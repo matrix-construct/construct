@@ -56,6 +56,7 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 } // namespace ircd
 
 #include "runtime.h"
+#include "timer.h"
 #include "context.h"
 #include "compartment.h"
 #include "error.h"

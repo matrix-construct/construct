@@ -1195,56 +1195,37 @@ ircd::js::context::context(JSRuntime *const &runtime,
 	}
 }
 ,opts{opts}
+,except{nullptr}
 ,state
 {{
 	0,                // Semaphore value starting at 0.
 	phase::ACCEPT,    // ACCEPT phase indicates nothing is running.
 	irq::JS,          // irq::JS is otherwise here in case JS triggers an interrupt.
 }}
-,except{nullptr}
-,limit{opts.timer_limit}
-,started{time_point::min()}
-,interval{opts.timer_interval}
-,timer{std::bind(&context::timer_worker, this)}
+,timer
+{
+	std::bind(&context::handle_timeout, this)
+}
 {
 	assert(&our(runtime) == rt);  // Trying to construct on thread without runtime thread_local
+	timer.set(opts.timer_limit);
 }
 
 ircd::js::context::~context()
 noexcept
 {
-	interval.store(microseconds(0), std::memory_order_release);
-	timer.join();
 }
 
 void
-ircd::js::context::timer_worker()
-{
-	while(interval.load(std::memory_order_consume) > microseconds(0))
-	{
-		std::this_thread::sleep_for(interval.load(std::memory_order_consume));
-		timer_check();
-	}
-}
-
-void
-ircd::js::context::timer_check()
+ircd::js::context::handle_timeout()
+noexcept
 {
 	// The interruption is an atomic transaction so our condition
 	// for a timer excess occurs in a synchronous closure.
-
-	interrupt(*this, [this]
+	interrupt(*this, []
 	{
-		// See if the execution has timing.
-		if(started == time_point::min() || limit == microseconds(0))
-			return irq::NONE;
-
-		// Check if timer exceeded limits.
-		const auto over_limit(steady_clock::now() - limit > started);
-		if(!over_limit)
-			return irq::NONE;
-
-		// Attempt to kill it.
+		// At this time there is no yield logic so if the timer calls
+		// the script is terminated.
 		return irq::TERMINATE;
 	});
 }
@@ -1303,6 +1284,8 @@ ircd::js::context::handle_interrupt()
 void
 ircd::js::leave(context &c)
 {
+	c.timer.cancel();
+
 	// Load the state to keep the current sem value up to date.
 	// This thread is the only writer to that value.
 	auto state(c.state.load(std::memory_order_relaxed));
@@ -1323,10 +1306,6 @@ ircd::js::leave(context &c)
 void
 ircd::js::enter(context &c)
 {
-	// Set the start time which will be observable to the interruptor
-	// after a release sequence.
-	c.started = std::chrono::steady_clock::now();
-
 	// State was already acquired by the last leave();
 	auto state(c.state.load(std::memory_order_relaxed));
 
@@ -1340,6 +1319,7 @@ ircd::js::enter(context &c)
 
 	// Commit to next execution.
 	c.state.store(state, std::memory_order_release);
+	c.timer.start();
 }
 
 bool
@@ -1415,6 +1395,161 @@ ircd::js::save_exception(context &c,
 
 	c.except = JS_SaveExceptionState(c),
 	c.report = report;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/timer.h
+//
+
+ircd::js::timer::timer(const callback &timeout)
+:finished{false}
+,timeout{timeout}
+,started{time_point::min()}
+,limit{0us}
+,state
+{{
+	0, false
+}}
+,thread{std::bind(&timer::worker, this)}
+{
+}
+
+ircd::js::timer::~timer()
+noexcept
+{
+	// This is all on the main IRCd thread, and the only point when it waits on the timer
+	// thread. That's okay as long as this is on IRCd shutdown etc.
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	finished = true;
+
+	// Wait for timer thread to exit. Notify before the unlock() could double tap,
+	// but should always make for a reliable way to do this shutdown.
+	cond.notify_all();
+	lock.unlock();
+	thread.join();
+}
+
+ircd::js::timer::time_point
+ircd::js::timer::start()
+{
+	// The counter is incremented indicating a new timing request, invalidating
+	// anything the timer was previously doing.
+	auto state(this->state.load(std::memory_order_relaxed));
+	++state.sem;
+	state.running = true;
+
+	// Commit to starting a new timer operation, unconditionally overwrite previous.
+	started = steady_clock::now();
+	this->state.store(state, std::memory_order_release);
+
+	// The timing thread is notified here. It may have already started on our new
+	// request. However, this notifcation must not be delayed and the timing thread
+	// must wake up soon/now.
+	cond.notify_one();
+
+	return started;
+}
+
+bool
+ircd::js::timer::cancel()
+{
+	// Relaxed acquire of the state to get the sem value.
+	auto state(this->state.load(std::memory_order_relaxed));
+
+	// Expect the timer to be running and order the timer to idle with an invalidation.
+	struct state in        { state.sem,      true   };
+	const struct state out { state.sem + 1,  false  };
+
+	// Commit to cancellation. On a successful state transition, wake up the thread.
+	static const auto order_fail(std::memory_order_relaxed);
+	static const auto order_success(std::memory_order_acq_rel);
+	if(this->state.compare_exchange_strong(in, out, order_success, order_fail))
+	{
+		cond.notify_one();
+		return true;
+	}
+	else return false;
+}
+
+void
+ircd::js::timer::set(const callback &timeout)
+{
+	this->timeout = timeout;
+	std::atomic_thread_fence(std::memory_order_release);
+}
+
+void
+ircd::js::timer::set(const microseconds &limit)
+{
+	this->limit.store(limit, std::memory_order_release);
+}
+
+void
+ircd::js::timer::worker()
+{
+	// This lock is only ever held by this thread except during a finish condition.
+	// Notifications to the condition are only broadcast by the main thread.
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	while(likely(!finished))
+		handle(lock);
+}
+
+void
+ircd::js::timer::handle(std::unique_lock<std::mutex> &lock)
+{
+	struct state ours, theirs;
+	const auto idle_condition([this, &ours]
+	{
+		if(unlikely(finished))
+			return true;
+
+		// Acquire the request operation
+		ours = this->state.load(std::memory_order_acquire);
+
+		// Require a start time
+		if(started == time_point::min())
+			return false;
+
+		return ours.running;
+	});
+
+	const auto cancel_condition([this, &ours, &theirs]
+	{
+		if(unlikely(finished))
+			return true;
+
+		// Acquire the request state and compare it to our saved state to see
+		// if the counter has changed or if there is cancellation.
+		theirs = this->state.load(std::memory_order_consume);
+		return ours.sem != theirs.sem || !theirs.running;
+	});
+
+	// Wait for a running condition into `in`
+	cond.wait(lock, idle_condition);
+	if(unlikely(finished))
+		return;
+
+	// Wait for timeout or cancellation
+	const auto limit(this->limit.load(std::memory_order_consume));
+	if(cond.wait_until(lock, started + limit, cancel_condition))
+	{
+		// A cancel or increment of the counter into the next request has occurred.
+		// This thread will go back to sleep in the idle_condition unless or until
+		// the next start() is triggered.
+		return;
+	}
+
+	// A timeout has occurred. This is the last chance for a belated cancellation to be
+	// observed. If a transition from running to !running can take place on this counter
+	// value, the user has not invalidated this request and desires the timeout.
+	assert(ours.running);
+	const struct state out { ours.sem, false };
+	static const auto order_fail(std::memory_order_relaxed);
+	static const auto order_success(std::memory_order_acq_rel);
+	if(state.compare_exchange_strong(ours, out, order_success, order_fail))
+		if(likely(timeout))
+			timeout();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -48,41 +48,32 @@ enum class irq
 struct context
 :private custom_ptr<JSContext>
 {
-	using steady_clock = std::chrono::steady_clock;
-	using time_point = steady_clock::time_point;
+	// Context options
+	struct opts
+	{
+		size_t stack_chunk_size       = 8_KiB;
+		microseconds timer_limit      = 10ms;
+	}
+	opts;
 
+	// Exception state
+	JSExceptionState *except;                    // Use save_exception()/restore_exception()
+	JSErrorReport report;                        // Note: ptrs may not be valid in here.
+
+	// Interruption state
 	struct alignas(8) state
 	{
 		uint32_t sem;
 		enum phase phase;
 		enum irq irq;
 	};
-
-	struct opts
-	{
-		size_t stack_chunk_size       = 8_KiB;
-		microseconds timer_interval   = 250000us;
-		microseconds timer_limit      = 500000us;
-	};
-
-	struct opts opts;
-
-	// Interruption state
 	std::atomic<struct state> state;             // Atomic state of execution
 	std::function<int (const irq &)> on_intr;    // User interrupt hook (ret -1 to not interfere)
-
-	// Exception state
-	JSExceptionState *except;                    // Use save_exception()/restore_exception()
-	JSErrorReport report;                        // Note: ptrs may not be valid in here.
+	bool handle_interrupt();                     // Called by runtime on interrupt
 
 	// Execution timer
-	microseconds limit;                          // The maximum duration for an execution
-	steady_clock::time_point started;            // When the execution started
-	std::atomic<microseconds> interval;          // The interval the timer will check the above
-	bool handle_interrupt();                     // Called by runtime on interrupt
-	void timer_check();
-	void timer_worker();
-	std::thread timer;
+	void handle_timeout() noexcept;              // Called by timer after requested time
+	struct timer timer;
 
 	// JSContext
 	operator JSContext *() const                 { return get();                                   }
