@@ -76,8 +76,13 @@ const runtime &our(const JSRuntime *const &);
 runtime &our(JSRuntime *const &);
 
 // Get to our runtime from any JSObject
-const runtime &object_runtime(const JSObject &);
-runtime &object_runtime(JSObject &);
+const runtime &our_runtime(const JSObject &);
+runtime &our_runtime(JSObject &);
+
+// Get to our runtime from any JSFreeOp
+JSFreeOp *default_freeop(runtime &);
+const runtime &our_runtime(const JSFreeOp &);
+runtime &our_runtime(JSFreeOp &);
 
 // Do not call interrupt() unless you know what you're doing; see context.h.
 void interrupt(runtime &r);
@@ -97,13 +102,31 @@ interrupt(runtime &r)
 }
 
 inline runtime &
-object_runtime(JSObject &o)
+our_runtime(JSFreeOp &o)
+{
+	return our(o.runtime());
+}
+
+inline const runtime &
+our_runtime(const JSFreeOp &o)
+{
+	return our(o.runtime());
+}
+
+inline JSFreeOp *
+default_freeop(runtime &r)
+{
+	return JS_GetDefaultFreeOp(r);
+}
+
+inline runtime &
+our_runtime(JSObject &o)
 {
 	return our(JS_GetObjectRuntime(&o));
 }
 
 inline const runtime &
-object_runtime(const JSObject &o)
+our_runtime(const JSObject &o)
 {
 	return our(JS_GetObjectRuntime(const_cast<JSObject *>(&o)));
 }

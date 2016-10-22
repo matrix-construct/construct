@@ -977,6 +977,35 @@ ircd::js::jserror::create(JSErrorReport &report)
 // ircd/js/debug.h
 //
 
+void
+ircd::js::debug_log_gcparams()
+{
+	for(int i(0); i < 50; ++i)
+	{
+		const auto key(static_cast<JSGCParamKey>(i));
+		const char *const name(reflect(key));
+		if(!strlen(name))
+			continue;
+
+		// These trigger assertion failures
+		switch(key)
+		{
+			case JSGC_NUMBER:
+			case JSGC_MAX_CODE_CACHE_BYTES:
+			case JSGC_DECOMMIT_THRESHOLD:
+				continue;
+
+			default:
+				break;
+		}
+
+		log.debug("context(%p) %s => %u",
+		          (const void *)cx,
+		          name,
+		          get(*cx, key));
+	}
+}
+
 std::string
 ircd::js::debug(const JSErrorReport &r)
 {
@@ -1077,7 +1106,40 @@ ircd::js::reflect(const JSFinalizeStatus &s)
 		case JSFINALIZE_COLLECTION_END:     return "COLLECTION_END";
 	}
 
-	return "????";
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSGCParamKey &s)
+{
+	switch(s)
+	{
+		case JSGC_MAX_BYTES:                       return "JSGC_MAX_BYTES";
+		case JSGC_MAX_MALLOC_BYTES:                return "JSGC_MAX_MALLOC_BYTES";
+		case JSGC_BYTES:                           return "JSGC_BYTES";
+		case JSGC_NUMBER:                          return "JSGC_NUMBER";
+		case JSGC_MAX_CODE_CACHE_BYTES:            return "JSGC_MAX_CODE_CACHE_BYTES";
+		case JSGC_MODE:                            return "JSGC_MODE";
+		case JSGC_UNUSED_CHUNKS:                   return "JSGC_UNUSED_CHUNKS";
+		case JSGC_TOTAL_CHUNKS:                    return "JSGC_TOTAL_CHUNKS";
+		case JSGC_SLICE_TIME_BUDGET:               return "JSGC_SLICE_TIME_BUDGET";
+		case JSGC_MARK_STACK_LIMIT:                return "JSGC_MARK_STACK_LIMIT";
+		case JSGC_HIGH_FREQUENCY_TIME_LIMIT:       return "JSGC_HIGH_FREQUENCY_TIME_LIMIT";
+		case JSGC_HIGH_FREQUENCY_LOW_LIMIT:        return "JSGC_HIGH_FREQUENCY_LOW_LIMIT";
+		case JSGC_HIGH_FREQUENCY_HIGH_LIMIT:       return "JSGC_HIGH_FREQUENCY_HIGH_LIMIT";
+		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX";
+		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN";
+		case JSGC_LOW_FREQUENCY_HEAP_GROWTH:       return "JSGC_LOW_FREQUENCY_HEAP_GROWTH";
+		case JSGC_DYNAMIC_HEAP_GROWTH:             return "JSGC_DYNAMIC_HEAP_GROWTH";
+		case JSGC_DYNAMIC_MARK_SLICE:              return "JSGC_DYNAMIC_MARK_SLICE";
+		case JSGC_ALLOCATION_THRESHOLD:            return "JSGC_ALLOCATION_THRESHOLD";
+		case JSGC_DECOMMIT_THRESHOLD:              return "JSGC_DECOMMIT_THRESHOLD";
+		case JSGC_MIN_EMPTY_CHUNK_COUNT:           return "JSGC_MIN_EMPTY_CHUNK_COUNT";
+		case JSGC_MAX_EMPTY_CHUNK_COUNT:           return "JSGC_MAX_EMPTY_CHUNK_COUNT";
+		case JSGC_COMPACTING_ENABLED:              return "JSGC_COMPACTING_ENABLED";
+	}
+
+	return "";
 }
 
 const char *
@@ -1089,7 +1151,7 @@ ircd::js::reflect(const JSGCStatus &s)
 		case JSGC_END:     return "END";
 	}
 
-	return "????";
+	return "";
 }
 
 const char *
@@ -1109,7 +1171,7 @@ ircd::js::reflect(const JSExnType &e)
 		case JSEXN_LIMIT:         return "?LIMIT?";
 	}
 
-	return "????";
+	return "";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1424,6 +1486,41 @@ ircd::js::save_exception(context &c,
 
 	c.except = JS_SaveExceptionState(c),
 	c.report = report;
+}
+
+void
+ircd::js::run_gc(context &c)
+{
+	JS_MaybeGC(c);
+}
+
+void
+ircd::js::out_of_memory(context &c)
+{
+	JS_ReportOutOfMemory(c);
+}
+
+void
+ircd::js::allocation_overflow(context &c)
+{
+	JS_ReportAllocationOverflow(c);
+}
+
+uint32_t
+ircd::js::get(context &c,
+              const JSGCParamKey &key)
+{
+	//return JS_GetGCParameterForThread(c, key);       // broken
+	return JS_GetGCParameter(c.runtime(), key);
+}
+
+void
+ircd::js::set(context &c,
+              const JSGCParamKey &key,
+              const uint32_t &val)
+{
+	//JS_SetGCParameterForThread(c, key, val);         // broken
+	JS_SetGCParameter(c.runtime(), key, val);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

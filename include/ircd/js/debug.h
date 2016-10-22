@@ -27,11 +27,13 @@ namespace js   {
 
 const char *reflect(const JSExnType &);
 const char *reflect(const JSGCStatus &);
+const char *reflect(const JSGCParamKey &);
 const char *reflect(const JSFinalizeStatus &);
 
 std::string debug(const JS::Value &);
 std::string debug(const JS::HandleObject &);
 std::string debug(const JSErrorReport &);
+void debug_log_gcparams();
 
 } // namespace js
 } // namespace ircd

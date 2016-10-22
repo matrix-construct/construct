@@ -116,9 +116,11 @@ JSObject *current_global(context &c);
 JSObject *current_global();                      // thread_local
 
 // Memory
-inline void out_of_memory(context &c)            { JS_ReportOutOfMemory(c);                        }
-inline void allocation_overflow(context &c)      { JS_ReportAllocationOverflow(c);                 }
-inline void run_gc(context &c)                   { JS_MaybeGC(c);                                  }
+void set(context &c, const JSGCParamKey &, const uint32_t &val);
+uint32_t get(context &c, const JSGCParamKey &);
+void out_of_memory(context &c);
+void allocation_overflow(context &c);
+void run_gc(context &c);
 
 // Exception
 bool pending_exception(const context &c);
