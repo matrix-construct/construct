@@ -28,8 +28,14 @@ namespace js   {
 struct function
 :JS::Rooted<JSFunction *>
 {
+	operator JSObject *() const;
+	explicit operator script() const;
+
 	value operator()(const object &, const JS::HandleValueArray &args) const;
 	value operator()(const object &) const;
+
+	string display_name() const;
+	string name() const;
 
 	// new function
 	function(JS::AutoObjectVector &stack,
@@ -38,8 +44,9 @@ struct function
 	         const std::vector<std::string> &args,
 	         const std::string &src);
 
-	function(JSFunction *const &);
 	explicit function(const value &);
+	function(JSFunction *const &);
+	function(JSFunction &);
 	function();
 	function(function &&) noexcept;
 	function(const function &) = delete;
@@ -73,6 +80,20 @@ noexcept
 }
 
 inline
+function::function(JSFunction &func)
+:JS::Rooted<JSFunction *>{*cx, &func}
+{
+}
+
+inline
+function::function(JSFunction *const &func)
+:JS::Rooted<JSFunction *>{*cx, func}
+{
+	if(unlikely(!get()))
+		throw internal_error("NULL function");
+}
+
+inline
 function::function(const value &val)
 :JS::Rooted<JSFunction *>
 {
@@ -81,25 +102,53 @@ function::function(const value &val)
 }
 {
 	if(!get())
-		throw type_error("Value is not an Function");
+		throw type_error("value is not a function");
+}
+
+inline string
+function::name()
+const
+{
+	const auto ret(JS_GetFunctionId(*this));
+	return ret? string(ret) : string("<unnamed>");
+}
+
+inline string
+function::display_name()
+const
+{
+	const auto ret(JS_GetFunctionDisplayId(*this));
+	return ret? string(ret) : string("<anonymous>");
 }
 
 inline
-function::function(JSFunction *const &func)
-:JS::Rooted<JSFunction *>{*cx, func}
+function::operator script()
+const
 {
+	return JS_GetFunctionScript(*cx, *this);
+}
+
+inline
+function::operator JSObject *()
+const
+{
+	const auto ret(JS_GetFunctionObject(get()));
+	if(unlikely(!ret))
+		throw type_error("function cannot cast to Object");
+
+	return ret;
 }
 
 inline string
 name(const function &f)
 {
-	return JS_GetFunctionId(f);
+	return f.name();
 }
 
 inline string
 display_name(const function &f)
 {
-	return JS_GetFunctionDisplayId(f);
+	return f.display_name();
 }
 
 } // namespace js

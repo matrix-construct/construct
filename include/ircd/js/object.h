@@ -34,8 +34,12 @@ struct object
 	object(const JSClass *const &, const object &proto);
 	object(const JSClass *const &);
 
+	object(const JS::MutableHandleObject &h): object{h.get()} {}
+	object(const JS::HandleObject &h): object{h.get()} {}
+	explicit object(const value &);
+	object(JSFunction *const &);
 	object(JSObject *const &);
-	object(const value &);
+	object(JSObject &);
 	object();
 	object(object &&) noexcept;
 	object(const object &) = delete;
@@ -44,7 +48,11 @@ struct object
 
 inline
 object::object()
-:JS::Rooted<JSObject *>{*cx}
+:JS::Rooted<JSObject *>
+{
+	*cx,
+	JS_NewPlainObject(*cx)
+}
 {
 }
 
@@ -66,6 +74,20 @@ noexcept
 }
 
 inline
+object::object(JSObject &obj)
+:JS::Rooted<JSObject *>{*cx, &obj}
+{
+}
+
+inline
+object::object(JSObject *const &obj)
+:JS::Rooted<JSObject *>{*cx, obj}
+{
+	if(unlikely(!get()))
+		throw internal_error("NULL object");
+}
+
+inline
 object::object(const value &val)
 :JS::Rooted<JSObject *>{*cx}
 {
@@ -74,9 +96,15 @@ object::object(const value &val)
 }
 
 inline
-object::object(JSObject *const &obj)
-:JS::Rooted<JSObject *>{*cx, obj}
+object::object(JSFunction *const &val)
+:JS::Rooted<JSObject *>
 {
+	*cx,
+	val? JS_GetFunctionObject(val) : nullptr
+}
+{
+	if(unlikely(!get()))
+		throw type_error("Function cannot convert to Object");
 }
 
 inline

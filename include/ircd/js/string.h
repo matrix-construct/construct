@@ -46,8 +46,9 @@ struct string
 	string(const char *const &, const size_t &len);
 	explicit string(const std::string &);
 	string(const char *const &);
-	string(JSString *const &);
 	string(const value &);
+	string(JSString *const &);
+	string(JSString &);
 	string();
 	string(string &&) noexcept;
 	string(const string &) = delete;
@@ -81,11 +82,10 @@ noexcept
 }
 
 inline
-string::string(const value &val)
+string::string(JSString &val)
 :JS::Rooted<JSString *>
 {
-	*cx,
-	JS::ToString(*cx, val)?: throw type_error("Failed to convert value to string")
+	*cx, &val
 }
 {
 }
@@ -95,7 +95,16 @@ string::string(JSString *const &val)
 :JS::Rooted<JSString *>
 {
 	*cx,
-	likely(val)? val : JS_GetEmptyString(*rt)
+	likely(val)? val : throw internal_error("NULL string")
+}
+{
+}
+
+string::string(const value &val)
+:JS::Rooted<JSString *>
+{
+	*cx,
+	JS::ToString(*cx, val)?: throw type_error("Failed to convert value to string")
 }
 {
 }

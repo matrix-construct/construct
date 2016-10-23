@@ -54,10 +54,12 @@ struct value
 	value(const jsid &);
 	value(JSObject &);
 	value(JSString *const &);
+	value(JSFunction *const &);
 	value(JS::Symbol *const &);
 	value(const JS::Value &);
 
 	template<class T> value(const JS::Handle<T> &h);
+	template<class T> value(const JS::MutableHandle<T> &h);
 	template<class T> value(const JS::Rooted<T> &r);
 	template<class T> value(const JS::PersistentRooted<T> &p);
 
@@ -103,6 +105,12 @@ value::value(const JS::Rooted<T> &r)
 }
 
 template<class T>
+value::value(const JS::MutableHandle<T> &h)
+:value(h.get())
+{
+}
+
+template<class T>
 value::value(const JS::Handle<T> &h)
 :value(h.get())
 {
@@ -130,6 +138,17 @@ inline
 value::value(JSString *const &val)
 :JS::Rooted<JS::Value>{*cx, JS::StringValue(val)}
 {
+}
+
+inline
+value::value(JSFunction *const &val)
+:JS::Rooted<JS::Value>{*cx}
+{
+	auto *const obj(JS_GetFunctionObject(val));
+	if(unlikely(!obj))
+		throw type_error("Function cannot convert to Object");
+
+	set(JS::ObjectValue(*obj));
 }
 
 inline

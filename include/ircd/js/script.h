@@ -33,6 +33,7 @@ struct script
 
 	script(const JS::CompileOptions &opts, const std::string &src);    // new script
 	script(JSScript *const &);
+	script(JSScript &);
 	script();
 	script(script &&) noexcept;
 	script(const script &) = delete;
@@ -52,9 +53,17 @@ noexcept
 }
 
 inline
+script::script(JSScript &val)
+:JS::Rooted<JSScript *>{*cx, &val}
+{
+}
+
+inline
 script::script(JSScript *const &val)
 :JS::Rooted<JSScript *>{*cx, val}
 {
+	if(unlikely(!get()))
+		throw internal_error("NULL script");
 }
 
 } // namespace js
