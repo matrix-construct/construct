@@ -1342,14 +1342,8 @@ void
 ircd::js::context::handle_timeout()
 noexcept
 {
-	// The interruption is an atomic transaction so our condition
-	// for a timer excess occurs in a synchronous closure.
-	interrupt(*this, []
-	{
-		// At this time there is no yield logic so if the timer calls
-		// the script is terminated.
-		return irq::TERMINATE;
-	});
+	// At this time there is no yield logic so if the timer calls the script is terminated.
+	interrupt(*this, irq::TERMINATE);
 }
 
 bool
@@ -1446,18 +1440,14 @@ ircd::js::enter(context &c)
 
 bool
 ircd::js::interrupt(context &c,
-                    const interrupt_condition &closure)
+                    const irq &req)
 {
-	// Acquire the execution state.
-	const auto state(c.state.load(std::memory_order_acquire));
-
-	// Only proceed if something is even running.
-	if(state.phase != phase::ENTER)
+	if(req == irq::NONE)
 		return false;
 
-	// See if user still wants an interruption.
-	const auto req(closure());
-	if(req == irq::NONE)
+	// Acquire the execution state. Proceed if something was running.
+	const auto state(c.state.load(std::memory_order_acquire));
+	if(state.phase != phase::ENTER)
 		return false;
 
 	// The expected value of the state to transact.

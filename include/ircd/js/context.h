@@ -129,14 +129,7 @@ bool restore_exception(context &c);
 bool report_exception(context &c);
 
 // Interruption
-// The interruption has to occur transactionally so you send a condition to the interruptor
-// via a synchronous closure. Returns true when committed to interrupt.
-//
-// * If JS is not ready for interruption the condition is ignored.
-// * If it is ready but your condition fails (returns irq::NONE) then no interrupt.
-// * If the condition returns an irq but JS is no longer ready you are declined.
-using interrupt_condition = std::function<irq ()>;
-bool interrupt(context &, const interrupt_condition &);
+bool interrupt(context &, const irq &);
 bool interrupt_poll(const context &c);
 
 // Execution
