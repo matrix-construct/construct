@@ -28,7 +28,7 @@ namespace js   {
 class trap
 {
 	const std::string _name;                     // don't touch
-	const JSClass _class;
+	std::unique_ptr<JSClass> _class;
 
 	// Override these to define JS objects in C
 	virtual JS::Value on_add(const JSObject &, const jsid &, const JS::Value &);
@@ -37,8 +37,8 @@ class trap
 	virtual bool on_del(const JSObject &, const jsid &);
 	virtual bool on_has(const JSObject &, const jsid &);
 	virtual bool on_enu(const JSObject &);
-	virtual bool on_call(const unsigned &argc, JS::Value &argv);
-	virtual bool on_ctor(const unsigned &argc, JS::Value &argv);
+	virtual value on_call(const JSObject &, const JS::CallArgs &);
+	virtual value on_ctor(const JS::CallArgs &);
 
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);
@@ -62,7 +62,7 @@ class trap
 
   public:
 	auto &name() const                           { return _name;                                   }
-	auto &jsclass() const                        { return _class;                                  }
+	auto &jsclass() const                        { return *_class;                                 }
 
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }

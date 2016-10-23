@@ -27,6 +27,12 @@
 namespace ircd {
 namespace js   {
 
+// Logging facility for this submodule with SNOMASK.
+struct log::log log
+{
+	"js", 'J'
+};
+
 // Location of the thread_local runtext. externs exist in js/runtime.h and js/context.h.
 // If these are null, js is not available on your thread.
 __thread runtime *rt;
@@ -35,12 +41,6 @@ __thread context *cx;
 // Location of the main JSRuntime and JSContext instances.
 runtime *main_runtime;
 context *main_context;
-
-// Logging facility for this submodule with SNOMASK.
-struct log::log log
-{
-	"js", 'J'
-};
 
 } // namespace js
 } // namespace ircd
@@ -137,7 +137,7 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 ircd::js::trap::trap(std::string name,
                      const uint32_t &flags)
 :_name{std::move(name)}
-,_class
+,_class{std::make_unique<JSClass>(JSClass
 {
 	this->_name.c_str(),
 	flags,
@@ -154,7 +154,7 @@ ircd::js::trap::trap(std::string name,
 	handle_ctor,
 	flags & JSCLASS_GLOBAL_FLAGS? JS_GlobalObjectTraceHook : handle_trace,
 	{ this }           // reserved[0] TODO: ?????????
-}
+})}
 {
 }
 
@@ -169,13 +169,13 @@ noexcept
 ircd::js::object
 ircd::js::trap::operator()()
 {
-	return { &_class };
+	return { _class.get() };
 }
 
 ircd::js::object
 ircd::js::trap::operator()(const object &proto)
 {
-	return object { &_class, proto };
+	return object { _class.get(), proto };
 }
 
 void
@@ -1097,6 +1097,18 @@ ircd::js::debug(const JS::Value &v)
 }
 
 const char *
+ircd::js::reflect(const JSContextOp &op)
+{
+	switch(op)
+	{
+		case JSCONTEXT_NEW:       return "JSCONTEXT_NEW";
+		case JSCONTEXT_DESTROY:   return "JSCONTEXT_DESTROY";
+	}
+
+	return "";
+}
+
+const char *
 ircd::js::reflect(const JSFinalizeStatus &s)
 {
 	switch(s)
@@ -1188,7 +1200,7 @@ ircd::js::compartment::compartment(JSObject *const &obj,
                                    context &c)
 :c{&c}
 ,prev{JS_EnterCompartment(c, obj)}
-,ours{JS_EnterCompartment(c, obj)}  // Enter same object compartment again to get its own ptr
+,ours{::js::GetContextCompartment(c)}
 ,cprev{static_cast<compartment *>(JS_GetCompartmentPrivate(ours))}
 {
 	JS_SetCompartmentPrivate(ours, this);
@@ -1765,6 +1777,11 @@ ircd::js::runtime::handle_context(JSContext *const c,
                                   void *const priv)
 noexcept
 {
+	log.debug("context(%p): %s (priv: %p)",
+	          (const void *)c,
+	          reflect(static_cast<JSContextOp>(op)),
+	          priv);
+
 	return true;
 }
 
@@ -1773,6 +1790,10 @@ ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
                                               JSCompartment *const compartment)
 noexcept
 {
+	log.debug("runtime(%p): compartment(%p) destroy: fop(%p)",
+	          (const void *)(our_runtime(*fop).ptr()),
+	          (const void *)compartment,
+	          (const void *)fop);
 }
 
 void
@@ -1782,6 +1803,11 @@ ircd::js::runtime::handle_compartment_name(JSRuntime *const rt,
                                            const size_t max)
 noexcept
 {
+	log.debug("runtime(%p): comaprtment: %p (buf@%p: max: %zu)",
+	          (const void *)rt,
+	          (const void *)compartment,
+	          (const void *)buf,
+	          max);
 }
 
 void
