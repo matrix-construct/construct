@@ -38,7 +38,7 @@ class trap
 	virtual bool on_has(const JSObject &, const jsid &);
 	virtual bool on_enu(const JSObject &);
 	virtual value on_call(const JSObject &, const JS::CallArgs &);
-	virtual value on_ctor(const JS::CallArgs &);
+	virtual void on_ctor(object &, const JS::CallArgs &);
 
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);

@@ -205,9 +205,17 @@ ircd::js::trap::handle_ctor(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
-	//debug("ctor");
 
-	return false;
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.callee());
+
+	auto &trap(from(that));
+	trap.debug("ctor: '%s'", trap.name().c_str());
+
+	object ret(JS_NewObjectForConstructor(*cx, &trap.jsclass(), ca));
+	trap.on_ctor(ret, ca);
+	ca.rval().set(ret);
+	return true;
 }
 catch(const jserror &e)
 {
@@ -216,8 +224,9 @@ catch(const jserror &e)
 }
 catch(const std::exception &e)
 {
-	//auto &trap(from(obj));
-	//trap.host_exception("call: %s", e.what());
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	auto &trap(from(object(ca.callee())));
+	trap.host_exception("ctor: %s", e.what());
 	return false;
 }
 
@@ -228,9 +237,19 @@ ircd::js::trap::handle_call(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
-	//debug("call");
 
-	return false;
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.computeThis(c));
+	object func(ca.callee());
+
+	auto &trap_that(from(that));
+	auto &trap_func(from(func));
+
+	trap_that.debug("call: '%s'", trap_func.name().c_str());
+	trap_func.debug("call");
+
+	ca.rval().set(trap_func.on_call(*func.get(), ca));
+	return true;
 }
 catch(const jserror &e)
 {
@@ -239,8 +258,9 @@ catch(const jserror &e)
 }
 catch(const std::exception &e)
 {
-	//auto &trap(from(obj));
-	//trap.host_exception("call: %s", e.what());
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	auto &trap(from(object(ca.computeThis(c))));
+	trap.host_exception("call: %s", e.what());
 	return false;
 }
 
@@ -519,18 +539,17 @@ const
 	va_end(ap);
 }
 
-bool
-ircd::js::trap::on_ctor(const unsigned &argc,
-                        JS::Value &argv)
+void
+ircd::js::trap::on_ctor(object &obj,
+                        const JS::CallArgs &)
 {
-	return false;
 }
 
-bool
-ircd::js::trap::on_call(const unsigned &argc,
-                        JS::Value &argv)
+ircd::js::value
+ircd::js::trap::on_call(const JSObject &,
+                        const JS::CallArgs &)
 {
-	return false;
+	return {};
 }
 
 bool
