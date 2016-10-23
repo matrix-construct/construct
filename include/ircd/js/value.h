@@ -45,11 +45,11 @@ struct value
 
 	value(const char *const &);
 	explicit value(const std::string &);
-	explicit value(const nullptr_t &);
-	explicit value(const double &);
-	explicit value(const float &);
-	explicit value(const int32_t &);
-	explicit value(const bool &);
+	value(const nullptr_t &);
+	value(const double &);
+	value(const float &);
+	value(const int32_t &);
+	value(const bool &);
 
 	value(const jsid &);
 	value(JSObject &);
