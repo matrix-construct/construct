@@ -49,6 +49,8 @@ struct compartment
 
 	compartment(JSObject *const &, context &);
 	compartment(JSObject *const &);
+	compartment(context &);
+	compartment();
 	compartment(compartment &&) noexcept;
 	compartment(const compartment &) = delete;
 	~compartment() noexcept;

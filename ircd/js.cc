@@ -1210,8 +1210,22 @@ ircd::js::reflect(const JSExnType &e)
 // ircd/js/compartment.h
 //
 
+ircd::js::compartment::compartment()
+:compartment{*cx}
+{
+}
+
+ircd::js::compartment::compartment(context &c)
+:compartment
+{
+	current_global(c)?: throw error("Cannot enter compartment without global"),
+	c
+}
+{
+}
+
 ircd::js::compartment::compartment(JSObject *const &obj)
-:compartment(obj, *cx)
+:compartment{obj, *cx}
 {
 }
 
