@@ -25,17 +25,19 @@
 namespace ircd {
 namespace js   {
 
+string decompile(const JS::Handle<JSFunction *> &, const bool &pretty = false);
+string display_name(const JSFunction &);
+string name(const JSFunction &);
+
 struct function
 :JS::Rooted<JSFunction *>
 {
 	operator JSObject *() const;
 	explicit operator script() const;
+	explicit operator string() const;
 
 	value operator()(const object &, const JS::HandleValueArray &args) const;
 	value operator()(const object &) const;
-
-	string display_name() const;
-	string name() const;
 
 	// new function
 	function(JS::AutoObjectVector &stack,
@@ -52,9 +54,6 @@ struct function
 	function(const function &) = delete;
 	function &operator=(function &&) noexcept;
 };
-
-string display_name(const function &);
-string name(const function &);
 
 inline
 function::function()
@@ -105,20 +104,11 @@ function::function(const value &val)
 		throw type_error("value is not a function");
 }
 
-inline string
-function::name()
+inline
+function::operator string()
 const
 {
-	const auto ret(JS_GetFunctionId(*this));
-	return ret? string(ret) : string("<unnamed>");
-}
-
-inline string
-function::display_name()
-const
-{
-	const auto ret(JS_GetFunctionDisplayId(*this));
-	return ret? string(ret) : string("<anonymous>");
+	return decompile(*this, true);
 }
 
 inline
@@ -140,15 +130,26 @@ const
 }
 
 inline string
-name(const function &f)
+name(const JSFunction &f)
 {
-	return f.name();
+	const auto ret(JS_GetFunctionId(const_cast<JSFunction *>(&f)));
+	return ret? string(ret) : string("<unnamed>");
 }
 
 inline string
-display_name(const function &f)
+display_name(const JSFunction &f)
 {
-	return f.display_name();
+	const auto ret(JS_GetFunctionDisplayId(const_cast<JSFunction *>(&f)));
+	return ret? string(ret) : string("<anonymous>");
+}
+
+inline string
+decompile(const JS::Handle<JSFunction *> &f,
+          const bool &pretty)
+{
+	uint flags(0);
+	flags |= pretty? 0 : JS_DONT_PRETTY_PRINT;
+	return JS_DecompileFunction(*cx, f, flags);
 }
 
 } // namespace js
