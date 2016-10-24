@@ -574,7 +574,7 @@ bool
 ircd::js::trap::on_del(const JSObject &obj,
                        const jsid &id)
 {
-	return false;
+	return true;
 }
 
 JS::Value
@@ -777,6 +777,182 @@ ircd::js::call(const object &obj,
                const JS::HandleValueArray &args)
 {
 	return call(obj, name.c_str(), args);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/del.h
+//
+
+void
+ircd::js::del(const JS::HandleObject &src,
+              const char *const path)
+{
+	value val;
+	object obj(src);
+	const char *fail(nullptr);
+	tokens(path, ".", [&path, &val, &obj, &fail]
+	(char *const &part)
+	{
+		if(fail)
+			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
+
+		if(!JS_GetProperty(*cx, obj, part, &val) || undefined(val))
+			throw reference_error("%s", part);
+
+		object tmp(obj.get());
+		if(!JS_ValueToObject(*cx, val, &obj) || !obj.get())
+		{
+			fail = part;
+			obj = std::move(tmp);
+		}
+	});
+
+	del(obj, id(val));
+}
+
+void
+ircd::js::del(const JS::HandleObject &obj,
+              const id &id)
+{
+	JS::ObjectOpResult res;
+	if(!JS_DeletePropertyById(*cx, obj, id, res))
+		throw jserror(jserror::pending);
+
+	if(!res.checkStrict(*cx, obj, id))
+		throw jserror(jserror::pending);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/set.h
+//
+
+void
+ircd::js::set(const JS::HandleObject &src,
+              const char *const path,
+              const value &val)
+{
+	value tmp;
+	object obj(src);
+	char buffer[strlen(path) + 1];
+	const char *fail(nullptr), *key(nullptr);
+	tokens(path, ".", buffer, sizeof(buffer), [&path, &tmp, &obj, &fail, &key]
+	(const char *const &part)
+	{
+		if(fail)
+			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
+
+		if(key)
+			throw reference_error("%s", part);
+
+		key = part;
+		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
+			return;
+
+		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
+			fail = part;
+	});
+
+	if(!key)
+		return;
+
+	if(!JS_SetProperty(*cx, obj, key, val))
+		throw jserror(jserror::pending);
+}
+
+void
+ircd::js::set(const JS::HandleObject &obj,
+              const id &id,
+              const value &val)
+{
+	if(!JS_SetPropertyById(*cx, obj, id, val))
+		throw jserror(jserror::pending);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/get.h
+//
+
+ircd::js::value
+ircd::js::get(const JS::HandleObject &src,
+              const char *const path)
+{
+	value ret;
+	object obj(src);
+	const char *fail(nullptr);
+	tokens(path, ".", [&obj, &path, &ret, &fail]
+	(const char *const &part)
+	{
+		if(fail)
+			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
+
+		if(!JS_GetProperty(*cx, obj, part, &ret) || undefined(ret))
+			throw reference_error("%s", part);
+
+		if(!JS_ValueToObject(*cx, ret, &obj) || !obj.get())
+			fail = part;
+	});
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::get(const JS::HandleObject &obj,
+              const id &id)
+{
+	value ret;
+	if(!JS_GetPropertyById(*cx, obj, id, &ret) || undefined(ret))
+		throw reference_error("%s", string(id).c_str());
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/has.h
+//
+
+bool
+ircd::js::has(const JS::HandleObject &src,
+              const char *const path)
+{
+	bool ret(true);
+	object obj(src);
+	const char *fail(nullptr);
+	tokens(path, ".", [&obj, &path, &ret, &fail]
+	(const char *const &part)
+	{
+		if(fail)
+			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
+
+		if(!JS_HasProperty(*cx, obj, part, &ret))
+			throw jserror(jserror::pending);
+
+		if(!ret)
+			return;
+
+		value tmp;
+		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
+			throw internal_error("%s", part);
+
+		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
+			fail = part;
+	});
+
+	return ret;
+}
+
+bool
+ircd::js::has(const JS::HandleObject &obj,
+              const id &id)
+{
+	bool ret;
+	if(!JS_HasPropertyById(*cx, obj, id, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

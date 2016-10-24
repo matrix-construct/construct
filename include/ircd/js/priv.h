@@ -29,7 +29,7 @@ IRCD_EXCEPTION(error, priv_error)
 
 template<class T = void>
 T &
-priv(const object &obj,
+priv(const JS::HandleObject &obj,
      const JSClass &jsc)
 {
 	const auto ret(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
@@ -41,7 +41,7 @@ priv(const object &obj,
 
 template<class T = void>
 T &
-priv(const object &obj)
+priv(const JS::HandleObject &obj)
 {
 	const auto jsc(JS_GetClass(obj));
 	if(unlikely(!jsc))

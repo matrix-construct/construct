@@ -20,13 +20,13 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_GET_H
+#define HAVE_IRCD_JS_DEL_H
 
 namespace ircd {
 namespace js   {
 
-value get(const JS::HandleObject &obj, const id &id);
-value get(const JS::HandleObject &src, const char *const path);
+void del(const JS::HandleObject &obj, const id &id);
+void del(const JS::HandleObject &src, const char *const path);
 
 } // namespace js
 } // namespace ircd
