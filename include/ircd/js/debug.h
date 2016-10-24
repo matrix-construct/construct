@@ -30,6 +30,7 @@ const char *reflect(const JSGCStatus &);
 const char *reflect(const JSGCParamKey &);
 const char *reflect(const JSFinalizeStatus &);
 const char *reflect(const JSContextOp &);
+const char *reflect_telemetry(const int &id);
 
 std::string debug(const JS::Value &);
 std::string debug(const JS::HandleObject &);

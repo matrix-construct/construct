@@ -22,6 +22,7 @@
  */
 
 #include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
+#include <jsfriendapi.h>
 #include <ircd/js/js.h>
 
 namespace ircd {
@@ -41,6 +42,10 @@ __thread context *cx;
 // Location of the main JSRuntime and JSContext instances.
 runtime *main_runtime;
 context *main_context;
+
+// Internal prototypes
+void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
+const char *reflect(const ::js::CTypesActivityType &);
 
 } // namespace js
 } // namespace ircd
@@ -1116,6 +1121,56 @@ ircd::js::debug(const JS::Value &v)
 }
 
 const char *
+ircd::js::reflect_telemetry(const int &id)
+{
+	switch(id)
+	{
+		case JS_TELEMETRY_GC_REASON:                                  return "GC_REASON";
+		case JS_TELEMETRY_GC_IS_COMPARTMENTAL:                        return "GC_IS_COMPARTMENTAL";
+		case JS_TELEMETRY_GC_MS:                                      return "GC_MS";
+		case JS_TELEMETRY_GC_BUDGET_MS:                               return "GC_BUDGET_MS";
+		case JS_TELEMETRY_GC_ANIMATION_MS:                            return "GC_ANIMATION_MS";
+		case JS_TELEMETRY_GC_MAX_PAUSE_MS:                            return "GC_MAX_PAUSE_MS";
+		case JS_TELEMETRY_GC_MARK_MS:                                 return "GC_MARK_MS";
+		case JS_TELEMETRY_GC_SWEEP_MS:                                return "GC_SWEEP_MS";
+		case JS_TELEMETRY_GC_MARK_ROOTS_MS:                           return "GC_MARK_ROOTS_MS";
+		case JS_TELEMETRY_GC_MARK_GRAY_MS:                            return "GC_MARK_GRAY_MS";
+		case JS_TELEMETRY_GC_SLICE_MS:                                return "GC_SLICE_MS";
+		case JS_TELEMETRY_GC_SLOW_PHASE:                              return "GC_SLOW_PHASE";
+		case JS_TELEMETRY_GC_MMU_50:                                  return "GC_MMU_50";
+		case JS_TELEMETRY_GC_RESET:                                   return "GC_RESET";
+		case JS_TELEMETRY_GC_INCREMENTAL_DISABLED:                    return "GC_INCREMENTAL_DISABLED";
+		case JS_TELEMETRY_GC_NON_INCREMENTAL:                         return "GC_NON_INCREMENTAL";
+		case JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS:                      return "GC_SCC_SWEEP_TOTAL_MS";
+		case JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS:                  return "GC_SCC_SWEEP_MAX_PAUSE_MS";
+		case JS_TELEMETRY_GC_MINOR_REASON:                            return "GC_MINOR_REASON";
+		case JS_TELEMETRY_GC_MINOR_REASON_LONG:                       return "GC_MINOR_REASON_LONG";
+		case JS_TELEMETRY_GC_MINOR_US:                                return "GC_MINOR_US";
+		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:  return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT";
+		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS:   return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS";
+		case JS_TELEMETRY_ADDON_EXCEPTIONS:                           return "ADDON_EXCEPTIONS";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const ::js::CTypesActivityType &t)
+{
+	using namespace ::js;
+
+	switch(t)
+	{
+		case CTYPES_CALL_BEGIN:       return "CTYPES_CALL_BEGIN";
+		case CTYPES_CALL_END:         return "CTYPES_CALL_END";
+		case CTYPES_CALLBACK_BEGIN:   return "CTYPES_CALLBACK_BEGIN";
+		case CTYPES_CALLBACK_END:     return "CTYPES_CALLBACK_END";
+	}
+
+	return "";
+}
+
+const char *
 ircd::js::reflect(const JSContextOp &op)
 {
 	switch(op)
@@ -1738,9 +1793,12 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
 	JS_SetGCCallback(get(), handle_gc, nullptr);
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
+	JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
 	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
 	JS_SetContextCallback(get(), handle_context, nullptr);
+	::js::SetActivityCallback(get(), handle_activity, this);
+	::js::SetCTypesActivityCallback(get(), handle_activity_ctypes);
 	JS_SetInterruptCallback(get(), handle_interrupt);
 
 	JS_SetNativeStackQuota(get(), opts.code_stack_max, opts.trusted_stack_max, opts.untrusted_stack_max);
@@ -1794,6 +1852,27 @@ noexcept
 	return c.handle_interrupt();
 }
 
+void
+ircd::js::runtime::handle_activity(void *const priv,
+                                   const bool active)
+noexcept
+{
+	auto &runtime(*static_cast<struct runtime *>(priv));
+	log.debug("runtime(%p): %s",
+	          (const void *)&runtime,
+	          active? "ACTIVE" : "IDLE");
+}
+
+void
+ircd::js::handle_activity_ctypes(JSContext *const c,
+                                 const ::js::CTypesActivityType t)
+noexcept
+{
+	log.debug("context(%p): %s",
+	          (const void *)c,
+	          reflect(t));
+}
+
 bool
 ircd::js::runtime::handle_context(JSContext *const c,
                                   const uint op,
@@ -1831,6 +1910,20 @@ noexcept
 	          (const void *)compartment,
 	          (const void *)buf,
 	          max);
+}
+
+void
+ircd::js::runtime::handle_telemetry(const int id,
+                                    const uint32_t sample,
+                                    const char *const key)
+noexcept
+{
+	log.debug("runtime(%p) telemetry(%02d) %s: %u %s",
+	          (const void *)rt,
+	          id,
+	          reflect_telemetry(id),
+	          sample,
+	          key?: "");
 }
 
 void
