@@ -26,12 +26,19 @@
 #ifdef __cplusplus
 namespace ircd {
 
-size_t token_count(const std::string &str, const char *const &sep);
-const std::string &token(const std::string &str, const char *const &sep, const size_t &at);
-const std::string &token_last(const std::string &str, const char *const &sep);
+using token_closure_cstr = std::function<void (char *const &)>;
+void tokens(char *const &str, const char *const &sep, const token_closure_cstr &);
+void tokens(const char *const &str, const char *const &sep, char *const &buf, const size_t &max, const token_closure_cstr &);
+void tokens(const char *const &str, const char *const &sep, const token_closure_cstr &);
+void tokensa(const char *const &str, const char *const &sep, const token_closure_cstr &);
+std::vector<char *> tokens(const char *const &str, const char *const &sep, char *const &buf, const size_t &max, const size_t &reserve = 16);
 
 using token_closure_string = std::function<void (const std::string &)>;
 void tokens(const std::string &str, const char *const &sep, const token_closure_string &);
+std::vector<std::string> tokens(const std::string &str, const char *const &sep, const size_t &reserve = 16);
+size_t token_count(const std::string &str, const char *const &sep);
+std::string token(const std::string &str, const char *const &sep, const size_t &at);
+std::string token_last(const std::string &str, const char *const &sep);
 
 std::string chomp(const std::string &str, const std::string &c = " "s);
 std::pair<std::string, std::string> split(const std::string &str, const std::string &delim = " "s);

@@ -140,19 +140,7 @@ ircd::reconstruct_parv(int parc, const char *parv[])
 	return tmpbuf;
 }
 
-void
-ircd::tokens(const std::string &str,
-             const char *const &sep,
-             const token_closure_string &closure)
-{
-	using delim = boost::char_separator<char>;
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-	std::for_each(begin(view), end(view), closure);
-}
-
-const std::string &
+std::string
 ircd::token(const std::string &str,
             const char *const &sep,
             const size_t &at)
@@ -168,12 +156,15 @@ ircd::token(const std::string &str,
 		if(i == at)
 			return *it;
 
+	if(str.empty())
+		return str;
+
 	// Moving the iterator may cause a parse, so there is no pre-check on the bounds;
 	// the valid token is returned in the loop, and exiting the loop is an error.
 	throw std::out_of_range("token out of range");
 }
 
-const std::string &
+std::string
 ircd::token_last(const std::string &str,
                  const char *const &sep)
 {
@@ -184,7 +175,7 @@ ircd::token_last(const std::string &str,
 
 	auto it(begin(view));
 	if(it == end(view))
-		throw std::out_of_range("token out of range");
+		return str.empty()? str : throw std::out_of_range("token out of range");
 
 	auto ret(it);
 	while(it != end(view))
@@ -202,4 +193,95 @@ ircd::token_count(const std::string &str,
 	const delim d(sep);
 	const boost::tokenizer<delim> view(str, d);
 	return std::distance(begin(view), end(view));
+}
+
+std::vector<std::string>
+ircd::tokens(const std::string &str,
+             const char *const &sep,
+             const size_t &reserve)
+{
+	using delim = boost::char_separator<char>;
+
+	std::vector<std::string> ret;
+	ret.reserve(reserve);
+
+	const delim d(sep);
+	const boost::tokenizer<delim> view(str, d);
+	std::copy(begin(view), end(view), std::back_inserter(ret));
+
+	return ret;
+}
+
+void
+ircd::tokens(const std::string &str,
+             const char *const &sep,
+             const token_closure_string &closure)
+{
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim> view(str, d);
+	std::for_each(begin(view), end(view), closure);
+}
+
+std::vector<char *>
+ircd::tokens(const char *const &str,
+             const char *const &sep,
+             char *const &buf,
+             const size_t &max,
+             const size_t &reserve)
+{
+	std::vector<char *> ret;
+	ret.reserve(reserve);
+	rb_strlcpy(buf, str, max);
+	tokens(buf, sep, [&ret]
+	(char *const &token)
+	{
+		ret.emplace_back(token);
+	});
+
+	return ret;
+}
+
+void
+ircd::tokensa(const char *const &str,
+              const char *const &sep,
+              const token_closure_cstr &closure)
+{
+	custom_ptr<char> cpy(strdup(str), std::free);
+	tokens(cpy.get(), sep, closure);
+}
+
+void
+ircd::tokens(const char *const &str,
+             const char *const &sep,
+             const token_closure_cstr &closure)
+{
+	const auto len(strlen(str));
+	char buf[strlen(str) + 1];
+	tokens(str, sep, buf, sizeof(buf), closure);
+}
+
+void
+ircd::tokens(const char *const &str,
+             const char *const &sep,
+             char *const &buf,
+             const size_t &max,
+             const token_closure_cstr &closure)
+{
+	rb_strlcpy(buf, str, max);
+	tokens(buf, sep, closure);
+}
+
+void
+ircd::tokens(char *const &str,
+             const char *const &sep,
+             const token_closure_cstr &closure)
+{
+	char *ctx;
+	char *tok(strtok_r(str, sep, &ctx)); do
+	{
+		closure(tok);
+	}
+	while((tok = strtok_r(NULL, sep, &ctx)) != NULL);
 }
