@@ -59,6 +59,7 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 #include "timer.h"
 #include "context.h"
 #include "compartment.h"
+#include "debug.h"
 #include "error.h"
 #include "value.h"
 #include "string.h"
@@ -72,5 +73,4 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 #include "get.h"
 #include "call.h"
 #include "for_each.h"
-#include "debug.h"
 #include "trap.h"

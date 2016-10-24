@@ -25,6 +25,7 @@
 namespace ircd {
 namespace js   {
 
+const char *reflect(const JSType &);
 const char *reflect(const JSExnType &);
 const char *reflect(const JSGCStatus &);
 const char *reflect(const JSGCParamKey &);

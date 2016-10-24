@@ -1302,6 +1302,25 @@ ircd::js::reflect(const JSExnType &e)
 	return "";
 }
 
+const char *
+ircd::js::reflect(const JSType &t)
+{
+	switch(t)
+	{
+		case JSTYPE_VOID:         return "VOID";
+		case JSTYPE_OBJECT:       return "OBJECT";
+		case JSTYPE_FUNCTION:     return "FUNCTION";
+		case JSTYPE_STRING:       return "STRING";
+		case JSTYPE_NUMBER:       return "NUMBER";
+		case JSTYPE_BOOLEAN:      return "BOOLEAN";
+		case JSTYPE_NULL:         return "NULL";
+		case JSTYPE_SYMBOL:       return "SYMBOL";
+		case JSTYPE_LIMIT:        return "LIMIT";
+	}
+
+	return "";
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/compartment.h

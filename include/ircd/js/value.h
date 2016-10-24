@@ -34,6 +34,8 @@ std::string native(const JSString *const &);
 struct value
 :JS::Rooted<JS::Value>
 {
+	explicit operator JSType() const;
+
 	explicit operator std::string() const;
 	explicit operator double() const;
 	explicit operator uint64_t() const;
@@ -41,7 +43,7 @@ struct value
 	explicit operator uint32_t() const;
 	explicit operator int32_t() const;
 	explicit operator uint16_t() const;
-	explicit operator bool() const               { return JS::ToBoolean(*this);                    }
+	explicit operator bool() const;
 
 	value(const char *const &);
 	explicit value(const std::string &);
@@ -67,6 +69,8 @@ struct value
 	value(value &&) noexcept;
 	value(const value &) = delete;
 	value &operator=(value &&) noexcept;
+
+	friend bool undefined(const value &);
 };
 
 inline
@@ -210,6 +214,13 @@ value::value(const char *const &s)
 }
 
 inline
+value::operator bool()
+const
+{
+	return JS::ToBoolean(*this);
+}
+
+inline
 value::operator uint16_t()
 const
 {
@@ -281,6 +292,19 @@ const
 {
 	const auto s(JS::ToString(*cx, *this));
 	return s? native(s) : throw type_error("Failed to cast to string");
+}
+
+inline
+value::operator JSType()
+const
+{
+	return JS_TypeOfValue(*cx, *this);
+}
+
+inline bool
+undefined(const value &val)
+{
+	return JSType(val) == JSTYPE_VOID;
 }
 
 } // namespace js
