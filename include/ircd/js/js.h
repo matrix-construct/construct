@@ -66,6 +66,7 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 #include "object.h"
 #include "script.h"
 #include "function.h"
+#include "function_literal.h"
 #include "vector.h"
 #include "priv.h"
 #include "get.h"

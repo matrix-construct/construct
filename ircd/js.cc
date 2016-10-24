@@ -638,6 +638,48 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/function_literal.h
+//
+
+ircd::js::function_literal::function_literal(const char *const &name,
+                                             const std::initializer_list<const char *> &prototype,
+                                             const char *const &text)
+:JS::PersistentRooted<JSFunction *>{*cx}
+,name{name}
+,text{text}
+,prototype{prototype}
+{
+	JS::CompileOptions opts{*cx};
+	JS::AutoObjectVector stack{*cx};
+	if(!JS::CompileFunction(*cx,
+	                        stack,
+	                        opts,
+	                        name,
+	                        this->prototype.size(),
+	                        &this->prototype.front(),
+	                        text,
+	                        strlen(text),
+	                        &(*this)))
+	{
+		throw syntax_error("Failed to compile function literal");
+	}
+}
+
+ircd::js::function_literal::function_literal(function_literal &&other)
+noexcept
+:JS::PersistentRooted<JSFunction *>
+{
+	*cx,
+	other
+}
+,name{std::move(other.name)}
+,text{std::move(other.text)}
+,prototype{std::move(other.prototype)}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/function.h
 //
 
