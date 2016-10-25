@@ -34,6 +34,8 @@ struct object
 	operator JS::Value() const;
 
 	// new object
+	object(const JSClass *const &, const handle &ctor, const JS::HandleValueArray &args);
+	object(const JSClass *const &, const JS::CallArgs &args);
 	object(const JSClass *const &, const object &proto);
 	object(const JSClass *const &);
 
@@ -127,6 +129,29 @@ object::object(const JSClass *const &clasp,
 {
 	*cx,
 	JS_NewObjectWithGivenProto(*cx, clasp, proto)
+}
+{
+}
+
+inline
+object::object(const JSClass *const &clasp,
+               const JS::CallArgs &args)
+:JS::Rooted<JSObject *>
+{
+	*cx,
+	JS_NewObjectForConstructor(*cx, clasp, args)
+}
+{
+}
+
+inline
+object::object(const JSClass *const &clasp,
+               const object::handle &ctor,
+               const JS::HandleValueArray &args)
+:JS::Rooted<JSObject *>
+{
+	*cx,
+	JS_New(*cx, ctor, args)
 }
 {
 }
