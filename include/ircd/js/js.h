@@ -76,4 +76,5 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 #include "del.h"
 #include "call.h"
 #include "for_each.h"
+#include "args.h"
 #include "trap.h"
