@@ -29,13 +29,13 @@ using closure_id = std::function<void (const id &)>;
 using closure_key_val = std::function<void (const value &, const value &)>;
 using closure_mutable_key_val = std::function<void (const value &, value &)>;
 
-void for_each(const object &, const closure_id &);
-void for_each(const object &, const closure_key_val &);
-void for_each(object &, const closure_mutable_key_val &);
+void for_each(object::handle, const closure_id &);
+void for_each(object::handle, const closure_key_val &);
+void for_each(object::handle_mutable, const closure_mutable_key_val &);
 
 
 inline void
-for_each(object &obj,
+for_each(object::handle_mutable obj,
          const closure_mutable_key_val &closure)
 {
 	for_each(obj, [&obj, &closure]
@@ -48,7 +48,7 @@ for_each(object &obj,
 }
 
 inline void
-for_each(const object &obj,
+for_each(object::handle obj,
          const closure_key_val &closure)
 {
 	for_each(obj, [&obj, &closure]
@@ -61,7 +61,7 @@ for_each(const object &obj,
 }
 
 inline void
-for_each(const object &obj,
+for_each(object::handle obj,
          const closure_id &closure)
 {
 	JS::Rooted<JS::IdVector> props(*cx, JS::IdVector(cx->ptr()));

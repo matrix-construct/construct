@@ -211,15 +211,15 @@ noexcept try
 {
 	assert(&our(c) == cx);
 
-	auto ca(JS::CallArgsFromVp(argc, argv));
-	object that(ca.callee());
+	const struct args args(argc, argv);
+	object that(args.callee());
 
 	auto &trap(from(that));
 	trap.debug("ctor: '%s'", trap.name().c_str());
 
-	object ret(JS_NewObjectForConstructor(*cx, &trap.jsclass(), ca));
-	trap.on_ctor(ret, ca);
-	ca.rval().set(ret);
+	object ret(JS_NewObjectForConstructor(*cx, &trap.jsclass(), args));
+	trap.on_ctor(ret, args);
+	args.rval().set(ret);
 	return true;
 }
 catch(const jserror &e)
@@ -243,9 +243,9 @@ noexcept try
 {
 	assert(&our(c) == cx);
 
-	auto ca(JS::CallArgsFromVp(argc, argv));
-	object that(ca.computeThis(c));
-	object func(ca.callee());
+	const struct args args(argc, argv);
+	object that(args.computeThis(c));
+	object func(args.callee());
 
 	auto &trap_that(from(that));
 	auto &trap_func(from(func));
@@ -253,7 +253,7 @@ noexcept try
 	trap_that.debug("call: '%s'", trap_func.name().c_str());
 	trap_func.debug("call");
 
-	ca.rval().set(trap_func.on_call(*func.get(), ca));
+	args.rval().set(trap_func.on_call(func, args));
 	return true;
 }
 catch(const jserror &e)
@@ -278,7 +278,7 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("enu");
-	return trap.on_enu(*obj.get());
+	return trap.on_enu(obj);
 }
 catch(const jserror &e)
 {
@@ -303,7 +303,7 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("has: '%s'", string(id).c_str());
-	*resolved = trap.on_has(*obj.get(), id.get());
+	*resolved = trap.on_has(obj, id);
 	return true;
 }
 catch(const jserror &e)
@@ -331,7 +331,7 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("del: '%s'", string(id).c_str());
-	if(trap.on_del(*obj.get(), id.get()))
+	if(trap.on_del(obj, id))
 		res.succeed();
 
 	return true;
@@ -361,7 +361,8 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("get: '%s'", string(id).c_str());
-	val.set(trap.on_get(*obj.get(), id.get(), val));
+	const value ret(trap.on_get(obj, id, val));
+	val.set(ret.get());
 	return true;
 }
 catch(const jserror &e)
@@ -390,7 +391,8 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("set: '%s'", string(id).c_str());
-	val.set(trap.on_set(*obj.get(), id.get(), val));
+	const value ret(trap.on_set(obj, id, val));
+	val.set(ret.get());
 	if(!val.isUndefined())
 		res.succeed();
 
@@ -421,7 +423,7 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("add: '%s'", string(id).c_str());
-	trap.on_add(*obj.get(), id.get(), val.get());
+	trap.on_add(obj, id, val);
 	return true;
 }
 catch(const jserror &e)
@@ -546,59 +548,58 @@ const
 
 void
 ircd::js::trap::on_ctor(object &obj,
-                        const JS::CallArgs &)
+                        const args &)
 {
-}
-
-ircd::js::value
-ircd::js::trap::on_call(const JSObject &,
-                        const JS::CallArgs &)
-{
-	return {};
 }
 
 bool
-ircd::js::trap::on_enu(const JSObject &obj)
-{
-	return false;
-}
-
-bool
-ircd::js::trap::on_has(const JSObject &obj,
-                       const jsid &id)
-{
-	return false;
-}
-
-bool
-ircd::js::trap::on_del(const JSObject &obj,
-                       const jsid &id)
+ircd::js::trap::on_enu(object::handle)
 {
 	return true;
 }
 
-JS::Value
-ircd::js::trap::on_get(const JSObject &obj,
-                       const jsid &id,
-                       const JS::Value &val)
+bool
+ircd::js::trap::on_has(object::handle,
+                       id::handle)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_del(object::handle,
+                       id::handle)
+{
+	return true;
+}
+
+void
+ircd::js::trap::on_add(object::handle,
+                       id::handle,
+                       value::handle)
+{
+}
+
+ircd::js::value
+ircd::js::trap::on_get(object::handle,
+                       id::handle,
+                       value::handle val)
 {
 	return val;
 }
 
-JS::Value
-ircd::js::trap::on_set(const JSObject &obj,
-                       const jsid &id,
-                       const JS::Value &val)
+ircd::js::value
+ircd::js::trap::on_set(object::handle,
+                       id::handle,
+                       value::handle val)
 {
 	return val;
 }
 
-JS::Value
-ircd::js::trap::on_add(const JSObject &obj,
-                       const jsid &id,
-                       const JS::Value &val)
+ircd::js::value
+ircd::js::trap::on_call(object::handle,
+                        const args &)
 {
-	return val;
+	return {};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -737,8 +738,8 @@ const
 
 ircd::js::value
 ircd::js::call(const object &obj,
-               const JS::HandleFunction &func,
-               const JS::HandleValueArray &args)
+               const function::handle &func,
+               const vector<value>::handle &args)
 {
 	value ret;
 	if(!JS_CallFunction(*cx, obj, func, args, &ret))
@@ -749,8 +750,8 @@ ircd::js::call(const object &obj,
 
 ircd::js::value
 ircd::js::call(const object &obj,
-               const JS::HandleValue &val,
-               const JS::HandleValueArray &args)
+               const value::handle &val,
+               const vector<value>::handle &args)
 {
 	value ret;
 	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
@@ -762,7 +763,7 @@ ircd::js::call(const object &obj,
 ircd::js::value
 ircd::js::call(const object &obj,
                const char *const &name,
-               const JS::HandleValueArray &args)
+               const vector<value>::handle &args)
 {
 	value ret;
 	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
@@ -774,7 +775,7 @@ ircd::js::call(const object &obj,
 ircd::js::value
 ircd::js::call(const object &obj,
                const std::string &name,
-               const JS::HandleValueArray &args)
+               const vector<value>::handle &args)
 {
 	return call(obj, name.c_str(), args);
 }
@@ -785,7 +786,7 @@ ircd::js::call(const object &obj,
 //
 
 void
-ircd::js::del(const JS::HandleObject &src,
+ircd::js::del(const object::handle &src,
               const char *const path)
 {
 	value val;
@@ -812,8 +813,8 @@ ircd::js::del(const JS::HandleObject &src,
 }
 
 void
-ircd::js::del(const JS::HandleObject &obj,
-              const id &id)
+ircd::js::del(const object::handle &obj,
+              const id::handle &id)
 {
 	JS::ObjectOpResult res;
 	if(!JS_DeletePropertyById(*cx, obj, id, res))
@@ -829,7 +830,7 @@ ircd::js::del(const JS::HandleObject &obj,
 //
 
 void
-ircd::js::set(const JS::HandleObject &src,
+ircd::js::set(const object::handle &src,
               const char *const path,
               const value &val)
 {
@@ -862,8 +863,8 @@ ircd::js::set(const JS::HandleObject &src,
 }
 
 void
-ircd::js::set(const JS::HandleObject &obj,
-              const id &id,
+ircd::js::set(const object::handle &obj,
+              const id::handle &id,
               const value &val)
 {
 	if(!JS_SetPropertyById(*cx, obj, id, val))
@@ -876,7 +877,7 @@ ircd::js::set(const JS::HandleObject &obj,
 //
 
 ircd::js::value
-ircd::js::get(const JS::HandleObject &src,
+ircd::js::get(const object::handle &src,
               const char *const path)
 {
 	value ret;
@@ -899,7 +900,7 @@ ircd::js::get(const JS::HandleObject &src,
 }
 
 ircd::js::value
-ircd::js::get(const JS::HandleObject &obj,
+ircd::js::get(const object::handle &obj,
               const id &id)
 {
 	value ret;
@@ -915,7 +916,7 @@ ircd::js::get(const JS::HandleObject &obj,
 //
 
 bool
-ircd::js::has(const JS::HandleObject &src,
+ircd::js::has(const object::handle &src,
               const char *const path)
 {
 	bool ret(true);
@@ -945,8 +946,8 @@ ircd::js::has(const JS::HandleObject &src,
 }
 
 bool
-ircd::js::has(const JS::HandleObject &obj,
-              const id &id)
+ircd::js::has(const object::handle &obj,
+              const id::handle &id)
 {
 	bool ret;
 	if(!JS_HasPropertyById(*cx, obj, id, &ret))

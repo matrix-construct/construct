@@ -28,6 +28,9 @@ namespace js   {
 struct string
 :JS::Rooted<JSString *>
 {
+	using handle = JS::HandleString;
+	using handle_mutable = JS::MutableHandleString;
+
 	// SpiderMonkey may use utf-16/char16_t strings; these will help you then
 	static size_t convert(const char16_t *const &, char *const &buf, const size_t &max);
 	static std::string convert(const char16_t *const &);

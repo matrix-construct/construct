@@ -27,23 +27,23 @@ namespace js   {
 
 value
 call(const object &obj,
-     const JS::HandleFunction &func,
-     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
+     const function::handle &func,
+     const vector<value>::handle &args = {});
 
 value
 call(const object &obj,
-     const JS::HandleValue &val,
-     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
+     const value::handle &val,
+     const vector<value>::handle &args = {});
 
 value
 call(const object &obj,
      const char *const &name,
-     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
+     const vector<value>::handle &args = {});
 
 value
 call(const object &obj,
      const std::string &name,
-     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
+     const vector<value>::handle &args = {});
 
 } // namespace js
 } // namespace ircd

@@ -25,8 +25,8 @@
 namespace ircd {
 namespace js   {
 
-void set(const JS::HandleObject &obj, const id &id, const value &val);
-void set(const JS::HandleObject &src, const char *const path, const value &val);
+void set(const object::handle &obj, const id::handle &id, const value &val);
+void set(const object::handle &src, const char *const path, const value &val);
 
 } // namespace js
 } // namespace ircd

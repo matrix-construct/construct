@@ -27,10 +27,46 @@ namespace js   {
 
 template<class T>
 struct vector
+:JS::AutoVectorRooter<T>
+{
+	using jsapi_type = T;
+	using local_type = T;
+
+	vector(const size_t &size)
+	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	{
+		this->resize(size);
+	}
+
+	vector()
+	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	{
+	}
+
+	vector(vector &&other) noexcept
+	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	{
+		this->reserve(other.length());
+		for(auto &t : other)
+			this->infallibleAppend(t);
+
+		other.clear();
+	}
+};
+
+template<>
+struct vector<value>
 :JS::AutoVectorRooter<JS::Value>
 {
 	using jsapi_type = JS::Value;
 	using local_type = value;
+
+	struct handle
+	:JS::HandleValueArray
+	{
+		using JS::HandleValueArray::HandleValueArray;
+		handle(): JS::HandleValueArray{JS::HandleValueArray::empty()} {}
+	};
 
 	// Construct vector from initializer list of raw `JS::Value`
 	// ex: JS::Value a; vector foo {{ a, a, ... }};

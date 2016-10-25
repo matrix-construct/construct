@@ -31,14 +31,14 @@ class trap
 	std::unique_ptr<JSClass> _class;
 
 	// Override these to define JS objects in C
-	virtual JS::Value on_add(const JSObject &, const jsid &, const JS::Value &);
-	virtual JS::Value on_set(const JSObject &, const jsid &, const JS::Value &);
-	virtual JS::Value on_get(const JSObject &, const jsid &, const JS::Value &);
-	virtual bool on_del(const JSObject &, const jsid &);
-	virtual bool on_has(const JSObject &, const jsid &);
-	virtual bool on_enu(const JSObject &);
-	virtual value on_call(const JSObject &, const JS::CallArgs &);
-	virtual void on_ctor(object &, const JS::CallArgs &);
+	virtual value on_call(object::handle, const args &);
+	virtual value on_set(object::handle, id::handle, value::handle);
+	virtual value on_get(object::handle, id::handle, value::handle);
+	virtual void on_add(object::handle, id::handle, value::handle);
+	virtual bool on_del(object::handle, id::handle);
+	virtual bool on_has(object::handle, id::handle);
+	virtual bool on_enu(object::handle);
+	virtual void on_ctor(object &, const args &);
 
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);

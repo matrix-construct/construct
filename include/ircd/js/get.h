@@ -25,8 +25,8 @@
 namespace ircd {
 namespace js   {
 
-value get(const JS::HandleObject &obj, const id &id);
-value get(const JS::HandleObject &src, const char *const path);
+value get(const object::handle &obj, const id &id);
+value get(const object::handle &src, const char *const path);
 
 } // namespace js
 } // namespace ircd

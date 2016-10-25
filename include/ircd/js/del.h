@@ -25,8 +25,8 @@
 namespace ircd {
 namespace js   {
 
-void del(const JS::HandleObject &obj, const id &id);
-void del(const JS::HandleObject &src, const char *const path);
+void del(const object::handle &obj, const id::handle &id);
+void del(const object::handle &src, const char *const path);
 
 } // namespace js
 } // namespace ircd

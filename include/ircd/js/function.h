@@ -32,6 +32,9 @@ string name(const JSFunction &);
 struct function
 :JS::Rooted<JSFunction *>
 {
+	using handle = JS::HandleFunction;
+	using handle_mutable = JS::MutableHandleFunction;
+
 	operator JSObject *() const;
 	explicit operator script() const;
 	explicit operator string() const;

@@ -28,6 +28,9 @@ namespace js   {
 struct id
 :JS::Rooted<jsid>
 {
+	using handle = JS::HandleId;
+	using handle_mutable = JS::MutableHandleId;
+
 	id(const JSProtoKey &);
 	id(const uint32_t &);
 	id(const jsid &);

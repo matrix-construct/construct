@@ -34,6 +34,9 @@ std::string native(const JSString *const &);
 struct value
 :JS::Rooted<JS::Value>
 {
+	using handle = JS::HandleValue;
+	using handle_mutable = JS::MutableHandleValue;
+
 	explicit operator JSType() const;
 
 	explicit operator std::string() const;

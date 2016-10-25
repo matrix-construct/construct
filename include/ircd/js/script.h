@@ -28,6 +28,9 @@ namespace js   {
 struct script
 :JS::Rooted<JSScript *>
 {
+	using handle = JS::HandleScript;
+	using handle_mutable = JS::MutableHandleScript;
+
 	value operator()(JS::AutoObjectVector &stack) const;
 	value operator()() const;
 

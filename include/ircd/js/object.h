@@ -28,14 +28,17 @@ namespace js   {
 struct object
 :JS::Rooted<JSObject *>
 {
+	using handle = JS::HandleObject;
+	using handle_mutable = JS::MutableHandleObject;
+
 	operator JS::Value() const;
 
 	// new object
 	object(const JSClass *const &, const object &proto);
 	object(const JSClass *const &);
 
-	object(const JS::MutableHandleObject &h): object{h.get()} {}
-	object(const JS::HandleObject &h): object{h.get()} {}
+	object(const object::handle_mutable &h): object{h.get()} {}
+	object(const object::handle &h): object{h.get()} {}
 	explicit object(const value &);
 	object(JSFunction *const &);
 	object(JSObject *const &);
