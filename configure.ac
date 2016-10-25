@@ -850,14 +850,14 @@ if [[ "$boost_linkage" = "shared" ]]; then
 	[
 		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine-mgw53-1_61.dll -lboost_context-mgw53-1_61.dll -lboost_thread-mgw53-1_61.dll -lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system -lpthread"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system"])
 	])
 else
 	AM_COND_IF([MINGW],
 	[
 		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine-mgw53-1_61.dll.a $boost_libdir/libboost_context-mgw53-1_61.dll.a $boost_libdir/libboost_thread-mgw53-1_61.dll.a $boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system -lpthread"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem.a"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
 	])
@@ -1230,6 +1230,19 @@ dnl
 
 PKG_CHECK_MODULES(PCRE, [libpcre2-8], [have_pcre="yes"], [have_pcre="no"])
 AM_CONDITIONAL([PCRE], [test "x$have_pcre" = "xyes"])
+
+
+
+dnl
+dnl Additional linkages
+dnl
+
+AM_COND_IF([MINGW],
+[
+
+], [
+	LIBS+="-lpthread -latomic"
+])
 
 
 
