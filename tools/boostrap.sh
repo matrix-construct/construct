@@ -162,6 +162,8 @@ run git submodule update --init --recursive libs/tuple
 run git submodule update --init --recursive libs/exception
 run git submodule update --init --recursive libs/algorithm
 
+run git submodule update --init --recursive libs/locale
+
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./b2 -d0 headers

@@ -979,50 +979,6 @@ const
 	return buf;
 }
 
-std::u16string
-ircd::js::string::convert(const std::string &s)
-{
-	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-
-	return converter.from_bytes(s);
-}
-
-std::u16string
-ircd::js::string::convert(const char *const &s)
-{
-	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-
-	return s? converter.from_bytes(s) : std::u16string{};
-}
-
-std::string
-ircd::js::string::convert(const std::u16string &s)
-{
-	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-
-	return converter.to_bytes(s);
-}
-
-std::string
-ircd::js::string::convert(const char16_t *const &s)
-{
-	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-
-	return s? converter.to_bytes(s) : std::string{};
-}
-
-size_t
-ircd::js::string::convert(const char16_t *const &str,
-                          char *const &buf,
-                          const size_t &max)
-{
-	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-
-	//TODO: optimize
-	const auto s(converter.to_bytes(str));
-	return rb_strlcpy(buf, s.c_str(), max);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/value.h
@@ -1116,7 +1072,7 @@ ircd::js::jserror::jserror(pending_t)
 		         report.lineno,
 		         report.column);
 
-		const auto msg(report.ucmessage? string::convert(report.ucmessage) : std::string{});
+		const auto msg(report.ucmessage? locale::convert(report.ucmessage) : std::string{});
 		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
 		         reflect((JSExnType)report.exnType),
 		         msg.empty()? "." : ": ",
@@ -1163,7 +1119,7 @@ ircd::js::jserror::generate(const JSExnType &type,
                             va_list ap)
 {
 	ircd::exception::generate(fmt, ap);
-	const auto msg(string::convert(what()));
+	const auto msg(locale::convert(what()));
 
 	JSErrorReport report;
 	report.ucmessage = msg.c_str();
@@ -1291,10 +1247,10 @@ ircd::js::debug(const JSErrorReport &r)
 		ss << reflect(JSExnType(r.exnType)) << " ";
 
 	if(r.ucmessage)
-		ss << "\"" << string::convert(r.ucmessage) << "\" ";
+		ss << "\"" << locale::convert(r.ucmessage) << "\" ";
 
 	for(auto it(r.messageArgs); it && *it; ++it)
-		ss << "\"" << string::convert(*it) << "\" ";
+		ss << "\"" << locale::convert(*it) << "\" ";
 
 	return ss.str();
 }

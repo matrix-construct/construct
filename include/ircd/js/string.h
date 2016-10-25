@@ -31,13 +31,6 @@ struct string
 	using handle = JS::HandleString;
 	using handle_mutable = JS::MutableHandleString;
 
-	// SpiderMonkey may use utf-16/char16_t strings; these will help you then
-	static size_t convert(const char16_t *const &, char *const &buf, const size_t &max);
-	static std::string convert(const char16_t *const &);
-	static std::string convert(const std::u16string &);
-	static std::u16string convert(const char *const &);
-	static std::u16string convert(const std::string &);
-
 	static constexpr const size_t CBUFS = 8;
 	static const size_t CBUFSZ;
 	const char *c_str() const;                   // Copy into rotating buf

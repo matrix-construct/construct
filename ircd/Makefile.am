@@ -53,7 +53,8 @@ libircd_la_SOURCES =   \
 	hook.cc            \
 	fmt.cc             \
 	db.cc              \
-	js.cc
+	js.cc              \
+	locale.cc
 
 #authproc.cc			\
 #bandbi.cc                      \
