@@ -42,6 +42,7 @@ __thread context *cx;
 // Location of the main JSRuntime and JSContext instances.
 runtime *main_runtime;
 context *main_context;
+trap *main_global;
 
 // Internal prototypes
 void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
@@ -82,6 +83,7 @@ ircd::js::init::init()
 	         version(*main_context));
 
 	{
+		// main_global is registered by the kernel module's trap
 		const std::lock_guard<context> lock{*main_context};
 		ircd::mods::load("kernel");
 	}
@@ -139,9 +141,37 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 // ircd/js/trap.h
 //
 
-ircd::js::trap::trap(std::string name,
+ircd::js::trap &
+ircd::js::trap::find(const std::string &path)
+{
+	if(unlikely(!main_global))
+		throw internal_error("Failed to find trap tree root");
+
+	auto &root(*main_global);
+	return root.child(path);
+}
+
+ircd::js::trap::trap(const std::string &path,
                      const uint32_t &flags)
-:_name{std::move(name)}
+:parent{[&path]
+{
+	const auto ret(rsplit(path, ".").first);
+	return ret == path? std::string{} : ret;
+}()}
+,_name
+{
+	path.empty()? std::string{""} : token_last(path, ".")
+}
+,ps
+{
+	{0},
+	{0}
+}
+,fs
+{
+	{0},
+	JS_FS_END
+}
 ,_class{std::make_unique<JSClass>(JSClass
 {
 	this->_name.c_str(),
@@ -161,26 +191,130 @@ ircd::js::trap::trap(std::string name,
 	{ this }           // reserved[0] TODO: ?????????
 })}
 {
+	add_this();
 }
 
 ircd::js::trap::~trap()
 noexcept
 {
+	del_this();
+
 	// Must run GC here to force reclamation of objects before
 	// the JSClass hosted by this trap destructs.
 	run_gc(*rt);
 }
 
-ircd::js::object
-ircd::js::trap::operator()()
+void
+ircd::js::trap::del_this()
+try
 {
-	return { _class.get() };
+	if(name().empty())
+	{
+		main_global = nullptr;
+		return;
+	}
+
+	auto &parent(find(this->parent));
+	parent.children.erase(name());
+	log.debug("Unregistered trap '%s' in `%s'",
+	          name().c_str(),
+	          this->parent.c_str());
+}
+catch(const std::exception &e)
+{
+	log.error("Failed to unregister object trap '%s' in `%s': %s",
+	          name().c_str(),
+	          parent.c_str(),
+	          e.what());
+	return;
 }
 
-ircd::js::object
-ircd::js::trap::operator()(const object &proto)
+void
+ircd::js::trap::add_this()
+try
 {
-	return object { _class.get(), proto };
+	if(name().empty())
+	{
+		if(main_global)
+			throw error("ircd::js::main_global is already active. Won't overwrite.");
+
+		main_global = this;
+		return;
+	}
+
+	auto &parent(find(this->parent));
+	const auto iit(parent.children.emplace(name(), this));
+	if(!iit.second)
+		throw error("Failed to overwrite existing");
+
+	log.debug("Registered trap '%s' in `%s'",
+	          name().c_str(),
+	          this->parent.c_str());
+}
+catch(const std::out_of_range &e)
+{
+	log.error("Failed to register object trap '%s' in `%s': missing parent.",
+	          name().c_str(),
+	          parent.c_str());
+	throw;
+}
+catch(const std::exception &e)
+{
+	log.error("Failed to register object trap '%s' in `%s': %s",
+	          name().c_str(),
+	          parent.c_str(),
+	          e.what());
+	throw;
+}
+
+
+ircd::js::object
+ircd::js::trap::operator()(const object &parent,
+                           const object &parent_proto)
+{
+	return JS_InitClass(*cx,
+	                    parent,
+	                    parent_proto,
+	                    _class.get(),
+	                    nullptr,
+	                    0,
+	                    ps,
+	                    fs,
+	                    nullptr,
+	                    nullptr);
+}
+
+ircd::js::trap &
+ircd::js::trap::child(const std::string &path)
+try
+{
+	if(path.empty())
+		return *this;
+
+	const auto elem(split(path, "."));
+	auto &child(*children.at(elem.first));
+	return child.child(elem.second);
+}
+catch(const std::out_of_range &e)
+{
+	throw reference_error("%s", path.c_str());
+}
+
+const ircd::js::trap &
+ircd::js::trap::child(const std::string &path)
+const
+try
+{
+	if(path.empty())
+		return *this;
+
+	const auto elem(split(path, "."));
+	auto &child(*children.at(elem.first));
+	return child.child(elem.second);
+}
+catch(const std::out_of_range &e)
+{
+	throw reference_error("%s", path.c_str());
 }
 
 void

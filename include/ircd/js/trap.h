@@ -25,10 +25,18 @@
 namespace ircd {
 namespace js   {
 
+// A trap serving as the root of the tree registers here (extern js.cc)
+extern struct trap *main_global;
+
 class trap
 {
+  protected:
+	const std::string parent;
 	const std::string _name;                     // don't touch
+	JSPropertySpec ps[2];
+	JSFunctionSpec fs[2];
 	std::unique_ptr<JSClass> _class;
+	std::map<std::string, trap *> children;
 
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, const args &);
@@ -43,6 +51,8 @@ class trap
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);
 	void debug(const char *fmt, ...) const AFP(2, 3);
+	void add_this();
+	void del_this();
 
 	static trap &from(const JSObject &);
 	static trap &from(const JS::HandleObject &);
@@ -64,13 +74,19 @@ class trap
 	auto &name() const                           { return _name;                                   }
 	auto &jsclass() const                        { return *_class;                                 }
 
+	 // Search for trap by relative path
+	const trap &child(const std::string &path) const;
+	trap &child(const std::string &path);
+
+	// Path is absolute to root
+	static trap &find(const std::string &path);
+
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
-	object operator()(const object &proto);
-	object operator()();
+	object operator()(const object &parent = {}, const object &parent_proto = {});
 
-	trap(std::string name, const uint32_t &flags = 0);
+	trap(const std::string &path, const uint32_t &flags = 0);
 	trap(trap &&) = delete;
 	trap(const trap &) = delete;
 	virtual ~trap() noexcept;
