@@ -1713,7 +1713,7 @@ ircd::js::context::context(JSRuntime *const &runtime,
 		cx = nullptr;
 	}
 }
-,opts{opts}
+,opts(opts)
 ,except{nullptr}
 ,state
 {{
@@ -2107,7 +2107,7 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS_NewRuntime(opts.maxbytes),
 	JS_DestroyRuntime
 }
-,opts{opts}
+,opts(opts)
 {
 	// We use their privdata to find `this` via our(JSRuntime*) function.
 	// Any additional user privdata will have to ride a member in this class itself.
@@ -2135,7 +2135,7 @@ ircd::js::runtime::runtime(const struct opts &opts)
 ircd::js::runtime::runtime(runtime &&other)
 noexcept
 :custom_ptr<JSRuntime>{std::move(other)}
-,opts{std::move(other.opts)}
+,opts(std::move(other.opts))
 {
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
