@@ -35,21 +35,15 @@ namespace ircd
 	main_exit_cb main_exit_func;                  // Called when main context exits
 	bool main_exited;                             // Set when IRCd is finished
 
+	bool main_finish;                            // Set by stop() to request main context exit
+	ctx::ctx *main_context;                      // Reference to main context
+
 	void seed_random();
 	void init_system();
 	void main_exiting() noexcept;
-	void handle_sigusr2();
-	void handle_sigusr1();
-	void handle_sigterm();
-	void handle_sigquit();
 	void main() noexcept;
 }
 
-//
-// Sets up the IRCd, handlers (main context), and then returns without blocking.
-// Pass your io_service instance, it will share it with the rest of your program.
-// An exception will be thrown on error.
-//
 void
 ircd::init(boost::asio::io_service &io_service,
            const std::string &configfile,
@@ -71,11 +65,20 @@ ircd::init(boost::asio::io_service &io_service,
 	at_main_exit(std::move(main_exit_func));
 
 	// The master of ceremonies runs the show after this function returns and ios.run().
-	// The SELF_DESTRUCT flag indicates it will clean itself up and cannot join here.
 	log::debug("spawning main context");
-	context(8_MiB, ircd::main, ctx::DEFER_POST | ctx::SELF_DESTRUCT);
+	context mc(8_MiB, ircd::main, ctx::DEFER_POST);       //TODO: optimize stack size
+	main_context = mc.detach();
 
 	log::debug("IRCd initialization completed.");
+}
+
+void
+ircd::stop()
+{
+	main_finish = true;
+
+	if(main_context)
+		ctx::notify(*main_context);
 }
 
 //
@@ -96,74 +99,19 @@ noexcept try
 	mods::init _mods_;
 	db::init _db_;
 	js::init _js_;
-	client_init _client_;
 
-	// Create IRCd's agency
-	ircd::me = add_client();
-
-	// This is where the configuration is finally evalulated. This must occur
-	// in a context which can block. If execute() does not transact successfully
-	// IRCd never reaches the main loop and aborts.
-	log::info("executing configuration");
-	conf::execute();
-
-	log::debug("setting up signals");
-	boost::asio::signal_set sigfd(*ios);
-	sigfd.add(SIGTERM);
-	sigfd.add(SIGQUIT);
-	sigfd.add(SIGUSR1);
-	sigfd.add(SIGUSR2);
-
-	// This is the main program loop. All it does is handle signals.
-	// The configuration will have spawned other loops.
-	log::notice("IRCd ready");
-	do switch(sigfd.async_wait(yield(continuation())))
+	// This is the main program loop. Right now all it does is sleep until notified
+	// to shutdown, but it can do other things eventually. Other subsystems may have
+	// spawned their own main loops.
+	log::notice("IRCd ready"); do
 	{
-		case SIGTERM:  handle_sigterm();  return;
-		case SIGQUIT:  handle_sigquit();  return;
-		case SIGUSR1:  handle_sigusr1();  continue;
-		case SIGUSR2:  handle_sigusr2();  continue;
+		ctx::wait();
 	}
-	while(1);
+	while(!main_finish);
 }
 catch(const std::exception &e)
 {
 	log::error("IRCd finished: %s", e.what());
-}
-
-void
-ircd::handle_sigterm()
-{
-	using namespace ircd;
-
-	log::notice("IRCd finished: SIGTERM");
-}
-
-void
-ircd::handle_sigquit()
-{
-	using namespace ircd;
-
-	log::notice("SIGQUIT. Quitting...");
-}
-
-void
-ircd::handle_sigusr1()
-{
-	using namespace ircd;
-
-	log::notice("SIGUSR1. Rehashing configuration...");
-	// dorehash (no longer hangup!)
-}
-
-void
-ircd::handle_sigusr2()
-{
-	using namespace ircd;
-
-	log::notice("SIGUSR2. Flushing caches...");
-	// dorehashbans
-	// doremotd
 }
 
 //
@@ -183,6 +131,7 @@ noexcept try
 	}
 
 	main_exited = true;
+	main_context = nullptr;
 }
 catch(const std::exception &e)
 {

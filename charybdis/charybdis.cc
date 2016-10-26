@@ -103,6 +103,8 @@ try
 	sigs.add(SIGTSTP);
 	sigs.add(SIGQUIT);
 	sigs.add(SIGTERM);
+	sigs.add(SIGUSR1);
+	sigs.add(SIGUSR2);
 	ircd::at_main_exit([]
 	{
 		// Entered when IRCd's main context has finished. ios.run() won't
@@ -189,6 +191,8 @@ boost::asio::posix::stream_descriptor *console_in;
 static void handle_line(const std::string &line);
 static void console();
 static void console_cancel();
+static void handle_usr2();
+static void handle_usr1();
 static void handle_quit();
 static void handle_interruption();
 static void handle_termstop();
@@ -216,11 +220,13 @@ sigfd_handler(const boost::system::error_code &ec,
 
 	switch(signum)
 	{
+		case SIGUSR1:  handle_usr1();           break;
+		case SIGUSR2:  handle_usr2();           break;
 		case SIGINT:   handle_interruption();   break;
 		case SIGTSTP:  handle_termstop();       break;
 		case SIGHUP:   handle_hangup();         break;
 		case SIGQUIT:  handle_quit();           return;
-		case SIGTERM:                           return;
+		case SIGTERM:  handle_quit();           return;
 		default:                                break;
 	}
 
@@ -232,10 +238,34 @@ handle_quit()
 try
 {
 	console_cancel();
+	ircd::stop();
 }
 catch(const std::exception &e)
 {
 	ircd::log::error("SIGQUIT handler: %s", e.what());
+}
+
+void
+handle_usr1()
+try
+{
+	// Do ircd rehash config
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("SIGUSR1 handler: %s", e.what());
+}
+
+void
+handle_usr2()
+try
+{
+	// Do ircd rehash bans
+	// Do refresh motd
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("SIGUSR2 handler: %s", e.what());
 }
 
 void

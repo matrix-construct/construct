@@ -42,8 +42,19 @@ extern bool main_exited;
 using main_exit_cb = std::function<void ()>;
 void at_main_exit(main_exit_cb);
 
-// Library constructor
+//
+// Sets up the IRCd, handlers (main context), and then returns without blocking.
+// Pass your io_service instance, it will share it with the rest of your program.
+// An exception will be thrown on error.
+//
 void init(boost::asio::io_service &ios, const std::string &newconf_path, main_exit_cb = nullptr);
+
+//
+// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this function will return
+// immediately. main_exit_cb will be called when IRCd has no more work for the ios (main_exit_cb
+// will be the last operation from IRCd posted to the ios).
+//
+void stop();
 
 }      // namespace ircd
 #endif // __cplusplus
