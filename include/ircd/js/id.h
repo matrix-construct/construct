@@ -31,16 +31,23 @@ struct id
 	using handle = JS::HandleId;
 	using handle_mutable = JS::MutableHandleId;
 
+	explicit id(const char *const &);         // creates new id (permanent)
+	explicit id(const std::string &);         // creates new id (permanent)
+	id(const string::handle &);
+	id(const value::handle &);
 	id(const JSProtoKey &);
 	id(const uint32_t &);
+	id(const handle_mutable &);
+	id(const handle &);
 	id(const jsid &);
-	id(const JS::HandleString &);
-	id(const JS::HandleValue &);
-	id(const JS::MutableHandleId &);
-	id(const JS::HandleId &);
 	id();
 	id(id &&) noexcept;
 	id(const id &) = delete;
+
+	friend bool operator==(const id &, const char *const &);
+	friend bool operator==(const id &, const std::string &);
+	friend bool operator==(const char *const &, const id &);
+	friend bool operator==(const std::string &, const id &);
 };
 
 inline
@@ -63,31 +70,15 @@ id::id(const jsid &i)
 }
 
 inline
-id::id(const JS::HandleId &h)
+id::id(const handle &h)
 :JS::Rooted<jsid>{*cx, h}
 {
 }
 
 inline
-id::id(const JS::MutableHandleId &h)
+id::id(const handle_mutable &h)
 :JS::Rooted<jsid>{*cx, h}
 {
-}
-
-inline
-id::id(const JS::HandleValue &h)
-:JS::Rooted<jsid>{*cx}
-{
-	if(!JS_ValueToId(*cx, h, &(*this)))
-		throw type_error("Failed to construct id from Value");
-}
-
-inline
-id::id(const JS::HandleString &h)
-:JS::Rooted<jsid>{*cx}
-{
-	if(!JS_StringToId(*cx, h, &(*this)))
-		throw type_error("Failed to construct id from String");
 }
 
 inline
@@ -103,6 +94,60 @@ id::id(const JSProtoKey &key)
 :JS::Rooted<jsid>{*cx}
 {
 	JS::ProtoKeyToId(*cx, key, &(*this));
+}
+
+inline
+id::id(const value::handle &h)
+:JS::Rooted<jsid>{*cx}
+{
+	if(!JS_ValueToId(*cx, h, &(*this)))
+		throw type_error("Failed to construct id from Value");
+}
+
+inline
+id::id(const string::handle &h)
+:JS::Rooted<jsid>{*cx}
+{
+	if(!JS_StringToId(*cx, h, &(*this)))
+		throw type_error("Failed to construct id from String");
+}
+
+inline
+id::id(const std::string &str)
+:id(str.c_str())
+{
+}
+
+inline
+id::id(const char *const &str)
+:JS::Rooted<jsid>{*cx, jsid()}
+{
+	if(!JS::PropertySpecNameToPermanentId(*cx, str, address()))
+		throw type_error("Failed to create id from native string");
+}
+
+inline bool
+operator==(const std::string &a, const id &b)
+{
+	return operator==(a.c_str(), b);
+}
+
+inline bool
+operator==(const char *const &a, const id &b)
+{
+	return JS::PropertySpecNameEqualsId(a, b);
+}
+
+inline bool
+operator==(const id &a, const std::string &b)
+{
+	return operator==(a, b.c_str());
+}
+
+inline bool
+operator==(const id &a, const char *const &b)
+{
+	return JS::PropertySpecNameEqualsId(b, a);
 }
 
 } // namespace js
