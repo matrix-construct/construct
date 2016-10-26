@@ -143,16 +143,6 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 // ircd/js/trap.h
 //
 
-ircd::js::trap &
-ircd::js::trap::find(const std::string &path)
-{
-	if(unlikely(!main_global))
-		throw internal_error("Failed to find trap tree root");
-
-	auto &root(*main_global);
-	return root.child(path);
-}
-
 ircd::js::trap::trap(const std::string &path,
                      const uint32_t &flags)
 :parent{[&path]
@@ -217,7 +207,9 @@ try
 	}
 
 	auto &parent(find(this->parent));
-	parent.children.erase(name());
+	if(!parent.children.erase(name()))
+		throw std::out_of_range("child not in parent's map");
+
 	log.debug("Unregistered trap '%s' in `%s'",
 	          name().c_str(),
 	          this->parent.c_str());
@@ -269,7 +261,6 @@ catch(const std::exception &e)
 	throw;
 }
 
-
 ircd::js::object
 ircd::js::trap::operator()(const object &parent,
                            const object &parent_proto)
@@ -287,36 +278,46 @@ ircd::js::trap::operator()(const object &parent,
 }
 
 ircd::js::trap &
-ircd::js::trap::child(const std::string &path)
+ircd::js::trap::find(const std::string &path)
+{
+	if(unlikely(!main_global))
+		throw internal_error("Failed to find trap tree root");
+
+	trap *ret(main_global);
+	const auto parts(tokens(path, "."));
+	for(const auto &part : parts)
+		ret = &ret->child(part);
+
+	return *ret;
+}
+
+ircd::js::trap &
+ircd::js::trap::child(const string &name)
 try
 {
-	if(path.empty())
+	if(name.empty())
 		return *this;
 
-	const auto elem(split(path, "."));
-	auto &child(*children.at(elem.first));
-	return child.child(elem.second);
+	return *children.at(name);
 }
 catch(const std::out_of_range &e)
 {
-	throw reference_error("%s", path.c_str());
+	throw reference_error("%s", name.c_str());
 }
 
 const ircd::js::trap &
-ircd::js::trap::child(const std::string &path)
+ircd::js::trap::child(const string &name)
 const
 try
 {
-	if(path.empty())
+	if(name.empty())
 		return *this;
 
-	const auto elem(split(path, "."));
-	auto &child(*children.at(elem.first));
-	return child.child(elem.second);
+	return *children.at(name);
 }
 catch(const std::out_of_range &e)
 {
-	throw reference_error("%s", path.c_str());
+	throw reference_error("%s", name.c_str());
 }
 
 void
@@ -726,11 +727,17 @@ ircd::js::trap::on_add(object::handle,
 }
 
 ircd::js::value
-ircd::js::trap::on_get(object::handle,
-                       id::handle,
+ircd::js::trap::on_get(object::handle obj,
+                       id::handle id,
                        value::handle val)
 {
-	return val;
+	const string name(id);
+	const auto it(children.find(name));
+	if(it == end(children))
+		return val;
+
+	auto &child(*it->second);
+	return child(obj);
 }
 
 ircd::js::value
