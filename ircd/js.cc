@@ -140,6 +140,98 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/trap_function.h
+//
+
+ircd::js::trap_function::trap_function(std::string name,
+                                       const uint &arity,
+                                       const uint &flags)
+:name{std::move(name)}
+,arity{arity}
+,flags{flags}
+{
+}
+
+ircd::js::trap_function::~trap_function()
+noexcept
+{
+}
+
+ircd::js::function
+ircd::js::trap_function::operator()(const object::handle &obj)
+{
+	const auto jsf(::js::DefineFunctionWithReserved(*cx,
+	                                                obj,
+	                                                name.c_str(),
+	                                                handle_call,
+	                                                arity,
+	                                                flags));
+	if(unlikely(!jsf))
+		throw internal_error("Failed to create trap_function");
+
+	function ret(jsf);
+	::js::SetFunctionNativeReserved(ret, 0, pointer_value(this));
+	return ret;
+}
+
+bool
+ircd::js::trap_function::handle_call(JSContext *const c,
+                                     const unsigned argc,
+                                     JS::Value *const argv)
+noexcept try
+{
+	assert(&our(c) == cx);
+
+	const struct args args(argc, argv);
+	//const auto that(args.computeThis(c));
+	const object func(args.callee());
+	auto &trap(from(func));
+	log.debug("trap_function(%p) \"%s\": call",
+	          (const void *)&trap,
+	          trap.name.c_str());
+
+	args.rval().set(trap.on_call(func, args));
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	const struct args args(argc, argv);
+	auto &func(args.callee());
+	auto &trap(from(&func));
+
+	log.error("trap_function(%p) \"%s\": %s",
+	          reinterpret_cast<const void *>(&trap),
+	          trap.name.c_str(),
+	          e.what());
+
+	JS_ReportError(*cx, "BUG: trap_function(%p) \"%s\": %s",
+	               reinterpret_cast<const void *>(&trap),
+	               trap.name.c_str(),
+	               e.what());
+	return false;
+}
+
+ircd::js::trap_function &
+ircd::js::trap_function::from(JSObject *const &func)
+{
+	const auto tval(::js::GetFunctionNativeReserved(func, 0));
+	return *pointer_value<trap_function>(tval);
+}
+
+ircd::js::value
+ircd::js::trap_function::on_call(object::handle,
+                                 const args &)
+{
+	return {};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/trap.h
 //
 
