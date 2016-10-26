@@ -34,10 +34,24 @@ struct string
 	static constexpr const size_t CBUFS = 8;
 	static const size_t CBUFSZ;
 	const char *c_str() const;                   // Copy into rotating buf
+	size_t native_size() const;
 	size_t size() const;
+	bool empty() const;
 
 	explicit operator std::string() const;
 	operator JS::Value() const;
+
+	char16_t operator[](const size_t &at) const;
+
+	string(const char *const &, const size_t &len);
+	string(const std::string &);
+	string(const char *const &);
+	string(const value &);
+	string(JSString *const &);
+	string(JSString &);
+	string();
+	string(string &&) noexcept;
+	string(const string &) = delete;
 
 	friend int cmp(const string &, const string &);
 	friend int cmp(const string &, const char *const &);
@@ -50,16 +64,6 @@ struct string
 		using is_transparent = std::true_type;
 		template<class A, class B> bool operator()(const A &, const B &) const;
 	};
-
-	string(const char *const &, const size_t &len);
-	explicit string(const std::string &);
-	string(const char *const &);
-	string(const value &);
-	string(JSString *const &);
-	string(JSString &);
-	string();
-	string(string &&) noexcept;
-	string(const string &) = delete;
 
 	friend std::ostream &operator<<(std::ostream &, const string &);
 };
@@ -138,6 +142,18 @@ ircd::js::string::string(const char *const &s,
 }
 
 inline
+char16_t
+string::operator[](const size_t &at)
+const
+{
+	char16_t ret;
+	if(!JS_GetStringCharAt(*cx, get(), at, &ret))
+		throw range_error("index %zu is out of range", at);
+
+	return ret;
+}
+
+inline
 string::operator JS::Value()
 const
 {
@@ -151,11 +167,25 @@ const
 	return native(get());
 }
 
+inline bool
+string::empty()
+const
+{
+	return size() == 0;
+}
+
 inline size_t
 string::size()
 const
 {
-	return native_size(get());
+	return JS_GetStringLength(get());
+}
+
+inline size_t
+string::native_size()
+const
+{
+	return js::native_size(get());
 }
 
 inline
