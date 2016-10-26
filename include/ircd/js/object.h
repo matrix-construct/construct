@@ -42,7 +42,6 @@ struct object
 	object(const object::handle_mutable &h): object{h.get()} {}
 	object(const object::handle &h): object{h.get()} {}
 	explicit object(const value &);
-	object(JSFunction *const &);
 	object(JSObject *const &);
 	object(JSObject &);
 	object();
@@ -98,18 +97,6 @@ object::object(const value &val)
 {
 	if(!JS_ValueToObject(*cx, val, &(*this)))
 		throw type_error("Value is not an Object");
-}
-
-inline
-object::object(JSFunction *const &val)
-:JS::Rooted<JSObject *>
-{
-	*cx,
-	val? JS_GetFunctionObject(val) : nullptr
-}
-{
-	if(unlikely(!get()))
-		throw type_error("Function cannot convert to Object");
 }
 
 inline

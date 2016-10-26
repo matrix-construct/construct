@@ -37,8 +37,6 @@ struct value
 	using handle = JS::HandleValue;
 	using handle_mutable = JS::MutableHandleValue;
 
-	explicit operator JSType() const;
-
 	explicit operator std::string() const;
 	explicit operator double() const;
 	explicit operator uint64_t() const;
@@ -48,8 +46,8 @@ struct value
 	explicit operator uint16_t() const;
 	explicit operator bool() const;
 
-	value(const char *const &);
 	explicit value(const std::string &);
+	value(const char *const &);
 	value(const nullptr_t &);
 	value(const double &);
 	value(const float &);
@@ -58,6 +56,7 @@ struct value
 
 	value(const jsid &);
 	value(JSObject &);
+	value(JSObject *const &);
 	value(JSString *const &);
 	value(JSFunction *const &);
 	value(JS::Symbol *const &);
@@ -73,6 +72,7 @@ struct value
 	value(const value &) = delete;
 	value &operator=(value &&) noexcept;
 
+	friend JSType type(const value &);
 	friend bool undefined(const value &);
 };
 
@@ -132,6 +132,16 @@ value::value(const JS::Value &val)
 inline
 value::value(JS::Symbol *const &val)
 :JS::Rooted<JS::Value>{*cx, JS::SymbolValue(val)}
+{
+}
+
+inline
+value::value(JSObject *const &val)
+:JS::Rooted<JS::Value>
+{
+	*cx,
+	val? JS::ObjectValue(*val) : throw internal_error("NULL JSObject")
+}
 {
 }
 
@@ -297,17 +307,16 @@ const
 	return s? native(s) : throw type_error("Failed to cast to string");
 }
 
-inline
-value::operator JSType()
-const
+inline JSType
+type(const value &val)
 {
-	return JS_TypeOfValue(*cx, *this);
+	return JS_TypeOfValue(*cx, val);
 }
 
 inline bool
 undefined(const value &val)
 {
-	return JSType(val) == JSTYPE_VOID;
+	return type(val) == JSTYPE_VOID;
 }
 
 } // namespace js
