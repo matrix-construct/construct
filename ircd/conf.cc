@@ -76,11 +76,13 @@ try
 
 	// Translate to oldconf and linefeed
 	bootstrap();
+/*
 	newconf::translate(newconf::current, []
 	(const std::string &line)
 	{
 		execute(line);
 	});
+*/
 }
 catch(const std::exception &e)
 {

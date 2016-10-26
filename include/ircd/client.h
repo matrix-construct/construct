@@ -39,6 +39,8 @@ IRCD_EXCEPTION(client_error, disconnected)
 struct sock;
 struct client;
 
+extern client *me;
+
 std::shared_ptr<const client> shared_from(const client &);
 std::shared_ptr<client> shared_from(client &);
 std::weak_ptr<const client> weak_from(const client &);

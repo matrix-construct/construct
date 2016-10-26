@@ -44,6 +44,7 @@ struct client
 	~client() noexcept;
 };
 
+client *me;
 std::unique_ptr<db::handle> client_db;
 clist client_list;
 

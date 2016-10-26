@@ -34,9 +34,8 @@
 #ifdef __cplusplus
 namespace ircd {
 
-extern bool debugmode;
-extern std::shared_ptr<client> me;
-extern bool main_exited;
+extern bool debugmode;                           // Set by command line to indicate debug behavior
+extern bool main_exited;                         // Set when main context has finished.
 
 // Set callback for when IRCd's main context has completed.
 using main_exit_cb = std::function<void ()>;
@@ -62,6 +61,7 @@ void stop();
 
 
 
+/*
 
 #ifdef __cplusplus
 namespace ircd {
@@ -69,11 +69,11 @@ namespace ircd {
 
 struct SetOptions
 {
-	int maxclients;		/* max clients allowed */
-	int autoconn;		/* autoconn enabled for all servers? */
+	int maxclients;		// max clients allowed
+	int autoconn;		// autoconn enabled for all servers?
 
-	int floodcount;		/* Number of messages in 1 second */
-	int ident_timeout;	/* timeout for identd lookups */
+	int floodcount;		// Number of messages in 1 second
+	int ident_timeout;	// timeout for identd lookups
 
 	int spam_num;
 	int spam_time;
@@ -84,15 +84,14 @@ struct SetOptions
 
 struct Counter
 {
-	int oper;		/* Opers */
-	int total;		/* total clients */
-	int invisi;		/* invisible clients */
-	int max_loc;		/* MAX local clients */
-	int max_tot;		/* MAX global clients */
-	unsigned long totalrestartcount;	/* Total client count ever */
+	int oper;		// Opers
+	int total;		// total clients
+	int invisi;		// invisible clients
+	int max_loc;	// MAX local clients
+	int max_tot;	// MAX global clients
+	unsigned long totalrestartcount;	// Total client count ever
 };
 
-/*
 extern struct SetOptions GlobalSetOptions;
 
 extern volatile sig_atomic_t dorehash;
@@ -132,7 +131,8 @@ extern int maxconnections;
 void restart(const char *) __attribute__((noreturn));
 void ircd_shutdown() __attribute__((noreturn));
 void server_reboot(void) __attribute__((noreturn));
-*/
 
 }      // namespace ircd
 #endif // __cplusplus
+
+*/

@@ -29,13 +29,13 @@
 
 namespace ircd
 {
-	bool debugmode;                               // set by command line
-	boost::asio::io_service *ios;                 // user's io service
-	std::shared_ptr<client> me;                   // That's me
-	main_exit_cb main_exit_func;                  // Called when main context exits
-	bool main_exited;                             // Set when IRCd is finished
+	bool debugmode;                              // set by command line
+
+	boost::asio::io_service *ios;                // user's io service
 
 	bool main_finish;                            // Set by stop() to request main context exit
+	bool main_exited;                            // Set when IRCd is finished
+	main_exit_cb main_exit_func;                 // Called when main context exits
 	ctx::ctx *main_context;                      // Reference to main context
 
 	void seed_random();
@@ -235,12 +235,12 @@ rb_dlink_list global_client_list;
 */
 
 /* unknown/client pointer lists */
-rb_dlink_list unknown_list;        /* unknown clients ON this server only */
-rb_dlink_list lclient_list;	/* local clients only ON this server */
-rb_dlink_list serv_list;           /* local servers to this server ONLY */
-rb_dlink_list global_serv_list;    /* global servers on the network */
-rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
-rb_dlink_list oper_list;           /* network opers */
+//rb_dlink_list unknown_list;        /* unknown clients ON this server only */
+//rb_dlink_list lclient_list;	/* local clients only ON this server */
+//rb_dlink_list serv_list;           /* local servers to this server ONLY */
+//rb_dlink_list global_serv_list;    /* global servers on the network */
+//rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
+//rb_dlink_list oper_list;           /* network opers */
 
 /*
 char * const *myargv;
@@ -300,10 +300,10 @@ check_rehash(void *unused)
  * output       - none
  * side effects - This sets all global set options needed
  */
+/*
 static void
 initialize_global_set_options(void)
 {
-/*
 	memset(&GlobalSetOptions, 0, sizeof(GlobalSetOptions));
 	// memset( &ConfigFileEntry, 0, sizeof(ConfigFileEntry));
 
@@ -337,8 +337,8 @@ initialize_global_set_options(void)
 	rb_strlcpy(GlobalSetOptions.adminstring,
 		ConfigFileEntry.default_adminstring,
 		sizeof(GlobalSetOptions.adminstring));
-*/
 }
+*/
 
 
 
