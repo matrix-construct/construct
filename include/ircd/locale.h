@@ -32,6 +32,7 @@ namespace locale {
 // On newer platforms (gcc-5 etc) these conversions are standard C++.
 // On older platforms the definition file may use boost::locale.
 size_t convert(const char16_t *const &, char *const &buf, const size_t &max);
+size_t convert(const char *const &, char16_t *const &buf, const size_t &max);  // uint8_t = max*2
 std::string convert(const char16_t *const &);
 std::string convert(const std::u16string &);
 std::u16string convert(const char *const &);

@@ -112,3 +112,39 @@ ircd::locale::convert(const char16_t *const &str,
 	return rb_strlcpy(buf, s.c_str(), max);
 }
 #endif
+
+#ifdef HAVE_CODECVT
+size_t
+ircd::locale::convert(const char *const &str,
+                      char16_t *const &buf,
+                      const size_t &max)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+	if(unlikely(!max))
+		return 0;
+
+	//TODO: optimize
+	const auto s(converter.from_bytes(str));
+	const auto cpsz(std::min(s.size(), size_t(max - 1)));
+	memcpy(buf, s.data(), cpsz * 2);
+	buf[cpsz] = char16_t(0);
+	return cpsz;
+}
+#else
+size_t
+ircd::locale::convert(const char *const &str,
+                      char16_t *const &buf,
+                      const size_t &max)
+{
+	if(unlikely(!max))
+		return 0;
+
+	//TODO: optimize
+	const auto s(boost::locale::conv::utf_to_utf<char16_t>(str));
+	const auto cpsz(std::min(s.size(), size_t(max - 1)));
+	memcpy(buf, s.data(), cpsz * 2);
+	buf[cpsz] = char16_t(0);
+	return cpsz;
+}
+#endif
