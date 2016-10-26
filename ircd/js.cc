@@ -40,6 +40,7 @@ __thread runtime *rt;
 __thread context *cx;
 
 // Location of the main JSRuntime and JSContext instances.
+std::thread::id main_thread_id;
 runtime *main_runtime;
 context *main_context;
 trap *main_global;
@@ -77,6 +78,7 @@ ircd::js::init::init()
 	log.info("Initializing the main JS Runtime (main_maxbytes: %zu)",
 	         runtime_opts.maxbytes);
 
+	main_thread_id = std::this_thread::get_id();
 	main_runtime = new runtime(runtime_opts);
 	main_context = new context(*main_runtime, context_opts);
 	log.info("Initialized main JS Runtime and context (version: '%s')",
@@ -2185,8 +2187,11 @@ ircd::js::runtime::handle_activity(void *const priv,
                                    const bool active)
 noexcept
 {
+	assert(priv);
+	const auto tid(std::this_thread::get_id());
 	auto &runtime(*static_cast<struct runtime *>(priv));
-	log.debug("runtime(%p): %s",
+	log.debug("[thread %s] runtime(%p): %s",
+	          ircd::string(tid).c_str(),
 	          (const void *)&runtime,
 	          active? "ACTIVE" : "IDLE");
 }
@@ -2246,7 +2251,9 @@ ircd::js::runtime::handle_telemetry(const int id,
                                     const char *const key)
 noexcept
 {
-	log.debug("runtime(%p) telemetry(%02d) %s: %u %s",
+	const auto tid(std::this_thread::get_id());
+	log.debug("[thread %s] runtime(%p) telemetry(%02d) %s: %u %s",
+	          ircd::string(tid).c_str(),
 	          (const void *)rt,
 	          id,
 	          reflect_telemetry(id),
