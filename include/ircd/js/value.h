@@ -25,6 +25,11 @@
 namespace ircd {
 namespace js   {
 
+// Use Value to carry a non-gc host pointer value
+template<class T> T *pointer_value(const JS::Value &);
+JS::Value pointer_value(const void *const &);
+JS::Value pointer_value(void *const &);
+
 struct value
 :JS::Rooted<JS::Value>
 {
@@ -320,6 +325,28 @@ inline bool
 undefined(const value &val)
 {
 	return type(val) == JSTYPE_VOID;
+}
+
+inline JS::Value
+pointer_value(const void *const &ptr)
+{
+	return pointer_value(const_cast<void *>(ptr));
+}
+
+inline JS::Value
+pointer_value(void *const &ptr)
+{
+	JS::Value ret;
+	ret.setPrivate(ptr);
+	return ret;
+}
+
+template<class T>
+T *
+pointer_value(const JS::Value &val)
+{
+	const auto ret(val.toPrivate());
+	return reinterpret_cast<T *>(ret);
 }
 
 } // namespace js
