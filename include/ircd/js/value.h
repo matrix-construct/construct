@@ -25,12 +25,6 @@
 namespace ircd {
 namespace js   {
 
-// Fundamental string utils. This is placed here instead of string.h so
-// `struct value` can make direct conversions without depending on struct string type
-size_t native_size(const JSString *const &);
-size_t native(const JSString *const &, char *const &buf, const size_t &max);
-std::string native(const JSString *const &);
-
 struct value
 :JS::Rooted<JS::Value>
 {
@@ -210,8 +204,12 @@ inline
 value::value(const std::string &s)
 :JS::Rooted<JS::Value>
 {
-	*cx,
-	JS::StringValue(JS_NewStringCopyN(*cx, s.data(), s.size()))
+	*cx, [&s]
+	{
+		auto buf(native_external_copy(s));
+		const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_deleter));
+		return JS::StringValue(ret);
+	}()
 }
 {
 }
@@ -220,8 +218,13 @@ inline
 value::value(const char *const &s)
 :JS::Rooted<JS::Value>
 {
-	*cx,
-	!s? JS::NullValue() : JS::StringValue(JS_NewStringCopyZ(*cx, s))
+	*cx, !s? JS::NullValue() : [&s]
+	{
+		const auto len(strlen(s));
+		auto buf(native_external_copy(s, len));
+		const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter));
+		return JS::StringValue(ret);
+	}()
 }
 {
 }

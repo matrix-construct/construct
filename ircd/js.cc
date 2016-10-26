@@ -1130,6 +1130,22 @@ const
 // ircd/js/value.h
 //
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/native.h
+//
+
+namespace ircd {
+namespace js   {
+
+JSStringFinalizer native_external_deleter
+{
+	native_external_delete
+};
+
+} // namespace js
+} // namespace ircd
+
 std::string
 ircd::js::native(const JSString *const &s)
 {
@@ -1137,6 +1153,12 @@ ircd::js::native(const JSString *const &s)
 	native(s, &ret.front(), ret.size());
 	ret.resize(ret.size() - 1);
 	return ret;
+}
+
+size_t
+ircd::js::native_size(const JSString *const &s)
+{
+	return JS_GetStringEncodingLength(*cx, const_cast<JSString *>(s));
 }
 
 size_t
@@ -1154,10 +1176,15 @@ ircd::js::native(const JSString *const &s,
 	return ret;
 }
 
-size_t
-ircd::js::native_size(const JSString *const &s)
+void
+ircd::js::native_external_delete(const JSStringFinalizer *const fin,
+                                 char16_t *const buf)
 {
-	return JS_GetStringEncodingLength(*cx, const_cast<JSString *>(s));
+	log.debug("string delete (fin: %p buf: %p)",
+	          (const void *)fin,
+	          (const void *)buf);
+
+	delete[] buf;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -118,12 +118,15 @@ string::string(const char *const &s)
 }
 
 inline
-string::string(const char *const &s,
-               const size_t &len)
+ircd::js::string::string(const char *const &s,
+                         const size_t &len)
 :JS::Rooted<JSString *>
 {
-	*cx,
-	JS_NewStringCopyN(*cx, s, len)
+	*cx, [&s, &len]
+	{
+		auto buf(native_external_copy(s, len));
+		return JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter);
+	}()
 }
 {
 	if(unlikely(!get()))
