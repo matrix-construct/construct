@@ -81,6 +81,7 @@ filesystem::path prefix_if_relative(const filesystem::path &path);
 filesystem::path postfixed(const filesystem::path &path);
 std::string postfixed(const std::string &name);
 
+template<class R, class F> R info(const filesystem::path &, F&& closure);
 std::vector<std::string> sections(const filesystem::path &path);
 std::vector<std::string> symbols(const filesystem::path &path);
 std::vector<std::string> symbols(const filesystem::path &path, const std::string &section);
@@ -537,23 +538,50 @@ ircd::mods::symbols(const std::string &fullpath,
 std::vector<std::string>
 ircd::mods::sections(const filesystem::path &path)
 {
-	boost::dll::library_info info(path);
-	return info.sections();
+	return info<std::vector<std::string>>(path, []
+	(boost::dll::library_info &info)
+	{
+		return info.sections();
+	});
 }
 
 std::vector<std::string>
 ircd::mods::symbols(const filesystem::path &path)
 {
-	boost::dll::library_info info(path);
-	return info.symbols();
+	return info<std::vector<std::string>>(path, []
+	(boost::dll::library_info &info)
+	{
+		return info.symbols();
+	});
 }
 
 std::vector<std::string>
 ircd::mods::symbols(const filesystem::path &path,
                     const std::string &section)
 {
+	return info<std::vector<std::string>>(path, [&section]
+	(boost::dll::library_info &info)
+	{
+		return info.symbols(section);
+	});
+}
+
+template<class R,
+         class F>
+R
+ircd::mods::info(const filesystem::path &path,
+                 F&& closure)
+{
+	if(!exists(path))
+		throw filesystem_error("`%s' does not exist",
+		                       path.string().c_str());
+
+	if(!is_regular_file(path))
+		throw filesystem_error("`%s' is not a file",
+		                       path.string().c_str());
+
 	boost::dll::library_info info(path);
-	return info.symbols(section);
+	return closure(info);
 }
 
 void
