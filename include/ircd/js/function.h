@@ -28,6 +28,7 @@ namespace js   {
 string decompile(const JS::Handle<JSFunction *> &, const bool &pretty = false);
 string display_name(const JSFunction &);
 string name(const JSFunction &);
+uint16_t arity(const JSFunction &f);
 
 struct function
 :JS::Rooted<JSFunction *>
@@ -130,6 +131,12 @@ const
 		throw type_error("function cannot cast to Object");
 
 	return ret;
+}
+
+inline uint16_t
+arity(const JSFunction &f)
+{
+	return JS_GetFunctionArity(const_cast<JSFunction *>(&f));
 }
 
 inline string
