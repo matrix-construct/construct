@@ -166,6 +166,7 @@ ircd::ctx::context::join()
 ircd::ctx::ctx *
 ircd::ctx::context::detach()
 {
+	c->flags |= SELF_DESTRUCT;
 	return c.release();
 }
 
