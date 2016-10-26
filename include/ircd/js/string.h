@@ -32,6 +32,7 @@ char16_t at(const JSString *const &, const size_t &);
 struct string
 :JS::Rooted<JSString *>
 {
+	IRCD_OVERLOAD(literal)
 	using handle = JS::HandleString;
 	using handle_mutable = JS::MutableHandleString;
 
@@ -47,6 +48,7 @@ struct string
 
 	char16_t operator[](const size_t &at) const;
 
+	string(literal_t, const char16_t *const &);
 	string(const char16_t *const &, const size_t &len);
 	string(const char16_t *const &);
 	string(const std::u16string &);
@@ -145,7 +147,7 @@ string::string(const char *const &s,
 	*cx, [&s, &len]
 	{
 		auto buf(native_external_copy(s, len));
-		return JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter);
+		return JS_NewExternalString(*cx, buf.release(), len, &native_external_delete);
 	}()
 }
 {
@@ -177,12 +179,25 @@ string::string(const char16_t *const &s,
 		auto buf(std::make_unique<char16_t[]>(len+1));
 		memcpy(buf.get(), s, len * 2);
 		buf.get()[len] = char16_t(0);
-		return JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter);
+		return JS_NewExternalString(*cx, buf.release(), len, &native_external_delete);
 	}()
 }
 {
 	if(unlikely(!get()))
 		throw type_error("Failed to construct string from character array");
+}
+
+inline
+string::string(literal_t,
+               const char16_t *const &s)
+:JS::Rooted<JSString *>
+{
+	*cx,
+	JS_NewExternalString(*cx, s, std::char_traits<char16_t>::length(s), &native_external_static)
+}
+{
+	if(unlikely(!get()))
+		throw type_error("Failed to construct string from wide character literal");
 }
 
 inline

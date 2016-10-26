@@ -1145,9 +1145,17 @@ const
 namespace ircd {
 namespace js   {
 
-JSStringFinalizer native_external_deleter
+void native_external_noop(const JSStringFinalizer *const fin, char16_t *const buf);
+void native_external_deleter(const JSStringFinalizer *const fin, char16_t *const buf);
+
+JSStringFinalizer native_external_delete
 {
-	native_external_delete
+	native_external_deleter
+};
+
+JSStringFinalizer native_external_static
+{
+	native_external_noop
 };
 
 } // namespace js
@@ -1184,14 +1192,23 @@ ircd::js::native(const JSString *const &s,
 }
 
 void
-ircd::js::native_external_delete(const JSStringFinalizer *const fin,
-                                 char16_t *const buf)
+ircd::js::native_external_deleter(const JSStringFinalizer *const fin,
+                                  char16_t *const buf)
 {
 	log.debug("string delete (fin: %p buf: %p)",
 	          (const void *)fin,
 	          (const void *)buf);
 
 	delete[] buf;
+}
+
+void
+ircd::js::native_external_noop(const JSStringFinalizer *const fin,
+                               char16_t *const buf)
+{
+	log.debug("string literal release (fin: %p buf: %p)",
+	          (const void *)fin,
+	          (const void *)buf);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

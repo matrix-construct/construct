@@ -25,8 +25,8 @@
 namespace ircd {
 namespace js   {
 
-void native_external_delete(const JSStringFinalizer *, char16_t *);
-extern JSStringFinalizer native_external_deleter;
+extern JSStringFinalizer native_external_delete; // calls `delete[]` on char16_t[]
+extern JSStringFinalizer native_external_static; // no-op for static/literal or self-managed
 
 std::unique_ptr<char16_t[]> native_external_copy(const char *const &s, const size_t &len);
 std::unique_ptr<char16_t[]> native_external_copy(const char *const &s);

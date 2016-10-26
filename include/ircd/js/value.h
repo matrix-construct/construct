@@ -207,7 +207,7 @@ value::value(const std::string &s)
 	*cx, [&s]
 	{
 		auto buf(native_external_copy(s));
-		const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_deleter));
+		const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_delete));
 		return JS::StringValue(ret);
 	}()
 }
@@ -222,7 +222,7 @@ value::value(const char *const &s)
 	{
 		const auto len(strlen(s));
 		auto buf(native_external_copy(s, len));
-		const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter));
+		const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_delete));
 		return JS::StringValue(ret);
 	}()
 }
