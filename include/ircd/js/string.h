@@ -25,6 +25,9 @@
 namespace ircd {
 namespace js   {
 
+size_t size(const JSString *const &);
+char16_t at(const JSString *const &, const size_t &);
+
 struct string
 :JS::Rooted<JSString *>
 {
@@ -67,6 +70,11 @@ struct string
 
 	friend std::ostream &operator<<(std::ostream &, const string &);
 };
+
+string operator+(const string::handle &left, const string::handle &right);
+string substr(const string::handle &, const size_t &pos, const size_t &len = -1);
+std::pair<string, string> split(const string::handle &, const char16_t &);
+std::pair<string, string> split(const string::handle &, const char &);
 
 inline
 string::string()
@@ -143,14 +151,10 @@ ircd::js::string::string(const char *const &s,
 
 inline
 char16_t
-string::operator[](const size_t &at)
+string::operator[](const size_t &pos)
 const
 {
-	char16_t ret;
-	if(!JS_GetStringCharAt(*cx, get(), at, &ret))
-		throw range_error("index %zu is out of range", at);
-
-	return ret;
+	return at(get(), pos);
 }
 
 inline
@@ -178,7 +182,7 @@ inline size_t
 string::size()
 const
 {
-	return JS_GetStringLength(get());
+	return js::size(get());
 }
 
 inline size_t
@@ -312,6 +316,63 @@ cmp(const string &a, const string &b)
 		throw internal_error("Failed to compare strings");
 
 	return ret;
+}
+
+inline std::pair<string, string>
+split(const string::handle &s,
+      const char &c)
+{
+	return {};
+}
+
+inline std::pair<string, string>
+split(const string::handle &s,
+      const char16_t &c)
+{
+	size_t i(0);
+	for(; i < size(s) && at(s, i) != c; ++i);
+	return
+	{
+		substr(s, 0, i),
+		i < size(s)? substr(s, i + 1, size(s) - i) : string()
+	};
+}
+
+inline string
+substr(const string::handle &s,
+       const size_t &pos,
+       const size_t &len)
+{
+	const auto _len(len == size_t(-1)? size(s) - pos : len);
+	const auto ret(JS_NewDependentString(*cx, s, pos, _len));
+	if(!ret)
+		throw std::out_of_range("substr(): invalid arguments");
+
+	return ret;
+}
+
+inline string
+operator+(const string::handle &left,
+          const string::handle &right)
+{
+	return JS_ConcatStrings(*cx, left, right);
+}
+
+inline char16_t
+at(const JSString *const &s,
+   const size_t &pos)
+{
+	char16_t ret;
+	if(unlikely(!JS_GetStringCharAt(*cx, const_cast<JSString *>(s), pos, &ret)))
+		throw range_error("index %zu is out of range", pos);
+
+	return ret;
+}
+
+inline size_t
+size(const JSString *const &s)
+{
+	return JS_GetStringLength(const_cast<JSString *>(s));
 }
 
 } // namespace js
