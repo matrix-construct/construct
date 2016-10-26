@@ -47,6 +47,7 @@ class trap
 	virtual bool on_has(object::handle, id::handle);
 	virtual bool on_enu(object::handle);
 	virtual void on_ctor(object &, const args &);
+	virtual void on_dtor(JSObject &);
 
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);

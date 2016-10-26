@@ -324,8 +324,13 @@ ircd::js::trap::handle_dtor(JSFreeOp *const op,
                             JSObject *const obj)
 noexcept try
 {
+	assert(op);
+	assert(obj);
+	assert(&our_runtime(*op) == rt);
+
 	auto &trap(from(*obj));
-	trap.debug("dtor");
+	trap.debug("dtor %p", (const void *)obj);
+	trap.on_dtor(*obj);
 }
 catch(const jserror &e)
 {
@@ -680,6 +685,11 @@ const
 	               buf);
 
 	va_end(ap);
+}
+
+void
+ircd::js::trap::on_dtor(JSObject &)
+{
 }
 
 void
