@@ -250,7 +250,7 @@ auto
 string(const T &s)
 {
 	std::stringstream ss;
-	return (ss << s).str();
+	return static_cast<std::stringstream &>(ss << s).str();
 }
 
 inline auto
