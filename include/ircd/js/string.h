@@ -39,6 +39,18 @@ struct string
 	explicit operator std::string() const;
 	operator JS::Value() const;
 
+	friend int cmp(const string &, const string &);
+	friend int cmp(const string &, const char *const &);
+	friend int cmp(const char *const &, const string &);
+	friend int cmp(const string &, const std::string &);
+	friend int cmp(const std::string &, const string &);
+
+	struct less
+	{
+		using is_transparent = std::true_type;
+		template<class A, class B> bool operator()(const A &, const B &) const;
+	};
+
 	string(const char *const &, const size_t &len);
 	explicit string(const std::string &);
 	string(const char *const &);
@@ -48,14 +60,6 @@ struct string
 	string();
 	string(string &&) noexcept;
 	string(const string &) = delete;
-
-	friend int cmp(const string &, const string &);
-
-	friend bool operator==(const string &, const string &);
-	friend bool operator==(const string &, const char *const &);
-	friend bool operator==(const char *const &, const string &);
-	friend bool operator==(const string &, const std::string &);
-	friend bool operator==(const std::string &, const string &);
 
 	friend std::ostream &operator<<(std::ostream &, const string &);
 };
@@ -161,16 +165,53 @@ std::ostream &operator<<(std::ostream &os, const string &s)
 	return os;
 }
 
-inline bool
-operator==(const string &a, const std::string &b)
+template<class A,
+         class B>
+constexpr bool
+string_comparison()
 {
-	return operator==(a, b.c_str());
+	return std::is_base_of<string, A>() || std::is_base_of<string, B>();
 }
 
-inline bool
-operator==(const std::string &a, const string &b)
+template<class A,
+         class B>
+bool
+string::less::operator()(const A &a, const B &b)
+const
 {
-	return operator==(a.c_str(), b);
+	return cmp(a, b) < 0;
+}
+
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator>(const A &a, const B &b)
+{
+	return cmp(a, b) > 0;
+}
+
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator<(const A &a, const B &b)
+{
+	return cmp(a, b) < 0;
+}
+
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator>=(const A &a, const B &b)
+{
+	return cmp(a, b) >= 0;
+}
+
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator<=(const A &a, const B &b)
+{
+	return cmp(a, b) <= 0;
 }
 
 inline bool
@@ -193,10 +234,44 @@ operator==(const char *const &a, const string &b)
 	return ret;
 }
 
-inline bool
-operator==(const string &a, const string &b)
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator==(const A &a, const B &b)
 {
 	return cmp(a, b) == 0;
+}
+
+template<class A,
+         class B>
+typename std::enable_if<string_comparison<A, B>(), bool>::type
+operator!=(const A &a, const B &b)
+{
+	return !(operator==(a, b));
+}
+
+inline int
+cmp(const string &a, const std::string &b)
+{
+	return cmp(a, b.c_str());
+}
+
+inline int
+cmp(const std::string &a, const string &b)
+{
+	return cmp(a.c_str(), b);
+}
+
+inline int
+cmp(const string &a, const char *const &b)
+{
+	return cmp(a, string(b));
+}
+
+inline int
+cmp(const char *const &a, const string &b)
+{
+	return cmp(string(a), b);
 }
 
 inline int
