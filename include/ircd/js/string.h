@@ -25,6 +25,7 @@
 namespace ircd {
 namespace js   {
 
+bool external(const JSString *const &);
 size_t size(const JSString *const &);
 char16_t at(const JSString *const &, const size_t &);
 
@@ -46,6 +47,9 @@ struct string
 
 	char16_t operator[](const size_t &at) const;
 
+	string(const char16_t *const &, const size_t &len);
+	string(const char16_t *const &);
+	string(const std::u16string &);
 	string(const char *const &, const size_t &len);
 	string(const std::string &);
 	string(const char *const &);
@@ -134,13 +138,45 @@ string::string(const char *const &s)
 }
 
 inline
-ircd::js::string::string(const char *const &s,
-                         const size_t &len)
+string::string(const char *const &s,
+               const size_t &len)
 :JS::Rooted<JSString *>
 {
 	*cx, [&s, &len]
 	{
 		auto buf(native_external_copy(s, len));
+		return JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter);
+	}()
+}
+{
+	if(unlikely(!get()))
+		throw type_error("Failed to construct string from character array");
+}
+
+inline
+string::string(const std::u16string &s)
+:string(s.data(), s.size())
+{
+}
+
+inline
+string::string(const char16_t *const &s)
+:string(s, std::char_traits<char16_t>::length(s))
+{
+}
+
+inline
+string::string(const char16_t *const &s,
+               const size_t &len)
+:JS::Rooted<JSString *>
+{
+	*cx, [&s, &len]
+	{
+		// JS_NewExternalString does not require a null terminated buffer, but we are going
+		// to terminate anyway in case the deleter ever wants to iterate a canonical vector.
+		auto buf(std::make_unique<char16_t[]>(len+1));
+		memcpy(buf.get(), s, len * 2);
+		buf.get()[len] = char16_t(0);
 		return JS_NewExternalString(*cx, buf.release(), len, &native_external_deleter);
 	}()
 }
@@ -373,6 +409,12 @@ inline size_t
 size(const JSString *const &s)
 {
 	return JS_GetStringLength(const_cast<JSString *>(s));
+}
+
+inline bool
+external(const JSString *const &s)
+{
+	return JS_IsExternalString(const_cast<JSString *>(s));
 }
 
 } // namespace js
