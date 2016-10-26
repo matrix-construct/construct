@@ -42,6 +42,7 @@ std::string token_last(const std::string &str, const char *const &sep);
 
 std::string chomp(const std::string &str, const std::string &c = " "s);
 std::pair<std::string, std::string> split(const std::string &str, const std::string &delim = " "s);
+std::pair<std::string, std::string> rsplit(const std::string &str, const std::string &delim = " "s);
 std::string between(const std::string &str, const std::string &a = "("s, const std::string &b = ")"s);
 bool endswith(const std::string &str, const char *const &val);
 bool endswith(const std::string &str, const std::string &val);
@@ -125,6 +126,15 @@ ircd::between(const std::string &str,
 	return split(split(str, a).second, b).first;
 }
 
+
+inline std::pair<std::string, std::string>
+ircd::rsplit(const std::string &str,
+             const std::string &delim)
+{
+	const auto pos(str.find_last_of(delim));
+	return pos == std::string::npos? std::make_pair(std::string{}, str):
+	                                 std::make_pair(str.substr(0, pos), str.substr(pos+delim.size()));
+}
 
 inline std::pair<std::string, std::string>
 ircd::split(const std::string &str,
