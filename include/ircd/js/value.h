@@ -30,12 +30,12 @@ template<class T> T *pointer_value(const JS::Value &);
 JS::Value pointer_value(const void *const &);
 JS::Value pointer_value(void *const &);
 
-struct value
-:JS::Rooted<JS::Value>
-{
-	using handle = JS::HandleValue;
-	using handle_mutable = JS::MutableHandleValue;
+namespace basic {
 
+template<lifetime L>
+struct value
+:root<JS::Value, L>
+{
 	explicit operator std::string() const;
 	explicit operator double() const;
 	explicit operator uint64_t() const;
@@ -45,14 +45,16 @@ struct value
 	explicit operator uint16_t() const;
 	explicit operator bool() const;
 
-	explicit value(const std::string &);
+	template<class T, lifetime LL> value(const root<T, LL> &r);
+	template<class T> value(const JS::MutableHandle<T> &h);
+	template<class T> value(const JS::Handle<T> &h);
+	value(const std::string &);
 	value(const char *const &);
 	value(const nullptr_t &);
 	value(const double &);
 	value(const float &);
 	value(const int32_t &);
 	value(const bool &);
-
 	value(const jsid &);
 	value(JSObject &);
 	value(JSObject *const &);
@@ -60,189 +62,164 @@ struct value
 	value(JSFunction *const &);
 	value(JS::Symbol *const &);
 	value(const JS::Value &);
-
-	template<class T> value(const JS::Handle<T> &h);
-	template<class T> value(const JS::MutableHandle<T> &h);
-	template<class T> value(const JS::Rooted<T> &r);
-	template<class T> value(const JS::PersistentRooted<T> &p);
-
 	value();
-	value(value &&) noexcept;
-	value(const value &) = delete;
-	value &operator=(value &&) noexcept;
-
-	friend JSType type(const value &);
-	friend bool undefined(const value &);
 };
 
-inline
-value::value()
-:JS::Rooted<JS::Value>{*cx, JS::UndefinedValue()}
+template<lifetime L> JSType type(const value<L> &);
+template<lifetime L> bool undefined(const value<L> &);
+
+} // namespace basic
+
+using value = basic::value<lifetime::stack>;
+using heap_value = basic::value<lifetime::heap>;
+
+//
+// Implementation
+//
+namespace basic {
+
+template<lifetime L>
+value<L>::value()
+:value<L>::root::type{JS::UndefinedValue()}
 {
 }
 
-inline
-value::value(value &&other)
-noexcept
-:JS::Rooted<JS::Value>{*cx, other.get()}
-{
-	other.set(JS::UndefinedValue());
-}
-
-inline value &
-value::operator=(value &&other)
-noexcept
-{
-	set(other.get());
-	other.set(JS::UndefinedValue());
-	return *this;
-}
-
-template<class T>
-value::value(const JS::PersistentRooted<T> &r)
-:value(JS::Handle<T>(r))
+template<lifetime L>
+value<L>::value(const JS::Value &val)
+:value<L>::root::type{val}
 {
 }
 
-template<class T>
-value::value(const JS::Rooted<T> &r)
-:value(JS::Handle<T>(r))
+template<lifetime L>
+value<L>::value(JS::Symbol *const &val)
+:value<L>::root::type{JS::SymbolValue(val)}
 {
 }
 
-template<class T>
-value::value(const JS::MutableHandle<T> &h)
-:value(h.get())
+template<lifetime L>
+value<L>::value(JSObject *const &val)
+:value<L>::root::type
 {
-}
-
-template<class T>
-value::value(const JS::Handle<T> &h)
-:value(h.get())
-{
-}
-
-inline
-value::value(const JS::Value &val)
-:JS::Rooted<JS::Value>{*cx, val}
-{
-}
-
-inline
-value::value(JS::Symbol *const &val)
-:JS::Rooted<JS::Value>{*cx, JS::SymbolValue(val)}
-{
-}
-
-inline
-value::value(JSObject *const &val)
-:JS::Rooted<JS::Value>
-{
-	*cx,
 	val? JS::ObjectValue(*val) : throw internal_error("NULL JSObject")
 }
 {
 }
 
-inline
-value::value(JSObject &val)
-:JS::Rooted<JS::Value>{*cx, JS::ObjectValue(val)}
+template<lifetime L>
+value<L>::value(JSObject &val)
+:value<L>::root::type{JS::ObjectValue(val)}
 {
 }
 
-inline
-value::value(JSString *const &val)
-:JS::Rooted<JS::Value>{*cx, JS::StringValue(val)}
+template<lifetime L>
+value<L>::value(JSString *const &val)
+:value<L>::root::type{JS::StringValue(val)}
 {
 }
 
-inline
-value::value(JSFunction *const &val)
-:JS::Rooted<JS::Value>{*cx}
+template<lifetime L>
+value<L>::value(JSFunction *const &val)
+:value<L>::root::type{}
 {
 	auto *const obj(JS_GetFunctionObject(val));
 	if(unlikely(!obj))
 		throw type_error("Function cannot convert to Object");
 
-	set(JS::ObjectValue(*obj));
+	this->set(JS::ObjectValue(*obj));
 }
 
-inline
-value::value(const jsid &val)
-:JS::Rooted<JS::Value>{*cx}
+template<lifetime L>
+value<L>::value(const jsid &val)
+:value<L>::root::type{}
 {
 	if(!JS_IdToValue(*cx, val, &(*this)))
 		throw type_error("Failed to construct value from Id");
 }
 
-inline
-value::value(const bool &b)
-:JS::Rooted<JS::Value>{*cx, JS::BooleanValue(b)}
+template<lifetime L>
+value<L>::value(const bool &b)
+:value<L>::root::type{JS::BooleanValue(b)}
 {
 }
 
-inline
-value::value(const int32_t &val)
-:JS::Rooted<JS::Value>{*cx, JS::Int32Value(val)}
+template<lifetime L>
+value<L>::value(const int32_t &val)
+:value<L>::root::type{JS::Int32Value(val)}
 {
 }
 
-inline
-value::value(const float &val)
-:JS::Rooted<JS::Value>{*cx, JS::Float32Value(val)}
+template<lifetime L>
+value<L>::value(const float &val)
+:value<L>::root::type{JS::Float32Value(val)}
 {
 }
 
-inline
-value::value(const double &val)
-:JS::Rooted<JS::Value>{*cx, JS::DoubleValue(val)}
+template<lifetime L>
+value<L>::value(const double &val)
+:value<L>::root::type{JS::DoubleValue(val)}
 {
 }
 
-inline
-value::value(const nullptr_t &)
-:JS::Rooted<JS::Value>{*cx, JS::NullValue()}
+template<lifetime L>
+value<L>::value(const nullptr_t &)
+:value<L>::root::type{JS::NullValue()}
 {
 }
 
-inline
-value::value(const std::string &s)
-:JS::Rooted<JS::Value>
+template<lifetime L>
+value<L>::value(const std::string &s)
+:value<L>::root::type{[&s]
 {
-	*cx, [&s]
-	{
-		auto buf(native_external_copy(s));
-		const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_delete));
-		return JS::StringValue(ret);
-	}()
-}
+	auto buf(native_external_copy(s));
+	const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_delete));
+	return JS::StringValue(ret);
+}()}
 {
 }
 
-inline
-value::value(const char *const &s)
-:JS::Rooted<JS::Value>
+template<lifetime L>
+value<L>::value(const char *const &s)
+:value<L>::root::type{!s? JS::NullValue() : [&s]
 {
-	*cx, !s? JS::NullValue() : [&s]
-	{
-		const auto len(strlen(s));
-		auto buf(native_external_copy(s, len));
-		const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_delete));
-		return JS::StringValue(ret);
-	}()
-}
+	const auto len(strlen(s));
+	auto buf(native_external_copy(s, len));
+	const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_delete));
+	return JS::StringValue(ret);
+}()}
 {
 }
 
-inline
-value::operator bool()
+template<lifetime L>
+template<class T>
+value<L>::value(const JS::Handle<T> &h)
+:value(h.get())
+{
+}
+
+template<lifetime L>
+template<class T>
+value<L>::value(const JS::MutableHandle<T> &h)
+:value(h.get())
+{
+}
+
+template<lifetime L>
+template<class T,
+         lifetime LL>
+value<L>::value(const root<T, LL> &r):
+value(r.get())
+{
+}
+
+template<lifetime L>
+value<L>::operator bool()
 const
 {
 	return JS::ToBoolean(*this);
 }
 
-inline
-value::operator uint16_t()
+template<lifetime L>
+value<L>::operator uint16_t()
 const
 {
 	uint16_t ret;
@@ -252,8 +229,8 @@ const
 	return ret;
 }
 
-inline
-value::operator int32_t()
+template<lifetime L>
+value<L>::operator int32_t()
 const
 {
 	int32_t ret;
@@ -263,8 +240,8 @@ const
 	return ret;
 }
 
-inline
-value::operator uint32_t()
+template<lifetime L>
+value<L>::operator uint32_t()
 const
 {
 	uint32_t ret;
@@ -274,8 +251,8 @@ const
 	return ret;
 }
 
-inline
-value::operator int64_t()
+template<lifetime L>
+value<L>::operator int64_t()
 const
 {
 	int64_t ret;
@@ -285,8 +262,8 @@ const
 	return ret;
 }
 
-inline
-value::operator uint64_t()
+template<lifetime L>
+value<L>::operator uint64_t()
 const
 {
 	uint64_t ret;
@@ -296,8 +273,8 @@ const
 	return ret;
 }
 
-inline
-value::operator double()
+template<lifetime L>
+value<L>::operator double()
 const
 {
 	double ret;
@@ -307,25 +284,29 @@ const
 	return ret;
 }
 
-inline
-value::operator std::string()
+template<lifetime L>
+value<L>::operator std::string()
 const
 {
 	const auto s(JS::ToString(*cx, *this));
 	return s? native(s) : throw type_error("Failed to cast to string");
 }
 
-inline JSType
-type(const value &val)
+template<lifetime L>
+JSType
+type(const value<L> &val)
 {
 	return JS_TypeOfValue(*cx, val);
 }
 
-inline bool
-undefined(const value &val)
+template<lifetime L>
+bool
+undefined(const value<L> &val)
 {
 	return type(val) == JSTYPE_VOID;
 }
+
+} // namespace basic
 
 inline JS::Value
 pointer_value(const void *const &ptr)

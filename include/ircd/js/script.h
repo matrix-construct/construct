@@ -22,52 +22,80 @@
 #pragma once
 #define HAVE_IRCD_JS_SCRIPT_H
 
-namespace ircd {
-namespace js   {
+namespace ircd  {
+namespace js    {
+namespace basic {
 
+template<lifetime L>
 struct script
-:JS::Rooted<JSScript *>
+:root<JSScript *, L>
 {
-	using handle = JS::HandleScript;
-	using handle_mutable = JS::MutableHandleScript;
+	value<lifetime::stack> operator()(JS::AutoObjectVector &stack) const;
+	value<lifetime::stack> operator()() const;
 
-	value operator()(JS::AutoObjectVector &stack) const;
-	value operator()() const;
-
+	using root<JSScript *, L>::root;
 	script(const JS::CompileOptions &opts, const std::string &src);    // new script
 	script(JSScript *const &);
 	script(JSScript &);
-	script();
-	script(script &&) noexcept;
-	script(const script &) = delete;
 };
 
-inline
-script::script()
-:JS::Rooted<JSScript *>{*cx}
+} // namespace basic
+
+using script = basic::script<lifetime::stack>;
+using heap_script = basic::script<lifetime::heap>;
+
+//
+// Implementation
+//
+namespace basic {
+
+template<lifetime L>
+script<L>::script(JSScript &val)
+:script<L>::root::type{&val}
 {
 }
 
-inline
-script::script(script &&other)
-noexcept
-:JS::Rooted<JSScript *>{*cx, other}
+template<lifetime L>
+script<L>::script(JSScript *const &val)
+:script<L>::root::type{val}
 {
-}
-
-inline
-script::script(JSScript &val)
-:JS::Rooted<JSScript *>{*cx, &val}
-{
-}
-
-inline
-script::script(JSScript *const &val)
-:JS::Rooted<JSScript *>{*cx, val}
-{
-	if(unlikely(!get()))
+	if(unlikely(!this->get()))
 		throw internal_error("NULL script");
 }
 
+template<lifetime L>
+script<L>::script(const JS::CompileOptions &opts,
+                  const std::string &src)
+:script<L>::root::type{}
+{
+	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
+		throw syntax_error("Failed to compile script");
+}
+
+template<lifetime L>
+value<lifetime::stack>
+script<L>::operator()()
+const
+{
+	value<lifetime::stack> ret;
+	if(!JS_ExecuteScript(*cx, *this, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
+}
+
+template<lifetime L>
+value<lifetime::stack>
+script<L>::operator()(JS::AutoObjectVector &stack)
+const
+{
+	value<lifetime::stack> ret;
+	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
+}
+
+} // namespace basic
 } // namespace js
 } // namespace ircd

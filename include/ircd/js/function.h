@@ -30,18 +30,19 @@ string display_name(const JSFunction &);
 string name(const JSFunction &);
 uint16_t arity(const JSFunction &f);
 
+namespace basic {
+
+template<lifetime L>
 struct function
-:JS::Rooted<JSFunction *>
+:root<JSFunction *, L>
 {
-	using handle = JS::HandleFunction;
-	using handle_mutable = JS::MutableHandleFunction;
-
 	operator JSObject *() const;
-	explicit operator script() const;
-	explicit operator string() const;
+	explicit operator script<L>() const;
+	explicit operator string<L>() const;
 
-	value operator()(const object &, const JS::HandleValueArray &args) const;
-	value operator()(const object &) const;
+	// js::value/js::object == lifetime::stack
+	js::value operator()(const js::object &, const JS::HandleValueArray &args) const;
+	js::value operator()(const js::object &) const;
 
 	// new function
 	function(JS::AutoObjectVector &stack,
@@ -50,88 +51,124 @@ struct function
 	         const std::vector<std::string> &args,
 	         const std::string &src);
 
-	explicit function(const value &);
+	using root<JSFunction *, L>::root;
+	explicit function(const value<L> &);
 	function(JSFunction *const &);
 	function(JSFunction &);
-	function();
-	function(function &&) noexcept;
-	function(const function &) = delete;
-	function &operator=(function &&) noexcept;
 };
 
-inline
-function::function()
-:JS::Rooted<JSFunction *>{*cx}
+} // namespace basic
+
+using function = basic::function<lifetime::stack>;
+using heap_function = basic::function<lifetime::heap>;
+
+//
+// Implementation
+//
+namespace basic {
+
+template<lifetime L>
+function<L>::function(JSFunction &func)
+:function<L>::root::type{&func}
 {
 }
 
-inline
-function::function(function &&other)
-noexcept
-:JS::Rooted<JSFunction *>{*cx, other}
+template<lifetime L>
+function<L>::function(JSFunction *const &func)
+:function<L>::root::type{func}
 {
-	other.set(nullptr);
-}
-
-inline function &
-function::operator=(function &&other)
-noexcept
-{
-	set(other.get());
-	other.set(nullptr);
-	return *this;
-}
-
-inline
-function::function(JSFunction &func)
-:JS::Rooted<JSFunction *>{*cx, &func}
-{
-}
-
-inline
-function::function(JSFunction *const &func)
-:JS::Rooted<JSFunction *>{*cx, func}
-{
-	if(unlikely(!get()))
+	if(unlikely(!this->get()))
 		throw internal_error("NULL function");
 }
 
-inline
-function::function(const value &val)
-:JS::Rooted<JSFunction *>
+template<lifetime L>
+function<L>::function(const value<L> &val)
+:function<L>::root::type
 {
-	*cx,
 	JS_ValueToFunction(*cx, val)
 }
 {
-	if(!get())
+	if(!this->get())
 		throw type_error("value is not a function");
 }
 
-inline
-function::operator string()
+template<lifetime L>
+function<L>::function(JS::AutoObjectVector &stack,
+                      const JS::CompileOptions &opts,
+                      const char *const &name,
+                      const std::vector<std::string> &args,
+                      const std::string &src)
+:function<L>::root::type{}
+{
+	std::vector<const char *> argp(args.size());
+	std::transform(begin(args), end(args), begin(argp), []
+	(const std::string &arg)
+	{
+		return arg.data();
+	});
+
+	if(!JS::CompileFunction(*cx,
+	                        stack,
+	                        opts,
+	                        name,
+	                        argp.size(),
+	                        &argp.front(),
+	                        src.data(),
+	                        src.size(),
+	                        &(*this)))
+	{
+		throw syntax_error("Failed to compile function");
+	}
+}
+
+template<lifetime L>
+js::value
+function<L>::operator()(const js::object &that)
+const
+{
+	return this->operator()(that, JS::HandleValueArray::empty());
+}
+
+template<lifetime L>
+js::value
+function<L>::operator()(const js::object &that,
+                        const JS::HandleValueArray &args)
+const
+{
+	js::value ret;
+	if(!JS_CallFunction(*cx, that, *this, args, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
+}
+
+
+template<lifetime L>
+function<L>::operator string<L>()
 const
 {
 	return decompile(*this, true);
 }
 
-inline
-function::operator script()
+template<lifetime L>
+function<L>::operator script<L>()
 const
 {
 	return JS_GetFunctionScript(*cx, *this);
 }
 
-inline
-function::operator JSObject *()
+template<lifetime L>
+function<L>::operator JSObject *()
 const
 {
-	const auto ret(JS_GetFunctionObject(get()));
+	const auto ret(JS_GetFunctionObject(this->get()));
 	if(unlikely(!ret))
 		throw type_error("function cannot cast to Object");
 
 	return ret;
 }
+
+} // namespace basic
 
 inline uint16_t
 arity(const JSFunction &f)

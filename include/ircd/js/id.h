@@ -22,133 +22,125 @@
 #pragma once
 #define HAVE_IRCD_JS_ID_H
 
-namespace ircd {
-namespace js   {
+namespace ircd  {
+namespace js    {
+namespace basic {
 
+template<lifetime L>
 struct id
-:JS::Rooted<jsid>
+:root<jsid, L>
 {
-	using handle = JS::HandleId;
-	using handle_mutable = JS::MutableHandleId;
-
-	explicit id(const char *const &);         // creates new id (permanent)
-	explicit id(const std::string &);         // creates new id (permanent)
-	id(const string::handle &);
-	id(const value::handle &);
+	using root<jsid, L>::root;
+	explicit id(const char *const &);  // creates new id
+	explicit id(const std::string &);  // creates new id
+	id(const typename string<L>::handle &);
+	id(const typename value<L>::handle &);
 	id(const JSProtoKey &);
 	id(const uint32_t &);
-	id(const handle_mutable &);
-	id(const handle &);
 	id(const jsid &);
 	id();
-	id(id &&) noexcept;
-	id(const id &) = delete;
-
-	friend bool operator==(const id &, const char *const &);
-	friend bool operator==(const id &, const std::string &);
-	friend bool operator==(const char *const &, const id &);
-	friend bool operator==(const std::string &, const id &);
 };
 
-inline
-id::id()
-:JS::Rooted<jsid>{*cx}
+template<lifetime L> bool operator==(const id<L> &, const char *const &);
+template<lifetime L> bool operator==(const id<L> &, const std::string &);
+template<lifetime L> bool operator==(const char *const &, const id<L> &);
+template<lifetime L> bool operator==(const std::string &, const id<L> &);
+
+} // namespace basic
+
+using id = basic::id<lifetime::stack>;
+using heap_id = basic::id<lifetime::heap>;
+
+//
+// Implementation
+//
+namespace basic {
+
+template<lifetime L>
+id<L>::id()
+:id<L>::root::type{}
 {
 }
 
-inline
-id::id(id &&other)
-noexcept
-:JS::Rooted<jsid>{*cx, other}
+template<lifetime L>
+id<L>::id(const jsid &i)
+:id<L>::root::type{i}
 {
 }
 
-inline
-id::id(const jsid &i)
-:JS::Rooted<jsid>{*cx, i}
-{
-}
-
-inline
-id::id(const handle &h)
-:JS::Rooted<jsid>{*cx, h}
-{
-}
-
-inline
-id::id(const handle_mutable &h)
-:JS::Rooted<jsid>{*cx, h}
-{
-}
-
-inline
-id::id(const uint32_t &index)
-:JS::Rooted<jsid>{*cx}
+template<lifetime L>
+id<L>::id(const uint32_t &index)
+:id<L>::root::type{}
 {
 	if(!JS_IndexToId(*cx, index, &(*this)))
 		throw type_error("Failed to construct id from uint32_t index");
 }
 
-inline
-id::id(const JSProtoKey &key)
-:JS::Rooted<jsid>{*cx}
+template<lifetime L>
+id<L>::id(const JSProtoKey &key)
+:id<L>::root::type{}
 {
 	JS::ProtoKeyToId(*cx, key, &(*this));
 }
 
-inline
-id::id(const value::handle &h)
-:JS::Rooted<jsid>{*cx}
+template<lifetime L>
+id<L>::id(const std::string &str)
+:id(str.c_str())
+{
+}
+
+template<lifetime L>
+id<L>::id(const char *const &str)
+:id<L>::root::type{jsid()}
+{
+	if(!JS::PropertySpecNameToPermanentId(*cx, str, this->address()))
+		throw type_error("Failed to create id from native string");
+}
+
+template<lifetime L>
+id<L>::id(const typename value<L>::handle &h)
+:id<L>::root::type{}
 {
 	if(!JS_ValueToId(*cx, h, &(*this)))
 		throw type_error("Failed to construct id from Value");
 }
 
-inline
-id::id(const string::handle &h)
-:JS::Rooted<jsid>{*cx}
+template<lifetime L>
+id<L>::id(const typename string<L>::handle &h)
+:id<L>::root::type{}
 {
 	if(!JS_StringToId(*cx, h, &(*this)))
 		throw type_error("Failed to construct id from String");
 }
 
-inline
-id::id(const std::string &str)
-:id(str.c_str())
-{
-}
-
-inline
-id::id(const char *const &str)
-:JS::Rooted<jsid>{*cx, jsid()}
-{
-	if(!JS::PropertySpecNameToPermanentId(*cx, str, address()))
-		throw type_error("Failed to create id from native string");
-}
-
-inline bool
-operator==(const std::string &a, const id &b)
+template<lifetime L>
+bool
+operator==(const std::string &a, const id<L> &b)
 {
 	return operator==(a.c_str(), b);
 }
 
-inline bool
-operator==(const char *const &a, const id &b)
+template<lifetime L>
+bool
+operator==(const char *const &a, const id<L> &b)
 {
 	return JS::PropertySpecNameEqualsId(a, b);
 }
 
-inline bool
-operator==(const id &a, const std::string &b)
+template<lifetime L>
+bool
+operator==(const id<L> &a, const std::string &b)
 {
 	return operator==(a, b.c_str());
 }
 
-inline bool
-operator==(const id &a, const char *const &b)
+template<lifetime L>
+bool
+operator==(const id<L> &a, const char *const &b)
 {
 	return JS::PropertySpecNameEqualsId(b, a);
 }
 
+} // namespace basic
 } // namespace js
 } // namespace ircd

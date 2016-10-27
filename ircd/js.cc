@@ -852,36 +852,6 @@ ircd::js::trap::on_call(object::handle,
 // ircd/js/script.h
 //
 
-ircd::js::script::script(const JS::CompileOptions &opts,
-                         const std::string &src)
-:JS::Rooted<JSScript *>{*cx}
-{
-	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
-		throw syntax_error("Failed to compile script");
-}
-
-ircd::js::value
-ircd::js::script::operator()()
-const
-{
-	value ret;
-	if(!JS_ExecuteScript(*cx, *this, &ret))
-		throw jserror(jserror::pending);
-
-	return ret;
-}
-
-ircd::js::value
-ircd::js::script::operator()(JS::AutoObjectVector &stack)
-const
-{
-	value ret;
-	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
-		throw jserror(jserror::pending);
-
-	return ret;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/function_literal.h
@@ -890,7 +860,7 @@ const
 ircd::js::function_literal::function_literal(const char *const &name,
                                              const std::initializer_list<const char *> &prototype,
                                              const char *const &text)
-:JS::PersistentRooted<JSFunction *>{*cx}
+:root<JSFunction *, lifetime::persist>{}
 ,name{name}
 ,text{text}
 ,prototype{prototype}
@@ -913,10 +883,9 @@ ircd::js::function_literal::function_literal(const char *const &name,
 
 ircd::js::function_literal::function_literal(function_literal &&other)
 noexcept
-:JS::PersistentRooted<JSFunction *>
+:root<JSFunction *, lifetime::persist>
 {
-	*cx,
-	other
+	std::move(other)
 }
 ,name{std::move(other.name)}
 ,text{std::move(other.text)}
@@ -928,53 +897,6 @@ noexcept
 //
 // ircd/js/function.h
 //
-
-ircd::js::function::function(JS::AutoObjectVector &stack,
-                             const JS::CompileOptions &opts,
-                             const char *const &name,
-                             const std::vector<std::string> &args,
-                             const std::string &src)
-:JS::Rooted<JSFunction *>{*cx}
-{
-	std::vector<const char *> argp(args.size());
-	std::transform(begin(args), end(args), begin(argp), []
-	(const std::string &arg)
-	{
-		return arg.data();
-	});
-
-	if(!JS::CompileFunction(*cx,
-	                        stack,
-	                        opts,
-	                        name,
-	                        argp.size(),
-	                        &argp.front(),
-	                        src.data(),
-	                        src.size(),
-	                        &(*this)))
-	{
-		throw syntax_error("Failed to compile function");
-	}
-}
-
-ircd::js::value
-ircd::js::function::operator()(const object &that)
-const
-{
-	return operator()(that, JS::HandleValueArray::empty());
-}
-
-ircd::js::value
-ircd::js::function::operator()(const object &that,
-                               const JS::HandleValueArray &args)
-const
-{
-	value ret;
-	if(!JS_CallFunction(*cx, that, *this, args, &ret))
-		throw jserror(jserror::pending);
-
-	return ret;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1206,21 +1128,15 @@ ircd::js::has(const object::handle &obj,
 // ircd/js/string.h
 //
 
-const size_t ircd::js::string::CBUFSZ
+char *
+ircd::js::c_str(const JSString *const &str)
 {
-	1024
-};
-
-const char *
-ircd::js::string::c_str()
-const
-{
-	static thread_local char cbuf[CBUFS][CBUFSZ];
+	static thread_local char cbuf[CSTR_BUFS][CSTR_BUFSIZE];
 	static thread_local size_t ctr;
 
 	char *const buf(cbuf[ctr]);
-	native(get(), buf, CBUFSZ);
-	ctr = (ctr + 1) % CBUFS;
+	native(str, buf, CSTR_BUFSIZE);
+	ctr = (ctr + 1) % CSTR_BUFS;
 	return buf;
 }
 

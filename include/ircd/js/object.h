@@ -22,14 +22,16 @@
 #pragma once
 #define HAVE_IRCD_JS_OBJECT_H
 
-namespace ircd {
-namespace js   {
+namespace ircd  {
+namespace js    {
+namespace basic {
 
+template<lifetime L>
 struct object
-:JS::Rooted<JSObject *>
+:root<JSObject *, L>
 {
-	using handle = JS::HandleObject;
-	using handle_mutable = JS::MutableHandleObject;
+	using handle = typename root<JSObject *, L>::handle;
+	using handle_mutable = typename root<JSObject *, L>::handle_mutable;
 
 	operator JS::Value() const;
 
@@ -39,116 +41,110 @@ struct object
 	object(const JSClass *const &, const object &proto);
 	object(const JSClass *const &);
 
-	object(const object::handle_mutable &h): object{h.get()} {}
-	object(const object::handle &h): object{h.get()} {}
-	explicit object(const value &);
+	template<class T, lifetime LL> object(const root<T, LL> &);
+	using root<JSObject *, L>::root;
+	object(const value<L> &);
 	object(JSObject *const &);
 	object(JSObject &);
 	object();
-	object(object &&) noexcept;
-	object(const object &) = delete;
-	object &operator=(object &&) noexcept;
 };
 
-inline
-object::object()
-:JS::Rooted<JSObject *>
+} // namespace basic
+
+using object = basic::object<lifetime::stack>;
+using heap_object = basic::object<lifetime::heap>;
+
+//
+// Implementation
+//
+namespace basic {
+
+template<lifetime L>
+object<L>::object()
+:object<L>::root::type
 {
-	*cx,
 	JS_NewPlainObject(*cx)
 }
 {
 }
 
-inline
-object::object(object &&other)
-noexcept
-:JS::Rooted<JSObject *>{*cx, other}
-{
-	other.set(nullptr);
-}
-
-inline object &
-object::operator=(object &&other)
-noexcept
-{
-	set(other.get());
-	other.set(nullptr);
-	return *this;
-}
-
-inline
-object::object(JSObject &obj)
-:JS::Rooted<JSObject *>{*cx, &obj}
+template<lifetime L>
+object<L>::object(JSObject &obj)
+:object<L>::root::type{&obj}
 {
 }
 
-inline
-object::object(JSObject *const &obj)
-:JS::Rooted<JSObject *>{*cx, obj}
+template<lifetime L>
+object<L>::object(JSObject *const &obj)
+:object<L>::root::type{obj}
 {
-	if(unlikely(!get()))
+	if(unlikely(!this->get()))
 		throw internal_error("NULL object");
 }
 
-inline
-object::object(const value &val)
-:JS::Rooted<JSObject *>{*cx}
+template<lifetime L>
+object<L>::object(const value<L> &val)
+:object<L>::root::type{}
 {
 	if(!JS_ValueToObject(*cx, val, &(*this)))
 		throw type_error("Value is not an Object");
 }
 
-inline
-object::object(const JSClass *const &clasp)
-:JS::Rooted<JSObject *>
+template<lifetime L>
+template<class T,
+         lifetime LL>
+object<L>::object(const root<T, LL> &o)
+:object{o.get()}
 {
-	*cx,
+}
+
+template<lifetime L>
+object<L>::object(const JSClass *const &clasp)
+:object<L>::root::type
+{
 	JS_NewObject(*cx, clasp)
 }
 {
 }
 
-inline
-object::object(const JSClass *const &clasp,
-               const object &proto)
-:JS::Rooted<JSObject *>
+template<lifetime L>
+object<L>::object(const JSClass *const &clasp,
+                  const object &proto)
+:object<L>::root::type
 {
-	*cx,
 	JS_NewObjectWithGivenProto(*cx, clasp, proto)
 }
 {
 }
 
-inline
-object::object(const JSClass *const &clasp,
-               const JS::CallArgs &args)
-:JS::Rooted<JSObject *>
+template<lifetime L>
+object<L>::object(const JSClass *const &clasp,
+                  const JS::CallArgs &args)
+:object<L>::root::type
 {
-	*cx,
 	JS_NewObjectForConstructor(*cx, clasp, args)
 }
 {
 }
 
-inline
-object::object(const JSClass *const &clasp,
-               const object::handle &ctor,
-               const JS::HandleValueArray &args)
-:JS::Rooted<JSObject *>
+template<lifetime L>
+object<L>::object(const JSClass *const &clasp,
+                  const object::handle &ctor,
+                  const JS::HandleValueArray &args)
+:object<L>::root::type
 {
-	*cx,
 	JS_New(*cx, ctor, args)
 }
 {
 }
 
-inline
-object::operator JS::Value()
+template<lifetime L>
+object<L>::operator JS::Value()
 const
 {
-	return get()? JS::ObjectValue(*get()) : JS::NullValue();
+	return this->get()? JS::ObjectValue(*this->get()) : JS::NullValue();
 }
 
+} // namespace basic
 } // namespace js
 } // namespace ircd
