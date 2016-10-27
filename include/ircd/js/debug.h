@@ -25,6 +25,7 @@
 namespace ircd {
 namespace js   {
 
+// Returns static string
 const char *reflect(const JSType &);
 const char *reflect(const JSExnType &);
 const char *reflect(const JSGCStatus &);
@@ -33,10 +34,25 @@ const char *reflect(const JSFinalizeStatus &);
 const char *reflect(const JSContextOp &);
 const char *reflect_telemetry(const int &id);
 
+// Returns single-line string
 std::string debug(const JS::Value &);
 std::string debug(const JS::HandleObject &);
 std::string debug(const JSErrorReport &);
-void debug_log_gcparams();
+
+// prints to IRCd stdout
+void dump(const JSString *const &v);
+void dump(const JSAtom *const &v);
+void dump(const JSObject *const &v);
+void dump(const JS::Value &v);
+void dump(const jsid &v);
+void dump(const JSContext *v);
+void dump(const JSScript *const &v);
+void dump(const char16_t *const &v, const size_t &len);
+void dump(const ::js::InterpreterFrame *v);
+void backtrace();
+
+// writes lines to ircd::js::log
+void log_gcparams();
 
 } // namespace js
 } // namespace ircd

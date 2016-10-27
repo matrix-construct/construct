@@ -39,6 +39,11 @@
 #include <jsapi.h>
 #include <js/Conversions.h>
 
+// Some forward declarations for jsapi items not declared in the above includes,
+// but visible to definition files making use of additional jsapi interfaces.
+struct JSAtom;
+namespace js {  struct InterpreterFrame;  }
+
 namespace ircd {
 namespace js   {
 

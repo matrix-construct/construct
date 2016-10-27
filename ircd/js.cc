@@ -1466,7 +1466,7 @@ ircd::js::jserror::create(JSErrorReport &report)
 //
 
 void
-ircd::js::debug_log_gcparams()
+ircd::js::log_gcparams()
 {
 	for(int i(0); i < 50; ++i)
 	{
@@ -1492,6 +1492,86 @@ ircd::js::debug_log_gcparams()
 		          name,
 		          get(*cx, key));
 	}
+}
+
+void
+ircd::js::backtrace()
+{
+	#ifdef JS_DEBUG
+	::js::DumpBacktrace(*cx);
+	#endif
+}
+
+void
+ircd::js::dump(const JSString *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpString(const_cast<JSString *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSAtom *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpAtom(const_cast<JSAtom *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSObject *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpObject(const_cast<JSObject *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JS::Value &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpValue(v);
+	#endif
+}
+
+void
+ircd::js::dump(const jsid &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpId(v);
+	#endif
+}
+
+void
+ircd::js::dump(const JSContext *v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpPC(const_cast<JSContext *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSScript *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpScript(*cx, const_cast<JSScript *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const char16_t *const &v, const size_t &len)
+{
+	#ifdef JS_DEBUG
+	::js::DumpChars(v, len);
+	#endif
+}
+
+void
+ircd::js::dump(const ::js::InterpreterFrame *v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpInterpreterFrame(*cx, const_cast<::js::InterpreterFrame *>(v));
+	#endif
 }
 
 std::string
