@@ -30,7 +30,7 @@ struct jserror
 {
 	IRCD_OVERLOAD(pending)
 
-	JS::PersistentRootedValue val;
+	JS::Heap<JS::Value> val;
 
 	void create(JSErrorReport &);
 	void create(const JSErrorReport &);

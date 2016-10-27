@@ -1226,20 +1226,20 @@ ircd::js::native_external_noop(const JSStringFinalizer *const fin,
 
 ircd::js::jserror::jserror(const JS::Value &val)
 :ircd::js::error{generate_skip}
-,val{*cx, val}
+,val{val}
 {
 }
 
 ircd::js::jserror::jserror(generate_skip_t)
 :ircd::js::error(generate_skip)
-,val{*cx}
+,val{}
 {
 }
 
 ircd::js::jserror::jserror(const char *const fmt,
                            ...)
 :ircd::js::error{generate_skip}
-,val{*cx}
+,val{}
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -1249,14 +1249,14 @@ ircd::js::jserror::jserror(const char *const fmt,
 
 ircd::js::jserror::jserror(const JSErrorReport &report)
 :ircd::js::error{generate_skip}
-,val{*cx}
+,val{}
 {
 	create(report);
 }
 
 ircd::js::jserror::jserror(pending_t)
 :ircd::js::error{generate_skip}
-,val{*cx}
+,val{}
 {
 	if(unlikely(!restore_exception(*cx)))
 	{
@@ -1265,9 +1265,11 @@ ircd::js::jserror::jserror(pending_t)
 		return;
 	}
 
+	value val;
 	auto &report(cx->report);
 	if(JS_GetPendingException(*cx, &val))
 	{
+		this->val = JS::Heap<JS::Value>(val.get());
 		JS::RootedObject obj(*cx, &val.toObject());
 		if(likely(JS_ErrorFromException(*cx, obj)))
 			report = *JS_ErrorFromException(*cx, obj);
@@ -1315,7 +1317,7 @@ void
 ircd::js::jserror::set_pending()
 const
 {
-	JS_SetPendingException(*cx, val);
+	JS_SetPendingException(*cx, value(val));
 }
 
 void
@@ -1360,6 +1362,7 @@ ircd::js::jserror::create(JSErrorReport &report)
 		JS_NewStringCopyZ(*cx, fn.get()?: "<unknown>")
 	};
 
+	value val;
 	JS::RootedObject stack(*cx, nullptr);
 	const auto type((JSExnType)report.exnType);
 	if(!JS::CreateError(*cx,
@@ -1374,6 +1377,8 @@ ircd::js::jserror::create(JSErrorReport &report)
 	{
 		throw error("Failed to construct jserror exception!");
 	}
+
+	this->val = JS::Heap<JS::Value>(val.get());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
