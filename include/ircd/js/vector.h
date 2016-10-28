@@ -68,15 +68,17 @@ struct vector<value>
 		handle(): JS::HandleValueArray{JS::HandleValueArray::empty()} {}
 	};
 
+	/*
 	// Construct vector from initializer list of raw `JS::Value`
 	// ex: JS::Value a; vector foo {{ a, a, ... }};
-	vector(const std::initializer_list<jsapi_type> &list)
+	explicit vector(const std::initializer_list<jsapi_type> &list)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
 		reserve(list.size());
 		for(auto &t : list)
 			infallibleAppend(t);
 	}
+	*/
 
 	// Construct from initializer list of our `struct value` wrapper
 	// ex: value a(1); vector foo {{ a, a, ... }};
@@ -85,7 +87,7 @@ struct vector<value>
 	{
 		reserve(list.size());
 		for(auto &t : list)
-			infallibleAppend(t.get());
+			infallibleAppend(t);
 	}
 
 	// Construct from initializer list of any type passed through `struct value` ctor
