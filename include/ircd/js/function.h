@@ -41,8 +41,8 @@ struct function
 	explicit operator string<L>() const;
 
 	// js::value/js::object == lifetime::stack
-	js::value operator()(const js::object &, const JS::HandleValueArray &args) const;
-	js::value operator()(const js::object &) const;
+	js::value operator()(const js::object &, const vector<js::value>::handle &args = {}) const;
+	template<class... args> js::value operator()(const js::object &, args&&...) const;
 
 	// new function
 	function(JS::AutoObjectVector &stack,
@@ -122,26 +122,28 @@ function<L>::function(JS::AutoObjectVector &stack,
 }
 
 template<lifetime L>
+template<class... args>
 js::value
-function<L>::operator()(const js::object &that)
+function<L>::operator()(const js::object &that,
+                        args&&... a)
 const
 {
-	return this->operator()(that, JS::HandleValueArray::empty());
+	vector<basic::value<lifetime::stack>> v
+	{{
+		std::forward<args>(a)...
+	}};
+
+	return call(that, *this, decltype(v)::handle(v));
 }
 
 template<lifetime L>
 js::value
 function<L>::operator()(const js::object &that,
-                        const JS::HandleValueArray &args)
+                        const vector<js::value>::handle &args)
 const
 {
-	js::value ret;
-	if(!JS_CallFunction(*cx, that, *this, args, &ret))
-		throw jserror(jserror::pending);
-
-	return ret;
+	return call(that, *this, args);
 }
-
 
 template<lifetime L>
 function<L>::operator string<L>()
