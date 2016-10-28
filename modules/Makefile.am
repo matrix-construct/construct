@@ -36,6 +36,10 @@ conf_module_LTLIBRARIES =     \
 	conf/conf_serverinfo.la   \
 	conf/conf_listen.la
 
+dns_moduledir=@moduledir@
+dns_module_LTLIBRARIES = dns/dns.la
+dns_dns_la_SOURCES  = dns/dns.cc \
+                      dns/lookup.cc
 
 moduledir=@moduledir@
 future_la_SOURCES = future.cc
