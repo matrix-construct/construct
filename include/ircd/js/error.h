@@ -32,6 +32,9 @@ struct jserror
 
 	JS::Heap<JS::Value> val;
 
+	void generate_what_js(const JSErrorReport &report);
+	void generate_what_our(const JSErrorReport &report);
+
 	void create(JSErrorReport &);
 	void create(const JSErrorReport &);
 	void generate(const JSExnType &type, const char *const &fmt, va_list ap);

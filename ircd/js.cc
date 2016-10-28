@@ -1265,27 +1265,14 @@ ircd::js::jserror::jserror(pending_t)
 		return;
 	}
 
-	value val;
 	auto &report(cx->report);
 	if(JS_GetPendingException(*cx, &val))
 	{
-		this->val = JS::Heap<JS::Value>(val.get());
 		JS::RootedObject obj(*cx, &val.toObject());
 		if(likely(JS_ErrorFromException(*cx, obj)))
 			report = *JS_ErrorFromException(*cx, obj);
 
-		char linebuf[64];
-		snprintf(linebuf, sizeof(linebuf), "@%u+%u: ",
-		         report.lineno,
-		         report.column);
-
-		const auto msg(report.ucmessage? locale::convert(report.ucmessage) : std::string{});
-		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
-		         reflect((JSExnType)report.exnType),
-		         msg.empty()? "." : ": ",
-		         msg.empty()? "" : linebuf,
-		         msg.c_str());
-
+		generate_what_our(report);
 		JS_ClearPendingException(*cx);
 		return;
 	}
@@ -1362,7 +1349,6 @@ ircd::js::jserror::create(JSErrorReport &report)
 		JS_NewStringCopyZ(*cx, fn.get()?: "<unknown>")
 	};
 
-	value val;
 	JS::RootedObject stack(*cx, nullptr);
 	const auto type((JSExnType)report.exnType);
 	if(!JS::CreateError(*cx,
@@ -1378,7 +1364,30 @@ ircd::js::jserror::create(JSErrorReport &report)
 		throw error("Failed to construct jserror exception!");
 	}
 
-	this->val = JS::Heap<JS::Value>(val.get());
+	generate_what_our(report);
+}
+
+void
+ircd::js::jserror::generate_what_our(const JSErrorReport &report)
+{
+	char linebuf[64];
+	snprintf(linebuf, sizeof(linebuf), "@%u+%u: ",
+	         report.lineno,
+	         report.column);
+
+	const auto msg(report.ucmessage? locale::convert(report.ucmessage) : std::string{});
+	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
+	         reflect((JSExnType)report.exnType),
+	         msg.empty()? "." : ": ",
+	         msg.empty()? "" : !report.lineno && !report.column? "" : linebuf,
+	         msg.c_str());
+}
+
+void
+ircd::js::jserror::generate_what_js(const JSErrorReport &report)
+{
+	const auto str(native(::js::ErrorReportToString(*cx, const_cast<JSErrorReport *>(&report))));
+	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s", str.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2462,11 +2471,12 @@ noexcept
 {
 	assert(report);
 /*
-	log.debug("JSContext(%p) Error report: %s | %s",
+	log.debug("JSContext(%p) Error report: %s [%s]",
 	          (const void *)ctx,
 	          msg,
 	          debug(*report).c_str());
-
+*/
+/*
 	log.critical("Unhandled: JSContext(%p): %s [%s]",
 	             (const void *)ctx,
 	             msg,
