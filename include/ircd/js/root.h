@@ -93,6 +93,23 @@ struct root<T, lifetime::stack>
 	root &operator=(const root &) = delete;
 };
 
+// This conversion is missing in the jsapi. Is this object not gc rooted? Can it not have a handle?
+template<class T>
+JS::Handle<T>
+operator&(const JS::Heap<T> &h)
+{
+	return JS::Handle<T>::fromMarkedLocation(h.address());
+}
+
+// This conversion is missing in the jsapi. Is this object not gc rooted? Can it not have a handle?
+template<class T>
+JS::MutableHandle<T>
+operator&(JS::Heap<T> &h)
+{
+	const auto ptr(const_cast<T *>(h.address()));
+	return JS::MutableHandle<T>::fromMarkedLocation(ptr);
+}
+
 template<class T>
 struct root<T, lifetime::heap>
 :JS::Heap<T>
@@ -110,16 +127,6 @@ struct root<T, lifetime::heap>
 	{
 		const auto ptr(const_cast<T *>(this->address()));
 		return JS::MutableHandle<T>::fromMarkedLocation(ptr);
-	}
-
-	auto operator&() const
-	{
-		return static_cast<handle>(*this);
-	}
-
-	auto operator&()
-	{
-		return static_cast<handle_mutable>(*this);
 	}
 
 	root(const handle &h)
@@ -153,6 +160,23 @@ struct root<T, lifetime::heap>
 	root &operator=(root &&) = default;
 	root &operator=(const root &) = default;
 };
+
+// This conversion is missing in the jsapi. Is this object not gc rooted? Can it not have a handle?
+template<class T>
+JS::Handle<T>
+operator&(const JS::TenuredHeap<T> &h)
+{
+	return JS::Handle<T>::fromMarkedLocation(h.address());
+}
+
+// This conversion is missing in the jsapi. Is this object not gc rooted? Can it not have a handle?
+template<class T>
+JS::MutableHandle<T>
+operator&(JS::TenuredHeap<T> &h)
+{
+	const auto ptr(const_cast<T *>(h.address()));
+	return JS::MutableHandle<T>::fromMarkedLocation(ptr);
+}
 
 template<class T>
 struct root<T, lifetime::tenured>
