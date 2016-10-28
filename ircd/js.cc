@@ -1103,7 +1103,10 @@ ircd::js::has(const object::handle &src,
 
 		value tmp;
 		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
-			throw internal_error("%s", part);
+		{
+			ret = false;
+			return;
+		}
 
 		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
 			fail = part;
