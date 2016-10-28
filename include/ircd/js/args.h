@@ -28,6 +28,10 @@ namespace js   {
 struct args
 :JS::CallArgs
 {
+	bool empty() const                           { return length() == 0;                           }
+	size_t size() const                          { return length();                                }
+	bool has(const size_t &at) const             { return size() > at;                             }
+
 	value operator[](const size_t &at) const;
 
 	args(const unsigned &argc, JS::Value *const &argv);
