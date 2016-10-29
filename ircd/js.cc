@@ -1790,7 +1790,7 @@ ircd::js::compartment::compartment(JSObject *const &obj,
                                    context &c)
 :c{&c}
 ,prev{JS_EnterCompartment(c, obj)}
-,ours{::js::GetContextCompartment(c)}
+,ours{current_compartment(c)}
 ,cprev{static_cast<compartment *>(JS_GetCompartmentPrivate(ours))}
 {
 	JS_SetCompartmentPrivate(ours, this);
@@ -2112,6 +2112,18 @@ ircd::js::set(context &c,
 {
 	//JS_SetGCParameterForThread(c, key, val);         // broken
 	JS_SetGCParameter(c.runtime(), key, val);
+}
+
+JSCompartment *
+ircd::js::current_compartment()
+{
+	return current_compartment(*cx);
+}
+
+JSCompartment *
+ircd::js::current_compartment(context &c)
+{
+	return ::js::GetContextCompartment(c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

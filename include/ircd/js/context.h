@@ -113,6 +113,8 @@ void priv(context &, privdata *const &);
 // Misc
 inline auto running(const context &c)            { return JS_IsRunning(c);                         }
 inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
+JSCompartment *current_compartment(context &);
+JSCompartment *current_compartment();
 JSObject *current_global(context &c);
 JSObject *current_global();                      // thread_local
 
