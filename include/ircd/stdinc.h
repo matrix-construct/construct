@@ -48,6 +48,7 @@ namespace ircd
 	using std::chrono::seconds;
 	using std::chrono::milliseconds;
 	using std::chrono::microseconds;
+	using std::chrono::nanoseconds;
 	using std::chrono::duration_cast;
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;

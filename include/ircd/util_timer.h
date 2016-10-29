@@ -32,11 +32,12 @@ struct timer
 {
 	using clock = std::chrono::steady_clock;
 
+	nanoseconds accumulator;
 	clock::time_point start;
-	clock::time_point stop;
 
 	template<class duration = std::chrono::seconds> duration get() const;
-	template<class duration = std::chrono::seconds> duration mark();
+	void cont();
+	void stop();
 
 	timer(const std::function<void ()> &);
 	timer();
@@ -44,8 +45,8 @@ struct timer
 
 inline
 timer::timer()
-:start{clock::now()}
-,stop{clock::time_point::min()}
+:accumulator{0ns}
+,start{clock::now()}
 {
 }
 
@@ -54,15 +55,30 @@ timer::timer(const std::function<void ()> &func)
 :timer{}
 {
 	func();
-	mark();
+	stop();
 }
 
-template<class duration>
-duration
-timer::mark()
+inline void
+timer::stop()
 {
-	stop = clock::now();
-	return std::chrono::duration_cast<duration>(stop - start);
+	const auto now(clock::now());
+	if(start == clock::time_point::min())
+		return;
+
+	accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
+	start = clock::time_point::min();
+}
+
+inline void
+timer::cont()
+{
+	if(start != clock::time_point::min())
+	{
+		const auto now(clock::now());
+		accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
+	}
+
+	start = clock::now();
 }
 
 template<class duration>
@@ -70,9 +86,7 @@ duration
 timer::get()
 const
 {
-	static const auto min(clock::time_point::min());
-	const clock::time_point stop(this->stop != min? this->stop : clock::now());
-	return std::chrono::duration_cast<duration>(stop - start);
+	return std::chrono::duration_cast<duration>(accumulator);
 }
 
 }        // namespace util
