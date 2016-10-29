@@ -360,9 +360,14 @@ noexcept
 {
 	del_this();
 
+	assert(_class->reserved[0] == this);
+	//_class->reserved[0] = nullptr;
+	//_class->trace = nullptr;
+	memset(_class.get(), 0x0, sizeof(JSClass));
+
 	// Must run GC here to force reclamation of objects before
 	// the JSClass hosted by this trap destructs.
-	run_gc(*rt);
+	//run_gc(*rt);
 }
 
 void
@@ -450,7 +455,7 @@ ircd::js::trap &
 ircd::js::trap::find(const std::string &path)
 {
 	if(unlikely(!tree))
-		throw internal_error("Failed to find trap tree root");
+		throw error("Failed to find trap tree root");
 
 	trap *ret(tree);
 	const auto parts(tokens(path, "."));
@@ -808,10 +813,16 @@ ircd::js::trap::from(const JSObject &o)
 {
 	auto *const c(JS_GetClass(const_cast<JSObject *>(&o)));
 	if(!c)
+	{
+		log.critical("trap::from(): Trapped on an object without a JSClass!");
 		std::terminate(); //TODO: exception
+	}
 
 	if(!c->reserved[0])
+	{
+		log.critical("trap::from(): Trap called on a trap instance that has gone out of scope!");
 		std::terminate(); //TODO: exception
+	}
 
 	return *static_cast<trap *>(c->reserved[0]);  //TODO: ???
 }
@@ -878,7 +889,7 @@ bool
 ircd::js::trap::on_has(object::handle,
                        id::handle)
 {
-	return false;
+	return true;
 }
 
 bool
