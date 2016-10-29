@@ -38,9 +38,7 @@ struct log::log log
 // If these are null, js is not available on your thread.
 __thread runtime *rt;
 __thread context *cx;
-
-// Location of the main JSRuntime and JSContext instances.
-trap *main_global;
+__thread trap *tree;
 
 // Internal prototypes
 void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
@@ -85,7 +83,7 @@ ircd::js::init::init()
 	         version(*cx));
 
 	{
-		// main_global is registered by the kernel module's trap
+		// tree is registered by the kernel module's trap
 		const std::lock_guard<context> lock{*cx};
 		ircd::mods::load("kernel");
 	}
@@ -300,7 +298,7 @@ try
 {
 	if(name().empty())
 	{
-		main_global = nullptr;
+		tree = nullptr;
 		return;
 	}
 
@@ -327,10 +325,10 @@ try
 {
 	if(name().empty())
 	{
-		if(main_global)
-			throw error("ircd::js::main_global is already active. Won't overwrite.");
+		if(tree)
+			throw error("ircd::js::tree is already active. Won't overwrite.");
 
-		main_global = this;
+		tree = this;
 		return;
 	}
 
@@ -378,10 +376,10 @@ ircd::js::trap::operator()(const object &parent,
 ircd::js::trap &
 ircd::js::trap::find(const std::string &path)
 {
-	if(unlikely(!main_global))
+	if(unlikely(!tree))
 		throw internal_error("Failed to find trap tree root");
 
-	trap *ret(main_global);
+	trap *ret(tree);
 	const auto parts(tokens(path, "."));
 	for(const auto &part : parts)
 		ret = &ret->child(part);

@@ -25,9 +25,6 @@
 namespace ircd {
 namespace js   {
 
-// A trap serving as the root of the tree registers here (extern js.cc)
-extern struct trap *main_global;
-
 class trap
 {
   protected:
@@ -92,6 +89,8 @@ class trap
 	trap(const trap &) = delete;
 	virtual ~trap() noexcept;
 };
+
+extern __thread trap *tree;
 
 } // namespace js
 } // namespace ircd
