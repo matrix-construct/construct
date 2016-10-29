@@ -49,10 +49,21 @@ struct object
 	object();
 };
 
+// Get the JSClass from which the trap can also be derived.
+template<lifetime L> const JSClass &jsclass(const object<L> &);
+
+// Private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
+template<class T, lifetime L> T &priv(const object<L> &);
+template<lifetime L> void priv(object<L> &, void *const &);
+template<lifetime L> void priv(object<L> &, const void *const &);
+
 } // namespace basic
 
 using object = basic::object<lifetime::stack>;
 using heap_object = basic::object<lifetime::heap>;
+using basic::priv;
+
+IRCD_STRONG_TYPEDEF(uint, reserved)
 
 //
 // Implementation
@@ -143,6 +154,46 @@ object<L>::operator JS::Value()
 const
 {
 	return this->get()? JS::ObjectValue(*this->get()) : JS::NullValue();
+}
+
+template<lifetime L>
+void
+priv(object<L> &obj,
+     const void *const &ptr)
+{
+	priv(obj, const_cast<void *>(ptr));
+}
+
+template<lifetime L>
+void
+priv(object<L> &obj,
+     void *const &ptr)
+{
+	JS_SetPrivate(obj, ptr);
+}
+
+template<class T,
+         lifetime L>
+T &
+priv(const object<L> &obj)
+{
+	const auto &jsc(jsclass(obj));
+	const auto ret(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
+	if(!ret)
+		throw error("Object has no private data");
+
+	return *reinterpret_cast<T *>(ret);
+}
+
+template<lifetime L>
+const JSClass &
+jsclass(const object<L> &obj)
+{
+	const auto jsc(JS_GetClass(obj));
+	if(unlikely(!jsc))
+		throw error("Object has no JSClass");
+
+	return *const_cast<JSClass *>(jsc);
 }
 
 } // namespace basic

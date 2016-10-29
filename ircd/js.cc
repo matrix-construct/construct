@@ -1042,6 +1042,14 @@ ircd::js::set(const object::handle &obj,
 		throw jserror(jserror::pending);
 }
 
+void
+ircd::js::set(const object::handle &obj,
+              const reserved &slot,
+              const value &val)
+{
+	JS_SetReservedSlot(obj, slot, val);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/get.h
@@ -1072,13 +1080,20 @@ ircd::js::get(const object::handle &src,
 
 ircd::js::value
 ircd::js::get(const object::handle &obj,
-              const id &id)
+              const id::handle &id)
 {
 	value ret;
 	if(!JS_GetPropertyById(*cx, obj, id, &ret) || undefined(ret))
 		throw reference_error("%s", string(id).c_str());
 
 	return ret;
+}
+
+ircd::js::value
+ircd::js::get(const object::handle &obj,
+              const reserved &slot)
+{
+	return JS_GetReservedSlot(obj, slot);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

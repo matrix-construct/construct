@@ -36,6 +36,8 @@ template<lifetime L>
 struct value
 :root<JS::Value, L>
 {
+	IRCD_OVERLOAD(pointer)
+
 	explicit operator std::string() const;
 	explicit operator double() const;
 	explicit operator uint64_t() const;
@@ -48,6 +50,7 @@ struct value
 	template<class T, lifetime LL> value(const root<T, LL> &r);
 	template<class T> value(const JS::MutableHandle<T> &h);
 	template<class T> value(const JS::Handle<T> &h);
+	value(pointer_t, void *const &);
 	value(const std::string &);
 	value(const char *const &);
 	value(const nullptr_t &);
@@ -186,6 +189,13 @@ value<L>::value(const char *const &s)
 	const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_delete));
 	return JS::StringValue(ret);
 }()}
+{
+}
+
+template<lifetime L>
+value<L>::value(pointer_t,
+                void *const &ptr)
+:value<L>::root::type{pointer_value(ptr)}
 {
 }
 

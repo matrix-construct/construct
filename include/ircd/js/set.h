@@ -25,6 +25,7 @@
 namespace ircd {
 namespace js   {
 
+void set(const object::handle &obj, const reserved &slot, const value &val);
 void set(const object::handle &obj, const id::handle &id, const value &val);
 void set(const object::handle &src, const char *const path, const value &val);
 
