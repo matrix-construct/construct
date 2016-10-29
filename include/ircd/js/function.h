@@ -45,11 +45,12 @@ struct function
 	template<class... args> js::value operator()(const js::object &, args&&...) const;
 
 	// new function
+	template<class string_t>
 	function(JS::AutoObjectVector &stack,
 	         const JS::CompileOptions &opts,
 	         const char *const &name,
-	         const std::vector<std::string> &args,
-	         const std::string &src);
+	         const std::vector<string_t> &args,
+	         const string_t &src);
 
 	using root<JSFunction *, L>::root;
 	explicit function(const value<L> &);
@@ -93,16 +94,17 @@ function<L>::function(const value<L> &val)
 }
 
 template<lifetime L>
+template<class string_t>
 function<L>::function(JS::AutoObjectVector &stack,
                       const JS::CompileOptions &opts,
                       const char *const &name,
-                      const std::vector<std::string> &args,
-                      const std::string &src)
+                      const std::vector<string_t> &args,
+                      const string_t &src)
 :function<L>::root::type{}
 {
-	std::vector<const char *> argp(args.size());
+	std::vector<const typename string_t::value_type *> argp(args.size());
 	std::transform(begin(args), end(args), begin(argp), []
-	(const std::string &arg)
+	(const string_t &arg)
 	{
 		return arg.data();
 	});
