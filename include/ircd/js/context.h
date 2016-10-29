@@ -88,7 +88,8 @@ struct context
 	void lock()                                  { JS_BeginRequest(get());                         }
 	void unlock()                                { JS_EndRequest(get());                           }
 
-	context(JSRuntime *const &, const struct opts &);
+	context(struct runtime &, const struct opts &);
+	context(const struct opts &);
 	context() = default;
 	context(context &&) = delete;
 	context(const context &) = delete;
@@ -133,6 +134,8 @@ bool interrupt(context &, const irq &);
 bool interrupt_poll(const context &c);
 
 // Execution
+void restore_frame_chain(context &);
+void save_frame_chain(context &);
 void enter(context &);  // throws if can't enter
 void leave(context &);  // must be called if enter() succeeds
 
@@ -152,6 +155,18 @@ run(F&& function)
 	});
 
 	return function();
+}
+
+inline void
+save_frame_chain(context &c)
+{
+	JS_SaveFrameChain(c);
+}
+
+inline void
+restore_frame_chain(context &c)
+{
+	JS_RestoreFrameChain(c);
 }
 
 inline bool

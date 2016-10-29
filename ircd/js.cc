@@ -40,9 +40,6 @@ __thread runtime *rt;
 __thread context *cx;
 
 // Location of the main JSRuntime and JSContext instances.
-std::thread::id main_thread_id;
-runtime *main_runtime;
-context *main_context;
 trap *main_global;
 
 // Internal prototypes
@@ -76,17 +73,20 @@ ircd::js::init::init()
 	struct runtime::opts runtime_opts;
 	struct context::opts context_opts;
 	log.info("Initializing the main JS Runtime (main_maxbytes: %zu)",
-	         runtime_opts.maxbytes);
+	         runtime_opts.max_bytes);
 
-	main_thread_id = std::this_thread::get_id();
-	main_runtime = new runtime(runtime_opts);
-	main_context = new context(*main_runtime, context_opts);
+	assert(!rt);
+	assert(!cx);
+
+	rt = new runtime(runtime_opts);
+	cx = new context(*rt, context_opts);
+
 	log.info("Initialized main JS Runtime and context (version: '%s')",
-	         version(*main_context));
+	         version(*cx));
 
 	{
 		// main_global is registered by the kernel module's trap
-		const std::lock_guard<context> lock{*main_context};
+		const std::lock_guard<context> lock{*cx};
 		ircd::mods::load("kernel");
 	}
 }
@@ -94,9 +94,9 @@ ircd::js::init::init()
 ircd::js::init::~init()
 noexcept
 {
-	if(main_context && !!*main_context) try
+	if(cx && !!*cx) try
 	{
-		const std::lock_guard<context> lock{*main_context};
+		const std::lock_guard<context> lock{*cx};
 		ircd::mods::unload("kernel");
 	}
 	catch(const std::exception &e)
@@ -105,8 +105,9 @@ noexcept
 	}
 
 	log.info("Terminating the JS Main Runtime");
-	delete main_context;
-	delete main_runtime;
+
+	delete cx;  cx = nullptr;
+	delete rt;  rt = nullptr;
 
 	log.info("Terminating the JS Engine");
 	JS_ShutDown();
@@ -1851,7 +1852,12 @@ noexcept
 // ircd/js/context.h
 //
 
-ircd::js::context::context(JSRuntime *const &runtime,
+ircd::js::context::context(const struct opts &opts)
+:context{*rt, opts}
+{
+}
+
+ircd::js::context::context(struct runtime &runtime,
                            const struct opts &opts)
 :custom_ptr<JSContext>
 {
@@ -1863,9 +1869,6 @@ ircd::js::context::context(JSRuntime *const &runtime,
 		// Use their privdata pointer to point to our instance. We can then use our(JSContext*)
 		// to get back to `this` instance.
 		JS_SetContextPrivate(ret, this);
-
-		// Assign the thread_local here.
-		cx = this;
 
 		return ret;
 	}(),
@@ -1881,9 +1884,6 @@ ircd::js::context::context(JSRuntime *const &runtime,
 		delete static_cast<const privdata *>(JS_GetSecondContextPrivate(ctx));
 
 		JS_DestroyContext(ctx);
-
-		// Indicate to thread_local
-		cx = nullptr;
 	}
 }
 ,opts(opts)
@@ -1899,7 +1899,7 @@ ircd::js::context::context(JSRuntime *const &runtime,
 	std::bind(&context::handle_timeout, this)
 }
 {
-	assert(&our(runtime) == rt);  // Trying to construct on thread without runtime thread_local
+	assert(&runtime == rt);       // Trying to construct on thread without runtime thread_local
 	timer.set(opts.timer_limit);
 }
 
@@ -2274,20 +2274,21 @@ ircd::js::timer::handle(std::unique_lock<std::mutex> &lock)
 // ircd/js/runtime.h
 //
 
-ircd::js::runtime::runtime(const struct opts &opts)
+ircd::js::runtime::runtime(const struct opts &opts,
+                           runtime *const &parent)
 :custom_ptr<JSRuntime>
 {
-	JS_NewRuntime(opts.maxbytes),
+	JS_NewRuntime(opts.max_bytes,
+	              opts.max_nursery_bytes,
+	              parent? static_cast<JSRuntime *>(*parent) : nullptr),
 	JS_DestroyRuntime
 }
 ,opts(opts)
+,tid{std::this_thread::get_id()}
 {
 	// We use their privdata to find `this` via our(JSRuntime*) function.
 	// Any additional user privdata will have to ride a member in this class itself.
 	JS_SetRuntimePrivate(get(), this);
-
-	// Assign the thread_local runtime pointer here.
-	rt = this;
 
 	JS_SetErrorReporter(get(), handle_error);
 	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
@@ -2309,13 +2310,11 @@ ircd::js::runtime::runtime(runtime &&other)
 noexcept
 :custom_ptr<JSRuntime>{std::move(other)}
 ,opts(std::move(other.opts))
+,tid{std::move(other.tid)}
 {
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
 		JS_SetRuntimePrivate(get(), this);
-
-	// Ensure the thread_local runtime always points here
-	rt = this;
 }
 
 ircd::js::runtime &
@@ -2324,13 +2323,11 @@ noexcept
 {
 	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
 	opts = std::move(other.opts);
+	tid = std::move(other.tid);
 
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
 		JS_SetRuntimePrivate(get(), this);
-
-	// Ensure the thread_local runtime always points here
-	rt = this;
 
 	return *this;
 }
@@ -2338,9 +2335,6 @@ noexcept
 ircd::js::runtime::~runtime()
 noexcept
 {
-	// Branch not taken on std::move()
-	if(!!*this)
-		rt = nullptr;
 }
 
 bool

@@ -43,13 +43,15 @@ class runtime
   public:
 	struct opts
 	{
-		size_t maxbytes              = 64_MiB;
+		size_t max_bytes             = 64_MiB;
+		size_t max_nursery_bytes     = 16_MiB;
 		size_t code_stack_max        = 0;
 		size_t trusted_stack_max     = 0;
 		size_t untrusted_stack_max   = 0;
 	};
 
 	struct opts opts;                            // We keep a copy of the given opts here
+	std::thread::id tid;                         // This is recorded for assertions/logging.
 
 	operator JSRuntime *() const                 { return get();                                   }
 	operator JSRuntime &() const                 { return custom_ptr<JSRuntime>::operator*();      }
@@ -57,7 +59,7 @@ class runtime
 	auto ptr() const                             { return get();                                   }
 	auto ptr()                                   { return get();                                   }
 
-	runtime(const struct opts &);
+	runtime(const struct opts &, runtime *const &parent = nullptr);
 	runtime() = default;
 	runtime(runtime &&) noexcept;
 	runtime(const runtime &) = delete;
