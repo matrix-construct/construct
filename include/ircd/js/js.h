@@ -86,3 +86,5 @@ inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);
 #include "trap.h"
 #include "trap_function.h"
 #include "generator.h"
+#include "global.h"
+#include "task.h"

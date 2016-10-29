@@ -139,6 +139,79 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/task.h
+//
+
+ircd::js::task::task(const std::string &source)
+:global{[this]
+{
+	// Global object is constructed using the root trap (JSClass) at *tree;
+	// This is a thread_local registered by the kernel.so module.
+	struct global global(*tree);
+
+	// The root trap is configured with HAS_PRIVATE and that slot is set so we can find this
+	// `struct task` from the global object using task::get(object). The global object
+	// can first be found from a context or active compartment. As a convenience `struct task`
+	// can be found contextually with task::get(void).
+	priv(global, this);
+
+	return global;
+}()}
+,main{[this, &source]
+{
+	// A compartment for the global must be entered to compile in this scope
+	const compartment c(this->global);
+
+	// TODO: options
+	JS::CompileOptions opts(*cx);
+	JS::AutoObjectVector stack(*cx);
+
+	// The function must be compiled in this scope and returned as a heap_function
+	// before the compartment destructs.
+	return heap_function { stack, opts, "main", {}, source };
+}()}
+,generator{[this]
+{
+	// A compartment for the global must be entered to run the generator wrapper.
+	const compartment c(this->global);
+
+	// Run the generator wrapper (main function) returning the generator object.
+	// The run() closure provides safety for entering the JS engine.
+	value state(run([this]
+	{
+		return this->main(this->global);
+	}));
+
+	// Construct the generator object here on the stack while in a compartment. The
+	// instance then contains returnable heap objects.
+	struct generator ret(state);
+
+	return ret;
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/global.h
+//
+
+ircd::js::global::global(trap &trap,
+                         JSPrincipals *const &principals)
+:heap_object
+{
+	JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook)
+}
+{
+	const compartment c(*this);
+	if(!JS_InitStandardClasses(*cx, *this))
+		throw error("Failed to init standard classes for global object");
+
+	JS_FireOnNewGlobalObject(*cx, *this);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/generator.h
 //
 
