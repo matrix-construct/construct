@@ -72,11 +72,12 @@ class trap
 	auto &name() const                           { return _name;                                   }
 	auto &jsclass() const                        { return *_class;                                 }
 
-	 // Search for trap by relative path
+	 // Get child by name (NOT PATH)
 	const trap &child(const string &name) const;
 	trap &child(const string &name);
 
 	// Path is absolute to root
+	static trap &find(const string::handle &path);
 	static trap &find(const std::string &path);
 
 	operator const JSClass &() const             { return jsclass();                               }

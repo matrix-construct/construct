@@ -466,6 +466,22 @@ ircd::js::trap::find(const std::string &path)
 }
 
 ircd::js::trap &
+ircd::js::trap::find(const string::handle &path)
+{
+	if(unlikely(!tree))
+		throw error("Failed to find trap tree root");
+
+	trap *ret(tree);
+	tokens(string(path), '.', basic::string_closure<string>([&ret]
+	(const string &part)
+	{
+		ret = &ret->child(part);
+	}));
+
+	return *ret;
+}
+
+ircd::js::trap &
 ircd::js::trap::child(const string &name)
 try
 {
