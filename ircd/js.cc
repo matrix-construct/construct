@@ -549,7 +549,7 @@ noexcept try
 	auto &trap(from(that));
 	trap.debug("ctor: '%s'", trap.name().c_str());
 
-	object ret(JS_NewObjectForConstructor(*cx, &trap.jsclass(), args));
+	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
 	trap.on_ctor(ret, args);
 	args.rval().set(ret);
 	return true;
