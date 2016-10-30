@@ -114,6 +114,7 @@ template<lifetime L> std::ostream & operator<<(std::ostream &os, const string<L>
 
 using string = basic::string<lifetime::stack>;
 using heap_string = basic::string<lifetime::heap>;
+using persist_string = basic::string<lifetime::persist>;
 
 //
 // Implementation

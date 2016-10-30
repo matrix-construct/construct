@@ -33,7 +33,7 @@ class trap
 	JSPropertySpec ps[2];
 	JSFunctionSpec fs[2];
 	std::unique_ptr<JSClass> _class;
-	std::map<heap_string, trap *, heap_string::less> children;
+	std::map<persist_string, trap *, persist_string::less> children;
 
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, const args &);
