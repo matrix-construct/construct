@@ -24,6 +24,9 @@
 
 namespace ircd  {
 namespace js    {
+
+string decompile(const JS::Handle<JSScript *> &, const char *const &name, const bool &pretty = false);
+
 namespace basic {
 
 template<lifetime L>
@@ -97,5 +100,16 @@ const
 }
 
 } // namespace basic
+
+inline string
+decompile(const JS::Handle<JSScript *> &s,
+          const char *const &name,
+          const bool &pretty)
+{
+	uint flags(0);
+	flags |= pretty;
+	return JS_DecompileScript(*cx, s, name, flags);
+}
+
 } // namespace js
 } // namespace ircd

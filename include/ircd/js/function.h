@@ -29,6 +29,7 @@ string decompile(const JS::Handle<JSFunction *> &, const bool &pretty = false);
 string display_name(const JSFunction &);
 string name(const JSFunction &);
 uint16_t arity(const JSFunction &f);
+bool is_ctor(const JSFunction &f);
 
 namespace basic {
 
@@ -173,6 +174,12 @@ const
 }
 
 } // namespace basic
+
+inline bool
+is_ctor(const JSFunction &f)
+{
+	return JS_IsConstructor(const_cast<JSFunction *>(&f));
+}
 
 inline uint16_t
 arity(const JSFunction &f)

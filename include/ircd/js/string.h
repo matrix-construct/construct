@@ -39,6 +39,7 @@ template<lifetime L>
 struct string
 :root<JSString *, L>
 {
+	IRCD_OVERLOAD(pinned)
 	IRCD_OVERLOAD(literal)
 
 	char *c_str() const;                         // Copy into rotating buf
@@ -51,6 +52,9 @@ struct string
 	operator JS::Value() const;
 
 	using root<JSString *, L>::root;
+	string(pinned_t, const char16_t *const &);
+	string(pinned_t, const char *const &);
+	string(pinned_t, const string &);
 	string(literal_t, const char16_t *const &);
 	string(const char16_t *const &, const size_t &len);
 	string(const char16_t *const &);
@@ -213,6 +217,42 @@ string<L>::string(literal_t,
 {
 	if(unlikely(!this->get()))
 		throw type_error("Failed to construct string from wide character literal");
+}
+
+template<lifetime L>
+string<L>::string(pinned_t,
+                  const string &s)
+:string<L>::root::type
+{
+	JS_AtomizeAndPinJSString(*cx, s)
+}
+{
+	if(unlikely(!this->get()))
+		throw type_error("Failed to intern JSString");
+}
+
+template<lifetime L>
+string<L>::string(pinned_t,
+                  const char *const &s)
+:string<L>::root::type
+{
+	JS_AtomizeAndPinStringN(*cx, s, strlen(s))
+}
+{
+	if(unlikely(!this->get()))
+		throw type_error("Failed to construct pinned string from character array");
+}
+
+template<lifetime L>
+string<L>::string(pinned_t,
+                  const char16_t *const &s)
+:string<L>::root::type
+{
+	JS_AtomizeAndPinUCStringN(*cx, s, std::char_traits<char16_t>::length(s))
+}
+{
+	if(unlikely(!this->get()))
+		throw type_error("Failed to construct pinned string from wide character array");
 }
 
 template<lifetime L>
