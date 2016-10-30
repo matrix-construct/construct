@@ -1864,33 +1864,38 @@ ircd::js::reflect(const JSType &t)
 // ircd/js/compartment.h
 //
 
-ircd::js::compartment::compartment()
-:compartment{*cx}
+ircd::js::compartment::compartment(const JSVersion &ver)
+:compartment{*cx, ver}
 {
 }
 
-ircd::js::compartment::compartment(context &c)
+ircd::js::compartment::compartment(context &c,
+                                   const JSVersion &ver)
 :compartment
 {
 	current_global(c)?: throw error("Cannot enter compartment without global"),
-	c
+	c,
+	ver
 }
-{
-}
-
-ircd::js::compartment::compartment(JSObject *const &obj)
-:compartment{obj, *cx}
 {
 }
 
 ircd::js::compartment::compartment(JSObject *const &obj,
-                                   context &c)
+                                   const JSVersion &ver)
+:compartment{obj, *cx, ver}
+{
+}
+
+ircd::js::compartment::compartment(JSObject *const &obj,
+                                   context &c,
+                                   const JSVersion &ver)
 :c{&c}
 ,prev{JS_EnterCompartment(c, obj)}
 ,ours{current_compartment(c)}
 ,cprev{static_cast<compartment *>(JS_GetCompartmentPrivate(ours))}
 {
 	JS_SetCompartmentPrivate(ours, this);
+	JS_SetVersionForCompartment(ours, ver);
 }
 
 ircd::js::compartment::compartment(compartment &&other)

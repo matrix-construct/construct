@@ -47,10 +47,10 @@ struct compartment
 	operator JSCompartment *()                   { return ours;                                    }
 	operator JSCompartment &()                   { return *ours;                                   }
 
-	compartment(JSObject *const &, context &);
-	compartment(JSObject *const &);
-	compartment(context &);
-	compartment();
+	compartment(JSObject *const &, context &, const JSVersion & = JSVERSION_LATEST);
+	compartment(JSObject *const &, const JSVersion & = JSVERSION_LATEST);
+	compartment(context &, const JSVersion & = JSVERSION_LATEST);
+	compartment(const JSVersion & = JSVERSION_LATEST);
 	compartment(compartment &&) noexcept;
 	compartment(const compartment &) = delete;
 	~compartment() noexcept;
