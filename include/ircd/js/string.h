@@ -96,10 +96,13 @@ template<class A, class B> string_comparison<A, B> operator!=(const A &a, const 
 
 template<lifetime L>
 using string_pair = std::pair<string<L>, string<L>>;
-template<lifetime L> string_pair<L> split(const typename string<L>::handle &s, const char &c);
-template<lifetime L> string_pair<L> split(const typename string<L>::handle &s, const char16_t &c);
-template<lifetime L> string<L> substr(const typename string<L>::handle &s, const size_t &pos, const size_t &len);
-template<lifetime L> string<L> operator+(const typename string<L>::handle &left, const typename string<L>::handle &right);
+template<lifetime L> string_pair<L> split(const string<L> &s, const char &c);
+template<lifetime L> string_pair<L> split(const string<L> &s, const char16_t &c);
+template<lifetime L> string<L> substr(const string<L> &s, const size_t &pos, const size_t &len);
+template<lifetime L> string<L> operator+(const string<L> &left, const string<L> &right);
+
+template<class string> using string_closure = std::function<void (const string &)>;
+template<lifetime L> void tokens(const string<L> &, const char &sep, const string_closure<string<L>> &);
 
 template<lifetime L> std::ostream & operator<<(std::ostream &os, const string<L> &s);
 
@@ -284,6 +287,64 @@ operator<<(std::ostream &os, const string<L> &s)
 	return os;
 }
 
+template<lifetime L>
+void
+tokens(const string<L> &str,
+       const char &sep,
+       const string_closure<string<L>> &closure)
+{
+	for(auto pair(split(str, sep));; pair = split(pair.second, sep))
+	{
+		closure(pair.first);
+		if(pair.second.empty())
+			break;
+	}
+}
+
+template<lifetime L>
+std::pair<string<L>, string<L>>
+split(const string<L> &s,
+      const char &c)
+{
+	return split(s, char16_t(c));
+}
+
+template<lifetime L>
+std::pair<string<L>, string<L>>
+split(const string<L> &s,
+      const char16_t &c)
+{
+	size_t i(0);
+	for(; i < size(s) && at(s, i) != c; ++i);
+	return
+	{
+		substr(s, 0, i),
+		i < size(s)? substr(s, i + 1, size(s) - i) : string<L>()
+	};
+}
+
+template<lifetime L>
+string<L>
+substr(const string<L> &s,
+       const size_t &pos,
+       const size_t &len)
+{
+	const auto _len(len == size_t(-1)? size(s) - pos : len);
+	const auto ret(JS_NewDependentString(*cx, s, pos, _len));
+	if(!ret)
+		throw std::out_of_range("substr(): invalid arguments");
+
+	return ret;
+}
+
+template<lifetime L>
+string<L>
+operator+(const string<L> &left,
+          const string<L> &right)
+{
+	return JS_ConcatStrings(*cx, left, right);
+}
+
 template<class A,
          class B>
 string_comparison<A, B>
@@ -397,50 +458,6 @@ cmp(const string<A> &a,
 		throw internal_error("Failed to compare strings");
 
 	return ret;
-}
-
-template<lifetime L>
-std::pair<string<L>, string<L>>
-split(const typename string<L>::handle &s,
-      const char &c)
-{
-	return {};
-}
-
-template<lifetime L>
-std::pair<string<L>, string<L>>
-split(const typename string<L>::handle &s,
-      const char16_t &c)
-{
-	size_t i(0);
-	for(; i < size(s) && at(s, i) != c; ++i);
-	return
-	{
-		substr(s, 0, i),
-		i < size(s)? substr(s, i + 1, size(s) - i) : string<L>()
-	};
-}
-
-template<lifetime L>
-string<L>
-substr(const typename string<L>::handle &s,
-       const size_t &pos,
-       const size_t &len)
-{
-	const auto _len(len == size_t(-1)? size(s) - pos : len);
-	const auto ret(JS_NewDependentString(*cx, s, pos, _len));
-	if(!ret)
-		throw std::out_of_range("substr(): invalid arguments");
-
-	return ret;
-}
-
-template<lifetime L>
-string<L>
-operator+(const typename string<L>::handle &left,
-          const typename string<L>::handle &right)
-{
-	return JS_ConcatStrings(*cx, left, right);
 }
 
 template<class A,
