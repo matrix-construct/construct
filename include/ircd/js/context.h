@@ -117,6 +117,8 @@ JSCompartment *current_compartment(context &);
 JSCompartment *current_compartment();
 JSObject *current_global(context &c);
 JSObject *current_global();                      // thread_local
+JS::Zone *current_zone(context &);
+JS::Zone *current_zone();
 
 // Memory
 void set(context &c, const JSGCParamKey &, const uint32_t &val);
@@ -183,6 +185,18 @@ pending_exception(const context &c)
 	return JS_IsExceptionPending(c);
 }
 
+inline JS::Zone *
+current_zone()
+{
+	return current_zone(*cx);
+}
+
+inline JS::Zone *
+current_zone(context &c)
+{
+	return ::js::GetContextZone(c);
+}
+
 inline JSObject *
 current_global()
 {
@@ -193,6 +207,18 @@ inline JSObject *
 current_global(context &c)
 {
 	return JS::CurrentGlobalOrNull(c);
+}
+
+inline JSCompartment *
+current_compartment()
+{
+	return current_compartment(*cx);
+}
+
+inline JSCompartment *
+current_compartment(context &c)
+{
+	return ::js::GetContextCompartment(c);
 }
 
 inline void

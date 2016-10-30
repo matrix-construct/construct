@@ -2216,18 +2216,6 @@ ircd::js::set(context &c,
 	JS_SetGCParameter(c.runtime(), key, val);
 }
 
-JSCompartment *
-ircd::js::current_compartment()
-{
-	return current_compartment(*cx);
-}
-
-JSCompartment *
-ircd::js::current_compartment(context &c)
-{
-	return ::js::GetContextCompartment(c);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/timer.h
@@ -2410,6 +2398,8 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS_SetGCCallback(get(), handle_gc, nullptr);
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
+	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
+	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
 	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
 	JS_SetContextCallback(get(), handle_context, nullptr);
@@ -2504,9 +2494,11 @@ ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
                                               JSCompartment *const compartment)
 noexcept
 {
-	log.debug("runtime(%p): compartment(%p) destroy: fop(%p)",
+	log.debug("runtime(%p): compartment: %p %s%sdestroy: fop(%p)",
 	          (const void *)(our_runtime(*fop).ptr()),
 	          (const void *)compartment,
+	          ::js::IsSystemCompartment(compartment)? "[system] " : "",
+	          ::js::IsAtomsCompartment(compartment)? "[atoms] " : "",
 	          (const void *)fop);
 }
 
@@ -2522,6 +2514,28 @@ noexcept
 	          (const void *)compartment,
 	          (const void *)buf,
 	          max);
+}
+
+void
+ircd::js::runtime::handle_zone_destroy(JS::Zone *const zone)
+noexcept
+{
+	log.debug("runtime(%p): zone: %p %s%sdestroy",
+	          (const void *)rt,
+	          (const void *)zone,
+	          ::js::IsSystemZone(zone)? "[system] " : "",
+	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
+}
+
+void
+ircd::js::runtime::handle_zone_sweep(JS::Zone *const zone)
+noexcept
+{
+	log.debug("runtime(%p): zone: %p %s%ssweep",
+	          (const void *)rt,
+	          (const void *)zone,
+	          ::js::IsSystemZone(zone)? "[system] " : "",
+	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
 }
 
 void

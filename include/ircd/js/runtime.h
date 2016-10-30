@@ -34,6 +34,8 @@ class runtime
 	static void handle_gc(JSRuntime *, JSGCStatus, void *) noexcept;
 	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
 	static void handle_telemetry(int id, uint32_t sample, const char *key) noexcept;
+	static void handle_zone_sweep(JS::Zone *) noexcept;
+	static void handle_zone_destroy(JS::Zone *) noexcept;
 	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t) noexcept;
 	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *) noexcept;
 	static bool handle_context(JSContext *, uint op, void *) noexcept;
