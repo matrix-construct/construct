@@ -1419,7 +1419,7 @@ ircd::js::jserror::generate(const JSExnType &type,
                             va_list ap)
 {
 	ircd::exception::generate(fmt, ap);
-	const auto msg(locale::convert(what()));
+	const auto msg(locale::char16::conv(what()));
 
 	JSErrorReport report;
 	report.ucmessage = msg.c_str();
@@ -1481,7 +1481,7 @@ ircd::js::jserror::generate_what_our(const JSErrorReport &report)
 	         report.lineno,
 	         report.column);
 
-	const auto msg(report.ucmessage? locale::convert(report.ucmessage) : std::string{});
+	const auto msg(report.ucmessage? locale::char16::conv(report.ucmessage) : std::string{});
 	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
 	         reflect((JSExnType)report.exnType),
 	         msg.empty()? "." : ": ",
@@ -1652,10 +1652,10 @@ ircd::js::debug(const JSErrorReport &r)
 		ss << reflect(JSExnType(r.exnType)) << " ";
 
 	if(r.ucmessage)
-		ss << "\"" << locale::convert(r.ucmessage) << "\" ";
+		ss << "\"" << locale::char16::conv(r.ucmessage) << "\" ";
 
 	for(auto it(r.messageArgs); it && *it; ++it)
-		ss << "\"" << locale::convert(*it) << "\" ";
+		ss << "\"" << locale::char16::conv(*it) << "\" ";
 
 	return ss.str();
 }

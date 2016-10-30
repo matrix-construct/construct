@@ -31,14 +31,14 @@ namespace locale {
 
 #ifdef HAVE_CODECVT
 std::u16string
-ircd::locale::convert(const std::string &s)
+ircd::locale::char16::conv(const std::string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 	return converter.from_bytes(s);
 }
 #else
 std::u16string
-ircd::locale::convert(const std::string &s)
+ircd::locale::char16::conv(const std::string &s)
 {
 	return boost::locale::conv::utf_to_utf<char16_t>(s);
 }
@@ -46,14 +46,14 @@ ircd::locale::convert(const std::string &s)
 
 #ifdef HAVE_CODECVT
 std::u16string
-ircd::locale::convert(const char *const &s)
+ircd::locale::char16::conv(const char *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 	return s? converter.from_bytes(s) : std::u16string{};
 }
 #else
 std::u16string
-ircd::locale::convert(const char *const &s)
+ircd::locale::char16::conv(const char *const &s)
 {
 	return boost::locale::conv::utf_to_utf<char16_t>(s);
 }
@@ -61,14 +61,14 @@ ircd::locale::convert(const char *const &s)
 
 #ifdef HAVE_CODECVT
 std::string
-ircd::locale::convert(const std::u16string &s)
+ircd::locale::char16::conv(const std::u16string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 	return converter.to_bytes(s);
 }
 #else
 std::string
-ircd::locale::convert(const std::u16string &s)
+ircd::locale::char16::conv(const std::u16string &s)
 {
 	return boost::locale::conv::utf_to_utf<char>(s);
 }
@@ -76,14 +76,14 @@ ircd::locale::convert(const std::u16string &s)
 
 #ifdef HAVE_CODECVT
 std::string
-ircd::locale::convert(const char16_t *const &s)
+ircd::locale::char16::conv(const char16_t *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 	return s? converter.to_bytes(s) : std::string{};
 }
 #else
 std::string
-ircd::locale::convert(const char16_t *const &s)
+ircd::locale::char16::conv(const char16_t *const &s)
 {
 	return boost::locale::conv::utf_to_utf<char>(s);
 }
@@ -91,9 +91,9 @@ ircd::locale::convert(const char16_t *const &s)
 
 #ifdef HAVE_CODECVT
 size_t
-ircd::locale::convert(const char16_t *const &str,
-                      char *const &buf,
-                      const size_t &max)
+ircd::locale::char16::conv(const char16_t *const &str,
+                           char *const &buf,
+                           const size_t &max)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
@@ -103,7 +103,7 @@ ircd::locale::convert(const char16_t *const &str,
 }
 #else
 size_t
-ircd::locale::convert(const char16_t *const &str,
+ircd::locale::char16::conv(const char16_t *const &str,
                       char *const &buf,
                       const size_t &max)
 {
@@ -115,9 +115,9 @@ ircd::locale::convert(const char16_t *const &str,
 
 #ifdef HAVE_CODECVT
 size_t
-ircd::locale::convert(const char *const &str,
-                      char16_t *const &buf,
-                      const size_t &max)
+ircd::locale::char16::conv(const char *const &str,
+                           char16_t *const &buf,
+                           const size_t &max)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
@@ -133,9 +133,9 @@ ircd::locale::convert(const char *const &str,
 }
 #else
 size_t
-ircd::locale::convert(const char *const &str,
-                      char16_t *const &buf,
-                      const size_t &max)
+ircd::locale::char16::conv(const char *const &str,
+                           char16_t *const &buf,
+                           const size_t &max)
 {
 	if(unlikely(!max))
 		return 0;
@@ -148,3 +148,23 @@ ircd::locale::convert(const char *const &str,
 	return cpsz;
 }
 #endif
+
+char16_t
+ircd::locale::char16::conv(const char &c)
+{
+	//TODO: optimize
+	char16_t ret[2];
+	char cs[2] = { c, '\0' };
+	conv(cs, ret, 1);
+	return ret[0];
+}
+
+char
+ircd::locale::char16::conv(const char16_t &c)
+{
+	//TODO: optimize
+	char ret[2];
+	char16_t cs[2] = { c, char16_t(0) };
+	conv(cs, ret, 1);
+	return ret[0];
+}

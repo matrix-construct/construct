@@ -31,12 +31,17 @@ namespace locale {
 
 // On newer platforms (gcc-5 etc) these conversions are standard C++.
 // On older platforms the definition file may use boost::locale.
-size_t convert(const char16_t *const &, char *const &buf, const size_t &max);
-size_t convert(const char *const &, char16_t *const &buf, const size_t &max);  // uint8_t = max*2
-std::string convert(const char16_t *const &);
-std::string convert(const std::u16string &);
-std::u16string convert(const char *const &);
-std::u16string convert(const std::string &);
+namespace char16
+{
+	char conv(const char16_t &);
+	char16_t conv(const char &);
+	size_t conv(const char16_t *const &, char *const &buf, const size_t &max);
+	size_t conv(const char *const &, char16_t *const &buf, const size_t &max);  // uint8_t = max*2
+	std::string conv(const char16_t *const &);
+	std::string conv(const std::u16string &);
+	std::u16string conv(const char *const &);
+	std::u16string conv(const std::string &);
+}
 
 } // namespace locale
 } // namespace ircd
