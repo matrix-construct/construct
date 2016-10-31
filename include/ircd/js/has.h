@@ -26,6 +26,7 @@ namespace ircd {
 namespace js   {
 
 bool has(const object::handle &obj, const id::handle &id);
+bool has(const object::handle &obj, const uint32_t &idx);
 bool has(const object::handle &src, const char *const path);
 
 } // namespace js

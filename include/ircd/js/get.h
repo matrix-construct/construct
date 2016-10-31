@@ -27,6 +27,7 @@ namespace js   {
 
 value get(const object::handle &obj, const reserved &id);
 value get(const object::handle &obj, const id::handle &id);
+value get(const object::handle &obj, const uint32_t &idx);
 value get(const object::handle &src, const char *const path);
 
 } // namespace js

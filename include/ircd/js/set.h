@@ -27,7 +27,18 @@ namespace js   {
 
 void set(const object::handle &obj, const reserved &slot, const value &val);
 void set(const object::handle &obj, const id::handle &id, const value &val);
+template<class T> void set(const object::handle &obj, const uint32_t &idx, T&& t);
 void set(const object::handle &src, const char *const path, const value &val);
+
+template<class T>
+void
+set(const object::handle &obj,
+    const uint32_t &idx,
+    T&& t)
+{
+	if(!JS_SetElement(*cx, obj, idx, std::forward<T>(t)))
+		throw jserror(jserror::pending);
+}
 
 } // namespace js
 } // namespace ircd

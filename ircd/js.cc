@@ -1123,6 +1123,18 @@ ircd::js::del(const object::handle &src,
 
 void
 ircd::js::del(const object::handle &obj,
+              const uint32_t &idx)
+{
+	JS::ObjectOpResult res;
+	if(!JS_DeleteElement(*cx, obj, idx, res))
+		throw jserror(jserror::pending);
+
+	if(!res.checkStrict(*cx, obj))
+		throw jserror(jserror::pending);
+}
+
+void
+ircd::js::del(const object::handle &obj,
               const id::handle &id)
 {
 	JS::ObjectOpResult res;
@@ -1218,6 +1230,17 @@ ircd::js::get(const object::handle &src,
 
 ircd::js::value
 ircd::js::get(const object::handle &obj,
+              const uint32_t &idx)
+{
+	value ret;
+	if(!JS_GetElement(*cx, obj, idx, &ret) || undefined(ret))
+		throw reference_error("[%u]", idx);
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::get(const object::handle &obj,
               const id::handle &id)
 {
 	value ret;
@@ -1268,6 +1291,17 @@ ircd::js::has(const object::handle &src,
 		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
 			fail = part;
 	});
+
+	return ret;
+}
+
+bool
+ircd::js::has(const object::handle &obj,
+              const uint32_t &idx)
+{
+	bool ret;
+	if(!JS_HasElement(*cx, obj, idx, &ret))
+		throw jserror(jserror::pending);
 
 	return ret;
 }
