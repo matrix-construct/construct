@@ -40,6 +40,12 @@ __thread runtime *rt;
 __thread context *cx;
 __thread trap *tree;
 
+// Whenever a JSClass is seen by the runtime it has to remain reachable for the lifetime
+// of the runtimet. They don't give any further access or callbacks to free the object,
+// expecting it to be static or something (yea right). What we have here is a place for
+// traps to dump their JSClass on destruction and then this can be reaped later.
+std::forward_list<std::unique_ptr<JSClass>> class_drain;
+
 // Internal prototypes
 void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
 const char *reflect(const ::js::CTypesActivityType &);
@@ -401,6 +407,7 @@ noexcept
 	//_class->reserved[0] = nullptr;
 	//_class->trace = nullptr;
 	memset(_class.get(), 0x0, sizeof(JSClass));
+	class_drain.emplace_front(std::move(_class));
 
 	// Must run GC here to force reclamation of objects before
 	// the JSClass hosted by this trap destructs.
