@@ -356,7 +356,8 @@ ircd::js::trap_function::on_call(object::handle,
 //
 
 ircd::js::trap::trap(const std::string &path,
-                     const uint32_t &flags)
+                     const uint &flags,
+                     const uint &prop_flags)
 :parent{[&path]
 {
 	const auto ret(rsplit(path, ".").first);
@@ -395,6 +396,8 @@ ircd::js::trap::trap(const std::string &path,
 	{ this }           // reserved[0] TODO: ?????????
 })}
 {
+	ps[0].flags |= prop_flags;
+
 	add_this();
 }
 

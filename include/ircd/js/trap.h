@@ -85,7 +85,7 @@ class trap
 
 	template<class... args> object operator()(const object &parent, args&&...);
 
-	trap(const std::string &path, const uint32_t &flags = 0);
+	trap(const std::string &path, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(trap &&) = delete;
 	trap(const trap &) = delete;
 	virtual ~trap() noexcept;
