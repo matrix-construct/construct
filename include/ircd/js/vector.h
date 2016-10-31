@@ -101,6 +101,18 @@ struct vector<value>
 			infallibleAppend(value(t));
 	}
 
+	vector(const object &obj)
+	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	{
+		if(!is_array(obj))
+			throw internal_error("Object is not an array");
+
+		const auto len(obj.size());
+		reserve(obj.size());
+		for(size_t i(0); i < len; ++i)
+			infallibleAppend(get(obj, i));
+	}
+
 	vector(const size_t &size)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
