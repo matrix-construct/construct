@@ -32,6 +32,7 @@ const char *reflect(const JSGCStatus &);
 const char *reflect(const JSGCParamKey &);
 const char *reflect(const JSFinalizeStatus &);
 const char *reflect(const JSContextOp &);
+const char *reflect_prop(const uint &flag);
 const char *reflect_telemetry(const int &id);
 
 // Returns single-line string

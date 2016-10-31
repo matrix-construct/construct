@@ -439,16 +439,18 @@ ircd::js::object
 ircd::js::trap::operator()(const object &parent,
                            const object &parent_proto)
 {
-	return JS_InitClass(*cx,
-	                    parent,
-	                    parent_proto,
-	                    _class.get(),
-	                    nullptr,
-	                    0,
-	                    ps,
-	                    fs,
-	                    nullptr,
-	                    nullptr);
+	object proto(JS_InitClass(*cx,
+	                          parent,
+	                          parent_proto,
+	                          _class.get(),
+	                          nullptr,
+	                          0,
+	                          ps,
+	                          fs,
+	                          nullptr,
+	                          nullptr));
+
+	return JS_New(*cx, proto, JS::HandleValueArray::empty());
 }
 
 ircd::js::trap &
@@ -1745,6 +1747,34 @@ ircd::js::reflect_telemetry(const int &id)
 		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:  return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT";
 		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS:   return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS";
 		case JS_TELEMETRY_ADDON_EXCEPTIONS:                           return "ADDON_EXCEPTIONS";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect_prop(const uint &flag)
+{
+	switch(flag)
+	{
+		case JSPROP_ENUMERATE:                  return "JSPROP_ENUMERATE";
+		case JSPROP_READONLY:                   return "JSPROP_READONLY";
+		case JSPROP_PERMANENT:                  return "JSPROP_PERMANENT";
+		case JSPROP_PROPOP_ACCESSORS:           return "JSPROP_PROPOP_ACCESSORS";
+		case JSPROP_GETTER:                     return "JSPROP_GETTER";
+		case JSPROP_SETTER:                     return "JSPROP_SETTER";
+		case JSPROP_SHARED:                     return "JSPROP_SHARED";
+		case JSPROP_INTERNAL_USE_BIT:           return "JSPROP_INTERNAL_USE_BIT";
+		case JSPROP_DEFINE_LATE:                return "JSPROP_DEFINE_LATE";
+		case JSFUN_STUB_GSOPS:                  return "JSFUN_STUB_GSOPS";
+		case JSFUN_CONSTRUCTOR:                 return "JSFUN_CONSTRUCTOR";
+		case JSFUN_GENERIC_NATIVE:              return "JSFUN_GENERIC_NATIVE";
+		case JSPROP_REDEFINE_NONCONFIGURABLE:   return "JSPROP_REDEFINE_NONCONFIGURABLE";
+		case JSPROP_RESOLVING:                  return "JSPROP_RESOLVING";
+		case JSPROP_IGNORE_ENUMERATE:           return "JSPROP_IGNORE_ENUMERATE";
+		case JSPROP_IGNORE_READONLY:            return "JSPROP_IGNORE_READONLY";
+		case JSPROP_IGNORE_PERMANENT:           return "JSPROP_IGNORE_PERMANENT";
+		case JSPROP_IGNORE_VALUE:               return "JSPROP_IGNORE_VALUE";
 	}
 
 	return "";
