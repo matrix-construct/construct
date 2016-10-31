@@ -42,7 +42,7 @@ struct function
 	explicit operator string<L>() const;
 
 	// js::value/js::object == lifetime::stack
-	js::value operator()(const js::object &, const vector<js::value>::handle &args = {}) const;
+	js::value operator()(const js::object &, const vector<js::value>::handle &args) const;
 	template<class... args> js::value operator()(const js::object &, args&&...) const;
 
 	// new function
@@ -131,12 +131,12 @@ function<L>::operator()(const js::object &that,
                         args&&... a)
 const
 {
-	vector<basic::value<lifetime::stack>> v
+	vector<basic::value<lifetime::stack>> argv
 	{{
 		std::forward<args>(a)...
 	}};
 
-	return call(that, *this, decltype(v)::handle(v));
+	return call(*this, that, decltype(argv)::handle());
 }
 
 template<lifetime L>
@@ -145,7 +145,7 @@ function<L>::operator()(const js::object &that,
                         const vector<js::value>::handle &args)
 const
 {
-	return call(that, *this, args);
+	return call(*this, that, args);
 }
 
 template<lifetime L>

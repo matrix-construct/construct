@@ -1010,47 +1010,47 @@ noexcept
 //
 
 ircd::js::value
-ircd::js::call(const object &obj,
-               const function::handle &func,
+ircd::js::call(const std::string &name,
+               const object &that,
+               const vector<value>::handle &args)
+{
+	return call(name.c_str(), that, args);
+}
+
+ircd::js::value
+ircd::js::call(const char *const &name,
+               const object &that,
                const vector<value>::handle &args)
 {
 	value ret;
-	if(!JS_CallFunction(*cx, obj, func, args, &ret))
+	if(!JS_CallFunctionName(*cx, that, name, args, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;
 }
 
 ircd::js::value
-ircd::js::call(const object &obj,
-               const value::handle &val,
+ircd::js::call(const value::handle &val,
+               const object &that,
                const vector<value>::handle &args)
 {
 	value ret;
-	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
+	if(!JS_CallFunctionValue(*cx, that, val, args, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;
 }
 
 ircd::js::value
-ircd::js::call(const object &obj,
-               const char *const &name,
+ircd::js::call(const function::handle &func,
+               const object &that,
                const vector<value>::handle &args)
 {
 	value ret;
-	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
+	if(!JS_CallFunction(*cx, that, func, args, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;
-}
-
-ircd::js::value
-ircd::js::call(const object &obj,
-               const std::string &name,
-               const vector<value>::handle &args)
-{
-	return call(obj, name.c_str(), args);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

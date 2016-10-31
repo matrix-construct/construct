@@ -26,23 +26,23 @@ namespace ircd {
 namespace js   {
 
 value
-call(const object &obj,
-     const function::handle &func,
+call(const function::handle &func,
+     const object &that,
      const vector<value>::handle &args = {});
 
 value
-call(const object &obj,
-     const value::handle &val,
+call(const value::handle &val,
+     const object &that,
      const vector<value>::handle &args = {});
 
 value
-call(const object &obj,
-     const char *const &name,
+call(const char *const &name,
+     const object &that,
      const vector<value>::handle &args = {});
 
 value
-call(const object &obj,
-     const std::string &name,
+call(const std::string &name,
+     const object &that,
      const vector<value>::handle &args = {});
 
 } // namespace js
