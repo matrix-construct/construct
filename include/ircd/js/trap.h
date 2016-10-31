@@ -42,7 +42,7 @@ class trap
 	virtual void on_add(object::handle, id::handle, value::handle);
 	virtual bool on_del(object::handle, id::handle);
 	virtual bool on_has(object::handle, id::handle);
-	virtual bool on_enu(object::handle);
+	virtual void on_enu(object::handle);
 	virtual void on_ctor(object &, const args &);
 	virtual void on_dtor(JSObject &);
 

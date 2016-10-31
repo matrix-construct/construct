@@ -612,7 +612,8 @@ noexcept try
 
 	auto &trap(from(obj));
 	trap.debug("enu");
-	return trap.on_enu(obj);
+	trap.on_enu(obj);
+	return true;
 }
 catch(const jserror &e)
 {
@@ -897,10 +898,9 @@ ircd::js::trap::on_ctor(object &obj,
 {
 }
 
-bool
+void
 ircd::js::trap::on_enu(object::handle)
 {
-	return true;
 }
 
 bool
