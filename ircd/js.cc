@@ -544,6 +544,7 @@ ircd::js::trap::handle_ctor(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	const struct args args(argc, argv);
 	object that(args.callee());
@@ -576,6 +577,7 @@ ircd::js::trap::handle_call(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	const struct args args(argc, argv);
 	object that(args.computeThis(c));
@@ -635,6 +637,7 @@ ircd::js::trap::handle_has(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
 	trap.debug("has: '%s'", string(id).c_str());
@@ -663,6 +666,7 @@ ircd::js::trap::handle_del(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
 	trap.debug("del: '%s'", string(id).c_str());
@@ -693,6 +697,7 @@ ircd::js::trap::handle_get(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
 	trap.debug("get: '%s'", string(id).c_str());
@@ -723,6 +728,7 @@ ircd::js::trap::handle_set(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
 	trap.debug("set: '%s'", string(id).c_str());
@@ -755,6 +761,7 @@ ircd::js::trap::handle_add(JSContext *const c,
 noexcept try
 {
 	assert(&our(c) == cx);
+	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
 	trap.debug("add: '%s'", string(id).c_str());

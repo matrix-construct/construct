@@ -152,6 +152,8 @@ template<class F>
 auto
 run(F&& function)
 {
+	assert(!pending_exception(*cx));
+
 	enter(*cx);
 	const scope out([]
 	{
