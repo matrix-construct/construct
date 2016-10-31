@@ -30,10 +30,16 @@ template<lifetime L>
 struct object
 :root<JSObject *, L>
 {
+	IRCD_OVERLOAD(array)
+
 	using handle = typename root<JSObject *, L>::handle;
 	using handle_mutable = typename root<JSObject *, L>::handle_mutable;
 
 	operator JS::Value() const;
+
+	// for array objects
+	uint32_t size() const;
+	void resize(const uint32_t &);
 
 	// new object
 	object(const JSClass *const &, const handle &ctor, const JS::HandleValueArray &args);
@@ -43,6 +49,8 @@ struct object
 
 	template<class T, lifetime LL> object(const root<T, LL> &);
 	using root<JSObject *, L>::root;
+	object(array_t, const size_t &length);
+	object(const JS::HandleValueArray &);
 	object(const value<L> &);
 	object(JSObject *const &);
 	object(JSObject &);
@@ -56,6 +64,13 @@ template<lifetime L> const JSClass &jsclass(const object<L> &);
 template<class T, lifetime L> T &priv(const object<L> &);
 template<lifetime L> void priv(object<L> &, void *const &);
 template<lifetime L> void priv(object<L> &, const void *const &);
+
+template<lifetime L> bool is_extensible(const object<L> &);
+template<lifetime L> bool is_array(const object<L> &);
+template<lifetime L> uint32_t size(const object<L> &);
+
+template<lifetime L> bool deep_freeze(const object<L> &);
+template<lifetime L> bool freeze(const object<L> &);
 
 } // namespace basic
 
@@ -77,6 +92,8 @@ object<L>::object()
 	JS_NewPlainObject(*cx)
 }
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (plain)");
 }
 
 template<lifetime L>
@@ -102,6 +119,29 @@ object<L>::object(const value<L> &val)
 }
 
 template<lifetime L>
+object<L>::object(const JS::HandleValueArray &values)
+:object<L>::root::type
+{
+	JS_NewArrayObject(*cx, values)
+}
+{
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (array)");
+}
+
+template<lifetime L>
+object<L>::object(array_t,
+                  const size_t &length)
+:object<L>::root::type
+{
+	JS_NewArrayObject(*cx, length)
+}
+{
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (array)");
+}
+
+template<lifetime L>
 template<class T,
          lifetime LL>
 object<L>::object(const root<T, LL> &o)
@@ -116,6 +156,8 @@ object<L>::object(const JSClass *const &clasp)
 	JS_NewObject(*cx, clasp)
 }
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (clasp)");
 }
 
 template<lifetime L>
@@ -126,6 +168,8 @@ object<L>::object(const JSClass *const &clasp,
 	JS_NewObjectWithGivenProto(*cx, clasp, proto)
 }
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (with given proto)");
 }
 
 template<lifetime L>
@@ -136,6 +180,8 @@ object<L>::object(const JSClass *const &clasp,
 	JS_NewObjectForConstructor(*cx, clasp, args)
 }
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (for constructor)");
 }
 
 template<lifetime L>
@@ -147,6 +193,28 @@ object<L>::object(const JSClass *const &clasp,
 	JS_New(*cx, ctor, args)
 }
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (new)");
+}
+
+template<lifetime L>
+void
+object<L>::resize(const uint32_t &length)
+{
+	if(!JS_SetArrayLength(*cx, &(*this), length))
+		throw internal_error("Failed to set array object length");
+}
+
+template<lifetime L>
+uint32_t
+object<L>::size()
+const
+{
+	uint32_t ret;
+	if(!JS_GetArrayLength(*cx, handle(*this), &ret))
+		throw internal_error("Failed to get array object length");
+
+	return ret;
 }
 
 template<lifetime L>
@@ -154,6 +222,42 @@ object<L>::operator JS::Value()
 const
 {
 	return this->get()? JS::ObjectValue(*this->get()) : JS::NullValue();
+}
+
+template<lifetime L>
+bool
+freeze(const object<L> & obj)
+{
+	return JS_FreezeObject(*cx, obj);
+}
+
+template<lifetime L>
+bool
+deep_freeze(const object<L> & obj)
+{
+	return JS_DeepFreezeObject(*cx, obj);
+}
+
+template<lifetime L>
+bool
+is_array(const object<L> & obj)
+{
+	bool ret;
+	if(!JS_IsArrayObject(*cx, obj, &ret))
+		throw internal_error("Failed to query if object is array");
+
+	return ret;
+}
+
+template<lifetime L>
+bool
+is_extensible(const object<L> & obj)
+{
+	bool ret;
+	if(!JS_IsExtensible(*cx, obj, &ret))
+		throw internal_error("Failed to query object extensibility");
+
+	return ret;
 }
 
 template<lifetime L>

@@ -70,6 +70,7 @@ struct value
 
 template<lifetime L> JSType type(const value<L> &);
 template<lifetime L> bool undefined(const value<L> &);
+template<lifetime L> bool is_array(typename value<L>::handle);
 
 } // namespace basic
 
@@ -303,10 +304,14 @@ const
 }
 
 template<lifetime L>
-JSType
-type(const value<L> &val)
+bool
+is_array(const value<L> &val)
 {
-	return JS_TypeOfValue(*cx, val);
+	bool ret;
+	if(!JS_IsArrayObject(*cx, val, &ret))
+		throw internal_error("Failed to query if value is array");
+
+	return ret;
 }
 
 template<lifetime L>
@@ -314,6 +319,13 @@ bool
 undefined(const value<L> &val)
 {
 	return type(val) == JSTYPE_VOID;
+}
+
+template<lifetime L>
+JSType
+type(const value<L> &val)
+{
+	return JS_TypeOfValue(*cx, val);
 }
 
 } // namespace basic
