@@ -56,6 +56,7 @@ struct value
 	value(const nullptr_t &);
 	value(const double &);
 	value(const float &);
+	value(const uint64_t &);
 	value(const int32_t &);
 	value(const bool &);
 	value(const jsid &);
@@ -149,6 +150,12 @@ value<L>::value(const bool &b)
 template<lifetime L>
 value<L>::value(const int32_t &val)
 :value<L>::root::type{JS::Int32Value(val)}
+{
+}
+
+template<lifetime L>
+value<L>::value(const uint64_t &val)
+:value<L>::root::type{JS::DoubleValue(val)}
 {
 }
 
