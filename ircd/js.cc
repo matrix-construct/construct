@@ -472,24 +472,6 @@ catch(const std::exception &e)
 	throw;
 }
 
-ircd::js::object
-ircd::js::trap::operator()(const object &parent,
-                           const object &parent_proto)
-{
-	object proto(JS_InitClass(*cx,
-	                          parent,
-	                          parent_proto,
-	                          _class.get(),
-	                          nullptr,
-	                          0,
-	                          ps,
-	                          fs,
-	                          nullptr,
-	                          nullptr));
-
-	return JS_New(*cx, proto, JS::HandleValueArray::empty());
-}
-
 ircd::js::trap &
 ircd::js::trap::find(const std::string &path)
 {

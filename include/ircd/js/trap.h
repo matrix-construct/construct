@@ -83,7 +83,7 @@ class trap
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
-	object operator()(const object &parent = {}, const object &parent_proto = {});
+	template<class... args> object operator()(const object &parent, args&&...);
 
 	trap(const std::string &path, const uint32_t &flags = 0);
 	trap(trap &&) = delete;
@@ -92,6 +92,25 @@ class trap
 };
 
 extern __thread trap *tree;
+
+template<class... args>
+object
+trap::operator()(const object &parent,
+                 args&&... a)
+{
+	object proto(JS_InitClass(*cx,
+	                          parent,
+	                          object{},
+	                          _class.get(),
+	                          nullptr,
+	                          0,
+	                          ps,
+	                          fs,
+	                          nullptr,
+	                          nullptr));
+
+	return JS_New(*cx, proto, vector<value>{std::forward<args>(a)...});
+}
 
 } // namespace js
 } // namespace ircd
