@@ -26,27 +26,25 @@ namespace ircd {
 namespace js   {
 
 struct task
+:std::enable_shared_from_this<task>
 {
+	uint64_t pid;
 	struct global global;                        // global / this / root scope object
 	heap_function main;                          // main generator wrapper function
 	struct generator generator;                  // generator state
 
-	// Invokes next() on the generator
-	template<class... args> value operator()(args&&...);
+  private:
+	static uint64_t tasks_next_pid();
+	uint64_t tasks_insert();
+	bool tasks_remove();
 
+  public:
 	task(const std::string &source);
-	task() = default;
+	~task() noexcept;
 
 	static task &get(const object &global);
 	static task &get();
 };
-
-template<class... args>
-value
-task::operator()(args&&... a)
-{
-	return generator.next(std::forward<args>(a)...);
-}
 
 inline task &
 task::get()

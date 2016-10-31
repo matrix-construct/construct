@@ -143,7 +143,12 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 //
 
 ircd::js::task::task(const std::string &source)
-:global{[this]
+try
+:pid
+{
+	tasks_insert()
+}
+,global{[this]
 {
 	// Global object is constructed using the root trap (JSClass) at *tree;
 	// This is a thread_local registered by the kernel.so module.
@@ -189,6 +194,38 @@ ircd::js::task::task(const std::string &source)
 	return ret;
 }()}
 {
+}
+catch(const std::exception &e)
+{
+	tasks_remove();
+}
+
+ircd::js::task::~task()
+noexcept
+{
+	tasks_remove();
+}
+
+bool
+ircd::js::task::tasks_remove()
+{
+	return cx->tasks.erase(pid);
+}
+
+uint64_t
+ircd::js::task::tasks_insert()
+{
+	const uint64_t pid(tasks_next_pid());
+	const auto iit(cx->tasks.emplace(pid, this));
+	assert(iit.second);
+	return pid;
+}
+
+uint64_t
+ircd::js::task::tasks_next_pid()
+{
+	auto &tasks(cx->tasks);
+	return tasks.empty()? 0 : std::prev(std::end(tasks))->first + 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
