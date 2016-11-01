@@ -67,6 +67,7 @@ struct value
 	value(JS::Symbol *const &);
 	value(const JS::Value &);
 	value();
+	value(const value &);
 };
 
 template<lifetime L> JSType type(const value<L> &);
@@ -86,6 +87,12 @@ namespace basic {
 template<lifetime L>
 value<L>::value()
 :value<L>::root::type{JS::UndefinedValue()}
+{
+}
+
+template<lifetime L>
+value<L>::value(const value &other)
+:value<L>::root::type{other.get()}
 {
 }
 
