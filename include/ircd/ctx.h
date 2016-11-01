@@ -105,6 +105,7 @@ using ctx::timeout;
 #include "ctx/context.h"
 #include "ctx/prof.h"
 #include "ctx/dock.h"
+#include "ctx/queue.h"
 #include "ctx/mutex.h"
 #include "ctx/shared_state.h"
 #include "ctx/promise.h"
