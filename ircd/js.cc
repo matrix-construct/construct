@@ -145,6 +145,55 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/contract.h
+//
+
+ircd::js::contract::contract(object::handle future)
+:contract{task::get(), future}
+{
+}
+
+ircd::js::contract::contract(struct task &task,
+                             object::handle future)
+:std::weak_ptr<struct task>{weak_from(task)}
+,future{future}
+{
+}
+
+void
+ircd::js::contract::operator()(const closure &func)
+noexcept try
+{
+	task::enter(*this, [this, &func]
+	(task &task)
+	{
+		try
+		{
+			set(future, "value", func());
+		}
+		catch(const jserror &e)
+		{
+			set(future, "error", e.val.get());
+		}
+		catch(const std::exception &e)
+		{
+			set(future, "error", string(e.what()));
+		}
+
+		assert(cx->star);
+		cx->star->completion.push(*this);
+	});
+}
+catch(const std::exception &e)
+{
+	ircd::js::log.critical("contract(%p): %s",
+	                       (const void *)this,
+	                       e.what());
+	std::terminate();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/task.h
 //
 
@@ -153,6 +202,10 @@ try
 :pid
 {
 	tasks_insert()
+}
+,yid
+{
+	0
 }
 ,global{[this]
 {
@@ -187,7 +240,7 @@ try
 
 	// Run the generator wrapper (main function) returning the generator object.
 	// The run() closure provides safety for entering the JS engine.
-	value state(run([this]
+	value state(js::run([this]
 	{
 		return this->main();
 	}));
@@ -212,16 +265,81 @@ noexcept
 }
 
 bool
+ircd::js::task::enter(const std::weak_ptr<task> &ptr,
+                      const std::function<void (task &)> &closure)
+try
+{
+	const life_guard<struct task> task(ptr);
+	const std::lock_guard<context> lock{*cx};
+	const compartment compartment(task->global);
+	run([&closure, &task]
+	{
+		closure(*task);
+	});
+
+	return true;
+}
+catch(const std::bad_weak_ptr &e)
+{
+	ircd::js::log.warning("task::enter(%p, closure: %p): expired task",
+	                      (const void *)&ptr,
+	                      (const void *)&closure);
+	return false;
+}
+
+bool
+ircd::js::task::pending_del(const uint64_t &id)
+{
+	const auto ret(pending.erase(id));
+	if(!ret)
+		return false;
+
+	// When nothing is pending this strong self-reference is dropped and the task
+	// may be allowed to delete itself.
+	if(pending.empty())
+		work.reset();
+
+	return true;
+}
+
+bool
+ircd::js::task::pending_add(const uint64_t &id)
+{
+	const auto iit(pending.emplace(id));
+	if(!iit.second)
+		return false;
+
+	// If this is the first pending contract for this task a strong self-reference
+	// is placed here to ensure the task lingers until all work is completed.
+	if(pending.size() == 1)
+		work = shared_from_this();
+
+	return true;
+}
+
+bool
 ircd::js::task::tasks_remove()
 {
-	return cx->tasks.erase(pid);
+	auto &tasks(cx->star->tasks);
+	const auto ret(tasks.erase(pid));
+	log.debug("task(%p) pid[%lu] removed",
+	          (const void *)this,
+	          pid);
+
+	assert(ret);
+	return ret;
 }
 
 uint64_t
 ircd::js::task::tasks_insert()
 {
+	auto &tasks(cx->star->tasks);
 	const uint64_t pid(tasks_next_pid());
-	const auto iit(cx->tasks.emplace(pid, this));
+	const auto iit(tasks.emplace(pid, this));
+	log.debug("task(%p) pid[%lu] added",
+	          (const void *)this,
+	          pid);
+
 	assert(iit.second);
 	return pid;
 }
@@ -229,7 +347,7 @@ ircd::js::task::tasks_insert()
 uint64_t
 ircd::js::task::tasks_next_pid()
 {
-	auto &tasks(cx->tasks);
+	auto &tasks(cx->star->tasks);
 	return tasks.empty()? 0 : std::prev(std::end(tasks))->first + 1;
 }
 
@@ -2115,6 +2233,7 @@ ircd::js::context::context(struct runtime &runtime,
 {
 	std::bind(&context::handle_timeout, this)
 }
+,star{nullptr}
 {
 	assert(&runtime == rt);       // Trying to construct on thread without runtime thread_local
 	timer.set(opts.timer_limit);

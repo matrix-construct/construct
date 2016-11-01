@@ -75,7 +75,8 @@ struct context
 	void handle_timeout() noexcept;              // Called by timer after requested time
 	struct timer timer;
 
-	std::map<uint64_t, struct task *> tasks;     // Active processes
+	// System target
+	struct star *star;                           // Registered by kernel
 
 	// JSContext
 	operator JSContext *() const                 { return get();                                   }
