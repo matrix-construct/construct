@@ -48,7 +48,7 @@ struct string
 	bool empty() const;
 	char16_t operator[](const size_t &at) const;
 
-	explicit operator std::string() const;
+	operator std::string() const;
 	operator JS::Value() const;
 
 	using root<JSString *, L>::root;

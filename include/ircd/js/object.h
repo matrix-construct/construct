@@ -24,6 +24,27 @@
 
 namespace ircd  {
 namespace js    {
+
+using object_handle = JS::Handle<JSObject *>;
+using object_handle_mutable = JS::MutableHandle<JSObject *>;
+
+// Get the JSClass from which the trap can also be derived.
+const JSClass &jsclass(const object_handle &);
+
+bool is_extensible(const object_handle &);
+bool is_array(const object_handle &);
+uint32_t size(const object_handle &);
+
+// Private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
+template<class T> T &priv(const object_handle &);
+void priv(const object_handle &, void *const &);
+void priv(const object_handle &, const void *const &);
+
+bool deep_freeze(const object_handle &);
+bool freeze(const object_handle &);
+
+IRCD_STRONG_TYPEDEF(uint, reserved)
+
 namespace basic {
 
 template<lifetime L>
@@ -32,8 +53,8 @@ struct object
 {
 	IRCD_OVERLOAD(array)
 	IRCD_OVERLOAD(uninitialized)
-	using handle = typename root<JSObject *, L>::handle;
-	using handle_mutable = typename root<JSObject *, L>::handle_mutable;
+	using handle = object_handle;
+	using handle_mutable = object_handle_mutable;
 
 	operator JS::Value() const;
 
@@ -58,28 +79,10 @@ struct object
 	object();
 };
 
-// Get the JSClass from which the trap can also be derived.
-template<lifetime L> const JSClass &jsclass(const object<L> &);
-
-// Private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
-template<class T, lifetime L> T &priv(const object<L> &);
-template<lifetime L> void priv(object<L> &, void *const &);
-template<lifetime L> void priv(object<L> &, const void *const &);
-
-template<lifetime L> bool is_extensible(const object<L> &);
-template<lifetime L> bool is_array(const object<L> &);
-template<lifetime L> uint32_t size(const object<L> &);
-
-template<lifetime L> bool deep_freeze(const object<L> &);
-template<lifetime L> bool freeze(const object<L> &);
-
 } // namespace basic
 
 using object = basic::object<lifetime::stack>;
 using heap_object = basic::object<lifetime::heap>;
-using basic::priv;
-
-IRCD_STRONG_TYPEDEF(uint, reserved)
 
 //
 // Implementation
@@ -107,6 +110,8 @@ template<lifetime L>
 object<L>::object(JSObject &obj)
 :object<L>::root::type{&obj}
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (ref)");
 }
 
 template<lifetime L>
@@ -154,6 +159,8 @@ template<class T,
 object<L>::object(const root<T, LL> &o)
 :object{o.get()}
 {
+	if(unlikely(!this->get()))
+		throw internal_error("NULL object (cross-lifetime)");
 }
 
 template<lifetime L>
@@ -208,7 +215,7 @@ template<lifetime L>
 void
 object<L>::resize(const uint32_t &length)
 {
-	if(!JS_SetArrayLength(*cx, &(*this), length))
+	if(!JS_SetArrayLength(*cx, *this, length))
 		throw internal_error("Failed to set array object length");
 }
 
@@ -217,11 +224,7 @@ uint32_t
 object<L>::size()
 const
 {
-	uint32_t ret;
-	if(!JS_GetArrayLength(*cx, handle(*this), &ret))
-		throw internal_error("Failed to get array object length");
-
-	return ret;
+	return js::size(*this);
 }
 
 template<lifetime L>
@@ -231,23 +234,32 @@ const
 	return this->get()? JS::ObjectValue(*this->get()) : JS::NullValue();
 }
 
-template<lifetime L>
-bool
-freeze(const object<L> & obj)
+} // namespace basic
+
+inline bool
+freeze(const object_handle &obj)
 {
 	return JS_FreezeObject(*cx, obj);
 }
 
-template<lifetime L>
-bool
-deep_freeze(const object<L> & obj)
+inline bool
+deep_freeze(const object_handle &obj)
 {
 	return JS_DeepFreezeObject(*cx, obj);
 }
 
-template<lifetime L>
-bool
-is_array(const object<L> & obj)
+inline uint32_t
+size(const object_handle &obj)
+{
+	uint32_t ret;
+	if(!JS_GetArrayLength(*cx, obj, &ret))
+		throw internal_error("Failed to get array object length");
+
+	return ret;
+}
+
+inline bool
+is_array(const object_handle &obj)
 {
 	bool ret;
 	if(!JS_IsArrayObject(*cx, obj, &ret))
@@ -256,9 +268,8 @@ is_array(const object<L> & obj)
 	return ret;
 }
 
-template<lifetime L>
-bool
-is_extensible(const object<L> & obj)
+inline bool
+is_extensible(const object_handle &obj)
 {
 	bool ret;
 	if(!JS_IsExtensible(*cx, obj, &ret))
@@ -267,26 +278,23 @@ is_extensible(const object<L> & obj)
 	return ret;
 }
 
-template<lifetime L>
-void
-priv(object<L> &obj,
+inline void
+priv(const object_handle &obj,
      const void *const &ptr)
 {
-	priv(obj, const_cast<void *>(ptr));
+	JS_SetPrivate(obj, const_cast<void *>(ptr));
 }
 
-template<lifetime L>
-void
-priv(object<L> &obj,
+inline void
+priv(const object_handle &obj,
      void *const &ptr)
 {
 	JS_SetPrivate(obj, ptr);
 }
 
-template<class T,
-         lifetime L>
+template<class T>
 T &
-priv(const object<L> &obj)
+priv(const object_handle &obj)
 {
 	const auto &jsc(jsclass(obj));
 	const auto ret(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
@@ -296,9 +304,8 @@ priv(const object<L> &obj)
 	return *reinterpret_cast<T *>(ret);
 }
 
-template<lifetime L>
-const JSClass &
-jsclass(const object<L> &obj)
+inline const JSClass &
+jsclass(const object_handle &obj)
 {
 	const auto jsc(JS_GetClass(obj));
 	if(unlikely(!jsc))
@@ -307,6 +314,5 @@ jsclass(const object<L> &obj)
 	return *const_cast<JSClass *>(jsc);
 }
 
-} // namespace basic
 } // namespace js
 } // namespace ircd

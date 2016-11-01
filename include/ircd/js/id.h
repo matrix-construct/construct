@@ -35,6 +35,8 @@ struct id
 	explicit id(const std::string &);  // creates new id
 	id(const typename string<L>::handle &);
 	id(const typename value<L>::handle &);
+	id(const value<L> &);
+	id(const string<L> &);
 	id(const JSProtoKey &);
 	id(const uint32_t &);
 	id(const jsid &);
@@ -95,6 +97,18 @@ id<L>::id(const char *const &str)
 {
 	if(!JS::PropertySpecNameToPermanentId(*cx, str, this->address()))
 		throw type_error("Failed to create id from native string");
+}
+
+template<lifetime L>
+id<L>::id(const string<L> &h)
+:id<L>::id(typename string<L>::handle(h))
+{
+}
+
+template<lifetime L>
+id<L>::id(const value<L> &h)
+:id<L>::id(typename value<L>::handle(h))
+{
 }
 
 template<lifetime L>

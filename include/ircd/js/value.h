@@ -70,14 +70,14 @@ struct value
 	value(const value &);
 };
 
-template<lifetime L> JSType type(const value<L> &);
-template<lifetime L> bool undefined(const value<L> &);
-template<lifetime L> bool is_array(typename value<L>::handle);
-
 } // namespace basic
 
 using value = basic::value<lifetime::stack>;
 using heap_value = basic::value<lifetime::heap>;
+
+template<class value> JSType type(const value &);
+template<class value> bool undefined(const value &val);
+template<class value> bool is_array(const value &val);
 
 //
 // Implementation
@@ -317,9 +317,11 @@ const
 	return s? native(s) : throw type_error("Failed to cast to string");
 }
 
-template<lifetime L>
+} // namespace basic
+
+template<class value>
 bool
-is_array(const value<L> &val)
+is_array(const value &val)
 {
 	bool ret;
 	if(!JS_IsArrayObject(*cx, val, &ret))
@@ -328,21 +330,19 @@ is_array(const value<L> &val)
 	return ret;
 }
 
-template<lifetime L>
+template<class value>
 bool
-undefined(const value<L> &val)
+undefined(const value &val)
 {
 	return type(val) == JSTYPE_VOID;
 }
 
-template<lifetime L>
+template<class value>
 JSType
-type(const value<L> &val)
+type(const value &val)
 {
 	return JS_TypeOfValue(*cx, val);
 }
-
-} // namespace basic
 
 inline JS::Value
 pointer_value(const void *const &ptr)
