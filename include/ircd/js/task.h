@@ -30,7 +30,7 @@ struct task
 {
 	uint64_t pid;
 	struct global global;                        // global / this / root scope object
-	heap_function main;                          // main generator wrapper function
+	heap_script main;                            // main generator wrapper script
 	struct generator generator;                  // generator state
 
   private:

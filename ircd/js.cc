@@ -175,11 +175,10 @@ try
 
 	// TODO: options
 	JS::CompileOptions opts(*cx);
-	JS::AutoObjectVector stack(*cx);
 
 	// The function must be compiled in this scope and returned as a heap_function
 	// before the compartment destructs.
-	return heap_function { stack, opts, "main", {}, source };
+	return heap_script { opts, source };
 }()}
 ,generator{[this]
 {
@@ -190,7 +189,7 @@ try
 	// The run() closure provides safety for entering the JS engine.
 	value state(run([this]
 	{
-		return this->main(this->global);
+		return this->main();
 	}));
 
 	// Construct the generator object here on the stack while in a compartment. The
