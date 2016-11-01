@@ -50,6 +50,7 @@ class dock
 
 	void notify_all() noexcept;
 	void notify_one() noexcept;
+	void notify() noexcept;
 
 	dock() = default;
 	~dock() noexcept;
@@ -63,13 +64,26 @@ noexcept
 }
 
 inline void
+dock::notify()
+noexcept
+{
+	if(q.empty())
+		return;
+
+	auto c(q.front());
+	q.pop_front();
+	q.emplace_back(c);
+	ircd::ctx::notify(*c);
+}
+
+inline void
 dock::notify_one()
 noexcept
 {
 	if(q.empty())
 		return;
 
-	notify(*q.front());
+	ircd::ctx::notify(*q.front());
 }
 
 inline void
@@ -78,7 +92,7 @@ noexcept
 {
 	const auto copy(q);
 	for(const auto &c : copy)
-		notify(*c);
+		ircd::ctx::notify(*c);
 }
 
 inline void
