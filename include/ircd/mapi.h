@@ -53,9 +53,13 @@ struct exports
 	template<class... List> exports(List&&... list);
 };
 
+const char *const header_symbol_name
+{
+	"IRCD_MODULE"
+};
+
 struct header
 {
-	static const char *const sym_name;
 	static constexpr const magic_t MAGIC
 	{
 		0x4D41
@@ -112,12 +116,6 @@ noexcept
 {
 	mods::static_destruction = true;
 }
-
-const char *const
-header::sym_name
-{
-	"IRCD_MODULE"
-};
 
 inline auto &
 header::operator[](const std::string &key)

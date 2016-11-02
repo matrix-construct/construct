@@ -62,7 +62,7 @@ try
 }
 ,header
 {
-	&handle.get<mapi::header>(mapi::header::sym_name)
+	&handle.get<mapi::header>(mapi::header_symbol_name)
 }
 {
 	if(unlikely(!header))

@@ -507,7 +507,7 @@ ircd::mods::is_module(const filesystem::path &path)
 		                       path.string().c_str());
 
 	const auto syms(symbols(path));
-	const auto &header_name(mapi::header::sym_name);
+	const auto &header_name(mapi::header_symbol_name);
 	const auto it(std::find(begin(syms), end(syms), header_name));
 	if(it == end(syms))
 		throw error("`%s': has no MAPI header (%s)",
