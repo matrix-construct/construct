@@ -31,7 +31,7 @@ struct object
 :root<JSObject *, L>
 {
 	IRCD_OVERLOAD(array)
-
+	IRCD_OVERLOAD(uninitialized)
 	using handle = typename root<JSObject *, L>::handle;
 	using handle_mutable = typename root<JSObject *, L>::handle_mutable;
 
@@ -54,6 +54,7 @@ struct object
 	object(const value<L> &);
 	object(JSObject *const &);
 	object(JSObject &);
+	object(uninitialized_t);
 	object();
 };
 
@@ -84,6 +85,12 @@ IRCD_STRONG_TYPEDEF(uint, reserved)
 // Implementation
 //
 namespace basic {
+
+template<lifetime L>
+object<L>::object(uninitialized_t)
+:object<L>::root::type{}
+{
+}
 
 template<lifetime L>
 object<L>::object()
