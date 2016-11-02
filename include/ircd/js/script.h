@@ -26,6 +26,7 @@ namespace ircd  {
 namespace js    {
 
 string decompile(const JS::Handle<JSScript *> &, const char *const &name, const bool &pretty = false);
+ctx::future<void *> compile_async(const JS::ReadOnlyCompileOptions &, const std::u16string &);
 
 namespace basic {
 
@@ -33,11 +34,15 @@ template<lifetime L>
 struct script
 :root<JSScript *, L>
 {
+	IRCD_OVERLOAD(yielding)
+
 	value<lifetime::stack> operator()(JS::AutoObjectVector &stack) const;
 	value<lifetime::stack> operator()() const;
 
 	using root<JSScript *, L>::root;
-	script(const JS::CompileOptions &opts, const std::string &src);    // new script
+	script(yielding_t, const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
+	script(const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
+	script(const JS::ReadOnlyCompileOptions &opts, const std::string &src);
 	script(JSScript *const &);
 	script(JSScript &);
 };
@@ -67,12 +72,37 @@ script<L>::script(JSScript *const &val)
 }
 
 template<lifetime L>
-script<L>::script(const JS::CompileOptions &opts,
+script<L>::script(const JS::ReadOnlyCompileOptions &opts,
                   const std::string &src)
 :script<L>::root::type{}
 {
 	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
 		throw syntax_error("Failed to compile script");
+}
+
+template<lifetime L>
+script<L>::script(const JS::ReadOnlyCompileOptions &opts,
+                  const std::u16string &src)
+:script<L>::root::type{}
+{
+	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
+		throw syntax_error("Failed to compile script");
+}
+
+template<lifetime L>
+script<L>::script(yielding_t,
+                  const JS::ReadOnlyCompileOptions &opts,
+                  const std::u16string &src)
+:script<L>::root::type{[&opts, &src]
+{
+	// This constructor compiles the script concurrently by yielding this ircd::ctx.
+	// The compilation occurs on another thread entirely, so other ircd contexts will
+	// still be able to run.
+	auto future(compile_async(opts, src));
+	void *const token(future.get());
+	return JS::FinishOffThreadScript(*cx, *rt, token);
+}()}
+{
 }
 
 template<lifetime L>
@@ -100,16 +130,5 @@ const
 }
 
 } // namespace basic
-
-inline string
-decompile(const JS::Handle<JSScript *> &s,
-          const char *const &name,
-          const bool &pretty)
-{
-	uint flags(0);
-	flags |= pretty;
-	return JS_DecompileScript(*cx, s, name, flags);
-}
-
 } // namespace js
 } // namespace ircd

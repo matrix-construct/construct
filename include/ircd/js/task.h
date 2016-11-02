@@ -46,6 +46,7 @@ struct task
 	bool pending_add(const uint64_t &id);
 	bool pending_del(const uint64_t &id);
 
+	task(const std::u16string &source);
 	task(const std::string &source);
 	~task() noexcept;
 

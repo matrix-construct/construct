@@ -198,6 +198,11 @@ catch(const std::exception &e)
 //
 
 ircd::js::task::task(const std::string &source)
+:task{locale::char16::conv(source)}
+{
+}
+
+ircd::js::task::task(const std::u16string &source)
 try
 :pid
 {
@@ -228,10 +233,12 @@ try
 
 	// TODO: options
 	JS::CompileOptions opts(*cx);
+	opts.forceAsync = true;
 
 	// The function must be compiled in this scope and returned as a heap_function
-	// before the compartment destructs.
-	return heap_script { opts, source };
+	// before the compartment destructs. The compilation is also conducted asynchronously:
+	// it will yield the current ircd::ctx until it is complete.
+	return heap_script { heap_script::yielding, opts, source };
 }()}
 ,generator{[this]
 {
@@ -1110,6 +1117,58 @@ ircd::js::trap::on_call(object::handle,
 //
 // ircd/js/script.h
 //
+
+namespace ircd {
+namespace js   {
+
+void handle_compile_async(void *, void *) noexcept;
+
+} // namespace js
+} // namespace ircd
+
+ircd::js::string
+ircd::js::decompile(const JS::Handle<JSScript *> &s,
+                    const char *const &name,
+                    const bool &pretty)
+{
+	uint flags(0);
+	flags |= pretty;
+	return JS_DecompileScript(*cx, s, name, flags);
+}
+
+ircd::ctx::future<void *>
+ircd::js::compile_async(const JS::ReadOnlyCompileOptions &opts,
+                        const std::u16string &src)
+{
+	auto promise(std::make_unique<ctx::promise<void *>>());
+	if(!JS::CompileOffThread(*cx, opts, src.data(), src.size(), handle_compile_async, promise.get()))
+		throw internal_error("Failed to compile concurrent script");
+
+	return *promise.release();
+}
+
+void
+ircd::js::handle_compile_async(void *const token,
+                               void *const priv)
+noexcept
+{
+	// This frame is entered on a thread owned by SpiderMonkey, not IRCd. Do not call
+	// ircd::log from here, it is not thread-safe.
+	/*
+	printf("[thread %s]: runtime(%p): context(%p): compile(%p) READY (priv: %p)\n",
+	       ircd::string(std::this_thread::get_id()).c_str(),
+	       (const void *)rt,
+	       (const void *)cx,
+	       token,
+	       priv);
+	*/
+
+	// Setting the value of the promise and then deleting the promise is thread-safe.
+	// Note that JS::FinishOffThreadScript(); will need to be called on the main thread.
+	auto *const _promise(reinterpret_cast<ctx::promise<void *> *>(priv));
+	const std::unique_ptr<ctx::promise<void *>> promise(_promise);
+	promise->set_value(token);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
