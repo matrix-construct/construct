@@ -29,7 +29,7 @@ struct future
 {
 	uint64_t id_ctr;
 
-	void on_ctor(object &, const args &args) override;
+	void on_new(object::handle, object &, const args &args) override;
 
 	future();
 }
@@ -46,7 +46,7 @@ future::future()
 }
 
 void
-future::on_ctor(object &obj, const args &args)
+future::on_new(object::handle, object &obj, const args &args)
 {
 	auto &task(task::get());
 

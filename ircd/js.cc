@@ -427,14 +427,14 @@ noexcept try
 	assert(&our(c) == cx);
 
 	const struct args args(argc, argv);
-	//const auto that(args.computeThis(c));
+	const value that(args.computeThis(c));
 	const object func(args.callee());
 	auto &trap(from(func));
 	log.debug("trap_function(%p) \"%s\": call",
 	          (const void *)&trap,
 	          trap.name.c_str());
 
-	args.rval().set(trap.on_call(func, args));
+	args.rval().set(trap.on_call(func, that, args));
 	return true;
 }
 catch(const jserror &e)
@@ -469,6 +469,7 @@ ircd::js::trap_function::from(JSObject *const &func)
 
 ircd::js::value
 ircd::js::trap_function::on_call(object::handle,
+                                 value::handle,
                                  const args &)
 {
 	return {};
@@ -676,7 +677,7 @@ noexcept try
 
 	auto &trap(from(*obj));
 	trap.debug("dtor %p", (const void *)obj);
-	trap.on_dtor(*obj);
+	trap.on_gc(*obj);
 }
 catch(const jserror &e)
 {
@@ -706,7 +707,7 @@ noexcept try
 	trap.debug("ctor: '%s'", trap.name().c_str());
 
 	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
-	trap.on_ctor(ret, args);
+	trap.on_new(that, ret, args);
 	args.rval().set(ret);
 	return true;
 }
@@ -742,7 +743,7 @@ noexcept try
 	trap_that.debug("call: '%s'", trap_func.name().c_str());
 	trap_func.debug("call");
 
-	args.rval().set(trap_func.on_call(func, args));
+	args.rval().set(trap_func.on_call(func, that, args));
 	return true;
 }
 catch(const jserror &e)
@@ -1048,13 +1049,14 @@ const
 }
 
 void
-ircd::js::trap::on_dtor(JSObject &)
+ircd::js::trap::on_gc(JSObject &)
 {
 }
 
 void
-ircd::js::trap::on_ctor(object &obj,
-                        const args &)
+ircd::js::trap::on_new(object::handle,
+                       object &,
+                       const args &)
 {
 }
 
@@ -1067,7 +1069,7 @@ bool
 ircd::js::trap::on_has(object::handle,
                        id::handle)
 {
-	return true;
+	return false;
 }
 
 bool
@@ -1108,6 +1110,7 @@ ircd::js::trap::on_set(object::handle,
 
 ircd::js::value
 ircd::js::trap::on_call(object::handle,
+                        object::handle,
                         const args &)
 {
 	return {};

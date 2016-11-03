@@ -36,15 +36,15 @@ class trap
 	std::map<persist_string, trap *, persist_string::less> children;
 
 	// Override these to define JS objects in C
-	virtual value on_call(object::handle, const args &);
+	virtual value on_call(object::handle, object::handle, const args &);
 	virtual value on_set(object::handle, id::handle, value::handle);
 	virtual value on_get(object::handle, id::handle, value::handle);
 	virtual void on_add(object::handle, id::handle, value::handle);
 	virtual bool on_del(object::handle, id::handle);
 	virtual bool on_has(object::handle, id::handle);
 	virtual void on_enu(object::handle);
-	virtual void on_ctor(object &, const args &);
-	virtual void on_dtor(JSObject &);
+	virtual void on_new(object::handle, object &, const args &);
+	virtual void on_gc(JSObject &);
 
   private:
 	void host_exception(const char *fmt, ...) const AFP(2, 3);

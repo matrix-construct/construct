@@ -32,7 +32,7 @@ struct trap_function
 	uint flags;
 
   protected:
-	virtual value on_call(object::handle, const args &);
+	virtual value on_call(object::handle callee, value::handle that, const args &);
 
   private:
 	static trap_function &from(JSObject *const &);
