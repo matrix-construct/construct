@@ -41,6 +41,12 @@ dns_module_LTLIBRARIES = dns/dns.la
 dns_dns_la_SOURCES  = dns/dns.cc \
                       dns/lookup.cc
 
+net_moduledir=@moduledir@
+net_module_LTLIBRARIES = net/net.la
+net_net_la_SOURCES  = net/net.cc \
+                      net/socket.cc \
+                      net/server.cc
+
 moduledir=@moduledir@
 future_la_SOURCES = future.cc
 require_la_SOURCES = require.cc
