@@ -1311,6 +1311,13 @@ ircd::js::del(const object::handle &obj,
 
 void
 ircd::js::del(const object::handle &obj,
+              const id &id)
+{
+	return del(obj, id::handle(id));
+}
+
+void
+ircd::js::del(const object::handle &obj,
               const id::handle &id)
 {
 	JS::ObjectOpResult res;
@@ -1357,6 +1364,14 @@ ircd::js::set(const object::handle &src,
 
 	if(!JS_SetProperty(*cx, obj, key, val))
 		throw jserror(jserror::pending);
+}
+
+void
+ircd::js::set(const object::handle &obj,
+              const id &id,
+              const value &val)
+{
+	set(obj, id::handle(id), val);
 }
 
 void
@@ -1413,6 +1428,13 @@ ircd::js::get(const object::handle &obj,
 		throw reference_error("[%u]", idx);
 
 	return ret;
+}
+
+ircd::js::value
+ircd::js::get(const object::handle &obj,
+              const id &id)
+{
+	return get(obj, id::handle(id));
 }
 
 ircd::js::value
@@ -1480,6 +1502,13 @@ ircd::js::has(const object::handle &obj,
 		throw jserror(jserror::pending);
 
 	return ret;
+}
+
+bool
+ircd::js::has(const object::handle &obj,
+              const id &id)
+{
+	return has(obj, id::handle(id));
 }
 
 bool
