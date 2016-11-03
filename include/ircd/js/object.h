@@ -62,6 +62,10 @@ struct object
 	uint32_t size() const;
 	void resize(const uint32_t &);
 
+	// Get/set prototype
+	object prototype() const;
+	void prototype(object::handle);
+
 	// new object
 	object(const JSClass *const &, const handle &ctor, const JS::HandleValueArray &args);
 	object(const JSClass *const &, const JS::CallArgs &args);
@@ -209,6 +213,26 @@ object<L>::object(const JSClass *const &clasp,
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object (new)");
+}
+
+template<lifetime L>
+void
+object<L>::prototype(object::handle obj)
+{
+	if(!JS_SetPrototype(*cx, *this, obj))
+		throw internal_error("Failed to set prototype for object");
+}
+
+template<lifetime L>
+object<L>
+object<L>::prototype()
+const
+{
+	object ret;
+	if(!JS_GetPrototype(*cx, *this, &ret))
+		throw internal_error("Failed to get prototype for object");
+
+	return ret;
 }
 
 template<lifetime L>
