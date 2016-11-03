@@ -25,10 +25,20 @@
 namespace ircd  {
 namespace js    {
 
+// Fundamental utils
+bool latin1(const JSString *const &);
 bool external(const JSString *const &);
 size_t size(const JSString *const &);
 char16_t at(const JSString *const &, const size_t &);
 
+// Direct access to the string data via a pointer within a protective closure.
+using string16_closure = std::function<void (const char16_t *const &, const size_t &)>;
+using string8_closure = std::function<void (const char *const &, const size_t &)>;
+void observe16(const JSString *const &, const string16_closure &);
+void observe8(const JSString *const &, const string8_closure &);
+void observe(const JSString *const &, const std::pair<string8_closure, string16_closure> &);
+
+// Convert to native and copy into circular buffer.
 const size_t CSTR_BUFS = 8;
 const size_t CSTR_BUFSIZE = 1024;
 char *c_str(const JSString *const &);
@@ -519,6 +529,38 @@ is_string()
 
 } // namespace basic
 
+inline void
+observe(const JSString *const &str,
+        const std::pair<string8_closure, string16_closure> &closure)
+{
+	if(latin1(str))
+		observe8(str, closure.first);
+	else
+		observe16(str, closure.second);
+}
+
+inline void
+observe8(const JSString *const &str,
+         const string8_closure &closure)
+{
+	JS::AutoCheckCannotGC ngc;
+
+	size_t length;
+	const auto ptr(JS_GetLatin1StringCharsAndLength(*cx, ngc, const_cast<JSString *>(str), &length));
+	closure(reinterpret_cast<const char *>(ptr), length);
+}
+
+inline void
+observe16(const JSString *const &str,
+          const string16_closure &closure)
+{
+	JS::AutoCheckCannotGC ngc;
+
+	size_t length;
+	const auto ptr(JS_GetTwoByteStringCharsAndLength(*cx, ngc, const_cast<JSString *>(str), &length));
+	closure(ptr, length);
+}
+
 inline char16_t
 at(const JSString *const &s,
    const size_t &pos)
@@ -540,6 +582,12 @@ inline bool
 external(const JSString *const &s)
 {
 	return JS_IsExternalString(const_cast<JSString *>(s));
+}
+
+inline bool
+latin1(const JSString *const &s)
+{
+	return JS_StringHasLatin1Chars(const_cast<JSString *>(s));
 }
 
 } // namespace js
