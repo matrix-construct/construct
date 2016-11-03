@@ -83,6 +83,8 @@ class trap
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
+	IRCD_OVERLOAD(prototyped)
+	template<class... args> object operator()(prototyped_t, const object &parent, const object &proto, args&&...);
 	template<class... args> object operator()(const object &parent, args&&...);
 
 	trap(const std::string &path, const uint &flags = 0, const uint &prop_flags = 0);
@@ -98,9 +100,19 @@ object
 trap::operator()(const object &parent,
                  args&&... a)
 {
+	return operator()(prototyped, parent, object{}, std::forward<args>(a)...);
+}
+
+template<class... args>
+object
+trap::operator()(prototyped_t,
+                 const object &parent,
+                 const object &parent_proto,
+                 args&&... a)
+{
 	object proto(JS_InitClass(*cx,
 	                          parent,
-	                          object{},
+	                          parent_proto,
 	                          _class.get(),
 	                          nullptr,
 	                          0,
