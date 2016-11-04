@@ -77,7 +77,7 @@ script<L>::script(const JS::ReadOnlyCompileOptions &opts,
 :script<L>::root::type{}
 {
 	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
-		throw syntax_error("Failed to compile script");
+		throw jserror(jserror::pending);
 }
 
 template<lifetime L>
@@ -86,7 +86,7 @@ script<L>::script(const JS::ReadOnlyCompileOptions &opts,
 :script<L>::root::type{}
 {
 	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
-		throw syntax_error("Failed to compile script");
+		throw jserror(jserror::pending);
 }
 
 template<lifetime L>
@@ -103,6 +103,8 @@ script<L>::script(yielding_t,
 	return JS::FinishOffThreadScript(*cx, *rt, token);
 }()}
 {
+	if(unlikely(!this->get()))
+		throw jserror(jserror::pending);
 }
 
 template<lifetime L>
