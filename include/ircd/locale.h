@@ -35,10 +35,18 @@ namespace char16
 {
 	char conv(const char16_t &);
 	char16_t conv(const char &);
+
+	size_t conv(const char16_t *const &, const size_t &len, char *const &buf, const size_t &max);
+	size_t conv(const char *const &, const size_t &len, char16_t *const &buf, const size_t &max);  // uint8_t = max*2
+
 	size_t conv(const char16_t *const &, char *const &buf, const size_t &max);
 	size_t conv(const char *const &, char16_t *const &buf, const size_t &max);  // uint8_t = max*2
+
+	std::string conv(const char16_t *const &, const size_t &len);
 	std::string conv(const char16_t *const &);
 	std::string conv(const std::u16string &);
+
+	std::u16string conv(const char *const &, const size_t &len);
 	std::u16string conv(const char *const &);
 	std::u16string conv(const std::string &);
 }

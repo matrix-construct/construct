@@ -56,6 +56,6 @@ ircd::js::native_external_copy(const char *const &s,
                                const size_t &len)
 {
 	auto buf(std::make_unique<char16_t[]>(len + 1));
-	ircd::locale::char16::conv(s, buf.get(), len + 1);
+	ircd::locale::char16::conv(s, len, buf.get(), len + 1);
 	return buf;
 }

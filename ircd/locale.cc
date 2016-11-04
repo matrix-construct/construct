@@ -60,6 +60,23 @@ ircd::locale::char16::conv(const char *const &s)
 #endif
 
 #ifdef HAVE_CODECVT
+std::u16string
+ircd::locale::char16::conv(const char *const &s,
+                           const size_t &len)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+	return s && len? converter.from_bytes(s, s + len) : std::u16string{};
+}
+#else
+std::u16string
+ircd::locale::char16::conv(const char *const &s,
+                           const size_t &len)
+{
+	return boost::locale::conv::utf_to_utf<char16_t>(s, s + len);
+}
+#endif
+
+#ifdef HAVE_CODECVT
 std::string
 ircd::locale::char16::conv(const std::u16string &s)
 {
@@ -90,6 +107,23 @@ ircd::locale::char16::conv(const char16_t *const &s)
 #endif
 
 #ifdef HAVE_CODECVT
+std::string
+ircd::locale::char16::conv(const char16_t *const &s,
+                           const size_t &len)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+	return s && len? converter.to_bytes(s, s + len) : std::string{};
+}
+#else
+std::string
+ircd::locale::char16::conv(const char16_t *const &s,
+                           const size_t &len)
+{
+	return boost::locale::conv::utf_to_utf<char>(s, s + len);
+}
+#endif
+
+#ifdef HAVE_CODECVT
 size_t
 ircd::locale::char16::conv(const char16_t *const &str,
                            char *const &buf,
@@ -104,11 +138,37 @@ ircd::locale::char16::conv(const char16_t *const &str,
 #else
 size_t
 ircd::locale::char16::conv(const char16_t *const &str,
-                      char *const &buf,
-                      const size_t &max)
+                           char *const &buf,
+                           const size_t &max)
 {
 	//TODO: optimize
 	const auto s(boost::locale::conv::utf_to_utf<char>(str));
+	return rb_strlcpy(buf, s.c_str(), max);
+}
+#endif
+
+#ifdef HAVE_CODECVT
+size_t
+ircd::locale::char16::conv(const char16_t *const &str,
+                           const size_t &len,
+                           char *const &buf,
+                           const size_t &max)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+	//TODO: optimize
+	const auto s(converter.to_bytes(str, str + len));
+	return rb_strlcpy(buf, s.c_str(), max);
+}
+#else
+size_t
+ircd::locale::char16::conv(const char16_t *const &str,
+                           const size_t &len,
+                           char *const &buf,
+                           const size_t &max)
+{
+	//TODO: optimize
+	const auto s(boost::locale::conv::utf_to_utf<char>(str, str + len));
 	return rb_strlcpy(buf, s.c_str(), max);
 }
 #endif
@@ -142,6 +202,44 @@ ircd::locale::char16::conv(const char *const &str,
 
 	//TODO: optimize
 	const auto s(boost::locale::conv::utf_to_utf<char16_t>(str));
+	const auto cpsz(std::min(s.size(), size_t(max - 1)));
+	memcpy(buf, s.data(), cpsz * 2);
+	buf[cpsz] = char16_t(0);
+	return cpsz;
+}
+#endif
+
+#ifdef HAVE_CODECVT
+size_t
+ircd::locale::char16::conv(const char *const &str,
+                           const size_t &len,
+                           char16_t *const &buf,
+                           const size_t &max)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+	if(unlikely(!max))
+		return 0;
+
+	//TODO: optimize
+	const auto s(converter.from_bytes(str, str + len));
+	const auto cpsz(std::min(s.size(), size_t(max - 1)));
+	memcpy(buf, s.data(), cpsz * 2);
+	buf[cpsz] = char16_t(0);
+	return cpsz;
+}
+#else
+size_t
+ircd::locale::char16::conv(const char *const &str,
+                           const size_t &len,
+                           char16_t *const &buf,
+                           const size_t &max)
+{
+	if(unlikely(!max))
+		return 0;
+
+	//TODO: optimize
+	const auto s(boost::locale::conv::utf_to_utf<char16_t>(str, str + len));
 	const auto cpsz(std::min(s.size(), size_t(max - 1)));
 	memcpy(buf, s.data(), cpsz * 2);
 	buf[cpsz] = char16_t(0);
