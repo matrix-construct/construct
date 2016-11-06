@@ -49,13 +49,13 @@ struct NAME                                                 \
     using TYPE::TYPE;                                       \
 };
 
-#define IRCD_STRONG_TYPEDEF(TYPE, NAME)                     \
-struct NAME                                                 \
-{                                                           \
-    TYPE val;                                               \
-                                                            \
-    operator const TYPE &() const   { return val;  }        \
-    operator TYPE &()               { return val;  }        \
+#define IRCD_STRONG_TYPEDEF(TYPE, NAME)                       \
+struct NAME                                                   \
+{                                                             \
+    TYPE val;                                                 \
+                                                              \
+    explicit operator const TYPE &() const  { return val;  }  \
+    explicit operator TYPE &()              { return val;  }  \
 };
 
 #define IRCD_WEAK_T(TYPE) \
