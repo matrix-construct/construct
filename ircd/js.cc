@@ -734,13 +734,13 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	const struct args args(argc, argv);
-	object that(args.computeThis(c));
+	value that(args.computeThis(c));
 	object func(args.callee());
 
-	auto &trap_that(from(that));
+	//auto &trap_that(from(that));
 	auto &trap_func(from(func));
 
-	trap_that.debug("call: '%s'", trap_func.name().c_str());
+	//trap_that.debug("call: '%s'", trap_func.name().c_str());
 	trap_func.debug("call");
 
 	args.rval().set(trap_func.on_call(func, that, args));
@@ -1091,6 +1091,9 @@ ircd::js::trap::on_get(object::handle obj,
                        id::handle id,
                        value::handle val)
 {
+	if(!undefined(val))
+		return val;
+
 	const string name(id);
 	const auto it(children.find(name));
 	if(it == end(children))
@@ -1110,7 +1113,7 @@ ircd::js::trap::on_set(object::handle,
 
 ircd::js::value
 ircd::js::trap::on_call(object::handle,
-                        object::handle,
+                        value::handle,
                         const args &)
 {
 	return {};

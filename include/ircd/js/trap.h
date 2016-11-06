@@ -36,7 +36,7 @@ class trap
 	std::map<persist_string, trap *, persist_string::less> children;
 
 	// Override these to define JS objects in C
-	virtual value on_call(object::handle, object::handle, const args &);
+	virtual value on_call(object::handle, value::handle, const args &);
 	virtual value on_set(object::handle, id::handle, value::handle);
 	virtual value on_get(object::handle, id::handle, value::handle);
 	virtual void on_add(object::handle, id::handle, value::handle);
