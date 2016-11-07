@@ -47,11 +47,12 @@ namespace js {  struct InterpreterFrame;  }
 namespace ircd {
 namespace js   {
 
-// Extend this class to store your data with any priv(),
-// i.e priv(runtime, privdata*) or priv(context, privdata*) etc
+// Extend this class to store your data with any priv(), i.e priv(runtime, privdata*) or
+// priv(context, privdata*). Also useful with reserved slots and private object variables.
 struct privdata
+:std::enable_shared_from_this<privdata>
 {
-	virtual ~privdata() noexcept = 0;            // Your object is managed by the host
+	virtual ~privdata() noexcept;            // Your object is managed by the host
 };
 
 inline const char *version(const JSVersion &v)   { return JS_VersionToString(v);                   }

@@ -117,6 +117,12 @@ noexcept
 	JS_ShutDown();
 }
 
+// Plant down the location of the struct privdata vtable here
+ircd::js::privdata::~privdata()
+noexcept
+{
+}
+
 const char *
 ircd::js::version(const ver &type)
 {
@@ -222,7 +228,7 @@ try
 	// `struct task` from the global object using task::get(object). The global object
 	// can first be found from a context or active compartment. As a convenience `struct task`
 	// can be found contextually with task::get(void).
-	priv(global, this);
+	JS_SetPrivate(global, this);
 
 	return global;
 }()}
@@ -1049,7 +1055,14 @@ const
 }
 
 void
-ircd::js::trap::on_gc(JSObject &)
+ircd::js::trap::on_gc(JSObject &that)
+{
+	if(jsclass().flags & JSCLASS_HAS_PRIVATE)
+		priv(that, nullptr);
+}
+
+void
+ircd::js::trap::on_trace(const JSObject &)
 {
 }
 

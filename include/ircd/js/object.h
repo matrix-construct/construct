@@ -35,15 +35,25 @@ bool is_extensible(const object_handle &);
 bool is_array(const object_handle &);
 uint32_t size(const object_handle &);
 
-// Private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
-template<class T> T &priv(const object_handle &);
-void priv(const object_handle &, void *const &);
-void priv(const object_handle &, const void *const &);
-
 bool deep_freeze(const object_handle &);
 bool freeze(const object_handle &);
 
 IRCD_STRONG_TYPEDEF(uint, reserved)
+
+// Get private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
+template<class T> const T *priv(const JSObject &);
+template<class T> T *priv(JSObject &);
+template<class T> T &priv(const object_handle &);
+
+// Set private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
+void priv(JSObject &, nullptr_t);
+void priv(JSObject &, std::shared_ptr<privdata>);
+
+// Set private data slot (morphisms: object -> JS::HandleObject -> JSObject *)
+void priv(JSObject *const &, nullptr_t);
+void priv(JSObject *const &, std::shared_ptr<privdata>);
+
+template<class T, class... args> std::shared_ptr<privdata> make_priv(args&&...);
 
 namespace basic {
 
@@ -260,6 +270,81 @@ const
 
 } // namespace basic
 
+template<class T,
+         class... args>
+std::shared_ptr<privdata>
+make_priv(args&&... a)
+{
+	return std::make_shared<T>(std::forward<args>(a)...);
+}
+
+inline void
+priv(JSObject *const &obj,
+     std::shared_ptr<privdata> ptr)
+{
+	assert(obj);
+	priv(*obj, ptr);
+}
+
+inline void
+priv(JSObject *const &obj,
+     nullptr_t)
+{
+	assert(obj);
+	priv(*obj, nullptr);
+}
+
+inline void
+priv(JSObject &obj,
+     std::shared_ptr<privdata> ptr)
+{
+	JS_SetPrivate(&obj, new std::shared_ptr<privdata>(ptr));
+}
+
+inline void
+priv(JSObject &obj,
+     nullptr_t)
+{
+	void *const vp(JS_GetPrivate(&obj));
+	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
+	delete sp;
+	JS_SetPrivate(&obj, nullptr);
+}
+
+template<class T>
+T *
+priv(JSObject &obj)
+{
+	void *const vp(JS_GetPrivate(&obj));
+	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
+	return sp? reinterpret_cast<T *>(sp->get()) : nullptr;
+}
+
+template<class T>
+const T *
+priv(const JSObject &obj)
+{
+	void *const vp(JS_GetPrivate(const_cast<JSObject *>(&obj)));
+	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
+	return sp? reinterpret_cast<T *>(sp->get()) : nullptr;
+}
+
+template<class T>
+T &
+priv(const object_handle &obj)
+{
+	const auto &jsc(jsclass(obj));
+	const auto vp(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
+	if(!vp)
+		throw error("Object has no private data");
+
+	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
+	if(!*sp)
+		throw error("Object has no private data");
+
+	return *reinterpret_cast<T *>(sp->get());
+}
+
 inline bool
 freeze(const object_handle &obj)
 {
@@ -300,32 +385,6 @@ is_extensible(const object_handle &obj)
 		throw internal_error("Failed to query object extensibility");
 
 	return ret;
-}
-
-inline void
-priv(const object_handle &obj,
-     const void *const &ptr)
-{
-	JS_SetPrivate(obj, const_cast<void *>(ptr));
-}
-
-inline void
-priv(const object_handle &obj,
-     void *const &ptr)
-{
-	JS_SetPrivate(obj, ptr);
-}
-
-template<class T>
-T &
-priv(const object_handle &obj)
-{
-	const auto &jsc(jsclass(obj));
-	const auto ret(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
-	if(!ret)
-		throw error("Object has no private data");
-
-	return *reinterpret_cast<T *>(ret);
 }
 
 inline const JSClass &

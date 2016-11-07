@@ -64,7 +64,7 @@ task::get()
 inline task &
 task::get(const object &global)
 {
-	return priv<task>(global);
+	return *reinterpret_cast<task *>(JS_GetPrivate(global));
 }
 
 } // namespace js
