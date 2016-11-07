@@ -25,6 +25,8 @@
 namespace ircd {
 namespace js   {
 
+bool has(const JSObject &obj, const reserved &id);
+bool has(const JSObject *const &obj, const reserved &id);
 bool has(const object::handle &obj, const id::handle &id);
 bool has(const object::handle &obj, const id &id);
 bool has(const object::handle &obj, const uint32_t &idx);

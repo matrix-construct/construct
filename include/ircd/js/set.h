@@ -25,7 +25,7 @@
 namespace ircd {
 namespace js   {
 
-void set(const object::handle &obj, const reserved &slot, const value &val);
+void set(JSObject *const &obj, const reserved &slot, const JS::Value &);
 void set(const object::handle &obj, const id::handle &id, const value &val);
 void set(const object::handle &obj, const id &id, const value &val);
 template<class T> void set(const object::handle &obj, const uint32_t &idx, T&& t);

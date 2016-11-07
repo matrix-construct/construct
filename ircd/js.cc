@@ -1390,11 +1390,11 @@ ircd::js::set(const object::handle &obj,
 }
 
 void
-ircd::js::set(const object::handle &obj,
+ircd::js::set(JSObject *const &obj,
               const reserved &slot,
-              const value &val)
+              const JS::Value &val)
 {
-	JS_SetReservedSlot(obj, slot, val);
+	JS_SetReservedSlot(obj, uint(slot), val);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1454,11 +1454,18 @@ ircd::js::get(const object::handle &obj,
 	return ret;
 }
 
-ircd::js::value
-ircd::js::get(const object::handle &obj,
+JS::Value
+ircd::js::get(const JSObject *const &obj,
               const reserved &slot)
 {
-	return JS_GetReservedSlot(obj, slot);
+	return likely(obj)? get(*obj, slot) : throw internal_error("get(reserved): NULL JSObject");
+}
+
+JS::Value
+ircd::js::get(const JSObject &obj,
+              const reserved &slot)
+{
+	return JS_GetReservedSlot(const_cast<JSObject *>(&obj), uint(slot));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1526,6 +1533,25 @@ ircd::js::has(const object::handle &obj,
 		throw jserror(jserror::pending);
 
 	return ret;
+}
+
+bool
+ircd::js::has(const JSObject *const &obj,
+              const reserved &id)
+{
+	return likely(obj)? has(*obj, id) : false;
+}
+
+bool
+ircd::js::has(const JSObject &obj,
+              const reserved &id)
+{
+	auto *const c(JS_GetClass(const_cast<JSObject *>(&obj)));
+	if(!c)
+		return false;
+
+	const auto &flags(c->flags);
+	return flags & JSCLASS_HAS_RESERVED_SLOTS(uint(id));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

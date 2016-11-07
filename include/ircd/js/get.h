@@ -25,7 +25,8 @@
 namespace ircd {
 namespace js   {
 
-value get(const object::handle &obj, const reserved &id);
+JS::Value get(const JSObject &obj, const reserved &id);
+JS::Value get(const JSObject *const &obj, const reserved &id);
 value get(const object::handle &obj, const id::handle &id);
 value get(const object::handle &obj, const id &id);
 value get(const object::handle &obj, const uint32_t &idx);
