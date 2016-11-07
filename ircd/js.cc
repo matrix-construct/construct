@@ -239,7 +239,7 @@ try
 
 	// TODO: options
 	JS::CompileOptions opts(*cx);
-	opts.forceAsync = true;
+	//opts.forceAsync = true;
 
 	// The function must be compiled in this scope and returned as a heap_function
 	// before the compartment destructs. The compilation is also conducted asynchronously:
@@ -1162,6 +1162,17 @@ ircd::js::compile_async(const JS::ReadOnlyCompileOptions &opts,
                         const std::u16string &src)
 {
 	auto promise(std::make_unique<ctx::promise<void *>>());
+	if(!JS::CanCompileOffThread(*cx, opts, src.size()))
+	{
+		log.warning("Context(%p): Rejected asynchronous script compile (script size: %zu)",
+		            (const void *)cx,
+		            src.size());
+
+		ctx::future<void *> ret(*promise);
+		promise->set_value(nullptr);
+		return ret;
+	}
+
 	if(!JS::CompileOffThread(*cx, opts, src.data(), src.size(), handle_compile_async, promise.get()))
 		throw internal_error("Failed to compile concurrent script");
 

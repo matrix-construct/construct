@@ -100,7 +100,8 @@ script<L>::script(yielding_t,
 	// still be able to run.
 	auto future(compile_async(opts, src));
 	void *const token(future.get());
-	return JS::FinishOffThreadScript(*cx, *rt, token);
+	return token? JS::FinishOffThreadScript(*cx, *rt, token):
+	              script(opts, src).get();
 }()}
 {
 	if(unlikely(!this->get()))
