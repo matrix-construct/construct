@@ -26,7 +26,7 @@ namespace ircd {
 namespace js   {
 
 struct global
-:heap_object
+:persist_object
 {
 	global(trap &, JSPrincipals *const & = nullptr);
 };

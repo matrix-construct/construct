@@ -274,6 +274,7 @@ catch(const std::exception &e)
 ircd::js::task::~task()
 noexcept
 {
+	run_gc(*rt);
 	tasks_remove();
 }
 
@@ -371,7 +372,7 @@ ircd::js::task::tasks_next_pid()
 
 ircd::js::global::global(trap &trap,
                          JSPrincipals *const &principals)
-:heap_object
+:persist_object
 {
 	JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook)
 }
@@ -542,10 +543,6 @@ noexcept
 	//_class->trace = nullptr;
 	memset(_class.get(), 0x0, sizeof(JSClass));
 	class_drain.emplace_front(std::move(_class));
-
-	// Must run GC here to force reclamation of objects before
-	// the JSClass hosted by this trap destructs.
-	//run_gc(*rt);
 }
 
 void
@@ -973,8 +970,13 @@ ircd::js::trap::handle_trace(JSTracer *const tracer,
                              JSObject *const obj)
 noexcept try
 {
+	assert(cx);
+	assert(tracer);
+	assert(obj);
+
 	auto &trap(from(*obj));
 	trap.debug("trace");
+	trap.on_trace(*obj);
 }
 catch(const jserror &e)
 {
@@ -2548,10 +2550,17 @@ ircd::js::save_exception(context &c,
 	c.report = report;
 }
 
-void
+bool
 ircd::js::run_gc(context &c)
+noexcept
 {
+	// JS_MaybeGC dereferences the context's current zone without checking if the context
+	// is even in a compartment/has a current zone; we must check here.
+	if(!current_zone(c))
+		return false;
+
 	JS_MaybeGC(c);
+	return true;
 }
 
 void
@@ -2806,6 +2815,14 @@ noexcept
 ircd::js::runtime::~runtime()
 noexcept
 {
+}
+
+bool
+ircd::js::run_gc(runtime &r)
+noexcept
+{
+	JS_GC(r);
+	return true;
 }
 
 bool

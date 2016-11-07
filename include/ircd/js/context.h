@@ -128,7 +128,7 @@ void set(context &c, const JSGCParamKey &, const uint32_t &val);
 uint32_t get(context &c, const JSGCParamKey &);
 void out_of_memory(context &c);
 void allocation_overflow(context &c);
-void run_gc(context &c);
+bool run_gc(context &c) noexcept;
 
 // Exception
 bool pending_exception(const context &c);

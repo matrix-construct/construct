@@ -189,7 +189,8 @@ value<L>::value(const std::string &s)
 :value<L>::root::type{[&s]
 {
 	auto buf(native_external_copy(s));
-	const auto ret(JS_NewExternalString(*cx, buf.release(), s.size(), &native_external_delete));
+	const auto ret(JS_NewExternalString(*cx, buf.get(), s.size(), &native_external_delete));
+	buf.release();
 	return JS::StringValue(ret);
 }()}
 {
@@ -201,7 +202,8 @@ value<L>::value(const char *const &s)
 {
 	const auto len(strlen(s));
 	auto buf(native_external_copy(s, len));
-	const auto ret(JS_NewExternalString(*cx, buf.release(), len, &native_external_delete));
+	const auto ret(JS_NewExternalString(*cx, buf.get(), len, &native_external_delete));
+	buf.release();
 	return JS::StringValue(ret);
 }()}
 {

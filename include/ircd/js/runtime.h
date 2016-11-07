@@ -92,14 +92,8 @@ runtime &our_runtime(JSFreeOp &);
 
 // Do not call interrupt() unless you know what you're doing; see context.h.
 void interrupt(runtime &r);
-void run_gc(runtime &r);
+bool run_gc(runtime &r) noexcept;
 
-
-inline void
-run_gc(runtime &r)
-{
-	JS_GC(r);
-}
 
 inline void
 interrupt(runtime &r)

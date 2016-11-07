@@ -44,6 +44,7 @@ class trap
 	virtual bool on_has(object::handle, id::handle);
 	virtual void on_enu(object::handle);
 	virtual void on_new(object::handle, object &, const args &);
+	virtual void on_trace(const JSObject &);
 	virtual void on_gc(JSObject &);
 
   private:

@@ -97,6 +97,7 @@ struct object
 
 using object = basic::object<lifetime::stack>;
 using heap_object = basic::object<lifetime::heap>;
+using persist_object = basic::object<lifetime::persist>;
 
 //
 // Implementation
