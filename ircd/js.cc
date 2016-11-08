@@ -641,7 +641,7 @@ ircd::js::trap::find(const string::handle &path)
 }
 
 ircd::js::trap &
-ircd::js::trap::child(const string &name)
+ircd::js::trap::child(const std::string &name)
 try
 {
 	if(name.empty())
@@ -655,7 +655,7 @@ catch(const std::out_of_range &e)
 }
 
 const ircd::js::trap &
-ircd::js::trap::child(const string &name)
+ircd::js::trap::child(const std::string &name)
 const
 try
 {

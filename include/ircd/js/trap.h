@@ -33,7 +33,7 @@ class trap
 	JSPropertySpec ps[2];
 	JSFunctionSpec fs[2];
 	std::unique_ptr<JSClass> _class;
-	std::map<persist_string, trap *, persist_string::less> children;
+	std::map<std::string, trap *> children;
 
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, value::handle, const args &);
@@ -74,8 +74,8 @@ class trap
 	auto &jsclass() const                        { return *_class;                                 }
 
 	 // Get child by name (NOT PATH)
-	const trap &child(const string &name) const;
-	trap &child(const string &name);
+	const trap &child(const std::string &name) const;
+	trap &child(const std::string &name);
 
 	// Path is absolute to root
 	static trap &find(const string::handle &path);
