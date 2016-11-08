@@ -59,6 +59,7 @@ struct string
 	char16_t operator[](const size_t &at) const;
 
 	operator std::string() const;
+	operator std::u16string() const;
 	operator JS::Value() const;
 
 	using root<JSString *, L>::root;
@@ -286,6 +287,13 @@ string<L>::operator std::string()
 const
 {
 	return native(this->get());
+}
+
+template<lifetime L>
+string<L>::operator std::u16string()
+const
+{
+	return locale::char16::conv(native(this->get()));
 }
 
 template<lifetime L>
