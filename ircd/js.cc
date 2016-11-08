@@ -682,16 +682,14 @@ noexcept try
 	trap.debug("dtor %p", (const void *)obj);
 	trap.on_gc(*obj);
 }
-catch(const jserror &e)
-{
-	e.set_pending();
-	return;
-}
 catch(const std::exception &e)
 {
 	auto &trap(from(*obj));
-	trap.host_exception("dtor: %s", e.what());
-	return;
+	log.critical("Unhandled on GC (fop: %p obj: %p): %s",
+	             (const void *)op,
+	             (const void *)obj,
+	             e.what());
+	assert(0);
 }
 
 bool
