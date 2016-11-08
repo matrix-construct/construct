@@ -50,6 +50,9 @@ namespace ircd
 	using std::chrono::microseconds;
 	using std::chrono::nanoseconds;
 	using std::chrono::duration_cast;
+	using std::static_pointer_cast;
+	using std::dynamic_pointer_cast;
+	using std::const_pointer_cast;
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;
 	using namespace std::string_literals;

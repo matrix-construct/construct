@@ -42,6 +42,12 @@ is_shared_from_this()
 	return false;
 }
 
+// Convenience functions for types shared_from_this
+template<class T> std::shared_ptr<const T> shared_from(const T &t);
+template<class T> std::shared_ptr<T> shared_from(T &t);
+template<class T> std::weak_ptr<const T> weak_from(const T &t);
+template<class T> std::weak_ptr<T> weak_from(T &t);
+
 /* Use the life_guard to keep an object alive within a function running in a context.
  *
  * Example:
@@ -63,7 +69,7 @@ struct life_guard
 	template<class SFINAE = T>
 	life_guard(T &t,
 	           typename std::enable_if<is_shared_from_this<SFINAE>(), void>::type * = 0)
-	:std::shared_ptr<T>(t.shared_from_this())
+	:std::shared_ptr<T>(shared_from(t))
 	{
 	}
 
@@ -87,6 +93,34 @@ struct life_guard
 		if(wp.expired())
 			throw std::bad_weak_ptr();
 	}
+};
+
+template<class T>
+std::weak_ptr<T>
+weak_from(T &t)
+{
+	return shared_from(t);
+};
+
+template<class T>
+std::weak_ptr<const T>
+weak_from(const T &t)
+{
+	return shared_from(t);
+};
+
+template<class T>
+std::shared_ptr<T>
+shared_from(T &t)
+{
+	return dynamic_pointer_cast<T>(t.shared_from_this());
+};
+
+template<class T>
+std::shared_ptr<const T>
+shared_from(const T &t)
+{
+	return dynamic_pointer_cast<const T>(t.shared_from_this());
 };
 
 }      // namespace ircd
