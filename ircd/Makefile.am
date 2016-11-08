@@ -14,9 +14,12 @@ PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
 
 AM_LDFLAGS = \
-	-export-dynamic \
 	-avoid-version \
-	-no-undefined \
+	-Wl,-fuse-ld=gold \
+	-Wl,--no-allow-shlib-undefined \
+	-Wl,--export-dynamic \
+	-Wl,--no-undefined \
+	-Wl,--no-gnu-unique \
 	$(PLATFORM_LDFLAGS)
 
 AM_LDFLAGS += \

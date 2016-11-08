@@ -8,34 +8,40 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \
+	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@
 
 AM_LDFLAGS += \
-	-module \
-	-shared \
-	-export-dynamic \
 	-avoid-version \
-	-no-undefined \
-	--no-allow-shlib-undefined
+	-module \
+	-Wl,-fuse-ld=gold \
+	-Wl,--shared \
+	-Wl,--export-dynamic \
+	-Wl,--no-allow-shlib-undefined \
+	-Wl,--no-gnu-unique
+#	-Wl,--no-undefined \
 #	-export-symbols-regex IRCD_MODULE*
 #	-export-symbols-regex *
 
-AM_LDFLAGS += \
-	-lircd \
-	-lrb \
-	@BOOST_LIBS@
+#
+#AM_LDFLAGS += \
+#	-lircd \
+#	-lrb \
+#	@BOOST_LIBS@ \
+#	@JS_LIBS@
 
 
 # This puts the source in conf/ but the installed
 # library is conf_X.so in the main modules dir.
-conf_moduledir=@moduledir@
-conf_conf_loadmodule_la_SOURCES  = conf/loadmodule.cc
-conf_conf_serverinfo_la_SOURCES  = conf/serverinfo.cc
-conf_conf_listen_la_SOURCES      = conf/listen.cc
-conf_module_LTLIBRARIES =     \
-	conf/conf_loadmodule.la   \
-	conf/conf_serverinfo.la   \
-	conf/conf_listen.la
+#conf_moduledir=@moduledir@
+#conf_conf_loadmodule_la_SOURCES  = conf/loadmodule.cc
+#conf_conf_serverinfo_la_SOURCES  = conf/serverinfo.cc
+#conf_conf_listen_la_SOURCES      = conf/listen.cc
+#conf_module_LTLIBRARIES =     \
+#	conf/conf_loadmodule.la   \
+#	conf/conf_serverinfo.la   \
+#	conf/conf_listen.la
+
 
 dns_moduledir=@moduledir@
 dns_module_LTLIBRARIES = dns/dns.la

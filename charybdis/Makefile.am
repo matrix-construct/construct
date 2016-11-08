@@ -7,7 +7,10 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@
 
 AM_LDFLAGS = \
-	-dlopen self
+	-dlopen self \
+	-Wl,-fuse-ld=gold \
+	-Wl,--no-undefined \
+	-Wl,--no-gnu-unique
 
 AM_LDFLAGS += \
 	-L$(top_srcdir)/ircd \
