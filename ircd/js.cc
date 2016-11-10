@@ -437,9 +437,10 @@ noexcept try
 	const value that(args.computeThis(c));
 	const object func(args.callee());
 	auto &trap(from(func));
-	log.debug("trap_function(%p) \"%s\": call",
+	log.debug("trap_function(%p) \"%s\": this(%p) call",
 	          (const void *)&trap,
-	          trap.name.c_str());
+	          trap.name.c_str(),
+	          (const void *)that.address());
 
 	args.rval().set(trap.on_call(func, that, args));
 	return true;
@@ -679,7 +680,9 @@ noexcept try
 	assert(&our_runtime(*op) == rt);
 
 	auto &trap(from(*obj));
-	trap.debug("dtor %p", (const void *)obj);
+	trap.debug("this(%p) dtor",
+	           (const void *)obj);
+
 	trap.on_gc(*obj);
 }
 catch(const std::exception &e)
@@ -705,7 +708,10 @@ noexcept try
 	object that(args.callee());
 
 	auto &trap(from(that));
-	trap.debug("ctor: '%s'", trap.name().c_str());
+	trap.debug("this(%p) ctor: '%s' argv[%zu]",
+	           (const void *)that.get(),
+	           trap.name().c_str(),
+	           args.size());
 
 	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
 	trap.on_new(that, ret, args);
@@ -742,7 +748,9 @@ noexcept try
 	auto &trap_func(from(func));
 
 	//trap_that.debug("call: '%s'", trap_func.name().c_str());
-	trap_func.debug("call");
+	trap_func.debug("this(%p) call argv[%zu]",
+	                (const void *)that.address(),
+	                args.size());
 
 	args.rval().set(trap_func.on_call(func, that, args));
 	return true;
@@ -768,7 +776,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("enu");
+	trap.debug("this(%p) enu", (const void *)obj.get());
 	trap.on_enu(obj);
 	return true;
 }
@@ -795,7 +803,10 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("has: '%s'", string(id).c_str());
+	trap.debug("this(%p) has: '%s'",
+	           (const void *)obj.get(),
+	           string(id).c_str());
+
 	*resolved = trap.on_has(obj, id);
 	return true;
 }
@@ -824,7 +835,10 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("del: '%s'", string(id).c_str());
+	trap.debug("this(%p) del: '%s'",
+	           (const void *)obj.get(),
+	           string(id).c_str());
+
 	if(trap.on_del(obj, id))
 		res.succeed();
 
@@ -855,7 +869,10 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("get: '%s'", string(id).c_str());
+	trap.debug("this(%p) get: '%s'",
+	           (const void *)obj.get(),
+	           string(id).c_str());
+
 	const value ret(trap.on_get(obj, id, val));
 	val.set(ret.get());
 	return true;
@@ -886,7 +903,10 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("set: '%s'", string(id).c_str());
+	trap.debug("this(%p) set: '%s'",
+	           (const void *)obj.get(),
+	           string(id).c_str());
+
 	const value ret(trap.on_set(obj, id, val));
 	val.set(ret.get());
 	if(!val.isUndefined())
@@ -919,7 +939,10 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("add: '%s'", string(id).c_str());
+	trap.debug("this(%p) add: '%s'",
+	           (const void *)obj.get(),
+	           string(id).c_str());
+
 	trap.on_add(obj, id, val);
 	return true;
 }
@@ -947,7 +970,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("inst");
+	trap.debug("this(%p) inst", (const void *)obj.get());
 
 	return false;
 }
@@ -2880,7 +2903,7 @@ noexcept
 	log.debug("[thread %s] runtime(%p): %s",
 	          ircd::string(tid).c_str(),
 	          (const void *)&runtime,
-	          active? "ACTIVE" : "IDLE");
+	          active? "EVENT" : "ACCEPT");
 }
 
 void
