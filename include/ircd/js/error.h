@@ -44,6 +44,8 @@ struct jserror
 	jserror(generate_skip_t);
 	jserror(const JSErrorReport &);
 	jserror(const char *fmt = " ", ...) AFP(2, 3);
+	jserror(JSObject &);
+	jserror(JSObject *const &);
 	jserror(const JS::Value &);
 };
 

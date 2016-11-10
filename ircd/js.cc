@@ -1685,6 +1685,18 @@ ircd::js::jserror::jserror(const JS::Value &val)
 {
 }
 
+ircd::js::jserror::jserror(JSObject *const &obj)
+:ircd::js::error{generate_skip}
+,val{obj? JS::ObjectValue(*obj) : JS::UndefinedValue() }
+{
+}
+
+ircd::js::jserror::jserror(JSObject &obj)
+:ircd::js::error{generate_skip}
+,val{JS::ObjectValue(obj)}
+{
+}
+
 ircd::js::jserror::jserror(generate_skip_t)
 :ircd::js::error(generate_skip)
 ,val{}
@@ -1759,7 +1771,8 @@ void
 ircd::js::jserror::set_pending()
 const
 {
-	JS_SetPendingException(*cx, value(val));
+	JS_SetPendingException(*cx, &val);
+	save_exception(*cx, *JS_ErrorFromException(*cx, object(val.get())));
 }
 
 void
@@ -1818,6 +1831,14 @@ ircd::js::jserror::create(JSErrorReport &report)
 	{
 		throw error("Failed to construct jserror exception!");
 	}
+
+	JS::Rooted<JSObject *> obj(*cx);
+	if(unlikely(!JS_ValueToObject(*cx, &val, &obj)))
+		throw error("Failed to convert value to object on exception!");
+
+	JS::Rooted<JS::Value> msgv(*cx, JS::StringValue(msg));
+	if(unlikely(!JS_SetProperty(*cx, obj, "message", msgv)))
+		throw error("Failed to set jserror.message property on exception!");
 
 	generate_what_our(report);
 }
@@ -2553,7 +2574,11 @@ ircd::js::save_exception(context &c,
                          const JSErrorReport &report)
 {
 	if(c.except)
-		throw error("(internal error): Won't overwrite saved exception");
+	{
+		//throw error("(internal error): Won't overwrite saved exception");
+		log.warning("save_exception(): Dropping unrestored exception @ %p", (const void *)c.except);
+		JS_DropExceptionState(*cx, c.except);
+	}
 
 	c.except = JS_SaveExceptionState(c),
 	c.report = report;
@@ -2993,17 +3018,20 @@ ircd::js::runtime::handle_error(JSContext *const ctx,
 noexcept
 {
 	assert(report);
-/*
 	log.debug("JSContext(%p) Error report: %s [%s]",
 	          (const void *)ctx,
 	          msg,
 	          debug(*report).c_str());
-*/
 /*
 	log.critical("Unhandled: JSContext(%p): %s [%s]",
 	             (const void *)ctx,
 	             msg,
 	             debug(*report).c_str());
 */
+
+	//TODO: warnings
+	if(!JSREPORT_IS_EXCEPTION(report->flags))
+		return;
+
 	save_exception(our(ctx), *report);
 }
