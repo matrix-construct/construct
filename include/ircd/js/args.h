@@ -32,6 +32,7 @@ struct args
 	size_t size() const                          { return length();                                }
 	bool has(const size_t &at) const             { return size() > at;                             }
 
+	value at(const size_t &at) const;
 	value operator[](const size_t &at) const;
 
 	args(const unsigned &argc, JS::Value *const &argv);
@@ -46,6 +47,13 @@ args::args(const unsigned &argc,
 
 inline value
 args::operator[](const size_t &at)
+const
+{
+	return length() > at? JS::CallArgs::operator[](at) : value{};
+}
+
+inline value
+args::at(const size_t &at)
 const
 {
 	if(unlikely(length() <= at))
