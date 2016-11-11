@@ -136,6 +136,7 @@ ctx::wait()
 	if(unlikely(flags & INTERRUPTED))
 	{
 		mark(prof::event::CUR_INTERRUPT);
+		flags &= ~INTERRUPTED;
 		throw interrupted("ctx(%p)::wait()", (const void *)this);
 	}
 
