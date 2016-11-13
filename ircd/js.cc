@@ -47,7 +47,6 @@ __thread trap *tree;
 std::forward_list<std::unique_ptr<JSClass>> class_drain;
 
 // Internal prototypes
-void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
 const char *reflect(const ::js::CTypesActivityType &);
 
 } // namespace js
@@ -175,6 +174,10 @@ void
 ircd::js::contract::operator()(const closure &func)
 noexcept try
 {
+	log.debug("runtime(%p): RESULT (future: %p)",
+	          (const void *)rt,
+	          (const void *)future.get());
+
 	task::enter(*this, [this, &func]
 	(task &task)
 	{
@@ -414,7 +417,7 @@ noexcept
 	assert(tracer->runtime() == rt->get());
 
 	log.debug("runtime(%p): tracer(%p) object(%p)",
-	          (const void *)tracer->runtime(),
+	          (const void *)&our(tracer->runtime()),
 	          (const void *)tracer,
 	          (const void *)obj);
 }
@@ -472,12 +475,17 @@ noexcept try
 	const value that(args.computeThis(c));
 	const object func(args.callee());
 	auto &trap(from(func));
-	log.debug("trap_function(%p) \"%s\": this(%p) call",
+	log.debug("trap(%p) \"%s()\": this(%p) call",
 	          (const void *)&trap,
 	          trap.name.c_str(),
 	          (const void *)that.address());
 
 	args.rval().set(trap.on_call(func, that, args));
+	log.debug("trap(%p) \"%s()\": this(%p) return",
+	          (const void *)&trap,
+	          trap.name.c_str(),
+	          (const void *)that.address());
+
 	return true;
 }
 catch(const jserror &e)
@@ -491,12 +499,12 @@ catch(const std::exception &e)
 	auto &func(args.callee());
 	auto &trap(from(&func));
 
-	log.error("trap_function(%p) \"%s\": %s",
+	log.error("trap(%p) \"%s()\": %s",
 	          reinterpret_cast<const void *>(&trap),
 	          trap.name.c_str(),
 	          e.what());
 
-	JS_ReportError(*cx, "BUG: trap_function(%p) \"%s\": %s",
+	JS_ReportError(*cx, "BUG: trap(%p) \"%s()\": %s",
 	               reinterpret_cast<const void *>(&trap),
 	               trap.name.c_str(),
 	               e.what());
@@ -1033,7 +1041,7 @@ noexcept try
 	assert(obj);
 
 	auto &trap(from(*obj));
-	trap.debug("trace");
+	trap.debug("trace object(%p)", (const void *)obj);
 	trap.on_trace(*obj);
 }
 catch(const jserror &e)
@@ -2289,6 +2297,33 @@ ircd::js::reflect(const JSGCStatus &s)
 }
 
 const char *
+ircd::js::reflect(const JSGCMode &s)
+{
+	switch(s)
+	{
+		case JSGC_MODE_GLOBAL:       return "GLOBAL";
+		case JSGC_MODE_COMPARTMENT:  return "COMPARTMENT";
+		case JSGC_MODE_INCREMENTAL:  return "INCREMENTAL";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JS::GCProgress &s)
+{
+	switch(s)
+	{
+		case JS::GC_CYCLE_BEGIN:   return "CYCLE_BEGIN";
+		case JS::GC_SLICE_BEGIN:   return "SLICE_BEGIN";
+		case JS::GC_SLICE_END:     return "SLICE_END";
+		case JS::GC_CYCLE_END:     return "CYCLE_END";
+	}
+
+	return "";
+}
+
+const char *
 ircd::js::reflect(const JSExnType &e)
 {
 	switch(e)
@@ -2856,6 +2891,14 @@ ircd::js::timer::handle(std::unique_lock<std::mutex> &lock)
 // ircd/js/runtime.h
 //
 
+namespace ircd  {
+namespace js    {
+
+void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
+
+} // namespace js
+} // namespace ircd
+
 ircd::js::runtime::runtime(const struct opts &opts,
                            runtime *const &parent)
 :opts(opts)
@@ -2880,6 +2923,7 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
 	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
+	JS::SetGCSliceCallback(get(), handle_slice);
 	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
 	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
@@ -3051,6 +3095,17 @@ noexcept
 }
 
 void
+ircd::js::runtime::handle_slice(JSRuntime *const rt,
+                                JS::GCProgress progress,
+                                const JS::GCDescription &d)
+noexcept
+{
+	log.debug("runtime(%p): SLICE %s",
+	          (const void *)rt,
+	          reflect(progress));
+}
+
+void
 ircd::js::runtime::handle_trace_extra(JSTracer *const tracer,
                                       void *const priv)
 noexcept
@@ -3097,7 +3152,7 @@ ircd::js::runtime::handle_telemetry(const int id,
 noexcept
 {
 	//const auto tid(std::this_thread::get_id());
-	log.debug("runtime(%p) telemetry(%02d) %s: %u %s",
+	log.debug("runtime(%p): telemetry(%02d) %s: %u %s",
 	          //ircd::string(tid).c_str(),
 	          (const void *)rt,
 	          id,
@@ -3179,11 +3234,12 @@ void
 ircd::js::trace_heap(JSTracer *const &tracer,
                      tracing::thing &thing)
 {
-	log.debug("runtime(%p): tracer(%p): heap<%s> @ %p",
-	          (const void *)tracer->runtime(),
-	          (const void *)tracer,
-	          reflect(thing.type),
-	          (const void *)thing.ptr);
+	if(thing.type != jstype::OBJECT)
+		log.debug("runtime(%p): tracer(%p): heap<%s> @ %p",
+		          (const void *)tracer->runtime(),
+		          (const void *)tracer,
+		          reflect(thing.type),
+		          (const void *)thing.ptr);
 
 	if(likely(thing.ptr)) switch(thing.type)
 	{

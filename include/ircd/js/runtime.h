@@ -34,6 +34,7 @@ class runtime
 	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
 	static void handle_trace_gray(JSTracer *, void *) noexcept;
 	static void handle_trace_extra(JSTracer *, void *) noexcept;
+	static void handle_slice(JSRuntime *, JS::GCProgress, const JS::GCDescription &) noexcept;
 	static void handle_zone_sweep(JS::Zone *) noexcept;
 	static void handle_zone_destroy(JS::Zone *) noexcept;
 	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t) noexcept;

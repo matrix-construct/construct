@@ -28,7 +28,9 @@ namespace js   {
 // Returns static string
 const char *reflect(const JSType &);
 const char *reflect(const JSExnType &);
+const char *reflect(const JSGCMode &);
 const char *reflect(const JSGCStatus &);
+const char *reflect(const JS::GCProgress &);
 const char *reflect(const JSGCParamKey &);
 const char *reflect(const JSFinalizeStatus &);
 const char *reflect(const JSContextOp &);
