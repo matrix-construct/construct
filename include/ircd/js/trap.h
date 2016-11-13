@@ -35,6 +35,11 @@ class trap
 	std::unique_ptr<JSClass> _class;
 	std::map<std::string, trap *> children;
 
+	static trap &from(const JSObject &);
+	static trap &from(const JS::HandleObject &);
+
+	void debug(const char *fmt, ...) const AFP(2, 3);
+
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, value::handle, const args &);
 	virtual value on_set(object::handle, id::handle, value::handle);
@@ -48,13 +53,9 @@ class trap
 	virtual void on_gc(JSObject &);
 
   private:
-	void host_exception(const char *fmt, ...) const AFP(2, 3);
-	void debug(const char *fmt, ...) const AFP(2, 3);
 	void add_this();
 	void del_this();
-
-	static trap &from(const JSObject &);
-	static trap &from(const JS::HandleObject &);
+	void host_exception(const char *fmt, ...) const AFP(2, 3);
 
 	// Internal callback interface
 	static void handle_trace(JSTracer *, JSObject *) noexcept;
@@ -85,8 +86,8 @@ class trap
 	operator const JSClass *() const             { return &jsclass();                              }
 
 	IRCD_OVERLOAD(prototyped)
-	template<class... args> object operator()(prototyped_t, const object &parent, const object &proto, args&&...);
-	template<class... args> object operator()(const object &parent, args&&...);
+	object operator()(prototyped_t, const object &parent, const object &proto);
+	object operator()(const object &parent = {});
 
 	trap(const std::string &path, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(trap &&) = delete;
@@ -96,20 +97,16 @@ class trap
 
 extern __thread trap *tree;
 
-template<class... args>
-object
-trap::operator()(const object &parent,
-                 args&&... a)
+inline object
+trap::operator()(const object &parent)
 {
-	return operator()(prototyped, parent, object{}, std::forward<args>(a)...);
+	return operator()(prototyped, parent, object{});
 }
 
-template<class... args>
-object
+inline object
 trap::operator()(prototyped_t,
                  const object &parent,
-                 const object &parent_proto,
-                 args&&... a)
+                 const object &parent_proto)
 {
 	object proto(JS_InitClass(*cx,
 	                          parent,
@@ -121,8 +118,7 @@ trap::operator()(prototyped_t,
 	                          fs,
 	                          nullptr,
 	                          nullptr));
-
-	return JS_New(*cx, proto, vector<value>{std::forward<args>(a)...});
+	return proto;
 }
 
 } // namespace js
