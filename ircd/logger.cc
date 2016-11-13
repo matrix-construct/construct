@@ -343,6 +343,17 @@ log::log::critical(const char *const fmt,
 }
 
 void
+log::log::operator()(const facility &facility,
+                     const char *const fmt,
+                     ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
 log::mark(const char *const &msg)
 {
 	for_each<facility>([&msg]

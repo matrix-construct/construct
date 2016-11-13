@@ -80,6 +80,7 @@ class log
 	lease_ptr snote;
 
   public:
+	void operator()(const facility &, const char *fmt, ...) AFP(3, 4);
 	void critical(const char *fmt, ...) AFP(2, 3);
 	void error(const char *fmt, ...) AFP(2, 3);
 	void warning(const char *fmt, ...) AFP(2, 3);
