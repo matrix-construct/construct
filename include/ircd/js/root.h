@@ -121,6 +121,24 @@ struct root<T, lifetime::heap>
 	using handle = JS::Handle<T>;
 	using handle_mutable = JS::MutableHandle<T>;
 
+  private:
+	tracing::list::iterator tracing_it;
+
+	tracing::list::iterator add(JS::Heap<T> *const &ptr)
+	{
+		return rt->tracing.heap.emplace(end(rt->tracing.heap), tracing::thing { ptr, js::type<T>() });
+	}
+
+	void del(const tracing::list::iterator &tracing_it)
+	{
+		if(tracing_it != end(rt->tracing.heap))
+		{
+			const void *ptr = tracing_it->ptr;
+			rt->tracing.heap.erase(tracing_it);
+		}
+	}
+
+  public:
 	operator handle() const
 	{
 		return JS::Handle<T>::fromMarkedLocation(this->address());
@@ -134,34 +152,65 @@ struct root<T, lifetime::heap>
 
 	root(const handle &h)
 	:JS::Heap<T>{h}
+	,tracing_it{add(this)}
 	{
 	}
 
 	root(const handle_mutable &h)
 	:JS::Heap<T>{h}
+	,tracing_it{add(this)}
 	{
 	}
 
 	template<lifetime L>
 	root(const root<T, L> &other)
-	:JS::Heap<T>{other.get()}
+	:JS::Heap<T>{other}
+	,tracing_it{add(this)}
 	{
 	}
 
 	explicit root(const T &t)
 	:JS::Heap<T>{t}
+	,tracing_it{add(this)}
 	{
 	}
 
 	root()
 	:JS::Heap<T>{}
+	,tracing_it{add(this)}
 	{
 	}
 
-	root(root&&) = default;
-	root(const root &) = default;
-	root &operator=(root &&) = default;
-	root &operator=(const root &) = default;
+	root(root &&other) noexcept
+	:JS::Heap<T>{other.get()}
+	,tracing_it{std::move(other.tracing_it)}
+	{
+		other.tracing_it = end(rt->tracing.heap);
+		tracing_it->ptr = static_cast<JS::Heap<T> *>(this);
+	}
+
+	root(const root &other)
+	:JS::Heap<T>{other}
+	,tracing_it{add(this)}
+	{
+	}
+
+	root &operator=(root &&other) noexcept
+	{
+		JS::Heap<T>::operator=(std::move(other));
+		return *this;
+	}
+
+	root &operator=(const root &other)
+	{
+		JS::Heap<T>::operator=(other);
+		return *this;
+	}
+
+	~root() noexcept
+	{
+		del(tracing_it);
+	}
 };
 
 // This conversion is missing in the jsapi. Is this object not gc rooted? Can it not have a handle?

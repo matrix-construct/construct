@@ -29,6 +29,7 @@ using object_handle = JS::Handle<JSObject *>;
 using object_handle_mutable = JS::MutableHandle<JSObject *>;
 
 // Get the JSClass from which the trap can also be derived.
+const JSClass *jsclass(JSObject *const &);
 const JSClass &jsclass(const object_handle &);
 
 // Get the `this` global from any object
@@ -425,6 +426,12 @@ jsclass(const object_handle &obj)
 		throw error("Object has no JSClass");
 
 	return *const_cast<JSClass *>(jsc);
+}
+
+inline const JSClass *
+jsclass(JSObject *const &obj)
+{
+	return JS_GetClass(object(obj));
 }
 
 } // namespace js

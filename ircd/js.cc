@@ -187,7 +187,7 @@ noexcept try
 		}
 
 		assert(cx->star);
-		cx->star->completion.push(*this);
+		cx->star->completion.push(std::move(*this));
 	});
 }
 catch(const std::exception &e)
@@ -220,9 +220,11 @@ try
 }
 ,global{[this]
 {
+	JS::CompartmentOptions opts;
+
 	// Global object is constructed using the root trap (JSClass) at *tree;
 	// This is a thread_local registered by the kernel.so module.
-	struct global global(*tree);
+	struct global global(*tree, nullptr, opts);
 
 	// The root trap is configured with HAS_PRIVATE and that slot is set so we can find this
 	// `struct task` from the global object using task::get(object). The global object
@@ -371,17 +373,37 @@ ircd::js::task::tasks_next_pid()
 //
 
 ircd::js::global::global(trap &trap,
-                         JSPrincipals *const &principals)
-:persist_object
+                         JSPrincipals *const &principals,
+                         JS::CompartmentOptions opts)
+:heap_object{[&trap, &principals, &opts]
 {
-	JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook)
-}
+	opts.setTrace(handle_trace);
+	return JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook, opts);
+}()}
 {
 	const compartment c(*this);
 	if(!JS_InitStandardClasses(*cx, *this))
 		throw error("Failed to init standard classes for global object");
 
 	JS_FireOnNewGlobalObject(*cx, *this);
+}
+
+ircd::js::global::~global()
+noexcept
+{
+}
+
+void
+ircd::js::global::handle_trace(JSTracer *const tracer,
+                               JSObject *const obj)
+noexcept
+{
+	assert(tracer->runtime() == rt->get());
+
+	log.debug("runtime(%p): tracer(%p) object(%p)",
+	          (const void *)tracer->runtime(),
+	          (const void *)tracer,
+	          (const void *)obj);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -542,7 +564,9 @@ noexcept
 	assert(_class->reserved[0] == this);
 	//_class->reserved[0] = nullptr;
 	//_class->trace = nullptr;
+	const auto flags(_class->flags);
 	memset(_class.get(), 0x0, sizeof(JSClass));
+	_class->flags = flags;
 	class_drain.emplace_front(std::move(_class));
 }
 
@@ -2004,6 +2028,16 @@ ircd::js::dump(const ::js::InterpreterFrame *v)
 }
 
 std::string
+ircd::js::debug(const JSTracer &t)
+{
+	return t.isMarkingTracer()?     "MARKING":
+	       t.isWeakMarkingTracer()? "WEAKMARKING":
+	       t.isTenuringTracer()?    "TENURING":
+	       t.isCallbackTracer()?    "CALLBACK":
+	                                "UNKNOWN";
+}
+
+std::string
 ircd::js::debug(const JSErrorReport &r)
 {
 	std::stringstream ss;
@@ -2811,15 +2845,15 @@ ircd::js::timer::handle(std::unique_lock<std::mutex> &lock)
 
 ircd::js::runtime::runtime(const struct opts &opts,
                            runtime *const &parent)
-:custom_ptr<JSRuntime>
+:opts(opts)
+,tid{std::this_thread::get_id()}
+,_ptr
 {
 	JS_NewRuntime(opts.max_bytes,
 	              opts.max_nursery_bytes,
 	              parent? static_cast<JSRuntime *>(*parent) : nullptr),
 	JS_DestroyRuntime
 }
-,opts(opts)
-,tid{std::this_thread::get_id()}
 {
 	// We use their privdata to find `this` via our(JSRuntime*) function.
 	// Any additional user privdata will have to ride a member in this class itself.
@@ -2829,8 +2863,10 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
 	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
 	JS_SetGCCallback(get(), handle_gc, nullptr);
-	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
+	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
+	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
+	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
 	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
 	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
@@ -2845,9 +2881,10 @@ ircd::js::runtime::runtime(const struct opts &opts,
 
 ircd::js::runtime::runtime(runtime &&other)
 noexcept
-:custom_ptr<JSRuntime>{std::move(other)}
-,opts(std::move(other.opts))
+:opts(std::move(other.opts))
 ,tid{std::move(other.tid)}
+,tracing{std::move(other.tracing)}
+,_ptr{std::move(other._ptr)}
 {
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
@@ -2858,9 +2895,10 @@ ircd::js::runtime &
 ircd::js::runtime::operator=(runtime &&other)
 noexcept
 {
-	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
 	opts = std::move(other.opts);
 	tid = std::move(other.tid);
+	tracing = std::move(other.tracing);
+	_ptr = std::move(other._ptr);
 
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
@@ -2872,6 +2910,15 @@ noexcept
 ircd::js::runtime::~runtime()
 noexcept
 {
+	// If items still exist on the tracing lists at this point (runtime shutdown):
+	// that is bad. The objects are still reachable but should have removed themselves.
+	if(unlikely(!tracing.heap.empty()))
+	{
+		log.critical("runtime(%p): !!! LEAK !!! %zu traceable items still reachable on the heap",
+		             (const void *)this,
+		             tracing.heap.size());
+		assert(0);
+	}
 }
 
 bool
@@ -2898,10 +2945,10 @@ ircd::js::runtime::handle_activity(void *const priv,
 noexcept
 {
 	assert(priv);
-	const auto tid(std::this_thread::get_id());
+	//const auto tid(std::this_thread::get_id());
 	auto &runtime(*static_cast<struct runtime *>(priv));
-	log.debug("[thread %s] runtime(%p): %s",
-	          ircd::string(tid).c_str(),
+	log.debug("runtime(%p): %s",
+	          //ircd::string(tid).c_str(),
 	          (const void *)&runtime,
 	          active? "EVENT" : "ACCEPT");
 }
@@ -2931,12 +2978,23 @@ noexcept
 }
 
 void
+ircd::js::runtime::handle_gc(JSRuntime *const rt,
+                             const JSGCStatus status,
+                             void *const priv)
+noexcept
+{
+	log.debug("runtime(%p): GC %s",
+	          (const void *)rt,
+	          reflect(status));
+}
+
+void
 ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
                                               JSCompartment *const compartment)
 noexcept
 {
 	log.debug("runtime(%p): compartment: %p %s%sdestroy: fop(%p)",
-	          (const void *)(our_runtime(*fop).ptr()),
+	          (const void *)(our_runtime(*fop).get()),
 	          (const void *)compartment,
 	          ::js::IsSystemCompartment(compartment)? "[system] " : "",
 	          ::js::IsAtomsCompartment(compartment)? "[atoms] " : "",
@@ -2980,19 +3038,30 @@ noexcept
 }
 
 void
-ircd::js::runtime::handle_telemetry(const int id,
-                                    const uint32_t sample,
-                                    const char *const key)
+ircd::js::runtime::handle_trace_extra(JSTracer *const tracer,
+                                      void *const priv)
 noexcept
 {
-	const auto tid(std::this_thread::get_id());
-	log.debug("[thread %s] runtime(%p) telemetry(%02d) %s: %u %s",
-	          ircd::string(tid).c_str(),
+	log.debug("runtime(%p): tracer(%p) %s: extra (priv: %p) count: %zu",
 	          (const void *)rt,
-	          id,
-	          reflect_telemetry(id),
-	          sample,
-	          key?: "");
+	          (const void *)tracer,
+	          debug(*tracer).c_str(),
+	          priv,
+	          rt->tracing.heap.size());
+
+	rt->tracing(tracer);
+}
+
+
+void
+ircd::js::runtime::handle_trace_gray(JSTracer *const tracer,
+                                     void *const priv)
+noexcept
+{
+	log.debug("runtime(%p): tracer(%p): gray (priv: %p)",
+	          (const void *)rt,
+	          (const void *)tracer,
+	          priv);
 }
 
 void
@@ -3009,14 +3078,19 @@ noexcept
 }
 
 void
-ircd::js::runtime::handle_gc(JSRuntime *const rt,
-                             const JSGCStatus status,
-                             void *const priv)
+ircd::js::runtime::handle_telemetry(const int id,
+                                    const uint32_t sample,
+                                    const char *const key)
 noexcept
 {
-	log.debug("runtime(%p): GC %s",
+	//const auto tid(std::this_thread::get_id());
+	log.debug("runtime(%p) telemetry(%02d) %s: %u %s",
+	          //ircd::string(tid).c_str(),
 	          (const void *)rt,
-	          reflect(status));
+	          id,
+	          reflect_telemetry(id),
+	          sample,
+	          key?: "");
 }
 
 void
@@ -3031,7 +3105,7 @@ ircd::js::runtime::handle_out_of_memory(JSContext *const ctx,
                                         void *const priv)
 noexcept
 {
-	log.error("JSContext(%p): out of memory", (const void *)ctx);
+	log.error("context(%p): out of memory", (const void *)ctx);
 }
 
 void
@@ -3041,20 +3115,169 @@ ircd::js::runtime::handle_error(JSContext *const ctx,
 noexcept
 {
 	assert(report);
-	log.debug("JSContext(%p) Error report: %s [%s]",
-	          (const void *)ctx,
-	          msg,
-	          debug(*report).c_str());
-/*
-	log.critical("Unhandled: JSContext(%p): %s [%s]",
-	             (const void *)ctx,
-	             msg,
-	             debug(*report).c_str());
-*/
+	const log::facility facility
+	{
+		JSREPORT_IS_WARNING(report->flags)? log::WARNING:
+		                                    log::DEBUG
+	};
+
+	log(facility, "context(%p): %s",
+		(const void *)ctx,
+		debug(*report).c_str());
 
 	//TODO: warnings
 	if(!JSREPORT_IS_EXCEPTION(report->flags))
 		return;
 
 	save_exception(our(ctx), *report);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/tracing.h
+//
+
+namespace ircd {
+namespace js   {
+
+void trace_heap(JSTracer *const &tracer, tracing::thing &thing);
+
+} // namespace js
+} // namespace ircd
+
+ircd::js::tracing::tracing()
+{
+}
+
+ircd::js::tracing::~tracing()
+noexcept
+{
+	assert(heap.empty());
+}
+
+void
+ircd::js::tracing::operator()(JSTracer *const &tracer)
+{
+	for(auto &thing : rt->tracing.heap)
+		trace_heap(tracer, thing);
+}
+
+void
+ircd::js::trace_heap(JSTracer *const &tracer,
+                     tracing::thing &thing)
+{
+	log.debug("runtime(%p): tracer(%p): heap<%s> @ %p",
+	          (const void *)tracer->runtime(),
+	          (const void *)tracer,
+	          reflect(thing.type),
+	          (const void *)thing.ptr);
+
+	if(likely(thing.ptr)) switch(thing.type)
+	{
+		case jstype::VALUE:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<JS::Value> *>(thing.ptr));
+			if(!ptr->address())
+				break;
+
+			JS_CallValueTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::OBJECT:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<JSObject *> *>(thing.ptr));
+			if(!ptr->get())
+				break;
+
+			log.debug("runtime(%p): tracer(%p): heap<%s> @ %p object(%p trap: %p '%s')",
+			          (const void *)tracer->runtime(),
+			          (const void *)tracer,
+			          reflect(thing.type),
+			          (const void *)thing.ptr,
+			          (const void *)ptr->get(),
+			          (const void *)(has_jsclass(*ptr)? &jsclass(*ptr) : nullptr),
+			          has_jsclass(*ptr)? jsclass(*ptr).name : "<no trap>");
+
+			JS_CallObjectTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::FUNCTION:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<JSFunction *> *>(thing.ptr));
+			if(!ptr->get())
+				break;
+
+			JS_CallFunctionTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::SCRIPT:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<JSScript *> *>(thing.ptr));
+			if(!ptr->get())
+				break;
+
+			JS_CallScriptTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::STRING:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<JSString *> *>(thing.ptr));
+			if(!ptr->get())
+				break;
+
+			JS_CallStringTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::ID:
+		{
+			const auto ptr(reinterpret_cast<JS::Heap<jsid> *>(thing.ptr));
+			if(!ptr->address())
+				break;
+
+			JS_CallIdTracer(tracer, ptr, "heap");
+			break;
+		}
+
+		case jstype::SYMBOL:
+		{
+			break;
+		}
+
+		default:
+		{
+			log.warning("runtime(%p): tracer(%p): heap<%s> @ %p",
+			            (const void *)tracer->runtime(),
+			            (const void *)tracer,
+			            reflect(thing.type),
+			            (const void *)thing.ptr);
+			break;
+		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/type.h
+//
+
+const char *
+ircd::js::reflect(const jstype &t)
+{
+	switch(t)
+	{
+		case jstype::VALUE:        return "VALUE";
+		case jstype::OBJECT:       return "OBJECT";
+		case jstype::FUNCTION:     return "FUNCTION";
+		case jstype::SCRIPT:       return "SCRIPT";
+		case jstype::STRING:       return "STRING";
+		case jstype::SYMBOL:       return "SYMBOL";
+		case jstype::ID:           return "ID";
+	}
+
+	return "";
 }

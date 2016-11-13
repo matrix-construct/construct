@@ -26,18 +26,19 @@ namespace ircd {
 namespace js   {
 
 class runtime
-:custom_ptr<JSRuntime>
 {
 	static void handle_error(JSContext *, const char *msg, JSErrorReport *) noexcept;
 	static void handle_out_of_memory(JSContext *, void *) noexcept;
 	static void handle_large_allocation_failure(void *) noexcept;
-	static void handle_gc(JSRuntime *, JSGCStatus, void *) noexcept;
-	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
 	static void handle_telemetry(int id, uint32_t sample, const char *key) noexcept;
+	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
+	static void handle_trace_gray(JSTracer *, void *) noexcept;
+	static void handle_trace_extra(JSTracer *, void *) noexcept;
 	static void handle_zone_sweep(JS::Zone *) noexcept;
 	static void handle_zone_destroy(JS::Zone *) noexcept;
 	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t) noexcept;
 	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *) noexcept;
+	static void handle_gc(JSRuntime *, JSGCStatus, void *) noexcept;
 	static bool handle_context(JSContext *, uint op, void *) noexcept;
 	static void handle_activity(void *priv, bool active) noexcept;
 	static bool handle_interrupt(JSContext *) noexcept;
@@ -54,12 +55,14 @@ class runtime
 
 	struct opts opts;                            // We keep a copy of the given opts here
 	std::thread::id tid;                         // This is recorded for assertions/logging.
+	struct tracing tracing;                      // State for garbage collection / tracing.
+	custom_ptr<JSRuntime> _ptr;
 
-	operator JSRuntime *() const                 { return get();                                   }
-	operator JSRuntime &() const                 { return custom_ptr<JSRuntime>::operator*();      }
-	bool operator!() const                       { return !custom_ptr<JSRuntime>::operator bool(); }
-	auto ptr() const                             { return get();                                   }
-	auto ptr()                                   { return get();                                   }
+	operator JSRuntime *() const                 { return _ptr.get();                              }
+	operator JSRuntime &() const                 { return *_ptr;                                   }
+	bool operator!() const                       { return !_ptr;                                   }
+	auto get() const                             { return _ptr.get();                              }
+	auto get()                                   { return _ptr.get();                              }
 
 	runtime(const struct opts &, runtime *const &parent = nullptr);
 	runtime() = default;

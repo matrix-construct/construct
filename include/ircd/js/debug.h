@@ -34,11 +34,13 @@ const char *reflect(const JSFinalizeStatus &);
 const char *reflect(const JSContextOp &);
 const char *reflect_prop(const uint &flag);
 const char *reflect_telemetry(const int &id);
+const char *reflect(const jstype &);
 
 // Returns single-line string
 std::string debug(const JS::Value &);
 std::string debug(const JS::HandleObject &);
 std::string debug(const JSErrorReport &);
+std::string debug(const JSTracer &);
 
 // prints to IRCd stdout
 void dump(const JSString *const &v);

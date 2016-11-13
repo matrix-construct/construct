@@ -20,25 +20,44 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_GLOBAL_H
+#define HAVE_IRCD_JS_TRACING_H
 
 namespace ircd {
 namespace js   {
 
-class global
-:public heap_object
+struct tracing
 {
-	static void handle_trace(JSTracer *, JSObject *) noexcept;
+	struct thing
+	{
+		void *ptr;
+		jstype type;
 
-  public:
-	global(trap &,
-	       JSPrincipals *const & = nullptr,
-	       JS::CompartmentOptions = JS::CompartmentOptions());
+		template<class T> operator const JS::Heap<T> &() const;
+		template<class T> operator JS::Heap<T> &();
+	};
 
-	global(global &&) = default;
-	global(const global &) = delete;
-	~global() noexcept;
+	using list = std::list<thing>;
+
+	list heap;
+
+	void operator()(JSTracer *const &);
+
+	tracing();
+	~tracing() noexcept;
 };
+
+template<class T>
+tracing::thing::operator JS::Heap<T> &()
+{
+	return *reinterpret_cast<JS::Heap<T> *>(ptr);
+}
+
+template<class T>
+tracing::thing::operator const JS::Heap<T> &()
+const
+{
+	return *reinterpret_cast<const JS::Heap<T> *>(ptr);
+}
 
 } // namespace js
 } // namespace ircd
