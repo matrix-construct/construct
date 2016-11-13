@@ -57,6 +57,9 @@ struct compartment
 
 	friend void for_each_compartment_our(const closure_our &);
 	friend void for_each_compartment(const closure &);
+
+	static compartment &get(context &c);
+	static compartment &get();
 };
 
 const compartment *our(const JSCompartment *const &);
@@ -65,11 +68,33 @@ compartment *our(JSCompartment *const &);
 void for_each_compartment_our(const compartment::closure_our &);  // iterate our compartments only
 void for_each_compartment(const compartment::closure &);          // iterate all compartments
 
-JSObject *global(compartment &);
+// Get the compartmentalized `this` object.
+JSObject *current_global(compartment &);
 
+
+inline compartment &
+compartment::get()
+{
+	assert(cx);
+	return get(*cx);
+}
+
+inline compartment &
+compartment::get(context &c)
+{
+	const auto cp(current_compartment(c));
+	if(unlikely(!cp))
+		throw error("No current compartment on context(%p)", (const void *)&c);
+
+	const auto ret(our(cp));
+	if(unlikely(!ret))
+		throw error("Current compartment on context(%p) not ours", (const void *)&c);
+
+	return *ret;
+}
 
 inline JSObject *
-global(compartment &c)
+current_global(compartment &c)
 {
 	return JS_GetGlobalForCompartmentOrNull(static_cast<context &>(c), c);
 }

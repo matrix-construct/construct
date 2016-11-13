@@ -43,15 +43,15 @@ struct id
 	id();
 };
 
-template<lifetime L> bool operator==(const id<L> &, const char *const &);
-template<lifetime L> bool operator==(const id<L> &, const std::string &);
-template<lifetime L> bool operator==(const char *const &, const id<L> &);
-template<lifetime L> bool operator==(const std::string &, const id<L> &);
-
 } // namespace basic
 
 using id = basic::id<lifetime::stack>;
 using heap_id = basic::id<lifetime::heap>;
+
+bool operator==(const handle<id> &, const char *const &);
+bool operator==(const handle<id> &, const std::string &);
+bool operator==(const char *const &, const handle<id> &);
+bool operator==(const std::string &, const handle<id> &);
 
 //
 // Implementation
@@ -127,34 +127,31 @@ id<L>::id(const typename string<L>::handle &h)
 		throw type_error("Failed to construct id from String");
 }
 
-template<lifetime L>
-bool
-operator==(const std::string &a, const id<L> &b)
+} // namespace basic
+
+inline bool
+operator==(const std::string &a, const handle<id> &b)
 {
 	return operator==(a.c_str(), b);
 }
 
-template<lifetime L>
-bool
-operator==(const char *const &a, const id<L> &b)
+inline bool
+operator==(const char *const &a, const handle<id> &b)
 {
 	return JS::PropertySpecNameEqualsId(a, b);
 }
 
-template<lifetime L>
-bool
-operator==(const id<L> &a, const std::string &b)
+inline bool
+operator==(const handle<id> &a, const std::string &b)
 {
 	return operator==(a, b.c_str());
 }
 
-template<lifetime L>
-bool
-operator==(const id<L> &a, const char *const &b)
+inline bool
+operator==(const handle<id> &a, const char *const &b)
 {
 	return JS::PropertySpecNameEqualsId(b, a);
 }
 
-} // namespace basic
 } // namespace js
 } // namespace ircd

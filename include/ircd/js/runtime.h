@@ -72,9 +72,8 @@ class runtime
 	friend void interrupt(runtime &);
 };
 
-// Current thread_local runtime. Runtimes/Contexts are single-threaded and we maintain
-// one per thread (or only one will be relevant on the given thread you are on).
-// Do not construct more than one runtime on the same thread- this is overwritten.
+// Current thread_local runtime. This value affects contextual data for almost every function
+// in this entire subsystem (ircd::js). Located in ircd/js.cc
 extern __thread runtime *rt;
 
 // Get to our `struct runtime` from any upstream JSRuntime

@@ -42,6 +42,9 @@ struct root
 };
 
 template<class T>
+using handle = typename T::handle;
+
+template<class T>
 struct root<T, lifetime::stack>
 :JS::Rooted<T>
 {

@@ -48,6 +48,8 @@ struct task
 
 	task(const std::u16string &source);
 	task(const std::string &source);
+	task(task &&) = delete;
+	task(const task &) = delete;
 	~task() noexcept;
 
 	static bool enter(const std::weak_ptr<task> &, const std::function<void (task &)> &closure);

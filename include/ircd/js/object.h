@@ -31,6 +31,9 @@ using object_handle_mutable = JS::MutableHandle<JSObject *>;
 // Get the JSClass from which the trap can also be derived.
 const JSClass &jsclass(const object_handle &);
 
+// Get the `this` global from any object
+JSObject *current_global(JSObject *const &);
+
 bool is_extensible(const object_handle &);
 bool is_array(const object_handle &);
 uint32_t size(const object_handle &);
@@ -76,6 +79,9 @@ struct object
 	object prototype() const;
 	void prototype(object::handle);
 
+	// Get the constructor
+	object constructor() const;
+
 	// new object
 	object(const JSClass *const &, const handle &ctor, const JS::HandleValueArray &args);
 	object(const JSClass *const &, const JS::CallArgs &args);
@@ -91,6 +97,8 @@ struct object
 	object(JSObject &);
 	object(uninitialized_t);
 	object();
+
+	static object global();                      // current_global(cx)
 };
 
 } // namespace basic
@@ -105,12 +113,6 @@ using persist_object = basic::object<lifetime::persist>;
 namespace basic {
 
 template<lifetime L>
-object<L>::object(uninitialized_t)
-:object<L>::root::type{}
-{
-}
-
-template<lifetime L>
 object<L>::object()
 :object<L>::root::type
 {
@@ -119,6 +121,12 @@ object<L>::object()
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object (plain)");
+}
+
+template<lifetime L>
+object<L>::object(uninitialized_t)
+:object<L>::root::type{}
+{
 }
 
 template<lifetime L>
@@ -224,6 +232,21 @@ object<L>::object(const JSClass *const &clasp,
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object (new)");
+}
+
+template<lifetime L>
+object<L>
+object<L>::global()
+{
+	return current_global();
+}
+
+template<lifetime L>
+object<L>
+object<L>::constructor()
+const
+{
+	return JS_GetConstructor(*cx, *this);
 }
 
 template<lifetime L>
@@ -386,6 +409,12 @@ is_extensible(const object_handle &obj)
 		throw internal_error("Failed to query object extensibility");
 
 	return ret;
+}
+
+inline JSObject *
+current_global(JSObject *const &obj)
+{
+	return JS_GetGlobalForObject(*cx, obj);
 }
 
 inline const JSClass &

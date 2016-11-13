@@ -99,29 +99,22 @@ struct context
 	~context() noexcept;
 };
 
-// Current thread_local context. Runtimes/Contexts (soon to be merged in future SpiderMonkey)
-// are singled-threaded and this points to the context appropos your thread.
-// Do not construct more than one context on the same thread- this is overwritten.
+// Current thread_local context. This value affects contextual data for almost every function
+// in this entire subsystem (ircd::js). Located in ircd/js.cc
 extern __thread context *cx;
 
 // Get to our `struct context` from any upstream JSContext
 const context &our(const JSContext *const &);
 context &our(JSContext *const &);
 
-// Get/Set your privdata managed by this object, casting to your expected type.
-template<class T = privdata> const T *priv(const context &);
-template<class T = privdata> T *priv(context &);
-void priv(context &, privdata *const &);
-
 // Misc
 inline auto running(const context &c)            { return JS_IsRunning(c);                         }
 inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
-JSCompartment *current_compartment(context &);
-JSCompartment *current_compartment();
-JSObject *current_global(context &c);
-JSObject *current_global();                      // thread_local
-JS::Zone *current_zone(context &);
-JS::Zone *current_zone();
+
+// Current stack
+JS::Zone *current_zone(context & = *cx);
+JSObject *current_global(context & = *cx);
+JSCompartment *current_compartment(context & = *cx);
 
 // Memory
 void set(context &c, const JSGCParamKey &, const uint32_t &val);
@@ -190,34 +183,10 @@ pending_exception(const context &c)
 	return JS_IsExceptionPending(c);
 }
 
-inline JS::Zone *
-current_zone()
-{
-	return current_zone(*cx);
-}
-
-inline JS::Zone *
-current_zone(context &c)
-{
-	return ::js::GetContextZone(c);
-}
-
-inline JSObject *
-current_global()
-{
-	return current_global(*cx);
-}
-
 inline JSObject *
 current_global(context &c)
 {
 	return JS::CurrentGlobalOrNull(c);
-}
-
-inline JSCompartment *
-current_compartment()
-{
-	return current_compartment(*cx);
 }
 
 inline JSCompartment *
@@ -226,27 +195,10 @@ current_compartment(context &c)
 	return ::js::GetContextCompartment(c);
 }
 
-inline void
-priv(context &c,
-     privdata *const &ptr)
+inline JS::Zone *
+current_zone(context &c)
 {
-	// Free any existing object to overwrite/null
-	delete priv(c);
-	JS_SetSecondContextPrivate(c, ptr);
-}
-
-template<class T>
-T *
-priv(context &c)
-{
-	return dynamic_cast<T *>(static_cast<privdata *>(JS_GetSecondContextPrivate(c)));
-}
-
-template<class T>
-const T *
-priv(const context &c)
-{
-	return dynamic_cast<const T *>(static_cast<const privdata *>(JS_GetSecondContextPrivate(c)));
+	return ::js::GetContextZone(c);
 }
 
 inline context &

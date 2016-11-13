@@ -1185,7 +1185,7 @@ ircd::js::compile_async(const JS::ReadOnlyCompileOptions &opts,
 	auto promise(std::make_unique<ctx::promise<void *>>());
 	if(!JS::CanCompileOffThread(*cx, opts, src.size()))
 	{
-		log.warning("Context(%p): Rejected asynchronous script compile (script size: %zu)",
+		log.warning("context(%p): Rejected asynchronous script compile (script size: %zu)",
 		            (const void *)cx,
 		            src.size());
 
