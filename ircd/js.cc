@@ -166,6 +166,11 @@ ircd::js::contract::contract(struct task &task,
 {
 }
 
+ircd::js::contract::~contract()
+noexcept
+{
+}
+
 void
 ircd::js::contract::operator()(const closure &func)
 noexcept try
@@ -286,14 +291,7 @@ ircd::js::task::enter(const std::weak_ptr<task> &ptr,
 try
 {
 	const life_guard<struct task> task(ptr);
-	const std::lock_guard<context> lock{*cx};
-	const compartment compartment(task->global);
-	run([&closure, &task]
-	{
-		closure(*task);
-	});
-
-	return true;
+	return enter(*task, closure);
 }
 catch(const std::bad_weak_ptr &e)
 {
@@ -301,6 +299,20 @@ catch(const std::bad_weak_ptr &e)
 	                      (const void *)&ptr,
 	                      (const void *)&closure);
 	return false;
+}
+
+bool
+ircd::js::task::enter(task &t,
+                      const std::function<void (task &)> &closure)
+{
+	const std::lock_guard<context> lock{*cx};
+	const compartment compartment(t.global);
+	run([&closure, &t]
+	{
+		closure(t);
+	});
+
+	return true;
 }
 
 bool
@@ -319,9 +331,10 @@ ircd::js::task::pending_del(const uint64_t &id)
 }
 
 bool
-ircd::js::task::pending_add(const uint64_t &id)
+ircd::js::task::pending_add(const uint64_t &id,
+                            heap_object obj)
 {
-	const auto iit(pending.emplace(id));
+	const auto iit(pending.emplace(id, std::move(obj)));
 	if(!iit.second)
 		return false;
 

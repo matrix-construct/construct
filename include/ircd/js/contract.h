@@ -44,6 +44,9 @@ struct contract
 	// The task is automatically found with task::get() in the overload without a task argument.
 	contract(struct task &, object::handle future);
 	contract(object::handle future);
+	contract(contract &&) = default;
+	contract(const contract &) = default;
+	~contract() noexcept;
 };
 
 } // namespace js

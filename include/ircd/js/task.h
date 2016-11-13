@@ -31,7 +31,7 @@ struct task
 	uint64_t pid;                                // unique process ID
 	uint64_t yid;                                // ID of current yield attempting unification
 	std::map<uint64_t, heap_object> complete;    // futures waiting for yield unification
-	std::set<uint64_t> pending;                  // pending futures awaiting results
+	std::map<uint64_t, heap_object> pending;     // pending futures awaiting results
 	std::shared_ptr<task> work;                  // references self when there is unfinished work
 	struct global global;                        // global / this / root scope object
 	heap_script main;                            // main generator wrapper script
@@ -43,7 +43,7 @@ struct task
 	bool tasks_remove();
 
   public:
-	bool pending_add(const uint64_t &id);
+	bool pending_add(const uint64_t &id, heap_object);
 	bool pending_del(const uint64_t &id);
 
 	task(const std::u16string &source);
@@ -52,6 +52,7 @@ struct task
 	task(const task &) = delete;
 	~task() noexcept;
 
+	static bool enter(task &, const std::function<void (task &)> &closure);
 	static bool enter(const std::weak_ptr<task> &, const std::function<void (task &)> &closure);
 	static task &get(const object &global);
 	static task &get();
