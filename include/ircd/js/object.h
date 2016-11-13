@@ -28,36 +28,25 @@ namespace js    {
 using object_handle = JS::Handle<JSObject *>;
 using object_handle_mutable = JS::MutableHandle<JSObject *>;
 
+// get()/set() et al overload on reserved{n} to manipulate reserved slot n
+IRCD_STRONG_TYPEDEF(uint, reserved)
+
 // Get the JSClass from which the trap can also be derived.
-const JSClass *jsclass(JSObject *const &);
-const JSClass &jsclass(const object_handle &);
+bool has_jsclass(const JSObject *const &);
+const JSClass &jsclass(JSObject *const &);
+
+// Get the flags from the object's JSClass or 0.
+uint flags(const JSObject *const &);
 
 // Get the `this` global from any object
 JSObject *current_global(JSObject *const &);
 
+// Misc utils
 bool is_extensible(const object_handle &);
 bool is_array(const object_handle &);
 uint32_t size(const object_handle &);
-
 bool deep_freeze(const object_handle &);
 bool freeze(const object_handle &);
-
-IRCD_STRONG_TYPEDEF(uint, reserved)
-
-// Get private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
-template<class T> const T *priv(const JSObject &);
-template<class T> T *priv(JSObject &);
-template<class T> T &priv(const object_handle &);
-
-// Set private data slot (trap must have flag JSCLASS_HAS_PRIVATE)
-void priv(JSObject &, nullptr_t);
-void priv(JSObject &, std::shared_ptr<privdata>);
-
-// Set private data slot (morphisms: object -> JS::HandleObject -> JSObject *)
-void priv(JSObject *const &, nullptr_t);
-void priv(JSObject *const &, std::shared_ptr<privdata>);
-
-template<class T, class... args> std::shared_ptr<privdata> make_priv(args&&...);
 
 namespace basic {
 
@@ -295,81 +284,6 @@ const
 
 } // namespace basic
 
-template<class T,
-         class... args>
-std::shared_ptr<privdata>
-make_priv(args&&... a)
-{
-	return std::make_shared<T>(std::forward<args>(a)...);
-}
-
-inline void
-priv(JSObject *const &obj,
-     std::shared_ptr<privdata> ptr)
-{
-	assert(obj);
-	priv(*obj, ptr);
-}
-
-inline void
-priv(JSObject *const &obj,
-     nullptr_t)
-{
-	assert(obj);
-	priv(*obj, nullptr);
-}
-
-inline void
-priv(JSObject &obj,
-     std::shared_ptr<privdata> ptr)
-{
-	JS_SetPrivate(&obj, new std::shared_ptr<privdata>(ptr));
-}
-
-inline void
-priv(JSObject &obj,
-     nullptr_t)
-{
-	void *const vp(JS_GetPrivate(&obj));
-	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
-	delete sp;
-	JS_SetPrivate(&obj, nullptr);
-}
-
-template<class T>
-T *
-priv(JSObject &obj)
-{
-	void *const vp(JS_GetPrivate(&obj));
-	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
-	return sp? reinterpret_cast<T *>(sp->get()) : nullptr;
-}
-
-template<class T>
-const T *
-priv(const JSObject &obj)
-{
-	void *const vp(JS_GetPrivate(const_cast<JSObject *>(&obj)));
-	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
-	return sp? reinterpret_cast<T *>(sp->get()) : nullptr;
-}
-
-template<class T>
-T &
-priv(const object_handle &obj)
-{
-	const auto &jsc(jsclass(obj));
-	const auto vp(JS_GetInstancePrivate(*cx, obj, &jsc, nullptr));
-	if(!vp)
-		throw error("Object has no private data");
-
-	auto *const sp(reinterpret_cast<std::shared_ptr<privdata> *>(vp));
-	if(!*sp)
-		throw error("Object has no private data");
-
-	return *reinterpret_cast<T *>(sp->get());
-}
-
 inline bool
 freeze(const object_handle &obj)
 {
@@ -418,20 +332,24 @@ current_global(JSObject *const &obj)
 	return JS_GetGlobalForObject(*cx, obj);
 }
 
-inline const JSClass &
-jsclass(const object_handle &obj)
+inline uint
+flags(const JSObject *const &obj)
 {
-	const auto jsc(JS_GetClass(obj));
-	if(unlikely(!jsc))
-		throw error("Object has no JSClass");
+	return has_jsclass(obj)? jsclass(const_cast<JSObject *>(obj)).flags : 0;
+}
 
+inline const JSClass &
+jsclass(JSObject *const &obj)
+{
+	assert(has_jsclass(obj));
+	const auto jsc(JS_GetClass(obj));
 	return *const_cast<JSClass *>(jsc);
 }
 
-inline const JSClass *
-jsclass(JSObject *const &obj)
+inline bool
+has_jsclass(const JSObject *const &obj)
 {
-	return JS_GetClass(object(obj));
+	return JS_GetClass(const_cast<JSObject *>(obj)) != nullptr;
 }
 
 } // namespace js

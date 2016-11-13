@@ -25,6 +25,9 @@
 namespace ircd {
 namespace js   {
 
+// Delete the private data (see: priv.h).
+void del(JSObject *const &obj, priv_t);
+
 void del(const object::handle &obj, const id::handle &id);
 void del(const object::handle &obj, const id &id);
 void del(const object::handle &obj, const uint32_t &idx);

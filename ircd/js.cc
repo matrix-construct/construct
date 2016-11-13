@@ -116,12 +116,6 @@ noexcept
 	JS_ShutDown();
 }
 
-// Plant down the location of the struct privdata vtable here
-ircd::js::privdata::~privdata()
-noexcept
-{
-}
-
 const char *
 ircd::js::version(const ver &type)
 {
@@ -728,7 +722,7 @@ noexcept try
 	trap.debug("this(%p) dtor",
 	           (const void *)obj);
 
-	trap.on_gc(*obj);
+	trap.on_gc(obj);
 }
 catch(const std::exception &e)
 {
@@ -760,7 +754,7 @@ noexcept try
 
 	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
 	trap.on_new(that, ret, args);
-	args.rval().set(ret);
+	args.rval().set(std::move(ret));
 	return true;
 }
 catch(const jserror &e)
@@ -1042,7 +1036,7 @@ noexcept try
 
 	auto &trap(from(*obj));
 	trap.debug("trace object(%p)", (const void *)obj);
-	trap.on_trace(*obj);
+	trap.on_trace(obj);
 }
 catch(const jserror &e)
 {
@@ -1123,14 +1117,14 @@ const
 }
 
 void
-ircd::js::trap::on_gc(JSObject &that)
+ircd::js::trap::on_gc(JSObject *const &that)
 {
 	if(jsclass().flags & JSCLASS_HAS_PRIVATE)
-		priv(that, nullptr);
+		del(that, priv);
 }
 
 void
-ircd::js::trap::on_trace(const JSObject &)
+ircd::js::trap::on_trace(const JSObject *const &)
 {
 }
 
@@ -1426,6 +1420,18 @@ ircd::js::del(const object::handle &obj,
 		throw jserror(jserror::pending);
 }
 
+void
+ircd::js::del(JSObject *const &obj,
+              priv_t)
+{
+	if(unlikely(~flags(obj) & JSCLASS_HAS_PRIVATE))
+		throw error("del(priv): Object has no private slot");
+
+	void *const existing(JS_GetPrivate(obj));
+	delete reinterpret_cast<priv_ptr *>(existing);
+	JS_SetPrivate(obj, nullptr);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/set.h
@@ -1479,6 +1485,25 @@ ircd::js::set(const object::handle &obj,
 {
 	if(!JS_SetPropertyById(*cx, obj, id, val))
 		throw jserror(jserror::pending);
+}
+
+void
+ircd::js::set(JSObject *const &obj,
+              priv_data &data)
+{
+	set(obj, shared_from(data));
+}
+
+void
+ircd::js::set(JSObject *const &obj,
+              const std::shared_ptr<priv_data> &data)
+{
+	if(unlikely(~flags(obj) & JSCLASS_HAS_PRIVATE))
+		throw error("set(priv): Object has no private slot");
+
+	void *const existing(JS_GetPrivate(obj));
+	delete reinterpret_cast<priv_ptr *>(existing);
+	JS_SetPrivate(obj, new priv_ptr(data));
 }
 
 void
@@ -1547,17 +1572,10 @@ ircd::js::get(const object::handle &obj,
 }
 
 JS::Value
-ircd::js::get(const JSObject *const &obj,
+ircd::js::get(JSObject *const &obj,
               const reserved &slot)
 {
-	return likely(obj)? get(*obj, slot) : throw internal_error("get(reserved): NULL JSObject");
-}
-
-JS::Value
-ircd::js::get(const JSObject &obj,
-              const reserved &slot)
-{
-	return JS_GetReservedSlot(const_cast<JSObject *>(&obj), uint(slot));
+	return JS_GetReservedSlot(obj, uint(slot));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1629,21 +1647,32 @@ ircd::js::has(const object::handle &obj,
 
 bool
 ircd::js::has(const JSObject *const &obj,
-              const reserved &id)
+              priv_t)
 {
-	return likely(obj)? has(*obj, id) : false;
+	if(~flags(obj) & JSCLASS_HAS_PRIVATE)
+		return false;
+
+	const auto vp(JS_GetPrivate(const_cast<JSObject *>(obj)));
+	const auto sp(reinterpret_cast<const priv_ptr *>(vp));
+	return sp && !!*sp;
 }
 
 bool
-ircd::js::has(const JSObject &obj,
-              const reserved &id)
+ircd::js::has(const JSObject *const &obj,
+              const reserved &slot)
 {
-	auto *const c(JS_GetClass(const_cast<JSObject *>(&obj)));
-	if(!c)
-		return false;
+	return flags(obj) & JSCLASS_HAS_RESERVED_SLOTS(uint(slot));
+}
 
-	const auto &flags(c->flags);
-	return flags & JSCLASS_HAS_RESERVED_SLOTS(uint(id));
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/priv.h
+//
+
+// Anchor the struct priv_data vtable here.
+ircd::js::priv_data::~priv_data()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2486,7 +2515,7 @@ ircd::js::context::context(struct runtime &runtime,
 			return;
 
 		// Free the user's privdata managed object
-		delete static_cast<const privdata *>(JS_GetSecondContextPrivate(ctx));
+		delete static_cast<const priv_data *>(JS_GetSecondContextPrivate(ctx));
 
 		JS_DestroyContext(ctx);
 	}

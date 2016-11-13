@@ -25,8 +25,12 @@
 namespace ircd {
 namespace js   {
 
-JS::Value get(const JSObject &obj, const reserved &id);
-JS::Value get(const JSObject *const &obj, const reserved &id);
+// Get reserved data slots
+JS::Value get(JSObject *const &obj, const reserved &id);
+
+// Get private data slot
+template<class T> T &get(JSObject *const &, priv_t);
+
 value get(const object::handle &obj, const id::handle &id);
 value get(const object::handle &obj, const id &id);
 value get(const object::handle &obj, const uint32_t &idx);
@@ -34,3 +38,19 @@ value get(const object::handle &src, const char *const path);
 
 } // namespace js
 } // namespace ircd
+
+template<class T>
+T &
+ircd::js::get(JSObject *const &obj,
+              priv_t)
+{
+	if(unlikely(~flags(obj) & JSCLASS_HAS_PRIVATE))
+        throw error("get(priv): Object has no private slot");
+
+	auto *const vp(JS_GetPrivate(obj));
+	auto *const sp(reinterpret_cast<priv_ptr *>(vp));
+	if(unlikely(!sp || !*sp))
+		throw error("get(priv): Object has no private data set");
+
+	return *reinterpret_cast<T *>(sp->get());
+}

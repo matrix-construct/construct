@@ -25,7 +25,13 @@
 namespace ircd {
 namespace js   {
 
+// Set the reserved data slots
 void set(JSObject *const &obj, const reserved &slot, const JS::Value &);
+
+// Set the private data (see: priv.h) Proper delete of any existing on overwrite.
+void set(JSObject *const &obj, priv_data &);
+void set(JSObject *const &obj, const std::shared_ptr<priv_data> &);
+
 void set(const object::handle &obj, const id::handle &id, const value &val);
 void set(const object::handle &obj, const id &id, const value &val);
 template<class T> void set(const object::handle &obj, const uint32_t &idx, T&& t);
