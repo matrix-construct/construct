@@ -46,7 +46,7 @@ future::future()
 }
 
 void
-future::on_new(object::handle, object &obj, const args &args)
+future::on_new(object::handle callee, object &obj, const args &args)
 {
 	auto &task(task::get());
 
@@ -54,7 +54,8 @@ future::on_new(object::handle, object &obj, const args &args)
 		set(obj, "callback", args[0]);
 
 	const auto id(++id_ctr);
-	task.pending_add(id);
+	heap_object ho(obj);
+	task.pending_add(id, ho);
 	set(obj, "id", id);
 }
 
