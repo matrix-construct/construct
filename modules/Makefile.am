@@ -53,8 +53,7 @@ require_la_SOURCES = require.cc
 events_la_SOURCES = events.cc
 assert_la_SOURCES = assert.cc
 console_la_SOURCES = console.cc
-m_host_la_SOURCES = m_host.cc
-m_get_la_SOURCES = m_get.cc
+stream_la_SOURCES = stream.cc
 #m_ban_la_SOURCES = m_ban.cc
 #m_die_la_SOURCES = m_die.cc
 #m_error_la_SOURCES = m_error.cc
@@ -145,8 +144,7 @@ require.la           \
 assert.la            \
 events.la            \
 console.la           \
-m_host.la            \
-m_get.la
+stream.la
 
 # m_modules.la
 #  m_ban.la \
