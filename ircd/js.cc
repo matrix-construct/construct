@@ -1142,7 +1142,7 @@ ircd::js::trap::on_enu(object::handle)
 
 bool
 ircd::js::trap::on_has(object::handle,
-                       id::handle)
+                       id::handle id)
 {
 	return false;
 }
@@ -1166,16 +1166,7 @@ ircd::js::trap::on_get(object::handle obj,
                        id::handle id,
                        value::handle val)
 {
-	if(!undefined(val))
-		return val;
-
-	const string name(id);
-	const auto it(children.find(name));
-	if(it == end(children))
-		return val;
-
-	auto &child(*it->second);
-	return child(obj);
+	return val;
 }
 
 ircd::js::value
