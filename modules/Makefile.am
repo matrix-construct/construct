@@ -54,6 +54,7 @@ events_la_SOURCES = events.cc
 assert_la_SOURCES = assert.cc
 console_la_SOURCES = console.cc
 stream_la_SOURCES = stream.cc
+crypto_la_SOURCES = crypto.cc
 #m_ban_la_SOURCES = m_ban.cc
 #m_die_la_SOURCES = m_die.cc
 #m_error_la_SOURCES = m_error.cc
@@ -144,7 +145,8 @@ require.la           \
 assert.la            \
 events.la            \
 console.la           \
-stream.la
+stream.la            \
+crypto.la
 
 # m_modules.la
 #  m_ban.la \
