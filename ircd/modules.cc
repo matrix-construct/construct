@@ -174,7 +174,7 @@ try
 	};
 
 	auto mod(std::make_unique<struct mod>(fullpath, flags));
-	log.info("Opened module '%s' @ `%s' version: %u",
+	log.info("Opened '%s' @ `%s' version: %u",
 	         mods::name(*mod).c_str(),
 	         fullpath.string().c_str(),
 	         version(*mod));
@@ -230,7 +230,7 @@ ircd::mods::unload(const std::string name)
 		log.error("Module \"%s\" is stuck and failing to unload.", name.c_str());
 		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
 	} else {
-		log.info("Module '%s' unloaded", filename.c_str());
+		log.info("Unloaded '%s'", filename.c_str());
 	}
 
 	return true;
