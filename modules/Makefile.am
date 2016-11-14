@@ -51,6 +51,7 @@ moduledir=@moduledir@
 future_la_SOURCES = future.cc
 require_la_SOURCES = require.cc
 events_la_SOURCES = events.cc
+assert_la_SOURCES = assert.cc
 console_la_SOURCES = console.cc
 m_host_la_SOURCES = m_host.cc
 m_get_la_SOURCES = m_get.cc
@@ -141,6 +142,7 @@ m_get_la_SOURCES = m_get.cc
 module_LTLIBRARIES = \
 future.la            \
 require.la           \
+assert.la            \
 events.la            \
 console.la           \
 m_host.la            \
