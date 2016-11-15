@@ -25,15 +25,22 @@
 namespace ircd {
 namespace js   {
 
-class trap
+struct trap
 {
+	struct function;
+
   protected:
 	const std::string parent;
 	const std::string _name;                     // don't touch
-	JSPropertySpec ps[2];
-	JSFunctionSpec fs[2];
+	std::array<JSPropertySpec, 32> sps;          // static property spec
+	std::array<JSPropertySpec, 32> ps;           // property spec
+	std::array<JSFunctionSpec, 32> sfs;          // static function spec
+	std::array<JSFunctionSpec, 32> fs;           // function spec
 	std::unique_ptr<JSClass> _class;
 	std::map<std::string, trap *> children;
+	std::set<function *> memfun;
+	trap *parent_prototype;
+	trap *prototype;
 
 	static trap &from(const JSObject &);
 	static trap &from(const JS::HandleObject &);
@@ -85,9 +92,8 @@ class trap
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
-	IRCD_OVERLOAD(prototyped)
-	object operator()(prototyped_t, const object &parent, const object &proto);
-	object operator()(const object &parent = {});
+	// Produces prototype. Call ctor(trap) for full construction
+	object operator()();
 
 	trap(const std::string &path, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(trap &&) = delete;
@@ -96,30 +102,6 @@ class trap
 };
 
 extern __thread trap *tree;
-
-inline object
-trap::operator()(const object &parent)
-{
-	return operator()(prototyped, parent, object{});
-}
-
-inline object
-trap::operator()(prototyped_t,
-                 const object &parent,
-                 const object &parent_proto)
-{
-	object proto(JS_InitClass(*cx,
-	                          parent,
-	                          parent_proto,
-	                          _class.get(),
-	                          nullptr,
-	                          0,
-	                          ps,
-	                          fs,
-	                          nullptr,
-	                          nullptr));
-	return proto;
-}
 
 } // namespace js
 } // namespace ircd

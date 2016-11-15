@@ -426,22 +426,28 @@ noexcept
 // ircd/js/trap_function.h
 //
 
-ircd::js::trap_function::trap_function(std::string name,
-                                       const uint &arity,
-                                       const uint &flags)
-:name{std::move(name)}
+ircd::js::trap::function::function(trap &member,
+                                   std::string name,
+                                   const uint &arity,
+                                   const uint &flags,
+                                   const closure &lambda)
+:member{&member}
+,name{std::move(name)}
 ,arity{arity}
 ,flags{flags}
+,lambda{lambda}
 {
+	member.memfun.emplace(this);
 }
 
-ircd::js::trap_function::~trap_function()
+ircd::js::trap::function::~function()
 noexcept
 {
+	member->memfun.erase(this);
 }
 
 ircd::js::function
-ircd::js::trap_function::operator()(const object::handle &obj)
+ircd::js::trap::function::operator()(const object::handle &obj)
 {
 	const auto jsf(::js::DefineFunctionWithReserved(*cx,
 	                                                obj,
@@ -450,17 +456,17 @@ ircd::js::trap_function::operator()(const object::handle &obj)
 	                                                arity,
 	                                                flags));
 	if(unlikely(!jsf))
-		throw internal_error("Failed to create trap_function");
+		throw internal_error("Failed to create trap::function");
 
-	function ret(jsf);
+	js::function ret(jsf);
 	::js::SetFunctionNativeReserved(ret, 0, pointer_value(this));
 	return ret;
 }
 
 bool
-ircd::js::trap_function::handle_call(JSContext *const c,
-                                     const unsigned argc,
-                                     JS::Value *const argv)
+ircd::js::trap::function::handle_call(JSContext *const c,
+                                      const unsigned argc,
+                                      JS::Value *const argv)
 noexcept try
 {
 	assert(&our(c) == cx);
@@ -505,19 +511,19 @@ catch(const std::exception &e)
 	return false;
 }
 
-ircd::js::trap_function &
-ircd::js::trap_function::from(JSObject *const &func)
+ircd::js::trap::function &
+ircd::js::trap::function::from(JSObject *const &func)
 {
 	const auto tval(::js::GetFunctionNativeReserved(func, 0));
-	return *pointer_value<trap_function>(tval);
+	return *pointer_value<function>(tval);
 }
 
 ircd::js::value
-ircd::js::trap_function::on_call(object::handle,
-                                 value::handle,
-                                 const args &)
+ircd::js::trap::function::on_call(object::handle obj,
+                                  value::handle val,
+                                  const args &args)
 {
-	return {};
+	return lambda(obj, val, args);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -537,16 +543,10 @@ ircd::js::trap::trap(const std::string &path,
 {
 	path.empty()? std::string{""} : token_last(path, ".")
 }
-,ps
-{
-	{0},
-	{0}
-}
-,fs
-{
-	{0},
-	JS_FS_END
-}
+,sps{0}
+,ps{0}
+,sfs{0}
+,fs{0}
 ,_class{std::make_unique<JSClass>(JSClass
 {
 	this->_name.c_str(),
@@ -565,9 +565,13 @@ ircd::js::trap::trap(const std::string &path,
 	flags & JSCLASS_GLOBAL_FLAGS? JS_GlobalObjectTraceHook : handle_trace,
 	{ this }           // reserved[0] TODO: ?????????
 })}
+,parent_prototype{nullptr}
+,prototype{nullptr}
 {
-	ps[0].flags |= prop_flags;
+	std::fill(begin(sfs), end(sfs), (JSFunctionSpec)JS_FS_END);
+	std::fill(begin(fs), end(fs), (JSFunctionSpec)JS_FS_END);
 
+	ps[0].flags |= prop_flags;
 	add_this();
 }
 
@@ -577,12 +581,37 @@ noexcept
 	del_this();
 
 	assert(_class->reserved[0] == this);
-	//_class->reserved[0] = nullptr;
-	//_class->trace = nullptr;
+	_class->reserved[0] = nullptr;
+	_class->trace = nullptr;
 	const auto flags(_class->flags);
 	memset(_class.get(), 0x0, sizeof(JSClass));
 	_class->flags = flags;
 	class_drain.emplace_front(std::move(_class));
+}
+
+ircd::js::object
+ircd::js::trap::operator()()
+{
+	object p(prototype? ctor(*prototype) : object{});
+	object pp(parent_prototype? ctor(*parent_prototype) : object{});
+	object proto(JS_InitClass(*cx,
+	                          p,
+	                          pp,
+	                          _class.get(),
+	                          nullptr,
+	                          0,
+	                          ps.data(),
+	                          fs.data(),
+	                          sps.data(),
+	                          sfs.data()));
+
+	for(auto it(begin(memfun)); it != end(memfun); ++it)
+	{
+		trap::function &deffun(**it);
+		deffun(proto);
+	}
+
+	return proto;
 }
 
 void

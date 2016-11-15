@@ -25,29 +25,35 @@
 namespace ircd {
 namespace js   {
 
-struct trap_function
+struct trap::function
 {
-	std::string name;
-	uint arity;
-	uint flags;
+	using closure = std::function<value (object::handle, value::handle, const args &)>;
+
+	trap *member;
+	const std::string name;
+	const uint arity;
+	const uint flags;
+	closure lambda;
 
   protected:
 	virtual value on_call(object::handle callee, value::handle that, const args &);
 
   private:
-	static trap_function &from(JSObject *const &);
+	static function &from(JSObject *const &);
 	static bool handle_call(JSContext *, unsigned, JS::Value *) noexcept;
 
   public:
-	function operator()(const object::handle &);
+	js::function operator()(const object::handle &);
 
-	trap_function(std::string name,
-	              const uint &arity = 0,
-	              const uint &flags = 0);
+	function(trap &,
+	         std::string name,
+	         const uint &arity = 0,
+	         const uint &flags = 0,
+	         const closure & = {});
 
-	trap_function(trap_function &&) = delete;
-	trap_function(const trap_function &) = delete;
-	virtual ~trap_function() noexcept;
+	function(function &&) = delete;
+	function(const function &) = delete;
+	virtual ~function() noexcept;
 };
 
 } // namespace js
