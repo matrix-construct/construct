@@ -94,7 +94,7 @@ void
 conf::bootstrap()
 {
 	log.debug("Bootstrapping L-Line module to load more modules...");
-	mods::load("conf_loadmodule");
+	//mods::load("conf_loadmodule");
 }
 
 void

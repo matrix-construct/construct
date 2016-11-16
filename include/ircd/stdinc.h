@@ -113,7 +113,7 @@ namespace ircd
 #include "newconf.h"
 #include "conf.h"
 
-#include "modules.h"
+#include "mods.h"
 
 #include "info.h"
 #include "stringops.h"

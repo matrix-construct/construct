@@ -43,7 +43,7 @@ libircd_la_SOURCES =   \
 	fs.cc              \
 	conf.cc            \
 	newconf.cc         \
-	modules.cc         \
+	mods.cc            \
 	snomask.cc         \
 	info.cc            \
 	cmds.cc            \

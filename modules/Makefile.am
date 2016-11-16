@@ -2,7 +2,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
-	-include $(top_srcdir)/include/ircd/mapi.h
+	-include $(top_srcdir)/include/ircd/mods/mapi.h
 
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \

@@ -30,8 +30,8 @@
 namespace filesystem = boost::filesystem;
 namespace load_mode = boost::dll::load_mode;
 
-#include <ircd/mapi.h>  // Module's internal API
-#include "mods_mod.h"   // struct mod
+#include <ircd/mods/mapi.h>  // Module's internal API
+#include <ircd/mods/mod.h>   // struct mod
 
 namespace ircd {
 namespace mods {
@@ -40,42 +40,6 @@ struct log::log log
 {
 	"modules", 'M'
 };
-
-const filesystem::path modroot
-{
-	path::get(path::MODULES)
-};
-
-std::forward_list<filesystem::path> _paths
-{
-	modroot
-};
-
-//TODO: XXX: This should all be folded away somewhere eventually
-std::map<std::type_index, struct type_handlers> type_handlers
-{{
-	// Add a generic init function handler
-	make_index<mapi::init>(),
-	{
-		[](mod &mod, const std::string &name)
-		{
-			get<mapi::init>(mod, name)();
-		}
-	}
-},
-{
-	// Add a generic fini function handler
-	make_index<mapi::fini>(),
-	{
-		nullptr,
-		[](mod &mod, const std::string &name)
-		{
-			get<mapi::fini>(mod, name)();
-		}
-	}
-}};
-
-std::map<std::string, std::unique_ptr<mod>> mods;
 
 filesystem::path prefix_if_relative(const filesystem::path &path);
 filesystem::path postfixed(const filesystem::path &path);
@@ -90,14 +54,10 @@ bool is_module(const filesystem::path &);
 bool is_module(const filesystem::path &, std::string &why);
 bool is_module(const filesystem::path &, std::nothrow_t);
 
-// Associates exported RTTI at object location to a symbol name
-using reflections = std::map<const void *, std::string>;
-using associations = std::vector<std::pair<std::string, std::type_index>>;
-reflections reflection(const mod &, const std::vector<std::string> &syms);
-associations association(const mod &, const reflections &);
-
-void unload_symbol(mod &mod, const std::string &name, const std::type_index &);
-void load_symbol(mod &mod, const std::string &name, const std::type_index &);
+// Checks if loadable module containing a mapi header (does not verify the magic)
+bool is_module(const std::string &fullpath, std::string &why);
+bool is_module(const std::string &fullpath, std::nothrow_t);
+bool is_module(const std::string &fullpath);
 
 } // namespace mods
 } // namespace ircd
@@ -109,63 +69,35 @@ ircd::mods::init::init()
 ircd::mods::init::~init()
 noexcept
 {
-	unload();
 }
 
-void
-ircd::mods::unload()
-{
-	log.info("Unloading %zu (all) modules...", mods.size());
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/module.h
+//
 
-	// Proper way to unload is by name; don't just clear the map.
-	std::vector<std::string> names(mods.size());
-	std::transform(begin(mods), end(mods), begin(names), []
-	(const auto &pit)
-	{
-		return pit.first;
-	});
+namespace ircd {
+namespace mods {
 
-	for(const auto &name : names)
-		unload(name);
+filesystem::path fullpath(const std::string &name);
 
-	log.info("Unloaded all modules.");
-}
+} // namespace mods
+} // namespace ircd
 
-void
-ircd::mods::autoload()
-{
-	for(const auto &name : available()) try
-	{
-		log.debug("Autoload module '%s'", name.c_str());
-		load(name);
-	}
-	catch(const std::exception &e)
-	{
-		log.warning("Could not autoload '%s'", name.c_str());
-	}
-}
-
-bool
-ircd::mods::load(const std::string &name)
+ircd::mods::module::module(const std::string &name)
 try
+:std::shared_ptr<mod>{[&name]
 {
-	using filesystem::path;
-
-	std::vector<std::string> why;
-	const path fullpath(search(name, why));
-	if(fullpath.empty())
-	{
-		log.error("Failed to find valid module by name `%s'", name.c_str());
-		for(const auto &str : why)
-			log.error("candidate failed: %s", str.c_str());
-
-		return false;
-	}
-
+	const auto path(fullpath(name));
 	const auto filename(postfixed(name));
-	auto it(mods.lower_bound(filename));
-	if(it != end(mods) && mods::name(*it->second) == filename)
-		throw error("Module '%s' is already loaded", filename.c_str());
+
+	// Search for loaded module and increment the reference counter for this handle if loaded.
+	auto it(mod::loaded.find(filename));
+	if(it != end(mod::loaded))
+	{
+		auto &mod(*it->second);
+		return shared_from(mod);
+	}
 
 	static const load_mode::type flags
 	{
@@ -173,155 +105,82 @@ try
 		load_mode::rtld_now
 	};
 
-	auto mod(std::make_unique<struct mod>(fullpath, flags));
-	log.info("Opened '%s' @ `%s' version: %u",
-	         mods::name(*mod).c_str(),
-	         fullpath.string().c_str(),
-	         version(*mod));
+	log.debug("Attempting to load '%s' @ `%s'",
+	          filename.c_str(),
+	          path.string().c_str());
 
-	const auto refs(reflection(*mod, symbols(location(*mod))));
-	for(const auto &assoc : association(*mod, refs))
-		load_symbol(*mod, assoc.first, assoc.second);
-
-	const auto nombre(mods::name(*mod));
-	const auto iit(mods.emplace_hint(it, nombre, std::move(mod)));
-	{
-		const auto &mod(iit->second);
-		const auto &desc(mods::desc(*mod));
-		log.info("Loaded module %s \"%s\"",
-		         mods::name(*mod).c_str(),
-		         desc.size()? desc.c_str() : "<no description>");
-	}
-	return true;
+	return std::make_shared<mod>(path, flags);
+}()}
+{
 }
 catch(const std::exception &e)
 {
-	log.error("Failed to load '%s': %s", name.c_str(), e.what());
+	log.error("Failed to load '%s': %s",
+	          name.c_str(),
+	          e.what());
 	throw;
 }
 
-// Allows module to communicate static destruction is taking place when mapi::header
-// destructs. This allows us to gauge if the module *really* unloaded on command. DSO's
-// are allowed to silently refuse to unload for any reason. We prefer developers to do
-// things that don't trigger such behavior and allow a clean unload.
-bool ircd::mods::static_destruction;
-
-bool
-ircd::mods::unload(const std::string name)
+ircd::mods::module::~module()
+noexcept
 {
-	const auto filename(postfixed(name));
-	const auto it(mods.find(filename));
-	if(it == end(mods))
-		return false;
+}
 
-	auto &mod(*it->second);
-	for(const auto &pit : mod.handled)
+std::string
+ircd::mods::module::name()
+const
+{
+	if(unlikely(!*this))
+		return std::string{};
+
+	auto &mod(**this);
+	return mod.name();
+}
+
+std::string
+ircd::mods::module::path()
+const
+{
+	if(unlikely(!*this))
+		return std::string{};
+
+	auto &mod(**this);
+	return mod.location();
+}
+
+filesystem::path
+ircd::mods::fullpath(const std::string &name)
+{
+	std::vector<std::string> why;
+	const filesystem::path path(search(name, why));
+	if(path.empty())
 	{
-		const auto &name(pit.first);
-		const auto &sym(pit.second);
-		unload_symbol(mod, name, sym.type);
+		for(const auto &str : why)
+			log.error("candidate for module '%s' failed: %s",
+			          name.c_str(),
+			          str.c_str());
+
+		throw error("No valid module by name `%s'", name.c_str());
 	}
 
-	static_destruction = false;
-	mods.erase(it);
-
-	if(!static_destruction)
-	{
-		log.error("Module \"%s\" is stuck and failing to unload.", name.c_str());
-		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
-	} else {
-		log.info("Unloaded '%s'", filename.c_str());
-	}
-
-	return true;
+	return path;
 }
 
-bool
-ircd::mods::reload(const std::string name)
-{
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/mods.h
+//
 
-	return true;
-}
+namespace ircd {
+namespace mods {
 
-void
-ircd::mods::load_symbol(mod &mod,
-                        const std::string &name,
-                        const std::type_index &type)
-try
-{
-	const auto &handlers(type_handlers.at(type));
-	log.debug("Found loader[%s] unloader[%s] reloader[%s] for \"%s\" in %s (type: %s)",
-	          handlers.loader?   "yes" : "no",
-	          handlers.unloader? "yes" : "no",
-	          handlers.reloader? "yes" : "no",
-	          name.c_str(),
-	          mods::name(mod).c_str(),
-	          type.name());
-
-	if(handlers.loader)
-		handlers.loader(mod, name);
-
-	mod.handled.emplace(name, type);
-}
-catch(const std::out_of_range &e)
-{
-	if(~flags(mod) & mapi::RELAXED_INIT)
-		throw invalid_export("symbol '%s' is an unhandled type named '%s'",
-		                     name.c_str(),
-		                     type.name());
-
-	mod.unhandled.emplace(type, name);
-	log.notice("Symbol \"%s\" in %s is loading in an unhandled state (type: %s)",
-	           name.c_str(),
-	           mods::name(mod).c_str(),
-	           type.name());
-}
-
-void
-ircd::mods::unload_symbol(mod &mod,
-                          const std::string &name,
-                          const std::type_index &type)
-try
-{
-	const auto &handlers(type_handlers.at(type));
-	if(!handlers.unloader)
-		return;
-
-	log.debug("Executing unloader for \"%s\" in %s (type: %s)",
-	          name.c_str(),
-	          mods::name(mod).c_str(),
-	          type.name());
-
-	handlers.unloader(mod, name);
-}
-catch(const std::out_of_range &e)
-{
-	throw invalid_export("symbol '%s' type handler was deleted prematurely (type named '%s')",
-	                     name.c_str(),
-	                     type.name());
-}
-
-ircd::mods::mod &
-ircd::mods::get(const std::string &name)
-try
-{
-	return *mods.at(postfixed(name));
-}
-catch(const std::out_of_range &e)
-{
-	throw error("module '%s' is not loaded", name.c_str());
-}
+} // namespace mods
+} // namespace ircd
 
 bool
 ircd::mods::loaded(const std::string &name)
 {
-	return mods.count(postfixed(name));
-}
-
-const decltype(ircd::mods::mods) &
-ircd::mods::loaded()
-{
-	return mods;
+	return mod::loaded.count(postfixed(name));
 }
 
 bool
@@ -378,7 +237,7 @@ ircd::mods::search(const std::string &name,
 		why.resize(why.size() + 1);
 		return is_module(path, why.back())? name : std::string{};
 	}
-	else for(const auto &dir : _paths)
+	else for(const auto &dir : paths)
 	{
 		why.resize(why.size() + 1);
 		if(is_module(dir/path, why.back()))
@@ -395,7 +254,7 @@ ircd::mods::available()
 	using filesystem::directory_iterator;
 
 	std::forward_list<std::string> ret;
-	for(const auto &dir : _paths) try
+	for(const auto &dir : paths) try
 	{
 		for(directory_iterator it(dir); it != directory_iterator(); ++it)
 			if(is_module(it->path(), std::nothrow))
@@ -404,48 +263,10 @@ ircd::mods::available()
 	catch(const filesystem::filesystem_error &e)
 	{
 		log.warning("Module path [%s]: %s",
-		            dir.string().c_str(),
+		            dir.c_str(),
 		            e.what());
 		continue;
 	}
-
-	return ret;
-}
-
-ircd::mods::associations
-ircd::mods::association(const mod &mod,
-                        const reflections &refs)
-{
-	ircd::mods::associations ret;
-	const auto &exp(exports(mod));
-	std::for_each(begin(exports(mod)), end(exports(mod)), [&]
-	(const auto &pit)
-	{
-		const auto &ptr(pit.first);
-		const auto &type(pit.second);
-		const auto it(refs.find(ptr));
-		if(unlikely(it == end(refs)))
-			throw invalid_export("Failed to associate type (%s) @ %p with a symbol name",
-			                     type.name(),
-			                     ptr);
-
-		const auto &name(it->second);
-		ret.emplace_back(name, type);
-	});
-
-	return ret;
-}
-
-ircd::mods::reflections
-ircd::mods::reflection(const mod &mod,
-                       const std::vector<std::string> &syms)
-{
-	ircd::mods::reflections ret;
-	std::for_each(begin(syms), end(syms), [&mod, &ret]
-	(const auto &name)
-	{
-		ret.emplace(mod.ptr(name), name);
-	});
 
 	return ret;
 }
@@ -584,27 +405,34 @@ ircd::mods::info(const filesystem::path &path,
 	return closure(info);
 }
 
-void
-ircd::mods::path_clear()
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/paths.h
+//
+
+namespace ircd {
+namespace mods {
+
+const filesystem::path modroot
 {
-	_paths.clear();
+	ircd::path::get(ircd::path::MODULES)
+};
+
+struct paths paths;
+
+} // namespace mods
+} // namespace ircd
+
+ircd::mods::paths::paths()
+:std::vector<std::string>
+{{
+	modroot.string()
+}}
+{
 }
 
 bool
-ircd::mods::path_add(const std::string &dir,
-                     std::nothrow_t)
-try
-{
-	return path_add(dir);
-}
-catch(const std::exception &e)
-{
-	log.error("Failed to add path: %s", e.what());
-	return false;
-}
-
-bool
-ircd::mods::path_add(const std::string &dir)
+ircd::mods::paths::add(const std::string &dir)
 {
 	using filesystem::path;
 
@@ -620,41 +448,38 @@ ircd::mods::path_add(const std::string &dir)
 		                       dir.c_str(),
 		                       path.string().c_str());
 
-	if(std::find(begin(_paths), end(_paths), path) != end(_paths))
+	if(added(dir))
 		return false;
 
-	_paths.emplace_front(path);
+	emplace(begin(), dir);
 	return true;
 }
 
-void
-ircd::mods::path_del(const std::string &dir)
+bool
+ircd::mods::paths::add(const std::string &dir,
+                       std::nothrow_t)
+try
 {
-	using filesystem::path;
-
-	_paths.remove(prefix_if_relative(dir));
+	return add(dir);
+}
+catch(const std::exception &e)
+{
+	log.error("Failed to add path: %s", e.what());
+	return false;
 }
 
 bool
-ircd::mods::path_added(const std::string &dir)
+ircd::mods::paths::del(const std::string &dir)
 {
-	return std::find(begin(_paths), end(_paths), dir) != end(_paths);
+	std::remove(begin(), end(), prefix_if_relative(dir).string());
+	return true;
 }
 
-std::vector<std::string>
-ircd::mods::paths()
+bool
+ircd::mods::paths::added(const std::string &dir)
+const
 {
-	using filesystem::path;
-
-	const auto num_paths(std::distance(begin(_paths), end(_paths)));
-	std::vector<std::string> ret(num_paths);
-	std::transform(begin(_paths), end(_paths), begin(ret), []
-	(const path &path)
-	{
-		return path.string();
-	});
-
-	return ret;
+	return std::find(begin(), end(), dir) != end();
 }
 
 std::string
@@ -681,57 +506,106 @@ ircd::mods::prefix_if_relative(const filesystem::path &path)
 	return path.is_relative()? (modroot / path) : path;
 }
 
-bool
-ircd::mods::has(const std::type_index &type)
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/mod.h
+//
+
+namespace ircd {
+namespace mods {
+
+std::map<std::string, mod *> mod::loaded;
+
+} // namespace mods
+} // namespace ircd
+
+ircd::mods::mod::mod(const filesystem::path &path,
+                     const load_mode::type &type)
+try
+:handle
 {
-	return type_handlers.count(type);
+	path, type
+}
+,header
+{
+	&handle.get<mapi::header>(mapi::header_symbol_name)
+}
+{
+	log.debug("Loaded static segment of '%s' @ `%s'",
+	          name().c_str(),
+	          path.string().c_str());
+
+	if(unlikely(!header))
+		throw error("Unexpected null header");
+
+	if(header->magic != mapi::header::MAGIC)
+		throw error("Bad magic [%04x] need: [%04x]",
+		            header->magic,
+		            mapi::header::MAGIC);
+
+	// Set some basic metadata
+	auto &meta(header->meta);
+	meta["name"] = name();
+	meta["location"] = location();
+
+	// If init throws an exception from here the loading process will back out.
+	if(header->init)
+		header->init();
+
+	// Without init exception, the module is now considered loaded.
+	loaded.emplace(name(), this);
+	log.info("Loaded module %s v%u \"%s\"",
+	         name().c_str(),
+	         header->version,
+	         description().size()? description().c_str() : "<no description>");
+}
+catch(const boost::system::system_error &e)
+{
+	throw error("%s", e.what());
 }
 
-bool
-ircd::mods::del(const std::type_index &type)
-{
-	if(!type_handlers.erase(type))
-	{
-		log.warning("Failed to remove non-existent handler for type '%s'.", type.name());
-		return false;
-	}
+// Allows module to communicate static destruction is taking place when mapi::header
+// destructs. If dlclose() returns without this being set, dlclose() lied about really
+// unloading the module. That is considered a "stuck" module.
+bool ircd::mapi::static_destruction;
 
-	log.debug("Removed handler for type '%s'.", type.name());
-	return true;
+ircd::mods::mod::~mod()
+noexcept try
+{
+	const auto name(this->name());
+	log.debug("Attempting unload module '%s' @ `%s'",
+	          name.c_str(),
+	          location().c_str());
+
+	const size_t erased(loaded.erase(name));
+	assert(erased == 1);
+
+	if(header->fini)
+		header->fini();
+
+	log.debug("Attempting static unload for '%s' @ `%s'",
+	          name.c_str(),
+	          location().c_str());
+
+	mapi::static_destruction = false;
+	handle.unload();
+	assert(!handle.is_loaded());
+	if(!mapi::static_destruction)
+	{
+		log.error("Module \"%s\" is stuck and failing to unload.", name.c_str());
+		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
+	} else {
+		log.info("Unloaded '%s'", name.c_str());
+	}
 }
-
-bool
-ircd::mods::add(const std::type_index &type,
-                const struct type_handlers &handlers)
+catch(const std::exception &e)
 {
-	if(!handlers.loader)
-		log.warning("Handler for type '%s' has no loader function", type.name());
+	log::critical("Module @%p unload: %s",
+	              (const void *)this,
+	              e.what());
 
-	const auto iit(type_handlers.emplace(type, handlers));
-	if(!iit.second)
-	{
-		log.warning("Handler for type '%s' already exists", type.name());
-		return false;
-	}
-
-	log.debug("Added handler for type '%s'", type.name());
-
-	// Go through each module's unhandled list and load the symbol now
-	for(const auto &pit : mods)
-	{
-		auto &mod(*pit.second);
-		const auto ppit(mod.unhandled.equal_range(type));
-		for(auto it(ppit.first); it != ppit.second; ++it)
-		{
-			const auto &symbol(it->second);
-			load_symbol(mod, symbol, type);
-		}
-
-		if(ppit.first != ppit.second)
-			mod.unhandled.erase(ppit.first, ppit.second);
-	}
-
-	return true;
+	if(!ircd::debugmode)
+		return;
 }
 
 /*{
