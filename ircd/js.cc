@@ -1330,6 +1330,70 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/for_each.h
+//
+
+void
+ircd::js::for_each(object::handle obj,
+                   const each_key_val &closure)
+{
+	for_each(obj, iter::none, closure);
+}
+
+void
+ircd::js::for_each(object::handle obj,
+                   const iter &flags,
+                   const each_key_val &closure)
+{
+	for_each(obj, flags, each_id([&obj, &closure]
+	(const id &hid)
+	{
+		const value val(get(obj, hid));
+		const value key(hid);
+		closure(key, val);
+	}));
+}
+
+void
+ircd::js::for_each(object::handle obj,
+                   const each_key &closure)
+{
+	for_each(obj, iter::none, closure);
+}
+
+void
+ircd::js::for_each(object::handle obj,
+                   const iter &flags,
+                   const each_key &closure)
+{
+	for_each(obj, flags, each_id([&obj, &closure]
+	(const id &id)
+	{
+		const value key(id);
+		closure(key);
+	}));
+}
+
+void
+ircd::js::for_each(object::handle obj,
+                   const each_id &closure)
+{
+	for_each(obj, iter::none, closure);
+}
+
+void
+ircd::js::for_each(object::handle obj,
+                   const iter &flags,
+                   const each_id &closure)
+{
+	vector<id> props;
+	if(::js::GetPropertyKeys(*cx, obj, uint(flags), &props))
+		for(size_t i(0); i < props.length(); ++i)
+			closure(props[i]);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/call.h
 //
 

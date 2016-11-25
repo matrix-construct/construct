@@ -25,50 +25,32 @@
 namespace ircd {
 namespace js   {
 
-using closure_id = std::function<void (const id &)>;
-using closure_key_val = std::function<void (const value &, const value &)>;
-using closure_mutable_key_val = std::function<void (const value &, value &)>;
-
-void for_each(object::handle, const closure_id &);
-void for_each(object::handle, const closure_key_val &);
-void for_each(object::handle_mutable, const closure_mutable_key_val &);
-
-
-inline void
-for_each(object::handle_mutable obj,
-         const closure_mutable_key_val &closure)
+enum class iter
 {
-	for_each(obj, [&obj, &closure]
-	(const id &hid)
-	{
-		value val(get(obj, hid));
-		const value key(hid);
-		closure(key, val);
-	});
-}
+	none          = 0,
+	enumerate     = JSITER_ENUMERATE,
+	for_each      = JSITER_FOREACH,
+	key_val       = JSITER_KEYVALUE,
+	own_only      = JSITER_OWNONLY,
+	hidden        = JSITER_HIDDEN,
+	symbols       = JSITER_SYMBOLS,
+	symbols_only  = JSITER_SYMBOLSONLY,
+};
 
-inline void
-for_each(object::handle obj,
-         const closure_key_val &closure)
-{
-	for_each(obj, [&obj, &closure]
-	(const id &hid)
-	{
-		const value val(get(obj, hid));
-		const value key(hid);
-		closure(key, val);
-	});
-}
+// Key iteration (as id type)
+using each_id = std::function<void (const id &)>;
+void for_each(object::handle, const iter &flags, const each_id &);
+void for_each(object::handle, const each_id &);
 
-inline void
-for_each(object::handle obj,
-         const closure_id &closure)
-{
-	JS::Rooted<JS::IdVector> props(*cx, JS::IdVector(cx->ptr()));
-	if(JS_Enumerate(*cx, obj, &props))
-		for(size_t i(0); i < props.length(); ++i)
-			closure(props[i]);
-}
+// Key iteration (as value)
+using each_key = std::function<void (const value &)>;
+void for_each(object::handle, const each_key &);
+void for_each(object::handle, const iter &flags, const each_key &);
+
+// Key/Value iteration (as value => value)
+using each_key_val = std::function<void (const value &, const value &)>;
+void for_each(object::handle, const each_key_val &);
+void for_each(object::handle, const iter &flags, const each_key_val &);
 
 } // namespace js
 } // namespace ircd
