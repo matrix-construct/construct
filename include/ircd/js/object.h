@@ -47,6 +47,7 @@ bool is_array(const object_handle &);
 uint32_t size(const object_handle &);
 bool deep_freeze(const object_handle &);
 bool freeze(const object_handle &);
+size_t bytecodes(const object_handle &, uint8_t *const &buf, const size_t &size);
 
 namespace basic {
 
@@ -80,6 +81,7 @@ struct object
 	object(const JSClass *const &, const object &proto);
 	object(const JSClass *const &);
 
+	object(const uint8_t *const &bytecode, const size_t &size);
 	template<class T, lifetime LL> object(const root<T, LL> &);
 	using root<JSObject *, L>::root;
 	template<class... args> object(json_t, args&&...);
@@ -250,6 +252,18 @@ object<L>::object(const JSClass *const &clasp,
 }
 
 template<lifetime L>
+object<L>::object(const uint8_t *const &bytecode,
+                  const size_t &size)
+:object<L>::root::type
+{
+	JS_DecodeInterpretedFunction(*cx, bytecode, size)
+}
+{
+	if(unlikely(!this->get()))
+		throw jserror(jserror::pending);
+}
+
+template<lifetime L>
 object<L>
 object<L>::global()
 {
@@ -317,6 +331,22 @@ const
 }
 
 } // namespace basic
+
+inline size_t
+bytecodes(const object_handle &obj,
+          uint8_t *const &buf,
+          const size_t &size)
+{
+	uint32_t ret;
+	const custom_ptr<void> ptr
+	{
+		JS_EncodeInterpretedFunction(*cx, obj, &ret), js_free
+	};
+
+	const auto cpsz(std::min(size_t(ret), size));
+	memcpy(buf, ptr.get(), cpsz);
+	return cpsz;
+}
 
 inline bool
 freeze(const object_handle &obj)
