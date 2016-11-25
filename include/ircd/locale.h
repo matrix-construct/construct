@@ -49,7 +49,22 @@ namespace char16
 	std::u16string conv(const char *const &, const size_t &len);
 	std::u16string conv(const char *const &);
 	std::u16string conv(const std::string &);
+
+	std::ostream &operator<<(std::ostream &, const std::u16string &);
 }
 
+using char16::operator<<;
+
 } // namespace locale
+
+using locale::operator<<;
+
 } // namespace ircd
+
+inline std::ostream &
+ircd::locale::char16::operator<<(std::ostream &s,
+                                 const std::u16string &u)
+{
+	s << conv(u);
+	return s;
+}
