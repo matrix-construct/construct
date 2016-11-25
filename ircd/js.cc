@@ -1930,6 +1930,9 @@ ircd::js::set(const object::handle &src,
 			throw reference_error("%s", part);
 
 		key = part;
+		if(strcmp(key, path) == 0)
+			return;
+
 		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
 			return;
 
