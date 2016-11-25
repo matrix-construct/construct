@@ -186,6 +186,9 @@ string<L>::string(const char *const &s,
                   const size_t &len)
 :string<L>::root::type{[&s, &len]
 {
+	if(!s || !*s)
+		return JS_GetEmptyString(*rt);
+
 	auto buf(native_external_copy(s, len));
 	return JS_NewExternalString(*cx, buf.release(), len, &native_external_delete);
 }()}
@@ -211,6 +214,9 @@ string<L>::string(const char16_t *const &s,
                   const size_t &len)
 :string<L>::root::type{[&s, &len]
 {
+	if(!s || !*s)
+		return JS_GetEmptyString(*rt);
+
 	// JS_NewExternalString does not require a null terminated buffer, but we are going
 	// to terminate anyway in case the deleter ever wants to iterate a canonical vector.
 	auto buf(std::make_unique<char16_t[]>(len+1));
@@ -228,7 +234,9 @@ string<L>::string(literal_t,
                   const char16_t *const &s)
 :string<L>::root::type
 {
-	JS_NewExternalString(*cx, s, std::char_traits<char16_t>::length(s), &native_external_static)
+	s && *s?
+	JS_NewExternalString(*cx, s, std::char_traits<char16_t>::length(s), &native_external_static):
+	JS_GetEmptyString(*rt)
 }
 {
 	if(unlikely(!this->get()))
