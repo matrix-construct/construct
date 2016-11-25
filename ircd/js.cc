@@ -21,9 +21,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
-#include <jsfriendapi.h>
 #include <ircd/js/js.h>
+#include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
+#include <mozilla/ThreadLocal.h>                 // For GetThreadType() linkage hack (see: down)
 
 namespace ircd {
 namespace js   {
@@ -136,6 +136,26 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 	ircd::js::log.critical("jsalloc(): Reported out of memory (ExclusiveContext: %p)", (const void *)c);
 	std::terminate();
 }
+
+//
+// This DEBUG section is a fix for linkage errors when SpiderMonkey is compiled
+// in debug mode.
+//
+#ifdef DEBUG
+namespace js  {
+namespace oom {
+
+extern mozilla::ThreadLocal<uint32_t> threadType;
+
+uint32_t
+GetThreadType()
+{
+	return threadType.get();
+}
+
+} // namespace oom
+} // namespace js
+#endif // DEBUG
 
 // This was only ever defined for the SpiderMonkey headers and some of our hacks above.
 #undef DEBUG

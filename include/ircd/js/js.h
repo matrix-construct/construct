@@ -45,6 +45,7 @@
 // include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
 // <ircd/xxx.h> and shouldn't have any conflict issues.
 #include <jsapi.h>
+#include <jsfriendapi.h>
 #include <js/Conversions.h>
 
 // Some forward declarations for jsapi items not declared in the above includes,
