@@ -58,6 +58,9 @@ struct task
 	static task &get();
 };
 
+string decompile(const task &, const bool &pretty = false);
+object reflect(const task &);
+
 inline task &
 task::get()
 {

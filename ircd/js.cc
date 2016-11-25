@@ -380,6 +380,24 @@ ircd::js::task::tasks_next_pid()
 	return tasks.empty()? 0 : std::prev(std::end(tasks))->first + 1;
 }
 
+ircd::js::object
+ircd::js::reflect(const task &task)
+{
+	object ret;
+	const object global(task.global);
+	const object reflect(get(global, "Reflect"));
+	const function parse(get(reflect, "parse"));
+	ret = parse(global, decompile(task));
+	return ret;
+}
+
+ircd::js::string
+ircd::js::decompile(const task &task,
+                    const bool &pretty)
+{
+	return decompile(task.main, "main", pretty);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/global.h
@@ -398,6 +416,7 @@ ircd::js::global::global(trap &trap,
 	if(!JS_InitStandardClasses(*cx, *this))
 		throw error("Failed to init standard classes for global object");
 
+	JS_InitReflectParse(*cx, *this);
 	JS_FireOnNewGlobalObject(*cx, *this);
 }
 
