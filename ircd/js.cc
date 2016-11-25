@@ -2363,9 +2363,11 @@ void
 ircd::js::native_external_deleter(const JSStringFinalizer *const fin,
                                   char16_t *const buf)
 {
-	log.debug("string delete (fin: %p buf: %p)",
+	log.debug("runtime(%p): string(%p) delete (dtor @%p) \"%s\"",
+	          (const void *)rt,
+	          (const void *)buf,
 	          (const void *)fin,
-	          (const void *)buf);
+	          locale::char16::conv(buf).c_str());
 
 	delete[] buf;
 }
