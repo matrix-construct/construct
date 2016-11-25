@@ -964,9 +964,15 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	fi
 
 	js_branch="esr45"
-	js_options="--enable-optimize"
 	js_jobs="4"
-	bash tools/buildjs.sh $js_branch $js_options $js_jobs
+
+	if [[ $DEBUG ]]; then
+		js_options="--disable-optimize --enable-debug"
+	else
+		js_options="--enable-optimize"
+	fi
+
+	bash tools/buildjs.sh "$js_branch" "$js_options" "$js_jobs"
 ],[
 	AC_MSG_RESULT([no])
 	with_included_js="no"
