@@ -89,6 +89,8 @@ struct string
 template<class T> constexpr bool is_string();
 template<class A, class B> constexpr bool string_argument();
 
+template<lifetime L> auto hash(const string<L> &s);
+
 template<lifetime A, lifetime B> int cmp(const string<A> &a, const string<B> &b);
 template<lifetime L> int cmp(const char *const &a, const string<L> &b);
 template<lifetime L> int cmp(const string<L> &a, const char *const &b);
@@ -126,6 +128,8 @@ template<lifetime L> std::ostream & operator<<(std::ostream &os, const string<L>
 using string = basic::string<lifetime::stack>;
 using heap_string = basic::string<lifetime::heap>;
 using persist_string = basic::string<lifetime::persist>;
+
+using basic::hash;
 
 //
 // Implementation
@@ -517,6 +521,14 @@ cmp(const string<A> &a,
 		throw internal_error("Failed to compare strings");
 
 	return ret;
+}
+
+template<lifetime L>
+auto
+hash(const string<L> &s)
+{
+	//TODO: optimize
+	return ircd::util::hash(std::u16string(s));
 }
 
 template<class A,
