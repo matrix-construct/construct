@@ -436,7 +436,14 @@ ircd::js::global::global(trap &trap,
 	if(!JS_InitStandardClasses(*cx, *this))
 		throw error("Failed to init standard classes for global object");
 
+	for(auto it(begin(trap.memfun)); it != end(trap.memfun); ++it)
+	{
+		trap::function &deffun(*it->second);
+		deffun(*this);
+	}
+
 	JS_InitReflectParse(*cx, *this);
+
 	JS_FireOnNewGlobalObject(*cx, *this);
 }
 
@@ -465,6 +472,169 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/trap_property.h
+//
+
+ircd::js::trap::property::property(struct trap &trap,
+                                   std::string name)
+try
+:trap{&trap}
+,name{std::move(name)}
+{
+	const auto it(std::find_if(begin(trap.ps), end(trap.ps), []
+	(const JSPropertySpec &ps)
+	{
+		return !ps.name;
+	}));
+
+	if(it == end(trap.ps))
+		throw error("out of slots");
+
+	{
+		const auto it(trap.member.emplace(this->name, this));
+		if(!it.second)
+			throw error("already exists");
+	}
+
+	JSPropertySpec &spec(*it);
+	spec.name = this->name.c_str();
+	spec.flags = JSPROP_SHARED;
+	spec.getter.native.op = handle_get;
+	spec.setter.native.op = handle_set;
+
+	log.debug("Registered property '%s' on trap '%s'",
+	          this->name.c_str(),
+	          trap.name().c_str());
+}
+catch(const error &e)
+{
+	throw error("Failed to register property '%s': out slots on trap '%s': %s",
+	            this->name.c_str(),
+	            trap.name().c_str(),
+	            e.what());
+}
+
+ircd::js::trap::property::~property()
+noexcept
+{
+	assert(trap);
+	const auto it(std::find_if(begin(trap->ps), end(trap->ps), [this]
+	(const JSPropertySpec &spec)
+	{
+		return name == spec.name;
+	}));
+
+	if(it != end(trap->ps))
+	{
+		JSPropertySpec &spec(*it);
+		memset(&spec, 0x0, sizeof(spec));
+	}
+
+	const size_t erased(trap->member.erase(name));
+	assert(erased);
+}
+
+bool
+ircd::js::trap::property::handle_get(JSContext *const c,
+                                     const unsigned argc,
+                                     JS::Value *const argv)
+noexcept try
+{
+	using js::function;
+
+	const struct args args(argc, argv);
+	object that(args.computeThis(c));
+	function func(args.callee());
+	const string name(js::name(func));
+
+	auto &trap(from(that));
+	trap.debug(that.get(), "get '%s' (property)",
+	           name.c_str());
+
+	property &prop(*trap.member.at(name));
+	args.rval().set(prop.on_get(func, that));
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.computeThis(c));
+	auto &trap(from(that));
+	trap.host_exception(that.get(), "property get: %s", e.what());
+	return false;
+}
+
+namespace ircd {
+namespace js   {
+
+struct foodata
+:priv_data
+{
+	trap::property *ptr;
+
+	foodata(trap::property *const &ptr = nullptr): ptr{ptr} {}
+};
+
+} // namespace js
+} // namespace ircd
+
+bool
+ircd::js::trap::property::handle_set(JSContext *const c,
+                                     const unsigned argc,
+                                     JS::Value *const argv)
+noexcept try
+{
+	using js::function;
+
+	const struct args args(argc, argv);
+	object that(args.computeThis(c));
+	function func(args.callee());
+	const string name(js::name(func));
+
+	auto &trap(from(that));
+	trap.debug(that.get(), "set '%s' (property)",
+	           name.c_str());
+
+	property &prop(*trap.member.at(name));
+	args.rval().set(prop.on_get(func, that));
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.computeThis(c));
+	auto &trap(from(that));
+	trap.host_exception(that.get(), "property set: %s", e.what());
+	return false;
+}
+
+ircd::js::value
+ircd::js::trap::property::on_get(function::handle,
+                                 object::handle that)
+{
+	return {};
+}
+
+ircd::js::value
+ircd::js::trap::property::on_set(function::handle,
+                                 object::handle that,
+                                 value::handle val)
+{
+	return val;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/trap_function.h
 //
 
@@ -479,17 +649,18 @@ ircd::js::trap::function::function(trap &member,
 ,flags{flags}
 ,lambda{lambda}
 {
-	member.memfun.emplace(this);
+	member.memfun.emplace(this->name, this);
 }
 
 ircd::js::trap::function::~function()
 noexcept
 {
-	member->memfun.erase(this);
+	member->memfun.erase(this->name);
 }
 
 ircd::js::function
 ircd::js::trap::function::operator()(const object::handle &obj)
+const
 {
 	const auto jsf(::js::DefineFunctionWithReserved(*cx,
 	                                                obj,
@@ -514,8 +685,8 @@ noexcept try
 	assert(&our(c) == cx);
 
 	const struct args args(argc, argv);
-	const value that(args.computeThis(c));
 	const object func(args.callee());
+	const value that(args.computeThis(c));
 	auto &trap(from(func));
 	log.debug("trap(%p) this(%p) %s() call argv[%u]",
 	          (const void *)&trap,
@@ -574,21 +745,24 @@ ircd::js::trap::function::on_call(object::handle obj,
 // ircd/js/trap.h
 //
 
-ircd::js::trap::trap(const std::string &path,
+ircd::js::trap::trap(const std::string &name,
                      const uint &flags,
                      const uint &prop_flags)
-:parent{[&path]
+:trap{*tree, name, flags, prop_flags}
 {
-	const auto ret(rsplit(path, ".").first);
-	return ret == path? std::string{} : ret;
-}()}
-,_name
-{
-	path.empty()? std::string{""} : token_last(path, ".")
 }
+
+ircd::js::trap::trap(trap &parent,
+                     const std::string &name,
+                     const uint &flags,
+                     const uint &prop_flags)
+:parent{&parent != this? &parent : nullptr}
+,_name{name}
+,cis{0}
+,cds{0}
 ,sps{0}
-,ps{0}
 ,sfs{0}
+,ps{0}
 ,fs{0}
 ,_class{std::make_unique<JSClass>(JSClass
 {
@@ -608,13 +782,14 @@ ircd::js::trap::trap(const std::string &path,
 	flags & JSCLASS_GLOBAL_FLAGS? JS_GlobalObjectTraceHook : handle_trace,
 	{ this }           // reserved[0] TODO: ?????????
 })}
-,parent_prototype{nullptr}
-,prototype{nullptr}
+,prototrap{nullptr}
 {
 	std::fill(begin(sfs), end(sfs), (JSFunctionSpec)JS_FS_END);
 	std::fill(begin(fs), end(fs), (JSFunctionSpec)JS_FS_END);
 
-	ps[0].flags |= prop_flags;
+	//ps[0].name = "";
+	//ps[0].flags |= prop_flags;
+	//ps[0].flags |= JSPROP_ENUMERATE;
 	add_this();
 }
 
@@ -633,26 +808,50 @@ noexcept
 }
 
 ircd::js::object
-ircd::js::trap::operator()()
+ircd::js::trap::construct(const vector<value>::handle &argv)
 {
-	object p(prototype? ctor(*prototype) : object{});
-	object pp(parent_prototype? ctor(*parent_prototype) : object{});
-	object proto(JS_InitClass(*cx,
-	                          p,
-	                          pp,
-	                          _class.get(),
-	                          nullptr,
-	                          0,
-	                          ps.data(),
-	                          fs.data(),
-	                          sps.data(),
-	                          sfs.data()));
+	const object globals;
+	return construct(globals, argv);
+}
+
+ircd::js::object
+ircd::js::trap::construct(const object::handle &globals,
+                          const vector<value>::handle &argv)
+{
+	const object prototype(this->prototype(globals));
+	return JS_New(*cx, prototype, argv);
+}
+
+ircd::js::object
+ircd::js::trap::prototype(const object::handle &globals)
+{
+	const object super
+	{
+		prototrap? prototrap->construct() : object{object::uninitialized}
+	};
+
+	const object proto
+	{
+		JS_InitClass(*cx,
+		             globals,
+		             super,
+		             _class.get(),
+		             nullptr,
+		             0,
+		             ps.data(),
+		             fs.data(),
+		             sps.data(),
+		             sfs.data())
+	};
 
 	for(auto it(begin(memfun)); it != end(memfun); ++it)
 	{
-		trap::function &deffun(**it);
-		deffun(proto);
+		const function &deffun(*it->second);
+		const js::function func(deffun(proto));
 	}
+
+	JS_DefineConstIntegers(*cx, proto, cis.data());
+	JS_DefineConstDoubles(*cx, proto, cds.data());
 
 	return proto;
 }
@@ -661,25 +860,28 @@ void
 ircd::js::trap::del_this()
 try
 {
-	if(name().empty())
+	// It is a special condition when the parent is self (this) and the trap has no name.
+	if(!parent && name().empty())
 	{
-		tree = nullptr;
+		tree = nullptr; // thread_local
 		return;
 	}
 
-	auto &parent(find(this->parent));
-	if(!parent.children.erase(name()))
+	if(!parent)
+		return;
+
+	if(!parent->children.erase(name()))
 		throw std::out_of_range("child not in parent's map");
 
 	log.debug("Unregistered trap '%s' in `%s'",
 	          name().c_str(),
-	          this->parent.c_str());
+	          parent->name().c_str());
 }
 catch(const std::exception &e)
 {
 	log.error("Failed to unregister object trap '%s' in `%s': %s",
 	          name().c_str(),
-	          parent.c_str(),
+	          parent->name().c_str(),
 	          e.what());
 	return;
 }
@@ -688,36 +890,29 @@ void
 ircd::js::trap::add_this()
 try
 {
-	if(name().empty())
+	// It is a special condition when the parent is self (this) and the trap has no name.
+	if(!parent && name().empty())
 	{
-		if(tree)
-			throw error("ircd::js::tree is already active. Won't overwrite.");
-
-		tree = this;
+		tree = this; // thread_local
 		return;
 	}
 
-	auto &parent(find(this->parent));
-	const auto iit(parent.children.emplace(name(), this));
+	if(!parent)
+		return;
+
+	const auto iit(parent->children.emplace(name(), this));
 	if(!iit.second)
 		throw error("Failed to overwrite existing");
 
 	log.debug("Registered trap '%s' in `%s'",
 	          name().c_str(),
-	          this->parent.c_str());
-}
-catch(const std::out_of_range &e)
-{
-	log.error("Failed to register object trap '%s' in `%s': missing parent.",
-	          name().c_str(),
-	          parent.c_str());
-	throw;
+	          parent->name().c_str());
 }
 catch(const std::exception &e)
 {
 	log.error("Failed to register object trap '%s' in `%s': %s",
 	          name().c_str(),
-	          parent.c_str(),
+	          parent->name().c_str(),
 	          e.what());
 	throw;
 }
@@ -953,9 +1148,115 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("del '%s': %s",
+	trap.host_exception(obj.get(), "del '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
+	return false;
+}
+
+namespace ircd {
+namespace js   {
+
+std::map<std::string, heap_value> tempo;
+
+}
+}
+
+bool
+ircd::js::trap::handle_getter(JSContext *const c,
+                              unsigned argc,
+                              JS::Value *const argv)
+noexcept try
+{
+	using js::function;
+
+	const struct args args(argc, argv);
+	object that(args.computeThis(c));
+	function func(args.callee());
+	const string name(js::name(func));
+
+	auto &trap(from(that));
+	trap.debug(that.get(), "get '%s' (getter)",
+	           name.c_str());
+
+	const auto it(tempo.find(name));
+	if(it == end(tempo))
+	{
+		//throw reference_error("%s", name.c_str());
+		args.rval().set(value{});
+		return true;
+	}
+
+	heap_value &val(it->second);
+	args.rval().set(val);
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.computeThis(c));
+	auto &trap(from(that));
+	trap.host_exception(that.get(), "getter: %s", e.what());
+	return false;
+}
+
+bool
+ircd::js::trap::handle_setter(JSContext *const c,
+                              unsigned argc,
+                              JS::Value *const argv)
+noexcept try
+{
+	using js::function;
+
+	const struct args args(argc, argv);
+	object that(args.computeThis(c));
+	function func(args.callee());
+
+	value val(args[0]);
+	const auto type(basic::type(val));
+	const string name(js::name(func));
+
+	auto &trap(from(that));
+	trap.debug(that.get(), "set '%s' (%s) (setter)",
+	           name.c_str(),
+	           reflect(type));
+
+	auto it(tempo.lower_bound(name));
+	assert(it != end(tempo));
+	heap_value &hval(it->second);
+	switch(js::type(type))
+	{
+		case jstype::OBJECT:
+		{
+			//const auto flags(JSPROP_SHARED);
+			//object ret(JS_DefineObject(*cx, object(val), "", &trap.jsclass(), flags));
+			//tempo.emplace(name, heap_value(ret));
+			//args.rval().set(ret);
+			//return true;
+		}
+
+		default:
+			hval = val;
+			args.rval().set(val);
+			return true;
+	}
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto ca(JS::CallArgsFromVp(argc, argv));
+	object that(ca.computeThis(c));
+	auto &trap(from(that));
+	trap.host_exception(that.get(), "setter: %s", e.what());
 	return false;
 }
 
@@ -1108,9 +1409,9 @@ catch(const std::exception &e)
 }
 
 ircd::js::trap &
-ircd::js::trap::from(const JS::HandleObject &o)
+ircd::js::trap::from(const JSObject *const &o)
 {
-	return from(*o.get());
+	return from(*o);
 }
 
 ircd::js::trap &
@@ -1206,6 +1507,31 @@ bool
 ircd::js::trap::on_has(object::handle,
                        id::handle id)
 {
+/*
+	const string sid(id);
+	if(children.count(sid))
+		return false;
+
+	if(std::any_of(begin(memfun), end(memfun), [&sid]
+	(const auto &it)
+	{
+		const auto &memfun(*it.second);
+		return sid == memfun.name;
+	}))
+		return false;
+*/
+
+/*
+	value val;
+	const auto flags(JSPROP_SHARED | JSPROP_ENUMERATE);
+	if(!JS_DefinePropertyById(*cx, obj, id, val, flags, handle_getter, handle_setter))
+		throw jserror("Failed to define property '%s'", sid.c_str());
+
+*/
+//	const auto flags(0);
+//	if(!JS_DefineObject(*cx, obj, sid.c_str(), &jsclass(), flags))
+//		throw jserror("Failed to define property '%s'", sid.c_str());
+
 	return false;
 }
 

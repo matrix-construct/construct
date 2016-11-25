@@ -36,8 +36,7 @@ inline object
 ctor(trap &trap,
      const vector<value>::handle &args = {})
 {
-	object proto(trap());
-	return JS_New(*cx, proto, args);
+	return trap.construct(args);
 }
 
 } // namespace js

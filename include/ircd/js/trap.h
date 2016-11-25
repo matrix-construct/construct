@@ -27,23 +27,26 @@ namespace js   {
 
 struct trap
 {
+	struct property;
 	struct function;
 
-  protected:
-	const std::string parent;
+	trap *parent;
 	const std::string _name;                     // don't touch
-	std::array<JSPropertySpec, 32> sps;          // static property spec
-	std::array<JSPropertySpec, 32> ps;           // property spec
-	std::array<JSFunctionSpec, 32> sfs;          // static function spec
-	std::array<JSFunctionSpec, 32> fs;           // function spec
-	std::unique_ptr<JSClass> _class;
+	std::map<std::string, property *> member;
+	std::map<std::string, function *> memfun;
 	std::map<std::string, trap *> children;
-	std::set<function *> memfun;
-	trap *parent_prototype;
-	trap *prototype;
+
+	std::array<JSConstIntegerSpec, 32> cis;      // static const integer spec
+	std::array<JSConstDoubleSpec, 32> cds;       // static const double spec
+	std::array<JSPropertySpec, 32> sps;          // static property spec
+	std::array<JSFunctionSpec, 32> sfs;          // static function spec
+	std::array<JSPropertySpec, 32> ps;           // property spec
+	std::array<JSFunctionSpec, 32> fs;           // function spec
+	std::unique_ptr<JSClass> _class;             // class spec
+	trap *prototrap;                             // pointer to __proto__ trap
 
 	static trap &from(const JSObject &);
-	static trap &from(const JS::HandleObject &);
+	static trap &from(const JSObject *const &);
 
   protected:
 	void debug(const void *const &that, const char *fmt, ...) const AFP(3, 4);
@@ -74,6 +77,8 @@ struct trap
 	static bool handle_del(JSContext *, JS::HandleObject, JS::HandleId, JS::ObjectOpResult &) noexcept;
 	static bool handle_has(JSContext *, JS::HandleObject, JS::HandleId, bool *resolved) noexcept;
 	static bool handle_enu(JSContext *, JS::HandleObject) noexcept;
+	static bool handle_setter(JSContext *, unsigned argc, JS::Value *argv) noexcept;
+	static bool handle_getter(JSContext *, unsigned argc, JS::Value *argv) noexcept;
 	static bool handle_call(JSContext *, unsigned argc, JS::Value *argv) noexcept;
 	static bool handle_ctor(JSContext *, unsigned argc, JS::Value *argv) noexcept;
 	static void handle_dtor(JSFreeOp *, JSObject *) noexcept;
@@ -81,6 +86,7 @@ struct trap
   public:
 	auto &name() const                           { return _name;                                   }
 	auto &jsclass() const                        { return *_class;                                 }
+	auto &jsclass()                              { return *_class;                                 }
 
 	 // Get child by name (NOT PATH)
 	const trap &child(const std::string &name) const;
@@ -93,10 +99,13 @@ struct trap
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
-	// Produces prototype. Call ctor(trap) for full construction
-	object operator()();
+	object prototype(const object::handle &globals);
+	object construct(const object::handle &globals, const vector<value>::handle &argv = {});
+	object construct(const vector<value>::handle &argv = {});
+	template<class... args> object operator()(args&&...);
 
-	trap(const std::string &path, const uint &flags = 0, const uint &prop_flags = 0);
+	trap(trap &parent, const std::string &name, const uint &flags = 0, const uint &prop_flags = 0);
+	trap(const std::string &name, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(trap &&) = delete;
 	trap(const trap &) = delete;
 	virtual ~trap() noexcept;
@@ -106,3 +115,11 @@ extern __thread trap *tree;
 
 } // namespace js
 } // namespace ircd
+
+template<class... args>
+ircd::js::object
+ircd::js::trap::operator()(args&&... a)
+{
+	vector<value> argv{{std::forward<args>(a)...}};
+	return construct(argv);
+}

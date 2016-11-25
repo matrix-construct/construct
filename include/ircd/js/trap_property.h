@@ -20,40 +20,30 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_TRAP_FUNCTION
+#define HAVE_IRCD_JS_TRAP_PROPERTY
 
 namespace ircd {
 namespace js   {
 
-struct trap::function
+struct trap::property
 {
-	using closure = std::function<value (object::handle, value::handle, const args &)>;
+	using function = js::function;
 
-	trap *member;
+	struct trap *trap;
 	const std::string name;
-	const uint arity;
-	const uint flags;
-	closure lambda;
 
-  protected:
-	virtual value on_call(object::handle callee, value::handle that, const args &);
+	virtual value on_set(function::handle, object::handle, value::handle);
+	virtual value on_get(function::handle, object::handle);
 
   private:
-	static function &from(JSObject *const &);
-	static bool handle_call(JSContext *, unsigned, JS::Value *) noexcept;
+	static bool handle_set(JSContext *c, unsigned argc, JS::Value *argv) noexcept;
+	static bool handle_get(JSContext *c, unsigned argc, JS::Value *argv) noexcept;
 
   public:
-	js::function operator()(const object::handle &) const;
-
-	function(trap &,
-	         std::string name,
-	         const uint &arity = 0,
-	         const uint &flags = 0,
-	         const closure & = {});
-
-	function(function &&) = delete;
-	function(const function &) = delete;
-	virtual ~function() noexcept;
+	property(struct trap &, std::string name);
+	property(property &&) = delete;
+	property(const property &) = delete;
+	virtual ~property() noexcept;
 };
 
 } // namespace js
