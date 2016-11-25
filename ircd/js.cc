@@ -3167,6 +3167,7 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
 	JS_SetGCCallback(get(), handle_gc, nullptr);
 	JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
+	::js::SetPreserveWrapperCallback(get(), handle_preserve_wrapper);
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
 	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
@@ -3277,6 +3278,18 @@ noexcept
 	          (const void *)c,
 	          reflect(static_cast<JSContextOp>(op)),
 	          priv);
+
+	return true;
+}
+
+bool
+ircd::js::runtime::handle_preserve_wrapper(JSContext *const c,
+                                           JSObject *const obj)
+noexcept
+{
+	log.debug("context(%p): (object: %p) preserve wrapper",
+	          (const void *)c,
+	          (const void *)obj);
 
 	return true;
 }

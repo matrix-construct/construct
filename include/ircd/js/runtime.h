@@ -40,6 +40,7 @@ class runtime
 	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t) noexcept;
 	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *) noexcept;
 	static void handle_gc(JSRuntime *, JSGCStatus, void *) noexcept;
+	static bool handle_preserve_wrapper(JSContext *, JSObject *) noexcept;
 	static bool handle_context(JSContext *, uint op, void *) noexcept;
 	static void handle_activity(void *priv, bool active) noexcept;
 	static bool handle_interrupt(JSContext *) noexcept;
