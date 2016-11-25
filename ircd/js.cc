@@ -517,16 +517,17 @@ noexcept try
 	const value that(args.computeThis(c));
 	const object func(args.callee());
 	auto &trap(from(func));
-	log.debug("trap(%p) \"%s()\": this(%p) call",
+	log.debug("trap(%p) this(%p) %s() call argv[%u]",
 	          (const void *)&trap,
+	          (const void *)that.address(),
 	          trap.name.c_str(),
-	          (const void *)that.address());
+	          argc);
 
 	args.rval().set(trap.on_call(func, that, args));
-	log.debug("trap(%p) \"%s()\": this(%p) return",
+	log.debug("trap(%p) this(%p) %s() leave",
 	          (const void *)&trap,
-	          trap.name.c_str(),
-	          (const void *)that.address());
+	          (const void *)that.address(),
+	          trap.name.c_str());
 
 	return true;
 }
@@ -790,9 +791,7 @@ noexcept try
 	assert(&our_runtime(*op) == rt);
 
 	auto &trap(from(*obj));
-	trap.debug("this(%p) dtor",
-	           (const void *)obj);
-
+	trap.debug(obj, "dtor");
 	trap.on_gc(obj);
 }
 catch(const std::exception &e)
@@ -818,8 +817,7 @@ noexcept try
 	object that(args.callee());
 
 	auto &trap(from(that));
-	trap.debug("this(%p) ctor: '%s' argv[%zu]",
-	           (const void *)that.get(),
+	trap.debug(that.get(), "ctor '%s' argv[%zu]",
 	           trap.name().c_str(),
 	           args.size());
 
@@ -836,8 +834,9 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto ca(JS::CallArgsFromVp(argc, argv));
-	auto &trap(from(object(ca.callee())));
-	trap.host_exception("ctor: %s", e.what());
+	object that(ca.callee());
+	auto &trap(from(that));
+	trap.host_exception(that.get(), "ctor: %s", e.what());
 	return false;
 }
 
@@ -857,11 +856,8 @@ noexcept try
 	//auto &trap_that(from(that));
 	auto &trap_func(from(func));
 
-	//trap_that.debug("call: '%s'", trap_func.name().c_str());
-	trap_func.debug("this(%p) call argv[%zu]",
-	                (const void *)that.address(),
-	                args.size());
-
+	//trap_that.debug(that.get(), "call: '%s'", trap_func.name().c_str());
+	trap_func.debug(func.get(), "call argv[%zu]", args.size());
 	args.rval().set(trap_func.on_call(func, that, args));
 	return true;
 }
@@ -873,8 +869,9 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto ca(JS::CallArgsFromVp(argc, argv));
-	auto &trap(from(object(ca.computeThis(c))));
-	trap.host_exception("call: %s", e.what());
+	object func(ca.callee());
+	auto &trap(from(func));
+	trap.host_exception(func.get(), "call: %s", e.what());
 	return false;
 }
 
@@ -886,7 +883,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) enu", (const void *)obj.get());
+	trap.debug(obj.get(), "enumerate");
 	trap.on_enu(obj);
 	return true;
 }
@@ -898,7 +895,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("enu: %s", e.what());
+	trap.host_exception(obj.get(), "enu: %s", e.what());
 	return false;
 }
 
@@ -913,10 +910,7 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) has: '%s'",
-	           (const void *)obj.get(),
-	           string(id).c_str());
-
+	trap.debug(obj.get(), "has '%s'", string(id).c_str());
 	*resolved = trap.on_has(obj, id);
 	return true;
 }
@@ -928,7 +922,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("has: '%s': %s",
+	trap.host_exception(obj.get(), "has '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
 	return false;
@@ -945,10 +939,7 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) del: '%s'",
-	           (const void *)obj.get(),
-	           string(id).c_str());
-
+	trap.debug(obj.get(), "del '%s'", string(id).c_str());
 	if(trap.on_del(obj, id))
 		res.succeed();
 
@@ -979,10 +970,7 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) get: '%s'",
-	           (const void *)obj.get(),
-	           string(id).c_str());
-
+	trap.debug(obj.get(), "get '%s'", string(id).c_str());
 	const value ret(trap.on_get(obj, id, val));
 	val.set(ret.get());
 	return true;
@@ -995,7 +983,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("get: '%s': %s",
+	trap.host_exception(obj.get(), "get: '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
 	return false;
@@ -1013,10 +1001,7 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) set: '%s'",
-	           (const void *)obj.get(),
-	           string(id).c_str());
-
+	trap.debug(obj.get(), "set '%s'", string(id).c_str());
 	const value ret(trap.on_set(obj, id, val));
 	val.set(ret.get());
 	if(!val.isUndefined())
@@ -1032,7 +1017,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("set: '%s': %s",
+	trap.host_exception(obj.get(), "set '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
 	return false;
@@ -1049,9 +1034,11 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) add: '%s'",
-	           (const void *)obj.get(),
-	           string(id).c_str());
+	const string name(id);
+	trap.debug(obj.get(), "add '%s' %s @%p",
+	           name.c_str(),
+	           reflect(basic::type(val)),
+	           (const void *)val.address());
 
 	trap.on_add(obj, id, val);
 	return true;
@@ -1064,7 +1051,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("add: '%s': %s",
+	trap.host_exception(obj.get(), "add '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
 	return false;
@@ -1080,8 +1067,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("this(%p) inst", (const void *)obj.get());
-
+	trap.debug(obj.get(), "inst");
 	return false;
 }
 catch(const jserror &e)
@@ -1092,7 +1078,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("inst: %s", e.what());
+	trap.host_exception(obj.get(), "inst: %s", e.what());
 	return false;
 }
 
@@ -1106,7 +1092,7 @@ noexcept try
 	assert(obj);
 
 	auto &trap(from(*obj));
-	trap.debug("trace object(%p)", (const void *)obj);
+	trap.debug(obj, "trace");
 	trap.on_trace(obj);
 }
 catch(const jserror &e)
@@ -1117,7 +1103,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(*obj));
-	trap.host_exception("trace: %s", e.what());
+	trap.host_exception(obj, "trace: %s", e.what());
 	return;
 }
 
@@ -1147,7 +1133,8 @@ ircd::js::trap::from(const JSObject &o)
 }
 
 void
-ircd::js::trap::debug(const char *const fmt,
+ircd::js::trap::debug(const void *const &that,
+                      const char *const fmt,
                       ...)
 const
 {
@@ -1156,16 +1143,18 @@ const
 
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	log.debug("trap(%p) \"%s\": %s",
+	log.debug("trap(%p) this(%p) %s %s",
 	          reinterpret_cast<const void *>(this),
-	          name().c_str(),
+	          that,
+	          !name().empty()? name().c_str() : "this",
 	          buf);
 
 	va_end(ap);
 }
 
 void
-ircd::js::trap::host_exception(const char *const fmt,
+ircd::js::trap::host_exception(const void *const &that,
+                               const char *const fmt,
                                ...)
 const
 {
@@ -1174,13 +1163,15 @@ const
 
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	log.error("trap(%p) \"%s\": %s",
+	log.error("trap(%p) this(%p) \"%s\" %s",
 	          reinterpret_cast<const void *>(this),
+	          that,
 	          name().c_str(),
 	          buf);
 
-	JS_ReportError(*cx, "BUG: trap(%p) \"%s\" %s",
+	JS_ReportError(*cx, "BUG: trap(%p) this(%p) \"%s\" %s",
 	               reinterpret_cast<const void *>(this),
+	               that,
 	               name().c_str(),
 	               buf);
 

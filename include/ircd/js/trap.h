@@ -45,7 +45,8 @@ struct trap
 	static trap &from(const JSObject &);
 	static trap &from(const JS::HandleObject &);
 
-	void debug(const char *fmt, ...) const AFP(2, 3);
+  protected:
+	void debug(const void *const &that, const char *fmt, ...) const AFP(3, 4);
 
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, value::handle, const args &);
@@ -62,7 +63,7 @@ struct trap
   private:
 	void add_this();
 	void del_this();
-	void host_exception(const char *fmt, ...) const AFP(2, 3);
+	void host_exception(const void *const &that, const char *fmt, ...) const AFP(3, 4);
 
 	// Internal callback interface
 	static void handle_trace(JSTracer *, JSObject *) noexcept;
