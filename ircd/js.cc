@@ -3832,7 +3832,7 @@ void
 ircd::js::runtime::handle_error(JSContext *const ctx,
                                 const char *const msg,
                                 JSErrorReport *const report)
-noexcept
+noexcept try
 {
 	assert(report);
 	const log::facility facility
@@ -3845,11 +3845,23 @@ noexcept
 		(const void *)ctx,
 		debug(*report).c_str());
 
-	//TODO: warnings
-	if(!JSREPORT_IS_EXCEPTION(report->flags))
+	if(JSREPORT_IS_EXCEPTION(report->flags))
+	{
+		save_exception(our(ctx), *report);
 		return;
+	}
 
-	save_exception(our(ctx), *report);
+	if(report->exnType == JSEXN_INTERNALERR)
+		throw internal_error("#%u %s", report->errorNumber, msg);
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+}
+catch(const std::exception &e)
+{
+	internal_error ie("%s", e.what());
+	ie.set_pending();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
