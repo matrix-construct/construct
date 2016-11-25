@@ -85,6 +85,7 @@ struct object
 	template<class... args> object(json_t, args&&...);
 	object(array_t, const size_t &length);
 	object(const JS::HandleValueArray &);
+	object(std::initializer_list<std::pair<const char *, value<L>>>);
 	object(const value<L> &);
 	object(JSObject *const &);
 	object(JSObject &);
@@ -144,6 +145,19 @@ object<L>::object(const value<L> &val)
 {
 	if(!JS_ValueToObject(*cx, val, &(*this)))
 		throw type_error("Value is not an Object");
+}
+
+template<lifetime L>
+object<L>::object(std::initializer_list<std::pair<const char *, value<L>>> list)
+:object<L>{}
+{
+	for(const auto &pair : list)
+	{
+		const auto &key(pair.first);
+		const auto &val(pair.second);
+		if(!JS_SetProperty(*cx, *this, key, val))
+			throw jserror(jserror::pending);
+	}
 }
 
 template<lifetime L>
