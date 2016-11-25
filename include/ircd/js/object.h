@@ -54,6 +54,7 @@ template<lifetime L>
 struct object
 :root<JSObject *, L>
 {
+	IRCD_OVERLOAD(json)
 	IRCD_OVERLOAD(array)
 	IRCD_OVERLOAD(uninitialized)
 	using handle = object_handle;
@@ -80,6 +81,7 @@ struct object
 
 	template<class T, lifetime LL> object(const root<T, LL> &);
 	using root<JSObject *, L>::root;
+	template<class... args> object(json_t, args&&...);
 	object(array_t, const size_t &length);
 	object(const JS::HandleValueArray &);
 	object(const value<L> &);
@@ -164,6 +166,14 @@ object<L>::object(array_t,
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object (array)");
+}
+
+template<lifetime L>
+template<class... args>
+object<L>::object(json_t,
+                  args&&... a)
+:object<L>(js::json::parse(std::forward<args>(a)...))
+{
 }
 
 template<lifetime L>

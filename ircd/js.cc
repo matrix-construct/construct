@@ -1719,6 +1719,129 @@ ircd::js::c_str(const JSString *const &str)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/json.h
+//
+
+namespace ircd {
+namespace js   {
+namespace json {
+
+bool write_callback(const char16_t *, uint32_t, void *) noexcept;
+
+} // namespace json
+} // namespace js
+} // namespace ircd
+
+ircd::js::value
+ircd::js::json::parse(const string &string)
+{
+	value ret;
+	if(!JS_ParseJSON(*cx, string, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::json::parse(const char *const &str)
+{
+	return parse(locale::char16::conv(str));
+}
+
+ircd::js::value
+ircd::js::json::parse(const std::string &str)
+{
+	return parse(locale::char16::conv(str));
+}
+
+ircd::js::value
+ircd::js::json::parse(const std::u16string &str)
+{
+	return parse(str.c_str(), str.size());
+}
+
+ircd::js::value
+ircd::js::json::parse(const char16_t *const &str,
+                      const size_t &size)
+{
+	value ret;
+	if(!JS_ParseJSON(*cx, str, size, &ret))
+		throw jserror(jserror::pending);
+
+	return ret;
+}
+
+std::u16string
+ircd::js::json::stringify(const value &val,
+                          const bool &pretty)
+{
+	value v(val);
+	return stringify(value::handle_mutable(&v), pretty);
+}
+
+std::u16string
+ircd::js::json::stringify(value &v,
+                          const bool &pretty)
+{
+	return stringify(value::handle_mutable(&v), pretty);
+}
+
+std::u16string
+ircd::js::json::stringify(const value::handle_mutable &val,
+                          const bool &pretty)
+{
+	const object fmtr;
+	const string sp(string::literal, pretty? u"\t" : u"");
+	return stringify(val, fmtr, value(sp));
+}
+
+std::u16string
+ircd::js::json::stringify(const value::handle_mutable &value,
+                          const JS::HandleObject &fmtr,
+                          const value::handle &sp)
+{
+	std::u16string ret;
+	stringify(value, fmtr, sp, [&ret]
+	(const char16_t *const &ptr, const uint &len)
+	{
+		ret.assign(ptr, len);
+		return true;
+	});
+
+	return ret;
+}
+
+void
+ircd::js::json::stringify(const value::handle_mutable &val,
+                          const closure &cont)
+{
+	value sp;
+	object fmtr;
+	return stringify(val, fmtr, sp, cont);
+}
+
+void
+ircd::js::json::stringify(const value::handle_mutable &value,
+                          const JS::HandleObject &fmtr,
+                          const value::handle &sp,
+                          const closure &cont)
+{
+	if(!JS_Stringify(*cx, value, fmtr, sp, write_callback, const_cast<closure *>(&cont)))
+		throw jserror(jserror::pending);
+}
+
+bool
+ircd::js::json::write_callback(const char16_t *const str,
+                               const uint32_t len,
+                               void *const priv)
+noexcept
+{
+	const auto &func(*reinterpret_cast<const closure *>(priv));
+	return func(str, len);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/native.h
 //
 
