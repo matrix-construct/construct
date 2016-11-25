@@ -33,6 +33,14 @@
 #pragma once
 #define HAVE_IRCD_JS_JS_H
 
+// SpiderMonkey makes use of the `DEBUG` define in headers which must match what the bottom
+// end was also compiled with. We tie that define to RB_DEBUG controlled by --enable-debug.
+// From a completely clean build, configuring IRCd with --enable-debug should compile SpiderMonkey
+// in debug as well.
+#ifdef RB_DEBUG
+	#define DEBUG
+#endif
+
 // SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
 // include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
 // <ircd/xxx.h> and shouldn't have any conflict issues.

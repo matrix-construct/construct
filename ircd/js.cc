@@ -137,6 +137,9 @@ js::ReportOutOfMemory(ExclusiveContext *const c)
 	std::terminate();
 }
 
+// This was only ever defined for the SpiderMonkey headers and some of our hacks above.
+#undef DEBUG
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/js.h - With 3rd party (JSAPI) symbols
