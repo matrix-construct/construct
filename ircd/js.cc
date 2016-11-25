@@ -1230,6 +1230,37 @@ void handle_compile_async(void *, void *) noexcept;
 } // namespace js
 } // namespace ircd
 
+bool
+ircd::js::compilable(const std::string &str,
+                     const object &stack)
+{
+	return compilable(str.c_str(), str.size(), stack);
+}
+
+bool
+ircd::js::compilable(const char *const &str,
+                     const size_t &len,
+                     const object &stack)
+{
+	return JS_BufferIsCompilableUnit(*cx, stack, str, len);
+}
+
+size_t
+ircd::js::bytecodes(const JS::Handle<JSScript *> &s,
+                    uint8_t *const &buf,
+                    const size_t &max)
+{
+	uint32_t len;
+	const custom_ptr<void> ptr
+	{
+		JS_EncodeScript(*cx, s, &len), js_free
+	};
+
+	const size_t ret(std::min(size_t(len), max));
+	memcpy(buf, ptr.get(), ret);
+	return ret;
+}
+
 ircd::js::string
 ircd::js::decompile(const JS::Handle<JSScript *> &s,
                     const char *const &name,

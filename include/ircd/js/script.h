@@ -25,8 +25,11 @@
 namespace ircd  {
 namespace js    {
 
-string decompile(const JS::Handle<JSScript *> &, const char *const &name, const bool &pretty = false);
 ctx::future<void *> compile_async(const JS::ReadOnlyCompileOptions &, const std::u16string &);
+string decompile(const JS::Handle<JSScript *> &, const char *const &name, const bool &pretty = false);
+size_t bytecodes(const JS::Handle<JSScript *> &, uint8_t *const &buf, const size_t &max);
+bool compilable(const char *const &str, const size_t &len, const object &stack = {});
+bool compilable(const std::string &str, const object &stack = {});
 
 namespace basic {
 
@@ -43,6 +46,7 @@ struct script
 	script(yielding_t, const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
 	script(const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
 	script(const JS::ReadOnlyCompileOptions &opts, const std::string &src);
+	script(const uint8_t *const &bytecode, const size_t &size);
 	script(JSScript *const &);
 	script(JSScript &);
 };
@@ -69,6 +73,18 @@ script<L>::script(JSScript *const &val)
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL script");
+}
+
+template<lifetime L>
+script<L>::script(const uint8_t *const &bytecode,
+                  const size_t &size)
+:script<L>::root::type
+{
+	JS_DecodeScript(*cx, bytecode, size)
+}
+{
+	if(unlikely(!this->get()))
+		throw jserror(jserror::pending);
 }
 
 template<lifetime L>
