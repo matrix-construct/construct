@@ -30,11 +30,8 @@ template<class T> T *pointer_value(const JS::Value &);
 JS::Value pointer_value(const void *const &);
 JS::Value pointer_value(void *const &);
 
-namespace basic {
-
-template<lifetime L = lifetime::stack>
 struct value
-:root<JS::Value, L>
+:root<JS::Value>
 {
 	IRCD_OVERLOAD(pointer)
 
@@ -47,7 +44,6 @@ struct value
 	explicit operator uint16_t() const;
 	explicit operator bool() const;
 
-	template<class T, lifetime LL> value(const root<T, LL> &r);
 	template<class T> value(const JS::MutableHandle<T> &h);
 	template<class T> value(const JS::Handle<T> &h);
 	value(pointer_t, void *const &);
@@ -67,152 +63,112 @@ struct value
 	value(JS::Symbol *const &);
 	value(const JS::Value &);
 	value();
-	value(const value &);
 };
 
-template<lifetime L>
-JSType
-type(const value<L> &val)
-{
-	return JS_TypeOfValue(*cx, val);
-}
+JSType type(const handle<value> &val);
+JSType type(const value &val);
+bool undefined(const handle<value> &val);
+bool undefined(const value &val);
+bool is_array(const handle<value> &val);
+bool is_array(const value &val);
 
-inline JSType
-type(const handle<value<>> &val)
-{
-	return JS_TypeOfValue(*cx, val);
-}
-
-template<lifetime L>
-bool
-undefined(const value<L> &val)
-{
-	return type(val) == JSTYPE_VOID;
-}
-
-inline bool
-undefined(const JS::Handle<JS::Value> &val)
-{
-	return type(val) == JSTYPE_VOID;
-}
-
-} // namespace basic
-
-using value = basic::value<lifetime::stack>;
-using heap_value = basic::value<lifetime::heap>;
-
-using basic::type;
-using basic::undefined;
-template<class value> bool is_array(const value &val);
-
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-value<L>::value()
-:value<L>::root::type{JS::UndefinedValue()}
+inline
+value::value()
+:value::root::type{JS::UndefinedValue()}
 {
 }
 
-template<lifetime L>
-value<L>::value(const value &other)
-:value<L>::root::type{other.get()}
+inline
+value::value(const JS::Value &val)
+:value::root::type{val}
 {
 }
 
-template<lifetime L>
-value<L>::value(const JS::Value &val)
-:value<L>::root::type{val}
+inline
+value::value(JS::Symbol *const &val)
+:value::root::type{JS::SymbolValue(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(JS::Symbol *const &val)
-:value<L>::root::type{JS::SymbolValue(val)}
-{
-}
-
-template<lifetime L>
-value<L>::value(JSObject *const &val)
-:value<L>::root::type
+inline
+value::value(JSObject *const &val)
+:value::root::type
 {
 	val? JS::ObjectValue(*val) : throw internal_error("NULL JSObject")
 }
 {
 }
 
-template<lifetime L>
-value<L>::value(JSObject &val)
-:value<L>::root::type{JS::ObjectValue(val)}
+inline
+value::value(JSObject &val)
+:value::root::type{JS::ObjectValue(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(JSString *const &val)
-:value<L>::root::type{JS::StringValue(val)}
+inline
+value::value(JSString *const &val)
+:value::root::type{JS::StringValue(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(JSFunction *const &val)
-:value<L>::root::type{}
+inline
+value::value(JSFunction *const &val)
+:value::root::type{}
 {
 	auto *const obj(JS_GetFunctionObject(val));
 	if(unlikely(!obj))
 		throw type_error("Function cannot convert to Object");
 
-	this->set(JS::ObjectValue(*obj));
+	(*this) = JS::ObjectValue(*obj);
 }
 
-template<lifetime L>
-value<L>::value(const jsid &val)
-:value<L>::root::type{}
+inline
+value::value(const jsid &val)
+:value::root::type{}
 {
 	if(!JS_IdToValue(*cx, val, &(*this)))
 		throw type_error("Failed to construct value from Id");
 }
 
-template<lifetime L>
-value<L>::value(const bool &b)
-:value<L>::root::type{JS::BooleanValue(b)}
+inline
+value::value(const bool &b)
+:value::root::type{JS::BooleanValue(b)}
 {
 }
 
-template<lifetime L>
-value<L>::value(const int32_t &val)
-:value<L>::root::type{JS::Int32Value(val)}
+inline
+value::value(const int32_t &val)
+:value::root::type{JS::Int32Value(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(const uint64_t &val)
-:value<L>::root::type{JS::DoubleValue(val)}
+inline
+value::value(const uint64_t &val)
+:value::root::type{JS::DoubleValue(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(const float &val)
-:value<L>::root::type{JS::Float32Value(val)}
+inline
+value::value(const float &val)
+:value::root::type{JS::Float32Value(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(const double &val)
-:value<L>::root::type{JS::DoubleValue(val)}
+inline
+value::value(const double &val)
+:value::root::type{JS::DoubleValue(val)}
 {
 }
 
-template<lifetime L>
-value<L>::value(const nullptr_t &)
-:value<L>::root::type{JS::NullValue()}
+inline
+value::value(const nullptr_t &)
+:value::root::type{JS::NullValue()}
 {
 }
 
-template<lifetime L>
-value<L>::value(const std::string &s)
-:value<L>::root::type{[&s]
+inline
+value::value(const std::string &s)
+:value::root::type{[&s]
 {
 	if(s.empty())
 		return JS::StringValue(JS_GetEmptyString(*rt));
@@ -225,9 +181,9 @@ value<L>::value(const std::string &s)
 {
 }
 
-template<lifetime L>
-value<L>::value(const char *const &s)
-:value<L>::root::type{[&s]
+inline
+value::value(const char *const &s)
+:value::root::type{[&s]
 {
 	if(!s || !*s)
 		return JS::StringValue(JS_GetEmptyString(*rt));
@@ -241,44 +197,34 @@ value<L>::value(const char *const &s)
 {
 }
 
-template<lifetime L>
-value<L>::value(pointer_t,
+inline
+value::value(pointer_t,
                 void *const &ptr)
-:value<L>::root::type{pointer_value(ptr)}
+:value::root::type{pointer_value(ptr)}
 {
 }
 
-template<lifetime L>
 template<class T>
-value<L>::value(const JS::Handle<T> &h)
+value::value(const JS::Handle<T> &h)
 :value(h.get())
 {
 }
 
-template<lifetime L>
 template<class T>
-value<L>::value(const JS::MutableHandle<T> &h)
+value::value(const JS::MutableHandle<T> &h)
 :value(h.get())
 {
 }
 
-template<lifetime L>
-template<class T,
-         lifetime LL>
-value<L>::value(const root<T, LL> &r):
-value(r.get())
-{
-}
-
-template<lifetime L>
-value<L>::operator bool()
+inline
+value::operator bool()
 const
 {
 	return JS::ToBoolean(*this);
 }
 
-template<lifetime L>
-value<L>::operator uint16_t()
+inline
+value::operator uint16_t()
 const
 {
 	uint16_t ret;
@@ -288,8 +234,8 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator int32_t()
+inline
+value::operator int32_t()
 const
 {
 	int32_t ret;
@@ -299,8 +245,8 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator uint32_t()
+inline
+value::operator uint32_t()
 const
 {
 	uint32_t ret;
@@ -310,8 +256,8 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator int64_t()
+inline
+value::operator int64_t()
 const
 {
 	int64_t ret;
@@ -321,8 +267,8 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator uint64_t()
+inline
+value::operator uint64_t()
 const
 {
 	uint64_t ret;
@@ -332,8 +278,8 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator double()
+inline
+value::operator double()
 const
 {
 	double ret;
@@ -343,19 +289,22 @@ const
 	return ret;
 }
 
-template<lifetime L>
-value<L>::operator std::string()
+inline
+value::operator std::string()
 const
 {
 	const auto s(JS::ToString(*cx, *this));
 	return s? native(s) : throw type_error("Failed to cast to string");
 }
 
-} // namespace basic
-
-template<class value>
-bool
+inline bool
 is_array(const value &val)
+{
+	return is_array(handle<value>(val));
+}
+
+inline bool
+is_array(const handle<value> &val)
 {
 	bool ret;
 	if(!JS_IsArrayObject(*cx, val, &ret))
@@ -363,14 +312,31 @@ is_array(const value &val)
 
 	return ret;
 }
-/*
-template<class value>
-bool
+
+inline bool
 undefined(const value &val)
 {
-	return basic::type(val) == JSTYPE_VOID;
+	return type(val) == JSTYPE_VOID;
 }
-*/
+
+inline bool
+undefined(const handle<value> &val)
+{
+	return type(val) == JSTYPE_VOID;
+}
+
+inline JSType
+type(const value &val)
+{
+	return JS_TypeOfValue(*cx, val);
+}
+
+inline JSType
+type(const handle<value> &val)
+{
+	return JS_TypeOfValue(*cx, val);
+}
+
 inline JS::Value
 pointer_value(const void *const &ptr)
 {

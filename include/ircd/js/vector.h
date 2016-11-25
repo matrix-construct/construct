@@ -83,7 +83,7 @@ struct vector<value>
 	// Construct from initializer list of our `struct value` wrapper
 	// ex: value a(1); vector foo {{ a, a, ... }};
 
-	vector(const std::initializer_list<heap_value> &list)
+	vector(const std::initializer_list<value> &list)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
 		reserve(list.size());
@@ -103,8 +103,7 @@ struct vector<value>
 			infallibleAppend(value(t));
 	}
 */
-	template<lifetime L>
-	vector(const basic::object<L> &obj)
+	vector(const object &obj)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
 		if(!is_array(obj))
@@ -116,9 +115,8 @@ struct vector<value>
 			infallibleAppend(get(obj, i));
 	}
 
-	template<lifetime L>
-	vector(const basic::value<L> &val)
-	:vector(basic::object<L>(val))
+	vector(const value &val)
+	:vector(object(val))
 	{
 	}
 

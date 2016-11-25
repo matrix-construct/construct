@@ -31,19 +31,15 @@ string name(const JSFunction *const *);
 uint16_t arity(const JSFunction *const &);
 bool is_ctor(const JSFunction *const &);
 
-namespace basic {
-
-template<lifetime L>
 struct function
-:root<JSFunction *, L>
+:root<JSFunction *>
 {
 	operator JSObject *() const;
-	explicit operator script<L>() const;
-	explicit operator string<L>() const;
+	explicit operator script() const;
+	explicit operator string() const;
 
-	// js::value/js::object == lifetime::stack
-	value<L> operator()(const js::object::handle &, const vector<js::value>::handle &) const;
-	template<class... args> value<L> operator()(const js::object::handle &, args&&...) const;
+	value operator()(const object::handle &, const vector<value>::handle &) const;
+	template<class... args> value operator()(const object::handle &, args&&...) const;
 
 	// new function
 	template<class string_t>
@@ -53,46 +49,36 @@ struct function
 	         const std::vector<string_t> &args,
 	         const string_t &src);
 
-	using root<JSFunction *, L>::root;
-	function(const handle<value<L>> &);
-	function(const js::value &);
+	using root<JSFunction *>::root;
+	function(const value::handle &);
+	function(const value &);
 	function(JSFunction *const &);
 	function(JSFunction &);
 };
 
-} // namespace basic
-
-using function = basic::function<lifetime::stack>;
-using heap_function = basic::function<lifetime::heap>;
-
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-function<L>::function(JSFunction &func)
-:function<L>::root::type{&func}
+inline
+function::function(JSFunction &func)
+:function::root::type{&func}
 {
 }
 
-template<lifetime L>
-function<L>::function(JSFunction *const &func)
-:function<L>::root::type{func}
+inline
+function::function(JSFunction *const &func)
+:function::root::type{func}
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL function");
 }
 
-template<lifetime L>
-function<L>::function(const js::value &val)
-:function{static_cast<js::value::handle>(val)}
+inline
+function::function(const value &val)
+:function{static_cast<value::handle>(val)}
 {
 }
 
-template<lifetime L>
-function<L>::function(const handle<value<L>> &val)
-:function<L>::root::type
+inline
+function::function(const value::handle &val)
+:function::root::type
 {
 	JS_ValueToFunction(*cx, val)
 }
@@ -101,14 +87,13 @@ function<L>::function(const handle<value<L>> &val)
 		throw type_error("value is not a function");
 }
 
-template<lifetime L>
 template<class string_t>
-function<L>::function(JS::AutoObjectVector &stack,
+function::function(JS::AutoObjectVector &stack,
                       const JS::CompileOptions &opts,
                       const char *const &name,
                       const std::vector<string_t> &args,
                       const string_t &src)
-:function<L>::root::type{}
+:function::root::type{}
 {
 	std::vector<const typename string_t::value_type *> argp(args.size());
 	std::transform(begin(args), end(args), begin(argp), []
@@ -131,46 +116,37 @@ function<L>::function(JS::AutoObjectVector &stack,
 	}
 }
 
-template<lifetime L>
 template<class... args>
-value<L>
-function<L>::operator()(const js::object::handle &that,
-                        args&&... a)
+value
+function::operator()(const object::handle &that,
+                     args&&... a)
 const
 {
-	vector<basic::value<lifetime::stack>> argv
-	{{
+	const vector<value> argv
+	{
 		std::forward<args>(a)...
-	}};
+	};
 
-	return call(*this, that, decltype(argv)::handle(argv));
+	const vector<value>::handle handle(argv);
+	return operator()(that, handle);
 }
 
-template<lifetime L>
-value<L>
-function<L>::operator()(const js::object::handle &that,
-                        const vector<js::value>::handle &argv)
-const
-{
-	return call(*this, that, argv);
-}
-
-template<lifetime L>
-function<L>::operator string<L>()
+inline
+function::operator string()
 const
 {
 	return decompile(*this, true);
 }
 
-template<lifetime L>
-function<L>::operator script<L>()
+inline
+function::operator script()
 const
 {
 	return JS_GetFunctionScript(*cx, *this);
 }
 
-template<lifetime L>
-function<L>::operator JSObject *()
+inline
+function::operator JSObject *()
 const
 {
 	const auto ret(JS_GetFunctionObject(this->get()));
@@ -179,8 +155,6 @@ const
 
 	return ret;
 }
-
-} // namespace basic
 
 inline bool
 is_ctor(const JSFunction *const &f)

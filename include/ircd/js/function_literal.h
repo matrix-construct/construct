@@ -26,7 +26,7 @@ namespace ircd {
 namespace js   {
 
 class function_literal
-:public root<JSFunction *, lifetime::persist>
+:public root<JSFunction *>
 {
 	const char *name;
 	const char *text;

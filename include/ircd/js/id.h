@@ -24,123 +24,102 @@
 
 namespace ircd  {
 namespace js    {
-namespace basic {
 
-template<lifetime L>
 struct id
-:root<jsid, L>
+:root<jsid>
 {
-	operator value<L>() const;
+	operator value() const;
 
-	using root<jsid, L>::root;
+	using root<jsid>::root;
 	explicit id(const char *const &);  // creates new id
 	explicit id(const std::string &);  // creates new id
-	id(const typename string<L>::handle &);
-	id(const typename value<L>::handle &);
-	id(const value<L> &);
-	id(const string<L> &);
+	id(const string::handle &);
+	id(const value::handle &);
+	id(const value &);
+	id(const string &);
 	id(const JSProtoKey &);
 	id(const uint32_t &);
-	id(const jsid &);
 	id();
 };
-
-} // namespace basic
-
-using id = basic::id<lifetime::stack>;
-using heap_id = basic::id<lifetime::heap>;
 
 bool operator==(const handle<id> &, const char *const &);
 bool operator==(const handle<id> &, const std::string &);
 bool operator==(const char *const &, const handle<id> &);
 bool operator==(const std::string &, const handle<id> &);
 
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-id<L>::id()
-:id<L>::root::type{}
+inline
+id::id()
+:id::root::type{}
 {
 }
 
-template<lifetime L>
-id<L>::id(const jsid &i)
-:id<L>::root::type{i}
-{
-}
-
-template<lifetime L>
-id<L>::id(const uint32_t &index)
-:id<L>::root::type{}
+inline
+id::id(const uint32_t &index)
+:id::root::type{}
 {
 	if(!JS_IndexToId(*cx, index, &(*this)))
 		throw type_error("Failed to construct id from uint32_t index");
 }
 
-template<lifetime L>
-id<L>::id(const JSProtoKey &key)
-:id<L>::root::type{}
+inline
+id::id(const JSProtoKey &key)
+:id::root::type{}
 {
 	JS::ProtoKeyToId(*cx, key, &(*this));
 }
 
-template<lifetime L>
-id<L>::id(const std::string &str)
+inline
+id::id(const std::string &str)
 :id(str.c_str())
 {
 }
 
-template<lifetime L>
-id<L>::id(const char *const &str)
-:id<L>::root::type{jsid()}
+inline
+id::id(const char *const &str)
+:id::root::type{jsid()}
 {
-	if(!JS::PropertySpecNameToPermanentId(*cx, str, this->address()))
+	if(!JS::PropertySpecNameToPermanentId(*cx, str, const_cast<jsid *>(this->address())))
 		throw type_error("Failed to create id from native string");
 }
 
-template<lifetime L>
-id<L>::id(const string<L> &h)
-:id<L>::id(typename string<L>::handle(h))
+inline
+id::id(const string &h)
+:id::id(string::handle(h))
 {
 }
 
-template<lifetime L>
-id<L>::id(const value<L> &h)
-:id<L>::id(typename value<L>::handle(h))
+inline
+id::id(const value &h)
+:id::id(value::handle(h))
 {
 }
 
-template<lifetime L>
-id<L>::id(const typename value<L>::handle &h)
-:id<L>::root::type{}
+inline
+id::id(const value::handle &h)
+:id::root::type{}
 {
 	if(!JS_ValueToId(*cx, h, &(*this)))
 		throw type_error("Failed to construct id from Value");
 }
 
-template<lifetime L>
-id<L>::id(const typename string<L>::handle &h)
-:id<L>::root::type{}
+inline
+id::id(const string::handle &h)
+:id::root::type{}
 {
 	if(!JS_StringToId(*cx, h, &(*this)))
 		throw type_error("Failed to construct id from String");
 }
 
-template<lifetime L>
-id<L>::operator value<L>()
+inline
+id::operator value()
 const
 {
-	value<L> ret;
+	value ret;
 	if(!JS_IdToValue(*cx, *this, &ret))
 		throw type_error("Failed to construct id from String");
 
 	return ret;
 }
-
-} // namespace basic
 
 inline bool
 operator==(const std::string &a, const handle<id> &b)

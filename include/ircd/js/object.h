@@ -42,27 +42,26 @@ uint flags(const JSObject *const &);
 JSObject *current_global(JSObject *const &);
 
 // Misc utils
-bool is_extensible(const object_handle &);
 bool is_array(const object_handle &);
+bool is_extensible(const object_handle &);
 uint32_t size(const object_handle &);
 bool deep_freeze(const object_handle &);
 bool freeze(const object_handle &);
 size_t bytecodes(const object_handle &, uint8_t *const &buf, const size_t &size);
 
-namespace basic {
-
-template<lifetime L>
 struct object
-:root<JSObject *, L>
+:root<JSObject *>
 {
 	IRCD_OVERLOAD(json)
 	IRCD_OVERLOAD(array)
 	IRCD_OVERLOAD(uninitialized)
+
 	using handle = object_handle;
 	using handle_mutable = object_handle_mutable;
 
 	explicit operator JSString *() const;
-	operator JS::Value() const;
+	explicit operator JS::Value() const;
+	operator value() const;
 
 	// for array objects
 	uint32_t size() const;
@@ -82,13 +81,12 @@ struct object
 	object(const JSClass *const &);
 
 	object(const uint8_t *const &bytecode, const size_t &size);
-	template<class T, lifetime LL> object(const root<T, LL> &);
-	using root<JSObject *, L>::root;
+	using root<JSObject *>::root;
 	template<class... args> object(json_t, args&&...);
 	object(array_t, const size_t &length);
 	object(const JS::HandleValueArray &);
-	object(std::initializer_list<std::pair<const char *, value<L>>>);
-	object(const value<L> &);
+	object(std::initializer_list<std::pair<const char *, value>>);
+	object(const value &);
 	object(JSObject *const &);
 	object(JSObject &);
 	object(uninitialized_t);
@@ -97,20 +95,9 @@ struct object
 	static object global();                      // current_global(cx)
 };
 
-} // namespace basic
-
-using object = basic::object<lifetime::stack>;
-using heap_object = basic::object<lifetime::heap>;
-using persist_object = basic::object<lifetime::persist>;
-
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-object<L>::object()
-:object<L>::root::type
+inline
+object::object()
+:object::root::type
 {
 	JS_NewPlainObject(*cx)
 }
@@ -119,39 +106,39 @@ object<L>::object()
 		throw internal_error("NULL object (plain)");
 }
 
-template<lifetime L>
-object<L>::object(uninitialized_t)
-:object<L>::root::type{}
+inline
+object::object(uninitialized_t)
+:object::root::type{}
 {
 }
 
-template<lifetime L>
-object<L>::object(JSObject &obj)
-:object<L>::root::type{&obj}
+inline
+object::object(JSObject &obj)
+:object::root::type{&obj}
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object (ref)");
 }
 
-template<lifetime L>
-object<L>::object(JSObject *const &obj)
-:object<L>::root::type{obj}
+inline
+object::object(JSObject *const &obj)
+:object::root::type{obj}
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL object");
 }
 
-template<lifetime L>
-object<L>::object(const value<L> &val)
-:object<L>::root::type{}
+inline
+object::object(const value &val)
+:object::root::type{}
 {
 	if(!JS_ValueToObject(*cx, val, &(*this)))
 		throw type_error("Value is not an Object");
 }
 
-template<lifetime L>
-object<L>::object(std::initializer_list<std::pair<const char *, value<L>>> list)
-:object<L>{}
+inline
+object::object(std::initializer_list<std::pair<const char *, value>> list)
+:object{}
 {
 	for(const auto &pair : list)
 	{
@@ -162,9 +149,9 @@ object<L>::object(std::initializer_list<std::pair<const char *, value<L>>> list)
 	}
 }
 
-template<lifetime L>
-object<L>::object(const JS::HandleValueArray &values)
-:object<L>::root::type
+inline
+object::object(const JS::HandleValueArray &values)
+:object::root::type
 {
 	JS_NewArrayObject(*cx, values)
 }
@@ -173,10 +160,10 @@ object<L>::object(const JS::HandleValueArray &values)
 		throw internal_error("NULL object (array)");
 }
 
-template<lifetime L>
-object<L>::object(array_t,
-                  const size_t &length)
-:object<L>::root::type
+inline
+object::object(array_t,
+               const size_t &length)
+:object::root::type
 {
 	JS_NewArrayObject(*cx, length)
 }
@@ -185,27 +172,16 @@ object<L>::object(array_t,
 		throw internal_error("NULL object (array)");
 }
 
-template<lifetime L>
 template<class... args>
-object<L>::object(json_t,
-                  args&&... a)
-:object<L>(js::json::parse(std::forward<args>(a)...))
+object::object(json_t,
+               args&&... a)
+:object(js::json::parse(std::forward<args>(a)...))
 {
 }
 
-template<lifetime L>
-template<class T,
-         lifetime LL>
-object<L>::object(const root<T, LL> &o)
-:object{o.get()}
-{
-	if(unlikely(!this->get()))
-		throw internal_error("NULL object (cross-lifetime)");
-}
-
-template<lifetime L>
-object<L>::object(const JSClass *const &clasp)
-:object<L>::root::type
+inline
+object::object(const JSClass *const &clasp)
+:object::root::type
 {
 	JS_NewObject(*cx, clasp)
 }
@@ -214,10 +190,10 @@ object<L>::object(const JSClass *const &clasp)
 		throw internal_error("NULL object (clasp)");
 }
 
-template<lifetime L>
-object<L>::object(const JSClass *const &clasp,
-                  const object &proto)
-:object<L>::root::type
+inline
+object::object(const JSClass *const &clasp,
+               const object &proto)
+:object::root::type
 {
 	JS_NewObjectWithGivenProto(*cx, clasp, proto)
 }
@@ -226,10 +202,10 @@ object<L>::object(const JSClass *const &clasp,
 		throw internal_error("NULL object (with given proto)");
 }
 
-template<lifetime L>
-object<L>::object(const JSClass *const &clasp,
-                  const JS::CallArgs &args)
-:object<L>::root::type
+inline
+object::object(const JSClass *const &clasp,
+               const JS::CallArgs &args)
+:object::root::type
 {
 	JS_NewObjectForConstructor(*cx, clasp, args)
 }
@@ -238,11 +214,11 @@ object<L>::object(const JSClass *const &clasp,
 		throw internal_error("NULL object (for constructor)");
 }
 
-template<lifetime L>
-object<L>::object(const JSClass *const &clasp,
-                  const object::handle &ctor,
-                  const JS::HandleValueArray &args)
-:object<L>::root::type
+inline
+object::object(const JSClass *const &clasp,
+               const object::handle &ctor,
+               const JS::HandleValueArray &args)
+:object::root::type
 {
 	JS_New(*cx, ctor, args)
 }
@@ -251,10 +227,10 @@ object<L>::object(const JSClass *const &clasp,
 		throw internal_error("NULL object (new)");
 }
 
-template<lifetime L>
-object<L>::object(const uint8_t *const &bytecode,
-                  const size_t &size)
-:object<L>::root::type
+inline
+object::object(const uint8_t *const &bytecode,
+               const size_t &size)
+:object::root::type
 {
 	JS_DecodeInterpretedFunction(*cx, bytecode, size)
 }
@@ -263,32 +239,28 @@ object<L>::object(const uint8_t *const &bytecode,
 		throw jserror(jserror::pending);
 }
 
-template<lifetime L>
-object<L>
-object<L>::global()
+inline object
+object::global()
 {
 	return current_global();
 }
 
-template<lifetime L>
-object<L>
-object<L>::constructor()
+inline object
+object::constructor()
 const
 {
 	return JS_GetConstructor(*cx, *this);
 }
 
-template<lifetime L>
-void
-object<L>::prototype(object::handle obj)
+inline void
+object::prototype(object::handle obj)
 {
 	if(!JS_SetPrototype(*cx, *this, obj))
 		throw internal_error("Failed to set prototype for object");
 }
 
-template<lifetime L>
-object<L>
-object<L>::prototype()
+inline object
+object::prototype()
 const
 {
 	object ret;
@@ -298,39 +270,43 @@ const
 	return ret;
 }
 
-template<lifetime L>
-void
-object<L>::resize(const uint32_t &length)
+inline void
+object::resize(const uint32_t &length)
 {
 	if(!JS_SetArrayLength(*cx, *this, length))
 		throw internal_error("Failed to set array object length");
 }
 
-template<lifetime L>
-uint32_t
-object<L>::size()
+inline uint32_t
+object::size()
 const
 {
 	return js::size(*this);
 }
 
-template<lifetime L>
-object<L>::operator JSString *()
+inline
+object::operator JSString *()
 const
 {
 	assert(this->get());
 	return JS_BasicObjectToString(*cx, *this);
 }
 
-template<lifetime L>
-object<L>::operator JS::Value()
+inline
+object::operator value()
 const
 {
 	assert(this->get());
 	return JS::ObjectValue(*this->get());
 }
 
-} // namespace basic
+inline
+object::operator JS::Value()
+const
+{
+	assert(this->get());
+	return JS::ObjectValue(*this->get());
+}
 
 inline size_t
 bytecodes(const object_handle &obj,
@@ -368,6 +344,12 @@ size(const object_handle &obj)
 		throw internal_error("Failed to get array object length");
 
 	return ret;
+}
+
+inline bool
+is_array(const object &obj)
+{
+	return is_array(object::handle(obj));
 }
 
 inline bool

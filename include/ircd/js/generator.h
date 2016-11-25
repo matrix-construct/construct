@@ -27,8 +27,8 @@ namespace js   {
 
 struct generator
 {
-	heap_object state;
-	heap_object last;
+	object state;
+	object last;
 
 	bool done() const;
 	template<class... args> value next(args&&...);

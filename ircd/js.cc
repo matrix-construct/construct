@@ -208,7 +208,7 @@ noexcept try
 		}
 		catch(const std::exception &e)
 		{
-			set(future, "error", string(e.what()));
+			set(future, "error", e.what());
 		}
 
 		assert(cx->star);
@@ -260,20 +260,22 @@ try
 	return global;
 }()}
 ,main{[this, &source]
+() -> script
 {
 	// A compartment for the global must be entered to compile in this scope
 	const compartment c(this->global);
 
 	// TODO: options
 	JS::CompileOptions opts(*cx);
+	//opts.setIntroductionType("GeneratorFunction");
 	//opts.forceAsync = true;
 
-	// The function must be compiled in this scope and returned as a heap_function
-	// before the compartment destructs. The compilation is also conducted asynchronously:
-	// it will yield the current ircd::ctx until it is complete.
-	return heap_script { heap_script::yielding, opts, source };
+	// The compilation is also conducted asynchronously: it will yield the current
+	// ircd::ctx until it is complete.
+	return { script::yielding, opts, source };
 }()}
 ,generator{[this]
+() -> struct generator
 {
 	// A compartment for the global must be entered to run the generator wrapper.
 	const compartment c(this->global);
@@ -282,14 +284,11 @@ try
 	// The run() closure provides safety for entering the JS engine.
 	value state(js::run([this]
 	{
-		return this->main();
+		return value{};
+		//return this->main();
 	}));
 
-	// Construct the generator object here on the stack while in a compartment. The
-	// instance then contains returnable heap objects.
-	struct generator ret(state);
-
-	return ret;
+	return { state };
 }()}
 {
 }
@@ -352,7 +351,7 @@ ircd::js::task::pending_del(const uint64_t &id)
 
 bool
 ircd::js::task::pending_add(const uint64_t &id,
-                            heap_object obj)
+                            object obj)
 {
 	const auto iit(pending.emplace(id, std::move(obj)));
 	if(!iit.second)
@@ -403,12 +402,10 @@ ircd::js::task::tasks_next_pid()
 ircd::js::object
 ircd::js::reflect(const task &task)
 {
-	object ret;
 	const object global(task.global);
 	const object reflect(get(global, "Reflect"));
 	const function parse(get(reflect, "parse"));
-	ret = parse(global, decompile(task));
-	return ret;
+	return parse(global, decompile(task));
 }
 
 ircd::js::string
@@ -426,7 +423,7 @@ ircd::js::decompile(const task &task,
 ircd::js::global::global(trap &trap,
                          JSPrincipals *const &principals,
                          JS::CompartmentOptions opts)
-:heap_object{[&trap, &principals, &opts]
+:object{[&trap, &principals, &opts]
 {
 	opts.setTrace(handle_trace);
 	return JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook, opts);
@@ -924,7 +921,7 @@ ircd::js::trap::find(const std::string &path)
 		throw error("Failed to find trap tree root");
 
 	trap *ret(tree);
-	const auto parts(tokens(path, "."));
+	const auto parts(ircd::tokens(path, "."));
 	for(const auto &part : parts)
 		ret = &ret->child(part);
 
@@ -938,7 +935,7 @@ ircd::js::trap::find(const string::handle &path)
 		throw error("Failed to find trap tree root");
 
 	trap *ret(tree);
-	tokens(string(path), '.', basic::string_closure<string>([&ret]
+	tokens(string(path), '.', string_closure<string>([&ret]
 	(const string &part)
 	{
 		ret = &ret->child(part);
@@ -1018,7 +1015,7 @@ noexcept try
 
 	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
 	trap.on_new(that, ret, args);
-	args.rval().set(std::move(ret));
+	args.rval().set(JS::Value(ret));
 	return true;
 }
 catch(const jserror &e)
@@ -1154,14 +1151,6 @@ catch(const std::exception &e)
 	return false;
 }
 
-namespace ircd {
-namespace js   {
-
-std::map<std::string, heap_value> tempo;
-
-}
-}
-
 bool
 ircd::js::trap::handle_getter(JSContext *const c,
                               unsigned argc,
@@ -1171,24 +1160,16 @@ noexcept try
 	using js::function;
 
 	const struct args args(argc, argv);
-	object that(args.computeThis(c));
-	function func(args.callee());
+	const object that(args.computeThis(c));
+	const function func(args.callee());
 	const string name(js::name(func));
 
 	auto &trap(from(that));
 	trap.debug(that.get(), "get '%s' (getter)",
 	           name.c_str());
 
-	const auto it(tempo.find(name));
-	if(it == end(tempo))
-	{
-		//throw reference_error("%s", name.c_str());
-		args.rval().set(value{});
-		return true;
-	}
-
-	heap_value &val(it->second);
-	args.rval().set(val);
+	//value &val(it->second);
+	//args.rval().set(val);
 	return true;
 }
 catch(const jserror &e)
@@ -1198,8 +1179,8 @@ catch(const jserror &e)
 }
 catch(const std::exception &e)
 {
-	auto ca(JS::CallArgsFromVp(argc, argv));
-	object that(ca.computeThis(c));
+	const auto ca(JS::CallArgsFromVp(argc, argv));
+	const object that(ca.computeThis(c));
 	auto &trap(from(that));
 	trap.host_exception(that.get(), "getter: %s", e.what());
 	return false;
@@ -1214,11 +1195,11 @@ noexcept try
 	using js::function;
 
 	const struct args args(argc, argv);
-	object that(args.computeThis(c));
-	function func(args.callee());
+	const object that(args.computeThis(c));
+	const function func(args.callee());
 
-	value val(args[0]);
-	const auto type(basic::type(val));
+	const value val(args[0]);
+	const auto type(js::type(val));
 	const string name(js::name(func));
 
 	auto &trap(from(that));
@@ -1226,22 +1207,17 @@ noexcept try
 	           name.c_str(),
 	           reflect(type));
 
-	auto it(tempo.lower_bound(name));
-	assert(it != end(tempo));
-	heap_value &hval(it->second);
 	switch(js::type(type))
 	{
 		case jstype::OBJECT:
 		{
 			//const auto flags(JSPROP_SHARED);
 			//object ret(JS_DefineObject(*cx, object(val), "", &trap.jsclass(), flags));
-			//tempo.emplace(name, heap_value(ret));
 			//args.rval().set(ret);
 			//return true;
 		}
 
 		default:
-			hval = val;
 			args.rval().set(val);
 			return true;
 	}
@@ -1253,8 +1229,8 @@ catch(const jserror &e)
 }
 catch(const std::exception &e)
 {
-	auto ca(JS::CallArgsFromVp(argc, argv));
-	object that(ca.computeThis(c));
+	const auto ca(JS::CallArgsFromVp(argc, argv));
+	const object that(ca.computeThis(c));
 	auto &trap(from(that));
 	trap.host_exception(that.get(), "setter: %s", e.what());
 	return false;
@@ -1338,7 +1314,7 @@ noexcept try
 	const string name(id);
 	trap.debug(obj.get(), "add '%s' %s @%p",
 	           name.c_str(),
-	           reflect(basic::type(val)),
+	           reflect(type(val)),
 	           (const void *)val.address());
 
 	trap.on_add(obj, id, val);
@@ -1680,7 +1656,7 @@ noexcept
 ircd::js::function_literal::function_literal(const char *const &name,
                                              const std::initializer_list<const char *> &prototype,
                                              const char *const &text)
-:root<JSFunction *, lifetime::persist>{}
+:root<JSFunction *>{}
 ,name{name}
 ,text{text}
 ,prototype{prototype}
@@ -1703,7 +1679,7 @@ ircd::js::function_literal::function_literal(const char *const &name,
 
 ircd::js::function_literal::function_literal(function_literal &&other)
 noexcept
-:root<JSFunction *, lifetime::persist>
+:root<JSFunction *>
 {
 	std::move(other)
 }
@@ -1717,6 +1693,14 @@ noexcept
 //
 // ircd/js/function.h
 //
+
+ircd::js::value
+ircd::js::function::operator()(const object::handle &that,
+                               const vector<value>::handle &argv)
+const
+{
+	return call(*this, that, argv);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1736,10 +1720,9 @@ ircd::js::for_each(object::handle obj,
                    const each_key_val &closure)
 {
 	for_each(obj, flags, each_id([&obj, &closure]
-	(const id &hid)
+	(const id &key)
 	{
-		const value val(get(obj, hid));
-		const value key(hid);
+		const value val(get(obj, key));
 		closure(key, val);
 	}));
 }
@@ -1759,8 +1742,7 @@ ircd::js::for_each(object::handle obj,
 	for_each(obj, flags, each_id([&obj, &closure]
 	(const id &id)
 	{
-		const value key(id);
-		closure(key);
+		closure(id);
 	}));
 }
 
@@ -1843,7 +1825,7 @@ ircd::js::del(const object::handle &src,
 	value val;
 	object obj(src);
 	const char *fail(nullptr);
-	tokens(path, ".", [&path, &val, &obj, &fail]
+	ircd::tokens(path, ".", [&path, &val, &obj, &fail]
 	(char *const &part)
 	{
 		if(fail)
@@ -1920,7 +1902,7 @@ ircd::js::set(const object::handle &src,
 	object obj(src);
 	char buffer[strlen(path) + 1];
 	const char *fail(nullptr), *key(nullptr);
-	tokens(path, ".", buffer, sizeof(buffer), [&path, &tmp, &obj, &fail, &key]
+	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &tmp, &obj, &fail, &key]
 	(const char *const &part)
 	{
 		if(fail)
@@ -2011,7 +1993,7 @@ ircd::js::get(const object::handle &src,
 	value ret;
 	object obj(src);
 	const char *fail(nullptr);
-	tokens(path, ".", [&obj, &path, &ret, &fail]
+	ircd::tokens(path, ".", [&obj, &path, &ret, &fail]
 	(const char *const &part)
 	{
 		if(fail)
@@ -2075,7 +2057,7 @@ ircd::js::has(const object::handle &src,
 	bool ret(true);
 	object obj(src);
 	const char *fail(nullptr);
-	tokens(path, ".", [&obj, &path, &ret, &fail]
+	ircd::tokens(path, ".", [&obj, &path, &ret, &fail]
 	(const char *const &part)
 	{
 		if(fail)
@@ -2257,16 +2239,16 @@ ircd::js::json::stringify(const value::handle_mutable &val,
 {
 	const object fmtr;
 	const string sp(string::literal, pretty? u"\t" : u"");
-	return stringify(val, fmtr, value(sp));
+	return stringify(val, fmtr, sp);
 }
 
 std::u16string
-ircd::js::json::stringify(const value::handle_mutable &value,
+ircd::js::json::stringify(const value::handle_mutable &val,
                           const JS::HandleObject &fmtr,
-                          const value::handle &sp)
+                          const value &sp)
 {
 	std::u16string ret;
-	stringify(value, fmtr, sp, [&ret]
+	stringify(val, fmtr, sp, [&ret]
 	(const char16_t *const &ptr, const uint &len)
 	{
 		ret.assign(ptr, len);
@@ -2286,12 +2268,12 @@ ircd::js::json::stringify(const value::handle_mutable &val,
 }
 
 void
-ircd::js::json::stringify(const value::handle_mutable &value,
+ircd::js::json::stringify(const value::handle_mutable &val,
                           const JS::HandleObject &fmtr,
-                          const value::handle &sp,
+                          const value &sp,
                           const closure &cont)
 {
-	if(!JS_Stringify(*cx, value, fmtr, sp, write_callback, const_cast<closure *>(&cont)))
+	if(!JS_Stringify(*cx, val, fmtr, sp, write_callback, const_cast<closure *>(&cont)))
 		throw jserror(jserror::pending);
 }
 
@@ -3978,6 +3960,10 @@ ircd::js::trace_heap(JSTracer *const &tracer,
 
 		case jstype::SYMBOL:
 		{
+			const auto ptr(reinterpret_cast<JS::Heap<JS::Symbol *> *>(thing.ptr));
+			if(!ptr->get())
+				break;
+
 			break;
 		}
 

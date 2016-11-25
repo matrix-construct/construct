@@ -25,22 +25,6 @@
 namespace ircd  {
 namespace js    {
 
-enum class lifetime
-{
-	stack,       // entity lives on the stack and the GC uses a cheap forward list between objects
-	heap,        // entity lives on the heap with dynamic duration
-	tenured,     // long-life-optimized heap entity with special rules (must read jsapi docs)
-	persist,     // entity has duration similar to the runtime itself
-	maybe,       // template with a boolean switch for GC participation
-	fake,        // noop; does not register with GC at all
-};
-
-template<class T,
-         lifetime L>
-struct root
-{
-};
-
 template<class T>
 using handle = typename T::handle;
 
@@ -79,17 +63,19 @@ operator&(JS::TenuredHeap<T> &h)
 }
 
 template<class T>
-struct root<T, lifetime::stack>
-:JS::Rooted<T>
+struct root
+:JS::Heap<T>
 {
-	using base_type = JS::Rooted<T>;
-	using type = root<T, lifetime::stack>;
-	using handle_mutable = JS::MutableHandle<T>;
+	using value_type = T;
+	using base_type = JS::Heap<T>;
 	using handle = JS::Handle<T>;
+	using handle_mutable = JS::MutableHandle<T>;
+	using type = root<value_type>;
 
 	operator handle() const
 	{
-		return JS::Handle<T>::fromMarkedLocation(this->address());
+		const auto ptr(this->address());
+		return JS::Handle<T>::fromMarkedLocation(ptr);
 	}
 
 	operator handle_mutable()
@@ -98,73 +84,10 @@ struct root<T, lifetime::stack>
 		return JS::MutableHandle<T>::fromMarkedLocation(ptr);
 	}
 
-	root(const handle &h)
-	:JS::Rooted<T>{*cx, h}
-	{
-	}
-
-	root(const handle_mutable &h)
-	:JS::Rooted<T>{*cx, h}
-	{
-	}
-
-	template<lifetime L>
-	root(const root<T, L> &other)
-	:JS::Rooted<T>{*cx, other.get()}
-	{
-	}
-
-	explicit root(const T &t)
-	:JS::Rooted<T>{*cx, t}
-	{
-	}
-
-	root()
-	:JS::Rooted<T>{*cx}
-	{
-	}
-
-	root(root&& other)
-	noexcept
-	:JS::Rooted<T>{*cx, other.get()}
-	{
-		other.set(nullptr);
-	}
-
-	root(const root &other)
-	:JS::Rooted<T>{*cx, other.get()}
-	{
-	}
-
-	root &operator=(root &&other)
-	noexcept
-	{
-		this->set(other.get());
-		other.set(nullptr);
-		return *this;
-	}
-
-	root &operator=(const root &other)
-	{
-		this->set(other.get());
-		return *this;
-	}
-
-	~root() noexcept = default;
-};
-
-template<class T>
-struct root<T, lifetime::heap>
-:JS::Heap<T>
-{
-	using type = root<T, lifetime::heap>;
-	using handle = JS::Handle<T>;
-	using handle_mutable = JS::MutableHandle<T>;
-
   private:
 	tracing::list::iterator tracing_it;
 
-	tracing::list::iterator add(JS::Heap<T> *const &ptr)
+	tracing::list::iterator add(base_type *const &ptr)
 	{
 		return rt->tracing.heap.emplace(end(rt->tracing.heap), tracing::thing { ptr, js::type<T>() });
 	}
@@ -179,71 +102,53 @@ struct root<T, lifetime::heap>
 	}
 
   public:
-	operator handle() const
-	{
-		return JS::Handle<T>::fromMarkedLocation(this->address());
-	}
-
-	operator handle_mutable()
-	{
-		const auto ptr(const_cast<T *>(this->address()));
-		return JS::MutableHandle<T>::fromMarkedLocation(ptr);
-	}
-
 	root(const handle &h)
-	:JS::Heap<T>{h}
+	:base_type{h.get()}
 	,tracing_it{add(this)}
 	{
 	}
 
 	root(const handle_mutable &h)
-	:JS::Heap<T>{h}
-	,tracing_it{add(this)}
-	{
-	}
-
-	template<lifetime L>
-	root(const root<T, L> &other)
-	:JS::Heap<T>{other}
+	:base_type{h.get()}
 	,tracing_it{add(this)}
 	{
 	}
 
 	explicit root(const T &t)
-	:JS::Heap<T>{t}
+	:base_type{t}
 	,tracing_it{add(this)}
 	{
 	}
 
 	root()
-	:JS::Heap<T>{}
+	:base_type{}
 	,tracing_it{add(this)}
 	{
 	}
 
 	root(root &&other) noexcept
-	:JS::Heap<T>{other.get()}
+	:base_type{other.get()}
 	,tracing_it{std::move(other.tracing_it)}
 	{
 		other.tracing_it = end(rt->tracing.heap);
-		tracing_it->ptr = static_cast<JS::Heap<T> *>(this);
+		tracing_it->ptr = static_cast<base_type *>(this);
 	}
 
 	root(const root &other)
-	:JS::Heap<T>{other}
+	:base_type{other.get()}
 	,tracing_it{add(this)}
 	{
 	}
 
 	root &operator=(root &&other) noexcept
 	{
-		JS::Heap<T>::operator=(std::move(other));
+		base_type::operator=(std::move(other.get()));
 		return *this;
 	}
 
 	root &operator=(const root &other)
 	{
-		JS::Heap<T>::operator=(other);
+		base_type::operator=(other.get());
 		return *this;
 	}
 
@@ -251,115 +156,6 @@ struct root<T, lifetime::heap>
 	{
 		del(tracing_it);
 	}
-};
-
-template<class T>
-struct root<T, lifetime::tenured>
-:JS::TenuredHeap<T>
-{
-	using type = root<T, lifetime::tenured>;
-	using handle_mutable = JS::MutableHandle<T>;
-	using handle = JS::Handle<T>;
-
-	operator handle() const
-	{
-		return JS::Handle<T>::fromMarkedLocation(this->address());
-	}
-
-	operator handle_mutable()
-	{
-		const auto ptr(const_cast<T *>(this->address()));
-		return JS::MutableHandle<T>::fromMarkedLocation(ptr);
-	}
-
-	auto operator&() const
-	{
-		return static_cast<handle>(*this);
-	}
-
-	auto operator&()
-	{
-		return static_cast<handle_mutable>(*this);
-	}
-
-	root(const handle &h)
-	:JS::TenuredHeap<T>{h}
-	{
-	}
-
-	root(const handle_mutable &h)
-	:JS::TenuredHeap<T>{h}
-	{
-	}
-
-	template<lifetime L>
-	root(const root<T, L> &other)
-	:JS::TenuredHeap<T>{other.get()}
-	{
-	}
-
-	explicit root(const T &t)
-	:JS::TenuredHeap<T>{t}
-	{
-	}
-
-	root()
-	:JS::TenuredHeap<T>{}
-	{
-	}
-
-	root(root&&) = default;
-	root(const root &) = default;
-	root &operator=(root &&) = default;
-	root &operator=(const root &) = default;
-};
-
-template<class T>
-struct root<T, lifetime::persist>
-:JS::PersistentRooted<T>
-{
-	using type = root<T, lifetime::persist>;
-	using handle_mutable = JS::MutableHandle<T>;
-	using handle = JS::Handle<T>;
-
-	template<lifetime L>
-	root(const root<T, L> &other)
-	:JS::PersistentRooted<T>{*cx, other.get()}
-	{
-	}
-
-	explicit root(const T &t)
-	:JS::PersistentRooted<T>{*cx, t}
-	{
-	}
-
-	root()
-	:JS::PersistentRooted<T>{*cx}
-	{
-	}
-
-	root(root&& other)
-	noexcept
-	:JS::PersistentRooted<T>{*cx, other.get()}
-	{
-	}
-
-	root(const root &) = delete;
-	root &operator=(const root &) = delete;
-};
-
-template<class T>
-struct root<T, lifetime::maybe>
-:public ::js::MaybeRooted<T, ::js::CanGC>
-{
-	using type = root<T, lifetime::maybe>;
-};
-
-template<class T>
-struct root<T, lifetime::fake>
-:public ::js::FakeRooted<T>
-{
-	using type = root<T, lifetime::fake>;
 };
 
 } // namespace js

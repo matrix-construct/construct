@@ -30,11 +30,10 @@ struct contract
 {
 	using closure = std::function<value ()>;
 
-	heap_object future;
+	object future;
 
-	operator const heap_object &() const         { return future;                                  }
-	operator heap_object &()                     { return future;                                  }
-	operator object() const                      { return future;                                  }
+	operator const object &() const              { return future;                                  }
+	operator object &()                          { return future;                                  }
 	operator value() const                       { return future;                                  }
 
 	// Enter this closure and return or throw to complete the result contract.

@@ -26,7 +26,7 @@ namespace ircd {
 namespace js   {
 
 class global
-:public heap_object
+:public object
 {
 	static void handle_trace(JSTracer *, JSObject *) noexcept;
 

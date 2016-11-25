@@ -43,11 +43,8 @@ const size_t CSTR_BUFS = 8;
 const size_t CSTR_BUFSIZE = 1024;
 char *c_str(const JSString *const &);
 
-namespace basic {
-
-template<lifetime L>
 struct string
-:root<JSString *, L>
+:root<JSString *>
 {
 	IRCD_OVERLOAD(pinned)
 	IRCD_OVERLOAD(literal)
@@ -60,9 +57,9 @@ struct string
 
 	operator std::string() const;
 	operator std::u16string() const;
-	operator JS::Value() const;
+	operator value() const;
 
-	using root<JSString *, L>::root;
+	using root<JSString *>::root;
 	string(pinned_t, const char16_t *const &);
 	string(pinned_t, const char *const &);
 	string(pinned_t, const string &);
@@ -73,7 +70,7 @@ struct string
 	string(const char *const &, const size_t &len);
 	string(const std::string &);
 	string(const char *const &);
-	string(const value<L> &);
+	string(const value &);
 	string(JSString *const &);
 	string(JSString &);
 	string();
@@ -81,7 +78,6 @@ struct string
 	struct less
 	{
 		using is_transparent = std::true_type;
-
 		template<class A, class B> bool operator()(const A &, const B &) const;
 	};
 };
@@ -89,15 +85,15 @@ struct string
 template<class T> constexpr bool is_string();
 template<class A, class B> constexpr bool string_argument();
 
-template<lifetime L> auto hash(const string<L> &s);
+auto hash(const string &s);
 
-template<lifetime A, lifetime B> int cmp(const string<A> &a, const string<B> &b);
-template<lifetime L> int cmp(const char *const &a, const string<L> &b);
-template<lifetime L> int cmp(const string<L> &a, const char *const &b);
-template<lifetime L> int cmp(const string<L> &a, const std::string &b);
-template<lifetime L> int cmp(const std::string &a, const string<L> &b);
-template<lifetime L> bool operator==(const string<L> &a, const char *const &b);
-template<lifetime L> bool operator==(const char *const &a, const string<L> &b);
+int cmp(const string &a, const string &b);
+int cmp(const char *const &a, const string &b);
+int cmp(const string &a, const char *const &b);
+int cmp(const string &a, const std::string &b);
+int cmp(const std::string &a, const string &b);
+bool operator==(const string &a, const char *const &b);
+bool operator==(const char *const &a, const string &b);
 
 template<class A,
          class B>
@@ -111,80 +107,66 @@ template<class A, class B> string_comparison<A, B> operator<=(const A &a, const 
 template<class A, class B> string_comparison<A, B> operator==(const A &a, const B &b);
 template<class A, class B> string_comparison<A, B> operator!=(const A &a, const B &b);
 
-template<lifetime L>
-using string_pair = std::pair<string<L>, string<L>>;
-template<lifetime L> string_pair<L> split(const string<L> &s, const char &c);
-template<lifetime L> string_pair<L> split(const string<L> &s, const char16_t &c);
-template<lifetime L> string<L> substr(const string<L> &s, const size_t &pos, const size_t &len);
-template<lifetime L> string<L> operator+(const string<L> &left, const string<L> &right);
+using string_pair = std::pair<string, string>;
+string_pair split(const string &s, const char &c);
+string_pair split(const string &s, const char16_t &c);
+string substr(const string &s, const size_t &pos, const size_t &len);
+string operator+(const string &left, const string &right);
 
 template<class string> using string_closure = std::function<void (const string &)>;
-template<lifetime L> void tokens(const string<L> &, const char &sep, const string_closure<string<L>> &);
+void tokens(const string &, const char &sep, const string_closure<string> &);
 
-template<lifetime L> std::ostream & operator<<(std::ostream &os, const string<L> &s);
+std::ostream & operator<<(std::ostream &os, const string &s);
 
-} // namespace basic
-
-using string = basic::string<lifetime::stack>;
-using heap_string = basic::string<lifetime::heap>;
-using persist_string = basic::string<lifetime::persist>;
-
-using basic::hash;
-
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-string<L>::string()
-:string<L>::root::type
+inline
+string::string()
+:string::root::type
 {
 	JS_GetEmptyString(*rt)
 }
 {
 }
 
-template<lifetime L>
-string<L>::string(JSString &val)
-:string<L>::root::type{&val}
+inline
+string::string(JSString &val)
+:string::root::type{&val}
 {
 }
 
-template<lifetime L>
-string<L>::string(JSString *const &val)
-:string<L>::root::type
+inline
+string::string(JSString *const &val)
+:string::root::type
 {
 	likely(val)? val : throw internal_error("NULL string")
 }
 {
 }
 
-template<lifetime L>
-string<L>::string(const value<L> &val)
-:string<L>::root::type
+inline
+string::string(const value &val)
+:string::root::type
 {
 	JS::ToString(*cx, val)?: throw type_error("Failed to convert value to string")
 }
 {
 }
 
-template<lifetime L>
-string<L>::string(const std::string &s)
+inline
+string::string(const std::string &s)
 :string(s.data(), s.size())
 {
 }
 
-template<lifetime L>
-string<L>::string(const char *const &s)
+inline
+string::string(const char *const &s)
 :string(s, strlen(s))
 {
 }
 
-template<lifetime L>
-string<L>::string(const char *const &s,
-                  const size_t &len)
-:string<L>::root::type{[&s, &len]
+inline
+string::string(const char *const &s,
+               const size_t &len)
+:string::root::type{[&s, &len]
 {
 	if(!s || !*s)
 		return JS_GetEmptyString(*rt);
@@ -197,22 +179,22 @@ string<L>::string(const char *const &s,
 		throw type_error("Failed to construct string from character array");
 }
 
-template<lifetime L>
-string<L>::string(const std::u16string &s)
+inline
+string::string(const std::u16string &s)
 :string(s.data(), s.size())
 {
 }
 
-template<lifetime L>
-string<L>::string(const char16_t *const &s)
+inline
+string::string(const char16_t *const &s)
 :string(s, std::char_traits<char16_t>::length(s))
 {
 }
 
-template<lifetime L>
-string<L>::string(const char16_t *const &s,
-                  const size_t &len)
-:string<L>::root::type{[&s, &len]
+inline
+string::string(const char16_t *const &s,
+               const size_t &len)
+:string::root::type{[&s, &len]
 {
 	if(!s || !*s)
 		return JS_GetEmptyString(*rt);
@@ -229,10 +211,10 @@ string<L>::string(const char16_t *const &s,
 		throw type_error("Failed to construct string from character array");
 }
 
-template<lifetime L>
-string<L>::string(literal_t,
-                  const char16_t *const &s)
-:string<L>::root::type
+inline
+string::string(literal_t,
+               const char16_t *const &s)
+:string::root::type
 {
 	s && *s?
 	JS_NewExternalString(*cx, s, std::char_traits<char16_t>::length(s), &native_external_static):
@@ -243,10 +225,10 @@ string<L>::string(literal_t,
 		throw type_error("Failed to construct string from wide character literal");
 }
 
-template<lifetime L>
-string<L>::string(pinned_t,
-                  const string &s)
-:string<L>::root::type
+inline
+string::string(pinned_t,
+               const string &s)
+:string::root::type
 {
 	JS_AtomizeAndPinJSString(*cx, s)
 }
@@ -255,10 +237,10 @@ string<L>::string(pinned_t,
 		throw type_error("Failed to intern JSString");
 }
 
-template<lifetime L>
-string<L>::string(pinned_t,
-                  const char *const &s)
-:string<L>::root::type
+inline
+string::string(pinned_t,
+               const char *const &s)
+:string::root::type
 {
 	JS_AtomizeAndPinStringN(*cx, s, strlen(s))
 }
@@ -267,10 +249,10 @@ string<L>::string(pinned_t,
 		throw type_error("Failed to construct pinned string from character array");
 }
 
-template<lifetime L>
-string<L>::string(pinned_t,
-                  const char16_t *const &s)
-:string<L>::root::type
+inline
+string::string(pinned_t,
+               const char16_t *const &s)
+:string::root::type
 {
 	JS_AtomizeAndPinUCStringN(*cx, s, std::char_traits<char16_t>::length(s))
 }
@@ -279,90 +261,83 @@ string<L>::string(pinned_t,
 		throw type_error("Failed to construct pinned string from wide character array");
 }
 
-template<lifetime L>
-char16_t
-string<L>::operator[](const size_t &pos)
+inline char16_t
+string::operator[](const size_t &pos)
 const
 {
 	return at(this->get(), pos);
 }
 
-template<lifetime L>
-string<L>::operator JS::Value()
+inline
+string::operator value()
 const
 {
 	return JS::StringValue(this->get());
 }
 
-template<lifetime L>
-string<L>::operator std::string()
+inline
+string::operator std::string()
 const
 {
 	return native(this->get());
 }
 
-template<lifetime L>
-string<L>::operator std::u16string()
+inline
+string::operator std::u16string()
 const
 {
 	return locale::char16::conv(native(this->get()));
 }
 
-template<lifetime L>
+inline
 char *
-string<L>::c_str()
+string::c_str()
 const
 {
 	return js::c_str(this->get());
 }
 
-template<lifetime L>
-bool
-string<L>::empty()
+inline bool
+string::empty()
 const
 {
 	return size() == 0;
 }
 
-template<lifetime L>
-size_t
-string<L>::size()
+inline size_t
+string::size()
 const
 {
 	return js::size(this->get());
 }
 
-template<lifetime L>
-size_t
-string<L>::native_size()
+inline size_t
+string::native_size()
 const
 {
 	return js::native_size(this->get());
 }
 
-template<lifetime L>
 template<class A,
          class B>
 bool
-string<L>::less::operator()(const A &a, const B &b)
+string::less::operator()(const A &a, const B &b)
 const
 {
 	return cmp(a, b) < 0;
 }
 
-template<lifetime L>
-std::ostream &
-operator<<(std::ostream &os, const string<L> &s)
+inline std::ostream &
+operator<<(std::ostream &os, const string &s)
 {
 	os << std::string(s);
 	return os;
 }
 
-template<lifetime L>
-void
-tokens(const string<L> &str,
+inline void
+tokens(const string &str,
        const char &sep,
-       const string_closure<string<L>> &closure)
+       const string_closure<string> &closure)
 {
 	for(auto pair(split(str, sep));; pair = split(pair.second, sep))
 	{
@@ -372,17 +347,15 @@ tokens(const string<L> &str,
 	}
 }
 
-template<lifetime L>
-std::pair<string<L>, string<L>>
-split(const string<L> &s,
+inline std::pair<string, string>
+split(const string &s,
       const char &c)
 {
 	return split(s, char16_t(c));
 }
 
-template<lifetime L>
-std::pair<string<L>, string<L>>
-split(const string<L> &s,
+inline std::pair<string, string>
+split(const string &s,
       const char16_t &c)
 {
 	size_t i(0);
@@ -390,13 +363,12 @@ split(const string<L> &s,
 	return
 	{
 		substr(s, 0, i),
-		i < size(s)? substr(s, i + 1, size(s) - i) : string<L>()
+		i < size(s)? substr(s, i + 1, size(s) - i) : string()
 	};
 }
 
-template<lifetime L>
-string<L>
-substr(const string<L> &s,
+inline string
+substr(const string &s,
        const size_t &pos,
        const size_t &len)
 {
@@ -408,10 +380,9 @@ substr(const string<L> &s,
 	return ret;
 }
 
-template<lifetime L>
-string<L>
-operator+(const string<L> &left,
-          const string<L> &right)
+inline string
+operator+(const string &left,
+          const string &right)
 {
 	return JS_ConcatStrings(*cx, left, right);
 }
@@ -464,9 +435,8 @@ operator!=(const A &a, const B &b)
 	return !(operator==(a, b));
 }
 
-template<lifetime L>
-bool
-operator==(const string<L> &a, const char *const &b)
+inline bool
+operator==(const string &a, const char *const &b)
 {
 	bool ret;
 	if(unlikely(!JS_StringEqualsAscii(*cx, a, b, &ret)))
@@ -475,9 +445,8 @@ operator==(const string<L> &a, const char *const &b)
 	return ret;
 }
 
-template<lifetime L>
-bool
-operator==(const char *const &a, const string<L> &b)
+inline bool
+operator==(const char *const &a, const string &b)
 {
 	bool ret;
 	if(unlikely(!JS_StringEqualsAscii(*cx, b, a, &ret)))
@@ -486,43 +455,37 @@ operator==(const char *const &a, const string<L> &b)
 	return ret;
 }
 
-template<lifetime L>
-int
-cmp(const string<L> &a,
+inline int
+cmp(const string &a,
     const std::string &b)
 {
 	return cmp(a, b.c_str());
 }
 
-template<lifetime L>
-int
+inline int
 cmp(const std::string &a,
-    const string<L> &b)
+    const string &b)
 {
 	return cmp(a.c_str(), b);
 }
 
-template<lifetime L>
-int
-cmp(const string<L> &a,
+inline int
+cmp(const string &a,
     const char *const &b)
 {
-	return cmp(a, string<L>(b));
+	return cmp(a, string(b));
 }
 
-template<lifetime L>
-int
+inline int
 cmp(const char *const &a,
-    const string<L> &b)
+    const string &b)
 {
-	return cmp(string<L>(a), b);
+	return cmp(string(a), b);
 }
 
-template<lifetime A,
-         lifetime B>
-int
-cmp(const string<A> &a,
-    const string<B> &b)
+inline int
+cmp(const string &a,
+    const string &b)
 {
 	int32_t ret;
 	if(unlikely(!JS_CompareStrings(*cx, a, b, &ret)))
@@ -531,9 +494,8 @@ cmp(const string<A> &a,
 	return ret;
 }
 
-template<lifetime L>
-auto
-hash(const string<L> &s)
+inline auto
+hash(const string &s)
 {
 	//TODO: optimize
 	return ircd::util::hash(std::u16string(s));
@@ -551,11 +513,8 @@ template<class T>
 constexpr bool
 is_string()
 {
-	return std::is_base_of<string<lifetime::stack>, T>() ||
-	       std::is_base_of<string<lifetime::heap>, T>();
+	return std::is_base_of<string, T>();
 }
-
-} // namespace basic
 
 inline void
 observe(const JSString *const &str,

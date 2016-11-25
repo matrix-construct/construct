@@ -31,18 +31,15 @@ size_t bytecodes(const JS::Handle<JSScript *> &, uint8_t *const &buf, const size
 bool compilable(const char *const &str, const size_t &len, const object &stack = {});
 bool compilable(const std::string &str, const object &stack = {});
 
-namespace basic {
-
-template<lifetime L>
 struct script
-:root<JSScript *, L>
+:root<JSScript *>
 {
 	IRCD_OVERLOAD(yielding)
 
-	value<lifetime::stack> operator()(JS::AutoObjectVector &stack) const;
-	value<lifetime::stack> operator()() const;
+	value operator()(JS::AutoObjectVector &stack) const;
+	value operator()() const;
 
-	using root<JSScript *, L>::root;
+	using root<JSScript *>::root;
 	script(yielding_t, const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
 	script(const JS::ReadOnlyCompileOptions &opts, const std::u16string &src);
 	script(const JS::ReadOnlyCompileOptions &opts, const std::string &src);
@@ -51,34 +48,24 @@ struct script
 	script(JSScript &);
 };
 
-} // namespace basic
-
-using script = basic::script<lifetime::stack>;
-using heap_script = basic::script<lifetime::heap>;
-
-//
-// Implementation
-//
-namespace basic {
-
-template<lifetime L>
-script<L>::script(JSScript &val)
-:script<L>::root::type{&val}
+inline
+script::script(JSScript &val)
+:script::root::type{&val}
 {
 }
 
-template<lifetime L>
-script<L>::script(JSScript *const &val)
-:script<L>::root::type{val}
+inline
+script::script(JSScript *const &val)
+:script::root::type{val}
 {
 	if(unlikely(!this->get()))
 		throw internal_error("NULL script");
 }
 
-template<lifetime L>
-script<L>::script(const uint8_t *const &bytecode,
-                  const size_t &size)
-:script<L>::root::type
+inline
+script::script(const uint8_t *const &bytecode,
+               const size_t &size)
+:script::root::type
 {
 	JS_DecodeScript(*cx, bytecode, size)
 }
@@ -87,29 +74,29 @@ script<L>::script(const uint8_t *const &bytecode,
 		throw jserror(jserror::pending);
 }
 
-template<lifetime L>
-script<L>::script(const JS::ReadOnlyCompileOptions &opts,
-                  const std::string &src)
-:script<L>::root::type{}
+inline
+script::script(const JS::ReadOnlyCompileOptions &opts,
+               const std::string &src)
+:script::root::type{}
 {
 	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
 		throw jserror(jserror::pending);
 }
 
-template<lifetime L>
-script<L>::script(const JS::ReadOnlyCompileOptions &opts,
-                  const std::u16string &src)
-:script<L>::root::type{}
+inline
+script::script(const JS::ReadOnlyCompileOptions &opts,
+               const std::u16string &src)
+:script::root::type{}
 {
 	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
 		throw jserror(jserror::pending);
 }
 
-template<lifetime L>
-script<L>::script(yielding_t,
-                  const JS::ReadOnlyCompileOptions &opts,
-                  const std::u16string &src)
-:script<L>::root::type{[&opts, &src]
+inline
+script::script(yielding_t,
+               const JS::ReadOnlyCompileOptions &opts,
+               const std::u16string &src)
+:script::root::type{[&opts, &src]
 {
 	// This constructor compiles the script concurrently by yielding this ircd::ctx.
 	// The compilation occurs on another thread entirely, so other ircd contexts will
@@ -124,30 +111,27 @@ script<L>::script(yielding_t,
 		throw jserror(jserror::pending);
 }
 
-template<lifetime L>
-value<lifetime::stack>
-script<L>::operator()()
+inline value
+script::operator()()
 const
 {
-	value<lifetime::stack> ret;
+	value ret;
 	if(!JS_ExecuteScript(*cx, *this, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;
 }
 
-template<lifetime L>
-value<lifetime::stack>
-script<L>::operator()(JS::AutoObjectVector &stack)
+inline value
+script::operator()(JS::AutoObjectVector &stack)
 const
 {
-	value<lifetime::stack> ret;
+	value ret;
 	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;
 }
 
-} // namespace basic
 } // namespace js
 } // namespace ircd
