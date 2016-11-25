@@ -1335,7 +1335,7 @@ noexcept
 
 ircd::js::value
 ircd::js::call(const std::string &name,
-               const object &that,
+               const object::handle &that,
                const vector<value>::handle &args)
 {
 	return call(name.c_str(), that, args);
@@ -1343,7 +1343,7 @@ ircd::js::call(const std::string &name,
 
 ircd::js::value
 ircd::js::call(const char *const &name,
-               const object &that,
+               const object::handle &that,
                const vector<value>::handle &args)
 {
 	value ret;
@@ -1355,7 +1355,7 @@ ircd::js::call(const char *const &name,
 
 ircd::js::value
 ircd::js::call(const value::handle &val,
-               const object &that,
+               const object::handle &that,
                const vector<value>::handle &args)
 {
 	value ret;
@@ -1367,7 +1367,7 @@ ircd::js::call(const value::handle &val,
 
 ircd::js::value
 ircd::js::call(const function::handle &func,
-               const object &that,
+               const object::handle &that,
                const vector<value>::handle &args)
 {
 	value ret;
@@ -1502,6 +1502,14 @@ void
 ircd::js::set(const object::handle &obj,
               const id::handle &id,
               const value &val)
+{
+	set(obj, id, value::handle(val));
+}
+
+void
+ircd::js::set(const object::handle &obj,
+              const id::handle &id,
+              const value::handle &val)
 {
 	if(!JS_SetPropertyById(*cx, obj, id, val))
 		throw jserror(jserror::pending);

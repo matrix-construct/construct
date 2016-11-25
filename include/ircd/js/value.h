@@ -32,7 +32,7 @@ JS::Value pointer_value(void *const &);
 
 namespace basic {
 
-template<lifetime L>
+template<lifetime L = lifetime::stack>
 struct value
 :root<JS::Value, L>
 {
@@ -70,13 +70,39 @@ struct value
 	value(const value &);
 };
 
+template<lifetime L>
+JSType
+type(const value<L> &val)
+{
+	return JS_TypeOfValue(*cx, val);
+}
+
+inline JSType
+type(const handle<value<>> &val)
+{
+	return JS_TypeOfValue(*cx, val);
+}
+
+template<lifetime L>
+bool
+undefined(const value<L> &val)
+{
+	return type(val) == JSTYPE_VOID;
+}
+
+inline bool
+undefined(const JS::Handle<JS::Value> &val)
+{
+	return type(val) == JSTYPE_VOID;
+}
+
 } // namespace basic
 
 using value = basic::value<lifetime::stack>;
 using heap_value = basic::value<lifetime::heap>;
 
-template<class value> JSType type(const value &);
-template<class value> bool undefined(const value &val);
+using basic::type;
+using basic::undefined;
 template<class value> bool is_array(const value &val);
 
 //
@@ -331,21 +357,14 @@ is_array(const value &val)
 
 	return ret;
 }
-
+/*
 template<class value>
 bool
 undefined(const value &val)
 {
-	return type(val) == JSTYPE_VOID;
+	return basic::type(val) == JSTYPE_VOID;
 }
-
-template<class value>
-JSType
-type(const value &val)
-{
-	return JS_TypeOfValue(*cx, val);
-}
-
+*/
 inline JS::Value
 pointer_value(const void *const &ptr)
 {

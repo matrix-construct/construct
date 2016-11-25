@@ -30,6 +30,8 @@ template<lifetime L>
 struct id
 :root<jsid, L>
 {
+	operator value<L>() const;
+
 	using root<jsid, L>::root;
 	explicit id(const char *const &);  // creates new id
 	explicit id(const std::string &);  // creates new id
@@ -125,6 +127,17 @@ id<L>::id(const typename string<L>::handle &h)
 {
 	if(!JS_StringToId(*cx, h, &(*this)))
 		throw type_error("Failed to construct id from String");
+}
+
+template<lifetime L>
+id<L>::operator value<L>()
+const
+{
+	value<L> ret;
+	if(!JS_IdToValue(*cx, *this, &ret))
+		throw type_error("Failed to construct id from String");
+
+	return ret;
 }
 
 } // namespace basic

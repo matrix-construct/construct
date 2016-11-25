@@ -82,7 +82,8 @@ struct vector<value>
 
 	// Construct from initializer list of our `struct value` wrapper
 	// ex: value a(1); vector foo {{ a, a, ... }};
-	vector(const std::initializer_list<local_type> &list)
+
+	vector(const std::initializer_list<heap_value> &list)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
 		reserve(list.size());
@@ -92,6 +93,7 @@ struct vector<value>
 
 	// Construct from initializer list of any type passed through `struct value` ctor
 	// ex: int a; vector foo {{ a, 3, 123, ... }};
+/*
 	template<class U>
 	vector(const std::initializer_list<U> &list)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
@@ -100,7 +102,7 @@ struct vector<value>
 		for(auto &t : list)
 			infallibleAppend(value(t));
 	}
-
+*/
 	template<lifetime L>
 	vector(const basic::object<L> &obj)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
@@ -118,6 +120,14 @@ struct vector<value>
 	vector(const basic::value<L> &val)
 	:vector(basic::object<L>(val))
 	{
+	}
+
+	vector(const handle &h)
+	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	{
+		reserve(h.length());
+		for(size_t i(0); i < h.length(); ++i)
+			infallibleAppend(h[i]);
 	}
 
 	vector(const size_t &size)
@@ -184,7 +194,8 @@ struct vector<id>
 {
 	using jsapi_type = jsid;
 	using local_type = id;
-
+	using base_type = JS::AutoVectorRooter<jsapi_type>;
+/*
 	vector(const std::initializer_list<jsapi_type> &list)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
@@ -192,9 +203,9 @@ struct vector<id>
 		for(auto &t : list)
 			infallibleAppend(t);
 	}
-
+*/
 	vector(const std::initializer_list<local_type> &list)
-	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	:base_type{*cx}
 	{
 		reserve(list.size());
 		for(auto &t : list)
@@ -202,14 +213,15 @@ struct vector<id>
 	}
 
 	vector(const size_t &size)
-	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	:base_type{*cx}
 	{
 		resize(size);
 	}
 
 	vector()
-	:JS::AutoVectorRooter<jsapi_type>{*cx}
+	:base_type{*cx}
 	{
+		reserve(8);
 	}
 };
 

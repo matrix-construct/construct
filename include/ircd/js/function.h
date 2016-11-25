@@ -26,10 +26,10 @@ namespace ircd {
 namespace js   {
 
 string decompile(const JS::Handle<JSFunction *> &, const bool &pretty = false);
-string display_name(const JSFunction &);
-string name(const JSFunction &);
-uint16_t arity(const JSFunction &f);
-bool is_ctor(const JSFunction &f);
+string display_name(const JSFunction *const &);
+string name(const JSFunction *const *);
+uint16_t arity(const JSFunction *const &);
+bool is_ctor(const JSFunction *const &);
 
 namespace basic {
 
@@ -42,8 +42,8 @@ struct function
 	explicit operator string<L>() const;
 
 	// js::value/js::object == lifetime::stack
-	js::value operator()(const js::object &, const vector<js::value>::handle &) const;
-	template<class... args> js::value operator()(const js::object &, args&&...) const;
+	value<L> operator()(const js::object::handle &, const vector<js::value>::handle &) const;
+	template<class... args> value<L> operator()(const js::object::handle &, args&&...) const;
 
 	// new function
 	template<class string_t>
@@ -54,7 +54,8 @@ struct function
 	         const string_t &src);
 
 	using root<JSFunction *, L>::root;
-	explicit function(const value<L> &);
+	function(const handle<value<L>> &);
+	function(const js::value &);
 	function(JSFunction *const &);
 	function(JSFunction &);
 };
@@ -84,7 +85,13 @@ function<L>::function(JSFunction *const &func)
 }
 
 template<lifetime L>
-function<L>::function(const value<L> &val)
+function<L>::function(const js::value &val)
+:function{static_cast<js::value::handle>(val)}
+{
+}
+
+template<lifetime L>
+function<L>::function(const handle<value<L>> &val)
 :function<L>::root::type
 {
 	JS_ValueToFunction(*cx, val)
@@ -126,8 +133,8 @@ function<L>::function(JS::AutoObjectVector &stack,
 
 template<lifetime L>
 template<class... args>
-js::value
-function<L>::operator()(const js::object &that,
+value<L>
+function<L>::operator()(const js::object::handle &that,
                         args&&... a)
 const
 {
@@ -140,8 +147,8 @@ const
 }
 
 template<lifetime L>
-js::value
-function<L>::operator()(const js::object &that,
+value<L>
+function<L>::operator()(const js::object::handle &that,
                         const vector<js::value>::handle &argv)
 const
 {
@@ -176,28 +183,28 @@ const
 } // namespace basic
 
 inline bool
-is_ctor(const JSFunction &f)
+is_ctor(const JSFunction *const &f)
 {
-	return JS_IsConstructor(const_cast<JSFunction *>(&f));
+	return JS_IsConstructor(const_cast<JSFunction *>(f));
 }
 
 inline uint16_t
-arity(const JSFunction &f)
+arity(const JSFunction *const &f)
 {
-	return JS_GetFunctionArity(const_cast<JSFunction *>(&f));
+	return JS_GetFunctionArity(const_cast<JSFunction *>(f));
 }
 
 inline string
-name(const JSFunction &f)
+name(const JSFunction *const &f)
 {
-	const auto ret(JS_GetFunctionId(const_cast<JSFunction *>(&f)));
+	const auto ret(JS_GetFunctionId(const_cast<JSFunction *>(f)));
 	return ret? string(ret) : string("<unnamed>");
 }
 
 inline string
-display_name(const JSFunction &f)
+display_name(const JSFunction *const &f)
 {
-	const auto ret(JS_GetFunctionDisplayId(const_cast<JSFunction *>(&f)));
+	const auto ret(JS_GetFunctionDisplayId(const_cast<JSFunction *>(f)));
 	return ret? string(ret) : string("<anonymous>");
 }
 

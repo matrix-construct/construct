@@ -49,7 +49,7 @@ inline value
 args::operator[](const size_t &at)
 const
 {
-	return length() > at? JS::CallArgs::operator[](at) : value{};
+	return value{length() > at? JS::CallArgs::operator[](at) : JS::UndefinedValue()};
 }
 
 inline value

@@ -27,23 +27,32 @@ namespace js   {
 
 value
 call(const function::handle &func,
-     const object &that,
+     const object::handle &that,
      const vector<value>::handle &args = {});
 
 value
 call(const value::handle &val,
-     const object &that,
+     const object::handle &that,
      const vector<value>::handle &args = {});
 
 value
 call(const char *const &name,
-     const object &that,
+     const object::handle &that,
      const vector<value>::handle &args = {});
 
 value
 call(const std::string &name,
-     const object &that,
+     const object::handle &that,
      const vector<value>::handle &args = {});
+
+inline value
+call(const function::handle &func,
+     const value::handle &that,
+     const vector<value>::handle &args = {})
+{
+	const object _that(that);
+	return call(func, _that, args);
+}
 
 } // namespace js
 } // namespace ircd

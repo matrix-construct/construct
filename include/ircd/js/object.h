@@ -60,6 +60,7 @@ struct object
 	using handle = object_handle;
 	using handle_mutable = object_handle_mutable;
 
+	explicit operator JSString *() const;
 	operator JS::Value() const;
 
 	// for array objects
@@ -286,10 +287,19 @@ const
 }
 
 template<lifetime L>
+object<L>::operator JSString *()
+const
+{
+	assert(this->get());
+	return JS_BasicObjectToString(*cx, *this);
+}
+
+template<lifetime L>
 object<L>::operator JS::Value()
 const
 {
-	return this->get()? JS::ObjectValue(*this->get()) : JS::NullValue();
+	assert(this->get());
+	return JS::ObjectValue(*this->get());
 }
 
 } // namespace basic
@@ -359,6 +369,7 @@ jsclass(JSObject *const &obj)
 inline bool
 has_jsclass(const JSObject *const &obj)
 {
+	assert(obj);
 	return JS_GetClass(const_cast<JSObject *>(obj)) != nullptr;
 }
 
