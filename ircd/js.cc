@@ -3745,6 +3745,28 @@ noexcept
 }
 
 void
+ircd::js::runtime::handle_weak_pointer_compartment(JSRuntime *const rt,
+                                                   JSCompartment *const comp,
+                                                   void *const data)
+noexcept
+{
+	log.debug("runtime(%p): weak pointer compartment(%p) %p",
+	          (const void *)rt,
+	          (const void *)comp,
+	          data);
+}
+
+void
+ircd::js::runtime::handle_weak_pointer_zone(JSRuntime *const rt,
+                                            void *const data)
+noexcept
+{
+	log.debug("runtime(%p): weak pointer zone %p",
+	          (const void *)rt,
+	          data);
+}
+
+void
 ircd::js::runtime::handle_trace_extra(JSTracer *const tracer,
                                       void *const priv)
 noexcept
