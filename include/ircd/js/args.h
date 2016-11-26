@@ -28,6 +28,8 @@ namespace js   {
 struct args
 :JS::CallArgs
 {
+	operator vector<value>::handle() const       { return { *this };                               }
+
 	bool empty() const                           { return length() == 0;                           }
 	size_t size() const                          { return length();                                }
 	bool has(const size_t &at) const             { return size() > at;                             }

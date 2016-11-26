@@ -120,6 +120,6 @@ template<class... args>
 ircd::js::object
 ircd::js::trap::operator()(args&&... a)
 {
-	vector<value> argv{{std::forward<args>(a)...}};
+	vector<value> argv{std::forward<args>(a)...};
 	return construct(argv);
 }

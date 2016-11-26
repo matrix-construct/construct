@@ -65,6 +65,7 @@ struct vector<value>
 	:JS::HandleValueArray
 	{
 		using JS::HandleValueArray::HandleValueArray;
+		handle(const JS::CallArgs &args): JS::HandleValueArray{args} {}
 		handle(): JS::HandleValueArray{JS::HandleValueArray::empty()} {}
 	};
 
@@ -103,7 +104,7 @@ struct vector<value>
 			infallibleAppend(value(t));
 	}
 */
-	vector(const object &obj)
+	explicit vector(const object &obj)
 	:JS::AutoVectorRooter<jsapi_type>{*cx}
 	{
 		if(!is_array(obj))
