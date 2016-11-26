@@ -642,13 +642,13 @@ ircd::js::trap::property::on_set(function::handle,
 
 ircd::js::trap::function::function(trap &member,
                                    std::string name,
-                                   const uint &arity,
                                    const uint &flags,
+                                   const uint &arity,
                                    const closure &lambda)
 :member{&member}
 ,name{std::move(name)}
-,arity{arity}
 ,flags{flags}
+,arity{arity}
 ,lambda{lambda}
 {
 	member.memfun.emplace(this->name, this);

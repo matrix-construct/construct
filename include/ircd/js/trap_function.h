@@ -31,8 +31,8 @@ struct trap::function
 
 	trap *member;
 	const std::string name;
-	const uint arity;
 	const uint flags;
+	const uint arity;
 	closure lambda;
 
   protected:
@@ -47,8 +47,8 @@ struct trap::function
 
 	function(trap &,
 	         std::string name,
-	         const uint &arity = 0,
 	         const uint &flags = 0,
+	         const uint &arity = 0,
 	         const closure & = {});
 
 	function(function &&) = delete;
