@@ -46,6 +46,9 @@ __thread trap *tree;
 // traps to dump their JSClass on destruction and then this can be reaped later.
 std::forward_list<std::unique_ptr<JSClass>> class_drain;
 
+// Handle to the kernel module
+ircd::module kernel;
+
 // Internal prototypes
 const char *reflect(const ::js::CTypesActivityType &);
 
@@ -84,13 +87,15 @@ ircd::js::init::init()
 	rt = new runtime(runtime_opts);
 	cx = new context(*rt, context_opts);
 
+	// Additional options
+	//set(*cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
+
 	log.info("Initialized main JS Runtime and context (version: '%s')",
 	         version(*cx));
-
 	{
 		// tree is registered by the kernel module's trap
 		const std::lock_guard<context> lock{*cx};
-		ircd::mods::load("kernel");
+		kernel = ircd::module("kernel");
 	}
 }
 
@@ -100,7 +105,7 @@ noexcept
 	if(cx && !!*cx) try
 	{
 		const std::lock_guard<context> lock{*cx};
-		ircd::mods::unload("kernel");
+		kernel.reset();
 	}
 	catch(const std::exception &e)
 	{
