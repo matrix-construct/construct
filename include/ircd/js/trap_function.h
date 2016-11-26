@@ -37,6 +37,7 @@ struct trap::function
 
   protected:
 	virtual value on_call(object::handle callee, value::handle that, const args &);
+	virtual value on_new(object::handle callee, const args &);
 
   private:
 	static function &from(JSObject *const &);

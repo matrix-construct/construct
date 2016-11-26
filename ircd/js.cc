@@ -688,19 +688,34 @@ noexcept try
 
 	const struct args args(argc, argv);
 	const object func(args.callee());
-	const value that(args.computeThis(c));
 	auto &trap(from(func));
-	log.debug("trap(%p) this(%p) %s() call argv[%u]",
-	          (const void *)&trap,
-	          (const void *)that.address(),
-	          trap.name.c_str(),
-	          argc);
+	if(args.isConstructing())
+	{
+		log.debug("trap(%p) %s() ctor argv[%u]",
+		          (const void *)&trap,
+		          trap.name.c_str(),
+		          argc);
 
-	args.rval().set(trap.on_call(func, that, args));
-	log.debug("trap(%p) this(%p) %s() leave",
-	          (const void *)&trap,
-	          (const void *)that.address(),
-	          trap.name.c_str());
+		const value that(trap.on_new(func, args));
+		args.rval().set(that);
+		log.debug("trap(%p) this(%p) %s() leave",
+		          (const void *)&trap,
+		          (const void *)that.address(),
+		          trap.name.c_str());
+	} else {
+		const value that(args.computeThis(c));
+		log.debug("trap(%p) this(%p) %s() call argv[%u]",
+		          (const void *)&trap,
+		          (const void *)that.address(),
+		          trap.name.c_str(),
+		          argc);
+
+		args.rval().set(trap.on_call(func, that, args));
+		log.debug("trap(%p) this(%p) %s() leave",
+		          (const void *)&trap,
+		          (const void *)that.address(),
+		          trap.name.c_str());
+	}
 
 	return true;
 }
@@ -740,6 +755,14 @@ ircd::js::trap::function::on_call(object::handle obj,
                                   const args &args)
 {
 	return lambda(obj, val, args);
+}
+
+ircd::js::value
+ircd::js::trap::function::on_new(object::handle obj,
+                                 const args &args)
+{
+	value ud;
+	return on_call(obj, ud, args);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
