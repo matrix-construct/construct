@@ -63,16 +63,15 @@ struct object
 	explicit operator JS::Value() const;
 	operator value() const;
 
-	// for array objects
-	uint32_t size() const;
-	void resize(const uint32_t &);
+	object constructor() const;                  // Get the constructor
+	object prototype() const;                    // Get the prototype
+	void prototype(object::handle);              // Set the prototype
 
-	// Get/set prototype
-	object prototype() const;
-	void prototype(object::handle);
+	bool is_array() const;
+	uint32_t size() const;                       // Number elements in array object
+	void resize(const uint32_t &);               // Set the number of elements in array object
 
-	// Get the constructor
-	object constructor() const;
+	object clone() const;                        // Copy the object and prototype
 
 	// new object
 	object(const JSClass *const &, const handle &ctor, const JS::HandleValueArray &args);
@@ -246,6 +245,34 @@ object::global()
 }
 
 inline object
+object::clone()
+const
+{
+	return JS_CloneObject(*cx, *this, prototype());
+}
+
+inline void
+object::resize(const uint32_t &length)
+{
+	if(!JS_SetArrayLength(*cx, *this, length))
+		throw internal_error("Failed to set array object length");
+}
+
+inline uint32_t
+object::size()
+const
+{
+	return js::size(*this);
+}
+
+inline bool
+object::is_array()
+const
+{
+	return js::is_array(handle(*this));
+}
+
+inline object
 object::constructor()
 const
 {
@@ -268,20 +295,6 @@ const
 		throw internal_error("Failed to get prototype for object");
 
 	return ret;
-}
-
-inline void
-object::resize(const uint32_t &length)
-{
-	if(!JS_SetArrayLength(*cx, *this, length))
-		throw internal_error("Failed to set array object length");
-}
-
-inline uint32_t
-object::size()
-const
-{
-	return js::size(*this);
 }
 
 inline
