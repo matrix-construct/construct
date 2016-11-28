@@ -56,6 +56,9 @@ namespace js {  struct InterpreterFrame;  }
 namespace ircd {
 namespace js   {
 
+// The ostream operator is explicitly brought from ircd:: to compete for efficient overloading,
+// and prevent any unnecessary implicit conversions here.
+using ircd::operator<<;
 
 } // namespace js
 } // namespace ircd
