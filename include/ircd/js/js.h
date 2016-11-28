@@ -56,12 +56,11 @@ namespace js {  struct InterpreterFrame;  }
 namespace ircd {
 namespace js   {
 
-inline const char *version(const JSVersion &v)   { return JS_VersionToString(v);                   }
-inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);                   }
 
 } // namespace js
 } // namespace ircd
 
+#include "version.h"
 #include "type.h"
 #include "tracing.h"
 #include "runtime.h"
