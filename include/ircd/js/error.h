@@ -25,6 +25,8 @@
 namespace ircd {
 namespace js   {
 
+void replace_message(JSErrorReport &report, const char *fmt, ...) AFP(2, 3);
+
 struct jserror
 :js::error
 {
@@ -39,6 +41,7 @@ struct jserror
 	void create(const JSErrorReport &);
 	void generate(const JSExnType &type, const char *const &fmt, va_list ap);
 	void set_pending() const;
+	void set_uncatchable() const;
 
 	jserror(pending_t);
 	jserror(generate_skip_t);

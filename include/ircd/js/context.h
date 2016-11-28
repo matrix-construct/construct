@@ -58,7 +58,6 @@ struct context
 
 	// Exception state
 	JSExceptionState *except;                    // Use save_exception()/restore_exception()
-	JSErrorReport report;                        // Note: ptrs may not be valid in here.
 
 	// Interruption state
 	struct alignas(8) state
@@ -125,7 +124,8 @@ bool run_gc(context &c) noexcept;
 
 // Exception
 bool pending_exception(const context &c);
-void save_exception(context &c, const JSErrorReport &);
+void save_exception(context &c);
+void clear_exception(context &c);
 bool restore_exception(context &c);
 bool report_exception(context &c);
 
@@ -175,6 +175,12 @@ inline bool
 report_exception(context &c)
 {
 	return JS_ReportPendingException(c);
+}
+
+inline void
+clear_exception(context &c)
+{
+	return JS_ClearPendingException(c);
 }
 
 inline bool

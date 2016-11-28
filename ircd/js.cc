@@ -2443,45 +2443,29 @@ ircd::js::jserror::jserror(pending_t)
 ,val{}
 {
 	if(unlikely(!restore_exception(*cx)))
-	{
-		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
-		         "(internal error): Failed to restore exception.");
-		return;
-	}
+		throw error("No exception pending");
 
-	auto &report(cx->report);
-	if(JS_GetPendingException(*cx, &val))
-	{
-		JS::RootedObject obj(*cx, &val.toObject());
-		if(likely(JS_ErrorFromException(*cx, obj)))
-			report = *JS_ErrorFromException(*cx, obj);
+	value val;
+	if(unlikely(!JS_GetPendingException(*cx, &val)))
+		throw error("Failed to recover pending exception");
 
-		generate_what_our(report);
-		JS_ClearPendingException(*cx);
-		return;
-	}
+	object obj(val);
+	const auto rp(JS_ErrorFromException(*cx, obj));
+	if(unlikely(!rp))
+		throw error("Error report from exception failed");
 
-	switch(report.errorNumber)
-	{
-		case 61: // JSAPI's code for interruption
-			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
-			         "interrupted @ line: %u col: %u",
-			         report.lineno,
-			         report.column);
-			break;
+	auto &report(*rp);
+	generate_what_our(report);
+	this->val = val;
+	clear_exception(*cx);
+}
 
-		case 105: // JSAPI's code for user reported error
-			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
-			         "(BUG) Host exception");
-			break;
-
-		default:
-			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
-			         "Unknown non-exception #%u flags[%02x]",
-			         report.errorNumber,
-			         report.flags);
-			break;
-	}
+void
+ircd::js::jserror::set_uncatchable()
+const
+{
+	set_pending();
+	clear_exception(*cx);
 }
 
 void
@@ -2489,7 +2473,7 @@ ircd::js::jserror::set_pending()
 const
 {
 	JS_SetPendingException(*cx, &val);
-	save_exception(*cx, *JS_ErrorFromException(*cx, object(val.get())));
+	save_exception(*cx);
 }
 
 void
@@ -2581,6 +2565,27 @@ ircd::js::jserror::generate_what_js(const JSErrorReport &report)
 {
 	const auto str(native(::js::ErrorReportToString(*cx, const_cast<JSErrorReport *>(&report))));
 	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s", str.c_str());
+}
+
+void
+ircd::js::replace_message(JSErrorReport &report,
+                          const char *fmt,
+                          ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	char buf[BUFSIZE];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+
+	const size_t ucsz(sizeof(buf) * 2);
+	custom_ptr<char16_t> ucbuf(reinterpret_cast<char16_t *>(js_malloc(ucsz)), js_free);
+	locale::char16::conv(buf, ucbuf.get(), ucsz);
+
+	custom_ptr<void> existing(const_cast<char16_t *>(report.ucmessage), js_free);
+	report.ucmessage = ucbuf.release();
+
+	va_end(ap);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3324,18 +3329,16 @@ ircd::js::restore_exception(context &c)
 }
 
 void
-ircd::js::save_exception(context &c,
-                         const JSErrorReport &report)
+ircd::js::save_exception(context &c)
 {
 	if(c.except)
 	{
-		//throw error("(internal error): Won't overwrite saved exception");
-		log.warning("save_exception(): Dropping unrestored exception @ %p", (const void *)c.except);
-		JS_DropExceptionState(*cx, c.except);
+		//log.warning("save_exception(): Dropping unrestored exception @ %p", (const void *)c.except);
+		//JS_DropExceptionState(*cx, c.except);
+		throw error("(internal error): Won't overwrite saved exception @ %p", (const void *)c.except);
 	}
 
-	c.except = JS_SaveExceptionState(c),
-	c.report = report;
+	c.except = JS_SaveExceptionState(c);
 }
 
 bool
@@ -3879,21 +3882,56 @@ noexcept try
 
 	if(JSREPORT_IS_EXCEPTION(report->flags))
 	{
-		save_exception(our(ctx), *report);
+		// If except state is saved this is a redundant report from an exception as our
+		// intertwined c++ -> js -> c++ stack is blows up.
+		if(our(ctx).except)
+			return;
+
+		// This is likely an uncaught exception from a throw in JS. We create a new exception
+		// object because we lost the one from the user and make that pending now in case some
+		// other opportunity for the user to catch this is presented.
+		jserror e(*report);
+		e.set_pending();
 		return;
 	}
 
 	if(report->exnType == JSEXN_INTERNALERR)
-		throw internal_error("#%u %s", report->errorNumber, msg);
-}
-catch(const jserror &e)
-{
-	e.set_pending();
+	{
+		internal_error ie("%s", msg);
+		ie.set_pending();
+		return;
+	}
+
+	switch(report->errorNumber)
+	{
+		case 61: // JSAPI's code for interruption
+		{
+			report->exnType = JSEXN_ERR;
+			report->flags |= JSREPORT_EXCEPTION;
+			replace_message(*report, "interrupted @ line[%u] col[%u]",
+			                report->lineno,
+			                report->column);
+
+			jserror e(*report);
+			e.set_uncatchable();
+			return;
+		}
+
+		case 105: // JSAPI's code for user reported error
+		{
+			report->exnType = JSEXN_INTERNALERR;
+			report->flags |= JSREPORT_EXCEPTION;
+			replace_message(*report, "(BUG) Host exception");
+			jserror e(*report);
+			e.set_uncatchable();
+			return;
+		}
+	}
 }
 catch(const std::exception &e)
 {
-	internal_error ie("%s", e.what());
-	ie.set_pending();
+	log.critical("triple fault: %s\n", e.what());
+	std::terminate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
