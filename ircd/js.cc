@@ -24,6 +24,7 @@
 #include <ircd/js/js.h>
 #include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
 #include <mozilla/ThreadLocal.h>                 // For GetThreadType() linkage hack (see: down)
+#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
 
 namespace ircd {
 namespace js   {
@@ -90,7 +91,7 @@ ircd::js::init::init()
 	// Additional options
 	//set(*cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
 
-	log.info("Initialized main JS Runtime and context (version: '%s')",
+		log.info("Initialized main JS Runtime and context (version: '%s')",
 	         version(*cx));
 	{
 		// tree is registered by the kernel module's trap
@@ -272,6 +273,8 @@ try
 
 	// TODO: options
 	JS::CompileOptions opts(*cx);
+	//opts.setCanLazilyParse(true);
+	//opts.setSourceIsLazy(true);
 	//opts.setIntroductionType("GeneratorFunction");
 	//opts.forceAsync = true;
 
@@ -296,6 +299,126 @@ try
 	return { state };
 }()}
 {
+	const compartment c(this->global);
+
+	uint8_t buf[16_KiB];
+	const size_t len(bytecodes(main, buf, sizeof(buf)));
+	const js::xdr xdr(buf, len);
+	std::cout << "n_args: " << xdr.header->n_args << std::endl;
+	std::cout << "n_atoms: " << xdr.header->n_atoms << std::endl;
+	std::cout << "n_objects: " << xdr.header->n_objects << std::endl;
+	std::cout << "length: " << xdr.header->length << std::endl;
+	std::cout << "fun_length: " << xdr.header->fun_length << std::endl;
+
+	size_t ai(0);
+	xdr.for_each_atom([&ai](const auto &atom)
+	{
+		printf("i[%02zx] len [%u] enc[%u] [%s]\n", ai++, atom.length, atom.encoding, atom.latin1);
+	});
+
+	xdr.for_each_binding([](const auto &binding)
+	{
+		printf("kind[%u] aliased[%u]\n", binding.kind, binding.aliased);
+	});
+
+	std::cout << "has_source: " << bool(xdr.sourcecode->has_source) << std::endl;
+	std::cout << "retrievable: " << bool(xdr.sourcecode->retrievable) << std::endl;
+	std::cout << "length: " << xdr.sourcecode->length << std::endl;
+	std::cout << "compressed_length: " << xdr.sourcecode->compressed_length << std::endl;
+
+	std::cout << "sourcemap->have: " << bool(xdr.sourcemap->have) << std::endl;
+	std::cout << "sourcemap->len: " << bool(xdr.sourcemap->len) << std::endl;
+
+	std::cout << "displayurl->have: " << bool(xdr.displayurl->have) << std::endl;
+	std::cout << "displayurl->len: " << bool(xdr.displayurl->len) << std::endl;
+
+	std::cout << "filename->have: " << bool(xdr.filename->have) << std::endl;
+
+	std::cout << "start: " << xdr.source->start << std::endl;
+	std::cout << "end: " << xdr.source->end << std::endl;
+	std::cout << "lineno: " << xdr.source->lineno << std::endl;
+	std::cout << "column: " << xdr.source->column << std::endl;
+
+	size_t i(0);
+	xdr.for_each_bytecode([&i]
+	(const auto &bc)
+	{
+		const auto &op(js::info(bc));
+		printf("+%02zu %-20s %u [%02x]", i++, op.name, op.length, bc.byte);
+		for(ssize_t j(0); j < op.length - 1; ++j)
+			printf(" %02x", bc.operand[j]);
+		printf("\n");
+	});
+
+	xdr.for_each_const([]
+	(const auto &c)
+	{
+		printf("const [%02u] (%zd)\n", c.tag, js::length(c));
+	});
+
+	xdr.for_each_object([&buf, &len, &xdr]
+	(const auto &o)
+	{
+		printf("object [%02u] (%zd)\n", o.classk, js::length(o));
+		if(o.classk == 3)
+		{
+			printf("is_array[%u] n_properties[%u]\n",
+			       o.literal.is_array,
+			       o.literal.n_properties);
+		}
+		else if(o.classk == 2)
+		{
+			printf("scope_index[%u] first_word[%02x] hmagic[%02x][%u] hversion[%02x][%u]\n",
+			       o.function.scope_index,
+			       o.function.first_word,
+			       xdr.header->magic,
+			       xdr.header->magic,
+			       xdr.header->version,
+			       xdr.header->version);
+
+			printf("flags_word[%02x] arg_count[%u] (total: %lu of %lu)\n",
+			       o.function.flags_word,
+			       o.function.flags_word >> 16,
+			       reinterpret_cast<const uint8_t *>(&o) - buf,
+			       len);
+
+			printf("has_atom[%lu] STAR GENERATOR[%lu] lazy[%lu] singleton[%lu]\n",
+			       ulong(o.function.first_word & 0x01UL),
+			       ulong(o.function.first_word & 0x02UL),
+			       ulong(o.function.first_word & 0x04UL),
+			       ulong(o.function.first_word & 0x08UL));
+/*
+	        const auto pp(reinterpret_cast<const uint8_t *>(&o));
+			//const auto bar(reinterpret_cast<const struct vm::xdr::source *>(pp + 16));
+			//printf("start %u end %u lineno %u column %u\n", bar->start, bar->end, bar->lineno, bar->column);
+
+			const auto foo(reinterpret_cast<const struct vm::xdr::header *>(pp + 128));
+			printf("magic [%02x]\n", foo->magic);
+			printf("n_args [%u]\n", foo->n_args);
+			printf("n_block_locals [%u]\n", foo->n_block_locals);
+			printf("n_body_level_lexicals [%u]\n", foo->n_body_level_lexicals);
+			printf("n_vars [%u]\n", foo->n_vars);
+			printf("n_atoms [%u]\n", foo->n_atoms);
+			printf("n_objects [%u]\n", foo->n_objects);
+			printf("n_consts [%u]\n", foo->n_consts);
+			printf("length [%u]\n", foo->length);
+			printf("version [%u]\n", foo->version);
+			printf("fun_length [%u]\n", foo->fun_length);
+
+			const auto bar(reinterpret_cast<const uint32_t *>(pp));
+			for(size_t i(0); pp+(i*4) < buf+len; i += 4)
+			{
+				if(i % 8 == 0)
+					printf("\n");
+
+				printf("%08x %08x %08x %08x ", bar[i+0], bar[i+1], bar[i+2], bar[i+3]);
+			}
+			printf("\n");
+*/
+		}
+
+	});
+
 }
 catch(const std::exception &e)
 {
@@ -461,7 +584,7 @@ noexcept
 {
 	assert(tracer->runtime() == rt->get());
 
-	log.debug("runtime(%p): tracer(%p) object(%p)",
+	log.debug("runtime(%p): global tracer(%p) object(%p)",
 	          (const void *)&our(tracer->runtime()),
 	          (const void *)tracer,
 	          (const void *)obj);
@@ -951,7 +1074,7 @@ ircd::js::trap::find(const std::string &path)
 	trap *ret(tree);
 	const auto parts(ircd::tokens(path, "."));
 	for(const auto &part : parts)
-		ret = &ret->child(part);
+		ret = &ret->child(std::string(part));
 
 	return *ret;
 }
@@ -963,11 +1086,11 @@ ircd::js::trap::find(const string::handle &path)
 		throw error("Failed to find trap tree root");
 
 	trap *ret(tree);
-	tokens(string(path), '.', string_closure<string>([&ret]
+	tokens(string(path), '.', [&ret]
 	(const string &part)
 	{
 		ret = &ret->child(part);
-	}));
+	});
 
 	return *ret;
 }
@@ -1130,7 +1253,7 @@ noexcept try
 	assert(!pending_exception(*cx));
 
 	auto &trap(from(obj));
-	trap.debug(obj.get(), "has '%s'", string(id).c_str());
+	//trap.debug(obj.get(), "has '%s'", string(id).c_str());
 	*resolved = trap.on_has(obj, id);
 	return true;
 }
@@ -1853,19 +1976,20 @@ ircd::js::del(const object::handle &src,
 	value val;
 	object obj(src);
 	const char *fail(nullptr);
-	ircd::tokens(path, ".", [&path, &val, &obj, &fail]
-	(char *const &part)
+	char buffer[strlen(path) + 1];
+	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &val, &obj, &fail]
+	(const string_view &part)
 	{
 		if(fail)
 			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
 
-		if(!JS_GetProperty(*cx, obj, part, &val) || undefined(val))
-			throw reference_error("%s", part);
+		if(!JS_GetProperty(*cx, obj, part.data(), &val) || undefined(val))
+			throw reference_error("%s", part.data());
 
 		object tmp(obj.get());
 		if(!JS_ValueToObject(*cx, val, &obj) || !obj.get())
 		{
-			fail = part;
+			fail = part.data();
 			obj = std::move(tmp);
 		}
 	});
@@ -1926,28 +2050,28 @@ ircd::js::set(const object::handle &src,
               const char *const path,
               const value &val)
 {
-	value tmp;
 	object obj(src);
 	char buffer[strlen(path) + 1];
 	const char *fail(nullptr), *key(nullptr);
-	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &tmp, &obj, &fail, &key]
-	(const char *const &part)
+	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &obj, &fail, &key]
+	(const string_view &part)
 	{
 		if(fail)
 			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
 
 		if(key)
-			throw reference_error("%s", part);
+			throw reference_error("%s", part.data());
 
-		key = part;
+		key = part.data();
 		if(strcmp(key, path) == 0)
 			return;
 
-		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
+		value tmp;
+		if(!JS_GetProperty(*cx, obj, part.data(), &tmp) || undefined(tmp))
 			return;
 
 		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
-			fail = part;
+			fail = part.data();
 	});
 
 	if(!key)
@@ -2021,17 +2145,18 @@ ircd::js::get(const object::handle &src,
 	value ret;
 	object obj(src);
 	const char *fail(nullptr);
-	ircd::tokens(path, ".", [&obj, &path, &ret, &fail]
-	(const char *const &part)
+	char buf[strlen(path) + 1];
+	ircd::tokens(path, ".", buf, sizeof(buf), [&obj, &path, &ret, &fail]
+	(const string_view &part)
 	{
 		if(fail)
 			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
 
-		if(!JS_GetProperty(*cx, obj, part, &ret) || undefined(ret))
-			throw reference_error("%s", part);
+		if(!JS_GetProperty(*cx, obj, part.data(), &ret) || undefined(ret))
+			throw reference_error("%s", part.data());
 
 		if(!JS_ValueToObject(*cx, ret, &obj) || !obj.get())
-			fail = part;
+			fail = part.data();
 	});
 
 	return ret;
@@ -2085,27 +2210,28 @@ ircd::js::has(const object::handle &src,
 	bool ret(true);
 	object obj(src);
 	const char *fail(nullptr);
-	ircd::tokens(path, ".", [&obj, &path, &ret, &fail]
-	(const char *const &part)
+	char buf[strlen(path) + 1];
+	ircd::tokens(path, ".", buf, sizeof(buf), [&obj, &path, &ret, &fail]
+	(const string_view &part)
 	{
 		if(fail)
 			throw type_error("cannot recurse through non-object '%s' in `%s'", fail, path);
 
-		if(!JS_HasProperty(*cx, obj, part, &ret))
+		if(!JS_HasProperty(*cx, obj, part.data(), &ret))
 			throw jserror(jserror::pending);
 
 		if(!ret)
 			return;
 
 		value tmp;
-		if(!JS_GetProperty(*cx, obj, part, &tmp) || undefined(tmp))
+		if(!JS_GetProperty(*cx, obj, part.data(), &tmp) || undefined(tmp))
 		{
 			ret = false;
 			return;
 		}
 
 		if(!JS_ValueToObject(*cx, tmp, &obj) || !obj.get())
-			fail = part;
+			fail = part.data();
 	});
 
 	return ret;
@@ -2158,6 +2284,11 @@ ircd::js::has(const JSObject *const &obj,
 {
 	return flags(obj) & JSCLASS_HAS_RESERVED_SLOTS(uint(slot));
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/object.h
+//
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -2742,7 +2873,7 @@ ircd::js::debug(const JSErrorReport &r)
 		ss << "col[" << r.column << "] ";
 
 	if(r.linebuf())
-		ss << "code[" << r.linebuf() << "] ";
+		ss << "code[" << std::u16string(r.linebuf()) << "] ";
 
 	//if(r.tokenptr)
 	//	ss << "toke[" << r.tokenptr << "] ";
@@ -3180,6 +3311,10 @@ bool
 ircd::js::context::handle_interrupt()
 {
 	auto state(this->state.load(std::memory_order_acquire));
+	log.debug("context(%p): Interrupt: IRQ[%u] phase[%u]",
+	          (const void *)this,
+	          uint(state.irq),
+	          uint(state.phase));
 
 	// Spurious interrupt; ignore.
 	if(unlikely(state.phase != phase::INTR && state.phase != phase::ENTER))
@@ -3563,6 +3698,10 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS_DestroyRuntime
 }
 {
+	//auto &ror(JS::RuntimeOptionsRef(get()));
+	//ror.setAsmJS(false);
+	//ror.setIon(false);
+
 	// We use their privdata to find `this` via our(JSRuntime*) function.
 	// Any additional user privdata will have to ride a member in this class itself.
 	JS_SetRuntimePrivate(get(), this);
@@ -3571,12 +3710,12 @@ ircd::js::runtime::runtime(const struct opts &opts,
 	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
 	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
 	JS_SetGCCallback(get(), handle_gc, nullptr);
-	JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
 	::js::SetPreserveWrapperCallback(get(), handle_preserve_wrapper);
+	//JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
 	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
-	JS::SetGCSliceCallback(get(), handle_slice);
+	//JS::SetGCSliceCallback(get(), handle_slice);
 	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
 	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
@@ -3643,8 +3782,6 @@ bool
 ircd::js::runtime::handle_interrupt(JSContext *const ctx)
 noexcept
 {
-	log.debug("JSContext(%p): Interrupt", (const void *)ctx);
-
 	auto &c(our(ctx));
 	return c.handle_interrupt();
 }

@@ -26,7 +26,6 @@
 #pragma once
 #define HAVE_IRCD_RFC1459_H
 
-#ifdef __cplusplus
 namespace ircd      {
 namespace rfc1459   {
 
@@ -35,7 +34,8 @@ IRCD_EXCEPTION(error, syntax_error)
 
 namespace character
 {
-	enum attr : uint
+	enum attr
+	:uint
 	{
 		PRINT    = 0x00000001,
 		CNTRL    = 0x00000002,
@@ -60,8 +60,8 @@ namespace character
 	using attr_t = std::underlying_type<attr>::type;
 
 	extern const std::array<attr_t, 256> attrs;
-	extern const std::array<uint8_t, 256> tolower_tab;
-	extern const std::array<uint8_t, 256> toupper_tab;
+	extern const std::array<unsigned char, 256> tolower_tab;
+	extern const std::array<unsigned char, 256> toupper_tab;
 
 	// Tests
 	bool is(const uint8_t &c, const attr &attr);
@@ -117,37 +117,37 @@ struct less
 {
 	bool operator()(const char *const &a, const char *const &b) const;
 	bool operator()(const std::string &a, const std::string &b) const;
-	bool operator()(const std::string *const &a, const std::string *const &b) const;
+	bool operator()(const std::string_view &a, const std::string_view &b) const;
 };
 
 struct nick
-:std::string
+:string_view
 {
-	template<class... A> nick(A&&... a): std::string{std::forward<A>(a)...} {}
+	using string_view::string_view;
 };
 
 struct user
-:std::string
+:string_view
 {
-	template<class... A> user(A&&... a): std::string{std::forward<A>(a)...} {}
+	using string_view::string_view;
 };
 
 struct host
-:std::string
+:string_view
 {
-	template<class... A> host(A&&... a): std::string{std::forward<A>(a)...} {}
+	using string_view::string_view;
 };
 
 struct cmd
-:std::string
+:string_view
 {
-	template<class... A> cmd(A&&... a): std::string{std::forward<A>(a)...} {}
+	using string_view::string_view;
 };
 
 struct parv
-:std::vector<std::string>
+:std::vector<string_view>
 {
-	using std::vector<std::string>::vector;
+	using std::vector<string_view>::vector;
 };
 
 struct pfx
@@ -166,25 +166,11 @@ struct line
 	struct parv parv;
 
 	bool empty() const;
-	auto &operator[](const size_t &pos) const    { return parv.at(pos);                            }
-	auto &operator[](const size_t &pos)          { return parv.at(pos);                            }
+	auto operator[](const size_t &pos) const     { return parv.at(pos);                            }
+	auto operator[](const size_t &pos)           { return parv.at(pos);                            }
 
-	explicit line(const uint8_t *const &buf, const size_t &len);
-	explicit line(const std::string &line);
-	line(const char *const &line);
+	line(const char *&start, const char *const &stop);
 	line() = default;
-};
-
-struct tape
-:std::deque<line>
-{
-	bool append(const char *const &buf, const size_t &len);
-
-	using std::deque<line>::deque;
-	explicit tape(const uint8_t *const &buf, const size_t &len);
-	explicit tape(const std::string &tape);
-	tape(const char *const &tape);
-	tape() = default;
 };
 
 std::ostream &operator<<(std::ostream &, const pfx &);
@@ -194,11 +180,15 @@ std::ostream &operator<<(std::ostream &, const line &);   // unterminated
 
 
 inline bool
-less::operator()(const std::string *const &a,
-                 const std::string *const &b)
+less::operator()(const std::string_view &a,
+                 const std::string_view &b)
 const
 {
-	return operator()(*a, *b);
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) < tolower(b);
+	});
 }
 
 inline bool
@@ -246,4 +236,3 @@ character::is(const uint8_t &c,
 
 }        // namespace rfc1459
 }        // namespace ircd
-#endif   // __cplusplus

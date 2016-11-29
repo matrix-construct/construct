@@ -31,7 +31,8 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_JS_H
+#ifdef RB_ENABLE_JS
+	#define HAVE_IRCD_JS_JS_H
 
 // SpiderMonkey makes use of the `DEBUG` define in headers which must match what the bottom
 // end was also compiled with. We tie that define to RB_DEBUG controlled by --enable-debug.
@@ -44,9 +45,9 @@
 // SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
 // include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
 // <ircd/xxx.h> and shouldn't have any conflict issues.
-#include <jsapi.h>
-#include <jsfriendapi.h>
-#include <js/Conversions.h>
+#include <RB_INC_JSAPI_H
+#include <RB_INC_JSFRIENDAPI_H
+#include <RB_INC_JS_CONVERSIONS_H
 
 // Some forward declarations for jsapi items not declared in the above includes,
 // but visible to definition files making use of additional jsapi interfaces.
@@ -85,6 +86,7 @@ using ircd::operator<<;
 #include "set.h"
 #include "del.h"
 #include "vector.h"
+#include "xdr.h"
 #include "script.h"
 #include "function.h"
 #include "function_literal.h"
@@ -100,3 +102,5 @@ using ircd::operator<<;
 #include "contract.h"
 #include "star.h"
 #include "task.h"
+
+#endif // defined(RB_ENABLE_JS)

@@ -268,17 +268,7 @@ log::log::log(const std::string &name)
 
 log::log::log(const std::string &name,
               const char &snote)
-:log
-{
-	name, std::make_shared<sno::mode>(snote)
-}
-{
-}
-
-log::log::log(const std::string &name,
-              const lease_ptr &lease)
-:name{name}
-,snote{lease}
+:log{name}
 {
 }
 
@@ -288,7 +278,7 @@ log::log::debug(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(DEBUG, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(DEBUG, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -298,7 +288,7 @@ log::log::info(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(INFO, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(INFO, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -308,7 +298,7 @@ log::log::notice(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(NOTICE, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(NOTICE, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -318,7 +308,7 @@ log::log::warning(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(WARNING, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(WARNING, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -328,7 +318,7 @@ log::log::error(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(ERROR, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(ERROR, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -338,7 +328,7 @@ log::log::critical(const char *const fmt,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(CRITICAL, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(CRITICAL, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -349,7 +339,7 @@ log::log::operator()(const facility &facility,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vlog(facility, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	vlog(facility, name, fmt, ap);
 	va_end(ap);
 }
 
@@ -407,30 +397,6 @@ log::vlog(const facility &fac,
 {
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	slog(fac, [&buf, &name]
-	(std::ostream &s)
-	{
-		s << name << " :" << buf;
-	});
-}
-
-void
-log::vlog(const facility &fac,
-          const std::string &name,
-          const sno::mask &snomask,
-          const char *const &fmt,
-          va_list ap)
-{
-	char buf[1024];
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-/*
-	if(snomask)
-		sendto_realops_snomask(snomask, L_NETWIDE, "%s %s :%s",
-		                       reflect(fac),
-		                       name.size()? name.c_str() : "*",
-		                       buf);
-*/
-
 	slog(fac, [&buf, &name]
 	(std::ostream &s)
 	{
@@ -548,8 +514,12 @@ log::reflect(const facility &f)
 const char *
 ircd::smalldate(const time_t &ltime)
 {
-	static char buf[MAX_DATE_STRING];
+	static const size_t MAX_DATE_STRING
+	{
+		32 // maximum string length for a date string (ircd_defs.h)
+	};
 
+	static char buf[MAX_DATE_STRING];
 	struct tm *const lt(localtime(&ltime));
 	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
 	         lt->tm_year + 1900,

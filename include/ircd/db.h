@@ -93,6 +93,10 @@ struct sopts
 
 enum class opt
 {
+	READ_ONLY,              // Opens database without writing permitted.
+	OPEN_FAST,              // Skips a lot of stuff to make opening a handle faster
+	OPEN_SMALL,             // Optimizes the cache hierarchy for < 1GiB databases.
+	OPEN_BULKLOAD,          // Optimizes the handle to accept a large amount of writes at once
 	NO_CREATE,              // A new database may be created (if none found) unless this is specified
 	NO_EXISTING,            // An error is given if database already exists
 	NO_CHECKSUM,            // (paranoid_checks)
@@ -106,9 +110,6 @@ enum class opt
 	MMAP_WRITES,            // mmap() table files for writing (hinders db journal)
 	STATS_THREAD,           // Stats collection etc related to DB threading (thread_track)
 	STATS_MALLOC,           // Stats collection for memory allocation when applicable
-	OPEN_FAST,              // Skips a lot of stuff to make opening a handle faster
-	OPEN_SMALL,             // Optimizes the cache hierarchy for < 1GiB databases.
-	OPEN_BULKLOAD,          // Optimizes the handle to accept a large amount of writes at once
 	LRU_CACHE,              // Pair with a size in bytes for the LRU cache size
 };
 
@@ -120,8 +121,8 @@ struct opts
 
 struct const_iterator
 {
-	using key_type = std::pair<const char *, size_t>;
-	using mapped_type = std::pair<const char *, size_t>;
+	using key_type = string_view;
+	using mapped_type = string_view;
 	using value_type = std::pair<key_type, mapped_type>;
 
   private:
@@ -163,37 +164,38 @@ class handle
 	std::unique_ptr<rocksdb::DB> d;
 
   public:
-	using closure = std::function<void (const char *, size_t)>;
+	using closure = std::function<void (const string_view &)>;
 
 	// Iterations
-	const_iterator lower_bound(const std::string &key, const gopts & = {});
-	const_iterator upper_bound(const std::string &key, const gopts & = {});
+	const_iterator lower_bound(const string_view &key, const gopts & = {});
+	const_iterator upper_bound(const string_view &key, const gopts & = {});
 	const_iterator cbegin(const gopts & = {});
 	const_iterator cend(const gopts & = {});
 
 	// Tests if key exists
-	bool has(const std::string &key, const gopts & = {});
+	bool has(const string_view &key, const gopts & = {});
 
 	// Perform a get into a closure. This offers a reference to the data with zero-copy.
-	// Be very, very cognizant of the things you do as you sojourn on this odyssey.
-	void get(const std::string &key, const closure &func, const gopts & = {});
+	void operator()(const string_view &key, const closure &func, const gopts & = {});
+	void operator()(const string_view &key, const gopts &, const closure &func);
 
 	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
-	size_t get(const std::string &key, char *const &buf, const size_t &max, const gopts & = {});
-	size_t get(const std::string &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
-	std::string get(const std::string &key, const gopts & = {});
+	size_t get(const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
+	size_t get(const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
+	std::string get(const string_view &key, const gopts & = {});
 
 	// Write data to the db
-	void set(const std::string &key, const char *const &buf, const size_t &size, const sopts & = {});
-	void set(const std::string &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
-	void set(const std::string &key, const std::string &value, const sopts & = {});
+	void set(const string_view &key, const string_view &value, const sopts & = {});
+	void set(const string_view &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
 
 	// Remove data from the db. not_found is never thrown.
-	void del(const std::string &key, const sopts & = {});
+	void del(const string_view &key, const sopts & = {});
 
 	handle(const std::string &name, const opts & = {});
 	~handle() noexcept;
 };
+
+void write(handle &, const string_view &key, const json::doc &obj, const sopts & = {});
 
 const_iterator begin(handle &);
 const_iterator end(handle &);

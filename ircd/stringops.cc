@@ -22,6 +22,122 @@
 
 #include <RB_INC_BOOST_TOKENIZER_HPP
 
+ircd::string_view
+ircd::token_first(const string_view &str,
+                  const char *const &sep)
+{
+	return token(str, sep, 0);
+}
+
+ircd::string_view
+ircd::token_last(const string_view &str,
+                 const char *const &sep)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+
+	auto it(begin(view));
+	if(it == end(view))
+		return str.empty()? str : throw std::out_of_range("token out of range");
+
+	auto ret(it);
+	while(it != end(view))
+		ret = it++;
+
+	return *ret;
+}
+
+ircd::string_view
+ircd::token(const string_view &str,
+            const char *const &sep,
+            const size_t &i)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+	const auto it(at(begin(view), end(view), i));
+	return *it;
+}
+
+size_t
+ircd::tokens_count(const string_view &str,
+                   const char *const &sep)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+	return std::distance(begin(view), end(view));
+}
+
+size_t
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             char *const &buf,
+             const size_t &max,
+             const token_view &closure)
+{
+	char *ptr(buf);
+	char *const stop(buf + max);
+	tokens(str, sep, [&closure, &ptr, &stop]
+	(const string_view &token)
+	{
+		const size_t terminated_size(token.size() + 1);
+		const size_t remaining(std::distance(ptr, stop));
+		if(remaining < terminated_size)
+			return;
+
+		char *const dest(ptr);
+		ptr += strlcpy(dest, token.data(), terminated_size);
+		closure(string_view(dest, token.size()));
+	});
+
+	return std::distance(buf, ptr);
+}
+
+size_t
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             const size_t &limit,
+             const token_view &closure)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+
+	size_t i(0);
+	for(auto it(begin(view)); i < limit && it != end(view); ++it, i++)
+		closure(*it);
+
+	return i;
+}
+
+void
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             const token_view &closure)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+	std::for_each(begin(view), end(view), closure);
+}
+
 /*
  * strip_colour - remove colour codes from a string
  * -asuffield (?)
@@ -130,158 +246,12 @@ ircd::reconstruct_parv(int parc, const char *parv[])
 {
 	static char tmpbuf[BUFSIZE];
 
-	rb_strlcpy(tmpbuf, parv[0], BUFSIZE);
+	strlcpy(tmpbuf, parv[0], BUFSIZE);
 	for (int i = 1; i < parc; i++)
 	{
-		rb_strlcat(tmpbuf, " ", BUFSIZE);
-		rb_strlcat(tmpbuf, parv[i], BUFSIZE);
+		strlcat(tmpbuf, " ", BUFSIZE);
+		strlcat(tmpbuf, parv[i], BUFSIZE);
 	}
 
 	return tmpbuf;
-}
-
-std::string
-ircd::token(const std::string &str,
-            const char *const &sep,
-            const size_t &at)
-{
-	using delim = boost::char_separator<char>;
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-
-	size_t i(0);
-	auto it(begin(view));
-	for(; it != end(view); ++it, i++)
-		if(i == at)
-			return *it;
-
-	if(str.empty())
-		return str;
-
-	// Moving the iterator may cause a parse, so there is no pre-check on the bounds;
-	// the valid token is returned in the loop, and exiting the loop is an error.
-	throw std::out_of_range("token out of range");
-}
-
-std::string
-ircd::token_last(const std::string &str,
-                 const char *const &sep)
-{
-	using delim = boost::char_separator<char>;
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-
-	auto it(begin(view));
-	if(it == end(view))
-		return str.empty()? str : throw std::out_of_range("token out of range");
-
-	auto ret(it);
-	while(it != end(view))
-		ret = it++;
-
-	return *ret;
-}
-
-size_t
-ircd::token_count(const std::string &str,
-                  const char *const &sep)
-{
-	using delim = boost::char_separator<char>;
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-	return std::distance(begin(view), end(view));
-}
-
-std::vector<std::string>
-ircd::tokens(const std::string &str,
-             const char *const &sep,
-             const size_t &reserve)
-{
-	using delim = boost::char_separator<char>;
-
-	std::vector<std::string> ret;
-	ret.reserve(reserve);
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-	std::copy(begin(view), end(view), std::back_inserter(ret));
-
-	return ret;
-}
-
-void
-ircd::tokens(const std::string &str,
-             const char *const &sep,
-             const token_closure_string &closure)
-{
-	using delim = boost::char_separator<char>;
-
-	const delim d(sep);
-	const boost::tokenizer<delim> view(str, d);
-	std::for_each(begin(view), end(view), closure);
-}
-
-std::vector<char *>
-ircd::tokens(const char *const &str,
-             const char *const &sep,
-             char *const &buf,
-             const size_t &max,
-             const size_t &reserve)
-{
-	std::vector<char *> ret;
-	ret.reserve(reserve);
-	rb_strlcpy(buf, str, max);
-	tokens(buf, sep, [&ret]
-	(char *const &token)
-	{
-		ret.emplace_back(token);
-	});
-
-	return ret;
-}
-
-void
-ircd::tokensa(const char *const &str,
-              const char *const &sep,
-              const token_closure_cstr &closure)
-{
-	custom_ptr<char> cpy(strdup(str), std::free);
-	tokens(cpy.get(), sep, closure);
-}
-
-void
-ircd::tokens(const char *const &str,
-             const char *const &sep,
-             const token_closure_cstr &closure)
-{
-	const auto len(strlen(str));
-	char buf[strlen(str) + 1];
-	tokens(str, sep, buf, sizeof(buf), closure);
-}
-
-void
-ircd::tokens(const char *const &str,
-             const char *const &sep,
-             char *const &buf,
-             const size_t &max,
-             const token_closure_cstr &closure)
-{
-	rb_strlcpy(buf, str, max);
-	tokens(buf, sep, closure);
-}
-
-void
-ircd::tokens(char *const &str,
-             const char *const &sep,
-             const token_closure_cstr &closure)
-{
-	char *ctx;
-	char *tok(strtok_r(str, sep, &ctx)); do
-	{
-		closure(tok);
-	}
-	while((tok = strtok_r(NULL, sep, &ctx)) != NULL);
 }

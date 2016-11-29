@@ -1,17 +1,10 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = include/rb
-SUBDIRS += include/ircd
-SUBDIRS += rb
+SUBDIRS = include/ircd
 SUBDIRS += ircd
 SUBDIRS += charybdis
-#SUBDIRS += authd
-#SUBDIRS += bandb
-#SUBDIRS += ssld
-#SUBDIRS += wsockd
 SUBDIRS += modules
-#SUBDIRS += extensions
 SUBDIRS += tools
 SUBDIRS += help
 SUBDIRS += doc

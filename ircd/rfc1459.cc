@@ -29,28 +29,12 @@ namespace karma = boost::spirit::karma;
 
 namespace ircd    {
 namespace rfc1459 {
+namespace parse   {
 
-// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::line object.
-// The top rule is inherited and then specified as grammar::line, which is compatible
-// with an rfc1459::line object.
-//
-struct head
-:parse::grammar<const uint8_t *, rfc1459::line>
-{
-	head(): grammar{grammar::line} {}
-}
-static const head;
+decltype(head) head;
+decltype(capstan) capstan;
 
-// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::tape object.
-// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
-//
-struct capstan
-:parse::grammar<const uint8_t *, rfc1459::tape>
-{
-	capstan(): grammar{grammar::tape} {}
-}
-static const capstan;
-
+} // namespace parse
 } // namespace rfc1459
 } // namespace ircd
 
@@ -85,14 +69,14 @@ rfc1459::operator<<(std::ostream &s, const parv &parv)
 	using karma::delimit;
 
 	struct generate_middle
-	:gen::grammar<karma::ostream_iterator<char>, std::string()>
+	:gen::grammar<karma::ostream_iterator<char>, string_view>
 	{
 		generate_middle(): grammar{grammar::middle} {}
 	}
 	static const generate_middle;
 
 	struct generate_trailing
-	:gen::grammar<karma::ostream_iterator<char>, std::string()>
+	:gen::grammar<karma::ostream_iterator<char>, string_view>
 	{
 		generate_trailing(): grammar{grammar::trailing} {}
 	}
@@ -145,75 +129,13 @@ rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 	return s;
 }
 
-rfc1459::tape::tape(const std::string &str)
-:tape
-{
-	reinterpret_cast<const uint8_t *>(str.data()),
-	str.size()
-}
-{
-}
-
-rfc1459::tape::tape(const char *const &str)
-:tape
-{
-	reinterpret_cast<const uint8_t *>(str),
-	strlen(str)
-}
-{
-}
-
-rfc1459::tape::tape(const uint8_t *const &buf,
-                    const size_t &size)
+rfc1459::line::line(const char *&start,
+                    const char *const &stop)
 try
 {
-	const uint8_t *start(buf);
-	const uint8_t *stop(buf + size);
-	qi::parse(start, stop, capstan, *this);
+	qi::parse(start, stop, parse::head, *this);
 }
-catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
-{
-	throw syntax_error("@%d expecting :%s",
-	                   int(e.last - e.first),
-	                   string(e.what_).c_str());
-}
-
-bool
-rfc1459::tape::append(const char *const &buf,
-                      const size_t &len)
-{
-	const auto &start(reinterpret_cast<const uint8_t *>(buf));
-	const auto &stop(start + len);
-	return qi::parse(start, stop, capstan, *this);
-}
-
-rfc1459::line::line(const std::string &str)
-:line
-{
-	reinterpret_cast<const uint8_t *>(str.data()),
-	str.size()
-}
-{
-}
-
-rfc1459::line::line(const char *const &str)
-:line
-{
-	reinterpret_cast<const uint8_t *>(str),
-	strlen(str)
-}
-{
-}
-
-rfc1459::line::line(const uint8_t *const &buf,
-                    const size_t &size)
-try
-{
-	const uint8_t *start(buf);
-	const uint8_t *stop(buf + size);
-	qi::parse(start, stop, head, *this);
-}
-catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
+catch(const boost::spirit::qi::expectation_failure<const char *> &e)
 {
 	throw syntax_error("@%d expecting :%s",
 	                   int(e.last - e.first),

@@ -25,6 +25,19 @@
 namespace ircd {
 namespace js   {
 
+// contract is a promise from C to a future in JS. When a task has no more pending contracts,
+// it ceases to exist.
+//
+// * The promise is the `struct contract` instantiated in C.
+// * The future is returned into JS as an object trapped by "future" (future.so)
+// * C unconditionally enters the closure to report result.
+// * * if the C closure returns a `value` the "value" field is set in JS
+// * * if the C closure throws an exception the "error" field conveys the exception in JS
+// *
+// * "id": uint
+// * "value": object [optional]
+// * "error": exception object [optional]
+//
 struct contract
 :std::weak_ptr<struct task>
 {

@@ -44,6 +44,60 @@ IRCD_EXCEPTION(error, invalid_export)
 
 extern struct log::log log;
 
+struct paths
+:std::vector<std::string>
+{
+	bool added(const std::string &dir) const;
+
+	bool del(const std::string &dir);
+	bool add(const std::string &dir, std::nothrow_t);
+	bool add(const std::string &dir);
+
+	paths();
+}
+extern paths;
+
+struct mod;
+struct module
+:std::shared_ptr<mod>
+{
+	std::string name() const;
+	std::string path() const;
+
+	bool has(const std::string &name) const;
+
+	template<class T = uint8_t> const T *ptr(const std::string &name) const;
+	template<class T = uint8_t> T *ptr(const std::string &name);
+
+	template<class T> const T &get(const std::string &name) const;
+	template<class T> T &get(const std::string &name);
+
+	module() = default;
+	module(const std::string &name);
+	~module() noexcept;
+};
+
+template<> const uint8_t *module::ptr<const uint8_t>(const std::string &name) const;
+template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
+
+std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
+std::vector<std::string> symbols(const std::string &fullpath);
+std::vector<std::string> sections(const std::string &fullpath);
+
+// Find module names where symbol resides
+bool has_symbol(const std::string &name, const std::string &symbol);
+std::vector<std::string> find_symbol(const std::string &symbol);
+
+// returns dir/name of first dir containing 'name' (and this will be a loadable module)
+// Unlike libltdl, the reason each individual candidate failed is presented in a vector.
+std::string search(const std::string &name, std::vector<std::string> &why);
+std::string search(const std::string &name);
+
+// Potential modules available to load
+std::forward_list<std::string> available();
+bool available(const std::string &name);
+bool loaded(const std::string &name);
+
 // Initialization and destruction singleton held by ircd::main()
 struct init
 {
@@ -54,12 +108,38 @@ struct init
 } // namespace mods
 } // namespace ircd
 
-#include "mods/paths.h"                          // Utility interface
-#include "mods/mods.h"                           // Utility interface
-#include "mods/module.h"                         // Public user interface
-
 namespace ircd {
 
 using mods::module;                              // Bring struct module into main ircd::
 
 } // namespace ircd
+
+template<class T>
+T &
+ircd::mods::module::get(const std::string &name)
+{
+	return *ptr<T>(name);
+}
+
+template<class T>
+const T &
+ircd::mods::module::get(const std::string &name)
+const
+{
+	return *ptr<T>(name);
+}
+
+template<class T>
+T *
+ircd::mods::module::ptr(const std::string &name)
+{
+	return reinterpret_cast<T *>(ptr<uint8_t>(name));
+}
+
+template<class T>
+const T *
+ircd::mods::module::ptr(const std::string &name)
+const
+{
+	return reinterpret_cast<const T *>(ptr<const uint8_t>(name));
+}

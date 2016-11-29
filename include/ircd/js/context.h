@@ -52,7 +52,7 @@ struct context
 	struct opts
 	{
 		size_t stack_chunk_size       = 8_KiB;
-		microseconds timer_limit      = 10ms;
+		microseconds timer_limit      = 10s;
 	}
 	opts;
 

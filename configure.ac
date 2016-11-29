@@ -31,7 +31,7 @@ AC_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_LANG(C++)
-AC_CONFIG_HEADER(include/rb/config.h)
+AC_CONFIG_HEADER(include/ircd/config.h)
 AX_CXX_COMPILE_STDCXX([14], [gnu], [mandatory], 201300)
 
 AC_PROG_YACC
@@ -53,21 +53,14 @@ dnl
 
 AC_CONFIG_FILES(\
 	Makefile                \
-	include/rb/Makefile     \
 	include/ircd/Makefile   \
-	rb/Makefile             \
-	authd/Makefile          \
 	charybdis/Makefile      \
 	ircd/Makefile           \
-	bandb/Makefile          \
 	doc/Makefile            \
-	extensions/Makefile     \
 	help/Makefile           \
 	modules/Makefile        \
-	ssld/Makefile           \
 	tools/Makefile          \
-	tools/genssl            \
-	wsockd/Makefile         \
+	tools/genssl
 )
 
 AM_INIT_AUTOMAKE([subdir-objects])
@@ -267,59 +260,21 @@ AC_DEFUN([RB_CHK_SYSHEADER],
 
 AC_HEADER_STDBOOL
 dnl AC_HEADER_STDC
-RB_CHK_SYSHEADER([errno.h],        [ERRNO_H])
 RB_CHK_SYSHEADER([assert.h],       [ASSERT_H])
-RB_CHK_SYSHEADER([stddef.h],       [STDDEF_H])
 RB_CHK_SYSHEADER([stdarg.h],       [STDARG_H])
-RB_CHK_SYSHEADER([stdint.h],       [STDINT_H])
-RB_CHK_SYSHEADER([inttypes.h],     [INTTYPES_H])
-RB_CHK_SYSHEADER([ctype.h],        [CTYPE_H])
-RB_CHK_SYSHEADER([limits.h],       [LIMITS_H])
-RB_CHK_SYSHEADER([stdlib.h],       [STDLIB_H])
-RB_CHK_SYSHEADER([unistd.h],       [UNISTD_H])
-RB_CHK_SYSHEADER([time.h],         [TIME_H])
-RB_CHK_SYSHEADER([fcntl.h],        [FCNTL_H])
-RB_CHK_SYSHEADER([signal.h],       [SIGNAL_H])
-RB_CHK_SYSHEADER([dirent.h],       [DIRENT_H])
-RB_CHK_SYSHEADER([sys/types.h],    [SYS_TYPES_H])
 RB_CHK_SYSHEADER([sys/time.h],     [SYS_TIME_H])
-RB_CHK_SYSHEADER([sys/stat.h],     [SYS_STAT_H])
-RB_CHK_SYSHEADER([sys/file.h],     [SYS_FILE_H])
-RB_CHK_SYSHEADER([sys/param.h],    [SYS_PARAM_H])
 RB_CHK_SYSHEADER([sys/resource.h], [SYS_RESOURCE_H])
-RB_CHK_SYSHEADER([sys/socket.h],   [SYS_SOCKET_H])
-RB_CHK_SYSHEADER([sys/syslog.h],   [SYS_SYSLOG_H])
-RB_CHK_SYSHEADER([sys/wait.h],     [SYS_WAIT_H])
-RB_CHK_SYSHEADER([wait.h],         [WAIT_H])
-RB_CHK_SYSHEADER([arpa/inet.h],    [ARPA_INET_H])
-RB_CHK_SYSHEADER([netinet/in.h],   [NETINET_IN_H])
-RB_CHK_SYSHEADER([netinet/tcp.h],  [NETINET_TCP_H])
-RB_CHK_SYSHEADER([string.h],       [STRING_H])
-RB_CHK_SYSHEADER([strings.h],      [STRINGS_H])
-RB_CHK_SYSHEADER([stdio.h],        [STDIO_H])
-RB_CHK_SYSHEADER([crypt.h],        [CRYPT_H])
-RB_CHK_SYSHEADER([sys/uio.h],      [SYS_UIO_H])
-RB_CHK_SYSHEADER([spawn.h],        [SPAWN_H])
-RB_CHK_SYSHEADER([sys/poll.h],     [SYS_POLL_H])
-RB_CHK_SYSHEADER([sys/epoll.h],    [SYS_EPOLL_H])
-RB_CHK_SYSHEADER([sys/select.h],   [SYS_SELECT_H])
-RB_CHK_SYSHEADER([sys/devpoll.h],  [SYS_DEVPOLL_H])
-RB_CHK_SYSHEADER([sys/event.h],    [SYS_EVENT_H])
-RB_CHK_SYSHEADER([port.h],         [PORT_H])
-RB_CHK_SYSHEADER([sys/signalfd.h], [SYS_SIGNALFD_H])
-RB_CHK_SYSHEADER([sys/timerfd.h],  [SYS_TIMERFD_H])
-RB_CHK_SYSHEADER([execinfo.h],     [EXECINFO_H])
-RB_CHK_SYSHEADER([machine/endian.h], [MACHINE_ENDIAN_H])
-
 RB_CHK_SYSHEADER([cstddef],        [CSTDDEF])
 RB_CHK_SYSHEADER([cstdint],        [CSTDINT])
 RB_CHK_SYSHEADER([limits],         [LIMITS])
 RB_CHK_SYSHEADER([type_traits],    [TYPE_TRAITS])
 RB_CHK_SYSHEADER([typeindex],      [TYPEINDEX])
+RB_CHK_SYSHEADER([variant],        [VARIANT])
 RB_CHK_SYSHEADER([utility],        [UTILITY])
 RB_CHK_SYSHEADER([functional],     [FUNCTIONAL])
 RB_CHK_SYSHEADER([algorithm],      [ALGORITHM])
 RB_CHK_SYSHEADER([numeric],        [NUMERIC])
+RB_CHK_SYSHEADER([cmath],          [CMATH])
 RB_CHK_SYSHEADER([memory],         [MEMORY])
 RB_CHK_SYSHEADER([exception],      [EXCEPTION])
 RB_CHK_SYSHEADER([cerrno],         [CERRNO])
@@ -335,6 +290,7 @@ RB_CHK_SYSHEADER([vector],         [VECTOR])
 RB_CHK_SYSHEADER([forward_list],   [FORWARD_LIST])
 RB_CHK_SYSHEADER([unordered_map],  [UNORDERED_MAP])
 RB_CHK_SYSHEADER([string],         [STRING])
+RB_CHK_SYSHEADER([cstring],        [CSTRING])
 RB_CHK_SYSHEADER([locale],         [LOCALE])
 RB_CHK_SYSHEADER([codecvt],        [CODECVT])
 RB_CHK_SYSHEADER([sstream],        [SSTREAM])
@@ -395,104 +351,24 @@ AC_CHECK_FUNCS([        \
 	strlcpy             \
 	strlcat             \
 	strnlen             \
-	strcasestr          \
-	strcasecmp          \
-	strncasecmp         \
-	strdup              \
-	strndup             \
-	strtok_r            \
 	snprintf            \
-	vsnprintf           \
-	gettimeofday        \
-	getrusage           \
-	gmtime_r            \
-	usleep              \
-	fstat               \
-	writev              \
-	sendmsg             \
-	socketpair          \
-	signalfd            \
-	timerfd_create      \
-	port_create         \
-	epoll_ctl           \
-	kevent              \
-	poll                \
-	select              \
-	getexecname         \
-	posix_spawn         \
-	arc4random          \
+	vsnprintf
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
-AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
 
 
 dnl
 dnl Networking Functions
 dnl
 
-AC_SEARCH_LIBS(socket, [socket],,)
-AC_CHECK_MEMBER([struct sockaddr.sa_len], [AC_DEFINE(SOCKADDR_IN_HAS_LEN, 1, [Define to 1 if sockaddr has a 'sa_len' member.])],,[[
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#endif
-]])
-
-AC_CHECK_TYPE([socklen_t], rb_cv_socklen_t=socklen_t,[
-	AC_MSG_CHECKING([for socklen_t equivalent])
-	AC_CACHE_VAL([rb_cv_socklen_t],
-	[
-	# Systems have either "struct sockaddr *" or
-	# "void *" as the second argument to getpeername
-	rb_cv_socklen_t=
-	for arg2 in "struct sockaddr" void; do
-		for t in int size_t unsigned long "unsigned long"; do
-			AC_TRY_COMPILE([
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
-int getpeername (int, $arg2 *, $t *);
-],[
-$t len;
-getpeername(0,0,&len);
-],[
-	rb_cv_socklen_t="$t"
-	break
+AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
+[
+	ipv6=$enableval
+], [
+	ipv6=yes
 ])
-		done
-	done
-
-	if test "x$rb_cv_socklen_t" = x; then
-		AC_MSG_WARN([Cannot find a type to use in place of socklen_t using int])
-		rb_cv_socklen_t=int
-	fi
-	])
-	AC_MSG_RESULT($rb_cv_socklen_t)],
-	[#include <sys/types.h>
-#include <sys/socket.h>])
-
-rb_socklen_t=$rb_cv_socklen_t
-
-AC_CHECK_TYPE([sa_family_t], [],
-[AC_DEFINE(sa_family_t, [u_int16_t], [If system does not define sa_family_t, define it here.])],
-[[#include <sys/types.h>
-#include <sys/socket.h>]])
-
-AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]), [ipv6=$enableval], [ipv6=yes])
 
 dnl TODO: IPV6 CHECKS
 
@@ -501,75 +377,6 @@ if test x$ipv6 = "Xyes"; then
 else
 	AC_DEFINE([HAVE_IPV6], [0], [IPv6 not supported])
 fi
-
-AC_CHECK_TYPES([struct sockaddr_storage],[
-	rb_have_sockaddr_storage=yes
-        ],[], [
-		#include <sys/types.h>
-		#include <sys/socket.h>
-	])
-
-
-AC_MSG_CHECKING(for /dev/poll)
-if test -c "/dev/poll"; then
-        AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_DEVPOLL, [1], [Define to 1 if you have devpoll])
-else
-	AC_MSG_RESULT(no)
-fi
-
-
-dnl SunOS/Solaris required libnsl for inet_ntoa()
-if test x"$SUN" = xyes; then
-	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
-fi
-
-AC_SEARCH_LIBS(crypt, [crypt descrypt],,)
-
-CRYPT_LIB=$ac_cv_search_crypt
-
-if test "$CRYPT_LIB" = "none required"; then
-	unset CRYPT_LIB
-elif test "$CRYPT_LIB" = no; then
-	unset CRYPT_LIB
-fi
-
-AC_SUBST(CRYPT_LIB)
-
-dnl definitions are in m4/charybdis.m4
-RB_CHECK_TIMER_CREATE
-RB_CHECK_TIMERFD_CREATE
-
-AC_CHECK_TYPE([sa_family_t], [],
-[AC_DEFINE(sa_family_t, [u_int16_t], [If system does not define sa_family_t, define it here.])],
-[[#include <sys/types.h>
-#include <sys/socket.h>]])
-
-dnl check for various functions...
-
-
-dnl check for nanosleep
-AC_CHECK_FUNC(nanosleep,,[AC_CHECK_LIB(rt,nanosleep,
-                 LIBS="${LIBS} -lrt",
-                 [AC_CHECK_LIB(posix4,nanosleep, LIBS="${LIBS} -lposix4"
-                 )])])
-if test x$ac_cv_func_nanosleep = xno && test x$ac_cv_lib_posix4_nanosleep = xno  && test x$ac_cv_lib_rt_nanosleep = xno
-then
-         AC_MSG_RESULT("nanosleep not found..using select for delay")
-else
-	 AC_DEFINE([HAVE_NANOSLEEP], 1, [Define if nanosleep exists])
-fi
-
-dnl check for /dev/null so we can use it to hold evil fd's
-AC_MSG_CHECKING([for /dev/null])
-if test -c /dev/null ; then
-	AC_DEFINE(PATH_DEVNULL, "/dev/null", [Path to /dev/null])
-	AC_MSG_RESULT(yes)
-else
-	AC_DEFINE(PATH_DEVNULL, "devnull.log", [Path to /dev/null])
-	AC_MSG_RESULT(no - using devnull.log)
-fi
-
 
 
 dnl ***************************************************************************
@@ -813,7 +620,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	fi
 
 	boost_linkage="$withval"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release shared multi
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release $withval multi
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
@@ -858,9 +665,7 @@ else
 	[
 		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine-mgw53-1_61.dll.a $boost_libdir/libboost_context-mgw53-1_61.dll.a $boost_libdir/libboost_thread-mgw53-1_61.dll.a $boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system"])
-dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem.a"])
-dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine.a $boost_libdir/libboost_context.a $boost_libdir/libboost_thread.a $boost_libdir/libboost_filesystem.a $boost_libdir/libboost_system.a"])
 	])
 fi
 
@@ -973,6 +778,11 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	fi
 
 	bash tools/buildjs.sh "$js_branch" "$js_options" "$js_jobs"
+
+	RB_DEFINE_UNQUOTED([ENABLE_JS], [1], [ Enable JavaScript support. ])
+	RB_DEFINE_UNQUOTED([INC_JSAPI_H], [jsapi.h>], [ SpiderMonkey JavaScript API. ])
+	RB_DEFINE_UNQUOTED([INC_JSFRIENDAPI_H], [jsfriendapi.h>], [ SpiderMonkey JavaScript Extended API. ])
+	RB_DEFINE_UNQUOTED([INC_JS_CONVERSIONS_H], [js/Conversions.h>], [ SpiderMonkey JavaScript Conversions. ])
 ],[
 	AC_MSG_RESULT([no])
 	with_included_js="no"
@@ -982,15 +792,29 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	[
 
 	], [
-		AC_MSG_ERROR([Unable to find required JS engine (SpiderMonkey 45) package. Try apt-get install libmozjs-dev])
+		AC_MSG_WARN([Unable to find JS engine (SpiderMonkey 45) package. Try apt-get install libmozjs-dev])
 	])
 
 	dnl TODO
-	AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-45"])
-	AC_SUBST(JS_LDFLAGS, [])
-	AC_SUBST(JS_LIBS, ["-lmozjs-45"])
+	dnl AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-45"])
+	dnl AC_SUBST(JS_LDFLAGS, [])
+	dnl AC_SUBST(JS_LIBS, ["-lmozjs-45"])
 ])
 
+dnl TODO use an $enable_js var
+AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
+
+
+dnl
+dnl libgmp support
+dnl
+
+PKG_CHECK_MODULES(GMP, [libgmp], [have_gmp="yes"], [have_gmp="no"])
+AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
+
+AC_SUBST(GMP_CPPFLAGS, [])
+AC_SUBST(GMP_LDFLAGS, [])
+AC_SUBST(GMP_LIBS, ["-lgmp"])
 
 
 dnl
@@ -1427,6 +1251,7 @@ echo "Building RocksDB................... $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
+echo "GNU MP support .................... $have_gmp"
 echo "IPv6 support ...................... $ipv6"
 echo "SSL type........................... $SSL_TYPE"
 echo "Installing into ................... $prefix"

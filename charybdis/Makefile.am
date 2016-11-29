@@ -10,11 +10,11 @@ AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
 	-Wl,--no-undefined \
-	-Wl,--no-gnu-unique
+	-Wl,--no-gnu-unique \
+	$(PLATFORM_LDFLAGS)
 
 AM_LDFLAGS += \
 	-L$(top_srcdir)/ircd \
-	-L$(top_srcdir)/rb \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@
@@ -28,7 +28,8 @@ charybdis_SOURCES = \
 
 charybdis_LDADD = \
 	-lircd \
-	-lrb \
 	@ROCKSDB_LIBS@ \
 	@JS_LIBS@ \
-	@BOOST_LIBS@
+	@BOOST_LIBS@ \
+	-lcrypto \
+	-lssl

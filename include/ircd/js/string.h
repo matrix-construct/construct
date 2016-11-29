@@ -80,6 +80,8 @@ struct string
 		using is_transparent = std::true_type;
 		template<class A, class B> bool operator()(const A &, const B &) const;
 	};
+
+	friend std::ostream & operator<<(std::ostream &os, const string &s);
 };
 
 template<class T> constexpr bool is_string();
@@ -113,10 +115,8 @@ string_pair split(const string &s, const char16_t &c);
 string substr(const string &s, const size_t &pos, const size_t &len);
 string operator+(const string &left, const string &right);
 
-template<class string> using string_closure = std::function<void (const string &)>;
-void tokens(const string &, const char &sep, const string_closure<string> &);
-
-std::ostream & operator<<(std::ostream &os, const string &s);
+using string_closure = std::function<void (const string &)>;
+void tokens(const string &, const char &sep, const string_closure &);
 
 inline
 string::string()
@@ -337,7 +337,7 @@ operator<<(std::ostream &os, const string &s)
 inline void
 tokens(const string &str,
        const char &sep,
-       const string_closure<string> &closure)
+       const string_closure &closure)
 {
 	for(auto pair(split(str, sep));; pair = split(pair.second, sep))
 	{

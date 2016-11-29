@@ -36,8 +36,8 @@
 // Public interface emulating std::thread; included automatically from here.
 // To spawn and manipulate contexts, deal with this object.
 //
-// `struct ctx` <ircd/ctx/ctx.h>
-// Internal implementation of the context and state holder. This is not included here.
+// `struct ctx` (ircd/ctx.cc)
+// Internal implementation of the context. This is not included here.
 // Several low-level functions are exposed for library creators. This file is usually
 // included when boost/asio.hpp is also included and calls are actually made into boost.
 //
@@ -52,56 +52,10 @@ IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, interrupted)
 IRCD_EXCEPTION(error, timeout)
 
-enum flags
-{
-	DEFER_POST      = 0x0001,   // Defers spawn with an ios.post()
-	DEFER_DISPATCH  = 0x0002,   // (Defers) spawn with an ios.dispatch()
-	DEFER_STRAND    = 0x0004,   // Defers spawn by posting to strand
-	SPAWN_STRAND    = 0x0008,   // Spawn onto a strand, otherwise ios itself
-	SELF_DESTRUCT   = 0x0010,   // Context deletes itself; see struct context constructor notes
-	INTERRUPTED     = 0x0020,   // Marked
-};
-
-const auto DEFAULT_STACK_SIZE = 64_KiB;
-
-// Context implementation
-struct ctx;                                      // Internal implementation to hide boost headers
-
-const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
-const flags &flags(const ctx &);                 // Get the internal flags value.
-bool finished(const ctx &);                      // Context function returned (or exception).
-bool started(const ctx &);                       // Context was ever entered.
-void interrupt(ctx &);                           // Interrupt the context for termination.
-bool notify(ctx &);                              // Increment the semaphore (only library ppl need this)
-
-// this_context
-extern __thread struct ctx *current;             // Always set to the currently running context or null
-
-ctx &cur();                                      // Convenience for *current (try to use this instead)
-void yield();                                    // Allow other contexts to run before returning.
-void wait();                                     // Returns when context notified.
-
-// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
-microseconds wait(const microseconds &, const std::nothrow_t &);
-template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
-template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
-
-// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
-bool wait_until(const time_point &tp, const std::nothrow_t &);
-template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
-template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
-
-// Ignores notes. Throws if interrupted.
-void sleep_until(const time_point &tp);
-template<class duration> void sleep(const duration &);
-void sleep(const int &secs);
-
 } // namespace ctx
-
-using ctx::timeout;
-
 } // namespace ircd
 
+#include "ctx/ctx.h"
 #include "ctx/context.h"
 #include "ctx/prof.h"
 #include "ctx/dock.h"
@@ -114,57 +68,9 @@ using ctx::timeout;
 #include "ctx/pool.h"
 #include "ctx/ole.h"
 
-inline void
-ircd::ctx::sleep(const int &secs)
-{
-	sleep(seconds(secs));
-}
+namespace ircd {
 
-template<class duration>
-void
-ircd::ctx::sleep(const duration &d)
-{
-	sleep_until(steady_clock::now() + d);
-}
+using ctx::timeout;
+using ctx::context;
 
-template<class E>
-ircd::throw_overload<E>
-ircd::ctx::wait_until(const time_point &tp)
-{
-	if(wait_until<std::nothrow_t>(tp))
-		throw E();
-}
-
-template<class E>
-ircd::nothrow_overload<E, bool>
-ircd::ctx::wait_until(const time_point &tp)
-{
-	return wait_until(tp, std::nothrow);
-}
-
-template<class E,
-         class duration>
-ircd::throw_overload<E, duration>
-ircd::ctx::wait(const duration &d)
-{
-	const auto ret(wait<std::nothrow_t>(d));
-	return ret <= duration(0)? throw E() : ret;
-}
-
-template<class E,
-         class duration>
-ircd::nothrow_overload<E, duration>
-ircd::ctx::wait(const duration &d)
-{
-	using std::chrono::duration_cast;
-
-	const auto ret(wait(duration_cast<microseconds>(d), std::nothrow));
-	return duration_cast<duration>(ret);
-}
-
-inline ircd::ctx::ctx &
-ircd::ctx::cur()
-{
-	assert(current);
-	return *current;
-}
+} // namespace ircd

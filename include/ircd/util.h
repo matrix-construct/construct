@@ -26,11 +26,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_H
 
-#ifdef __cplusplus
-
 namespace ircd        {
 inline namespace util {
-
 
 #define IRCD_EXPCAT(a, b)   a ## b
 #define IRCD_CONCAT(a, b)   IRCD_EXPCAT(a, b)
@@ -115,7 +112,7 @@ for_each(const std::function<void (const Enum &)> &func)
 
 struct case_insensitive_less
 {
-	bool operator()(const std::string &a, const std::string &b) const
+	bool operator()(const std::string_view &a, const std::string_view &b) const
 	{
 		return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
 		(const char &a, const char &b)
@@ -280,6 +277,13 @@ hash(const char *const &str,
 }
 
 inline size_t
+hash(const std::string_view &str,
+     const size_t i = 0)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
+}
+
+inline size_t
 hash(const std::string &str,
      const size_t i = 0)
 {
@@ -308,14 +312,14 @@ hash(const std::u16string &str,
  * as if a macro turned that into (8 * 1024 * 1024) at compile time.
  */
 
-#define UNIT_LITERAL_LL(name, morphism)             \
+#define IRCD_UNIT_LITERAL_LL(name, morphism)        \
 constexpr auto                                      \
 operator"" _ ## name(const unsigned long long val)  \
 {                                                   \
     return (morphism);                              \
 }
 
-#define UNIT_LITERAL_LD(name, morphism)             \
+#define IRCD_UNIT_LITERAL_LD(name, morphism)        \
 constexpr auto                                      \
 operator"" _ ## name(const long double val)         \
 {                                                   \
@@ -323,36 +327,36 @@ operator"" _ ## name(const long double val)         \
 }
 
 // IEC unit literals
-UNIT_LITERAL_LL( B,    val                                                              )
-UNIT_LITERAL_LL( KiB,  val * 1024LL                                                     )
-UNIT_LITERAL_LL( MiB,  val * 1024LL * 1024LL                                            )
-UNIT_LITERAL_LL( GiB,  val * 1024LL * 1024LL * 1024LL                                   )
-UNIT_LITERAL_LL( TiB,  val * 1024LL * 1024LL * 1024LL * 1024LL                          )
-UNIT_LITERAL_LL( PiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL                 )
-UNIT_LITERAL_LL( EiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL        )
+IRCD_UNIT_LITERAL_LL( B,    val                                                              )
+IRCD_UNIT_LITERAL_LL( KiB,  val * 1024LL                                                     )
+IRCD_UNIT_LITERAL_LL( MiB,  val * 1024LL * 1024LL                                            )
+IRCD_UNIT_LITERAL_LL( GiB,  val * 1024LL * 1024LL * 1024LL                                   )
+IRCD_UNIT_LITERAL_LL( TiB,  val * 1024LL * 1024LL * 1024LL * 1024LL                          )
+IRCD_UNIT_LITERAL_LL( PiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL                 )
+IRCD_UNIT_LITERAL_LL( EiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL        )
 
-UNIT_LITERAL_LD( B,    val                                                              )
-UNIT_LITERAL_LD( KiB,  val * 1024.0L                                                    )
-UNIT_LITERAL_LD( MiB,  val * 1024.0L * 1024.0L                                          )
-UNIT_LITERAL_LD( GiB,  val * 1024.0L * 1024.0L * 1024.0L                                )
-UNIT_LITERAL_LD( TiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L                      )
-UNIT_LITERAL_LD( PiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L            )
-UNIT_LITERAL_LD( EiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L  )
+IRCD_UNIT_LITERAL_LD( B,    val                                                              )
+IRCD_UNIT_LITERAL_LD( KiB,  val * 1024.0L                                                    )
+IRCD_UNIT_LITERAL_LD( MiB,  val * 1024.0L * 1024.0L                                          )
+IRCD_UNIT_LITERAL_LD( GiB,  val * 1024.0L * 1024.0L * 1024.0L                                )
+IRCD_UNIT_LITERAL_LD( TiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L                      )
+IRCD_UNIT_LITERAL_LD( PiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L            )
+IRCD_UNIT_LITERAL_LD( EiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L  )
 
 // SI unit literals
-UNIT_LITERAL_LL( KB,   val * 1000LL                                                     )
-UNIT_LITERAL_LL( MB,   val * 1000LL * 1000LL                                            )
-UNIT_LITERAL_LL( GB,   val * 1000LL * 1000LL * 1000LL                                   )
-UNIT_LITERAL_LL( TB,   val * 1000LL * 1000LL * 1000LL * 1000LL                          )
-UNIT_LITERAL_LL( PB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL                 )
-UNIT_LITERAL_LL( EB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL        )
+IRCD_UNIT_LITERAL_LL( KB,   val * 1000LL                                                     )
+IRCD_UNIT_LITERAL_LL( MB,   val * 1000LL * 1000LL                                            )
+IRCD_UNIT_LITERAL_LL( GB,   val * 1000LL * 1000LL * 1000LL                                   )
+IRCD_UNIT_LITERAL_LL( TB,   val * 1000LL * 1000LL * 1000LL * 1000LL                          )
+IRCD_UNIT_LITERAL_LL( PB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL                 )
+IRCD_UNIT_LITERAL_LL( EB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL        )
 
-UNIT_LITERAL_LD( KB,   val * 1000.0L                                                    )
-UNIT_LITERAL_LD( MB,   val * 1000.0L * 1000.0L                                          )
-UNIT_LITERAL_LD( GB,   val * 1000.0L * 1000.0L * 1000.0L                                )
-UNIT_LITERAL_LD( TB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L                      )
-UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L            )
-UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
+IRCD_UNIT_LITERAL_LD( KB,   val * 1000.0L                                                    )
+IRCD_UNIT_LITERAL_LD( MB,   val * 1000.0L * 1000.0L                                          )
+IRCD_UNIT_LITERAL_LD( GB,   val * 1000.0L * 1000.0L * 1000.0L                                )
+IRCD_UNIT_LITERAL_LD( TB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L                      )
+IRCD_UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L            )
+IRCD_UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
 
 
 /* Output the sizeof a structure at compile time.
@@ -407,6 +411,97 @@ struct is_complete<T, decltype(void(sizeof(T)))>
 };
 
 
-}        // namespace util
-}        // namespace ircd
-#endif   // __cplusplus
+//
+// Convenience constexprs for iterators
+//
+
+template<class It>
+constexpr auto
+is_iterator()
+{
+	return std::is_base_of<typename std::iterator_traits<It>::value_type, It>::value;
+}
+
+template<class It>
+constexpr auto
+is_forward_iterator()
+{
+	return std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<It>::iterator_category>::value;
+}
+
+template<class It>
+constexpr auto
+is_input_iterator()
+{
+	return std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<It>::iterator_category>::value;
+}
+
+
+
+// std::next with out_of_range exception
+template<class It>
+typename std::enable_if<is_forward_iterator<It>() || is_input_iterator<It>(), It>::type
+at(It &&start,
+   It &&stop,
+   ssize_t i)
+{
+	for(; start != stop; --i, std::next(start, 1))
+		if(!i)
+			return start;
+
+	throw std::out_of_range("at(a, b, i): 'i' out of range");
+}
+
+
+struct string_view
+:std::string_view
+{
+	// (non-standard) our faux insert stub
+	void insert(const iterator &, const char &) { assert(1); } //XXX
+
+	// (non-standard) our iterator-based assign
+	string_view &assign(const char *const &begin, const char *const &end)
+	{
+		*this = std::string_view{begin, size_t(std::distance(begin, end))};
+		return *this;
+	}
+
+	// (non-standard) our iterator-based constructor
+	string_view(const char *const &begin, const char *const &end)
+	:std::string_view{begin, size_t(std::distance(begin, end))}
+	{}
+
+	// Required due to current instability in stdlib
+	//string_view(const std::experimental::string_view &esv)
+	//:std::string_view{esv}
+	//{}
+
+	// Required due to current instability in stdlib
+	string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
+	:std::string_view{bsv}
+	{}
+
+	string_view()
+	:std::string_view{}
+	{}
+
+	using std::string_view::string_view;
+};
+
+
+template<class function,
+         class... args>
+auto
+syscall(function&& f,
+        args&&... a)
+{
+	const auto ret(f(a...));
+	if(unlikely(long(ret) == -1))
+		throw std::system_error(errno, std::system_category());
+
+	return ret;
+}
+
+
+} // namespace util
+} // namespace ircd

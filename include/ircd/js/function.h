@@ -30,10 +30,13 @@ string display_name(const JSFunction *const &);
 string name(const JSFunction *const *);
 uint16_t arity(const JSFunction *const &);
 bool is_ctor(const JSFunction *const &);
+object enclosing_scope(JSFunction *const &);
 
 struct function
 :root<JSFunction *>
 {
+	IRCD_OVERLOAD(outermost_enclosing)
+
 	operator JSObject *() const;
 	explicit operator script() const;
 	explicit operator string() const;
@@ -50,6 +53,7 @@ struct function
 	         const string_t &src);
 
 	using root<JSFunction *>::root;
+	function(outermost_enclosing_t);             // GetOutermostEnclosingFunctionOfScriptedCaller
 	function(const value::handle &);
 	function(const value &);
 	function(JSFunction *const &);
@@ -85,6 +89,17 @@ function::function(const value::handle &val)
 {
 	if(!this->get())
 		throw type_error("value is not a function");
+}
+
+inline
+function::function(outermost_enclosing_t)
+:function::root::type
+{
+	::js::GetOutermostEnclosingFunctionOfScriptedCaller(*cx)
+}
+{
+	if(!this->get())
+		throw internal_error("Caller has no enclosing function");
 }
 
 template<class string_t>
@@ -154,6 +169,12 @@ const
 		throw type_error("function cannot cast to Object");
 
 	return ret;
+}
+
+inline object
+enclosing_scope(JSFunction *const &f)
+{
+	return ::js::GetNearestEnclosingWithScopeObjectForFunction(f);
 }
 
 inline bool

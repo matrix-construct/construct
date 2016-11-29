@@ -23,67 +23,114 @@
 #pragma once
 #define HAVE_IRCD_STRINGOPS_H
 
-#ifdef __cplusplus
 namespace ircd {
 
-using token_closure_cstr = std::function<void (char *const &)>;
-void tokens(char *const &str, const char *const &sep, const token_closure_cstr &);
-void tokens(const char *const &str, const char *const &sep, char *const &buf, const size_t &max, const token_closure_cstr &);
-void tokens(const char *const &str, const char *const &sep, const token_closure_cstr &);
-void tokensa(const char *const &str, const char *const &sep, const token_closure_cstr &);
-std::vector<char *> tokens(const char *const &str, const char *const &sep, char *const &buf, const size_t &max, const size_t &reserve = 16);
+// Simple case insensitive comparison convenience utils
+bool iequals(const string_view &a, const string_view &b);
+bool iless(const string_view &a, const string_view &b);
 
-using token_closure_string = std::function<void (const std::string &)>;
-void tokens(const std::string &str, const char *const &sep, const token_closure_string &);
-std::vector<std::string> tokens(const std::string &str, const char *const &sep, const size_t &reserve = 16);
-size_t token_count(const std::string &str, const char *const &sep);
-std::string token(const std::string &str, const char *const &sep, const size_t &at);
-std::string token_last(const std::string &str, const char *const &sep);
+// Vintage
+size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
+size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
 
-std::string chomp(const std::string &str, const std::string &c = " "s);
-std::pair<std::string, std::string> split(const std::string &str, const std::string &delim = " "s);
-std::pair<std::string, std::string> rsplit(const std::string &str, const std::string &delim = " "s);
-std::string between(const std::string &str, const std::string &a = "("s, const std::string &b = ")"s);
-bool endswith(const std::string &str, const char *const &val);
-bool endswith(const std::string &str, const std::string &val);
-bool endswith(const std::string &str, const char &val);
-template<class It> bool endswith_any(const std::string &str, const It &begin, const It &end);
-bool startswith(const std::string &str, const char *const &val);
-bool startswith(const std::string &str, const std::string &val);
-bool startswith(const std::string &str, const char &val);
-
+// Legacy
 char *strip_colour(char *string);
 char *strip_unprintable(char *string);
 char *reconstruct_parv(int parc, const char **parv);
 
+
+//
+// String tokenization utils.
+//
+
+// Use the closure for best performance. Note that string_view's
+// are not required to be null terminated. Construct an std::string from the view to allocate
+// and copy the token with null termination.
+using token_view = std::function<void (const string_view &)>;
+void tokens(const string_view &str, const char *const &sep, const token_view &);
+size_t tokens(const string_view &str, const char *const &sep, const size_t &limit, const token_view &);
+
+// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
+size_t tokens(const string_view &str, const char *const &sep, char *const &buf, const size_t &max, const token_view &);
+
+// Receive token view into iterator range
+template<class it> it tokens(const string_view &str, const char *const &sep, const it &b, const it &e);
+
+// Receive token view into array
+template<size_t N> size_t tokens(const string_view &str, const char *const &sep, string_view (&buf)[N]);
+template<size_t N> size_t tokens(const string_view &str, const char *const &sep, std::array<string_view, N> &);
+
+// Receive token view into new container (custom allocator)
+template<template<class, class>
+         class C = std::vector,
+         class T = string_view,
+         class A>
+C<T, A> tokens(A allocator, const string_view &str, const char *const &sep);
+
+// Receive token view into new container
+template<template<class, class>
+         class C = std::vector,
+         class T = string_view,
+         class A = std::allocator<T>>
+C<T, A> tokens(const string_view &str, const char *const &sep);
+
+// Receive token view into new associative container (custom allocator)
+template<template<class, class, class>
+         class C,
+         class T = string_view,
+         class Comp = std::less<T>,
+         class A>
+C<T, Comp, A> token(A allocator, const string_view &str, const char *const &sep);
+
+// Receive token view into new associative container
+template<template<class, class, class>
+         class C,
+         class T = string_view,
+         class Comp = std::less<T>,
+         class A = std::allocator<T>>
+C<T, Comp, A> token(const string_view &str, const char *const &sep);
+
+// Convenience to get individual tokens
+size_t tokens_count(const string_view &str, const char *const &sep);
+string_view token(const string_view &str, const char *const &sep, const size_t &at);
+string_view token_last(const string_view &str, const char *const &sep);
+string_view token_first(const string_view &str, const char *const &sep);
+
+
+//
+// Misc utils
+//
+
+string_view chomp(const string_view &str, const string_view &c = " "s);
+std::pair<string_view, string_view> split(const string_view &str, const string_view &delim = " "s);
+std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim = " "s);
+string_view between(const string_view &str, const string_view &a = "("s, const string_view &b = ")"s);
+bool endswith(const string_view &str, const string_view &val);
+bool endswith(const string_view &str, const char &val);
+template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
+bool startswith(const string_view &str, const string_view &val);
+bool startswith(const string_view &str, const char &val);
+
 } // namespace ircd
 
 inline bool
-ircd::startswith(const std::string &str,
+ircd::startswith(const string_view &str,
                  const char &val)
 {
 	return !str.empty() && str[0] == val;
 }
 
 inline bool
-ircd::startswith(const std::string &str,
-                 const std::string &val)
+ircd::startswith(const string_view &str,
+                 const string_view &val)
 {
 	const auto pos(str.find(val, 0));
 	return pos == 0;
 }
 
-inline bool
-ircd::startswith(const std::string &str,
-                 const char *const &val)
-{
-	const auto pos(str.find(val, 0, strlen(val)));
-	return pos == 0;
-}
-
 template<class It>
 bool
-ircd::endswith_any(const std::string &str,
+ircd::endswith_any(const string_view &str,
                    const It &begin,
                    const It &end)
 {
@@ -94,63 +141,240 @@ ircd::endswith_any(const std::string &str,
 }
 
 inline bool
-ircd::endswith(const std::string &str,
+ircd::endswith(const string_view &str,
                const char &val)
 {
 	return !str.empty() && str[str.size()-1] == val;
 }
 
 inline bool
-ircd::endswith(const std::string &str,
-               const std::string &val)
+ircd::endswith(const string_view &str,
+               const string_view &val)
 {
 	const auto vlen(std::min(str.size(), val.size()));
 	const auto pos(str.find(val, vlen));
 	return pos == str.size() - vlen;
 }
 
-inline bool
-ircd::endswith(const std::string &str,
-               const char *const &val)
-{
-	const auto vlen(std::min(str.size(), strlen(val)));
-	const auto pos(str.find(val, str.size() - vlen));
-	return pos == str.size() - vlen;
-}
-
-inline std::string
-ircd::between(const std::string &str,
-              const std::string &a,
-              const std::string &b)
+inline ircd::string_view
+ircd::between(const string_view &str,
+              const string_view &a,
+              const string_view &b)
 {
 	return split(split(str, a).second, b).first;
 }
 
 
-inline std::pair<std::string, std::string>
-ircd::rsplit(const std::string &str,
-             const std::string &delim)
+inline std::pair<ircd::string_view, ircd::string_view>
+ircd::rsplit(const string_view &str,
+             const string_view &delim)
 {
 	const auto pos(str.find_last_of(delim));
-	return pos == std::string::npos? std::make_pair(std::string{}, str):
-	                                 std::make_pair(str.substr(0, pos), str.substr(pos+delim.size()));
+	if(pos == string_view::npos)
+		return std::make_pair(string_view{}, str);
+
+	const auto first(str.substr(0, pos));
+	const auto second(str.substr(pos + delim.size()));
+	return std::make_pair(first, second);
 }
 
-inline std::pair<std::string, std::string>
-ircd::split(const std::string &str,
-            const std::string &delim)
+inline std::pair<ircd::string_view, ircd::string_view>
+ircd::split(const string_view &str,
+            const string_view &delim)
 {
 	const auto pos(str.find(delim));
-	return pos == std::string::npos? std::make_pair(str, std::string{}):
-	                                 std::make_pair(str.substr(0, pos), str.substr(pos+delim.size()));
+	if(pos == string_view::npos)
+		return std::make_pair(str, string_view{});
+
+	const auto first(str.substr(0, pos));
+	const auto second(str.substr(pos + delim.size()));
+	return std::make_pair(first, second);
 }
 
-inline std::string
-ircd::chomp(const std::string &str,
-            const std::string &c)
+inline ircd::string_view
+ircd::chomp(const string_view &str,
+            const string_view &c)
 {
 	const auto pos(str.find_last_not_of(c));
-	return pos == std::string::npos? str : str.substr(0, pos+1);
+	if(pos == string_view::npos)
+		return str;
+
+	return str.substr(0, pos + 1);
 }
 
-#endif // __cplusplus
+template<size_t N>
+size_t
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             string_view (&buf)[N])
+{
+	const auto e(tokens(str, sep, begin(buf), end(buf)));
+	return std::distance(begin(buf), e);
+}
+
+template<size_t N>
+size_t
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             std::array<string_view, N> &buf)
+{
+	const auto e(tokens(str, sep, begin(buf), end(buf)));
+	return std::distance(begin(buf), e);
+}
+
+template<class it>
+it
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             const it &b,
+             const it &e)
+{
+	it pos(b);
+	tokens(str, sep, std::distance(b, e), [&pos]
+	(const string_view &token)
+	{
+		*pos = token;
+		++pos;
+	});
+
+	return pos;
+}
+
+template<template<class, class, class>
+         class C,
+         class T,
+         class Comp,
+         class A>
+C<T, Comp, A>
+ircd::tokens(const string_view &str,
+             const char *const &sep)
+{
+	A allocator;
+	return tokens<C, T, Comp, A>(allocator, str, sep);
+}
+
+template<template<class, class, class>
+         class C,
+         class T,
+         class Comp,
+         class A>
+C<T, Comp, A>
+ircd::tokens(A allocator,
+             const string_view &str,
+             const char *const &sep)
+{
+	C<T, Comp, A> ret(allocator);
+	tokens(str, sep, [&ret]
+	(const string_view &token)
+	{
+		ret.emplace(ret.end(), token);
+	});
+
+	return ret;
+}
+
+template<template<class, class>
+         class C,
+         class T,
+         class A>
+C<T, A>
+ircd::tokens(const string_view &str,
+             const char *const &sep)
+{
+	A allocator;
+	return tokens<C, T, A>(allocator, str, sep);
+}
+
+template<template<class, class>
+         class C,
+         class T,
+         class A>
+C<T, A>
+ircd::tokens(A allocator,
+             const string_view &str,
+             const char *const &sep)
+{
+	C<T, A> ret(allocator);
+	tokens(str, sep, [&ret]
+	(const string_view &token)
+	{
+		ret.emplace(ret.end(), token);
+	});
+
+	return ret;
+}
+
+inline size_t
+#ifndef HAVE_STRLCPY
+ircd::strlcpy(char *const &dest,
+              const char *const &src,
+              const size_t &max)
+{
+	if(!max)
+		return 0;
+
+	const size_t ret(strnlen(src, max));
+	const size_t len(ret >= max? max - 1 : ret);
+	memcpy(dest, src, len);
+	dest[len] = '\0';
+
+	return ret;
+}
+#else
+ircd::strlcpy(char *const &dest,
+              const char *const &src,
+              const size_t &max)
+{
+	return ::strlcpy(dest, src, max);
+}
+#endif
+
+inline size_t
+#ifndef HAVE_STRLCAT
+ircd::strlcat(char *const &dest,
+              const char *const &src,
+              const size_t &max)
+{
+	if(!max)
+		return 0;
+
+	const ssize_t dsize(strnlen(dest, max));
+    const ssize_t ssize(strnlen(src, max));
+	const ssize_t ret(dsize + ssize);
+	const ssize_t remain(max - dsize);
+	const ssize_t cpsz(ssize >= remain? remain - 1 : ssize);
+	char *const ptr(dest + dsize);
+	memcpy(ptr, src, cpsz);
+	ptr[cpsz] = '\0';
+	return ret;
+}
+#else
+ircd::strlcat(char *const &dest,
+              const char *const &src,
+              const size_t &max)
+{
+	return ::strlcat(dest, src, max);
+}
+#endif
+
+inline bool
+ircd::iless(const string_view &a,
+            const string_view &b)
+{
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) < tolower(b);
+	});
+}
+
+inline bool
+ircd::iequals(const string_view &a,
+              const string_view &b)
+{
+	return std::equal(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) == tolower(b);
+	});
+}

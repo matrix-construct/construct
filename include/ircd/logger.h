@@ -65,7 +65,6 @@ enum facility
 
 const char *reflect(const facility &);
 void slog(const facility &, const std::function<void (std::ostream &)> &);
-void vlog(const facility &, const std::string &name, const sno::mask &, const char *const &fmt, va_list ap);
 void vlog(const facility &, const std::string &name, const char *const &fmt, va_list ap);
 void vlog(const facility &, const char *const &fmt, va_list ap);
 void logf(const facility &, const char *fmt, ...) AFP(2, 3);
@@ -74,10 +73,7 @@ void mark(const char *const &msg = nullptr);
 
 class log
 {
-	using lease_ptr = std::shared_ptr<mode_lease<sno::mask, sno::table>>;
-
 	std::string name;
-	lease_ptr snote;
 
   public:
 	void operator()(const facility &, const char *fmt, ...) AFP(3, 4);
@@ -88,7 +84,6 @@ class log
 	void info(const char *fmt, ...) AFP(2, 3);
 	void debug(const char *fmt, ...) AFP(2, 3);
 
-	log(const std::string &name, const lease_ptr &lease);
 	log(const std::string &name, const char &snote);
 	log(const std::string &name);
 };

@@ -558,7 +558,7 @@ const
 	});
 
 	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
+	:rfc1459::gen::grammar<char *, rfc1459::host>
 	{
 		generator(): grammar{grammar::hostname} {}
 	}
@@ -582,7 +582,7 @@ const
 	});
 
 	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
+	:rfc1459::gen::grammar<char *, rfc1459::user>
 	{
 		generator(): grammar{grammar::user} {}
 	}
@@ -606,7 +606,7 @@ const
 	});
 
 	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
+	:rfc1459::gen::grammar<char *, rfc1459::nick>
 	{
 		generator(): grammar{grammar::nick} {}
 	}
@@ -646,14 +646,14 @@ const
 		*/
 
 		struct generate_middle
-		:rfc1459::gen::grammar<char *, std::string()>
+		:rfc1459::gen::grammar<char *, string_view>
 		{
 			generate_middle(): grammar{grammar::middle} {}
 		}
 		static const generate_middle;
 
 		struct generate_trailing
-		:rfc1459::gen::grammar<char *, std::string()>
+		:rfc1459::gen::grammar<char *, string_view>
 		{
 			generate_trailing(): grammar{grammar::trailing} {}
 		}
@@ -696,7 +696,7 @@ const
 	});
 
 	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
+	:rfc1459::gen::grammar<char *, string_view>
 	{
 		generator(): grammar{grammar::middle} {}
 	}

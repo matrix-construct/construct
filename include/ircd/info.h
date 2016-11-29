@@ -23,7 +23,6 @@
 #pragma once
 #define HAVE_IRCD_INFO_H
 
-#ifdef __cplusplus
 namespace ircd {
 namespace info {
 
@@ -39,7 +38,7 @@ extern const std::vector<info::line> myinfo;
 extern const std::vector<std::string> credits;
 extern const std::string serno;
 extern const std::string version;
-extern const char *const ircd_version;             // legacy (version.c_str() is not safe to hold)
+extern const char *const ircd_version;             // legacy
 
 extern const time_t configured_time;
 extern const time_t compiled_time;
@@ -48,6 +47,5 @@ extern const std::string compiled;
 extern const std::string configured;
 extern const std::string startup;
 
-}      // namespace info
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace info
+} // namespace ircd

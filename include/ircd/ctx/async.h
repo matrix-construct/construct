@@ -43,7 +43,7 @@ using future_value = typename std::enable_if<!is_void_result<F, A...>(),
                      future<typename std::result_of<F (A...)>::type>>::type;
 
 template<size_t stack_size = DEFAULT_STACK_SIZE,
-         enum flags flags = (enum flags)0,
+         context::flags flags = (context::flags)0,
          class F,
          class... A>
 future_value<F, A...>
@@ -62,12 +62,12 @@ async(F&& f,
 
 	future<R> ret(*p);
 	//TODO: DEFER_POST?
-	context(stack_size, std::move(wrapper), SELF_DESTRUCT | DEFER_POST | flags);
+	context(stack_size, std::move(wrapper), context::DETACH | context::POST | flags);
 	return ret;
 }
 
 template<size_t stack_size = DEFAULT_STACK_SIZE,
-         enum flags flags = (enum flags)0,
+         context::flags flags = context::flags(0),
          class F,
          class... A>
 future_void<F, A...>
@@ -87,7 +87,7 @@ async(F&& f,
 
 	future<R> ret(*p);
 	//TODO: DEFER_POST?
-	context(stack_size, std::move(wrapper), SELF_DESTRUCT | DEFER_POST | flags);
+	context(stack_size, std::move(wrapper), context::DETACH | context::POST | flags);
 	return ret;
 }
 

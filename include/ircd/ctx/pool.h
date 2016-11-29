@@ -30,6 +30,7 @@ struct pool
 	using closure = std::function<void ()>;
 
   private:
+	const char *name;
 	size_t stack_size;
 	size_t available;
 	struct dock dock;
@@ -40,18 +41,31 @@ struct pool
 	void main();
 
   public:
+	// indicators
 	auto size() const                            { return ctxs.size();                             }
 	auto avail() const                           { return available;                               }
 	auto queued() const                          { return queue.size();                            }
 
+	// control panel
 	void add(const size_t & = 1);
 	void del(const size_t & = 1);
+	void interrupt();
 
+	// dispatch function to pool
 	void operator()(closure);
+
+	// dispatch function std async style
 	template<class F, class... A> future_void<F, A...> async(F&&, A&&...);
 	template<class F, class... A> future_value<F, A...> async(F&&, A&&...);
 
-	pool(const size_t & = 0, const size_t &stack_size = DEFAULT_STACK_SIZE);
+	pool(const char *const &name    = "<unnamed pool>",
+	     const size_t &stack_size   = DEFAULT_STACK_SIZE,
+	     const size_t &             = 0);
+
+	pool(pool &&) = delete;
+	pool(const pool &) = delete;
+	pool &operator=(pool &&) = delete;
+	pool &operator=(const pool &) = delete;
 	~pool() noexcept;
 };
 

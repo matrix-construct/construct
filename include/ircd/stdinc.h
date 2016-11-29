@@ -21,125 +21,164 @@
  *
  */
 
-#if defined(PIC) && defined(PCH)
-#include <rb/rb.pic.h>
-#else
-#include <rb/rb.h>
+#include "config.h"
+
+extern "C" {
+
+#include <RB_INC_ASSERT_H
+#include <RB_INC_STDARG_H
+#include <RB_INC_SYS_TIME_H
+#include <RB_INC_SYS_RESOURCE_H
+
+} // extern "C"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN 1
+#include <RB_INC_WINDOWS_H
+#include <RB_INC_WINSOCK2_H
+#include <RB_INC_WS2TCPIP_H
+#include <RB_INC_IPHLPAPI_H
 #endif
 
-// TODO: move
+#include <RB_INC_CSTDDEF
+#include <RB_INC_CSTDINT
+#include <RB_INC_LIMITS
+#include <RB_INC_TYPE_TRAITS
+#include <RB_INC_TYPEINDEX
+#include <RB_INC_VARIANT
+#include <RB_INC_CERRNO
+#include <RB_INC_UTILITY
+#include <RB_INC_FUNCTIONAL
+#include <RB_INC_ALGORITHM
+#include <RB_INC_NUMERIC
+#include <RB_INC_CMATH
+#include <RB_INC_MEMORY
+#include <RB_INC_EXCEPTION
+#include <RB_INC_SYSTEM_ERROR
+#include <RB_INC_ARRAY
+#include <RB_INC_VECTOR
+#include <RB_INC_STACK
+#include <RB_INC_STRING
+#include <RB_INC_CSTRING
+#include <RB_INC_STRING_VIEW
+#include <RB_INC_EXPERIMENTAL_STRING_VIEW
+#include <RB_INC_LOCALE
+#include <RB_INC_CODECVT
+#include <RB_INC_MAP
+#include <RB_INC_SET
+#include <RB_INC_LIST
+#include <RB_INC_FORWARD_LIST
+#include <RB_INC_UNORDERED_MAP
+#include <RB_INC_DEQUE
+#include <RB_INC_QUEUE
+#include <RB_INC_SSTREAM
+#include <RB_INC_FSTREAM
+#include <RB_INC_IOSTREAM
+#include <RB_INC_IOMANIP
+#include <RB_INC_CSTDIO
+#include <RB_INC_CHRONO
+#include <RB_INC_CTIME
+#include <RB_INC_ATOMIC
+#include <RB_INC_THREAD
+#include <RB_INC_MUTEX
+#include <RB_INC_CONDITION_VARIABLE
+
+namespace std {
+
+using experimental::string_view;
+
+} // namespace std
+
 // Allow a reference to an ios to be passed to ircd
-#ifdef __cplusplus
 namespace boost {
 namespace asio  {
 
-	struct io_service;
+struct io_service;
+struct const_buffer;
+struct mutable_buffer;
 
 } // namespace asio
 } // namespace boost
-#endif // __cplusplus
 
-namespace ircd
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#define AFP(a, b)       __attribute__((format(printf, a, b)))
+
+namespace ircd {
+
+enum class init_priority
 {
-	using std::nullptr_t;
-	using std::begin;
-	using std::end;
-	using std::get;
-	using std::chrono::seconds;
-	using std::chrono::milliseconds;
-	using std::chrono::microseconds;
-	using std::chrono::nanoseconds;
-	using std::chrono::duration_cast;
-	using std::static_pointer_cast;
-	using std::dynamic_pointer_cast;
-	using std::const_pointer_cast;
-	using ostream = std::ostream;
-	namespace ph = std::placeholders;
-	using namespace std::string_literals;
-	using namespace std::literals::chrono_literals;
+	FIRST           = 101,
+	STD_CONTAINER   = 102,
+};
+
+#define IRCD_INIT_PRIORITY(name) \
+	__attribute__((init_priority(int(ircd::init_priority::name))))
+
+} // namespace ircd
+
+namespace ircd {
+
+using std::nullptr_t;
+using std::begin;
+using std::end;
+using std::get;
+using std::chrono::seconds;
+using std::chrono::milliseconds;
+using std::chrono::microseconds;
+using std::chrono::nanoseconds;
+using std::chrono::duration_cast;
+using std::static_pointer_cast;
+using std::dynamic_pointer_cast;
+using std::const_pointer_cast;
+using ostream = std::ostream;
+namespace ph = std::placeholders;
+namespace asio = boost::asio;
+using namespace std::string_literals;
+using namespace std::literals::chrono_literals;
+
+extern boost::asio::io_service *ios;
+constexpr size_t BUFSIZE { 512 };
+
+struct socket;
+struct client;
+
+namespace chan
+{
+	struct chan;
+	struct membership;
 }
 
-// Temp fwd decl scaffold
-namespace ircd
-{
-	extern boost::asio::io_service *ios;
+struct ConfItem;
+struct Blacklist;
+struct server_conf;
+struct line {};
 
-	struct client;
-
-	namespace chan
-	{
-		struct chan;
-		struct membership;
-	}
-
-	struct ConfItem;
-	struct Blacklist;
-	struct server_conf;
-}
+} // namespace ircd
 
 #include "util.h"
 #include "util_timer.h"
-#include "locale.h"
+#include "allocator.h"
+#include "info.h"
+#include "localee.h"
 #include "life_guard.h"
-#include "defaults.h"
 #include "exception.h"
-#include "numeric.h"
 #include "color.h"
-#include "messages.h"
-#include "protocol.h"
+#include "stringops.h"
+#include "buffer.h"
+#include "parse.h"
 #include "rfc1459.h"
+#include "json.h"
+#include "http.h"
+#include "matrix.h"
 #include "fmt.h"
-#include "err.h"
 #include "path.h"
-#include "s_assert.h"
-#include "match.h"
-#include "mode_table.h"
-#include "mode_lease.h"
-#include "snomask.h"
 #include "ctx.h"
-#include "hook.h"
-#include "line.h"
-#include "tape.h"
-#include "cmds.h"
+#include "conf.h"
+#include "resource.h"
 #include "vm.h"
 #include "logger.h"
 #include "db.h"
 #include "js.h"
-
-#include "u_id.h"
-
 #include "client.h"
-
-#include "newconf.h"
-#include "conf.h"
-
 #include "mods.h"
-
-#include "info.h"
-#include "stringops.h"
-
-/*
-#include "cache.h"
-#include "whowas.h"
-#include "tgchange.h"
-
-#include "mask.h"
-#include "chmode.h"
-#include "channel.h"
-
-#include "capability.h"
-#include "certfp.h"
-#include "class.h"
-#include "hash.h"
-#include "hook.h"
-#include "monitor.h"
-#include "ratelimit.h"
-#include "reject.h"
-#include "send.h"
-#include "s_newconf.h"
-#include "s_serv.h"
-#include "s_stats.h"
-#include "substitution.h"
-#include "supported.h"
-#include "s_user.h"
-*/

@@ -21,7 +21,7 @@
 
 #include <ircd/ircd.h>
 #include <boost/asio.hpp>
-#include <ircd/ctx/ctx.h>
+#include <ircd/ctx/continuation.h>
 #include "lgetopt.h"
 
 namespace path = ircd::path;
@@ -119,7 +119,7 @@ try
 
 	ios->run();  // Blocks until a clean exit or an exception comes out of it.
 }
-catch(const ircd::conf::newconf::syntax_error &e)
+catch(const ircd::user_error &e)
 {
 	if(ircd::debugmode)
 		throw;
@@ -156,7 +156,7 @@ void print_version()
 	       PACKAGE_VERSION);
 	#endif
 
-	printf("VERSION :%s\n", rb_lib_version());
+	printf("VERSION :boost %d\n", BOOST_VERSION);
 }
 
 bool startup_checks()
@@ -347,8 +347,8 @@ console_spawn()
 		return;
 
 	// The console function is executed asynchronously.
-	// The SELF_DESTRUCT indicates it will clean itself up.
-	ircd::context(std::bind(&console), ircd::ctx::SELF_DESTRUCT);
+	// The DETACH indicates it will clean itself up.
+	ircd::context(std::bind(&console), ircd::context::DETACH);
 }
 
 const char *const console_message
@@ -398,7 +398,7 @@ try
 		if(!line.empty())
 			handle_line(line);
 	}
-	catch(const ircd::cmds::not_found &e)
+	catch(const ircd::resource::not_found &e)
 	{
 		std::cerr << e.what() << std::endl;
 	}
@@ -431,8 +431,9 @@ handle_line(const std::string &line)
 	if(line == "EXIT")
 		exit(0);
 
-	if(unlikely(!ircd::me))
-		throw ircd::error("IRCd `me' not available to execute on");
+	//if(unlikely(!ircd::me))
+	//	throw ircd::error("IRCd `me' not available to execute on");
 
-	ircd::execute(*ircd::me, line);
+	//ircd::execute(*ircd::me, line);
+	ircd::test(line);
 }

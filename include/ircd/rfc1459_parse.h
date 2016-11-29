@@ -27,18 +27,18 @@
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-	ircd::rfc1459::pfx,
-	( ircd::rfc1459::nick,  nick )
-	( ircd::rfc1459::user,  user )
-	( ircd::rfc1459::host,  host )
+	ircd::rfc1459::pfx
+	,( decltype(ircd::rfc1459::pfx::nick),  nick )
+	,( decltype(ircd::rfc1459::pfx::user),  user )
+	,( decltype(ircd::rfc1459::pfx::host),  host )
 )
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-	ircd::rfc1459::line,
-	( ircd::rfc1459::pfx,   pfx  )
-	( ircd::rfc1459::cmd,   cmd  )
-	( ircd::rfc1459::parv,  parv )
+	ircd::rfc1459::line
+	,( decltype(ircd::rfc1459::line::pfx),   pfx  )
+	,( decltype(ircd::rfc1459::line::cmd),   cmd  )
+	,( decltype(ircd::rfc1459::line::parv),  parv )
 )
 
 namespace ircd    {
@@ -52,6 +52,8 @@ using qi::char_;
 using qi::repeat;
 using qi::attr;
 using qi::eps;
+using qi::raw;
+using qi::omit;
 
 /* The grammar template class.
  * This aggregates all the rules under one template to make composing them easier.
@@ -72,21 +74,21 @@ struct grammar
 	qi::rule<it> spnulcrlf;
 	qi::rule<it> terminator;
 
-	qi::rule<it, std::string()> hostname;
-	qi::rule<it, std::string()> user;
-	qi::rule<it, std::string()> server;
-	qi::rule<it, std::string()> nick;
+	qi::rule<it, rfc1459::host> hostname;
+	qi::rule<it, rfc1459::host> server;
+	qi::rule<it, rfc1459::user> user;
+	qi::rule<it, rfc1459::nick> nick;
 	qi::rule<it, rfc1459::pfx> prefix;
 
-	qi::rule<it, std::string()> trailing;
-	qi::rule<it, std::string()> middle;
+	qi::rule<it, string_view> trailing;
+	qi::rule<it, string_view> middle;
 	qi::rule<it, rfc1459::parv> params;
 
-	qi::rule<it, std::string()> numeric;
+	qi::rule<it, string_view> numeric;
 	qi::rule<it, rfc1459::cmd> command;
 
 	qi::rule<it, rfc1459::line> line;
-	qi::rule<it, rfc1459::tape> tape;
+	qi::rule<it, std::deque<rfc1459::line>> tape;
 
 	grammar(qi::rule<it, top> &top_rule);
 };
@@ -134,22 +136,22 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,hostname // A valid hostname
 {
-	+char_(charset(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	raw[+char_(charset(character::HOST))] // TODO: https://tools.ietf.org/html/rfc952
 	,"hostname"
-}
-,user // A valid username
-{
-	+char_(charset(character::USER))
-	,"user"
 }
 ,server // A valid servername
 {
 	hostname
 	,"server"
 }
+,user // A valid username
+{
+	raw[+char_(charset(character::USER))]
+	,"user"
+}
 ,nick // A valid nickname, leading letter followed by any NICK chars
 {
-	char_(charset(character::ALPHA)) >> *char_(charset(character::NICK))
+	raw[char_(charset(character::ALPHA)) >> *char_(charset(character::NICK))]
 	,"nick"
 }
 ,prefix // A valid prefix, required name, optional user and host (or empty placeholders)
@@ -159,12 +161,12 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,trailing // Trailing string pinch
 {
-	colon >> +(char_ - nulcrlf)
+	colon >> raw[+(char_ - nulcrlf)]
 	,"trailing"
 }
 ,middle // Spaced parameters
 {
-	!colon >> +(char_ - spnulcrlf)
+	!colon >> raw[+(char_ - spnulcrlf)]
 	,"middle"
 }
 ,params // Parameter vector
@@ -179,7 +181,7 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,command // A command or numeric
 {
-	+char_(charset(character::ALPHA)) | numeric
+	raw[+char_(charset(character::ALPHA)) | numeric]
 	,"command"
 }
 ,line
@@ -194,6 +196,27 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 {
 }
+
+// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::line object.
+// The top rule is inherited and then specified as grammar::line, which is compatible
+// with an rfc1459::line object.
+//
+struct head
+:parse::grammar<const char *, rfc1459::line>
+{
+    head(): grammar{grammar::line} {}
+}
+extern const head;
+
+// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::tape object.
+// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
+//
+struct capstan
+:parse::grammar<const char *, std::deque<rfc1459::line>>
+{
+    capstan(): grammar{grammar::tape} {}
+}
+extern const capstan;
 
 }      // namespace parse
 }      // namespace rfc1459

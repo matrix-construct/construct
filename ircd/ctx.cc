@@ -19,24 +19,165 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/ctx/ctx.h>
-
-using namespace ircd;
+#include <boost/asio/steady_timer.hpp>
+#include <ircd/ctx/continuation.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ctx.h
+// (internal)
 //
-__thread ctx::ctx *ctx::current;
+
+namespace ircd {
+namespace ctx  {
+
+struct ctx
+{
+	using error_code = boost::system::error_code;
+
+	static uint64_t id_ctr;                      // monotonic
+
+	uint64_t id;                                 // Unique runtime ID
+	const char *name;                            // User given name (optional)
+	context::flags flags;                        // User given flags
+	boost::asio::steady_timer alarm;             // acting semaphore (64B)
+	boost::asio::yield_context *yc;              // boost interface
+	uintptr_t stack_base;                        // assigned when spawned
+	size_t stack_max;                            // User given stack size
+	int64_t notes;                               // norm: 0 = asleep; 1 = awake; inc by others; dec by self
+	ctx *adjoindre;                              // context waiting for this to join()
+	microseconds awake;                          // monotonic counter
+
+	bool finished() const                        { return yc == nullptr;                           }
+	bool started() const                         { return bool(yc);                                }
+	bool wait();                                 // suspend this context (returns on resume)
+	void wake();                                 // queue resumption of this context (use note())
+	bool note();                                 // properly request wake()
+
+	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
+
+	ctx(const char *const &name                  = "<unnamed context>",
+	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
+	    const context::flags &flags              = (context::flags)0,
+	    boost::asio::io_service *const &ios      = ircd::ios);
+
+	ctx(ctx &&) noexcept = delete;
+	ctx(const ctx &) = delete;
+};
+
+} // namespace ctx
+} // namespace ircd
+
+decltype(ircd::ctx::ctx::id_ctr)
+ircd::ctx::ctx::id_ctr
+{
+	0
+};
+
+ircd::ctx::ctx::ctx(const char *const &name,
+                    const size_t &stack_max,
+                    const context::flags &flags,
+                    boost::asio::io_service *const &ios)
+:id{++id_ctr}
+,name{name}
+,flags{flags}
+,alarm{*ios}
+,yc{nullptr}
+,stack_base{0}
+,stack_max{stack_max}
+,notes{1}
+,adjoindre{nullptr}
+,awake{0us}
+{
+}
 
 void
-ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
+ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
+                           const std::function<void ()> func)
+noexcept
+{
+	this->yc = &yc;
+	notes = 1;
+	stack_base = uintptr_t(__builtin_frame_address(0));
+	ircd::ctx::current = this;
+	mark(prof::event::CUR_ENTER);
+
+	const scope atexit([this]
+	{
+		if(adjoindre)
+			notify(*adjoindre);
+
+		mark(prof::event::CUR_LEAVE);
+		ircd::ctx::current = nullptr;
+		this->yc = nullptr;
+
+		if(flags & context::DETACH)
+			delete this;
+	});
+
+	if(likely(bool(func)))
+		func();
+}
+
+bool
+ircd::ctx::ctx::note()
+{
+	if(notes++ > 0)
+		return false;
+
+	wake();
+	return true;
+}
+
+void
+ircd::ctx::ctx::wake()
+try
+{
+	alarm.cancel();
+}
+catch(const boost::system::system_error &e)
+{
+	ircd::log::error("ctx::wake(%p): %s", this, e.what());
+}
+
+bool
+ircd::ctx::ctx::wait()
+{
+	if(--notes > 0)
+		return false;
+
+	boost::system::error_code ec;
+	alarm.async_wait(boost::asio::yield_context(continuation(this))[ec]);
+
+	assert(ec == boost::system::errc::operation_canceled ||
+	       ec == boost::system::errc::success);
+
+	// Interruption shouldn't be used for normal operation,
+	// so please eat this branch misprediction.
+	if(unlikely(flags & context::INTERRUPTED))
+	{
+		mark(prof::event::CUR_INTERRUPT);
+		flags &= ~context::INTERRUPTED;
+		throw interrupted("ctx(%p)::wait()", (const void *)this);
+	}
+
+	// notes = 1; set by continuation dtor on wakeup
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx/ctx.h
+//
+__thread ircd::ctx::ctx *ircd::ctx::current;
+
+void
+ircd::ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
 {
 	while(!wait_until(tp, std::nothrow));
 }
 
 bool
-ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
+ircd::ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
                 const std::nothrow_t &)
 {
 	auto &c(cur());
@@ -47,7 +188,7 @@ ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
 }
 
 std::chrono::microseconds
-ctx::wait(const std::chrono::microseconds &duration,
+ircd::ctx::wait(const std::chrono::microseconds &duration,
           const std::nothrow_t &)
 {
 	auto &c(cur());
@@ -62,7 +203,7 @@ ctx::wait(const std::chrono::microseconds &duration,
 }
 
 void
-ctx::wait()
+ircd::ctx::wait()
 {
 	auto &c(cur());
 	c.alarm.expires_at(std::chrono::steady_clock::time_point::max());
@@ -70,7 +211,7 @@ ctx::wait()
 }
 
 void
-ctx::yield()
+ircd::ctx::yield()
 {
 	bool done(false);
 	const auto restore([&done, &me(cur())]
@@ -87,10 +228,92 @@ ctx::yield()
 	while(!done);
 }
 
-ircd::ctx::context::context(const size_t &stack_sz,
-                            std::function<void ()> func,
-                            const enum flags &flags)
-:c{std::make_unique<ctx>(stack_sz, flags, ircd::ios)}
+bool
+ircd::ctx::notify(ctx &ctx)
+{
+	return ctx.note();
+}
+
+void
+ircd::ctx::interrupt(ctx &ctx)
+{
+	ctx.flags |= context::INTERRUPTED;
+	ctx.wake();
+}
+
+bool
+ircd::ctx::started(const ctx &ctx)
+{
+	return ctx.started();
+}
+
+bool
+ircd::ctx::finished(const ctx &ctx)
+{
+	return ctx.finished();
+}
+
+const int64_t &
+ircd::ctx::notes(const ctx &ctx)
+{
+	return ctx.notes;
+}
+
+ircd::string_view
+ircd::ctx::name(const ctx &ctx)
+{
+	return ctx.name;
+}
+
+const uint64_t &
+ircd::ctx::id(const ctx &ctx)
+{
+	return ctx.id;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx/continuation.h
+//
+
+ircd::ctx::continuation::continuation(ctx *const &self)
+:self{self}
+{
+    mark(prof::event::CUR_YIELD);
+    assert(self != nullptr);
+    assert(self->notes <= 1);
+    ircd::ctx::current = nullptr;
+}
+
+ircd::ctx::continuation::~continuation()
+noexcept
+{
+    ircd::ctx::current = self;
+    self->notes = 1;
+    mark(prof::event::CUR_CONTINUE);
+}
+
+ircd::ctx::continuation::operator boost::asio::yield_context &()
+{
+	return *self->yc;
+}
+
+ircd::ctx::continuation::operator const boost::asio::yield_context &()
+const
+{
+	return *self->yc;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx/context.h
+//
+
+ircd::ctx::context::context(const char *const &name,
+                            const size_t &stack_sz,
+                            const flags &flags,
+                            std::function<void ()> func)
+:c{std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)}
 {
 	auto spawn([stack_sz, c(c.get()), func(std::move(func))]
 	{
@@ -114,24 +337,53 @@ ircd::ctx::context::context(const size_t &stack_sz,
 	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
 	mark(prof::event::SPAWN);
 
-	if(flags & DEFER_POST)
+	if(flags & POST)
 		ios->post(std::move(spawn));
-	else if(flags & DEFER_DISPATCH)
+	else if(flags & DISPATCH)
 		ios->dispatch(std::move(spawn));
 	else
 		spawn();
 
-	if(flags & SELF_DESTRUCT)
+	if(flags & DETACH)
 		c.release();
 }
 
-ircd::ctx::context::context(std::function<void ()> func,
-                            const enum flags &flags)
+ircd::ctx::context::context(const char *const &name,
+                            const size_t &stack_size,
+                            std::function<void ()> func,
+                            const flags &flags)
 :context
 {
-	DEFAULT_STACK_SIZE,
-	std::move(func),
-	flags
+	name, stack_size, flags, std::move(func)
+}
+{
+}
+
+ircd::ctx::context::context(const char *const &name,
+                            const flags &flags,
+                            std::function<void ()> func)
+:context
+{
+	name, DEFAULT_STACK_SIZE, flags, std::move(func)
+}
+{
+}
+
+ircd::ctx::context::context(const char *const &name,
+                            std::function<void ()> func,
+                            const flags &flags)
+:context
+{
+	name, DEFAULT_STACK_SIZE, flags, std::move(func)
+}
+{
+}
+
+ircd::ctx::context::context(std::function<void ()> func,
+                            const flags &flags)
+:context
+{
+	"<unnamed context>", DEFAULT_STACK_SIZE, flags, std::move(func)
 }
 {
 }
@@ -166,91 +418,8 @@ ircd::ctx::context::join()
 ircd::ctx::ctx *
 ircd::ctx::context::detach()
 {
-	c->flags |= SELF_DESTRUCT;
+	c->flags |= DETACH;
 	return c.release();
-}
-
-bool
-ircd::ctx::notify(ctx &ctx)
-{
-	return ctx.note();
-}
-
-void
-ircd::ctx::interrupt(ctx &ctx)
-{
-	ctx.flags |= INTERRUPTED;
-	ctx.wake();
-}
-
-bool
-ircd::ctx::started(const ctx &ctx)
-{
-	return ctx.started();
-}
-
-bool
-ircd::ctx::finished(const ctx &ctx)
-{
-	return ctx.finished();
-}
-
-const enum ctx::flags &
-ircd::ctx::flags(const ctx &ctx)
-{
-	return ctx.flags;
-}
-
-const int64_t &
-ircd::ctx::notes(const ctx &ctx)
-{
-	return ctx.notes;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// ctx_ctx.h
-//
-
-ctx::ctx::ctx(const size_t &stack_max,
-              const enum flags &flags,
-              boost::asio::io_service *const &ios)
-:alarm{*ios}
-,yc{nullptr}
-,stack_base{0}
-,stack_max{stack_max}
-,notes{1}
-,adjoindre{nullptr}
-,flags{flags}
-{
-}
-
-void
-ctx::ctx::operator()(boost::asio::yield_context yc,
-                     const std::function<void ()> func)
-noexcept
-{
-	this->yc = &yc;
-	notes = 1;
-	stack_base = uintptr_t(__builtin_frame_address(0));
-	ircd::ctx::current = this;
-	mark(prof::event::CUR_ENTER);
-
-	const scope atexit([this]
-	{
-		if(adjoindre)
-			notify(*adjoindre);
-
-		mark(prof::event::CUR_LEAVE);
-		ircd::ctx::current = nullptr;
-		this->yc = nullptr;
-
-		if(flags & SELF_DESTRUCT)
-			delete this;
-	});
-
-	if(likely(bool(func)))
-		func();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -258,29 +427,31 @@ noexcept
 // ctx_pool.h
 //
 
-ctx::pool::pool(const size_t &size,
-                const size_t &stack_size)
-:stack_size{stack_size}
+ircd::ctx::pool::pool(const char *const &name,
+                      const size_t &stack_size,
+                      const size_t &size)
+:name{name}
+,stack_size{stack_size}
 ,available{0}
 {
 	add(size);
 }
 
-ctx::pool::~pool()
+ircd::ctx::pool::~pool()
 noexcept
 {
 	del(size());
 }
 
 void
-ctx::pool::operator()(closure closure)
+ircd::ctx::pool::operator()(closure closure)
 {
-	queue.emplace_back(std::move(closure));
+	queue.push_back(std::move(closure));
 	dock.notify_one();
 }
 
 void
-ctx::pool::del(const size_t &num)
+ircd::ctx::pool::del(const size_t &num)
 {
 	const ssize_t requested(size() - num);
 	const size_t target(std::max(requested, ssize_t(0)));
@@ -289,14 +460,21 @@ ctx::pool::del(const size_t &num)
 }
 
 void
-ctx::pool::add(const size_t &num)
+ircd::ctx::pool::add(const size_t &num)
 {
 	for(size_t i(0); i < num; ++i)
-		ctxs.emplace_back(stack_size, std::bind(&pool::main, this), DEFER_POST);
+		ctxs.emplace_back(name, stack_size, context::POST, std::bind(&pool::main, this));
 }
 
 void
-ctx::pool::main()
+ircd::ctx::pool::interrupt()
+{
+	for(auto &context : ctxs)
+		context.interrupt();
+}
+
+void
+ircd::ctx::pool::main()
 try
 {
 	++available;
@@ -317,7 +495,7 @@ catch(const interrupted &e)
 }
 
 void
-ctx::pool::next()
+ircd::ctx::pool::next()
 try
 {
 	dock.wait([this]
@@ -383,7 +561,7 @@ void handle_cur_enter();
 } // namespace ircd
 
 void
-ctx::prof::mark(const event &e)
+ircd::ctx::prof::mark(const event &e)
 {
 	switch(e)
 	{
@@ -396,46 +574,51 @@ ctx::prof::mark(const event &e)
 }
 
 void
-ctx::prof::handle_cur_enter()
+ircd::ctx::prof::handle_cur_enter()
 {
 	slice_start();
 }
 
 void
-ctx::prof::handle_cur_leave()
+ircd::ctx::prof::handle_cur_leave()
 {
 	check_slice();
 }
 
 void
-ctx::prof::handle_cur_yield()
+ircd::ctx::prof::handle_cur_yield()
 {
 	check_stack();
 	check_slice();
 }
 
 void
-ctx::prof::handle_cur_continue()
+ircd::ctx::prof::handle_cur_continue()
 {
 	slice_start();
 }
 
 void
-ctx::prof::slice_start()
+ircd::ctx::prof::slice_start()
 {
 	cur_slice_start = steady_clock::now();
 }
 
 void
-ctx::prof::check_slice()
+ircd::ctx::prof::check_slice()
 {
 	auto &c(cur());
+
 	const auto time_usage(steady_clock::now() - cur_slice_start);
+	c.awake += duration_cast<microseconds>(time_usage);
+
 	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
 	{
-		log::warning("CONTEXT TIMESLICE EXCEEDED ctx(%p) last: %06ld microseconds",
+		log::warning("CONTEXT TIMESLICE EXCEEDED (%p) '%s' last: %06ldus total: %06ldus",
 		             (const void *)&c,
-		             duration_cast<microseconds>(time_usage).count());
+		             c.name,
+		             duration_cast<microseconds>(time_usage).count(),
+		             c.awake.count());
 
 		assert(settings.slice_assertion == 0us || time_usage < settings.slice_assertion);
 	}
@@ -447,7 +630,7 @@ ctx::prof::check_slice()
 }
 
 void
-ctx::prof::check_stack()
+ircd::ctx::prof::check_stack()
 {
 	auto &c(cur());
 	const double &stack_max(c.stack_max);
@@ -465,7 +648,7 @@ ctx::prof::check_stack()
 }
 
 size_t
-ctx::prof::stack_usage_here(const ctx &ctx)
+ircd::ctx::prof::stack_usage_here(const ctx &ctx)
 {
 	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }
@@ -495,14 +678,14 @@ void push(closure &&);
 } // namespace ctx
 } // namespace ircd
 
-ctx::ole::init::init()
+ircd::ctx::ole::init::init()
 {
 	assert(!thread);
 	interruption = false;
 	thread = new std::thread(&worker);
 }
 
-ctx::ole::init::~init()
+ircd::ctx::ole::init::~init()
 noexcept
 {
 	if(!thread)
@@ -518,7 +701,7 @@ noexcept
 }
 
 void
-ctx::ole::offload(const std::function<void ()> &func)
+ircd::ctx::ole::offload(const std::function<void ()> &func)
 {
 	std::exception_ptr eptr;
 	auto &context(cur());
@@ -550,7 +733,7 @@ ctx::ole::offload(const std::function<void ()> &func)
 }
 
 void
-ctx::ole::push(closure &&func)
+ircd::ctx::ole::push(closure &&func)
 {
 	const std::lock_guard<decltype(mutex)> lock(mutex);
 	queue.emplace_back(std::move(func));
@@ -558,7 +741,7 @@ ctx::ole::push(closure &&func)
 }
 
 void
-ctx::ole::worker()
+ircd::ctx::ole::worker()
 noexcept try
 {
 	while(1)
@@ -572,8 +755,8 @@ catch(const interrupted &)
 	return;
 }
 
-ctx::ole::closure
-ctx::ole::pop()
+ircd::ctx::ole::closure
+ircd::ctx::ole::pop()
 {
 	std::unique_lock<decltype(mutex)> lock(mutex);
 	cond.wait(lock, []

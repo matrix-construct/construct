@@ -122,20 +122,19 @@ info::myinfo
 	{"UHPATH", "NONE", 0, "Path to User Help Files"},
 	#endif
 
-	#ifdef SOMAXCONN
-	{"CHARYBDIS_SOMAXCONN", "", SOMAXCONN, "Maximum Queue Length of Pending Connections"},
-	#else
-	{"CHARYBDIS_SOMAXCONN", "", CHARYBDIS_SOMAXCONN, "Maximum Queue Length of Pending Connections"},
-	#endif
-
 	#ifdef RB_IPV6
 	{"IPV6", "ON", 0, "IPv6 Support"},
 	#else
 	{"IPV6", "OFF", 0, "IPv6 Support"},
 	#endif
 
+	#ifdef JOIN_LEAVE_COUNT_EXPIRE_TIME
 	{"JOIN_LEAVE_COUNT_EXPIRE_TIME", "", JOIN_LEAVE_COUNT_EXPIRE_TIME, "Anti SpamBot Parameter"},
+	#endif
+
+	#ifdef KILLCHASETIMELIMIT
 	{"KILLCHASETIMELIMIT", "", KILLCHASETIMELIMIT, "Nick Change Tracker for KILL"},
+	#endif
 
 	#ifdef LPATH
 	{"LPATH", LPATH, 0, "Path to Log File"},
@@ -143,9 +142,17 @@ info::myinfo
 	{"LPATH", "NONE", 0, "Path to Log File"},
 	#endif
 
+	#ifdef MAX_BUFFER
 	{"MAX_BUFFER", "", MAX_BUFFER, "Maximum Buffer Connections Allowed"},
+	#endif
+
+	#ifdef MAX_JOIN_LEAVE_COUNT
 	{"MAX_JOIN_LEAVE_COUNT", "", MAX_JOIN_LEAVE_COUNT, "Anti SpamBot Parameter"},
+	#endif
+
+	#ifdef MAX_JOIN_LEAVE_TIME
 	{"MIN_JOIN_LEAVE_TIME", "", MIN_JOIN_LEAVE_TIME, "Anti SpamBot Parameter"},
+	#endif
 
 	#ifdef MPATH
 	{"MPATH", MPATH, 0, "Path to MOTD File"},
@@ -153,7 +160,9 @@ info::myinfo
 	{"MPATH", "NONE", 0, "Path to MOTD File"},
 	#endif
 
+	#ifdef NICKNAMEHISTORYLENGTH
 	{"NICKNAMEHISTORYLENGTH", "", NICKNAMEHISTORYLENGTH, "Size of WHOWAS Array"},
+	#endif
 
 	#ifdef OPATH
 	{"OPATH", OPATH, 0, "Path to Operator MOTD File"},
@@ -161,7 +170,9 @@ info::myinfo
 	{"OPATH", "NONE", 0, "Path to Operator MOTD File"},
 	#endif
 
+	#ifdef OPER_SPAM_COUNTDOWN
 	{"OPER_SPAM_COUNTDOWN", "", OPER_SPAM_COUNTDOWN, "Anti SpamBot Parameter"},
+	#endif
 
 	#ifdef HAVE_LIBCRYPTO
 	{"HAVE_LIBCRYPTO", "ON", 0, "Enable OpenSSL CHALLENGE Support"},
@@ -187,8 +198,13 @@ info::myinfo
 	{"SPATH", "NONE", 0, "Path to Server Executable"},
 	#endif
 
+	#ifdef TS_MAX_DELTA_DEFAULT
 	{"TS_MAX_DELTA_DEFAULT", "", TS_MAX_DELTA_DEFAULT, "Maximum Allowed TS Delta from another Server"},
+	#endif
+
+	#ifdef TS_WARN_DELTA_DEFAULT
 	{"TS_WARN_DELTA_DEFAULT", "", TS_WARN_DELTA_DEFAULT, "Maximum TS Delta before Sending Warning"},
+	#endif
 
 	#ifdef USE_IODEBUG_HOOKS
 	{"USE_IODEBUG_HOOKS", "YES", 0, "IO Debugging support"},

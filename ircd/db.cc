@@ -80,6 +80,15 @@ noexcept
 {
 }
 
+void
+db::write(handle &handle,
+          const string_view &key,
+          const json::doc &obj,
+          const sopts &sopts)
+{
+	printf("Got this object %zu\n", obj.size());
+}
+
 db::handle::handle(const std::string &name,
                    const opts &opts)
 try
@@ -97,10 +106,15 @@ try
 	meta->opts.row_cache = meta->cache;
 	return std::move(meta);
 }()}
-,d{[this]
+,d{[this, &opts]
 {
 	rocksdb::DB *ptr;
-	throw_on_error(rocksdb::DB::Open(meta->opts, meta->path, &ptr));
+
+	if(has_opt(opts, opt::READ_ONLY))
+		throw_on_error(rocksdb::DB::OpenForReadOnly(meta->opts, meta->path, &ptr));
+	else
+		throw_on_error(rocksdb::DB::Open(meta->opts, meta->path, &ptr));
+
 	return std::unique_ptr<rocksdb::DB>{ptr};
 }()}
 {
@@ -135,10 +149,14 @@ catch(const std::exception &e)
 db::handle::~handle()
 noexcept
 {
+	log.info("Closing database \"%s\" @ `%s' (handle: %p)",
+	         meta->name.c_str(),
+	         meta->path.c_str(),
+	         (const void *)this);
 }
 
 void
-db::handle::del(const std::string &key,
+db::handle::del(const string_view &key,
                 const sopts &sopts)
 {
 	using rocksdb::Slice;
@@ -149,90 +167,90 @@ db::handle::del(const std::string &key,
 }
 
 void
-db::handle::set(const std::string &key,
-                const std::string &value,
-                const sopts &sopts)
-{
-	set(key, value.data(), value.size(), sopts);
-}
-
-void
-db::handle::set(const std::string &key,
+db::handle::set(const string_view &key,
                 const uint8_t *const &buf,
                 const size_t &size,
                 const sopts &sopts)
 {
-	set(key, reinterpret_cast<const char *>(buf), size, sopts);
+	const string_view val{reinterpret_cast<const char *>(buf), size};
+	set(key, key, sopts);
 }
 
 void
-db::handle::set(const std::string &key,
-                const char *const &buf,
-                const size_t &size,
+db::handle::set(const string_view &key,
+                const string_view &val,
                 const sopts &sopts)
 {
 	using rocksdb::Slice;
 
 	auto opts(make_opts(sopts));
 	const Slice k(key.data(), key.size());
-	const Slice v(buf, size);
+	const Slice v(val.data(), val.size());
 	throw_on_error(d->Put(opts, k, v));
 }
 
 std::string
-db::handle::get(const std::string &key,
+db::handle::get(const string_view &key,
                 const gopts &gopts)
 {
 	std::string ret;
 	const auto copy([&ret]
-	(const char *const &src, const size_t &size)
+	(const string_view &src)
 	{
-		ret.assign(src, size);
+		ret.assign(begin(src), end(src));
 	});
 
-	get(key, copy, gopts);
+	operator()(key, copy, gopts);
 	return ret;
 }
 
 size_t
-db::handle::get(const std::string &key,
+db::handle::get(const string_view &key,
                 uint8_t *const &buf,
                 const size_t &max,
                 const gopts &gopts)
 {
 	size_t ret(0);
 	const auto copy([&ret, &buf, &max]
-	(const char *const &src, const size_t &size)
+	(const string_view &src)
 	{
-		ret = std::min(size, max);
-		memcpy(buf, src, ret);
+		ret = std::min(src.size(), max);
+		memcpy(buf, src.data(), ret);
 	});
 
-	get(key, copy, gopts);
+	operator()(key, copy, gopts);
 	return ret;
 }
 
 size_t
-db::handle::get(const std::string &key,
+db::handle::get(const string_view &key,
                 char *const &buf,
                 const size_t &max,
                 const gopts &gopts)
 {
 	size_t ret(0);
 	const auto copy([&ret, &buf, &max]
-	(const char *const &src, const size_t &size)
+	(const string_view &src)
 	{
-		ret = rb_strlcpy(buf, src, std::min(size, max));
+		ret = strlcpy(buf, src.data(), std::min(src.size(), max));
 	});
 
-	get(key, copy, gopts);
+	operator()(key, copy, gopts);
 	return ret;
 }
 
 void
-db::handle::get(const std::string &key,
-                const closure &func,
-                const gopts &gopts)
+db::handle::operator()(const string_view &key,
+                       const gopts &gopts,
+                       const closure &func)
+{
+	return operator()(key, func, gopts);
+}
+
+void
+db::handle::operator()(const string_view &key,
+                       const closure &func,
+                       const gopts &gopts)
 {
 	using rocksdb::Slice;
 	using rocksdb::Iterator;
@@ -242,11 +260,11 @@ db::handle::get(const std::string &key,
 	const auto it(seek(*d, sk, opts));
 	valid_equal_or_throw(*it, sk);
 	const auto &v(it->value());
-	func(v.data(), v.size());
+	func(string_view{v.data(), v.size()});
 }
 
 bool
-db::handle::has(const std::string &key,
+db::handle::has(const string_view &key,
                 const gopts &gopts)
 {
 	using rocksdb::Slice;
@@ -324,7 +342,7 @@ db::handle::cbegin(const gopts &gopts)
 }
 
 db::const_iterator
-db::handle::upper_bound(const std::string &key,
+db::handle::upper_bound(const string_view &key,
                         const gopts &gopts)
 {
 	using rocksdb::Slice;
@@ -338,7 +356,7 @@ db::handle::upper_bound(const std::string &key,
 }
 
 db::const_iterator
-db::handle::lower_bound(const std::string &key,
+db::handle::lower_bound(const string_view &key,
                         const gopts &gopts)
 {
 	using rocksdb::Slice;
@@ -414,12 +432,10 @@ db::const_iterator::operator*()
 const
 {
 	const auto &k(state->it->key());
-	val.first.first = k.data();
-	val.first.second = k.size();
-
 	const auto &v(state->it->value());
-	val.second.first = v.data();
-	val.second.second = v.size();
+
+	val.first   = { k.data(), k.size() };
+	val.second  = { v.data(), v.size() };
 
 	return val;
 }

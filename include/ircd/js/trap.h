@@ -63,7 +63,7 @@ struct trap
 	virtual void on_trace(const JSObject *const &);
 	virtual void on_gc(JSObject *const &);
 
-  private:
+  private: protected:
 	void add_this();
 	void del_this();
 	void host_exception(const void *const &that, const char *fmt, ...) const AFP(3, 4);

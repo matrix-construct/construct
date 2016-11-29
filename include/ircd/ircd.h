@@ -26,9 +26,9 @@
 #define HAVE_IRCD_H
 
 #if defined(PIC) && defined(PCH)
-#include "stdinc.pic.h"
+	#include "stdinc.pic.h"
 #else
-#include "stdinc.h"
+	#include "stdinc.h"
 #endif
 
 #ifdef __cplusplus
@@ -54,6 +54,11 @@ void init(boost::asio::io_service &ios, const std::string &newconf_path, main_ex
 // will be the last operation from IRCd posted to the ios).
 //
 void stop();
+
+//
+// Runtime test interface for developers
+//
+void test(const string_view &what);
 
 }      // namespace ircd
 #endif // __cplusplus

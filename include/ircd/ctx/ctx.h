@@ -1,6 +1,9 @@
 /*
- *  Copyright (C) 2016 Charybdis Development Team
- *  Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ * charybdis: oh just a little chat server
+ * ctx.h: userland context switching (stackful coroutines)
+ *
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,131 +25,101 @@
 #pragma once
 #define HAVE_IRCD_CTX_CTX_H
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/spawn.hpp>
-
 namespace ircd {
 namespace ctx  {
 
-struct ctx
-{
-	boost::asio::steady_timer alarm;             // 64B
-	boost::asio::yield_context *yc;
-	uintptr_t stack_base;
-	size_t stack_max;
-	int64_t notes;                               // norm: 0 = asleep; 1 = awake; inc by others; dec by self
-	ctx *adjoindre;
-	enum flags flags;
+struct ctx;
 
-	bool finished() const                        { return yc == nullptr;                           }
-	bool started() const                         { return bool(yc);                                }
-	bool wait();
-	void wake();
-	bool note();
+//
+// low-level ctx interface exposure
+//
+const uint64_t &id(const ctx &);                 // Unique ID for context 
+string_view name(const ctx &);                   // User's optional label for context
+const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
+bool finished(const ctx &);                      // Context function returned (or exception).
+bool started(const ctx &);                       // Context was ever entered.
+void interrupt(ctx &);                           // Interrupt the context for termination.
+bool notify(ctx &);                              // Increment the semaphore (only library ppl need this)
 
-	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
+//
+// "this_context" interface relevant to the currently running context
+//
+extern __thread struct ctx *current;             // Always set to the currently running context or null
 
-	ctx(const size_t &stack_max                  = DEFAULT_STACK_SIZE,
-	    const enum flags &flags                  = (enum flags)0,
-	    boost::asio::io_service *const &ios      = ircd::ios);
+// low-level fundamentals
+ctx &cur();                                      // Convenience for *current (try to use this instead)
+void yield();                                    // Allow other contexts to run before returning.
+void wait();                                     // Returns when context notified.
 
-	ctx(ctx &&) noexcept = delete;
-	ctx(const ctx &) = delete;
-};
+// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
+microseconds wait(const microseconds &, const std::nothrow_t &);
+template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
+template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
 
-struct continuation
-{
-	ctx *self;
+// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
+bool wait_until(const time_point &tp, const std::nothrow_t &);
+template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
+template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
 
-	operator const boost::asio::yield_context &() const;
-	operator boost::asio::yield_context &();
-
-	continuation(ctx *const &self = ircd::ctx::current);
-	~continuation() noexcept;
-};
-
-inline
-continuation::continuation(ctx *const &self)
-:self{self}
-{
-	mark(prof::event::CUR_YIELD);
-	assert(self != nullptr);
-	assert(self->notes <= 1);
-	ircd::ctx::current = nullptr;
-}
-
-inline
-continuation::~continuation()
-noexcept
-{
-	ircd::ctx::current = self;
-	mark(prof::event::CUR_CONTINUE);
-	self->notes = 1;
-}
-
-inline
-continuation::operator boost::asio::yield_context &()
-{
-	return *self->yc;
-}
-
-inline
-continuation::operator const boost::asio::yield_context &()
-const
-{
-	return *self->yc;
-}
-
-inline bool
-ctx::note()
-{
-	if(notes++ > 0)
-		return false;
-
-	wake();
-	return true;
-}
-
-inline void
-ctx::wake()
-try
-{
-	alarm.cancel();
-}
-catch(const boost::system::system_error &e)
-{
-	ircd::log::error("ctx::wake(%p): %s", this, e.what());
-}
-
-inline bool
-ctx::wait()
-{
-	if(--notes > 0)
-		return false;
-
-	boost::system::error_code ec;
-	alarm.async_wait(boost::asio::yield_context(continuation(this))[ec]);
-
-	assert(ec == boost::system::errc::operation_canceled ||
-	       ec == boost::system::errc::success);
-
-	// Interruption shouldn't be used for normal operation,
-	// so please eat this branch misprediction.
-	if(unlikely(flags & INTERRUPTED))
-	{
-		mark(prof::event::CUR_INTERRUPT);
-		flags &= ~INTERRUPTED;
-		throw interrupted("ctx(%p)::wait()", (const void *)this);
-	}
-
-	// notes = 1; set by continuation dtor on wakeup
-	return true;
-}
+// Ignores notes. Throws if interrupted.
+void sleep_until(const time_point &tp);
+template<class duration> void sleep(const duration &);
+void sleep(const int &secs);
 
 } // namespace ctx
-
-using ctx::continuation;
-using yield = boost::asio::yield_context;
-
 } // namespace ircd
+
+inline void
+ircd::ctx::sleep(const int &secs)
+{
+	sleep(seconds(secs));
+}
+
+template<class duration>
+void
+ircd::ctx::sleep(const duration &d)
+{
+	sleep_until(steady_clock::now() + d);
+}
+
+template<class E>
+ircd::throw_overload<E>
+ircd::ctx::wait_until(const time_point &tp)
+{
+	if(wait_until<std::nothrow_t>(tp))
+		throw E();
+}
+
+template<class E>
+ircd::nothrow_overload<E, bool>
+ircd::ctx::wait_until(const time_point &tp)
+{
+	return wait_until(tp, std::nothrow);
+}
+
+template<class E,
+         class duration>
+ircd::throw_overload<E, duration>
+ircd::ctx::wait(const duration &d)
+{
+	const auto ret(wait<std::nothrow_t>(d));
+	return ret <= duration(0)? throw E() : ret;
+}
+
+template<class E,
+         class duration>
+ircd::nothrow_overload<E, duration>
+ircd::ctx::wait(const duration &d)
+{
+	using std::chrono::duration_cast;
+
+	const auto ret(wait(duration_cast<microseconds>(d), std::nothrow));
+	return duration_cast<duration>(ret);
+}
+
+inline ircd::ctx::ctx &
+ircd::ctx::cur()
+{
+	assert(current);
+	return *current;
+}

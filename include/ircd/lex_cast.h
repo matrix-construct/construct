@@ -27,7 +27,6 @@
 #pragma once
 #define HAVE_IRCD_LEX_CAST
 
-#ifdef __cplusplus
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
 
 namespace ircd        {
@@ -42,6 +41,5 @@ auto lex_cast(Args&&... args)
 }
 #endif
 
-}        // namespace util
-}        // namespace ircd
-#endif   // __cplusplus
+} // namespace util
+} // namespace ircd

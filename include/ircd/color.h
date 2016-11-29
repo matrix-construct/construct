@@ -20,9 +20,8 @@
 #pragma once
 #define HAVE_IRCD_COLOR_H
 
-#ifdef __cplusplus
-namespace ircd   {
-namespace color  {
+namespace ircd  {
+namespace color {
 
 enum mode
 :uint8_t
@@ -53,6 +52,5 @@ enum class bg
 	BLUE_BLINK,      MAGENTA_BLINK,   BLACK_BLINK,   LGRAY,
 };
 
-}      // namespace color
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace color
+} // namespace ircd

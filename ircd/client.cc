@@ -25,293 +25,225 @@
  *  USA
  */
 
-#include <boost/asio.hpp>
-#include <ircd/sock.h>
-#include "rbuf.h"
+#include <ircd/socket.h>
+#include <ircd/lex_cast.h>
 
 namespace ircd {
 
-struct client
-:std::enable_shared_from_this<client>
+ctx::pool request
 {
-	struct rbuf rbuf;
-	clist::const_iterator clit;
-	std::shared_ptr<struct sock> sock;
-
-	client();
-	client(const client &) = delete;
-	client &operator=(const client &) = delete;
-	~client() noexcept;
+	"request", 1_MiB
 };
 
-client *me;
-std::unique_ptr<db::handle> client_db;
-clist client_list;
+client::list client::clients
+{};
 
-hook::sequence<client &> h_client_added;
-
+bool handle_ec_timeout(client &);
 bool handle_ec_eof(client &);
-bool handle_ec_cancel(client &);
 bool handle_ec_success(client &);
 bool handle_ec(client &, const error_code &);
-void handle_recv(client &, const error_code &, const size_t);
+
+void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
+void async_recv_next(std::shared_ptr<client>);
+
+void disconnect(client &, const socket::dc & = socket::dc::FIN);
+void disconnect_all();
+
+template<class... args> std::shared_ptr<client> make_client(args&&...);
 
 } // namespace ircd
 
-using namespace ircd;
-
-client_init::client_init()
+ircd::client::init::init()
 {
-	client_db.reset(new db::handle("clients"));
+	request.add(1);
 }
 
-client_init::~client_init()
+ircd::client::init::~init()
 noexcept
 {
+	request.interrupt();
 	disconnect_all();
-	client_db.reset(nullptr);
 }
 
-client::client()
+ircd::client::client(const char *const &type)
+:type{type}
+,clit{clients.emplace(end(clients), this)}
 {
 }
 
-client::~client()
+ircd::client::client(const char *const &type,
+                     std::shared_ptr<socket> sock)
+:type{type}
+,clit{clients.emplace(end(clients), this)}
+,sock{std::move(sock)}
+{
+}
+
+ircd::client::~client()
 noexcept
 {
+	clients.erase(clit);
 }
 
-const clist &
-ircd::clients()
+bool
+ircd::client::main()
+noexcept try
 {
-	return client_list;
+	char arbuf[2048];
+	parse::buffer pb(arbuf, arbuf + sizeof(arbuf));
+
+    parse::context pc(pb, [this]
+    (char *&read, char *const &stop)
+    {
+        read += sock->read_some(mutable_buffers{{read, stop}});
+    });
+
+    const http::request::head header{pc};
+    const http::request::body content{pc, header};
+
+	try
+	{
+		log::debug("Requesting resource \"%s\"", std::string(header.resource).c_str());
+		const auto &resource(*resource::resources.at(header.resource));
+		const auto &meth(*resource.methods.at(header.method));
+		const json::doc doc(content);
+		for(const auto &member : doc)
+		{
+			const auto it(meth.members.find(member.first));
+			if(it == meth.members.end())
+			{
+				log::warning("In method %s of resource %s: Unhandled member \"%s\"",
+				             std::string(header.method).data(),
+				             std::string(header.resource).data(),
+				             std::string(member.first).data());
+				continue;
+			}
+
+			const auto &mem(*it->second);
+			if(mem.valid) try
+			{
+				mem.valid(member.second);
+			}
+			catch(const m::error &e)
+			{
+				throw http::error(http::code::BAD_REQUEST, e.what());
+			}
+		}
+
+		resource::request req{header, content};
+		resource::response response; try
+		{
+			resource(*this, req, response);
+		}
+		catch(const std::exception &e)
+		{
+			ircd::log::error("resource[%s]: %s", resource.name, e.what());
+			throw http::error(http::code::INTERNAL_SERVER_ERROR);
+		}
+	}
+	catch(const std::out_of_range &e)
+	{
+		throw http::error(http::code::NOT_FOUND);
+	}
+
+	return true;
+}
+catch(const http::error &e)
+{
+	char clen[64];
+	const auto clen_size
+	{
+		size_t(snprintf(clen, sizeof(clen), "Content-Length: %zu\r\n", e.content.size()))
+	};
+
+	const const_buffers iov
+	{
+		{ "HTTP/1.1 ", 9                      },
+		{ e.what(), strlen(e.what())          },
+		{ "\r\n", 2                           },
+		{ clen, clen_size                     },
+		{ "\r\n", 2                           },
+		{ e.content.data(), e.content.size()  }
+	};
+
+	sock->write(iov);
+	log::error("http::error: %s", e.what());
+	return true;
+}
+catch(const boost::system::system_error &e)
+{
+	log::error("system_error: %s", e.what());
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::error("exception: %s", e.what());
+	return false;
 }
 
-std::shared_ptr<client>
-ircd::add_client(std::shared_ptr<struct sock> sock)
+std::shared_ptr<ircd::client>
+ircd::add_client(std::shared_ptr<socket> s)
 {
-	auto client(add_client());
-	client->sock = std::move(sock);
+	auto client(make_client("client", std::move(s)));
 	log::info("New client[%s] on local[%s]",
 	          string(remote_address(*client)).c_str(),
 	          string(local_address(*client)).c_str());
 
-	h_client_added(*client);
-	async_recv_next(*client);
+	async_recv_next(client, seconds(30));
 	return client;
 }
 
-std::shared_ptr<client>
-ircd::add_client()
+template<class... args>
+std::shared_ptr<ircd::client>
+ircd::make_client(args&&... a)
 {
-	auto client(std::make_shared<client>());
-	client->clit = client_list.emplace(end(client_list), client);
-	return client;
-}
-
-void
-ircd::finished(client &client)
-{
-	const auto p(shared_from(client));
-	client_list.erase(client.clit);
-	log::debug("client[%p] finished. (refs: %zu)", (const void *)p.get(), p.use_count());
-}
-
-size_t
-ircd::recv(client &client,
-           char *const &buf,
-           const size_t &max,
-           milliseconds &timeout)
-try
-{
-	using std::chrono::duration_cast;
-
-	auto &sock(socket(client));
-	sock.set_timeout(timeout);
-	const auto ret(sock.recv_some(mutable_buffers_1(buf, max)));
-	if(timeout < milliseconds(0))
-		return ret;
-
-	sock.timer.cancel();
-	timeout = duration_cast<milliseconds>(sock.timer.expires_from_now());
-	return ret;
-}
-catch(const boost::system::system_error &e)
-{
-	using namespace boost::system::errc;
-	using boost::asio::error::eof;
-
-	switch(e.code().value())
-	{
-		case success:
-			return 0;
-
-		case eof:
-			throw disconnected();
-
-		case operation_canceled:
-			if(socket(client).timedout)
-				throw ctx::timeout();
-			else
-				throw ctx::interrupted();
-
-		default:
-			throw error("%s", e.what());
-	}
-}
-
-void
-ircd::send(client &client,
-           text_terminate_t,
-           const std::string &text)
-{
-	send(client, text_terminate, text.c_str(), text.size());
-}
-
-void
-ircd::send(client &client,
-           text_terminate_t,
-           const char *const &text)
-{
-	send(client, text_terminate, text, strlen(text));
-}
-
-void
-ircd::send(client &client,
-           text_terminate_t,
-           const char *const &text,
-           const size_t &len)
-{
-	assert(len <= 510);
-	const std::array<const_buffer, 2> buffers
-	{{
-		{ text, len  },
-		{ "\r\n", 2  }
-	}};
-
-	auto &sock(socket(client));
-	sock.send(buffers);
-}
-
-void
-ircd::send(client &client,
-           text_raw_t,
-           const std::string &text)
-{
-	send(client, text_raw, text.c_str(), text.size());
-}
-
-void
-ircd::send(client &client,
-           text_raw_t,
-           const char *const &text)
-{
-	send(client, text_raw, text, strlen(text));
-}
-
-void
-ircd::send(client &client,
-           text_raw_t,
-           const char *const &text,
-           const size_t &len)
-{
-	assert(len <= 512);
-	auto &sock(socket(client));
-	sock.send(const_buffers_1(text, len));
+	return std::make_shared<client>(std::forward<args>(a)...);
 }
 
 void
 ircd::disconnect_all()
 {
-	for(auto &client : client_list)
-		disconnect(std::nothrow, *client, dc::RST);
-}
-
-bool
-ircd::disconnect(std::nothrow_t,
-                 client &client,
-                 const dc &type)
-noexcept try
-{
-	if(!client.sock)
-		return true;
-
-	disconnect(client, type);
-	return true;
-}
-catch(...)
-{
-	return false;
+	for(auto &client : client::clients) try
+	{
+		disconnect(*client, socket::dc::RST);
+	}
+	catch(...)
+	{
+	}
 }
 
 void
 ircd::disconnect(client &client,
-                 const dc &type)
+                 const socket::dc &type)
 {
-	auto &sock(socket(client));
+	auto &sock(*client.sock);
 	sock.disconnect(type);
 }
 
-bool
-ircd::connected(const client &client)
-noexcept
-try
+void
+ircd::async_recv_next(std::shared_ptr<client> client)
 {
-	return socket(client).sd.is_open();
-}
-catch(...)
-{
-	return false;
+	async_recv_next(std::move(client), milliseconds(-1));
 }
 
 void
-ircd::async_recv_next(client &client)
+ircd::async_recv_next(std::shared_ptr<client> client,
+                      const milliseconds &timeout)
 {
-	async_recv_next(client, std::chrono::milliseconds(-1));
-}
+	auto &sock(*client->sock);
+	sock(timeout, [client(std::move(client)), timeout]
+	(const error_code &ec)
+	noexcept
+	{
+		if(!handle_ec(*client, ec))
+			return;
 
-void
-ircd::async_recv_next(client &client,
-                      const std::chrono::milliseconds &timeout)
-{
-	using boost::asio::async_read;
-
-	auto &rbuf(client.rbuf);
-	rbuf.reset();
-
-	auto &sock(*client.sock);
-	sock.set_timeout(timeout);
-	async_read(sock.sd, mutable_buffers_1(data(rbuf.buf), size(rbuf.buf)),
-	           std::bind(&rbuf::handle_pck, &rbuf, ph::_1, ph::_2),
-	           std::bind(&ircd::handle_recv, std::ref(client), ph::_1, ph::_2));
-}
-
-void
-ircd::async_recv_cancel(client &client)
-{
-	auto &sock(socket(client));
-	sock.sd.cancel();
-}
-
-void
-ircd::handle_recv(client &client,
-                  const error_code &ec,
-                  const size_t bytes)
-try
-{
-	if(!handle_ec(client, ec))
-		return;
-
-	auto &rbuf(client.rbuf);
-	execute(client, rbuf.reel);
-}
-catch(const std::exception &e)
-{
-	log::error("client[%s]: error: %s",
-	           string(remote_address(client)).c_str(),
-	           e.what());
-
-	finished(client);
+		request([client(std::move(client)), timeout]
+		{
+			if(client->main())
+				async_recv_next(client, timeout);
+		});
+	});
 }
 
 bool
@@ -321,14 +253,11 @@ ircd::handle_ec(client &client,
 	using namespace boost::system::errc;
 	using boost::asio::error::eof;
 
-	if(client.rbuf.eptr)
-		std::rethrow_exception(client.rbuf.eptr);
-
 	switch(ec.value())
 	{
 		case success:                return handle_ec_success(client);
-		case operation_canceled:     return handle_ec_cancel(client);
 		case eof:                    return handle_ec_eof(client);
+		case operation_canceled:     return handle_ec_timeout(client);
 		default:                     throw boost::system::system_error(ec);
 	}
 }
@@ -336,106 +265,24 @@ ircd::handle_ec(client &client,
 bool
 ircd::handle_ec_success(client &client)
 {
-	auto &sock(*client.sock);
-	{
-		error_code ec;
-		sock.timer.cancel(ec);
-		assert(ec == boost::system::errc::success);
-	}
-
 	return true;
-}
-
-bool
-ircd::handle_ec_cancel(client &client)
-{
-	auto &sock(*client.sock);
-
-	// The cancel can come from a timeout or directly.
-	// If directly, the timer may still needs to be canceled
-	if(!sock.timedout)
-	{
-		error_code ec;
-		sock.timer.cancel(ec);
-		assert(ec == boost::system::errc::success);
-		log::debug("client[%s]: recv canceled", string(remote_address(client)).c_str());
-		return false;
-	}
-
-	log::debug("client[%s]: recv timeout", string(remote_address(client)).c_str());
-	finished(client);
-	return false;
 }
 
 bool
 ircd::handle_ec_eof(client &client)
 {
-	log::debug("client[%s]: eof", string(remote_address(client)).c_str());
-	finished(client);
 	return false;
 }
 
-void
-ircd::execute(client &client,
-              const uint8_t *const &ptr,
-              const size_t &len)
+bool
+ircd::handle_ec_timeout(client &client)
 {
-	execute(client, line(ptr, len));
-}
+	auto &sock(*client.sock);
+	log::debug("client[%s]: disconnecting after inactivity timeout",
+	          string(remote_address(client)).c_str());
 
-void
-ircd::execute(client &client,
-              const std::string &l)
-{
-	execute(client, line(l));
-}
-
-void
-ircd::execute(client &client,
-              tape &reel)
-{
-	context([wp(weak_from(client)), &client, &reel]
-	{
-		// Hold the client for the lifetime of this context
-		const life_guard<struct client> lg(wp);
-
-		while(!reel.empty()) try
-		{
-			auto &line(reel.front());
-			const scope pop([&reel]
-			{
-				reel.pop_front();
-			});
-
-			if(line.empty())
-				continue;
-
-			auto &handle(cmds::find(command(line)));
-			handle(client, std::move(line));
-		}
-		catch(const std::exception &e)
-		{
-			log::error("vm: %s", e.what());
-			disconnect(client);
-			finished(client);
-			return;
-		}
-
-		async_recv_next(client);
-	},
-	ctx::DEFER_POST | ctx::SELF_DESTRUCT);
-}
-
-
-void
-ircd::execute(client &c,
-              line line)
-{
-	if(line.empty())
-		return;
-
-	auto &handle(cmds::find(command(line)));
-	handle(c, std::move(line));
+	sock.disconnect();
+	return false;
 }
 
 std::string
@@ -450,72 +297,20 @@ ircd::string(const ip_port &pair)
 
 ircd::ip_port
 ircd::local_address(const client &client)
-try
 {
-	const auto &sock(socket(client));
+	if(!client.sock)
+		return { "0.0.0.0"s, 0 };
+
+	const auto &sock(*client.sock);
 	return { local_ip(sock), local_port(sock) };
-}
-catch(const std::bad_weak_ptr &)
-{
-	return { "0.0.0.0"s, 0 };
 }
 
 ircd::ip_port
 ircd::remote_address(const client &client)
-try
 {
-	const auto &sock(socket(client));
+	if(!client.sock)
+		return { "0.0.0.0"s, 0 };
+
+	const auto &sock(*client.sock);
 	return { remote_ip(sock), remote_port(sock) };
-}
-catch(const std::bad_weak_ptr &)
-{
-	return { "0.0.0.0"s, 0 };
-}
-
-sock &
-ircd::socket(client &client)
-{
-	if(unlikely(!has_socket(client)))
-		throw std::bad_weak_ptr();
-
-	return *client.sock;
-}
-
-const sock &
-ircd::socket(const client &client)
-{
-	if(unlikely(!has_socket(client)))
-		throw std::bad_weak_ptr();
-
-	return *client.sock;
-}
-
-bool
-ircd::has_socket(const client &client)
-{
-	return bool(client.sock);
-}
-
-std::weak_ptr<client>
-ircd::weak_from(client &client)
-{
-	return shared_from(client);
-}
-
-std::weak_ptr<const client>
-ircd::weak_from(const client &client)
-{
-	return shared_from(client);
-}
-
-std::shared_ptr<client>
-ircd::shared_from(client &client)
-{
-	return client.shared_from_this();
-}
-
-std::shared_ptr<const client>
-ircd::shared_from(const client &client)
-{
-	return client.shared_from_this();
 }

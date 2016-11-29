@@ -48,14 +48,14 @@ struct grammar
 	karma::rule<it> colon;
 	karma::rule<it> terminator;
 
-	karma::rule<it, std::string()> hostname;
-	karma::rule<it, std::string()> user;
-	karma::rule<it, std::string()> nick;
+	karma::rule<it, rfc1459::host> hostname;
+	karma::rule<it, rfc1459::user> user;
+	karma::rule<it, rfc1459::nick> nick;
 	karma::rule<it, rfc1459::pfx> prefix;
 	karma::rule<it, rfc1459::pfx> prefix_optionals;
 
-	karma::rule<it, std::string()> trailing;
-	karma::rule<it, std::string()> middle;
+	karma::rule<it, string_view> trailing;
+	karma::rule<it, string_view> middle;
 	karma::rule<it, rfc1459::parv> params;
 
 	karma::rule<it, rfc1459::cmd> command_numeric;

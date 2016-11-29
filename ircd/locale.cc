@@ -133,7 +133,7 @@ ircd::locale::char16::conv(const char16_t *const &str,
 
 	//TODO: optimize
 	const auto s(converter.to_bytes(str));
-	return rb_strlcpy(buf, s.c_str(), max);
+	return strlcpy(buf, s.c_str(), max);
 }
 #else
 size_t
@@ -143,7 +143,7 @@ ircd::locale::char16::conv(const char16_t *const &str,
 {
 	//TODO: optimize
 	const auto s(boost::locale::conv::utf_to_utf<char>(str));
-	return rb_strlcpy(buf, s.c_str(), max);
+	return strlcpy(buf, s.c_str(), max);
 }
 #endif
 
@@ -158,7 +158,7 @@ ircd::locale::char16::conv(const char16_t *const &str,
 
 	//TODO: optimize
 	const auto s(converter.to_bytes(str, str + len));
-	return rb_strlcpy(buf, s.c_str(), max);
+	return strlcpy(buf, s.c_str(), max);
 }
 #else
 size_t
@@ -169,7 +169,7 @@ ircd::locale::char16::conv(const char16_t *const &str,
 {
 	//TODO: optimize
 	const auto s(boost::locale::conv::utf_to_utf<char>(str, str + len));
-	return rb_strlcpy(buf, s.c_str(), max);
+	return strlcpy(buf, s.c_str(), max);
 }
 #endif
 

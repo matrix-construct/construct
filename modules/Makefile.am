@@ -3,11 +3,10 @@ AM_CPPFLAGS = \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
-	-include $(top_srcdir)/include/ircd/mods/mapi.h
+	-include $(top_srcdir)/include/ircd/mapi.h
 
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
-	-L$(top_srcdir)/rb \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@
 
@@ -23,220 +22,18 @@ AM_LDFLAGS += \
 #	-export-symbols-regex IRCD_MODULE*
 #	-export-symbols-regex *
 
-#
-#AM_LDFLAGS += \
-#	-lircd \
-#	-lrb \
-#	@BOOST_LIBS@ \
-#	@JS_LIBS@
-
-
-# This puts the source in conf/ but the installed
-# library is conf_X.so in the main modules dir.
-#conf_moduledir=@moduledir@
-#conf_conf_loadmodule_la_SOURCES  = conf/loadmodule.cc
-#conf_conf_serverinfo_la_SOURCES  = conf/serverinfo.cc
-#conf_conf_listen_la_SOURCES      = conf/listen.cc
-#conf_module_LTLIBRARIES =     \
-#	conf/conf_loadmodule.la   \
-#	conf/conf_serverinfo.la   \
-#	conf/conf_listen.la
-
-
-dns_moduledir=@moduledir@
-dns_module_LTLIBRARIES = dns/dns.la
-dns_dns_la_SOURCES  = dns/dns.cc \
-                      dns/lookup.cc
-
-net_moduledir=@moduledir@
-net_module_LTLIBRARIES = net/net.la
-net_net_la_SOURCES  = net/net.cc \
-                      net/socket.cc \
-                      net/server.cc
+# This puts the source in client/ but the installed
+# library is client_X.so in the main modules dir.
+client_moduledir=@moduledir@
+client_client_versions_la_SOURCES   = client/versions.cc
+client_client_login_la_SOURCES      = client/login.cc
+client_client_register_la_SOURCES   = client/register.cc
+client_module_LTLIBRARIES =     \
+	client/client_versions.la   \
+	client/client_login.la      \
+	client/client_register.la
 
 moduledir=@moduledir@
-future_la_SOURCES = future.cc
-require_la_SOURCES = require.cc
-events_la_SOURCES = events.cc
-assert_la_SOURCES = assert.cc
-kernel_la_SOURCES = kernel.cc
-console_la_SOURCES = console.cc
-stream_la_SOURCES = stream.cc
-crypto_la_SOURCES = crypto.cc
-#m_ban_la_SOURCES = m_ban.cc
-#m_die_la_SOURCES = m_die.cc
-#m_error_la_SOURCES = m_error.cc
-#m_join_la_SOURCES = m_join.cc
-#m_kick_la_SOURCES = m_kick.cc
-#m_kill_la_SOURCES = m_kill.cc
-#m_message_la_SOURCES = m_message.cc
-#m_mode_la_SOURCES = m_mode.cc
-#m_modules_la_SOURCES = m_modules.cc
-#m_nick_la_SOURCES = m_nick.cc
-#m_part_la_SOURCES = m_part.cc
-#m_quit_la_SOURCES = m_quit.cc
-#m_server_la_SOURCES = m_server.cc
-#m_squit_la_SOURCES = m_squit.cc
-#cap_account_tag_la_SOURCES = cap_account_tag.cc
-#cap_server_time_la_SOURCES = cap_server_time.cc
-#chm_nocolour_la_SOURCES = chm_nocolour.cc
-#chm_noctcp_la_SOURCES = chm_noctcp.cc
-#m_accept_la_SOURCES = m_accept.cc
-#m_admin_la_SOURCES = m_admin.cc
-#m_alias_la_SOURCES = m_alias.cc
-#m_away_la_SOURCES = m_away.cc
-#m_cap_la_SOURCES = m_cap.cc
-#m_capab_la_SOURCES = m_capab.cc
-#m_certfp_la_SOURCES = m_certfp.cc
-#m_challenge_la_SOURCES = m_challenge.cc
-#m_chghost_la_SOURCES = m_chghost.cc
-#m_close_la_SOURCES = m_close.cc
-#m_connect_la_SOURCES = m_connect.cc
-#m_dline_la_SOURCES = m_dline.cc
-#m_encap_la_SOURCES = m_encap.cc
-#m_etrace_la_SOURCES = m_etrace.cc
-#m_grant_la_SOURCES = m_grant.cc
-#m_help_la_SOURCES = m_help.cc
-#m_info_la_SOURCES = m_info.cc
-#m_invite_la_SOURCES = m_invite.cc
-#m_ison_la_SOURCES = m_ison.cc
-#m_kline_la_SOURCES = m_kline.cc
-#m_knock_la_SOURCES = m_knock.cc
-#m_links_la_SOURCES = m_links.cc
-#m_list_la_SOURCES = m_list.cc
-#m_lusers_la_SOURCES = m_lusers.cc
-#m_map_la_SOURCES = m_map.cc
-#m_monitor_la_SOURCES = m_monitor.cc
-#m_motd_la_SOURCES = m_motd.cc
-#m_names_la_SOURCES = m_names.cc
-#m_oper_la_SOURCES = m_oper.cc
-#m_operspy_la_SOURCES = m_operspy.cc
-#m_pass_la_SOURCES = m_pass.cc
-#m_ping_la_SOURCES = m_ping.cc
-#m_pong_la_SOURCES = m_pong.cc
-#m_post_la_SOURCES = m_post.cc
-#m_privs_la_SOURCES = m_privs.cc
-#m_rehash_la_SOURCES = m_rehash.cc
-#m_restart_la_SOURCES = m_restart.cc
-#m_resv_la_SOURCES = m_resv.cc
-#m_sasl_la_SOURCES = m_sasl.cc
-#m_scan_la_SOURCES = m_scan.cc
-#m_services_la_SOURCES = m_services.cc
-#m_set_la_SOURCES = m_set.cc
-#m_signon_la_SOURCES = m_signon.cc
-#m_snote_la_SOURCES = m_snote.cc
-#m_starttls_la_SOURCES = m_starttls.cc
-#m_stats_la_SOURCES = m_stats.cc
-#m_svinfo_la_SOURCES = m_svinfo.cc
-#m_tb_la_SOURCES = m_tb.cc
-#m_testline_la_SOURCES = m_testline.cc
-#m_testmask_la_SOURCES = m_testmask.cc
-#m_tginfo_la_SOURCES = m_tginfo.cc
-#m_time_la_SOURCES = m_time.cc
-#m_topic_la_SOURCES = m_topic.cc
-#m_trace_la_SOURCES = m_trace.cc
-#m_unreject_la_SOURCES = m_unreject.cc
-#m_user_la_SOURCES = m_user.cc
-#m_userhost_la_SOURCES = m_userhost.cc
-#m_users_la_SOURCES = m_users.cc
-#m_version_la_SOURCES = m_version.cc
-#m_wallops_la_SOURCES = m_wallops.cc
-#m_who_la_SOURCES = m_who.cc
-#m_whois_la_SOURCES = m_whois.cc
-#m_whowas_la_SOURCES = m_whowas.cc
-#m_xline_la_SOURCES = m_xline.cc
-#sno_routing_la_SOURCES = sno_routing.cc
-
+listen_la_SOURCES = listen.cc
 module_LTLIBRARIES = \
-future.la            \
-require.la           \
-assert.la            \
-events.la            \
-kernel.la            \
-console.la           \
-stream.la            \
-crypto.la
-
-# m_modules.la
-#  m_ban.la \
-#  m_die.la \
-#  m_error.la \
-#  m_join.la \
-#  m_kick.la \
-#  m_kill.la \
-#  m_message.la \
-#  m_mode.la \
-#  m_nick.la \
-#  m_part.la \
-#  m_quit.la \
-#  m_server.la \
-#  m_squit.la \
-#  cap_account_tag.la \
-#  cap_server_time.la \
-#  chm_nocolour.la \
-#  chm_noctcp.la \
-#  m_accept.la \
-#  m_admin.la \
-#  m_alias.la \
-#  m_away.la \
-#  m_cap.la \
-#  m_capab.la \
-#  m_certfp.la \
-#  m_challenge.la \
-#  m_chghost.la \
-#  m_close.la \
-#  m_connect.la \
-#  m_dline.la \
-#  m_encap.la \
-#  m_etrace.la \
-#  m_grant.la \
-#  m_help.la \
-#  m_info.la \
-#  m_invite.la \
-#  m_ison.la \
-#  m_kline.la \
-#  m_knock.la \
-#  m_links.la \
-#  m_list.la \
-#  m_lusers.la \
-#  m_map.la \
-#  m_monitor.la \
-#  m_motd.la \
-#  m_names.la \
-#  m_oper.la \
-#  m_operspy.la \
-#  m_pass.la \
-#  m_ping.la \
-#  m_pong.la \
-#  m_post.la \
-#  m_privs.la \
-#  m_rehash.la \
-#  m_restart.la \
-#  m_resv.la \
-#  m_sasl.la \
-#  m_scan.la \
-#  m_services.la \
-#  m_set.la \
-#  m_signon.la \
-#  m_snote.la \
-#  m_starttls.la \
-#  m_stats.la \
-#  m_svinfo.la \
-#  m_tb.la \
-#  m_testline.la \
-#  m_testmask.la \
-#  m_tginfo.la \
-#  m_time.la \
-#  m_topic.la \
-#  m_trace.la \
-#  m_unreject.la \
-#  m_user.la \
-#  m_userhost.la \
-#  m_users.la \
-#  m_version.la \
-#  m_wallops.la \
-#  m_who.la \
-#  m_whois.la \
-#  m_whowas.la \
-#  m_xline.la \
-#  sno_routing.la
+	listen.la

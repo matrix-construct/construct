@@ -36,6 +36,7 @@ struct task
 	struct global global;                        // global / this / root scope object
 	script main;                                 // main generator wrapper script
 	struct generator generator;                  // generator state
+	bool canceling = false;
 
   private:
 	static uint64_t tasks_next_pid();

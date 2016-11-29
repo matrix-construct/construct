@@ -23,9 +23,8 @@
  *  USA
  */
 
-#include <boost/asio.hpp>
-#include <ircd/ctx/ctx.h>
-#include <ircd/js.h>
+#include <ircd/socket.h>
+#include <ircd/ctx/continuation.h>
 
 namespace ircd
 {
@@ -41,7 +40,7 @@ namespace ircd
 	void seed_random();
 	void init_system();
 	void main_exiting() noexcept;
-	void main() noexcept;
+	void main();
 }
 
 void
@@ -58,7 +57,6 @@ ircd::init(boost::asio::io_service &io_service,
 
 	// The configuration is parsed for grammatical errors only. It is not evaluated.
 	log::info("parsing your configuration");
-	conf::parse(configfile);
 
 	// The caller has no other way to know IRCd has halted as everyone shares the
 	// same io_service, which may not return if the caller has their own tasks.
@@ -66,7 +64,7 @@ ircd::init(boost::asio::io_service &io_service,
 
 	// The master of ceremonies runs the show after this function returns and ios.run().
 	log::debug("spawning main context");
-	context mc(8_MiB, ircd::main, ctx::DEFER_POST);       //TODO: optimize stack size
+	context mc("main", 8_MiB, ircd::main);       //TODO: optimize stack size
 	main_context = mc.detach();
 
 	log::debug("IRCd initialization completed.");
@@ -87,7 +85,7 @@ ircd::stop()
 //
 void
 ircd::main()
-noexcept try
+try
 {
 	log::debug("IRCd entered main context.");
 	const scope main_exit(&main_exiting);   // The user is notified when this function ends
@@ -98,7 +96,17 @@ noexcept try
 	ctx::ole::init _ole_;
 	mods::init _mods_;
 	db::init _db_;
-	js::init _js_;
+	//js::init _js_;
+	socket::init _sock_;
+	client::init _client_;
+
+	//json::test();
+	//exit(0);
+
+	module listener("listen.so");
+	module client_versions("client_versions.so");
+	module client_login("client_login.so");
+	module client_register("client_register.so");
 
 	// This is the main program loop. Right now all it does is sleep until notified
 	// to shutdown, but it can do other things eventually. Other subsystems may have
@@ -145,76 +153,56 @@ ircd::at_main_exit(main_exit_cb main_exit_func)
 	ircd::main_exit_func = std::move(main_exit_func);
 }
 
+namespace ircd
+{
+	void init_random();
+	void init_rlimit();
+}
+
 void
 ircd::init_system()
 {
-
-	/*
-	 * Setup corefile size immediately after boot -kre
-	 */
-	#ifdef HAVE_SYS_RESOURCE_H
-		struct rlimit rlim;	/* resource limits */
-
-		/* Set corefilesize to maximum */
-		if(!getrlimit(RLIMIT_CORE, &rlim))
-		{
-			rlim.rlim_cur = rlim.rlim_max;
-			setrlimit(RLIMIT_CORE, &rlim);
-		}
-	#endif
-
-	rb_set_time();
-	rb_init_prng(NULL, RB_PRNG_DEFAULT);
-	seed_random();
-}
-
-static bool
-seed_with_urandom()
-{
-	unsigned int seed;
-	int fd;
-
-	fd = open("/dev/urandom", O_RDONLY);
-	if(fd >= 0)
-	{
-		if(read(fd, &seed, sizeof(seed)) == sizeof(seed))
-		{
-			close(fd);
-			srand(seed);
-			return true;
-		}
-		close(fd);
-	}
-	return false;
-}
-
-static void
-seed_with_clock()
-{
- 	const struct timeval *tv;
-	rb_set_time();
-	tv = rb_current_time_tv();
-	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
+	init_rlimit();
+	init_random();
 }
 
 void
-ircd::seed_random()
+#ifdef HAVE_SYS_RESOURCE_H
+ircd::init_rlimit()
+try
 {
-	unsigned int seed;
-	if(rb_get_random(&seed, sizeof(seed)) == -1)
-	{
-		if(!seed_with_urandom())
-			seed_with_clock();
-		return;
-	}
-	srand(seed);
+	//
+	// Setup corefile size immediately after boot -kre
+	//
+
+	rlimit rlim;	// resource limits
+	syscall(getrlimit, RLIMIT_CORE, &rlim);
+
+	// Set corefilesize to maximum
+	rlim.rlim_cur = rlim.rlim_max;
+	syscall(setrlimit, RLIMIT_CORE, &rlim);
 }
+catch(const std::exception &e)
+{
+	std::cerr << "Failed to adjust rlimit: " << e.what() << std::endl;
+}
+#else
+ircd::init_rlimit()
+{
+}
+	#endif
 
+void
+ircd::init_random()
+{
+	char seed[4];
 
+	std::ifstream s("/dev/urandom");
+	if(s.good())
+		s.read(seed, sizeof(seed));
 
-
-
-
+	srand(reinterpret_cast<const int &>(seed));
+}
 
 
 // namespace ircd {

@@ -25,6 +25,5 @@
 namespace ircd {
 namespace vm   {
 
-
 } // namespace vm
 } // namespace ircd

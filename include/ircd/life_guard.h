@@ -70,8 +70,7 @@ struct life_guard
 	life_guard(T &t,
 	           typename std::enable_if<is_shared_from_this<SFINAE>(), void>::type * = 0)
 	:std::shared_ptr<T>(shared_from(t))
-	{
-	}
+	{}
 
 	// This constructor uses our convention for forward declaring objects that internally
 	// inherit from std::enable_shared_from_this<>. Our convention is to provide:
@@ -82,8 +81,7 @@ struct life_guard
 	life_guard(T &t,
 	           typename std::enable_if<!is_shared_from_this<SFINAE>(), void>::type * = 0)
 	:std::shared_ptr<T>(shared_from(t))
-	{
-	}
+	{}
 
 	// This constructor is used with a weak_ptr of the type. This throws an exception
 	// to abort the scope when the object already died before being able to guard at all.
