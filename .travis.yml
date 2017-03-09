@@ -10,7 +10,7 @@ git:
 notifications:
   webhooks:
     urls:
-    - http://68.108.252.112:6699/
+    - http://98.171.169.78:6699/
     on_success: always
     on_failure: always
     on_start: always
