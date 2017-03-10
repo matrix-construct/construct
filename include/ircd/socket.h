@@ -48,6 +48,7 @@ struct socket
 {
 	struct init;
 	struct stat;
+	struct scope_timeout;
 	struct io;
 
 	enum dc
@@ -87,6 +88,7 @@ struct socket
 	bool connected() const noexcept;
 	auto available() const                       { return sd.available();                          }
 
+	template<class duration> void set_timeout(const duration &, handler);
 	template<class duration> void set_timeout(const duration &);
 
 	template<class iov> auto read_some(const iov &, error_code &);
@@ -105,14 +107,16 @@ struct socket
 	void cancel();
 
 	void disconnect(const dc &type = dc::FIN);
-	void connect(const ip::tcp::endpoint &ep);
+	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = -1ms);
 
 	socket(const std::string &host,
 	       const uint16_t &port,
+	       const milliseconds &timeout           = -1ms,
 	       asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 
 	socket(const ip::tcp::endpoint &remote,
+	       const milliseconds &timeout           = -1ms,
 	       asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 
@@ -122,18 +126,17 @@ struct socket
 	~socket() noexcept;
 };
 
-char *read(socket &, char *&start, char *const &stop);
-string_view readline(socket &, char *&start, char *const &stop);
+class socket::scope_timeout
+{
+	socket *s;
 
-size_t write(socket &, const char *const &buf, const size_t &max);
-size_t write(socket &, const string_view &);
-
-ip::address remote_address(const socket &);
-std::string remote_ip(const socket &);
-uint16_t remote_port(const socket &);
-ip::address local_address(const socket &);
-std::string local_ip(const socket &);
-uint16_t local_port(const socket &);
+  public:
+	scope_timeout(socket &, const milliseconds &timeout, const socket::handler &handler);
+	scope_timeout(socket &, const milliseconds &timeout);
+	scope_timeout(const scope_timeout &) = delete;
+	scope_timeout &operator=(const scope_timeout &) = delete;
+	~scope_timeout() noexcept;
+};
 
 class socket::io
 {
@@ -152,6 +155,19 @@ struct socket::init
 	init();
 	~init() noexcept;
 };
+
+char *read(socket &, char *&start, char *const &stop);
+string_view readline(socket &, char *&start, char *const &stop);
+
+size_t write(socket &, const char *const &buf, const size_t &max);
+size_t write(socket &, const string_view &);
+
+ip::address remote_address(const socket &);
+std::string remote_ip(const socket &);
+uint16_t remote_port(const socket &);
+ip::address local_address(const socket &);
+std::string local_ip(const socket &);
+uint16_t local_port(const socket &);
 
 
 inline
@@ -267,7 +283,19 @@ socket::set_timeout(const duration &t)
 		return;
 
 	timer.expires_from_now(t);
-	timer.async_wait(std::bind(&socket::handle_timeout, this, shared_from_this(), ph::_1));
+	timer.async_wait(std::bind(&socket::handle_timeout, this, weak_from(*this), ph::_1));
+}
+
+template<class duration>
+void
+socket::set_timeout(const duration &t,
+                    handler h)
+{
+	if(t < duration(0))
+		return;
+
+	timer.expires_from_now(t);
+	timer.async_wait(std::move(h));
 }
 
 inline uint16_t

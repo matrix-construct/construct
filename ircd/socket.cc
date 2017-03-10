@@ -105,8 +105,35 @@ ircd::read(socket &socket,
 	return base;
 }
 
+ircd::socket::scope_timeout::scope_timeout(socket &socket,
+                                           const milliseconds &timeout)
+:s{&socket}
+{
+    socket.set_timeout(timeout, [&socket]
+    (const error_code &ec)
+    {
+        if(!ec)
+            socket.sd.cancel();
+    });
+}
+
+ircd::socket::scope_timeout::scope_timeout(socket &socket,
+                                           const milliseconds &timeout,
+                                           const socket::handler &handler)
+:s{&socket}
+{
+	socket.set_timeout(timeout, handler);
+}
+
+ircd::socket::scope_timeout::~scope_timeout()
+noexcept
+{
+	s->timer.cancel();
+}
+
 ircd::socket::socket(const std::string &host,
                      const uint16_t &port,
+                     const milliseconds &timeout,
                      asio::ssl::context &ssl,
                      boost::asio::io_service *const &ios)
 :socket
@@ -122,6 +149,7 @@ ircd::socket::socket(const std::string &host,
 
 		return *epit;
 	}(),
+	timeout,
 	ssl,
 	ios
 }
@@ -129,11 +157,12 @@ ircd::socket::socket(const std::string &host,
 }
 
 ircd::socket::socket(const ip::tcp::endpoint &remote,
+                     const milliseconds &timeout,
                      asio::ssl::context &ssl,
                      boost::asio::io_service *const &ios)
 :socket{ssl, ios}
 {
-	connect(remote);
+	connect(remote, timeout);
 }
 
 ircd::socket::socket(asio::ssl::context &ssl,
@@ -151,8 +180,10 @@ noexcept
 }
 
 void
-ircd::socket::connect(const ip::tcp::endpoint &ep)
+ircd::socket::connect(const ip::tcp::endpoint &ep,
+                      const milliseconds &timeout)
 {
+	const scope_timeout ts(*this, timeout);
 	sd.async_connect(ep, yield(continuation()));
 	ssl.async_handshake(socket::handshake_type::client, yield(continuation()));
 }
