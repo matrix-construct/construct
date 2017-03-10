@@ -17,24 +17,24 @@ notifications:
 
 matrix:
   include:
-  - os: linux
-    dist: precise
-    group: stable
-    compiler: gcc-4.9
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - gcc-4.9
-        - g++-4.9
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-    env:
-    - CCOMPILER=gcc-4.9
-    - CXXCOMPILER=g++-4.9
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=--with-included-js=shared
+#  - os: linux
+#    dist: precise
+#    group: stable
+#    compiler: gcc-4.9
+#    addons:
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        packages:
+#        - gcc-4.9
+#        - g++-4.9
+#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+#    env:
+#    - CCOMPILER=gcc-4.9
+#    - CXXCOMPILER=g++-4.9
+#    - WITH_INCLUDED_BOOST=--with-included-boost
+#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+#    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: precise
@@ -75,59 +75,59 @@ matrix:
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
     - WITH_INCLUDED_JS=--with-included-js=shared
 
-  - os: linux
-    dist: precise
-    group: unstable
-    sudo: false
-    compiler: clang-3.6
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-precise-3.6
-        packages:
-        - clang-3.6
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-    env:
-    - CCOMPILER=clang-3.6
-    - CXXCOMPILER=clang++-3.6
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=--with-included-js=shared
+#  - os: linux
+#    dist: precise
+#    group: unstable
+#    sudo: false
+#    compiler: clang-3.6
+#    addons:
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        - llvm-toolchain-precise-3.6
+#        packages:
+#        - clang-3.6
+#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+#    env:
+#    - CCOMPILER=clang-3.6
+#    - CXXCOMPILER=clang++-3.6
+#    - WITH_INCLUDED_BOOST=--with-included-boost
+#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+#    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: trusty
     group: unstable
     sudo: required
-    compiler: clang-3.8
+    compiler: clang-3.9
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        - llvm-toolchain-trusty-3.8
+        - llvm-toolchain-trusty-3.9
         packages:
-        - clang-3.8
-        - gcc-4.9
-        - g++-4.9
+        - clang-3.9
+        - gcc-5
+        - g++-5
         - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
-    - CCOMPILER=clang-3.8
-    - CXXCOMPILER=clang++-3.8
+    - CCOMPILER=clang-3.9
+    - CXXCOMPILER=clang++-3.9
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
     - WITH_INCLUDED_JS=--with-included-js=shared
 
-  - os: osx
-    compiler: clang
-    env:
-    - CCOMPILER=clang
-    - CXXCOMPILER=clang++
-    - LIBTOOLIZE=glibtoolize
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=--with-included-js=shared
-
-osx_image: xcode7.3
+#  - os: osx
+#    compiler: clang
+#    env:
+#    - CCOMPILER=clang
+#    - CXXCOMPILER=clang++
+#    - LIBTOOLIZE=glibtoolize
+#    - WITH_INCLUDED_BOOST=--with-included-boost
+#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+#    - WITH_INCLUDED_JS=--with-included-js=shared
+#
+#osx_image: xcode7.3
 
 cache:
   apt:
@@ -143,6 +143,7 @@ script:
 - $CC --version
 - $CXX --version
 - time bash autogen.sh
-- time ./configure --with-shared-sqlite $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB $WITH_INCLUDED_JS CC=$CC CXX=$CXX
+#- time ./configure $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB $WITH_INCLUDED_JS CC=$CC CXX=$CXX
+- time ./configure $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB CC=$CC CXX=$CXX
 - time make -j4
 - time make -j4 install
