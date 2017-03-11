@@ -28,17 +28,11 @@ namespace m    {
 } // namespace m
 } // namespace ircd
 
-ircd::m::client::client(const std::string &host,
-                        const uint16_t &port)
-:sock{std::make_shared<ircd::socket>(host, port)}
-{
-}
-
 void
 ircd::test(const string_view &what)
 try
 {
-	m::client client("matrix.org", 8448);
+	http::client client{host_port{"matrix.org", 8448}};
 
 	static const string_view request
 	{

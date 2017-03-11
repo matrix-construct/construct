@@ -35,13 +35,5 @@ struct error
 	error(const json::obj &obj);
 };
 
-struct client
-:http::client
-{
-	std::shared_ptr<socket> sock;
-
-	client(const std::string &host, const uint16_t &port);
-};
-
 } // namespace m
 } // namespace ircd

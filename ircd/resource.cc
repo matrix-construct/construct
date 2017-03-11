@@ -54,16 +54,23 @@ noexcept
 
 void
 ircd::resource::operator()(client &client,
-                           request &request,
-                           response &response)
+                           parse::context &pc,
+                           const http::request::head &head)
 const try
 {
-	const auto &method(*methods.at(request.head.method));
+	const auto &method(*methods.at(head.method));
+	http::request::body content{pc, head};
+	resource::request request
+	{
+		head, content
+	};
+
+	resource::response response;
 	method(client, request, response);
 }
 catch(const std::out_of_range &e)
 {
-	throw not_found("404! not found!");
+	throw http::error(http::METHOD_NOT_ALLOWED);
 }
 
 ircd::resource::method::method(struct resource &resource,

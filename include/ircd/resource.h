@@ -45,7 +45,7 @@ struct resource
 	decltype(resources)::const_iterator resources_it;
 
   public:
-	void operator()(client &, request &, response &) const;
+	void operator()(client &, parse::context &, const http::request::head &) const;
 
 	resource(const char *const &name,
 	         const char *const &description = "");
@@ -62,7 +62,7 @@ struct resource::response
 struct resource::request
 {
 	const http::request::head &head;
-	const http::request::body &content;
+	http::request::body &content;
 };
 
 struct resource::method

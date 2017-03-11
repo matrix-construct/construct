@@ -227,7 +227,7 @@ ircd::socket::operator()(const milliseconds &timeout,
 
 	set_timeout(timeout);
 	sd.async_receive(buffers, flags, [this, handler(h), wp(weak_from(*this))]
-	(const error_code &ec, const size_t &bytes)
+	(error_code ec, const size_t &bytes)
 	{
 		assert(bytes <= sizeof(buffer));
 

@@ -272,17 +272,17 @@ const parser;
 } // namespace ircd
 
 ircd::http::content::content(parse::context &pc,
-                            const headers &h)
+                             const headers &h)
 :std::string(h.content_length, char())
 {
 	char *data(const_cast<char *>(this->data()));
 	char *const stop(data + size());
-
 	const size_t unparsed(pc.read - pc.parsed);
 	const size_t have(std::min(unparsed, size()));
-	data += strlcpy(data, pc.parsed, have);
-	assert(data == this->data() + have);
-
+	memcpy(data, pc.parsed, have);
+	data[have] = '\0';
+	pc.parsed += have;
+	data += have;
 	if(data != stop)
 	{
 		pc.reader(data, stop);
@@ -386,6 +386,7 @@ std::map<code, string_view> reason
 {
 	{ code::BAD_REQUEST,                  "Bad Request"                },
 	{ code::NOT_FOUND,                    "Not Found"                  },
+	{ code::METHOD_NOT_ALLOWED,           "Method Not Allowed"         },
 
 	{ code::INTERNAL_SERVER_ERROR,        "Internal Server Error"      },
 };
@@ -393,9 +394,10 @@ std::map<code, string_view> reason
 } // namespace http
 } // namespace ircd
 
-ircd::http::error::error(const code &code,
+ircd::http::error::error(const enum code &code,
                          const string_view &text)
 :ircd::error{generate_skip}
+,code{code}
 ,content{text}
 {
 	snprintf(buf, sizeof(buf), "%d %s", int(code), reason[code].data());

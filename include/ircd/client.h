@@ -34,9 +34,9 @@ IRCD_EXCEPTION(client_error, broken_pipe)
 IRCD_EXCEPTION(client_error, disconnected)
 
 struct socket;
-using ip_port_pair = std::pair<std::string, uint16_t>;
-using ip_port = IRCD_WEAK_T(ip_port_pair);
-std::string string(const ip_port &);
+using host_port_pair = std::pair<std::string, uint16_t>;
+using host_port = IRCD_WEAK_T(host_port_pair);
+std::string string(const host_port &);
 
 struct client
 {
@@ -49,11 +49,13 @@ struct client
 	list::const_iterator clit;
 	std::shared_ptr<socket> sock;
 
-	virtual bool main() noexcept;
+	virtual bool handle();
+	bool main() noexcept;
 
   public:
-	client(const char *const &type, std::shared_ptr<socket>);
-	client(const char *const &type = "client");
+	explicit client(std::shared_ptr<socket>);
+	explicit client(const host_port &, const seconds &timeout = 5s);
+	client();
 	client(client &&) = delete;
 	client(const client &) = delete;
 	client &operator=(client &&) = delete;
@@ -61,11 +63,29 @@ struct client
 	virtual ~client() noexcept;
 };
 
-ip_port remote_address(const client &);
-ip_port local_address(const client &);
+host_port remote_address(const client &);
+host_port local_address(const client &);
 
 // Creates a client.
 std::shared_ptr<client> add_client(std::shared_ptr<socket>);
+
+} // namespace ircd
+
+namespace ircd {
+namespace http {
+
+struct client
+:ircd::client
+{
+	virtual bool handle() override;
+
+	using ircd::client::client;
+};
+
+} // namespace ircd
+} // namespace http
+
+namespace ircd {
 
 struct client::init
 {

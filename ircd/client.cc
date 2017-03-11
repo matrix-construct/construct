@@ -65,14 +65,102 @@ noexcept
 	disconnect_all();
 }
 
-ircd::client::client(const char *const &type)
-:type{type}
-,clit{clients.emplace(end(clients), this)}
+bool
+ircd::http::client::handle()
+try
+{
+	char buffer[2048];
+	parse::buffer pb{buffer, buffer + sizeof(buffer)};
+	parse::context pc{pb, [this](char *&read, char *const &stop)
+	{
+		const mutable_buffers buffers{{read, stop}};
+		read += sock->read_some(buffers);
+	}};
+
+	const http::request::head head{pc}; try
+	{
+		log::debug("client[%s] requesting resource \"%s\"",
+		           string(remote_address(*this)).c_str(),
+		           std::string(head.resource).c_str());
+
+		const auto &resource(*resource::resources.at(head.resource));
+		resource(*this, pc, head);
+	}
+	catch(const std::out_of_range &e)
+	{
+		throw http::error(http::code::NOT_FOUND);
+	}
+
+	return true;
+}
+catch(const http::error &e)
+{
+	char content_len[64]; const auto content_len_len
+	{
+		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n", e.content.size())
+	};
+
+	const const_buffers iov
+	{
+		{ "HTTP/1.1 ", 9                       },
+		{ e.what(), strlen(e.what())           },
+		{ "\r\n", 2                            },
+		{ content_len, size_t(content_len_len) },
+		{ "\r\n", 2                            },
+		{ e.content.data(), e.content.size()   }
+	};
+
+	sock->write(iov);
+	log::debug("client[%s] http::error(%d): %s",
+	           string(remote_address(*this)).c_str(),
+	           int(e.code),
+	           e.what());
+
+	switch(e.code)
+	{
+		case http::BAD_REQUEST:               return false;
+		case http::INTERNAL_SERVER_ERROR:     return false;
+		default:                              return true;
+	}
+
+	return true;
+}
+
+ircd::host_port
+ircd::local_address(const client &client)
+{
+	if(!client.sock)
+		return { "0.0.0.0"s, 0 };
+
+	const auto &sock(*client.sock);
+	return { local_ip(sock), local_port(sock) };
+}
+
+ircd::host_port
+ircd::remote_address(const client &client)
+{
+	if(!client.sock)
+		return { "0.0.0.0"s, 0 };
+
+	const auto &sock(*client.sock);
+	return { remote_ip(sock), remote_port(sock) };
+}
+
+ircd::client::client()
+:client{std::shared_ptr<socket>{}}
 {
 }
 
-ircd::client::client(const char *const &type,
-                     std::shared_ptr<socket> sock)
+ircd::client::client(const host_port &host_port,
+                     const seconds &timeout)
+:client
+{
+	std::make_shared<socket>(host_port.first, host_port.second, timeout)
+}
+{
+}
+
+ircd::client::client(std::shared_ptr<socket> sock)
 :type{type}
 ,clit{clients.emplace(end(clients), this)}
 ,sock{std::move(sock)}
@@ -89,86 +177,7 @@ bool
 ircd::client::main()
 noexcept try
 {
-	char arbuf[2048];
-	parse::buffer pb(arbuf, arbuf + sizeof(arbuf));
-
-    parse::context pc(pb, [this]
-    (char *&read, char *const &stop)
-    {
-        read += sock->read_some(mutable_buffers{{read, stop}});
-    });
-
-    const http::request::head header{pc};
-    const http::request::body content{pc, header};
-
-	try
-	{
-		log::debug("Requesting resource \"%s\"", std::string(header.resource).c_str());
-		const auto &resource(*resource::resources.at(header.resource));
-		const auto &meth(*resource.methods.at(header.method));
-		const json::doc doc(content);
-		for(const auto &member : doc)
-		{
-			const auto it(meth.members.find(member.first));
-			if(it == meth.members.end())
-			{
-				log::warning("In method %s of resource %s: Unhandled member \"%s\"",
-				             std::string(header.method).data(),
-				             std::string(header.resource).data(),
-				             std::string(member.first).data());
-				continue;
-			}
-
-			const auto &mem(*it->second);
-			if(mem.valid) try
-			{
-				mem.valid(member.second);
-			}
-			catch(const m::error &e)
-			{
-				throw http::error(http::code::BAD_REQUEST, e.what());
-			}
-		}
-
-		resource::request req{header, content};
-		resource::response response; try
-		{
-			resource(*this, req, response);
-		}
-		catch(const std::exception &e)
-		{
-			ircd::log::error("resource[%s]: %s", resource.name, e.what());
-			throw http::error(http::code::INTERNAL_SERVER_ERROR);
-		}
-	}
-	catch(const std::out_of_range &e)
-	{
-		throw http::error(http::code::NOT_FOUND);
-	}
-
-	return true;
-}
-catch(const http::error &e)
-{
-	char clen[64];
-	const auto clen_size
-	{
-		size_t(snprintf(clen, sizeof(clen), "Content-Length: %zu\r\n", e.content.size()))
-	};
-
-	const const_buffers iov
-	{
-		{ "HTTP/1.1 ", 9                      },
-		{ e.what(), strlen(e.what())          },
-		{ "\r\n", 2                           },
-		{ clen, clen_size                     },
-		{ "\r\n", 2                           },
-		{ e.content.data(), e.content.size()  }
-	};
-
-	sock->write(iov);
-	log::error("http::error: %s", e.what());
-	return true;
+	return handle();
 }
 catch(const boost::system::system_error &e)
 {
@@ -184,13 +193,19 @@ catch(const std::exception &e)
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
-	auto client(make_client("client", std::move(s)));
+	const auto client(std::make_shared<http::client>(std::move(s)));
 	log::info("New client[%s] on local[%s]",
 	          string(remote_address(*client)).c_str(),
 	          string(local_address(*client)).c_str());
 
-	async_recv_next(client, seconds(30));
+	async_recv_next(client, 30s);
 	return client;
+}
+
+bool
+ircd::client::handle()
+{
+	return false;
 }
 
 template<class... args>
@@ -231,14 +246,14 @@ ircd::async_recv_next(std::shared_ptr<client> client,
                       const milliseconds &timeout)
 {
 	auto &sock(*client->sock);
-	sock(timeout, [client(std::move(client)), timeout]
+	sock(timeout, [client, timeout]
 	(const error_code &ec)
 	noexcept
 	{
 		if(!handle_ec(*client, ec))
 			return;
 
-		request([client(std::move(client)), timeout]
+		request([client, timeout]
 		{
 			if(client->main())
 				async_recv_next(client, timeout);
@@ -286,31 +301,11 @@ ircd::handle_ec_timeout(client &client)
 }
 
 std::string
-ircd::string(const ip_port &pair)
+ircd::string(const host_port &pair)
 {
 	std::string ret(64, '\0');
 	ret.resize(snprintf(&ret.front(), ret.size(), "%s:%u",
 	                    pair.first.c_str(),
 	                    pair.second));
 	return ret;
-}
-
-ircd::ip_port
-ircd::local_address(const client &client)
-{
-	if(!client.sock)
-		return { "0.0.0.0"s, 0 };
-
-	const auto &sock(*client.sock);
-	return { local_ip(sock), local_port(sock) };
-}
-
-ircd::ip_port
-ircd::remote_address(const client &client)
-{
-	if(!client.sock)
-		return { "0.0.0.0"s, 0 };
-
-	const auto &sock(*client.sock);
-	return { remote_ip(sock), remote_port(sock) };
 }

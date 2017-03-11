@@ -28,10 +28,11 @@
 namespace ircd {
 namespace http {
 
-enum class code
+enum code
 {
 	BAD_REQUEST             = 400,
 	NOT_FOUND               = 404,
+	METHOD_NOT_ALLOWED      = 405,
 
 	INTERNAL_SERVER_ERROR   = 500,
 };
@@ -41,9 +42,10 @@ extern std::map<code, string_view> reason;
 struct error
 :ircd::error
 {
+	enum code code;
 	std::string content;
 
-	error(const code &, const string_view &reason = {});
+	error(const enum code &, const string_view &reason = {});
 };
 
 struct line
@@ -152,11 +154,6 @@ struct response::body
 	body(parse::context &pc, const head &h)
 	:content{pc, h}
 	{}
-};
-
-struct client
-{
-
 };
 
 } // namespace http
