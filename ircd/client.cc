@@ -105,7 +105,7 @@ catch(const http::error &e)
 		{ "HTTP/1.1 ", 9                       },
 		{ e.what(), strlen(e.what())           },
 		{ "\r\n", 2                            },
-		{ content_len, size_t(content_len_len) },
+		{ string_view(content_len)             },
 		{ "\r\n", 2                            },
 		{ e.content.data(), e.content.size()   }
 	};

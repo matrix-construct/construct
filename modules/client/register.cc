@@ -23,55 +23,144 @@
 
 //ircd::db::handle logins("login", db::opt::READ_ONLY);
 
-using namespace ircd;
-
-mapi::header IRCD_MODULE
+ircd::mapi::header IRCD_MODULE
 {
 	"registers the resource 'client/register' to handle requests"
 };
 
-resource register_resource
+ircd::resource register_resource
 {
 	"/_matrix/client/r0/register",
 	"Register for an account on this homeserver. (3.3.1)"
 };
 
-void valid_username(const string_view &s);
-void handle_post(client &client, resource::request &request, resource::response &response);
+auto generate_access_token([] { });
+auto generate_refresh_token([] { });
+void valid_username(const ircd::string_view &s);
+ircd::resource::response handle_post(ircd::client &client, ircd::resource::request &request);
 
-resource::member username     { "username",    json::STRING,  valid_username };
-resource::member bind_email   { "bind_email",  json::LITERAL                 };
-resource::method on_post
+template<class T>
+struct in
+{
+};
+
+template<class T>
+struct out
+{
+};
+
+template<class T>
+struct query
+{
+};
+
+struct string
+{
+};
+
+struct object
+{
+};
+
+struct boolean
+{
+};
+
+template<>
+struct in<string>
+{
+	in(const char *const &name, const std::function<void (const ircd::string_view &)> &valid = nullptr) {}
+};
+
+template<>
+struct in<object>
+{
+	in(const char *const &name) {}
+};
+
+template<>
+struct in<boolean>
+{
+	in(const char *const &name) {}
+};
+
+template<>
+struct query<boolean>
+{
+	template<class A, class B> query(A&&, B&&) {}
+};
+
+template<>
+struct out<string>
+{
+	template<class T> out(const char *const &name, T&&) {}
+};
+
+//
+// Inputs
+//
+in<string> username        { "username",  valid_username                      };
+in<string> password        { "password"                                       };
+in<object> auth            { "auth"                                           };
+in<string> session         { "auth.session"                                   };
+in<string> type            { "auth.type"                                      };
+in<boolean> bind_email     { "bind_email"                                     };
+
+//
+// Queries
+//
+ircd::db::handle users         { "users"                                         };
+query<boolean> username_exists { users, username                                 };
+
+//
+// Commitments
+//
+
+//
+// Outputs
+//
+out<string> user_id        { "user_id",        username                       };
+out<string> home_server    { "home_server",    "pitcock's playground"         };
+out<string> access_token   { "access_token",   generate_access_token          };
+out<string> refresh_token  { "refresh_token",  generate_refresh_token         };
+
+ircd::resource::method post
 {
 	register_resource, "POST", handle_post,
 	{
-		&username,
-		&bind_email,
+		//&username,
+		//&bind_email,
 	}
 };
 
-void handle_post(client &client,
-                 resource::request &request,
-                 resource::response &response)
+ircd::resource::response
+handle_post(ircd::client &client,
+            ircd::resource::request &request)
 {
+	using namespace ircd;
+
 	const json::doc in{request.content};
 
-	char head[256], body[25];
-    static const auto headfmt
-    {
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Length: %zu\r\n"
-        "\r\n"
-    };
+	json::obj hoo;
+	hoo["kaa"] = "\"choo\"";
 
-	std::cout << request.content << std::endl;
-	//std::cout << in << std::endl;
+	json::obj foo;
+	foo["yea"] = "\"pie\"";
+	foo["hoo"] = &hoo;
 
-//	write(client, in);
+	json::obj out;
+	out["user_id"]         = in["username"];
+	out["access_token"]    = "\"ABCDEFG\"";
+	out["home_server"]     = "\"dereferenced\"";
+	out["refresh_token"]   = "\"tokenizeddd\"";
+
+	return { client, out };
 }
 
-void valid_username(const string_view &s)
+void valid_username(const ircd::string_view &s)
 {
+	using namespace ircd;
+
 	static conf::item<size_t> max_len
 	{
 		"client.register.username.max_len", 15

@@ -80,7 +80,7 @@ template<template<class, class, class>
          class T = string_view,
          class Comp = std::less<T>,
          class A>
-C<T, Comp, A> token(A allocator, const string_view &str, const char *const &sep);
+C<T, Comp, A> tokens(A allocator, const string_view &str, const char *const &sep);
 
 // Receive token view into new associative container
 template<template<class, class, class>
@@ -88,7 +88,7 @@ template<template<class, class, class>
          class T = string_view,
          class Comp = std::less<T>,
          class A = std::allocator<T>>
-C<T, Comp, A> token(const string_view &str, const char *const &sep);
+C<T, Comp, A> tokens(const string_view &str, const char *const &sep);
 
 // Convenience to get individual tokens
 size_t tokens_count(const string_view &str, const char *const &sep);

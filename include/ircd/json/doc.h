@@ -29,32 +29,30 @@ struct doc
 :string_view
 {
 	struct member;
-	struct iterator;
+	struct const_iterator;
 
 	using key_type = string_view;
 	using mapped_type = string_view;
 	using value_type = const member;
 	using pointer = value_type *;
 	using reference = value_type &;
-	using const_iterator = iterator;
+	using iterator = const_iterator;
 	using size_type = size_t;
 	using difference_type = std::ptrdiff_t;
 	using key_compare = std::less<member>;
 
 	bool contains(const string_view &) const;
 
-	iterator end() const;
-	iterator begin() const;
+	const_iterator end() const;
+	const_iterator begin() const;
 
-	iterator find(const char *const &name) const;
+	const_iterator find(const char *const &name) const;
 	size_t count() const;
 
 	string_view at(const char *const &name) const;
 	string_view operator[](const char *const &name) const;
 
-	doc(const string_view &s = {})
-	:string_view{s}
-	{}
+	using string_view::string_view;
 
 	friend size_t print(char *const &buf, const size_t &max, const doc &);
 	friend std::ostream &operator<<(std::ostream &, const doc &);
@@ -75,7 +73,7 @@ struct doc::member
 	friend std::ostream &operator<<(std::ostream &, const doc::member &);
 };
 
-struct doc::iterator
+struct doc::const_iterator
 {
 	using value_type = const member;
 	using pointer = value_type *;
@@ -90,7 +88,7 @@ struct doc::iterator
 	const char *stop;
 	mutable member state;
 
-	iterator(const char *const &start, const char *const &stop)
+	const_iterator(const char *const &start, const char *const &stop)
 	:start{start}
 	,stop{stop}
 	{}
@@ -99,48 +97,48 @@ struct doc::iterator
 	value_type *operator->() const               { return &state;                                  }
 	value_type &operator*() const                { return *operator->();                           }
 
-	iterator &operator++();
+	const_iterator &operator++();
 
-	friend bool operator==(const doc::iterator &, const doc::iterator &);
-	friend bool operator!=(const doc::iterator &, const doc::iterator &);
-	friend bool operator<=(const doc::iterator &, const doc::iterator &);
-	friend bool operator>=(const doc::iterator &, const doc::iterator &);
-	friend bool operator<(const doc::iterator &, const doc::iterator &);
-	friend bool operator>(const doc::iterator &, const doc::iterator &);
+	friend bool operator==(const doc::const_iterator &, const doc::const_iterator &);
+	friend bool operator!=(const doc::const_iterator &, const doc::const_iterator &);
+	friend bool operator<=(const doc::const_iterator &, const doc::const_iterator &);
+	friend bool operator>=(const doc::const_iterator &, const doc::const_iterator &);
+	friend bool operator<(const doc::const_iterator &, const doc::const_iterator &);
+	friend bool operator>(const doc::const_iterator &, const doc::const_iterator &);
 };
 
 inline bool
-operator==(const doc::iterator &a, const doc::iterator &b)
+operator==(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start == b.start;
 }
 
 inline bool
-operator!=(const doc::iterator &a, const doc::iterator &b)
+operator!=(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start != b.start;
 }
 
 inline bool
-operator<=(const doc::iterator &a, const doc::iterator &b)
+operator<=(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start <= b.start;
 }
 
 inline bool
-operator>=(const doc::iterator &a, const doc::iterator &b)
+operator>=(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start >= b.start;
 }
 
 inline bool
-operator<(const doc::iterator &a, const doc::iterator &b)
+operator<(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start < b.start;
 }
 
 inline bool
-operator>(const doc::iterator &a, const doc::iterator &b)
+operator>(const doc::const_iterator &a, const doc::const_iterator &b)
 {
 	return a.start > b.start;
 }
@@ -205,7 +203,7 @@ const
 	return it->second;
 }
 
-inline ircd::json::doc::iterator
+inline ircd::json::doc::const_iterator
 ircd::json::doc::find(const char *const &name)
 const
 {

@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CLIENT_SOCK_H
+#define HAVE_IRCD_CLIENT_SOCKET_H
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -156,18 +156,18 @@ struct socket::init
 	~init() noexcept;
 };
 
-char *read(socket &, char *&start, char *const &stop);
-string_view readline(socket &, char *&start, char *const &stop);
-
-size_t write(socket &, const char *const &buf, const size_t &max);
-size_t write(socket &, const string_view &);
-
 ip::address remote_address(const socket &);
 std::string remote_ip(const socket &);
 uint16_t remote_port(const socket &);
 ip::address local_address(const socket &);
 std::string local_ip(const socket &);
 uint16_t local_port(const socket &);
+
+char *read(socket &, char *&start, char *const &stop);
+string_view readline(socket &, char *&start, char *const &stop);
+
+size_t write(socket &, const char *const &buf, const size_t &max);
+size_t write(socket &, const string_view &);
 
 
 inline

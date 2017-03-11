@@ -42,6 +42,25 @@ struct buffer
 	{}
 };
 
+struct const_buffer
+:buffer<const char *>
+{
+	operator boost::asio::const_buffer() const;
+
+	using buffer<const char *>::buffer;
+	const_buffer(const string_view &s)
+	:buffer<const char *>{begin(s), end(s)}
+	{}
+};
+
+struct mutable_buffer
+:buffer<char *>
+{
+	operator boost::asio::mutable_buffer() const;
+
+	using buffer<char *>::buffer;
+};
+
 template<class it,
          size_t align = 16>
 struct unique_buffer
@@ -51,22 +70,6 @@ struct unique_buffer
 	unique_buffer(const size_t &size);
 	unique_buffer() = default;
 	~unique_buffer() noexcept;
-};
-
-struct const_buffer
-:buffer<const char *>
-{
-	operator boost::asio::const_buffer() const;
-
-	using buffer<const char *>::buffer;
-};
-
-struct mutable_buffer
-:buffer<char *>
-{
-	operator boost::asio::mutable_buffer() const;
-
-	using buffer<char *>::buffer;
 };
 
 template<class T> using buffers = std::initializer_list<T>;

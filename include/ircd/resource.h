@@ -55,7 +55,9 @@ struct resource
 
 struct resource::response
 {
-	response();
+	response(client &, const json::doc &doc, const http::code &code = http::OK);
+	response(client &, const json::obj &obj, const http::code &code = http::OK);
+	response() = default;
 	~response() noexcept;
 };
 
@@ -66,9 +68,9 @@ struct resource::request
 };
 
 struct resource::method
-:std::function<void (client &, request &, response &)>
+:std::function<response (client &, request &)>
 {
-	using handler = std::function<void (client &, request &, response &)>;
+	using handler = std::function<response (client &, request &)>;
 
   protected:
   public:

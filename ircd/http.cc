@@ -382,13 +382,15 @@ ircd::http::line::line(parse::context &pc)
 namespace ircd {
 namespace http {
 
-std::map<code, string_view> reason
+std::map<code, std::string> reason
 {
-	{ code::BAD_REQUEST,                  "Bad Request"                },
-	{ code::NOT_FOUND,                    "Not Found"                  },
-	{ code::METHOD_NOT_ALLOWED,           "Method Not Allowed"         },
+	{ code::OK,                           "OK"s                         },
 
-	{ code::INTERNAL_SERVER_ERROR,        "Internal Server Error"      },
+	{ code::BAD_REQUEST,                  "Bad Request"s                },
+	{ code::NOT_FOUND,                    "Not Found"s                  },
+	{ code::METHOD_NOT_ALLOWED,           "Method Not Allowed"s         },
+
+	{ code::INTERNAL_SERVER_ERROR,        "Internal Server Error"s      },
 };
 
 } // namespace http

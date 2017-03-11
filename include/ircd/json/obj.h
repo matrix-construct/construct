@@ -38,7 +38,7 @@ struct obj
 	using size_type = size_t;
 	using difference_type = std::ptrdiff_t;
 	using key_compare = std::less<member>;
-	using index = std::set<member>;
+	using index = std::vector<member>;
 
 	doc state;
 	index idx;
@@ -67,7 +67,7 @@ struct obj
 	delta operator[](const char *const &name);
 
 	obj(const doc &d);
-	obj() = default;
+	obj();
 	obj(obj &&) = default;
 	explicit obj(const obj &);
 	~obj() noexcept;
@@ -105,6 +105,7 @@ struct obj::delta
 	void set(const std::string &);
 	void set(const char *const &);
 	void set(const string_view &);
+	void set(const json::obj &);
 
   public:
 	delta(struct obj &, obj::member &, const string_view &);
@@ -193,14 +194,14 @@ const
 inline ircd::json::obj::iterator
 ircd::json::obj::find(const char *const &name)
 {
-	return { *this, idx.find(string_view{name}) };
+	return { *this, std::find(std::begin(idx), std::end(idx), string_view{name}) };
 }
 
 inline ircd::json::obj::const_iterator
 ircd::json::obj::find(const char *const &name)
 const
 {
-	return idx.find(string_view{name});
+	return std::find(std::begin(idx), std::end(idx), string_view{name});
 }
 
 inline size_t

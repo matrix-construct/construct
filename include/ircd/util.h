@@ -445,7 +445,7 @@ at(It &&start,
    It &&stop,
    ssize_t i)
 {
-	for(; start != stop; --i, std::next(start, 1))
+	for(; start != stop; --i, std::advance(start, 1))
 		if(!i)
 			return start;
 

@@ -34,14 +34,7 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::json::doc::member::first),   first )
     ( decltype(ircd::json::doc::member::second),  second )
 )
-/*
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::json::obj::member,
-    ( decltype(ircd::json::obj::member::first), first )
-    ( decltype(ircd::json::obj::member::second), second )
-)
-*/
+
 namespace ircd {
 namespace json {
 
@@ -69,6 +62,7 @@ using karma::char_;
 using karma::maxwidth;
 using karma::buffer;
 using karma::eps;
+using karma::attr_cast;
 
 template<class it>
 struct input
@@ -266,26 +260,22 @@ struct output
 	rule<string_view> string           { quote << chars << quote                         ,"string" };
 
 	rule<string_view> name             { string                                            ,"name" };
-	rule<string_view> value            { rule<string_view>{}                              ,"value" };
+	rule<string_view> value            { karma::string                                    ,"value" };
 
-	rule<const json::array &> elems    { *(value % value_sep)                          ,"elements" };
+	rule<const json::array &> elems    { (value % value_sep)                           ,"elements" };
 	rule<const json::array &> array    { array_begin << elems << array_end                ,"array" };
 
 	rule<doc::member> dmember          { name << name_sep << value                       ,"member" };
-	rule<const json::doc &> dmembers   { *(dmember % value_sep)                         ,"members" };
+	rule<const json::doc &> dmembers   { (dmember % value_sep)                          ,"members" };
 	rule<const json::doc &> document   { object_begin << dmembers << object_end        ,"document" };
 
 	rule<doc::member> member           { name << name_sep << value                       ,"member" };
-	rule<const json::obj &> members    { *(member % value_sep)                          ,"members" };
+	rule<const json::obj &> members    { (member % value_sep)                           ,"members" };
 	rule<const json::obj &> object     { object_begin << members << object_end           ,"object" };
 
 	output()
 	:output::base_type{rule<>{}}
-	{
-		array %= array_begin << elems << array_end;
-		object %= object_begin << members << object_end;
-		document %= object_begin << dmembers << object_end;
-	}
+	{}
 };
 
 } // namespace json
@@ -304,14 +294,14 @@ const parser;
 struct printer
 :output<char *>
 {
-	using output<char *>::output;
+	printer();
 }
 const printer;
 
 struct ostreamer
 :output<karma::ostream_iterator<char>>
 {
-	using output<karma::ostream_iterator<char>>::output;
+	ostreamer();
 }
 const ostreamer;
 
@@ -325,6 +315,49 @@ std::ostream &operator<<(std::ostream &, const obj &);
 
 } // namespace json
 } // namespace ircd
+
+ircd::json::printer::printer()
+{
+	const auto recursor([this](auto &a, auto &b, auto &c)
+	{
+		const auto recurse_document([&]
+		{
+			char *out(const_cast<char *>(a.data()));
+			karma::generate(out, maxwidth(a.size())[document], json::doc(a));
+			a.resize(size_t(out - a.data()));
+		});
+
+		if(likely(!a.empty())) switch(a.front())
+		{
+			case '{':  recurse_document();  break;
+			default:                        break;
+		}
+	});
+
+	value %= karma::string[recursor];
+}
+
+ircd::json::ostreamer::ostreamer()
+{
+	const auto recursor([this](auto &a, auto &b, auto &c)
+	{
+		const auto recurse_document([&]
+		{
+			char *out(const_cast<char *>(a.data()));
+			const auto count(print(out, a.size(), json::doc(a)));
+			a.resize(count);
+		});
+
+		if(likely(!a.empty())) switch(a.front())
+		{
+			case '{':  recurse_document();  break;
+			case '[':  c = false;           break;
+			default:                        break;
+		}
+	});
+
+	value %= karma::string[recursor];
+}
 
 size_t
 ircd::json::print(char *const &buf,
@@ -385,6 +418,11 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 	karma::ostream_iterator<char> osi(s);
 	karma::generate(osi, ostreamer.object | eps[throws], obj);
 	return s;
+}
+
+ircd::json::obj::obj()
+:owns_state{false}
+{
 }
 
 ircd::json::obj::obj(const doc &doc)
@@ -449,8 +487,8 @@ const
 ircd::json::obj::delta
 ircd::json::obj::operator[](const char *const &name)
 {
-	auto pit(idx.emplace(string_view{name}, string_view{}));
-	auto &member(const_cast<obj::member &>(*pit.first));
+	const auto it(idx.emplace(idx.end(), string_view{name}, string_view{}));
+	auto &member(const_cast<obj::member &>(*it));
 /*
 	if(pit.second)
 	{
@@ -468,7 +506,7 @@ ircd::json::obj::operator[](const char *const &name)
 ircd::json::obj::delta
 ircd::json::obj::at(const char *const &name)
 {
-	const auto it(idx.find(string_view{name}));
+	const auto it(std::find(std::begin(idx), std::end(idx), string_view{name}));
 	if(unlikely(it == idx.end()))
 		throw not_found("name \"%s\"", name);
 
@@ -547,6 +585,18 @@ ircd::json::obj::delta::delta(struct obj &obj,
 ,obj{&obj}
 ,member{&member}
 {
+}
+
+void
+ircd::json::obj::delta::set(const json::obj &obj)
+{
+	const size_t size(obj.size());
+	std::unique_ptr<char[]> buf(new char[size + 1]);
+	const auto doc(serialize(obj, buf.get(), buf.get() + size));
+	buf.get()[size] = '\0';
+	commit(doc);
+	member->owns_second = true;
+	buf.release();
 }
 
 void
@@ -667,13 +717,14 @@ ircd::json::print(char *const &buf,
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const doc &doc)
 {
+	const auto &os(ostreamer);
 	static const auto throws([]
 	{
 		throw print_error("The JSON generator failed to output document to stream");
 	});
 
 	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, ostreamer.document | eps[throws], doc);
+	karma::generate(osi, os.document | eps[throws], doc);
 	return s;
 }
 
@@ -690,8 +741,8 @@ ircd::json::operator<<(std::ostream &s, const doc::member &member)
 	return s;
 }
 
-ircd::json::doc::iterator &
-ircd::json::doc::iterator::operator++()
+ircd::json::doc::const_iterator &
+ircd::json::doc::const_iterator::operator++()
 {
 	static const qi::rule<const char *, json::doc::member> member
 	{
@@ -711,7 +762,7 @@ ircd::json::doc::iterator::operator++()
 	return *this;
 }
 
-ircd::json::doc::iterator
+ircd::json::doc::const_iterator
 ircd::json::doc::begin()
 const
 {
@@ -732,7 +783,7 @@ const
 	return ret;
 }
 
-ircd::json::doc::iterator
+ircd::json::doc::const_iterator
 ircd::json::doc::end()
 const
 {

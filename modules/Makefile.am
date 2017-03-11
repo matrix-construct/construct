@@ -26,12 +26,12 @@ AM_LDFLAGS += \
 # library is client_X.so in the main modules dir.
 client_moduledir=@moduledir@
 client_client_versions_la_SOURCES   = client/versions.cc
-client_client_login_la_SOURCES      = client/login.cc
 client_client_register_la_SOURCES   = client/register.cc
+client_client_login_la_SOURCES      = client/login.cc
 client_module_LTLIBRARIES =     \
 	client/client_versions.la   \
-	client/client_login.la      \
-	client/client_register.la
+	client/client_register.la   \
+	client/client_login.la
 
 moduledir=@moduledir@
 listen_la_SOURCES = listen.cc

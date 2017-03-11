@@ -37,8 +37,8 @@ resource login_resource
 
 resource::method getter
 {login_resource, "POST", [](client &client,
-                            resource::request &request,
-                            resource::response &response)
+                            resource::request &request)
+-> resource::response
 {
 	char head[256], body[256];
     static const auto headfmt
@@ -97,6 +97,7 @@ resource::method getter
 	};
 
 	client.sock->write(iov);
+	return {};
 }};
 
 mapi::header IRCD_MODULE

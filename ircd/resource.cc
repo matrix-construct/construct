@@ -19,6 +19,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ircd/socket.h>
+
 namespace ircd {
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)
@@ -65,8 +67,7 @@ const try
 		head, content
 	};
 
-	resource::response response;
-	method(client, request, response);
+	response r(method(client, request));
 }
 catch(const std::out_of_range &e)
 {
@@ -99,8 +100,57 @@ noexcept
 	resource->methods.erase(methods_it);
 }
 
-ircd::resource::response::response()
+ircd::resource::response::response(client &client,
+                                   const json::obj &doc,
+                                   const http::code &code)
 {
+	char cbuf[1024];
+	mutable_buffer buf(cbuf, sizeof(cbuf));
+	response(client, serialize(doc, data(buf), data(buf) + size(buf)), code);
+}
+
+ircd::resource::response::response(client &client,
+                                   const json::doc &doc,
+                                   const http::code &code)
+{
+	char status_line[64]; const auto status_line_len
+	{
+		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
+		         uint(code),
+		         http::reason[code].data())
+	};
+
+	char server_line[128]; const auto server_line_len
+	{
+		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd) %s\r\n",
+		         BRANDING_NAME,
+		         BRANDING_VERSION)
+	};
+
+	const time_t ltime(time(nullptr));
+	struct tm *const tm(localtime(&ltime));
+	char date_line[64]; const auto date_line_len
+	{
+		strftime(date_line, sizeof(date_line), "Date: %a, %d %b %Y %T %z\r\n", tm)
+	};
+
+	char content_len[64]; const auto content_len_len
+	{
+		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
+		         doc.size())
+	};
+
+	const const_buffers iov
+	{
+		{ status_line,  size_t(status_line_len)  },
+		{ server_line,  size_t(server_line_len)  },
+		{ date_line,    size_t(date_line_len)    },
+		{ content_len,  size_t(content_len_len)  },
+		{ "\r\n", 2                              },
+		{ doc.data(),  doc.size()                }
+	};
+
+	client.sock->write(iov);
 }
 
 ircd::resource::response::~response()

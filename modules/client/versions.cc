@@ -59,18 +59,20 @@ resource versions_resource
 };
 
 resource::method getter
-{versions_resource, "GET", [](client &client,
-                              resource::request &request,
-                              resource::response &response)
 {
-	static const const_buffers iov
+	versions_resource, "GET", []
+	(client &client, resource::request &request) -> resource::response
 	{
-		{ header.data(), header.size() },
-		{ body.data(), body.size()     },
-	};
+		static const const_buffers iov
+		{
+			{ header.data(), header.size() },
+			{ body.data(), body.size()     },
+		};
 
-	client.sock->write(iov);
-}};
+		client.sock->write(iov);
+		return {};
+	}
+};
 
 mapi::header IRCD_MODULE
 {
