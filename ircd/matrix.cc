@@ -42,7 +42,7 @@ try
 	const auto port(lex_cast<uint16_t>(tok.at(1)));
 	ircd::client client
 	{
-		host_port{host, port}
+		{ host, port }
 	};
 
 	http::request

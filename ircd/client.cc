@@ -206,31 +206,50 @@ catch(const std::exception &e)
 	return false;
 }
 
+namespace ircd
+{
+	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
+	bool handle_request(client &client, parse::capstan &pc);
+
+} // namepace ircd
+
 bool
 ircd::client::serve()
 try
 {
-	char buffer[4096];
-
+	char buffer[2048];
 	parse::buffer pb{buffer, buffer + sizeof(buffer)};
-	parse::capstan pc{pb, read_closure(*this)};
+	parse::capstan pc{pb, read_closure(*this)}; do
+	{
+		if(!handle_request(*this, pc))
+			break;
+
+		pb.remove();
+	}
+	while(pc.unparsed());
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error("client[%s] [500 Internal Error]: %s",
+	           string(remote_addr(*this)).c_str(),
+	           e.what());
+
+	return false;
+}
+
+bool
+ircd::handle_request(client &client,
+                     parse::capstan &pc)
+try
+{
 	http::request
 	{
-		pc, nullptr, write_closure(*this), [&]
-		(const http::request::head &head)
+		pc, nullptr, write_closure(client), [&client, &pc]
+		(const auto &head)
 		{
-			log::debug("client[%s] requesting resource \"%s\"",
-		           string(remote_addr(*this)).c_str(),
-		           std::string(head.resource).c_str());
-			try
-			{
-				const auto &resource(*resource::resources.at(head.resource));
-				resource(*this, pc, head);
-			}
-			catch(const std::out_of_range &e)
-			{
-				throw http::error(http::code::NOT_FOUND);
-			}
+			handle_request(client, pc, head);
 		}
 	};
 
@@ -239,7 +258,7 @@ try
 catch(const http::error &e)
 {
 	log::debug("client[%s] http::error(%d): %s",
-	           string(remote_addr(*this)).c_str(),
+	           string(remote_addr(client)).c_str(),
 	           int(e.code),
 	           e.what());
 
@@ -250,13 +269,23 @@ catch(const http::error &e)
 		default:                              return true;
 	}
 }
-catch(const std::exception &e)
-{
-	log::error("client[%s] [500 Internal Error]: %s",
-	           string(remote_addr(*this)).c_str(),
-	           e.what());
 
-	return false;
+void
+ircd::handle_request(client &client,
+                     parse::capstan &pc,
+                     const http::request::head &head)
+try
+{
+	log::debug("client[%s] requesting resource \"%s\"",
+	           string(remote_addr(client)).c_str(),
+	           std::string(head.resource).c_str());
+
+	const auto &resource(*resource::resources.at(head.resource));
+	resource(client, pc, head);
+}
+catch(const std::out_of_range &e)
+{
+	throw http::error(http::code::NOT_FOUND);
 }
 
 std::shared_ptr<ircd::client>

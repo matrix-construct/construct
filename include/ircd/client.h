@@ -53,8 +53,8 @@ struct client
 	bool main() noexcept;
 
   public:
-	explicit client(std::shared_ptr<socket>);
-	explicit client(const host_port &, const seconds &timeout = 5s);
+	client(std::shared_ptr<socket>);
+	client(const host_port &, const seconds &timeout = 5s);
 	client();
 	client(client &&) = delete;
 	client(const client &) = delete;
