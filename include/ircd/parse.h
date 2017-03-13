@@ -33,6 +33,9 @@ struct parse
 	IRCD_EXCEPTION(error, grammar_error)
 	IRCD_EXCEPTION(error, syntax_error)
 
+	using read_closure = std::function<void (char *&, char *)>;
+	using parse_closure = std::function<bool (const char *&, const char *)>;
+
 	struct grammar;
 	struct context;
 	struct buffer;
@@ -54,16 +57,37 @@ struct parse::grammar
 
 struct parse::buffer
 {
-	char *base;
-	const char *parsed;
-	char *read;
-	char *stop;
+	char *base;                                  // Lowest address of the buffer (const)
+	const char *parsed;                          // Data between [base, parsed] is completed
+	char *read;                                  // Data between [parsed, read] is unparsed
+	char *stop;                                  // Data between [read, stop] is unreceived (const)
+
+	size_t size() const                          { return stop - base;                             }
+	size_t completed() const                     { return parsed - base;                           }
+	size_t unparsed() const                      { return read - parsed;                           }
+	size_t remaining() const                     { return stop - read;                             }
+
+	void discard();
+	void remove();
+
+	buffer(const buffer &old, char *const &start, char *const &stop)
+	:base{start}
+	,parsed{start}
+	,read{start + old.unparsed()}
+	,stop{stop}
+	{
+		memmove(base, old.base, old.unparsed());
+	}
 
 	buffer(char *const &start, char *const &stop)
 	:base{start}
 	,parsed{start}
 	,read{start}
 	,stop{stop}
+	{}
+
+	template<size_t N> buffer(const buffer &old, char (&buf)[N])
+	:buffer{old, buf, buf + N}
 	{}
 
 	template<size_t N> buffer(char (&buf)[N])
@@ -73,12 +97,12 @@ struct parse::buffer
 
 struct parse::context
 {
-	using read_closure = std::function<void (char *&, char *)>;
-	using parse_closure = std::function<bool (const char *&, const char *)>;
-
 	const char *&parsed;
 	char *&read;
 	char *stop;
+
+	size_t unparsed() const                      { return read - parsed;                           }
+	size_t remaining() const                     { return stop - read;                             }
 
 	read_closure reader;
 	void operator()(const parse_closure &);
@@ -116,4 +140,18 @@ ircd::parse::context::operator()(const parse_closure &pc)
 {
 	while(!pc(parsed, const_cast<const char *>(read)))
 		reader(read, stop);
+}
+
+inline void
+ircd::parse::buffer::remove()
+{
+	memmove(base, parsed, unparsed());
+	read = base + unparsed();
+	parsed = base;
+}
+
+inline void
+ircd::parse::buffer::discard()
+{
+	read -= unparsed();
 }
