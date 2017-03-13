@@ -29,6 +29,8 @@ template<class it>
 struct buffer
 :std::tuple<it, it>
 {
+	using value_type = it;
+
 	operator string_view() const;
 	operator std::string_view() const;
 	explicit operator std::string() const;
@@ -95,6 +97,9 @@ template<class it> size_t size(const buffer<it> &buffer);
 template<class T> size_t size(const buffers<T> &buffers);
 template<class it> it data(const buffer<it> &buffer);
 
+template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
+template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
+
 } // namespace buffer
 
 using buffer::const_buffer;
@@ -107,6 +112,32 @@ using buffer::null_buffers;
 
 } // namespace ircd
 
+template<class T>
+size_t
+ircd::buffer::consume(buffers<T> &buffers,
+                      const size_t &bytes)
+{
+	size_t remain(bytes);
+	for(auto it(begin(buffers)); it != end(buffers) && remain > 0; ++it)
+	{
+		using buffer = typename buffers<T>::value_type;
+		using iterator = typename buffer::value_type;
+
+		buffer &b(const_cast<buffer &>(*it));
+		remain -= consume(b, remain);
+	}
+
+	return bytes - remain;
+}
+
+template<class it>
+size_t
+ircd::buffer::consume(buffer<it> &buffer,
+                      const size_t &bytes)
+{
+	get<0>(buffer) += std::min(size(buffer), bytes);
+	return bytes - size(buffer);
+}
 
 template<class it>
 it
