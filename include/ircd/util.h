@@ -69,25 +69,38 @@ using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
 
 struct scope
 {
+	struct uncaught;
+
 	const std::function<void ()> func;
 
-	template<class F> scope(F &&func);
+	template<class F>
+	scope(F &&func)
+	:func(std::forward<F>(func))
+	{}
+
 	scope(const scope &) = delete;
-	~scope() noexcept;
+	~scope() noexcept
+	{
+		func();
+	}
 };
 
-template<class F>
-scope::scope(F &&func)
-:func(std::forward<F>(func))
+struct scope::uncaught
 {
-}
+	const std::function<void ()> func;
 
-inline
-scope::~scope()
-noexcept
-{
-	func();
-}
+	template<class F>
+	uncaught(F &&func)
+	:func(std::forward<F>(func))
+	{}
+
+	uncaught(const uncaught &) = delete;
+	~uncaught() noexcept
+	{
+		if(unlikely(std::uncaught_exception()))
+			func();
+	}
+};
 
 
 // For conforming enums include a _NUM_ as the last element,
