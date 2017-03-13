@@ -74,7 +74,7 @@ struct line
 	struct header;
 
 	using string_view::string_view;
-	line(parse::context &);
+	line(parse::capstan &);
 };
 
 struct line::request
@@ -112,7 +112,7 @@ struct headers
 {
 	using closure = std::function<void (const line::header &)>;
 
-	headers(parse::context &, const closure & = {});
+	headers(parse::capstan &, const closure & = {});
 };
 
 struct content
@@ -120,8 +120,8 @@ struct content
 {
 	IRCD_OVERLOAD(discard)
 
-	content(parse::context &, const size_t &length, discard_t);
-	content(parse::context &, const size_t &length);
+	content(parse::capstan &, const size_t &length, discard_t);
+	content(parse::capstan &, const size_t &length);
 	content() = default;
 };
 
@@ -138,7 +138,7 @@ struct response
 	         const write_closure &,
 	         const std::initializer_list<line::header> & = {});
 
-	response(parse::context &,
+	response(parse::capstan &,
 	         content *const & = nullptr,
 	         const proffer & = nullptr,
 	         const headers::closure & = {});
@@ -149,17 +149,17 @@ struct response::head
 {
 	size_t content_length {0};
 
-	head(parse::context &pc, const headers::closure &c = {});
+	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
 struct response::content
 :http::content
 {
-	content(parse::context &pc, const head &h, discard_t)
+	content(parse::capstan &pc, const head &h, discard_t)
 	:http::content{pc, h.content_length, discard}
 	{}
 
-	content(parse::context &pc, const head &h)
+	content(parse::capstan &pc, const head &h)
 	:http::content{pc, h.content_length}
 	{}
 
@@ -181,7 +181,7 @@ struct request
 	        const write_closure &         = nullptr,
 	        const std::initializer_list<line::header> & = {});
 
-	request(parse::context &,
+	request(parse::capstan &,
 	        content *const & = nullptr,
 	        const write_closure & = nullptr,
 	        const proffer & = nullptr,
@@ -196,17 +196,17 @@ struct request::head
 	string_view te;
 	size_t content_length {0};
 
-	head(parse::context &pc, const headers::closure &c = {});
+	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
 struct request::content
 :http::content
 {
-	content(parse::context &pc, const head &h, discard_t)
+	content(parse::capstan &pc, const head &h, discard_t)
 	:http::content{pc, h.content_length, discard}
 	{}
 
-	content(parse::context &pc, const head &h)
+	content(parse::capstan &pc, const head &h)
 	:http::content{pc, h.content_length}
 	{}
 };

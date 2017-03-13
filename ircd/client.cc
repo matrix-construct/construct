@@ -213,7 +213,7 @@ try
 	char buffer[4096];
 
 	parse::buffer pb{buffer, buffer + sizeof(buffer)};
-	parse::context pc{pb, read_closure(*this)};
+	parse::capstan pc{pb, read_closure(*this)};
 	http::request
 	{
 		pc, nullptr, write_closure(*this), [&]

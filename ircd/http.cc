@@ -311,7 +311,7 @@ ircd::http::printed_size(const std::initializer_list<line::header> &headers)
 	});
 }
 
-ircd::http::request::request(parse::context &pc,
+ircd::http::request::request(parse::capstan &pc,
                              content *const &c,
                              const write_closure &write_closure,
                              const proffer &proffer,
@@ -396,7 +396,7 @@ ircd::http::request::request(const string_view &host,
 	closure(vector);
 }
 
-ircd::http::request::head::head(parse::context &pc,
+ircd::http::request::head::head(parse::capstan &pc,
                                 const headers::closure &c)
 :line::request{pc}
 {
@@ -416,7 +416,7 @@ ircd::http::request::head::head(parse::context &pc,
 	}};
 }
 
-ircd::http::response::response(parse::context &pc,
+ircd::http::response::response(parse::capstan &pc,
                                content *const &c,
                                const proffer &proffer,
                                const headers::closure &headers_closure)
@@ -501,7 +501,7 @@ ircd::http::response::response(const code &code,
 	closure(iov);
 }
 
-ircd::http::response::head::head(parse::context &pc,
+ircd::http::response::head::head(parse::capstan &pc,
                                  const headers::closure &c)
 :line::response{pc}
 {
@@ -515,7 +515,7 @@ ircd::http::response::head::head(parse::context &pc,
 	}};
 }
 
-ircd::http::content::content(parse::context &pc,
+ircd::http::content::content(parse::capstan &pc,
                              const size_t &length)
 :string_view{[&pc, &length]
 {
@@ -543,7 +543,7 @@ ircd::http::content::content(parse::context &pc,
 {
 }
 
-ircd::http::content::content(parse::context &pc,
+ircd::http::content::content(parse::capstan &pc,
                              const size_t &length,
                              discard_t)
 :string_view{}
@@ -563,7 +563,7 @@ ircd::http::content::content(parse::context &pc,
 	}
 }
 
-ircd::http::headers::headers(parse::context &pc,
+ircd::http::headers::headers(parse::capstan &pc,
                              const closure &c)
 {
 	for(line::header h{pc}; !h.first.empty(); h = line::header{pc})
@@ -630,7 +630,7 @@ catch(const qi::expectation_failure<const char *> &e)
 	throw error(code::BAD_REQUEST, buf);
 }
 
-ircd::http::line::line(parse::context &pc)
+ircd::http::line::line(parse::capstan &pc)
 :string_view{[&pc]
 {
 	static const auto grammar

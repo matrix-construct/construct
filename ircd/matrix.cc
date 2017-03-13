@@ -55,7 +55,7 @@ try
 
 	char buf[4096];
 	parse::buffer pb{buf};
-	parse::context pc{pb, read_closure(client)};
+	parse::capstan pc{pb, read_closure(client)};
 	http::response
 	{
 		pc, nullptr, [&pc](const auto &head)

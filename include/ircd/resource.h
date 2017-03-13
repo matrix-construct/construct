@@ -45,7 +45,7 @@ struct resource
 	decltype(resources)::const_iterator resources_it;
 
   public:
-	void operator()(client &, parse::context &, const http::request::head &) const;
+	void operator()(client &, parse::capstan &, const http::request::head &) const;
 
 	resource(const char *const &name,
 	         const char *const &description = "");

@@ -54,7 +54,7 @@ noexcept
 
 void
 ircd::resource::operator()(client &client,
-                           parse::context &pc,
+                           parse::capstan &pc,
                            const http::request::head &head)
 const try
 {

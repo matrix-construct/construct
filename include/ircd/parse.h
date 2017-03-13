@@ -37,7 +37,7 @@ struct parse
 	using parse_closure = std::function<bool (const char *&, const char *)>;
 
 	struct grammar;
-	struct context;
+	struct capstan;
 	struct buffer;
 };
 
@@ -95,7 +95,7 @@ struct parse::buffer
 	{}
 };
 
-struct parse::context
+struct parse::capstan
 {
 	const char *&parsed;
 	char *&read;
@@ -107,14 +107,14 @@ struct parse::context
 	read_closure reader;
 	void operator()(const parse_closure &);
 
-	context(const char *&parsed, char *&read, char *const &max, const decltype(reader) &reader = nullptr);
-	context(buffer &, const decltype(reader) &reader = nullptr);
+	capstan(const char *&parsed, char *&read, char *const &max, const decltype(reader) &reader = nullptr);
+	capstan(buffer &, const decltype(reader) &reader = nullptr);
 };
 
 } // namespace ircd
 
 inline
-ircd::parse::context::context(buffer &buffer,
+ircd::parse::capstan::capstan(buffer &buffer,
                               const decltype(reader) &reader)
 :parsed{buffer.parsed}
 ,read{buffer.read}
@@ -124,7 +124,7 @@ ircd::parse::context::context(buffer &buffer,
 }
 
 inline
-ircd::parse::context::context(const char *&parsed,
+ircd::parse::capstan::capstan(const char *&parsed,
                               char *&read,
                               char *const &max,
                               const decltype(reader) &reader)
@@ -136,7 +136,7 @@ ircd::parse::context::context(const char *&parsed,
 }
 
 inline void
-ircd::parse::context::operator()(const parse_closure &pc)
+ircd::parse::capstan::operator()(const parse_closure &pc)
 {
 	while(!pc(parsed, const_cast<const char *>(read)))
 		reader(read, stop);
