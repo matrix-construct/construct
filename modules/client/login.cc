@@ -96,7 +96,7 @@ resource::method getter
 		{ body, bodysz         },
 	};
 
-	client.sock->write(iov);
+	write(*client.sock, iov);
 	return {};
 }};
 

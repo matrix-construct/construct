@@ -20,7 +20,6 @@
  */
 
 #include <ircd/lex_cast.h>
-#include <ircd/socket.h>
 
 namespace ircd {
 namespace m    {
@@ -32,28 +31,42 @@ void
 ircd::test(const string_view &what)
 try
 {
-	http::client client{host_port{"matrix.org", 8448}};
+	const auto tok(tokens(what, " "));
+	const std::string method(tok.at(2));
+	const std::string rcontent(tok.size() >= 5? tok.at(4) : string_view{});
 
-	static const string_view request
+	char url[256] {0};
+	snprintf(url, sizeof(url), "/_matrix/client/%s", std::string(tok.at(3)).c_str());
+
+	const std::string host{tok.at(0)};
+	const auto port(lex_cast<uint16_t>(tok.at(1)));
+	ircd::client client
 	{
-		"GET /_matrix/client/versions HTTP/1.1\r\nHost: matrix.org\r\n\r\n"
+		host_port{host, port}
 	};
 
-	auto &sock(*client.sock);
-	write(sock, request);
+	http::request
+	{
+		host, method, url, rcontent, write_closure(client),
+		{
+			{ "Content-Type"s, "application/json"s }
+		}
+	};
 
 	char buf[4096];
-	parse::buffer pb(buf);
-	parse::context pc(pb, [&sock]
-	(char *&read, char *const &stop)
+	parse::buffer pb{buf};
+	parse::context pc{pb, read_closure(client)};
+	http::response
 	{
-		read += sock.read_some(mutable_buffers{{read, stop}});
-	});
+		pc, nullptr, [&pc](const auto &head)
+		{
+			http::response::content content{pc, head};
+			const json::doc cdoc{content};
 
-	const http::response::head header{pc};
-	const http::response::body content{pc, header};
-	for(const auto &member : json::doc(content))
-		std::cout << member.first << " --> " << member.second << std::endl;
+			for(const auto &member : cdoc)
+				std::cout << member.first << " --> " << member.second << std::endl;
+		}
+	};
 }
 catch(const std::exception &e)
 {

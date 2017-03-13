@@ -49,7 +49,7 @@ struct client
 	list::const_iterator clit;
 	std::shared_ptr<socket> sock;
 
-	virtual bool handle();
+	virtual bool serve();
 	bool main() noexcept;
 
   public:
@@ -63,34 +63,22 @@ struct client
 	virtual ~client() noexcept;
 };
 
-host_port remote_address(const client &);
-host_port local_address(const client &);
-
-// Creates a client.
-std::shared_ptr<client> add_client(std::shared_ptr<socket>);
-
-} // namespace ircd
-
-namespace ircd {
-namespace http {
-
-struct client
-:ircd::client
-{
-	virtual bool handle() override;
-
-	using ircd::client::client;
-};
-
-} // namespace ircd
-} // namespace http
-
-namespace ircd {
-
 struct client::init
 {
 	init();
 	~init() noexcept;
 };
+
+host_port remote_addr(const client &);
+host_port local_addr(const client &);
+
+const char *write(client &, const char *&start, const char *const &stop);
+char *read(client &, char *&start, char *const &stop);
+string_view readline(client &, char *&start, char *const &stop);
+
+http::response::write_closure write_closure(client &);
+parse::read_closure read_closure(client &);
+
+std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 
 } // namespace ircd

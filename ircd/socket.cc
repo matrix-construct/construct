@@ -57,52 +57,27 @@ ircd::write(socket &socket,
 size_t
 ircd::write(socket &socket,
             const char *const &buf,
-            const size_t &max)
+            const size_t &size)
 {
-	const std::array<const_buffer, 1> cbufs
+	const std::array<const_buffer, 1> bufs
+	{{
+		{ buf, size }
+	}};
+
+	return socket.write(bufs);
+}
+
+size_t
+ircd::read(socket &socket,
+           char *const &buf,
+           const size_t &max)
+{
+	const std::array<mutable_buffer, 1> bufs
 	{{
 		{ buf, max }
 	}};
 
-	return socket.write(cbufs);
-}
-
-ircd::string_view
-ircd::readline(socket &socket,
-               char *&start,
-               char *const &stop)
-{
-	size_t pos;
-	string_view ret;
-	char *const base(start); do
-	{
-		const std::array<mutable_buffer, 1> buf
-		{{
-			{ start, stop }
-		}};
-
-		start += socket.read_some(buf);
-		ret = {base, start};
-		pos = ret.find("\r\n");
-	}
-	while(pos != std::string_view::npos);
-
-	return { begin(ret), std::next(begin(ret), pos + 2) };
-}
-
-char *
-ircd::read(socket &socket,
-           char *&start,
-           char *const &stop)
-{
-	const std::array<mutable_buffer, 1> buf
-	{{
-		{ start, stop }
-	}};
-
-	char *const base(start);
-	start += socket.read_some(buf);
-	return base;
+	return socket.read_some(bufs);
 }
 
 ircd::socket::scope_timeout::scope_timeout(socket &socket,

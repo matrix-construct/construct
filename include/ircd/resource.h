@@ -64,7 +64,7 @@ struct resource::response
 struct resource::request
 {
 	const http::request::head &head;
-	http::request::body &content;
+	http::request::content &content;
 };
 
 struct resource::method

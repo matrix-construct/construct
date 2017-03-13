@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/socket.h>
-
 namespace ircd {
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)
@@ -61,13 +59,13 @@ ircd::resource::operator()(client &client,
 const try
 {
 	const auto &method(*methods.at(head.method));
-	http::request::body content{pc, head};
+	http::request::content content{pc, head};
 	resource::request request
 	{
 		head, content
 	};
 
-	response r(method(client, request));
+	method(client, request);
 }
 catch(const std::out_of_range &e)
 {
@@ -105,52 +103,20 @@ ircd::resource::response::response(client &client,
                                    const http::code &code)
 {
 	char cbuf[1024];
-	mutable_buffer buf(cbuf, sizeof(cbuf));
-	response(client, serialize(doc, data(buf), data(buf) + size(buf)), code);
+	response(client, serialize(doc, cbuf, cbuf + sizeof(cbuf)), code);
 }
 
 ircd::resource::response::response(client &client,
                                    const json::doc &doc,
                                    const http::code &code)
 {
-	char status_line[64]; const auto status_line_len
+	http::response
 	{
-		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
-		         uint(code),
-		         http::reason[code].data())
+		code, doc, write_closure(client),
+		{
+			{ "Content-Type", "application/json" }
+		}
 	};
-
-	char server_line[128]; const auto server_line_len
-	{
-		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd) %s\r\n",
-		         BRANDING_NAME,
-		         BRANDING_VERSION)
-	};
-
-	const time_t ltime(time(nullptr));
-	struct tm *const tm(localtime(&ltime));
-	char date_line[64]; const auto date_line_len
-	{
-		strftime(date_line, sizeof(date_line), "Date: %a, %d %b %Y %T %z\r\n", tm)
-	};
-
-	char content_len[64]; const auto content_len_len
-	{
-		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
-		         doc.size())
-	};
-
-	const const_buffers iov
-	{
-		{ status_line,  size_t(status_line_len)  },
-		{ server_line,  size_t(server_line_len)  },
-		{ date_line,    size_t(date_line_len)    },
-		{ content_len,  size_t(content_len_len)  },
-		{ "\r\n", 2                              },
-		{ doc.data(),  doc.size()                }
-	};
-
-	client.sock->write(iov);
 }
 
 ircd::resource::response::~response()
@@ -166,74 +132,3 @@ ircd::resource::member::member(const char *const &name,
 ,valid{std::move(valid)}
 {
 }
-
-//
-// Museum of historical comments
-//
-// parse.c (1990 - 2016)
-//
-
-    /* ok, fake prefix happens naturally during a burst on a nick
-     * collision with TS5, we cant kill them because one client has to
-     * survive, so we just send an error.
-     */
-
-    /* meepfoo  is a nickname (ignore)
-     * #XXXXXXXX    is a UID (KILL)
-     * #XX      is a SID (SQUIT)
-     * meep.foo is a server (SQUIT)
-     */
-/*
- * *WARNING*
- *      Numerics are mostly error reports. If there is something
- *      wrong with the message, just *DROP* it! Don't even think of
- *      sending back a neat error message -- big danger of creating
- *      a ping pong error message...
- */
-
-    /*
-     * Prepare the parameter portion of the message into 'buffer'.
-     * (Because the buffer is twice as large as the message buffer
-     * for the socket, no overflow can occur here... ...on current
-     * assumptions--bets are off, if these are changed --msa)
-     * Note: if buffer is non-empty, it will begin with SPACE.
-     */
-
-            /*
-             * We shouldn't get numerics sent to us,
-             * any numerics we do get indicate a bug somewhere..
-             */
-
-            /* ugh.  this is here because of nick collisions.  when two servers
-             * relink, they burst each other their nicks, then perform collides.
-             * if there is a nick collision, BOTH servers will kill their own
-             * nicks, and BOTH will kill the other servers nick, which wont exist,
-             * because it will have been already killed by the local server.
-             *
-             * unfortunately, as we cant guarantee other servers will do the
-             * "right thing" on a nick collision, we have to keep both kills.
-             * ergo we need to ignore ERR_NOSUCHNICK. --fl_
-             */
-
-            /* quick comment. This _was_ tried. i.e. assume the other servers
-             * will do the "right thing" and kill a nick that is colliding.
-             * unfortunately, it did not work. --Dianora
-             */
-
-            /* note, now we send PING on server connect, we can
-             * also get ERR_NOSUCHSERVER..
-             */
-
-            /* This message changed direction (nick collision?)
-             * ignore it.
-             */
-
-        /* csircd will send out unknown umode flag for +a (admin), drop it here. */
-
-        /* Fake it for server hiding, if its our client */
-
-    /* bit of a hack.
-     * I don't =really= want to waste a bit in a flag
-     * number_of_nick_changes is only really valid after the client
-     * is fully registered..
-     */

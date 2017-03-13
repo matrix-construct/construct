@@ -19,38 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/socket.h>
-
 using namespace ircd;
-
-const std::string body
-{[]{
-	const json::doc object
-	{R"(
-
-	{"versions":["r0.0.1"]}
-
-	)"};
-
-	std::array<char, 128> body {0};
-	const size_t size(0);
-	//const size_t size(print(body.data(), body.size(), object));
-	return std::string(body.data(), size);
-}()};
-
-const std::string header
-{[]{
-	const auto head
-	{
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Length: %zu\r\n"
-		"\r\n"
-	};
-
-	std::array<char, 128> header;
-	const size_t size(snprintf(header.data(), header.size(), head, body.size()));
-	return std::string(header.data(), size);
-}()};
 
 resource versions_resource
 {
@@ -61,16 +30,15 @@ resource versions_resource
 resource::method getter
 {
 	versions_resource, "GET", []
-	(client &client, resource::request &request) -> resource::response
+	(client &client, resource::request &request)
+	-> resource::response
 	{
-		static const const_buffers iov
+		static const json::doc object
 		{
-			{ header.data(), header.size() },
-			{ body.data(), body.size()     },
+			R"({"versions":["r0.0.1"]})"
 		};
 
-		client.sock->write(iov);
-		return {};
+		return resource::response { client, object };
 	}
 };
 

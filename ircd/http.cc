@@ -47,21 +47,7 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::http::line::header::first),   first  )
     ( decltype(ircd::http::line::header::second),  second )
 )
-/*
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::request,
-    ( decltype(ircd::http::request::command),   command  )
-    ( decltype(ircd::http::request::headers),   headers  )
-)
 
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::response,
-    ( decltype(ircd::http::response::status),   status  )
-    ( decltype(ircd::http::response::headers),  headers )
-)
-*/
 namespace ircd {
 namespace http {
 
@@ -205,7 +191,7 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule,
 }
 ,version
 {
-	raw[+(char_ - (NUL | CR | LF | SP))]
+	raw[+(char_ - (NUL | CR | LF | WS))]
 	,"version"
 }
 ,status
@@ -268,119 +254,8 @@ struct parser
 }
 const parser;
 
-} // namespace http
-} // namespace ircd
-
-ircd::http::content::content(parse::context &pc,
-                             const headers &h)
-:std::string(h.content_length, char())
-{
-	char *data(const_cast<char *>(this->data()));
-	char *const stop(data + size());
-	const size_t unparsed(pc.read - pc.parsed);
-	const size_t have(std::min(unparsed, size()));
-	memcpy(data, pc.parsed, have);
-	data[have] = '\0';
-	pc.parsed += have;
-	data += have;
-	if(data != stop)
-	{
-		pc.reader(data, stop);
-		*data = '\0';
-	}
-
-	assert(data == stop);
-}
-
-ircd::http::headers::headers(parse::context &pc,
-                             const closure &c)
-{
-	for(line::header h{pc}; !h.first.empty(); h = line::header{pc})
-	{
-		if(iequals(h.first, "host"))
-			host = h.second;
-		else if(iequals(h.first, "expect"))
-			expect = h.second;
-		else if(iequals(h.first, "te"))
-			te = h.second;
-		else if(iequals(h.first, "content-length"))
-			content_length = lex_cast<size_t>(h.second);
-
-		if(c)
-			c(h);
-	}
-}
-
-ircd::http::line::header::header(const line &line)
-try
-{
-	static const auto grammar
-	{
-		eps > parser.header
-	};
-
-	if(line.empty())
-		return;
-
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw error(code::BAD_REQUEST);
-}
-
-ircd::http::line::response::response(const line &line)
-{
-	static const auto grammar
-	{
-		parser.response_line
-	};
-
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
-}
-
-ircd::http::line::request::request(const line &line)
-try
-{
-	static const auto grammar
-	{
-		eps > parser.request_line
-	};
-
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw error(code::BAD_REQUEST);
-}
-
-ircd::http::line::line(parse::context &pc)
-:string_view{[&pc]
-{
-	static const auto grammar
-	{
-		parser.line
-	};
-
-	string_view ret;
-	pc([&ret](const char *&start, const char *stop)
-	{
-		return qi::parse(start, stop, grammar, ret);
-	});
-
-	return ret;
-}()}
-{
-}
-
-namespace ircd {
-namespace http {
+size_t printed_size(const std::initializer_list<line::header> &headers);
+size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
 
 std::map<code, std::string> reason
 {
@@ -411,6 +286,373 @@ std::map<code, std::string> reason
 
 } // namespace http
 } // namespace ircd
+
+size_t
+ircd::http::print(char *const &buf,
+                  const size_t &max,
+                  const std::initializer_list<line::header> &headers)
+{
+	size_t ret(0);
+	for(const auto &header : headers)
+		ret += snprintf(buf + ret, max - ret, "%s: %s\r\n",
+		                header.first.data(),
+		                header.second.data());
+	return ret;
+}
+
+size_t
+ircd::http::printed_size(const std::initializer_list<line::header> &headers)
+{
+	return std::accumulate(begin(headers), end(headers), size_t(0), []
+	(auto &ret, const auto &pair)
+	{
+		//            key                 :   SP  value                CRLF
+		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
+	});
+}
+
+ircd::http::request::request(parse::context &pc,
+                             content *const &c,
+                             const write_closure &write_closure,
+                             const proffer &proffer,
+                             const headers::closure &headers_closure)
+try
+{
+	const head h{pc, headers_closure};
+	const char *const content_mark(pc.parsed);
+	const scope discard_unused_content{[&pc, &h, &content_mark]
+	{
+		const size_t consumed(pc.parsed - content_mark);
+		const size_t remain(h.content_length - consumed);
+		http::content{pc, remain, content::discard};
+	}};
+
+	if(proffer)
+		proffer(h);
+
+	if(c)
+		*c = content{pc, h};
+}
+catch(const http::error &e)
+{
+	if(write_closure)
+		http::response{e.code, e.content, write_closure};
+
+	throw;
+}
+catch(const std::exception &e)
+{
+	if(write_closure)
+		http::response{http::INTERNAL_SERVER_ERROR, e.what(), write_closure};
+
+	throw;
+}
+
+ircd::http::request::request(const string_view &host,
+                             const string_view &method,
+                             const string_view &resource,
+                             const string_view &content,
+                             const write_closure &closure,
+                             const std::initializer_list<line::header> &headers)
+{
+	assert(!method.empty());
+	assert(!resource.empty());
+
+	char host_line[128] {"Host: "}; const auto host_line_len
+	{
+		6 + snprintf(host_line + 6, std::min(sizeof(host_line) - 6, host.size() + 3), "%s\r\n",
+		             host.data())
+	};
+
+	char content_len[64]; const auto content_len_len
+	{
+		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
+		         content.size())
+	};
+
+	char user_headers[printed_size(headers) + 1]; const auto user_headers_len
+	{
+		print(user_headers, sizeof(user_headers), headers)
+	};
+
+	const auto &space       {" "s          };
+	const auto &version     { "HTTP/1.1"s  };
+	const auto &terminator  { "\r\n"s      };
+	const_buffers vector
+	{
+		{ method.data(),      method.size()             },
+		{ space.data(),       space.size(),             },
+		{ resource.data(),    resource.size(),          },
+		{ space.data(),       space.size(),             },
+		{ version.data(),     version.size(),           },
+		{ terminator.data(),  terminator.size()         },
+		{ host_line,          size_t(host_line_len)     },
+		{ content_len,        size_t(content_len_len)   },
+		{ user_headers,       size_t(user_headers_len)  },
+		{ terminator.data(),  terminator.size()         },
+		{ content.data(),     content.size()            },
+	};
+
+	closure(vector);
+}
+
+ircd::http::request::head::head(parse::context &pc,
+                                const headers::closure &c)
+:line::request{pc}
+{
+	headers{pc, [this, &c](const auto &h)
+	{
+		if(iequals(h.first, "host"s))
+			host = h.second;
+		else if(iequals(h.first, "expect"s))
+			expect = h.second;
+		else if(iequals(h.first, "te"s))
+			te = h.second;
+		else if(iequals(h.first, "content-length"s))
+			content_length = lex_cast<size_t>(h.second);
+
+		if(c)
+			c(h);
+	}};
+}
+
+ircd::http::response::response(parse::context &pc,
+                               content *const &c,
+                               const proffer &proffer,
+                               const headers::closure &headers_closure)
+{
+	const head h{pc, headers_closure};
+	const char *const content_mark(pc.parsed);
+	const scope discard_unused_content{[&pc, &h, &content_mark]
+	{
+		const size_t consumed(pc.parsed - content_mark);
+		const size_t remain(h.content_length - consumed);
+		http::content{pc, remain, content::discard};
+	}};
+
+	if(proffer)
+		proffer(h);
+
+	if(c)
+		*c = content{pc, h};
+}
+
+ircd::http::response::response(const code &code,
+                               const string_view &content,
+                               const write_closure &closure,
+                               const std::initializer_list<line::header> &headers)
+{
+	char status_line[64]; const auto status_line_len
+	{
+		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
+		         uint(code),
+		         http::reason[code].data())
+	};
+
+	char server_line[128]; const auto server_line_len
+	{
+		code >= 200 && code < 300?
+		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd) %s\r\n",
+		         BRANDING_NAME,
+		         BRANDING_VERSION):
+		0
+	};
+
+	const time_t ltime(time(nullptr));
+	struct tm *const tm(localtime(&ltime));
+	char date_line[64]; const auto date_line_len
+	{
+		code < 400 || code >= 500?
+		strftime(date_line, sizeof(date_line), "Date: %a, %d %b %Y %T %z\r\n", tm):
+		0
+	};
+
+	char content_len[64]; const auto content_len_len
+	{
+		code != NO_CONTENT?
+		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
+		         content.size()):
+		0
+	};
+
+	const auto user_headers_bufsize
+	{
+		std::accumulate(begin(headers), end(headers), size_t(1), []
+		(auto &ret, const auto &pair)
+		{
+			return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
+		})
+	};
+
+	char user_headers[user_headers_bufsize];
+	const auto user_headers_len(print(user_headers, sizeof(user_headers), headers));
+
+	const_buffers iov
+	{
+		{ status_line,      size_t(status_line_len)     },
+		{ server_line,      size_t(server_line_len)     },
+		{ date_line,        size_t(date_line_len)       },
+		{ content_len,      size_t(content_len_len)     },
+		{ user_headers,     size_t(user_headers_len)    },
+		{ "\r\n",           2                           },
+		{ content.data(),   content.size()              },
+	};
+
+	closure(iov);
+}
+
+ircd::http::response::head::head(parse::context &pc,
+                                 const headers::closure &c)
+:line::response{pc}
+{
+	headers{pc, [this, &c](const auto &h)
+	{
+		if(iequals(h.first, "content-length"s))
+			content_length = lex_cast<size_t>(h.second);
+
+		if(c)
+			c(h);
+	}};
+}
+
+ircd::http::content::content(parse::context &pc,
+                             const size_t &length)
+:string_view{[&pc, &length]
+{
+	const char *const base(pc.parsed);
+	const size_t have(std::min(pc.unparsed(), length));
+	size_t remain(length - have);
+	pc.parsed += have;
+
+	while(remain && pc.remaining())
+	{
+		const auto read_max(std::min(remain, pc.remaining()));
+		pc.reader(pc.read, pc.read + read_max);
+		remain -= pc.unparsed();
+		pc.parsed = pc.read;
+	}
+
+	assert(pc.parsed == base + length);
+	assert(pc.parsed == pc.read);
+
+	if(pc.remaining())
+		*pc.read = '\0';
+
+	return string_view { base, pc.parsed };
+}()}
+{
+}
+
+ircd::http::content::content(parse::context &pc,
+                             const size_t &length,
+                             discard_t)
+:string_view{}
+{
+	static char buf[512] alignas(16);
+
+	const size_t have(std::min(pc.unparsed(), length));
+	size_t remain(length - have);
+	pc.read -= have;
+
+	while(remain)
+	{
+		char *start(buf);
+		__builtin_prefetch(start, 1, 0);    // 1 = write, 0 = no cache
+		pc.reader(start, start + std::min(remain, sizeof(buf)));
+		remain -= std::distance(buf, start);
+	}
+}
+
+ircd::http::headers::headers(parse::context &pc,
+                             const closure &c)
+{
+	for(line::header h{pc}; !h.first.empty(); h = line::header{pc})
+		if(c)
+			c(h);
+}
+
+ircd::http::line::header::header(const line &line)
+try
+{
+	static const auto grammar
+	{
+		eps > parser.header
+	};
+
+	if(line.empty())
+		return;
+
+	const char *start(line.data());
+	const char *const stop(line.data() + line.size());
+	qi::parse(start, stop, grammar, *this);
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "I require a valid %s starting at character %d.",
+	         ircd::string(e.what_).data(),
+	         int(e.last - e.first));
+
+	throw error(code::BAD_REQUEST, buf);
+}
+
+ircd::http::line::response::response(const line &line)
+{
+	static const auto grammar
+	{
+		parser.response_line
+	};
+
+	const char *start(line.data());
+	const char *const stop(line.data() + line.size());
+	qi::parse(start, stop, grammar, *this);
+}
+
+ircd::http::line::request::request(const line &line)
+try
+{
+	static const auto grammar
+	{
+		eps > parser.request_line
+	};
+
+	const char *start(line.data());
+	const char *const stop(line.data() + line.size());
+	qi::parse(start, stop, grammar, *this);
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "I require a valid %s starting at character %d.",
+	         ircd::string(e.what_).data(),
+	         int(e.last - e.first));
+
+	throw error(code::BAD_REQUEST, buf);
+}
+
+ircd::http::line::line(parse::context &pc)
+:string_view{[&pc]
+{
+	static const auto grammar
+	{
+		parser.line
+	};
+
+	string_view ret;
+	pc([&ret](const char *&start, const char *const &stop)
+	{
+		if(!qi::parse(start, stop, grammar, ret))
+		{
+			ret = {};
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}()}
+{
+}
 
 ircd::http::error::error(const enum code &code,
                          const string_view &text)

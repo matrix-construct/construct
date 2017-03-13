@@ -173,7 +173,7 @@ extern "C" void gogo()
 {
 	const auto iit(listeners.emplace("foo"s, "foo"s));
 	auto &foo(iit.first->second);
-	foo.host = ip::address::from_string("0.0.0.0");
+	foo.host = ip::address::from_string("127.0.0.1");
 	foo.ep = ip::tcp::endpoint(foo.host, 6667);
 	foo.cond.notify_one();
 }

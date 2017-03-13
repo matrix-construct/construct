@@ -110,67 +110,104 @@ struct line::header
 
 struct headers
 {
-	using closure = std::function<void (const std::pair<string_view, string_view> &)>;
-
-	string_view host;
-	string_view expect;
-	string_view te;
-	size_t content_length {0};
+	using closure = std::function<void (const line::header &)>;
 
 	headers(parse::context &, const closure & = {});
 };
 
 struct content
-:std::string
+:string_view
 {
-	content(parse::context &, const headers &);
-};
+	IRCD_OVERLOAD(discard)
 
-struct request
-{
-	struct head;
-	struct body;
+	content(parse::context &, const size_t &length, discard_t);
+	content(parse::context &, const size_t &length);
+	content() = default;
 };
 
 struct response
 {
 	struct head;
-	struct body;
-};
+	struct content;
 
-struct request::head
-:line::request
-,headers
-{
-	head(parse::context &pc, const headers::closure &c = {})
-	:line::request{pc}
-	,headers{pc, c}
-	{}
-};
+	using write_closure = std::function<void (const_buffers &)>;
+	using proffer = std::function<void (const head &)>;
 
-struct request::body
-:content
-{
-	body(parse::context &pc, const head &h)
-	:content{pc, h}
-	{}
+	response(const code &,
+	         const string_view &content,
+	         const write_closure &,
+	         const std::initializer_list<line::header> & = {});
+
+	response(parse::context &,
+	         content *const & = nullptr,
+	         const proffer & = nullptr,
+	         const headers::closure & = {});
 };
 
 struct response::head
 :line::response
-,headers
 {
-	head(parse::context &pc, const headers::closure &c = {})
-	:line::response{pc}
-	,headers{pc, c}
-	{}
+	size_t content_length {0};
+
+	head(parse::context &pc, const headers::closure &c = {});
 };
 
-struct response::body
-:content
+struct response::content
+:http::content
 {
-	body(parse::context &pc, const head &h)
-	:content{pc, h}
+	content(parse::context &pc, const head &h, discard_t)
+	:http::content{pc, h.content_length, discard}
+	{}
+
+	content(parse::context &pc, const head &h)
+	:http::content{pc, h.content_length}
+	{}
+
+	content() = default;
+};
+
+struct request
+{
+	struct head;
+	struct content;
+
+	using write_closure = std::function<void (const_buffers &)>;
+	using proffer = std::function<void (const head &)>;
+
+	request(const string_view &host       = {},
+	        const string_view &method     = "GET",
+	        const string_view &resource   = "/",
+	        const string_view &content    = {},
+	        const write_closure &         = nullptr,
+	        const std::initializer_list<line::header> & = {});
+
+	request(parse::context &,
+	        content *const & = nullptr,
+	        const write_closure & = nullptr,
+	        const proffer & = nullptr,
+	        const headers::closure & = {});
+};
+
+struct request::head
+:line::request
+{
+	string_view host;
+	string_view expect;
+	string_view te;
+	size_t content_length {0};
+
+	head(parse::context &pc, const headers::closure &c = {});
+};
+
+struct request::content
+:http::content
+{
+	content(parse::context &pc, const head &h, discard_t)
+	:http::content{pc, h.content_length, discard}
+	{}
+
+	content(parse::context &pc, const head &h)
+	:http::content{pc, h.content_length}
 	{}
 };
 

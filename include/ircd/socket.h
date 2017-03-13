@@ -39,6 +39,11 @@ IRCD_EXCEPTION(error, nxdomain)
 
 extern asio::ssl::context sslv23_client;
 
+ip::address address(const ip::tcp::endpoint &);
+std::string hostaddr(const ip::address &);
+std::string hostaddr(const ip::tcp::endpoint &);
+uint16_t port(const ip::tcp::endpoint &);
+
 } // namespace ircd
 
 namespace ircd {
@@ -156,19 +161,53 @@ struct socket::init
 	~init() noexcept;
 };
 
-ip::address remote_address(const socket &);
-std::string remote_ip(const socket &);
-uint16_t remote_port(const socket &);
-ip::address local_address(const socket &);
-std::string local_ip(const socket &);
-uint16_t local_port(const socket &);
-
-char *read(socket &, char *&start, char *const &stop);
-string_view readline(socket &, char *&start, char *const &stop);
-
-size_t write(socket &, const char *const &buf, const size_t &max);
+template<class iov> size_t write(socket &, const iov &);               // write_all
+template<class iov> size_t write(socket &, iov &);                     // write_some
+size_t write(socket &, const char *const &buf, const size_t &size);
 size_t write(socket &, const string_view &);
 
+template<class iov> size_t read(socket &, const iov &);                // read_all
+template<class iov> size_t read(socket &, iov &);                      // read_some
+size_t read(socket &, char *const &buf, const size_t &max);
+
+
+template<class iov>
+size_t
+read(socket &socket,
+     iov &bufs)
+{
+	const auto read(socket.read_some(bufs));
+	const auto consumed(consume(bufs, read));
+	assert(read == consumed);
+	return read;
+}
+
+template<class iov>
+size_t
+read(socket &socket,
+     const iov &bufs)
+{
+	return socket.read(bufs);
+}
+
+template<class iov>
+size_t
+write(socket &socket,
+      iov &bufs)
+{
+	const auto wrote(socket.write_some(bufs));
+	const auto consumed(consume(bufs, wrote));
+	assert(wrote == consumed);
+	return consumed;
+}
+
+template<class iov>
+size_t
+write(socket &socket,
+      const iov &bufs)
+{
+	return socket.write(bufs);
+}
 
 inline
 socket::io::io(struct socket &sock,
@@ -193,8 +232,10 @@ template<class iov>
 auto
 socket::write(const iov &bufs)
 {
-	const auto ret(async_write(ssl, bufs, yield(continuation())));
-	return ret;
+	return io(*this, out, [&]
+	{
+		return async_write(ssl, bufs, yield(continuation()));
+	});
 }
 
 template<class iov>
@@ -202,16 +243,20 @@ auto
 socket::write(const iov &bufs,
               error_code &ec)
 {
-	const auto ret(async_write(ssl, bufs, yield(continuation())[ec]));
-	return ret;
+	return io(*this, out, [&]
+	{
+		return async_write(ssl, bufs, yield(continuation())[ec]);
+	});
 }
 
 template<class iov>
 auto
 socket::write_some(const iov &bufs)
 {
-	const auto ret(ssl.async_write_some(bufs, yield(continuation())));
-	return ret;
+	return io(*this, out, [&]
+	{
+		return ssl.async_write_some(bufs, yield(continuation()));
+	});
 }
 
 template<class iov>
@@ -219,8 +264,10 @@ auto
 socket::write_some(const iov &bufs,
                    error_code &ec)
 {
-	const auto ret(ssl.async_write_some(bufs, yield(continuation())[ec]));
-	return ret;
+	return io(*this, out, [&]
+	{
+		return ssl.async_write_some(bufs, yield(continuation())[ec]);
+	});
 }
 
 template<class iov>
@@ -298,43 +345,31 @@ socket::set_timeout(const duration &t,
 	timer.async_wait(std::move(h));
 }
 
-inline uint16_t
-local_port(const socket &socket)
-{
-	return socket.local().port();
-}
-
-inline std::string
-local_ip(const socket &socket)
-{
-	return local_address(socket).to_string();
-}
-
-inline ip::address
-local_address(const socket &socket)
-{
-	return socket.local().address();
-}
-
-inline uint16_t
-remote_port(const socket &socket)
-{
-	return socket.remote().port();
-}
-
-inline std::string
-remote_ip(const socket &socket)
-{
-	return remote_address(socket).to_string();
-}
-
-inline ip::address
-remote_address(const socket &socket)
-{
-	return socket.remote().address();
-}
-
 } // namespace ircd
+
+inline uint16_t
+ircd::port(const ip::tcp::endpoint &ep)
+{
+	return ep.port();
+}
+
+inline std::string
+ircd::hostaddr(const ip::tcp::endpoint &ep)
+{
+	return hostaddr(address(ep));
+}
+
+inline std::string
+ircd::hostaddr(const ip::address &addr)
+{
+	return addr.to_string();
+}
+
+inline boost::asio::ip::address
+ircd::address(const ip::tcp::endpoint &ep)
+{
+	return ep.address();
+}
 
 inline
 ircd::buffer::mutable_buffer::operator boost::asio::mutable_buffer()
