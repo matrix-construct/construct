@@ -30,6 +30,16 @@
 
 namespace ircd {
 
+const auto async_timeout
+{
+	15s
+};
+
+const auto request_timeout
+{
+	30s
+};
+
 ctx::pool request
 {
 	"request", 1_MiB
@@ -63,24 +73,6 @@ noexcept
 {
 	request.interrupt();
 	disconnect_all();
-}
-
-ircd::http::response::write_closure
-ircd::write_closure(client &client)
-{
-	return [&client](const const_buffers &iov)
-	{
-		write(*client.sock, iov);
-	};
-}
-
-ircd::parse::read_closure
-ircd::read_closure(client &client)
-{
-    return [&client](char *&start, char *const &stop)
-    {
-        read(client, start, stop);
-    };
 }
 
 ircd::string_view
@@ -162,6 +154,43 @@ ircd::remote_addr(const client &client)
 	return { hostaddr(ep), port(ep) };
 }
 
+ircd::http::response::write_closure
+ircd::write_closure(client &client)
+{
+	return [&client](const const_buffers &iov)
+	{
+		write(*client.sock, iov);
+	};
+}
+
+ircd::parse::read_closure
+ircd::read_closure(client &client)
+{
+	static const auto handle_error([]
+	(const boost::system::system_error &e)
+	{
+		using namespace boost::system::errc;
+
+		switch(e.code().value())
+		{
+			case operation_canceled:     throw http::error(http::REQUEST_TIMEOUT);
+			default:                     throw boost::system::system_error(e);
+		}
+	});
+
+	return [&client](char *&start, char *const &stop)
+	{
+		try
+		{
+			read(client, start, stop);
+		}
+		catch(const boost::system::system_error &e)
+		{
+			handle_error(e);
+		}
+    };
+}
+
 ircd::client::client()
 :client{std::shared_ptr<socket>{}}
 {
@@ -222,7 +251,7 @@ try
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
 		if(!handle_request(*this, pc))
-			break;
+			return false;
 
 		pb.remove();
 	}
@@ -244,11 +273,19 @@ ircd::handle_request(client &client,
                      parse::capstan &pc)
 try
 {
+	client.sock->set_timeout(request_timeout, [&client]
+	(const error_code &ec)
+	{
+		if(!ec)
+			client.sock->cancel();
+	});
+
 	http::request
 	{
 		pc, nullptr, write_closure(client), [&client, &pc]
 		(const auto &head)
 		{
+			client.sock->timer.cancel();
 			handle_request(client, pc, head);
 		}
 	};
@@ -266,6 +303,7 @@ catch(const http::error &e)
 	{
 		case http::BAD_REQUEST:               return false;
 		case http::INTERNAL_SERVER_ERROR:     return false;
+		case http::REQUEST_TIMEOUT:           return false;
 		default:                              return true;
 	}
 }
@@ -296,7 +334,7 @@ ircd::add_client(std::shared_ptr<socket> s)
 	          string(remote_addr(*client)).c_str(),
 	          string(local_addr(*client)).c_str());
 
-	async_recv_next(client, 30s);
+	async_recv_next(client, async_timeout);
 	return client;
 }
 
