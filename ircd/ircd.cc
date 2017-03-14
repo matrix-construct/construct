@@ -195,13 +195,17 @@ ircd::init_rlimit()
 void
 ircd::init_random()
 {
-	char seed[4];
+	union
+	{
+		char seed_char[4];
+		int seed_int;
+	};
 
 	std::ifstream s("/dev/urandom");
 	if(s.good())
-		s.read(seed, sizeof(seed));
+		s.read(seed_char, sizeof(seed_char));
 
-	srand(reinterpret_cast<const int &>(seed));
+	srand(seed_int);
 }
 
 
