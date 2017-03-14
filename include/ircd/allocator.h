@@ -81,19 +81,31 @@ struct allocator::fixed<T, size>::state
 	static constexpr uint word_bits              { word_bytes * 8                                  };
 	static uint byte(const uint &i)              { return i / word_bits;                           }
 	static uint bit(const uint &i)               { return i % word_bits;                           }
+	static word_t mask(const uint &pos)          { return word_t(1) << bit(pos);                   }
 
-	bool bt(const uint &pos) const               { return avail[byte(pos)] & (1ULL << bit(pos));   }
-	void bts(const uint &pos)                    { avail[byte(pos)] |= (1ULL << bit(pos));         }
-	void btc(const uint &pos)                    { avail[byte(pos)] &= ~(1ULL << bit(pos));        }
+	bool test(const uint &pos) const             { return avail[byte(pos)] & mask(pos);            }
+	void bts(const uint &pos)                    { avail[byte(pos)] |= mask(pos);                  }
+	void btc(const uint &pos)                    { avail[byte(pos)] &= ~mask(pos);                 }
 
 	uint next(const size_t &n) const;
 
 	allocator::fixed<T, size> operator()()       { return { *this };                               }
 };
 
+template<class... T1,
+         class... T2>
+bool operator==(const allocator::fixed<T1...> &, const allocator::fixed<T2...> &);
+
+template<class... T1,
+         class... T2>
+bool operator!=(const allocator::fixed<T1...> &, const allocator::fixed<T2...> &);
+
+} // namespace ircd
+
+
 template<class T,
          size_t size>
-allocator::fixed<T, size>::fixed(state &s)
+ircd::allocator::fixed<T, size>::fixed(state &s)
 noexcept
 :s{&s}
 {
@@ -103,7 +115,7 @@ template<class T,
          size_t size>
 template<class U,
          size_t S>
-allocator::fixed<T, size>::fixed(const fixed<U, S> &)
+ircd::allocator::fixed<T, size>::fixed(const fixed<U, S> &)
 noexcept
 {
 	assert(0);
@@ -112,8 +124,8 @@ noexcept
 template<class T,
          size_t size>
 void
-allocator::fixed<T, size>::deallocate(const pointer &p,
-                                      const size_type &n)
+ircd::allocator::fixed<T, size>::deallocate(const pointer &p,
+                                            const size_type &n)
 {
 	const uint pos(p - s->buf.data());
 	for(size_t i(0); i < n; ++i)
@@ -122,12 +134,12 @@ allocator::fixed<T, size>::deallocate(const pointer &p,
 
 template<class T,
          size_t size>
-typename allocator::fixed<T, size>::pointer
-allocator::fixed<T, size>::allocate(const size_type &n,
-                                    const const_pointer &hint)
+typename ircd::allocator::fixed<T, size>::pointer
+ircd::allocator::fixed<T, size>::allocate(const size_type &n,
+                                          const const_pointer &hint)
 {
 	const auto next(s->next(n));
-	if(unlikely(next >= size))
+	if(unlikely(next >= size))         // No block of n was found anywhere (next is past-the-end)
 		throw std::bad_alloc();
 
 	for(size_t i(0); i < n; ++i)
@@ -140,31 +152,26 @@ allocator::fixed<T, size>::allocate(const size_type &n,
 template<class T,
          size_t size>
 uint
-allocator::fixed<T, size>::state::next(const size_t &n)
+ircd::allocator::fixed<T, size>::state::next(const size_t &n)
 const
 {
-	// Search for a contiguous block of n, starting from after the last alloc.
 	uint ret(last), rem(n);
 	for(; ret < size && rem; ++ret)
-		if(bt(ret))
+		if(test(ret))
 			rem = n;
 		else
 			--rem;
 
-	// A block of n was found between the last alloc and the end.
 	if(likely(!rem))
 		return ret - n;
 
-	// Circle around and search between 0 to last
 	for(ret = 0, rem = n; ret < last && rem; ++ret)
-		if(bt(ret))
+		if(test(ret))
 			rem = n;
 		else
 			--rem;
 
-	// No block of n was found anywhere, report size past-the-end
-	// The allocator should throw std::bad_alloc with this value.
-	if(unlikely(rem))
+	if(unlikely(rem))                  // The allocator should throw std::bad_alloc if !rem
 		return size;
 
 	return ret - n;
@@ -172,16 +179,16 @@ const
 
 template<class... T1,
          class... T2>
-bool operator==(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
+bool
+ircd::operator==(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
 {
 	return &a == &b;
 }
 
 template<class... T1,
          class... T2>
-bool operator!=(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
+bool
+ircd::operator!=(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
 {
 	return &a != &b;
 }
-
-} // namespace ircd

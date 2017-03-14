@@ -21,6 +21,7 @@
  */
 
 #include <RB_INC_BOOST_TOKENIZER_HPP
+#include <RB_INC_BOOST_LEXICAL_CAST_HPP
 
 ircd::string_view
 ircd::token_first(const string_view &str,
@@ -136,6 +137,285 @@ ircd::tokens(const string_view &str,
 	const delim d(sep);
 	const boost::tokenizer<delim, iter, type> view(str, d);
 	std::for_each(begin(view), end(view), closure);
+}
+
+namespace ircd {
+
+const size_t LEX_CAST_BUFSIZE {64};
+thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
+
+template<size_t N,
+         class T>
+static string_view
+_lex_cast(const T &i,
+          char *buf,
+          size_t max)
+{
+	using array = std::array<char, N>;
+
+	if(!buf)
+	{
+		static thread_local uint cur;
+		buf = lex_cast_buf[cur++];
+		max = LEX_CAST_BUFSIZE;
+		cur %= LEX_CAST_BUFS;
+	}
+
+	assert(max >= N);
+	auto &a(*reinterpret_cast<array *>(buf));
+	a = boost::lexical_cast<array>(i);
+	return { buf, strnlen(buf, max) };
+}
+
+template<class T>
+static T
+_lex_cast(const string_view &s)
+{
+	return boost::lexical_cast<T>(s);
+}
+
+} // namespace ircd
+
+template<> ircd::string_view
+ircd::lex_cast(bool i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(8);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(int8_t i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(8);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(uint8_t i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(8);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(short i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(8);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(ushort i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(8);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(int i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(16);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(uint i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(16);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(long i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(32);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(ulong i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(32);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(double i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(long double i,
+               char *const &buf,
+               const size_t &max)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i, buf, max);
+}
+
+template<> bool
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<bool>(s);
+}
+
+template<> int8_t
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<char>(s);
+}
+
+template<> uint8_t
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<unsigned char>(s);
+}
+
+template<> short
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<short>(s);
+}
+
+template<> unsigned short
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<unsigned short>(s);
+}
+
+template<> int
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<int>(s);
+}
+
+template<> unsigned int
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<unsigned int>(s);
+}
+
+template<> long
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<long>(s);
+}
+
+template<> unsigned long
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<unsigned long>(s);
+}
+
+template<> double
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<double>(s);
+}
+
+template<> long double
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<long double>(s);
+}
+
+template<> bool
+ircd::try_lex_cast<bool>(const string_view &s)
+{
+	bool i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<int8_t>(const string_view &s)
+{
+	int8_t i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<uint8_t>(const string_view &s)
+{
+	uint8_t i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<short>(const string_view &s)
+{
+	short i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<ushort>(const string_view &s)
+{
+	ushort i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<int>(const string_view &s)
+{
+	int i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<unsigned int>(const string_view &s)
+{
+	unsigned int i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<long>(const string_view &s)
+{
+	long i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<unsigned long>(const string_view &s)
+{
+	unsigned long i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<double>(const string_view &s)
+{
+	double i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<long double>(const string_view &s)
+{
+	long double i;
+	return boost::conversion::try_lexical_convert(s, i);
 }
 
 /*

@@ -26,7 +26,6 @@
  */
 
 #include <ircd/socket.h>
-#include <ircd/lex_cast.h>
 
 namespace ircd {
 

@@ -22,7 +22,6 @@
 #pragma once
 #define HAVE_IRCD_MAPI_H
 
-#ifdef __cplusplus
 namespace ircd {
 namespace mapi {
 
@@ -102,4 +101,3 @@ const
 
 } // namespace mapi
 } // namespace ircd
-#endif // __cplusplus

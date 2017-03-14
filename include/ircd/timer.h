@@ -1,8 +1,4 @@
 /*
- * charybdis: 21st Century IRC++d
- * lex_cast.h: Import convenience for boost::lexical_cast
- * - This is a non-stdinc.h header, and must be included per-use.
- *
  * Copyright (C) 2016 Charybdis Development Team
  * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
@@ -25,21 +21,71 @@
  */
 
 #pragma once
-#define HAVE_IRCD_LEX_CAST
+#define HAVE_IRCD_UTIL_TIMER_H
 
-#include <RB_INC_BOOST_LEXICAL_CAST_HPP
-
-namespace ircd        {
+namespace ircd {
 inline namespace util {
 
-#ifdef BOOST_LEXICAL_CAST_INCLUDED
-template<class T = std::string,
-         class... Args>
-auto lex_cast(Args&&... args)
+struct timer
 {
-	return boost::lexical_cast<T>(std::forward<Args>(args)...);
+	using clock = std::chrono::steady_clock;
+
+	nanoseconds accumulator;
+	clock::time_point start;
+
+	template<class duration = std::chrono::seconds> duration get() const;
+	void cont();
+	void stop();
+
+	timer(const std::function<void ()> &);
+	timer();
+};
+
+inline
+timer::timer()
+:accumulator{0ns}
+,start{clock::now()}
+{
 }
-#endif
+
+inline
+timer::timer(const std::function<void ()> &func)
+:timer{}
+{
+	func();
+	stop();
+}
+
+inline void
+timer::stop()
+{
+	const auto now(clock::now());
+	if(start == clock::time_point::min())
+		return;
+
+	accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
+	start = clock::time_point::min();
+}
+
+inline void
+timer::cont()
+{
+	if(start != clock::time_point::min())
+	{
+		const auto now(clock::now());
+		accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
+	}
+
+	start = clock::now();
+}
+
+template<class duration>
+duration
+timer::get()
+const
+{
+	return std::chrono::duration_cast<duration>(accumulator);
+}
 
 } // namespace util
 } // namespace ircd

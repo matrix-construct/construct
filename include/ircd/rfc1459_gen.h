@@ -22,7 +22,6 @@
 #pragma once
 #define HAVE_IRCD_RFC1459_GEN_H
 
-#ifdef __cplusplus
 #include <boost/spirit/include/karma.hpp>
 #include "rfc1459_parse.h"
 
@@ -153,7 +152,6 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 {
 }
 
-}      // namespace gen
-}      // namespace rfc1459
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace gen
+} // namespace rfc1459
+} // namespace ircd

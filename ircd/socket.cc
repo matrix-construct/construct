@@ -19,7 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/lex_cast.h>
 #include <ircd/ctx/continuation.h>
 #include <ircd/socket.h>
 
@@ -116,7 +115,7 @@ ircd::socket::socket(const std::string &host,
 	[&host, &port]() -> ip::tcp::endpoint
 	{
 		assert(resolver);
-		const ip::tcp::resolver::query query(host, lex_cast(port));
+		const ip::tcp::resolver::query query(host, string(lex_cast(port)));
 		auto epit(resolver->async_resolve(query, yield(continuation())));
 		static const ip::tcp::resolver::iterator end;
 		if(epit == end)

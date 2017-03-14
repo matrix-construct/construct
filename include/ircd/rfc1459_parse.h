@@ -22,7 +22,6 @@
 #pragma once
 #define HAVE_IRCD_RFC1459_PARSE_H
 
-#ifdef __cplusplus
 #include <boost/spirit/include/qi.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -218,7 +217,6 @@ struct capstan
 }
 extern const capstan;
 
-}      // namespace parse
-}      // namespace rfc1459
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace parse
+} // namespace rfc1459
+} // namespace ircd

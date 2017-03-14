@@ -26,7 +26,6 @@
 #pragma once
 #define HAVE_IRCD_EXCEPTION_H
 
-#ifdef __cplusplus
 namespace ircd {
 
 /** The root exception type.
@@ -150,5 +149,4 @@ struct name                                                                   \
 IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
 IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
 
-}       // namespace ircd
-#endif  // __cplusplus
+} // namespace ircd

@@ -34,20 +34,17 @@
 #pragma once
 #define HAVE_IRCD_LOGGER_H
 
-#ifdef __cplusplus
 namespace ircd {
 
 const char *smalldate(const time_t &);
 
 }       // namespace ircd
-#endif  // __cplusplus
 
 // windows.h #define conflicts with our facility
 #ifdef HAVE_WINDOWS_H
 #undef ERROR
 #endif
 
-#ifdef __cplusplus
 namespace ircd  {
 namespace log   {
 
@@ -159,5 +156,4 @@ template<class... A> void slog(const ilogfile, const uint sno, const char *fmt, 
 }
 #pragma GCC diagnostic pop
 
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace ircd

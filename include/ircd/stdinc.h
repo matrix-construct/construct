@@ -157,14 +157,14 @@ struct line {};
 } // namespace ircd
 
 #include "util.h"
-#include "util_timer.h"
+#include "timer.h"
 #include "allocator.h"
 #include "info.h"
 #include "localee.h"
 #include "life_guard.h"
 #include "exception.h"
 #include "color.h"
-#include "stringops.h"
+#include "lexical.h"
 #include "buffer.h"
 #include "parse.h"
 #include "rfc1459.h"

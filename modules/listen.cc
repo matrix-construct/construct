@@ -21,7 +21,6 @@
 
 #include <boost/asio.hpp>
 #include <ircd/ctx/continuation.h>
-#include <ircd/lex_cast.h>
 #include <ircd/socket.h>
 
 using namespace ircd;

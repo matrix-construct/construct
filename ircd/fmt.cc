@@ -21,7 +21,6 @@
 
 #include <ircd/rfc1459_parse.h>
 #include <ircd/rfc1459_gen.h>
-#include <ircd/lex_cast.h>
 #include <ircd/fmt.h>
 
 BOOST_FUSION_ADAPT_STRUCT

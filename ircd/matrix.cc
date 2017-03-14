@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/lex_cast.h>
-
 namespace ircd {
 namespace m    {
 

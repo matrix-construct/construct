@@ -22,7 +22,6 @@
 #pragma once
 #define HAVE_IRCD_FMT_H
 
-#ifdef __cplusplus
 namespace ircd {
 namespace fmt  {
 
@@ -114,6 +113,5 @@ snprintf::snprintf(char *const &buf,
 {
 }
 
-}      // namespace fmt
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace fmt
+} // namespace ircd

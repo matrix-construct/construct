@@ -146,9 +146,33 @@ catch(const std::exception &e)
 	            e.what());
 }
 
+db::handle::handle()
+{
+}
+
+db::handle::handle(handle &&other)
+noexcept
+:meta{std::move(other.meta)}
+,d{std::move(other.d)}
+{
+}
+
+db::handle &
+db::handle::operator=(handle &&other)
+noexcept
+{
+	meta = std::move(other.meta);
+	d = std::move(other.d);
+	return *this;
+}
+
 db::handle::~handle()
 noexcept
 {
+	if(!*this)
+		return;
+
+	// Branch not taken after std::move()
 	log.info("Closing database \"%s\" @ `%s' (handle: %p)",
 	         meta->name.c_str(),
 	         meta->path.c_str(),
@@ -306,7 +330,7 @@ db::handle::has(const string_view &key,
 namespace ircd {
 namespace db   {
 
-struct const_iterator::state
+struct handle::const_iterator::state
 {
 	struct handle *handle;
 	rocksdb::ReadOptions ropts;
@@ -319,13 +343,13 @@ struct const_iterator::state
 } // namespace db
 } // namespace ircd
 
-db::const_iterator
+db::handle::const_iterator
 db::handle::cend(const gopts &gopts)
 {
 	return {};
 }
 
-db::const_iterator
+db::handle::const_iterator
 db::handle::cbegin(const gopts &gopts)
 {
 	const_iterator ret
@@ -341,7 +365,7 @@ db::handle::cbegin(const gopts &gopts)
 	return std::move(ret);
 }
 
-db::const_iterator
+db::handle::const_iterator
 db::handle::upper_bound(const string_view &key,
                         const gopts &gopts)
 {
@@ -355,7 +379,7 @@ db::handle::upper_bound(const string_view &key,
 	return std::move(it);
 }
 
-db::const_iterator
+db::handle::const_iterator
 db::handle::lower_bound(const string_view &key,
                         const gopts &gopts)
 {
@@ -375,15 +399,15 @@ db::handle::lower_bound(const string_view &key,
 	return std::move(ret);
 }
 
-db::const_iterator::state::state(struct handle *const &handle,
-                                 const gopts &gopts)
+db::handle::const_iterator::state::state(db::handle *const &handle,
+                                         const gopts &gopts)
 :handle{handle}
 ,ropts{make_opts(gopts, true)}
 ,snap
 {
 	[this, &handle, &gopts]() -> const rocksdb::Snapshot *
 	{
-		if(handle && !has_opt(gopts, get::NO_SNAPSHOT))
+		if(handle && !has_opt(gopts, db::get::NO_SNAPSHOT))
 			ropts.snapshot = handle->d->GetSnapshot();
 
 		return ropts.snapshot;
@@ -397,38 +421,38 @@ db::const_iterator::state::state(struct handle *const &handle,
 {
 }
 
-db::const_iterator::const_iterator(std::unique_ptr<struct state> &&state)
+db::handle::const_iterator::const_iterator(std::unique_ptr<struct state> &&state)
 :state{std::move(state)}
 {
 }
 
-db::const_iterator::const_iterator(const_iterator &&o)
+db::handle::const_iterator::const_iterator(const_iterator &&o)
 noexcept
 :state{std::move(o.state)}
 {
 }
 
-db::const_iterator::~const_iterator()
+db::handle::const_iterator::~const_iterator()
 noexcept
 {
 }
 
-db::const_iterator &
-db::const_iterator::operator--()
+db::handle::const_iterator &
+db::handle::const_iterator::operator--()
 {
 	seek(*state->handle->d, pos::PREV, state->ropts, state->it);
 	return *this;
 }
 
-db::const_iterator &
-db::const_iterator::operator++()
+db::handle::const_iterator &
+db::handle::const_iterator::operator++()
 {
 	seek(*state->handle->d, pos::NEXT, state->ropts, state->it);
 	return *this;
 }
 
-const db::const_iterator::value_type &
-db::const_iterator::operator*()
+const db::handle::const_iterator::value_type &
+db::handle::const_iterator::operator*()
 const
 {
 	const auto &k(state->it->key());
@@ -440,36 +464,36 @@ const
 	return val;
 }
 
-const db::const_iterator::value_type *
-db::const_iterator::operator->()
+const db::handle::const_iterator::value_type *
+db::handle::const_iterator::operator->()
 const
 {
 	return &operator*();
 }
 
 bool
-db::const_iterator::operator>=(const const_iterator &o)
+db::handle::const_iterator::operator>=(const const_iterator &o)
 const
 {
 	return (*this > o) || (*this == o);
 }
 
 bool
-db::const_iterator::operator<=(const const_iterator &o)
+db::handle::const_iterator::operator<=(const const_iterator &o)
 const
 {
 	return (*this < o) || (*this == o);
 }
 
 bool
-db::const_iterator::operator!=(const const_iterator &o)
+db::handle::const_iterator::operator!=(const const_iterator &o)
 const
 {
 	return !(*this == o);
 }
 
 bool
-db::const_iterator::operator==(const const_iterator &o)
+db::handle::const_iterator::operator==(const const_iterator &o)
 const
 {
 	if(*this && o)
@@ -486,7 +510,7 @@ const
 }
 
 bool
-db::const_iterator::operator>(const const_iterator &o)
+db::handle::const_iterator::operator>(const const_iterator &o)
 const
 {
 	if(*this && o)
@@ -507,7 +531,7 @@ const
 }
 
 bool
-db::const_iterator::operator<(const const_iterator &o)
+db::handle::const_iterator::operator<(const const_iterator &o)
 const
 {
 	if(*this && o)
@@ -528,7 +552,7 @@ const
 }
 
 bool
-db::const_iterator::operator!()
+db::handle::const_iterator::operator!()
 const
 {
 	if(!state)
@@ -543,7 +567,7 @@ const
 	return false;
 }
 
-db::const_iterator::operator bool()
+db::handle::const_iterator::operator bool()
 const
 {
 	return !!*this;

@@ -23,7 +23,6 @@
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>
-#include <ircd/lex_cast.h>
 
 BOOST_FUSION_ADAPT_STRUCT
 (

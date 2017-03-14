@@ -28,7 +28,7 @@ libircd_la_SOURCES =   \
 	info.cc            \
 	exception.cc       \
 	rfc1459.cc         \
-	stringops.cc       \
+	lexical.cc         \
 	logger.cc          \
 	fs.cc              \
 	mods.cc            \

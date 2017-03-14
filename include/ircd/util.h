@@ -123,19 +123,6 @@ for_each(const std::function<void (const Enum &)> &func)
 }
 
 
-struct case_insensitive_less
-{
-	bool operator()(const std::string_view &a, const std::string_view &b) const
-	{
-		return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
-		(const char &a, const char &b)
-		{
-			return tolower(a) < tolower(b);
-		});
-	}
-};
-
-
 /**
  * flag-enum utilities
  *

@@ -234,5 +234,5 @@ character::is(const uint8_t &c,
 	return (attrs[c] & attr) == attr;
 }
 
-}        // namespace rfc1459
-}        // namespace ircd
+} // namespace rfc1459
+} // namespace ircd

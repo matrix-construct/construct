@@ -26,7 +26,6 @@
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>
-#include <ircd/lex_cast.h>
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -642,14 +641,8 @@ void
 ircd::json::obj::delta::set(const int32_t &number)
 {
 	static const size_t max(16);
-	using array = std::array<char, max>;
-
 	std::unique_ptr<char[]> restart(new char[max]);
-	auto &a(*reinterpret_cast<array *>(restart.get()));
-	a = lex_cast<array>(number);
-
-	const auto size(strlen(restart.get()));
-	commit(string_view(restart.get(), restart.get() + size));
+	commit(lex_cast(number, restart.get(), max));
 	member->owns_second = true;
 	restart.release();
 }
@@ -658,14 +651,8 @@ void
 ircd::json::obj::delta::set(const uint64_t &number)
 {
 	static const size_t max(32);
-	using array = std::array<char, max>;
-
 	std::unique_ptr<char[]> restart(new char[max]);
-	auto &a(*reinterpret_cast<array *>(restart.get()));
-	a = lex_cast<array>(number);
-
-	const auto size(strlen(restart.get()));
-	commit(string_view(restart.get(), restart.get() + size));
+	commit(lex_cast(number, restart.get(), max));
 	member->owns_second = true;
 	restart.release();
 }
@@ -674,14 +661,8 @@ void
 ircd::json::obj::delta::set(const double &number)
 {
 	static const size_t max(64);
-	using array = std::array<char, max>;
-
 	std::unique_ptr<char[]> restart(new char[max]);
-	auto &a(*reinterpret_cast<array *>(restart.get()));
-	a = lex_cast<array>(number);
-
-	const auto size(strlen(restart.get()));
-	commit(string_view(restart.get(), restart.get() + size));
+	commit(lex_cast(number, restart.get(), max));
 	member->owns_second = true;
 	restart.release();
 }

@@ -31,7 +31,6 @@
 	#include "stdinc.h"
 #endif
 
-#ifdef __cplusplus
 namespace ircd {
 
 extern bool debugmode;                           // Set by command line to indicate debug behavior
@@ -60,8 +59,7 @@ void stop();
 //
 void test(const string_view &what);
 
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace ircd
 
 
 

@@ -22,7 +22,6 @@
 #pragma once
 #define HAVE_IRCD_LIFE_GUARD_H
 
-#ifdef __cplusplus
 namespace ircd {
 
 // Tests if type inherits from std::enable_shared_from_this<>
@@ -121,5 +120,4 @@ shared_from(const T &t)
 	return dynamic_pointer_cast<const T>(t.shared_from_this());
 };
 
-}      // namespace ircd
-#endif // __cplusplus
+} // namespace ircd

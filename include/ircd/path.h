@@ -36,7 +36,6 @@
  * AUTOMODPATH = directory for autoloaded modules
  */
 
-#ifdef __cplusplus
 namespace ircd {
 namespace path {
 
@@ -97,4 +96,3 @@ void chdir(const std::string &path);
 
 } // namespace path
 } // namespace ircd
-#endif // __cplusplus

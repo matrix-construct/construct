@@ -119,15 +119,61 @@ struct opts
 	template<class... list> opts(list&&... l): optlist<opt>{std::forward<list>(l)...} {}
 };
 
-struct const_iterator
+struct handle
+{
+	struct const_iterator;
+
+  private:
+	std::unique_ptr<struct meta> meta;
+	std::unique_ptr<rocksdb::DB> d;
+
+  public:
+	using closure = std::function<void (const string_view &)>;
+
+	operator bool() const                        { return bool(d);                                 }
+	bool operator!() const                       { return !d;                                      }
+
+	// Iterations
+	const_iterator lower_bound(const string_view &key, const gopts & = {});
+	const_iterator upper_bound(const string_view &key, const gopts & = {});
+	const_iterator cbegin(const gopts & = {});
+	const_iterator cend(const gopts & = {});
+
+	// Tests if key exists
+	bool has(const string_view &key, const gopts & = {});
+
+	// Perform a get into a closure. This offers a reference to the data with zero-copy.
+	void operator()(const string_view &key, const closure &func, const gopts & = {});
+	void operator()(const string_view &key, const gopts &, const closure &func);
+
+	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
+	size_t get(const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
+	size_t get(const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
+	std::string get(const string_view &key, const gopts & = {});
+
+	// Write data to the db
+	void set(const string_view &key, const string_view &value, const sopts & = {});
+	void set(const string_view &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
+
+	// Remove data from the db. not_found is never thrown.
+	void del(const string_view &key, const sopts & = {});
+
+	handle(const std::string &name, const opts & = {});
+	handle();
+	handle(handle &&) noexcept;
+	handle &operator=(handle &&) noexcept;
+	~handle() noexcept;
+};
+
+struct handle::const_iterator
 {
 	using key_type = string_view;
 	using mapped_type = string_view;
 	using value_type = std::pair<key_type, mapped_type>;
 
   private:
-	friend class handle;
 	struct state;
+	friend class handle;
 
 	std::unique_ptr<struct state> state;
 	mutable value_type val;
@@ -156,49 +202,10 @@ struct const_iterator
 	~const_iterator() noexcept;
 };
 
-class handle
-{
-	friend class const_iterator;
-
-	std::unique_ptr<struct meta> meta;
-	std::unique_ptr<rocksdb::DB> d;
-
-  public:
-	using closure = std::function<void (const string_view &)>;
-
-	// Iterations
-	const_iterator lower_bound(const string_view &key, const gopts & = {});
-	const_iterator upper_bound(const string_view &key, const gopts & = {});
-	const_iterator cbegin(const gopts & = {});
-	const_iterator cend(const gopts & = {});
-
-	// Tests if key exists
-	bool has(const string_view &key, const gopts & = {});
-
-	// Perform a get into a closure. This offers a reference to the data with zero-copy.
-	void operator()(const string_view &key, const closure &func, const gopts & = {});
-	void operator()(const string_view &key, const gopts &, const closure &func);
-
-	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
-	size_t get(const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
-	size_t get(const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
-	std::string get(const string_view &key, const gopts & = {});
-
-	// Write data to the db
-	void set(const string_view &key, const string_view &value, const sopts & = {});
-	void set(const string_view &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
-
-	// Remove data from the db. not_found is never thrown.
-	void del(const string_view &key, const sopts & = {});
-
-	handle(const std::string &name, const opts & = {});
-	~handle() noexcept;
-};
-
 void write(handle &, const string_view &key, const json::doc &obj, const sopts & = {});
 
-const_iterator begin(handle &);
-const_iterator end(handle &);
+handle::const_iterator begin(handle &);
+handle::const_iterator end(handle &);
 
 struct init
 {
@@ -212,13 +219,13 @@ extern struct log::log log;
 } // namespace db
 } // namespace ircd
 
-inline ircd::db::const_iterator
+inline ircd::db::handle::const_iterator
 ircd::db::end(handle &handle)
 {
 	return handle.cend();
 }
 
-inline ircd::db::const_iterator
+inline ircd::db::handle::const_iterator
 ircd::db::begin(handle &handle)
 {
 	return handle.cbegin();

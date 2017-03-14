@@ -21,26 +21,60 @@
  */
 
 #pragma once
-#define HAVE_IRCD_STRINGOPS_H
+#define HAVE_IRCD_STRING_H
 
 namespace ircd {
 
-// Simple case insensitive comparison convenience utils
-bool iequals(const string_view &a, const string_view &b);
-bool iless(const string_view &a, const string_view &b);
+//
+// Lexical conversions
+//
 
-// Vintage
-size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
-size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
+template<class T> bool try_lex_cast(const string_view &);
+template<> bool try_lex_cast<long double>(const string_view &);
+template<> bool try_lex_cast<double>(const string_view &);
+template<> bool try_lex_cast<ulong>(const string_view &);
+template<> bool try_lex_cast<long>(const string_view &);
+template<> bool try_lex_cast<uint>(const string_view &);
+template<> bool try_lex_cast<int>(const string_view &);
+template<> bool try_lex_cast<ushort>(const string_view &);
+template<> bool try_lex_cast<short>(const string_view &);
+template<> bool try_lex_cast<uint8_t>(const string_view &);
+template<> bool try_lex_cast<int8_t>(const string_view &);
+template<> bool try_lex_cast<bool>(const string_view &);
 
-// Legacy
-char *strip_colour(char *string);
-char *strip_unprintable(char *string);
-char *reconstruct_parv(int parc, const char **parv);
+template<class T> T lex_cast(const string_view &);
+template<> long double lex_cast(const string_view &);
+template<> double lex_cast(const string_view &);
+template<> ulong lex_cast(const string_view &);
+template<> long lex_cast(const string_view &);
+template<> uint lex_cast(const string_view &);
+template<> int lex_cast(const string_view &);
+template<> ushort lex_cast(const string_view &);
+template<> short lex_cast(const string_view &);
+template<> uint8_t lex_cast(const string_view &);
+template<> int8_t lex_cast(const string_view &);
+template<> bool lex_cast(const string_view &);
 
+// User supplied destination buffer
+template<class T> string_view lex_cast(T, char *const &buf, const size_t &max);
+template<> string_view lex_cast(long double, char *const &buf, const size_t &max);
+template<> string_view lex_cast(double, char *const &buf, const size_t &max);
+template<> string_view lex_cast(ulong, char *const &buf, const size_t &max);
+template<> string_view lex_cast(long, char *const &buf, const size_t &max);
+template<> string_view lex_cast(uint, char *const &buf, const size_t &max);
+template<> string_view lex_cast(int, char *const &buf, const size_t &max);
+template<> string_view lex_cast(ushort, char *const &buf, const size_t &max);
+template<> string_view lex_cast(short, char *const &buf, const size_t &max);
+template<> string_view lex_cast(uint8_t, char *const &buf, const size_t &max);
+template<> string_view lex_cast(int8_t, char *const &buf, const size_t &max);
+template<> string_view lex_cast(bool, char *const &buf, const size_t &max);
+
+// Circular static thread_local buffer
+const size_t LEX_CAST_BUFS {8};
+template<class T> string_view lex_cast(const T &t);
 
 //
-// String tokenization utils.
+// String tokenization.
 //
 
 // Use the closure for best performance. Note that string_view's
@@ -96,10 +130,22 @@ string_view token(const string_view &str, const char *const &sep, const size_t &
 string_view token_last(const string_view &str, const char *const &sep);
 string_view token_first(const string_view &str, const char *const &sep);
 
-
 //
 // Misc utils
 //
+
+// Simple case insensitive comparison convenience utils
+bool iequals(const string_view &a, const string_view &b);
+bool iless(const string_view &a, const string_view &b);
+
+// Vintage
+size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
+size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
+
+// Legacy
+char *strip_colour(char *string);
+char *strip_unprintable(char *string);
+char *reconstruct_parv(int parc, const char **parv);
 
 string_view chomp(const string_view &str, const string_view &c = " "s);
 std::pair<string_view, string_view> split(const string_view &str, const string_view &delim = " "s);
@@ -112,6 +158,14 @@ bool startswith(const string_view &str, const string_view &val);
 bool startswith(const string_view &str, const char &val);
 
 } // namespace ircd
+
+
+template<class T>
+ircd::string_view
+ircd::lex_cast(const T &t)
+{
+	return lex_cast<T>(t, nullptr, 0);
+}
 
 inline bool
 ircd::startswith(const string_view &str,
@@ -339,7 +393,7 @@ ircd::strlcat(char *const &dest,
 		return 0;
 
 	const ssize_t dsize(strnlen(dest, max));
-    const ssize_t ssize(strnlen(src, max));
+	const ssize_t ssize(strnlen(src, max));
 	const ssize_t ret(dsize + ssize);
 	const ssize_t remain(max - dsize);
 	const ssize_t cpsz(ssize >= remain? remain - 1 : ssize);
