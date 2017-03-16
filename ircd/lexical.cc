@@ -150,6 +150,7 @@ static string_view
 _lex_cast(const T &i,
           char *buf,
           size_t max)
+try
 {
 	using array = std::array<char, N>;
 
@@ -166,12 +167,21 @@ _lex_cast(const T &i,
 	a = boost::lexical_cast<array>(i);
 	return { buf, strnlen(buf, max) };
 }
+catch(const boost::bad_lexical_cast &e)
+{
+	throw ircd::bad_lex_cast("%s", e.what());
+}
 
 template<class T>
 static T
 _lex_cast(const string_view &s)
+try
 {
 	return boost::lexical_cast<T>(s);
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw ircd::bad_lex_cast("%s", e.what());
 }
 
 } // namespace ircd

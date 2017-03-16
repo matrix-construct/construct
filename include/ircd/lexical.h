@@ -28,6 +28,7 @@ namespace ircd {
 //
 // Lexical conversions
 //
+IRCD_EXCEPTION(ircd::error, bad_lex_cast)
 
 template<class T> bool try_lex_cast(const string_view &);
 template<> bool try_lex_cast<long double>(const string_view &);
@@ -129,6 +130,29 @@ size_t tokens_count(const string_view &str, const char *const &sep);
 string_view token(const string_view &str, const char *const &sep, const size_t &at);
 string_view token_last(const string_view &str, const char *const &sep);
 string_view token_first(const string_view &str, const char *const &sep);
+
+class params
+{
+	string_view in;
+	const char *sep;
+	std::initializer_list<const char *> names;
+
+	const char *name(const size_t &i) const;
+
+  public:
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, missing)
+	IRCD_EXCEPTION(error, invalid)
+
+	string_view operator[](const size_t &i) const;                  // returns empty
+	template<class T> T at(const size_t &i, const T &def) const;    // throws invalid
+	template<class T> T at(const size_t &i) const;                  // throws missing or invalid
+	string_view at(const size_t &i) const;                          // throws missing
+
+	params(const string_view &in,
+	       const char *const &sep,
+	       const std::initializer_list<const char *> &names = {});
+};
 
 //
 // Misc utils
@@ -254,6 +278,66 @@ ircd::chomp(const string_view &str,
 		return str;
 
 	return str.substr(0, pos + 1);
+}
+
+inline
+ircd::params::params(const string_view &in,
+                     const char *const &sep,
+	                 const std::initializer_list<const char *> &names)
+:in{in}
+,sep{sep}
+,names{names}
+{
+}
+
+template<class T>
+T
+ircd::params::at(const size_t &i,
+                 const T &def)
+const try
+{
+	return tokens_count(in, sep) > i? at<T>(i) : def;
+}
+catch(const bad_lex_cast &e)
+{
+	throw invalid("parameter #%zu \"%s\"", i, name(i));
+}
+
+template<class T>
+T
+ircd::params::at(const size_t &i)
+const try
+{
+	return lex_cast<T>(at(i));
+}
+catch(const bad_lex_cast &e)
+{
+	throw invalid("parameter #%zu \"%s\"", i, name(i));
+}
+
+inline ircd::string_view
+ircd::params::at(const size_t &i)
+const try
+{
+	return token(in, sep, i);
+}
+catch(const std::out_of_range &e)
+{
+	throw missing("required parameter #%zu \"%s\"", i, name(i));
+}
+
+inline ircd::string_view
+ircd::params::operator[](const size_t &i)
+const
+{
+	return tokens_count(in, sep) > i? token(in, sep, i) : string_view{};
+}
+
+inline const char *
+ircd::params::name(const size_t &i)
+const
+{
+	return names.size() > i? *std::next(begin(names), i) : "<unlabeled>";
 }
 
 template<size_t N>
