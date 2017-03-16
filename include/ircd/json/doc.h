@@ -38,7 +38,7 @@ struct doc
 	using reference = value_type &;
 	using iterator = const_iterator;
 	using size_type = size_t;
-	using difference_type = std::ptrdiff_t;
+	using difference_type = size_t;
 	using key_compare = std::less<member>;
 
 	bool contains(const string_view &) const;
@@ -54,6 +54,7 @@ struct doc
 
 	using string_view::string_view;
 
+	friend doc serialize(const doc &, char *&buf, char *const &stop);
 	friend size_t print(char *const &buf, const size_t &max, const doc &);
 	friend std::ostream &operator<<(std::ostream &, const doc &);
 };
@@ -78,7 +79,7 @@ struct doc::const_iterator
 	using value_type = const member;
 	using pointer = value_type *;
 	using reference = value_type &;
-	using difference_type = std::ptrdiff_t;
+	using difference_type = size_t;
 	using iterator_category = std::forward_iterator_tag;
 
   protected:

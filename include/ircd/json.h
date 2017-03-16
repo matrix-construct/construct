@@ -28,18 +28,30 @@ namespace json {
 IRCD_EXCEPTION(ircd::error, error);
 IRCD_EXCEPTION(error, parse_error);
 IRCD_EXCEPTION(error, print_error);
+IRCD_EXCEPTION(error, type_error);
 IRCD_EXCEPTION(error, not_found);
 
 struct doc;
-struct obj;
 struct array;
 
-void test();
+struct val;
+struct obj;
+
+enum type
+{
+	OBJECT  = 0,
+	STRING  = 1,
+	NUMBER  = 2,
+	LITERAL = 3,
+	ARRAY   = 4,
+};
+
+type type(const string_view &);
 
 } // namespace json
 } // namespace ircd
 
-#include "json/type.h"
 #include "json/array.h"
 #include "json/doc.h"
+#include "json/val.h"
 #include "json/obj.h"
