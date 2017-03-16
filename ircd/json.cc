@@ -21,11 +21,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/karma.hpp>
-#include <boost/fusion/include/std_pair.hpp>
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
+#include <ircd/spirit.h>
 
 BOOST_FUSION_ADAPT_STRUCT
 (
