@@ -131,7 +131,7 @@ ircd::write(client &client,
 	return base;
 }
 
-ircd::host_port
+ircd::client::host_port
 ircd::local_addr(const client &client)
 {
 	if(!client.sock)
@@ -142,7 +142,7 @@ ircd::local_addr(const client &client)
 	return { hostaddr(ep), port(ep) };
 }
 
-ircd::host_port
+ircd::client::host_port
 ircd::remote_addr(const client &client)
 {
 	if(!client.sock)
@@ -430,7 +430,7 @@ ircd::handle_ec_timeout(client &client)
 }
 
 std::string
-ircd::string(const host_port &pair)
+ircd::string(const client::host_port &pair)
 {
 	std::string ret(64, '\0');
 	ret.resize(snprintf(&ret.front(), ret.size(), "%s:%u",

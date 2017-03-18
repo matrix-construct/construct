@@ -34,13 +34,12 @@ IRCD_EXCEPTION(client_error, broken_pipe)
 IRCD_EXCEPTION(client_error, disconnected)
 
 struct socket;
-using host_port_pair = std::pair<std::string, uint16_t>;
-using host_port = IRCD_WEAK_T(host_port_pair);
-std::string string(const host_port &);
-
 struct client
 {
 	struct init;
+
+	using host_port_pair = std::pair<std::string, uint16_t>;
+	using host_port = IRCD_WEAK_T(host_port_pair);
 	using list = std::list<client *>;
 
 	static list clients;
@@ -69,8 +68,11 @@ struct client::init
 	~init() noexcept;
 };
 
-host_port remote_addr(const client &);
-host_port local_addr(const client &);
+client::host_port remote_addr(const client &);
+client::host_port local_addr(const client &);
+std::string string(const client::host_port &);
+const auto &host(const client::host_port &);
+const auto &port(const client::host_port &);
 
 const char *write(client &, const char *&start, const char *const &stop);
 char *read(client &, char *&start, char *const &stop);
@@ -82,3 +84,15 @@ parse::read_closure read_closure(client &);
 std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 
 } // namespace ircd
+
+inline const auto &
+ircd::port(const client::host_port &host_port)
+{
+	return host_port.second;
+}
+
+inline const auto &
+ircd::host(const client::host_port &host_port)
+{
+	return host_port.first;
+}
