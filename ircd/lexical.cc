@@ -24,6 +24,20 @@
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
 
 ircd::string_view
+ircd::tokens_after(const string_view &str,
+                   const char *const &sep,
+                   const size_t &i)
+try
+{
+	const auto t(token(str, sep, i + 1));
+	return { t.data(), str.data() + str.size() };
+}
+catch(const std::out_of_range &e)
+{
+	return {};
+}
+
+ircd::string_view
 ircd::token_first(const string_view &str,
                   const char *const &sep)
 {
