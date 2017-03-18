@@ -46,16 +46,6 @@ using qi::repeat;
 using qi::omit;
 using qi::unused_type;
 
-const char SPECIFIER
-{
-	'%'
-};
-
-const char SPECIFIER_TERMINATOR
-{
-	'$'
-};
-
 std::map<string_view, specifier *> _specifiers;
 bool is_specifier(const string_view &name);
 

@@ -33,16 +33,23 @@ IRCD_EXCEPTION(error, illegal);
 //
 // Module API
 //
-extern const char SPECIFIER;
-extern const char SPECIFIER_TERMINATOR;
+constexpr char SPECIFIER
+{
+	'%'
+};
+
+constexpr char SPECIFIER_TERMINATOR
+{
+	'$'
+};
 
 using arg = std::tuple<const void *, std::type_index>;
 
 // Structural representation of a format specifier
 struct spec
 {
-	char sign         = '+';
-	int width         = 0;
+	char sign {'+'};
+	int width {0};
 	string_view name;
 
 	spec() = default;
