@@ -593,10 +593,10 @@ try
 	if(unlikely(!header))
 		throw error("Unexpected null header");
 
-	if(header->magic != mapi::header::MAGIC)
+	if(header->magic != mapi::MAGIC)
 		throw error("Bad magic [%04x] need: [%04x]",
 		            header->magic,
-		            mapi::header::MAGIC);
+		            mapi::MAGIC);
 
 	// Set some basic metadata
 	auto &meta(header->meta);

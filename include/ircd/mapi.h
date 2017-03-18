@@ -34,13 +34,13 @@ const char *const header_symbol_name
 	"IRCD_MODULE"
 };
 
+constexpr const magic_t MAGIC
+{
+	0x4D41
+};
+
 struct header
 {
-	static constexpr const magic_t MAGIC
-	{
-		0x4D41
-	};
-
 	magic_t magic;                               // The magic must match MAGIC
 	version_t version;                           // Version indicator
 	int64_t timestamp;                           // Module's compile epoch
