@@ -56,6 +56,7 @@ enum code
 };
 
 extern std::map<code, std::string> reason;
+enum code status(const string_view &);
 
 struct error
 :ircd::error
@@ -63,7 +64,7 @@ struct error
 	enum code code;
 	std::string content;
 
-	error(const enum code &, const string_view &reason = {});
+	error(const enum code &, std::string content = {});
 };
 
 struct line

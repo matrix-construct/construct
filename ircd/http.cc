@@ -49,12 +49,16 @@ namespace http {
 
 namespace spirit = boost::spirit;
 namespace qi = spirit::qi;
+namespace ascii = qi::ascii;
 
 using spirit::unused_type;
 
 using qi::lit;
 using qi::string;
 using qi::char_;
+using qi::short_;
+using qi::int_;
+using qi::long_;
 using qi::repeat;
 using qi::omit;
 using qi::raw;
@@ -87,6 +91,7 @@ struct grammar
 	rule<string_view> resource;
 	rule<string_view> version;
 	rule<string_view> status;
+	rule<short> status_code;
 	rule<string_view> reason;
 	rule<http::line::request> request_line;
 	rule<http::line::response> response_line;
@@ -195,6 +200,11 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule,
 	raw[repeat(3)[char_("0-9")]]
 	,"status"
 }
+,status_code
+{
+	short_
+	,"status code"
+}
 ,reason
 {
 	raw[+(char_ - (NUL | CR | LF))]
@@ -246,6 +256,8 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule,
 struct parser
 :grammar<const char *, unused_type>
 {
+	static size_t content_length(const string_view &val);
+
 	parser(): grammar { grammar::ws, "http.request" } {}
 }
 const parser;
@@ -405,7 +417,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 		else if(iequals(h.first, "te"s))
 			te = h.second;
 		else if(iequals(h.first, "content-length"s))
-			content_length = lex_cast<size_t>(h.second);
+			content_length = parser.content_length(h.second);
 
 		if(c)
 			c(h);
@@ -504,7 +516,7 @@ ircd::http::response::head::head(parse::capstan &pc,
 	headers{pc, [this, &c](const auto &h)
 	{
 		if(iequals(h.first, "content-length"s))
-			content_length = lex_cast<size_t>(h.second);
+			content_length = parser.content_length(h.second);
 
 		if(c)
 			c(h);
@@ -651,10 +663,44 @@ ircd::http::line::line(parse::capstan &pc)
 }
 
 ircd::http::error::error(const enum code &code,
-                         const string_view &text)
+                         std::string content)
 :ircd::error{generate_skip}
 ,code{code}
-,content{text}
+,content{std::move(content)}
 {
 	snprintf(buf, sizeof(buf), "%d %s", int(code), reason[code].data());
+}
+
+ircd::http::code
+ircd::http::status(const string_view &str)
+{
+	static const auto grammar
+	{
+		parser.status_code
+	};
+
+	short ret;
+	const char *start(str.data());
+	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
+	if(!parsed || ret < 0 || ret >= 1000)
+		throw ircd::error("Invalid HTTP status code");
+
+	return http::code(ret);
+}
+
+size_t
+ircd::http::parser::content_length(const string_view &str)
+{
+	static const parser::rule<long> grammar
+	{
+		long_
+	};
+
+	long ret;
+	const char *start(str.data());
+	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
+	if(!parsed || ret < 0)
+		throw error(BAD_REQUEST, "Invalid content-length value");
+
+	return ret;
 }
