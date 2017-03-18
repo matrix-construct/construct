@@ -189,6 +189,17 @@ const char_specifier
 	"c"s
 };
 
+struct pointer_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const pointer_specifier
+{
+	"p"s
+};
+
 } // namespace fmt
 } // namespace ircd
 
@@ -333,6 +344,40 @@ catch(const illegal &e)
 	              spec.name,
 	              idx,
 	              e.what());
+}
+
+bool
+fmt::pointer_specifier::operator()(char *&out,
+                                   const size_t &max,
+                                   const spec &,
+                                   const arg &val)
+const
+{
+	using karma::ulong_;
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Not a pointer");
+	});
+
+	struct generator
+	:karma::grammar<char *, uintptr_t()>
+	{
+		karma::rule<char *, uintptr_t()> pointer_hex
+		{
+			lit("0x") << karma::hex
+		};
+
+		generator(): generator::base_type{pointer_hex} {}
+	}
+	static const generator;
+
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	const void *const p(*reinterpret_cast<const void *const *>(ptr));
+	return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], uintptr_t(p));
 }
 
 bool
