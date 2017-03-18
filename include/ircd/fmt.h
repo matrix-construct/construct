@@ -102,7 +102,7 @@ class snprintf
 	         Args&&... args)
 	:snprintf
 	{
-		internal, buf, max, fmt, va_rtti(args...)
+		internal, buf, max, fmt, va_rtti{std::forward<Args>(args)...}
 	}{}
 };
 
