@@ -255,12 +255,16 @@ ircd::rsplit(const string_view &str,
              const string_view &delim)
 {
 	const auto pos(str.find_last_of(delim));
-	if(pos == string_view::npos)
-		return std::make_pair(string_view{}, str);
-
-	const auto first(str.substr(0, pos));
-	const auto second(str.substr(pos + delim.size()));
-	return std::make_pair(first, second);
+	if(pos == string_view::npos) return
+	{
+		string_view{},
+		str
+	};
+	else return
+	{
+		str.substr(0, pos),
+		str.substr(pos + delim.size())
+	};
 }
 
 inline std::pair<ircd::string_view, ircd::string_view>
@@ -268,12 +272,16 @@ ircd::split(const string_view &str,
             const string_view &delim)
 {
 	const auto pos(str.find(delim));
-	if(pos == string_view::npos)
-		return std::make_pair(str, string_view{});
-
-	const auto first(str.substr(0, pos));
-	const auto second(str.substr(pos + delim.size()));
-	return std::make_pair(first, second);
+	if(pos == string_view::npos) return
+	{
+		str,
+		string_view{}
+	};
+	else return
+	{
+		str.substr(0, pos),
+		str.substr(pos + delim.size())
+	};
 }
 
 inline ircd::string_view
@@ -281,10 +289,7 @@ ircd::chomp(const string_view &str,
             const string_view &c)
 {
 	const auto pos(str.find_last_not_of(c));
-	if(pos == string_view::npos)
-		return str;
-
-	return str.substr(0, pos + 1);
+	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
 }
 
 inline
