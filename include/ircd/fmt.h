@@ -36,25 +36,25 @@ IRCD_EXCEPTION(error, illegal);
 extern const char SPECIFIER;
 extern const char SPECIFIER_TERMINATOR;
 
-using ptrs = std::vector<const void *>;
-using types = std::vector<std::type_index>;
+using ptrs = std::initializer_list<const void *>;
+using types = std::initializer_list<std::type_index>;
 using arg = std::tuple<const void *const &, const std::type_index &>;
 
 // Structural representation of a format specifier
 struct spec
 {
-	char sign;
-	int width;
-	std::string name;
+	char sign         = '+';
+	int width         = 0;
+	string_view name;
 
-	spec();
+	spec() = default;
 };
 
 // A format specifier handler module.
 // This allows a new "%foo" to be defined with custom handling.
 class specifier
 {
-	std::vector<std::string> names;
+	std::set<std::string> names;
 
   public:
 	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
@@ -64,7 +64,7 @@ class specifier
 	virtual ~specifier() noexcept;
 };
 
-const std::map<std::string, specifier *> &specifiers();
+const std::map<string_view, specifier *> &specifiers();
 
 //
 // User API
@@ -98,20 +98,15 @@ class snprintf
 	operator ssize_t() const                     { return consumed();                              }
 
 	template<class... A>
-	snprintf(char *const &buf, const size_t &max, const char *const &fmt, A&&... args);
+	snprintf(char *const &buf,
+	         const size_t &max,
+	         const char *const &fmt,
+	         A&&... args)
+	:snprintf
+	{
+		internal, buf, max, fmt, ptrs{std::addressof(args)...}, types{typeid(Args)...}
+	}{}
 };
-
-template<class... Args>
-snprintf::snprintf(char *const &buf,
-                   const size_t &max,
-                   const char *const &fmt,
-                   Args&&... args)
-:snprintf
-{
-	internal, buf, max, fmt, ptrs{std::addressof(args)...}, types{typeid(Args)...}
-}
-{
-}
 
 } // namespace fmt
 } // namespace ircd

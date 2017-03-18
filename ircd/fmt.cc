@@ -26,9 +26,9 @@
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
-	( char,         sign  )
-	( int,          width )
-	( std::string,  name  )
+	( decltype(ircd::fmt::spec::sign), sign )
+	( decltype(ircd::fmt::spec::width), width )
+	( decltype(ircd::fmt::spec::name), name )
 )
 
 namespace ircd {
@@ -36,6 +36,15 @@ namespace fmt  {
 
 namespace qi = boost::spirit::qi;
 namespace karma = boost::spirit::karma;
+
+using qi::lit;
+using qi::char_;
+using qi::int_;
+using qi::eps;
+using qi::raw;
+using qi::repeat;
+using qi::omit;
+using qi::unused_type;
 
 const char SPECIFIER
 {
@@ -47,10 +56,39 @@ const char SPECIFIER_TERMINATOR
 	'$'
 };
 
-std::map<std::string, specifier *> _specifiers;
+std::map<string_view, specifier *> _specifiers;
+bool is_specifier(const string_view &name);
+
+struct parser
+:qi::grammar<const char *, fmt::spec>
+{
+	template<class R = unused_type> using rule = qi::rule<const char *, R>;
+
+	const rule<> specsym           { lit(SPECIFIER)                        ,"format specifier" };
+	const rule<> specterm          { char_(SPECIFIER_TERMINATOR)      ,"specifier termination" };
+	const rule<string_view> name
+	{
+		raw[repeat(1,14)[char_("A-Za-z")]] >> -specterm
+		,"specifier name"
+	};
+
+	rule<fmt::spec> spec;
+
+	parser()
+	:parser::base_type{spec}
+	{
+		spec %= specsym >> -char_("+-") >> -int_ >> name[([]
+		(const auto &str, auto &ctx, auto &valid)
+		{
+			valid = is_specifier(str);
+		})];
+	}
+}
+const parser;
 
 template<class generator> bool generate_string(char *&out, const generator &, const arg &);
 template<class integer> bool generate_integer(char *&out, const size_t &max, const spec &, const integer &i);
+void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
 
 struct param_specifier
 :specifier
@@ -151,63 +189,10 @@ const char_specifier
 	"c"s
 };
 
-bool is_specifier(const std::string &name);
-void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
-
-namespace parse
-{
-	using qi::lit;
-	using qi::char_;
-	using qi::int_;
-	using qi::eps;
-	using qi::repeat;
-	using qi::omit;
-
-	template<class it,
-	         class top>
-	struct grammar
-	:qi::grammar<it, top>
-	{
-		qi::rule<it> specsym;
-		qi::rule<it> specterm;
-		qi::rule<it, std::string()> name;
-		qi::rule<it, fmt::spec> spec;
-
-		grammar(qi::rule<it, top> &top_rule);
-	};
-}
-
 } // namespace fmt
 } // namespace ircd
 
 using namespace ircd;
-
-template<class it,
-         class top>
-fmt::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
-:grammar<it, top>::base_type
-{
-	top_rule
-}
-,specsym
-{
-	lit(SPECIFIER)
-}
-,specterm
-{
-	char_(SPECIFIER_TERMINATOR)
-}
-,name
-{
-	repeat(1,14)[char_("A-Za-z")] >> omit[-specterm]
-}
-{
-	spec %= specsym >> -char_("+-") >> -int_ >> name[([]
-	(auto &str, auto &ctx, auto &valid)
-	{
-		valid = is_specifier(str);
-	})];
-}
 
 fmt::snprintf::snprintf(internal_t,
                         char *const &out,
@@ -237,8 +222,11 @@ try
 	}
 
 	append(fstr, fstart);
-	for(size_t i(0); i < p.size(); ++i)
-		argument(arg{p.at(i), t.at(i)});
+	auto itp(begin(p));
+	auto itt(begin(t));
+	assert(p.size() == t.size());
+	for(; itp != end(p); ++itp, ++itt)
+		argument(arg{*itp, *itt});
 }
 catch(const std::out_of_range &e)
 {
@@ -248,13 +236,6 @@ catch(const std::out_of_range &e)
 void
 fmt::snprintf::argument(const arg &val)
 {
-	struct parser
-	:parse::grammar<const char *, fmt::spec>
-	{
-		parser(): grammar{grammar::spec} {}
-	}
-	static const parser;
-
 	if(finished())
 		return;
 
@@ -313,15 +294,8 @@ noexcept
 		_specifiers.erase(name);
 }
 
-fmt::spec::spec()
-:sign('+')
-,width(0)
-{
-	name.reserve(14);
-}
-
 bool
-fmt::is_specifier(const std::string &name)
+fmt::is_specifier(const string_view &name)
 {
 	return specifiers().count(name);
 }
@@ -340,21 +314,21 @@ try
 		throw invalid_type("`%s' for format specifier '%c%s' for argument #%u",
 		                   type.name(),
 		                   SPECIFIER,
-		                   spec.name.c_str(),
+		                   std::string(spec.name).c_str(),
 		                   idx);
 }
 catch(const std::out_of_range &e)
 {
 	throw invalid_format("Unhandled specifier `%c%s' for argument #%u in format string",
 	                     SPECIFIER,
-	                     spec.name.c_str(),
+	                     std::string(spec.name).c_str(),
 	                     idx);
 }
 catch(const illegal &e)
 {
 	throw illegal("Specifier `%c%s' for argument #%u: %s",
 	              SPECIFIER,
-	              spec.name.c_str(),
+	              std::string(spec.name).c_str(),
 	              idx,
 	              e.what());
 }
@@ -440,12 +414,11 @@ const
 
 	if(type == typeid(const char[]))
 	{
-		size_t test;
 		const auto &i(reinterpret_cast<const char *>(ptr));
-		const auto len(std::min(max, strlen(i)));
-		if(!boost::conversion::try_lexical_convert(i, test))
+		if(!try_lex_cast<ssize_t>(i))
 			throw illegal("The string literal value for integer specifier is not a valid integer");
 
+		const auto len(std::min(max, strlen(i)));
 		memcpy(out, i, len);
 		out += len;
 		return true;
@@ -453,12 +426,11 @@ const
 
 	if(type == typeid(const char *))
 	{
-		size_t test;
 		const auto &i(*reinterpret_cast<const char *const *>(ptr));
-		const auto len(std::min(max, strlen(i)));
-		if(!boost::conversion::try_lexical_convert(i, test))
+		if(!try_lex_cast<ssize_t>(i))
 			throw illegal("The character buffer for integer specifier is not a valid integer");
 
+		const auto len(std::min(max, strlen(i)));
 		memcpy(out, i, len);
 		out += len;
 		return true;
@@ -466,12 +438,23 @@ const
 
 	if(type == typeid(const std::string))
 	{
-		size_t test;
 		const auto &i(*reinterpret_cast<const std::string *>(ptr));
-		const auto len(std::min(max, i.size()));
-		if(!boost::conversion::try_lexical_convert(i, test))
+		if(!try_lex_cast<ssize_t>(i))
 			throw illegal("The string argument for integer specifier is not a valid integer");
 
+		const auto len(std::min(max, i.size()));
+		memcpy(out, i.data(), len);
+		out += len;
+		return true;
+	}
+
+	if(type == typeid(const string_view) || type == typeid(const std::string_view))
+	{
+		const auto &i(*reinterpret_cast<const std::string_view *>(ptr));
+		if(!try_lex_cast<ssize_t>(i))
+			throw illegal("The string argument for integer specifier is not a valid integer");
+
+		const auto len(std::min(max, i.size()));
 		memcpy(out, i.data(), len);
 		out += len;
 		return true;
@@ -490,6 +473,7 @@ const
 	using karma::char_;
 	using karma::eps;
 	using karma::maxwidth;
+	using karma::unused_type;
 
 	static const auto throw_illegal([]
 	{
@@ -497,16 +481,18 @@ const
 	});
 
 	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
+	:karma::grammar<char *, string_view>
 	{
-		karma::rule<char *, std::string()> printable
+		karma::rule<char *, string_view> printable
 		{
-			*char_(rfc1459::character::charset(rfc1459::character::PRINT))
+			*(~karma::ascii::cntrl)
+			,"printable string"
 		};
 
-		generator(): grammar{printable} {}
+		generator() :generator::base_type{printable} {}
 	}
 	static const generator;
+
 	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
 }
 
@@ -737,7 +723,19 @@ fmt::generate_string(char *&out,
 
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
-	if(type == typeid(std::string))
+	if(type == typeid(ircd::string_view))
+	{
+		const auto &str(*reinterpret_cast<const ircd::string_view *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+	else if(type == typeid(std::string_view))
+	{
+		const auto &str(*reinterpret_cast<const std::string_view *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+	else if(type == typeid(std::string))
 	{
 		const auto &str(*reinterpret_cast<const std::string *>(ptr));
 		karma::generate(out, gen, str);
