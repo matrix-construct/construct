@@ -199,68 +199,6 @@ log::console_quiet::~console_quiet()
 	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
 }
 
-void
-log::debug(const char *const fmt,
-           ...)
-{
-	#ifndef NDEBUG
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::DEBUG, fmt, ap);
-	va_end(ap);
-	#endif
-}
-
-void
-log::info(const char *const fmt,
-          ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::INFO, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::notice(const char *const fmt,
-            ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::NOTICE, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::warning(const char *const fmt,
-             ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::WARNING, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::error(const char *const fmt,
-           ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::ERROR, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::critical(const char *const fmt,
-              ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility::CRITICAL, fmt, ap);
-	va_end(ap);
-}
-
 log::log::log(const std::string &name)
 :name{name}
 {
@@ -270,77 +208,6 @@ log::log::log(const std::string &name,
               const char &snote)
 :log{name}
 {
-}
-
-void
-log::log::debug(const char *const fmt,
-                ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(DEBUG, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::info(const char *const fmt,
-               ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(INFO, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::notice(const char *const fmt,
-                 ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(NOTICE, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::warning(const char *const fmt,
-                  ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(WARNING, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::error(const char *const fmt,
-                ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(ERROR, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::critical(const char *const fmt,
-                   ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(CRITICAL, name, fmt, ap);
-	va_end(ap);
-}
-
-void
-log::log::operator()(const facility &facility,
-                     const char *const fmt,
-                     ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(facility, name, fmt, ap);
-	va_end(ap);
 }
 
 void
@@ -365,27 +232,17 @@ log::mark(const facility &fac,
 }
 
 void
-log::logf(const facility &fac,
-          const char *const fmt,
-          ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vlog(fac, fmt, ap);
-	va_end(ap);
-}
-
-void
 log::vlog(const facility &fac,
           const char *const &fmt,
-          va_list ap)
+          const va_rtti &ap)
 {
 	char buf[1024];
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
 	slog(fac, [&buf]
 	(std::ostream &s)
 	{
-		s << "ircd :" << buf;
+		static const auto name{"ircd"};
+		s << std::left << std::setw(9) << name << std::right << " :" << buf;
 	});
 }
 
@@ -393,14 +250,14 @@ void
 log::vlog(const facility &fac,
           const std::string &name,
           const char *const &fmt,
-          va_list ap)
+          const va_rtti &ap)
 {
 	char buf[1024];
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
 	slog(fac, [&buf, &name]
 	(std::ostream &s)
 	{
-		s << name << " :" << buf;
+		s << std::left << std::setw(9) << name << std::right << " :" << buf;
 	});
 }
 

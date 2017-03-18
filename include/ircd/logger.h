@@ -38,7 +38,7 @@ namespace ircd {
 
 const char *smalldate(const time_t &);
 
-}       // namespace ircd
+} // namespace ircd
 
 // windows.h #define conflicts with our facility
 #ifdef HAVE_WINDOWS_H
@@ -56,15 +56,13 @@ enum facility
 	NOTICE   = 3,
 	INFO     = 4,
 	DEBUG    = 5,
-
 	_NUM_
 };
 
 const char *reflect(const facility &);
 void slog(const facility &, const std::function<void (std::ostream &)> &);
-void vlog(const facility &, const std::string &name, const char *const &fmt, va_list ap);
-void vlog(const facility &, const char *const &fmt, va_list ap);
-void logf(const facility &, const char *fmt, ...) AFP(2, 3);
+void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
+void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
 void mark(const facility &, const char *const &msg = nullptr);
 void mark(const char *const &msg = nullptr);
 
@@ -73,24 +71,25 @@ class log
 	std::string name;
 
   public:
-	void operator()(const facility &, const char *fmt, ...) AFP(3, 4);
-	void critical(const char *fmt, ...) AFP(2, 3);
-	void error(const char *fmt, ...) AFP(2, 3);
-	void warning(const char *fmt, ...) AFP(2, 3);
-	void notice(const char *fmt, ...) AFP(2, 3);
-	void info(const char *fmt, ...) AFP(2, 3);
-	void debug(const char *fmt, ...) AFP(2, 3);
+	template<class... args> void operator()(const facility &, const char *const &fmt, args&&...);
+
+	template<class... args> void critical(const char *const &fmt, args&&...);
+	template<class... args> void error(const char *const &fmt, args&&...);
+	template<class... args> void warning(const char *const &fmt, args&&...);
+	template<class... args> void notice(const char *const &fmt, args&&...);
+	template<class... args> void info(const char *const &fmt, args&&...);
+	template<class... args> void debug(const char *const &fmt, args&&...);
 
 	log(const std::string &name, const char &snote);
 	log(const std::string &name);
 };
 
-void critical(const char *fmt, ...) AFP(1, 2);
-void error(const char *fmt, ...) AFP(1, 2);
-void warning(const char *fmt, ...) AFP(1, 2);
-void notice(const char *fmt, ...) AFP(1, 2);
-void info(const char *fmt, ...) AFP(1, 2);
-void debug(const char *fmt, ...) AFP(1, 2);
+template<class... args> void critical(const char *const &fmt, args&&...);
+template<class... args> void error(const char *const &fmt, args&&...);
+template<class... args> void warning(const char *const &fmt, args&&...);
+template<class... args> void notice(const char *const &fmt, args&&...);
+template<class... args> void info(const char *const &fmt, args&&...);
+template<class... args> void debug(const char *const &fmt, args&&...);
 
 struct console_quiet
 {
@@ -105,55 +104,110 @@ void open();
 void init();
 void fini();
 
-}      // namespace log
-
-
-enum ilogfile
-{
-       L_MAIN,
-       L_USER,
-       L_FUSER,
-       L_OPERED,
-       L_FOPER,
-       L_SERVER,
-       L_KILL,
-       L_KLINE,
-       L_OPERSPY,
-       L_IOERROR,
-       LAST_LOGFILE
-};
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wformat-security"
-template<class... A> void ilog(ilogfile dest, A&&... a)
-{
-	log::logf(log::INFO, std::forward<A>(a)...);
-}
-template<class... A> void idebug(A&&... a)
-{
-	log::debug(std::forward<A>(a)...);
-}
-template<class... A> void inotice(A&&... a)
-{
-	log::notice(std::forward<A>(a)...);
-}
-template<class... A> void iwarn(A&&... a)
-{
-	log::warning(std::forward<A>(a)...);
-}
-template<class... A> void ierror(A&&... a)
-{
-	log::error(std::forward<A>(a)...);
-}
-template<class... A> void ilog_error(A&&... a)
-{
-	log::error(std::forward<A>(a)...);
-}
-template<class... A> void slog(const ilogfile, const uint sno, const char *fmt, A&&... a)
-{
-	log::info(fmt, std::forward<A>(a)...);
-}
-#pragma GCC diagnostic pop
-
+} // namespace log
 } // namespace ircd
+
+template<class... args>
+void
+ircd::log::debug(const char *const &fmt,
+                 args&&... a)
+{
+	vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::info(const char *const &fmt,
+                args&&... a)
+{
+	vlog(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::notice(const char *const &fmt,
+                  args&&... a)
+{
+	vlog(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::warning(const char *const &fmt,
+                   args&&... a)
+{
+	vlog(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::error(const char *const &fmt,
+                 args&&... a)
+{
+	vlog(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::critical(const char *const &fmt,
+                    args&&... a)
+{
+	vlog(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::debug(const char *const &fmt,
+                      args&&... a)
+{
+	operator()(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::info(const char *const &fmt,
+                     args&&... a)
+{
+	operator()(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::notice(const char *const &fmt,
+                       args&&... a)
+{
+	operator()(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::warning(const char *const &fmt,
+                        args&&... a)
+{
+	operator()(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::error(const char *const &fmt,
+                      args&&... a)
+{
+	operator()(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::critical(const char *const &fmt,
+                         args&&... a)
+{
+	operator()(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::operator()(const facility &f,
+                           const char *const &fmt,
+                           args&&... a)
+{
+	vlog(f, name, fmt, va_rtti{std::forward<args>(a)...});
+}
