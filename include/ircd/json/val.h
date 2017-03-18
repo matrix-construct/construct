@@ -29,9 +29,10 @@ struct val
 {
 	union // xxx std::variant
 	{
+		uint64_t integer;
 		const char *string;
 		const struct obj *object;
-		uint64_t integer;
+		const struct array *array;
 	};
 
 	uint64_t len     : 59;
@@ -39,6 +40,7 @@ struct val
 	uint64_t serial  : 1;
 	uint64_t alloc   : 1;
 
+  public:
 	size_t size() const;
 
 	operator string_view() const;
@@ -56,7 +58,7 @@ struct val
 	val() = default;
 	val(val &&) noexcept;
 	val(const val &) = delete;
-	val &operator=(val &&) = default;
+	val &operator=(val &&) noexcept;
 	val &operator=(const val &) = delete;
 	~val() noexcept;
 
@@ -105,13 +107,28 @@ ircd::json::val::val(const struct obj &object,
 inline
 ircd::json::val::val(val &&other)
 noexcept
-:string{other.string}
+:integer{other.integer}
 ,len{other.len}
 ,type{other.type}
 ,serial{other.serial}
 ,alloc{other.alloc}
 {
 	other.alloc = false;
+}
+
+inline
+ircd::json::val &
+ircd::json::val::operator=(val &&other)
+noexcept
+{
+	this->~val();
+	integer = other.integer;
+	len = other.len;
+	type = other.type;
+	serial = other.serial;
+	alloc = other.alloc;
+	other.alloc = false;
+	return *this;
 }
 
 inline bool

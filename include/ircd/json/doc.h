@@ -38,7 +38,7 @@ struct doc
 	using reference = value_type &;
 	using iterator = const_iterator;
 	using size_type = size_t;
-	using difference_type = size_t;
+	using difference_type = ptrdiff_t;
 	using key_compare = std::less<member>;
 
 	bool contains(const string_view &) const;

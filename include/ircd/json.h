@@ -32,7 +32,7 @@ IRCD_EXCEPTION(error, type_error);
 IRCD_EXCEPTION(error, not_found);
 
 struct doc;
-struct array;
+struct arr;
 
 struct val;
 struct obj;
@@ -51,7 +51,7 @@ type type(const string_view &);
 } // namespace json
 } // namespace ircd
 
-#include "json/array.h"
+#include "json/arr.h"
 #include "json/doc.h"
 #include "json/val.h"
 #include "json/obj.h"

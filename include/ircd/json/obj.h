@@ -62,7 +62,7 @@ struct obj
 	bool erase(const string_view &name);
 
 	obj(std::initializer_list<member>);
-	explicit obj(const doc &d);
+	obj(const doc &d);
 	obj() = default;
 	obj(obj &&) = default;
 	obj(const obj &) = delete;
