@@ -388,31 +388,31 @@ const
 		return generate_integer(out, max, s, *reinterpret_cast<const char *>(ptr));
 
 	if(type == typeid(const unsigned char))
-			return generate_integer(out, max, s, *reinterpret_cast<const unsigned char *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const unsigned char *>(ptr));
 
 	if(type == typeid(const short))
-			return generate_integer(out, max, s, *reinterpret_cast<const short *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const short *>(ptr));
 
 	if(type == typeid(const unsigned short))
-			return generate_integer(out, max, s, *reinterpret_cast<const unsigned short *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const unsigned short *>(ptr));
 
 	if(type == typeid(const int))
-			return generate_integer(out, max, s, *reinterpret_cast<const int *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const int *>(ptr));
 
 	if(type == typeid(const unsigned int))
-			return generate_integer(out, max, s, *reinterpret_cast<const unsigned int *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const unsigned int *>(ptr));
 
 	if(type == typeid(const long))
-			return generate_integer(out, max, s, *reinterpret_cast<const long *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const long *>(ptr));
 
 	if(type == typeid(const unsigned long))
-			return generate_integer(out, max, s, *reinterpret_cast<const unsigned long *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const unsigned long *>(ptr));
 
 	if(type == typeid(const long long))
-			return generate_integer(out, max, s, *reinterpret_cast<const long long *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const long long *>(ptr));
 
 	if(type == typeid(const unsigned long long))
-			return generate_integer(out, max, s, *reinterpret_cast<const unsigned long long *>(ptr));
+		return generate_integer(out, max, s, *reinterpret_cast<const unsigned long long *>(ptr));
 
 	if(type == typeid(const char[]))
 	{
@@ -698,7 +698,7 @@ fmt::generate_integer(char *&out,
                       const spec &s,
                       const integer &i)
 {
-	using karma::int_;
+	using karma::long_;
 	using karma::maxwidth;
 
 	struct generator
@@ -706,7 +706,7 @@ fmt::generate_integer(char *&out,
 	{
 		karma::rule<char *, integer()> rule
 		{
-			int_
+			long_
 		};
 
 		generator(): rfc1459::gen::grammar<char *, integer()>{rule} {}
