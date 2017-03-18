@@ -23,20 +23,18 @@
  *
  */
 
-using namespace ircd;
-
 ssize_t
-exception::generate(const char *const &fmt,
-                    va_list ap)
+ircd::exception::generate(const char *const &fmt,
+                          const va_rtti &ap)
 noexcept
 {
-	return vsnprintf(buf, sizeof(buf), fmt, ap);
+	return fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
 }
 
 ssize_t
-exception::generate(const char *const &name,
-                    const char *const &fmt,
-                    va_list ap)
+ircd::exception::generate(const char *const &name,
+                          const char *const &fmt,
+                          const va_rtti &ap)
 noexcept
 {
 	size_t size(0);
@@ -44,7 +42,7 @@ noexcept
 	size = strlcat(buf, name, sizeof(buf));
 	size = strlcat(buf, empty? "." : ": ", sizeof(buf));
 	if(size < sizeof(buf))
-		size += vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);
+		size += fmt::vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);
 
 	return size;
 }

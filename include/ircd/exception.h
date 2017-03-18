@@ -55,8 +55,8 @@ struct exception
 
 	char buf[BUFSIZE];
 
-	ssize_t generate(const char *const &name, const char *const &fmt, va_list ap) noexcept;
-	ssize_t generate(const char *const &fmt, va_list ap) noexcept;
+	ssize_t generate(const char *const &name, const char *const &fmt, const va_rtti &ap) noexcept;
+	ssize_t generate(const char *const &fmt, const va_rtti &ap) noexcept;
 
   public:
 	const char *what() const noexcept override
@@ -106,13 +106,11 @@ struct exception
 struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
-    name(const char *const fmt = " ", ...) noexcept AFP(2, 3)                 \
+    template<class... args>                                                   \
+    name(const char *const fmt = " ", args&&... ap) noexcept                  \
     :parent{generate_skip}                                                    \
     {                                                                         \
-        va_list ap;                                                           \
-        va_start(ap, fmt);                                                    \
-        generate(#name, fmt, ap);                                             \
-        va_end(ap);                                                           \
+        generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
     }                                                                         \
                                                                               \
     name(const generate_skip_t) noexcept                                      \
@@ -125,13 +123,11 @@ struct name                                                                   \
 struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
-    name(const char *const fmt, ...) noexcept AFP(2, 3)                       \
-    parent{generate_skip_t}                                                   \
+    template<class... args>                                                   \
+    name(const char *const fmt = " ", args&&... ap) noexcept                  \
+    :parent{generate_skip_t}                                                  \
     {                                                                         \
-        va_list ap;                                                           \
-        va_start(ap, fmt);                                                    \
-        generate(fmt, ap);                                                    \
-        va_end(ap);                                                           \
+        generate(fmt, va_rtti{std::forward<args>(ap)...});                    \
     }                                                                         \
                                                                               \
     name(const generate_skip_t = {}) noexcept                                 \
