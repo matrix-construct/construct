@@ -522,7 +522,10 @@ struct va_rtti
 	,argc
 	{
 		sizeof...(args)
-	}{}
+	}
+	{
+		assert(argc <= 8);
+	}
 };
 
 
