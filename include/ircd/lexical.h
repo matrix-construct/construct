@@ -181,15 +181,21 @@ bool endswith(const string_view &str, const char &val);
 template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
 bool startswith(const string_view &str, const string_view &val);
 bool startswith(const string_view &str, const char &val);
+string_view unquote(string_view str);
 
 } // namespace ircd
 
 
-template<class T>
-ircd::string_view
-ircd::lex_cast(const T &t)
+inline ircd::string_view
+ircd::unquote(string_view str)
 {
-	return lex_cast<T>(t, nullptr, 0);
+	if(startswith(str, '"'))
+		str = { str.data() + 1, str.data() + str.size() };
+
+	if(endswith(str, '"'))
+		str = { str.data(), str.data() + str.size() - 1 };
+
+	return str;
 }
 
 inline bool
