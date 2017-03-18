@@ -35,7 +35,8 @@ IRCD_EXCEPTION(error, illegal);
 //
 extern const char SPECIFIER;
 extern const char SPECIFIER_TERMINATOR;
-using arg = std::tuple<const void *const &, const std::type_index &>;
+
+using arg = std::tuple<const void *, std::type_index>;
 
 // Structural representation of a format specifier
 struct spec
@@ -94,14 +95,27 @@ class snprintf
   public:
 	operator ssize_t() const                     { return consumed();                              }
 
-	template<class... A>
+	template<class... Args>
 	snprintf(char *const &buf,
 	         const size_t &max,
 	         const char *const &fmt,
-	         A&&... args)
+	         Args&&... args)
 	:snprintf
 	{
-		internal, buf, max, fmt, va_rtti{std::forward<A>(args)...}
+		internal, buf, max, fmt, va_rtti(args...)
+	}{}
+};
+
+struct vsnprintf
+:snprintf
+{
+	vsnprintf(char *const &buf,
+	          const size_t &max,
+	          const char *const &fmt,
+	          const va_rtti &ap)
+	:snprintf
+	{
+		internal, buf, max, fmt, ap
 	}{}
 };
 

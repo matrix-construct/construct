@@ -504,18 +504,25 @@ syscall(function&& f,
 
 
 struct va_rtti
-:std::tuple<std::initializer_list<const void *>,
-            std::initializer_list<std::type_index>>
+:std::array<std::pair<const void *, const std::type_info *>, 8>
 {
+	size_t argc;
+
+	size_t size() const
+	{
+		return argc;
+	}
+
 	template<class... Args>
 	va_rtti(Args&&... args)
-	:std::tuple<std::initializer_list<const void *>,
-                std::initializer_list<std::type_index>>
+	:std::array<std::pair<const void *, const std::type_info *>, 8>
+	{{
+		std::make_pair(std::addressof(args), std::addressof(typeid(Args)))...
+	}}
+	,argc
 	{
-		{ std::addressof(args)... },
-		{ typeid(Args)...         },
-	}
-	{}
+		sizeof...(args)
+	}{}
 };
 
 

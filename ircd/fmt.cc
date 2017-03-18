@@ -208,9 +208,6 @@ try
 ,out{out}
 ,idx{0}
 {
-	const auto &ptrs(get<0>(v));
-	const auto &types(get<1>(v));
-
 	if(unlikely(!max))
 	{
 		fstart = nullptr;
@@ -224,15 +221,18 @@ try
 	}
 
 	append(fstr, fstart);
-	auto itp(begin(ptrs));
-	auto itt(begin(types));
-	for(; itp != end(ptrs); ++itp, ++itt)
-		argument(arg{*itp, *itt});
+
+	auto it(begin(v));
+	for(size_t i(0); i < v.size(); ++it, i++)
+	{
+		const auto &ptr(get<0>(*it));
+		const auto &type(get<1>(*it));
+		argument(std::make_tuple(ptr, std::type_index(*type)));
+	}
 }
 catch(const std::out_of_range &e)
 {
-	throw invalid_format("Format string requires more than %zu arguments.",
-	                     get<0>(v).size());
+	throw invalid_format("Format string requires more than %zu arguments.", v.size());
 }
 
 void
@@ -283,7 +283,7 @@ fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 		if(is_specifier(name))
 			throw error("Specifier '%c%s' already registered\n",
 			            SPECIFIER,
-			            name.c_str());
+			            name);
 
 	for(const auto &name : this->names)
 		_specifiers.emplace(name, this);
@@ -316,21 +316,21 @@ try
 		throw invalid_type("`%s' for format specifier '%c%s' for argument #%u",
 		                   type.name(),
 		                   SPECIFIER,
-		                   std::string(spec.name).c_str(),
+		                   spec.name,
 		                   idx);
 }
 catch(const std::out_of_range &e)
 {
 	throw invalid_format("Unhandled specifier `%c%s' for argument #%u in format string",
 	                     SPECIFIER,
-	                     std::string(spec.name).c_str(),
+	                     spec.name,
 	                     idx);
 }
 catch(const illegal &e)
 {
 	throw illegal("Specifier `%c%s' for argument #%u: %s",
 	              SPECIFIER,
-	              std::string(spec.name).c_str(),
+	              spec.name,
 	              idx,
 	              e.what());
 }
@@ -483,15 +483,15 @@ const
 	});
 
 	struct generator
-	:karma::grammar<char *, string_view>
+	:karma::grammar<char *, const string_view &>
 	{
-		karma::rule<char *, string_view> printable
+		karma::rule<char *, const string_view &> string
 		{
-			*(~karma::ascii::cntrl)
-			,"printable string"
+			*(karma::print)
+			,"string"
 		};
 
-		generator() :generator::base_type{printable} {}
+		generator() :generator::base_type{string} {}
 	}
 	static const generator;
 
@@ -745,8 +745,8 @@ fmt::generate_string(char *&out,
 	}
 	else if(type == typeid(const char *))
 	{
-		const auto &str(*reinterpret_cast<const char *const *>(ptr));
-		karma::generate(out, gen, str);
+		const char *const str{*reinterpret_cast<const char *const *const>(ptr)};
+		karma::generate(out, gen, string_view{str});
 		return true;
 	}
 
@@ -755,5 +755,5 @@ fmt::generate_string(char *&out,
 	// grammar will fail gracefully (most of the time) or not print something bogus when
 	// it happens to be legal.
 	const auto &str(reinterpret_cast<const char *>(ptr));
-	return karma::generate(out, gen, str);
+	return karma::generate(out, gen, string_view{str});
 }
