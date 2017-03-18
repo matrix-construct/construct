@@ -503,5 +503,21 @@ syscall(function&& f,
 }
 
 
+struct va_rtti
+:std::tuple<std::initializer_list<const void *>,
+            std::initializer_list<std::type_index>>
+{
+	template<class... Args>
+	va_rtti(Args&&... args)
+	:std::tuple<std::initializer_list<const void *>,
+                std::initializer_list<std::type_index>>
+	{
+		{ std::addressof(args)... },
+		{ typeid(Args)...         },
+	}
+	{}
+};
+
+
 } // namespace util
 } // namespace ircd

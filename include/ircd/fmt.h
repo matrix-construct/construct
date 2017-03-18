@@ -35,9 +35,6 @@ IRCD_EXCEPTION(error, illegal);
 //
 extern const char SPECIFIER;
 extern const char SPECIFIER_TERMINATOR;
-
-using ptrs = std::initializer_list<const void *>;
-using types = std::initializer_list<std::type_index>;
 using arg = std::tuple<const void *const &, const std::type_index &>;
 
 // Structural representation of a format specifier
@@ -92,7 +89,7 @@ class snprintf
 	void argument(const arg &);
 
 	IRCD_OVERLOAD(internal)
-	snprintf(internal_t, char *const &, const size_t &, const char *const &, const ptrs &, const types &);
+	snprintf(internal_t, char *const &, const size_t &, const char *const &, const va_rtti &);
 
   public:
 	operator ssize_t() const                     { return consumed();                              }
@@ -104,7 +101,7 @@ class snprintf
 	         A&&... args)
 	:snprintf
 	{
-		internal, buf, max, fmt, ptrs{std::addressof(args)...}, types{typeid(Args)...}
+		internal, buf, max, fmt, va_rtti{std::forward<A>(args)...}
 	}{}
 };
 

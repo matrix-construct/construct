@@ -198,8 +198,7 @@ fmt::snprintf::snprintf(internal_t,
                         char *const &out,
                         const size_t &max,
                         const char *const &fstr,
-                        const ptrs &p,
-                        const types &t)
+                        const va_rtti &v)
 try
 :fstart{strchr(fstr, SPECIFIER)}
 ,fstop{fstr}
@@ -209,6 +208,9 @@ try
 ,out{out}
 ,idx{0}
 {
+	const auto &ptrs(get<0>(v));
+	const auto &types(get<1>(v));
+
 	if(unlikely(!max))
 	{
 		fstart = nullptr;
@@ -222,15 +224,15 @@ try
 	}
 
 	append(fstr, fstart);
-	auto itp(begin(p));
-	auto itt(begin(t));
-	assert(p.size() == t.size());
-	for(; itp != end(p); ++itp, ++itt)
+	auto itp(begin(ptrs));
+	auto itt(begin(types));
+	for(; itp != end(ptrs); ++itp, ++itt)
 		argument(arg{*itp, *itt});
 }
 catch(const std::out_of_range &e)
 {
-	throw invalid_format("Format string requires more than %zu arguments.", p.size());
+	throw invalid_format("Format string requires more than %zu arguments.",
+	                     get<0>(v).size());
 }
 
 void
