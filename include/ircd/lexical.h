@@ -307,7 +307,7 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw invalid("parameter #%zu \"%s\"", i, name(i));
+	throw invalid("parameter #%zu <%s>", i, name(i));
 }
 
 template<class T>
@@ -319,7 +319,7 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw invalid("parameter #%zu \"%s\"", i, name(i));
+	throw invalid("parameter #%zu <%s>", i, name(i));
 }
 
 inline ircd::string_view
@@ -330,7 +330,7 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw missing("required parameter #%zu \"%s\"", i, name(i));
+	throw missing("required parameter #%zu <%s>", i, name(i));
 }
 
 inline ircd::string_view
@@ -344,7 +344,7 @@ inline const char *
 ircd::params::name(const size_t &i)
 const
 {
-	return names.size() > i? *std::next(begin(names), i) : "<unlabeled>";
+	return names.size() > i? *std::next(begin(names), i) : "<unnamed>";
 }
 
 template<size_t N>
@@ -522,4 +522,11 @@ ircd::iequals(const string_view &a,
 	{
 		return tolower(a) == tolower(b);
 	});
+}
+
+template<class T>
+ircd::string_view
+ircd::lex_cast(const T &t)
+{
+	return lex_cast<T>(t, nullptr, 0);
 }
