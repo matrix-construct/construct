@@ -304,66 +304,6 @@ ircd::chomp(const string_view &str,
 	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
 }
 
-inline
-ircd::params::params(const string_view &in,
-                     const char *const &sep,
-	                 const std::initializer_list<const char *> &names)
-:in{in}
-,sep{sep}
-,names{names}
-{
-}
-
-template<class T>
-T
-ircd::params::at(const size_t &i,
-                 const T &def)
-const try
-{
-	return tokens_count(in, sep) > i? at<T>(i) : def;
-}
-catch(const bad_lex_cast &e)
-{
-	throw invalid("parameter #%zu <%s>", i, name(i));
-}
-
-template<class T>
-T
-ircd::params::at(const size_t &i)
-const try
-{
-	return lex_cast<T>(at(i));
-}
-catch(const bad_lex_cast &e)
-{
-	throw invalid("parameter #%zu <%s>", i, name(i));
-}
-
-inline ircd::string_view
-ircd::params::at(const size_t &i)
-const try
-{
-	return token(in, sep, i);
-}
-catch(const std::out_of_range &e)
-{
-	throw missing("required parameter #%zu <%s>", i, name(i));
-}
-
-inline ircd::string_view
-ircd::params::operator[](const size_t &i)
-const
-{
-	return tokens_count(in, sep) > i? token(in, sep, i) : string_view{};
-}
-
-inline const char *
-ircd::params::name(const size_t &i)
-const
-{
-	return names.size() > i? *std::next(begin(names), i) : "<unnamed>";
-}
-
 template<size_t N>
 size_t
 ircd::tokens(const string_view &str,

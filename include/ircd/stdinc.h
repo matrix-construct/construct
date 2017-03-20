@@ -165,6 +165,7 @@ struct line {};
 #include "exception.h"
 #include "color.h"
 #include "lexical.h"
+#include "params.h"
 #include "buffer.h"
 #include "parse.h"
 #include "rfc1459.h"
