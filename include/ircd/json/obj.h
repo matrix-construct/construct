@@ -49,8 +49,6 @@ struct obj
 	size_t count() const;
 	size_t size() const;
 
-	explicit operator std::string() const;
-
 	const_iterator find(const string_view &name) const;
 	bool has(const string_view &name) const;
 
@@ -61,8 +59,10 @@ struct obj
 	void erase(const const_iterator &s);
 	bool erase(const string_view &name);
 
+	explicit operator std::string() const;
+
 	obj(std::initializer_list<member>);
-	obj(const doc &d);
+	obj(const doc &d, const bool &recurse = false);
 	obj() = default;
 	obj(obj &&) = default;
 	obj(const obj &) = delete;
@@ -75,33 +75,21 @@ struct obj
 struct obj::member
 :std::pair<val, val>
 {
-	member(const string_view &k, const string_view &v)
-	:std::pair<val, val>{k, v}
-	{}
-
-	member(const string_view &k, const obj *const &v)
-	:std::pair<val, val>{k, *v}
-	{}
-
-	member(const string_view &k, std::initializer_list<member> v)
-	:std::pair<val, val>{k, val{*new obj(v), true}}
-	{}
-
-	explicit member(const string_view &k)
-	:std::pair<val, val>{k, string_view{}}
-	{}
-
-	explicit member(const doc::member &dm)
-	:member{dm.first, dm.second}
-	{}
-
+	template<class K> member(const K &k, std::initializer_list<member> v);
+	template<class K, class V> member(const K &k, V&& v);
+	explicit member(const string_view &k);
+	explicit member(const doc::member &m);
 	member() = default;
 
-	friend bool operator<(const member &a, const string_view &b);
-	friend bool operator==(const member &a, const string_view &b);
-
-	friend bool operator<(const member &a, const member &b);
 	friend bool operator==(const member &a, const member &b);
+	friend bool operator!=(const member &a, const member &b);
+	friend bool operator<(const member &a, const member &b);
+
+	friend bool operator==(const member &a, const string_view &b);
+	friend bool operator!=(const member &a, const string_view &b);
+	friend bool operator<(const member &a, const string_view &b);
+
+	friend std::ostream &operator<<(std::ostream &, const member &);
 };
 
 struct obj::const_iterator
@@ -124,13 +112,14 @@ struct obj::const_iterator
 	{}
 
   public:
-	auto operator==(const const_iterator &o) const  { return it == o.it;                           }
-	auto operator!=(const const_iterator &o) const  { return it != o.it;                           }
-
 	value_type *operator->() const                  { return it.operator->();                      }
 	value_type &operator*() const                   { return it.operator*();                       }
 
 	const_iterator &operator++()                    { ++it; return *this;                          }
+
+	friend bool operator==(const const_iterator &a, const const_iterator &b);
+	friend bool operator!=(const const_iterator &a, const const_iterator &b);
+	friend bool operator<(const const_iterator &a, const const_iterator &b);
 };
 
 } // namespace json
@@ -141,17 +130,6 @@ ircd::json::obj::operator[](const string_view &name)
 const
 {
 	return at(name);
-}
-
-inline const ircd::json::val &
-ircd::json::obj::at(const string_view &name)
-const
-{
-	const auto it(find(name));
-	if(unlikely(it == end()))
-		throw not_found("name \"%s\"", name.data());
-
-	return it->second;
 }
 
 inline bool
@@ -208,6 +186,53 @@ const
 	return { std::end(idx) };
 }
 
+template<class K,
+         class V>
+ircd::json::obj::member::member(const K &k,
+                                V&& v)
+:std::pair<val, val>
+{
+	val { k }, val { std::forward<V>(v) }
+}
+{}
+
+template<class K>
+ircd::json::obj::member::member(const K &k,
+                                std::initializer_list<member> v)
+:std::pair<val, val>
+{
+	val { k }, val { std::make_unique<obj>(std::move(v)) }
+}
+{}
+
+inline
+ircd::json::obj::member::member(const doc::member &m)
+:std::pair<val, val>
+{
+	m.first, val { m.second, type(m.second) }
+}
+{}
+
+inline
+ircd::json::obj::member::member(const string_view &k)
+:std::pair<val, val>
+{
+	k, string_view{}
+}
+{}
+
+inline bool
+ircd::json::operator<(const obj::member &a, const obj::member &b)
+{
+	return a.first < b.first;
+}
+
+inline bool
+ircd::json::operator!=(const obj::member &a, const obj::member &b)
+{
+	return a.first != b.first;
+}
+
 inline bool
 ircd::json::operator==(const obj::member &a, const obj::member &b)
 {
@@ -215,9 +240,15 @@ ircd::json::operator==(const obj::member &a, const obj::member &b)
 }
 
 inline bool
-ircd::json::operator<(const obj::member &a, const obj::member &b)
+ircd::json::operator<(const obj::member &a, const string_view &b)
 {
-	return a.first < b.first;
+	return string_view(a.first.string, a.first.len) < b;
+}
+
+inline bool
+ircd::json::operator!=(const obj::member &a, const string_view &b)
+{
+	return string_view(a.first.string, a.first.len) == b;
 }
 
 inline bool
@@ -227,7 +258,19 @@ ircd::json::operator==(const obj::member &a, const string_view &b)
 }
 
 inline bool
-ircd::json::operator<(const obj::member &a, const string_view &b)
+ircd::json::operator<(const obj::const_iterator &a, const obj::const_iterator &b)
 {
-	return string_view(a.first.string, a.first.len) < b;
+	return a.it < b.it;
+}
+
+inline bool
+ircd::json::operator!=(const obj::const_iterator &a, const obj::const_iterator &b)
+{
+	return a.it != b.it;
+}
+
+inline bool
+ircd::json::operator==(const obj::const_iterator &a, const obj::const_iterator &b)
+{
+	return a.it == b.it;
 }

@@ -42,11 +42,14 @@ struct arr
 	const_iterator end() const;
 	const_iterator begin() const;
 
+	const_iterator find(size_t i) const;
 	size_t count() const;
 
-	const_iterator find(size_t i) const;
-	string_view at(size_t i) const;
-	string_view operator[](size_t i) const;
+	template<class T> T at(const size_t &i) const;
+	string_view at(const size_t &i) const;
+	string_view operator[](const size_t &i) const;
+
+	explicit operator std::string() const;
 
 	using string_view::string_view;
 
@@ -81,49 +84,13 @@ struct arr::const_iterator
 
 	const_iterator &operator++();
 
-	friend bool operator==(const arr::const_iterator &, const arr::const_iterator &);
-	friend bool operator!=(const arr::const_iterator &, const arr::const_iterator &);
-	friend bool operator<=(const arr::const_iterator &, const arr::const_iterator &);
-	friend bool operator>=(const arr::const_iterator &, const arr::const_iterator &);
-	friend bool operator<(const arr::const_iterator &, const arr::const_iterator &);
-	friend bool operator>(const arr::const_iterator &, const arr::const_iterator &);
+	friend bool operator==(const const_iterator &, const const_iterator &);
+	friend bool operator!=(const const_iterator &, const const_iterator &);
+	friend bool operator<=(const const_iterator &, const const_iterator &);
+	friend bool operator>=(const const_iterator &, const const_iterator &);
+	friend bool operator<(const const_iterator &, const const_iterator &);
+	friend bool operator>(const const_iterator &, const const_iterator &);
 };
-
-inline bool
-operator==(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-inline bool
-operator!=(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-inline bool
-operator<=(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-inline bool
-operator>=(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-inline bool
-operator<(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-inline bool
-operator>(const arr::const_iterator &a, const arr::const_iterator &b)
-{
-	return a.start > b.start;
-}
 
 } // namespace json
 } // namespace ircd
@@ -137,19 +104,31 @@ const
 }
 
 inline ircd::string_view
-ircd::json::arr::operator[](size_t i)
+ircd::json::arr::operator[](const size_t &i)
 const
 {
 	const auto it(find(i));
 	return it != end()? *it : string_view{};
 }
 
+template<class T>
+T
+ircd::json::arr::at(const size_t &i)
+const try
+{
+	return lex_cast<T>(at(i));
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("indice %zu must cast to type %s", i, typeid(T).name());
+}
+
 inline ircd::string_view
-ircd::json::arr::at(size_t i)
+ircd::json::arr::at(const size_t &i)
 const
 {
 	const auto it(find(i));
-	return likely(it != end())? *it : throw not_found("[%zu]", i);
+	return likely(it != end())? *it : throw not_found("indice %zu", i);
 }
 
 inline ircd::json::arr::const_iterator
@@ -166,4 +145,40 @@ ircd::json::arr::count()
 const
 {
 	return std::distance(begin(), end());
+}
+
+inline bool
+ircd::json::operator==(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start == b.start;
+}
+
+inline bool
+ircd::json::operator!=(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start != b.start;
+}
+
+inline bool
+ircd::json::operator<=(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start <= b.start;
+}
+
+inline bool
+ircd::json::operator>=(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start >= b.start;
+}
+
+inline bool
+ircd::json::operator<(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start < b.start;
+}
+
+inline bool
+ircd::json::operator>(const arr::const_iterator &a, const arr::const_iterator &b)
+{
+	return a.start > b.start;
 }

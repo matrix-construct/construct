@@ -39,14 +39,14 @@ struct obj;
 
 enum type
 {
-	OBJECT  = 0,
-	STRING  = 1,
-	NUMBER  = 2,
-	LITERAL = 3,
-	ARRAY   = 4,
+	STRING  = 0,
+	OBJECT  = 1,
+	ARRAY   = 2,
+	NUMBER  = 3,
+	LITERAL = 4,
 };
-
-type type(const string_view &);
+enum type type(const string_view &);
+enum type type(const string_view &, std::nothrow_t);
 
 } // namespace json
 } // namespace ircd
