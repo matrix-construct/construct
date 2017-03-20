@@ -808,7 +808,8 @@ db::valid_or_throw(const rocksdb::Iterator &it)
 	if(!valid(it))
 	{
 		throw_on_error(it.status());
-		assert(0); // status == ok + !Valid() == ???
+		throw not_found();
+		//assert(0); // status == ok + !Valid() == ???
 	}
 }
 
