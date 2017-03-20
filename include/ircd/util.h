@@ -63,44 +63,61 @@ struct NAME                                                   \
     IRCD_STRONG_TYPEDEF(TYPE, IRCD_UNIQUE(strong_t))
 
 
-template<class T>
-using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
-
-
 struct scope
 {
-	struct uncaught;
+	struct nominal;
+	struct exceptional;
 
 	const std::function<void ()> func;
 
 	template<class F>
-	scope(F &&func)
-	:func(std::forward<F>(func))
-	{}
-
+	scope(F &&func): func(std::forward<F>(func)) {}
+	scope() = default;
 	scope(const scope &) = delete;
+	scope &operator=(const scope &) = delete;
 	~scope() noexcept
 	{
 		func();
 	}
 };
 
-struct scope::uncaught
+struct scope::nominal
+:scope
 {
-	const std::function<void ()> func;
-
 	template<class F>
-	uncaught(F &&func)
-	:func(std::forward<F>(func))
-	{}
-
-	uncaught(const uncaught &) = delete;
-	~uncaught() noexcept
+	nominal(F &&func)
+	:scope
 	{
-		if(unlikely(std::uncaught_exception()))
-			func();
-	}
+		[func(std::forward<F>(func))]
+		{
+			if(likely(!std::uncaught_exception()))
+				func();
+		}
+	}{}
+
+	nominal() = default;
 };
+
+struct scope::exceptional
+:scope
+{
+	template<class F>
+	exceptional(F &&func)
+	:scope
+	{
+		[func(std::forward<F>(func))]
+		{
+			if(unlikely(std::uncaught_exception()))
+				func();
+		}
+	}{}
+
+	exceptional() = default;
+};
+
+
+template<class T>
+using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
 
 
 // For conforming enums include a _NUM_ as the last element,
