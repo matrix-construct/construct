@@ -536,10 +536,10 @@ namespace prof {
 
 struct settings settings
 {
-	0.66,        // stack_usage_warning
-	0.87,        // stack_usage_assertion
+	0.46,        // stack_usage_warning
+	0.67,        // stack_usage_assertion
 
-	5000us,      // slice_warning
+	50ms,        // slice_warning
 	0us,         // slice_interrupt
 	0us,         // slice_assertion
 };
@@ -614,7 +614,7 @@ ircd::ctx::prof::check_slice()
 
 	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
 	{
-		log::warning("CONTEXT TIMESLICE EXCEEDED (%p) '%s' last: %06ldus total: %06ldus",
+		log::warning("CONTEXT TIMESLICE EXCEEDED (%p) '%s' last: %06ld$us total: %06ld$us",
 		             (const void *)&c,
 		             c.name,
 		             duration_cast<microseconds>(time_usage).count(),
