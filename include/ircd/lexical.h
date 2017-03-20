@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_STRING_H
+#define HAVE_IRCD_LEXICAL_H
 
 namespace ircd {
 
