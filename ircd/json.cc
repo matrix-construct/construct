@@ -41,8 +41,8 @@ namespace qi = spirit::qi;
 using spirit::unused_type;
 
 using qi::lit;
-using qi::int_;
 using qi::char_;
+using qi::long_;
 using qi::double_;
 using qi::raw;
 using qi::omit;
@@ -54,7 +54,7 @@ using qi::attr;
 
 using karma::lit;
 using karma::char_;
-using karma::int_;
+using karma::long_;
 using karma::double_;
 using karma::bool_;
 using karma::maxwidth;
@@ -68,38 +68,40 @@ struct input
 {
 	template<class T = unused_type> using rule = qi::rule<it, T>;
 
+	rule<> NUL                         { lit('\0')                                          ,"nul" };
+
 	// insignificant whitespaces
-	rule<> SP                          { lit('\x20')                                     ,"space" };
-	rule<> HT                          { lit('\x09')                            ,"horizontal tab" };
-	rule<> CR                          { lit('\x0D')                           ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                 ,"line feed" };
+	rule<> SP                          { lit('\x20')                                      ,"space" };
+	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
+	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
+	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
 
 	// whitespace skipping
-	rule<> WS                          { SP | HT | CR | LF                          ,"whitespace" };
-	rule<> ws                          { *(WS)                               ,"whitespace monoid" };
-	rule<> wsp                         { +(WS)                            ,"whitespace semigroup" };
+	rule<> WS                          { SP | HT | CR | LF                           ,"whitespace" };
+	rule<> ws                          { *(WS)                                ,"whitespace monoid" };
+	rule<> wsp                         { +(WS)                             ,"whitespace semigroup" };
 
 	// structural 
-	rule<> object_begin                { lit('{')                                 ,"object begin" };
-	rule<> object_end                  { lit('}')                                   ,"object end" };
-	rule<> array_begin                 { lit('[')                                  ,"array begin" };
-	rule<> array_end                   { lit(']')                                    ,"array end" };
-	rule<> name_sep                    { lit(':')                                     ,"name sep" };
-	rule<> value_sep                   { lit(',')                                    ,"value sep" };
+	rule<> object_begin                { lit('{')                                  ,"object begin" };
+	rule<> object_end                  { lit('}')                                    ,"object end" };
+	rule<> array_begin                 { lit('[')                                   ,"array begin" };
+	rule<> array_end                   { lit(']')                                     ,"array end" };
+	rule<> name_sep                    { lit(':')                                      ,"name sep" };
+	rule<> value_sep                   { lit(',')                                     ,"value sep" };
 
 	// literal
-	rule<string_view> lit_true         { lit("true")                              ,"literal true" };
-	rule<string_view> lit_false        { lit("false")                            ,"literal false" };
-	rule<string_view> lit_null         { lit("null")                              ,"literal null" };
+	rule<string_view> lit_true         { lit("true")                               ,"literal true" };
+	rule<string_view> lit_false        { lit("false")                             ,"literal false" };
+	rule<string_view> lit_null         { lit("null")                               ,"literal null" };
 
-	rule<> quote                       { lit("\"")                                       ,"quote" };
-	rule<string_view> chars            { raw[*(char_ - quote)]                      ,"characters" };
-	rule<string_view> string           { quote >> chars >> quote                        ,"string" };
-	rule<string_view> name             { string                                           ,"name" };
+	rule<> quote                       { lit('"')                                         ,"quote" };
+	rule<string_view> chars            { raw[*(char_ - quote)]                       ,"characters" };
+	rule<string_view> string           { quote >> chars >> quote                         ,"string" };
+	rule<string_view> name             { string                                            ,"name" };
 
-	rule<string_view> boolean          { lit_true | lit_false                          ,"boolean" };
-	rule<string_view> literal          { lit_true | lit_false | lit_null               ,"literal" };
-	rule<string_view> number           { raw[double_]                                   ,"number" };
+	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
+	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
+	rule<string_view> number           { raw[double_]                                    ,"number" };
 
 	rule<string_view> array
 	{
@@ -178,19 +180,20 @@ struct output
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
 
-	rule<string_view> chars            { *(~char_("\""))                             ,"characters" };
+	rule<string_view> chars            { *(~char_('"'))                              ,"characters" };
 	rule<string_view> string           { quote << chars << quote                         ,"string" };
 
 	rule<string_view> number           { double_                                         ,"number" };
 
 	rule<string_view> name             { string                                            ,"name" };
-	rule<string_view> value            { rule<string_view>{}                              ,"value" };
+	rule<string_view> value            { rule<string_view>{}  /* subclass implemented */  ,"value" };
+	rule<const doc::member &> member   { name << name_sep << value                       ,"member" };
 
-	rule<const json::arr &> elems      { (value % value_sep)                           ,"elements" };
+	rule<const string_view &> elem     { value                                          ,"element" };
+	rule<const json::arr &> elems      { -(value % value_sep)                          ,"elements" };
 	rule<const json::arr &> array      { array_begin << elems << array_end                ,"array" };
 
-	rule<doc::member> member           { name << name_sep << value                       ,"member" };
-	rule<const json::doc &> members    { (member % value_sep)                           ,"members" };
+	rule<const json::doc &> members    { -(member % value_sep)                          ,"members" };
 	rule<const json::doc &> document   { object_begin << members << object_end         ,"document" };
 
 	output()
@@ -228,6 +231,8 @@ const ostreamer;
 size_t print(char *const &buf, const size_t &max, const arr &);
 size_t print(char *const &buf, const size_t &max, const doc &);
 size_t print(char *const &buf, const size_t &max, const obj &);
+arr serialize(const arr &, char *&start, char *const &stop);
+doc serialize(const doc &, char *&start, char *const &stop);
 doc serialize(const obj &, char *&start, char *const &stop);
 
 std::ostream &operator<<(std::ostream &, const arr &);
@@ -245,15 +250,15 @@ ircd::json::printer::printer()
 		const auto recurse_array([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			karma::generate(out, maxwidth(a.size())[array], json::arr(a));
-			a.resize(size_t(out - a.data()));
+			const arr r(serialize(json::arr(a), out, out + a.size()));
+			a.resize(size_t(out - r.data()));
 		});
 
 		const auto recurse_document([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			karma::generate(out, maxwidth(a.size())[document], json::doc(a));
-			a.resize(size_t(out - a.data()));
+			const doc d(serialize(json::doc(a), out, out + a.size()));
+			a.resize(size_t(out - d.data()));
 		});
 
 		const auto quote_string([&]
@@ -299,15 +304,15 @@ ircd::json::ostreamer::ostreamer()
 		const auto recurse_array([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const auto count(print(out, a.size() + 1, json::arr(a)));
-			a.resize(count);
+			const arr r(serialize(json::arr(a), out, out + a.size()));
+			a.resize(size_t(out - r.data()));
 		});
 
 		const auto recurse_document([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const auto count(print(out, a.size() + 1, json::doc(a)));
-			a.resize(count);
+			const doc d(serialize(json::doc(a), out, out + a.size()));
+			a.resize(size_t(out - d.data()));
 		});
 
 		const auto quote_string([&]
@@ -372,14 +377,19 @@ ircd::json::serialize(const obj &obj,
 
 	const auto print_string([&stop, &out](const val &val)
 	{
-		karma::generate(out, maxwidth(stop - out)[printer.string] | eps[throws], val);
+		karma::generate(out, maxwidth(stop - out)[printer.string] | eps[throws], string_view{val});
+	});
+
+	const auto print_literal([&stop, &out](const val &val)
+	{
+		karma::generate(out, maxwidth(stop - out)[karma::string] | eps[throws], string_view{val});
 	});
 
 	const auto print_object([&stop, &out](const val &val)
 	{
 		if(val.serial)
 		{
-			karma::generate(out, maxwidth(stop - out)[printer.document] | eps[throws], val);
+			karma::generate(out, maxwidth(stop - out)[printer.document] | eps[throws], string_view{val});
 			return;
 		}
 
@@ -391,12 +401,31 @@ ircd::json::serialize(const obj &obj,
 	{
 		if(val.serial)
 		{
-			karma::generate(out, maxwidth(stop - out)[printer.array] | eps[throws], val);
+			karma::generate(out, maxwidth(stop - out)[printer.array] | eps[throws], string_view{val});
 			return;
 		}
 
+		assert(0);
 		//assert(val.object);
 		//serialize(*val.object, out, stop);
+	});
+
+	const auto print_number([&stop, &out](const val &val)
+	{
+		if(val.serial)
+		{
+			if(val.floats)
+				karma::generate(out, maxwidth(stop - out)[double_] | eps[throws], string_view{val});
+			else
+				karma::generate(out, maxwidth(stop - out)[long_] | eps[throws], string_view{val});
+
+			return;
+		}
+
+		if(val.floats)
+			karma::generate(out, maxwidth(stop - out)[double_] | eps[throws], val.floating);
+		else
+			karma::generate(out, maxwidth(stop - out)[long_] | eps[throws], val.integer);
 	});
 
 	const auto print_member([&](const obj::member &member)
@@ -413,8 +442,8 @@ ircd::json::serialize(const obj &obj,
 			case STRING:   print_string(member.second);   break;
 			case OBJECT:   print_object(member.second);   break;
 			case ARRAY:    print_array(member.second);    break;
-			default:
-				throw type_error("Cannot stream unsupported member type");
+			case NUMBER:   print_number(member.second);   break;
+			case LITERAL:  print_literal(member.second);  break;
 		}
 	});
 
@@ -448,14 +477,19 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 
 	const auto stream_string([&osi](const val &val)
 	{
-		karma::generate(osi, ostreamer.string, val);
+		karma::generate(osi, ostreamer.string, string_view{val});
+	});
+
+	const auto stream_literal([&osi](const val &val)
+	{
+		karma::generate(osi, karma::string, string_view{val});
 	});
 
 	const auto stream_object([&osi, &s](const val &val)
 	{
 		if(val.serial)
 		{
-			karma::generate(osi, ostreamer.document, val);
+			karma::generate(osi, ostreamer.document, string_view{val});
 			return;
 		}
 
@@ -463,11 +497,11 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 		s << *val.object;
 	});
 
-	const auto stream_array([&osi, &s](const val &val)
+	const auto stream_array([&osi](const val &val)
 	{
 		if(val.serial)
 		{
-			karma::generate(osi, ostreamer.array, val);
+			karma::generate(osi, ostreamer.array, string_view{val});
 			return;
 		}
 
@@ -476,17 +510,35 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 		//s << *val.object;
 	});
 
+	const auto stream_number([&osi](const val &val)
+	{
+		if(val.serial)
+		{
+			if(val.floats)
+				karma::generate(osi, double_, string_view{val});
+			else
+				karma::generate(osi, long_, string_view{val});
+
+			return;
+		}
+
+		if(val.floats)
+			karma::generate(osi, double_, val.floating);
+		else
+			karma::generate(osi, long_, val.integer);
+	});
+
 	const auto stream_member([&](const obj::member &member)
 	{
 		karma::generate(osi, ostreamer.name << ostreamer.name_sep, string_view(member.first));
 
 		switch(member.second.type)
 		{
-			case STRING:  stream_string(member.second);  break;
-			case OBJECT:  stream_object(member.second);  break;
-			case ARRAY:   stream_array(member.second);   break;
-			default:
-				throw type_error("cannot stream unsupported member type");
+			case STRING:   stream_string(member.second);   break;
+			case OBJECT:   stream_object(member.second);   break;
+			case ARRAY:    stream_array(member.second);    break;
+			case NUMBER:   stream_number(member.second);   break;
+			case LITERAL:  stream_literal(member.second);  break;
 		}
 	});
 
@@ -507,21 +559,42 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 	return s;
 }
 
-ircd::json::obj::obj(std::initializer_list<member> builder)
+ircd::json::obj::obj(const doc &doc,
+                     const bool &recurse)
+:idx{doc.count()}
 {
-	std::transform(std::begin(builder), std::end(builder), std::back_inserter(idx), []
+	const auto non_recursive_transform([]
+	(const doc::member &m) -> obj::member
+	{
+		return obj::member{m};
+	});
+
+	const auto recursive_transform([&non_recursive_transform]
+	(const doc::member &m) -> obj::member
+	{
+		switch(type(m.second))
+		{
+			case OBJECT:
+				return obj::member{m.first, std::make_unique<obj>(m.second)};
+
+			default:
+				return non_recursive_transform(m);
+		};
+	});
+
+	if(recurse)
+		std::transform(std::begin(doc), std::end(doc), std::begin(idx), recursive_transform);
+	else
+		std::transform(std::begin(doc), std::end(doc), std::begin(idx), non_recursive_transform);
+}
+
+ircd::json::obj::obj(std::initializer_list<member> builder)
+:idx{builder.size()}
+{
+	std::transform(std::begin(builder), std::end(builder), std::begin(idx), []
 	(auto&& m)
 	{
 		return std::move(const_cast<member &>(m));
-	});
-}
-
-ircd::json::obj::obj(const doc &doc)
-{
-	std::transform(std::begin(doc), std::end(doc), std::back_inserter(idx), []
-	(const doc::member &m) -> obj::member
-	{
-		return { val { m.first }, val { m.second, type(m.second), true } };
 	});
 }
 
@@ -549,6 +622,48 @@ ircd::json::obj::erase(const const_iterator &start,
 	return { idx.erase(start, stop) };
 }
 
+const ircd::json::val &
+ircd::json::obj::at(const string_view &path)
+const
+{
+	const auto elem(split(path, '.'));
+	const auto ident(split(elem.first, '['));
+	const auto &name(ident.first);
+	const auto &indice(ident.second);
+
+	const auto it(find(name));
+	if(unlikely(it == end()))
+		throw not_found("'%s'", name);
+
+	const auto &val(it->second);
+	if(!indice.empty())
+	{
+		const auto idx(lex_cast<size_t>(chomp(indice, "]")));
+
+		if(type(val) != ARRAY)
+			throw not_found("cannot recurse through non-array \"%s\" for indice [%zu]", name, idx);
+
+		if(val.serial)
+			throw not_found("cannot recurse through unparsed array \"%s\" for indice [%zu]", name, idx);
+
+		assert(0);
+		//return val.array->at(idx);
+	}
+	else if(!elem.second.empty())
+	{
+		if(type(val) != OBJECT)
+			throw not_found("cannot recurse through non-object \"%s\" for \"%s\"", name, elem.second);
+
+		if(val.serial)
+			throw not_found("cannot recurse through unparsed object \"%s\" for \"%s\"", name, elem.second);
+
+		return val.object->at(elem.second);
+	}
+
+	return it->second;
+}
+
+
 size_t
 ircd::json::obj::size()
 const
@@ -567,36 +682,6 @@ const
 	std::string ret(size(), char());
 	ret.resize(print(const_cast<char *>(ret.data()), ret.size() + 1, *this));
 	return ret;
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const val &v)
-{
-	switch(v.type)
-	{
-		case STRING:
-			s << string_view(v);
-			break;
-
-		case OBJECT:
-			if(v.serial)
-				s << string_view(v);
-			else
-				s << *v.object;
-			break;
-
-		case ARRAY:
-			if(v.serial)
-				s << string_view(v);
-			else
-				assert(0);
-			break;
-
-		default:
-			throw type_error("cannot stream value type[%d]", int(v.type));
-	}
-
-	return s;
 }
 
 inline
@@ -618,6 +703,7 @@ const
 	switch(type)
 	{
 		case STRING:
+		case LITERAL:
 			return std::string(unquote(string_view(*this)));
 
 		case OBJECT:
@@ -632,8 +718,13 @@ const
 			else
 				break;
 
-		default:
-			break;
+		case NUMBER:
+			if(serial)
+				return std::string(string_view(*this));
+			else if(floats)
+				return std::string(lex_cast(floating));
+			else
+				return std::string(lex_cast(integer));
 	}
 
 	throw type_error("cannot stringify type[%d]", int(type));
@@ -649,13 +740,12 @@ const
 
 		case ARRAY:
 		case OBJECT:
+		case NUMBER:
+		case LITERAL:
 			if(serial)
 				return string_view{string, len};
 			else
 				break;
-
-		default:
-			break;
 	}
 
 	throw type_error("value type[%d] is not a string", int(type));
@@ -667,14 +757,105 @@ const
 {
 	switch(type)
 	{
-		case NUMBER:  return lex_cast(integer).size();
-		case STRING:  return 1 + len + 1;
-		case OBJECT:  return serial? len : object->size();
-		case ARRAY:   return serial? len : 2;
-		default:      break;
+		case NUMBER:   return lex_cast(integer).size();
+		case STRING:   return 1 + len + 1;
+		case OBJECT:   return serial? len : object->size();
+		case ARRAY:    return serial? len : 2;
+		case LITERAL:  return len;
 	};
 
 	throw type_error("cannot size type[%u]", int(type));
+}
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const val &v)
+{
+	switch(v.type)
+	{
+		case STRING:
+		case LITERAL:
+			s << string_view(v);
+			break;
+
+		case OBJECT:
+			if(v.serial)
+				s << string_view(v);
+			else
+				s << *v.object;
+			break;
+
+		case ARRAY:
+			if(v.serial)
+				s << string_view(v);
+			else
+				assert(0);
+			break;
+
+		case NUMBER:
+			if(v.serial)
+				s << string_view(v);
+			else if(v.floats)
+				s << v.floating;
+			else
+				s << v.integer;
+			break;
+	}
+
+	return s;
+}
+
+inline bool
+ircd::json::operator>(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) > static_cast<string_view>(b);
+}
+
+inline bool
+ircd::json::operator<(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) < static_cast<string_view>(b);
+}
+
+inline bool
+ircd::json::operator>=(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) >= static_cast<string_view>(b);
+}
+
+inline bool
+ircd::json::operator<=(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) <= static_cast<string_view>(b);
+}
+
+inline bool
+ircd::json::operator!=(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) != static_cast<string_view>(b);
+}
+
+inline bool
+ircd::json::operator==(const val &a, const val &b)
+{
+    if(unlikely(type(a) != STRING || type(b) != STRING))
+        throw type_error("cannot compare values");
+
+    return static_cast<string_view>(a) == static_cast<string_view>(b);
 }
 
 size_t
@@ -754,6 +935,15 @@ ircd::json::doc::const_iterator::operator++()
 	return *this;
 }
 
+ircd::json::doc::operator std::string()
+const
+{
+	//TODO: tmp
+	std::stringstream ret;
+	ret << (*this);
+	return ret.str();
+}
+
 ircd::json::doc::const_iterator
 ircd::json::doc::begin()
 const
@@ -806,18 +996,23 @@ ircd::json::serialize(const arr &a,
 		throw print_error("The JSON generator failed to print array");
 	});
 
-	const karma::rule<char *, const json::arr &> grammar
-	{
-		printer.array_begin << (printer.value % printer.value_sep) << printer.array_end
-	};
-
 	char *const start(out);
-	karma::generate(out, maxwidth(stop - start)[grammar] | eps[throws], a);
+	karma::generate(out, maxwidth(stop - out)[printer.array_begin] | eps[throws]);
+
+	auto it(begin(a));
+	if(it != end(a))
+	{
+		karma::generate(out, maxwidth(stop - out)[printer.elem] | eps[throws], *it);
+		for(++it; it != end(a); ++it)
+			karma::generate(out, maxwidth(stop - out)[printer.value_sep << printer.elem] | eps[throws], *it);
+	}
+
+	karma::generate(out, maxwidth(stop - out)[printer.array_end] | eps[throws]);
 	return string_view{start, out};
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const arr &arr)
+ircd::json::operator<<(std::ostream &s, const arr &a)
 {
 	const auto &os(ostreamer);
 	static const auto throws([]
@@ -826,7 +1021,17 @@ ircd::json::operator<<(std::ostream &s, const arr &arr)
 	});
 
 	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, os.array | eps[throws], arr);
+	karma::generate(osi, ostreamer.array_begin | eps[throws]);
+
+	auto it(begin(a));
+	if(it != end(a))
+	{
+		karma::generate(osi, ostreamer.elem | eps[throws], *it);
+		for(++it; it != end(a); ++it)
+			karma::generate(osi, (ostreamer.value_sep << ostreamer.elem) | eps[throws], *it);
+	}
+
+	karma::generate(osi, ostreamer.array_end | eps[throws]);
 	return s;
 }
 
@@ -843,6 +1048,15 @@ ircd::json::arr::const_iterator::operator++()
 		start = stop;
 
 	return *this;
+}
+
+ircd::json::arr::operator std::string()
+const
+{
+	//TODO: tmp
+	std::stringstream ret;
+	ret << (*this);
+	return ret.str();
 }
 
 ircd::json::arr::const_iterator
@@ -876,6 +1090,19 @@ ircd::json::type(const string_view &buf)
 	enum type ret;
 	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
 		throw type_error("Failed to get type from buffer");
+
+	return ret;
+}
+
+enum ircd::json::type
+ircd::json::type(const string_view &buf,
+                 std::nothrow_t)
+{
+	static const auto flag(qi::skip_flag::dont_postskip);
+
+	enum type ret;
+	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
+		return STRING;
 
 	return ret;
 }
