@@ -132,29 +132,6 @@ string_view token_last(const string_view &str, const char *const &sep);
 string_view token_first(const string_view &str, const char *const &sep);
 string_view tokens_after(const string_view &str, const char *const &sep, const size_t &at);
 
-class params
-{
-	string_view in;
-	const char *sep;
-	std::initializer_list<const char *> names;
-
-	const char *name(const size_t &i) const;
-
-  public:
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, missing)
-	IRCD_EXCEPTION(error, invalid)
-
-	string_view operator[](const size_t &i) const;                  // returns empty
-	template<class T> T at(const size_t &i, const T &def) const;    // throws invalid
-	template<class T> T at(const size_t &i) const;                  // throws missing or invalid
-	string_view at(const size_t &i) const;                          // throws missing
-
-	params(const string_view &in,
-	       const char *const &sep,
-	       const std::initializer_list<const char *> &names = {});
-};
-
 //
 // Misc utils
 //
