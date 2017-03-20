@@ -100,6 +100,12 @@ template<class it> it data(const buffer<it> &buffer);
 template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
 
+template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
+template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
+
+template<class T> char *copy(char *&dest, char *const &stop, const buffers<T> &buffer);
+template<class T> size_t copy(char *const &dest, const size_t &max, const buffers<T> &buffer);
+
 } // namespace buffer
 
 using buffer::const_buffer;
@@ -111,6 +117,61 @@ using buffer::null_buffer;
 using buffer::null_buffers;
 
 } // namespace ircd
+
+template<class T>
+size_t
+ircd::buffer::copy(char *const &dest,
+                   const size_t &max,
+                   const buffers<T> &buffers)
+{
+	size_t ret(0);
+	for(const auto &buffer : buffers)
+		ret += copy(dest + ret, max - ret, buffer);
+
+	return ret;
+}
+
+template<class it>
+size_t
+ircd::buffer::copy(char *const &dest,
+                   const size_t &max,
+                   const buffer<it> &buffer)
+{
+	if(!max)
+		return 0;
+
+	char *out(dest);
+	char *const stop(dest + max - 1);
+	copy(out, stop, buffer);
+	*out = '\0';
+	return std::distance(dest, out);
+}
+
+template<class T>
+char *
+ircd::buffer::copy(char *&dest,
+                   char *const &stop,
+                   const buffers<T> &buffers)
+{
+	char *const ret(dest);
+	for(const auto &buffer : buffers)
+		copy(dest, stop, buffer);
+
+	return ret;
+}
+
+template<class it>
+char *
+ircd::buffer::copy(char *&dest,
+                   char *const &stop,
+                   const buffer<it> &buffer)
+{
+	char *const ret(dest);
+	const size_t remain(stop - dest);
+	dest += std::min(size(buffer), remain);
+	memcpy(ret, data(buffer), dest - ret);
+	return ret;
+}
 
 template<class T>
 size_t
