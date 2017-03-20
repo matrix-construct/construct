@@ -22,8 +22,6 @@
 #pragma once
 #define HAVE_IRCD_LOCALE_H
 
-#include <ostream>
-
 //
 // Utilities for internationalization.
 //
