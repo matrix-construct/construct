@@ -150,8 +150,10 @@ char *strip_unprintable(char *string);
 char *reconstruct_parv(int parc, const char **parv);
 
 string_view chomp(const string_view &str, const string_view &c = " "s);
-std::pair<string_view, string_view> split(const string_view &str, const string_view &delim = " "s);
-std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim = " "s);
+std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
+std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
+std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
+std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim);
 string_view between(const string_view &str, const string_view &a = "("s, const string_view &b = ")"s);
 bool endswith(const string_view &str, const string_view &val);
 bool endswith(const string_view &str, const char &val);
@@ -226,7 +228,6 @@ ircd::between(const string_view &str,
 	return split(split(str, a).second, b).first;
 }
 
-
 inline std::pair<ircd::string_view, ircd::string_view>
 ircd::rsplit(const string_view &str,
              const string_view &delim)
@@ -245,6 +246,23 @@ ircd::rsplit(const string_view &str,
 }
 
 inline std::pair<ircd::string_view, ircd::string_view>
+ircd::rsplit(const string_view &str,
+             const char &delim)
+{
+	const auto pos(str.find_last_of(delim));
+	if(pos == string_view::npos) return
+	{
+		string_view{},
+		str
+	};
+	else return
+	{
+		str.substr(0, pos),
+		str.substr(pos + 1)
+	};
+}
+
+inline std::pair<ircd::string_view, ircd::string_view>
 ircd::split(const string_view &str,
             const string_view &delim)
 {
@@ -258,6 +276,23 @@ ircd::split(const string_view &str,
 	{
 		str.substr(0, pos),
 		str.substr(pos + delim.size())
+	};
+}
+
+inline std::pair<ircd::string_view, ircd::string_view>
+ircd::split(const string_view &str,
+            const char &delim)
+{
+	const auto pos(str.find(delim));
+	if(pos == string_view::npos) return
+	{
+		str,
+		string_view{}
+	};
+	else return
+	{
+		str.substr(0, pos),
+		str.substr(pos + 1)
 	};
 }
 
