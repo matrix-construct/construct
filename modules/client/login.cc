@@ -19,13 +19,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/socket.h>
-
 using namespace ircd;
 
-db::handle logins
+mods::sym_ref<db::handle> accounts_ref
 {
-	"login"
+	"client_register",
+	"accounts"
 };
 
 resource login_resource
@@ -35,70 +34,66 @@ resource login_resource
 	"they can use to authorize themself in subsequent requests. (3.2.2)"
 };
 
-resource::method getter
-{login_resource, "POST", [](client &client,
-                            resource::request &request)
--> resource::response
+resource::response
+login(client &client, const resource::request &request)
+try
 {
-	char head[256], body[256];
-    static const auto headfmt
-    {
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Length: %zu\r\n"
-        "\r\n"
-    };
-
-	const json::obj in
+	const auto user
 	{
-		json::doc{request.content}
+		unquote(request.at("user"))
 	};
 
-	const std::string user(in["user"]);
-	if(!logins.has(user))
+	const auto password
 	{
-		log::debug("User [%s] doesn't exist", user.data());
-		write(logins, user, in.state);
-	}
-	else
+		request.at("password")
+	};
+
+	const auto type
 	{
-		log::debug("User [%s] found", user.data());
-		logins(user, [](const string_view &foo)
+		unquote(request["type"])
+	};
+
+	if(!type.empty() && type != "m.login.password")
+	{
+		throw m::error
 		{
-			printf("dox [%s]\n", std::string(foo.data(), foo.size()).data());
-		});
+			"M_UNSUPPORTED", "Login type is not supported."
+		};
 	}
 
-	json::obj out;
-	out["user_id"] = in["user"];
-	out["access_token"] = "{\"la\":\"abc123\"}";
-	out["home_server"] = "wewt";
-
-	const json::obj out2(out);
-
-	char buf[256];
-	const json::doc outd(serialize(out2, buf, buf + sizeof(buf)));
-	for(const auto &member : outd)
-		std::cout << member.first << " => " << member.second << std::endl;
-
-	const size_t bodysz
+	db::handle &accounts(accounts_ref);
+	accounts(user, [&password](const json::doc &user)
 	{
-		print(body, sizeof(body), out)
-	};
+		if(user["password"] != password)
+			throw db::not_found();
+	});
 
-	const int headsz
+	const auto access_token(123456);
+	const auto home_server("cdc.z");
+	const auto device_id("ABCDEF");
+	return resource::response
 	{
-		snprintf(head, sizeof(head), headfmt, bodysz)
+		client,
+		{
+			{ "user_id",        user          },
+			{ "access_token",   access_token  },
+			{ "home_server",    home_server   },
+			{ "device_id",      device_id     },
+		}
 	};
-
-	const const_buffers iov
+}
+catch(const db::not_found &e)
+{
+	throw m::error
 	{
-		{ head, size_t(headsz) },
-		{ body, bodysz         },
+		http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
 	};
+}
 
-	write(*client.sock, iov);
-	return {};
-}};
+resource::method post
+{
+	login_resource, "POST", login
+};
 
 mapi::header IRCD_MODULE
 {

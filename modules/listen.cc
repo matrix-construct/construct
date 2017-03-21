@@ -60,6 +60,7 @@ struct log::log listener::log
 };
 
 listener::listener(const std::string &name)
+try
 :name
 {
 	name
@@ -83,6 +84,10 @@ listener::listener(const std::string &name)
 {
 	ssl.use_certificate_file("/home/jason/cdc.z.cert", asio::ssl::context::pem);
 	ssl.use_private_key_file("/home/jason/cdc.z.key", asio::ssl::context::pem);
+}
+catch(const boost::system::system_error &e)
+{
+	throw error("listener: %s", e.what());
 }
 
 bool
