@@ -495,6 +495,13 @@ at(It &&start,
 }
 
 
+//
+// Customized std::string_view (experimental TS / C++17)
+//
+// This class adds iterator-based (char*, char*) construction to std::string_view which otherwise
+// takes traditional (char*, size_t) arguments. This allows boost::spirit grammars to create
+// string_view's using the raw[] directive achieving zero-copy/zero-allocation parsing.
+//
 struct string_view
 :std::string_view
 {
@@ -531,6 +538,10 @@ struct string_view
 };
 
 
+//
+// Error-checking closure for POSIX system calls. Note the usage is
+// syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
+//
 template<class function,
          class... args>
 auto
@@ -545,6 +556,15 @@ syscall(function&& f,
 }
 
 
+//
+// Similar to a va_list, but conveying std-c++ type data acquired from a variadic template
+// parameter pack acting as the ...) elipsis. This is used to implement fmt::snprintf(),
+// exceptions and logger et al in their respective translation units rather than the header
+// files.
+//
+// Limitations: The choice of a fixed array of 8 is because std::initializer_list doesn't
+// seem to work and other containers may be heavy in this context.
+//
 struct va_rtti
 :std::array<std::pair<const void *, const std::type_info *>, 8>
 {
