@@ -24,6 +24,7 @@ bin_PROGRAMS = charybdis
 
 charybdis_SOURCES = \
 	lgetopt.cc      \
+	console.cc      \
 	charybdis.cc
 
 charybdis_LDADD = \
