@@ -59,13 +59,13 @@ struct spec
 // This allows a new "%foo" to be defined with custom handling.
 class specifier
 {
-	std::set<std::string> names;
+	std::set<string_view> names;
 
   public:
 	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
 
-	specifier(const std::initializer_list<std::string> &names);
-	specifier(const std::string &name);
+	specifier(const std::initializer_list<string_view> &names);
+	specifier(const string_view &name);
 	virtual ~specifier() noexcept;
 };
 
