@@ -119,6 +119,27 @@ struct opts
 	template<class... list> opts(list&&... l): optlist<opt>{std::forward<list>(l)...} {}
 };
 
+enum op
+{
+	PUT,
+	MERGE,
+	DELETE,
+	SINGLE_DELETE,
+	DELETE_RANGE,
+};
+
+struct delta
+:std::tuple<op, string_view, string_view>
+{
+	delta(const enum op &op, const string_view &key, const string_view &val = {})
+	:std::tuple<enum op, string_view, string_view>{op, key, val}
+	{}
+
+	delta(const string_view &key, const string_view &val, const enum op &op = op::PUT)
+	:std::tuple<enum op, string_view, string_view>{op, key, val}
+	{}
+};
+
 struct handle
 {
 	struct const_iterator;
@@ -145,6 +166,10 @@ struct handle
 	// Perform a get into a closure. This offers a reference to the data with zero-copy.
 	void operator()(const string_view &key, const closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const closure &func);
+
+	// Perform operations in a sequence as a single transaction.
+	void operator()(const delta &, const sopts & = {});
+	void operator()(const std::initializer_list<delta> &, const sopts & = {});
 
 	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
 	size_t get(const string_view &key, char *const &buf, const size_t &max, const gopts & = {});

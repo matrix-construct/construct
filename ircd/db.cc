@@ -263,6 +263,59 @@ db::handle::get(const string_view &key,
 	return ret;
 }
 
+namespace ircd {
+namespace db   {
+
+static
+void append(rocksdb::WriteBatch &batch,
+            const delta &delta)
+{
+	const rocksdb::Slice k
+	{
+		std::get<1>(delta).data(), std::get<1>(delta).size()
+	};
+
+	const rocksdb::Slice v
+	{
+		std::get<2>(delta).data(), std::get<2>(delta).size()
+	};
+
+	switch(std::get<0>(delta))
+	{
+		case op::PUT:            batch.Put(k, v);           break;
+		case op::MERGE:          batch.Merge(k, v);         break;
+		case op::DELETE:         batch.Delete(k);           break;
+		case op::SINGLE_DELETE:  batch.SingleDelete(k);     break;
+		case op::DELETE_RANGE:   batch.DeleteRange(k, v);   break;
+	}
+}
+
+} // namespace db
+} // namespace ircd
+
+void
+db::handle::operator()(const std::initializer_list<delta> &deltas,
+                       const sopts &sopts)
+{
+	rocksdb::WriteBatch batch;
+	for(const auto &delta : deltas)
+		append(batch, delta);
+
+	auto opts(make_opts(sopts));
+	throw_on_error(d->Write(opts, &batch));
+}
+
+void
+db::handle::operator()(const delta &delta,
+                       const sopts &sopts)
+{
+	rocksdb::WriteBatch batch;
+	append(batch, delta);
+
+	auto opts(make_opts(sopts));
+	throw_on_error(d->Write(opts, &batch));
+}
+
 void
 db::handle::operator()(const string_view &key,
                        const gopts &gopts,
