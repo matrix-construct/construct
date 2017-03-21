@@ -120,6 +120,31 @@ template<class T>
 using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
 
 
+//
+// Iteration of a tuple
+//
+// for_each(tuple, [](auto&& elem) { ... });
+
+template<size_t i,
+         class func,
+         class... args>
+typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
+for_each(const std::tuple<args...> &t,
+         func&& f)
+{}
+
+template<size_t i = 0,
+         class func,
+         class... args>
+typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, void>::type
+for_each(const std::tuple<args...> &t,
+         func&& f)
+{
+	f(std::get<i>(t));
+	for_each<i+1>(t, std::forward<func>(f));
+}
+
+
 // For conforming enums include a _NUM_ as the last element,
 // then num_of<my_enum>() works
 template<class Enum>
