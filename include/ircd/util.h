@@ -145,6 +145,31 @@ for_each(const std::tuple<args...> &t,
 }
 
 
+//
+// Iteration of a tuple until() style: your closure returns true to continue, false
+// to break. until() then remains true to the end, or returns false if not.
+
+template<size_t i,
+         class func,
+         class... args>
+typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, bool>::type
+until(const std::tuple<args...> &t,
+      func&& f)
+{
+	return true;
+}
+
+template<size_t i = 0,
+         class func,
+         class... args>
+typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::type
+until(const std::tuple<args...> &t,
+      func&& f)
+{
+	return f(std::get<i>(t))? until<i+1>(t, std::forward<func>(f)) : false;
+}
+
+
 // For conforming enums include a _NUM_ as the last element,
 // then num_of<my_enum>() works
 template<class Enum>
