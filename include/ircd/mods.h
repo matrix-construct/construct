@@ -41,6 +41,8 @@ using mapi::version_t;
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, filesystem_error)
 IRCD_EXCEPTION(error, invalid_export)
+IRCD_EXCEPTION(error, expired_symbol)
+IRCD_EXCEPTION(error, undefined_symbol)
 
 extern struct log::log log;
 
@@ -80,6 +82,38 @@ struct module
 template<> const uint8_t *module::ptr<const uint8_t>(const std::string &name) const;
 template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
 
+class sym_ptr
+:std::weak_ptr<mod>
+{
+	void *ptr;
+
+  public:
+	operator bool() const                        { return !expired();                              }
+	bool operator!() const                       { return expired();                               }
+
+	template<class T> const T *get() const;
+	template<class T> T *get();
+
+	template<class T> const T *operator->() const;
+	template<class T> T *operator->();
+
+	template<class T> const T &operator*() const;
+	template<class T> T &operator*();
+
+	sym_ptr(const std::string &modname, const std::string &symname);
+	~sym_ptr() noexcept;
+};
+
+template<class T>
+struct sym_ref
+:protected sym_ptr
+{
+	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
+	operator T &()                               { return sym_ptr::operator*<T>();                 }
+
+	using sym_ptr::sym_ptr;
+};
+
 std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
 std::vector<std::string> symbols(const std::string &fullpath);
 std::vector<std::string> sections(const std::string &fullpath);
@@ -113,6 +147,57 @@ namespace ircd {
 using mods::module;                              // Bring struct module into main ircd::
 
 } // namespace ircd
+
+template<class T>
+T &
+ircd::mods::sym_ptr::operator*()
+{
+	if(unlikely(expired()))
+		throw expired_symbol("The reference to a symbol in another module is no longer valid");
+
+	return *get<T>();
+}
+
+template<class T>
+T *
+ircd::mods::sym_ptr::operator->()
+{
+	return get<T>();
+}
+
+template<class T>
+T *
+ircd::mods::sym_ptr::get()
+{
+	return reinterpret_cast<T *>(ptr);
+}
+
+template<class T>
+const T &
+ircd::mods::sym_ptr::operator*()
+const
+{
+	if(unlikely(expired()))
+		throw expired_symbol("The const reference to a symbol in another module is no longer valid");
+
+	return *get<T>();
+}
+
+template<class T>
+const T *
+ircd::mods::sym_ptr::operator->()
+const
+{
+	return get<T>();
+}
+
+template<class T>
+const T *
+ircd::mods::sym_ptr::get()
+const
+{
+	return reinterpret_cast<const T *>(ptr);
+}
 
 template<class T>
 T &

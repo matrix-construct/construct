@@ -105,8 +105,8 @@ try
 
 	module listener("listen.so");
 	module client_versions("client_versions.so");
-	module client_login("client_login.so");
 	module client_register("client_register.so");
+	module client_login("client_login.so");
 
 	// This is the main program loop. Right now all it does is sleep until notified
 	// to shutdown, but it can do other things eventually. Other subsystems may have

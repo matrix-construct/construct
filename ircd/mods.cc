@@ -174,8 +174,8 @@ const
 template<> uint8_t *
 ircd::mods::module::ptr<uint8_t>(const std::string &name)
 {
-	const auto &mod(**this);
-	return &mod.handle.get<uint8_t>(name);
+	auto &mod(**this);
+	return mod.ptr<uint8_t>(name);
 }
 
 template<>
@@ -184,7 +184,7 @@ ircd::mods::module::ptr<const uint8_t>(const std::string &name)
 const
 {
 	const auto &mod(**this);
-	return &mod.handle.get<const uint8_t>(name);
+	return mod.ptr<const uint8_t>(name);
 }
 
 bool
@@ -195,7 +195,35 @@ const
 		return false;
 
 	const auto &mod(**this);
-	return mod.handle.has(name);
+	return mod.has(name);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// sym_ptr
+//
+
+ircd::mods::sym_ptr::sym_ptr(const std::string &modname,
+                             const std::string &symname)
+:std::weak_ptr<mod>
+{
+	module(modname)
+}
+,ptr{[this, &modname, &symname]
+{
+	const life_guard<mods::mod> mod(*this);
+
+	if(unlikely(!mod->has(symname)))
+		throw undefined_symbol("Could not find symbol '%s' in module '%s'", symname, mod->name());
+
+	return mod->ptr(symname);
+}()}
+{
+}
+
+ircd::mods::sym_ptr::~sym_ptr()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
