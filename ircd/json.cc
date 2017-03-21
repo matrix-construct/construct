@@ -559,6 +559,30 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 	return s;
 }
 
+ircd::json::obj::obj(merge_t,
+                     const std::initializer_list<doc> &merge)
+:idx
+{
+	std::accumulate(std::begin(merge), std::end(merge), size_t(0), []
+	(auto sum, const auto &doc)
+	{
+		return sum += doc.count();
+	})
+}
+{
+	auto it(std::begin(idx));
+	for(auto dit(std::rbegin(merge)); dit != std::rend(merge); ++dit)
+		for(const doc::member &m : *dit)
+		{
+			*it = obj::member{m};
+			++it;
+		}
+
+	std::stable_sort(std::begin(idx), std::end(idx));
+	const auto e(std::unique(std::begin(idx), std::end(idx)));
+	idx.erase(e, std::end(idx));
+}
+
 ircd::json::obj::obj(const doc &doc,
                      const bool &recurse)
 :idx{doc.count()}

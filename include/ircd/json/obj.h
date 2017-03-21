@@ -61,8 +61,11 @@ struct obj
 
 	explicit operator std::string() const;
 
+	IRCD_OVERLOAD(merge)
+
 	obj(std::initializer_list<member>);
 	obj(const doc &d, const bool &recurse = false);
+	obj(merge_t, const std::initializer_list<doc> &);
 	obj() = default;
 	obj(obj &&) = default;
 	obj(const obj &) = delete;
