@@ -41,10 +41,11 @@ libircd_la_SOURCES =   \
 	fmt.cc             \
 	db.cc              \
 	locale.cc          \
-	json.cc            \
 	http.cc            \
+	json.cc            \
 	matrix.cc          \
-	parse.cc
+	parse.cc           \
+	conf.cc
 
 if JS
 libircd_la_SOURCES +=  \

@@ -171,7 +171,6 @@ struct line {};
 #include "rfc1459.h"
 #include "json.h"
 #include "http.h"
-#include "matrix.h"
 #include "fmt.h"
 #include "path.h"
 #include "ctx.h"
@@ -183,3 +182,4 @@ struct line {};
 #include "js.h"
 #include "client.h"
 #include "mods.h"
+#include "matrix.h"

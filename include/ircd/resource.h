@@ -44,8 +44,10 @@ struct resource
   protected:
 	decltype(resources)::const_iterator resources_it;
 
+	void call_method(client &, method &, resource::request &);
+
   public:
-	void operator()(client &, parse::capstan &, const http::request::head &) const;
+	void operator()(client &, parse::capstan &, const http::request::head &);
 
 	resource(const char *const &name,
 	         const char *const &description = "");
@@ -53,18 +55,25 @@ struct resource
 	virtual ~resource() noexcept;
 };
 
-struct resource::response
-{
-	response(client &, const json::doc &doc, const http::code &code = http::OK);
-	response(client &, const json::obj &obj, const http::code &code = http::OK);
-	response() = default;
-	~response() noexcept;
-};
-
 struct resource::request
+:json::doc
 {
 	const http::request::head &head;
 	http::request::content &content;
+
+	request(const http::request::head &head, http::request::content &content)
+	:json::doc{content}
+	,head{head}
+	,content{content}
+	{}
+};
+
+struct resource::response
+{
+	response(client &, const json::doc &doc, const http::code & = http::OK);
+	response(client &, const json::obj &obj, const http::code & = http::OK);
+	response() = default;
+	~response() noexcept;
 };
 
 struct resource::method

@@ -248,7 +248,7 @@ ircd::json::operator<(const obj::member &a, const string_view &b)
 inline bool
 ircd::json::operator!=(const obj::member &a, const string_view &b)
 {
-	return string_view(a.first.string, a.first.len) == b;
+	return string_view(a.first.string, a.first.len) != b;
 }
 
 inline bool

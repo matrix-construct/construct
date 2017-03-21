@@ -181,6 +181,7 @@ ircd::read_closure(client &client)
 	{
 		try
 		{
+			const char *const got(start);
 			read(client, start, stop);
 		}
 		catch(const boost::system::system_error &e)
@@ -317,7 +318,7 @@ try
 	           string(remote_addr(client)).c_str(),
 	           std::string(head.resource).c_str());
 
-	const auto &resource(*resource::resources.at(head.resource));
+	auto &resource(*resource::resources.at(head.resource));
 	resource(client, pc, head);
 }
 catch(const std::out_of_range &e)

@@ -56,20 +56,39 @@ void
 ircd::resource::operator()(client &client,
                            parse::capstan &pc,
                            const http::request::head &head)
-const try
+try
 {
-	const auto &method(*methods.at(head.method));
+	auto &method(*methods.at(head.method));
 	http::request::content content{pc, head};
 	resource::request request
 	{
 		head, content
 	};
 
-	method(client, request);
+	call_method(client, method, request);
 }
 catch(const std::out_of_range &e)
 {
-	throw http::error(http::METHOD_NOT_ALLOWED);
+	throw http::error
+	{
+		http::METHOD_NOT_ALLOWED
+	};
+}
+
+void
+ircd::resource::call_method(client &client,
+                            method &method,
+                            resource::request &request)
+try
+{
+	method(client, request);
+}
+catch(const json::error &e)
+{
+	throw m::error
+	{
+		"M_BAD_JSON", "Required JSON field: %s", e.what()
+	};
 }
 
 ircd::resource::method::method(struct resource &resource,
@@ -99,11 +118,20 @@ noexcept
 }
 
 ircd::resource::response::response(client &client,
-                                   const json::obj &doc,
+                                   const json::obj &obj,
                                    const http::code &code)
+try
 {
-	char cbuf[1024];
-	response(client, serialize(doc, cbuf, cbuf + sizeof(cbuf)), code);
+	char cbuf[1024], *out(cbuf);
+	const auto doc(serialize(obj, out, cbuf + sizeof(cbuf)));
+	response(client, doc, code);
+}
+catch(const json::error &e)
+{
+	throw m::error
+	{
+		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+	};
 }
 
 ircd::resource::response::response(client &client,
