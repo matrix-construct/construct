@@ -21,29 +21,6 @@
 
 #include <ircd/spirit.h>
 
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::request,
-    ( decltype(ircd::http::line::request::method),    method   )
-    ( decltype(ircd::http::line::request::resource),  resource )
-    ( decltype(ircd::http::line::request::version),   version  )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::response,
-    ( decltype(ircd::http::line::response::version),  version )
-    ( decltype(ircd::http::line::response::status),   status  )
-    ( decltype(ircd::http::line::response::reason),   reason  )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::header,
-    ( decltype(ircd::http::line::header::first),   first  )
-    ( decltype(ircd::http::line::header::second),  second )
-)
-
 namespace ircd {
 namespace http {
 
@@ -64,206 +41,6 @@ using qi::omit;
 using qi::raw;
 using qi::attr;
 using qi::eps;
-
-template<class it,
-         class top = unused_type>
-struct grammar
-:qi::grammar<it, top>
-,parse::grammar
-{
-	template<class R = unused_type> using rule = qi::rule<it, R>;
-
-	rule<> NUL;
-	rule<> SP;
-	rule<> HT;
-	rule<> CR;
-	rule<> LF;
-	rule<> CRLF;
-	rule<> colon;
-
-	rule<> WS;
-	rule<> ws;
-	rule<string_view> token;
-	rule<string_view> string;
-
-	rule<string_view> line;
-	rule<string_view> method;
-	rule<string_view> resource;
-	rule<string_view> version;
-	rule<string_view> status;
-	rule<short> status_code;
-	rule<string_view> reason;
-	rule<http::line::request> request_line;
-	rule<http::line::response> response_line;
-
-	rule<string_view> key;
-	rule<string_view> value;
-	rule<http::line::header> header;
-
-	rule<unused_type> headers;
-	rule<unused_type> request;
-	rule<unused_type> response;
-
-	grammar(rule<top> &top_rule, const char *const &name);
-};
-
-[[noreturn]]
-void bail()
-{
-	throw error(code::BAD_REQUEST);
-}
-
-template<class it,
-         class top>
-grammar<it, top>::grammar(qi::rule<it, top> &top_rule,
-                          const char *const &name)
-:grammar<it, top>::base_type
-{
-	top_rule
-}
-,parse::grammar
-{
-	name
-}
-,NUL
-{
-	lit('\0')
-	,"NUL"
-}
-,SP
-{
-	lit(' ')
-	,"SP"
-}
-,HT
-{
-	lit('\t')
-	,"HT"
-}
-,CR
-{
-	lit('\r')
-	,"CR"
-}
-,CRLF
-{
-	lit('\r') >> lit('\n')
-	,"CRLF"
-}
-,colon
-{
-	lit(':')
-	,"colon"
-}
-,WS
-{
-	(SP | HT)
-	,"whitespace"
-}
-,ws
-{
-	+(SP | HT)
-	,"whitespaces"
-}
-,token
-{
-	raw[+(char_ - (NUL | CR | LF | WS))]
-	,"token"
-}
-,string
-{
-	raw[+(char_ - (NUL | CR | LF))]
-	,"string"
-}
-,line
-{
-	-ws >> -string >> CRLF
-	,"line"
-}
-,method
-{
-	raw[+(char_ - (NUL | CR | LF | WS))]
-	,"method"
-}
-,resource
-{
-	raw[+(char_ - (NUL | CR | LF | WS))]
-	,"resource"
-}
-,version
-{
-	raw[+(char_ - (NUL | CR | LF | WS))]
-	,"version"
-}
-,status
-{
-	raw[repeat(3)[char_("0-9")]]
-	,"status"
-}
-,status_code
-{
-	short_
-	,"status code"
-}
-,reason
-{
-	raw[+(char_ - (NUL | CR | LF))]
-	,"status"
-}
-,request_line
-{
-	method >> +SP >> resource >> +SP >> version
-	,"request line"
-}
-,response_line
-{
-	version >> +SP >> status >> +SP >> reason
-	,"response line"
-}
-,key
-{
-	raw[+(char_ - (NUL | CR | LF | WS | colon))]
-	,"key"
-}
-,value
-{
-	string
-	,"value"
-}
-,header
-{
-	key >> -ws >> colon >> -ws >> value
-	,"header"
-}
-,headers
-{
-	+(-header % CRLF) >> CRLF
-	,"headers"
-}
-,request
-{
-	request_line >> -ws >> CRLF >> headers
-	,"request"
-}
-,response
-{
-	response_line >> -ws >> CRLF >> headers
-	,"response"
-}
-{
-}
-
-struct parser
-:grammar<const char *, unused_type>
-{
-	static size_t content_length(const string_view &val);
-
-	parser(): grammar { grammar::ws, "http.request" } {}
-}
-const parser;
-
-size_t printed_size(const std::initializer_list<line::header> &headers);
-size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
 
 std::map<code, std::string> reason
 {
@@ -291,6 +68,122 @@ std::map<code, std::string> reason
 	{ code::SERVICE_UNAVAILABLE,                 "Service Unavailable"s                            },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"s                     },
 };
+
+} // namespace http
+} // namespace ircd
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::request,
+    ( decltype(ircd::http::line::request::method),    method   )
+    ( decltype(ircd::http::line::request::resource),  resource )
+    ( decltype(ircd::http::line::request::version),   version  )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::response,
+    ( decltype(ircd::http::line::response::version),  version )
+    ( decltype(ircd::http::line::response::status),   status  )
+    ( decltype(ircd::http::line::response::reason),   reason  )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::header,
+    ( decltype(ircd::http::line::header::first),   first  )
+    ( decltype(ircd::http::line::header::second),  second )
+)
+
+namespace ircd {
+namespace http {
+
+template<class it,
+         class top = unused_type>
+struct grammar
+:qi::grammar<it, top>
+,parse::grammar
+{
+	template<class R = unused_type> using rule = qi::rule<it, R>;
+
+	rule<> NUL                         { lit('\0')                                          ,"nul" };
+
+	// insignificant whitespaces
+	rule<> SP                          { lit('\x20')                                      ,"space" };
+	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
+	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
+	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
+
+	// whitespace skipping
+	rule<> ws                          { SP | HT                                     ,"whitespace" };
+
+	rule<> CRLF                        { lit('\r') >> lit('\n')      ,"carriage return, line feed" };
+	rule<> colon                       { lit(':')                                         ,"colon" };
+
+	rule<string_view> token            { raw[+(char_ - (NUL | CR | LF | ws))]             ,"token" };
+	rule<string_view> string           { raw[+(char_ - (NUL | CR | LF))]                 ,"string" };
+	rule<string_view> line             { *ws >> -string >> CRLF                            ,"line" };
+
+	rule<string_view> method           { raw[+(char_ - (NUL | CR | LF | ws))]            ,"method" };
+	rule<string_view> resource         { raw[+(char_ - (NUL | CR | LF | ws))]          ,"resource" };
+	rule<string_view> version          { raw[+(char_ - (NUL | CR | LF | ws))]           ,"version" };
+
+	rule<string_view> status           { raw[repeat(3)[char_("0-9")]]                    ,"status" };
+	rule<short> status_code            { short_                                     ,"status code" };
+	rule<string_view> reason           { raw[+(char_ - (NUL | CR | LF))]                 ,"status" };
+
+	rule<string_view> key              { raw[+(char_ - (NUL | CR | LF | ws | colon))]       ,"key" };
+	rule<string_view> value            { string                                           ,"value" };
+	rule<line::header> header          { key >> *ws >> colon >> *ws >> value             ,"header" };
+	rule<unused_type> headers          { (header % (*ws >> CRLF))                       ,"headers" };
+
+	rule<line::request> request_line
+	{
+		method >> +SP >> resource >> +SP >> version
+		,"request line"
+	};
+
+	rule<line::response> response_line
+	{
+		version >> +SP >> status >> -(+SP >> reason)
+		,"response line"
+	};
+
+	rule<unused_type> request
+	{
+		request_line >> *ws >> CRLF >> -headers >> CRLF
+		,"request"
+	};
+
+	rule<unused_type> response
+	{
+		response_line >> *ws >> CRLF >> -headers >> CRLF
+		,"response"
+	};
+
+	grammar(rule<top> &top_rule, const char *const &name)
+	:grammar<it, top>::base_type
+	{
+		top_rule
+	}
+	,parse::grammar
+	{
+		name
+	}
+	{}
+};
+
+struct parser
+:grammar<const char *, unused_type>
+{
+	static size_t content_length(const string_view &val);
+
+	parser(): grammar { grammar::ws, "http.request" } {}
+}
+const parser;
+
+size_t printed_size(const std::initializer_list<line::header> &headers);
+size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
 
 } // namespace http
 } // namespace ircd
@@ -597,9 +490,12 @@ try
 catch(const qi::expectation_failure<const char *> &e)
 {
 	char buf[256];
-	snprintf(buf, sizeof(buf), "I require a valid %s starting at character %d.",
-	         ircd::string(e.what_).data(),
-	         int(e.last - e.first));
+	const auto rule(ircd::string(e.what_));
+	fmt::snprintf(buf, sizeof(buf),
+	              "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+	              between(rule, "<", ">"),
+	              ssize_t(e.last - e.first),
+	              string_view{e.first, e.last});
 
 	throw error(code::BAD_REQUEST, buf);
 }
@@ -608,7 +504,7 @@ ircd::http::line::response::response(const line &line)
 {
 	static const auto grammar
 	{
-		parser.response_line
+		eps > parser.response_line
 	};
 
 	const char *start(line.data());
@@ -631,9 +527,12 @@ try
 catch(const qi::expectation_failure<const char *> &e)
 {
 	char buf[256];
-	snprintf(buf, sizeof(buf), "I require a valid %s starting at character %d.",
-	         ircd::string(e.what_).data(),
-	         int(e.last - e.first));
+	const auto rule(ircd::string(e.what_));
+	fmt::snprintf(buf, sizeof(buf),
+	              "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+	              between(rule, "<", ">"),
+	              ssize_t(e.last - e.first),
+	              string_view{e.first, e.last});
 
 	throw error(code::BAD_REQUEST, buf);
 }
