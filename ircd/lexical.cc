@@ -24,24 +24,30 @@
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
 
 ircd::string_view
-ircd::tokens_after(const string_view &str,
-                   const char *const &sep,
-                   const size_t &i)
-try
-{
-	const auto t(token(str, sep, i + 1));
-	return { t.data(), str.data() + str.size() };
-}
-catch(const std::out_of_range &e)
-{
-	return {};
-}
-
-ircd::string_view
 ircd::token_first(const string_view &str,
                   const char *const &sep)
 {
 	return token(str, sep, 0);
+}
+
+ircd::string_view
+ircd::tokens_after(const string_view &str,
+                   const char *const &sep,
+                   const size_t &i)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim, iter, type> view(str, d);
+
+	auto it(begin(view));
+	for(size_t j(0); it != end(view); ++it, j++)
+		if(j > i)
+			return string_view{it->data(), str.data() + str.size()};
+
+	return {};
 }
 
 ircd::string_view
