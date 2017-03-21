@@ -133,19 +133,14 @@ try
 		load_mode::rtld_now
 	};
 
-	log.debug("Attempting to load '%s' @ `%s'",
-	          filename.c_str(),
-	          path.string().c_str());
-
+	log.debug("Attempting to load '%s' @ `%s'", filename, path.string());
 	return std::make_shared<mod>(path, flags);
 }()}
 {
 }
 catch(const std::exception &e)
 {
-	log.error("Failed to load '%s': %s",
-	          name.c_str(),
-	          e.what());
+	log.error("Failed to load '%s': %s", name, e.what());
 	throw;
 }
 
@@ -270,11 +265,9 @@ ircd::mods::fullpath(const std::string &name)
 	if(path.empty())
 	{
 		for(const auto &str : why)
-			log.error("candidate for module '%s' failed: %s",
-			          name.c_str(),
-			          str.c_str());
+			log.error("candidate for module '%s' failed: %s", name, str);
 
-		throw error("No valid module by name `%s'", name.c_str());
+		throw error("No valid module by name `%s'", name);
 	}
 
 	return path;
@@ -317,9 +310,7 @@ ircd::mods::available()
 	}
 	catch(const filesystem::filesystem_error &e)
 	{
-		log.warning("Module path [%s]: %s",
-		            dir.c_str(),
-		            e.what());
+		log.warning("Module path [%s]: %s", dir, e.what());
 		continue;
 	}
 
@@ -375,20 +366,17 @@ bool
 ircd::mods::is_module(const filesystem::path &path)
 {
 	if(!exists(path))
-		throw filesystem_error("`%s' does not exist",
-		                       path.string().c_str());
+		throw filesystem_error("`%s' does not exist", path.string());
 
 	if(!is_regular_file(path))
-		throw filesystem_error("`%s' is not a file",
-		                       path.string().c_str());
+		throw filesystem_error("`%s' is not a file", path.string());
 
 	const auto syms(symbols(path));
 	const auto &header_name(mapi::header_symbol_name);
 	const auto it(std::find(begin(syms), end(syms), header_name));
 	if(it == end(syms))
-		throw error("`%s': has no MAPI header (%s)",
-		            path.string().c_str(),
-		            header_name);
+		throw error("`%s': has no MAPI header (%s)", path.string(), header_name);
+
 	return true;
 }
 
@@ -449,12 +437,10 @@ ircd::mods::info(const filesystem::path &path,
                  F&& closure)
 {
 	if(!exists(path))
-		throw filesystem_error("`%s' does not exist",
-		                       path.string().c_str());
+		throw filesystem_error("`%s' does not exist", path.string());
 
 	if(!is_regular_file(path))
-		throw filesystem_error("`%s' is not a file",
-		                       path.string().c_str());
+		throw filesystem_error("`%s' is not a file", path.string());
 
 	boost::dll::library_info info(path);
 	return closure(info);
@@ -494,14 +480,10 @@ ircd::mods::paths::add(const std::string &dir)
 	const path path(prefix_if_relative(dir));
 
 	if(!exists(path))
-		throw filesystem_error("path `%s' (%s) does not exist",
-		                       dir.c_str(),
-		                       path.string().c_str());
+		throw filesystem_error("path `%s' (%s) does not exist", dir, path.string());
 
 	if(!is_directory(path))
-		throw filesystem_error("path `%s' (%s) is not a directory",
-		                       dir.c_str(),
-		                       path.string().c_str());
+		throw filesystem_error("path `%s' (%s) is not a directory", dir, path.string());
 
 	if(added(dir))
 		return false;
@@ -586,17 +568,13 @@ try
 	&handle.get<mapi::header>(mapi::header_symbol_name)
 }
 {
-	log.debug("Loaded static segment of '%s' @ `%s'",
-	          name().c_str(),
-	          path.string().c_str());
+	log.debug("Loaded static segment of '%s' @ `%s'", name(), path.string());
 
 	if(unlikely(!header))
 		throw error("Unexpected null header");
 
 	if(header->magic != mapi::MAGIC)
-		throw error("Bad magic [%04x] need: [%04x]",
-		            header->magic,
-		            mapi::MAGIC);
+		throw error("Bad magic [%04x] need: [%04x]", header->magic, mapi::MAGIC);
 
 	// Set some basic metadata
 	auto &meta(header->meta);
@@ -610,9 +588,9 @@ try
 	// Without init exception, the module is now considered loaded.
 	loaded.emplace(name(), this);
 	log.info("Loaded module %s v%u \"%s\"",
-	         name().c_str(),
+	         name(),
 	         header->version,
-	         description().size()? description().c_str() : "<no description>");
+	         description().size()? description() : "<no description>"s);
 }
 catch(const boost::system::system_error &e)
 {
@@ -628,9 +606,7 @@ ircd::mods::mod::~mod()
 noexcept try
 {
 	const auto name(this->name());
-	log.debug("Attempting unload module '%s' @ `%s'",
-	          name.c_str(),
-	          location().c_str());
+	log.debug("Attempting unload module '%s' @ `%s'", name, location());
 
 	const size_t erased(loaded.erase(name));
 	assert(erased == 1);
@@ -638,26 +614,21 @@ noexcept try
 	if(header->fini)
 		header->fini();
 
-	log.debug("Attempting static unload for '%s' @ `%s'",
-	          name.c_str(),
-	          location().c_str());
-
+	log.debug("Attempting static unload for '%s' @ `%s'", name, location());
 	mapi::static_destruction = false;
 	handle.unload();
 	assert(!handle.is_loaded());
 	if(!mapi::static_destruction)
 	{
-		log.error("Module \"%s\" is stuck and failing to unload.", name.c_str());
-		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
+		log.error("Module \"%s\" is stuck and failing to unload.", name);
+		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name);
 	} else {
-		log.info("Unloaded '%s'", name.c_str());
+		log.info("Unloaded '%s'", name);
 	}
 }
 catch(const std::exception &e)
 {
-	log::critical("Module @%p unload: %s",
-	              (const void *)this,
-	              e.what());
+	log::critical("Module @%p unload: %s", (const void *)this, e.what());
 
 	if(!ircd::debugmode)
 		return;
