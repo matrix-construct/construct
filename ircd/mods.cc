@@ -587,10 +587,35 @@ std::map<std::string, mod *> mod::loaded;
 ircd::mods::mod::mod(const filesystem::path &path,
                      const load_mode::type &type)
 try
-:handle
+:handle{[&path, &type]
 {
-	path, type
-}
+	const auto ours([]
+	{
+		log.critical("std::terminate() called during the static construction of a module.");
+
+		if(std::current_exception()) try
+		{
+			std::rethrow_exception(std::current_exception());
+		}
+		catch(const std::exception &e)
+		{
+			log.error("%s", e.what());
+		}
+	});
+
+	const auto theirs
+	{
+		std::get_terminate()
+	};
+
+	const scope reset{[&theirs]
+	{
+		std::set_terminate(theirs);
+	}};
+
+	std::set_terminate(ours);
+	return boost::dll::shared_library{path, type};
+}()}
 ,header
 {
 	&handle.get<mapi::header>(mapi::header_symbol_name)
