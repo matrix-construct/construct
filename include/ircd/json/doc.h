@@ -41,17 +41,17 @@ struct doc
 	using difference_type = ptrdiff_t;
 	using key_compare = std::less<member>;
 
-	bool contains(const string_view &) const;
-
 	const_iterator end() const;
 	const_iterator begin() const;
 
+	bool has(const string_view &name) const;
 	const_iterator find(const string_view &name) const;
 	size_t count() const;
 
 	string_view at(const string_view &name) const;
 	template<class T> T at(const string_view &name) const;
 	string_view operator[](const string_view &name) const;
+	template<class T = string_view> T get(const string_view &name, const T &def = T()) const;
 
 	explicit operator std::string() const;
 
@@ -115,6 +115,20 @@ struct doc::const_iterator
 
 } // namespace json
 } // namespace ircd
+
+template<class T>
+T
+ircd::json::doc::get(const string_view &name,
+                     const T &def)
+const try
+{
+	const string_view sv(operator[](name));
+	return !sv.empty()? lex_cast<T>(sv) : def;
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("'%s' must cast to type %s", name, typeid(T).name());
+}
 
 inline ircd::string_view
 ircd::json::doc::operator[](const string_view &name)
@@ -183,11 +197,10 @@ const
 }
 
 inline bool
-ircd::json::doc::contains(const string_view &s)
+ircd::json::doc::has(const string_view &name)
 const
 {
-	return s.begin() >= this->string_view::begin() &&
-	       s.end() <= this->string_view::end();
+	return find(name) != end();
 }
 
 inline bool
