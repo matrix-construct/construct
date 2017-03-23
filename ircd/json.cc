@@ -243,6 +243,23 @@ std::ostream &operator<<(std::ostream &, const obj &);
 } // namespace json
 } // namespace ircd
 
+namespace ircd {
+namespace db   {
+namespace json {
+
+std::string
+merge_operator(const string_view &key,
+               const std::pair<string_view, string_view> &delta)
+{
+	ircd::json::obj obj{delta.first};
+	obj += delta.second;
+	return obj;
+}
+
+} // namespace json
+} // namespace db
+} // namespace ircd
+
 ircd::json::printer::printer()
 {
 	const auto recursor([this](auto &a, auto &b, auto &c)

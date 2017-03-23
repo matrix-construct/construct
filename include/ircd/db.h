@@ -121,11 +121,12 @@ struct opts
 
 enum op
 {
-	PUT,
+	GET,
+	SET,
 	MERGE,
 	DELETE,
-	SINGLE_DELETE,
 	DELETE_RANGE,
+	SINGLE_DELETE,
 };
 
 struct delta
@@ -135,17 +136,21 @@ struct delta
 	:std::tuple<enum op, string_view, string_view>{op, key, val}
 	{}
 
-	delta(const string_view &key, const string_view &val, const enum op &op = op::PUT)
+	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
 	:std::tuple<enum op, string_view, string_view>{op, key, val}
 	{}
 };
+
+using merge_delta = std::pair<string_view, string_view>;
+using merge_function = std::function<std::string (const string_view &key, const merge_delta &)>;
+using update_function = std::function<std::string (const string_view &key, merge_delta &)>;
 
 struct handle
 {
 	struct const_iterator;
 
   private:
-	std::unique_ptr<struct meta> meta;
+	std::shared_ptr<struct meta> meta;
 	std::unique_ptr<rocksdb::DB> d;
 
   public:
@@ -160,9 +165,6 @@ struct handle
 	const_iterator cbegin(const gopts & = {});
 	const_iterator cend(const gopts & = {});
 
-	// Tests if key exists
-	bool has(const string_view &key, const gopts & = {});
-
 	// Perform a get into a closure. This offers a reference to the data with zero-copy.
 	void operator()(const string_view &key, const closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const closure &func);
@@ -170,6 +172,10 @@ struct handle
 	// Perform operations in a sequence as a single transaction.
 	void operator()(const delta &, const sopts & = {});
 	void operator()(const std::initializer_list<delta> &, const sopts & = {});
+	void operator()(const op &, const string_view &key, const string_view &val = {}, const sopts & = {});
+
+	// Tests if key exists
+	bool has(const string_view &key, const gopts & = {});
 
 	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
 	size_t get(const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
@@ -183,7 +189,7 @@ struct handle
 	// Remove data from the db. not_found is never thrown.
 	void del(const string_view &key, const sopts & = {});
 
-	handle(const std::string &name, const opts & = {});
+	handle(const std::string &name, const opts & = {}, merge_function = {});
 	handle();
 	handle(handle &&) noexcept;
 	handle &operator=(handle &&) noexcept;
@@ -195,6 +201,10 @@ struct handle::const_iterator
 	using key_type = string_view;
 	using mapped_type = string_view;
 	using value_type = std::pair<key_type, mapped_type>;
+	using pointer = value_type *;
+	using reference = value_type &;
+	using difference_type = size_t;
+	using iterator_category = std::bidirectional_iterator_tag;
 
   private:
 	struct state;
@@ -227,8 +237,6 @@ struct handle::const_iterator
 	~const_iterator() noexcept;
 };
 
-void write(handle &, const string_view &key, const json::doc &obj, const sopts & = {});
-
 handle::const_iterator begin(handle &);
 handle::const_iterator end(handle &);
 
@@ -241,6 +249,24 @@ struct init
 // db subsystem has its own SNOMASK'ed logging facility.
 extern struct log::log log;
 
+} // namespace db
+} // namespace ircd
+
+namespace ircd {
+namespace db   {
+namespace json {
+
+std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
+
+struct obj
+:handle
+{
+	obj(const std::string &name, const opts &opts = {})
+	:handle{name, opts, merge_operator}
+	{}
+};
+
+} // namespace json
 } // namespace db
 } // namespace ircd
 
