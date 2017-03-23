@@ -129,6 +129,14 @@ template<size_t i,
          class func,
          class... args>
 typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
+for_each(std::tuple<args...> &t,
+         func&& f)
+{}
+
+template<size_t i,
+         class func,
+         class... args>
+typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
 for_each(const std::tuple<args...> &t,
          func&& f)
 {}
@@ -144,6 +152,17 @@ for_each(const std::tuple<args...> &t,
 	for_each<i+1>(t, std::forward<func>(f));
 }
 
+template<size_t i = 0,
+         class func,
+         class... args>
+typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, void>::type
+for_each(std::tuple<args...> &t,
+         func&& f)
+{
+	f(std::get<i>(t));
+	for_each<i+1>(t, std::forward<func>(f));
+}
+
 
 //
 // Iteration of a tuple until() style: your closure returns true to continue, false
@@ -153,10 +172,30 @@ template<size_t i,
          class func,
          class... args>
 typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, bool>::type
+until(std::tuple<args...> &t,
+      func&& f)
+{
+	return true;
+}
+
+template<size_t i,
+         class func,
+         class... args>
+typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, bool>::type
 until(const std::tuple<args...> &t,
       func&& f)
 {
 	return true;
+}
+
+template<size_t i = 0,
+         class func,
+         class... args>
+typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::type
+until(std::tuple<args...> &t,
+      func&& f)
+{
+	return f(std::get<i>(t))? until<i+1>(t, std::forward<func>(f)) : false;
 }
 
 template<size_t i = 0,
