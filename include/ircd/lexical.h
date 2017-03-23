@@ -71,7 +71,7 @@ template<> string_view lex_cast(int8_t, char *const &buf, const size_t &max);
 template<> string_view lex_cast(bool, char *const &buf, const size_t &max);
 
 // Circular static thread_local buffer
-const size_t LEX_CAST_BUFS {8};
+const size_t LEX_CAST_BUFS {256}; // plenty
 template<class T> string_view lex_cast(const T &t);
 
 //
@@ -149,12 +149,18 @@ char *strip_colour(char *string);
 char *strip_unprintable(char *string);
 char *reconstruct_parv(int parc, const char **parv);
 
-string_view chomp(const string_view &str, const string_view &c = " "s);
+string_view chomp(const string_view &str, const char &c = '\n');
+string_view chomp(const string_view &str, const string_view &c);
+string_view strip(const string_view &str, const char &c = ' ');
+string_view strip(const string_view &str, const string_view &c);
+string_view lstrip(const string_view &str, const char &c = ' ');
+string_view lstrip(const string_view &str, const string_view &c);
 std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
 std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
 std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
 std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim);
-string_view between(const string_view &str, const string_view &a = "("s, const string_view &b = ")"s);
+string_view between(const string_view &str, const string_view &a, const string_view &b);
+string_view between(const string_view &str, const char &a = '(', const char &b = ')');
 bool endswith(const string_view &str, const string_view &val);
 bool endswith(const string_view &str, const char &val);
 template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
@@ -228,6 +234,14 @@ ircd::between(const string_view &str,
 	return split(split(str, a).second, b).first;
 }
 
+inline ircd::string_view
+ircd::between(const string_view &str,
+              const char &a,
+              const char &b)
+{
+	return split(split(str, a).second, b).first;
+}
+
 inline std::pair<ircd::string_view, ircd::string_view>
 ircd::rsplit(const string_view &str,
              const string_view &delim)
@@ -297,8 +311,46 @@ ircd::split(const string_view &str,
 }
 
 inline ircd::string_view
+ircd::lstrip(const string_view &str,
+             const char &c)
+{
+	const auto pos(str.find_first_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+}
+
+inline ircd::string_view
+ircd::lstrip(const string_view &str,
+             const string_view &c)
+{
+	const auto pos(str.find_first_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+}
+
+inline ircd::string_view
+ircd::strip(const string_view &str,
+            const string_view &c)
+{
+	return chomp(str, c);
+}
+
+inline ircd::string_view
+ircd::strip(const string_view &str,
+            const char &c)
+{
+	return chomp(str, c);
+}
+
+inline ircd::string_view
 ircd::chomp(const string_view &str,
             const string_view &c)
+{
+	const auto pos(str.find_last_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+}
+
+inline ircd::string_view
+ircd::chomp(const string_view &str,
+            const char &c)
 {
 	const auto pos(str.find_last_not_of(c));
 	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
