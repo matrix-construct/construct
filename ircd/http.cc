@@ -42,7 +42,7 @@ using qi::raw;
 using qi::attr;
 using qi::eps;
 
-std::map<code, std::string> reason
+std::map<code, string_view> reason
 {
 	{ code::CONTINUE,                            "Continue"s                                       },
 	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"s                            },
@@ -454,7 +454,6 @@ ircd::http::content::content(parse::capstan &pc,
 	const size_t have(std::min(pc.unparsed(), length));
 	size_t remain(length - have);
 	pc.read -= have;
-
 	while(remain)
 	{
 		char *start(buf);

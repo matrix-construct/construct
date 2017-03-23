@@ -55,7 +55,7 @@ enum code
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
 };
 
-extern std::map<code, std::string> reason;
+extern std::map<code, string_view> reason;
 enum code status(const string_view &);
 
 struct error

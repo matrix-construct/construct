@@ -531,7 +531,7 @@ struct string_view
 :std::string_view
 {
 	// (non-standard) our faux insert stub
-	void insert(const iterator &, const char &) { assert(1); } //XXX
+	void insert(const iterator &, const char &) { assert(0); } //XXX
 
 	// (non-standard) our iterator-based assign
 	string_view &assign(const char *const &begin, const char *const &end)

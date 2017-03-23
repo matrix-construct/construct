@@ -37,10 +37,10 @@ struct context
 {
 	enum flags
 	{
-		POST            = 0x0001,   // Defers spawn with an ios.post()
-		DISPATCH        = 0x0002,   // (Defers) spawn with an ios.dispatch()
-		DETACH          = 0x0010,   // Context deletes itself; see struct context constructor notes
-		INTERRUPTED     = 0x0020,   // Marked
+		POST            = 1U << 0,   // Defers spawn with an ios.post()
+		DISPATCH        = 1U << 1,   // (Defers) spawn with an ios.dispatch()
+		DETACH          = 1U << 2,   // Context deletes itself; see struct context constructor notes
+		INTERRUPTED     = 1U << 3,   // Marked
 	};
 
   private:
