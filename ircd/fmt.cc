@@ -58,11 +58,11 @@ struct parser
 {
 	template<class R = unused_type> using rule = qi::rule<const char *, R>;
 
-	const rule<> specsym           { lit(SPECIFIER)                        ,"format specifier" };
-	const rule<> specterm          { char_(SPECIFIER_TERMINATOR)      ,"specifier termination" };
+	const rule<> specsym           { lit(SPECIFIER)                            ,"format specifier" };
+	const rule<> specterm          { lit(SPECIFIER_TERMINATOR)            ,"specifier termination" };
 	const rule<string_view> name
 	{
-		raw[repeat(1,14)[char_("A-Za-z")]] >> -specterm
+		raw[repeat(1,14)[char_("A-Za-z")]]
 		,"specifier name"
 	};
 
@@ -71,11 +71,13 @@ struct parser
 	parser()
 	:parser::base_type{spec}
 	{
-		spec %= specsym >> -char_("+-") >> -int_ >> name[([]
-		(const auto &str, auto &ctx, auto &valid)
+		static const auto is_valid([]
+		(const auto &str, auto &, auto &valid)
 		{
 			valid = is_specifier(str);
-		})];
+		});
+
+		spec %= specsym >> -char_("+-") >> -int_ >> name[is_valid] >> -specterm;
 	}
 }
 const parser;
@@ -255,7 +257,7 @@ fmt::snprintf::argument(const arg &val)
 	if(qi::parse(fstart, fend, parser, spec))
 		handle_specifier(out, remaining(), idx++, spec, val);
 
-	fstop = fstart++;
+	fstop = fstart;
 	if(fstop < fend)
 	{
 		fstart = strchr(fstart, SPECIFIER);
@@ -291,9 +293,7 @@ fmt::specifier::specifier(const std::initializer_list<string_view> &names)
 {
 	for(const auto &name : this->names)
 		if(is_specifier(name))
-			throw error("Specifier '%c%s' already registered\n",
-			            SPECIFIER,
-			            name);
+			throw error("Specifier '%s' already registered\n", name);
 
 	for(const auto &name : this->names)
 		_specifiers.emplace(name, this);
@@ -323,23 +323,20 @@ try
 	const auto &type(get<1>(val));
 	const auto &handler(*specifiers().at(spec.name));
 	if(!handler(out, max, spec, val))
-		throw invalid_type("`%s' for format specifier '%c%s' for argument #%u",
+		throw invalid_type("`%s' for format specifier '%s' for argument #%u",
 		                   type.name(),
-		                   SPECIFIER,
 		                   spec.name,
 		                   idx);
 }
 catch(const std::out_of_range &e)
 {
-	throw invalid_format("Unhandled specifier `%c%s' for argument #%u in format string",
-	                     SPECIFIER,
+	throw invalid_format("Unhandled specifier `%s' for argument #%u in format string",
 	                     spec.name,
 	                     idx);
 }
 catch(const illegal &e)
 {
-	throw illegal("Specifier `%c%s' for argument #%u: %s",
-	              SPECIFIER,
+	throw illegal("Specifier `%s' for argument #%u: %s",
 	              spec.name,
 	              idx,
 	              e.what());
@@ -656,8 +653,13 @@ fmt::generate_string(char *&out,
 	}
 	else if(type == typeid(const char *))
 	{
-		const char *const str{*reinterpret_cast<const char *const *const>(ptr)};
+		const char *const &str{*reinterpret_cast<const char *const *const>(ptr)};
 		return karma::generate(out, gen, string_view{str});
+	}
+	else if(type == typeid(std::exception))
+	{
+		const auto &e{*reinterpret_cast<const std::exception *>(ptr)};
+		return karma::generate(out, gen, string_view{e.what()});
 	}
 
 	// This for string literals which have unique array types depending on their size.
