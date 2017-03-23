@@ -73,6 +73,13 @@ static void open(const facility &fac);
 static void prefix(const facility &fac, const char *const &date);
 static void suffix(const facility &fac);
 
+const auto main_thread_id
+{
+	std::this_thread::get_id()
+};
+
+void thread_assertion();
+
 } // namespace log
 } // namespace ircd
 
@@ -265,6 +272,8 @@ void
 log::slog(const facility &fac,
           const std::function<void (std::ostream &)> &closure)
 {
+	void thread_assertion();
+
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
 		return;
 
@@ -367,7 +376,6 @@ log::reflect(const facility &f)
 	return "??????";
 }
 
-
 const char *
 ircd::smalldate(const time_t &ltime)
 {
@@ -386,4 +394,11 @@ ircd::smalldate(const time_t &ltime)
 	         lt->tm_min);
 
 	return buf;
+}
+
+void
+ircd::log::thread_assertion()
+{
+	// Trying to log from another thread is not yet allowed
+	assert(std::this_thread::get_id() == main_thread_id);
 }
