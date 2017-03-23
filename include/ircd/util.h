@@ -626,11 +626,11 @@ syscall(function&& f,
 // exceptions and logger et al in their respective translation units rather than the header
 // files.
 //
-// Limitations: The choice of a fixed array of 8 is because std::initializer_list doesn't
+// Limitations: The choice of a fixed array of 12 is because std::initializer_list doesn't
 // seem to work and other containers may be heavy in this context.
 //
 struct va_rtti
-:std::array<std::pair<const void *, const std::type_info *>, 8>
+:std::array<std::pair<const void *, const std::type_info *>, 12>
 {
 	size_t argc;
 
@@ -641,7 +641,7 @@ struct va_rtti
 
 	template<class... Args>
 	va_rtti(Args&&... args)
-	:std::array<std::pair<const void *, const std::type_info *>, 8>
+	:std::array<std::pair<const void *, const std::type_info *>, 12>
 	{{
 		std::make_pair(std::addressof(args), std::addressof(typeid(Args)))...
 	}}
@@ -654,6 +654,7 @@ struct va_rtti
 	}
 };
 
+static_assert(sizeof(va_rtti) == 192 + 8, "");
 
 } // namespace util
 } // namespace ircd
