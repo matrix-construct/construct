@@ -26,6 +26,8 @@
 #include <rocksdb/perf_level.h>
 #include <rocksdb/listener.h>
 #include <rocksdb/statistics.h>
+#include <rocksdb/convenience.h>
+#include <rocksdb/env.h>
 
 namespace ircd {
 namespace db   {
@@ -69,6 +71,7 @@ struct meta
 :rocksdb::Statistics
 ,rocksdb::EventListener
 ,rocksdb::AssociativeMergeOperator
+,rocksdb::Logger
 {
 	std::string name;
 	std::string path;
@@ -101,6 +104,11 @@ struct meta
 	// AssociativeMergeOperator
 	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const override;
 	const char *Name() const override;
+
+	// Logger
+	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) override;
+	void Logv(const char *fmt, va_list ap) override;
+	void LogHeader(const char *fmt, va_list ap) override;
 
 	meta();
 	~meta() noexcept;
@@ -137,6 +145,12 @@ try
 	meta->path = path(name);
 	meta->opts = make_opts(opts);
 
+	// Setup logging;
+	meta->opts.info_log = meta;
+	meta->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
+	meta->opts.info_log_level = meta->GetInfoLogLevel();
+
+	meta->opts.create_missing_column_families = true;
 	meta->cols =
 	{
 		rocksdb::ColumnFamilyDescriptor { "default", meta->opts },
@@ -474,6 +488,61 @@ ircd::db::meta::meta()
 ircd::db::meta::~meta()
 noexcept
 {
+}
+
+static
+ircd::log::facility
+translate(const rocksdb::InfoLogLevel &level)
+{
+	switch(level)
+	{
+		// Treat all infomational messages from rocksdb as debug here for now.
+		// We can clean them up and make better reports for our users eventually.
+		default:
+		case rocksdb::InfoLogLevel::DEBUG_LEVEL:     return ircd::log::facility::DEBUG;
+		case rocksdb::InfoLogLevel::INFO_LEVEL:      return ircd::log::facility::DEBUG;
+
+		case rocksdb::InfoLogLevel::WARN_LEVEL:      return ircd::log::facility::WARNING;
+		case rocksdb::InfoLogLevel::ERROR_LEVEL:     return ircd::log::facility::ERROR;
+		case rocksdb::InfoLogLevel::FATAL_LEVEL:     return ircd::log::facility::CRITICAL;
+		case rocksdb::InfoLogLevel::HEADER_LEVEL:    return ircd::log::facility::NOTICE;
+	}
+}
+
+void
+ircd::db::meta::Logv(const char *const fmt,
+                     va_list ap)
+{
+	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
+}
+
+void
+ircd::db::meta::LogHeader(const char *const fmt,
+                          va_list ap)
+{
+	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
+}
+
+void
+ircd::db::meta::Logv(const rocksdb::InfoLogLevel level,
+                     const char *const fmt,
+                     va_list ap)
+{
+	if(level < GetInfoLogLevel())
+		return;
+
+	char buf[1024]; const auto len
+	{
+		std::vsnprintf(buf, sizeof(buf), fmt, ap)
+	};
+
+	const auto str
+	{
+		// RocksDB adds annoying leading whitespace to attempt to right-justify things and idc
+		lstrip(buf, ' ')
+	};
+
+	log(translate(level), "'%s': (rdb) %s", name, str);
 }
 
 const char *
