@@ -129,11 +129,11 @@ struct input
 
 	rule<int> type
 	{
-		(omit[object_begin]    >> attr(json::OBJECT))   |
-		(omit[array_begin]     >> attr(json::ARRAY))    |
-		(omit[quote]           >> attr(json::STRING))   |
-		(omit[number]          >> attr(json::NUMBER))   |
-		(omit[literal]         >> attr(json::LITERAL))
+		(omit[object_begin]    >> attr(json::OBJECT))  |
+		(omit[array_begin]     >> attr(json::ARRAY))   |
+		(omit[quote]           >> attr(json::STRING))  |
+		(omit[number >> eoi]   >> attr(json::NUMBER))  |
+		(omit[literal >> eoi]  >> attr(json::LITERAL))
 		,"type"
 	};
 
