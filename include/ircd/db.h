@@ -26,6 +26,7 @@
 namespace rocksdb
 {
 	struct DB;
+	struct ColumnFamilyHandle;
 }
 
 namespace ircd {
@@ -151,13 +152,13 @@ struct handle
 
   private:
 	std::shared_ptr<struct meta> meta;
-	std::unique_ptr<rocksdb::DB> d;
+	rocksdb::ColumnFamilyHandle *h;
 
   public:
 	using closure = std::function<void (const string_view &)>;
 
-	operator bool() const                        { return bool(d);                                 }
-	bool operator!() const                       { return !d;                                      }
+	operator bool() const                        { return bool(h);                                 }
+	bool operator!() const                       { return !h;                                      }
 
 	// Iterations
 	const_iterator lower_bound(const string_view &key, const gopts & = {});
@@ -189,7 +190,17 @@ struct handle
 	// Remove data from the db. not_found is never thrown.
 	void del(const string_view &key, const sopts & = {});
 
-	handle(const std::string &name, const opts & = {}, merge_function = {});
+	// Flush memory tables to disk (this column only).
+	void flush(const bool &blocking = false);
+
+	// Sync the write log (all columns)
+	void sync();
+
+	handle(const std::string &name,
+	       const std::string &column  = "default",
+	       const opts &               = {},
+	       merge_function             = {});
+
 	handle();
 	handle(handle &&) noexcept;
 	handle &operator=(handle &&) noexcept;
@@ -261,8 +272,10 @@ std::string merge_operator(const string_view &, const std::pair<string_view, str
 struct obj
 :handle
 {
-	obj(const std::string &name, const opts &opts = {})
-	:handle{name, opts, merge_operator}
+	obj(const std::string &name,
+	    const std::string &column = "default",
+	    const opts &opts = {})
+	:handle{name, column, opts, merge_operator}
 	{}
 };
 
