@@ -115,6 +115,10 @@ noexcept
 			delete this;
 	});
 
+	// Check for a precocious interrupt
+	if(unlikely(flags & context::INTERRUPTED))
+		return;
+
 	if(likely(bool(func)))
 		func();
 }
