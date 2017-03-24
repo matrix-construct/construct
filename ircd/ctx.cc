@@ -103,10 +103,11 @@ noexcept
 
 	const scope atexit([this]
 	{
+		mark(prof::event::CUR_LEAVE);
+
 		if(adjoindre)
 			notify(*adjoindre);
 
-		mark(prof::event::CUR_LEAVE);
 		ircd::ctx::current = nullptr;
 		this->yc = nullptr;
 
