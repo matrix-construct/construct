@@ -31,6 +31,9 @@ namespace ircd {
 IRCD_EXCEPTION(ircd::error, bad_lex_cast)
 
 template<class T> bool try_lex_cast(const string_view &);
+template<> bool try_lex_cast<std::string>(const string_view &);       // stub always true
+template<> bool try_lex_cast<std::string_view>(const string_view &);  // stub always true
+template<> bool try_lex_cast<string_view>(const string_view &);       // stub always true
 template<> bool try_lex_cast<long double>(const string_view &);
 template<> bool try_lex_cast<double>(const string_view &);
 template<> bool try_lex_cast<ulong>(const string_view &);
@@ -43,7 +46,15 @@ template<> bool try_lex_cast<uint8_t>(const string_view &);
 template<> bool try_lex_cast<int8_t>(const string_view &);
 template<> bool try_lex_cast<bool>(const string_view &);
 
+template<class T> T lex_cast(std::string &);
+template<class T> T lex_cast(const std::string &);
+template<class T> T lex_cast(const std::string_view &);
 template<class T> T lex_cast(const string_view &);
+template<> std::string &lex_cast(std::string &);                          // trivial
+template<> std::string lex_cast(const std::string &);                     // trivial
+template<> std::string_view lex_cast(const std::string_view &);           // trivial
+template<> std::string lex_cast(const string_view &);                     // trivial
+template<> string_view lex_cast(const string_view &);                     // trivial
 template<> long double lex_cast(const string_view &);
 template<> double lex_cast(const string_view &);
 template<> ulong lex_cast(const string_view &);
@@ -58,6 +69,9 @@ template<> bool lex_cast(const string_view &);
 
 // User supplied destination buffer
 template<class T> string_view lex_cast(T, char *const &buf, const size_t &max);
+template<> string_view lex_cast(const std::string &, char *const &buf, const size_t &max);
+template<> string_view lex_cast(const std::string_view &, char *const &buf, const size_t &max);
+template<> string_view lex_cast(const string_view &, char *const &buf, const size_t &max);
 template<> string_view lex_cast(long double, char *const &buf, const size_t &max);
 template<> string_view lex_cast(double, char *const &buf, const size_t &max);
 template<> string_view lex_cast(ulong, char *const &buf, const size_t &max);
@@ -538,4 +552,123 @@ ircd::string_view
 ircd::lex_cast(const T &t)
 {
 	return lex_cast<T>(t, nullptr, 0);
+}
+
+template<>
+inline std::string
+ircd::lex_cast<std::string>(const string_view &s)
+{
+	return std::string{s};
+}
+
+template<class T>
+T
+ircd::lex_cast(const string_view &s)
+{
+	return s;
+}
+
+template<>
+inline std::string_view
+ircd::lex_cast<std::string_view>(const std::string_view &s)
+{
+	return s;
+}
+
+template<>
+__attribute__((warning("unnecessary lexical cast")))
+inline std::string
+ircd::lex_cast<std::string>(const std::string &s)
+{
+	return s;
+}
+
+template<class T>
+T
+ircd::lex_cast(const std::string &s)
+{
+	return lex_cast<T>(string_view{s});
+}
+
+template<>
+inline std::string &
+ircd::lex_cast(std::string &s)
+{
+	return s;
+}
+
+template<class T>
+T
+ircd::lex_cast(std::string &s)
+{
+	return lex_cast<T>(string_view{s});
+}
+
+template<>
+inline ircd::string_view
+ircd::lex_cast(const string_view &s,
+               char *const &buf,
+               const size_t &max)
+{
+	s.copy(buf, max);
+	return { buf, max };
+}
+
+template<>
+inline ircd::string_view
+ircd::lex_cast(const std::string_view &s,
+               char *const &buf,
+               const size_t &max)
+{
+	s.copy(buf, max);
+	return { buf, max };
+}
+
+template<>
+inline ircd::string_view
+ircd::lex_cast(const std::string &s,
+               char *const &buf,
+               const size_t &max)
+{
+	s.copy(buf, max);
+	return { buf, max };
+}
+
+template<class T>
+__attribute__((error("unsupported lexical cast")))
+ircd::string_view
+ircd::lex_cast(T t,
+               char *const &buf,
+               const size_t &max)
+{
+	assert(0);
+}
+
+template<>
+inline bool
+ircd::try_lex_cast<ircd::string_view>(const string_view &)
+{
+	return true;
+}
+
+template<>
+inline bool
+ircd::try_lex_cast<std::string_view>(const string_view &)
+{
+	return true;
+}
+
+template<>
+inline bool
+ircd::try_lex_cast<std::string>(const string_view &s)
+{
+	return true;
+}
+
+template<class T>
+__attribute__((error("unsupported lexical cast")))
+bool
+ircd::try_lex_cast(const string_view &s)
+{
+	assert(0);
 }
