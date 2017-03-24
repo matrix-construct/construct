@@ -24,6 +24,7 @@
  */
 
 #include <ircd/socket.h>
+#include <ircd/listen.h>
 #include <ircd/ctx/continuation.h>
 
 namespace ircd
@@ -103,10 +104,46 @@ try
 	//json::test();
 	//exit(0);
 
-	module listener("listen.so");
 	module client_versions("client_versions.so");
 	module client_register("client_register.so");
 	module client_login("client_login.so");
+
+	listener matrics
+	{
+		std::string { json::obj
+		{
+			{ "name",    "Chat Matrix" },
+			{ "host",    "127.0.0.1"   },
+			{ "port",     6667         },
+			{
+				"ssl",
+				{
+					{
+						"certificate",
+						{
+							{
+								"file",
+								{
+									{ "pem", "/home/jason/cdc.z.cert" }
+								}
+							}
+						}
+					},
+					{
+						"private_key",
+						{
+							{
+								"file",
+								{
+									{ "pem", "/home/jason/cdc.z.key" }
+								}
+							}
+						}
+					}
+				}
+			}
+		}}
+	};
 
 	// This is the main program loop. Right now all it does is sleep until notified
 	// to shutdown, but it can do other things eventually. Other subsystems may have

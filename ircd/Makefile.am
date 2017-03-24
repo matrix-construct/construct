@@ -43,9 +43,10 @@ libircd_la_SOURCES =   \
 	locale.cc          \
 	http.cc            \
 	json.cc            \
-	matrix.cc          \
 	parse.cc           \
-	conf.cc
+	conf.cc            \
+	listen.cc          \
+	matrix.cc
 
 if JS
 libircd_la_SOURCES +=  \

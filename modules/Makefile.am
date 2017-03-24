@@ -34,6 +34,4 @@ client_module_LTLIBRARIES =     \
 	client/client_login.la
 
 moduledir=@moduledir@
-listen_la_SOURCES = listen.cc
 module_LTLIBRARIES = \
-	listen.la
