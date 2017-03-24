@@ -350,7 +350,7 @@ fmt::visit_type(const arg &val,
 {
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
-	return type == typeid(T)? closure(*reinterpret_cast<const T *>(ptr)) : false;
+	return type == typeid(T)? closure(*static_cast<const T *>(ptr)) : false;
 }
 
 bool
@@ -383,7 +383,7 @@ const
 
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
-	const void *const p(*reinterpret_cast<const void *const *>(ptr));
+	const void *const p(*static_cast<const void *const *>(ptr));
 	return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], uintptr_t(p));
 }
 
@@ -419,7 +419,7 @@ const
 	const auto &type(get<1>(val));
 	if(type == typeid(const char))
 	{
-		const auto &c(*reinterpret_cast<const char *>(ptr));
+		const auto &c(*static_cast<const char *>(ptr));
 		karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], c);
 		return true;
 	}
@@ -638,27 +638,27 @@ fmt::generate_string(char *&out,
 	const auto &type(get<1>(val));
 	if(type == typeid(ircd::string_view))
 	{
-		const auto &str(*reinterpret_cast<const ircd::string_view *>(ptr));
+		const auto &str(*static_cast<const ircd::string_view *>(ptr));
 		return karma::generate(out, gen, str);
 	}
 	else if(type == typeid(std::string_view))
 	{
-		const auto &str(*reinterpret_cast<const std::string_view *>(ptr));
+		const auto &str(*static_cast<const std::string_view *>(ptr));
 		return karma::generate(out, gen, str);
 	}
 	else if(type == typeid(std::string))
 	{
-		const auto &str(*reinterpret_cast<const std::string *>(ptr));
+		const auto &str(*static_cast<const std::string *>(ptr));
 		return karma::generate(out, gen, string_view{str});
 	}
 	else if(type == typeid(const char *))
 	{
-		const char *const &str{*reinterpret_cast<const char *const *const>(ptr)};
+		const char *const &str{*static_cast<const char *const *const>(ptr)};
 		return karma::generate(out, gen, string_view{str});
 	}
 	else if(type == typeid(std::exception))
 	{
-		const auto &e{*reinterpret_cast<const std::exception *>(ptr)};
+		const auto &e{*static_cast<const std::exception *>(ptr)};
 		return karma::generate(out, gen, string_view{e.what()});
 	}
 
@@ -666,6 +666,6 @@ fmt::generate_string(char *&out,
 	// There is no reasonable way to match them. The best that can be hoped for is the
 	// grammar will fail gracefully (most of the time) or not print something bogus when
 	// it happens to be legal.
-	const auto &str(reinterpret_cast<const char *>(ptr));
+	const auto &str(static_cast<const char *>(ptr));
 	return karma::generate(out, gen, string_view{str});
 }
