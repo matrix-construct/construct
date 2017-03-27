@@ -35,6 +35,7 @@ class dock
 	std::deque<ctx *> q;
 
 	void remove_self();
+	void notify(ctx &) noexcept;
 
   public:
 	auto size() const                            { return q.size();                                }
@@ -73,7 +74,7 @@ noexcept
 	auto c(q.front());
 	q.pop_front();
 	q.emplace_back(c);
-	ircd::ctx::notify(*c);
+	notify(*c);
 }
 
 inline void
@@ -83,13 +84,17 @@ noexcept
 	if(q.empty())
 		return;
 
-	ircd::ctx::notify(*q.front());
+	notify(*q.front());
 }
 
 inline void
 dock::notify_all()
 noexcept
 {
+	// We copy the queue and post all notifications without requesting direct context switches.
+	// This ensures everyone gets notified in a single transaction without any interleaving
+	// during this process.
+
 	const auto copy(q);
 	for(const auto &c : copy)
 		ircd::ctx::notify(*c);
@@ -188,6 +193,20 @@ dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
+}
+
+inline void
+dock::notify(ctx &ctx)
+noexcept
+{
+	// This branch handles dock.notify() being called from outside the context system.
+	// If a context is currently running we can make a direct context-switch with
+	// yield(ctx), otherwise notify(ctx) enqueues the context.
+
+	if(current)
+		ircd::ctx::yield(ctx);
+	else
+		ircd::ctx::notify(ctx);
 }
 
 inline void

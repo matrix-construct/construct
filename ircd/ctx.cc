@@ -49,8 +49,13 @@ struct ctx
 
 	bool finished() const                        { return yc == nullptr;                           }
 	bool started() const                         { return bool(yc);                                }
-	bool wait();                                 // suspend this context (returns on resume)
-	void wake();                                 // queue resumption of this context (use note())
+
+	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
+	void interruption_point();                   // throws interrupted
+
+	bool wait();                                 // yield context to ios queue (returns on this resume)
+	void jump();                                 // jump to context directly (returns on your resume)
+	void wake();                                 // jump to context by queueing with ios (use note())
 	bool note();                                 // properly request wake()
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
@@ -123,6 +128,52 @@ noexcept
 		func();
 }
 
+void
+ircd::ctx::ctx::jump()
+{
+	assert(this->yc);
+	assert(current != this);                  // can't jump to self
+
+	auto &yc(*this->yc);
+	auto &target(*yc.coro_.lock());
+	{
+		// Notes must be cleared before the continuation{}
+		notes = 0;
+
+		// Jump from the currently running context (source) to *this (target)
+		// with continuation of source after target
+		const continuation continuation{current};
+		target();
+	}
+
+	assert(current != this);
+	assert(notes = 1); // notes = 1; set by continuation dtor on wakeup
+
+	interruption_point();
+}
+
+bool
+ircd::ctx::ctx::wait()
+{
+	namespace errc = boost::system::errc;
+
+	assert(this->yc);
+	assert(current == this);
+
+	if(--notes > 0)
+		return false;
+
+	boost::system::error_code ec;
+	alarm.async_wait(boost::asio::yield_context(continuation(this))[ec]);
+
+	assert(ec == errc::operation_canceled || ec == errc::success);
+	assert(current == this);
+	assert(notes == 1);  // notes = 1; set by continuation dtor on wakeup
+
+	interruption_point();
+	return true;
+}
+
 bool
 ircd::ctx::ctx::note()
 {
@@ -144,29 +195,25 @@ catch(const boost::system::system_error &e)
 	ircd::log::error("ctx::wake(%p): %s", this, e.what());
 }
 
-bool
-ircd::ctx::ctx::wait()
+void
+ircd::ctx::ctx::interruption_point()
 {
-	if(--notes > 0)
-		return false;
+	if(unlikely(interruption_point(std::nothrow)))
+		throw interrupted("ctx(%p) '%s'", (const void *)this, name);
+}
 
-	boost::system::error_code ec;
-	alarm.async_wait(boost::asio::yield_context(continuation(this))[ec]);
-
-	assert(ec == boost::system::errc::operation_canceled ||
-	       ec == boost::system::errc::success);
-
+bool
+ircd::ctx::ctx::interruption_point(std::nothrow_t)
+{
 	// Interruption shouldn't be used for normal operation,
 	// so please eat this branch misprediction.
 	if(unlikely(flags & context::INTERRUPTED))
 	{
 		mark(prof::event::CUR_INTERRUPT);
 		flags &= ~context::INTERRUPTED;
-		throw interrupted("ctx(%p)::wait()", (const void *)this);
+		return true;
 	}
-
-	// notes = 1; set by continuation dtor on wakeup
-	return true;
+	else return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -183,7 +230,7 @@ ircd::ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
 
 bool
 ircd::ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
-                const std::nothrow_t &)
+                      const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_at(tp);
@@ -194,7 +241,7 @@ ircd::ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
 
 std::chrono::microseconds
 ircd::ctx::wait(const std::chrono::microseconds &duration,
-          const std::nothrow_t &)
+                const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_from_now(duration);
@@ -231,6 +278,13 @@ ircd::ctx::yield()
 		wait();
 	}
 	while(!done);
+}
+
+void
+ircd::ctx::yield(ctx &ctx)
+{
+	assert(current);
+	ctx.jump();
 }
 
 bool

@@ -25,28 +25,38 @@
 #pragma once
 #define HAVE_IRCD_CTX_CTX_H
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// low-level ctx interface exposure
+//
+
 namespace ircd {
 namespace ctx  {
 
 struct ctx;
 
-//
-// low-level ctx interface exposure
-//
 const uint64_t &id(const ctx &);                 // Unique ID for context 
 string_view name(const ctx &);                   // User's optional label for context
 const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
 bool finished(const ctx &);                      // Context function returned (or exception).
 bool started(const ctx &);                       // Context was ever entered.
 void interrupt(ctx &);                           // Interrupt the context for termination.
-bool notify(ctx &);                              // Increment the semaphore (only library ppl need this)
+bool notify(ctx &);                              // Queue context switch (only library ppl need this)
+void yield(ctx &);                               // Direct context switch (only library ppl need this)
 
+} // namespace ctx
+} // namespace ircd
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // "this_context" interface relevant to the currently running context
 //
+
+namespace ircd {
+namespace ctx  {
+
 extern __thread struct ctx *current;             // Always set to the currently running context or null
 
-// low-level fundamentals
 ctx &cur();                                      // Convenience for *current (try to use this instead)
 void yield();                                    // Allow other contexts to run before returning.
 void wait();                                     // Returns when context notified.

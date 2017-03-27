@@ -73,7 +73,7 @@ mutex::unlock()
 	m = false;
 
 	if(next)
-		notify(*next);
+		yield(*next);
 }
 
 inline void
