@@ -39,6 +39,7 @@ struct ctx
 	uint64_t id;                                 // Unique runtime ID
 	const char *name;                            // User given name (optional)
 	context::flags flags;                        // User given flags
+	boost::asio::io_service::strand strand;      // mutex/serializer
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
 	boost::asio::yield_context *yc;              // boost interface
 	uintptr_t stack_base;                        // assigned when spawned
@@ -85,6 +86,7 @@ ircd::ctx::ctx::ctx(const char *const &name,
 :id{++id_ctr}
 ,name{name}
 ,flags{flags}
+,strand{*ios}
 ,alarm{*ios}
 ,yc{nullptr}
 ,stack_base{0}
@@ -383,7 +385,7 @@ ircd::ctx::context::context(const char *const &name,
 			boost::coroutines::stack_unwind
 		};
 
-		boost::asio::spawn(*ios, std::move(bound), attrs);
+		boost::asio::spawn(c->strand, std::move(bound), attrs);
 	});
 
 	// The current context must be reasserted if spawn returns here
@@ -762,10 +764,16 @@ noexcept
 void
 ircd::ctx::ole::offload(const std::function<void ()> &func)
 {
+	bool done(false);
+	auto *const context(current);
+	const auto notifier([&context, &done]
+	{
+		done = true;
+		notify(*context);
+	});
+
 	std::exception_ptr eptr;
-	auto &context(cur());
-	std::atomic<bool> done{false};
-	auto closure([&func, &eptr, &context, &done]
+	auto closure([&func, &eptr, &context, &notifier]
 	() noexcept
 	{
 		try
@@ -777,15 +785,14 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 			eptr = std::current_exception();
 		}
 
-		done.store(true, std::memory_order_release);
-		notify(context);
+		context->strand.post(notifier);
 	});
 
 	push(std::move(closure)); do
 	{
 		wait();
 	}
-	while(!done.load(std::memory_order_consume));
+	while(!done);
 
 	if(eptr)
 		std::rethrow_exception(eptr);
