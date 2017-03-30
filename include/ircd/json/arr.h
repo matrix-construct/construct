@@ -37,8 +37,6 @@ struct arr
 	using size_type = size_t;
 	using difference_type = ptrdiff_t;
 
-	bool contains(const string_view &) const;
-
 	const_iterator end() const;
 	const_iterator begin() const;
 
@@ -94,14 +92,6 @@ struct arr::const_iterator
 
 } // namespace json
 } // namespace ircd
-
-inline bool
-ircd::json::arr::contains(const string_view &s)
-const
-{
-	return s.begin() >= this->string_view::begin() &&
-	       s.end() <= this->string_view::end();
-}
 
 inline ircd::string_view
 ircd::json::arr::operator[](const size_t &i)

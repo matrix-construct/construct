@@ -59,16 +59,19 @@ struct obj
 	void erase(const const_iterator &s);
 	bool erase(const string_view &name);
 
-	explicit operator std::string() const;
+	operator std::string() const;
 
-	IRCD_OVERLOAD(merge)
+	IRCD_OVERLOAD(recursive)
 
 	obj(std::initializer_list<member>);
-	obj(const doc &d, const bool &recurse = false);
-	obj(merge_t, const std::initializer_list<doc> &);
+	obj(const doc &d);
+	obj(recursive_t, const doc &d);
 	obj() = default;
 	obj(obj &&) = default;
 	obj(const obj &) = delete;
+
+	friend obj &operator+=(obj &, const doc &);      // integration
+	friend obj operator+(const doc &, const doc &);  // integral
 
 	friend doc serialize(const obj &, char *&start, char *const &stop);
 	friend size_t print(char *const &buf, const size_t &max, const obj &);
@@ -101,7 +104,7 @@ struct obj::const_iterator
 	using pointer = value_type *;
 	using reference = value_type &;
 	using difference_type = size_t;
-	using iterator_category = std::forward_iterator_tag;
+	using iterator_category = std::bidirectional_iterator_tag;
 
   protected:
 	friend class obj;
@@ -119,6 +122,7 @@ struct obj::const_iterator
 	value_type &operator*() const                   { return it.operator*();                       }
 
 	const_iterator &operator++()                    { ++it; return *this;                          }
+	const_iterator &operator--()                    { --it; return *this;                          }
 
 	friend bool operator==(const const_iterator &a, const const_iterator &b);
 	friend bool operator!=(const const_iterator &a, const const_iterator &b);

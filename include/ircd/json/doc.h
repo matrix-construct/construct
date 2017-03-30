@@ -200,7 +200,16 @@ inline bool
 ircd::json::doc::has(const string_view &name)
 const
 {
-	return find(name) != end();
+	const auto p(split(name, '.'));
+	const auto it(find(p.first));
+	if(it == end())
+		return false;
+
+	if(p.second.empty())
+		return true;
+
+	const doc d(it->second);
+	return d.has(p.second);
 }
 
 inline bool
