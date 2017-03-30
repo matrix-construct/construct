@@ -132,13 +132,6 @@ std::forward_list<std::string> available();
 bool available(const std::string &name);
 bool loaded(const std::string &name);
 
-// Initialization and destruction singleton held by ircd::main()
-struct init
-{
-	init();
-	~init() noexcept;
-};
-
 } // namespace mods
 } // namespace ircd
 

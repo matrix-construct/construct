@@ -196,7 +196,7 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 {
 }
 
-// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::line object.
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::line object.
 // The top rule is inherited and then specified as grammar::line, which is compatible
 // with an rfc1459::line object.
 //
@@ -207,7 +207,7 @@ struct head
 }
 extern const head;
 
-// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::tape object.
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::tape object.
 // The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
 //
 struct capstan

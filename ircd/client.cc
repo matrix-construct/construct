@@ -156,6 +156,7 @@ ircd::remote_addr(const client &client)
 ircd::http::response::write_closure
 ircd::write_closure(client &client)
 {
+	// returns a function that can be called to send an iovector of data to a client
 	return [&client](const const_buffers &iov)
 	{
 		write(*client.sock, iov);
@@ -177,6 +178,7 @@ ircd::read_closure(client &client)
 		}
 	});
 
+	// Returns a function the parser can call when it wants more data
 	return [&client](char *&start, char *const &stop)
 	{
 		try

@@ -107,13 +107,13 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const fmt = " ", args&&... ap) noexcept                  \
+    name(const char *const &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
     }                                                                         \
                                                                               \
-    name(const generate_skip_t) noexcept                                      \
+    name(generate_skip_t) noexcept                                            \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \
@@ -124,13 +124,13 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const fmt = " ", args&&... ap) noexcept                  \
-    :parent{generate_skip_t}                                                  \
+    name(const char *const &fmt = " ", args&&... ap) noexcept                 \
+    :parent{generate_skip}                                                    \
     {                                                                         \
         generate(fmt, va_rtti{std::forward<args>(ap)...});                    \
     }                                                                         \
                                                                               \
-    name(const generate_skip_t = {}) noexcept                                 \
+    name(generate_skip_t = {}) noexcept                                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \

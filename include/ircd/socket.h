@@ -39,8 +39,8 @@ IRCD_EXCEPTION(error, nxdomain)
 
 extern asio::ssl::context sslv23_client;
 
+std::string string(const ip::address &);
 ip::address address(const ip::tcp::endpoint &);
-std::string hostaddr(const ip::address &);
 std::string hostaddr(const ip::tcp::endpoint &);
 uint16_t port(const ip::tcp::endpoint &);
 
@@ -356,11 +356,11 @@ ircd::port(const ip::tcp::endpoint &ep)
 inline std::string
 ircd::hostaddr(const ip::tcp::endpoint &ep)
 {
-	return hostaddr(address(ep));
+	return string(address(ep));
 }
 
 inline std::string
-ircd::hostaddr(const ip::address &addr)
+ircd::string(const ip::address &addr)
 {
 	return addr.to_string();
 }

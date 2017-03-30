@@ -656,11 +656,6 @@ fmt::generate_string(char *&out,
 		const char *const &str{*static_cast<const char *const *const>(ptr)};
 		return karma::generate(out, gen, string_view{str});
 	}
-	else if(type == typeid(std::exception))
-	{
-		const auto &e{*static_cast<const std::exception *>(ptr)};
-		return karma::generate(out, gen, string_view{e.what()});
-	}
 
 	// This for string literals which have unique array types depending on their size.
 	// There is no reasonable way to match them. The best that can be hoped for is the

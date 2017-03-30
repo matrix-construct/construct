@@ -44,16 +44,9 @@ void interrupt(ctx &);                           // Interrupt the context for te
 bool notify(ctx &);                              // Queue context switch (only library ppl need this)
 void yield(ctx &);                               // Direct context switch (only library ppl need this)
 
-} // namespace ctx
-} // namespace ircd
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // "this_context" interface relevant to the currently running context
 //
-
-namespace ircd {
-namespace ctx  {
 
 extern __thread struct ctx *current;             // Always set to the currently running context or null
 

@@ -24,7 +24,7 @@
 #include "lgetopt.h"
 #include "charybdis.h"
 
-namespace path = ircd::path;
+namespace fs = ircd::fs;
 
 static void sigfd_handler(const boost::system::error_code &, int);
 static bool startup_checks();
@@ -95,7 +95,7 @@ try
 		return 0;
 	}
 
-	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
+	const std::string confpath(configfile?: fs::get(fs::IRCD_CONF));
 	ircd::init(*ios, confpath);
 
 	sigs.add(SIGHUP);
@@ -166,7 +166,7 @@ try
 		throw ircd::error("Don't run ircd as root!!!");
 	#endif
 
-	path::chdir(path::get(path::PREFIX));
+	fs::chdir(fs::get(fs::PREFIX));
 	return true;
 }
 catch(const std::exception &e)

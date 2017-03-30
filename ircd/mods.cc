@@ -92,25 +92,10 @@ struct log::log log
 } // namespace mods
 } // namespace ircd
 
-ircd::mods::init::init()
-{
-}
-
-ircd::mods::init::~init()
-noexcept
-{
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // module
 //
-
-namespace ircd {
-namespace mods {
-
-} // namespace mods
-} // namespace ircd
 
 ircd::mods::module::module(const std::string &name)
 try
@@ -484,7 +469,7 @@ namespace mods {
 
 const filesystem::path modroot
 {
-	ircd::path::get(ircd::path::MODULES)
+	ircd::fs::get(ircd::fs::MODULES)
 };
 
 struct paths paths;
