@@ -16,9 +16,9 @@ AM_LDFLAGS += \
 	-Wl,-fuse-ld=gold \
 	-Wl,--shared \
 	-Wl,--export-dynamic \
-	-Wl,--no-allow-shlib-undefined \
-	-Wl,--no-gnu-unique
-#	-Wl,--no-undefined \
+	-Wl,--no-gnu-unique \
+	-Wl,--no-allow-shlib-undefined
+#	-Wl,--no-undefined
 #	-export-symbols-regex IRCD_MODULE*
 #	-export-symbols-regex *
 

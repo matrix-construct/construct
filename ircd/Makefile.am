@@ -20,6 +20,8 @@ AM_LDFLAGS = \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
+	-Wl,--no-allow-shlib-undefined
+#	-Wl,--no-undefined
 	$(PLATFORM_LDFLAGS)
 
 libircd_LTLIBRARIES = libircd.la
