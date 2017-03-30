@@ -234,7 +234,9 @@ log::mark(const facility &fac,
 	slog(fac, [&msg]
 	(std::ostream &s)
 	{
-		s << "*** " << (msg? msg : "mark") << " ***";
+		static const auto name{'*'};
+		s << std::left << std::setw(9) << name << std::right << " :";
+		s << (msg? msg : "mark");
 	});
 }
 
