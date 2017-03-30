@@ -181,9 +181,21 @@ template<class It> bool endswith_any(const string_view &str, const It &begin, co
 bool startswith(const string_view &str, const string_view &val);
 bool startswith(const string_view &str, const char &val);
 string_view unquote(string_view str);
+std::string unquote(std::string &&);
 
 } // namespace ircd
 
+inline std::string
+ircd::unquote(std::string &&str)
+{
+	if(endswith(str, '"'))
+		str.pop_back();
+
+	if(startswith(str, '"'))
+		str = str.substr(1);
+
+	return std::move(str);
+}
 
 inline ircd::string_view
 ircd::unquote(string_view str)
