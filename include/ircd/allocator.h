@@ -37,45 +37,12 @@ template<class T,
          size_t size>
 struct allocator::fixed
 {
-	struct state;
-
-	using value_type         = T;
-	using pointer            = T *;
-	using const_pointer      = const T *;
-	using reference          = T &;
-	using const_reference    = const T &;
-	using size_type          = std::size_t;
-	using difference_type    = std::ptrdiff_t;
-
-	template<class U> struct rebind
-	{
-		typedef allocator::fixed<U, size> other;
-	};
-
-	size_type max_size() const                   { return size;                                    }
-	auto address(reference x) const              { return &x;                                      }
-	auto address(const_reference x) const        { return &x;                                      }
-
-	state *s;
-
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr);
-	void deallocate(const pointer &p, const size_type &n);
-
-	fixed(state &) noexcept;
-	fixed(fixed &&) = default;
-	fixed(const fixed &) = default;
-	template<class U, size_t S> fixed(const fixed<U, S> &) noexcept;
-};
-
-template<class T,
-         size_t size>
-struct allocator::fixed<T, size>::state
-{
+	struct allocator;
 	using word_t = unsigned long long;
 
 	size_t last                                  { 0                                               };
-	std::array<word_t, size / 8> avail           { 0                                               };
-	std::array<T, size> buf;
+	std::array<word_t, size / 8> avail           {{ 0                                             }};
+	std::array<T, size> buf alignas(16);
 
 	static constexpr uint word_bytes             { sizeof(word_t)                                  };
 	static constexpr uint word_bits              { word_bytes * 8                                  };
@@ -89,43 +56,79 @@ struct allocator::fixed<T, size>::state
 
 	uint next(const size_t &n) const;
 
-	allocator::fixed<T, size> operator()()       { return { *this };                               }
+	allocator operator()();
+	operator allocator();
+};
+
+template<class T,
+         size_t size>
+struct allocator::fixed<T, size>::allocator
+{
+	using value_type         = T;
+	using pointer            = T *;
+	using const_pointer      = const T *;
+	using reference          = T &;
+	using const_reference    = const T &;
+	using size_type          = std::size_t;
+	using difference_type    = std::ptrdiff_t;
+
+	template<class U> struct rebind
+	{
+		using other = typename fixed<U, size>::allocator;
+	};
+
+	size_type max_size() const                   { return size;                                    }
+	auto address(reference x) const              { return &x;                                      }
+	auto address(const_reference x) const        { return &x;                                      }
+
+	fixed *s;
+
+	pointer allocate(const size_type &n, const const_pointer &hint = nullptr);
+	void deallocate(const pointer &p, const size_type &n);
+
+	allocator(fixed &) noexcept;
+	allocator(allocator &&) = default;
+	allocator(const allocator &) = default;
+	template<class U, size_t S> allocator(const typename fixed<U, S>::allocator &) noexcept;
 };
 
 template<class... T1,
          class... T2>
-bool operator==(const allocator::fixed<T1...> &, const allocator::fixed<T2...> &);
+bool operator==(const typename allocator::fixed<T1...>::allocator &,
+                const typename allocator::fixed<T2...>::allocator &);
 
 template<class... T1,
          class... T2>
-bool operator!=(const allocator::fixed<T1...> &, const allocator::fixed<T2...> &);
+bool operator!=(const typename allocator::fixed<T1...>::allocator &,
+                const typename allocator::fixed<T2...>::allocator &);
 
 } // namespace ircd
 
 
 template<class T,
          size_t size>
-ircd::allocator::fixed<T, size>::fixed(state &s)
+ircd::allocator::fixed<T, size>::allocator::allocator(fixed &s)
 noexcept
 :s{&s}
-{
-}
+{}
 
 template<class T,
          size_t size>
 template<class U,
          size_t S>
-ircd::allocator::fixed<T, size>::fixed(const fixed<U, S> &)
+ircd::allocator::fixed<T, size>::allocator::allocator(const typename fixed<U, S>::allocator &s)
 noexcept
+:s
 {
-	assert(0);
+	reinterpret_cast<typename fixed<T, size>::state *>(s.s)
 }
+{}
 
 template<class T,
          size_t size>
 void
-ircd::allocator::fixed<T, size>::deallocate(const pointer &p,
-                                            const size_type &n)
+ircd::allocator::fixed<T, size>::allocator::deallocate(const pointer &p,
+                                                       const size_type &n)
 {
 	const uint pos(p - s->buf.data());
 	for(size_t i(0); i < n; ++i)
@@ -134,9 +137,9 @@ ircd::allocator::fixed<T, size>::deallocate(const pointer &p,
 
 template<class T,
          size_t size>
-typename ircd::allocator::fixed<T, size>::pointer
-ircd::allocator::fixed<T, size>::allocate(const size_type &n,
-                                          const const_pointer &hint)
+typename ircd::allocator::fixed<T, size>::allocator::pointer
+ircd::allocator::fixed<T, size>::allocator::allocate(const size_type &n,
+                                                     const const_pointer &hint)
 {
 	const auto next(s->next(n));
 	if(unlikely(next >= size))         // No block of n was found anywhere (next is past-the-end)
@@ -151,8 +154,24 @@ ircd::allocator::fixed<T, size>::allocate(const size_type &n,
 
 template<class T,
          size_t size>
+typename ircd::allocator::fixed<T, size>::allocator
+ircd::allocator::fixed<T, size>::operator()()
+{
+	return { *this };
+}
+
+template<class T,
+         size_t size>
+ircd::allocator::fixed<T, size>::operator
+allocator()
+{
+	return { *this };
+}
+
+template<class T,
+         size_t size>
 uint
-ircd::allocator::fixed<T, size>::state::next(const size_t &n)
+ircd::allocator::fixed<T, size>::next(const size_t &n)
 const
 {
 	uint ret(last), rem(n);
@@ -180,7 +199,8 @@ const
 template<class... T1,
          class... T2>
 bool
-ircd::operator==(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
+ircd::operator==(const typename allocator::fixed<T1...>::allocator &a,
+                 const typename allocator::fixed<T2...>::allocator &b)
 {
 	return &a == &b;
 }
@@ -188,7 +208,8 @@ ircd::operator==(const allocator::fixed<T1...> &a, const allocator::fixed<T2...>
 template<class... T1,
          class... T2>
 bool
-ircd::operator!=(const allocator::fixed<T1...> &a, const allocator::fixed<T2...> &b)
+ircd::operator!=(const typename allocator::fixed<T1...>::allocator &a,
+                 const typename allocator::fixed<T2...>::allocator &b)
 {
 	return &a != &b;
 }
