@@ -38,8 +38,11 @@ namespace mods {
 struct mod
 :std::enable_shared_from_this<mod>
 {
+	static std::stack<mod *> loading;            // State of current dlopen() recursion.
 	static std::map<std::string, mod *> loaded;
 
+	filesystem::path path;
+	load_mode::type mode;
 	boost::dll::shared_library handle;
 	mapi::header *header;
 
@@ -564,16 +567,24 @@ ircd::mods::prefix_if_relative(const filesystem::path &path)
 namespace ircd {
 namespace mods {
 
+std::stack<mod *> mod::loading;
 std::map<std::string, mod *> mod::loaded;
 
 } // namespace mods
 } // namespace ircd
 
 ircd::mods::mod::mod(const filesystem::path &path,
-                     const load_mode::type &type)
+                     const load_mode::type &mode)
 try
-:handle{[&path, &type]
+:path{path}
+,mode{mode}
+,handle{[this, &path, &mode]
 {
+	const auto theirs
+	{
+		std::get_terminate()
+	};
+
 	const auto ours([]
 	{
 		log.critical("std::terminate() called during the static construction of a module.");
@@ -588,18 +599,17 @@ try
 		}
 	});
 
-	const auto theirs
+	const scope reset{[this, &theirs]
 	{
-		std::get_terminate()
-	};
+		assert(loading.top() == this);
+		loading.pop();
 
-	const scope reset{[&theirs]
-	{
 		std::set_terminate(theirs);
 	}};
 
+	loading.push(this);
 	std::set_terminate(ours);
-	return boost::dll::shared_library{path, type};
+	return boost::dll::shared_library{path, mode};
 }()}
 ,header
 {
@@ -619,16 +629,26 @@ try
 	meta["name"] = name();
 	meta["location"] = location();
 
+	if(!loading.empty())
+	{
+		const auto &m(mod::loading.top());
+		log.debug("Module '%s' recursively loaded by '%s'",
+		          name(),
+		          m->path.filename().string());
+	}
+
 	// If init throws an exception from here the loading process will back out.
 	if(header->init)
 		header->init();
 
-	// Without init exception, the module is now considered loaded.
-	loaded.emplace(name(), this);
-	log.info("Loaded module %s v%u \"%s\"",
+	log.info("Loaded module %s v%u \"%s\" (depth: %zu)",
 	         name(),
 	         header->version,
-	         description().size()? description() : "<no description>"s);
+	         description().size()? description() : "<no description>"s,
+	         loading.size());
+
+	// Without init exception, the module is now considered loaded.
+	loaded.emplace(name(), this);
 }
 catch(const boost::system::system_error &e)
 {
