@@ -75,6 +75,9 @@ struct database
 	database(database &&) = delete;
 	database(const database &) = delete;
     ~database() noexcept;
+
+	static const database &get(const column &);
+	static database &get(column &);
 };
 
 // options <-> string

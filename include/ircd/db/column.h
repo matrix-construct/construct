@@ -23,50 +23,17 @@
 #pragma once
 #define HAVE_IRCD_DB_COLUMN_H
 
+namespace ircd {
+namespace db   {
+
+// Columns add the ability to run multiple LevelDB's in synchrony under the same database
+// (directory). Each column is a fully distinct key/value store; they are merely joined
+// for consistency.
 //
 // [GET] may be posted to a separate thread which incurs the time of IO while the calling
 // ircd::context yields.
 //
 // [SET] usually occur without yielding your context because the DB is write-log oriented.
-//
-
-namespace ircd {
-namespace db   {
-
-enum class set
-{
-	FSYNC,                  // Uses kernel filesystem synchronization after write (slow)
-	NO_JOURNAL,             // Write Ahead Log (WAL) for some crash recovery
-	MISSING_COLUMNS         // No exception thrown when writing to a deleted column family
-};
-
-struct sopts
-:optlist<set>
-{
-	template<class... list> sopts(list&&... l): optlist<set>{std::forward<list>(l)...} {}
-};
-
-enum class get
-{
-	PIN,                    // Keep iter data in memory for iter lifetime (good for lots of ++/--)
-	CACHE,                  // Update the cache (CACHE is default for non-iterator operations)
-	NO_CACHE,               // Do not update the cache (NO_CACHE is default for iterators)
-	NO_SNAPSHOT,            // This iterator will have the latest data (tailing)
-	NO_CHECKSUM,            // Integrity of data will be checked unless this is specified
-	READAHEAD,              // Pair with a size in bytes for prefetching additional data
-};
-
-struct gopts
-:optlist<get>
-{
-	database::snapshot snapshot;
-
-	template<class... list> gopts(list&&... l): optlist<get>{std::forward<list>(l)...} {}
-};
-
-// Columns add the ability to run multiple LevelDB's in synchrony under the same database
-// (directory). Each column is a fully distinct key/value store; they are merely joined
-// for consistency.
 //
 struct column
 {
@@ -82,19 +49,17 @@ struct column
   protected:
 	using ColumnFamilyHandle = rocksdb::ColumnFamilyHandle;
 
-	std::shared_ptr<database> d;
 	database::column *c;
 
   public:
-	operator const database &() const            { return *d;                                      }
+	operator const database &() const            { return database::get(*c);                       }
 	operator const database::column &() const    { return *c;                                      }
-	operator std::shared_ptr<database>() const   { return d;                                       }
 
-	operator database &()                        { return *d;                                      }
+	operator database &()                        { return database::get(*c);                       }
 	operator database::column &()                { return *c;                                      }
 
-	operator bool() const                        { return bool(d);                                 }
-	bool operator!() const                       { return !d;                                      }
+	operator bool() const                        { return bool(c);                                 }
+	bool operator!() const                       { return !c;                                      }
 
 	// [GET] Iterations
 	const_iterator cbegin(const gopts & = {});
@@ -105,9 +70,6 @@ struct column
 	const_iterator lower_bound(const string_view &key, const gopts & = {});
 	const_iterator upper_bound(const string_view &key, const gopts & = {});
 
-	// [GET] Tests if key exists
-	bool has(const string_view &key, const gopts & = {});
-
 	// [GET] Perform a get into a closure. This offers a reference to the data with zero-copy.
 	void operator()(const string_view &key, const view_closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const view_closure &func);
@@ -117,13 +79,11 @@ struct column
 	void operator()(const std::initializer_list<delta> &, const sopts & = {});
 	void operator()(const op &, const string_view &key, const string_view &val = {}, const sopts & = {});
 
-	// Flush memory tables to disk (this column only).
-	void flush(const bool &blocking = false);
-
-	column(std::shared_ptr<database>, database::column &);
-	column(database &, database::column &);
 	column(database &, const string_view &column);
-	column(database::column &);
+	column(database::column &c)
+	:c{&c}
+	{}
+
 	column() = default;
 };
 
@@ -138,6 +98,9 @@ const std::string &name(const column &);
 size_t file_count(column &);
 size_t bytes(column &);
 
+// [GET] Tests if key exists
+bool has(column &, const string_view &key, const gopts & = {});
+
 // [GET] Convenience functions to copy data into your buffer.
 // The signed char buffer is null terminated; the unsigned is not.
 size_t read(column &, const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
@@ -151,5 +114,25 @@ void write(column &, const string_view &key, const uint8_t *const &buf, const si
 // [SET] Remove data from the db. not_found is never thrown.
 void del(column &, const string_view &key, const sopts & = {});
 
+// [SET] Flush memory tables to disk (this column only).
+void flush(column &, const bool &blocking = false);
+
 } // namespace db
 } // namespace ircd
+
+inline
+ircd::db::column::column(database &d,
+                         const string_view &column_name)
+try
+:column
+{
+	*d.columns.at(column_name)
+}
+{
+}
+catch(const std::out_of_range &e)
+{
+	log.error("'%s' failed to open non-existent column '%s'",
+	          d.name,
+	          column_name);
+}

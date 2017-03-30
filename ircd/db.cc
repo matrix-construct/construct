@@ -181,7 +181,8 @@ struct database::comparator
 };
 
 struct database::column
-:rocksdb::ColumnFamilyDescriptor
+:std::enable_shared_from_this<database::column>
+,rocksdb::ColumnFamilyDescriptor
 {
 	database *d;
 	std::type_index key_type;
@@ -403,6 +404,20 @@ ircd::db::database::operator[](const string_view &name)
 const
 {
 	return *columns.at(name);
+}
+
+ircd::db::database &
+ircd::db::database::get(column &column)
+{
+	assert(column.d);
+	return *column.d;
+}
+
+const ircd::db::database &
+ircd::db::database::get(const column &column)
+{
+	assert(column.d);
+	return *column.d;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1069,45 +1084,12 @@ ircd::db::name(const column &column)
 // column
 //
 
-ircd::db::column::column(database &d,
-                         const string_view &column_name)
-try
-:column
-{
-	d, *d.columns.at(column_name)
-}
-{
-}
-catch(const std::out_of_range &e)
-{
-	log.error("'%s' failed to open non-existent column '%s'",
-	          d.name,
-	          column_name);
-}
-
-ircd::db::column::column(database::column &c)
-:column{*c.d,c}
-{
-}
-
-ircd::db::column::column(database &d,
-                         database::column &c)
-:column{shared_from(d), c}
-{
-}
-
-ircd::db::column::column(std::shared_ptr<database> d,
-                         database::column &c)
-:d{std::move(d)}
-,c{&c}
-{
-}
-
 void
-ircd::db::column::flush(const bool &blocking)
+ircd::db::flush(column &column,
+                const bool &blocking)
 {
-	database &d(*this);
-	database::column &c(*this);
+	database &d(column);
+	database::column &c(column);
 
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
@@ -1175,6 +1157,49 @@ ircd::db::append(rocksdb::WriteBatch &batch,
 	}
 }
 
+bool
+ircd::db::has(column &column,
+              const string_view &key,
+              const gopts &gopts)
+{
+	database &d(column);
+	database::column &c(column);
+
+	const auto k(slice(key));
+	auto opts(make_opts(gopts));
+
+	// Perform queries which are stymied from any sysentry
+	opts.read_tier = NON_BLOCKING;
+
+	// Perform a co-RP query to the filtration
+	if(!d.d->KeyMayExist(opts, c, k, nullptr, nullptr))
+		return false;
+
+	// Perform a query to the cache
+	auto status(d.d->Get(opts, c, k, nullptr));
+	if(status.IsIncomplete())
+	{
+		// DB cache miss; next query requires I/O, offload it
+		opts.read_tier = BLOCKING;
+		ctx::offload([&d, &c, &k, &opts, &status]
+		{
+			status = d.d->Get(opts, c, k, nullptr);
+		});
+	}
+
+	// Finally the result
+	switch(status.code())
+	{
+		using rocksdb::Status;
+
+		case Status::kOk:          return true;
+		case Status::kNotFound:    return false;
+		default:
+			throw_on_error(status);
+			__builtin_unreachable();
+	}
+}
+
 void
 ircd::db::column::operator()(const op &op,
                              const string_view &key,
@@ -1227,48 +1252,6 @@ ircd::db::column::operator()(const string_view &key,
 
 	const auto &v(it->value());
 	func(string_view{v.data(), v.size()});
-}
-
-bool
-ircd::db::column::has(const string_view &key,
-                      const gopts &gopts)
-{
-	database &d(*this);
-	database::column &c(*this);
-
-	const auto k(slice(key));
-	auto opts(make_opts(gopts));
-
-	// Perform queries which are stymied from any sysentry
-	opts.read_tier = NON_BLOCKING;
-
-	// Perform a co-RP query to the filtration
-	if(!d.d->KeyMayExist(opts, c, k, nullptr, nullptr))
-		return false;
-
-	// Perform a query to the cache
-	auto status(d.d->Get(opts, c, k, nullptr));
-	if(status.IsIncomplete())
-	{
-		// DB cache miss; next query requires I/O, offload it
-		opts.read_tier = BLOCKING;
-		ctx::offload([&d, &c, &k, &opts, &status]
-		{
-			status = d.d->Get(opts, c, k, nullptr);
-		});
-	}
-
-	// Finally the result
-	switch(status.code())
-	{
-		using rocksdb::Status;
-
-		case Status::kOk:          return true;
-		case Status::kNotFound:    return false;
-		default:
-			throw_on_error(status);
-			__builtin_unreachable();
-	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////

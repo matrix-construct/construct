@@ -37,6 +37,37 @@ template<class T> using optlist = std::initializer_list<optval<T>>;
 template<class T> bool has_opt(const optlist<T> &, const T &);
 template<class T> ssize_t opt_val(const optlist<T> &, const T &);
 
+enum class set
+{
+	FSYNC,                  // Uses kernel filesystem synchronization after write (slow)
+	NO_JOURNAL,             // Write Ahead Log (WAL) for some crash recovery
+	MISSING_COLUMNS         // No exception thrown when writing to a deleted column family
+};
+
+struct sopts
+:optlist<set>
+{
+	template<class... list> sopts(list&&... l): optlist<set>{std::forward<list>(l)...} {}
+};
+
+enum class get
+{
+	PIN,                    // Keep iter data in memory for iter lifetime (good for lots of ++/--)
+	CACHE,                  // Update the cache (CACHE is default for non-iterator operations)
+	NO_CACHE,               // Do not update the cache (NO_CACHE is default for iterators)
+	NO_SNAPSHOT,            // This iterator will have the latest data (tailing)
+	NO_CHECKSUM,            // Integrity of data will be checked unless this is specified
+	READAHEAD,              // Pair with a size in bytes for prefetching additional data
+};
+
+struct gopts
+:optlist<get>
+{
+	database::snapshot snapshot;
+
+	template<class... list> gopts(list&&... l): optlist<get>{std::forward<list>(l)...} {}
+};
+
 } // namespace db
 } // namespace ircd
 
