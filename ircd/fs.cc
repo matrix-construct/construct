@@ -25,10 +25,10 @@
 
 #include <boost/filesystem.hpp>
 
-namespace fs = boost::filesystem;
-
 namespace ircd {
-namespace path {
+namespace fs   {
+
+using namespace boost::filesystem;
 
 enum
 {
@@ -57,12 +57,12 @@ std::array<ent, num_of<index>()> paths
 	{ "db",                DBPATH        },
 }};
 
-} // namespace path
+} // namespace fs
 } // namespace ircd
 
 
 void
-ircd::path::chdir(const std::string &path)
+ircd::fs::chdir(const std::string &path)
 try
 {
 	fs::current_path(path);
@@ -73,7 +73,7 @@ catch(const fs::filesystem_error &e)
 }
 
 std::string
-ircd::path::cwd()
+ircd::fs::cwd()
 try
 {
 	return fs::current_path().string();
@@ -84,7 +84,7 @@ catch(const fs::filesystem_error &e)
 }
 
 std::vector<std::string>
-ircd::path::ls_recursive(const std::string &path)
+ircd::fs::ls_recursive(const std::string &path)
 try
 {
 	fs::recursive_directory_iterator it(path);
@@ -104,13 +104,14 @@ catch(const fs::filesystem_error &e)
 }
 
 std::vector<std::string>
-ircd::path::ls(const std::string &path)
+ircd::fs::ls(const std::string &path)
 try
 {
+	static const fs::directory_iterator end;
+
+	std::vector<std::string> ret;
 	fs::directory_iterator it(path);
-	const fs::directory_iterator end;
-	std::vector<std::string> ret(std::distance(it, end));
-	std::transform(it, end, begin(ret), []
+	std::transform(it, end, std::back_inserter(ret), []
 	(const auto &ent)
 	{
 		return ent.path().string();
@@ -124,7 +125,7 @@ catch(const fs::filesystem_error &e)
 }
 
 bool
-ircd::path::is_reg(const std::string &path)
+ircd::fs::is_reg(const std::string &path)
 try
 {
 	return fs::is_regular_file(path);
@@ -135,7 +136,7 @@ catch(const fs::filesystem_error &e)
 }
 
 bool
-ircd::path::is_dir(const std::string &path)
+ircd::fs::is_dir(const std::string &path)
 try
 {
 	return fs::is_directory(path);
@@ -146,7 +147,7 @@ catch(const fs::filesystem_error &e)
 }
 
 bool
-ircd::path::exists(const std::string &path)
+ircd::fs::exists(const std::string &path)
 try
 {
 	return fs::exists(path);
@@ -157,7 +158,7 @@ catch(const fs::filesystem_error &e)
 }
 
 std::string
-ircd::path::build(const std::initializer_list<std::string> &list)
+ircd::fs::make_path(const std::initializer_list<std::string> &list)
 {
 	fs::path ret;
 	for(const auto &s : list)
@@ -167,7 +168,7 @@ ircd::path::build(const std::initializer_list<std::string> &list)
 }
 
 const char *
-ircd::path::get(index index)
+ircd::fs::get(index index)
 noexcept try
 {
 	return std::get<PATH>(paths.at(index)).c_str();
@@ -178,7 +179,7 @@ catch(const std::out_of_range &e)
 }
 
 const char *
-ircd::path::name(index index)
+ircd::fs::name(index index)
 noexcept try
 {
 	return std::get<NAME>(paths.at(index)).c_str();

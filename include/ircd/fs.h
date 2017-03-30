@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_PATH_H
+#define HAVE_IRCD_FS_H
 
 /*
  * Directory paths and filenames for UNIX systems.
@@ -37,7 +37,7 @@
  */
 
 namespace ircd {
-namespace path {
+namespace fs   {
 
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, filesystem_error)
@@ -54,7 +54,7 @@ constexpr auto CPATH = RB_ETC_DIR "/ircd.conf";              // ircd.conf file
 constexpr auto MPATH = RB_ETC_DIR "/ircd.motd";              // MOTD file
 constexpr auto LPATH = RB_LOG_DIR "/ircd.log";               // ircd logfile
 constexpr auto OPATH = RB_ETC_DIR "/opers.motd";             // oper MOTD file
-constexpr auto DBPATH = PKGLOCALSTATEDIR;                    // database prefix
+constexpr auto DBPATH = PKGLOCALSTATEDIR "/db";              // database prefix
 constexpr auto BDBPATH = PKGLOCALSTATEDIR "/ban.db";         // bandb file
 
 // Below are the elements for default paths.
@@ -82,7 +82,7 @@ enum index
 const char *get(index) noexcept;
 const char *name(index) noexcept;
 
-std::string build(const std::initializer_list<std::string> &);
+std::string make_path(const std::initializer_list<std::string> &);
 
 bool exists(const std::string &path);
 bool is_dir(const std::string &path);
@@ -94,5 +94,5 @@ std::vector<std::string> ls_recursive(const std::string &path);
 std::string cwd();
 void chdir(const std::string &path);
 
-} // namespace path
+} // namespace fs
 } // namespace ircd

@@ -172,7 +172,7 @@ struct line {};
 #include "json.h"
 #include "http.h"
 #include "fmt.h"
-#include "path.h"
+#include "fs.h"
 #include "ctx.h"
 #include "conf.h"
 #include "resource.h"
