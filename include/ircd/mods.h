@@ -105,9 +105,15 @@ class sym_ptr
 };
 
 template<class T>
-struct sym_ref
-:protected sym_ptr
+struct import
+:sym_ptr
 {
+	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
+	T *operator->()                              { return sym_ptr::operator-><T>();                }
+
+	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
+	T &operator*()                               { return sym_ptr::operator*<T>();                 }
+
 	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
 	operator T &()                               { return sym_ptr::operator*<T>();                 }
 
@@ -138,6 +144,7 @@ bool loaded(const std::string &name);
 namespace ircd {
 
 using mods::module;                              // Bring struct module into main ircd::
+using mods::import;
 
 } // namespace ircd
 
