@@ -149,7 +149,7 @@ ircd::ctx::ctx::jump()
 	}
 
 	assert(current != this);
-	assert(notes = 1); // notes = 1; set by continuation dtor on wakeup
+	assert(notes == 1); // notes = 1; set by continuation dtor on wakeup
 
 	interruption_point();
 }
@@ -766,14 +766,14 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 {
 	bool done(false);
 	auto *const context(current);
-	const auto notifier([&context, &done]
+	const auto kick([&context, &done]
 	{
 		done = true;
 		notify(*context);
 	});
 
 	std::exception_ptr eptr;
-	auto closure([&func, &eptr, &context, &notifier]
+	auto closure([&func, &eptr, &context, &kick]
 	() noexcept
 	{
 		try
@@ -785,7 +785,7 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 			eptr = std::current_exception();
 		}
 
-		context->strand.post(notifier);
+		context->strand.post(kick);
 	});
 
 	push(std::move(closure)); do
