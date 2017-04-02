@@ -341,7 +341,7 @@ ircd::lstrip(const string_view &str,
              const char &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
 }
 
 inline ircd::string_view
@@ -349,7 +349,7 @@ ircd::lstrip(const string_view &str,
              const string_view &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
 }
 
 inline ircd::string_view
