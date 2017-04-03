@@ -570,7 +570,13 @@ struct string_view
 :std::string_view
 {
 	// (non-standard) our faux insert stub
-	void insert(const iterator &, const char &) { assert(0); } //XXX
+	// Tricks boost::spirit into thinking this is mutable string (hint: it's not).
+	// Instead, the raw[] directive in Qi grammar will use the iterator constructor only.
+	// __attribute__((error("string_view is not insertable (hint: use raw[] directive)")))
+	void insert(const iterator &, const char &)
+	{
+		assert(0);
+	}
 
 	// (non-standard) our iterator-based assign
 	string_view &assign(const char *const &begin, const char *const &end)
