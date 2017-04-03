@@ -85,7 +85,9 @@ struct line
 struct line::request
 {
 	string_view method;
-	string_view resource;
+	string_view path;
+	string_view query;
+	string_view fragment;
 	string_view version;
 
 	request(const line &);
@@ -102,6 +104,32 @@ struct line::response
 	response() = default;
 };
 
+struct query
+:std::pair<string_view, string_view>
+{
+	struct string;
+
+	bool operator<(const string_view &s) const   { return iless(first, s);                         }
+	bool operator==(const string_view &s) const  { return iequals(first, s);                       }
+
+	using std::pair<string_view, string_view>::pair;
+	query() = default;
+};
+
+// Query string is read as a complete string off the tape (into request.query)
+// and not parsed further. To make queries into that string pun this class on it.
+struct query::string
+:string_view
+{
+	void for_each(const std::function<void (const query &)> &) const;
+	bool until(const std::function<bool (const query &)> &) const;
+
+	string_view at(const string_view &key) const;
+	string_view operator[](const string_view &key) const;
+
+	using string_view::string_view;
+};
+
 struct line::header
 :std::pair<string_view, string_view>
 {
@@ -113,6 +141,7 @@ struct line::header
 	header() = default;
 };
 
+// HTTP headers are read once off the tape and proffered to the closure.
 struct headers
 {
 	using closure = std::function<void (const line::header &)>;
@@ -120,6 +149,9 @@ struct headers
 	headers(parse::capstan &, const closure & = {});
 };
 
+// Use the request::content / response::content wrappers. They ensure the proper amount
+// of content is read and the tape is in the right position for the next request
+// with exception safety.
 struct content
 :string_view
 {
@@ -181,7 +213,8 @@ struct request
 
 	request(const string_view &host       = {},
 	        const string_view &method     = "GET",
-	        const string_view &resource   = "/",
+	        const string_view &path       = "/",
+	        const string_view &query      = {},
 	        const string_view &content    = {},
 	        const write_closure &         = nullptr,
 	        const std::initializer_list<line::header> & = {});

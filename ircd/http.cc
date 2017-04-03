@@ -80,7 +80,9 @@ BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::http::line::request,
     ( decltype(ircd::http::line::request::method),    method   )
-    ( decltype(ircd::http::line::request::resource),  resource )
+    ( decltype(ircd::http::line::request::path),      path     )
+    ( decltype(ircd::http::line::request::query),     query    )
+    ( decltype(ircd::http::line::request::fragment),  fragment )
     ( decltype(ircd::http::line::request::version),   version  )
 )
 
@@ -97,6 +99,13 @@ BOOST_FUSION_ADAPT_STRUCT
     ircd::http::line::header,
     ( decltype(ircd::http::line::header::first),   first  )
     ( decltype(ircd::http::line::header::second),  second )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::query,
+    ( decltype(ircd::http::query::first),   first  )
+    ( decltype(ircd::http::query::second),  second )
 )
 
 namespace ircd {
@@ -118,32 +127,54 @@ struct grammar
 	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
 	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
 
-	// whitespace skipping
 	rule<> ws                          { SP | HT                                     ,"whitespace" };
-
+	rule<> illegal                     { NUL | CR | LF                                  ,"illegal" };
 	rule<> CRLF                        { lit('\r') >> lit('\n')      ,"carriage return, line feed" };
 	rule<> colon                       { lit(':')                                         ,"colon" };
+	rule<> slash                       { lit('/')                               ,"forward solidus" };
+	rule<> question                    { lit('?')                                 ,"question mark" };
+	rule<> pound                       { lit('#')                                    ,"pound sign" };
+	rule<> equal                       { lit('=')                                    ,"equal sign" };
+	rule<> ampersand                   { lit('&')                                     ,"ampersand" };
 
-	rule<string_view> token            { raw[+(char_ - (NUL | CR | LF | ws))]             ,"token" };
-	rule<string_view> string           { raw[+(char_ - (NUL | CR | LF))]                 ,"string" };
+	rule<string_view> token            { raw[+(char_ - (illegal | ws))]                   ,"token" };
+	rule<string_view> string           { raw[+(char_ - illegal)]                         ,"string" };
 	rule<string_view> line             { *ws >> -string >> CRLF                            ,"line" };
-
-	rule<string_view> method           { raw[+(char_ - (NUL | CR | LF | ws))]            ,"method" };
-	rule<string_view> resource         { raw[+(char_ - (NUL | CR | LF | ws))]          ,"resource" };
-	rule<string_view> version          { raw[+(char_ - (NUL | CR | LF | ws))]           ,"version" };
 
 	rule<string_view> status           { raw[repeat(3)[char_("0-9")]]                    ,"status" };
 	rule<short> status_code            { short_                                     ,"status code" };
-	rule<string_view> reason           { raw[+(char_ - (NUL | CR | LF))]                 ,"status" };
+	rule<string_view> reason           { string                                          ,"status" };
 
-	rule<string_view> key              { raw[+(char_ - (NUL | CR | LF | ws | colon))]       ,"key" };
-	rule<string_view> value            { string                                           ,"value" };
-	rule<line::header> header          { key >> *ws >> colon >> *ws >> value             ,"header" };
+	rule<string_view> head_key         { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
+	rule<string_view> head_val         { string                                      ,"head value" };
+	rule<line::header> header          { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
 	rule<unused_type> headers          { (header % (*ws >> CRLF))                       ,"headers" };
+
+	rule<> query_terminator            { equal | question | ampersand | pound  ,"query terminator" };
+	rule<> query_illegal               { illegal | ws | query_terminator          ,"query illegal" };
+	rule<string_view> query_key        { raw[+(char_ - query_illegal)]                ,"query key" };
+	rule<string_view> query_val        { raw[*(char_ - query_illegal)]              ,"query value" };
+
+	rule<string_view> method           { token                                           ,"method" };
+	rule<string_view> path             { slash >> raw[*(char_ - query_illegal)]            ,"path" };
+	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
+	rule<string_view> version          { token                                          ,"version" };
+
+	rule<http::query> query
+	{
+		query_key >> -(equal >> query_val)
+		,"query"
+	};
+
+	rule<string_view> query_string
+	{
+		question >> raw[(query_key >> -(equal >> query_val)) % ampersand]
+		,"query string"
+	};
 
 	rule<line::request> request_line
 	{
-		method >> +SP >> resource >> +SP >> version
+		method >> +SP >> path >> -query_string >> -fragment >> +SP >> version
 		,"request line"
 	};
 
@@ -255,13 +286,25 @@ catch(const std::exception &e)
 
 ircd::http::request::request(const string_view &host,
                              const string_view &method,
-                             const string_view &resource,
+                             const string_view &path,
+                             const string_view &query,
                              const string_view &content,
                              const write_closure &closure,
                              const std::initializer_list<line::header> &headers)
 {
 	assert(!method.empty());
-	assert(!resource.empty());
+	assert(!path.empty());
+
+	const auto &version{"HTTP/1.1"s};
+	char request_line[2048]; const auto request_line_len
+	{
+		snprintf(request_line, sizeof(request_line), "%s /%s%s%s %s\r\n",
+		         method.data(),
+		         path.data(),
+		         query.empty()? "" : "?",
+		         query.empty()? "" : query.data(),
+		         version.data())
+	};
 
 	char host_line[128] {"Host: "}; const auto host_line_len
 	{
@@ -275,27 +318,21 @@ ircd::http::request::request(const string_view &host,
 		         content.size())
 	};
 
-	char user_headers[printed_size(headers) + 1]; const auto user_headers_len
+	char user_headers[printed_size(headers) + 2 + 1]; auto user_headers_len
 	{
 		print(user_headers, sizeof(user_headers), headers)
 	};
 
-	const auto &space       {" "s          };
-	const auto &version     { "HTTP/1.1"s  };
-	const auto &terminator  { "\r\n"s      };
+	const auto terminator{"\r\n"};
+	user_headers_len = strlcat(user_headers, terminator, sizeof(user_headers));
+
 	const_buffers vector
 	{
-		{ method.data(),      method.size()             },
-		{ space.data(),       space.size(),             },
-		{ resource.data(),    resource.size(),          },
-		{ space.data(),       space.size(),             },
-		{ version.data(),     version.size(),           },
-		{ terminator.data(),  terminator.size()         },
-		{ host_line,          size_t(host_line_len)     },
-		{ content_len,        size_t(content_len_len)   },
-		{ user_headers,       size_t(user_headers_len)  },
-		{ terminator.data(),  terminator.size()         },
-		{ content.data(),     content.size()            },
+		{ request_line,      size_t(request_line_len)  },
+		{ host_line,         size_t(host_line_len)     },
+		{ content_len,       size_t(content_len_len)   },
+		{ user_headers,      size_t(user_headers_len)  },
+		{ content.data(),    content.size()            },
 	};
 
 	closure(vector);
@@ -562,6 +599,74 @@ ircd::http::line::line(parse::capstan &pc)
 	return ret;
 }()}
 {
+}
+
+ircd::string_view
+ircd::http::query::string::at(const string_view &key)
+const
+{
+	const auto ret(operator[](key));
+	if(ret.empty())
+		throw std::out_of_range("Failed to find value for required query string key");
+
+	return ret;
+}
+
+ircd::string_view
+ircd::http::query::string::operator[](const string_view &key)
+const
+{
+	string_view ret;
+	const auto match([&key, &ret](const query &query) -> bool
+	{
+		if(query.first == key)
+		{
+			ret = query.second;
+			return false;         // false to break out of until()
+		}
+		else return true;
+	});
+
+	until(match);
+	return ret;
+}
+
+bool
+ircd::http::query::string::until(const std::function<bool (const query &)> &closure)
+const
+{
+	const auto action([&closure](const auto &attribute, const auto &context, auto &halt)
+	{
+		halt = closure(attribute);
+	});
+
+	const parser::rule<unused_type> grammar
+	{
+		-parser.question >> (parser.query[action] % parser.ampersand)
+	};
+
+	const string_view &s(*this);
+	const char *start(s.data()), *const stop(s.data() + s.size());
+	return qi::parse(start, stop, grammar);
+}
+
+void
+ircd::http::query::string::for_each(const std::function<void (const query &)> &closure)
+const
+{
+	const auto action([&closure](const auto &attribute, const auto &context, auto &halt)
+	{
+		closure(attribute);
+	});
+
+	const parser::rule<unused_type> grammar
+	{
+		-parser.question >> (parser.query[action] % parser.ampersand)
+	};
+
+	const string_view &s(*this);
+	const char *start(s.data()), *const stop(s.data() + s.size());
+	qi::parse(start, stop, grammar);
 }
 
 ircd::http::error::error(const enum code &code,
