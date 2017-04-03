@@ -30,24 +30,22 @@ namespace ircd {
 
 struct allocator
 {
+	struct state;
+	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
 };
 
-template<class T,
-         size_t size>
-struct allocator::fixed
+struct allocator::state
 {
-	struct allocator;
-	using word_t = unsigned long long;
+	using word_t                                 = unsigned long long;
+	using size_type                              = std::size_t;
 
+	size_t size                                  { 0                                               };
+	word_t *avail                                { nullptr                                         };
 	size_t last                                  { 0                                               };
-	std::array<word_t, size / 8> avail           {{ 0                                             }};
-	std::array<T, size> buf alignas(16);
 
-	static constexpr uint word_bytes             { sizeof(word_t)                                  };
-	static constexpr uint word_bits              { word_bytes * 8                                  };
-	static uint byte(const uint &i)              { return i / word_bits;                           }
-	static uint bit(const uint &i)               { return i % word_bits;                           }
+	static uint byte(const uint &i)              { return i / (sizeof(word_t) * 8);                }
+	static uint bit(const uint &i)               { return i % (sizeof(word_t) * 8);                }
 	static word_t mask(const uint &pos)          { return word_t(1) << bit(pos);                   }
 
 	bool test(const uint &pos) const             { return avail[byte(pos)] & mask(pos);            }
@@ -55,9 +53,65 @@ struct allocator::fixed
 	void btc(const uint &pos)                    { avail[byte(pos)] &= ~mask(pos);                 }
 
 	uint next(const size_t &n) const;
+	void deallocate(const uint &p, const size_t &n);
+	uint allocate(const size_t &n, const uint &hint = -1);
 
+	state(const size_t &size = 0,
+	      word_t *const &avail = nullptr)
+	:size{size}
+	,avail{avail}
+	,last{0}
+	{}
+};
+
+template<class T,
+         size_t max>
+struct allocator::fixed
+:state
+{
+	struct allocator;
+
+	std::array<word_t, max / 8> avail            {{ 0                                             }};
+	std::array<T, max> buf alignas(16);
+
+  public:
 	allocator operator()();
 	operator allocator();
+
+	fixed()
+	:state{max, avail.data()}
+	{}
+};
+
+template<class T>
+struct allocator::dynamic
+:state
+{
+	struct allocator;
+
+	size_t head_size, data_size;
+	std::unique_ptr<uint8_t[]> arena;
+	T *buf;
+
+  public:
+	allocator operator()();
+	operator allocator();
+
+	dynamic(const size_t &size)
+	:state{size}
+	,head_size{size / 8}
+	,data_size{sizeof(T) * size + 16}
+	,arena
+	{
+		new uint8_t[head_size + data_size]
+	}
+	,buf
+	{
+		reinterpret_cast<T *>(arena.get() + head_size + (head_size % 16))
+	}
+	{
+		state::avail = reinterpret_cast<word_t *>(arena.get());
+	}
 };
 
 template<class T,
@@ -72,84 +126,125 @@ struct allocator::fixed<T, size>::allocator
 	using size_type          = std::size_t;
 	using difference_type    = std::ptrdiff_t;
 
-	template<class U> struct rebind
+	fixed *s;
+
+  public:
+	template<class U, size_t S> struct rebind
 	{
-		using other = typename fixed<U, size>::allocator;
+		using other = typename fixed<U, S>::allocator;
 	};
 
 	size_type max_size() const                   { return size;                                    }
 	auto address(reference x) const              { return &x;                                      }
 	auto address(const_reference x) const        { return &x;                                      }
 
-	fixed *s;
+	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	{
+		const uint hintpos(hint? hint - s->buf.data() : -1);
+		return s->buf.data() + s->state::allocate(n, hint);
+	}
 
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr);
-	void deallocate(const pointer &p, const size_type &n);
+	void deallocate(const pointer &p, const size_type &n)
+	{
+		const uint pos(p - s->buf.data());
+		s->state::deallocate(pos, n);
+	}
 
-	allocator(fixed &) noexcept;
+	template<class U, size_t S>
+	allocator(const typename fixed<U, S>::allocator &) noexcept
+	:s{reinterpret_cast<fixed *>(s.s)}
+	{}
+
+	allocator(fixed &s) noexcept
+	:s{&s}
+	{}
+
 	allocator(allocator &&) = default;
 	allocator(const allocator &) = default;
-	template<class U, size_t S> allocator(const typename fixed<U, S>::allocator &) noexcept;
+
+	friend bool operator==(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
+
+	friend bool operator!=(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
 };
 
-template<class... T1,
-         class... T2>
-bool operator==(const typename allocator::fixed<T1...>::allocator &,
-                const typename allocator::fixed<T2...>::allocator &);
+template<class T>
+struct allocator::dynamic<T>::allocator
+{
+	using value_type         = T;
+	using pointer            = T *;
+	using const_pointer      = const T *;
+	using reference          = T &;
+	using const_reference    = const T &;
+	using size_type          = std::size_t;
+	using difference_type    = std::ptrdiff_t;
 
-template<class... T1,
-         class... T2>
-bool operator!=(const typename allocator::fixed<T1...>::allocator &,
-                const typename allocator::fixed<T2...>::allocator &);
+	dynamic *s;
+
+  public:
+	template<class U> struct rebind
+	{
+		using other = typename dynamic<U>::allocator;
+	};
+
+	size_type max_size() const                   { return s->size;                                 }
+	auto address(reference x) const              { return &x;                                      }
+	auto address(const_reference x) const        { return &x;                                      }
+
+	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	{
+		const uint hintpos(hint? hint - s->buf : -1);
+		return s->buf + s->state::allocate(n, hintpos);
+	}
+
+	void deallocate(const pointer &p, const size_type &n)
+	{
+		const uint pos(p - s->buf);
+		s->state::deallocate(pos, n);
+	}
+
+	template<class U>
+	allocator(const typename dynamic<U>::allocator &) noexcept
+	:s{reinterpret_cast<dynamic *>(s.s)}
+	{}
+
+	allocator(dynamic &s) noexcept
+	:s{&s}
+	{}
+
+	allocator(allocator &&) = default;
+	allocator(const allocator &) = default;
+
+	friend bool operator==(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
+
+	friend bool operator!=(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
+};
 
 } // namespace ircd
 
-
-template<class T,
-         size_t size>
-ircd::allocator::fixed<T, size>::allocator::allocator(fixed &s)
-noexcept
-:s{&s}
-{}
-
-template<class T,
-         size_t size>
-template<class U,
-         size_t S>
-ircd::allocator::fixed<T, size>::allocator::allocator(const typename fixed<U, S>::allocator &s)
-noexcept
-:s
+template<class T>
+typename ircd::allocator::dynamic<T>::allocator
+ircd::allocator::dynamic<T>::operator()()
 {
-	reinterpret_cast<typename fixed<T, size>::state *>(s.s)
-}
-{}
-
-template<class T,
-         size_t size>
-void
-ircd::allocator::fixed<T, size>::allocator::deallocate(const pointer &p,
-                                                       const size_type &n)
-{
-	const uint pos(p - s->buf.data());
-	for(size_t i(0); i < n; ++i)
-		s->btc(pos + i);
+	return { *this };
 }
 
-template<class T,
-         size_t size>
-typename ircd::allocator::fixed<T, size>::allocator::pointer
-ircd::allocator::fixed<T, size>::allocator::allocate(const size_type &n,
-                                                     const const_pointer &hint)
+template<class T>
+ircd::allocator::dynamic<T>::operator
+allocator()
 {
-	const auto next(s->next(n));
-	if(unlikely(next >= size))         // No block of n was found anywhere (next is past-the-end)
-		throw std::bad_alloc();
-
-	for(size_t i(0); i < n; ++i)
-		s->bts(next + i);
-
-	s->last = next + n;
-	return s->buf.data() + next;
+	return { *this };
 }
 
 template<class T,
@@ -168,10 +263,31 @@ allocator()
 	return { *this };
 }
 
-template<class T,
-         size_t size>
-uint
-ircd::allocator::fixed<T, size>::next(const size_t &n)
+inline void
+ircd::allocator::state::deallocate(const uint &pos,
+                                   const size_type &n)
+{
+	for(size_t i(0); i < n; ++i)
+		btc(pos + i);
+}
+
+inline uint
+ircd::allocator::state::allocate(const size_type &n,
+                                 const uint &hint)
+{
+	const auto next(this->next(n));
+	if(unlikely(next >= size))         // No block of n was found anywhere (next is past-the-end)
+		throw std::bad_alloc();
+
+	for(size_t i(0); i < n; ++i)
+		bts(next + i);
+
+	last = next + n;
+	return next;
+}
+
+inline uint
+ircd::allocator::state::next(const size_t &n)
 const
 {
 	uint ret(last), rem(n);
@@ -194,22 +310,4 @@ const
 		return size;
 
 	return ret - n;
-}
-
-template<class... T1,
-         class... T2>
-bool
-ircd::operator==(const typename allocator::fixed<T1...>::allocator &a,
-                 const typename allocator::fixed<T2...>::allocator &b)
-{
-	return &a == &b;
-}
-
-template<class... T1,
-         class... T2>
-bool
-ircd::operator!=(const typename allocator::fixed<T1...>::allocator &a,
-                 const typename allocator::fixed<T2...>::allocator &b)
-{
-	return &a != &b;
 }
