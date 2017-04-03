@@ -877,6 +877,22 @@ const
 	throw type_error("value type[%d] is not a string", int(type));
 }
 
+bool
+ircd::json::val::empty()
+const
+{
+	switch(type)
+	{
+		case NUMBER:   return lex_cast(integer).empty();
+		case STRING:   return !len;
+		case OBJECT:   return serial? !len : object? object->empty() : true;
+		case ARRAY:    return serial? !len : array? false : true;            //TODO: XXX arr
+		case LITERAL:  return !len;
+	};
+
+	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
+}
+
 size_t
 ircd::json::val::size()
 const
@@ -890,7 +906,7 @@ const
 		case LITERAL:  return len;
 	};
 
-	throw type_error("cannot size type[%u]", int(type));
+	throw type_error("deciding the size of a type[%u] is undefined", int(type));
 }
 
 std::ostream &

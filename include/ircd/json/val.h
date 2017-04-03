@@ -43,6 +43,7 @@ struct val
 	uint64_t floats  : 1;
 
   public:
+	bool empty() const;
 	size_t size() const;
 	operator string_view() const;
 	explicit operator std::string() const;
@@ -54,7 +55,7 @@ struct val
 	val(const char *const &s);
 	val(const struct obj *const &);  // alloc = false
 	val(std::unique_ptr<obj>);       // alloc = true
-	val() = default;
+	val();
 	val(val &&) noexcept;
 	val(const val &) = delete;
 	val &operator=(val &&) noexcept;
@@ -81,6 +82,16 @@ static_assert(sizeof(val) == 16, "");
 
 } // namespace json
 } // namespace ircd
+
+inline
+ircd::json::val::val()
+:string{""}
+,len{0}
+,type{STRING}
+,serial{true}
+,alloc{false}
+,floats{false}
+{}
 
 template<size_t N>
 ircd::json::val::val(const char (&str)[N])
