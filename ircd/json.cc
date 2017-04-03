@@ -724,6 +724,13 @@ ircd::json::obj::obj(std::initializer_list<member> builder)
 	{
 		return std::move(const_cast<member &>(m));
 	});
+
+	const auto empty([](const auto &member)
+	{
+		return member.first.empty();
+	});
+
+	idx.erase(std::remove_if(std::begin(idx), std::end(idx), empty), idx.end());
 }
 
 bool
