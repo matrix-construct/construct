@@ -44,29 +44,33 @@ using qi::eps;
 
 std::map<code, string_view> reason
 {
-	{ code::CONTINUE,                            "Continue"s                                       },
-	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"s                            },
+	{ code::CONTINUE,                            "Continue"                                        },
+	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"                             },
 
-	{ code::OK,                                  "OK"s                                             },
-	{ code::CREATED,                             "Created"s                                        },
-	{ code::ACCEPTED,                            "Accepted"s                                       },
-	{ code::NON_AUTHORITATIVE_INFORMATION,       "Non-Authoritative Information"s                  },
-	{ code::NO_CONTENT,                          "No Content"s                                     },
+	{ code::OK,                                  "OK"                                              },
+	{ code::CREATED,                             "Created"                                         },
+	{ code::ACCEPTED,                            "Accepted"                                        },
+	{ code::NON_AUTHORITATIVE_INFORMATION,       "Non-Authoritative Information"                   },
+	{ code::NO_CONTENT,                          "No Content"                                      },
 
-	{ code::BAD_REQUEST,                         "Bad Request"s                                    },
-	{ code::UNAUTHORIZED,                        "Unauthorized"s                                   },
-	{ code::FORBIDDEN,                           "Forbidden"s                                      },
-	{ code::NOT_FOUND,                           "Not Found"s                                      },
-	{ code::METHOD_NOT_ALLOWED,                  "Method Not Allowed"s                             },
-	{ code::REQUEST_TIMEOUT,                     "Request Time-out"s                               },
-	{ code::EXPECTATION_FAILED,                  "Expectation Failed"s                             },
-	{ code::TOO_MANY_REQUESTS,                   "Too Many Requests"s                              },
-	{ code::REQUEST_HEADER_FIELDS_TOO_LARGE,     "Request Header Fields Too Large"s                },
+	{ code::BAD_REQUEST,                         "Bad Request"                                     },
+	{ code::UNAUTHORIZED,                        "Unauthorized"                                    },
+	{ code::FORBIDDEN,                           "Forbidden"                                       },
+	{ code::NOT_FOUND,                           "Not Found"                                       },
+	{ code::METHOD_NOT_ALLOWED,                  "Method Not Allowed"                              },
+	{ code::REQUEST_TIMEOUT,                     "Request Time-out"                                },
+	{ code::CONFLICT,                            "Conflict"                                        },
+	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },
+	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
+	{ code::UNPROCESSABLE_ENTITY,                "Unprocessable Entity"                            },
+	{ code::TOO_MANY_REQUESTS,                   "Too Many Requests"                               },
+	{ code::REQUEST_HEADER_FIELDS_TOO_LARGE,     "Request Header Fields Too Large"                 },
 
-	{ code::INTERNAL_SERVER_ERROR,               "Internal Server Error"s                          },
-	{ code::NOT_IMPLEMENTED,                     "Not Implemented"s                                },
-	{ code::SERVICE_UNAVAILABLE,                 "Service Unavailable"s                            },
-	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"s                     },
+	{ code::INTERNAL_SERVER_ERROR,               "Internal Server Error"                           },
+	{ code::NOT_IMPLEMENTED,                     "Not Implemented"                                 },
+	{ code::SERVICE_UNAVAILABLE,                 "Service Unavailable"                             },
+	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
+	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
 };
 
 } // namespace http

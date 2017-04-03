@@ -45,7 +45,10 @@ enum code
 	NOT_FOUND                               = 404,
 	METHOD_NOT_ALLOWED                      = 405,
 	REQUEST_TIMEOUT                         = 408,
+	CONFLICT                                = 409,
+	REQUEST_URI_TOO_LONG                    = 414,
 	EXPECTATION_FAILED                      = 417,
+	UNPROCESSABLE_ENTITY                    = 422,
 	TOO_MANY_REQUESTS                       = 429,
 	REQUEST_HEADER_FIELDS_TOO_LARGE         = 431,
 
@@ -53,6 +56,7 @@ enum code
 	NOT_IMPLEMENTED                         = 501,
 	SERVICE_UNAVAILABLE                     = 503,
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
+	INSUFFICIENT_STORAGE                    = 507,
 };
 
 extern std::map<code, string_view> reason;
