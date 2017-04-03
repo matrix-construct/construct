@@ -106,11 +106,37 @@ decltype(string_specifier::types)
 string_specifier::types
 {};
 
+struct bool_specifier
+:specifier
+{
+	static const std::tuple
+	<
+		bool,
+		char,  unsigned char,
+		short, unsigned short,
+		int,   unsigned int,
+		long,  unsigned long
+	>
+	types;
+
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const bool_specifier
+{
+	{ "b" }
+};
+
+decltype(bool_specifier::types)
+bool_specifier::types
+{};
+
 struct signed_specifier
 :specifier
 {
 	static const std::tuple
 	<
+		bool,
 		char,  unsigned char,
 		short, unsigned short,
 		int,   unsigned int,
@@ -135,6 +161,7 @@ struct unsigned_specifier
 {
 	static const std::tuple
 	<
+		bool,
 		char,  unsigned char,
 		short, unsigned short,
 		int,   unsigned int,
@@ -424,6 +451,47 @@ const
 		return true;
 	}
 	else return false;
+}
+
+bool
+fmt::bool_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &,
+                                const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Failed to print signed value");
+	});
+
+	const auto closure([&](const bool &boolean)
+	{
+		using karma::maxwidth;
+
+		struct generator
+		:karma::grammar<char *, bool()>
+		{
+			karma::rule<char *, bool()> rule
+			{
+				karma::bool_
+				,"boolean"
+			};
+
+			generator(): generator::base_type{rule} {}
+		}
+		static const generator;
+
+		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], boolean);
+	});
+
+	return !until(types, [&](auto type)
+	{
+		return !visit_type<decltype(type)>(val, closure);
+	});
 }
 
 bool
