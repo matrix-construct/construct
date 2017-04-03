@@ -26,41 +26,185 @@
 namespace ircd {
 namespace db   {
 
-struct cell
-{
-	explicit
-	cell(database &,
-	     column,
-	     const string_view &key,
-	     gopts opts = {});
-};
-
 struct row
 {
-	using key_type = column;
-	using mapped_type = std::unique_ptr<rocksdb::Iterator>;
-	using value_type = std::pair<key_type, mapped_type>;
+	struct delta;
+	struct iterator;
+	struct const_iterator;
+	using value_type = cell &;
+	using reference = cell &;
+	using pointer = cell *;
+	using difference_type = size_t;
 
-	gopts opts;
-	std::vector<value_type> its;
+  private:
+	std::vector<cell> its;
 
 	template<class pos> friend void seek(row &, const pos &);
 	friend void seek(row &, const string_view &key);
 
   public:
-	auto begin() const                           { return std::begin(its);                         }
-	auto end() const                             { return std::end(its);                           }
-	auto begin()                                 { return std::begin(its);                         }
-	auto end()                                   { return std::end(its);                           }
+	// [GET] Iterations
+	const_iterator begin() const;
+	const_iterator end() const;
+	iterator begin();
+	iterator end();
 
-	string_view operator[](const string_view &column);
+	// [GET] Get iterator to cell
+	const_iterator find(const string_view &column) const;
+	iterator find(const string_view &column);
 
-	row(database &, const string_view &key = {}, gopts = {});
-	row() = default;
-	row(row &&) noexcept;
-	row &operator=(row &&) noexcept;
-	~row() noexcept;
+	auto empty() const                           { return its.empty();                             }
+	auto size() const                            { return its.size();                              }
+
+	// [GET] Get cell
+	const cell &operator[](const string_view &column) const;
+	cell &operator[](const string_view &column);
+
+    // [SET] Perform operation
+	void operator()(const op &, const string_view &col, const string_view &val = {}, const sopts & = {});
+
+	row(std::vector<cell> cells = {})
+	:its{std::move(cells)}
+	{}
+
+	row(database &,
+	    const string_view &key = {},
+	    const vector_view<string_view> &columns = {},
+	    const gopts &opts = {});
+
+	friend size_t trim(row &, const std::function<bool (cell &)> &);
+	friend size_t trim(row &, const string_view &key); // remove invalid or not equal
+	friend size_t trim(row &); // remove invalid
+};
+
+struct row::const_iterator
+{
+	using value_type = const cell &;
+	using reference = const cell &;
+	using pointer = const cell *;
+	using iterator_category = std::bidirectional_iterator_tag;
+
+  private:
+	friend class row;
+
+	decltype(row::its)::const_iterator it;
+
+	const_iterator(decltype(row::its)::const_iterator it)
+	:it{std::move(it)}
+	{}
+
+  public:
+	reference operator*() const                  { return it.operator*();                          }
+	pointer operator->() const                   { return it.operator->();                         }
+
+	const_iterator &operator++()                 { ++it; return *this;                             }
+	const_iterator &operator--()                 { --it; return *this;                             }
+
+	const_iterator() = default;
+
+	friend bool operator==(const const_iterator &, const const_iterator &);
+	friend bool operator!=(const const_iterator &, const const_iterator &);
+};
+
+struct row::iterator
+{
+	using value_type = cell &;
+	using reference = cell &;
+	using pointer = cell *;
+	using iterator_category = std::bidirectional_iterator_tag;
+
+  private:
+	friend class row;
+
+	decltype(row::its)::iterator it;
+
+	iterator(decltype(row::its)::iterator it)
+	:it{std::move(it)}
+	{}
+
+  public:
+	reference operator*() const                  { return it.operator*();                          }
+	pointer operator->() const                   { return it.operator->();                         }
+
+	iterator &operator++()                       { ++it; return *this;                             }
+	iterator &operator--()                       { --it; return *this;                             }
+
+	iterator() = default;
+
+	friend bool operator==(const iterator &, const iterator &);
+	friend bool operator!=(const iterator &, const iterator &);
 };
 
 } // namespace db
 } // namespace ircd
+
+inline ircd::db::cell &
+ircd::db::row::operator[](const string_view &column)
+{
+	const auto it(find(column));
+	if(unlikely(it == end()))
+		throw not_found("column '%s' does not exist", column);
+
+	return *it;
+}
+
+inline const ircd::db::cell &
+ircd::db::row::operator[](const string_view &column)
+const
+{
+	const auto it(find(column));
+	if(unlikely(it == end()))
+		throw not_found("column '%s' does not exist", column);
+
+	return *it;
+}
+
+inline ircd::db::row::iterator
+ircd::db::row::end()
+{
+	return { std::end(its) };
+}
+
+inline ircd::db::row::iterator
+ircd::db::row::begin()
+{
+	return { std::begin(its) };
+}
+
+inline ircd::db::row::const_iterator
+ircd::db::row::end()
+const
+{
+	return { std::end(its) };
+}
+
+inline ircd::db::row::const_iterator
+ircd::db::row::begin()
+const
+{
+	return { std::begin(its) };
+}
+
+inline bool
+ircd::db::operator!=(const row::iterator &a, const row::iterator &b)
+{
+	return a.it != b.it;
+}
+
+inline bool
+ircd::db::operator==(const row::iterator &a, const row::iterator &b)
+{
+	return a.it == b.it;
+}
+
+inline bool
+ircd::db::operator!=(const row::const_iterator &a, const row::const_iterator &b)
+{
+	return a.it != b.it;
+}
+
+inline bool
+ircd::db::operator==(const row::const_iterator &a, const row::const_iterator &b)
+{
+	return a.it == b.it;
+}

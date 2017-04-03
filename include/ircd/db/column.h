@@ -37,6 +37,7 @@ namespace db   {
 //
 struct column
 {
+	struct delta;
 	struct const_iterator;
 	using key_type = string_view;
 	using mapped_type = string_view;
@@ -47,16 +48,14 @@ struct column
 	using iterator = const_iterator;
 
   protected:
-	using ColumnFamilyHandle = rocksdb::ColumnFamilyHandle;
-
-	database::column *c;
+	std::shared_ptr<database::column> c;
 
   public:
-	operator const database &() const            { return database::get(*c);                       }
-	operator const database::column &() const    { return *c;                                      }
+	explicit operator const database &() const;
+	explicit operator const database::column &() const;
 
-	operator database &()                        { return database::get(*c);                       }
-	operator database::column &()                { return *c;                                      }
+	explicit operator database &();
+	explicit operator database::column &();
 
 	operator bool() const                        { return bool(c);                                 }
 	bool operator!() const                       { return !c;                                      }
@@ -70,30 +69,90 @@ struct column
 	const_iterator lower_bound(const string_view &key, const gopts & = {});
 	const_iterator upper_bound(const string_view &key, const gopts & = {});
 
+	// [GET] Get cell
+	cell operator[](const string_view &key) const;
+
 	// [GET] Perform a get into a closure. This offers a reference to the data with zero-copy.
+	using view_closure = std::function<void (const string_view &)>;
 	void operator()(const string_view &key, const view_closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const view_closure &func);
 
 	// [SET] Perform operations in a sequence as a single transaction.
 	void operator()(const delta &, const sopts & = {});
 	void operator()(const std::initializer_list<delta> &, const sopts & = {});
+	void operator()(const sopts &, const std::initializer_list<delta> &);
 	void operator()(const op &, const string_view &key, const string_view &val = {}, const sopts & = {});
 
+	explicit column(std::shared_ptr<database::column> c);
+	column(database::column &c);
 	column(database &, const string_view &column);
-	column(database::column &c)
-	:c{&c}
-	{}
-
 	column() = default;
 };
 
-// Get property data of a db column (column).
+struct column::delta
+:std::tuple<op, string_view, string_view>
+{
+	delta(const enum op &op, const string_view &key, const string_view &val = {})
+	:std::tuple<enum op, string_view, string_view>{op, key, val}
+	{}
+
+	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
+	:std::tuple<enum op, string_view, string_view>{op, key, val}
+	{}
+};
+
+struct column::const_iterator
+{
+	using value_type = column::value_type;
+	using iterator_category = std::bidirectional_iterator_tag;
+
+  private:
+	gopts opts;
+	std::shared_ptr<database::column> c;
+	std::unique_ptr<rocksdb::Iterator> it;
+	mutable value_type val;
+
+	friend class column;
+	const_iterator(std::shared_ptr<database::column>, std::unique_ptr<rocksdb::Iterator> &&, gopts = {});
+
+  public:
+	operator const database::column &() const    { return *c;                                   }
+	operator const database::snapshot &() const  { return opts.snapshot;                        }
+	explicit operator const gopts &() const      { return opts;                                 }
+
+	operator database::column &()                { return *c;                                   }
+	explicit operator database::snapshot &()     { return opts.snapshot;                        }
+
+	operator bool() const;
+	bool operator!() const;
+
+	const value_type *operator->() const;
+	const value_type &operator*() const;
+
+	const_iterator &operator++();
+	const_iterator &operator--();
+
+	const_iterator();
+	const_iterator(const_iterator &&) noexcept;
+	const_iterator &operator=(const_iterator &&) noexcept;
+	~const_iterator() noexcept;
+
+	friend bool operator==(const const_iterator &, const const_iterator &);
+	friend bool operator!=(const const_iterator &, const const_iterator &);
+	friend bool operator<(const const_iterator &, const const_iterator &);
+	friend bool operator>(const const_iterator &, const const_iterator &);
+
+	template<class pos> friend void seek(column::const_iterator &, const pos &);
+	friend void seek(column::const_iterator &, const string_view &key);
+};
+
+// Get property data of a db column.
 // R can optionally be uint64_t for some values.
 template<class R = std::string> R property(column &, const string_view &name);
 template<> std::string property(column &, const string_view &name);
 template<> uint64_t property(column &, const string_view &name);
 
-// Information about a column (column)
+// Information about a column
 const std::string &name(const column &);
 size_t file_count(column &);
 size_t bytes(column &);
@@ -121,18 +180,27 @@ void flush(column &, const bool &blocking = false);
 } // namespace ircd
 
 inline
-ircd::db::column::column(database &d,
-                         const string_view &column_name)
-try
-:column
+ircd::db::column::operator database::column &()
 {
-	*d.columns.at(column_name)
+	return *c;
 }
+
+inline
+ircd::db::column::operator database &()
 {
+	return database::get(*c);
 }
-catch(const std::out_of_range &e)
+
+inline
+ircd::db::column::operator const database::column &()
+const
 {
-	log.error("'%s' failed to open non-existent column '%s'",
-	          d.name,
-	          column_name);
+	return *c;
+}
+
+inline
+ircd::db::column::operator const database &()
+const
+{
+	return database::get(*c);
 }

@@ -36,22 +36,9 @@ enum op
 	SINGLE_DELETE,
 };
 
-struct delta
-:std::tuple<op, string_view, string_view>
-{
-	delta(const enum op &op, const string_view &key, const string_view &val = {})
-	:std::tuple<enum op, string_view, string_view>{op, key, val}
-	{}
-
-	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
-	:std::tuple<enum op, string_view, string_view>{op, key, val}
-	{}
-};
-
 using merge_delta = std::pair<string_view, string_view>;
 using merge_closure = std::function<std::string (const string_view &key, const merge_delta &)>;
 using update_closure = std::function<std::string (const string_view &key, merge_delta &)>;
-using view_closure = std::function<void (const string_view &)>;
 
 struct comparator
 {

@@ -58,6 +58,7 @@ enum class get
 	NO_SNAPSHOT,            // This iterator will have the latest data (tailing)
 	NO_CHECKSUM,            // Integrity of data will be checked unless this is specified
 	READAHEAD,              // Pair with a size in bytes for prefetching additional data
+	NO_EMPTY,               // Option for db::row to not include unassigned cells in the row
 };
 
 struct gopts

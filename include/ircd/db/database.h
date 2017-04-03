@@ -38,16 +38,6 @@ struct database
 	struct comparator;
 	struct column;
 
-	struct descriptor
-	{
-		using typing = std::pair<std::type_index, std::type_index>;
-
-		std::string name;
-		typing type          { typeid(string_view), typeid(string_view) };
-		std::string options  {};
-		db::comparator cmp   {};
-	};
-
     static std::map<string_view, database *> dbs; // open databases
 
     std::string name;
@@ -61,6 +51,20 @@ struct database
     custom_ptr<rocksdb::DB> d;
 
   public:
+	struct descriptor
+	{
+		using typing = std::pair<std::type_index, std::type_index>;
+
+		std::string name;
+		std::string explain;
+		typing type          { typeid(string_view), typeid(string_view) };
+		std::string options  {};
+		db::comparator cmp   {};
+	};
+
+	using description = std::initializer_list<descriptor>;
+
+	operator std::shared_ptr<database>()         { return shared_from_this();                      }
 	operator const rocksdb::DB &() const         { return *d;                                      }
 	operator rocksdb::DB &()                     { return *d;                                      }
 
@@ -69,7 +73,7 @@ struct database
 
     database(const std::string &name,
              const std::string &options = {},
-             std::initializer_list<descriptor> = {});
+             description = {});
 
 	database() = default;
 	database(database &&) = delete;
@@ -143,21 +147,24 @@ struct database::snapshot
 	~snapshot() noexcept;
 };
 
+// Linkage to get shared_ptr of database::column
+std::shared_ptr<const database::column> shared_from(const database::column &);
+std::shared_ptr<database::column> shared_from(database::column &);
+
 // Get property data from all columns in DB. Only integer properties supported.
 template<class R = uint64_t> R property(database &, const string_view &name);
 template<> uint64_t property(database &, const string_view &name);
 
+const std::string &name(const database &);
 const std::string &name(const database::column &);
-uint32_t id(const database::column &);
-void drop(database::column &);                   // Request to erase column from db
 
 uint64_t sequence(const database::snapshot &);   // Sequence of a snapshot
 uint64_t sequence(const database &);             // Latest sequence number
 
+uint32_t id(const database::column &);
+void drop(database::column &);                   // Request to erase column from db
+
 void sync(database &);                           // Sync the write log (all columns)
 
 } // namespace db
-
-using database = db::database;
-
 } // namespace ircd

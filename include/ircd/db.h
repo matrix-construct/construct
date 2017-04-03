@@ -30,6 +30,11 @@
 namespace ircd {
 namespace db   {
 
+struct cell;
+struct row;
+struct column;
+struct database;
+
 // Errors for the database subsystem. The exceptions that use _HIDENAME
 // are built from RocksDB errors which already have an info string with
 // an included name.
@@ -55,11 +60,14 @@ extern struct log::log log;
 } // namespace db
 } // namespace ircd
 
+//
 // These are forward declarations to objects we may carry a pointer to.
 // Users of ircd::db should not be dealing with these types.
+//
 namespace rocksdb
 {
 	struct DB;
+	struct Slice;
 	struct Options;
 	struct DBOptions;
 	struct ColumnFamilyOptions;
@@ -71,21 +79,33 @@ namespace rocksdb
 	struct Snapshot;
 }
 
-#include "db/opts.h"
-#include "db/delta.h"
-#include "db/database.h"
-#include "db/column.h"
-#include "db/const_iterator.h"
-#include "db/row.h"
-
+//
+// Misc utils
+//
 namespace ircd {
 namespace db   {
+
+rocksdb::Slice slice(const string_view &);
+string_view slice(const rocksdb::Slice &);
+
+bool valid(const rocksdb::Iterator &);
+string_view key(const rocksdb::Iterator &);
+string_view val(const rocksdb::Iterator &);
 
 std::string path(const std::string &name);
 std::vector<std::string> available();
 
+void log_rdb_perf_context(const bool &all = true);
+
 } // namespace db
 } // namespace ircd
+
+#include "db/delta.h"
+#include "db/database.h"
+#include "db/opts.h"
+#include "db/column.h"
+#include "db/cell.h"
+#include "db/row.h"
 
 namespace ircd {
 namespace db   {
@@ -93,4 +113,10 @@ namespace db   {
 std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
 
 } // namespace db
+} // namespace ircd
+
+namespace ircd {
+
+using database = db::database;
+
 } // namespace ircd

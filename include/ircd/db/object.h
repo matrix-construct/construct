@@ -23,21 +23,23 @@
 #pragma once
 #define HAVE_IRCD_DB_OBJECT_H
 
+// handler register(username):
+//
+// (let database value registered = 0)
+//
+//  context A                   | context B
+//                              |
+//0 enter                       |
+//1 if(registered)              | enter                         ; A yields on cache-miss/IO read
+//2                             | if(registered)                ; B resumes hitting cached value A fetched
+//3                             |     bnt return;               ; B continues without yield
+//4                             | registered = time(nullptr);   ; B assigns B's value to database
+//5    b?t return;              | leave                         ; A resumes [what does if() see?]
+//6 registered = time(nullptr); |                               ; A overwrites B's value
+//7 leave                       |                               ; ???
+
 namespace ircd {
 namespace db   {
-
-template<database *const &d>
-struct transaction
-{
-	string_view index;
-	database::snapshot snapshot;
-	//something transaction;
-
-	transaction(const string_view &index = {})
-	:index{index}
-	,snapshot{*d}
-	{}
-};
 
 template<class T,
          database *const &d>
@@ -47,186 +49,99 @@ struct value
 
 template<database *const &d>
 struct value<void, d>
+:cell
 {
-	mutable column h;
-	transaction<d> *t;
-
 	value(const string_view &name,
-	      transaction<d> &t)
-	:h{!name.empty()? column{*d, name} : column{}}
-	,t{&t}
+	      const string_view &index)
+	:cell{*d, name, index}
 	{}
 
-	value()
-	:t{nullptr}
-	{}
+	using cell::cell;
 };
 
-template<database *const &d,
-         const char *const &prefix>
+template<database *const &d>
 struct object
+:row
 {
-	struct iterator;
+	struct const_iterator;
 
-	using key_type = string_view;
-	using mapped_type = value<void, d>;
-	using value_type = std::pair<key_type, mapped_type>;
-	using pointer = value_type *;
-	using reference = value_type &;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
+	string_view prefix;
+	string_view index;
 
-	transaction<d> *t;
-
-	iterator begin();
-	iterator end();
-
-	object(transaction<d> &t)
-	:t{&t}
-	{}
-
-	object()
-	:t{nullptr}
-	{}
+	object(const string_view &prefix, const string_view &index);
+	object() = default;
 };
 
-
-template<database *const &d,
-         const char *const &prefix>
-struct object<d, prefix>::iterator
+template<database *const &d>
+object<d>::object(const string_view &prefix,
+	              const string_view &index)
+:row{[&prefix, &index]() -> row
 {
-	using key_type = string_view;
-	using mapped_type = value<void, d>;
-	using value_type = std::pair<key_type, mapped_type>;
-	using pointer = value_type *;
-	using reference = value_type &;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
+	// The prefix is the name of the object we want to find members in.
+	// This function has to find columns starting with the prefix but not
+	// containing any additional '.' except the one directly after the prefix,
+	// as more '.' indicates sub-members which we don't fetch here.
 
-	friend class object<d, prefix>;
-
-  protected:
-	transaction<d> *t;
-	decltype(database::columns)::iterator it;
-	value_type last;
-	value_type val;
-
-	void seek_next();
-
-  public:
-	const value_type *operator->() const         { return &val;                                    }
-	const value_type &operator*() const          { return *operator->();                           }
-
-	bool operator==(const iterator &o) const     { return it == o.it;                              }
-	bool operator!=(const iterator &o) const     { return it != o.it;                              }
-	bool operator<(const iterator &o) const      { return it < o.it;                               }
-
-	iterator &operator++()
+	auto &columns(d->columns);
+	auto low(columns.lower_bound(prefix)), hi(low);
+	for(; hi != std::end(columns); ++hi)
 	{
-		++it;
-		seek_next();
-		return *this;
+		const auto &name(hi->first);
+		if(!startswith(name, prefix))
+			break;
 	}
 
-	iterator(transaction<d> &t)
-	:t{&t}
-	{}
-
-	iterator()
-	:t{nullptr}
-	{}
-};
-
-template<database *const &d,
-         const char *const &prefix>
-typename object<d, prefix>::iterator
-object<d, prefix>::end()
-{
-	iterator ret{};
-	ret.it = std::end(d->columns);
-	return ret;
-}
-
-template<database *const &d,
-         const char *const &prefix>
-typename object<d, prefix>::iterator
-object<d, prefix>::begin()
-{
-	iterator ret{*t};
-	ret.it = std::begin(d->columns);
-	ret.seek_next();
-	return ret;
-}
-
-template<database *const &d,
-          const char *const &prefix>
-void
-object<d, prefix>::iterator::seek_next()
-{
-	const auto ptc(tokens_count(prefix, "."));
-	while(it != std::end(d->columns))
+	string_view names[std::distance(low, hi)];
+	std::transform(low, hi, names, [&prefix](const auto &pair)
 	{
-		const auto &pair(*it);
-		if(!startswith(pair.first, prefix))
-		{
-			++it;
-			continue;
-		}
+		const auto &path(pair.first);
 
-		const auto ktc(tokens_count(pair.first, "."));
-		if(ktc != ptc + 1)
-		{
-			const auto com(std::min(tokens_count(last.first, "."), ptc + 1));
-			if(!com || token(last.first, ".", com - 1) == token(pair.first, ".", com - 1))
-			{
-				++it;
-				continue;
-			}
-		}
+		// Find members of this object by removing the prefix and then removing
+		// any members which have a '.' indicating they are not at this level.
+		string_view name(path);
+		name = lstrip(name, prefix);
+		name = lstrip(name, '.');
+		if(tokens_count(name, ".") != 1)
+			return string_view{};
 
-		bool bad(false);
-		const auto com(std::min(ktc, ptc));
-		if(com)
-			for(size_t i(0); i < com - 1 && !bad; i++)
-				if(token(prefix, ".", i) != token(pair.first, ".", i))
-					bad = true;
-		if(bad)
-		{
-			++it;
-			continue;
-		}
+		return string_view{path};
+	});
 
-		val.first = pair.first;
-		last.first = pair.first;
-		val.first = lstrip(val.first, prefix);
-		val.first = lstrip(val.first, '.');
-		val.first = split(val.first, '.').first;
-		val.second = value<void, d>{pair.first, *t};
-		break;
-	}
+	// Clear empty names from the array before passing up to row{}
+	const auto end(std::remove(names, names + std::distance(low, hi), string_view{}));
+	const auto count(std::distance(names, end));
+	return row
+	{
+		*d, index, vector_view<string_view>(names, count)
+	};
+}()}
+,index{index}
+{
 }
 
-/*
 template<database *const &d>
 struct value<string_view ,d>
 :value<void, d>
 {
-	// hold iterator
-
 	operator string_view() const
 	{
-		std::cout << "read [" << this->name << "] " << std::endl;
-		return {};
+		return string_view{static_cast<const cell &>(*this)};
+	}
+
+	operator string_view()
+	{
+		return string_view{static_cast<cell &>(*this)};
 	}
 
 	value &operator=(const string_view &val)
 	{
-		std::cout << "write [" << this->name << "] " << val << std::endl;
+		static_cast<cell &>(*this) = val;
 		return *this;
 	}
 
-	value(const string_view &name)
-	:value<void, d>{name}
+	value(const string_view &col,
+	      const string_view &row)
+	:value<void, d>{col, row}
 	{}
 
 	friend std::ostream &operator<<(std::ostream &s, const value<string_view, d> &v)
@@ -235,37 +150,76 @@ struct value<string_view ,d>
 		return s;
 	}
 };
-*/
 
-template<database *const &d>
-struct value<int64_t, d>
+template<class T,
+         database *const &d>
+struct arithmetic_value
 :value<void, d>
 {
-	int64_t def;
+	bool compare_exchange(T &expected, const T &desired)
+	{
+		const auto ep(reinterpret_cast<const char *>(&expected));
+		const auto dp(reinterpret_cast<const char *>(&desired));
 
-	operator int64_t() const try
-	{
-		const auto val(read(this->h, this->t->index));
-		return lex_cast<int64_t>(val);
-	}
-	catch(const not_found &e)
-	{
-		return def;
+		string_view s{ep, expected? sizeof(T) : 0};
+		const auto ret(cell::compare_exchange(s, string_view{dp, sizeof(T)}));
+		expected = !s.empty()? *reinterpret_cast<const T *>(s.data()) : 0;
+		return ret;
 	}
 
-	value &operator=(const int64_t &val)
+	T exchange(const T &desired)
 	{
-		write(this->h, this->t->index, lex_cast(val));
+		const auto dp(reinterpret_cast<const char *>(&desired));
+		const auto ret(cell::exchange(string_view{dp, desired? sizeof(T) : 0}));
+		return !ret.empty()? *reinterpret_cast<const T *>(ret.data()) : 0;
+	}
+
+	operator T() const
+	{
+		const auto val(this->val());
+		return !val.empty()? *reinterpret_cast<const T *>(val.data()) : 0;
+	}
+
+	operator T()
+	{
+		const auto val(this->val());
+		return !val.empty()? *reinterpret_cast<const T *>(val.data()) : 0;
+	}
+
+	arithmetic_value &operator=(const T &val)
+	{
+		cell &cell(*this);
+		const auto ptr(reinterpret_cast<const char *>(&val));
+		cell = string_view{ptr, val? sizeof(T) : 0};
 		return *this;
 	}
 
-	value(const string_view &name,
-	      transaction<d> &t,
-	      const int64_t &def = 0)
-	:value<void, d>{name, t}
-	,def{def}
+	friend std::ostream &operator<<(std::ostream &s, const arithmetic_value &v)
+	{
+		s << T(v);
+		return s;
+	}
+
+	arithmetic_value(const string_view &col,
+	                 const string_view &row)
+	:value<void, d>{col, row}
 	{}
 };
+
+#define IRCD_ARITHMETIC_VALUE(_type_)                    \
+template<database *const &d>                             \
+struct value<_type_, d>                                  \
+:arithmetic_value<_type_, d>                             \
+{                                                        \
+	using arithmetic_value<_type_, d>::arithmetic_value; \
+}
+
+IRCD_ARITHMETIC_VALUE(uint64_t);
+IRCD_ARITHMETIC_VALUE(int64_t);
+IRCD_ARITHMETIC_VALUE(uint32_t);
+IRCD_ARITHMETIC_VALUE(int32_t);
+IRCD_ARITHMETIC_VALUE(uint16_t);
+IRCD_ARITHMETIC_VALUE(int16_t);
 
 } // namespace db
 } // namespace ircd

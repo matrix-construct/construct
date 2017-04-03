@@ -25,6 +25,7 @@
 #include <rocksdb/comparator.h>
 #include <rocksdb/merge_operator.h>
 #include <rocksdb/perf_level.h>
+#include <rocksdb/perf_context.h>
 #include <rocksdb/listener.h>
 #include <rocksdb/statistics.h>
 #include <rocksdb/convenience.h>
@@ -46,6 +47,7 @@ struct throw_on_error
 const std::string &reflect(const rocksdb::Tickers &);
 const std::string &reflect(const rocksdb::Histograms &);
 rocksdb::Slice slice(const string_view &);
+string_view slice(const rocksdb::Slice &);
 
 // Frequently used get options and set options are separate from the string/map system
 rocksdb::WriteOptions make_opts(const sopts &);
@@ -73,18 +75,26 @@ void valid_or_throw(const rocksdb::Iterator &);
 bool valid_equal(const rocksdb::Iterator &, const string_view &);
 void valid_equal_or_throw(const rocksdb::Iterator &, const string_view &);
 
-// re-seekers
+// Direct re-seekers. Internal only.
+void _seek_(rocksdb::Iterator &, const rocksdb::Slice &);
+void _seek_(rocksdb::Iterator &, const string_view &);
+void _seek_(rocksdb::Iterator &, const pos &);
+
+// Move an iterator
+template<class pos> void seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+template<class pos> void seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
 template<class pos> void seek(column::const_iterator &, const pos &);
 template<class pos> void seek(row &, const pos &p);
 
-// Initial seekers
+// Query for an iterator. Returns a lower_bound on a key
 std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
-std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &, const gopts &);
+std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
 std::vector<row::value_type> seek(database &, const gopts &);
 
 std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
 
-void append(rocksdb::WriteBatch &, column &, const delta &delta);
+void append(rocksdb::WriteBatch &, column &, const column::delta &delta);
+void append(rocksdb::WriteBatch &, const cell::delta &delta);
 
 std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
 std::vector<std::string> column_names(const std::string &path, const std::string &options);
@@ -188,7 +198,7 @@ struct database::column
 	std::type_index key_type;
 	std::type_index mapped_type;
 	comparator cmp;
-	rocksdb::ColumnFamilyHandle *handle;
+	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:
 	operator const rocksdb::ColumnFamilyOptions &();
@@ -199,7 +209,12 @@ struct database::column
 	operator rocksdb::ColumnFamilyHandle *();
 	operator database &();
 
-	column(database *const &d, descriptor);
+	explicit column(database *const &d, descriptor);
+	column() = delete;
+	column(column &&) = delete;
+	column(const column &) = delete;
+	column &operator=(column &&) = delete;
+	column &operator=(const column &) = delete;
 	~column() noexcept;
 };
 
@@ -218,7 +233,10 @@ database::dbs
 void
 ircd::db::sync(database &d)
 {
-	throw_on_error(d.d->SyncWAL());
+	throw_on_error
+	{
+		d.d->SyncWAL()
+	};
 }
 
 uint64_t
@@ -239,13 +257,25 @@ ircd::db::property(database &d,
 	return ret;
 }
 
+std::shared_ptr<ircd::db::database::column>
+ircd::db::shared_from(database::column &column)
+{
+	return column.shared_from_this();
+}
+
+std::shared_ptr<const ircd::db::database::column>
+ircd::db::shared_from(const database::column &column)
+{
+	return column.shared_from_this();
+}
+
 //
 // database
 //
 
 ircd::db::database::database(const std::string &name,
                              const std::string &optstr,
-                             std::initializer_list<descriptor> descriptor)
+                             description description)
 try
 :name
 {
@@ -274,23 +304,22 @@ try
 ,cache{[this]() -> std::shared_ptr<rocksdb::Cache>
 {
 	//TODO: XXX
-	/*{
-		const auto ret(rocksdb::NewLRUCache(lru_cache_size));
-		this->opts->row_cache = ret;
-		return ret;
-	}*/
-	return {};
+	const auto lru_cache_size{64_MiB};
+	return rocksdb::NewLRUCache(lru_cache_size);
 }()}
-,d{[this, &descriptor, &optstr]() -> custom_ptr<rocksdb::DB>
+,d{[this, &description, &optstr]() -> custom_ptr<rocksdb::DB>
 {
 	rocksdb::DBOptions opts
 	{
 		options(optstr)
 	};
 
+	// Setup sundry
 	opts.error_if_exists = false;
 	opts.create_if_missing = true;
 	opts.create_missing_column_families = true;
+	opts.max_file_opening_threads = 0;
+	opts.use_fsync = true;
 
 	// Setup logging
 	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
@@ -305,11 +334,15 @@ try
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
 
 	// Setup journal recovery options
-	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
+	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+
+	// Setup cache
+	opts.row_cache = this->cache;
 
 	// Setup column families
-	for(auto &desc : descriptor)
+	for(auto &desc : description)
 	{
 		const auto c(std::make_shared<column>(this, std::move(desc)));
 		columns.emplace(c->name, c);
@@ -327,14 +360,17 @@ try
 			throw error("Failed to describe existing column '%s'", name);
 
 	// Setup the database closer.
-	// We need customization here because of the column family thing.
 	const auto deleter([this](rocksdb::DB *const d)
 	noexcept
 	{
-		throw_on_error(d->SyncWAL());                 // blocking
+		throw_on_error
+		{
+			d->SyncWAL() // blocking
+		};
+
 		columns.clear();
-		rocksdb::CancelAllBackgroundWork(d, true);    // true = blocking
-		throw_on_error(d->PauseBackgroundWork());
+		//rocksdb::CancelAllBackgroundWork(d, true);    // true = blocking
+		//throw_on_error(d->PauseBackgroundWork());
 		const auto seq(d->GetLatestSequenceNumber());
 		delete d;
 
@@ -343,12 +379,6 @@ try
 		         this->path,
 		         seq);
 	});
-
-	// Announce attempt before usual point where exceptions are thrown
-	log.debug("Opening database \"%s\" @ `%s' columns[%zu]",
-	          this->name,
-	          path,
-	          columns.size());
 
 	// Open DB into ptr
 	rocksdb::DB *ptr;
@@ -359,16 +389,31 @@ try
 	{
 		return static_cast<const rocksdb::ColumnFamilyDescriptor &>(*pair.second);
 	});
-
+/*
+	if(fs::is_dir(path))
+	{
+		log.info("Checking database @ `%s' columns[%zu]", path, columns.size());
+		throw_on_error(rocksdb::RepairDB(path, opts, columns));
+		log.info("Database @ `%s' check complete", path, columns.size());
+	}
 	//if(has_opt(opts, opt::READ_ONLY))
 	//	throw_on_error(rocksdb::DB::OpenForReadOnly(*this->opts, path, columns, &handles, &ptr));
 	//else
-		throw_on_error(rocksdb::DB::Open(opts, path, columns, &handles, &ptr));
+*/
+	// Announce attempt before usual point where exceptions are thrown
+	log.debug("Opening database \"%s\" @ `%s' columns[%zu]",
+	          this->name,
+	          path,
+	          columns.size());
+
+	throw_on_error
+	{
+		rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
+	};
 
 	for(const auto &handle : handles)
-		this->columns.at(handle->GetName())->handle = handle;
+		this->columns.at(handle->GetName())->handle.reset(handle);
 
-	// re-establish RAII here
 	return { ptr, deleter };
 }()}
 {
@@ -395,15 +440,24 @@ noexcept
 
 ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
+try
 {
 	return *columns.at(name);
+}
+catch(const std::out_of_range &e)
+{
+	throw error("'%s': column '%s' is not available or specified in schema", this->name, name);
 }
 
 const ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
-const
+const try
 {
 	return *columns.at(name);
+}
+catch(const std::out_of_range &e)
+{
+	throw error("'%s': column '%s' is not available or specified in schema", this->name, name);
 }
 
 ircd::db::database &
@@ -536,8 +590,17 @@ ircd::db::database::column::column(database *const &d,
 ,key_type{desc.type.first}
 ,mapped_type{desc.type.second}
 ,cmp{d, std::move(desc.cmp)}
-,handle{nullptr}
+,handle
 {
+	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
+	{
+		if(handle)
+			this->d->d->DestroyColumnFamilyHandle(handle);
+	}
+}
+{
+	assert(d->columns.count(this->name) == 0);
+
 	if(!this->cmp.user.less)
 	{
 		if(key_type == typeid(string_view))
@@ -562,8 +625,6 @@ ircd::db::database::column::column(database *const &d,
 ircd::db::database::column::~column()
 noexcept
 {
-	if(handle)
-		d->d->DestroyColumnFamilyHandle(handle);
 }
 
 ircd::db::database::column::operator
@@ -575,7 +636,7 @@ database &()
 ircd::db::database::column::operator
 rocksdb::ColumnFamilyHandle *()
 {
-	return handle;
+	return handle.get();
 }
 
 ircd::db::database::column::operator
@@ -589,7 +650,7 @@ ircd::db::database::column::operator
 const rocksdb::ColumnFamilyHandle *()
 const
 {
-	return handle;
+	return handle.get();
 }
 
 void
@@ -598,7 +659,10 @@ ircd::db::drop(database::column &c)
 	if(!c.handle)
 		return;
 
-	throw_on_error(c.d->d->DropColumnFamily(c.handle));
+	throw_on_error
+	{
+		c.d->d->DropColumnFamily(c.handle.get())
+	};
 }
 
 uint32_t
@@ -614,6 +678,12 @@ const std::string &
 ircd::db::name(const database::column &c)
 {
 	return c.name;
+}
+
+const std::string &
+ircd::db::name(const database &d)
+{
+	return d.name;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -649,6 +719,11 @@ ircd::db::database::snapshot::~snapshot()
 noexcept
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::logs
+//
 
 static
 ircd::log::facility
@@ -705,6 +780,11 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 	log(translate(level), "'%s': (rdb) %s", d->name, str);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::mergeop
+//
+
 const char *
 ircd::db::database::mergeop::Name()
 const
@@ -754,6 +834,18 @@ catch(const std::exception &e)
 {
 	log.error("merge: %s", e);
 	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::stats
+//
+
+void
+ircd::db::log_rdb_perf_context(const bool &all)
+{
+	const bool exclude_zeros(!all);
+	log.debug("%s", rocksdb::perf_context.ToString(exclude_zeros));
 }
 
 bool
@@ -886,23 +978,310 @@ ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnF
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// db/cell.h
+//
+
+void
+ircd::db::write(const sopts &sopts,
+                const std::initializer_list<cell::delta> &deltas)
+{
+	write(deltas, sopts);
+}
+
+void
+ircd::db::write(const std::initializer_list<cell::delta> &deltas,
+                const sopts &sopts)
+{
+	if(!deltas.size())
+		return;
+
+	auto &front(*std::begin(deltas));
+	column &c(std::get<cell &>(front).c);
+	database &d(c);
+
+	rocksdb::WriteBatch batch;
+	for(const auto &delta : deltas)
+		append(batch, delta);
+
+	auto opts(make_opts(sopts));
+	throw_on_error
+	{
+		d.d->Write(opts, &batch)
+	};
+}
+
+void
+ircd::db::write(const cell::delta &delta,
+                const sopts &sopts)
+{
+	column &c(std::get<cell &>(delta).c);
+	database &d(c);
+
+	rocksdb::WriteBatch batch;
+	append(batch, delta);
+	auto opts(make_opts(sopts));
+	throw_on_error
+	{
+		d.d->Write(opts, &batch)
+	};
+}
+
+void
+ircd::db::append(rocksdb::WriteBatch &batch,
+                 const cell::delta &delta)
+{
+	auto &column(std::get<cell &>(delta).c);
+	append(batch, column, column::delta
+	{
+		std::get<op>(delta),
+		std::get<cell &>(delta).index,
+		std::get<string_view>(delta)
+	});
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::cell()
+{
+}
+
+ircd::db::cell::cell(database &d,
+                     const string_view &colname,
+                     const string_view &index,
+                     gopts opts)
+:cell
+{
+	column(d[colname]), index, std::move(opts)
+}
+{
+}
+
+ircd::db::cell::cell(column column,
+                     const string_view &index,
+                     gopts opts)
+:c{std::move(column)}
+,index{index}
+,ss{opts.snapshot}
+,it{ss? seek(this->c, this->index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
+{
+}
+
+ircd::db::cell::cell(column column,
+                     const string_view &index,
+                     std::unique_ptr<rocksdb::Iterator> it)
+:c{std::move(column)}
+,index{index}
+,it{std::move(it)}
+{
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::cell(cell &&o)
+noexcept
+:c{std::move(o.c)}
+,index{std::move(o.index)}
+,ss{std::move(o.ss)}
+,it{std::move(o.it)}
+{
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell &
+ircd::db::cell::operator=(cell &&o)
+noexcept
+{
+	c = std::move(o.c);
+	index = std::move(o.index);
+	ss = std::move(o.ss);
+	it = std::move(o.it);
+
+	return *this;
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::~cell()
+noexcept
+{
+}
+
+bool
+ircd::db::cell::load(gopts opts)
+{
+	database &d(c);
+	if(valid() && !opts.snapshot && sequence(ss) == sequence(d))
+		return true;
+
+	if(bool(opts.snapshot))
+	{
+		this->it.reset();
+		this->ss = std::move(opts.snapshot);
+	}
+
+	std::unique_ptr<rocksdb::TransactionLogIterator> tit;
+	throw_on_error(d.d->GetUpdatesSince(0, &tit));
+	while(tit && tit->Valid())
+	{
+		auto batchres(tit->GetBatch());
+		std::cout << "seq: " << batchres.sequence;
+		if(batchres.writeBatchPtr)
+		{
+			auto &batch(*batchres.writeBatchPtr);
+			std::cout << " count " << batch.Count() << " ds: " << batch.GetDataSize()
+			<< " " << batch.Data() << std::endl;
+		}
+
+		tit->Next();
+	}
+
+
+	database::column &c(this->c);
+	seek(c, index, opts, it);
+	return valid();
+}
+
+ircd::string_view
+ircd::db::cell::exchange(const string_view &desired)
+{
+	const auto ret(val());
+	(*this) = desired;
+	return ret;
+}
+
+bool
+ircd::db::cell::compare_exchange(string_view &expected,
+                                 const string_view &desired)
+{
+	const auto existing(val());
+	if(expected.size() != existing.size() ||
+	   memcmp(expected.data(), existing.data(), expected.size()) != 0)
+	{
+		expected = existing;
+		return false;
+	}
+
+	expected = existing;
+	(*this) = desired;
+	return true;
+}
+
+ircd::db::cell &
+ircd::db::cell::operator=(const string_view &s)
+{
+	write(c, index, s);
+	return *this;
+}
+
+ircd::db::cell::operator string_view()
+{
+	return val();
+}
+
+ircd::db::cell::operator string_view()
+const
+{
+	return val();
+}
+
+ircd::string_view
+ircd::db::cell::val()
+{
+	if(!valid())
+		load();
+
+	return likely(valid())? db::val(*it) : string_view{};
+}
+
+ircd::string_view
+ircd::db::cell::key()
+{
+	if(!valid())
+		load();
+
+	return likely(valid())? db::key(*it) : index;
+}
+
+ircd::string_view
+ircd::db::cell::val()
+const
+{
+	return likely(valid())? db::val(*it) : string_view{};
+}
+
+ircd::string_view
+ircd::db::cell::key()
+const
+{
+	return likely(valid())? db::key(*it) : index;
+}
+
+bool
+ircd::db::cell::valid()
+const
+{
+	return it && valid_equal(*it, index);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // db/row.h
 //
 
 ircd::db::row::row(database &d,
                    const string_view &key,
-                   gopts opts)
-:opts{std::move(opts)}
-,its{[this, &d]
+                   const vector_view<string_view> &colnames,
+                   const gopts &opts)
+:its{[this, &d, &key, &colnames, &opts]
 {
-	return seek(d, this->opts);
+	using std::end;
+	using std::begin;
+	using rocksdb::Iterator;
+	using rocksdb::ColumnFamilyHandle;
+
+	const rocksdb::ReadOptions options
+	{
+		make_opts(opts)
+	};
+
+	std::vector<database::column *> colptr
+	{
+		colnames.empty()? d.columns.size() : colnames.size()
+	};
+
+	if(colnames.empty())
+		std::transform(begin(d.columns), end(d.columns), begin(colptr), [&colnames]
+		(const auto &p)
+		{
+			return p.second.get();
+		});
+	else
+		std::transform(begin(colnames), end(colnames), begin(colptr), [&d]
+		(const auto &name)
+		{
+			return &d[name];
+		});
+
+	std::vector<ColumnFamilyHandle *> handles(colptr.size());
+	std::transform(begin(colptr), end(colptr), begin(handles), []
+	(database::column *const &ptr)
+	{
+		return ptr->handle.get();
+	});
+
+	std::vector<Iterator *> iterators;
+	throw_on_error
+	{
+		d.d->NewIterators(options, handles, &iterators)
+	};
+
+	std::vector<cell> ret(iterators.size());
+	for(size_t i(0); i < ret.size(); ++i)
+	{
+		std::unique_ptr<Iterator> it(iterators.at(i));
+		ret[i] = cell { *colptr.at(i), key, std::move(it) };
+	}
+
+	return ret;
 }()}
 {
-	// Piggyback on the snapshot's reference to database.
-	// This has to be set here if gopts.snapshot was default initialized.
-	if(!this->opts.snapshot)
-		this->opts.snapshot.d = weak_from(d);
-
 	if(key.empty())
 	{
 		seek(*this, pos::FRONT);
@@ -910,63 +1289,120 @@ ircd::db::row::row(database &d,
 	}
 
 	seek(*this, key);
-	const auto end
+
+	// without the noempty flag, all cells for a row show up in the row
+	// i.e all the columns of the db, etc
+	const bool noempty
 	{
-		std::remove_if(std::begin(its), std::end(its), [&key]
-		(auto &pair)
+		has_opt(opts, get::NO_EMPTY)
+	};
+
+	const auto trimmer([&key, &noempty]
+	(auto &cell)
+	{
+		if(noempty)
+			return cell.key() != key;
+
+		// seek() returns a lower_bound so we have to compare equality
+		// here to not give the user data from the wrong row. The cell itself
+		// is not removed to allow the column to be visible in the row.
+		if(cell.key() != key)
+			cell.it.reset();
+
+		return false;
+	});
+
+	trim(*this, trimmer);
+}
+
+void
+ircd::db::row::operator()(const op &op,
+                          const string_view &col,
+                          const string_view &val,
+                          const sopts &sopts)
+{
+	write(cell::delta{op, (*this)[col], val}, sopts);
+}
+
+size_t
+ircd::db::trim(row &r)
+{
+	return trim(r, []
+	(const auto &cell)
+	{
+		return !valid(*cell.it);
+	});
+}
+
+size_t
+ircd::db::trim(row &r,
+               const string_view &index)
+{
+	return trim(r, [&index]
+	(const auto &cell)
+	{
+		return !valid_equal(*cell.it, index);
+	});
+}
+
+size_t
+ircd::db::trim(row &r,
+               const std::function<bool (cell &)> &closure)
+{
+	const auto end(std::remove_if(std::begin(r.its), std::end(r.its), closure));
+	const auto ret(std::distance(end, std::end(r.its)));
+	r.its.erase(end, std::end(r.its));
+	r.its.shrink_to_fit();
+	return ret;
+}
+
+void
+ircd::db::seek(row &r,
+               const string_view &s)
+{
+	seek<string_view>(r, s);
+}
+
+template<class pos>
+void
+ircd::db::seek(row &r,
+               const pos &p)
+{
+	ctx::offload([&r, &p]
+	{
+		std::for_each(begin(r.its), end(r.its), [&p]
+		(auto &cell)
 		{
-			rocksdb::Iterator &it{*pair.second};
-			return !valid_equal(it, key);
-		})
-	};
-	its.erase(end, std::end(its));
+			_seek_(cell, p);
+		});
+	});
 }
 
-ircd::db::row::row(row &&o)
-noexcept
-:opts{std::move(o.opts)}
-,its{std::move(o.its)}
+ircd::db::row::iterator
+ircd::db::row::find(const string_view &col)
 {
-}
-
-ircd::db::row &
-ircd::db::row::operator=(row &&o)
-noexcept
-{
-	its = std::move(o.its);
-	opts = std::move(o.opts);
-
-	return *this;
-}
-
-ircd::db::row::~row()
-noexcept
-{
-}
-
-ircd::string_view
-ircd::db::row::operator[](const string_view &colname)
-{
-	const auto it(std::find_if(begin(), end(), [&colname]
-	(const auto &pair)
+	iterator ret;
+	ret.it = std::find_if(std::begin(its), std::end(its), [&col]
+	(const auto &cell)
 	{
-		auto &column(pair.first);
-		return name(column) == colname;
-	}));
+		return name(cell.c) == col;
+	});
 
-	if(it == end())
-		return {};
+	return ret;
+}
 
-	rocksdb::Iterator &rit
+ircd::db::row::const_iterator
+ircd::db::row::find(const string_view &col)
+const
+{
+	const_iterator ret;
+	ret.it = std::find_if(std::begin(its), std::end(its), [&col]
+	(const auto &cell)
 	{
-		*it->second
-	};
+		return name(cell.c) == col;
+	});
 
-	if(!rit)
-		return {};
-
-	const auto pair(*rit);
-	return pair.second;
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1059,7 +1495,8 @@ ircd::db::bytes(column &column)
 	rocksdb::ColumnFamilyMetaData cfm;
 	database::column &c(column);
 	database &d(c);
-	d.d->GetColumnFamilyMetaData(c.handle, &cfm);
+	assert(bool(c.handle));
+	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.size;
 }
 
@@ -1069,7 +1506,8 @@ ircd::db::file_count(column &column)
 	rocksdb::ColumnFamilyMetaData cfm;
 	database::column &c(column);
 	database &d(c);
-	d.d->GetColumnFamilyMetaData(c.handle, &cfm);
+	assert(bool(c.handle));
+	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.file_count;
 }
 
@@ -1084,6 +1522,21 @@ ircd::db::name(const column &column)
 // column
 //
 
+ircd::db::column::column(database::column &c)
+:c{shared_from(c)}
+{
+}
+
+ircd::db::column::column(std::shared_ptr<database::column> c)
+:c{std::move(c)}
+{
+}
+
+ircd::db::column::column(database &d,
+                         const string_view &column_name)
+:c{shared_from(d[column_name])}
+{}
+
 void
 ircd::db::flush(column &column,
                 const bool &blocking)
@@ -1093,8 +1546,15 @@ ircd::db::flush(column &column,
 
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
+	log.debug("'%s':'%s' @%lu FLUSH",
+	          name(d),
+	          name(c),
+	          sequence(d));
 
-	throw_on_error(d.d->Flush(opts, c));
+	throw_on_error
+	{
+		d.d->Flush(opts, c)
+	};
 }
 
 void
@@ -1104,9 +1564,17 @@ ircd::db::del(column &column,
 {
 	database &d(column);
 	database::column &c(column);
+	log.debug("'%s':'%s' @%lu DELETE key(%zu B)",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          key.size());
 
 	auto opts(make_opts(sopts));
-	throw_on_error(d.d->Delete(opts, c, slice(key)));
+	throw_on_error
+	{
+		d.d->Delete(opts, c, slice(key))
+	};
 }
 
 void
@@ -1132,15 +1600,24 @@ ircd::db::write(column &column,
 {
 	database &d(column);
 	database::column &c(column);
+	log.debug("'%s':'%s' @%lu PUT key(%zu B) val(%zu B)",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          key.size(),
+	          val.size());
 
 	auto opts(make_opts(sopts));
-	throw_on_error(d.d->Put(opts, c, slice(key), slice(val)));
+	throw_on_error
+	{
+		d.d->Put(opts, c, slice(key), slice(val))
+	};
 }
 
 void
 ircd::db::append(rocksdb::WriteBatch &batch,
                  column &column,
-                 const delta &delta)
+                 const column::delta &delta)
 {
 	database::column &c(column);
 
@@ -1187,6 +1664,14 @@ ircd::db::has(column &column,
 		});
 	}
 
+	log.debug("'%s':'%s' @%lu HAS key(%zu B) %s [%s]",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          key.size(),
+	          status.ok()? "YES"s : "NO"s,
+	          opts.read_tier == BLOCKING? "CACHE MISS"s : "CACHE HIT"s);
+
 	// Finally the result
 	switch(status.code())
 	{
@@ -1210,6 +1695,13 @@ ircd::db::column::operator()(const op &op,
 }
 
 void
+ircd::db::column::operator()(const sopts &sopts,
+                             const std::initializer_list<delta> &deltas)
+{
+	operator()(deltas, sopts);
+}
+
+void
 ircd::db::column::operator()(const std::initializer_list<delta> &deltas,
                              const sopts &sopts)
 {
@@ -1219,7 +1711,10 @@ ircd::db::column::operator()(const std::initializer_list<delta> &deltas,
 
 	database &d(*this);
 	auto opts(make_opts(sopts));
-	throw_on_error(d.d->Write(opts, &batch));
+	throw_on_error
+	{
+		d.d->Write(opts, &batch)
+	};
 }
 
 void
@@ -1231,7 +1726,10 @@ ircd::db::column::operator()(const delta &delta,
 
 	database &d(*this);
 	auto opts(make_opts(sopts));
-	throw_on_error(d.d->Write(opts, &batch));
+	throw_on_error
+	{
+		d.d->Write(opts, &batch)
+	};
 }
 
 void
@@ -1249,10 +1747,16 @@ ircd::db::column::operator()(const string_view &key,
 {
 	const auto it(seek(*this, key, gopts));
 	valid_equal_or_throw(*it, key);
-
-	const auto &v(it->value());
-	func(string_view{v.data(), v.size()});
+	func(val(*it));
 }
+
+ircd::db::cell
+ircd::db::column::operator[](const string_view &key)
+const
+{
+	return { *this, key };
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1286,7 +1790,6 @@ ircd::db::column::cend(const gopts &gopts)
 ircd::db::column::const_iterator
 ircd::db::column::cbegin(const gopts &gopts)
 {
-	database::column &c(*this);
 	const_iterator ret
 	{
 		c, {}, gopts
@@ -1322,7 +1825,6 @@ ircd::db::column::const_iterator
 ircd::db::column::lower_bound(const string_view &key,
                               const gopts &gopts)
 {
-	database::column &c(*this);
 	const_iterator ret
 	{
 		c, {}, gopts
@@ -1330,11 +1832,6 @@ ircd::db::column::lower_bound(const string_view &key,
 
 	seek(ret, key);
 	return std::move(ret);
-}
-
-ircd::db::column::const_iterator::const_iterator()
-:c{nullptr}
-{
 }
 
 ircd::db::column::const_iterator::const_iterator(const_iterator &&o)
@@ -1350,21 +1847,22 @@ ircd::db::column::const_iterator &
 ircd::db::column::const_iterator::operator=(const_iterator &&o)
 noexcept
 {
-	this->~const_iterator();
-
 	opts = std::move(o.opts);
 	c = std::move(o.c);
 	it = std::move(o.it);
 	val = std::move(o.val);
-
 	return *this;
 }
 
-ircd::db::column::const_iterator::const_iterator(database::column &c,
+ircd::db::column::const_iterator::const_iterator()
+{
+}
+
+ircd::db::column::const_iterator::const_iterator(std::shared_ptr<database::column> c,
                                                  std::unique_ptr<rocksdb::Iterator> &&it,
                                                  gopts opts)
 :opts{std::move(opts)}
-,c{&c}
+,c{std::move(c)}
 ,it{std::move(it)}
 {
 	//if(!has_opt(this->opts, get::READAHEAD))
@@ -1394,12 +1892,9 @@ const ircd::db::column::const_iterator::value_type &
 ircd::db::column::const_iterator::operator*()
 const
 {
-	const auto &k(it->key());
-	const auto &v(it->value());
-
-	val.first   = { k.data(), k.size() };
-	val.second  = { v.data(), v.size() };
-
+	assert(valid(*it));
+	val.first = db::key(*it);
+	val.second = db::val(*it);
 	return val;
 }
 
@@ -1408,86 +1903,6 @@ ircd::db::column::const_iterator::operator->()
 const
 {
 	return &operator*();
-}
-
-bool
-ircd::db::column::const_iterator::operator>=(const const_iterator &o)
-const
-{
-	return (*this > o) || (*this == o);
-}
-
-bool
-ircd::db::column::const_iterator::operator<=(const const_iterator &o)
-const
-{
-	return (*this < o) || (*this == o);
-}
-
-bool
-ircd::db::column::const_iterator::operator!=(const const_iterator &o)
-const
-{
-	return !(*this == o);
-}
-
-bool
-ircd::db::column::const_iterator::operator==(const const_iterator &o)
-const
-{
-	if(*this && o)
-	{
-		const auto &a(it->key());
-		const auto &b(o.it->key());
-		return a.compare(b) == 0;
-	}
-
-	if(!*this && !o)
-		return true;
-
-	return false;
-}
-
-bool
-ircd::db::column::const_iterator::operator>(const const_iterator &o)
-const
-{
-	if(*this && o)
-	{
-		const auto &a(it->key());
-		const auto &b(o.it->key());
-		return a.compare(b) == 1;
-	}
-
-	if(!*this && o)
-		return true;
-
-	if(!*this && !o)
-		return false;
-
-	assert(!*this && o);
-	return false;
-}
-
-bool
-ircd::db::column::const_iterator::operator<(const const_iterator &o)
-const
-{
-	if(*this && o)
-	{
-		const auto &a(it->key());
-		const auto &b(o.it->key());
-		return a.compare(b) == -1;
-	}
-
-	if(!*this && o)
-		return false;
-
-	if(!*this && !o)
-		return false;
-
-	assert(*this && !o);
-	return true;
 }
 
 bool
@@ -1509,6 +1924,197 @@ const
 	return !!*this;
 }
 
+bool
+ircd::db::operator!=(const column::const_iterator &a, const column::const_iterator &b)
+{
+	return !(a == b);
+}
+
+bool
+ircd::db::operator==(const column::const_iterator &a, const column::const_iterator &b)
+{
+	if(a && b)
+	{
+		const auto &ak(a.it->key());
+		const auto &bk(b.it->key());
+		return ak.compare(bk) == 0;
+	}
+
+	if(!a && !b)
+		return true;
+
+	return false;
+}
+
+bool
+ircd::db::operator>(const column::const_iterator &a, const column::const_iterator &b)
+{
+	if(a && b)
+	{
+		const auto &ak(a.it->key());
+		const auto &bk(b.it->key());
+		return ak.compare(bk) == 1;
+	}
+
+	if(!a && b)
+		return true;
+
+	if(!a && !b)
+		return false;
+
+	assert(!a && b);
+	return false;
+}
+
+bool
+ircd::db::operator<(const column::const_iterator &a, const column::const_iterator &b)
+{
+	if(a && b)
+	{
+		const auto &ak(a.it->key());
+		const auto &bk(b.it->key());
+		return ak.compare(bk) == -1;
+	}
+
+	if(!a && b)
+		return false;
+
+	if(!a && !b)
+		return false;
+
+	assert(a && !b);
+	return true;
+}
+
+template<class pos>
+void
+ircd::db::seek(column::const_iterator &it,
+               const pos &p)
+{
+	database::column &c(it);
+	database &d(*c.d);
+	const gopts &gopts(it);
+	auto opts
+	{
+		make_opts(gopts, true)
+	};
+
+	seek(c, p, opts, it.it);
+}
+
+void
+ircd::db::seek(column::const_iterator &it,
+               const string_view &s)
+{
+	seek<string_view>(it, s);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// seek
+//
+
+std::unique_ptr<rocksdb::Iterator>
+ircd::db::seek(column &column,
+               const string_view &key,
+               const gopts &opts)
+{
+	using rocksdb::Iterator;
+
+	database &d(column);
+	database::column &c(column);
+	std::unique_ptr<Iterator> ret;
+	seek(c, key, opts, ret);
+	return std::move(ret);
+}
+
+template<class pos>
+void
+ircd::db::seek(database::column &c,
+               const pos &p,
+               const gopts &gopts,
+               std::unique_ptr<rocksdb::Iterator> &it)
+{
+	auto opts
+	{
+		make_opts(gopts)
+	};
+
+	seek(c, p, opts, it);
+}
+
+template<class pos>
+void
+ircd::db::seek(database::column &c,
+               const pos &p,
+               rocksdb::ReadOptions &opts,
+               std::unique_ptr<rocksdb::Iterator> &it)
+{
+	database &d(*c.d);
+
+	// Start with a non-blocking query
+	if(!it || opts.read_tier == BLOCKING)
+	{
+		opts.read_tier = NON_BLOCKING;
+		it.reset(d.d->NewIterator(opts, c));
+	}
+
+	_seek_(*it, p);
+	if(it->status().IsIncomplete())
+	{
+		// DB cache miss: reset the iterator to blocking mode and offload it
+		opts.read_tier = BLOCKING;
+		it.reset(d.d->NewIterator(opts, c));
+		ctx::offload([&it, &p]
+		{
+			_seek_(*it, p);
+		});
+	}
+
+	log.debug("'%s':'%s' @%lu SEEK [valid: %d] [%s]",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          valid(*it),
+	          opts.read_tier == BLOCKING? "CACHE MISS"s : "CACHE HIT"s);
+}
+
+void
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const pos &p)
+{
+	switch(p)
+	{
+		case pos::NEXT:     it.Next();           break;
+		case pos::PREV:     it.Prev();           break;
+		case pos::FRONT:    it.SeekToFirst();    break;
+		case pos::BACK:     it.SeekToLast();     break;
+		default:
+		case pos::END:
+		{
+			it.SeekToLast();
+			if(it.Valid())
+				it.Next();
+
+			break;
+		}
+	}
+}
+
+void
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const string_view &sv)
+{
+	_seek_(it, slice(sv));
+}
+
+void
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const rocksdb::Slice &sk)
+{
+	it.Seek(sk);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Misc
@@ -1527,7 +2133,11 @@ ircd::db::column_names(const std::string &path,
 try
 {
 	std::vector<std::string> ret;
-	throw_on_error(rocksdb::DB::ListColumnFamilies(opts, path, &ret));
+	throw_on_error
+	{
+		rocksdb::DB::ListColumnFamilies(opts, path, &ret)
+	};
+
 	return ret;
 }
 catch(const io_error &e)
@@ -1544,25 +2154,39 @@ ircd::db::database::options::options(const database &d)
 }
 
 ircd::db::database::options::options(const database::column &c)
-:options{rocksdb::ColumnFamilyOptions{c.d->d->GetOptions(c.handle)}}
+:options
 {
-}
+	rocksdb::ColumnFamilyOptions
+	{
+		c.d->d->GetOptions(c.handle.get())
+	}
+}{}
 
 ircd::db::database::options::options(const rocksdb::DBOptions &opts)
 {
-	throw_on_error{rocksdb::GetStringFromDBOptions(this, opts)};
+	throw_on_error
+	{
+		rocksdb::GetStringFromDBOptions(this, opts)
+	};
 }
 
 ircd::db::database::options::options(const rocksdb::ColumnFamilyOptions &opts)
 {
-	throw_on_error{rocksdb::GetStringFromColumnFamilyOptions(this, opts)};
+	throw_on_error
+	{
+		rocksdb::GetStringFromColumnFamilyOptions(this, opts)
+	};
 }
 
 ircd::db::database::options::operator rocksdb::PlainTableOptions()
 const
 {
 	rocksdb::PlainTableOptions ret;
-	throw_on_error{rocksdb::GetPlainTableOptionsFromString(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetPlainTableOptionsFromString(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1570,7 +2194,11 @@ ircd::db::database::options::operator rocksdb::BlockBasedTableOptions()
 const
 {
 	rocksdb::BlockBasedTableOptions ret;
-	throw_on_error{rocksdb::GetBlockBasedTableOptionsFromString(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetBlockBasedTableOptionsFromString(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1578,7 +2206,11 @@ ircd::db::database::options::operator rocksdb::ColumnFamilyOptions()
 const
 {
 	rocksdb::ColumnFamilyOptions ret;
-	throw_on_error{rocksdb::GetColumnFamilyOptionsFromString(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetColumnFamilyOptionsFromString(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1586,7 +2218,11 @@ ircd::db::database::options::operator rocksdb::DBOptions()
 const
 {
 	rocksdb::DBOptions ret;
-	throw_on_error{rocksdb::GetDBOptionsFromString(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetDBOptionsFromString(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1594,20 +2230,31 @@ ircd::db::database::options::operator rocksdb::Options()
 const
 {
 	rocksdb::Options ret;
-	throw_on_error{rocksdb::GetOptionsFromString(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetOptionsFromString(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
 ircd::db::database::options::map::map(const options &o)
 {
-	throw_on_error{rocksdb::StringToMap(o, this)};
+	throw_on_error
+	{
+		rocksdb::StringToMap(o, this)
+	};
 }
 
 ircd::db::database::options::map::operator rocksdb::PlainTableOptions()
 const
 {
 	rocksdb::PlainTableOptions ret;
-	throw_on_error{rocksdb::GetPlainTableOptionsFromMap(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetPlainTableOptionsFromMap(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1615,7 +2262,11 @@ ircd::db::database::options::map::operator rocksdb::BlockBasedTableOptions()
 const
 {
 	rocksdb::BlockBasedTableOptions ret;
-	throw_on_error{rocksdb::GetBlockBasedTableOptionsFromMap(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetBlockBasedTableOptionsFromMap(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1623,7 +2274,11 @@ ircd::db::database::options::map::operator rocksdb::ColumnFamilyOptions()
 const
 {
 	rocksdb::ColumnFamilyOptions ret;
-	throw_on_error{rocksdb::GetColumnFamilyOptionsFromMap(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetColumnFamilyOptionsFromMap(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1631,7 +2286,11 @@ ircd::db::database::options::map::operator rocksdb::DBOptions()
 const
 {
 	rocksdb::DBOptions ret;
-	throw_on_error{rocksdb::GetDBOptionsFromMap(ret, *this, &ret)};
+	throw_on_error
+	{
+		rocksdb::GetDBOptionsFromMap(ret, *this, &ret)
+	};
+
 	return ret;
 }
 
@@ -1644,6 +2303,8 @@ ircd::db::make_opts(const gopts &opts,
 
 	if(iterator)
 		ret.fill_cache = false;
+	else
+		ret.fill_cache = true;
 
 	for(const auto &opt : opts) switch(opt.first)
 	{
@@ -1701,192 +2362,6 @@ ircd::db::make_opts(const sopts &opts)
 	}
 
 	return ret;
-}
-
-namespace ircd {
-namespace db   {
-
-void seek(rocksdb::Iterator &, const rocksdb::Slice &);
-void seek(rocksdb::Iterator &, const string_view &);
-void seek(rocksdb::Iterator &, const pos &);
-
-} // namespace db
-} // namespace ircd
-
-std::vector<ircd::db::row::value_type>
-ircd::db::seek(database &d,
-               const gopts &gopts)
-{
-	using rocksdb::Iterator;
-	using rocksdb::ColumnFamilyHandle;
-
-	const auto opts
-	{
-		make_opts(gopts, true)
-	};
-
-	std::vector<Iterator *> iterators;
-	std::vector<database::column *> column(d.columns.size());
-	std::transform(begin(d.columns), end(d.columns), begin(column), []
-	(const auto &p)
-	{
-		return p.second.get();
-	});
-
-	std::vector<ColumnFamilyHandle *> columns(column.size());
-	std::transform(begin(column), end(column), begin(columns), []
-	(const auto &ptr)
-	{
-		return ptr->handle;
-	});
-
-	throw_on_error
-	{
-		d.d->NewIterators(opts, columns, &iterators)
-	};
-
-	std::vector<row::value_type> ret(iterators.size());
-	for(size_t i(0); i < ret.size(); ++i)
-	{
-		std::unique_ptr<Iterator> it(iterators.at(i));
-		ret[i] = std::make_pair(db::column{*column.at(i)}, std::move(it));
-	}
-
-	return ret;
-}
-
-std::unique_ptr<rocksdb::Iterator>
-ircd::db::seek(column &column,
-               const string_view &key,
-               const gopts &gopts)
-{
-	using rocksdb::Iterator;
-
-	database &d(column);
-	database::column &c(column);
-	auto opts
-	{
-		make_opts(gopts, true)
-	};
-
-	// Perform a query which won't be allowed to do kernel IO
-	opts.read_tier = NON_BLOCKING;
-
-	std::unique_ptr<Iterator> it(d.d->NewIterator(opts, c));
-	seek(*it, key);
-
-	if(it->status().IsIncomplete())
-	{
-		// DB cache miss: reset the iterator to blocking mode and offload it
-		opts.read_tier = BLOCKING;
-		it.reset(d.d->NewIterator(opts, c));
-		ctx::offload([&it, &key]
-		{
-			seek(*it, key);
-		});
-	}
-	// else DB cache hit; no context switch; no thread switch; no kernel I/O; gg
-
-	return std::move(it);
-}
-
-template<class pos>
-void
-ircd::db::seek(row &r,
-               const pos &p)
-{
-	ctx::offload([&r, &p]
-	{
-		std::for_each(begin(r.its), end(r.its), [&p]
-		(const auto &pair)
-		{
-			rocksdb::Iterator &it(*pair.second);
-			seek(it, p);
-		});
-	});
-}
-
-void
-ircd::db::seek(row &r,
-               const string_view &s)
-{
-	seek<string_view>(r, s);
-}
-
-template<class pos>
-void
-ircd::db::seek(column::const_iterator &it,
-               const pos &p)
-{
-	const gopts &gopts(it);
-	database::column &c(it);
-	database &d(*c.d);
-	auto opts
-	{
-		make_opts(gopts, true)
-	};
-
-	// Start with a non-blocking query
-	if(!it.it || opts.read_tier == BLOCKING)
-	{
-		opts.read_tier = NON_BLOCKING;
-		it.it.reset(d.d->NewIterator(opts, c));
-	}
-
-	seek(*it.it, p);
-	if(it.it->status().IsIncomplete())
-	{
-		// DB cache miss: reset the iterator to blocking mode and offload it
-		opts.read_tier = BLOCKING;
-		it.it.reset(d.d->NewIterator(opts, c));
-		ctx::offload([&it, &p]
-		{
-			seek(*it.it, p);
-		});
-	}
-}
-
-void
-ircd::db::seek(column::const_iterator &it,
-               const string_view &s)
-{
-	seek<string_view>(it, s);
-}
-
-void
-ircd::db::seek(rocksdb::Iterator &it,
-               const pos &p)
-{
-	switch(p)
-	{
-		case pos::NEXT:     it.Next();           break;
-		case pos::PREV:     it.Prev();           break;
-		case pos::FRONT:    it.SeekToFirst();    break;
-		case pos::BACK:     it.SeekToLast();     break;
-		default:
-		case pos::END:
-		{
-			it.SeekToLast();
-			if(it.Valid())
-				it.Next();
-
-			break;
-		}
-	}
-}
-
-void
-ircd::db::seek(rocksdb::Iterator &it,
-         const string_view &sv)
-{
-	seek(it, slice(sv));
-}
-
-void
-ircd::db::seek(rocksdb::Iterator &it,
-         const rocksdb::Slice &sk)
-{
-	it.Seek(sk);
 }
 
 void
@@ -1977,19 +2452,31 @@ ircd::db::path(const std::string &name)
 std::pair<ircd::string_view, ircd::string_view>
 ircd::db::operator*(const rocksdb::Iterator &it)
 {
-	const auto &k(it.key());
-	const auto &v(it.value());
-	return
-	{
-		{ k.data(), k.size() },
-		{ v.data(), v.size() }
-	};
+	return { key(it), val(it) };
+}
+
+ircd::string_view
+ircd::db::key(const rocksdb::Iterator &it)
+{
+	return slice(it.key());
+}
+
+ircd::string_view
+ircd::db::val(const rocksdb::Iterator &it)
+{
+	return slice(it.value());
 }
 
 rocksdb::Slice
 ircd::db::slice(const string_view &sv)
 {
 	return { sv.data(), sv.size() };
+}
+
+ircd::string_view
+ircd::db::slice(const rocksdb::Slice &sk)
+{
+	return { sk.data(), sk.size() };
 }
 
 const std::string &
