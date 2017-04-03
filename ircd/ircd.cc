@@ -54,17 +54,15 @@ ircd::init(boost::asio::io_service &io_service,
 
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
-	log::mark("log started");
+	log::mark("START");
 
-	// The configuration is parsed for grammatical errors only. It is not evaluated.
-	log::info("parsing your configuration");
-
-	// The caller has no other way to know IRCd has halted as everyone shares the
-	// same io_service, which may not return if the caller has their own tasks.
-	at_main_exit(std::move(main_exit_func));
+	if(main_exit_func)
+	{
+		log::debug("User set an exit callback");
+		at_main_exit(std::move(main_exit_func));
+	}
 
 	// The master of ceremonies runs the show after this function returns and ios.run().
-	log::debug("spawning main context");
 	context mc("main", 8_MiB, ircd::main);       //TODO: optimize stack size
 	main_context = mc.detach();
 
@@ -95,14 +93,9 @@ try
 	// to the main context. Initialization can also occur in ircd::init() if static initialization
 	// and destruction is not possible, but there is no complementary destruction up there.
 	ctx::ole::init _ole_;
-	mods::init _mods_;
-	db::init _db_;
 	//js::init _js_;
 	socket::init _sock_;
 	client::init _client_;
-
-	//json::test();
-	//exit(0);
 
 	module client_versions("client_versions.so");
 	module client_register("client_register.so");
@@ -153,10 +146,15 @@ try
 		ctx::wait();
 	}
 	while(!main_finish);
+
+	log::notice("IRCd terminating");
 }
 catch(const std::exception &e)
 {
-	log::error("IRCd finished: %s", e.what());
+	log::critical("IRCd terminated: %s", e.what());
+
+	if(ircd::debugmode)
+		throw;
 }
 
 //
@@ -171,7 +169,7 @@ noexcept try
 		// This function will notify the user of IRCd shutdown. The notification is
 		// posted to the io_service ensuring THERE IS NO CONTINUATION ON THIS STACK by
 		// the user, who is then free to destruct all elements of IRCd.
-		log::debug("Notifying user of IRCd completion");
+		log::notice("Notifying user of IRCd completion");
 		ios->post(main_exit_func);
 	}
 
