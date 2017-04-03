@@ -729,5 +729,64 @@ struct va_rtti
 
 static_assert(sizeof(va_rtti) == 192 + 8, "");
 
+
+//
+// To collapse pairs of iterators down to a single type
+//
+template<class T>
+struct iterators
+:std::pair<typename T::iterator, typename T::iterator>
+{
+	using std::pair<typename T::iterator, typename T::iterator>::pair;
+
+	iterators(T &t)
+	:std::pair<typename T::iterator, typename T::iterator>
+	{
+		std::begin(t), std::end(t)
+	}{}
+};
+
+template<class T>
+struct const_iterators
+:std::pair<typename T::const_iterator, typename T::const_iterator>
+{
+	using std::pair<typename T::const_iterator, typename T::const_iterator>::pair;
+
+	const_iterators(const T &t)
+	:std::pair<typename T::const_iterator, typename T::const_iterator>
+	{
+		std::begin(t), std::end(t)
+	}{}
+};
+
+template<class T>
+typename T::iterator
+begin(const iterators<T> &i)
+{
+	return i.first;
+}
+
+template<class T>
+typename T::iterator
+end(const iterators<T> &i)
+{
+	return i.second;
+}
+
+template<class T>
+typename T::const_iterator
+begin(const const_iterators<T> &ci)
+{
+	return ci.first;
+}
+
+template<class T>
+typename T::const_iterator
+end(const const_iterators<T> &ci)
+{
+	return ci.second;
+}
+
+
 } // namespace util
 } // namespace ircd
