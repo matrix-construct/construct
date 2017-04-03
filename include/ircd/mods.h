@@ -23,28 +23,13 @@
 #define HAVE_IRCD_MODS_H
 
 namespace ircd {
-namespace mapi {
-
-using magic_t = uint16_t;
-using version_t = uint16_t;
-struct header;
-
-} // namespace mapi
-} // namespace ircd
-
-namespace ircd {
 namespace mods {
-
-using mapi::magic_t;
-using mapi::version_t;
 
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, filesystem_error)
 IRCD_EXCEPTION(error, invalid_export)
 IRCD_EXCEPTION(error, expired_symbol)
 IRCD_EXCEPTION(error, undefined_symbol)
-
-extern struct log::log log;
 
 struct paths
 :std::vector<std::string>

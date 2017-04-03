@@ -25,6 +25,9 @@
 namespace ircd {
 namespace mapi {
 
+struct header;
+using magic_t = uint16_t;
+using version_t = uint16_t;
 using metadata = std::map<std::string, std::string>;
 using init_function = std::function<void ()>;
 using fini_function = std::function<void ()>;
