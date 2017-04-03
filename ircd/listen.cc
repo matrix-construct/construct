@@ -116,7 +116,11 @@ try
 
 	if(opts.has("ssl.certificate.file.pem"))
 	{
-		const std::string filename{opts["ssl.certificate.file.pem"]};
+		const std::string filename
+		{
+			unquote(opts["ssl.certificate.file.pem"])
+		};
+
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
 		log.info("%s using certificate file '%s'",
 		          std::string(*this),
@@ -125,7 +129,11 @@ try
 
 	if(opts.has("ssl.private_key.file.pem"))
 	{
-		const std::string filename{opts["ssl.private_key.file.pem"]};
+		const std::string filename
+		{
+			unquote(opts["ssl.private_key.file.pem"])
+		};
+
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
 		log.info("%s using private key file '%s'",
 		          std::string(*this),
@@ -134,7 +142,7 @@ try
 
 	a.listen(backlog);
 
-	// Allows main() to run and print its log message
+	// Allow main() to run and print its log message
 	ctx::yield();
 }
 catch(const boost::system::system_error &e)
