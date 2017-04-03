@@ -97,7 +97,7 @@ struct input
 	rule<> quote                       { lit('"')                                         ,"quote" };
 	rule<string_view> chars            { raw[*(char_ - quote)]                       ,"characters" };
 	rule<string_view> string           { quote >> chars >> quote                         ,"string" };
-	rule<string_view> name             { string                                            ,"name" };
+	rule<string_view> name             { quote >> raw[+(char_ - quote)] >> quote           ,"name" };
 
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
@@ -185,7 +185,7 @@ struct output
 
 	rule<string_view> number           { double_                                         ,"number" };
 
-	rule<string_view> name             { string                                            ,"name" };
+	rule<string_view> name             { quote << +(~char_('"')) << quote                  ,"name" };
 	rule<string_view> value            { rule<string_view>{}  /* subclass implemented */  ,"value" };
 	rule<const doc::member &> member   { name << name_sep << value                       ,"member" };
 
