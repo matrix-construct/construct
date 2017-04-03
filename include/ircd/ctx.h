@@ -72,5 +72,6 @@ namespace ircd {
 
 using ctx::timeout;
 using ctx::context;
+using ctx::sleep;
 
 } // namespace ircd
