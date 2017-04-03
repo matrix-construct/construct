@@ -601,6 +601,79 @@ struct string_view
 	using std::string_view::string_view;
 };
 
+template<class T>
+struct vector_view
+{
+	T *_data                                     { nullptr                                         };
+	T *_stop                                     { nullptr                                         };
+
+  public:
+	T *data() const                              { return _data;                                   }
+	size_t size() const                          { return std::distance(_data, _stop);             }
+	bool empty() const                           { return !size();                                 }
+
+	const T *begin() const                       { return data();                                  }
+	const T *end() const                         { return _stop;                                   }
+	const T *cbegin()                            { return data();                                  }
+	const T *cend()                              { return _stop;                                   }
+	T *begin()                                   { return data();                                  }
+	T *end()                                     { return _stop;                                   }
+
+	const T &operator[](const size_t &pos) const
+	{
+		return *(data() + pos);
+	}
+
+	T &operator[](const size_t &pos)
+	{
+		return *(data() + pos);
+	}
+
+	const T &at(const size_t &pos) const
+	{
+		if(unlikely(pos >= size()))
+			throw std::out_of_range();
+
+		return operator[](pos);
+	}
+
+	T &at(const size_t &pos)
+	{
+		if(unlikely(pos >= size()))
+			throw std::out_of_range();
+
+		return operator[](pos);
+	}
+
+	vector_view(T *const &start, T *const &stop)
+	:_data{start}
+	,_stop{stop}
+	{}
+
+	vector_view(T *const &start, const size_t &size)
+	:_data{start}
+	,_stop{start + size}
+	{}
+
+	template<class U,
+	         class A>
+	vector_view(std::vector<U, A> &v)
+	:vector_view{v.data(), v.size()}
+	{}
+
+	template<size_t SIZE>
+	vector_view(T (&buffer)[SIZE])
+	:vector_view{std::addressof(buffer), SIZE}
+	{}
+
+	template<size_t SIZE>
+	vector_view(std::array<T, SIZE> &array)
+	:vector_view{array.data(), array.size()}
+	{}
+
+	vector_view() = default;
+};
+
 
 //
 // Error-checking closure for POSIX system calls. Note the usage is
