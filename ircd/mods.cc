@@ -43,6 +43,7 @@ struct mod
 
 	filesystem::path path;
 	load_mode::type mode;
+	std::deque<mod *> children;
 	boost::dll::shared_library handle;
 	mapi::header *header;
 
@@ -60,6 +61,8 @@ struct mod
 	template<class T> T &get(const std::string &name);
 	template<class T = uint8_t> const T *ptr(const std::string &name) const;
 	template<class T = uint8_t> T *ptr(const std::string &name);
+
+	bool unload();
 
 	mod(const filesystem::path &,
 	    const load_mode::type & = load_mode::rtld_local | load_mode::rtld_now);
@@ -632,6 +635,7 @@ try
 	if(!loading.empty())
 	{
 		const auto &m(mod::loading.top());
+		m->children.emplace_back(this);
 		log.debug("Module '%s' recursively loaded by '%s'",
 		          name(),
 		          m->path.filename().string());
@@ -663,14 +667,41 @@ bool ircd::mapi::static_destruction;
 ircd::mods::mod::~mod()
 noexcept try
 {
+	unload();
+}
+catch(const std::exception &e)
+{
+	log::critical("Module @%p unload: %s", (const void *)this, e.what());
+
+	if(!ircd::debugmode)
+		return;
+}
+
+bool
+ircd::mods::mod::unload()
+{
+	if(!handle.is_loaded())
+		return false;
+
 	const auto name(this->name());
 	log.debug("Attempting unload module '%s' @ `%s'", name, location());
-
 	const size_t erased(loaded.erase(name));
 	assert(erased == 1);
 
 	if(header->fini)
 		header->fini();
+
+	// Save the children! dlclose() does not like to be called recursively during static
+	// destruction of a module. The mod ctor recorded all of the modules loaded while this
+	// module was loading so we can reverse the record and unload them here.
+	// Note: If the user loaded more modules from inside their module they will have to dtor them
+	// before 'static destruction' does. They can also do that by adding them to this vector.
+	std::for_each(rbegin(this->children), rend(this->children), []
+	(mod *const &ptr)
+	{
+		if(shared_from(*ptr).use_count() <= 2)
+			ptr->unload();
+	});
 
 	log.debug("Attempting static unload for '%s' @ `%s'", name, location());
 	mapi::static_destruction = false;
@@ -683,13 +714,8 @@ noexcept try
 	} else {
 		log.info("Unloaded '%s'", name);
 	}
-}
-catch(const std::exception &e)
-{
-	log::critical("Module @%p unload: %s", (const void *)this, e.what());
 
-	if(!ircd::debugmode)
-		return;
+	return true;
 }
 
 template<class T>

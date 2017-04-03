@@ -74,7 +74,10 @@ struct module
 	template<class T> const T &get(const std::string &name) const;
 	template<class T> T &get(const std::string &name);
 
-	module() = default;
+	module(std::shared_ptr<mod> ptr = {})
+	:std::shared_ptr<mod>{std::move(ptr)}
+	{}
+
 	module(const std::string &name);
 	~module() noexcept;
 };
