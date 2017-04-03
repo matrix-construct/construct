@@ -52,6 +52,7 @@ struct doc
 	template<class T> T at(const string_view &name) const;
 	string_view operator[](const string_view &name) const;
 	template<class T = string_view> T get(const string_view &name, const T &def = T()) const;
+	string_view get(const string_view &name, const string_view &def = {}) const;
 
 	explicit operator std::string() const;
 
@@ -115,6 +116,15 @@ struct doc::const_iterator
 
 } // namespace json
 } // namespace ircd
+
+inline ircd::string_view
+ircd::json::doc::get(const string_view &name,
+                     const string_view &def)
+const
+{
+	const string_view sv(operator[](name));
+	return !sv.empty()? sv : def;
+}
 
 template<class T>
 T
