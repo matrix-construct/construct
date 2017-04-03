@@ -3,8 +3,8 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = include/ircd
 SUBDIRS += ircd
-SUBDIRS += charybdis
 SUBDIRS += modules
+SUBDIRS += charybdis
 SUBDIRS += tools
 SUBDIRS += help
 SUBDIRS += doc

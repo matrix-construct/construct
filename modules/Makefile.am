@@ -17,7 +17,8 @@ AM_LDFLAGS += \
 	-Wl,--shared \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
-	-Wl,--no-allow-shlib-undefined
+	-Wl,--no-allow-shlib-undefined \
+	$(PLATFORM_LDFLAGS)
 #	-Wl,--no-undefined
 #	-export-symbols-regex IRCD_MODULE*
 #	-export-symbols-regex *
