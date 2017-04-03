@@ -289,10 +289,27 @@ ircd::ctx::yield(ctx &ctx)
 	ctx.jump();
 }
 
+void
+ircd::ctx::notify(ctx &ctx,
+                  threadsafe_t)
+{
+	strand(ctx, [&ctx]
+	{
+		notify(ctx);
+	});
+}
+
 bool
 ircd::ctx::notify(ctx &ctx)
 {
 	return ctx.note();
+}
+
+void
+ircd::ctx::strand(ctx &ctx,
+                  std::function<void ()> func)
+{
+	ctx.strand.post(std::move(func));
 }
 
 void
@@ -785,7 +802,7 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 			eptr = std::current_exception();
 		}
 
-		context->strand.post(kick);
+		strand(*context, kick);
 	});
 
 	push(std::move(closure)); do

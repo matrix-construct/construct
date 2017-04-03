@@ -35,13 +35,18 @@ namespace ctx  {
 
 struct ctx;
 
+IRCD_OVERLOAD(threadsafe)
+
 const uint64_t &id(const ctx &);                 // Unique ID for context 
 string_view name(const ctx &);                   // User's optional label for context
 const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
 bool finished(const ctx &);                      // Context function returned (or exception).
 bool started(const ctx &);                       // Context was ever entered.
+
 void interrupt(ctx &);                           // Interrupt the context for termination.
-bool notify(ctx &);                              // Queue context switch (only library ppl need this)
+void strand(ctx &, std::function<void ()>);      // Post function to context strand
+void notify(ctx &, threadsafe_t);                // Notify context with threadsafety.
+bool notify(ctx &);                              // Queue a context switch (only library ppl need this)
 void yield(ctx &);                               // Direct context switch (only library ppl need this)
 
 //
