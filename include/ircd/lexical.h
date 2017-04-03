@@ -654,6 +654,7 @@ ircd::lex_cast(T t,
                const size_t &max)
 {
 	assert(0);
+	return {};
 }
 
 template<>
@@ -683,4 +684,5 @@ bool
 ircd::try_lex_cast(const string_view &s)
 {
 	assert(0);
+	return false;
 }

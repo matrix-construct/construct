@@ -30,7 +30,7 @@ class params
 {
 	string_view in;
 	const char *sep;
-	std::initializer_list<const char *> names;
+	std::vector<const char *> names;
 
 	const char *name(const size_t &i) const;
 
