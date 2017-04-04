@@ -794,5 +794,71 @@ end(const const_iterators<T> &ci)
 }
 
 
+//
+// For instances of objects that want to add themselves to a container
+// and store an iterator as a member to remove themselves in the destructor.
+// It is unsafe to do that. Use this instead.
+//
+template<class container>
+struct unique_const_iterator
+{
+	container *c;
+	typename container::const_iterator it;
+
+	unique_const_iterator(container &c, typename container::const_iterator it)
+	:c{&c}
+	,it{std::move(it)}
+	{}
+
+	unique_const_iterator()
+	:c{nullptr}
+	{}
+
+	unique_const_iterator(const unique_const_iterator &) = delete;
+	unique_const_iterator(unique_const_iterator &&o)
+	:c{std::move(o.c)}
+	,it{std::move(o.it)}
+	{
+		o.c = nullptr;
+	}
+
+	~unique_const_iterator() noexcept
+	{
+		if(c)
+			c->erase(it);
+	}
+};
+
+template<class container>
+struct unique_iterator
+{
+	container *c;
+	typename container::iterator it;
+
+	unique_iterator(container &c, typename container::iterator it)
+	:c{&c}
+	,it{std::move(it)}
+	{}
+
+	unique_iterator()
+	:c{nullptr}
+	{}
+
+	unique_iterator(const unique_iterator &) = delete;
+	unique_iterator(unique_iterator &&o)
+	:c{std::move(o.c)}
+	,it{std::move(o.it)}
+	{
+		o.c = nullptr;
+	}
+
+	~unique_iterator() noexcept
+	{
+		if(c)
+			c->erase(it);
+	}
+};
+
+
 } // namespace util
 } // namespace ircd
