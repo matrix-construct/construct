@@ -164,12 +164,16 @@ char *strip_colour(char *string);
 char *strip_unprintable(char *string);
 char *reconstruct_parv(int parc, const char **parv);
 
-string_view chomp(const string_view &str, const char &c = '\n');
-string_view chomp(const string_view &str, const string_view &c);
-string_view strip(const string_view &str, const char &c = ' ');
-string_view strip(const string_view &str, const string_view &c);
+char chop(string_view &str);
+size_t chomp(string_view &str, const char &c = '\n');
+size_t chomp(string_view &str, const string_view &c);
+template<class T, class delim> size_t chomp(iterators<T>, const delim &d);
+string_view rstrip(const string_view &str, const char &c = ' ');
+string_view rstrip(const string_view &str, const string_view &c);
 string_view lstrip(const string_view &str, const char &c = ' ');
 string_view lstrip(const string_view &str, const string_view &c);
+string_view strip(const string_view &str, const char &c = ' ');
+string_view strip(const string_view &str, const string_view &c);
 std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
 std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
 std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
@@ -338,6 +342,36 @@ ircd::split(const string_view &str,
 }
 
 inline ircd::string_view
+ircd::strip(const string_view &str,
+            const string_view &c)
+{
+	return lstrip(rstrip(str, c), c);
+}
+
+inline ircd::string_view
+ircd::strip(const string_view &str,
+            const char &c)
+{
+	return lstrip(rstrip(str, c), c);
+}
+
+inline ircd::string_view
+ircd::rstrip(const string_view &str,
+             const string_view &c)
+{
+	const auto pos(str.find_last_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+}
+
+inline ircd::string_view
+ircd::rstrip(const string_view &str,
+             const char &c)
+{
+	const auto pos(str.find_last_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+}
+
+inline ircd::string_view
 ircd::lstrip(const string_view &str,
              const char &c)
 {
@@ -353,34 +387,49 @@ ircd::lstrip(const string_view &str,
 	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
 }
 
-inline ircd::string_view
-ircd::strip(const string_view &str,
-            const string_view &c)
+template<class T,
+         class delim>
+size_t
+ircd::chomp(iterators<T> its,
+            const delim &d)
 {
-	return chomp(str, c);
+	return std::accumulate(begin(its), end(its), size_t(0), [&d]
+	(auto ret, const auto &s)
+	{
+		return ret += chomp(s, d);
+	});
 }
 
-inline ircd::string_view
-ircd::strip(const string_view &str,
+inline size_t
+ircd::chomp(string_view &str,
             const char &c)
 {
-	return chomp(str, c);
+	const auto pos(str.find_last_of(c));
+	if(pos == string_view::npos)
+		return 0;
+
+	assert(str.size() - pos == 1);
+	str = str.substr(0, pos);
+	return 1;
 }
 
-inline ircd::string_view
-ircd::chomp(const string_view &str,
+inline size_t
+ircd::chomp(string_view &str,
             const string_view &c)
 {
-	const auto pos(str.find_last_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+	const auto pos(str.find_last_of(c));
+	if(pos == string_view::npos)
+		return 0;
+
+	assert(str.size() - pos == c.size());
+	str = str.substr(0, pos);
+	return c.size();
 }
 
-inline ircd::string_view
-ircd::chomp(const string_view &str,
-            const char &c)
+inline char
+ircd::chop(string_view &str)
 {
-	const auto pos(str.find_last_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+	return !str.empty()? str.pop_back() : '\0';
 }
 
 template<size_t N>
