@@ -585,6 +585,26 @@ struct string_view
 		return *this;
 	}
 
+	// (non-standard) intuitive wrapper for remove_suffix.
+	// Unlike std::string, we can cheaply involve a reference to the removed character
+	// which still exist.
+	const char &pop_back()
+	{
+		const char &ret(back());
+		remove_suffix(1);
+		return ret;
+	}
+
+	// (non-standard) intuitive wrapper for remove_prefix.
+	// Unlike std::string, we can cheaply involve a reference to the removed character
+	// which still exist.
+	const char &pop_front()
+	{
+		const char &ret(front());
+		remove_prefix(1);
+		return ret;
+	}
+
 	// (non-standard) our iterator-based constructor
 	string_view(const char *const &begin, const char *const &end)
 	:std::string_view{begin, size_t(std::distance(begin, end))}
