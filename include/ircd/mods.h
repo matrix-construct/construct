@@ -80,12 +80,11 @@ class sym_ptr
 	bool operator!() const                       { return expired();                               }
 
 	template<class T> const T *get() const;
-	template<class T> T *get();
-
 	template<class T> const T *operator->() const;
-	template<class T> T *operator->();
-
 	template<class T> const T &operator*() const;
+
+	template<class T> T *get();
+	template<class T> T *operator->();
 	template<class T> T &operator*();
 
 	sym_ptr(const std::string &modname, const std::string &symname);
@@ -97,15 +96,30 @@ struct import
 :sym_ptr
 {
 	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
-	T *operator->()                              { return sym_ptr::operator-><T>();                }
-
 	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
-	T &operator*()                               { return sym_ptr::operator*<T>();                 }
-
 	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
+
+	T *operator->()                              { return sym_ptr::operator-><T>();                }
+	T &operator*()                               { return sym_ptr::operator*<T>();                 }
 	operator T &()                               { return sym_ptr::operator*<T>();                 }
 
 	using sym_ptr::sym_ptr;
+};
+
+template<class T>
+struct import_shared
+:import<std::shared_ptr<T>>
+,std::shared_ptr<T>
+{
+	using std::shared_ptr<T>::get;
+	using std::shared_ptr<T>::operator bool;
+	using std::shared_ptr<T>::operator->;
+	using std::shared_ptr<T>::operator*;
+
+	operator const T &() const                   { return std::shared_ptr<T>::operator*();         }
+	operator T &()                               { return std::shared_ptr<T>::operator*();         }
+
+	import_shared(const std::string &modname, const std::string &symname);
 };
 
 std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
@@ -133,8 +147,21 @@ namespace ircd {
 
 using mods::module;                              // Bring struct module into main ircd::
 using mods::import;
+using mods::import_shared;
 
 } // namespace ircd
+
+template<class T>
+ircd::mods::import_shared<T>::import_shared(const std::string &modname,
+                                            const std::string &symname)
+:import<std::shared_ptr<T>>
+{
+	modname, symname
+}
+,std::shared_ptr<T>
+{
+	import<std::shared_ptr<T>>::operator*()
+}{}
 
 template<class T>
 T &
