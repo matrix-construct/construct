@@ -151,8 +151,9 @@ string_view tokens_after(const string_view &str, const char *const &sep, const s
 //
 
 // Simple case insensitive comparison convenience utils
-bool iequals(const string_view &a, const string_view &b);
-bool iless(const string_view &a, const string_view &b);
+struct iless;
+struct igreater;
+struct iequals;
 
 // Vintage
 size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
@@ -537,9 +538,56 @@ ircd::strlcat(char *const &dest,
 }
 #endif
 
+struct ircd::iless
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const                { return s;                                       }
+
+	bool operator()(const string_view &a, const string_view &b) const;
+	bool operator()(const string_view &a, const std::string &b) const;
+	bool operator()(const std::string &a, const string_view &b) const;
+	bool operator()(const std::string &a, const std::string &b) const;
+
+	template<class A,
+	         class B>
+	iless(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	iless() = default;
+};
+
 inline bool
-ircd::iless(const string_view &a,
-            const string_view &b)
+ircd::iless::operator()(const std::string &a,
+                        const std::string &b)
+const
+{
+	return operator()(string_view{a}, string_view{b});
+}
+
+inline bool
+ircd::iless::operator()(const string_view &a,
+                        const std::string &b)
+const
+{
+	return operator()(a, string_view{b});
+}
+
+inline bool
+ircd::iless::operator()(const std::string &a,
+                        const string_view &b)
+const
+{
+	return operator()(string_view{a}, b);
+}
+
+inline bool
+ircd::iless::operator()(const string_view &a,
+                        const string_view &b)
+const
 {
 	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
 	(const char &a, const char &b)
@@ -548,14 +596,119 @@ ircd::iless(const string_view &a,
 	});
 }
 
+struct ircd::iequals
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const                { return s;                                       }
+
+	bool operator()(const string_view &a, const string_view &b) const;
+	bool operator()(const string_view &a, const std::string &b) const;
+	bool operator()(const std::string &a, const string_view &b) const;
+	bool operator()(const std::string &a, const std::string &b) const;
+
+	template<class A,
+	         class B>
+	iequals(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	iequals() = default;
+};
+
 inline bool
-ircd::iequals(const string_view &a,
-              const string_view &b)
+ircd::iequals::operator()(const std::string &a,
+                          const std::string &b)
+const
+{
+	return operator()(string_view{a}, string_view{b});
+}
+
+inline bool
+ircd::iequals::operator()(const string_view &a,
+                          const std::string &b)
+const
+{
+	return operator()(a, string_view{b});
+}
+
+inline bool
+ircd::iequals::operator()(const std::string &a,
+                          const string_view &b)
+const
+{
+	return operator()(string_view{a}, b);
+}
+
+inline bool
+ircd::iequals::operator()(const string_view &a,
+                          const string_view &b)
+const
 {
 	return std::equal(begin(a), end(a), begin(b), end(b), []
 	(const char &a, const char &b)
 	{
 		return tolower(a) == tolower(b);
+	});
+}
+
+struct ircd::igreater
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const                { return s;                                       }
+
+	bool operator()(const string_view &a, const string_view &b) const;
+	bool operator()(const string_view &a, const std::string &b) const;
+	bool operator()(const std::string &a, const string_view &b) const;
+	bool operator()(const std::string &a, const std::string &b) const;
+
+	template<class A,
+	         class B>
+	igreater(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	igreater() = default;
+};
+
+inline bool
+ircd::igreater::operator()(const std::string &a,
+                           const std::string &b)
+const
+{
+	return operator()(string_view{a}, string_view{b});
+}
+
+inline bool
+ircd::igreater::operator()(const string_view &a,
+                           const std::string &b)
+const
+{
+	return operator()(a, string_view{b});
+}
+
+inline bool
+ircd::igreater::operator()(const std::string &a,
+                           const string_view &b)
+const
+{
+	return operator()(string_view{a}, b);
+}
+
+inline bool
+ircd::igreater::operator()(const string_view &a,
+                           const string_view &b)
+const
+{
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) > tolower(b);
 	});
 }
 
