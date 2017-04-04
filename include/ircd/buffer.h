@@ -106,6 +106,9 @@ template<class it> size_t copy(char *const &dest, const size_t &max, const buffe
 template<class T> char *copy(char *&dest, char *const &stop, const buffers<T> &buffer);
 template<class T> size_t copy(char *const &dest, const size_t &max, const buffers<T> &buffer);
 
+template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
+template<class T> std::ostream &operator<<(std::ostream &s, const buffers<T> &buffers);
+
 } // namespace buffer
 
 using buffer::const_buffer;
@@ -117,6 +120,27 @@ using buffer::null_buffer;
 using buffer::null_buffers;
 
 } // namespace ircd
+
+template<class T>
+std::ostream &
+ircd::buffer::operator<<(std::ostream &s, const buffers<T> &buffers)
+{
+	std::for_each(begin(buffers), end(buffers), [&s]
+	(const auto &buffer)
+	{
+		s << buffer;
+	});
+
+	return s;
+}
+
+template<class it>
+std::ostream &
+ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
+{
+	s.write(data(buffer), size(buffer));
+	return s;
+}
 
 template<class T>
 size_t
