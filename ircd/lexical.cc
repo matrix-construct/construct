@@ -65,11 +65,11 @@ ircd::token_last(const string_view &str,
 	if(it == end(view))
 		return str.empty()? str : throw std::out_of_range("token out of range");
 
-	auto ret(it);
-	while(it != end(view))
-		ret = it++;
+	string_view ret(*it);
+	for(++it; it != end(view); ++it)
+		ret = *it;
 
-	return *ret;
+	return ret;
 }
 
 ircd::string_view
