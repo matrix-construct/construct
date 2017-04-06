@@ -165,7 +165,7 @@ struct grammar
 	rule<string_view> query_val        { raw[*(char_ - query_illegal)]              ,"query value" };
 
 	rule<string_view> method           { token                                           ,"method" };
-	rule<string_view> path             { slash >> raw[*(char_ - query_illegal)]            ,"path" };
+	rule<string_view> path             { -slash >> raw[*(char_ - query_illegal)]           ,"path" };
 	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
 	rule<string_view> version          { token                                          ,"version" };
 
@@ -177,7 +177,7 @@ struct grammar
 
 	rule<string_view> query_string
 	{
-		question >> raw[(query_key >> -(equal >> query_val)) % ampersand]
+		question >> -raw[(query_key >> -(equal >> query_val)) % ampersand]
 		,"query string"
 	};
 
