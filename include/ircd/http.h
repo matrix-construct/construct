@@ -38,6 +38,14 @@ enum code
 	ACCEPTED                                = 202,
 	NON_AUTHORITATIVE_INFORMATION           = 203,
 	NO_CONTENT                              = 204,
+	PARTIAL_CONTENT                         = 206,
+
+	MOVED_PERMANENTLY                       = 301,
+	FOUND                                   = 302,
+	SEE_OTHER                               = 303,
+	NOT_MODIFIED                            = 304,
+	TEMPORARY_REDIRECT                      = 305,
+	PERMANENT_REDIRECT                      = 306,
 
 	BAD_REQUEST                             = 400,
 	UNAUTHORIZED                            = 401,
@@ -48,6 +56,7 @@ enum code
 	CONFLICT                                = 409,
 	REQUEST_URI_TOO_LONG                    = 414,
 	EXPECTATION_FAILED                      = 417,
+	IM_A_TEAPOT,                            = 418,
 	UNPROCESSABLE_ENTITY                    = 422,
 	TOO_MANY_REQUESTS                       = 429,
 	REQUEST_HEADER_FIELDS_TOO_LARGE         = 431,

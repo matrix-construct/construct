@@ -52,6 +52,14 @@ std::map<code, string_view> reason
 	{ code::ACCEPTED,                            "Accepted"                                        },
 	{ code::NON_AUTHORITATIVE_INFORMATION,       "Non-Authoritative Information"                   },
 	{ code::NO_CONTENT,                          "No Content"                                      },
+	{ code::PARTIAL_CONTENT,                     "Partial Content"                                 },
+
+	{ code::MOVED_PERMANENTLY,                   "Moved Permanently"                               },
+	{ code::FOUND,                               "Found"                                           },
+	{ code::SEE_OTHER,                           "See Other"                                       },
+	{ code::NOT_MODIFIED,                        "Not Modified"                                    },
+	{ code::TEMPORARY_REDIRECT,                  "Temporary Redirect"                              },
+	{ code::PERMANENT_REDIRECT,                  "Permanent Redirect"                              },
 
 	{ code::BAD_REQUEST,                         "Bad Request"                                     },
 	{ code::UNAUTHORIZED,                        "Unauthorized"                                    },
@@ -62,6 +70,7 @@ std::map<code, string_view> reason
 	{ code::CONFLICT,                            "Conflict"                                        },
 	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },
 	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
+	{ code::IM_A_TEAPOT,                         "Negative, I Am A Meat Popsicle"                  },
 	{ code::UNPROCESSABLE_ENTITY,                "Unprocessable Entity"                            },
 	{ code::TOO_MANY_REQUESTS,                   "Too Many Requests"                               },
 	{ code::REQUEST_HEADER_FIELDS_TOO_LARGE,     "Request Header Fields Too Large"                 },
