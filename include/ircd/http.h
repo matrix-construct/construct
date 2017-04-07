@@ -56,7 +56,7 @@ enum code
 	CONFLICT                                = 409,
 	REQUEST_URI_TOO_LONG                    = 414,
 	EXPECTATION_FAILED                      = 417,
-	IM_A_TEAPOT,                            = 418,
+	IM_A_TEAPOT                             = 418,
 	UNPROCESSABLE_ENTITY                    = 422,
 	TOO_MANY_REQUESTS                       = 429,
 	REQUEST_HEADER_FIELDS_TOO_LARGE         = 431,
