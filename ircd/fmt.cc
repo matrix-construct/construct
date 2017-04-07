@@ -178,6 +178,31 @@ const unsigned_specifier
 	{ "u"s, "lu"s, "zu"s }
 };
 
+struct hex_lowercase_specifier
+:specifier
+{
+	static const std::tuple
+	<
+		bool,
+		char,  unsigned char,
+		short, unsigned short,
+		int,   unsigned int,
+		long,  unsigned long
+	>
+	types;
+
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const hex_lowercase_specifier
+{
+	{ "x"s, "lx"s }
+};
+
+decltype(hex_lowercase_specifier::types)
+hex_lowercase_specifier::types
+{};
+
 decltype(unsigned_specifier::types)
 unsigned_specifier::types
 {};
@@ -558,6 +583,44 @@ const
 			{
 				ulong_
 				,"unsigned long integer"
+			};
+
+			generator(): generator::base_type{rule} {}
+		}
+		static const generator;
+
+		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], integer);
+	});
+
+	return !until(types, [&](auto type)
+	{
+		return !visit_type<decltype(type)>(val, closure);
+	});
+}
+
+bool
+fmt::hex_lowercase_specifier::operator()(char *&out,
+                                         const size_t &max,
+                                         const spec &s,
+                                         const arg &val)
+const
+{
+	static const auto throw_illegal([]
+	{
+		throw illegal("Failed to print hexadecimal value");
+	});
+
+	const auto closure([&](const uint &integer)
+	{
+		using karma::maxwidth;
+
+		struct generator
+		:karma::grammar<char *, uint()>
+		{
+			karma::rule<char *, uint()> rule
+			{
+				karma::lower[karma::hex]
+				,"unsigned lowercase hexadecimal"
 			};
 
 			generator(): generator::base_type{rule} {}
