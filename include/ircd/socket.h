@@ -206,7 +206,9 @@ size_t
 write(socket &socket,
       const iov &bufs)
 {
-	return socket.write(bufs);
+	const auto wrote(socket.write(bufs));
+	assert(wrote == size(bufs));
+	return wrote;
 }
 
 inline
@@ -234,7 +236,7 @@ socket::write(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, yield(continuation()));
+		return async_write(ssl, bufs, asio::transfer_all(), yield(continuation()));
 	});
 }
 
@@ -245,7 +247,7 @@ socket::write(const iov &bufs,
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, yield(continuation())[ec]);
+		return async_write(ssl, bufs, asio::transfer_all(), yield(continuation())[ec]);
 	});
 }
 
