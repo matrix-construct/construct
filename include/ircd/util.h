@@ -560,6 +560,29 @@ at(It &&start,
 
 
 //
+// Some functors for STL
+//
+
+template<class container>
+struct keys
+{
+	auto &operator()(typename container::reference v) const
+	{
+		return v.first;
+	}
+};
+
+template<class container>
+struct values
+{
+	auto &operator()(typename container::reference v) const
+	{
+		return v.second;
+	}
+};
+
+
+//
 // Customized std::string_view (experimental TS / C++17)
 //
 // This class adds iterator-based (char*, char*) construction to std::string_view which otherwise
