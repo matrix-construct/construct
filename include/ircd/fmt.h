@@ -49,7 +49,7 @@ using arg = std::tuple<const void *, std::type_index>;
 struct spec
 {
 	char sign {'+'};
-	int width {0};
+	ushort width {0};
 	string_view name;
 
 	spec() = default;
@@ -59,17 +59,17 @@ struct spec
 // This allows a new "%foo" to be defined with custom handling.
 class specifier
 {
-	std::set<string_view> names;
+	std::set<std::string> names;
 
   public:
 	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
 
-	specifier(const std::initializer_list<string_view> &names);
-	specifier(const string_view &name);
+	specifier(const std::initializer_list<std::string> &names);
+	specifier(const std::string &name);
 	virtual ~specifier() noexcept;
 };
 
-const std::map<string_view, specifier *> &specifiers();
+const std::map<string_view, specifier *, std::less<>> &specifiers();
 
 //
 // User API

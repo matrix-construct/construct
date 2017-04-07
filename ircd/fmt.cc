@@ -39,6 +39,7 @@ namespace karma = boost::spirit::karma;
 
 using qi::lit;
 using qi::char_;
+using qi::ushort_;
 using qi::int_;
 using qi::eps;
 using qi::raw;
@@ -46,7 +47,7 @@ using qi::repeat;
 using qi::omit;
 using qi::unused_type;
 
-std::map<string_view, specifier *> _specifiers;
+std::map<string_view, specifier *, std::less<>> _specifiers;
 
 bool is_specifier(const string_view &name);
 void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
@@ -77,7 +78,7 @@ struct parser
 			valid = is_specifier(str);
 		});
 
-		spec %= specsym >> -char_("+-") >> -int_ >> name[is_valid] >> -specterm;
+		spec %= specsym >> -(char_('+') | char_('-')) >> -ushort_ >> name[is_valid] >> -specterm;
 	}
 }
 const parser;
@@ -99,7 +100,7 @@ struct string_specifier
 }
 const string_specifier
 {
-	"s"
+	"s"s
 };
 
 decltype(string_specifier::types)
@@ -124,7 +125,7 @@ struct bool_specifier
 }
 const bool_specifier
 {
-	{ "b" }
+	{ "b"s }
 };
 
 decltype(bool_specifier::types)
@@ -149,7 +150,7 @@ struct signed_specifier
 }
 const signed_specifier
 {
-	{ "d", "ld", "zd" }
+	{ "d"s, "ld"s, "zd"s }
 };
 
 decltype(signed_specifier::types)
@@ -174,7 +175,7 @@ struct unsigned_specifier
 }
 const unsigned_specifier
 {
-	{ "u", "lu", "zu" }
+	{ "u"s, "lu"s, "zu"s }
 };
 
 decltype(unsigned_specifier::types)
@@ -199,7 +200,7 @@ struct float_specifier
 }
 const float_specifier
 {
-	{ "f", "lf" }
+	{ "f"s, "lf"s }
 };
 
 decltype(float_specifier::types)
@@ -214,7 +215,7 @@ struct char_specifier
 }
 const char_specifier
 {
-	"c"
+	"c"s
 };
 
 struct pointer_specifier
@@ -225,7 +226,7 @@ struct pointer_specifier
 }
 const pointer_specifier
 {
-	"p"
+	"p"s
 };
 
 } // namespace fmt
@@ -285,7 +286,7 @@ fmt::snprintf::argument(const arg &val)
 		handle_specifier(out, remaining(), idx++, spec, val);
 
 	fstop = fstart;
-	if(fstop < fend)
+	if(fstart < fend)
 	{
 		fstart = strchr(fstart, SPECIFIER);
 		append(fstop, fstart?: fend);
@@ -310,12 +311,12 @@ fmt::specifiers()
 	return _specifiers;
 }
 
-fmt::specifier::specifier(const string_view &name)
+fmt::specifier::specifier(const std::string &name)
 :specifier{{name}}
 {
 }
 
-fmt::specifier::specifier(const std::initializer_list<string_view> &names)
+fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 :names{names}
 {
 	for(const auto &name : this->names)
