@@ -34,17 +34,6 @@ AC_LANG(C++)
 AC_CONFIG_HEADER(include/ircd/config.h)
 AX_CXX_COMPILE_STDCXX([14], [gnu], [mandatory], 201300)
 
-AC_PROG_YACC
-dnl AC_PROG_YACC defaults to yacc unconditionally if nothing can be found
-if test "$YACC" = "yacc" -a -z "`which $YACC 2>/dev/null`"; then
-	AC_MSG_ERROR([could not locate a suitable parser generator; install bison, yacc, or byacc])
-fi
-
-AC_PROG_LEX
-if test "$LEX" = ":"; then
-	AC_MSG_ERROR([could not locate a suitable lexical generator, install flex or lex.])
-fi
-
 
 dnl ***************************************************************************
 dnl Makefile tree
