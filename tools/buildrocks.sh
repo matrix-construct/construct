@@ -47,5 +47,6 @@ USERDIR=$PWD            # Save current dir and return to it later
 run git submodule update --init rocksdb
 
 run cd rocksdb
-CFLAGS=-fPIC run make -j $JOBS $LINKAGE
+run git checkout v5.5.3
+CFLAGS=-fPIC run make -j$JOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
