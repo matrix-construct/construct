@@ -129,6 +129,7 @@ struct database::stats
 	void histogramData(const uint32_t type, rocksdb::HistogramData *) const override;
 	void measureTime(const uint32_t histogramType, const uint64_t time) override;
 	bool HistEnabledForType(const uint32_t type) const override;
+	uint64_t getAndResetTickerCount(const uint32_t tickerType) override;
 
 	stats(database *const &d)
 	:d{d}
@@ -846,6 +847,14 @@ ircd::db::log_rdb_perf_context(const bool &all)
 {
 	const bool exclude_zeros(!all);
 	log.debug("%s", rocksdb::perf_context.ToString(exclude_zeros));
+}
+
+uint64_t
+ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
+{
+	const auto ret(getTickerCount(type));
+	setTickerCount(type, 0);
+	return ret;
 }
 
 bool
@@ -1653,14 +1662,15 @@ ircd::db::has(column &column,
 		return false;
 
 	// Perform a query to the cache
-	auto status(d.d->Get(opts, c, k, nullptr));
+	static std::string *const null_str_ptr(nullptr);
+	auto status(d.d->Get(opts, c, k, null_str_ptr));
 	if(status.IsIncomplete())
 	{
 		// DB cache miss; next query requires I/O, offload it
 		opts.read_tier = BLOCKING;
 		ctx::offload([&d, &c, &k, &opts, &status]
 		{
-			status = d.d->Get(opts, c, k, nullptr);
+			status = d.d->Get(opts, c, k, null_str_ptr);
 		});
 	}
 
