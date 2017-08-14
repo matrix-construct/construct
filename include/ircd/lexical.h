@@ -54,7 +54,6 @@ template<> std::string &lex_cast(std::string &);                          // tri
 template<> std::string lex_cast(const std::string &);                     // trivial
 template<> std::string_view lex_cast(const std::string_view &);           // trivial
 template<> std::string lex_cast(const string_view &);                     // trivial
-template<> string_view lex_cast(const string_view &);                     // trivial
 template<> long double lex_cast(const string_view &);
 template<> double lex_cast(const string_view &);
 template<> ulong lex_cast(const string_view &);
