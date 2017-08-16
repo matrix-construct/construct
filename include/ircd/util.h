@@ -979,22 +979,30 @@ syscall(function&& f,
 // exceptions and logger et al in their respective translation units rather than the header
 // files.
 //
-// Limitations: The choice of a fixed array of 12 is because std::initializer_list doesn't
-// seem to work and other containers may be heavy in this context.
+// Limitations: The choice of a fixed array of N is because std::initializer_list doesn't
+// work here and other containers may be heavy in this context. Ideas to improve this are
+// welcome.
 //
+const size_t VA_RTTI_MAX_SIZE = 12;
 struct va_rtti
-:std::array<std::pair<const void *, const std::type_info *>, 12>
+:std::array<std::pair<const void *, const std::type_info *>, VA_RTTI_MAX_SIZE>
 {
-	size_t argc;
+	using base_type = std::array<value_type, VA_RTTI_MAX_SIZE>;
 
-	size_t size() const
+	static constexpr size_t max_size()
+	{
+		return std::tuple_size<base_type>();
+	}
+
+	size_t argc;
+	const size_t &size() const
 	{
 		return argc;
 	}
 
 	template<class... Args>
 	va_rtti(Args&&... args)
-	:std::array<std::pair<const void *, const std::type_info *>, 12>
+	:base_type
 	{{
 		std::make_pair(std::addressof(args), std::addressof(typeid(Args)))...
 	}}
@@ -1003,11 +1011,18 @@ struct va_rtti
 		sizeof...(args)
 	}
 	{
-		assert(argc <= 8);
+		assert(argc <= max_size());
 	}
 };
 
-static_assert(sizeof(va_rtti) == 192 + 8, "");
+static_assert
+(
+	sizeof(va_rtti) == (va_rtti::max_size() * 16) + 8,
+	"va_rtti should be (8 + 8) * N + 8;"
+	" where 8 + 8 are the two pointers carrying the argument and its type data;"
+	" where N is the max arguments;"
+	" where the final + 8 bytes holds the actual number of arguments passed;"
+);
 
 
 //
