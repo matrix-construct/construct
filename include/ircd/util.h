@@ -1069,47 +1069,19 @@ end(const const_iterators<T> &ci)
 
 
 //
-// For instances of objects that want to add themselves to a container
-// and store an iterator as a member to remove themselves in the destructor.
-// It is unsafe to do that. Use this instead.
+// For objects using the pattern of adding their own instance to a container
+// in their constructor, storing an iterator as a member, and then removing
+// themselves using the iterator in their destructor. It is unsafe to do that.
+// Use this instead.
 //
-template<class container>
-struct unique_const_iterator
-{
-	container *c;
-	typename container::const_iterator it;
-
-	unique_const_iterator(container &c, typename container::const_iterator it)
-	:c{&c}
-	,it{std::move(it)}
-	{}
-
-	unique_const_iterator()
-	:c{nullptr}
-	{}
-
-	unique_const_iterator(const unique_const_iterator &) = delete;
-	unique_const_iterator(unique_const_iterator &&o)
-	:c{std::move(o.c)}
-	,it{std::move(o.it)}
-	{
-		o.c = nullptr;
-	}
-
-	~unique_const_iterator() noexcept
-	{
-		if(c)
-			c->erase(it);
-	}
-};
-
-template<class container>
+template<class container,
+         class iterator = typename container::iterator>
 struct unique_iterator
 {
 	container *c;
-	typename container::iterator it;
+	iterator it;
 
-	unique_iterator(container &c, typename container::iterator it)
+	unique_iterator(container &c, iterator it)
 	:c{&c}
 	,it{std::move(it)}
 	{}
@@ -1131,6 +1103,14 @@ struct unique_iterator
 		if(c)
 			c->erase(it);
 	}
+};
+
+template<class container>
+struct unique_const_iterator
+:unique_iterator<container, typename container::const_iterator>
+{
+	using iterator_type = typename container::const_iterator;
+	using unique_iterator<container, iterator_type>::unique_iterator;
 };
 
 
