@@ -81,6 +81,17 @@ catch(const fs::filesystem_error &e)
 	throw filesystem_error("%s", e.what());
 }
 
+bool
+ircd::fs::mkdir(const std::string &path)
+try
+{
+	return fs::create_directory(path);
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
 std::string
 ircd::fs::cwd()
 try
