@@ -70,9 +70,16 @@ struct mod
 	~mod() noexcept;
 };
 
+static const auto suffix
+{
+	boost::dll::shared_library::suffix()
+};
+
 filesystem::path prefix_if_relative(const filesystem::path &path);
 filesystem::path postfixed(const filesystem::path &path);
+filesystem::path unpostfixed(const filesystem::path &path);
 std::string postfixed(const std::string &name);
+std::string unpostfixed(const std::string &name);
 
 template<class R, class F> R info(const filesystem::path &, F&& closure);
 std::vector<std::string> sections(const filesystem::path &path);
@@ -539,16 +546,29 @@ const
 }
 
 std::string
+ircd::mods::unpostfixed(const std::string &name)
+{
+	return unpostfixed(filesystem::path(name)).string();
+}
+
+std::string
 ircd::mods::postfixed(const std::string &name)
 {
 	return postfixed(filesystem::path(name)).string();
 }
 
 filesystem::path
+ircd::mods::unpostfixed(const filesystem::path &path)
+{
+	if(extension(path) != suffix)
+		return path;
+
+	return filesystem::path(path).replace_extension();
+}
+
+filesystem::path
 ircd::mods::postfixed(const filesystem::path &path)
 {
-	static const auto suffix(boost::dll::shared_library::suffix());
-
 	if(extension(path) == suffix)
 		return path;
 

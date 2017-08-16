@@ -129,6 +129,9 @@ struct import_shared
 	import_shared(const std::string &modname, const std::string &symname);
 };
 
+std::string postfixed(const std::string &name);
+std::string unpostfixed(const std::string &name);
+
 std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
 std::vector<std::string> symbols(const std::string &fullpath);
 std::vector<std::string> sections(const std::string &fullpath);
