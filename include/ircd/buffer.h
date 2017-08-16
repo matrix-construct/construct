@@ -63,14 +63,16 @@ struct mutable_buffer
 	using buffer<char *>::buffer;
 };
 
-template<class it,
+template<class buffer,
          size_t align = 16>
 struct unique_buffer
-:buffer<it>
+:buffer
 {
-	template<class T> unique_buffer(std::unique_ptr<T[]> &&, const size_t &size);
+	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
 	unique_buffer(const size_t &size);
 	unique_buffer() = default;
+	unique_buffer(unique_buffer &&) noexcept;
+	unique_buffer(const unique_buffer &) = delete;
 	~unique_buffer() noexcept;
 };
 
@@ -278,19 +280,21 @@ ircd::buffer::rend(const buffer<it> &buffer)
 	return std::reverse_iterator<it>(get<0>(buffer));
 }
 
-template<class it,
+template<class buffer,
          size_t alignment>
-template<class T>
-ircd::buffer::unique_buffer<it, alignment>::unique_buffer(std::unique_ptr<T[]> &&b,
-                                                          const size_t &size)
-:buffer<it>{it(b.release()), size}
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<uint8_t[]> &&b,
+                                                              const size_t &size)
+:buffer
+{
+	typename buffer::value_type(b.release()), size
+}
 {
 }
 
-template<class it,
+template<class buffer,
          size_t alignment>
-ircd::buffer::unique_buffer<it, alignment>::unique_buffer(const size_t &size)
-:unique_buffer
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
+:unique_buffer<buffer, alignment>
 {
 	std::unique_ptr<uint8_t[]>
 	{
@@ -301,9 +305,21 @@ ircd::buffer::unique_buffer<it, alignment>::unique_buffer(const size_t &size)
 {
 }
 
-template<class it,
+template<class buffer,
          size_t alignment>
-ircd::buffer::unique_buffer<it, alignment>::~unique_buffer()
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&other)
+noexcept
+:buffer
+{
+	std::move(other)
+}
+{
+	get<0>(other) = nullptr;
+}
+
+template<class buffer,
+         size_t alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
 noexcept
 {
 	delete[] data(*this);
