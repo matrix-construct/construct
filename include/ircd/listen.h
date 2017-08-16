@@ -32,6 +32,7 @@ struct listener
 
   public:
 	listener(const json::object &options);
+	listener(const std::string &options);
 	~listener() noexcept;
 };
 

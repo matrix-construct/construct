@@ -65,6 +65,11 @@ struct listener::acceptor
 // ircd::listener
 //
 
+ircd::listener::listener(const std::string &opts)
+:listener{json::object{opts}}
+{
+}
+
 ircd::listener::listener(const json::object &opts)
 :acceptor{std::make_unique<struct acceptor>(opts)}
 {
