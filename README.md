@@ -1,23 +1,65 @@
-# charybdis/5
+# IRCd
 
-Charybdis is a collaboration server designed to be scalable and community-developed.
+**I**nternet **R**elay **C**hat **d**aemon: *Charybdis*
 
-It implements communication protocols for Matrix and IRC.
+Charybdis is designed to be fast and highly scalable. It is also designed to be community-
+developed by volunteer contributors over the internet. This makes Charybdis easy to understand,
+modify, audit, and extend.
 
-## Building from git
+IRCd is a free and open source server which facilitates real-time communication over the
+internet. It was started in 1988 by Jarkko Oikarinen in the University of Oulu and eventually
+made its way to William Pitcock et al, whom after 2005 developed the project under the alias
+*Charybdis*. In 2014 a protocol was proposed to reinvigorate real-time communication in lieu
+of growing commercial competition and a lack of innovation from open source alternatives to
+compete. This protcol is known as the *Matrix* protocol.
+
+##### IRCd now implements the Matrix protocol.
+
+
+## Charybdis/5
+
+Charybdis Five is the first high performance implementation of *Matrix* written in C++. It remains
+true to its roots for being highly scalable, modular and having minimal requirements. Most of the
+old code has been rewritten but the architecture is the same.
+
+
+### Dependencies
+
+	* **Boost** (1.61 or later) - We have replaced libratbox with the well known and actively
+	developed Boost libraries. These are included as a submodule in this repository.
+
+	* **RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
+	and have furthered the mission of eliminating the need for external "IRC services"
+
+
+## Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
+
+	The developer preview will install charybdis in a specific directory isolated from the
+	system. It will not use or install system libraries. It will download and build the
+	dependencies from the submodules we have pinned here and build them the way we have
+	configured. Charybdis should be executed using those builds. You may need to set the
+	`LD_LIBRARY_PATH` to the built libraries. None of this will be required when released.
 
 	* `git clone https://github.com/charybdis-ircd/charybdis`
 	* `cd charybdis`
-	* `./configure`
+	* `git checkout 5`
+		- Verify you have the latest source tree and **are on the Matrix branch**.
+
+	* `./autogen.sh`
+	* `mkdir build`
+		- The install directory may be this or another place of your choosing.
+		- If you decide elsewhere, make sure to change the `--prefix` in the `./configure`
+		statement below.
+
+	* `CXX=g++-6 ./configure --prefix=$PWD/build --enable-debug --with-included-boost=shared --with-included-rocksdb=shared`
+		- Many systems alias `g++` to an older version. To be safe, specify a version manually
+		in `CXX`. This will also build the submodule dependencies with that version.
+		- The `--with-included-*` will fetch, configure **and build** the dependencies included
+		as submodules. Include `=shared` for now until things are changed around.
+
 	* `make`
 	* `make install`
 
-### Notable configuration options when building
-
-	* `--enable-debug`
-	* `--with-included-boost[=shared]`
-	* `--with-included-rocksdb[=shared]`
-	* `--with-included-js[=shared]`
 
 ## Platforms
 
@@ -37,14 +79,6 @@ It implements communication protocols for Matrix and IRC.
  * Please read doc/index.txt to get an overview of the current documentation.
 
  * Read the NEWS file for what's new in this release.
-
-## Git access
-
- * The Charybdis GIT repository can be checked out using the following command:
-	`git clone https://github.com/charybdis-ircd/charybdis`
-
- * Charybdis's GIT repository depot can be browsed over the Internet at the following address:
-	https://github.com/charybdis-ircd/charybdis
 
 ## Developers
 
