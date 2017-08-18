@@ -26,6 +26,17 @@
 namespace ircd {
 namespace db   {
 
+// A cell is a single key-value element existing within a column. This structure
+// provides the necessary facilities for working with a single cell. Many simple
+// operations can also be done through the column interface itself so check column.h
+// for satisfaction. Cells from different columns sharing the same key are composed
+// into a `row` (see: row.h).
+//
+// NOTE that this cell struct is type-agnostic. The database is capable of storing
+// binary data in the key or the value for a cell. The string_view will work with
+// both a normal string and binary data, so this class is not a template and offers
+// no conversions at this level. see: value.h/object.h
+//
 struct cell
 {
 	struct delta;
@@ -80,6 +91,11 @@ struct cell
 	friend std::ostream &operator<<(std::ostream &s, const cell &c);
 };
 
+//
+// A delta is an element of a database transaction. The cell::delta
+// is specific to a key in a column. Use cell deltas to make an
+// all-succeed-or-all-fail transaction across many cells in many columns.
+//
 struct cell::delta
 :std::tuple<op, cell &, string_view>
 {

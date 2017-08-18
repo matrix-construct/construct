@@ -46,7 +46,12 @@ namespace db   {
 // remove the IO/offload thread as well.
 //
 // [SET] usually occur without yielding your context because the DB is oriented
-// around write-log appending so it can deal with heavier tasks later in background.
+// around write-log appends. It deals with the heavier tasks later in background.
+//
+// NOTE that the column and cell structs are type-agnostic. The database is capable of
+// storing binary data in the key or the value for a cell. The string_view will work
+// with both a normal string and binary data, so this class is not a template and
+// offers no conversions at this level. see: value.h/object.h
 //
 struct column
 {
@@ -102,6 +107,12 @@ struct column
 	column() = default;
 };
 
+//
+// Delta is an element of a transaction. Use column::delta's to atomically
+// commit to multiple keys in the same column. Refer to delta.h for the `enum op`
+// choices. Refer to cell::delta to transact with multiple cells across
+// different columns.
+//
 struct column::delta
 :std::tuple<op, string_view, string_view>
 {
@@ -114,6 +125,12 @@ struct column::delta
 	{}
 };
 
+//
+// Iteration over all keys down a column. Default construction is an invalid
+// iterator, which could be compared against in the style of STL algorithms.
+// Otherwise, construct an iterator by having it returned from the appropriate
+// function in column::.
+//
 struct column::const_iterator
 {
 	using value_type = column::value_type;
@@ -159,8 +176,8 @@ struct column::const_iterator
 	friend void seek(column::const_iterator &, const string_view &key);
 };
 
-// Get property data of a db column.
-// R can optionally be uint64_t for some values.
+// Get property data of a db column. R can optionally be uint64_t for some
+// values. Refer to RocksDB documentation for more info.
 template<class R = std::string> R property(column &, const string_view &name);
 template<> std::string property(column &, const string_view &name);
 template<> uint64_t property(column &, const string_view &name);

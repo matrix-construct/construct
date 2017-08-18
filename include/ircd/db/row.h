@@ -26,6 +26,9 @@
 namespace ircd {
 namespace db   {
 
+// A row is a collection of cells from different columns which all share the same
+// key. This is an interface for dealing with those cells in the aggregate.
+//
 struct row
 {
 	struct delta;

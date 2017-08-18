@@ -28,12 +28,12 @@ namespace db   {
 
 enum op
 {
-	GET,
-	SET,
-	MERGE,
-	DELETE,
-	DELETE_RANGE,
-	SINGLE_DELETE,
+	GET,                     // no-op sentinel, do not use (debug asserts)
+	SET,                     // (batch.Put)
+	MERGE,                   // (batch.Merge)
+	DELETE,                  // (batch.Delete)
+	DELETE_RANGE,            // (batch.DeleteRange)
+	SINGLE_DELETE,           // (batch.SingleDelete)
 };
 
 using merge_delta = std::pair<string_view, string_view>;
