@@ -138,18 +138,17 @@ ircd::ctx::ctx::jump()
 
 	auto &yc(*this->yc);
 	auto &target(*yc.coro_.lock());
-	{
-		// Notes must be cleared before the continuation{}
-		notes = 0;
 
-		// Jump from the currently running context (source) to *this (target)
-		// with continuation of source after target
+	// Jump from the currently running context (source) to *this (target)
+	// with continuation of source after target
+	{
+		current->notes = 0; // Unconditionally cleared here
 		const continuation continuation{current};
 		target();
 	}
 
 	assert(current != this);
-	assert(notes == 1); // notes = 1; set by continuation dtor on wakeup
+	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
 
 	interruption_point();
 }
@@ -286,7 +285,19 @@ void
 ircd::ctx::yield(ctx &ctx)
 {
 	assert(current);
-	ctx.jump();
+
+	//ctx.jump();
+	// !!! TODO !!!
+	// XXX: We can't jump directly to a context if it's waiting on its alarm, and
+	// we don't know whether it's waiting on its alarm. We can add another flag to
+	// inform us of that, but most contexts are usually waiting on their alarm anyway.
+	//
+	// Perhaps a better way to do this would be to centralize the alarms into a single
+	// context with the sole job of waiting on a single alarm. Then it can schedule
+	// things allowing for more direct jumps until all work is complete.
+	// !!! TODO !!!
+
+	notify(ctx);
 }
 
 void
