@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2017 Charybdis Development Team
- * Copyright (C) 2017 Jason Volk <jason@zemos.net>
+ * charybdis: 21st Century IRC++d
+ *
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,14 +19,14 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-ircd::import_shared<ircd::database> events_database
-{
-	"client_events", "events_database"
-};
+#pragma once
+#define HAVE_IRCD_M_ACCOUNTS_H
 
-extern ircd::database *const events
-{
-	events_database.get()
-};
+namespace ircd {
+namespace m    {
+
+} // namespace m
+} // namespace ircd

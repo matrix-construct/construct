@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2017 Charybdis Development Team
- * Copyright (C) 2017 Jason Volk <jason@zemos.net>
+ * charybdis: 21st Century IRC++d
+ *
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +19,26 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-using namespace ircd;
+#pragma once
+#define HAVE_IRCD_M_DB_H
 
-struct room
-:resource
+namespace ircd {
+namespace m    {
+namespace db   {
+
+extern database *events;
+extern database *accounts;
+extern database *rooms;
+
+struct init
 {
-	using resource::resource;
-}
-rooms_resource
-{
-	"_matrix/client/r0/rooms/",
-	"Rooms (7.0)"
+	init();
+	~init() noexcept;
 };
 
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/rooms'"
-};
+} // namespace db
+} // namespace m
+} // namespace ircd

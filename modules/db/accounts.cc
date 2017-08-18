@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -19,12 +19,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-ircd::import_shared<ircd::database> account_database
+using namespace ircd;
+
+const database::descriptor accounts_token_descriptor
 {
-	"client_account", "account_database"
+	"token",
+	"An index of access_token to user_id",
+	{
+		// readable key      // readable value
+		typeid(string_view), typeid(string_view)
+	}
 };
 
-extern ircd::database *const account
+const database::descriptor accounts_registered_descriptor
 {
-	account_database.get()
+	"registered",
+	"A UNIX epoch timestamp sampled when the account was created.",
+	{
+		// readable key      // binary value
+		typeid(string_view), typeid(time_t)
+	}
 };
+
+const database::description accounts_description
+{
+	{ "default"                                  },
+	accounts_token_descriptor,
+	accounts_registered_descriptor,
+	{ "access_token"                             },
+	{ "access_token.text"                        },
+	{ "password"                                 },
+	{ "password.text"                            },
+	{ "password.hash"                            },
+	{ "password.hash.sha256"                     },
+};
+
+std::shared_ptr<database> accounts_database
+{
+	std::make_shared<database>("accounts"s, ""s, accounts_description)
+};
+
+mapi::header IRCD_MODULE
+{
+	"Hosts the 'accounts' database"
+};
+

@@ -21,16 +21,6 @@
 
 using namespace ircd;
 
-import<database *> room_database
-{
-	"client_room", "room"
-};
-
-extern database *const room
-{
-    room_database
-};
-
 resource createroom
 {
 	"_matrix/client/r0/createRoom",

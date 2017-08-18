@@ -21,49 +21,6 @@
 
 using namespace ircd;
 
-const database::descriptor token_descriptor
-{
-	"token",
-	"An index of access_token to user_id",
-	{
-		// readable key      // readable value
-		typeid(string_view), typeid(string_view)
-	}
-};
-
-const database::descriptor account_registered_descriptor
-{
-	"registered",
-	"A UNIX epoch timestamp sampled when the account was created.",
-	{
-		// readable key      // binary value
-		typeid(string_view), typeid(time_t)
-	}
-};
-
-const database::description account_description
-{
-	{ "default"                                  },
-	token_descriptor,
-	account_registered_descriptor,
-	{ "access_token"                             },
-	{ "access_token.text"                        },
-	{ "password"                                 },
-	{ "password.text"                            },
-	{ "password.hash"                            },
-	{ "password.hash.sha256"                     },
-};
-
-std::shared_ptr<database> account_database
-{
-	std::make_shared<database>("account"s, ""s, account_description)
-};
-
-extern database *const account
-{
-	account_database.get()
-};
-
 struct account
 :resource
 {

@@ -33,6 +33,18 @@ module_LTLIBRARIES = \
 	root.la \
 	###
 
+# This puts the source in db/ but the installed
+# library is client_X.so in the main modules dir.
+db_moduledir = @moduledir@
+db_db_events_la_SOURCES = db/events.cc
+db_db_accounts_la_SOURCES = db/accounts.cc
+db_db_rooms_la_SOURCES = db/rooms.cc
+db_module_LTLIBRARIES = \
+	db/db_events.la \
+	db/db_accounts.la \
+	db/db_rooms.la \
+	###
+
 # This puts the source in client/ but the installed
 # library is client_X.so in the main modules dir.
 client_moduledir = @moduledir@

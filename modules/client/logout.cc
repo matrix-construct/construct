@@ -19,12 +19,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "account.h"
-
 using namespace ircd;
 
-using object = db::object<account>;
-template<class T = string_view> using value = db::value<T, account>;
+using object = db::object<m::db::accounts>;
+template<class T = string_view> using value = db::value<m::db::accounts, T>;
 
 resource logout_resource
 {

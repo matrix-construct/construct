@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "account.h"
-
 using namespace ircd;
 
 resource login_resource
@@ -36,8 +34,8 @@ const auto home_server
 	"cdc.z"
 };
 
-using object = db::object<account>;
-template<class T = string_view> using value = db::value<T, account>;
+using object = db::object<m::db::accounts>;
+template<class T = string_view> using value = db::value<m::db::accounts, T>;
 
 resource::response
 post_login_password(client &client, const resource::request &request)

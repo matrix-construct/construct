@@ -19,12 +19,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-ircd::import_shared<ircd::database> rooms_database
+using namespace ircd;
+
+const database::descriptor rooms_head_descriptor
 {
-	"client_rooms", "rooms_database"
+	// name
+	"head",
+
+	// notes
+	R"(
+	### developer note:
+
+	The latest event for a room.
+
+	key is room_id
+	value is event_id
+
+	)",
+
+	// typing for key and value
+	{
+		typeid(string_view), typeid(string_view)
+	}
 };
 
-extern ircd::database *const rooms
+const database::description rooms_description
 {
-	rooms_database.get()
+	{ "default" },
+	rooms_head_descriptor,
+};
+
+std::shared_ptr<database> rooms_database
+{
+	std::make_shared<database>("room"s, ""s, rooms_description)
+};
+
+mapi::header IRCD_MODULE
+{
+	"Hosts the 'rooms' database"
 };

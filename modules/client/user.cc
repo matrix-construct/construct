@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "account.h"
-
 using namespace ircd;
 
 resource user_resource

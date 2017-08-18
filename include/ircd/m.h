@@ -35,10 +35,22 @@ namespace m    {
 
 #include "m/error.h"
 #include "m/id.h"
+#include "m/db.h"
 #include "m/event.h"
 #include "m/request.h"
+#include "m/accounts.h"
 #include "m/session.h"
 
 namespace ircd {
+namespace m    {
 
+struct init
+{
+	db::init db;
+
+	init();
+	~init() noexcept;
+};
+
+} // namespace m
 } // namespace ircd

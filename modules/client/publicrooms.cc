@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rooms.h"
-
 using namespace ircd;
 
 resource publicrooms_resource
