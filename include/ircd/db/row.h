@@ -146,7 +146,7 @@ ircd::db::row::operator[](const string_view &column)
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw not_found("column '%s' does not exist", column);
+		throw schema_error("column '%s' not specified in the descriptor schema", column);
 
 	return *it;
 }
@@ -157,7 +157,7 @@ const
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw not_found("column '%s' does not exist", column);
+		throw schema_error("column '%s' not specified in the descriptor schema", column);
 
 	return *it;
 }

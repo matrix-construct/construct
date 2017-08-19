@@ -41,6 +41,7 @@ struct database;
 //
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, not_found)
+IRCD_EXCEPTION(error, schema_error)
 IRCD_EXCEPTION_HIDENAME(error, corruption)
 IRCD_EXCEPTION_HIDENAME(error, not_supported)
 IRCD_EXCEPTION_HIDENAME(error, invalid_argument)
