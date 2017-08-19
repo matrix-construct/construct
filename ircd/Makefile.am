@@ -61,7 +61,9 @@ libircd_la_SOURCES =   \
 	json.cc            \
 	parse.cc           \
 	listen.cc          \
-	matrix.cc
+	matrix.cc          \
+	rand.cc            \
+	###
 
 if JS
 libircd_la_SOURCES +=  \

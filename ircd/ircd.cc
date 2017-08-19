@@ -37,8 +37,7 @@ namespace ircd
 	main_exit_cb main_exit_func;                 // Called when main context exits
 	ctx::ctx *main_context;                      // Reference to main context
 
-	void seed_random();
-	void init_system();
+	void init_rlimit();
 	void main_exiting() noexcept;
 	void main();
 }
@@ -51,7 +50,7 @@ ircd::init(boost::asio::io_service &io_service,
 	ircd::ios = &io_service;
 	main_finish = false;
 	_main_exited = false;
-	init_system();
+	init_rlimit();
 
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
@@ -153,19 +152,6 @@ ircd::at_main_exit(main_exit_cb main_exit_func)
 	ircd::main_exit_func = std::move(main_exit_func);
 }
 
-namespace ircd
-{
-	void init_random();
-	void init_rlimit();
-}
-
-void
-ircd::init_system()
-{
-	init_rlimit();
-	init_random();
-}
-
 void
 #ifdef HAVE_SYS_RESOURCE_H
 ircd::init_rlimit()
@@ -190,24 +176,7 @@ catch(const std::exception &e)
 ircd::init_rlimit()
 {
 }
-	#endif
-
-void
-ircd::init_random()
-{
-	union
-	{
-		char seed_char[4];
-		int seed_int;
-	};
-
-	std::ifstream s("/dev/urandom");
-	if(s.good())
-		s.read(seed_char, sizeof(seed_char));
-
-	srand(seed_int);
-}
-
+#endif
 
 // namespace ircd {
 

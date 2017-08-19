@@ -293,6 +293,7 @@ RB_CHK_SYSHEADER([atomic],         [ATOMIC])
 RB_CHK_SYSHEADER([thread],         [THREAD])
 RB_CHK_SYSHEADER([mutex],          [MUTEX])
 RB_CHK_SYSHEADER([condition_variable], [CONDITION_VARIABLE])
+RB_CHK_SYSHEADER([random],         [RANDOM])
 
 dnl experimental
 RB_CHK_SYSHEADER([string_view],                 [STRING_VIEW])

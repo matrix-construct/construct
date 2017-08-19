@@ -82,6 +82,7 @@ extern "C" {
 #include <RB_INC_THREAD
 #include <RB_INC_MUTEX
 #include <RB_INC_CONDITION_VARIABLE
+#include <RB_INC_RANDOM
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -176,6 +177,7 @@ struct client;
 } // namespace ircd
 
 #include "util.h"
+#include "rand.h"
 #include "timer.h"
 #include "allocator.h"
 #include "info.h"
