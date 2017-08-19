@@ -954,6 +954,19 @@ struct vector_view
 	vector_view() = default;
 };
 
+//
+// Convenience cast a type (ex. an integer) into a string_view
+//
+template<class T>
+string_view
+binary_view(const T &t)
+{
+	return
+	{
+		reinterpret_cast<const char *>(&t), sizeof(T)
+	};
+}
+
 
 //
 // Error-checking closure for POSIX system calls. Note the usage is
