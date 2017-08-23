@@ -29,24 +29,10 @@ struct task
 :std::enable_shared_from_this<task>
 {
 	uint64_t pid;                                // unique process ID
-	uint64_t yid;                                // ID of current yield attempting unification
-	std::map<uint64_t, object> complete;         // futures waiting for yield unification
-	std::map<uint64_t, object> pending;          // pending futures awaiting results
-	std::shared_ptr<task> work;                  // references self when there is unfinished work
 	struct global global;                        // global / this / root scope object
-	script main;                                 // main generator wrapper script
-	struct generator generator;                  // generator state
-	bool canceling = false;
-
-  private:
-	static uint64_t tasks_next_pid();
-	uint64_t tasks_insert();
-	bool tasks_remove();
+	struct module main;                          // main module script
 
   public:
-	bool pending_add(const uint64_t &id, object);
-	bool pending_del(const uint64_t &id);
-
 	task(const std::u16string &source);
 	task(const std::string &source);
 	task(task &&) = delete;

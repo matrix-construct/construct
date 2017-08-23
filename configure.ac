@@ -733,34 +733,36 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/js/src"
 
 	AC_SUBST(JS_LIBS)
-	JS_LIBS+=" -lmozjs-45"
-	#JS_LIBS+=" -lmozglue"
+	JS_LIBS+=" -lmozjs-52"
+	JS_LIBS+=" -lmozglue"
 
 	dnl !!!!
 	dnl HACK BUG-WORKAROUND - Mozilla forgot to include this in their lib?
 	dnl Runtime segfault (unresolved dynamic function address) if this is not specified
-	JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
+	#JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
+	#JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt1.o"
+	JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mozglue/misc/TimeStamp.o"
 
 	AC_MSG_CHECKING([whether to use shared JS engine])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
 		AC_MSG_NOTICE([Shared SpiderMonkey linkage requires running charybdis with an intact build directory])
 		js_linkage="shared"
-		JS_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
-		JS_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+		JS_LDFLAGS+=" -Wl,-rpath=$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
+		JS_LDFLAGS+=" -Wl,-rpath=$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
 	else
 		AC_MSG_RESULT([no])
 		js_linkage="static"
 		JS_LIBS+=" -ljs_static"
 	fi
 
-	js_branch="esr45"
+	js_branch="esr52"
 	js_jobs="4"
 
 	if [[ $DEBUG ]]; then
-		js_options="--disable-optimize --enable-debug"
+		js_options="--disable-optimize --enable-debug --disable-js-shell"
 	else
-		js_options="--enable-optimize"
+		js_options="--enable-optimize --disable-js-shell"
 	fi
 
 	bash tools/buildjs.sh "$js_branch" "$js_options" "$js_jobs"
@@ -774,17 +776,17 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	with_included_js="no"
 
 	dnl TODO mumble mumble
-	AC_CHECK_LIB(mozjs-45, _Z11JS_ShutDownv,
+	AC_CHECK_LIB(mozjs-52, _Z11JS_ShutDownv,
 	[
 
 	], [
-		AC_MSG_WARN([Unable to find JS engine (SpiderMonkey 45) package. Try apt-get install libmozjs-dev])
+		AC_MSG_WARN([Unable to find JS engine (SpiderMonkey 52) package. Try apt-get install libmozjs-dev])
 	])
 
 	dnl TODO
-	dnl AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-45"])
+	dnl AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-52"])
 	dnl AC_SUBST(JS_LDFLAGS, [])
-	dnl AC_SUBST(JS_LIBS, ["-lmozjs-45"])
+	dnl AC_SUBST(JS_LIBS, ["-lmozjs-52"])
 ])
 
 dnl TODO use an $enable_js var

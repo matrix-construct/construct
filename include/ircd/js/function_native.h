@@ -20,43 +20,59 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_TRAP_FUNCTION
+#define HAVE_IRCD_JS_FUNCTION_NATIVE
 
 namespace ircd {
 namespace js   {
 
-struct trap::function
+struct function::native
+:root<JSFunction *>
 {
-	friend struct trap;
 	using closure = std::function<value (object::handle, value::handle, const args &)>;
 
-	struct trap *trap;
-	std::string name;
+	const char *_name;
 	closure lambda;
-	JSFunctionSpec spec;
 
   protected:
 	virtual value on_call(object::handle callee, value::handle that, const args &);
 	virtual value on_new(object::handle callee, const args &);
 
   private:
-	static function &from(JSObject *const &);
-
+	static function::native &from(JSObject *const &);
 	static bool handle_call(JSContext *, unsigned, JS::Value *) noexcept;
 
   public:
-	js::function operator()(const object::handle &) const;
+	uint16_t arity() const;
+	string display_name() const;
+	string name() const;
 
-	function(struct trap &,
-	         const std::string &name,
-	         const uint16_t &flags = 0,
-	         const uint16_t &arity = 0,
-	         const closure & = {});
+	value operator()(const object::handle &, const vector<value>::handle &) const;
+	template<class... args> value operator()(const object::handle &, args&&...) const;
 
-	function(function &&) = delete;
-	function(const function &) = delete;
-	virtual ~function() noexcept;
+	native(const char *const &name   = "<native>",
+	       const uint &flags         = 0,
+	       const uint &arity         = 0,
+	       const closure &           = {});
+
+	native(native &&) = delete;
+	native(const native &) = delete;
+	virtual ~native() noexcept;
 };
+
+template<class... args>
+value
+function::native::operator()(const object::handle &that,
+                             args&&... a)
+const
+{
+	const vector<value> argv
+	{
+		std::forward<args>(a)...
+	};
+
+	const vector<value>::handle handle(argv);
+	return operator()(that, handle);
+}
 
 } // namespace js
 } // namespace ircd

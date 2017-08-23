@@ -25,7 +25,7 @@
 namespace ircd  {
 namespace js    {
 
-ctx::future<void *> compile_async(const JS::ReadOnlyCompileOptions &, const std::u16string &);
+ctx::future<void *> compile_async(const JS::ReadOnlyCompileOptions &, const std::u16string &, const bool &module = false);
 string decompile(const JS::Handle<JSScript *> &, const char *const &name, const bool &pretty = false);
 size_t bytecodes(const JS::Handle<JSScript *> &, uint8_t *const &buf, const size_t &max);
 bool compilable(const char *const &str, const size_t &len, const object &stack = {});
@@ -36,7 +36,8 @@ struct script
 {
 	IRCD_OVERLOAD(yielding)
 
-	value operator()(JS::AutoObjectVector &stack) const;
+	value operator()(JS::AutoObjectVector &environment) const;
+	value operator()(const object &environment) const;
 	value operator()() const;
 
 	using root<JSScript *>::root;
@@ -67,7 +68,7 @@ script::script(const uint8_t *const &bytecode,
                const size_t &size)
 :script::root::type
 {
-	JS_DecodeScript(*cx, bytecode, size)
+	//JS_DecodeScript(*cx, bytecode, size)
 }
 {
 	if(unlikely(!this->get()))
@@ -92,18 +93,19 @@ script::script(const JS::ReadOnlyCompileOptions &opts,
 		throw jserror(jserror::pending);
 }
 
+// This constructor compiles the script concurrently by yielding this ircd::ctx.
+// The compilation occurs on another thread entirely, so other ircd contexts will
+// still be able to run, but this ircd context will block until the script is
+// compiled at which point this constructor will complete.
 inline
 script::script(yielding_t,
                const JS::ReadOnlyCompileOptions &opts,
                const std::u16string &src)
-:script::root::type{[&opts, &src]
+:script::root::type{[this, &opts, &src]
 {
-	// This constructor compiles the script concurrently by yielding this ircd::ctx.
-	// The compilation occurs on another thread entirely, so other ircd contexts will
-	// still be able to run.
 	auto future(compile_async(opts, src));
 	void *const token(future.get());
-	return token? JS::FinishOffThreadScript(*cx, *rt, token):
+	return token? JS::FinishOffThreadScript(*cx, token):
 	              script(opts, src).get();
 }()}
 {
@@ -123,11 +125,20 @@ const
 }
 
 inline value
-script::operator()(JS::AutoObjectVector &stack)
+script::operator()(const object &environment)
+const
+{
+	JS::AutoObjectVector env(*cx);
+	env.append(object());
+	return operator()(env);
+}
+
+inline value
+script::operator()(JS::AutoObjectVector &environment)
 const
 {
 	value ret;
-	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
+	if(!JS_ExecuteScript(*cx, environment, *this, &ret))
 		throw jserror(jserror::pending);
 
 	return ret;

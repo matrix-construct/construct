@@ -89,15 +89,15 @@ struct root
 
 	tracing::list::iterator add(base_type *const &ptr)
 	{
-		return rt->tracing.heap.emplace(end(rt->tracing.heap), tracing::thing { ptr, js::type<T>() });
+		return cx->tracing.heap.emplace(end(cx->tracing.heap), tracing::thing { ptr, js::type<T>() });
 	}
 
 	void del(const tracing::list::iterator &tracing_it)
 	{
-		if(tracing_it != end(rt->tracing.heap))
+		if(tracing_it != end(cx->tracing.heap))
 		{
 			const void *ptr = tracing_it->ptr;
-			rt->tracing.heap.erase(tracing_it);
+			cx->tracing.heap.erase(tracing_it);
 		}
 	}
 
@@ -130,7 +130,7 @@ struct root
 	:base_type{other.get()}
 	,tracing_it{std::move(other.tracing_it)}
 	{
-		other.tracing_it = end(rt->tracing.heap);
+		other.tracing_it = end(cx->tracing.heap);
 		tracing_it->ptr = static_cast<base_type *>(this);
 	}
 

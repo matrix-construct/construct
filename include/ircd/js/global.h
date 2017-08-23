@@ -30,10 +30,15 @@ class global
 {
 	static void handle_trace(JSTracer *, JSObject *) noexcept;
 
+	std::map<std::string, module *> imports;
+	object import(module &importer, const string &requesting, const object &that);
+	std::unique_ptr<function::native> module_resolve_hook;
+
   public:
 	global(trap &,
 	       JSPrincipals *const & = nullptr,
-	       JS::CompartmentOptions = JS::CompartmentOptions());
+	       JS::CompartmentCreationOptions = {},
+	       JS::CompartmentBehaviors = {});
 
 	global(global &&) = default;
 	global(const global &) = delete;

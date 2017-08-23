@@ -25,7 +25,7 @@
 namespace ircd {
 namespace js   {
 
-class function_literal
+class function::literal
 :public root<JSFunction *>
 {
 	const char *name;
@@ -33,19 +33,16 @@ class function_literal
 	std::vector<const char *> prototype;
 
   public:
-	function_literal(const char *const &name,
-	                 const std::initializer_list<const char *> &prototype,
-	                 const char *const &text);
+	literal(const char *const &name,
+	        const std::initializer_list<const char *> &prototype,
+	        const char *const &text);
 
-	function_literal(function_literal &&) noexcept;
-	function_literal(const function_literal &) = delete;
+	literal(literal &&) noexcept;
+	literal(const literal &) = delete;
 };
 
-inline function_literal
-operator ""_function(const char *const text, const size_t len)
-{
-	return { "<literal>", {}, text };
-}
+// Compile a C++ string literal as an actual JavaScript function.
+function::literal operator ""_function(const char *const text, const size_t len);
 
 } // namespace js
 } // namespace ircd

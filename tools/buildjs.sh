@@ -46,8 +46,8 @@ USERDIR=$PWD            # Save current dir and return to it later
 
 run git submodule update --init --remote gecko-dev
 run cd gecko-dev
-#run git fetch --depth=1 origin esr45
-#run git checkout FETCH_HEAD
+#run git fetch --depth=1 origin $BRANCH
+run git checkout $BRANCH
 
 run cd js/src
 run autoconf2.13
@@ -60,12 +60,12 @@ run cd build_OPT.OBJ
 # may actually be the best behavior in production but right now this test
 # prevents rebuilds
 if test $ALREADY_EXISTS -eq 0; then
-	run ../configure $CONFIG_OPTIONS
+	run ../configure $CONFIG_OPTIONS JS_STANDALONE=1
 fi
 
 #run ../configure --enable-debug
 # run ../configure --disable-shared-js --enable-debug # --enable-replace-malloc
 
-run make
+run make -j8
 
 run cd $USERDIR         # Return to user's original directory

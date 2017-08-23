@@ -29,7 +29,7 @@ namespace js   {
 enum class phase
 :uint8_t
 {
-	ACCEPT,        // JS is not running.
+	LEAVE,         // JS is not running.
 	ENTER,         // JS is currently executing or is committed to being entered.
 	INTR,          // An interrupt request has or is committed to being sent.
 };
@@ -45,44 +45,61 @@ enum class irq
 	TERMINATE,     // The javascript should be terminated.
 };
 
-struct context
-:private custom_ptr<JSContext>
+class context
+:custom_ptr<JSContext>
 {
-	// Context options
-	struct opts
-	{
-		size_t stack_chunk_size       = 8_KiB;
-		microseconds timer_limit      = 10s;
-	}
-	opts;
+	// JS engine callback surface.
+	static void handle_error(JSContext *, JSErrorReport *) noexcept;
+	static bool handle_interrupt(JSContext *) noexcept;
+	static void handle_timeout(JSContext *) noexcept;
+	static void handle_telemetry(int id, uint32_t sample, const char *key) noexcept;
+	static bool handle_get_performance_groups(JSContext *, ::js::PerformanceGroupVector &, void *) noexcept;
+	static bool handle_stopwatch_commit(uint64_t, ::js::PerformanceGroupVector &, void *) noexcept;
+	static bool handle_stopwatch_start(uint64_t, void *) noexcept;
+	static void handle_out_of_memory(JSContext *, void *) noexcept;
+	static void handle_large_allocation_failure(void *) noexcept;
+	static void handle_trace_gray(JSTracer *, void *) noexcept;
+	static void handle_trace_extra(JSTracer *, void *) noexcept;
+	static void handle_weak_pointer_zone(JSContext *, void *) noexcept;
+	static void handle_weak_pointer_compartment(JSContext *, JSCompartment *, void *) noexcept;
+	static void handle_zone_sweep(JS::Zone *) noexcept;
+	static void handle_zone_destroy(JS::Zone *) noexcept;
+	static void handle_compartment_name(JSContext *, JSCompartment *, char *buf, size_t) noexcept;
+	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *) noexcept;
+	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
+	static void handle_objects_tenured(JSContext *, void *) noexcept;
+	static void handle_slice(JSContext *, JS::GCProgress, const JS::GCDescription &) noexcept;
+	static void handle_gc(JSContext *, JSGCStatus, void *) noexcept;
+	static bool handle_preserve_wrapper(JSContext *, JSObject *) noexcept;
+	static void handle_activity(void *priv, bool active) noexcept;
+	static bool handle_promise_enqueue_job(JSContext *, JS::HandleObject, JS::HandleObject, JS::HandleObject, void *) noexcept;
+	static void handle_promise_rejection_tracker(JSContext *, JS::HandleObject, PromiseRejectionHandlingState, void *) noexcept;
+	static bool handle_start_async_task(JSContext *, JS::AsyncTask *) noexcept;
+	static bool handle_finish_async_task(JS::AsyncTask *) noexcept;
+	static JSObject *handle_get_incumbent_global(JSContext *) noexcept;
 
-	// Exception state
-	JSExceptionState *except;                    // Use save_exception()/restore_exception()
-
-	// Interruption state
+  public:
+	struct opts;
 	struct alignas(8) state
 	{
 		uint32_t sem;
 		enum phase phase;
 		enum irq irq;
 	};
+
+	std::unique_ptr<struct opts> opts;           // Options for the context.
+	std::thread::id tid;                         // This is recorded for assertions/logging.
+	struct tracing tracing;                      // State for garbage collection / tracing.
+	JSExceptionState *except;                    // Use save_exception()/restore_exception()
 	std::atomic<struct state> state;             // Atomic state of execution
 	std::function<int (const irq &)> on_intr;    // User interrupt hook (ret -1 to not interfere)
-	bool handle_interrupt();                     // Called by runtime on interrupt
-
-	// Execution timer
-	void handle_timeout() noexcept;              // Called by timer after requested time
-	struct timer timer;
-
-	// System target
-	struct star *star;                           // Registered by kernel
+	struct timer timer;                          // Preemption timer
+	struct star *star;                           // System target
 
 	// JSContext
 	operator JSContext *() const                 { return get();                                   }
 	operator JSContext &() const                 { return custom_ptr<JSContext>::operator*();      }
 	bool operator!() const                       { return !custom_ptr<JSContext>::operator bool(); }
-	auto &runtime() const                        { return our(JS_GetRuntime(get()));               }
-	auto &runtime()                              { return our(JS_GetRuntime(get()));               }
 	auto ptr() const                             { return get();                                   }
 	auto ptr()                                   { return get();                                   }
 
@@ -90,19 +107,37 @@ struct context
 	void lock()                                  { JS_BeginRequest(get());                         }
 	void unlock()                                { JS_EndRequest(get());                           }
 
-	context(struct runtime &, const struct opts &);
-	context(const struct opts &);
+	context(std::unique_ptr<struct opts> opts, JSContext *const &parent = nullptr);
+	context(const struct opts &, JSContext *const &parent = nullptr);
 	context() = default;
 	context(context &&) = delete;
 	context(const context &) = delete;
 	~context() noexcept;
 };
 
+// Options for the context. Most of these values will never change from what
+// the user initially specified, but this is not held as const by the context to
+// allow for JS code itself to change its own options if possible.
+struct context::opts
+{
+	size_t max_bytes              = 64_MiB;
+	size_t max_nursery_bytes      = 16_MiB;
+	size_t code_stack_max         = 0;
+	size_t trusted_stack_max      = 0;
+	size_t untrusted_stack_max    = 0;
+	size_t stack_chunk_size       = 8_KiB;
+	microseconds timer_limit      = 10s;              //TODO: Temp
+	bool concurrent_parsing       = true;
+	bool concurrent_jit           = true;
+	uint8_t gc_zeal_mode          = 0;                     // normal
+	uint32_t gc_zeal_freq         = JS_DEFAULT_ZEAL_FREQ;  // 100
+};
+
 // Current thread_local context. This value affects contextual data for almost every function
-// in this entire subsystem (ircd::js). Located in ircd/js.cc
+// in this entire subsystem (ircd::js). Located in ircd/js.cc.
 extern __thread context *cx;
 
-// Get to our `struct context` from any upstream JSContext
+// Get to our own `struct context` from any upstream JSContext*
 const context &our(const JSContext *const &);
 context &our(JSContext *const &);
 
@@ -110,7 +145,7 @@ context &our(JSContext *const &);
 inline auto running(const context &c)            { return JS_IsRunning(c);                         }
 inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
 
-// Current stack
+// Current
 JS::Zone *current_zone(context & = *cx);
 JSObject *current_global(context & = *cx);
 JSCompartment *current_compartment(context & = *cx);
@@ -120,27 +155,25 @@ void set(context &c, const JSGCParamKey &, const uint32_t &val);
 uint32_t get(context &c, const JSGCParamKey &);
 void out_of_memory(context &c);
 void allocation_overflow(context &c);
+bool maybe_gc(context &c) noexcept;
 bool run_gc(context &c) noexcept;
 
 // Exception
 bool pending_exception(const context &c);
-void save_exception(context &c);
 void clear_exception(context &c);
+void save_exception(context &c);
 bool restore_exception(context &c);
-bool report_exception(context &c);
 
 // Interruption
 bool interrupt(context &, const irq &);
 bool interrupt_poll(const context &c);
 
 // Execution
-void restore_frame_chain(context &);
-void save_frame_chain(context &);
 void enter(context &);  // throws if can't enter
 void leave(context &);  // must be called if enter() succeeds
 
-// Enter JS within this closure. Most likely your function will return a `struct value`
-// or JS::Value returned by most calls into JS.
+// (Convenience) enter JS within this closure. Most likely your function
+// will return a `struct value` or JS::Value returned by most calls into JS.
 template<class F> auto run(F&& function);
 
 
@@ -157,24 +190,6 @@ run(F&& function)
 	});
 
 	return function();
-}
-
-inline void
-save_frame_chain(context &c)
-{
-	JS_SaveFrameChain(c);
-}
-
-inline void
-restore_frame_chain(context &c)
-{
-	JS_RestoreFrameChain(c);
-}
-
-inline bool
-report_exception(context &c)
-{
-	return JS_ReportPendingException(c);
 }
 
 inline void

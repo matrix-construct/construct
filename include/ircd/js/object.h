@@ -88,6 +88,7 @@ struct object
 	object(const value &);
 	object(JSObject *const &);
 	object(JSObject &);
+	object(nullptr_t);
 	object(uninitialized_t);
 	object();
 
@@ -108,6 +109,12 @@ object::object()
 inline
 object::object(uninitialized_t)
 :object::root::type{}
+{
+}
+
+inline
+object::object(nullptr_t)
+:object{value{nullptr}}
 {
 }
 
@@ -231,7 +238,7 @@ object::object(const uint8_t *const &bytecode,
                const size_t &size)
 :object::root::type
 {
-	JS_DecodeInterpretedFunction(*cx, bytecode, size)
+	//JS_DecodeInterpretedFunction(*cx, bytecode, size)
 }
 {
 	if(unlikely(!this->get()))
@@ -298,19 +305,10 @@ const
 }
 
 inline
-object::operator JSString *()
-const
-{
-	assert(this->get());
-	return JS_BasicObjectToString(*cx, *this);
-}
-
-inline
 object::operator value()
 const
 {
-	assert(this->get());
-	return JS::ObjectValue(*this->get());
+	return static_cast<JS::Value>(*this);
 }
 
 inline
@@ -321,6 +319,14 @@ const
 	return JS::ObjectValue(*this->get());
 }
 
+inline
+object::operator JSString *()
+const
+{
+	assert(this->get());
+	return JS_BasicObjectToString(*cx, *this);
+}
+
 inline size_t
 bytecodes(const object_handle &obj,
           uint8_t *const &buf,
@@ -329,7 +335,7 @@ bytecodes(const object_handle &obj,
 	uint32_t ret;
 	const custom_ptr<void> ptr
 	{
-		JS_EncodeInterpretedFunction(*cx, obj, &ret), js_free
+		//JS_EncodeInterpretedFunction(*cx, obj, &ret), js_free
 	};
 
 	const auto cpsz(std::min(size_t(ret), size));

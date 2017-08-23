@@ -39,7 +39,7 @@
 // From a completely clean build, configuring IRCd with --enable-debug should compile SpiderMonkey
 // in debug as well.
 #ifdef RB_DEBUG
-//	#define DEBUG
+	#define DEBUG
 #endif
 
 // SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
@@ -66,13 +66,12 @@ using ircd::operator<<;
 
 #include "version.h"
 #include "type.h"
+#include "debug.h"
 #include "tracing.h"
-#include "runtime.h"
 #include "timer.h"
 #include "context.h"
 #include "priv.h"
 #include "compartment.h"
-#include "debug.h"
 #include "root.h"
 #include "error.h"
 #include "native.h"
@@ -86,21 +85,21 @@ using ircd::operator<<;
 #include "set.h"
 #include "del.h"
 #include "vector.h"
+#include "for_each.h"
 #include "xdr.h"
 #include "script.h"
+#include "module.h"
+#include "args.h"
 #include "function.h"
 #include "function_literal.h"
+#include "function_native.h"
 #include "call.h"
 #include "for_each.h"
-#include "args.h"
 #include "trap.h"
 #include "trap_function.h"
 #include "trap_property.h"
 #include "ctor.h"
-#include "generator.h"
 #include "global.h"
-#include "contract.h"
-#include "star.h"
 #include "task.h"
 
 #endif // defined(RB_ENABLE_JS)

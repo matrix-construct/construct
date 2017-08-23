@@ -171,7 +171,7 @@ value::value(const std::string &s)
 :value::root::type{[&s]
 {
 	if(s.empty())
-		return JS::StringValue(JS_GetEmptyString(*rt));
+		return JS::StringValue(JS_GetEmptyString(*cx));
 
 	auto buf(native_external_copy(s));
 	const auto ret(JS_NewExternalString(*cx, buf.get(), s.size(), &native_external_delete));
@@ -186,7 +186,7 @@ value::value(const char *const &s)
 :value::root::type{[&s]
 {
 	if(!s || !*s)
-		return JS::StringValue(JS_GetEmptyString(*rt));
+		return JS::StringValue(JS_GetEmptyString(*cx));
 
 	const auto len(strlen(s));
 	auto buf(native_external_copy(s, len));

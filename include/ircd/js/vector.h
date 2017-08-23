@@ -64,10 +64,23 @@ struct vector<value>
 	struct handle
 	:JS::HandleValueArray
 	{
-		using JS::HandleValueArray::HandleValueArray;
-		handle(const JS::CallArgs &args): JS::HandleValueArray{args} {}
-		handle(): JS::HandleValueArray{JS::HandleValueArray::empty()} {}
+		handle()
+		:JS::HandleValueArray{JS::HandleValueArray::empty()}
+		{}
+
+		handle(const JS::CallArgs &args)
+		:JS::HandleValueArray{args}
+		{}
+
+		handle(const size_t &len, const JS::Value *const &elems)
+		:JS::HandleValueArray{JS::HandleValueArray::fromMarkedLocation(len, elems)}
+		{}
 	};
+
+	operator handle() const
+	{
+		return { length(), begin() };
+	}
 
 	/*
 	// Construct vector from initializer list of raw `JS::Value`

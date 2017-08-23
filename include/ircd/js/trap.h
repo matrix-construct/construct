@@ -27,26 +27,20 @@ namespace js   {
 
 struct trap
 {
-	struct property;
-	struct function;
+	struct property;            // Properties (trap_property.h)
+	struct function;            // Functions (trap_function.h)
+	struct constint;            // Constant integers (trap_constint.h)
 
-	trap *parent;
-	const std::string _name;                     // don't touch
-	std::map<std::string, property *> member;
-	std::map<std::string, function *> memfun;
-	std::map<std::string, trap *> children;
+	std::string name;                  // classp name
+	trap *prototrap;                   // Parent trap
 
-	std::array<JSConstIntegerSpec, 32> cis;      // static const integer spec
-	std::array<JSConstDoubleSpec, 32> cds;       // static const double spec
-	std::array<JSPropertySpec, 32> sps;          // static property spec
-	std::array<JSFunctionSpec, 32> sfs;          // static function spec
-	std::array<JSPropertySpec, 32> ps;           // property spec
-	std::array<JSFunctionSpec, 32> fs;           // function spec
-	std::unique_ptr<JSClass> _class;             // class spec
-	trap *prototrap;                             // pointer to __proto__ trap
+	// Static specifications
+	std::map<std::string, property *> sprop;
+	std::map<std::string, function *> sfunc;
 
-	static trap &from(const JSObject &);
-	static trap &from(const JSObject *const &);
+	// Member specifications
+	std::map<std::string, property *> memprop;
+	std::map<std::string, function *> memfunc;
 
   protected:
 	void debug(const void *const &that, const char *fmt, ...) const AFP(3, 4);
@@ -64,8 +58,6 @@ struct trap
 	virtual void on_gc(JSObject *const &);
 
   private: protected:
-	void add_this();
-	void del_this();
 	void host_exception(const void *const &that, const char *fmt, ...) const AFP(3, 4);
 
 	// Internal callback interface
@@ -83,18 +75,17 @@ struct trap
 	static bool handle_ctor(JSContext *, unsigned argc, JS::Value *argv) noexcept;
 	static void handle_dtor(JSFreeOp *, JSObject *) noexcept;
 
+	// Aggregate structure specifying internal callback surface
+	static const JSClassOps cops;      // Used for regular objects
+	static const JSClassOps gcops;     // Used for global objects
+	const JSClass classp;              // Instance uses one of the above JSClassOps
+
   public:
-	auto &name() const                           { return _name;                                   }
-	auto &jsclass() const                        { return *_class;                                 }
-	auto &jsclass()                              { return *_class;                                 }
+	static trap &from(const JSObject *const &);
+	static trap &from(const JSObject &);
 
-	 // Get child by name (NOT PATH)
-	const trap &child(const std::string &name) const;
-	trap &child(const std::string &name);
-
-	// Path is absolute to root
-	static trap &find(const string::handle &path);
-	static trap &find(const std::string &path);
+	auto &jsclass() const                        { return classp;                                  }
+	auto &jsclass()                              { return classp;                                  }
 
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
@@ -104,14 +95,11 @@ struct trap
 	object construct(const vector<value>::handle &argv = {});
 	template<class... args> object operator()(args&&...);
 
-	trap(trap &parent, const std::string &name, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(const std::string &name, const uint &flags = 0, const uint &prop_flags = 0);
 	trap(trap &&) = delete;
 	trap(const trap &) = delete;
 	virtual ~trap() noexcept;
 };
-
-extern __thread trap *tree;
 
 } // namespace js
 } // namespace ircd
@@ -120,6 +108,10 @@ template<class... args>
 ircd::js::object
 ircd::js::trap::operator()(args&&... a)
 {
-	vector<value> argv{std::forward<args>(a)...};
+	const vector<value> argv
+	{
+		std::forward<args>(a)...
+	};
+
 	return construct(argv);
 }

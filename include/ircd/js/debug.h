@@ -26,6 +26,7 @@ namespace ircd {
 namespace js   {
 
 // Returns static string
+const char *reflect(const jstype &);
 const char *reflect(const JSType &);
 const char *reflect(const JSExnType &);
 const char *reflect(const JSGCMode &);
@@ -33,10 +34,10 @@ const char *reflect(const JSGCStatus &);
 const char *reflect(const JS::GCProgress &);
 const char *reflect(const JSGCParamKey &);
 const char *reflect(const JSFinalizeStatus &);
-const char *reflect(const JSContextOp &);
+const char *reflect(const JS::PromiseState &);
+const char *reflect(const PromiseRejectionHandlingState &);
 const char *reflect_prop(const uint &flag);
 const char *reflect_telemetry(const int &id);
-const char *reflect(const jstype &);
 
 // Returns single-line string
 std::string debug(const JS::Value &);
@@ -54,6 +55,7 @@ void dump(const JSContext *v);
 void dump(const JSScript *const &v);
 void dump(const char16_t *const &v, const size_t &len);
 void dump(const ::js::InterpreterFrame *v);
+void dump_promise(const JS::HandleObject &promise);
 void backtrace();
 
 // writes lines to ircd::js::log

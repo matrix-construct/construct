@@ -31,7 +31,7 @@ struct compartment
 	using closure = std::function<void (JSCompartment *)>;
 
   private:
-	static void handle_iterate(JSRuntime *, void *, JSCompartment *) noexcept;
+	static void handle_iterate(JSContext *, void *, JSCompartment *) noexcept;
 
 	context *c;
 	JSCompartment *prev;
@@ -62,9 +62,11 @@ struct compartment
 	static compartment &get();
 };
 
+// Get our structure from JSCompartment. Returns null when not ours.
 const compartment *our(const JSCompartment *const &);
 compartment *our(JSCompartment *const &);
 
+// Compartment iterations
 void for_each_compartment_our(const compartment::closure_our &);  // iterate our compartments only
 void for_each_compartment(const compartment::closure &);          // iterate all compartments
 

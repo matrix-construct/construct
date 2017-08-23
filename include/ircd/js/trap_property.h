@@ -27,10 +27,12 @@ namespace js   {
 
 struct trap::property
 {
+	friend struct trap;
 	using function = js::function;
 
 	struct trap *trap;
-	const std::string name;
+	std::string name;
+	JSPropertySpec spec;
 
 	virtual value on_set(function::handle, object::handle, value::handle);
 	virtual value on_get(function::handle, object::handle);
@@ -40,7 +42,7 @@ struct trap::property
 	static bool handle_get(JSContext *c, unsigned argc, JS::Value *argv) noexcept;
 
   public:
-	property(struct trap &, std::string name);
+	property(struct trap &, const std::string &name, const uint &flags = 0);
 	property(property &&) = delete;
 	property(const property &) = delete;
 	virtual ~property() noexcept;

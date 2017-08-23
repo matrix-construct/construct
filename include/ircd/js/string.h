@@ -57,6 +57,7 @@ struct string
 
 	operator std::string() const;
 	operator std::u16string() const;
+	operator JS::Value() const;
 	operator value() const;
 
 	using root<JSString *>::root;
@@ -110,10 +111,13 @@ template<class A, class B> string_comparison<A, B> operator==(const A &a, const 
 template<class A, class B> string_comparison<A, B> operator!=(const A &a, const B &b);
 
 using string_pair = std::pair<string, string>;
+string_pair splita(const string &s, const char16_t &c);
+string_pair splita(const string &s, const char &c);        // split() but skips multiple contiguous c
+string_pair split(const string &s, const char16_t &c);     // split on first position of c
 string_pair split(const string &s, const char &c);
-string_pair split(const string &s, const char16_t &c);
 string substr(const string &s, const size_t &pos, const size_t &len);
 string operator+(const string &left, const string &right);
+string &operator+=(string &left, const string &right);
 
 using string_closure = std::function<void (const string &)>;
 void tokens(const string &, const char &sep, const string_closure &);
@@ -122,7 +126,7 @@ inline
 string::string()
 :string::root::type
 {
-	JS_GetEmptyString(*rt)
+	JS_GetEmptyString(*cx)
 }
 {
 }
@@ -169,7 +173,7 @@ string::string(const char *const &s,
 :string::root::type{[&s, &len]
 {
 	if(!s || !*s)
-		return JS_GetEmptyString(*rt);
+		return JS_GetEmptyString(*cx);
 
 	auto buf(native_external_copy(s, len));
 	return JS_NewExternalString(*cx, buf.release(), len, &native_external_delete);
@@ -197,7 +201,7 @@ string::string(const char16_t *const &s,
 :string::root::type{[&s, &len]
 {
 	if(!s || !*s)
-		return JS_GetEmptyString(*rt);
+		return JS_GetEmptyString(*cx);
 
 	// JS_NewExternalString does not require a null terminated buffer, but we are going
 	// to terminate anyway in case the deleter ever wants to iterate a canonical vector.
@@ -218,7 +222,7 @@ string::string(literal_t,
 {
 	s && *s?
 	JS_NewExternalString(*cx, s, std::char_traits<char16_t>::length(s), &native_external_static):
-	JS_GetEmptyString(*rt)
+	JS_GetEmptyString(*cx)
 }
 {
 	if(unlikely(!this->get()))
@@ -270,6 +274,13 @@ const
 
 inline
 string::operator value()
+const
+{
+	return static_cast<JS::Value>(*this);
+}
+
+inline
+string::operator JS::Value()
 const
 {
 	return JS::StringValue(this->get());
@@ -339,7 +350,7 @@ tokens(const string &str,
        const char &sep,
        const string_closure &closure)
 {
-	for(auto pair(split(str, sep));; pair = split(pair.second, sep))
+	for(auto pair(splita(str, sep));; pair = splita(pair.second, sep))
 	{
 		closure(pair.first);
 		if(pair.second.empty())
@@ -355,15 +366,40 @@ split(const string &s,
 }
 
 inline std::pair<string, string>
+splita(const string &s,
+       const char &c)
+{
+	return splita(s, char16_t(c));
+}
+
+inline std::pair<string, string>
 split(const string &s,
       const char16_t &c)
 {
-	size_t i(0);
-	for(; i < size(s) && at(s, i) != c; ++i);
+	size_t a(0);
+	for(; a < size(s) && at(s, a) != c; ++a);
+
 	return
 	{
-		substr(s, 0, i),
-		i < size(s)? substr(s, i + 1, size(s) - i) : string()
+		substr(s, 0, a),
+		a + 1 < size(s)? substr(s, a + 1, size(s) - a) : string()
+	};
+}
+
+inline std::pair<string, string>
+splita(const string &s,
+       const char16_t &c)
+{
+	size_t a(0);
+	for(; a < size(s) && at(s, a) != c; ++a);
+
+	size_t b(a);
+	for(; b < size(s) && at(s, b) == c; ++b);
+
+	return
+	{
+		substr(s, 0, a),
+		b < size(s)? substr(s, b, size(s) - b) : string()
 	};
 }
 
@@ -378,6 +414,14 @@ substr(const string &s,
 		throw std::out_of_range("substr(): invalid arguments");
 
 	return ret;
+}
+
+inline string &
+operator+=(string &left,
+           const string &right)
+{
+	left = operator+(left, right);
+	return left;
 }
 
 inline string

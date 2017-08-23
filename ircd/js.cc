@@ -24,7 +24,16 @@
 #include <ircd/js/js.h>
 #include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
 #include <mozilla/ThreadLocal.h>                 // For GetThreadType() linkage hack (see: down)
-//#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
+#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
+
+// Must be defined until we address issues with SpiderMonkey fixed inside any
+// IRCD_JS_FIX blocks.
+#define IRCD_JS_FIX
+
+// This was only ever defined for the SpiderMonkey headers and some of our hacks,
+// but we need to undef it to not step on the log facility log::DEBUG.
+// Use JS_DEBUG as an analog instead.
+#undef DEBUG
 
 namespace ircd {
 namespace js   {
@@ -35,9 +44,8 @@ struct log::log log
 	"js", 'J'
 };
 
-// Location of the thread_local runtext. externs exist in js/runtime.h and js/context.h.
-// If these are null, js is not available on your thread.
-__thread runtime *rt;
+// Location of the thread_local runtext (js/context.h)
+// If this is null, js is not available on your thread.
 __thread context *cx;
 __thread trap *tree;
 
@@ -46,9 +54,6 @@ __thread trap *tree;
 // expecting it to be static or something (yea right). What we have here is a place for
 // traps to dump their JSClass on destruction and then this can be reaped later.
 std::forward_list<std::unique_ptr<JSClass>> class_drain;
-
-// Handle to the kernel module
-//ircd::module kernel;
 
 // Internal prototypes
 const char *reflect(const ::js::CTypesActivityType &);
@@ -74,73 +79,33 @@ ircd::js::init::init()
 			this->~init();
 	});
 
-	if(!JS_Init())
-		throw error("JS_Init(): failure");
+	{
+		const char *errmsg;
+		if((errmsg = JS_InitWithFailureDiagnostic()))
+			throw error("JS_Init(): %s", errmsg);
+	}
 
-	struct runtime::opts runtime_opts;
 	struct context::opts context_opts;
-	log.info("Initializing the main JS Runtime (main_maxbytes: %zu)",
-	         runtime_opts.max_bytes);
+	log.info("Initializing the main JS context (main_maxbytes: %zu)",
+	         context_opts.max_bytes);
 
-	assert(!rt);
 	assert(!cx);
-
-	rt = new runtime(runtime_opts);
-	cx = new context(*rt, context_opts);
-	cx->star = new star;
-	tree = new trap("", JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_PRIVATE);
+	cx = new context(context_opts);
 
 	// Additional options
 	//set(*cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
 
-		log.info("Initialized main JS Runtime and context (version: '%s')",
+	log.info("Initialized main JS context (version: '%s')",
 	         version(*cx));
-	{
-		// tree is registered by the kernel module's trap
-		ircd::context main("matrix", 8_MiB, []()
-		{
-			const std::lock_guard<context> lock{*cx};
-			const std::string script
-			{
-				ircd::fs::read("/home/jason/charybdis/charybdis/modules/ircd.js")
-			};
-
-			auto task
-			{
-				std::make_shared<ircd::js::task>(script)
-			};
-
-			ircd::log::info("task %zu bytes pid %lu", script.size(), task->pid);
-
-			js::task::enter(*task, [](js::task &task)
-			{
-				value state(task.main());
-				ircd::log::info("%s", std::string(state));
-			});
-		});
-
-		//const std::lock_guard<context> lock{*cx};
-		//kernel = ircd::module("kernel");
-	}
 }
 
 ircd::js::init::~init()
 noexcept
 {
-	if(cx && !!*cx) try
-	{
-		const std::lock_guard<context> lock{*cx};
-		//kernel.reset();
-	}
-	catch(const std::exception &e)
-	{
-		log.warning("Failed to unload the kernel: %s", e.what());
-	}
+	log.info("Terminating the main JS context");
 
-	log.info("Terminating the JS Main Runtime");
-
-	delete cx;  cx = nullptr;
-	delete rt;  rt = nullptr;
+ 	delete cx;
+	cx = nullptr;
 
 	log.info("Terminating the JS Engine");
 	JS_ShutDown();
@@ -159,99 +124,10 @@ ircd::js::version(const ver &type)
 	}
 }
 
-void
-__attribute__((noreturn))
-js::ReportOutOfMemory(ExclusiveContext *const c)
-{
-	ircd::js::log.critical("jsalloc(): Reported out of memory (ExclusiveContext: %p)", (const void *)c);
-	std::terminate();
-}
-
-//
-// This DEBUG section is a fix for linkage errors when SpiderMonkey is compiled
-// in debug mode.
-//
-#ifdef DEBUG
-namespace js  {
-namespace oom {
-
-extern mozilla::ThreadLocal<uint32_t> threadType;
-
-uint32_t
-GetThreadType()
-{
-	return threadType.get();
-}
-
-} // namespace oom
-} // namespace js
-#endif // DEBUG
-
-// This was only ever defined for the SpiderMonkey headers and some of our hacks above.
-#undef DEBUG
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/js.h - With 3rd party (JSAPI) symbols
 //
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/js/contract.h
-//
-
-ircd::js::contract::contract(object::handle future)
-:contract{task::get(), future}
-{
-}
-
-ircd::js::contract::contract(struct task &task,
-                             object::handle future)
-:std::weak_ptr<struct task>{weak_from(task)}
-,future{future}
-{
-}
-
-ircd::js::contract::~contract()
-noexcept
-{
-}
-
-void
-ircd::js::contract::operator()(const closure &func)
-noexcept try
-{
-	log.debug("runtime(%p): RESULT (future: %p)",
-	          (const void *)rt,
-	          (const void *)future.get());
-
-	task::enter(*this, [this, &func]
-	(task &task)
-	{
-		try
-		{
-			set(future, "value", func());
-		}
-		catch(const jserror &e)
-		{
-			set(future, "error", e.val.get());
-		}
-		catch(const std::exception &e)
-		{
-			set(future, "error", e.what());
-		}
-
-		assert(cx->star);
-		cx->star->completion.push(std::move(*this));
-	});
-}
-catch(const std::exception &e)
-{
-	ircd::js::log.critical("contract(%p): %s",
-	                       (const void *)this,
-	                       e.what());
-	std::terminate();
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -267,15 +143,11 @@ ircd::js::task::task(const std::u16string &source)
 try
 :pid
 {
-	tasks_insert()
-}
-,yid
-{
 	0
 }
 ,global{[this]
 {
-	JS::CompartmentOptions opts;
+	JS::CompartmentCreationOptions opts;
 
 	// Global object is constructed using the root trap (JSClass) at *tree;
 	// This is a thread_local registered by the kernel.so module.
@@ -290,7 +162,7 @@ try
 	return global;
 }()}
 ,main{[this, &source]
-() -> script
+() -> struct module
 {
 	// A compartment for the global must be entered to compile in this scope
 	const compartment c(this->global);
@@ -304,38 +176,24 @@ try
 
 	// The compilation is also conducted asynchronously: it will yield the current
 	// ircd::ctx until it is complete.
-	return { script::yielding, opts, source };
-}()}
-,generator{[this]
-() -> struct generator
-{
-	// A compartment for the global must be entered to run the generator wrapper.
-	const compartment c(this->global);
-
-	// Run the generator wrapper (main function) returning the generator object.
-	// The run() closure provides safety for entering the JS engine.
-	value state(js::run([this]
+	const auto instantiate{true};
+	return
 	{
-		return value{};
-		//return this->main();
-	}));
-
-	return { state };
+		 module::yielding, opts, source, nullptr, instantiate
+	};
 }()}
 {
-	const compartment c(this->global);
-
+	//const compartment c(this->global);
 }
 catch(const std::exception &e)
 {
-	tasks_remove();
+	throw;
 }
 
 ircd::js::task::~task()
 noexcept
 {
-	run_gc(*rt);
-	tasks_remove();
+	run_gc(*cx);
 }
 
 bool
@@ -368,71 +226,6 @@ ircd::js::task::enter(task &t,
 	return true;
 }
 
-bool
-ircd::js::task::pending_del(const uint64_t &id)
-{
-	const auto ret(pending.erase(id));
-	if(!ret)
-		return false;
-
-	// When nothing is pending this strong self-reference is dropped and the task
-	// may be allowed to delete itself.
-	if(pending.empty())
-		work.reset();
-
-	return true;
-}
-
-bool
-ircd::js::task::pending_add(const uint64_t &id,
-                            object obj)
-{
-	const auto iit(pending.emplace(id, std::move(obj)));
-	if(!iit.second)
-		return false;
-
-	// If this is the first pending contract for this task a strong self-reference
-	// is placed here to ensure the task lingers until all work is completed.
-	if(pending.size() == 1)
-		work = shared_from_this();
-
-	return true;
-}
-
-bool
-ircd::js::task::tasks_remove()
-{
-	auto &tasks(cx->star->tasks);
-	const auto ret(tasks.erase(pid));
-	log.debug("task(%p) pid[%lu] removed",
-	          (const void *)this,
-	          pid);
-
-	assert(ret);
-	return ret;
-}
-
-uint64_t
-ircd::js::task::tasks_insert()
-{
-	auto &tasks(cx->star->tasks);
-	const uint64_t pid(tasks_next_pid());
-	const auto iit(tasks.emplace(pid, this));
-	log.debug("task(%p) pid[%lu] added",
-	          (const void *)this,
-	          pid);
-
-	assert(iit.second);
-	return pid;
-}
-
-uint64_t
-ircd::js::task::tasks_next_pid()
-{
-	auto &tasks(cx->star->tasks);
-	return tasks.empty()? 0 : std::prev(std::end(tasks))->first + 1;
-}
-
 ircd::js::object
 ircd::js::reflect(const task &task)
 {
@@ -449,6 +242,7 @@ ircd::js::decompile(const task &task,
 	return decompile(task.main, "main", pretty);
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/global.h
@@ -456,25 +250,44 @@ ircd::js::decompile(const task &task,
 
 ircd::js::global::global(trap &trap,
                          JSPrincipals *const &principals,
-                         JS::CompartmentOptions opts)
-:object{[&trap, &principals, &opts]
+                         JS::CompartmentCreationOptions copts,
+                         JS::CompartmentBehaviors bopts)
+:object{[&trap, &principals, &copts, &bopts]
 {
-	opts.setTrace(handle_trace);
-	return JS_NewGlobalObject(*cx, &trap.jsclass(), principals, JS::DontFireOnNewGlobalHook, opts);
+	//copts.setMergeable(true);
+	//copts.setInvisibleToDebugger(true);
+	copts.setTrace(handle_trace);
+	const JS::CompartmentOptions opts
+	{
+		copts, bopts
+	};
+
+	return JS_NewGlobalObject(*cx,
+	                          &trap.jsclass(),
+	                          principals,
+	                          JS::DontFireOnNewGlobalHook,
+	                          opts);
+}()}
+,module_resolve_hook{[this]
+{
+	const compartment c(*this);
+	return std::make_unique<function::native>("ModuleResolveHook", 0, 0, [this]
+	(object::handle func, value::handle that, const args &args)
+	{
+		assert(args.size() == 2);
+		const object requestor(args.at(0));
+		const string requesting(args.at(1));
+		module &importer(module::our(requestor));
+		return import(importer, requesting, object(that));
+	});
 }()}
 {
 	const compartment c(*this);
 	if(!JS_InitStandardClasses(*cx, *this))
 		throw error("Failed to init standard classes for global object");
 
-	for(auto it(begin(trap.memfun)); it != end(trap.memfun); ++it)
-	{
-		trap::function &deffun(*it->second);
-		deffun(*this);
-	}
-
 	JS_InitReflectParse(*cx, *this);
-
+	JS::SetModuleResolveHook(*cx, *module_resolve_hook);
 	JS_FireOnNewGlobalObject(*cx, *this);
 }
 
@@ -488,18 +301,59 @@ ircd::js::global::handle_trace(JSTracer *const tracer,
                                JSObject *const obj)
 noexcept
 {
-	assert(tracer->runtime() == rt->get());
+	//assert(tracer->runtime() == cx->get());
 
-	log.debug("runtime(%p): global tracer(%p) object(%p)",
-	          (const void *)&our(tracer->runtime()),
+	log.debug("context(%p): global tracer(%p) object(%p)",
+	          nullptr,//(const void *)&our(tracer->context()),
 	          (const void *)tracer,
 	          (const void *)obj);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/js/generator.h
-//
+ircd::js::object
+ircd::js::global::import(module &importer,
+                         const string &requesting,
+                         const object &that)
+{
+	log.debug("context(%p): module '%s' import '%s' (that: %p existing: %d)",
+	          (const void *)cx,
+	          std::string("<fixme>"),
+	          std::string(requesting),
+	          (const void *)that.address(),
+	          imports.find(requesting) != end(imports));
+
+	const auto it(imports.find(requesting));
+	if(it != end(imports))
+	{
+		const auto &exporter(*it->second);
+		const string name(exporter.trap->name);
+		js::set(that, name, exporter.trap->construct());
+		return static_cast<const object &>(exporter);
+	}
+
+	static const std::string prefix
+	{
+		std::string(fs::MODPATH) + "/"
+	};
+
+	string fname(prefix);
+	const string delim("_");
+	tokens(requesting, '.', [&fname, &delim]
+	(const string &token)
+	{
+		fname += token;
+		fname += delim;
+	});
+
+	fname = substr(fname, 0, fname.size() - 1);
+	fname += ".so";
+
+	ircd::module *const m(new ircd::module(fname));
+	const auto exporter(m->get<module *>("IRCD_JS_MODULE"));
+	const auto iit(imports.emplace(requesting, exporter));
+	const string name(exporter->trap->name);
+	js::set(that, name, exporter->trap->construct());
+	return static_cast<const object &>(*exporter);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -507,61 +361,40 @@ noexcept
 //
 
 ircd::js::trap::property::property(struct trap &trap,
-                                   std::string name)
+                                   const std::string &name,
+                                   const uint &flags)
 try
 :trap{&trap}
-,name{std::move(name)}
+,name{name}
+,spec{0}
 {
-	const auto it(std::find_if(begin(trap.ps), end(trap.ps), []
-	(const JSPropertySpec &ps)
-	{
-		return !ps.name;
-	}));
+	spec.name = this->name.data(),
+	spec.flags = flags,
+	spec.accessors.setter.native = { handle_set };
+	spec.accessors.getter.native = { handle_get };
 
-	if(it == end(trap.ps))
-		throw error("out of slots");
-
-	{
-		const auto it(trap.member.emplace(this->name, this));
-		if(!it.second)
-			throw error("already exists");
-	}
-
-	JSPropertySpec &spec(*it);
-	spec.name = this->name.c_str();
-	spec.flags = JSPROP_SHARED;
-	spec.getter.native.op = handle_get;
-	spec.setter.native.op = handle_set;
+	const auto iit(trap.memprop.emplace(this->name, this));
+	if(!iit.second)
+		throw error("trap property '%s' already exists on '%s'",
+		            this->name,
+		            trap.name);
 
 	log.debug("Registered property '%s' on trap '%s'",
-	          this->name.c_str(),
-	          trap.name().c_str());
+	          this->name,
+	          trap.name);
 }
 catch(const error &e)
 {
 	throw error("Failed to register property '%s': out slots on trap '%s': %s",
 	            this->name.c_str(),
-	            trap.name().c_str(),
+	            trap.name.c_str(),
 	            e.what());
 }
 
 ircd::js::trap::property::~property()
 noexcept
 {
-	assert(trap);
-	const auto it(std::find_if(begin(trap->ps), end(trap->ps), [this]
-	(const JSPropertySpec &spec)
-	{
-		return name == spec.name;
-	}));
-
-	if(it != end(trap->ps))
-	{
-		JSPropertySpec &spec(*it);
-		memset(&spec, 0x0, sizeof(spec));
-	}
-
-	const size_t erased(trap->member.erase(name));
+	const auto erased(trap->memprop.erase(name));
 	assert(erased);
 }
 
@@ -582,7 +415,7 @@ noexcept try
 	trap.debug(that.get(), "get '%s' (property)",
 	           name.c_str());
 
-	property &prop(*trap.member.at(name));
+	property &prop(*trap.memprop.at(name));
 	args.rval().set(prop.on_get(func, that));
 	return true;
 }
@@ -599,20 +432,6 @@ catch(const std::exception &e)
 	trap.host_exception(that.get(), "property get: %s", e.what());
 	return false;
 }
-
-namespace ircd {
-namespace js   {
-
-struct foodata
-:priv_data
-{
-	trap::property *ptr;
-
-	foodata(trap::property *const &ptr = nullptr): ptr{ptr} {}
-};
-
-} // namespace js
-} // namespace ircd
 
 bool
 ircd::js::trap::property::handle_set(JSContext *const c,
@@ -631,7 +450,7 @@ noexcept try
 	trap.debug(that.get(), "set '%s' (property)",
 	           name.c_str());
 
-	property &prop(*trap.member.at(name));
+	property &prop(*trap.memprop.at(name));
 	args.rval().set(prop.on_get(func, that));
 	return true;
 }
@@ -669,24 +488,38 @@ ircd::js::trap::property::on_set(function::handle,
 // ircd/js/trap_function.h
 //
 
-ircd::js::trap::function::function(trap &member,
-                                   std::string name,
-                                   const uint &flags,
-                                   const uint &arity,
+ircd::js::trap::function::function(struct trap &trap,
+                                   const std::string &name,
+                                   const uint16_t &flags,
+                                   const uint16_t &arity,
                                    const closure &lambda)
-:member{&member}
-,name{std::move(name)}
-,flags{flags}
-,arity{arity}
+:trap{&trap}
+,name{name}
 ,lambda{lambda}
+,spec
 {
-	member.memfun.emplace(this->name, this);
+	this->name.data(),
+	{ handle_call },
+	arity,
+	flags
+}
+{
+	const auto iit(trap.memfunc.emplace(this->name, this));
+	if(!iit.second)
+		throw error("trap function '%s' already exists on '%s'",
+		            this->name,
+		            trap.name);
+
+	log.debug("Registered function '%s' on trap '%s'",
+	          this->name,
+	          trap.name);
 }
 
 ircd::js::trap::function::~function()
 noexcept
 {
-	member->memfun.erase(this->name);
+	const auto erased(trap->memfunc.erase(this->name));
+	assert(erased);
 }
 
 ircd::js::function
@@ -695,10 +528,10 @@ const
 {
 	const auto jsf(::js::DefineFunctionWithReserved(*cx,
 	                                                obj,
-	                                                name.c_str(),
-	                                                handle_call,
-	                                                arity,
-	                                                flags));
+	                                                spec.name,
+	                                                spec.call.op,
+	                                                spec.nargs,
+	                                                spec.flags));
 	if(unlikely(!jsf))
 		throw internal_error("Failed to create trap::function");
 
@@ -722,7 +555,7 @@ noexcept try
 	{
 		log.debug("trap(%p) %s() ctor argv[%u]",
 		          (const void *)&trap,
-		          trap.name.c_str(),
+		          trap.name,
 		          argc);
 
 		const value that(trap.on_new(func, args));
@@ -730,20 +563,20 @@ noexcept try
 		log.debug("trap(%p) this(%p) %s() leave",
 		          (const void *)&trap,
 		          (const void *)that.address(),
-		          trap.name.c_str());
+		          trap.name);
 	} else {
 		const value that(args.computeThis(c));
 		log.debug("trap(%p) this(%p) %s() call argv[%u]",
 		          (const void *)&trap,
 		          (const void *)that.address(),
-		          trap.name.c_str(),
+		          trap.name,
 		          argc);
 
 		args.rval().set(trap.on_call(func, that, args));
 		log.debug("trap(%p) this(%p) %s() leave",
 		          (const void *)&trap,
 		          (const void *)that.address(),
-		          trap.name.c_str());
+		          trap.name);
 	}
 
 	return true;
@@ -761,13 +594,13 @@ catch(const std::exception &e)
 
 	log.error("trap(%p) \"%s()\": %s",
 	          reinterpret_cast<const void *>(&trap),
-	          trap.name.c_str(),
+	          trap.name,
 	          e.what());
 
-	JS_ReportError(*cx, "BUG: trap(%p) \"%s()\": %s",
-	               reinterpret_cast<const void *>(&trap),
-	               trap.name.c_str(),
-	               e.what());
+	JS_ReportErrorUTF8(*cx, "BUG: trap(%p) \"%s()\": %s",
+	                   reinterpret_cast<const void *>(&trap),
+	                   trap.name.c_str(),
+	                   e.what());
 	return false;
 }
 
@@ -799,67 +632,74 @@ ircd::js::trap::function::on_new(object::handle obj,
 // ircd/js/trap.h
 //
 
+namespace ircd {
+namespace js   {
+
+} // namespace js
+} // namespace ircd
+
 ircd::js::trap::trap(const std::string &name,
                      const uint &flags,
                      const uint &prop_flags)
-:trap{*tree, name, flags, prop_flags}
-{
-}
-
-ircd::js::trap::trap(trap &parent,
-                     const std::string &name,
-                     const uint &flags,
-                     const uint &prop_flags)
-:parent{&parent != this? &parent : nullptr}
-,_name{name}
-,cis{0}
-,cds{0}
-,sps{0}
-,sfs{0}
-,ps{0}
-,fs{0}
-,_class{std::make_unique<JSClass>(JSClass
-{
-	this->_name.c_str(),
-	flags,
-	handle_add, // flags & JSCLASS_GLOBAL_FLAGS? nullptr : handle_add,
-	handle_del,
-	handle_get,
-	handle_set,
-	handle_enu,
-	handle_has,
-	nullptr,           // JSConvertOp - Obsolete since SpiderMonkey 44  // 45 = mayResolve?
-	handle_dtor,
-	handle_call,
-	handle_inst,
-	handle_ctor,
-	flags & JSCLASS_GLOBAL_FLAGS? JS_GlobalObjectTraceHook : handle_trace,
-	{ this }           // reserved[0] TODO: ?????????
-})}
+:name{name}
 ,prototrap{nullptr}
+,classp
 {
-	std::fill(begin(sfs), end(sfs), (JSFunctionSpec)JS_FS_END);
-	std::fill(begin(fs), end(fs), (JSFunctionSpec)JS_FS_END);
+	this->name.data(),
+	flags | JSCLASS_FOREGROUND_FINALIZE,
+	(flags & JSCLASS_IS_GLOBAL)? &gcops : &cops,
+	{ this } // reserved[0] TODO: ?????????
+}
+{
+	if(this->name == "[global]")
+		ircd::js::tree = this;
 
-	//ps[0].name = "";
-	//ps[0].flags |= prop_flags;
-	//ps[0].flags |= JSPROP_ENUMERATE;
-	add_this();
+	log.debug("Registered trap '%s' @ %p",
+	          jsclass().name,
+	          (const void *)this);
 }
 
 ircd::js::trap::~trap()
 noexcept
 {
-	del_this();
-
-	assert(_class->reserved[0] == this);
-	_class->reserved[0] = nullptr;
-	_class->trace = nullptr;
-	const auto flags(_class->flags);
-	memset(_class.get(), 0x0, sizeof(JSClass));
-	_class->flags = flags;
-	class_drain.emplace_front(std::move(_class));
+	log.debug("Unregistered trap '%s' @ %p",
+	          jsclass().name,
+	          (const void *)this);
 }
+
+const JSClassOps
+ircd::js::trap::cops
+{
+	handle_add,
+	handle_del,
+	handle_get,
+	handle_set,
+	handle_enu,
+	handle_has,
+	nullptr,     // JSConvertOp - Obsolete since SpiderMonkey 44  // 45 = mayResolve?
+	handle_dtor,
+	handle_call,
+	handle_inst,
+	handle_ctor,
+	handle_trace,
+};
+
+const JSClassOps
+ircd::js::trap::gcops
+{
+	handle_add,  // flags & JSCLASS_GLOBAL_FLAGS? nullptr : handle_add,
+	handle_del,
+	handle_get,
+	handle_set,
+	handle_enu,
+	handle_has,
+	nullptr,     // JSConvertOp - Obsolete since SpiderMonkey 44  // 45 = mayResolve?
+	handle_dtor,
+	handle_call,
+	handle_inst,
+	handle_ctor,
+	JS_GlobalObjectTraceHook,
+};
 
 ircd::js::object
 ircd::js::trap::construct(const vector<value>::handle &argv)
@@ -879,155 +719,89 @@ ircd::js::trap::construct(const object::handle &globals,
 ircd::js::object
 ircd::js::trap::prototype(const object::handle &globals)
 {
+	// Create parent object of this object in the prototype chain
 	const object super
 	{
 		prototrap? prototrap->construct() : object{object::uninitialized}
 	};
 
+	// Build static property descriptor array
+	std::vector<JSPropertySpec> sprop
+	{
+		this->sprop.size() + 1,  // JS requires classical null terminator
+		{ 0 }
+	};
+
+	// Build static function descriptor array
+	std::vector<JSFunctionSpec> sfunc
+	{
+		this->sfunc.size() + 1,  // JS requires classical null terminator
+		{ 0 }
+	};
+
+	// Build member property descriptor array
+	std::vector<JSPropertySpec> memprop
+	{
+		this->memprop.size() + 1,  // JS requires classical null terminator
+		{ 0 }
+	};
+
+	std::transform(begin(this->memprop), end(this->memprop), begin(memprop), []
+	(const auto &it)
+	{
+		const auto &prop(*it.second);
+		return prop.spec;
+	});
+
+	// Mozilla really screwed the pooch here. There is no way to specify a function
+	// with a reserved slot in order to find our trap::function instance from the
+	// JSNative callback. Their API surface is too broad and there are too many different
+	// and mutually exclusive ways to define functions. So we have to be inconsistent
+	// here and not use InitClass()'s facility for defining member functions.
+
+	// Build member function descriptor array
+	std::vector<JSFunctionSpec> memfunc
+	{
+		this->memfunc.size() + 1,  // JS requires classical vector terminator
+		{ 0 }
+	};
+
+/*
+	std::transform(begin(this->memfunc), end(this->memfunc), begin(memfunc), []
+	(const auto &it)
+	{
+		const auto &function(*it.second);
+		return function.spec;
+	});
+*/
+
+	// Create object
 	const object proto
 	{
 		JS_InitClass(*cx,
 		             globals,
 		             super,
-		             _class.get(),
+		             &jsclass(),
 		             nullptr,
 		             0,
-		             ps.data(),
-		             fs.data(),
-		             sps.data(),
-		             sfs.data())
+		             memprop.data(),
+		             memfunc.data(),
+		             sprop.data(),
+		             sfunc.data())
 	};
 
-	for(auto it(begin(memfun)); it != end(memfun); ++it)
+	// Member functions defined after the fact here.
+	std::for_each(begin(this->memfunc), end(this->memfunc), [&proto]
+	(const auto &it)
 	{
-		const function &deffun(*it->second);
-		const js::function func(deffun(proto));
-	}
-
-	JS_DefineConstIntegers(*cx, proto, cis.data());
-	JS_DefineConstDoubles(*cx, proto, cds.data());
-
-	return proto;
-}
-
-void
-ircd::js::trap::del_this()
-try
-{
-	// It is a special condition when the parent is self (this) and the trap has no name.
-	if(!parent && name().empty())
-	{
-		tree = nullptr; // thread_local
-		return;
-	}
-
-	if(!parent)
-		return;
-
-	if(!parent->children.erase(name()))
-		throw std::out_of_range("child not in parent's map");
-
-	log.debug("Unregistered trap '%s' in `%s'",
-	          name().c_str(),
-	          parent->name().c_str());
-}
-catch(const std::exception &e)
-{
-	log.error("Failed to unregister object trap '%s' in `%s': %s",
-	          name().c_str(),
-	          parent->name().c_str(),
-	          e.what());
-	return;
-}
-
-void
-ircd::js::trap::add_this()
-try
-{
-	// It is a special condition when the parent is self (this) and the trap has no name.
-	if(!parent && name().empty())
-	{
-		tree = this; // thread_local
-		return;
-	}
-
-	if(!parent)
-		return;
-
-	const auto iit(parent->children.emplace(name(), this));
-	if(!iit.second)
-		throw error("Failed to overwrite existing");
-
-	log.debug("Registered trap '%s' in `%s'",
-	          name().c_str(),
-	          parent->name().c_str());
-}
-catch(const std::exception &e)
-{
-	log.error("Failed to register object trap '%s' in `%s': %s",
-	          name().c_str(),
-	          parent->name().c_str(),
-	          e.what());
-	throw;
-}
-
-ircd::js::trap &
-ircd::js::trap::find(const std::string &path)
-{
-	if(unlikely(!tree))
-		throw error("Failed to find trap tree root");
-
-	trap *ret(tree);
-	const auto parts(ircd::tokens(path, "."));
-	for(const auto &part : parts)
-		ret = &ret->child(std::string(part));
-
-	return *ret;
-}
-
-ircd::js::trap &
-ircd::js::trap::find(const string::handle &path)
-{
-	if(unlikely(!tree))
-		throw error("Failed to find trap tree root");
-
-	trap *ret(tree);
-	tokens(string(path), '.', [&ret]
-	(const string &part)
-	{
-		ret = &ret->child(part);
+		const auto &deffun(*it.second);
+		const auto func(deffun(proto));
 	});
 
-	return *ret;
-}
+	//JS_DefineConstIntegers(*cx, proto, cis.data());
+	//JS_DefineConstDoubles(*cx, proto, cds.data());
 
-ircd::js::trap &
-ircd::js::trap::child(const std::string &name)
-try
-{
-	if(name.empty())
-		return *this;
-
-	return *children.at(name);
-}
-catch(const std::out_of_range &e)
-{
-	throw reference_error("%s", name.c_str());
-}
-
-const ircd::js::trap &
-ircd::js::trap::child(const std::string &name)
-const
-try
-{
-	if(name.empty())
-		return *this;
-
-	return *children.at(name);
-}
-catch(const std::out_of_range &e)
-{
-	throw reference_error("%s", name.c_str());
+	return proto;
 }
 
 void
@@ -1037,7 +811,7 @@ noexcept try
 {
 	assert(op);
 	assert(obj);
-	assert(&our_runtime(*op) == rt);
+	//assert(&our_runtime(*op) == rt);
 
 	auto &trap(from(*obj));
 	trap.debug(obj, "dtor");
@@ -1067,7 +841,7 @@ noexcept try
 
 	auto &trap(from(that));
 	trap.debug(that.get(), "ctor '%s' argv[%zu]",
-	           trap.name().c_str(),
+	           trap.name.c_str(),
 	           args.size());
 
 	object ret(JS_NewObjectWithGivenProto(*cx, &trap.jsclass(), that));
@@ -1102,7 +876,7 @@ noexcept try
 	value that(args.computeThis(c));
 	object func(args.callee());
 
-	//auto &trap_that(from(that));
+	//auto &trap_that(from(object(that)));
 	auto &trap_func(from(func));
 
 	//trap_that.debug(that.get(), "call: '%s'", trap_func.name().c_str());
@@ -1158,8 +932,8 @@ noexcept try
 	assert(&our(c) == cx);
 	assert(!pending_exception(*cx));
 
-	auto &trap(from(obj));
-	//trap.debug(obj.get(), "has '%s'", string(id).c_str());
+	auto &trap(trap::from(obj));
+	trap.debug(obj.get(), "has '%s'", string(id).c_str());
 	*resolved = trap.on_has(obj, id);
 	return true;
 }
@@ -1442,15 +1216,15 @@ catch(const std::exception &e)
 }
 
 ircd::js::trap &
-ircd::js::trap::from(const JSObject *const &o)
+ircd::js::trap::from(const JSObject &o)
 {
-	return from(*o);
+	return from(&o);
 }
 
 ircd::js::trap &
-ircd::js::trap::from(const JSObject &o)
+ircd::js::trap::from(const JSObject *const &o)
 {
-	auto *const c(JS_GetClass(const_cast<JSObject *>(&o)));
+	auto *const c(JS_GetClass(const_cast<JSObject *>(o)));
 	if(!c)
 	{
 		log.critical("trap::from(): Trapped on an object without a JSClass!");
@@ -1477,10 +1251,10 @@ const
 
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	log.debug("trap(%p) this(%p) %s %s",
+	log.debug("trap(%p) this(%p) '%s' %s",
 	          reinterpret_cast<const void *>(this),
 	          that,
-	          !name().empty()? name().c_str() : "this",
+	          jsclass().name,
 	          buf);
 
 	va_end(ap);
@@ -1497,17 +1271,17 @@ const
 
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	log.error("trap(%p) this(%p) \"%s\" %s",
+	log.error("trap(%p) this(%p) '%s' %s",
 	          reinterpret_cast<const void *>(this),
 	          that,
-	          name().c_str(),
+	          jsclass().name,
 	          buf);
 
-	JS_ReportError(*cx, "BUG: trap(%p) this(%p) \"%s\" %s",
-	               reinterpret_cast<const void *>(this),
-	               that,
-	               name().c_str(),
-	               buf);
+	JS_ReportErrorUTF8(*cx, "BUG: trap(%p) this(%p) '%s' %s",
+	                   reinterpret_cast<const void *>(this),
+	                   that,
+	                   jsclass().name,
+	                   buf);
 
 	va_end(ap);
 }
@@ -1515,6 +1289,9 @@ const
 void
 ircd::js::trap::on_gc(JSObject *const &that)
 {
+	if(jsclass().flags & JSCLASS_IS_GLOBAL) //TODO: leak??
+		return;
+
 	if(jsclass().flags & JSCLASS_HAS_PRIVATE)
 		del(that, priv);
 }
@@ -1608,6 +1385,11 @@ ircd::js::trap::on_call(object::handle,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/module.h
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/script.h
 //
 
@@ -1639,13 +1421,13 @@ ircd::js::bytecodes(const JS::Handle<JSScript *> &s,
                     uint8_t *const &buf,
                     const size_t &max)
 {
-	uint32_t len;
+	uint32_t len(0);
 	const custom_ptr<void> ptr
 	{
-		JS_EncodeScript(*cx, s, &len), js_free
+		//JS_EncodeScript(*cx, s, &len), js_free
 	};
 
-	const size_t ret(std::min(size_t(len), max));
+	const auto ret(std::min(size_t(len), max));
 	memcpy(buf, ptr.get(), ret);
 	return ret;
 }
@@ -1662,22 +1444,29 @@ ircd::js::decompile(const JS::Handle<JSScript *> &s,
 
 ircd::ctx::future<void *>
 ircd::js::compile_async(const JS::ReadOnlyCompileOptions &opts,
-                        const std::u16string &src)
+                        const std::u16string &src,
+                        const bool &module)
 {
 	auto promise(std::make_unique<ctx::promise<void *>>());
 	if(!JS::CanCompileOffThread(*cx, opts, src.size()))
 	{
-		log.warning("context(%p): Rejected asynchronous script compile (script size: %zu)",
-		            (const void *)cx,
-		            src.size());
+		log.debug("context(%p): Rejected asynchronous script compile (script size: %zu)",
+		          (const void *)cx,
+		          src.size());
 
 		ctx::future<void *> ret(*promise);
 		promise->set_value(nullptr);
 		return ret;
 	}
 
-	if(!JS::CompileOffThread(*cx, opts, src.data(), src.size(), handle_compile_async, promise.get()))
-		throw internal_error("Failed to compile concurrent script");
+	const auto &compile
+	{
+		module? JS::CompileOffThreadModule : JS::CompileOffThread
+	};
+
+	if(!compile(*cx, opts, src.data(), src.size(), handle_compile_async, promise.get()))
+		throw internal_error("Failed to compile %s concurrently",
+		                     module? "module" : "script");
 
 	return *promise.release();
 }
@@ -1690,9 +1479,8 @@ noexcept
 	// This frame is entered on a thread owned by SpiderMonkey, not IRCd. Do not call
 	// ircd::log from here, it is not thread-safe.
 	/*
-	printf("[thread %s]: runtime(%p): context(%p): compile(%p) READY (priv: %p)\n",
+	printf("[thread %s]: context(%p): compile(%p) READY (priv: %p)\n",
 	       ircd::string(std::this_thread::get_id()).c_str(),
-	       (const void *)rt,
 	       (const void *)cx,
 	       token,
 	       priv);
@@ -1707,12 +1495,25 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/function.h
+//
+
+ircd::js::value
+ircd::js::function::operator()(const object::handle &that,
+                               const vector<value>::handle &argv)
+const
+{
+	return call(*this, that, argv);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/function_literal.h
 //
 
-ircd::js::function_literal::function_literal(const char *const &name,
-                                             const std::initializer_list<const char *> &prototype,
-                                             const char *const &text)
+ircd::js::function::literal::literal(const char *const &name,
+                                     const std::initializer_list<const char *> &prototype,
+                                     const char *const &text)
 :root<JSFunction *>{}
 ,name{name}
 ,text{text}
@@ -1734,7 +1535,7 @@ ircd::js::function_literal::function_literal(const char *const &name,
 	}
 }
 
-ircd::js::function_literal::function_literal(function_literal &&other)
+ircd::js::function::literal::literal(literal &&other)
 noexcept
 :root<JSFunction *>
 {
@@ -1746,17 +1547,160 @@ noexcept
 {
 }
 
+ircd::js::function::literal
+operator ""_function(const char *const text, const size_t len)
+{
+	return { "<literal>", {}, text };
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ircd/js/function.h
+// ircd/js/function_native.h
 //
 
+ircd::js::function::native::native(const char *const &name,
+                                   const uint &flags,
+                                   const uint &arity,
+                                   const closure &lambda)
+:native::root::type{[this, &name, &flags, &arity]
+{
+	const auto jsf(::js::DefineFunctionWithReserved(*cx,
+	                                                object(),
+	                                                name,
+	                                                handle_call,
+	                                                arity,
+	                                                flags));
+	if(unlikely(!jsf))
+		throw internal_error("Failed to create function::native '%s'", name);
+
+	js::function ret(jsf);
+	::js::SetFunctionNativeReserved(ret, 0, pointer_value(this));
+	return ret;
+}()}
+,_name{name}
+,lambda{lambda}
+{
+}
+
+ircd::js::function::native::~native()
+noexcept
+{
+}
+
 ircd::js::value
-ircd::js::function::operator()(const object::handle &that,
-                               const vector<value>::handle &argv)
+ircd::js::function::native::operator()(const object::handle &that,
+                                       const vector<value>::handle &argv)
 const
 {
 	return call(*this, that, argv);
+}
+
+ircd::js::string
+ircd::js::function::native::name()
+const
+{
+	return JS_GetFunctionId(*this);
+}
+
+
+ircd::js::string
+ircd::js::function::native::display_name()
+const
+{
+	return JS_GetFunctionDisplayId(*this);
+}
+
+uint16_t
+ircd::js::function::native::arity()
+const
+{
+	return JS_GetFunctionArity(*this);
+}
+
+bool
+ircd::js::function::native::handle_call(JSContext *const c,
+                                        const unsigned argc,
+                                        JS::Value *const argv)
+noexcept try
+{
+	assert(&our(c) == cx);
+
+	const struct args args(argc, argv);
+	const object func(args.callee());
+	auto &instance(from(func));
+	if(args.isConstructing())
+	{
+		log.debug("native(%p) %s() ctor argv[%u]",
+		          (const void *)&instance,
+		          instance._name,
+		          argc);
+
+		const value that(instance.on_new(func, args));
+		args.rval().set(that);
+		log.debug("native(%p) this(%p) %s() leave",
+		          (const void *)&instance,
+		          (const void *)that.address(),
+		          instance._name);
+	} else {
+		const value that(args.computeThis(c));
+		log.debug("native(%p) this(%p) %s() call argv[%u]",
+		          (const void *)&instance,
+		          (const void *)that.address(),
+		          instance._name,
+		          argc);
+
+		args.rval().set(instance.on_call(func, that, args));
+		log.debug("native(%p) this(%p) %s() leave",
+		          (const void *)&instance,
+		          (const void *)that.address(),
+		          instance._name);
+	}
+
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	const struct args args(argc, argv);
+	const object func(args.callee());
+	const function::native &instance(from(func));
+	log.error("native(%p) \"%s()\": %s",
+	          std::addressof(instance),
+	          instance._name,
+	          e.what());
+
+	JS_ReportErrorUTF8(*cx, "BUG: native(%p) \"%s()\": %s",
+	                   std::addressof(instance),
+	                   instance._name,
+	                   e.what());
+	return false;
+}
+
+ircd::js::function::native &
+ircd::js::function::native::from(JSObject *const &func)
+{
+	const auto tval(::js::GetFunctionNativeReserved(func, 0));
+	return *pointer_value<function::native>(tval);
+}
+
+ircd::js::value
+ircd::js::function::native::on_call(object::handle obj,
+                                    value::handle val,
+                                    const args &args)
+{
+	return lambda(obj, val, args);
+}
+
+ircd::js::value
+ircd::js::function::native::on_new(object::handle obj,
+                                   const args &args)
+{
+	value ud;
+	return on_call(obj, ud, args);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1815,7 +1759,7 @@ ircd::js::for_each(object::handle obj,
                    const iter &flags,
                    const each_id &closure)
 {
-	vector<id> props;
+	JS::AutoIdVector props(*cx);
 	if(::js::GetPropertyKeys(*cx, obj, uint(flags), &props))
 		for(size_t i(0); i < props.length(); ++i)
 			closure(props[i]);
@@ -2360,8 +2304,8 @@ noexcept
 namespace ircd {
 namespace js   {
 
-void native_external_noop(const JSStringFinalizer *const fin, char16_t *const buf);
-void native_external_deleter(const JSStringFinalizer *const fin, char16_t *const buf);
+void native_external_noop(JS::Zone *const zone, const JSStringFinalizer *const fin, char16_t *const buf);
+void native_external_deleter(JS::Zone *const zone, const JSStringFinalizer *const fin, char16_t *const buf);
 
 JSStringFinalizer native_external_delete
 {
@@ -2407,11 +2351,13 @@ ircd::js::native(const JSString *const &s,
 }
 
 void
-ircd::js::native_external_deleter(const JSStringFinalizer *const fin,
+ircd::js::native_external_deleter(JS::Zone *const zone,
+                                  const JSStringFinalizer *const fin,
                                   char16_t *const buf)
 {
-	log.debug("runtime(%p): string(%p) delete (dtor @%p) \"%s\"",
-	          (const void *)rt,
+	log.debug("context(%p) zone(%p): string(%p) delete (dtor @%p) \"%s\"",
+	          (const void *)cx,
+	          (const void *)zone,
 	          (const void *)buf,
 	          (const void *)fin,
 	          locale::char16::conv(buf).c_str());
@@ -2420,10 +2366,12 @@ ircd::js::native_external_deleter(const JSStringFinalizer *const fin,
 }
 
 void
-ircd::js::native_external_noop(const JSStringFinalizer *const fin,
+ircd::js::native_external_noop(JS::Zone *const zone,
+                               const JSStringFinalizer *const fin,
                                char16_t *const buf)
 {
-	log.debug("string literal release (fin: %p buf: %p)",
+	log.debug("string literal release (zone: %p fin: %p buf: %p)",
+	          (const void *)zone,
 	          (const void *)fin,
 	          (const void *)buf);
 }
@@ -2479,8 +2427,8 @@ ircd::js::jserror::jserror(pending_t)
 :ircd::js::error{generate_skip}
 ,val{}
 {
-	if(unlikely(!restore_exception(*cx)))
-		throw error("No exception pending");
+	//if(unlikely(!restore_exception(*cx)))
+	//	throw error("No exception pending");
 
 	value val;
 	if(unlikely(!JS_GetPendingException(*cx, &val)))
@@ -2493,6 +2441,11 @@ ircd::js::jserror::jserror(pending_t)
 
 	auto &report(*rp);
 	generate_what_our(report);
+	log.debug("jserror(%p): from pending [%s]: %s",
+	          (const void *)this,
+	          debug(report),
+	          what());
+
 	this->val = val;
 	clear_exception(*cx);
 }
@@ -2522,7 +2475,7 @@ ircd::js::jserror::generate(const JSExnType &type,
 	const auto msg(locale::char16::conv(what()));
 
 	JSErrorReport report;
-	report.ucmessage = msg.c_str();
+	//report.message = msg.c_str();
 	report.exnType = type;
 
 	create(report);
@@ -2546,7 +2499,7 @@ ircd::js::jserror::create(JSErrorReport &report)
 	JS::RootedString msg
 	{
 		*cx,
-		JS_NewUCStringCopyZ(*cx, report.ucmessage)
+		//JS_NewStringCopyUTF8N(*cx, report.message())
 	};
 
 	JS::RootedString file
@@ -2589,19 +2542,20 @@ ircd::js::jserror::generate_what_our(const JSErrorReport &report)
 	         report.lineno,
 	         report.column);
 
-	const auto msg(report.ucmessage? locale::char16::conv(report.ucmessage) : std::string{});
+	const auto msg(report.message());
+	const auto empty(false);
 	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
 	         reflect((JSExnType)report.exnType),
-	         msg.empty()? "." : ": ",
-	         msg.empty()? "" : !report.lineno && !report.column? "" : linebuf,
+	         empty? "." : ": ",
+	         empty? "" : !report.lineno && !report.column? "" : linebuf,
 	         msg.c_str());
 }
 
 void
 ircd::js::jserror::generate_what_js(const JSErrorReport &report)
 {
-	const auto str(native(::js::ErrorReportToString(*cx, const_cast<JSErrorReport *>(&report))));
-	snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s", str.c_str());
+	//const auto str(native(::js::ErrorReportToString(*cx, const_cast<JSErrorReport *>(&report))));
+	//snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s", str.c_str());
 }
 
 void
@@ -2619,439 +2573,26 @@ ircd::js::replace_message(JSErrorReport &report,
 	custom_ptr<char16_t> ucbuf(reinterpret_cast<char16_t *>(js_malloc(ucsz)), js_free);
 	locale::char16::conv(buf, ucbuf.get(), ucsz);
 
-	custom_ptr<void> existing(const_cast<char16_t *>(report.ucmessage), js_free);
-	report.ucmessage = ucbuf.release();
+	//custom_ptr<void> existing(const_cast<char16_t *>(report.message()), js_free);
+	//report.ucmessage = ucbuf.release();
 
 	va_end(ap);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/js/debug.h
-//
-
+#if defined(IRCD_JS_FIX)
 void
-ircd::js::log_gcparams()
+::JSErrorReport::freeLinebuf()
 {
-	for(int i(0); i < 50; ++i)
-	{
-		const auto key(static_cast<JSGCParamKey>(i));
-		const char *const name(reflect(key));
-		if(!strlen(name))
-			continue;
-
-		// These trigger assertion failures
-		switch(key)
-		{
-			case JSGC_NUMBER:
-			case JSGC_MAX_CODE_CACHE_BYTES:
-			case JSGC_DECOMMIT_THRESHOLD:
-				continue;
-
-			default:
-				break;
-		}
-
-		log.debug("context(%p) %s => %u",
-		          (const void *)cx,
-		          name,
-		          get(*cx, key));
-	}
+	js_free(const_cast<char16_t *>(linebuf()));
 }
+#endif // IRCD_JS_FIX
 
+#if defined(IRCD_JS_FIX)
 void
-ircd::js::backtrace()
+::JSErrorReport::freeMessage()
 {
-	#ifdef JS_DEBUG
-	::js::DumpBacktrace(*cx);
-	#endif
 }
-
-void
-ircd::js::dump(const JSString *const &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpString(const_cast<JSString *>(v));
-	#endif
-}
-
-void
-ircd::js::dump(const JSAtom *const &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpAtom(const_cast<JSAtom *>(v));
-	#endif
-}
-
-void
-ircd::js::dump(const JSObject *const &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpObject(const_cast<JSObject *>(v));
-	#endif
-}
-
-void
-ircd::js::dump(const JS::Value &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpValue(v);
-	#endif
-}
-
-void
-ircd::js::dump(const jsid &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpId(v);
-	#endif
-}
-
-void
-ircd::js::dump(const JSContext *v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpPC(const_cast<JSContext *>(v));
-	#endif
-}
-
-void
-ircd::js::dump(const JSScript *const &v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpScript(*cx, const_cast<JSScript *>(v));
-	#endif
-}
-
-void
-ircd::js::dump(const char16_t *const &v, const size_t &len)
-{
-	#ifdef JS_DEBUG
-	::js::DumpChars(v, len);
-	#endif
-}
-
-void
-ircd::js::dump(const ::js::InterpreterFrame *v)
-{
-	#ifdef JS_DEBUG
-	::js::DumpInterpreterFrame(*cx, const_cast<::js::InterpreterFrame *>(v));
-	#endif
-}
-
-std::string
-ircd::js::debug(const JSTracer &t)
-{
-	return t.isMarkingTracer()?     "MARKING":
-	       t.isWeakMarkingTracer()? "WEAKMARKING":
-	       t.isTenuringTracer()?    "TENURING":
-	       t.isCallbackTracer()?    "CALLBACK":
-	                                "UNKNOWN";
-}
-
-std::string
-ircd::js::debug(const JSErrorReport &r)
-{
-	std::stringstream ss;
-
-	if(JSREPORT_IS_WARNING(r.flags))
-		ss << "WARNING ";
-
-	if(JSREPORT_IS_EXCEPTION(r.flags))
-		ss << "EXCEPTION ";
-
-	if(JSREPORT_IS_STRICT(r.flags))
-		ss << "STRICT ";
-
-	if(JSREPORT_IS_STRICT_MODE_ERROR(r.flags))
-		ss << "STRICT_MODE_ERROR ";
-
-	if(r.isMuted)
-		ss << "MUTED ";
-
-	if(r.filename)
-		ss << "file[" << r.filename << "] ";
-
-	if(r.lineno)
-		ss << "line[" << r.lineno << "] ";
-
-	if(r.column)
-		ss << "col[" << r.column << "] ";
-
-	if(r.linebuf())
-		ss << "code[" << std::u16string(r.linebuf()) << "] ";
-
-	//if(r.tokenptr)
-	//	ss << "toke[" << r.tokenptr << "] ";
-
-	if(r.errorNumber)
-		ss << "errnum[" << r.errorNumber << "] ";
-
-	if(r.exnType)
-		ss << reflect(JSExnType(r.exnType)) << " ";
-
-	if(r.ucmessage)
-		ss << "\"" << locale::char16::conv(r.ucmessage) << "\" ";
-
-	for(auto it(r.messageArgs); it && *it; ++it)
-		ss << "\"" << locale::char16::conv(*it) << "\" ";
-
-	return ss.str();
-}
-
-std::string
-ircd::js::debug(const JS::HandleObject &o)
-{
-	std::stringstream ss;
-
-	if(JS_IsGlobalObject(o))    ss << "Global ";
-	if(JS_IsNative(o))          ss << "Native ";
-	if(JS::IsCallable(o))       ss << "Callable ";
-	if(JS::IsConstructor(o))    ss << "Constructor ";
-
-	bool ret;
-	if(JS_IsExtensible(*cx, o, &ret) && ret)
-		ss << "Extensible ";
-
-	if(JS_IsArrayObject(*cx, o, &ret) && ret)
-		ss << "Array ";
-
-	return ss.str();
-}
-
-std::string
-ircd::js::debug(const JS::Value &v)
-{
-	std::stringstream ss;
-
-	if(v.isNull())        ss << "Null ";
-	if(v.isUndefined())   ss << "Undefined ";
-	if(v.isBoolean())     ss << "Boolean ";
-	if(v.isTrue())        ss << "TrueValue ";
-	if(v.isFalse())       ss << "FalseValue ";
-	if(v.isNumber())      ss << "Number ";
-	if(v.isDouble())      ss << "Double ";
-	if(v.isInt32())       ss << "Int32 ";
-	if(v.isString())      ss << "String ";
-	if(v.isObject())      ss << "Object ";
-	if(v.isSymbol())      ss << "Symbol ";
-
-	return ss.str();
-}
-
-const char *
-ircd::js::reflect_telemetry(const int &id)
-{
-	switch(id)
-	{
-		case JS_TELEMETRY_GC_REASON:                                  return "GC_REASON";
-		case JS_TELEMETRY_GC_IS_COMPARTMENTAL:                        return "GC_IS_COMPARTMENTAL";
-		case JS_TELEMETRY_GC_MS:                                      return "GC_MS";
-		case JS_TELEMETRY_GC_BUDGET_MS:                               return "GC_BUDGET_MS";
-		case JS_TELEMETRY_GC_ANIMATION_MS:                            return "GC_ANIMATION_MS";
-		case JS_TELEMETRY_GC_MAX_PAUSE_MS:                            return "GC_MAX_PAUSE_MS";
-		case JS_TELEMETRY_GC_MARK_MS:                                 return "GC_MARK_MS";
-		case JS_TELEMETRY_GC_SWEEP_MS:                                return "GC_SWEEP_MS";
-		case JS_TELEMETRY_GC_MARK_ROOTS_MS:                           return "GC_MARK_ROOTS_MS";
-		case JS_TELEMETRY_GC_MARK_GRAY_MS:                            return "GC_MARK_GRAY_MS";
-		case JS_TELEMETRY_GC_SLICE_MS:                                return "GC_SLICE_MS";
-		case JS_TELEMETRY_GC_SLOW_PHASE:                              return "GC_SLOW_PHASE";
-		case JS_TELEMETRY_GC_MMU_50:                                  return "GC_MMU_50";
-		case JS_TELEMETRY_GC_RESET:                                   return "GC_RESET";
-		case JS_TELEMETRY_GC_INCREMENTAL_DISABLED:                    return "GC_INCREMENTAL_DISABLED";
-		case JS_TELEMETRY_GC_NON_INCREMENTAL:                         return "GC_NON_INCREMENTAL";
-		case JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS:                      return "GC_SCC_SWEEP_TOTAL_MS";
-		case JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS:                  return "GC_SCC_SWEEP_MAX_PAUSE_MS";
-		case JS_TELEMETRY_GC_MINOR_REASON:                            return "GC_MINOR_REASON";
-		case JS_TELEMETRY_GC_MINOR_REASON_LONG:                       return "GC_MINOR_REASON_LONG";
-		case JS_TELEMETRY_GC_MINOR_US:                                return "GC_MINOR_US";
-		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:  return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT";
-		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS:   return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS";
-		case JS_TELEMETRY_ADDON_EXCEPTIONS:                           return "ADDON_EXCEPTIONS";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect_prop(const uint &flag)
-{
-	switch(flag)
-	{
-		case JSPROP_ENUMERATE:                  return "JSPROP_ENUMERATE";
-		case JSPROP_READONLY:                   return "JSPROP_READONLY";
-		case JSPROP_PERMANENT:                  return "JSPROP_PERMANENT";
-		case JSPROP_PROPOP_ACCESSORS:           return "JSPROP_PROPOP_ACCESSORS";
-		case JSPROP_GETTER:                     return "JSPROP_GETTER";
-		case JSPROP_SETTER:                     return "JSPROP_SETTER";
-		case JSPROP_SHARED:                     return "JSPROP_SHARED";
-		case JSPROP_INTERNAL_USE_BIT:           return "JSPROP_INTERNAL_USE_BIT";
-		case JSPROP_DEFINE_LATE:                return "JSPROP_DEFINE_LATE";
-		case JSFUN_STUB_GSOPS:                  return "JSFUN_STUB_GSOPS";
-		case JSFUN_CONSTRUCTOR:                 return "JSFUN_CONSTRUCTOR";
-		case JSFUN_GENERIC_NATIVE:              return "JSFUN_GENERIC_NATIVE";
-		case JSPROP_REDEFINE_NONCONFIGURABLE:   return "JSPROP_REDEFINE_NONCONFIGURABLE";
-		case JSPROP_RESOLVING:                  return "JSPROP_RESOLVING";
-		case JSPROP_IGNORE_ENUMERATE:           return "JSPROP_IGNORE_ENUMERATE";
-		case JSPROP_IGNORE_READONLY:            return "JSPROP_IGNORE_READONLY";
-		case JSPROP_IGNORE_PERMANENT:           return "JSPROP_IGNORE_PERMANENT";
-		case JSPROP_IGNORE_VALUE:               return "JSPROP_IGNORE_VALUE";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const ::js::CTypesActivityType &t)
-{
-	using namespace ::js;
-
-	switch(t)
-	{
-		case CTYPES_CALL_BEGIN:       return "CTYPES_CALL_BEGIN";
-		case CTYPES_CALL_END:         return "CTYPES_CALL_END";
-		case CTYPES_CALLBACK_BEGIN:   return "CTYPES_CALLBACK_BEGIN";
-		case CTYPES_CALLBACK_END:     return "CTYPES_CALLBACK_END";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSContextOp &op)
-{
-	switch(op)
-	{
-		case JSCONTEXT_NEW:       return "JSCONTEXT_NEW";
-		case JSCONTEXT_DESTROY:   return "JSCONTEXT_DESTROY";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSFinalizeStatus &s)
-{
-	switch(s)
-	{
-		case JSFINALIZE_GROUP_START:        return "GROUP_START";
-		case JSFINALIZE_GROUP_END:          return "GROUP_END";
-		case JSFINALIZE_COLLECTION_END:     return "COLLECTION_END";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSGCParamKey &s)
-{
-	switch(s)
-	{
-		case JSGC_MAX_BYTES:                       return "JSGC_MAX_BYTES";
-		case JSGC_MAX_MALLOC_BYTES:                return "JSGC_MAX_MALLOC_BYTES";
-		case JSGC_BYTES:                           return "JSGC_BYTES";
-		case JSGC_NUMBER:                          return "JSGC_NUMBER";
-		case JSGC_MAX_CODE_CACHE_BYTES:            return "JSGC_MAX_CODE_CACHE_BYTES";
-		case JSGC_MODE:                            return "JSGC_MODE";
-		case JSGC_UNUSED_CHUNKS:                   return "JSGC_UNUSED_CHUNKS";
-		case JSGC_TOTAL_CHUNKS:                    return "JSGC_TOTAL_CHUNKS";
-		case JSGC_SLICE_TIME_BUDGET:               return "JSGC_SLICE_TIME_BUDGET";
-		case JSGC_MARK_STACK_LIMIT:                return "JSGC_MARK_STACK_LIMIT";
-		case JSGC_HIGH_FREQUENCY_TIME_LIMIT:       return "JSGC_HIGH_FREQUENCY_TIME_LIMIT";
-		case JSGC_HIGH_FREQUENCY_LOW_LIMIT:        return "JSGC_HIGH_FREQUENCY_LOW_LIMIT";
-		case JSGC_HIGH_FREQUENCY_HIGH_LIMIT:       return "JSGC_HIGH_FREQUENCY_HIGH_LIMIT";
-		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX";
-		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN";
-		case JSGC_LOW_FREQUENCY_HEAP_GROWTH:       return "JSGC_LOW_FREQUENCY_HEAP_GROWTH";
-		case JSGC_DYNAMIC_HEAP_GROWTH:             return "JSGC_DYNAMIC_HEAP_GROWTH";
-		case JSGC_DYNAMIC_MARK_SLICE:              return "JSGC_DYNAMIC_MARK_SLICE";
-		case JSGC_ALLOCATION_THRESHOLD:            return "JSGC_ALLOCATION_THRESHOLD";
-		case JSGC_DECOMMIT_THRESHOLD:              return "JSGC_DECOMMIT_THRESHOLD";
-		case JSGC_MIN_EMPTY_CHUNK_COUNT:           return "JSGC_MIN_EMPTY_CHUNK_COUNT";
-		case JSGC_MAX_EMPTY_CHUNK_COUNT:           return "JSGC_MAX_EMPTY_CHUNK_COUNT";
-		case JSGC_COMPACTING_ENABLED:              return "JSGC_COMPACTING_ENABLED";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSGCStatus &s)
-{
-	switch(s)
-	{
-		case JSGC_BEGIN:   return "BEGIN";
-		case JSGC_END:     return "END";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSGCMode &s)
-{
-	switch(s)
-	{
-		case JSGC_MODE_GLOBAL:       return "GLOBAL";
-		case JSGC_MODE_COMPARTMENT:  return "COMPARTMENT";
-		case JSGC_MODE_INCREMENTAL:  return "INCREMENTAL";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JS::GCProgress &s)
-{
-	switch(s)
-	{
-		case JS::GC_CYCLE_BEGIN:   return "CYCLE_BEGIN";
-		case JS::GC_SLICE_BEGIN:   return "SLICE_BEGIN";
-		case JS::GC_SLICE_END:     return "SLICE_END";
-		case JS::GC_CYCLE_END:     return "CYCLE_END";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSExnType &e)
-{
-	switch(e)
-	{
-		case JSEXN_NONE:          return "?NONE?";
-		case JSEXN_ERR:           return "Error";
-		case JSEXN_INTERNALERR:   return "InternalError";
-		case JSEXN_EVALERR:       return "EvalError";
-		case JSEXN_RANGEERR:      return "RangeError";
-		case JSEXN_REFERENCEERR:  return "ReferenceError";
-		case JSEXN_SYNTAXERR:     return "SyntaxError";
-		case JSEXN_TYPEERR:       return "TypeError";
-		case JSEXN_URIERR:        return "URIError";
-		case JSEXN_LIMIT:         return "?LIMIT?";
-	}
-
-	return "";
-}
-
-const char *
-ircd::js::reflect(const JSType &t)
-{
-	switch(t)
-	{
-		case JSTYPE_VOID:         return "VOID";
-		case JSTYPE_OBJECT:       return "OBJECT";
-		case JSTYPE_FUNCTION:     return "FUNCTION";
-		case JSTYPE_STRING:       return "STRING";
-		case JSTYPE_NUMBER:       return "NUMBER";
-		case JSTYPE_BOOLEAN:      return "BOOLEAN";
-		case JSTYPE_NULL:         return "NULL";
-		case JSTYPE_SYMBOL:       return "SYMBOL";
-		case JSTYPE_LIMIT:        return "LIMIT";
-	}
-
-	return "";
-}
+#endif // IRCD_JS_FIX
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -3128,13 +2669,13 @@ ircd::js::for_each_compartment_our(const compartment::closure_our &closure)
 void
 ircd::js::for_each_compartment(const compartment::closure &closure)
 {
-	JS_IterateCompartments(*rt,
+	JS_IterateCompartments(*cx,
 	                       const_cast<compartment::closure *>(&closure),
 	                       compartment::handle_iterate);
 }
 
 void
-ircd::js::compartment::handle_iterate(JSRuntime *const rt,
+ircd::js::compartment::handle_iterate(JSContext *const cx,
                                       void *const priv,
                                       JSCompartment *const c)
 noexcept
@@ -3148,19 +2689,32 @@ noexcept
 // ircd/js/context.h
 //
 
-ircd::js::context::context(const struct opts &opts)
-:context{*rt, opts}
+namespace ircd  {
+namespace js    {
+
+void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
+
+} // namespace js
+} // namespace ircd
+
+ircd::js::context::context(const struct opts &opts,
+                           JSContext *const &parent)
+:context
+{
+	std::make_unique<struct opts>(opts),
+	parent
+}
 {
 }
 
-ircd::js::context::context(struct runtime &runtime,
-                           const struct opts &opts)
+ircd::js::context::context(std::unique_ptr<struct opts> opts,
+                           JSContext *const &parent)
 :custom_ptr<JSContext>
 {
 	// Construct the context
-	[this, &runtime, &opts]
+	[this, &opts, &parent]
 	{
-		const auto ret(JS_NewContext(runtime, opts.stack_chunk_size));
+		const auto ret(JS_NewContext(opts->max_bytes, opts->max_nursery_bytes, parent));
 
 		// Use their privdata pointer to point to our instance. We can then use our(JSContext*)
 		// to get back to `this` instance.
@@ -3177,94 +2731,78 @@ ircd::js::context::context(struct runtime &runtime,
 			return;
 
 		// Free the user's privdata managed object
-		delete static_cast<const priv_data *>(JS_GetSecondContextPrivate(ctx));
+		//delete static_cast<const priv_data *>(JS_GetSecondContextPrivate(ctx));
 
 		JS_DestroyContext(ctx);
 	}
 }
-,opts(opts)
+,opts{std::move(opts)}
+,tid{std::this_thread::get_id()}
 ,except{nullptr}
 ,state
 {{
 	0,                // Semaphore value starting at 0.
-	phase::ACCEPT,    // ACCEPT phase indicates nothing is running.
+	phase::LEAVE,     // LEAVE phase indicates nothing is running.
 	irq::JS,          // irq::JS is otherwise here in case JS triggers an interrupt.
 }}
 ,timer
 {
-	std::bind(&context::handle_timeout, this)
+	std::bind(&context::handle_timeout, get())
 }
 ,star{nullptr}
 {
-	assert(&runtime == rt);       // Trying to construct on thread without runtime thread_local
-	timer.set(opts.timer_limit);
+	JS::SetWarningReporter(get(), handle_error);
+	JS_AddInterruptCallback(get(), handle_interrupt);
+	//JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
+	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
+	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
+	JS_SetGCCallback(get(), handle_gc, nullptr);
+	JS::SetGCSliceCallback(get(), handle_slice);
+	JS_SetObjectsTenuredCallback(get(), handle_objects_tenured, nullptr);
+	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
+	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
+	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
+	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
+	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
+	::js::SetPreserveWrapperCallback(get(), handle_preserve_wrapper);
+	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
+	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
+	::js::SetActivityCallback(get(), handle_activity, this);
+	::js::SetCTypesActivityCallback(get(), handle_activity_ctypes);
+	JS::SetEnqueuePromiseJobCallback(get(), handle_promise_enqueue_job, this);
+	JS::SetPromiseRejectionTrackerCallback(get(), handle_promise_rejection_tracker, this);
+	JS::SetAsyncTaskCallbacks(get(), handle_start_async_task, handle_finish_async_task);
+	JS::SetGetIncumbentGlobalCallback(get(), handle_get_incumbent_global);
+	::js::SetStopwatchStartCallback(get(), handle_stopwatch_start, this);
+	::js::SetStopwatchCommitCallback(get(), handle_stopwatch_commit, this);
+	::js::SetGetPerformanceGroupsCallback(get(), handle_get_performance_groups, nullptr);
+
+	timer.set(this->opts->timer_limit);
+	JS_SetNativeStackQuota(get(), this->opts->code_stack_max, this->opts->trusted_stack_max, this->opts->untrusted_stack_max);
+	JS_SetParallelParsingEnabled(get(), this->opts->concurrent_parsing);
+	JS_SetOffthreadIonCompilationEnabled(get(), this->opts->concurrent_jit);
+	JS_SetGCZeal(get(), this->opts->gc_zeal_mode, this->opts->gc_zeal_freq);
+
+	if(!JS::InitSelfHostedCode(get()))
+		throw error("JS::InitSelfHostedCode: failure.");
 }
 
 ircd::js::context::~context()
 noexcept
 {
-}
-
-void
-ircd::js::context::handle_timeout()
-noexcept
-{
-	// At this time there is no yield logic so if the timer calls the script is terminated.
-	interrupt(*this, irq::TERMINATE);
-}
-
-bool
-ircd::js::context::handle_interrupt()
-{
-	auto state(this->state.load(std::memory_order_acquire));
-	log.debug("context(%p): Interrupt: IRQ[%u] phase[%u]",
-	          (const void *)this,
-	          uint(state.irq),
-	          uint(state.phase));
-
-	// Spurious interrupt; ignore.
-	if(unlikely(state.phase != phase::INTR && state.phase != phase::ENTER))
+	// If items still exist on the tracing lists at this point (runtime shutdown):
+	// that is bad. The objects are still reachable but should have removed themselves.
+	if(unlikely(!tracing.heap.empty()))
 	{
-		log.warning("context(%p): Spurious interrupt (irq: %02x)",
-		            (const void *)this,
-		            uint(state.irq));
-		return true;
-	}
+		// When the context terminates with an active exception the exception itself
+		// can be ignored and leak. This case should eventually lead to IRCd termination...
+		if(std::uncaught_exception() && tracing.heap.size() == 1)
+			return;
 
-	// After the interrupt is handled the phase indicates entry back to JS,
-	// IRQ is left indicating JS in case we don't trigger the next interrupt.
-	const scope interrupt_return([this, &state]
-	{
-		state.phase = phase::ENTER;
-		state.irq = irq::JS;
-		this->state.store(state, std::memory_order_release);
-	});
-
-	// Call the user hook if available
-	if(on_intr)
-	{
-		// The user's handler returns -1 for non-overriding behavior
-		const auto ret(on_intr(state.irq));
-		if(ret != -1)
-			return ret;
-	}
-
-	switch(state.irq)
-	{
-		default:
-		case irq::NONE:
-			assert(0);
-
-		case irq::JS:
-		case irq::USER:
-			return true;
-
-		case irq::YIELD:
-			ctx::yield();
-			return true;
-
-		case irq::TERMINATE:
-			return false;
+		log.critical("context(%p): !!! LEAK !!! %zu traceable items still reachable on the heap",
+		             (const void *)this,
+		             tracing.heap.size());
+		assert(0);
 	}
 }
 
@@ -3277,10 +2815,10 @@ ircd::js::leave(context &c)
 	// This thread is the only writer to that value.
 	auto state(c.state.load(std::memory_order_relaxed));
 
-	// The ACCEPT phase locks out the interruptor
-	state.phase = phase::ACCEPT;
+	// The LEAVE phase locks out the interruptor
+	state.phase = phase::LEAVE;
 
-	// The ACCEPT is released and the current phase seen by interruptor is acquired.
+	// The LEAVE is released and the current phase seen by interruptor is acquired.
 	state = c.state.exchange(state, std::memory_order_acq_rel);
 
 	// The executor (us) must check if the interruptor (them) has committed to an interrupt
@@ -3348,7 +2886,7 @@ ircd::js::interrupt(context &c,
 
 	// Commitment now puts the burden on the executor to not allow this interrupt to bleed into
 	// the next execution, even if JS has already exited before its arrival.
-	interrupt(c.runtime());
+	JS_RequestInterruptCallback(c);
 	return true;
 }
 
@@ -3383,7 +2921,7 @@ ircd::js::save_exception(context &c)
 }
 
 bool
-ircd::js::run_gc(context &c)
+ircd::js::maybe_gc(context &c)
 noexcept
 {
 	// JS_MaybeGC dereferences the context's current zone without checking if the context
@@ -3412,7 +2950,7 @@ ircd::js::get(context &c,
               const JSGCParamKey &key)
 {
 	//return JS_GetGCParameterForThread(c, key);       // broken
-	return JS_GetGCParameter(c.runtime(), key);
+	return JS_GetGCParameter(c, key);
 }
 
 void
@@ -3421,7 +2959,501 @@ ircd::js::set(context &c,
               const uint32_t &val)
 {
 	//JS_SetGCParameterForThread(c, key, val);         // broken
-	JS_SetGCParameter(c.runtime(), key, val);
+	JS_SetGCParameter(c, key, val);
+}
+
+bool
+ircd::js::run_gc(context &c)
+noexcept
+{
+	JS_GC(c);
+	return true;
+}
+
+//
+// Callback surface
+//
+
+JSObject *
+ircd::js::context::handle_get_incumbent_global(JSContext *const cx)
+noexcept
+{
+	auto &c(our(cx));
+	log.debug("context(%p): get incumbent global (current_global: %p)",
+	          (const void *)cx,
+	          current_global(c));
+
+	return current_global(c);
+}
+
+bool
+ircd::js::context::handle_start_async_task(JSContext *const cx,
+                                           JS::AsyncTask *const task)
+noexcept
+{
+	log.debug("context(%p): async task(%p) START",
+	          (const void *)cx,
+	          task);
+
+	return true;
+}
+
+bool
+ircd::js::context::handle_finish_async_task(JS::AsyncTask *const task)
+noexcept
+{
+	log.debug("context(%p): async task(%p) FINISH",
+	          nullptr,
+	          task);
+
+	return true;
+}
+
+bool
+ircd::js::context::handle_promise_enqueue_job(JSContext *const c,
+                                              JS::HandleObject job,
+                                              JS::HandleObject allocation_site,
+                                              JS::HandleObject incumbent_global,
+                                              void *const priv)
+noexcept
+{
+	log.debug("context(%p): promise enqueue job (priv: %p)",
+	          (const void *)c,
+	          priv);
+
+//	dump(job);
+//	printf("--\n");
+//	dump(allocation_site);
+
+	return true;
+}
+
+void
+ircd::js::context::handle_promise_rejection_tracker(JSContext *const c,
+                                                    JS::HandleObject promise,
+                                                    PromiseRejectionHandlingState state,
+                                                    void *const priv)
+noexcept
+{
+	log.debug("context(%p): promise rejection track (state: %s priv: %p)",
+	          (const void *)c,
+	          reflect(state),
+	          priv);
+}
+
+void
+ircd::js::context::handle_activity(void *const priv,
+                                   const bool active)
+noexcept
+{
+	assert(priv);
+	auto &c(*static_cast<struct context *>(priv));
+	//const auto tid(std::this_thread::get_id());
+	const auto &msg(active? "ENTER" : "LEAVE");
+	log.debug("context(%p): %s",
+	          //ircd::string(tid).c_str(),
+	          (const void *)c.ptr(),
+	          msg);
+}
+
+void
+ircd::js::handle_activity_ctypes(JSContext *const cx,
+                                 const ::js::CTypesActivityType t)
+noexcept
+{
+	log.debug("context(%p): %s",
+	          (const void *)cx,
+	          reflect(t));
+}
+
+bool
+ircd::js::context::handle_preserve_wrapper(JSContext *const cx,
+                                           JSObject *const obj)
+noexcept
+{
+	log.debug("context(%p): (object: %p) preserve wrapper",
+	          (const void *)cx,
+	          (const void *)obj);
+
+	return true;
+}
+
+void
+ircd::js::context::handle_gc(JSContext *const cx,
+                             const JSGCStatus status,
+                             void *const priv)
+noexcept
+{
+	log.debug("context(%p): GC %s (priv: %p)",
+	          (const void *)cx,
+	          reflect(status),
+	          (const void *)priv);
+}
+
+void
+ircd::js::context::handle_slice(JSContext *const cx,
+                                JS::GCProgress progress,
+                                const JS::GCDescription &d)
+noexcept
+{
+	log.debug("context(%p): SLICE: %s (description: %p)",
+	          (const void *)cx,
+	          reflect(progress),
+	          (const void *)&d);
+}
+
+void
+ircd::js::context::handle_objects_tenured(JSContext *const cx,
+                                          void *const priv)
+noexcept
+{
+	log.debug("context(%p): objects tenured (priv: %p)",
+	          (const void *)cx,
+	          (const void *)priv);
+}
+
+void
+ircd::js::context::handle_finalize(JSFreeOp *const fop,
+                                   const JSFinalizeStatus status,
+                                   const bool is_compartment,
+                                   void *const priv)
+noexcept
+{
+	log.debug("context(%p): fop(%p): %s %s (priv: %p)",
+	          (const void *)cx,
+	          (const void *)fop,
+	          reflect(status),
+	          is_compartment? "COMPARTMENT" : "",
+	          priv);
+}
+
+void
+ircd::js::context::handle_compartment_destroy(JSFreeOp *const fop,
+                                              JSCompartment *const compartment)
+noexcept
+{
+	auto *const c(our(compartment));
+	auto *const cx(c? &static_cast<context &>(*c) : (context *)nullptr);
+	log.debug("context(%p): compartment: %p %s%sdestroy: fop(%p)",
+	          cx? (const void *)cx->ptr() : (const void *)nullptr,
+	          (const void *)compartment,
+	          ::js::IsSystemCompartment(compartment)? "[system] " : "",
+	          ::js::IsAtomsCompartment(compartment)? "[atoms] " : "",
+	          (const void *)fop);
+}
+
+void
+ircd::js::context::handle_compartment_name(JSContext *const cx,
+                                           JSCompartment *const compartment,
+                                           char *const buf,
+                                           const size_t max)
+noexcept
+{
+	log.debug("context(%p): comaprtment: %p (buf@%p: max: %zu)",
+	          (const void *)cx,
+	          (const void *)compartment,
+	          (const void *)buf,
+	          max);
+}
+
+void
+ircd::js::context::handle_zone_destroy(JS::Zone *const zone)
+noexcept
+{
+	log.debug("context(%p): zone: %p %s%sdestroy",
+	          (const void *)cx,
+	          (const void *)zone,
+	          ::js::IsSystemZone(zone)? "[system] " : "",
+	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
+}
+
+void
+ircd::js::context::handle_zone_sweep(JS::Zone *const zone)
+noexcept
+{
+	log.debug("context(%p): zone: %p %s%ssweep",
+	          (const void *)cx,
+	          (const void *)zone,
+	          ::js::IsSystemZone(zone)? "[system] " : "",
+	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
+}
+
+void
+ircd::js::context::handle_weak_pointer_compartment(JSContext *const cx,
+                                                   JSCompartment *const comp,
+                                                   void *const data)
+noexcept
+{
+	log.debug("context(%p): weak pointer compartment(%p) %p",
+	          (const void *)cx,
+	          (const void *)comp,
+	          data);
+}
+
+void
+ircd::js::context::handle_weak_pointer_zone(JSContext *const cx,
+                                            void *const data)
+noexcept
+{
+	log.debug("context(%p): weak pointer zone %p",
+	          (const void *)cx,
+	          data);
+}
+
+void
+ircd::js::context::handle_trace_extra(JSTracer *const tracer,
+                                      void *const priv)
+noexcept
+{
+	log.debug("context(%p): tracer(%p) %s: extra (priv: %p) count: %zu",
+	          (const void *)cx,
+	          (const void *)tracer,
+	          debug(*tracer).c_str(),
+	          priv,
+	          cx->tracing.heap.size());
+
+	if(unlikely(std::uncaught_exception() && cx->tracing.heap.size() == 1))
+	{
+		log.warning("context(%p): tracer(%p) %s: extra skipped due to uncaught exception",
+		            (const void *)cx,
+		            (const void *)tracer,
+		            debug(*tracer).c_str());
+		return;
+	}
+
+	cx->tracing(tracer);
+}
+
+void
+ircd::js::context::handle_trace_gray(JSTracer *const tracer,
+                                     void *const priv)
+noexcept
+{
+	log.debug("context(%p): tracer(%p): gray (priv: %p)",
+	          (const void *)cx,
+	          (const void *)tracer,
+	          priv);
+}
+
+void
+ircd::js::context::handle_large_allocation_failure(void *const priv)
+noexcept
+{
+	log.error("context(%p): Large allocation failure (priv: %p)",
+	          (const void *)cx,
+	          priv);
+
+	assert(0); //TODO: XXX
+}
+
+void
+ircd::js::context::handle_out_of_memory(JSContext *const cx,
+                                        void *const priv)
+noexcept
+{
+	log.error("context(%p): out of memory",
+	          (const void *)cx);
+
+	assert(0); //TODO: XXX
+}
+
+bool
+ircd::js::context::handle_stopwatch_start(const uint64_t us,
+                                          void *const priv)
+noexcept
+{
+	assert(priv);
+	auto &c(*static_cast<context *>(priv));
+	log.debug("context(%p): stopwatch start (microseconds: %lu priv: %p)",
+	          (const void *)c.get(),
+	          us,
+	          priv);
+
+	return true;
+}
+
+bool
+ircd::js::context::handle_stopwatch_commit(const uint64_t us,
+                                           ::js::PerformanceGroupVector &vec,
+                                           void *const priv)
+noexcept
+{
+	assert(priv);
+	auto &c(*static_cast<context *>(priv));
+	log.debug("context(%p): stopwatch commit (microseconds: %lu priv: %p)",
+	          (const void *)c.get(),
+	          us,
+	          priv);
+
+	return true;
+}
+
+bool
+ircd::js::context::handle_get_performance_groups(JSContext *const cx,
+                                                 ::js::PerformanceGroupVector &vec,
+                                                 void *const priv)
+noexcept
+{
+	log.debug("context(%p): get performance groups (priv: %p)",
+	          (const void *)cx,
+	          priv);
+
+	return true;
+}
+
+void
+ircd::js::context::handle_telemetry(const int id,
+                                    const uint32_t sample,
+                                    const char *const key)
+noexcept
+{
+	//const auto tid(std::this_thread::get_id());
+	log.debug("context(%p): telemetry(%02d) %s: %u %s",
+	          //ircd::string(tid).c_str(),
+	          (const void *)cx,
+	          id,
+	          reflect_telemetry(id),
+	          sample,
+	          key?: "");
+}
+
+void
+ircd::js::context::handle_timeout(JSContext *const cx)
+noexcept
+{
+	// At this time there is no yield logic so if the timer calls the script is terminated.
+	auto &c(our(cx));
+	interrupt(c, irq::TERMINATE);
+}
+
+bool
+ircd::js::context::handle_interrupt(JSContext *const cx)
+noexcept
+{
+	auto &c(our(cx));
+	auto state(c.state.load(std::memory_order_acquire));
+	log.debug("context(%p): Interrupt: IRQ[%u] phase[%u]",
+	          (const void *)cx,
+	          uint(state.irq),
+	          uint(state.phase));
+
+	// Spurious interrupt; ignore.
+	if(unlikely(state.phase != phase::INTR && state.phase != phase::ENTER))
+	{
+		log.warning("context(%p): Spurious interrupt (irq: %02x)",
+		            (const void *)cx,
+		            uint(state.irq));
+		return true;
+	}
+
+	// After the interrupt is handled the phase indicates entry back to JS,
+	// IRQ is left indicating JS in case we don't trigger the next interrupt.
+	const scope interrupt_return([&c, &state]
+	{
+		state.phase = phase::ENTER;
+		state.irq = irq::JS;
+		c.state.store(state, std::memory_order_release);
+	});
+
+	// Call the user hook if available
+	if(c.on_intr)
+	{
+		// The user's handler returns -1 for non-overriding behavior
+		const auto ret(c.on_intr(state.irq));
+		if(ret != -1)
+			return ret;
+	}
+
+	switch(state.irq)
+	{
+		case irq::JS:
+		case irq::USER:
+			return true;
+
+		case irq::YIELD:
+			ctx::yield();
+			return true;
+
+		case irq::TERMINATE:
+			return false;
+
+		default:
+		case irq::NONE:
+			assert(0);
+			return false;
+	}
+}
+
+void
+ircd::js::context::handle_error(JSContext *const cx,
+                                JSErrorReport *const report)
+noexcept try
+{
+	assert(report);
+	const log::facility facility
+	{
+		JSREPORT_IS_WARNING(report->flags)? log::WARNING:
+		                                    log::DEBUG
+	};
+
+	log(facility, "context(%p): %s",
+		(const void *)cx,
+		debug(*report).c_str());
+
+	auto &c(our(cx));
+	if(JSREPORT_IS_EXCEPTION(report->flags))
+	{
+		// If except state is saved this is a redundant report from an exception as our
+		// intertwined c++ -> js -> c++ stack blows up.
+		if(c.except)
+			return;
+
+		// This is likely an uncaught exception from a throw in JS. We create a new exception
+		// object because we lost the one from the user and make that pending now in case some
+		// other opportunity for the user to catch this is presented.
+		jserror e(*report);
+		e.set_pending();
+		return;
+	}
+
+	if(report->exnType == JSEXN_INTERNALERR)
+	{
+		static const std::string msg("god save jsapi");
+		internal_error ie("%s", msg.c_str());
+		ie.set_pending();
+		return;
+	}
+
+	switch(report->errorNumber)
+	{
+		case 61: // JSAPI's code for interruption
+		{
+			report->exnType = JSEXN_ERR;
+			report->flags |= JSREPORT_EXCEPTION;
+			replace_message(*report, "interrupted @ line[%u] col[%u]",
+			                report->lineno,
+			                report->column);
+
+			jserror e(*report);
+			e.set_uncatchable();
+			return;
+		}
+
+		case 105: // JSAPI's code for user reported error
+		{
+			report->exnType = JSEXN_INTERNALERR;
+			report->flags |= JSREPORT_EXCEPTION;
+			replace_message(*report, "(BUG) Host exception");
+			jserror e(*report);
+			e.set_uncatchable();
+			return;
+		}
+	}
+}
+catch(const std::exception &e)
+{
+	log.critical("triple fault: %s\n", e.what());
+	std::terminate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3581,404 +3613,6 @@ ircd::js::timer::handle(std::unique_lock<std::mutex> &lock)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ircd/js/runtime.h
-//
-
-namespace ircd  {
-namespace js    {
-
-void handle_activity_ctypes(JSContext *, enum ::js::CTypesActivityType) noexcept;
-
-} // namespace js
-} // namespace ircd
-
-ircd::js::runtime::runtime(const struct opts &opts,
-                           runtime *const &parent)
-:opts(opts)
-,tid{std::this_thread::get_id()}
-,_ptr
-{
-	JS_NewRuntime(opts.max_bytes,
-	              opts.max_nursery_bytes,
-	              parent? static_cast<JSRuntime *>(*parent) : nullptr),
-	JS_DestroyRuntime
-}
-{
-	//auto &ror(JS::RuntimeOptionsRef(get()));
-	//ror.setAsmJS(false);
-	//ror.setIon(false);
-
-	// We use their privdata to find `this` via our(JSRuntime*) function.
-	// Any additional user privdata will have to ride a member in this class itself.
-	JS_SetRuntimePrivate(get(), this);
-
-	JS_SetErrorReporter(get(), handle_error);
-	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
-	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
-	JS_SetGCCallback(get(), handle_gc, nullptr);
-	::js::SetPreserveWrapperCallback(get(), handle_preserve_wrapper);
-	//JS_SetAccumulateTelemetryCallback(get(), handle_telemetry);
-	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
-	JS_SetGrayGCRootsTracer(get(), handle_trace_gray, nullptr);
-	JS_AddExtraGCRootsTracer(get(), handle_trace_extra, nullptr);
-	//JS::SetGCSliceCallback(get(), handle_slice);
-	JS_SetSweepZoneCallback(get(), handle_zone_sweep);
-	JS_SetDestroyZoneCallback(get(), handle_zone_destroy);
-	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
-	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
-	JS_SetContextCallback(get(), handle_context, nullptr);
-	::js::SetActivityCallback(get(), handle_activity, this);
-	::js::SetCTypesActivityCallback(get(), handle_activity_ctypes);
-	JS_SetInterruptCallback(get(), handle_interrupt);
-
-	JS_SetNativeStackQuota(get(), opts.code_stack_max, opts.trusted_stack_max, opts.untrusted_stack_max);
-}
-
-ircd::js::runtime::runtime(runtime &&other)
-noexcept
-:opts(std::move(other.opts))
-,tid{std::move(other.tid)}
-,tracing{std::move(other.tracing)}
-,_ptr{std::move(other._ptr)}
-{
-	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
-	if(!!*this)
-		JS_SetRuntimePrivate(get(), this);
-}
-
-ircd::js::runtime &
-ircd::js::runtime::operator=(runtime &&other)
-noexcept
-{
-	opts = std::move(other.opts);
-	tid = std::move(other.tid);
-	tracing = std::move(other.tracing);
-	_ptr = std::move(other._ptr);
-
-	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
-	if(!!*this)
-		JS_SetRuntimePrivate(get(), this);
-
-	return *this;
-}
-
-ircd::js::runtime::~runtime()
-noexcept
-{
-	// If items still exist on the tracing lists at this point (runtime shutdown):
-	// that is bad. The objects are still reachable but should have removed themselves.
-	if(unlikely(!tracing.heap.empty()))
-	{
-		log.critical("runtime(%p): !!! LEAK !!! %zu traceable items still reachable on the heap",
-		             (const void *)this,
-		             tracing.heap.size());
-		assert(0);
-	}
-}
-
-bool
-ircd::js::run_gc(runtime &r)
-noexcept
-{
-	JS_GC(r);
-	return true;
-}
-
-bool
-ircd::js::runtime::handle_interrupt(JSContext *const ctx)
-noexcept
-{
-	auto &c(our(ctx));
-	return c.handle_interrupt();
-}
-
-void
-ircd::js::runtime::handle_activity(void *const priv,
-                                   const bool active)
-noexcept
-{
-	assert(priv);
-	//const auto tid(std::this_thread::get_id());
-	auto &runtime(*static_cast<struct runtime *>(priv));
-	log.debug("runtime(%p): %s",
-	          //ircd::string(tid).c_str(),
-	          (const void *)&runtime,
-	          active? "EVENT" : "ACCEPT");
-}
-
-void
-ircd::js::handle_activity_ctypes(JSContext *const c,
-                                 const ::js::CTypesActivityType t)
-noexcept
-{
-	log.debug("context(%p): %s",
-	          (const void *)c,
-	          reflect(t));
-}
-
-bool
-ircd::js::runtime::handle_context(JSContext *const c,
-                                  const uint op,
-                                  void *const priv)
-noexcept
-{
-	log.debug("context(%p): %s (priv: %p)",
-	          (const void *)c,
-	          reflect(static_cast<JSContextOp>(op)),
-	          priv);
-
-	return true;
-}
-
-bool
-ircd::js::runtime::handle_preserve_wrapper(JSContext *const c,
-                                           JSObject *const obj)
-noexcept
-{
-	log.debug("context(%p): (object: %p) preserve wrapper",
-	          (const void *)c,
-	          (const void *)obj);
-
-	return true;
-}
-
-void
-ircd::js::runtime::handle_gc(JSRuntime *const rt,
-                             const JSGCStatus status,
-                             void *const priv)
-noexcept
-{
-	log.debug("runtime(%p): GC %s",
-	          (const void *)rt,
-	          reflect(status));
-}
-
-void
-ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
-                                              JSCompartment *const compartment)
-noexcept
-{
-	log.debug("runtime(%p): compartment: %p %s%sdestroy: fop(%p)",
-	          (const void *)(our_runtime(*fop).get()),
-	          (const void *)compartment,
-	          ::js::IsSystemCompartment(compartment)? "[system] " : "",
-	          ::js::IsAtomsCompartment(compartment)? "[atoms] " : "",
-	          (const void *)fop);
-}
-
-void
-ircd::js::runtime::handle_compartment_name(JSRuntime *const rt,
-                                           JSCompartment *const compartment,
-                                           char *const buf,
-                                           const size_t max)
-noexcept
-{
-	log.debug("runtime(%p): comaprtment: %p (buf@%p: max: %zu)",
-	          (const void *)rt,
-	          (const void *)compartment,
-	          (const void *)buf,
-	          max);
-}
-
-void
-ircd::js::runtime::handle_zone_destroy(JS::Zone *const zone)
-noexcept
-{
-	log.debug("runtime(%p): zone: %p %s%sdestroy",
-	          (const void *)rt,
-	          (const void *)zone,
-	          ::js::IsSystemZone(zone)? "[system] " : "",
-	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
-}
-
-void
-ircd::js::runtime::handle_zone_sweep(JS::Zone *const zone)
-noexcept
-{
-	log.debug("runtime(%p): zone: %p %s%ssweep",
-	          (const void *)rt,
-	          (const void *)zone,
-	          ::js::IsSystemZone(zone)? "[system] " : "",
-	          ::js::IsAtomsZone(zone)? "[atoms] " : "");
-}
-
-void
-ircd::js::runtime::handle_slice(JSRuntime *const rt,
-                                JS::GCProgress progress,
-                                const JS::GCDescription &d)
-noexcept
-{
-	log.debug("runtime(%p): SLICE %s",
-	          (const void *)rt,
-	          reflect(progress));
-}
-
-void
-ircd::js::runtime::handle_weak_pointer_compartment(JSRuntime *const rt,
-                                                   JSCompartment *const comp,
-                                                   void *const data)
-noexcept
-{
-	log.debug("runtime(%p): weak pointer compartment(%p) %p",
-	          (const void *)rt,
-	          (const void *)comp,
-	          data);
-}
-
-void
-ircd::js::runtime::handle_weak_pointer_zone(JSRuntime *const rt,
-                                            void *const data)
-noexcept
-{
-	log.debug("runtime(%p): weak pointer zone %p",
-	          (const void *)rt,
-	          data);
-}
-
-void
-ircd::js::runtime::handle_trace_extra(JSTracer *const tracer,
-                                      void *const priv)
-noexcept
-{
-	log.debug("runtime(%p): tracer(%p) %s: extra (priv: %p) count: %zu",
-	          (const void *)rt,
-	          (const void *)tracer,
-	          debug(*tracer).c_str(),
-	          priv,
-	          rt->tracing.heap.size());
-
-	rt->tracing(tracer);
-}
-
-
-void
-ircd::js::runtime::handle_trace_gray(JSTracer *const tracer,
-                                     void *const priv)
-noexcept
-{
-	log.debug("runtime(%p): tracer(%p): gray (priv: %p)",
-	          (const void *)rt,
-	          (const void *)tracer,
-	          priv);
-}
-
-void
-ircd::js::runtime::handle_finalize(JSFreeOp *const fop,
-                                   const JSFinalizeStatus status,
-                                   const bool is_compartment,
-                                   void *const priv)
-noexcept
-{
-	log.debug("fop(%p): %s %s",
-	          (const void *)fop,
-	          reflect(status),
-	          is_compartment? "COMPARTMENT" : "");
-}
-
-void
-ircd::js::runtime::handle_telemetry(const int id,
-                                    const uint32_t sample,
-                                    const char *const key)
-noexcept
-{
-	//const auto tid(std::this_thread::get_id());
-	log.debug("runtime(%p): telemetry(%02d) %s: %u %s",
-	          //ircd::string(tid).c_str(),
-	          (const void *)rt,
-	          id,
-	          reflect_telemetry(id),
-	          sample,
-	          key?: "");
-}
-
-void
-ircd::js::runtime::handle_large_allocation_failure(void *const priv)
-noexcept
-{
-	log.error("Large allocation failure");
-}
-
-void
-ircd::js::runtime::handle_out_of_memory(JSContext *const ctx,
-                                        void *const priv)
-noexcept
-{
-	log.error("context(%p): out of memory", (const void *)ctx);
-}
-
-void
-ircd::js::runtime::handle_error(JSContext *const ctx,
-                                const char *const msg,
-                                JSErrorReport *const report)
-noexcept try
-{
-	assert(report);
-	const log::facility facility
-	{
-		JSREPORT_IS_WARNING(report->flags)? log::WARNING:
-		                                    log::DEBUG
-	};
-
-	log(facility, "context(%p): %s",
-		(const void *)ctx,
-		debug(*report).c_str());
-
-	if(JSREPORT_IS_EXCEPTION(report->flags))
-	{
-		// If except state is saved this is a redundant report from an exception as our
-		// intertwined c++ -> js -> c++ stack is blows up.
-		if(our(ctx).except)
-			return;
-
-		// This is likely an uncaught exception from a throw in JS. We create a new exception
-		// object because we lost the one from the user and make that pending now in case some
-		// other opportunity for the user to catch this is presented.
-		jserror e(*report);
-		e.set_pending();
-		return;
-	}
-
-	if(report->exnType == JSEXN_INTERNALERR)
-	{
-		internal_error ie("%s", msg);
-		ie.set_pending();
-		return;
-	}
-
-	switch(report->errorNumber)
-	{
-		case 61: // JSAPI's code for interruption
-		{
-			report->exnType = JSEXN_ERR;
-			report->flags |= JSREPORT_EXCEPTION;
-			replace_message(*report, "interrupted @ line[%u] col[%u]",
-			                report->lineno,
-			                report->column);
-
-			jserror e(*report);
-			e.set_uncatchable();
-			return;
-		}
-
-		case 105: // JSAPI's code for user reported error
-		{
-			report->exnType = JSEXN_INTERNALERR;
-			report->flags |= JSREPORT_EXCEPTION;
-			replace_message(*report, "(BUG) Host exception");
-			jserror e(*report);
-			e.set_uncatchable();
-			return;
-		}
-	}
-}
-catch(const std::exception &e)
-{
-	log.critical("triple fault: %s\n", e.what());
-	std::terminate();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // ircd/js/tracing.h
 //
 
@@ -3997,13 +3631,16 @@ ircd::js::tracing::tracing()
 ircd::js::tracing::~tracing()
 noexcept
 {
+	if(std::uncaught_exception() && heap.size() == 1)
+		return;
+
 	assert(heap.empty());
 }
 
 void
 ircd::js::tracing::operator()(JSTracer *const &tracer)
 {
-	for(auto &thing : rt->tracing.heap)
+	for(auto &thing : cx->tracing.heap)
 		trace_heap(tracer, thing);
 }
 
@@ -4012,8 +3649,8 @@ ircd::js::trace_heap(JSTracer *const &tracer,
                      tracing::thing &thing)
 {
 	if(thing.type != jstype::OBJECT)
-		log.debug("runtime(%p): tracer(%p): heap<%s> @ %p",
-		          (const void *)tracer->runtime(),
+		log.debug("context(%p): tracer(%p): heap<%s> @ %p",
+		          nullptr, //(const void *)tracer->runtime(),
 		          (const void *)tracer,
 		          reflect(thing.type),
 		          (const void *)thing.ptr);
@@ -4026,18 +3663,18 @@ ircd::js::trace_heap(JSTracer *const &tracer,
 			if(!ptr->address())
 				break;
 
-			JS_CallValueTracer(tracer, ptr, "heap");
+			//JS_CallValueTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::OBJECT:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<JSObject *> *>(thing.ptr));
-			if(!ptr->get())
+			//if(!ptr->get())
 				break;
 
-			log.debug("runtime(%p): tracer(%p): heap<%s> @ %p object(%p trap: %p '%s')",
-			          (const void *)tracer->runtime(),
+			log.debug("context(%p): tracer(%p): heap<%s> @ %p object(%p trap: %p '%s')",
+			          nullptr, //(const void *)tracer->runtime(),
 			          (const void *)tracer,
 			          reflect(thing.type),
 			          (const void *)thing.ptr,
@@ -4045,54 +3682,54 @@ ircd::js::trace_heap(JSTracer *const &tracer,
 			          (const void *)(has_jsclass(*ptr)? &jsclass(*ptr) : nullptr),
 			          has_jsclass(*ptr)? jsclass(*ptr).name : "<no trap>");
 
-			JS_CallObjectTracer(tracer, ptr, "heap");
+			//JS_CallObjectTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::FUNCTION:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<JSFunction *> *>(thing.ptr));
-			if(!ptr->get())
+			//if(!ptr->get())
 				break;
 
-			JS_CallFunctionTracer(tracer, ptr, "heap");
+			//JS_CallFunctionTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::SCRIPT:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<JSScript *> *>(thing.ptr));
-			if(!ptr->get())
+			//if(!ptr->get())
 				break;
 
-			JS_CallScriptTracer(tracer, ptr, "heap");
+			//JS_CallScriptTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::STRING:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<JSString *> *>(thing.ptr));
-			if(!ptr->get())
+			//if(!ptr->get())
 				break;
 
-			JS_CallStringTracer(tracer, ptr, "heap");
+			//JS_CallStringTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::ID:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<jsid> *>(thing.ptr));
-			if(!ptr->address())
+			//if(!ptr->address())
 				break;
 
-			JS_CallIdTracer(tracer, ptr, "heap");
+			//JS_CallIdTracer(tracer, ptr, "heap");
 			break;
 		}
 
 		case jstype::SYMBOL:
 		{
 			const auto ptr(reinterpret_cast<JS::Heap<JS::Symbol *> *>(thing.ptr));
-			if(!ptr->get())
+			//if(!ptr->get())
 				break;
 
 			break;
@@ -4100,8 +3737,8 @@ ircd::js::trace_heap(JSTracer *const &tracer,
 
 		default:
 		{
-			log.warning("runtime(%p): tracer(%p): heap<%s> @ %p",
-			            (const void *)tracer->runtime(),
+			log.warning("context(%p): tracer(%p): heap<%s> @ %p",
+			            nullptr, //(const void *)tracer->runtime(),
 			            (const void *)tracer,
 			            reflect(thing.type),
 			            (const void *)thing.ptr);
@@ -4112,8 +3749,508 @@ ircd::js::trace_heap(JSTracer *const &tracer,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ircd/js/type.h
+// ircd/js/debug.h
 //
+
+void
+ircd::js::log_gcparams()
+{
+	for(int i(0); i < 50; ++i)
+	{
+		const auto key(static_cast<JSGCParamKey>(i));
+		const char *const name(reflect(key));
+		if(!strlen(name))
+			continue;
+
+		// These trigger assertion failures
+		switch(key)
+		{
+			case JSGC_NUMBER:
+			case JSGC_MAX_MALLOC_BYTES:
+			case JSGC_ALLOCATION_THRESHOLD:
+				continue;
+
+			default:
+				break;
+		}
+
+		log.debug("context(%p) %s => %u",
+		          (const void *)cx,
+		          name,
+		          get(*cx, key));
+	}
+}
+
+void
+ircd::js::backtrace()
+{
+	#ifdef JS_DEBUG
+	::js::DumpBacktrace(*cx);
+	#endif
+}
+
+void
+ircd::js::dump_promise(const JS::HandleObject &promise)
+{
+	#ifdef JS_DEBUG
+	JS::DumpPromiseAllocationSite(*cx, promise);
+	JS::DumpPromiseResolutionSite(*cx, promise);
+	#endif
+}
+
+void
+ircd::js::dump(const JSString *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpString(const_cast<JSString *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSAtom *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpAtom(const_cast<JSAtom *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSObject *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpObject(const_cast<JSObject *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JS::Value &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpValue(v);
+	#endif
+}
+
+void
+ircd::js::dump(const jsid &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpId(v);
+	#endif
+}
+
+void
+ircd::js::dump(const JSContext *v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpPC(const_cast<JSContext *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const JSScript *const &v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpScript(*cx, const_cast<JSScript *>(v));
+	#endif
+}
+
+void
+ircd::js::dump(const char16_t *const &v, const size_t &len)
+{
+	#ifdef JS_DEBUG
+	::js::DumpChars(v, len);
+	#endif
+}
+
+void
+ircd::js::dump(const ::js::InterpreterFrame *v)
+{
+	#ifdef JS_DEBUG
+	::js::DumpInterpreterFrame(*cx, const_cast<::js::InterpreterFrame *>(v));
+	#endif
+}
+
+std::string
+ircd::js::debug(const JSTracer &t)
+{
+	return t.isMarkingTracer()?     "MARKING":
+	       t.isWeakMarkingTracer()? "WEAKMARKING":
+	       t.isTenuringTracer()?    "TENURING":
+	       t.isCallbackTracer()?    "CALLBACK":
+	                                "UNKNOWN";
+}
+
+std::string
+ircd::js::debug(const JSErrorReport &r)
+{
+	std::stringstream ss;
+
+	if(JSREPORT_IS_WARNING(r.flags))
+		ss << "WARNING ";
+
+	if(JSREPORT_IS_EXCEPTION(r.flags))
+		ss << "EXCEPTION ";
+
+	if(JSREPORT_IS_STRICT(r.flags))
+		ss << "STRICT ";
+
+	if(r.isMuted)
+		ss << "MUTED ";
+
+	if(r.filename)
+		ss << "file[" << r.filename << "] ";
+
+	if(r.lineno)
+		ss << "line[" << r.lineno << "] ";
+
+	if(r.column)
+		ss << "col[" << r.column << "] ";
+
+	if(r.linebuf())
+		ss << "code[" << std::u16string(r.linebuf()) << "] ";
+
+	//if(r.tokenptr)
+	//	ss << "toke[" << r.tokenptr << "] ";
+
+	if(r.errorNumber)
+		ss << "errnum[" << r.errorNumber << "] ";
+
+	if(r.exnType)
+		ss << reflect(JSExnType(r.exnType)) << " ";
+
+//	if(r.message())
+//		ss << "\"" << locale::char16::conv(r.message()) << "\" ";
+
+//	for(auto it(r.messageArgs); it && *it; ++it)
+//		ss << "\"" << locale::char16::conv(*it) << "\" ";
+
+	return ss.str();
+}
+
+std::string
+ircd::js::debug(const JS::HandleObject &o)
+{
+	std::stringstream ss;
+
+	if(JS_IsGlobalObject(o))            ss << "Global ";
+	if(JS_IsNative(o))                  ss << "Native ";
+	if(JS::IsCallable(o))               ss << "Callable ";
+	if(JS::IsConstructor(o))            ss << "Constructor ";
+	if(JS_ObjectIsFunction(*cx, o))     ss << "Function ";
+
+	bool ret;
+	if(JS_IsExtensible(*cx, o, &ret))
+		if(ret)
+			ss << "Extensible ";
+
+	if(JS_IsArrayObject(*cx, o, &ret))
+		if(ret)
+			ss << "Array ";
+
+	if(JS::IsArray(*cx, o, &ret))
+		if(ret)
+			ss << "Array.isArray ";
+
+	if(JS_ObjectIsRegExp(*cx, o, &ret))
+		if(ret)
+			ss << "RegExp ";
+
+	if(JS_ObjectIsDate(*cx, o, &ret))
+		if(ret)
+			ss << "Date ";
+
+	if(JS::IsPromiseObject(o))
+	{
+		ss << "Promise[#" << JS::GetPromiseID(o);
+		ss << " " << reflect(JS::GetPromiseState(o));
+		ss << "] ";
+	}
+
+	if(JS_IsArrayBufferObject(o))
+	{
+		ss << "ArrayBuffer[" << JS_GetArrayBufferByteLength(o);
+		ss << " " << JS_IsDetachedArrayBufferObject(o)? "DETACHED" : "ATTACHED";
+		ss << " " << JS_IsMappedArrayBufferObject(o)? "MAPPED" : "UNMAPPED";
+		ss << "] ";
+	}
+
+	if(JS_IsSharedArrayBufferObject(o))
+	{
+		ss << "SharedArrayBuffer[" << JS_GetSharedArrayBufferByteLength(o);
+		ss << " " << JS_IsDetachedArrayBufferObject(o)? "DETACHED" : "ATTACHED";
+		ss << " " << JS_IsMappedArrayBufferObject(o)? "MAPPED" : "UNMAPPED";
+		ss << "] ";
+	}
+
+	if(JS_IsArrayBufferViewObject(o))
+	{
+		ss << "ArrayBufferView[" << JS_GetArrayBufferViewByteLength(o);
+		ss << "] ";
+	}
+
+	if(JS_IsDataViewObject(o))
+	{
+		ss << "DataView[" << JS_GetDataViewByteLength(o);
+		ss << " @" << JS_GetDataViewByteOffset(o);
+		ss << "] ";
+	}
+
+	return ss.str();
+}
+
+std::string
+ircd::js::debug(const JS::Value &v)
+{
+	std::stringstream ss;
+
+	if(v.isNull())        ss << "Null ";
+	if(v.isUndefined())   ss << "Undefined ";
+	if(v.isBoolean())     ss << "Boolean ";
+	if(v.isTrue())        ss << "TrueValue ";
+	if(v.isFalse())       ss << "FalseValue ";
+	if(v.isNumber())      ss << "Number ";
+	if(v.isDouble())      ss << "Double ";
+	if(v.isInt32())       ss << "Int32 ";
+	if(v.isString())      ss << "String ";
+	if(v.isSymbol())      ss << "Symbol ";
+	if(v.isObject())      ss << "Object ";
+
+	if(v.isObject())
+	{
+		JS::RootedObject obj(*cx);
+		JS::RootedValue rv(*cx, v);
+		if(JS_ValueToObject(*cx, rv, &obj))
+			ss << "(" << debug(obj) << ") ";
+	}
+
+	return ss.str();
+}
+
+const char *
+ircd::js::reflect_telemetry(const int &id)
+{
+	switch(id)
+	{
+		case JS_TELEMETRY_GC_REASON:                                  return "GC_REASON";
+		case JS_TELEMETRY_GC_MS:                                      return "GC_MS";
+		case JS_TELEMETRY_GC_BUDGET_MS:                               return "GC_BUDGET_MS";
+		case JS_TELEMETRY_GC_ANIMATION_MS:                            return "GC_ANIMATION_MS";
+		case JS_TELEMETRY_GC_MAX_PAUSE_MS:                            return "GC_MAX_PAUSE_MS";
+		case JS_TELEMETRY_GC_MARK_MS:                                 return "GC_MARK_MS";
+		case JS_TELEMETRY_GC_SWEEP_MS:                                return "GC_SWEEP_MS";
+		case JS_TELEMETRY_GC_MARK_ROOTS_MS:                           return "GC_MARK_ROOTS_MS";
+		case JS_TELEMETRY_GC_MARK_GRAY_MS:                            return "GC_MARK_GRAY_MS";
+		case JS_TELEMETRY_GC_SLICE_MS:                                return "GC_SLICE_MS";
+		case JS_TELEMETRY_GC_SLOW_PHASE:                              return "GC_SLOW_PHASE";
+		case JS_TELEMETRY_GC_MMU_50:                                  return "GC_MMU_50";
+		case JS_TELEMETRY_GC_RESET:                                   return "GC_RESET";
+		case JS_TELEMETRY_GC_INCREMENTAL_DISABLED:                    return "GC_INCREMENTAL_DISABLED";
+		case JS_TELEMETRY_GC_NON_INCREMENTAL:                         return "GC_NON_INCREMENTAL";
+		case JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS:                      return "GC_SCC_SWEEP_TOTAL_MS";
+		case JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS:                  return "GC_SCC_SWEEP_MAX_PAUSE_MS";
+		case JS_TELEMETRY_GC_MINOR_REASON:                            return "GC_MINOR_REASON";
+		case JS_TELEMETRY_GC_MINOR_REASON_LONG:                       return "GC_MINOR_REASON_LONG";
+		case JS_TELEMETRY_GC_MINOR_US:                                return "GC_MINOR_US";
+		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:  return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT";
+		case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS:   return "DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS";
+		case JS_TELEMETRY_ADDON_EXCEPTIONS:                           return "ADDON_EXCEPTIONS";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect_prop(const uint &flag)
+{
+	switch(flag)
+	{
+		case JSPROP_ENUMERATE:                  return "JSPROP_ENUMERATE";
+		case JSPROP_READONLY:                   return "JSPROP_READONLY";
+		case JSPROP_PERMANENT:                  return "JSPROP_PERMANENT";
+		case JSPROP_PROPOP_ACCESSORS:           return "JSPROP_PROPOP_ACCESSORS";
+		case JSPROP_GETTER:                     return "JSPROP_GETTER";
+		case JSPROP_SETTER:                     return "JSPROP_SETTER";
+		case JSPROP_SHARED:                     return "JSPROP_SHARED";
+		case JSPROP_INTERNAL_USE_BIT:           return "JSPROP_INTERNAL_USE_BIT";
+		case JSFUN_STUB_GSOPS:                  return "JSFUN_STUB_GSOPS";
+		case JSFUN_CONSTRUCTOR:                 return "JSFUN_CONSTRUCTOR";
+		case JSPROP_REDEFINE_NONCONFIGURABLE:   return "JSPROP_REDEFINE_NONCONFIGURABLE";
+		case JSPROP_RESOLVING:                  return "JSPROP_RESOLVING";
+		case JSPROP_IGNORE_ENUMERATE:           return "JSPROP_IGNORE_ENUMERATE";
+		case JSPROP_IGNORE_READONLY:            return "JSPROP_IGNORE_READONLY";
+		case JSPROP_IGNORE_PERMANENT:           return "JSPROP_IGNORE_PERMANENT";
+		case JSPROP_IGNORE_VALUE:               return "JSPROP_IGNORE_VALUE";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JS::PromiseState &state)
+{
+	switch(state)
+	{
+		case JS::PromiseState::Pending:     return "Pending";
+		case JS::PromiseState::Fulfilled:   return "Fulfilled";
+		case JS::PromiseState::Rejected:    return "Rejected";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const PromiseRejectionHandlingState &state)
+{
+	switch(state)
+	{
+		case PromiseRejectionHandlingState::Unhandled:   return "Unhandled";
+		case PromiseRejectionHandlingState::Handled:     return "Handled";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const ::js::CTypesActivityType &t)
+{
+	using namespace ::js;
+
+	switch(t)
+	{
+		case CTYPES_CALL_BEGIN:       return "CTYPES_CALL_BEGIN";
+		case CTYPES_CALL_END:         return "CTYPES_CALL_END";
+		case CTYPES_CALLBACK_BEGIN:   return "CTYPES_CALLBACK_BEGIN";
+		case CTYPES_CALLBACK_END:     return "CTYPES_CALLBACK_END";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSFinalizeStatus &s)
+{
+	switch(s)
+	{
+		case JSFINALIZE_GROUP_START:        return "GROUP_START";
+		case JSFINALIZE_GROUP_END:          return "GROUP_END";
+		case JSFINALIZE_COLLECTION_END:     return "COLLECTION_END";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSGCParamKey &s)
+{
+	switch(s)
+	{
+		case JSGC_MAX_BYTES:                       return "JSGC_MAX_BYTES";
+		case JSGC_MAX_MALLOC_BYTES:                return "JSGC_MAX_MALLOC_BYTES";
+		case JSGC_BYTES:                           return "JSGC_BYTES";
+		case JSGC_NUMBER:                          return "JSGC_NUMBER";
+		case JSGC_MODE:                            return "JSGC_MODE";
+		case JSGC_UNUSED_CHUNKS:                   return "JSGC_UNUSED_CHUNKS";
+		case JSGC_TOTAL_CHUNKS:                    return "JSGC_TOTAL_CHUNKS";
+		case JSGC_SLICE_TIME_BUDGET:               return "JSGC_SLICE_TIME_BUDGET";
+		case JSGC_MARK_STACK_LIMIT:                return "JSGC_MARK_STACK_LIMIT";
+		case JSGC_HIGH_FREQUENCY_TIME_LIMIT:       return "JSGC_HIGH_FREQUENCY_TIME_LIMIT";
+		case JSGC_HIGH_FREQUENCY_LOW_LIMIT:        return "JSGC_HIGH_FREQUENCY_LOW_LIMIT";
+		case JSGC_HIGH_FREQUENCY_HIGH_LIMIT:       return "JSGC_HIGH_FREQUENCY_HIGH_LIMIT";
+		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX";
+		case JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN:  return "JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN";
+		case JSGC_LOW_FREQUENCY_HEAP_GROWTH:       return "JSGC_LOW_FREQUENCY_HEAP_GROWTH";
+		case JSGC_DYNAMIC_HEAP_GROWTH:             return "JSGC_DYNAMIC_HEAP_GROWTH";
+		case JSGC_DYNAMIC_MARK_SLICE:              return "JSGC_DYNAMIC_MARK_SLICE";
+		case JSGC_ALLOCATION_THRESHOLD:            return "JSGC_ALLOCATION_THRESHOLD";
+		case JSGC_MIN_EMPTY_CHUNK_COUNT:           return "JSGC_MIN_EMPTY_CHUNK_COUNT";
+		case JSGC_MAX_EMPTY_CHUNK_COUNT:           return "JSGC_MAX_EMPTY_CHUNK_COUNT";
+		case JSGC_COMPACTING_ENABLED:              return "JSGC_COMPACTING_ENABLED";
+		case JSGC_REFRESH_FRAME_SLICES_ENABLED:    return "JSGC_REFRESH_FRAME_SLICES_ENABLED";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSGCStatus &s)
+{
+	switch(s)
+	{
+		case JSGC_BEGIN:   return "BEGIN";
+		case JSGC_END:     return "END";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSGCMode &s)
+{
+	switch(s)
+	{
+		case JSGC_MODE_GLOBAL:       return "GLOBAL";
+		case JSGC_MODE_INCREMENTAL:  return "INCREMENTAL";
+		case JSGC_MODE_ZONE:         return "ZONE";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JS::GCProgress &s)
+{
+	switch(s)
+	{
+		case JS::GC_CYCLE_BEGIN:   return "CYCLE_BEGIN";
+		case JS::GC_SLICE_BEGIN:   return "SLICE_BEGIN";
+		case JS::GC_SLICE_END:     return "SLICE_END";
+		case JS::GC_CYCLE_END:     return "CYCLE_END";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSExnType &e)
+{
+	switch(e)
+	{
+		case JSEXN_WARN:              return "Warning";
+		case JSEXN_ERR:               return "Error";
+		case JSEXN_INTERNALERR:       return "InternalError";
+		case JSEXN_EVALERR:           return "EvalError";
+		case JSEXN_RANGEERR:          return "RangeError";
+		case JSEXN_REFERENCEERR:      return "ReferenceError";
+		case JSEXN_SYNTAXERR:         return "SyntaxError";
+		case JSEXN_TYPEERR:           return "TypeError";
+		case JSEXN_URIERR:            return "URIError";
+		case JSEXN_LIMIT:             return "?LIMIT?";
+		case JSEXN_DEBUGGEEWOULDRUN:  return "DebugeeWouldRun";
+		case JSEXN_WASMCOMPILEERROR:  return "WASMCompileError";
+		case JSEXN_WASMRUNTIMEERROR:  return "WASMRuntimeError";
+	}
+
+	return "";
+}
+
+const char *
+ircd::js::reflect(const JSType &t)
+{
+	switch(t)
+	{
+		case JSTYPE_VOID:         return "VOID";
+		case JSTYPE_OBJECT:       return "OBJECT";
+		case JSTYPE_FUNCTION:     return "FUNCTION";
+		case JSTYPE_STRING:       return "STRING";
+		case JSTYPE_NUMBER:       return "NUMBER";
+		case JSTYPE_BOOLEAN:      return "BOOLEAN";
+		case JSTYPE_NULL:         return "NULL";
+		case JSTYPE_SYMBOL:       return "SYMBOL";
+		case JSTYPE_LIMIT:        return "LIMIT";
+	}
+
+	return "";
+}
 
 const char *
 ircd::js::reflect(const jstype &t)
@@ -4131,3 +4268,49 @@ ircd::js::reflect(const jstype &t)
 
 	return "";
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/type.h
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/version.h
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Misc / Fixes / Temp
+//
+
+#if defined(IRCD_JS_FIX)
+void
+__attribute__((noreturn))
+js::ReportOutOfMemory(ExclusiveContext *const c)
+{
+	ircd::js::log.critical("jsalloc(): Reported out of memory (ExclusiveContext: %p)", (const void *)c);
+	std::terminate();
+}
+#endif //IRCD_JS_FIX
+
+//
+// This DEBUG section is a fix for linkage errors when SpiderMonkey is compiled
+// in debug mode.
+//
+#if defined(JS_DEBUG) && defined(IRCD_JS_FIX)
+namespace js  {
+namespace oom {
+
+extern mozilla::detail::ThreadLocal<uint32_t> threadType;
+
+uint32_t
+GetThreadType()
+{
+	assert(0);
+	return threadType.get();
+}
+
+} // namespace oom
+} // namespace js
+#endif // JS_DEBUG && IRCD_JS_FIX

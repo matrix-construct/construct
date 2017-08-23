@@ -35,6 +35,9 @@ object enclosing_scope(JSFunction *const &);
 struct function
 :root<JSFunction *>
 {
+	struct native;      // Use this instead to specify a function in C
+	struct literal;     // Use this instead to supply the JS as a C string literal.
+
 	IRCD_OVERLOAD(outermost_enclosing)
 
 	operator JSObject *() const;
@@ -104,10 +107,10 @@ function::function(outermost_enclosing_t)
 
 template<class string_t>
 function::function(JS::AutoObjectVector &stack,
-                      const JS::CompileOptions &opts,
-                      const char *const &name,
-                      const std::vector<string_t> &args,
-                      const string_t &src)
+                   const JS::CompileOptions &opts,
+                   const char *const &name,
+                   const std::vector<string_t> &args,
+                   const string_t &src)
 :function::root::type{}
 {
 	std::vector<const typename string_t::value_type *> argp(args.size());
@@ -174,7 +177,7 @@ const
 inline object
 enclosing_scope(JSFunction *const &f)
 {
-	return ::js::GetNearestEnclosingWithScopeObjectForFunction(f);
+	return ::js::GetNearestEnclosingWithEnvironmentObjectForFunction(f);
 }
 
 inline bool

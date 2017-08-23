@@ -19,25 +19,87 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-#define HAVE_IRCD_JS_STAR_H
+#include <ircd/listen.h>
+#include <ircd/js/js.h>
 
 namespace ircd {
 namespace js   {
 
-struct star
+struct listener
+:js::trap
 {
-	// Active processes by PID. This is managed by the actual task structure itself.
-	// A task pointer in the map will always be valid. When the last shared_ptr to a task is
-	// destroyed the task removes itself and weak references to the task are invalidated.
-	std::map<uint64_t, task *> tasks;
+	struct listen;
 
-	// Modules conducting some asynchronous operation on behalf of a task maintain state with
-	// a `struct contract` object. When the result is ready and the contract is fulfilled
-	// the contract object inserts itself into this queue (the user does not do this).
-	// The kernel is listening on the other end of this queue.
-	ctx::queue<contract> completion;
+	static const char *const source;
+	struct module module;
+
+	listener();
+}
+static listener;
+
+struct listener::listen
+:trap::function
+{
+	ircd::listener *l;
+
+	value on_call(object::handle obj, value::handle _this, const args &args) override
+	{
+		l = new ircd::listener(std::string(args[0]));
+		return {};
+	}
+
+	using trap::function::function;
+}
+static listener_listen
+{
+	listener, "listen"
 };
 
 } // namespace js
 } // namespace ircd
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Listener source
+//
+
+const char *const
+ircd::js::listener::source
+{R"(
+
+import * as console from "server.console";
+
+export function listen(opts)
+{
+	__listener.listen(JSON.stringify(opts));
+}
+
+)"};
+///////////////////////////////////////////////////////////////////////////////
+
+ircd::js::listener::listener()
+:js::trap
+{
+	"__listener",
+}
+,module
+{
+	JS::CompileOptions(*cx),
+	locale::char16::conv(source),
+	this,
+	true
+}
+{
+}
+
+extern "C" ircd::js::module *
+IRCD_JS_MODULE
+{
+	&ircd::js::listener.module
+};
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Network listener socket support for servers"
+};

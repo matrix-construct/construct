@@ -19,6 +19,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+//
+// TODO: This file will be merged with string.h.
+// Don't confuse it with SpiderMonkey terminology for "JSNative" functions
+//
+
 #pragma once
 #define HAVE_IRCD_JS_NATIVE_H
 

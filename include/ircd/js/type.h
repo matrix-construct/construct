@@ -45,7 +45,7 @@ template<> constexpr jstype type<JSString *>()        { return jstype::STRING;  
 template<> constexpr jstype type<JS::Symbol *>()      { return jstype::SYMBOL;                     }
 template<> constexpr jstype type<jsid>()              { return jstype::ID;                         }
 
-inline jstype // This cannot be constexpr <= GCC-4.9
+constexpr jstype
 type(const JSType &t)
 {
 	switch(t)
@@ -59,8 +59,9 @@ type(const JSType &t)
 		case JSTYPE_BOOLEAN:      return jstype::VALUE;
 		case JSTYPE_NULL:         return jstype::VALUE;
 		case JSTYPE_LIMIT:        return jstype::VALUE;
-		default:                  return jstype::VALUE;
 	}
+
+	return jstype::VALUE;
 }
 
 } // namespace js
