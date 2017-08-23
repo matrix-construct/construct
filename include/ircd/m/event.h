@@ -22,16 +22,32 @@
  *
  */
 
-#include <ircd/json/object.h>
-
 #pragma once
 #define HAVE_IRCD_M_EVENT_H
+
+///////////////////////////////////////////////////////////////////////////////
+// Protocol notes
+//
+// 10.4
+// The total size of any event MUST NOT exceed 65 KB.
+//
+// There are additional restrictions on sizes per key:
+// sender MUST NOT exceed 255 bytes (including domain).
+// room_id MUST NOT exceed 255 bytes.
+// state_key MUST NOT exceed 255 bytes.
+// type MUST NOT exceed 255 bytes.
+// event_id MUST NOT exceed 255 bytes.
+//
+// Some event types have additional size restrictions which are specified in
+// the description of the event. Additional keys have no limit other than that
+// implied by the total 65 KB limit on events.
+//
 
 namespace ircd {
 namespace m    {
 
 struct event
-:json::object
+:json::parse
 <
 	string_view,
 	time_t,
@@ -53,35 +69,7 @@ struct event
 
 	template<class... A>
 	event(A&&... a)
-	:object{std::make_tuple(std::forward<A>(a)...)}
-	{}
-};
-
-struct sync
-:json::object
-<
-	string_view,
-	string_view,
-	string_view,
-	string_view
->
-{
-	IRCD_MEMBERS
-	(
-		"account_data",
-		"next_batch",
-		"rooms",
-		"presence",
-	)
-
-	sync(const json::doc &doc)
-	{
-	
-	}
-
-	template<class... A>
-	sync(A&&... a)
-	:object{std::make_tuple(std::forward<A>(a)...)}
+	:parse{*this, std::forward<A>(a)...}
 	{}
 };
 

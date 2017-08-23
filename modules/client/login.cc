@@ -40,7 +40,7 @@ using object = db::object<account>;
 template<class T = string_view> using value = db::value<T, account>;
 
 resource::response
-login_password(client &client, const resource::request &request)
+post_login_password(client &client, const resource::request &request)
 {
 	const auto user
 	{
@@ -98,7 +98,7 @@ login_password(client &client, const resource::request &request)
 }
 
 resource::response
-login_token(client &client, const resource::request &request)
+post_login_token(client &client, const resource::request &request)
 {
 	const auto token
 	{
@@ -128,7 +128,7 @@ login_token(client &client, const resource::request &request)
 }
 
 resource::response
-login(client &client, const resource::request &request)
+post_login(client &client, const resource::request &request)
 {
 	const auto type
 	{
@@ -137,9 +137,9 @@ login(client &client, const resource::request &request)
 	};
 
 	if(type == "m.login.password")
-		return login_password(client, request);
+		return post_login_password(client, request);
 	else if(type == "m.login.token")
-		return login_token(client, request);
+		return post_login_token(client, request);
 	else
 		throw m::error
 		{
@@ -147,9 +147,28 @@ login(client &client, const resource::request &request)
 		};
 }
 
-resource::method post
+resource::method method_post
 {
-	login_resource, "POST", login
+	login_resource, "POST", post_login
+};
+
+resource::response
+get_login(client &client, const resource::request &request)
+{
+	static const json::object flows
+	{
+		R"({"flows":[{"type":"m.login.password"}]})"
+	};
+
+	return resource::response
+	{
+		client, flows
+	};
+}
+
+resource::method method_get
+{
+	login_resource, "GET", get_login
 };
 
 mapi::header IRCD_MODULE

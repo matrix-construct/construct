@@ -37,9 +37,10 @@ __attribute__((constructor))
 void
 init_0()
 {
-	for(const auto &file : fs::ls("/home/jason/charybdis/charybdis/modules/static"))
+	// TODO: XXX
+	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static"))
 	{
-		const auto name(token_last(file, "/"));
+		const auto name(tokens_after(file, "/", 5));
 		files.emplace(std::string(name), file);
 	}
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,50 +19,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
-
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+ircd::import_shared<ircd::database> rooms_database
 {
-}
+	"client_rooms", "rooms_database"
+};
 
-ircd::json::object
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+extern ircd::database *const rooms
 {
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
-
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
-
-	http::code status;
-	json::object object;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &object](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			object = http::response::content{pc, head};
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, object);
-
-	return object;
-}
+	rooms_database.get()
+};

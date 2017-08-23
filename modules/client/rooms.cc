@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,50 +19,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
+using namespace ircd;
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+const database::descriptor rooms_head_descriptor
 {
-}
+	// name
+	"head",
 
-ircd::json::object
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+	// notes
+	R"(
+	### developer note:
+
+	The latest event for a room.
+
+	key is room_id
+	value is event_id
+
+	)",
+
+	// typing for key and value
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
+const database::description rooms_description
 {
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
+	{ "default" },
+	rooms_head_descriptor,
+};
 
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
+std::shared_ptr<database> rooms_database
+{
+	std::make_shared<database>("room"s, ""s, rooms_description)
+};
 
-	http::code status;
-	json::object object;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &object](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			object = http::response::content{pc, head};
-		}
-	};
+extern database *const room
+{
+	rooms_database.get()
+};
 
-	if(status < 200 || status >= 300)
-		throw m::error(status, object);
-
-	return object;
+struct room
+:resource
+{
+	using resource::resource;
 }
+rooms_resource
+{
+	"_matrix/client/r0/rooms/",
+	"Rooms (7.0)"
+};
+
+mapi::header IRCD_MODULE
+{
+	"registers the resource 'client/rooms' and hosts the rooms database"
+};

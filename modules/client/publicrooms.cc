@@ -19,7 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "room.h"
+#include "rooms.h"
 
 using namespace ircd;
 
@@ -33,49 +33,6 @@ resource publicrooms_resource
 resource::response
 get_publicrooms(client &client, const resource::request &request)
 {
-	json::doc test
-	{
-		R"({"content":"hello","origin_server_ts":12345,"sender":"me"})"
-	};
-
-	m::event ev
-	{
-		"some content", 0, "some sender", "some type", "some unsigned", "statie"
-	};
-
-	json::for_each(ev, []
-	(const auto &key, const auto &val)
-	{
-		std::cout << key << " => " << val << std::endl;
-	});
-
-	std::cout << std::endl;
-	json::rfor_each(ev, []
-	(const string_view &key, const auto &val)
-	{
-		std::cout << key << " => " << val << std::endl;
-	});
-
-	std::cout << std::endl;
-	json::until(ev, []
-	(const string_view &key, const auto &val)
-	{
-		std::cout << key << " => " << val << std::endl;
-		return true;
-	});
-
-	std::cout << std::endl;
-	json::runtil(ev, []
-	(const string_view &key, const auto &val)
-	{
-		std::cout << key << " => " << val << std::endl;
-		return true;
-	});
-
-	std::cout << std::endl;
-	std::cout << index(ev, "origin_server_ts") << std::endl;
-	std::cout << std::endl;
-
 	return resource::response
 	{
 		client, json::index

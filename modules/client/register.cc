@@ -89,10 +89,10 @@ handle_post(client &client,
 			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
 		};
 
-	const auto pass
+	const auto password
 	{
 		// "Required. The desired password for the account."
-		request.at("pass")
+		request.at("password")
 	};
 
 	const auto bind_email
@@ -139,7 +139,7 @@ handle_post(client &client,
 	// Batch transaction to database
 	db::write
 	({
-		{ db::SET,  password_text,      pass          },
+		{ db::SET,  password_text,      password      },
 		{ db::SET,  access_token_text,  access_token  },
 	});
 

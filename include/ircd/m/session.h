@@ -35,7 +35,7 @@ struct session
 	std::deque<std::string> tape;
 	std::multimap<string_view, string_view> resource;
 
-	json::doc operator()(parse::buffer &pb, request &);
+	json::object operator()(parse::buffer &pb, request &);
 
 	session(const host_port &);
 };

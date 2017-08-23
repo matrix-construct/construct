@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -19,12 +19,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-ircd::import_shared<ircd::database> room_database
+ircd::import_shared<ircd::database> events_database
 {
-	"client_room", "room_database"
+	"client_events", "events_database"
 };
 
-extern ircd::database *const room
+extern ircd::database *const events
 {
-	room_database.get()
+	events_database.get()
 };

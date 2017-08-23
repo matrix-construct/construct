@@ -25,6 +25,8 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
+#include "json/parse.h"
+
 namespace ircd {
 namespace m    {
 

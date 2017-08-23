@@ -33,8 +33,8 @@ struct error
 {
 	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
-	error(const http::code &, const json::doc &doc = {});
-	error(const http::code &, const json::obj &obj);
+	error(const http::code &, const json::object &object = {});
+	error(const http::code &, const json::index &idx);
 };
 
 } // namespace m
@@ -42,14 +42,14 @@ struct error
 
 inline
 ircd::m::error::error(const http::code &c,
-                      const json::obj &obj)
-:http::error{c, std::string{obj}}
+                      const json::index &index)
+:http::error{c, std::string{index}}
 {}
 
 inline
 ircd::m::error::error(const http::code &c,
-                      const json::doc &doc)
-:http::error{c, std::string{doc}}
+                      const json::object &object)
+:http::error{c, std::string{object}}
 {}
 
 template<class... args>
@@ -75,7 +75,7 @@ ircd::m::error::error(const http::code &status,
 			fmt::snprintf{estr, sizeof(estr), fmt, std::forward<args>(a)...}
 		};
 
-		return json::obj
+		return json::index
 		{
 			{ "errcode",  errcode                      },
 			{ "error",    string_view(estr, estr_len)  }
