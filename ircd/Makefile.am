@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = foreign
 libircddir	= @libdir@
 
 AM_CPPFLAGS = \
+	-fmax-errors=2 \
 	-ffriend-injection \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \
@@ -20,11 +21,25 @@ AM_LDFLAGS = \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
-	-Wl,--no-allow-shlib-undefined \
+	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS)
 #	-Wl,--no-undefined
 
 libircd_LTLIBRARIES = libircd.la
+
+libircd_la_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	@ROCKSDB_LDFLAGS@ \
+	@JS_LDFLAGS@ \
+	@BOOST_LDFLAGS@
+
+libircd_la_LIBADD = \
+	@ROCKSDB_LIBS@ \
+	@JS_LIBS@ \
+	@BOOST_LIBS@ \
+	-lcrypto \
+	-lssl \
+	-lz
 
 libircd_la_SOURCES =   \
 	ircd.cc            \

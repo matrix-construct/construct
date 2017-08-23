@@ -10,24 +10,20 @@ AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
 	-Wl,--no-gnu-unique \
-	$(PLATFORM_LDFLAGS) \
-	-Wl,--no-allow-shlib-undefined
-#	-Wl,--no-undefined
-
-AM_LDFLAGS += \
+	-Wl,--no-allow-shlib-undefined \
+	-Wl,--no-undefined \
+	-Wl,-z -Wl,now \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
-	@ROCKSDB_LDFLAGS@ \
-	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@
-
+	$(PLATFORM_LDFLAGS)
 
 bin_PROGRAMS = charybdis
 
-charybdis_SOURCES = \
-	lgetopt.cc      \
-	console.cc      \
-	charybdis.cc
+charybdis_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	@ROCKSDB_LDFLAGS@ \
+	@JS_LDFLAGS@ \
+	@BOOST_LDFLAGS@
 
 charybdis_LDADD = \
 	-lircd \
@@ -35,4 +31,10 @@ charybdis_LDADD = \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
 	-lcrypto \
-	-lssl
+	-lssl \
+	-lz
+
+charybdis_SOURCES = \
+	lgetopt.cc      \
+	console.cc      \
+	charybdis.cc
