@@ -96,10 +96,11 @@ std::vector<std::string>
 ircd::fs::ls_recursive(const std::string &path)
 try
 {
-	fs::recursive_directory_iterator it(path);
 	const fs::recursive_directory_iterator end;
-	std::vector<std::string> ret(std::distance(it, end));
-	std::transform(it, end, begin(ret), []
+	fs::recursive_directory_iterator it(path);
+
+	std::vector<std::string> ret;
+	std::transform(it, end, std::back_inserter(ret), []
 	(const auto &ent)
 	{
 		return ent.path().string();
@@ -117,9 +118,9 @@ ircd::fs::ls(const std::string &path)
 try
 {
 	static const fs::directory_iterator end;
+	fs::directory_iterator it(path);
 
 	std::vector<std::string> ret;
-	fs::directory_iterator it(path);
 	std::transform(it, end, std::back_inserter(ret), []
 	(const auto &ent)
 	{
