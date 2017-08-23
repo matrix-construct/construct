@@ -28,6 +28,9 @@
 namespace ircd {
 namespace http {
 
+//
+// Add more as you go...
+//
 enum code
 {
 	CONTINUE                                = 100,
@@ -125,8 +128,8 @@ struct query
 	query() = default;
 };
 
-// Query string is read as a complete string off the tape (into request.query)
-// and not parsed further. To make queries into that string pun this class on it.
+// Query string is read as a complete string off the tape (into request.query) and
+// not parsed further. To make queries into that string use this class to view it.
 struct query::string
 :string_view
 {
