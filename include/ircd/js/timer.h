@@ -49,7 +49,7 @@ struct timer
 
 	void handle(std::unique_lock<std::mutex> &lock);
 	void worker();
-	std::thread thread;
+	std::thread thread;                          //TODO: single extern thread plz
 
   public:
 	void set(const microseconds &limit);         // Set the time limit (only when not started)

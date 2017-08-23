@@ -39,7 +39,7 @@
 // From a completely clean build, configuring IRCd with --enable-debug should compile SpiderMonkey
 // in debug as well.
 #ifdef RB_DEBUG
-	#define DEBUG
+//	#define DEBUG
 #endif
 
 // SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
@@ -51,8 +51,8 @@
 
 // Some forward declarations for jsapi items not declared in the above includes,
 // but visible to definition files making use of additional jsapi interfaces.
-struct JSAtom;
-namespace js {  struct InterpreterFrame;  }
+//struct JSAtom;
+//namespace js {  struct InterpreterFrame;  }
 
 namespace ircd {
 namespace js   {

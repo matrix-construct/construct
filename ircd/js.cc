@@ -24,7 +24,7 @@
 #include <ircd/js/js.h>
 #include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
 #include <mozilla/ThreadLocal.h>                 // For GetThreadType() linkage hack (see: down)
-#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
+//#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
 
 namespace ircd {
 namespace js   {
@@ -48,7 +48,7 @@ __thread trap *tree;
 std::forward_list<std::unique_ptr<JSClass>> class_drain;
 
 // Handle to the kernel module
-ircd::module kernel;
+//ircd::module kernel;
 
 // Internal prototypes
 const char *reflect(const ::js::CTypesActivityType &);
@@ -87,6 +87,8 @@ ircd::js::init::init()
 
 	rt = new runtime(runtime_opts);
 	cx = new context(*rt, context_opts);
+	cx->star = new star;
+	tree = new trap("", JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_PRIVATE);
 
 	// Additional options
 	//set(*cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
@@ -95,8 +97,30 @@ ircd::js::init::init()
 	         version(*cx));
 	{
 		// tree is registered by the kernel module's trap
-		const std::lock_guard<context> lock{*cx};
-		kernel = ircd::module("kernel");
+		ircd::context main("matrix", 8_MiB, []()
+		{
+			const std::lock_guard<context> lock{*cx};
+			const std::string script
+			{
+				ircd::fs::read("/home/jason/charybdis/charybdis/modules/ircd.js")
+			};
+
+			auto task
+			{
+				std::make_shared<ircd::js::task>(script)
+			};
+
+			ircd::log::info("task %zu bytes pid %lu", script.size(), task->pid);
+
+			js::task::enter(*task, [](js::task &task)
+			{
+				value state(task.main());
+				ircd::log::info("%s", std::string(state));
+			});
+		});
+
+		//const std::lock_guard<context> lock{*cx};
+		//kernel = ircd::module("kernel");
 	}
 }
 
@@ -106,7 +130,7 @@ noexcept
 	if(cx && !!*cx) try
 	{
 		const std::lock_guard<context> lock{*cx};
-		kernel.reset();
+		//kernel.reset();
 	}
 	catch(const std::exception &e)
 	{
@@ -300,124 +324,6 @@ try
 }()}
 {
 	const compartment c(this->global);
-
-	uint8_t buf[16_KiB];
-	const size_t len(bytecodes(main, buf, sizeof(buf)));
-	const js::xdr xdr(buf, len);
-	std::cout << "n_args: " << xdr.header->n_args << std::endl;
-	std::cout << "n_atoms: " << xdr.header->n_atoms << std::endl;
-	std::cout << "n_objects: " << xdr.header->n_objects << std::endl;
-	std::cout << "length: " << xdr.header->length << std::endl;
-	std::cout << "fun_length: " << xdr.header->fun_length << std::endl;
-
-	size_t ai(0);
-	xdr.for_each_atom([&ai](const auto &atom)
-	{
-		printf("i[%02zx] len [%u] enc[%u] [%s]\n", ai++, atom.length, atom.encoding, atom.latin1);
-	});
-
-	xdr.for_each_binding([](const auto &binding)
-	{
-		printf("kind[%u] aliased[%u]\n", binding.kind, binding.aliased);
-	});
-
-	std::cout << "has_source: " << bool(xdr.sourcecode->has_source) << std::endl;
-	std::cout << "retrievable: " << bool(xdr.sourcecode->retrievable) << std::endl;
-	std::cout << "length: " << xdr.sourcecode->length << std::endl;
-	std::cout << "compressed_length: " << xdr.sourcecode->compressed_length << std::endl;
-
-	std::cout << "sourcemap->have: " << bool(xdr.sourcemap->have) << std::endl;
-	std::cout << "sourcemap->len: " << bool(xdr.sourcemap->len) << std::endl;
-
-	std::cout << "displayurl->have: " << bool(xdr.displayurl->have) << std::endl;
-	std::cout << "displayurl->len: " << bool(xdr.displayurl->len) << std::endl;
-
-	std::cout << "filename->have: " << bool(xdr.filename->have) << std::endl;
-
-	std::cout << "start: " << xdr.source->start << std::endl;
-	std::cout << "end: " << xdr.source->end << std::endl;
-	std::cout << "lineno: " << xdr.source->lineno << std::endl;
-	std::cout << "column: " << xdr.source->column << std::endl;
-
-	size_t i(0);
-	xdr.for_each_bytecode([&i]
-	(const auto &bc)
-	{
-		const auto &op(js::info(bc));
-		printf("+%02zu %-20s %u [%02x]", i++, op.name, op.length, bc.byte);
-		for(ssize_t j(0); j < op.length - 1; ++j)
-			printf(" %02x", bc.operand[j]);
-		printf("\n");
-	});
-
-	xdr.for_each_const([]
-	(const auto &c)
-	{
-		printf("const [%02u] (%zd)\n", c.tag, js::length(c));
-	});
-
-	xdr.for_each_object([&buf, &len, &xdr]
-	(const auto &o)
-	{
-		printf("object [%02u] (%zd)\n", o.classk, js::length(o));
-		if(o.classk == 3)
-		{
-			printf("is_array[%u] n_properties[%u]\n",
-			       o.literal.is_array,
-			       o.literal.n_properties);
-		}
-		else if(o.classk == 2)
-		{
-			printf("scope_index[%u] first_word[%02x] hmagic[%02x][%u] hversion[%02x][%u]\n",
-			       o.function.scope_index,
-			       o.function.first_word,
-			       xdr.header->magic,
-			       xdr.header->magic,
-			       xdr.header->version,
-			       xdr.header->version);
-
-			printf("flags_word[%02x] arg_count[%u] (total: %lu of %lu)\n",
-			       o.function.flags_word,
-			       o.function.flags_word >> 16,
-			       reinterpret_cast<const uint8_t *>(&o) - buf,
-			       len);
-
-			printf("has_atom[%lu] STAR GENERATOR[%lu] lazy[%lu] singleton[%lu]\n",
-			       ulong(o.function.first_word & 0x01UL),
-			       ulong(o.function.first_word & 0x02UL),
-			       ulong(o.function.first_word & 0x04UL),
-			       ulong(o.function.first_word & 0x08UL));
-/*
-	        const auto pp(reinterpret_cast<const uint8_t *>(&o));
-			//const auto bar(reinterpret_cast<const struct vm::xdr::source *>(pp + 16));
-			//printf("start %u end %u lineno %u column %u\n", bar->start, bar->end, bar->lineno, bar->column);
-
-			const auto foo(reinterpret_cast<const struct vm::xdr::header *>(pp + 128));
-			printf("magic [%02x]\n", foo->magic);
-			printf("n_args [%u]\n", foo->n_args);
-			printf("n_block_locals [%u]\n", foo->n_block_locals);
-			printf("n_body_level_lexicals [%u]\n", foo->n_body_level_lexicals);
-			printf("n_vars [%u]\n", foo->n_vars);
-			printf("n_atoms [%u]\n", foo->n_atoms);
-			printf("n_objects [%u]\n", foo->n_objects);
-			printf("n_consts [%u]\n", foo->n_consts);
-			printf("length [%u]\n", foo->length);
-			printf("version [%u]\n", foo->version);
-			printf("fun_length [%u]\n", foo->fun_length);
-
-			const auto bar(reinterpret_cast<const uint32_t *>(pp));
-			for(size_t i(0); pp+(i*4) < buf+len; i += 4)
-			{
-				if(i % 8 == 0)
-					printf("\n");
-
-				printf("%08x %08x %08x %08x ", bar[i+0], bar[i+1], bar[i+2], bar[i+3]);
-			}
-			printf("\n");
-*/
-		}
-
-	});
 
 }
 catch(const std::exception &e)

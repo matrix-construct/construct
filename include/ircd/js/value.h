@@ -199,7 +199,7 @@ value::value(const char *const &s)
 
 inline
 value::value(pointer_t,
-                void *const &ptr)
+             void *const &ptr)
 :value::root::type{pointer_value(ptr)}
 {
 }

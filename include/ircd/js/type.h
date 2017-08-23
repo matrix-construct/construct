@@ -54,10 +54,10 @@ type(const JSType &t)
 		case JSTYPE_OBJECT:       return jstype::OBJECT;
 		case JSTYPE_FUNCTION:     return jstype::FUNCTION;
 		case JSTYPE_STRING:       return jstype::STRING;
+		case JSTYPE_SYMBOL:       return jstype::SYMBOL;
 		case JSTYPE_NUMBER:       return jstype::VALUE;
 		case JSTYPE_BOOLEAN:      return jstype::VALUE;
 		case JSTYPE_NULL:         return jstype::VALUE;
-		case JSTYPE_SYMBOL:       return jstype::SYMBOL;
 		case JSTYPE_LIMIT:        return jstype::VALUE;
 		default:                  return jstype::VALUE;
 	}
