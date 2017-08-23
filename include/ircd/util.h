@@ -198,7 +198,7 @@ typename std::enable_if<(i > 0), void>::type
 rfor_each(const std::tuple<args...> &t,
           func&& f)
 {
-	f(std::get<i - i>(t));
+	f(std::get<i - 1>(t));
 	rfor_each<i - 1>(t, std::forward<func>(f));
 }
 
@@ -210,7 +210,7 @@ typename std::enable_if<(i > 0), void>::type
 rfor_each(std::tuple<args...> &t,
           func&& f)
 {
-	f(std::get<i - i>(t));
+	f(std::get<i - 1>(t));
 	rfor_each<i - 1>(t, std::forward<func>(f));
 }
 
@@ -222,7 +222,7 @@ typename std::enable_if<(i == -1), void>::type
 rfor_each(const std::tuple<args...> &t,
           func&& f)
 {
-	constexpr const auto size
+	constexpr const ssize_t size
 	{
 		std::tuple_size<std::tuple<args...>>::value
 	};
@@ -238,7 +238,7 @@ typename std::enable_if<(i == -1), void>::type
 rfor_each(std::tuple<args...> &t,
           func&& f)
 {
-	constexpr const auto size
+	constexpr const ssize_t size
 	{
 		std::tuple_size<std::tuple<args...>>::value
 	};
@@ -280,7 +280,8 @@ typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::
 until(std::tuple<args...> &t,
       func&& f)
 {
-	return f(std::get<i>(t))? until<i+1>(t, std::forward<func>(f)) : false;
+	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
+	return f(static_cast<value_type &>(std::get<i>(t)))? until<i+1>(t, f) : false;
 }
 
 template<size_t i = 0,
@@ -291,9 +292,9 @@ typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::
 until(const std::tuple<args...> &t,
       func&& f)
 {
-	return f(std::get<i>(t))? until<i+1>(t, std::forward<func>(f)) : false;
+	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
+	return f(static_cast<const value_type &>(std::get<i>(t)))? until<i+1>(t, f) : false;
 }
-
 
 //
 // Circuits for reverse iteration of a tuple
@@ -330,7 +331,7 @@ typename std::enable_if<(i > 0), bool>::type
 runtil(const std::tuple<args...> &t,
        func&& f)
 {
-	return f(std::get<i - i>(t))? runtil<i - 1>(t, std::forward<func>(f)) : false;
+	return f(std::get<i - 1>(t))? runtil<i - 1>(t, f) : false;
 }
 
 template<ssize_t i,
@@ -341,7 +342,7 @@ typename std::enable_if<(i > 0), bool>::type
 runtil(std::tuple<args...> &t,
        func&& f)
 {
-	return f(std::get<i - i>(t))? runtil<i - 1>(t, std::forward<func>(f)) : false;
+	return f(std::get<i - 1>(t))? runtil<i - 1>(t, f) : false;
 }
 
 template<ssize_t i = -1,
@@ -395,7 +396,6 @@ for_each(const std::function<void (const Enum &)> &func)
     for(size_t i(0); i < num_of<Enum>(); ++i)
         func(static_cast<Enum>(i));
 }
-
 
 /**
  * flag-enum utilities
