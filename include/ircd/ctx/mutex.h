@@ -25,6 +25,11 @@
 namespace ircd {
 namespace ctx  {
 
+/**
+ * The mutex only allows one context to lock it and continue,
+ * additional contexts are queued. This can be used with std::
+ * locking concepts.
+ */
 class mutex
 {
 	bool m;

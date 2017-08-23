@@ -30,6 +30,10 @@ enum class cv_status
 	no_timeout, timeout
 };
 
+/**
+ * a dock is a condition variable which has no requirement for locking
+ * because the context system does not require mutual exclusion.
+ */
 class dock
 {
 	std::deque<ctx *> q;

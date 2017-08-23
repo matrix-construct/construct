@@ -802,6 +802,7 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 			eptr = std::current_exception();
 		}
 
+		// To wake the context on the IRCd thread we give it the kick
 		strand(*context, kick);
 	});
 
