@@ -23,11 +23,6 @@
 
 namespace ircd {
 
-const size_t DEFAULT_STACK_SIZE
-{
-	1_MiB  // can be optimized
-};
-
 struct listener::acceptor
 {
 	using error_code = boost::system::error_code;
@@ -99,7 +94,7 @@ try
 }
 ,backlog
 {
-	opts.get<size_t>("backlog", asio::socket_base::max_connections)
+	opts.get<size_t>("backlog", asio::socket_base::max_connections - 2)
 }
 ,ssl
 {
@@ -184,10 +179,25 @@ noexcept try
 	          std::string(*this),
 	          string(sock->remote()));
 
-	static const auto handshake_type(socket::handshake_type::server);
-	auto handshake(std::bind(&acceptor::handshake, this, ph::_1, sock));
+/*
+	static const asio::socket_base::keep_alive keep_alive(true);
+	static const asio::socket_base::linger linger(true, 30);
+	sock->sd.set_option(keep_alive);
+	sock->sd.set_option(linger);
+	sock->sd.non_blocking(true);
+*/
+
+	static const auto handshake_type
+	{
+		socket::handshake_type::server
+	};
+
+	auto handshake
+	{
+		std::bind(&acceptor::handshake, this, ph::_1, sock)
+	};
+
 	sock->ssl.async_handshake(handshake_type, handshake);
-	next();
 }
 catch(const std::exception &e)
 {
@@ -229,6 +239,7 @@ noexcept try
 	          string(sock->remote()));
 
 	add_client(sock);
+	next();
 }
 catch(const std::exception &e)
 {
@@ -266,8 +277,12 @@ ircd::listener::acceptor::configure(const json::object &opts)
 	ssl.set_options
 	(
 		ssl.default_workarounds
-		// | ssl.no_sslv2
-		// | ssl.single_dh_use
+		//| ssl.no_tlsv1
+		//| ssl.no_tlsv1_1
+		| ssl.no_tlsv1_2
+		//| ssl.no_sslv2
+		| ssl.no_sslv3
+		//| ssl.single_dh_use
 	);
 
 	//TODO: XXX
