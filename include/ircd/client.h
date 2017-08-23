@@ -35,6 +35,7 @@ IRCD_EXCEPTION(client_error, disconnected)
 
 struct socket;
 struct client
+:std::enable_shared_from_this<client>
 {
 	struct init;
 
