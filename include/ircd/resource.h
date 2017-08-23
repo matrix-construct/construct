@@ -27,32 +27,44 @@ namespace ircd {
 struct resource
 {
 	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, not_found)
-	IRCD_EXCEPTION(error, already_exists)
 
-	struct member;
 	struct method;
 	struct request;
 	struct response;
 
-	static std::map<string_view, resource *> resources;
+	enum flag
+	{
+		DIRECTORY  = 0x01,
+	};
 
-	const char *const name;
-	const char *const description;
+	struct opts
+	{
+		flag flags{flag(0)};
+		string_view description;
+	};
+
+	static std::map<string_view, resource *, iless> resources;
+	static std::map<std::string, client *, std::less<>> tokens; //TODO: XXX
+
+	string_view path;
+	string_view description;
+	flag flags;
 	std::map<string_view, method *> methods;
+	unique_const_iterator<decltype(resources)> resources_it;
 
-  protected:
-	decltype(resources)::const_iterator resources_it;
-
-	void call_method(client &, method &, resource::request &);
+  private:
+	virtual void handle_request(client &, method &, resource::request &);
 
   public:
+	method &operator[](const string_view &path);
 	void operator()(client &, parse::capstan &, const http::request::head &);
 
-	resource(const char *const &name,
-	         const char *const &description = "");
-
+	resource(const string_view &path, const string_view &description, opts = {{}});
+	resource(const string_view &path, opts = {{}});
+	resource() = default;
 	virtual ~resource() noexcept;
+
+	static resource &find(string_view path);
 };
 
 struct resource::request
@@ -60,54 +72,46 @@ struct resource::request
 {
 	const http::request::head &head;
 	http::request::content &content;
+	http::query::string query;
 
-	request(const http::request::head &head, http::request::content &content)
-	:json::doc{content}
-	,head{head}
-	,content{content}
-	{}
+	request(const http::request::head &head, http::request::content &content, http::query::string query);
 };
 
 struct resource::response
 {
-	response(client &, const json::doc &doc, const http::code & = http::OK);
+	response(client &, const string_view &str, const string_view &ct = "text/plain; charset=utf8", const http::code & = http::OK);
+	response(client &, const json::doc &doc = "{}", const http::code & = http::OK);
 	response(client &, const json::obj &obj, const http::code & = http::OK);
+	response(client &, const http::code &, const json::obj &obj);
 	response() = default;
-	~response() noexcept;
 };
 
 struct resource::method
-:std::function<response (client &, request &)>
 {
+	enum flag
+	{
+		REQUIRES_AUTH  = 0x01,
+		RATE_LIMITED   = 0x02,
+	};
+
+	struct opts
+	{
+		flag flags{flag(0)};
+	};
+
 	using handler = std::function<response (client &, request &)>;
 
-  protected:
-  public:
-	const char *const name;
+	string_view name;
 	struct resource *resource;
-	decltype(resource::methods)::const_iterator methods_it;
-	std::map<string_view, member *> members;
+	handler function;
+	flag flags;
+	unique_const_iterator<decltype(resource::methods)> methods_it;
 
   public:
-	method(struct resource &,
-	       const char *const &name,
-	       const handler &,
-	       const std::initializer_list<member *> & = {});
+	virtual response operator()(client &, request &);
 
-	~method() noexcept;
-};
-
-struct resource::member
-{
-	IRCD_EXCEPTION(resource::error, error)
-
-	using validator = std::function<void (const string_view &)>;
-
-	const char *name;
-	enum json::type type;
-	validator valid;
-
-	member(const char *const &name, const enum json::type &, validator = {});
+	method(struct resource &, const string_view &name, const handler &, opts = {{}});
+	virtual ~method() noexcept;
 };
 
 } // namespace ircd
