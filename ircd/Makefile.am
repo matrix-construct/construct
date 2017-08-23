@@ -39,14 +39,12 @@ libircd_la_SOURCES =   \
 	ctx.cc             \
 	socket.cc          \
 	client.cc          \
-	vm.cc              \
 	fmt.cc             \
 	db.cc              \
 	locale.cc          \
 	http.cc            \
 	json.cc            \
 	parse.cc           \
-	conf.cc            \
 	listen.cc          \
 	matrix.cc
 
