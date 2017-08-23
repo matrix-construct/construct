@@ -17,6 +17,7 @@ It implements communication protocols for Matrix and IRC.
 	* `--enable-debug`
 	* `--with-included-boost[=shared]`
 	* `--with-included-rocksdb[=shared]`
+	* `--with-included-js[=shared]`
 
 ## Platforms
 
@@ -44,3 +45,13 @@ It implements communication protocols for Matrix and IRC.
 
  * Charybdis's GIT repository depot can be browsed over the Internet at the following address:
 	https://github.com/charybdis-ircd/charybdis
+
+## Developers
+
+### Style
+
+#### Misc
+
+	* When using a `switch` over an `enum` type, put what would be the `default` case after/outside
+	of the `switch` unless the situation specifically calls for one. We use -Wswitch so changes to
+	the enum will provide a good warning to update any `switch`.

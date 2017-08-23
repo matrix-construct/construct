@@ -86,7 +86,7 @@ info::credits
 	"Copyright (c) 1988-1991 University of Oulu, Computing Center",
 	"Copyright (c) 1996-2001 Hybrid Development Team",
 	"Copyright (c) 2002-2009 ircd-ratbox Development Team",
-	"Copyright (c) 2005-2016 charybdis development team",
+	"Copyright (c) 2005-2017 charybdis development team",
 	" ",
 	"This program is free software; you can redistribute it and/or",
 	"modify it under the terms of the GNU General Public License as",
