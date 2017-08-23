@@ -24,25 +24,70 @@
 
 namespace ircd {
 
-struct conf
-{
-	template<class T> struct item
-	{
-		const string_view path;
-		const T def;
-
-		operator const T &() const
-		{
-			return def;
-		}
-
-		item(const string_view &path,
-		     T&& def)
-		:path{path}
-		,def{std::forward<T>(def)}
-		{
-		}
-	};
-};
+extern struct conf conf;
 
 } // namespace ircd
+
+struct ircd::conf
+{
+	struct init;
+	struct item_base;
+	template<class T> struct item;
+
+	std::map<std::string, item_base> items;
+};
+
+struct ircd::conf::item_base
+{
+	std::string buf;
+};
+
+template<class T>
+struct ircd::conf::item
+:item_base
+{
+	operator const T &() const
+	{
+		assert(buf.size() == sizeof(T));
+		return reinterpret_cast<T *>(buf.data());
+	};
+
+	operator T &()
+	{
+		assert(buf.size() == sizeof(T));
+		return reinterpret_cast<T *>(buf.data());
+	};
+
+	item(T t)
+	:item_base{[&t]
+	{
+		std::string ret{sizeof(T), char{}};
+		*reinterpret_cast<T *>(ret.data()) = std::move(t);
+	}()}
+	{}
+};
+
+namespace ircd {
+
+template<> struct conf::item<std::string>;
+
+}
+
+template<>
+struct ircd::conf::item<std::string>
+:item_base
+{
+	operator const std::string &() const
+	{
+		return buf;
+	};
+
+	operator std::string &()
+	{
+		return buf;
+	};
+
+	item(std::string string)
+	:item_base{std::move(string)}
+	{}
+};

@@ -174,7 +174,6 @@ struct line {};
 #include "fmt.h"
 #include "fs.h"
 #include "ctx.h"
-#include "conf.h"
 #include "resource.h"
 #include "vm.h"
 #include "logger.h"
@@ -182,3 +181,4 @@ struct line {};
 #include "js.h"
 #include "client.h"
 #include "mods.h"
+#include "conf.h"

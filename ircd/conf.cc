@@ -19,6 +19,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct ircd::conf ircd::conf {};
+
 namespace ircd {
 
 } // namespace ircd
