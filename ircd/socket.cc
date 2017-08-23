@@ -207,12 +207,15 @@ ircd::socket::operator()(const milliseconds &timeout,
 
 		if(unlikely(wp.expired()))
 		{
-			log::warning("socket(%p): belated callback to handler...", (const void *)this);
+			log::warning("socket(%p): belated callback to handler...", this);
 			return;
 		}
 
 		if(!handle_ready(ec))
+		{
+			log::debug("socket(%p): %s", this, ec.message());
 			return;
+		}
 
 		handler(ec);
 	});
@@ -234,9 +237,6 @@ ircd::socket::handle_ready(const error_code &ec)
 noexcept
 {
  	using namespace boost::system::errc;
-
-	if(ec)
-		log::debug("socket(%p): %s", (const void *)this, ec.message().c_str());
 
 	if(!timedout)
 		timer.cancel();
