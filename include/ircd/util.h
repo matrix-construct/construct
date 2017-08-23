@@ -864,6 +864,22 @@ struct string_view
 	:std::string_view{begin, size_t(std::distance(begin, end))}
 	{}
 
+	// (non-standard) our array based constructor
+	template<size_t SIZE>
+	string_view(const std::array<char, SIZE> &array)
+	:string_view
+	{
+		array.data(), std::find(array.begin(), array.end(), '\0')
+	}{}
+
+	// (non-standard) our buffer based constructor
+	template<size_t SIZE>
+	string_view(const char (&buf)[SIZE])
+	:string_view
+	{
+		buf, std::find(buf, buf + SIZE, '\0')
+	}{}
+
 	// Required due to current instability in stdlib
 	//string_view(const std::experimental::string_view &esv)
 	//:std::string_view{esv}
