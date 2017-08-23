@@ -31,11 +31,10 @@ IRCD_EXCEPTION(error, print_error);
 IRCD_EXCEPTION(error, type_error);
 IRCD_EXCEPTION(error, not_found);
 
-struct doc;
-struct arr;
-
-struct val;
-struct obj;
+struct array;
+struct object;
+struct value;
+struct index;
 
 enum type
 {
@@ -51,8 +50,8 @@ enum type type(const string_view &, std::nothrow_t);
 } // namespace json
 } // namespace ircd
 
-#include "json/arr.h"
-#include "json/doc.h"
-#include "json/val.h"
-#include "json/obj.h"
-#include "json/map.h"
+#include "json/array.h"
+#include "json/object.h"
+#include "json/value.h"
+#include "json/index.h"
+// #include "json/parse.h"

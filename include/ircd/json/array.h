@@ -20,12 +20,12 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JSON_ARR_H
+#define HAVE_IRCD_JSON_ARRAY_H
 
 namespace ircd {
 namespace json {
 
-struct arr
+struct array
 :string_view
 {
 	struct const_iterator;
@@ -51,12 +51,12 @@ struct arr
 
 	using string_view::string_view;
 
-	friend arr serialize(const arr &, char *&buf, char *const &stop);
-	friend size_t print(char *const &buf, const size_t &max, const arr &);
-	friend std::ostream &operator<<(std::ostream &, const arr &);
+	friend array serialize(const array &, char *&buf, char *const &stop);
+	friend size_t print(char *const &buf, const size_t &max, const array &);
+	friend std::ostream &operator<<(std::ostream &, const array &);
 };
 
-struct arr::const_iterator
+struct array::const_iterator
 {
 	using value_type = const string_view;
 	using pointer = value_type *;
@@ -65,7 +65,7 @@ struct arr::const_iterator
 	using iterator_category = std::forward_iterator_tag;
 
   protected:
-	friend class arr;
+	friend class array;
 
 	const char *start;
 	const char *stop;
@@ -94,7 +94,7 @@ struct arr::const_iterator
 } // namespace ircd
 
 inline ircd::string_view
-ircd::json::arr::operator[](const size_t &i)
+ircd::json::array::operator[](const size_t &i)
 const
 {
 	const auto it(find(i));
@@ -103,7 +103,7 @@ const
 
 template<class T>
 T
-ircd::json::arr::at(const size_t &i)
+ircd::json::array::at(const size_t &i)
 const try
 {
 	return lex_cast<T>(at(i));
@@ -114,15 +114,15 @@ catch(const bad_lex_cast &e)
 }
 
 inline ircd::string_view
-ircd::json::arr::at(const size_t &i)
+ircd::json::array::at(const size_t &i)
 const
 {
 	const auto it(find(i));
 	return likely(it != end())? *it : throw not_found("indice %zu", i);
 }
 
-inline ircd::json::arr::const_iterator
-ircd::json::arr::find(size_t i)
+inline ircd::json::array::const_iterator
+ircd::json::array::find(size_t i)
 const
 {
 	auto it(begin());
@@ -131,44 +131,44 @@ const
 }
 
 inline size_t
-ircd::json::arr::count()
+ircd::json::array::count()
 const
 {
 	return std::distance(begin(), end());
 }
 
 inline bool
-ircd::json::operator==(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator==(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start == b.start;
 }
 
 inline bool
-ircd::json::operator!=(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator!=(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start != b.start;
 }
 
 inline bool
-ircd::json::operator<=(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator<=(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start <= b.start;
 }
 
 inline bool
-ircd::json::operator>=(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator>=(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start >= b.start;
 }
 
 inline bool
-ircd::json::operator<(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator<(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start < b.start;
 }
 
 inline bool
-ircd::json::operator>(const arr::const_iterator &a, const arr::const_iterator &b)
+ircd::json::operator>(const array::const_iterator &a, const array::const_iterator &b)
 {
 	return a.start > b.start;
 }

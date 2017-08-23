@@ -20,357 +20,276 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JSON_REFLECT_H
-
-#define IRCD_MEMBERS(_name_, _vals_...)                   \
-static constexpr const char *_member_(const size_t i)     \
-{                                                         \
-    constexpr const char *const val[]                     \
-    {                                                     \
-        _vals_                                            \
-    };                                                    \
-                                                          \
-    return val[i];                                        \
-}
+#define HAVE_IRCD_JSON_OBJECT_H
 
 namespace ircd {
 namespace json {
 
-struct basic_object
-{
-};
-
-template<class... T>
 struct object
-:basic_object
-,std::tuple<T...>
+:string_view
 {
-	using tuple_type = std::tuple<T...>;
+	struct member;
+	struct const_iterator;
 
-	static constexpr size_t size()
-	{
-		return std::tuple_size<tuple_type>();
-	}
+	using key_type = string_view;
+	using mapped_type = string_view;
+	using value_type = const member;
+	using pointer = value_type *;
+	using reference = value_type &;
+	using iterator = const_iterator;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
+	using key_compare = std::less<member>;
 
-	using std::tuple<T...>::tuple;
+	const_iterator end() const;
+	const_iterator begin() const;
+
+	bool has(const string_view &name) const;
+	const_iterator find(const string_view &name) const;
+	size_t count() const;
+
+	string_view at(const string_view &name) const;
+	template<class T> T at(const string_view &name) const;
+	string_view operator[](const string_view &name) const;
+	template<class T = string_view> T get(const string_view &name, const T &def = T()) const;
+	string_view get(const string_view &name, const string_view &def = {}) const;
+
+	explicit operator std::string() const;
+
+	using string_view::string_view;
+
+	friend object serialize(const object &, char *&buf, char *const &stop);
+	friend size_t print(char *const &buf, const size_t &max, const object &);
+	friend std::ostream &operator<<(std::ostream &, const object &);
 };
 
-template<class object>
-using tuple_type = typename object::tuple_type;
-
-template<class object>
-using tuple_size = std::tuple_size<tuple_type<object>>;
-
-template<size_t i,
-         class object>
-using tuple_element = typename std::tuple_element<i, tuple_type<object>>::type;
-
-template<class object>
-constexpr auto &
-tuple(const object &o)
+struct object::member
+:std::pair<string_view, string_view>
 {
-	return static_cast<const typename object::tuple_type &>(o);
-}
+	member(const string_view &first = {}, const string_view &second = {})
+	:std::pair<string_view, string_view>{first, second}
+	{}
 
-template<class object>
-constexpr auto &
-tuple(object &o)
+	friend bool operator==(const member &, const member &);
+	friend bool operator!=(const member &, const member &);
+	friend bool operator<=(const member &, const member &);
+	friend bool operator>=(const member &, const member &);
+	friend bool operator<(const member &, const member &);
+	friend bool operator>(const member &, const member &);
+
+	friend std::ostream &operator<<(std::ostream &, const object::member &);
+};
+
+struct object::const_iterator
 {
-	return static_cast<typename object::tuple_type &>(o);
-}
+	using value_type = const member;
+	using pointer = value_type *;
+	using reference = value_type &;
+	using difference_type = size_t;
+	using iterator_category = std::forward_iterator_tag;
 
-template<class... T>
-constexpr auto
-size(const object<T...> &t)
-{
-	return t.size();
-}
+  protected:
+	friend class object;
 
-template<size_t i,
-         class... T>
-constexpr auto &
-get(const object<T...> &t)
-{
-	return std::get<i>(t);
-}
+	const char *start;
+	const char *stop;
+	member state;
 
-template<size_t i,
-         class... T>
-constexpr auto &
-get(object<T...> &t)
-{
-	return std::get<i>(t);
-}
+	const_iterator(const char *const &start, const char *const &stop)
+	:start{start}
+	,stop{stop}
+	{}
 
-template<size_t i,
-         class object>
-constexpr const char *
-reflect(const object &t)
-{
-	return t._member_(i);
-}
+  public:
+	value_type *operator->() const               { return &state;                                  }
+	value_type &operator*() const                { return *operator->();                           }
 
-template<size_t i,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<object>::value, void>::type
-for_each(const object &t,
-         function&& f)
-{}
+	const_iterator &operator++();
 
-template<size_t i,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<object>::value, void>::type
-for_each(object &t,
-         function&& f)
-{}
-
-template<size_t i = 0,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, void>::type
-for_each(const object &t,
-         function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
-	for_each<i + 1>(t, std::forward<function>(f));
-}
-
-template<size_t i = 0,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, void>::type
-for_each(object &t,
-         function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
-	for_each<i + 1>(t, std::forward<function>(f));
-}
-
-template<class object,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), void>::type
-rfor_each(const object &t,
-          function&& f)
-{}
-
-template<class object,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), void>::type
-rfor_each(object &t,
-          function&& f)
-{}
-
-template<class object,
-         class function,
-         ssize_t i = tuple_size<object>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<object>(), void>::type
-rfor_each(const object &t,
-          function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
-	rfor_each<object, function, i - 1>(t, std::forward<function>(f));
-}
-
-template<class object,
-         class function,
-         ssize_t i = tuple_size<object>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<object>(), void>::type
-rfor_each(object &t,
-          function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
-	rfor_each<object, function, i - 1>(t, std::forward<function>(f));
-}
-
-template<size_t i,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<object>::value, bool>::type
-until(const object &t,
-      function&& f)
-{
-	return true;
-}
-
-template<size_t i,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<object>::value, bool>::type
-until(object &t,
-      function&& f)
-{
-	return true;
-}
-
-template<size_t i = 0,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, bool>::type
-until(const object &t,
-      function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	const auto &value(static_cast<const type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       until<i + 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<size_t i = 0,
-         class object,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, bool>::type
-until(object &t,
-      function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	auto &value(static_cast<type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       until<i + 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class object,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), bool>::type
-runtil(const object &t,
-       function&& f)
-{
-	return true;
-}
-
-template<class object,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), bool>::type
-runtil(object &t,
-       function&& f)
-{
-	return true;
-}
-
-template<class object,
-         class function,
-         ssize_t i = tuple_size<object>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, bool>::type
-runtil(const object &t,
-       function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	const auto &value(static_cast<const type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       runtil<object, function, i - 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class object,
-         class function,
-         ssize_t i = tuple_size<object>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<object>::value, bool>::type
-runtil(object &t,
-       function&& f)
-{
-	using type = tuple_element<i, object>;
-
-	auto &value(static_cast<type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       runtil<object, function, i - 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class object>
-constexpr size_t
-index(object&& t,
-      const string_view &name)
-{
-	size_t ret(0);
-	const auto res(until(t, [&ret, &name]
-	(const string_view &key, auto&& member)
-	{
-		if(key == name)
-			return false;
-
-		++ret;
-		return true;
-	}));
-
-	return !res? ret : throw std::out_of_range("Object has no member with that name");
-}
-
-template<class object,
-         class function>
-constexpr bool
-at(object&& t,
-   const string_view &name,
-   function&& f)
-{
-	return until(t, [&name, &f]
-	(const string_view &key, auto&& member)
-	{
-		if(key != name)
-			return true;
-
-		f(member);
-		return false;
-	});
-}
-
-template<class object>
-constexpr void
-keys(object&& t,
-     const std::function<void (string_view)> &f)
-{
-	for_each(t, [&f]
-	(const char *const key, auto&& member)
-	{
-		f(key);
-	});
-}
-
-template<class object,
-         class function>
-constexpr void
-values(object&& t,
-       function&& f)
-{
-	for_each(t, [&f]
-	(const char *const key, auto&& member)
-	{
-		f(member);
-	});
-}
+	friend bool operator==(const const_iterator &, const const_iterator &);
+	friend bool operator!=(const const_iterator &, const const_iterator &);
+	friend bool operator<=(const const_iterator &, const const_iterator &);
+	friend bool operator>=(const const_iterator &, const const_iterator &);
+	friend bool operator<(const const_iterator &, const const_iterator &);
+	friend bool operator>(const const_iterator &, const const_iterator &);
+};
 
 } // namespace json
 } // namespace ircd
+
+inline ircd::string_view
+ircd::json::object::get(const string_view &name,
+                     const string_view &def)
+const
+{
+	const string_view sv(operator[](name));
+	return !sv.empty()? sv : def;
+}
+
+template<class T>
+T
+ircd::json::object::get(const string_view &name,
+                     const T &def)
+const try
+{
+	const string_view sv(operator[](name));
+	return !sv.empty()? lex_cast<T>(sv) : def;
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("'%s' must cast to type %s", name, typeid(T).name());
+}
+
+inline ircd::string_view
+ircd::json::object::operator[](const string_view &name)
+const
+{
+	const auto p(split(name, '.'));
+	const auto it(find(p.first));
+	if(it == end())
+		return {};
+
+	if(!p.second.empty())
+	{
+		const object d(it->second);
+		return d[p.second];
+	}
+
+	return it->second;
+}
+
+template<class T>
+T
+ircd::json::object::at(const string_view &name)
+const try
+{
+	return lex_cast<T>(at(name));
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("'%s' must cast to type %s", name, typeid(T).name());
+}
+
+inline ircd::string_view
+ircd::json::object::at(const string_view &name)
+const
+{
+	const auto p(split(name, '.'));
+	const auto it(find(p.first));
+	if(unlikely(it == end()))
+		throw not_found("'%s'", p.first);
+
+	if(!p.second.empty())
+	{
+		const object d(it->second);
+		return d.at(p.second);
+	}
+
+	return it->second;
+}
+
+inline ircd::json::object::const_iterator
+ircd::json::object::find(const string_view &name)
+const
+{
+	return std::find_if(begin(), end(), [&name]
+	(const auto &member)
+	{
+		return member.first == name;
+	});
+}
+
+inline size_t
+ircd::json::object::count()
+const
+{
+	return std::distance(begin(), end());
+}
+
+inline bool
+ircd::json::object::has(const string_view &name)
+const
+{
+	const auto p(split(name, '.'));
+	const auto it(find(p.first));
+	if(it == end())
+		return false;
+
+	if(p.second.empty())
+		return true;
+
+	const object d(it->second);
+	return d.has(p.second);
+}
+
+inline bool
+ircd::json::operator==(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start == b.start;
+}
+
+inline bool
+ircd::json::operator!=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start != b.start;
+}
+
+inline bool
+ircd::json::operator<=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start <= b.start;
+}
+
+inline bool
+ircd::json::operator>=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start >= b.start;
+}
+
+inline bool
+ircd::json::operator<(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start < b.start;
+}
+
+inline bool
+ircd::json::operator>(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start > b.start;
+}
+
+inline bool
+ircd::json::operator==(const object::member &a, const object::member &b)
+{
+	return a.first == b.first;
+}
+
+inline bool
+ircd::json::operator!=(const object::member &a, const object::member &b)
+{
+	return a.first != b.first;
+}
+
+inline bool
+ircd::json::operator<=(const object::member &a, const object::member &b)
+{
+	return a.first <= b.first;
+}
+
+inline bool
+ircd::json::operator>=(const object::member &a, const object::member &b)
+{
+	return a.first >= b.first;
+}
+
+inline bool
+ircd::json::operator<(const object::member &a, const object::member &b)
+{
+	return a.first < b.first;
+}
+
+inline bool
+ircd::json::operator>(const object::member &a, const object::member &b)
+{
+	return a.first > b.first;
+}

@@ -36,7 +36,7 @@ try
 {
 	return resource::response
 	{
-		client, json::obj
+		client, json::index
 		{
 			{    }
 		}

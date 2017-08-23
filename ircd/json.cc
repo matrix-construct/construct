@@ -25,9 +25,9 @@
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-    ircd::json::doc::member,
-    ( decltype(ircd::json::doc::member::first),   first )
-    ( decltype(ircd::json::doc::member::second),  second )
+    ircd::json::object::member,
+    ( decltype(ircd::json::object::member::first),   first )
+    ( decltype(ircd::json::object::member::second),  second )
 )
 
 namespace ircd {
@@ -81,7 +81,7 @@ struct input
 	rule<> ws                          { *(WS)                                ,"whitespace monoid" };
 	rule<> wsp                         { +(WS)                             ,"whitespace semigroup" };
 
-	// structural 
+	// structural
 	rule<> object_begin                { lit('{')                                  ,"object begin" };
 	rule<> object_end                  { lit('}')                                    ,"object end" };
 	rule<> array_begin                 { lit('[')                                   ,"array begin" };
@@ -121,7 +121,7 @@ struct input
 		,"value"
 	};
 
-	rule<doc::member> member
+	rule<object::member> member
 	{
 		name >> ws >> name_sep >> ws >> value
 		,"member"
@@ -164,7 +164,7 @@ struct output
 	rule<> ws                          { *(WS)                                ,"whitespace monoid" };
 	rule<> wsp                         { +(WS)                             ,"whitespace semigroup" };
 
-	// structural 
+	// structural
 	rule<> object_begin                { lit('{')                                  ,"object begin" };
 	rule<> object_end                  { lit('}')                                    ,"object end" };
 	rule<> array_begin                 { lit('[')                                  ,"array begin"  };
@@ -176,25 +176,38 @@ struct output
 	rule<string_view> lit_true         { karma::string("true")                     ,"literal true" };
 	rule<string_view> lit_false        { karma::string("false")                   ,"literal false" };
 	rule<string_view> lit_null         { karma::string("null")                     ,"literal null" };
-
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
-
 	rule<string_view> chars            { *(~char_('"'))                              ,"characters" };
 	rule<string_view> string           { quote << chars << quote                         ,"string" };
-
 	rule<string_view> number           { double_                                         ,"number" };
-
 	rule<string_view> name             { quote << +(~char_('"')) << quote                  ,"name" };
 	rule<string_view> value            { rule<string_view>{}  /* subclass implemented */  ,"value" };
-	rule<const doc::member &> member   { name << name_sep << value                       ,"member" };
-
 	rule<const string_view &> elem     { value                                          ,"element" };
-	rule<const json::arr &> elems      { -(value % value_sep)                          ,"elements" };
-	rule<const json::arr &> array      { array_begin << elems << array_end                ,"array" };
+	rule<const json::array &> elems    { -(value % value_sep)                          ,"elements" };
+	rule<const json::array &> array
+	{
+		array_begin << elems << array_end
+		,"array"
+	};
 
-	rule<const json::doc &> members    { -(member % value_sep)                          ,"members" };
-	rule<const json::doc &> document   { object_begin << members << object_end         ,"document" };
+	rule<const json::object::member &> member
+	{
+		name << name_sep << value
+		,"member"
+	};
+
+	rule<const json::object &> members
+	{
+		-(member % value_sep)
+		,"members"
+	};
+
+	rule<const json::object &> object
+	{
+		object_begin << members << object_end
+		,"object"
+	};
 
 	output()
 	:output::base_type{rule<>{}}
@@ -235,17 +248,17 @@ struct ostreamer
 }
 const ostreamer;
 
-size_t print(char *const &buf, const size_t &max, const arr &);
-size_t print(char *const &buf, const size_t &max, const doc &);
-size_t print(char *const &buf, const size_t &max, const obj &);
-arr serialize(const arr &, char *&start, char *const &stop);
-doc serialize(const doc &, char *&start, char *const &stop);
-doc serialize(const obj &, char *&start, char *const &stop);
+size_t print(char *const &buf, const size_t &max, const array &);
+size_t print(char *const &buf, const size_t &max, const object &);
+size_t print(char *const &buf, const size_t &max, const index &);
+array serialize(const array &, char *&start, char *const &stop);
+object serialize(const object &, char *&start, char *const &stop);
+object serialize(const index &, char *&start, char *const &stop);
 
-std::ostream &operator<<(std::ostream &, const arr &);
-std::ostream &operator<<(std::ostream &, const doc::member &);
-std::ostream &operator<<(std::ostream &, const doc &);
-std::ostream &operator<<(std::ostream &, const obj &);
+std::ostream &operator<<(std::ostream &, const array &);
+std::ostream &operator<<(std::ostream &, const object::member &);
+std::ostream &operator<<(std::ostream &, const object &);
+std::ostream &operator<<(std::ostream &, const index &);
 
 } // namespace json
 } // namespace ircd
@@ -266,7 +279,7 @@ failed_to_stream_object()
 	throw print_error("The JSON generator failed to stream object");
 }
 
-}
+} // namespace <anonymous>
 } // namespace json
 } // namespace ircd
 
@@ -277,9 +290,9 @@ std::string
 merge_operator(const string_view &key,
                const std::pair<string_view, string_view> &delta)
 {
-	ircd::json::obj obj{delta.first};
-	obj += delta.second;
-	return obj;
+	ircd::json::index index{delta.first};
+	index += delta.second;
+	return index;
 }
 
 } // namespace db
@@ -292,14 +305,14 @@ ircd::json::printer::printer()
 		const auto recurse_array([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const arr r(serialize(json::arr(a), out, out + a.size()));
+			const auto r(serialize(json::array(a), out, out + a.size()));
 			a.resize(size_t(out - r.data()));
 		});
 
-		const auto recurse_document([&]
+		const auto recurse_object([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const doc d(serialize(json::doc(a), out, out + a.size()));
+			const auto d(serialize(json::object(a), out, out + a.size()));
 			a.resize(size_t(out - d.data()));
 		});
 
@@ -311,7 +324,7 @@ ircd::json::printer::printer()
 
 		if(likely(!a.empty())) switch(a.front())
 		{
-			case '{':  recurse_document();  break;
+			case '{':  recurse_object();    break;
 			case '[':  recurse_array();     break;
 			case '"':                       break;
 			case '0':                       break;
@@ -374,7 +387,7 @@ const
 size_t
 ircd::json::print(char *const &buf,
                   const size_t &max,
-                  const obj &obj)
+                  const index &obj)
 {
 	if(unlikely(!max))
 		return 0;
@@ -385,65 +398,65 @@ ircd::json::print(char *const &buf,
 	return out - buf;
 }
 
-ircd::json::doc
-ircd::json::serialize(const obj &obj,
+ircd::json::object
+ircd::json::serialize(const index &obj,
                       char *&out,
                       char *const &stop)
 {
-	const auto print_string([&stop, &out](const val &val)
+	const auto print_string([&stop, &out](const value &value)
 	{
-		printer(out, stop, printer.string, string_view{val});
+		printer(out, stop, printer.string, string_view{value});
 	});
 
-	const auto print_literal([&stop, &out](const val &val)
+	const auto print_literal([&stop, &out](const value &value)
 	{
-		printer(out, stop, karma::string, string_view{val});
+		printer(out, stop, karma::string, string_view{value});
 	});
 
-	const auto print_object([&stop, &out](const val &val)
+	const auto print_object([&stop, &out](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			printer(out, stop, printer.document, string_view{val});
+			printer(out, stop, printer.object, string_view{value});
 			return;
 		}
 
-		assert(val.object);
-		serialize(*val.object, out, stop);
+		assert(value.object);
+		serialize(*value.object, out, stop);
 	});
 
-	const auto print_array([&stop, &out](const val &val)
+	const auto print_array([&stop, &out](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			printer(out, stop, printer.array, string_view{val});
+			printer(out, stop, printer.array, string_view{value});
 			return;
 		}
 
 		assert(0);
-		//assert(val.object);
-		//serialize(*val.object, out, stop);
+		//assert(value.object);
+		//serialize(*value.object, out, stop);
 	});
 
-	const auto print_number([&stop, &out](const val &val)
+	const auto print_number([&stop, &out](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			if(val.floats)
-				printer(out, stop, double_, string_view{val});
+			if(value.floats)
+				printer(out, stop, double_, string_view{value});
 			else
-				printer(out, stop, long_, string_view{val});
+				printer(out, stop, long_, string_view{value});
 
 			return;
 		}
 
-		if(val.floats)
-			printer(out, stop, double_, val.floating);
+		if(value.floats)
+			printer(out, stop, double_, value.floating);
 		else
-			printer(out, stop, long_, val.integer);
+			printer(out, stop, long_, value.integer);
 	});
 
-	const auto print_member([&](const obj::member &member)
+	const auto print_member([&](const index::member &member)
 	{
 		printer(out, stop, printer.name << printer.name_sep, member.first);
 
@@ -482,14 +495,14 @@ ircd::json::ostreamer::ostreamer()
 		const auto recurse_array([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const arr r(serialize(json::arr(a), out, out + a.size()));
+			const auto r(serialize(json::array(a), out, out + a.size()));
 			a.resize(size_t(out - r.data()));
 		});
 
-		const auto recurse_document([&]
+		const auto recurse_object([&]
 		{
 			char *out(const_cast<char *>(a.data()));
-			const doc d(serialize(json::doc(a), out, out + a.size()));
+			const auto d(serialize(json::object(a), out, out + a.size()));
 			a.resize(size_t(out - d.data()));
 		});
 
@@ -501,7 +514,7 @@ ircd::json::ostreamer::ostreamer()
 
 		if(likely(!a.empty())) switch(a.front())
 		{
-			case '{':  recurse_document();  break;
+			case '{':  recurse_object();    break;
 			case '[':  recurse_array();     break;
 			case '"':                       break;
 			case '0':                       break;
@@ -530,64 +543,64 @@ ircd::json::ostreamer::ostreamer()
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const obj &obj)
+ircd::json::operator<<(std::ostream &s, const index &obj)
 {
 	karma::ostream_iterator<char> osi(s);
 
-	const auto stream_string([&osi](const val &val)
+	const auto stream_string([&osi](const value &value)
 	{
-		karma::generate(osi, ostreamer.string, string_view{val});
+		karma::generate(osi, ostreamer.string, string_view{value});
 	});
 
-	const auto stream_literal([&osi](const val &val)
+	const auto stream_literal([&osi](const value &value)
 	{
-		karma::generate(osi, karma::string, string_view{val});
+		karma::generate(osi, karma::string, string_view{value});
 	});
 
-	const auto stream_object([&osi, &s](const val &val)
+	const auto stream_object([&osi, &s](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			karma::generate(osi, ostreamer.document, string_view{val});
+			karma::generate(osi, ostreamer.object, string_view{value});
 			return;
 		}
 
-		assert(val.object);
-		s << *val.object;
+		assert(value.object);
+		s << *value.object;
 	});
 
-	const auto stream_array([&osi](const val &val)
+	const auto stream_array([&osi](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			karma::generate(osi, ostreamer.array, string_view{val});
+			karma::generate(osi, ostreamer.array, string_view{value});
 			return;
 		}
 
 		assert(0);
-		//assert(val.object);
-		//s << *val.object;
+		//assert(value.object);
+		//s << *value.object;
 	});
 
-	const auto stream_number([&osi](const val &val)
+	const auto stream_number([&osi](const value &value)
 	{
-		if(val.serial)
+		if(value.serial)
 		{
-			if(val.floats)
-				karma::generate(osi, double_, string_view{val});
+			if(value.floats)
+				karma::generate(osi, double_, string_view{value});
 			else
-				karma::generate(osi, long_, string_view{val});
+				karma::generate(osi, long_, string_view{value});
 
 			return;
 		}
 
-		if(val.floats)
-			karma::generate(osi, double_, val.floating);
+		if(value.floats)
+			karma::generate(osi, double_, value.floating);
 		else
-			karma::generate(osi, long_, val.integer);
+			karma::generate(osi, long_, value.integer);
 	});
 
-	const auto stream_member([&](const obj::member &member)
+	const auto stream_member([&](const index::member &member)
 	{
 		karma::generate(osi, ostreamer.name << ostreamer.name_sep, string_view(member.first));
 
@@ -618,16 +631,16 @@ ircd::json::operator<<(std::ostream &s, const obj &obj)
 	return s;
 }
 
-ircd::json::obj
-ircd::json::operator+(const doc &left, const doc &right)
+ircd::json::index
+ircd::json::operator+(const object &left, const object &right)
 {
-	obj ret(left);
+	index ret(left);
 	ret += right;
 	return ret;
 }
 
-ircd::json::obj &
-ircd::json::operator+=(obj &left, const doc &right)
+ircd::json::index &
+ircd::json::operator+=(index &left, const object &right)
 {
 	for(const auto &b : right)
 	{
@@ -646,7 +659,7 @@ ircd::json::operator+=(obj &left, const doc &right)
 			if(deletion)   // prevents adding the empty indicator as the new key!
 				continue;
 
-			left.idx.emplace_back(obj::member{b});
+			left.idx.emplace_back(index::member{b});
 			continue;
 		}
 
@@ -656,20 +669,20 @@ ircd::json::operator+=(obj &left, const doc &right)
 			continue;
 		}
 
-		auto &a(const_cast<obj::member &>(*it));
+		auto &a(const_cast<index::member &>(*it));
 		switch(type(a.second))
 		{
 			default:
 			{
-				a = obj::member{b};
+				a = index::member{b};
 				continue;
 			}
 
 			// merge recursively
 			case OBJECT:
 			{
-				auto merged(std::make_unique<obj>(json::doc{a.second}));
-				*merged += json::doc{b.second};
+				auto merged(std::make_unique<index>(json::object{a.second}));
+				*merged += json::object{b.second};
 				if(merged->empty())
 				{
 					// Child merge was empty value. Now we can also remove this empty parent.
@@ -677,7 +690,7 @@ ircd::json::operator+=(obj &left, const doc &right)
 					continue;
 				}
 
-				a = obj::member{string_view{a.first}, std::move(merged)};
+				a = index::member{string_view{a.first}, std::move(merged)};
 				continue;
 			}
 		}
@@ -686,35 +699,35 @@ ircd::json::operator+=(obj &left, const doc &right)
 	return left;
 }
 
-ircd::json::obj::obj(recursive_t recursive,
-                     const doc &doc)
-:idx{doc.count()}
+ircd::json::index::index(recursive_t recursive,
+                         const object &object)
+:idx{object.count()}
 {
-	std::transform(std::begin(doc), std::end(doc), std::begin(idx), [&]
-	(const doc::member &m) -> obj::member
+	std::transform(std::begin(object), std::end(object), std::begin(idx), [&]
+	(const object::member &m) -> index::member
 	{
 		switch(type(m.second))
 		{
 			case OBJECT:
-				return obj::member{m.first, std::make_unique<obj>(recursive, m.second)};
+				return index::member{m.first, std::make_unique<index>(recursive, m.second)};
 
 			default:
-				return obj::member{m};
+				return index::member{m};
 		};
 	});
 }
 
-ircd::json::obj::obj(const doc &doc)
-:idx{doc.count()}
+ircd::json::index::index(const object &object)
+:idx{object.count()}
 {
-	std::transform(std::begin(doc), std::end(doc), std::begin(idx), []
-	(const doc::member &m) -> obj::member
+	std::transform(std::begin(object), std::end(object), std::begin(idx), []
+	(const object::member &m) -> index::member
 	{
-		return obj::member{m};
+		return index::member{m};
 	});
 }
 
-ircd::json::obj::obj(std::initializer_list<member> builder)
+ircd::json::index::index(std::initializer_list<member> builder)
 :idx{builder.size()}
 {
 	std::transform(std::begin(builder), std::end(builder), std::begin(idx), []
@@ -732,7 +745,7 @@ ircd::json::obj::obj(std::initializer_list<member> builder)
 }
 
 bool
-ircd::json::obj::erase(const string_view &name)
+ircd::json::index::erase(const string_view &name)
 {
 	const auto it(find(name));
 	if(it == end())
@@ -743,20 +756,20 @@ ircd::json::obj::erase(const string_view &name)
 }
 
 void
-ircd::json::obj::erase(const const_iterator &it)
+ircd::json::index::erase(const const_iterator &it)
 {
 	idx.erase(it);
 }
 
-ircd::json::obj::const_iterator
-ircd::json::obj::erase(const const_iterator &start,
-                       const const_iterator &stop)
+ircd::json::index::const_iterator
+ircd::json::index::erase(const const_iterator &start,
+                         const const_iterator &stop)
 {
 	return { idx.erase(start, stop) };
 }
 
-const ircd::json::val &
-ircd::json::obj::at(const string_view &path)
+const ircd::json::value &
+ircd::json::index::at(const string_view &path)
 const
 {
 	const auto elem(split(path, '.'));
@@ -797,7 +810,7 @@ const
 }
 
 size_t
-ircd::json::obj::size()
+ircd::json::index::size()
 const
 {
 	const size_t ret(1 + idx.empty());
@@ -808,7 +821,7 @@ const
 	});
 }
 
-ircd::json::obj::operator std::string()
+ircd::json::index::operator std::string()
 const
 {
 	std::string ret(size(), char());
@@ -816,7 +829,7 @@ const
 	return ret;
 }
 
-ircd::json::val::~val()
+ircd::json::value::~value()
 noexcept
 {
 	switch(type)
@@ -828,7 +841,7 @@ noexcept
 	}
 }
 
-ircd::json::val::operator std::string()
+ircd::json::value::operator std::string()
 const
 {
 	switch(type)
@@ -858,10 +871,10 @@ const
 				return std::string(lex_cast(integer));
 	}
 
-	throw type_error("cannot stringify type[%d]", int(type));
+	throw type_error("cannot index type[%d]", int(type));
 }
 
-ircd::json::val::operator string_view()
+ircd::json::value::operator string_view()
 const
 {
 	switch(type)
@@ -883,7 +896,7 @@ const
 }
 
 bool
-ircd::json::val::empty()
+ircd::json::value::empty()
 const
 {
 	switch(type)
@@ -899,7 +912,7 @@ const
 }
 
 size_t
-ircd::json::val::size()
+ircd::json::value::size()
 const
 {
 	switch(type)
@@ -915,7 +928,7 @@ const
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const val &v)
+ircd::json::operator<<(std::ostream &s, const value &v)
 {
 	switch(v.type)
 	{
@@ -952,7 +965,7 @@ ircd::json::operator<<(std::ostream &s, const val &v)
 }
 
 bool
-ircd::json::operator>(const val &a, const val &b)
+ircd::json::operator>(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -961,7 +974,7 @@ ircd::json::operator>(const val &a, const val &b)
 }
 
 bool
-ircd::json::operator<(const val &a, const val &b)
+ircd::json::operator<(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -970,7 +983,7 @@ ircd::json::operator<(const val &a, const val &b)
 }
 
 bool
-ircd::json::operator>=(const val &a, const val &b)
+ircd::json::operator>=(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -979,7 +992,7 @@ ircd::json::operator>=(const val &a, const val &b)
 }
 
 bool
-ircd::json::operator<=(const val &a, const val &b)
+ircd::json::operator<=(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -988,7 +1001,7 @@ ircd::json::operator<=(const val &a, const val &b)
 }
 
 bool
-ircd::json::operator!=(const val &a, const val &b)
+ircd::json::operator!=(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -997,7 +1010,7 @@ ircd::json::operator!=(const val &a, const val &b)
 }
 
 bool
-ircd::json::operator==(const val &a, const val &b)
+ircd::json::operator==(const value &a, const value &b)
 {
     if(unlikely(type(a) != STRING || type(b) != STRING))
         throw type_error("cannot compare values");
@@ -1008,52 +1021,52 @@ ircd::json::operator==(const val &a, const val &b)
 size_t
 ircd::json::print(char *const &buf,
                   const size_t &max,
-                  const doc &doc)
+                  const object &object)
 {
 	if(unlikely(!max))
 		return 0;
 
 	char *out(buf);
-	serialize(doc, out, out + (max - 1));
+	serialize(object, out, out + (max - 1));
 	*out = '\0';
 	return std::distance(buf, out);
 }
 
-ircd::json::doc
-ircd::json::serialize(const doc &doc,
+ircd::json::object
+ircd::json::serialize(const object &object,
                       char *&out,
                       char *const &stop)
 {
 	static const auto throws([]
 	{
-		throw print_error("The JSON generator failed to print document");
+		throw print_error("The JSON generator failed to print object");
 	});
 
 	char *const start(out);
-	karma::generate(out, maxwidth(stop - start)[printer.document] | eps[throws], doc);
+	karma::generate(out, maxwidth(stop - start)[printer.object] | eps[throws], object);
 	return string_view{start, out};
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const doc &doc)
+ircd::json::operator<<(std::ostream &s, const object &object)
 {
 	const auto &os(ostreamer);
 	static const auto throws([]
 	{
-		throw print_error("The JSON generator failed to output document to stream");
+		throw print_error("The JSON generator failed to output object to stream");
 	});
 
 	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, os.document | eps[throws], doc);
+	karma::generate(osi, os.object | eps[throws], object);
 	return s;
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const doc::member &member)
+ircd::json::operator<<(std::ostream &s, const object::member &member)
 {
 	static const auto throws([]
 	{
-		throw print_error("The JSON generator failed to output document member to stream");
+		throw print_error("The JSON generator failed to output object member to stream");
 	});
 
 	karma::ostream_iterator<char> osi(s);
@@ -1061,15 +1074,15 @@ ircd::json::operator<<(std::ostream &s, const doc::member &member)
 	return s;
 }
 
-ircd::json::doc::const_iterator &
-ircd::json::doc::const_iterator::operator++()
+ircd::json::object::const_iterator &
+ircd::json::object::const_iterator::operator++()
 {
-	static const qi::rule<const char *, json::doc::member> member
+	static const qi::rule<const char *, json::object::member> member
 	{
 		parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value]
 	};
 
-	static const qi::rule<const char *, json::doc::member> parse_next
+	static const qi::rule<const char *, json::object::member> parse_next
 	{
 		parser.object_end | (parser.value_sep >> parser.ws >> member)
 	};
@@ -1082,7 +1095,7 @@ ircd::json::doc::const_iterator::operator++()
 	return *this;
 }
 
-ircd::json::doc::operator std::string()
+ircd::json::object::operator std::string()
 const
 {
 	//TODO: tmp
@@ -1091,16 +1104,16 @@ const
 	return ret.str();
 }
 
-ircd::json::doc::const_iterator
-ircd::json::doc::begin()
+ircd::json::object::const_iterator
+ircd::json::object::begin()
 const
 {
-	static const qi::rule<const char *, json::doc::member> member
+	static const qi::rule<const char *, json::object::member> member
 	{
 		parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value]
 	};
 
-	static const qi::rule<const char *, json::doc::member> parse_begin
+	static const qi::rule<const char *, json::object::member> parse_begin
 	{
 		parser.object_begin >> parser.ws >> (parser.object_end | member)
 	};
@@ -1112,8 +1125,8 @@ const
 	return ret;
 }
 
-ircd::json::doc::const_iterator
-ircd::json::doc::end()
+ircd::json::object::const_iterator
+ircd::json::object::end()
 const
 {
 	return { string_view::end(), string_view::end() };
@@ -1122,7 +1135,7 @@ const
 size_t
 ircd::json::print(char *const &buf,
                   const size_t &max,
-                  const arr &arr)
+                  const array &arr)
 {
 	if(unlikely(!max))
 		return 0;
@@ -1133,8 +1146,8 @@ ircd::json::print(char *const &buf,
 	return std::distance(buf, out);
 }
 
-ircd::json::arr
-ircd::json::serialize(const arr &a,
+ircd::json::array
+ircd::json::serialize(const array &a,
                       char *&out,
                       char *const &stop)
 {
@@ -1159,7 +1172,7 @@ ircd::json::serialize(const arr &a,
 }
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const arr &a)
+ircd::json::operator<<(std::ostream &s, const array &a)
 {
 	const auto &os(ostreamer);
 	static const auto throws([]
@@ -1182,8 +1195,8 @@ ircd::json::operator<<(std::ostream &s, const arr &a)
 	return s;
 }
 
-ircd::json::arr::const_iterator &
-ircd::json::arr::const_iterator::operator++()
+ircd::json::array::const_iterator &
+ircd::json::array::const_iterator::operator++()
 {
 	static const qi::rule<const char *, string_view> parse_next
 	{
@@ -1197,7 +1210,7 @@ ircd::json::arr::const_iterator::operator++()
 	return *this;
 }
 
-ircd::json::arr::operator std::string()
+ircd::json::array::operator std::string()
 const
 {
 	//TODO: tmp
@@ -1206,8 +1219,8 @@ const
 	return ret.str();
 }
 
-ircd::json::arr::const_iterator
-ircd::json::arr::begin()
+ircd::json::array::const_iterator
+ircd::json::array::begin()
 const
 {
 	static const qi::rule<const char *, string_view> parse_begin
@@ -1222,8 +1235,8 @@ const
 	return ret;
 }
 
-ircd::json::arr::const_iterator
-ircd::json::arr::end()
+ircd::json::array::const_iterator
+ircd::json::array::end()
 const
 {
 	return { string_view::end(), string_view::end() };

@@ -55,7 +55,7 @@ try
 
 	return resource::response
 	{
-		client, http::CREATED, json::obj
+		client, http::CREATED, json::index
 		{
 			{ "room_id",       room_id        }
 		}

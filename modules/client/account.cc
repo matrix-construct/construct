@@ -120,7 +120,7 @@ try
 /*
 	account(db::MERGE, "jzk", std::string
 	{
-		json::obj
+		json::index
 		{{
 			"password",
 			{

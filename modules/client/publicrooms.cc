@@ -78,7 +78,7 @@ get_publicrooms(client &client, const resource::request &request)
 
 	return resource::response
 	{
-		client, json::obj
+		client, json::index
 		{
 			{   }
 		}

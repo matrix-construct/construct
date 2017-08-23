@@ -20,25 +20,25 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JSON_OBJ_H
+#define HAVE_IRCD_JSON_INDEX_H
 
 namespace ircd {
 namespace json {
 
-struct obj
+struct index
 {
 	struct member;
 	struct const_iterator;
 
-	using key_type = val;
-	using mapped_type = val;
+	using key_type = value;
+	using mapped_type = value;
 	using value_type = const member;
 	using size_type = size_t;
 	using difference_type = size_t;
 	using key_compare = std::less<member>;
-	using index = std::vector<member>;
+	using index_type = std::vector<member>;
 
-	index idx;
+	index_type idx;
 
 	const_iterator begin() const;
 	const_iterator end() const;
@@ -52,8 +52,8 @@ struct obj
 	const_iterator find(const string_view &name) const;
 	bool has(const string_view &name) const;
 
-	const val &operator[](const string_view &name) const;
-	const val &at(const string_view &name) const;
+	const value &operator[](const string_view &name) const;
+	const value &at(const string_view &name) const;
 
 	const_iterator erase(const const_iterator &s, const const_iterator &e);
 	void erase(const const_iterator &s);
@@ -63,28 +63,28 @@ struct obj
 
 	IRCD_OVERLOAD(recursive)
 
-	obj(std::initializer_list<member>);
-	obj(const doc &d);
-	obj(recursive_t, const doc &d);
-	obj() = default;
-	obj(obj &&) = default;
-	obj(const obj &) = delete;
+	index(std::initializer_list<member>);
+	index(const object &d);
+	index(recursive_t, const object &d);
+	index() = default;
+	index(index &&) = default;
+	index(const index &) = delete;
 
-	friend obj &operator+=(obj &, const doc &);      // integration
-	friend obj operator+(const doc &, const doc &);  // integral
+	friend index &operator+=(index &, const object &);      // integration
+	friend index operator+(const object &, const object &);  // integral
 
-	friend doc serialize(const obj &, char *&start, char *const &stop);
-	friend size_t print(char *const &buf, const size_t &max, const obj &);
-	friend std::ostream &operator<<(std::ostream &, const obj &);
+	friend object serialize(const index &, char *&start, char *const &stop);
+	friend size_t print(char *const &buf, const size_t &max, const index &);
+	friend std::ostream &operator<<(std::ostream &, const index &);
 };
 
-struct obj::member
-:std::pair<val, val>
+struct index::member
+:std::pair<value, value>
 {
 	template<class K> member(const K &k, std::initializer_list<member> v);
 	template<class K, class V> member(const K &k, V&& v);
 	explicit member(const string_view &k);
-	explicit member(const doc::member &m);
+	explicit member(const object::member &m);
 	member() = default;
 
 	friend bool operator==(const member &a, const member &b);
@@ -98,7 +98,7 @@ struct obj::member
 	friend std::ostream &operator<<(std::ostream &, const member &);
 };
 
-struct obj::const_iterator
+struct index::const_iterator
 {
 	using value_type = const member;
 	using pointer = value_type *;
@@ -107,9 +107,9 @@ struct obj::const_iterator
 	using iterator_category = std::bidirectional_iterator_tag;
 
   protected:
-	friend class obj;
+	friend class index;
 
-	obj::index::const_iterator it;
+	index::index_type::const_iterator it;
 
 	operator const auto &() const                   { return it;                                   }
 
@@ -132,62 +132,62 @@ struct obj::const_iterator
 } // namespace json
 } // namespace ircd
 
-inline const ircd::json::val &
-ircd::json::obj::operator[](const string_view &name)
+inline const ircd::json::value &
+ircd::json::index::operator[](const string_view &name)
 const
 {
 	return at(name);
 }
 
 inline bool
-ircd::json::obj::has(const string_view &name)
+ircd::json::index::has(const string_view &name)
 const
 {
 	return find(name) != end();
 }
 
-inline ircd::json::obj::const_iterator
-ircd::json::obj::find(const string_view &name)
+inline ircd::json::index::const_iterator
+ircd::json::index::find(const string_view &name)
 const
 {
 	return std::find(std::begin(idx), std::end(idx), name);
 }
 
 inline size_t
-ircd::json::obj::count()
+ircd::json::index::count()
 const
 {
 	return idx.size();
 }
 
 inline bool
-ircd::json::obj::empty()
+ircd::json::index::empty()
 const
 {
 	return idx.empty();
 }
 
-inline ircd::json::obj::const_iterator
-ircd::json::obj::cbegin()
+inline ircd::json::index::const_iterator
+ircd::json::index::cbegin()
 {
 	return { std::begin(idx) };
 }
 
-inline ircd::json::obj::const_iterator
-ircd::json::obj::cend()
+inline ircd::json::index::const_iterator
+ircd::json::index::cend()
 {
 	return { std::end(idx) };
 }
 
-inline ircd::json::obj::const_iterator
-ircd::json::obj::begin()
+inline ircd::json::index::const_iterator
+ircd::json::index::begin()
 const
 {
 	return { std::begin(idx) };
 }
 
-inline ircd::json::obj::const_iterator
-ircd::json::obj::end()
+inline ircd::json::index::const_iterator
+ircd::json::index::end()
 const
 {
 	return { std::end(idx) };
@@ -195,89 +195,89 @@ const
 
 template<class K,
          class V>
-ircd::json::obj::member::member(const K &k,
-                                V&& v)
-:std::pair<val, val>
+ircd::json::index::member::member(const K &k,
+                                  V&& v)
+:std::pair<value, value>
 {
-	val { k }, val { std::forward<V>(v) }
+	value { k }, value { std::forward<V>(v) }
 }
 {}
 
 template<class K>
-ircd::json::obj::member::member(const K &k,
-                                std::initializer_list<member> v)
-:std::pair<val, val>
+ircd::json::index::member::member(const K &k,
+                                  std::initializer_list<member> v)
+:std::pair<value, value>
 {
-	val { k }, val { std::make_unique<obj>(std::move(v)) }
+	value { k }, value { std::make_unique<index>(std::move(v)) }
 }
 {}
 
 inline
-ircd::json::obj::member::member(const doc::member &m)
-:std::pair<val, val>
+ircd::json::index::member::member(const object::member &m)
+:std::pair<value, value>
 {
-	m.first, val { m.second, type(m.second) }
+	m.first, value { m.second, type(m.second) }
 }
 {}
 
 inline
-ircd::json::obj::member::member(const string_view &k)
-:std::pair<val, val>
+ircd::json::index::member::member(const string_view &k)
+:std::pair<value, value>
 {
 	k, string_view{}
 }
 {}
 
 inline bool
-ircd::json::operator<(const obj::member &a, const obj::member &b)
+ircd::json::operator<(const index::member &a, const index::member &b)
 {
 	return a.first < b.first;
 }
 
 inline bool
-ircd::json::operator!=(const obj::member &a, const obj::member &b)
+ircd::json::operator!=(const index::member &a, const index::member &b)
 {
 	return a.first != b.first;
 }
 
 inline bool
-ircd::json::operator==(const obj::member &a, const obj::member &b)
+ircd::json::operator==(const index::member &a, const index::member &b)
 {
 	return a.first == b.first;
 }
 
 inline bool
-ircd::json::operator<(const obj::member &a, const string_view &b)
+ircd::json::operator<(const index::member &a, const string_view &b)
 {
 	return string_view(a.first.string, a.first.len) < b;
 }
 
 inline bool
-ircd::json::operator!=(const obj::member &a, const string_view &b)
+ircd::json::operator!=(const index::member &a, const string_view &b)
 {
 	return string_view(a.first.string, a.first.len) != b;
 }
 
 inline bool
-ircd::json::operator==(const obj::member &a, const string_view &b)
+ircd::json::operator==(const index::member &a, const string_view &b)
 {
 	return string_view(a.first.string, a.first.len) == b;
 }
 
 inline bool
-ircd::json::operator<(const obj::const_iterator &a, const obj::const_iterator &b)
+ircd::json::operator<(const index::const_iterator &a, const index::const_iterator &b)
 {
 	return a.it < b.it;
 }
 
 inline bool
-ircd::json::operator!=(const obj::const_iterator &a, const obj::const_iterator &b)
+ircd::json::operator!=(const index::const_iterator &a, const index::const_iterator &b)
 {
 	return a.it != b.it;
 }
 
 inline bool
-ircd::json::operator==(const obj::const_iterator &a, const obj::const_iterator &b)
+ircd::json::operator==(const index::const_iterator &a, const index::const_iterator &b)
 {
 	return a.it == b.it;
 }

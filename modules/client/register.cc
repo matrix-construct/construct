@@ -55,7 +55,7 @@ handle_post(client &client,
 
 		return resource::response
 		{
-			client, http::CREATED, json::obj
+			client, http::CREATED, json::index
 			{
 				{ "access_token",    access_token   },
 				{ "home_server",     home_server    },
@@ -146,7 +146,7 @@ handle_post(client &client,
 	// Send response to user
 	return resource::response
 	{
-		client, http::CREATED, json::obj
+		client, http::CREATED, json::index
 		{
 			{ "access_token",    access_token   },
 			{ "home_server",     home_server    },

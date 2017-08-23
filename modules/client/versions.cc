@@ -33,7 +33,7 @@ resource::method getter
 	(client &client, resource::request &request)
 	-> resource::response
 	{
-		static const json::doc object
+		static const json::object object
 		{
 			R"({"versions":["r2.0.0"]})"
 		};
