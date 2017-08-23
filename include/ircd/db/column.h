@@ -26,14 +26,27 @@
 namespace ircd {
 namespace db   {
 
-// Columns add the ability to run multiple LevelDB's in synchrony under the same database
-// (directory). Each column is a fully distinct key/value store; they are merely joined
-// for consistency.
+// Columns add the ability to run multiple LevelDB's in synchrony under the same
+// database (directory). Each column is a fully distinct key/value store; they
+// are merely joined for consistency and possible performance advantages for
+// concurrent multi-column lookups of the same key.
 //
-// [GET] may be posted to a separate thread which incurs the time of IO while the calling
-// ircd::context yields.
+// This class is a handle to the real column instance `database::column` because the
+// real column instance has to have a lifetime congruent to the open database. But
+// that makes this object easier to work with, pass around, and construct. It will
+// find the real `database::column` at any time.
 //
-// [SET] usually occur without yielding your context because the DB is write-log oriented.
+// [GET] If the data is not cached, your ircd::context will yield. Note that the
+// request may be posted to a separate thread which incurs the time of IO. This is
+// because RocksDB has minimalist origins and is not yet asynchronous.
+//
+// + In the future, your ircd::context will still yield but the internals here will
+// interleave pending contexts. If RocksDB is clever enough to expose actual file
+// descriptors or something we can interleave on, similar to the pgsql API, we can
+// remove the IO/offload thread as well.
+//
+// [SET] usually occur without yielding your context because the DB is oriented
+// around write-log appending so it can deal with heavier tasks later in background.
 //
 struct column
 {

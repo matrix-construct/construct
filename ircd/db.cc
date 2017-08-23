@@ -20,6 +20,7 @@
  *
  */
 
+#include <rocksdb/version.h>
 #include <rocksdb/db.h>
 #include <rocksdb/cache.h>
 #include <rocksdb/comparator.h>
@@ -34,11 +35,13 @@
 namespace ircd {
 namespace db   {
 
+// Dedicated logging facility for the database subsystem
 struct log::log log
 {
 	"db", 'D'            // Database subsystem takes SNOMASK +D
 };
 
+// Functor to wrap calls made to the rocksdb API to check for errors.
 struct throw_on_error
 {
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
@@ -226,6 +229,20 @@ database::dbs
 } // namespace db
 } // namespace ircd
 
+static char ircd_db_version[64];
+const char *const ircd::db::version(ircd_db_version);
+
+// Renders a version string from the defines included here.
+__attribute__((constructor))
+static void
+version_init()
+{
+	snprintf(ircd_db_version, sizeof(ircd_db_version), "%d.%d.%d",
+	         ROCKSDB_MAJOR,
+	         ROCKSDB_MINOR,
+	         ROCKSDB_PATCH);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database
@@ -275,6 +292,15 @@ ircd::db::shared_from(const database::column &column)
 //
 
 ircd::db::database::database(const std::string &name,
+                             const std::string &optstr)
+:database
+{
+	name, optstr, {}
+}
+{
+}
+
+ircd::db::database::database(const std::string &name,
                              const std::string &optstr,
                              description description)
 try
@@ -302,13 +328,15 @@ try
 {
 	std::make_shared<struct mergeop>(this)
 }
-,cache{[this]() -> std::shared_ptr<rocksdb::Cache>
+,cache{[this]
+() -> std::shared_ptr<rocksdb::Cache>
 {
 	//TODO: XXX
 	const auto lru_cache_size{64_MiB};
 	return rocksdb::NewLRUCache(lru_cache_size);
 }()}
-,d{[this, &description, &optstr]() -> custom_ptr<rocksdb::DB>
+,d{[this, &description, &optstr]
+() -> custom_ptr<rocksdb::DB>
 {
 	rocksdb::DBOptions opts
 	{
@@ -769,7 +797,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 
 	char buf[1024]; const auto len
 	{
-		std::vsnprintf(buf, sizeof(buf), fmt, ap)
+		vsnprintf(buf, sizeof(buf), fmt, ap)
 	};
 
 	const auto str

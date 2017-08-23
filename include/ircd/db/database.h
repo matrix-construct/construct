@@ -26,43 +26,44 @@
 namespace ircd {
 namespace db   {
 
+// Database instance
+//
+// There can be only one instance of this class for each database, so it is
+// always shared and must be make_shared(). The database is open when an
+// instance is constructed and closed when the instance destructs.
+//
+// The construction must have the same consistent descriptor set used every
+// time otherwise bad things happen.
+//
+// The instance registers and deregisters itself in a global set of open
+// databases and can be found that way if necessary.
+//
 struct database
 :std::enable_shared_from_this<struct database>
 {
+	struct descriptor;
 	struct options;
-    struct events;
-    struct stats;
-    struct logs;
-    struct mergeop;
+	struct events;
+	struct stats;
+	struct logs;
+	struct mergeop;
 	struct snapshot;
 	struct comparator;
 	struct column;
+	using description = std::initializer_list<struct descriptor>;
 
-    static std::map<string_view, database *> dbs; // open databases
+	// central collection of open databases for iteration (non-owning)
+	static std::map<string_view, database *> dbs;
 
-    std::string name;
-    std::string path;
-    std::shared_ptr<struct logs> logs;
-    std::shared_ptr<struct stats> stats;
-    std::shared_ptr<struct events> events;
-    std::shared_ptr<struct mergeop> mergeop;
-    std::shared_ptr<rocksdb::Cache> cache;
+	std::string name;
+	std::string path;
+	std::shared_ptr<struct logs> logs;
+	std::shared_ptr<struct stats> stats;
+	std::shared_ptr<struct events> events;
+	std::shared_ptr<struct mergeop> mergeop;
+	std::shared_ptr<rocksdb::Cache> cache;
 	std::map<string_view, std::shared_ptr<column>> columns;
-    custom_ptr<rocksdb::DB> d;
-
-  public:
-	struct descriptor
-	{
-		using typing = std::pair<std::type_index, std::type_index>;
-
-		std::string name;
-		std::string explain;
-		typing type          { typeid(string_view), typeid(string_view) };
-		std::string options  {};
-		db::comparator cmp   {};
-	};
-
-	using description = std::initializer_list<descriptor>;
+	custom_ptr<rocksdb::DB> d;
 
 	operator std::shared_ptr<database>()         { return shared_from_this();                      }
 	operator const rocksdb::DB &() const         { return *d;                                      }
@@ -72,16 +73,33 @@ struct database
 	column &operator[](const string_view &);
 
     database(const std::string &name,
-             const std::string &options = {},
-             description = {});
+             const std::string &options,
+             description);
+
+    database(const std::string &name,
+             const std::string &options = {});
 
 	database() = default;
 	database(database &&) = delete;
 	database(const database &) = delete;
     ~database() noexcept;
 
+	// Get this instance from any column.
 	static const database &get(const column &);
 	static database &get(column &);
+};
+
+// Descriptor of a column when opening database. Database must be opened with
+// a consistent set of descriptors describing what will be found upon opening.
+struct database::descriptor
+{
+	using typing = std::pair<std::type_index, std::type_index>;
+
+	std::string name;
+	std::string explain;
+	typing type          { typeid(string_view), typeid(string_view) };
+	std::string options  {};
+	db::comparator cmp   {};
 };
 
 // options <-> string

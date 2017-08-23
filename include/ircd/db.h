@@ -85,6 +85,8 @@ namespace rocksdb
 namespace ircd {
 namespace db   {
 
+extern const char *const version;
+
 rocksdb::Slice slice(const string_view &);
 string_view slice(const rocksdb::Slice &);
 
