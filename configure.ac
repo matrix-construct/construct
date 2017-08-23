@@ -610,7 +610,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AC_MSG_CHECKING([whether to use shared boost])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
-		BOOST_LDFLAGS += " -Wl,-rpath=$boost_libdir"
+		BOOST_LDFLAGS+=" -Wl,-rpath=$boost_libdir"
 	else
 		AC_MSG_RESULT([no])
 		withval="static"
