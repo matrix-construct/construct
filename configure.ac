@@ -596,10 +596,20 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 		BTOOLSET=`echo $CXX | cut -d' ' -f1`
 	])
 
+	AM_COND_IF([MINGW],
+	[
+		boost_libdir="$PWD/boost/stage/lib"
+	], [
+		boost_libdir="$PWD/boost/lib"
+	])
+
+	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
+	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/boost/include"])
+
 	AC_MSG_CHECKING([whether to use shared boost])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
-		BOOST_LDFLAGS += " -Wl,-rpath -Wl,$boost_libdir"
+		BOOST_LDFLAGS += " -Wl,-rpath=$boost_libdir"
 	else
 		AC_MSG_RESULT([no])
 		withval="static"
@@ -610,16 +620,6 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
-
-	AM_COND_IF([MINGW],
-	[
-		boost_libdir="$PWD/boost/stage/lib"
-	], [
-		boost_libdir="$PWD/boost/lib"
-	])
-
-	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/boost/include"])
-	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
 
 	AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
 	AC_MSG_NOTICE([Bootstrapping boost: done])
@@ -686,7 +686,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 		AC_MSG_RESULT([yes])
 		rocksdb_linkage="shared_lib"
 		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
-		ROCKSDB_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/rocksdb/"
+		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/rocksdb/"
 		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 	else
 		AC_MSG_RESULT([no])
