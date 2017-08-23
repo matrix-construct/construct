@@ -377,6 +377,60 @@ runtil(std::tuple<args...> &t,
 	return runtil<size>(t, std::forward<func>(f));
 }
 
+//
+// Kronecker delta
+//
+
+template<size_t j,
+         size_t i,
+         class func,
+         class... args>
+constexpr
+typename std::enable_if<i == j, void>::type
+kronecker_delta(const std::tuple<args...> &t,
+                func&& f)
+{
+	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
+	f(static_cast<const value_type &>(std::get<i>(t)));
+}
+
+template<size_t i,
+         size_t j,
+         class func,
+         class... args>
+constexpr
+typename std::enable_if<i == j, void>::type
+kronecker_delta(std::tuple<args...> &t,
+                func&& f)
+{
+	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
+	f(static_cast<value_type &>(std::get<i>(t)));
+}
+
+template<size_t j,
+         size_t i = 0,
+         class func,
+         class... args>
+constexpr
+typename std::enable_if<(i < j), void>::type
+kronecker_delta(const std::tuple<args...> &t,
+                func&& f)
+{
+	kronecker_delta<j, i + 1>(t, std::forward<func>(f));
+}
+
+template<size_t j,
+         size_t i = 0,
+         class func,
+         class... args>
+constexpr
+typename std::enable_if<(i < j), void>::type
+kronecker_delta(std::tuple<args...> &t,
+                func&& f)
+{
+	kronecker_delta<j, i + 1>(t, std::forward<func>(f));
+}
+
 
 // For conforming enums include a _NUM_ as the last element,
 // then num_of<my_enum>() works
