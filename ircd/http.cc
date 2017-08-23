@@ -133,12 +133,13 @@ struct grammar
 	// insignificant whitespaces
 	rule<> SP                          { lit('\x20')                                      ,"space" };
 	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
+	rule<> ws                          { SP | HT                                     ,"whitespace" };
+
 	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
 	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
+	rule<> CRLF                        { CR >> LF                    ,"carriage return, line feed" };
 
-	rule<> ws                          { SP | HT                                     ,"whitespace" };
 	rule<> illegal                     { NUL | CR | LF                                  ,"illegal" };
-	rule<> CRLF                        { lit('\r') >> lit('\n')      ,"carriage return, line feed" };
 	rule<> colon                       { lit(':')                                         ,"colon" };
 	rule<> slash                       { lit('/')                               ,"forward solidus" };
 	rule<> question                    { lit('?')                                 ,"question mark" };
@@ -418,6 +419,15 @@ ircd::http::response::response(const code &code,
 		0
 	};
 
+	char cache_line[64]; const auto cache_line_len
+	{
+		//TODO: real cache control subsystem
+		code == OK || (code >= 403 && code <= 405) || (code >= 300 && code < 400)?
+		snprintf(cache_line, sizeof(cache_line), "Cache-Control: %s\r\n",
+		         "no-cache"):
+		0
+	};
+
 	char content_len[64]; const auto content_len_len
 	{
 		code != NO_CONTENT?
@@ -435,8 +445,10 @@ ircd::http::response::response(const code &code,
 		})
 	};
 
-	char user_headers[user_headers_bufsize];
-	const auto user_headers_len(print(user_headers, sizeof(user_headers), headers));
+	char user_headers[user_headers_bufsize]; const auto user_headers_len
+	{
+		print(user_headers, sizeof(user_headers), headers)
+	};
 
 	const_buffers iov
 	{
