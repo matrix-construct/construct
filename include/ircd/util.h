@@ -62,6 +62,15 @@ struct NAME                                                   \
 #define IRCD_STRONG_T(TYPE) \
     IRCD_STRONG_TYPEDEF(TYPE, IRCD_UNIQUE(strong_t))
 
+// for complex static initialization (try to avoid this though)
+enum class init_priority
+{
+    FIRST           = 101,
+    STD_CONTAINER   = 102,
+};
+
+#define IRCD_INIT_PRIORITY(name) \
+    __attribute__((init_priority(int(ircd::init_priority::name))))
 
 struct scope
 {

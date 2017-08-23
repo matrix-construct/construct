@@ -83,39 +83,59 @@ extern "C" {
 #include <RB_INC_MUTEX
 #include <RB_INC_CONDITION_VARIABLE
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// IRCd's namespacing is as follows:
+//
+// IRCD_     #define and macro namespace
+// ircd_     C namespace and demangled bindings
+// ircd::    C++ namespace
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Pollution
+//
+// This section lists all of the items introduced outside of our namespace
+// which may conflict with your project.
+//
+
+// Common branch prediction macros
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+
+// Legacy attribute format printf macros
+#define AFP(a, b)       __attribute__((format(printf, a, b)))
+#define AFGP(a, b)      __attribute__((format(gnu_printf, a, b)))
+
+// Experimental std::string_view
 namespace std {
 
 using experimental::string_view;
 
 } // namespace std
 
-// Allow a reference to an ios to be passed to ircd
+///////////////////////////////////////////////////////////////////////////////
+//
+// Forward declarations from third party namespaces not included here
+//
+
+// Boost is not exposed unless explicitly included by a definition file. This
+// is a major improvement of project compile time.
 namespace boost {
 namespace asio  {
 
-struct io_service;
-struct const_buffer;
-struct mutable_buffer;
+struct io_service;         // Allow a reference to an ios to be passed to ircd
+struct const_buffer;       // ircd/buffer.h
+struct mutable_buffer;     // ircd/buffer.h
 
 } // namespace asio
 } // namespace boost
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
-#define AFP(a, b)       __attribute__((format(printf, a, b)))
-
-namespace ircd {
-
-enum class init_priority
-{
-	FIRST           = 101,
-	STD_CONTAINER   = 102,
-};
-
-#define IRCD_INIT_PRIORITY(name) \
-	__attribute__((init_priority(int(ircd::init_priority::name))))
-
-} // namespace ircd
+///////////////////////////////////////////////////////////////////////////////
+//
+// Items imported into our namespace.
+//
 
 namespace ircd {
 
@@ -137,22 +157,21 @@ namespace asio = boost::asio;
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
 
+} // namespace ircd
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// libircd API
+//
+
+// Unsorted section
+namespace ircd {
+
 extern boost::asio::io_service *ios;
 constexpr size_t BUFSIZE { 512 };
 
 struct socket;
 struct client;
-
-namespace chan
-{
-	struct chan;
-	struct membership;
-}
-
-struct ConfItem;
-struct Blacklist;
-struct server_conf;
-struct line {};
 
 } // namespace ircd
 
