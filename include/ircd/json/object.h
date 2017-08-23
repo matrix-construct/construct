@@ -25,6 +25,28 @@
 namespace ircd {
 namespace json {
 
+// ircd::json::object is an extremely lightweight device for making
+// queries into a string of JSON. This is a read-only device. It is merely
+// functionality built on top of a string_view which is just a pair of
+// const char* pointers to the borders of the JSON object.
+//
+// This class computes over strings of JSON by parsing it on-the-fly
+// via forward iteration. The const_iterator is fundamental. All other member
+// functions are built from this forward iteration and have worst-case linear
+// complexity *every time you invoke them*. This is not necessarily a bad
+// thing in the appropriate use case. Our parser is pretty efficient; this
+// device conducts zero copies, zero allocations and zero indexing; instead
+// the parser provides string_views to members during the iteration. Those
+// string_views are also trivially convertible to more ircd::json::object's
+// of course, providing any recursion.
+//
+// Other devices for dealing with strings of JSON are available: if an index
+// should be populated (ircd::json::index), or if a certain set of keys
+// should be found and extracted with a single pass (ircd::json::extract).
+//
+// Some serialization/write functions are actually provided here, these
+// are to *rewrite* JSON into our desired output form.
+//
 struct object
 :string_view
 {
