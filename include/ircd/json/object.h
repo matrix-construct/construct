@@ -36,9 +36,16 @@ namespace json {
 // complexity *every time you invoke them*. This is not necessarily a bad
 // thing in the appropriate use case. Our parser is pretty efficient; this
 // device conducts zero copies, zero allocations and zero indexing; instead
-// the parser provides string_views to members during the iteration. Those
-// string_views are also trivially convertible to more ircd::json::object's
-// of course, providing any recursion.
+// the parser provides string_views to members during the iteration.
+//
+// The returned values are character ranges (string_view's) which themselves
+// are type agnostic to their contents. The type of a value is determined at
+// the user's discretion by querying the content of the string_view using a
+// util function like json::type() etc. In other words, a value carries type
+// data from its own original content. This means the user is responsible for
+// removing prefix and suffix characters like '{' or '"' after determining the
+// type if they want a truly pure value string. Our zero-copy string_view utils
+// make this to a simple ballet of pointers.
 //
 // Other devices for dealing with strings of JSON are available: if an index
 // should be populated (ircd::json::index), or if a certain set of keys
@@ -46,6 +53,13 @@ namespace json {
 //
 // Some serialization/write functions are actually provided here, these
 // are to *rewrite* JSON into our desired output form.
+//
+// Recursive traversal cannot be achieved via a single key string value; so
+// any string_view argument for a key will not be recursive. In other words,
+// due to the fact that a JS identifier can have almost any character we have
+// to use a different *type* like a vector of strings; in our common case we
+// use an initializer_list typedef'ed as `path` and those overloads will be
+// recursive.
 //
 struct object
 :string_view
