@@ -55,3 +55,27 @@ struct init
 
 } // namespace js
 } // namespace ircd
+
+#ifndef RB_ENABLE_JS
+//
+// Stub definitions for when JS isn't enabled because the definition
+// file is not compiled at all.
+//
+
+inline
+ircd::js::init::init()
+{
+}
+
+inline
+ircd::js::init::~init()
+{
+}
+
+inline
+const char *ircd::js::version(const ver &ver)
+{
+	return "DISABLED";
+}
+
+#endif // !RB_ENABLE_JS
