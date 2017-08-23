@@ -25,7 +25,7 @@ namespace ircd {
 
 const size_t DEFAULT_STACK_SIZE
 {
-	256_KiB  // can be optimized
+	1_MiB  // can be optimized
 };
 
 struct listener::acceptor
@@ -110,15 +110,46 @@ try
 {
 	log.debug("%s attempting to open listening socket", std::string(*this));
 
+	ssl.set_options
+	(
+		ssl.default_workarounds |
+		ssl.no_sslv2
+		//ssl.single_dh_use
+	);
+
+	ssl.set_password_callback([this]
+	(const auto &size, const auto &purpose)
+	{
+		log.debug("%s asking for password with purpose '%s' (size: %zu)",
+		          std::string(*this),
+		          purpose,
+		          size);
+
+		return "foobar";
+	});
+
 	a.open(ep.protocol());
 	a.set_option(ip::tcp::acceptor::reuse_address(true));
 	a.bind(ep);
 
-	if(opts.has("ssl.certificate.file.pem"))
+	if(opts.has("ssl_certificate_chain_file"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl.certificate.file.pem"])
+			unquote(opts["ssl_certificate_chain_file"])
+		};
+
+		ssl.use_certificate_chain_file(filename);
+		log.info("%s using certificate chain file '%s'",
+		          std::string(*this),
+		          filename);
+	}
+
+	if(opts.has("ssl_certificate_file_pem"))
+	{
+		const std::string filename
+		{
+			unquote(opts["ssl_certificate_file_pem"])
 		};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
@@ -127,15 +158,28 @@ try
 		          filename);
 	}
 
-	if(opts.has("ssl.private_key.file.pem"))
+	if(opts.has("ssl_private_key_file_pem"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl.private_key.file.pem"])
+			unquote(opts["ssl_private_key_file_pem"])
 		};
 
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
 		log.info("%s using private key file '%s'",
+		          std::string(*this),
+		          filename);
+	}
+
+	if(opts.has("ssl_tmp_dh_file"))
+	{
+		const std::string filename
+		{
+			unquote(opts["ssl_tmp_dh_file"])
+		};
+
+		ssl.use_tmp_dh_file(filename);
+		log.info("%s using tmp dh file '%s'",
 		          std::string(*this),
 		          filename);
 	}
@@ -172,7 +216,9 @@ catch(const ircd::ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	log.error("%s %s", std::string(*this), e);
+	log.critical("%s %s", std::string(*this), e.what());
+	if(ircd::debugmode)
+		throw;
 }
 
 bool
@@ -180,8 +226,14 @@ ircd::listener::acceptor::accept()
 try
 {
 	auto sock(std::make_shared<ircd::socket>(ssl));
-	a.async_accept(sock->ssl.lowest_layer(), yield(continuation()));
+	//log.debug("%s listening with socket(%p)", std::string(*this), sock.get());
+
+	a.async_accept(sock->sd, yield(continuation()));
+	//log.debug("%s accepted %s", std::string(*this), string(sock->remote()));
+
 	sock->ssl.async_handshake(socket::handshake_type::server, yield(continuation()));
+	//log.debug("%s SSL shooks hands with %s", std::string(*this), string(sock->remote()));
+
 	add_client(std::move(sock));
 	return true;
 }
@@ -193,12 +245,14 @@ catch(const boost::system::system_error &e)
 
 		case success:               return true;
 		case operation_canceled:    return false;
-		default:                    throw;
+		default:
+			log.warning("%s: in accept(): %s", std::string(*this), e.what());
+			return true;
 	}
 }
 catch(const std::exception &e)
 {
-	log.error("%s: in accept(): %s", std::string(*this), e);
+	log.error("%s: in accept(): %s", std::string(*this), e.what());
 	return true;
 }
 

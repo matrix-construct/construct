@@ -26,6 +26,7 @@
 #include <ircd/socket.h>
 #include <ircd/listen.h>
 #include <ircd/ctx/continuation.h>
+#include <ircd/js/js.h>
 
 namespace ircd
 {
@@ -92,55 +93,19 @@ try
 	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties them
 	// to the main context. Initialization can also occur in ircd::init() if static initialization
 	// and destruction is not possible, but there is no complementary destruction up there.
-	ctx::ole::init _ole_;
-	//js::init _js_;
-	socket::init _sock_;
+
+	ctx::ole::init _ole_;    // Thread OffLoad Engine
+	js::init _js_;           // SpiderMonkey
+	socket::init _sock_;     // Networking
 	client::init _client_;
 
-	module client_versions("client_versions.so");
-	module client_register("client_register.so");
-	module client_login("client_login.so");
+//	module matrix
+//	{
+//		"matrix"
+//	};
 
-	listener matrics
-	{
-		std::string { json::obj
-		{
-			{ "name",    "Chat Matrix" },
-			{ "host",    "127.0.0.1"   },
-			{ "port",     6667         },
-			{
-				"ssl",
-				{
-					{
-						"certificate",
-						{
-							{
-								"file",
-								{
-									{ "pem", "/home/jason/cdc.z.cert" }
-								}
-							}
-						}
-					},
-					{
-						"private_key",
-						{
-							{
-								"file",
-								{
-									{ "pem", "/home/jason/cdc.z.key" }
-								}
-							}
-						}
-					}
-				}
-			}
-		}}
-	};
-
-	// This is the main program loop. Right now all it does is sleep until notified
-	// to shutdown, but it can do other things eventually. Other subsystems may have
-	// spawned their own main loops.
+	// This is the main program loop. Right now all it does is sleep until notified to
+	// break with a clean shutdown. Other subsystems may have spawned their own main loops.
 	log::notice("IRCd ready"); do
 	{
 		ctx::wait();

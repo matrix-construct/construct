@@ -31,12 +31,12 @@ namespace ircd {
 
 const auto async_timeout
 {
-	15s
+	3h
 };
 
 const auto request_timeout
 {
-	30s
+	300s
 };
 
 ctx::pool request
@@ -159,7 +159,13 @@ ircd::write_closure(client &client)
 	// returns a function that can be called to send an iovector of data to a client
 	return [&client](const const_buffers &iov)
 	{
-		write(*client.sock, iov);
+		//std::cout << "<<<<" << std::endl;
+		//std::cout << iov << std::endl;
+		//std::cout << "----" << std::endl;
+		const auto written
+		{
+			write(*client.sock, iov)
+		};
 	};
 }
 
@@ -185,6 +191,9 @@ ircd::read_closure(client &client)
 		{
 			const char *const got(start);
 			read(client, start, stop);
+			//std::cout << ">>>>" << std::endl;
+			//std::cout << string_view{got, start} << std::endl;
+			//std::cout << "----" << std::endl;
 		}
 		catch(const boost::system::system_error &e)
 		{
@@ -209,7 +218,7 @@ ircd::client::client(const host_port &host_port,
 
 ircd::client::client(std::shared_ptr<socket> sock)
 :type{type}
-,clit{clients.emplace(end(clients), this)}
+,clit{clients, clients.emplace(end(clients), this)}
 ,sock{std::move(sock)}
 {
 }
@@ -217,7 +226,6 @@ ircd::client::client(std::shared_ptr<socket> sock)
 ircd::client::~client()
 noexcept
 {
-	clients.erase(clit);
 }
 
 bool
@@ -228,12 +236,36 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log::error("system_error: %s", e.what());
+	using namespace boost::system::errc;
+
+	switch(e.code().value())
+	{
+		case success:
+			assert(0);
+			return true;
+
+		case operation_canceled:
+			return false;
+
+		case not_connected:
+			return false;
+
+		default:
+			break;
+	}
+
+	log::critical("(unexpected) system_error: %s", e.what());
+	if(ircd::debugmode)
+		std::terminate();
+
 	return false;
 }
 catch(const std::exception &e)
 {
-	log::error("exception: %s", e.what());
+	log::critical("exception: %s", e.what());
+	if(ircd::debugmode)
+		std::terminate();
+
 	return false;
 }
 
@@ -248,7 +280,7 @@ bool
 ircd::client::serve()
 try
 {
-	char buffer[2048];
+	char buffer[8192];
 	parse::buffer pb{buffer, buffer + sizeof(buffer)};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
@@ -264,8 +296,11 @@ try
 catch(const std::exception &e)
 {
 	log::error("client[%s] [500 Internal Error]: %s",
-	           string(remote_addr(*this)).c_str(),
+	           string(remote_addr(*this)),
 	           e.what());
+
+	if(ircd::debugmode)
+		throw;
 
 	return false;
 }
@@ -296,10 +331,10 @@ try
 }
 catch(const http::error &e)
 {
-	log::debug("client[%s] http::error(%d): %s",
-	           string(remote_addr(client)).c_str(),
-	           int(e.code),
-	           e.what());
+	log::debug("client[%s] HTTP %s %s",
+	           string(remote_addr(client)),
+	           e.what(),
+	           e.content);
 
 	switch(e.code)
 	{
@@ -314,27 +349,24 @@ void
 ircd::handle_request(client &client,
                      parse::capstan &pc,
                      const http::request::head &head)
-try
 {
-	log::debug("client[%s] requesting resource \"%s\"",
-	           string(remote_addr(client)).c_str(),
-	           std::string(head.resource).c_str());
+	log::debug("client[%s] HTTP %s `%s' content-length: %zu",
+	           string(remote_addr(client)),
+	           head.method,
+	           head.path,
+	           head.content_length);
 
-	auto &resource(*resource::resources.at(head.resource));
+	auto &resource(ircd::resource::find(head.path));
 	resource(client, pc, head);
-}
-catch(const std::out_of_range &e)
-{
-	throw http::error(http::code::NOT_FOUND);
 }
 
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
 	const auto client(std::make_shared<ircd::client>(std::move(s)));
-	log::info("New client[%s] on local[%s]",
-	          string(remote_addr(*client)).c_str(),
-	          string(local_addr(*client)).c_str());
+	log::debug("client[%s] CONNECTED local[%s]",
+	           string(remote_addr(*client)),
+	           string(local_addr(*client)));
 
 	async_recv_next(client, async_timeout);
 	return client;
@@ -354,8 +386,9 @@ ircd::disconnect_all()
 	{
 		disconnect(*client, socket::dc::RST);
 	}
-	catch(...)
+	catch(const std::exception &e)
 	{
+		log::warning("Error disconnecting client @%p: %s", &client, e.what());
 	}
 }
 
@@ -418,6 +451,8 @@ ircd::handle_ec_success(client &client)
 bool
 ircd::handle_ec_eof(client &client)
 {
+	log::debug("client[%s]: EOF", string(remote_addr(client)));
+	client.sock->disconnect(socket::FIN_RECV);
 	return false;
 }
 
@@ -425,9 +460,7 @@ bool
 ircd::handle_ec_timeout(client &client)
 {
 	auto &sock(*client.sock);
-	log::debug("client[%s]: disconnecting after inactivity timeout",
-	          string(remote_addr(client)).c_str());
-
+	log::debug("client[%s]: disconnecting after inactivity timeout", string(remote_addr(client)));
 	sock.disconnect();
 	return false;
 }
