@@ -40,9 +40,16 @@ ircd::resource::find(string_view path)
 {
     path = lstrip(path, '/');
     path = strip(path, '/');
+
 	auto it(resources.lower_bound(path));
-	if(it == end(resources))
+	if(it == end(resources)) try
+	{
 		return *resources.at(string_view{});
+	}
+	catch(const std::out_of_range &e)
+	{
+		throw http::error(http::code::NOT_FOUND);
+	}
 
 	// Exact file or directory match
 	if(path == it->first)
