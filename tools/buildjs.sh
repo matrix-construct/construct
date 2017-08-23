@@ -6,13 +6,8 @@ if [ -z $BRANCH ]; then
 fi
 
 CONFIG_OPTIONS=$2
-if [ -z $CONFIG_OPTIONS ]; then
+if [ -z "$CONFIG_OPTIONS" ]; then
 	CONFIG_OPTIONS="--enable-optimize"
-fi
-
-JOBS=$3
-if [ -z $JOBS ]; then
-	JOBS=4
 fi
 
 run ()
@@ -71,6 +66,6 @@ fi
 #run ../configure --enable-debug
 # run ../configure --disable-shared-js --enable-debug # --enable-replace-malloc
 
-run make -j $JOBS
+run make
 
 run cd $USERDIR         # Return to user's original directory
