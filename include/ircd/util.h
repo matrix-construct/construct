@@ -841,7 +841,7 @@ struct string_view
 
 	// (non-standard) intuitive wrapper for remove_suffix.
 	// Unlike std::string, we can cheaply involve a reference to the removed character
-	// which still exist.
+	// which still exists.
 	const char &pop_back()
 	{
 		const char &ret(back());
@@ -851,7 +851,7 @@ struct string_view
 
 	// (non-standard) intuitive wrapper for remove_prefix.
 	// Unlike std::string, we can cheaply involve a reference to the removed character
-	// which still exist.
+	// which still exists.
 	const char &pop_front()
 	{
 		const char &ret(front());
