@@ -109,11 +109,18 @@ void log_rdb_perf_context(const bool &all = true);
 #include "db/column.h"
 #include "db/cell.h"
 #include "db/row.h"
+#include "db/object.h"
 
 namespace ircd {
 namespace db   {
 
 std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
+
+struct init
+{
+	init();
+	~init() noexcept;
+};
 
 } // namespace db
 } // namespace ircd
