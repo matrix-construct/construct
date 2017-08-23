@@ -22,13 +22,13 @@
 #include <ircd/ircd.h>
 #include <boost/asio.hpp>
 #include <ircd/ctx/continuation.h>
+#include <ircd/m.h>
 #include "charybdis.h"
 
 const char *const generic_message
 {R"(
-*** - To end the console session, type ctrl-d             -> EOF
-*** - To exit cleanly, type DIE or ctrl-\                 -> SIGQUIT
-*** - To exit immediately, type EXIT                      -> exit(0)
+*** - To end the console session: type ctrl-d             -> EOF
+*** - To exit cleanly: type exit, die, or ctrl-\          -> SIGQUIT
 *** - To generate a coredump for developers, type ABORT   -> abort()
 ***
 )"};
@@ -37,7 +37,7 @@ bool console_active;
 ircd::ctx::ctx *console_ctx;
 boost::asio::posix::stream_descriptor *console_in;
 
-static void handle_line(const std::string &line);
+static bool handle_line(const std::string &line);
 static void console();
 
 void
@@ -121,7 +121,7 @@ catch(const std::exception &e)
 	ircd::log::error("console_termstop(): %s", e.what());
 }
 
-ircd::m::client *moi;
+ircd::m::session *moi;
 
 const char *const console_message
 {R"(
@@ -155,7 +155,7 @@ try
 	std::istream is{&buf};
 	std::string line;
 
-	while(1) try
+	while(1)
 	{
 		std::cout << "\n> " << std::flush;
 
@@ -167,12 +167,11 @@ try
 		}
 
 		std::getline(is, line);
-		if(!line.empty())
-			handle_line(line);
-	}
-	catch(const ircd::resource::not_found &e)
-	{
-		std::cerr << e.what() << std::endl;
+		if(line.empty())
+			continue;
+
+		if(!handle_line(line))
+			break;
 	}
 }
 catch(const std::exception &e)
@@ -185,7 +184,7 @@ catch(const std::exception &e)
 	return;
 }
 
-void
+bool
 handle_line(const std::string &line)
 try
 {
@@ -197,23 +196,48 @@ try
 	if(line == "EXIT")
 		exit(0);
 
+	if(line == "exit" || line == "die")
+	{
+		ircd::stop();
+		return false;
+	}
+
 	switch(hash(token(line, " ", 0)))
 	{
-		case hash("GET"):
-		case hash("POST"):
+		case hash("reload"):
 		{
-			if(!moi)
+			module matrix("matrix");
+			auto &root(matrix.get<module *>("root_module"));
+			root->reset();
+			*root = module("root");
+			break;
+		}
+
+		case hash("show"):
+		{
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"what"}};
+			const std::string what(token.at(0));
+			switch(hash(what))
 			{
-				std::cerr << "No current session" << std::endl;
-				break;
+				case hash("dbs"):
+				{
+					const auto dirs(ircd::db::available());
+					for(const auto &dir : dirs)
+						std::cout << dir << ", ";
+
+					std::cout << std::endl;
+					break;
+				}
 			}
 
-			const auto raw(line);
-			m::request::quote q
-			{
-				"GET", "/foo", "{}"
-			};
-			moi->quote(q);
+			break;
+		}
+
+		case hash("reconnect"):
+		{
+			handle_line("disconnect");
+			handle_line("connect");
 			break;
 		}
 
@@ -227,9 +251,9 @@ try
 
 			const auto args(tokens_after(line, " ", 0));
 			const params token{args, " ", {"host", "port"}};
-			const std::string host{token.at(0)};
-			const auto port{token.at<uint16_t>(1)};
-			moi = new m::client{{host, port}};
+			const std::string host{token.at(0, "127.0.0.1"s)};
+			const auto port{token.at<uint16_t>(1, 6667)};
+			moi = new m::session{{host, port}};
 			break;
 		}
 
@@ -253,14 +277,15 @@ try
 				break;
 			}
 
-			m::request::versions
+			m::request request
 			{
-				*moi, [](const json::doc &doc)
-				{
-					std::cout << doc << std::endl;
-				}
+				"GET", "_matrix/client/versions"
 			};
 
+			static char buf[1024];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			std::cout << doc << std::endl;
 			break;
 		}
 
@@ -269,12 +294,32 @@ try
 			if(!moi)
 			{
 				std::cerr << "No current session" << std::endl;
-				//break;
+				break;
 			}
 
 			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"user", "pass"}};
-			moi->reg(token.at(0), token.at(1));
+			const params token{args, " ", {"username", "pass"}};
+
+			m::request request
+			{
+				"POST", "_matrix/client/r0/register", {},
+				{
+					{ "username",  token.at(0) },
+					{ "pass",      token.at(1) },
+					{ "password",  token.at(1) },
+					{
+						"auth",
+						{
+							{ "type",  "m.login.dummy" }
+						}
+					}
+				}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			std::cout << doc << std::endl;
 			break;
 		}
 
@@ -287,21 +332,23 @@ try
 			}
 
 			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"user", "password"}};
-			m::request::login login
-			{{
-				{ "user",      token.at(0)        },
-				{ "password",  token.at(1)        },
-				{ "type",      "m.login.password" }
-			}};
+			const params token{args, " ", {"user", "pass"}};
 
-			const auto session
+			m::request request
 			{
-				moi->login(login)
+				"POST", "_matrix/client/r0/login", {},
+				{
+					{ "user",         token.at(0) },
+					{ "password",     token.at(1) },
+					{ "type",  "m.login.password" },
+				}
 			};
 
-			std::cout << "access_token: " << session.access_token << std::endl;
-
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			std::cout << doc << std::endl;
+			moi->access_token = std::string(unquote(doc.at("access_token")));
 			break;
 		}
 
@@ -313,27 +360,121 @@ try
 				break;
 			}
 
-			m::request::sync sync;
-			moi->sync(sync);
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"user", "pass"}};
+
+			static char query[2048];
+			snprintf(query, sizeof(query), "%s=%s",
+			         "access_token",
+			         moi->access_token.c_str());
+
+			m::request request
+			{
+				"GET", "_matrix/client/r0/sync", query,
+				{
+				}
+			};
+
+			static char buf[8192];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			for(const auto &member : doc)
+				std::cout << string_view{member.first} << " => " << string_view{member.second} << std::endl;
+
 			break;
 		}
 
+		case hash("createroom"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"name"}};
+
+			char query[1024];
+			snprintf(query, sizeof(query), "%s=%s",
+			         "access_token",
+			         moi->access_token.c_str());
+
+			m::request request
+			{
+				"POST", "_matrix/client/r0/createRoom", query,
+				{
+					{ "name",      token.at(0) },
+				}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			std::cout << doc << std::endl;
+			break;
+		}
+/*
+		case hash("GET"):
+		case hash("POST"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto raw(line);
+			m::request::quote q
+			{
+				"GET", "/foo", "{}"
+			};
+			moi->quote(q);
+			break;
+		}
+
+		case hash("password"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"new_password"}};
+			m::request::password password
+			{{
+				{ "new_password",  token.at(0) },
+				{ "auth",
+				{
+					{ "session",  "abcdef"         },
+					{ "type",     "m.login.token"  }
+				}}
+			}};
+
+			moi->password(password);
+			break;
+		}
+*/
 		default:
 			std::cerr << "Bad command or filename" << std::endl;
 	}
+
+	return true;
 }
 catch(const std::out_of_range &e)
 {
 	std::cerr << "missing required arguments." << std::endl;
-	return;
+	return true;
 }
 catch(const ircd::http::error &e)
 {
 	ircd::log::error("console: %s %s", e.what(), e.content.c_str());
-	return;
+	return true;
 }
 catch(const std::exception &e)
 {
 	ircd::log::error("console: %s", e.what());
-	return;
+	return true;
 }

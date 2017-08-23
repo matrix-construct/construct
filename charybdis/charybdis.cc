@@ -58,7 +58,7 @@ lgetopt opts[] =
 	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
 	{ "conftest",   &testing_conf,    lgetopt::YESNO,   "Test the configuration files and exit" },
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
-	{ "console",    &cmdline,         lgetopt::BOOL,    "Interrupt to a command line immediately after startup" },
+	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
