@@ -52,6 +52,7 @@ struct parse
 		return std::tuple_size<tuple_type>();
 	}
 
+	parse() = default;
 	template<class R> parse(R &r, const json::object &obj);
 };
 

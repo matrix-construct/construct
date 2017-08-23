@@ -25,6 +25,12 @@
 namespace ircd {
 namespace json {
 
+// The ircd::json::value is used if we have to keep state in machine-form
+// rather than directly computing JSON strings. This class ends up being useful
+// for recursive initializer_lists to compose JSON from machine values. It
+// is lightweight, consuming the space of two pointers which is the same size
+// as a string_view.
+//
 struct value
 {
 	union // xxx std::variant
