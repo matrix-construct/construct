@@ -141,10 +141,22 @@ ircd::socket::socket(const ip::tcp::endpoint &remote,
 
 ircd::socket::socket(asio::ssl::context &ssl,
                      boost::asio::io_service *const &ios)
-:ssl{*ios, ssl}
-,sd{this->ssl.next_layer()}
-,timer{*ios}
-,timedout{false}
+:ssl
+{
+	*ios, ssl
+}
+,sd
+{
+	this->ssl.next_layer()
+}
+,timer
+{
+	*ios
+}
+,timedout
+{
+	false
+}
 {
 }
 
@@ -208,40 +220,164 @@ ircd::socket::cancel()
 	sd.cancel();
 }
 
+//
+// Overload for operator() without a timeout. see: operator()
+//
 void
 ircd::socket::operator()(handler h)
 {
 	operator()(milliseconds(-1), std::move(h));
 }
 
+//
+// This function calls back the handler when the socket has received
+// something and is ready to be read from.
+//
+// The purpose here is to allow waiting for data from the socket without
+// blocking any context and using any stack space whatsoever, i.e full
+// asynchronous mode.
+//
+// boost::asio has no direct way to accomplish this, so we use a little
+// trick to read a single byte with MSG_PEEK as our indication. This is
+// done directly on the socket and not through the SSL cipher, but we
+// don't want this byte anyway. This isn't such a great trick, because
+// it may result in an extra syscall; so there's room for improvement here.
+//
 void
 ircd::socket::operator()(const milliseconds &timeout,
-                         handler h)
+                         handler callback)
 {
+	static const auto flags
+	{
+		ip::tcp::socket::message_peek
+	};
+
 	static char buffer[1];
-	static const mutable_buffers buffers{{buffer, sizeof(buffer)}};
-	static const auto flags(ip::tcp::socket::message_peek);
+	static const asio::mutable_buffers_1 buffers
+	{
+		buffer, sizeof(buffer)
+	};
+
+	auto handler
+	{
+		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1, ph::_2)
+	};
 
 	set_timeout(timeout);
-	sd.async_receive(buffers, flags, [this, handler(h), wp(weak_from(*this))]
-	(error_code ec, const size_t &bytes)
+	sd.async_receive(buffers, flags, std::move(handler));
+}
+
+void
+ircd::socket::handle(const std::weak_ptr<socket> wp,
+                     const handler callback,
+                     const error_code &ec,
+                     const size_t &bytes)
+noexcept
+{
+	// This handler may still be registered with asio after the socket destructs, so
+	// the weak_ptr will indicate that fact. However, this is never intended and is
+	// a debug assertion which should be corrected.
+	if(unlikely(wp.expired()))
 	{
-		assert(bytes <= sizeof(buffer));
+		log::warning("socket(%p): belated callback to handler...", this);
+		assert(0);
+		return;
+	}
 
-		if(unlikely(wp.expired()))
-		{
-			log::warning("socket(%p): belated callback to handler...", this);
-			return;
-		}
+	// This handler and the timeout handler are responsible for canceling each other
+	// when one or the other is entered. If the timeout handler has already fired for
+	// a timeout on the socket, `timedout` will be `true` and this handler will be
+	// entered with an `operation_canceled` error.
+	if(!timedout)
+		timer.cancel();
+	else
+		assert(ec == boost::system::errc::operation_canceled);
 
-		if(!handle_ready(ec))
-		{
-			log::debug("socket(%p): %s", this, ec.message());
-			return;
-		}
+	// We can handle a few errors at this level which don't ever need to invoke the
+	// user's callback. Otherwise they are passed up.
+	if(!handle_error(ec))
+	{
+		log::debug("socket(%p): %s", this, ec.message());
+		return;
+	}
 
-		handler(ec);
-	});
+	call_user(callback, ec);
+}
+
+void
+ircd::socket::call_user(const handler &callback,
+                        const error_code &ec)
+noexcept try
+{
+	callback(ec);
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p): async handler: unhandled user exception: %s",
+	           this,
+	           e.what());
+
+	if(ircd::debugmode)
+		throw;
+}
+
+bool
+ircd::socket::handle_error(const error_code &ec)
+{
+ 	using namespace boost::system::errc;
+
+	switch(ec.value())
+	{
+		// A success is not an error; can call the user handler
+		case success:
+			return true;
+
+		// A cancel is triggered either by the timeout handler or by
+		// a request to shutdown/close the socket. We only call the user's
+		// handler for a timeout, otherwise this is hidden from the user.
+		case operation_canceled:
+			return timedout;
+
+		// This indicates the remote closed the socket, we still
+		// pass this up to the user so they can handle it.
+		case boost::asio::error::eof:
+			return true;
+
+		// This is a condition which we hide from the user.
+		case bad_file_descriptor:
+			return false;
+
+		// Everything else is passed up to the user.
+		default:
+			return true;
+	}
+}
+
+void
+ircd::socket::handle_timeout(const std::weak_ptr<socket> wp,
+                             const error_code &ec)
+{
+ 	using namespace boost::system::errc;
+
+	if(!wp.expired()) switch(ec.value())
+	{
+		// A 'success' for this handler means there was a timeout on the socket
+		case success:
+			timedout = true;
+			cancel();
+			break;
+
+		// A cancelation means there was no timeout.
+		case operation_canceled:
+			timedout = false;
+			break;
+
+		// All other errors are unexpected, logged and ignored here.
+		default:
+			log::error("socket::handle_timeout(): unexpected: %s\n",
+			           ec.message());
+			break;
+	}
 }
 
 bool
@@ -253,56 +389,4 @@ const noexcept try
 catch(const boost::system::system_error &e)
 {
 	return false;
-}
-
-bool
-ircd::socket::handle_ready(const error_code &ec)
-noexcept
-{
- 	using namespace boost::system::errc;
-
-	if(!timedout)
-		timer.cancel();
-
-	switch(ec.value())
-	{
-		case success:
-			return true;
-
-		case boost::asio::error::eof:
-			return true;
-
-		case operation_canceled:
-			return timedout;
-
-		case bad_file_descriptor:
-			return false;
-
-		default:
-			return true;
-	}
-}
-
-void
-ircd::socket::handle_timeout(const std::weak_ptr<socket> wp,
-                             const error_code &ec)
-noexcept
-{
- 	using namespace boost::system::errc;
-
-	if(!wp.expired()) switch(ec.value())
-	{
-		case success:
-			timedout = true;
-			cancel();
-			break;
-
-		case operation_canceled:
-			timedout = false;
-			break;
-
-		default:
-			log::error("socket::handle_timeout(): unexpected: %s\n", ec.message().c_str());
-			break;
-	}
 }

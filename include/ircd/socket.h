@@ -82,8 +82,10 @@ struct socket
 	stat in, out;
 	bool timedout;
 
-	void handle_timeout(const std::weak_ptr<socket> wp, const error_code &ec) noexcept;
-	bool handle_ready(const error_code &ec) noexcept;
+	void call_user(const handler &, const error_code &) noexcept;
+	bool handle_error(const error_code &ec);
+	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec);
+	void handle(std::weak_ptr<socket>, handler, const error_code &, const size_t &) noexcept;
 
   public:
 	operator const ip::tcp::socket &() const     { return sd;                                      }
@@ -130,6 +132,8 @@ struct socket
 	socket(asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 
+	socket(socket &&) = delete;
+	socket(const socket &) = delete;
 	~socket() noexcept;
 };
 

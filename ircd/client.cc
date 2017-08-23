@@ -85,6 +85,7 @@ ircd::client::init::~init()
 noexcept
 {
 	request.interrupt();
+	ctx::yield();
 	disconnect_all();
 	socket_init.reset(nullptr);
 }
@@ -232,8 +233,7 @@ ircd::client::client(const host_port &host_port,
 }
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:type{type}
-,clit{clients, clients.emplace(end(clients), this)}
+:clit{clients, clients.emplace(end(clients), this)}
 ,sock{std::move(sock)}
 {
 }
@@ -252,6 +252,8 @@ noexcept try
 catch(const boost::system::system_error &e)
 {
 	using boost::asio::error::eof;
+	using boost::asio::error::broken_pipe;
+	using boost::asio::error::connection_reset;
 	using namespace boost::system::errc;
 
 	switch(e.code().value())
@@ -261,6 +263,8 @@ catch(const boost::system::system_error &e)
 			return true;
 
 		case eof:
+		case broken_pipe:
+		case connection_reset:
 		case not_connected:
 		case operation_canceled:
 			return false;
@@ -378,7 +382,11 @@ ircd::handle_request(client &client,
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
-	const auto client(std::make_shared<ircd::client>(std::move(s)));
+	const auto client
+	{
+		make_client(std::move(s))
+	};
+
 	log::debug("client[%s] CONNECTED local[%s]",
 	           string(remote_addr(*client)),
 	           string(local_addr(*client)));
@@ -421,20 +429,52 @@ ircd::async_recv_next(std::shared_ptr<client> client)
 	async_recv_next(std::move(client), milliseconds(-1));
 }
 
+//
+// This function is the basis for the client's request loop. We still use
+// an asynchronous pattern until there is activity on the socket (a request)
+// in which case we switch to synchronous mode by jumping into an ircd::context
+// drawn from the request pool. When the request is finished, we exit back
+// into asynchronous mode until the next request is received and rinse and repeat.
+//
+// This sequence exists to avoid any possible c10k-style limitation imposed by
+// dedicating a context and its stack space to the lifetime of a connection.
+// This is similar to the thread-per-request pattern before async was in vogue.
+// Except now with userspace threads, a context switch has a cost on the order
+// of a function call, not nearly that of a system thread. So after enduring
+// several years of non-blocking stackless callback asynchronous web-scale hell,
+// we have now made it out alive on the other side. Enjoy.
+//
+// Pay close attention to the comments to know exactly where you are and what
+// you can do at any given point in this sequence.
+//
 void
 ircd::async_recv_next(std::shared_ptr<client> client,
                       const milliseconds &timeout)
 {
 	auto &sock(*client->sock);
-	sock(timeout, [client, timeout]
-	(const error_code &ec)
+
+	// This call returns immediately so we no longer block the current context and
+	// its stack while waiting for activity on idle connections between requests.
+	sock(timeout, [client(std::move(client)), timeout](const error_code &ec)
 	noexcept
 	{
+		// Right here this handler is executing on the main stack (not in any
+		// ircd::context). We handle any socket errors now, and if this function
+		// returns here the client's shared_ptr may expire and that will be the
+		// end of this client, socket, and connection...
 		if(!handle_ec(*client, ec))
 			return;
 
-		request([client, timeout]
+		// This call returns immediately because we can never block the main stack outside
+		// of the ircd::context system. The context the closure ends up getting is the next
+		// available from the request pool, which may not be available immediately so this
+		// handler might be queued for some time after this call returns.
+		request([client(std::move(client)), timeout]
 		{
+			// Right here this handler is executing on an ircd::context with its own
+			// stack dedicated to the lifetime of this request. If client::main()
+			// returns true, we bring the client back into async mode to wait for
+			// the next request.
 			if(client->main())
 				async_recv_next(client, timeout);
 		});
@@ -465,18 +505,40 @@ ircd::handle_ec_success(client &client)
 
 bool
 ircd::handle_ec_eof(client &client)
+try
 {
-	log::debug("client[%s]: EOF", string(remote_addr(client)));
+	log::debug("client[%s]: EOF",
+	           string(remote_addr(client)));
+
 	client.sock->disconnect(socket::FIN_RECV);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::warning("client(%p): EOF: %s",
+	             &client,
+	             e.what());
+
 	return false;
 }
 
 bool
 ircd::handle_ec_timeout(client &client)
+try
 {
 	auto &sock(*client.sock);
-	log::debug("client[%s]: disconnecting after inactivity timeout", string(remote_addr(client)));
+	log::debug("client[%s]: disconnecting after inactivity timeout",
+	           string(remote_addr(client)));
+
 	sock.disconnect();
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::warning("client(%p): timeout: %s",
+	             &client,
+	             e.what());
+
 	return false;
 }
 

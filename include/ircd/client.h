@@ -45,7 +45,6 @@ struct client
 
 	static list clients;
 
-	string_view type;
 	unique_const_iterator<list> clit;
 	std::shared_ptr<socket> sock;
 
