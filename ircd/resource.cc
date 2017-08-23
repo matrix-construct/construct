@@ -295,7 +295,7 @@ ircd::resource::response::response(client &client,
 		code, str, write_closure(client),
 		{
 			{ "Content-Type", content_type },
-			{ "Access-Control-Allow-Origin", "*" }
+			{ "Access-Control-Allow-Origin", "*" } //TODO: XXX
 		}
 	};
 
