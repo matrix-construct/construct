@@ -58,10 +58,12 @@ struct socket
 
 	enum dc
 	{
-		RST,          // hardest disconnect
-		FIN,          // graceful shutdown both directions
-		FIN_SEND,     // graceful shutdown send side
-		FIN_RECV,     // graceful shutdown recv side
+		RST,                // hardest disconnect
+		FIN,                // graceful shutdown both directions
+		FIN_SEND,           // graceful shutdown send side
+		FIN_RECV,           // graceful shutdown recv side
+		SSL_NOTIFY,         // SSL close_notify (async, errors ignored)
+		SSL_NOTIFY_YIELD,   // SSL close_notify (yields context, throws)
 	};
 
 	struct stat
@@ -111,7 +113,7 @@ struct socket
 	void operator()(handler);
 	void cancel();
 
-	void disconnect(const dc &type = dc::FIN);
+	void disconnect(const dc &type = dc::SSL_NOTIFY);
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = -1ms);
 
 	socket(const std::string &host,

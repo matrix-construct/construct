@@ -175,6 +175,29 @@ ircd::socket::disconnect(const dc &type)
 		case dc::FIN:       sd.shutdown(ip::tcp::socket::shutdown_both);     break;
 		case dc::FIN_SEND:  sd.shutdown(ip::tcp::socket::shutdown_send);     break;
 		case dc::FIN_RECV:  sd.shutdown(ip::tcp::socket::shutdown_receive);  break;
+
+		case dc::SSL_NOTIFY:
+		{
+			ssl.async_shutdown([socket(shared_from_this())]
+			(boost::system::error_code ec)
+			{
+				if(!ec)
+					socket->sd.close(ec);
+
+				if(ec)
+					log::warning("socket(%p): disconnect(): %s",
+					             socket.get(),
+					             ec.message());
+			});
+			break;
+		}
+
+		case dc::SSL_NOTIFY_YIELD:
+		{
+			ssl.async_shutdown(yield(continuation()));
+			sd.close();
+			break;
+		}
 	}
 }
 
