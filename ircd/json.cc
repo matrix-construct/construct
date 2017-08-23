@@ -350,7 +350,7 @@ const
 {
 	const auto gg
 	{
-		maxwidth(stop - out)[std::forward<gen>(g)] | eps[failed_to_serialize_object]
+		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[failed_to_serialize_object]
 	};
 
 	return karma::generate(out, gg, std::forward<attr>(a));
@@ -365,7 +365,7 @@ const
 {
 	const auto gg
 	{
-		maxwidth(stop - out)[std::forward<gen>(g)] | eps[failed_to_serialize_object]
+		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[failed_to_serialize_object]
 	};
 
 	return karma::generate(out, gg);
@@ -690,7 +690,7 @@ ircd::json::obj::obj(recursive_t recursive,
                      const doc &doc)
 :idx{doc.count()}
 {
-	static const auto transform([&]
+	std::transform(std::begin(doc), std::end(doc), std::begin(idx), [&]
 	(const doc::member &m) -> obj::member
 	{
 		switch(type(m.second))
@@ -702,8 +702,6 @@ ircd::json::obj::obj(recursive_t recursive,
 				return obj::member{m};
 		};
 	});
-
-	std::transform(std::begin(doc), std::end(doc), std::begin(idx), transform);
 }
 
 ircd::json::obj::obj(const doc &doc)
@@ -773,7 +771,7 @@ const
 	const auto &val(it->second);
 	if(!indice.empty())
 	{
-		const auto idx(lex_cast<size_t>(chomp(indice, "]")));
+		const auto idx(lex_cast<size_t>(rstrip(indice, ']')));
 
 		if(type(val) != ARRAY)
 			throw not_found("cannot recurse through non-array \"%s\" for indice [%zu]", name, idx);
