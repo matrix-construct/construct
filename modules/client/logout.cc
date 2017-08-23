@@ -1,6 +1,6 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+/* 
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,50 +19,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
+#include "account.h"
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+using namespace ircd;
+
+using object = db::object<account>;
+template<class T = string_view> using value = db::value<T, account>;
+
+resource logout_resource
 {
-}
+	"_matrix/client/r0/logout",
+	"Invalidates an existing access token, so that it can no longer be used for "
+	"authorization. (3.2.3)"
+};
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+resource::response
+logout(client &client, const resource::request &request)
 {
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
+	const auto &access_token(request.query.at("access_token"));
+	const auto it(resource::tokens.find(access_token));
+	if(unlikely(it == end(resource::tokens)))
+		throw http::error{http::INTERNAL_SERVER_ERROR};
 
-	http::request
+	resource::tokens.erase(it);
+	return resource::response
 	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
+		client, json::obj
 		{
-			{ "Content-Type"s, "application/json"s }
+			{   }
 		}
 	};
-
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
 }
+
+resource::method post
+{
+	logout_resource, "POST", logout,
+	{
+		post.REQUIRES_AUTH
+	}
+};
+
+mapi::header IRCD_MODULE
+{
+	"registers the resource 'client/logout' to handle requests"
+};

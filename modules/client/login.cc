@@ -19,75 +19,132 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-using namespace ircd;
+#include "account.h"
 
-mods::sym_ref<db::handle> accounts_ref
-{
-	"client_register",
-	"accounts"
-};
+using namespace ircd;
 
 resource login_resource
 {
-	"/_matrix/client/r0/login",
+	"_matrix/client/r0/login",
 	"Authenticates the user by password, and issues an access token "
 	"they can use to authorize themself in subsequent requests. (3.2.2)"
 };
 
+const auto home_server
+{
+	// "The hostname of the homeserver on which the account has been registered."
+	"cdc.z"
+};
+
+using object = db::object<account>;
+template<class T = string_view> using value = db::value<T, account>;
+
 resource::response
-login(client &client, const resource::request &request)
-try
+login_password(client &client, const resource::request &request)
 {
 	const auto user
 	{
+		// "The fully qualified user ID or just local part of the user ID, to log in."
 		unquote(request.at("user"))
 	};
 
+    char user_id[m::USER_ID_BUFSIZE]; m::id
+    {
+        user, home_server, user_id
+    };
+
 	const auto password
 	{
+		// "Required. The user's password."
 		request.at("password")
 	};
 
-	const auto type
-	{
-		unquote(request["type"])
-	};
-
-	if(!type.empty() && type != "m.login.password")
-	{
+    value<> password_text("password.text", user_id);
+	if(password_text != password)
 		throw m::error
 		{
-			"M_UNSUPPORTED", "Login type is not supported."
+			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
 		};
-	}
 
-	db::handle &accounts(accounts_ref);
-	accounts(user, [&password](const json::doc &user)
-	{
-		if(user["password"] != password)
-			throw db::not_found();
-	});
+	// "An access token for the account. This access token can then be used to "
+	// "authorize other requests. The access token may expire at some point, and if "
+	// "so, it SHOULD come with a refresh_token. There is no specific error message to "
+	// "indicate that a request has failed because an access token has expired; "
+	// "instead, if a client has reason to believe its access token is valid, and "
+	// "it receives an auth error, they should attempt to refresh for a new token "
+	// "on failure, and retry the request with the new token."
+	value<> access_token_text{"access_token.text", user_id};
 
-	const auto access_token(123456);
-	const auto home_server("cdc.z");
-	const auto device_id("ABCDEF");
+	 // Generate access token
+	char access_token[m::ACCESS_TOKEN_BUFSIZE];
+	m::access_token_generate(access_token, sizeof(access_token));
+
+	// Write access token to database
+	access_token_text = access_token;
+	ircd::resource::tokens.emplace(access_token, &client); //TODO: XXX
+	value<> token_to_user_id{"token", access_token_text};
+	token_to_user_id = user_id;
+
+	// Send response to user
 	return resource::response
 	{
 		client,
 		{
-			{ "user_id",        user          },
+			{ "user_id",        user_id       },
 			{ "access_token",   access_token  },
 			{ "home_server",    home_server   },
-			{ "device_id",      device_id     },
 		}
 	};
 }
-catch(const db::not_found &e)
+
+resource::response
+login_token(client &client, const resource::request &request)
 {
-	throw m::error
+	const auto token
 	{
-		http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
+		unquote(request.at("token"))
 	};
+
+	const value<> user_id
+	{
+		"token", token
+	};
+
+	if(!user_id)
+		throw m::error
+		{
+			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
+		};
+
+	return resource::response
+	{
+		client,
+		{
+			{ "user_id",        string_view(user_id) },
+			{ "access_token",   token                },
+			{ "home_server",    home_server          },
+		}
+	};
+}
+
+resource::response
+login(client &client, const resource::request &request)
+{
+	const auto type
+	{
+		// "Required. The login type being used. Currently only "m.login.password" is supported."
+		unquote(request.at("type"))
+	};
+
+	if(type == "m.login.password")
+		return login_password(client, request);
+	else if(type == "m.login.token")
+		return login_token(client, request);
+	else
+		throw m::error
+		{
+			"M_UNSUPPORTED", "Login type is not supported."
+		};
 }
 
 resource::method post

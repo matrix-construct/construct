@@ -19,50 +19,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
+#include <ircd/listen.h>
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+using namespace ircd;
+
+mapi::header IRCD_MODULE
 {
-}
+	"Chat Matrix Protocol"
+};
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+std::map<std::string, module> modules;
+
+ //TODO: XXX very temporary stuff around here
+// The path root (serves static assets for web etc); this pointer
+// exists for now to easily find and reload that specifically.
+module *root_module;
+const auto _init_([]
 {
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
+	// These modules host databases and have to be loaded first.
+	modules.emplace("client_account.so"s, "client_account.so"s);
+	modules.emplace("client_room.so"s, "client_room.so"s);
 
-	http::request
+	for(const auto &name : mods::available())
+		if(name != "matrix.so")
+			modules.emplace(name, name);
+
+	root_module = &modules.at("root.so"s);
+	return true;
+}());
+
+listener matrices
+{
+	std::string { json::obj
 	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
+		{ "name",    "Chat Matrix" },
+		{ "host",    "0.0.0.0"     },
 		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
-
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
+			"ssl_certificate_chain_file", "/home/jason/.synapse/zemos.net.crt"
+		},
 		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
+			"ssl_tmp_dh_file", "/home/jason/.synapse/cdc.z.tls.dh"
+		},
+		{
+			"ssl_private_key_file_pem", "/home/jason/.synapse/cdc.z.tls.key"
+		},
+		{
+			"port", 6667
 		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
-}
+	}}
+};

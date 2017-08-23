@@ -1,4 +1,6 @@
 /*
+ * charybdis: 21st Century IRC++d
+ *
  * Copyright (C) 2016 Charybdis Development Team
  * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
@@ -17,52 +19,24 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#include <ircd/m.h>
+#pragma once
+#define HAVE_IRCD_M_H
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
-{
-}
+namespace ircd {
+namespace m    {
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
-{
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
+} // namespace m
+} // namespace ircd
 
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
+#include "m/error.h"
+#include "m/id.h"
+#include "m/event.h"
+#include "m/request.h"
+#include "m/session.h"
 
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
-		}
-	};
+namespace ircd {
 
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
-}
+} // namespace ircd

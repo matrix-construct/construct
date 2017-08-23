@@ -19,6 +19,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ircd/m.h>
+
 namespace ircd {
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)

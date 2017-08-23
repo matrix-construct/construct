@@ -21,28 +21,68 @@
 
 using namespace ircd;
 
-resource versions_resource
+import<database *> room_database
 {
-	"_matrix/client/versions",
-	"Gets the versions of the specification supported by the server (2.1)"
+	"client_room", "room"
 };
 
-resource::method getter
+extern database *const room
 {
-	versions_resource, "GET", []
-	(client &client, resource::request &request)
-	-> resource::response
-	{
-		static const json::doc object
-		{
-			R"({"versions":["r2.0.0"]})"
-		};
+    room_database
+};
 
-		return resource::response { client, object };
+resource createroom
+{
+	"_matrix/client/r0/createRoom",
+	"Create a new room with various configuration options. (7.1.1)"
+};
+
+resource::response
+room_create(client &client, const resource::request &request)
+try
+{
+	const auto name
+	{
+		unquote(request["name"])
+	};
+
+	const auto visibility
+	{
+		unquote(request["visibility"])
+	};
+
+	std::string room_id {"!foo@bar.com"};
+
+	return resource::response
+	{
+		client, http::CREATED, json::obj
+		{
+			{ "room_id",       room_id        }
+		}
+	};
+}
+catch(const db::not_found &e)
+{
+	throw m::error
+	{
+		http::CONFLICT, "M_ROOM_IN_USE", "The desired room name is in use."
+	};
+
+	throw m::error
+	{
+		http::CONFLICT, "M_ROOM_ALIAS_IN_USE", "An alias of the desired room is in use."
+	};
+}
+
+resource::method post
+{
+	createroom, "POST", room_create,
+	{
+		post.REQUIRES_AUTH
 	}
 };
 
 mapi::header IRCD_MODULE
 {
-	"registers the resource 'client/versions' to handle requests"
+	"registers the resource 'client/createRoom' to handle requests"
 };

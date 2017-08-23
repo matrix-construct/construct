@@ -1,6 +1,6 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+/* 
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,50 +19,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
-
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+ircd::import_shared<ircd::database> account_database
 {
-}
+	"client_account", "account_database"
+};
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+extern ircd::database *const account
 {
-	parse::capstan pc
-	{
-		pb, read_closure(*this)
-	};
-
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
-
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
-}
+	account_database.get()
+};

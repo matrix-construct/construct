@@ -1,4 +1,6 @@
 /*
+ * charybdis: 21st Century IRC++d
+ *
  * Copyright (C) 2016 Charybdis Development Team
  * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
@@ -17,52 +19,71 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#include <ircd/m.h>
+#include <ircd/json/object.h>
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+#pragma once
+#define HAVE_IRCD_M_EVENT_H
+
+namespace ircd {
+namespace m    {
+
+struct event
+:json::object
+<
+	string_view,
+	time_t,
+	string_view,
+	string_view,
+	string_view,
+	string_view
+>
 {
-}
+	IRCD_MEMBERS
+	(
+		"content",
+		"origin_server_ts",
+		"sender",
+		"type",
+		"unsigned",
+		"state_key"
+	)
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+	template<class... A>
+	event(A&&... a)
+	:object{std::make_tuple(std::forward<A>(a)...)}
+	{}
+};
+
+struct sync
+:json::object
+<
+	string_view,
+	string_view,
+	string_view,
+	string_view
+>
 {
-	parse::capstan pc
+	IRCD_MEMBERS
+	(
+		"account_data",
+		"next_batch",
+		"rooms",
+		"presence",
+	)
+
+	sync(const json::doc &doc)
 	{
-		pb, read_closure(*this)
-	};
+	
+	}
 
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
-	};
+	template<class... A>
+	sync(A&&... a)
+	:object{std::make_tuple(std::forward<A>(a)...)}
+	{}
+};
 
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
-}
+} // namespace m
+} // namespace ircd

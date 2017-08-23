@@ -1,6 +1,6 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+/* 
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,50 +19,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
+using namespace ircd;
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+resource pushrules
 {
-}
+	"_matrix/client/r0/pushrules", R"(
+	Retrieve all push rulesets for this user. Clients can "drill-down" on the rulesets by
+	suffixing a scope to this path e.g. /pushrules/global/. This will return a subset of this data
+	under the specified key e.g. the global key. (11.10.1.4.6)
+	)"
+};
 
-ircd::json::doc
-ircd::m::session::operator()(parse::buffer &pb,
-                             request &r)
+resource::response
+get_pushrules(client &client, const resource::request &request)
+try
 {
-	parse::capstan pc
+	return resource::response
 	{
-		pb, read_closure(*this)
-	};
-
-	http::request
-	{
-		host(remote_addr(*this)),
-		r.method,
-		r.path,
-		r.query,
-		std::string(r),
-		write_closure(*this),
+		client, json::obj
 		{
-			{ "Content-Type"s, "application/json"s }
+			{    }
 		}
 	};
-
-	http::code status;
-	json::doc doc;
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &doc](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			doc = http::response::content{pc, head};
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, doc);
-
-	return doc;
 }
+catch(...)
+{
+	throw;
+}
+
+resource::method get
+{
+	pushrules, "GET", get_pushrules
+};
+
+mapi::header IRCD_MODULE
+{
+	"registers the resource 'client/pushrules' to handle requests"
+};
