@@ -242,7 +242,7 @@ catch(const std::bad_function_call &e)
 ircd::resource::request::request(const http::request::head &head,
                                  http::request::content &content,
                                  http::query::string query)
-:json::doc{content}
+:json::object{content}
 ,head{head}
 ,content{content}
 ,query{std::move(query)}
@@ -251,19 +251,19 @@ ircd::resource::request::request(const http::request::head &head,
 
 ircd::resource::response::response(client &client,
                                    const http::code &code,
-                                   const json::obj &obj)
-:response{client, obj, code}
+                                   const json::index &idx)
+:response{client, idx, code}
 {
 }
 
 ircd::resource::response::response(client &client,
-                                   const json::obj &obj,
+                                   const json::index &index,
                                    const http::code &code)
 try
 {
-	char cbuf[4096], *out(cbuf);
-	const auto doc(serialize(obj, out, cbuf + sizeof(cbuf)));
-	response(client, doc, code);
+	char cbuf[8192], *out(cbuf);
+	const auto object(serialize(index, out, cbuf + sizeof(cbuf)));
+	response(client, object, code);
 }
 catch(const json::error &e)
 {
@@ -274,7 +274,7 @@ catch(const json::error &e)
 }
 
 ircd::resource::response::response(client &client,
-                                   const json::doc &doc,
+                                   const json::object &object,
                                    const http::code &code)
 {
 	const auto content_type
@@ -282,7 +282,7 @@ ircd::resource::response::response(client &client,
 		"application/json; charset=utf-8"
 	};
 
-	response(client, doc, content_type, code);
+	response(client, object, content_type, code);
 }
 
 ircd::resource::response::response(client &client,
