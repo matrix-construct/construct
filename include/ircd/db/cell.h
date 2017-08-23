@@ -32,6 +32,11 @@ namespace db   {
 // for satisfaction. Cells from different columns sharing the same key are composed
 // into a `row` (see: row.h).
 //
+// When composed into a `row` or `object` remember that calls to cell::key() will
+// all be the same index key -- not the name of the column the cell is representing
+// in the row. You probably want cell::col() when iterating the row to build a
+// JSON object's keys when iterating across a row.
+//
 // NOTE that this cell struct is type-agnostic. The database is capable of storing
 // binary data in the key or the value for a cell. The string_view will work with
 // both a normal string and binary data, so this class is not a template and offers
@@ -69,6 +74,9 @@ struct cell
 	explicit operator string_view() const;       // empty on !valid()
 	explicit operator string_view();             // reload then empty on !valid()
 
+	// [SET] Perform operation on this cell only
+	void operator()(const op &, const string_view &val = {}, const sopts & = {});
+
 	// [SET] assign cell
 	cell &operator=(const string_view &);
 
@@ -76,9 +84,10 @@ struct cell
 	bool compare_exchange(string_view &expected, const string_view &desired);
 	string_view exchange(const string_view &desired);
 
+	// [GET] load cell only (returns valid)
 	bool load(gopts = {});
 
-	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>);
+	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>, gopts = {});
 	cell(column, const string_view &index, gopts = {});
 	cell(database &, const string_view &column, const string_view &index, gopts = {});
 	cell();
@@ -92,47 +101,37 @@ struct cell
 };
 
 //
-// A delta is an element of a database transaction. The cell::delta
-// is specific to a key in a column. Use cell deltas to make an
-// all-succeed-or-all-fail transaction across many cells in many columns.
+// A delta is an element of a database transaction. You can use this to change
+// the values of cells. Use cell deltas to make an all-succeed-or-all-fail
+// transaction across many cells in various columns at once.
 //
 struct cell::delta
 :std::tuple<op, cell &, string_view>
 {
-	delta(const enum op &op, cell &c, const string_view &val = {})
+	delta(cell &c, const string_view &val, const enum op &op = op::SET)
 	:std::tuple<enum op, cell &, string_view>{op, c, val}
 	{}
 
-	delta(cell &c, const string_view &val, const enum op &op = op::SET)
+	delta(const enum op &op, cell &c, const string_view &val = {})
 	:std::tuple<enum op, cell &, string_view>{op, c, val}
 	{}
 };
 
-// [SET] Perform operations in a sequence as a single transaction.
-void write(const cell::delta &, const sopts & = {});
+// [SET] Perform operations in a sequence as a single transaction. No template
+// iterators supported yet, just a ptr range good for contiguous sequences like
+// vectors and initializer_lists. To support any iterator I think we'll need to
+// forward-expose a wrapping of rocksdb::WriteBatch.
+void write(const cell::delta *const &begin, const cell::delta *const &end, const sopts & = {});
 void write(const std::initializer_list<cell::delta> &, const sopts & = {});
 void write(const sopts &, const std::initializer_list<cell::delta> &);
+void write(const cell::delta &, const sopts & = {});
 
+// Util
 const std::string &name(const cell &);
 uint64_t sequence(const cell &);
 
 } // namespace db
 } // namespace ircd
-
-inline
-uint64_t
-ircd::db::sequence(const cell &c)
-{
-	const database::snapshot &ss(c);
-	return sequence(ss);
-}
-
-inline
-const std::string &
-ircd::db::name(const cell &c)
-{
-	return name(c.c);
-}
 
 inline std::ostream &
 ircd::db::operator<<(std::ostream &s, const cell &c)

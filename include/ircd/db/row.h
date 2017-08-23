@@ -26,9 +26,13 @@
 namespace ircd {
 namespace db   {
 
-// A row is a collection of cells from different columns which all share the same
+// A `row` is a collection of cells from different columns which all share the same
 // key. This is an interface for dealing with those cells in the aggregate.
 //
+// Note that in a `row` each `cell` comes from a different `column`, but `cell::key()`
+// will all return the same index value across the whole `row`. To get the names
+// of the columns themselves to build ex. the key name of a JSON key-value pair,
+// use `cell::col()`, which will be different for each `cell` across the `row`.
 struct row
 {
 	struct delta;
@@ -73,7 +77,7 @@ struct row
 	row(database &,
 	    const string_view &key = {},
 	    const vector_view<string_view> &columns = {},
-	    const gopts &opts = {});
+	    gopts opts = {});
 
 	friend size_t trim(row &, const std::function<bool (cell &)> &);
 	friend size_t trim(row &, const string_view &key); // remove invalid or not equal
@@ -137,6 +141,34 @@ struct row::iterator
 	friend bool operator==(const iterator &, const iterator &);
 	friend bool operator!=(const iterator &, const iterator &);
 };
+
+//
+// A delta is an element of a database transaction. You can use this to make
+// an all-succeed-or-all-fail commitment to multiple rows at once. It is also
+// useful to make a commitment on a single row as a convenient way to compose
+// all of a row's cells together.
+//
+struct row::delta
+:std::tuple<op, row &>
+{
+	delta(row &r, const enum op &op = op::SET)
+	:std::tuple<enum op, row &>{op, r}
+	{}
+
+	delta(const enum op &op, row &r)
+	:std::tuple<enum op, row &>{op, r}
+	{}
+};
+
+// [SET] Perform operations in a sequence as a single transaction. No template
+// iterators supported yet, just a ptr range good for contiguous sequences.
+void write(const row::delta *const &begin, const row::delta *const &end, const sopts & = {});
+void write(const std::initializer_list<row::delta> &, const sopts & = {});
+void write(const sopts &, const std::initializer_list<row::delta> &);
+void write(const row::delta &, const sopts & = {});
+
+// [SET] Delete row from DB (convenience to an op::DELETE delta)
+void del(row &, const sopts & = {});
 
 } // namespace db
 } // namespace ircd

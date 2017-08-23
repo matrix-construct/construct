@@ -47,7 +47,10 @@ enum class set
 struct sopts
 :optlist<set>
 {
-	template<class... list> sopts(list&&... l): optlist<set>{std::forward<list>(l)...} {}
+	template<class... list>
+	sopts(list&&... l)
+	:optlist<set>{std::forward<list>(l)...}
+	{}
 };
 
 enum class get
@@ -66,7 +69,10 @@ struct gopts
 {
 	database::snapshot snapshot;
 
-	template<class... list> gopts(list&&... l): optlist<get>{std::forward<list>(l)...} {}
+	template<class... list>
+	gopts(list&&... l)
+	:optlist<get>{std::forward<list>(l)...}
+	{}
 };
 
 } // namespace db

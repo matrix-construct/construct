@@ -63,7 +63,7 @@ extern struct log::log log;
 
 //
 // These are forward declarations to objects we may carry a pointer to.
-// Users of ircd::db should not be dealing with these types.
+// Users of ircd::db should not have to deal directly with these types.
 //
 namespace rocksdb
 {

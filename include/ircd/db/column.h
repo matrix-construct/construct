@@ -95,11 +95,12 @@ struct column
 	void operator()(const string_view &key, const view_closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const view_closure &func);
 
-	// [SET] Perform operations in a sequence as a single transaction.
-	void operator()(const delta &, const sopts & = {});
+	// [SET] Perform operations in a sequence as a single transaction. No template iterators
+	// supported yet, just a ContiguousContainer iteration (and derived convenience overloads)
+	void operator()(const delta *const &begin, const delta *const &end, const sopts & = {});
 	void operator()(const std::initializer_list<delta> &, const sopts & = {});
 	void operator()(const sopts &, const std::initializer_list<delta> &);
-	void operator()(const op &, const string_view &key, const string_view &val = {}, const sopts & = {});
+	void operator()(const delta &, const sopts & = {});
 
 	explicit column(std::shared_ptr<database::column> c);
 	column(database::column &c);
@@ -110,17 +111,24 @@ struct column
 //
 // Delta is an element of a transaction. Use column::delta's to atomically
 // commit to multiple keys in the same column. Refer to delta.h for the `enum op`
-// choices. Refer to cell::delta to transact with multiple cells across
-// different columns.
+// choices. Refer to cell::delta to transact with multiple cells across different
+// columns. Refer to row::delta to transact with entire rows.
+//
+// Note, for now, unlike cell::delta and row::delta, the column::delta has
+// no reference to the column in its tuple. This is why these deltas are executed
+// through the member column::operator() and not an overload of db::write().
+//
+// It is unlikely you will need to work with column deltas directly because
+// you may decohere one column from the others participating in a row.
 //
 struct column::delta
 :std::tuple<op, string_view, string_view>
 {
-	delta(const enum op &op, const string_view &key, const string_view &val = {})
+	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
 	:std::tuple<enum op, string_view, string_view>{op, key, val}
 	{}
 
-	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
+	delta(const enum op &op, const string_view &key, const string_view &val = {})
 	:std::tuple<enum op, string_view, string_view>{op, key, val}
 	{}
 };
@@ -146,12 +154,12 @@ struct column::const_iterator
 	const_iterator(std::shared_ptr<database::column>, std::unique_ptr<rocksdb::Iterator> &&, gopts = {});
 
   public:
-	operator const database::column &() const    { return *c;                                   }
-	operator const database::snapshot &() const  { return opts.snapshot;                        }
-	explicit operator const gopts &() const      { return opts;                                 }
+	explicit operator const database::snapshot &() const;
+	explicit operator const database::column &() const;
+	explicit operator const gopts &() const;
 
-	operator database::column &()                { return *c;                                   }
-	explicit operator database::snapshot &()     { return opts.snapshot;                        }
+	explicit operator database::snapshot &();
+	explicit operator database::column &();
 
 	operator bool() const;
 	bool operator!() const;
@@ -209,27 +217,60 @@ void flush(column &, const bool &blocking = false);
 } // namespace db
 } // namespace ircd
 
-inline
-ircd::db::column::operator database::column &()
+inline ircd::db::column::const_iterator::operator
+database::column &()
 {
 	return *c;
 }
 
-inline
-ircd::db::column::operator database &()
+inline ircd::db::column::const_iterator::operator
+database::snapshot &()
 {
-	return database::get(*c);
+	return opts.snapshot;
 }
 
-inline
-ircd::db::column::operator const database::column &()
+inline ircd::db::column::const_iterator::operator
+const gopts &()
+const
+{
+	return opts;
+}
+
+inline ircd::db::column::const_iterator::operator
+const database::column &()
 const
 {
 	return *c;
 }
 
-inline
-ircd::db::column::operator const database &()
+inline ircd::db::column::const_iterator::operator
+const database::snapshot &()
+const
+{
+	return opts.snapshot;
+}
+
+inline ircd::db::column::operator
+database::column &()
+{
+	return *c;
+}
+
+inline ircd::db::column::operator
+database &()
+{
+	return database::get(*c);
+}
+
+inline ircd::db::column::operator
+const database::column &()
+const
+{
+	return *c;
+}
+
+inline ircd::db::column::operator
+const database &()
 const
 {
 	return database::get(*c);

@@ -55,6 +55,7 @@ string_view slice(const rocksdb::Slice &);
 // Frequently used get options and set options are separate from the string/map system
 rocksdb::WriteOptions make_opts(const sopts &);
 rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
+bool optstr_find_and_remove(std::string &optstr, const std::string &what);
 
 enum class pos
 {
@@ -229,18 +230,59 @@ database::dbs
 } // namespace db
 } // namespace ircd
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// init
+//
+
+namespace ircd {
+namespace db   {
+
+static void init_directory();
+static void init_version();
+
+} // namespace db
+} // namespace ircd
+
 static char ircd_db_version[64];
 const char *const ircd::db::version(ircd_db_version);
 
 // Renders a version string from the defines included here.
 __attribute__((constructor))
 static void
-version_init()
+ircd::db::init_version()
 {
 	snprintf(ircd_db_version, sizeof(ircd_db_version), "%d.%d.%d",
 	         ROCKSDB_MAJOR,
 	         ROCKSDB_MINOR,
 	         ROCKSDB_PATCH);
+}
+
+static void
+ircd::db::init_directory()
+try
+{
+	const auto dbdir(fs::get(fs::DB));
+	if(fs::mkdir(dbdir))
+		log.warning("Created new database directory at `%s'", dbdir);
+	else
+		log.info("Using database directory at `%s'", dbdir);
+}
+catch(const fs::error &e)
+{
+	log.error("Cannot start database system: %s", e.what());
+	if(ircd::debugmode)
+		throw;
+}
+
+ircd::db::init::init()
+{
+	init_directory();
+}
+
+ircd::db::init::~init()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -291,22 +333,22 @@ ircd::db::shared_from(const database::column &column)
 // database
 //
 
-ircd::db::database::database(const std::string &name,
-                             const std::string &optstr)
+ircd::db::database::database(std::string name,
+                             std::string optstr)
 :database
 {
-	name, optstr, {}
+	std::move(name), std::move(optstr), {}
 }
 {
 }
 
-ircd::db::database::database(const std::string &name,
-                             const std::string &optstr,
+ircd::db::database::database(std::string name,
+                             std::string optstr,
                              description description)
 try
 :name
 {
-	name
+	std::move(name)
 }
 ,path
 {
@@ -338,17 +380,31 @@ try
 ,d{[this, &description, &optstr]
 () -> custom_ptr<rocksdb::DB>
 {
+	// RocksDB doesn't parse a read_only option, so we allow that to be added
+	// to open the database as read_only and then remove that from the string.
+	const bool read_only
+	{
+		optstr_find_and_remove(optstr, "read_only=true;"s)
+	};
+
+	// We also allow the user to specify fsck=true to run a repair operation on
+	// the db. This may be expensive to do by default every startup.
+	const bool fsck
+	{
+		optstr_find_and_remove(optstr, "fsck=true;"s)
+	};
+
+	// Generate RocksDB options from string
 	rocksdb::DBOptions opts
 	{
 		options(optstr)
 	};
 
 	// Setup sundry
-	opts.error_if_exists = false;
 	opts.create_if_missing = true;
 	opts.create_missing_column_families = true;
 	opts.max_file_opening_threads = 0;
-	opts.use_fsync = true;
+	//opts.use_fsync = true;
 
 	// Setup logging
 	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
@@ -418,53 +474,76 @@ try
 	{
 		return static_cast<const rocksdb::ColumnFamilyDescriptor &>(*pair.second);
 	});
-/*
-	if(fs::is_dir(path))
+
+	if(fsck && fs::is_dir(path))
 	{
-		log.info("Checking database @ `%s' columns[%zu]", path, columns.size());
-		throw_on_error(rocksdb::RepairDB(path, opts, columns));
-		log.info("Database @ `%s' check complete", path, columns.size());
+		log.info("Checking database @ `%s' columns[%zu]",
+		         path,
+		         columns.size());
+
+		throw_on_error
+		{
+			rocksdb::RepairDB(path, opts, columns)
+		};
+
+		log.info("Database @ `%s' check complete",
+		         path,
+		         columns.size());
 	}
-	//if(has_opt(opts, opt::READ_ONLY))
-	//	throw_on_error(rocksdb::DB::OpenForReadOnly(*this->opts, path, columns, &handles, &ptr));
-	//else
-*/
+
 	// Announce attempt before usual point where exceptions are thrown
 	log.debug("Opening database \"%s\" @ `%s' columns[%zu]",
 	          this->name,
 	          path,
 	          columns.size());
 
-	throw_on_error
-	{
-		rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
-	};
+	if(read_only)
+		throw_on_error
+		{
+			rocksdb::DB::OpenForReadOnly(opts, path, columns, &handles, &ptr)
+		};
+	else
+		throw_on_error
+		{
+			rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
+		};
 
 	for(const auto &handle : handles)
 		this->columns.at(handle->GetName())->handle.reset(handle);
 
 	return { ptr, deleter };
 }()}
+,dbs_it
+{
+	dbs, dbs.emplace(string_view{this->name}, this).first
+}
 {
 	log.info("'%s': Opened database @ `%s' (handle: %p) columns[%zu] seq[%zu]",
-	         name,
+	         this->name,
 	         path,
 	         (const void *)this,
 	         columns.size(),
 	         d->GetLatestSequenceNumber());
-
-	dbs.emplace(string_view{this->name}, this);
 }
 catch(const std::exception &e)
 {
-	throw error("Failed to open db '%s': %s", name, e.what());
+	throw error("Failed to open db '%s': %s",
+	            this->name,
+	            e.what());
 }
 
 ircd::db::database::~database()
 noexcept
 {
-	log.debug("'%s': closing database @ `%s'", name, path);
-	dbs.erase(name);
+	const auto background_errors
+	{
+		property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors)
+	};
+
+	log.debug("'%s': closing database @ `%s' (background errors: %lu)",
+	          name,
+	          path,
+	          background_errors);
 }
 
 ircd::db::database::column &
@@ -475,7 +554,9 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw error("'%s': column '%s' is not available or specified in schema", this->name, name);
+	throw schema_error("'%s': column '%s' is not available or specified in schema",
+	                   this->name,
+	                   name);
 }
 
 const ircd::db::database::column &
@@ -486,7 +567,9 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw error("'%s': column '%s' is not available or specified in schema", this->name, name);
+	throw schema_error("'%s': column '%s' is not available or specified in schema",
+	                   this->name,
+	                   name);
 }
 
 ircd::db::database &
@@ -522,8 +605,8 @@ ircd::db::database::comparator::Equal(const Slice &a,
 const
 {
 	assert(bool(user.equal));
-	const string_view sa{a.data(), a.size()};
-	const string_view sb{b.data(), b.size()};
+	const string_view sa{slice(a)};
+	const string_view sb{slice(b)};
 	return user.equal(sa, sb);
 }
 
@@ -533,8 +616,8 @@ ircd::db::database::comparator::Compare(const Slice &a,
 const
 {
 	assert(bool(user.less));
-	const string_view sa{a.data(), a.size()};
-	const string_view sb{b.data(), b.size()};
+	const string_view sa{slice(a)};
+	const string_view sb{slice(b)};
 	return user.less(sa, sb)? -1:
 		   user.less(sb, sa)?  1:
 		                       0;
@@ -644,6 +727,8 @@ ircd::db::database::column::column(database *const &d,
 
 	this->options.comparator = &this->cmp;
 
+	//this->options.prefix_extractor = std::shared_ptr<const rocksdb::SliceTransform>(rocksdb::NewNoopTransform());
+
 	//if(d->mergeop->merger)
 	//	this->options.merge_operator = d->mergeop;
 
@@ -728,20 +813,30 @@ ircd::db::sequence(const database::snapshot &s)
 }
 
 ircd::db::database::snapshot::snapshot(database &d)
-:d{weak_from(d)}
-,s{[this, &d]() -> const rocksdb::Snapshot *
+:s
 {
-	return d.d->GetSnapshot();
-}()
-,[this](const rocksdb::Snapshot *const s)
-{
-	if(!s)
-		return;
+	d.d->GetSnapshot(),
+	[dp(weak_from(d))](const rocksdb::Snapshot *const s)
+	{
+		if(!s)
+			return;
 
-	const auto d(this->d.lock());
-	d->d->ReleaseSnapshot(s);
-}}
+		const auto d(dp.lock());
+		log.debug("'%s' @%p: snapshot(@%p) release seq[%lu]",
+		          db::name(*d),
+		          d->d.get(),
+		          s,
+		          s->GetSequenceNumber());
+
+		d->d->ReleaseSnapshot(s);
+	}
+}
 {
+	log.debug("'%s' @%p: snapshot(@%p) seq[%lu]",
+	          db::name(d),
+	          d.d.get(),
+	          s.get(),
+	          sequence(*this));
 }
 
 ircd::db::database::snapshot::~snapshot()
@@ -805,6 +900,10 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 		// RocksDB adds annoying leading whitespace to attempt to right-justify things and idc
 		lstrip(buf, ' ')
 	};
+
+	// Skip the options for now
+	if(startswith(str, "Options"))
+		return;
 
 	log(translate(level), "'%s': (rdb) %s", d->name, str);
 }
@@ -1018,6 +1117,26 @@ ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnF
 // db/cell.h
 //
 
+uint64_t
+ircd::db::sequence(const cell &c)
+{
+	const database::snapshot &ss(c);
+	return sequence(database::snapshot(c));
+}
+
+const std::string &
+ircd::db::name(const cell &c)
+{
+	return name(c.c);
+}
+
+void
+ircd::db::write(const cell::delta &delta,
+                const sopts &sopts)
+{
+	write(&delta, &delta + 1, sopts);
+}
+
 void
 ircd::db::write(const sopts &sopts,
                 const std::initializer_list<cell::delta> &deltas)
@@ -1029,34 +1148,37 @@ void
 ircd::db::write(const std::initializer_list<cell::delta> &deltas,
                 const sopts &sopts)
 {
-	if(!deltas.size())
+	write(std::begin(deltas), std::end(deltas), sopts);
+}
+
+void
+ircd::db::write(const cell::delta *const &begin,
+                const cell::delta *const &end,
+                const sopts &sopts)
+{
+	if(begin == end)
 		return;
 
-	auto &front(*std::begin(deltas));
+	// Find the database through one of the cell's columns. cell::deltas
+	// may come from different columns so we do nothing else with this.
+	auto &front(*begin);
 	column &c(std::get<cell &>(front).c);
 	database &d(c);
 
 	rocksdb::WriteBatch batch;
-	for(const auto &delta : deltas)
-		append(batch, delta);
-
-	auto opts(make_opts(sopts));
-	throw_on_error
+	std::for_each(begin, end, [&batch]
+	(const cell::delta &delta)
 	{
-		d.d->Write(opts, &batch)
-	};
-}
+		append(batch, delta);
+	});
 
-void
-ircd::db::write(const cell::delta &delta,
-                const sopts &sopts)
-{
-	column &c(std::get<cell &>(delta).c);
-	database &d(c);
-
-	rocksdb::WriteBatch batch;
-	append(batch, delta);
 	auto opts(make_opts(sopts));
+	log.debug("'%s' @%lu PUT %zu cell deltas",
+	          name(d),
+	          sequence(d),
+	          std::distance(begin, end));
+
+	// Commitment
 	throw_on_error
 	{
 		d.d->Write(opts, &batch)
@@ -1104,9 +1226,11 @@ ircd::db::cell::cell(column column,
 
 ircd::db::cell::cell(column column,
                      const string_view &index,
-                     std::unique_ptr<rocksdb::Iterator> it)
+                     std::unique_ptr<rocksdb::Iterator> it,
+                     gopts opts)
 :c{std::move(column)}
 ,index{index}
+,ss{std::move(opts.snapshot)}
 ,it{std::move(it)}
 {
 }
@@ -1158,12 +1282,11 @@ ircd::db::cell::load(gopts opts)
 	while(tit && tit->Valid())
 	{
 		auto batchres(tit->GetBatch());
-		std::cout << "seq: " << batchres.sequence;
+		//std::cout << "seq: " << batchres.sequence;
 		if(batchres.writeBatchPtr)
 		{
 			auto &batch(*batchres.writeBatchPtr);
-			std::cout << " count " << batch.Count() << " ds: " << batch.GetDataSize()
-			<< " " << batch.Data() << std::endl;
+			//std::cout << " count " << batch.Count() << " ds: " << batch.GetDataSize() << " " << batch.Data() << std::endl;
 		}
 
 		tit->Next();
@@ -1207,12 +1330,22 @@ ircd::db::cell::operator=(const string_view &s)
 	return *this;
 }
 
-ircd::db::cell::operator string_view()
+void
+ircd::db::cell::operator()(const op &op,
+                           const string_view &val,
+                           const sopts &sopts)
+{
+	write(cell::delta{op, *this, val}, sopts);
+}
+
+ircd::db::cell::operator
+string_view()
 {
 	return val();
 }
 
-ircd::db::cell::operator string_view()
+ircd::db::cell::operator
+string_view()
 const
 {
 	return val();
@@ -1262,10 +1395,82 @@ const
 // db/row.h
 //
 
+void
+ircd::db::del(row &row,
+              const sopts &sopts)
+{
+	write(row::delta{op::DELETE, row}, sopts);
+}
+
+void
+ircd::db::write(const row::delta &delta,
+                const sopts &sopts)
+{
+	write(&delta, &delta + 1, sopts);
+}
+
+void
+ircd::db::write(const sopts &sopts,
+                const std::initializer_list<row::delta> &deltas)
+{
+	write(deltas, sopts);
+}
+
+void
+ircd::db::write(const std::initializer_list<row::delta> &deltas,
+                const sopts &sopts)
+{
+	write(std::begin(deltas), std::end(deltas), sopts);
+}
+
+void
+ircd::db::write(const row::delta *const &begin,
+                const row::delta *const &end,
+                const sopts &sopts)
+{
+	// Count the total number of cells for this transaction.
+	const auto cells
+	{
+		std::accumulate(begin, end, size_t(0), []
+		(auto ret, const row::delta &delta)
+		{
+			const auto &row(std::get<row &>(delta));
+			return ret += row.size();
+		})
+	};
+
+	//TODO: allocator?
+	std::vector<cell::delta> deltas;
+	deltas.reserve(cells);
+
+	// Compose all of the cells from all of the rows into a single txn
+	std::for_each(begin, end, [&deltas]
+	(const auto &delta)
+	{
+		auto &row(std::get<row &>(delta));
+		const auto &op(std::get<op>(delta));
+		std::for_each(std::begin(row), std::end(row), [&deltas, &op]
+		(auto &cell)
+		{
+			// For operations like DELETE which don't require a value in
+			// the delta, we can skip a potentially expensive load of the cell.
+			const auto value
+			{
+				value_required(op)? cell.val() : string_view{}
+			};
+
+			deltas.emplace_back(op, cell, value);
+		});
+	});
+
+	// Commitment
+	write(&deltas.front(), &deltas.front() + deltas.size(), sopts);
+}
+
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<string_view> &colnames,
-                   const gopts &opts)
+                   gopts opts)
 :its{[this, &d, &key, &colnames, &opts]
 {
 	using std::end;
@@ -1273,11 +1478,15 @@ ircd::db::row::row(database &d,
 	using rocksdb::Iterator;
 	using rocksdb::ColumnFamilyHandle;
 
+	if(!opts.snapshot)
+		opts.snapshot = database::snapshot(d);
+
 	const rocksdb::ReadOptions options
 	{
 		make_opts(opts)
 	};
 
+	//TODO: allocator
 	std::vector<database::column *> colptr
 	{
 		colnames.empty()? d.columns.size() : colnames.size()
@@ -1296,6 +1505,7 @@ ircd::db::row::row(database &d,
 			return &d[name];
 		});
 
+	//TODO: allocator
 	std::vector<ColumnFamilyHandle *> handles(colptr.size());
 	std::transform(begin(colptr), end(colptr), begin(handles), []
 	(database::column *const &ptr)
@@ -1303,6 +1513,7 @@ ircd::db::row::row(database &d,
 		return ptr->handle.get();
 	});
 
+	//TODO: does this block?
 	std::vector<Iterator *> iterators;
 	throw_on_error
 	{
@@ -1313,7 +1524,7 @@ ircd::db::row::row(database &d,
 	for(size_t i(0); i < ret.size(); ++i)
 	{
 		std::unique_ptr<Iterator> it(iterators.at(i));
-		ret[i] = cell { *colptr.at(i), key, std::move(it) };
+		ret[i] = cell { *colptr.at(i), key, std::move(it), opts };
 	}
 
 	return ret;
@@ -1724,12 +1935,10 @@ ircd::db::has(column &column,
 }
 
 void
-ircd::db::column::operator()(const op &op,
-                             const string_view &key,
-                             const string_view &val,
+ircd::db::column::operator()(const delta &delta,
                              const sopts &sopts)
 {
-	operator()(delta{op, key, val}, sopts);
+	operator()(&delta, &delta + 1, sopts);
 }
 
 void
@@ -1743,27 +1952,29 @@ void
 ircd::db::column::operator()(const std::initializer_list<delta> &deltas,
                              const sopts &sopts)
 {
-	rocksdb::WriteBatch batch;
-	for(const auto &delta : deltas)
-		append(batch, *this, delta);
-
-	database &d(*this);
-	auto opts(make_opts(sopts));
-	throw_on_error
-	{
-		d.d->Write(opts, &batch)
-	};
+	operator()(std::begin(deltas), std::end(deltas), sopts);
 }
 
 void
-ircd::db::column::operator()(const delta &delta,
+ircd::db::column::operator()(const delta *const &begin,
+                             const delta *const &end,
                              const sopts &sopts)
 {
-	rocksdb::WriteBatch batch;
-	append(batch, *this, delta);
-
 	database &d(*this);
+
+	rocksdb::WriteBatch batch;
+	std::for_each(begin, end, [this, &batch]
+	(const delta &delta)
+	{
+		append(batch, *this, delta);
+	});
+
 	auto opts(make_opts(sopts));
+	log.debug("'%s' @%lu PUT %zu column deltas",
+	          name(d),
+	          sequence(d),
+	          std::distance(begin, end));
+
 	throw_on_error
 	{
 		d.d->Write(opts, &batch)
@@ -1950,7 +2161,7 @@ const
 	if(!it)
 		return true;
 
-	if(!it->Valid())
+	if(!valid(*it))
 		return true;
 
 	return false;
@@ -2057,11 +2268,10 @@ ircd::db::seek(column &column,
                const string_view &key,
                const gopts &opts)
 {
-	using rocksdb::Iterator;
-
 	database &d(column);
 	database::column &c(column);
-	std::unique_ptr<Iterator> ret;
+
+	std::unique_ptr<rocksdb::Iterator> ret;
 	seek(c, key, opts, ret);
 	return std::move(ret);
 }
@@ -2388,6 +2598,18 @@ const
 	return ret;
 }
 
+bool
+ircd::db::optstr_find_and_remove(std::string &optstr,
+                                 const std::string &what)
+{
+	const auto pos(optstr.find(what));
+	if(pos == std::string::npos)
+		return false;
+
+	optstr.erase(pos, what.size());
+	return true;
+}
+
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts,
                     const bool &iterator)
@@ -2604,4 +2826,21 @@ ircd::db::reflect(const rocksdb::Histograms &type)
 
 	static const auto empty{"<histogram>?????"s};
 	return it != end(names)? it->second : empty;
+}
+
+bool
+ircd::db::value_required(const op &op)
+{
+	switch(op)
+	{
+		case op::SET:
+		case op::MERGE:
+		case op::DELETE_RANGE:
+			return true;
+
+		case op::GET:
+		case op::DELETE:
+		case op::SINGLE_DELETE:
+			return false;
+	}
 }

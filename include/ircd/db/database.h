@@ -64,6 +64,7 @@ struct database
 	std::shared_ptr<rocksdb::Cache> cache;
 	std::map<string_view, std::shared_ptr<column>> columns;
 	custom_ptr<rocksdb::DB> d;
+	unique_const_iterator<decltype(dbs)> dbs_it;
 
 	operator std::shared_ptr<database>()         { return shared_from_this();                      }
 	operator const rocksdb::DB &() const         { return *d;                                      }
@@ -72,12 +73,12 @@ struct database
 	const column &operator[](const string_view &) const;
 	column &operator[](const string_view &);
 
-    database(const std::string &name,
-             const std::string &options,
+    database(std::string name,
+             std::string options,
              description);
 
-    database(const std::string &name,
-             const std::string &options = {});
+    database(std::string name,
+             std::string options = {});
 
 	database() = default;
 	database(database &&) = delete;
@@ -148,19 +149,15 @@ struct database::options::map
 
 struct database::snapshot
 {
-	std::weak_ptr<database> d;
 	std::shared_ptr<const rocksdb::Snapshot> s;
 
   public:
-	operator const database &() const            { return *d.lock();                               }
 	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
 
-	operator database &()                        { return *d.lock();                               }
-
-	operator bool() const                        { return bool(s);                                 }
+	explicit operator bool() const               { return bool(s);                                 }
 	bool operator !() const                      { return !s;                                      }
 
-	snapshot(database &);
+	explicit snapshot(database &);
 	snapshot() = default;
 	~snapshot() noexcept;
 };

@@ -36,6 +36,10 @@ enum op
 	SINGLE_DELETE,           // (batch.SingleDelete)
 };
 
+// Indicates an op uses both a key and value for its operation. Some only use
+// a key name so an empty value argument in a delta is okay when false.
+bool value_required(const op &op);
+
 using merge_delta = std::pair<string_view, string_view>;
 using merge_closure = std::function<std::string (const string_view &key, const merge_delta &)>;
 using update_closure = std::function<std::string (const string_view &key, merge_delta &)>;
