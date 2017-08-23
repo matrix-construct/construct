@@ -37,7 +37,7 @@ struct ctx;
 
 IRCD_OVERLOAD(threadsafe)
 
-const uint64_t &id(const ctx &);                 // Unique ID for context 
+const uint64_t &id(const ctx &);                 // Unique ID for context
 string_view name(const ctx &);                   // User's optional label for context
 const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
 bool finished(const ctx &);                      // Context function returned (or exception).
