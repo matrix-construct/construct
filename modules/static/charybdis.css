@@ -1,0 +1,3883 @@
+/************************************************
+ * Charybdis 5m
+ */
+
+/**
+ * Scalar variables
+ *
+ * Some of these should be wrapped in calc() when used in
+ * a style attribute.
+ */
+:root
+{
+	/*
+	 * Color Palette
+	 *
+	 * The color palette is 4 primary colors A, B, C, D with
+	 * carefully calculated shades.
+	 */
+	--pal-AA: #5965AF;   --pal-BA: #50B87A;   --pal-CA: #FF8A6F;   --pal-DA: #FFD66F;
+	--pal-AB: #1F2D86;   --pal-BB: #118C43;   --pal-CB: #C33813;   --pal-DB: #C39317;
+	--pal-AC: #3B489C;   --pal-BC: #2FA45E;   --pal-CC: #E46041;   --pal-DC: #E4B641;
+	--pal-AD: #8891CD;   --pal-BD: #81D2A2;   --pal-CD: #FFAF9C;   --pal-DD: #FFE39C;
+	--pal-AE: #C3C9E8;   --pal-BE: #C0EBD1;   --pal-CE: #FFD9D0;   --pal-DE: #FFF2D0;
+	                                          --pal-CF: #FFE5DC;   --pal-DF: #FFFFFF;
+	/* Font size ratios */
+	--fs: (1vw + 0.5625vh) * 0.5625;
+
+	/* Headers */
+	--fsA: var(--fs) * 2.5;
+	--fsB: var(--fs) * 1.5;
+	--fsC: var(--fs) * 1.25;
+	--fsD: var(--fs) * 1.00;
+	--fsE: var(--fs) * 0.80;
+	--fsF: 11px;
+	--fsG: 9px;
+
+	/* Paragraphs */
+	--fsP: 15px;
+
+	/* Icons */
+	--fsIA: var(--fs) * 5.0;
+	--fsIB: var(--fs) * 3.25;
+	--fsIC: var(--fs) * 2.75;
+	--fsID: var(--fs) * 2.50;
+	--fsIE: var(--fs) * 1.75;
+	--fsIF: var(--fs) * 1.5;
+
+	/* Text shadows */
+	--tsA: 1px 1px #484848;
+	--tsB: 0px 1px #606060;
+
+	/* Icon shadows */
+	--tsIA: 0px 1px #888888;
+}
+
+@font-face
+{
+	font-family: 'Lato';
+	font-weight: normal;
+	src: url('lato-regular.ttf');
+}
+
+@font-face
+{
+	font-family: 'Lato';
+	font-style: italic;
+	src: url('lato-italic.ttf');
+}
+
+@font-face
+{
+	font-family: 'Lato';
+	font-weight: bold;
+	src: url('lato-bold.ttf');
+}
+
+@font-face
+{
+	font-family: 'Lato';
+	font-weight: 900;
+	src: url('lato-black.ttf');
+}
+
+@font-face
+{
+	font-family: 'Lato';
+	font-weight: bold;
+	font-style: italic;
+	src: url('lato-bolditalic.ttf');
+}
+
+@font-face
+{
+	font-family: 'NixieOne';
+	font-weight: normal;
+	src: url('NixieOne-Regular.ttf');
+}
+
+*
+{
+}
+
+body
+{
+	background-color: var(--pal-AD);
+	opacity: 0.0;
+}
+
+body.loaded
+{
+	opacity: 1.0 !important;
+	transition: opacity 1.5s cubic-bezier(0.25, 0.01, 1.0, 1.0);
+}
+
+/**************************************************************
+ * IRCd root class
+ *
+ * Our class namespace is "ircd". The actual root element carrying
+ * this class is selected somewhere later.
+ */
+
+.ircd
+{
+	background-color: var(--pal-AD);
+	font-family: Lato;
+	color: white;
+}
+
+
+/************************************************
+ * Divisions.
+ *
+ * This project is fully flexbox.
+ */
+
+.ircd div
+{
+	display: flex;
+}
+
+
+/************************************************
+ * Headings
+ */
+
+.ircd h1,
+.ircd h2,
+.ircd h3,
+.ircd h4,
+.ircd h5,
+.ircd h6
+{
+	display: flex;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	font-family: Lato;
+}
+
+/* The style for an hx tag can be lifted to another tag
+ * when desired by applying the eponymous class.
+ */
+.ircd h1,
+.ircd h2,
+.ircd h3,
+.ircd h4,
+.ircd h5,
+.ircd h6,
+.ircd .h1,
+.ircd .h2,
+.ircd .h3,
+.ircd .h4,
+.ircd .h5,
+.ircd .h6
+{
+	font-weight: bold;
+	letter-spacing: 0.5pt;
+	font-smoothing: antialiased;
+	-moz-font-smoothing: antialiased;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+.ircd h1,
+.ircd .h1
+{
+	font-size: calc(var(--fsA));
+	text-shadow: calc(var(--tsA));
+}
+
+.ircd h2,
+.ircd .h2
+{
+	font-size: calc(var(--fsB));
+	text-shadow: calc(var(--tsB));
+}
+
+.ircd h3,
+.ircd .h3
+{
+	font-size: calc(var(--fsC));
+	text-shadow: 0px 1px #686868;
+}
+
+.ircd h4,
+.ircd .h4
+{
+	font-size: calc(var(--fsD));
+	text-shadow: 0px 1px #707070;
+}
+
+.ircd h5,
+.ircd .h5
+{
+	font-size: calc(var(--fsE));
+}
+
+.ircd h6,
+.ircd .h6
+{
+	font-size: calc(var(--fsF));
+}
+
+
+/************************************************
+ * Paragraphs
+ */
+
+.ircd p
+{
+	display: flex;
+	position: relative;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	font-smoothing: antialiased;
+	-moz-font-smoothing: antialiased;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	font-size: var(--fsP);
+	font-family: NixieOne;
+	letter-spacing: 0.15pt;
+	color: inherit;
+}
+
+
+/************************************************
+ *  Links
+ */
+
+.ircd a
+{
+	display: flex;
+	text-decoration: none;
+}
+
+
+/************************************************
+ *  Images
+ */
+
+.ircd img
+{
+	display: flex;
+	object-fit: contain;
+}
+
+
+/************************************************
+ *  Lists
+ */
+
+.ircd ul
+{
+	display: flex;
+}
+
+.ircd li
+{
+	display: flex;
+	list-style: none;
+}
+
+
+/************************************************
+ *  Forms
+ */
+
+.ircd form
+{
+	display: flex;
+	position: relative;
+}
+
+/* Use something like <h6 class="label"> following
+ * any form input box.
+ */
+.ircd form input + label
+{
+	margin: 1px 0px 0px 0px;
+}
+
+
+/************************************************
+ *  Input
+ */
+
+.ircd input
+{
+	display: flex;
+	flex-grow: 1;
+	margin: 0px 0px 0px 0px;
+	padding: 3px 0px 3px 0px;
+	border: 0px;
+	background-color: var(--pal-CE);
+	font-family: Lato;
+	font-size: calc(var(--fsP) * 1.1);
+	color: var(--pal-AC);
+	cursor: text;
+}
+
+.ircd input.number
+{
+	font-family: NixieOne;
+	text-shadow: 0px 0px black;
+	color: var(--pal-AB);
+
+}
+
+.ircd input[type=text]
+{
+	padding-left: 2px;
+}
+
+.ircd input:focus
+{
+	outline: none;
+}
+
+
+/************************************************
+ *  Textareas
+ */
+
+.ircd textarea
+{
+	display: flex;
+	flex-grow: 1;
+	position: relative;
+	box-sizing: border-box;
+	padding: 2px 5px 2px 5px;
+	border: 0px;
+	border-radius: 3px 3px 3px 3px;
+	background-color: var(--pal-CE);
+	font-family: NixieOne;
+	text-shadow: 1px 1px var(--pal-AC);
+	font-size: 14px;
+	color: var(--pal-AC);
+	cursor: text;
+}
+
+.ircd textarea:focus
+{
+	outline: none;
+}
+
+
+/************************************************
+ *  Icons
+ */
+
+.ircd i
+{
+	text-shadow: var(--tsIA);
+	color: var(--pal-CD);
+}
+
+.ircd i.icon.selected,
+.ircd .selected i.icon
+{
+	color: var(--pal-CA) !important;
+}
+
+@keyframes spinner
+{
+	to { transform: rotate(360deg); }
+}
+
+.ircd i.icon.fa-spinner
+{
+	animation: spinner 0.8s steps(8) infinite;
+}
+
+.ircd i.icon.fa-refresh.spinner
+{
+	animation: spinner 0.5s linear infinite;
+}
+
+
+/************************************************
+ *  Buttons
+ */
+ 
+.ircd button
+{
+	display: flex;
+	margin: 0px 0px 0px 0px;
+	padding: 3px 0px 3px 0px;
+	border: none;
+	border-radius: 4px;
+	background-color: inherit;
+	font-size: calc(var(--fsP));
+	cursor: text;
+	color: white;
+}
+
+.ircd input:focus,
+.ircd button:focus
+{
+	outline: none;
+}
+
+.ircd input[type=submit],
+.ircd button[type=submit]
+{
+	cursor: pointer;
+}
+
+.ircd button:hover
+{
+	background-color: var(--pal-AC);
+	cursor: pointer;
+}
+
+.ircd button:hover i
+{
+	color: var(--pal-CA);
+}
+
+.ircd .selected,
+.ircd button.selected
+{
+	background-color: var(--pal-AC) !important;
+}
+
+.ircd button.disabled,
+.ircd button:disabled
+{
+	color: var(--pal-AE);
+}
+
+.ircd button.disabled i.icon,
+.ircd button:disabled i.icon
+{
+	text-shadow: 0px 0px #000000;
+	color: var(--pal-AE);
+}
+
+.ircd button.disabled:hover
+{
+	background-color: inherit !important;
+}
+
+.ircd button.disabled:hover i.icon
+{
+	color: inherit;
+}
+
+.ircd button.pending
+{
+	transition: all 3s ease-out;
+	background-color: var(--pal-AC) !important;
+}
+
+/* prevents the :hover from interfering with the animation */
+.ircd button.pending:hover
+{
+	transition: all 0s;
+	background-color: var(--pal-AD) !important;
+}
+
+.ircd button.pending i.icon
+{
+	transition: all 10s ease-out;
+	transform: rotate(calc(360deg * 10 * 3));
+}
+
+.ircd .holding,
+.ircd button.holding
+{
+	transition: all 1s ease-in;
+	background-color: var(--pal-AD) !important;
+}
+
+.ircd button.holding i.icon
+{
+	transition: all 1s linear;
+	transform: rotate(calc(360deg * 1));
+}
+
+.ircd .available,
+.ircd button.available
+{
+	border: 1px dotted var(--pal-BE) !important;
+}
+
+.ircd button.available:hover 
+{
+	border: inherit;
+}
+
+.ircd .choice,
+.ircd button.choice
+{
+	border: 1px dotted var(--pal-DD) !important;
+}
+
+.ircd button.choice:hover 
+{
+	border: inherit;
+}
+
+.ircd button.error
+{
+	background-color: var(--pal-CB) !important;
+}
+
+.ircd button.error:hover 
+{
+	background-color: var(--pal-CB) !important;
+}
+
+.ircd button.error i.icon,
+.ircd button.error:hover i.icon
+{
+	color: var(--pal-DA);
+}
+
+
+/************************************************
+ *  Scrollbars
+ */
+
+.ircd::-webkit-scrollbar,
+.ircd ::-webkit-scrollbar
+{
+	height: 15px;
+	width: 15px;
+}
+
+.ircd::-webkit-scrollbar-track,
+.ircd ::-webkit-scrollbar-track
+{
+	background-color: var(--pal-AA);
+}
+
+.ircd::-webkit-scrollbar-thumb,
+.ircd ::-webkit-scrollbar-thumb
+{
+	background-color: var(--pal-AD);
+	border: 1px solid var(--pal-AA);
+}
+
+.ircd::-webkit-scrollbar-corner,
+.ircd ::-webkit-scrollbar-corner
+{
+	background-color: var(--pal-AE);
+}
+
+.ircd::-webkit-scrollbar-button,
+.ircd ::-webkit-scrollbar-button
+{
+	background-color: var(--pal-AA);
+}
+
+.ircd::-webkit-resizer,
+.ircd ::-webkit-resizer
+{
+	background-color: var(--pal-DE);
+	border: 6px double var(--pal-AA);
+}
+
+
+/************************************************
+ *  Angular $animate
+ */
+
+.ircd .ng-animate
+{
+	transition: 0.09s linear all;
+}
+
+.ircd .no-animate
+{
+	transition: none !important;
+	-moz-transition: none !important;
+	-webkit-transition: none !important;
+}
+
+.ircd .ng-hide-animate
+{
+	/* transition: 0.1s linear all; */
+}
+
+
+/* show -> hide */
+.ircd .ng-hide-add
+{
+	transition: all 0.09s linear;
+	opacity: 1;
+}
+
+/* show -> hide */
+.ircd .ng-hide-add-active
+{
+	opacity: 0;
+}
+
+/* hide -> show */
+.ircd .ng-hide-remove
+{
+	transition: all 0.09s linear;
+	opacity: 0;
+}
+
+/* hide -> show */
+.ircd .ng-hide-remove-active
+{
+	opacity: 1;
+}
+
+
+/* show -> hide */
+.ircd .slides.ng-hide-add
+{
+	transition: height 0.15s linear;
+	height: 100%;
+}
+
+.ircd .slides.ng-hide-add-active
+{
+	height: 0%;
+}
+
+/* hide -> show */
+.ircd .slides.ng-hide-remove
+{
+	transition: height 0.20s linear;
+	height: 0%;
+}
+
+.ircd .slides.ng-hide-remove-active
+{
+	height: 100%;
+}
+
+
+/************************************************
+ *  IRCd DOM-markup convenience classes.
+ *
+ * These are intended to be useful directly in
+ * the markup when necessary.
+ */
+
+.ircd .row
+{
+	flex-direction: row;
+}
+
+.ircd .column
+{
+	flex-direction: column;
+}
+
+.ircd .wrap
+{
+	flex-wrap: wrap;
+}
+
+.ircd .nowrap
+{
+	flex-wrap: nowrap;
+}
+
+.ircd .grow
+{
+	flex-grow: 1;
+}
+
+.ircd .no-shrink
+{
+	flex-shrink: 0;
+}
+
+.ircd .center-self
+{
+	align-self: center;
+}
+
+.ircd .center-items
+{
+	align-items: center;
+}
+
+.ircd .center-justify
+{
+	justify-content: center;
+}
+
+.ircd .center
+{
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.ircd .stretch-self
+{
+	align-self: stretch;
+}
+
+.ircd .stretch-items
+{
+	align-items: stretch;
+}
+
+.ircd .stretch-justify
+{
+	justify-content: stretch;
+}
+
+.ircd .stretch
+{
+	align-items: stretch;
+	align-content: stretch;
+	justify-content: stretch;
+}
+
+.ircd .pointer
+{
+	cursor: pointer;
+}
+
+
+/************************************************
+ *  Errors & debugging
+ */
+
+.ircd ircd-catch,
+.ircd [ircd-catch=true]
+{
+	display: flex;
+	position: relative;
+	box-sizing: border-box;
+	z-index: 1;
+}
+
+.ircd div.error
+{
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	max-height: 100%;
+	flex-flow: column nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: flex-start;
+	box-sizing: border-box;
+	border: 1px solid var(--pal-CC);
+	/* border: 1px solid var(--pal-DC); */
+	/* box-shadow: 1px 1px 2px #383838; */
+	border-radius: inherit;
+	background-color: var(--pal-CB);
+	opacity: 0.90;
+	color: white;
+}
+
+.ircd div.error h1,
+.ircd div.error h2,
+.ircd div.error h3,
+.ircd div.error h4,
+.ircd div.error h5
+{
+	padding: 5px 5px 5px 5px;
+	text-shadow: 0px 0px #000000;
+}
+
+.ircd div.error .icon
+{
+	font-size: calc(var(--fsID));
+	padding: 3px 5px 3px 5px;
+	color: var(--pal-DD);
+}
+
+.ircd div.error div.footer i.guru.icon
+{
+	color: var(--pal-CC);
+}
+
+.ircd div.error .message p
+{
+	flex-grow: 1;
+	align-items: center;
+	justify-content: center;
+	margin: 5px 5px 5px 5px;
+	text-shadow: 0px 0px #000000;
+	font-weight: bold;
+}
+
+.ircd div.error div.guru
+{
+	position: fixed;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+	margin: auto;
+	padding: 20px 20px 20px 20px;
+	border: 4px double var(--pal-CA);
+	border-radius: 5px;
+	background-color: var(--pal-CB);
+	font-size: 11px;
+}
+
+.ircd div.error div.guru .icon
+{
+	align-self: flex-end;
+}
+
+.ircd div.error div.guru p
+{
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	font-family: monospace;
+	white-space: pre-wrap;
+	font-weight: bold;
+	text-align: left;
+	font-size: 11px;
+	color: white;
+}
+
+
+/************************************************
+ *  Loading indication
+ */
+
+.ircd div.loading
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	align-self: center;
+	align-items: center;
+	justify-content: center;
+}
+
+/************************************************
+ *  Progress indication
+ */
+
+.ircd div.progress
+{
+	position: absolute;
+	z-index: 1;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+	height: 100%;
+	width: 0%;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	border-radius: 2px;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	background-color: var(--pal-BB);
+	opacity: 0.25;
+}
+
+.ircd div.progress:not(.pending)
+{
+	width: 0%;
+}
+
+.ircd div.progress.pending,
+.ircd form.pending div.progress
+{
+	transition: all 3s ease-out;
+	width: 100%;
+}
+
+
+/************************************************
+ * Object explorer
+ */
+
+.ircd .explore2.object,
+.ircd .explore2 .object
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	margin: 5px 0px 5px 0px;
+	padding: 0px 0px 0px 0px;
+	border-radius: 3px 0px 0px 0px;
+	border-left: 1px dotted var(--pal-AE);
+}
+
+.ircd .explore2 div.member
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	margin: 1px 0px 1px 0px;
+}
+
+.ircd .explore2 .key
+{
+	flex-grow: 1;
+	align-items: center;
+	justify-content: flex-start;
+	margin: 0px 20px 0px 5px;
+}
+
+.ircd .explore2 input.value
+{
+	flex-grow: 0;
+	min-width: 48ch;
+	padding: 2px 5px 2px 5px;
+	border-radius: 2px;
+	font-family: monospace;
+	font-size: calc(var(--fsE));
+}
+
+/*
+ * Old explorer
+ */
+
+.ircd div.object
+{
+	display: inline-flex;
+	flex-shrink: 0;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: stretch;
+	border-left: 1px dotted var(--pal-AA);
+}
+
+.ircd .object div.member
+{
+	display: inline-flex;
+	flex-shrink: 0;
+	min-height: 24px;
+}
+
+.ircd .object .member div.key
+{
+	display: inline-flex;
+	flex-shrink: 0;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: left;
+	padding: 0px 15px 0px 10px;
+}
+
+.ircd .object .member .key p
+{
+	font-weight: normal;
+	font-size: 18px;
+	text-shadow: 0px 0px #585858;
+	color: var(--pal-AA);
+	flex-shrink: 0;
+	margin: auto;
+}
+
+.ircd .object .member .key .icon
+{
+	padding: 3px 5px 3px 1px;
+	text-shadow: 0px 1px #A8A8A8;
+	font-size: 20px;
+	color: var(--pal-CA);
+}
+
+.ircd .object .member div.value
+{
+	display: inline-flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: stretch;
+	font-family: FreeMono;
+	font-weight: normal;
+	font-size: 15px;
+	text-shadow: 1px 0px #505050;
+	text-align: left;
+	color: var(--pal-AC);
+	flex-grow: 1;
+	flex-shrink: 0;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.ircd .object .member .value input
+{
+	width: inherit;
+	padding: 5px 10px 5px 10px;
+	border: 1px dotted var(--pal-BA);
+	font-family: FreeMono;
+	font-size: 18px;
+}
+
+
+/************************************************
+ *  Event
+ */
+
+.ircd form.event
+{
+
+}
+
+
+/************************************************
+ ************************************************
+ *
+ * This is the root element of the application.
+ *
+ */
+
+#charybdis
+{
+	display: flex;
+	flex-flow: row nowrap;
+	flex-grow: 1;
+	align-self: center;
+	align-items: stretch;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100vw;
+	height: 100vh;
+	overflow: auto;
+}
+
+/************************************************
+ *  Menus
+ */
+
+.ircd .menu
+{
+	flex-shrink: 0;
+	align-items: center;
+	align-content: stretch;
+	justify-content: center;
+}
+
+.ircd .menu .item
+{
+	flex-shrink: 0;
+	flex-grow: 1;
+	flex-wrap: nowrap;
+	flex-direction: column;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	margin: 1px 1px 1px 1px;
+	padding: 5px 5px 5px 5px;
+	background-color: inherit;
+	outline: none;
+}
+
+.ircd .menu .item:hover
+{
+	background-color: var(--pal-AB);
+}
+
+.ircd .menu .item .name
+{
+	flex-flow: row wrap;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	text-shadow: 1px 1px #888888;
+	line-height: 1.1em;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.ircd .menu .item .icon
+{
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 5px 5px 5px 5px;
+	font-size: calc(var(--fsIA));
+}
+
+.ircd .menu button.hide
+{
+	display: none;
+}
+
+
+ /* This is the main menu */
+#charybdis_menu
+{
+	flex-grow: 1;
+	flex-shrink: 100;
+	max-height: 100vh;
+	max-width: 100vw;
+}
+
+#charybdis_menu .item
+{
+	flex-grow: 1;
+	flex-shrink: 1;
+	margin: 1px 5px 1px 5px;
+}
+
+
+/************************************************
+ *  MOTD
+ */
+
+#charybdis_motd
+{
+	flex-flow: column nowrap;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 20px;
+	flex-shrink: 0;
+	flex-basis: 40%;
+	background-color: var(--pal-CF);
+	text-align: center;
+	color: var(--pal-AB);
+}
+
+#charybdis_motd h3
+{
+	text-shadow: 0px 0px #000000;
+	color: var(--pal-AA);
+}
+
+#charybdis_motd p
+{
+	display: block;
+	padding: 5px 10px 5px 10px;
+	margin-bottom: 20px;
+	white-space: normal;
+	font-family: FreeMono;
+	font-weight: 500;
+	line-height: 1.3em;
+	text-align: left;
+	color: var(--pal-AB);
+}
+
+
+/************************************************
+ *  Login
+ */
+
+#charybdis_login
+{
+	flex-flow: column nowrap;
+	min-width: 25vw;
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: center;
+	background-color: var(--pal-AA);
+}
+
+#charybdis_login_form
+{
+	align-items: flex-start;
+	margin: 0px 10px 0px 10px;
+}
+
+.ircd .login_
+{
+	max-width: 50vw;
+	word-wrap: break-word;
+}
+
+.ircd .login_ form
+{
+	display: flex;
+	position: relative;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+/* This doesn't exist in the HTML until generated */
+.ircd .login_ form div.error
+{
+	top: 100%;
+	margin-top: 2%;
+	border-radius: 4px;
+}
+
+.ircd .login_ h1
+{
+	font-size: 39px;
+	text-align: left;
+	text-shadow: 1px 2px #404040;
+	color: #F8F8F8;
+}
+
+.ircd .login_ h1:hover
+{
+	color: var(--pal-CE);
+}
+
+.ircd .login_ input,
+.ircd .login_ button
+{
+	height: 65px;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 10px 0px 0px 0px;
+	padding: 0px 4px 0px 4px;
+}
+
+.ircd .login_ div.submit
+{
+	display: inline-flex;
+	flex-flow: row nowrap;
+	align-self: stretch;
+	align-items: center;
+	justify-content: stretch;
+}
+
+.ircd .login_ button.submit
+{
+	align-items: center;
+	justify-content: center;
+	padding: 10px 15px 10px 15px;
+	background-color: var(--pal-AD);
+	letter-spacing: 1px;
+	font-weight: bold;
+	font-size: 17px;
+	color: white;
+}
+
+.ircd .login_ .submit button[name=login_]
+{
+	margin-right: 5px;
+}
+
+.ircd .login_ .submit button[name=register]
+{
+	margin-left: 5px;
+}
+
+.ircd .login_ button.submit:hover
+{
+	background-color: var(--pal-AB);
+}
+
+.ircd .login_ button.submit.disabled,
+.ircd .login_ button.submit.disabled:hover
+{
+	background-color: var(--pal-CB) !important;
+	color: var(--pal-AE);
+	opacity: 0.33;
+}
+
+.ircd .login_ p
+{
+	display: flex;
+	align-self: stretch;
+	flex-flow: row wrap;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	padding: 20px 0px 20px 0px;
+	margin: 20px auto 20px auto;
+	background-color: var(--pal-CB);
+	border-radius: 6px;
+	letter-spacing: 1px;
+	font-weight: bold;
+	font-size: 17px;
+	color: #FFFFFF;
+}
+
+
+/************************************************
+ *  rooms
+ */
+
+.ircd div.rooms
+{
+	flex-grow: 1;
+	flex-basis: 100%;
+	flex-flow: row nowrap;
+	background-color: var(--pal-DE);
+}
+
+.ircd .rooms
+div.main
+{
+	flex-grow: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	border-right: 1px solid var(--pal-AA);
+}
+
+.ircd .rooms
+.main h1
+{
+	display: flex;
+	flex-grow: 1;
+	flex-shrink: 0;
+	align-items: flex-end;
+	justify-content: center;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.ircd .rooms
+div.main > div.head
+{
+	position: relative;
+	flex-flow: column nowrap;
+	flex-shrink: 0;
+	background-color: var(--pal-AD);
+}
+
+/***  rooms menu ***/
+.ircd .rooms
+div.main > div.head form.menu
+{
+	position: relative;
+	flex-flow: row wrap;
+	align-items: stretch;
+	padding: 5px 5px 5px 5px;
+}
+
+.ircd .rooms
+div.main > div.head form.menu button
+{
+	width: 30%;
+}
+
+.ircd .rooms
+div.main > div.head form.menu button h3
+{
+	width: 9ch;
+}
+
+.ircd .rooms
+div.main > div.head form.menu button i
+{
+	font-size: calc(var(--fsIB));
+}
+
+.ircd .rooms
+div.main > div.head form.menu button.highlight
+{
+	border: 1px dotted var(--pal-BE);
+}
+
+/***  rooms search ***/
+.ircd .rooms
+div.main > div.head form.search
+{
+	display: flex;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: stretch;
+	padding: 10px 10px 10px 10px;
+}
+
+/***  rooms search ***/
+.ircd .rooms
+div.main > div.head form.search.selected
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .rooms
+div.main > div.head form.search input
+{
+	padding: 5px 10px 5px 10px;
+	margin: 5px 0px 1px 0px;
+	border-radius: 3px;
+}
+
+/***  rooms list ***/
+.ircd .rooms
+div.main div.list
+{
+	position: relative;
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	padding: 0px 0px 0px 0px;
+	overflow-y: auto;
+	/* resize: horizontal; */
+}
+
+.ircd .rooms
+div.main div.list::-webkit-scrollbar-thumb
+{
+	background-color: var(--pal-DE);
+}
+
+.ircd .rooms
+div.main div.list::-webkit-scrollbar-track
+{
+	background-color: var(--pal-AD);
+}
+
+.ircd .rooms
+div.main div.list::-webkit-scrollbar-button
+{
+	background-color: var(--pal-AD);
+}
+
+.ircd .rooms
+div.main div.list div.loading
+{
+	align-self: flex-end;
+}
+
+.ircd .rooms
+div.main div.list .loading i
+{
+	font-size: calc(var(--fsIA));
+	color: var(--pal-AB);
+}
+
+.ircd .rooms
+div.main div.list div.item
+{
+	flex-grow: 1;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	background-color: var(--pal-AD);
+}
+
+.ircd .rooms
+div.main div.list div.item i
+{
+	align-self: center;
+	cursor: pointer;
+	color: var(--pal-CD);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head
+{
+	flex-grow: 1;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: center;
+	overflow: hidden;
+	overflow-wrap: nowrap;
+	text-overflow: ellipsis;
+	background-color: var(--pal-DE);
+	padding-right: 5px;
+	color: var(--pal-AB);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head:hover
+{
+	background-color: var(--pal-AC);
+	color: white;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head:hover i
+{
+	color: var(--pal-CA);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head .right
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	padding: 0px 5px 0px 5px;
+	text-shadow: 0px 0px #000000;
+	line-height: 0.8em;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head h3.right
+{
+	overflow: hidden;
+	white-space: nowrap;
+	overflow-wrap: nowrap;
+	text-overflow: ellipsis;
+	justify-content: flex-start;
+	width: 30ch;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head .left
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: center;
+	line-height: 0.95em;
+	font-weight: bold;
+	padding: 0px 5px 0px 5px;
+	margin: 0px 0px 0px 0px;
+	cursor: pointer;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head .member_count
+{
+	width: 4ch;
+	padding: 0px 2px 0px 2px;
+	margin: 0px 2px 0px 2px;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head .notification_count
+{
+	width: 3ch;
+	padding: 1px 2px 1px 2px;
+	margin: 1px 2px 1px 2px;
+	border-radius: 3px;
+	background-color: var(--pal-DA);
+	border: 1px solid var(--pal-BC);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head .highlight_count
+{
+	width: 3ch;
+	padding: 1px 2px 1px 2px;
+	margin: 1px 2px 1px 2px;
+	border-radius: 3px;
+	border: 1px solid var(--pal-BA);
+	background-color: var(--pal-CC);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus i
+{
+	text-shadow: initial;
+	padding-right: 7px;
+	padding-left: 5px;
+	padding-top: 1px;
+	margin: 1px 0px 0px 0px;
+	color: var(--pal-CD);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus.selected i
+{
+	visibility: inherit;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head:hover div.focus
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus:hover
+{
+	background-color: var(--pal-AB) !important;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus.selected
+{
+	background-color: var(--pal-AC) !important;
+}
+
+.ircd .rooms
+div.main div.list div.item div.head div.focus:hover.selected
+{
+	background-color: var(--pal-AB) !important;
+}
+
+.ircd .rooms .main .list .item div.info
+{
+	flex-grow: 10;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	align-self: stretch;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	padding: 0px 0px 0px 0px;
+	background-color: var(--pal-DE);
+	border-top: 1px solid var(--pal-AD);
+}
+
+.ircd .rooms .main .list .item div.info > div.id,
+.ircd .rooms .main .list .item div.info > div.name
+{
+}
+
+.ircd .rooms .main .list .item div.info > div.name h3,
+.ircd .rooms .main .list .item div.info > div.id h4
+{
+	text-shadow: initial;
+}
+
+.ircd .rooms .main .list .item div.info > div.name
+{
+	padding: 10px 10px 10px 10px;
+	border-bottom: 1px solid var(--pal-DA);
+	background-color: var(--pal-DD);
+	color: black;
+}
+
+.ircd .rooms .main .list .item div.info > div.id
+{
+	justify-content: flex-end;
+	padding: 5px 10px 5px 10px;
+	border-bottom: 1px solid var(--pal-DD);
+	color: var(--pal-AB);
+}
+
+.ircd .rooms .main .list .item div.info > div.stats
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	padding-top: 5px;
+}
+
+.ircd .rooms .main .list .item div.info > div.stats > div
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	padding: 5px 10px 5px 10px;
+}
+
+.ircd .rooms .main .list .item .info .label
+{
+	color: var(--pal-AB);
+}
+
+.ircd .rooms .main .list .item .info p
+{
+	color: black;
+}
+
+.ircd .rooms .main .list .item .info form.menu,
+.ircd .rooms .main .list .item .info select.menu
+{
+	position: relative;
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	padding: 10px 0px 10px 0px;
+}
+
+.ircd .rooms .main .list .item .info .menu button
+{
+	flex-grow: 0;
+	position: relative;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 15px 10px 15px 10px;
+	margin: 5px 10px 5px 10px;
+	background-color: var(--pal-AD);
+	cursor: pointer;
+}
+
+.ircd .rooms .main .list .item .info .menu button:hover
+{
+	background-color: var(--pal-AB);
+}
+
+.ircd .rooms .main .list .item .info .menu i
+{
+	font-size: calc(var(--fsIC));
+	color: var(--pal-CD);
+}
+
+.ircd .rooms .main .list .item .info .menu .name
+{
+	position: absolute;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.ircd div.rooms div.current
+{
+	flex-flow: column nowrap;
+}
+
+/************************************************
+ *
+ *  Room
+ *
+ */
+
+#charybdis_room
+{
+	flex-grow: 1;
+	flex-basis: 100%
+}
+
+.ircd div.room
+{
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+}
+
+
+/*
+ * Abstract components
+ */
+ 
+ /* power levels */
+.ircd .room div.power_levels div.levels
+{
+	align-items: stretch;
+}
+
+.ircd .room div.power_levels div.levels div.level
+{
+	align-items: center;
+	padding: 1px 1px 1px 1px;
+}
+
+.ircd .room div.power_levels div.levels div.level .name
+{
+	flex-grow: 1;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0px 5px 0px 5px;
+	font-weight: bold;
+}
+
+.ircd .room div.power_levels div.levels div.level input
+{
+	display: flex;
+	flex-grow: 0;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	text-align: right;
+	width: 5ch;
+	box-sizing: border-box;
+	padding: 0px 5px 0px 0px;
+	border-radius: 2px 2px 2px 2px;
+	background-color: var(--pal-CE);
+	font-size: calc(var(--fsC));
+}
+
+
+/* Aliases */
+.ircd .room form.aliases
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+}
+
+.ircd .room form.aliases h1
+{
+}
+
+.ircd .room form.aliases div.server
+{
+	flex-flow: column nowrap;
+	align-items: flex-start;
+	justify-content: flex-start;
+	margin: 2px 0px 2px 0px;
+}
+
+.ircd .room form.aliases div.server div.alias
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: flex-start;
+	margin: 5px 0px 0px 0px;
+}
+
+.ircd .room form.aliases div.server div.alias h3
+{
+	font-size: inherit;
+	padding: 0px 1px 0px 1px;
+}
+
+.ircd .room form.aliases div.server div.alias h3.hashtag
+{
+	padding-left: 0px;
+}
+
+.ircd .room form.aliases div.alias input
+{
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	padding-left: 2px;
+	width: initial;
+}
+
+
+/*
+ * Bar (generic)
+ */
+.ircd .room .bar
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+}
+
+.ircd .room .bar i
+{
+	font-size: calc(var(--fsIB));
+	padding: 3px 5px 3px 5px;
+	margin: 1px 1px 1px 1px;
+	border-radius: 3px 3px 3px 3px;
+	color: var(--pal-CD);
+}
+
+.ircd .room .bar p
+{
+	
+}
+
+.ircd .room .bar > div
+{
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd .room .bar > div:first-child
+{
+	border-left: 0px dotted var(--pal-AA);
+}
+
+.ircd .room .bar > div h2,
+.ircd .room .bar > div h3,
+.ircd .room .bar > div h4,
+.ircd .room .bar > div h5
+{
+	align-items: center;
+	justify-content: center;
+}
+
+.ircd .room .bar > div h2,
+.ircd .room .bar > div h3,
+.ircd .room .bar > div h4
+{
+	font-weight: bold;
+}
+
+.ircd .room .bar > div h5
+{
+	font-weight: bold;
+}
+
+.ircd .room .bar > div p
+{
+	font-weight: bold;
+	align-items: center;
+}
+
+
+/* Indicator bar */
+.ircd .room div.indicator
+{
+	position: relative;
+	flex-shrink: 0;
+	padding: 1px;
+	background-color: var(--pal-AA);
+	cursor: pointer;
+}
+
+.ircd .room div.indicator button
+{
+	padding: 1px;
+	margin: 1px;
+}
+
+.ircd .room div.indicator i
+{
+	padding: 2px;
+	font-size: calc(var(--fsID));
+}
+
+.ircd .room .indicator h5
+{
+	padding: 0px 2px 0px 2px;
+	color: var(--pal-AE);
+	font-weight: normal;
+}
+
+.ircd .room .indicator > div
+{
+	flex-flow: row wrap;
+	height: 46px;
+	align-items: stretch;
+	justify-content: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	border-left: 1px dotted var(--pal-AD);
+	padding: 1px 5px 1px 5px;
+}
+
+.ircd .room .indicator > div > *
+{
+	min-height: 40px;
+	box-sizing: border-box;
+}
+
+.ircd .room .indicator > div h2,
+.ircd .room .indicator > div h3,
+.ircd .room .indicator > div h4
+{
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd .room .indicator > div h5
+{
+	padding: 0px 1px 0px 1px;
+}
+
+.ircd .room .indicator > div.id h5
+{
+	padding: 0px 2px 0px 2px;
+}
+
+.ircd .room .indicator > div p
+{
+	padding: 0px 2px 0px 2px;
+}
+
+.ircd .room .indicator h3:empty
+{
+	display: none;
+}
+
+.ircd .room div.indicator > div:first-child,
+.ircd .room div.indicator > div:last-child
+{
+	padding: 0px 0px 0px 0px;
+}
+
+.ircd .room div.indicator div.menu_toggle
+{
+}
+
+.ircd .room div.indicator div.menu_toggle button
+{
+	padding: 0px 15px 0px 15px;
+}
+
+.ircd .room div.indicator div.menu_toggle:hover,
+.ircd .room div.indicator div.menu_toggle button:hover,
+.ircd .room div.indicator div.menu_toggle button.selected:hover,
+.ircd .room div.indicator div.menu_toggle:hover i
+{
+	background-color: var(--pal-AC) !important;
+}
+
+.ircd .room div.indicator div.menu_toggle button.selected
+{
+	background-color: var(--pal-AB) !important;
+}
+
+.ircd .room div.indicator > div.name
+{
+	align-items: center;
+	flex-grow: 1;
+}
+
+.ircd .room div.indicator > div.name .name
+{
+	flex-grow: 1;
+}
+
+.ircd .room div.indicator > div.id
+{
+}
+
+.ircd .room div.indicator > div.id > .id
+{
+}
+
+/* Control bar */
+.ircd .room > div.control
+{
+	flex-shrink: 0;
+	padding: 0px 0px 0px 0px;
+	background-color: var(--pal-DE);
+	border-right: 1px solid var(--pal-AA);
+}
+
+.ircd .room > div.control h1,
+.ircd .room > div.control h2,
+.ircd .room > div.control h3,
+.ircd .room > div.control h4,
+.ircd .room > div.control h5,
+.ircd .room > div.control h6
+{
+	color: var(--pal-AC);
+	text-shadow: initial;
+}
+
+.ircd .room > div.control h6.label
+{
+	color: var(--pal-AD);
+}
+
+.ircd .room > div.control > div
+{
+	align-items: stretch;
+	padding: 10px 10px 10px 10px;
+	margin: 5px 5px 5px 5px;
+	border-radius: 5px;
+}
+
+.ircd .room > div.control > div > h3
+{
+	justify-content: flex-start;
+	margin-bottom: auto;
+}
+
+.ircd .room > div.control input,
+.ircd .room > div.control textarea
+{
+	border: 1px solid var(--pal-AE);
+}
+
+
+/* Status indicator bar */
+.ircd .room div.status.indicator > div > div
+{
+	margin-left: 2px;
+}
+
+.ircd .room div.status div.activity p.bytes
+{
+	min-width: 9ch;
+}
+
+.ircd .room div.status div.activity p.bytes.down
+{
+	justify-content: flex-end;
+}
+
+.ircd .room div.status div.activity p.bytes.up
+{
+	justify-content: flex-start;
+}
+
+.ircd .room div.status div.activity i
+{
+	align-self: center;
+}
+
+.ircd .room div.status div.activity i:hover
+{
+	background-color: inherit;
+}
+
+.ircd .room div.status div.activity i.mode
+{
+	color: var(--pal-BD);
+	font-size: calc(var(--fsIE));
+}
+
+.ircd .room div.status div.activity i.activity
+{
+	margin: 0px 0px 0px 0px;
+	padding: 1px 3px 1px 1px;
+	color: var(--pal-BC);
+	font-size: calc(var(--fsIE));
+}
+
+.ircd .room div.status div.activity i.activity.activated
+{
+	color: var(--pal-BE);
+}
+
+.ircd .room div.status div.explore h4
+{
+	padding-right: 10px;
+}
+
+.ircd .room div.status div.explore
+{
+	justify-content: center;
+}
+
+.ircd .room div.status div.explore i
+{
+	margin: auto;
+}
+
+/* detail control bar */
+.ircd .room div.detail div
+{
+	align-self: stretch;
+}
+
+.ircd .room div.detail h3
+{
+	font-size: calc(var(--fsF));
+	justify-content: flex-start;
+}
+
+.ircd .room div.detail .menu h4
+{
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room div.detail div.power_levels
+{
+	flex-flow: column nowrap;
+}
+
+.ircd .room div.detail div.power_levels h3
+{
+	border-bottom: 1px dotted var(--pal-AD);
+	margin-bottom: 2px;
+}
+
+.ircd .room div.detail div.power_levels div.levels
+{
+	flex-grow: 1;
+}
+
+.ircd .room div.detail div.power_levels div.levels div.level
+{
+	flex-grow: 1;
+	text-align: right;
+}
+
+.ircd .room div.detail div.forms
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+}
+
+.ircd .room div.detail div.forms div,
+.ircd .room div.detail div.forms form
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	margin: 2px 0px 2px 0px;
+}
+
+.ircd .room div.detail div.forms div input,
+.ircd .room div.detail div.forms form input
+{
+	border-radius: 2px;
+}
+
+.ircd .room div.detail div.topic
+{
+	flex-grow: 1;
+	align-items: stretch;
+}
+
+.ircd .room div.detail div.topic textarea
+{
+	flex-grow: 1;
+	width: 100%;
+	resize: none;
+}
+
+.ircd .room div.detail div.rules
+{
+	flex-flow: column nowrap;
+}
+
+.ircd .room div.detail div.rules h3
+{
+	margin-bottom: 2px;
+	border-bottom: 1px solid var(--pal-AE);
+}
+
+.ircd .room div.detail div.rules > div
+{
+	flex-flow: column nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	margin: 5px 0px 5px 0px;
+}
+
+.ircd .room div.detail div.rules > div:first-child
+{
+	margin-top: 0px;
+}
+
+.ircd .room div.detail div.rules > div:last-child
+{
+	margin-bottom: 0px;
+}
+
+.ircd .room div.detail div.rules .menu
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: stretch;
+}
+
+.ircd .room div.detail div.rules .menu .item
+{
+	color: var(--pal-AC);
+}
+
+.ircd .room div.detail div.rules .menu .item i
+{
+	flex-grow: 1;
+	color: var(--pal-CA);
+	font-size: calc(var(--fsID));
+}
+
+.ircd .room div.detail div.rules .menu .item .name
+{
+	min-width: 9ch;
+	text-shadow: initial;
+}
+
+.ircd .room div.detail div.rules .menu .item:hover .name
+{
+	color: white;
+}
+
+.ircd .room div.detail div.rules .menu .item.selected .name
+{
+	color: white;
+}
+
+.ircd .room div.detail div.rules div.guest_access
+{
+}
+
+/* event control bar */
+.ircd .room div.event.control h3
+{
+	justify-content: flex-start;
+	margin-bottom: 2px;
+	border-bottom: 1px dotted var(--pal-AE);
+	font-size: calc(var(--fsD));
+}
+
+.ircd .room div.event.control h4
+{
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room div.event.control
+{
+	flex-shrink: 0;
+}
+
+.ircd .room div.event.control > div:first-child
+{
+	padding: 0px 0px 5px 0px;
+}
+
+.ircd .room div.event.control > div > div
+{
+	padding: 0px 10px 0px 10px;
+	margin: 0px 0px 0px 0px;
+}
+
+.ircd .room div.event.control div.state
+{
+}
+
+.ircd .room div.event.control div.state div.slots
+{
+	align-items: stretch;
+	align-content: center;
+	justify-content: stretch;
+}
+
+.ircd .room div.event.control div.state div.slots div.slot
+{
+	align-items: stretch;
+	justify-content: stretch;
+	margin: 1px 0px 1px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+.ircd .room div.event.control div.state div.slots div.slot > h4
+{
+	min-width: 22ch;
+	justify-content: flex-end;
+	padding: 1px 5px 1px 1px;
+	color: var(--pal-AE);
+}
+
+.ircd .room div.event.control div.state div.slots div.slot.active > h4
+{
+	color: var(--pal-DD);
+}
+
+.ircd .room div.event.control div.state div.slots div.slot input,
+.ircd .room div.event.control div.state div.slots div.slot p
+{
+	padding: 1px 3px 1px 3px;
+	font-family: monospace;
+}
+
+.ircd .room div.event.control div.state div.slots div.slot input
+{
+	box-sizing: border-box;
+	border-radius: 2px;
+}
+
+.ircd .room div.event.control div.state div.slots div.slot.active input
+{
+}
+
+.ircd .room div.event.control div.state div.slots div.slot.empty input
+{
+	border: 1px solid var(--pal-CE);
+	background-color: var(--pal-AD);
+}
+
+.ircd .room div.event.control div.state div.slots div.slot.disabled input
+{
+	background-color: var(--pal-AE);
+	border: 0px solid var(--pal-CE);
+}
+
+.ircd .room div.event.control div.state div.slots div.slot .id
+{
+	flex-grow: 0;
+	width: 25ch;
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room div.event.control div.state div.slots div.slot .sender
+{
+	font-weight: bold;
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room div.event.control div.capstan
+{
+}
+
+.ircd .room div.event.control div.capstan > div
+{
+	padding: 0px 0px 15px 0px;
+}
+
+.ircd .room div.event.control div.capstan h3
+{
+	align-self: stretch;
+	justify-content: flex-start;
+	border-bottom: 1px dotted var(--pal-AE);
+	margin: 0px 0px 2px 0px;
+}
+
+.ircd .room div.event.control div.capstan form
+{
+	flex-flow: column nowrap;
+}
+
+.ircd .room div.event.control div.capstan form div
+{
+	margin: 2px 0px 2px 0px;
+}
+
+.ircd .room div.event.control div.capstan form h4
+{
+}
+
+.ircd .room div.event.control div.capstan form h5
+{
+	width: 16ch;
+	padding-right: 10px;
+	justify-content: flex-end;
+}
+
+.ircd .room div.event.control div.capstan form input
+{
+	width: 30ch;
+	flex-grow: 0;
+	flex-shrink: 1;
+	padding: 2px 10px 2px 10px;
+	border-radius: 3px;
+	font-family: courier;
+	font-size: calc(var(--fsD));
+}
+
+.ircd .room div.event.control div.capstan div.head,
+.ircd .room div.event.control div.capstan div.viewport
+{
+	align-items: flex-start;
+	justify-content: flex-start;
+}
+
+.ircd .room div.event.control div.capstan div.head > div
+{
+	margin: 0px 5px 0px 5px;
+}
+
+.ircd .room div.event.control div.capstan div.viewport form
+{
+	flex-flow: row nowrap;
+	align-items: flex-start;
+}
+
+.ircd .room div.event.control div.capstan div.viewport form h4
+{
+	width: 15ch;
+	align-self: center;
+	padding: 0px 10px 0px 0px;
+	justify-content: flex-end;
+}
+
+.ircd .room div.event.control div.capstan div.viewport form div
+{
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd .room div.event.control div.capstan div.viewport form div h5
+{
+	padding: 0px 5px 0px 0px;
+	height: initial;
+	width: initial;
+}
+
+.ircd .room div.event.control div.capstan div.viewport form input
+{
+	width: 11ch;
+	text-align: right;
+}
+
+.ircd .room form.event.player
+{
+	flex-shrink: 0;
+	align-items: stretch;
+	align-content: stretch;
+}
+
+.ircd .room form.event.player button
+{
+	flex-shrink: 1;
+	align-self: stretch;
+}
+
+.ircd .room form.event.player .name
+{
+	font-weight: bold;
+	color: white;
+}
+
+.ircd .room form.event.player i
+{
+	font-size: calc(var(--fsIA));
+}
+
+/***
+ *
+ * Main room outer frame
+ *
+ */
+
+.ircd .room div.main
+{
+	flex-grow: 100;
+	position: relative;
+	flex-flow: row nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: stretch;
+	background-color: var(--pal-AD);
+}
+
+
+.ircd .room div.main div.members
+{
+	position: relative;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	background-color: var(--pal-AA);
+	border-left: 1px solid var(--pal-AA);
+	border-top: 1px solid var(--pal-AD);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.ircd .room div.members > div,
+.ircd .room div.members > form,
+.ircd .room div.members > select
+{
+}
+
+.ircd .room div.members form,
+.ircd .room div.members select
+{
+	flex-shrink: 0;
+}
+
+.ircd .room div.members form input
+{
+	display: flex;
+	flex-shrink: 0;
+	border-radius: 3px;
+}
+
+.ircd .room div.members form h6
+{
+	display: flex;
+	text-shadow: 0px 0px var(--pal-AE);
+}
+
+.ircd .room div.members form.search
+{
+	flex-flow: column nowrap;
+	align-self: stretch;
+	margin: 0px 5px 5px 5px;
+}
+
+.ircd .room div.members .search input
+{
+	padding: 4px 2px 4px 2px;
+}
+
+.ircd .room div.members div.menu
+{
+	position: relative;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	margin: 5px 4px 5px 4px;
+}
+
+.ircd .room div.members .menu .item
+{
+}
+
+.ircd .room div.members .menu .item .name
+{
+	min-width: 11ch;
+}
+
+.ircd .room div.members .menu .item:not(.selected)
+{
+}
+
+.ircd .room div.members .menu .item:hover
+{
+	color: white;
+}
+
+.ircd .room div.members .menu .item i
+{
+	font-size: calc(var(--fsIC));
+}
+
+.ircd .room div.members .menu .item.selected
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .room div.members div.list
+{
+	position: relative;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	background-color: var(--pal-DE);
+	border-top: 1px solid var(--pal-AD);
+}
+
+.ircd .room div.members div.list .loading i
+{
+	font-size: calc(var(--fsIA));
+	color: var(--pal-AD);
+}
+
+.ircd .room div.members div.list div.member
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+	flex-shrink: 0;
+}
+
+.ircd .room div.members div.list .member div.head
+{
+	position: relative;
+	flex-flow: row nowrap;
+	align-items: center;
+	padding: 0px 2px 0px 2px;
+	margin: 0px 0px 0px 0px;
+	cursor: pointer;
+	color: var(--pal-AC);
+}
+
+.ircd .room div.members div.list .member div.head:hover
+{
+	background-color: var(--pal-AA);
+	color: white;
+}
+
+.ircd .room div.members div.list .member div.head .name
+{
+	max-width: 25ch;
+	padding-left: 4px;
+	text-shadow: 0px 0px #000000;
+	font-size: calc(var(--fsC));
+	font-family: Lato;
+	letter-spacing: 0.33px;
+	white-space: nowrap;
+	word-wrap: normal;
+	word-break: keep-all;
+	text-overflow: ellipsis;
+}
+
+.ircd .room div.members div.list .member div.head .idle
+{
+	padding: 1px 2px 1px 2px;
+	border-radius: 3px;
+}
+
+.ircd .room div.members div.list .member.active div.head .idle
+{
+	color: var(--pal-BB);
+}
+
+.ircd .room div.members div.list .member.inactive div.head .idle
+{
+	color: var(--pal-AD);
+}
+
+.ircd .room div.members div.list .member div.head:hover .idle,
+.ircd .room div.members div.list .member div.head.selected .idle
+{
+	color: white;
+}
+
+.ircd .room div.members div.list .member div.head .domain
+{
+	align-self: flex-end;
+	padding: 1px 3px 1px 3px;
+	max-width: 20ch;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ircd .room div.members div.list .member div.selected
+{
+	padding-top: 2px;
+	padding-bottom: 2px;
+	background-color: var(--pal-AC);
+	color: white;
+}
+
+.ircd .room div.members div.list div.head .icon,
+.ircd .room div.members .invite .icon
+{
+	opacity: 0.4;
+	margin: -2% 0px -2% 0px;
+	padding: 0px 2px 0px 5px;
+	font-size: calc(var(--fsIF));
+	color: var(--pal-DF);
+}
+
+.ircd .room div.members div.list .member div.head.selected i.icon
+{
+	opacity: 1.0;
+	margin: 1px 0px 3px 0px;
+	color: var(--pal-CA);
+}
+
+.ircd .room div.members div.list .member.active div.head i.icon
+{
+	z-index: 2;
+	opacity: 1.0;
+	color: var(--pal-CC);
+}
+
+.ircd .room div.members div.list .member.inactive div.head i.icon
+{
+	color: var(--pal-AD);
+}
+
+.ircd .room div.members div.list .member.me div.head i.icon
+{
+	color: var(--pal-BB);
+}
+
+.ircd .room div.members div.list .member div.info
+{
+	flex-grow: 1;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	padding: 0px 0px 5px 0px;
+	margin: 0px 0px 5px 0px;
+	text-align: left;
+}
+
+.ircd .room div.members div.list .member .info div.mxid
+{
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0px 5px 0px 5px;
+	border-bottom: 1px solid var(--pal-DA);
+	background-color: var(--pal-DD);
+}
+
+.ircd .room div.members div.list .member .info div.mxid p
+{
+	font-weight: bold;
+}
+
+.ircd .room div.members div.list .member div.info div.data
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+	padding: 0px 5px 0px 5px;
+	margin: 0px 0px 0px 0px;
+	text-align: left;
+}
+
+.ircd .room div.members div.list .member div.info div.avatar
+{
+	flex-grow: 1;
+	justify-content: flex-end;
+}
+
+.ircd .room div.members div.list .member .info div.avatar img
+{
+	max-height: 150px;
+	width: auto;
+	height: auto;
+	border-radius: 3px;
+	border: 3px double var(--pal-AE);
+	border-radius: 9px;
+	margin: 5px 0px 5px 5px;
+}
+
+.ircd .room div.members div.list .member div.info div.data div.attrs
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd .room div.members div.list .member div.info div.data div.attrs > div
+{
+	flex-grow: 1;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0px 0px 0px 0px;
+	text-align: left;
+}
+
+.ircd .room div.members div.list .member .info h3
+{
+	flex-basis: 20%;
+	justify-content: flex-end;
+	margin-right: 8px;
+	font-size: calc(var(--fsE));
+	font-weight: bold;
+	color: var(--pal-AC);
+	text-shadow: 0px 0px #000000;
+	white-space: nowrap;
+}
+
+.ircd .room div.members div.list .member .info p
+{
+	font-size: calc(var(--fsD));
+	color: var(--pal-AB);
+	line-break: normal;
+	word-wrap: break-word;
+	overflow-wrap: normal;
+}
+
+.ircd .room div.members div.list .member .info div.event
+{
+	align-self: flex-end;
+	align-items: center;
+	padding: 0px 5px 0px 5px;
+	cursor: pointer;
+}
+
+.ircd .room div.members div.list .member .info div.event p
+{
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room div.members div.list .member .info div.event p:hover
+{
+	color: var(--pal-AC);
+}
+
+.ircd .room div.members div.list .member .info .menu
+{
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	background-color: var(--pal-AA);
+	padding: 3px 2px 3px 2px;
+}
+
+.ircd .room div.members div.list .member .info .menu .item
+{
+	position: relative;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--pal-AD);
+}
+
+.ircd .room div.members div.list .member .info .menu .item:hover
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .room div.members div.list .member .info .menu .item .name
+{
+	align-self: center;
+}
+
+.ircd .room div.members div.list .member .menu .item .icon
+{
+	font-size: calc(var(--fsIB));
+}
+
+.ircd .room div.members div.invite
+{
+	height: 15px;
+	background-color: var(--pal-DE);
+}
+
+.ircd .room div.members div.invite.member
+{
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: flex-start;
+	width: 100%;
+	height: 40px;
+}
+
+.ircd .room div.members div.invite form
+{
+	display: flex;
+	flex-flow: column nowrap;
+	flex-grow: 1;
+	align-items: stretch;
+	align-content: stretch;
+	justify-content: stretch;
+	margin-right: 1%;
+	padding: 1px 5px 5px 0px;
+}
+
+.ircd .room div.members .invite form h6
+{
+	display: flex;
+}
+
+.ircd .room div.members .invite form input
+{
+	display: flex;
+	padding: 3px 4px 3px 4px;
+	font-size: 14px;
+	/* letter-spacing: 0px; */
+	text-shadow: 0px 0px #000000;
+	outline: none;
+}
+
+
+/**
+ * Main room inner content
+ *
+ */
+
+.ircd .room .main .content
+{
+	position: relative;
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+	background-color: var(--pal-DE);
+}
+
+.ircd .room ::-webkit-scrollbar-thumb
+{
+	background-color: var(--pal-DE);
+}
+
+.ircd .room .main .content div.events
+{
+	position: relative;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	padding: 10px 0px 0px 0px;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	overflow-y: scroll;
+	will-change: scroll;
+	direction: rtl;
+
+	/* ideally we want to justify flex-end but the browser
+	 * breaks the scrollbars on overflow. There has to be a
+	 * a magic trick done with a wrapping div using direction
+	 * column-reverse. But for now we use a margin to push the
+	 * events down to the bottom and use flex-start to ensure
+	 * at least some alignment is well defined.
+	 */
+	margin-top: auto;
+	justify-content: flex-start;
+}
+
+.ircd .room .main .content form.search
+{
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	border-top: 1px solid var(--pal-AD);
+	border-radius: 0px 0px 0px 0px;
+	background-color: var(--pal-AA);
+	padding: 1% 5% 1% 5%;
+}
+
+.ircd .room .main .content form.search > div
+{
+}
+
+.ircd .room .main .content form.search input
+{
+	justify-content: center;
+	font-size: calc(var(--fsB));
+	border-radius: 3px 3px 3px 3px;
+	padding: 2px 3px 2px 3px;
+}
+
+.ircd .room .main .content form.search .label
+{
+	display: none;
+	margin-top: 3px;
+}
+
+.ircd .room .main .content form.search div.menu
+{
+	margin: 0px 10px 0px 10px;
+}
+
+.ircd .room .main .content form.search div.menu .item
+{
+	flex-wrap: wrap;
+	margin: 0px 3px 0px 3px;
+	padding: 2px 5px 2px 5px;
+}
+
+.ircd .room .main .content form.search div.menu .name
+{
+	max-width: 15ch;
+	padding-bottom: 1px;
+	font-size: calc(var(--fsE));
+}
+
+.ircd .room .main .content form.search div.menu .icon
+{
+	padding: 1px 5px 1px 5px;
+	font-size: calc(var(--fsIE));
+}
+
+/* Event styling
+ * Note events are already classified as "item"
+ */
+
+.ircd .room .main div.event
+{
+	flex-shrink: 0;
+	position: relative;
+	flex-flow: row wrap;
+	align-items: flex-start;
+	justify-content: flex-start;
+	align-content: flex-start;
+	direction: ltr;
+}
+
+.ircd .room .main .event h3,
+.ircd .room .main .event p
+{
+	font-weight: normal;
+	text-shadow: 0px 0px #000000;
+	color: var(--pal-AB);
+}
+
+.ircd .room .main .event.zoom
+{
+	margin-top: 5px;
+}
+
+.ircd .room .main .event .unhandled p
+{
+	font-size: 11px;
+	line-height: 1em;
+	color: var(--pal-CB) !important;
+}
+
+.ircd .room .main .event div.timeline
+{
+	flex-flow: row nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: center;
+	border-left: 3px solid var(--pal-DE);
+	border-bottom: 1px solid var(--pal-DE);
+}
+
+.ircd .room .main .event div.timeline .index
+{
+	min-width: 4ch;
+	padding: 0px 5px 0px 5px;
+	align-items: center;
+	justify-content: flex-end;
+	background-color: var(--pal-AA);
+	font-size: calc(var(--fsF));
+}
+
+.ircd .room .main .event div.timeline .index:hover
+{
+	background-color: var(--pal-AB);
+}
+
+.ircd .room .main .event div.timeline div.info
+{
+	padding: 10px 10px 10px 5px;
+	border-radius: 0px 5px 5px 0px;
+	background-color: var(--pal-AD);
+}
+
+.ircd .room .main .event div.timeline div.info .id
+{
+	align-items: flex-end;
+	font-size: calc(var(--fsD));
+	font-weight: bold;
+	color: white;
+	border-bottom: 1px dotted var(--pal-AE);
+}
+
+.ircd .room .main .event div.timeline div.info form
+{
+	margin: 10px 0px 10px 0px;
+}
+
+.ircd .room .main .event div.timeline div.info form.event
+{
+	padding-top: 5px;
+	border-left: 0px;
+	background-color: var(--pal-AD);
+	border-radius: 0px 0px 0px 0px;
+}
+
+.ircd .room .main .event div.timeline div.info form.event .key
+{
+	color: white;
+}
+
+.ircd .room .main .event div.timeline div.info form.menu
+{
+}
+
+.ircd .room .main .event div.timeline div.info form.menu .name
+{
+	font-size: calc(var(--fsD));
+}
+
+.ircd .room .main .event div.timeline div.info form.menu i
+{
+	font-size: calc(var(--fsID));
+}
+
+
+.ircd .room .main .event .sender,
+.ircd .room .main .event .target
+{
+	flex-flow: row nowrap;
+	align-self: flex-start;
+	align-items: center;
+	justify-content: left;
+	white-space: nowrap;
+	text-shadow: 0px 0px #000000;
+	letter-spacing: 0px;
+	font-weight: normal;
+	color: var(--pal-AB);
+}
+
+.ircd .room .main .event .sender
+{
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd .room .main .event .target
+{
+	padding: 0px 0px 0px 10px;
+}
+
+.ircd .room .main .event .sender .name,
+.ircd .room .main .event .target .name
+{
+	font-weight: bold;
+	font-size: 16px;
+	/* letter-spacing: 0px; */
+	color: var(--pal-AB);
+}
+
+.ircd .room .main .event .sender .name.me
+{
+	color: var(--pal-BB);
+}
+
+.ircd .room .main .event .sender a.avatar,
+.ircd .room .main .event .target a.avatar
+{
+	display: inline-flex;
+	align-self: center;
+	margin: auto 0px auto 0px;
+}
+
+.ircd .room .main .event .sender .avatar img,
+.ircd .room .main .event .target .avatar img
+{
+	max-height: 16px;
+	max-width: 16px;
+	border-radius: 2px;
+	padding: 1px 5px 1px 1px;
+}
+
+.ircd .room .main .event .sender .bracket,
+.ircd .room .main .event .target .bracket
+{
+	display: inline-flex;
+}
+
+.ircd .room .main .event .sender .domain,
+.ircd .room .main .event .target .domain
+{
+	align-self: first baseline;
+	font-size: 80%;
+	align-self: center;
+}
+
+.ircd .room .main .event .default
+{
+	color: var(--pal-CB);
+}
+
+
+/* Message events */
+
+.ircd .room .main .event div.message
+{
+	flex-grow: 1;
+	align-self: stretch;
+	align-items: flex-start;
+	line-break: strict;
+	color: var(--pal-AB);
+}
+
+.ircd .room .main .event .message .text
+{
+	flex-grow: 0;
+	font-family: Lato;
+	padding: 0px 5px 0px 5px;
+	font-size: calc(var(--fsP));
+	line-height: 1em;
+	line-break: strict;
+	word-wrap: normal;
+	overflow-wrap: normal;
+	white-space: pre-wrap;
+	color: black;
+}
+
+.ircd .room .main .event .message div.notice
+{
+	max-width: 90%;
+	max-height: 87vh;
+	font-family: courier;
+	line-height: 1.0em;
+	line-break: strict;
+	white-space: pre-wrap;
+	padding: 1px 0px 1px 0px;
+	margin: 2px 0px 2px 0px;
+	word-wrap: break-word;
+	word-break: break-all;
+	overflow-wrap: break-word;
+	overflow-x: auto;
+	resize: both;
+}
+
+.ircd .room .main .event .message .emote
+{
+}
+
+.ircd .room .main .event .message .image
+{
+	flex-flow: column nowrap;
+	flex-grow: 1;
+	justify-content: center;
+	align-items: flex-start;
+	border-left: 1px solid var(--pal-DA);
+	margin: 1px 5px 1px 0px;
+	padding-left: 5px;
+}
+
+.ircd .room .main .event .message .image.zoom
+{
+	align-items: center;
+	padding-left: 0px;
+	margin-right: 2px;
+}
+
+.ircd .room .main .event .message .image img
+{
+	flex-shrink: 0;
+	height: 33vh;
+	max-width: 100%;
+	width: auto;
+	object-fit: contain;
+	padding: 1px 1px 1px 1px;
+	overflow: visible;
+	resize: both;
+}
+
+.ircd .room .main .event .message .image.zoom img
+{
+	width: auto;
+	height: auto;
+	max-width: 95%;
+	max-height: 90vh;
+	object-fit: contain;
+	border-radius: 4px;
+}
+
+.ircd .room .main .event .message .image .label
+{
+	align-self: stretch;
+	font-weight: bold;
+	padding: 5px 5px 5px 5px;
+	font-size: calc(var(--fsD));
+	color: black;
+}
+
+.ircd .room .main .event .message .image.zoom .label
+{
+	background-color: var(--pal-DD);
+}
+
+
+/* Member events */
+
+.ircd .room .main div.event.member
+{
+}
+
+.ircd .room .main div.event div.member
+{
+	flex-grow: 0;
+	padding: 0px 0px 0px 0px;
+	color: black;
+}
+
+.ircd .room .main div.event div.member p
+{
+	font-weight: bold;
+	font-size: calc(var(--fsP));
+	line-height: 1.25em;
+}
+
+
+/* State events */
+
+.ircd .room .main .event div.state
+{
+	flex-grow: 1;
+	margin: 3px 10px 5px 10px;
+	border-radius: 5px;
+	background-color: var(--pal-DD);
+}
+
+.ircd .room .main .event .state h1,
+.ircd .room .main .event .state h2,
+.ircd .room .main .event .state h3,
+.ircd .room .main .event .state h4,
+.ircd .room .main .event .state h5,
+.ircd .room .main .event .state h6
+{
+	font-weight: bold;
+	padding: 5px 5px 5px 5px;
+	color: var(--pal-AC);
+}
+
+.ircd .room .main .event div.state div.changed
+{
+	flex-flow: column nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: stretch;
+	min-width: 15%;
+	flex-shrink: 0;
+	padding: 5px 5px 5px 5px;
+}
+
+.ircd .room .main .event div.state div.changed h3
+{
+	padding: 10px 10px 10px 10px;
+	flex-grow: 1;
+}
+
+.ircd .room .main .event div.state div.changed > h5
+{
+	font-size: 12px;
+	text-shadow: 0px 0px #000000;
+	padding: 0px 0px 0px 0px;
+	flex-grow: 1;
+}
+
+.ircd .room .main .event div.state.power_levels div.levels
+{
+	background-color: var(--pal-AA);
+	border-radius: 5px;
+	padding: 5px;
+	margin: 10px;
+}
+
+.ircd .room .main .event div.state.power_levels div.levels p
+{
+	font-weight: bold;
+	margin-right: 10px;
+}
+
+.ircd .room div.detail div.power_levels div.levels
+{
+	flex-grow: 1;
+}
+
+.ircd .room .main .event div.state > div
+{
+	border-top-right-radius: inherit;
+	border-bottom-right-radius: inherit;
+}
+
+.ircd .room .main .event div.state.join_rules div.join_rules
+{
+	flex-grow: 1;
+	padding: 10px;
+	background-color: var(--pal-AD);
+}
+
+.ircd .room .main .event div.state.join_rules div.join_rules .item
+{
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	padding: 10px;
+}
+
+.ircd .room .main .event div.state.join_rules div.join_rules .item > *
+{
+	padding: 0px 15px 0px 15px;
+}
+
+.ircd .room .main .event div.state.aliases div.aliases
+{
+	flex-flow: row wrap;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+}
+
+.ircd .room .main .event div.right
+{
+	position: absolute;
+	top: 0px;
+	right: 5px;
+	flex-flow: column nowrap;
+	align-items: flex-end;
+	justify-content: flex-start;
+}
+
+.ircd .room .main .event div.right h1
+{
+	font-size: calc(var(--fsD));
+	color: var(--pal-AA);
+	margin-right: 2px;
+}
+
+.ircd .room .main .event div.right p
+{
+	font-size: calc(var(--fsE));
+	letter-spacing: 0.70px;
+	color: var(--pal-AD);
+}
+
+.ircd .room .main .event div.right .white p
+{
+	font-weight: bold;
+	text-shadow: 0px 0px white;
+	color: white;
+}
+
+.ircd .room .main .event div.timestamp
+{
+}
+
+.ircd .room .main .event.present > div
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	background-color: var(--pal-DE);
+	padding: 1px 5px 1px 5px;
+}
+
+.ircd .room .main .event.present i
+{
+	font-size: calc(var(--fsID));
+	color: var(--pal-AB);
+}
+
+.ircd .room .main .event.present h1
+{
+	font-size: calc(var(--fsD));
+	color: var(--pal-AA);
+	margin-right: 2px;
+}
+
+.ircd .room .main .event.present p
+{
+	font-size: calc(var(--fsE));
+	letter-spacing: 0.70px;
+	color: var(--pal-AD);
+}
+
+.ircd .room .main .event.present .white p
+{
+	font-weight: bold;
+	color: white;
+}
+
+.ircd .room .main .event.present div.typing
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	flex-grow: 1;
+}
+
+.ircd .room .main .event.present div.typing i
+{
+	font-size: calc(var(--fsIE));
+}
+
+.ircd .room .main .event.present div.typer
+{
+	align-items: center;
+	margin: 0px 4px 0px 4px;
+}
+
+.ircd .room .main .event.present div.receipts
+{
+	flex-flow: row wrap;
+	align-items: flex-end;
+	justify-content: flex-end;
+}
+
+.ircd .room .main .event.present div.receipts i
+{
+	font-size: calc(var(--fsIE));
+	color: var(--pal-AA);
+}
+
+.ircd .room .main .event.present div.receipt
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: flex-start;
+	margin: 0px 4px 0px 4px;
+}
+
+.ircd .room .main .event.present div.receipt:first-child
+{
+	margin: 0px 4px 0px 0px;
+}
+
+.ircd .room .main .event.present div.receipt:last-child
+{
+	margin: 0px 0px 0px 4px;
+}
+
+/*
+ * Main room user input bar
+ */
+.ircd .room .main .content form.input
+{
+	display: flex;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	background-color: var(--pal-AA);
+	padding: 0px 0px 0px 15px;
+	margin: 0px 0px 0px 0px;
+}
+
+.ircd .room .main .content form.input div.message
+{
+	flex-shrink: 0;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	background-color: var(--pal-AA);
+}
+
+.ircd .room .main .content form.input div.message i
+{
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	font-size: calc(var(--fsIE));	
+}
+
+.ircd .room .main .content form.input div.message input,
+.ircd .room .main .content form.input div.message textarea
+{
+	display: flex;
+	box-sizing: border-box;
+	justify-content: center;
+	border-radius: 0px 0px 0px 0px;
+	border-top: 1px solid var(--pal-AE);
+}
+
+.ircd .room .main .content form.input div.message input:focus,
+.ircd .room .main .content form.input div.message textarea:focus
+{
+	border-radius: 0px 0px 0px 0px;
+}
+
+.ircd .room .main .content form.input div.message textarea[name=message]
+{
+	text-shadow: 1px 1px #585858;
+	padding: 5px 10px 5px 1px;
+	font-family: monospace;
+	text-shadow: 0px 0px #000000;
+	font-size: 16px;
+	resize: none;
+}
+
+.ircd .room .main .content form.input div.message textarea[name=message]:focus
+{
+}
+
+.ircd .room .main .content form.input div.message div.attach
+{
+	display: flex;
+	position: relative;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+	padding: 0px 10px 0px 10px;
+}
+
+.ircd .room .main .content form.input div.message div.attach:hover
+{
+	background-color: var(--pal-AB);
+}
+
+.ircd .room .main .content form.input div.message .attach i.icon
+{
+	align-self: center;
+}
+
+.ircd .room .main .content form.input div.message .attach input
+{
+	position: absolute;
+	overflow: hidden;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	opacity: 0.0;
+}
+
+.ircd .room .main .content form.input div.message button[type=submit]
+{
+	flex-grow: 0;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	text-shadow: 1px 1px #585858;
+	padding: 0px 20px 0px 20px;
+	border-radius: 0px 0px 0px 0px;
+}
+
+.ircd .room .main .content form.input div.message button.submit:hover
+{
+	background-color: var(--pal-BC);
+}
+
+.ircd .room .main .content form.input div.message button.submit.empty:hover
+{
+	background-color: inherit;
+}
+
+.ircd .room .main .content form.input div.message button.submit.empty:hover i
+{
+	color: var(--pal-CD);
+}
+
+.ircd .room .main .content form.input div.message button.submit.eval
+{
+	background-color: var(--pal-DC);
+	color: var(--pal-AA);
+}
+
+.ircd .room .main .content form.input div.message button.submit.eval i
+{
+	color: var(--pal-BC);
+}
+
+.ircd .room .main .content form.input div.message i.reply
+{
+	padding: 1px 10px 0px 10px;
+}
+
+.ircd .room .main .content form.input div.files
+{
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+	background-color: var(--pal-AD);
+}
+
+.ircd .room .main .content form.input div.summary
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+}
+
+.ircd .room .main .content form.input div.file
+{
+	position: relative;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	margin: 0px 0px 0px 0px;
+}
+
+.ircd .room .main .content form.input div.file > *
+{
+	z-index: 2;
+}
+
+.ircd .room .main .content form.input div.file button.remove
+{
+	padding: 0px 5px 0px 5px;
+	font-size: calc(var(--fsIB));
+}
+
+.ircd .room .main .content form.input div.file .name
+{
+	flex-grow: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ircd .room .main .content form.input div.file .url
+{
+	font-weight: bold;
+}
+
+.ircd .room .main .content form.input div.file div.status
+{
+	padding: 0px 10px 0px 10px;
+	align-items: center;
+}
+
+.ircd .room .main .content form.input div.file div.status .state
+{
+	margin: 0px 5px 0px 5px;
+}
+
+.ircd .room .main .content form.input div.file button
+{
+	align-self: stretch;
+	align-items: center;
+	padding-right: 10px;
+	padding-left: 10px;
+	color: white;
+}
+
+.ircd .room .main .content form.input div.file button .icon
+{
+	font-size: calc(var(--fsIC));
+	padding: 0px 5px 0px 5px;
+	border-radius: 5px;
+}
+
+.ircd .room .main .content form.input div.file button.upload
+{
+	margin: 2px 5px 2px 5px;
+	border: 1px solid var(--pal-BB);
+	border-radius: 5px;
+	background-color: var(--pal-BC);
+}
+
+.ircd .room .main .content form.input div.file button.post
+{
+	margin: 5px;
+	border-radius: 5px;
+	background-color: var(--pal-AA);
+	border: 1px solid var(--pal-BA);
+}
+
+.ircd .room .main .content form.input div.file button.post i
+{
+	margin: 5px;
+	border-radius: 5px;
+}
+
+.ircd .room .main .content form.input div.file img
+{
+	margin: 5px;
+	border: 1px solid var(--pal-AC);
+	border-radius: 3px;
+	max-width: 120px;
+	max-height: 60px;
+	min-height: 60px;
+	height: auto;
+	width: auto;
+	object-fit: contain;	
+}
+
+.ircd .room .main .content form.input div.file div.text
+{
+	flex-grow: 1;
+}
+
+.ircd .room .main .content form.input div.file div.text .label
+{
+	align-self: stretch;
+	align-items: center;
+	margin: 2px 0px 2px 0px;
+	padding: 0px 2px 0px 6px;
+	border-left: 1px dotted var(--pal-AE);
+}
+
+.ircd .room .main .content form.input div.file div.text input
+{
+	margin: 2px 5px 2px 5px;
+	padding-right: 4px;
+	padding-left: 4px;
+	border-radius: 2px;
+	width: 33%;
+}
+
+.ircd .room .main .content form.input div.file div.progress
+{
+	position: absolute;
+	z-index: 1;
+	opacity: 1.0;
+}
+
+.ircd .room .main .content form.input div.file.loading div.progress
+{
+	background-color: var(--pal-DB);
+}
+
+.ircd .room .main .content form.input div.file.uploading div.progress
+{
+}
+
+.ircd .room .main .content form.input div.file.failed div.progress
+{
+	width: 100%;
+	background-color: var(--pal-CB);
+}
+
+/**
+ *  Room explorer
+ */
+.ircd .room .main .explore
+{
+	display: inline-flex;
+	flex-flow: column nowrap;
+	flex-shrink: 0;
+	flex-basis: 25%;
+	align-items: stretch;
+	justify-content: stretch;
+	background-color: var(--pal-DE);
+	border-left: 1px solid var(--pal-AA);
+}
+
+.ircd .room .main .explore .content > div.object
+{
+	border-left: 0px;
+}
+
+.ircd .room .main .explore .control
+{
+	display: none;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0px 10px 0px 10px;
+	border-radius: 0px 0px 0px 0px;
+	border-right: 15px solid var(--pal-AA);
+	background-color: var(--pal-AD);
+	color: #FFFFFF;
+}
+
+.ircd .room .main .explore div.control > i
+{
+	font-size: calc(1vw + 1vh);
+	padding: 5px 10px 5px 10px;
+}
+
+.ircd .room .main .explore div.control i.selected
+{
+	background-color: var(--pal-AC);
+	color: var(--pal-CA);
+}
+
+.ircd .room .main .explore div.control > i:hover
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .room .main .explore .content
+{
+	padding: 0px 10px 0px 0px;
+	color: #FFFFFF;
+	overflow: auto;
+}
+
+/************************************************
+ *  ...
+ */
