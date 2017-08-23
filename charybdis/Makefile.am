@@ -9,12 +9,14 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
-	-Wl,--no-undefined \
 	-Wl,--no-gnu-unique \
-	$(PLATFORM_LDFLAGS)
+	$(PLATFORM_LDFLAGS) \
+	-Wl,--no-allow-shlib-undefined
+#	-Wl,--no-undefined
 
 AM_LDFLAGS += \
 	-L$(top_srcdir)/ircd \
+	-L$(top_srcdir)/modules \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@
