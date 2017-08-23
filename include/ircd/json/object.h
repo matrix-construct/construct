@@ -85,23 +85,33 @@ struct object
 	// util
 	size_t count() const;
 	bool has(const string_view &key) const;
+	bool has(const path &) const;
 
 	// returns value or default
 	template<class T> T get(const string_view &key, const T &def = T{}) const;
+	template<class T> T get(const path &, const T &def = T{}) const;
 	string_view get(const string_view &key, const string_view &def = {}) const;
+	string_view get(const path &, const string_view &def = {}) const;
 
 	// returns value or throws not_found
-	template<class T> T at(const string_view &key) const;
-	string_view at(const string_view &key) const;
+	template<class T = string_view> T at(const string_view &key) const;
+	template<class T = string_view> T at(const path &) const;
 
 	// returns value or empty
 	string_view operator[](const string_view &key) const;
+	string_view operator[](const path &) const;
 
-	// rewrite-copy into string
+	// constructor. Note that you are able to construct from invalid JSON. The
+	// parser is not invoked until other operations and that's when it errors.
+	using string_view::string_view;
+
+	// rewrite into allocated string copy
 	explicit operator std::string() const;
 
-	// constructor
-	using string_view::string_view;
+	// rewrite onto streams or buffers etc
+	friend std::ostream &operator<<(std::ostream &, const object &);
+	friend object serialize(const object &, char *&buf, char *const &stop);
+	friend size_t print(char *const &buf, const size_t &max, const object &);
 };
 
 struct object::member
@@ -118,6 +128,7 @@ struct object::member
 	friend bool operator<(const member &, const member &);
 	friend bool operator>(const member &, const member &);
 
+	// writes a single member onto stream
 	friend std::ostream &operator<<(std::ostream &, const object::member &);
 };
 
@@ -155,35 +166,30 @@ struct object::const_iterator
 	friend bool operator>(const const_iterator &, const const_iterator &);
 };
 
-bool has(object, const path &path);
-bool has(const object &, const string_view &key);
-
-template<class T = string_view> T get(object, const path &, const T &def = T{});
-template<class T = string_view> T get(const object &, const string_view &key, const T &def = T{});
-
-template<class T = string_view> T at(object, const path &);
-template<class T = string_view> T at(const object &, const string_view &key);
-
-object serialize(const object &, char *&buf, char *const &stop);
-size_t print(char *const &buf, const size_t &max, const object &);
-std::ostream &operator<<(std::ostream &, const object &);
-
 } // namespace json
 } // namespace ircd
 
-template<class T>
-T
-ircd::json::at(const object &object,
-               const string_view &key)
+inline ircd::string_view
+ircd::json::object::operator[](const path &path)
+const
 {
-	return object.at<T>(key);
+	return get(path);
+}
+
+inline ircd::string_view
+ircd::json::object::operator[](const string_view &key)
+const
+{
+	const auto it(find(key));
+	return it != end()? it->second : string_view{};
 }
 
 template<class T>
 T
-ircd::json::at(object object,
-               const path &path)
+ircd::json::object::at(const path &path)
+const try
 {
+	object object(*this);
 	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
 	(const string_view &key)
 	{
@@ -197,22 +203,54 @@ ircd::json::at(object object,
 
 	return lex_cast<T>(object);
 }
-
-template<class T>
-T
-ircd::json::get(const object &object,
-                const string_view &key,
-                const T &def)
+catch(const bad_lex_cast &e)
 {
-	return object.get<T>(key, def);
+	throw type_error("'%s' must cast to type %s",
+	                 string(path),
+	                 typeid(T).name());
 }
 
 template<class T>
 T
-ircd::json::get(object object,
-                const path &path,
-                const T &def)
+ircd::json::object::at(const string_view &key)
+const try
 {
+	const auto it(find(key));
+	if(it == end())
+		throw not_found("'%s'", key);
+
+	return lex_cast<T>(it->second);
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("'%s' must cast to type %s",
+	                 key,
+	                 typeid(T).name());
+}
+
+inline ircd::string_view
+ircd::json::object::get(const path &path,
+                        const string_view &def)
+const
+{
+	return get<string_view>(path, def);
+}
+
+inline ircd::string_view
+ircd::json::object::get(const string_view &key,
+                        const string_view &def)
+const
+{
+	return get<string_view>(key, def);
+}
+
+template<class T>
+T
+ircd::json::object::get(const path &path,
+                        const T &def)
+const try
+{
+	object object(*this);
 	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
 	(const string_view &key)
 	{
@@ -226,18 +264,37 @@ ircd::json::get(object object,
 
 	return it == std::end(path)? lex_cast<T>(object) : def;
 }
-
-inline bool
-ircd::json::has(const object &object,
-                const string_view &key)
+catch(const bad_lex_cast &e)
 {
-	return object.has(key);
+	return def;
+}
+
+template<class T>
+T
+ircd::json::object::get(const string_view &key,
+                        const T &def)
+const try
+{
+	const string_view sv(operator[](key));
+	return !sv.empty()? lex_cast<T>(sv) : def;
+}
+catch(const bad_lex_cast &e)
+{
+	return def;
+}
+
+inline size_t
+ircd::json::object::count()
+const
+{
+	return std::distance(begin(), end());
 }
 
 inline bool
-ircd::json::has(object object,
-                const path &path)
+ircd::json::object::has(const path &path)
+const
 {
+	object object(*this);
 	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
 	(const string_view &key)
 	{
@@ -253,62 +310,11 @@ ircd::json::has(object object,
 	return it == std::end(path) && path.size();
 }
 
-inline ircd::string_view
-ircd::json::object::operator[](const string_view &key)
+inline bool
+ircd::json::object::has(const string_view &key)
 const
 {
-	const auto it(find(key));
-	return it != end()? it->second : string_view{};
-}
-
-template<class T>
-T
-ircd::json::object::at(const string_view &key)
-const try
-{
-	return lex_cast<T>(at(key));
-}
-catch(const bad_lex_cast &e)
-{
-	throw type_error("'%s' must cast to type %s",
-	                 key,
-	                 typeid(T).name());
-}
-
-inline ircd::string_view
-ircd::json::object::at(const string_view &key)
-const
-{
-	const auto it(find(key));
-	if(it == end())
-		throw not_found("'%s'", key);
-
-	return it->second;
-}
-
-template<class T>
-T
-ircd::json::object::get(const string_view &key,
-                        const T &def)
-const try
-{
-	const string_view sv(operator[](key));
-	return !sv.empty()? lex_cast<T>(sv) : def;
-}
-catch(const bad_lex_cast &e)
-{
-	throw type_error("'%s' must cast to type %s",
-	                 key,
-	                 typeid(T).name());
-}
-
-inline ircd::string_view
-ircd::json::object::get(const string_view &key,
-                        const string_view &def)
-const
-{
-	const string_view sv(operator[](key));
-	return !sv.empty()? sv : def;
+	return find(key) != end();
 }
 
 inline ircd::json::object::const_iterator
@@ -320,20 +326,6 @@ const
 	{
 		return member.first == key;
 	});
-}
-
-inline size_t
-ircd::json::object::count()
-const
-{
-	return std::distance(begin(), end());
-}
-
-inline bool
-ircd::json::object::has(const string_view &key)
-const
-{
-	return find(key) != end();
 }
 
 inline bool
