@@ -52,7 +52,8 @@ let client = mc;
 mc.opts =
 {
 	// Base URL to use if there is no real window location (i.e browsing from file://)
-	base_url: new String(window.location.origin),
+	//base_url: "https://matrix.org:8448",
+	base_url: String(window.location.origin),
 
 	// The root element for the application in the DOM.
 	root: "#charybdis",

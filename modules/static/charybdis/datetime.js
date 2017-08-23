@@ -107,7 +107,7 @@ mc.date.describe.elapsed = (ms, short = false) =>
 	for(let key in order)
 	{
 		let val = parseInt(order[key]);
-		if(val <= 0)
+		if(val <= 0.0001)
 			continue;
 
 		let unit = short? key[0] : " " + key;

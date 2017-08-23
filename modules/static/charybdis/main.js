@@ -256,7 +256,7 @@ mc.main.on_logout = function()
  */
 mc.main.menu =
 {
-	"":
+	"MENU":
 	{
 		icon: "fa-bars",
 		target: "#charybdis_menu",

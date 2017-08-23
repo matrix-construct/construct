@@ -174,6 +174,9 @@ mc.auth["m.register.user"] = async function(opts = {})
 
 mc.auth.logout = async function(opts = {})
 {
+	if(!mc.instance.authentic)
+		return false;
+
 	let request = mc.m.logout.post(opts);
 	let data = await request.response;
 	delete mc.session.access_token;

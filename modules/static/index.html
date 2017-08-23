@@ -38,7 +38,7 @@ lang="en"
 	-->
 
 	<title>
-		Charybdis 5 - Internet Relay Collaboration 
+		Charybdis 5 - Internet Relay Collaboration
 	</title>
 </head>
 
@@ -48,10 +48,10 @@ ng-app="ircd"
 ng-class="{ loaded: true }"
 >
 
-<!-- --------------------------------------------------------------------------
+<!----------------------------------------------------------------------------
 
 	Charybdis 5 Client
-		
+
 	The document is specified as a set of Angular templates in <script> tags.
 	These templates are composed into the document by including other templates
 	in a tree. The root of the tree is the #charybdis <div> at the end of the
@@ -75,7 +75,7 @@ ng-class="{ loaded: true }"
 	ng-foo="foo"
 	>
 
---------------------------------------------------------------------------- -->
+----------------------------------------------------------------------------->
 
 	
 <script
@@ -115,11 +115,11 @@ type="text/ng-template"
 </script>
 
 
-<!-- --------------------------------------------------------------------------
+<!----------------------------------------------------------------------------
 
 Rooms
 
---------------------------------------------------------------------------- -->
+----------------------------------------------------------------------------->
 
 
 <script
@@ -1834,7 +1834,7 @@ type="text/ng-template"
 	ng-click="room.toggle_explore($event);"
 	>
 		<i
-		class="fa icon arrow"
+		class="explore fa icon arrow"
 		aria-hidden="true"
 		ng-class="
 		{
@@ -1955,7 +1955,18 @@ type="text/ng-template"
 	{
 		me: event.sender == mc.session.user_id,
 	}"
-	>{{ mc.m.sid(event.sender) }}</span>
+	>
+		<span
+		ng-if="mc.users[event.sender].displayname"
+		>
+			{{ mc.users[event.sender].displayname }}
+		</span>
+		<span
+		ng-if="!mc.users[event.sender].displayname"
+		>
+			{{ mc.m.sid(event.sender) }}
+		</span>
+	</span>
 
 	&nbsp;
 

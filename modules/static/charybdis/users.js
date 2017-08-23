@@ -97,6 +97,12 @@ mc.users.learn = function(event)
 		if(!user.last_active_ago || user.last_active_ago > elapsed)
 			user.last_active_ago = elapsed;
 	}
+
+	if(event.sender)
+		if(event.type == "m.room.member")
+			if(event.membership == "join")
+				if(maybe(() => event.content.displayname))
+					this.get(event.sender).displayname = event.content.displayname;
 };
 
 mc.users.add = function(mxid)

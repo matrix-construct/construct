@@ -49,7 +49,7 @@ const debug =
 	 * @param {number} r - The current frame's recursion depth.
 	 * @returns {string} A string representation of the object.
 	 */
-	stringify(obj, r_max = 10, enumerator = Object.oeach, r = 1)
+	stringify(obj, r_max = 10, enumerator = Object.aeach, r = 1)
 	{
 		let tabular = (r, ret = "", i = 0) =>
 		{
@@ -111,19 +111,19 @@ const debug =
 		return ret + "\n" + tabular(r - 1) + "}";
 	},
 
-	log(func, obj, r_max = 1, enumerator = Object.oeach)
+	log(func, obj, r_max = 1, enumerator = Object.aeach)
 	{
 		func(this.stringify(obj, r_max, enumerator));
 	},
 
 	/** Stringify to console.log() */
-	object(obj, r_max = 2, enumerator = Object.oeach)
+	object(obj, r_max = 2, enumerator = Object.aeach)
 	{
 		this.log(console.log, obj, r_max, enumerator);
 	},
 
 	/** Stringify to console.error() */
-	error(obj, r_max = 2, enumerator = Object.oeach)
+	error(obj, r_max = 2, enumerator = Object.aeach)
 	{
 		this.log(console.error, obj, r_max, enumerator);
 	},

@@ -164,7 +164,11 @@ mc.io.request.constructor = function(ctx = {})
 	// This should be done here for now
 	this.xhr.open(this.ctx.method, this.ctx.url);
 
-	console.log(this.ctx.method + " " + this.ctx.resource + " " + this.ctx.url + " " + maybe(() => this.ctx.content.length) + " bytes");
+	console.log(this.ctx.method
+	           + " " + this.ctx.resource
+	           + " " + this.ctx.url
+	           + " sending " + maybe(() => this.ctx.content.length) + " bytes"
+	           );
 }
 
 /** Construct XHR related for the request.
@@ -249,7 +253,13 @@ mc.io.request.destructor = function()
 	let type = xhr.responseType;
 	let bytes_up = this.uploaded();
 	let bytes_down = this.loaded();
-	console.log(xhr.status + " " + ctx.method + " " + ctx.resource + " sent:" + bytes_up + " recv:" + bytes_down + " " + type);
+	console.log(xhr.status
+	           + " " + ctx.method
+	           + " " + ctx.resource
+	           + " sent:" + bytes_up
+	           + " recv:" + bytes_down
+	           + " " + type
+	           );
 };
 
 /**
@@ -417,6 +427,7 @@ mc.io.request.on.readystatechange[XMLHttpRequest.OPENED] = function(event)
 
 mc.io.request.on.readystatechange[XMLHttpRequest.HEADERS_RECEIVED] = function(event)
 {
+	//console.log("" + xhr.getAllResponseHeaders());
 };
 
 mc.io.request.on.readystatechange[XMLHttpRequest.LOADING] = function(event)
@@ -427,7 +438,8 @@ mc.io.request.on.readystatechange[XMLHttpRequest.DONE] = function(event)
 {
 	mc.io.request.destructor.call(this);
 
-	switch(this.xhr.status / 100)
+	let code = parseInt(this.xhr.status);
+	switch(Math.floor(code / 100))
 	{
 		case 2:   // 2xx
 			return mc.io.request.success.call(this, event);
@@ -457,6 +469,7 @@ mc.io.request.on.progress = function(event)
 		mc.io.stats.sent.msgs++;
 	else
 		mc.io.stats.recv.msgs++;
+
 }
 
 mc.io.request.on.load = function(event)
