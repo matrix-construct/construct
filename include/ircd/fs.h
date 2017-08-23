@@ -94,5 +94,7 @@ std::vector<std::string> ls_recursive(const std::string &path);
 std::string cwd();
 void chdir(const std::string &path);
 
+std::string read(const std::string &name);
+
 } // namespace fs
 } // namespace ircd

@@ -60,6 +60,15 @@ std::array<ent, num_of<index>()> paths
 } // namespace fs
 } // namespace ircd
 
+std::string
+ircd::fs::read(const std::string &path)
+{
+	std::ifstream file{path};
+	std::noskipws(file);
+	std::istream_iterator<char> b{file};
+	std::istream_iterator<char> e{};
+	return std::string{b, e};
+}
 
 void
 ircd::fs::chdir(const std::string &path)
