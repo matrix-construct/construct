@@ -252,7 +252,7 @@ try
 			const auto args(tokens_after(line, " ", 0));
 			const params token{args, " ", {"host", "port"}};
 			const std::string host{token.at(0, "127.0.0.1"s)};
-			const auto port{token.at<uint16_t>(1, 6667)};
+			const auto port{token.at<uint16_t>(1, 8448)};
 			moi = new m::session{{host, port}};
 			break;
 		}
@@ -298,14 +298,13 @@ try
 			}
 
 			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"username", "pass"}};
+			const params token{args, " ", {"username", "password"}};
 
 			m::request request
 			{
-				"POST", "_matrix/client/r0/register", {},
+				"POST", "_matrix/client/r0/register?kind=user", {},
 				{
 					{ "username",  token.at(0) },
-					{ "pass",      token.at(1) },
 					{ "password",  token.at(1) },
 					{
 						"auth",
@@ -332,7 +331,7 @@ try
 			}
 
 			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"user", "pass"}};
+			const params token{args, " ", {"username", "password"}};
 
 			m::request request
 			{

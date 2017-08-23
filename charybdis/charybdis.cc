@@ -84,7 +84,6 @@ int main(int argc, char *const *argv)
 try
 {
 	umask(077);       // better safe than sorry --SRB
-
 	parseargs(&argc, &argv, opts);
 	if(!startup_checks())
 		return 1;
@@ -95,9 +94,24 @@ try
 		return 0;
 	}
 
-	const std::string confpath(configfile?: fs::get(fs::IRCD_CONF));
+	// Determine the configuration file from either the user's command line
+	// argument or fall back to the default.
+	const std::string confpath
+	{
+		configfile?: fs::get(fs::IRCD_CONF)
+	};
+
+	// Associates libircd with our io_service and posts the initial routines
+	// to that io_service. Execution of IRCd will then occur during ios::run()
 	ircd::init(*ios, confpath);
 
+	// libircd does no signal handling (or at least none that you ever have to
+	// care about); reaction to all signals happens out here instead. Handling
+	// is done properly through the io_service which registers the handler for
+	// the platform and then safely posts the received signal to the io_service
+	// event loop. This means we lose the true instant hardware-interrupt gratitude
+	// of signals but with the benefit of unconditional safety and cross-
+	// platformness with windows etc.
 	sigs.add(SIGHUP);
 	sigs.add(SIGINT);
 	sigs.add(SIGTSTP);
@@ -105,18 +119,26 @@ try
 	sigs.add(SIGTERM);
 	sigs.add(SIGUSR1);
 	sigs.add(SIGUSR2);
-	ircd::at_main_exit([]
-	{
-		// Entered when IRCd's main context has finished. ios.run() won't
-		// return because our signal handler out here is still using it.
-		sigs.cancel();
-	});
 	sigs.async_wait(sigfd_handler);
 
+	// Because we registered signal handlers with the io_service, ios->run()
+	// is now shared between those handlers and libircd. This means the run()
+	// won't return even if ircd::stop() is called. We use the callback to then
+	// cancel the handlers allowing run() to return and the program to exit.
+	ircd::at_main_exit([]
+	{
+		// Entered when IRCd's main context has finished.
+		sigs.cancel();
+	});
+
+	// If the user wants to immediately drop to a command line without having to
+	// send a ctrl-c for it, that is provided here.
 	if(cmdline)
 		console_spawn();
 
-	ios->run();  // Blocks until a clean exit or an exception comes out of it.
+	// Execution.
+	// Blocks until a clean exit from a stop() or an exception comes out of it.
+	ios->run();
 }
 catch(const ircd::user_error &e)
 {
@@ -156,6 +178,7 @@ void print_version()
 	#endif
 
 	printf("VERSION :boost %d\n", BOOST_VERSION);
+	printf("VERSION :RocksDB %s\n", ircd::db::version);
 }
 
 bool startup_checks()
