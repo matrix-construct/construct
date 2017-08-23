@@ -55,3 +55,4 @@ enum type type(const string_view &, std::nothrow_t);
 #include "json/doc.h"
 #include "json/val.h"
 #include "json/obj.h"
+#include "json/map.h"
