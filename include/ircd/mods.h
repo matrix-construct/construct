@@ -82,6 +82,7 @@ class sym_ptr
 	template<class T> const T *get() const;
 	template<class T> const T *operator->() const;
 	template<class T> const T &operator*() const;
+	template<class T, class... args> auto operator()(args&&... a) const;
 
 	template<class T> T *get();
 	template<class T> T *operator->();
@@ -95,6 +96,12 @@ template<class T>
 struct import
 :sym_ptr
 {
+	template<class... args>
+	auto operator()(args&&... a) const
+	{
+		return sym_ptr::operator()<T>(std::forward<args>(a)...);
+	}
+
 	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
 	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
 	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
@@ -185,6 +192,15 @@ T *
 ircd::mods::sym_ptr::get()
 {
 	return reinterpret_cast<T *>(ptr);
+}
+
+template<class T,
+         class... args>
+auto
+ircd::mods::sym_ptr::operator()(args&&... a)
+const
+{
+	return (*get<T>())(std::forward<args>(a)...);
 }
 
 template<class T>
