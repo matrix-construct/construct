@@ -68,7 +68,7 @@ struct resource
 };
 
 struct resource::request
-:json::doc
+:json::object
 {
 	const http::request::head &head;
 	http::request::content &content;
@@ -80,9 +80,9 @@ struct resource::request
 struct resource::response
 {
 	response(client &, const string_view &str, const string_view &ct = "text/plain; charset=utf8", const http::code & = http::OK);
-	response(client &, const json::doc &doc = "{}", const http::code & = http::OK);
-	response(client &, const json::obj &obj, const http::code & = http::OK);
-	response(client &, const http::code &, const json::obj &obj);
+	response(client &, const json::object & = "{}", const http::code & = http::OK);
+	response(client &, const json::index &, const http::code & = http::OK);
+	response(client &, const http::code &, const json::index &);
 	response() = default;
 };
 
