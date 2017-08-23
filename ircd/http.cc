@@ -394,7 +394,7 @@ ircd::http::response::response(const code &code,
                                const write_closure &closure,
                                const std::initializer_list<line::header> &headers)
 {
-	char status_line[64]; const auto status_line_len
+	char status_line[128]; const auto status_line_len
 	{
 		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
 		         uint(code),
@@ -412,7 +412,7 @@ ircd::http::response::response(const code &code,
 
 	const time_t ltime(time(nullptr));
 	struct tm *const tm(localtime(&ltime));
-	char date_line[64]; const auto date_line_len
+	char date_line[128]; const auto date_line_len
 	{
 		code < 400 || code >= 500?
 		strftime(date_line, sizeof(date_line), "Date: %a, %d %b %Y %T %z\r\n", tm):
@@ -422,7 +422,7 @@ ircd::http::response::response(const code &code,
 	char cache_line[64]; const auto cache_line_len
 	{
 		//TODO: real cache control subsystem
-		code == OK || (code >= 403 && code <= 405) || (code >= 300 && code < 400)?
+		(code >= 200 && code < 300) || (code >= 403 && code <= 405) || (code >= 300 && code < 400)?
 		snprintf(cache_line, sizeof(cache_line), "Cache-Control: %s\r\n",
 		         "no-cache"):
 		0
@@ -455,8 +455,9 @@ ircd::http::response::response(const code &code,
 		{ status_line,      size_t(status_line_len)     },
 		{ server_line,      size_t(server_line_len)     },
 		{ date_line,        size_t(date_line_len)       },
-		{ content_len,      size_t(content_len_len)     },
+		{ cache_line,       size_t(cache_line_len)      },
 		{ user_headers,     size_t(user_headers_len)    },
+		{ content_len,      size_t(content_len_len)     },
 		{ "\r\n",           2                           },
 		{ content.data(),   content.size()              },
 	};
