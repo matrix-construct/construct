@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Charybdis Development Team
  * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "socket.h"
-
 namespace ircd {
 
 struct listener
@@ -33,7 +31,7 @@ struct listener
 	std::unique_ptr<struct acceptor> acceptor;
 
   public:
-	listener(const json::doc &options);
+	listener(const json::object &options);
 	~listener() noexcept;
 };
 

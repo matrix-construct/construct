@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Charybdis Development Team
  * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
@@ -19,7 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/listen.h>
+#include <ircd/socket.h>
 
 namespace ircd {
 
@@ -30,22 +30,31 @@ const size_t DEFAULT_STACK_SIZE
 
 struct listener::acceptor
 {
+	using error_code = boost::system::error_code;
+
 	static log::log log;
 
 	std::string name;
 	size_t backlog;
-
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
-	ctx::context context;
 
 	explicit operator std::string() const;
+	void configure(const json::object &opts);
 
-	bool accept();
-	void main();
+	// Handshake stack
+	bool handshake_error(const error_code &ec);
+	void handshake(const error_code &ec, std::shared_ptr<socket>) noexcept;
 
-	acceptor(const json::doc &opts);
+	// Acceptance stack
+	bool accept_error(const error_code &ec);
+	void accept(const error_code &ec, std::shared_ptr<socket>) noexcept;
+
+	// Accept next
+	void next();
+
+	acceptor(const json::object &opts);
 	~acceptor() noexcept;
 };
 
@@ -56,7 +65,7 @@ struct listener::acceptor
 // ircd::listener
 //
 
-ircd::listener::listener(const json::doc &opts)
+ircd::listener::listener(const json::object &opts)
 :acceptor{std::make_unique<struct acceptor>(opts)}
 {
 }
@@ -77,7 +86,7 @@ ircd::listener::acceptor::log
 	"listener"
 };
 
-ircd::listener::acceptor::acceptor(const json::doc &opts)
+ircd::listener::acceptor::acceptor(const json::object &opts)
 try
 :name
 {
@@ -100,23 +109,163 @@ try
 {
 	*ircd::ios
 }
-,context
 {
-	"listener",
-	opts.get<size_t>("stack_size", DEFAULT_STACK_SIZE),
-	std::bind(&acceptor::main, this),
-	context.POST // defer until ctor body binds the socket
+	static const ip::tcp::acceptor::reuse_address reuse_address{true};
+
+	configure(opts);
+
+	log.debug("%s configured listener SSL",
+	          std::string(*this));
+
+	a.open(ep.protocol());
+	a.set_option(reuse_address);
+	log.debug("%s opened listener socket",
+	          std::string(*this));
+
+	a.bind(ep);
+	log.debug("%s bound listener socket",
+	          std::string(*this));
+
+	a.listen(backlog);
+	log.debug("%s listening (backlog: %lu)",
+	          std::string(*this),
+	          backlog);
+
+	next();
 }
+catch(const boost::system::system_error &e)
 {
-	log.debug("%s attempting to open listening socket", std::string(*this));
+	throw error("listener: %s", e.what());
+}
+
+ircd::listener::acceptor::~acceptor()
+noexcept
+{
+	a.cancel();
+}
+
+void
+ircd::listener::acceptor::next()
+try
+{
+	auto sock(std::make_shared<ircd::socket>(ssl));
+	log.debug("%s: listening with next socket(%p)",
+	          std::string(*this),
+	          sock.get());
+
+	// The context blocks here until the next client is connected.
+	auto accept(std::bind(&acceptor::accept, this, ph::_1, sock));
+	a.async_accept(sock->sd, accept);
+}
+catch(const std::exception &e)
+{
+	log.critical("%s: %s",
+	             std::string(*this),
+	             e.what());
+
+	if(ircd::debugmode)
+		throw;
+}
+
+void
+ircd::listener::acceptor::accept(const error_code &ec,
+                                 const std::shared_ptr<socket> sock)
+noexcept try
+{
+	if(accept_error(ec))
+		return;
+
+	log.debug("%s: accepted %s",
+	          std::string(*this),
+	          string(sock->remote()));
+
+	static const auto handshake_type(socket::handshake_type::server);
+	auto handshake(std::bind(&acceptor::handshake, this, ph::_1, sock));
+	sock->ssl.async_handshake(handshake_type, handshake);
+	next();
+}
+catch(const std::exception &e)
+{
+	log.error("%s: in accept(): socket(%p): %s",
+	          std::string(*this),
+	          sock.get(),
+	          e.what());
+	next();
+}
+
+bool
+ircd::listener::acceptor::accept_error(const error_code &ec)
+{
+	switch(ec.value())
+	{
+		using namespace boost::system::errc;
+
+		case success:
+			return false;
+
+		case operation_canceled:
+			return true;
+
+		default:
+			throw boost::system::system_error(ec);
+	}
+}
+
+void
+ircd::listener::acceptor::handshake(const error_code &ec,
+                                    const std::shared_ptr<socket> sock)
+noexcept try
+{
+	if(handshake_error(ec))
+		return;
+
+	log.debug("%s SSL handshook %s",
+	          std::string(*this),
+	          string(sock->remote()));
+
+	add_client(sock);
+}
+catch(const std::exception &e)
+{
+	log.error("%s: in handshake(): socket(%p)[%s]: %s",
+	          std::string(*this),
+	          sock.get(),
+	          string(sock->remote()),
+	          e.what());
+}
+
+bool
+ircd::listener::acceptor::handshake_error(const error_code &ec)
+{
+	switch(ec.value())
+	{
+		using namespace boost::system::errc;
+
+		case success:
+			return false;
+
+		case operation_canceled:
+			return true;
+
+		default:
+			throw boost::system::system_error(ec);
+	}
+}
+
+void
+ircd::listener::acceptor::configure(const json::object &opts)
+{
+	log.debug("%s preparing listener socket configuration...",
+	          std::string(*this));
 
 	ssl.set_options
 	(
-		ssl.default_workarounds |
-		ssl.no_sslv2
-		//ssl.single_dh_use
+		ssl.default_workarounds
+		// | ssl.no_sslv2
+		// | ssl.single_dh_use
 	);
 
+	//TODO: XXX
 	ssl.set_password_callback([this]
 	(const auto &size, const auto &purpose)
 	{
@@ -125,12 +274,9 @@ try
 		          purpose,
 		          size);
 
+		//XXX: TODO
 		return "foobar";
 	});
-
-	a.open(ep.protocol());
-	a.set_option(ip::tcp::acceptor::reuse_address(true));
-	a.bind(ep);
 
 	if(opts.has("ssl_certificate_chain_file"))
 	{
@@ -183,77 +329,6 @@ try
 		          std::string(*this),
 		          filename);
 	}
-
-	a.listen(backlog);
-
-	// Allow main() to run and print its log message
-	ctx::yield();
-}
-catch(const boost::system::system_error &e)
-{
-	throw error("listener: %s", e.what());
-}
-
-ircd::listener::acceptor::~acceptor()
-noexcept
-{
-	a.cancel();
-}
-
-void
-ircd::listener::acceptor::main()
-try
-{
-	log.info("%s ready", std::string(*this));
-
-	while(accept());
-
-	log.info("%s closing", std::string(*this));
-}
-catch(const ircd::ctx::interrupted &e)
-{
-	log.warning("%s interrupted", std::string(*this));
-}
-catch(const std::exception &e)
-{
-	log.critical("%s %s", std::string(*this), e.what());
-	if(ircd::debugmode)
-		throw;
-}
-
-bool
-ircd::listener::acceptor::accept()
-try
-{
-	auto sock(std::make_shared<ircd::socket>(ssl));
-	//log.debug("%s listening with socket(%p)", std::string(*this), sock.get());
-
-	a.async_accept(sock->sd, yield(continuation()));
-	//log.debug("%s accepted %s", std::string(*this), string(sock->remote()));
-
-	sock->ssl.async_handshake(socket::handshake_type::server, yield(continuation()));
-	//log.debug("%s SSL shooks hands with %s", std::string(*this), string(sock->remote()));
-
-	add_client(std::move(sock));
-	return true;
-}
-catch(const boost::system::system_error &e)
-{
-	switch(e.code().value())
-	{
-		using namespace boost::system::errc;
-
-		case success:               return true;
-		case operation_canceled:    return false;
-		default:
-			log.warning("%s: in accept(): %s", std::string(*this), e.what());
-			return true;
-	}
-}
-catch(const std::exception &e)
-{
-	log.error("%s: in accept(): %s", std::string(*this), e.what());
-	return true;
 }
 
 ircd::listener::acceptor::operator std::string()
