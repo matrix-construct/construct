@@ -29,23 +29,35 @@
 
 namespace ircd {
 
+// Default time limit for how long a client connection can be in "async mode"
+// (or idle mode) after which it is disconnected.
 const auto async_timeout
 {
 	3h
 };
 
+// Time limit for how long a connected client can be in "request mode." This
+// should never be hit unless there's an error in the handling code.
 const auto request_timeout
 {
 	300s
 };
 
+// Instance of socket::init is constructed and destructed manually to be in sync
+// with client::init. This is placed here so ircd::main() doesn't have to see
+// ircd/socket.h and do it there. It should be empty during static destruction.
+std::unique_ptr<socket::init> socket_init;
+
+// The pool of request contexts. When a client makes a request it does so by acquiring
+// a stack from this pool. The request handling and response logic can then be written
+// in a synchronous manner as if each connection had its own thread.
 ctx::pool request
 {
 	"request", 1_MiB
 };
 
-client::list client::clients
-{};
+// Container for all active clients (connections) for iteration purposes.
+client::list client::clients;
 
 bool handle_ec_timeout(client &);
 bool handle_ec_eof(client &);
@@ -55,7 +67,7 @@ bool handle_ec(client &, const error_code &);
 void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
 void async_recv_next(std::shared_ptr<client>);
 
-void disconnect(client &, const socket::dc & = socket::dc::FIN);
+void disconnect(client &, const socket::dc & = socket::dc::RST);
 void disconnect_all();
 
 template<class... args> std::shared_ptr<client> make_client(args&&...);
@@ -64,6 +76,8 @@ template<class... args> std::shared_ptr<client> make_client(args&&...);
 
 ircd::client::init::init()
 {
+	assert(!socket_init);
+	socket_init = std::make_unique<socket::init>();
 	request.add(1);
 }
 
@@ -72,6 +86,7 @@ noexcept
 {
 	request.interrupt();
 	disconnect_all();
+	socket_init.reset(nullptr);
 }
 
 ircd::string_view
@@ -236,6 +251,7 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
+	using boost::asio::error::eof;
 	using namespace boost::system::errc;
 
 	switch(e.code().value())
@@ -244,10 +260,9 @@ catch(const boost::system::system_error &e)
 			assert(0);
 			return true;
 
-		case operation_canceled:
-			return false;
-
+		case eof:
 		case not_connected:
+		case operation_canceled:
 			return false;
 
 		default:
@@ -293,7 +308,7 @@ try
 
 	return true;
 }
-catch(const std::exception &e)
+catch(const ircd::exception &e)
 {
 	log::error("client[%s] [500 Internal Error]: %s",
 	           string(remote_addr(*this)),
@@ -350,7 +365,7 @@ ircd::handle_request(client &client,
                      parse::capstan &pc,
                      const http::request::head &head)
 {
-	log::debug("client[%s] HTTP %s `%s' content-length: %zu",
+	log::debug("client[%s] HTTP %s `%s' (content-length: %zu)",
 	           string(remote_addr(client)),
 	           head.method,
 	           head.path,

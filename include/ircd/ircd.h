@@ -33,104 +33,42 @@
 
 namespace ircd {
 
-extern bool debugmode;                           // Set by command line to indicate debug behavior
-extern bool main_exited;                         // Set when main context has finished.
+extern bool debugmode;            // Toggled by command line to indicate debug behavior
+extern const bool &main_exited;   // Set when main context has finished.
 
-// Set callback for when IRCd's main context has completed.
+// The signature of the callback indicating when IRCd's main context has completed.
 using main_exit_cb = std::function<void ()>;
-void at_main_exit(main_exit_cb);
 
 //
 // Sets up the IRCd, handlers (main context), and then returns without blocking.
 // Pass your io_service instance, it will share it with the rest of your program.
 // An exception will be thrown on error.
 //
+// This function will setup the main program loop of libircd. The execution will
+// occur when your io_service.run() or poll() is further invoked. For an explanation
+// of the callback, see the documentation for ircd::stop().
+//
 void init(boost::asio::io_service &ios, const std::string &newconf_path, main_exit_cb = nullptr);
 
 //
-// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this function will return
-// immediately. main_exit_cb will be called when IRCd has no more work for the ios (main_exit_cb
-// will be the last operation from IRCd posted to the ios).
+// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this
+// function will return immediately. main_exit_cb will be called when IRCd
+// has no more work for the ios (main_exit_cb will be the last operation from
+// IRCd posted to the ios).
+//
+// This function is the proper way to shutdown libircd after an init(), and while
+// your io_service.run() is invoked without stopping your io_service shared by
+// other activities unrelated to libircd. If your io_service has no other activities
+// the run() will then return.
+//
+// This is useful when your other activities prevent run() from returning.
 //
 void stop();
 
+//
+// Replaces the callback passed to init() which will indicate libircd completion.
+// This can be called anytime between init() and stop() to make that replacement.
+//
+void at_main_exit(main_exit_cb);
+
 } // namespace ircd
-
-
-
-
-/*
-
-#ifdef __cplusplus
-namespace ircd {
-
-
-struct SetOptions
-{
-	int maxclients;		// max clients allowed
-	int autoconn;		// autoconn enabled for all servers?
-
-	int floodcount;		// Number of messages in 1 second
-	int ident_timeout;	// timeout for identd lookups
-
-	int spam_num;
-	int spam_time;
-
-	char operstring[REALLEN];
-	char adminstring[REALLEN];
-};
-
-struct Counter
-{
-	int oper;		// Opers
-	int total;		// total clients
-	int invisi;		// invisible clients
-	int max_loc;	// MAX local clients
-	int max_tot;	// MAX global clients
-	unsigned long totalrestartcount;	// Total client count ever
-};
-
-extern struct SetOptions GlobalSetOptions;
-
-extern volatile sig_atomic_t dorehash;
-extern volatile sig_atomic_t dorehashbans;
-extern volatile sig_atomic_t doremotd;
-extern bool kline_queued;
-extern bool server_state_foreground;
-extern bool opers_see_all_users; // sno_farconnect.so loaded, operspy without accountability, etc
-
-extern rb_dlink_list global_client_list;
-extern client::client *local[];
-extern struct Counter Count;
-extern int default_server_capabs;
-
-extern int splitmode;
-extern int splitchecking;
-extern int split_users;
-extern int split_servers;
-extern int eob_count;
-
-extern rb_dlink_list unknown_list;
-extern rb_dlink_list lclient_list;
-extern rb_dlink_list serv_list;
-extern rb_dlink_list global_serv_list;
-extern rb_dlink_list local_oper_list;
-extern rb_dlink_list oper_list;
-extern rb_dlink_list dead_list;
-
-extern int testing_conf;
-
-extern struct ev_entry *check_splitmode_ev;
-
-extern bool ircd_ssl_ok;
-extern bool ircd_zlib_ok;
-extern int maxconnections;
-
-void restart(const char *) __attribute__((noreturn));
-void ircd_shutdown() __attribute__((noreturn));
-void server_reboot(void) __attribute__((noreturn));
-
-}      // namespace ircd
-#endif // __cplusplus
-
-*/

@@ -23,10 +23,7 @@
  *  USA
  */
 
-#include <ircd/socket.h>
-#include <ircd/listen.h>
-#include <ircd/ctx/continuation.h>
-#include <ircd/js/js.h>
+#include <boost/asio/io_service.hpp>
 
 namespace ircd
 {
@@ -35,7 +32,8 @@ namespace ircd
 	boost::asio::io_service *ios;                // user's io service
 
 	bool main_finish;                            // Set by stop() to request main context exit
-	bool main_exited;                            // Set when IRCd is finished
+	bool _main_exited;                           // Set when IRCd is finished
+	const bool &main_exited(_main_exited);       // Read-only observer linkage for _main_exited.
 	main_exit_cb main_exit_func;                 // Called when main context exits
 	ctx::ctx *main_context;                      // Reference to main context
 
@@ -51,6 +49,8 @@ ircd::init(boost::asio::io_service &io_service,
            main_exit_cb main_exit_func)
 {
 	ircd::ios = &io_service;
+	main_finish = false;
+	_main_exited = false;
 	init_system();
 
 	// The log is available, but it is console-only until conf opens files.
@@ -64,10 +64,9 @@ ircd::init(boost::asio::io_service &io_service,
 	}
 
 	// The master of ceremonies runs the show after this function returns and ios.run().
-	context mc("main", 8_MiB, ircd::main);       //TODO: optimize stack size
-	main_context = mc.detach();
+	main_context = context("main", 8_MiB, ircd::main).detach();       //TODO: optimize stack size
 
-	log::debug("IRCd initialization completed.");
+	log::debug("IRCd pre-main initialization completed.");
 }
 
 void
@@ -80,8 +79,9 @@ ircd::stop()
 }
 
 //
-// Main context; Main program loop.
-// This function is spawned by init(). Do not call this function.
+// Main context; Main program loop. Do not call this function directly. This is created
+// by the user of libircd calling ircd::init(). It is shutdown by the user of libircd
+// calling ircd::stop(). It is scheduled by the user's io_service.run().
 //
 void
 ircd::main()
@@ -90,22 +90,22 @@ try
 	log::debug("IRCd entered main context.");
 	const scope main_exit(&main_exiting);   // The user is notified when this function ends
 
-	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties them
-	// to the main context. Initialization can also occur in ircd::init() if static initialization
-	// and destruction is not possible, but there is no complementary destruction up there.
+	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties their life
+	// to the main context. Initialization can also occur in ircd::init() or static initialization
+	// itself if either are more appropriate.
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
+	client::init _client_;   // Client/Socket Networking
 	js::init _js_;           // SpiderMonkey
-	socket::init _sock_;     // Networking
-	client::init _client_;
 
-//	module matrix
-//	{
-//		"matrix"
-//	};
+	module matrix
+	{
+		"matrix"
+	};
 
 	// This is the main program loop. Right now all it does is sleep until notified to
-	// break with a clean shutdown. Other subsystems may have spawned their own main loops.
+	// break with a clean shutdown. Other subsystems may spawn their own main loops, but
+	// they all must cleanly complete when this completes.
 	log::notice("IRCd ready"); do
 	{
 		ctx::wait();
@@ -138,7 +138,7 @@ noexcept try
 		ios->post(main_exit_func);
 	}
 
-	main_exited = true;
+	_main_exited = true;
 	main_context = nullptr;
 }
 catch(const std::exception &e)
