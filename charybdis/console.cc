@@ -241,6 +241,26 @@ try
 			break;
 		}
 
+		case hash("events"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			m::request request
+			{
+				"GET", "_matrix/client/r0/events"
+			};
+
+			static char buf[1024];
+			ircd::parse::buffer pb{buf};
+			const auto doc((*moi)(pb, request));
+			std::cout << doc << std::endl;
+			break;
+		}
+
 		case hash("connect"):
 		{
 			if(moi)
