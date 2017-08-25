@@ -25,6 +25,15 @@
 namespace ircd {
 namespace json {
 
+// ircd::json::array is the rank1 analog to ircd::json::object. It accepts
+// queries with numerical indexing. The same parsing approach is used in
+// ircd::json::object and that is important to note here: iterating this array
+// by incrementing your own numerical index and making calls into this object
+// is NOT efficient. Simply put, do not do something like
+// `for(int x=0;x<array.count();x++) array.at(x)` as that will parse the array
+// from the beginning on every single iteration. Instead, use the provided
+// iterator object.
+//
 struct array
 :string_view
 {
