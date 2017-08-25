@@ -22,6 +22,15 @@
 #pragma once
 #define HAVE_IRCD_LIFE_GUARD_H
 
+//
+// life_guard is a convenience which takes advantage of
+// std::enable_shared_from_this<T>. The life_guard glorifies the constructor
+// of an std::shared_ptr<T> by accepting std::weak_ptr<T> and T& itself all
+// with proper semantics. Once construction is successful, the user holds it
+// for the duration of the scope ensuring T& survives context interleaving
+// without being destructed.
+//
+
 namespace ircd {
 
 // Tests if type inherits from std::enable_shared_from_this<>
