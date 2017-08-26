@@ -22,28 +22,120 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
 
+//
+// Here we represent a JSON object with a named tuple, allowing the programmer
+// to create a structure specifying all of the potentially valid members of the
+// object. Access to a specific member is O(1) just like a native `struct`
+// rather than a linear or logn lookup into a map. The size of the tuple is
+// extremely minimal: only the size of the values it stores. This is because
+// the member keys and type data are all static or dealt with at compile time.
+//
+// Create and use a tuple to efficiently extract members from a json::object.
+// The tuple will populate its own members during a single-pass iteration of
+// the JSON input. This is cheap, because no copies or allocations or searches
+// are required to take place. If the JSON does not contain a member specified
+// in the tuple, the value will be default initialized. If the JSON contains
+// a member not specified in the tuple, it is ignored. If you need to know all
+// of the members specified in the JSON dynamically, use a json::index or
+// iterate manually.
+//
 namespace ircd {
 namespace json {
 
+//
+// Non-template common base for all ircd::json::tuple templates.
+//
 struct tuple_base
 {
 	// class must be empty for EBO
+
+	struct member;
 };
 
+//
+// Non-template common base for all tuple members
+//
+struct tuple_base::member
+{
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd::json::tuple template. Create your own struct inheriting this
+// class template with the members.
+//
 template<class... T>
 struct tuple
 :tuple_base
 ,std::tuple<T...>
 {
 	using tuple_type = std::tuple<T...>;
+	using super_type = tuple<T...>;
 
-	static constexpr size_t size()
-	{
-		return std::tuple_size<tuple_type>();
-	}
+	static constexpr size_t size();
 
-	using std::tuple<T...>::tuple;
+	tuple(const json::object &);
+	tuple() = default;
 };
+
+template<class... T>
+constexpr size_t
+tuple<T...>::size()
+{
+	return std::tuple_size<tuple_type>();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// tuple member template. Specify a list of these in the tuple template to
+// form the members of the object.
+//
+template<const char *const &name,
+         class T>
+struct member
+:tuple_base::member
+{
+	using key_type = const char *;
+	using value_type = T;
+
+	static constexpr auto &key{name};
+	T value;
+
+	operator const T &() const;
+	operator T &();
+
+	member(T&& value);
+	member() = default;
+};
+
+template<const char *const &name,
+         class T>
+member<name, T>::member(T&& value)
+:value{value}
+{
+}
+
+template<const char *const &name,
+         class T>
+member<name, T>::operator
+T &()
+{
+	return value;
+}
+
+template<const char *const &name,
+         class T>
+member<name, T>::operator
+const T &()
+const
+{
+	return value;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Tools
+//
 
 template<class tuple>
 using tuple_type = typename tuple::tuple_type;
@@ -51,34 +143,75 @@ using tuple_type = typename tuple::tuple_type;
 template<class tuple>
 using tuple_size = std::tuple_size<tuple_type<tuple>>;
 
-template<size_t i,
-         class tuple>
+template<class tuple,
+         size_t i>
 using tuple_element = typename std::tuple_element<i, tuple_type<tuple>>::type;
 
+template<class tuple,
+         size_t i>
+using tuple_value_type = typename tuple_element<tuple, i>::value_type;
+
 template<class tuple>
-constexpr auto &
+auto &
 stdcast(const tuple &o)
 {
 	return static_cast<const typename tuple::tuple_type &>(o);
 }
 
 template<class tuple>
-constexpr auto &
+auto &
 stdcast(tuple &o)
 {
 	return static_cast<typename tuple::tuple_type &>(o);
 }
 
-template<class... T>
-constexpr auto
-size(const tuple<T...> &t)
+template<class tuple>
+constexpr size_t
+size()
 {
-	return t.size();
+	return tuple_size<tuple>::value;
+}
+
+template<class tuple,
+         size_t i>
+constexpr auto &
+key()
+{
+	return tuple_element<tuple, i>::key;
 }
 
 template<size_t i,
          class... T>
-constexpr auto &
+auto &
+key(const tuple<T...> &t)
+{
+	return get<i>(t).key;
+}
+
+template<class tuple,
+         size_t i>
+constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
+indexof(const char *const &name)
+{
+	return size<tuple>();
+}
+
+template<class tuple,
+         size_t i = 0>
+constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+indexof(const char *const &name)
+{
+	const auto equal
+	{
+		_constexpr_equal(key<tuple, i>(), name)
+	};
+
+	return equal? i : indexof<tuple, i + 1>(name);
+}
+
+template<size_t i,
+         class... T>
+auto &
 get(const tuple<T...> &t)
 {
 	return std::get<i>(t);
@@ -86,259 +219,269 @@ get(const tuple<T...> &t)
 
 template<size_t i,
          class... T>
-constexpr auto &
+auto &
 get(tuple<T...> &t)
 {
 	return std::get<i>(t);
 }
 
 template<size_t i,
-         class tuple>
-constexpr const char *
-reflect(const tuple &t)
+         class... T>
+auto &
+val(const tuple<T...> &t)
 {
-	return t._member_(i);
-}
+	using value_type = tuple_value_type<tuple<T...>, i>;
 
-#define IRCD_MEMBERS(_vals_...)                           \
-static constexpr const char *_member_(const size_t i)     \
-{                                                         \
-    constexpr const char *const val[]                     \
-    {                                                     \
-        _vals_                                            \
-    };                                                    \
-                                                          \
-    return val[i];                                        \
+	return static_cast<const value_type &>(get<i>(t));
 }
 
 template<size_t i,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<tuple>::value, void>::type
-for_each(const tuple &t,
-         function&& f)
-{}
-
-template<size_t i,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<tuple>::value, void>::type
-for_each(tuple &t,
-         function&& f)
-{}
-
-template<size_t i = 0,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, void>::type
-for_each(const tuple &t,
-         function&& f)
+         class... T>
+auto &
+val(tuple<T...> &t)
 {
-	using type = tuple_element<i, tuple>;
+	using value_type = tuple_value_type<tuple<T...>, i>;
 
-	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
-	for_each<i + 1>(t, std::forward<function>(f));
+	return static_cast<value_type &>(get<i>(t));
 }
 
-template<size_t i = 0,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, void>::type
-for_each(tuple &t,
-         function&& f)
+template<const char *const &name,
+         class... T>
+auto &
+val(const tuple<T...> &t)
 {
-	using type = tuple_element<i, tuple>;
-
-	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
-	for_each<i + 1>(t, std::forward<function>(f));
+	return val<indexof<tuple<T...>>(name)>(t);
 }
 
-template<class tuple,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), void>::type
-rfor_each(const tuple &t,
-          function&& f)
-{}
-
-template<class tuple,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), void>::type
-rfor_each(tuple &t,
-          function&& f)
-{}
-
-template<class tuple,
-         class function,
-         ssize_t i = tuple_size<tuple>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>(), void>::type
-rfor_each(const tuple &t,
-          function&& f)
+template<const char *const &name,
+         class... T>
+auto &
+val(tuple<T...> &t)
 {
-	using type = tuple_element<i, tuple>;
-
-	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
-	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
+	return val<indexof<tuple<T...>>(name)>(t);
 }
 
-template<class tuple,
-         class function,
-         ssize_t i = tuple_size<tuple>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>(), void>::type
-rfor_each(tuple &t,
-          function&& f)
+template<const char *const &name,
+         class... T>
+const tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
+at(const tuple<T...> &t)
 {
-	using type = tuple_element<i, tuple>;
-
-	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
-	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
-}
-
-template<size_t i,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<tuple>::value, bool>::type
-until(const tuple &t,
-      function&& f)
-{
-	return true;
-}
-
-template<size_t i,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i == tuple_size<tuple>::value, bool>::type
-until(tuple &t,
-      function&& f)
-{
-	return true;
-}
-
-template<size_t i = 0,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
-until(const tuple &t,
-      function&& f)
-{
-	using type = tuple_element<i, tuple>;
-
-	const auto &value(static_cast<const type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       until<i + 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<size_t i = 0,
-         class tuple,
-         class function>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
-until(tuple &t,
-      function&& f)
-{
-	using type = tuple_element<i, tuple>;
-
-	auto &value(static_cast<type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       until<i + 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class tuple,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), bool>::type
-runtil(const tuple &t,
-       function&& f)
-{
-	return true;
-}
-
-template<class tuple,
-         class function,
-         ssize_t i>
-constexpr
-typename std::enable_if<(i < 0), bool>::type
-runtil(tuple &t,
-       function&& f)
-{
-	return true;
-}
-
-template<class tuple,
-         class function,
-         ssize_t i = tuple_size<tuple>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
-runtil(const tuple &t,
-       function&& f)
-{
-	using type = tuple_element<i, tuple>;
-
-	const auto &value(static_cast<const type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class tuple,
-         class function,
-         ssize_t i = tuple_size<tuple>() - 1>
-constexpr
-typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
-runtil(tuple &t,
-       function&& f)
-{
-	using type = tuple_element<i, tuple>;
-
-	auto &value(static_cast<type &>(get<i>(t)));
-	return f(reflect<i>(t), value)?
-	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
-	       false;
-}
-
-template<class tuple>
-constexpr size_t
-indexof(tuple&& t,
-        const string_view &name)
-{
-	size_t ret(0);
-	const auto res(until(t, [&ret, &name]
-	(const string_view &key, auto&& member)
+	constexpr size_t idx
 	{
-		if(key == name)
-			return false;
+		indexof<tuple<T...>>(name)
+	};
 
-		++ret;
-		return true;
-	}));
+	const auto &ret
+	{
+		val<idx>(t)
+	};
 
-	return !res? ret : throw std::out_of_range("tuple has no member with that name");
+	using value_type = tuple_value_type<tuple<T...>, idx>;
+
+	//TODO: does tcmalloc zero this or huh?
+	if(ret == value_type{})
+		throw not_found("%s", name);
+
+	return ret;
+}
+
+template<const char *const &name,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
+at(tuple<T...> &t)
+{
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>>(name)
+	};
+
+	auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple<T...>, idx>;
+
+	//TODO: does tcmalloc zero this or huh?
+	if(ret == value_type{})
+		throw not_found("%s", name);
+
+	return ret;
+}
+
+template<size_t i,
+         class tuple,
+         class function>
+typename std::enable_if<i == size<tuple>(), void>::type
+for_each(const tuple &t,
+         function&& f)
+{}
+
+template<size_t i,
+         class tuple,
+         class function>
+typename std::enable_if<i == size<tuple>(), void>::type
+for_each(tuple &t,
+         function&& f)
+{}
+
+template<size_t i = 0,
+         class tuple,
+         class function>
+typename std::enable_if<i < size<tuple>(), void>::type
+for_each(const tuple &t,
+         function&& f)
+{
+	f(key<i>(t), val<i>(t));
+	for_each<i + 1>(t, std::forward<function>(f));
+}
+
+template<size_t i = 0,
+         class tuple,
+         class function>
+typename std::enable_if<i < size<tuple>(), void>::type
+for_each(tuple &t,
+         function&& f)
+{
+	f(key<i>(t), val<i>(t));
+	for_each<i + 1>(t, std::forward<function>(f));
 }
 
 template<class tuple,
+         class function,
+         ssize_t i>
+typename std::enable_if<(i < 0), void>::type
+rfor_each(const tuple &t,
+          function&& f)
+{}
+
+template<class tuple,
+         class function,
+         ssize_t i>
+typename std::enable_if<(i < 0), void>::type
+rfor_each(tuple &t,
+          function&& f)
+{}
+
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
+typename std::enable_if<i < tuple_size<tuple>(), void>::type
+rfor_each(const tuple &t,
+          function&& f)
+{
+	f(key<i>(t), val<i>(t));
+	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
+}
+
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
+typename std::enable_if<i < tuple_size<tuple>(), void>::type
+rfor_each(tuple &t,
+          function&& f)
+{
+	f(key<i>(t), val<i>(t));
+	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
+}
+
+template<size_t i,
+         class tuple,
          class function>
-constexpr bool
-at(tuple&& t,
+typename std::enable_if<i == size<tuple>(), bool>::type
+until(const tuple &t,
+      function&& f)
+{
+	return true;
+}
+
+template<size_t i,
+         class tuple,
+         class function>
+typename std::enable_if<i == size<tuple>(), bool>::type
+until(tuple &t,
+      function&& f)
+{
+	return true;
+}
+
+template<size_t i = 0,
+         class tuple,
+         class function>
+typename std::enable_if<i < size<tuple>(), bool>::type
+until(const tuple &t,
+      function&& f)
+{
+	return f(key<i>(t), val<i>(t))?
+	       until<i + 1>(t, std::forward<function>(f)):
+	       false;
+}
+
+template<size_t i = 0,
+         class tuple,
+         class function>
+typename std::enable_if<i < size<tuple>(), bool>::type
+until(tuple &t,
+      function&& f)
+{
+	return f(key<i>(t), val<i>(t))?
+	       until<i + 1>(t, std::forward<function>(f)):
+	       false;
+}
+
+template<class tuple,
+         class function,
+         ssize_t i>
+typename std::enable_if<(i < 0), bool>::type
+runtil(const tuple &t,
+       function&& f)
+{
+	return true;
+}
+
+template<class tuple,
+         class function,
+         ssize_t i>
+typename std::enable_if<(i < 0), bool>::type
+runtil(tuple &t,
+       function&& f)
+{
+	return true;
+}
+
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
+typename std::enable_if<i < size<tuple>(), bool>::type
+runtil(const tuple &t,
+       function&& f)
+{
+	return f(key<i>(t), val<i>(t))?
+	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
+	       false;
+}
+
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
+typename std::enable_if<i < size<tuple>(), bool>::type
+runtil(tuple &t,
+       function&& f)
+{
+	return f(key<i>(t), val<i>(t))?
+	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
+	       false;
+}
+
+template<class function,
+         class... T>
+bool
+at(tuple<T...> &t,
    const string_view &name,
    function&& f)
 {
 	return until(t, [&name, &f]
-	(const string_view &key, auto&& member)
+	(const string_view &key, auto &member)
 	{
 		if(key != name)
 			return true;
@@ -348,39 +491,33 @@ at(tuple&& t,
 	});
 }
 
-template<class tuple>
-constexpr void
-keys(tuple&& t,
-     const std::function<void (string_view)> &f)
+template<class function,
+         class... T>
+bool
+at(const tuple<T...> &t,
+   const string_view &name,
+   function&& f)
 {
-	for_each(t, [&f]
-	(const char *const key, auto&& member)
+	return until(t, [&name, &f]
+	(const string_view &key, const auto &member)
 	{
-		f(key);
-	});
-}
+		if(key != name)
+			return true;
 
-template<class tuple,
-         class function>
-constexpr void
-values(tuple&& t,
-       function&& f)
-{
-	for_each(t, [&f]
-	(const char *const key, auto&& member)
-	{
 		f(member);
+		return false;
 	});
 }
 
-template<class tuple>
-tuple &
-assign_tuple(tuple &ret,
-             const json::object &object)
+template<class... T>
+tuple<T...>::tuple(const json::object &object)
 {
-	std::for_each(std::begin(object), std::end(object), [&ret](auto &&member)
+	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
+	std::for_each(std::begin(object), std::end(object), [this]
+	(const auto &member)
 	{
-		at(ret, member.first, [&member](auto&& target)
+		at(*this, member.first, [&member]
+		(auto &target)
 		{
 			using target_type = decltype(target);
 			using cast_type = typename std::remove_reference<target_type>::type; try
@@ -389,23 +526,12 @@ assign_tuple(tuple &ret,
 			}
 			catch(const bad_lex_cast &e)
 			{
-				throw tuple_error("member \"%s\" must convert to '%s'",
+				throw parse_error("member '%s' must convert to '%s'",
 				                  member.first,
 				                  typeid(target_type).name());
 			}
 		});
 	});
-
-	return ret;
-}
-
-template<class tuple>
-tuple
-make_tuple(const json::object &object)
-{
-	tuple ret;
-	assign_tuple(ret, object);
-	return ret;
 }
 
 } // namespace json
