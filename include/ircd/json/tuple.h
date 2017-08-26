@@ -20,7 +20,85 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JSON_PARSE_H
+#define HAVE_IRCD_JSON_TUPLE_H
+
+namespace ircd {
+namespace json {
+
+struct tuple_base
+{
+	// class must be empty for EBO
+};
+
+template<class... T>
+struct tuple
+:tuple_base
+,std::tuple<T...>
+{
+	using tuple_type = std::tuple<T...>;
+
+	static constexpr size_t size()
+	{
+		return std::tuple_size<tuple_type>();
+	}
+
+	using std::tuple<T...>::tuple;
+};
+
+template<class tuple>
+using tuple_type = typename tuple::tuple_type;
+
+template<class tuple>
+using tuple_size = std::tuple_size<tuple_type<tuple>>;
+
+template<size_t i,
+         class tuple>
+using tuple_element = typename std::tuple_element<i, tuple_type<tuple>>::type;
+
+template<class tuple>
+constexpr auto &
+stdcast(const tuple &o)
+{
+	return static_cast<const typename tuple::tuple_type &>(o);
+}
+
+template<class tuple>
+constexpr auto &
+stdcast(tuple &o)
+{
+	return static_cast<typename tuple::tuple_type &>(o);
+}
+
+template<class... T>
+constexpr auto
+size(const tuple<T...> &t)
+{
+	return t.size();
+}
+
+template<size_t i,
+         class... T>
+constexpr auto &
+get(const tuple<T...> &t)
+{
+	return std::get<i>(t);
+}
+
+template<size_t i,
+         class... T>
+constexpr auto &
+get(tuple<T...> &t)
+{
+	return std::get<i>(t);
+}
+
+template<size_t i,
+         class tuple>
+constexpr const char *
+reflect(const tuple &t)
+{
+	return t._member_(i);
+}
 
 #define IRCD_MEMBERS(_vals_...)                           \
 static constexpr const char *_member_(const size_t i)     \
@@ -33,233 +111,129 @@ static constexpr const char *_member_(const size_t i)     \
     return val[i];                                        \
 }
 
-namespace ircd {
-namespace json {
-
-struct basic_parse
-{
-};
-
-template<class... T>
-struct parse
-:basic_parse
-,std::tuple<T...>
-{
-	using tuple_type = std::tuple<T...>;
-
-	static constexpr size_t size()
-	{
-		return std::tuple_size<tuple_type>();
-	}
-
-	parse() = default;
-	template<class R> parse(R &r, const json::object &obj);
-};
-
-template<class... T>
-template<class R>
-parse<T...>::parse(R &r,
-                   const json::object &object)
-{
-	std::for_each(std::begin(object), std::end(object), [this, &r]
-	(auto &&member)
-	{
-		at(r, member.first, [&member]
-		(auto&& target)
-		{
-			using target_type = decltype(target);
-			using cast_type = typename std::remove_reference<target_type>::type; try
-			{
-				target = lex_cast<cast_type>(member.second);
-			}
-			catch(const bad_lex_cast &e)
-			{
-				throw parse_error("member \"%s\" must convert to '%s'",
-				                  member.first,
-				                  typeid(target_type).name());
-			}
-		});
-	});
-}
-
-template<class parse>
-using tuple_type = typename parse::tuple_type;
-
-template<class parse>
-using tuple_size = std::tuple_size<tuple_type<parse>>;
-
 template<size_t i,
-         class parse>
-using tuple_element = typename std::tuple_element<i, tuple_type<parse>>::type;
-
-template<class parse>
-constexpr auto &
-tuple(const parse &o)
-{
-	return static_cast<const typename parse::tuple_type &>(o);
-}
-
-template<class parse>
-constexpr auto &
-tuple(parse &o)
-{
-	return static_cast<typename parse::tuple_type &>(o);
-}
-
-template<class... T>
-constexpr auto
-size(const parse<T...> &t)
-{
-	return t.size();
-}
-
-template<size_t i,
-         class... T>
-constexpr auto &
-get(const parse<T...> &t)
-{
-	return std::get<i>(t);
-}
-
-template<size_t i,
-         class... T>
-constexpr auto &
-get(parse<T...> &t)
-{
-	return std::get<i>(t);
-}
-
-template<size_t i,
-         class parse>
-constexpr const char *
-reflect(const parse &t)
-{
-	return t._member_(i);
-}
-
-template<size_t i,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i == tuple_size<parse>::value, void>::type
-for_each(const parse &t,
+typename std::enable_if<i == tuple_size<tuple>::value, void>::type
+for_each(const tuple &t,
          function&& f)
 {}
 
 template<size_t i,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i == tuple_size<parse>::value, void>::type
-for_each(parse &t,
+typename std::enable_if<i == tuple_size<tuple>::value, void>::type
+for_each(tuple &t,
          function&& f)
 {}
 
 template<size_t i = 0,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, void>::type
-for_each(const parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, void>::type
+for_each(const tuple &t,
          function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
 	for_each<i + 1>(t, std::forward<function>(f));
 }
 
 template<size_t i = 0,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, void>::type
-for_each(parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, void>::type
+for_each(tuple &t,
          function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
 	for_each<i + 1>(t, std::forward<function>(f));
 }
 
-template<class parse,
+template<class tuple,
          class function,
          ssize_t i>
 constexpr
 typename std::enable_if<(i < 0), void>::type
-rfor_each(const parse &t,
+rfor_each(const tuple &t,
           function&& f)
 {}
 
-template<class parse,
+template<class tuple,
          class function,
          ssize_t i>
 constexpr
 typename std::enable_if<(i < 0), void>::type
-rfor_each(parse &t,
+rfor_each(tuple &t,
           function&& f)
 {}
 
-template<class parse,
+template<class tuple,
          class function,
-         ssize_t i = tuple_size<parse>() - 1>
+         ssize_t i = tuple_size<tuple>() - 1>
 constexpr
-typename std::enable_if<i < tuple_size<parse>(), void>::type
-rfor_each(const parse &t,
+typename std::enable_if<i < tuple_size<tuple>(), void>::type
+rfor_each(const tuple &t,
           function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	f(reflect<i>(t), static_cast<const type &>(get<i>(t)));
-	rfor_each<parse, function, i - 1>(t, std::forward<function>(f));
+	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
 }
 
-template<class parse,
+template<class tuple,
          class function,
-         ssize_t i = tuple_size<parse>() - 1>
+         ssize_t i = tuple_size<tuple>() - 1>
 constexpr
-typename std::enable_if<i < tuple_size<parse>(), void>::type
-rfor_each(parse &t,
+typename std::enable_if<i < tuple_size<tuple>(), void>::type
+rfor_each(tuple &t,
           function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	f(reflect<i>(t), static_cast<type &>(get<i>(t)));
-	rfor_each<parse, function, i - 1>(t, std::forward<function>(f));
+	rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
 }
 
 template<size_t i,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i == tuple_size<parse>::value, bool>::type
-until(const parse &t,
+typename std::enable_if<i == tuple_size<tuple>::value, bool>::type
+until(const tuple &t,
       function&& f)
 {
 	return true;
 }
 
 template<size_t i,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i == tuple_size<parse>::value, bool>::type
-until(parse &t,
+typename std::enable_if<i == tuple_size<tuple>::value, bool>::type
+until(tuple &t,
       function&& f)
 {
 	return true;
 }
 
 template<size_t i = 0,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, bool>::type
-until(const parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
+until(const tuple &t,
       function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	const auto &value(static_cast<const type &>(get<i>(t)));
 	return f(reflect<i>(t), value)?
@@ -268,14 +242,14 @@ until(const parse &t,
 }
 
 template<size_t i = 0,
-         class parse,
+         class tuple,
          class function>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, bool>::type
-until(parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
+until(tuple &t,
       function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	auto &value(static_cast<type &>(get<i>(t)));
 	return f(reflect<i>(t), value)?
@@ -283,63 +257,63 @@ until(parse &t,
 	       false;
 }
 
-template<class parse,
+template<class tuple,
          class function,
          ssize_t i>
 constexpr
 typename std::enable_if<(i < 0), bool>::type
-runtil(const parse &t,
+runtil(const tuple &t,
        function&& f)
 {
 	return true;
 }
 
-template<class parse,
+template<class tuple,
          class function,
          ssize_t i>
 constexpr
 typename std::enable_if<(i < 0), bool>::type
-runtil(parse &t,
+runtil(tuple &t,
        function&& f)
 {
 	return true;
 }
 
-template<class parse,
+template<class tuple,
          class function,
-         ssize_t i = tuple_size<parse>() - 1>
+         ssize_t i = tuple_size<tuple>() - 1>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, bool>::type
-runtil(const parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
+runtil(const tuple &t,
        function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	const auto &value(static_cast<const type &>(get<i>(t)));
 	return f(reflect<i>(t), value)?
-	       runtil<parse, function, i - 1>(t, std::forward<function>(f)):
+	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
 	       false;
 }
 
-template<class parse,
+template<class tuple,
          class function,
-         ssize_t i = tuple_size<parse>() - 1>
+         ssize_t i = tuple_size<tuple>() - 1>
 constexpr
-typename std::enable_if<i < tuple_size<parse>::value, bool>::type
-runtil(parse &t,
+typename std::enable_if<i < tuple_size<tuple>::value, bool>::type
+runtil(tuple &t,
        function&& f)
 {
-	using type = tuple_element<i, parse>;
+	using type = tuple_element<i, tuple>;
 
 	auto &value(static_cast<type &>(get<i>(t)));
 	return f(reflect<i>(t), value)?
-	       runtil<parse, function, i - 1>(t, std::forward<function>(f)):
+	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
 	       false;
 }
 
-template<class parse>
+template<class tuple>
 constexpr size_t
-indexof(parse&& t,
+indexof(tuple&& t,
         const string_view &name)
 {
 	size_t ret(0);
@@ -353,13 +327,13 @@ indexof(parse&& t,
 		return true;
 	}));
 
-	return !res? ret : throw std::out_of_range("parse has no member with that name");
+	return !res? ret : throw std::out_of_range("tuple has no member with that name");
 }
 
-template<class parse,
+template<class tuple,
          class function>
 constexpr bool
-at(parse&& t,
+at(tuple&& t,
    const string_view &name,
    function&& f)
 {
@@ -374,9 +348,9 @@ at(parse&& t,
 	});
 }
 
-template<class parse>
+template<class tuple>
 constexpr void
-keys(parse&& t,
+keys(tuple&& t,
      const std::function<void (string_view)> &f)
 {
 	for_each(t, [&f]
@@ -386,10 +360,10 @@ keys(parse&& t,
 	});
 }
 
-template<class parse,
+template<class tuple,
          class function>
 constexpr void
-values(parse&& t,
+values(tuple&& t,
        function&& f)
 {
 	for_each(t, [&f]
@@ -397,6 +371,41 @@ values(parse&& t,
 	{
 		f(member);
 	});
+}
+
+template<class tuple>
+tuple &
+assign_tuple(tuple &ret,
+             const json::object &object)
+{
+	std::for_each(std::begin(object), std::end(object), [&ret](auto &&member)
+	{
+		at(ret, member.first, [&member](auto&& target)
+		{
+			using target_type = decltype(target);
+			using cast_type = typename std::remove_reference<target_type>::type; try
+			{
+				target = lex_cast<cast_type>(member.second);
+			}
+			catch(const bad_lex_cast &e)
+			{
+				throw tuple_error("member \"%s\" must convert to '%s'",
+				                  member.first,
+				                  typeid(target_type).name());
+			}
+		});
+	});
+
+	return ret;
+}
+
+template<class tuple>
+tuple
+make_tuple(const json::object &object)
+{
+	tuple ret;
+	assign_tuple(ret, object);
+	return ret;
 }
 
 } // namespace json

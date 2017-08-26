@@ -47,7 +47,7 @@ namespace ircd {
 namespace m    {
 
 struct event
-:json::parse
+:json::tuple
 <
 	string_view,
 	time_t,
@@ -68,8 +68,8 @@ struct event
 	)
 
 	template<class... A>
-	event(A&&... a)
-	:parse{*this, std::forward<A>(a)...}
+	explicit event(const json::object &obj)
+	:tuple{json::make_tuple<decltype(*this)>(obj)}
 	{}
 };
 
