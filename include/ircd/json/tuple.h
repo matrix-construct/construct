@@ -32,12 +32,11 @@
 //
 // Create and use a tuple to efficiently extract members from a json::object.
 // The tuple will populate its own members during a single-pass iteration of
-// the JSON input. This is cheap, because no copies or allocations or searches
-// are required to take place. If the JSON does not contain a member specified
-// in the tuple, the value will be default initialized. If the JSON contains
-// a member not specified in the tuple, it is ignored. If you need to know all
-// of the members specified in the JSON dynamically, use a json::index or
-// iterate manually.
+// the JSON input. If the JSON does not contain a member specified in the
+// tuple, the value will be default initialized. If the JSON contains a member
+// not specified in the tuple, it is ignored. If you need to know all of the
+// members specified in the JSON dynamically, use a json::index or iterate
+// manually.
 //
 namespace ircd {
 namespace json {
