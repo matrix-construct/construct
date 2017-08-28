@@ -23,8 +23,13 @@
 #pragma once
 #define HAVE_IRCD_DB_ROW_H
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	struct row;
+
+	// [SET] Delete row from DB (convenience to an op::DELETE delta)
+	void del(row &, const sopts & = {});
+}
 
 // A `row` is a collection of cells from different columns which all share the same
 // key. This is an interface for dealing with those cells in the aggregate.
@@ -33,7 +38,7 @@ namespace db   {
 // will all return the same index value across the whole `row`. To get the names
 // of the columns themselves to build ex. the key name of a JSON key-value pair,
 // use `cell::col()`, which will be different for each `cell` across the `row`.
-struct row
+struct ircd::db::row
 {
 	struct delta;
 	struct iterator;
@@ -84,7 +89,17 @@ struct row
 	friend size_t trim(row &); // remove invalid
 };
 
-struct row::const_iterator
+namespace ircd::db
+{
+	// [SET] Perform operations in a sequence as a single transaction. No template
+	// iterators supported yet, just a ptr range good for contiguous sequences.
+	void write(const row::delta *const &begin, const row::delta *const &end, const sopts & = {});
+	void write(const std::initializer_list<row::delta> &, const sopts & = {});
+	void write(const sopts &, const std::initializer_list<row::delta> &);
+	void write(const row::delta &, const sopts & = {});
+}
+
+struct ircd::db::row::const_iterator
 {
 	using value_type = const cell &;
 	using reference = const cell &;
@@ -113,7 +128,7 @@ struct row::const_iterator
 	friend bool operator!=(const const_iterator &, const const_iterator &);
 };
 
-struct row::iterator
+struct ircd::db::row::iterator
 {
 	using value_type = cell &;
 	using reference = cell &;
@@ -148,7 +163,7 @@ struct row::iterator
 // useful to make a commitment on a single row as a convenient way to compose
 // all of a row's cells together.
 //
-struct row::delta
+struct ircd::db::row::delta
 :std::tuple<op, row &>
 {
 	delta(row &r, const enum op &op = op::SET)
@@ -159,19 +174,6 @@ struct row::delta
 	:std::tuple<enum op, row &>{op, r}
 	{}
 };
-
-// [SET] Perform operations in a sequence as a single transaction. No template
-// iterators supported yet, just a ptr range good for contiguous sequences.
-void write(const row::delta *const &begin, const row::delta *const &end, const sopts & = {});
-void write(const std::initializer_list<row::delta> &, const sopts & = {});
-void write(const sopts &, const std::initializer_list<row::delta> &);
-void write(const row::delta &, const sopts & = {});
-
-// [SET] Delete row from DB (convenience to an op::DELETE delta)
-void del(row &, const sopts & = {});
-
-} // namespace db
-} // namespace ircd
 
 inline ircd::db::cell &
 ircd::db::row::operator[](const string_view &column)

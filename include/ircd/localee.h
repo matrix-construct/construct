@@ -26,12 +26,9 @@
 // Utilities for internationalization.
 //
 
-namespace ircd   {
-namespace locale {
-
 // On newer platforms (gcc-5 etc) these conversions are standard C++.
 // On older platforms the definition file may use boost::locale.
-namespace char16
+namespace ircd::locale::char16
 {
 	char conv(const char16_t &);
 	char16_t conv(const char &);
@@ -53,13 +50,15 @@ namespace char16
 	std::ostream &operator<<(std::ostream &, const std::u16string &);
 }
 
-using char16::operator<<;
+namespace ircd::locale
+{
+	using char16::operator<<;
+}
 
-} // namespace locale
-
-using locale::operator<<;
-
-} // namespace ircd
+namespace ircd
+{
+	using locale::operator<<;
+}
 
 inline std::ostream &
 ircd::locale::char16::operator<<(std::ostream &s,

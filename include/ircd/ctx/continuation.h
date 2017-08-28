@@ -24,10 +24,18 @@
 
 #include <boost/asio/spawn.hpp>
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	struct continuation;
+}
 
-struct continuation
+namespace ircd
+{
+	using ctx::continuation;
+	using yield = boost::asio::yield_context;
+}
+
+struct ircd::ctx::continuation
 {
 	ctx *self;
 
@@ -37,10 +45,3 @@ struct continuation
 	continuation(ctx *const &self = ircd::ctx::current);
 	~continuation() noexcept;
 };
-
-} // namespace ctx
-
-using ctx::continuation;
-using yield = boost::asio::yield_context;
-
-} // namespace ircd

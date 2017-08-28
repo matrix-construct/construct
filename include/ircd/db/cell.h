@@ -23,8 +23,14 @@
 #pragma once
 #define HAVE_IRCD_DB_CELL_H
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	struct cell;
+
+	// Util
+	const std::string &name(const cell &);
+	uint64_t sequence(const cell &);
+}
 
 // A cell is a single key-value element existing within a column. This structure
 // provides the necessary facilities for working with a single cell. Many simple
@@ -42,7 +48,7 @@ namespace db   {
 // both a normal string and binary data, so this class is not a template and offers
 // no conversions at this level. see: value.h/object.h
 //
-struct cell
+struct ircd::db::cell
 {
 	struct delta;
 
@@ -100,12 +106,24 @@ struct cell
 	friend std::ostream &operator<<(std::ostream &s, const cell &c);
 };
 
+namespace ircd::db
+{
+	// [SET] Perform operations in a sequence as a single transaction. No template
+	// iterators supported yet, just a ptr range good for contiguous sequences like
+	// vectors and initializer_lists. To support any iterator I think we'll need to
+	// forward-expose a wrapping of rocksdb::WriteBatch.
+	void write(const cell::delta *const &begin, const cell::delta *const &end, const sopts & = {});
+	void write(const std::initializer_list<cell::delta> &, const sopts & = {});
+	void write(const sopts &, const std::initializer_list<cell::delta> &);
+	void write(const cell::delta &, const sopts & = {});
+}
+
 //
 // A delta is an element of a database transaction. You can use this to change
 // the values of cells. Use cell deltas to make an all-succeed-or-all-fail
 // transaction across many cells in various columns at once.
 //
-struct cell::delta
+struct ircd::db::cell::delta
 :std::tuple<op, cell &, string_view>
 {
 	delta(cell &c, const string_view &val, const enum op &op = op::SET)
@@ -116,22 +134,6 @@ struct cell::delta
 	:std::tuple<enum op, cell &, string_view>{op, c, val}
 	{}
 };
-
-// [SET] Perform operations in a sequence as a single transaction. No template
-// iterators supported yet, just a ptr range good for contiguous sequences like
-// vectors and initializer_lists. To support any iterator I think we'll need to
-// forward-expose a wrapping of rocksdb::WriteBatch.
-void write(const cell::delta *const &begin, const cell::delta *const &end, const sopts & = {});
-void write(const std::initializer_list<cell::delta> &, const sopts & = {});
-void write(const sopts &, const std::initializer_list<cell::delta> &);
-void write(const cell::delta &, const sopts & = {});
-
-// Util
-const std::string &name(const cell &);
-uint64_t sequence(const cell &);
-
-} // namespace db
-} // namespace ircd
 
 inline std::ostream &
 ircd::db::operator<<(std::ostream &s, const cell &c)

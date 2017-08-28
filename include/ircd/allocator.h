@@ -26,16 +26,19 @@
 #pragma once
 #define HAVE_IRCD_ALLOCATOR_H
 
-namespace ircd {
+namespace ircd
+{
+	struct allocator;
+}
 
-struct allocator
+struct ircd::allocator
 {
 	struct state;
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
 };
 
-struct allocator::state
+struct ircd::allocator::state
 {
 	using word_t                                 = unsigned long long;
 	using size_type                              = std::size_t;
@@ -66,7 +69,7 @@ struct allocator::state
 
 template<class T,
          size_t max>
-struct allocator::fixed
+struct ircd::allocator::fixed
 :state
 {
 	struct allocator;
@@ -84,7 +87,7 @@ struct allocator::fixed
 };
 
 template<class T>
-struct allocator::dynamic
+struct ircd::allocator::dynamic
 :state
 {
 	struct allocator;
@@ -116,7 +119,7 @@ struct allocator::dynamic
 
 template<class T,
          size_t size>
-struct allocator::fixed<T, size>::allocator
+struct ircd::allocator::fixed<T, size>::allocator
 {
 	using value_type         = T;
 	using pointer            = T *;
@@ -174,7 +177,7 @@ struct allocator::fixed<T, size>::allocator
 };
 
 template<class T>
-struct allocator::dynamic<T>::allocator
+struct ircd::allocator::dynamic<T>::allocator
 {
 	using value_type         = T;
 	using pointer            = T *;
@@ -230,8 +233,6 @@ struct allocator::dynamic<T>::allocator
 		return &a == &b;
 	}
 };
-
-} // namespace ircd
 
 template<class T>
 typename ircd::allocator::dynamic<T>::allocator

@@ -23,17 +23,22 @@
 #pragma once
 #define HAVE_IRCD_DB_VALUE_H
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	template<database *const &d, class T = string_view> struct value;
+	template<database *const &d> struct value<d, void>;
+	template<database *const &d> struct value<d, string_view>;
+	template<database *const &d, class T> struct arithmetic_value;
+}
 
-template<database *const &d,
-         class T = string_view>
-struct value
+template<ircd::db::database *const &d,
+         class T>
+struct ircd::db::value
 {
 };
 
-template<database *const &d>
-struct value<d, void>
+template<ircd::db::database *const &d>
+struct ircd::db::value<d, void>
 :cell
 {
 	using cell::cell;
@@ -44,8 +49,8 @@ struct value<d, void>
 	{}
 };
 
-template<database *const &d>
-struct value<d, string_view>
+template<ircd::db::database *const &d>
+struct ircd::db::value<d, ircd::string_view>
 :value<d, void>
 {
 	operator string_view() const
@@ -78,9 +83,9 @@ struct value<d, string_view>
 	}
 };
 
-template<database *const &d,
+template<ircd::db::database *const &d,
          class T>
-struct arithmetic_value
+struct ircd::db::arithmetic_value
 :value<d, void>
 {
 	bool compare_exchange(T &expected, const T &desired)
@@ -143,12 +148,12 @@ struct value<d, _type_>                                  \
 	using arithmetic_value<d, _type_>::arithmetic_value; \
 }
 
-IRCD_ARITHMETIC_VALUE(uint64_t);
-IRCD_ARITHMETIC_VALUE(int64_t);
-IRCD_ARITHMETIC_VALUE(uint32_t);
-IRCD_ARITHMETIC_VALUE(int32_t);
-IRCD_ARITHMETIC_VALUE(uint16_t);
-IRCD_ARITHMETIC_VALUE(int16_t);
-
-} // namespace db
-} // namespace ircd
+namespace ircd::db
+{
+	IRCD_ARITHMETIC_VALUE(uint64_t);
+	IRCD_ARITHMETIC_VALUE(int64_t);
+	IRCD_ARITHMETIC_VALUE(uint32_t);
+	IRCD_ARITHMETIC_VALUE(int32_t);
+	IRCD_ARITHMETIC_VALUE(uint16_t);
+	IRCD_ARITHMETIC_VALUE(int16_t);
+}

@@ -22,8 +22,10 @@
 #pragma once
 #define HAVE_IRCD_JSON_OBJECT_H
 
-namespace ircd {
-namespace json {
+namespace ircd::json
+{
+	struct object;
+}
 
 // ircd::json::object is an extremely lightweight device for making
 // queries into a string of JSON. This is a read-only device. It is merely
@@ -61,7 +63,7 @@ namespace json {
 // use an initializer_list typedef'ed as `path` and those overloads will be
 // recursive.
 //
-struct object
+struct ircd::json::object
 :string_view
 {
 	struct member;
@@ -114,7 +116,7 @@ struct object
 	friend size_t print(char *const &buf, const size_t &max, const object &);
 };
 
-struct object::member
+struct ircd::json::object::member
 :std::pair<string_view, string_view>
 {
 	member(const string_view &first = {}, const string_view &second = {})
@@ -132,7 +134,7 @@ struct object::member
 	friend std::ostream &operator<<(std::ostream &, const object::member &);
 };
 
-struct object::const_iterator
+struct ircd::json::object::const_iterator
 {
 	using value_type = const member;
 	using pointer = value_type *;
@@ -165,9 +167,6 @@ struct object::const_iterator
 	friend bool operator<(const const_iterator &, const const_iterator &);
 	friend bool operator>(const const_iterator &, const const_iterator &);
 };
-
-} // namespace json
-} // namespace ircd
 
 inline ircd::string_view
 ircd::json::object::operator[](const path &path)

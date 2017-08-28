@@ -36,22 +36,15 @@
  * call which has been passed over for mitigation may start doing some blocking flush under load,
  * etc. The profiler will alert us of this so it doesn't silently degrade performance.
  */
-namespace ircd {
-namespace ctx  {
-namespace prof {
-
-struct settings
+namespace ircd::ctx::prof
 {
-	double stack_usage_warning;       // percentage
-	double stack_usage_assertion;     // percentage
+	enum class event;
+	struct settings extern settings;
 
-	microseconds slice_warning;       // Warn when the yield-to-yield time exceeds
-	microseconds slice_interrupt;     // Interrupt exception when exceeded (not a signal)
-	microseconds slice_assertion;     // abort() when exceeded (not a signal, must yield)
+	void mark(const event &);
 }
-extern settings;
 
-enum class event
+enum class ircd::ctx::prof::event
 {
 	SPAWN,             // Context spawn requested
 	JOIN,              // Context join requested
@@ -63,8 +56,12 @@ enum class event
 	CUR_INTERRUPT,     // Current context detects interruption
 };
 
-void mark(const event &);
+struct ircd::ctx::prof::settings
+{
+	double stack_usage_warning;       // percentage
+	double stack_usage_assertion;     // percentage
 
-} // namespace prof	
-} // namespace ctx
-} // namespace ircd
+	microseconds slice_warning;       // Warn when the yield-to-yield time exceeds
+	microseconds slice_interrupt;     // Interrupt exception when exceeded (not a signal)
+	microseconds slice_assertion;     // abort() when exceeded (not a signal, must yield)
+};

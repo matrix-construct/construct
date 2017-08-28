@@ -25,9 +25,12 @@
 #pragma once
 #define HAVE_IRCD_PARSE_H
 
-namespace ircd {
+namespace ircd
+{
+	struct parse;
+}
 
-struct parse
+struct ircd::parse
 {
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, grammar_error)
@@ -41,7 +44,7 @@ struct parse
 	struct buffer;
 };
 
-struct parse::grammar
+struct ircd::parse::grammar
 {
 	static std::map<std::string_view, const grammar *> grammars;
 
@@ -55,7 +58,7 @@ struct parse::grammar
 	~grammar() noexcept;
 };
 
-struct parse::buffer
+struct ircd::parse::buffer
 {
 	char *base;                                  // Lowest address of the buffer (const)
 	const char *parsed;                          // Data between [base, parsed] is completed
@@ -95,7 +98,7 @@ struct parse::buffer
 	{}
 };
 
-struct parse::capstan
+struct ircd::parse::capstan
 {
 	const char *&parsed;
 	char *&read;
@@ -110,8 +113,6 @@ struct parse::capstan
 	capstan(const char *&parsed, char *&read, char *const &max, const decltype(reader) &reader = nullptr);
 	capstan(buffer &, const decltype(reader) &reader = nullptr);
 };
-
-} // namespace ircd
 
 inline
 ircd::parse::capstan::capstan(buffer &buffer,

@@ -22,10 +22,7 @@
 #pragma once
 #define HAVE_IRCD_JSON_INDEX_H
 
-namespace ircd {
-namespace json {
-
-struct index
+struct ircd::json::index
 {
 	struct member;
 	struct const_iterator;
@@ -78,7 +75,7 @@ struct index
 	friend std::ostream &operator<<(std::ostream &, const index &);
 };
 
-struct index::member
+struct ircd::json::index::member
 :std::pair<value, value>
 {
 	template<class K> member(const K &k, std::initializer_list<member> v);
@@ -98,7 +95,7 @@ struct index::member
 	friend std::ostream &operator<<(std::ostream &, const member &);
 };
 
-struct index::const_iterator
+struct ircd::json::index::const_iterator
 {
 	using value_type = const member;
 	using pointer = value_type *;
@@ -128,9 +125,6 @@ struct index::const_iterator
 	friend bool operator!=(const const_iterator &a, const const_iterator &b);
 	friend bool operator<(const const_iterator &a, const const_iterator &b);
 };
-
-} // namespace json
-} // namespace ircd
 
 inline const ircd::json::value &
 ircd::json::index::operator[](const string_view &name)

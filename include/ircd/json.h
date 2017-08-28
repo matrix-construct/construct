@@ -56,36 +56,33 @@
 // proven* output safety. In other words, the grammar prevents exploits like
 // injecting and terminating JSON as it composes the output.
 //
-namespace ircd {
-namespace json {
-
-IRCD_EXCEPTION(ircd::error, error);
-IRCD_EXCEPTION(error, parse_error);
-IRCD_EXCEPTION(error, print_error);
-IRCD_EXCEPTION(error, type_error);
-IRCD_EXCEPTION(error, not_found);
-
-struct array;
-struct object;
-struct value;
-struct index;
-
-enum type
+namespace ircd::json
 {
-	STRING  = 0,
-	OBJECT  = 1,
-	ARRAY   = 2,
-	NUMBER  = 3,
-	LITERAL = 4,
-};
-enum type type(const string_view &);
-enum type type(const string_view &, std::nothrow_t);
+	IRCD_EXCEPTION(ircd::error, error);
+	IRCD_EXCEPTION(error, parse_error);
+	IRCD_EXCEPTION(error, print_error);
+	IRCD_EXCEPTION(error, type_error);
+	IRCD_EXCEPTION(error, not_found);
 
-using path = std::initializer_list<string_view>;
-std::ostream &operator<<(std::ostream &, const path &);
+	struct array;
+	struct object;
+	struct value;
+	struct index;
 
-} // namespace json
-} // namespace ircd
+	enum type
+	{
+		STRING  = 0,
+		OBJECT  = 1,
+		ARRAY   = 2,
+		NUMBER  = 3,
+		LITERAL = 4,
+	};
+	enum type type(const string_view &);
+	enum type type(const string_view &, std::nothrow_t);
+
+	using path = std::initializer_list<string_view>;
+	std::ostream &operator<<(std::ostream &, const path &);
+}
 
 #include "json/array.h"
 #include "json/object.h"
@@ -93,11 +90,10 @@ std::ostream &operator<<(std::ostream &, const path &);
 #include "json/index.h"
 #include "json/tuple.h"
 
-namespace ircd {
-
-using json::operator<<;
-
-} // namespace ircd
+namespace ircd
+{
+	using json::operator<<;
+}
 
 inline std::ostream &
 ircd::json::operator<<(std::ostream &s, const path &p)

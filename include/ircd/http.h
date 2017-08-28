@@ -25,13 +25,26 @@
 #pragma once
 #define HAVE_IRCD_HTTP_H
 
-namespace ircd {
-namespace http {
+namespace ircd::http
+{
+	enum code :int;
+	struct error;
+	struct line;
+	struct query;
+	struct headers;
+	struct content;
+	struct request;
+	struct response;
+
+	extern std::map<code, string_view> reason;
+	enum code status(const string_view &);
+}
 
 //
 // Add more as you go...
 //
-enum code
+enum ircd::http::code
+:int
 {
 	CONTINUE                                = 100,
 	SWITCHING_PROTOCOLS                     = 101,
@@ -71,10 +84,7 @@ enum code
 	INSUFFICIENT_STORAGE                    = 507,
 };
 
-extern std::map<code, string_view> reason;
-enum code status(const string_view &);
-
-struct error
+struct ircd::http::error
 :ircd::error
 {
 	enum code code;
@@ -83,7 +93,7 @@ struct error
 	error(const enum code &, std::string content = {});
 };
 
-struct line
+struct ircd::http::line
 :string_view
 {
 	struct request;
@@ -94,7 +104,7 @@ struct line
 	line(parse::capstan &);
 };
 
-struct line::request
+struct ircd::http::line::request
 {
 	string_view method;
 	string_view path;
@@ -106,7 +116,7 @@ struct line::request
 	request() = default;
 };
 
-struct line::response
+struct ircd::http::line::response
 {
 	string_view version;
 	string_view status;
@@ -116,7 +126,7 @@ struct line::response
 	response() = default;
 };
 
-struct query
+struct ircd::http::query
 :std::pair<string_view, string_view>
 {
 	struct string;
@@ -130,7 +140,7 @@ struct query
 
 // Query string is read as a complete string off the tape (into request.query) and
 // not parsed further. To make queries into that string use this class to view it.
-struct query::string
+struct ircd::http::query::string
 :string_view
 {
 	void for_each(const std::function<void (const query &)> &) const;
@@ -142,7 +152,7 @@ struct query::string
 	using string_view::string_view;
 };
 
-struct line::header
+struct ircd::http::line::header
 :std::pair<string_view, string_view>
 {
 	bool operator<(const string_view &s) const   { return iless(first, s);                         }
@@ -154,7 +164,7 @@ struct line::header
 };
 
 // HTTP headers are read once off the tape and proffered to the closure.
-struct headers
+struct ircd::http::headers
 {
 	using closure = std::function<void (const line::header &)>;
 
@@ -164,7 +174,7 @@ struct headers
 // Use the request::content / response::content wrappers. They ensure the proper amount
 // of content is read and the tape is in the right position for the next request
 // with exception safety.
-struct content
+struct ircd::http::content
 :string_view
 {
 	IRCD_OVERLOAD(discard)
@@ -174,7 +184,7 @@ struct content
 	content() = default;
 };
 
-struct response
+struct ircd::http::response
 {
 	struct head;
 	struct content;
@@ -193,7 +203,7 @@ struct response
 	         const headers::closure & = {});
 };
 
-struct response::head
+struct ircd::http::response::head
 :line::response
 {
 	size_t content_length {0};
@@ -201,7 +211,7 @@ struct response::head
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
-struct response::content
+struct ircd::http::response::content
 :http::content
 {
 	content(parse::capstan &pc, const head &h, discard_t)
@@ -215,7 +225,7 @@ struct response::content
 	content() = default;
 };
 
-struct request
+struct ircd::http::request
 {
 	struct head;
 	struct content;
@@ -238,7 +248,7 @@ struct request
 	        const headers::closure & = {});
 };
 
-struct request::head
+struct ircd::http::request::head
 :line::request
 {
 	string_view host;
@@ -249,7 +259,7 @@ struct request::head
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
-struct request::content
+struct ircd::http::request::content
 :http::content
 {
 	content(parse::capstan &pc, const head &h, discard_t)
@@ -260,6 +270,3 @@ struct request::content
 	:http::content{pc, h.content_length}
 	{}
 };
-
-} // namespace http
-} // namespace ircd

@@ -19,9 +19,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace ircd {
+namespace ircd
+{
+	struct listener;
+}
 
-struct listener
+struct ircd::listener
 {
 	struct acceptor;
 
@@ -35,5 +38,3 @@ struct listener
 	listener(const std::string &options);
 	~listener() noexcept;
 };
-
-} // namespace ircd

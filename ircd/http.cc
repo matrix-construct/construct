@@ -21,28 +21,34 @@
 
 #include <ircd/spirit.h>
 
-namespace ircd {
-namespace http {
+namespace ircd::http
+{
+	namespace spirit = boost::spirit;
+	namespace qi = spirit::qi;
+	namespace ascii = qi::ascii;
 
-namespace spirit = boost::spirit;
-namespace qi = spirit::qi;
-namespace ascii = qi::ascii;
+	using spirit::unused_type;
 
-using spirit::unused_type;
+	using qi::lit;
+	using qi::string;
+	using qi::char_;
+	using qi::short_;
+	using qi::int_;
+	using qi::long_;
+	using qi::repeat;
+	using qi::omit;
+	using qi::raw;
+	using qi::attr;
+	using qi::eps;
 
-using qi::lit;
-using qi::string;
-using qi::char_;
-using qi::short_;
-using qi::int_;
-using qi::long_;
-using qi::repeat;
-using qi::omit;
-using qi::raw;
-using qi::attr;
-using qi::eps;
+	template<class it, class top = unused_type> struct grammar;
+	struct parser extern const parser;
 
-std::map<code, string_view> reason
+	size_t printed_size(const std::initializer_list<line::header> &headers);
+	size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
+}
+
+std::map<ircd::http::code, ircd::string_view> ircd::http::reason
 {
 	{ code::CONTINUE,                            "Continue"                                        },
 	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"                             },
@@ -82,9 +88,6 @@ std::map<code, string_view> reason
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
 };
 
-} // namespace http
-} // namespace ircd
-
 BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::http::line::request,
@@ -117,12 +120,9 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::http::query::second),  second )
 )
 
-namespace ircd {
-namespace http {
-
 template<class it,
-         class top = unused_type>
-struct grammar
+         class top>
+struct ircd::http::grammar
 :qi::grammar<it, top>
 ,parse::grammar
 {
@@ -218,20 +218,14 @@ struct grammar
 	{}
 };
 
-struct parser
+struct ircd::http::parser
 :grammar<const char *, unused_type>
 {
 	static size_t content_length(const string_view &val);
 
 	parser(): grammar { grammar::ws, "http.request" } {}
 }
-const parser;
-
-size_t printed_size(const std::initializer_list<line::header> &headers);
-size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
-
-} // namespace http
-} // namespace ircd
+const ircd::http::parser;
 
 size_t
 ircd::http::print(char *const &buf,

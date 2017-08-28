@@ -22,10 +22,14 @@
 #pragma once
 #define HAVE_IRCD_CTX_SHARED_STATE_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	struct shared_state_base;
+	template<class T = void> struct shared_state;
+	template<> struct shared_state<void>;
+}
 
-struct shared_state_base
+struct ircd::ctx::shared_state_base
 {
 	dock cond;
 	std::exception_ptr eptr;
@@ -34,8 +38,8 @@ struct shared_state_base
 	void reset();
 };
 
-template<class T = void>
-struct shared_state
+template<class T>
+struct ircd::ctx::shared_state
 :shared_state_base
 ,std::enable_shared_from_this<shared_state<T>>
 {
@@ -50,7 +54,7 @@ struct shared_state
 };
 
 template<>
-struct shared_state<void>
+struct ircd::ctx::shared_state<void>
 :shared_state_base
 ,std::enable_shared_from_this<shared_state<void>>
 {
@@ -60,41 +64,37 @@ struct shared_state<void>
 	std::shared_ptr<shared_state<void>> share();
 };
 
-
-inline std::shared_ptr<shared_state<void>>
-shared_state<void>::share()
+inline std::shared_ptr<ircd::ctx::shared_state<void>>
+ircd::ctx::shared_state<void>::share()
 {
 	return this->shared_from_this();
 }
 
 template<class T>
-std::shared_ptr<shared_state<T>>
-shared_state<T>::share()
+std::shared_ptr<ircd::ctx::shared_state<T>>
+ircd::ctx::shared_state<T>::share()
 {
 	return this->shared_from_this();
 }
 
-inline std::shared_ptr<const shared_state<void>>
-shared_state<void>::share()
+inline std::shared_ptr<const ircd::ctx::shared_state<void>>
+ircd::ctx::shared_state<void>::share()
 const
 {
 	return this->shared_from_this();
 }
 
 template<class T>
-std::shared_ptr<const shared_state<T>>
-shared_state<T>::share()
+std::shared_ptr<const ircd::ctx::shared_state<T>>
+ircd::ctx::shared_state<T>::share()
 const
 {
 	return this->shared_from_this();
 }
 
 inline void
-shared_state_base::reset()
+ircd::ctx::shared_state_base::reset()
 {
 	eptr = nullptr;
 	finished = false;
 }
-
-} // namespace ctx
-} // namespace ircd

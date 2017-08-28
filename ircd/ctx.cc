@@ -27,10 +27,7 @@
 // (internal)
 //
 
-namespace ircd {
-namespace ctx  {
-
-struct ctx
+struct ircd::ctx::ctx
 {
 	using error_code = boost::system::error_code;
 
@@ -69,9 +66,6 @@ struct ctx
 	ctx(ctx &&) noexcept = delete;
 	ctx(const ctx &) = delete;
 };
-
-} // namespace ctx
-} // namespace ircd
 
 decltype(ircd::ctx::ctx::id_ctr)
 ircd::ctx::ctx::id_ctr
@@ -619,11 +613,22 @@ catch(const std::exception &e)
 // ctx_prof.h
 //
 
-namespace ircd {
-namespace ctx  {
-namespace prof {
+namespace ircd::ctx::prof
+{
+	time_point cur_slice_start;     // Time slice state
 
-struct settings settings
+	size_t stack_usage_here(const ctx &) __attribute__((noinline));
+	void check_stack();
+	void check_slice();
+	void slice_start();
+
+	void handle_cur_continue();
+	void handle_cur_yield();
+	void handle_cur_leave();
+	void handle_cur_enter();
+}
+
+struct ircd::ctx::prof::settings ircd::ctx::prof::settings
 {
 	0.46,        // stack_usage_warning
 	0.67,        // stack_usage_assertion
@@ -632,22 +637,6 @@ struct settings settings
 	0us,         // slice_interrupt
 	0us,         // slice_assertion
 };
-
-time_point cur_slice_start;     // Time slice state
-
-size_t stack_usage_here(const ctx &) __attribute__((noinline));
-void check_stack();
-void check_slice();
-void slice_start();
-
-void handle_cur_continue();
-void handle_cur_yield();
-void handle_cur_leave();
-void handle_cur_enter();
-
-} // namespace prof
-} // namespace ctx
-} // namespace ircd
 
 void
 ircd::ctx::prof::mark(const event &e)
@@ -747,25 +736,20 @@ ircd::ctx::prof::stack_usage_here(const ctx &ctx)
 // ctx_ole.h
 //
 
-namespace ircd {
-namespace ctx  {
-namespace ole  {
+namespace ircd::ctx::ole
+{
+	using closure = std::function<void () noexcept>;
 
-using closure = std::function<void () noexcept>;
+	std::mutex mutex;
+	std::condition_variable cond;
+	std::deque<closure> queue;
+	bool interruption;
+	std::thread *thread;
 
-std::mutex mutex;
-std::condition_variable cond;
-std::deque<closure> queue;
-bool interruption;
-std::thread *thread;
-
-closure pop();
-void worker() noexcept;
-void push(closure &&);
-
-} // namespace ole
-} // namespace ctx
-} // namespace ircd
+	closure pop();
+	void worker() noexcept;
+	void push(closure &&);
+}
 
 ircd::ctx::ole::init::init()
 {

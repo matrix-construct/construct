@@ -22,16 +22,54 @@
 #pragma once
 #define HAVE_IRCD_MODS_H
 
-namespace ircd {
-namespace mods {
+namespace ircd::mods
+{
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, filesystem_error)
+	IRCD_EXCEPTION(error, invalid_export)
+	IRCD_EXCEPTION(error, expired_symbol)
+	IRCD_EXCEPTION(error, undefined_symbol)
 
-IRCD_EXCEPTION(ircd::error, error)
-IRCD_EXCEPTION(error, filesystem_error)
-IRCD_EXCEPTION(error, invalid_export)
-IRCD_EXCEPTION(error, expired_symbol)
-IRCD_EXCEPTION(error, undefined_symbol)
+	struct mod;
+	struct module;
+	struct sym_ptr;
+	template<class T> struct import;
+	template<class T> struct import_shared;
+	struct paths extern paths;
 
-struct paths
+	std::string demangle(const std::string &symbol);
+	std::string postfixed(const std::string &name);
+	std::string unpostfixed(const std::string &name);
+
+	std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
+	std::vector<std::string> symbols(const std::string &fullpath);
+	std::vector<std::string> sections(const std::string &fullpath);
+
+	// Find module names where symbol resides
+	bool has_symbol(const std::string &name, const std::string &symbol);
+	std::vector<std::string> find_symbol(const std::string &symbol);
+
+	// returns dir/name of first dir containing 'name' (and this will be a loadable module)
+	// Unlike libltdl, the reason each individual candidate failed is presented in a vector.
+	std::string search(const std::string &name, std::vector<std::string> &why);
+	std::string search(const std::string &name);
+
+	// Potential modules available to load
+	std::forward_list<std::string> available();
+	bool available(const std::string &name);
+	bool loaded(const std::string &name);
+}
+
+// Bring struct module into main ircd::
+namespace ircd
+{
+	using mods::module;
+	using mods::import;
+	using mods::import_shared;
+	using mods::demangle;
+}
+
+struct ircd::mods::paths
 :std::vector<std::string>
 {
 	bool added(const std::string &dir) const;
@@ -41,11 +79,9 @@ struct paths
 	bool add(const std::string &dir);
 
 	paths();
-}
-extern paths;
+};
 
-struct mod;
-struct module
+struct ircd::mods::module
 :std::shared_ptr<mod>
 {
 	std::string name() const;
@@ -67,10 +103,13 @@ struct module
 	~module() noexcept;
 };
 
-template<> const uint8_t *module::ptr<const uint8_t>(const std::string &name) const;
-template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
+namespace ircd::mods
+{
+	template<> const uint8_t *module::ptr<const uint8_t>(const std::string &name) const;
+	template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
+}
 
-class sym_ptr
+class ircd::mods::sym_ptr
 :std::weak_ptr<mod>
 {
 	void *ptr;
@@ -93,7 +132,7 @@ class sym_ptr
 };
 
 template<class T>
-struct import
+struct ircd::mods::import
 :sym_ptr
 {
 	template<class... args>
@@ -114,7 +153,7 @@ struct import
 };
 
 template<class T>
-struct import_shared
+struct ircd::mods::import_shared
 :import<std::shared_ptr<T>>
 ,std::shared_ptr<T>
 {
@@ -128,42 +167,6 @@ struct import_shared
 
 	import_shared(const std::string &modname, const std::string &symname);
 };
-
-
-std::string demangle(const std::string &symbol);
-
-std::string postfixed(const std::string &name);
-std::string unpostfixed(const std::string &name);
-
-std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
-std::vector<std::string> symbols(const std::string &fullpath);
-std::vector<std::string> sections(const std::string &fullpath);
-
-// Find module names where symbol resides
-bool has_symbol(const std::string &name, const std::string &symbol);
-std::vector<std::string> find_symbol(const std::string &symbol);
-
-// returns dir/name of first dir containing 'name' (and this will be a loadable module)
-// Unlike libltdl, the reason each individual candidate failed is presented in a vector.
-std::string search(const std::string &name, std::vector<std::string> &why);
-std::string search(const std::string &name);
-
-// Potential modules available to load
-std::forward_list<std::string> available();
-bool available(const std::string &name);
-bool loaded(const std::string &name);
-
-} // namespace mods
-} // namespace ircd
-
-namespace ircd {
-
-using mods::module;                              // Bring struct module into main ircd::
-using mods::import;
-using mods::import_shared;
-using mods::demangle;
-
-} // namespace ircd
 
 template<class T>
 ircd::mods::import_shared<T>::import_shared(const std::string &modname,

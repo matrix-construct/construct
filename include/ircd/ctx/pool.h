@@ -22,10 +22,12 @@
 #pragma once
 #define HAVE_IRCD_CTX_POOL_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	struct pool;
+}
 
-struct pool
+struct ircd::ctx::pool
 {
 	using closure = std::function<void ()>;
 
@@ -71,9 +73,9 @@ struct pool
 
 template<class F,
          class... A>
-future_value<F, A...>
-pool::async(F&& f,
-            A&&... a)
+ircd::ctx::future_value<F, A...>
+ircd::ctx::pool::async(F&& f,
+                       A&&... a)
 {
 	using R = typename std::result_of<F (A...)>::type;
 
@@ -90,9 +92,9 @@ pool::async(F&& f,
 
 template<class F,
          class... A>
-future_void<F, A...>
-pool::async(F&& f,
-            A&&... a)
+ircd::ctx::future_void<F, A...>
+ircd::ctx::pool::async(F&& f,
+                       A&&... a)
 {
 	using R = typename std::result_of<F (A...)>::type;
 
@@ -107,6 +109,3 @@ pool::async(F&& f,
 
 	return future<R>(*p);
 }
-
-} // namespace ctx
-} // namespace ircd

@@ -23,10 +23,12 @@
 #pragma once
 #define HAVE_IRCD_PARAMS_H
 
-namespace ircd {
-inline namespace util {
+namespace ircd::util
+{
+	struct params;
+}
 
-class params
+class ircd::util::params
 {
 	string_view in;
 	const char *sep;
@@ -48,9 +50,6 @@ class params
 	       const char *const &sep,
 	       const std::initializer_list<const char *> &names = {});
 };
-
-} // namespace util
-} // namespace ircd
 
 inline
 ircd::util::params::params(const string_view &in,

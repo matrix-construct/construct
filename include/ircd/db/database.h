@@ -23,9 +23,7 @@
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_H
 
-namespace ircd {
-namespace db   {
-
+//
 // Database instance
 //
 // There can be only one instance of this class for each database, so it is
@@ -38,7 +36,19 @@ namespace db   {
 // The instance registers and deregisters itself in a global set of open
 // databases and can be found that way if necessary.
 //
-struct database
+
+namespace ircd::db
+{
+	struct database;
+
+	template<class R = uint64_t> R property(database &, const string_view &name);
+	template<> uint64_t property(database &, const string_view &name);
+	const std::string &name(const database &);
+	uint64_t sequence(const database &);             // Latest sequence number
+	void sync(database &);                           // Sync the write log (all columns)
+}
+
+struct ircd::db::database
 :std::enable_shared_from_this<struct database>
 {
 	struct descriptor;
@@ -90,9 +100,19 @@ struct database
 	static database &get(column &);
 };
 
+namespace ircd::db
+{
+	std::shared_ptr<const database::column> shared_from(const database::column &);
+	std::shared_ptr<database::column> shared_from(database::column &);
+	const std::string &name(const database::column &);
+	uint64_t sequence(const database::snapshot &);   // Sequence of a snapshot
+	uint32_t id(const database::column &);
+	void drop(database::column &);                   // Request to erase column from db
+}
+
 // Descriptor of a column when opening database. Database must be opened with
 // a consistent set of descriptors describing what will be found upon opening.
-struct database::descriptor
+struct ircd::db::database::descriptor
 {
 	using typing = std::pair<std::type_index, std::type_index>;
 
@@ -104,7 +124,7 @@ struct database::descriptor
 };
 
 // options <-> string
-struct database::options
+struct ircd::db::database::options
 :std::string
 {
 	struct map;
@@ -129,7 +149,7 @@ struct database::options
 };
 
 // options <-> map
-struct database::options::map
+struct ircd::db::database::options::map
 :std::unordered_map<std::string, std::string>
 {
 	// Output of options structures from map
@@ -147,7 +167,7 @@ struct database::options::map
 	{}
 };
 
-struct database::snapshot
+struct ircd::db::database::snapshot
 {
 	std::shared_ptr<const rocksdb::Snapshot> s;
 
@@ -161,25 +181,3 @@ struct database::snapshot
 	snapshot() = default;
 	~snapshot() noexcept;
 };
-
-// Linkage to get shared_ptr of database::column
-std::shared_ptr<const database::column> shared_from(const database::column &);
-std::shared_ptr<database::column> shared_from(database::column &);
-
-// Get property data from all columns in DB. Only integer properties supported.
-template<class R = uint64_t> R property(database &, const string_view &name);
-template<> uint64_t property(database &, const string_view &name);
-
-const std::string &name(const database &);
-const std::string &name(const database::column &);
-
-uint64_t sequence(const database::snapshot &);   // Sequence of a snapshot
-uint64_t sequence(const database &);             // Latest sequence number
-
-uint32_t id(const database::column &);
-void drop(database::column &);                   // Request to erase column from db
-
-void sync(database &);                           // Sync the write log (all columns)
-
-} // namespace db
-} // namespace ircd

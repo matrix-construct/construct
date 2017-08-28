@@ -23,29 +23,28 @@
 #pragma once
 #define HAVE_IRCD_INFO_H
 
-namespace ircd {
-namespace info {
+namespace ircd::info
+{
+	struct line;
 
-struct line
+	extern const std::vector<info::line> myinfo;
+	extern const std::vector<std::string> credits;
+	extern const std::string serno;
+	extern const std::string version;
+	extern const char *const ircd_version;             // legacy
+
+	extern const time_t configured_time;
+	extern const time_t compiled_time;
+	extern const time_t startup_time;
+	extern const std::string compiled;
+	extern const std::string configured;
+	extern const std::string startup;
+}
+
+struct ircd::info::line
 {
 	std::string key;
 	std::string valstr;
 	uint64_t valnum;
 	std::string desc;
 };
-
-extern const std::vector<info::line> myinfo;
-extern const std::vector<std::string> credits;
-extern const std::string serno;
-extern const std::string version;
-extern const char *const ircd_version;             // legacy
-
-extern const time_t configured_time;
-extern const time_t compiled_time;
-extern const time_t startup_time;
-extern const std::string compiled;
-extern const std::string configured;
-extern const std::string startup;
-
-} // namespace info
-} // namespace ircd

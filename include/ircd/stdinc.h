@@ -132,11 +132,10 @@ extern "C" {
 #define AFGP(a, b)      __attribute__((format(gnu_printf, a, b)))
 
 // Experimental std::string_view
-namespace std {
-
-using experimental::string_view;
-
-} // namespace std
+namespace std
+{
+	using experimental::string_view;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -145,42 +144,38 @@ using experimental::string_view;
 
 // Boost is not exposed unless explicitly included by a definition file. This
 // is a major improvement of project compile time.
-namespace boost {
-namespace asio  {
-
-struct io_service;         // Allow a reference to an ios to be passed to ircd
-struct const_buffer;       // ircd/buffer.h
-struct mutable_buffer;     // ircd/buffer.h
-
-} // namespace asio
-} // namespace boost
+namespace boost::asio
+{
+	struct io_service;       // Allow a reference to an ios to be passed to ircd
+	struct const_buffer;     // ircd/buffer.h
+	struct mutable_buffer;   // ircd/buffer.h
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Items imported into our namespace.
 //
 
-namespace ircd {
-
-using std::nullptr_t;
-using std::begin;
-using std::end;
-using std::get;
-using std::chrono::seconds;
-using std::chrono::milliseconds;
-using std::chrono::microseconds;
-using std::chrono::nanoseconds;
-using std::chrono::duration_cast;
-using std::static_pointer_cast;
-using std::dynamic_pointer_cast;
-using std::const_pointer_cast;
-using ostream = std::ostream;
-namespace ph = std::placeholders;
-namespace asio = boost::asio;
-using namespace std::string_literals;
-using namespace std::literals::chrono_literals;
-
-} // namespace ircd
+namespace ircd
+{
+	using std::nullptr_t;
+	using std::begin;
+	using std::end;
+	using std::get;
+	using std::chrono::seconds;
+	using std::chrono::milliseconds;
+	using std::chrono::microseconds;
+	using std::chrono::nanoseconds;
+	using std::chrono::duration_cast;
+	using std::static_pointer_cast;
+	using std::dynamic_pointer_cast;
+	using std::const_pointer_cast;
+	using ostream = std::ostream;
+	namespace ph = std::placeholders;
+	namespace asio = boost::asio;
+	using namespace std::string_literals;
+	using namespace std::literals::chrono_literals;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -188,15 +183,14 @@ using namespace std::literals::chrono_literals;
 //
 
 // Unsorted section
-namespace ircd {
+namespace ircd
+{
+	extern boost::asio::io_service *ios;
+	constexpr size_t BUFSIZE { 512 };
 
-extern boost::asio::io_service *ios;
-constexpr size_t BUFSIZE { 512 };
-
-struct socket;
-struct client;
-
-} // namespace ircd
+	struct socket;
+	struct client;
+}
 
 #include "util.h"
 #include "rand.h"

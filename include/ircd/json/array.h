@@ -22,9 +22,6 @@
 #pragma once
 #define HAVE_IRCD_JSON_ARRAY_H
 
-namespace ircd {
-namespace json {
-
 // ircd::json::array is the rank1 analog to ircd::json::object. It accepts
 // queries with numerical indexing. The same parsing approach is used in
 // ircd::json::object and that is important to note here: iterating this array
@@ -34,7 +31,7 @@ namespace json {
 // array from the beginning on every single iteration. Instead, use the
 // provided iterator object.
 //
-struct array
+struct ircd::json::array
 :string_view
 {
 	struct const_iterator;
@@ -65,7 +62,7 @@ struct array
 	friend std::ostream &operator<<(std::ostream &, const array &);
 };
 
-struct array::const_iterator
+struct ircd::json::array::const_iterator
 {
 	using value_type = const string_view;
 	using pointer = value_type *;
@@ -98,9 +95,6 @@ struct array::const_iterator
 	friend bool operator<(const const_iterator &, const const_iterator &);
 	friend bool operator>(const const_iterator &, const const_iterator &);
 };
-
-} // namespace json
-} // namespace ircd
 
 inline ircd::string_view
 ircd::json::array::operator[](const size_t &i)

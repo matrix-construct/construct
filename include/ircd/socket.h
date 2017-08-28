@@ -27,29 +27,37 @@
 #include <boost/asio/steady_timer.hpp>
 #include "ctx/continuation.h"
 
-namespace ircd {
+namespace ircd
+{
+	namespace asio = boost::asio;
+	namespace ip = asio::ip;
 
-namespace asio = boost::asio;
-namespace ip = asio::ip;
+	using boost::system::error_code;
+	using asio::steady_timer;
 
-using boost::system::error_code;
-using asio::steady_timer;
+	IRCD_EXCEPTION(error, nxdomain)
 
-IRCD_EXCEPTION(error, nxdomain)
+	struct socket;
 
-extern asio::ssl::context sslv23_client;
+	extern asio::ssl::context sslv23_client;
 
-std::string string(const ip::address &);
-ip::address address(const ip::tcp::endpoint &);
-std::string hostaddr(const ip::tcp::endpoint &);
-uint16_t port(const ip::tcp::endpoint &);
+	std::string string(const ip::address &);
+	ip::address address(const ip::tcp::endpoint &);
+	std::string hostaddr(const ip::tcp::endpoint &);
+	uint16_t port(const ip::tcp::endpoint &);
 
-} // namespace ircd
+	template<class iov> size_t write(socket &, const iov &);               // write_all
+	template<class iov> size_t write(socket &, iov &);                     // write_some
+	size_t write(socket &, const char *const &buf, const size_t &size);
+	size_t write(socket &, const string_view &);
 
-namespace ircd {
+	template<class iov> size_t read(socket &, const iov &);                // read_all
+	template<class iov> size_t read(socket &, iov &);                      // read_some
+	size_t read(socket &, char *const &buf, const size_t &max);
+}
 
-struct socket
-:std::enable_shared_from_this<socket>
+struct ircd::socket
+:std::enable_shared_from_this<ircd::socket>
 {
 	struct init;
 	struct stat;
@@ -137,7 +145,7 @@ struct socket
 	~socket() noexcept;
 };
 
-class socket::scope_timeout
+class ircd::socket::scope_timeout
 {
 	socket *s;
 
@@ -149,7 +157,7 @@ class socket::scope_timeout
 	~scope_timeout() noexcept;
 };
 
-class socket::io
+class ircd::socket::io
 {
 	struct socket &sock;
 	struct stat &stat;
@@ -161,26 +169,16 @@ class socket::io
 	io(struct socket &, struct stat &, const std::function<size_t ()> &closure);
 };
 
-struct socket::init
+struct ircd::socket::init
 {
 	init();
 	~init() noexcept;
 };
 
-template<class iov> size_t write(socket &, const iov &);               // write_all
-template<class iov> size_t write(socket &, iov &);                     // write_some
-size_t write(socket &, const char *const &buf, const size_t &size);
-size_t write(socket &, const string_view &);
-
-template<class iov> size_t read(socket &, const iov &);                // read_all
-template<class iov> size_t read(socket &, iov &);                      // read_some
-size_t read(socket &, char *const &buf, const size_t &max);
-
-
 template<class iov>
 size_t
-read(socket &socket,
-     iov &bufs)
+ircd::read(socket &socket,
+           iov &bufs)
 {
 	const auto read(socket.read_some(bufs));
 	const auto consumed(consume(bufs, read));
@@ -190,16 +188,16 @@ read(socket &socket,
 
 template<class iov>
 size_t
-read(socket &socket,
-     const iov &bufs)
+ircd::read(socket &socket,
+           const iov &bufs)
 {
 	return socket.read(bufs);
 }
 
 template<class iov>
 size_t
-write(socket &socket,
-      iov &bufs)
+ircd::write(socket &socket,
+            iov &bufs)
 {
 	const auto wrote(socket.write_some(bufs));
 	const auto consumed(consume(bufs, wrote));
@@ -209,8 +207,8 @@ write(socket &socket,
 
 template<class iov>
 size_t
-write(socket &socket,
-      const iov &bufs)
+ircd::write(socket &socket,
+            const iov &bufs)
 {
 	const auto wrote(socket.write(bufs));
 	assert(wrote == size(bufs));
@@ -218,9 +216,9 @@ write(socket &socket,
 }
 
 inline
-socket::io::io(struct socket &sock,
-               struct stat &stat,
-               const std::function<size_t ()> &closure)
+ircd::socket::io::io(struct socket &sock,
+                     struct stat &stat,
+                     const std::function<size_t ()> &closure)
 :sock{sock}
 ,stat{stat}
 ,bytes{closure()}
@@ -230,7 +228,7 @@ socket::io::io(struct socket &sock,
 }
 
 inline
-socket::io::operator size_t()
+ircd::socket::io::operator size_t()
 const
 {
 	return bytes;
@@ -238,7 +236,7 @@ const
 
 template<class iov>
 auto
-socket::write(const iov &bufs)
+ircd::socket::write(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
@@ -248,8 +246,8 @@ socket::write(const iov &bufs)
 
 template<class iov>
 auto
-socket::write(const iov &bufs,
-              error_code &ec)
+ircd::socket::write(const iov &bufs,
+                    error_code &ec)
 {
 	return io(*this, out, [&]
 	{
@@ -259,7 +257,7 @@ socket::write(const iov &bufs,
 
 template<class iov>
 auto
-socket::write_some(const iov &bufs)
+ircd::socket::write_some(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
@@ -269,8 +267,8 @@ socket::write_some(const iov &bufs)
 
 template<class iov>
 auto
-socket::write_some(const iov &bufs,
-                   error_code &ec)
+ircd::socket::write_some(const iov &bufs,
+                         error_code &ec)
 {
 	return io(*this, out, [&]
 	{
@@ -280,7 +278,7 @@ socket::write_some(const iov &bufs,
 
 template<class iov>
 auto
-socket::read(const iov &bufs)
+ircd::socket::read(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
@@ -295,8 +293,8 @@ socket::read(const iov &bufs)
 
 template<class iov>
 auto
-socket::read(const iov &bufs,
-             error_code &ec)
+ircd::socket::read(const iov &bufs,
+                   error_code &ec)
 {
 	return io(*this, in, [&]
 	{
@@ -306,7 +304,7 @@ socket::read(const iov &bufs,
 
 template<class iov>
 auto
-socket::read_some(const iov &bufs)
+ircd::socket::read_some(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
@@ -321,8 +319,8 @@ socket::read_some(const iov &bufs)
 
 template<class iov>
 auto
-socket::read_some(const iov &bufs,
-                  error_code &ec)
+ircd::socket::read_some(const iov &bufs,
+                        error_code &ec)
 {
 	return io(*this, in, [&]
 	{
@@ -332,7 +330,7 @@ socket::read_some(const iov &bufs,
 
 template<class duration>
 void
-socket::set_timeout(const duration &t)
+ircd::socket::set_timeout(const duration &t)
 {
 	if(t < duration(0))
 		return;
@@ -343,8 +341,8 @@ socket::set_timeout(const duration &t)
 
 template<class duration>
 void
-socket::set_timeout(const duration &t,
-                    handler h)
+ircd::socket::set_timeout(const duration &t,
+                          handler h)
 {
 	if(t < duration(0))
 		return;
@@ -352,8 +350,6 @@ socket::set_timeout(const duration &t,
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(h));
 }
-
-} // namespace ircd
 
 inline uint16_t
 ircd::port(const ip::tcp::endpoint &ep)

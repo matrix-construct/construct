@@ -46,21 +46,20 @@
 // to make a good case for an offload that doesn't hurt more than it helps. And when it hurts,
 // it hurts _everything_.
 //
-namespace ircd {
-namespace ctx  {
-namespace ole  {
+namespace ircd::ctx::ole
+{
+	struct init;
 
-void offload(const std::function<void ()> &);
+	void offload(const std::function<void ()> &);
+}
 
-struct init
+namespace ircd::ctx
+{
+	using ole::offload;
+}
+
+struct ircd::ctx::ole::init
 {
 	init();
 	~init() noexcept;
 };
-
-} // namespace ole
-
-using ole::offload;
-
-} // namespace ctx
-} // namespace ircd

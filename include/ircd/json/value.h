@@ -22,16 +22,13 @@
 #pragma once
 #define HAVE_IRCD_JSON_VALUE_H
 
-namespace ircd {
-namespace json {
-
 // The ircd::json::value is used if we have to keep state in machine-form
 // rather than directly computing JSON strings. This class ends up being useful
 // for recursive initializer_lists to compose JSON from machine values. It
 // is lightweight, consuming the space of two pointers which is the same size
 // as a string_view.
 //
-struct value
+struct ircd::json::value
 {
 	union // xxx std::variant
 	{
@@ -59,8 +56,8 @@ struct value
 	value(const string_view &sv, const enum type &);
 	value(const string_view &sv);
 	value(const char *const &s);
-	value(const struct index *const &);    // alloc = false
-	value(std::unique_ptr<struct index>);  // alloc = true
+	value(const index *const &);    // alloc = false
+	value(std::unique_ptr<index>);  // alloc = true
 	value();
 	value(value &&) noexcept;
 	value(const value &) = delete;
@@ -77,17 +74,18 @@ struct value
 	friend bool operator>(const value &a, const value &b);
 	friend std::ostream &operator<<(std::ostream &, const value &);
 };
-template<> value::value(const double &floating);
-template<> value::value(const int64_t &integer);
-template<> value::value(const float &floating);
-template<> value::value(const int32_t &integer);
-template<> value::value(const int16_t &integer);
-template<> value::value(const std::string &str);
 
-static_assert(sizeof(value) == 16, "");
+namespace ircd::json
+{
+	template<> value::value(const double &floating);
+	template<> value::value(const int64_t &integer);
+	template<> value::value(const float &floating);
+	template<> value::value(const int32_t &integer);
+	template<> value::value(const int16_t &integer);
+	template<> value::value(const std::string &str);
+}
 
-} // namespace json
-} // namespace ircd
+static_assert(sizeof(ircd::json::value) == 16, "");
 
 inline
 ircd::json::value::value()
@@ -111,7 +109,7 @@ ircd::json::value::value(const string_view &sv,
 {}
 
 inline
-ircd::json::value::value(const struct index *const &object)
+ircd::json::value::value(const index *const &object)
 :object{object}
 ,len{0}
 ,type{OBJECT}
@@ -121,7 +119,7 @@ ircd::json::value::value(const struct index *const &object)
 {}
 
 inline
-ircd::json::value::value(std::unique_ptr<struct index> object)
+ircd::json::value::value(std::unique_ptr<index> object)
 :object{object.get()}
 ,len{0}
 ,type{OBJECT}

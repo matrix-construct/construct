@@ -25,57 +25,56 @@
 #pragma once
 #define HAVE_IRCD_CTX_CTX_H
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
 // low-level ctx interface exposure
 //
+namespace ircd::ctx
+{
+	struct ctx;
 
-namespace ircd {
-namespace ctx  {
+	IRCD_OVERLOAD(threadsafe)
 
-struct ctx;
+	const uint64_t &id(const ctx &);             // Unique ID for context
+	string_view name(const ctx &);               // User's optional label for context
+	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
+	bool finished(const ctx &);                  // Context function returned (or exception).
+	bool started(const ctx &);                   // Context was ever entered.
 
-IRCD_OVERLOAD(threadsafe)
+	void interrupt(ctx &);                       // Interrupt the context for termination.
+	void strand(ctx &, std::function<void ()>);  // Post function to context strand
+	void notify(ctx &, threadsafe_t);            // Notify context with threadsafety.
+	bool notify(ctx &);                          // Queue a context switch
+	void yield(ctx &);                           // Direct context switch
+}
 
-const uint64_t &id(const ctx &);                 // Unique ID for context
-string_view name(const ctx &);                   // User's optional label for context
-const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
-bool finished(const ctx &);                      // Context function returned (or exception).
-bool started(const ctx &);                       // Context was ever entered.
-
-void interrupt(ctx &);                           // Interrupt the context for termination.
-void strand(ctx &, std::function<void ()>);      // Post function to context strand
-void notify(ctx &, threadsafe_t);                // Notify context with threadsafety.
-bool notify(ctx &);                              // Queue a context switch (only library ppl need this)
-void yield(ctx &);                               // Direct context switch (only library ppl need this)
-
+///////////////////////////////////////////////////////////////////////////////
 //
 // "this_context" interface relevant to the currently running context
 //
+namespace ircd::ctx
+{
+	extern __thread struct ctx *current;         // Always set to the currently running context or null
 
-extern __thread struct ctx *current;             // Always set to the currently running context or null
+	ctx &cur();                                  // Convenience for *current (try to use this instead)
+	void yield();                                // Allow other contexts to run before returning.
+	void wait();                                 // Returns when context notified.
 
-ctx &cur();                                      // Convenience for *current (try to use this instead)
-void yield();                                    // Allow other contexts to run before returning.
-void wait();                                     // Returns when context notified.
+	// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
+	microseconds wait(const microseconds &, const std::nothrow_t &);
+	template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
+	template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
 
-// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
-microseconds wait(const microseconds &, const std::nothrow_t &);
-template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
-template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
+	// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
+	bool wait_until(const time_point &tp, const std::nothrow_t &);
+	template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
+	template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
 
-// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
-bool wait_until(const time_point &tp, const std::nothrow_t &);
-template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
-template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
-
-// Ignores notes. Throws if interrupted.
-void sleep_until(const time_point &tp);
-template<class duration> void sleep(const duration &);
-void sleep(const int &secs);
-
-} // namespace ctx
-} // namespace ircd
+	// Ignores notes. Throws if interrupted.
+	void sleep_until(const time_point &tp);
+	template<class duration> void sleep(const duration &);
+	void sleep(const int &secs);
+}
 
 inline void
 ircd::ctx::sleep(const int &secs)

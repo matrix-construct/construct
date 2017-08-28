@@ -22,33 +22,41 @@
 #pragma once
 #define HAVE_IRCD_CTX_ASYNC_H
 
-namespace ircd {
-namespace ctx  {
-
-template<class F,
-         class... A>
-constexpr bool
-is_void_result()
+namespace ircd::ctx
 {
-	return std::is_void<typename std::result_of<F (A...)>::type>::value;
+	template<class F,
+	         class... A>
+	constexpr bool is_void_result();
+
+	template<class F,
+	         class... A>
+	using future_void = typename std::enable_if<is_void_result<F, A...>(), future<void>>::type;
+
+	template<class F,
+	         class... A>
+	using future_value = typename std::enable_if<!is_void_result<F, A...>(),
+	                     future<typename std::result_of<F (A...)>::type>>::type;
+
+	template<size_t stack_size = DEFAULT_STACK_SIZE,
+	         context::flags flags = (context::flags)0,
+	         class F,
+	         class... A>
+	future_value<F, A...> async(F&& f, A&&... a);
+
+	template<size_t stack_size = DEFAULT_STACK_SIZE,
+	         context::flags flags = context::flags(0),
+	         class F,
+	         class... A>
+	future_void<F, A...> async(F&& f, A&&... a);
 }
 
-template<class F,
-         class... A>
-using future_void = typename std::enable_if<is_void_result<F, A...>(), future<void>>::type;
-
-template<class F,
-         class... A>
-using future_value = typename std::enable_if<!is_void_result<F, A...>(),
-                     future<typename std::result_of<F (A...)>::type>>::type;
-
-template<size_t stack_size = DEFAULT_STACK_SIZE,
-         context::flags flags = (context::flags)0,
+template<size_t stack_size,
+         ircd::ctx::context::flags flags,
          class F,
          class... A>
-future_value<F, A...>
-async(F&& f,
-      A&&... a)
+ircd::ctx::future_value<F, A...>
+ircd::ctx::async(F&& f,
+                 A&&... a)
 {
 	using R = typename std::result_of<F (A...)>::type;
 
@@ -66,13 +74,13 @@ async(F&& f,
 	return ret;
 }
 
-template<size_t stack_size = DEFAULT_STACK_SIZE,
-         context::flags flags = context::flags(0),
+template<size_t stack_size,
+         ircd::ctx::context::flags flags,
          class F,
          class... A>
-future_void<F, A...>
-async(F&& f,
-      A&&... a)
+ircd::ctx::future_void<F, A...>
+ircd::ctx::async(F&& f,
+                 A&&... a)
 {
 	using R = typename std::result_of<F (A...)>::type;
 
@@ -91,5 +99,10 @@ async(F&& f,
 	return ret;
 }
 
-} // namespace ctx
-} // namespace ircd
+template<class F,
+         class... A>
+constexpr bool
+ircd::ctx::is_void_result()
+{
+	return std::is_void<typename std::result_of<F (A...)>::type>::value;
+}

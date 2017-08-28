@@ -22,17 +22,20 @@
 #pragma once
 #define HAVE_IRCD_CTX_PROMISE_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	IRCD_EXCEPTION(ircd::ctx::error, future_error)
+	IRCD_EXCEPTION(future_error, no_state)
+	IRCD_EXCEPTION(future_error, broken_promise)
+	IRCD_EXCEPTION(future_error, future_already_retrieved)
+	IRCD_EXCEPTION(future_error, promise_already_satisfied)
 
-IRCD_EXCEPTION(ircd::ctx::error, future_error)
-IRCD_EXCEPTION(future_error, no_state)
-IRCD_EXCEPTION(future_error, broken_promise)
-IRCD_EXCEPTION(future_error, future_already_retrieved)
-IRCD_EXCEPTION(future_error, promise_already_satisfied)
+	template<class T = void> class promise;
+	template<> class promise<void>;
+}
 
-template<class T = void>
-class promise
+template<class T>
+class ircd::ctx::promise
 {
 	std::shared_ptr<shared_state<T>> st;
 
@@ -62,7 +65,7 @@ class promise
 };
 
 template<>
-class promise<void>
+class ircd::ctx::promise<void>
 {
 	std::shared_ptr<shared_state<void>> st;
 
@@ -86,29 +89,28 @@ class promise<void>
 	~promise() noexcept;
 };
 
-
 inline
-promise<void>::promise():
+ircd::ctx::promise<void>::promise():
 st(std::make_shared<shared_state<void>>())
 {
 }
 
 template<class T>
-promise<T>::promise():
+ircd::ctx::promise<T>::promise():
 st(std::make_shared<shared_state<T>>())
 {
 }
 
 template<class T>
-promise<T>::promise(promise<T> &&o)
+ircd::ctx::promise<T>::promise(promise<T> &&o)
 noexcept:
 st(std::move(o.st))
 {
 }
 
 template<class T>
-promise<T> &
-promise<T>::operator=(promise<T> &&o)
+ircd::ctx::promise<T> &
+ircd::ctx::promise<T>::operator=(promise<T> &&o)
 noexcept
 {
 	st = std::move(o.st);
@@ -116,7 +118,7 @@ noexcept
 }
 
 inline
-promise<void>::~promise()
+ircd::ctx::promise<void>::~promise()
 noexcept
 {
 	if(valid() && !st->finished && !st.unique())
@@ -124,7 +126,7 @@ noexcept
 }
 
 template<class T>
-promise<T>::~promise()
+ircd::ctx::promise<T>::~promise()
 noexcept
 {
 	if(valid() && !st->finished && !st.unique())
@@ -132,7 +134,7 @@ noexcept
 }
 
 inline void
-promise<void>::reset()
+ircd::ctx::promise<void>::reset()
 {
 	if(valid())
 		st->reset();
@@ -140,7 +142,7 @@ promise<void>::reset()
 
 template<class T>
 void
-promise<T>::reset()
+ircd::ctx::promise<T>::reset()
 {
 	if(valid())
 		st->reset();
@@ -148,7 +150,7 @@ promise<T>::reset()
 
 template<class T>
 void
-promise<T>::set_value(T&& val)
+ircd::ctx::promise<T>::set_value(T&& val)
 {
 	st->val = std::move(val);
 	st->finished = true;
@@ -156,7 +158,7 @@ promise<T>::set_value(T&& val)
 }
 
 inline void
-promise<void>::set_value()
+ircd::ctx::promise<void>::set_value()
 {
 	st->finished = true;
 	st->cond.notify_all();
@@ -164,7 +166,7 @@ promise<void>::set_value()
 
 template<class T>
 void
-promise<T>::set_value(const T &val)
+ircd::ctx::promise<T>::set_value(const T &val)
 {
 	st->val = val;
 	st->finished = true;
@@ -172,7 +174,7 @@ promise<T>::set_value(const T &val)
 }
 
 inline void
-promise<void>::set_exception(std::exception_ptr eptr)
+ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
 	st->eptr = std::move(eptr);
 	st->finished = true;
@@ -181,12 +183,9 @@ promise<void>::set_exception(std::exception_ptr eptr)
 
 template<class T>
 void
-promise<T>::set_exception(std::exception_ptr eptr)
+ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
 	st->eptr = std::move(eptr);
 	st->finished = true;
 	st->cond.notify_all();
 }
-
-} // namespace ctx
-} // namespace ircd

@@ -34,21 +34,47 @@
 #pragma once
 #define HAVE_IRCD_LOGGER_H
 
-namespace ircd {
-
-const char *smalldate(const time_t &);
-
-} // namespace ircd
-
 // windows.h #define conflicts with our facility
 #ifdef HAVE_WINDOWS_H
 #undef ERROR
 #endif
 
-namespace ircd  {
-namespace log   {
+namespace ircd
+{
+	const char *smalldate(const time_t &);
+}
 
-enum facility
+namespace ircd::log
+{
+	enum facility :int;
+	const char *reflect(const facility &);
+
+	struct log;
+	struct console_quiet;
+
+	void slog(const facility &, const std::function<void (std::ostream &)> &);
+	void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
+	void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
+	void mark(const facility &, const char *const &msg = nullptr);
+	void mark(const char *const &msg = nullptr);
+
+	template<class... args> void critical(const char *const &fmt, args&&...);
+	template<class... args> void error(const char *const &fmt, args&&...);
+	template<class... args> void warning(const char *const &fmt, args&&...);
+	template<class... args> void notice(const char *const &fmt, args&&...);
+	template<class... args> void info(const char *const &fmt, args&&...);
+	template<class... args> void debug(const char *const &fmt, args&&...);
+
+	void flush();
+	void close();
+	void open();
+
+	void init();
+	void fini();
+}
+
+enum ircd::log::facility
+:int
 {
 	CRITICAL = 0,
 	ERROR    = 1,
@@ -59,14 +85,7 @@ enum facility
 	_NUM_
 };
 
-const char *reflect(const facility &);
-void slog(const facility &, const std::function<void (std::ostream &)> &);
-void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
-void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
-void mark(const facility &, const char *const &msg = nullptr);
-void mark(const char *const &msg = nullptr);
-
-class log
+class ircd::log::log
 {
 	std::string name;
 
@@ -84,28 +103,11 @@ class log
 	log(const std::string &name);
 };
 
-template<class... args> void critical(const char *const &fmt, args&&...);
-template<class... args> void error(const char *const &fmt, args&&...);
-template<class... args> void warning(const char *const &fmt, args&&...);
-template<class... args> void notice(const char *const &fmt, args&&...);
-template<class... args> void info(const char *const &fmt, args&&...);
-template<class... args> void debug(const char *const &fmt, args&&...);
-
-struct console_quiet
+struct ircd::log::console_quiet
 {
 	console_quiet(const bool &showmsg = true);
 	~console_quiet();
 };
-
-void flush();
-void close();
-void open();
-
-void init();
-void fini();
-
-} // namespace log
-} // namespace ircd
 
 template<class... args>
 void

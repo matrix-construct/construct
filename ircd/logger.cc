@@ -34,57 +34,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-using namespace ircd;
-
-namespace ircd {
-namespace log  {
-
-// Option toggles
-std::array<bool, num_of<facility>()> file_flush;
-std::array<bool, num_of<facility>()> console_flush;
-std::array<const char *, num_of<facility>()> console_ansi;
-
-// Runtime master switches
-std::array<bool, num_of<facility>()> file_out;
-std::array<bool, num_of<facility>()> console_out;
-std::array<bool, num_of<facility>()> console_err;
-
-// Suppression state (for struct console_quiet)
-std::array<bool, num_of<facility>()> quieted_out;
-std::array<bool, num_of<facility>()> quieted_err;
-
-// Logfile name and device
-std::array<const char *, num_of<facility>()> fname;
-std::array<std::ofstream, num_of<facility>()> file;
-
-/*
-ConfEntry conf_log_table[] =
+namespace ircd::log
 {
-	{ "file_critical",  CF_QSTRING, NULL, PATH_MAX, &fname[CRITICAL]  },
-	{ "file_error",     CF_QSTRING, NULL, PATH_MAX, &fname[ERROR]     },
-	{ "file_warning",   CF_QSTRING, NULL, PATH_MAX, &fname[WARNING]   },
-	{ "file_notice",    CF_QSTRING, NULL, PATH_MAX, &fname[NOTICE]    },
-	{ "file_info",      CF_QSTRING, NULL, PATH_MAX, &fname[INFO]      },
-	{ "file_debug",     CF_QSTRING, NULL, PATH_MAX, &fname[DEBUG]     },
-};
-*/
+	// Option toggles
+	std::array<bool, num_of<facility>()> file_flush;
+	std::array<bool, num_of<facility>()> console_flush;
+	std::array<const char *, num_of<facility>()> console_ansi;
 
-static void open(const facility &fac);
-static void prefix(const facility &fac, const char *const &date);
-static void suffix(const facility &fac);
+	// Runtime master switches
+	std::array<bool, num_of<facility>()> file_out;
+	std::array<bool, num_of<facility>()> console_out;
+	std::array<bool, num_of<facility>()> console_err;
 
-const auto main_thread_id
-{
-	std::this_thread::get_id()
-};
+	// Suppression state (for struct console_quiet)
+	std::array<bool, num_of<facility>()> quieted_out;
+	std::array<bool, num_of<facility>()> quieted_err;
 
-void thread_assertion();
+	// Logfile name and device
+	std::array<const char *, num_of<facility>()> fname;
+	std::array<std::ofstream, num_of<facility>()> file;
 
-} // namespace log
-} // namespace ircd
+	/*
+	ConfEntry conf_log_table[] =
+	{
+		{ "file_critical",  CF_QSTRING, NULL, PATH_MAX, &fname[CRITICAL]  },
+		{ "file_error",     CF_QSTRING, NULL, PATH_MAX, &fname[ERROR]     },
+		{ "file_warning",   CF_QSTRING, NULL, PATH_MAX, &fname[WARNING]   },
+		{ "file_notice",    CF_QSTRING, NULL, PATH_MAX, &fname[NOTICE]    },
+		{ "file_info",      CF_QSTRING, NULL, PATH_MAX, &fname[INFO]      },
+		{ "file_debug",     CF_QSTRING, NULL, PATH_MAX, &fname[DEBUG]     },
+	};
+	*/
+
+	static void open(const facility &fac);
+	static void prefix(const facility &fac, const char *const &date);
+	static void suffix(const facility &fac);
+
+	const auto main_thread_id
+	{
+		std::this_thread::get_id()
+	};
+
+	void thread_assertion();
+}
 
 void
-log::init()
+ircd::log::init()
 {
 	//TODO: XXX: config + cmd control + other fancy stuff
 
@@ -127,13 +122,13 @@ log::init()
 }
 
 void
-log::fini()
+ircd::log::fini()
 {
 	//remove_top_conf("log");
 }
 
 void
-log::open()
+ircd::log::open()
 {
 	for_each<facility>([](const facility &fac)
 	{
@@ -153,7 +148,7 @@ log::open()
 }
 
 void
-log::close()
+ircd::log::close()
 {
 	for_each<facility>([](const facility &fac)
 	{
@@ -163,7 +158,7 @@ log::close()
 }
 
 void
-log::flush()
+ircd::log::flush()
 {
 	for_each<facility>([](const facility &fac)
 	{
@@ -172,7 +167,7 @@ log::flush()
 }
 
 void
-log::open(const facility &fac)
+ircd::log::open(const facility &fac)
 try
 {
 	const auto &mode(std::ios::app);
@@ -189,7 +184,7 @@ catch(const std::exception &e)
 	throw;
 }
 
-log::console_quiet::console_quiet(const bool &showmsg)
+ircd::log::console_quiet::console_quiet(const bool &showmsg)
 {
 	if(showmsg)
 		notice("Log messages are now quieted at the console");
@@ -200,25 +195,25 @@ log::console_quiet::console_quiet(const bool &showmsg)
 	std::fill(begin(console_err), end(console_err), false);
 }
 
-log::console_quiet::~console_quiet()
+ircd::log::console_quiet::~console_quiet()
 {
 	std::copy(begin(quieted_out), end(quieted_out), begin(console_out));
 	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
 }
 
-log::log::log(const std::string &name)
+ircd::log::log::log(const std::string &name)
 :name{name}
 {
 }
 
-log::log::log(const std::string &name,
+ircd::log::log::log(const std::string &name,
               const char &snote)
 :log{name}
 {
 }
 
 void
-log::mark(const char *const &msg)
+ircd::log::mark(const char *const &msg)
 {
 	for_each<facility>([&msg]
 	(const auto &fac)
@@ -228,8 +223,8 @@ log::mark(const char *const &msg)
 }
 
 void
-log::mark(const facility &fac,
-          const char *const &msg)
+ircd::log::mark(const facility &fac,
+                const char *const &msg)
 {
 	slog(fac, [&msg]
 	(std::ostream &s)
@@ -241,9 +236,9 @@ log::mark(const facility &fac,
 }
 
 void
-log::vlog(const facility &fac,
-          const char *const &fmt,
-          const va_rtti &ap)
+ircd::log::vlog(const facility &fac,
+                const char *const &fmt,
+                const va_rtti &ap)
 {
 	char buf[1024];
 	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -256,10 +251,10 @@ log::vlog(const facility &fac,
 }
 
 void
-log::vlog(const facility &fac,
-          const std::string &name,
-          const char *const &fmt,
-          const va_rtti &ap)
+ircd::log::vlog(const facility &fac,
+                const std::string &name,
+                const char *const &fmt,
+                const va_rtti &ap)
 {
 	char buf[1024];
 	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -271,8 +266,8 @@ log::vlog(const facility &fac,
 }
 
 void
-log::slog(const facility &fac,
-          const std::function<void (std::ostream &)> &closure)
+ircd::log::slog(const facility &fac,
+                const std::function<void (std::ostream &)> &closure)
 {
 	void thread_assertion();
 
@@ -300,8 +295,8 @@ log::slog(const facility &fac,
 }
 
 void
-log::prefix(const facility &fac,
-            const char *const &date)
+ircd::log::prefix(const facility &fac,
+                  const char *const &date)
 {
 	const auto console_prefix([&fac, &date]
 	(auto &stream)
@@ -329,7 +324,7 @@ log::prefix(const facility &fac,
 }
 
 void
-log::suffix(const facility &fac)
+ircd::log::suffix(const facility &fac)
 {
 	const auto console_newline([&fac]
 	(auto &stream)
@@ -362,7 +357,7 @@ log::suffix(const facility &fac)
 }
 
 const char *
-log::reflect(const facility &f)
+ircd::log::reflect(const facility &f)
 {
 	switch(f)
 	{

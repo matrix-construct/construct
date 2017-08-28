@@ -22,31 +22,38 @@
 #pragma once
 #define HAVE_IRCD_FMT_H
 
-namespace ircd {
-namespace fmt  {
-
-IRCD_EXCEPTION(ircd::error, error);
-IRCD_EXCEPTION(error, invalid_format);
-IRCD_EXCEPTION(error, invalid_type);
-IRCD_EXCEPTION(error, illegal);
-
-//
-// Module API
-//
-constexpr char SPECIFIER
+namespace ircd::fmt
 {
-	'%'
-};
+	IRCD_EXCEPTION(ircd::error, error);
+	IRCD_EXCEPTION(error, invalid_format);
+	IRCD_EXCEPTION(error, invalid_type);
+	IRCD_EXCEPTION(error, illegal);
 
-constexpr char SPECIFIER_TERMINATOR
-{
-	'$'
-};
+	struct spec;
+	struct specifier;
+	struct snprintf;
+	struct vsnprintf;
 
-using arg = std::tuple<const void *, std::type_index>;
+	//
+	// Module API
+	//
+	constexpr char SPECIFIER
+	{
+		'%'
+	};
+
+	constexpr char SPECIFIER_TERMINATOR
+	{
+		'$'
+	};
+
+	using arg = std::tuple<const void *, std::type_index>;
+
+	const std::map<string_view, specifier *, std::less<>> &specifiers();
+}
 
 // Structural representation of a format specifier
-struct spec
+struct ircd::fmt::spec
 {
 	char sign {'+'};
 	ushort width {0};
@@ -57,7 +64,7 @@ struct spec
 
 // A format specifier handler module.
 // This allows a new "%foo" to be defined with custom handling.
-class specifier
+class ircd::fmt::specifier
 {
 	std::set<std::string> names;
 
@@ -69,15 +76,13 @@ class specifier
 	virtual ~specifier() noexcept;
 };
 
-const std::map<string_view, specifier *, std::less<>> &specifiers();
-
 //
 // User API
 //
 
 // * The arguments are not restricted by stdarg limitations. You can pass a real std::string.
 // * The function participates in the custom protocol-safe ruleset.
-class snprintf
+class ircd::fmt::snprintf
 {
 	const char *fstart;                          // Current running position in the fmtstr
 	const char *fstop;                           // Saved state from the last position
@@ -113,7 +118,7 @@ class snprintf
 	}{}
 };
 
-struct vsnprintf
+struct ircd::fmt::vsnprintf
 :snprintf
 {
 	vsnprintf(char *const &buf,
@@ -125,6 +130,3 @@ struct vsnprintf
 		internal, buf, max, fmt, ap
 	}{}
 };
-
-} // namespace fmt
-} // namespace ircd

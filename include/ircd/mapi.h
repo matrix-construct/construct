@@ -22,27 +22,31 @@
 #pragma once
 #define HAVE_IRCD_MAPI_H
 
-namespace ircd {
-namespace mapi {
-
-struct header;
-using magic_t = uint16_t;
-using version_t = uint16_t;
-using metadata = std::map<std::string, std::string>;
-using init_function = std::function<void ()>;
-using fini_function = std::function<void ()>;
-
-const char *const header_symbol_name
+namespace ircd::mapi
 {
-	"IRCD_MODULE"
-};
+	struct header;
+	using magic_t = uint16_t;
+	using version_t = uint16_t;
+	using metadata = std::map<std::string, std::string>;
+	using init_function = std::function<void ()>;
+	using fini_function = std::function<void ()>;
 
-constexpr const magic_t MAGIC
-{
-	0x4D41
-};
+	const char *const header_symbol_name
+	{
+		"IRCD_MODULE"
+	};
 
-struct header
+	constexpr const magic_t MAGIC
+	{
+		0x4D41
+	};
+
+	// Used to communicate whether a module unload actually took place. dlclose() is allowed to return
+	// success but the actual static destruction of the module's contents doesn't lie. (mods.cc)
+	extern bool static_destruction;
+}
+
+struct ircd::mapi::header
 {
 	magic_t magic;                               // The magic must match MAGIC
 	version_t version;                           // Version indicator
@@ -62,14 +66,10 @@ struct header
 	~header() noexcept;
 };
 
-// Used to communicate whether a module unload actually took place. dlclose() is allowed to return
-// success but the actual static destruction of the module's contents doesn't lie. (mods.cc)
-extern bool static_destruction;
-
 inline
-header::header(const char *const &desc,
-               init_function init,
-               fini_function fini)
+ircd::mapi::header::header(const char *const &desc,
+                           init_function init,
+                           fini_function fini)
 :magic(MAGIC)
 ,version(4)
 ,timestamp(RB_DATECODE)
@@ -83,24 +83,21 @@ header::header(const char *const &desc,
 }
 
 inline
-header::~header()
+ircd::mapi::header::~header()
 noexcept
 {
 	static_destruction = true;
 }
 
 inline auto &
-header::operator[](const std::string &key)
+ircd::mapi::header::operator[](const std::string &key)
 {
 	return meta[key];
 }
 
 inline auto &
-header::operator[](const std::string &key)
+ircd::mapi::header::operator[](const std::string &key)
 const
 {
 	return meta.at(key);
 }
-
-} // namespace mapi
-} // namespace ircd

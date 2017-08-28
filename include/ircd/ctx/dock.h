@@ -22,19 +22,18 @@
 #pragma once
 #define HAVE_IRCD_CTX_DOCK_H
 
-namespace ircd {
-namespace ctx  {
-
-enum class cv_status
+namespace ircd::ctx
 {
-	no_timeout, timeout
-};
+	struct dock;
+	enum class cv_status;
+}
 
-/**
- * a dock is a condition variable which has no requirement for locking
- * because the context system does not require mutual exclusion.
- */
-class dock
+//
+// a dock is a condition variable which has no requirement for locking because
+// the context system does not require mutual exclusion for coherence, however
+// we have to create our own queue here rather than piggyback a mutex's.
+//
+class ircd::ctx::dock
 {
 	std::deque<ctx *> q;
 
@@ -61,15 +60,20 @@ class dock
 	~dock() noexcept;
 };
 
+enum class ircd::ctx::cv_status
+{
+	no_timeout, timeout
+};
+
 inline
-dock::~dock()
+ircd::ctx::dock::~dock()
 noexcept
 {
 	assert(q.empty());
 }
 
 inline void
-dock::notify()
+ircd::ctx::dock::notify()
 noexcept
 {
 	if(q.empty())
@@ -82,7 +86,7 @@ noexcept
 }
 
 inline void
-dock::notify_one()
+ircd::ctx::dock::notify_one()
 noexcept
 {
 	if(q.empty())
@@ -92,7 +96,7 @@ noexcept
 }
 
 inline void
-dock::notify_all()
+ircd::ctx::dock::notify_all()
 noexcept
 {
 	// We copy the queue and post all notifications without requesting direct context switches.
@@ -105,7 +109,7 @@ noexcept
 }
 
 inline void
-dock::wait()
+ircd::ctx::dock::wait()
 {
 	const scope remove(std::bind(&dock::remove_self, this));
 	q.emplace_back(&cur());
@@ -114,7 +118,7 @@ dock::wait()
 
 template<class predicate>
 void
-dock::wait(predicate&& pred)
+ircd::ctx::dock::wait(predicate&& pred)
 {
 	if(pred())
 		return;
@@ -128,8 +132,8 @@ dock::wait(predicate&& pred)
 }
 
 template<class duration>
-cv_status
-dock::wait_for(const duration &dur)
+ircd::ctx::cv_status
+ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
 
@@ -143,7 +147,7 @@ dock::wait_for(const duration &dur)
 template<class duration,
          class predicate>
 bool
-dock::wait_for(const duration &dur,
+ircd::ctx::dock::wait_for(const duration &dur,
                predicate&& pred)
 {
 	static const duration zero(0);
@@ -166,8 +170,8 @@ dock::wait_for(const duration &dur,
 }
 
 template<class time_point>
-cv_status
-dock::wait_until(time_point&& tp)
+ircd::ctx::cv_status
+ircd::ctx::dock::wait_until(time_point&& tp)
 {
 	const scope remove(std::bind(&dock::remove_self, this));
 	q.emplace_back(&cur());
@@ -179,7 +183,7 @@ dock::wait_until(time_point&& tp)
 template<class time_point,
          class predicate>
 bool
-dock::wait_until(time_point&& tp,
+ircd::ctx::dock::wait_until(time_point&& tp,
                  predicate&& pred)
 {
 	if(pred())
@@ -200,7 +204,7 @@ dock::wait_until(time_point&& tp,
 }
 
 inline void
-dock::notify(ctx &ctx)
+ircd::ctx::dock::notify(ctx &ctx)
 noexcept
 {
 	// This branch handles dock.notify() being called from outside the context system.
@@ -214,12 +218,9 @@ noexcept
 }
 
 inline void
-dock::remove_self()
+ircd::ctx::dock::remove_self()
 {
 	const auto it(std::find(begin(q), end(q), &cur()));
 	assert(it != end(q));
 	q.erase(it);
 }
-
-} // namespace ctx
-} // namespace ircd

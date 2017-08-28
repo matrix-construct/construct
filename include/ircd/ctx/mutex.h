@@ -22,15 +22,17 @@
 #pragma once
 #define HAVE_IRCD_CTX_MUTEX_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	class mutex;
+}
 
-/**
- * The mutex only allows one context to lock it and continue,
- * additional contexts are queued. This can be used with std::
- * locking concepts.
- */
-class mutex
+//
+// The mutex only allows one context to lock it and continue,
+// additional contexts are queued. This can be used with std::
+// locking concepts.
+//
+class ircd::ctx::mutex
 {
 	bool m;
 	std::deque<ctx *> q;
@@ -48,13 +50,13 @@ class mutex
 };
 
 inline
-mutex::mutex():
+ircd::ctx::mutex::mutex():
 m(false)
 {
 }
 
 inline
-mutex::~mutex()
+ircd::ctx::mutex::~mutex()
 noexcept
 {
 	assert(!m);
@@ -62,7 +64,7 @@ noexcept
 }
 
 inline void
-mutex::unlock()
+ircd::ctx::mutex::unlock()
 {
 	ctx *next; do
 	{
@@ -82,7 +84,7 @@ mutex::unlock()
 }
 
 inline void
-mutex::lock()
+ircd::ctx::mutex::lock()
 {
 	if(likely(try_lock()))
 		return;
@@ -94,14 +96,14 @@ mutex::lock()
 
 template<class duration>
 bool
-mutex::try_lock_for(const duration &d)
+ircd::ctx::mutex::try_lock_for(const duration &d)
 {
 	return try_lock_until(steady_clock::now() + d);
 }
 
 template<class time_point>
 bool
-mutex::try_lock_until(const time_point &tp)
+ircd::ctx::mutex::try_lock_until(const time_point &tp)
 {
 	if(likely(try_lock()))
 		return true;
@@ -122,7 +124,7 @@ mutex::try_lock_until(const time_point &tp)
 }
 
 inline bool
-mutex::try_lock()
+ircd::ctx::mutex::try_lock()
 {
 	if(m)
 		return false;
@@ -130,6 +132,3 @@ mutex::try_lock()
 	m = true;
 	return true;
 }
-
-} // namespace ctx
-} // namespace ircd

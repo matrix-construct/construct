@@ -42,18 +42,15 @@
 // included when boost/asio.hpp is also included and calls are actually made into boost.
 //
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	using std::chrono::steady_clock;
+	using time_point = steady_clock::time_point;
 
-using std::chrono::steady_clock;
-using time_point = steady_clock::time_point;
-
-IRCD_EXCEPTION(ircd::error, error)
-IRCD_EXCEPTION(error, interrupted)
-IRCD_EXCEPTION(error, timeout)
-
-} // namespace ctx
-} // namespace ircd
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, interrupted)
+	IRCD_EXCEPTION(error, timeout)
+}
 
 #include "ctx/ctx.h"
 #include "ctx/context.h"
@@ -68,10 +65,9 @@ IRCD_EXCEPTION(error, timeout)
 #include "ctx/pool.h"
 #include "ctx/ole.h"
 
-namespace ircd {
-
-using ctx::timeout;
-using ctx::context;
-using ctx::sleep;
-
-} // namespace ircd
+namespace ircd
+{
+	using ctx::timeout;
+	using ctx::context;
+	using ctx::sleep;
+}

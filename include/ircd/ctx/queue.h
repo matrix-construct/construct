@@ -22,11 +22,13 @@
 #pragma once
 #define HAVE_IRCD_CTX_QUEUE_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	template<class T> class queue;
+}
 
 template<class T>
-class queue
+class ircd::ctx::queue
 {
 	struct dock dock;
 	std::queue<T> q;
@@ -50,7 +52,7 @@ class queue
 };
 
 template<class T>
-queue<T>::~queue()
+ircd::ctx::queue<T>::~queue()
 noexcept
 {
 	assert(q.empty());
@@ -58,7 +60,7 @@ noexcept
 
 template<class T>
 void
-queue<T>::push(T &&t)
+ircd::ctx::queue<T>::push(T &&t)
 noexcept
 {
 	q.push(std::move(t));
@@ -67,7 +69,7 @@ noexcept
 
 template<class T>
 void
-queue<T>::push(const T &t)
+ircd::ctx::queue<T>::push(const T &t)
 {
 	q.push(t);
 	dock.notify();
@@ -76,7 +78,7 @@ queue<T>::push(const T &t)
 template<class T>
 template<class... args>
 void
-queue<T>::emplace(args&&... a)
+ircd::ctx::queue<T>::emplace(args&&... a)
 {
 	q.emplace(std::forward<args>(a)...);
 	dock.notify();
@@ -84,7 +86,7 @@ queue<T>::emplace(args&&... a)
 
 template<class T>
 T
-queue<T>::pop()
+ircd::ctx::queue<T>::pop()
 {
 	dock.wait([this]
 	{
@@ -103,7 +105,7 @@ queue<T>::pop()
 template<class T>
 template<class duration>
 T
-queue<T>::pop_for(const duration &dur)
+ircd::ctx::queue<T>::pop_for(const duration &dur)
 {
 	const auto status(dock.wait_for(dur, [this]
 	{
@@ -125,7 +127,7 @@ queue<T>::pop_for(const duration &dur)
 template<class T>
 template<class time_point>
 T
-queue<T>::pop_until(time_point&& tp)
+ircd::ctx::queue<T>::pop_until(time_point&& tp)
 {
 	const auto status(dock.wait_until(tp, [this]
 	{
@@ -143,6 +145,3 @@ queue<T>::pop_until(time_point&& tp)
 	auto &ret(q.front());
 	return std::move(ret);
 }
-
-} // namespace ctx
-} // namespace ircd

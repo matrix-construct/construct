@@ -31,30 +31,33 @@
 // without being destructed.
 //
 
-namespace ircd {
-
-// Tests if type inherits from std::enable_shared_from_this<>
-template<class T>
-constexpr typename std::enable_if<is_complete<T>::value, bool>::type
-is_shared_from_this()
+namespace ircd
 {
-	return std::is_base_of<std::enable_shared_from_this<T>, T>();
-}
+	// Tests if type inherits from std::enable_shared_from_this<>
+	template<class T>
+	constexpr typename std::enable_if<is_complete<T>::value, bool>::type
+	is_shared_from_this()
+	{
+		return std::is_base_of<std::enable_shared_from_this<T>, T>();
+	}
 
-// Unconditional failure for fwd-declared incomplete types, which
-// obviously don't inherit from std::enable_shared_from_this<>
-template<class T>
-constexpr typename std::enable_if<!is_complete<T>::value, bool>::type
-is_shared_from_this()
-{
-	return false;
-}
+	// Unconditional failure for fwd-declared incomplete types, which
+	// obviously don't inherit from std::enable_shared_from_this<>
+	template<class T>
+	constexpr typename std::enable_if<!is_complete<T>::value, bool>::type
+	is_shared_from_this()
+	{
+		return false;
+	}
 
-// Convenience functions for types shared_from_this
-template<class T> std::shared_ptr<const T> shared_from(const T &t);
-template<class T> std::shared_ptr<T> shared_from(T &t);
-template<class T> std::weak_ptr<const T> weak_from(const T &t);
-template<class T> std::weak_ptr<T> weak_from(T &t);
+	// Convenience functions for types shared_from_this
+	template<class T> std::shared_ptr<const T> shared_from(const T &t);
+	template<class T> std::shared_ptr<T> shared_from(T &t);
+	template<class T> std::weak_ptr<const T> weak_from(const T &t);
+	template<class T> std::weak_ptr<T> weak_from(T &t);
+
+	template<class T> struct life_guard;
+}
 
 /* Use the life_guard to keep an object alive within a function running in a context.
  *
@@ -70,7 +73,7 @@ template<class T> std::weak_ptr<T> weak_from(T &t);
 	}
 */
 template<class T>
-struct life_guard
+struct ircd::life_guard
 :std::shared_ptr<T>
 {
 	// This constructor is used when the templated type inherits from std::enable_shared_from_this<>
@@ -103,30 +106,28 @@ struct life_guard
 
 template<class T>
 std::weak_ptr<T>
-weak_from(T &t)
+ircd::weak_from(T &t)
 {
 	return shared_from(t);
 };
 
 template<class T>
 std::weak_ptr<const T>
-weak_from(const T &t)
+ircd::weak_from(const T &t)
 {
 	return shared_from(t);
 };
 
 template<class T>
 std::shared_ptr<T>
-shared_from(T &t)
+ircd::shared_from(T &t)
 {
 	return dynamic_pointer_cast<T>(t.shared_from_this());
 };
 
 template<class T>
 std::shared_ptr<const T>
-shared_from(const T &t)
+ircd::shared_from(const T &t)
 {
 	return dynamic_pointer_cast<const T>(t.shared_from_this());
 };
-
-} // namespace ircd

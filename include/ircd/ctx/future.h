@@ -22,18 +22,28 @@
 #pragma once
 #define HAVE_IRCD_CTX_FUTURE_H
 
-namespace ircd {
-namespace ctx  {
+namespace ircd::ctx
+{
+	template<class T = void> class future;
+	template<> class future<void>;
+	template<class... T> struct scoped_future;
 
-enum class future_status
+	enum class future_status;
+
+	template<class T,
+	         class time_point>
+	future_status wait_until(const future<T> &, const time_point &);
+}
+
+enum class ircd::ctx::future_status
 {
 	ready,
 	timeout,
 	deferred,
 };
 
-template<class T = void>
-class future
+template<class T>
+class ircd::ctx::future
 {
 	std::shared_ptr<shared_state<T>> st;
 
@@ -59,7 +69,7 @@ class future
 };
 
 template<>
-class future<void>
+class ircd::ctx::future<void>
 {
 	std::shared_ptr<shared_state<void>> st;
 
@@ -79,12 +89,9 @@ class future<void>
 	future(promise<void> &promise);
 };
 
-template<class T,
-         class time_point>
-future_status wait_until(const future<T> &, const time_point &);
-
 template<class... T>
-struct scoped_future : future<T...>
+struct ircd::ctx::scoped_future
+:future<T...>
 {
 	template<class... Args> scoped_future(Args&&... args);
 	~scoped_future() noexcept;
@@ -92,13 +99,13 @@ struct scoped_future : future<T...>
 
 template<class... T>
 template<class... Args>
-scoped_future<T...>::scoped_future(Args&&... args):
-future<T...>{std::forward<Args>(args)...}
+ircd::ctx::scoped_future<T...>::scoped_future(Args&&... args)
+:future<T...>{std::forward<Args>(args)...}
 {
 }
 
 template<class... T>
-scoped_future<T...>::~scoped_future()
+ircd::ctx::scoped_future<T...>::~scoped_future()
 noexcept
 {
 	if(std::uncaught_exception())
@@ -109,32 +116,32 @@ noexcept
 }
 
 inline
-future<void>::future():
+ircd::ctx::future<void>::future():
 st(nullptr)
 {
 }
 
 template<class T>
-future<T>::future():
+ircd::ctx::future<T>::future():
 st(nullptr)
 {
 }
 
 inline
-future<void>::future(promise<void> &promise):
+ircd::ctx::future<void>::future(promise<void> &promise):
 st(promise.get_state().share())
 {
 }
 
 template<class T>
-future<T>::future(promise<T> &promise):
+ircd::ctx::future<T>::future(promise<T> &promise):
 st(promise.get_state().share())
 {
 }
 
 template<class T>
 T
-future<T>::get()
+ircd::ctx::future<T>::get()
 {
 	wait();
 
@@ -145,7 +152,7 @@ future<T>::get()
 }
 
 inline void
-future<void>::wait()
+ircd::ctx::future<void>::wait()
 const
 {
 	this->wait_until(steady_clock::time_point::max());
@@ -153,15 +160,15 @@ const
 
 template<class T>
 void
-future<T>::wait()
+ircd::ctx::future<T>::wait()
 const
 {
 	this->wait_until(steady_clock::time_point::max());
 }
 
 template<class duration>
-future_status
-future<void>::wait(const duration &d)
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait(const duration &d)
 const
 {
 	return this->wait_until(steady_clock::now() + d);
@@ -169,8 +176,8 @@ const
 
 template<class T>
 template<class duration>
-future_status
-future<T>::wait(const duration &d)
+ircd::ctx::future_status
+ircd::ctx::future<T>::wait(const duration &d)
 const
 {
 	return this->wait_until(steady_clock::now() + d);
@@ -178,16 +185,16 @@ const
 
 template<class T>
 template<class time_point>
-future_status
-future<T>::wait_until(const time_point &tp)
+ircd::ctx::future_status
+ircd::ctx::future<T>::wait_until(const time_point &tp)
 const
 {
 	return ircd::ctx::wait_until(*this, tp);
 }
 
 template<class time_point>
-future_status
-future<void>::wait_until(const time_point &tp)
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait_until(const time_point &tp)
 const
 {
 	return ircd::ctx::wait_until(*this, tp);
@@ -195,9 +202,9 @@ const
 
 template<class T,
          class time_point>
-future_status
-wait_until(const future<T> &f,
-           const time_point &tp)
+ircd::ctx::future_status
+ircd::ctx::wait_until(const future<T> &f,
+                      const time_point &tp)
 {
 	const auto wfun([&f]() -> bool
 	{
@@ -213,6 +220,3 @@ wait_until(const future<T> &f,
 	return likely(wfun())? future_status::ready:
 	                       future_status::deferred;
 }
-
-} // namespace ctx
-} // namespace ircd

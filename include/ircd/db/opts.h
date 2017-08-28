@@ -23,28 +23,35 @@
 #pragma once
 #define HAVE_IRCD_DB_OPTS_H
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	template<class T> struct optval;
+	template<class T> using optlist = std::initializer_list<optval<T>>;
+	template<class T> bool has_opt(const optlist<T> &, const T &);
+	template<class T> ssize_t opt_val(const optlist<T> &, const T &);
+
+	enum class set;
+	struct sopts;
+
+	enum class get;
+	struct gopts;
+}
 
 template<class T>
-struct optval
+struct ircd::db::optval
 :std::pair<T, ssize_t>
 {
 	optval(const T &key, const ssize_t &val = std::numeric_limits<ssize_t>::min());
 };
 
-template<class T> using optlist = std::initializer_list<optval<T>>;
-template<class T> bool has_opt(const optlist<T> &, const T &);
-template<class T> ssize_t opt_val(const optlist<T> &, const T &);
-
-enum class set
+enum class ircd::db::set
 {
 	FSYNC,                  // Uses kernel filesystem synchronization after write (slow)
 	NO_JOURNAL,             // Write Ahead Log (WAL) for some crash recovery
 	MISSING_COLUMNS         // No exception thrown when writing to a deleted column family
 };
 
-struct sopts
+struct ircd::db::sopts
 :optlist<set>
 {
 	template<class... list>
@@ -53,7 +60,7 @@ struct sopts
 	{}
 };
 
-enum class get
+enum class ircd::db::get
 {
 	PIN,                    // Keep iter data in memory for iter lifetime (good for lots of ++/--)
 	CACHE,                  // Update the cache (CACHE is default for non-iterator operations)
@@ -64,7 +71,7 @@ enum class get
 	NO_EMPTY,               // Option for db::row to not include unassigned cells in the row
 };
 
-struct gopts
+struct ircd::db::gopts
 :optlist<get>
 {
 	database::snapshot snapshot;
@@ -74,9 +81,6 @@ struct gopts
 	:optlist<get>{std::forward<list>(l)...}
 	{}
 };
-
-} // namespace db
-} // namespace ircd
 
 template<class T>
 ssize_t

@@ -23,13 +23,13 @@
 #pragma once
 #define HAVE_IRCD_UTIL_RANDOM_H
 
-namespace ircd {
-namespace rand {
+namespace ircd::rand
+{
+	extern std::random_device device;
+	extern std::mt19937_64 mt;
+}
 
-extern std::random_device device;
-extern std::mt19937_64 mt;
-
-namespace dict
+namespace ircd::rand::dict
 {
 	extern const std::string alnum;
 	extern const std::string alpha;
@@ -38,20 +38,20 @@ namespace dict
 	extern const std::string numeric;
 }
 
-uint64_t integer();
-uint64_t integer(const uint64_t &min, const uint64_t &max);
+namespace ircd::rand
+{
+	uint64_t integer();
+	uint64_t integer(const uint64_t &min, const uint64_t &max);
 
-// Random character from dictionary
-char character(const std::string &dict = dict::alnum);
+	// Random character from dictionary
+	char character(const std::string &dict = dict::alnum);
 
-// Random string of len from dictionary; char buffers null terminated, uchar not.
-template<size_t size> string_view string(const std::string &dict, const size_t &len, char (&buf)[size]);
-string_view string(const std::string &dict, const size_t &len, char *const &buf, const size_t &max);
-string_view string(const std::string &dict, const size_t &len, uint8_t *const &buf);
-std::string string(const std::string &dict, const size_t &len);
-
-} // namespace rand
-} // namespace ircd
+	// Random string of len from dictionary; char buffers null terminated, uchar not.
+	template<size_t size> string_view string(const std::string &dict, const size_t &len, char (&buf)[size]);
+	string_view string(const std::string &dict, const size_t &len, char *const &buf, const size_t &max);
+	string_view string(const std::string &dict, const size_t &len, uint8_t *const &buf);
+	std::string string(const std::string &dict, const size_t &len);
+}
 
 template<size_t size>
 ircd::string_view

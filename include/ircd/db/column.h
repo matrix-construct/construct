@@ -23,9 +23,6 @@
 #pragma once
 #define HAVE_IRCD_DB_COLUMN_H
 
-namespace ircd {
-namespace db   {
-
 // Columns add the ability to run multiple LevelDB's in synchrony under the same
 // database (directory). Each column is a fully distinct key/value store; they
 // are merely joined for consistency and possible performance advantages for
@@ -53,7 +50,42 @@ namespace db   {
 // with both a normal string and binary data, so this class is not a template and
 // offers no conversions at this level. see: value.h/object.h
 //
-struct column
+namespace ircd::db
+{
+	struct column;
+
+	// Get property data of a db column. R can optionally be uint64_t for some
+	// values. Refer to RocksDB documentation for more info.
+	template<class R = std::string> R property(column &, const string_view &name);
+	template<> std::string property(column &, const string_view &name);
+	template<> uint64_t property(column &, const string_view &name);
+
+	// Information about a column
+	const std::string &name(const column &);
+	size_t file_count(column &);
+	size_t bytes(column &);
+
+	// [GET] Tests if key exists
+	bool has(column &, const string_view &key, const gopts & = {});
+
+	// [GET] Convenience functions to copy data into your buffer.
+	// The signed char buffer is null terminated; the unsigned is not.
+	size_t read(column &, const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
+	string_view read(column &, const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
+	std::string read(column &, const string_view &key, const gopts & = {});
+
+	// [SET] Write data to the db
+	void write(column &, const string_view &key, const string_view &value, const sopts & = {});
+	void write(column &, const string_view &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
+
+	// [SET] Remove data from the db. not_found is never thrown.
+	void del(column &, const string_view &key, const sopts & = {});
+
+	// [SET] Flush memory tables to disk (this column only).
+	void flush(column &, const bool &blocking = false);
+}
+
+struct ircd::db::column
 {
 	struct delta;
 	struct const_iterator;
@@ -121,7 +153,7 @@ struct column
 // It is unlikely you will need to work with column deltas directly because
 // you may decohere one column from the others participating in a row.
 //
-struct column::delta
+struct ircd::db::column::delta
 :std::tuple<op, string_view, string_view>
 {
 	delta(const string_view &key, const string_view &val, const enum op &op = op::SET)
@@ -139,7 +171,7 @@ struct column::delta
 // Otherwise, construct an iterator by having it returned from the appropriate
 // function in column::.
 //
-struct column::const_iterator
+struct ircd::db::column::const_iterator
 {
 	using value_type = column::value_type;
 	using iterator_category = std::bidirectional_iterator_tag;
@@ -183,39 +215,6 @@ struct column::const_iterator
 	template<class pos> friend void seek(column::const_iterator &, const pos &);
 	friend void seek(column::const_iterator &, const string_view &key);
 };
-
-// Get property data of a db column. R can optionally be uint64_t for some
-// values. Refer to RocksDB documentation for more info.
-template<class R = std::string> R property(column &, const string_view &name);
-template<> std::string property(column &, const string_view &name);
-template<> uint64_t property(column &, const string_view &name);
-
-// Information about a column
-const std::string &name(const column &);
-size_t file_count(column &);
-size_t bytes(column &);
-
-// [GET] Tests if key exists
-bool has(column &, const string_view &key, const gopts & = {});
-
-// [GET] Convenience functions to copy data into your buffer.
-// The signed char buffer is null terminated; the unsigned is not.
-size_t read(column &, const string_view &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
-string_view read(column &, const string_view &key, char *const &buf, const size_t &max, const gopts & = {});
-std::string read(column &, const string_view &key, const gopts & = {});
-
-// [SET] Write data to the db
-void write(column &, const string_view &key, const string_view &value, const sopts & = {});
-void write(column &, const string_view &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
-
-// [SET] Remove data from the db. not_found is never thrown.
-void del(column &, const string_view &key, const sopts & = {});
-
-// [SET] Flush memory tables to disk (this column only).
-void flush(column &, const bool &blocking = false);
-
-} // namespace db
-} // namespace ircd
 
 inline ircd::db::column::const_iterator::operator
 database::column &()

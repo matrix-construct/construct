@@ -23,171 +23,170 @@
 #pragma once
 #define HAVE_IRCD_LEXICAL_H
 
-namespace ircd {
-
 //
 // Lexical conversions
 //
-IRCD_EXCEPTION(ircd::error, bad_lex_cast)
+namespace ircd
+{
+	IRCD_EXCEPTION(ircd::error, bad_lex_cast)
 
-template<class T> bool try_lex_cast(const string_view &);
-template<> bool try_lex_cast<std::string>(const string_view &);       // stub always true
-template<> bool try_lex_cast<std::string_view>(const string_view &);  // stub always true
-template<> bool try_lex_cast<string_view>(const string_view &);       // stub always true
-template<> bool try_lex_cast<long double>(const string_view &);
-template<> bool try_lex_cast<double>(const string_view &);
-template<> bool try_lex_cast<ulong>(const string_view &);
-template<> bool try_lex_cast<long>(const string_view &);
-template<> bool try_lex_cast<uint>(const string_view &);
-template<> bool try_lex_cast<int>(const string_view &);
-template<> bool try_lex_cast<ushort>(const string_view &);
-template<> bool try_lex_cast<short>(const string_view &);
-template<> bool try_lex_cast<uint8_t>(const string_view &);
-template<> bool try_lex_cast<int8_t>(const string_view &);
-template<> bool try_lex_cast<bool>(const string_view &);
+	template<class T> bool try_lex_cast(const string_view &);
+	template<> bool try_lex_cast<std::string>(const string_view &);       // stub always true
+	template<> bool try_lex_cast<std::string_view>(const string_view &);  // stub always true
+	template<> bool try_lex_cast<string_view>(const string_view &);       // stub always true
+	template<> bool try_lex_cast<long double>(const string_view &);
+	template<> bool try_lex_cast<double>(const string_view &);
+	template<> bool try_lex_cast<ulong>(const string_view &);
+	template<> bool try_lex_cast<long>(const string_view &);
+	template<> bool try_lex_cast<uint>(const string_view &);
+	template<> bool try_lex_cast<int>(const string_view &);
+	template<> bool try_lex_cast<ushort>(const string_view &);
+	template<> bool try_lex_cast<short>(const string_view &);
+	template<> bool try_lex_cast<uint8_t>(const string_view &);
+	template<> bool try_lex_cast<int8_t>(const string_view &);
+	template<> bool try_lex_cast<bool>(const string_view &);
 
-template<class T> T lex_cast(std::string &);
-template<class T> T lex_cast(const std::string &);
-template<class T> T lex_cast(const std::string_view &);
-template<class T> T lex_cast(const string_view &);
-template<> std::string &lex_cast(std::string &);                          // trivial
-template<> std::string lex_cast(const std::string &);                     // trivial
-template<> std::string_view lex_cast(const std::string_view &);           // trivial
-template<> std::string lex_cast(const string_view &);                     // trivial
-template<> long double lex_cast(const string_view &);
-template<> double lex_cast(const string_view &);
-template<> ulong lex_cast(const string_view &);
-template<> long lex_cast(const string_view &);
-template<> uint lex_cast(const string_view &);
-template<> int lex_cast(const string_view &);
-template<> ushort lex_cast(const string_view &);
-template<> short lex_cast(const string_view &);
-template<> uint8_t lex_cast(const string_view &);
-template<> int8_t lex_cast(const string_view &);
-template<> bool lex_cast(const string_view &);
+	template<class T> T lex_cast(std::string &);
+	template<class T> T lex_cast(const std::string &);
+	template<class T> T lex_cast(const std::string_view &);
+	template<class T> T lex_cast(const string_view &);
+	template<> std::string &lex_cast(std::string &);                          // trivial
+	template<> std::string lex_cast(const std::string &);                     // trivial
+	template<> std::string_view lex_cast(const std::string_view &);           // trivial
+	template<> std::string lex_cast(const string_view &);                     // trivial
+	template<> long double lex_cast(const string_view &);
+	template<> double lex_cast(const string_view &);
+	template<> ulong lex_cast(const string_view &);
+	template<> long lex_cast(const string_view &);
+	template<> uint lex_cast(const string_view &);
+	template<> int lex_cast(const string_view &);
+	template<> ushort lex_cast(const string_view &);
+	template<> short lex_cast(const string_view &);
+	template<> uint8_t lex_cast(const string_view &);
+	template<> int8_t lex_cast(const string_view &);
+	template<> bool lex_cast(const string_view &);
 
-// User supplied destination buffer
-template<class T> string_view lex_cast(T, char *const &buf, const size_t &max);
-template<> string_view lex_cast(const std::string &, char *const &buf, const size_t &max);
-template<> string_view lex_cast(const std::string_view &, char *const &buf, const size_t &max);
-template<> string_view lex_cast(const string_view &, char *const &buf, const size_t &max);
-template<> string_view lex_cast(long double, char *const &buf, const size_t &max);
-template<> string_view lex_cast(double, char *const &buf, const size_t &max);
-template<> string_view lex_cast(ulong, char *const &buf, const size_t &max);
-template<> string_view lex_cast(long, char *const &buf, const size_t &max);
-template<> string_view lex_cast(uint, char *const &buf, const size_t &max);
-template<> string_view lex_cast(int, char *const &buf, const size_t &max);
-template<> string_view lex_cast(ushort, char *const &buf, const size_t &max);
-template<> string_view lex_cast(short, char *const &buf, const size_t &max);
-template<> string_view lex_cast(uint8_t, char *const &buf, const size_t &max);
-template<> string_view lex_cast(int8_t, char *const &buf, const size_t &max);
-template<> string_view lex_cast(bool, char *const &buf, const size_t &max);
+	// User supplied destination buffer
+	template<class T> string_view lex_cast(T, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(const std::string &, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(const std::string_view &, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(const string_view &, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(long double, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(double, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(ulong, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(long, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(uint, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(int, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(ushort, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(short, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(uint8_t, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(int8_t, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(bool, char *const &buf, const size_t &max);
 
-// Circular static thread_local buffer
-const size_t LEX_CAST_BUFS {256}; // plenty
-template<class T> string_view lex_cast(const T &t);
+	// Circular static thread_local buffer
+	const size_t LEX_CAST_BUFS {256}; // plenty
+	template<class T> string_view lex_cast(const T &t);
 
-//
-// String tokenization.
-//
+	//
+	// String tokenization.
+	//
 
-// Use the closure for best performance. Note that string_view's
-// are not required to be null terminated. Construct an std::string from the view to allocate
-// and copy the token with null termination.
-using token_view = std::function<void (const string_view &)>;
-void tokens(const string_view &str, const char *const &sep, const token_view &);
-size_t tokens(const string_view &str, const char *const &sep, const size_t &limit, const token_view &);
+	// Use the closure for best performance. Note that string_view's
+	// are not required to be null terminated. Construct an std::string from the view to allocate
+	// and copy the token with null termination.
+	using token_view = std::function<void (const string_view &)>;
+	void tokens(const string_view &str, const char *const &sep, const token_view &);
+	size_t tokens(const string_view &str, const char *const &sep, const size_t &limit, const token_view &);
 
-// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
-size_t tokens(const string_view &str, const char *const &sep, char *const &buf, const size_t &max, const token_view &);
+	// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
+	size_t tokens(const string_view &str, const char *const &sep, char *const &buf, const size_t &max, const token_view &);
 
-// Receive token view into iterator range
-template<class it> it tokens(const string_view &str, const char *const &sep, const it &b, const it &e);
+	// Receive token view into iterator range
+	template<class it> it tokens(const string_view &str, const char *const &sep, const it &b, const it &e);
 
-// Receive token view into array
-template<size_t N> size_t tokens(const string_view &str, const char *const &sep, string_view (&buf)[N]);
-template<size_t N> size_t tokens(const string_view &str, const char *const &sep, std::array<string_view, N> &);
+	// Receive token view into array
+	template<size_t N> size_t tokens(const string_view &str, const char *const &sep, string_view (&buf)[N]);
+	template<size_t N> size_t tokens(const string_view &str, const char *const &sep, std::array<string_view, N> &);
 
-// Receive token view into new container (custom allocator)
-template<template<class, class>
-         class C = std::vector,
-         class T = string_view,
-         class A>
-C<T, A> tokens(A allocator, const string_view &str, const char *const &sep);
+	// Receive token view into new container (custom allocator)
+	template<template<class, class>
+	         class C = std::vector,
+	         class T = string_view,
+	         class A>
+	C<T, A> tokens(A allocator, const string_view &str, const char *const &sep);
 
-// Receive token view into new container
-template<template<class, class>
-         class C = std::vector,
-         class T = string_view,
-         class A = std::allocator<T>>
-C<T, A> tokens(const string_view &str, const char *const &sep);
+	// Receive token view into new container
+	template<template<class, class>
+	         class C = std::vector,
+	         class T = string_view,
+	         class A = std::allocator<T>>
+	C<T, A> tokens(const string_view &str, const char *const &sep);
 
-// Receive token view into new associative container (custom allocator)
-template<template<class, class, class>
-         class C,
-         class T = string_view,
-         class Comp = std::less<T>,
-         class A>
-C<T, Comp, A> tokens(A allocator, const string_view &str, const char *const &sep);
+	// Receive token view into new associative container (custom allocator)
+	template<template<class, class, class>
+	         class C,
+	         class T = string_view,
+	         class Comp = std::less<T>,
+	         class A>
+	C<T, Comp, A> tokens(A allocator, const string_view &str, const char *const &sep);
 
-// Receive token view into new associative container
-template<template<class, class, class>
-         class C,
-         class T = string_view,
-         class Comp = std::less<T>,
-         class A = std::allocator<T>>
-C<T, Comp, A> tokens(const string_view &str, const char *const &sep);
+	// Receive token view into new associative container
+	template<template<class, class, class>
+	         class C,
+	         class T = string_view,
+	         class Comp = std::less<T>,
+	         class A = std::allocator<T>>
+	C<T, Comp, A> tokens(const string_view &str, const char *const &sep);
 
-// Convenience to get individual tokens
-size_t tokens_count(const string_view &str, const char *const &sep);
-string_view token(const string_view &str, const char *const &sep, const size_t &at);
-string_view token_last(const string_view &str, const char *const &sep);
-string_view token_first(const string_view &str, const char *const &sep);
-string_view tokens_after(const string_view &str, const char *const &sep, const size_t &at);
+	// Convenience to get individual tokens
+	size_t tokens_count(const string_view &str, const char *const &sep);
+	string_view token(const string_view &str, const char *const &sep, const size_t &at);
+	string_view token_last(const string_view &str, const char *const &sep);
+	string_view token_first(const string_view &str, const char *const &sep);
+	string_view tokens_after(const string_view &str, const char *const &sep, const size_t &at);
 
-//
-// Misc utils
-//
+	//
+	// Misc utils
+	//
 
-// Simple case insensitive comparison convenience utils
-struct iless;
-struct igreater;
-struct iequals;
+	// Simple case insensitive comparison convenience utils
+	struct iless;
+	struct igreater;
+	struct iequals;
 
-// Vintage
-size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
-size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
+	// Vintage
+	size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
+	size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
 
-// Legacy
-char *strip_colour(char *string);
-char *strip_unprintable(char *string);
-char *reconstruct_parv(int parc, const char **parv);
+	// Legacy
+	char *strip_colour(char *string);
+	char *strip_unprintable(char *string);
+	char *reconstruct_parv(int parc, const char **parv);
 
-char chop(string_view &str);
-size_t chomp(string_view &str, const char &c = '\n');
-size_t chomp(string_view &str, const string_view &c);
-template<class T, class delim> size_t chomp(iterators<T>, const delim &d);
-string_view rstrip(const string_view &str, const char &c = ' ');
-string_view rstrip(const string_view &str, const string_view &c);
-string_view lstrip(const string_view &str, const char &c = ' ');
-string_view lstrip(const string_view &str, const string_view &c);
-string_view strip(const string_view &str, const char &c = ' ');
-string_view strip(const string_view &str, const string_view &c);
-std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
-std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
-std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
-std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim);
-string_view between(const string_view &str, const string_view &a, const string_view &b);
-string_view between(const string_view &str, const char &a = '(', const char &b = ')');
-bool endswith(const string_view &str, const string_view &val);
-bool endswith(const string_view &str, const char &val);
-template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
-bool startswith(const string_view &str, const string_view &val);
-bool startswith(const string_view &str, const char &val);
-string_view unquote(string_view str);
-std::string unquote(std::string &&);
-
-} // namespace ircd
+	char chop(string_view &str);
+	size_t chomp(string_view &str, const char &c = '\n');
+	size_t chomp(string_view &str, const string_view &c);
+	template<class T, class delim> size_t chomp(iterators<T>, const delim &d);
+	string_view rstrip(const string_view &str, const char &c = ' ');
+	string_view rstrip(const string_view &str, const string_view &c);
+	string_view lstrip(const string_view &str, const char &c = ' ');
+	string_view lstrip(const string_view &str, const string_view &c);
+	string_view strip(const string_view &str, const char &c = ' ');
+	string_view strip(const string_view &str, const string_view &c);
+	std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
+	std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
+	std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
+	std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim);
+	string_view between(const string_view &str, const string_view &a, const string_view &b);
+	string_view between(const string_view &str, const char &a = '(', const char &b = ')');
+	bool endswith(const string_view &str, const string_view &val);
+	bool endswith(const string_view &str, const char &val);
+	template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
+	bool startswith(const string_view &str, const string_view &val);
+	bool startswith(const string_view &str, const char &val);
+	string_view unquote(string_view str);
+	std::string unquote(std::string &&);
+}
 
 inline std::string
 ircd::unquote(std::string &&str)

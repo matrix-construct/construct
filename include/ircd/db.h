@@ -27,39 +27,37 @@
 //
 // Please see db/README.md for documentation.
 //
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	struct init;
+	struct cell;
+	struct row;
+	struct column;
+	struct database;
 
-struct cell;
-struct row;
-struct column;
-struct database;
+	// Errors for the database subsystem. The exceptions that use _HIDENAME
+	// are built from RocksDB errors which already have an info string with
+	// an included name.
+	//
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, not_found)
+	IRCD_EXCEPTION(error, schema_error)
+	IRCD_EXCEPTION_HIDENAME(error, corruption)
+	IRCD_EXCEPTION_HIDENAME(error, not_supported)
+	IRCD_EXCEPTION_HIDENAME(error, invalid_argument)
+	IRCD_EXCEPTION_HIDENAME(error, io_error)
+	IRCD_EXCEPTION_HIDENAME(error, merge_in_progress)
+	IRCD_EXCEPTION_HIDENAME(error, incomplete)
+	IRCD_EXCEPTION_HIDENAME(error, shutdown_in_progress)
+	IRCD_EXCEPTION_HIDENAME(error, timed_out)
+	IRCD_EXCEPTION_HIDENAME(error, aborted)
+	IRCD_EXCEPTION_HIDENAME(error, busy)
+	IRCD_EXCEPTION_HIDENAME(error, expired)
+	IRCD_EXCEPTION_HIDENAME(error, try_again)
 
-// Errors for the database subsystem. The exceptions that use _HIDENAME
-// are built from RocksDB errors which already have an info string with
-// an included name.
-//
-IRCD_EXCEPTION(ircd::error, error)
-IRCD_EXCEPTION(error, not_found)
-IRCD_EXCEPTION(error, schema_error)
-IRCD_EXCEPTION_HIDENAME(error, corruption)
-IRCD_EXCEPTION_HIDENAME(error, not_supported)
-IRCD_EXCEPTION_HIDENAME(error, invalid_argument)
-IRCD_EXCEPTION_HIDENAME(error, io_error)
-IRCD_EXCEPTION_HIDENAME(error, merge_in_progress)
-IRCD_EXCEPTION_HIDENAME(error, incomplete)
-IRCD_EXCEPTION_HIDENAME(error, shutdown_in_progress)
-IRCD_EXCEPTION_HIDENAME(error, timed_out)
-IRCD_EXCEPTION_HIDENAME(error, aborted)
-IRCD_EXCEPTION_HIDENAME(error, busy)
-IRCD_EXCEPTION_HIDENAME(error, expired)
-IRCD_EXCEPTION_HIDENAME(error, try_again)
-
-// db subsystem has its own logging facility
-extern struct log::log log;
-
-} // namespace db
-} // namespace ircd
+	// db subsystem has its own logging facility
+	extern struct log::log log;
+}
 
 //
 // These are forward declarations to objects we may carry a pointer to.
@@ -83,25 +81,22 @@ namespace rocksdb
 //
 // Misc utils
 //
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	extern const char *const version;
 
-extern const char *const version;
+	rocksdb::Slice slice(const string_view &);
+	string_view slice(const rocksdb::Slice &);
 
-rocksdb::Slice slice(const string_view &);
-string_view slice(const rocksdb::Slice &);
+	bool valid(const rocksdb::Iterator &);
+	string_view key(const rocksdb::Iterator &);
+	string_view val(const rocksdb::Iterator &);
 
-bool valid(const rocksdb::Iterator &);
-string_view key(const rocksdb::Iterator &);
-string_view val(const rocksdb::Iterator &);
+	std::string path(const std::string &name);
+	std::vector<std::string> available();
 
-std::string path(const std::string &name);
-std::vector<std::string> available();
-
-void log_rdb_perf_context(const bool &all = true);
-
-} // namespace db
-} // namespace ircd
+	void log_rdb_perf_context(const bool &all = true);
+}
 
 #include "db/delta.h"
 #include "db/database.h"
@@ -109,24 +104,20 @@ void log_rdb_perf_context(const bool &all = true);
 #include "db/column.h"
 #include "db/cell.h"
 #include "db/row.h"
-#include "db/object.h"
+#include "db/value.h"
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
+}
 
-std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
+namespace ircd
+{
+	using db::database;
+}
 
-struct init
+struct ircd::db::init
 {
 	init();
 	~init() noexcept;
 };
-
-} // namespace db
-} // namespace ircd
-
-namespace ircd {
-
-using database = db::database;
-
-} // namespace ircd

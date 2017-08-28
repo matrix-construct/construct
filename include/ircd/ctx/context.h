@@ -25,15 +25,17 @@
 #pragma once
 #define HAVE_IRCD_CTX_CONTEXT_H
 
-namespace ircd {
-namespace ctx  {
-
-const size_t DEFAULT_STACK_SIZE
+namespace ircd::ctx
 {
-	64_KiB
-};
+	struct context;
 
-struct context
+	const size_t DEFAULT_STACK_SIZE
+	{
+		64_KiB
+	};
+}
+
+struct ircd::ctx::context
 {
 	enum flags
 	{
@@ -94,11 +96,8 @@ struct context
 };
 
 inline void
-swap(context &a, context &b)
+ircd::ctx::swap(context &a, context &b)
 noexcept
 {
 	std::swap(a.c, b.c);
 }
-
-} // namespace ctx
-} // namespace ircd

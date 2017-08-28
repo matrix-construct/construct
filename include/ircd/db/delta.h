@@ -23,33 +23,32 @@
 #pragma once
 #define HAVE_IRCD_DB_DELTA_H
 
-namespace ircd {
-namespace db   {
-
-enum op
+namespace ircd::db
 {
-	GET,                     // no-op sentinel, do not use (debug asserts)
-	SET,                     // (batch.Put)
-	MERGE,                   // (batch.Merge)
-	DELETE,                  // (batch.Delete)
-	DELETE_RANGE,            // (batch.DeleteRange)
-	SINGLE_DELETE,           // (batch.SingleDelete)
-};
+	enum op
+	{
+		GET,                     // no-op sentinel, do not use (debug asserts)
+		SET,                     // (batch.Put)
+		MERGE,                   // (batch.Merge)
+		DELETE,                  // (batch.Delete)
+		DELETE_RANGE,            // (batch.DeleteRange)
+		SINGLE_DELETE,           // (batch.SingleDelete)
+	};
 
-// Indicates an op uses both a key and value for its operation. Some only use
-// a key name so an empty value argument in a delta is okay when false.
-bool value_required(const op &op);
+	// Indicates an op uses both a key and value for its operation. Some only use
+	// a key name so an empty value argument in a delta is okay when false.
+	bool value_required(const op &op);
 
-using merge_delta = std::pair<string_view, string_view>;
-using merge_closure = std::function<std::string (const string_view &key, const merge_delta &)>;
-using update_closure = std::function<std::string (const string_view &key, merge_delta &)>;
+	using merge_delta = std::pair<string_view, string_view>;
+	using merge_closure = std::function<std::string (const string_view &key, const merge_delta &)>;
+	using update_closure = std::function<std::string (const string_view &key, merge_delta &)>;
 
-struct comparator
+	struct comparator;
+}
+
+struct ircd::db::comparator
 {
 	std::string name;
 	std::function<bool (const string_view &, const string_view &)> less;
 	std::function<bool (const string_view &, const string_view &)> equal;
 };
-
-} // namespace db
-} // namespace ircd

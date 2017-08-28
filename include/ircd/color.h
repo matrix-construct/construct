@@ -20,23 +20,26 @@
 #pragma once
 #define HAVE_IRCD_COLOR_H
 
-namespace ircd  {
-namespace color {
-
-enum mode
-:uint8_t
+namespace ircd::color
 {
-	OFF       = 0x0f,
-	BOLD      = 0x02,
-	COLOR     = 0x03,
-	ITALIC    = 0x09,
-	STRIKE    = 0x13,
-	UNDER     = 0x15,
-	UNDER2    = 0x1f,
-	REVERSE   = 0x16,
-};
+	enum mode
+	:uint8_t
+	{
+		OFF       = 0x0f,
+		BOLD      = 0x02,
+		COLOR     = 0x03,
+		ITALIC    = 0x09,
+		STRIKE    = 0x13,
+		UNDER     = 0x15,
+		UNDER2    = 0x1f,
+		REVERSE   = 0x16,
+	};
 
-enum class fg
+	enum class fg;
+	enum class bg;
+}
+
+enum class ircd::color::fg
 {
 	WHITE,    BLACK,      BLUE,      GREEN,
 	LRED,     RED,        MAGENTA,   ORANGE,
@@ -44,13 +47,10 @@ enum class fg
 	LBLUE,    LMAGENTA,   GRAY,      LGRAY
 };
 
-enum class bg
+enum class ircd::color::bg
 {
 	LGRAY_BLINK,     BLACK,           BLUE,          GREEN,
 	RED_BLINK,       RED,             MAGENTA,       ORANGE,
 	ORANGE_BLINK,    GREEN_BLINK,     CYAN,          CYAN_BLINK,
 	BLUE_BLINK,      MAGENTA_BLINK,   BLACK_BLINK,   LGRAY,
 };
-
-} // namespace color
-} // namespace ircd

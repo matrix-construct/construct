@@ -23,10 +23,12 @@
 #pragma once
 #define HAVE_IRCD_UTIL_TIMER_H
 
-namespace ircd {
-inline namespace util {
+namespace ircd::util
+{
+	struct timer;
+}
 
-struct timer
+struct ircd::util::timer
 {
 	using clock = std::chrono::steady_clock;
 
@@ -42,14 +44,14 @@ struct timer
 };
 
 inline
-timer::timer()
+ircd::util::timer::timer()
 :accumulator{0ns}
 ,start{clock::now()}
 {
 }
 
 inline
-timer::timer(const std::function<void ()> &func)
+ircd::util::timer::timer(const std::function<void ()> &func)
 :timer{}
 {
 	func();
@@ -57,7 +59,7 @@ timer::timer(const std::function<void ()> &func)
 }
 
 inline void
-timer::stop()
+ircd::util::timer::stop()
 {
 	const auto now(clock::now());
 	if(start == clock::time_point::min())
@@ -68,7 +70,7 @@ timer::stop()
 }
 
 inline void
-timer::cont()
+ircd::util::timer::cont()
 {
 	if(start != clock::time_point::min())
 	{
@@ -81,11 +83,8 @@ timer::cont()
 
 template<class duration>
 duration
-timer::get()
+ircd::util::timer::get()
 const
 {
 	return std::chrono::duration_cast<duration>(accumulator);
 }
-
-} // namespace util
-} // namespace ircd

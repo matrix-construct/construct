@@ -22,11 +22,56 @@
 #pragma once
 #define HAVE_IRCD_BUFFER_H
 
-namespace ircd   {
-namespace buffer {
+namespace ircd::buffer
+{
+	template<class it> struct buffer;
+	struct const_buffer;
+	struct mutable_buffer;
+	template<class buffer, size_t align> struct unique_buffer;
+
+	template<class T> using buffers = std::initializer_list<T>;
+	using const_buffers = buffers<const_buffer>;
+	using mutable_buffers = buffers<mutable_buffer>;
+
+	extern const mutable_buffer null_buffer;
+	extern const mutable_buffers null_buffers;
+
+	template<class it> it rend(const buffer<it> &buffer);
+	template<class it> it end(const buffer<it> &buffer);
+	template<class it> it rbegin(const buffer<it> &buffer);
+	template<class it> it begin(const buffer<it> &buffer);
+
+	template<class it> size_t size(const buffer<it> &buffer);
+	template<class T> size_t size(const buffers<T> &buffers);
+	template<class it> it data(const buffer<it> &buffer);
+
+	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
+	template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
+
+	template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
+	template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
+
+	template<class T> char *copy(char *&dest, char *const &stop, const buffers<T> &buffer);
+	template<class T> size_t copy(char *const &dest, const size_t &max, const buffers<T> &buffer);
+
+	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
+	template<class T> std::ostream &operator<<(std::ostream &s, const buffers<T> &buffers);
+}
+
+// Export these important aliases down to main ircd namespace
+namespace ircd
+{
+	using buffer::const_buffer;
+	using buffer::mutable_buffer;
+	using buffer::unique_buffer;
+	using buffer::const_buffers;
+	using buffer::mutable_buffers;
+	using buffer::null_buffer;
+	using buffer::null_buffers;
+}
 
 template<class it>
-struct buffer
+struct ircd::buffer::buffer
 :std::tuple<it, it>
 {
 	using value_type = it;
@@ -44,7 +89,7 @@ struct buffer
 	{}
 };
 
-struct const_buffer
+struct ircd::buffer::const_buffer
 :buffer<const char *>
 {
 	operator boost::asio::const_buffer() const;
@@ -55,7 +100,7 @@ struct const_buffer
 	{}
 };
 
-struct mutable_buffer
+struct ircd::buffer::mutable_buffer
 :buffer<char *>
 {
 	operator boost::asio::mutable_buffer() const;
@@ -65,7 +110,7 @@ struct mutable_buffer
 
 template<class buffer,
          size_t align = 16>
-struct unique_buffer
+struct ircd::buffer::unique_buffer
 :buffer
 {
 	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
@@ -75,53 +120,6 @@ struct unique_buffer
 	unique_buffer(const unique_buffer &) = delete;
 	~unique_buffer() noexcept;
 };
-
-template<class T> using buffers = std::initializer_list<T>;
-using const_buffers = buffers<const_buffer>;
-using mutable_buffers = buffers<mutable_buffer>;
-
-const mutable_buffer null_buffer
-{
-    nullptr, nullptr
-};
-
-const mutable_buffers null_buffers
-{{
-	null_buffer
-}};
-
-template<class it> it rend(const buffer<it> &buffer);
-template<class it> it end(const buffer<it> &buffer);
-template<class it> it rbegin(const buffer<it> &buffer);
-template<class it> it begin(const buffer<it> &buffer);
-
-template<class it> size_t size(const buffer<it> &buffer);
-template<class T> size_t size(const buffers<T> &buffers);
-template<class it> it data(const buffer<it> &buffer);
-
-template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
-template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
-
-template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
-template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
-
-template<class T> char *copy(char *&dest, char *const &stop, const buffers<T> &buffer);
-template<class T> size_t copy(char *const &dest, const size_t &max, const buffers<T> &buffer);
-
-template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
-template<class T> std::ostream &operator<<(std::ostream &s, const buffers<T> &buffers);
-
-} // namespace buffer
-
-using buffer::const_buffer;
-using buffer::mutable_buffer;
-using buffer::unique_buffer;
-using buffer::const_buffers;
-using buffer::mutable_buffers;
-using buffer::null_buffer;
-using buffer::null_buffers;
-
-} // namespace ircd
 
 template<class T>
 std::ostream &

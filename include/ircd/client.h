@@ -27,21 +27,30 @@
 #pragma once
 #define HAVE_IRCD_CLIENT_H
 
-namespace ircd {
+namespace ircd
+{
+	IRCD_EXCEPTION(ircd::error, client_error)
+	IRCD_EXCEPTION(client_error, broken_pipe)
+	IRCD_EXCEPTION(client_error, disconnected)
 
-IRCD_EXCEPTION(ircd::error, client_error)
-IRCD_EXCEPTION(client_error, broken_pipe)
-IRCD_EXCEPTION(client_error, disconnected)
+	struct socket;
+	struct client;
 
-struct socket;
-struct client
+	const char *write(client &, const char *&start, const char *const &stop);
+	char *read(client &, char *&start, char *const &stop);
+	string_view readline(client &, char *&start, char *const &stop);
+	http::response::write_closure write_closure(client &);
+	parse::read_closure read_closure(client &);
+	std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
+}
+
+struct ircd::client
 :std::enable_shared_from_this<client>
 {
 	struct init;
-
+	using list = std::list<client *>;
 	using host_port_pair = std::pair<std::string, uint16_t>;
 	using host_port = IRCD_WEAK_T(host_port_pair);
-	using list = std::list<client *>;
 
 	static list clients;
 
@@ -60,30 +69,19 @@ struct client
 	client &operator=(client &&) = delete;
 	client &operator=(const client &) = delete;
 	virtual ~client() noexcept;
+
+	friend host_port remote_addr(const client &);
+	friend host_port local_addr(const client &);
+	friend std::string string(const host_port &);
+	friend const auto &host(const host_port &);
+	friend const auto &port(const host_port &);
 };
 
-struct client::init
+struct ircd::client::init
 {
 	init();
 	~init() noexcept;
 };
-
-client::host_port remote_addr(const client &);
-client::host_port local_addr(const client &);
-std::string string(const client::host_port &);
-const auto &host(const client::host_port &);
-const auto &port(const client::host_port &);
-
-const char *write(client &, const char *&start, const char *const &stop);
-char *read(client &, char *&start, char *const &stop);
-string_view readline(client &, char *&start, char *const &stop);
-
-http::response::write_closure write_closure(client &);
-parse::read_closure read_closure(client &);
-
-std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
-
-} // namespace ircd
 
 inline const auto &
 ircd::port(const client::host_port &host_port)

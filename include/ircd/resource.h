@@ -22,9 +22,12 @@
 #pragma once
 #define HAVE_IRCD_RESOURCE_H
 
-namespace ircd {
+namespace ircd
+{
+	struct resource;
+}
 
-struct resource
+struct ircd::resource
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
@@ -67,9 +70,11 @@ struct resource
 	static resource &find(string_view path);
 };
 
-struct resource::request
+struct ircd::resource::request
 :json::object
 {
+	template<class> struct body;
+
 	const http::request::head &head;
 	http::request::content &content;
 	http::query::string query;
@@ -77,7 +82,14 @@ struct resource::request
 	request(const http::request::head &head, http::request::content &content, http::query::string query);
 };
 
-struct resource::response
+template<class tuple>
+struct ircd::resource::request::body
+:tuple
+{
+	body(const resource::request &);
+};
+
+struct ircd::resource::response
 {
 	response(client &, const string_view &str, const string_view &ct = "text/plain; charset=utf8", const http::code & = http::OK);
 	response(client &, const json::object & = "{}", const http::code & = http::OK);
@@ -86,7 +98,7 @@ struct resource::response
 	response() = default;
 };
 
-struct resource::method
+struct ircd::resource::method
 {
 	enum flag
 	{
@@ -114,4 +126,8 @@ struct resource::method
 	virtual ~method() noexcept;
 };
 
-} // namespace ircd
+template<class tuple>
+ircd::resource::request::body<tuple>::body(const resource::request &request)
+:tuple{request}
+{
+}

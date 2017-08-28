@@ -26,7 +26,10 @@
 #pragma once
 #define HAVE_IRCD_EXCEPTION_H
 
-namespace ircd {
+namespace ircd
+{
+	struct exception;
+}
 
 /** The root exception type.
  *
@@ -47,7 +50,7 @@ namespace ircd {
  *  Note: Prefer 'noexcept' instead of catch(...), noexcept is like an 'assert'
  *  for exceptions, and the rogue can be found-out in testing.
  */
-struct exception
+struct ircd::exception
 :std::exception
 {
   protected:
@@ -142,7 +145,8 @@ struct name                                                                   \
  *
  *  IRCD_EXCEPTION(ircd::error, error)
  */
-IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
-IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
-
-} // namespace ircd
+namespace ircd
+{
+	IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
+	IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
+}
