@@ -1162,7 +1162,7 @@ ircd::db::write(const cell::delta *const &begin,
 	// Find the database through one of the cell's columns. cell::deltas
 	// may come from different columns so we do nothing else with this.
 	auto &front(*begin);
-	column &c(std::get<cell &>(front).c);
+	column &c(std::get<cell *>(front)->c);
 	database &d(c);
 
 	rocksdb::WriteBatch batch;
@@ -1189,11 +1189,11 @@ void
 ircd::db::append(rocksdb::WriteBatch &batch,
                  const cell::delta &delta)
 {
-	auto &column(std::get<cell &>(delta).c);
+	auto &column(std::get<cell *>(delta)->c);
 	append(batch, column, column::delta
 	{
 		std::get<op>(delta),
-		std::get<cell &>(delta).index,
+		std::get<cell *>(delta)->index,
 		std::get<string_view>(delta)
 	});
 }
@@ -1434,8 +1434,8 @@ ircd::db::write(const row::delta *const &begin,
 		std::accumulate(begin, end, size_t(0), []
 		(auto ret, const row::delta &delta)
 		{
-			const auto &row(std::get<row &>(delta));
-			return ret += row.size();
+			const auto &row(std::get<row *>(delta));
+			return ret += row->size();
 		})
 	};
 
@@ -1447,9 +1447,9 @@ ircd::db::write(const row::delta *const &begin,
 	std::for_each(begin, end, [&deltas]
 	(const auto &delta)
 	{
-		auto &row(std::get<row &>(delta));
 		const auto &op(std::get<op>(delta));
-		std::for_each(std::begin(row), std::end(row), [&deltas, &op]
+		const auto &row(std::get<row *>(delta));
+		std::for_each(std::begin(*row), std::end(*row), [&deltas, &op]
 		(auto &cell)
 		{
 			// For operations like DELETE which don't require a value in

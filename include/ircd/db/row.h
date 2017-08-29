@@ -164,14 +164,14 @@ struct ircd::db::row::iterator
 // all of a row's cells together.
 //
 struct ircd::db::row::delta
-:std::tuple<op, row &>
+:std::tuple<op, row *>
 {
 	delta(row &r, const enum op &op = op::SET)
-	:std::tuple<enum op, row &>{op, r}
+	:std::tuple<enum op, row *>{op, &r}
 	{}
 
 	delta(const enum op &op, row &r)
-	:std::tuple<enum op, row &>{op, r}
+	:std::tuple<enum op, row *>{op, &r}
 	{}
 };
 

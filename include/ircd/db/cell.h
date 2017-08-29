@@ -124,14 +124,14 @@ namespace ircd::db
 // transaction across many cells in various columns at once.
 //
 struct ircd::db::cell::delta
-:std::tuple<op, cell &, string_view>
+:std::tuple<op, cell *, string_view>
 {
 	delta(cell &c, const string_view &val, const enum op &op = op::SET)
-	:std::tuple<enum op, cell &, string_view>{op, c, val}
+	:std::tuple<enum op, cell *, string_view>{op, &c, val}
 	{}
 
 	delta(const enum op &op, cell &c, const string_view &val = {})
-	:std::tuple<enum op, cell &, string_view>{op, c, val}
+	:std::tuple<enum op, cell *, string_view>{op, &c, val}
 	{}
 };
 
