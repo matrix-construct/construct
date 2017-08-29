@@ -82,6 +82,7 @@ namespace ircd::json
 	template<> value::value(const float &floating);
 	template<> value::value(const int32_t &integer);
 	template<> value::value(const int16_t &integer);
+	template<> value::value(const bool &boolean);
 	template<> value::value(const std::string &str);
 }
 
@@ -164,6 +165,14 @@ template<> inline
 ircd::json::value::value(const int16_t &integer)
 :value{int64_t(integer)}
 {}
+
+template<> inline
+ircd::json::value::value(const bool &boolean)
+:value
+{
+	boolean? "true" : "false",
+	type::LITERAL
+}{}
 
 template<> inline
 ircd::json::value::value(const std::string &str)
