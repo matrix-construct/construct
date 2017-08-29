@@ -410,7 +410,7 @@ ircd::json::serialize(const index &obj,
 
 	const auto print_literal([&stop, &out](const value &value)
 	{
-		printer(out, stop, karma::string, string_view{value});
+		printer(out, stop, printer.literal, string_view{value});
 	});
 
 	const auto print_object([&stop, &out](const value &value)
@@ -554,7 +554,7 @@ ircd::json::operator<<(std::ostream &s, const index &obj)
 
 	const auto stream_literal([&osi](const value &value)
 	{
-		karma::generate(osi, karma::string, string_view{value});
+		karma::generate(osi, ostreamer.literal, string_view{value});
 	});
 
 	const auto stream_object([&osi, &s](const value &value)
