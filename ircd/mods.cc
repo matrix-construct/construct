@@ -700,6 +700,27 @@ try
 }
 catch(const boost::system::system_error &e)
 {
+	switch(e.code().value())
+	{
+		case boost::system::errc::bad_file_descriptor:
+		{
+			const string_view what(e.what());
+			const auto pos(what.find("undefined symbol: "));
+			if(pos == std::string_view::npos)
+				break;
+
+			const string_view msg(what.substr(pos));
+			const std::string mangled(between(msg, ": ", ")"));
+			const std::string demangled(demangle(mangled));
+			throw error("undefined symbol: '%s' (%s)",
+			            demangled,
+			            mangled);
+		}
+
+		default:
+			break;
+	}
+
 	throw error("%s", e.what());
 }
 
