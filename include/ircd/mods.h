@@ -129,6 +129,9 @@ struct import_shared
 	import_shared(const std::string &modname, const std::string &symname);
 };
 
+
+std::string demangle(const std::string &symbol);
+
 std::string postfixed(const std::string &name);
 std::string unpostfixed(const std::string &name);
 
@@ -158,6 +161,7 @@ namespace ircd {
 using mods::module;                              // Bring struct module into main ircd::
 using mods::import;
 using mods::import_shared;
+using mods::demangle;
 
 } // namespace ircd
 

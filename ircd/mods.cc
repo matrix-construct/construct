@@ -24,6 +24,7 @@
  *  USA
  */
 
+#include <cxxabi.h>
 #include <boost/filesystem.hpp>
 #include <boost/dll.hpp>
 
@@ -580,6 +581,29 @@ filesystem::path
 ircd::mods::prefix_if_relative(const filesystem::path &path)
 {
 	return path.is_relative()? (modroot / path) : path;
+}
+
+std::string
+ircd::mods::demangle(const std::string &symbol)
+{
+	size_t len;
+	int status;
+	const custom_ptr<char> buf
+	{
+		abi::__cxa_demangle(symbol.c_str(), nullptr, &len, &status),
+		std::free
+	};
+
+	switch(status)
+	{
+		case 0:   break;
+		case -1:  throw error("Demangle failed -1: memory allocation failure");
+		case -2:  throw error("Demangle failed -2: mangled name is not valid");
+		case -3:  throw error("Demangle failed -3: invalid argument");
+		default:  throw error("Demangle failed %d: unknown error", status);
+	}
+
+	return { buf.get(), len };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
