@@ -1397,7 +1397,7 @@ ircd::db::cell::compare_exchange(string_view &expected,
 ircd::db::cell &
 ircd::db::cell::operator=(const string_view &s)
 {
-	write(c, index, s);
+	write(c, key(), s);
 	return *this;
 }
 
@@ -1458,7 +1458,7 @@ bool
 ircd::db::cell::valid()
 const
 {
-	return it && valid_equal(*it, index);
+	return it && (index.empty() || valid_equal(*it, index));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2935,4 +2935,7 @@ ircd::db::value_required(const op &op)
 		case op::SINGLE_DELETE:
 			return false;
 	}
+
+	assert(0);
+	return false;
 }

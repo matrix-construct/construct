@@ -49,7 +49,7 @@ namespace ircd::db
 }
 
 struct ircd::db::database
-:std::enable_shared_from_this<struct database>
+:std::enable_shared_from_this<database>
 {
 	struct descriptor;
 	struct options;
@@ -60,7 +60,7 @@ struct ircd::db::database
 	struct snapshot;
 	struct comparator;
 	struct column;
-	using description = std::initializer_list<struct descriptor>;
+	using description = std::initializer_list<descriptor>;
 
 	// central collection of open databases for iteration (non-owning)
 	static std::map<string_view, database *> dbs;
@@ -113,7 +113,6 @@ namespace ircd::db
 	std::shared_ptr<const database::column> shared_from(const database::column &);
 	std::shared_ptr<database::column> shared_from(database::column &);
 	const std::string &name(const database::column &);
-	uint64_t sequence(const database::snapshot &);   // Sequence of a snapshot
 	uint32_t id(const database::column &);
 	void drop(database::column &);                   // Request to erase column from db
 }
@@ -188,4 +187,6 @@ struct ircd::db::database::snapshot
 	explicit snapshot(database &);
 	snapshot() = default;
 	~snapshot() noexcept;
+
+	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
 };

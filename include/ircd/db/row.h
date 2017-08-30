@@ -38,6 +38,9 @@ namespace ircd::db
 // will all return the same index value across the whole `row`. To get the names
 // of the columns themselves to build ex. the key name of a JSON key-value pair,
 // use `cell::col()`, which will be different for each `cell` across the `row`.
+//
+// The db::row::iterator iterates over the cells in a row; to iterate over
+// multiple rows use the db::cursor
 struct ircd::db::row
 {
 	struct delta;
