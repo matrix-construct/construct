@@ -34,6 +34,7 @@ namespace ircd::db
 	struct row;
 	struct column;
 	struct database;
+	enum class pos;
 
 	// Errors for the database subsystem. The exceptions that use _HIDENAME
 	// are built from RocksDB errors which already have an info string with
@@ -115,6 +116,15 @@ namespace ircd
 {
 	using db::database;
 }
+
+enum class ircd::db::pos
+{
+    FRONT   = -2,    // .front()    | first element
+    PREV    = -1,    // std::prev() | previous element
+    END     = 0,     // break;      | exit iteration (or past the end)
+    NEXT    = 1,     // continue;   | next element
+    BACK    = 2,     // .back()     | last element
+};
 
 struct ircd::db::init
 {

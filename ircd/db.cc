@@ -47,6 +47,7 @@ struct throw_on_error
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
 };
 
+const char *reflect(const pos &);
 const std::string &reflect(const rocksdb::Tickers &);
 const std::string &reflect(const rocksdb::Histograms &);
 rocksdb::Slice slice(const string_view &);
@@ -56,15 +57,6 @@ string_view slice(const rocksdb::Slice &);
 rocksdb::WriteOptions make_opts(const sopts &);
 rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
 bool optstr_find_and_remove(std::string &optstr, const std::string &what);
-
-enum class pos
-{
-	FRONT   = -2,    // .front()    | first element
-	PREV    = -1,    // std::prev() | previous element
-	END     = 0,     // break;      | exit iteration (or past the end)
-	NEXT    = 1,     // continue;   | next element
-	BACK    = 2,     // .back()     | last element
-};
 
 const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
 const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
@@ -2844,6 +2836,21 @@ ircd::db::reflect(const rocksdb::Histograms &type)
 
 	static const auto empty{"<histogram>?????"s};
 	return it != end(names)? it->second : empty;
+}
+
+const char *
+ircd::db::reflect(const pos &pos)
+{
+	switch(pos)
+	{
+		case pos::NEXT:     return "NEXT";
+		case pos::PREV:     return "PREV";
+		case pos::FRONT:    return "FRONT";
+		case pos::BACK:     return "BACK";
+		case pos::END:      return "END";
+	}
+
+	return "?????";
 }
 
 bool
