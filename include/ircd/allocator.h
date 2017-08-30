@@ -106,7 +106,7 @@ struct ircd::allocator::dynamic
 	,data_size{sizeof(T) * size + 16}
 	,arena
 	{
-		new uint8_t[head_size + data_size]
+		new __attribute__((aligned(16))) uint8_t[head_size + data_size]
 	}
 	,buf
 	{
