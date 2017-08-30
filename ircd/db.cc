@@ -85,10 +85,8 @@ void _seek_(rocksdb::Iterator &, const string_view &);
 void _seek_(rocksdb::Iterator &, const pos &);
 
 // Move an iterator
-template<class pos> void seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
-template<class pos> void seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
-template<class pos> void seek(column::const_iterator &, const pos &);
-template<class pos> void seek(row &, const pos &p);
+template<class pos> bool seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+template<class pos> bool seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
 
 // Query for an iterator. Returns a lower_bound on a key
 std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
@@ -1198,6 +1196,22 @@ ircd::db::append(rocksdb::WriteBatch &batch,
 	});
 }
 
+template<class pos>
+bool
+ircd::db::seek(cell &c,
+               const pos &p)
+{
+	column &cc(c);
+	database::column &dc(cc);
+
+	gopts opts;
+	opts.snapshot = c.ss;
+	auto ropts(make_opts(opts));
+	return seek(dc, p, ropts, c.it);
+}
+template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &);
+template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &);
+
 // Linkage for incomplete rocksdb::Iterator
 ircd::db::cell::cell()
 {
@@ -1292,10 +1306,8 @@ ircd::db::cell::load(gopts opts)
 		tit->Next();
 	}
 
-
 	database::column &c(this->c);
-	seek(c, index, opts, it);
-	return valid();
+	return seek(c, index, opts, this->it);
 }
 
 ircd::string_view
@@ -1467,6 +1479,69 @@ ircd::db::write(const row::delta *const &begin,
 	write(&deltas.front(), &deltas.front() + deltas.size(), sopts);
 }
 
+template<class pos>
+bool
+ircd::db::seek(row &r,
+               const pos &p)
+{
+	return std::all_of(begin(r.its), end(r.its), [&p]
+	(auto &cell)
+	{
+		return seek(cell, p);
+	});
+}
+template bool ircd::db::seek<ircd::db::pos>(row &, const pos &);
+template bool ircd::db::seek<ircd::string_view>(row &, const string_view &);
+
+template<class pos>
+bool
+ircd::db::seeka(row &r,
+                const pos &p)
+{
+	bool invalid(false);
+	std::for_each(begin(r.its), end(r.its), [&invalid, &p]
+	(auto &cell)
+	{
+		invalid |= !seek(cell, p);
+	});
+
+	return !invalid;
+}
+template bool ircd::db::seeka<ircd::db::pos>(row &, const pos &);
+template bool ircd::db::seeka<ircd::string_view>(row &, const string_view &);
+
+size_t
+ircd::db::trim(row &r)
+{
+	return trim(r, []
+	(const auto &cell)
+	{
+		return !valid(*cell.it);
+	});
+}
+
+size_t
+ircd::db::trim(row &r,
+               const string_view &index)
+{
+	return trim(r, [&index]
+	(const auto &cell)
+	{
+		return !valid_equal(*cell.it, index);
+	});
+}
+
+size_t
+ircd::db::trim(row &r,
+               const std::function<bool (cell &)> &closure)
+{
+	const auto end(std::remove_if(std::begin(r.its), std::end(r.its), closure));
+	const auto ret(std::distance(end, std::end(r.its)));
+	r.its.erase(end, std::end(r.its));
+	r.its.shrink_to_fit();
+	return ret;
+}
+
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<string_view> &colnames,
@@ -1570,60 +1645,6 @@ ircd::db::row::operator()(const op &op,
                           const sopts &sopts)
 {
 	write(cell::delta{op, (*this)[col], val}, sopts);
-}
-
-size_t
-ircd::db::trim(row &r)
-{
-	return trim(r, []
-	(const auto &cell)
-	{
-		return !valid(*cell.it);
-	});
-}
-
-size_t
-ircd::db::trim(row &r,
-               const string_view &index)
-{
-	return trim(r, [&index]
-	(const auto &cell)
-	{
-		return !valid_equal(*cell.it, index);
-	});
-}
-
-size_t
-ircd::db::trim(row &r,
-               const std::function<bool (cell &)> &closure)
-{
-	const auto end(std::remove_if(std::begin(r.its), std::end(r.its), closure));
-	const auto ret(std::distance(end, std::end(r.its)));
-	r.its.erase(end, std::end(r.its));
-	r.its.shrink_to_fit();
-	return ret;
-}
-
-void
-ircd::db::seek(row &r,
-               const string_view &s)
-{
-	seek<string_view>(r, s);
-}
-
-template<class pos>
-void
-ircd::db::seek(row &r,
-               const pos &p)
-{
-	ctx::offload([&r, &p]
-	{
-		std::for_each(begin(r.its), end(r.its), [&p]
-		(auto &cell)
-		{
-			_seek_(cell, p);
-		});
-	});
 }
 
 ircd::db::row::iterator
@@ -2236,27 +2257,21 @@ ircd::db::operator<(const column::const_iterator &a, const column::const_iterato
 }
 
 template<class pos>
-void
+bool
 ircd::db::seek(column::const_iterator &it,
                const pos &p)
 {
 	database::column &c(it);
-	database &d(*c.d);
 	const gopts &gopts(it);
 	auto opts
 	{
 		make_opts(gopts, true)
 	};
 
-	seek(c, p, opts, it.it);
+	return seek(c, p, opts, it.it);
 }
-
-void
-ircd::db::seek(column::const_iterator &it,
-               const string_view &s)
-{
-	seek<string_view>(it, s);
-}
+template bool ircd::db::seek<ircd::db::pos>(column::const_iterator &, const pos &);
+template bool ircd::db::seek<ircd::string_view>(column::const_iterator &, const string_view &);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -2277,7 +2292,7 @@ ircd::db::seek(column &column,
 }
 
 template<class pos>
-void
+bool
 ircd::db::seek(database::column &c,
                const pos &p,
                const gopts &gopts,
@@ -2288,7 +2303,7 @@ ircd::db::seek(database::column &c,
 		make_opts(gopts)
 	};
 
-	seek(c, p, opts, it);
+	return seek(c, p, opts, it);
 }
 
 //
@@ -2298,7 +2313,7 @@ ircd::db::seek(database::column &c,
 // This slightly complicates our toggling between blocking and non-blocking queries.
 //
 template<class pos>
-void
+bool
 ircd::db::seek(database::column &c,
                const pos &p,
                rocksdb::ReadOptions &opts,
@@ -2327,7 +2342,8 @@ ircd::db::seek(database::column &c,
 		          sequence(d),
 		          valid(*it),
 		          it->status().ToString());
-		return;
+
+		return valid(*it);
 	}
 
 	// DB cache miss: create a blocking iterator and offload it.
@@ -2348,7 +2364,8 @@ ircd::db::seek(database::column &c,
 		if(valid(*it))
 			_seek_(*blocking_it, it->key());
 
-		_seek_(*blocking_it, p);
+		if(!valid(*it) || valid(*blocking_it))
+			_seek_(*blocking_it, p);
 	});
 
 	// When the blocking iterator comes back invalid the result is propagated
@@ -2361,7 +2378,8 @@ ircd::db::seek(database::column &c,
 		          sequence(d),
 		          valid(*it),
 		          it->status().ToString());
-		return;
+
+		return false;
 	}
 
 	// When the blocking iterator comes back valid the result still has to be
@@ -2380,7 +2398,7 @@ ircd::db::seek(database::column &c,
 	          valid(*blocking_it),
 	          blocking_it->status().ToString());
 
-	seek(c, blocking_it->key(), opts, it);
+	return seek(c, blocking_it->key(), opts, it);
 }
 
 void

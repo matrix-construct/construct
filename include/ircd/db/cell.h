@@ -104,6 +104,8 @@ struct ircd::db::cell
 	~cell() noexcept;
 
 	friend std::ostream &operator<<(std::ostream &s, const cell &c);
+
+	template<class pos> friend bool seek(cell &c, const pos &p);
 };
 
 namespace ircd::db

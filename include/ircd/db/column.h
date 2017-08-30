@@ -212,8 +212,7 @@ struct ircd::db::column::const_iterator
 	friend bool operator<(const const_iterator &, const const_iterator &);
 	friend bool operator>(const const_iterator &, const const_iterator &);
 
-	template<class pos> friend void seek(column::const_iterator &, const pos &);
-	friend void seek(column::const_iterator &, const string_view &key);
+	template<class pos> friend bool seek(column::const_iterator &, const pos &);
 };
 
 inline ircd::db::column::const_iterator::operator
