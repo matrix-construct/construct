@@ -971,18 +971,48 @@ struct vector_view
 };
 
 //
-// Convenience cast a type (ex. an integer) into a string_view
+// Convenience cast a type (ex. an integer) into and out of a string_view
 //
-template<class T>
-string_view
-binary_view(const T &t)
+template<class T = string_view>
+struct binary_view
 {
-	return
+	string_view s;
+
+	operator const T &() const
+	{
+		return *reinterpret_cast<const T *>(s.data());
+	}
+
+	binary_view(const string_view &s)
+	:s{s}
+	{
+		if(unlikely(sizeof(T) != s.size()))
+			throw std::bad_cast();
+	}
+};
+
+template<>
+struct binary_view<string_view>
+:string_view
+{
+	template<class T>
+	binary_view(const T &t)
+	:string_view
 	{
 		reinterpret_cast<const char *>(&t), sizeof(T)
-	};
-}
+	}
+	{}
+};
 
+// Convenience cast a type (ex. an integer) from a string_view
+// ref is always const because string_view uses const char *
+template<class R>
+const R &
+as(const string_view &s)
+{
+	const binary_view<R> bv{s};
+	return static_cast<const R &>(bv);
+}
 
 //
 // Error-checking closure for POSIX system calls. Note the usage is
