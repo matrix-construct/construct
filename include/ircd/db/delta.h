@@ -43,8 +43,23 @@ namespace ircd::db
 	using merge_closure = std::function<std::string (const string_view &key, const merge_delta &)>;
 	using update_closure = std::function<std::string (const string_view &key, merge_delta &)>;
 
+	struct delta;
 	struct comparator;
 }
+
+struct ircd::db::delta
+:std::tuple<op, string_view, string_view, string_view>
+{
+	delta(const string_view &col, const string_view &key, const string_view &val, const enum op &op = op::SET)
+	:std::tuple<enum op, string_view, string_view, string_view>{op, col, key, val}
+	{}
+
+	delta(const enum op &op, const string_view &col, const string_view &key, const string_view &val = {})
+	:std::tuple<enum op, string_view, string_view, string_view>{op, col, key, val}
+	{}
+
+	delta() = default;
+};
 
 struct ircd::db::comparator
 {

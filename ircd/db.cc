@@ -536,6 +536,73 @@ noexcept
 	          background_errors);
 }
 
+void
+ircd::db::database::operator()(const delta &delta)
+{
+	operator()(sopts{}, delta);
+}
+
+void
+ircd::db::database::operator()(const std::initializer_list<delta> &deltas)
+{
+	operator()(sopts{}, deltas);
+}
+
+void
+ircd::db::database::operator()(const delta *const &begin,
+                               const delta *const &end)
+{
+	operator()(sopts{}, begin, end);
+}
+
+void
+ircd::db::database::operator()(const sopts &sopts,
+                               const delta &delta)
+{
+	operator()(sopts, &delta, &delta + 1);
+}
+
+void
+ircd::db::database::operator()(const sopts &sopts,
+                               const std::initializer_list<delta> &deltas)
+{
+	operator()(sopts, std::begin(deltas), std::end(deltas));
+}
+
+void
+ircd::db::database::operator()(const sopts &sopts,
+                               const delta *const &begin,
+                               const delta *const &end)
+{
+	rocksdb::WriteBatch batch;
+	std::for_each(begin, end, [this, &batch]
+	(const delta &delta)
+	{
+		const auto &op(std::get<op>(delta));
+		const auto &col(std::get<1>(delta));
+		const auto &key(std::get<2>(delta));
+		const auto &val(std::get<3>(delta));
+		db::column column(operator[](col));
+		append(batch, column, db::column::delta
+		{
+			op,
+			key,
+			val
+		});
+	});
+
+	auto opts(make_opts(sopts));
+	log.debug("'%s' @%lu PUT %zu column deltas",
+	          name,
+	          sequence(*this),
+	          std::distance(begin, end));
+
+	throw_on_error
+	{
+		d->Write(opts, &batch)
+	};
+}
+
 ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 try

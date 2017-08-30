@@ -30,6 +30,8 @@
 namespace ircd::db
 {
 	struct init;
+	struct gopts;
+	struct sopts;
 	struct cell;
 	struct row;
 	struct column;

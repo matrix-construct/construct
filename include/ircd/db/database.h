@@ -83,6 +83,14 @@ struct ircd::db::database
 	const column &operator[](const string_view &) const;
 	column &operator[](const string_view &);
 
+	// [SET] Perform operations in a sequence as a single transaction.
+	void operator()(const sopts &, const delta *const &begin, const delta *const &end);
+	void operator()(const sopts &, const std::initializer_list<delta> &);
+	void operator()(const sopts &, const delta &);
+	void operator()(const delta *const &begin, const delta *const &end);
+	void operator()(const std::initializer_list<delta> &);
+	void operator()(const delta &);
+
     database(std::string name,
              std::string options,
              description);
