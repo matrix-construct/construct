@@ -1733,6 +1733,27 @@ const
 	return ret;
 }
 
+bool
+ircd::db::row::valid()
+const
+{
+	return std::any_of(std::begin(its), std::end(its), []
+	(const auto &cell)
+	{
+		return cell.valid();
+	});
+}
+
+void
+ircd::db::row::load(const gopts &opts)
+{
+	std::for_each(std::begin(its), std::end(its), [&opts]
+	(auto &cell)
+	{
+		cell.load(opts);
+	});
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // db/column.h

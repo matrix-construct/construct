@@ -51,13 +51,14 @@ struct ircd::db::row
 	using pointer = cell *;
 	using difference_type = size_t;
 
-  private:
+  private: public:
 	std::vector<cell> its;
 
-	template<class pos> friend void seek(row &, const pos &);
-	friend void seek(row &, const string_view &key);
-
   public:
+	auto empty() const                           { return its.empty();                             }
+	auto size() const                            { return its.size();                              }
+	bool valid() const;                          // true on any cell valid; false on empty
+
 	// [GET] Iterations
 	const_iterator begin() const;
 	const_iterator end() const;
@@ -68,15 +69,19 @@ struct ircd::db::row
 	const_iterator find(const string_view &column) const;
 	iterator find(const string_view &column);
 
-	auto empty() const                           { return its.empty();                             }
-	auto size() const                            { return its.size();                              }
-
 	// [GET] Get cell
 	const cell &operator[](const string_view &column) const;
 	cell &operator[](const string_view &column);
 
+	// [GET] Object conversion
+	template<class tuple> explicit operator tuple() const;
+	template<class tuple> explicit operator tuple();
+
     // [SET] Perform operation
 	void operator()(const op &, const string_view &col, const string_view &val = {}, const sopts & = {});
+
+	// All cells
+	void load(const gopts & = {});               // !DANGER! not atomic
 
 	row(std::vector<cell> cells = {})
 	:its{std::move(cells)}
@@ -85,6 +90,12 @@ struct ircd::db::row
 	row(database &,
 	    const string_view &key = {},
 	    const vector_view<string_view> &columns = {},
+	    gopts opts = {});
+
+	template<class... T>
+	row(database &,
+	    const string_view &key = {},
+	    const json::tuple<T...> & = {},
 	    gopts opts = {});
 
 	template<class pos> friend bool seeka(row &, const pos &);
@@ -179,6 +190,42 @@ struct ircd::db::row::delta
 	:std::tuple<enum op, row *>{op, &r}
 	{}
 };
+
+template<class... T>
+ircd::db::row::row(database &d,
+                   const string_view &key,
+                   const json::tuple<T...> &t,
+                   gopts opts)
+:row{[&d, &key, &t, &opts]
+() -> row
+{
+	std::array<string_view, t.size()> cols;
+	json::_key_transform(t, std::begin(cols), std::end(cols));
+	return { d, key, cols, opts };
+}()}
+{
+}
+
+template<class tuple>
+ircd::db::row::operator tuple()
+{
+	tuple ret;
+	for(auto &cell : *this)
+		json::set(ret, cell.col(), cell.val());
+
+	return ret;
+}
+
+template<class tuple>
+ircd::db::row::operator tuple()
+const
+{
+	tuple ret;
+	for(const auto &cell : *this)
+		json::set(ret, cell.col(), cell.val());
+
+	return ret;
+}
 
 inline ircd::db::cell &
 ircd::db::row::operator[](const string_view &column)
