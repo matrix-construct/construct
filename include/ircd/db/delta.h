@@ -45,6 +45,7 @@ namespace ircd::db
 
 	struct delta;
 	struct comparator;
+	struct prefix_transform;
 }
 
 struct ircd::db::delta
@@ -66,4 +67,11 @@ struct ircd::db::comparator
 	std::string name;
 	std::function<bool (const string_view &, const string_view &)> less;
 	std::function<bool (const string_view &, const string_view &)> equal;
+};
+
+struct ircd::db::prefix_transform
+{
+	std::string name;
+	std::function<bool (const string_view &)> has;
+	std::function<string_view (const string_view &)> get;
 };

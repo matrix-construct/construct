@@ -69,6 +69,7 @@ enum class ircd::db::get
 	NO_CHECKSUM,            // Integrity of data will be checked unless this is specified
 	READAHEAD,              // Pair with a size in bytes for prefetching additional data
 	NO_EMPTY,               // Option for db::row to not include unassigned cells in the row
+	ALL_PREFIX,             // Iter all keys in prefix-oriented col (prefix_same_as_start = false)
 };
 
 struct ircd::db::gopts

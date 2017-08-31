@@ -59,6 +59,7 @@ struct ircd::db::database
 	struct mergeop;
 	struct snapshot;
 	struct comparator;
+	struct prefix_transform;
 	struct column;
 	using description = std::initializer_list<descriptor>;
 
@@ -125,9 +126,10 @@ struct ircd::db::database::descriptor
 
 	std::string name;
 	std::string explain;
-	typing type          { typeid(string_view), typeid(string_view) };
-	std::string options  {};
-	db::comparator cmp   {};
+	typing type { typeid(string_view), typeid(string_view) };
+	std::string options {};
+	db::comparator cmp {};
+	db::prefix_transform prefix {};
 };
 
 // options <-> string

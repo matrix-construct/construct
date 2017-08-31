@@ -31,6 +31,7 @@
 #include <rocksdb/statistics.h>
 #include <rocksdb/convenience.h>
 #include <rocksdb/env.h>
+#include <rocksdb/slice_transform.h>
 
 namespace ircd {
 namespace db   {
@@ -185,6 +186,25 @@ struct database::comparator
 	{}
 };
 
+struct database::prefix_transform
+:rocksdb::SliceTransform
+{
+	using Slice = rocksdb::Slice;
+
+	database *d;
+	db::prefix_transform user;
+
+	const char *Name() const override;
+	bool InDomain(const Slice &key) const override;
+	bool InRange(const Slice &key) const override;
+	Slice Transform(const Slice &key) const override;
+
+	prefix_transform(database *const &d, db::prefix_transform user)
+	:d{d}
+	,user{std::move(user)}
+	{}
+};
+
 struct database::column
 :std::enable_shared_from_this<database::column>
 ,rocksdb::ColumnFamilyDescriptor
@@ -193,6 +213,7 @@ struct database::column
 	std::type_index key_type;
 	std::type_index mapped_type;
 	comparator cmp;
+	prefix_transform prefix;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:
@@ -744,6 +765,45 @@ struct cmp_int64_t
 } // namespace db
 } // namespace ircd
 
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::prefix_transform
+//
+
+const char *
+ircd::db::database::prefix_transform::Name()
+const
+{
+	assert(!user.name.empty());
+	return user.name.c_str();
+}
+
+rocksdb::Slice
+ircd::db::database::prefix_transform::Transform(const Slice &key)
+const
+{
+	assert(bool(user.get));
+	const string_view s{slice(key)};
+	return slice(user.get(s));
+}
+
+bool
+ircd::db::database::prefix_transform::InRange(const Slice &key)
+const
+{
+	return InDomain(key);
+}
+
+bool
+ircd::db::database::prefix_transform::InDomain(const Slice &key)
+const
+{
+	assert(bool(user.has));
+	const string_view s{slice(key)};
+	return user.has(s);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database::column
@@ -759,6 +819,7 @@ ircd::db::database::column::column(database *const &d,
 ,key_type{desc.type.first}
 ,mapped_type{desc.type.second}
 ,cmp{d, std::move(desc.cmp)}
+,prefix{d, std::move(desc.prefix)}
 ,handle
 {
 	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
@@ -784,7 +845,12 @@ ircd::db::database::column::column(database *const &d,
 
 	this->options.comparator = &this->cmp;
 
-	//this->options.prefix_extractor = std::shared_ptr<const rocksdb::SliceTransform>(rocksdb::NewNoopTransform());
+	// Set the prefix extractor
+	if(this->prefix.user.get && this->prefix.user.has)
+		this->options.prefix_extractor = std::shared_ptr<const rocksdb::SliceTransform>
+		{
+			&this->prefix, [](const rocksdb::SliceTransform *) {}
+		};
 
 	//if(d->mergeop->merger)
 	//	this->options.merge_operator = d->mergeop;
@@ -2715,6 +2781,7 @@ ircd::db::make_opts(const gopts &opts,
 	rocksdb::ReadOptions ret;
 	ret.snapshot = opts.snapshot;
 	ret.read_tier = NON_BLOCKING;
+	ret.prefix_same_as_start = true;
 	//ret.total_order_seek = true;
 	//ret.iterate_upper_bound = nullptr;
 
@@ -2749,6 +2816,10 @@ ircd::db::make_opts(const gopts &opts,
 
 		case get::READAHEAD:
 			ret.readahead_size = opt.second;
+			continue;
+
+		case get::ALL_PREFIX:
+			ret.prefix_same_as_start = false;
 			continue;
 
 		default:
