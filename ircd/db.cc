@@ -343,12 +343,16 @@ ircd::db::shared_from(const database::column &column)
 //
 // database
 //
+namespace ircd::db
+{
+	database::description default_description;
+}
 
 ircd::db::database::database(std::string name,
                              std::string optstr)
 :database
 {
-	std::move(name), std::move(optstr), {}
+	std::move(name), std::move(optstr), default_description
 }
 {
 }
@@ -1933,25 +1937,6 @@ ircd::db::name(const column &column)
 	return name(c);
 }
 
-//
-// column
-//
-
-ircd::db::column::column(database::column &c)
-:c{shared_from(c)}
-{
-}
-
-ircd::db::column::column(std::shared_ptr<database::column> c)
-:c{std::move(c)}
-{
-}
-
-ircd::db::column::column(database &d,
-                         const string_view &column_name)
-:c{shared_from(d[column_name])}
-{}
-
 void
 ircd::db::flush(column &column,
                 const bool &blocking)
@@ -2100,6 +2085,20 @@ ircd::db::has(column &column,
 			__builtin_unreachable();
 	}
 }
+
+//
+// column
+//
+
+ircd::db::column::column(database::column &c)
+:c{&c}
+{
+}
+
+ircd::db::column::column(database &d,
+                         const string_view &column_name)
+:c{&d[column_name]}
+{}
 
 void
 ircd::db::column::operator()(const delta &delta,
@@ -2274,11 +2273,11 @@ ircd::db::column::const_iterator::const_iterator()
 {
 }
 
-ircd::db::column::const_iterator::const_iterator(std::shared_ptr<database::column> c,
+ircd::db::column::const_iterator::const_iterator(database::column *const &c,
                                                  std::unique_ptr<rocksdb::Iterator> &&it,
                                                  gopts opts)
 :opts{std::move(opts)}
-,c{std::move(c)}
+,c{c}
 ,it{std::move(it)}
 {
 	//if(!has_opt(this->opts, get::READAHEAD))

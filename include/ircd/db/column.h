@@ -98,7 +98,7 @@ struct ircd::db::column
 	using iterator = const_iterator;
 
   protected:
-	std::shared_ptr<database::column> c;
+	database::column *c;
 
   public:
 	explicit operator const database &() const;
@@ -134,7 +134,6 @@ struct ircd::db::column
 	void operator()(const sopts &, const std::initializer_list<delta> &);
 	void operator()(const delta &, const sopts & = {});
 
-	explicit column(std::shared_ptr<database::column> c);
 	column(database::column &c);
 	column(database &, const string_view &column);
 	column() = default;
@@ -178,12 +177,12 @@ struct ircd::db::column::const_iterator
 
   private:
 	gopts opts;
-	std::shared_ptr<database::column> c;
+	database::column *c;
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
 
 	friend class column;
-	const_iterator(std::shared_ptr<database::column>, std::unique_ptr<rocksdb::Iterator> &&, gopts = {});
+	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, gopts = {});
 
   public:
 	explicit operator const database::snapshot &() const;
