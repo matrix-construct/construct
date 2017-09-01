@@ -1088,30 +1088,10 @@ static_assert
 // To collapse pairs of iterators down to a single type
 //
 template<class T>
-struct iterators
-:std::pair<typename T::iterator, typename T::iterator>
-{
-	using std::pair<typename T::iterator, typename T::iterator>::pair;
-
-	iterators(T &t)
-	:std::pair<typename T::iterator, typename T::iterator>
-	{
-		std::begin(t), std::end(t)
-	}{}
-};
+using iterators = std::pair<typename T::iterator, typename T::iterator>;
 
 template<class T>
-struct const_iterators
-:std::pair<typename T::const_iterator, typename T::const_iterator>
-{
-	using std::pair<typename T::const_iterator, typename T::const_iterator>::pair;
-
-	const_iterators(const T &t)
-	:std::pair<typename T::const_iterator, typename T::const_iterator>
-	{
-		std::begin(t), std::end(t)
-	}{}
-};
+using const_iterators = std::pair<typename T::const_iterator, typename T::const_iterator>;
 
 template<class T>
 typename T::iterator
