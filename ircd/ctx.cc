@@ -617,7 +617,6 @@ namespace ircd::ctx::prof
 {
 	time_point cur_slice_start;     // Time slice state
 
-	size_t stack_usage_here(const ctx &) __attribute__((noinline));
 	void check_stack();
 	void check_slice();
 	void slice_start();
@@ -726,7 +725,14 @@ ircd::ctx::prof::check_stack()
 }
 
 size_t
-ircd::ctx::prof::stack_usage_here(const ctx &ctx)
+ircd::ctx::stack_usage_here()
+{
+	assert(current);
+	return stack_usage_here(*current);
+}
+
+size_t
+ircd::ctx::stack_usage_here(const ctx &ctx)
 {
 	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }

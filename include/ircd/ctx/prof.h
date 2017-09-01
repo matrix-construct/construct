@@ -24,6 +24,12 @@
 #pragma once
 #define HAVE_IRCD_CTX_PROF_H
 
+namespace ircd::ctx
+{
+    size_t stack_usage_here(const ctx &) __attribute__((noinline));
+    size_t stack_usage_here() __attribute__((noinline));
+}
+
 /* Profiling for the context system. These facilities provide tools and statistics.
  * The primary purpose here is to alert developers of unwanted context behavior, in
  * addition to optimizing the overall performance of the context system.
