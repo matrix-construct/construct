@@ -89,3 +89,10 @@ old code has been rewritten but the architecture is the same.
 	* When using a `switch` over an `enum` type, put what would be the `default` case after/outside
 	of the `switch` unless the situation specifically calls for one. We use -Wswitch so changes to
 	the enum will provide a good warning to update any `switch`.
+
+	* Prototypes should name their argument variables to make them easier to understand, except if
+	such a name is redundant because the type carries enough information to make it obvious. In
+	other words, if you have a prototype like `foo(const std::string &message)` you should name
+	`message` because std::string is common and *what* the string is for is otherwise opaque.
+	OTOH, if you have `foo(const options &, const std::string &message)` one should skip the name
+	for `options &` as it just adds redundant text to the prototype.
