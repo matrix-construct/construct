@@ -179,6 +179,12 @@ ircd::json::value::value(const std::string &str)
 :value{string_view{str}}
 {}
 
+template<class T>
+ircd::json::value::value(const T &t)
+:value{static_cast<string_view>(t)}
+{
+}
+
 template<size_t N>
 ircd::json::value::value(const char (&str)[N])
 :value{string_view{str}}
