@@ -34,9 +34,11 @@ inline namespace util {
 #define IRCD_UNIQUE(a)      IRCD_CONCAT(a, __COUNTER__)
 
 
-#define IRCD_OVERLOAD(NAME)             \
-    struct NAME##_t {};                 \
-    static constexpr NAME##_t NAME {};
+#define IRCD_OVERLOAD(NAME) \
+    static constexpr struct NAME##_t {} NAME {};
+
+#define IRCD_USING_OVERLOAD(ALIAS, ORIGIN) \
+    static constexpr const auto &ALIAS{ORIGIN}
 
 
 #define IRCD_WEAK_TYPEDEF(TYPE, NAME)                       \
