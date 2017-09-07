@@ -25,20 +25,60 @@
 #pragma once
 #define HAVE_IRCD_M_ERROR_H
 
-namespace ircd {
-namespace m    {
+namespace ircd::m
+{
+	struct error;
+}
 
-struct error
+struct ircd::m::error
 :http::error
 {
 	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
 	error(const http::code &, const json::object &object = {});
 	error(const http::code &, const json::index &idx);
+	error(const http::code &);
+	error(std::string = {});
+
+	IRCD_OVERLOAD(child)
+	template<class... args> error(child_t, args&&... a)
+	:error{std::forward<args>(a)...}
+	{}
 };
 
-} // namespace m
-} // namespace ircd
+#define IRCD_M_EXCEPTION(_parent_, _name_, _httpcode_)              \
+struct _name_                                                       \
+: _parent_                                                          \
+{                                                                   \
+    template<class... args> _name_(args&&... a)                     \
+    : _parent_                                                      \
+    {                                                               \
+        child, _httpcode_, "M_"#_name_, std::forward<args>(a)...    \
+    }{}                                                             \
+                                                                    \
+    template<class... args> _name_(child_t, args&&... a)            \
+    : _parent_                                                      \
+    {                                                               \
+        child, std::forward<args>(a)...                             \
+    }{}                                                             \
+};
+
+namespace ircd::m
+{
+	IRCD_M_EXCEPTION(error, UNKNOWN, http::INTERNAL_SERVER_ERROR);
+	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
+	IRCD_M_EXCEPTION(error, BAD_JSON, http::BAD_REQUEST);
+}
+
+inline
+ircd::m::error::error(std::string c)
+:http::error{http::INTERNAL_SERVER_ERROR, std::move(c)}
+{}
+
+inline
+ircd::m::error::error(const http::code &c)
+:http::error{c}
+{}
 
 inline
 ircd::m::error::error(const http::code &c,
