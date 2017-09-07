@@ -25,78 +25,127 @@
 #pragma once
 #define HAVE_IRCD_M_ID_H
 
-namespace ircd {
-namespace m    {
-
-const size_t USER_ID_BUFSIZE = 256;
-const size_t ACCESS_TOKEN_BUFSIZE = 256;
-
-inline bool
-username_valid(const string_view &username)
+namespace ircd::m
 {
-	return true;
+	IRCD_M_EXCEPTION(error, INVALID_MXID, http::BAD_REQUEST)
+	IRCD_M_EXCEPTION(INVALID_MXID, BAD_SIGIL, http::BAD_REQUEST)
+
+	IRCD_OVERLOAD(generate)
+
+	struct id;
 }
 
-inline bool
-mxid_valid(const string_view &mxid)
+//
+// Interface to a string representing an mxid. The m::id itself is just a
+// string_view over some existing data. m::id::buf is an m::id with an
+// internal array providing the buffer.
+//
+struct ircd::m::id
+:string_view
 {
-	const auto userhost(split(mxid, ':'));
-	const auto &user(userhost.first);
-	const auto &host(userhost.second);
-	if(user.empty() || host.empty())
-		return false;
+	struct event;
+	struct user;
+	struct room;
+	struct alias;
+	template<class T, size_t SIZE = 256> struct buf;
 
-	if(!startswith(user, '@') || user.size() == 1)
-		return false;
-
-	return true;
-}
-
-inline string_view
-username_generate(char *const &buf,
-                  const size_t &max)
-{
-	const uint32_t num(rand() % 100000U);
-	const size_t len(snprintf(buf, max, "@guest%u", num));
-	return { buf, len };
-}
-
-inline string_view
-access_token_generate(char *const &buf,
-                      const size_t &max)
-{
-	const int num[] { rand(), rand(), rand() };
-	const size_t len(snprintf(buf, max, "charybdis%d%d%d", num[0], num[1], num[2]));
-	return { buf, len };
-}
-
-struct id
-{
-	string_view user;
-	string_view host;
-
-	template<size_t size>
-	id(string_view user, string_view host)
-	:user{std::move(user)}
-	,host{std::move(host)}
-	{}
-
-	id(const string_view &user, const string_view &host, char *const &buf, const size_t &max)
-	:user{user}
-	,host{host}
+	enum sigil
 	{
-		char gen_buf[USER_ID_BUFSIZE];
-		fmt::snprintf(buf, max, "%s%s:%s",
-		              user.empty() || startswith(user, '@')? "" : "@",
-		              !user.empty()? user : username_generate(gen_buf, sizeof(gen_buf)),
-		              host);
+		EVENT  = '$',
+		USER   = '@',
+		ROOM   = '!',
+		ALIAS  = '#',
 	}
+	sigil;
 
-	template<size_t size>
-	id(const string_view &user, const string_view &host, char (&buf)[size])
-	:id{user, host, buf, size}
-	{}
+	// Checks
+	bool valid() const;                          // Fully qualified mxid
+	bool valid_local() const;                    // Local part is valid (may or may not have host)
+
+	// Extract elements
+	string_view local() const                    { return split(*this, ':').first;                 }
+	string_view host() const                     { return split(*this, ':').second;                }
+	string_view name() const                     { return lstrip(local(), '@');                    }
+
+  private:
+	static string_view generate_random_timebased(const enum sigil &, char *const &buf, const size_t &max);
+	static string_view generate_random_prefixed(const enum sigil &, const string_view &prefix, char *const &buf, const size_t &max);
+
+  public:
+	IRCD_USING_OVERLOAD(generate, m::generate);
+
+	id() = default;
+	id(const string_view &id);
+	id(const enum sigil &, const string_view &id);
+	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &id);
+	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &name, const string_view &host);
+	id(const enum sigil &, char *const &buf, const size_t &max, const generate_t &, const string_view &host);
 };
 
-} // namespace m
-} // namespace ircd
+namespace ircd::m
+{
+	bool valid_sigil(const char &c);
+	bool valid_sigil(const string_view &id);
+	enum id::sigil sigil(const char &c);
+	enum id::sigil sigil(const string_view &id);
+	const char *reflect(const enum id::sigil &);
+}
+
+//
+// ID object backed by an internal buffer. Useful for creating or composing
+// a new ID.
+//
+template<class T,
+         size_t MAX = 256>
+struct ircd::m::id::buf
+:T
+{
+	static constexpr const size_t &SIZE{MAX};
+
+  private:
+	std::array<char, SIZE> b;
+
+  public:
+	template<class... args>
+	buf(args&&... a)
+	:T{b.data(), b.size(), std::forward<args>(a)...}
+	{}
+
+	buf() = default;
+};
+
+//
+// convenience typedefs
+//
+
+struct ircd::m::id::event
+:ircd::m::id
+{
+	using buf = m::id::buf<event>;
+	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
+	event() = default;
+};
+
+struct ircd::m::id::user
+:ircd::m::id
+{
+	using buf = m::id::buf<user>;
+	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
+	user() = default;
+};
+
+struct ircd::m::id::room
+:ircd::m::id
+{
+	using buf = m::id::buf<room>;
+	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
+	room() = default;
+};
+
+struct ircd::m::id::alias
+:ircd::m::id
+{
+	using buf = m::id::buf<alias>;
+	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
+	alias() = default;
+};
