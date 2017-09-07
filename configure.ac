@@ -617,7 +617,8 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	fi
 
 	boost_linkage="$withval"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release $withval multi
+	boost_version="boost-${BOOST_VERSION_MIN}.0"
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release $withval multi $boost_version
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi

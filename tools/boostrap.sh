@@ -5,7 +5,8 @@ BLIBS=$2                 # A comma-separated list of which boost libs to build
 BVARIANT=$3              # release optimization or debug symbols etc
 BLINK=$4                 # whether to build with shared or static linkage (we like shared)
 BTHREADING=$5            # whether to build with thread-safety (we benefit from SINGLE THREADED)
-TOPDIR=$6                # This should be an absolute path to the repo root
+BVER=$6                  # boost version
+TOPDIR=$7                # This should be an absolute path to the repo root
 
 
 if [ -z $TOPDIR ]; then
@@ -88,81 +89,81 @@ run cd $TOPDIR
 run git submodule update --init boost
 run cd boost
 
-### Build tools
-run git submodule update --init --recursive tools/build
-run git submodule update --init --recursive tools/inspect
+### Build toolsy
+run git submodule update --init --recursive --checkout tools/build
+run git submodule update --init --recursive --checkout tools/inspect
 
 ### These are the libraries we need. Most of them are header-only. If not header-only,
 ### add to the list --with-libraries in the ./bootstrap command below
-run git submodule update --init --recursive libs/predef
-run git submodule update --init --recursive libs/assert
-run git submodule update --init --recursive libs/static_assert
-run git submodule update --init --recursive libs/type_traits
-run git submodule update --init --recursive libs/config
-run git submodule update --init --recursive libs/core
-run git submodule update --init --recursive libs/detail
+run git submodule update --init --recursive --checkout libs/predef
+run git submodule update --init --recursive --checkout libs/assert
+run git submodule update --init --recursive --checkout libs/static_assert
+run git submodule update --init --recursive --checkout libs/type_traits
+run git submodule update --init --recursive --checkout libs/config
+run git submodule update --init --recursive --checkout libs/core
+run git submodule update --init --recursive --checkout libs/detail
 
-run git submodule update --init --recursive libs/asio
-run git submodule update --init --recursive libs/system
-run git submodule update --init --recursive libs/regex
+run git submodule update --init --recursive --checkout libs/asio
+run git submodule update --init --recursive --checkout libs/system
+run git submodule update --init --recursive --checkout libs/regex
 
-run git submodule update --init --recursive libs/lexical_cast
-run git submodule update --init --recursive libs/range
-run git submodule update --init --recursive libs/concept_check
-run git submodule update --init --recursive libs/utility
-run git submodule update --init --recursive libs/throw_exception
-run git submodule update --init --recursive libs/numeric
-run git submodule update --init --recursive libs/integer
-run git submodule update --init --recursive libs/array
-run git submodule update --init --recursive libs/functional
-run git submodule update --init --recursive libs/container
-run git submodule update --init --recursive libs/move
-run git submodule update --init --recursive libs/math
+run git submodule update --init --recursive --checkout libs/lexical_cast
+run git submodule update --init --recursive --checkout libs/range
+run git submodule update --init --recursive --checkout libs/concept_check
+run git submodule update --init --recursive --checkout libs/utility
+run git submodule update --init --recursive --checkout libs/throw_exception
+run git submodule update --init --recursive --checkout libs/numeric
+run git submodule update --init --recursive --checkout libs/integer
+run git submodule update --init --recursive --checkout libs/array
+run git submodule update --init --recursive --checkout libs/functional
+run git submodule update --init --recursive --checkout libs/container
+run git submodule update --init --recursive --checkout libs/move
+run git submodule update --init --recursive --checkout libs/math
 
-run git submodule update --init --recursive libs/tokenizer
-run git submodule update --init --recursive libs/iterator
-run git submodule update --init --recursive libs/mpl
-run git submodule update --init --recursive libs/preprocessor
-run git submodule update --init --recursive libs/date_time
-run git submodule update --init --recursive libs/smart_ptr
-run git submodule update --init --recursive libs/bind
+run git submodule update --init --recursive --checkout libs/tokenizer
+run git submodule update --init --recursive --checkout libs/iterator
+run git submodule update --init --recursive --checkout libs/mpl
+run git submodule update --init --recursive --checkout libs/preprocessor
+run git submodule update --init --recursive --checkout libs/date_time
+run git submodule update --init --recursive --checkout libs/smart_ptr
+run git submodule update --init --recursive --checkout libs/bind
 
-run git submodule update --init --recursive libs/filesystem
-run git submodule update --init --recursive libs/io
+run git submodule update --init --recursive --checkout libs/filesystem
+run git submodule update --init --recursive --checkout libs/io
 
-run git submodule update --init --recursive libs/dll
-run git submodule update --init --recursive libs/align
-run git submodule update --init --recursive libs/winapi
+run git submodule update --init --recursive --checkout libs/dll
+run git submodule update --init --recursive --checkout libs/align
+run git submodule update --init --recursive --checkout libs/winapi
 
-run git submodule update --init --recursive libs/spirit
-run git submodule update --init --recursive libs/phoenix
-run git submodule update --init --recursive libs/proto
-run git submodule update --init --recursive libs/fusion
-run git submodule update --init --recursive libs/typeof
-run git submodule update --init --recursive libs/variant
-run git submodule update --init --recursive libs/type_index
-run git submodule update --init --recursive libs/foreach
-run git submodule update --init --recursive libs/optional
-run git submodule update --init --recursive libs/function
-run git submodule update --init --recursive libs/function_types
-run git submodule update --init --recursive libs/iostreams
+run git submodule update --init --recursive --checkout libs/spirit
+run git submodule update --init --recursive --checkout libs/phoenix
+run git submodule update --init --recursive --checkout libs/proto
+run git submodule update --init --recursive --checkout libs/fusion
+run git submodule update --init --recursive --checkout libs/typeof
+run git submodule update --init --recursive --checkout libs/variant
+run git submodule update --init --recursive --checkout libs/type_index
+run git submodule update --init --recursive --checkout libs/foreach
+run git submodule update --init --recursive --checkout libs/optional
+run git submodule update --init --recursive --checkout libs/function
+run git submodule update --init --recursive --checkout libs/function_types
+run git submodule update --init --recursive --checkout libs/iostreams
 
-run git submodule update --init --recursive libs/coroutine
-#run git submodule update --init --recursive libs/coroutine2
+run git submodule update --init --recursive --checkout libs/coroutine
+#run git submodule update --init --recursive --checkout libs/coroutine2
 ## ASIO does not need coroutine2 at this time, but there is
 ## some issue with segmented stack support requiring inclusion
 ## of libs/context...
-run git submodule update --init --recursive libs/context
-run git submodule update --init --recursive libs/thread
-run git submodule update --init --recursive libs/chrono
-run git submodule update --init --recursive libs/atomic
-run git submodule update --init --recursive libs/ratio
-run git submodule update --init --recursive libs/intrusive
-run git submodule update --init --recursive libs/tuple
-run git submodule update --init --recursive libs/exception
-run git submodule update --init --recursive libs/algorithm
+run git submodule update --init --recursive --checkout libs/context
+run git submodule update --init --recursive --checkout libs/thread
+run git submodule update --init --recursive --checkout libs/chrono
+run git submodule update --init --recursive --checkout libs/atomic
+run git submodule update --init --recursive --checkout libs/ratio
+run git submodule update --init --recursive --checkout libs/intrusive
+run git submodule update --init --recursive --checkout libs/tuple
+run git submodule update --init --recursive --checkout libs/exception
+run git submodule update --init --recursive --checkout libs/algorithm
 
-run git submodule update --init --recursive libs/locale
+run git submodule update --init --recursive --checkout libs/locale
 
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
