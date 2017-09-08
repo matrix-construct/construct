@@ -54,7 +54,7 @@ try
 
 	return resource::response
 	{
-		client, json::index
+		client,
 		{
 			{    }
 		}
@@ -123,7 +123,7 @@ try
 
 	return resource::response
 	{
-		client, http::CREATED, json::index
+		client, http::CREATED,
 		{
 			{ "filter_id", "abc321" }
 		}

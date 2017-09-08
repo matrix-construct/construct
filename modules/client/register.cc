@@ -162,7 +162,7 @@ handle_post_kind_user(client &client,
 	// Send response to user
 	return resource::response
 	{
-		client, http::CREATED, json::index
+		client, http::CREATED,
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     home_server    },
@@ -183,7 +183,7 @@ handle_post_kind_guest(client &client,
 
 	return resource::response
 	{
-		client, http::CREATED, json::index
+		client, http::CREATED,
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     home_server    },

@@ -247,24 +247,19 @@ ircd::resource::request::request(const http::request::head &head,
 
 ircd::resource::response::response(client &client,
                                    const http::code &code,
-                                   const json::index &idx)
-:response{client, idx, code}
+                                   const json::members &members)
+:response{client, members, code}
 {
 }
 
 ircd::resource::response::response(client &client,
-                                   const json::index &index,
+                                   const json::members &members,
                                    const http::code &code)
 try
 {
-	char cbuf[8192];
-	mutable_buffer buf{cbuf};
-	const json::object object
-	{
-		stringify(buf, index)
-	};
-
-	response(client, object, code);
+	char buf[8192];
+	const auto sv(stringify(buf, members));
+	response(client, json::object{sv}, code);
 }
 catch(const json::error &e)
 {

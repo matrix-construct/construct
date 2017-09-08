@@ -61,18 +61,11 @@ get_events(client &client, const resource::request &request)
 	});
 
 	char buf[16384];
-	char *start{buf};
-	char *const stop{buf + sizeof(buf)};
-	const auto chunk
-	{
-		json::serialize(jo, start, stop)
-	};
-
 	return resource::response
 	{
-		client, json::index
+		client,
 		{
-			{ "chunk", string_view{chunk} }
+			{ "chunk", json::stringify(buf, jo) }
 		}
 	};
 }

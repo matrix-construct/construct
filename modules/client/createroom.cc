@@ -75,9 +75,9 @@ try
 */
 	return resource::response
 	{
-		client, http::CREATED, json::index
+		client, http::CREATED,
 		{
-			{ "room_id",       string_view{room_id}        }
+			{ "room_id", string_view{room_id} }
 		}
 	};
 }

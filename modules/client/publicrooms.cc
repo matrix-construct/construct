@@ -33,7 +33,7 @@ get_publicrooms(client &client, const resource::request &request)
 {
 	return resource::response
 	{
-		client, json::index
+		client,
 		{
 			{   }
 		}

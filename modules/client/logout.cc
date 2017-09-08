@@ -39,7 +39,7 @@ logout(client &client, const resource::request &request)
 	resource::tokens.erase(it);
 	return resource::response
 	{
-		client, json::index
+		client,
 		{
 			{   }
 		}
