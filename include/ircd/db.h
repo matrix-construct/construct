@@ -101,6 +101,15 @@ namespace ircd::db
 	void log_rdb_perf_context(const bool &all = true);
 }
 
+enum class ircd::db::pos
+{
+    FRONT   = -2,    // .front()    | first element
+    PREV    = -1,    // std::prev() | previous element
+    END     = 0,     // break;      | exit iteration (or past the end)
+    NEXT    = 1,     // continue;   | next element
+    BACK    = 2,     // .back()     | last element
+};
+
 #include "db/delta.h"
 #include "db/database.h"
 #include "db/opts.h"
@@ -120,15 +129,6 @@ namespace ircd
 {
 	using db::database;
 }
-
-enum class ircd::db::pos
-{
-    FRONT   = -2,    // .front()    | first element
-    PREV    = -1,    // std::prev() | previous element
-    END     = 0,     // break;      | exit iteration (or past the end)
-    NEXT    = 1,     // continue;   | next element
-    BACK    = 2,     // .back()     | last element
-};
 
 struct ircd::db::init
 {
