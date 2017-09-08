@@ -584,12 +584,6 @@ string(const uint8_t *const &buf, const size_t &size)
 	return string(reinterpret_cast<const char *>(buf), size);
 }
 
-inline auto
-operator!(const std::string &str)
-{
-	return str.empty();
-}
-
 
 constexpr size_t
 hash(const char *const &str,
@@ -1201,6 +1195,25 @@ _constexpr_equal(const char *a,
                  const char *b)
 {
 	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
+}
+
+
+inline auto
+operator!(const std::string &str)
+{
+	return str.empty();
+}
+
+inline auto
+operator!(const std::string_view &str)
+{
+	return str.empty();
+}
+
+inline auto
+operator!(const string_view &str)
+{
+	return str.empty();
 }
 
 
