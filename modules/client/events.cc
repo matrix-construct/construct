@@ -27,12 +27,53 @@ resource events_resource
 	"Events (6.2.3) (10.x)"
 };
 
+const m::id::room::buf accounts_room_id
+{
+	"accounts", "cdc.z"
+};
+
+const m::id::room::buf locops_room_id
+{
+	"locops", "cdc.z"
+};
+
+const m::id::room::buf ircd_room_id
+{
+	"ircd", "localhost"
+};
+
 resource::response
 get_events(client &client, const resource::request &request)
 {
+	m::room room{accounts_room_id};
+	std::vector<std::string> ret;
+
+	room.for_each([&ret](const auto &event)
+	{
+		ret.emplace_back(json::string(event));
+	});
+
+	std::vector<json::object> jo(ret.size());
+	std::transform(ret.begin(), ret.end(), jo.begin(), []
+	(const auto &string) -> json::object
+	{
+		return string;
+	});
+
+	char buf[16384];
+	char *start{buf};
+	char *const stop{buf + sizeof(buf)};
+	const auto chunk
+	{
+		json::serialize(jo, start, stop)
+	};
+
 	return resource::response
 	{
-		client, json::object {}
+		client, json::index
+		{
+			{ "chunk", string_view{chunk} }
+		}
 	};
 }
 

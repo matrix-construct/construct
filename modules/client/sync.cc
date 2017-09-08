@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -21,16 +21,16 @@
 
 using namespace ircd;
 
-//using object = db::object<m::db::accounts>;
-//template<class T = string_view> using value = db::value<T, m::db::accounts>;
-
 resource sync_resource
 {
 	"_matrix/client/r0/sync",
-	"Synchronise the client's state with the latest state on the server. "
-	"Clients use this API when they first log in to get an initial snapshot of "
-	"the state on the server, and then continue to call this API to get "
-	"incremental deltas to the state, and to receive new messages. (6.2)"
+
+	R"(
+		Synchronise the client's state with the latest state on the server.
+		Clients use this API when they first log in to get an initial snapshot of
+		the state on the server, and then continue to call this API to get
+		incremental deltas to the state, and to receive new messages. (6.2)
+	)"
 };
 
 resource::response

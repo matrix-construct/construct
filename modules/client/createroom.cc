@@ -41,13 +41,43 @@ try
 		unquote(request["visibility"])
 	};
 
-	std::string room_id {"!foo@bar.com"};
+	const m::id::room::buf room_id
+	{
+		m::id::generate, "localhost"
+	};
 
+	const m::id::user::buf sender_id
+	{
+		m::id::generate, "localhost"
+	};
+
+	const m::id::event::buf create_event_id
+	{
+		m::id::generate, "localhost",
+	};
+
+	const time_t origin_server_ts
+	{
+		time(NULL)
+	};
+/*
+	db::object<m::db::events, m::event> event
+	{
+		create_event_id
+	};
+
+	db::write
+	({
+		{ event["type"],               "m.room.create"                },
+		{ event["room_id"],            room_id                        },
+		{ event["origin_server_ts"],   binary_view(origin_server_ts)  },
+	});
+*/
 	return resource::response
 	{
 		client, http::CREATED, json::index
 		{
-			{ "room_id",       room_id        }
+			{ "room_id",       string_view{room_id}        }
 		}
 	};
 }

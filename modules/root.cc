@@ -25,7 +25,7 @@ using namespace ircd;
 
 mapi::header IRCD_MODULE
 {
-	"Chat Matrix Protocol"
+	"Web root content resource",
 };
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)

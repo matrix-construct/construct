@@ -1,11 +1,15 @@
+#
+#AM_CXXFLAGS = \
+#	-fno-implicit-templates
+#
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
 	-include $(top_srcdir)/include/ircd/mapi.h \
-	-include $(top_srcdir)/include/ircd/m.h \
-	-include $(top_srcdir)/include/ircd/db/object.h
+	-include $(top_srcdir)/include/ircd/m.h
 
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
@@ -26,10 +30,8 @@ AM_LDFLAGS += \
 #	-export-symbols-regex *
 
 moduledir=@moduledir@
-matrix_la_SOURCES = matrix.cc
 root_la_SOURCES = root.cc
 module_LTLIBRARIES = \
-	matrix.la \
 	root.la \
 	###
 
@@ -37,12 +39,8 @@ module_LTLIBRARIES = \
 # library is client_X.so in the main modules dir.
 db_moduledir = @moduledir@
 db_db_events_la_SOURCES = db/events.cc
-db_db_accounts_la_SOURCES = db/accounts.cc
-db_db_rooms_la_SOURCES = db/rooms.cc
 db_module_LTLIBRARIES = \
 	db/db_events.la \
-	db/db_accounts.la \
-	db/db_rooms.la \
 	###
 
 # This puts the source in client/ but the installed

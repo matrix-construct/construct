@@ -23,22 +23,47 @@
  */
 
 #pragma once
-#define HAVE_IRCD_M_DB_H
+#define HAVE_IRCD_M_EVENTS_H
 
-namespace ircd {
-namespace m    {
-namespace db   {
-
-extern database *events;
-extern database *accounts;
-extern database *rooms;
-
-struct init
+namespace ircd::m::events
 {
-	init();
-	~init() noexcept;
-};
+	IRCD_M_EXCEPTION(m::error, INVALID_TRANSITION, http::BAD_REQUEST)
 
-} // namespace db
-} // namespace m
-} // namespace ircd
+	struct transition;
+
+	using transition_list = std::list<struct transition *>;
+	extern transition_list transitions;
+
+	extern database *events;
+	using cursor = db::cursor<events, m::event>;
+	using const_iterator = cursor::const_iterator;
+	using iterator = const_iterator;
+	using where = cursor::where_type;
+
+	const_iterator find(const id &);
+	const_iterator begin();
+	const_iterator end();
+
+	void insert(event &);
+	void insert(const event &);
+}
+
+struct ircd::m::events::transition
+{
+	struct method
+	{
+		std::function<bool (const event &)> valid;
+		std::function<void (const event &) noexcept> effects;
+	};
+
+	const char *name;
+	struct method method;
+	unique_const_iterator<events::transition_list> it;
+
+	virtual bool valid(const event &event) const;
+	virtual void effects(const event &e);
+
+	transition(const char *const &name, struct method method);
+	transition(const char *const &name);
+	virtual ~transition() noexcept;
+};

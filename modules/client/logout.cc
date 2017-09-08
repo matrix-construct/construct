@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -20,9 +20,6 @@
  */
 
 using namespace ircd;
-
-using object = db::object<m::db::accounts>;
-template<class T = string_view> using value = db::value<m::db::accounts, T>;
 
 resource logout_resource
 {

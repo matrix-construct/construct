@@ -25,32 +25,32 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
-#include "json/parse.h"
-
-namespace ircd {
-namespace m    {
-
-} // namespace m
-} // namespace ircd
 
 #include "m/error.h"
 #include "m/id.h"
-#include "m/db.h"
 #include "m/event.h"
+#include "m/events.h"
+#include "m/room.h"
+#include "m/timeline.h"
 #include "m/request.h"
-#include "m/accounts.h"
 #include "m/session.h"
 
-namespace ircd {
-namespace m    {
-
-struct init
+namespace ircd::m::dbs
 {
-	db::init db;
+	struct init
+	{
+		init();
+		~init() noexcept;
+	};
+}
 
-	init();
-	~init() noexcept;
-};
+namespace ircd::m
+{
+	struct init
+	{
+		dbs::init dbs;
 
-} // namespace m
-} // namespace ircd
+		init();
+		~init() noexcept;
+	};
+}

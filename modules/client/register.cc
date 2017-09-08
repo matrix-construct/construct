@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -21,51 +21,79 @@
 
 using namespace ircd;
 
-using object = db::object<m::db::accounts>;
-template<class T = string_view> using value = db::value<m::db::accounts, T>;
-
 const auto home_server
 {
 	// "The hostname of the homeserver on which the account has been registered."
 	"cdc.z"
 };
 
-resource::response
-handle_post(client &client,
-            resource::request &request)
+namespace name
 {
-	const auto kind
+    constexpr auto username{"username"};
+    constexpr auto bind_email{"bind_email"};
+    constexpr auto password{"password"};
+    constexpr auto auth{"auth"};
+}
+
+struct body
+:json::tuple
+<
+	json::member<name::username, string_view>,
+	json::member<name::bind_email, bool>,
+	json::member<name::password, string_view>,
+	json::member<name::auth, json::object>
+>
+{
+    using super_type::tuple;
+};
+
+// Generate !accounts:host which is the MXID of the room where the members
+// are the account registrations on this homeserver.
+const m::id::room::buf accounts_room_id
+{
+	"accounts", home_server
+};
+
+m::room accounts_room
+{
+	accounts_room_id
+};
+
+static void
+join_accounts_room(const m::id::user &user_id,
+                   const json::members &contents)
+try
+{
+	const json::builder content
 	{
-		request.query["kind"]
+		nullptr, &contents
 	};
 
-	if(kind.empty() || kind == "guest")
+	accounts_room.join(user_id, content);
+}
+catch(const m::ALREADY_MEMBER &e)
+{
+	throw m::error
 	{
-		char user_id[m::USER_ID_BUFSIZE]; m::id
-		{
-			"randy12345", home_server, user_id
-		};
-		char access_token[m::ACCESS_TOKEN_BUFSIZE];
-		m::access_token_generate(access_token, sizeof(access_token));
-    	ircd::resource::tokens.emplace(access_token, &client); //TODO: XXX
-		value<> token_to_user_id{"token", access_token};
-		token_to_user_id = user_id;
+		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
+	};
+}
 
-		return resource::response
-		{
-			client, http::CREATED, json::index
-			{
-				{ "access_token",    access_token   },
-				{ "home_server",     home_server    },
-				{ "user_id",         user_id        },
-			}
-		};
-	}
-
-	const auto type
+resource::response
+handle_post_kind_user(client &client,
+                      resource::request &request,
+                      const resource::request::body<body> &body)
+{
+	// 3.3.1 Additional authentication information for the user-interactive authentication API.
+	const auto &auth
 	{
-		// "Required. The login type that the client is attempting to complete."
-		unquote(request.at("auth.type"))
+		at<name::auth>(body)
+	};
+
+	// 3.3.1 Required. The login type that the client is attempting to complete.
+	const auto &type
+	{
+		unquote(auth.at("type"))
 	};
 
 	if(type != "m.login.dummy")
@@ -74,71 +102,61 @@ handle_post(client &client,
 			"M_UNSUPPORTED", "Registration '%s' not supported.", type
 		};
 
-	const auto username
+	// 3.3.1 The local part of the desired Matrix ID. If omitted, the homeserver MUST
+	// generate a Matrix ID local part.
+	const auto &username
 	{
-		// "The local part of the desired Matrix ID. If omitted, the homeserver MUST "
-		// "generate a Matrix ID local part."
-		unquote(request.get("username"))
+		unquote(get<name::username>(body))
 	};
 
-	if(!username.empty() && !m::username_valid(username))
+	// Generate canonical mxid
+	const m::id::user::buf user_id
+	{
+		username, home_server
+	};
+
+	if(!user_id.valid())
 		throw m::error
 		{
 			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
 		};
 
-	const auto password
+	if(user_id.host() != home_server)
+		throw m::error
+		{
+			"M_INVALID_USERNAME", "Can only register with host '%s'", home_server
+		};
+
+	// 3.3.1 Required. The desired password for the account.
+	const auto &password
 	{
-		// "Required. The desired password for the account."
-		request.at("password")
+		at<name::password>(body)
 	};
 
-	const auto bind_email
+	if(password.size() > 255)
+		throw m::error
+		{
+			"M_INVALID_PASSWORD", "The desired password is too long"
+		};
+
+	// 3.3.1 If true, the server binds the email used for authentication to the
+	// Matrix ID with the ID Server. Defaults to false.
+	const auto &bind_email
 	{
-		// "If true, the server binds the email used for authentication to the "
-		// "Matrix ID with the ID Server."
-		request.get<bool>("bind_email", false)
+		get<name::bind_email>(body, false)
 	};
 
-	// Generate fully qualified user id and randomize username if missing
-	char user_id[m::USER_ID_BUFSIZE]; m::id
+	// Register the user by joining them to the accounts room. Join the user
+	// to the accounts room by issuing a join event.  The content will store
+	// keys from the registration options including the password - do not
+	// expose this to clients //TODO: store hashed pass
+	// Once this call completes the join was successful and the user
+	// is registered, otherwise throws.
+	char content[384];
+	join_accounts_room(user_id,
 	{
-		username, home_server, user_id
-	};
-
-	// Atomic commitment to registration
-	value<time_t> registered{"registered", user_id};
-	{
-		time_t expected(0); // unregistered == empty == 0
-		if(!registered.compare_exchange(expected, time(nullptr)))
-			throw m::error
-			{
-				http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already taken."
-			};
-	}
-
-	// "An access token for the account. This access token can then be used to "
-	// "authorize other requests. The access token may expire at some point, and if "
-	// "so, it SHOULD come with a refresh_token. There is no specific error message to "
-	// "indicate that a request has failed because an access token has expired; "
-	// "instead, if a client has reason to believe its access token is valid, and "
-	// "it receives an auth error, they should attempt to refresh for a new token "
-	// "on failure, and retry the request with the new token."
-	value<> access_token_text{"access_token.text", user_id};
-
-	// Prepare to store password
-	value<> password_text("password.text", user_id);
-
-	// Generate access token
-	char access_token[m::ACCESS_TOKEN_BUFSIZE];
-	m::access_token_generate(access_token, sizeof(access_token));
-    ircd::resource::tokens.emplace(access_token, &client); //TODO: XXX
-
-	// Batch transaction to database
-	db::write
-	({
-		{ db::SET,  password_text,      password      },
-		{ db::SET,  access_token_text,  access_token  },
+		{ "password",       password   },
+		{ "bind_email",     bind_email },
 	});
 
 	// Send response to user
@@ -146,10 +164,57 @@ handle_post(client &client,
 	{
 		client, http::CREATED, json::index
 		{
-			{ "access_token",    access_token   },
-			{ "home_server",     home_server    },
 			{ "user_id",         user_id        },
+			{ "home_server",     home_server    },
+//			{ "access_token",    access_token   },
 		}
+	};
+}
+
+resource::response
+handle_post_kind_guest(client &client,
+                       resource::request &request,
+                       const resource::request::body<body> &body)
+{
+	const m::id::user::buf user_id
+	{
+		m::generate, home_server
+	};
+
+	return resource::response
+	{
+		client, http::CREATED, json::index
+		{
+			{ "user_id",         user_id        },
+			{ "home_server",     home_server    },
+			//{ "access_token",    access_token   },
+		}
+	};
+}
+
+resource::response
+handle_post(client &client,
+            resource::request &request)
+{
+	const resource::request::body<body> body
+	{
+		request
+	};
+
+	const auto kind
+	{
+		request.query["kind"]
+	};
+
+	if(kind == "user")
+		return handle_post_kind_user(client, request, body);
+
+	if(kind.empty() || kind == "guest")
+		return handle_post_kind_guest(client, request, body);
+
+	throw m::error
+	{
+		http::BAD_REQUEST, "M_UNKNOWN", "Unknown 'kind' of registration specified in query."
 	};
 }
 

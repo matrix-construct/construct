@@ -21,16 +21,6 @@
 
 using namespace ircd;
 
-const database::descriptor accounts_token_descriptor
-{
-	"token",
-	"An index of access_token to user_id",
-	{
-		// readable key      // readable value
-		typeid(string_view), typeid(string_view)
-	}
-};
-
 const database::descriptor accounts_registered_descriptor
 {
 	"registered",
@@ -44,10 +34,7 @@ const database::descriptor accounts_registered_descriptor
 const database::description accounts_description
 {
 	{ "default"                                  },
-	accounts_token_descriptor,
 	accounts_registered_descriptor,
-	{ "access_token"                             },
-	{ "access_token.text"                        },
 	{ "password"                                 },
 	{ "password.text"                            },
 	{ "password.hash"                            },
@@ -63,4 +50,3 @@ mapi::header IRCD_MODULE
 {
 	"Hosts the 'accounts' database"
 };
-

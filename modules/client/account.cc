@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -106,5 +106,5 @@ resource::method post
 
 mapi::header IRCD_MODULE
 {
-	"registers the resource 'client/login' to handle requests"
+	"registers the resource 'client/account' to handle requests"
 };

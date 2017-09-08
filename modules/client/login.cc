@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -34,93 +34,109 @@ const auto home_server
 	"cdc.z"
 };
 
-using object = db::object<m::db::accounts>;
-template<class T = string_view> using value = db::value<m::db::accounts, T>;
+namespace name
+{
+	extern constexpr auto password{"password"};
+	extern constexpr auto medium{"medium"};
+	extern constexpr auto type{"type"};
+	extern constexpr auto user{"user"};
+	extern constexpr auto address{"address"};
+}
+
+struct body
+:json::tuple
+<
+	json::member<name::password, string_view>,
+	json::member<name::medium, time_t>,
+	json::member<name::type, string_view>,
+	json::member<name::user, string_view>,
+	json::member<name::address, string_view>
+>
+{
+	using super_type::tuple;
+};
+
+// Generate !accounts:host which is the MXID of the room where the members
+// are the actual account registrations themselves for this homeserver.
+const m::id::room::buf accounts_room_id
+{
+	"accounts", home_server
+};
+
+// Handle to the accounts room
+m::room accounts_room
+{
+	accounts_room_id
+};
 
 resource::response
-post_login_password(client &client, const resource::request &request)
+post_login_password(client &client,
+                    const resource::request &request,
+                    const resource::request::body<body> &body)
 {
-	const auto user
+	const m::id::user::buf user_id
 	{
-		// "The fully qualified user ID or just local part of the user ID, to log in."
-		unquote(request.at("user"))
+		unquote(at<name::user>(body)), home_server
 	};
 
-    char user_id[m::USER_ID_BUFSIZE]; m::id
-    {
-        user, home_server, user_id
-    };
-
-	const auto password
-	{
-		// "Required. The user's password."
-		request.at("password")
-	};
-
-    value<> password_text("password.text", user_id);
-	if(password_text != password)
+	if(!user_id.valid() || user_id.host() != home_server)
 		throw m::error
 		{
 			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
 		};
 
-	// "An access token for the account. This access token can then be used to "
-	// "authorize other requests. The access token may expire at some point, and if "
-	// "so, it SHOULD come with a refresh_token. There is no specific error message to "
-	// "indicate that a request has failed because an access token has expired; "
-	// "instead, if a client has reason to believe its access token is valid, and "
-	// "it receives an auth error, they should attempt to refresh for a new token "
-	// "on failure, and retry the request with the new token."
-	value<> access_token_text{"access_token.text", user_id};
+	const auto &supplied_password
+	{
+		at<name::password>(body)
+	};
 
-	 // Generate access token
-	char access_token[m::ACCESS_TOKEN_BUFSIZE];
-	m::access_token_generate(access_token, sizeof(access_token));
+	const auto check{[&supplied_password]
+	(const auto &event)
+	{
+		const json::object &content
+        {
+			json::val<m::name::content>(event)
+		};
 
-	// Write access token to database
-	access_token_text = access_token;
-	ircd::resource::tokens.emplace(access_token, &client); //TODO: XXX
-	value<> token_to_user_id{"token", access_token_text};
-	token_to_user_id = user_id;
+		const auto &membership
+		{
+			unquote(content.at("membership"))
+		};
+
+		if(membership != "join")
+			return false;
+
+		const auto &correct_password
+		{
+			content.at("password")
+		};
+
+		if(supplied_password != correct_password)
+			return false;
+
+		return true;
+	}};
+
+	const m::events::where::equal query
+	{
+		{ "type",        "m.room.member" },
+		{ "state_key",    user_id        }
+	};
+
+	if(!accounts_room.any(query, check))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
+		};
 
 	// Send response to user
 	return resource::response
 	{
 		client,
 		{
-			{ "user_id",        user_id       },
-			{ "access_token",   access_token  },
-			{ "home_server",    home_server   },
-		}
-	};
-}
-
-resource::response
-post_login_token(client &client, const resource::request &request)
-{
-	const auto token
-	{
-		unquote(request.at("token"))
-	};
-
-	const value<> user_id
-	{
-		"token", token
-	};
-
-	if(!user_id)
-		throw m::error
-		{
-			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
-		};
-
-	return resource::response
-	{
-		client,
-		{
-			{ "user_id",        string_view(user_id) },
-			{ "access_token",   token                },
-			{ "home_server",    home_server          },
+			{ "user_id",        string_view{user_id}    },
+			{ "home_server",    home_server             },
+//			{ "access_token",   access_token            },
 		}
 	};
 }
@@ -128,16 +144,20 @@ post_login_token(client &client, const resource::request &request)
 resource::response
 post_login(client &client, const resource::request &request)
 {
+	const resource::request::body<body> body
+	{
+		request
+	};
+
+	// x.x.x Required. The login type being used.
+	// Currently only "m.login.password" is supported.
 	const auto type
 	{
-		// "Required. The login type being used. Currently only "m.login.password" is supported."
-		unquote(request.at("type"))
+		unquote(at<name::type>(body))
 	};
 
 	if(type == "m.login.password")
-		return post_login_password(client, request);
-	else if(type == "m.login.token")
-		return post_login_token(client, request);
+		return post_login_password(client, request, body);
 	else
 		throw m::error
 		{

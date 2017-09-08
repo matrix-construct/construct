@@ -43,35 +43,40 @@
 // implied by the total 65 KB limit on events.
 //
 
-namespace ircd {
-namespace m    {
+namespace ircd::m
+{
+	struct event;
+}
 
-struct event
+namespace ircd::m::name
+{
+	constexpr const char *const event_id {"event_id"};
+	constexpr const char *const content {"content"};
+	constexpr const char *const origin_server_ts {"origin_server_ts"};
+	constexpr const char *const sender {"sender"};
+	constexpr const char *const type {"type"};
+	constexpr const char *const room_id {"room_id"};
+	constexpr const char *const state_key {"state_key"};
+	constexpr const char *const prev_ids {"prev_ids"};
+	constexpr const char *const unsigned_ {"unsigned"};
+	constexpr const char *const signatures {"signatures"};
+}
+
+struct ircd::m::event
 :json::tuple
 <
-	string_view,
-	time_t,
-	string_view,
-	string_view,
-	string_view,
-	string_view
+	json::member<name::event_id, string_view>,
+	json::member<name::content, string_view>,
+	json::member<name::origin_server_ts, time_t>,
+	json::member<name::sender, string_view>,
+	json::member<name::type, string_view>,
+	json::member<name::room_id, string_view>,
+	json::member<name::state_key, string_view>,
+	json::member<name::prev_ids, string_view>,
+	json::member<name::unsigned_, string_view>,
+	json::member<name::signatures, string_view>
 >
 {
-	IRCD_MEMBERS
-	(
-		"content",
-		"origin_server_ts",
-		"sender",
-		"type",
-		"unsigned",
-		"state_key"
-	)
-
-	template<class... A>
-	explicit event(const json::object &obj)
-	:tuple{json::make_tuple<decltype(*this)>(obj)}
-	{}
+	using super_type::tuple;
+	using super_type::operator=;
 };
-
-} // namespace m
-} // namespace ircd

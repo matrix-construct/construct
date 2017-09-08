@@ -97,11 +97,7 @@ try
 	client::init _client_;   // Client/Socket Networking
 	db::init _db_;           // RocksDB
 	js::init _js_;           // SpiderMonkey
-
-	module matrix
-	{
-		"matrix"
-	};
+	m::init _matrix_;        // Matrix
 
 	// This is the main program loop. Right now all it does is sleep until notified to
 	// break with a clean shutdown. Other subsystems may spawn their own main loops, but
