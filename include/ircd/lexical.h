@@ -157,6 +157,8 @@ namespace ircd
 	// Vintage
 	size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
 	size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
+	size_t strlcpy(char *const &dest, const string_view &src, const size_t &bufmax);
+	size_t strlcat(char *const &dest, const string_view &src, const size_t &bufmax);
 
 	// Legacy
 	char *strip_colour(char *string);
@@ -533,6 +535,25 @@ ircd::tokens(A allocator,
 }
 
 inline size_t
+ircd::strlcpy(char *const &dest,
+              const string_view &src,
+              const size_t &max)
+{
+	if(!max)
+		return 0;
+
+	const auto &len
+	{
+		src.size() >= max? max - 1 : src.size()
+	};
+
+	assert(len < max);
+	memcpy(dest, src.data(), len);
+	dest[len] = '\0';
+	return len;
+}
+
+inline size_t
 #ifndef HAVE_STRLCPY
 ircd::strlcpy(char *const &dest,
               const char *const &src,
@@ -541,12 +562,8 @@ ircd::strlcpy(char *const &dest,
 	if(!max)
 		return 0;
 
-	const size_t ret(strnlen(src, max));
-	const size_t len(ret >= max? max - 1 : ret);
-	memcpy(dest, src, len);
-	dest[len] = '\0';
-
-	return ret;
+	const auto len{strnlen(src, max)};
+	return strlcpy(dest, {src, len}, max);
 }
 #else
 ircd::strlcpy(char *const &dest,
