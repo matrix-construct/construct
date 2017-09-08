@@ -4,7 +4,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
-	@BOOST_CPPFLAGS@
+	@BOOST_CPPFLAGS@ \
+	###
 
 AM_LDFLAGS = \
 	-dlopen self \
@@ -15,7 +16,8 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,now \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
-	$(PLATFORM_LDFLAGS)
+	$(PLATFORM_LDFLAGS) \
+	###
 
 bin_PROGRAMS = charybdis
 
@@ -23,7 +25,8 @@ charybdis_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@
+	@BOOST_LDFLAGS@ \
+	###
 
 charybdis_LDADD = \
 	-lircd \
@@ -32,9 +35,11 @@ charybdis_LDADD = \
 	@BOOST_LIBS@ \
 	-lcrypto \
 	-lssl \
-	-lz
+	-lz \
+	###
 
 charybdis_SOURCES = \
-	lgetopt.cc      \
+	charybdis.cc    \
 	console.cc      \
-	charybdis.cc
+	lgetopt.cc      \
+	###

@@ -9,12 +9,14 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
 	-include $(top_srcdir)/include/ircd/mapi.h \
-	-include $(top_srcdir)/include/ircd/m.h
+	-include $(top_srcdir)/include/ircd/m.h \
+	###
 
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@
+	@BOOST_LDFLAGS@ \
+	###
 
 AM_LDFLAGS += \
 	-avoid-version \
@@ -24,10 +26,11 @@ AM_LDFLAGS += \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-allow-shlib-undefined \
-	$(PLATFORM_LDFLAGS)
-#	-Wl,--no-undefined
-#	-export-symbols-regex IRCD_MODULE*
-#	-export-symbols-regex *
+	$(PLATFORM_LDFLAGS) \
+	# -Wl,--no-undefined \
+	# -export-symbols-regex IRCD_MODULE* \
+	# -export-symbols-regex * \
+	###
 
 moduledir=@moduledir@
 root_la_SOURCES = root.cc

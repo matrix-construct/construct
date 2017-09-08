@@ -1,9 +1,9 @@
 AUTOMAKE_OPTIONS = foreign
 
-
-AM_CPPFLAGS = \
-    -I$(top_srcdir)/include \
-    @BOOST_CPPFLAGS@
+AM_CPPFLAGS =                 \
+    -I$(top_srcdir)/include   \
+    @BOOST_CPPFLAGS@          \
+    ###
 
 if GCC
 AM_CXXFLAGS = -fpch-deps

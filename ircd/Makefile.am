@@ -9,7 +9,8 @@ AM_CPPFLAGS = \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
-	-include ircd/ircd.h
+	-include ircd/ircd.h \
+	###
 
 if MINGW
 PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
@@ -22,8 +23,9 @@ AM_LDFLAGS = \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,-z -Wl,now \
-	$(PLATFORM_LDFLAGS)
-#	-Wl,--no-undefined
+	$(PLATFORM_LDFLAGS) \
+	# -Wl,--no-undefined \
+	###
 
 libircd_LTLIBRARIES = libircd.la
 
@@ -31,7 +33,8 @@ libircd_la_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@
+	@BOOST_LDFLAGS@ \
+	###
 
 libircd_la_LIBADD = \
 	@ROCKSDB_LIBS@ \
@@ -39,36 +42,38 @@ libircd_la_LIBADD = \
 	@BOOST_LIBS@ \
 	-lcrypto \
 	-lssl \
-	-lz
+	-lz \
+	###
 
 libircd_la_SOURCES =   \
-	ircd.cc            \
-	info.cc            \
-	exception.cc       \
-	rfc1459.cc         \
-	lexical.cc         \
-	logger.cc          \
-	fs.cc              \
-	mods.cc            \
-	resource.cc        \
-	ctx.cc             \
-	socket.cc          \
 	client.cc          \
-	fmt.cc             \
+	ctx.cc             \
 	db.cc              \
-	locale.cc          \
+	exception.cc       \
+	fmt.cc             \
+	fs.cc              \
 	http.cc            \
+	info.cc            \
+	ircd.cc            \
 	json.cc            \
-	parse.cc           \
+	lexical.cc         \
 	listen.cc          \
+	locale.cc          \
+	logger.cc          \
 	matrix.cc          \
+	mods.cc            \
+	parse.cc           \
 	rand.cc            \
+	resource.cc        \
+	rfc1459.cc         \
+	socket.cc          \
 	###
 
 if JS
 libircd_la_SOURCES +=  \
 	js.cc              \
-	xdr.cc
+	xdr.cc             \
+	###
 endif
 
 install-data-local:
