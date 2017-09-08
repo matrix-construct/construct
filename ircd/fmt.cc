@@ -375,8 +375,9 @@ try
 {
 	const auto &type(get<1>(val));
 	const auto &handler(*specifiers().at(spec.name));
-	if(!handler(out, max, spec, val))
-		throw invalid_type("`%s' for format specifier '%s' for argument #%u",
+	if(unlikely(!handler(out, max, spec, val)))
+		throw invalid_type("`%s' (%s) for format specifier '%s' for argument #%u",
+		                   demangle(type.name()),
 		                   type.name(),
 		                   spec.name,
 		                   idx);
