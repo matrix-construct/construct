@@ -33,68 +33,67 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice_transform.h>
 
-namespace ircd {
-namespace db   {
+#include <ircd/m.h>
 
-// Dedicated logging facility for the database subsystem
-struct log::log log
+namespace ircd::db
 {
-	"db", 'D'            // Database subsystem takes SNOMASK +D
+	const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
+	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
+	const auto DEFAULT_READAHEAD = 4_MiB;
+
+	struct throw_on_error
+	{
+		throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
+	};
+
+	const char *reflect(const pos &);
+	const std::string &reflect(const rocksdb::Tickers &);
+	const std::string &reflect(const rocksdb::Histograms &);
+	rocksdb::Slice slice(const string_view &);
+	string_view slice(const rocksdb::Slice &);
+
+	// Frequently used get options and set options are separate from the string/map system
+	rocksdb::WriteOptions make_opts(const sopts &);
+	rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
+	bool optstr_find_and_remove(std::string &optstr, const std::string &what);
+
+	// Validation functors
+	bool valid(const rocksdb::Iterator &);
+	bool operator!(const rocksdb::Iterator &);
+	void valid_or_throw(const rocksdb::Iterator &);
+	bool valid_equal(const rocksdb::Iterator &, const string_view &);
+	void valid_equal_or_throw(const rocksdb::Iterator &, const string_view &);
+
+	// [GET] seek suite
+	template<class pos> bool seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+	template<class pos> bool seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
+	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
+	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
+	std::vector<row::value_type> seek(database &, const gopts &);
+
+	std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
+
+	// [SET] writebatch suite
+	void commit(database &, rocksdb::WriteBatch &, const rocksdb::WriteOptions &);
+	void commit(database &, rocksdb::WriteBatch &, const sopts &);
+	void append(rocksdb::WriteBatch &, column &, const column::delta &delta);
+	void append(rocksdb::WriteBatch &, const cell::delta &delta);
+
+	std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
+	std::vector<std::string> column_names(const std::string &path, const std::string &options);
+}
+
+ircd::log::log ircd::db::log
+{
+	// Dedicated logging facility for the database subsystem
+	"db", 'D'
 };
 
-// Functor to wrap calls made to the rocksdb API to check for errors.
-struct throw_on_error
-{
-	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
-};
+std::map<ircd::string_view, ircd::db::database *>
+ircd::db::database::dbs
+{};
 
-const char *reflect(const pos &);
-const std::string &reflect(const rocksdb::Tickers &);
-const std::string &reflect(const rocksdb::Histograms &);
-rocksdb::Slice slice(const string_view &);
-string_view slice(const rocksdb::Slice &);
-
-// Frequently used get options and set options are separate from the string/map system
-rocksdb::WriteOptions make_opts(const sopts &);
-rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
-bool optstr_find_and_remove(std::string &optstr, const std::string &what);
-
-const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
-const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
-
-// This is important to prevent thrashing the iterators which have to reset on iops
-const auto DEFAULT_READAHEAD = 4_MiB;
-
-// Validation functors
-bool valid(const rocksdb::Iterator &);
-bool operator!(const rocksdb::Iterator &);
-void valid_or_throw(const rocksdb::Iterator &);
-bool valid_equal(const rocksdb::Iterator &, const string_view &);
-void valid_equal_or_throw(const rocksdb::Iterator &, const string_view &);
-
-// Direct re-seekers. Internal only.
-void _seek_(rocksdb::Iterator &, const rocksdb::Slice &);
-void _seek_(rocksdb::Iterator &, const string_view &);
-void _seek_(rocksdb::Iterator &, const pos &);
-
-// Move an iterator
-template<class pos> bool seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
-template<class pos> bool seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
-
-// Query for an iterator. Returns a lower_bound on a key
-std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
-std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
-std::vector<row::value_type> seek(database &, const gopts &);
-
-std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
-
-void append(rocksdb::WriteBatch &, column &, const column::delta &delta);
-void append(rocksdb::WriteBatch &, const cell::delta &delta);
-
-std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
-std::vector<std::string> column_names(const std::string &path, const std::string &options);
-
-struct database::logs
+struct ircd::db::database::logs
 :std::enable_shared_from_this<struct database::logs>
 ,rocksdb::Logger
 {
@@ -110,8 +109,8 @@ struct database::logs
 	{}
 };
 
-struct database::stats
-:std::enable_shared_from_this<struct database::stats>
+struct ircd::db::database::stats
+:std::enable_shared_from_this<struct ircd::db::database::stats>
 ,rocksdb::Statistics
 {
 	database *d;
@@ -131,8 +130,8 @@ struct database::stats
 	{}
 };
 
-struct database::events
-:std::enable_shared_from_this<struct database::events>
+struct ircd::db::database::events
+:std::enable_shared_from_this<struct ircd::db::database::events>
 ,rocksdb::EventListener
 {
 	database *d;
@@ -150,8 +149,8 @@ struct database::events
 	{}
 };
 
-struct database::mergeop
-:std::enable_shared_from_this<struct database::mergeop>
+struct ircd::db::database::mergeop
+:std::enable_shared_from_this<struct ircd::db::database::mergeop>
 ,rocksdb::AssociativeMergeOperator
 {
 	database *d;
@@ -166,7 +165,7 @@ struct database::mergeop
 	{}
 };
 
-struct database::comparator
+struct ircd::db::database::comparator
 :rocksdb::Comparator
 {
 	using Slice = rocksdb::Slice;
@@ -186,7 +185,7 @@ struct database::comparator
 	{}
 };
 
-struct database::prefix_transform
+struct ircd::db::database::prefix_transform
 :rocksdb::SliceTransform
 {
 	using Slice = rocksdb::Slice;
@@ -205,7 +204,7 @@ struct database::prefix_transform
 	{}
 };
 
-struct database::column
+struct ircd::db::database::column
 :std::enable_shared_from_this<database::column>
 ,rocksdb::ColumnFamilyDescriptor
 {
@@ -235,26 +234,16 @@ struct database::column
 	~column() noexcept;
 };
 
-std::map<string_view, database *>
-database::dbs
-{};
-
-} // namespace db
-} // namespace ircd
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
 //
 
-namespace ircd {
-namespace db   {
-
-static void init_directory();
-static void init_version();
-
-} // namespace db
-} // namespace ircd
+namespace ircd::db
+{
+	static void init_directory();
+	static void init_version();
+}
 
 static char ircd_db_version[64];
 const char *const ircd::db::version(ircd_db_version);
@@ -720,10 +709,13 @@ const
 	const string_view limit{_limit.data(), _limit.size()};
 }
 
-namespace ircd {
-namespace db   {
+namespace ircd::db
+{
+	struct cmp_string_view;
+	struct cmp_int64_t;
+}
 
-struct cmp_string_view
+struct ircd::db::cmp_string_view
 :db::comparator
 {
 	cmp_string_view()
@@ -741,7 +733,7 @@ struct cmp_string_view
 	}{}
 };
 
-struct cmp_int64_t
+struct ircd::db::cmp_int64_t
 :db::comparator
 {
 	cmp_int64_t()
@@ -766,10 +758,6 @@ struct cmp_int64_t
 		}
 	}{}
 };
-
-} // namespace db
-} // namespace ircd
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //
