@@ -95,6 +95,7 @@ try
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	client::init _client_;   // Client/Socket Networking
+	db::init _db_;           // RocksDB
 	js::init _js_;           // SpiderMonkey
 
 	module matrix
