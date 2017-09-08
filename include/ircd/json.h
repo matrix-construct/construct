@@ -88,25 +88,8 @@ namespace ircd::json
 #include "json/array.h"
 #include "json/object.h"
 #include "json/value.h"
+#include "json/member.h"
 #include "json/index.h"
-
-namespace ircd::json
-{
-	size_t size(const index::member *const &begin, const index::member *const &end);
-	object serialize(const index::member *const *const &begin, const index::member *const *const &end, char *&start, char *const &stop);
-	object serialize(const index::member *const &begin, const index::member *const &end, char *&start, char *const &stop);
-	size_t print(char *const &buf, const size_t &max, const index::member *const &begin, const index::member *const &end);
-	std::string string(const index::member *const &begin, const index::member *const &end);
-
-	using members = std::initializer_list<index::member>;
-	object serialize(const members &, char *&start, char *const &stop);
-	size_t print(char *const &buf, const size_t &max, const members &);
-	std::string string(const members &);
-
-	array serialize(const std::vector<json::object> &, char *&start, char *const &stop);
-	string_view stringify(char *const &buf, const size_t &max, const members &);
-}
-
 #include "json/tuple.h"
 #include "json/builder.h"
 

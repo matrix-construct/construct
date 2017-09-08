@@ -29,10 +29,8 @@
 //
 struct ircd::json::builder
 {
-	using member = index::member;
-	using members = std::initializer_list<member>;
-	using member_closure = std::function<void (const index::member &)>;
-	using member_closure_bool = std::function<bool (const index::member &)>;
+	using member_closure = std::function<void (const member &)>;
+	using member_closure_bool = std::function<bool (const member &)>;
 
 	const builder *parent;
 	member m;
@@ -43,7 +41,7 @@ struct ircd::json::builder
 	size_t count(const member_closure_bool &) const;
 	size_t count() const;
 
-	const index::member *find(const string_view &key) const;
+	const member *find(const string_view &key) const;
 	const json::value &at(const string_view &key) const;
 
 	builder(const builder *const &parent, const members *const &);
@@ -59,7 +57,7 @@ ircd::json::stringify(char *const &buf,
 {
 	size_t i(0);
 	const auto num(builder.count());
-	const builder::member *m[num];
+	const member *m[num];
 	builder.for_each([&i, &m]
 	(const auto &member)
 	{
@@ -125,7 +123,7 @@ const
 	return ret;
 }
 
-inline const ircd::json::index::member *
+inline const ircd::json::member *
 ircd::json::builder::find(const string_view &key)
 const
 {

@@ -65,16 +65,16 @@ namespace ircd::m::name
 struct ircd::m::event
 :json::tuple
 <
-	json::member<name::event_id, string_view>,
-	json::member<name::content, string_view>,
-	json::member<name::origin_server_ts, time_t>,
-	json::member<name::sender, string_view>,
-	json::member<name::type, string_view>,
-	json::member<name::room_id, string_view>,
-	json::member<name::state_key, string_view>,
-	json::member<name::prev_ids, string_view>,
-	json::member<name::unsigned_, string_view>,
-	json::member<name::signatures, string_view>
+	json::property<name::event_id, string_view>,
+	json::property<name::content, string_view>,
+	json::property<name::origin_server_ts, time_t>,
+	json::property<name::sender, string_view>,
+	json::property<name::type, string_view>,
+	json::property<name::room_id, string_view>,
+	json::property<name::state_key, string_view>,
+	json::property<name::prev_ids, string_view>,
+	json::property<name::unsigned_, string_view>,
+	json::property<name::signatures, string_view>
 >
 {
 	using super_type::tuple;

@@ -24,7 +24,7 @@
 
 struct ircd::json::index
 {
-	struct member;
+	using member = json::member;
 	struct const_iterator;
 
 	using key_type = value;
@@ -73,26 +73,6 @@ struct ircd::json::index
 	friend object serialize(const index &, char *&start, char *const &stop);
 	friend size_t print(char *const &buf, const size_t &max, const index &);
 	friend std::ostream &operator<<(std::ostream &, const index &);
-};
-
-struct ircd::json::index::member
-:std::pair<value, value>
-{
-	template<class K> member(const K &k, std::initializer_list<member> v);
-	template<class K, class V> member(const K &k, V&& v);
-	explicit member(const string_view &k);
-	explicit member(const object::member &m);
-	member() = default;
-
-	friend bool operator==(const member &a, const member &b);
-	friend bool operator!=(const member &a, const member &b);
-	friend bool operator<(const member &a, const member &b);
-
-	friend bool operator==(const member &a, const string_view &b);
-	friend bool operator!=(const member &a, const string_view &b);
-	friend bool operator<(const member &a, const string_view &b);
-
-	friend std::ostream &operator<<(std::ostream &, const member &);
 };
 
 struct ircd::json::index::const_iterator
@@ -185,77 +165,6 @@ ircd::json::index::end()
 const
 {
 	return { std::end(idx) };
-}
-
-template<class K,
-         class V>
-ircd::json::index::member::member(const K &k,
-                                  V&& v)
-:std::pair<value, value>
-{
-	value { k }, value { std::forward<V>(v) }
-}
-{}
-
-template<class K>
-ircd::json::index::member::member(const K &k,
-                                  std::initializer_list<member> v)
-:std::pair<value, value>
-{
-	value { k }, value { std::make_unique<index>(std::move(v)) }
-}
-{}
-
-inline
-ircd::json::index::member::member(const object::member &m)
-:std::pair<value, value>
-{
-	m.first, value { m.second, type(m.second) }
-}
-{}
-
-inline
-ircd::json::index::member::member(const string_view &k)
-:std::pair<value, value>
-{
-	k, string_view{}
-}
-{}
-
-inline bool
-ircd::json::operator<(const index::member &a, const index::member &b)
-{
-	return a.first < b.first;
-}
-
-inline bool
-ircd::json::operator!=(const index::member &a, const index::member &b)
-{
-	return a.first != b.first;
-}
-
-inline bool
-ircd::json::operator==(const index::member &a, const index::member &b)
-{
-	return a.first == b.first;
-}
-
-inline bool
-ircd::json::operator<(const index::member &a, const string_view &b)
-{
-	return string_view(a.first.string, a.first.len) < b;
-}
-
-inline bool
-ircd::json::operator!=(const index::member &a, const string_view &b)
-{
-	return string_view(a.first.string, a.first.len) != b;
-}
-
-inline bool
-ircd::json::operator==(const index::member &a, const string_view &b)
-{
-	return string_view(a.first.string, a.first.len) == b;
 }
 
 inline bool

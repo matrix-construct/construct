@@ -30,6 +30,11 @@
 // extremely minimal: only the size of the values it stores. This is because
 // the member keys and type data are all static or dealt with at compile time.
 //
+// The member structure for the tuple is called `property` because json::member
+// is already used to pair together runtime oriented json::values. This system
+// only decays into runtime members and values when compile-time logic cannot
+// be achieved.
+//
 // Create and use a tuple to efficiently extract members from a json::object.
 // The tuple will populate its own members during a single-pass iteration of
 // the JSON input. If the JSON does not contain a member specified in the
@@ -48,13 +53,13 @@ struct tuple_base
 {
 	// class must be empty for EBO
 
-	struct member;
+	struct property;
 };
 
 //
-// Non-template common base for all tuple members
+// Non-template common base for all tuple properties
 //
-struct tuple_base::member
+struct tuple_base::property
 {
 };
 
@@ -74,7 +79,7 @@ struct tuple
 	static constexpr size_t size();
 
 	tuple(const json::object &);
-	tuple(const std::initializer_list<json::index::member> &);
+	tuple(const std::initializer_list<member> &);
 	tuple() = default;
 };
 
@@ -87,13 +92,13 @@ tuple<T...>::size()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// tuple member template. Specify a list of these in the tuple template to
+// tuple property template. Specify a list of these in the tuple template to
 // form the members of the object.
 //
 template<const char *const &name,
          class T>
-struct member
-:tuple_base::member
+struct property
+:tuple_base::property
 {
 	using key_type = const char *const &;
 	using value_type = T;
@@ -104,20 +109,20 @@ struct member
 	operator const T &() const;
 	operator T &();
 
-	member(T&& value);
-	member() = default;
+	property(T&& value);
+	property() = default;
 };
 
 template<const char *const &name,
          class T>
-member<name, T>::member(T&& value)
+property<name, T>::property(T&& value)
 :value{value}
 {
 }
 
 template<const char *const &name,
          class T>
-member<name, T>::operator
+property<name, T>::operator
 T &()
 {
 	return value;
@@ -125,7 +130,7 @@ T &()
 
 template<const char *const &name,
          class T>
-member<name, T>::operator
+property<name, T>::operator
 const T &()
 const
 {
@@ -630,7 +635,7 @@ tuple<T...>::tuple(const json::object &object)
 }
 
 template<class... T>
-tuple<T...>::tuple(const std::initializer_list<json::index::member> &members)
+tuple<T...>::tuple(const std::initializer_list<member> &members)
 {
 	std::for_each(std::begin(members), std::end(members), [this]
 	(const auto &member)
@@ -721,7 +726,7 @@ serialize(const tuple<T...> &tuple,
           char *&start,
           char *const &stop)
 {
-	std::array<index::member, tuple.size()> members;
+	std::array<member, tuple.size()> members;
 	_member_transform(tuple, begin(members), end(members));
 	return serialize(begin(members), end(members), start, stop);
 }
@@ -732,7 +737,7 @@ print(char *const &buf,
       const size_t &max,
       const tuple<T...> &tuple)
 {
-	std::array<index::member, tuple.size()> members;
+	std::array<member, tuple.size()> members;
 	_member_transform(tuple, begin(members), end(members));
 	return print(buf, max, begin(members), end(members));
 }
@@ -741,7 +746,7 @@ template<class... T>
 std::string
 string(const tuple<T...> &tuple)
 {
-	std::array<index::member, tuple.size()> members;
+	std::array<member, tuple.size()> members;
 	_member_transform(tuple, begin(members), end(members));
 	return string(begin(members), end(members));
 }
