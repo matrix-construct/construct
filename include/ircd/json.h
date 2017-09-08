@@ -83,6 +83,11 @@ namespace ircd::json
 
 	using path = std::initializer_list<string_view>;
 	std::ostream &operator<<(std::ostream &, const path &);
+
+	size_t serialized(const string_view &);
+	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
+	template<class... T> size_t print(char *const &buf, const size_t &max, T&&... t);
+	template<class... T> std::string string(T&&... t);
 }
 
 #include "json/array.h"
@@ -97,6 +102,55 @@ namespace ircd::json
 namespace ircd
 {
 	using json::operator<<;
+}
+
+//
+// Convenience template for const rvalue mutable_buffers or basically
+// allowing a bracket initialization of a mutable_buffer in the argument
+// to stringify()
+//
+template<class... T>
+ircd::string_view
+ircd::json::stringify(const mutable_buffer &&mb,
+                      T&&... t)
+{
+	mutable_buffer mbc(mb);
+	return stringify(mbc, std::forward<T>(t)...);
+}
+
+//
+// Convenience template using the syntax print(buf, sizeof(buf), ...)
+// which stringifies with null termination into buffer.
+//
+template<class... T>
+size_t
+ircd::json::print(char *const &buf,
+                  const size_t &max,
+                  T&&... t)
+{
+	if(!max)
+		return 0;
+
+	mutable_buffer mb{buf, max - 1};
+	const auto sv(stringify(mb, std::forward<T>(t)...));
+	assert(sv.size() < max);
+	buf[sv.size()] = '\0';
+	return sv.size();
+}
+
+//
+// Convenience template using the syntax string(...) which returns
+// an std::string of the printed JSON
+//
+template<class... T>
+std::string
+ircd::json::string(T&&... t)
+{
+	std::string ret;
+	ret.resize(serialized(std::forward<T>(t)...), char{});
+	const auto buf{const_cast<char *>(ret.data())};
+	print(buf, ret.size() + 1, std::forward<T>(t)...);
+	return ret;
 }
 
 inline std::ostream &

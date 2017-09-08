@@ -57,8 +57,7 @@ struct ircd::json::array
 
 	using string_view::string_view;
 
-	friend array serialize(const array &, char *&buf, char *const &stop);
-	friend size_t print(char *const &buf, const size_t &max, const array &);
+	friend string_view stringify(mutable_buffer &, const array &);
 	friend std::ostream &operator<<(std::ostream &, const array &);
 };
 

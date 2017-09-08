@@ -99,11 +99,11 @@ ircd::m::init::init()
 
 	modules.emplace("root.so"s, "root.so"s);
 
+	//TODO: conf obviously
 	listener = new ircd::listener
 	{
-		//TODO: conf obviously
-		json::string
-		({
+		json::string(json::members
+		{
 			{ "name", "Chat Matrix" },
 			{ "host", "0.0.0.0" },
 			{ "port", 8447 },
@@ -141,7 +141,7 @@ ircd::m::bootstrap()
 		const auto type{"m.room.create"};
 
 		char content[512];
-		json::print(content, sizeof(content),
+		print(content, sizeof(content), json::members
 		{
             { "creator", user_id },
 		});
@@ -162,7 +162,7 @@ ircd::m::bootstrap()
 		const auto type{"m.room.member"};
 
 		char content[512];
-		json::print(content, sizeof(content),
+		print(content, sizeof(content), json::members
 		{
             { "membership",     "join"     },
 		});
@@ -438,7 +438,7 @@ ircd::m::room::membership(const m::id::user &user_id,
 		{ "type",         "m.room.member"                               },
 		{ "state_key",    user_id                                       },
 		{ "sender",       user_id                                       },
-		{ "content",      json::stringify(cbuf, sizeof(cbuf), content)  }
+		{ "content",      stringify(cbuf, content)  }
 	});
 }
 

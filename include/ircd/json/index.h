@@ -44,7 +44,7 @@ struct ircd::json::index
 
 	bool empty() const;
 	size_t count() const;
-	size_t size() const;
+	size_t serialized() const;
 
 	const_iterator find(const string_view &name) const;
 	bool has(const string_view &name) const;
@@ -70,8 +70,8 @@ struct ircd::json::index
 	friend index &operator+=(index &, const object &);      // integration
 	friend index operator+(const object &, const object &);  // integral
 
-	friend object serialize(const index &, char *&start, char *const &stop);
-	friend size_t print(char *const &buf, const size_t &max, const index &);
+	friend size_t serialized(const index &);
+	friend string_view stringify(mutable_buffer &, const index &);
 	friend std::ostream &operator<<(std::ostream &, const index &);
 };
 

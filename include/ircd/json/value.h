@@ -55,7 +55,7 @@ struct ircd::json::value
 
   public:
 	bool empty() const;
-	size_t size() const;
+	size_t serialized() const;
 	operator string_view() const;
 	explicit operator std::string() const;
 
@@ -80,6 +80,9 @@ struct ircd::json::value
 	friend bool operator>=(const value &a, const value &b);
 	friend bool operator<(const value &a, const value &b);
 	friend bool operator>(const value &a, const value &b);
+
+	friend size_t serialized(const value &);
+	friend string_view stringify(mutable_buffer &, const value &);
 	friend std::ostream &operator<<(std::ostream &, const value &);
 };
 

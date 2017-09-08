@@ -34,20 +34,16 @@
 namespace ircd::json
 {
 	struct member;
-
-	size_t size(const member *const &begin, const member *const &end);
-	object serialize(const member *const *const &begin, const member *const *const &end, char *&start, char *const &stop);
-	object serialize(const member *const &begin, const member *const &end, char *&start, char *const &stop);
-	size_t print(char *const &buf, const size_t &max, const member *const &begin, const member *const &end);
-	std::string string(const member *const &begin, const member *const &end);
-
 	using members = std::initializer_list<member>;
-	object serialize(const members &, char *&start, char *const &stop);
-	size_t print(char *const &buf, const size_t &max, const members &);
-	std::string string(const members &);
 
-	array serialize(const std::vector<json::object> &, char *&start, char *const &stop);
-	string_view stringify(char *const &buf, const size_t &max, const members &);
+	size_t serialized(const member *const &begin, const member *const &end);
+	size_t serialized(const members &);
+
+	string_view stringify(mutable_buffer &, const member *const *const &begin, const member *const *const &end);
+	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
+	string_view stringify(mutable_buffer &, const members &);
+
+	string_view stringify(mutable_buffer &, const std::vector<json::object> &);
 }
 
 struct ircd::json::member
@@ -67,6 +63,8 @@ struct ircd::json::member
 	friend bool operator!=(const member &a, const string_view &b);
 	friend bool operator<(const member &a, const string_view &b);
 
+	friend size_t serialized(const member &);
+	friend string_view stringify(mutable_buffer &, const member &);
 	friend std::ostream &operator<<(std::ostream &, const member &);
 };
 

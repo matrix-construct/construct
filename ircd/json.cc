@@ -248,6 +248,12 @@ struct printer
 	template<class generator>
 	bool operator()(char *&out, char *const &stop, generator&& gen) const;
 
+	template<class... args>
+	bool operator()(mutable_buffer &out, args&&... a) const
+	{
+		return operator()(begin(out), end(out), std::forward<args>(a)...);
+	}
+
 	printer();
 }
 const printer;
@@ -258,23 +264,6 @@ struct ostreamer
 	ostreamer();
 }
 const ostreamer;
-
-size_t print(char *const &buf, const size_t &max, const array &);
-size_t print(char *const &buf, const size_t &max, const object &);
-size_t print(char *const &buf, const size_t &max, const index::member *const &begin, const index::member *const &end);
-size_t print(char *const &buf, const size_t &max, const index &);
-size_t print(char *const &buf, const size_t &max, const members &);
-
-array serialize(const array &, char *&start, char *const &stop);
-object serialize(const object &, char *&start, char *const &stop);
-object serialize(const index::member *const &beg, const index::member *const &end, char *&start, char *const &stop);
-object serialize(const index &, char *&start, char *const &stop);
-object serialize(const members &, char *&start, char *const &stop);
-
-std::ostream &operator<<(std::ostream &, const array &);
-std::ostream &operator<<(std::ostream &, const object::member &);
-std::ostream &operator<<(std::ostream &, const object &);
-std::ostream &operator<<(std::ostream &, const index &);
 
 } // namespace json
 } // namespace ircd
@@ -318,18 +307,26 @@ ircd::json::printer::printer()
 {
 	const auto recursor([this](auto &a, auto &b, auto &c)
 	{
-		const auto recurse_array([&]
+		const auto recurse_array([&a]
 		{
-			char *out(const_cast<char *>(a.data()));
-			const auto r(serialize(json::array(a), out, out + a.size()));
-			a.resize(size_t(out - r.data()));
+			mutable_buffer mb
+			{
+				const_cast<char *>(a.data()), a.size()
+			};
+
+			const auto r(stringify(mb, json::array(a)));
+			a.resize(r.size());
 		});
 
-		const auto recurse_object([&]
+		const auto recurse_object([&a]
 		{
-			char *out(const_cast<char *>(a.data()));
-			const auto d(serialize(json::object(a), out, out + a.size()));
-			a.resize(size_t(out - d.data()));
+			mutable_buffer mb
+			{
+				const_cast<char *>(a.data()), a.size()
+			};
+
+			const auto r(stringify(mb, json::object(a)));
+			a.resize(r.size());
 		});
 
 		const auto quote_string([&]
@@ -400,104 +397,20 @@ const
 	return karma::generate(out, gg);
 }
 
-std::string
-ircd::json::string(const members &list)
-{
-	return string(std::begin(list), std::end(list));
-}
-
-std::string
-ircd::json::string(const index::member *const &begin,
-                   const index::member *const &end)
-{
-	std::string ret(size(begin, end), char());
-	print(const_cast<char *>(ret.data()), ret.size() + 1, begin, end);
-	return ret;
-}
-
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  const index &obj)
-{
-	if(unlikely(!max))
-		return 0;
-
-	char *out(buf);
-	serialize(obj, out, out + (max - 1));
-	*out = '\0';
-	return out - buf;
-}
-
 ircd::string_view
-ircd::json::stringify(char *const &buf,
-                      const size_t &max,
-                      const members &list)
+ircd::json::stringify(mutable_buffer &buf,
+                      const std::vector<json::object> &v)
 {
-	const auto len
+	const auto print_member([&buf](const string_view &elem)
 	{
-		print(buf, max, std::begin(list), std::end(list))
-	};
-
-	return string_view{buf, len};
-}
-
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  const members &list)
-{
-	return print(buf, max, std::begin(list), std::end(list));
-}
-
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  const index::member *const &begin,
-                  const index::member *const &end)
-{
-	if(unlikely(!max))
-		return 0;
-
-	char *out(buf);
-	serialize(begin, end, out, out + (max - 1));
-	*out = '\0';
-	return out - buf;
-}
-
-ircd::json::object
-ircd::json::serialize(const members &list,
-                      char *&out,
-                      char *const &stop)
-{
-	return serialize(std::begin(list), std::end(list), out, stop);
-}
-
-ircd::json::object
-ircd::json::serialize(const index &obj,
-                      char *&out,
-                      char *const &stop)
-{
-	const index::member *const &begin(&obj.idx.front());
-	const index::member *const &end(begin + obj.idx.size());
-	return serialize(begin, end, out, stop);
-}
-
-ircd::json::array
-ircd::json::serialize(const std::vector<json::object> &v,
-                      char *&out,
-                      char *const &stop)
-{
-	const auto print_member([&out, &stop](const string_view &elem)
-	{
-		//printer(out, stop, printer.elem, elem);
-		const auto cpsz(std::min(size_t(stop - out), elem.size()));
-		memcpy(out, elem.data(), cpsz);
-		out += cpsz;
+		//printer(buf, printer.elem, elem);
+		const auto cpsz(std::min(size(buf), elem.size()));
+		memcpy(begin(buf), elem.data(), cpsz);
+		begin(buf) += cpsz;
 	});
 
-	char *const start(out);
-	printer(out, stop, printer.array_begin);
+	char *const start(begin(buf));
+	printer(buf, printer.array_begin);
 
 	auto it(std::begin(v));
 	if(it != std::end(v))
@@ -505,66 +418,80 @@ ircd::json::serialize(const std::vector<json::object> &v,
 		print_member(*it);
 		for(++it; it != std::end(v); ++it)
 		{
-			printer(out, stop, printer.value_sep);
+			printer(buf, printer.value_sep);
 			print_member(*it);
 		}
 	}
 
-	printer(out, stop, printer.array_end);
-	return string_view{start, out};
+	printer(buf, printer.array_end);
+	return string_view{start, begin(buf)};
 }
 
-ircd::json::object
-ircd::json::serialize(const index::member *const &begin,
-                      const index::member *const &end,
-                      char *&out,
-                      char *const &stop)
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const members &list)
+{
+	return stringify(buf, std::begin(list), std::end(list));
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const index &obj)
+{
+	const member *const &begin(&obj.idx.front());
+	const member *const &end(begin + obj.idx.size());
+	return stringify(buf, begin, end);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member *const &begin,
+                      const member *const &end)
 {
 	const auto num(std::distance(begin, end));
-	const index::member *vec[num];
+	const member *vec[num];
 	for(auto i(0); i < num; ++i)
 		vec[i] = begin + i;
 
-	return serialize(vec, vec + num, out, stop);
+	return stringify(buf, vec, vec + num);
 }
 
-ircd::json::object
-ircd::json::serialize(const index::member *const *const &begin,
-                      const index::member *const *const &end,
-                      char *&out,
-                      char *const &stop)
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member *const *const &b,
+                      const member *const *const &e)
 {
-	const auto print_string([&stop, &out](const value &value)
+	const auto print_string([&buf](const value &value)
 	{
-		printer(out, stop, printer.string, string_view{value});
+		printer(buf, printer.string, string_view{value});
 	});
 
-	const auto print_literal([&stop, &out](const value &value)
+	const auto print_literal([&buf](const value &value)
 	{
-		printer(out, stop, printer.literal, string_view{value});
+		printer(buf, printer.literal, string_view{value});
 	});
 
-	const auto print_object([&stop, &out](const value &value)
+	const auto print_object([&buf](const value &value)
 	{
 		if(value.serial)
 		{
-			printer(out, stop, printer.object, string_view{value});
+			printer(buf, printer.object, string_view{value});
 			return;
 		}
 
 		assert(value.object);
-		serialize(*value.object, out, stop);
+		stringify(buf, *value.object);
 	});
 
-	const auto print_array([&stop, &out](const value &value)
+	const auto print_array([&buf](const value &value)
 	{
 		if(value.serial)
 		{
 			//printer(out, stop, printer.array, value);
 			const string_view data(value);
-			const auto cpsz(std::min(size_t(stop - out), data.size()));
-			memcpy(out, data.data(), cpsz);
-			out += cpsz;
+			const auto cpsz(std::min(size(buf), data.size()));
+			memcpy(begin(buf), data.data(), cpsz);
+			begin(buf) += cpsz;
 			return;
 		}
 
@@ -573,27 +500,27 @@ ircd::json::serialize(const index::member *const *const &begin,
 		//serialize(*value.object, out, stop);
 	});
 
-	const auto print_number([&stop, &out](const value &value)
+	const auto print_number([&buf](const value &value)
 	{
 		if(value.serial)
 		{
 			if(value.floats)
-				printer(out, stop, double_, string_view{value});
+				printer(buf, double_, string_view{value});
 			else
-				printer(out, stop, long_, string_view{value});
+				printer(buf, long_, string_view{value});
 
 			return;
 		}
 
 		if(value.floats)
-			printer(out, stop, double_, value.floating);
+			printer(buf, double_, value.floating);
 		else
-			printer(out, stop, long_, value.integer);
+			printer(buf, long_, value.integer);
 	});
 
-	const auto print_member([&](const index::member &member)
+	const auto print_member([&](const member &member)
 	{
-		printer(out, stop, printer.name << printer.name_sep, member.first);
+		printer(buf, printer.name << printer.name_sep, member.first);
 
 		switch(member.second.type)
 		{
@@ -605,40 +532,48 @@ ircd::json::serialize(const index::member *const *const &begin,
 		}
 	});
 
-	char *const start(out);
-	printer(out, stop, printer.object_begin);
+	char *const start(begin(buf));
+	printer(buf, printer.object_begin);
 
-	auto it(begin);
-	if(it != end)
+	auto it(b);
+	if(it != e)
 	{
 		print_member(**it);
-		for(++it; it != end; ++it)
+		for(++it; it != e; ++it)
 		{
-			printer(out, stop, printer.value_sep);
+			printer(buf, printer.value_sep);
 			print_member(**it);
 		}
 	}
 
-	printer(out, stop, printer.object_end);
-	return string_view{start, out};
+	printer(buf, printer.object_end);
+	return string_view{start, begin(buf)};
 }
 
 ircd::json::ostreamer::ostreamer()
 {
 	const auto recursor([this](auto &a, auto &b, auto &c)
 	{
-		const auto recurse_array([&]
+		const auto recurse_array([&a]
 		{
-			char *out(const_cast<char *>(a.data()));
-			const auto r(serialize(json::array(a), out, out + a.size()));
-			a.resize(size_t(out - r.data()));
+			mutable_buffer mb
+			{
+				const_cast<char *>(a.data()), a.size()
+			};
+
+			const auto r(stringify(mb, json::array(a)));
+			a.resize(r.size());
 		});
 
-		const auto recurse_object([&]
+		const auto recurse_object([&a]
 		{
-			char *out(const_cast<char *>(a.data()));
-			const auto d(serialize(json::object(a), out, out + a.size()));
-			a.resize(size_t(out - d.data()));
+			mutable_buffer mb
+			{
+				const_cast<char *>(a.data()), a.size()
+			};
+
+			const auto r(stringify(mb, json::object(a)));
+			a.resize(r.size());
 		});
 
 		const auto quote_string([&]
@@ -735,7 +670,7 @@ ircd::json::operator<<(std::ostream &s, const index &obj)
 			karma::generate(osi, long_, value.integer);
 	});
 
-	const auto stream_member([&](const index::member &member)
+	const auto stream_member([&](const member &member)
 	{
 		karma::generate(osi, ostreamer.name << ostreamer.name_sep, string_view(member.first));
 
@@ -766,6 +701,30 @@ ircd::json::operator<<(std::ostream &s, const index &obj)
 	return s;
 }
 
+size_t
+ircd::json::serialized(const members &m)
+{
+	return serialized(std::begin(m), std::end(m));
+}
+
+size_t
+ircd::json::serialized(const member *const &begin,
+                       const member *const &end)
+{
+	const size_t ret(1 + !std::distance(begin, end));
+	return std::accumulate(begin, end, ret, []
+	(auto ret, const auto &member)
+	{
+		return ret += serialized(member) + 1;
+	});
+}
+
+size_t
+ircd::json::serialized(const member &member)
+{
+	return serialized(member.first) + 1 + 1 + serialized(member.second);
+}
+
 ircd::json::index
 ircd::json::operator+(const object &left, const object &right)
 {
@@ -794,7 +753,7 @@ ircd::json::operator+=(index &left, const object &right)
 			if(deletion)   // prevents adding the empty indicator as the new key!
 				continue;
 
-			left.idx.emplace_back(index::member{b});
+			left.idx.emplace_back(member{b});
 			continue;
 		}
 
@@ -804,12 +763,12 @@ ircd::json::operator+=(index &left, const object &right)
 			continue;
 		}
 
-		auto &a(const_cast<index::member &>(*it));
+		auto &a(const_cast<member &>(*it));
 		switch(type(a.second))
 		{
 			default:
 			{
-				a = index::member{b};
+				a = member{b};
 				continue;
 			}
 
@@ -825,7 +784,7 @@ ircd::json::operator+=(index &left, const object &right)
 					continue;
 				}
 
-				a = index::member{string_view{a.first}, std::move(merged)};
+				a = member{string_view{a.first}, std::move(merged)};
 				continue;
 			}
 		}
@@ -839,15 +798,15 @@ ircd::json::index::index(recursive_t recursive,
 :idx{object.count()}
 {
 	std::transform(std::begin(object), std::end(object), std::begin(idx), [&]
-	(const object::member &m) -> index::member
+	(const object::member &m) -> member
 	{
 		switch(type(m.second))
 		{
 			case OBJECT:
-				return index::member{m.first, std::make_unique<index>(recursive, m.second)};
+				return member{m.first, std::make_unique<index>(recursive, m.second)};
 
 			default:
-				return index::member{m};
+				return member{m};
 		};
 	});
 }
@@ -856,9 +815,9 @@ ircd::json::index::index(const object &object)
 :idx{object.count()}
 {
 	std::transform(std::begin(object), std::end(object), std::begin(idx), []
-	(const object::member &m) -> index::member
+	(const object::member &m) -> member
 	{
-		return index::member{m};
+		return member{m};
 	});
 }
 
@@ -945,35 +904,26 @@ const
 }
 
 size_t
-ircd::json::size(const index::member *const &begin,
-                 const index::member *const &end)
+ircd::json::serialized(const index &index)
 {
-	const size_t ret(1 + !std::distance(begin, end));
-	return std::accumulate(begin, end, ret, []
-	(auto ret, const auto &member)
-	{
-		return ret += member.first.size() + 1 + 1 + member.second.size() + 1;
-	});
+	return index.serialized();
 }
 
 size_t
-ircd::json::index::size()
+ircd::json::index::serialized()
 const
 {
-	const size_t ret(1 + idx.empty());
-	return std::accumulate(std::begin(idx), std::end(idx), ret, []
-	(auto ret, const auto &member)
-	{
-		return ret += member.first.size() + 1 + 1 + member.second.size() + 1;
-	});
+	const member *const &begin(&idx.front());
+	const member *const &end(begin + idx.size());
+	return json::serialized(begin, end);
 }
 
 ircd::json::index::operator std::string()
 const
 {
-	std::string ret(size(), char());
-	ret.resize(print(const_cast<char *>(ret.data()), ret.size() + 1, *this));
-	return ret;
+	const member *const &begin(&idx.front());
+	const member *const &end(begin + idx.size());
+	return json::string(begin, end);
 }
 
 ircd::json::value::~value()
@@ -1059,14 +1009,20 @@ const
 }
 
 size_t
-ircd::json::value::size()
+ircd::json::serialized(const value &value)
+{
+	return value.serialized();
+}
+
+size_t
+ircd::json::value::serialized()
 const
 {
 	switch(type)
 	{
 		case NUMBER:   return lex_cast(integer).size();
 		case STRING:   return 1 + len + 1;
-		case OBJECT:   return serial? len : object->size();
+		case OBJECT:   return serial? len : object->serialized();
 		case ARRAY:    return serial? len : 2;
 		case LITERAL:  return len;
 	};
@@ -1165,33 +1121,22 @@ ircd::json::operator==(const value &a, const value &b)
     return static_cast<string_view>(a) == static_cast<string_view>(b);
 }
 
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  const object &object)
-{
-	if(unlikely(!max))
-		return 0;
-
-	char *out(buf);
-	serialize(object, out, out + (max - 1));
-	*out = '\0';
-	return std::distance(buf, out);
-}
-
-ircd::json::object
-ircd::json::serialize(const object &object,
-                      char *&out,
-                      char *const &stop)
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object &object)
 {
 	static const auto throws([]
 	{
 		throw print_error("The JSON generator failed to print object");
 	});
 
-	char *const start(out);
-	karma::generate(out, maxwidth(stop - start)[printer.object] | eps[throws], object);
-	return string_view{start, out};
+	char *const start(begin(buf));
+	karma::generate(begin(buf), maxwidth(size(buf))[printer.object] | eps[throws], object);
+
+	return string_view
+	{
+		start, begin(buf)
+	};
 }
 
 std::ostream &
@@ -1279,43 +1224,28 @@ const
 	return { string_view::end(), string_view::end() };
 }
 
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  const array &arr)
-{
-	if(unlikely(!max))
-		return 0;
-
-	char *out(buf);
-	serialize(arr, out, out + (max - 1));
-	*out = '\0';
-	return std::distance(buf, out);
-}
-
-ircd::json::array
-ircd::json::serialize(const array &a,
-                      char *&out,
-                      char *const &stop)
+ircd::string_view
+ircd::json::stringify(mutable_buffer &b,
+                      const array &a)
 {
 	static const auto throws([]
 	{
 		throw print_error("The JSON generator failed to print array");
 	});
 
-	char *const start(out);
-	karma::generate(out, maxwidth(stop - out)[printer.array_begin] | eps[throws]);
+	char *const start(begin(b));
+	karma::generate(begin(b), maxwidth(size(b))[printer.array_begin] | eps[throws]);
 
 	auto it(begin(a));
 	if(it != end(a))
 	{
-		karma::generate(out, maxwidth(stop - out)[printer.elem] | eps[throws], *it);
+		karma::generate(begin(b), maxwidth(size(b))[printer.elem] | eps[throws], *it);
 		for(++it; it != end(a); ++it)
-			karma::generate(out, maxwidth(stop - out)[printer.value_sep << printer.elem] | eps[throws], *it);
+			karma::generate(begin(b), maxwidth(size(b))[printer.value_sep << printer.elem] | eps[throws], *it);
 	}
 
-	karma::generate(out, maxwidth(stop - out)[printer.array_end] | eps[throws]);
-	return string_view{start, out};
+	karma::generate(begin(b), maxwidth(size(b))[printer.array_end] | eps[throws]);
+	return string_view{start, begin(b)};
 }
 
 std::ostream &
@@ -1387,6 +1317,27 @@ ircd::json::array::end()
 const
 {
 	return { string_view::end(), string_view::end() };
+}
+
+size_t
+ircd::json::serialized(const string_view &s)
+{
+	switch(type(s, std::nothrow))
+	{
+		case NUMBER:
+		case OBJECT:
+		case ARRAY:
+		case LITERAL:
+			return s.size();
+
+		case STRING:
+			break;
+	}
+
+	size_t ret(s.size());
+	ret += !startswith(s, '"');
+	ret += !endswith(s, '"');
+	return ret;
 }
 
 enum ircd::json::type

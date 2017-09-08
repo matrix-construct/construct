@@ -47,26 +47,24 @@ struct ircd::json::builder
 	builder(const builder *const &parent, const members *const &);
 	builder(const builder *const &parent, member);
 
-	friend string_view stringify(char *const &buf, const size_t &max, const builder &);
+	friend string_view stringify(mutable_buffer &, const builder &);
 };
 
 inline ircd::string_view
-ircd::json::stringify(char *const &buf,
-                      const size_t &max,
+ircd::json::stringify(mutable_buffer &head,
                       const builder &builder)
 {
-	size_t i(0);
-	const auto num(builder.count());
+	const auto num{builder.count()};
 	const member *m[num];
+
+	size_t i(0);
 	builder.for_each([&i, &m]
 	(const auto &member)
 	{
 		m[i++] = &member;
 	});
 
-	char *p(buf);
-	char *const e(buf + max);
-	return serialize(m, m + num, p, e);
+	return stringify(head, m, m + num);
 }
 
 inline

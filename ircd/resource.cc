@@ -257,8 +257,13 @@ ircd::resource::response::response(client &client,
                                    const http::code &code)
 try
 {
-	char cbuf[8192], *out(cbuf);
-	const auto object(serialize(index, out, cbuf + sizeof(cbuf)));
+	char cbuf[8192];
+	mutable_buffer buf{cbuf};
+	const json::object object
+	{
+		stringify(buf, index)
+	};
+
 	response(client, object, code);
 }
 catch(const json::error &e)

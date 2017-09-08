@@ -598,16 +598,29 @@ tuple<T...>::tuple(const std::initializer_list<member> &members)
 
 template<class tuple,
          class it_a,
+         class it_b,
+         class closure>
+constexpr void
+_key_transform(it_a it,
+               const it_b end,
+               closure&& lambda)
+{
+	for(size_t i(0); i < tuple::size() && it != end; ++i)
+	{
+		*it = lambda(key<tuple, i>());
+		++it;
+	}
+}
+
+template<class tuple,
+         class it_a,
          class it_b>
 constexpr void
 _key_transform(it_a it,
                const it_b end)
 {
-	for(size_t i(0); i < tuple::size(); ++i)
+	for(size_t i(0); i < tuple::size() && it != end; ++i)
 	{
-		if(it == end)
-			break;
-
 		*it = key<tuple, i>();
 		++it;
 	}
@@ -634,52 +647,101 @@ _key_transform(const tuple<T...> &tuple,
 
 template<class it_a,
          class it_b,
+         class closure,
+         class... T>
+void
+_member_transform(const tuple<T...> &tuple,
+                  it_a it,
+                  const it_b end,
+                  closure&& lambda)
+{
+	until(tuple, [&it, &end, &lambda]
+	(const auto &key, const auto &val)
+	{
+		if(it == end)
+			return false;
+
+		*it = lambda(key, val);
+		++it;
+		return true;
+	});
+}
+
+template<class it_a,
+         class it_b,
          class... T>
 void
 _member_transform(const tuple<T...> &tuple,
                   it_a it,
                   const it_b end)
 {
-	for_each(tuple, [&it, &end]
+	until(tuple, [&it, &end]
 	(const auto &key, const auto &val)
 	{
-		if(it != end)
-		{
-			*it = { key, val };
-			++it;
-		}
+		if(it == end)
+			return false;
+
+		*it = { key, val };
+		++it;
+		return true;
 	});
 }
 
-template<class... T>
-object
-serialize(const tuple<T...> &tuple,
-          char *&start,
-          char *const &stop)
+template<class T>
+constexpr bool
+serialized_lex_cast()
 {
-	std::array<member, tuple.size()> members;
-	_member_transform(tuple, begin(members), end(members));
-	return serialize(begin(members), end(members), start, stop);
+	using type = typename std::remove_reference<T>::type;
+	return std::is_arithmetic<type>::value;
+}
+
+template<class T>
+typename std::enable_if<serialized_lex_cast<T>(), size_t>::type
+serialized(T&& t)
+{
+	return lex_cast(t).size();
 }
 
 template<class... T>
 size_t
-print(char *const &buf,
-      const size_t &max,
-      const tuple<T...> &tuple)
+serialized(const tuple<T...> &t)
 {
-	std::array<member, tuple.size()> members;
-	_member_transform(tuple, begin(members), end(members));
-	return print(buf, max, begin(members), end(members));
+	constexpr const size_t member_count
+	{
+		tuple<T...>::size()
+	};
+
+	// Number of commas for this object is one less than the member count, or 0
+	const size_t commas
+	{
+		member_count? member_count - 1 : 0
+	};
+
+	// 2 for the {} and the comma count
+	const size_t overhead
+	{
+		2 + commas
+	};
+
+	std::array<size_t, member_count> sizes;
+	_member_transform(t, begin(sizes), end(sizes), []
+	(const string_view &key, auto&& val)
+	{
+		//     "                "   :
+		return 1 + key.size() + 1 + 1 + serialized(val);
+	});
+
+	return std::accumulate(begin(sizes), end(sizes), overhead);
 }
 
 template<class... T>
-std::string
-string(const tuple<T...> &tuple)
+string_view
+stringify(mutable_buffer &buf,
+          const tuple<T...> &tuple)
 {
 	std::array<member, tuple.size()> members;
 	_member_transform(tuple, begin(members), end(members));
-	return string(begin(members), end(members));
+	return stringify(buf, begin(members), end(members));
 }
 
 template<class... T>
