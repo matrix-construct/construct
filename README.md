@@ -31,6 +31,7 @@ old code has been rewritten but the architecture is the same.
 	* **RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
 	and have furthered the mission of eliminating the need for external "IRC services"
 
+	* autotools, libtool, make, zlib
 
 ## Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
 
