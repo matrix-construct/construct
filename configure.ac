@@ -579,7 +579,7 @@ dnl
 dnl boost support
 dnl
 
-BOOST_VERSION_MIN="1.61"
+BOOST_VERSION_MIN="1.62"
 BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
