@@ -68,6 +68,7 @@ namespace ircd::json
 	struct object;
 	struct value;
 	struct index;
+	struct builder;
 
 	enum type
 	{
@@ -88,7 +89,6 @@ namespace ircd::json
 #include "json/object.h"
 #include "json/value.h"
 #include "json/index.h"
-#include "json/tuple.h"
 
 namespace ircd::json
 {
@@ -106,6 +106,9 @@ namespace ircd::json
 	array serialize(const std::vector<json::object> &, char *&start, char *const &stop);
 	string_view stringify(char *const &buf, const size_t &max, const members &);
 }
+
+#include "json/tuple.h"
+#include "json/builder.h"
 
 namespace ircd
 {
