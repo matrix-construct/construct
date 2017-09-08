@@ -22,6 +22,27 @@
 #include <ircd/ctx/continuation.h>
 #include <ircd/socket.h>
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// buffer.h - provide definition for the null buffers
+//
+
+const ircd::buffer::mutable_buffer
+ircd::buffer::null_buffer
+{
+    nullptr, nullptr
+};
+
+const ircd::buffer::mutable_buffers
+ircd::buffer::null_buffers
+{{
+    null_buffer
+}};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//
+
 namespace ircd {
 
 ip::tcp::resolver *resolver;
