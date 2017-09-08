@@ -1220,5 +1220,25 @@ operator!(const string_view &str)
 }
 
 
+//
+// Iterator based until() matching std::for_each except the function
+// returns a bool to continue rather than void.
+//
+template<class it_a,
+         class it_b,
+         class boolean_function>
+bool
+until(it_a a,
+      const it_b &b,
+      boolean_function&& f)
+{
+	for(; a != b; ++a)
+		if(!f(*a))
+			return false;
+
+	return true;
+}
+
+
 } // namespace util
 } // namespace ircd
