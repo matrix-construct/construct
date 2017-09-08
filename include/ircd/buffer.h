@@ -36,14 +36,17 @@ namespace ircd::buffer
 	extern const mutable_buffer null_buffer;
 	extern const mutable_buffers null_buffers;
 
-	template<class it> it rend(const buffer<it> &buffer);
-	template<class it> it end(const buffer<it> &buffer);
+	template<class it> const it &begin(const buffer<it> &buffer);
+	template<class it> const it &end(const buffer<it> &buffer);
+	template<class it> it &begin(buffer<it> &buffer);
+	template<class it> it &end(buffer<it> &buffer);
+
 	template<class it> it rbegin(const buffer<it> &buffer);
-	template<class it> it begin(const buffer<it> &buffer);
+	template<class it> it rend(const buffer<it> &buffer);
 
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class T> size_t size(const buffers<T> &buffers);
-	template<class it> it data(const buffer<it> &buffer);
+	template<class it> const it &data(const buffer<it> &buffer);
 
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
@@ -80,12 +83,21 @@ struct ircd::buffer::buffer
 	operator std::string_view() const;
 	explicit operator std::string() const;
 
-	buffer(const it &start = nullptr, const it &stop = nullptr)
+	buffer(const it &start, const it &stop)
 	:std::tuple<it, it>{start, stop}
 	{}
 
 	buffer(const it &start, const size_t &size)
 	:buffer{start, start + size}
+	{}
+
+	template<size_t SIZE>
+	buffer(typename std::remove_pointer<it>::type (&buf)[SIZE])
+	:buffer{buf, SIZE}
+	{}
+
+	buffer()
+	:buffer{nullptr, nullptr}
 	{}
 };
 
@@ -106,19 +118,6 @@ struct ircd::buffer::mutable_buffer
 	operator boost::asio::mutable_buffer() const;
 
 	using buffer<char *>::buffer;
-};
-
-template<class buffer,
-         size_t align = 16>
-struct ircd::buffer::unique_buffer
-:buffer
-{
-	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
-	unique_buffer(const size_t &size);
-	unique_buffer() = default;
-	unique_buffer(unique_buffer &&) noexcept;
-	unique_buffer(const unique_buffer &) = delete;
-	~unique_buffer() noexcept;
 };
 
 template<class T>
@@ -225,7 +224,7 @@ ircd::buffer::consume(buffer<it> &buffer,
 }
 
 template<class it>
-it
+const it &
 ircd::buffer::data(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
@@ -252,9 +251,9 @@ ircd::buffer::size(const buffer<it> &buffer)
 
 template<class it>
 it
-ircd::buffer::begin(const buffer<it> &buffer)
+ircd::buffer::rend(const buffer<it> &buffer)
 {
-	return get<0>(buffer);
+	return std::reverse_iterator<it>(get<0>(buffer));
 }
 
 template<class it>
@@ -265,18 +264,66 @@ ircd::buffer::rbegin(const buffer<it> &buffer)
 }
 
 template<class it>
-it
+it &
+ircd::buffer::end(buffer<it> &buffer)
+{
+	return get<1>(buffer);
+}
+
+template<class it>
+it &
+ircd::buffer::begin(buffer<it> &buffer)
+{
+	return get<0>(buffer);
+}
+
+template<class it>
+const it &
 ircd::buffer::end(const buffer<it> &buffer)
 {
 	return get<1>(buffer);
 }
 
 template<class it>
-it
-ircd::buffer::rend(const buffer<it> &buffer)
+const it &
+ircd::buffer::begin(const buffer<it> &buffer)
 {
-	return std::reverse_iterator<it>(get<0>(buffer));
+	return get<0>(buffer);
 }
+
+template<class it>
+ircd::buffer::buffer<it>::operator std::string()
+const
+{
+	return { get<0>(*this), size(*this) };
+}
+
+template<class it>
+ircd::buffer::buffer<it>::operator std::string_view()
+const
+{
+	return { get<0>(*this), size(*this) };
+}
+
+template<class it>
+ircd::buffer::buffer<it>::operator string_view()
+const
+{
+	return { get<0>(*this), get<1>(*this) };
+}
+
+template<class buffer,
+         size_t align = 16>
+struct ircd::buffer::unique_buffer
+:buffer
+{
+	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
+	unique_buffer(const size_t &size);
+	unique_buffer() = default;
+	unique_buffer(unique_buffer &&) noexcept;
+	unique_buffer(const unique_buffer &) = delete;
+	~unique_buffer() noexcept;
+};
 
 template<class buffer,
          size_t alignment>
@@ -321,25 +368,4 @@ ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
 noexcept
 {
 	delete[] data(*this);
-}
-
-template<class it>
-ircd::buffer::buffer<it>::operator std::string()
-const
-{
-	return { get<0>(*this), size(*this) };
-}
-
-template<class it>
-ircd::buffer::buffer<it>::operator std::string_view()
-const
-{
-	return { get<0>(*this), size(*this) };
-}
-
-template<class it>
-ircd::buffer::buffer<it>::operator string_view()
-const
-{
-	return { get<0>(*this), get<1>(*this) };
 }
