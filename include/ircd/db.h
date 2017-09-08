@@ -120,6 +120,8 @@ enum class ircd::db::pos
 #include "db/index.h"
 #include "db/value.h"
 #include "db/tuple.h"
+#include "db/where.h"
+#include "db/cursor.h"
 
 namespace ircd::db
 {
