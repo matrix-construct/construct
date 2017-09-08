@@ -949,11 +949,14 @@ struct vector_view
 	vector_view() = default;
 };
 
+
 //
 // Convenience cast a type (ex. an integer) into and out of a string_view
 //
+
+// string_view -> bytes
 template<class T = string_view>
-struct binary_view
+struct byte_view
 {
 	string_view s;
 
@@ -962,36 +965,36 @@ struct binary_view
 		return *reinterpret_cast<const T *>(s.data());
 	}
 
-	binary_view(const string_view &s)
+	byte_view(const string_view &s)
 	:s{s}
 	{
 		if(unlikely(sizeof(T) != s.size()))
 			throw std::bad_cast();
 	}
-};
 
-template<>
-struct binary_view<string_view>
-:string_view
-{
-	template<class T>
-	binary_view(const T &t)
-	:string_view
-	{
-		reinterpret_cast<const char *>(&t), sizeof(T)
-	}
+	// bytes -> bytes (completeness)
+	byte_view(const T &t)
+	:s{byte_view<string_view>{t}}
 	{}
 };
 
-// Convenience cast a type (ex. an integer) from a string_view
-// ref is always const because string_view uses const char *
-template<class R>
-const R &
-as(const string_view &s)
+// bytes -> string_view
+template<>
+struct byte_view<string_view>
+:string_view
 {
-	const binary_view<R> bv{s};
-	return static_cast<const R &>(bv);
-}
+	template<class T>
+	byte_view(const T &t)
+	:string_view{reinterpret_cast<const char *>(&t), sizeof(T)}
+	{}
+};
+
+// string_view -> string_view (completeness)
+template<> inline
+byte_view<string_view>::byte_view(const string_view &t)
+:string_view{t}
+{}
+
 
 //
 // Error-checking closure for POSIX system calls. Note the usage is
