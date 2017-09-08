@@ -404,7 +404,7 @@ ircd::http::response::response(const code &code,
 		0
 	};
 
-	const time_t ltime(time(nullptr));
+	const time_t ltime(time());
 	struct tm *const tm(localtime(&ltime));
 	char date_line[128]; const auto date_line_len
 	{

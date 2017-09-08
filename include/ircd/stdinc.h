@@ -193,6 +193,7 @@ namespace ircd
 }
 
 #include "util.h"
+#include "date.h"
 #include "rand.h"
 #include "timer.h"
 #include "allocator.h"
