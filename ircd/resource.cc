@@ -120,28 +120,21 @@ authenticate(client &client,
 try
 {
 	const auto &access_token(request.query.at("access_token"));
-	if(access_token == "charybdisLETMEIN")
-		return;
-
 	const auto it(resource::tokens.find(access_token));
-	if(it == end(resource::tokens) || it->second != &client)
-	{
+	if(it == end(resource::tokens))
 		throw m::error
 		{
-			// "When credentials are required but missing or invalid, the HTTP call will "
-			// "return with a status of 401 and the error code, M_MISSING_TOKEN or "
-			// "M_UNKNOWN_TOKEN respectively."
+			// When credentials are required but missing or invalid, the HTTP call will return with
+			// a status of 401 and the error code, M_MISSING_TOKEN or M_UNKNOWN_TOKEN respectively.
 			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN", "Credentials for this method are required but invalid."
 		};
-	}
 }
 catch(const std::out_of_range &e)
 {
 	throw m::error
 	{
-		// "When credentials are required but missing or invalid, the HTTP call will return "
-		// "with a status of 401 and the error code, M_MISSING_TOKEN or M_UNKNOWN_TOKEN "
-		// "respectively."
+		// When credentials are required but missing or invalid, the HTTP call will return with
+		// a status of 401 and the error code, M_MISSING_TOKEN or M_UNKNOWN_TOKEN respectively.
 		http::UNAUTHORIZED, "M_MISSING_TOKEN", "Credentials for this method are required but missing."
 	};
 }
@@ -186,13 +179,16 @@ ircd::resource::handle_request(client &client,
                                resource::request &request)
 try
 {
-	method(client, request);
+	const auto response
+	{
+		method(client, request)
+	};
 }
 catch(const json::error &e)
 {
 	throw m::error
 	{
-		"M_BAD_JSON", "Required JSON field: %s", e.what()
+		http::BAD_REQUEST, "M_BAD_JSON", "Required JSON field: %s", e.what()
 	};
 }
 

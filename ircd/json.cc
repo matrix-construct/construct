@@ -183,8 +183,19 @@ struct output
 	rule<string_view> number           { double_                                         ,"number" };
 	rule<string_view> name             { quote << +(~char_('"')) << quote                  ,"name" };
 	rule<string_view> value            { rule<string_view>{}  /* subclass implemented */  ,"value" };
-	rule<const string_view &> elem     { value                                          ,"element" };
-	rule<const json::array &> elems    { -(value % value_sep)                          ,"elements" };
+
+	rule<const string_view &> elem
+	{
+		value
+		,"element"
+	};
+
+	rule<const json::array &> elems
+	{
+		-(value % value_sep)
+		,"elements"
+	};
+
 	rule<const json::array &> array
 	{
 		array_begin << elems << array_end
@@ -549,7 +560,11 @@ ircd::json::serialize(const index::member *const *const &begin,
 	{
 		if(value.serial)
 		{
-			printer(out, stop, printer.array, string_view{value});
+			//printer(out, stop, printer.array, value);
+			const string_view data(value);
+			const auto cpsz(std::min(size_t(stop - out), data.size()));
+			memcpy(out, data.data(), cpsz);
+			out += cpsz;
 			return;
 		}
 
@@ -946,7 +961,7 @@ ircd::json::index::size()
 const
 {
 	const size_t ret(1 + idx.empty());
-	return std::accumulate(std::begin(idx), std::end(idx), ret, [this]
+	return std::accumulate(std::begin(idx), std::end(idx), ret, []
 	(auto ret, const auto &member)
 	{
 		return ret += member.first.size() + 1 + 1 + member.second.size() + 1;
