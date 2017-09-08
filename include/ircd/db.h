@@ -107,6 +107,7 @@ namespace ircd::db
 #include "db/column.h"
 #include "db/cell.h"
 #include "db/row.h"
+#include "db/index.h"
 #include "db/value.h"
 #include "db/tuple.h"
 

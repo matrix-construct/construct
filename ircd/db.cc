@@ -1244,6 +1244,76 @@ ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnF
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// db/index.h
+//
+
+ircd::db::index::const_iterator
+ircd::db::index::find(const string_view &key)
+{
+	auto ret{column::lower_bound(key)};
+	if(!ret)
+		return const_iterator{};
+
+	const auto &prefix(c->descriptor.prefix);
+	if(prefix.has && prefix.has(ret->first))
+		if(prefix.get && key != prefix.get(ret->first))
+			return const_iterator{};
+
+	return std::move(ret);
+}
+
+ircd::db::index::const_iterator
+ircd::db::index::begin()
+{
+	return column::begin();
+}
+
+ircd::db::index::const_iterator
+ircd::db::index::end()
+{
+	return column::end();
+}
+
+//
+// const_iterator
+//
+
+ircd::db::index::const_iterator::const_iterator(column::const_iterator it)
+:column::const_iterator{std::move(it)}
+{
+//	const auto &prefix(c->descriptor.prefix);
+//	if(unlikely(!prefix.has || !prefix.get))
+//		throw schema_error("column '%s' has no prefix logic; it cannot be an index",
+//		                   name(*c));
+}
+
+const ircd::db::index::const_iterator::value_type &
+ircd::db::index::const_iterator::operator*()
+const
+{
+	const auto t(const_cast<const_iterator *>(this));
+	t->column::const_iterator::operator*();
+	string_view &key(t->val.first);
+	const auto &prefix(c->descriptor.prefix);
+	if(prefix.has && prefix.has(key))
+	{
+		const auto first(prefix.get(key));
+		const auto second(key.substr(first.size()));
+		key = second;
+	}
+
+	return t->val;
+}
+
+const ircd::db::index::const_iterator::value_type *
+ircd::db::index::const_iterator::operator->()
+const
+{
+	return &this->operator*();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // db/cell.h
 //
 
