@@ -90,6 +90,23 @@ namespace ircd::json
 #include "json/index.h"
 #include "json/tuple.h"
 
+namespace ircd::json
+{
+	size_t size(const index::member *const &begin, const index::member *const &end);
+	object serialize(const index::member *const *const &begin, const index::member *const *const &end, char *&start, char *const &stop);
+	object serialize(const index::member *const &begin, const index::member *const &end, char *&start, char *const &stop);
+	size_t print(char *const &buf, const size_t &max, const index::member *const &begin, const index::member *const &end);
+	std::string string(const index::member *const &begin, const index::member *const &end);
+
+	using members = std::initializer_list<index::member>;
+	object serialize(const members &, char *&start, char *const &stop);
+	size_t print(char *const &buf, const size_t &max, const members &);
+	std::string string(const members &);
+
+	array serialize(const std::vector<json::object> &, char *&start, char *const &stop);
+	string_view stringify(char *const &buf, const size_t &max, const members &);
+}
+
 namespace ircd
 {
 	using json::operator<<;

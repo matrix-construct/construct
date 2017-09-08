@@ -74,6 +74,7 @@ struct tuple
 	static constexpr size_t size();
 
 	tuple(const json::object &);
+	tuple(const std::initializer_list<json::index::member> &);
 	tuple() = default;
 };
 
@@ -94,7 +95,7 @@ template<const char *const &name,
 struct member
 :tuple_base::member
 {
-	using key_type = const char *;
+	using key_type = const char *const &;
 	using value_type = T;
 
 	static constexpr auto &key{name};
@@ -208,6 +209,27 @@ indexof(const char *const &name)
 	return equal? i : indexof<tuple, i + 1>(name);
 }
 
+template<class tuple,
+         size_t i>
+constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
+indexof(const string_view &name)
+{
+	return size<tuple>();
+}
+
+template<class tuple,
+         size_t i = 0>
+constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+indexof(const string_view &name)
+{
+	const auto equal
+	{
+		name == key<tuple, i>()
+	};
+
+	return equal? i : indexof<tuple, i + 1>(name);
+}
+
 template<size_t i,
          class... T>
 auto &
@@ -270,7 +292,7 @@ at(const tuple<T...> &t)
 		indexof<tuple<T...>>(name)
 	};
 
-	const auto &ret
+	auto &ret
 	{
 		val<idx>(t)
 	};
@@ -308,6 +330,50 @@ at(tuple<T...> &t)
 	return ret;
 }
 
+template<const char *const &name,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)>
+get(const tuple<T...> &t,
+    const tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &def = {})
+{
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>>(name)
+	};
+
+	const auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple<T...>, idx>;
+
+	//TODO: does tcmalloc zero this or huh?
+	return ret != value_type{}? ret : def;
+}
+
+template<const char *const &name,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
+get(tuple<T...> &t,
+    tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &def)
+{
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>>(name)
+	};
+
+	auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple<T...>, idx>;
+
+	//TODO: does tcmalloc zero this or huh?
+	return ret != value_type{}? ret : def;
+}
+
 template<size_t i,
          class tuple,
          class function>
@@ -472,40 +538,70 @@ runtil(tuple &t,
 	       false;
 }
 
-template<class function,
-         class... T>
-bool
-at(tuple<T...> &t,
+template<class tuple,
+         class function,
+         size_t i>
+typename std::enable_if<i == size<tuple>(), void>::type
+at(tuple &t,
    const string_view &name,
    function&& f)
 {
-	return until(t, [&name, &f]
-	(const string_view &key, auto &member)
-	{
-		if(key != name)
-			return true;
-
-		f(member);
-		return false;
-	});
 }
 
-template<class function,
-         class... T>
-bool
-at(const tuple<T...> &t,
+template<class tuple,
+         class function,
+         size_t i = 0>
+typename std::enable_if<i < size<tuple>(), void>::type
+at(tuple &t,
    const string_view &name,
    function&& f)
 {
-	return until(t, [&name, &f]
-	(const string_view &key, const auto &member)
-	{
-		if(key != name)
-			return true;
+	if(indexof<tuple>(name) == i)
+		f(val<i>(t));
+	else
+		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+}
 
-		f(member);
-		return false;
+template<class tuple,
+         class function,
+         size_t i>
+typename std::enable_if<i == size<tuple>(), void>::type
+at(const tuple &t,
+   const string_view &name,
+   function&& f)
+{
+}
+
+template<class tuple,
+         class function,
+         size_t i = 0>
+typename std::enable_if<i < size<tuple>(), void>::type
+at(const tuple &t,
+   const string_view &name,
+   function&& f)
+{
+	if(indexof<tuple>(name) == i)
+		f(val<i>(t));
+	else
+		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+}
+
+template<class V,
+         class... T>
+tuple<T...> &
+set(tuple<T...> &t,
+    const string_view &key,
+    const V &val)
+{
+	at(t, key, [&key, &val]
+	(auto &target)
+	{
+		using target_type = decltype(target);
+		using cast_type = typename std::remove_reference<target_type>::type;
+		target = byte_view<cast_type>(val);
 	});
+
+	return t;
 }
 
 template<class... T>
@@ -531,6 +627,131 @@ tuple<T...>::tuple(const json::object &object)
 			}
 		});
 	});
+}
+
+template<class... T>
+tuple<T...>::tuple(const std::initializer_list<json::index::member> &members)
+{
+	std::for_each(std::begin(members), std::end(members), [this]
+	(const auto &member)
+	{
+		switch(type(member.second))
+		{
+			case type::STRING:
+			case type::LITERAL:
+				set(*this, member.first, string_view{member.second});
+				break;
+
+			case type::NUMBER:
+				if(member.second.floats)
+					set(*this, member.first, member.second.floating);
+				else
+					set(*this, member.first, member.second.integer);
+				break;
+
+			case type::ARRAY:
+			case type::OBJECT:
+				if(!member.second.serial)
+					throw parse_error("Unserialized value not supported yet");
+
+				set(*this, member.first, string_view{member.second});
+				break;
+		}
+	});
+}
+
+template<class tuple,
+         class it_a,
+         class it_b>
+constexpr void
+_key_transform(it_a it,
+               const it_b end)
+{
+	for(size_t i(0); i < tuple::size(); ++i)
+	{
+		if(it == end)
+			break;
+
+		*it = key<tuple, i>();
+		++it;
+	}
+}
+
+template<class it_a,
+         class it_b,
+         class... T>
+void
+_key_transform(const tuple<T...> &tuple,
+               it_a it,
+               const it_b end)
+{
+	for_each(tuple, [&it, &end]
+	(const auto &key, const auto &val)
+	{
+		if(it != end)
+		{
+			*it = key;
+			++it;
+		}
+	});
+}
+
+template<class it_a,
+         class it_b,
+         class... T>
+void
+_member_transform(const tuple<T...> &tuple,
+                  it_a it,
+                  const it_b end)
+{
+	for_each(tuple, [&it, &end]
+	(const auto &key, const auto &val)
+	{
+		if(it != end)
+		{
+			*it = { key, val };
+			++it;
+		}
+	});
+}
+
+template<class... T>
+object
+serialize(const tuple<T...> &tuple,
+          char *&start,
+          char *const &stop)
+{
+	std::array<index::member, tuple.size()> members;
+	_member_transform(tuple, begin(members), end(members));
+	return serialize(begin(members), end(members), start, stop);
+}
+
+template<class... T>
+size_t
+print(char *const &buf,
+      const size_t &max,
+      const tuple<T...> &tuple)
+{
+	std::array<index::member, tuple.size()> members;
+	_member_transform(tuple, begin(members), end(members));
+	return print(buf, max, begin(members), end(members));
+}
+
+template<class... T>
+std::string
+string(const tuple<T...> &tuple)
+{
+	std::array<index::member, tuple.size()> members;
+	_member_transform(tuple, begin(members), end(members));
+	return string(begin(members), end(members));
+}
+
+template<class... T>
+std::ostream &
+operator<<(std::ostream &s, const tuple<T...> &t)
+{
+    s << string(t);
+    return s;
 }
 
 } // namespace json
