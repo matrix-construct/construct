@@ -103,6 +103,7 @@ struct ircd::db::column
   public:
 	explicit operator const database &() const;
 	explicit operator const database::column &() const;
+	explicit operator const database::descriptor &() const;
 
 	explicit operator database &();
 	explicit operator database::column &();
@@ -175,19 +176,19 @@ struct ircd::db::column::const_iterator
 	using value_type = column::value_type;
 	using iterator_category = std::bidirectional_iterator_tag;
 
-  private:
-	gopts opts;
+  protected:
 	database::column *c;
+	database::snapshot ss;
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
+	bool all_prefix;
 
 	friend class column;
-	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, gopts = {});
+	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, const gopts & = {});
 
   public:
 	explicit operator const database::snapshot &() const;
 	explicit operator const database::column &() const;
-	explicit operator const gopts &() const;
 
 	explicit operator database::snapshot &();
 	explicit operator database::column &();
@@ -223,14 +224,7 @@ database::column &()
 inline ircd::db::column::const_iterator::operator
 database::snapshot &()
 {
-	return opts.snapshot;
-}
-
-inline ircd::db::column::const_iterator::operator
-const gopts &()
-const
-{
-	return opts;
+	return ss;
 }
 
 inline ircd::db::column::const_iterator::operator
@@ -244,7 +238,7 @@ inline ircd::db::column::const_iterator::operator
 const database::snapshot &()
 const
 {
-	return opts.snapshot;
+	return ss;
 }
 
 inline ircd::db::column::operator

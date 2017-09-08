@@ -212,6 +212,7 @@ struct database::column
 	database *d;
 	std::type_index key_type;
 	std::type_index mapped_type;
+	struct descriptor descriptor;
 	comparator cmp;
 	prefix_transform prefix;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
@@ -225,7 +226,7 @@ struct database::column
 	operator rocksdb::ColumnFamilyHandle *();
 	operator database &();
 
-	explicit column(database *const &d, descriptor);
+	explicit column(database *const &d, struct descriptor);
 	column() = delete;
 	column(column &&) = delete;
 	column(const column &) = delete;
@@ -814,16 +815,17 @@ const
 //
 
 ircd::db::database::column::column(database *const &d,
-                                   descriptor desc)
+                                   struct descriptor descriptor)
 :rocksdb::ColumnFamilyDescriptor
 {
-	std::move(desc.name), database::options(desc.options)
+	descriptor.name, database::options(descriptor.options)
 }
 ,d{d}
-,key_type{desc.type.first}
-,mapped_type{desc.type.second}
-,cmp{d, std::move(desc.cmp)}
-,prefix{d, std::move(desc.prefix)}
+,key_type{descriptor.type.first}
+,mapped_type{descriptor.type.second}
+,descriptor{std::move(descriptor)}
+,cmp{d, this->descriptor.cmp}
+,prefix{d, this->descriptor.prefix}
 ,handle
 {
 	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
@@ -835,7 +837,7 @@ ircd::db::database::column::column(database *const &d,
 {
 	assert(d->columns.count(this->name) == 0);
 
-	if(!this->cmp.user.less)
+	if(!this->descriptor.cmp.less)
 	{
 		if(key_type == typeid(string_view))
 			this->cmp.user = cmp_string_view{};
@@ -847,6 +849,7 @@ ircd::db::database::column::column(database *const &d,
 			            key_type.name());
 	}
 
+	// Set the key comparator
 	this->options.comparator = &this->cmp;
 
 	// Set the prefix extractor
@@ -2172,6 +2175,12 @@ const
 	return { *this, key };
 }
 
+ircd::db::column::operator
+const database::descriptor &()
+const
+{
+	return c->descriptor;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -2210,6 +2219,7 @@ ircd::db::column::cbegin(const gopts &gopts)
 		c, {}, gopts
 	};
 
+	ret.all_prefix = true;
 	seek(ret, pos::FRONT);
 	return std::move(ret);
 }
@@ -2251,10 +2261,11 @@ ircd::db::column::lower_bound(const string_view &key,
 
 ircd::db::column::const_iterator::const_iterator(const_iterator &&o)
 noexcept
-:opts{std::move(o.opts)}
-,c{std::move(o.c)}
+:c{std::move(o.c)}
+,ss{std::move(o.ss)}
 ,it{std::move(o.it)}
 ,val{std::move(o.val)}
+,all_prefix{std::move(o.all_prefix)}
 {
 }
 
@@ -2262,10 +2273,11 @@ ircd::db::column::const_iterator &
 ircd::db::column::const_iterator::operator=(const_iterator &&o)
 noexcept
 {
-	opts = std::move(o.opts);
 	c = std::move(o.c);
+	ss = std::move(o.ss);
 	it = std::move(o.it);
 	val = std::move(o.val);
+	all_prefix = std::move(o.all_prefix);
 	return *this;
 }
 
@@ -2275,10 +2287,11 @@ ircd::db::column::const_iterator::const_iterator()
 
 ircd::db::column::const_iterator::const_iterator(database::column *const &c,
                                                  std::unique_ptr<rocksdb::Iterator> &&it,
-                                                 gopts opts)
-:opts{std::move(opts)}
-,c{c}
+                                                 const gopts &gopts)
+:c{c}
+,ss{gopts.snapshot}
 ,it{std::move(it)}
+,all_prefix{has_opt(gopts, db::get::ALL_PREFIX)}
 {
 	//if(!has_opt(this->opts, get::READAHEAD))
 	//	this->gopts.readahead_size = DEFAULT_READAHEAD;
@@ -2407,12 +2420,12 @@ ircd::db::seek(column::const_iterator &it,
                const pos &p)
 {
 	database::column &c(it);
-	const gopts &gopts(it);
 	auto opts
 	{
-		make_opts(gopts, true)
+		make_opts({}, true)
 	};
 
+	opts.prefix_same_as_start = !it.all_prefix;
 	return seek(c, p, opts, it.it);
 }
 template bool ircd::db::seek<ircd::db::pos>(column::const_iterator &, const pos &);
