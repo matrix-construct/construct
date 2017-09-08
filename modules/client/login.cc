@@ -46,11 +46,11 @@ namespace name
 struct body
 :json::tuple
 <
-	json::member<name::password, string_view>,
-	json::member<name::medium, time_t>,
-	json::member<name::type, string_view>,
-	json::member<name::user, string_view>,
-	json::member<name::address, string_view>
+	json::property<name::password, string_view>,
+	json::property<name::medium, time_t>,
+	json::property<name::type, string_view>,
+	json::property<name::user, string_view>,
+	json::property<name::address, string_view>
 >
 {
 	using super_type::tuple;

@@ -46,32 +46,15 @@
 namespace ircd {
 namespace json {
 
-//
-// Non-template common base for all ircd::json::tuple templates.
-//
-struct tuple_base
-{
-	// class must be empty for EBO
-
-	struct property;
-};
-
-//
-// Non-template common base for all tuple properties
-//
-struct tuple_base::property
-{
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd::json::tuple template. Create your own struct inheriting this
 // class template with the members.
 //
+
 template<class... T>
 struct tuple
-:tuple_base
-,std::tuple<T...>
+:std::tuple<T...>
 {
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
@@ -82,65 +65,6 @@ struct tuple
 	tuple(const std::initializer_list<member> &);
 	tuple() = default;
 };
-
-template<class... T>
-constexpr size_t
-tuple<T...>::size()
-{
-	return std::tuple_size<tuple_type>();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// tuple property template. Specify a list of these in the tuple template to
-// form the members of the object.
-//
-template<const char *const &name,
-         class T>
-struct property
-:tuple_base::property
-{
-	using key_type = const char *const &;
-	using value_type = T;
-
-	static constexpr auto &key{name};
-	T value;
-
-	operator const T &() const;
-	operator T &();
-
-	property(T&& value);
-	property() = default;
-};
-
-template<const char *const &name,
-         class T>
-property<name, T>::property(T&& value)
-:value{value}
-{
-}
-
-template<const char *const &name,
-         class T>
-property<name, T>::operator
-T &()
-{
-	return value;
-}
-
-template<const char *const &name,
-         class T>
-property<name, T>::operator
-const T &()
-const
-{
-	return value;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// Tools
-//
 
 template<class tuple>
 using tuple_type = typename tuple::tuple_type;
@@ -155,6 +79,13 @@ using tuple_element = typename std::tuple_element<i, tuple_type<tuple>>::type;
 template<class tuple,
          size_t i>
 using tuple_value_type = typename tuple_element<tuple, i>::value_type;
+
+template<class... T>
+constexpr size_t
+tuple<T...>::size()
+{
+	return std::tuple_size<tuple_type>();
+}
 
 template<class tuple>
 auto &

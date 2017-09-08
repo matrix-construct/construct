@@ -90,6 +90,7 @@ namespace ircd::json
 #include "json/value.h"
 #include "json/member.h"
 #include "json/index.h"
+#include "json/property.h"
 #include "json/tuple.h"
 #include "json/builder.h"
 

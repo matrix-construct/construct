@@ -38,10 +38,10 @@ namespace name
 struct body
 :json::tuple
 <
-	json::member<name::username, string_view>,
-	json::member<name::bind_email, bool>,
-	json::member<name::password, string_view>,
-	json::member<name::auth, json::object>
+	json::property<name::username, string_view>,
+	json::property<name::bind_email, bool>,
+	json::property<name::password, string_view>,
+	json::property<name::auth, json::object>
 >
 {
     using super_type::tuple;
