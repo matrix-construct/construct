@@ -51,7 +51,7 @@ namespace ircd::db
 struct ircd::db::delta
 :std::tuple<op, string_view, string_view, string_view>
 {
-	delta(const string_view &col, const string_view &key, const string_view &val, const enum op &op = op::SET)
+	delta(const string_view &col, const string_view &key, const string_view &val = {}, const enum op &op = op::SET)
 	:std::tuple<enum op, string_view, string_view, string_view>{op, col, key, val}
 	{}
 
