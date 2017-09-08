@@ -73,10 +73,6 @@ struct ircd::db::row
 	const cell &operator[](const string_view &column) const;
 	cell &operator[](const string_view &column);
 
-	// [GET] Object conversion
-	template<class tuple> explicit operator tuple() const;
-	template<class tuple> explicit operator tuple();
-
     // [SET] Perform operation
 	void operator()(const op &, const string_view &col, const string_view &val = {}, const sopts & = {});
 
@@ -204,27 +200,6 @@ ircd::db::row::row(database &d,
 	return { d, key, cols, opts };
 }()}
 {
-}
-
-template<class tuple>
-ircd::db::row::operator tuple()
-{
-	tuple ret;
-	for(auto &cell : *this)
-		json::set(ret, cell.col(), cell.val());
-
-	return ret;
-}
-
-template<class tuple>
-ircd::db::row::operator tuple()
-const
-{
-	tuple ret;
-	for(const auto &cell : *this)
-		json::set(ret, cell.col(), cell.val());
-
-	return ret;
 }
 
 inline ircd::db::cell &
