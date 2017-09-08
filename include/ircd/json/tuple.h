@@ -51,10 +51,15 @@ namespace json {
 // ircd::json::tuple template. Create your own struct inheriting this
 // class template with the members.
 //
+struct tuple_base
+{
+	// EBO tag
+};
 
 template<class... T>
 struct tuple
 :std::tuple<T...>
+,tuple_base
 {
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
@@ -62,9 +67,20 @@ struct tuple
 	static constexpr size_t size();
 
 	tuple(const json::object &);
+	tuple(const json::builder &);
 	tuple(const std::initializer_list<member> &);
 	tuple() = default;
 };
+
+template<class tuple>
+constexpr bool
+is_tuple()
+{
+	return std::is_base_of<tuple_base, tuple>::value;
+}
+
+template<class tuple, class R>
+using enable_if_tuple = typename std::enable_if<is_tuple<tuple>(), R>::type;
 
 template<class tuple>
 using tuple_type = typename tuple::tuple_type;
@@ -102,7 +118,7 @@ stdcast(tuple &o)
 }
 
 template<class tuple>
-constexpr size_t
+constexpr enable_if_tuple<tuple, size_t>
 size()
 {
 	return tuple_size<tuple>::value;
@@ -110,18 +126,18 @@ size()
 
 template<class tuple,
          size_t i>
-constexpr auto &
+constexpr enable_if_tuple<tuple, const char *const &>
 key()
 {
 	return tuple_element<tuple, i>::key;
 }
 
 template<size_t i,
-         class... T>
-auto &
-key(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const char *const &>
+key(const tuple &t)
 {
-	return get<i>(t).key;
+	return std::get<i>(t).key;
 }
 
 template<class tuple,
@@ -167,65 +183,63 @@ indexof(const string_view &name)
 }
 
 template<size_t i,
-         class... T>
-auto &
-get(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
+get(tuple &t)
 {
 	return std::get<i>(t);
 }
 
 template<size_t i,
-         class... T>
-auto &
-get(tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
+get(const tuple &t)
 {
 	return std::get<i>(t);
 }
 
 template<size_t i,
-         class... T>
-auto &
-val(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
+val(const tuple &t)
 {
-	using value_type = tuple_value_type<tuple<T...>, i>;
-
+	using value_type = tuple_value_type<tuple, i>;
 	return static_cast<const value_type &>(get<i>(t));
 }
 
 template<size_t i,
-         class... T>
-auto &
-val(tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
+val(tuple &t)
 {
-	using value_type = tuple_value_type<tuple<T...>, i>;
-
+	using value_type = tuple_value_type<tuple, i>;
 	return static_cast<value_type &>(get<i>(t));
 }
 
 template<const char *const &name,
-         class... T>
-auto &
-val(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple>(name)> &>
+val(const tuple &t)
 {
-	return val<indexof<tuple<T...>>(name)>(t);
+	return val<indexof<tuple>(name)>(t);
 }
 
 template<const char *const &name,
-         class... T>
-auto &
-val(tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple>(name)> &>
+val(tuple &t)
 {
-	return val<indexof<tuple<T...>>(name)>(t);
+	return val<indexof<tuple>(name)>(t);
 }
 
 template<const char *const &name,
-         class... T>
-const tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
-at(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple>(name)> &>
+at(const tuple &t)
 {
 	constexpr size_t idx
 	{
-		indexof<tuple<T...>>(name)
+		indexof<tuple>(name)
 	};
 
 	auto &ret
@@ -233,7 +247,7 @@ at(const tuple<T...> &t)
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple<T...>, idx>;
+	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: does tcmalloc zero this or huh?
 	if(ret == value_type{})
@@ -243,13 +257,13 @@ at(const tuple<T...> &t)
 }
 
 template<const char *const &name,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
-at(tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple>(name)> &>
+at(tuple &t)
 {
 	constexpr size_t idx
 	{
-		indexof<tuple<T...>>(name)
+		indexof<tuple>(name)
 	};
 
 	auto &ret
@@ -257,7 +271,7 @@ at(tuple<T...> &t)
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple<T...>, idx>;
+	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: does tcmalloc zero this or huh?
 	if(ret == value_type{})
@@ -566,6 +580,31 @@ tuple<T...>::tuple(const json::object &object)
 }
 
 template<class... T>
+tuple<T...>::tuple(const json::builder &builder)
+{
+	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
+	for_each(builder, [this]
+	(const auto &member)
+	{
+		at(*this, member.first, [&member]
+		(auto &target)
+		{
+			using target_type = decltype(target);
+			using cast_type = typename std::remove_reference<target_type>::type; try
+			{
+				target = static_cast<cast_type>(member.second);
+			}
+			catch(const bad_lex_cast &e)
+			{
+				throw parse_error("member '%s' must convert to '%s'",
+				                  member.first,
+				                  typeid(target_type).name());
+			}
+		});
+	});
+}
+
+template<class... T>
 tuple<T...>::tuple(const std::initializer_list<member> &members)
 {
 	std::for_each(std::begin(members), std::end(members), [this]
@@ -748,7 +787,7 @@ template<class... T>
 std::ostream &
 operator<<(std::ostream &s, const tuple<T...> &t)
 {
-    s << string(t);
+    s << json::string(t);
     return s;
 }
 

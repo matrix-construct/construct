@@ -248,14 +248,33 @@ namespace ircd::m::events
 ircd::database *ircd::m::events::events;
 
 void
-ircd::m::events::insert(const event &a)
+ircd::m::events::insert(json::builder &builder)
 {
-	event b(a);
-	insert(b);
+	const id::event::buf generated_event_id
+	{
+		builder.has("event_id")? id::event::buf{} : id::event::buf{id::generate, "cdc.z"}
+	};
+
+	const json::builder::add event_id
+	{
+		builder, { "event_id", generated_event_id }
+	};
+
+	const json::builder::set event_id2
+	{
+		builder, { "event_id", generated_event_id }
+	};
+
+	const json::builder::add origin_server_ts
+	{
+		builder, { "origin_server_ts", time<milliseconds>() }
+	};
+
+	insert(event{builder});
 }
 
 void
-ircd::m::events::insert(event &event)
+ircd::m::events::insert(const event &event)
 {
 	if(!json::val<name::type>(event))
 		throw BAD_JSON("Required event field: '%s'", name::type);
@@ -263,32 +282,11 @@ ircd::m::events::insert(event &event)
 	if(!json::val<name::sender>(event))
 		throw BAD_JSON("Required event field: '%s'", name::sender);
 
-	bool has_event_id
-	{
-		!json::val<name::event_id>(event).empty()
-	};
+	if(!json::val<name::event_id>(event))
+		throw BAD_JSON("Required event field: '%s'", name::event_id);
 
-	const id::event::buf generated_event_id
-	{
-		has_event_id? id::event::buf{} : id::event::buf{id::generate, "cdc.z"}
-	};
-
-	if(!has_event_id)
-		json::val<name::event_id>(event) = generated_event_id;
-
-	const scope remove_our_event_id([&]
-	{
-		if(!has_event_id)
-			json::val<name::event_id>(event) = {};
-	});
-
-	bool has_origin_server_ts
-	{
-		json::val<name::origin_server_ts>(event) != 0
-	};
-
-	if(!has_origin_server_ts)
-		json::val<name::origin_server_ts>(event) = time<milliseconds>();
+	if(!json::val<name::origin_server_ts>(event))
+		throw BAD_JSON("Required event field: '%s'", name::origin_server_ts);
 
 	for(const auto &transition : events::transitions)
 		if(!transition->valid(event))
@@ -410,20 +408,19 @@ ircd::m::events::write(const event &event)
 
 void
 ircd::m::room::join(const m::id::user &user_id,
-                    const json::builder &content)
+                    json::builder &content)
 {
-	const json::builder content_with_membership
+	json::builder::set membership_join
 	{
-		&content,
-		{ "membership", "join" }
+		content, { "membership", "join" }
 	};
 
-	membership(user_id, content_with_membership);
+	membership(user_id, content);
 }
 
 void
 ircd::m::room::membership(const m::id::user &user_id,
-                          const json::builder &content)
+                          json::builder &content)
 {
 	if(is_member(user_id, content.at("membership")))
 		throw m::ALREADY_MEMBER
@@ -431,15 +428,23 @@ ircd::m::room::membership(const m::id::user &user_id,
 			"Already a member with this membership."
 		};
 
-	char cbuf[512];
-	m::events::insert(m::event
+	char buffer[512];
+	const auto printed_content
 	{
-		{ "room_id",      room_id                                       },
-		{ "type",         "m.room.member"                               },
-		{ "state_key",    user_id                                       },
-		{ "sender",       user_id                                       },
-		{ "content",      stringify(cbuf, content)  }
-	});
+		stringify(buffer, content)
+	};
+
+	json::builder event;
+	json::builder::set fields{event,
+	{
+		{ "room_id",      room_id          },
+		{ "type",         "m.room.member"  },
+		{ "state_key",    user_id          },
+		{ "sender",       user_id          },
+		{ "content",      printed_content  }
+	}};
+
+	m::events::insert(event);
 }
 
 bool

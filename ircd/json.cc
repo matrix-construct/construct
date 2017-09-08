@@ -445,6 +445,13 @@ ircd::json::stringify(mutable_buffer &buf,
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
+                      const member &m)
+{
+	return stringify(buf, &m, &m + 1);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
                       const member *const &begin,
                       const member *const &end)
 {
@@ -992,6 +999,46 @@ const
 	throw type_error("value type[%d] is not a string", int(type));
 }
 
+ircd::json::value::operator int64_t()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return likely(!floats)? integer : floating;
+
+		case STRING:
+			return lex_cast<int64_t>(string_view(*this));
+
+		case ARRAY:
+		case OBJECT:
+		case LITERAL:
+			break;
+	}
+
+	throw type_error("value type[%d] is not an int64_t", int(type));
+}
+
+ircd::json::value::operator double()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return likely(floats)? floating : integer;
+
+		case STRING:
+			return lex_cast<double>(string_view(*this));
+
+		case ARRAY:
+		case OBJECT:
+		case LITERAL:
+			break;
+	}
+
+	throw type_error("value type[%d] is not a float", int(type));
+}
+
 bool
 ircd::json::value::empty()
 const
@@ -1363,4 +1410,224 @@ ircd::json::type(const string_view &buf,
 		return STRING;
 
 	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// builder.h
+//
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &head,
+                      const builder &builder)
+{
+	const auto num{count(builder)};
+	const member *m[num];
+
+	size_t i(0);
+	for_each(builder, [&i, &m]
+	(const auto &member)
+	{
+		m[i++] = &member;
+	});
+
+	return stringify(head, m, m + num);
+}
+
+size_t
+ircd::json::count(const builder &builder)
+{
+	return count(builder, []
+	(const auto &)
+	{
+		return true;
+	});
+}
+
+size_t
+ircd::json::count(const builder &builder,
+                  const member_closure_bool &closure)
+{
+	size_t ret(0);
+	for_each(builder, [&closure, &ret]
+	(const auto &member)
+	{
+		ret += closure(member);
+	});
+
+	return ret;
+}
+
+void
+ircd::json::for_each(const builder &b,
+                     const member_closure &closure)
+{
+	if(b.ms)
+		std::for_each(begin(*b.ms), end(*b.ms), closure);
+	else if(!b.m.first.empty())
+		closure(b.m);
+
+	if(b.child)
+		for_each(*b.child, closure);
+}
+
+bool
+ircd::json::until(const builder &b,
+                  const member_closure_bool &closure)
+{
+	if(b.ms)
+	{
+		if(!ircd::until(begin(*b.ms), end(*b.ms), closure))
+			return false;
+	}
+	else if(!b.m.first.empty() && !closure(b.m))
+		return false;
+
+	if(b.child)
+		return until(*b.child, closure);
+
+	return true;
+}
+
+bool
+ircd::json::builder::has(const string_view &key)
+const
+{
+	const auto *const member(find(key));
+	return member != nullptr;
+}
+
+const ircd::json::value &
+ircd::json::builder::at(const string_view &key)
+const
+{
+	const auto *const member(find(key));
+	if(!member)
+		throw not_found("'%s'", key);
+
+	return member->second;
+}
+
+const ircd::json::member *
+ircd::json::builder::find(const string_view &key)
+const
+{
+	const member *ret;
+	const auto test
+	{
+		[&key, &ret](const auto &member) -> bool
+		{
+			if(key == string_view{member.first})
+			{
+				ret = &member;
+				return false;
+			}
+			else return true;
+		}
+	};
+
+	return !until(*this, test)? ret : nullptr;
+}
+
+bool
+ircd::json::builder::test(const member_closure_bool &closure)
+const
+{
+	if(ms)
+		return ircd::until(begin(*ms), end(*ms), closure);
+
+	if(!m.first.empty())
+		return closure(m);
+
+	return true;
+}
+
+ircd::json::builder::add::add(builder &head, const members &ms)
+:builder{{}, &ms, &head}
+{
+	const auto existing(json::find(&head, [&ms](const builder &existing)
+	{
+		return existing.test([&ms](const member &existing)
+		{
+			return std::all_of(begin(ms), end(ms), [&existing]
+			(const auto &member)
+			{
+				return member.first == existing.first;
+			});
+		});
+	}));
+
+	if(existing)
+		throw exists("failed to add member '%s': already exists",
+		             string_view{existing->m.first}); //TODO BUG
+
+	tail(&head)->child = this;
+}
+
+ircd::json::builder::add::add(builder &head, member member)
+:builder{std::move(member), nullptr, &head}
+{
+	const auto existing(json::find(&head, [&member](const builder &existing)
+	{
+		return existing.test([&member](const auto &existing)
+		{
+			return member.first == existing.first;
+		});
+	}));
+
+	if(existing)
+		throw exists("failed to add member '%s': already exists",
+		             string_view{member.first});
+
+	tail(&head)->child = this;
+}
+
+ircd::json::builder::set::set(builder &head, const members &ms)
+:builder{{}, &ms, &head}
+{
+	const auto existing(json::find(&head, [&ms](const builder &existing)
+	{
+		return existing.test([&ms](const member &existing)
+		{
+			return std::all_of(begin(ms), end(ms), [&existing]
+			(const auto &member)
+			{
+				return member.first == existing.first;
+			});
+		});
+	}));
+
+	if(existing)
+	{
+		const auto p(prev(existing));
+		if(p)
+		{
+			p->child = this;
+			this->child = existing->child;
+		}
+	}
+	else tail(&head)->child = this;
+}
+
+ircd::json::builder::set::set(builder &head, member member)
+:builder{std::move(member), nullptr, &head}
+{
+	const auto existing(json::find(&head, [&member](const builder &existing)
+	{
+		return existing.test([&member](const auto &existing)
+		{
+			return member.first == existing.first;
+		});
+	}));
+
+	if(existing)
+	{
+		const auto p(prev(existing));
+		if(p)
+		{
+			p->child = this;
+			this->child = existing->child;
+		}
+	}
+	else tail(&head)->child = this;
 }

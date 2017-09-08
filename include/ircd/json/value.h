@@ -57,6 +57,8 @@ struct ircd::json::value
 	bool empty() const;
 	size_t serialized() const;
 	operator string_view() const;
+	explicit operator double() const;
+	explicit operator int64_t() const;
 	explicit operator std::string() const;
 
 	template<class T> explicit value(const T &specialized);

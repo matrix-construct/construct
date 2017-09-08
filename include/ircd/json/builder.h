@@ -22,153 +22,197 @@
 #pragma once
 #define HAVE_IRCD_JSON_BUILDER_H
 
-// ircd::json::builder is an interface to compose JSON dynamically and
-// efficiently. The product of the builder is an iteration of the added members
-// for use by stringifying and iovectoring. This gathers the members on a trip
-// up the stack without rewriting a JSON string at each frame.
+// ircd::json::builder is forward list to compose JSON dynamically and
+// efficiently on the stack. The product of the builder is an iteration of the
+// added members for use by stringifying and iovectoring. This gathers the
+// members on a trip up the stack without rewriting a JSON string at each frame.
 //
-struct ircd::json::builder
+namespace ircd::json
 {
+	struct builder;
+
 	using member_closure = std::function<void (const member &)>;
 	using member_closure_bool = std::function<bool (const member &)>;
+	using builder_closure_bool = std::function<bool (const builder &)>;
 
-	const builder *parent;
+	builder *head(builder *const &);
+	builder *next(builder *const &);
+	builder *prev(builder *const &);
+	builder *tail(builder *);
+	builder *find(builder *, const builder_closure_bool &);
+
+	const builder *head(const builder *const &);
+	const builder *next(const builder *const &);
+	const builder *prev(const builder *const &);
+	const builder *tail(const builder *);
+	const builder *find(const builder *, const builder_closure_bool &);
+
+	void for_each(const builder &, const member_closure &);
+	bool until(const builder &, const member_closure_bool &);
+	size_t count(const builder &, const member_closure_bool &);
+	size_t count(const builder &);
+}
+
+struct ircd::json::builder
+{
+	struct add;
+	struct set;
+	struct push;
+
+	IRCD_EXCEPTION(json::error, error);
+	IRCD_EXCEPTION(error, exists);
+
 	member m;
 	const members *ms;
+	builder *head;
+	builder *child;
 
-	void for_each(const member_closure &) const;
-	bool until(const member_closure_bool &) const;
-	size_t count(const member_closure_bool &) const;
-	size_t count() const;
+	bool test(const member_closure_bool &) const;
 
+	// recursive!
 	const member *find(const string_view &key) const;
 	const json::value &at(const string_view &key) const;
+	bool has(const string_view &key) const;
 
-	builder(const builder *const &parent, const members *const &);
-	builder(const builder *const &parent, member);
+	builder(member m = {},
+	        const members *const &ms = nullptr,
+	        builder *const &head = nullptr,
+	        builder *const &child = nullptr)
+	:m{std::move(m)}
+	,ms{ms}
+	,head{head}
+	,child{child}
+	{}
+
+	builder(const members &ms)
+	:builder{{}, &ms}
+	{}
+
+	builder(member m)
+	:builder{std::move(m)}
+	{}
 
 	friend string_view stringify(mutable_buffer &, const builder &);
 };
 
-inline ircd::string_view
-ircd::json::stringify(mutable_buffer &head,
-                      const builder &builder)
+struct ircd::json::builder::push
+:private ircd::json::builder
 {
-	const auto num{builder.count()};
-	const member *m[num];
-
-	size_t i(0);
-	builder.for_each([&i, &m]
-	(const auto &member)
+	push(builder &head, const members &ms)
+	:builder{{}, &ms, &head}
 	{
-		m[i++] = &member;
-	});
+		tail(&head)->child = this;
+	}
 
-	return stringify(head, m, m + num);
-}
-
-inline
-ircd::json::builder::builder(const builder *const &parent,
-                             member m)
-:parent{parent}
-,m{std::move(m)}
-,ms{nullptr}
-{
-}
-
-inline
-ircd::json::builder::builder(const builder *const &parent,
-                             const members *const &ms)
-:parent{parent}
-,m{}
-,ms{ms}
-{
-}
-
-inline const ircd::json::value &
-ircd::json::builder::at(const string_view &key)
-const
-{
-	const auto *const member(find(key));
-	if(!member)
-		throw not_found("'%s'", key);
-
-	return member->second;
-}
-
-inline size_t
-ircd::json::builder::count()
-const
-{
-	return count([]
-	(const auto &)
+	push(builder &head, member m)
+	:builder{std::move(m), nullptr, &head}
 	{
-		return true;
-	});
+		tail(&head)->child = this;
+	}
+};
+
+struct ircd::json::builder::add
+:private ircd::json::builder
+{
+	add(builder &head, const members &ms);
+	add(builder &head, member member);
+};
+
+struct ircd::json::builder::set
+:private ircd::json::builder
+{
+	set(builder &head, const members &ms);
+	set(builder &head, member member);
+};
+
+inline ircd::json::builder *
+ircd::json::find(builder *builder,
+                 const builder_closure_bool &test)
+{
+	for(; builder; builder = next(builder))
+		if(test(*builder))
+			return builder;
+
+	return nullptr;
 }
 
-inline size_t
-ircd::json::builder::count(const member_closure_bool &closure)
-const
+inline const ircd::json::builder *
+ircd::json::find(const builder *builder,
+                 const builder_closure_bool &test)
 {
-	size_t ret(0);
-	for_each([&closure, &ret]
-	(const auto &member)
-	{
-		ret += closure(member);
-	});
+	for(; builder; builder = next(builder))
+		if(test(*builder))
+			return builder;
+
+	return nullptr;
+}
+
+inline ircd::json::builder *
+ircd::json::tail(builder *ret)
+{
+	while(ret && next(ret))
+		ret = next(ret);
 
 	return ret;
 }
 
-inline const ircd::json::member *
-ircd::json::builder::find(const string_view &key)
-const
+inline const ircd::json::builder *
+ircd::json::tail(const builder *ret)
 {
-	const member *ret;
-	const auto test
-	{
-		[&key, &ret](const auto &member)
-		{
-			if(key == string_view{member.first})
-			{
-				ret = &member;
-				return false;
-			}
-			else return true;
-		}
-	};
+	while(ret && next(ret))
+		ret = next(ret);
 
-	return !until(test)? ret : nullptr;
+	return ret;
 }
 
-inline void
-ircd::json::builder::for_each(const member_closure &closure)
-const
+inline ircd::json::builder *
+ircd::json::prev(builder *const &builder)
 {
-	if(ms)
-		std::for_each(begin(*ms), end(*ms), closure);
-	else
-		closure(m);
+	assert(builder);
+	auto *ret(builder->head);
+	for(; ret; ret = next(ret))
+		if(next(ret) == builder)
+			return ret;
 
-	if(parent)
-		parent->for_each(closure);
+	return nullptr;
 }
 
-inline bool
-ircd::json::builder::until(const member_closure_bool &closure)
-const
+inline const ircd::json::builder *
+ircd::json::prev(const builder *const &builder)
 {
-	if(ms)
-	{
-		if(!ircd::until(begin(*ms), end(*ms), closure))
-			return false;
-	}
-	else if(!closure(m))
-		return false;
+	assert(builder);
+	const auto *ret(builder->head);
+	for(; ret; ret = next(ret))
+		if(next(ret) == builder)
+			return ret;
 
-	if(parent)
-		return parent->until(closure);
+	return nullptr;
+}
 
-	return true;
+inline ircd::json::builder *
+ircd::json::next(builder *const &builder)
+{
+	assert(builder);
+	return builder->child;
+}
+
+inline const ircd::json::builder *
+ircd::json::next(const builder *const &builder)
+{
+	assert(builder);
+	return builder->child;
+}
+
+inline ircd::json::builder *
+ircd::json::head(builder *const &builder)
+{
+	assert(builder);
+	return builder->head;
+}
+
+inline const ircd::json::builder *
+ircd::json::head(const builder *const &builder)
+{
+	assert(builder);
+	return builder->head;
 }
