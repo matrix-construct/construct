@@ -35,6 +35,7 @@ struct ircd::parse
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, grammar_error)
 	IRCD_EXCEPTION(error, syntax_error)
+	IRCD_EXCEPTION(error, buffer_error)
 
 	using read_closure = std::function<void (char *&, char *)>;
 	using parse_closure = std::function<bool (const char *&, const char *)>;

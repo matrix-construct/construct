@@ -490,12 +490,16 @@ ircd::http::content::content(parse::capstan &pc,
 		pc.parsed = pc.read;
 	}
 
-	assert(pc.parsed == base + length);
-	assert(pc.parsed == pc.read);
+	//assert(pc.parsed == base + length);
+	if(unlikely(pc.parsed < base + length))
+		throw parse::buffer_error("parse buffer short by %zu to hold %zu total bytes of content",
+		                          remain,
+		                          length);
 
 	if(pc.remaining())
 		*pc.read = '\0';
 
+	assert(pc.parsed == pc.read);
 	return string_view { base, pc.parsed };
 }()}
 {
