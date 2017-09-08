@@ -22,6 +22,15 @@
 #pragma once
 #define HAVE_IRCD_JSON_MEMBER_H
 
+// json::member is a pair of values. The key value (member.first) should always
+// be a STRING type. We don't use string_view directly in member.first because
+// json::value can take ownership of a string or use a literal depending on
+// the circumstance and it's more consistent this way.
+//
+// json::member, like json::value, is a runtime construct though still very
+// lightweight and useful for non-deterministic composition to and extraction
+// from JSON strings.
+//
 namespace ircd::json
 {
 	struct member;
@@ -117,17 +126,17 @@ ircd::json::operator==(const member &a, const member &b)
 inline bool
 ircd::json::operator<(const member &a, const string_view &b)
 {
-	return string_view(a.first.string, a.first.len) < b;
+	return string_view{a.first.string, a.first.len} < b;
 }
 
 inline bool
 ircd::json::operator!=(const member &a, const string_view &b)
 {
-	return string_view(a.first.string, a.first.len) != b;
+	return string_view{a.first.string, a.first.len} != b;
 }
 
 inline bool
 ircd::json::operator==(const member &a, const string_view &b)
 {
-	return string_view(a.first.string, a.first.len) == b;
+	return string_view{a.first.string, a.first.len} == b;
 }
