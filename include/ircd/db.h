@@ -79,6 +79,7 @@ namespace rocksdb
 	struct Iterator;
 	struct ColumnFamilyHandle;
 	struct Snapshot;
+	struct WriteBatch;
 }
 
 //
