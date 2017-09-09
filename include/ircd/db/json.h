@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_DB_TUPLE_H
+#define HAVE_IRCD_DB_JSON_H
 
 namespace ircd::db
 {
