@@ -30,18 +30,22 @@ namespace ircd::ctx
     size_t stack_usage_here() __attribute__((noinline));
 }
 
-/* Profiling for the context system. These facilities provide tools and statistics.
- * The primary purpose here is to alert developers of unwanted context behavior, in
- * addition to optimizing the overall performance of the context system.
- *
- * The original use case is for the embedded database backend. Function calls are made which may
- * conduct blocking I/O before returning. This will hang the current userspace context while it
- * is running and thus BLOCK EVERY CONTEXT in the entire IRCd. Since this is still an asynchronous
- * system, it just doesn't have callbacks: we do not do I/O without a cooperative yield.
- * Fortunately there are mechanisms to mitigate this -- but we have to know for sure. A database
- * call which has been passed over for mitigation may start doing some blocking flush under load,
- * etc. The profiler will alert us of this so it doesn't silently degrade performance.
- */
+/// Profiling for the context system.
+///
+/// These facilities provide tools and statistics. The primary purpose here is
+/// to alert developers of unwanted context behavior, in addition to optimizing
+/// the overall performance of the context system.
+///
+/// The original use case is for the embedded database backend. Function calls
+/// are made which may conduct blocking I/O before returning. This will hang the
+/// current userspace context while it is running and thus BLOCK EVERY CONTEXT
+/// in the entire IRCd. Since this is still an asynchronous system, it just
+/// doesn't have callbacks: we do not do I/O without a cooperative yield.
+/// Fortunately there are mechanisms to mitigate this -- but we have to know
+/// for sure. A database call which has been passed over for mitigation may
+/// start doing some blocking flush under load, etc. The profiler will alert
+/// us of this so it doesn't silently degrade performance.
+///
 namespace ircd::ctx::prof
 {
 	enum class event;

@@ -35,18 +35,41 @@ namespace ircd::ctx
 	};
 }
 
+/// Principal interface for a context.
+///
+/// This object creates, holds and destroys a context with an interface
+/// similar to that of std::thread.
+///
+/// The function passed to the constructor is executed on a new stack. By
+/// default this execution will start to occur before this object is even
+/// fully constructed. To delay child execution pass the `POST` flag to
+/// the constructor; the execution will then be posted to the io_service
+/// event queue instead. `DISPATCH` is an alternative, see boost::asio docs.
+///
+/// Unlike std::thread, when this object goes out of scope the context is
+/// interrupted and joined if it has not been already; the current context
+/// will wait for this to complete. If the child context does not cooperate
+/// the destructor will hang. To prevent this behavior `detach()` the ctx
+/// from this handler object; the detached context will free its own resources
+/// when finished executing. This is bad practice except in certain cases.
+///
+/// To wait for the child context to finish use `join()`. Calling `interrupt()`
+/// will cause an `interrupted` exception to be thrown down the child's stack
+/// from the next interruption point; a context switch is an interruption point
+/// and so the context will wake up in its exception handler.
+///
 struct ircd::ctx::context
 {
 	enum flags
 	{
-		// User options
-		POST            = 0x01,   // Defers spawn with an ios.post()
-		DISPATCH        = 0x02,   // (Defers) spawn with an ios.dispatch()
-		DETACH          = 0x04,   // Context deletes itself; see struct context constructor notes
+		POST            = 0x01,   ///< Defers spawn with an ios.post()
+		DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)
+		DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
 
-		// Indicators
-		INTERRUPTED     = 0x10,   // Marked
+		INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
 	};
+
+	using function = std::function<void ()>;
 
   private:
 	std::unique_ptr<ctx> c;
@@ -67,22 +90,22 @@ struct ircd::ctx::context
 	context(const char *const &name,
 	        const size_t &stack_size,
 	        const flags &,
-	        std::function<void ()>);
+	        function);
 
 	context(const char *const &name,
 	        const size_t &stack_size,
-	        std::function<void ()>,
+	        function,
 	        const flags & = (flags)0);
 
 	context(const char *const &name,
 	        const flags &,
-	        std::function<void ()>);
+	        function);
 
 	context(const char *const &name,
-	        std::function<void ()>,
+	        function,
 	        const flags & = (flags)0);
 
-	context(std::function<void ()>,
+	context(function,
 	        const flags & = (flags)0);
 
 	context() = default;

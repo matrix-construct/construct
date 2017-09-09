@@ -35,6 +35,11 @@ namespace ircd
 	using yield = boost::asio::yield_context;
 }
 
+/// This object is placed on the top of the stack when the context is yielding (INTERNAL USE).
+///
+/// The continuation constructor is the last thing executed before a context yields.
+/// The continuation destructor is the first thing executed when a context continues.
+///
 struct ircd::ctx::continuation
 {
 	ctx *self;

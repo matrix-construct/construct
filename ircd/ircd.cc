@@ -77,11 +77,10 @@ ircd::stop()
 		ctx::notify(*main_context);
 }
 
-//
-// Main context; Main program loop. Do not call this function directly. This is created
-// by the user of libircd calling ircd::init(). It is shutdown by the user of libircd
-// calling ircd::stop(). It is scheduled by the user's io_service.run().
-//
+/// Main context; Main program loop. Do not call this function directly.
+/// This is created by the user of libircd calling ircd::init(). It is shutdown
+/// by the user of libircd calling ircd::stop(). It is scheduled by the user's
+/// io_service.run().
 void
 ircd::main()
 try

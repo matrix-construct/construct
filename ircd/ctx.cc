@@ -23,10 +23,10 @@
 #include <ircd/ctx/continuation.h>
 
 ///////////////////////////////////////////////////////////////////////////////
-//
-// (internal)
-//
-
+///
+/// Internal context implementation structure
+///
+///
 struct ircd::ctx::ctx
 {
 	using error_code = boost::system::error_code;
@@ -395,7 +395,7 @@ const
 ircd::ctx::context::context(const char *const &name,
                             const size_t &stack_sz,
                             const flags &flags,
-                            std::function<void ()> func)
+                            function func)
 :c{std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)}
 {
 	auto spawn([stack_sz, c(c.get()), func(std::move(func))]
@@ -433,7 +433,7 @@ ircd::ctx::context::context(const char *const &name,
 
 ircd::ctx::context::context(const char *const &name,
                             const size_t &stack_size,
-                            std::function<void ()> func,
+                            function func,
                             const flags &flags)
 :context
 {
@@ -444,7 +444,7 @@ ircd::ctx::context::context(const char *const &name,
 
 ircd::ctx::context::context(const char *const &name,
                             const flags &flags,
-                            std::function<void ()> func)
+                            function func)
 :context
 {
 	name, DEFAULT_STACK_SIZE, flags, std::move(func)
@@ -453,7 +453,7 @@ ircd::ctx::context::context(const char *const &name,
 }
 
 ircd::ctx::context::context(const char *const &name,
-                            std::function<void ()> func,
+                            function func,
                             const flags &flags)
 :context
 {
@@ -462,7 +462,7 @@ ircd::ctx::context::context(const char *const &name,
 {
 }
 
-ircd::ctx::context::context(std::function<void ()> func,
+ircd::ctx::context::context(function func,
                             const flags &flags)
 :context
 {
