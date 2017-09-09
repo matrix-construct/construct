@@ -1414,18 +1414,18 @@ ircd::json::type(const string_view &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// builder.h
+// iov.h
 //
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &head,
-                      const builder &builder)
+                      const iov &iov)
 {
-	const auto num{count(builder)};
+	const auto num{count(iov)};
 	const member *m[num];
 
 	size_t i(0);
-	for_each(builder, [&i, &m]
+	for_each(iov, [&i, &m]
 	(const auto &member)
 	{
 		m[i++] = &member;
@@ -1435,9 +1435,9 @@ ircd::json::stringify(mutable_buffer &head,
 }
 
 size_t
-ircd::json::count(const builder &builder)
+ircd::json::count(const iov &iov)
 {
-	return count(builder, []
+	return count(iov, []
 	(const auto &)
 	{
 		return true;
@@ -1445,11 +1445,11 @@ ircd::json::count(const builder &builder)
 }
 
 size_t
-ircd::json::count(const builder &builder,
+ircd::json::count(const iov &iov,
                   const member_closure_bool &closure)
 {
 	size_t ret(0);
-	for_each(builder, [&closure, &ret]
+	for_each(iov, [&closure, &ret]
 	(const auto &member)
 	{
 		ret += closure(member);
@@ -1459,11 +1459,11 @@ ircd::json::count(const builder &builder,
 }
 
 void
-ircd::json::for_each(const builder &b,
+ircd::json::for_each(const iov &b,
                      const member_closure &closure)
 {
-	if(b.ms)
-		std::for_each(begin(*b.ms), end(*b.ms), closure);
+	if(b.b)
+		std::for_each(b.b, b.e, closure);
 	else if(!b.m.first.empty())
 		closure(b.m);
 
@@ -1472,12 +1472,12 @@ ircd::json::for_each(const builder &b,
 }
 
 bool
-ircd::json::until(const builder &b,
+ircd::json::until(const iov &b,
                   const member_closure_bool &closure)
 {
-	if(b.ms)
+	if(b.b && b.e)
 	{
-		if(!ircd::until(begin(*b.ms), end(*b.ms), closure))
+		if(!ircd::until(b.b, b.e, closure))
 			return false;
 	}
 	else if(!b.m.first.empty() && !closure(b.m))
@@ -1490,7 +1490,7 @@ ircd::json::until(const builder &b,
 }
 
 bool
-ircd::json::builder::has(const string_view &key)
+ircd::json::iov::has(const string_view &key)
 const
 {
 	const auto *const member(find(key));
@@ -1498,7 +1498,7 @@ const
 }
 
 const ircd::json::value &
-ircd::json::builder::at(const string_view &key)
+ircd::json::iov::at(const string_view &key)
 const
 {
 	const auto *const member(find(key));
@@ -1509,7 +1509,7 @@ const
 }
 
 const ircd::json::member *
-ircd::json::builder::find(const string_view &key)
+ircd::json::iov::find(const string_view &key)
 const
 {
 	const member *ret;
@@ -1530,11 +1530,11 @@ const
 }
 
 bool
-ircd::json::builder::test(const member_closure_bool &closure)
+ircd::json::iov::test(const member_closure_bool &closure)
 const
 {
-	if(ms)
-		return ircd::until(begin(*ms), end(*ms), closure);
+	if(b && likely(e))
+		return ircd::until(b, e, closure);
 
 	if(!m.first.empty())
 		return closure(m);
@@ -1542,10 +1542,10 @@ const
 	return true;
 }
 
-ircd::json::builder::add::add(builder &head, const members &ms)
-:builder{{}, &ms, &head}
+ircd::json::iov::add::add(iov &head, const members &ms)
+:iov{&head, nullptr, ms}
 {
-	const auto existing(json::find(&head, [&ms](const builder &existing)
+	const auto existing(json::find(&head, [&ms](const iov &existing)
 	{
 		return existing.test([&ms](const member &existing)
 		{
@@ -1564,10 +1564,10 @@ ircd::json::builder::add::add(builder &head, const members &ms)
 	tail(&head)->child = this;
 }
 
-ircd::json::builder::add::add(builder &head, member member)
-:builder{std::move(member), nullptr, &head}
+ircd::json::iov::add::add(iov &head, member member)
+:iov{&head, nullptr, std::move(member)}
 {
-	const auto existing(json::find(&head, [&member](const builder &existing)
+	const auto existing(json::find(&head, [&member](const iov &existing)
 	{
 		return existing.test([&member](const auto &existing)
 		{
@@ -1582,10 +1582,10 @@ ircd::json::builder::add::add(builder &head, member member)
 	tail(&head)->child = this;
 }
 
-ircd::json::builder::set::set(builder &head, const members &ms)
-:builder{{}, &ms, &head}
+ircd::json::iov::set::set(iov &head, const members &ms)
+:iov{&head, nullptr, ms}
 {
-	const auto existing(json::find(&head, [&ms](const builder &existing)
+	const auto existing(json::find(&head, [&ms](const iov &existing)
 	{
 		return existing.test([&ms](const member &existing)
 		{
@@ -1609,10 +1609,10 @@ ircd::json::builder::set::set(builder &head, const members &ms)
 	else tail(&head)->child = this;
 }
 
-ircd::json::builder::set::set(builder &head, member member)
-:builder{std::move(member), nullptr, &head}
+ircd::json::iov::set::set(iov &head, member member)
+:iov{&head, nullptr, std::move(member)}
 {
-	const auto existing(json::find(&head, [&member](const builder &existing)
+	const auto existing(json::find(&head, [&member](const iov &existing)
 	{
 		return existing.test([&member](const auto &existing)
 		{

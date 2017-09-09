@@ -248,29 +248,24 @@ namespace ircd::m::events
 ircd::database *ircd::m::events::events;
 
 void
-ircd::m::events::insert(json::builder &builder)
+ircd::m::events::insert(json::iov &iov)
 {
 	const id::event::buf generated_event_id
 	{
-		builder.has("event_id")? id::event::buf{} : id::event::buf{id::generate, "cdc.z"}
+		iov.has("event_id")? id::event::buf{} : id::event::buf{id::generate, "cdc.z"}
 	};
 
-	const json::builder::add event_id
+	const json::iov::add event_id
 	{
-		builder, { "event_id", generated_event_id }
+		iov, { "event_id", generated_event_id }
 	};
 
-	const json::builder::set event_id2
+	const json::iov::add origin_server_ts
 	{
-		builder, { "event_id", generated_event_id }
+		iov, { "origin_server_ts", time<milliseconds>() }
 	};
 
-	const json::builder::add origin_server_ts
-	{
-		builder, { "origin_server_ts", time<milliseconds>() }
-	};
-
-	insert(event{builder});
+	insert(event{iov});
 }
 
 void
@@ -408,9 +403,9 @@ ircd::m::events::write(const event &event)
 
 void
 ircd::m::room::join(const m::id::user &user_id,
-                    json::builder &content)
+                    json::iov &content)
 {
-	json::builder::set membership_join
+	json::iov::set membership_join
 	{
 		content, { "membership", "join" }
 	};
@@ -420,7 +415,7 @@ ircd::m::room::join(const m::id::user &user_id,
 
 void
 ircd::m::room::membership(const m::id::user &user_id,
-                          json::builder &content)
+                          json::iov &content)
 {
 	if(is_member(user_id, content.at("membership")))
 		throw m::ALREADY_MEMBER
@@ -434,17 +429,15 @@ ircd::m::room::membership(const m::id::user &user_id,
 		stringify(buffer, content)
 	};
 
-	json::builder event;
-	json::builder::set fields{event,
+	json::iov event
 	{
-		{ "room_id",      room_id          },
 		{ "type",         "m.room.member"  },
 		{ "state_key",    user_id          },
 		{ "sender",       user_id          },
 		{ "content",      printed_content  }
-	}};
+	};
 
-	m::events::insert(event);
+	send(event);
 }
 
 bool

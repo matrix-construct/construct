@@ -247,13 +247,19 @@ ircd::resource::request::request(const http::request::head &head,
 
 ircd::resource::response::response(client &client,
                                    const http::code &code,
-                                   const json::members &members)
+                                   const json::iov &members)
 :response{client, members, code}
 {
 }
 
 ircd::resource::response::response(client &client,
-                                   const json::members &members,
+                                   const http::code &code)
+:response{client, json::object{"{}"}, code}
+{
+}
+
+ircd::resource::response::response(client &client,
+                                   const json::iov &members,
                                    const http::code &code)
 try
 {

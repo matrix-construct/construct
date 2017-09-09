@@ -68,7 +68,7 @@ namespace ircd::json
 	struct object;
 	struct value;
 	struct index;
-	struct builder;
+	struct iov;
 
 	enum type
 	{
@@ -101,7 +101,7 @@ namespace ircd::json
 #include "json/member.h"
 #include "json/index.h"
 #include "json/property.h"
-#include "json/builder.h"
+#include "json/iov.h"
 #include "json/tuple.h"
 
 namespace ircd

@@ -67,7 +67,7 @@ struct tuple
 	static constexpr size_t size();
 
 	tuple(const json::object &);
-	tuple(const json::builder &);
+	tuple(const json::iov &);
 	tuple(const std::initializer_list<member> &);
 	tuple() = default;
 };
@@ -580,12 +580,24 @@ tuple<T...>::tuple(const json::object &object)
 }
 
 template<class... T>
-tuple<T...>::tuple(const json::builder &builder)
+tuple<T...>::tuple(const json::iov &iov)
 {
 	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
-	for_each(builder, [this]
+	for_each(iov, [this]
 	(const auto &member)
 	{
+		switch(type(member.second))
+		{
+			case type::STRING:
+			case type::OBJECT:
+			case type::ARRAY:
+				if(unlikely(!member.second.serial))
+					throw print_error("iov member '%s' must be JSON to be used by the tuple",
+					                  string_view{member.first});
+			default:
+				break;
+		}
+
 		at(*this, member.first, [&member]
 		(auto &target)
 		{

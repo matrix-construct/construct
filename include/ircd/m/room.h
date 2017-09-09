@@ -56,8 +56,9 @@ struct ircd::m::room
 
 	bool is_member(const m::id::user &, const string_view &membership = "join");
 
-	void membership(const m::id::user &, const json::builder &content);
-	void join(const m::id::user &, const json::builder &content);
+	bool is_member(const m::id::user &, const string_view &membership = "join");
+	void membership(const m::id::user &, json::iov &content);
+	void join(const m::id::user &, json::iov &content);
 
 	room(const id::room &room_id);
 	room(const id::alias &alias);

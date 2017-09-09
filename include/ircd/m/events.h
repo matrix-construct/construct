@@ -44,8 +44,8 @@ namespace ircd::m::events
 	const_iterator begin();
 	const_iterator end();
 
-	void insert(event &);
 	void insert(const event &);
+	void insert(json::iov &);
 }
 
 struct ircd::m::events::transition
