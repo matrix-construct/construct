@@ -7,56 +7,18 @@ sudo: false
 git:
   submodules: false
 
-notifications:
-  webhooks:
-    urls:
-    - http://98.171.169.78:6699/
-    on_success: always
-    on_failure: always
-    on_start: always
+#notifications:
+#  webhooks:
+#    urls:
+#    - http://98.171.169.78:6699/
+#    on_success: always
+#    on_failure: always
+#    on_start: always
 
 matrix:
   include:
-#  - os: linux
-#    dist: precise
-#    group: stable
-#    compiler: gcc-4.9
-#    addons:
-#      apt:
-#        sources:
-#        - ubuntu-toolchain-r-test
-#        packages:
-#        - gcc-4.9
-#        - g++-4.9
-#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-#    env:
-#    - CCOMPILER=gcc-4.9
-#    - CXXCOMPILER=g++-4.9
-#    - WITH_INCLUDED_BOOST=--with-included-boost
-#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-#    - WITH_INCLUDED_JS=--with-included-js=shared
-
   - os: linux
-    dist: precise
-    group: stable
-    compiler: gcc-5
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - gcc-5
-        - g++-5
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-    env:
-    - CCOMPILER=gcc-5
-    - CXXCOMPILER=g++-5
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=--with-included-js=shared
-
-  - os: linux
-    dist: trusty
+    dist: xenial
     group: unstable
     compiler: gcc-6
     sudo: required
@@ -67,7 +29,7 @@ matrix:
         packages:
         - gcc-6
         - g++-6
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
     env:
     - CCOMPILER=gcc-6
     - CXXCOMPILER=g++-6
@@ -75,28 +37,8 @@ matrix:
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
     - WITH_INCLUDED_JS=--with-included-js=shared
 
-#  - os: linux
-#    dist: precise
-#    group: unstable
-#    sudo: false
-#    compiler: clang-3.6
-#    addons:
-#      apt:
-#        sources:
-#        - ubuntu-toolchain-r-test
-#        - llvm-toolchain-precise-3.6
-#        packages:
-#        - clang-3.6
-#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-#    env:
-#    - CCOMPILER=clang-3.6
-#    - CXXCOMPILER=clang++-3.6
-#    - WITH_INCLUDED_BOOST=--with-included-boost
-#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-#    - WITH_INCLUDED_JS=--with-included-js=shared
-
   - os: linux
-    dist: trusty
+    dist: xenial
     group: unstable
     sudo: required
     compiler: clang-3.9
@@ -107,9 +49,9 @@ matrix:
         - llvm-toolchain-trusty-3.9
         packages:
         - clang-3.9
-        - gcc-5
-        - g++-5
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - gcc-6
+        - g++-6
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
     env:
     - CCOMPILER=clang-3.9
     - CXXCOMPILER=clang++-3.9
