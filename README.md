@@ -9,18 +9,20 @@ modify, audit, and extend.
 IRCd is a free and open source server which facilitates real-time communication over the
 internet. It was started in 1988 by Jarkko Oikarinen in the University of Oulu and eventually
 made its way to William Pitcock et al, whom after 2005 developed the project under the alias
-*Charybdis*. In 2014 a protocol was proposed to reinvigorate real-time communication in lieu
-of growing commercial competition and a lack of innovation from open source alternatives to
-compete. This protcol is known as the *Matrix* protocol.
+*Charybdis*.
+
+In 2014 a protocol was proposed to reinvigorate real-time communication in lieu of growing
+commercial competition and a lack of innovation from open source alternatives to
+compete. This protcol is known as the **Matrix protocol**.
 
 ##### IRCd now implements the Matrix protocol.
 
 
-## Charybdis/5
+# Charybdis/5
 
-Charybdis Five is the first high performance implementation of *Matrix* written in C++. It remains
+Charybdis Five is the first high performance implementation of **Matrix** written in C++. It remains
 true to its roots for being highly scalable, modular and having minimal requirements. Most of the
-old code has been rewritten but the architecture is the same.
+old code has been rewritten but with the same architecture and spirit of the original.
 
 
 ### Dependencies
@@ -31,20 +33,34 @@ old code has been rewritten but the architecture is the same.
 	* **RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
 	and have furthered the mission of eliminating the need for external "IRC services"
 
-	* autotools, libtool, make, zlib
+	* *Build dependencies:* gnu++14 compiler, automake, autoconf, autoconf2.13, autoconf-archive,
+	libtool, shtool
 
-## Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
+	* *Other dependencies:* OpenSSL, zlib, snappy (for rocksdb)
 
-	The developer preview will install charybdis in a specific directory isolated from the
-	system. It will not use or install system libraries. It will download and build the
-	dependencies from the submodules we have pinned here and build them the way we have
-	configured. Charybdis should be executed using those builds. You may need to set the
-	`LD_LIBRARY_PATH` to the built libraries. None of this will be required when released.
+### Installation
+
+#### Downloading Charybdis
 
 	* `git clone https://github.com/charybdis-ircd/charybdis`
 	* `cd charybdis`
 	* `git checkout 5`
 		- Verify you have the latest source tree and **are on the Matrix branch**.
+
+#### Building from git (production)
+
+	* `./autogen.sh`
+	* `./configure`
+	* `make`
+	* `sudo make install`
+
+#### Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
+
+	The developer preview will install charybdis in a specific directory isolated from the
+	system. It will not install and avoid using system libraries. Instead it will download
+	and build the dependencies from the submodules we have pinned here and build them the
+	way we have configured. Charybdis should be executed using those builds. You may need
+	to set the `LD_LIBRARY_PATH` to the built libraries. This is not required for release.
 
 	* `./autogen.sh`
 	* `mkdir build`
@@ -56,24 +72,23 @@ old code has been rewritten but the architecture is the same.
 		- Many systems alias `g++` to an older version. To be safe, specify a version manually
 		in `CXX`. This will also build the submodule dependencies with that version.
 		- The `--with-included-*` will fetch, configure **and build** the dependencies included
-		as submodules. Include `=shared` for now until things are changed around.
+		as submodules. Include `=shared` for now until static libraries are better handled.
 
 	* `make`
 	* `make install`
 
 
-## Platforms
+### Platforms
 
 [![Charybdis](http://img.shields.io/SemVer/v5.0.0-dev.png)](https://github.com/charybdis-ircd/charybdis/tree/master)
 *This branch is not meant for production. Use at your own risk.*
 
 | <sub> Continuously Integrated Host </sub>   | <sub> Compiler </sub>    | <sub> Third party </sub> | <sub> Status </sub> |
 |:------------------------------------------- |:------------------------ |:------------------------ |:------------------- |
-| <sub> Linux Ubuntu 12.04 Precise </sub>     | <sub> GCC 5       </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Linux Ubuntu 14.04 Trusty </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Linux Ubuntu 14.04 Trusty </sub>      | <sub> Clang 3.8   </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Apple Darwin 15.5 </sub>              | <sub> LLVM 7.3.0  </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Windows </sub>                        | <sub> mingw 3.5   </sub> | <sub> Boost 1.61 </sub>  | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/is0obsml8xyq2qk7/branch/master?svg=true)](https://ci.appveyor.com/project/kaniini/charybdis/branch/master) |
+| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
+| <sub> Linux Ubuntu 14.04 Xenial </sub>      | <sub> Clang 3.8   </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
+| <sub> Apple Darwin 15.5 </sub>              | <sub> LLVM 7.3.0  </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
+| <sub> Windows </sub>                        | <sub> mingw 3.5   </sub> | <sub> Boost 1.62 </sub>  | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/is0obsml8xyq2qk7/branch/master?svg=true)](https://ci.appveyor.com/project/kaniini/charybdis/branch/master) |
 
 ## Tips
 
