@@ -36,6 +36,7 @@ struct ircd::allocator
 	struct state;
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
+	template<class T> struct node;
 };
 
 struct ircd::allocator::state
@@ -84,37 +85,6 @@ struct ircd::allocator::fixed
 	fixed()
 	:state{max, avail.data()}
 	{}
-};
-
-template<class T>
-struct ircd::allocator::dynamic
-:state
-{
-	struct allocator;
-
-	size_t head_size, data_size;
-	std::unique_ptr<uint8_t[]> arena;
-	T *buf;
-
-  public:
-	allocator operator()();
-	operator allocator();
-
-	dynamic(const size_t &size)
-	:state{size}
-	,head_size{size / 8}
-	,data_size{sizeof(T) * size + 16}
-	,arena
-	{
-		new __attribute__((aligned(16))) uint8_t[head_size + data_size]
-	}
-	,buf
-	{
-		reinterpret_cast<T *>(arena.get() + head_size + (head_size % 16))
-	}
-	{
-		state::avail = reinterpret_cast<word_t *>(arena.get());
-	}
 };
 
 template<class T,
@@ -173,6 +143,53 @@ struct ircd::allocator::fixed<T, size>::allocator
 	friend bool operator!=(const allocator &a, const allocator &b)
 	{
 		return &a == &b;
+	}
+};
+
+template<class T,
+         size_t size>
+typename ircd::allocator::fixed<T, size>::allocator
+ircd::allocator::fixed<T, size>::operator()()
+{
+	return { *this };
+}
+
+template<class T,
+         size_t size>
+ircd::allocator::fixed<T, size>::operator
+allocator()
+{
+	return { *this };
+}
+
+template<class T>
+struct ircd::allocator::dynamic
+:state
+{
+	struct allocator;
+
+	size_t head_size, data_size;
+	std::unique_ptr<uint8_t[]> arena;
+	T *buf;
+
+  public:
+	allocator operator()();
+	operator allocator();
+
+	dynamic(const size_t &size)
+	:state{size}
+	,head_size{size / 8}
+	,data_size{sizeof(T) * size + 16}
+	,arena
+	{
+		new __attribute__((aligned(16))) uint8_t[head_size + data_size]
+	}
+	,buf
+	{
+		reinterpret_cast<T *>(arena.get() + head_size + (head_size % 16))
+	}
+	{
+		state::avail = reinterpret_cast<word_t *>(arena.get());
 	}
 };
 
@@ -248,21 +265,95 @@ allocator()
 	return { *this };
 }
 
-template<class T,
-         size_t size>
-typename ircd::allocator::fixed<T, size>::allocator
-ircd::allocator::fixed<T, size>::operator()()
+template<class T>
+struct ircd::allocator::node
 {
-	return { *this };
-}
+	struct allocator;
+	struct monotonic;
 
-template<class T,
-         size_t size>
-ircd::allocator::fixed<T, size>::operator
-allocator()
+	T *next {nullptr};
+
+	node() = default;
+};
+
+template<class T>
+struct ircd::allocator::node<T>::allocator
 {
-	return { *this };
-}
+	using value_type         = T;
+	using pointer            = T *;
+	using const_pointer      = const T *;
+	using reference          = T &;
+	using const_reference    = const T &;
+	using size_type          = std::size_t;
+	using difference_type    = std::ptrdiff_t;
+
+	node *s;
+
+  public:
+	template<class U> struct rebind
+	{
+		using other = typename node<U>::allocator;
+	};
+
+	size_type max_size() const                   { return std::numeric_limits<size_t>::max();      }
+	auto address(reference x) const              { return &x;                                      }
+	auto address(const_reference x) const        { return &x;                                      }
+
+	template<class U, class... args>
+	void construct(U *p, args&&... a)
+	{
+		new(p) U(std::forward<args>(a)...);
+	}
+
+	void construct(pointer p, const_reference val)
+	{
+		new(p) T(val);
+	}
+
+	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	{
+		assert(n == 1);
+		assert(hint == nullptr);
+		assert(s->next != nullptr);
+		return s->next;
+	}
+
+	void deallocate(const pointer &p, const size_type &n)
+	{
+		assert(n == 1);
+	}
+
+	template<class U>
+	allocator(const typename node<U>::allocator &s) noexcept
+	:s{reinterpret_cast<node *>(s.s)}
+	{
+	}
+
+	template<class U>
+	allocator(const U &s) noexcept
+	:s{reinterpret_cast<node *>(s.s)}
+	{
+	}
+
+	allocator(node &s) noexcept
+	:s{&s}
+	{
+	}
+
+	allocator() = default;
+	allocator(allocator &&) noexcept = default;
+	allocator(const allocator &) = default;
+
+	friend bool operator==(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
+
+	friend bool operator!=(const allocator &a, const allocator &b)
+	{
+		return &a == &b;
+	}
+};
 
 inline void
 ircd::allocator::state::deallocate(const uint &pos,
