@@ -110,6 +110,8 @@ struct ircd::buffer::const_buffer
 	const_buffer(const string_view &s)
 	:buffer<const char *>{begin(s), end(s)}
 	{}
+
+	const_buffer() = default;
 };
 
 struct ircd::buffer::mutable_buffer
