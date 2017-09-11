@@ -206,6 +206,7 @@ namespace ircd
 #include "lexical.h"
 #include "params.h"
 #include "buffer.h"
+#include "iov.h"
 #include "parse.h"
 #include "rfc1459.h"
 #include "json.h"
