@@ -39,7 +39,7 @@ struct request
 	request(const string_view &method,
 	        const string_view &path,
 	        const string_view &query = {},
-	        std::initializer_list<json::index::member> body = {});
+	        std::initializer_list<json::member> body = {});
 
 	request(const string_view &method,
 	        const string_view &path,
@@ -54,7 +54,7 @@ inline
 ircd::m::request::request(const string_view &method,
                           const string_view &path,
                           const string_view &query,
-                          std::initializer_list<json::index::member> body)
+                          std::initializer_list<json::member> body)
 :json::index{std::move(body)}
 ,method{method}
 ,path{path}

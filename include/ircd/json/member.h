@@ -49,6 +49,7 @@ namespace ircd::json
 struct ircd::json::member
 :std::pair<value, value>
 {
+	using std::pair<value, value>::pair;
 	template<class K> member(const K &k, std::initializer_list<member> v);
 	template<class K, class V> member(const K &k, V&& v);
 	explicit member(const string_view &k);

@@ -24,7 +24,6 @@
 
 struct ircd::json::index
 {
-	using member = json::member;
 	struct const_iterator;
 
 	using key_type = value;

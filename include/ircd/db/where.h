@@ -61,7 +61,7 @@ struct ircd::db::where<tuple>::equal
 	:value{value}
 	{}
 
-	equal(std::initializer_list<json::index::member> members)
+	equal(json::members members)
 	:value{std::move(members)}
 	{}
 };
@@ -101,7 +101,7 @@ struct ircd::db::where<tuple>::not_equal
 	:value{value}
 	{}
 
-	not_equal(std::initializer_list<json::index::member> members)
+	not_equal(json::members members)
 	:value{std::move(members)}
 	{}
 };
