@@ -422,9 +422,18 @@ ircd::http::response::response(const code &code,
 		0
 	};
 
+	const bool has_transfer_encoding
+	{
+		std::any_of(std::begin(headers), std::end(headers), []
+		(const auto &header)
+		{
+			return header == "Transfer-Encoding";
+		})
+	};
+
 	char content_len[64]; const auto content_len_len
 	{
-		code != NO_CONTENT?
+		code != NO_CONTENT && !has_transfer_encoding?
 		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
 		         content.size()):
 		0
