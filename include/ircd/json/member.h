@@ -25,16 +25,10 @@
 namespace ircd::json
 {
 	struct member;
-	using members = std::initializer_list<member>;
 
 	size_t serialized(const member *const &begin, const member *const &end);
-	size_t serialized(const members &);
-
 	string_view stringify(mutable_buffer &, const member *const *const &begin, const member *const *const &end);
 	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
-	string_view stringify(mutable_buffer &, const members &);
-
-	string_view stringify(mutable_buffer &, const std::vector<json::object> &);
 }
 
 /// A pair of json::value representing an object member.
@@ -66,6 +60,14 @@ struct ircd::json::member
 	friend string_view stringify(mutable_buffer &, const member &);
 	friend std::ostream &operator<<(std::ostream &, const member &);
 };
+
+namespace ircd::json
+{
+	using members = std::initializer_list<member>;
+
+	size_t serialized(const members &);
+	string_view stringify(mutable_buffer &, const members &);
+}
 
 template<class K,
          class V>

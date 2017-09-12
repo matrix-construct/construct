@@ -963,7 +963,7 @@ const
 			if(serial)
 				return std::string(string_view(*this));
 			else
-				return std::string(*object);
+				return json::string(*object);
 
 		case ARRAY:
 			if(serial)
@@ -991,9 +991,16 @@ const
 		case STRING:
 			return unquote(string_view{string, len});
 
+		case NUMBER:
+			if(serial)
+				return string_view{string, len};
+			else if(floats)
+				return byte_view<string_view>{floating};
+			else
+				return byte_view<string_view>{integer};
+
 		case ARRAY:
 		case OBJECT:
-		case NUMBER:
 		case LITERAL:
 			if(serial)
 				return string_view{string, len};
@@ -1013,6 +1020,7 @@ const
 			return likely(!floats)? integer : floating;
 
 		case STRING:
+			assert(serial);
 			return lex_cast<int64_t>(string_view(*this));
 
 		case ARRAY:
@@ -1033,6 +1041,7 @@ const
 			return likely(floats)? floating : integer;
 
 		case STRING:
+			assert(serial);
 			return lex_cast<double>(string_view(*this));
 
 		case ARRAY:
@@ -1045,6 +1054,36 @@ const
 }
 
 bool
+ircd::json::value::undefined()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return false;
+
+		case STRING:
+			return string == nullptr;
+
+		case OBJECT:
+			return serial? string == nullptr:
+			       object? object->empty():
+			               true;
+
+		case ARRAY:
+			return serial? string == nullptr:
+			       array?  array == nullptr:
+			               true;
+
+		case LITERAL:
+			return serial? string == nullptr:
+			               true;
+	};
+
+	throw type_error("deciding if a type[%u] is undefined is undefined", int(type));
+}
+
+bool
 ircd::json::value::empty()
 const
 {
@@ -1054,32 +1093,56 @@ const
 		case STRING:   return !len;
 		case OBJECT:   return serial? !len : object? object->empty() : true;
 		case ARRAY:    return serial? !len : array? false : true;            //TODO: XXX arr
-		case LITERAL:  return !len;
+		case LITERAL:  return serial? !len : true;
 	};
 
 	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
 }
 
-size_t
-ircd::json::serialized(const value &value)
-{
-	return value.serialized();
-}
-
-size_t
-ircd::json::value::serialized()
+bool
+ircd::json::value::null()
 const
 {
 	switch(type)
 	{
-		case NUMBER:   return lex_cast(integer).size();
-		case STRING:   return 1 + len + 1;
-		case OBJECT:   return serial? len : object->serialized();
-		case ARRAY:    return serial? len : 2;
-		case LITERAL:  return len;
+		case NUMBER:
+			return floats?  !(floating > 0.0 || floating < 0.0):
+			                bool(integer);
+
+		case STRING:
+			return string == nullptr;
+
+		case OBJECT:
+			return serial? string == nullptr:
+			       object? object->empty():
+			               true;
+
+		case ARRAY:
+			return serial? string == nullptr:
+			       array?  array == nullptr:
+			               true;
+
+		case LITERAL:
+			return serial? string == nullptr:
+			               true;
 	};
 
-	throw type_error("deciding the size of a type[%u] is undefined", int(type));
+	throw type_error("deciding if a type[%u] is null is undefined", int(type));
+}
+
+size_t
+ircd::json::serialized(const value &v)
+{
+	switch(v.type)
+	{
+		case NUMBER:   return lex_cast(v.integer).size();
+		case STRING:   return 1 + v.len + 1;
+		case OBJECT:   return v.serial? v.len : serialized(*v.object);
+		case ARRAY:    return v.serial? v.len : 2;
+		case LITERAL:  return v.len;
+	};
+
+	throw type_error("deciding the size of a type[%u] is undefined", int(v.type));
 }
 
 std::ostream &

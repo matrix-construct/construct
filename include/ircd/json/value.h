@@ -49,15 +49,17 @@ struct ircd::json::value
 		const struct array *array;
 	};
 
-	uint64_t len     : 58;
-	enum type type   : 3;
-	uint64_t serial  : 1;
-	uint64_t alloc   : 1;
-	uint64_t floats  : 1;
+	uint64_t len     : 57;      ///< length indicator
+	enum type type   : 3;       ///< json::type indicator
+	uint64_t serial  : 1;       ///< only string* is used. type indicates JSON
+	uint64_t alloc   : 1;       ///< indicates the pointer for type is owned
+	uint64_t floats  : 1;       ///< for NUMBER type, integer or floating
 
   public:
+	bool null() const;
 	bool empty() const;
-	size_t serialized() const;
+	bool undefined() const;
+
 	operator string_view() const;
 	explicit operator double() const;
 	explicit operator int64_t() const;
@@ -65,14 +67,14 @@ struct ircd::json::value
 
 	template<class T> explicit value(const T &specialized);
 	template<size_t N> value(const char (&)[N]);
+	value(const char *const &s);
 	value(const string_view &sv, const enum type &);
 	value(const string_view &sv);
-	value(const char *const &s);
 	value(const index *const &);    // alloc = false
 	value(std::unique_ptr<index>);  // alloc = true
 	value();
 	value(value &&) noexcept;
-	value(const value &) = delete;
+	value(const value &);
 	value &operator=(value &&) noexcept;
 	value &operator=(const value &) = delete;
 	~value() noexcept;
@@ -202,12 +204,22 @@ ircd::json::value::value(const T &t)
 
 template<size_t N>
 ircd::json::value::value(const char (&str)[N])
-:value{string_view{str}}
+:string{str}
+,len{strnlen(str, N)}
+,type{json::type(str, std::nothrow)}
+,serial{true}
+,alloc{false}
+,floats{false}
 {}
 
 inline
 ircd::json::value::value(const char *const &s)
-:value{string_view{s}}
+:string{s}
+,len{strlen(s)}
+,type{json::type(s, std::nothrow)}
+,serial{true}
+,alloc{false}
+,floats{false}
 {}
 
 inline
@@ -226,6 +238,33 @@ noexcept
 ,floats{other.floats}
 {
 	other.alloc = false;
+}
+
+inline
+ircd::json::value::value(const value &other)
+:integer{other.integer}
+,len{other.len}
+,type{other.type}
+,serial{other.serial}
+,alloc{other.alloc}
+,floats{other.floats}
+{
+	switch(type)
+	{
+		case NUMBER:
+			break;
+
+		case LITERAL:
+		case STRING:
+			assert(serial);
+			assert(!alloc);
+			break;
+
+		case OBJECT:
+		case ARRAY:
+			assert(serial);
+			break;
+	}
 }
 
 inline ircd::json::value &

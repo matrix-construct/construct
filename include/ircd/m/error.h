@@ -37,6 +37,7 @@ struct ircd::m::error
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
 	error(const http::code &, const json::object &object = {});
 	error(const http::code &, const json::index &idx);
+	error(const http::code &, const json::iov &);
 	error(const http::code &);
 	error(std::string = {});
 

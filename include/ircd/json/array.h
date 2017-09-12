@@ -60,6 +60,7 @@ struct ircd::json::array
 	using string_view::string_view;
 
 	friend string_view stringify(mutable_buffer &, const array &);
+	friend string_view stringify(mutable_buffer &, const std::vector<json::object> &);
 	friend std::ostream &operator<<(std::ostream &, const array &);
 };
 
