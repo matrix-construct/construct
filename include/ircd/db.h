@@ -116,7 +116,6 @@ enum class ircd::db::pos
 #include "db/cell.h"
 #include "db/row.h"
 #include "db/index.h"
-#include "db/value.h"
 #include "db/json.h"
 #include "db/where.h"
 #include "db/cursor.h"

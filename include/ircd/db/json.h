@@ -28,9 +28,8 @@ namespace ircd::db
 	template<class... T> json::tuple<T...> &set(json::tuple<T...> &, const row &r);
 	template<class tuple> tuple make_tuple(const row &r);
 
-	//template<class it, class... T> void deltas(const json::tuple<T...> &tuple, it i);
 	template<class it> void set_index(it begin, it end, const string_view &index);
-	template<class... T> void write(database &, const string_view &index, const json::tuple<T...> &, const gopts & = {});
+	template<class... T> void write(database &, const string_view &index, const json::tuple<T...> &, const sopts & = {});
 }
 
 //
@@ -49,34 +48,12 @@ ircd::db::set_index(it b,
 	});
 }
 
-/*
-template<class it,
-         class... T>
-void
-ircd::db::deltas(const json::tuple<T...> &tuple,
-                 it i)
-{
-	for_each(tuple, [&i]
-	(const string_view &key, const auto &val)
-	{
-		*i = delta
-		{
-			key,              // col
-			string_view{},    // key  (set_index)
-			byte_view<>(val)  // val
-		};
-
-		++i;
-	});
-}
-*/
-
 template<class... T>
 void
 ircd::db::write(database &database,
                 const string_view &index,
                 const json::tuple<T...> &tuple,
-                const gopts &opts)
+                const sopts &opts)
 {
 	std::array<delta, tuple.size()> deltas;
 	deltas(index, tuple, begin(deltas));
