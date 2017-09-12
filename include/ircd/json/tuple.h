@@ -580,7 +580,7 @@ template<class... T>
 tuple<T...>::tuple(const json::iov &iov)
 {
 	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
-	for_each(iov, [this]
+	std::for_each(std::begin(iov), std::end(iov), [this]
 	(const auto &member)
 	{
 		switch(type(member.second))

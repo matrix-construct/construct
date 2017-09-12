@@ -22,210 +22,124 @@
 #pragma once
 #define HAVE_IRCD_JSON_IOV_H
 
-// ircd::json::iov is forward list to compose JSON dynamically and
-// efficiently on the stack. The product of the iov is an iteration of the
-// added members for use by stringifying and iovectoring. This gathers the
-// members on a trip up the stack without rewriting a JSON string at each frame.
-//
 namespace ircd::json
 {
 	struct iov;
-
-	using member_closure = std::function<void (const member &)>;
-	using member_closure_bool = std::function<bool (const member &)>;
-	using iov_closure_bool = std::function<bool (const iov &)>;
-
-	iov *head(iov *const &);
-	iov *next(iov *const &);
-	iov *prev(iov *const &);
-	iov *tail(iov *);
-	iov *find(iov *, const iov_closure_bool &);
-
-	const iov *head(const iov *const &);
-	const iov *next(const iov *const &);
-	const iov *prev(const iov *const &);
-	const iov *tail(const iov *);
-	const iov *find(const iov *, const iov_closure_bool &);
-
-	void for_each(const iov &, const member_closure &);
-	bool until(const iov &, const member_closure_bool &);
-	size_t count(const iov &, const member_closure_bool &);
-	size_t count(const iov &);
 }
 
+/// A forward list to compose JSON efficiently on the stack.
+///
+/// The IOV gathers members for a JSON object being assembled from various
+/// sources and presents an iteration to a generator. This prevents the need
+/// for multiple generations and copying to occur before the final JSON is
+/// realized, if ever.
+///
+/// Add and remove items on the IOV by construction and destruction one of
+/// the node objects. The IOV has a standard forward list interface, only use
+/// that to observe and sort/rearrange the IOV. Do not add or remove things
+/// that way.
+///
+/// Nodes support a single member each. To support initializer_list syntax
+/// the iov allocates and internally manages the iov node that should have
+/// been on your stack.
+///
 struct ircd::json::iov
+:ircd::iov<ircd::json::member>
 {
-	struct add;
-	struct set;
-	struct push;
-
 	IRCD_EXCEPTION(json::error, error);
 	IRCD_EXCEPTION(error, exists);
 
-	iov *head {nullptr};
-	iov *child {nullptr};
-	const member *b {nullptr};
-	const member *e {nullptr};
-	member m;
+	struct push;
+	struct add;
+	struct add_if;
+	struct set;
+	struct set_if;
 
-	bool test(const member_closure_bool &) const;
+  private:
+	std::forward_list<node> allocated;
 
-	// recursive!
-	const member *find(const string_view &key) const;
-	const json::value &at(const string_view &key) const;
+  public:
 	bool has(const string_view &key) const;
+	const value &at(const string_view &key) const;
 
-	iov(iov *const &head,
-	    iov *const &child,
-	    member m)
-	:head{head}
-	,child{child}
-	,m{std::move(m)}
-	{}
-
-	iov(iov *const &head,
-	    iov *const &child,
-	    const member *const &begin,
-	    const member *const &end)
-	:head{head}
-	,child{child}
-	,b{begin}
-	,e{end}
-	{}
-
-	iov(iov *const &head,
-	    iov *const &child,
-	    const members &ms)
-	:head{head}
-	,child{child}
-	,b{std::begin(ms)}
-	,e{std::end(ms)}
-	{}
-
-	iov(const members &ms)
-	:iov{nullptr, nullptr, std::begin(ms), std::end(ms)}
-	{}
-
-	iov(member m = {})
-	:iov{nullptr, nullptr, std::move(m)}
-	{}
+	iov() = default;
+	iov(member);
+	iov(members);
 
 	friend string_view stringify(mutable_buffer &, const iov &);
+	friend std::ostream &operator<<(std::ostream &, const iov &);
+	friend size_t serialized(const iov &);
 };
 
 struct ircd::json::iov::push
-:private ircd::json::iov
+:protected ircd::json::iov::node
 {
 	template<class... args>
-	push(iov &head, args&&... a)
-	:iov{&head, nullptr, std::forward<args>(a)...}
-	{
-		tail(&head)->child = this;
-	}
+	push(iov &iov, args&&... a)
+	:node{iov, std::forward<args>(a)...}
+	{}
 };
 
 struct ircd::json::iov::add
-:private ircd::json::iov
+:protected ircd::json::iov::node
 {
-	add(iov &head, const members &ms);
-	add(iov &head, member member);
+	add(iov &, member);
+	add() = default;
+};
+
+struct ircd::json::iov::add_if
+:ircd::json::iov::add
+{
+	add_if(iov &, const bool &, member);
+	add_if() = default;
 };
 
 struct ircd::json::iov::set
-:private ircd::json::iov
+:protected ircd::json::iov::node
 {
-	set(iov &head, const members &ms);
-	set(iov &head, member member);
+	set(iov &, member);
+	set() = default;
 };
 
-inline ircd::json::iov *
-ircd::json::find(iov *iov,
-                 const iov_closure_bool &test)
+struct ircd::json::iov::set_if
+:ircd::json::iov::set
 {
-	for(; iov; iov = next(iov))
-		if(test(*iov))
-			return iov;
+	set_if(iov &, const bool &, member);
+	set_if() = default;
+};
 
-	return nullptr;
+inline
+ircd::json::iov::iov(json::member m)
+{
+	allocated.emplace_front(*this, std::move(m));
 }
 
-inline const ircd::json::iov *
-ircd::json::find(const iov *iov,
-                 const iov_closure_bool &test)
+inline
+ircd::json::iov::iov(members m)
 {
-	for(; iov; iov = next(iov))
-		if(test(*iov))
-			return iov;
-
-	return nullptr;
+	for(auto&& member : m)
+		allocated.emplace_front(*this, std::move(member));
 }
 
-inline ircd::json::iov *
-ircd::json::tail(iov *ret)
+inline size_t
+ircd::json::serialized(const iov &iov)
 {
-	while(ret && next(ret))
-		ret = next(ret);
+	const size_t ret
+	{
+		1U + !iov.empty()
+	};
 
-	return ret;
+	return std::accumulate(std::begin(iov), std::end(iov), ret, []
+	(auto ret, const auto &member)
+	{
+		return ret += serialized(member);
+	});
 }
 
-inline const ircd::json::iov *
-ircd::json::tail(const iov *ret)
+inline std::ostream &
+ircd::json::operator<<(std::ostream &s, const iov &iov)
 {
-	while(ret && next(ret))
-		ret = next(ret);
-
-	return ret;
+	s << string(iov);
+	return s;
 }
 
-inline ircd::json::iov *
-ircd::json::prev(iov *const &iov)
-{
-	assert(iov);
-	auto *ret(iov->head);
-	for(; ret; ret = next(ret))
-		if(next(ret) == iov)
-			return ret;
-
-	return nullptr;
-}
-
-inline const ircd::json::iov *
-ircd::json::prev(const iov *const &iov)
-{
-	assert(iov);
-	const auto *ret(iov->head);
-	for(; ret; ret = next(ret))
-		if(next(ret) == iov)
-			return ret;
-
-	return nullptr;
-}
-
-inline ircd::json::iov *
-ircd::json::next(iov *const &iov)
-{
-	assert(iov);
-	return iov->child;
-}
-
-inline const ircd::json::iov *
-ircd::json::next(const iov *const &iov)
-{
-	assert(iov);
-	return iov->child;
-}
-
-inline ircd::json::iov *
-ircd::json::head(iov *const &iov)
-{
-	assert(iov);
-	return iov->head;
-}
-
-inline const ircd::json::iov *
-ircd::json::head(const iov *const &iov)
-{
-	assert(iov);
-	return iov->head;
-}
