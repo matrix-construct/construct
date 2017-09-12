@@ -243,11 +243,28 @@ noexcept
 {
 }
 
+namespace ircd
+{
+	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
+	bool handle_request(client &client, parse::capstan &pc);
+}
+
 bool
 ircd::client::main()
 noexcept try
 {
-	return serve();
+	char buffer[8192];
+	parse::buffer pb{buffer, buffer + sizeof(buffer)};
+	parse::capstan pc{pb, read_closure(*this)}; do
+	{
+		if(!handle_request(*this, pc))
+			return false;
+
+		pb.remove();
+	}
+	while(pc.unparsed());
+
+	return true;
 }
 catch(const boost::system::system_error &e)
 {
@@ -280,39 +297,6 @@ catch(const boost::system::system_error &e)
 	return false;
 }
 catch(const std::exception &e)
-{
-	log::critical("exception: %s", e.what());
-	if(ircd::debugmode)
-		std::terminate();
-
-	return false;
-}
-
-namespace ircd
-{
-	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
-	bool handle_request(client &client, parse::capstan &pc);
-
-} // namepace ircd
-
-bool
-ircd::client::serve()
-try
-{
-	char buffer[8192];
-	parse::buffer pb{buffer, buffer + sizeof(buffer)};
-	parse::capstan pc{pb, read_closure(*this)}; do
-	{
-		if(!handle_request(*this, pc))
-			return false;
-
-		pb.remove();
-	}
-	while(pc.unparsed());
-
-	return true;
-}
-catch(const ircd::exception &e)
 {
 	log::error("client[%s] [500 Internal Error]: %s",
 	           string(remote_addr(*this)),

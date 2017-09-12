@@ -57,7 +57,6 @@ struct ircd::client
 	unique_const_iterator<list> clit;
 	std::shared_ptr<socket> sock;
 
-	virtual bool serve();
 	bool main() noexcept;
 
   public:
