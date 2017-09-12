@@ -31,25 +31,25 @@ namespace ircd
 	struct exception;
 }
 
-/** The root exception type.
- *
- *  All exceptions in the project inherit from this type.
- *  To catch any exception from a project developer's code:
- *    catch(const ircd::exception &) {}
- *
- *  Remember: not all exceptions are from project developer's code,
- *  such as std::out_of_range. In most contexts if you have to deal with this
- *  someone else was lazy, which is bad. To be sure and catch any exception:
- *    catch(const std::exception &) {}
- *
- *  Remember: not all exceptions have to inherit from std::exception, but
- *  those are rogue exceptions. We do not allow this. To be sure nothing
- *  can possibly get through, add to the bottom:
- *    catch(...) {}
- *
- *  Note: Prefer 'noexcept' instead of catch(...), noexcept is like an 'assert'
- *  for exceptions, and the rogue can be found-out in testing.
- */
+/// The root exception type.
+///
+/// All exceptions in the project inherit from this type.
+/// To catch any exception from a project developer's code:
+///   catch(const ircd::exception &) {}
+///
+/// Remember: not all exceptions are from project developer's code,
+/// such as std::out_of_range. In most contexts if you have to deal with this
+/// someone else was lazy, which is bad. To be sure and catch any exception:
+///   catch(const std::exception &) {}
+///
+/// Remember: not all exceptions have to inherit from std::exception, but
+/// those are rogue exceptions. We do not allow this. To be sure nothing
+/// can possibly get through, add to the bottom:
+///   catch(...) {}
+///
+/// Note: Prefer 'noexcept' instead of catch(...), noexcept is like an 'assert'
+/// for exceptions, and the rogue can be found-out in testing.
+///
 struct ircd::exception
 :std::exception
 {
@@ -73,38 +73,37 @@ struct ircd::exception
 	}
 };
 
-/** Exception generator convenience macro
- *
- *  If you want to create your own exception type, you have found the right
- *  place! This macro allows creating an exception in the the hierarchy.
- *
- *  To create an exception, invoke this macro in your header. Examples:
- *
- *     IRCD_EXCEPTION(ircd::exception, my_exception)
- *     IRCD_EXCEPTION(my_exception, my_specific_exception)
- *
- *  Then your catch sequence can look like the following:
- *
- *     catch(const my_specific_exception &e)
- *     {
- *         log("something specifically bad happened: %s", e.what());
- *     }
- *     catch(const my_exception &e)
- *     {
- *         log("something generically bad happened: %s", e.what());
- *     }
- *     catch(const ircd::exception &e)
- *     {
- *         log("unrelated bad happened: %s", e.what());
- *     }
- *     catch(const std::exception &e)
- *     {
- *         log("unhandled bad happened: %s", e.what());
- *     }
- *
- *  Remember: the order of the catch blocks is important.
- */
-
+/// Exception generator convenience macro
+///
+/// If you want to create your own exception type, you have found the right
+/// place! This macro allows creating an exception in the the hierarchy.
+///
+/// To create an exception, invoke this macro in your header. Examples:
+///
+///    IRCD_EXCEPTION(ircd::exception, my_exception)
+///    IRCD_EXCEPTION(my_exception, my_specific_exception)
+///
+/// Then your catch sequence can look like the following:
+///
+///    catch(const my_specific_exception &e)
+///    {
+///        log("something specifically bad happened: %s", e.what());
+///    }
+///    catch(const my_exception &e)
+///    {
+///        log("something generically bad happened: %s", e.what());
+///    }
+///    catch(const ircd::exception &e)
+///    {
+///        log("unrelated bad happened: %s", e.what());
+///    }
+///    catch(const std::exception &e)
+///    {
+///        log("unhandled bad happened: %s", e.what());
+///    }
+///
+/// Remember: the order of the catch blocks is important.
+///
 #define IRCD_EXCEPTION(parent, name)                                          \
 struct name                                                                   \
 :parent                                                                       \
@@ -122,6 +121,7 @@ struct name                                                                   \
     }                                                                         \
 };                                                                            \
 
+/// Hides the name of the exception when generating a string
 #define IRCD_EXCEPTION_HIDENAME(parent, name)                                 \
 struct name                                                                   \
 :parent                                                                       \
@@ -139,12 +139,12 @@ struct name                                                                   \
     }                                                                         \
 };
 
-/** Root error exception type. Inherit from this.
- *  List your own exception somewhere else (unless you're overhauling libircd).
- *  example, in your namespace:
- *
- *  IRCD_EXCEPTION(ircd::error, error)
- */
+/// Root error exception type. Inherit from this.
+/// List your own exception somewhere else (unless you're overhauling libircd).
+/// example, in your namespace:
+///
+/// IRCD_EXCEPTION(ircd::error, error)
+///
 namespace ircd
 {
 	IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")

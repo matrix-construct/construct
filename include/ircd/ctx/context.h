@@ -46,12 +46,12 @@ namespace ircd::ctx
 /// the constructor; the execution will then be posted to the io_service
 /// event queue instead. `DISPATCH` is an alternative, see boost::asio docs.
 ///
-/// Unlike std::thread, when this object goes out of scope the context is
-/// interrupted and joined if it has not been already; the current context
-/// will wait for this to complete. If the child context does not cooperate
-/// the destructor will hang. To prevent this behavior `detach()` the ctx
-/// from this handler object; the detached context will free its own resources
-/// when finished executing. This is bad practice except in certain cases.
+/// When this object goes out of scope the context is interrupted and joined
+/// if it has not been already; the current context will wait for this to
+/// complete. If the child context does not cooperate the destructor will hang.
+/// To prevent this behavior `detach()` the ctx from this handler object; the
+/// detached context will free its own resources when finished executing.
+/// This is bad practice except in certain cases.
 ///
 /// To wait for the child context to finish use `join()`. Calling `interrupt()`
 /// will cause an `interrupted` exception to be thrown down the child's stack

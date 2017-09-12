@@ -22,40 +22,37 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
 
-//
-// Here we represent a JSON object with a named tuple, allowing the programmer
-// to create a structure specifying all of the potentially valid members of the
-// object. Access to a specific member is O(1) just like a native `struct`
-// rather than a linear or logn lookup into a map. The size of the tuple is
-// extremely minimal: only the size of the values it stores. This is because
-// the member keys and type data are all static or dealt with at compile time.
-//
-// The member structure for the tuple is called `property` because json::member
-// is already used to pair together runtime oriented json::values. This system
-// only decays into runtime members and values when compile-time logic cannot
-// be achieved.
-//
-// Create and use a tuple to efficiently extract members from a json::object.
-// The tuple will populate its own members during a single-pass iteration of
-// the JSON input. If the JSON does not contain a member specified in the
-// tuple, the value will be default initialized. If the JSON contains a member
-// not specified in the tuple, it is ignored. If you need to know all of the
-// members specified in the JSON dynamically, use a json::index or iterate
-// manually.
-//
 namespace ircd {
 namespace json {
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd::json::tuple template. Create your own struct inheriting this
-// class template with the members.
-//
+/// All tuple templates inherit from this non-template type for tagging.
 struct tuple_base
 {
 	// EBO tag
 };
 
+/// A compile-time construct to describe a JSON object's members and types.
+///
+/// Here we represent a JSON object with a named tuple, allowing the programmer
+/// to create a structure specifying all of the potentially valid members of the
+/// object. Thus at runtime, the tuple only carries around its values like a
+/// `struct`. Unlike a `struct`, the tuple is abstractly iterable and we have
+/// implemented logic operating on all JSON tuples regardless of their makeup
+/// without any effort from a developer creating a new tuple.
+///
+/// The member structure for the tuple is called `property` because json::member
+/// is already used to pair together runtime oriented json::values. This system
+/// only decays into runtime members and values when compile-time logic cannot
+/// be achieved.
+///
+/// Create and use a tuple to efficiently extract members from a json::object.
+/// The tuple will populate its own members during a single-pass iteration of
+/// the JSON input. If the JSON does not contain a member specified in the
+/// tuple, the value will be default initialized. If the JSON contains a member
+/// not specified in the tuple, it is ignored. If you need to know all of the
+/// members specified in the JSON dynamically, use a json::index or iterate
+/// manually.
+///
 template<class... T>
 struct tuple
 :std::tuple<T...>

@@ -933,6 +933,11 @@ const
 	return json::string(begin, end);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/value.h
+//
+
 ircd::json::value::~value()
 noexcept
 {

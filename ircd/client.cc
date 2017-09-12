@@ -429,24 +429,21 @@ ircd::async_recv_next(std::shared_ptr<client> client)
 	async_recv_next(std::move(client), milliseconds(-1));
 }
 
+///
+/// This function is the basis for the client's request loop. We still use
+/// an asynchronous pattern until there is activity on the socket (a request)
+/// in which case the switch to synchronous mode is made by jumping into an
+/// ircd::context drawn from the request pool. When the request is finished,
+/// the client exits back into asynchronous mode until the next request is
+/// received and rinse and repeat.
 //
-// This function is the basis for the client's request loop. We still use
-// an asynchronous pattern until there is activity on the socket (a request)
-// in which case we switch to synchronous mode by jumping into an ircd::context
-// drawn from the request pool. When the request is finished, we exit back
-// into asynchronous mode until the next request is received and rinse and repeat.
+/// This sequence exists to avoid any possible c10k-style limitation imposed by
+/// dedicating a context and its stack space to the lifetime of a connection.
+/// This is similar to the thread-per-request pattern before async was in vogue.
 //
-// This sequence exists to avoid any possible c10k-style limitation imposed by
-// dedicating a context and its stack space to the lifetime of a connection.
-// This is similar to the thread-per-request pattern before async was in vogue.
-// Except now with userspace threads, a context switch has a cost on the order
-// of a function call, not nearly that of a system thread. So after enduring
-// several years of non-blocking stackless callback asynchronous web-scale hell,
-// we have now made it out alive on the other side. Enjoy.
-//
-// Pay close attention to the comments to know exactly where you are and what
-// you can do at any given point in this sequence.
-//
+/// Developers: Pay close attention to the comments to know exactly where you
+/// are and what you can do at any given point in this sequence.
+///
 void
 ircd::async_recv_next(std::shared_ptr<client> client,
                       const milliseconds &timeout)

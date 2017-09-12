@@ -1,8 +1,6 @@
 ## IRCd Database
 
-IRCd's database is presented here primarily as a persistent Object store.
-In other words, the structure presented by the database can be represented
-with JSON. This is built from the primitives of `column`, `row` and `cell`.
+The database is an object store built from the primitives of `cell`, `column`, and `row`.
 
 #### Columns
 While a simple key-value store could naively store a JSON document as a textual

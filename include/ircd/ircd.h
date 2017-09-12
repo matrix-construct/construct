@@ -31,6 +31,9 @@
 	#include "stdinc.h"
 #endif
 
+/// \brief Internet Relay Chat daemon. This is the principal namespace for IRCd.
+///
+///
 namespace ircd
 {
 	extern bool debugmode;            ///< Toggled by command line to indicate debug behavior

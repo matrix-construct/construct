@@ -23,10 +23,7 @@
 #pragma once
 #define HAVE_IRCD_DB_H
 
-// IRCd Database
-//
-// Please see db/README.md for documentation.
-//
+/// Database: an object store from the primitives of `cell`, `column`, and `row`.
 namespace ircd::db
 {
 	struct init;
@@ -62,10 +59,11 @@ namespace ircd::db
 	extern struct log::log log;
 }
 
-//
-// These are forward declarations to objects we may carry a pointer to.
-// Users of ircd::db should not have to deal directly with these types.
-//
+/// Forward declarations for rocksdb because we do not include it here.
+///
+/// These are forward declarations to objects we may carry a pointer to.
+/// Users of ircd::db should not have to deal directly with these types.
+///
 namespace rocksdb
 {
 	struct DB;

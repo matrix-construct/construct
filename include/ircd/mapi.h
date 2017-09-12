@@ -22,6 +22,7 @@
 #pragma once
 #define HAVE_IRCD_MAPI_H
 
+/// Module API: Interface for module developers.
 namespace ircd::mapi
 {
 	struct header;

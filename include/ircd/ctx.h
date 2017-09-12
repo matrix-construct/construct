@@ -25,23 +25,23 @@
 #pragma once
 #define HAVE_IRCD_CTX_H
 
-//
-// This is the public interface to the userspace context system. No 3rd party
-// symbols are included from here. This file is included automatically in stdinc.h
-// and you do not have to include it manually.
-//
-// There are two primary objects at work in the context system:
-//
-// `struct context` <ircd/ctx/context.h>
-// Public interface emulating std::thread; included automatically from here.
-// To spawn and manipulate contexts, deal with this object.
-//
-// `struct ctx` (ircd/ctx.cc)
-// Internal implementation of the context. This is not included here.
-// Several low-level functions are exposed for library creators. This file is usually
-// included when boost/asio.hpp is also included and calls are actually made into boost.
-//
-
+/// Userspace Contexts: cooperative threading from stackful coroutines.
+///
+/// This is the public interface to the userspace context system. No 3rd party
+/// symbols are included from here. This file is included automatically in stdinc.h
+/// and you do not have to include it manually.
+///
+/// There are two primary objects at work in the context system:
+///
+/// `struct context` <ircd/ctx/context.h>
+/// Public interface emulating std::thread; included automatically from here.
+/// To spawn and manipulate contexts, deal with this object.
+///
+/// `struct ctx` (ircd/ctx.cc)
+/// Internal implementation of the context. This is not included here.
+/// Several low-level functions are exposed for library creators. This file is usually
+/// included when boost/asio.hpp is also included and calls are actually made into boost.
+///
 namespace ircd::ctx
 {
 	using std::chrono::steady_clock;

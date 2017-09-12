@@ -20,6 +20,7 @@
 #pragma once
 #define HAVE_IRCD_COLOR_H
 
+/// Legacy mIRC color swatch
 namespace ircd::color
 {
 	enum mode

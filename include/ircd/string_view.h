@@ -36,13 +36,12 @@ namespace ircd
 	bool operator!(const string_view &);
 }
 
-//
-// Customized std::string_view (experimental TS / C++17)
-//
-// This class adds iterator-based (char*, char*) construction to std::string_view which otherwise
-// takes traditional (char*, size_t) arguments. This allows boost::spirit grammars to create
-// string_view's using the raw[] directive achieving zero-copy/zero-allocation parsing.
-//
+/// Customized std::string_view (experimental TS / C++17)
+///
+/// This class adds iterator-based (char*, char*) construction to std::string_view which otherwise
+/// takes traditional (char*, size_t) arguments. This allows boost::spirit grammars to create
+/// string_view's using the raw[] directive achieving zero-copy/zero-allocation parsing.
+///
 struct ircd::string_view
 :std::string_view
 {

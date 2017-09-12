@@ -22,15 +22,6 @@
 #pragma once
 #define HAVE_IRCD_JSON_MEMBER_H
 
-// json::member is a pair of values. The key value (member.first) should always
-// be a STRING type. We don't use string_view directly in member.first because
-// json::value can take ownership of a string or use a literal depending on
-// the circumstance and it's more consistent this way.
-//
-// json::member, like json::value, is a runtime construct though still very
-// lightweight and useful for non-deterministic composition to and extraction
-// from JSON strings.
-//
 namespace ircd::json
 {
 	struct member;
@@ -46,6 +37,13 @@ namespace ircd::json
 	string_view stringify(mutable_buffer &, const std::vector<json::object> &);
 }
 
+/// A pair of json::value representing an object member.
+///
+/// The key value (member.first) should always be a STRING type. We don't use
+/// string_view directly in member.first because json::value can take ownership
+/// of a string or use a literal depending on the circumstance and it's more
+/// consistent this way.
+///
 struct ircd::json::member
 :std::pair<value, value>
 {

@@ -41,7 +41,7 @@ class ircd::ctx::dock
 	void notify(ctx &) noexcept;
 
   public:
-	auto size() const                            { return q.size();                                }
+	size_t size() const;
 
 	template<class time_point, class predicate> bool wait_until(time_point&& tp, predicate&& pred);
 	template<class time_point> cv_status wait_until(time_point&& tp);
@@ -72,6 +72,10 @@ noexcept
 	assert(q.empty());
 }
 
+/// Wake up the next context waiting on the dock
+///
+/// Unlike notify_one(), the next context in the queue is repositioned in the
+/// back before being woken up for better fairness.
 inline void
 ircd::ctx::dock::notify()
 noexcept
@@ -85,6 +89,7 @@ noexcept
 	notify(*c);
 }
 
+/// Wake up the next context waiting on the dock
 inline void
 ircd::ctx::dock::notify_one()
 noexcept
@@ -95,14 +100,15 @@ noexcept
 	notify(*q.front());
 }
 
+/// Wake up all contexts waiting on the dock.
+///
+/// We copy the queue and post all notifications without requesting direct context
+/// switches. This ensures everyone gets notified in a single transaction without
+/// any interleaving during this process.
 inline void
 ircd::ctx::dock::notify_all()
 noexcept
 {
-	// We copy the queue and post all notifications without requesting direct context switches.
-	// This ensures everyone gets notified in a single transaction without any interleaving
-	// during this process.
-
 	const auto copy(q);
 	for(const auto &c : copy)
 		ircd::ctx::notify(*c);
@@ -148,7 +154,7 @@ template<class duration,
          class predicate>
 bool
 ircd::ctx::dock::wait_for(const duration &dur,
-               predicate&& pred)
+                          predicate&& pred)
 {
 	static const duration zero(0);
 
@@ -173,9 +179,12 @@ template<class time_point>
 ircd::ctx::cv_status
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
-	const scope remove(std::bind(&dock::remove_self, this));
-	q.emplace_back(&cur());
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
 
+	q.emplace_back(&cur());
 	return ircd::ctx::wait_until<std::nothrow_t>(tp)? cv_status::timeout:
 	                                                  cv_status::no_timeout;
 }
@@ -184,15 +193,22 @@ template<class time_point,
          class predicate>
 bool
 ircd::ctx::dock::wait_until(time_point&& tp,
-                 predicate&& pred)
+                            predicate&& pred)
 {
 	if(pred())
 		return true;
 
-	const scope remove(std::bind(&dock::remove_self, this));
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
+
 	q.emplace_back(&cur()); do
 	{
-		const bool expired(ircd::ctx::wait_until<std::nothrow_t>(tp));
+		const bool expired
+		{
+			ircd::ctx::wait_until<std::nothrow_t>(tp)
+		};
 
 		if(pred())
 			return true;
@@ -201,6 +217,14 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
+}
+
+/// The number of contexts waiting in the queue.
+inline size_t
+ircd::ctx::dock::size()
+const
+{
+	return q.size();
 }
 
 inline void

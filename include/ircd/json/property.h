@@ -22,17 +22,14 @@
 #pragma once
 #define HAVE_IRCD_JSON_PROPERTY_H
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// tuple property template. Specify a list of these in the tuple template to
-// form the members of the object.
-//
-
 namespace ircd::json
 {
 	template<const char *const &name, class value_type> struct property;
 }
 
+/// The property template specifies a key/value member of a json::tuple
+///
+///
 template<const char *const &name,
          class T>
 struct ircd::json::property

@@ -22,6 +22,7 @@
 #pragma once
 #define HAVE_IRCD_JSON_H
 
+/// JavaScript Object Notation: formal grammars & tools
 ///
 /// The IRCd JSON subsystem is meant to be a fast, safe, and extremely
 /// lightweight interface. We have taken a somewhat non-traditional approach

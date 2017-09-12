@@ -29,32 +29,32 @@
 #pragma once
 #define HAVE_IRCD_JS_H
 
-namespace ircd {
-namespace js   {
-
-// Root exception for this subsystem. The exception hierarchy integrating
-// with JS itself inherits from this and is defined in TODO: _________
-IRCD_EXCEPTION(ircd::error, error)
-
-// Specific logging facility for this subsystem with snomask
-extern struct log::log log;
-
-// Fetch version information
-enum class ver
+/// JavaScript Embedded Machine
+namespace ircd::js
 {
-	IMPLEMENTATION,
-};
-const char *version(const ver &ver);
+	// Root exception for this subsystem. The exception hierarchy integrating
+	// with JS itself inherits from this and is defined in TODO: _________
+	IRCD_EXCEPTION(ircd::error, error)
+
+	// Specific logging facility for this subsystem with snomask
+	extern struct log::log log;
+
+	// Fetch version information
+	enum class ver
+	{
+		IMPLEMENTATION,
+	};
+	const char *version(const ver &ver);
+
+	struct init;
+}
 
 // Initialize the subsystem (singleton held by IRCd main context only)
-struct init
+struct ircd::js::init
 {
 	init();
 	~init() noexcept;
 };
-
-} // namespace js
-} // namespace ircd
 
 #ifndef RB_ENABLE_JS
 //

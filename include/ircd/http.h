@@ -25,6 +25,7 @@
 #pragma once
 #define HAVE_IRCD_HTTP_H
 
+/// HyperText TransPort: formal grammars & tools
 namespace ircd::http
 {
 	enum code :int;

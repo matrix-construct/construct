@@ -57,7 +57,7 @@ struct body
 };
 
 // Generate !accounts:host which is the MXID of the room where the members
-// are the actual account registrations themselves for this homeserver.
+// are the actual account registrations for this homeserver.
 const m::id::room::buf accounts_room_id
 {
 	"accounts", home_server
@@ -74,6 +74,7 @@ post_login_password(client &client,
                     const resource::request &request,
                     const resource::request::body<body> &body)
 {
+	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
 		unquote(at<name::user>(body)), home_server

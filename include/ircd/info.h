@@ -23,6 +23,7 @@
 #pragma once
 #define HAVE_IRCD_INFO_H
 
+/// Information & metadata about the library.
 namespace ircd::info
 {
 	struct line;

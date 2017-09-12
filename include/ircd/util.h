@@ -26,6 +26,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_H
 
+/// Tools for developers
+namespace ircd::util
+{
+}
+
 namespace ircd        {
 inline namespace util {
 

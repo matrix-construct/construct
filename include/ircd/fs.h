@@ -36,6 +36,7 @@
  * AUTOMODPATH = directory for autoloaded modules
  */
 
+/// Tools for working with the local filesystem.
 namespace ircd::fs
 {
 	IRCD_EXCEPTION(ircd::error, error)

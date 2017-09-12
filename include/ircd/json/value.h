@@ -22,20 +22,22 @@
 #pragma once
 #define HAVE_IRCD_JSON_VALUE_H
 
-// The ircd::json::value is used if we have to keep non-deterministic runtime
-// state of values apropos a JSON object. In other words, value is runtime-
-// typed rather than the json::tuple which is compile-time typed. The cost of
-// using this value structure is in the switching based on the type enum it
-// stores as well as a branch in the destructor to deallocate owned resources.
-// This is still very lightweight. The structure itself is the same size as
-// a string_view (two pointers). It is also not template-based, allowing us
-// to keep logic in the definition files and out of the headers. Nevertheless,
-// this class should not be abused over an alternative compile-time solution.
-//
-// Value cannot be copied because it can own resources, and recursively. The
-// resource ownership is necessary in cases like nested initializer_lists
-// and other such complex compositions.
-//
+/// A primitive of the ircd::json system representing a value at runtime.
+///
+/// This holds state for values apropos a JSON object.
+///
+/// Value's data can either be in the form of a JSON string or it can be
+/// native machine state. The serial flag indicates the former.
+///
+/// Value is capable of allocation and ownership of its internal data if
+/// necessary with move semantics, but copying may be not implemented in
+/// exceptional cases.
+///
+/// Value can can hold any of the JSON types in either of these states.
+/// This is accomplished with runtime switching and branching but this is
+/// still lightweight. The structure is just the size of two pointers, the
+/// same as a string_view.
+///
 struct ircd::json::value
 {
 	union // xxx std::variant

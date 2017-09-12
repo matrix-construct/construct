@@ -193,29 +193,31 @@ ircd::socket::cancel()
 	sd.cancel();
 }
 
-//
-// Overload for operator() without a timeout. see: operator()
-//
+/// Asynchronous callback when the socket is ready
+///
+/// Overload for operator() without a timeout. see: operator()
+///
 void
 ircd::socket::operator()(handler h)
 {
 	operator()(milliseconds(-1), std::move(h));
 }
 
-//
-// This function calls back the handler when the socket has received
-// something and is ready to be read from.
-//
-// The purpose here is to allow waiting for data from the socket without
-// blocking any context and using any stack space whatsoever, i.e full
-// asynchronous mode.
-//
-// boost::asio has no direct way to accomplish this, so we use a little
-// trick to read a single byte with MSG_PEEK as our indication. This is
-// done directly on the socket and not through the SSL cipher, but we
-// don't want this byte anyway. This isn't such a great trick, because
-// it may result in an extra syscall; so there's room for improvement here.
-//
+/// Asynchronous callback when the socket is ready
+///
+/// This function calls back the handler when the socket has received
+/// something and is ready to be read from.
+///
+/// The purpose here is to allow waiting for data from the socket without
+/// blocking any context and using any stack space whatsoever, i.e full
+/// asynchronous mode.
+///
+/// boost::asio has no direct way to accomplish this because the buffer size
+/// must be positive so we use a little trick to read a single byte with
+/// MSG_PEEK as our indication. This is done directly on the socket and
+/// not through the SSL cipher, but we don't want this byte anyway. This
+/// isn't such a great trick.
+///
 void
 ircd::socket::operator()(const milliseconds &timeout,
                          handler callback)

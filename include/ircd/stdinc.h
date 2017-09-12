@@ -142,8 +142,20 @@ namespace std
 // Forward declarations from third party namespaces not included here
 //
 
-// Boost is not exposed unless explicitly included by a definition file. This
-// is a major improvement of project compile time.
+/// Forward declarations for boost because it is not included here.
+///
+/// libircd does not include third party headers along with its own headers
+/// for the public interface, only standard library headers. boost is only
+/// included in specific definition files where we use its functionality.
+/// This is a major improvement in project compile time.
+namespace boost
+{
+}
+
+/// Forward declarations for boost::asio because it is not included here.
+///
+/// Boost headers are not exposed to our users unless explicitly included by a
+/// definition file.
 namespace boost::asio
 {
 	struct io_service;       // Allow a reference to an ios to be passed to ircd

@@ -22,6 +22,7 @@
 #pragma once
 #define HAVE_IRCD_FMT_H
 
+/// Typesafe format strings from formal grammars & standard RTTI
 namespace ircd::fmt
 {
 	IRCD_EXCEPTION(ircd::error, error);

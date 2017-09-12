@@ -44,6 +44,7 @@ namespace ircd
 	const char *smalldate(const time_t &);
 }
 
+/// Logging system
 namespace ircd::log
 {
 	enum facility :int;

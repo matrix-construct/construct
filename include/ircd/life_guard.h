@@ -22,15 +22,6 @@
 #pragma once
 #define HAVE_IRCD_LIFE_GUARD_H
 
-//
-// life_guard is a convenience which takes advantage of
-// std::enable_shared_from_this<T>. The life_guard glorifies the constructor
-// of an std::shared_ptr<T> by accepting std::weak_ptr<T> and T& itself all
-// with proper semantics. Once construction is successful, the user holds it
-// for the duration of the scope ensuring T& survives context interleaving
-// without being destructed.
-//
-
 namespace ircd
 {
 	// Tests if type inherits from std::enable_shared_from_this<>
@@ -59,19 +50,25 @@ namespace ircd
 	template<class T> struct life_guard;
 }
 
-/* Use the life_guard to keep an object alive within a function running in a context.
- *
- * Example:
- *
-	void foo(client &c)
-	{
-		const life_guard<client> lg(c);
-
-		c.call();      // This call was always safe with or w/o life_guard.
-		ctx::wait();   // The context has now yielded and another context might destroy client &c
-		c.call();      // The context continues and this would have made a call on a dead c.
-	}
-*/
+/// life_guard is a convenience which takes advantage of std::enable_shared_from_this<T>.
+/// The life_guard glorifies the constructor of an std::shared_ptr<T> by accepting
+/// std::weak_ptr<T> and T& itself all with proper semantics. Once construction is
+/// successful, the user holds it for the duration of the scope ensuring T& survives
+/// context interleaving without being destructed.
+///
+/// Use the life_guard to keep an object alive within a function running in a context.
+///
+/// Example:
+///
+///	void foo(client &c)
+///	{
+///		const life_guard<client> lg(c);
+///
+///		c.call();      // This call was always safe with or w/o life_guard.
+///		ctx::wait();   // The context has now yielded and another context might destroy client &c
+///		c.call();      // The context continues and this would have made a call on a dead c.
+///	}
+///
 template<class T>
 struct ircd::life_guard
 :std::shared_ptr<T>

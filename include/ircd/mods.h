@@ -22,6 +22,7 @@
 #pragma once
 #define HAVE_IRCD_MODS_H
 
+/// Modules system
 namespace ircd::mods
 {
 	IRCD_EXCEPTION(ircd::error, error)

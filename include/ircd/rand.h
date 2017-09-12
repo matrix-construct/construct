@@ -23,12 +23,7 @@
 #pragma once
 #define HAVE_IRCD_UTIL_RANDOM_H
 
-namespace ircd::rand
-{
-	extern std::random_device device;
-	extern std::mt19937_64 mt;
-}
-
+/// Some character set dictionaries
 namespace ircd::rand::dict
 {
 	extern const std::string alnum;
@@ -38,8 +33,12 @@ namespace ircd::rand::dict
 	extern const std::string numeric;
 }
 
+/// Tools for randomization
 namespace ircd::rand
 {
+	extern std::random_device device;
+	extern std::mt19937_64 mt;
+
 	uint64_t integer();
 	uint64_t integer(const uint64_t &min, const uint64_t &max);
 
