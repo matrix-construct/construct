@@ -248,6 +248,26 @@ ircd::resource::response::response(client &client,
 }
 
 ircd::resource::response::response(client &client,
+                                   const json::members &members,
+                                   const http::code &code)
+:response{client, code, members}
+{
+}
+
+ircd::resource::response::response(client &client,
+                                   const http::code &code,
+                                   const json::members &members)
+{
+	size_t i(0);
+	json::iov iov;
+	json::iov::push nodes[members.size()];
+	for(const auto &member : members)
+		new (nodes + i++) json::iov::push(iov, member);
+
+	response(client, iov, code);
+}
+
+ircd::resource::response::response(client &client,
                                    const http::code &code)
 :response{client, json::object{"{}"}, code}
 {
