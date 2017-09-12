@@ -114,7 +114,7 @@ catch(const std::exception &e)
 	log::critical("IRCd terminated: %s", e.what());
 
 	if(ircd::debugmode)
-		throw;
+		std::terminate();
 }
 
 //

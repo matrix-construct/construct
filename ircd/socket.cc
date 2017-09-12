@@ -293,7 +293,7 @@ catch(const std::exception &e)
 	           e.what());
 
 	if(ircd::debugmode)
-		throw;
+		std::terminate();
 }
 
 bool

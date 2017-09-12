@@ -319,7 +319,7 @@ catch(const ircd::exception &e)
 	           e.what());
 
 	if(ircd::debugmode)
-		throw;
+		std::terminate();
 
 	return false;
 }
