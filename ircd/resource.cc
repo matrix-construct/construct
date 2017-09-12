@@ -28,11 +28,6 @@ decltype(resource::resources)
 resource::resources
 {};
 
-IRCD_INIT_PRIORITY(STD_CONTAINER)
-decltype(resource::tokens)
-resource::tokens
-{};
-
 } // namespace ircd
 
 ircd::resource &

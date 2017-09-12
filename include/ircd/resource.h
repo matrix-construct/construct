@@ -47,7 +47,6 @@ struct ircd::resource
 	};
 
 	static std::map<string_view, resource *, iless> resources;
-	static std::map<std::string, client *, std::less<>> tokens; //TODO: XXX
 
 	string_view path;
 	string_view description;
