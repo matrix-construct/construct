@@ -57,11 +57,12 @@ template<class T>
 struct ircd::iov<T>::node
 :iov::list_node
 {
-	iov &i;
+	iov *const i {nullptr};
 
 	operator const T &() const;
 	operator T &();
 
+	node() = default;
 	template<class... args> node(iov &, args&&...);
 	node(node &&) = delete;
 	node(const node &) = delete;
@@ -74,7 +75,7 @@ template<class T>
 template<class... args>
 ircd::iov<T>::node::node(iov &iov,
                          args&&... a)
-:i{iov}
+:i{&iov}
 {
 	auto &list
 	{
@@ -99,7 +100,7 @@ template<class T>
 ircd::iov<T>::node::~node()
 noexcept
 {
-	i.remove_if([this](const T &x)
+	i->remove_if([this](const T &x)
 	{
 		return &x == &static_cast<const T &>(*this);
 	});
