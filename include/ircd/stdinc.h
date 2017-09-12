@@ -175,6 +175,7 @@ namespace ircd
 	namespace asio = boost::asio;
 	using namespace std::string_literals;
 	using namespace std::literals::chrono_literals;
+	template<class... T> using ilist = std::initializer_list<T...>;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -205,8 +206,8 @@ namespace ircd
 #include "color.h"
 #include "lexical.h"
 #include "params.h"
-#include "buffer.h"
 #include "iov.h"
+#include "buffer.h"
 #include "parse.h"
 #include "rfc1459.h"
 #include "json.h"

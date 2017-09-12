@@ -22,43 +22,42 @@
 #pragma once
 #define HAVE_IRCD_BUFFER_H
 
+/// Lightweight buffer interface compatible with boost::asio IO buffers and vectors
 namespace ircd::buffer
 {
 	template<class it> struct buffer;
 	struct const_buffer;
 	struct mutable_buffer;
 	template<class buffer, size_t align> struct unique_buffer;
+	template<template<class> class I> using const_buffers = I<const_buffer>;
+	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
 
-	template<class T> using buffers = std::initializer_list<T>;
-	using const_buffers = buffers<const_buffer>;
-	using mutable_buffers = buffers<mutable_buffer>;
-
-	extern const mutable_buffer null_buffer;
-	extern const mutable_buffers null_buffers;
-
+	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
 	template<class it> const it &end(const buffer<it> &buffer);
 	template<class it> it &begin(buffer<it> &buffer);
 	template<class it> it &end(buffer<it> &buffer);
-
 	template<class it> it rbegin(const buffer<it> &buffer);
 	template<class it> it rend(const buffer<it> &buffer);
 
+	// Single buffer tools
 	template<class it> size_t size(const buffer<it> &buffer);
-	template<class T> size_t size(const buffers<T> &buffers);
 	template<class it> const it &data(const buffer<it> &buffer);
-
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
-	template<class T> size_t consume(buffers<T> &buffers, const size_t &bytes);
-
 	template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
 	template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
-
-	template<class T> char *copy(char *&dest, char *const &stop, const buffers<T> &buffer);
-	template<class T> size_t copy(char *const &dest, const size_t &max, const buffers<T> &buffer);
-
 	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
-	template<class T> std::ostream &operator<<(std::ostream &s, const buffers<T> &buffers);
+
+	// Iterable of buffers tools
+	template<template<class> class I, class T> size_t size(const I<T> &buffers);
+	template<template<class> class I, class T> char *copy(char *&dest, char *const &stop, const I<T> &buffer);
+	template<template<class> class I, class T> size_t copy(char *const &dest, const size_t &max, const I<T> &buffer);
+	template<template<class> class I, class T> size_t consume(I<T> &buffers, const size_t &bytes);
+	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
+
+	// Preconstructed null buffers
+	extern const mutable_buffer null_buffer;
+	extern const ilist<mutable_buffer> null_buffers;
 }
 
 // Export these important aliases down to main ircd namespace
@@ -67,10 +66,10 @@ namespace ircd
 	using buffer::const_buffer;
 	using buffer::mutable_buffer;
 	using buffer::unique_buffer;
+	using buffer::null_buffer;
+
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
-	using buffer::null_buffer;
-	using buffer::null_buffers;
 }
 
 template<class it>
@@ -122,17 +121,82 @@ struct ircd::buffer::mutable_buffer
 	using buffer<char *>::buffer;
 };
 
-template<class T>
+template<template<class>
+         class buffers,
+         class T>
 std::ostream &
-ircd::buffer::operator<<(std::ostream &s, const buffers<T> &buffers)
+ircd::buffer::operator<<(std::ostream &s, const buffers<T> &b)
 {
-	std::for_each(begin(buffers), end(buffers), [&s]
-	(const auto &buffer)
+	std::for_each(std::begin(b), std::end(b), [&s]
+	(const auto &b)
 	{
-		s << buffer;
+		s << b;
 	});
 
 	return s;
+}
+
+template<template<class>
+         class buffers,
+         class T>
+size_t
+ircd::buffer::consume(buffers<T> &b,
+                      const size_t &bytes)
+{
+	size_t remain(bytes);
+	for(auto it(std::begin(b)); it != std::end(b) && remain > 0; ++it)
+	{
+		using buffer = typename buffers<T>::value_type;
+		using iterator = typename buffer::value_type;
+
+		buffer &b(const_cast<buffer &>(*it));
+		remain -= consume(b, remain);
+	}
+
+	return bytes - remain;
+}
+
+template<template<class>
+         class buffers,
+         class T>
+size_t
+ircd::buffer::copy(char *const &dest,
+                   const size_t &max,
+                   const buffers<T> &b)
+{
+	size_t ret(0);
+	for(const auto &b : b)
+		ret += copy(dest + ret, max - ret, b);
+
+	return ret;
+}
+
+template<template<class>
+         class buffers,
+         class T>
+char *
+ircd::buffer::copy(char *&dest,
+                   char *const &stop,
+                   const buffers<T> &b)
+{
+	char *const ret(dest);
+	for(const auto &b : b)
+		copy(dest, stop, b);
+
+	return ret;
+}
+
+template<template<class>
+         class buffers,
+         class T>
+size_t
+ircd::buffer::size(const buffers<T> &b)
+{
+	return std::accumulate(std::begin(b), std::end(b), size_t(0), []
+	(auto ret, const auto &b)
+	{
+		return ret += size(b);
+	});
 }
 
 template<class it>
@@ -141,19 +205,6 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 {
 	s.write(data(buffer), size(buffer));
 	return s;
-}
-
-template<class T>
-size_t
-ircd::buffer::copy(char *const &dest,
-                   const size_t &max,
-                   const buffers<T> &buffers)
-{
-	size_t ret(0);
-	for(const auto &buffer : buffers)
-		ret += copy(dest + ret, max - ret, buffer);
-
-	return ret;
 }
 
 template<class it>
@@ -172,19 +223,6 @@ ircd::buffer::copy(char *const &dest,
 	return std::distance(dest, out);
 }
 
-template<class T>
-char *
-ircd::buffer::copy(char *&dest,
-                   char *const &stop,
-                   const buffers<T> &buffers)
-{
-	char *const ret(dest);
-	for(const auto &buffer : buffers)
-		copy(dest, stop, buffer);
-
-	return ret;
-}
-
 template<class it>
 char *
 ircd::buffer::copy(char *&dest,
@@ -196,24 +234,6 @@ ircd::buffer::copy(char *&dest,
 	dest += std::min(size(buffer), remain);
 	memcpy(ret, data(buffer), dest - ret);
 	return ret;
-}
-
-template<class T>
-size_t
-ircd::buffer::consume(buffers<T> &buffers,
-                      const size_t &bytes)
-{
-	size_t remain(bytes);
-	for(auto it(begin(buffers)); it != end(buffers) && remain > 0; ++it)
-	{
-		using buffer = typename buffers<T>::value_type;
-		using iterator = typename buffer::value_type;
-
-		buffer &b(const_cast<buffer &>(*it));
-		remain -= consume(b, remain);
-	}
-
-	return bytes - remain;
 }
 
 template<class it>
@@ -230,17 +250,6 @@ const it &
 ircd::buffer::data(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
-}
-
-template<class T>
-size_t
-ircd::buffer::size(const buffers<T> &buffers)
-{
-	return std::accumulate(std::begin(buffers), std::end(buffers), size_t(0), []
-	(auto ret, const auto &buffer)
-	{
-		return ret += size(buffer);
-	});
 }
 
 template<class it>

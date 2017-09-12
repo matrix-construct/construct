@@ -330,7 +330,7 @@ ircd::http::request::request(const string_view &host,
 	const auto terminator{"\r\n"};
 	user_headers_len = strlcat(user_headers, terminator, sizeof(user_headers));
 
-	const_buffers vector
+	const ilist<const_buffer> vector
 	{
 		{ request_line,      size_t(request_line_len)  },
 		{ host_line,         size_t(host_line_len)     },
@@ -444,7 +444,7 @@ ircd::http::response::response(const code &code,
 		print(user_headers, sizeof(user_headers), headers)
 	};
 
-	const_buffers iov
+	const ilist<const_buffer> iov
 	{
 		{ status_line,      size_t(status_line_len)     },
 		{ server_line,      size_t(server_line_len)     },

@@ -189,7 +189,7 @@ struct ircd::http::response
 	struct head;
 	struct content;
 
-	using write_closure = std::function<void (const_buffers &)>;
+	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
 
 	response(const code &,
@@ -230,7 +230,7 @@ struct ircd::http::request
 	struct head;
 	struct content;
 
-	using write_closure = std::function<void (const_buffers &)>;
+	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
 
 	request(const string_view &host       = {},

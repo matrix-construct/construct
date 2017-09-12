@@ -173,7 +173,7 @@ ircd::http::response::write_closure
 ircd::write_closure(client &client)
 {
 	// returns a function that can be called to send an iovector of data to a client
-	return [&client](const const_buffers &iov)
+	return [&client](const ilist<const_buffer> &iov)
 	{
 		//std::cout << "<<<<" << std::endl;
 		//std::cout << iov << std::endl;

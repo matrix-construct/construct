@@ -46,14 +46,18 @@ namespace ircd
 	std::string hostaddr(const ip::tcp::endpoint &);
 	uint16_t port(const ip::tcp::endpoint &);
 
-	template<class iov> size_t write(socket &, const iov &);               // write_all
-	template<class iov> size_t write(socket &, iov &);                     // write_some
-	size_t write(socket &, const char *const &buf, const size_t &size);
-	size_t write(socket &, const string_view &);
+	size_t write(socket &, const ilist<const_buffer> &);     // write_all
+	size_t write(socket &, const iov<const_buffer> &);       // write_all
+	size_t write(socket &, const const_buffer &);            // write_all
+	size_t write(socket &, iov<const_buffer> &);             // write_some
 
-	template<class iov> size_t read(socket &, const iov &);                // read_all
-	template<class iov> size_t read(socket &, iov &);                      // read_some
-	size_t read(socket &, char *const &buf, const size_t &max);
+	size_t read(socket &, const ilist<mutable_buffer> &);    // read_all
+	size_t read(socket &, const iov<mutable_buffer> &);      // read_all
+	size_t read(socket &, const mutable_buffer &);           // read_all
+	size_t read(socket &, iov<mutable_buffer> &);            // read_some
+
+	size_t available(const socket &);
+	bool connected(const socket &) noexcept;
 }
 
 struct ircd::socket
@@ -102,12 +106,6 @@ struct ircd::socket
 	ip::tcp::endpoint remote() const             { return sd.remote_endpoint();                    }
 	ip::tcp::endpoint local() const              { return sd.local_endpoint();                     }
 
-	bool connected() const noexcept;
-	auto available() const                       { return sd.available();                          }
-
-	template<class duration> void set_timeout(const duration &, handler);
-	template<class duration> void set_timeout(const duration &);
-
 	template<class iov> auto read_some(const iov &, error_code &);
 	template<class iov> auto read_some(const iov &);
 	template<class iov> auto read(const iov &, error_code &);
@@ -118,11 +116,15 @@ struct ircd::socket
 	template<class iov> auto write(const iov &, error_code &);
 	template<class iov> auto write(const iov &);
 
+	void set_timeout(const milliseconds &, handler);
+	void set_timeout(const milliseconds &);
+
 	// Asynchronous 'ready' closure
 	void operator()(const milliseconds &timeout, handler);
 	void operator()(handler);
 	void cancel();
 
+	bool connected() const noexcept;
 	void disconnect(const dc &type = dc::SSL_NOTIFY);
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = -1ms);
 
@@ -171,68 +173,11 @@ class ircd::socket::io
 
 struct ircd::socket::init
 {
+	std::unique_ptr<ip::tcp::resolver> resolver;
+
 	init();
 	~init() noexcept;
 };
-
-template<class iov>
-size_t
-ircd::read(socket &socket,
-           iov &bufs)
-{
-	const auto read(socket.read_some(bufs));
-	const auto consumed(consume(bufs, read));
-	assert(read == consumed);
-	return read;
-}
-
-template<class iov>
-size_t
-ircd::read(socket &socket,
-           const iov &bufs)
-{
-	return socket.read(bufs);
-}
-
-template<class iov>
-size_t
-ircd::write(socket &socket,
-            iov &bufs)
-{
-	const auto wrote(socket.write_some(bufs));
-	const auto consumed(consume(bufs, wrote));
-	assert(wrote == consumed);
-	return consumed;
-}
-
-template<class iov>
-size_t
-ircd::write(socket &socket,
-            const iov &bufs)
-{
-	const auto wrote(socket.write(bufs));
-	assert(wrote == size(bufs));
-	return wrote;
-}
-
-inline
-ircd::socket::io::io(struct socket &sock,
-                     struct stat &stat,
-                     const std::function<size_t ()> &closure)
-:sock{sock}
-,stat{stat}
-,bytes{closure()}
-{
-	stat.bytes += bytes;
-	stat.calls++;
-}
-
-inline
-ircd::socket::io::operator size_t()
-const
-{
-	return bytes;
-}
 
 template<class iov>
 auto
@@ -326,71 +271,4 @@ ircd::socket::read_some(const iov &bufs,
 	{
 		return ssl.async_read_some(bufs, yield(continuation())[ec]);
 	});
-}
-
-template<class duration>
-void
-ircd::socket::set_timeout(const duration &t)
-{
-	if(t < duration(0))
-		return;
-
-	timer.expires_from_now(t);
-	timer.async_wait(std::bind(&socket::handle_timeout, this, weak_from(*this), ph::_1));
-}
-
-template<class duration>
-void
-ircd::socket::set_timeout(const duration &t,
-                          handler h)
-{
-	if(t < duration(0))
-		return;
-
-	timer.expires_from_now(t);
-	timer.async_wait(std::move(h));
-}
-
-inline uint16_t
-ircd::port(const ip::tcp::endpoint &ep)
-{
-	return ep.port();
-}
-
-inline std::string
-ircd::hostaddr(const ip::tcp::endpoint &ep)
-{
-	return string(address(ep));
-}
-
-inline std::string
-ircd::string(const ip::address &addr)
-{
-	return addr.to_string();
-}
-
-inline boost::asio::ip::address
-ircd::address(const ip::tcp::endpoint &ep)
-{
-	return ep.address();
-}
-
-inline
-ircd::buffer::mutable_buffer::operator boost::asio::mutable_buffer()
-const
-{
-	return boost::asio::mutable_buffer
-	{
-		data(*this), size(*this)
-	};
-}
-
-inline
-ircd::buffer::const_buffer::operator boost::asio::const_buffer()
-const
-{
-	return boost::asio::const_buffer
-	{
-		data(*this), size(*this)
-	};
 }

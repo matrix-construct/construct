@@ -24,30 +24,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// buffer.h - provide definition for the null buffers
+// socket.h
 //
-
-const ircd::buffer::mutable_buffer
-ircd::buffer::null_buffer
-{
-    nullptr, nullptr
-};
-
-const ircd::buffer::mutable_buffers
-ircd::buffer::null_buffers
-{{
-    null_buffer
-}};
-
-///////////////////////////////////////////////////////////////////////////////
-//
-//
-
-namespace ircd {
-
-ip::tcp::resolver *resolver;
-
-} // namespace ircd
 
 boost::asio::ssl::context
 ircd::sslv23_client
@@ -55,49 +33,23 @@ ircd::sslv23_client
 	boost::asio::ssl::context::method::sslv23_client
 };
 
-ircd::socket::init::init()
+namespace ircd
 {
-	assert(ircd::ios);
-	resolver = new ip::tcp::resolver(*ios);
+	ip::tcp::resolver *resolver;
+}
+
+ircd::socket::init::init()
+:resolver
+{
+	std::make_unique<ip::tcp::resolver>(*ios)
+}
+{
+	ircd::resolver = resolver.get();
 }
 
 ircd::socket::init::~init()
 {
-	delete resolver;
-	resolver = nullptr;
-}
-
-size_t
-ircd::write(socket &socket,
-            const string_view &s)
-{
-	return write(socket, s.data(), s.size());
-}
-
-size_t
-ircd::write(socket &socket,
-            const char *const &buf,
-            const size_t &size)
-{
-	const std::array<const_buffer, 1> bufs
-	{{
-		{ buf, size }
-	}};
-
-	return socket.write(bufs);
-}
-
-size_t
-ircd::read(socket &socket,
-           char *const &buf,
-           const size_t &max)
-{
-	const std::array<mutable_buffer, 1> bufs
-	{{
-		{ buf, max }
-	}};
-
-	return socket.read_some(bufs);
+	ircd::resolver = nullptr;
 }
 
 ircd::socket::scope_timeout::scope_timeout(socket &socket,
@@ -401,6 +353,106 @@ ircd::socket::handle_timeout(const std::weak_ptr<socket> wp,
 	}
 }
 
+size_t
+ircd::available(const socket &s)
+{
+	return s.sd.available();
+}
+
+bool
+ircd::connected(const socket &s)
+noexcept
+{
+	return s.connected();
+}
+
+uint16_t
+ircd::port(const ip::tcp::endpoint &ep)
+{
+	return ep.port();
+}
+
+std::string
+ircd::hostaddr(const ip::tcp::endpoint &ep)
+{
+	return string(address(ep));
+}
+
+std::string
+ircd::string(const ip::address &addr)
+{
+	return addr.to_string();
+}
+
+boost::asio::ip::address
+ircd::address(const ip::tcp::endpoint &ep)
+{
+	return ep.address();
+}
+
+size_t
+ircd::read(socket &socket,
+           iov<mutable_buffer> &bufs)
+{
+	const size_t read(socket.read_some(bufs));
+	const size_t consumed(buffer::consume(bufs, read));
+	assert(read == consumed);
+	return read;
+}
+
+size_t
+ircd::read(socket &socket,
+           const iov<mutable_buffer> &bufs)
+{
+	return socket.read(bufs);
+}
+
+size_t
+ircd::read(socket &socket,
+           const mutable_buffer &buf)
+{
+	const ilist<mutable_buffer> bufs{buf};
+	return socket.read(bufs);
+}
+
+size_t
+ircd::write(socket &socket,
+            iov<const_buffer> &bufs)
+{
+	const size_t wrote(socket.write_some(bufs));
+	const size_t consumed(consume(bufs, wrote));
+	assert(wrote == consumed);
+	return consumed;
+}
+
+size_t
+ircd::write(socket &socket,
+            const iov<const_buffer> &bufs)
+{
+	const size_t wrote(socket.write(bufs));
+	assert(wrote == size(bufs));
+	return wrote;
+}
+
+size_t
+ircd::write(socket &socket,
+            const const_buffer &buf)
+{
+	const ilist<const_buffer> bufs{buf};
+	const size_t wrote(socket.write(bufs));
+	assert(wrote == size(bufs));
+	return wrote;
+}
+
+size_t
+ircd::write(socket &socket,
+            const ilist<const_buffer> &bufs)
+{
+	const size_t wrote(socket.write(bufs));
+	assert(wrote == size(bufs));
+	return wrote;
+}
+
 bool
 ircd::socket::connected()
 const noexcept try
@@ -410,4 +462,77 @@ const noexcept try
 catch(const boost::system::system_error &e)
 {
 	return false;
+}
+
+void
+ircd::socket::set_timeout(const milliseconds &t)
+{
+	if(t < milliseconds(0))
+		return;
+
+	timer.expires_from_now(t);
+	timer.async_wait(std::bind(&socket::handle_timeout, this, weak_from(*this), ph::_1));
+}
+
+void
+ircd::socket::set_timeout(const milliseconds &t,
+                          handler h)
+{
+	if(t < milliseconds(0))
+		return;
+
+	timer.expires_from_now(t);
+	timer.async_wait(std::move(h));
+}
+
+ircd::socket::io::io(struct socket &sock,
+                     struct stat &stat,
+                     const std::function<size_t ()> &closure)
+:sock{sock}
+,stat{stat}
+,bytes{closure()}
+{
+	stat.bytes += bytes;
+	stat.calls++;
+}
+
+ircd::socket::io::operator size_t()
+const
+{
+	return bytes;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// buffer.h - provide definition for the null buffers and asio conversion
+//
+
+const ircd::buffer::mutable_buffer
+ircd::buffer::null_buffer
+{
+    nullptr, nullptr
+};
+
+const ircd::ilist<ircd::buffer::mutable_buffer>
+ircd::buffer::null_buffers
+{{
+    null_buffer
+}};
+
+ircd::buffer::mutable_buffer::operator boost::asio::mutable_buffer()
+const
+{
+	return boost::asio::mutable_buffer
+	{
+		data(*this), size(*this)
+	};
+}
+
+ircd::buffer::const_buffer::operator boost::asio::const_buffer()
+const
+{
+	return boost::asio::const_buffer
+	{
+		data(*this), size(*this)
+	};
 }
