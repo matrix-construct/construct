@@ -5,8 +5,17 @@ AM_CPPFLAGS =                 \
     @BOOST_CPPFLAGS@          \
     ###
 
+AM_CXXFLAGS = \
+	###
+
 if GCC
-AM_CXXFLAGS = -fpch-deps
+AM_CXXFLAGS += -fpch-deps
+endif
+
+if DEBUG
+if GCC
+AM_CXXFLAGS += -fmax-errors=2
+endif
 endif
 
 if BUILD_PCH

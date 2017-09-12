@@ -154,6 +154,8 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 	CPPDEFINE([NDEBUG])
 ])
 
+AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
+
 
 AC_MSG_CHECKING(if you want to do a profile build)
 AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),

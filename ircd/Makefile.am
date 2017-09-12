@@ -3,7 +3,6 @@ AUTOMAKE_OPTIONS = foreign
 libircddir	= @libdir@
 
 AM_CPPFLAGS = \
-	-fmax-errors=2 \
 	-ffriend-injection \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \
@@ -12,8 +11,17 @@ AM_CPPFLAGS = \
 	-include ircd/ircd.h \
 	###
 
+AM_CXXFLAGS = \
+	###
+
 if MINGW
 PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
+endif
+
+if DEBUG
+if GCC
+AM_CXXFLAGS += -fmax-errors=2
+endif
 endif
 
 AM_LDFLAGS = \
