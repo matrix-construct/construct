@@ -94,8 +94,7 @@ struct ircd::db::row
 	    const json::tuple<T...> & = {},
 	    gopts opts = {});
 
-	template<class pos> friend bool seeka(row &, const pos &);
-	template<class pos> friend bool seek(row &, const pos &);
+	template<class pos> friend size_t seek(row &, const pos &);
 	friend size_t trim(row &, const std::function<bool (cell &)> &);
 	friend size_t trim(row &, const string_view &key); // remove invalid or not equal
 	friend size_t trim(row &); // remove invalid

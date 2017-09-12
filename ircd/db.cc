@@ -1643,35 +1643,18 @@ ircd::db::write(const row::delta *const &begin,
 }
 
 template<class pos>
-bool
+size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
-	return std::all_of(begin(r.its), end(r.its), [&p]
+	return std::count_if(begin(r.its), end(r.its), [&p]
 	(auto &cell)
 	{
 		return seek(cell, p);
 	});
 }
-template bool ircd::db::seek<ircd::db::pos>(row &, const pos &);
-template bool ircd::db::seek<ircd::string_view>(row &, const string_view &);
-
-template<class pos>
-bool
-ircd::db::seeka(row &r,
-                const pos &p)
-{
-	bool invalid(false);
-	std::for_each(begin(r.its), end(r.its), [&invalid, &p]
-	(auto &cell)
-	{
-		invalid |= !seek(cell, p);
-	});
-
-	return !invalid;
-}
-template bool ircd::db::seeka<ircd::db::pos>(row &, const pos &);
-template bool ircd::db::seeka<ircd::string_view>(row &, const string_view &);
+template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
+template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
 
 size_t
 ircd::db::trim(row &r)
