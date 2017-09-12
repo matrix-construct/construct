@@ -110,6 +110,9 @@ enum class ircd::db::pos
 };
 
 #include "db/delta.h"
+#include "db/comparator.h"
+#include "db/prefix.h"
+#include "db/merge.h"
 #include "db/database.h"
 #include "db/opts.h"
 #include "db/column.h"
@@ -119,11 +122,6 @@ enum class ircd::db::pos
 #include "db/json.h"
 #include "db/where.h"
 #include "db/cursor.h"
-
-namespace ircd::db
-{
-	std::string merge_operator(const string_view &, const std::pair<string_view, string_view> &);
-}
 
 namespace ircd
 {

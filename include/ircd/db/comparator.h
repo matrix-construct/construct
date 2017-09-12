@@ -21,37 +21,16 @@
  */
 
 #pragma once
-#define HAVE_IRCD_DB_DELTA_H
+#define HAVE_IRCD_DB_COMPARATOR_H
 
 namespace ircd::db
 {
-	enum op
-	{
-		GET,                     // no-op sentinel, do not use (debug asserts)
-		SET,                     // (batch.Put)
-		MERGE,                   // (batch.Merge)
-		DELETE,                  // (batch.Delete)
-		DELETE_RANGE,            // (batch.DeleteRange)
-		SINGLE_DELETE,           // (batch.SingleDelete)
-	};
-
-	struct delta;
-
-	// Indicates an op uses both a key and value for its operation. Some only use
-	// a key name so an empty value argument in a delta is okay when false.
-	bool value_required(const op &op);
+	struct comparator;
 }
 
-struct ircd::db::delta
-:std::tuple<op, string_view, string_view, string_view>
+struct ircd::db::comparator
 {
-	delta(const string_view &col, const string_view &key, const string_view &val = {}, const enum op &op = op::SET)
-	:std::tuple<enum op, string_view, string_view, string_view>{op, col, key, val}
-	{}
-
-	delta(const enum op &op, const string_view &col, const string_view &key, const string_view &val = {})
-	:std::tuple<enum op, string_view, string_view, string_view>{op, col, key, val}
-	{}
-
-	delta() = default;
+	std::string name;
+	std::function<bool (const string_view &, const string_view &)> less;
+	std::function<bool (const string_view &, const string_view &)> equal;
 };
