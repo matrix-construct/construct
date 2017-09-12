@@ -174,6 +174,7 @@ struct ircd::db::column::delta
 struct ircd::db::column::const_iterator
 {
 	using value_type = column::value_type;
+	using difference_type = size_t;
 	using iterator_category = std::bidirectional_iterator_tag;
 
   protected:
