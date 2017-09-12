@@ -77,6 +77,8 @@ ircd::db::set(json::tuple<T...> &tuple,
 	for(auto &cell : row)
 		if(cell.valid())
 			json::set(tuple, cell.col(), cell.val());
+		else
+			json::set(tuple, cell.col(), string_view{});
 
 	return tuple;
 }
