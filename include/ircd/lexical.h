@@ -602,6 +602,25 @@ ircd::strlcat(char *const &dest,
 }
 #endif
 
+inline size_t
+ircd::strlcat(char *const &dest,
+              const string_view &src,
+              const size_t &max)
+{
+	if(!max)
+		return 0;
+
+	const ssize_t dsize(strnlen(dest, max));
+	const ssize_t ssize(src.size());
+	const ssize_t ret(dsize + ssize);
+	const ssize_t remain(max - dsize);
+	const ssize_t cpsz(ssize >= remain? remain - 1 : ssize);
+	char *const ptr(dest + dsize);
+	memcpy(ptr, src.data(), cpsz);
+	ptr[cpsz] = '\0';
+	return ret;
+}
+
 struct ircd::iless
 {
 	using is_transparent = std::true_type;
