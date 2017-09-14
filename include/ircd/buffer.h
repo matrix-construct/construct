@@ -23,6 +23,17 @@
 #define HAVE_IRCD_BUFFER_H
 
 /// Lightweight buffer interface compatible with boost::asio IO buffers and vectors
+///
+/// A const_buffer is a pair of iterators like `const char *` meant for sending
+/// data; a mutable_buffer is a pair of iterators meant for receiving. These
+/// templates offer tools for individual buffers as well as tools for
+/// iterations of buffers.
+///
+/// An iteration of buffers is an iovector that is passed to our sockets etc.
+/// The ircd::iov template can host an iteration of buffers. The
+/// `template template` functions are tools for a container of buffers of
+/// either type.
+///
 namespace ircd::buffer
 {
 	template<class it> struct buffer;
@@ -130,7 +141,7 @@ std::ostream &
 ircd::buffer::operator<<(std::ostream &s, const buffers<T> &b)
 {
 	std::for_each(std::begin(b), std::end(b), [&s]
-	(const auto &b)
+	(const T &b)
 	{
 		s << b;
 	});
@@ -167,7 +178,7 @@ ircd::buffer::copy(char *const &dest,
                    const buffers<T> &b)
 {
 	size_t ret(0);
-	for(const auto &b : b)
+	for(const T &b : b)
 		ret += copy(dest + ret, max - ret, b);
 
 	return ret;
@@ -182,7 +193,7 @@ ircd::buffer::copy(char *&dest,
                    const buffers<T> &b)
 {
 	char *const ret(dest);
-	for(const auto &b : b)
+	for(const T &b : b)
 		copy(dest, stop, b);
 
 	return ret;
@@ -195,7 +206,7 @@ size_t
 ircd::buffer::size(const buffers<T> &b)
 {
 	return std::accumulate(std::begin(b), std::end(b), size_t(0), []
-	(auto ret, const auto &b)
+	(auto ret, const T &b)
 	{
 		return ret += size(b);
 	});
@@ -261,7 +272,7 @@ ircd::buffer::consume(buffer<it> &buffer,
                       const size_t &bytes)
 {
 	get<0>(buffer) += std::min(size(buffer), bytes);
-	return bytes - size(buffer);
+	return size(buffer);
 }
 
 template<class it>
@@ -342,6 +353,9 @@ const
 	return { get<0>(*this), get<1>(*this) };
 }
 
+/// Like unique_ptr, this template holds ownership of an allocated buffer
+///
+///
 template<class buffer,
          size_t align = 16>
 struct ircd::buffer::unique_buffer
