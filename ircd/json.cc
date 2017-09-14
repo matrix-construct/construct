@@ -729,7 +729,7 @@ ircd::json::serialized(const member *const &begin,
 size_t
 ircd::json::serialized(const member &member)
 {
-	return serialized(member.first) + 1 + 1 + serialized(member.second);
+	return serialized(member.first) + 1 + serialized(member.second);
 }
 
 ircd::json::index
