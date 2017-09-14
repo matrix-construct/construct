@@ -95,6 +95,11 @@ struct ircd::buffer::buffer
 	operator std::string_view() const;
 	explicit operator std::string() const;
 
+	auto &begin() const                { return std::get<0>(*this);            }
+	auto &begin()                      { return std::get<0>(*this);            }
+	auto &end() const                  { return std::get<1>(*this);            }
+	auto &end()                        { return std::get<1>(*this);            }
+
 	buffer(const it &start, const it &stop)
 	:std::tuple<it, it>{start, stop}
 	{}
@@ -120,7 +125,7 @@ struct ircd::buffer::const_buffer
 
 	using buffer<const char *>::buffer;
 	const_buffer(const string_view &s)
-	:buffer<const char *>{begin(s), end(s)}
+	:buffer<const char *>{std::begin(s), std::end(s)}
 	{}
 
 	const_buffer() = default;
