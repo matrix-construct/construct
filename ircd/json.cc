@@ -22,6 +22,7 @@
  */
 
 #include <ircd/spirit.h>
+#include <boost/fusion/include/at.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -30,40 +31,55 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::json::object::member::second),  second )
 )
 
-namespace ircd {
-namespace json {
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::json::member,
+    ( decltype(ircd::json::member::first),   first )
+    ( decltype(ircd::json::member::second),  second )
+)
 
-namespace spirit = boost::spirit;
-namespace ascii = spirit::ascii;
-namespace karma = spirit::karma;
-namespace qi = spirit::qi;
+namespace ircd::json
+{
+	namespace spirit = boost::spirit;
+	namespace ascii = spirit::ascii;
+	namespace karma = spirit::karma;
+	namespace qi = spirit::qi;
 
-using spirit::unused_type;
+	using spirit::unused_type;
 
-using qi::lit;
-using qi::char_;
-using qi::long_;
-using qi::double_;
-using qi::raw;
-using qi::omit;
-using qi::matches;
-using qi::hold;
-using qi::eoi;
-using qi::eps;
-using qi::attr;
+	using qi::lit;
+	using qi::char_;
+	using qi::long_;
+	using qi::double_;
+	using qi::raw;
+	using qi::omit;
+	using qi::matches;
+	using qi::hold;
+	using qi::eoi;
+	using qi::eps;
+	using qi::attr;
 
-using karma::lit;
-using karma::char_;
-using karma::long_;
-using karma::double_;
-using karma::bool_;
-using karma::maxwidth;
-using karma::buffer;
-using karma::eps;
-using karma::attr_cast;
+	using karma::lit;
+	using karma::char_;
+	using karma::long_;
+	using karma::double_;
+	using karma::bool_;
+	using karma::maxwidth;
+	using karma::buffer;
+	using karma::eps;
+	using karma::attr_cast;
+
+	template<class it> struct input;
+	template<class it> struct output;
+
+	// Instantiations of the grammars
+	struct parser extern const parser;
+	struct printer extern const printer;
+	struct ostreamer extern const ostreamer;
+}
 
 template<class it>
-struct input
+struct ircd::json::input
 :qi::grammar<it, unused_type>
 {
 	template<class T = unused_type> using rule = qi::rule<it, T>;
@@ -90,9 +106,9 @@ struct input
 	rule<> value_sep                   { lit(',')                                     ,"value sep" };
 
 	// literal
-	rule<string_view> lit_true         { lit("true")                               ,"literal true" };
 	rule<string_view> lit_false        { lit("false")                             ,"literal false" };
-	rule<string_view> lit_null         { lit("null")                               ,"literal null" };
+	rule<string_view> lit_true         { lit("true")                               ,"literal true" };
+	rule<string_view> lit_null         { lit("null")                                       ,"null" };
 
 	rule<> quote                       { lit('"')                                         ,"quote" };
 	rule<string_view> chars            { raw[*(char_ - quote)]                       ,"characters" };
@@ -103,28 +119,28 @@ struct input
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
 	rule<string_view> number           { raw[double_]                                    ,"number" };
 
-	rule<string_view> array
+	rule<json::object::member> member
 	{
-		array_begin >> -(omit[ws >> value >> ws] % value_sep) >> ws >> array_end
-		,"array"
+		name >> name_sep >> value
+		,"member"
 	};
 
 	rule<string_view> object
 	{
-		object_begin >> -(omit[ws >> member >> ws] % value_sep) >> ws >> object_end
+		raw[object_begin >> -(member % value_sep) >> object_end]
 		,"object"
+	};
+
+	rule<string_view> array
+	{
+		raw[array_begin >> -(value % value_sep) >> array_end]
+		,"array"
 	};
 
 	rule<string_view> value
 	{
-		lit_false | lit_true | lit_null | object | array | number | string
+		raw[lit_false | lit_null | lit_true | object | array | number | string]
 		,"value"
-	};
-
-	rule<object::member> member
-	{
-		name >> ws >> name_sep >> ws >> value
-		,"member"
 	};
 
 	rule<int> type
@@ -140,13 +156,14 @@ struct input
 	input()
 	:input::base_type{rule<>{}}
 	{
-		array %= array_begin >> -(omit[ws >> value >> ws] % value_sep) >> ws >> array_end;
-		object %= object_begin >> -(omit[ws >> member >> ws] % value_sep) >> ws >> object_end;
+		member %= name >> name_sep >> value;
+		array %= raw[array_begin >> -(value % value_sep) >> array_end];
+		object %= raw[object_begin >> -(member % value_sep) >> object_end];
 	}
 };
 
 template<class it>
-struct output
+struct ircd::json::output
 :karma::grammar<it, unused_type>
 {
 	template<class T = unused_type> using rule = karma::rule<it, T>;
@@ -167,8 +184,8 @@ struct output
 	// structural
 	rule<> object_begin                { lit('{')                                  ,"object begin" };
 	rule<> object_end                  { lit('}')                                    ,"object end" };
-	rule<> array_begin                 { lit('[')                                  ,"array begin"  };
-	rule<> array_end                   { lit(']')                                    ,"array end"  };
+	rule<> array_begin                 { lit('[')                                   ,"array begin" };
+	rule<> array_end                   { lit(']')                                     ,"array end" };
 	rule<> name_sep                    { lit(':')                                ,"name separator" };
 	rule<> value_sep                   { lit(',')                               ,"value separator" };
 	rule<> quote                       { lit('"')                                         ,"quote" };
@@ -182,63 +199,20 @@ struct output
 	rule<string_view> string           { quote << chars << quote                         ,"string" };
 	rule<string_view> number           { double_                                         ,"number" };
 	rule<string_view> name             { quote << +(~char_('"')) << quote                  ,"name" };
-	rule<string_view> value            { rule<string_view>{}  /* subclass implemented */  ,"value" };
-
-	rule<const string_view &> elem
-	{
-		value
-		,"element"
-	};
-
-	rule<const json::array &> elems
-	{
-		-(value % value_sep)
-		,"elements"
-	};
-
-	rule<const json::array &> array
-	{
-		array_begin << elems << array_end
-		,"array"
-	};
-
-	rule<const json::object::member &> member
-	{
-		name << name_sep << value
-		,"member"
-	};
-
-	rule<const json::object &> members
-	{
-		-(member % value_sep)
-		,"members"
-	};
-
-	rule<const json::object &> object
-	{
-		object_begin << members << object_end
-		,"object"
-	};
 
 	output()
 	:output::base_type{rule<>{}}
 	{}
 };
 
-} // namespace json
-} // namespace ircd
-
-namespace ircd {
-namespace json {
-
-struct parser
+struct ircd::json::parser
 :input<const char *>
 {
-	using input<const char *>::input;
+	using input::input;
 }
-const parser;
+const ircd::json::parser;
 
-struct printer
+struct ircd::json::printer
 :output<char *>
 {
 	template<class generator,
@@ -253,117 +227,14 @@ struct printer
 	{
 		return operator()(begin(out), end(out), std::forward<args>(a)...);
 	}
-
-	printer();
 }
-const printer;
+const ircd::json::printer;
 
-struct ostreamer
+struct ircd::json::ostreamer
 :output<karma::ostream_iterator<char>>
 {
-	ostreamer();
 }
-const ostreamer;
-
-} // namespace json
-} // namespace ircd
-
-namespace ircd {
-namespace json {
-namespace      {
-
-void
-failed_to_serialize_object()
-{
-	throw print_error("The JSON generator failed to serialize object");
-}
-
-void
-failed_to_stream_object()
-{
-	throw print_error("The JSON generator failed to stream object");
-}
-
-} // namespace <anonymous>
-} // namespace json
-} // namespace ircd
-
-namespace ircd {
-namespace db   {
-
-std::string
-merge_operator(const string_view &key,
-               const std::pair<string_view, string_view> &delta)
-{
-	ircd::json::index index{delta.first};
-	index += delta.second;
-	return index;
-}
-
-} // namespace db
-} // namespace ircd
-
-ircd::json::printer::printer()
-{
-	const auto recursor([this](auto &a, auto &b, auto &c)
-	{
-		const auto recurse_array([&a]
-		{
-			mutable_buffer mb
-			{
-				const_cast<char *>(a.data()), a.size()
-			};
-
-			const auto r(stringify(mb, json::array(a)));
-			a.resize(r.size());
-		});
-
-		const auto recurse_object([&a]
-		{
-			mutable_buffer mb
-			{
-				const_cast<char *>(a.data()), a.size()
-			};
-
-			const auto r(stringify(mb, json::object(a)));
-			a.resize(r.size());
-		});
-
-		const auto quote_string([&]
-		{
-			a.insert(a.end(), '"');
-			a.insert(a.begin(), '"');
-		});
-
-		if(likely(!a.empty())) switch(a.front())
-		{
-			case '{':  recurse_object();    break;
-			case '[':  recurse_array();     break;
-			case '"':                       break;
-			case '0':                       break;
-			case '1':                       break;
-			case '2':                       break;
-			case '3':                       break;
-			case '4':                       break;
-			case '5':                       break;
-			case '6':                       break;
-			case '7':                       break;
-			case '8':                       break;
-			case '9':                       break;
-			case 't':
-			case 'f':
-			case 'n':
-				if(a == "true" || a == "false" || a == "null")
-					break;
-
-			default:
-				quote_string();
-				break;
-		}
-	});
-
-	value %= karma::string[recursor];
-}
+const ircd::json::ostreamer;
 
 template<class gen,
          class attr>
@@ -374,9 +245,17 @@ ircd::json::printer::operator()(char *&out,
                                 attr&& a)
 const
 {
+	const auto throws([&out, &stop]
+	{
+		throw print_error("Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
+		                  demangle<decltype(a)>(),
+		                  demangle<decltype(g)>(),
+		                  size_t(stop - out));
+	});
+
 	const auto gg
 	{
-		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[failed_to_serialize_object]
+		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[throws]
 	};
 
 	return karma::generate(out, gg, std::forward<attr>(a));
@@ -389,58 +268,155 @@ ircd::json::printer::operator()(char *&out,
                                 gen&& g)
 const
 {
+	const auto throws([&out, &stop]
+	{
+		throw print_error("Failed to print generator '%s' (%zd bytes in buffer)",
+		                  demangle<decltype(g)>(),
+		                  size_t(stop - out));
+	});
+
 	const auto gg
 	{
-		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[failed_to_serialize_object]
+		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[throws]
 	};
 
 	return karma::generate(out, gg);
 }
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const std::vector<json::object> &v)
+///////////////////////////////////////////////////////////////////////////////
+//
+// iov.h
+//
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const iov &iov)
 {
-	const auto print_member([&buf](const string_view &elem)
+	s << json::string(iov);
+	return s;
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &head,
+                      const iov &iov)
+{
+	const auto num{iov.size()};
+	const member *m[num];
+
+	size_t i(0);
+	std::for_each(std::begin(iov), std::end(iov), [&i, &m]
+	(const auto &member)
 	{
-		//printer(buf, printer.elem, elem);
-		const auto cpsz(std::min(size(buf), elem.size()));
-		memcpy(begin(buf), elem.data(), cpsz);
-		begin(buf) += cpsz;
+		m[i++] = &member;
 	});
 
-	char *const start(begin(buf));
-	printer(buf, printer.array_begin);
-
-	auto it(std::begin(v));
-	if(it != std::end(v))
-	{
-		print_member(*it);
-		for(++it; it != std::end(v); ++it)
-		{
-			printer(buf, printer.value_sep);
-			print_member(*it);
-		}
-	}
-
-	printer(buf, printer.array_end);
-	return string_view{start, begin(buf)};
+	return stringify(head, m, m + num);
 }
+
+size_t
+ircd::json::serialized(const iov &iov)
+{
+	const size_t ret
+	{
+		1U + iov.empty()
+	};
+
+	return std::accumulate(std::begin(iov), std::end(iov), ret, []
+	(auto ret, const auto &member)
+	{
+		return ret += serialized(member) + 1;
+	});
+}
+
+bool
+ircd::json::iov::has(const string_view &key)
+const
+{
+	return std::any_of(std::begin(*this), std::end(*this), [&key]
+	(const auto &member)
+	{
+		return string_view{member.first} == key;
+	});
+}
+
+const ircd::json::value &
+ircd::json::iov::at(const string_view &key)
+const
+{
+	const auto it(std::find_if(std::begin(*this), std::end(*this), [&key]
+	(const auto &member)
+	{
+		return string_view{member.first} == key;
+	}));
+
+	return it->second;
+}
+
+ircd::json::iov::add::add(iov &iov,
+                          member member)
+:node
+{
+	iov, [&iov, &member]
+	{
+		if(iov.has(member.first))
+			throw exists("failed to add member '%s': already exists",
+			             string_view{member.first});
+
+		return std::move(member);
+	}()
+}
+{
+}
+
+ircd::json::iov::add_if::add_if(iov &iov,
+                                const bool &b,
+                                member member)
+:node
+{
+	iov, std::move(member)
+}
+{
+	if(!b)
+		iov.pop_front();
+}
+
+ircd::json::iov::set::set(iov &iov, member member)
+:node
+{
+	iov, [&iov, &member]
+	{
+		iov.remove_if([&member](const auto &existing)
+		{
+			return string_view{existing.first} == string_view{member.first};
+		});
+
+		return std::move(member);
+	}()
+}
+{
+}
+
+ircd::json::iov::set_if::set_if(iov &iov,
+                                const bool &b,
+                                member member)
+:node
+{
+	iov, std::move(member)
+}
+{
+	if(!b)
+		iov.pop_front();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/member.h
+//
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const members &list)
 {
 	return stringify(buf, std::begin(list), std::end(list));
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const index &obj)
-{
-	const member *const &begin(&obj.idx.front());
-	const member *const &end(begin + obj.idx.size());
-	return stringify(buf, begin, end);
 }
 
 ircd::string_view
@@ -468,76 +444,14 @@ ircd::json::stringify(mutable_buffer &buf,
                       const member *const *const &b,
                       const member *const *const &e)
 {
-	const auto print_string([&buf](const value &value)
+	const auto &print_member
 	{
-		printer(buf, printer.string, string_view{value});
-	});
-
-	const auto print_literal([&buf](const value &value)
-	{
-		printer(buf, printer.literal, string_view{value});
-	});
-
-	const auto print_object([&buf](const value &value)
-	{
-		if(value.serial)
+		[&](const member &member)
 		{
-			printer(buf, printer.object, string_view{value});
-			return;
+			printer(buf, printer.name << printer.name_sep, member.first);
+			stringify(buf, member.second);
 		}
-
-		assert(value.object);
-		stringify(buf, *value.object);
-	});
-
-	const auto print_array([&buf](const value &value)
-	{
-		if(value.serial)
-		{
-			//printer(out, stop, printer.array, value);
-			const string_view data(value);
-			const auto cpsz(std::min(size(buf), data.size()));
-			memcpy(begin(buf), data.data(), cpsz);
-			begin(buf) += cpsz;
-			return;
-		}
-
-		assert(0);
-		//assert(value.object);
-		//serialize(*value.object, out, stop);
-	});
-
-	const auto print_number([&buf](const value &value)
-	{
-		if(value.serial)
-		{
-			if(value.floats)
-				printer(buf, double_, string_view{value});
-			else
-				printer(buf, long_, string_view{value});
-
-			return;
-		}
-
-		if(value.floats)
-			printer(buf, double_, value.floating);
-		else
-			printer(buf, long_, value.integer);
-	});
-
-	const auto print_member([&](const member &member)
-	{
-		printer(buf, printer.name << printer.name_sep, member.first);
-
-		switch(member.second.type)
-		{
-			case STRING:   print_string(member.second);   break;
-			case OBJECT:   print_object(member.second);   break;
-			case ARRAY:    print_array(member.second);    break;
-			case NUMBER:   print_number(member.second);   break;
-			case LITERAL:  print_literal(member.second);  break;
-		}
-	});
+	};
 
 	char *const start(begin(buf));
 	printer(buf, printer.object_begin);
@@ -555,157 +469,6 @@ ircd::json::stringify(mutable_buffer &buf,
 
 	printer(buf, printer.object_end);
 	return string_view{start, begin(buf)};
-}
-
-ircd::json::ostreamer::ostreamer()
-{
-	const auto recursor([this](auto &a, auto &b, auto &c)
-	{
-		const auto recurse_array([&a]
-		{
-			mutable_buffer mb
-			{
-				const_cast<char *>(a.data()), a.size()
-			};
-
-			const auto r(stringify(mb, json::array(a)));
-			a.resize(r.size());
-		});
-
-		const auto recurse_object([&a]
-		{
-			mutable_buffer mb
-			{
-				const_cast<char *>(a.data()), a.size()
-			};
-
-			const auto r(stringify(mb, json::object(a)));
-			a.resize(r.size());
-		});
-
-		const auto quote_string([&]
-		{
-			a.insert(a.end(), '"');
-			a.insert(a.begin(), '"');
-		});
-
-		if(likely(!a.empty())) switch(a.front())
-		{
-			case '{':  recurse_object();    break;
-			case '[':  recurse_array();     break;
-			case '"':                       break;
-			case '0':                       break;
-			case '1':                       break;
-			case '2':                       break;
-			case '3':                       break;
-			case '4':                       break;
-			case '5':                       break;
-			case '6':                       break;
-			case '7':                       break;
-			case '8':                       break;
-			case '9':                       break;
-			case 't':
-			case 'f':
-			case 'n':
-				if(a == "true" || a == "false" || a == "null")
-					break;
-
-			default:
-				quote_string();
-				break;
-		}
-	});
-
-	value %= karma::string[recursor];
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const index &obj)
-{
-	karma::ostream_iterator<char> osi(s);
-
-	const auto stream_string([&osi](const value &value)
-	{
-		karma::generate(osi, ostreamer.string, string_view{value});
-	});
-
-	const auto stream_literal([&osi](const value &value)
-	{
-		karma::generate(osi, ostreamer.literal, string_view{value});
-	});
-
-	const auto stream_object([&osi, &s](const value &value)
-	{
-		if(value.serial)
-		{
-			karma::generate(osi, ostreamer.object, string_view{value});
-			return;
-		}
-
-		assert(value.object);
-		s << *value.object;
-	});
-
-	const auto stream_array([&osi](const value &value)
-	{
-		if(value.serial)
-		{
-			karma::generate(osi, ostreamer.array, string_view{value});
-			return;
-		}
-
-		assert(0);
-		//assert(value.object);
-		//s << *value.object;
-	});
-
-	const auto stream_number([&osi](const value &value)
-	{
-		if(value.serial)
-		{
-			if(value.floats)
-				karma::generate(osi, double_, string_view{value});
-			else
-				karma::generate(osi, long_, string_view{value});
-
-			return;
-		}
-
-		if(value.floats)
-			karma::generate(osi, double_, value.floating);
-		else
-			karma::generate(osi, long_, value.integer);
-	});
-
-	const auto stream_member([&](const member &member)
-	{
-		karma::generate(osi, ostreamer.name << ostreamer.name_sep, string_view(member.first));
-
-		switch(member.second.type)
-		{
-			case STRING:   stream_string(member.second);   break;
-			case OBJECT:   stream_object(member.second);   break;
-			case ARRAY:    stream_array(member.second);    break;
-			case NUMBER:   stream_number(member.second);   break;
-			case LITERAL:  stream_literal(member.second);  break;
-		}
-	});
-
-	karma::generate(osi, ostreamer.object_begin);
-
-	auto it(begin(obj));
-	if(it != end(obj))
-	{
-		stream_member(*it);
-		for(++it; it != end(obj); ++it)
-		{
-			karma::generate(osi, ostreamer.value_sep);
-			stream_member(*it);
-		}
-	}
-
-	karma::generate(osi, ostreamer.object_end);
-	return s;
 }
 
 size_t
@@ -732,205 +495,264 @@ ircd::json::serialized(const member &member)
 	return serialized(member.first) + 1 + serialized(member.second);
 }
 
-ircd::json::index
-ircd::json::operator+(const object &left, const object &right)
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/object.h
+//
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object &object)
 {
-	index ret(left);
-	ret += right;
+	const char *const start(begin(buf));
+	consume(buf, copy(buf, string_view{object}));
+	return { start, begin(buf) };
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object::member &member)
+{
+	static const auto throws([]
+	{
+		throw print_error("The JSON generator failed to stringify object::member");
+	});
+
+	const char *const start(begin(buf));
+	consume(buf, copy(buf, string_view{member.first}));
+	printer(buf, printer.name_sep | eps[throws]);
+	consume(buf, copy(buf, string_view{member.second}));
+	return string_view{start, begin(buf)};
+}
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const object &object)
+{
+	s << json::string(object);
+	return s;
+}
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const object::member &member)
+{
+	s << json::string(member);
+	return s;
+}
+
+ircd::json::object::const_iterator &
+ircd::json::object::const_iterator::operator++()
+try
+{
+	static const qi::rule<const char *, json::object::member> member
+	{
+		parser.name >> parser.name_sep >> parser.value
+		,"next object member"
+	};
+
+	static const qi::rule<const char *, json::object::member> parse_next
+	{
+		(parser.value_sep >> member) | parser.object_end
+		,"next object member or end"
+	};
+
+	state.first = string_view{};
+	state.second = string_view{};
+	qi::parse(start, stop, eps > parse_next, state);
+	return *this;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	const auto rule(ircd::string(e.what_));
+	const long size(std::distance(e.first, e.last));
+	throw parse_error("Expected JSON %s. You input %zu invalid characters starting with `%s`.",
+	                  between(rule, "<", ">"),
+	                  size,
+	                  string_view(e.first, e.first + std::min(size, 64L)));
+}
+
+ircd::json::object::operator std::string()
+const
+{
+	return json::string(*this);
+}
+
+ircd::json::object::const_iterator
+ircd::json::object::begin()
+const try
+{
+	static const qi::rule<const char *, json::object::member> object_member
+	{
+		parser.name >> parser.name_sep >> parser.value
+		,"object member"
+	};
+
+	static const qi::rule<const char *, json::object::member> parse_begin
+	{
+		parser.object_begin >> (parser.object_end | object_member)
+		,"object begin and member or end"
+	};
+
+	const_iterator ret
+	{
+		string_view::begin(), string_view::end()
+	};
+
+	if(!empty())
+		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
+
 	return ret;
 }
-
-ircd::json::index &
-ircd::json::operator+=(index &left, const object &right)
+catch(const qi::expectation_failure<const char *> &e)
 {
-	for(const auto &b : right)
+	const auto rule(ircd::string(e.what_));
+	const long size(std::distance(e.first, e.last));
+	throw parse_error("Expected JSON %s. You input %zu invalid characters starting with `%s`.",
+	                  between(rule, "<", ">"),
+	                  size,
+	                  string_view(e.first, e.first + std::min(size, 64L)));
+}
+
+ircd::json::object::const_iterator
+ircd::json::object::end()
+const
+{
+	return { string_view::end(), string_view::end() };
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/array.h
+//
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const array &v)
+{
+	consume(buf, copy(buf, string_view{v}));
+	return string_view{v};
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const std::string *const &b,
+                      const std::string *const &e)
+{
+	return array::stringify(buf, b, e);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const string_view *const &b,
+                      const string_view *const &e)
+{
+	return array::stringify(buf, b, e);
+}
+
+template<class it>
+ircd::string_view
+ircd::json::array::stringify(mutable_buffer &buf,
+                             const it &b,
+                             const it &e)
+{
+	const auto print_element
 	{
-		const auto deletion
+		[&buf](const string_view &element)
 		{
-			// empty replacement value indicates deletion
-			b.second.empty()    ||
-			b.second == "\"\""  ||
-			b.second == "{}"    ||
-			b.second == "[]"
-		};
-
-		const auto it(left.find(b.first));
-		if(it == left.end())
-		{
-			if(deletion)   // prevents adding the empty indicator as the new key!
-				continue;
-
-			left.idx.emplace_back(member{b});
-			continue;
+			if(!consume(buf, buffer::copy(buf, element)))
+				throw print_error("The JSON generator ran out of space in supplied buffer");
 		}
+	};
 
-		if(deletion)
+	char *const start(std::begin(buf));
+	printer(buf, printer.array_begin);
+
+	auto i(b);
+	if(i != e)
+	{
+		print_element(*i);
+		for(++i; i != e; ++i)
 		{
-			left.erase(it);
-			continue;
-		}
-
-		auto &a(const_cast<member &>(*it));
-		switch(type(a.second))
-		{
-			default:
-			{
-				a = member{b};
-				continue;
-			}
-
-			// merge recursively
-			case OBJECT:
-			{
-				auto merged(std::make_unique<index>(json::object{a.second}));
-				*merged += json::object{b.second};
-				if(merged->empty())
-				{
-					// Child merge was empty value. Now we can also remove this empty parent.
-					left.erase(it);
-					continue;
-				}
-
-				a = member{string_view{a.first}, std::move(merged)};
-				continue;
-			}
+			printer(buf, printer.value_sep);
+			print_element(*i);
 		}
 	}
 
-	return left;
+	printer(buf, printer.array_end);
+	return string_view{start, std::begin(buf)};
 }
 
-ircd::json::index::index(recursive_t recursive,
-                         const object &object)
-:idx{object.count()}
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const array &a)
 {
-	std::transform(std::begin(object), std::end(object), std::begin(idx), [&]
-	(const object::member &m) -> member
+	s << json::string(a);
+	return s;
+}
+
+ircd::json::array::const_iterator &
+ircd::json::array::const_iterator::operator++()
+try
+{
+	static const qi::rule<const char *, string_view> parse_next
 	{
-		switch(type(m.second))
-		{
-			case OBJECT:
-				return member{m.first, std::make_unique<index>(recursive, m.second)};
+		parser.array_end | (parser.value_sep >> parser.value)
+		,"next array element or end"
+	};
 
-			default:
-				return member{m};
-		};
-	});
+	state = string_view{};
+	qi::parse(start, stop, eps > parse_next, state);
+	return *this;
 }
-
-ircd::json::index::index(const object &object)
-:idx{object.count()}
+catch(const qi::expectation_failure<const char *> &e)
 {
-	std::transform(std::begin(object), std::end(object), std::begin(idx), []
-	(const object::member &m) -> member
-	{
-		return member{m};
-	});
+	const auto rule(ircd::string(e.what_));
+	const long size(std::distance(e.first, e.last));
+	throw parse_error("Expected JSON %s. You input %zd invalid characters starting with `%s`.",
+	                  between(rule, "<", ">"),
+	                  size,
+	                  string_view(e.first, e.first + std::min(size, 64L)));
 }
 
-ircd::json::index::index(std::initializer_list<member> builder)
-:idx{builder.size()}
-{
-	std::transform(std::begin(builder), std::end(builder), std::begin(idx), []
-	(auto&& m)
-	{
-		return std::move(const_cast<member &>(m));
-	});
-
-	const auto empty([](const auto &member)
-	{
-		return member.first.empty();
-	});
-
-	idx.erase(std::remove_if(std::begin(idx), std::end(idx), empty), idx.end());
-}
-
-bool
-ircd::json::index::erase(const string_view &name)
-{
-	const auto it(find(name));
-	if(it == end())
-		return false;
-
-	erase(it);
-	return true;
-}
-
-void
-ircd::json::index::erase(const const_iterator &it)
-{
-	idx.erase(it);
-}
-
-ircd::json::index::const_iterator
-ircd::json::index::erase(const const_iterator &start,
-                         const const_iterator &stop)
-{
-	return { idx.erase(start, stop) };
-}
-
-const ircd::json::value &
-ircd::json::index::at(const string_view &path)
+ircd::json::array::operator std::string()
 const
 {
-	const auto elem(split(path, '.'));
-	const auto ident(split(elem.first, '['));
-	const auto &name(ident.first);
-	const auto &indice(ident.second);
-
-	const auto it(find(name));
-	if(unlikely(it == end()))
-		throw not_found("'%s'", name);
-
-	const auto &val(it->second);
-	if(!indice.empty())
-	{
-		const auto idx(lex_cast<size_t>(rstrip(indice, ']')));
-
-		if(type(val) != ARRAY)
-			throw not_found("cannot recurse through non-array \"%s\" for indice [%zu]", name, idx);
-
-		if(val.serial)
-			throw not_found("cannot recurse through unparsed array \"%s\" for indice [%zu]", name, idx);
-
-		assert(0);
-		//return val.array->at(idx);
-	}
-	else if(!elem.second.empty())
-	{
-		if(type(val) != OBJECT)
-			throw not_found("cannot recurse through non-object \"%s\" for \"%s\"", name, elem.second);
-
-		if(val.serial)
-			throw not_found("cannot recurse through unparsed object \"%s\" for \"%s\"", name, elem.second);
-
-		return val.object->at(elem.second);
-	}
-
-	return it->second;
+	return json::string(*this);
 }
 
-size_t
-ircd::json::serialized(const index &index)
+ircd::json::array::const_iterator
+ircd::json::array::begin()
+const try
 {
-	return index.serialized();
+	static const qi::rule<const char *, string_view> parse_begin
+	{
+		parser.array_begin >> (parser.array_end | parser.value)
+		,"array begin and element or end"
+	};
+
+	const_iterator ret
+	{
+		string_view::begin(), string_view::end()
+	};
+
+	if(!empty())
+		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
+
+	return ret;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	const auto rule(ircd::string(e.what_));
+	const long size(std::distance(e.first, e.last));
+	throw parse_error("Expected JSON %s. You input %zd invalid characters starting with `%s`.",
+	                  between(rule, "<", ">"),
+	                  size,
+	                  string_view(e.first, e.first + std::min(size, 64L)));
 }
 
-size_t
-ircd::json::index::serialized()
+ircd::json::array::const_iterator
+ircd::json::array::end()
 const
 {
-	const member *const &begin(&idx.front());
-	const member *const &end(begin + idx.size());
-	return json::serialized(begin, end);
-}
-
-ircd::json::index::operator std::string()
-const
-{
-	const member *const &begin(&idx.front());
-	const member *const &end(begin + idx.size());
-	return json::string(begin, end);
+	return { string_view::end(), string_view::end() };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -938,49 +760,313 @@ const
 // json/value.h
 //
 
+const ircd::string_view ircd::json::value::literal_null {"null"};
+const ircd::string_view ircd::json::value::literal_true {"true"};
+const ircd::string_view ircd::json::value::literal_false {"false"};
+const ircd::string_view ircd::json::value::empty_string {"\"\""};
+const ircd::string_view ircd::json::value::empty_number {"0"};
+const ircd::string_view ircd::json::value::empty_object {"{}"};
+const ircd::string_view ircd::json::value::empty_array {"[]"};
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const value &v)
+{
+	s << json::string(v);
+	return s;
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const value *const &b,
+                      const value *const &e)
+{
+	static const auto throws([]
+	{
+		throw print_error("The JSON generator failed to print array values");
+	});
+
+	char *const start(begin(buf));
+	printer(buf, printer.array_begin);
+
+	auto it(b);
+	if(it != e)
+	{
+		stringify(buf, *it);
+		for(++it; it != e; ++it)
+		{
+			printer(buf, printer.value_sep);
+			stringify(buf, *it);
+		}
+	}
+
+	printer(buf, printer.array_end);
+	return string_view{start, begin(buf)};
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const value &v)
+{
+	const auto start
+	{
+		begin(buf)
+	};
+
+	switch(v.type)
+	{
+		case STRING:
+		{
+			const string_view sv{v};
+			printer(buf, printer.string, sv);
+			break;
+		}
+
+		case LITERAL:
+		{
+			consume(buf, copy(buf, string_view{v}));
+			break;
+		}
+
+		case OBJECT:
+		{
+			if(v.serial)
+			{
+				consume(buf, copy(buf, string_view{v}));
+				break;
+			}
+
+			if(v.object)
+			{
+				stringify(buf, v.object, v.object + v.len);
+				break;
+			}
+
+			consume(buf, copy(buf, v.literal_null));
+			break;
+		}
+
+		case ARRAY:
+		{
+			if(v.serial)
+			{
+				consume(buf, copy(buf, string_view{v}));
+				break;
+			}
+
+			if(v.array)
+			{
+				stringify(buf, v.array, v.array + v.len);
+				break;
+			}
+
+			consume(buf, copy(buf, v.literal_null));
+			break;
+		}
+
+		case NUMBER:
+		{
+			if(v.serial)
+			{
+				if(v.floats)
+					printer(buf, double_, string_view{v});
+				else
+					printer(buf, long_, string_view{v});
+
+				break;
+			}
+
+			if(v.floats)
+				printer(buf, double_, v.floating);
+			else
+				printer(buf, long_, v.integer);
+
+			break;
+		}
+	}
+
+	return { start, begin(buf) };
+}
+
+size_t
+ircd::json::serialized(const values &v)
+{
+	return serialized(std::begin(v), std::end(v));
+}
+
+size_t
+ircd::json::serialized(const value *const &begin,
+                       const value *const &end)
+{
+	// One opening '[' and either one ']' or comma count.
+	const size_t ret(1 + !std::distance(begin, end));
+	return std::accumulate(begin, end, size_t(ret), []
+	(auto ret, const value &v)
+	{
+		return ret += serialized(v) + 1; // 1 comma
+	});
+}
+
+size_t
+ircd::json::serialized(const value &v)
+{
+	switch(v.type)
+	{
+		case OBJECT:
+			return v.serial? v.len : serialized(v.object, v.object + v.len);
+
+		case ARRAY:
+			return v.serial? v.len : serialized(v.array, v.array + v.len);
+
+		case LITERAL:
+			return v.len;
+
+		case NUMBER:
+		{
+			if(v.serial)
+				return v.len;
+
+			static thread_local char test_buffer[4096];
+			const auto test
+			{
+				stringify(mutable_buffer{test_buffer}, v)
+			};
+
+			return test.size();
+		}
+
+		case STRING:
+		{
+			if(!v.string)
+				return 2;
+
+			size_t ret(v.len);
+			const string_view sv{v.string, v.len};
+			ret += !startswith(sv, '"');
+			ret += !endswith(sv, '"');
+			return ret;
+		}
+	};
+
+	throw type_error("deciding the size of a type[%u] is undefined", int(v.type));
+}
+
+//
+// json::value
+//
+
+ircd::json::value::value(const json::members &members)
+:string{nullptr}
+,len{serialized(members)}
+,type{OBJECT}
+,serial{true}
+,alloc{true}
+,floats{false}
+{
+	create_string(len, [&members]
+	(mutable_buffer buffer)
+	{
+		json::stringify(buffer, members);
+	});
+}
+
+ircd::json::value::value(const value &other)
+:integer{other.integer}
+,len{other.len}
+,type{other.type}
+,serial{other.serial}
+,alloc{other.alloc}
+,floats{other.floats}
+{
+	if(alloc && serial)
+	{
+		create_string(len, [this](mutable_buffer buffer)
+		{
+			copy(buffer, string_view{*this});
+		});
+	}
+	else switch(type)
+	{
+		case OBJECT:
+			if(!serial && object)
+			{
+				const size_t count(this->len);
+				create_string(serialized(object, object + count), [this, &count]
+				(mutable_buffer buffer)
+				{
+					json::stringify(buffer, object, object + count);
+				});
+			}
+
+			break;
+
+		case ARRAY:
+			if(!serial && array)
+			{
+				const size_t count(this->len);
+				create_string(serialized(array, array + count), [this, &count]
+				(mutable_buffer buffer)
+				{
+					json::stringify(buffer, array, array + count);
+				});
+			}
+			break;
+
+		case STRING:
+			if(!serial && alloc && string)
+			{
+				create_string(serialized(*this), [this]
+				(mutable_buffer buffer)
+				{
+					json::stringify(buffer, *this);
+				});
+			}
+
+		case LITERAL:
+		case NUMBER:
+			break;
+	}
+}
+
+ircd::json::value &
+ircd::json::value::operator=(const value &other)
+{
+	this->~value();
+	new (this) value(other);
+	return *this;
+}
+
 ircd::json::value::~value()
 noexcept
 {
-	switch(type)
+	if(!alloc)
+		return;
+
+	else if(serial)
+		delete[] string;
+
+	else switch(type)
 	{
-		case STRING:  if(alloc)  delete[] string;  break;
-		case OBJECT:  if(alloc)  delete object;    break;
-		//case ARRAY:   if(alloc)  delete array;     break;
-		default:                                   break;
+		case STRING:
+			delete[] string;
+			break;
+
+		case OBJECT:
+			delete[] object;
+			break;
+
+		case ARRAY:
+			delete[] array;
+			break;
+
+		default:
+			break;
 	}
 }
 
 ircd::json::value::operator std::string()
 const
 {
-	switch(type)
-	{
-		case STRING:
-		case LITERAL:
-			return std::string(unquote(string_view(*this)));
-
-		case OBJECT:
-			if(serial)
-				return std::string(string_view(*this));
-			else
-				return json::string(*object);
-
-		case ARRAY:
-			if(serial)
-				return std::string(string_view(*this));
-			else
-				break;
-
-		case NUMBER:
-			if(serial)
-				return std::string(string_view(*this));
-			else if(floats)
-				return std::string(lex_cast(floating));
-			else
-				return std::string(lex_cast(integer));
-	}
-
-	throw type_error("cannot index type[%d]", int(type));
+	return json::string(*this);
 }
 
 ircd::json::value::operator string_view()
@@ -992,17 +1078,13 @@ const
 			return unquote(string_view{string, len});
 
 		case NUMBER:
-			if(serial)
-				return string_view{string, len};
-			else if(floats)
-				return byte_view<string_view>{floating};
-			else
-				return byte_view<string_view>{integer};
-
+			return serial? string_view{string, len}:
+			       floats? byte_view<string_view>{floating}:
+				           byte_view<string_view>{integer};
 		case ARRAY:
 		case OBJECT:
 		case LITERAL:
-			if(serial)
+			if(likely(serial))
 				return string_view{string, len};
 			else
 				break;
@@ -1020,8 +1102,7 @@ const
 			return likely(!floats)? integer : floating;
 
 		case STRING:
-			assert(serial);
-			return lex_cast<int64_t>(string_view(*this));
+			return lex_cast<int64_t>(string_view{*this});
 
 		case ARRAY:
 		case OBJECT:
@@ -1041,8 +1122,7 @@ const
 			return likely(floats)? floating : integer;
 
 		case STRING:
-			assert(serial);
-			return lex_cast<double>(string_view(*this));
+			return lex_cast<double>(string_view{*this});
 
 		case ARRAY:
 		case OBJECT:
@@ -1051,6 +1131,104 @@ const
 	}
 
 	throw type_error("value type[%d] is not a float", int(type));
+}
+
+bool
+ircd::json::value::operator!()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return floats?  !(floating > 0.0 || floating < 0.0):
+			                !bool(integer);
+
+		case STRING:
+			return string?  !len || string_view{*this} == empty_string:
+			                true;
+
+		case OBJECT:
+			return serial?  !len || string_view{*this} == empty_object:
+			       object?  !len:
+			                true;
+
+		case ARRAY:
+			return serial?  !len || (string_view{*this} == empty_array):
+			       array?   !len:
+			                true;
+
+		case LITERAL:
+			if(serial)
+				return string == nullptr ||
+				       string_view{*this} == literal_false ||
+				       string_view{*this} == literal_null;
+			break;
+	};
+
+	throw type_error("deciding if a type[%u] is falsy is undefined", int(type));
+}
+
+bool
+ircd::json::value::empty()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return serial? !len:
+			       floats? !(floating > 0.0 || floating < 0.0):
+			               !bool(integer);
+
+		case STRING:
+			return !string || !len || string_view{*this} == empty_string;
+
+		case OBJECT:
+			return serial? !len || string_view{*this} == empty_object:
+			       object? !len:
+			               true;
+
+		case ARRAY:
+			return serial? !len || string_view{*this} == empty_array:
+			       array?  false:
+			               true;            //TODO: XXX arr
+
+		case LITERAL:
+			return serial? !len:
+			               true;
+	};
+
+	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
+}
+
+bool
+ircd::json::value::null()
+const
+{
+	switch(type)
+	{
+		case NUMBER:
+			return floats?  !(floating > 0.0 || floating < 0.0):
+			                !bool(integer);
+
+		case STRING:
+			return string == nullptr;
+
+		case OBJECT:
+			return serial? string == nullptr:
+			       object? false:
+			               true;
+
+		case ARRAY:
+			return serial? string == nullptr:
+			       array?  array == nullptr:
+			               true;
+
+		case LITERAL:
+			return serial? string == nullptr:
+			               true;
+	};
+
+	throw type_error("deciding if a type[%u] is null is undefined", int(type));
 }
 
 bool
@@ -1067,12 +1245,12 @@ const
 
 		case OBJECT:
 			return serial? string == nullptr:
-			       object? object->empty():
+			       object? false:
 			               true;
 
 		case ARRAY:
 			return serial? string == nullptr:
-			       array?  array == nullptr:
+			       array?  false:
 			               true;
 
 		case LITERAL:
@@ -1083,103 +1261,31 @@ const
 	throw type_error("deciding if a type[%u] is undefined is undefined", int(type));
 }
 
-bool
-ircd::json::value::empty()
-const
+void
+ircd::json::value::create_string(const size_t &len,
+                                 const create_string_closure &closure)
 {
-	switch(type)
+	const size_t max
 	{
-		case NUMBER:   return lex_cast(integer).empty();
-		case STRING:   return !len;
-		case OBJECT:   return serial? !len : object? object->empty() : true;
-		case ARRAY:    return serial? !len : array? false : true;            //TODO: XXX arr
-		case LITERAL:  return serial? !len : true;
+		len + 1
 	};
 
-	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
-}
-
-bool
-ircd::json::value::null()
-const
-{
-	switch(type)
+	std::unique_ptr<char[]> string
 	{
-		case NUMBER:
-			return floats?  !(floating > 0.0 || floating < 0.0):
-			                bool(integer);
-
-		case STRING:
-			return string == nullptr;
-
-		case OBJECT:
-			return serial? string == nullptr:
-			       object? object->empty():
-			               true;
-
-		case ARRAY:
-			return serial? string == nullptr:
-			       array?  array == nullptr:
-			               true;
-
-		case LITERAL:
-			return serial? string == nullptr:
-			               true;
+		new char[max]
 	};
 
-	throw type_error("deciding if a type[%u] is null is undefined", int(type));
-}
-
-size_t
-ircd::json::serialized(const value &v)
-{
-	switch(v.type)
+	const mutable_buffer buffer
 	{
-		case NUMBER:   return lex_cast(v.integer).size();
-		case STRING:   return 1 + v.len + 1;
-		case OBJECT:   return v.serial? v.len : serialized(*v.object);
-		case ARRAY:    return v.serial? v.len : 2;
-		case LITERAL:  return v.len;
+		string.get(), len
 	};
 
-	throw type_error("deciding the size of a type[%u] is undefined", int(v.type));
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const value &v)
-{
-	switch(v.type)
-	{
-		case STRING:
-		case LITERAL:
-			s << string_view(v);
-			break;
-
-		case OBJECT:
-			if(v.serial)
-				s << string_view(v);
-			else
-				s << *v.object;
-			break;
-
-		case ARRAY:
-			if(v.serial)
-				s << string_view(v);
-			else
-				assert(0);
-			break;
-
-		case NUMBER:
-			if(v.serial)
-				s << string_view(v);
-			else if(v.floats)
-				s << v.floating;
-			else
-				s << v.integer;
-			break;
-	}
-
-	return s;
+	closure(buffer);
+	(string.get())[len] = '\0';
+	this->alloc = true;
+	this->serial = true;
+	this->len = len;
+	this->string = string.release();
 }
 
 bool
@@ -1236,208 +1342,15 @@ ircd::json::operator==(const value &a, const value &b)
     return static_cast<string_view>(a) == static_cast<string_view>(b);
 }
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const object &object)
-{
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to print object");
-	});
-
-	char *const start(begin(buf));
-	karma::generate(begin(buf), maxwidth(size(buf))[printer.object] | eps[throws], object);
-
-	return string_view
-	{
-		start, begin(buf)
-	};
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const object &object)
-{
-	const auto &os(ostreamer);
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to output object to stream");
-	});
-
-	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, os.object | eps[throws], object);
-	return s;
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const object::member &member)
-{
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to output object member to stream");
-	});
-
-	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, ostreamer.member | eps[throws], member);
-	return s;
-}
-
-ircd::json::object::const_iterator &
-ircd::json::object::const_iterator::operator++()
-{
-	static const qi::rule<const char *, json::object::member> member
-	{
-		parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value]
-	};
-
-	static const qi::rule<const char *, json::object::member> parse_next
-	{
-		parser.object_end | (parser.value_sep >> parser.ws >> member)
-	};
-
-	state.first = string_view{};
-	state.second = string_view{};
-	if(!qi::phrase_parse(start, stop, parse_next, parser.WS, state))
-		start = stop;
-
-	return *this;
-}
-
-ircd::json::object::operator std::string()
-const
-{
-	//TODO: tmp
-	std::stringstream ret;
-	ret << (*this);
-	return ret.str();
-}
-
-ircd::json::object::const_iterator
-ircd::json::object::begin()
-const
-{
-	static const qi::rule<const char *, json::object::member> member
-	{
-		parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value]
-	};
-
-	static const qi::rule<const char *, json::object::member> parse_begin
-	{
-		parser.object_begin >> parser.ws >> (parser.object_end | member)
-	};
-
-	const_iterator ret(string_view::begin(), string_view::end());
-	if(!qi::phrase_parse(ret.start, ret.stop, parse_begin, parser.WS, ret.state))
-		ret.start = ret.stop;
-
-	return ret;
-}
-
-ircd::json::object::const_iterator
-ircd::json::object::end()
-const
-{
-	return { string_view::end(), string_view::end() };
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &b,
-                      const array &a)
-{
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to print array");
-	});
-
-	char *const start(begin(b));
-	karma::generate(begin(b), maxwidth(size(b))[printer.array_begin] | eps[throws]);
-
-	auto it(begin(a));
-	if(it != end(a))
-	{
-		karma::generate(begin(b), maxwidth(size(b))[printer.elem] | eps[throws], *it);
-		for(++it; it != end(a); ++it)
-			karma::generate(begin(b), maxwidth(size(b))[printer.value_sep << printer.elem] | eps[throws], *it);
-	}
-
-	karma::generate(begin(b), maxwidth(size(b))[printer.array_end] | eps[throws]);
-	return string_view{start, begin(b)};
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const array &a)
-{
-	const auto &os(ostreamer);
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to output array to stream");
-	});
-
-	karma::ostream_iterator<char> osi(s);
-	karma::generate(osi, ostreamer.array_begin | eps[throws]);
-
-	auto it(begin(a));
-	if(it != end(a))
-	{
-		karma::generate(osi, ostreamer.elem | eps[throws], *it);
-		for(++it; it != end(a); ++it)
-			karma::generate(osi, (ostreamer.value_sep << ostreamer.elem) | eps[throws], *it);
-	}
-
-	karma::generate(osi, ostreamer.array_end | eps[throws]);
-	return s;
-}
-
-ircd::json::array::const_iterator &
-ircd::json::array::const_iterator::operator++()
-{
-	static const qi::rule<const char *, string_view> parse_next
-	{
-		parser.array_end | (parser.value_sep >> parser.ws >> raw[parser.value])
-	};
-
-	state = string_view{};
-	if(!qi::phrase_parse(start, stop, parse_next, parser.WS, state))
-		start = stop;
-
-	return *this;
-}
-
-ircd::json::array::operator std::string()
-const
-{
-	//TODO: tmp
-	std::stringstream ret;
-	ret << (*this);
-	return ret.str();
-}
-
-ircd::json::array::const_iterator
-ircd::json::array::begin()
-const
-{
-	static const qi::rule<const char *, string_view> parse_begin
-	{
-		parser.array_begin >> parser.ws >> (parser.array_end | raw[parser.value])
-	};
-
-	const_iterator ret(string_view::begin(), string_view::end());
-	if(!qi::phrase_parse(ret.start, ret.stop, parse_begin, parser.WS, ret.state))
-		ret.start = ret.stop;
-
-	return ret;
-}
-
-ircd::json::array::const_iterator
-ircd::json::array::end()
-const
-{
-	return { string_view::end(), string_view::end() };
-}
+///////////////////////////////////////////////////////////////////////////////
+//
+// json.h
+//
 
 size_t
 ircd::json::serialized(const string_view &s)
 {
-	switch(type(s, std::nothrow))
+	if(!s.empty()) switch(type(s, std::nothrow))
 	{
 		case NUMBER:
 		case OBJECT:
@@ -1480,110 +1393,17 @@ ircd::json::type(const string_view &buf,
 	return ret;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// iov.h
-//
-
 ircd::string_view
-ircd::json::stringify(mutable_buffer &head,
-                      const iov &iov)
+ircd::json::reflect(const enum type &type)
 {
-	const auto num{iov.size()};
-	const member *m[num];
-
-	size_t i(0);
-	std::for_each(std::begin(iov), std::end(iov), [&i, &m]
-	(const auto &member)
+	switch(type)
 	{
-		m[i++] = &member;
-	});
-
-	return stringify(head, m, m + num);
-}
-
-bool
-ircd::json::iov::has(const string_view &key)
-const
-{
-	return std::any_of(std::begin(*this), std::end(*this), [&key]
-	(const auto &member)
-	{
-		return string_view{member.first} == key;
-	});
-}
-
-const ircd::json::value &
-ircd::json::iov::at(const string_view &key)
-const
-{
-	const auto it(std::find_if(std::begin(*this), std::end(*this), [&key]
-	(const auto &member)
-	{
-		return string_view{member.first} == key;
-	}));
-
-	return it->second;
-}
-
-ircd::json::iov::add::add(iov &iov,
-                          member member)
-:node
-{
-	iov, [&iov, &member]
-	{
-		if(iov.has(member.first))
-			throw exists("failed to add member '%s': already exists",
-			             string_view{member.first});
-
-		return std::move(member);
-	}()
-}
-{
-}
-
-ircd::json::iov::add_if::add_if(iov &iov,
-                                const bool &b,
-                                member member)
-:add
-{
-	iov, std::move(member)
-}
-{
-	if(!b)
-	{
-		assert(iov.front() == member);
-		iov.pop_front();
+		case NUMBER:   return "NUMBER";
+		case OBJECT:   return "OBJECT";
+		case ARRAY:    return "ARRAY";
+		case LITERAL:  return "LITERAL";
+		case STRING:   return "STRING";
 	}
-}
 
-ircd::json::iov::set::set(iov &iov, member member)
-:node
-{
-	iov, [&iov, &member]
-	{
-		iov.remove_if([&member](const auto &existing)
-		{
-			return string_view{existing.first} == string_view{member.first};
-		});
-
-		return std::move(member);
-	}()
-}
-{
-}
-
-ircd::json::iov::set_if::set_if(iov &iov,
-                                const bool &b,
-                                member member)
-:set
-{
-	iov, std::move(member)
-}
-{
-	if(!b)
-	{
-		assert(iov.front() == member);
-		iov.pop_front();
-	}
+	return {};
 }

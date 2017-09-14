@@ -36,7 +36,7 @@ struct ircd::m::error
 	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
 	error(const http::code &, const json::object &object = {});
-	error(const http::code &, const json::index &idx);
+	error(const http::code &, const json::members &);
 	error(const http::code &, const json::iov &);
 	error(const http::code &);
 	error(std::string = {});
@@ -83,8 +83,14 @@ ircd::m::error::error(const http::code &c)
 
 inline
 ircd::m::error::error(const http::code &c,
-                      const json::index &index)
-:http::error{c, std::string{index}}
+                      const json::members &members)
+:http::error{c, json::string(members)}
+{}
+
+inline
+ircd::m::error::error(const http::code &c,
+                      const json::iov &iov)
+:http::error{c, json::string(iov)}
 {}
 
 inline
@@ -111,15 +117,15 @@ ircd::m::error::error(const http::code &status,
 {
 	status, [&]() -> std::string
 	{
-		char estr[256]; const auto estr_len
+		char estr[512]; const auto estr_len
 		{
 			fmt::snprintf{estr, sizeof(estr), fmt, std::forward<args>(a)...}
 		};
 
-		return json::index
+		return json::string(json::members
 		{
 			{ "errcode",  errcode                      },
 			{ "error",    string_view(estr, estr_len)  }
-		};
+		});
 	}()
 }{}

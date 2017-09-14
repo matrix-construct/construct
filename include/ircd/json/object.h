@@ -31,7 +31,9 @@ namespace ircd::json
 ///
 /// This makes queries into a string of JSON. This is a read-only device.
 /// It is merely functionality built on top of a string_view which is just a
-/// pair of const char* pointers to the borders of the JSON object.
+/// pair of `const char*` pointers to the borders of the JSON object. The first
+/// character should be '{' and the last character should be '}' but this is
+/// not checked on construction.
 ///
 /// This class computes over strings of JSON by parsing it on-the-fly
 /// via forward iteration. The const_iterator is fundamental. All other member
@@ -50,12 +52,10 @@ namespace ircd::json
 /// type if they want a truly pure value string. Our zero-copy string_view utils
 /// make this to a simple ballet of pointers.
 ///
-/// Other devices for dealing with strings of JSON are available: if an index
-/// should be populated (ircd::json::index), or if a certain set of keys
-/// should be found and extracted with a single pass (ircd::json::extract).
-///
-/// Some serialization/write functions are actually provided here, these
-/// are to *rewrite* JSON into our desired output form.
+/// Some serialization/write functions are actually provided here. They will
+/// always *rewrite* JSON through our generator correcting any imperfections
+/// that may have been allowed by the parsing grammar (if such allowances are
+/// ever made).
 ///
 /// Recursive traversal cannot be achieved via a single key string value; so
 /// any string_view argument for a key will not be recursive. In other words,
@@ -123,12 +123,12 @@ struct ircd::json::object::member
 	:std::pair<string_view, string_view>{first, second}
 	{}
 
-	friend bool operator==(const member &, const member &);
-	friend bool operator!=(const member &, const member &);
-	friend bool operator<=(const member &, const member &);
-	friend bool operator>=(const member &, const member &);
-	friend bool operator<(const member &, const member &);
-	friend bool operator>(const member &, const member &);
+	friend bool operator==(const object::member &, const object::member &);
+	friend bool operator!=(const object::member &, const object::member &);
+	friend bool operator<=(const object::member &, const object::member &);
+	friend bool operator>=(const object::member &, const object::member &);
+	friend bool operator<(const object::member &, const object::member &);
+	friend bool operator>(const object::member &, const object::member &);
 
 	// writes a single member onto stream
 	friend string_view stringify(mutable_buffer &, const object::member &);
@@ -137,10 +137,14 @@ struct ircd::json::object::member
 
 struct ircd::json::object::const_iterator
 {
+	using key_type = string_view;
+	using mapped_type = string_view;
 	using value_type = const member;
 	using pointer = value_type *;
 	using reference = value_type &;
+	using size_type = size_t;
 	using difference_type = size_t;
+	using key_compare = std::less<value_type>;
 	using iterator_category = std::forward_iterator_tag;
 
   protected:

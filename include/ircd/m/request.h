@@ -29,17 +29,18 @@ namespace ircd {
 namespace m    {
 
 struct request
-:json::index
 {
 	string_view method;
 	string_view path;
 	string_view query;
 	string_view access_token;
+	std::string _content;
+	json::object content;
 
 	request(const string_view &method,
 	        const string_view &path,
 	        const string_view &query = {},
-	        std::initializer_list<json::member> body = {});
+	        json::members body = {});
 
 	request(const string_view &method,
 	        const string_view &path,
@@ -54,11 +55,12 @@ inline
 ircd::m::request::request(const string_view &method,
                           const string_view &path,
                           const string_view &query,
-                          std::initializer_list<json::member> body)
-:json::index{std::move(body)}
-,method{method}
+                          json::members body)
+:method{method}
 ,path{path}
 ,query{query}
+,_content{json::string(body)}
+,content{_content}
 {
 }
 
@@ -67,9 +69,9 @@ ircd::m::request::request(const string_view &method,
                           const string_view &path,
                           const string_view &query,
                           const json::object &content)
-:json::index{content}
-,method{method}
+:method{method}
 ,path{path}
 ,query{query}
+,content{content}
 {
 }

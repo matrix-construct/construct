@@ -55,16 +55,11 @@ struct ircd::json::iov
 	struct set;
 	struct set_if;
 
-  private:
-	std::forward_list<node> allocated;
-
   public:
 	bool has(const string_view &key) const;
 	const value &at(const string_view &key) const;
 
 	iov() = default;
-	iov(member);
-	iov(members);
 
 	friend string_view stringify(mutable_buffer &, const iov &);
 	friend std::ostream &operator<<(std::ostream &, const iov &);
@@ -78,6 +73,8 @@ struct ircd::json::iov::push
 	push(iov &iov, args&&... a)
 	:node{iov, std::forward<args>(a)...}
 	{}
+
+	push() = default;
 };
 
 struct ircd::json::iov::add
@@ -88,7 +85,7 @@ struct ircd::json::iov::add
 };
 
 struct ircd::json::iov::add_if
-:ircd::json::iov::add
+:protected ircd::json::iov::node
 {
 	add_if(iov &, const bool &, member);
 	add_if() = default;
@@ -102,44 +99,8 @@ struct ircd::json::iov::set
 };
 
 struct ircd::json::iov::set_if
-:ircd::json::iov::set
+:protected ircd::json::iov::node
 {
 	set_if(iov &, const bool &, member);
 	set_if() = default;
 };
-
-inline
-ircd::json::iov::iov(json::member m)
-{
-	allocated.emplace_front(*this, std::move(m));
-}
-
-inline
-ircd::json::iov::iov(members m)
-{
-	for(auto&& member : m)
-		allocated.emplace_front(*this, std::move(member));
-}
-
-inline size_t
-ircd::json::serialized(const iov &iov)
-{
-	const size_t ret
-	{
-		1U + !iov.empty()
-	};
-
-	return std::accumulate(std::begin(iov), std::end(iov), ret, []
-	(auto ret, const auto &member)
-	{
-		return ret += serialized(member);
-	});
-}
-
-inline std::ostream &
-ircd::json::operator<<(std::ostream &s, const iov &iov)
-{
-	s << string(iov);
-	return s;
-}
-

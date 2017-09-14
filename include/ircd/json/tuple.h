@@ -33,17 +33,19 @@ struct tuple_base
 
 /// A compile-time construct to describe a JSON object's members and types.
 ///
+/// Member access by name is O(1) because of recursive constexpr function
+/// inlining when translating a name to the index number which is then used
+/// as the template argument to std::get() for the value.
+///
 /// Here we represent a JSON object with a named tuple, allowing the programmer
 /// to create a structure specifying all of the potentially valid members of the
 /// object. Thus at runtime, the tuple only carries around its values like a
 /// `struct`. Unlike a `struct`, the tuple is abstractly iterable and we have
 /// implemented logic operating on all JSON tuples regardless of their makeup
-/// without any effort from a developer creating a new tuple.
+/// without any effort from a developer when creating a new tuple.
 ///
 /// The member structure for the tuple is called `property` because json::member
-/// is already used to pair together runtime oriented json::values. This system
-/// only decays into runtime members and values when compile-time logic cannot
-/// be achieved.
+/// is already used to pair together runtime oriented json::values.
 ///
 /// Create and use a tuple to efficiently extract members from a json::object.
 /// The tuple will populate its own members during a single-pass iteration of
@@ -585,7 +587,6 @@ tuple<T...>::tuple(const json::iov &iov)
 	{
 		switch(type(member.second))
 		{
-			case type::STRING:
 			case type::OBJECT:
 			case type::ARRAY:
 				if(unlikely(!member.second.serial))
@@ -729,7 +730,7 @@ _member_transform(const tuple<T...> &tuple,
 		if(it == end)
 			return false;
 
-		*it = { key, val };
+		*it = member { key, val };
 		++it;
 		return true;
 	});

@@ -68,7 +68,7 @@ namespace ircd::json
 	struct array;
 	struct object;
 	struct value;
-	struct index;
+	struct member;
 	struct iov;
 
 	enum type
@@ -81,6 +81,7 @@ namespace ircd::json
 	};
 	enum type type(const string_view &);
 	enum type type(const string_view &, std::nothrow_t);
+	string_view reflect(const enum type &);
 
 	/// Higher order type beyond a string to cleanly delimit multiple keys.
 	using path = std::initializer_list<string_view>;
@@ -94,13 +95,14 @@ namespace ircd::json
 	template<class... T> std::string string(T&&... t);
 
 	size_t serialized(const string_view &);
+
+	using members = std::initializer_list<member>;
 }
 
 #include "json/array.h"
 #include "json/object.h"
 #include "json/value.h"
 #include "json/member.h"
-#include "json/index.h"
 #include "json/property.h"
 #include "json/iov.h"
 #include "json/tuple.h"
@@ -168,7 +170,13 @@ ircd::json::string(T&&... t)
 	std::string ret(size, char{});
 	const auto buf{const_cast<char *>(ret.data())};
 	const auto max{ret.size() + 1};
-	print(buf, max, std::forward<T>(t)...);
+
+	const auto printed
+	{
+		print(buf, max, std::forward<T>(t)...)
+	};
+
+	assert(printed == ret.size());
 	return ret;
 }
 

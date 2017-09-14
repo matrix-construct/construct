@@ -31,7 +31,10 @@ namespace ircd::json
 	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
 }
 
-/// A pair of json::value representing an object member.
+/// A pair of json::value representing state for a member of an object.
+///
+/// This is slightly heavier than object::member as that only deals with
+/// a pair of strings while the value here holds more diverse native state.
 ///
 /// The key value (member.first) should always be a STRING type. We don't use
 /// string_view directly in member.first because json::value can take ownership
@@ -42,7 +45,6 @@ struct ircd::json::member
 :std::pair<value, value>
 {
 	using std::pair<value, value>::pair;
-	template<class K> member(const K &k, std::initializer_list<member> v);
 	template<class K, class V> member(const K &k, V&& v);
 	explicit member(const string_view &k);
 	explicit member(const object::member &m);
@@ -76,15 +78,6 @@ ircd::json::member::member(const K &k,
 :std::pair<value, value>
 {
 	value { k }, value { std::forward<V>(v) }
-}
-{}
-
-template<class K>
-ircd::json::member::member(const K &k,
-                           std::initializer_list<member> v)
-:std::pair<value, value>
-{
-	value { k }, value { std::make_unique<index>(std::move(v)) }
 }
 {}
 

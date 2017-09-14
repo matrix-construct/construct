@@ -22,15 +22,22 @@
 #pragma once
 #define HAVE_IRCD_JSON_ARRAY_H
 
+namespace ircd::json
+{
+	struct array;
+
+	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
+	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
+}
+
 /// Lightweight interface to a JSON array string.
 ///
-/// This is the rank1 analog to ircd::json::object. It accepts queries with
-/// numerical indexing. The same parsing approach is used in ircd::json::object
-/// and that is important to note here: iterating this array by incrementing
-/// your own numerical index and making calls into this object is NOT efficient.
-/// Simply put, do not do something like
-/// `for(int x=0; x<array.count(); x++) array.at(x)` as that will parse the
-/// array from the beginning on every single iteration. Instead, use the
+/// This object accepts queries with numerical indexing. The same parsing
+/// approach is used in ircd::json::object and that is important to note here:
+/// iterating this array by incrementing your own numerical index and making
+/// calls into this object is NOT efficient. Simply put, do not do something
+/// like `for(int x=0; x<array.count(); x++) array.at(x)` as that will parse
+/// the array from the beginning on every single iteration. Instead, use the
 /// provided iterator object.
 ///
 struct ircd::json::array
@@ -59,8 +66,8 @@ struct ircd::json::array
 
 	using string_view::string_view;
 
+	template<class it> static string_view stringify(mutable_buffer &, const it &b, const it &e);
 	friend string_view stringify(mutable_buffer &, const array &);
-	friend string_view stringify(mutable_buffer &, const std::vector<json::object> &);
 	friend std::ostream &operator<<(std::ostream &, const array &);
 };
 
@@ -69,7 +76,9 @@ struct ircd::json::array::const_iterator
 	using value_type = const string_view;
 	using pointer = value_type *;
 	using reference = value_type &;
-	using difference_type = size_t;
+	using iterator = const_iterator;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
 	using iterator_category = std::forward_iterator_tag;
 
   protected:

@@ -2418,6 +2418,22 @@ template bool ircd::db::seek<ircd::string_view>(column::const_iterator &, const 
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// merge.h
+//
+
+std::string
+ircd::db::merge_operator(const string_view &key,
+                         const std::pair<string_view, string_view> &delta)
+{
+	//ircd::json::index index{delta.first};
+	//index += delta.second;
+	//return index;
+	assert(0);
+	return {};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // writebatch
 //
 
