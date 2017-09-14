@@ -32,6 +32,7 @@ namespace ircd
 	template<class T> struct vector_view;
 	template<class T = string_view> struct byte_view;
 	template<> struct byte_view<string_view>;
+	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
 	bool operator!(const string_view &);
 }
@@ -240,4 +241,11 @@ inline bool
 ircd::operator!(const string_view &str)
 {
 	return str.empty();
+}
+
+template<int (&test)(int)>
+auto
+ircd::ctype(const string_view &s)
+{
+    return ctype<test>(std::begin(s), std::end(s));
 }

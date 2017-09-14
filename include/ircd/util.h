@@ -1037,5 +1037,20 @@ until(it_a a,
 }
 
 
+/// Convenience loop to test std::is* on a character sequence
+template<int (&test)(int) = std::isprint>
+ssize_t
+ctype(const char *begin,
+      const char *const &end)
+{
+	size_t i(0);
+	for(; begin != end; ++begin, ++i)
+		if(!test(static_cast<unsigned char>(*begin)))
+			return i;
+
+	return -1;
+}
+
+
 } // namespace util
 } // namespace ircd
