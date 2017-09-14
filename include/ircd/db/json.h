@@ -74,7 +74,7 @@ ircd::json::tuple<T...> &
 ircd::db::set(json::tuple<T...> &tuple,
               const row &row)
 {
-	for(auto &cell : row)
+	for(const auto &cell : row)
 		if(cell.valid())
 			json::set(tuple, cell.col(), cell.val());
 		else

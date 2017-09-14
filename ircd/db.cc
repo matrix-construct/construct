@@ -1382,6 +1382,16 @@ ircd::db::cell::cell()
 
 ircd::db::cell::cell(database &d,
                      const string_view &colname,
+                     gopts opts)
+:cell
+{
+	column(d[colname]), std::unique_ptr<rocksdb::Iterator>{}, std::move(opts)
+}
+{
+}
+
+ircd::db::cell::cell(database &d,
+                     const string_view &colname,
                      const string_view &index,
                      gopts opts)
 :cell
@@ -1395,10 +1405,12 @@ ircd::db::cell::cell(column column,
                      const string_view &index,
                      gopts opts)
 :c{std::move(column)}
-,index{index}
 ,ss{opts.snapshot}
-,it{ss? seek(this->c, this->index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
+,it{ss? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
 {
+	if(bool(this->it))
+		if(!valid_equal(*this->it, index))
+			this->it.reset();
 }
 
 ircd::db::cell::cell(column column,
@@ -1406,7 +1418,18 @@ ircd::db::cell::cell(column column,
                      std::unique_ptr<rocksdb::Iterator> it,
                      gopts opts)
 :c{std::move(column)}
-,index{index}
+,ss{opts.snapshot}
+,it{std::move(it)}
+{
+	seek(*this, index);
+	if(!valid_equal(*this->it, index))
+		this->it.reset();
+}
+
+ircd::db::cell::cell(column column,
+                     std::unique_ptr<rocksdb::Iterator> it,
+                     gopts opts)
+:c{std::move(column)}
 ,ss{std::move(opts.snapshot)}
 ,it{std::move(it)}
 {
@@ -1416,7 +1439,6 @@ ircd::db::cell::cell(column column,
 ircd::db::cell::cell(cell &&o)
 noexcept
 :c{std::move(o.c)}
-,index{std::move(o.index)}
 ,ss{std::move(o.ss)}
 ,it{std::move(o.it)}
 {
@@ -1428,7 +1450,6 @@ ircd::db::cell::operator=(cell &&o)
 noexcept
 {
 	c = std::move(o.c);
-	index = std::move(o.index);
 	ss = std::move(o.ss);
 	it = std::move(o.it);
 
@@ -1442,7 +1463,8 @@ noexcept
 }
 
 bool
-ircd::db::cell::load(gopts opts)
+ircd::db::cell::load(const string_view &index,
+                     gopts opts)
 {
 	database &d(c);
 	if(valid() && !opts.snapshot && sequence(ss) == sequence(d))
@@ -1541,7 +1563,7 @@ ircd::db::cell::key()
 	if(!valid())
 		load();
 
-	return likely(valid())? db::key(*it) : index;
+	return likely(valid())? db::key(*it) : string_view{};
 }
 
 ircd::string_view
@@ -1555,14 +1577,21 @@ ircd::string_view
 ircd::db::cell::key()
 const
 {
-	return likely(valid())? db::key(*it) : index;
+	return likely(valid())? db::key(*it) : string_view{};
+}
+
+bool
+ircd::db::cell::valid(const string_view &eq)
+const
+{
+	return bool(it) && db::valid_equal(*it, eq);
 }
 
 bool
 ircd::db::cell::valid()
 const
 {
-	return it && (index.empty() || valid_equal(*it, index));
+	return bool(it) && db::valid(*it);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1828,16 +1857,6 @@ const
 	(const auto &cell)
 	{
 		return cell.valid();
-	});
-}
-
-void
-ircd::db::row::load(const gopts &opts)
-{
-	std::for_each(std::begin(its), std::end(its), [&opts]
-	(auto &cell)
-	{
-		cell.load(opts);
 	});
 }
 
@@ -2450,7 +2469,7 @@ ircd::db::append(rocksdb::WriteBatch &batch,
 	append(batch, column, column::delta
 	{
 		std::get<op>(delta),
-		std::get<cell *>(delta)->index,
+		std::get<cell *>(delta)->key(),
 		std::get<string_view>(delta)
 	});
 }

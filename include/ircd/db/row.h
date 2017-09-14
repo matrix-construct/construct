@@ -76,9 +76,6 @@ struct ircd::db::row
     // [SET] Perform operation
 	void operator()(const op &, const string_view &col, const string_view &val = {}, const sopts & = {});
 
-	// All cells
-	void load(const gopts & = {});               // !DANGER! not atomic
-
 	row(std::vector<cell> cells = {})
 	:its{std::move(cells)}
 	{}

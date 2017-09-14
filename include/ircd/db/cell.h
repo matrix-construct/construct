@@ -53,7 +53,6 @@ struct ircd::db::cell
 	struct delta;
 
 	column c;
-	string_view index;
 	database::snapshot ss;
 	std::unique_ptr<rocksdb::Iterator> it;
 
@@ -66,6 +65,7 @@ struct ircd::db::cell
 	explicit operator column &()                 { return c;                                      }
 
 	bool valid() const;                          // cell exists
+	bool valid(const string_view &eq) const;     // valid_equal
 	operator bool() const                        { return valid();                                }
 	bool operator!() const                       { return !valid();                               }
 
@@ -91,11 +91,13 @@ struct ircd::db::cell
 	string_view exchange(const string_view &desired);
 
 	// [GET] load cell only (returns valid)
-	bool load(gopts = {});
+	bool load(const string_view &index = {}, gopts = {});
 
+	cell(column, std::unique_ptr<rocksdb::Iterator>, gopts = {});
 	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>, gopts = {});
 	cell(column, const string_view &index, gopts = {});
 	cell(database &, const string_view &column, const string_view &index, gopts = {});
+	cell(database &, const string_view &column, gopts = {});
 	cell();
 	cell(cell &&) noexcept;
 	cell(const cell &) = delete;
