@@ -179,11 +179,25 @@ try
 		method(client, request)
 	};
 }
-catch(const json::error &e)
+catch(const json::not_found &e)
 {
 	throw m::error
 	{
 		http::BAD_REQUEST, "M_BAD_JSON", "Required JSON field: %s", e.what()
+	};
+}
+catch(const json::print_error &e)
+{
+	throw m::error
+	{
+		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+	};
+}
+catch(const json::error &e)
+{
+	throw m::error
+	{
+		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
 	};
 }
 
@@ -258,13 +272,18 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const json::members &members)
 {
-	size_t i(0);
-	json::iov iov;
-	json::iov::push nodes[members.size()];
-	for(const auto &member : members)
-		new (nodes + i++) json::iov::push(iov, member);
+	const auto size
+	{
+		serialized(members)
+	};
 
-	response(client, iov, code);
+	char buffer[size];
+	const json::object object
+	{
+		stringify(mutable_buffer{buffer, buffer + size}, members)
+	};
+
+	response(client, object, code);
 }
 
 ircd::resource::response::response(client &client,
@@ -278,9 +297,18 @@ ircd::resource::response::response(client &client,
                                    const http::code &code)
 try
 {
-	char buf[8192];
-	const auto sv(stringify(buf, members));
-	response(client, json::object{sv}, code);
+	const auto size
+	{
+		serialized(members)
+	};
+
+	char buffer[size];
+	const json::object object
+	{
+		stringify(mutable_buffer{buffer, buffer + size}, members)
+	};
+
+	response(client, object, code);
 }
 catch(const json::error &e)
 {

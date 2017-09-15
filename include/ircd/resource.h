@@ -91,9 +91,9 @@ struct ircd::resource::request::body
 struct ircd::resource::response
 {
 	response(client &, const string_view &str, const string_view &ct = "text/plain; charset=utf8", const http::code & = http::OK);
-	response(client &, const json::object & = "{}", const http::code & = http::OK);
+	response(client &, const json::object &str, const http::code & = http::OK);
+	response(client &, const json::members & = {}, const http::code & = http::OK);
 	response(client &, const json::iov &, const http::code & = http::OK);
-	response(client &, const json::members &, const http::code & = http::OK);
 	response(client &, const http::code &, const json::members &);
 	response(client &, const http::code &, const json::iov &);
 	response(client &, const http::code &);
