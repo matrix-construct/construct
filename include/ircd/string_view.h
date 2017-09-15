@@ -82,9 +82,20 @@ struct ircd::string_view
 		return ret;
 	}
 
+	/// (non-standard) resize viewer
+	void resize(const size_t &count)
+	{
+		*this = string_view{data(), data() + count};
+	}
+
 	// (non-standard) our iterator-based constructor
 	string_view(const char *const &begin, const char *const &end)
 	:std::string_view{begin, size_t(std::distance(begin, end))}
+	{}
+
+	// (non-standard) our iterator-based constructor
+	string_view(const std::string::const_iterator &begin, const std::string::const_iterator &end)
+	:string_view{&*begin, &*end}
 	{}
 
 	// (non-standard) our array based constructor
