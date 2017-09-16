@@ -227,6 +227,11 @@ struct ircd::json::printer
 	{
 		return operator()(begin(out), end(out), std::forward<args>(a)...);
 	}
+
+	template<class it_a,
+	         class it_b,
+	         class closure>
+	static void list_protocol(mutable_buffer &, it_a begin, const it_b &end, closure&&);
 }
 const ircd::json::printer;
 
@@ -281,6 +286,26 @@ const
 	};
 
 	return karma::generate(out, gg);
+}
+
+template<class it_a,
+         class it_b,
+         class closure>
+void
+ircd::json::printer::list_protocol(mutable_buffer &buffer,
+                                   it_a it,
+                                   const it_b &end,
+                                   closure&& lambda)
+{
+	if(it != end)
+	{
+		lambda(buffer, *it);
+		for(++it; it != end; ++it)
+		{
+			json::printer(buffer, json::printer.value_sep);
+			lambda(buffer, *it);
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -444,31 +469,21 @@ ircd::json::stringify(mutable_buffer &buf,
                       const member *const *const &b,
                       const member *const *const &e)
 {
-	const auto &print_member
+	const auto print_member
 	{
-		[&](const member &member)
+		[](mutable_buffer &buf, const auto &it)
 		{
-			printer(buf, printer.name << printer.name_sep, member.first);
-			stringify(buf, member.second);
+			const auto &m(*it);
+			printer(buf, printer.name << printer.name_sep, m.first);
+			stringify(buf, m.second);
 		}
 	};
 
-	char *const start(begin(buf));
+	char *const start{begin(buf)};
 	printer(buf, printer.object_begin);
-
-	auto it(b);
-	if(it != e)
-	{
-		print_member(**it);
-		for(++it; it != e; ++it)
-		{
-			printer(buf, printer.value_sep);
-			print_member(**it);
-		}
-	}
-
+	printer::list_protocol(buf, b, e, print_member);
 	printer(buf, printer.object_end);
-	return string_view{start, begin(buf)};
+	return { start, begin(buf) };
 }
 
 size_t
@@ -504,8 +519,20 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const object &object)
 {
-	const char *const start(begin(buf));
-	consume(buf, copy(buf, string_view{object}));
+	static const auto stringify_member
+	{
+		[](mutable_buffer &buf, const auto &member)
+		{
+			stringify(buf, member);
+		}
+	};
+
+	const auto b(std::begin(object));
+	const auto e(std::end(object));
+	char *const start(begin(buf));
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, b, e, stringify_member);
+	printer(buf, printer.object_end);
 	return { start, begin(buf) };
 }
 
@@ -513,16 +540,11 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const object::member &member)
 {
-	static const auto throws([]
-	{
-		throw print_error("The JSON generator failed to stringify object::member");
-	});
-
 	const char *const start(begin(buf));
 	consume(buf, copy(buf, string_view{member.first}));
-	printer(buf, printer.name_sep | eps[throws]);
+	printer(buf, printer.name_sep);
 	consume(buf, copy(buf, string_view{member.second}));
-	return string_view{start, begin(buf)};
+	return string_view { start, begin(buf) };
 }
 
 std::ostream &
@@ -654,9 +676,9 @@ ircd::json::array::stringify(mutable_buffer &buf,
                              const it &b,
                              const it &e)
 {
-	const auto print_element
+	static const auto print_element
 	{
-		[&buf](const string_view &element)
+		[](mutable_buffer &buf, const string_view &element)
 		{
 			if(!consume(buf, buffer::copy(buf, element)))
 				throw print_error("The JSON generator ran out of space in supplied buffer");
@@ -665,20 +687,9 @@ ircd::json::array::stringify(mutable_buffer &buf,
 
 	char *const start(std::begin(buf));
 	printer(buf, printer.array_begin);
-
-	auto i(b);
-	if(i != e)
-	{
-		print_element(*i);
-		for(++i; i != e; ++i)
-		{
-			printer(buf, printer.value_sep);
-			print_element(*i);
-		}
-	}
-
+	printer::list_protocol(buf, b, e, print_element);
 	printer(buf, printer.array_end);
-	return string_view{start, std::begin(buf)};
+	return { start, std::begin(buf) };
 }
 
 std::ostream &
@@ -780,27 +791,19 @@ ircd::json::stringify(mutable_buffer &buf,
                       const value *const &b,
                       const value *const &e)
 {
-	static const auto throws([]
+	static const auto print_value
 	{
-		throw print_error("The JSON generator failed to print array values");
-	});
+		[](mutable_buffer &buf, const value &value)
+		{
+			stringify(buf, value);
+		}
+	};
 
 	char *const start(begin(buf));
 	printer(buf, printer.array_begin);
-
-	auto it(b);
-	if(it != e)
-	{
-		stringify(buf, *it);
-		for(++it; it != e; ++it)
-		{
-			printer(buf, printer.value_sep);
-			stringify(buf, *it);
-		}
-	}
-
+	printer::list_protocol(buf, b, e, print_value);
 	printer(buf, printer.array_end);
-	return string_view{start, begin(buf)};
+	return { start, begin(buf) };
 }
 
 ircd::string_view
