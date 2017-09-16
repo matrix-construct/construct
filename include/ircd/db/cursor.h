@@ -203,7 +203,12 @@ const
 {
 	if(stale)
 	{
-		set(v, row);
+		for(const auto &cell : row)
+			if(cell.valid() && cell.key() == idx->first)
+				json::set(v, cell.col(), cell.val());
+			else
+				json::set(v, cell.col(), string_view{});
+
 		stale = false;
 	}
 

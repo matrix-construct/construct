@@ -25,9 +25,7 @@
 
 namespace ircd::db
 {
-	template<class... T> json::tuple<T...> &set(json::tuple<T...> &, const row &r);
 	template<class tuple> tuple make_tuple(const row &r);
-
 	template<class it> void set_index(it begin, it end, const string_view &index);
 	template<class... T> void write(database &, const string_view &index, const json::tuple<T...> &, const sopts & = {});
 }
@@ -67,18 +65,4 @@ ircd::db::make_tuple(const row &row)
 	tuple ret;
 	set(ret, row);
 	return ret;
-}
-
-template<class... T>
-ircd::json::tuple<T...> &
-ircd::db::set(json::tuple<T...> &tuple,
-              const row &row)
-{
-	for(const auto &cell : row)
-		if(cell.valid())
-			json::set(tuple, cell.col(), cell.val());
-		else
-			json::set(tuple, cell.col(), string_view{});
-
-	return tuple;
 }
