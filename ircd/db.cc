@@ -46,7 +46,6 @@ namespace ircd::db
 		throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
 	};
 
-	const char *reflect(const pos &);
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
 	rocksdb::Slice slice(const string_view &);
@@ -3203,19 +3202,19 @@ ircd::db::reflect(const rocksdb::Histograms &type)
 	return it != end(names)? it->second : empty;
 }
 
-const char *
+ircd::string_view
 ircd::db::reflect(const pos &pos)
 {
 	switch(pos)
 	{
-		case pos::NEXT:     return "NEXT";
-		case pos::PREV:     return "PREV";
-		case pos::FRONT:    return "FRONT";
-		case pos::BACK:     return "BACK";
-		case pos::END:      return "END";
+		case pos::NEXT:     return "NEXT"s;
+		case pos::PREV:     return "PREV"s;
+		case pos::FRONT:    return "FRONT"s;
+		case pos::BACK:     return "BACK"s;
+		case pos::END:      return "END"s;
 	}
 
-	return "?????";
+	return "?????"s;
 }
 
 bool

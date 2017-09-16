@@ -98,6 +98,8 @@ namespace ircd::db
 	std::vector<std::string> available();
 
 	void log_rdb_perf_context(const bool &all = true);
+
+	string_view reflect(const pos &);
 }
 
 enum class ircd::db::pos
