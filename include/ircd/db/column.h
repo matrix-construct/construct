@@ -98,7 +98,7 @@ struct ircd::db::column
 	using iterator = const_iterator;
 
   protected:
-	database::column *c;
+	database::column *c {nullptr};
 
   public:
 	explicit operator const database &() const;

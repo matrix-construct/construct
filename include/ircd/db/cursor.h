@@ -40,7 +40,7 @@ struct ircd::db::cursor
 	using index_iterator = ircd::db::index::const_iterator;
 
 	struct index index;
-	const where_type *where;
+	const where_type *where{nullptr};
 
 	const_iterator end();
 	const_iterator begin();
@@ -204,7 +204,7 @@ const
 	if(stale)
 	{
 		for(const auto &cell : row)
-			if(cell.valid() && cell.key() == idx->first)
+			if(cell.valid(idx->first))
 				json::set(v, cell.col(), cell.val());
 			else
 				json::set(v, cell.col(), string_view{});

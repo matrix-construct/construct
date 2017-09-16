@@ -1702,37 +1702,9 @@ ircd::db::seek(row &r,
 template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
 template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
 
-size_t
-ircd::db::trim(row &r)
-{
-	return trim(r, []
-	(const auto &cell)
-	{
-		return !valid(*cell.it);
-	});
-}
-
-size_t
-ircd::db::trim(row &r,
-               const string_view &index)
-{
-	return trim(r, [&index]
-	(const auto &cell)
-	{
-		return !valid_eq(*cell.it, index);
-	});
-}
-
-size_t
-ircd::db::trim(row &r,
-               const std::function<bool (cell &)> &closure)
-{
-	const auto end(std::remove_if(std::begin(r.its), std::end(r.its), closure));
-	const auto ret(std::distance(end, std::end(r.its)));
-	r.its.erase(end, std::end(r.its));
-	r.its.shrink_to_fit();
-	return ret;
-}
+//
+// row
+//
 
 ircd::db::row::row(database &d,
                    const string_view &key,
@@ -1798,36 +1770,9 @@ ircd::db::row::row(database &d,
 }()}
 {
 	if(key.empty())
-	{
 		seek(*this, pos::FRONT);
-		return;
-	}
-
-	seek(*this, key);
-
-	// without the noempty flag, all cells for a row show up in the row
-	// i.e all the columns of the db, etc
-	const bool noempty
-	{
-		has_opt(opts, get::NO_EMPTY)
-	};
-
-	const auto trimmer([&key, &noempty]
-	(auto &cell)
-	{
-		if(noempty)
-			return cell.key() != key;
-
-		// seek() returns a lower_bound so we have to compare equality
-		// here to not give the user data from the wrong row. The cell itself
-		// is not removed to allow the column to be visible in the row.
-		if(cell.key() != key)
-			cell.it.reset();
-
-		return false;
-	});
-
-	trim(*this, trimmer);
+	else
+		seek(*this, key);
 }
 
 void
@@ -1842,28 +1787,22 @@ ircd::db::row::operator()(const op &op,
 ircd::db::row::iterator
 ircd::db::row::find(const string_view &col)
 {
-	iterator ret;
-	ret.it = std::find_if(std::begin(its), std::end(its), [&col]
+	return std::find_if(std::begin(its), std::end(its), [&col]
 	(const auto &cell)
 	{
 		return name(cell.c) == col;
 	});
-
-	return ret;
 }
 
 ircd::db::row::const_iterator
 ircd::db::row::find(const string_view &col)
 const
 {
-	const_iterator ret;
-	ret.it = std::find_if(std::begin(its), std::end(its), [&col]
+	return std::find_if(std::begin(its), std::end(its), [&col]
 	(const auto &cell)
 	{
 		return name(cell.c) == col;
 	});
-
-	return ret;
 }
 
 bool
