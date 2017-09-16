@@ -871,6 +871,47 @@ static_assert
 //
 // To collapse pairs of iterators down to a single type
 //
+
+template<class T>
+struct iterpair
+:std::pair<T, T>
+{
+	using std::pair<T, T>::pair;
+};
+
+template<class T>
+T &
+begin(iterpair<T> &i)
+{
+	return std::get<0>(i);
+}
+
+template<class T>
+T &
+end(iterpair<T> &i)
+{
+	return std::get<1>(i);
+}
+
+template<class T>
+const T &
+begin(const iterpair<T> &i)
+{
+	return std::get<0>(i);
+}
+
+template<class T>
+const T &
+end(const iterpair<T> &i)
+{
+	return std::get<1>(i);
+}
+
+//
+// To collapse pairs of iterators down to a single type
+// typed by an object with iterator typedefs.
+//
+
 template<class T>
 using iterators = std::pair<typename T::iterator, typename T::iterator>;
 
