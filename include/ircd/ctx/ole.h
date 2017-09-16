@@ -27,24 +27,7 @@
 ///
 /// This system allows moving a task off the main IRCd thread by passing a function to a
 /// worker thread for execution. The context on the main IRCd thread yields until the offload
-/// function has returned (or thrown). Please read the last paragraph and be thoroughly dissuaded
-/// from temptation to abuse this.
-///
-/// The offload engine is for ye 'ole libraries or opaque function calls which may hang the
-/// program with blocking I/O, extreme and time-consuming computation, or other uncooperative
-/// behavior. IRCd is, at its core, still a single-threaded asynchronous environment and while
-/// userspace context switching is provided to eliminate callbacks, the same rules for hanging
-/// the program still apply.
-///
-/// Before using this system, do everything you possibly can to figure out if you can participate
-/// directly in the main boost::asio (glorified epoll()) system. If you have access to a file
-/// descriptor, socket, or similar device exposed by the library YOU DO NOT NEED THIS SYSTEM.
-/// We do not *prefer* to use threads just to have them wait on I/O. This system is also not for
-/// moderately expensive computation; it is alright to be fairly liberal with the main thread.
-/// You must factor in the round trip costs of kernel thread context switching, cache/bus
-/// transfers and contention, and whether any concurrency will really even be produced at all
-/// to make a good case for an offload that doesn't hurt more than it helps. And when it hurts,
-/// it hurts _everything_.
+/// function has returned (or thrown).
 ///
 namespace ircd::ctx::ole
 {

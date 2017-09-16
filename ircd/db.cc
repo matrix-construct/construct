@@ -2896,6 +2896,11 @@ const
 	return ret;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// Misc
+//
+
 bool
 ircd::db::optstr_find_and_remove(std::string &optstr,
                                  const std::string &what)

@@ -58,7 +58,7 @@ namespace ircd::ctx
 
 	ctx &cur();                                  // Convenience for *current (try to use this instead)
 	void yield();                                // Allow other contexts to run before returning.
-	void wait();                                 // Returns when context notified.
+	void wait();                                 // Returns when context is woken up.
 
 	// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
 	microseconds wait(const microseconds &, const std::nothrow_t &);

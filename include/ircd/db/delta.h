@@ -42,6 +42,13 @@ namespace ircd::db
 	bool value_required(const op &op);
 }
 
+/// Update a database cell without `cell`, `column` or row `references`.
+///
+/// The cell is found by name string. This is the least efficient of the deltas
+/// for many updates to the same column or cell when a reference to those can
+/// be pre-resolved. This delta has to resolve those references every single
+/// time it's iterated over; but that's okay for some transactions.
+///
 struct ircd::db::delta
 :std::tuple<op, string_view, string_view, string_view>
 {
