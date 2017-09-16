@@ -134,6 +134,13 @@ struct ircd::string_view
 template<class T>
 struct ircd::vector_view
 {
+	using value_type = T;
+	using pointer = T *;
+	using reference = T &;
+	using difference_type = size_t;
+	using iterator = T *;
+	using const_iterator = const T *;
+
 	T *_data                                     { nullptr                                         };
 	T *_stop                                     { nullptr                                         };
 
@@ -142,12 +149,12 @@ struct ircd::vector_view
 	size_t size() const                          { return std::distance(_data, _stop);             }
 	bool empty() const                           { return !size();                                 }
 
-	const T *begin() const                       { return data();                                  }
-	const T *end() const                         { return _stop;                                   }
-	const T *cbegin()                            { return data();                                  }
-	const T *cend()                              { return _stop;                                   }
-	T *begin()                                   { return data();                                  }
-	T *end()                                     { return _stop;                                   }
+	const_iterator begin() const                 { return data();                                  }
+	const_iterator end() const                   { return _stop;                                   }
+	const_iterator cbegin()                      { return data();                                  }
+	const_iterator cend()                        { return _stop;                                   }
+	iterator begin()                             { return data();                                  }
+	iterator end()                               { return _stop;                                   }
 
 	const T &operator[](const size_t &pos) const
 	{
