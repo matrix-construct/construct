@@ -71,8 +71,8 @@ struct ircd::db::cursor<d, tuple>::const_iterator
 	mutable bool stale{true};
 	bool invalid{false};
 
-	bool operator!() const                       { return invalid || !row.valid();                 }
-	operator bool() const                        { return !operator!();                            }
+	operator bool() const;
+	bool operator!() const;
 
 	bool operator==(const const_iterator &o) const;
 	bool operator!=(const const_iterator &o) const;
@@ -143,7 +143,7 @@ ircd::db::cursor<d, tuple>::const_iterator::const_iterator(const cursor &c,
 }
 ,invalid
 {
-	!this->idx || !row.valid()
+	!bool(this->idx) || !row.valid(this->idx->first)
 }
 {
 	if(!invalid && this->where && !(*this->where)(this->operator*()))
@@ -213,6 +213,30 @@ const
 	}
 
 	return v;
+}
+
+template<ircd::db::database *const &d,
+         class tuple>
+bool
+ircd::db::cursor<d, tuple>::const_iterator::operator!()
+const
+{
+	return !static_cast<bool>(*this);
+}
+
+template<ircd::db::database *const &d,
+         class tuple>
+ircd::db::cursor<d, tuple>::const_iterator::operator
+bool()
+const
+{
+	if(invalid)
+		return false;
+
+	if(!idx)
+		return false;
+
+	return row.valid(idx->first);
 }
 
 template<ircd::db::database *const &d,

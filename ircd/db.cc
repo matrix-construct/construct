@@ -60,9 +60,13 @@ namespace ircd::db
 	// Validation functors
 	bool valid(const rocksdb::Iterator &);
 	bool operator!(const rocksdb::Iterator &);
+	using valid_proffer = std::function<bool (const rocksdb::Iterator &)>;
+	bool valid(const rocksdb::Iterator &, const valid_proffer &);
+	bool valid_eq(const rocksdb::Iterator &, const string_view &);
+	bool valid_lte(const rocksdb::Iterator &, const string_view &);
+	bool valid_gt(const rocksdb::Iterator &, const string_view &);
 	void valid_or_throw(const rocksdb::Iterator &);
-	bool valid_equal(const rocksdb::Iterator &, const string_view &);
-	void valid_equal_or_throw(const rocksdb::Iterator &, const string_view &);
+	void valid_eq_or_throw(const rocksdb::Iterator &, const string_view &);
 
 	// [GET] seek suite
 	template<class pos> bool seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
@@ -1409,7 +1413,7 @@ ircd::db::cell::cell(column column,
 ,it{ss? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
 {
 	if(bool(this->it))
-		if(!valid_equal(*this->it, index))
+		if(!valid_eq(*this->it, index))
 			this->it.reset();
 }
 
@@ -1422,7 +1426,7 @@ ircd::db::cell::cell(column column,
 ,it{std::move(it)}
 {
 	seek(*this, index);
-	if(!valid_equal(*this->it, index))
+	if(!valid_eq(*this->it, index))
 		this->it.reset();
 }
 
@@ -1581,17 +1585,31 @@ const
 }
 
 bool
-ircd::db::cell::valid(const string_view &eq)
-const
-{
-	return bool(it) && db::valid_equal(*it, eq);
-}
-
-bool
 ircd::db::cell::valid()
 const
 {
 	return bool(it) && db::valid(*it);
+}
+
+bool
+ircd::db::cell::valid(const string_view &s)
+const
+{
+	return bool(it) && db::valid_eq(*it, s);
+}
+
+bool
+ircd::db::cell::valid_gt(const string_view &s)
+const
+{
+	return bool(it) && db::valid_gt(*it, s);
+}
+
+bool
+ircd::db::cell::valid_lte(const string_view &s)
+const
+{
+	return bool(it) && db::valid_lte(*it, s);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1702,7 +1720,7 @@ ircd::db::trim(row &r,
 	return trim(r, [&index]
 	(const auto &cell)
 	{
-		return !valid_equal(*cell.it, index);
+		return !valid_eq(*cell.it, index);
 	});
 }
 
@@ -1857,6 +1875,17 @@ const
 	(const auto &cell)
 	{
 		return cell.valid();
+	});
+}
+
+bool
+ircd::db::row::valid(const string_view &s)
+const
+{
+	return std::any_of(std::begin(its), std::end(its), [&s]
+	(const auto &cell)
+	{
+		return cell.valid(s);
 	});
 }
 
@@ -2168,7 +2197,7 @@ ircd::db::column::operator()(const string_view &key,
                              const gopts &gopts)
 {
 	const auto it(seek(*this, key, gopts));
-	valid_equal_or_throw(*it, key);
+	valid_eq_or_throw(*it, key);
 	func(val(*it));
 }
 
@@ -2324,7 +2353,7 @@ const ircd::db::column::const_iterator::value_type &
 ircd::db::column::const_iterator::operator*()
 const
 {
-	assert(valid(*it));
+	assert(it && valid(*it));
 	val.first = db::key(*it);
 	val.second = db::val(*it);
 	return val;
@@ -2341,19 +2370,19 @@ bool
 ircd::db::column::const_iterator::operator!()
 const
 {
-	if(!it)
-		return true;
-
-	if(!valid(*it))
-		return true;
-
-	return false;
+	return !static_cast<bool>(*this);
 }
 
 ircd::db::column::const_iterator::operator bool()
 const
 {
-	return !!*this;
+	if(!it)
+		return false;
+
+	if(!valid(*it))
+		return false;
+
+	return true;
 }
 
 bool
@@ -2994,25 +3023,14 @@ ircd::db::make_opts(const sopts &opts)
 }
 
 void
-ircd::db::valid_equal_or_throw(const rocksdb::Iterator &it,
-                               const string_view &sv)
+ircd::db::valid_eq_or_throw(const rocksdb::Iterator &it,
+                            const string_view &sv)
 {
-	valid_or_throw(it);
-	if(it.key().compare(slice(sv)) != 0)
+	if(!valid_eq(it, sv))
+	{
+		throw_on_error(it.status());
 		throw not_found();
-}
-
-bool
-ircd::db::valid_equal(const rocksdb::Iterator &it,
-                      const string_view &sv)
-{
-	if(!valid(it))
-		return false;
-
-	if(it.key().compare(slice(sv)) != 0)
-		return false;
-
-	return true;
+	}
 }
 
 void
@@ -3024,6 +3042,43 @@ ircd::db::valid_or_throw(const rocksdb::Iterator &it)
 		throw not_found();
 		//assert(0); // status == ok + !Valid() == ???
 	}
+}
+
+bool
+ircd::db::valid_lte(const rocksdb::Iterator &it,
+                    const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) <= 0;
+	});
+}
+
+bool
+ircd::db::valid_gt(const rocksdb::Iterator &it,
+                   const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) > 0;
+	});
+}
+
+bool
+ircd::db::valid_eq(const rocksdb::Iterator &it,
+                   const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) == 0;
+	});
+}
+
+bool
+ircd::db::valid(const rocksdb::Iterator &it,
+                const valid_proffer &proffer)
+{
+	return valid(it)? proffer(it) : false;
 }
 
 bool

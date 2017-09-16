@@ -58,6 +58,7 @@ struct ircd::db::row
 	auto empty() const                           { return its.empty();                             }
 	auto size() const                            { return its.size();                              }
 	bool valid() const;                          // true on any cell valid; false on empty
+	bool valid(const string_view &) const;       // true on any cell valid equal; false on empty
 
 	// [GET] Iterations
 	const_iterator begin() const;

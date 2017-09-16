@@ -65,7 +65,9 @@ struct ircd::db::cell
 	explicit operator column &()                 { return c;                                      }
 
 	bool valid() const;                          // cell exists
-	bool valid(const string_view &eq) const;     // valid_equal
+	bool valid(const string_view &) const;       // valid equal key
+	bool valid_gt(const string_view &) const;    // valid greater than key
+	bool valid_lte(const string_view &) const;   // valid less than or equal key
 	operator bool() const                        { return valid();                                }
 	bool operator!() const                       { return !valid();                               }
 
