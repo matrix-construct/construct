@@ -108,15 +108,30 @@ noexcept
 
 namespace ircd {
 
+const m::room accounts
+{
+	m::id::room{"!accounts:cdc.z"}
+};
+
 static void
 authenticate(client &client,
              resource::method &method,
              resource::request &request)
 try
 {
-	const auto &access_token(request.query.at("access_token"));
-	const auto it(resource::tokens.find(access_token));
-	if(it == end(resource::tokens))
+	const auto &access_token
+	{
+		request.query.at("access_token")
+	};
+
+	// Sets up the query to find the access_token in the accounts room
+	const m::events::where::equal query
+	{
+		{ "type",        "ircd.access_token" },
+		{ "state_key",   access_token        }
+	};
+
+	if(!accounts.any(query))
 		throw m::error
 		{
 			// When credentials are required but missing or invalid, the HTTP call will return with
