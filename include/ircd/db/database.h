@@ -68,12 +68,14 @@ struct ircd::db::database
 
 	std::string name;
 	std::string path;
+	std::string optstr;
 	std::shared_ptr<struct logs> logs;
 	std::shared_ptr<struct stats> stats;
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
 	std::shared_ptr<rocksdb::Cache> cache;
-	std::map<string_view, std::shared_ptr<column>> columns;
+	std::map<std::string, size_t, std::less<>> column_names;
+	std::vector<std::shared_ptr<column>> columns;
 	custom_ptr<rocksdb::DB> d;
 	unique_const_iterator<decltype(dbs)> dbs_it;
 
@@ -81,8 +83,10 @@ struct ircd::db::database
 	operator const rocksdb::DB &() const         { return *d;                                      }
 	operator rocksdb::DB &()                     { return *d;                                      }
 
-	const column &operator[](const string_view &) const;
-	column &operator[](const string_view &);
+	const column &operator[](const uint32_t &id) const;
+	const column &operator[](const string_view &name) const;
+	column &operator[](const uint32_t &id);
+	column &operator[](const string_view &name);
 
 	// [SET] Perform operations in a sequence as a single transaction.
 	void operator()(const sopts &, const delta *const &begin, const delta *const &end);

@@ -39,7 +39,8 @@ namespace ircd::db
 
 	// Indicates an op uses both a key and value for its operation. Some only use
 	// a key name so an empty value argument in a delta is okay when false.
-	bool value_required(const op &op);
+	bool value_required(const op &);
+	string_view reflect(const op &);
 }
 
 /// Update a database cell without `cell`, `column` or row `references`.
