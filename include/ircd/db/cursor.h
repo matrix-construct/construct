@@ -260,5 +260,5 @@ const
 	if(!row.valid() || !o.row.valid())
 		return false;
 
-	return row.its.at(0).key() == o.row.its.at(0).key();
+	return idx->first == o.idx->first;
 }
