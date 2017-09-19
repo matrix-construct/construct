@@ -1295,6 +1295,370 @@ ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnF
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// db/txn.h
+//
+
+struct ircd::db::txn::handler
+:rocksdb::WriteBatch::Handler
+{
+	using Status = rocksdb::Status;
+	using Slice = rocksdb::Slice;
+
+	const database &d;
+	const std::function<void (const delta &)> &cb;
+	bool _continue {true};
+
+	Status callback(const delta &) noexcept;
+	Status callback(const uint32_t &, const op &, const Slice &a, const Slice &b) noexcept;
+
+	bool Continue() noexcept override;
+	Status MarkRollback(const Slice &xid) noexcept override;
+	Status MarkCommit(const Slice &xid) noexcept override;
+	Status MarkEndPrepare(const Slice &xid) noexcept override;
+	Status MarkBeginPrepare() noexcept override;
+
+	Status MergeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+	Status SingleDeleteCF(const uint32_t cfid, const Slice &) noexcept override;
+	Status DeleteRangeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+	Status DeleteCF(const uint32_t cfid, const Slice &) noexcept override;
+	Status PutCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+
+	handler(const database &d,
+	        const std::function<void (const delta &)> &cb)
+	:d{d}
+	,cb{cb}
+	{}
+};
+
+std::string
+ircd::db::debug(const txn &t)
+{
+	const rocksdb::WriteBatch &wb(t);
+	return db::debug(wb);
+}
+
+void
+ircd::db::for_each(const txn &t,
+                   const std::function<void (const delta &)> &closure)
+{
+	const database &d(t);
+	const rocksdb::WriteBatch &wb{t};
+	txn::handler h{d, closure};
+	throw_on_error
+	{
+		wb.Iterate(&h)
+	};
+}
+
+///
+/// handler
+///
+
+rocksdb::Status
+ircd::db::txn::handler::PutCF(const uint32_t cfid,
+                              const Slice &key,
+                              const Slice &val)
+noexcept
+{
+	return callback(cfid, op::SET, key, val);
+}
+
+rocksdb::Status
+ircd::db::txn::handler::DeleteCF(const uint32_t cfid,
+                                 const Slice &key)
+noexcept
+{
+	return callback(cfid, op::DELETE, key, {});
+}
+
+rocksdb::Status
+ircd::db::txn::handler::DeleteRangeCF(const uint32_t cfid,
+                                      const Slice &begin,
+                                      const Slice &end)
+noexcept
+{
+	return callback(cfid, op::DELETE_RANGE, begin, end);
+}
+
+rocksdb::Status
+ircd::db::txn::handler::SingleDeleteCF(const uint32_t cfid,
+                                       const Slice &key)
+noexcept
+{
+	return callback(cfid, op::SINGLE_DELETE, key, {});
+}
+
+rocksdb::Status
+ircd::db::txn::handler::MergeCF(const uint32_t cfid,
+                                const Slice &key,
+                                const Slice &value)
+noexcept
+{
+	return callback(cfid, op::MERGE, key, value);
+}
+
+rocksdb::Status
+ircd::db::txn::handler::MarkBeginPrepare()
+noexcept
+{
+	return Status::OK();
+}
+
+rocksdb::Status
+ircd::db::txn::handler::MarkEndPrepare(const Slice &xid)
+noexcept
+{
+	return Status::OK();
+}
+
+rocksdb::Status
+ircd::db::txn::handler::MarkCommit(const Slice &xid)
+noexcept
+{
+	return Status::OK();
+}
+
+rocksdb::Status
+ircd::db::txn::handler::MarkRollback(const Slice &xid)
+noexcept
+{
+	return Status::OK();
+}
+
+rocksdb::Status
+ircd::db::txn::handler::callback(const uint32_t &cfid,
+                                 const op &op,
+                                 const Slice &a,
+                                 const Slice &b)
+noexcept try
+{
+	auto &c{d[cfid]};
+	const delta delta
+	{
+		op,
+		db::name(c),
+		slice(a),
+		slice(b)
+	};
+
+	return callback(delta);
+}
+catch(const std::exception &e)
+{
+	_continue = false;
+	return Status::Aborted(slice(string_view{e.what()}));
+}
+
+rocksdb::Status
+ircd::db::txn::handler::callback(const delta &delta)
+noexcept try
+{
+	cb(delta);
+	return Status::OK();
+}
+catch(const std::exception &e)
+{
+	_continue = false;
+	return Status::Aborted(slice(string_view{e.what()}));
+}
+
+bool
+ircd::db::txn::handler::Continue()
+noexcept
+{
+	return _continue;
+}
+
+//
+// txn
+//
+
+ircd::db::txn::txn(database &d)
+:txn{d, {}}
+{
+}
+
+ircd::db::txn::txn(database &d,
+                   const opts &opts)
+:d{&d}
+,wb
+{
+	std::make_unique<rocksdb::WriteBatch>(opts.reserve_bytes, opts.max_bytes)
+}
+{
+}
+
+ircd::db::txn::~txn()
+noexcept
+{
+}
+
+void
+ircd::db::txn::operator()(const sopts &opts)
+{
+	assert(bool(d));
+	operator()(*d, opts);
+}
+
+void
+ircd::db::txn::operator()(database &d,
+                          const sopts &opts)
+{
+	assert(bool(wb));
+	commit(d, *wb, opts);
+}
+
+void
+ircd::db::txn::clear()
+{
+	assert(bool(wb));
+	wb->Clear();
+}
+
+size_t
+ircd::db::txn::size()
+const
+{
+	assert(bool(wb));
+	return wb->Count();
+}
+
+size_t
+ircd::db::txn::bytes()
+const
+{
+	assert(bool(wb));
+	return wb->GetDataSize();
+}
+
+bool
+ircd::db::txn::has(const op &op)
+const
+{
+	assert(bool(wb));
+	switch(op)
+	{
+		case op::GET:              assert(0); return false;
+		case op::SET:              return wb->HasPut();
+		case op::MERGE:            return wb->HasMerge();
+		case op::DELETE:           return wb->HasDelete();
+		case op::DELETE_RANGE:     return wb->HasDeleteRange();
+		case op::SINGLE_DELETE:    return wb->HasSingleDelete();
+	}
+
+	return false;
+}
+
+ircd::db::txn::operator
+ircd::db::database &()
+{
+	assert(bool(d));
+	return *d;
+}
+
+ircd::db::txn::operator
+rocksdb::WriteBatch &()
+{
+	assert(bool(wb));
+	return *wb;
+}
+
+ircd::db::txn::operator
+const ircd::db::database &()
+const
+{
+	assert(bool(d));
+	return *d;
+}
+
+ircd::db::txn::operator
+const rocksdb::WriteBatch &()
+const
+{
+	assert(bool(wb));
+	return *wb;
+}
+
+//
+// Checkpoint
+//
+
+ircd::db::txn::checkpoint::checkpoint(txn &t)
+:t{t}
+{
+	assert(bool(t.wb));
+	t.wb->SetSavePoint();
+}
+
+ircd::db::txn::checkpoint::~checkpoint()
+noexcept
+{
+	if(likely(!std::uncaught_exception()))
+		throw_on_error { t.wb->PopSavePoint() };
+	else
+		throw_on_error { t.wb->RollbackToSavePoint() };
+}
+
+ircd::db::txn::append::append(txn &t,
+                              const string_view &key,
+                              const json::iov &iov)
+{
+	std::for_each(std::begin(iov), std::end(iov), [&t, &key]
+	(const auto &member)
+	{
+		append
+		{
+			t, delta
+			{
+				member.first,   // col
+				key,            // key
+				member.second   // val
+			}
+		};
+	});
+}
+
+ircd::db::txn::append::append(txn &t,
+                              const delta &delta)
+{
+	assert(bool(t.d));
+	append(t, *t.d, delta);
+}
+
+ircd::db::txn::append::append(txn &t,
+                              const row::delta &delta)
+{
+	assert(0);
+}
+
+ircd::db::txn::append::append(txn &t,
+                              const cell::delta &delta)
+{
+	db::append(*t.wb, delta);
+}
+
+ircd::db::txn::append::append(txn &t,
+                              column &c,
+                              const column::delta &delta)
+{
+	db::append(*t.wb, c, delta);
+}
+
+ircd::db::txn::append::append(txn &t,
+                              database &d,
+                              const delta &delta)
+{
+	db::column c{d[std::get<1>(delta)]};
+	db::append(*t.wb, c, db::column::delta
+	{
+		std::get<op>(delta),
+		std::get<2>(delta),
+		std::get<3>(delta)
+	});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // db/index.h
 //
 
