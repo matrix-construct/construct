@@ -358,7 +358,7 @@ ircd::db::database::database(std::string name,
 
 ircd::db::database::database(std::string name,
                              std::string optstr,
-                             const description &description)
+                             description description)
 try
 :name
 {

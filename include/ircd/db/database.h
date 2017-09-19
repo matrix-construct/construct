@@ -61,7 +61,7 @@ struct ircd::db::database
 	struct comparator;
 	struct prefix_transform;
 	struct column;
-	using description = std::initializer_list<descriptor>;
+	using description = std::vector<descriptor>;
 
 	// central collection of open databases for iteration (non-owning)
 	static std::map<string_view, database *> dbs;
