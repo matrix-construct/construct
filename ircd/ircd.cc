@@ -27,6 +27,8 @@
 
 namespace ircd
 {
+	extern const uint boost_version[3];
+
 	bool debugmode;                              // set by command line
 
 	boost::asio::io_service *ios;                // user's io service
@@ -55,6 +57,16 @@ ircd::init(boost::asio::io_service &io_service,
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
 	log::mark("START");
+
+	log::info("%s. boost %u.%u.%u. rocksdb %s. %s configured %s %s",
+	          PACKAGE_STRING,
+	          boost_version[0],
+	          boost_version[1],
+	          boost_version[2],
+	          db::version,
+	          BRANDING_VERSION,
+	          RB_DATE_CONFIGURED,
+	          RB_DEBUG? "(DEBUG MODE)" : "");
 
 	if(main_exit_func)
 	{
@@ -173,6 +185,14 @@ ircd::init_rlimit()
 {
 }
 #endif
+
+const uint
+ircd::boost_version[3]
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
 
 // namespace ircd {
 
