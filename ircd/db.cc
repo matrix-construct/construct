@@ -1305,7 +1305,7 @@ struct ircd::db::txn::handler
 	using Slice = rocksdb::Slice;
 
 	const database &d;
-	const std::function<void (const delta &)> &cb;
+	const std::function<bool (const delta &)> &cb;
 	bool _continue {true};
 
 	Status callback(const delta &) noexcept;
@@ -1324,7 +1324,7 @@ struct ircd::db::txn::handler
 	Status PutCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
 
 	handler(const database &d,
-	        const std::function<void (const delta &)> &cb)
+	        const std::function<bool (const delta &)> &cb)
 	:d{d}
 	,cb{cb}
 	{}
@@ -1341,13 +1341,28 @@ void
 ircd::db::for_each(const txn &t,
                    const std::function<void (const delta &)> &closure)
 {
+	const auto re{[&closure]
+	(const delta &delta)
+	{
+		closure(delta);
+		return true;
+	}};
+
+	const database &d(t);
+	const rocksdb::WriteBatch &wb{t};
+	txn::handler h{d, re};
+	wb.Iterate(&h);
+}
+
+bool
+ircd::db::until(const txn &t,
+                const std::function<bool (const delta &)> &closure)
+{
 	const database &d(t);
 	const rocksdb::WriteBatch &wb{t};
 	txn::handler h{d, closure};
-	throw_on_error
-	{
-		wb.Iterate(&h)
-	};
+	wb.Iterate(&h);
+	return h._continue;
 }
 
 ///
@@ -1446,20 +1461,21 @@ noexcept try
 catch(const std::exception &e)
 {
 	_continue = false;
-	return Status::Aborted(slice(string_view{e.what()}));
+	log::critical("txn::handler: cfid[%u]: %s", cfid, e.what());
+	std::terminate();
 }
 
 rocksdb::Status
 ircd::db::txn::handler::callback(const delta &delta)
 noexcept try
 {
-	cb(delta);
+	_continue = cb(delta);
 	return Status::OK();
 }
 catch(const std::exception &e)
 {
 	_continue = false;
-	return Status::Aborted(slice(string_view{e.what()}));
+	return Status::OK();
 }
 
 bool
@@ -1547,6 +1563,106 @@ const
 	}
 
 	return false;
+}
+
+bool
+ircd::db::txn::has(const op &op,
+                   const string_view &col)
+const
+{
+	return !until(*this, [&op, &col]
+	(const auto &delta)
+	{
+		return std::get<0>(delta) == op &&
+		       std::get<1>(delta) == col;
+	});
+}
+
+bool
+ircd::db::txn::has(const op &op,
+                   const string_view &col,
+                   const string_view &key)
+const
+{
+	return !until(*this, [&op, &col, &key]
+	(const auto &delta)
+	{
+		return std::get<0>(delta) == op &&
+		       std::get<1>(delta) == col &&
+		       std::get<2>(delta) == key;
+	});
+}
+
+ircd::db::delta
+ircd::db::txn::at(const op &op,
+                  const string_view &col)
+const
+{
+	const auto ret(get(op, col));
+	if(unlikely(!std::get<2>(ret)))
+		throw not_found("db::txn::at(%s, %s): no matching delta in transaction",
+		                reflect(op),
+		                col);
+	return ret;
+}
+
+ircd::db::delta
+ircd::db::txn::get(const op &op,
+                   const string_view &col)
+const
+{
+	delta ret;
+	until(*this, [&ret, &op, &col]
+	(const delta &delta)
+	{
+		if(std::get<0>(delta) == op &&
+		   std::get<1>(delta) == col)
+		{
+			ret = delta;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+ircd::string_view
+ircd::db::txn::at(const op &op,
+                  const string_view &col,
+                  const string_view &key)
+const
+{
+	const auto ret(get(op, col, key));
+	if(unlikely(!ret))
+		throw not_found("db::txn::at(%s, %s, %s): no matching delta in transaction",
+		                reflect(op),
+		                col,
+		                key);
+	return ret;
+}
+
+ircd::string_view
+ircd::db::txn::get(const op &op,
+                   const string_view &col,
+                   const string_view &key)
+const
+{
+	string_view ret;
+	until(*this, [&ret, &op, &col, &key]
+	(const delta &delta)
+	{
+		if(std::get<0>(delta) == op &&
+		   std::get<1>(delta) == col &&
+		   std::get<2>(delta) == key)
+		{
+			ret = std::get<3>(delta);
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
 }
 
 ircd::db::txn::operator

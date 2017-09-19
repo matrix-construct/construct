@@ -27,6 +27,7 @@ namespace ircd::db
 {
 	struct txn;
 
+	bool until(const txn &, const std::function<bool (const delta &)> &);
 	void for_each(const txn &, const std::function<void (const delta &)> &);
 	std::string debug(const txn &);
 }
@@ -47,7 +48,15 @@ class ircd::db::txn
 	explicit operator rocksdb::WriteBatch &();
 	explicit operator database &();
 
+	string_view get(const op &, const string_view &col, const string_view &key) const;
+	string_view at(const op &, const string_view &col, const string_view &key) const;
+	bool has(const op &, const string_view &col, const string_view &key) const;
+
+	delta get(const op &, const string_view &col) const;
+	delta at(const op &, const string_view &col) const;
+	bool has(const op &, const string_view &col) const;
 	bool has(const op &) const;
+
 	size_t bytes() const;
 	size_t size() const;
 
