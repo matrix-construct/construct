@@ -37,27 +37,27 @@ matrix:
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
     - WITH_INCLUDED_JS=--with-included-js=shared
 
-  - os: linux
-    dist: xenial
-    group: unstable
-    sudo: required
-    compiler: clang-3.9
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-trusty-3.9
-        packages:
-        - clang-3.9
-        - gcc-6
-        - g++-6
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
-    env:
-    - CCOMPILER=clang-3.9
-    - CXXCOMPILER=clang++-3.9
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=--with-included-js=shared
+#  - os: linux
+#    dist: xenial
+#    group: unstable
+#    sudo: required
+#    compiler: clang-3.9
+#    addons:
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        - llvm-toolchain-trusty-3.9
+#        packages:
+#        - clang-3.9
+#        - gcc-6
+#        - g++-6
+#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
+#    env:
+#    - CCOMPILER=clang-3.9
+#    - CXXCOMPILER=clang++-3.9
+#    - WITH_INCLUDED_BOOST=--with-included-boost
+#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+#    - WITH_INCLUDED_JS=--with-included-js=shared
 
 #  - os: osx
 #    compiler: clang
