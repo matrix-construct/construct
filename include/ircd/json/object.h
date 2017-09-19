@@ -112,6 +112,7 @@ struct ircd::json::object
 	explicit operator std::string() const;
 
 	// rewrite onto streams or buffers etc
+	friend size_t serialized(const object &);
 	friend string_view stringify(mutable_buffer &, const object &);
 	friend std::ostream &operator<<(std::ostream &, const object &);
 };
@@ -131,6 +132,7 @@ struct ircd::json::object::member
 	friend bool operator>(const object::member &, const object::member &);
 
 	// writes a single member onto stream
+	friend size_t serialized(const object::member &);
 	friend string_view stringify(mutable_buffer &, const object::member &);
 	friend std::ostream &operator<<(std::ostream &, const object::member &);
 };

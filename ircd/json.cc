@@ -515,36 +515,28 @@ ircd::json::serialized(const member &member)
 // json/object.h
 //
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const object &object)
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const object::member &member)
 {
-	static const auto stringify_member
-	{
-		[](mutable_buffer &buf, const auto &member)
-		{
-			stringify(buf, member);
-		}
-	};
-
-	const auto b(std::begin(object));
-	const auto e(std::end(object));
-	char *const start(begin(buf));
-	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, b, e, stringify_member);
-	printer(buf, printer.object_end);
-	return { start, begin(buf) };
+	s << json::string(member);
+	return s;
 }
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const object::member &member)
 {
-	const char *const start(begin(buf));
-	consume(buf, copy(buf, string_view{member.first}));
+	char *const start(begin(buf));
+	printer(buf, printer.name, member.first);
 	printer(buf, printer.name_sep);
-	consume(buf, copy(buf, string_view{member.second}));
+	consume(buf, copy(buf, member.second));
 	return string_view { start, begin(buf) };
+}
+
+size_t
+ircd::json::serialized(const object::member &member)
+{
+	return serialized(member.first) + 1 + serialized(member.second);
 }
 
 std::ostream &
@@ -554,11 +546,38 @@ ircd::json::operator<<(std::ostream &s, const object &object)
 	return s;
 }
 
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const object::member &member)
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object &object)
 {
-	s << json::string(member);
-	return s;
+	const auto b(std::begin(object));
+	const auto e(std::end(object));
+	char *const start(begin(buf));
+	static const auto stringify_member
+	{
+		[](mutable_buffer &buf, const object::member &member)
+		{
+			stringify(buf, member);
+		}
+	};
+
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, b, e, stringify_member);
+	printer(buf, printer.object_end);
+	return { start, begin(buf) };
+}
+
+size_t
+ircd::json::serialized(const object &object)
+{
+	const auto begin(std::begin(object));
+	const auto end(std::end(object));
+	const size_t ret(1 + (begin == end));
+	return std::accumulate(begin, end, ret, []
+	(auto ret, const object::member &member)
+	{
+		return ret += serialized(member) + 1;
+	});
 }
 
 ircd::json::object::const_iterator &
@@ -1353,21 +1372,25 @@ ircd::json::operator==(const value &a, const value &b)
 size_t
 ircd::json::serialized(const string_view &s)
 {
-	if(!s.empty()) switch(type(s, std::nothrow))
+	size_t ret
+	{
+		s.size()
+	};
+
+	switch(type(s, std::nothrow))
 	{
 		case NUMBER:
 		case OBJECT:
 		case ARRAY:
 		case LITERAL:
-			return s.size();
+			break;
 
 		case STRING:
+			ret += !startswith(s, '"');
+			ret += !endswith(s, '"');
 			break;
 	}
 
-	size_t ret(s.size());
-	ret += !startswith(s, '"');
-	ret += !endswith(s, '"');
 	return ret;
 }
 

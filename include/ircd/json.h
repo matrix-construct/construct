@@ -136,7 +136,7 @@ ircd::json::print(char *const &buf,
                   const size_t &max,
                   T&&... t)
 {
-	if(!max)
+	if(unlikely(!max))
 		return 0;
 
 	mutable_buffer mb
