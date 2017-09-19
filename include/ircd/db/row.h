@@ -112,6 +112,11 @@ namespace ircd::db
 struct ircd::db::row::delta
 :std::tuple<op, row *>
 {
+	enum
+	{
+		OP, ROW
+	};
+
 	delta(row &r, const enum op &op = op::SET)
 	:std::tuple<enum op, row *>{op, &r}
 	{}

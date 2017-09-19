@@ -132,6 +132,11 @@ namespace ircd::db
 struct ircd::db::cell::delta
 :std::tuple<op, cell *, string_view>
 {
+	enum
+	{
+		OP, CELL, VAL,
+	};
+
 	delta(cell &c, const string_view &val, const enum op &op = op::SET)
 	:std::tuple<enum op, cell *, string_view>{op, &c, val}
 	{}
