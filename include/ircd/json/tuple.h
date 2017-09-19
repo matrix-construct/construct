@@ -49,11 +49,11 @@ struct tuple_base
 ///
 /// Create and use a tuple to efficiently extract members from a json::object.
 /// The tuple will populate its own members during a single-pass iteration of
-/// the JSON input. If the JSON does not contain a member specified in the
-/// tuple, the value will be default initialized. If the JSON contains a member
-/// not specified in the tuple, it is ignored. If you need to know all of the
-/// members specified in the JSON dynamically, use a json::index or iterate
-/// manually.
+/// the JSON input.
+///
+/// But remember, the tuple carries very little information for you at runtime
+/// which may make it difficult to represent all JS phenomena like "undefined"
+/// and "null".
 ///
 template<class... T>
 struct tuple
@@ -62,6 +62,8 @@ struct tuple
 {
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
+
+	operator json::value() const;
 
 	static constexpr size_t size();
 
@@ -179,6 +181,13 @@ indexof(const string_view &name)
 	};
 
 	return equal? i : indexof<tuple, i + 1>(name);
+}
+
+template<class tuple>
+constexpr bool
+key_exists(const string_view &key)
+{
+	return indexof<tuple>(key) < size<tuple>();
 }
 
 template<size_t i,
@@ -799,6 +808,22 @@ operator<<(std::ostream &s, const tuple<T...> &t)
 {
     s << json::string(t);
     return s;
+}
+
+template<class... T>
+tuple<T...>::operator
+json::value()
+const
+{
+	json::value ret;
+	ret.type = OBJECT;
+	ret.create_string(serialized(*this), [this]
+	(mutable_buffer buffer)
+	{
+		stringify(buffer, *this);
+	});
+	return ret;
+
 }
 
 } // namespace json

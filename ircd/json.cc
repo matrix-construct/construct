@@ -24,20 +24,6 @@
 #include <ircd/spirit.h>
 #include <boost/fusion/include/at.hpp>
 
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::json::object::member,
-    ( decltype(ircd::json::object::member::first),   first )
-    ( decltype(ircd::json::object::member::second),  second )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::json::member,
-    ( decltype(ircd::json::member::first),   first )
-    ( decltype(ircd::json::member::second),  second )
-)
-
 namespace ircd::json
 {
 	namespace spirit = boost::spirit;
@@ -77,6 +63,20 @@ namespace ircd::json
 	struct printer extern const printer;
 	struct ostreamer extern const ostreamer;
 }
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::json::member,
+    ( decltype(ircd::json::member::first),   first )
+    ( decltype(ircd::json::member::second),  second )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::json::object::member,
+    ( decltype(ircd::json::object::member::first),   first )
+    ( decltype(ircd::json::object::member::second),  second )
+)
 
 template<class it>
 struct ircd::json::input
