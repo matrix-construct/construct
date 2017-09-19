@@ -464,17 +464,17 @@ try
 	const auto deleter([this](rocksdb::DB *const d)
 	noexcept
 	{
-		const auto seq
+		const auto sequence
 		{
 			d->GetLatestSequenceNumber()
 		};
 
 		delete d;
 
-		log.info("'%s': closed database @ `%s' seq[%zu]",
+		log.info("'%s': closed database @ `%s' at sequence number %lu.",
 		         this->name,
 		         this->path,
-		         seq);
+		         sequence);
 	});
 
 	// Open DB into ptr
@@ -540,10 +540,9 @@ try
 	dbs, dbs.emplace(string_view{this->name}, this).first
 }
 {
-	log.info("'%s': Opened database @ `%s' (handle: %p) columns[%zu] seq[%zu]",
+	log.info("'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
 	         this->name,
 	         path,
-	         (const void *)this,
 	         columns.size(),
 	         d->GetLatestSequenceNumber());
 }

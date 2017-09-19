@@ -689,11 +689,10 @@ try
 	if(header->init)
 		header->init();
 
-	log.info("Loaded module %s v%u \"%s\" (depth: %zu)",
+	log.info("Loaded module %s v%u \"%s\"",
 	         name(),
 	         header->version,
-	         description().size()? description() : "<no description>"s,
-	         loading.size());
+	         description().size()? description() : "<no description>"s);
 
 	// Without init exception, the module is now considered loaded.
 	loaded.emplace(name(), this);

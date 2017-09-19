@@ -97,13 +97,13 @@ ircd::resource::resource(const string_view &path,
 	};
 }()}
 {
-	log::info("Registered resource \"%s\" by handler @ %p", path, this);
+	log::info("Registered resource \"%s\"", path.empty()? string_view{"/"} : path);
 }
 
 ircd::resource::~resource()
 noexcept
 {
-	log::info("Unregistered resource \"%s\" by handler @ %p", path, this);
+	log::info("Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path);
 }
 
 namespace ircd {
