@@ -122,7 +122,7 @@ enum class ircd::db::pos
 #include "db/row.h"
 #include "db/index.h"
 #include "db/json.h"
-#include "db/txn.h"
+#include "db/iov.h"
 #include "db/where.h"
 #include "db/cursor.h"
 

@@ -21,27 +21,27 @@
  */
 
 #pragma once
-#define HAVE_IRCD_DB_TXN_H
+#define HAVE_IRCD_DB_IOV_H
 
 namespace ircd::db
 {
-	struct txn;
+	struct iov;
 
-	bool until(const txn &, const std::function<bool (const delta &)> &);
-	void for_each(const txn &, const std::function<void (const delta &)> &);
-	std::string debug(const txn &);
+	bool until(const iov &, const std::function<bool (const delta &)> &);
+	void for_each(const iov &, const std::function<void (const delta &)> &);
+	std::string debug(const iov &);
 }
 
-class ircd::db::txn
+class ircd::db::iov
 {
 	database *d {nullptr};
 	std::unique_ptr<rocksdb::WriteBatch> wb;
 
   public:
 	struct opts;
+	struct checkpoint;
 	struct append;
 	struct handler;
-	struct checkpoint;
 
 	explicit operator const rocksdb::WriteBatch &() const;
 	explicit operator const database &() const;
@@ -67,31 +67,31 @@ class ircd::db::txn
 	// clear
 	void clear();
 
-	txn() = default;
-	txn(database &);
-	txn(database &, const opts &);
-	~txn() noexcept;
+	iov() = default;
+	iov(database &);
+	iov(database &, const opts &);
+	~iov() noexcept;
 };
 
-struct ircd::db::txn::checkpoint
+struct ircd::db::iov::append
 {
-	txn &t;
+	append(iov &, database &, const delta &);
+	append(iov &, column &, const column::delta &);
+	append(iov &, const cell::delta &);
+	append(iov &, const row::delta &);
+	append(iov &, const delta &);
+	append(iov &, const string_view &key, const json::iov &);
+};
 
-	checkpoint(txn &);
+struct ircd::db::iov::checkpoint
+{
+	iov &t;
+
+	checkpoint(iov &);
 	~checkpoint() noexcept;
 };
 
-struct ircd::db::txn::append
-{
-	append(txn &, database &, const delta &);
-	append(txn &, column &, const column::delta &);
-	append(txn &, const cell::delta &);
-	append(txn &, const row::delta &);
-	append(txn &, const delta &);
-	append(txn &, const string_view &key, const json::iov &);
-};
-
-struct ircd::db::txn::opts
+struct ircd::db::iov::opts
 {
 	size_t reserve_bytes = 0;
 	size_t max_bytes = 0;
