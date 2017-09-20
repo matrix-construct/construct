@@ -41,6 +41,7 @@ class ircd::ctx::dock
 	void notify(ctx &) noexcept;
 
   public:
+	bool empty() const;
 	size_t size() const;
 
 	template<class time_point, class predicate> bool wait_until(time_point&& tp, predicate&& pred);
@@ -117,7 +118,11 @@ noexcept
 inline void
 ircd::ctx::dock::wait()
 {
-	const scope remove(std::bind(&dock::remove_self, this));
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
+
 	q.emplace_back(&cur());
 	ircd::ctx::wait();
 }
@@ -129,7 +134,11 @@ ircd::ctx::dock::wait(predicate&& pred)
 	if(pred())
 		return;
 
-	const scope remove(std::bind(&dock::remove_self, this));
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
+
 	q.emplace_back(&cur()); do
 	{
 		ircd::ctx::wait();
@@ -143,9 +152,12 @@ ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
 
-	const scope remove(std::bind(&dock::remove_self, this));
-	q.emplace_back(&cur());
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
 
+	q.emplace_back(&cur());
 	return ircd::ctx::wait<std::nothrow_t>(dur) > zero? cv_status::no_timeout:
 	                                                    cv_status::timeout;
 }
@@ -161,7 +173,11 @@ ircd::ctx::dock::wait_for(const duration &dur,
 	if(pred())
 		return true;
 
-	const scope remove(std::bind(&dock::remove_self, this));
+	const scope remove
+	{
+		std::bind(&dock::remove_self, this)
+	};
+
 	q.emplace_back(&cur()); do
 	{
 		const bool expired(ircd::ctx::wait<std::nothrow_t>(dur) <= zero);
@@ -219,14 +235,6 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 	while(1);
 }
 
-/// The number of contexts waiting in the queue.
-inline size_t
-ircd::ctx::dock::size()
-const
-{
-	return q.size();
-}
-
 inline void
 ircd::ctx::dock::notify(ctx &ctx)
 noexcept
@@ -247,4 +255,20 @@ ircd::ctx::dock::remove_self()
 	const auto it(std::find(begin(q), end(q), &cur()));
 	assert(it != end(q));
 	q.erase(it);
+}
+
+/// The number of contexts waiting in the queue.
+inline size_t
+ircd::ctx::dock::size()
+const
+{
+	return q.size();
+}
+
+/// The number of contexts waiting in the queue.
+inline bool
+ircd::ctx::dock::empty()
+const
+{
+	return q.empty();
 }

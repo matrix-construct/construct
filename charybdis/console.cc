@@ -163,7 +163,7 @@ try
 		// so the output of the command (if log messages) can be seen.
 		{
 			const log::console_quiet quiet(false);
-			boost::asio::async_read_until(in, buf, '\n', yield(continuation()));
+			boost::asio::async_read_until(in, buf, '\n', yield_context{continuation{}});
 		}
 
 		std::getline(is, line);

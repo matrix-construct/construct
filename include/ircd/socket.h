@@ -185,7 +185,7 @@ ircd::socket::write(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, asio::transfer_all(), yield(continuation()));
+		return async_write(ssl, bufs, asio::transfer_all(), yield_context{continuation{}});
 	});
 }
 
@@ -196,7 +196,7 @@ ircd::socket::write(const iov &bufs,
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, asio::transfer_all(), yield(continuation())[ec]);
+		return async_write(ssl, bufs, asio::transfer_all(), yield_context{continuation{}}[ec]);
 	});
 }
 
@@ -206,7 +206,7 @@ ircd::socket::write_some(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
-		return ssl.async_write_some(bufs, yield(continuation()));
+		return ssl.async_write_some(bufs, yield_context{continuation{}});
 	});
 }
 
@@ -217,7 +217,7 @@ ircd::socket::write_some(const iov &bufs,
 {
 	return io(*this, out, [&]
 	{
-		return ssl.async_write_some(bufs, yield(continuation())[ec]);
+		return ssl.async_write_some(bufs, yield_context{continuation{}}[ec]);
 	});
 }
 
@@ -227,7 +227,7 @@ ircd::socket::read(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
-		const auto ret(async_read(ssl, bufs, yield(continuation())));
+		const size_t ret(async_read(ssl, bufs, yield_context{continuation{}}));
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
@@ -243,7 +243,7 @@ ircd::socket::read(const iov &bufs,
 {
 	return io(*this, in, [&]
 	{
-		return async_read(ssl, bufs, yield(continuation())[ec]);
+		return async_read(ssl, bufs, yield_context{continuation{}}[ec]);
 	});
 }
 
@@ -253,7 +253,7 @@ ircd::socket::read_some(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
-		const auto ret(ssl.async_read_some(bufs, yield(continuation())));
+		const size_t ret(ssl.async_read_some(bufs, yield_context{continuation{}}));
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
@@ -269,6 +269,6 @@ ircd::socket::read_some(const iov &bufs,
 {
 	return io(*this, in, [&]
 	{
-		return ssl.async_read_some(bufs, yield(continuation())[ec]);
+		return ssl.async_read_some(bufs, yield_context{continuation{}}[ec]);
 	});
 }

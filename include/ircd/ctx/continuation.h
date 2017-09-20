@@ -26,13 +26,15 @@
 
 namespace ircd::ctx
 {
+	using yield_context = boost::asio::yield_context;
+
 	struct continuation;
 }
 
 namespace ircd
 {
+	using ctx::yield_context;
 	using ctx::continuation;
-	using yield = boost::asio::yield_context;
 }
 
 /// This object is placed on the top of the stack when the context is yielding (INTERNAL USE).

@@ -218,14 +218,14 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 __thread ircd::ctx::ctx *ircd::ctx::current;
 
 void
-ircd::ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
+ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
 {
 	while(!wait_until(tp, std::nothrow));
 }
 
 bool
-ircd::ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
-                      const std::nothrow_t &)
+ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
+                                 const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_at(tp);
@@ -235,8 +235,8 @@ ircd::ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
 }
 
 std::chrono::microseconds
-ircd::ctx::wait(const std::chrono::microseconds &duration,
-                const std::nothrow_t &)
+ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
+                          const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_from_now(duration);
@@ -250,7 +250,7 @@ ircd::ctx::wait(const std::chrono::microseconds &duration,
 }
 
 void
-ircd::ctx::wait()
+ircd::ctx::this_ctx::wait()
 {
 	auto &c(cur());
 	c.alarm.expires_at(std::chrono::steady_clock::time_point::max());
@@ -258,7 +258,7 @@ ircd::ctx::wait()
 }
 
 void
-ircd::ctx::yield()
+ircd::ctx::this_ctx::yield()
 {
 	bool done(false);
 	const auto restore([&done, &me(cur())]
@@ -273,6 +273,18 @@ ircd::ctx::yield()
 		wait();
 	}
 	while(!done);
+}
+
+void
+ircd::ctx::this_ctx::interruption_point()
+{
+	return cur().interruption_point();
+}
+
+bool
+ircd::ctx::this_ctx::interruption_requested()
+{
+	return interruption(cur());
 }
 
 void
@@ -298,7 +310,7 @@ void
 ircd::ctx::notify(ctx &ctx,
                   threadsafe_t)
 {
-	strand(ctx, [&ctx]
+	signal(ctx, [&ctx]
 	{
 		notify(ctx);
 	});
@@ -311,7 +323,7 @@ ircd::ctx::notify(ctx &ctx)
 }
 
 void
-ircd::ctx::strand(ctx &ctx,
+ircd::ctx::signal(ctx &ctx,
                   std::function<void ()> func)
 {
 	ctx.strand.post(std::move(func));
@@ -334,6 +346,12 @@ bool
 ircd::ctx::finished(const ctx &ctx)
 {
 	return ctx.finished();
+}
+
+bool
+ircd::ctx::interruption(const ctx &c)
+{
+	return c.flags & context::INTERRUPTED;
 }
 
 const int64_t &
@@ -547,6 +565,12 @@ ircd::ctx::pool::add(const size_t &num)
 {
 	for(size_t i(0); i < num; ++i)
 		ctxs.emplace_back(name, stack_size, context::POST, std::bind(&pool::main, this));
+}
+
+void
+ircd::ctx::pool::join()
+{
+	del(size());
 }
 
 void
@@ -804,7 +828,7 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 		}
 
 		// To wake the context on the IRCd thread we give it the kick
-		strand(*context, kick);
+		signal(*context, kick);
 	});
 
 	push(std::move(closure)); do

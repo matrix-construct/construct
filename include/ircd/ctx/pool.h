@@ -47,11 +47,14 @@ struct ircd::ctx::pool
 	auto size() const                            { return ctxs.size();                             }
 	auto avail() const                           { return available;                               }
 	auto queued() const                          { return queue.size();                            }
+	auto active() const                          { return size() - avail();                        }
+	auto pending() const                         { return active() + queued();                     }
 
 	// control panel
 	void add(const size_t & = 1);
 	void del(const size_t & = 1);
 	void interrupt();
+	void join();
 
 	// dispatch function to pool
 	void operator()(closure);
@@ -79,8 +82,16 @@ ircd::ctx::pool::async(F&& f,
 {
 	using R = typename std::result_of<F (A...)>::type;
 
-	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
-	auto p(std::make_shared<promise<R>>());
+	auto func
+	{
+		std::bind(std::forward<F>(f), std::forward<A>(a)...)
+	};
+
+	auto p
+	{
+		std::make_shared<promise<R>>()
+	};
+
 	(*this)([p, func(std::move(func))]
 	() -> void
 	{
@@ -98,8 +109,16 @@ ircd::ctx::pool::async(F&& f,
 {
 	using R = typename std::result_of<F (A...)>::type;
 
-	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
-	auto p(std::make_shared<promise<R>>());
+	auto func
+	{
+		std::bind(std::forward<F>(f), std::forward<A>(a)...)
+	};
+
+	auto p
+	{
+		std::make_shared<promise<R>>()
+	};
+
 	(*this)([p, func(std::move(func))]
 	() -> void
 	{
