@@ -41,10 +41,7 @@ namespace ircd::db
 	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
 	const auto DEFAULT_READAHEAD = 4_MiB;
 
-	struct throw_on_error
-	{
-		throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
-	};
+	struct throw_on_error;
 
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
@@ -89,16 +86,6 @@ namespace ircd::db
 	std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
 	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 }
-
-ircd::log::log ircd::db::log
-{
-	// Dedicated logging facility for the database subsystem
-	"db", 'D'
-};
-
-std::map<ircd::string_view, ircd::db::database *>
-ircd::db::database::dbs
-{};
 
 struct ircd::db::database::logs
 :std::enable_shared_from_this<struct database::logs>
@@ -242,6 +229,21 @@ struct ircd::db::database::column
 
 	friend void flush(column &, const bool &blocking);
 };
+
+struct ircd::db::throw_on_error
+{
+	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
+};
+
+ircd::log::log ircd::db::log
+{
+	// Dedicated logging facility for the database subsystem
+	"db", 'D'
+};
+
+std::map<ircd::string_view, ircd::db::database *>
+ircd::db::database::dbs
+{};
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -417,7 +419,6 @@ try
 	return ret;
 }()}
 ,d{[this, &description]
-() -> custom_ptr<rocksdb::DB>
 {
 	bool fsck{false};
 	bool read_only{false};
@@ -460,25 +461,6 @@ try
 		columns.emplace_back(c);
 	}
 
-	// Setup the database closer.
-	const auto deleter([this](rocksdb::DB *const d)
-	noexcept
-	{
-		const auto sequence
-		{
-			d->GetLatestSequenceNumber()
-		};
-
-		delete d;
-
-		log.info("'%s': closed database @ `%s' at sequence number %lu.",
-		         this->name,
-		         this->path,
-		         sequence);
-	});
-
-	// Open DB into ptr
-	rocksdb::DB *ptr;
 	std::vector<rocksdb::ColumnFamilyHandle *> handles;
 	std::vector<rocksdb::ColumnFamilyDescriptor> columns(this->columns.size());
 	std::transform(begin(this->columns), end(this->columns), begin(columns), []
@@ -509,6 +491,8 @@ try
 	          path,
 	          columns.size());
 
+	// Open DB into ptr
+	rocksdb::DB *ptr;
 	if(read_only)
 		throw_on_error
 		{
@@ -533,7 +517,27 @@ try
 			            db::id(*this->columns[i]),
 			            db::name(*this->columns[i]));
 
-	return { ptr, deleter };
+	return custom_ptr<rocksdb::DB>
+	{
+		ptr, [this](rocksdb::DB *const d) noexcept
+		{
+			sync(*this);
+			this->columns.clear();
+			log.debug("'%s': closed columns; synchronizing to hardware...",
+			          this->name);
+
+			const auto sequence
+			{
+				d->GetLatestSequenceNumber()
+			};
+
+			delete d;
+			log.info("'%s': closed database @ `%s' at sequence number %lu.",
+			         this->name,
+			         this->path,
+			         sequence);
+		}
+	};
 }()}
 ,dbs_it
 {
@@ -567,12 +571,6 @@ noexcept
 	          name,
 	          path,
 	          background_errors);
-
-	columns.clear();
-	log.debug("'%s': closed columns; synchronizing to hardware...",
-	          name);
-
-	sync(*this);
 }
 
 void
@@ -3135,7 +3133,7 @@ ircd::db::seek(database::column &c,
 	// Start with a non-blocking query.
 	_seek_(*it, p);
 
-	// Indicate a cache miss and blocking is required.
+	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
 		log.debug("'%s':'%s' @%lu SEEK %s CACHE HIT %s",
@@ -3159,7 +3157,7 @@ ircd::db::seek(database::column &c,
 
 	ctx::offload([&blocking_it, &it, &p]
 	{
-		// When the non-blocking iterator hit its cache miss in the middle of an
+		// When the non-blocking iterator cache missed in the middle of an
 		// iteration we have to copy its position to the blocking iterator first
 		// and then make the next query. In other words, two seeks, because the
 		// original seek (p) may be a `pos` and not a key. TODO: this can be

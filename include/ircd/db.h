@@ -33,7 +33,8 @@ namespace ircd::db
 	struct row;
 	struct column;
 	struct database;
-	enum class pos;
+	enum op :uint8_t;
+	enum class pos :int8_t;
 
 	// Errors for the database subsystem. The exceptions that use _HIDENAME
 	// are built from RocksDB errors which already have an info string with
@@ -100,15 +101,32 @@ namespace ircd::db
 	void log_rdb_perf_context(const bool &all = true);
 
 	string_view reflect(const pos &);
+
+	// Indicates an op uses both a key and value for its operation. Some only use
+	// a key name so an empty value argument in a delta is okay when false.
+	bool value_required(const op &);
+	string_view reflect(const op &);
 }
 
 enum class ircd::db::pos
+:int8_t
 {
     FRONT   = -2,    // .front()    | first element
     PREV    = -1,    // std::prev() | previous element
     END     = 0,     // break;      | exit iteration (or past the end)
     NEXT    = 1,     // continue;   | next element
     BACK    = 2,     // .back()     | last element
+};
+
+enum ircd::db::op
+:uint8_t
+{
+	GET,                     // no-op sentinel, do not use (debug asserts)
+	SET,                     // (batch.Put)
+	MERGE,                   // (batch.Merge)
+	DELETE,                  // (batch.Delete)
+	DELETE_RANGE,            // (batch.DeleteRange)
+	SINGLE_DELETE,           // (batch.SingleDelete)
 };
 
 #include "db/delta.h"
