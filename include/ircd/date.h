@@ -25,29 +25,58 @@
 
 namespace ircd
 {
+	using std::chrono::seconds;
+	using std::chrono::milliseconds;
+	using std::chrono::microseconds;
+	using std::chrono::nanoseconds;
+	using std::chrono::duration_cast;
+	using std::chrono::system_clock;
+	using std::chrono::steady_clock;
+	using std::chrono::time_point;
+
 	using microtime_t = std::pair<time_t, int32_t>;
+	using steady_point = time_point<steady_clock>;
+	using system_point = time_point<system_clock>;
+
 	microtime_t microtime();
 	ssize_t microtime(char *const &buf, const size_t &size);
 	std::ostream &operator<<(std::ostream &, const microtime_t &);
 
-	template<class resolution = std::chrono::seconds> resolution now();
-	template<class resolution = std::chrono::seconds> time_t time();
+	template<class unit = seconds> unit now();
+	template<> steady_point now();
+	template<> system_point now();
+
+	template<class unit = seconds> time_t time();
 }
 
-template<class resolution>
+template<class unit>
 time_t
 ircd::time()
 {
-	return now<resolution>().count();
+	return now<unit>().count();
 }
 
-template<class resolution>
-resolution
+template<> inline
+ircd::steady_point
+ircd::now()
+{
+	return steady_clock::now();
+}
+
+template<> inline
+ircd::system_point
+ircd::now()
+{
+	return system_clock::now();
+}
+
+template<class unit>
+unit
 ircd::now()
 {
 	const auto now
 	{
-		std::chrono::system_clock::now()
+		steady_clock::now()
 	};
 
 	const auto tse
@@ -55,7 +84,7 @@ ircd::now()
 		now.time_since_epoch()
 	};
 
-	return std::chrono::duration_cast<resolution>(tse);
+	return std::chrono::duration_cast<unit>(tse);
 }
 
 inline std::ostream &

@@ -165,7 +165,7 @@ namespace boost::asio
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Items imported into our namespace.
+// Some items imported into our namespace.
 //
 
 namespace ircd
@@ -174,11 +174,6 @@ namespace ircd
 	using std::begin;
 	using std::end;
 	using std::get;
-	using std::chrono::seconds;
-	using std::chrono::milliseconds;
-	using std::chrono::microseconds;
-	using std::chrono::nanoseconds;
-	using std::chrono::duration_cast;
 	using std::static_pointer_cast;
 	using std::dynamic_pointer_cast;
 	using std::const_pointer_cast;
