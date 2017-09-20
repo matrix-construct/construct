@@ -85,8 +85,8 @@ ircd::client::init::~init()
 noexcept
 {
 	request.interrupt();
-	ctx::yield();
 	disconnect_all();
+	request.join();
 	socket_init.reset(nullptr);
 }
 
