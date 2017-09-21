@@ -72,7 +72,7 @@ struct ircd::resource
 struct ircd::resource::request
 :json::object
 {
-	template<class> struct body;
+	template<class> struct object;
 
 	const http::request::head &head;
 	http::request::content &content;
@@ -82,10 +82,23 @@ struct ircd::resource::request
 };
 
 template<class tuple>
-struct ircd::resource::request::body
+struct ircd::resource::request::object
 :tuple
 {
-	body(const resource::request &);
+	resource::request &r;
+	const http::request::head &head;
+	const http::request::content &content;
+	const http::query::string &query;
+	const json::object &body;
+
+	object(resource::request &r)
+	:tuple{r}
+	,r{r}
+	,head{r.head}
+	,content{r.content}
+	,query{r.query}
+	,body{r}
+	{}
 };
 
 struct ircd::resource::response
@@ -127,9 +140,3 @@ struct ircd::resource::method
 	method(struct resource &, const string_view &name, const handler &, opts = {{}});
 	virtual ~method() noexcept;
 };
-
-template<class tuple>
-ircd::resource::request::body<tuple>::body(const resource::request &request)
-:tuple{request}
-{
-}
