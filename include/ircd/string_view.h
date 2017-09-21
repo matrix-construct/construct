@@ -222,7 +222,7 @@ struct ircd::byte_view
 		return *reinterpret_cast<const T *>(s.data());
 	}
 
-	byte_view(const string_view &s)
+	byte_view(const string_view &s = {})
 	:s{s}
 	{
 		if(unlikely(sizeof(T) != s.size()))
