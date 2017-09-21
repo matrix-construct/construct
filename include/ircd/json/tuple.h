@@ -257,7 +257,7 @@ at(const tuple &t)
 
 	using value_type = tuple_value_type<tuple, idx>;
 
-	//TODO: does tcmalloc zero this or huh?
+	//TODO: undefined
 	if(ret == value_type{})
 		throw not_found("%s", name);
 
@@ -281,7 +281,7 @@ at(tuple &t)
 
 	using value_type = tuple_value_type<tuple, idx>;
 
-	//TODO: does tcmalloc zero this or huh?
+	//TODO: undefined
 	if(ret == value_type{})
 		throw not_found("%s", name);
 
@@ -306,8 +306,21 @@ get(const tuple<T...> &t,
 
 	using value_type = tuple_value_type<tuple<T...>, idx>;
 
-	//TODO: does tcmalloc zero this or huh?
+	//TODO: undefined
 	return ret != value_type{}? ret : def;
+}
+
+template<const char *const &name,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
+get(tuple<T...> &t)
+{
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>>(name)
+	};
+
+	return val<idx>(t);
 }
 
 template<const char *const &name,
@@ -316,19 +329,9 @@ tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
 get(tuple<T...> &t,
     tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &def)
 {
-	constexpr size_t idx
-	{
-		indexof<tuple<T...>>(name)
-	};
-
-	auto &ret
-	{
-		val<idx>(t)
-	};
-
-	using value_type = tuple_value_type<tuple<T...>, idx>;
-
-	//TODO: does tcmalloc zero this or huh?
+	//TODO: undefined
+	auto &ret{get<name, T...>(t)};
+	using value_type = decltype(ret);
 	return ret != value_type{}? ret : def;
 }
 
@@ -544,20 +547,130 @@ at(const tuple &t,
 		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_convertible<src, dst>::value,
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = std::forward<src>(s);
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_arithmetic<dst>() &&
+	std::is_base_of<std::string_view, typename std::remove_reference<src>::type>() &&
+	!std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+try
+{
+	d = lex_cast<dst>(std::forward<src>(s));
+}
+catch(const bad_lex_cast &e)
+{
+	throw parse_error("cannot convert '%s' to '%s'",
+	                  demangle<src>(),
+	                  demangle<dst>());
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_arithmetic<dst>() &&
+	std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = byte_view<dst>(std::forward<src>(s));
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_base_of<std::string_view, dst>() &&
+	std::is_pod<typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = byte_view<dst>(std::forward<src>(s));
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	ircd::json::is_tuple<dst>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = dst{std::forward<src>(s)};
+}
+
 template<class V,
          class... T>
 tuple<T...> &
 set(tuple<T...> &t,
     const string_view &key,
-    const V &val)
+    V&& val)
+try
 {
 	at(t, key, [&key, &val]
 	(auto &target)
 	{
-		using target_type = decltype(target);
-		using cast_type = typename std::remove_reference<target_type>::type;
-		target = byte_view<cast_type>(val);
+		_assign(target, std::forward<V>(val));
 	});
+
+	return t;
+}
+catch(const std::exception &e)
+{
+	throw parse_error("failed to set member '%s': %s",
+	                  key,
+	                  e.what());
+}
+
+template<class... T>
+tuple<T...> &
+set(tuple<T...> &t,
+    const string_view &key,
+    const json::value &value)
+{
+	switch(type(value))
+	{
+		case type::STRING:
+		case type::LITERAL:
+			set(t, key, string_view{value});
+			break;
+
+		case type::NUMBER:
+			if(value.floats)
+				set(t, key, value.floating);
+			else
+				set(t, key, value.integer);
+			break;
+
+		case type::OBJECT:
+		case type::ARRAY:
+			if(unlikely(!value.serial))
+				throw print_error("Type %s must be JSON to be used by tuple member '%s'",
+				                  reflect(type(value)),
+				                  key);
+
+			set(t, key, string_view{value});
+			break;
+	}
 
 	return t;
 }
@@ -565,61 +678,20 @@ set(tuple<T...> &t,
 template<class... T>
 tuple<T...>::tuple(const json::object &object)
 {
-	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
 	std::for_each(std::begin(object), std::end(object), [this]
 	(const auto &member)
 	{
-		at(*this, member.first, [&member]
-		(auto &target)
-		{
-			using target_type = decltype(target);
-			using cast_type = typename std::remove_reference<target_type>::type; try
-			{
-				target = lex_cast<cast_type>(member.second);
-			}
-			catch(const bad_lex_cast &e)
-			{
-				throw parse_error("member '%s' must convert to '%s'",
-				                  member.first,
-				                  typeid(target_type).name());
-			}
-		});
+		set(*this, member.first, member.second);
 	});
 }
 
 template<class... T>
 tuple<T...>::tuple(const json::iov &iov)
 {
-	//TODO: is tcmalloc zero-initializing all tuple elements, or is something else doing that?
 	std::for_each(std::begin(iov), std::end(iov), [this]
 	(const auto &member)
 	{
-		switch(type(member.second))
-		{
-			case type::OBJECT:
-			case type::ARRAY:
-				if(unlikely(!member.second.serial))
-					throw print_error("iov member '%s' must be JSON to be used by the tuple",
-					                  string_view{member.first});
-			default:
-				break;
-		}
-
-		at(*this, member.first, [&member]
-		(auto &target)
-		{
-			using target_type = decltype(target);
-			using cast_type = typename std::remove_reference<target_type>::type; try
-			{
-				target = static_cast<cast_type>(member.second);
-			}
-			catch(const bad_lex_cast &e)
-			{
-				throw parse_error("member '%s' must convert to '%s'",
-				                  member.first,
-				                  typeid(target_type).name());
-			}
-		});
+		set(*this, member.first, member.second);
 	});
 }
 
@@ -629,28 +701,7 @@ tuple<T...>::tuple(const std::initializer_list<member> &members)
 	std::for_each(std::begin(members), std::end(members), [this]
 	(const auto &member)
 	{
-		switch(type(member.second))
-		{
-			case type::STRING:
-			case type::LITERAL:
-				set(*this, member.first, string_view{member.second});
-				break;
-
-			case type::NUMBER:
-				if(member.second.floats)
-					set(*this, member.first, member.second.floating);
-				else
-					set(*this, member.first, member.second.integer);
-				break;
-
-			case type::ARRAY:
-			case type::OBJECT:
-				if(!member.second.serial)
-					throw parse_error("Unserialized value not supported yet");
-
-				set(*this, member.first, string_view{member.second});
-				break;
-		}
+		set(*this, member.first, member.second);
 	});
 }
 

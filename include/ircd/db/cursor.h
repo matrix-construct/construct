@@ -204,10 +204,25 @@ const
 	if(stale)
 	{
 		for(const auto &cell : row)
-			if(cell.valid(idx->first))
-				json::set(v, cell.col(), cell.val());
+		{
+			const column &c{cell};
+			const database::descriptor &desc{describe(c)};
+
+			if(desc.type.second == typeid(string_view))
+			{
+				if(cell.valid(idx->first))
+					json::set(v, cell.col(), cell.val());
+				else
+					json::set(v, cell.col(), string_view{});
+			}
 			else
-				json::set(v, cell.col(), string_view{});
+			{
+				if(cell.valid(idx->first))
+					json::set(v, cell.col(), byte_view<string_view>{cell.val()});
+				else
+					json::set(v, cell.col(), byte_view<string_view>{string_view{}});
+			}
+		}
 
 		stale = false;
 	}

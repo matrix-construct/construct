@@ -43,16 +43,12 @@ struct ircd::json::property
 	operator const T &() const;
 	operator T &();
 
-	property(T&& value);
+	property(T&& value)
+	:value{value}
+	{}
+
 	property() = default;
 };
-
-template<const char *const &name,
-         class T>
-ircd::json::property<name, T>::property(T&& value)
-:value{value}
-{
-}
 
 template<const char *const &name,
          class T>
