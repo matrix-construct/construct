@@ -584,7 +584,7 @@ ircd::mods::prefix_if_relative(const filesystem::path &path)
 }
 
 std::string
-ircd::mods::demangle(const std::string &symbol)
+ircd::demangle(const std::string &symbol)
 {
 	size_t len;
 	int status;

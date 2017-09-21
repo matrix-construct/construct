@@ -38,9 +38,6 @@ namespace ircd::mods
 	template<class T> struct import_shared;
 	struct paths extern paths;
 
-	std::string demangle(const std::string &symbol);
-	template<class T> std::string demangle();
-
 	std::string postfixed(const std::string &name);
 	std::string unpostfixed(const std::string &name);
 
@@ -69,7 +66,6 @@ namespace ircd
 	using mods::module;
 	using mods::import;
 	using mods::import_shared;
-	using mods::demangle;
 }
 
 struct ircd::mods::paths
@@ -271,11 +267,4 @@ ircd::mods::module::ptr(const std::string &name)
 const
 {
 	return reinterpret_cast<const T *>(ptr<const uint8_t>(name));
-}
-
-template<class T>
-std::string
-ircd::mods::demangle()
-{
-	return demangle(typeid(T).name());
 }

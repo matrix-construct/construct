@@ -198,6 +198,9 @@ namespace ircd
 
 	struct socket;
 	struct client;
+
+	std::string demangle(const std::string &symbol);
+	template<class T> std::string demangle();
 }
 
 #include "util.h"
@@ -229,3 +232,10 @@ namespace ircd
 #include "client.h"
 #include "mods.h"
 #include "listen.h"
+
+template<class T>
+std::string
+ircd::demangle()
+{
+	return demangle(typeid(T).name());
+}
