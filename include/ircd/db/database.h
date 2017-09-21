@@ -117,6 +117,7 @@ namespace ircd::db
 {
 	std::shared_ptr<const database::column> shared_from(const database::column &);
 	std::shared_ptr<database::column> shared_from(database::column &);
+	const database::descriptor &describe(const database::column &);
 	const std::string &name(const database::column &);
 	uint32_t id(const database::column &);
 	void drop(database::column &);                   // Request to erase column from db

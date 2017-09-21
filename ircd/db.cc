@@ -885,6 +885,12 @@ ircd::db::name(const database::column &c)
 	return c.name;
 }
 
+const ircd::db::database::descriptor &
+ircd::db::describe(const database::column &c)
+{
+	return c.descriptor;
+}
+
 //
 // database::column
 //
@@ -2491,6 +2497,13 @@ ircd::db::name(const column &column)
 {
 	const database::column &c(column);
 	return name(c);
+}
+
+const ircd::db::database::descriptor &
+ircd::db::describe(const column &column)
+{
+	const database::column &c(column);
+	return describe(c);
 }
 
 void

@@ -61,6 +61,7 @@ namespace ircd::db
 	template<> uint64_t property(column &, const string_view &name);
 
 	// Information about a column
+	const database::descriptor &describe(const column &);
 	const std::string &name(const column &);
 	uint32_t id(const column &);
 	size_t file_count(column &);
