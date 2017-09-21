@@ -24,10 +24,12 @@
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
 
 ircd::string_view
-ircd::token_first(const string_view &str,
-                  const char *const &sep)
+ircd::tokens_after(const string_view &str,
+                   const char &sep,
+                   const size_t &i)
 {
-	return token(str, sep, 0);
+	const char ssep[2] { sep, '\0' };
+	return tokens_after(str, ssep, i);
 }
 
 ircd::string_view
@@ -48,6 +50,29 @@ ircd::tokens_after(const string_view &str,
 			return string_view{it->data(), str.data() + str.size()};
 
 	return {};
+}
+
+ircd::string_view
+ircd::token_first(const string_view &str,
+                  const char &sep)
+{
+	const char ssep[2] { sep, '\0' };
+	return token(str, ssep, 0);
+}
+
+ircd::string_view
+ircd::token_first(const string_view &str,
+                  const char *const &sep)
+{
+	return token(str, sep, 0);
+}
+
+ircd::string_view
+ircd::token_last(const string_view &str,
+                 const char &sep)
+{
+	const char ssep[2] { sep, '\0' };
+	return token_last(str, ssep);
 }
 
 ircd::string_view
@@ -74,6 +99,15 @@ ircd::token_last(const string_view &str,
 
 ircd::string_view
 ircd::token(const string_view &str,
+            const char &sep,
+            const size_t &i)
+{
+	const char ssep[2] { sep, '\0' };
+	return token(str, ssep, i);
+}
+
+ircd::string_view
+ircd::token(const string_view &str,
             const char *const &sep,
             const size_t &i)
 {
@@ -89,6 +123,14 @@ ircd::token(const string_view &str,
 
 size_t
 ircd::tokens_count(const string_view &str,
+                   const char &sep)
+{
+	const char ssep[2] { sep, '\0' };
+	return tokens_count(str, ssep);
+}
+
+size_t
+ircd::tokens_count(const string_view &str,
                    const char *const &sep)
 {
 	using type = string_view;
@@ -98,6 +140,17 @@ ircd::tokens_count(const string_view &str,
 	const delim d(sep);
 	const boost::tokenizer<delim, iter, type> view(str, d);
 	return std::distance(begin(view), end(view));
+}
+
+size_t
+ircd::tokens(const string_view &str,
+             const char &sep,
+             char *const &buf,
+             const size_t &max,
+             const token_view &closure)
+{
+	const char ssep[2] { sep, '\0' };
+	return tokens(str, ssep, buf, max, closure);
 }
 
 size_t
@@ -127,6 +180,16 @@ ircd::tokens(const string_view &str,
 
 size_t
 ircd::tokens(const string_view &str,
+             const char &sep,
+             const size_t &limit,
+             const token_view &closure)
+{
+	const char ssep[2] { sep, '\0' };
+	return tokens(str, ssep, limit, closure);
+}
+
+size_t
+ircd::tokens(const string_view &str,
              const char *const &sep,
              const size_t &limit,
              const token_view &closure)
@@ -143,6 +206,15 @@ ircd::tokens(const string_view &str,
 		closure(*it);
 
 	return i;
+}
+
+void
+ircd::tokens(const string_view &str,
+             const char &sep,
+             const token_view &closure)
+{
+	const char ssep[2] { sep, '\0' };
+	tokens(str, ssep, closure);
 }
 
 void
