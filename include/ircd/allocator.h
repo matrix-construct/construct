@@ -26,12 +26,7 @@
 #pragma once
 #define HAVE_IRCD_ALLOCATOR_H
 
-namespace ircd
-{
-	struct allocator;
-}
-
-struct ircd::allocator
+namespace ircd::allocator
 {
 	struct state;
 	template<class T = char> struct dynamic;
