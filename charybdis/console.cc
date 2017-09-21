@@ -488,7 +488,7 @@ catch(const std::out_of_range &e)
 }
 catch(const ircd::http::error &e)
 {
-	ircd::log::error("console: %s %s", e.what(), e.content.c_str());
+	ircd::log::error("console: %s %s", e.what(), e.content);
 	return true;
 }
 catch(const std::exception &e)

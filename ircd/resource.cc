@@ -125,7 +125,7 @@ try
 	};
 
 	// Sets up the query to find the access_token in the accounts room
-	const m::events::where::equal query
+	const m::event::where::equal query
 	{
 		{ "type",        "ircd.access_token" },
 		{ "state_key",   access_token        }

@@ -356,7 +356,11 @@ ircd::handle_request(client &client,
 	           head.path,
 	           head.content_length);
 
-	auto &resource(ircd::resource::find(head.path));
+	auto &resource
+	{
+		ircd::resource::find(head.path)
+	};
+
 	resource(client, pc, head);
 }
 
