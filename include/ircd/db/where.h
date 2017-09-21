@@ -31,23 +31,24 @@ namespace ircd::db
 template<class tuple>
 struct ircd::db::where
 {
-	struct noop;
 	struct equal;
 	struct not_equal;
+	struct logical_not;
+	struct logical_and;
+	struct logical_or;
+	struct test;
+	struct noop;
 
 	virtual bool operator()(const tuple &) const = 0;
 	virtual ~where() noexcept = default;
 };
 
-template<class tuple>
-struct ircd::db::where<tuple>::noop
-:ircd::db::where<tuple>
+namespace ircd::db
 {
-	bool operator()(const tuple &) const override
-	{
-		return true;
-	}
-};
+	template<class T> typename where<T>::logical_or operator||(const where<T> &, const where<T> &);
+	template<class T> typename where<T>::logical_and operator&&(const where<T> &, const where<T> &);
+	template<class T> typename where<T>::logical_not operator!(const where<T> &);
+}
 
 template<class tuple>
 struct ircd::db::where<tuple>::equal
@@ -128,3 +129,102 @@ const
 		return not_equal;
 	});
 }
+
+template<class tuple>
+struct ircd::db::where<tuple>::logical_and
+:ircd::db::where<tuple>
+{
+	const where *a, *b;
+
+	bool operator()(const tuple &t) const override
+	{
+		return (*a)(t) && (*b)(t);
+	}
+
+	logical_and(const where &a, const where &b)
+	:a{&a}
+	,b{&b}
+	{}
+};
+
+template<class tuple>
+typename ircd::db::where<tuple>::logical_and
+ircd::db::operator&&(const where<tuple> &a, const where<tuple> &b)
+{
+	return { a, b };
+}
+
+template<class tuple>
+struct ircd::db::where<tuple>::logical_or
+:ircd::db::where<tuple>
+{
+	const where *a, *b;
+
+	bool operator()(const tuple &t) const override
+	{
+		return (*a)(t) || (*b)(t);
+	}
+
+	logical_or(const where &a, const where &b)
+	:a{&a}
+	,b{&b}
+	{}
+};
+
+template<class tuple>
+typename ircd::db::where<tuple>::logical_or
+ircd::db::operator||(const where<tuple> &a, const where<tuple> &b)
+{
+	return { a, b };
+}
+
+template<class tuple>
+struct ircd::db::where<tuple>::logical_not
+:ircd::db::where<tuple>
+{
+	const where *a;
+
+	bool operator()(const tuple &t) const override
+	{
+		return !(*a)(t);
+	}
+
+	logical_not(const where &a)
+	:a{&a}
+	{}
+};
+
+template<class tuple>
+typename ircd::db::where<tuple>::logical_not
+ircd::db::operator!(const where<tuple> &a)
+{
+	return { a };
+}
+
+template<class tuple>
+struct ircd::db::where<tuple>::test
+:ircd::db::where<tuple>
+{
+	using function = std::function<bool (const tuple &)>;
+
+	function closure;
+
+	bool operator()(const tuple &t) const override
+	{
+		return closure(t);
+	}
+
+	test(function closure)
+	:closure{std::move(closure)}
+	{}
+};
+
+template<class tuple>
+struct ircd::db::where<tuple>::noop
+:ircd::db::where<tuple>
+{
+	bool operator()(const tuple &) const override
+	{
+		return true;
+	}
+};
