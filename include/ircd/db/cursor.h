@@ -146,7 +146,13 @@ ircd::db::cursor<d, tuple>::const_iterator::const_iterator(const cursor &c,
 	!bool(this->idx) || !row.valid(this->idx->first)
 }
 {
-	if(!invalid && this->where && !(*this->where)(this->operator*()))
+	if(invalid)
+		return;
+
+	if(!this->where)
+		return;
+
+	if(!(*this->where)(this->operator*()))
 		seek(pos::NEXT);
 }
 
@@ -201,32 +207,11 @@ const typename ircd::db::cursor<d, tuple>::const_iterator::value_type &
 ircd::db::cursor<d, tuple>::const_iterator::operator*()
 const
 {
-	if(stale)
-	{
-		for(const auto &cell : row)
-		{
-			const column &c{cell};
-			const database::descriptor &desc{describe(c)};
+	if(!stale)
+		return v;
 
-			if(desc.type.second == typeid(string_view))
-			{
-				if(cell.valid(idx->first))
-					json::set(v, cell.col(), cell.val());
-				else
-					json::set(v, cell.col(), string_view{});
-			}
-			else
-			{
-				if(cell.valid(idx->first))
-					json::set(v, cell.col(), byte_view<string_view>{cell.val()});
-				else
-					json::set(v, cell.col(), byte_view<string_view>{string_view{}});
-			}
-		}
-
-		stale = false;
-	}
-
+	assign(v, row, idx->first);
+	stale = false;
 	return v;
 }
 
