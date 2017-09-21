@@ -25,7 +25,7 @@
  *  USA
  */
 
-#include <ircd/socket.h>
+#include <ircd/asio.h>
 
 namespace ircd {
 
@@ -42,11 +42,6 @@ const auto request_timeout
 {
 	300s
 };
-
-// Instance of socket::init is constructed and destructed manually to be in sync
-// with client::init. This is placed here so ircd::main() doesn't have to see
-// ircd/socket.h and do it there. It should be empty during static destruction.
-std::unique_ptr<socket::init> socket_init;
 
 // The pool of request contexts. When a client makes a request it does so by acquiring
 // a stack from this pool. The request handling and response logic can then be written
@@ -76,18 +71,20 @@ template<class... args> std::shared_ptr<client> make_client(args&&...);
 
 ircd::client::init::init()
 {
-	assert(!socket_init);
-	socket_init = std::make_unique<socket::init>();
-	request.add(1);
+	request.add(2);
 }
 
 ircd::client::init::~init()
 noexcept
 {
+	log::debug("Interrupting %zu requests; dropping %zu requests; disconnecting %zu clients.",
+	           request.active(),
+	           request.pending(),
+	           client::clients.size());
+
 	request.interrupt();
 	disconnect_all();
 	request.join();
-	socket_init.reset(nullptr);
 }
 
 ircd::string_view

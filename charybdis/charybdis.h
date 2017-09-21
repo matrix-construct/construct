@@ -23,7 +23,7 @@
 // charybdis.cc
 //
 
-extern boost::asio::io_service *ios;
+extern std::unique_ptr<boost::asio::io_service> ios;
 
 //
 // console.cc

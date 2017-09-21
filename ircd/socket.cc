@@ -19,8 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/ctx/continuation.h>
-#include <ircd/socket.h>
+#include <ircd/asio.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -89,7 +88,7 @@ ircd::socket::socket(const std::string &host,
 	{
 		assert(resolver);
 		const ip::tcp::resolver::query query(host, string(lex_cast(port)));
-		auto epit(resolver->async_resolve(query, yield_context{continuation{}}));
+		auto epit(resolver->async_resolve(query, yield_context{to_asio{}}));
 		static const ip::tcp::resolver::iterator end;
 		if(epit == end)
 			throw nxdomain("host '%s' not found", host.data());
@@ -143,8 +142,8 @@ ircd::socket::connect(const ip::tcp::endpoint &ep,
                       const milliseconds &timeout)
 {
 	const scope_timeout ts(*this, timeout);
-	sd.async_connect(ep, yield_context{continuation{}});
-	ssl.async_handshake(socket::handshake_type::client, yield_context{continuation{}});
+	sd.async_connect(ep, yield_context{to_asio{}});
+	ssl.async_handshake(socket::handshake_type::client, yield_context{to_asio{}});
 }
 
 void
@@ -179,7 +178,7 @@ ircd::socket::disconnect(const dc &type)
 
 		case dc::SSL_NOTIFY_YIELD:
 		{
-			ssl.async_shutdown(yield_context{continuation{}});
+			ssl.async_shutdown(yield_context{to_asio{}});
 			sd.close();
 			break;
 		}

@@ -19,8 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <boost/asio/steady_timer.hpp>
-#include <ircd/ctx/continuation.h>
+#include <ircd/asio.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -159,7 +158,7 @@ ircd::ctx::ctx::wait()
 		return false;
 
 	boost::system::error_code ec;
-	alarm.async_wait(boost::asio::yield_context(continuation(this))[ec]);
+	alarm.async_wait(boost::asio::yield_context{to_asio{this}}[ec]);
 
 	assert(ec == errc::operation_canceled || ec == errc::success);
 	assert(current == this);

@@ -22,14 +22,33 @@
  */
 
 #pragma once
-#define HAVE_IRCD_SPIRIT_H
+#define HAVE_IRCD_ASIO_H
 
-/// This file is not part of the IRCd standard include list (stdinc.h) because
-/// it involves extremely expensive boost headers for creating formal spirit
-/// grammars. Include this in a definition file which defines such grammars.
+///
+/// Boost library
+///
+/// It is better to add a boost header which we have omitted here rather than
+/// in your definition file, and then #include <ircd/asio.h>. This is because
+/// we can compose a precompiled header for your definition file much easier
+/// this way.
+///
+/// Note that there is no precompile for this header right now, only the
+/// standard headers. That still significantly improves compile times of these
+/// boost headers for the time being...
+///
 
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/karma.hpp>
-#include <boost/fusion/include/std_pair.hpp>
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/io_service.hpp>
+
+///
+/// The following IRCd headers are not included in the main stdinc.h list of
+/// includes because they require boost directly or symbols which we cannot
+/// forward declare. You should include this in your definition file if you
+/// need these low-level interfaces.
+///
+
+#include <ircd/ctx/continuation.h>
+#include <ircd/socket.h>

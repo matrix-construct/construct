@@ -23,7 +23,8 @@
  *  USA
  */
 
-#include <boost/asio/io_service.hpp>
+#include <ircd/asio.h>
+#include <ircd/m.h>
 
 namespace ircd
 {
@@ -105,7 +106,8 @@ try
 	// itself if either are more appropriate.
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
-	client::init _client_;   // Client/Socket Networking
+	socket::init _socket_;   // Socket/Networking
+	client::init _client_;   // Client related
 	db::init _db_;           // RocksDB
 	js::init _js_;           // SpiderMonkey
 	m::init _matrix_;        // Matrix

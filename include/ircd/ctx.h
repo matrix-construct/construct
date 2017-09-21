@@ -42,6 +42,10 @@
 /// Several low-level functions are exposed for library creators. This file is usually
 /// included when boost/asio.hpp is also included and calls are actually made into boost.
 ///
+/// boost::asio is not included from here. To access that include boost in a
+/// definition file with #include <ircd/asio.h>. That include contains some
+/// devices we use to yield a context to asio.
+///
 namespace ircd::ctx
 {
 	IRCD_EXCEPTION(ircd::error, error)

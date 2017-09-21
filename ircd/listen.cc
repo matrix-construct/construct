@@ -19,7 +19,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/socket.h>
+#include <ircd/asio.h>
 
 namespace ircd {
 

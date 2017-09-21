@@ -20,7 +20,7 @@
  */
 
 #include <ircd/ircd.h>
-#include <boost/asio.hpp>
+#include <ircd/asio.h>
 #include "lgetopt.h"
 #include "charybdis.h"
 
@@ -62,11 +62,11 @@ lgetopt opts[] =
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
-boost::asio::io_service *ios
+std::unique_ptr<boost::asio::io_service> ios
 {
 	// Having trouble with static destruction in clang so this
 	// has to become still-reachable
-	new boost::asio::io_service
+	std::make_unique<boost::asio::io_service>()
 };
 
 boost::asio::signal_set sigs

@@ -20,8 +20,7 @@
  */
 
 #include <ircd/ircd.h>
-#include <boost/asio.hpp>
-#include <ircd/ctx/continuation.h>
+#include <ircd/asio.h>
 #include <ircd/m.h>
 #include "charybdis.h"
 
@@ -163,7 +162,7 @@ try
 		// so the output of the command (if log messages) can be seen.
 		{
 			const log::console_quiet quiet(false);
-			boost::asio::async_read_until(in, buf, '\n', yield_context{continuation{}});
+			boost::asio::async_read_until(in, buf, '\n', yield_context{to_asio{}});
 		}
 
 		std::getline(is, line);

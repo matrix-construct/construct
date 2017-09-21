@@ -22,6 +22,15 @@
 #pragma once
 #define HAVE_IRCD_BUFFER_H
 
+// Forward declarations from boost::asio because it is not included here. IRCd
+// buffers are not based directly on the boost ones but are easily converted
+// when passing our buffer to an asio function.
+namespace boost::asio
+{
+	struct const_buffer;
+	struct mutable_buffer;
+}
+
 /// Lightweight buffer interface compatible with boost::asio IO buffers and vectors
 ///
 /// A const_buffer is a pair of iterators like `const char *` meant for sending

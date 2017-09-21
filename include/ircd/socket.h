@@ -22,10 +22,12 @@
 #pragma once
 #define HAVE_IRCD_CLIENT_SOCKET_H
 
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include "ctx/continuation.h"
+/// This file is not included with the IRCd standard include stack because
+/// it requires symbols we can't forward declare without boost headers. It
+/// is part of the <ircd/asio.h> stack which can be included in your
+/// definition file if you need low level access to this socket API. The
+/// client.h still offers higher level access to sockets without requiring
+/// boost headers; please check that for satisfaction before including this.
 
 namespace ircd
 {
@@ -185,7 +187,7 @@ ircd::socket::write(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, asio::transfer_all(), yield_context{continuation{}});
+		return async_write(ssl, bufs, asio::transfer_all(), yield_context{to_asio{}});
 	});
 }
 
@@ -196,7 +198,7 @@ ircd::socket::write(const iov &bufs,
 {
 	return io(*this, out, [&]
 	{
-		return async_write(ssl, bufs, asio::transfer_all(), yield_context{continuation{}}[ec]);
+		return async_write(ssl, bufs, asio::transfer_all(), yield_context{to_asio{}}[ec]);
 	});
 }
 
@@ -206,7 +208,7 @@ ircd::socket::write_some(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
-		return ssl.async_write_some(bufs, yield_context{continuation{}});
+		return ssl.async_write_some(bufs, yield_context{to_asio{}});
 	});
 }
 
@@ -217,7 +219,7 @@ ircd::socket::write_some(const iov &bufs,
 {
 	return io(*this, out, [&]
 	{
-		return ssl.async_write_some(bufs, yield_context{continuation{}}[ec]);
+		return ssl.async_write_some(bufs, yield_context{to_asio{}}[ec]);
 	});
 }
 
@@ -227,7 +229,7 @@ ircd::socket::read(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
-		const size_t ret(async_read(ssl, bufs, yield_context{continuation{}}));
+		const size_t ret(async_read(ssl, bufs, yield_context{to_asio{}}));
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
@@ -243,7 +245,7 @@ ircd::socket::read(const iov &bufs,
 {
 	return io(*this, in, [&]
 	{
-		return async_read(ssl, bufs, yield_context{continuation{}}[ec]);
+		return async_read(ssl, bufs, yield_context{to_asio{}}[ec]);
 	});
 }
 
@@ -253,7 +255,7 @@ ircd::socket::read_some(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
-		const size_t ret(ssl.async_read_some(bufs, yield_context{continuation{}}));
+		const size_t ret(ssl.async_read_some(bufs, yield_context{to_asio{}}));
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
@@ -269,6 +271,6 @@ ircd::socket::read_some(const iov &bufs,
 {
 	return io(*this, in, [&]
 	{
-		return ssl.async_read_some(bufs, yield_context{continuation{}}[ec]);
+		return ssl.async_read_some(bufs, yield_context{to_asio{}}[ec]);
 	});
 }
