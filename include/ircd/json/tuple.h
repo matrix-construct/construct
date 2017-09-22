@@ -455,6 +455,30 @@ until(tuple &t,
 	       false;
 }
 
+template<size_t i,
+         class tuple,
+         class function>
+typename std::enable_if<i == size<tuple>(), bool>::type
+until(const tuple &a,
+      const tuple &b,
+      function&& f)
+{
+	return true;
+}
+
+template<size_t i = 0,
+         class tuple,
+         class function>
+typename std::enable_if<i < size<tuple>(), bool>::type
+until(const tuple &a,
+      const tuple &b,
+      function&& f)
+{
+	return f(key<i>(a), val<i>(a), val<i>(b))?
+	       until<i + 1>(a, b, std::forward<function>(f)):
+	       false;
+}
+
 template<class tuple,
          class function,
          ssize_t i>
