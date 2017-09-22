@@ -101,7 +101,7 @@ noexcept
 	ircd::ctx::current = this;
 	mark(prof::event::CUR_ENTER);
 
-	const scope atexit([this]
+	const unwind atexit([this]
 	{
 		mark(prof::event::CUR_LEAVE);
 
@@ -428,7 +428,7 @@ ircd::ctx::context::context(const char *const &name,
 	});
 
 	// The current context must be reasserted if spawn returns here
-	const scope recurrent([current(ircd::ctx::current)]
+	const unwind recurrent([current(ircd::ctx::current)]
 	{
 		ircd::ctx::current = current;
 	});
@@ -584,7 +584,7 @@ ircd::ctx::pool::main()
 try
 {
 	++available;
-	const scope avail([this]
+	const unwind avail([this]
 	{
 		--available;
 	});
@@ -610,7 +610,7 @@ try
 	});
 
 	--available;
-	const scope avail([this]
+	const unwind avail([this]
 	{
 		++available;
 	});

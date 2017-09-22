@@ -80,7 +80,7 @@ template<class T>
 void
 ircd::ctx::view<T>::notify(T &t)
 {
-	const scope afterward{[this]
+	const unwind afterward{[this]
 	{
 		assert(a.empty());
 		this->t = nullptr;

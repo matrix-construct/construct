@@ -99,7 +99,7 @@ ircd::main()
 try
 {
 	log::debug("IRCd entered main context.");
-	const scope main_exit(&main_exiting);   // The user is notified when this function ends
+	const unwind main_exit(&main_exiting);   // The user is notified when this function ends
 
 	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties their life
 	// to the main context. Initialization can also occur in ircd::init() or static initialization

@@ -650,7 +650,7 @@ try
 		}
 	});
 
-	const scope reset{[this, &theirs]
+	const unwind reset{[this, &theirs]
 	{
 		assert(loading.top() == this);
 		loading.pop();

@@ -260,7 +260,7 @@ try
 {
 	const head h{pc, headers_closure};
 	const char *const content_mark(pc.parsed);
-	const scope discard_unused_content{[&pc, &h, &content_mark]
+	const unwind discard_unused_content{[&pc, &h, &content_mark]
 	{
 		const size_t consumed(pc.parsed - content_mark);
 		const size_t remain(h.content_length - consumed);
@@ -369,7 +369,7 @@ ircd::http::response::response(parse::capstan &pc,
 {
 	const head h{pc, headers_closure};
 	const char *const content_mark(pc.parsed);
-	const scope discard_unused_content{[&pc, &h, &content_mark]
+	const unwind discard_unused_content{[&pc, &h, &content_mark]
 	{
 		const size_t consumed(pc.parsed - content_mark);
 		const size_t remain(h.content_length - consumed);

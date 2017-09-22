@@ -274,7 +274,7 @@ ircd::log::slog(const facility &fac,
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
 		return;
 
-	const scope always_newline([&fac]
+	const unwind always_newline([&fac]
 	{
 		suffix(fac);
 	});

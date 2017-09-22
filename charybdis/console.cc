@@ -135,7 +135,7 @@ try
 {
 	using namespace ircd;
 
-	const scope atexit([]
+	const unwind atexit([]
 	{
 		console_active = false;
 		console_in = nullptr;

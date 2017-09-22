@@ -118,7 +118,7 @@ noexcept
 inline void
 ircd::ctx::dock::wait()
 {
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};
@@ -134,7 +134,7 @@ ircd::ctx::dock::wait(predicate&& pred)
 	if(pred())
 		return;
 
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};
@@ -152,7 +152,7 @@ ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
 
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};
@@ -173,7 +173,7 @@ ircd::ctx::dock::wait_for(const duration &dur,
 	if(pred())
 		return true;
 
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};
@@ -195,7 +195,7 @@ template<class time_point>
 ircd::ctx::cv_status
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};
@@ -214,7 +214,7 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 	if(pred())
 		return true;
 
-	const scope remove
+	const unwind remove
 	{
 		std::bind(&dock::remove_self, this)
 	};

@@ -79,7 +79,14 @@ enum class init_priority
 #define IRCD_INIT_PRIORITY(name) \
     __attribute__((init_priority(int(ircd::init_priority::name))))
 
-struct scope
+
+///
+/// Fundamental scope-unwind utilities establishing actions during destruction
+///
+
+/// Unconditionally executes the provided code when the object goes out of scope.
+///
+struct unwind
 {
 	struct nominal;
 	struct exceptional;
@@ -87,48 +94,64 @@ struct scope
 	const std::function<void ()> func;
 
 	template<class F>
-	scope(F &&func): func(std::forward<F>(func)) {}
-	scope() = default;
-	scope(const scope &) = delete;
-	scope &operator=(const scope &) = delete;
-	~scope() noexcept
+	unwind(F &&func)
+	:func{std::forward<F>(func)}
+	{}
+
+	unwind(const unwind &) = delete;
+	unwind &operator=(const unwind &) = delete;
+	~unwind() noexcept
 	{
 		func();
 	}
 };
 
-struct scope::nominal
-:scope
+/// Executes function only if the unwind takes place without active exception
+///
+/// The function is expected to be executed and the likely() should pipeline
+/// that branch and make this device cheaper to use under normal circumstances.
+///
+struct unwind::nominal
 {
+	const std::function<void ()> func;
+
 	template<class F>
 	nominal(F &&func)
-	:scope
-	{
-		[func(std::forward<F>(func))]
-		{
-			if(likely(!std::uncaught_exception()))
-				func();
-		}
-	}{}
+	:func{std::forward<F>(func)}
+	{}
 
-	nominal() = default;
+	~nominal() noexcept
+	{
+		if(likely(!std::uncaught_exception()))
+			func();
+	}
+
+	nominal(const nominal &) = delete;
 };
 
-struct scope::exceptional
-:scope
+/// Executes function only if unwind is taking place because exception thrown
+///
+/// The unlikely() intends for the cost of a branch misprediction to be paid
+/// for fetching and executing this function. This is because we strive to
+/// optimize the pipeline for the nominal path, making this device as cheap
+/// as possible to use.
+///
+struct unwind::exceptional
 {
+	const std::function<void ()> func;
+
 	template<class F>
 	exceptional(F &&func)
-	:scope
-	{
-		[func(std::forward<F>(func))]
-		{
-			if(unlikely(std::uncaught_exception()))
-				func();
-		}
-	}{}
+	:func{std::forward<F>(func)}
+	{}
 
-	exceptional() = default;
+	~exceptional() noexcept
+	{
+		if(unlikely(std::uncaught_exception()))
+			func();
+	}
+
+	exceptional(const exceptional &) = delete;
 };
 
 

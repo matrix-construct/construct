@@ -93,7 +93,7 @@ ircd::ctx::queue<T>::pop()
 		return !q.empty();
 	});
 
-	const scope pop([this]
+	const unwind pop([this]
 	{
 		q.pop();
 	});
@@ -115,7 +115,7 @@ ircd::ctx::queue<T>::pop_for(const duration &dur)
 	if(status == cv_status::timeout)
 		throw timeout();
 
-	const scope pop([this]
+	const unwind pop([this]
 	{
 		q.pop();
 	});
@@ -137,7 +137,7 @@ ircd::ctx::queue<T>::pop_until(time_point&& tp)
 	if(status == cv_status::timeout)
 		throw timeout();
 
-	const scope pop([this]
+	const unwind pop([this]
 	{
 		q.pop();
 	});

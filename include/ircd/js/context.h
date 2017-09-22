@@ -184,7 +184,7 @@ run(F&& function)
 	assert(!pending_exception(*cx));
 
 	enter(*cx);
-	const scope out([]
+	const unwind out([]
 	{
 		leave(*cx);
 	});

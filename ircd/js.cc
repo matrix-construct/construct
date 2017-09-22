@@ -72,7 +72,7 @@ ircd::js::init::init()
 	         "SpiderMonkey",
 	         version(ver::IMPLEMENTATION));
 
-	const scope exit([this]
+	const unwind exit([this]
 	{
 		// Ensure ~init() is always safe to call at any intermediate state
 		if(std::current_exception())
@@ -3348,7 +3348,7 @@ noexcept
 
 	// After the interrupt is handled the phase indicates entry back to JS,
 	// IRQ is left indicating JS in case we don't trigger the next interrupt.
-	const scope interrupt_return([&c, &state]
+	const unwind interrupt_return([&c, &state]
 	{
 		state.phase = phase::ENTER;
 		state.irq = irq::JS;
