@@ -48,9 +48,14 @@ namespace ircd::buffer
 	template<class it> struct buffer;
 	struct const_buffer;
 	struct mutable_buffer;
+	struct const_raw_buffer;
+	struct mutable_raw_buffer;
 	template<class buffer, size_t align> struct unique_buffer;
+
 	template<template<class> class I> using const_buffers = I<const_buffer>;
 	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
+	template<template<class> class I> using const_raw_buffers = I<const_raw_buffer>;
+	template<template<class> class I> using mutable_raw_buffers = I<mutable_raw_buffer>;
 
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
@@ -87,6 +92,8 @@ namespace ircd
 {
 	using buffer::const_buffer;
 	using buffer::mutable_buffer;
+	using buffer::const_raw_buffer;
+	using buffer::mutable_raw_buffer;
 	using buffer::unique_buffer;
 	using buffer::null_buffer;
 
@@ -146,8 +153,6 @@ struct ircd::buffer::const_buffer
 	const_buffer(const string_view &s)
 	:buffer<const char *>{std::begin(s), std::end(s)}
 	{}
-
-	const_buffer() = default;
 };
 
 struct ircd::buffer::mutable_buffer
@@ -156,6 +161,22 @@ struct ircd::buffer::mutable_buffer
 	operator boost::asio::mutable_buffer() const;
 
 	using buffer<char *>::buffer;
+};
+
+struct ircd::buffer::const_raw_buffer
+:buffer<const unsigned char *>
+{
+	operator boost::asio::const_buffer() const;
+
+	using buffer<const unsigned char *>::buffer;
+};
+
+struct ircd::buffer::mutable_raw_buffer
+:buffer<unsigned char *>
+{
+	operator boost::asio::mutable_buffer() const;
+
+	using buffer<unsigned char *>::buffer;
 };
 
 template<template<class>

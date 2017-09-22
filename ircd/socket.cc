@@ -520,7 +520,8 @@ ircd::buffer::null_buffers
     null_buffer
 }};
 
-ircd::buffer::mutable_buffer::operator boost::asio::mutable_buffer()
+ircd::buffer::mutable_buffer::operator
+boost::asio::mutable_buffer()
 const
 {
 	return boost::asio::mutable_buffer
@@ -529,7 +530,28 @@ const
 	};
 }
 
-ircd::buffer::const_buffer::operator boost::asio::const_buffer()
+ircd::buffer::const_buffer::operator
+boost::asio::const_buffer()
+const
+{
+	return boost::asio::const_buffer
+	{
+		data(*this), size(*this)
+	};
+}
+
+ircd::buffer::mutable_raw_buffer::operator
+boost::asio::mutable_buffer()
+const
+{
+	return boost::asio::mutable_buffer
+	{
+		data(*this), size(*this)
+	};
+}
+
+ircd::buffer::const_raw_buffer::operator
+boost::asio::const_buffer()
 const
 {
 	return boost::asio::const_buffer

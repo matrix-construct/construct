@@ -237,20 +237,7 @@ ircd::tokens(const string_view &str,
 
 ircd::string_view
 ircd::b64encode(const mutable_buffer &out,
-                const const_buffer &in)
-{
-	const auto ptr
-	{
-		reinterpret_cast<const uint8_t *>(data(in))
-	};
-
-	return b64encode(out, ptr, size(in));
-}
-
-ircd::string_view
-ircd::b64encode(const mutable_buffer &out,
-                const uint8_t *const &in,
-                const size_t &len)
+                const const_raw_buffer &in)
 {
 
 	using transform = boost::archive::iterators::transform_width<unsigned char *, 6, 8>;
@@ -258,26 +245,13 @@ ircd::b64encode(const mutable_buffer &out,
 	using ostream_iterator = boost::archive::iterators::ostream_iterator<char>;
 
 	std::stringstream ss;
-	std::copy(b64fb(in), b64fb(in + len), ostream_iterator(ss));
+	std::copy(b64fb(data(in)), b64fb(data(in) + size(in)), ostream_iterator(ss));
 	const auto outlen(ss.str().copy(data(out), size(out)));
 	return { data(out), outlen };
 }
 
-ircd::const_buffer
-ircd::a2u(const mutable_buffer &out,
-          const const_buffer &in)
-{
-	const auto ptr
-	{
-		reinterpret_cast<uint8_t *>(data(out))
-	};
-
-	return a2u(ptr, size(out), in);
-}
-
-ircd::const_buffer
-ircd::a2u(uint8_t *const &out,
-          const size_t &max,
+ircd::const_raw_buffer
+ircd::a2u(const mutable_raw_buffer &out,
           const const_buffer &in)
 {
 	const size_t len{size(in) / 2};
@@ -293,28 +267,15 @@ ircd::a2u(uint8_t *const &out,
 		out[i] = strtol(gl, nullptr, 16);
 	}
 
-	return { reinterpret_cast<const char *>(out), len };
+	return { data(out), len };
 }
 
 ircd::string_view
 ircd::u2a(const mutable_buffer &out,
-          const const_buffer &in)
-{
-	const auto ptr
-	{
-		reinterpret_cast<const uint8_t *>(data(in))
-	};
-
-	return u2a(out, ptr, size(in));
-}
-
-ircd::string_view
-ircd::u2a(const mutable_buffer &out,
-          const uint8_t *const &in,
-          const size_t &len)
+          const const_raw_buffer &in)
 {
 	char *p(data(out));
-	for(size_t i(0); i < len; ++i)
+	for(size_t i(0); i < size(in); ++i)
 		p += snprintf(p, size(out) - (p - data(out)), "%02x", in[i]);
 
 	return { data(out), size_t(p - data(out)) };
