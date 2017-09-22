@@ -557,6 +557,28 @@ operator^=(Enum &a, const Enum &b)
 	return (a = (a ^ b));
 }
 
+template<class Enum,
+         class it>
+typename std::enable_if<std::is_enum<Enum>::value, typename std::underlying_type<Enum>::type>::type
+combine_flags(const it &begin,
+              const it &end)
+{
+	using type = typename std::underlying_type<Enum>::type;
+
+	return std::accumulate(begin, end, type(0), []
+	(auto ret, const auto &val)
+	{
+		return ret |= type(val);
+	});
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, typename std::underlying_type<Enum>::type>::type
+combine_flags(const std::initializer_list<Enum> &list)
+{
+	return combine_flags<Enum>(begin(list), end(list));
+}
+
 
 inline size_t
 size(std::ostream &s)
