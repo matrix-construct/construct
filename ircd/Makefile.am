@@ -60,6 +60,7 @@ libircd_la_SOURCES =   \
 	exception.cc       \
 	fmt.cc             \
 	fs.cc              \
+	hash.cc            \
 	http.cc            \
 	info.cc            \
 	ircd.cc            \

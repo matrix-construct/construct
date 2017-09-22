@@ -25,47 +25,101 @@
 #pragma once
 #define HAVE_IRCD_HASH_H
 
-namespace ircd
+namespace ircd::bernstein
 {
 	constexpr size_t hash(const char *const &str, const size_t i = 0);
 	constexpr size_t hash(const char16_t *const &str, const size_t i = 0);
 
-	size_t hash(const std::string_view &str, const size_t i = 0);
 	size_t hash(const std::string &str, const size_t i = 0);
 	size_t hash(const std::u16string &str, const size_t i = 0);
+	size_t hash(const std::string_view &str, const size_t i = 0);
+}
+
+namespace ircd::crh
+{
+	IRCD_EXCEPTION(ircd::error, error)
+
+	struct hash;
+	struct sha256;
+}
+
+namespace ircd
+{
+	using bernstein::hash;
+	using crh::hash;
+	using crh::sha256;
+}
+
+struct ircd::crh::hash
+{
+	virtual size_t length() const = 0;
+	virtual void finalize(const mutable_raw_buffer &) = 0;
+	virtual void extract(const mutable_raw_buffer &) const = 0;
+	virtual void update(const const_buffer &) = 0;
+
+	// conveniences
+	void finalize(const mutable_raw_buffer &) const;
+	void operator()(const mutable_raw_buffer &out, const const_buffer &in);
+	hash &operator+=(const const_buffer &);
+
+	virtual ~hash() noexcept;
+};
+
+struct ircd::crh::sha256
+:hash
+{
+	struct ctx;
+
+	static constexpr const size_t bytes
+	{
+		256 / 8
+	};
+
+  protected:
+	std::unique_ptr<ctx> ctx;
+
+  public:
+	size_t length() const override;
+	void finalize(const mutable_raw_buffer &) override;
+	void extract(const mutable_raw_buffer &) const override;
+	void update(const const_buffer &) override;
+
+	sha256(const mutable_raw_buffer &, const const_buffer &);
+	sha256();
+	~sha256() noexcept;
+};
+
+inline size_t
+ircd::bernstein::hash(const std::string_view &str,
+                      const size_t i)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
+}
+
+inline size_t
+ircd::bernstein::hash(const std::u16string &str,
+                      const size_t i)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
+}
+
+inline size_t
+ircd::bernstein::hash(const std::string &str,
+                      const size_t i)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
 constexpr size_t
-ircd::hash(const char *const &str,
-           const size_t i)
+ircd::bernstein::hash(const char16_t *const &str,
+                      const size_t i)
 {
 	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
 }
 
-inline size_t
-ircd::hash(const std::string_view &str,
-           const size_t i)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
-inline size_t
-ircd::hash(const std::string &str,
-           const size_t i)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
 constexpr size_t
-ircd::hash(const char16_t *const &str,
-           const size_t i)
+ircd::bernstein::hash(const char *const &str,
+                      const size_t i)
 {
 	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
-}
-
-inline size_t
-ircd::hash(const std::u16string &str,
-           const size_t i)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
