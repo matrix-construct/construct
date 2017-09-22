@@ -26,6 +26,9 @@
 namespace ircd::db
 {
 	struct comparator;
+
+	struct cmp_string_view extern const cmp_string_view;
+	struct cmp_int64_t extern const cmp_int64_t;
 }
 
 struct ircd::db::comparator

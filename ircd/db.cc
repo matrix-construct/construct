@@ -751,12 +751,6 @@ const
 	const string_view limit{_limit.data(), _limit.size()};
 }
 
-namespace ircd::db
-{
-	struct cmp_string_view;
-	struct cmp_int64_t;
-}
-
 struct ircd::db::cmp_string_view
 :db::comparator
 {
@@ -773,7 +767,8 @@ struct ircd::db::cmp_string_view
 			return a == b;
 		}
 	}{}
-};
+}
+const ircd::db::cmp_string_view;
 
 struct ircd::db::cmp_int64_t
 :db::comparator
@@ -799,7 +794,8 @@ struct ircd::db::cmp_int64_t
 			return a == b;
 		}
 	}{}
-};
+}
+const ircd::db::cmp_int64_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -923,9 +919,9 @@ ircd::db::database::column::column(database *const &d,
 	if(!this->descriptor.cmp.less)
 	{
 		if(key_type == typeid(string_view))
-			this->cmp.user = cmp_string_view{};
+			this->cmp.user = cmp_string_view;
 		else if(key_type == typeid(int64_t))
-			this->cmp.user = cmp_int64_t{};
+			this->cmp.user = cmp_int64_t;
 		else
 			throw error("column '%s' key type[%s] requires user supplied comparator",
 			            this->name,
