@@ -612,42 +612,6 @@ string(const uint8_t *const &buf, const size_t &size)
 }
 
 
-constexpr size_t
-hash(const char *const &str,
-     const size_t i = 0)
-{
-	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
-}
-
-inline size_t
-hash(const std::string_view &str,
-     const size_t i = 0)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
-inline size_t
-hash(const std::string &str,
-     const size_t i = 0)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
-constexpr size_t
-hash(const char16_t *const &str,
-     const size_t i = 0)
-{
-	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
-}
-
-inline size_t
-hash(const std::u16string &str,
-     const size_t i = 0)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
-
 /***
  * C++14 user defined literals
  *
