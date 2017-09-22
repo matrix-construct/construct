@@ -109,6 +109,16 @@ struct ircd::buffer::buffer
 	auto &end() const                  { return std::get<1>(*this);            }
 	auto &end()                        { return std::get<1>(*this);            }
 
+	auto &operator[](const size_t &i) const
+	{
+		return *(begin() + i);
+	}
+
+	auto &operator[](const size_t &i)
+	{
+		return *(begin() + i);
+	}
+
 	buffer(const it &start, const it &stop)
 	:std::tuple<it, it>{start, stop}
 	{}
