@@ -49,8 +49,12 @@ namespace ircd::db
 	string_view slice(const rocksdb::Slice &);
 
 	// Frequently used get options and set options are separate from the string/map system
+	rocksdb::WriteOptions &operator+=(rocksdb::WriteOptions &, const sopts &);
+	rocksdb::ReadOptions &operator+=(rocksdb::ReadOptions &, const gopts &);
 	rocksdb::WriteOptions make_opts(const sopts &);
-	rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
+	rocksdb::ReadOptions make_opts(const gopts &);
+
+	// Database options creator
 	bool optstr_find_and_remove(std::string &optstr, const std::string &what);
 	rocksdb::DBOptions make_dbopts(std::string &optstr, bool *read_only = nullptr, bool *fsck = nullptr);
 	template<class... args> rocksdb::DBOptions make_dbopts(const std::string &, args&&...);
@@ -67,7 +71,7 @@ namespace ircd::db
 	void valid_eq_or_throw(const rocksdb::Iterator &, const string_view &);
 
 	// [GET] seek suite
-	template<class pos> bool seek(database::column &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+	template<class pos> bool seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
 	template<class pos> bool seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
@@ -1781,62 +1785,97 @@ ircd::db::iov::append::append(iov &t,
 // db/index.h
 //
 
-ircd::db::index::const_iterator
-ircd::db::index::find(const string_view &key)
+const ircd::db::gopts
+ircd::db::index::applied_opts
 {
-	auto ret{column::lower_bound(key)};
-	if(!ret)
-		return const_iterator{};
+	{ get::PREFIX }
+};
 
-	const auto &prefix(c->descriptor.prefix);
-	if(prefix.has && prefix.has(ret->first))
-		if(prefix.get && key != prefix.get(ret->first))
-			return const_iterator{};
+template<class pos>
+bool
+ircd::db::seek(index::const_iterator &it,
+               const pos &p,
+               gopts opts)
+{
+	opts |= index::applied_opts;
+	return seek(static_cast<column::const_iterator &>(it), p, opts);
+}
+template bool ircd::db::seek<ircd::db::pos>(index::const_iterator &, const pos &, gopts);
+template bool ircd::db::seek<ircd::string_view>(index::const_iterator &, const string_view &, gopts);
 
-	return std::move(ret);
+ircd::db::index::const_iterator
+ircd::db::index::find(const string_view &key,
+                      const gopts &opts)
+{
+	const_iterator ret
+	{
+		c, {}, opts.snapshot
+	};
+
+	seek(ret, key, opts);
+	return ret;
 }
 
 ircd::db::index::const_iterator
-ircd::db::index::begin()
+ircd::db::index::begin(const gopts &opts)
 {
-	return column::begin();
+	const_iterator ret
+	{
+		c, {}, opts.snapshot
+	};
+
+	seek(ret, pos::FRONT, opts);
+	return ret;
 }
 
 ircd::db::index::const_iterator
-ircd::db::index::end()
+ircd::db::index::end(const gopts &opts)
 {
-	return column::end();
+	return {};
 }
 
 //
 // const_iterator
 //
 
-ircd::db::index::const_iterator::const_iterator(column::const_iterator it)
-:column::const_iterator{std::move(it)}
+ircd::db::index::const_iterator &
+ircd::db::index::const_iterator::operator--()
 {
-//	const auto &prefix(c->descriptor.prefix);
-//	if(unlikely(!prefix.has || !prefix.get))
-//		throw schema_error("column '%s' has no prefix logic; it cannot be an index",
-//		                   name(*c));
+	seek(*this, pos::PREV);
+	return *this;
+}
+
+ircd::db::index::const_iterator &
+ircd::db::index::const_iterator::operator++()
+{
+	seek(*this, pos::NEXT);
+	return *this;
 }
 
 const ircd::db::index::const_iterator::value_type &
 ircd::db::index::const_iterator::operator*()
 const
 {
-	const auto t(const_cast<const_iterator *>(this));
-	t->column::const_iterator::operator*();
-	string_view &key(t->val.first);
-	const auto &prefix(c->descriptor.prefix);
+	const auto &prefix
+	{
+		describe(*c).prefix
+	};
+
+	// Fetch the full value like a standard column first
+	column::const_iterator::operator*();
+	string_view &key{val.first};
+
+	// When there's no prefixing this index column is just
+	// like a normal column. Otherwise, we remove the prefix
+	// from the key the user will end up seeing.
 	if(prefix.has && prefix.has(key))
 	{
-		const auto first(prefix.get(key));
-		const auto second(key.substr(first.size()));
+		const auto &first(prefix.get(key));
+		const auto &second(key.substr(first.size()));
 		key = second;
 	}
 
-	return t->val;
+	return val;
 }
 
 const ircd::db::index::const_iterator::value_type *
@@ -1924,7 +1963,7 @@ ircd::db::seek(cell &c,
 
 	gopts opts;
 	opts.snapshot = c.ss;
-	auto ropts(make_opts(opts));
+	const auto ropts(make_opts(opts));
 	return seek(dc, p, ropts, c.it);
 }
 template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &);
@@ -2742,30 +2781,17 @@ namespace db   {
 ircd::db::column::const_iterator
 ircd::db::column::end(const gopts &gopts)
 {
-	return cend(gopts);
+	return {};
 }
 
 ircd::db::column::const_iterator
 ircd::db::column::begin(const gopts &gopts)
 {
-	return cbegin(gopts);
-}
-
-ircd::db::column::const_iterator
-ircd::db::column::cend(const gopts &gopts)
-{
-	return {};
-}
-
-ircd::db::column::const_iterator
-ircd::db::column::cbegin(const gopts &gopts)
-{
 	const_iterator ret
 	{
-		c, {}, gopts
+		c, {}, gopts.snapshot
 	};
 
-	ret.all_prefix = true;
 	seek(ret, pos::FRONT);
 	return std::move(ret);
 }
@@ -2787,7 +2813,7 @@ ircd::db::column::find(const string_view &key,
 {
 	auto it(lower_bound(key, gopts));
 	if(!it || it.it->key().compare(slice(key)) != 0)
-		return cend(gopts);
+		return end(gopts);
 
 	return it;
 }
@@ -2798,7 +2824,7 @@ ircd::db::column::lower_bound(const string_view &key,
 {
 	const_iterator ret
 	{
-		c, {}, gopts
+		c, {}, gopts.snapshot
 	};
 
 	seek(ret, key);
@@ -2811,7 +2837,6 @@ noexcept
 ,ss{std::move(o.ss)}
 ,it{std::move(o.it)}
 ,val{std::move(o.val)}
-,all_prefix{std::move(o.all_prefix)}
 {
 }
 
@@ -2823,7 +2848,6 @@ noexcept
 	ss = std::move(o.ss);
 	it = std::move(o.it);
 	val = std::move(o.val);
-	all_prefix = std::move(o.all_prefix);
 	return *this;
 }
 
@@ -2833,14 +2857,11 @@ ircd::db::column::const_iterator::const_iterator()
 
 ircd::db::column::const_iterator::const_iterator(database::column *const &c,
                                                  std::unique_ptr<rocksdb::Iterator> &&it,
-                                                 const gopts &gopts)
+                                                 database::snapshot ss)
 :c{c}
-,ss{gopts.snapshot}
+,ss{std::move(ss)}
 ,it{std::move(it)}
-,all_prefix{has_opt(gopts, db::get::ALL_PREFIX)}
 {
-	//if(!has_opt(this->opts, get::READAHEAD))
-	//	this->gopts.readahead_size = DEFAULT_READAHEAD;
 }
 
 ircd::db::column::const_iterator::~const_iterator()
@@ -2963,19 +2984,19 @@ ircd::db::operator<(const column::const_iterator &a, const column::const_iterato
 template<class pos>
 bool
 ircd::db::seek(column::const_iterator &it,
-               const pos &p)
+               const pos &p,
+               const gopts &opts)
 {
 	database::column &c(it);
-	auto opts
+	const auto ropts
 	{
-		make_opts({}, true)
+		make_opts(opts)
 	};
 
-	opts.prefix_same_as_start = !it.all_prefix;
-	return seek(c, p, opts, it.it);
+	return seek(c, p, ropts, it.it);
 }
-template bool ircd::db::seek<ircd::db::pos>(column::const_iterator &, const pos &);
-template bool ircd::db::seek<ircd::string_view>(column::const_iterator &, const string_view &);
+template bool ircd::db::seek<ircd::db::pos>(column::const_iterator &, const pos &, const gopts &);
+template bool ircd::db::seek<ircd::string_view>(column::const_iterator &, const string_view &, const gopts &);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -3150,7 +3171,7 @@ template<class pos>
 bool
 ircd::db::seek(database::column &c,
                const pos &p,
-               rocksdb::ReadOptions &opts,
+               const rocksdb::ReadOptions &opts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
 	database &d(*c.d);
@@ -3506,57 +3527,33 @@ ircd::db::optstr_find_and_remove(std::string &optstr,
 }
 
 rocksdb::ReadOptions
-ircd::db::make_opts(const gopts &opts,
-                    const bool &iterator)
+ircd::db::make_opts(const gopts &opts)
 {
 	rocksdb::ReadOptions ret;
-	ret.snapshot = opts.snapshot;
 	ret.read_tier = NON_BLOCKING;
-	ret.prefix_same_as_start = true;
-	//ret.total_order_seek = true;
+	ret.iterate_upper_bound = opts.upper_bound;
+
+	// slice* for exclusive upper bound. when prefixes are used this value must
+	// have the same prefix because ordering is not guaranteed between prefixes
 	//ret.iterate_upper_bound = nullptr;
 
-	if(iterator)
-	{
-		ret.fill_cache = false;
-		ret.readahead_size = 4_KiB;
-	}
-	else ret.fill_cache = true;
+	ret += opts;
+	return ret;
+}
 
-	for(const auto &opt : opts) switch(opt.first)
-	{
-		case get::PIN:
-			ret.pin_data = true;
-			continue;
+rocksdb::ReadOptions &
+ircd::db::operator+=(rocksdb::ReadOptions &ret,
+                     const gopts &opts)
+{
+	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
+		ret.snapshot = opts.snapshot;
 
-		case get::CACHE:
-			ret.fill_cache = true;
-			continue;
-
-		case get::NO_CACHE:
-			ret.fill_cache = false;
-			continue;
-
-		case get::NO_SNAPSHOT:
-			ret.tailing = true;
-			continue;
-
-		case get::NO_CHECKSUM:
-			ret.verify_checksums = false;
-			continue;
-
-		case get::READAHEAD:
-			ret.readahead_size = opt.second;
-			continue;
-
-		case get::ALL_PREFIX:
-			ret.prefix_same_as_start = false;
-			continue;
-
-		default:
-			continue;
-	}
-
+	ret.pin_data = test(opts, get::PIN);
+	ret.fill_cache |= test(opts, get::CACHE);
+	ret.fill_cache &= !test(opts, get::NO_CACHE);
+	ret.tailing = test(opts, get::NO_SNAPSHOT);
+	ret.verify_checksums = !test(opts, get::NO_CHECKSUM);
+	ret.prefix_same_as_start = test(opts, get::PREFIX);
 	return ret;
 }
 
@@ -3564,24 +3561,17 @@ rocksdb::WriteOptions
 ircd::db::make_opts(const sopts &opts)
 {
 	rocksdb::WriteOptions ret;
-	for(const auto &opt : opts) switch(opt.first)
-	{
-		case set::FSYNC:
-			ret.sync = true;
-			continue;
+	ret += opts;
+	return ret;
+}
 
-		case set::NO_JOURNAL:
-			ret.disableWAL = true;
-			continue;
-
-		case set::MISSING_COLUMNS:
-			ret.ignore_missing_column_families = true;
-			continue;
-
-		default:
-			continue;
-	}
-
+rocksdb::WriteOptions &
+ircd::db::operator+=(rocksdb::WriteOptions &ret,
+                     const sopts &opts)
+{
+	ret.sync = test(opts, set::FSYNC);
+	ret.disableWAL = test(opts, set::NO_JOURNAL);
+	ret.ignore_missing_column_families = test(opts, set::MISSING_COLUMNS);
 	return ret;
 }
 

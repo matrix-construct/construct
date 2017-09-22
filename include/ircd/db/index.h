@@ -36,9 +36,11 @@ struct ircd::db::index
 	using iterator_type = const_iterator;
 	using const_iterator_type = const_iterator;
 
-	const_iterator end();
-	const_iterator begin();
-	const_iterator find(const string_view &key);
+	static const gopts applied_opts;
+
+	const_iterator end(const gopts & = {});
+	const_iterator begin(const gopts & = {});
+	const_iterator find(const string_view &key, const gopts & = {});
 
 	using column::column;
 };
@@ -46,9 +48,15 @@ struct ircd::db::index
 struct ircd::db::index::const_iterator
 :ircd::db::column::const_iterator
 {
+	friend class index;
+
 	const value_type &operator*() const;
 	const value_type *operator->() const;
 
-	const_iterator(column::const_iterator it);
-	const_iterator() = default;
+	const_iterator &operator++();
+	const_iterator &operator--();
+
+	using column::const_iterator::const_iterator;
+
+	template<class pos> friend bool seek(index::const_iterator &, const pos &, gopts = {});
 };

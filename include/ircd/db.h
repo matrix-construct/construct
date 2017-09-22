@@ -32,6 +32,7 @@ namespace ircd::db
 	struct cell;
 	struct row;
 	struct column;
+	struct index;
 	struct database;
 	enum op :uint8_t;
 	enum class pos :int8_t;

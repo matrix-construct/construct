@@ -114,8 +114,6 @@ struct ircd::db::column
 	bool operator!() const                       { return !c;                                      }
 
 	// [GET] Iterations
-	const_iterator cbegin(const gopts & = {});
-	const_iterator cend(const gopts & = {});
 	const_iterator begin(const gopts & = {});
 	const_iterator end(const gopts & = {});
 	const_iterator find(const string_view &key, const gopts & = {});
@@ -185,14 +183,14 @@ struct ircd::db::column::const_iterator
 	using iterator_category = std::bidirectional_iterator_tag;
 
   protected:
+	friend class column;
+
 	database::column *c;
 	database::snapshot ss;
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
-	bool all_prefix;
 
-	friend class column;
-	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, const gopts & = {});
+	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, database::snapshot = {});
 
   public:
 	explicit operator const database::snapshot &() const;
@@ -220,7 +218,7 @@ struct ircd::db::column::const_iterator
 	friend bool operator<(const const_iterator &, const const_iterator &);
 	friend bool operator>(const const_iterator &, const const_iterator &);
 
-	template<class pos> friend bool seek(column::const_iterator &, const pos &);
+	template<class pos> friend bool seek(column::const_iterator &, const pos &, const gopts & = {});
 };
 
 inline ircd::db::column::const_iterator::operator

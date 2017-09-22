@@ -62,31 +62,23 @@ struct ircd::db::where<tuple>::equal
 	:value{value}
 	{}
 
-	equal(json::members members)
-	:value{std::move(members)}
+	equal(const json::members &members)
+	:value{members}
 	{}
 };
 
 template<class tuple>
 bool
-ircd::db::where<tuple>::equal::operator()(const tuple &t)
+ircd::db::where<tuple>::equal::operator()(const tuple &value)
 const
 {
-	return json::until(this->value, [&t]
-	(const auto &key, auto&& where_value)
+	return json::until(this->value, value, []
+	(const auto &key, const auto &a, const auto &b)
 	{
-		if(!where_value)
+		if(!a)
 			return true;
 
-		bool equal(true);
-		at(t, key, [&where_value, &equal]
-		(auto&& value)
-		{
-			//equal = value == where_value;
-			equal = (byte_view<>(value) == byte_view<>(where_value));
-		});
-
-		return equal;
+		return a == b;
 	});
 }
 
@@ -102,31 +94,23 @@ struct ircd::db::where<tuple>::not_equal
 	:value{value}
 	{}
 
-	not_equal(json::members members)
-	:value{std::move(members)}
+	not_equal(const json::members &members)
+	:value{members}
 	{}
 };
 
 template<class tuple>
 bool
-ircd::db::where<tuple>::not_equal::operator()(const tuple &t)
+ircd::db::where<tuple>::not_equal::operator()(const tuple &value)
 const
 {
-	return json::until(this->value, [&t]
-	(const auto &key, auto&& where_value)
+	return !json::until(this->value, value, []
+	(const auto &key, const auto &a, const auto &b)
 	{
-		if(!where_value)
+		if(!a)
 			return true;
 
-		bool not_equal(true);
-		at(t, key, [&where_value, &not_equal]
-		(auto&& value)
-		{
-			//equal = value == where_value;
-			not_equal = (byte_view<>(value) != byte_view<>(where_value));
-		});
-
-		return not_equal;
+		return a == b;
 	});
 }
 

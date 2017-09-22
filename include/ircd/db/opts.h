@@ -25,91 +25,125 @@
 
 namespace ircd::db
 {
-	template<class T> struct optval;
-	template<class T> using optlist = std::initializer_list<optval<T>>;
-	template<class T> bool has_opt(const optlist<T> &, const T &);
-	template<class T> ssize_t opt_val(const optlist<T> &, const T &);
+	enum class set :uint64_t;
+	enum class get :uint64_t;
 
-	enum class set;
+	template<class> struct opts;
 	struct sopts;
-
-	enum class get;
 	struct gopts;
+
+	template<class T> bool test(const opts<T> &, const typename std::underlying_type<T>::type &);
+	template<class T> bool test(const opts<T> &, const T &value);
+
+	template<class T> opts<T> &operator|=(opts<T> &, const opts<T> &);
+	template<class T> opts<T> &operator|=(opts<T> &, const T &value);
+
+	template<class T> opts<T> &operator&=(opts<T> &, const opts<T> &);
+	template<class T> opts<T> &operator&=(opts<T> &, const T &value);
 }
 
-template<class T>
-struct ircd::db::optval
-:std::pair<T, ssize_t>
-{
-	optval(const T &key, const ssize_t &val = std::numeric_limits<ssize_t>::min());
-};
-
 enum class ircd::db::set
+:uint64_t
 {
-	FSYNC,                  // Uses kernel filesystem synchronization after write (slow)
-	NO_JOURNAL,             // Write Ahead Log (WAL) for some crash recovery
-	MISSING_COLUMNS         // No exception thrown when writing to a deleted column family
-};
-
-struct ircd::db::sopts
-:optlist<set>
-{
-	template<class... list>
-	sopts(list&&... l)
-	:optlist<set>{std::forward<list>(l)...}
-	{}
+	FSYNC            = 0x0001, // Uses kernel filesystem synchronization after write (slow)
+	NO_JOURNAL       = 0x0002, // Write Ahead Log (WAL) for some crash recovery
+	MISSING_COLUMNS  = 0x0004, // No exception thrown when writing to a deleted column family
 };
 
 enum class ircd::db::get
+:uint64_t
 {
-	PIN,                    // Keep iter data in memory for iter lifetime (good for lots of ++/--)
-	CACHE,                  // Update the cache (CACHE is default for non-iterator operations)
-	NO_CACHE,               // Do not update the cache (NO_CACHE is default for iterators)
-	NO_SNAPSHOT,            // This iterator will have the latest data (tailing)
-	NO_CHECKSUM,            // Integrity of data will be checked unless this is specified
-	READAHEAD,              // Pair with a size in bytes for prefetching additional data
-	NO_EMPTY,               // Option for db::row to not include unassigned cells in the row
-	ALL_PREFIX,             // Iter all keys in prefix-oriented col (prefix_same_as_start = false)
-};
-
-struct ircd::db::gopts
-:optlist<get>
-{
-	database::snapshot snapshot;
-
-	template<class... list>
-	gopts(list&&... l)
-	:optlist<get>{std::forward<list>(l)...}
-	{}
+	PIN              = 0x0001, // Keep iter data in memory for iter lifetime (good for lots of ++/--)
+	CACHE            = 0x0002, // Update the cache (CACHE is default for non-iterator operations)
+	NO_CACHE         = 0x0004, // Do not update the cache (NO_CACHE is default for iterators)
+	NO_SNAPSHOT      = 0x0008, // This iterator will have the latest data (tailing)
+	NO_CHECKSUM      = 0x0010, // Integrity of data will be checked unless this is specified
+	PREFIX           = 0x0020, // Iteration over a single prefix in column (prefix_same_as_start)
 };
 
 template<class T>
-ssize_t
-ircd::db::opt_val(const optlist<T> &list,
-                  const T &opt)
+struct ircd::db::opts
 {
-	for(const auto &p : list)
-		if(p.first == opt)
-			return p.second;
+	using flag_t = typename std::underlying_type<T>::type;
 
-	return std::numeric_limits<ssize_t>::min();
+	flag_t value {0};
+
+	opts() = default;
+	opts(const std::initializer_list<T> &list)
+	:value{combine_flags(list)}
+	{}
+};
+
+struct ircd::db::sopts
+:opts<set>
+{
+	using opts<set>::opts;
+};
+
+struct ircd::db::gopts
+:opts<get>
+{
+	database::snapshot snapshot;
+	size_t readahead { 4_KiB };
+	const rocksdb::Slice *upper_bound {nullptr};
+
+	using opts<get>::opts;
+};
+
+template<class T>
+ircd::db::opts<T> &
+ircd::db::operator&=(opts<T> &a,
+                     const T &value)
+{
+	using flag_t = typename opts<T>::flag_t;
+
+	a.value &= flag_t(value);
+	return a;
+}
+
+template<class T>
+ircd::db::opts<T> &
+ircd::db::operator&=(opts<T> &a,
+                     const opts<T> &b)
+{
+	a.value &= b.value;
+	return a;
+}
+
+template<class T>
+ircd::db::opts<T> &
+ircd::db::operator|=(opts<T> &a,
+                     const T &value)
+{
+	using flag_t = typename opts<T>::flag_t;
+
+	a.value |= flag_t(value);
+	return a;
+}
+
+template<class T>
+ircd::db::opts<T> &
+ircd::db::operator|=(opts<T> &a,
+                     const opts<T> &b)
+{
+	a.value |= b.value;
+	return a;
 }
 
 template<class T>
 bool
-ircd::db::has_opt(const optlist<T> &list,
-                  const T &opt)
+ircd::db::test(const opts<T> &a,
+               const T &value)
 {
-	for(const auto &p : list)
-		if(p.first == opt)
-			return true;
+	using flag_t = typename opts<T>::flag_t;
 
-	return false;
+	return a.value & flag_t(value);
 }
 
 template<class T>
-ircd::db::optval<T>::optval(const T &key,
-                            const ssize_t &val)
-:std::pair<T, ssize_t>{key, val}
+bool
+ircd::db::test(const opts<T> &a,
+               const typename std::underlying_type<T>::type &value)
 {
+	return (a.value & value) == value;
 }
