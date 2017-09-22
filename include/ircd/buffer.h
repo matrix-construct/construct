@@ -144,31 +144,12 @@ struct ircd::buffer::buffer
 	{}
 };
 
-struct ircd::buffer::const_buffer
-:buffer<const char *>
-{
-	operator boost::asio::const_buffer() const;
-
-	using buffer<const char *>::buffer;
-	const_buffer(const string_view &s)
-	:buffer<const char *>{std::begin(s), std::end(s)}
-	{}
-};
-
 struct ircd::buffer::mutable_buffer
 :buffer<char *>
 {
 	operator boost::asio::mutable_buffer() const;
 
-	using buffer<char *>::buffer;
-};
-
-struct ircd::buffer::const_raw_buffer
-:buffer<const unsigned char *>
-{
-	operator boost::asio::const_buffer() const;
-
-	using buffer<const unsigned char *>::buffer;
+	using buffer<value_type>::buffer;
 };
 
 struct ircd::buffer::mutable_raw_buffer
@@ -176,7 +157,51 @@ struct ircd::buffer::mutable_raw_buffer
 {
 	operator boost::asio::mutable_buffer() const;
 
-	using buffer<unsigned char *>::buffer;
+	using buffer<value_type>::buffer;
+
+	mutable_raw_buffer(const mutable_buffer &b)
+	:buffer<value_type>{reinterpret_cast<value_type>(data(b)), size(b)}
+	{}
+};
+
+struct ircd::buffer::const_buffer
+:buffer<const char *>
+{
+	operator boost::asio::const_buffer() const;
+
+	using buffer<value_type>::buffer;
+
+	const_buffer(const mutable_buffer &b)
+	:buffer<value_type>{data(b), size(b)}
+	{}
+
+	const_buffer(const string_view &s)
+	:buffer<value_type>{std::begin(s), std::end(s)}
+	{}
+
+	explicit const_buffer(const std::string &s)
+	:buffer<value_type>{s.data(), s.size()}
+	{}
+};
+
+struct ircd::buffer::const_raw_buffer
+:buffer<const unsigned char *>
+{
+	operator boost::asio::const_buffer() const;
+
+	using buffer<value_type>::buffer;
+
+	const_raw_buffer(const const_buffer &b)
+	:buffer<value_type>{reinterpret_cast<value_type>(data(b)), size(b)}
+	{}
+
+	const_raw_buffer(const mutable_raw_buffer &b)
+	:buffer<value_type>{data(b), size(b)}
+	{}
+
+	const_raw_buffer(const mutable_buffer &b)
+	:const_raw_buffer{mutable_raw_buffer{b}}
+	{}
 };
 
 template<template<class>
