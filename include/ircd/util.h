@@ -69,6 +69,21 @@ struct NAME                                                   \
 #define IRCD_STRONG_T(TYPE) \
     IRCD_STRONG_TYPEDEF(TYPE, IRCD_UNIQUE(strong_t))
 
+
+/* Output the sizeof a structure at compile time.
+ * This stops the compiler with an error (good) containing the size of the target
+ * in the message.
+ *
+ * example: struct foo {}; IRCD_TEST_SIZEOF(foo)
+ */
+
+template<size_t SIZE>
+struct _TEST_SIZEOF_;
+
+#define IRCD_TEST_SIZEOF(name) \
+	ircd::util::_TEST_SIZEOF_<sizeof(name)> _test_;
+
+
 // for complex static initialization (try to avoid this though)
 enum class init_priority
 {
@@ -78,6 +93,73 @@ enum class init_priority
 
 #define IRCD_INIT_PRIORITY(name) \
     __attribute__((init_priority(int(ircd::init_priority::name))))
+
+
+///
+/// C++14 user defined literals
+///
+/// These are very useful for dealing with space. Simply write 8_MiB and it's
+/// as if a macro turned that into (8 * 1024 * 1024) at compile time.
+///
+
+/// (Internal) Defines a unit literal with an unsigned long long basis.
+///
+#define IRCD_UNIT_LITERAL_UL(name, morphism)        \
+constexpr auto                                      \
+operator"" _ ## name(const unsigned long long val)  \
+{                                                   \
+    return (morphism);                              \
+}
+
+/// (Internal) Defines a unit literal with a signed long long basis
+///
+#define IRCD_UNIT_LITERAL_LL(name, morphism)        \
+constexpr auto                                      \
+operator"" _ ## name(const long long val)           \
+{                                                   \
+    return (morphism);                              \
+}
+
+/// (Internal) Defines a unit literal with a long double basis
+///
+#define IRCD_UNIT_LITERAL_LD(name, morphism)        \
+constexpr auto                                      \
+operator"" _ ## name(const long double val)         \
+{                                                   \
+    return (morphism);                              \
+}
+
+// IEC unit literals
+IRCD_UNIT_LITERAL_UL( B,    val                                                              )
+IRCD_UNIT_LITERAL_UL( KiB,  val * 1024LL                                                     )
+IRCD_UNIT_LITERAL_UL( MiB,  val * 1024LL * 1024LL                                            )
+IRCD_UNIT_LITERAL_UL( GiB,  val * 1024LL * 1024LL * 1024LL                                   )
+IRCD_UNIT_LITERAL_UL( TiB,  val * 1024LL * 1024LL * 1024LL * 1024LL                          )
+IRCD_UNIT_LITERAL_UL( PiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL                 )
+IRCD_UNIT_LITERAL_UL( EiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL        )
+
+IRCD_UNIT_LITERAL_LD( B,    val                                                              )
+IRCD_UNIT_LITERAL_LD( KiB,  val * 1024.0L                                                    )
+IRCD_UNIT_LITERAL_LD( MiB,  val * 1024.0L * 1024.0L                                          )
+IRCD_UNIT_LITERAL_LD( GiB,  val * 1024.0L * 1024.0L * 1024.0L                                )
+IRCD_UNIT_LITERAL_LD( TiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L                      )
+IRCD_UNIT_LITERAL_LD( PiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L            )
+IRCD_UNIT_LITERAL_LD( EiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L  )
+
+// SI unit literals
+IRCD_UNIT_LITERAL_UL( KB,   val * 1000LL                                                     )
+IRCD_UNIT_LITERAL_UL( MB,   val * 1000LL * 1000LL                                            )
+IRCD_UNIT_LITERAL_UL( GB,   val * 1000LL * 1000LL * 1000LL                                   )
+IRCD_UNIT_LITERAL_UL( TB,   val * 1000LL * 1000LL * 1000LL * 1000LL                          )
+IRCD_UNIT_LITERAL_UL( PB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL                 )
+IRCD_UNIT_LITERAL_UL( EB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL        )
+
+IRCD_UNIT_LITERAL_LD( KB,   val * 1000.0L                                                    )
+IRCD_UNIT_LITERAL_LD( MB,   val * 1000.0L * 1000.0L                                          )
+IRCD_UNIT_LITERAL_LD( GB,   val * 1000.0L * 1000.0L * 1000.0L                                )
+IRCD_UNIT_LITERAL_LD( TB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L                      )
+IRCD_UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L            )
+IRCD_UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
 
 
 ///
@@ -633,74 +715,6 @@ string(const uint8_t *const &buf, const size_t &size)
 {
 	return string(reinterpret_cast<const char *>(buf), size);
 }
-
-
-/***
- * C++14 user defined literals
- *
- * These are very useful for dealing with space. Simply write 8_MiB and it's
- * as if a macro turned that into (8 * 1024 * 1024) at compile time.
- */
-
-#define IRCD_UNIT_LITERAL_LL(name, morphism)        \
-constexpr auto                                      \
-operator"" _ ## name(const unsigned long long val)  \
-{                                                   \
-    return (morphism);                              \
-}
-
-#define IRCD_UNIT_LITERAL_LD(name, morphism)        \
-constexpr auto                                      \
-operator"" _ ## name(const long double val)         \
-{                                                   \
-    return (morphism);                              \
-}
-
-// IEC unit literals
-IRCD_UNIT_LITERAL_LL( B,    val                                                              )
-IRCD_UNIT_LITERAL_LL( KiB,  val * 1024LL                                                     )
-IRCD_UNIT_LITERAL_LL( MiB,  val * 1024LL * 1024LL                                            )
-IRCD_UNIT_LITERAL_LL( GiB,  val * 1024LL * 1024LL * 1024LL                                   )
-IRCD_UNIT_LITERAL_LL( TiB,  val * 1024LL * 1024LL * 1024LL * 1024LL                          )
-IRCD_UNIT_LITERAL_LL( PiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL                 )
-IRCD_UNIT_LITERAL_LL( EiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL        )
-
-IRCD_UNIT_LITERAL_LD( B,    val                                                              )
-IRCD_UNIT_LITERAL_LD( KiB,  val * 1024.0L                                                    )
-IRCD_UNIT_LITERAL_LD( MiB,  val * 1024.0L * 1024.0L                                          )
-IRCD_UNIT_LITERAL_LD( GiB,  val * 1024.0L * 1024.0L * 1024.0L                                )
-IRCD_UNIT_LITERAL_LD( TiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L                      )
-IRCD_UNIT_LITERAL_LD( PiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L            )
-IRCD_UNIT_LITERAL_LD( EiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L  )
-
-// SI unit literals
-IRCD_UNIT_LITERAL_LL( KB,   val * 1000LL                                                     )
-IRCD_UNIT_LITERAL_LL( MB,   val * 1000LL * 1000LL                                            )
-IRCD_UNIT_LITERAL_LL( GB,   val * 1000LL * 1000LL * 1000LL                                   )
-IRCD_UNIT_LITERAL_LL( TB,   val * 1000LL * 1000LL * 1000LL * 1000LL                          )
-IRCD_UNIT_LITERAL_LL( PB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL                 )
-IRCD_UNIT_LITERAL_LL( EB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL        )
-
-IRCD_UNIT_LITERAL_LD( KB,   val * 1000.0L                                                    )
-IRCD_UNIT_LITERAL_LD( MB,   val * 1000.0L * 1000.0L                                          )
-IRCD_UNIT_LITERAL_LD( GB,   val * 1000.0L * 1000.0L * 1000.0L                                )
-IRCD_UNIT_LITERAL_LD( TB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L                      )
-IRCD_UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L            )
-IRCD_UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
-
-
-/* Output the sizeof a structure at compile time.
- * This stops the compiler with an error (good) containing the size of the target
- * in the message.
- *
- * example: struct foo {}; IRCD_TEST_SIZEOF(foo)
- */
-
-template<size_t SIZE>
-struct _TEST_SIZEOF_;
-
-#define IRCD_TEST_SIZEOF(name) \
-	ircd::util::_TEST_SIZEOF_<sizeof(name)> _test_;
 
 
 /* This is a template alternative to nothrow overloads, which
