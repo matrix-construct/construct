@@ -2022,7 +2022,7 @@ ircd::db::cell::load(const string_view &index,
                      gopts opts)
 {
 	database &d(c);
-	if(valid() && !opts.snapshot && sequence(ss) == sequence(d))
+	if(valid(index) && !opts.snapshot && sequence(ss) == sequence(d))
 		return true;
 
 	if(bool(opts.snapshot))
