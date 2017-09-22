@@ -88,6 +88,22 @@ namespace ircd
 	template<class T> string_view lex_cast(const T &t);
 
 	//
+	// Binary / Hex / Base64 conversion suite
+	//
+
+	// Binary buffer to null terminated string of hex (out must be 2*in + 1).
+	string_view u2a(const mutable_buffer &out, const uint8_t *const &in, const size_t &len);
+	string_view u2a(const mutable_buffer &out, const const_buffer &in);
+
+	// String of hex to binary buffer.
+	const_buffer a2u(uint8_t *const &out, const size_t &max, const const_buffer &in);
+	const_buffer a2u(const mutable_buffer &out, const const_buffer &in);
+
+	// Binary buffer to string of base64
+	string_view b64encode(const mutable_buffer &out, const uint8_t *const &in, const size_t &len);
+	string_view b64encode(const mutable_buffer &out, const const_buffer &in);
+
+	//
 	// String tokenization.
 	//
 

@@ -22,6 +22,10 @@
 
 #include <RB_INC_BOOST_TOKENIZER_HPP
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/insert_linebreaks.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+#include <boost/archive/iterators/ostream_iterator.hpp>
 
 ircd::string_view
 ircd::tokens_after(const string_view &str,
@@ -229,6 +233,91 @@ ircd::tokens(const string_view &str,
 	const delim d(sep);
 	const boost::tokenizer<delim, iter, type> view(str, d);
 	std::for_each(begin(view), end(view), closure);
+}
+
+ircd::string_view
+ircd::b64encode(const mutable_buffer &out,
+                const const_buffer &in)
+{
+	const auto ptr
+	{
+		reinterpret_cast<const uint8_t *>(data(in))
+	};
+
+	return b64encode(out, ptr, size(in));
+}
+
+ircd::string_view
+ircd::b64encode(const mutable_buffer &out,
+                const uint8_t *const &in,
+                const size_t &len)
+{
+
+	using transform = boost::archive::iterators::transform_width<unsigned char *, 6, 8>;
+	using b64fb = boost::archive::iterators::base64_from_binary<transform>;
+	using ostream_iterator = boost::archive::iterators::ostream_iterator<char>;
+
+	std::stringstream ss;
+	std::copy(b64fb(in), b64fb(in + len), ostream_iterator(ss));
+	const auto outlen(ss.str().copy(data(out), size(out)));
+	return { data(out), outlen };
+}
+
+ircd::const_buffer
+ircd::a2u(const mutable_buffer &out,
+          const const_buffer &in)
+{
+	const auto ptr
+	{
+		reinterpret_cast<uint8_t *>(data(out))
+	};
+
+	return a2u(ptr, size(out), in);
+}
+
+ircd::const_buffer
+ircd::a2u(uint8_t *const &out,
+          const size_t &max,
+          const const_buffer &in)
+{
+	const size_t len{size(in) / 2};
+	for(size_t i(0); i < len; ++i)
+	{
+		const char gl[3]
+		{
+			in[i * 2],
+			in[i * 2 + 1],
+			'\0'
+		};
+
+		out[i] = strtol(gl, nullptr, 16);
+	}
+
+	return { reinterpret_cast<const char *>(out), len };
+}
+
+ircd::string_view
+ircd::u2a(const mutable_buffer &out,
+          const const_buffer &in)
+{
+	const auto ptr
+	{
+		reinterpret_cast<const uint8_t *>(data(in))
+	};
+
+	return u2a(out, ptr, size(in));
+}
+
+ircd::string_view
+ircd::u2a(const mutable_buffer &out,
+          const uint8_t *const &in,
+          const size_t &len)
+{
+	char *p(data(out));
+	for(size_t i(0); i < len; ++i)
+		p += snprintf(p, size(out) - (p - data(out)), "%02x", in[i]);
+
+	return { data(out), size_t(p - data(out)) };
 }
 
 namespace ircd {
