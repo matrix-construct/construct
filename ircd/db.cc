@@ -2336,6 +2336,27 @@ ircd::db::row::operator()(const op &op,
 	write(cell::delta{op, (*this)[col], val}, sopts);
 }
 
+ircd::db::cell &
+ircd::db::row::operator[](const string_view &column)
+{
+	const auto it(find(column));
+	if(unlikely(it == end()))
+		throw schema_error("column '%s' not specified in the descriptor schema", column);
+
+	return *it;
+}
+
+const ircd::db::cell &
+ircd::db::row::operator[](const string_view &column)
+const
+{
+	const auto it(find(column));
+	if(unlikely(it == end()))
+		throw schema_error("column '%s' not specified in the descriptor schema", column);
+
+	return *it;
+}
+
 ircd::db::row::iterator
 ircd::db::row::find(const string_view &col)
 {

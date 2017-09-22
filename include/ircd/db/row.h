@@ -64,12 +64,14 @@ struct ircd::db::row
 	iterator begin();
 	iterator end();
 
-	// [GET] Get iterator to cell
+	// [GET] Find cell by name
 	const_iterator find(const string_view &column) const;
 	iterator find(const string_view &column);
 
-	// [GET] Get cell
+	// [GET] Get cell (or throw)
+	const cell &operator[](const size_t &column) const;
 	const cell &operator[](const string_view &column) const;
+	cell &operator[](const size_t &column);
 	cell &operator[](const string_view &column);
 
     // [SET] Perform operation
@@ -142,24 +144,16 @@ ircd::db::row::row(database &d,
 }
 
 inline ircd::db::cell &
-ircd::db::row::operator[](const string_view &column)
+ircd::db::row::operator[](const size_t &i)
 {
-	const auto it(find(column));
-	if(unlikely(it == end()))
-		throw schema_error("column '%s' not specified in the descriptor schema", column);
-
-	return *it;
+	return its.at(i);
 }
 
 inline const ircd::db::cell &
-ircd::db::row::operator[](const string_view &column)
+ircd::db::row::operator[](const size_t &i)
 const
 {
-	const auto it(find(column));
-	if(unlikely(it == end()))
-		throw schema_error("column '%s' not specified in the descriptor schema", column);
-
-	return *it;
+	return its.at(i);
 }
 
 inline ircd::db::row::iterator
