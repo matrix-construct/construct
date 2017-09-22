@@ -586,8 +586,8 @@ ircd::mods::prefix_if_relative(const filesystem::path &path)
 std::string
 ircd::demangle(const std::string &symbol)
 {
-	size_t len;
-	int status;
+	size_t len(0);
+	int status(0);
 	const custom_ptr<char> buf
 	{
 		abi::__cxa_demangle(symbol.c_str(), nullptr, &len, &status),
@@ -603,7 +603,11 @@ ircd::demangle(const std::string &symbol)
 		default:  throw error("Demangle failed %d: unknown error", status);
 	}
 
-	return { buf.get(), len };
+	if(unlikely(!len))
+		return {};
+
+	assert(*(buf.get() + len - 1) == '\0');
+	return std::string { buf.get(), len - 1 };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
