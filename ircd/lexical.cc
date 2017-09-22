@@ -20,6 +20,14 @@
  *  USA
  */
 
+/// !!! NOTE !!!
+///
+/// Many functions implemented here need to be replaced with karma generators
+/// similar to ircd::fmt. Both the boost and std lexical conversions are an
+/// order of magnitude slower than the formal generators. Some tokenizations
+/// can also be replaced.
+///
+
 #include <RB_INC_BOOST_TOKENIZER_HPP
 #include <RB_INC_BOOST_LEXICAL_CAST_HPP
 #include <boost/archive/iterators/base64_from_binary.hpp>

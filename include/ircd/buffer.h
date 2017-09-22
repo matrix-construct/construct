@@ -34,14 +34,19 @@ namespace boost::asio
 /// Lightweight buffer interface compatible with boost::asio IO buffers and vectors
 ///
 /// A const_buffer is a pair of iterators like `const char *` meant for sending
-/// data; a mutable_buffer is a pair of iterators meant for receiving. These
-/// templates offer tools for individual buffers as well as tools for
-/// iterations of buffers.
+/// data; a mutable_buffer is a pair of iterators meant for receiving. In fact,
+/// those types store signed char* and our convention is to represent readable
+/// data with them. The const_raw_buffer and mutable_raw_buffer use unsigned
+/// char* pairs and our convention is to represent unreadable/binary data with
+/// them. Remember, these are conventions, not guarantees from these types. The
+/// const_buffer is analogous (but doesn't inherit from) a string_view, so they
+/// play well and convert easily between each other.
 ///
-/// An iteration of buffers is an iovector that is passed to our sockets etc.
-/// The ircd::iov template can host an iteration of buffers. The
-/// `template template` functions are tools for a container of buffers of
-/// either type.
+/// These templates offer tools for individual buffers as well as tools for
+/// iterations of buffers.  An iteration of buffers is an iovector that is
+/// passed to our sockets etc. The ircd::iov template can host an iteration of
+/// buffers. The `template template` functions are tools for a container of
+/// buffers of any permutation.
 ///
 namespace ircd::buffer
 {

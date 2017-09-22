@@ -211,7 +211,7 @@ struct ircd::vector_view
 	vector_view() = default;
 };
 
-// string_view -> bytes
+/// string_view -> bytes
 template<class T>
 struct ircd::byte_view
 {
@@ -235,7 +235,11 @@ struct ircd::byte_view
 	{}
 };
 
-// bytes -> string_view
+/// bytes -> string_view. A byte_view<string_view> is raw data of byte_view<T>.
+///
+/// This is an important specialization to take note of. When you see
+/// byte_view<string_view> know that another type's bytes are being represented
+/// by the string_view.
 template<>
 struct ircd::byte_view<ircd::string_view>
 :string_view
@@ -246,7 +250,7 @@ struct ircd::byte_view<ircd::string_view>
 	{}
 };
 
-// string_view -> string_view (completeness)
+/// string_view -> string_view (completeness)
 namespace ircd
 {
 	template<> inline

@@ -49,13 +49,10 @@ namespace ircd::json
 /// util function like json::type() etc. In other words, a value carries type
 /// data from its own original content. This means the user is responsible for
 /// removing prefix and suffix characters like '{' or '"' after determining the
-/// type if they want a truly pure value string. Our zero-copy string_view utils
-/// make this to a simple ballet of pointers.
-///
-/// Some serialization/write functions are actually provided here. They will
-/// always *rewrite* JSON through our generator correcting any imperfections
-/// that may have been allowed by the parsing grammar (if such allowances are
-/// ever made).
+/// type if they want a truly pure value string_view. Note the contrast with
+/// with json::value which hides '"' around keys and string values: this object
+/// preserves all characters of the value for view because it carries no other
+/// type information. see: ircd::unquote().
 ///
 /// Recursive traversal cannot be achieved via a single key string value; so
 /// any string_view argument for a key will not be recursive. In other words,
