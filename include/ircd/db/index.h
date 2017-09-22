@@ -31,32 +31,54 @@ namespace ircd::db
 struct ircd::db::index
 :column
 {
+	struct const_iterator_base;
 	struct const_iterator;
+	struct const_reverse_iterator;
 
 	using iterator_type = const_iterator;
 	using const_iterator_type = const_iterator;
 
 	static const gopts applied_opts;
 
-	const_iterator end(const gopts & = {});
-	const_iterator begin(const gopts & = {});
-	const_iterator find(const string_view &key, const gopts & = {});
+	const_iterator end(const string_view &key, gopts = {});
+	const_iterator begin(const string_view &key, gopts = {});
+	const_reverse_iterator rend(const string_view &key, gopts = {});
+	const_reverse_iterator rbegin(const string_view &key, gopts = {});
 
 	using column::column;
 };
 
-struct ircd::db::index::const_iterator
-:ircd::db::column::const_iterator
+struct ircd::db::index::const_iterator_base
+:ircd::db::column::const_iterator_base
 {
 	friend class index;
 
 	const value_type &operator*() const;
 	const value_type *operator->() const;
 
+	using column::const_iterator_base::const_iterator_base;
+
+	template<class pos> friend bool seek(index::const_iterator_base &, const pos &, gopts = {});
+};
+
+struct ircd::db::index::const_iterator
+:ircd::db::index::const_iterator_base
+{
+	friend class index;
+
 	const_iterator &operator++();
 	const_iterator &operator--();
 
-	using column::const_iterator::const_iterator;
+	using index::const_iterator_base::const_iterator_base;
+};
 
-	template<class pos> friend bool seek(index::const_iterator &, const pos &, gopts = {});
+struct ircd::db::index::const_reverse_iterator
+:ircd::db::index::const_iterator_base
+{
+	friend class index;
+
+	const_reverse_iterator &operator++();
+	const_reverse_iterator &operator--();
+
+	using index::const_iterator_base::const_iterator_base;
 };

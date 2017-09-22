@@ -90,14 +90,19 @@ namespace ircd::db
 struct ircd::db::column
 {
 	struct delta;
+	struct const_iterator_base;
 	struct const_iterator;
+	struct const_reverse_iterator;
+
 	using key_type = string_view;
 	using mapped_type = string_view;
 	using value_type = std::pair<key_type, mapped_type>;
 	using pointer = value_type *;
 	using reference = value_type &;
-	using difference_type = size_t;
 	using iterator = const_iterator;
+	using reverse_iterator = const_reverse_iterator;
+	using iterator_category = std::bidirectional_iterator_tag;
+	using difference_type = size_t;
 
   protected:
 	database::column *c {nullptr};
@@ -116,6 +121,10 @@ struct ircd::db::column
 	// [GET] Iterations
 	const_iterator begin(const gopts & = {});
 	const_iterator end(const gopts & = {});
+
+	const_reverse_iterator rbegin(const gopts & = {});
+	const_reverse_iterator rend(const gopts & = {});
+
 	const_iterator find(const string_view &key, const gopts & = {});
 	const_iterator lower_bound(const string_view &key, const gopts & = {});
 	const_iterator upper_bound(const string_view &key, const gopts & = {});
@@ -176,21 +185,23 @@ struct ircd::db::column::delta
 // Otherwise, construct an iterator by having it returned from the appropriate
 // function in column::.
 //
-struct ircd::db::column::const_iterator
+struct ircd::db::column::const_iterator_base
 {
-	using value_type = column::value_type;
-	using difference_type = size_t;
+	using key_type = string_view;
+	using mapped_type = string_view;
+	using value_type = std::pair<key_type, mapped_type>;
+	using pointer = value_type *;
+	using reference = value_type &;
 	using iterator_category = std::bidirectional_iterator_tag;
+	using difference_type = size_t;
 
   protected:
-	friend class column;
-
 	database::column *c;
 	database::snapshot ss;
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
 
-	const_iterator(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, database::snapshot = {});
+	const_iterator_base(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, database::snapshot = {});
 
   public:
 	explicit operator const database::snapshot &() const;
@@ -205,42 +216,61 @@ struct ircd::db::column::const_iterator
 	const value_type *operator->() const;
 	const value_type &operator*() const;
 
+	const_iterator_base();
+	const_iterator_base(const_iterator_base &&) noexcept;
+	const_iterator_base &operator=(const_iterator_base &&) noexcept;
+	~const_iterator_base() noexcept;
+
+	friend bool operator==(const const_iterator_base &, const const_iterator_base &);
+	friend bool operator!=(const const_iterator_base &, const const_iterator_base &);
+	friend bool operator<(const const_iterator_base &, const const_iterator_base &);
+	friend bool operator>(const const_iterator_base &, const const_iterator_base &);
+
+	template<class pos> friend bool seek(column::const_iterator_base &, const pos &, const gopts & = {});
+};
+
+struct ircd::db::column::const_iterator
+:const_iterator_base
+{
+	friend class column;
+
 	const_iterator &operator++();
 	const_iterator &operator--();
 
-	const_iterator();
-	const_iterator(const_iterator &&) noexcept;
-	const_iterator &operator=(const_iterator &&) noexcept;
-	~const_iterator() noexcept;
-
-	friend bool operator==(const const_iterator &, const const_iterator &);
-	friend bool operator!=(const const_iterator &, const const_iterator &);
-	friend bool operator<(const const_iterator &, const const_iterator &);
-	friend bool operator>(const const_iterator &, const const_iterator &);
-
-	template<class pos> friend bool seek(column::const_iterator &, const pos &, const gopts & = {});
+	using const_iterator_base::const_iterator_base;
 };
 
-inline ircd::db::column::const_iterator::operator
+struct ircd::db::column::const_reverse_iterator
+:const_iterator_base
+{
+	friend class column;
+
+	const_reverse_iterator &operator++();
+	const_reverse_iterator &operator--();
+
+	using const_iterator_base::const_iterator_base;
+};
+
+inline ircd::db::column::const_iterator_base::operator
 database::column &()
 {
 	return *c;
 }
 
-inline ircd::db::column::const_iterator::operator
+inline ircd::db::column::const_iterator_base::operator
 database::snapshot &()
 {
 	return ss;
 }
 
-inline ircd::db::column::const_iterator::operator
+inline ircd::db::column::const_iterator_base::operator
 const database::column &()
 const
 {
 	return *c;
 }
 
-inline ircd::db::column::const_iterator::operator
+inline ircd::db::column::const_iterator_base::operator
 const database::snapshot &()
 const
 {

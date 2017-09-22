@@ -1793,19 +1793,19 @@ ircd::db::index::applied_opts
 
 template<class pos>
 bool
-ircd::db::seek(index::const_iterator &it,
+ircd::db::seek(index::const_iterator_base &it,
                const pos &p,
                gopts opts)
 {
 	opts |= index::applied_opts;
-	return seek(static_cast<column::const_iterator &>(it), p, opts);
+	return seek(static_cast<column::const_iterator_base &>(it), p, opts);
 }
-template bool ircd::db::seek<ircd::db::pos>(index::const_iterator &, const pos &, gopts);
-template bool ircd::db::seek<ircd::string_view>(index::const_iterator &, const string_view &, gopts);
+template bool ircd::db::seek<ircd::db::pos>(index::const_iterator_base &, const pos &, gopts);
+template bool ircd::db::seek<ircd::string_view>(index::const_iterator_base &, const string_view &, gopts);
 
 ircd::db::index::const_iterator
-ircd::db::index::find(const string_view &key,
-                      const gopts &opts)
+ircd::db::index::begin(const string_view &key,
+                       gopts opts)
 {
 	const_iterator ret
 	{
@@ -1817,21 +1817,52 @@ ircd::db::index::find(const string_view &key,
 }
 
 ircd::db::index::const_iterator
-ircd::db::index::begin(const gopts &opts)
+ircd::db::index::end(const string_view &key,
+                     gopts opts)
 {
 	const_iterator ret
 	{
 		c, {}, opts.snapshot
 	};
 
-	seek(ret, pos::FRONT, opts);
+	if(seek(ret, key, opts))
+		seek(ret, pos::END, opts);
+
 	return ret;
 }
 
-ircd::db::index::const_iterator
-ircd::db::index::end(const gopts &opts)
+ircd::db::index::const_reverse_iterator
+ircd::db::index::rbegin(const string_view &key,
+                        gopts opts)
 {
-	return {};
+	const_reverse_iterator ret
+	{
+		c, {}, opts.snapshot
+	};
+
+	opts |= get::NO_CACHE;
+	if(seek(ret, key, opts))
+	{
+		while(seek(ret, pos::NEXT, opts));
+		seek(ret, pos::PREV, opts);
+	}
+
+	return ret;
+}
+
+ircd::db::index::const_reverse_iterator
+ircd::db::index::rend(const string_view &key,
+                      gopts opts)
+{
+	const_reverse_iterator ret
+	{
+		c, {}, opts.snapshot
+	};
+
+	if(seek(ret, key, opts))
+		seek(ret, pos::END, opts);
+
+	return ret;
 }
 
 //
@@ -1841,19 +1872,49 @@ ircd::db::index::end(const gopts &opts)
 ircd::db::index::const_iterator &
 ircd::db::index::const_iterator::operator--()
 {
-	seek(*this, pos::PREV);
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
 	return *this;
 }
 
 ircd::db::index::const_iterator &
 ircd::db::index::const_iterator::operator++()
 {
-	seek(*this, pos::NEXT);
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
 	return *this;
 }
 
-const ircd::db::index::const_iterator::value_type &
-ircd::db::index::const_iterator::operator*()
+ircd::db::index::const_reverse_iterator &
+ircd::db::index::const_reverse_iterator::operator--()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
+	return *this;
+}
+
+ircd::db::index::const_reverse_iterator &
+ircd::db::index::const_reverse_iterator::operator++()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
+	return *this;
+}
+
+const ircd::db::index::const_iterator_base::value_type &
+ircd::db::index::const_iterator_base::operator*()
 const
 {
 	const auto &prefix
@@ -1862,7 +1923,7 @@ const
 	};
 
 	// Fetch the full value like a standard column first
-	column::const_iterator::operator*();
+	column::const_iterator_base::operator*();
 	string_view &key{val.first};
 
 	// When there's no prefixing this index column is just
@@ -1878,8 +1939,8 @@ const
 	return val;
 }
 
-const ircd::db::index::const_iterator::value_type *
-ircd::db::index::const_iterator::operator->()
+const ircd::db::index::const_iterator_base::value_type *
+ircd::db::index::const_iterator_base::operator->()
 const
 {
 	return &this->operator*();
@@ -2781,7 +2842,13 @@ namespace db   {
 ircd::db::column::const_iterator
 ircd::db::column::end(const gopts &gopts)
 {
-	return {};
+	const_iterator ret
+	{
+		c, {}, gopts.snapshot
+	};
+
+	seek(ret, pos::END, gopts);
+	return ret;
 }
 
 ircd::db::column::const_iterator
@@ -2792,8 +2859,32 @@ ircd::db::column::begin(const gopts &gopts)
 		c, {}, gopts.snapshot
 	};
 
-	seek(ret, pos::FRONT);
-	return std::move(ret);
+	seek(ret, pos::FRONT, gopts);
+	return ret;
+}
+
+ircd::db::column::const_reverse_iterator
+ircd::db::column::rend(const gopts &gopts)
+{
+	const_reverse_iterator ret
+	{
+		c, {}, gopts.snapshot
+	};
+
+	seek(ret, pos::END, gopts);
+	return ret;
+}
+
+ircd::db::column::const_reverse_iterator
+ircd::db::column::rbegin(const gopts &gopts)
+{
+	const_reverse_iterator ret
+	{
+		c, {}, gopts.snapshot
+	};
+
+	seek(ret, pos::BACK, gopts);
+	return ret;
 }
 
 ircd::db::column::const_iterator
@@ -2804,7 +2895,7 @@ ircd::db::column::upper_bound(const string_view &key,
 	if(it && it.it->key().compare(slice(key)) == 0)
 		++it;
 
-	return std::move(it);
+	return it;
 }
 
 ircd::db::column::const_iterator
@@ -2827,11 +2918,55 @@ ircd::db::column::lower_bound(const string_view &key,
 		c, {}, gopts.snapshot
 	};
 
-	seek(ret, key);
-	return std::move(ret);
+	seek(ret, key, gopts);
+	return ret;
 }
 
-ircd::db::column::const_iterator::const_iterator(const_iterator &&o)
+ircd::db::column::const_iterator &
+ircd::db::column::const_iterator::operator--()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
+	return *this;
+}
+
+ircd::db::column::const_iterator &
+ircd::db::column::const_iterator::operator++()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
+	return *this;
+}
+
+ircd::db::column::const_reverse_iterator &
+ircd::db::column::const_reverse_iterator::operator--()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
+	return *this;
+}
+
+ircd::db::column::const_reverse_iterator &
+ircd::db::column::const_reverse_iterator::operator++()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
+	return *this;
+}
+
+ircd::db::column::const_iterator_base::const_iterator_base(const_iterator_base &&o)
 noexcept
 :c{std::move(o.c)}
 ,ss{std::move(o.ss)}
@@ -2840,8 +2975,8 @@ noexcept
 {
 }
 
-ircd::db::column::const_iterator &
-ircd::db::column::const_iterator::operator=(const_iterator &&o)
+ircd::db::column::const_iterator_base &
+ircd::db::column::const_iterator_base::operator=(const_iterator_base &&o)
 noexcept
 {
 	c = std::move(o.c);
@@ -2851,11 +2986,18 @@ noexcept
 	return *this;
 }
 
-ircd::db::column::const_iterator::const_iterator()
+// linkage for incmplete rocksdb::Iterator
+ircd::db::column::const_iterator_base::const_iterator_base()
 {
 }
 
-ircd::db::column::const_iterator::const_iterator(database::column *const &c,
+// linkage for incmplete rocksdb::Iterator
+ircd::db::column::const_iterator_base::~const_iterator_base()
+noexcept
+{
+}
+
+ircd::db::column::const_iterator_base::const_iterator_base(database::column *const &c,
                                                  std::unique_ptr<rocksdb::Iterator> &&it,
                                                  database::snapshot ss)
 :c{c}
@@ -2864,27 +3006,8 @@ ircd::db::column::const_iterator::const_iterator(database::column *const &c,
 {
 }
 
-ircd::db::column::const_iterator::~const_iterator()
-noexcept
-{
-}
-
-ircd::db::column::const_iterator &
-ircd::db::column::const_iterator::operator--()
-{
-	seek(*this, pos::PREV);
-	return *this;
-}
-
-ircd::db::column::const_iterator &
-ircd::db::column::const_iterator::operator++()
-{
-	seek(*this, pos::NEXT);
-	return *this;
-}
-
-const ircd::db::column::const_iterator::value_type &
-ircd::db::column::const_iterator::operator*()
+const ircd::db::column::const_iterator_base::value_type &
+ircd::db::column::const_iterator_base::operator*()
 const
 {
 	assert(it && valid(*it));
@@ -2893,21 +3016,21 @@ const
 	return val;
 }
 
-const ircd::db::column::const_iterator::value_type *
-ircd::db::column::const_iterator::operator->()
+const ircd::db::column::const_iterator_base::value_type *
+ircd::db::column::const_iterator_base::operator->()
 const
 {
 	return &operator*();
 }
 
 bool
-ircd::db::column::const_iterator::operator!()
+ircd::db::column::const_iterator_base::operator!()
 const
 {
 	return !static_cast<bool>(*this);
 }
 
-ircd::db::column::const_iterator::operator bool()
+ircd::db::column::const_iterator_base::operator bool()
 const
 {
 	if(!it)
@@ -2920,13 +3043,13 @@ const
 }
 
 bool
-ircd::db::operator!=(const column::const_iterator &a, const column::const_iterator &b)
+ircd::db::operator!=(const column::const_iterator_base &a, const column::const_iterator_base &b)
 {
 	return !(a == b);
 }
 
 bool
-ircd::db::operator==(const column::const_iterator &a, const column::const_iterator &b)
+ircd::db::operator==(const column::const_iterator_base &a, const column::const_iterator_base &b)
 {
 	if(a && b)
 	{
@@ -2942,7 +3065,7 @@ ircd::db::operator==(const column::const_iterator &a, const column::const_iterat
 }
 
 bool
-ircd::db::operator>(const column::const_iterator &a, const column::const_iterator &b)
+ircd::db::operator>(const column::const_iterator_base &a, const column::const_iterator_base &b)
 {
 	if(a && b)
 	{
@@ -2962,7 +3085,7 @@ ircd::db::operator>(const column::const_iterator &a, const column::const_iterato
 }
 
 bool
-ircd::db::operator<(const column::const_iterator &a, const column::const_iterator &b)
+ircd::db::operator<(const column::const_iterator_base &a, const column::const_iterator_base &b)
 {
 	if(a && b)
 	{
@@ -2983,7 +3106,7 @@ ircd::db::operator<(const column::const_iterator &a, const column::const_iterato
 
 template<class pos>
 bool
-ircd::db::seek(column::const_iterator &it,
+ircd::db::seek(column::const_iterator_base &it,
                const pos &p,
                const gopts &opts)
 {
@@ -2995,8 +3118,8 @@ ircd::db::seek(column::const_iterator &it,
 
 	return seek(c, p, ropts, it.it);
 }
-template bool ircd::db::seek<ircd::db::pos>(column::const_iterator &, const pos &, const gopts &);
-template bool ircd::db::seek<ircd::string_view>(column::const_iterator &, const string_view &, const gopts &);
+template bool ircd::db::seek<ircd::db::pos>(column::const_iterator_base &, const pos &, const gopts &);
+template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, const string_view &, const gopts &);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
