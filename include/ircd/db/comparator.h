@@ -29,6 +29,7 @@ namespace ircd::db
 
 	struct cmp_int64_t;
 	struct cmp_string_view;
+	struct reverse_cmp_string_view;
 }
 
 struct ircd::db::comparator
@@ -36,6 +37,24 @@ struct ircd::db::comparator
 	string_view name;
 	std::function<bool (const string_view &, const string_view &)> less;
 	std::function<bool (const string_view &, const string_view &)> equal;
+};
+
+struct ircd::db::reverse_cmp_string_view
+:db::comparator
+{
+	static bool less(const string_view &a, const string_view &b)
+	{
+		return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
+	}
+
+	static bool equal(const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
+
+	reverse_cmp_string_view()
+	:db::comparator{"reverse_string_view", &less, &equal}
+	{}
 };
 
 struct ircd::db::cmp_string_view
@@ -52,7 +71,7 @@ struct ircd::db::cmp_string_view
 	}
 
 	cmp_string_view()
-	:db::comparator{"string_view", less, equal}
+	:db::comparator{"string_view", &less, &equal}
 	{}
 };
 
@@ -78,6 +97,6 @@ struct ircd::db::cmp_int64_t
 	}
 
 	cmp_int64_t()
-	:db::comparator{"int64_t", less, equal}
+	:db::comparator{"int64_t", &less, &equal}
 	{}
 };
