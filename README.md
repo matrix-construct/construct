@@ -27,55 +27,59 @@ old code has been rewritten but with the same architecture and spirit of the ori
 
 ### Dependencies
 
-	* **Boost** (1.61 or later) - We have replaced libratbox with the well known and actively
-	developed Boost libraries. These are included as a submodule in this repository.
+**Boost** (1.61 or later) - We have replaced libratbox with the well known and actively
+developed Boost libraries. These are included as a submodule in this repository.
 
-	* **RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
-	and have furthered the mission of eliminating the need for external "IRC services"
+**RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
+and have furthered the mission of eliminating the need for external "IRC services"
 
-	* *Build dependencies:* gnu++14 compiler, automake, autoconf, autoconf2.13, autoconf-archive,
-	libtool, shtool
+*Build dependencies:* **gnu++14 compiler**, **automake**, **autoconf**, **autoconf2.13**,
+**autoconf-archive**, **libtool**, **shtool**
 
-	* *Other dependencies:* OpenSSL, zlib, snappy (for rocksdb)
+*Other dependencies:* **OpenSSL**, **zlib**, **snappy** (for rocksdb)
+
 
 ### Installation
 
+
 #### Downloading Charybdis
 
-	* `git clone https://github.com/charybdis-ircd/charybdis`
-	* `cd charybdis`
-	* `git checkout 5`
-		- Verify you have the latest source tree and **are on the Matrix branch**.
+`git clone https://github.com/charybdis-ircd/charybdis`
+`cd charybdis`
+`git checkout 5`
+	- Verify you have the latest source tree and **are on the Matrix branch**.
+
 
 #### Building from git (production)
 
-	* `./autogen.sh`
-	* `./configure`
-	* `make`
-	* `sudo make install`
+`./autogen.sh`
+`./configure`
+`make`
+`sudo make install`
+
 
 #### Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
 
-	The developer preview will install charybdis in a specific directory isolated from the
-	system. It will not install and avoid using system libraries. Instead it will download
-	and build the dependencies from the submodules we have pinned here and build them the
-	way we have configured. Charybdis should be executed using those builds. You may need
-	to set the `LD_LIBRARY_PATH` to the built libraries. This is not required for release.
+The developer preview will install charybdis in a specific directory isolated from the
+system. It will not install and avoid using system libraries. Instead it will download
+and build the dependencies from the submodules we have pinned here and build them the
+way we have configured. Charybdis should be executed using those builds. You may need
+to set the `LD_LIBRARY_PATH` to the built libraries. This is not required for release.
 
-	* `./autogen.sh`
-	* `mkdir build`
-		- The install directory may be this or another place of your choosing.
-		- If you decide elsewhere, make sure to change the `--prefix` in the `./configure`
-		statement below.
+`./autogen.sh`
+`mkdir build`
+- The install directory may be this or another place of your choosing.
+- If you decide elsewhere, make sure to change the `--prefix` in the `./configure`
+statement below.
 
-	* `CXX=g++-6 ./configure --prefix=$PWD/build --enable-debug --with-included-boost=shared --with-included-rocksdb=shared`
-		- Many systems alias `g++` to an older version. To be safe, specify a version manually
-		in `CXX`. This will also build the submodule dependencies with that version.
-		- The `--with-included-*` will fetch, configure **and build** the dependencies included
-		as submodules. Include `=shared` for now until static libraries are better handled.
+`CXX=g++-6 ./configure --prefix=$PWD/build --enable-debug --with-included-boost=shared --with-included-rocksdb=shared`
+- Many systems alias `g++` to an older version. To be safe, specify a version manually
+in `CXX`. This will also build the submodule dependencies with that version.
+- The `--with-included-*` will fetch, configure **and build** the dependencies included
+as submodules. Include `=shared` for now until static libraries are better handled.
 
-	* `make`
-	* `make install`
+`make`
+`make install`
 
 
 ### Platforms
