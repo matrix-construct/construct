@@ -196,4 +196,5 @@ struct ircd::db::database::snapshot
 	~snapshot() noexcept;
 
 	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
+	friend uint64_t sequence(const rocksdb::Snapshot *const &);
 };
