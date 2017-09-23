@@ -36,6 +36,7 @@ struct ircd::util::timer
 	clock::time_point start;
 
 	template<class duration = std::chrono::seconds> duration get() const;
+	template<class duration = std::chrono::seconds> duration at() const;
 	void cont();
 	void stop();
 
@@ -79,6 +80,15 @@ ircd::util::timer::cont()
 	}
 
 	start = clock::now();
+}
+
+template<class duration>
+duration
+ircd::util::timer::at()
+const
+{
+	const auto now(clock::now());
+	return duration_cast<duration>(now - start);
 }
 
 template<class duration>
