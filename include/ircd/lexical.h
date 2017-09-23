@@ -578,91 +578,69 @@ ircd::tokens(A&& allocator,
 }
 
 inline size_t
-ircd::strlcpy(char *const &dest,
+ircd::strlcpy(char *const &dst,
               const string_view &src,
               const size_t &max)
 {
 	if(!max)
 		return 0;
 
-	const auto &len
+	const size_t len
 	{
-		src.size() >= max? max - 1 : src.size()
+		std::min(src.size(), max - 1)
 	};
 
-	assert(len < max);
-	memcpy(dest, src.data(), len);
-	dest[len] = '\0';
+	memcpy(dst, src.data(), len);
+	dst[len] = '\0';
 	return len;
 }
 
 inline size_t
 #ifndef HAVE_STRLCPY
-ircd::strlcpy(char *const &dest,
+ircd::strlcpy(char *const &dst,
               const char *const &src,
               const size_t &max)
 {
-	if(!max)
-		return 0;
-
 	const auto len{strnlen(src, max)};
-	return strlcpy(dest, {src, len}, max);
+	return strlcpy(dst, {src, len}, max);
 }
 #else
-ircd::strlcpy(char *const &dest,
+ircd::strlcpy(char *const &dst,
               const char *const &src,
               const size_t &max)
 {
-	return ::strlcpy(dest, src, max);
+	return ::strlcpy(dst, src, max);
 }
 #endif
 
 inline size_t
-#ifndef HAVE_STRLCAT
-ircd::strlcat(char *const &dest,
-              const char *const &src,
-              const size_t &max)
-{
-	if(!max)
-		return 0;
-
-	const ssize_t dsize(strnlen(dest, max));
-	const ssize_t ssize(strnlen(src, max));
-	const ssize_t ret(dsize + ssize);
-	const ssize_t remain(max - dsize);
-	const ssize_t cpsz(ssize >= remain? remain - 1 : ssize);
-	char *const ptr(dest + dsize);
-	memcpy(ptr, src, cpsz);
-	ptr[cpsz] = '\0';
-	return ret;
-}
-#else
-ircd::strlcat(char *const &dest,
-              const char *const &src,
-              const size_t &max)
-{
-	return ::strlcat(dest, src, max);
-}
-#endif
-
-inline size_t
-ircd::strlcat(char *const &dest,
+ircd::strlcat(char *const &dst,
               const string_view &src,
               const size_t &max)
 {
-	if(!max)
-		return 0;
-
-	const ssize_t dsize(strnlen(dest, max));
-	const ssize_t ssize(src.size());
-	const ssize_t ret(dsize + ssize);
-	const ssize_t remain(max - dsize);
-	const ssize_t cpsz(ssize >= remain? remain - 1 : ssize);
-	char *const ptr(dest + dsize);
-	memcpy(ptr, src.data(), cpsz);
-	ptr[cpsz] = '\0';
-	return ret;
+	const auto pos{strnlen(dst, max)};
+	const auto remain{max - pos};
+	strlcpy(dst + pos, src, remain);
+	return pos + src.size();
 }
+
+inline size_t
+#ifndef HAVE_STRLCAT
+ircd::strlcat(char *const &dst,
+              const char *const &src,
+              const size_t &max)
+{
+	const auto len{strnlen(src, max)};
+	return strlcat(dst, {src, len}, max);
+}
+#else
+ircd::strlcat(char *const &dst,
+              const char *const &src,
+              const size_t &max)
+{
+	return ::strlcat(dst, src, max);
+}
+#endif
 
 struct ircd::iless
 {
