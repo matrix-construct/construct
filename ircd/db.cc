@@ -769,8 +769,7 @@ ircd::db::database::prefix_transform::Transform(const Slice &key)
 const
 {
 	assert(bool(user.get));
-	const string_view s{slice(key)};
-	return slice(user.get(s));
+	return slice(user.get(slice(key)));
 }
 
 bool
@@ -785,8 +784,7 @@ ircd::db::database::prefix_transform::InDomain(const Slice &key)
 const
 {
 	assert(bool(user.has));
-	const string_view s{slice(key)};
-	return user.has(s);
+	return user.has(slice(key));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
