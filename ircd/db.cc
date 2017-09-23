@@ -2301,11 +2301,28 @@ size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
-	return std::count_if(begin(r.its), end(r.its), [&p]
-	(auto &cell)
+	assert(!r.its.empty());
+	const column &c(r[0]);
+	const database &d(c);
+	const ircd::timer timer;
+	const auto ret
 	{
-		return seek(cell, p);
-	});
+		std::count_if(begin(r.its), end(r.its), [&p]
+		(auto &cell)
+		{
+			return seek(cell, p);
+		})
+	};
+
+	log.debug("'%s':'%s' @%lu ROW SEEK %zu of %zu in %ld$us",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          ret,
+	          r.its.size(),
+	          timer.at<microseconds>().count());
+
+	return ret;
 }
 template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
 template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
