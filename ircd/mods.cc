@@ -606,8 +606,7 @@ ircd::demangle(const std::string &symbol)
 	if(unlikely(!len))
 		return {};
 
-	assert(*(buf.get() + len - 1) == '\0');
-	return std::string { buf.get(), len - 1 };
+	return std::string { buf.get(), strnlen(buf.get(), len) };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
