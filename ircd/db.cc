@@ -2382,10 +2382,6 @@ ircd::db::row::row(database &d,
 	return ret;
 }()}
 {
-	if(key.empty())
-		seek(*this, pos::FRONT);
-	else
-		seek(*this, key);
 }
 
 void
