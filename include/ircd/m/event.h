@@ -50,16 +50,16 @@ namespace ircd::m
 
 namespace ircd::m::name
 {
-	constexpr const char *const event_id {"event_id"};
-	constexpr const char *const content {"content"};
-	constexpr const char *const origin_server_ts {"origin_server_ts"};
-	constexpr const char *const sender {"sender"};
-	constexpr const char *const type {"type"};
-	constexpr const char *const room_id {"room_id"};
-	constexpr const char *const state_key {"state_key"};
-	constexpr const char *const prev_ids {"prev_ids"};
-	constexpr const char *const unsigned_ {"unsigned"};
-	constexpr const char *const signatures {"signatures"};
+	extern constexpr const char *const content {"content"};
+	extern constexpr const char *const event_id {"event_id"};
+	extern constexpr const char *const origin_server_ts {"origin_server_ts"};
+	extern constexpr const char *const prev_ids {"prev_ids"};
+	extern constexpr const char *const room_id {"room_id"};
+	extern constexpr const char *const sender {"sender"};
+	extern constexpr const char *const signatures {"signatures"};
+	extern constexpr const char *const state_key {"state_key"};
+	extern constexpr const char *const type {"type"};
+	extern constexpr const char *const unsigned_ {"unsigned"};
 }
 
 struct ircd::m::event
