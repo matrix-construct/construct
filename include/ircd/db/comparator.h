@@ -27,13 +27,57 @@ namespace ircd::db
 {
 	struct comparator;
 
-	struct cmp_string_view extern const cmp_string_view;
-	struct cmp_int64_t extern const cmp_int64_t;
+	struct cmp_int64_t;
+	struct cmp_string_view;
 }
 
 struct ircd::db::comparator
 {
-	std::string name;
+	string_view name;
 	std::function<bool (const string_view &, const string_view &)> less;
 	std::function<bool (const string_view &, const string_view &)> equal;
+};
+
+struct ircd::db::cmp_string_view
+:db::comparator
+{
+	static bool less(const string_view &a, const string_view &b)
+	{
+		return a < b;
+	}
+
+	static bool equal(const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
+
+	cmp_string_view()
+	:db::comparator{"string_view", less, equal}
+	{}
+};
+
+struct ircd::db::cmp_int64_t
+:db::comparator
+{
+	static bool less(const string_view &sa, const string_view &sb)
+	{
+		assert(sa.size() == sizeof(int64_t));
+		assert(sb.size() == sizeof(int64_t));
+		const byte_view<int64_t> a{sa};
+		const byte_view<int64_t> b{sb};
+		return a < b;
+	}
+
+	static bool equal(const string_view &sa, const string_view &sb)
+	{
+		assert(sa.size() == sizeof(int64_t));
+		assert(sb.size() == sizeof(int64_t));
+		const byte_view<int64_t> a{sa};
+		const byte_view<int64_t> b{sb};
+		return a == b;
+	}
+
+	cmp_int64_t()
+	:db::comparator{"int64_t", less, equal}
+	{}
 };

@@ -710,7 +710,7 @@ ircd::db::database::comparator::Name()
 const
 {
 	assert(!user.name.empty());
-	return user.name.c_str();
+	return user.name.data();
 }
 
 bool
@@ -719,9 +719,7 @@ ircd::db::database::comparator::Equal(const Slice &a,
 const
 {
 	assert(bool(user.equal));
-	const string_view sa{slice(a)};
-	const string_view sb{slice(b)};
-	return user.equal(sa, sb);
+	return user.equal(slice(a), slice(b));
 }
 
 int
@@ -730,11 +728,13 @@ ircd::db::database::comparator::Compare(const Slice &a,
 const
 {
 	assert(bool(user.less));
-	const string_view sa{slice(a)};
-	const string_view sb{slice(b)};
-	return user.less(sa, sb)? -1:
-		   user.less(sb, sa)?  1:
-		                       0;
+	const auto sa{slice(a)};
+	const auto sb{slice(b)};
+	return user.less(sa, sb)?                -1:  // less[Y], equal[?], greater[?]
+	       user.equal && user.equal(sa, sb)?  0:  // less[N], equal[Y], greater[?]
+	       user.equal?                        1:  // less[N], equal[N], greater[Y]
+	       user.less(sb, sa)?                 1:  // less[N], equal[?], greater[Y]
+	                                          0;  // less[N], equal[Y], greater[N]
 }
 
 void
@@ -750,52 +750,6 @@ const
 {
 	const string_view limit{_limit.data(), _limit.size()};
 }
-
-struct ircd::db::cmp_string_view
-:db::comparator
-{
-	cmp_string_view()
-	:db::comparator
-	{
-		"string_view"
-		,[](const string_view &a, const string_view &b)
-		{
-			return a < b;
-		}
-		,[](const string_view &a, const string_view &b)
-		{
-			return a == b;
-		}
-	}{}
-}
-const ircd::db::cmp_string_view;
-
-struct ircd::db::cmp_int64_t
-:db::comparator
-{
-	cmp_int64_t()
-	:db::comparator
-	{
-		"int64_t"
-		,[](const string_view &sa, const string_view &sb)
-		{
-			assert(sa.size() == sizeof(int64_t));
-			assert(sb.size() == sizeof(int64_t));
-			const auto &a(*reinterpret_cast<const int64_t *>(sa.data()));
-			const auto &b(*reinterpret_cast<const int64_t *>(sb.data()));
-			return a < b;
-		}
-		,[](const string_view &sa, const string_view &sb)
-		{
-			assert(sa.size() == sizeof(int64_t));
-			assert(sb.size() == sizeof(int64_t));
-			const auto &a(*reinterpret_cast<const int64_t *>(sa.data()));
-			const auto &b(*reinterpret_cast<const int64_t *>(sb.data()));
-			return a == b;
-		}
-	}{}
-}
-const ircd::db::cmp_int64_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -919,9 +873,9 @@ ircd::db::database::column::column(database *const &d,
 	if(!this->descriptor.cmp.less)
 	{
 		if(key_type == typeid(string_view))
-			this->cmp.user = cmp_string_view;
+			this->cmp.user = cmp_string_view{};
 		else if(key_type == typeid(int64_t))
-			this->cmp.user = cmp_int64_t;
+			this->cmp.user = cmp_int64_t{};
 		else
 			throw error("column '%s' key type[%s] requires user supplied comparator",
 			            this->name,
@@ -943,6 +897,14 @@ ircd::db::database::column::column(database *const &d,
 
 	//log.debug("'%s': Creating new column '%s'", d->name, this->name);
 	//throw_on_error(d->d->CreateColumnFamily(this->options, this->name, &this->handle));
+
+	log.debug("schema '%s' declares column [%s => %s] cmp[%s] prefix[%s]: %s",
+	          db::name(*d),
+	          demangle(key_type.name()),
+	          demangle(mapped_type.name()),
+	          this->cmp.Name(),
+	          this->options.prefix_extractor? this->prefix.Name() : "none",
+	          this->descriptor.name);
 }
 
 ircd::db::database::column::~column()
