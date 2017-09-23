@@ -209,6 +209,67 @@ struct ircd::buffer::const_raw_buffer
 	{}
 };
 
+/// Like unique_ptr, this template holds ownership of an allocated buffer
+///
+///
+template<class buffer,
+         size_t align = 16>
+struct ircd::buffer::unique_buffer
+:buffer
+{
+	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
+	unique_buffer(const size_t &size);
+	unique_buffer() = default;
+	unique_buffer(unique_buffer &&) noexcept;
+	unique_buffer(const unique_buffer &) = delete;
+	~unique_buffer() noexcept;
+};
+
+template<class buffer,
+         size_t alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<uint8_t[]> &&b,
+                                                              const size_t &size)
+:buffer
+{
+	typename buffer::value_type(b.release()), size
+}
+{
+}
+
+template<class buffer,
+         size_t alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
+:unique_buffer<buffer, alignment>
+{
+	std::unique_ptr<uint8_t[]>
+	{
+		new __attribute__((aligned(alignment))) uint8_t[size]
+	},
+	size
+}
+{
+}
+
+template<class buffer,
+         size_t alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&other)
+noexcept
+:buffer
+{
+	std::move(other)
+}
+{
+	get<0>(other) = nullptr;
+}
+
+template<class buffer,
+         size_t alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
+noexcept
+{
+	delete[] data(*this);
+}
+
 template<template<class>
          class buffers,
          class T>
@@ -426,65 +487,4 @@ ircd::buffer::buffer<it>::operator string_view()
 const
 {
 	return { get<0>(*this), get<1>(*this) };
-}
-
-/// Like unique_ptr, this template holds ownership of an allocated buffer
-///
-///
-template<class buffer,
-         size_t align = 16>
-struct ircd::buffer::unique_buffer
-:buffer
-{
-	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
-	unique_buffer(const size_t &size);
-	unique_buffer() = default;
-	unique_buffer(unique_buffer &&) noexcept;
-	unique_buffer(const unique_buffer &) = delete;
-	~unique_buffer() noexcept;
-};
-
-template<class buffer,
-         size_t alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<uint8_t[]> &&b,
-                                                              const size_t &size)
-:buffer
-{
-	typename buffer::value_type(b.release()), size
-}
-{
-}
-
-template<class buffer,
-         size_t alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
-:unique_buffer<buffer, alignment>
-{
-	std::unique_ptr<uint8_t[]>
-	{
-		new __attribute__((aligned(alignment))) uint8_t[size]
-	},
-	size
-}
-{
-}
-
-template<class buffer,
-         size_t alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&other)
-noexcept
-:buffer
-{
-	std::move(other)
-}
-{
-	get<0>(other) = nullptr;
-}
-
-template<class buffer,
-         size_t alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
-noexcept
-{
-	delete[] data(*this);
 }
