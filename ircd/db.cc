@@ -1800,10 +1800,7 @@ ircd::db::index::rbegin(const string_view &key,
 
 	opts |= get::NO_CACHE;
 	if(seek(ret, key, opts))
-	{
-		while(seek(ret, pos::NEXT, opts));
-		seek(ret, pos::PREV, opts);
-	}
+		seek(ret, pos::BACK, opts);
 
 	return ret;
 }

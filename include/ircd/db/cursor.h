@@ -175,7 +175,7 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
 }
 ,invalid
 {
-	!bool(this->idx) || !row.valid(this->idx->first)
+	!this->idx || !row.valid(this->idx->first)
 }
 {
 	if(invalid)
