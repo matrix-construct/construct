@@ -2019,7 +2019,7 @@ ircd::db::cell::cell(column column,
                      gopts opts)
 :c{std::move(column)}
 ,ss{opts.snapshot}
-,it{ss? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
+,it{ss && !index.empty()? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
 {
 	if(bool(this->it))
 		if(!valid_eq(*this->it, index))
@@ -2034,6 +2034,9 @@ ircd::db::cell::cell(column column,
 ,ss{opts.snapshot}
 ,it{std::move(it)}
 {
+	if(index.empty())
+		return;
+
 	seek(*this, index);
 	if(!valid_eq(*this->it, index))
 		this->it.reset();
