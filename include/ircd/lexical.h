@@ -313,11 +313,11 @@ inline std::pair<ircd::string_view, ircd::string_view>
 ircd::rsplit(const string_view &str,
              const string_view &delim)
 {
-	const auto pos(str.find_last_of(delim));
+	const auto pos(str.rfind(delim));
 	if(pos == string_view::npos) return
 	{
-		string_view{},
-		str
+		str,
+		string_view{}
 	};
 	else return
 	{
@@ -333,8 +333,8 @@ ircd::rsplit(const string_view &str,
 	const auto pos(str.find_last_of(delim));
 	if(pos == string_view::npos) return
 	{
-		string_view{},
-		str
+		str,
+		string_view{}
 	};
 	else return
 	{
