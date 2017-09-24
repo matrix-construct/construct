@@ -1782,6 +1782,12 @@ ircd::db::index::end(const string_view &key,
 	return ret;
 }
 
+/// NOTE: RocksDB says they don't support reverse iteration over a prefix range
+/// This means we have to forward scan to the end and then walk back! Reverse
+/// iterations of an index shoud only be used for debugging and statistics! The
+/// index should be ordered the way it will be primarily accessed using the
+/// comparator. If it will be accessed in different directions, make another
+/// index column.
 ircd::db::index::const_reverse_iterator
 ircd::db::index::rbegin(const string_view &key,
                         gopts opts)
@@ -1791,9 +1797,11 @@ ircd::db::index::rbegin(const string_view &key,
 		c, {}, opts.snapshot
 	};
 
-	opts |= get::NO_CACHE;
 	if(seek(ret, key, opts))
-		seek(ret, pos::BACK, opts);
+	{
+		while(seek(ret, pos::NEXT, opts));
+		seek(ret, pos::PREV, opts);
+	}
 
 	return ret;
 }
@@ -3217,9 +3225,10 @@ ircd::db::has(const rocksdb::WriteBatch &wb,
 
 namespace ircd::db
 {
-	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const rocksdb::Slice &);
-	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
 	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const pos &);
+	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
+	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
+	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
 	static std::unique_ptr<rocksdb::Iterator> _seek_offload(database::column &c, const rocksdb::ReadOptions &opts, const std::function<void (rocksdb::Iterator &)> &closure);
 	bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
 	bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
@@ -3386,7 +3395,10 @@ ircd::db::_seek(database::column &c,
 		(rocksdb::Iterator &blocking_it)
 		{
 			if(valid_it)
-				_seek_(blocking_it, it->key());
+			{
+				assert(valid(*it));
+				_seek_(blocking_it, slice(it->key()));
+			}
 
 			_seek_(blocking_it, p);
 		})
@@ -3449,6 +3461,32 @@ ircd::db::_seek_offload(database::column &c,
 	return blocking_it;
 }
 
+/// Seek to entry NOT GREATER THAN key. That is, equal to or less than key
+rocksdb::Iterator &
+ircd::db::_seek_lower_(rocksdb::Iterator &it,
+                       const string_view &sv)
+{
+	it.SeekForPrev(slice(sv));
+	return it;
+}
+
+/// Seek to entry NOT LESS THAN key. That is, equal to or greater than key
+rocksdb::Iterator &
+ircd::db::_seek_upper_(rocksdb::Iterator &it,
+                       const string_view &sv)
+{
+	it.Seek(slice(sv));
+	return it;
+}
+
+/// Defaults to _seek_upper_ because it has better support from RocksDB.
+rocksdb::Iterator &
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const string_view &sv)
+{
+	return _seek_upper_(it, sv);
+}
+
 rocksdb::Iterator &
 ircd::db::_seek_(rocksdb::Iterator &it,
                  const pos &p)
@@ -3470,21 +3508,6 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 		}
 	}
 
-	return it;
-}
-
-rocksdb::Iterator &
-ircd::db::_seek_(rocksdb::Iterator &it,
-                 const string_view &sv)
-{
-	return _seek_(it, slice(sv));
-}
-
-rocksdb::Iterator &
-ircd::db::_seek_(rocksdb::Iterator &it,
-                 const rocksdb::Slice &sk)
-{
-	it.Seek(sk);
 	return it;
 }
 
@@ -3746,6 +3769,7 @@ ircd::db::operator+=(rocksdb::ReadOptions &ret,
 	ret.tailing = test(opts, get::NO_SNAPSHOT);
 	ret.verify_checksums = !test(opts, get::NO_CHECKSUM);
 	ret.prefix_same_as_start = test(opts, get::PREFIX);
+	ret.total_order_seek = test(opts, get::ORDERED);
 	return ret;
 }
 

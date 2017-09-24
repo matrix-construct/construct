@@ -58,7 +58,8 @@ enum class ircd::db::get
 	NO_CACHE         = 0x0004, // Do not update the cache (NO_CACHE is default for iterators)
 	NO_SNAPSHOT      = 0x0008, // This iterator will have the latest data (tailing)
 	NO_CHECKSUM      = 0x0010, // Integrity of data will be checked unless this is specified
-	PREFIX           = 0x0020, // Iteration over a single prefix in column (prefix_same_as_start)
+	PREFIX           = 0x0020, // (prefix_same_as_start); automatic for index columns with pfx
+	ORDERED          = 0x0040, // (total_order_seek); relevant to index columns
 };
 
 template<class T>
