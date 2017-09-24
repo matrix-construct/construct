@@ -232,7 +232,7 @@ ircd::client::client(const host_port &host_port,
 ircd::client::client(std::shared_ptr<socket> sock)
 :clit{clients, clients.emplace(end(clients), this)}
 ,sock{std::move(sock)}
-,request_timer{ircd::timer::stopped}
+,request_timer{ircd::timer::nostart}
 {
 }
 

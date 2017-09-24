@@ -30,7 +30,7 @@ namespace ircd::util
 
 struct ircd::util::timer
 {
-	IRCD_OVERLOAD(stopped)
+	IRCD_OVERLOAD(nostart)
 	using clock = std::chrono::steady_clock;
 
 	nanoseconds accumulator;
@@ -43,7 +43,7 @@ struct ircd::util::timer
 	void stop();
 
 	timer(const std::function<void ()> &);
-	timer(stopped_t);
+	timer(nostart_t);
 	timer();
 };
 
@@ -56,9 +56,9 @@ ircd::util::timer::timer()
 {
 }
 
-/// timer(timer::stopped)
+/// timer(timer::nostart)
 inline
-ircd::util::timer::timer(stopped_t)
+ircd::util::timer::timer(nostart_t)
 :accumulator{0ns}
 ,start{clock::time_point::min()}
 {
@@ -112,8 +112,7 @@ const
 	return std::chrono::duration_cast<duration>(accumulator);
 }
 
-template<class duration>
-bool
+inline bool
 ircd::util::timer::stopped()
 const
 {
