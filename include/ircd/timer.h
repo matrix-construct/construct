@@ -30,24 +30,37 @@ namespace ircd::util
 
 struct ircd::util::timer
 {
+	IRCD_OVERLOAD(stopped)
 	using clock = std::chrono::steady_clock;
 
 	nanoseconds accumulator;
 	clock::time_point start;
 
+	bool stopped() const;
 	template<class duration = std::chrono::seconds> duration get() const;
 	template<class duration = std::chrono::seconds> duration at() const;
 	void cont();
 	void stop();
 
 	timer(const std::function<void ()> &);
+	timer(stopped_t);
 	timer();
 };
 
+
+/// Default construction will start the timer.
 inline
 ircd::util::timer::timer()
 :accumulator{0ns}
 ,start{clock::now()}
+{
+}
+
+/// timer(timer::stopped)
+inline
+ircd::util::timer::timer(stopped_t)
+:accumulator{0ns}
+,start{clock::time_point::min()}
 {
 }
 
@@ -62,10 +75,10 @@ ircd::util::timer::timer(const std::function<void ()> &func)
 inline void
 ircd::util::timer::stop()
 {
-	const auto now(clock::now());
-	if(start == clock::time_point::min())
+	if(stopped())
 		return;
 
+	const auto now(clock::now());
 	accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
 	start = clock::time_point::min();
 }
@@ -73,7 +86,7 @@ ircd::util::timer::stop()
 inline void
 ircd::util::timer::cont()
 {
-	if(start != clock::time_point::min())
+	if(!stopped())
 	{
 		const auto now(clock::now());
 		accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
@@ -97,4 +110,12 @@ ircd::util::timer::get()
 const
 {
 	return std::chrono::duration_cast<duration>(accumulator);
+}
+
+template<class duration>
+bool
+ircd::util::timer::stopped()
+const
+{
+	return start == clock::time_point::min();
 }
