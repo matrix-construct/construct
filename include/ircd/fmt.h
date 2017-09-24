@@ -34,6 +34,8 @@ namespace ircd::fmt
 	struct specifier;
 	struct snprintf;
 	struct vsnprintf;
+	struct snstringf;
+	struct vsnstringf;
 
 	//
 	// Module API
@@ -129,5 +131,36 @@ struct ircd::fmt::vsnprintf
 	:snprintf
 	{
 		internal, buf, max, fmt, ap
+	}{}
+};
+
+struct ircd::fmt::vsnstringf
+:std::string
+{
+	vsnstringf(const size_t &max,
+	           const char *const &fmt,
+	           const va_rtti &ap)
+	:std::string
+	{
+		[&max, &fmt, &ap]
+		{
+			std::string ret;
+			ret.resize(max, char{});
+			ret.resize(vsnprintf(const_cast<char *>(ret.data()), ret.size() + 1, fmt, ap));
+			return ret;
+		}()
+	}{}
+};
+
+struct ircd::fmt::snstringf
+:vsnstringf
+{
+	template<class... args>
+	snstringf(const size_t &max,
+	          const char *const &fmt,
+	          args&&... a)
+	:vsnstringf
+	{
+		max, fmt, va_rtti{std::forward<args>(a)...}
 	}{}
 };
