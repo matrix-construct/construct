@@ -359,13 +359,14 @@ ircd::resource::response::response(client &client,
 		}
 	};
 
-	log::debug("client[%s] HTTP %d %s (%s) content-length: %zu %s...",
+	log::debug("client[%s] HTTP %d %s in %ld$us (%s) content-length: %zu %s...",
 	           string(remote_addr(client)),
 	           int(code),
                http::reason[code],
-               content_type,
-               str.size(),
-               startswith(content_type, "text") ||
-               content_type == "application/json" ||
-               content_type == "application/javascript"? str.substr(0, 96) : string_view{});
+	           client.request_timer.at<microseconds>().count(),
+	           content_type,
+	           str.size(),
+	           startswith(content_type, "text") ||
+	           content_type == "application/json" ||
+	           content_type == "application/javascript"? str.substr(0, 96) : string_view{});
 }

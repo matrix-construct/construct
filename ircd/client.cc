@@ -232,6 +232,7 @@ ircd::client::client(const host_port &host_port,
 ircd::client::client(std::shared_ptr<socket> sock)
 :clit{clients, clients.emplace(end(clients), this)}
 ,sock{std::move(sock)}
+,request_timer{ircd::timer::stopped}
 {
 }
 
@@ -310,6 +311,7 @@ ircd::handle_request(client &client,
                      parse::capstan &pc)
 try
 {
+	client.request_timer = ircd::timer{};
 	client.sock->set_timeout(request_timeout, [&client]
 	(const error_code &ec)
 	{
@@ -331,9 +333,10 @@ try
 }
 catch(const http::error &e)
 {
-	log::debug("client[%s] HTTP %s %s",
+	log::debug("client[%s] HTTP %s in %ld$us %s",
 	           string(remote_addr(client)),
 	           e.what(),
+	           client.request_timer.at<microseconds>().count(),
 	           e.content);
 
 	switch(e.code)
