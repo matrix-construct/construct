@@ -527,7 +527,7 @@ try
 		{
 			sync(*this);
 			this->columns.clear();
-			log.debug("'%s': closed columns; synchronizing to hardware...",
+			log.debug("'%s': closed columns; synchronizing with hardware...",
 			          this->name);
 
 			const auto sequence
@@ -2317,7 +2317,7 @@ ircd::db::seek(row &r,
 		})
 	};
 
-	log.debug("'%s':'%s' @%lu:%lu ROW SEEK %zu of %zu in %ld$us",
+	log.debug("'%s':'%s' @%lu:%lu row seek %zu of %zu in %ld$us",
 	          name(d),
 	          name(c),
 	          sequence(d),
@@ -3302,7 +3302,7 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-		log.debug("'%s':'%s' @%lu:%lu SEEK %s %s in %ld$us",
+		log.debug("'%s':'%s' @%lu:%lu seek %s %s in %ld$us",
 		          name(d),
 		          name(c),
 		          sequence(opts.snapshot),
@@ -3316,8 +3316,7 @@ ircd::db::_seek(database::column &c,
 
 	const auto blocking_it
 	{
-		_seek_offload(c, opts, [&p]
-		(rocksdb::Iterator &blocking_it)
+		_seek_offload(c, opts, [&p](rocksdb::Iterator &blocking_it)
 		{
 			_seek_(blocking_it, p);
 		})
@@ -3327,7 +3326,7 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s':'%s' @%lu:%lu SEEK INVALID CACHE MISS %s in %ld$us",
+		log.debug("'%s':'%s' @%lu:%lu seek INVALID CACHE MISS %s in %ld$us",
 		          name(d),
 		          name(c),
 		          sequence(opts.snapshot),
@@ -3339,7 +3338,7 @@ ircd::db::_seek(database::column &c,
 	}
 
 	it.reset(nullptr);
-	log.debug("'%s':'%s' @%lu:%lu SEEK VALID CACHE MISS %s in %ld$us",
+	log.debug("'%s':'%s' @%lu:%lu seek VALID CACHE MISS %s in %ld$us",
 	          name(d),
 	          name(c),
 	          sequence(opts.snapshot),
@@ -3375,7 +3374,7 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-		log.debug("'%s':'%s' @%lu:%lu SEEK[%s] %s->%s %s in %ld$us",
+		log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s %s in %ld$us",
 		          name(d),
 		          name(c),
 		          sequence(opts.snapshot),
@@ -3408,7 +3407,7 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s':'%s' @%lu:%lu SEEK[%s] %s->%s|INVALID CACHE MISS %s in %ld$us",
+		log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s|INVALID CACHE MISS %s in %ld$us",
 		          name(d),
 		          name(c),
 		          sequence(opts.snapshot),
@@ -3423,7 +3422,7 @@ ircd::db::_seek(database::column &c,
 	}
 
 	it.reset(nullptr);
-	log.debug("'%s':'%s' @%lu:%lu SEEK[%s] %s->%s|VALID CACHE MISS %s in %ld$us",
+	log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s|VALID CACHE MISS %s in %ld$us",
 	          name(d),
 	          name(c),
 	          sequence(opts.snapshot),
