@@ -46,6 +46,12 @@ namespace ircd
 struct ircd::string_view
 :std::string_view
 {
+	// (non-standard)
+	explicit operator bool() const
+	{
+		return !empty();
+	}
+
 	// (non-standard) our faux insert stub
 	// Tricks boost::spirit into thinking this is mutable string (hint: it's not).
 	// Instead, the raw[] directive in Qi grammar will use the iterator constructor only.
