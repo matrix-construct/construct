@@ -84,7 +84,7 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 		if(!stale)
 			return v;
 
-		assign(v, row, idx->first);
+		assign(v, row, row_key());
 		stale = false;
 		return v;
 	}
@@ -95,6 +95,8 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 	}
 
   protected:
+	string_view row_key() const;
+	bool row_valid() const;
 	bool seek_row();
 
   public:
@@ -171,11 +173,20 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
 ,idx{std::move(idx)}
 ,row
 {
-	*d, bool(this->idx)? this->idx->first : string_view{}, tuple{}, opts
+	*d,
+	bool(this->idx) && this->idx->second? this->idx->second:
+	bool(this->idx)?                      this->idx->first:
+	                                      string_view{},
+	tuple{},
+	opts
+}
+,stale
+{
+	true
 }
 ,invalid
 {
-	!this->idx || !row.valid(this->idx->first)
+	!this->idx || !row_valid()
 }
 {
 	if(invalid)
@@ -220,7 +231,7 @@ template<class index_iterator>
 bool
 ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::seek_row()
 {
-	if(!db::seek(row, idx->first))
+	if(!db::seek(row, row_key()))
 		return false;
 
 	stale = true;
@@ -228,6 +239,33 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::seek_row()
 		return false;
 
 	return true;
+}
+
+template<ircd::db::database *const &d,
+         class tuple>
+template<class index_iterator>
+bool
+ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::row_valid()
+const
+{
+	return row.valid(row_key());
+}
+
+template<ircd::db::database *const &d,
+         class tuple>
+template<class index_iterator>
+ircd::string_view
+ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::row_key()
+const
+{
+	if(!idx)
+		return {};
+
+	if(idx->second)
+		return idx->second;
+
+	assert(bool(idx->first));
+	return idx->first;
 }
 
 template<ircd::db::database *const &d,
@@ -253,7 +291,7 @@ const
 	if(!idx)
 		return false;
 
-	return row.valid(idx->first);
+	return row_valid();
 }
 
 template<ircd::db::database *const &d,
@@ -273,11 +311,14 @@ bool
 ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator==(const const_iterator_base<index_iterator> &o)
 const
 {
-	if(!row.valid() && !o.row.valid())
-		return true;
-
-	if(!row.valid() || !o.row.valid())
+	if(row_key() != o.row_key())
 		return false;
 
-	return idx->first == o.idx->first;
+	if(!row_valid() && !o.row_valid())
+		return true;
+
+	if(!row_valid() || !o.row_valid())
+		return false;
+
+	return true;
 }
