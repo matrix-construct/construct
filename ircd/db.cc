@@ -2317,11 +2317,11 @@ ircd::db::seek(row &r,
 		})
 	};
 
-	log.debug("'%s':'%s' @%lu:%lu row seek %zu of %zu in %ld$us",
+	log.debug("'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
 	          name(d),
-	          name(c),
 	          sequence(d),
 	          sequence(r[0]),
+	          name(c),
 	          ret,
 	          r.its.size(),
 	          timer.at<microseconds>().count());
@@ -2615,10 +2615,10 @@ ircd::db::del(column &column,
 {
 	database &d(column);
 	database::column &c(column);
-	log.debug("'%s':'%s' @%lu DELETE key(%zu B)",
+	log.debug("'%s' %lu '%s' DELETE key(%zu B)",
 	          name(d),
-	          name(c),
 	          sequence(d),
+	          name(c),
 	          key.size());
 
 	auto opts(make_opts(sopts));
@@ -2651,10 +2651,10 @@ ircd::db::write(column &column,
 {
 	database &d(column);
 	database::column &c(column);
-	log.debug("'%s':'%s' @%lu PUT key(%zu B) val(%zu B)",
+	log.debug("'%s' %lu '%s' PUT key(%zu B) val(%zu B)",
 	          name(d),
-	          name(c),
 	          sequence(d),
+	          name(c),
 	          key.size(),
 	          val.size());
 
@@ -2696,11 +2696,11 @@ ircd::db::has(column &column,
 		});
 	}
 
-	log.debug("'%s':'%s' @%lu:%lu HAS key(%zu B) %s [%s]",
+	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s [%s]",
 	          name(d),
-	          name(c),
-	          sequence(opts.snapshot),
 	          sequence(d),
+	          sequence(opts.snapshot),
+	          name(c),
 	          key.size(),
 	          status.ok()? "YES"s : "NO"s,
 	          opts.read_tier == BLOCKING? "CACHE MISS"s : "CACHE HIT"s);
@@ -3163,7 +3163,7 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
-	log.debug("'%s' @%lu COMMIT %s",
+	log.debug("'%s' %lu COMMIT %s",
 	          d.name,
 	          sequence(d),
 	          debug(batch));
@@ -3302,11 +3302,11 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-		log.debug("'%s':'%s' @%lu:%lu seek %s %s in %ld$us",
+		log.debug("'%s' %lu:%lu '%s' SEEK %s %s in %ld$us",
 		          name(d),
-		          name(c),
-		          sequence(opts.snapshot),
 		          sequence(d),
+		          sequence(opts.snapshot),
+		          name(c),
 		          valid(*it)? "VALID" : "INVALID",
 		          it->status().ToString(),
 		          timer.at<microseconds>().count());
@@ -3326,11 +3326,11 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s':'%s' @%lu:%lu seek INVALID CACHE MISS %s in %ld$us",
+		log.debug("'%s' %lu:%lu '%s' SEEK INVALID CACHE MISS %s in %ld$us",
 		          name(d),
-		          name(c),
-		          sequence(opts.snapshot),
 		          sequence(d),
+		          sequence(opts.snapshot),
+		          name(c),
 		          it->status().ToString(),
 		          timer.at<microseconds>().count());
 
@@ -3338,11 +3338,11 @@ ircd::db::_seek(database::column &c,
 	}
 
 	it.reset(nullptr);
-	log.debug("'%s':'%s' @%lu:%lu seek VALID CACHE MISS %s in %ld$us",
+	log.debug("'%s' %lu:%lu '%s' SEEK VALID CACHE MISS %s in %ld$us",
 	          name(d),
-	          name(c),
-	          sequence(opts.snapshot),
 	          sequence(d),
+	          sequence(opts.snapshot),
+	          name(c),
 	          blocking_it->status().ToString(),
 	          timer.at<microseconds>().count());
 
@@ -3374,11 +3374,11 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-		log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s %s in %ld$us",
+		log.debug("'%s' %lu:%lu '%s' SEEK[%s] %s -> %s %s in %ld$us",
 		          name(d),
-		          name(c),
-		          sequence(opts.snapshot),
 		          sequence(d),
+		          sequence(opts.snapshot),
+		          name(c),
 		          reflect(p),
 		          valid_it? "VALID" : "INVALID",
 		          valid(*it)? "VALID" : "INVALID",
@@ -3407,11 +3407,11 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s|INVALID CACHE MISS %s in %ld$us",
+		log.debug("'%s' %lu:%lu '%s' SEEK[%s] %s -> %s|INVALID CACHE MISS %s in %ld$us",
 		          name(d),
-		          name(c),
-		          sequence(opts.snapshot),
 		          sequence(d),
+		          sequence(opts.snapshot),
+		          name(c),
 		          reflect(p),
 		          valid_it? "VALID" : "INVALID",
 		          valid(*it)? "VALID" : "INVALID",
@@ -3422,14 +3422,13 @@ ircd::db::_seek(database::column &c,
 	}
 
 	it.reset(nullptr);
-	log.debug("'%s':'%s' @%lu:%lu seek[%s] %s -> %s|VALID CACHE MISS %s in %ld$us",
+	log.debug("'%s' %lu:%lu '%s' SEEK[%s] %s -> VALID CACHE MISS %s in %ld$us",
 	          name(d),
-	          name(c),
-	          sequence(opts.snapshot),
 	          sequence(d),
+	          sequence(opts.snapshot),
+	          name(c),
 	          reflect(p),
 	          valid_it? "VALID" : "INVALID",
-	          valid(*it)? "VALID" : "INVALID",
 	          blocking_it->status().ToString(),
 	          timer.at<microseconds>().count());
 
