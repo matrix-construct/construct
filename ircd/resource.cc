@@ -270,6 +270,12 @@ ircd::resource::request::request(const http::request::head &head,
 }
 
 ircd::resource::response::response(client &client,
+                                   const http::code &code)
+:response{client, json::object{"{}"}, code}
+{
+}
+
+ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const json::iov &members)
 :response{client, members, code}
@@ -284,8 +290,59 @@ ircd::resource::response::response(client &client,
 }
 
 ircd::resource::response::response(client &client,
+                                   const json::value &value,
+                                   const http::code &code)
+:response{client, code, value}
+{
+}
+
+ircd::resource::response::response(client &client,
+                                   const http::code &code,
+                                   const json::value &value)
+try
+{
+	const auto size
+	{
+		serialized(value)
+	};
+
+	char buffer[size]; mutable_buffer mb
+	{
+		buffer, size
+	};
+
+	switch(type(value))
+	{
+		case json::ARRAY:
+		{
+			response(client, json::array{stringify(mb, value)}, code);
+			return;
+		}
+
+		case json::OBJECT:
+		{
+			response(client, json::object{stringify(mb, value)}, code);
+			return;
+		}
+
+		default: throw m::error
+		{
+			http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Cannot send json::%s as response content", type(value)
+		};
+	}
+}
+catch(const json::error &e)
+{
+	throw m::error
+	{
+		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+	};
+}
+
+ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const json::members &members)
+try
 {
 	const auto size
 	{
@@ -300,11 +357,12 @@ ircd::resource::response::response(client &client,
 
 	response(client, object, code);
 }
-
-ircd::resource::response::response(client &client,
-                                   const http::code &code)
-:response{client, json::object{"{}"}, code}
+catch(const json::error &e)
 {
+	throw m::error
+	{
+		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+	};
 }
 
 ircd::resource::response::response(client &client,
@@ -346,10 +404,27 @@ ircd::resource::response::response(client &client,
 }
 
 ircd::resource::response::response(client &client,
+                                   const json::array &array,
+                                   const http::code &code)
+{
+	const auto content_type
+	{
+		"application/json; charset=utf-8"
+	};
+
+	response(client, array, content_type, code);
+}
+
+ircd::resource::response::response(client &client,
                                    const string_view &str,
                                    const string_view &content_type,
                                    const http::code &code)
 {
+	const auto request_time
+	{
+		client.request_timer.at<microseconds>()
+	};
+
 	http::response
 	{
 		code, str, write_closure(client),
@@ -359,14 +434,12 @@ ircd::resource::response::response(client &client,
 		}
 	};
 
-	log::debug("client[%s] HTTP %d %s in %ld$us (%s) content-length: %zu %s...",
+	log::debug("client[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length: %zu",
 	           string(remote_addr(client)),
 	           int(code),
                http::reason[code],
-	           client.request_timer.at<microseconds>().count(),
+	           request_time.count(),
+	           (client.request_timer.at<microseconds>() - request_time).count(),
 	           content_type,
-	           str.size(),
-	           startswith(content_type, "text") ||
-	           content_type == "application/json" ||
-	           content_type == "application/javascript"? str.substr(0, 96) : string_view{});
+	           str.size());
 }
