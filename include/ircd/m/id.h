@@ -115,6 +115,11 @@ struct ircd::m::id::buf
 	{}
 
 	buf() = default;
+	buf &operator=(const string_view &s)
+	{
+		static_cast<T &>(*this) = T{b.data(), b.size(), s};
+		return *this;
+	}
 };
 
 //

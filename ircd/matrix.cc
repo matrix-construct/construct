@@ -957,10 +957,14 @@ ircd::m::id::id(const enum sigil &sigil,
                 char *const &buf,
                 const size_t &max,
                 const string_view &id)
-:string_view{buf}
+:string_view
+{
+	buf, strlcpy(buf, id, max)
+}
 ,sigil{sigil}
 {
-	strlcpy(buf, id, max);
+	if(!valid())
+		throw INVALID_MXID("Not a valid '%s' mxid", reflect(sigil));
 }
 
 ircd::m::id::id(const enum sigil &sigil,
@@ -994,6 +998,13 @@ ircd::m::id::id(const enum sigil &sigil,
 	}
 	else if(has_sep == 1 && !host.empty() && !split(name, ':').second.empty())
 	{
+		len += strlcpy(buf + len, name, max - len);
+	}
+	else if(has_sep == 1 && !host.empty())
+	{
+		if(split(name, ':').second != host)
+			throw INVALID_MXID("MXID must be on host '%s'", host);
+
 		len += strlcpy(buf + len, name, max - len);
 	}
 	else if(has_sep && !host.empty())
