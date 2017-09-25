@@ -100,7 +100,10 @@ template<class T,
 struct ircd::m::id::buf
 :T
 {
-	static constexpr const size_t &SIZE{MAX};
+	static constexpr const size_t SIZE
+	{
+		MAX
+	};
 
   private:
 	std::array<char, SIZE> b;

@@ -23,23 +23,27 @@
  */
 
 #pragma once
-#define HAVE_IRCD_M_TIMELINE_H
+#define HAVE_IRCD_M_USER_H
 
-namespace ircd  {
-namespace m     {
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// The timeline class represents a sequence of events. This is the preferred
-// interface to the events DB. The timeline can be used to compose a selection
-// of events and run algorithms over them. The timeline interface can also be
-// used to insert new events. Timelines form the basis for composing higher
-// level structures like rooms.
-//
-struct timeline
+namespace ircd::m
 {
+	struct user;
+}
 
+namespace ircd::m::users
+{
+}
+
+struct ircd::m::user
+{
+	using id = m::id::user;
+
+	id user_id;
+
+	user(const id &user_id);
 };
 
-} // namespace m
-} // namespace ircd
+inline
+ircd::m::user::user(const id &user_id)
+:user_id{user_id}
+{}

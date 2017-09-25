@@ -278,10 +278,58 @@ const database::descriptor events_signatures_descriptor
 	}
 };
 
-const database::descriptor index_room_id_to_event_id
+/// prefix transform for event_id suffixes
+///
+/// This transform expects a concatenation ending with an event_id which means
+/// the prefix can be the same for multiple event_id's; therefor we can find
+/// or iterate "event_id in X" where X is some key like a room_id
+///
+const ircd::db::prefix_transform event_id_in
+{
+	"event_id in",
+	[](const string_view &key)
+	{
+		return key.find('$') != key.npos;
+	},
+	[](const string_view &key)
+	{
+		return rsplit(key, '$').first;
+	}
+};
+
+const database::descriptor event_id_in_sender
 {
 	// name
-	"!room_id$event_id",
+	"event_id in sender",
+
+	// explanation
+	R"(### developer note:
+
+	key is "@sender$event_id"
+	the prefix transform is in effect. this column indexes events by
+	sender offering an iterable bound of the index prefixed by sender
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in,
+};
+
+const database::descriptor event_id_in_room_id
+{
+	// name
+	"event_id in room_id",
 
 	// explanation
 	R"(### developer note:
@@ -300,27 +348,99 @@ const database::descriptor index_room_id_to_event_id
 	// options
 	{},
 
+	// comparator - sorts from highest to lowest
+	ircd::db::reverse_cmp_string_view{},
+
+	// prefix transform
+	event_id_in,
+};
+
+/// prefix transform for room_id
+///
+/// This transform expects a concatenation ending with a room_id which means
+/// the prefix can be the same for multiple room_id's; therefor we can find
+/// or iterate "room_id in X" where X is some repeated prefix
+///
+const ircd::db::prefix_transform room_id_in
+{
+	"room_id in",
+	[](const string_view &key)
+	{
+		return key.find('!') != key.npos;
+	},
+	[](const string_view &key)
+	{
+		return rsplit(key, '!').first;
+	}
+};
+
+const database::descriptor event_id_for_room_id_in_type
+{
+	// name
+	"event_id for room_id in type",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
 	// comparator
 	{},
 
 	// prefix transform
+	room_id_in,
+};
+
+/// prefix transform for type,state_key in room_id
+///
+/// This transform is special for concatenating room_id with type and state_key
+/// in that order with prefix being the room_id (this may change to room_id+
+/// type
+///
+const ircd::db::prefix_transform type_state_key_in_room_id
+{
+	"type,state_key in room_id",
+	[](const string_view &key)
 	{
-		"!room_id$event_id"s,
-		[](const string_view &key)
-		{
-			return key.find('$') != key.npos;
-		},
-		[](const string_view &key)
-		{
-			return split(key, '$').first;
-		}
+		return key.find("..") != key.npos;
+	},
+	[](const string_view &key)
+	{
+		return split(key, "..").first;
 	}
+};
 
-	// hooks
-//	{
+const database::descriptor event_id_for_type_state_key_in_room_id
+{
+	// name
+	"event_id for type,state_key in room_id",
 
+	// explanation
+	R"(### developer note:
 
-//	}
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	type_state_key_in_room_id
 };
 
 const database::description events_description
@@ -337,7 +457,10 @@ const database::description events_description
 	events_prev_ids_descriptor,
 	events_unsigned_descriptor,
 	events_signatures_descriptor,
-	index_room_id_to_event_id,
+	event_id_in_sender,
+	event_id_in_room_id,
+	event_id_for_room_id_in_type,
+	event_id_for_type_state_key_in_room_id,
 };
 
 std::shared_ptr<database> events_database

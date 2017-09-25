@@ -131,7 +131,7 @@ try
 		{ "state_key",   access_token        }
 	};
 
-	if(!accounts.any(query))
+	if(!m::room::events{accounts}.any(query))
 		throw m::error
 		{
 			// When credentials are required but missing or invalid, the HTTP call will return with
@@ -213,6 +213,13 @@ catch(const json::error &e)
 	throw m::error
 	{
 		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
+	};
+}
+catch(const std::out_of_range &e)
+{
+	throw m::error
+	{
+		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
 	};
 }
 

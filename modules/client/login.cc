@@ -34,14 +34,14 @@ const auto home_server
 	"cdc.z"
 };
 
-namespace name
+namespace { namespace name
 {
-	extern constexpr auto password{"password"};
-	extern constexpr auto medium{"medium"};
-	extern constexpr auto type{"type"};
-	extern constexpr auto user{"user"};
-	extern constexpr auto address{"address"};
-}
+	constexpr const auto password{"password"};
+	constexpr const auto medium{"medium"};
+	constexpr const auto type{"type"};
+	constexpr const auto user{"user"};
+	constexpr const auto address{"address"};
+}}
 
 struct body
 :json::tuple
@@ -69,15 +69,19 @@ m::room accounts_room
 	accounts_room_id
 };
 
+const m::room::events accounts_room_events
+{
+	accounts_room
+};
+
 resource::response
 post_login_password(client &client,
-                    const resource::request &request,
-                    const resource::request::body<body> &body)
+                    const resource::request::object<body> &request)
 {
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		unquote(at<name::user>(body)), home_server
+		unquote(at<name::user>(request)), home_server
 	};
 
 	if(!user_id.valid() || user_id.host() != home_server)
@@ -88,14 +92,23 @@ post_login_password(client &client,
 
 	const auto &supplied_password
 	{
-		at<name::password>(body)
+		at<name::password>(request)
 	};
 
-	const auto check{[&supplied_password]
+	// Sets up the query to find the user_id in the accounts room
+	const m::event::where::equal member_event
+	{
+		{ "type",        "m.room.member" },
+		{ "state_key",    user_id        }
+	};
+
+	// Once the query finds the result this closure views the event in the
+	// database and returns true if the login is authentic.
+	const m::event::where::test correct_password{[&supplied_password]
 	(const auto &event)
 	{
 		const json::object &content
-        {
+		{
 			json::val<m::name::content>(event)
 		};
 
@@ -109,8 +122,11 @@ post_login_password(client &client,
 
 		const auto &correct_password
 		{
-			content.at("password")
+			content.get("password")
 		};
+
+		if(!correct_password)
+			return false;
 
 		if(supplied_password != correct_password)
 			return false;
@@ -118,47 +134,67 @@ post_login_password(client &client,
 		return true;
 	}};
 
-	const m::events::where::equal query
+	const auto query
 	{
-		{ "type",        "m.room.member" },
-		{ "state_key",    user_id        }
+		member_event && correct_password
 	};
 
-	if(!accounts_room.any(query, check))
+	// The query to the database is made here. Know that this ircd::ctx
+	// may suspend and global state may have changed after this call.
+	if(!accounts_room_events.query(query))
 		throw m::error
 		{
 			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
 		};
+
+	// Generate the access token
+	static constexpr const auto token_len{127};
+	static const auto token_dict{rand::dict::alpha};
+	char token_buf[token_len + 1];
+	const string_view access_token
+	{
+		rand::string(token_dict, token_len, token_buf, sizeof(token_buf))
+	};
+
+	// Log the user in by issuing an event in the accounts room containing
+	// the generated token. When this call completes without throwing the
+	// access_token will be committed and the user will be logged in.
+	accounts_room.send(
+	{
+		{ "type",      "ircd.access_token"   },
+		{ "sender",     user_id              },
+		{ "state_key",  access_token         },
+		{ "content",    json::members
+		{
+			{ "ip",      string(remote_addr(client)) },
+			{ "device",  "unknown"                   },
+		}}
+	});
 
 	// Send response to user
 	return resource::response
 	{
 		client,
 		{
-			{ "user_id",        string_view{user_id}    },
-			{ "home_server",    home_server             },
-//			{ "access_token",   access_token            },
+			{ "user_id",        user_id        },
+			{ "home_server",    home_server    },
+			{ "access_token",   access_token   },
 		}
 	};
 }
 
 resource::response
-post_login(client &client, const resource::request &request)
+post_login(client &client, const resource::request::object<body> &request)
 {
-	const resource::request::body<body> body
-	{
-		request
-	};
-
 	// x.x.x Required. The login type being used.
 	// Currently only "m.login.password" is supported.
 	const auto type
 	{
-		unquote(at<name::type>(body))
+		unquote(at<name::type>(request))
 	};
 
 	if(type == "m.login.password")
-		return post_login_password(client, request, body);
+		return post_login_password(client, request);
 	else
 		throw m::error
 		{
@@ -174,14 +210,22 @@ resource::method method_post
 resource::response
 get_login(client &client, const resource::request &request)
 {
-	static const json::object flows
+	json::member login_password
 	{
-		R"({"flows":[{"type":"m.login.password"}]})"
+		"type", "m.login.password"
+	};
+
+	json::value flows[1]
+	{
+		{ login_password }
 	};
 
 	return resource::response
 	{
-		client, flows
+		client, json::members
+		{
+			{ "flows", { flows, 1 } }
+		}
 	};
 }
 

@@ -38,10 +38,7 @@ get_turnserver(client &client, const resource::request &request)
 {
 	return resource::response
 	{
-		client,
-		{
-			{    },
-		}
+		client, http::OK
 	};
 }
 

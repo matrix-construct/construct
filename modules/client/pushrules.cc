@@ -36,10 +36,7 @@ try
 {
 	return resource::response
 	{
-		client,
-		{
-			{    }
-		}
+		client, http::OK
 	};
 }
 catch(...)

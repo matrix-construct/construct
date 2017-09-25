@@ -31,18 +31,14 @@ resource logout_resource
 resource::response
 logout(client &client, const resource::request &request)
 {
-	const auto &access_token(request.query.at("access_token"));
-	const auto it(resource::tokens.find(access_token));
-	if(unlikely(it == end(resource::tokens)))
-		throw http::error{http::INTERNAL_SERVER_ERROR};
+	const auto &access_token
+	{
+		request.query.at("access_token")
+	};
 
-	resource::tokens.erase(it);
 	return resource::response
 	{
-		client,
-		{
-			{   }
-		}
+		client, http::OK
 	};
 }
 

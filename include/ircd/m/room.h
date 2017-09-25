@@ -34,42 +34,85 @@ namespace ircd::m
 	struct room;
 }
 
-namespace ircd::m::rooms
-{
-}
-
 struct ircd::m::room
 {
 	struct alias;
+	struct events;
+	struct state;
 
-	string_view room_id;
+	using id = m::id::room;
 
-	using event_closure = std::function<void (const event &)>;
-	void for_each(const events::where &, const event_closure &) const;
-	void for_each(const event_closure &) const;
+	id room_id;
 
-	using event_closure_bool = std::function<bool (const event &)>;
-	size_t count(const events::where &, const event_closure_bool &) const;
-	size_t count(const events::where &) const;
-	bool any(const events::where &, const event_closure_bool &) const;
-	bool any(const events::where &) const;
-
-	bool is_member(const m::id::user &, const string_view &membership = "join");
+	void send(json::iov &event);
+	void send(const json::members &event);
 
 	bool is_member(const m::id::user &, const string_view &membership = "join");
 	void membership(const m::id::user &, json::iov &content);
+	void leave(const m::id::user &, json::iov &content);
 	void join(const m::id::user &, json::iov &content);
 
-	room(const id::room &room_id);
-	room(const id::alias &alias);
+	room(const id &room_id)
+	:room_id{room_id}
+	{}
+
+	room(const id::alias &alias)
+	:room_id{}
+	{}
 };
 
-inline
-ircd::m::room::room(const id::room &room_id)
-:room_id{room_id}
-{}
+struct ircd::m::room::events
+{
+	id room_id;
 
-inline
-ircd::m::room::room(const id::alias &alias)
-:room_id{}
-{}
+	using event_closure = std::function<void (const event &)>;
+	using event_closure_bool = std::function<bool (const event &)>;
+
+	bool query(const event::where &, const event_closure_bool &) const;
+	bool rquery(const event::where &, const event_closure_bool &) const;
+	void for_each(const event::where &, const event_closure &) const;
+	void rfor_each(const event::where &, const event_closure &) const;
+	size_t count(const event::where &, const event_closure_bool &) const;
+	bool any(const event::where &, const event_closure_bool &) const;
+
+	bool query(const event_closure_bool &) const;
+	bool rquery(const event_closure_bool &) const;
+	void for_each(const event_closure &) const;
+	void rfor_each(const event_closure &) const;
+	size_t count(const event::where &) const;
+	bool any(const event::where &) const;
+
+	events(const id &room_id)
+	:room_id{room_id}
+	{}
+
+	events(const room &room)
+	:room_id{room.room_id}
+	{}
+};
+
+struct ircd::m::room::state
+{
+	id room_id;
+
+	using event_closure = std::function<void (const event &)>;
+	using event_closure_bool = std::function<bool (const event &)>;
+
+	bool query(const event::where &, const event_closure_bool &) const;
+	void for_each(const event::where &, const event_closure &) const;
+	size_t count(const event::where &, const event_closure_bool &) const;
+	bool any(const event::where &, const event_closure_bool &) const;
+
+	bool query(const event_closure_bool &) const;
+	void for_each(const event_closure &) const;
+	size_t count(const event::where &) const;
+	bool any(const event::where &) const;
+
+	state(const id &room_id)
+	:room_id{room_id}
+	{}
+
+	state(const room &room)
+	:room_id{room.room_id}
+	{}
+};

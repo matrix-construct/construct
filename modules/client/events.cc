@@ -39,33 +39,44 @@ const m::id::room::buf locops_room_id
 
 const m::id::room::buf ircd_room_id
 {
-	"ircd", "localhost"
+	"ircd", "cdc.z"
 };
 
 resource::response
 get_events(client &client, const resource::request &request)
 {
-	m::room room{accounts_room_id};
-	std::vector<std::string> ret;
-
-	room.for_each([&ret](const auto &event)
+	m::room room
 	{
-		ret.emplace_back(json::string(event));
+		m::id::room
+		{
+			unquote(request.at("room_id"))
+		}
+	};
+
+	const m::room::events events
+	{
+		room
+	};
+
+	size_t i(0);
+	events.for_each([&i](const auto &event)
+	{
+		++i;
 	});
 
-	std::vector<json::object> jo(ret.size());
-	std::transform(ret.begin(), ret.end(), jo.begin(), []
-	(const auto &string) -> json::object
+	size_t j(0);
+	json::value ret[i];
+	events.for_each([&i, &j, &ret](const m::event &event)
 	{
-		return string;
+		if(j < i)
+			ret[j++] = event;
 	});
 
-	char buf[16384];
 	return resource::response
 	{
-		client,
+		client, json::members
 		{
-			{ "chunk", json::stringify(buf, jo) }
+			{ "chunk", { ret, j } }
 		}
 	};
 }

@@ -29,9 +29,9 @@
 #include "m/error.h"
 #include "m/id.h"
 #include "m/event.h"
-#include "m/events.h"
 #include "m/room.h"
-#include "m/timeline.h"
+#include "m/user.h"
+#include "m/filter.h"
 #include "m/request.h"
 #include "m/session.h"
 

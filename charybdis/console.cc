@@ -248,15 +248,104 @@ try
 				break;
 			}
 
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"room_id"}};
+			const auto room_id{token.at(0, "!ircd:cdc.z"s)};
+
 			m::request request
 			{
-				"GET", "_matrix/client/r0/events"
+				"GET", "_matrix/client/r0/events", {}, json::members
+				{
+					{ "room_id", string_view{room_id} }
+				}
 			};
 
-			static char buf[1024];
+			static char buf[65536];
 			ircd::parse::buffer pb{buf};
-			const auto doc((*moi)(pb, request));
-			std::cout << doc << std::endl;
+			const json::object response{(*moi)(pb, request)};
+			const json::array chunk(response["chunk"]);
+			for(const string_view &chunk : chunk)
+				std::cout << chunk << std::endl;
+
+			break;
+		}
+
+		case hash("context"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"room_id", "event_id"}};
+			const auto &room_id{token.at(0)};
+			const auto &event_id{token.at(1)};
+
+			char url[512]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/client/r0/rooms/%s/context/%s",
+				              room_id,
+				              event_id)
+			};
+
+			m::request request
+			{
+				"GET", string_view{url, size_t(url_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			for(const auto &member : response)
+				std::cout << member.first << " " << member.second << std::endl;
+
+			break;
+		}
+
+		case hash("state"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"room_id", "event_type", "state_key"}};
+			const auto &room_id{token.at(0)};
+			const auto event_type{token[1]};
+			const auto state_key{token[2]};
+
+			char url[512]; const auto url_len
+			{
+				event_type && state_key?
+					fmt::snprintf(url, sizeof(url), "_matrix/client/r0/rooms/%s/state/%s/%s",
+					              room_id,
+					              event_type,
+					              state_key):
+
+				event_type?
+					fmt::snprintf(url, sizeof(url), "_matrix/client/r0/rooms/%s/state/%s",
+					              room_id,
+					              event_type):
+
+					fmt::snprintf(url, sizeof(url), "_matrix/client/r0/rooms/%s/state",
+					              room_id)
+			};
+
+			m::request request
+			{
+				"GET", string_view{url, size_t(url_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::array response{(*moi)(pb, request)};
+			for(const auto &event : response)
+				std::cout << event << std::endl;
+
 			break;
 		}
 
@@ -336,7 +425,7 @@ try
 
 			static char buf[4096];
 			ircd::parse::buffer pb{buf};
-			const auto doc((*moi)(pb, request));
+			const string_view doc((*moi)(pb, request));
 			std::cout << doc << std::endl;
 			break;
 		}
@@ -350,7 +439,32 @@ try
 			}
 
 			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"username", "password"}};
+			if(args.empty())
+			{
+				m::request request
+				{
+					"GET", "_matrix/client/r0/login", {}, {}
+				};
+
+				static char buf[4096];
+				ircd::parse::buffer pb{buf};
+				const json::object doc((*moi)(pb, request));
+				const json::array flows(doc.at("flows"));
+
+				size_t i(0);
+				for(const auto &flow : flows)
+					std::cout << i++ << ": " << flow << std::endl;
+
+				break;
+			}
+
+			const params token
+			{
+				args, " ",
+				{
+					"username", "password"
+				}
+			};
 
 			m::request request
 			{
@@ -364,7 +478,7 @@ try
 
 			static char buf[4096];
 			ircd::parse::buffer pb{buf};
-			const auto doc((*moi)(pb, request));
+			const json::object doc((*moi)(pb, request));
 			std::cout << doc << std::endl;
 			moi->access_token = std::string(unquote(doc.at("access_token")));
 			break;
@@ -475,6 +589,102 @@ try
 			break;
 		}
 */
+		case hash("setfilter"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto user_id
+			{
+				token(args, " ", 0)
+			};
+
+			const json::object filter
+			{
+				tokens_after(args, " ", 0)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/client/r0/user/%s/filter", user_id)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
+
+			m::request request
+			{
+				"POST", url, query, filter
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
+		case hash("getfilter"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto user_id
+			{
+				token(args, " ", 0)
+			};
+
+			const auto filter_id
+			{
+				tokens_after(args, " ", 0)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/client/r0/user/%s/filter/%s",
+				              user_id,
+				              filter_id)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
+
+			m::request request
+			{
+				"GET", url, query, {}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
 		default:
 			std::cerr << "Bad command or filename" << std::endl;
 	}

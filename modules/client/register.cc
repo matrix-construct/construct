@@ -27,13 +27,13 @@ const auto home_server
 	"cdc.z"
 };
 
-namespace name
+namespace { namespace name
 {
-    constexpr auto username{"username"};
-    constexpr auto bind_email{"bind_email"};
-    constexpr auto password{"password"};
-    constexpr auto auth{"auth"};
-}
+	constexpr const auto username {"username"};
+	constexpr const auto bind_email {"bind_email"};
+	constexpr const auto password {"password"};
+	constexpr const auto auth {"auth"};
+}}
 
 struct body
 :json::tuple
@@ -44,7 +44,7 @@ struct body
 	json::property<name::auth, json::object>
 >
 {
-    using super_type::tuple;
+	using super_type::tuple;
 };
 
 // Generate !accounts:host which is the MXID of the room where the members
@@ -54,40 +54,26 @@ const m::id::room::buf accounts_room_id
 	"accounts", home_server
 };
 
+// This object is a lightweight handle to the accounts room, which is a
+// chatroom whose members are the representation of the accounts registered
+// to this server itself.
 m::room accounts_room
 {
 	accounts_room_id
 };
 
-static void
-join_accounts_room(const m::id::user &user_id,
-                   const json::members &contents)
-try
-{
-	const json::builder content
-	{
-		nullptr, &contents
-	};
-
-	accounts_room.join(user_id, content);
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
-	};
-}
+static void validate_user_id(const m::id::user &user_id);
+static void validate_password(const string_view &password);
+static void join_accounts_room(const m::id::user &user_id, const json::members &contents);
 
 resource::response
 handle_post_kind_user(client &client,
-                      resource::request &request,
-                      const resource::request::body<body> &body)
+                      const resource::request::object<body> &request)
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
 	const auto &auth
 	{
-		at<name::auth>(body)
+		at<name::auth>(request)
 	};
 
 	// 3.3.1 Required. The login type that the client is attempting to complete.
@@ -96,6 +82,7 @@ handle_post_kind_user(client &client,
 		unquote(auth.at("type"))
 	};
 
+	// We only support this for now, for some reason. TODO: XXX
 	if(type != "m.login.dummy")
 		throw m::error
 		{
@@ -106,53 +93,41 @@ handle_post_kind_user(client &client,
 	// generate a Matrix ID local part.
 	const auto &username
 	{
-		unquote(get<name::username>(body))
+		unquote(get<name::username>(request))
 	};
 
-	// Generate canonical mxid
+	// Generate canonical mxid. The home_server is appended if one is not
+	// specified. We do not generate a user_id here if the local part is not
+	// specified. TODO: isn't that guest reg?
 	const m::id::user::buf user_id
 	{
 		username, home_server
 	};
 
-	if(!user_id.valid())
-		throw m::error
-		{
-			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
-		};
-
-	if(user_id.host() != home_server)
-		throw m::error
-		{
-			"M_INVALID_USERNAME", "Can only register with host '%s'", home_server
-		};
+	// Check if the the user_id is acceptably formed for this server or throws
+	validate_user_id(user_id);
 
 	// 3.3.1 Required. The desired password for the account.
 	const auto &password
 	{
-		at<name::password>(body)
+		at<name::password>(request)
 	};
-
-	if(password.size() > 255)
-		throw m::error
-		{
-			"M_INVALID_PASSWORD", "The desired password is too long"
-		};
 
 	// 3.3.1 If true, the server binds the email used for authentication to the
 	// Matrix ID with the ID Server. Defaults to false.
 	const auto &bind_email
 	{
-		get<name::bind_email>(body, false)
+		get<name::bind_email>(request, false)
 	};
 
-	// Register the user by joining them to the accounts room. Join the user
-	// to the accounts room by issuing a join event.  The content will store
-	// keys from the registration options including the password - do not
-	// expose this to clients //TODO: store hashed pass
-	// Once this call completes the join was successful and the user
-	// is registered, otherwise throws.
-	char content[384];
+	// Check if the password is acceptable for this server or throws
+	validate_password(password);
+
+	// Register the user by joining them to the accounts room. The content of
+	// the join event will store keys from the registration options including
+	// the password - do not expose this to clients //TODO: store hashed pass
+	// Once this call completes the join was successful and the user is
+	// registered, otherwise throws.
 	join_accounts_room(user_id,
 	{
 		{ "password",       password   },
@@ -173,8 +148,7 @@ handle_post_kind_user(client &client,
 
 resource::response
 handle_post_kind_guest(client &client,
-                       resource::request &request,
-                       const resource::request::body<body> &body)
+                       const resource::request::object<body> &request)
 {
 	const m::id::user::buf user_id
 	{
@@ -187,30 +161,25 @@ handle_post_kind_guest(client &client,
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     home_server    },
-			//{ "access_token",    access_token   },
+//			{ "access_token",    access_token   },
 		}
 	};
 }
 
 resource::response
 handle_post(client &client,
-            resource::request &request)
+            const resource::request::object<body> &request)
 {
-	const resource::request::body<body> body
-	{
-		request
-	};
-
 	const auto kind
 	{
 		request.query["kind"]
 	};
 
 	if(kind == "user")
-		return handle_post_kind_user(client, request, body);
+		return handle_post_kind_user(client, request);
 
 	if(kind.empty() || kind == "guest")
-		return handle_post_kind_guest(client, request, body);
+		return handle_post_kind_guest(client, request);
 
 	throw m::error
 	{
@@ -233,3 +202,51 @@ mapi::header IRCD_MODULE
 {
 	"registers the resource 'client/register' to handle requests"
 };
+
+void
+join_accounts_room(const m::id::user &user_id,
+                   const json::members &contents)
+try
+{
+	json::iov content;
+	json::iov::push members[contents.size()];
+
+	size_t i(0);
+	for(const auto &member : contents)
+		new (members + i++) json::iov::push(content, member);
+
+	accounts_room.join(user_id, content);
+}
+catch(const m::ALREADY_MEMBER &e)
+{
+	throw m::error
+	{
+		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
+	};
+}
+
+void
+validate_user_id(const m::id::user &user_id)
+{
+	if(!user_id.valid())
+		throw m::error
+		{
+			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
+		};
+
+	if(user_id.host() != home_server)
+		throw m::error
+		{
+			"M_INVALID_USERNAME", "Can only register with host '%s'", home_server
+		};
+}
+
+void
+validate_password(const string_view &password)
+{
+	if(password.size() > 255)
+		throw m::error
+		{
+			"M_INVALID_PASSWORD", "The desired password is too long"
+		};
+}

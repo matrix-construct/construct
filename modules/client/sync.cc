@@ -26,12 +26,26 @@ resource sync_resource
 	"_matrix/client/r0/sync",
 
 	R"(
-		Synchronise the client's state with the latest state on the server.
+		6.2. Synchronise the client's state with the latest state on the server.
 		Clients use this API when they first log in to get an initial snapshot of
 		the state on the server, and then continue to call this API to get
-		incremental deltas to the state, and to receive new messages. (6.2)
+		incremental deltas to the state, and to receive new messages.
 	)"
 };
+
+struct polldata
+{
+	std::weak_ptr<ircd::client> client;
+	steady_point timeout;
+};
+
+std::deque<polldata>
+polling
+{};
+
+ircd::ctx::dock
+polldock
+{};
 
 resource::response
 sync(client &client, const resource::request &request)
@@ -72,12 +86,22 @@ sync(client &client, const resource::request &request)
 		request.get("set_presence", "offline")
 	};
 
-	const auto timeout
+	const milliseconds timeout
 	{
 		// 6.2.1 The maximum time to poll in milliseconds before returning this request.
-		request.get<time_t>("timeout", -1)
+		request.get<time_t>("timeout", 30 * 1000)
 	};
 
+	// A reference to the client is saved. We save a weak reference to still
+	// allow the client to disconnect.
+	polling.emplace_back(polldata
+	{
+		weak_from(client),
+		now<steady_point>() + timeout
+	});
+
+	// This handler returns no response. As long as this handler doesn't throw
+	// an exception IRCd will keep the client alive.
 	return {};
 }
 
@@ -89,7 +113,81 @@ resource::method get_sync
 	}
 };
 
+void worker();
+ircd::context synchronizer_context
+{
+	"synchronizer",
+	1_MiB,
+	&worker,
+	ircd::context::POST,
+};
+
+const auto on_unload{[]
+{
+	synchronizer_context.interrupt();
+	synchronizer_context.join();
+}};
+
 mapi::header IRCD_MODULE
 {
-	"registers the resource 'client/sync' to handle requests."
+	"registers the resource 'client/sync' to handle requests.",
+	nullptr,
+	on_unload
 };
+
+void
+handle_event(const m::event &event,
+             const polldata &request)
+try
+{
+	const life_guard<client> client
+	{
+		request.client
+	};
+
+	resource::response
+	{
+		*client, json::members
+		{
+			{ "event", json::string(event) }
+		}
+	};
+}
+catch(const std::exception &e)
+{
+	log::error("%s", e.what());
+}
+
+void
+synchronize(const m::event &event)
+{
+	if(polling.empty())
+		return;
+
+	const auto &request
+	{
+		polling.front()
+	};
+
+	handle_event(event, request);
+	polling.pop_front();
+}
+
+void
+worker()
+try
+{
+	for(;; ctx::interruption_point())
+	{
+		const auto &event
+		{
+			m::event::inserted.wait()
+		};
+
+		synchronize(event);
+	}
+}
+catch(const ircd::ctx::interrupted &e)
+{
+	ircd::log::debug("Synchronizer interrupted");
+}

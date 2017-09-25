@@ -50,33 +50,47 @@ namespace ircd::m
 
 namespace ircd::m::name
 {
-	extern constexpr const char *const content {"content"};
-	extern constexpr const char *const event_id {"event_id"};
-	extern constexpr const char *const origin_server_ts {"origin_server_ts"};
-	extern constexpr const char *const prev_ids {"prev_ids"};
-	extern constexpr const char *const room_id {"room_id"};
-	extern constexpr const char *const sender {"sender"};
-	extern constexpr const char *const signatures {"signatures"};
-	extern constexpr const char *const state_key {"state_key"};
-	extern constexpr const char *const type {"type"};
-	extern constexpr const char *const unsigned_ {"unsigned"};
+	constexpr const char *const content {"content"};
+	constexpr const char *const event_id {"event_id"};
+	constexpr const char *const origin_server_ts {"origin_server_ts"};
+	constexpr const char *const prev_ids {"prev_ids"};
+	constexpr const char *const room_id {"room_id"};
+	constexpr const char *const sender {"sender"};
+	constexpr const char *const signatures {"signatures"};
+	constexpr const char *const state_key {"state_key"};
+	constexpr const char *const type {"type"};
+	constexpr const char *const unsigned_ {"unsigned"};
 }
 
 struct ircd::m::event
 :json::tuple
 <
-	json::property<name::event_id, string_view>,
 	json::property<name::content, string_view>,
+	json::property<name::event_id, string_view>,
 	json::property<name::origin_server_ts, time_t>,
-	json::property<name::sender, string_view>,
-	json::property<name::type, string_view>,
-	json::property<name::room_id, string_view>,
-	json::property<name::state_key, string_view>,
 	json::property<name::prev_ids, string_view>,
-	json::property<name::unsigned_, string_view>,
-	json::property<name::signatures, string_view>
+	json::property<name::room_id, string_view>,
+	json::property<name::sender, string_view>,
+	json::property<name::signatures, string_view>,
+	json::property<name::state_key, string_view>,
+	json::property<name::type, string_view>,
+	json::property<name::unsigned_, string_view>
 >
 {
+	using id = m::id::event;
+
+	static database *events;
+	using cursor = db::cursor<events, event>;
+	using const_iterator = cursor::const_iterator;
+	using iterator = const_iterator;
+	using where = cursor::where_type;
+
+	// Queue of contexts waiting to see the next inserted event
+	static ctx::view<const event> inserted;
+
+	static const_iterator find(const id &);
+	static void insert(json::iov &);
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
