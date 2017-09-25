@@ -627,7 +627,7 @@ void>::type
 _assign(dst &d,
         src&& s)
 {
-	d = byte_view<dst>(std::forward<src>(s));
+	d = byte_view<string_view>(std::forward<src>(s));
 }
 
 template<class dst,
