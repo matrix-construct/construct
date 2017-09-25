@@ -56,24 +56,6 @@ struct body
 	using super_type::tuple;
 };
 
-// Generate !accounts:host which is the MXID of the room where the members
-// are the actual account registrations for this homeserver.
-const m::id::room::buf accounts_room_id
-{
-	"accounts", home_server
-};
-
-// Handle to the accounts room
-m::room accounts_room
-{
-	accounts_room_id
-};
-
-const m::room::events accounts_room_events
-{
-	accounts_room
-};
-
 resource::response
 post_login_password(client &client,
                     const resource::request::object<body> &request)
@@ -92,56 +74,21 @@ post_login_password(client &client,
 
 	const auto &supplied_password
 	{
-		at<name::password>(request)
+		unquote(at<name::password>(request))
 	};
 
-	// Sets up the query to find the user_id in the accounts room
-	const m::event::where::equal member_event
+	m::user user
 	{
-		{ "type",        "m.room.member" },
-		{ "state_key",    user_id        }
+		user_id
 	};
 
-	// Once the query finds the result this closure views the event in the
-	// database and returns true if the login is authentic.
-	const m::event::where::test correct_password{[&supplied_password]
-	(const auto &event)
-	{
-		const json::object &content
+	if(!user.is_password(supplied_password))
+		throw m::error
 		{
-			json::val<m::name::content>(event)
+			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
 		};
 
-		const auto &membership
-		{
-			unquote(content.at("membership"))
-		};
-
-		if(membership != "join")
-			return false;
-
-		const auto &correct_password
-		{
-			content.get("password")
-		};
-
-		if(!correct_password)
-			return false;
-
-		if(supplied_password != correct_password)
-			return false;
-
-		return true;
-	}};
-
-	const auto query
-	{
-		member_event && correct_password
-	};
-
-	// The query to the database is made here. Know that this ircd::ctx
-	// may suspend and global state may have changed after this call.
-	if(!accounts_room_events.query(query))
+	if(!user.is_active())
 		throw m::error
 		{
 			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
@@ -159,7 +106,7 @@ post_login_password(client &client,
 	// Log the user in by issuing an event in the accounts room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
-	accounts_room.send(
+	m::user::accounts.send(
 	{
 		{ "type",      "ircd.access_token"   },
 		{ "sender",     user_id              },

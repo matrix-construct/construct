@@ -109,6 +109,8 @@ struct ircd::m::filter
 	json::property<name::presence, event_filter>
 >
 {
+	static room filters;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };

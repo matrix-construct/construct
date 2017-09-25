@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/session.h
@@ -87,6 +85,24 @@ namespace ircd::m
 	void bootstrap();
 }
 
+ircd::m::user
+ircd::m::me
+{
+	"@ircd:cdc.z"
+};
+
+ircd::m::room
+ircd::m::my_room
+{
+	ircd::m::room::id{"!ircd:cdc.z"}
+};
+
+ircd::m::room
+ircd::m::filter::filters
+{
+	ircd::m::room::id{"!filters:cdc.z"}
+};
+
 ircd::m::init::init()
 try
 {
@@ -139,12 +155,8 @@ ircd::m::join_ircd_room()
 try
 {
 	// ircd.start event
-	const m::id::room::buf room_id{"ircd", "cdc.z"};
-	const m::id::user::buf user_id{"ircd", "cdc.z"};
-	m::room ircd_room{room_id};
-
 	json::iov content;
-	ircd_room.join(user_id, content);
+	my_room.join(me.user_id, content);
 }
 catch(const m::ALREADY_MEMBER &e)
 {
@@ -155,12 +167,8 @@ void
 ircd::m::leave_ircd_room()
 {
 	// ircd.start event
-	const m::id::room::buf room_id{"ircd", "cdc.z"};
-	const m::id::user::buf user_id{"ircd", "cdc.z"};
-	m::room ircd_room{room_id};
-
 	json::iov content;
-	ircd_room.leave(user_id, content);
+	my_room.leave(me.user_id, content);
 }
 
 void
@@ -175,46 +183,38 @@ ircd::m::bootstrap()
 		"database is empty. I will be bootstrapping it with initial events now..."
 	);
 
-	const m::id::user::buf user_id{"ircd", "cdc.z"};
-	const m::id::room::buf ircd_room_id{"ircd", "cdc.z"};
-	m::room ircd_room{ircd_room_id};
-	ircd_room.send(
+	my_room.send(
 	{
 		{ "type",        "m.room.create" },
-		{ "sender",      user_id         },
+		{ "sender",      me.user_id      },
 		{ "state_key",   ""              },
 		{ "content",     json::members
 		{
-			{ "creator", user_id }
+			{ "creator", me.user_id }
 		}}
 	});
 
-	const m::id::room::buf accounts_room_id{"accounts", "cdc.z"};
-	m::room accounts_room{accounts_room_id};
-	accounts_room.send(
+	user::accounts.send(
 	{
 		{ "type",        "m.room.create" },
-		{ "sender",      user_id         },
+		{ "sender",      me.user_id      },
 		{ "state_key",   ""              },
 		{ "content",     json::members
 		{
-			{ "creator", user_id }
+			{ "creator", me.user_id }
 		}}
 	});
 
 	json::iov content;
-	accounts_room.join(user_id, content);
-
-	const m::id::room::buf filters_room_id{"filters", "cdc.z"};
-	m::room filters_room{filters_room_id};
-	filters_room.send(
+	user::accounts.join(me.user_id, content);
+	filter::filters.send(
 	{
 		{ "type",        "m.room.create" },
-		{ "sender",      user_id         },
+		{ "sender",      me.user_id      },
 		{ "state_key",   ""              },
 		{ "content",     json::members
 		{
-			{ "creator", user_id }
+			{ "creator", me.user_id }
 		}}
 	});
 }
@@ -636,6 +636,163 @@ const
 			return true;
 
 	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/user.h
+//
+
+ircd::m::room
+ircd::m::user::accounts
+{
+	ircd::m::room::id{"!accounts:cdc.z"}
+};
+
+/// Register the user by joining them to the accounts room.
+///
+/// The content of the join event may store keys including the registration
+/// options. Once this call completes the join was successful and the user is
+/// registered, otherwise throws.
+void
+ircd::m::user::activate(const json::members &contents)
+try
+{
+	json::iov content;
+	json::iov::push members[contents.size()];
+
+	size_t i(0);
+	for(const auto &member : contents)
+		new (members + i++) json::iov::push(content, member);
+
+	accounts.join(user_id, content);
+}
+catch(const m::ALREADY_MEMBER &e)
+{
+	throw m::error
+	{
+		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
+	};
+}
+
+void
+ircd::m::user::deactivate(const json::members &contents)
+{
+	json::iov content;
+	json::iov::push members[contents.size()];
+
+	size_t i(0);
+	for(const auto &member : contents)
+		new (members + i++) json::iov::push(content, member);
+
+	accounts.leave(user_id, content);
+}
+
+void
+ircd::m::user::password(const string_view &password)
+try
+{
+	json::iov event;
+	json::iov::push members[]
+	{
+		{ event, json::member { "type",      "ircd.password"  }},
+		{ event, json::member { "state_key",  user_id         }},
+		{ event, json::member { "sender",     user_id         }},
+		{ event, json::member { "content",    json::members
+		{
+			{ "plaintext", password }
+		}}},
+	};
+
+	accounts.send(event);
+}
+catch(const m::ALREADY_MEMBER &e)
+{
+	throw m::error
+	{
+		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
+	};
+}
+
+bool
+ircd::m::user::is_password(const string_view &supplied_password)
+const
+{
+	const m::event::where::equal member_event
+	{
+		{ "type",        "ircd.password" },
+		{ "state_key",    user_id        }
+	};
+
+	bool ret{false};
+	const m::event::where::test correct_password{[&ret, &supplied_password]
+	(const auto &event)
+	{
+		const json::object &content
+		{
+			json::at<m::name::content>(event)
+		};
+
+		const auto &correct_password
+		{
+			unquote(content.at("plaintext"))
+		};
+
+		ret = supplied_password == correct_password;
+		return true;
+	}};
+
+	const auto query
+	{
+		member_event && correct_password
+	};
+
+	// The query to the database is made here. Know that this ircd::ctx
+	// may suspend and global state may have changed after this call.
+	const room::events events
+	{
+		accounts
+	};
+
+	events.query(member_event && correct_password);
+	return ret;
+}
+
+bool
+ircd::m::user::is_active()
+const
+{
+	const m::event::where::equal member_event
+	{
+		{ "type",        "m.room.member" },
+		{ "state_key",    user_id        }
+	};
+
+	bool ret{false};
+	const m::event::where::test is_joined{[&ret]
+	(const auto &event)
+	{
+		const json::object &content
+		{
+			json::val<m::name::content>(event)
+		};
+
+		const auto &membership
+		{
+			unquote(content["membership"])
+		};
+
+		ret = membership == "join";
+		return true;
+	}};
+
+	const room::events events
+	{
+		accounts
+	};
+
+	events.query(member_event && is_joined);
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

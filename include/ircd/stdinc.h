@@ -227,13 +227,14 @@ namespace ircd
 #include "fmt.h"
 #include "fs.h"
 #include "ctx.h"
-#include "resource.h"
 #include "logger.h"
 #include "db.h"
 #include "js.h"
 #include "client.h"
 #include "mods.h"
 #include "listen.h"
+#include "m.h"
+#include "resource.h"
 
 template<class T>
 std::string

@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/m.h>
-
 namespace ircd {
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)
@@ -108,7 +106,7 @@ noexcept
 
 namespace ircd {
 
-const m::room accounts
+const m::room::events accounts
 {
 	m::id::room{"!accounts:cdc.z"}
 };
@@ -119,7 +117,7 @@ authenticate(client &client,
              resource::request &request)
 try
 {
-	const auto &access_token
+	const string_view &access_token
 	{
 		request.query.at("access_token")
 	};
@@ -131,7 +129,17 @@ try
 		{ "state_key",   access_token        }
 	};
 
-	if(!m::room::events{accounts}.any(query))
+	const bool result
+	{
+		accounts.query(query, [&request, &access_token](const m::event &event)
+		{
+			assert(at<m::name::state_key>(event) == access_token);
+			request.user_id = at<m::name::sender>(event);
+			return true;
+		})
+	};
+
+	if(!result)
 		throw m::error
 		{
 			// When credentials are required but missing or invalid, the HTTP call will return with

@@ -47,24 +47,8 @@ struct body
 	using super_type::tuple;
 };
 
-// Generate !accounts:host which is the MXID of the room where the members
-// are the account registrations on this homeserver.
-const m::id::room::buf accounts_room_id
-{
-	"accounts", home_server
-};
-
-// This object is a lightweight handle to the accounts room, which is a
-// chatroom whose members are the representation of the accounts registered
-// to this server itself.
-m::room accounts_room
-{
-	accounts_room_id
-};
-
 static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
-static void join_accounts_room(const m::id::user &user_id, const json::members &contents);
 
 resource::response
 handle_post_kind_user(client &client,
@@ -123,16 +107,24 @@ handle_post_kind_user(client &client,
 	// Check if the password is acceptable for this server or throws
 	validate_password(password);
 
-	// Register the user by joining them to the accounts room. The content of
-	// the join event will store keys from the registration options including
-	// the password - do not expose this to clients //TODO: store hashed pass
-	// Once this call completes the join was successful and the user is
-	// registered, otherwise throws.
-	join_accounts_room(user_id,
+	// Represent the user
+	m::user user
 	{
-		{ "password",       password   },
+		user_id
+	};
+
+	// Activate the account. Underneath this will join the user to the room
+	// !accounts:your.domain. If the user_id is already a member then this
+	// throws 409 Conflict; otherwise the user is registered after this call.
+	user.activate(
+	{
 		{ "bind_email",     bind_email },
 	});
+
+	// Set the password for the account. This issues an ircd.password state
+	// event to the accounts room for the user. If this call completes the
+	// user will be able to login with m.login.password
+	user.password(password);
 
 	// Send response to user
 	return resource::response
@@ -202,28 +194,6 @@ mapi::header IRCD_MODULE
 {
 	"registers the resource 'client/register' to handle requests"
 };
-
-void
-join_accounts_room(const m::id::user &user_id,
-                   const json::members &contents)
-try
-{
-	json::iov content;
-	json::iov::push members[contents.size()];
-
-	size_t i(0);
-	for(const auto &member : contents)
-		new (members + i++) json::iov::push(content, member);
-
-	accounts_room.join(user_id, content);
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
-	};
-}
 
 void
 validate_user_id(const m::id::user &user_id)

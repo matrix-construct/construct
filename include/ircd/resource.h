@@ -77,6 +77,7 @@ struct ircd::resource::request
 	const http::request::head &head;
 	http::request::content &content;
 	http::query::string query;
+	m::user::id::buf user_id;
 
 	request(const http::request::head &head, http::request::content &content, http::query::string query);
 };

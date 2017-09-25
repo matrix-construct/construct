@@ -33,8 +33,6 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice_transform.h>
 
-#include <ircd/m.h>
-
 namespace ircd::db
 {
 	const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;

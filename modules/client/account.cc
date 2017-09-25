@@ -48,47 +48,36 @@ resource::response
 account_password(client &client, const resource::request &request)
 try
 {
-	const auto new_password
+	const string_view &new_password
 	{
-		request.at("new_password")
+		unquote(request.at("new_password"))
 	};
 
-	const auto type
+	const string_view &type
 	{
-		unquote(request.at("auth.type"))
+		unquote(request.at({"auth", "type"}))
 	};
 
-	const auto session
-	{
-		request["auth.session"]
-	};
-
-	if(!type.empty() && type != "m.login.token")
-	{
+	if(type != "m.login.password")
 		throw m::error
 		{
 			"M_UNSUPPORTED", "Login type is not supported."
 		};
-	}
 
-	//db::handle hand(account, "foo");
-	//database::snapshot snap(hand);
-
-/*
-	account(db::MERGE, "jzk", std::string
+	const string_view &session
 	{
-		json::index
-		{{
-			"password",
-			{
-				{ "plaintext", new_password }
-			}
-		}}
-	});
-*/
+		request[{"auth", "session"}]
+	};
+
+	m::user user
+	{
+		request.user_id
+	};
+
+	user.password(new_password);
 	return resource::response
 	{
-		client
+		client, http::OK
 	};
 }
 catch(const db::not_found &e)
@@ -99,9 +88,49 @@ catch(const db::not_found &e)
 	};
 }
 
-resource::method post
+resource::method post_password
 {
-	account_resource.password, "POST", account_password
+	account_resource.password, "POST", account_password,
+	{
+		post_password.REQUIRES_AUTH
+	}
+};
+
+resource::response
+account_deactivate(client &client, const resource::request &request)
+{
+	const string_view &type
+	{
+		request.at({"auth", "type"})
+	};
+
+	const string_view &session
+	{
+		request[{"auth", "session"}]
+	};
+
+	m::user user
+	{
+		request.user_id
+	};
+
+	user.deactivate();
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "goodbye", "Thanks for visiting. Come back soon!" }
+		}
+	};
+}
+
+resource::method post_deactivate
+{
+	account_resource.deactivate, "POST", account_deactivate,
+	{
+		post_deactivate.REQUIRES_AUTH
+	}
 };
 
 mapi::header IRCD_MODULE

@@ -30,16 +30,6 @@ resource user_resource
 	}
 };
 
-m::room filters_room
-{
-	m::room::id{"!filters:cdc.z"}
-};
-
-const m::room::events filters_room_events
-{
-	filters_room
-};
-
 resource::response
 get_filter(client &client, const resource::request &request)
 try
@@ -76,6 +66,11 @@ try
 
 		return true;
 	}};
+
+	const m::room::events filters_room_events
+	{
+		m::filter::filters
+	};
 
 	if(!filters_room_events.any(query, result))
 		throw m::NOT_FOUND("No matching filter with that ID");
@@ -166,7 +161,7 @@ try
 		{ event, json::member { "content",    request.body    }}
 	};
 
-	filters_room.send(event);
+	m::filter::filters.send(event);
 	return resource::response
 	{
 		client, http::CREATED,

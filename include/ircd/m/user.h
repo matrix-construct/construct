@@ -28,10 +28,10 @@
 namespace ircd::m
 {
 	struct user;
-}
 
-namespace ircd::m::users
-{
+	extern user me;
+	extern room my_room;
+	extern room filters;
 }
 
 struct ircd::m::user
@@ -40,10 +40,16 @@ struct ircd::m::user
 
 	id user_id;
 
-	user(const id &user_id);
-};
+	static room accounts;
 
-inline
-ircd::m::user::user(const id &user_id)
-:user_id{user_id}
-{}
+	bool is_active() const;
+	bool is_password(const string_view &password) const;
+
+	void password(const string_view &password);
+	void activate(const json::members &contents = {});
+	void deactivate(const json::members &contents = {});
+
+	user(const id &user_id)
+	:user_id{user_id}
+	{}
+};

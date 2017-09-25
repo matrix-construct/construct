@@ -564,7 +564,7 @@ try
 			moi->quote(q);
 			break;
 		}
-
+*/
 		case hash("password"):
 		{
 			if(!moi)
@@ -575,20 +575,66 @@ try
 
 			const auto args(tokens_after(line, " ", 0));
 			const params token{args, " ", {"new_password"}};
-			m::request::password password
-			{{
-				{ "new_password",  token.at(0) },
-				{ "auth",
-				{
-					{ "session",  "abcdef"         },
-					{ "type",     "m.login.token"  }
-				}}
-			}};
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
 
-			moi->password(password);
+			m::request request
+			{
+				"POST", "_matrix/client/r0/account/password", query, json::members
+				{
+					{ "new_password",  token.at(0) },
+					{ "auth",          json::members
+					{
+						{ "type",     "m.login.password"  }
+					}},
+				}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
 			break;
 		}
-*/
+
+		case hash("deactivate"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args(tokens_after(line, " ", 0));
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
+
+			m::request request
+			{
+				"POST", "_matrix/client/r0/account/deactivate", query, json::members
+				{
+					{ "auth",          json::members
+					{
+						{ "type",     "m.login.password"  }
+					}},
+				}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
 		case hash("setfilter"):
 		{
 			if(!moi)
