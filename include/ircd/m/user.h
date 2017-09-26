@@ -36,11 +36,14 @@ namespace ircd::m
 
 struct ircd::m::user
 {
+	struct rooms;
+
 	using id = m::id::user;
 
 	id user_id;
 
 	static room accounts;
+	static room sessions;
 
 	bool is_active() const;
 	bool is_password(const string_view &password) const;
@@ -50,6 +53,19 @@ struct ircd::m::user
 	void deactivate(const json::members &contents = {});
 
 	user(const id &user_id)
+	:user_id{user_id}
+	{}
+};
+
+struct ircd::m::user::rooms
+:m::events
+{
+	id user_id;
+
+	bool _query_(const event::where &, const event_closure_bool &) const override;
+	bool _rquery_(const event::where &, const event_closure_bool &) const override;
+
+	rooms(const id &user_id)
 	:user_id{user_id}
 	{}
 };

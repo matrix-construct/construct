@@ -57,6 +57,12 @@ get_state(client &client,
 		state.count(query)
 	};
 
+	if(!count)
+		throw m::NOT_FOUND
+		{
+			"No state."
+		};
+
 	size_t j(0);
 	json::value ret[count];
 	state.for_each(query, [&count, &j, &ret]
@@ -208,4 +214,95 @@ get_rooms(client &client, const resource::request &request)
 resource::method method_get
 {
 	rooms_resource, "GET", get_rooms
+};
+
+resource::response
+put_send(client &client,
+         const resource::request &request,
+         const string_view &params,
+         const m::room::id &room_id)
+{
+	string_view token[4];
+	tokens(params, "/", token);
+
+	const string_view &type
+	{
+		token[2]
+	};
+
+	const string_view &txnid
+	{
+		token[3]
+	};
+
+	json::iov event;
+
+	const json::iov::push _type
+	{
+		event, "type", type
+	};
+
+	const json::iov::push _sender
+	{
+		event, "sender", request.user_id
+	};
+
+	const json::iov::push _content
+	{
+		event, "content", json::object{request}
+	};
+
+	m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		room.send(event)
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "event_id", event_id }
+		}
+	};
+}
+
+resource::response
+put_rooms(client &client, const resource::request &request)
+{
+	const auto params
+	{
+		lstrip(request.head.path, room::base_url)
+	};
+
+	string_view token[2];
+	if(tokens(params, "/", token) != 2)
+		throw http::error(http::code::NOT_FOUND, "/rooms command required");
+
+	const m::room::id &room_id
+	{
+		token[0]
+	};
+
+	const string_view &cmd
+	{
+		token[1]
+	};
+
+	if(cmd == "send")
+		return put_send(client, request, params, room_id);
+
+	throw http::error(http::code::NOT_FOUND, "/rooms command not found");
+}
+
+resource::method method_put
+{
+	rooms_resource, "PUT", put_rooms,
+	{
+		method_put.REQUIRES_AUTH
+	}
 };

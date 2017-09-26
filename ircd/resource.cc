@@ -106,11 +106,6 @@ noexcept
 
 namespace ircd {
 
-const m::room::events accounts
-{
-	m::id::room{"!accounts:cdc.z"}
-};
-
 static void
 authenticate(client &client,
              resource::method &method,
@@ -122,7 +117,12 @@ try
 		request.query.at("access_token")
 	};
 
-	// Sets up the query to find the access_token in the accounts room
+	static const m::room::state sessions
+	{
+		m::id::room{"!sessions:cdc.z"}
+	};
+
+	// Sets up the query to find the access_token in the sessions rooms
 	const m::event::where::equal query
 	{
 		{ "type",        "ircd.access_token" },
@@ -131,8 +131,21 @@ try
 
 	const bool result
 	{
-		accounts.query(query, [&request, &access_token](const m::event &event)
+		sessions.test(query, [&request, &access_token](const m::event &event)
 		{
+			// Checks if the access token has expired. Tokens are expired when
+			// an m.room.redaction event is issued for the ircd.access_token
+			// event. Instead of making another query here for the redaction
+			// we expect the original event to be updated with the following
+			// key which must be part of the redaction process.
+			const json::object &unsigned_
+			{
+				json::val<m::name::unsigned_>(event)
+			};
+
+			if(unsigned_.has("redacted_because"))
+				return false;
+
 			assert(at<m::name::state_key>(event) == access_token);
 			request.user_id = at<m::name::sender>(event);
 			return true;

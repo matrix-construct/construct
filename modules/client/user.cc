@@ -72,7 +72,7 @@ try
 		m::filter::filters
 	};
 
-	if(!filters_room_events.any(query, result))
+	if(!filters_room_events.test(query, result))
 		throw m::NOT_FOUND("No matching filter with that ID");
 
 	// Response already made

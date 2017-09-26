@@ -65,7 +65,7 @@ namespace ircd::m::name
 struct ircd::m::event
 :json::tuple
 <
-	json::property<name::content, string_view>,
+	json::property<name::content, json::object>,
 	json::property<name::event_id, string_view>,
 	json::property<name::origin_server_ts, time_t>,
 	json::property<name::prev_ids, string_view>,

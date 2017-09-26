@@ -498,27 +498,52 @@ try
 				break;
 			}
 
-			const auto args(tokens_after(line, " ", 0));
-			const params token{args, " ", {"user", "pass"}};
-
-			static char query[2048];
-			snprintf(query, sizeof(query), "%s=%s",
-			         "access_token",
-			         moi->access_token.c_str());
-
-			m::request request
+			const auto args
 			{
-				"GET", "_matrix/client/r0/sync", query,
+				tokens_after(line, " ", 0)
+			};
+
+			const params token
+			{
+				args, " ",
 				{
+					"timeout", "filter_id", "full_state", "set_presence"
 				}
 			};
 
-			static char buf[8192];
-			ircd::parse::buffer pb{buf};
-			const auto doc((*moi)(pb, request));
-			for(const auto &member : doc)
-				std::cout << string_view{member.first} << " => " << string_view{member.second} << std::endl;
+			const time_t timeout
+			{
+				token.at(0, 0)
+			};
 
+			static char query[2048];
+			snprintf(query, sizeof(query), "%s=%s&timeout=%zd",
+			         "access_token",
+			         moi->access_token.c_str(),
+			         timeout * 1000);
+
+			while(1)
+			{
+				m::request request
+				{
+					"GET", "_matrix/client/r0/sync", query,
+					{
+					}
+				};
+
+				static char buf[8192];
+				ircd::parse::buffer pb{buf};
+				const json::object doc((*moi)(pb, request));
+				const auto since(doc.at("next_batch"));
+				for(const auto &member : doc)
+					std::cout << string_view{member.first} << " => " << string_view{member.second} << std::endl;
+
+				fmt::snprintf(query, sizeof(query), "%s=%s&since=%s&timeout=%zd",
+				             "access_token",
+				              moi->access_token,
+				              since,
+				              timeout * 1000);
+			}
 			break;
 		}
 
@@ -571,6 +596,53 @@ try
 			break;
 		}
 */
+		case hash("privmsg"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			static uint txnid;
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"room_id", "msgtype"}};
+			const auto &room_id{token.at(0)};
+			const auto &msgtype{token.at(1)};
+			const auto &event_type{"m.room.message"};
+			const auto text(tokens_after(line, " ", 2));
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
+
+			static char url[512]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/client/r0/rooms/%s/send/%s/%u",
+				              room_id,
+				              event_type,
+				              txnid++)
+			};
+
+			m::request request
+			{
+				"PUT", url, query, json::members
+				{
+					{ "msgtype", msgtype },
+					{ "body", text }
+				}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
 		case hash("password"):
 		{
 			if(!moi)

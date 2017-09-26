@@ -399,6 +399,31 @@ const database::descriptor event_id_for_room_id_in_type
 	room_id_in,
 };
 
+const database::descriptor event_id_for_room_id_in_sender
+{
+	// name
+	"event_id for room_id in sender",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	room_id_in,
+};
+
 /// prefix transform for type,state_key in room_id
 ///
 /// This transform is special for concatenating room_id with type and state_key
@@ -460,6 +485,7 @@ const database::description events_description
 	event_id_in_sender,
 	event_id_in_room_id,
 	event_id_for_room_id_in_type,
+	event_id_for_room_id_in_sender,
 	event_id_for_type_state_key_in_room_id,
 };
 

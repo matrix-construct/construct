@@ -44,13 +44,14 @@ struct ircd::m::room
 
 	id room_id;
 
-	void send(json::iov &event);
-	void send(const json::members &event);
+	event::id::buf send(json::iov &event);
+	event::id::buf send(const json::members &event);
 
 	bool is_member(const m::id::user &, const string_view &membership = "join");
 	void membership(const m::id::user &, json::iov &content);
 	void leave(const m::id::user &, json::iov &content);
 	void join(const m::id::user &, json::iov &content);
+	void create(const m::id::user &sender, const m::id::user &creator, json::iov &content);
 
 	room(const id &room_id)
 	:room_id{room_id}
@@ -62,25 +63,12 @@ struct ircd::m::room
 };
 
 struct ircd::m::room::events
+:m::events
 {
 	id room_id;
 
-	using event_closure = std::function<void (const event &)>;
-	using event_closure_bool = std::function<bool (const event &)>;
-
-	bool query(const event::where &, const event_closure_bool &) const;
-	bool rquery(const event::where &, const event_closure_bool &) const;
-	void for_each(const event::where &, const event_closure &) const;
-	void rfor_each(const event::where &, const event_closure &) const;
-	size_t count(const event::where &, const event_closure_bool &) const;
-	bool any(const event::where &, const event_closure_bool &) const;
-
-	bool query(const event_closure_bool &) const;
-	bool rquery(const event_closure_bool &) const;
-	void for_each(const event_closure &) const;
-	void rfor_each(const event_closure &) const;
-	size_t count(const event::where &) const;
-	bool any(const event::where &) const;
+	bool _query_(const event::where &, const event_closure_bool &) const override;
+	bool _rquery_(const event::where &, const event_closure_bool &) const override;
 
 	events(const id &room_id)
 	:room_id{room_id}
@@ -92,21 +80,12 @@ struct ircd::m::room::events
 };
 
 struct ircd::m::room::state
+:m::events
 {
 	id room_id;
 
-	using event_closure = std::function<void (const event &)>;
-	using event_closure_bool = std::function<bool (const event &)>;
-
-	bool query(const event::where &, const event_closure_bool &) const;
-	void for_each(const event::where &, const event_closure &) const;
-	size_t count(const event::where &, const event_closure_bool &) const;
-	bool any(const event::where &, const event_closure_bool &) const;
-
-	bool query(const event_closure_bool &) const;
-	void for_each(const event_closure &) const;
-	size_t count(const event::where &) const;
-	bool any(const event::where &) const;
+	bool _query_(const event::where &, const event_closure_bool &) const override;
+	bool _rquery_(const event::where &, const event_closure_bool &) const override;
 
 	state(const id &room_id)
 	:room_id{room_id}

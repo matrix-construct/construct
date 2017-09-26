@@ -23,35 +23,39 @@
  */
 
 #pragma once
-#define HAVE_IRCD_M_H
-
-
-#include "m/error.h"
-#include "m/id.h"
-#include "m/event.h"
-#include "m/events.h"
-#include "m/room.h"
-#include "m/user.h"
-#include "m/filter.h"
-#include "m/request.h"
-#include "m/session.h"
-
-namespace ircd::m::dbs
-{
-	struct init
-	{
-		init();
-		~init() noexcept;
-	};
-}
+#define HAVE_IRCD_M_EVENTS_H
 
 namespace ircd::m
 {
-	struct init
-	{
-		dbs::init dbs;
-
-		init();
-		~init() noexcept;
-	};
+	struct events;
 }
+
+struct ircd::m::events
+{
+	using event_closure = std::function<void (const event &)>;
+	using event_closure_bool = std::function<bool (const event &)>;
+
+	virtual bool _query_(const event::where &, const event_closure_bool &) const;
+	virtual bool _rquery_(const event::where &, const event_closure_bool &) const;
+
+	bool query(const event::where &, const event_closure_bool &) const;
+	bool query(const event_closure_bool &) const;
+
+	bool rquery(const event::where &, const event_closure_bool &) const;
+	bool rquery(const event_closure_bool &) const;
+
+	void for_each(const event::where &, const event_closure &) const;
+	void for_each(const event_closure &) const;
+
+	void rfor_each(const event::where &, const event_closure &) const;
+	void rfor_each(const event_closure &) const;
+
+	size_t count(const event::where &, const event_closure_bool &) const;
+	size_t count(const event::where &) const;
+
+	bool test(const event::where &, const event_closure_bool &) const;
+	bool test(const event::where &) const;
+
+	events() = default;
+	virtual ~events() noexcept;
+};
