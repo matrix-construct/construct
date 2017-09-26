@@ -28,7 +28,7 @@
 //
 namespace ircd
 {
-	IRCD_EXCEPTION(ircd::error, bad_lex_cast)
+	IRCD_EXCEPTION_HIDENAME(ircd::error, bad_lex_cast)
 
 	template<class T> bool try_lex_cast(const string_view &);
 	template<> bool try_lex_cast<std::string>(const string_view &);       // stub always true
