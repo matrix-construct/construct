@@ -224,7 +224,7 @@ ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp
 
 bool
 ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
-                                 const std::nothrow_t &)
+                                const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_at(tp);

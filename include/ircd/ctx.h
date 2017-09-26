@@ -122,12 +122,18 @@ namespace ircd
 	using ctx::sleep;
 }
 
+/// This overload matches ::sleep() and acts as a drop-in for ircd contexts.
+/// interruption point.
 inline void
 ircd::ctx::this_ctx::sleep(const int &secs)
 {
 	sleep(seconds(secs));
 }
 
+/// Yield the context for a period of time and ignore notifications. sleep()
+/// is like wait() but it only returns after the timeout and not because of a
+/// note.
+/// interruption point.
 template<class duration>
 void
 ircd::ctx::this_ctx::sleep(const duration &d)
@@ -135,6 +141,10 @@ ircd::ctx::this_ctx::sleep(const duration &d)
 	sleep_until(steady_clock::now() + d);
 }
 
+/// Wait for a notification until a point in time. If there is a notification
+/// then context continues normally. If there's never a notification then an
+/// exception (= timeout) is thrown.
+/// interruption point.
 template<class E>
 ircd::throw_overload<E>
 ircd::ctx::this_ctx::wait_until(const time_point &tp)
@@ -143,6 +153,9 @@ ircd::ctx::this_ctx::wait_until(const time_point &tp)
 		throw E();
 }
 
+/// Wait for a notification until a point in time. If there is a notification
+/// then returns true. If there's never a notification then returns false.
+/// interruption point. this is not noexcept.
 template<class E>
 ircd::nothrow_overload<E, bool>
 ircd::ctx::this_ctx::wait_until(const time_point &tp)
@@ -150,6 +163,10 @@ ircd::ctx::this_ctx::wait_until(const time_point &tp)
 	return wait_until(tp, std::nothrow);
 }
 
+/// Wait for a notification for at most some amount of time. If the duration is
+/// reached without a notification then E (= timeout) is thrown. Otherwise,
+/// returns the time remaining on the duration.
+/// interruption point
 template<class E,
          class duration>
 ircd::throw_overload<E, duration>
@@ -159,6 +176,10 @@ ircd::ctx::this_ctx::wait(const duration &d)
 	return ret <= duration(0)? throw E() : ret;
 }
 
+/// Wait for a notification for some amount of time. This function returns
+/// when a context is notified. It always returns the duration remaining which
+/// will be <= 0 to indicate a timeout without notification.
+/// interruption point. this is not noexcept.
 template<class E,
          class duration>
 ircd::nothrow_overload<E, duration>
@@ -170,6 +191,8 @@ ircd::ctx::this_ctx::wait(const duration &d)
 	return duration_cast<duration>(ret);
 }
 
+/// Reference to the currently running context. Call if you expect to be in a
+/// context. Otherwise use the ctx::current pointer.
 inline ircd::ctx::ctx &
 ircd::ctx::cur()
 {
