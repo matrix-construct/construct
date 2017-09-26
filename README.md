@@ -2,30 +2,34 @@
 
 **I**nternet **R**elay **C**hat **d**aemon: *Charybdis*
 
-Charybdis is designed to be fast and highly scalable. It is also designed to be community-
-developed by volunteer contributors over the internet. This makes Charybdis easy to understand,
-modify, audit, and extend.
-
 IRCd is a free and open source server which facilitates real-time communication over the
 internet. It was started in 1988 by Jarkko Oikarinen in the University of Oulu and eventually
-made its way to William Pitcock et al, whom after 2005 developed the project under the alias
+made its way to William Pitcock et al, whom after 2005 developed the project under the brand
 *Charybdis*.
 
 In 2014 a protocol was proposed to reinvigorate real-time communication in lieu of growing
 commercial competition and a lack of innovation from open source alternatives to
-compete. This protcol is known as the **Matrix protocol**.
+compete. This protocol is known as the **Matrix protocol**.
 
-##### IRCd now implements the Matrix protocol.
+**IRCd now implements the Matrix protocol.**
 
 
 # Charybdis/5
 
-Charybdis Five is the first high performance implementation of **Matrix** written in C++. It remains
-true to its roots for being highly scalable, modular and having minimal requirements. Most of the
-old code has been rewritten but with the same architecture and spirit of the original.
+Charybdis is designed to be fast and highly scalable, and to be community
+developed by volunteer contributors over the internet. This mission strives to
+make the software easy to understand, modify, audit, and extend.
+
+Charybdis Five is the first implementation of *Matrix* written in C++. It remains
+true to its roots for being highly scalable, modular and having minimal requirements.
+Most of the old code has been rewritten but with the same architecture and spirit of
+the original.
 
 
-### Dependencies
+## Installation
+
+
+#### Dependencies
 
 **Boost** (1.61 or later) - We have replaced libratbox with the well known and actively
 developed Boost libraries. These are included as a submodule in this repository.
@@ -39,9 +43,6 @@ and have furthered the mission of eliminating the need for external "IRC service
 *Other dependencies:* **OpenSSL**, **zlib**, **snappy** (for rocksdb)
 
 
-### Installation
-
-
 #### Downloading Charybdis
 
 `git clone https://github.com/charybdis-ircd/charybdis`
@@ -50,7 +51,7 @@ and have furthered the mission of eliminating the need for external "IRC service
 	- Verify you have the latest source tree and **are on the Matrix branch**.
 
 
-#### Building from git (production)
+### Building from git (production)
 
 `./autogen.sh`
 `./configure`
@@ -60,11 +61,14 @@ and have furthered the mission of eliminating the need for external "IRC service
 
 #### Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
 
+*This is only intended to allow development with dependencies that have not made
+their way to mainstream systems yet.* **Not for release.**
+
 The developer preview will install charybdis in a specific directory isolated from the
-system. It will not install and avoid using system libraries. Instead it will download
-and build the dependencies from the submodules we have pinned here and build them the
-way we have configured. Charybdis should be executed using those builds. You may need
-to set the `LD_LIBRARY_PATH` to the built libraries. This is not required for release.
+system. It will avoid using system libraries by downloading and building the dependencies
+from the submodules we have pinned here and build them the way we have configured. You may
+need to set the `LD_LIBRARY_PATH` to the built libraries and/or maintain an intact build
+directory.
 
 `./autogen.sh`
 `mkdir build`

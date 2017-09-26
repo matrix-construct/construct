@@ -240,5 +240,3 @@ other words, if you have a prototype like `foo(const std::string &message)` you 
 `message` because std::string is common and *what* the string is for is otherwise opaque.
 OTOH, if you have `foo(const options &, const std::string &message)` one should skip the name
 for `options &` as it just adds redundant text to the prototype.
-
-
