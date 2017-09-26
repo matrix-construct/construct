@@ -398,6 +398,74 @@ ircd::m::room::send(json::iov &event)
 }
 
 bool
+ircd::m::room::members::_rquery_(const event::where &where,
+                                 const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&where
+	};
+
+	//TODO: ???
+	static const size_t max_type_size
+	{
+		256
+	};
+
+	const auto key_max
+	{
+		room::id::buf::SIZE + max_type_size
+	};
+
+	size_t key_len;
+	char key[key_max]; key[0] = '\0';
+	key_len = strlcat(key, room_id, sizeof(key));
+	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
+
+	for(auto it(cursor.rbegin(key)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::room::members::_query_(const event::where &where,
+                                const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&where
+	};
+
+	//TODO: ???
+	static const size_t max_type_size
+	{
+		256
+	};
+
+	const auto key_max
+	{
+		room::id::buf::SIZE + max_type_size
+	};
+
+	size_t key_len;
+	char key[key_max]; key[0] = '\0';
+	key_len = strlcat(key, room_id, sizeof(key));
+	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
+
+	for(auto it(cursor.begin(key)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
 ircd::m::room::state::_rquery_(const event::where &where,
                                const event_closure_bool &closure)
 const

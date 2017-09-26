@@ -39,6 +39,7 @@ struct ircd::m::room
 	struct alias;
 	struct events;
 	struct state;
+	struct members;
 
 	using id = m::id::room;
 
@@ -92,6 +93,23 @@ struct ircd::m::room::state
 	{}
 
 	state(const room &room)
+	:room_id{room.room_id}
+	{}
+};
+
+struct ircd::m::room::members
+:m::events
+{
+	id room_id;
+
+	bool _query_(const event::where &, const event_closure_bool &) const override;
+	bool _rquery_(const event::where &, const event_closure_bool &) const override;
+
+	members(const id &room_id)
+	:room_id{room_id}
+	{}
+
+	members(const room &room)
 	:room_id{room.room_id}
 	{}
 };
