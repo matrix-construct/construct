@@ -94,9 +94,10 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 		return &this->operator*();
 	}
 
-  protected:
 	string_view row_key() const;
 	bool row_valid() const;
+
+  protected:
 	bool seek_row();
 
   public:
