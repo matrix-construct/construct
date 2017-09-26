@@ -42,11 +42,11 @@ struct ircd::db::cursor
 	struct index index;
 	const where_type *where{nullptr};
 
-	const_iterator end(const string_view &key);
-	const_iterator begin(const string_view &key);
+	const_iterator end(const string_view &key = {});
+	const_iterator begin(const string_view &key = {});
 
-	const_reverse_iterator rend(const string_view &key);
-	const_reverse_iterator rbegin(const string_view &key);
+	const_reverse_iterator rend(const string_view &key = {});
+	const_reverse_iterator rbegin(const string_view &key = {});
 
 	cursor(const string_view &index, const where_type *const &where = nullptr)
 	:index{*d, index}
