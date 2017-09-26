@@ -965,7 +965,10 @@ ircd::m::indexer::concat::operator()(const event &event,
                                      db::iov &iov)
 const
 {
-	const size_t buf_max
+	if(!iov.has(db::op::SET, col_a) || !iov.has(db::op::SET, col_b))
+		return;
+
+	static const size_t buf_max
 	{
 		1024
 	};
@@ -1018,7 +1021,10 @@ ircd::m::indexer::concat_v::operator()(const event &event,
                                        db::iov &iov)
 const
 {
-	const size_t buf_max
+	if(!iov.has(db::op::SET, col_c) || !iov.has(db::op::SET, col_b))
+		return;
+
+	static const size_t buf_max
 	{
 		1024
 	};
@@ -1080,7 +1086,10 @@ ircd::m::indexer::concat_2v::operator()(const event &event,
                                         db::iov &iov)
 const
 {
-	const size_t buf_max
+	if(!iov.has(db::op::SET, col_c) || !iov.has(db::op::SET, col_b0) || !iov.has(db::op::SET, col_b1))
+		return;
+
+	static const size_t buf_max
 	{
 		2048
 	};
