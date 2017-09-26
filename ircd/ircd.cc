@@ -29,80 +29,129 @@ namespace ircd
 {
 	extern const uint boost_version[3];
 
-	bool debugmode;                              // set by command line
-
+	enum runlevel _runlevel;
+	const enum runlevel &runlevel{_runlevel};
+	runlevel_handler runlevel_changed;
 	boost::asio::io_service *ios;                // user's io service
+	ctx::ctx *main_context;
+	bool debugmode;
 
-	bool main_finish;                            // Set by stop() to request main context exit
-	bool _main_exited;                           // Set when IRCd is finished
-	const bool &main_exited(_main_exited);       // Read-only observer linkage for _main_exited.
-	main_exit_cb main_exit_func;                 // Called when main context exits
-	ctx::ctx *main_context;                      // Reference to main context
-
+	void set_runlevel(const enum runlevel &);
 	void init_rlimit();
-	void main_exiting() noexcept;
 	void main();
 }
 
 void
-ircd::init(boost::asio::io_service &io_service,
-           const std::string &configfile,
-           main_exit_cb main_exit_func)
+ircd::init(boost::asio::io_service &ios,
+           runlevel_handler function)
 {
-	ircd::ios = &io_service;
-	main_finish = false;
-	_main_exited = false;
+	init(ios, std::string{}, std::move(function));
+}
+
+///
+/// Sets up the IRCd and its main context, then returns without blocking.
+//
+/// Pass your io_service instance, it will share it with the rest of your program.
+/// An exception will be thrown on error.
+///
+/// This function will setup the main program loop of libircd. The execution will
+/// occur when your io_service.run() or poll() is further invoked.
+///
+void
+ircd::init(boost::asio::io_service &ios,
+           const std::string &configfile,
+           runlevel_handler runlevel_changed)
+{
+	assert(runlevel == runlevel::STOPPED);
+	ircd::ios = &ios;
 	init_rlimit();
 
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
 	log::mark("START");
 
-	log::info("%s. boost %u.%u.%u. rocksdb %s. %s configured %s %s",
+	ircd::context main_context
+	{
+		"main", 256_KiB, &ircd::main, context::POST
+	};
+
+	ircd::main_context = main_context.detach();
+	ircd::runlevel_changed = std::move(runlevel_changed);
+	log::info("%s. boost %u.%u.%u. rocksdb %s.",
 	          PACKAGE_STRING,
 	          boost_version[0],
 	          boost_version[1],
 	          boost_version[2],
-	          db::version,
+	          db::version);
+
+	log::info("%s %ld %s. configured: %s. compiled: %s %s",
 	          BRANDING_VERSION,
+	          __cplusplus,
+	          __VERSION__,
 	          RB_DATE_CONFIGURED,
+	          __TIMESTAMP__,
 	          RB_DEBUG? "(DEBUG MODE)" : "");
 
-	if(main_exit_func)
-	{
-		log::debug("User set an exit callback");
-		at_main_exit(std::move(main_exit_func));
-	}
-
-	// The master of ceremonies runs the show after this function returns and ios.run().
-	main_context = context("main", 8_MiB, ircd::main).detach();       //TODO: optimize stack size
-
-	log::debug("IRCd pre-main initialization completed.");
+	ircd::set_runlevel(runlevel::READY);
 }
 
-void
+///
+/// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this
+/// function will return immediately. main_exit_cb will be called when IRCd
+/// has no more work for the ios (main_exit_cb will be the last operation from
+/// IRCd posted to the ios).
+///
+/// This function is the proper way to shutdown libircd after an init(), and while
+/// your io_service.run() is invoked without stopping your io_service shared by
+/// other activities unrelated to libircd. If your io_service has no other activities
+/// the run() will then return.
+///
+/// This is useful when your other activities prevent run() from returning.
+///
+bool
 ircd::stop()
+noexcept
 {
-	main_finish = true;
+	if(runlevel != runlevel::RUN)
+		return false;
 
-	if(main_context)
-		ctx::notify(*main_context);
+	if(!main_context)
+		return false;
+
+	ctx::notify(*main_context);
+	return true;
 }
 
 /// Main context; Main program loop. Do not call this function directly.
-/// This is created by the user of libircd calling ircd::init(). It is shutdown
-/// by the user of libircd calling ircd::stop(). It is scheduled by the user's
-/// io_service.run().
+///
+/// This function manages the lifetime for all resources and subsystems
+/// that don't/can't have their own static initialization. When this
+/// function is entered, subsystem init objects are constructed on the
+/// frame. The lifetime of those objects is the handle to the lifetime
+/// of the subsystem, so destruction will shut down that subsystem.
+///
+/// The status of this function and IRCd overall can be observed through
+/// the ircd::runlevel. The ircd::runlevel_changed callback can be set
+/// to be notified on a runlevel change. The user should wait for a runlevel
+/// of STOPPED before destroying IRCd related resources and stopping their
+/// io_service from running more jobs.
+///
 void
 ircd::main()
 try
 {
-	log::debug("IRCd entered main context.");
-	const unwind main_exit(&main_exiting);   // The user is notified when this function ends
+	// When this function is entered IRCd will transition to START indicating
+	// that subsystems are initializing.
+	ircd::set_runlevel(runlevel::START);
 
-	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties their life
-	// to the main context. Initialization can also occur in ircd::init() or static initialization
-	// itself if either are more appropriate.
+	// When this function completes, subsystems are done shutting down and IRCd
+	// transitions to STOPPED.
+	const unwind stopped{std::bind(&ircd::set_runlevel, runlevel::STOPPED)};
+
+	// These objects are the init()'s and fini()'s for each subsystem.
+	// Appearing here ties their life to the main context. Initialization can
+	// also occur in ircd::init() or static initialization itself if either are
+	// more appropriate.
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	socket::init _socket_;   // Socket/Networking
@@ -111,16 +160,24 @@ try
 	js::init _js_;           // SpiderMonkey
 	m::init _matrix_;        // Matrix
 
-	// This is the main program loop. Right now all it does is sleep until notified to
-	// break with a clean shutdown. Other subsystems may spawn their own main loops, but
-	// they all must cleanly complete when this completes.
-	log::notice("IRCd ready"); do
-	{
-		ctx::wait();
-	}
-	while(!main_finish);
+	// IRCd will now transition to the RUN state indicating full functionality.
+	ircd::set_runlevel(runlevel::RUN);
 
-	log::notice("IRCd terminating");
+	// When the call to wait() below completes, IRCd exits from the RUN state
+	// and enters one of the two states below depending on whether the unwind
+	// is taking place normally or because of an exception.
+	const unwind::nominal nominal{std::bind(&ircd::set_runlevel, runlevel::STOP)};
+	const unwind::exceptional exceptional{std::bind(&ircd::set_runlevel, runlevel::FAULT)};
+
+	// This call blocks until the main context is notified or interrupted etc.
+	// Waiting here will hold open this stack with all of the above objects
+	// living on it. Once this call completes this function effectively
+	// executes backwards from this point and shuts down IRCd.
+	ctx::wait();
+}
+catch(const ctx::interrupted &e)
+{
+	log::warning("IRCd main interrupted...");
 }
 catch(const std::exception &e)
 {
@@ -128,36 +185,60 @@ catch(const std::exception &e)
 	std::terminate();
 }
 
-//
-// Cleanup function for the main context.
-//
 void
-ircd::main_exiting()
-noexcept try
+ircd::set_runlevel(const enum runlevel &new_runlevel)
+try
 {
-	if(main_exit_func)
-	{
-		// This function will notify the user of IRCd shutdown. The notification is
-		// posted to the io_service ensuring THERE IS NO CONTINUATION ON THIS STACK by
-		// the user, who is then free to destruct all elements of IRCd.
-		log::notice("Notifying user of IRCd completion");
-		ios->post(main_exit_func);
-	}
+	log::debug("IRCd runlevel transition from '%s' to '%s'%s",
+	           reflect(ircd::runlevel),
+	           reflect(new_runlevel),
+	           ircd::runlevel_changed? " (notifying user)" : "");
 
-	_main_exited = true;
-	main_context = nullptr;
+	ircd::_runlevel = new_runlevel;
+
+	// This function will notify the user of the change to IRCd. The
+	// notification is posted to the io_service ensuring THERE IS NO
+	// CONTINUATION ON THIS STACK by the user.
+	if(ircd::runlevel_changed)
+		ios->post([new_runlevel]
+		{
+			ircd::runlevel_changed(new_runlevel);
+		});
+
+	log::notice("IRCd %s", reflect(ircd::runlevel));
 }
 catch(const std::exception &e)
 {
-	log::critical("main context exit: %s", e.what());
+	log::critical("IRCd runlevel change to '%s': %s",
+	              reflect(new_runlevel),
+	              e.what());
+
 	std::terminate();
 }
 
-void
-ircd::at_main_exit(main_exit_cb main_exit_func)
+ircd::string_view
+ircd::reflect(const enum runlevel &level)
 {
-	ircd::main_exit_func = std::move(main_exit_func);
+	switch(level)
+	{
+		case runlevel::FAULT:     return "FAULT";
+		case runlevel::STOPPED:   return "STOPPED";
+		case runlevel::READY:     return "READY";
+		case runlevel::START:     return "START";
+		case runlevel::RUN:       return "RUN";
+		case runlevel::STOP:      return "STOP";
+	}
+
+	return "??????";
 }
+
+const uint
+ircd::boost_version[3]
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
 
 void
 #ifdef HAVE_SYS_RESOURCE_H
@@ -184,14 +265,6 @@ ircd::init_rlimit()
 {
 }
 #endif
-
-const uint
-ircd::boost_version[3]
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
 
 // namespace ircd {
 

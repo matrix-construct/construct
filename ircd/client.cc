@@ -33,14 +33,14 @@ namespace ircd {
 // (or idle mode) after which it is disconnected.
 const auto async_timeout
 {
-	3h
+	300s
 };
 
 // Time limit for how long a connected client can be in "request mode." This
 // should never be hit unless there's an error in the handling code.
 const auto request_timeout
 {
-	300s
+	60s
 };
 
 // The pool of request contexts. When a client makes a request it does so by acquiring

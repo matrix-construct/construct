@@ -52,6 +52,7 @@ console_spawn()
 
 void
 console_cancel()
+try
 {
 	if(!console_active)
 		return;
@@ -60,6 +61,11 @@ console_cancel()
 		return;
 
 	console_in->cancel();
+	console_in->close();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("Interrupting console: %s", e.what());
 }
 
 void

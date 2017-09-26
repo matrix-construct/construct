@@ -123,13 +123,21 @@ try
 
 	// Because we registered signal handlers with the io_service, ios->run()
 	// is now shared between those handlers and libircd. This means the run()
-	// won't return even if ircd::stop() is called. We use the callback to then
-	// cancel the handlers allowing run() to return and the program to exit.
-	ircd::at_main_exit([]
+	// won't return even if we call ircd::stop(). We use the callback to then
+	// cancel the handlers so run() can return and the program can exit.
+	ircd::runlevel_changed = [](const enum ircd::runlevel &mode)
 	{
-		// Entered when IRCd's main context has finished.
-		sigs.cancel();
-	});
+		switch(mode)
+		{
+			case ircd::runlevel::STOPPED:
+			case ircd::runlevel::FAULT:
+				sigs.cancel();
+				break;
+
+			default:
+				break;
+		}
+	};
 
 	// If the user wants to immediately drop to a command line without having to
 	// send a ctrl-c for it, that is provided here.

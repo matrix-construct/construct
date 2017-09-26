@@ -36,42 +36,28 @@
 ///
 namespace ircd
 {
-	extern bool debugmode;            ///< Toggled by command line to indicate debug behavior
-	extern const bool &main_exited;   ///< Set when main context has finished.
+	struct init;
 
-	/// The signature of the callback indicating when IRCd's main context has completed.
-	using main_exit_cb = std::function<void ()>;
+	enum class runlevel;
+	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
-	///
-	/// Sets up the IRCd and its main context, then returns without blocking.
-	//
-	/// Pass your io_service instance, it will share it with the rest of your program.
-	/// An exception will be thrown on error.
-	///
-	/// This function will setup the main program loop of libircd. The execution will
-	/// occur when your io_service.run() or poll() is further invoked. For an explanation
-	/// of the callback, see the documentation for ircd::stop().
-	///
-	void init(boost::asio::io_service &ios, const std::string &newconf_path, main_exit_cb = nullptr);
+	extern bool debugmode;                      ///< Toggled by command line to indicate debug behavior
+	extern const enum runlevel &runlevel;       ///< Reflects current running mode of library
+	extern runlevel_handler runlevel_changed;   ///< User hook to get called on runlevel change.
 
-	///
-	/// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this
-	/// function will return immediately. main_exit_cb will be called when IRCd
-	/// has no more work for the ios (main_exit_cb will be the last operation from
-	/// IRCd posted to the ios).
-	///
-	/// This function is the proper way to shutdown libircd after an init(), and while
-	/// your io_service.run() is invoked without stopping your io_service shared by
-	/// other activities unrelated to libircd. If your io_service has no other activities
-	/// the run() will then return.
-	///
-	/// This is useful when your other activities prevent run() from returning.
-	///
-	void stop();
+	string_view reflect(const enum runlevel &);
 
-	///
-	/// Replaces the callback passed to init() which will indicate libircd completion.
-	/// This can be called anytime between init() and stop() to make that replacement.
-	///
-	void at_main_exit(main_exit_cb);
+	void init(boost::asio::io_service &ios, const std::string &conf, runlevel_handler = {});
+	void init(boost::asio::io_service &ios, runlevel_handler = {});
+	bool stop() noexcept;
 }
+
+enum class ircd::runlevel
+{
+	FAULT    = -1,
+	STOPPED  = 0,
+	READY    = 1,
+	START    = 2,
+	RUN      = 3,
+	STOP     = 4,
+};
