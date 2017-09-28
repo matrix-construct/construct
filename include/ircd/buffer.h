@@ -76,8 +76,8 @@ namespace ircd::buffer
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
 	template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
-	template<class it> size_t copy(mutable_buffer &dst, const buffer<it> &src);
-	size_t copy(mutable_buffer &dst, const string_view &src);
+	template<class it> size_t copy(const mutable_buffer &dst, const buffer<it> &src);
+	size_t copy(const mutable_buffer &dst, const string_view &src);
 	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
 
 	// Iterable of buffers tools
@@ -357,7 +357,7 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 }
 
 inline size_t
-ircd::buffer::copy(mutable_buffer &dst,
+ircd::buffer::copy(const mutable_buffer &dst,
                    const string_view &s)
 {
 	return copy(dst, const_buffer{s});
@@ -365,7 +365,7 @@ ircd::buffer::copy(mutable_buffer &dst,
 
 template<class it>
 size_t
-ircd::buffer::copy(mutable_buffer &dst,
+ircd::buffer::copy(const mutable_buffer &dst,
                    const buffer<it> &src)
 {
 	auto e(begin(dst));
