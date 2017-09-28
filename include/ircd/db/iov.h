@@ -27,6 +27,7 @@ namespace ircd::db
 {
 	struct iov;
 
+	bool test(const iov &, const std::function<bool (const delta &)> &);
 	bool until(const iov &, const std::function<bool (const delta &)> &);
 	void for_each(const iov &, const std::function<void (const delta &)> &);
 	std::string debug(const iov &);

@@ -1324,6 +1324,20 @@ ircd::db::until(const iov &t,
 	return h._continue;
 }
 
+/// Iterate the iov using the "test protocol"
+/// reminder: the closure returns true to break, false to continue;
+/// returns true if broken early, false if the end reached.
+bool
+ircd::db::test(const iov &t,
+               const std::function<bool (const delta &)> &closure)
+{
+	return !until(t, [&closure]
+	(const delta &delta)
+	{
+		return !closure(delta);
+	});
+}
+
 ///
 /// handler
 ///
@@ -1529,11 +1543,11 @@ ircd::db::iov::has(const op &op,
                    const string_view &col)
 const
 {
-	return !until(*this, [&op, &col]
+	return test(*this, [&op, &col]
 	(const auto &delta)
 	{
-		return std::get<0>(delta) == op &&
-		       std::get<1>(delta) == col;
+		return std::get<delta.OP>(delta) == op &&
+		       std::get<delta.COL>(delta) == col;
 	});
 }
 
@@ -1543,12 +1557,12 @@ ircd::db::iov::has(const op &op,
                    const string_view &key)
 const
 {
-	return !until(*this, [&op, &col, &key]
+	return test(*this, [&op, &col, &key]
 	(const auto &delta)
 	{
-		return std::get<0>(delta) == op &&
-		       std::get<1>(delta) == col &&
-		       std::get<2>(delta) == key;
+		return std::get<delta.OP>(delta) == op &&
+		       std::get<delta.COL>(delta) == col &&
+		       std::get<delta.KEY>(delta) == key;
 	});
 }
 
@@ -1558,7 +1572,7 @@ ircd::db::iov::at(const op &op,
 const
 {
 	const auto ret(get(op, col));
-	if(unlikely(!std::get<2>(ret)))
+	if(unlikely(!std::get<ret.KEY>(ret)))
 		throw not_found("db::iov::at(%s, %s): no matching delta in transaction",
 		                reflect(op),
 		                col);
@@ -1571,16 +1585,16 @@ ircd::db::iov::get(const op &op,
 const
 {
 	delta ret;
-	until(*this, [&ret, &op, &col]
+	test(*this, [&ret, &op, &col]
 	(const delta &delta)
 	{
-		if(std::get<0>(delta) == op &&
-		   std::get<1>(delta) == col)
+		if(std::get<delta.OP>(delta) == op &&
+		   std::get<delta.COL>(delta) == col)
 		{
 			ret = delta;
-			return false;
+			return true;
 		}
-		else return true;
+		else return false;
 	});
 
 	return ret;
@@ -1608,17 +1622,17 @@ ircd::db::iov::get(const op &op,
 const
 {
 	string_view ret;
-	until(*this, [&ret, &op, &col, &key]
+	test(*this, [&ret, &op, &col, &key]
 	(const delta &delta)
 	{
-		if(std::get<0>(delta) == op &&
-		   std::get<1>(delta) == col &&
-		   std::get<2>(delta) == key)
+		if(std::get<delta.OP>(delta) == op &&
+		   std::get<delta.COL>(delta) == col &&
+		   std::get<delta.KEY>(delta) == key)
 		{
-			ret = std::get<3>(delta);
-			return false;
+			ret = std::get<delta.VAL>(delta);
+			return true;
 		}
-		else return true;
+		else return false;
 	});
 
 	return ret;
