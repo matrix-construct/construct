@@ -25,37 +25,20 @@
 #pragma once
 #define HAVE_IRCD_M_EVENTS_H
 
-namespace ircd::m
+namespace ircd::m::events
 {
-	struct events;
-}
+	using closure = std::function<void (const event &)>;
+	using closure_bool = std::function<bool (const event &)>;
 
-struct ircd::m::events
-{
-	using event_closure = std::function<void (const event &)>;
-	using event_closure_bool = std::function<bool (const event &)>;
+	bool query(const event::query<> &, const closure_bool &);
+	bool query(const closure_bool &);
 
-	virtual bool _query_(const event::where &, const event_closure_bool &) const;
-	virtual bool _rquery_(const event::where &, const event_closure_bool &) const;
+	void for_each(const event::query<> &, const closure &);
+	void for_each(const closure &);
 
-	bool query(const event::where &, const event_closure_bool &) const;
-	bool query(const event_closure_bool &) const;
+	size_t count(const event::query<> &, const closure_bool &);
+	size_t count(const event::query<> &);
 
-	bool rquery(const event::where &, const event_closure_bool &) const;
-	bool rquery(const event_closure_bool &) const;
-
-	void for_each(const event::where &, const event_closure &) const;
-	void for_each(const event_closure &) const;
-
-	void rfor_each(const event::where &, const event_closure &) const;
-	void rfor_each(const event_closure &) const;
-
-	size_t count(const event::where &, const event_closure_bool &) const;
-	size_t count(const event::where &) const;
-
-	bool test(const event::where &, const event_closure_bool &) const;
-	bool test(const event::where &) const;
-
-	events() = default;
-	virtual ~events() noexcept;
+	bool test(const event::query<> &, const closure_bool &);
+	bool test(const event::query<> &);
 };

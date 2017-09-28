@@ -204,14 +204,15 @@ sync(client &client, const resource::request &request)
 	};
 
 	// The ircd.tape.head
-	const m::event::where::equal query
+	const m::event::query<m::event::where::equal> query
 	{
+		{ "room_id",    m::user::sessions.room_id        },
 		{ "type",       "ircd.tape.head"                 },
 		{ "state_key",  request.query.at("access_token") },
 	};
 
 	m::event::id::buf head;
-	if(!sessions.test(query, [&head](const auto &event)
+	if(!m::events::test(query, [&head](const auto &event)
 	{
 		const json::object &content
 		{

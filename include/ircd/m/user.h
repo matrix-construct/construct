@@ -31,13 +31,10 @@ namespace ircd::m
 
 	extern user me;
 	extern room my_room;
-	extern room filters;
 }
 
 struct ircd::m::user
 {
-	struct rooms;
-
 	using id = m::id::user;
 
 	id user_id;
@@ -53,19 +50,6 @@ struct ircd::m::user
 	void deactivate(const json::members &contents = {});
 
 	user(const id &user_id)
-	:user_id{user_id}
-	{}
-};
-
-struct ircd::m::user::rooms
-:m::events
-{
-	id user_id;
-
-	bool _query_(const event::where &, const event_closure_bool &) const override;
-	bool _rquery_(const event::where &, const event_closure_bool &) const override;
-
-	rooms(const id &user_id)
 	:user_id{user_id}
 	{}
 };

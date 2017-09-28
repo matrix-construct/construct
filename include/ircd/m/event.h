@@ -83,7 +83,8 @@ struct ircd::m::event
 	using cursor = db::cursor<events, event>;
 	using const_iterator = cursor::const_iterator;
 	using iterator = const_iterator;
-	using where = cursor::where_type;
+	using where = db::where;
+	template<enum db::where w = where::noop> using query = cursor::query_type<w>;
 
 	// Queue of contexts waiting to see the next inserted event
 	static ctx::view<const event> inserted;

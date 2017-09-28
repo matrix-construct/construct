@@ -340,27 +340,12 @@ bool
 ircd::m::room::is_member(const m::id::user &user_id,
                          const string_view &membership)
 {
-	const m::event::where::equal query
+	const members members
 	{
-		{ "type",        "m.room.member" },
-		{ "state_key",    user_id        }
+		room_id
 	};
 
-	return events{*this}.test(query, [&membership]
-	(const auto &event)
-	{
-		const json::object &content
-		{
-			json::val<m::name::content>(event)
-		};
-
-		const auto &existing
-		{
-			unquote(content["membership"])
-		};
-
-		return membership == existing;
-	});
+	return members.membership(user_id, membership);
 }
 
 ircd::m::event::id::buf
@@ -398,143 +383,51 @@ ircd::m::room::send(json::iov &event)
 }
 
 bool
-ircd::m::room::members::_rquery_(const event::where &where,
-                                 const event_closure_bool &closure)
+ircd::m::room::members::membership(const m::id::user &user_id,
+                                   const string_view &membership)
 const
 {
-	event::cursor cursor
+	if(membership.empty())
+		return is_member(user_id);
+
+	const event::query<event::where::equal> member_event
 	{
-		"event_id for type,state_key in room_id",
-		&where
+		{ "room_id",      room_id           },
+		{ "type",        "m.room.member"    },
+		{ "state_key",    user_id           },
 	};
 
-	//TODO: ???
-	static const size_t max_type_size
+	const event::query<event::where::test> membership_test{[&membership]
+	(const auto &event)
 	{
-		256
-	};
+		const json::object &content
+		{
+			json::at<m::name::content>(event)
+		};
 
-	const auto key_max
-	{
-		room::id::buf::SIZE + max_type_size
-	};
+		const auto &existing_membership
+		{
+			unquote(content.at("membership"))
+		};
 
-	size_t key_len;
-	char key[key_max]; key[0] = '\0';
-	key_len = strlcat(key, room_id, sizeof(key));
-	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
+		return membership == existing_membership;
+	}};
 
-	for(auto it(cursor.rbegin(key)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
+	return m::events::test(member_event && membership_test);
 }
 
 bool
-ircd::m::room::members::_query_(const event::where &where,
-                                const event_closure_bool &closure)
+ircd::m::room::members::is_member(const m::id::user &user_id)
 const
 {
-	event::cursor cursor
+	const event::query<event::where::equal> member_event
 	{
-		"event_id for type,state_key in room_id",
-		&where
+		{ "room_id",      room_id           },
+		{ "type",        "m.room.member"    },
+		{ "state_key",    user_id           },
 	};
 
-	//TODO: ???
-	static const size_t max_type_size
-	{
-		256
-	};
-
-	const auto key_max
-	{
-		room::id::buf::SIZE + max_type_size
-	};
-
-	size_t key_len;
-	char key[key_max]; key[0] = '\0';
-	key_len = strlcat(key, room_id, sizeof(key));
-	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
-
-	for(auto it(cursor.begin(key)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::room::state::_rquery_(const event::where &where,
-                               const event_closure_bool &closure)
-const
-{
-	event::cursor cursor
-	{
-		"event_id for type,state_key in room_id",
-		&where
-	};
-
-	for(auto it(cursor.rbegin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::room::state::_query_(const event::where &where,
-                              const event_closure_bool &closure)
-const
-{
-	event::cursor cursor
-	{
-		"event_id for type,state_key in room_id",
-		&where
-	};
-
-	for(auto it(cursor.begin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::room::events::_rquery_(const event::where &where,
-                                const event_closure_bool &closure)
-const
-{
-	event::cursor cursor
-	{
-		"event_id in room_id",
-		&where
-	};
-
-	for(auto it(cursor.rbegin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::room::events::_query_(const event::where &where,
-                               const event_closure_bool &closure)
-const
-{
-	event::cursor cursor
-	{
-		"event_id in room_id",
-		&where
-	};
-
-	for(auto it(cursor.begin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
+	return m::events::test(member_event);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -623,13 +516,14 @@ bool
 ircd::m::user::is_password(const string_view &supplied_password)
 const
 {
-	const m::event::where::equal member_event
+	const event::query<event::where::equal> member_event
 	{
-		{ "type",        "ircd.password" },
-		{ "state_key",    user_id        }
+		{ "room_id",      accounts.room_id  },
+		{ "type",        "ircd.password"    },
+		{ "state_key",    user_id           },
 	};
 
-	const m::event::where::test correct_password{[&supplied_password]
+	const event::query<event::where::test> correct_password{[&supplied_password]
 	(const auto &event)
 	{
 		const json::object &content
@@ -650,27 +544,22 @@ const
 		member_event && correct_password
 	};
 
-	// The query to the database is made here. Know that this ircd::ctx
-	// may suspend and global state may have changed after this call.
-	const room::events events
-	{
-		accounts
-	};
-
-	return events.test(member_event && correct_password);
+	return m::events::test(member_event && correct_password);
 }
 
 bool
 ircd::m::user::is_active()
 const
 {
-	const m::event::where::equal member_event
+	const auto &room_id{accounts.room_id};
+	const m::event::query<event::where::equal> member_event
 	{
+		{ "room_id",      room_id        },
 		{ "type",        "m.room.member" },
-		{ "state_key",    user_id        }
+		{ "state_key",    user_id        },
 	};
 
-	const m::event::where::test is_joined{[]
+	const m::event::query<event::where::test> is_joined{[]
 	(const auto &event)
 	{
 		const json::object &content
@@ -686,23 +575,161 @@ const
 		return membership == "join";
 	}};
 
-	const room::events events
+	return events::test(member_event && is_joined);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// query lib
+//
+/*
+bool
+ircd::m::room::members::_rquery_(const event::query<> &query,
+                                 const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
 	{
-		accounts
+		"event_id for type,state_key in room_id",
+		&query
 	};
 
-	return events.test(member_event && is_joined);
+	//TODO: ???
+	static const size_t max_type_size
+	{
+		256
+	};
+
+	const auto key_max
+	{
+		room::id::buf::SIZE + max_type_size
+	};
+
+	size_t key_len;
+	char key[key_max]; key[0] = '\0';
+	key_len = strlcat(key, room_id, sizeof(key));
+	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
+	for(auto it(cursor.rbegin(key)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
 }
 
 bool
-ircd::m::user::rooms::_rquery_(const event::where &where,
+ircd::m::room::members::_query_(const event::query<> &query,
+                                const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&query
+	};
+
+	//TODO: ???
+	static const size_t max_type_size
+	{
+		256
+	};
+
+	const auto key_max
+	{
+		room::id::buf::SIZE + max_type_size
+	};
+
+	size_t key_len;
+	char key[key_max]; key[0] = '\0';
+	key_len = strlcat(key, room_id, sizeof(key));
+	key_len = strlcat(key, "..m.room.member", sizeof(key)); //TODO: prefix protocol
+	for(auto it(cursor.begin(key)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::room::state::_rquery_(const event::query<> &query,
+                               const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&query
+	};
+
+	for(auto it(cursor.rbegin(room_id)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::room::state::_query_(const event::query<> &query,
+                              const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&query
+	};
+
+	for(auto it(cursor.begin(room_id)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::room::events::_rquery_(const event::query<> &query,
+                                const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id in room_id",
+		&query
+	};
+
+	for(auto it(cursor.rbegin(room_id)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::room::events::_query_(const event::query<> &query,
+                               const event_closure_bool &closure)
+const
+{
+	event::cursor cursor
+	{
+		"event_id in room_id",
+		&query
+	};
+
+	for(auto it(cursor.begin(room_id)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::user::rooms::_rquery_(const event::query<> &query,
                                const event_closure_bool &closure)
 const
 {
 	event::cursor cursor
 	{
 		"event_id for room_id in sender",
-		&where
+		&query
 	};
 
 	for(auto it(cursor.rbegin(user_id)); bool(it); ++it)
@@ -713,14 +740,14 @@ const
 }
 
 bool
-ircd::m::user::rooms::_query_(const event::where &where,
+ircd::m::user::rooms::_query_(const event::query<> &query,
                               const event_closure_bool &closure)
 const
 {
 	event::cursor cursor
 	{
 		"event_id for room_id in sender",
-		&where
+		&query
 	};
 
 	for(auto it(cursor.begin(user_id)); bool(it); ++it)
@@ -730,140 +757,8 @@ const
 	return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/events.h
-//
-
-ircd::m::events::~events()
-noexcept
-{
-}
-
 bool
-ircd::m::events::test(const event::where &where)
-const
-{
-	return test(where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-bool
-ircd::m::events::test(const event::where &where,
-                      const event_closure_bool &closure)
-const
-{
-	bool ret{false};
-	query(where, [&ret, &closure]
-	(const auto &event)
-	{
-		ret = closure(event);
-		return true;
-	});
-
-	return ret;
-}
-
-size_t
-ircd::m::events::count(const event::where &where)
-const
-{
-	return count(where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-size_t
-ircd::m::events::count(const event::where &where,
-                       const event_closure_bool &closure)
-const
-{
-	size_t i(0);
-	for_each(where, [&closure, &i](const auto &event)
-	{
-		i += closure(event);
-	});
-
-	return i;
-}
-
-void
-ircd::m::events::rfor_each(const event_closure &closure)
-const
-{
-	const m::event::where::noop where{};
-	rfor_each(where, closure);
-}
-
-void
-ircd::m::events::rfor_each(const event::where &where,
-                           const event_closure &closure)
-const
-{
-	rquery(where, [&closure](const auto &event)
-	{
-		closure(event);
-		return false;
-	});
-}
-
-void
-ircd::m::events::for_each(const event::where &where,
-                          const event_closure &closure)
-const
-{
-	query(where, [&closure](const auto &event)
-	{
-		closure(event);
-		return false;
-	});
-}
-
-void
-ircd::m::events::for_each(const event_closure &closure)
-const
-{
-	const m::event::where::noop where{};
-	for_each(where, closure);
-}
-
-bool
-ircd::m::events::rquery(const event_closure_bool &closure)
-const
-{
-	const m::event::where::noop where{};
-	return rquery(where, closure);
-}
-
-bool
-ircd::m::events::rquery(const event::where &where,
-                        const event_closure_bool &closure)
-const
-{
-	return _rquery_(where, closure);
-}
-
-bool
-ircd::m::events::query(const event_closure_bool &closure)
-const
-{
-	const m::event::where::noop where{};
-	return query(where, closure);
-}
-
-bool
-ircd::m::events::query(const event::where &where,
-                       const event_closure_bool &closure)
-const
-{
-	return _query_(where, closure);
-}
-
-bool
-ircd::m::events::_rquery_(const event::where &where,
+ircd::m::events::_rquery_(const event::query<> &where,
                           const event_closure_bool &closure)
 const
 {
@@ -881,7 +776,7 @@ const
 }
 
 bool
-ircd::m::events::_query_(const event::where &where,
+ircd::m::events::_query_(const event::query<> &where,
                          const event_closure_bool &closure)
 const
 {
@@ -897,6 +792,257 @@ const
 
 	return false;
 }
+*/
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/events.h
+//
+
+bool
+ircd::m::events::test(const event::query<> &where)
+{
+	return test(where, [](const auto &event)
+	{
+		return true;
+	});
+}
+
+bool
+ircd::m::events::test(const event::query<> &where,
+                      const closure_bool &closure)
+{
+	bool ret{false};
+	query(where, [&ret, &closure]
+	(const auto &event)
+	{
+		ret = closure(event);
+		return true;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::events::count(const event::query<> &where)
+{
+	return count(where, [](const auto &event)
+	{
+		return true;
+	});
+}
+
+size_t
+ircd::m::events::count(const event::query<> &where,
+                       const closure_bool &closure)
+{
+	size_t i(0);
+	for_each(where, [&closure, &i](const auto &event)
+	{
+		i += closure(event);
+	});
+
+	return i;
+}
+
+/*
+void
+ircd::m::events::rfor_each(const closure &closure)
+{
+	const event::query<event::where::noop> where{};
+	rfor_each(where, closure);
+}
+
+void
+ircd::m::events::rfor_each(const event::query<> &where,
+                           const closure &closure)
+{
+	rquery(where, [&closure](const auto &event)
+	{
+		closure(event);
+		return false;
+	});
+}
+
+bool
+ircd::m::events::rquery(const closure_bool &closure)
+{
+	const event::query<event::where::noop> where{};
+	return rquery(where, closure);
+}
+
+bool
+ircd::m::events::rquery(const event::query<> &where,
+                        const closure_bool &closure)
+{
+	//return _rquery_(where, closure);
+	return true;
+}
+*/
+
+void
+ircd::m::events::for_each(const event::query<> &where,
+                          const closure &closure)
+{
+	query(where, [&closure](const auto &event)
+	{
+		closure(event);
+		return false;
+	});
+}
+
+void
+ircd::m::events::for_each(const closure &closure)
+{
+	const event::query<event::where::noop> where{};
+	for_each(where, closure);
+}
+
+bool
+ircd::m::events::query(const closure_bool &closure)
+{
+	const event::query<event::where::noop> where{};
+	return query(where, closure);
+}
+
+namespace ircd::m::events
+{
+	bool _query_event_id(const event::query<> &, const closure_bool &);
+	bool _query_in_room_id(const event::query<> &, const closure_bool &, const room::id &);
+	bool _query_for_type_state_key_in_room_id(const event::query<> &, const closure_bool &, const room::id &, const string_view &type = {}, const string_view &state_key = {});
+}
+
+bool
+ircd::m::events::query(const event::query<> &where,
+                       const closure_bool &closure)
+{
+	switch(where.type)
+	{
+		case event::where::equal:
+		{
+			auto &clause
+			{
+				dynamic_cast<const event::query<event::where::equal> &>(where)
+			};
+
+			const auto &value{clause.value};
+			const auto &room_id{json::val<name::room_id>(value)};
+			const auto &type{json::val<name::type>(value)};
+			const auto &state_key{json::val<name::state_key>(value)};
+			if(room_id && type && state_key.defined())
+				return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
+
+			if(room_id && state_key.defined())
+				return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
+
+			if(room_id)
+				return _query_in_room_id(where, closure, room_id);
+
+			break;
+		}
+
+		case event::where::logical_and:
+		{
+			auto &clause
+			{
+				dynamic_cast<const event::query<event::where::logical_and> &>(where)
+			};
+
+			const auto &lhs{*clause.a}, &rhs{*clause.b};
+			const auto reclosure{[&lhs, &rhs, &closure]
+			(const auto &event)
+			{
+				if(!rhs(event))
+					return false;
+
+				return closure(event);
+			}};
+
+			return events::query(lhs, reclosure);
+		}
+
+		default:
+			break;
+	}
+
+	return _query_event_id(where, closure);
+}
+
+bool
+ircd::m::events::_query_event_id(const event::query<> &where,
+                                 const closure_bool &closure)
+{
+	event::cursor cursor
+	{
+		"event_id",
+		&where
+	};
+
+	for(auto it(cursor.begin()); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::events::_query_in_room_id(const event::query<> &query,
+                                   const closure_bool &closure,
+                                   const room::id &room_id)
+{
+	event::cursor cursor
+	{
+		"event_id in room_id",
+		&query
+	};
+
+	for(auto it(cursor.begin(room_id)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::events::_query_for_type_state_key_in_room_id(const event::query<> &query,
+                                                      const closure_bool &closure,
+                                                      const room::id &room_id,
+                                                      const string_view &type,
+                                                      const string_view &state_key)
+{
+	event::cursor cursor
+	{
+		"event_id for type,state_key in room_id",
+		&query
+	};
+
+	static const size_t max_type_size
+	{
+		255
+	};
+
+	static const size_t max_state_key_size
+	{
+		255
+	};
+
+	const auto key_max
+	{
+		room::id::buf::SIZE + max_type_size + max_state_key_size + 2
+	};
+
+	size_t key_len;
+	char key[key_max]; key[0] = '\0';
+	key_len = strlcat(key, room_id, sizeof(key));
+	key_len = strlcat(key, "..", sizeof(key)); //TODO: prefix protocol
+	key_len = strlcat(key, type, sizeof(key)); //TODO: prefix protocol
+	key_len = strlcat(key, state_key, sizeof(key)); //TODO: prefix protocol
+	for(auto it(cursor.begin(key)); bool(it); ++it)
+		if(closure(*it))
+			return true;
+
+	return false;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -907,6 +1053,9 @@ namespace ircd::m
 {
 	void append_indexes(const event &, db::iov &);
 }
+
+// vtable for the db::query partially specialized to m::event as its tuple
+template ircd::db::query<ircd::m::event, ircd::db::where::noop>::~query();
 
 ircd::database *
 ircd::m::event::events
@@ -1045,7 +1194,7 @@ const
 	index[0] = '\0';
 	const auto function
 	{
-		[&index, &buf_max](const auto &val)
+		[&index](const auto &val)
 		{
 			strlcat(index, byte_view<string_view>{val}, buf_max);
 		}
@@ -1101,7 +1250,7 @@ const
 	index[0] = '\0';
 	const auto concat
 	{
-		[&index, &buf_max](const auto &val)
+		[&index](const auto &val)
 		{
 			strlcat(index, byte_view<string_view>{val}, buf_max);
 		}
@@ -1166,7 +1315,7 @@ const
 	index[0] = '\0';
 	const auto concat
 	{
-		[&index, &buf_max](const auto &val)
+		[&index](const auto &val)
 		{
 			strlcat(index, byte_view<string_view>{val}, buf_max);
 		}

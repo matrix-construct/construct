@@ -117,21 +117,17 @@ try
 		request.query.at("access_token")
 	};
 
-	static const m::room::state sessions
-	{
-		m::id::room{"!sessions:cdc.z"}
-	};
-
 	// Sets up the query to find the access_token in the sessions rooms
-	const m::event::where::equal query
+	const m::event::query<m::event::where::equal> query
 	{
 		{ "type",        "ircd.access_token" },
-		{ "state_key",   access_token        }
+		{ "state_key",   access_token        },
+		{ "room_id",     "!sessions:cdc.z"   },
 	};
 
 	const bool result
 	{
-		sessions.test(query, [&request, &access_token](const m::event &event)
+		m::events::test(query, [&request, &access_token](const m::event &event)
 		{
 			// Checks if the access token has expired. Tokens are expired when
 			// an m.room.redaction event is issued for the ircd.access_token

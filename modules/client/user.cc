@@ -44,11 +44,12 @@ try
 		token(request.head.path, '/', 6)
 	};
 
-	const m::event::where::equal query
+	const m::event::query<m::event::where::equal> query
 	{
-		{ "type",        "ircd.filter" },
-		{ "sender",       user_id      },
-		{ "state_key",    filter_id    }
+		{ "room_id",      m::filter::filters.room_id  },
+		{ "type",        "ircd.filter"                },
+		{ "state_key",    filter_id                   },
+		{ "sender",       user_id                     },
 	};
 
 	const auto result{[&client]
@@ -67,12 +68,7 @@ try
 		return true;
 	}};
 
-	const m::room::events filters_room_events
-	{
-		m::filter::filters
-	};
-
-	if(!filters_room_events.test(query, result))
+	if(!m::events::test(query, result))
 		throw m::NOT_FOUND("No matching filter with that ID");
 
 	// Response already made

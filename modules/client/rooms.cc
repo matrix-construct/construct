@@ -49,12 +49,11 @@ resource::response
 get_state(client &client,
           const resource::request &request,
           const string_view &params,
-          const m::room::state &state,
-          const m::event::where &query)
+          const m::event::query<> &query)
 {
 	const auto count
 	{
-		state.count(query)
+		m::events::count(query)
 	};
 
 	if(!count)
@@ -65,7 +64,7 @@ get_state(client &client,
 
 	size_t j(0);
 	json::value ret[count];
-	state.for_each(query, [&count, &j, &ret]
+	m::events::for_each(query, [&count, &j, &ret]
 	(const auto &event)
 	{
 		if(j < count)
@@ -85,32 +84,34 @@ resource::response
 get_state(client &client,
           const resource::request &request,
           const string_view &params,
-          const m::room::state &state,
+          const m::room::id &room_id,
           const string_view &type,
           const string_view &state_key)
 {
-	const m::event::where::equal query
+	const m::event::query<m::event::where::equal> query
 	{
-		{ "type", type },
-		{ "state_key", state_key },
+		{ "room_id",    room_id    },
+		{ "type",       type       },
+		{ "state_key",  state_key  },
 	};
 
-	return get_state(client, request, params, state, query);
+	return get_state(client, request, params, query);
 }
 
 resource::response
 get_state(client &client,
           const resource::request &request,
           const string_view &params,
-          const m::room::state &state,
+          const m::room::id &room_id,
           const string_view &type)
 {
-	const m::event::where::equal query
+	const m::event::query<m::event::where::equal> query
 	{
-		{ "type", type }
+		{ "room_id",    room_id    },
+		{ "type",       type       }
 	};
 
-	return get_state(client, request, params, state, query);
+	return get_state(client, request, params, query);
 }
 
 resource::response
@@ -132,19 +133,19 @@ get_state(client &client,
 		token[3]
 	};
 
-	const m::room::state state
-	{
-		room_id
-	};
-
 	if(type && state_key)
-		return get_state(client, request, params, state, type, state_key);
+		return get_state(client, request, params, room_id, type, state_key);
 
 	if(type)
-		return get_state(client, request, params, state, type);
+		return get_state(client, request, params, room_id, type);
 
-	const m::event::where::noop query;
-	return get_state(client, request, params, state, query);
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "room_id",    room_id    },
+		{ "state_key",  ""         },
+	};
+
+	return get_state(client, request, params, query);
 }
 
 resource::response

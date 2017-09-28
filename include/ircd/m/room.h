@@ -37,8 +37,6 @@ namespace ircd::m
 struct ircd::m::room
 {
 	struct alias;
-	struct events;
-	struct state;
 	struct members;
 
 	using id = m::id::room;
@@ -63,47 +61,12 @@ struct ircd::m::room
 	{}
 };
 
-struct ircd::m::room::events
-:m::events
-{
-	id room_id;
-
-	bool _query_(const event::where &, const event_closure_bool &) const override;
-	bool _rquery_(const event::where &, const event_closure_bool &) const override;
-
-	events(const id &room_id)
-	:room_id{room_id}
-	{}
-
-	events(const room &room)
-	:room_id{room.room_id}
-	{}
-};
-
-struct ircd::m::room::state
-:m::events
-{
-	id room_id;
-
-	bool _query_(const event::where &, const event_closure_bool &) const override;
-	bool _rquery_(const event::where &, const event_closure_bool &) const override;
-
-	state(const id &room_id)
-	:room_id{room_id}
-	{}
-
-	state(const room &room)
-	:room_id{room.room_id}
-	{}
-};
-
 struct ircd::m::room::members
-:m::events
 {
 	id room_id;
 
-	bool _query_(const event::where &, const event_closure_bool &) const override;
-	bool _rquery_(const event::where &, const event_closure_bool &) const override;
+	bool is_member(const m::id::user &) const;
+	bool membership(const m::id::user &, const string_view & = "join") const;
 
 	members(const id &room_id)
 	:room_id{room_id}

@@ -27,46 +27,28 @@ resource events_resource
 	"Events (6.2.3) (10.x)"
 };
 
-const m::id::room::buf accounts_room_id
-{
-	"accounts", "cdc.z"
-};
-
-const m::id::room::buf locops_room_id
-{
-	"locops", "cdc.z"
-};
-
-const m::id::room::buf ircd_room_id
-{
-	"ircd", "cdc.z"
-};
-
 resource::response
 get_events(client &client, const resource::request &request)
 {
-	m::room room
+	const m::room::id &room_id
 	{
-		m::id::room
-		{
-			unquote(request.at("room_id"))
-		}
+		unquote(request["room_id"])
 	};
 
-	const m::room::events events
+	const m::event::query<m::event::where::equal> query
 	{
-		room
+		{ "room_id", room_id }
 	};
 
 	size_t i(0);
-	events.for_each([&i](const auto &event)
+	m::events::for_each(query, [&i](const auto &event)
 	{
 		++i;
 	});
 
 	size_t j(0);
 	json::value ret[i];
-	events.for_each([&i, &j, &ret](const m::event &event)
+	m::events::for_each(query, [&i, &j, &ret](const m::event &event)
 	{
 		if(j < i)
 			ret[j++] = event;
