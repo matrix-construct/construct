@@ -605,9 +605,11 @@ catch(const qi::expectation_failure<const char *> &e)
 {
 	const auto rule(ircd::string(e.what_));
 	const long size(std::distance(e.first, e.last));
-	throw parse_error("Expected JSON %s. You input %zu invalid characters starting with `%s`.",
+	const long cat(std::distance(start, e.first));
+	throw parse_error("Expected %s. You input %zd invalid characters at position %zd: %s",
 	                  between(rule, "<", ">"),
 	                  size,
+	                  cat,
 	                  string_view(e.first, e.first + std::min(size, 64L)));
 }
 
@@ -647,9 +649,11 @@ catch(const qi::expectation_failure<const char *> &e)
 {
 	const auto rule(ircd::string(e.what_));
 	const long size(std::distance(e.first, e.last));
-	throw parse_error("Expected JSON %s. You input %zu invalid characters starting with `%s`.",
+	const long cat(std::distance(string_view::data(), e.first));
+	throw parse_error("Expected %s. You input %zd invalid characters at position %zd: %s.",
 	                  between(rule, "<", ">"),
 	                  size,
+	                  cat,
 	                  string_view(e.first, e.first + std::min(size, 64L)));
 }
 
