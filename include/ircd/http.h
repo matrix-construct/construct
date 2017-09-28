@@ -168,6 +168,7 @@ struct ircd::http::line::header
 struct ircd::http::headers
 {
 	using closure = std::function<void (const line::header &)>;
+	using range = std::pair<const line::header *, const line::header *>;
 
 	headers(parse::capstan &, const closure & = {});
 };
@@ -189,9 +190,15 @@ struct ircd::http::response
 {
 	struct head;
 	struct content;
+	struct chunked;
 
 	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
+
+	response(const code &,
+	         const string_view &content,
+	         const write_closure &,
+	         const headers::range &headers);
 
 	response(const code &,
 	         const string_view &content,
@@ -202,6 +209,28 @@ struct ircd::http::response
 	         content *const & = nullptr,
 	         const proffer & = nullptr,
 	         const headers::closure & = {});
+
+	response() = default;
+};
+
+struct ircd::http::response::chunked
+:response
+{
+	struct chunk;
+
+	const write_closure &closure;
+
+	chunked(const code &,
+	        const write_closure &,
+	        const headers::range &headers);
+
+	chunked(const chunked &) = delete;
+	~chunked() noexcept;
+};
+
+struct ircd::http::response::chunked::chunk
+{
+	chunk(chunked &, const const_buffer &);
 };
 
 struct ircd::http::response::head
@@ -240,7 +269,7 @@ struct ircd::http::request
 	        const string_view &query      = {},
 	        const string_view &content    = {},
 	        const write_closure &         = nullptr,
-	        const std::initializer_list<line::header> & = {});
+	        const headers::range & = {});
 
 	request(parse::capstan &,
 	        content *const & = nullptr,

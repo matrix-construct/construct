@@ -38,6 +38,11 @@ ircd::m::session::operator()(parse::buffer &pb,
 		pb, read_closure(*this)
 	};
 
+	const http::line::header headers[]
+	{
+		{ "Content-Type"s, "application/json"s }
+	};
+
 	http::request
 	{
 		host(remote_addr(*this)),
@@ -46,9 +51,7 @@ ircd::m::session::operator()(parse::buffer &pb,
 		r.query,
 		r.content,
 		write_closure(*this),
-		{
-			{ "Content-Type"s, "application/json"s }
-		}
+		{ headers, headers + (sizeof(headers) / sizeof(http::line::header)) }
 	};
 
 	http::code status;

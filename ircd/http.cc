@@ -44,8 +44,8 @@ namespace ircd::http
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;
 
-	size_t printed_size(const std::initializer_list<line::header> &headers);
-	size_t print(char *const &buf, const size_t &max, const std::initializer_list<line::header> &headers);
+	size_t printed_size(const headers::range &headers);
+	size_t print(char *const &buf, const size_t &max, const headers::range &headers);
 }
 
 std::map<ircd::http::code, ircd::string_view> ircd::http::reason
@@ -230,20 +230,25 @@ const ircd::http::parser;
 size_t
 ircd::http::print(char *const &buf,
                   const size_t &max,
-                  const std::initializer_list<line::header> &headers)
+                  const headers::range &headers)
 {
 	size_t ret(0);
-	for(const auto &header : headers)
-		ret += snprintf(buf + ret, max - ret, "%s: %s\r\n",
-		                header.first.data(),
-		                header.second.data());
+	for(auto it(headers.first); it != headers.second; ++it)
+	{
+		ret += fmt::snprintf(buf + ret, max - ret, "%s: %s",
+		                     it->first,
+		                     it->second);
+
+		ret += snprintf(buf + ret, max - ret, "\r\n");
+	}
+
 	return ret;
 }
 
 size_t
-ircd::http::printed_size(const std::initializer_list<line::header> &headers)
+ircd::http::printed_size(const headers::range &headers)
 {
-	return std::accumulate(begin(headers), end(headers), size_t(0), []
+	return std::accumulate(headers.first, headers.second, size_t(1), []
 	(auto &ret, const auto &pair)
 	{
 		//            key                 :   SP  value                CRLF
@@ -294,7 +299,7 @@ ircd::http::request::request(const string_view &host,
                              const string_view &query,
                              const string_view &content,
                              const write_closure &closure,
-                             const std::initializer_list<line::header> &headers)
+                             const headers::range &headers)
 {
 	assert(!method.empty());
 	assert(!path.empty());
@@ -387,6 +392,17 @@ ircd::http::response::response(const code &code,
                                const string_view &content,
                                const write_closure &closure,
                                const std::initializer_list<line::header> &headers)
+:response
+{
+	code, content, closure, {std::begin(headers), std::end(headers)}
+}
+{
+}
+
+ircd::http::response::response(const code &code,
+                               const string_view &content,
+                               const write_closure &closure,
+                               const headers::range &headers)
 {
 	char status_line[128]; const auto status_line_len
 	{
@@ -424,7 +440,7 @@ ircd::http::response::response(const code &code,
 
 	const bool has_transfer_encoding
 	{
-		std::any_of(std::begin(headers), std::end(headers), []
+		std::any_of(headers.first, headers.second, []
 		(const auto &header)
 		{
 			return header == "Transfer-Encoding";
@@ -441,11 +457,7 @@ ircd::http::response::response(const code &code,
 
 	const auto user_headers_bufsize
 	{
-		std::accumulate(begin(headers), end(headers), size_t(1), []
-		(auto &ret, const auto &pair)
-		{
-			return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
-		})
+		printed_size(headers)
 	};
 
 	char user_headers[user_headers_bufsize]; const auto user_headers_len
@@ -466,6 +478,55 @@ ircd::http::response::response(const code &code,
 	};
 
 	closure(iov);
+}
+
+ircd::http::response::chunked::chunked(const code &code,
+                                       const write_closure &closure,
+                                       const headers::range &user_headers)
+:closure{closure}
+{
+	const auto num_headers
+	{
+		std::distance(user_headers.first, user_headers.second) + 1
+	};
+
+	line::header headers[num_headers]
+	{
+		{ "Transfer-Encoding", "chunked" }
+	};
+
+	std::copy(user_headers.first, user_headers.second, headers + 1);
+
+	response
+	{
+		code, {}, closure, { headers, headers + num_headers }
+	};
+}
+
+ircd::http::response::chunked::~chunked()
+noexcept
+{
+	chunk(*this, null_buffer);
+}
+
+ircd::http::response::chunked::chunk::chunk(chunked &chunked,
+                                            const const_buffer &buffer)
+{
+	char size_buf[16];
+	const auto size_size
+	{
+		snprintf(size_buf, sizeof(size_buf), "%zu", size(buffer))
+	};
+
+	const ilist<const_buffer> iov
+	{
+		{ size_buf,     size_t(size_size) },
+		{ "\r\n",       2                 },
+		buffer,
+		{ "\r\n",       2                 },
+	};
+
+	chunked.closure(iov);
 }
 
 ircd::http::response::head::head(parse::capstan &pc,
