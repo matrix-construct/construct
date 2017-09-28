@@ -1310,6 +1310,9 @@ ircd::db::for_each(const iov &t,
 	wb.Iterate(&h);
 }
 
+/// Iterate the iov using the "until protocol"
+/// reminder: the closure remains-true-until-the-end; false to break;
+/// returns true if the end reached; false if broken early
 bool
 ircd::db::until(const iov &t,
                 const std::function<bool (const delta &)> &closure)

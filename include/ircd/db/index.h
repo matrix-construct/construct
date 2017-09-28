@@ -28,6 +28,26 @@ namespace ircd::db
 	struct index;
 }
 
+/// An index is a glorified column; the database descriptor for this column
+/// must specify a prefix-extractor otherwise this index just behaves like
+/// a regular key/value column. Index is used to create iterable domains of
+/// a column which all share the same key-prefix.
+///
+/// The index allows a concatenation of two strings to form a key. This con-
+/// catenated key is still unique for the column as a whole and is stored as
+/// the full concatenation -- however, as stated above the prefix function must
+/// be aware of how such a concatenation can be separated back into two
+/// strings.
+///
+/// db::index allows the user to query for either just the first string, or
+/// the whole concatenation. In either case, the resulting iterator can move
+/// only around the keys and values within the domain of that first string.
+/// The iterator presents the user with it.first = second string only, thereby
+/// hiding the prefix allowing for easier iteration of the domain.
+///
+/// Index is not good at reverse iteration due to limitations in RocksDB. Thus
+/// it's better to just flip the comparator function for the column.
+///
 struct ircd::db::index
 :column
 {

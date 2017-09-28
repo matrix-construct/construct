@@ -116,8 +116,7 @@ namespace ircd::db
 {
 	// [SET] Perform operations in a sequence as a single transaction. No template
 	// iterators supported yet, just a ptr range good for contiguous sequences like
-	// vectors and initializer_lists. To support any iterator I think we'll need to
-	// forward-expose a wrapping of rocksdb::WriteBatch.
+	// vectors and initializer_lists. Alternatively, see: iov.h.
 	void write(const cell::delta *const &begin, const cell::delta *const &end, const sopts & = {});
 	void write(const std::initializer_list<cell::delta> &, const sopts & = {});
 	void write(const sopts &, const std::initializer_list<cell::delta> &);
