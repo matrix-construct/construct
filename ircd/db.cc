@@ -4018,3 +4018,20 @@ ircd::db::value_required(const op &op)
 	assert(0);
 	return false;
 }
+
+ircd::string_view
+ircd::db::reflect(const where &w)
+{
+	switch(w)
+	{
+		case where::noop:           return "noop";
+		case where::test:           return "test";
+		case where::equal:          return "equal";
+		case where::not_equal:      return "not_equal";
+		case where::logical_or:     return "logical_or";
+		case where::logical_and:    return "logical_and";
+		case where::logical_not:    return "logical_not";
+	}
+
+	return "?????";
+}

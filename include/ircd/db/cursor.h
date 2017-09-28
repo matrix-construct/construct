@@ -36,11 +36,11 @@ struct ircd::db::cursor
 	struct const_reverse_iterator;
 	struct const_iterator;
 
-	using where_type = db::where<tuple>;
+	template<enum where where = where::noop> using query_type = db::query<tuple, where>;
 	using iterator_type = const_iterator;
 
 	struct index index;
-	const where_type *where{nullptr};
+	const query_type<> *query{nullptr};
 
 	const_iterator end(const string_view &key = {});
 	const_iterator begin(const string_view &key = {});
@@ -48,9 +48,9 @@ struct ircd::db::cursor
 	const_reverse_iterator rend(const string_view &key = {});
 	const_reverse_iterator rbegin(const string_view &key = {});
 
-	cursor(const string_view &index, const where_type *const &where = nullptr)
+	cursor(const string_view &index, const query_type<> *const &query = nullptr)
 	:index{*d, index}
-	,where{where}
+	,query{query}
 	{}
 };
 
@@ -64,9 +64,9 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 	using reference = value_type &;
 	using difference_type = size_t;
 	using iterator_category = std::bidirectional_iterator_tag;
-	using where_type = cursor::where_type;
+	template<enum where where = where::noop> using query_type = cursor::query_type<where>;
 
-	const where_type *where{nullptr};
+	const query_type<> *query{nullptr};
 	index_iterator idx;
 	db::row row;
 	mutable tuple v;
@@ -170,7 +170,7 @@ template<class index_iterator>
 ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
                                                                                      index_iterator idx,
                                                                                      const gopts &opts)
-:where{c.where}
+:query{c.query}
 ,idx{std::move(idx)}
 ,row
 {
@@ -193,10 +193,10 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
 	if(invalid)
 		return;
 
-	if(!this->where)
+	if(!this->query)
 		return;
 
-	if(!(*this->where)(this->operator*()))
+	if(!(*this->query)(this->operator*()))
 		this->operator++();
 }
 
@@ -236,7 +236,7 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::seek_row()
 		return false;
 
 	stale = true;
-	if(this->where && !(*this->where)(this->operator*()))
+	if(this->query && !(*this->query)(this->operator*()))
 		return false;
 
 	return true;
