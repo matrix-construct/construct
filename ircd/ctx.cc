@@ -376,21 +376,48 @@ ircd::ctx::id(const ctx &ctx)
 // ctx/continuation.h
 //
 
+//
+// Support for critical_assertion (ctx.h)
+//
+
+namespace ircd::ctx
+{
+	bool critical_asserted;
+}
+
+ircd::ctx::this_ctx::critical_assertion::critical_assertion()
+:theirs{critical_asserted}
+{
+	critical_asserted = true;
+}
+
+ircd::ctx::this_ctx::critical_assertion::~critical_assertion()
+noexcept
+{
+	assert(critical_asserted);
+	critical_asserted = theirs;
+}
+
+//
+// continuation
+//
+
 ircd::ctx::continuation::continuation(ctx *const &self)
 :self{self}
 {
-    mark(prof::event::CUR_YIELD);
-    assert(self != nullptr);
-    assert(self->notes <= 1);
-    ircd::ctx::current = nullptr;
+	mark(prof::event::CUR_YIELD);
+	assert(!critical_asserted);
+	assert(self != nullptr);
+	assert(self->notes <= 1);
+	ircd::ctx::current = nullptr;
 }
 
 ircd::ctx::continuation::~continuation()
 noexcept
 {
-    ircd::ctx::current = self;
-    self->notes = 1;
-    mark(prof::event::CUR_CONTINUE);
+	ircd::ctx::current = self;
+	self->notes = 1;
+	mark(prof::event::CUR_CONTINUE);
 }
 
 ircd::ctx::continuation::operator boost::asio::yield_context &()

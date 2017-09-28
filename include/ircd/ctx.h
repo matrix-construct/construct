@@ -75,12 +75,16 @@ namespace ircd::ctx
 /// Interface to the currently running context
 namespace ircd::ctx { inline namespace this_ctx
 {
+	struct critical_assertion;                   // Assert no yielding for a section
+
 	// Always set to the currently running context or null for main stack
 	extern __thread struct ctx *current;
 
 	ctx &cur();                                  // Assumptional reference to *current
+
 	void wait();                                 // Returns when context is woken up.
 	void yield();                                // Allow other contexts to run before returning.
+
 	void interruption_point();                   // throws interrupted if interruption_requested()
 	bool interruption_requested();               // interruption(cur())
 
@@ -121,6 +125,23 @@ namespace ircd
 	using ctx::context;
 	using ctx::sleep;
 }
+
+/// An instance of critical_assertion detects an attempt to context switch
+/// when the developer specifically does not want any yielding in that section
+/// or anywhere up the stack from it. This device does not prevent a switch
+/// and may carry no meaning outside of debug-mode compilation. It is good
+/// practice to use this device even when it appears obvious the section's
+/// callgraph has no chance of yielding; code changes, and everything up
+/// up the graph can change without taking notice of your section.
+///
+class ircd::ctx::this_ctx::critical_assertion
+{
+	bool theirs;
+
+  public:
+	critical_assertion();
+	~critical_assertion() noexcept;
+};
 
 /// This overload matches ::sleep() and acts as a drop-in for ircd contexts.
 /// interruption point.
