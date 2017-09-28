@@ -35,6 +35,8 @@ namespace ircd
 	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
 	bool operator!(const string_view &);
+	bool defined(const string_view &);
+	bool null(const string_view &);
 }
 
 /// Customized std::string_view (experimental TS / C++17)
@@ -50,6 +52,30 @@ struct ircd::string_view
 	explicit operator bool() const
 	{
 		return !empty();
+	}
+
+	/// (non-standard) When data() != nullptr we consider the string defined
+	/// downstream in this project wrt JS/JSON. This is the bit of information
+	/// we're deciding on for defined|undefined. If this string_view is
+	/// constructed from a literal "" we must assert that inputs a valid pointer
+	/// in the std::string_view with length 0; stdlib can't optimize that with
+	/// a nullptr replacement.
+	bool undefined() const
+	{
+		return data() == nullptr;
+	}
+
+	bool defined() const
+	{
+		return !undefined();
+	}
+
+	/// (non-standard) After using data() == nullptr for undefined, we're fresh
+	/// out of legitimate bits here to represent the null type string. In this
+	/// case we expect a hack pointer of 0x1 which will mean JS null
+	bool null() const
+	{
+		return data() == reinterpret_cast<const char *>(0x1);
 	}
 
 	// (non-standard) our faux insert stub
@@ -130,8 +156,10 @@ struct ircd::string_view
 	:std::string_view{bsv}
 	{}
 
+	/// Our default constructor sets the elements to 0 for best behavior by
+	/// defined() and null() et al.
 	string_view()
-	:std::string_view{}
+	:std::string_view{nullptr, 0}
 	{}
 
 	using std::string_view::string_view;
@@ -269,6 +297,18 @@ inline bool
 ircd::operator!(const string_view &str)
 {
 	return str.empty();
+}
+
+inline bool
+ircd::null(const string_view &str)
+{
+	return str.null();
+}
+
+inline bool
+ircd::defined(const string_view &str)
+{
+	return str.defined();
 }
 
 template<int (&test)(int)>
