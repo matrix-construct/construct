@@ -114,6 +114,7 @@ extern "C" {
 #include <RB_INC_ATOMIC
 #include <RB_INC_THREAD
 #include <RB_INC_MUTEX
+#include <RB_INC_SHARED_MUTEX
 #include <RB_INC_CONDITION_VARIABLE
 #include <RB_INC_RANDOM
 
