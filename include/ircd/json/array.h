@@ -28,6 +28,9 @@ namespace ircd::json
 
 	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
 	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
+
+	size_t serialized(const string_view *const &begin, const string_view *const &end);
+	size_t serialized(const std::string *const &begin, const std::string *const &end);
 }
 
 /// Lightweight interface to a JSON array string.

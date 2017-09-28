@@ -685,12 +685,28 @@ ircd::json::stringify(mutable_buffer &buf,
 	return array::stringify(buf, b, e);
 }
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const string_view *const &b,
-                      const string_view *const &e)
+size_t
+ircd::json::serialized(const std::string *const &b,
+                       const std::string *const &e)
 {
-	return array::stringify(buf, b, e);
+	const size_t ret(1 + !std::distance(b, e));
+	return std::accumulate(b, e, ret, []
+	(auto ret, const auto &value)
+	{
+		return ret += serialized(string_view{value}) + 1;
+	});
+}
+
+size_t
+ircd::json::serialized(const string_view *const &b,
+                       const string_view *const &e)
+{
+	const size_t ret(1 + !std::distance(b, e));
+	return std::accumulate(b, e, ret, []
+	(auto ret, const auto &value)
+	{
+		return ret += serialized(value) + 1;
+	});
 }
 
 template<class it>
