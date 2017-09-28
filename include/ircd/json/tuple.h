@@ -733,7 +733,7 @@ template<class tuple,
          class it_a,
          class it_b,
          class closure>
-constexpr void
+constexpr auto
 _key_transform(it_a it,
                const it_b end,
                closure&& lambda)
@@ -743,12 +743,14 @@ _key_transform(it_a it,
 		*it = lambda(key<tuple, i>());
 		++it;
 	}
+
+	return it;
 }
 
 template<class tuple,
          class it_a,
          class it_b>
-constexpr void
+constexpr auto
 _key_transform(it_a it,
                const it_b end)
 {
@@ -757,12 +759,14 @@ _key_transform(it_a it,
 		*it = key<tuple, i>();
 		++it;
 	}
+
+	return it;
 }
 
 template<class it_a,
          class it_b,
          class... T>
-void
+auto
 _key_transform(const tuple<T...> &tuple,
                it_a it,
                const it_b end)
@@ -776,17 +780,19 @@ _key_transform(const tuple<T...> &tuple,
 			++it;
 		}
 	});
+
+	return it;
 }
 
 template<class it_a,
          class it_b,
          class closure,
          class... T>
-void
-_member_transform(const tuple<T...> &tuple,
-                  it_a it,
-                  const it_b end,
-                  closure&& lambda)
+auto
+_member_transform_if(const tuple<T...> &tuple,
+                     it_a it,
+                     const it_b end,
+                     closure&& lambda)
 {
 	until(tuple, [&it, &end, &lambda]
 	(const auto &key, const auto &val)
@@ -794,8 +800,29 @@ _member_transform(const tuple<T...> &tuple,
 		if(it == end)
 			return false;
 
-		*it = lambda(key, val);
-		++it;
+		if(lambda(*it, key, val))
+			++it;
+
+		return true;
+	});
+
+	return it;
+}
+
+template<class it_a,
+         class it_b,
+         class closure,
+         class... T>
+auto
+_member_transform(const tuple<T...> &tuple,
+                  it_a it,
+                  const it_b end,
+                  closure&& lambda)
+{
+	return _member_transform_if(tuple, it, end, [&lambda]
+	(auto&& ret, const auto &key, const auto &val)
+	{
+		ret = lambda(key, val);
 		return true;
 	});
 }
@@ -803,19 +830,15 @@ _member_transform(const tuple<T...> &tuple,
 template<class it_a,
          class it_b,
          class... T>
-void
+auto
 _member_transform(const tuple<T...> &tuple,
                   it_a it,
                   const it_b end)
 {
-	until(tuple, [&it, &end]
-	(const auto &key, const auto &val)
+	return _member_transform_if(tuple, it, end, []
+	(auto&& ret, const auto &key, const auto &val)
 	{
-		if(it == end)
-			return false;
-
-		*it = member { key, val };
-		++it;
+		ret = member { key, val };
 		return true;
 	});
 }
@@ -835,6 +858,13 @@ serialized(T&& t)
 	return lex_cast(t).size();
 }
 
+template<class T>
+typename std::enable_if<serialized_lex_cast<T>(), bool>::type
+defined(T&& t)
+{
+	return t != T{};
+}
+
 template<class... T>
 size_t
 serialized(const tuple<T...> &t)
@@ -844,27 +874,24 @@ serialized(const tuple<T...> &t)
 		tuple<T...>::size()
 	};
 
-	// Number of commas for this object is one less than the member count, or 0
-	const size_t commas
-	{
-		member_count? member_count - 1 : 0
-	};
-
-	// 2 for the {} and the comma count
-	const size_t overhead
-	{
-		2 + commas
-	};
-
 	std::array<size_t, member_count> sizes;
-	_member_transform(t, begin(sizes), end(sizes), []
-	(const string_view &key, auto&& val)
+	const auto e{_member_transform_if(t, begin(sizes), end(sizes), []
+	(auto&& ret, const string_view &key, auto&& val)
 	{
-		//     "                "   :
-		return 1 + key.size() + 1 + 1 + serialized(val);
-	});
+		if(!defined(val))
+			return false;
 
-	return std::accumulate(begin(sizes), end(sizes), overhead);
+		//     "                "   :                    ,
+		ret = 1 + key.size() + 1 + 1 + serialized(val) + 1;
+		return true;
+	})};
+
+	// Subtract one to get the final size when an extra comma is
+	// accumulated on non-empty objects.
+	const size_t overhead{2};
+	auto ret{std::accumulate(begin(sizes), e, overhead)};
+	ret -= e != begin(sizes);
+	return ret;
 }
 
 template<class... T>
@@ -873,8 +900,17 @@ stringify(mutable_buffer &buf,
           const tuple<T...> &tuple)
 {
 	std::array<member, tuple.size()> members;
-	_member_transform(tuple, begin(members), end(members));
-	return stringify(buf, begin(members), end(members));
+	const auto e{_member_transform_if(tuple, begin(members), end(members), []
+	(auto&& ret, const string_view &key, auto&& val)
+	{
+		if(!defined(val))
+			return false;
+
+		ret = member { key, val };
+		return true;
+	})};
+
+	return stringify(buf, begin(members), e);
 }
 
 template<class... T>
