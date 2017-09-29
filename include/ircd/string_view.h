@@ -29,9 +29,12 @@
 namespace ircd
 {
 	struct string_view;
+
 	template<class T> struct vector_view;
+
 	template<class T = string_view> struct byte_view;
 	template<> struct byte_view<string_view>;
+
 	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
 	bool operator!(const string_view &);
@@ -179,7 +182,9 @@ struct ircd::vector_view
 	T *_stop                                     { nullptr                                         };
 
   public:
-	T *data() const                              { return _data;                                   }
+	const T *data() const                        { return _data;                                   }
+	T *data()                                    { return _data;                                   }
+
 	size_t size() const                          { return std::distance(_data, _stop);             }
 	bool empty() const                           { return !size();                                 }
 
@@ -203,7 +208,7 @@ struct ircd::vector_view
 	const T &at(const size_t &pos) const
 	{
 		if(unlikely(pos >= size()))
-			throw std::out_of_range();
+			throw std::out_of_range("vector_view::range_check");
 
 		return operator[](pos);
 	}
@@ -211,7 +216,7 @@ struct ircd::vector_view
 	T &at(const size_t &pos)
 	{
 		if(unlikely(pos >= size()))
-			throw std::out_of_range();
+			throw std::out_of_range("vector_view::range_check");
 
 		return operator[](pos);
 	}
@@ -222,8 +227,11 @@ struct ircd::vector_view
 	{}
 
 	vector_view(T *const &start, const size_t &size)
-	:_data{start}
-	,_stop{start + size}
+	:vector_view{start, start + size}
+	{}
+
+	vector_view(const std::initializer_list<const T> &list)
+	:vector_view{std::begin(list), std::end(list)}
 	{}
 
 	template<class U,
@@ -234,7 +242,7 @@ struct ircd::vector_view
 
 	template<size_t SIZE>
 	vector_view(T (&buffer)[SIZE])
-	:vector_view{std::addressof(buffer), SIZE}
+	:vector_view{buffer, SIZE}
 	{}
 
 	template<size_t SIZE>
