@@ -110,7 +110,8 @@ template<class it>
 struct ircd::buffer::buffer
 :std::tuple<it, it>
 {
-	using value_type = it;
+	using iterator = it;
+	using value_type = typename std::remove_pointer<iterator>::type;
 
 	operator string_view() const;
 	operator std::string_view() const;
@@ -140,8 +141,13 @@ struct ircd::buffer::buffer
 	{}
 
 	template<size_t SIZE>
-	buffer(typename std::remove_pointer<it>::type (&buf)[SIZE])
+	buffer(value_type (&buf)[SIZE])
 	:buffer{buf, SIZE}
+	{}
+
+	template<size_t SIZE>
+	buffer(std::array<value_type, SIZE> &buf)
+	:buffer{buf.data(), SIZE}
 	{}
 
 	buffer()
@@ -149,63 +155,108 @@ struct ircd::buffer::buffer
 	{}
 };
 
-struct ircd::buffer::mutable_buffer
-:buffer<char *>
+namespace ircd::buffer
 {
+	template<class T> struct mutable_buffer_base;
+}
+
+template<class T>
+struct ircd::buffer::mutable_buffer_base
+:buffer<T>
+{
+	using iterator = typename buffer<T>::iterator;
+	using value_type = typename buffer<T>::value_type;
+
+	// Allows boost::spirit to append to the buffer; this means the size() of
+	// this buffer becomes a consumption counter and the real size of the buffer
+	// must be kept separately. This is the lowlevel basis for a stream buffer.
+	void insert(const iterator &it, const value_type &v)
+	{
+		assert(it >= this->begin() && it <= this->end());
+		memmove(it + 1, it, std::distance(it, this->end()));
+		*it = v;
+		++std::get<1>(*this);
+	}
+
+	using buffer<T>::buffer;
+
+	// lvalue string reference offered to write through to a std::string as
+	// the buffer. not explicit; should be hard to bind by accident...
+	mutable_buffer_base(std::string &buf)
+	:mutable_buffer_base<iterator>{const_cast<char *>(buf.data()), buf.size()}
+	{}
+};
+
+struct ircd::buffer::mutable_buffer
+:mutable_buffer_base<char *>
+{
+	// Conversion offered for the analogous asio buffer
 	operator boost::asio::mutable_buffer() const;
 
-	using buffer<value_type>::buffer;
+	using mutable_buffer_base<char *>::mutable_buffer_base;
 };
 
 struct ircd::buffer::mutable_raw_buffer
-:buffer<unsigned char *>
+:mutable_buffer_base<unsigned char *>
 {
+	// Conversion offered for the analogous asio buffer
 	operator boost::asio::mutable_buffer() const;
 
-	using buffer<value_type>::buffer;
+	using mutable_buffer_base<unsigned char *>::mutable_buffer_base;
 
 	mutable_raw_buffer(const mutable_buffer &b)
-	:buffer<value_type>{reinterpret_cast<value_type>(data(b)), size(b)}
+	:mutable_buffer_base<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
+	{}
+};
+
+namespace ircd::buffer
+{
+	template<class T> struct const_buffer_base;
+}
+
+template<class T>
+struct ircd::buffer::const_buffer_base
+:buffer<T>
+{
+	using iterator = typename buffer<T>::iterator;
+	using value_type = typename buffer<T>::value_type;
+
+	using buffer<T>::buffer;
+
+	const_buffer_base(const mutable_buffer &b)
+	:buffer<T>{data(b), size(b)}
+	{}
+
+	const_buffer_base(const string_view &s)
+	:buffer<T>{std::begin(s), std::end(s)}
+	{}
+
+	explicit const_buffer_base(const std::string &s)
+	:buffer<T>{s.data(), s.size()}
 	{}
 };
 
 struct ircd::buffer::const_buffer
-:buffer<const char *>
+:const_buffer_base<const char *>
 {
 	operator boost::asio::const_buffer() const;
 
-	using buffer<value_type>::buffer;
-
-	const_buffer(const mutable_buffer &b)
-	:buffer<value_type>{data(b), size(b)}
-	{}
-
-	const_buffer(const string_view &s)
-	:buffer<value_type>{std::begin(s), std::end(s)}
-	{}
-
-	explicit const_buffer(const std::string &s)
-	:buffer<value_type>{s.data(), s.size()}
-	{}
+	using const_buffer_base<iterator>::const_buffer_base;
 };
 
 struct ircd::buffer::const_raw_buffer
-:buffer<const unsigned char *>
+:const_buffer_base<const unsigned char *>
 {
 	operator boost::asio::const_buffer() const;
 
-	using buffer<value_type>::buffer;
+	using const_buffer_base<iterator>::const_buffer_base;
 
 	const_raw_buffer(const const_buffer &b)
-	:buffer<value_type>{reinterpret_cast<value_type>(data(b)), size(b)}
+	:const_buffer_base{reinterpret_cast<const unsigned char *>(data(b)), size(b)}
 	{}
 
 	const_raw_buffer(const mutable_raw_buffer &b)
-	:buffer<value_type>{data(b), size(b)}
-	{}
-
-	const_raw_buffer(const mutable_buffer &b)
-	:const_raw_buffer{mutable_raw_buffer{b}}
+	:const_buffer_base{reinterpret_cast<const unsigned char *>(data(b)), size(b)}
 	{}
 };
 
@@ -231,7 +282,7 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<ui
                                                               const size_t &size)
 :buffer
 {
-	typename buffer::value_type(b.release()), size
+	typename buffer::iterator(b.release()), size
 }
 {
 }
@@ -296,7 +347,7 @@ ircd::buffer::consume(buffers<T> &b,
 	for(auto it(std::begin(b)); it != std::end(b) && remain > 0; ++it)
 	{
 		using buffer = typename buffers<T>::value_type;
-		using iterator = typename buffer::value_type;
+		using iterator = typename buffer::iterator;
 
 		buffer &b(const_cast<buffer &>(*it));
 		remain -= consume(b, remain);
