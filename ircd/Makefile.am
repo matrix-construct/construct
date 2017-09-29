@@ -55,12 +55,12 @@ libircd_la_LIBADD = \
 
 libircd_la_SOURCES =   \
 	client.cc          \
+	crypto.cc          \
 	ctx.cc             \
 	db.cc              \
 	exception.cc       \
 	fmt.cc             \
 	fs.cc              \
-	hash.cc            \
 	http.cc            \
 	info.cc            \
 	ircd.cc            \
