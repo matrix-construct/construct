@@ -32,6 +32,8 @@ namespace ircd::fmt
 
 	struct spec;
 	struct specifier;
+	struct sprintf;
+	struct vsprintf;
 	struct snprintf;
 	struct vsnprintf;
 	struct snstringf;
@@ -121,6 +123,19 @@ class ircd::fmt::snprintf
 	}{}
 };
 
+struct ircd::fmt::sprintf
+:snprintf
+{
+	template<class... Args>
+	sprintf(const mutable_buffer &buf,
+	        const char *const &fmt,
+	        Args&&... args)
+	:snprintf
+	{
+		internal, data(buf), size(buf), fmt, va_rtti{std::forward<Args>(args)...}
+	}{}
+};
+
 struct ircd::fmt::vsnprintf
 :snprintf
 {
@@ -131,6 +146,18 @@ struct ircd::fmt::vsnprintf
 	:snprintf
 	{
 		internal, buf, max, fmt, ap
+	}{}
+};
+
+struct ircd::fmt::vsprintf
+:snprintf
+{
+	vsprintf(const mutable_buffer &buf,
+	         const char *const &fmt,
+	         const va_rtti &ap)
+	:snprintf
+	{
+		internal, data(buf), size(buf), fmt, ap
 	}{}
 };
 
