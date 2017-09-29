@@ -19,25 +19,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <openssl/sha.h>
+///////////////////////////////////////////////////////////////////////////////
+//
+// hash.h
+//
 
-namespace ircd::crh
-{
-	struct throw_on_error;
-
-	static void finalize(struct sha256::ctx *const &, const mutable_raw_buffer &);
-}
-
-struct ircd::crh::throw_on_error
-{
-	throw_on_error(const int &openssl_return_value)
-	{
-		if(unlikely(openssl_return_value != 1))
-			throw error("OpenSSL error code: %d", openssl_return_value);
-	}
-};
-
-/// vtable
 ircd::crh::hash::~hash()
 noexcept
 {
@@ -65,85 +51,92 @@ const
 	extract(buf);
 }
 
-struct ircd::crh::sha256::ctx
-:SHA256_CTX
+///////////////////////////////////////////////////////////////////////////////
+//
+// rand.h
+//
+
+decltype(ircd::rand::device) ircd::rand::device
 {
-	ctx();
-	~ctx() noexcept;
+	// on linux: uses RDRND or /dev/urandom
+	// on windows: TODO: verify construction source
 };
 
-ircd::crh::sha256::ctx::ctx()
+decltype(ircd::rand::mt) ircd::rand::mt
 {
-	throw_on_error
+	device()
+};
+
+decltype(ircd::rand::dict::alnum) ircd::rand::dict::alnum
+{
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+};
+
+decltype(ircd::rand::dict::alpha) ircd::rand::dict::alpha
+{
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+};
+
+decltype(ircd::rand::dict::upper) ircd::rand::dict::upper
+{
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+};
+
+decltype(ircd::rand::dict::lower) ircd::rand::dict::lower
+{
+	"abcdefghijklmnopqrstuvwxyz"
+};
+
+decltype(ircd::rand::dict::numeric) ircd::rand::dict::numeric
+{
+	"0123456789"
+};
+
+std::string
+ircd::rand::string(const std::string &dict,
+                   const size_t &len)
+{
+	std::string ret(len, char());
+	string(dict, len, reinterpret_cast<uint8_t *>(&ret.front()));
+	return ret;
+}
+
+ircd::string_view
+ircd::rand::string(const std::string &dict,
+                   const size_t &len,
+                   char *const &buf,
+                   const size_t &max)
+{
+	if(unlikely(!max))
+		return { buf, max };
+
+	const auto size
 	{
-		SHA256_Init(this)
-	};
-}
-
-ircd::crh::sha256::ctx::~ctx()
-noexcept
-{
-}
-
-ircd::crh::sha256::sha256()
-:ctx{std::make_unique<struct ctx>()}
-{
-}
-
-/// One-shot functor. Immediately calls operator().
-ircd::crh::sha256::sha256(const mutable_raw_buffer &out,
-                          const const_buffer &in)
-:sha256{}
-{
-	operator()(out, in);
-}
-
-ircd::crh::sha256::~sha256()
-noexcept
-{
-}
-
-void
-ircd::crh::sha256::update(const const_buffer &buf)
-{
-	throw_on_error
-	{
-		SHA256_Update(ctx.get(), data(buf), size(buf))
-	};
-}
-
-void
-ircd::crh::sha256::extract(const mutable_raw_buffer &buf)
-const
-{
-	auto copy(*ctx);
-	crh::finalize(&copy, buf);
-}
-
-void
-ircd::crh::sha256::finalize(const mutable_raw_buffer &buf)
-{
-	crh::finalize(ctx.get(), buf);
-}
-
-size_t
-ircd::crh::sha256::length()
-const
-{
-	return bytes;
-}
-
-void
-ircd::crh::finalize(struct sha256::ctx *const &ctx,
-                    const mutable_raw_buffer &buf)
-{
-	uint8_t *const md
-	{
-		reinterpret_cast<uint8_t *>(data(buf))
+		std::min(len, max - 1)
 	};
 
-	throw_on_error
+	buf[size] = '\0';
+	return string(dict, size, reinterpret_cast<uint8_t *>(buf));
+}
+
+ircd::string_view
+ircd::rand::string(const std::string &dict,
+                   const size_t &len,
+                   uint8_t *const &buf)
+{
+	std::uniform_int_distribution<size_t> dist
 	{
-		SHA256_Final(md, ctx)
+		0, dict.size() - 1
+	};
+
+	std::generate(buf, buf + len, [&dict, &dist]
+	() -> uint8_t
+	{
+		return dict.at(dist(mt));
+	});
+
+	return string_view
+	{
+		reinterpret_cast<const char *>(buf), len
 	};
 }

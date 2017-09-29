@@ -71,8 +71,8 @@ libircd_la_SOURCES =   \
 	logger.cc          \
 	matrix.cc          \
 	mods.cc            \
+	openssl.cc         \
 	parse.cc           \
-	rand.cc            \
 	resource.cc        \
 	rfc1459.cc         \
 	socket.cc          \
