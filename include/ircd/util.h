@@ -1116,5 +1116,23 @@ ctype(const char *begin,
 }
 
 
+template<class lockable>
+struct unlock_guard
+{
+	lockable &l;
+
+	unlock_guard(lockable &l)
+	:l{l}
+	{
+		l.unlock();
+	}
+
+	~unlock_guard() noexcept
+	{
+		l.lock();
+	}
+};
+
+
 } // namespace util
 } // namespace ircd
