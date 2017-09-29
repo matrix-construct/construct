@@ -42,27 +42,13 @@ namespace ircd::db
 /// The db::row::iterator iterates over the cells in a row; to iterate over
 /// multiple rows use the db::cursor
 struct ircd::db::row
+:vector_view<cell>
 {
 	struct delta;
 
-	using vector = std::vector<cell>;
-	using iterator = vector::iterator;
-	using const_iterator = vector::const_iterator;
-	using value_type = vector::value_type;
-
-	vector its;
-
   public:
-	auto empty() const                           { return its.empty();                             }
-	auto size() const                            { return its.size();                              }
 	bool valid() const;                          // true on any cell valid; false on empty
 	bool valid(const string_view &) const;       // true on any cell valid equal; false on empty
-
-	// [GET] Iterations
-	const_iterator begin() const;
-	const_iterator end() const;
-	iterator begin();
-	iterator end();
 
 	// [GET] Find cell by name
 	const_iterator find(const string_view &column) const;
@@ -77,19 +63,19 @@ struct ircd::db::row
     // [SET] Perform operation
 	void operator()(const op &, const string_view &col, const string_view &val = {}, const sopts & = {});
 
-	row(std::vector<cell> its = {})
-	:its{std::move(its)}
-	{}
+	using vector_view<cell>::vector_view;
 
 	row(database &,
 	    const string_view &key = {},
 	    const vector_view<string_view> &columns = {},
+	    const vector_view<cell> &buf = {},
 	    gopts opts = {});
 
 	template<class... T>
 	row(database &,
 	    const string_view &key = {},
 	    const json::tuple<T...> & = {},
+	    const vector_view<cell> &buf = {},
 	    gopts opts = {});
 
 	template<class pos> friend size_t seek(row &, const pos &);
@@ -132,13 +118,14 @@ template<class... T>
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const json::tuple<T...> &t,
+                   const vector_view<cell> &buf,
                    gopts opts)
-:row{[&d, &key, &t, &opts]
+:row{[&d, &key, &t, &buf, &opts]
 () -> row
 {
 	std::array<string_view, t.size()> cols;
 	json::_key_transform(t, std::begin(cols), std::end(cols));
-	return { d, key, cols, opts };
+	return { d, key, cols, buf, opts };
 }()}
 {
 }
@@ -146,38 +133,12 @@ ircd::db::row::row(database &d,
 inline ircd::db::cell &
 ircd::db::row::operator[](const size_t &i)
 {
-	return its.at(i);
+	return vector_view<cell>::at(i);
 }
 
 inline const ircd::db::cell &
 ircd::db::row::operator[](const size_t &i)
 const
 {
-	return its.at(i);
-}
-
-inline ircd::db::row::iterator
-ircd::db::row::end()
-{
-	return std::end(its);
-}
-
-inline ircd::db::row::iterator
-ircd::db::row::begin()
-{
-	return std::begin(its);
-}
-
-inline ircd::db::row::const_iterator
-ircd::db::row::end()
-const
-{
-	return std::end(its);
-}
-
-inline ircd::db::row::const_iterator
-ircd::db::row::begin()
-const
-{
-	return std::begin(its);
+	return vector_view<cell>::at(i);
 }

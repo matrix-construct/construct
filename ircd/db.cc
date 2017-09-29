@@ -2319,13 +2319,13 @@ size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
-	assert(!r.its.empty());
+	assert(!r.empty());
 	const column &c(r[0]);
 	const database &d(c);
 	const ircd::timer timer;
 	const auto ret
 	{
-		std::count_if(begin(r.its), end(r.its), [&p]
+		std::count_if(begin(r), end(r), [&p]
 		(auto &cell)
 		{
 			return seek(cell, p);
@@ -2338,7 +2338,7 @@ ircd::db::seek(row &r,
 	          sequence(r[0]),
 	          name(c),
 	          ret,
-	          r.its.size(),
+	          r.size(),
 	          timer.at<microseconds>().count());
 
 	return ret;
@@ -2353,8 +2353,9 @@ template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<string_view> &colnames,
+                   const vector_view<cell> &buf,
                    gopts opts)
-:its{[this, &d, &key, &colnames, &opts]
+:vector_view<cell>{buf}
 {
 	using std::end;
 	using std::begin;
@@ -2403,16 +2404,11 @@ ircd::db::row::row(database &d,
 		d.d->NewIterators(options, handles, &iterators)
 	};
 
-	std::vector<cell> ret(iterators.size());
-	for(size_t i(0); i < ret.size(); ++i)
+	for(size_t i(0); i < this->size(); ++i)
 	{
 		std::unique_ptr<Iterator> it(iterators.at(i));
-		ret[i] = cell { *colptr.at(i), key, std::move(it), opts };
+		(*this)[i] = cell { *colptr.at(i), key, std::move(it), opts };
 	}
-
-	return ret;
-}()}
-{
 }
 
 void
@@ -2448,7 +2444,7 @@ const
 ircd::db::row::iterator
 ircd::db::row::find(const string_view &col)
 {
-	return std::find_if(std::begin(its), std::end(its), [&col]
+	return std::find_if(std::begin(*this), std::end(*this), [&col]
 	(const auto &cell)
 	{
 		return name(cell.c) == col;
@@ -2459,7 +2455,7 @@ ircd::db::row::const_iterator
 ircd::db::row::find(const string_view &col)
 const
 {
-	return std::find_if(std::begin(its), std::end(its), [&col]
+	return std::find_if(std::begin(*this), std::end(*this), [&col]
 	(const auto &cell)
 	{
 		return name(cell.c) == col;
@@ -2470,7 +2466,7 @@ bool
 ircd::db::row::valid()
 const
 {
-	return std::any_of(std::begin(its), std::end(its), []
+	return std::any_of(std::begin(*this), std::end(*this), []
 	(const auto &cell)
 	{
 		return cell.valid();
@@ -2481,7 +2477,7 @@ bool
 ircd::db::row::valid(const string_view &s)
 const
 {
-	return std::any_of(std::begin(its), std::end(its), [&s]
+	return std::any_of(std::begin(*this), std::end(*this), [&s]
 	(const auto &cell)
 	{
 		return cell.valid(s);

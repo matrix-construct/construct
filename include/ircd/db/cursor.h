@@ -68,6 +68,7 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 
 	const query_type<> *query{nullptr};
 	index_iterator idx;
+	std::array<db::cell, tuple::size()> cell;
 	db::row row;
 	mutable tuple v;
 	mutable bool stale{true};
@@ -172,6 +173,7 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
                                                                                      const gopts &opts)
 :query{c.query}
 ,idx{std::move(idx)}
+,cell{}
 ,row
 {
 	*d,
@@ -179,6 +181,7 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
 	bool(this->idx)?                      this->idx->first:
 	                                      string_view{},
 	tuple{},
+	cell,
 	opts
 }
 ,stale
