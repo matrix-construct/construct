@@ -1069,7 +1069,7 @@ body.loaded
 	align-content: center;
 	justify-content: center;
 	margin: 1px 1px 1px 1px;
-	padding: 5px 5px 5px 5px;
+	padding: 1vh 1vw 1vh 1vw;
 	background-color: inherit;
 	outline: none;
 }
@@ -1177,8 +1177,8 @@ body.loaded
 
 #charybdis_login_form
 {
-	align-items: flex-start;
-	margin: 0px 10px 0px 10px;
+	align-items: flex-end;
+	margin: 0px 1vw 0px 1vw;
 }
 
 .ircd .login_
@@ -1194,7 +1194,6 @@ body.loaded
 	flex-flow: column nowrap;
 	align-items: center;
 	justify-content: center;
-	text-align: center;
 }
 
 /* This doesn't exist in the HTML until generated */
@@ -1207,10 +1206,40 @@ body.loaded
 
 .ircd .login_ h1
 {
-	font-size: 39px;
-	text-align: left;
-	text-shadow: 1px 2px #404040;
-	color: #F8F8F8;
+	font-size: 1.5vw;
+	align-self: flex-end;
+	text-shadow: 1px 2px #707070;
+	align-items: center;
+}
+
+.ircd .login_ img
+{
+	align-self: flex-end;
+	width: 30px;
+}
+
+.ircd .login_ h2
+{
+	font-size: 3vw;
+	align-self: flex-start;
+	text-shadow: 1px 1px #505050;
+	align-items: center;
+}
+
+.ircd .login_ h3
+{
+	font-size: 2.25vw;
+	align-self: center;
+	text-shadow: 1px 2px #707070;
+	align-items: baseline;
+	letter-spacing: -1px;
+}
+
+.ircd .login_ h3 b
+{
+	color: var(--pal-CA);
+	font-size: 3.5vw;
+	letter-spacing: -2px;
 }
 
 .ircd .login_ h1:hover
@@ -1226,6 +1255,7 @@ body.loaded
 	box-sizing: border-box;
 	margin: 10px 0px 0px 0px;
 	padding: 0px 4px 0px 4px;
+	border-radius: 3px;
 }
 
 .ircd .login_ div.submit

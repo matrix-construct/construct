@@ -92,7 +92,12 @@ window.addEventListener("unload", async function(event)
 	}
 });
 
-$(document).ready((event) =>
+mc.run = async function(event = {})
 {
 	mc.execution = mc.ready(event);
+}
+
+$(document).ready((event) =>
+{
+	mc.run(event);
 });

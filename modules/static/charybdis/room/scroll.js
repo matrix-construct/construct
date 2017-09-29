@@ -115,11 +115,17 @@ room.scroll.on = function(event)
 		mc.ng.apply();
 	}
 
-	if(at_top || (going_up && pcts.top < 0.15))
+	if(at_top || (going_up && pcts.top < 0.15)) try
+	{
 		this.scroll.back(48);
+	}
+	catch(e) {}
 
-	if(!at_bottom && going_down && pcts.bottom < 0.15)
+	if(!at_bottom && going_down && pcts.bottom < 0.15) try
+	{
 		this.scroll.front(48);
+	}
+	catch(e) {}
 
 	this.control.scroll_pos_last = pos;
 	this.control.scroll_pct_last = pcts;

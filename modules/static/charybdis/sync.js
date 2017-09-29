@@ -69,8 +69,8 @@ mc.sync["rooms"] = function(rooms)
 
 mc.sync["presence"] = function(presence)
 {
-	let events = presence.events;
-	mc.users.sync(events);
+	if(presence.events)
+		mc.users.sync(presence.events);
 };
 
 mc.sync["account_data"] = function(account_data)

@@ -52,10 +52,14 @@ room.sync = function(data, action)
 	if(this.focused())
 	{
 		this.sync.activity();
-		if(this.control.mode == "LIVE")
+		if(this.control.mode == "LIVE") try
 		{
 			this.scroll.to.bottom("fast");
 			this.receipt.send.current();
+		}
+		catch(e)
+		{
+			console.error(e);
 		}
 	}
 };

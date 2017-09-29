@@ -204,6 +204,7 @@ mc.main.fault["M_MISSING_TOKEN"] = async function(error)
 		console.error("Authentication via " + type + ": " + result);
 	}
 
+	mc.main.on_logout();
 	return false;
 };
 
@@ -215,6 +216,7 @@ mc.main.on_login = async function()
 	await mc.filter.init();
 
 	mc.main.menu["ROOMS"].hide = false;
+	mc.main.menu["MENU"].hide = false;
 	mc.show["#charybdis_rooms"] = true;
 
 	if(!mc.session.guest)
@@ -246,6 +248,7 @@ mc.main.on_logout = function()
 	mc.main.menu["USERS"].hide = true;
 	mc.main.menu["LOGIN"].hide = false;
 	mc.main.menu["LOGOUT"].hide = true;
+	mc.main.menu["MENU"].hide = true;
 	mc.show["#charybdis_menu"] = true;
 	mc.show["#charybdis_login"] = true;
 	mc.show["#charybdis_rooms"] = false;
@@ -260,6 +263,7 @@ mc.main.menu =
 	{
 		icon: "fa-bars",
 		target: "#charybdis_menu",
+		hide: true,
 	},
 
 	"IRCd":

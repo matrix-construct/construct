@@ -64,7 +64,7 @@ mc.opts =
 	style: "charybdis.css",
 
 	// Quick setting to debug incoming sync messages on the console
-	sync_debug: 0,
+	sync_debug: 10,
 
 	account_data:
 	{
