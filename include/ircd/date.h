@@ -32,6 +32,7 @@ namespace ircd
 	using std::chrono::duration_cast;
 	using std::chrono::system_clock;
 	using std::chrono::steady_clock;
+	using std::chrono::high_resolution_clock;
 	using std::chrono::time_point;
 
 	using microtime_t = std::pair<time_t, int32_t>;
@@ -46,14 +47,33 @@ namespace ircd
 	template<> steady_point now();
 	template<> system_point now();
 
+	template<class unit = seconds> time_t &time(time_t &ref);
 	template<class unit = seconds> time_t time();
+	template<class unit = seconds> time_t time(time_t *const &ptr);
+}
+
+template<class unit>
+time_t
+ircd::time(time_t *const &ptr)
+{
+	time_t buf, &ret{ptr? *ptr : buf};
+	return time<unit>(ret);
 }
 
 template<class unit>
 time_t
 ircd::time()
 {
-	return now<unit>().count();
+	time_t ret;
+	return time<unit>(ret);
+}
+
+template<class unit>
+time_t &
+ircd::time(time_t &ref)
+{
+	ref = duration_cast<unit>(system_clock::now().time_since_epoch()).count();
+	return ref;
 }
 
 template<> inline
