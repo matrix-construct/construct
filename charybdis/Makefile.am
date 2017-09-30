@@ -1,5 +1,8 @@
 prefix = @prefix@
 
+AM_CXXFLAGS = \
+	###
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \

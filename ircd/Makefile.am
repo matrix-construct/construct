@@ -2,6 +2,9 @@ AUTOMAKE_OPTIONS = foreign
 
 libircddir	= @libdir@
 
+AM_CXXFLAGS = \
+	###
+
 AM_CPPFLAGS = \
 	-ffriend-injection \
 	-I$(top_srcdir)/include \
@@ -9,9 +12,6 @@ AM_CPPFLAGS = \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include ircd/ircd.h \
-	###
-
-AM_CXXFLAGS = \
 	###
 
 if MINGW

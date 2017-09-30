@@ -1,7 +1,10 @@
+################################################################################
 #
-#AM_CXXFLAGS = \
-#	-fno-implicit-templates
+# IRCd Modules
 #
+
+AM_CXXFLAGS = \
+	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
