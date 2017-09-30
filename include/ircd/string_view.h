@@ -37,6 +37,7 @@ namespace ircd
 
 	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
+	size_t size(const string_view &);
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
 	bool null(const string_view &);
@@ -317,6 +318,12 @@ inline bool
 ircd::defined(const string_view &str)
 {
 	return str.defined();
+}
+
+inline size_t
+ircd::size(const string_view &str)
+{
+	return str.size();
 }
 
 template<int (&test)(int)>
