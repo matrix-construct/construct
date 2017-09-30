@@ -156,7 +156,6 @@ mc.auth["m.register.user"] = async function(opts = {})
 		mc.session.guest = false;
 		mc.instance.authentic = true;
 		Object.update(mc.session, data);
-		mc.run();
 		return true;
 	}
 	catch(error)

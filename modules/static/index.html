@@ -1084,7 +1084,7 @@ type="text/ng-template"
 			name="login_"
 			type="submit"
 			class="submit button"
-			ng-click="mc.auth['m.login.password'](); $event.stopPropagation();"
+			ng-click="mc.auth['m.login.password'](); mc.run(); $event.stopPropagation();"
 			>
 				LOGIN
 			</button>
@@ -1096,7 +1096,7 @@ type="text/ng-template"
 			{
 				disabled: mc.auth['m.register.user'].disabled,
 			}"
-			ng-click="mc.auth['m.register.user'](); $event.stopPropagation();"
+			ng-click="mc.auth['m.register.user'](); mc.run(); $event.stopPropagation();"
 			>
 				REGISTER
 			</button>

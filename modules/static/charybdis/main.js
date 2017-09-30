@@ -32,18 +32,18 @@
 
 /**
  * Main synchronous loop. This drives the client by receiving updates from
- * /sync or tries to figure out why it can't, fix it, and then continue to
+ * /sync or tries to figure out why it can't, fix it, and then continues to
  * poll /sync. Otherwise if there is no hope that /sync can ever be called,
- * the client is cleanly shut down and the function returns. Any exceptions
- * out of here are abnormal and the window should be reloaded.
+ * the client is cleanly shut down and the function returns. Call mc.run()
+ * after this happens.
+ *
+ * Any exceptions out of here are abnormal and the window should be reloaded.
  */
 mc.main = async function()
 {
 	var ret = 0;
 	let sopts = {};
-	await mc.main.init();
-
-	while(1) try
+	if(await mc.main.init()) while(1) try
 	{
 		// longpolls and processes data from a /sync request
 		mc.ng.apply.later();
@@ -83,17 +83,17 @@ mc.main.init = async function()
 	mc.settings.init();
 	mc.console.init();
 
-	// Fault this manually to ensure authenticity for now.
-	console.log("Logging in...");
-	let errors = {};
-	await mc.main.fault["M_MISSING_TOKEN"](errors);
-
 	// This event will break the main loop and allow a clean shutdown.
 	window.addEventListener("beforeunload", mc.main.beforeunload,
 	{
 		passive: false,
 		once: true,
 	});
+
+	// Fault this manually to ensure authenticity for now.
+	console.log("Logging in...");
+	let errors = {};
+	return await mc.main.fault["M_MISSING_TOKEN"](errors);
 };
 
 /**
