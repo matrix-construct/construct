@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CLIENT_SOCKET_H
+#define HAVE_IRCD_NET_SOCKET_H
 
 /// This file is not included with the IRCd standard include stack because
 /// it requires symbols we can't forward declare without boost headers. It
@@ -29,9 +29,8 @@
 /// client.h still offers higher level access to sockets without requiring
 /// boost headers; please check that for satisfaction before including this.
 
-namespace ircd
+namespace ircd::net
 {
-	namespace asio = boost::asio;
 	namespace ip = asio::ip;
 
 	using boost::system::error_code;
@@ -44,28 +43,24 @@ namespace ircd
 	extern asio::ssl::context sslv23_client;
 
 	std::string string(const ip::address &);
+	std::string string(const ip::tcp::endpoint &);
 	ip::address address(const ip::tcp::endpoint &);
 	std::string hostaddr(const ip::tcp::endpoint &);
 	uint16_t port(const ip::tcp::endpoint &);
-
-	size_t write(socket &, const ilist<const_buffer> &);     // write_all
-	size_t write(socket &, const iov<const_buffer> &);       // write_all
-	size_t write(socket &, const const_buffer &);            // write_all
-	size_t write(socket &, iov<const_buffer> &);             // write_some
-
-	size_t read(socket &, const ilist<mutable_buffer> &);    // read_all
-	size_t read(socket &, const iov<mutable_buffer> &);      // read_all
-	size_t read(socket &, const mutable_buffer &);           // read_all
-	size_t read(socket &, iov<mutable_buffer> &);            // read_some
-
-	size_t available(const socket &);
-	bool connected(const socket &) noexcept;
 }
 
-struct ircd::socket
-:std::enable_shared_from_this<ircd::socket>
+namespace ircd
 {
-	struct init;
+	using net::error_code;
+	using net::string;
+	using net::address;
+	using net::hostaddr;
+	using net::port;
+}
+
+struct ircd::net::socket
+:std::enable_shared_from_this<ircd::net::socket>
+{
 	struct stat;
 	struct scope_timeout;
 	struct io;
@@ -149,7 +144,7 @@ struct ircd::socket
 	~socket() noexcept;
 };
 
-class ircd::socket::scope_timeout
+class ircd::net::socket::scope_timeout
 {
 	socket *s;
 
@@ -161,7 +156,7 @@ class ircd::socket::scope_timeout
 	~scope_timeout() noexcept;
 };
 
-class ircd::socket::io
+class ircd::net::socket::io
 {
 	struct socket &sock;
 	struct stat &stat;
@@ -173,17 +168,9 @@ class ircd::socket::io
 	io(struct socket &, struct stat &, const std::function<size_t ()> &closure);
 };
 
-struct ircd::socket::init
-{
-	std::unique_ptr<ip::tcp::resolver> resolver;
-
-	init();
-	~init() noexcept;
-};
-
 template<class iov>
 auto
-ircd::socket::write(const iov &bufs)
+ircd::net::socket::write(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
@@ -193,8 +180,8 @@ ircd::socket::write(const iov &bufs)
 
 template<class iov>
 auto
-ircd::socket::write(const iov &bufs,
-                    error_code &ec)
+ircd::net::socket::write(const iov &bufs,
+                         error_code &ec)
 {
 	return io(*this, out, [&]
 	{
@@ -204,7 +191,7 @@ ircd::socket::write(const iov &bufs,
 
 template<class iov>
 auto
-ircd::socket::write_some(const iov &bufs)
+ircd::net::socket::write_some(const iov &bufs)
 {
 	return io(*this, out, [&]
 	{
@@ -214,8 +201,8 @@ ircd::socket::write_some(const iov &bufs)
 
 template<class iov>
 auto
-ircd::socket::write_some(const iov &bufs,
-                         error_code &ec)
+ircd::net::socket::write_some(const iov &bufs,
+                              error_code &ec)
 {
 	return io(*this, out, [&]
 	{
@@ -225,7 +212,7 @@ ircd::socket::write_some(const iov &bufs,
 
 template<class iov>
 auto
-ircd::socket::read(const iov &bufs)
+ircd::net::socket::read(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
@@ -240,8 +227,8 @@ ircd::socket::read(const iov &bufs)
 
 template<class iov>
 auto
-ircd::socket::read(const iov &bufs,
-                   error_code &ec)
+ircd::net::socket::read(const iov &bufs,
+                        error_code &ec)
 {
 	return io(*this, in, [&]
 	{
@@ -251,7 +238,7 @@ ircd::socket::read(const iov &bufs,
 
 template<class iov>
 auto
-ircd::socket::read_some(const iov &bufs)
+ircd::net::socket::read_some(const iov &bufs)
 {
 	return io(*this, in, [&]
 	{
@@ -266,8 +253,8 @@ ircd::socket::read_some(const iov &bufs)
 
 template<class iov>
 auto
-ircd::socket::read_some(const iov &bufs,
-                        error_code &ec)
+ircd::net::socket::read_some(const iov &bufs,
+                             error_code &ec)
 {
 	return io(*this, in, [&]
 	{

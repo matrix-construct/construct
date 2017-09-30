@@ -57,7 +57,7 @@ client::list client::clients;
 bool handle_ec_timeout(client &);
 bool handle_ec_eof(client &);
 bool handle_ec_success(client &);
-bool handle_ec(client &, const error_code &);
+bool handle_ec(client &, const net::error_code &);
 
 void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
 void async_recv_next(std::shared_ptr<client>);
@@ -144,26 +144,22 @@ ircd::write(client &client,
 	return base;
 }
 
-ircd::client::host_port
-ircd::local_addr(const client &client)
+ircd::hostport
+ircd::local(const client &client)
 {
 	if(!client.sock)
 		return { "0.0.0.0"s, 0 };
 
-	const auto &sock(*client.sock);
-	const auto &ep(sock.local());
-	return { hostaddr(ep), port(ep) };
+	return net::local_hostport(*client.sock);
 }
 
-ircd::client::host_port
-ircd::remote_addr(const client &client)
+ircd::hostport
+ircd::remote(const client &client)
 {
 	if(!client.sock)
 		return { "0.0.0.0"s, 0 };
 
-	const auto &sock(*client.sock);
-	const auto &ep(sock.remote());
-	return { hostaddr(ep), port(ep) };
+	return net::remote_hostport(*client.sock);
 }
 
 ircd::http::response::write_closure
@@ -220,7 +216,7 @@ ircd::client::client()
 {
 }
 
-ircd::client::client(const host_port &host_port,
+ircd::client::client(const hostport &host_port,
                      const seconds &timeout)
 :client
 {
@@ -297,7 +293,7 @@ catch(const boost::system::system_error &e)
 catch(const std::exception &e)
 {
 	log::error("client[%s] [500 Internal Error]: %s",
-	           string(remote_addr(*this)),
+	           string(remote(*this)),
 	           e.what());
 
 	if(ircd::debugmode)
@@ -313,7 +309,7 @@ try
 {
 	client.request_timer = ircd::timer{};
 	client.sock->set_timeout(request_timeout, [&client]
-	(const error_code &ec)
+	(const net::error_code &ec)
 	{
 		if(!ec)
 			client.sock->cancel();
@@ -334,7 +330,7 @@ try
 catch(const http::error &e)
 {
 	log::debug("client[%s] HTTP %s in %ld$us %s",
-	           string(remote_addr(client)),
+	           string(remote(client)),
 	           e.what(),
 	           client.request_timer.at<microseconds>().count(),
 	           e.content);
@@ -354,7 +350,7 @@ ircd::handle_request(client &client,
                      const http::request::head &head)
 {
 	log::debug("client[%s] HTTP %s `%s' (content-length: %zu)",
-	           string(remote_addr(client)),
+	           string(remote(client)),
 	           head.method,
 	           head.path,
 	           head.content_length);
@@ -376,8 +372,8 @@ ircd::add_client(std::shared_ptr<socket> s)
 	};
 
 	log::debug("client[%s] CONNECTED local[%s]",
-	           string(remote_addr(*client)),
-	           string(local_addr(*client)));
+	           string(remote(*client)),
+	           string(local(*client)));
 
 	async_recv_next(client, async_timeout);
 	return client;
@@ -440,7 +436,7 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 
 	// This call returns immediately so we no longer block the current context and
 	// its stack while waiting for activity on idle connections between requests.
-	sock(timeout, [client(std::move(client)), timeout](const error_code &ec)
+	sock(timeout, [client(std::move(client)), timeout](const net::error_code &ec)
 	noexcept
 	{
 		// Right here this handler is executing on the main stack (not in any
@@ -468,7 +464,7 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 
 bool
 ircd::handle_ec(client &client,
-                const error_code &ec)
+                const net::error_code &ec)
 {
 	using namespace boost::system::errc;
 	using boost::asio::error::eof;
@@ -493,7 +489,7 @@ ircd::handle_ec_eof(client &client)
 try
 {
 	log::debug("client[%s]: EOF",
-	           string(remote_addr(client)));
+	           string(remote(client)));
 
 	client.sock->disconnect(socket::FIN_RECV);
 	return false;
@@ -513,7 +509,7 @@ try
 {
 	auto &sock(*client.sock);
 	log::debug("client[%s]: disconnecting after inactivity timeout",
-	           string(remote_addr(client)));
+	           string(remote(client)));
 
 	sock.disconnect();
 	return false;
@@ -525,14 +521,4 @@ catch(const std::exception &e)
 	             e.what());
 
 	return false;
-}
-
-std::string
-ircd::string(const client::host_port &pair)
-{
-	std::string ret(64, '\0');
-	ret.resize(snprintf(&ret.front(), ret.size(), "%s:%u",
-	                    pair.first.c_str(),
-	                    pair.second));
-	return ret;
 }

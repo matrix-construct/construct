@@ -66,16 +66,15 @@ libircd_la_SOURCES =   \
 	ircd.cc            \
 	json.cc            \
 	lexical.cc         \
-	listen.cc          \
 	locale.cc          \
 	logger.cc          \
 	matrix.cc          \
 	mods.cc            \
+	net.cc             \
 	openssl.cc         \
 	parse.cc           \
 	resource.cc        \
 	rfc1459.cc         \
-	socket.cc          \
 	###
 
 if JS

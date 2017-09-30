@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ *  Copyright (C) 2017 Charybdis Development Team
+ *  Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,22 +19,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace ircd
+#pragma once
+#define HAVE_IRCD_IOS_H
+
+/// Forward declarations for boost::asio because it is not included here.
+///
+/// Boost headers are not exposed to our users unless explicitly included by a
+/// definition file. Other libircd headers may extend this namespace with more
+/// forward declarations.
+namespace boost::asio
 {
-	struct listener;
+	struct io_service;       // Allow a reference to an ios to be passed to ircd
 }
 
-struct ircd::listener
+namespace ircd
 {
-	struct acceptor;
+	namespace asio = boost::asio;          // Alias so that asio:: can be used
 
-	IRCD_EXCEPTION(ircd::error, error)
-
-  private:
-	std::unique_ptr<struct acceptor> acceptor;
-
-  public:
-	listener(const json::object &options);
-	listener(const std::string &options);
-	~listener() noexcept;
-};
+	extern asio::io_service *ios;          // The user's io_service;
+	struct strand extern *strand;          // IRCd's strand.
+}

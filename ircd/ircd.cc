@@ -33,11 +33,13 @@ namespace ircd
 	const enum runlevel &runlevel{_runlevel};
 	runlevel_handler runlevel_changed;
 	boost::asio::io_service *ios;                // user's io service
+	struct strand *strand;               // our main strand
 	ctx::ctx *main_context;
 	bool debugmode;
 
 	void set_runlevel(const enum runlevel &);
 	void init_rlimit();
+	void at_main_exit() noexcept;
 	void main();
 }
 
@@ -61,10 +63,14 @@ void
 ircd::init(boost::asio::io_service &ios,
            const std::string &configfile,
            runlevel_handler runlevel_changed)
+try
 {
 	assert(runlevel == runlevel::STOPPED);
-	ircd::ios = &ios;
+
 	init_rlimit();
+
+	ircd::ios = &ios;
+	ircd::strand = new struct strand(ios);
 
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
@@ -93,6 +99,12 @@ ircd::init(boost::asio::io_service &ios,
 	          RB_DEBUG? "(DEBUG MODE)" : "");
 
 	ircd::set_runlevel(runlevel::READY);
+}
+catch(const std::exception &e)
+{
+	delete strand;
+	strand = nullptr;
+	throw;
 }
 
 ///
@@ -146,7 +158,11 @@ try
 
 	// When this function completes, subsystems are done shutting down and IRCd
 	// transitions to STOPPED.
-	const unwind stopped{std::bind(&ircd::set_runlevel, runlevel::STOPPED)};
+	const unwind stopped{[]
+	{
+		at_main_exit();
+		set_runlevel(runlevel::STOPPED);
+	}};
 
 	// These objects are the init()'s and fini()'s for each subsystem.
 	// Appearing here ties their life to the main context. Initialization can
@@ -154,7 +170,7 @@ try
 	// more appropriate.
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
-	socket::init _socket_;   // Socket/Networking
+	net::init _net_;         // Networking
 	client::init _client_;   // Client related
 	db::init _db_;           // RocksDB
 	js::init _js_;           // SpiderMonkey
@@ -183,6 +199,17 @@ catch(const std::exception &e)
 {
 	log::critical("IRCd terminated: %s", e.what());
 	std::terminate();
+}
+
+void
+ircd::at_main_exit()
+noexcept
+{
+	strand->post([]
+	{
+		delete strand;
+		strand = nullptr;
+	});
 }
 
 void

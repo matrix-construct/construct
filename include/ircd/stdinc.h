@@ -142,31 +142,6 @@ namespace std
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Forward declarations from third party namespaces not included here
-//
-
-/// Forward declarations for boost because it is not included here.
-///
-/// libircd does not include third party headers along with its own headers
-/// for the public interface, only standard library headers. boost is only
-/// included in specific definition files where we use its functionality.
-/// This is a major improvement in project compile time.
-namespace boost
-{
-}
-
-/// Forward declarations for boost::asio because it is not included here.
-///
-/// Boost headers are not exposed to our users unless explicitly included by a
-/// definition file. Other libircd headers may extend this namespace with more
-/// forward declarations.
-namespace boost::asio
-{
-	struct io_service;       // Allow a reference to an ios to be passed to ircd
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // Some items imported into our namespace.
 //
 
@@ -181,7 +156,6 @@ namespace ircd
 	using std::const_pointer_cast;
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;
-	namespace asio = boost::asio;
 	using namespace std::string_literals;
 	using namespace std::literals::chrono_literals;
 	template<class... T> using ilist = std::initializer_list<T...>;
@@ -195,10 +169,8 @@ namespace ircd
 // Unsorted section
 namespace ircd
 {
-	extern boost::asio::io_service *ios;
 	constexpr size_t BUFSIZE { 512 };
 
-	struct socket;
 	struct client;
 
 	std::string demangle(const std::string &symbol);
@@ -227,15 +199,16 @@ namespace ircd
 #include "http.h"
 #include "fmt.h"
 #include "fs.h"
+#include "ios.h"
 #include "ctx.h"
 #include "logger.h"
 #include "db.h"
 #include "js.h"
-#include "client.h"
 #include "mods.h"
-#include "listen.h"
+#include "net.h"
 #include "m.h"
 #include "resource.h"
+#include "client.h"
 
 template<class T>
 std::string
