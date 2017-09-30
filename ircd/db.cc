@@ -243,6 +243,15 @@ ircd::log::log ircd::db::log
 	"db", 'D'
 };
 
+namespace ircd::db
+{
+	// Dedicated logging facility for rocksdb's log callbacks
+	log::log rog
+	{
+		"rdb", 'R'
+	};
+}
+
 std::map<ircd::string_view, ircd::db::database *>
 ircd::db::database::dbs
 {};
@@ -1042,7 +1051,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 	if(startswith(str, "Options"))
 		return;
 
-	log(translate(level), "'%s': (rdb) %s", d->name, str);
+	rog(translate(level), "'%s': %s", d->name, str);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1173,7 +1182,7 @@ void
 ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
                                              const rocksdb::FlushJobInfo &info)
 {
-	log.debug("'%s' @%p: flushed: column[%s] path[%s] tid[%lu] job[%d] writes[slow:%d stop:%d]",
+	rog.debug("'%s' @%p: flushed: column[%s] path[%s] tid[%lu] job[%d] writes[slow:%d stop:%d]",
 	          d->name,
 	          db,
 	          info.cf_name,
@@ -1188,7 +1197,7 @@ void
 ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
 {
-	log.debug("'%s' @%p: compacted: column[%s] status[%d] tid[%lu] job[%d]",
+	rog.debug("'%s' @%p: compacted: column[%s] status[%d] tid[%lu] job[%d]",
 	          d->name,
 	          db,
 	          info.cf_name,
@@ -1200,7 +1209,7 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
 void
 ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &info)
 {
-	log.debug("'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
+	rog.debug("'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
 	          d->name,
 	          info.db_name,
 	          info.file_path,
@@ -1211,7 +1220,7 @@ ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionI
 void
 ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationInfo &info)
 {
-	log.debug("'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
+	rog.debug("'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
 	          d->name,
 	          info.db_name,
 	          info.file_path,
@@ -1222,7 +1231,7 @@ ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationI
 void
 ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &info)
 {
-	log.debug("'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
+	rog.debug("'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
 	          d->name,
 	          info.db_name,
 	          info.cf_name,
@@ -1233,7 +1242,7 @@ ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileC
 void
 ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
 {
-	log.debug("'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
+	rog.debug("'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
 	          d->name,
 	          info.cf_name,
 	          info.num_entries,
@@ -1243,7 +1252,7 @@ ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
 void
 ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *const h)
 {
-	log.debug("'%s': column[%s] handle closing @ %p",
+	rog.debug("'%s': column[%s] handle closing @ %p",
 	          d->name,
 	          h->GetName(),
 	          h);
