@@ -446,7 +446,13 @@ ircd::resource::response::response(client &client,
 {
 	const auto request_time
 	{
-		client.request_timer.at<microseconds>()
+		client.request_timer.at<microseconds>().count()
+	};
+
+	char rtime[64]; const auto rtime_len
+	{
+		snprintf(rtime, sizeof(rtime), "%zdus",
+		         request_time)
 	};
 
 	http::response
@@ -454,16 +460,17 @@ ircd::resource::response::response(client &client,
 		code, str, write_closure(client),
 		{
 			{ "Content-Type", content_type },
-			{ "Access-Control-Allow-Origin", "*" } //TODO: XXX
+			{ "Access-Control-Allow-Origin", "*" }, //TODO: XXX
+			{ "X-IRCd-Request-Timer", string_view{rtime, size_t(rtime_len)} }
 		}
 	};
 
 	log::debug("client[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length: %zu",
-	           string(remote_addr(client)),
+	           string(remote(client)),
 	           int(code),
-               http::reason[code],
-	           request_time.count(),
-	           (client.request_timer.at<microseconds>() - request_time).count(),
+	           http::status(code),
+	           request_time,
+	           (client.request_timer.at<microseconds>().count() - request_time),
 	           content_type,
 	           str.size());
 }
