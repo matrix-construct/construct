@@ -20,94 +20,96 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CTX_VIEW_H
+#define HAVE_IRCD_CTX_PEEK_H
 
 namespace ircd::ctx
 {
-	template<class T> class view;
+	template<class T> class peek;
 }
 
 /// Device for a context to share data on its stack with others while yielding
 ///
-/// The view yields a context while other contexts examine the object pointed
-/// to in the view. This allows a producing context to construct something
+/// The peek yields a context while other contexts examine the object pointed
+/// to in the peek. This allows a producing context to construct something
 /// on its stack and then wait for the consuming contexts to do something with
 /// that data before the producer resumes and potentially destroys the data.
 /// This creates a very simple and lightweight single-producer/multi-consumer
 /// queue mechanism using only context switching.
 ///
-/// The producer is blocked until all consumers are finished with their view.
-/// The consumers acquire the unique_lock before passing it to the call to wait().
-/// wait() returns with a view of the object under unique_lock. Once the
-/// consumer releases the unique_lock the viewed object is not safe for them.
+/// Consumers get one chance to safely peek the data when a call to wait()
+/// returns. Once the consumer context yields again for any reason the data is
+/// potentially invalid. The data can only be peeked once by the consumer
+/// because the second call to wait() will yield until the next data is
+/// made available by the producer, not the same data.
+///
+/// Producers will share an object during the call to notify(). Once the call
+/// to notify() returns all consumers have peeked the data and the producer is
+/// free to destroy it.
 ///
 template<class T>
-class ircd::ctx::view
-:public mutex
+class ircd::ctx::peek
 {
 	T *t {nullptr};
-	dock q;
-	size_t waiting {0};
+	dock a, b;
 
 	bool ready() const;
 
   public:
+	size_t waiting() const;
+
 	// Consumer interface;
-	template<class time_point> T &wait_until(std::unique_lock<view> &, time_point&&);
-	template<class duration> T &wait_for(std::unique_lock<view> &, const duration &);
-	T &wait(std::unique_lock<view> &);
+	template<class time_point> T &wait_until(time_point&&);
+	template<class duration> T &wait_for(const duration &);
+	T &wait();
 
 	// Producer interface;
 	void notify(T &);
 
-	view() = default;
-	~view() noexcept;
+	peek() = default;
+	~peek() noexcept;
 };
 
 template<class T>
-ircd::ctx::view<T>::~view()
+ircd::ctx::peek<T>::~peek()
 noexcept
 {
-	assert(!waiting);
+	assert(!waiting());
 }
 
 template<class T>
 void
-ircd::ctx::view<T>::notify(T &t)
+ircd::ctx::peek<T>::notify(T &t)
 {
-	if(!waiting)
-		return;
+	const unwind afterward{[this]
+	{
+		assert(a.empty());
+		this->t = nullptr;
+		if(!b.empty())
+		{
+			b.notify_all();
+			yield();
+		}
+	}};
 
+	assert(b.empty());
 	this->t = &t;
-	q.notify_all();
-	q.wait([this] { return !waiting; });
-	const std::lock_guard<view> lock{*this};
-	this->t = nullptr;
-	assert(!waiting);
-	q.notify_all();
+	a.notify_all();
+	yield();
 }
 
 template<class T>
 T &
-ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
+ircd::ctx::peek<T>::wait()
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	b.wait([this]
 	{
-		lock.unlock();
-		q.wait();
-	}
+		return !ready();
+	});
 
-	const unwind ul{[this]
+	a.wait([this]
 	{
-		--waiting;
-		q.notify_all();
-	}};
-
-	for(++waiting; !ready(); lock.lock())
-	{
-		lock.unlock();
-		q.wait();
-	}
+		return ready();
+	});
 
 	assert(t != nullptr);
 	return *t;
@@ -116,8 +118,7 @@ ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
 template<class T>
 template<class duration>
 T &
-ircd::ctx::view<T>::wait_for(std::unique_lock<view> &lock,
-                             const duration &dur)
+ircd::ctx::peek<T>::wait_for(const duration &dur)
 {
 	return wait_until(now<steady_point>() + dur);
 }
@@ -125,34 +126,35 @@ ircd::ctx::view<T>::wait_for(std::unique_lock<view> &lock,
 template<class T>
 template<class time_point>
 T &
-ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
-                               time_point&& tp)
+ircd::ctx::peek<T>::wait_until(time_point&& tp)
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	if(!b.wait_until(tp, [this]
 	{
-		lock.unlock();
-		q.wait_until(tp);
-	}
+		return !ready();
+	}))
+		throw timeout();
 
-	const unwind ul{[this]
+	if(!a.wait_until(tp, [this]
 	{
-		--waiting;
-		q.notify_all();
-	}};
-
-	for(++waiting; !ready(); lock.lock())
-	{
-		lock.unlock();
-		q.wait_until(tp);
-	}
+		return ready();
+	}))
+		throw timeout();
 
 	assert(t != nullptr);
 	return *t;
 }
 
 template<class T>
+size_t
+ircd::ctx::peek<T>::waiting()
+const
+{
+	return a.size() + b.size();
+}
+
+template<class T>
 bool
-ircd::ctx::view<T>::ready()
+ircd::ctx::peek<T>::ready()
 const
 {
 	return t != nullptr;

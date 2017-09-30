@@ -20,30 +20,30 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CTX_VIEW_H
+#define HAVE_IRCD_CTX_SHARED_VIEW_H
 
 namespace ircd::ctx
 {
-	template<class T> class view;
+	template<class T> class shared_view;
 }
 
 /// Device for a context to share data on its stack with others while yielding
 ///
-/// The view yields a context while other contexts examine the object pointed
-/// to in the view. This allows a producing context to construct something
+/// The shared_view yields a context while other contexts examine the object pointed
+/// to in the shared_view. This allows a producing context to construct something
 /// on its stack and then wait for the consuming contexts to do something with
 /// that data before the producer resumes and potentially destroys the data.
 /// This creates a very simple and lightweight single-producer/multi-consumer
 /// queue mechanism using only context switching.
 ///
-/// The producer is blocked until all consumers are finished with their view.
-/// The consumers acquire the unique_lock before passing it to the call to wait().
-/// wait() returns with a view of the object under unique_lock. Once the
-/// consumer releases the unique_lock the viewed object is not safe for them.
+/// The producer is blocked until all consumers are finished with their shared_view.
+/// The consumers acquire the shared_lock before passing it to the call to wait().
+/// wait() returns with a shared_view of the object under shared_lock. Once the
+/// consumer releases the shared_lock the viewed object is not safe for them.
 ///
 template<class T>
-class ircd::ctx::view
-:public mutex
+class ircd::ctx::shared_view
+:public shared_mutex
 {
 	T *t {nullptr};
 	dock q;
@@ -53,19 +53,19 @@ class ircd::ctx::view
 
   public:
 	// Consumer interface;
-	template<class time_point> T &wait_until(std::unique_lock<view> &, time_point&&);
-	template<class duration> T &wait_for(std::unique_lock<view> &, const duration &);
-	T &wait(std::unique_lock<view> &);
+	template<class time_point> T &wait_until(std::shared_lock<shared_view> &, time_point&&);
+	template<class duration> T &wait_for(std::shared_lock<shared_view> &, const duration &);
+	T &wait(std::shared_lock<shared_view> &);
 
 	// Producer interface;
 	void notify(T &);
 
-	view() = default;
-	~view() noexcept;
+	shared_view() = default;
+	~shared_view() noexcept;
 };
 
 template<class T>
-ircd::ctx::view<T>::~view()
+ircd::ctx::shared_view<T>::~shared_view()
 noexcept
 {
 	assert(!waiting);
@@ -73,7 +73,7 @@ noexcept
 
 template<class T>
 void
-ircd::ctx::view<T>::notify(T &t)
+ircd::ctx::shared_view<T>::notify(T &t)
 {
 	if(!waiting)
 		return;
@@ -81,7 +81,7 @@ ircd::ctx::view<T>::notify(T &t)
 	this->t = &t;
 	q.notify_all();
 	q.wait([this] { return !waiting; });
-	const std::lock_guard<view> lock{*this};
+	const std::lock_guard<shared_view> lock{*this};
 	this->t = nullptr;
 	assert(!waiting);
 	q.notify_all();
@@ -89,11 +89,11 @@ ircd::ctx::view<T>::notify(T &t)
 
 template<class T>
 T &
-ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
+ircd::ctx::shared_view<T>::wait(std::shared_lock<shared_view> &lock)
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	for(assert(lock.owns_lock_shared()); ready(); lock.lock_shared())
 	{
-		lock.unlock();
+		lock.unlock_shared();
 		q.wait();
 	}
 
@@ -103,9 +103,9 @@ ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
 		q.notify_all();
 	}};
 
-	for(++waiting; !ready(); lock.lock())
+	for(++waiting; !ready(); lock.lock_shared())
 	{
-		lock.unlock();
+		lock.unlock_shared();
 		q.wait();
 	}
 
@@ -116,8 +116,8 @@ ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
 template<class T>
 template<class duration>
 T &
-ircd::ctx::view<T>::wait_for(std::unique_lock<view> &lock,
-                             const duration &dur)
+ircd::ctx::shared_view<T>::wait_for(std::shared_lock<shared_view> &lock,
+                                    const duration &dur)
 {
 	return wait_until(now<steady_point>() + dur);
 }
@@ -125,12 +125,12 @@ ircd::ctx::view<T>::wait_for(std::unique_lock<view> &lock,
 template<class T>
 template<class time_point>
 T &
-ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
-                               time_point&& tp)
+ircd::ctx::shared_view<T>::wait_until(std::shared_lock<shared_view> &lock,
+                                      time_point&& tp)
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	for(assert(lock.owns_lock_shared()); ready(); lock.lock_shared())
 	{
-		lock.unlock();
+		lock.unlock_shared();
 		q.wait_until(tp);
 	}
 
@@ -140,9 +140,9 @@ ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
 		q.notify_all();
 	}};
 
-	for(++waiting; !ready(); lock.lock())
+	for(++waiting; !ready(); lock.lock_shared())
 	{
-		lock.unlock();
+		lock.unlock_shared();
 		q.wait_until(tp);
 	}
 
@@ -152,7 +152,7 @@ ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
 
 template<class T>
 bool
-ircd::ctx::view<T>::ready()
+ircd::ctx::shared_view<T>::ready()
 const
 {
 	return t != nullptr;

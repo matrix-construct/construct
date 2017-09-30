@@ -741,7 +741,7 @@ ircd::ctx::prof::check_slice()
 
 	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
 	{
-		log::warning("CONTEXT TIMESLICE EXCEEDED (%p) '%s' last: %06ld$us total: %06ld$us",
+		log::warning("context timeslice exceeded (%p) '%s' last: %06ld$us total: %06ld$us",
 		             (const void *)&c,
 		             c.name,
 		             duration_cast<microseconds>(time_usage).count(),
@@ -765,7 +765,7 @@ ircd::ctx::prof::check_stack()
 
 	if(unlikely(stack_usage > stack_max * settings.stack_usage_warning))
 	{
-		log::warning("CONTEXT STACK USAGE ctx(%p) used %zu of %zu bytes",
+		log::warning("context stack usage ctx(%p) used %zu of %zu bytes",
 		             (const void *)&c,
 		             stack_usage,
 		             c.stack_max);

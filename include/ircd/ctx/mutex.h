@@ -66,6 +66,8 @@ noexcept
 inline void
 ircd::ctx::mutex::unlock()
 {
+	assert(m);
+
 	ctx *next; do
 	{
 		if(!q.empty())
