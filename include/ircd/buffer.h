@@ -106,6 +106,8 @@ namespace ircd
 	using buffer::mutable_buffers;
 }
 
+/// Base for all buffer types
+///
 template<class it>
 struct ircd::buffer::buffer
 :std::tuple<it, it>
@@ -160,6 +162,9 @@ namespace ircd::buffer
 	template<class T> struct mutable_buffer_base;
 }
 
+/// Base for mutable buffers, or buffers which can be written to because they
+/// are not const.
+///
 template<class T>
 struct ircd::buffer::mutable_buffer_base
 :buffer<T>
@@ -179,14 +184,19 @@ struct ircd::buffer::mutable_buffer_base
 	}
 
 	using buffer<T>::buffer;
+	mutable_buffer_base(): buffer<T>{} {}
 
 	// lvalue string reference offered to write through to a std::string as
 	// the buffer. not explicit; should be hard to bind by accident...
 	mutable_buffer_base(std::string &buf)
-	:mutable_buffer_base<iterator>{const_cast<char *>(buf.data()), buf.size()}
+	:mutable_buffer_base<iterator>{const_cast<iterator>(buf.data()), buf.size()}
 	{}
 };
 
+/// A writable buffer of signed char data. Convention is for this buffer to
+/// represent readable strings, which may or may not be null terminated. This
+/// is just a convention; not a gurantee of the type.
+///
 struct ircd::buffer::mutable_buffer
 :mutable_buffer_base<char *>
 {
@@ -196,13 +206,19 @@ struct ircd::buffer::mutable_buffer
 	using mutable_buffer_base<char *>::mutable_buffer_base;
 };
 
+/// A writable buffer of unsigned signed char data. Convention is for this
+/// buffer to represent unreadable binary data. It may also be constructed
+/// from a mutable_buffer because a buffer of any data (this one) can also
+/// be readable data. The inverse is not true, mutable_buffer cannot be
+/// constructed from this class.
+///
 struct ircd::buffer::mutable_raw_buffer
 :mutable_buffer_base<unsigned char *>
 {
 	// Conversion offered for the analogous asio buffer
 	operator boost::asio::mutable_buffer() const;
 
-	using mutable_buffer_base<unsigned char *>::mutable_buffer_base;
+	using mutable_buffer_base<iterator>::mutable_buffer_base;
 
 	mutable_raw_buffer(const mutable_buffer &b)
 	:mutable_buffer_base<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
@@ -221,18 +237,19 @@ struct ircd::buffer::const_buffer_base
 	using iterator = typename buffer<T>::iterator;
 	using value_type = typename buffer<T>::value_type;
 
-	using buffer<T>::buffer;
+	using buffer<iterator>::buffer;
+	const_buffer_base(): buffer<T>{} {}
 
 	const_buffer_base(const mutable_buffer &b)
-	:buffer<T>{data(b), size(b)}
+	:buffer<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
 	{}
 
 	const_buffer_base(const string_view &s)
-	:buffer<T>{std::begin(s), std::end(s)}
+	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
 
 	explicit const_buffer_base(const std::string &s)
-	:buffer<T>{s.data(), s.size()}
+	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
 };
 
