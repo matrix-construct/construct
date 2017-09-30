@@ -65,19 +65,6 @@ dnl
 
 
 dnl
-dnl General variables exported to Makefile.am
-dnl
-
-AC_SUBST(CC)
-AC_SUBST(CXX)
-AC_SUBST(CFLAGS)
-AC_SUBST(CXXFLAGS, "-ffriend-injection")
-AC_SUBST(CPPFLAGS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(LIBS)
-
-
-dnl
 dnl Coarse compiler test macros
 dnl
 
@@ -97,6 +84,19 @@ AM_CONDITIONAL([CYGWIN],     [[[[ $host_os = *cygwin* ]]]])
 AM_CONDITIONAL([INTERIX],    [[[[ $host_os = *interix* ]]]])
 AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
 
+
+dnl
+dnl Initialization of variables exported to Makefile.am.
+dnl These will be further composed throughout this file...
+dnl
+
+AC_SUBST(CC)
+AC_SUBST(CXX)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(LIBS)
 
 
 dnl ***************************************************************************
@@ -138,31 +138,39 @@ AC_DEFUN([CPPDEFINE],
 
 
 dnl ***************************************************************************
-dnl Development options
+dnl Developer options
 dnl
 
+
+dnl
+dnl Debugging mode
+dnl
 
 AC_MSG_CHECKING(if you want to enable debugging)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
 	AC_SUBST(DEBUG, 1)
-	CXXFLAGS="$CXXFLAGS -O0 -ggdb"
+	CXXFLAGS+=" -O0 -ggdb"
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
 ], [
 	AC_SUBST(DEBUG, 0)
-	CXXFLAGS="$CXXFLAGS -O3"
+	CXXFLAGS+=" -O3"
 	CPPDEFINE([NDEBUG])
 ])
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
 
 
+dnl
+dnl Profiling mode
+dnl
+
 AC_MSG_CHECKING(if you want to do a profile build)
 AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 [
 	if test "$ac_cv_c_compiler_gnu" = yes; then
 		AC_MSG_RESULT([yes, adding -pg])
-		CXXFLAGS="$CXXFLAGS -pg"
+		CXXFLAGS+=" -pg"
 		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	else
 		AC_MSG_RESULT([no, profile builds only work with gcc])
@@ -170,6 +178,10 @@ AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 ], [
 ])
 
+
+dnl
+dnl Precompiled headers
+dnl
 
 AC_MSG_CHECKING(if you want to disable precompiled headers)
 AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
@@ -184,6 +196,20 @@ AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header g
 
 AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
 
+
+dnl
+dnl Compiler intrumentation
+dnl
+
+dnl CXXFLAGS+=" -mmpx"
+dnl CXXFLAGS+=" -fcheck-pointer-bounds"
+CXXFLAGS+=" -fchkp-instrument-marked-only"
+CXXFLAGS+=" -fstack-protector-explicit"
+
+
+dnl
+dnl Compiler warnings
+dnl
 
 STACK_USAGE_WARNING=16384
 CWARNS=""
@@ -215,6 +241,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wunreachable-code], charybdis_cv_c_gcc_w_unreachable
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overloaded_virtual)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wchkp], charybdis_cv_c_gcc_w_chkp)
 
 AM_COND_IF([GCC],
 [
@@ -233,6 +260,15 @@ AM_COND_IF([CLANG],
 ])
 
 CPPFLAGS+="$CWARNS"
+
+
+dnl
+dnl Misc
+dnl
+
+dnl -ffriend-injection allows us to deduplicate declarations of friend
+dnl functions in both the friend class and the enclosing namespace
+CXXFLAGS+=" -ffriend-injection"
 
 
 
@@ -584,7 +620,7 @@ dnl
 dnl boost support
 dnl
 
-BOOST_VERSION_MIN="1.62"
+BOOST_VERSION_MIN="1.61"
 BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
