@@ -37,8 +37,17 @@ namespace ircd::http
 	struct request;
 	struct response;
 
-	extern std::map<code, string_view> reason;
+	string_view status(const enum code &);
 	enum code status(const string_view &);
+
+	string_view urlencode(const string_view &url, const mutable_buffer &);
+	string_view urldecode(const string_view &url, const mutable_buffer &);
+}
+
+namespace ircd
+{
+	using http::urldecode;
+	using http::urlencode;
 }
 
 //
@@ -167,8 +176,8 @@ struct ircd::http::line::header
 // HTTP headers are read once off the tape and proffered to the closure.
 struct ircd::http::headers
 {
-	using closure = std::function<void (const line::header &)>;
-	using range = std::pair<const line::header *, const line::header *>;
+	using header = line::header;
+	using closure = std::function<void (const header &)>;
 
 	headers(parse::capstan &, const closure & = {});
 };
@@ -180,9 +189,11 @@ struct ircd::http::content
 :string_view
 {
 	IRCD_OVERLOAD(discard)
+	IRCD_OVERLOAD(chunked)
 
 	content(parse::capstan &, const size_t &length, discard_t);
 	content(parse::capstan &, const size_t &length);
+	content(parse::capstan &, chunked_t);
 	content() = default;
 };
 
@@ -194,21 +205,17 @@ struct ircd::http::response
 
 	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
+	using header = line::header;
 
 	response(const code &,
 	         const string_view &content,
 	         const write_closure &,
-	         const headers::range &headers);
-
-	response(const code &,
-	         const string_view &content,
-	         const write_closure &,
-	         const std::initializer_list<line::header> & = {});
+	         const vector_view<const header> & = {});
 
 	response(parse::capstan &,
-	         content *const & = nullptr,
-	         const proffer & = nullptr,
-	         const headers::closure & = {});
+	         content *const &          = nullptr,
+	         const proffer &           = nullptr,
+	         const headers::closure &  = {});
 
 	response() = default;
 };
@@ -218,11 +225,11 @@ struct ircd::http::response::chunked
 {
 	struct chunk;
 
-	const write_closure &closure;
+	write_closure closure;
 
 	chunked(const code &,
 	        const write_closure &,
-	        const headers::range &headers);
+	        const vector_view<const header> &headers);
 
 	chunked(const chunked &) = delete;
 	~chunked() noexcept;
@@ -237,6 +244,7 @@ struct ircd::http::response::head
 :line::response
 {
 	size_t content_length {0};
+	string_view transfer_encoding;
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
@@ -246,6 +254,10 @@ struct ircd::http::response::content
 {
 	content(parse::capstan &pc, const head &h, discard_t)
 	:http::content{pc, h.content_length, discard}
+	{}
+
+	content(parse::capstan &pc, const head &h, chunked_t)
+	:http::content{pc, chunked}
 	{}
 
 	content(parse::capstan &pc, const head &h)
@@ -262,20 +274,21 @@ struct ircd::http::request
 
 	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
+	using header = line::header;
 
-	request(const string_view &host       = {},
-	        const string_view &method     = "GET",
-	        const string_view &path       = "/",
-	        const string_view &query      = {},
-	        const string_view &content    = {},
-	        const write_closure &         = nullptr,
-	        const headers::range & = {});
+	request(const string_view &host            = {},
+	        const string_view &method          = "GET",
+	        const string_view &path            = "/",
+	        const string_view &query           = {},
+	        const string_view &content         = {},
+	        const write_closure &              = nullptr,
+	        const vector_view<const header> &  = {});
 
 	request(parse::capstan &,
-	        content *const & = nullptr,
-	        const write_closure & = nullptr,
-	        const proffer & = nullptr,
-	        const headers::closure & = {});
+	        content *const &          = nullptr,
+	        const write_closure &     = nullptr,
+	        const proffer &           = nullptr,
+	        const headers::closure &  = {});
 };
 
 struct ircd::http::request::head

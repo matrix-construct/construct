@@ -25,6 +25,7 @@ namespace ircd::http
 {
 	namespace spirit = boost::spirit;
 	namespace qi = spirit::qi;
+	namespace karma = spirit::karma;
 	namespace ascii = qi::ascii;
 
 	using spirit::unused_type;
@@ -40,15 +41,20 @@ namespace ircd::http
 	using qi::raw;
 	using qi::attr;
 	using qi::eps;
+	using qi::attr_cast;
+
+	using karma::maxwidth;
 
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;
 
-	size_t printed_size(const headers::range &headers);
-	size_t print(char *const &buf, const size_t &max, const headers::range &headers);
+	size_t printed_size(const vector_view<const line::header> &headers);
+	size_t print(char *const &buf, const size_t &max, const vector_view<const line::header> &headers);
+
+	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
 }
 
-std::map<ircd::http::code, ircd::string_view> ircd::http::reason
+const decltype(ircd::http::reason) ircd::http::reason
 {
 	{ code::CONTINUE,                            "Continue"                                        },
 	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"                             },
@@ -126,7 +132,7 @@ struct ircd::http::grammar
 :qi::grammar<it, top>
 ,parse::grammar
 {
-	template<class R = unused_type> using rule = qi::rule<it, R>;
+	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
 
@@ -164,6 +170,12 @@ struct ircd::http::grammar
 	rule<> query_illegal               { illegal | ws | query_terminator          ,"query illegal" };
 	rule<string_view> query_key        { raw[+(char_ - query_illegal)]                ,"query key" };
 	rule<string_view> query_val        { raw[*(char_ - query_illegal)]              ,"query value" };
+
+	rule<size_t> chunk_size
+	{
+		qi::uint_parser<size_t, 16, 1, 8>{} >> CRLF
+		,"chunk size"
+	};
 
 	rule<string_view> method           { token                                           ,"method" };
 	rule<string_view> path             { -slash >> raw[*(char_ - query_illegal)]           ,"path" };
@@ -206,7 +218,7 @@ struct ircd::http::grammar
 		,"response"
 	};
 
-	grammar(rule<top> &top_rule, const char *const &name)
+	grammar(const rule<top> &top_rule, const char *const &name)
 	:grammar<it, top>::base_type
 	{
 		top_rule
@@ -223,6 +235,7 @@ struct ircd::http::parser
 {
 	static size_t content_length(const string_view &val);
 
+	using http::grammar<const char *, unused_type>::grammar;
 	parser(): grammar { grammar::ws, "http.request" } {}
 }
 const ircd::http::parser;
@@ -230,10 +243,10 @@ const ircd::http::parser;
 size_t
 ircd::http::print(char *const &buf,
                   const size_t &max,
-                  const headers::range &headers)
+                  const vector_view<const line::header> &headers)
 {
 	size_t ret(0);
-	for(auto it(headers.first); it != headers.second; ++it)
+	for(auto it(std::begin(headers)); it != std::end(headers); ++it)
 	{
 		ret += fmt::snprintf(buf + ret, max - ret, "%s: %s",
 		                     it->first,
@@ -246,9 +259,9 @@ ircd::http::print(char *const &buf,
 }
 
 size_t
-ircd::http::printed_size(const headers::range &headers)
+ircd::http::printed_size(const vector_view<const line::header> &headers)
 {
-	return std::accumulate(headers.first, headers.second, size_t(1), []
+	return std::accumulate(std::begin(headers), std::end(headers), size_t(1), []
 	(auto &ret, const auto &pair)
 	{
 		//            key                 :   SP  value                CRLF
@@ -299,12 +312,16 @@ ircd::http::request::request(const string_view &host,
                              const string_view &query,
                              const string_view &content,
                              const write_closure &closure,
-                             const headers::range &headers)
+                             const vector_view<const header> &headers)
 {
 	assert(!method.empty());
 	assert(!path.empty());
 
-	const auto &version{"HTTP/1.1"s};
+	static const auto &version
+	{
+		"HTTP/1.1"
+	};
+
 	char request_line[2048]; const auto request_line_len
 	{
 		snprintf(request_line, sizeof(request_line), "%s /%s%s%s %s\r\n",
@@ -312,7 +329,7 @@ ircd::http::request::request(const string_view &host,
 		         path.data(),
 		         query.empty()? "" : "?",
 		         query.empty()? "" : query.data(),
-		         version.data())
+		         version)
 	};
 
 	char host_line[128] {"Host: "}; const auto host_line_len
@@ -332,7 +349,11 @@ ircd::http::request::request(const string_view &host,
 		print(user_headers, sizeof(user_headers), headers)
 	};
 
-	const auto terminator{"\r\n"};
+	static const auto &terminator
+	{
+		"\r\n"
+	};
+
 	user_headers_len = strlcat(user_headers, terminator, sizeof(user_headers));
 
 	const ilist<const_buffer> vector
@@ -391,24 +412,13 @@ ircd::http::response::response(parse::capstan &pc,
 ircd::http::response::response(const code &code,
                                const string_view &content,
                                const write_closure &closure,
-                               const std::initializer_list<line::header> &headers)
-:response
-{
-	code, content, closure, {std::begin(headers), std::end(headers)}
-}
-{
-}
-
-ircd::http::response::response(const code &code,
-                               const string_view &content,
-                               const write_closure &closure,
-                               const headers::range &headers)
+                               const vector_view<const header> &headers)
 {
 	char status_line[128]; const auto status_line_len
 	{
 		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
 		         uint(code),
-		         http::reason[code].data())
+		         status(code).data())
 	};
 
 	char server_line[128]; const auto server_line_len
@@ -440,7 +450,7 @@ ircd::http::response::response(const code &code,
 
 	const bool has_transfer_encoding
 	{
-		std::any_of(headers.first, headers.second, []
+		std::any_of(std::begin(headers), std::end(headers), []
 		(const auto &header)
 		{
 			return header == "Transfer-Encoding";
@@ -482,12 +492,12 @@ ircd::http::response::response(const code &code,
 
 ircd::http::response::chunked::chunked(const code &code,
                                        const write_closure &closure,
-                                       const headers::range &user_headers)
+                                       const vector_view<const header> &user_headers)
 :closure{closure}
 {
 	const auto num_headers
 	{
-		std::distance(user_headers.first, user_headers.second) + 1
+		user_headers.size() + 1
 	};
 
 	line::header headers[num_headers]
@@ -495,7 +505,7 @@ ircd::http::response::chunked::chunked(const code &code,
 		{ "Transfer-Encoding", "chunked" }
 	};
 
-	std::copy(user_headers.first, user_headers.second, headers + 1);
+	std::copy(begin(user_headers), end(user_headers), headers + 1);
 
 	response
 	{
@@ -515,17 +525,18 @@ ircd::http::response::chunked::chunk::chunk(chunked &chunked,
 	char size_buf[16];
 	const auto size_size
 	{
-		snprintf(size_buf, sizeof(size_buf), "%zu", size(buffer))
+		snprintf(size_buf, sizeof(size_buf), "%lx", size(buffer))
 	};
 
 	const ilist<const_buffer> iov
 	{
 		{ size_buf,     size_t(size_size) },
 		{ "\r\n",       2                 },
-		buffer,
+		{ buffer                          },
 		{ "\r\n",       2                 },
 	};
 
+	assert(bool(chunked.closure));
 	chunked.closure(iov);
 }
 
@@ -538,9 +549,62 @@ ircd::http::response::head::head(parse::capstan &pc,
 		if(iequals(h.first, "content-length"s))
 			content_length = parser.content_length(h.second);
 
+		else if(iequals(h.first, "transfer-encoding"s))
+			transfer_encoding = h.second;
+
 		if(c)
 			c(h);
 	}};
+}
+
+ircd::http::content::content(parse::capstan &pc,
+                             chunked_t)
+:string_view{[&pc]
+{
+	size_t size;
+	pc([&size](const char *&start, const char *const &stop)
+	{
+		static const auto &grammar
+		{
+			parser.chunk_size
+		};
+
+		if(!qi::parse(start, stop, grammar, size))
+		{
+			size = 0;
+			return false;
+		}
+		else return true;
+	});
+
+	if(size >= pc.remaining() - 2)
+		throw parse::buffer_error("parse buffer must be for %zu bytes of chunk content + crlf",
+		                          size + 2);
+
+	const string_view ret
+	{
+		pc.read, pc.read + size
+	};
+
+	if(size)
+	{
+		pc.reader(pc.read, pc.read + size);
+		pc.parsed = pc.read;
+	}
+
+	pc([](const char *&start, const char *const &stop)
+	{
+		static const auto &grammar
+		{
+			parser.CRLF
+		};
+
+		return qi::parse(start, stop, grammar);
+	});
+
+	return ret;
+}()}
+{
 }
 
 ircd::http::content::content(parse::capstan &pc,
@@ -765,7 +829,7 @@ ircd::http::error::error(const enum code &code,
 ,code{code}
 ,content{std::move(content)}
 {
-	snprintf(buf, sizeof(buf), "%d %s", int(code), reason[code].data());
+	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).data());
 }
 
 ircd::http::code
@@ -785,6 +849,12 @@ ircd::http::status(const string_view &str)
 	return http::code(ret);
 }
 
+ircd::string_view
+ircd::http::status(const enum code &code)
+{
+	return reason.at(code);
+}
+
 size_t
 ircd::http::parser::content_length(const string_view &str)
 {
@@ -800,4 +870,97 @@ ircd::http::parser::content_length(const string_view &str)
 		throw error(BAD_REQUEST, "Invalid content-length value");
 
 	return ret;
+}
+
+namespace ircd::http
+{
+	struct urlencoder extern const urlencoder;
+	struct urldecoder extern const urldecoder;
+}
+
+struct ircd::http::urlencoder
+:karma::grammar<char *, const string_view &>
+{
+	void throw_illegal()
+	{
+		throw error(code::BAD_REQUEST, "Generator Protection: urlencode");
+	}
+
+	karma::rule<char *, const string_view &> url_encoding
+	{
+		*(karma::char_("A-Za-z0-9") | (karma::lit('%') << karma::hex))
+		,"url encoding"
+	};
+
+	urlencoder(): urlencoder::base_type{url_encoding} {}
+}
+const ircd::http::urlencoder;
+
+struct ircd::http::urldecoder
+:qi::grammar<const char *, mutable_buffer>
+{
+	template<class R = unused_type, class... S> using rule = qi::rule<const char *, R, S...>;
+
+	rule<> url_illegal
+	{
+		char_(0x00, 0x1f)
+		,"url illegal"
+	};
+
+	rule<char()> url_encodable
+	{
+		char_("A-Za-z0-9")
+		,"url encodable character"
+	};
+
+	rule<char()> urlencoded_character
+	{
+		'%' > qi::int_parser<char, 16, 2, 2>{}
+		,"urlencoded character"
+	};
+
+	rule<mutable_buffer> url_decode
+	{
+		*((urlencoded_character | (char_ - '%')) - url_illegal)
+		,"urldecode"
+	};
+
+	urldecoder(): urldecoder::base_type { url_decode } {}
+}
+const ircd::http::urldecoder;
+
+ircd::string_view
+ircd::http::urldecode(const string_view &url,
+                      const mutable_buffer &buf)
+try
+{
+	const char *start{url.data()}, *const stop
+	{
+		url.data() + std::min(url.size(), size(buf))
+	};
+
+	mutable_buffer mb{data(buf), size_t(0)};
+	qi::parse(start, stop, urldecoder.url_decode, mb);
+	return string_view{data(mb), size(mb)};
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	char err[256];
+	const auto rule(ircd::string(e.what_));
+	fmt::snprintf(err, sizeof(err),
+	              "I require a valid urlencoded %s. You sent %zu invalid chars starting with `%s'.",
+	              between(rule, "<", ">"),
+	              ssize_t(e.last - e.first),
+	              string_view{e.first, e.last});
+
+	throw error(code::BAD_REQUEST, err);
+}
+
+ircd::string_view
+ircd::http::urlencode(const string_view &url,
+                      const mutable_buffer &buf)
+{
+	char *out{data(buf)};
+	karma::generate(out, maxwidth(size(buf))[urlencoder], url);
+	return string_view{data(buf), size_t(std::distance(data(buf), out))};
 }
