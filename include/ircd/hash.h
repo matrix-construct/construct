@@ -25,7 +25,7 @@
 #pragma once
 #define HAVE_IRCD_HASH_H
 
-namespace ircd::bernstein
+namespace ircd
 {
 	constexpr size_t hash(const char *const &str, const size_t i = 0);
 	constexpr size_t hash(const char16_t *const &str, const size_t i = 0);
@@ -45,7 +45,6 @@ namespace ircd::crh
 
 namespace ircd
 {
-	using bernstein::hash;
 	using crh::hash;
 	using crh::sha256;
 }
@@ -90,36 +89,36 @@ struct ircd::crh::sha256
 };
 
 inline size_t
-ircd::bernstein::hash(const std::string_view &str,
-                      const size_t i)
+ircd::hash(const std::string_view &str,
+           const size_t i)
 {
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
 inline size_t
-ircd::bernstein::hash(const std::u16string &str,
-                      const size_t i)
+ircd::hash(const std::u16string &str,
+           const size_t i)
 {
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
 inline size_t
-ircd::bernstein::hash(const std::string &str,
-                      const size_t i)
+ircd::hash(const std::string &str,
+           const size_t i)
 {
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
 constexpr size_t
-ircd::bernstein::hash(const char16_t *const &str,
-                      const size_t i)
+ircd::hash(const char16_t *const &str,
+           const size_t i)
 {
 	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
 }
 
 constexpr size_t
-ircd::bernstein::hash(const char *const &str,
-                      const size_t i)
+ircd::hash(const char *const &str,
+           const size_t i)
 {
 	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
 }
