@@ -1028,6 +1028,8 @@ ircd::db::database::logs::LogHeader(const char *const fmt,
 	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
 void
 ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
                                const char *const fmt,
@@ -1053,6 +1055,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 
 	rog(translate(level), "'%s': %s", d->name, str);
 }
+#pragma GCC diagnostic pop
 
 ///////////////////////////////////////////////////////////////////////////////
 //
