@@ -915,13 +915,13 @@ struct ircd::http::urldecoder
 
 	rule<char()> urlencoded_character
 	{
-		'%' > qi::int_parser<char, 16, 2, 2>{}
+		'%' > qi::uint_parser<char, 16, 2, 2>{}
 		,"urlencoded character"
 	};
 
 	rule<mutable_buffer> url_decode
 	{
-		*((urlencoded_character | (char_ - '%')) - url_illegal)
+		*((char_ - '%') | urlencoded_character)
 		,"urldecode"
 	};
 
