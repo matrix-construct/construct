@@ -109,6 +109,16 @@ struct ircd::m::id::buf
 	std::array<char, SIZE> b;
 
   public:
+	operator const_buffer() const
+	{
+		return b;
+	}
+
+	operator mutable_buffer()
+	{
+		return b;
+	}
+
 	template<class... args>
 	buf(args&&... a)
 	:T{b.data(), b.size(), std::forward<args>(a)...}
