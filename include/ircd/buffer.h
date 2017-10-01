@@ -62,6 +62,10 @@ namespace ircd::buffer
 	template<template<class> class I> using const_raw_buffers = I<const_raw_buffer>;
 	template<template<class> class I> using mutable_raw_buffers = I<mutable_raw_buffer>;
 
+	// Preconstructed null buffers
+	extern const mutable_buffer null_buffer;
+	extern const ilist<mutable_buffer> null_buffers;
+
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
 	template<class it> const it &end(const buffer<it> &buffer);
@@ -74,22 +78,18 @@ namespace ircd::buffer
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
-	template<class it> char *copy(char *&dest, char *const &stop, const buffer<it> &buffer);
-	template<class it> size_t copy(char *const &dest, const size_t &max, const buffer<it> &buffer);
-	template<class it> size_t copy(const mutable_buffer &dst, const buffer<it> &src);
-	size_t copy(const mutable_buffer &dst, const string_view &src);
-	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
+	template<class it> it copy(it &dest, const it &stop, const const_raw_buffer &);
+	template<class it> size_t copy(const it &dest, const size_t &max, const const_raw_buffer &buffer);
+	size_t copy(const mutable_raw_buffer &dst, const const_raw_buffer &src);
 
 	// Iterable of buffers tools
 	template<template<class> class I, class T> size_t size(const I<T> &buffers);
-	template<template<class> class I, class T> char *copy(char *&dest, char *const &stop, const I<T> &buffer);
-	template<template<class> class I, class T> size_t copy(char *const &dest, const size_t &max, const I<T> &buffer);
+	template<template<class> class I, class T> size_t copy(const mutable_raw_buffer &, const I<T> &buffer);
 	template<template<class> class I, class T> size_t consume(I<T> &buffers, const size_t &bytes);
-	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
 
-	// Preconstructed null buffers
-	extern const mutable_buffer null_buffer;
-	extern const ilist<mutable_buffer> null_buffers;
+	// Convenience copy to stream
+	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
+	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
 }
 
 // Export these important aliases down to main ircd namespace
@@ -377,28 +377,12 @@ template<template<class>
          class buffers,
          class T>
 size_t
-ircd::buffer::copy(char *const &dest,
-                   const size_t &max,
+ircd::buffer::copy(const mutable_raw_buffer &dest,
                    const buffers<T> &b)
 {
 	size_t ret(0);
 	for(const T &b : b)
-		ret += copy(dest + ret, max - ret, b);
-
-	return ret;
-}
-
-template<template<class>
-         class buffers,
-         class T>
-char *
-ircd::buffer::copy(char *&dest,
-                   char *const &stop,
-                   const buffers<T> &b)
-{
-	char *const ret(dest);
-	for(const T &b : b)
-		copy(dest, stop, b);
+		ret += copy(data(dest) + ret, size(dest) - ret, b);
 
 	return ret;
 }
@@ -425,48 +409,40 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 }
 
 inline size_t
-ircd::buffer::copy(const mutable_buffer &dst,
-                   const string_view &s)
+ircd::buffer::copy(const mutable_raw_buffer &dst,
+                   const const_raw_buffer &src)
 {
-	return copy(dst, const_buffer{s});
+	auto e{begin(dst)};
+	copy(e, end(dst), src);
+	return std::distance(begin(dst), e);
 }
 
 template<class it>
 size_t
-ircd::buffer::copy(const mutable_buffer &dst,
-                   const buffer<it> &src)
-{
-	auto e(begin(dst));
-	auto b(copy(e, end(dst), src));
-	return std::distance(b, e);
-}
-
-template<class it>
-size_t
-ircd::buffer::copy(char *const &dest,
+ircd::buffer::copy(const it &dest,
                    const size_t &max,
-                   const buffer<it> &buffer)
+                   const const_raw_buffer &src)
 {
 	if(!max)
 		return 0;
 
-	char *out(dest);
-	char *const stop(dest + max - 1);
-	copy(out, stop, buffer);
+	it out{dest};
+	const it stop{dest + max - 1};
+	copy(out, stop, const_raw_buffer{src});
 	*out = '\0';
 	return std::distance(dest, out);
 }
 
 template<class it>
-char *
-ircd::buffer::copy(char *&dest,
-                   char *const &stop,
-                   const buffer<it> &buffer)
+it
+ircd::buffer::copy(it &dest,
+                   const it &stop,
+                   const const_raw_buffer &src)
 {
-	char *const ret(dest);
+	const it ret{dest};
 	const size_t remain(stop - dest);
-	dest += std::min(size(buffer), remain);
-	memcpy(ret, data(buffer), dest - ret);
+	dest += std::min(size(src), remain);
+	memcpy(ret, data(src), dest - ret);
 	return ret;
 }
 
@@ -540,19 +516,19 @@ template<class it>
 ircd::buffer::buffer<it>::operator std::string()
 const
 {
-	return { get<0>(*this), size(*this) };
+	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
 }
 
 template<class it>
 ircd::buffer::buffer<it>::operator std::string_view()
 const
 {
-	return { get<0>(*this), size(*this) };
+	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
 }
 
 template<class it>
 ircd::buffer::buffer<it>::operator string_view()
 const
 {
-	return { get<0>(*this), get<1>(*this) };
+	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
 }
