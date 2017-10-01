@@ -836,11 +836,12 @@ dnl TODO use an $enable_js var
 AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
 
 
+
 dnl
 dnl libgmp support
 dnl
 
-PKG_CHECK_MODULES(GMP, [libgmp], [have_gmp="yes"], [have_gmp="no"])
+PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
 AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
 
 AC_SUBST(GMP_CPPFLAGS, [])
@@ -1274,12 +1275,12 @@ echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB................... $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
+echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
+echo "SSL support........................ $SSL_TYPE"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
-echo "GNU MP support .................... $have_gmp"
 echo "IPv6 support ...................... $ipv6"
-echo "SSL type........................... $SSL_TYPE"
 echo "Installing into ................... $prefix"
 echo
 echo "* Ready to build $PACKAGE_NAME"
