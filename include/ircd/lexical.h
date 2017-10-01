@@ -206,6 +206,7 @@ namespace ircd
 	template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
 	bool startswith(const string_view &str, const string_view &val);
 	bool startswith(const string_view &str, const char &val);
+	template<class It> bool startswith_any(const string_view &str, const It &begin, const It &end);
 	bool surrounds(const string_view &str, const string_view &val);
 	bool surrounds(const string_view &str, const char &val);
 	string_view unquote(string_view str);
@@ -248,6 +249,18 @@ ircd::surrounds(const string_view &str,
                 const string_view &val)
 {
 	return startswith(str, val) && endswith(str, val);
+}
+
+template<class It>
+bool
+ircd::startswith_any(const string_view &str,
+                     const It &begin,
+                     const It &end)
+{
+	return std::any_of(begin, end, [&str](const auto &val)
+	{
+		return startswith(str, val);
+	});
 }
 
 inline bool
