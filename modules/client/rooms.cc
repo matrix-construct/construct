@@ -156,7 +156,7 @@ get_context(client &client,
 {
 	const m::event::id &event_id
 	{
-		token(params, "/", 2)
+		token(params, '/', 2)
 	};
 
 	const auto it
@@ -165,7 +165,7 @@ get_context(client &client,
 	};
 
 	if(!it)
-		throw http::error(http::NOT_FOUND, "event not found");
+		throw m::NOT_FOUND{"event not found"};
 
 	const auto event
 	{
@@ -190,18 +190,15 @@ get_rooms(client &client, const resource::request &request)
 	};
 
 	string_view token[2];
-	if(tokens(params, "/", token) != 2)
-		throw http::error(http::code::NOT_FOUND, "/rooms command required");
+	if(tokens(params, '/', token) != 2)
+		throw m::BAD_REQUEST{"/rooms command required"};
 
-	const m::room::id &room_id
+	m::room::id::buf room_id
 	{
-		token[0]
+		urldecode(token[0], room_id)
 	};
 
-	const string_view &cmd
-	{
-		token[1]
-	};
+	const string_view &cmd{token[1]};
 
 	if(cmd == "context")
 		return get_context(client, request, params, room_id);
@@ -209,7 +206,13 @@ get_rooms(client &client, const resource::request &request)
 	if(cmd == "state")
 		return get_state(client, request, params, room_id);
 
-	throw http::error(http::code::NOT_FOUND, "/rooms command not found");
+	if(cmd == "members")
+		return get_members(client, request, params, room_id);
+
+	if(cmd == "messages")
+		return get_messages(client, request, params, room_id);
+
+	throw m::NOT_FOUND{"/rooms command not found"};
 }
 
 resource::method method_get
@@ -224,7 +227,7 @@ put_send(client &client,
          const m::room::id &room_id)
 {
 	string_view token[4];
-	tokens(params, "/", token);
+	tokens(params, '/', token);
 
 	const string_view &type
 	{
@@ -282,7 +285,7 @@ put_rooms(client &client, const resource::request &request)
 
 	string_view token[2];
 	if(tokens(params, "/", token) != 2)
-		throw http::error(http::code::NOT_FOUND, "/rooms command required");
+		throw m::BAD_REQUEST{"/rooms command required"};
 
 	const m::room::id &room_id
 	{
@@ -297,7 +300,7 @@ put_rooms(client &client, const resource::request &request)
 	if(cmd == "send")
 		return put_send(client, request, params, room_id);
 
-	throw http::error(http::code::NOT_FOUND, "/rooms command not found");
+	throw m::NOT_FOUND{"/rooms command not found"};
 }
 
 resource::method method_put

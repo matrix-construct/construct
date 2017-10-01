@@ -42,7 +42,7 @@ module_LTLIBRARIES = \
 	###
 
 # This puts the source in db/ but the installed
-# library is client_X.so in the main modules dir.
+# library is db_X.so in the main modules dir.
 db_moduledir = @moduledir@
 db_db_events_la_SOURCES = db/events.cc
 db_module_LTLIBRARIES = \

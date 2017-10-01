@@ -32,11 +32,10 @@ resource user_resource
 
 resource::response
 get_filter(client &client, const resource::request &request)
-try
 {
-	const m::user::id user_id
+	m::user::id::buf user_id
 	{
-		token(request.head.path, '/', 4)
+		urldecode(token(request.head.path, '/', 4), user_id)
 	};
 
 	const auto filter_id
@@ -74,10 +73,6 @@ try
 	// Response already made
 	return {};
 }
-catch(...)
-{
-	throw;
-}
 
 resource::method get
 {
@@ -91,42 +86,42 @@ resource::method get
 // may be used in future requests to restrict which events are returned to the client.
 resource::response
 post_filter(client &client, const resource::request::object<const m::filter> &request)
-try
 {
-	const auto &user_id
+	// (5.2) Required. The id of the user uploading the filter. The access
+	// token must be authorized to make requests for this user id.
+	m::user::id::buf user_id
 	{
-		// (5.2) Required. The id of the user uploading the filter. The access
-		// token must be authorized to make requests for this user id.
-		token(request.head.path, '/', 4)
+		urldecode(token(request.head.path, '/', 4), user_id)
 	};
+	user_id.validate();
 
+	// (5.2) List of event fields to include. If this list is absent then all fields are
+	// included. The entries may include '.' charaters to indicate sub-fields. So
+	// ['content.body'] will include the 'body' field of the 'content' object. A literal '.'
+	// character in a field name may be escaped using a '\'. A server may include more
+	// fields than were requested.
 	const auto &event_fields
 	{
-		// (5.2) List of event fields to include. If this list is absent then all fields are
-		// included. The entries may include '.' charaters to indicate sub-fields. So
-		// ['content.body'] will include the 'body' field of the 'content' object. A literal '.'
-		// character in a field name may be escaped using a '\'. A server may include more
-		// fields than were requested.
 		json::get<m::name::event_fields>(request)
 	};
 
+	// (5.2) The format to use for events. 'client' will return the events in a format suitable
+	// for clients. 'federation' will return the raw event as receieved over federation.
+	// The default is 'client'. One of: ["client", "federation"]
 	const auto &event_format
 	{
-		// (5.2) The format to use for events. 'client' will return the events in a format suitable
-		// for clients. 'federation' will return the raw event as receieved over federation.
-		// The default is 'client'. One of: ["client", "federation"]
 		json::get<m::name::event_format>(request)
 	};
 
+	// (5.2) The user account data that isn't associated with rooms to include.
 	const auto &account_data
 	{
-		// (5.2) The user account data that isn't associated with rooms to include.
 		json::val<m::name::account_data>(request)
 	};
 
+	// (5.2) Filters to be applied to room data.
 	const auto &room
 	{
-		// (5.2) Filters to be applied to room data.
 		json::val<m::name::room>(request)
 	};
 
@@ -165,10 +160,6 @@ try
 			{ "filter_id", filter_id }
 		}
 	};
-}
-catch(...)
-{
-	throw;
 }
 
 resource::method post
