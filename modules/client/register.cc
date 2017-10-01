@@ -21,12 +21,6 @@
 
 using namespace ircd;
 
-const auto home_server
-{
-	// "The hostname of the homeserver on which the account has been registered."
-	"cdc.z"
-};
-
 namespace { namespace name
 {
 	constexpr const auto username {"username"};
@@ -85,7 +79,7 @@ handle_post_kind_user(client &client,
 	// specified. TODO: isn't that guest reg?
 	const m::id::user::buf user_id
 	{
-		username, home_server
+		username, my_host()
 	};
 
 	// Check if the the user_id is acceptably formed for this server or throws
@@ -132,7 +126,7 @@ handle_post_kind_user(client &client,
 		client, http::CREATED,
 		{
 			{ "user_id",         user_id        },
-			{ "home_server",     home_server    },
+			{ "home_server",     my_host()      },
 //			{ "access_token",    access_token   },
 		}
 	};
@@ -144,7 +138,7 @@ handle_post_kind_guest(client &client,
 {
 	const m::id::user::buf user_id
 	{
-		m::generate, home_server
+		m::generate, my_host()
 	};
 
 	return resource::response
@@ -152,7 +146,7 @@ handle_post_kind_guest(client &client,
 		client, http::CREATED,
 		{
 			{ "user_id",         user_id        },
-			{ "home_server",     home_server    },
+			{ "home_server",     my_host()      },
 //			{ "access_token",    access_token   },
 		}
 	};
@@ -204,10 +198,10 @@ validate_user_id(const m::id::user &user_id)
 			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
 		};
 
-	if(user_id.host() != home_server)
+	if(user_id.host() != my_host())
 		throw m::error
 		{
-			"M_INVALID_USERNAME", "Can only register with host '%s'", home_server
+			"M_INVALID_USERNAME", "Can only register with host '%s'", my_host()
 		};
 }
 

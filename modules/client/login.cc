@@ -28,12 +28,6 @@ resource login_resource
 	"they can use to authorize themself in subsequent requests. (3.2.2)"
 };
 
-const auto home_server
-{
-	// "The hostname of the homeserver on which the account has been registered."
-	"cdc.z"
-};
-
 namespace { namespace name
 {
 	constexpr const auto password{"password"};
@@ -63,10 +57,10 @@ post_login_password(client &client,
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		unquote(at<name::user>(request)), home_server
+		unquote(at<name::user>(request)), my_host()
 	};
 
-	if(!user_id.valid() || user_id.host() != home_server)
+	if(!user_id.valid() || user_id.host() != my_host())
 		throw m::error
 		{
 			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
@@ -113,8 +107,8 @@ post_login_password(client &client,
 		{ "state_key",  access_token         },
 		{ "content",    json::members
 		{
-			{ "ip",      string(remote_addr(client)) },
-			{ "device",  "unknown"                   },
+			{ "ip",      string(remote(client)) },
+			{ "device",  "unknown"              },
 		}}
 	});
 
@@ -124,7 +118,7 @@ post_login_password(client &client,
 		client,
 		{
 			{ "user_id",        user_id        },
-			{ "home_server",    home_server    },
+			{ "home_server",    my_host()      },
 			{ "access_token",   access_token   },
 		}
 	};
