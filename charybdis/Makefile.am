@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
+	@SODIUM_CPPFLAGS@ \
 	###
 
 AM_LDFLAGS = \
@@ -29,6 +30,7 @@ charybdis_LDFLAGS = \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
+	@SODIUM_LDFLAGS@ \
 	###
 
 charybdis_LDADD = \
@@ -36,6 +38,7 @@ charybdis_LDADD = \
 	@ROCKSDB_LIBS@ \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
+	@SODIUM_LIBS@ \
 	-lcrypto \
 	-lssl \
 	-lz \

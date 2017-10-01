@@ -37,10 +37,10 @@ developed Boost libraries. These are included as a submodule in this repository.
 **RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
 and have furthered the mission of eliminating the need for external "IRC services"
 
+*Other dependencies:* **sodium** (NaCl crypto), **OpenSSL**, **zlib**, **snappy** (for rocksdb)
+
 *Build dependencies:* **gnu++14 compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
-
-*Other dependencies:* **OpenSSL**, **zlib**, **snappy** (for rocksdb)
 
 
 #### Downloading Charybdis

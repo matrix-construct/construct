@@ -83,12 +83,13 @@ try
 
 	ircd::main_context = main_context.detach();
 	ircd::runlevel_changed = std::move(runlevel_changed);
-	log::info("%s. boost %u.%u.%u. rocksdb %s.",
+	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s.",
 	          PACKAGE_STRING,
 	          boost_version[0],
 	          boost_version[1],
 	          boost_version[2],
-	          db::version);
+	          db::version,
+	          nacl::version());
 
 	log::info("%s %ld %s. configured: %s. compiled: %s %s",
 	          BRANDING_VERSION,
@@ -170,6 +171,7 @@ try
 	// more appropriate.
 
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
+	nacl::init _nacl_;       // nacl crypto
 	net::init _net_;         // Networking
 	client::init _client_;   // Client related
 	db::init _db_;           // RocksDB

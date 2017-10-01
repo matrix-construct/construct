@@ -11,6 +11,7 @@ AM_CPPFLAGS = \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
+	@SODIUM_CPPFLAGS@ \
 	-include ircd/ircd.h \
 	###
 
@@ -42,12 +43,14 @@ libircd_la_LDFLAGS = \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
+	@SODIUM_LDFLAGS@ \
 	###
 
 libircd_la_LIBADD = \
 	@ROCKSDB_LIBS@ \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
+	@SODIUM_LIBS@ \
 	-lcrypto \
 	-lssl \
 	-lz \
@@ -75,6 +78,7 @@ libircd_la_SOURCES =   \
 	parse.cc           \
 	resource.cc        \
 	rfc1459.cc         \
+	sodium.cc          \
 	###
 
 if JS

@@ -848,6 +848,26 @@ AC_SUBST(GMP_LDFLAGS, [])
 AC_SUBST(GMP_LIBS, ["-lgmp"])
 
 
+
+dnl
+dnl libsodium (NaCl) crypto support
+dnl
+
+dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
+AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
+AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
+
+AM_COND_IF([SODIUM], [],
+[
+	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
+])
+
+AC_SUBST(SODIUM_CPPFLAGS, [])
+AC_SUBST(SODIUM_LDFLAGS, [])
+AC_SUBST(SODIUM_LIBS, ["-lsodium"])
+
+
+
 dnl
 dnl OpenSSL support
 dnl
@@ -1254,6 +1274,7 @@ echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB................... $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
+echo "Sodium support .................... $have_sodium"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "GNU MP support .................... $have_gmp"

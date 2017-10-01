@@ -81,6 +81,7 @@ namespace ircd::buffer
 	template<class it> it copy(it &dest, const it &stop, const const_raw_buffer &);
 	template<class it> size_t copy(const it &dest, const size_t &max, const const_raw_buffer &buffer);
 	size_t copy(const mutable_raw_buffer &dst, const const_raw_buffer &src);
+	void zero(const mutable_raw_buffer &buf);
 
 	// Iterable of buffers tools
 	template<template<class> class I, class T> size_t size(const I<T> &buffers);
