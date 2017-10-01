@@ -34,6 +34,7 @@ namespace ircd
 	using std::chrono::steady_clock;
 	using std::chrono::high_resolution_clock;
 	using std::chrono::time_point;
+	using namespace std::literals::chrono_literals;
 
 	using microtime_t = std::pair<time_t, int32_t>;
 	using steady_point = time_point<steady_clock>;
