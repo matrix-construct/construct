@@ -27,12 +27,35 @@
 // Internal
 //
 
-__attribute__((constructor))
-static void
-ircd_init()
+struct throw_on_error
 {
-	if(sodium_init() < 0)
+	throw_on_error(const int &val)
+	{
+		if(unlikely(val != 0))
+			throw ircd::nacl::error("sodium error");
+	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/nacl.h
+//
+
+ircd::string_view
+ircd::nacl::version()
+{
+	return ::sodium_version_string();
+}
+
+ircd::nacl::init::init()
+{
+	if(::sodium_init() < 0)
 		throw std::runtime_error("sodium_init(): error");
+}
+
+ircd::nacl::init::~init()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,4 +67,69 @@ void
 ircd::buffer::zero(const mutable_raw_buffer &buf)
 {
 	sodium_memzero(data(buf), size(buf));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/ed25519
+//
+
+static_assert(ircd::ed25519::PK_SZ == crypto_sign_ed25519_PUBLICKEYBYTES);
+
+ircd::ed25519::sk::sk(const string_view &filename,
+                      pk *const &pk_arg)
+:key
+{
+	reinterpret_cast<uint8_t *>(::sodium_malloc(crypto_sign_ed25519_SECRETKEYBYTES)),
+	&::sodium_free
+}
+{
+	pk discard, &pk
+	{
+		pk_arg? *pk_arg : discard
+	};
+
+	throw_on_error
+	{
+		::crypto_sign_ed25519_keypair(pk.data(), key.get())
+	};
+}
+
+ircd::ed25519::sig
+ircd::ed25519::sk::sign(const const_raw_buffer &msg)
+const
+{
+	unsigned long long sig_sz;
+	struct sig sig;
+	throw_on_error
+	{
+		::crypto_sign_ed25519_detached(sig.data(),
+		                               &sig_sz,
+		                               buffer::data(msg),
+		                               buffer::size(msg),
+		                               key.get())
+	};
+
+	assert(sig_sz <= sig.size());
+	assert(sig.size() >= sig_sz);
+	memset(sig.data() + sig.size() - sig_sz, 0, sig.size() - sig_sz);
+	return sig;
+}
+
+bool
+ircd::ed25519::pk::verify(const const_raw_buffer &msg,
+                          const sig &sig)
+const
+{
+	const int ret
+	{
+		::crypto_sign_ed25519_verify_detached(sig.data(),
+		                                      buffer::data(msg),
+		                                      buffer::size(msg),
+		                                      data())
+	};
+
+	return ret == 0?   true:
+	       ret == -1?  false:
+	                   throw nacl::error("verify failed: %d", ret);
 }
