@@ -55,7 +55,7 @@ namespace ircd::buffer
 	struct mutable_buffer;
 	struct const_raw_buffer;
 	struct mutable_raw_buffer;
-	template<class buffer, size_t align> struct unique_buffer;
+	template<class buffer, uint align = 16> struct unique_buffer;
 
 	template<template<class> class I> using const_buffers = I<const_buffer>;
 	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
@@ -282,7 +282,7 @@ struct ircd::buffer::const_raw_buffer
 ///
 ///
 template<class buffer,
-         size_t align = 16>
+         uint alignment>
 struct ircd::buffer::unique_buffer
 :buffer
 {
@@ -295,7 +295,7 @@ struct ircd::buffer::unique_buffer
 };
 
 template<class buffer,
-         size_t alignment>
+         uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<uint8_t[]> &&b,
                                                               const size_t &size)
 :buffer
@@ -306,21 +306,27 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<ui
 }
 
 template<class buffer,
-         size_t alignment>
+         uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
 :unique_buffer<buffer, alignment>
 {
 	std::unique_ptr<uint8_t[]>
 	{
-		new __attribute__((aligned(alignment))) uint8_t[size]
+		//TODO: Can't use a template parameter to the attribute even though
+		// it's known at compile time. Hardcoding this until fixed with better
+		// aligned dynamic memory.
+		//new __attribute__((aligned(alignment))) uint8_t[size]
+		new __attribute__((aligned(16))) uint8_t[size]
 	},
 	size
 }
 {
+	// Alignment can only be 16 bytes for now
+	assert(alignment == 16);
 }
 
 template<class buffer,
-         size_t alignment>
+         uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&other)
 noexcept
 :buffer
@@ -332,7 +338,7 @@ noexcept
 }
 
 template<class buffer,
-         size_t alignment>
+         uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
 noexcept
 {
