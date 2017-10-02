@@ -112,11 +112,11 @@ namespace ircd::db
 enum class ircd::db::pos
 :int8_t
 {
-    FRONT   = -2,    // .front()    | first element
-    PREV    = -1,    // std::prev() | previous element
-    END     = 0,     // break;      | exit iteration (or past the end)
-    NEXT    = 1,     // continue;   | next element
-    BACK    = 2,     // .back()     | last element
+	FRONT   = -2,    // .front()    | first element
+	PREV    = -1,    // std::prev() | previous element
+	END     = 0,     // break;      | exit iteration (or past the end)
+	NEXT    = 1,     // continue;   | next element
+	BACK    = 2,     // .back()     | last element
 };
 
 enum ircd::db::op
