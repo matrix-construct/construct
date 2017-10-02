@@ -562,6 +562,13 @@ ircd::try_lex_cast<long double>(const string_view &s)
 //
 
 ircd::string_view
+ircd::b64encode_unpadded(const mutable_buffer &out,
+                         const const_raw_buffer &in)
+{
+	return rstrip(b64encode(out, in), '=');
+}
+
+ircd::string_view
 ircd::b64encode(const mutable_buffer &out,
                 const const_raw_buffer &in)
 {

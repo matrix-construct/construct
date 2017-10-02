@@ -50,6 +50,7 @@ namespace ircd
 
 	// Binary <-> Base64 conversion suite
 	string_view b64encode(const mutable_buffer &out, const const_raw_buffer &in);
+	string_view b64encode_unpadded(const mutable_buffer &out, const const_raw_buffer &in);
 }
 
 namespace ircd
