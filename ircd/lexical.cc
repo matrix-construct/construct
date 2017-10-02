@@ -35,6 +35,11 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/tokens.h
+//
+
 ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const char &sep,
@@ -243,73 +248,46 @@ ircd::tokens(const string_view &str,
 	std::for_each(begin(view), end(view), closure);
 }
 
-ircd::string_view
-ircd::b64encode(const mutable_buffer &out,
-                const const_raw_buffer &in)
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/lex_cast.h
+//
+
+namespace ircd
 {
+	/// The static lex_cast ring buffers are each LEX_CAST_BUFSIZE bytes;
+	/// Consider increasing if some lex_cast<T>(str) has more characters.
+	const size_t LEX_CAST_BUFSIZE {64};
 
-	using transform = boost::archive::iterators::transform_width<unsigned char *, 6, 8>;
-	using b64fb = boost::archive::iterators::base64_from_binary<transform>;
-	using ostream_iterator = boost::archive::iterators::ostream_iterator<char>;
+	/// This is a static "ring buffer" to simplify a majority of lex_cast uses.
+	/// If the lex_cast has binary input and string output, and no user buffer
+	/// is supplied, the next buffer here will be used instead. The returned
+	/// string_view of data from this buffer is only valid for several more
+	/// calls to lex_cast before it is overwritten.
+	thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
+	thread_local uint lex_cast_cur;
 
-	std::stringstream ss;
-	std::copy(b64fb(data(in)), b64fb(data(in) + size(in)), ostream_iterator(ss));
-	const auto outlen(ss.str().copy(data(out), size(out)));
-	return { data(out), outlen };
+	template<size_t N, class T> static string_view _lex_cast(const T &i, char *buf, size_t max);
+	template<class T> static T _lex_cast(const string_view &s);
 }
 
-ircd::const_raw_buffer
-ircd::a2u(const mutable_raw_buffer &out,
-          const const_buffer &in)
-{
-	const size_t len{size(in) / 2};
-	for(size_t i(0); i < len; ++i)
-	{
-		const char gl[3]
-		{
-			in[i * 2],
-			in[i * 2 + 1],
-			'\0'
-		};
-
-		out[i] = strtol(gl, nullptr, 16);
-	}
-
-	return { data(out), len };
-}
-
-ircd::string_view
-ircd::u2a(const mutable_buffer &out,
-          const const_raw_buffer &in)
-{
-	char *p(data(out));
-	for(size_t i(0); i < size(in); ++i)
-		p += snprintf(p, size(out) - (p - data(out)), "%02x", in[i]);
-
-	return { data(out), size_t(p - data(out)) };
-}
-
-namespace ircd {
-
-const size_t LEX_CAST_BUFSIZE {64};
-thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
-
+/// Internal template providing conversions from a number to a string;
+/// potentially using the ring buffer if no user buffer is supplied.
 template<size_t N,
          class T>
-static string_view
-_lex_cast(const T &i,
-          char *buf,
-          size_t max)
+ircd::string_view
+ircd::_lex_cast(const T &i,
+                char *buf,
+                size_t max)
 try
 {
 	using array = std::array<char, N>;
 
 	if(!buf)
 	{
-		static thread_local uint cur;
-		buf = lex_cast_buf[cur++];
+		buf = lex_cast_buf[lex_cast_cur++];
 		max = LEX_CAST_BUFSIZE;
-		cur %= LEX_CAST_BUFS;
+		lex_cast_cur %= LEX_CAST_BUFS;
 	}
 
 	assert(max >= N);
@@ -322,9 +300,11 @@ catch(const boost::bad_lexical_cast &e)
 	throw ircd::bad_lex_cast("%s", e.what());
 }
 
+/// Internal template providing conversions from a string to a number;
+/// the native object is returned directly; no ring buffer is consumed.
 template<class T>
-static T
-_lex_cast(const string_view &s)
+T
+ircd::_lex_cast(const string_view &s)
 try
 {
 	return boost::lexical_cast<T>(s);
@@ -333,8 +313,6 @@ catch(const boost::bad_lexical_cast &e)
 {
 	throw ircd::bad_lex_cast("%s", e.what());
 }
-
-} // namespace ircd
 
 template<> ircd::string_view
 ircd::lex_cast(bool i,
@@ -576,6 +554,57 @@ ircd::try_lex_cast<long double>(const string_view &s)
 {
 	long double i;
 	return boost::conversion::try_lexical_convert(s, i);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/stringops.h
+//
+
+ircd::string_view
+ircd::b64encode(const mutable_buffer &out,
+                const const_raw_buffer &in)
+{
+
+	using transform = boost::archive::iterators::transform_width<unsigned char *, 6, 8>;
+	using b64fb = boost::archive::iterators::base64_from_binary<transform>;
+	using ostream_iterator = boost::archive::iterators::ostream_iterator<char>;
+
+	std::stringstream ss;
+	std::copy(b64fb(data(in)), b64fb(data(in) + size(in)), ostream_iterator(ss));
+	const auto outlen(ss.str().copy(data(out), size(out)));
+	return { data(out), outlen };
+}
+
+ircd::const_raw_buffer
+ircd::a2u(const mutable_raw_buffer &out,
+          const const_buffer &in)
+{
+	const size_t len{size(in) / 2};
+	for(size_t i(0); i < len; ++i)
+	{
+		const char gl[3]
+		{
+			in[i * 2],
+			in[i * 2 + 1],
+			'\0'
+		};
+
+		out[i] = strtol(gl, nullptr, 16);
+	}
+
+	return { data(out), len };
+}
+
+ircd::string_view
+ircd::u2a(const mutable_buffer &out,
+          const const_raw_buffer &in)
+{
+	char *p(data(out));
+	for(size_t i(0); i < size(in); ++i)
+		p += snprintf(p, size(out) - (p - data(out)), "%02x", in[i]);
+
+	return { data(out), size_t(p - data(out)) };
 }
 
 /*
