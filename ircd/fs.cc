@@ -60,6 +60,34 @@ std::array<ent, num_of<index>()> paths
 } // namespace fs
 } // namespace ircd
 
+bool
+ircd::fs::write(const std::string &path,
+                const const_raw_buffer &buf)
+{
+	if(fs::exists(path))
+		return false;
+
+	return overwrite(path, buf);
+}
+
+bool
+ircd::fs::overwrite(const std::string &path,
+                    const const_raw_buffer &buf)
+{
+	std::ofstream file{path, std::ios::trunc};
+	file.write(reinterpret_cast<const char *>(data(buf)), size(buf));
+	return true;
+}
+
+bool
+ircd::fs::append(const std::string &path,
+                 const const_raw_buffer &buf)
+{
+	std::ofstream file{path, std::ios::app};
+	file.write(reinterpret_cast<const char *>(data(buf)), size(buf));
+	return true;
+}
+
 std::string
 ircd::fs::read(const std::string &path)
 {
@@ -68,6 +96,18 @@ ircd::fs::read(const std::string &path)
 	std::istream_iterator<char> b{file};
 	std::istream_iterator<char> e{};
 	return std::string{b, e};
+}
+
+ircd::string_view
+ircd::fs::read(const std::string &path,
+               const mutable_raw_buffer &buf)
+{
+	std::ifstream file{path};
+	if(!file.good())
+		return {};
+
+	file.read(reinterpret_cast<char *>(data(buf)), size(buf));
+	return { reinterpret_cast<const char *>(data(buf)), file.gcount() };
 }
 
 void

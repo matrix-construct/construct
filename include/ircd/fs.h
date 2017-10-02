@@ -95,4 +95,8 @@ namespace ircd::fs
 	bool mkdir(const std::string &path);
 
 	std::string read(const std::string &name);
+	string_view read(const std::string &name, const mutable_raw_buffer &buf);
+	bool write(const std::string &name, const const_raw_buffer &buf);
+	bool append(const std::string &name, const const_raw_buffer &buf);
+	bool overwrite(const std::string &name, const const_raw_buffer &buf);
 }
