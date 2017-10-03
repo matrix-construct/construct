@@ -1366,6 +1366,12 @@ ircd::m::id::id(const string_view &id)
 {
 }
 
+ircd::m::id::id(const enum sigil &sigil)
+:string_view{}
+,sigil{sigil}
+{
+}
+
 ircd::m::id::id(const enum sigil &sigil,
                 const string_view &id)
 :string_view{id}
@@ -1473,6 +1479,14 @@ ircd::m::id::id(const enum sigil &sigil,
 }()}
 ,sigil{sigil}
 {
+}
+
+void
+ircd::m::id::validate()
+const
+{
+	if(!valid())
+		throw INVALID_MXID("Not a valid '%s' mxid", reflect(sigil));
 }
 
 bool

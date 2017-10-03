@@ -61,6 +61,7 @@ struct ircd::m::id
 	// Checks
 	bool valid() const;                          // Fully qualified mxid
 	bool valid_local() const;                    // Local part is valid (may or may not have host)
+	void validate() const;                       // valid() | throws
 
 	// Extract elements
 	string_view local() const                    { return split(*this, ':').first;                 }
@@ -74,12 +75,13 @@ struct ircd::m::id
   public:
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
-	id() = default;
-	id(const string_view &id);
-	id(const enum sigil &, const string_view &id);
-	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &id);
-	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &name, const string_view &host);
 	id(const enum sigil &, char *const &buf, const size_t &max, const generate_t &, const string_view &host);
+	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &name, const string_view &host);
+	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &id);
+	id(const enum sigil &, const string_view &id);
+	id(const enum sigil &);
+	id(const string_view &id);
+	id() = default;
 };
 
 namespace ircd::m
@@ -141,7 +143,6 @@ struct ircd::m::id::event
 {
 	using buf = m::id::buf<event>;
 	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
-	event() = default;
 };
 
 struct ircd::m::id::user
@@ -149,7 +150,6 @@ struct ircd::m::id::user
 {
 	using buf = m::id::buf<user>;
 	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
-	user() = default;
 };
 
 struct ircd::m::id::room
@@ -157,7 +157,6 @@ struct ircd::m::id::room
 {
 	using buf = m::id::buf<room>;
 	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
-	room() = default;
 };
 
 struct ircd::m::id::alias
@@ -165,5 +164,4 @@ struct ircd::m::id::alias
 {
 	using buf = m::id::buf<alias>;
 	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
-	alias() = default;
 };
