@@ -619,6 +619,11 @@ ircd::net::socket::socket(const std::string &host,
 		if(epit == end)
 			throw nxdomain("host '%s' not found", host.data());
 
+		log::debug("resolved remote %s:%u => %s",
+		           host,
+		           port,
+		           string(*epit));
+
 		return *epit;
 	}(),
 	timeout,
@@ -632,9 +637,27 @@ ircd::net::socket::socket(const ip::tcp::endpoint &remote,
                           const milliseconds &timeout,
                           asio::ssl::context &ssl,
                           boost::asio::io_service *const &ios)
+try
 :socket{ssl, ios}
 {
+	log::debug("socket(%p) connecting to remote: %s timeout: %ld$ms",
+	           this,
+	           string(remote),
+	           timeout.count());
+
 	connect(remote, timeout);
+
+	log::debug("socket(%p) connected to remote: %s from local: %s",
+	           this,
+	           string(remote),
+	           string(local()));
+}
+catch(const std::exception &e)
+{
+	log::debug("socket(%p) failed to connect to remote %s: %s",
+	           this,
+	           string(remote),
+	           e.what());
 }
 
 ircd::net::socket::socket(asio::ssl::context &ssl,

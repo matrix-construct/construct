@@ -474,7 +474,11 @@ ircd::handle_ec(client &client,
 		case success:                return handle_ec_success(client);
 		case eof:                    return handle_ec_eof(client);
 		case operation_canceled:     return handle_ec_timeout(client);
-		default:                     throw boost::system::system_error(ec);
+		default:
+		{
+			log::debug("client(%p): %s", &client, ec.message());
+			return false;
+		}
 	}
 }
 
