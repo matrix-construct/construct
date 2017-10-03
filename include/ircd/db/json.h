@@ -129,9 +129,22 @@ ircd::db::_assign_invalid(tuple &t,
 	};
 
 	if(is_string)
+	{
 		json::set(t, cell.col(), string_view{});
-	else
-		json::set(t, cell.col(), byte_view<string_view>{string_view{}});
+		return;
+	}
+
+	const bool is_integer
+	{
+		descriptor.type.second == typeid(int64_t) ||
+		descriptor.type.second == typeid(double)
+	};
+
+	if(is_integer)
+	{
+		json::set(t, cell.col(), 0L);
+		return;
+	}
 }
 
 template<class tuple>
