@@ -143,16 +143,6 @@ struct ircd::buffer::buffer
 	:buffer{start, start + size}
 	{}
 
-	template<size_t SIZE>
-	buffer(value_type (&buf)[SIZE])
-	:buffer{buf, SIZE}
-	{}
-
-	template<size_t SIZE>
-	buffer(std::array<value_type, SIZE> &buf)
-	:buffer{buf.data(), SIZE}
-	{}
-
 	buffer()
 	:buffer{nullptr, nullptr}
 	{}
@@ -185,7 +175,17 @@ struct ircd::buffer::mutable_buffer_base
 	}
 
 	using buffer<T>::buffer;
-	mutable_buffer_base(): buffer<T>{} {}
+	mutable_buffer_base(): buffer<iterator>{} {}
+
+	template<size_t SIZE>
+	mutable_buffer_base(value_type (&buf)[SIZE])
+	:buffer<iterator>{buf, SIZE}
+	{}
+
+	template<size_t SIZE>
+	mutable_buffer_base(std::array<value_type, SIZE> &buf)
+	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
+	{}
 
 	// lvalue string reference offered to write through to a std::string as
 	// the buffer. not explicit; should be hard to bind by accident...
@@ -219,7 +219,7 @@ struct ircd::buffer::mutable_raw_buffer
 	// Conversion offered for the analogous asio buffer
 	operator boost::asio::mutable_buffer() const;
 
-	using mutable_buffer_base<iterator>::mutable_buffer_base;
+	using mutable_buffer_base<unsigned char *>::mutable_buffer_base;
 
 	mutable_raw_buffer(const mutable_buffer &b)
 	:mutable_buffer_base<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
@@ -237,9 +237,20 @@ struct ircd::buffer::const_buffer_base
 {
 	using iterator = typename buffer<T>::iterator;
 	using value_type = typename buffer<T>::value_type;
+	using mutable_value_type = typename std::remove_const<value_type>::type;
 
-	using buffer<iterator>::buffer;
-	const_buffer_base(): buffer<T>{} {}
+	using buffer<T>::buffer;
+	const_buffer_base(): buffer<iterator>{} {}
+
+	template<size_t SIZE>
+	const_buffer_base(const value_type (&buf)[SIZE])
+	:buffer<iterator>{buf, SIZE}
+	{}
+
+	template<size_t SIZE>
+	const_buffer_base(const std::array<mutable_value_type, SIZE> &buf)
+	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
+	{}
 
 	const_buffer_base(const mutable_buffer &b)
 	:buffer<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
@@ -260,6 +271,10 @@ struct ircd::buffer::const_buffer
 	operator boost::asio::const_buffer() const;
 
 	using const_buffer_base<iterator>::const_buffer_base;
+
+	explicit const_buffer(const std::string &s)
+	:const_buffer_base{s}
+	{}
 };
 
 struct ircd::buffer::const_raw_buffer
@@ -270,11 +285,15 @@ struct ircd::buffer::const_raw_buffer
 	using const_buffer_base<iterator>::const_buffer_base;
 
 	const_raw_buffer(const const_buffer &b)
-	:const_buffer_base{reinterpret_cast<const unsigned char *>(data(b)), size(b)}
+	:const_buffer_base{reinterpret_cast<iterator>(data(b)), size(b)}
 	{}
 
 	const_raw_buffer(const mutable_raw_buffer &b)
-	:const_buffer_base{reinterpret_cast<const unsigned char *>(data(b)), size(b)}
+	:const_buffer_base{reinterpret_cast<iterator>(data(b)), size(b)}
+	{}
+
+	explicit const_raw_buffer(const std::string &s)
+	:const_buffer_base{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
 };
 
