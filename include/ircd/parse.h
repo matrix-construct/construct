@@ -45,20 +45,6 @@ struct ircd::parse
 	struct buffer;
 };
 
-struct ircd::parse::grammar
-{
-	static std::map<std::string_view, const grammar *> grammars;
-
-	const char *const name;
-
-  private:
-	decltype(grammars)::const_iterator grammars_it;
-
-  public:
-	grammar(const char *const &name);
-	~grammar() noexcept;
-};
-
 struct ircd::parse::buffer
 {
 	char *base;                                  // Lowest address of the buffer (const)
@@ -74,28 +60,24 @@ struct ircd::parse::buffer
 	void discard();
 	void remove();
 
-	buffer(const buffer &old, char *const &start, char *const &stop)
-	:base{start}
-	,parsed{start}
-	,read{start + old.unparsed()}
+	buffer(const buffer &old, const mutable_buffer &mb)
+	:base{data(mb)}
+	,parsed{data(mb)}
+	,read{data(mb) + old.unparsed()}
 	,stop{stop}
 	{
 		memmove(base, old.base, old.unparsed());
 	}
 
-	buffer(char *const &start, char *const &stop)
-	:base{start}
-	,parsed{start}
-	,read{start}
-	,stop{stop}
+	buffer(const mutable_buffer &mb)
+	:base{data(mb)}
+	,parsed{data(mb)}
+	,read{data(mb)}
+	,stop{data(mb) + ircd::size(mb)}
 	{}
 
 	template<size_t N> buffer(const buffer &old, char (&buf)[N])
-	:buffer{old, buf, buf + N}
-	{}
-
-	template<size_t N> buffer(char (&buf)[N])
-	:buffer{buf, buf + N}
+	:buffer{old, buf}
 	{}
 };
 

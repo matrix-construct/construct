@@ -130,7 +130,6 @@ template<class it,
          class top>
 struct ircd::http::grammar
 :qi::grammar<it, top>
-,parse::grammar
 {
 	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
@@ -218,14 +217,10 @@ struct ircd::http::grammar
 		,"response"
 	};
 
-	grammar(const rule<top> &top_rule, const char *const &name)
+	grammar(const rule<top> &top_rule)
 	:grammar<it, top>::base_type
 	{
 		top_rule
-	}
-	,parse::grammar
-	{
-		name
 	}
 	{}
 };
@@ -236,7 +231,7 @@ struct ircd::http::parser
 	static size_t content_length(const string_view &val);
 
 	using http::grammar<const char *, unused_type>::grammar;
-	parser(): grammar { grammar::ws, "http.request" } {}
+	parser(): grammar { grammar::ws } {}
 }
 const ircd::http::parser;
 

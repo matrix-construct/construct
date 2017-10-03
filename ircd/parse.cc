@@ -19,37 +19,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-//#include <boost/spirit/include/qi.hpp>
-//#include <boost/spirit/include/karma.hpp>
-
-namespace ircd {
-
-// Registry of grammars. Grammars are usualy static data or modules.
-IRCD_INIT_PRIORITY(STD_CONTAINER)
-decltype(parse::grammar::grammars)
-parse::grammar::grammars
+namespace ircd
 {
-};
 
-} // namespace ircd
-
-ircd::parse::grammar::grammar(const char *const &name)
-:name{name}
-,grammars_it{[this, &name]
-{
-	const auto iit(grammars.emplace(name, this));
-	if(!iit.second)
-		throw grammar_error("Parsing grammar named \"%s\" already exists.", name);
-
-	return iit.first;
-}()}
-{
-}
-
-ircd::parse::grammar::~grammar()
-noexcept
-{
-	grammars.erase(grammars_it);
 }
 
 
