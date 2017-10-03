@@ -1119,7 +1119,7 @@ body.loaded
 {
 	flex-grow: 1;
 	flex-shrink: 1;
-	margin: 1px 5px 1px 5px;
+	margin: 5px;
 }
 
 
@@ -1272,7 +1272,7 @@ body.loaded
 	align-items: center;
 	justify-content: center;
 	padding: 10px 15px 10px 15px;
-	background-color: var(--pal-AD);
+	border: 1px solid var(--pal-AD);
 	letter-spacing: 1px;
 	font-weight: bold;
 	font-size: 17px;
