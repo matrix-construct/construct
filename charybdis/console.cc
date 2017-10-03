@@ -246,7 +246,7 @@ try
 			break;
 		}
 
-		case hash("events"):
+		case hash("messages"):
 		{
 			if(!moi)
 			{
@@ -256,14 +256,26 @@ try
 
 			const auto args(tokens_after(line, " ", 0));
 			const params token{args, " ", {"room_id"}};
-			const auto room_id{token.at(0, "!ircd:cdc.z"s)};
+			const string_view &room_id
+			{
+				token.at(0, ircd::m::my_room.room_id)
+			};
+
+			char room_id_encoded[512];
+			char url[512]; const auto url_len
+			{
+				fmt::sprintf(url, "_matrix/client/r0/rooms/%s/messages",
+				             urlencode(room_id, room_id_encoded))
+			};
+
+			char query[1024];
+			snprintf(query, sizeof(query), "%s=%s",
+			         "access_token",
+			         moi->access_token.c_str());
 
 			m::request request
 			{
-				"GET", "_matrix/client/r0/events", {}, json::members
-				{
-					{ "room_id", string_view{room_id} }
-				}
+				"GET", string_view{url, size_t(url_len)}, query, {}
 			};
 
 			static char buf[65536];
@@ -341,9 +353,16 @@ try
 					              room_id)
 			};
 
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "access_token",
+				              moi->access_token)
+			};
+
 			m::request request
 			{
-				"GET", string_view{url, size_t(url_len)}, {}
+				"GET", string_view{url, size_t(url_len)}, string_view{query, size_t(query_len)}
 			};
 
 			static char buf[65536];
@@ -806,6 +825,313 @@ try
 			ircd::parse::buffer pb{buf};
 			const json::object response{(*moi)(pb, request)};
 			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
+		case hash("keys"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const string_view key_id
+			{
+				!args.empty()? token(args, " ", 0) : ""
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/key/v2/server/%s",
+				              key_id)
+			};
+
+			m::request request
+			{
+				"GET", url, {}, {}
+			};
+
+			static char buf[4096];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << response << std::endl;
+			break;
+		}
+
+		case hash("backfill"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto room_id_token
+			{
+				token(args, " ", 0)
+			};
+
+			char room_id_buf[512];
+			const auto room_id
+			{
+				urlencode(room_id_token, room_id_buf)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/federation/v1/backfill/%s/",
+				              room_id)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s&%s=%s",
+				              "limit",
+				              "32",
+				              "v",
+				              "0")
+			};
+
+			m::request request
+			{
+				"GET", url, string_view{query, size_t(query_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << response << std::endl;
+			break;
+		}
+
+		case hash("fedstate"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto room_id_token
+			{
+				token(args, " ", 0)
+			};
+
+			const auto event_id_token
+			{
+				token(args, " ", 1)
+			};
+
+			char room_id_buf[512];
+			const auto room_id
+			{
+				urlencode(room_id_token, room_id_buf)
+			};
+
+			char event_id_buf[512];
+			const auto event_id
+			{
+				urlencode(event_id_token, event_id_buf)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/federation/v1/state/%s/",
+				              room_id)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "event_id",
+				              event_id)
+			};
+
+			m::request request
+			{
+				"GET", url, string_view{query, size_t(query_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << response << std::endl;
+			break;
+		}
+
+		case hash("fedevent"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto event_id_token
+			{
+				token(args, " ", 0)
+			};
+
+			char event_id_buf[512];
+			const auto event_id
+			{
+				urlencode(event_id_token, event_id_buf)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/federation/v1/event/%s/",
+				              event_id)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				0
+				/*
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "foo",
+				              "bar")
+				*/
+			};
+
+			m::request request
+			{
+				"GET", url, string_view{query, size_t(query_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << string_view{response} << std::endl;
+			break;
+		}
+
+		case hash("directory"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto query_type
+			{
+				"directory"
+			};
+
+			const auto room_alias_token
+			{
+				token(args, " ", 0)
+			};
+
+			char room_alias_buf[512];
+			const auto room_alias
+			{
+				urlencode(room_alias_token, room_alias_buf)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/federation/v1/query/%s",
+				              query_type)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "room_alias",
+				              room_alias)
+			};
+
+			m::request request
+			{
+				"GET", url, string_view{query, size_t(query_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << response << std::endl;
+			break;
+		}
+
+		case hash("profile"):
+		{
+			if(!moi)
+			{
+				std::cerr << "No current session" << std::endl;
+				break;
+			}
+
+			const auto args
+			{
+				tokens_after(line, " ", 0)
+			};
+
+			const auto query_type
+			{
+				"profile"
+			};
+
+			const auto user_id_token
+			{
+				token(args, " ", 0)
+			};
+
+			char user_id_buf[512];
+			const auto user_id
+			{
+				urlencode(user_id_token, user_id_buf)
+			};
+
+			static char url[128]; const auto url_len
+			{
+				fmt::snprintf(url, sizeof(url), "_matrix/federation/v1/query/%s",
+				              query_type)
+			};
+
+			static char query[512]; const auto query_len
+			{
+				fmt::snprintf(query, sizeof(query), "%s=%s",
+				              "user_id",
+				              user_id)
+			};
+
+			m::request request
+			{
+				"GET", url, string_view{query, size_t(query_len)}, {}
+			};
+
+			static char buf[65536];
+			ircd::parse::buffer pb{buf};
+			const json::object response{(*moi)(pb, request)};
+			std::cout << response << std::endl;
 			break;
 		}
 
