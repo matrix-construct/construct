@@ -74,9 +74,31 @@ ircd::buffer::zero(const mutable_raw_buffer &buf)
 // ircd/ed25519
 //
 
+static_assert(ircd::ed25519::SK_SZ == crypto_sign_ed25519_SECRETKEYBYTES);
 static_assert(ircd::ed25519::PK_SZ == crypto_sign_ed25519_PUBLICKEYBYTES);
 
-ircd::ed25519::sk::sk(const string_view &filename,
+ircd::ed25519::sk::sk(pk *const &pk_arg,
+                      const const_raw_buffer &seed)
+:key
+{
+	reinterpret_cast<uint8_t *>(::sodium_malloc(crypto_sign_ed25519_SECRETKEYBYTES)),
+	&::sodium_free
+}
+{
+	assert(size(seed) >= SEED_SZ);
+
+	pk discard, &pk
+	{
+		pk_arg? *pk_arg : discard
+	};
+
+	throw_on_error
+	{
+		::crypto_sign_ed25519_seed_keypair(pk.data(), key.get(), data(seed))
+	};
+}
+
+ircd::ed25519::sk::sk(const std::string &filename,
                       pk *const &pk_arg)
 :key
 {
@@ -89,9 +111,27 @@ ircd::ed25519::sk::sk(const string_view &filename,
 		pk_arg? *pk_arg : discard
 	};
 
+	const auto existing
+	{
+		fs::read(filename, mutable_raw_buffer{key.get(), SK_SZ})
+	};
+
+	if(!existing)
+	{
+		if(fs::exists(filename))
+			throw error("Failed to read existing ed25519 secret key in: %s", filename);
+
+		throw_on_error
+		{
+			::crypto_sign_ed25519_keypair(pk.data(), key.get())
+		};
+
+		fs::write(filename, const_raw_buffer{key.get(), SK_SZ});
+	}
+
 	throw_on_error
 	{
-		::crypto_sign_ed25519_keypair(pk.data(), key.get())
+		::crypto_sign_ed25519_sk_to_pk(pk.data(), key.get())
 	};
 }
 

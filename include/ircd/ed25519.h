@@ -27,8 +27,10 @@
 
 namespace ircd::ed25519
 {
+	const size_t SK_SZ { 32 + 32 };
 	const size_t PK_SZ { 32 };
 	const size_t SIG_SZ { 64 };
+	const size_t SEED_SZ { 32 };
 
 	struct pk;
 	struct sk;
@@ -42,7 +44,9 @@ class ircd::ed25519::sk
   public:
 	sig sign(const const_raw_buffer &msg) const;
 
-	sk(const string_view &filename, pk *const & = nullptr);
+	sk(const std::string &filename, pk *const & = nullptr);
+	sk(pk *const &, const const_raw_buffer &seed);
+	sk(): key{nullptr, std::free} {}
 };
 
 struct ircd::ed25519::pk
@@ -53,6 +57,7 @@ struct ircd::ed25519::pk
 	bool verify(const const_raw_buffer &msg, const sig &) const;
 
 	using array_type::array_type;
+	pk(): array_type{0} {}
 };
 
 struct ircd::ed25519::sig
