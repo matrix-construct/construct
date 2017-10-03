@@ -38,7 +38,7 @@ namespace ircd
 	bool debugmode;
 
 	void set_runlevel(const enum runlevel &);
-	void init_rlimit();
+	void enable_coredumps();
 	void at_main_exit() noexcept;
 	void main();
 }
@@ -65,9 +65,12 @@ ircd::init(boost::asio::io_service &ios,
            runlevel_handler runlevel_changed)
 try
 {
-	assert(runlevel == runlevel::STOPPED);
+	// cores are not dumped without consent of the user to maintain the privacy
+	// of cryptographic key material in memory at the time of the crash.
+	if(RB_DEBUG || debugmode)
+		enable_coredumps();
 
-	init_rlimit();
+	assert(runlevel == runlevel::STOPPED);
 
 	ircd::ios = &ios;
 	ircd::strand = new struct strand(ios);
@@ -271,7 +274,7 @@ ircd::boost_version[3]
 
 void
 #ifdef HAVE_SYS_RESOURCE_H
-ircd::init_rlimit()
+ircd::enable_coredumps()
 try
 {
 	//
@@ -290,7 +293,7 @@ catch(const std::exception &e)
 	std::cerr << "Failed to adjust rlimit: " << e.what() << std::endl;
 }
 #else
-ircd::init_rlimit()
+ircd::enable_coredumps()
 {
 }
 #endif
