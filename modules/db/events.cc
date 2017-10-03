@@ -278,6 +278,114 @@ const database::descriptor events_signatures_descriptor
 	}
 };
 
+const database::descriptor events_auth_events_descriptor
+{
+	// name
+	"auth_events",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
+const database::descriptor events_depth_descriptor
+{
+	// name
+	"depth",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id value is long integer
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(int64_t)
+	}
+};
+
+const database::descriptor events_hashes_descriptor
+{
+	// name
+	"hashes",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
+const database::descriptor events_membership_descriptor
+{
+	// name
+	"membership",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
+const database::descriptor events_prev_events_descriptor
+{
+	// name
+	"prev_events",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
+const database::descriptor events_prev_state_descriptor
+{
+	// name
+	"prev_state",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+
 /// prefix transform for event_id suffixes
 ///
 /// This transform expects a concatenation ending with an event_id which means
@@ -482,6 +590,12 @@ const database::description events_description
 	events_prev_ids_descriptor,
 	events_unsigned_descriptor,
 	events_signatures_descriptor,
+	events_auth_events_descriptor,
+	events_depth_descriptor,
+	events_hashes_descriptor,
+	events_membership_descriptor,
+	events_prev_events_descriptor,
+	events_prev_state_descriptor,
 	event_id_in_sender,
 	event_id_in_room_id,
 	event_id_for_room_id_in_type,

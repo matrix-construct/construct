@@ -50,10 +50,17 @@ namespace ircd::m
 
 namespace ircd::m::name
 {
+	constexpr const char *const auth_events {"auth_events"};
 	constexpr const char *const content {"content"};
+	constexpr const char *const depth {"depth"};
 	constexpr const char *const event_id {"event_id"};
+	constexpr const char *const hashes {"hashes"};
+	constexpr const char *const membership {"membership"};
+	constexpr const char *const origin {"origin"};
 	constexpr const char *const origin_server_ts {"origin_server_ts"};
 	constexpr const char *const prev_ids {"prev_ids"};
+	constexpr const char *const prev_events {"prev_ids"};
+	constexpr const char *const prev_state {"prev_ids"};
 	constexpr const char *const room_id {"room_id"};
 	constexpr const char *const sender {"sender"};
 	constexpr const char *const signatures {"signatures"};
@@ -65,10 +72,17 @@ namespace ircd::m::name
 struct ircd::m::event
 :json::tuple
 <
+	json::property<name::auth_events, string_view>,
 	json::property<name::content, json::object>,
+	json::property<name::depth, int64_t>,
 	json::property<name::event_id, string_view>,
+	json::property<name::hashes, string_view>,
+	json::property<name::membership, string_view>,
+	json::property<name::origin, string_view>,
 	json::property<name::origin_server_ts, time_t>,
 	json::property<name::prev_ids, string_view>,
+	json::property<name::prev_events, string_view>,
+	json::property<name::prev_state, string_view>,
 	json::property<name::room_id, string_view>,
 	json::property<name::sender, string_view>,
 	json::property<name::signatures, string_view>,
