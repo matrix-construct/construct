@@ -614,6 +614,7 @@ void>::type
 _assign(dst &d,
         src&& s)
 {
+	assert(!s.empty());
 	d = byte_view<dst>(std::forward<src>(s));
 }
 
@@ -660,8 +661,9 @@ try
 }
 catch(const std::exception &e)
 {
-	throw parse_error("failed to set member '%s': %s",
+	throw parse_error("failed to set member '%s' (from %s): %s",
 	                  key,
+	                  demangle<V>(),
 	                  e.what());
 }
 
