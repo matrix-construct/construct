@@ -68,10 +68,16 @@ namespace ircd
 	bool endswith(const string_view &str, const char &val);
 	template<class It> bool endswith_any(const string_view &str, const It &begin, const It &end);
 
+	// count occurrences of val at end of string
+	size_t endswith_count(const string_view &str, const char &val);
+
 	// test string startswith delim; or any of the delims in iterable
 	bool startswith(const string_view &str, const string_view &val);
 	bool startswith(const string_view &str, const char &val);
 	template<class It> bool startswith_any(const string_view &str, const It &begin, const It &end);
+
+	// count occurrences of val at start of string
+	size_t startswith_count(const string_view &str, const char &val);
 
 	// test string is surrounded by val (ex. surrounded by quote characters)
 	bool surrounds(const string_view &str, const string_view &val);
@@ -191,6 +197,15 @@ ircd::surrounds(const string_view &str,
 	return startswith(str, val) && endswith(str, val);
 }
 
+/// Count occurrences of val at end of string
+inline size_t
+ircd::startswith_count(const string_view &str,
+                       const char &v)
+{
+	const auto pos(str.find_first_not_of(v));
+	return pos == string_view::npos? str.size() : str.size() - pos - 1;
+}
+
 /// Test if a string starts with any of the values in the iterable
 template<class It>
 bool
@@ -219,6 +234,15 @@ ircd::startswith(const string_view &str,
 {
 	const auto pos(str.find(val, 0));
 	return pos == 0;
+}
+
+/// Count occurrences of val at end of string
+inline size_t
+ircd::endswith_count(const string_view &str,
+                     const char &v)
+{
+	const auto pos(str.find_last_not_of(v));
+	return pos == string_view::npos? str.size() : str.size() - pos - 1;
 }
 
 /// Test if a string ends with any of the values in iterable
