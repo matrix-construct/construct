@@ -31,13 +31,14 @@ resource::resources
 ircd::resource &
 ircd::resource::find(string_view path)
 {
-    path = lstrip(path, '/');
-    path = strip(path, '/');
+	path = strip(path, '/');
 
 	auto it(resources.lower_bound(path));
 	if(it == end(resources)) try
 	{
-		return *resources.at(string_view{});
+		--it;
+		if(it == begin(resources) || !startswith(path, rstrip(it->first, '/')))
+			return *resources.at(string_view{});
 	}
 	catch(const std::out_of_range &e)
 	{
@@ -45,24 +46,24 @@ ircd::resource::find(string_view path)
 	}
 
 	// Exact file or directory match
-	if(path == it->first)
+	if(path == rstrip(it->first, '/'))
 		return *it->second;
 
 	// Directories handle all paths under them.
-	if(!startswith(path, it->first))
+	if(!startswith(path, rstrip(it->first, '/')))
 	{
 		// Walk the iterator back to find if there is a directory prefixing this path.
 		if(it == begin(resources))
 			throw http::error(http::code::NOT_FOUND);
 
 		--it;
-		if(!startswith(path, it->first))
+		if(!startswith(path, rstrip(it->first, '/')))
 			throw http::error(http::code::NOT_FOUND);
 	}
 
 	// Check if the resource is a directory; if not, it can only
 	// handle exact path matches.
-	if(~it->second->flags & it->second->DIRECTORY && path != it->first)
+	if(~it->second->flags & it->second->DIRECTORY && path != rstrip(it->first, '/'))
 		throw http::error(http::code::NOT_FOUND);
 
 	return *it->second;
