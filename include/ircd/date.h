@@ -25,6 +25,7 @@
 
 namespace ircd
 {
+	using std::chrono::hours;
 	using std::chrono::seconds;
 	using std::chrono::milliseconds;
 	using std::chrono::microseconds;

@@ -51,11 +51,11 @@ namespace ircd
 	string_view strip(const string_view &str, const char &c = ' ');
 	string_view strip(const string_view &str, const string_view &c);
 
-	// split view on first match of delim; delim not included; no delim .second empty
+	// split view on first match of delim; delim not included; if no delim then .second empty
 	std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
 	std::pair<string_view, string_view> split(const string_view &str, const string_view &delim);
 
-	// split view on last match of delim; delim not included; no delim .second empty
+	// split view on last match of delim; delim not included; if no delim then .second empty
 	std::pair<string_view, string_view> rsplit(const string_view &str, const char &delim = ' ');
 	std::pair<string_view, string_view> rsplit(const string_view &str, const string_view &delim);
 
