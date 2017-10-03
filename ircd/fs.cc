@@ -211,7 +211,7 @@ bool
 ircd::fs::exists(const std::string &path)
 try
 {
-	return fs::exists(path);
+	return boost::filesystem::exists(path);
 }
 catch(const fs::filesystem_error &e)
 {
