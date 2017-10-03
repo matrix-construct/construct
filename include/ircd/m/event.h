@@ -102,6 +102,7 @@ struct ircd::m::event
 
 	// Queue of contexts waiting to see the next inserted event
 	static ctx::view<const event> inserted;
+	static id::buf head;
 
 	static const_iterator find(const id &);
 	static void insert(json::iov &);

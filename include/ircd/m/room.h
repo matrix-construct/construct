@@ -43,13 +43,15 @@ struct ircd::m::room
 
 	id room_id;
 
+	bool membership(const m::id::user &, const string_view &membership = "join") const;
+	event::id head(event::id::buf &) const;
+
 	event::id::buf send(json::iov &event);
 	event::id::buf send(const json::members &event);
-
-	bool is_member(const m::id::user &, const string_view &membership = "join");
 	void membership(const m::id::user &, json::iov &content);
 	void leave(const m::id::user &, json::iov &content);
 	void join(const m::id::user &, json::iov &content);
+
 	void create(const m::id::user &sender, const m::id::user &creator, json::iov &content);
 
 	room(const id &room_id)
@@ -58,21 +60,5 @@ struct ircd::m::room
 
 	room(const id::alias &alias)
 	:room_id{}
-	{}
-};
-
-struct ircd::m::room::members
-{
-	id room_id;
-
-	bool is_member(const m::id::user &) const;
-	bool membership(const m::id::user &, const string_view & = "join") const;
-
-	members(const id &room_id)
-	:room_id{room_id}
-	{}
-
-	members(const room &room)
-	:room_id{room.room_id}
 	{}
 };

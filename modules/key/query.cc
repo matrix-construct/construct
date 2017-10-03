@@ -1,8 +1,6 @@
 /*
- * charybdis: 21st Century IRC++d
- *
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ * Copyright (C) 2017 Charybdis Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,26 +17,11 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#pragma once
-#define HAVE_IRCD_M_SESSION_H
+using namespace ircd;
 
-namespace ircd {
-namespace m    {
-
-struct session
+mapi::header IRCD_MODULE
 {
-	std::shared_ptr<ircd::client> client;
-	std::string access_token;
-	std::deque<std::string> tape;
-	std::multimap<string_view, string_view> resource;
-
-	json::object operator()(parse::buffer &pb, request &);
-
-	session(const hostport &);
+	"Hosts the key server resource"
 };
-
-} // namespace m
-} // namespace ircd

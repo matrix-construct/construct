@@ -39,18 +39,6 @@ resource sync_resource
 	sync_description
 };
 
-struct syncpoll
-{
-	static std::multimap<std::string, syncpoll> polling;
-	static std::multimap<steady_point, decltype(polling)::iterator> pollout;
-
-	std::weak_ptr<ircd::client> client;
-	decltype(pollout)::iterator it { std::end(pollout) };
-};
-
-decltype(syncpoll::polling) syncpoll::polling {};
-decltype(syncpoll::pollout) syncpoll::pollout {};
-
 void longpoll(client &client, const resource::request &request, const steady_point &timeout);
 
 void synchronizer_worker();
@@ -88,71 +76,11 @@ mapi::header IRCD_MODULE
 };
 
 resource::response
-sync_now(client &client,
-         const resource::request &request,
-         const string_view &filter_id,
-         const bool &full_state,
-         const string_view &set_presence)
-{
-
-	json::value events[1];
-
-	const json::members timeline
-	{
-		{ "events",  { events, 1 } }
-	};
-
-	const json::members state
-	{
-		{ "events",  { events, 1 } }
-	};
-
-	const json::members join
-	{
-		{ "timeline",   timeline },
-		{ "state",      state    },
-	};
-
-	const json::object leave{};
-	const json::object invite{};
-	const json::members rooms
-	{
-		{ "leave",   leave  },
-		{ "join",    join   },
-		{ "invite",  invite },
-	};
-
-	const string_view next_batch{};
-	const json::object presence{};
-
-	const m::event::id head_event_id
-	{
-		"$12382382:cdc.z"
-	};
-
-	const json::members content
-	{
-		{ "event_id",  head_event_id }
-	};
-
-	m::user::sessions.send(
-	{
-		{ "type",       "ircd.tape.head"                 },
-		{ "state_key",  request.query.at("access_token") },
-		{ "sender",     request.user_id                  },
-		{ "content",    content                          },
-	});
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  next_batch  },
-			{ "rooms",       rooms       },
-			{ "presence",    presence    }
-		}
-	};
-}
+initial_sync(client &client,
+             const resource::request &request,
+             const string_view &filter_id,
+             const bool &full_state,
+             const string_view &set_presence);
 
 resource::response
 sync(client &client, const resource::request &request)
@@ -193,15 +121,9 @@ sync(client &client, const resource::request &request)
 		request.query["set_presence"]
 	};
 
+	// Start a new spool for client
 	if(!since)
-		return sync_now(client, request, filter_id, full_state, set_presence);
-
-	// The !sessions:your.host room is where the ircd.tape.head event holds
-	// the state we use to calculate the last event the user has seen.
-	const m::room::state sessions
-	{
-		m::user::sessions
-	};
+		return initial_sync(client, request, filter_id, full_state, set_presence);
 
 	// The ircd.tape.head
 	const m::event::query<m::event::where::equal> query
@@ -254,24 +176,49 @@ resource::method get_sync
 /// Input
 ///
 ///
+
+struct syncpoll
+{
+	static std::list<syncpoll> polling;
+	static std::multimap<steady_point, decltype(polling)::iterator> pollout;
+
+	std::string user_id;
+	std::string since;
+	std::string access_token; // can get rid of this and use some session id
+	std::weak_ptr<ircd::client> client;
+	decltype(pollout)::iterator it { std::end(pollout) };
+};
+
+decltype(syncpoll::polling) syncpoll::polling {};
+decltype(syncpoll::pollout) syncpoll::pollout {};
+
 void
 longpoll(client &client,
          const resource::request &request,
          const steady_point &timeout)
 {
+	static auto &polling{syncpoll::polling};
+	static auto &pollout{syncpoll::pollout};
+
 	const auto it
 	{
-		syncpoll::polling.emplace(request.user_id, syncpoll{weak_from(client)})
+		polling.emplace(polling.end(), syncpoll
+		{
+			std::string{request.user_id},
+			std::string{request.query.at("since")},
+			std::string{request.query.at("access_token")},
+			weak_from(client)
+		})
 	};
 
 	syncpoll &data
 	{
-		it->second
+		*it
 	};
 
-	data.it = syncpoll::pollout.emplace(timeout, it);
+	data.it = pollout.emplace(timeout, it);
 
-	if(syncpoll::pollout.size() == 1)
+	if(pollout.size() == 1)
 		notify(synchronizer_timeout_context);
 }
 
@@ -279,7 +226,7 @@ longpoll(client &client,
 // Timeout worker stack
 //
 
-void synchronizer_timeout(const std::string &user_id, const syncpoll &sp);
+void synchronizer_timeout(const syncpoll &sp);
 
 /// This function is the base of an ircd::context which yields until a client
 /// is due to timeout. This worker reaps timed out clients from the lists.
@@ -302,9 +249,8 @@ try
 				continue;
 			}
 
-			const auto &user_id{iterator->first};
-			const auto &data{iterator->second};
-			synchronizer_timeout(user_id, data);
+			const auto &data{*iterator};
+			synchronizer_timeout(data);
 			polling.erase(iterator);
 			pollout.erase(std::begin(pollout));
 		}
@@ -322,8 +268,7 @@ catch(const ircd::ctx::interrupted &e)
 /// TODO: The http error response should not yield this context. If the sendq
 /// TODO: is backed up the client should be dc'ed.
 void
-synchronizer_timeout(const std::string &user_id,
-                     const syncpoll &sp)
+synchronizer_timeout(const syncpoll &sp)
 try
 {
 	const life_guard<client> client
@@ -345,6 +290,7 @@ catch(const std::exception &e)
 // Main worker stack
 //
 
+bool update_sync(const syncpoll &data, const m::event &event, const m::room &);
 void synchronize(const m::event &, const m::room::id &);
 void synchronize(const m::event &);
 
@@ -354,16 +300,23 @@ try
 {
 	while(1) try
 	{
-		const auto &event
+		std::unique_lock<decltype(m::event::inserted)> lock
 		{
-			m::event::inserted.wait()
+			m::event::inserted
 		};
 
-		synchronize(event);
+		// reference to the event on the inserter's stack
+		const auto &event
+		{
+			m::event::inserted.wait(lock)
+		};
+
+		if(!syncpoll::polling.empty())
+			synchronize(event);
 	}
 	catch(const timeout &e)
 	{
-		ircd::log::debug("Synchronizer worker timeout");
+		ircd::log::debug("Synchronizer worker: %s", e.what());
 	}
 }
 catch(const ircd::ctx::interrupted &e)
@@ -374,9 +327,6 @@ catch(const ircd::ctx::interrupted &e)
 void
 synchronize(const m::event &event)
 {
-	static auto &polling{syncpoll::polling};
-	static auto &pollout{syncpoll::pollout};
-
 	const auto &room_id
 	{
 		json::val<m::name::room_id>(event)
@@ -388,33 +338,288 @@ synchronize(const m::event &event)
 		return;
 	}
 
-	std::cout << event << std::endl;
+	assert(0);
 }
 
 void
 synchronize(const m::event &event,
             const m::room::id &room_id)
 {
-	std::cout << event << std::endl;
+	static auto &polling{syncpoll::polling};
+	static auto &pollout{syncpoll::pollout};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	for(auto it(std::begin(polling)); it != std::end(polling);)
+	{
+		const auto &data{*it};
+		if(!room.membership(data.user_id))
+		{
+			++it;
+			continue;
+		}
+
+		if(update_sync(data, event, room))
+		{
+			pollout.erase(data.it);
+			polling.erase(it++);
+		}
+		else ++it;
+	}
+}
+
+std::string
+update_sync_room(client &client,
+                 const m::room &room,
+                 const string_view &since,
+                 const m::event &event)
+{
+	std::vector<std::string> state;
+	if(defined(json::val<m::name::state_key>(event)))
+		state.emplace_back(json::string(event));
+
+	const auto state_serial
+	{
+		json::string(state.data(), state.data() + state.size())
+	};
+
+	std::vector<std::string> timeline;
+	if(!defined(json::val<m::name::state_key>(event)))
+		timeline.emplace_back(json::string(event));
+
+	const auto timeline_serial
+	{
+		json::string(timeline.data(), timeline.data() + timeline.size())
+	};
+
+	const json::members body
+	{
+		{ "state",      json::member { "events", state_serial }     },
+		{ "timeline",   json::member { "events", timeline_serial }  }
+	};
+
+	return json::string(body);
+}
+
+std::string
+update_sync_rooms(client &client,
+                  const m::user::id &user_id,
+                  const m::room &room,
+                  const string_view &since,
+                  const m::event &event)
+{
+
+	std::vector<std::string> r[3];
+	std::vector<json::member> m[3];
+	r[0].emplace_back(update_sync_room(client, room, since, event));
+	m[0].emplace_back(room.room_id, r[0].back());
+
+	const std::string join{json::string(m[0].data(), m[0].data() + m[0].size())};
+	const std::string leave{json::string(m[1].data(), m[1].data() + m[1].size())};
+	const std::string invite{json::string(m[2].data(), m[2].data() + m[2].size())};
+	return json::string(json::members
+	{
+		{ "join",     join    },
+		{ "leave",    leave   },
+		{ "invite",   invite  },
+	});
 }
 
 bool
-handle_event(const m::event &event,
-             const syncpoll &request)
+update_sync(const syncpoll &data,
+            const m::event &event,
+            const m::room &room)
 try
 {
-	const life_guard<const client> client
+	const life_guard<client> client
 	{
-		request.client
+		data.client
 	};
 
-//	if(request.timeout < now<steady_point>())
-//		return false;
+	const auto rooms
+	{
+		update_sync_rooms(*client, data.user_id, room, data.since, event)
+	};
+
+	const auto presence
+	{
+		"{}"
+	};
+
+	const string_view next_batch
+	{
+		at<m::name::event_id>(event)
+	};
+
+	resource::response
+	{
+		*client, json::members
+		{
+			{ "next_batch",  next_batch  },
+			{ "rooms",       rooms       },
+			{ "presence",    presence    }
+		}
+	};
 
 	return true;
 }
-catch(const std::exception &e)
+catch(const std::bad_weak_ptr &e)
 {
-	log::error("%s", e.what());
-	return false;
+	return true;
+}
+
+std::string
+initial_sync_room(client &client,
+                  const resource::request &request,
+                  const m::room &room,
+                  const bool &full_state)
+{
+	std::vector<std::string> state;
+	{
+		const m::event::query<m::event::where::equal> state_query
+		{
+			{ "room_id",      room.room_id     },
+			{ "state_key",    ""               },
+		};
+
+		m::events::for_each(state_query, [&state](const auto &event)
+		{
+			state.emplace_back(json::string(event));
+		});
+	}
+
+	const auto state_serial
+	{
+		json::string(state.data(), state.data() + state.size())
+	};
+
+	std::vector<std::string> timeline;
+	{
+		const m::event::query<m::event::where::equal> timeline_query
+		{
+			{ "room_id", room.room_id },
+		};
+
+		m::events::query(timeline_query, [&timeline](const auto &event)
+		{
+			if(timeline.size() > 10)
+				return true;
+
+			if(!defined(json::val<m::name::state_key>(event)))
+				timeline.emplace_back(json::string(event));
+
+			return false;
+		});
+	}
+
+	const auto timeline_serial
+	{
+		json::string(timeline.data(), timeline.data() + timeline.size())
+	};
+
+	const json::members body
+	{
+		{ "state",      json::member { "events", state_serial }     },
+		{ "timeline",   json::member { "events", timeline_serial }  }
+	};
+
+	return json::string(body);
+}
+
+std::string
+initial_sync_rooms(client &client,
+                   const resource::request &request,
+                   const string_view &filter_id,
+                   const bool &full_state)
+{
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "type",        "m.room.member"   },
+		{ "state_key",    request.user_id  },
+    };
+
+	std::array<std::vector<std::string>, 3> r;
+	std::array<std::vector<json::member>, 3> m;
+	m::events::for_each(query, [&r, &m, &client, &request, &full_state](const auto &event)
+	{
+		const auto &content{json::val<m::name::content>(event)};
+		const auto &membership{unquote(content["membership"])};
+		const m::room::id &room_id{json::val<m::name::room_id>(event)};
+		const auto i
+		{
+			membership == "join"? 0:
+			membership == "leave"? 1:
+			membership == "invite"? 2:
+			-1
+		};
+
+		r.at(i).emplace_back(initial_sync_room(client, request, room_id, full_state));
+		m.at(i).emplace_back(room_id, r.at(i).back());
+	});
+
+	const std::string join{json::string(m[0].data(), m[0].data() + m[0].size())};
+	const std::string leave{json::string(m[1].data(), m[1].data() + m[1].size())};
+	const std::string invite{json::string(m[2].data(), m[2].data() + m[2].size())};
+	return json::string(json::members
+	{
+		{ "join",     join    },
+		{ "leave",    leave   },
+		{ "invite",   invite  },
+	});
+}
+
+resource::response
+initial_sync(client &client,
+             const resource::request &request,
+             const string_view &filter_id,
+             const bool &full_state,
+             const string_view &set_presence)
+{
+	char buf[4096] {0};
+	json::mutable_object body{buf};
+	body.insert({"foo","bar"});
+	body.insert({"baz","bam"});
+
+	std::cout << buf << std::endl;
+
+	const std::string rooms
+	{
+		initial_sync_rooms(client, request, filter_id, full_state)
+	};
+
+	const auto presence
+	{
+		"{}"
+	};
+
+	const string_view next_batch
+	{
+		m::event::head
+	};
+
+	const json::members content
+	{
+		{ "event_id",  next_batch }
+	};
+
+	m::user::sessions.send(
+	{
+		{ "type",       "ircd.tape.head"                 },
+		{ "state_key",  request.query.at("access_token") },
+		{ "sender",     request.user_id                  },
+		{ "content",    content                          },
+	});
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "next_batch",  next_batch  },
+			{ "rooms",       rooms       },
+			{ "presence",    presence    }
+		}
+	};
 }

@@ -120,9 +120,9 @@ try
 	// Sets up the query to find the access_token in the sessions rooms
 	const m::event::query<m::event::where::equal> query
 	{
-		{ "type",        "ircd.access_token" },
-		{ "state_key",   access_token        },
-		{ "room_id",     "!sessions:cdc.z"   },
+		{ "type",        "ircd.access_token"         },
+		{ "state_key",   access_token                },
+		{ "room_id",     m::user::sessions.room_id   },
 	};
 
 	const bool result

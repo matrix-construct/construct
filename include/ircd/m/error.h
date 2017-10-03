@@ -67,8 +67,9 @@ struct _name_                                                       \
 namespace ircd::m
 {
 	IRCD_M_EXCEPTION(error, UNKNOWN, http::INTERNAL_SERVER_ERROR);
-	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
+	IRCD_M_EXCEPTION(error, BAD_REQUEST, http::BAD_REQUEST);
 	IRCD_M_EXCEPTION(error, BAD_JSON, http::BAD_REQUEST);
+	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
 }
 
 inline

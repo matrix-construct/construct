@@ -28,9 +28,6 @@
 namespace ircd::m
 {
 	struct user;
-
-	extern user me;
-	extern room my_room;
 }
 
 struct ircd::m::user

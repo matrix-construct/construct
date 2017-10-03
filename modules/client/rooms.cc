@@ -26,7 +26,7 @@ struct room
 {
 	static constexpr const auto base_url
 	{
-		"_matrix/client/r0/rooms/"
+		"_matrix/client/r0/rooms"
 	};
 
 	using resource::resource;
@@ -44,6 +44,102 @@ mapi::header IRCD_MODULE
 {
 	"registers the resource 'client/rooms'"
 };
+
+resource::response
+get_messages(client &client,
+             const resource::request &request,
+             const string_view &params,
+             const m::room::id &room_id)
+{
+	const m::event::query<m::event::where::equal> event_in_room
+	{
+		{ "room_id", room_id }
+	};
+
+	const m::event::query<m::event::where::test> event_not_state
+	{
+		[](const auto &event)
+		{
+			return !defined(json::val<m::name::state_key>(event));
+		}
+	};
+
+	const auto query
+	{
+		event_in_room && event_not_state
+	};
+
+	const size_t count
+	{
+		std::min(m::events::count(query), 128UL)
+	};
+
+	if(!count)
+		throw m::NOT_FOUND
+		{
+			"No messages."
+		};
+
+	size_t j(0);
+	json::value ret[count];
+	m::events::for_each(query, [&count, &j, &ret]
+	(const auto &event)
+	{
+		if(j < count)
+			ret[j++] = event;
+	});
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "chunk", json::value { ret, j } }
+		}
+	};
+}
+
+resource::response
+get_members(client &client,
+            const resource::request &request,
+            const string_view &params,
+            const m::room::id &room_id)
+{
+
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "room_id",    room_id         },
+		{ "type",       "m.room.member" },
+		{ "state_key",  ""              },
+	};
+
+	const auto count
+	{
+		m::events::count(query)
+	};
+
+	if(!count)
+		throw m::NOT_FOUND
+		{
+			"No members."
+		};
+
+	size_t j(0);
+	json::value ret[count];
+	m::events::for_each(query, [&count, &j, &ret]
+	(const auto &event)
+	{
+		if(j < count)
+			ret[j++] = event;
+	});
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "chunk", json::value { ret, j } }
+		}
+	};
+}
 
 resource::response
 get_state(client &client,
@@ -306,6 +402,49 @@ put_rooms(client &client, const resource::request &request)
 resource::method method_put
 {
 	rooms_resource, "PUT", put_rooms,
+	{
+		method_put.REQUIRES_AUTH
+	}
+};
+
+resource::response
+post_receipt(client &client,
+             const resource::request &request,
+             const string_view &params,
+             const m::room::id &room_id)
+{
+	string_view token[4];
+	if(tokens(params, '/', token) != 4)
+		throw m::BAD_REQUEST{"receipt type and event_id required"};
+
+	const string_view &receipt_type{token[2]};
+	const string_view &event_id{token[3]};
+	std::cout << "type: " << receipt_type << " eid: " << event_id << std::endl;
+}
+
+resource::response
+post_rooms(client &client, const resource::request &request)
+{
+	const auto params
+	{
+		lstrip(request.head.path, room::base_url)
+	};
+
+	string_view token[2];
+	if(tokens(params, '/', token) != 2)
+		throw m::BAD_REQUEST{"/rooms command required"};
+
+	m::room::id::buf room_id;
+	urldecode(token[0], room_id);
+	const string_view &cmd{token[1]};
+
+	if(cmd == "receipt")
+		return post_receipt(client, request, params, room_id);
+}
+
+resource::method method_POST
+{
+	rooms_resource, "POST", post_rooms,
 	{
 		method_put.REQUIRES_AUTH
 	}

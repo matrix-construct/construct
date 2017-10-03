@@ -130,8 +130,6 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 		json::val<m::name::state>(room)
 	};
 
-	std::cout << json::get<m::name::limit>(state) << std::endl;
-
 	const auto &presence
 	{
 		// (5.2) The presence updates to include.

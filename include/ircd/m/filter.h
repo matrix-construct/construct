@@ -113,4 +113,8 @@ struct ircd::m::filter
 
 	using super_type::tuple;
 	using super_type::operator=;
+
+	static size_t size(const string_view &filter_id);
+
+	filter(const string_view &filter_id, const mutable_buffer &);
 };

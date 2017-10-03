@@ -48,7 +48,12 @@ init_0()
 resource::response
 get_root(client &client, const resource::request &request)
 {
-	auto it(files.find(request.head.path));
+	const auto &path
+	{
+		request.head.path?: "index.html"
+	};
+
+	auto it(files.find(path));
 	if(it == end(files))
 		throw http::error{http::NOT_FOUND};
 

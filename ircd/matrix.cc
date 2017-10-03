@@ -24,8 +24,8 @@
 // m/session.h
 //
 
-ircd::m::session::session(const host_port &host_port)
-:client{host_port}
+ircd::m::session::session(const hostport &host_port)
+:client{std::make_shared<ircd::client>(host_port)}
 {
 }
 
@@ -33,29 +33,111 @@ ircd::json::object
 ircd::m::session::operator()(parse::buffer &pb,
                              request &r)
 {
-	parse::capstan pc
+	const json::member origin
 	{
-		pb, read_closure(*this)
+		"origin", my_host()
 	};
 
-	const http::line::header headers[]
+	const json::member destination
 	{
-		{ "Content-Type"s, "application/json"s }
+		//host(remote_hostport(*client->sock))
+		"destination", "zemos.net"
 	};
+
+	const json::member method
+	{
+		"method", r.method
+	};
+
+	const std::string uri
+	{
+		std::string {"/"} + std::string{r.path} +
+		(r.query? (std::string{"?"} + std::string{r.query}) : std::string{})
+	};
+
+	json::iov iov;
+	const json::iov::push pushed[]
+	{
+		{ iov,  json::member { "uri", uri }  },
+		{ iov,  origin                       },
+		{ iov,  method                       },
+		{ iov,  destination                  },
+	};
+
+	const json::iov::add_if content
+	{
+		iov, r.content.size() > 2, json::member
+		{
+			"content", r.content
+		}
+	};
+
+	size_t headers{2};
+	http::line::header header[3]
+	{
+		{ "Content-Type",  "application/json"  },
+		{ "User-Agent",    "IRCd"              }
+	};
+
+	char x_matrix_buf[2048];
+	if(startswith(r.path, "_matrix/federation"))
+	{
+		// These buffers can be comfortably large if they're not on a stack and
+		// nothing in this procedure has a yield; the assertion is tripped if so
+		static char request_object_buffer[4096];
+		static char signature_buffer[128];
+		ctx::critical_assertion ca;
+
+		const auto request_object
+		{
+			json::stringify(request_object_buffer, iov)
+		};
+
+		std::cout << request_object << std::endl;
+
+		const ed25519::sig sig
+		{
+			my::secret_key.sign(request_object)
+		};
+
+		const auto signature
+		{
+			b64encode_unpadded(signature_buffer, sig)
+		};
+
+		const auto x_matrix_len
+		{
+			fmt::sprintf(x_matrix_buf, "X-Matrix origin=%s,key=\"ed25519:pk2\",sig=\"%s\"",
+			             string_view{origin.second},
+			             signature)
+		};
+
+		const string_view x_matrix
+		{
+			x_matrix_buf, size_t(x_matrix_len)
+		};
+
+		header[headers++] = { "Authorization",  x_matrix };
+	}
 
 	http::request
 	{
-		host(remote_addr(*this)),
+		string_view{destination.second}, //host(remote(*client)),
 		r.method,
 		r.path,
 		r.query,
 		r.content,
-		write_closure(*this),
-		{ headers, headers + (sizeof(headers) / sizeof(http::line::header)) }
+		write_closure(*client),
+		{ header, headers }
 	};
 
 	http::code status;
 	json::object object;
+	parse::capstan pc
+	{
+		pb, read_closure(*client)
+	};
+
 	http::response
 	{
 		pc,
@@ -81,36 +163,56 @@ ircd::m::session::operator()(parse::buffer &pb,
 namespace ircd::m
 {
 	std::map<std::string, ircd::module> modules;
-	ircd::listener *listener;
+	ircd::net::listener *listener;
 
 	static void leave_ircd_room();
 	static void join_ircd_room();
-	void bootstrap();
+	static void init_keys(const std::string &secret_key_file);
+	static void bootstrap();
 }
+
+const ircd::m::user::id::buf
+ircd_user_id
+{
+	"ircd", "cdc.z"  //TODO: hostname
+};
 
 ircd::m::user
 ircd::m::me
 {
-	"@ircd:cdc.z"
+	ircd_user_id
+};
+
+const ircd::m::room::id::buf
+ircd_room_id
+{
+	"ircd", ircd::my_host()
 };
 
 ircd::m::room
 ircd::m::my_room
 {
-	ircd::m::room::id{"!ircd:cdc.z"}
+	ircd_room_id
 };
 
-ircd::m::room
-ircd::m::filter::filters
+ircd::string_view
+ircd::m::my_host()
 {
-	ircd::m::room::id{"!filters:cdc.z"}
-};
+	return "cdc.z:8447"; //me.user_id.host();
+}
 
 ircd::m::init::init()
 try
 {
+	init_keys("charybdis.sk");
+
+	const string_view prefixes[]
+	{
+		"client_", "key_",
+	};
+
 	for(const auto &name : mods::available())
-		if(startswith(name, "client_"))
+		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
 			modules.emplace(name, name);
 
 	if(db::sequence(*event::events) == 0)
@@ -123,14 +225,14 @@ try
 		{ "name", "Chat Matrix" },
 		{ "host", "0.0.0.0" },
 		{ "port", 8447 },
-		{ "ssl_certificate_file", "/home/jason/zemos.net.tls.crt" },
-		{ "ssl_certificate_chain_file", "/home/jason/zemos.net.tls.crt" },
+		{ "ssl_certificate_file", "/home/jason/zemos.net.tls2.crt" },
+		{ "ssl_certificate_chain_file", "/home/jason/zemos.net.tls2.crt" },
 		{ "ssl_tmp_dh_file", "/home/jason/zemos.net.tls.dh" },
-		{ "ssl_private_key_file_pem", "/home/jason/zemos.net.tls.key" },
+		{ "ssl_private_key_file_pem", "/home/jason/zemos.net.tls2.key" },
 	})};
 
 	//TODO: conf obviously
-	listener = new ircd::listener{options};
+	listener = new ircd::net::listener{options};
 
 	join_ircd_room();
 }
@@ -174,6 +276,11 @@ ircd::m::leave_ircd_room()
 	my_room.leave(me.user_id, content);
 }
 
+namespace ircd::m
+{
+	static void bootstrap_keys();
+}
+
 void
 ircd::m::bootstrap()
 {
@@ -192,6 +299,174 @@ ircd::m::bootstrap()
 	user::accounts.join(me.user_id, content);
 	user::sessions.create(me.user_id, me.user_id, content);
 	filter::filters.create(me.user_id, me.user_id, content);
+	bootstrap_keys();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/keys.h
+//
+
+const ircd::m::room::id::buf
+keys_room_id
+{
+	"keys", ircd::my_host()
+};
+
+ircd::m::room
+ircd::m::key::keys
+{
+	keys_room_id
+};
+
+ircd::ed25519::sk
+ircd::my::secret_key
+{};
+
+ircd::ed25519::pk
+ircd::my::public_key
+{};
+
+std::string
+ircd::my::public_key_b64
+{};
+
+static void
+ircd::m::init_keys(const std::string &sk_file)
+{
+	my::secret_key = ed25519::sk
+	{
+		sk_file, &my::public_key
+	};
+
+	my::public_key_b64 = b64encode_unpadded(my::public_key);
+
+	log::info("My ed25519 public key is: %s",
+	          my::public_key_b64);
+}
+
+namespace ircd
+{
+	size_t certbytes(const mutable_raw_buffer &buf, const std::string &certfile);
+}
+
+static void
+ircd::m::bootstrap_keys()
+{
+	json::iov content;
+	key::keys.create(me.user_id, me.user_id, content);
+
+	key my_key;
+	json::val<name::server_name>(my_key) = my_host();
+	json::val<name::old_verify_keys>(my_key) = "{}";
+
+	const auto valid_until
+	{
+		ircd::time<milliseconds>() + duration_cast<milliseconds>(hours(2160)).count()
+	};
+	json::val<name::valid_until_ts>(my_key) = valid_until;
+
+	static char verify_keys_buf[256];
+	json::val<name::verify_keys>(my_key) = json::stringify(verify_keys_buf, json::members
+	{
+		{ "ed25519:pk2", json::members
+		{
+			{ "key", my::public_key_b64 }
+		}}
+	});
+
+	//static unsigned char pembuf[4096];
+	//const auto cbsz{ircd::certbytes(pembuf, "/home/jason/zemos.net.tls.crt")};
+
+	static std::array<uint8_t, 32> tls_hash;
+	a2u(tls_hash, "C259B83ABED34D81B31F773737574FBD966CE33BDED708BF502CA1D4CEC3D318");
+
+	static char tls_b64_buf[256];
+	const json::members tlsfps
+	{
+		{ "sha256", b64encode_unpadded(tls_b64_buf, tls_hash) }
+	};
+
+	const json::value tlsfp[1]
+	{
+		{ tlsfps }
+	};
+
+	static char tls_fingerprints_buf[256];
+	json::val<name::tls_fingerprints>(my_key) = json::stringify(tls_fingerprints_buf, json::value
+	{
+		tlsfp, 1
+	});
+
+	const std::string presig
+	{
+		json::string(my_key)
+	};
+
+	const ed25519::sig sig
+	{
+		my::secret_key.sign(const_raw_buffer{presig})
+	};
+
+	static char signature[128], signatures[256];
+	json::val<name::signatures>(my_key) = json::stringify(signatures, json::members
+	{
+		{ my_host(), json::members
+		{
+			{ "ed25519:pk2", b64encode_unpadded(signature, sig) }
+		}}
+	});
+
+	keys::set(my_key);
+}
+
+void
+ircd::m::keys::set(const key &key)
+{
+	const auto &state_key
+	{
+		at<name::server_name>(key)
+	};
+
+	const m::user::id::buf sender
+	{
+		"ircd", at<name::server_name>(key)
+	};
+
+	const auto content
+	{
+		json::string(key)
+	};
+
+	json::iov event;
+	json::iov::push members[]
+	{
+		{ event, json::member { "type",       "ircd.key"   }},
+		{ event, json::member { "state_key",  state_key    }},
+		{ event, json::member { "sender",     sender       }},
+		{ event, json::member { "content",    content      }}
+	};
+
+	key::keys.send(event);
+}
+
+bool
+ircd::m::keys::get(const string_view &server_name,
+                   const closure &closure)
+{
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "room_id",      key::keys.room_id   },
+		{ "type",        "ircd.key"           },
+		{ "state_key",    server_name         },
+	};
+
+	return m::events::test(query, [&closure]
+	(const auto &event)
+	{
+		closure(json::val<name::content>(event));
+		return true;
+	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -247,6 +522,65 @@ ircd::m::dbs::init_modules()
 	for(const auto &name : mods::available())
 		if(startswith(name, "db_"))
 			modules.emplace(name, name);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/filter.h
+//
+
+const ircd::m::room::id::buf
+filters_room_id
+{
+	"filters", ircd::my_host()
+};
+
+ircd::m::room
+ircd::m::filter::filters
+{
+	filters_room_id
+};
+
+ircd::m::filter::filter(const string_view &filter_id,
+                        const mutable_buffer &buf)
+{
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "room_id",      filters.room_id   },
+		{ "type",        "ircd.filter"      },
+		{ "state_key",    filter_id         },
+	};
+
+	size_t len{0};
+	m::events::test(query, [&buf, &len]
+	(const auto &event)
+	{
+		len = copy(buf, json::val<name::content>(event));
+		return true;
+	});
+
+	new (this) filter{json::object{buf}};
+}
+
+size_t
+ircd::m::filter::size(const string_view &filter_id)
+{
+	const m::event::query<m::event::where::equal> query
+	{
+		{ "room_id",      filters.room_id   },
+		{ "type",        "ircd.filter"      },
+		{ "state_key",    filter_id         },
+	};
+
+	size_t ret{0};
+	m::events::test(query, [&ret]
+	(const auto &event)
+	{
+		ret = json::val<name::content>(event).size();
+		return true;
+	});
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -310,12 +644,12 @@ void
 ircd::m::room::membership(const m::id::user &user_id,
                           json::iov &content)
 {
-	const string_view membership
+	const string_view &membership
 	{
 		content.at("membership")
 	};
 
-	if(is_member(user_id, membership))
+	if(this->membership(user_id, membership))
 		throw m::ALREADY_MEMBER
 		{
 			"Member '%s' is already '%s'.", string_view{user_id}, membership
@@ -340,15 +674,56 @@ ircd::m::room::membership(const m::id::user &user_id,
 }
 
 bool
-ircd::m::room::is_member(const m::id::user &user_id,
-                         const string_view &membership)
+ircd::m::room::membership(const m::id::user &user_id,
+                          const string_view &membership)
+const
 {
-	const members members
+	const event::query<event::where::equal> member_event
 	{
-		room_id
+		{ "room_id",      room_id           },
+		{ "type",        "m.room.member"    },
+		{ "state_key",    user_id           },
 	};
 
-	return members.membership(user_id, membership);
+	if(!membership)
+		return m::events::test(member_event);
+
+	const event::query<event::where::test> membership_test{[&membership]
+	(const auto &event)
+	{
+		const json::object &content
+		{
+			json::at<m::name::content>(event)
+		};
+
+		const auto &existing_membership
+		{
+			unquote(content.at("membership"))
+		};
+
+		return membership == existing_membership;
+	}};
+
+	return m::events::test(member_event && membership_test);
+}
+
+ircd::m::event::id
+ircd::m::room::head(event::id::buf &buf)
+const
+{
+	const event::query<event::where::equal> query
+	{
+		{ "room_id", room_id },
+	};
+
+	events::test(query, [&buf]
+	(const auto &event)
+	{
+		buf = json::val<name::event_id>(event);
+		return true;
+	});
+
+	return buf;
 }
 
 ircd::m::event::id::buf
@@ -385,69 +760,33 @@ ircd::m::room::send(json::iov &event)
 	return generated_event_id;
 }
 
-bool
-ircd::m::room::members::membership(const m::id::user &user_id,
-                                   const string_view &membership)
-const
-{
-	if(membership.empty())
-		return is_member(user_id);
-
-	const event::query<event::where::equal> member_event
-	{
-		{ "room_id",      room_id           },
-		{ "type",        "m.room.member"    },
-		{ "state_key",    user_id           },
-	};
-
-	const event::query<event::where::test> membership_test{[&membership]
-	(const auto &event)
-	{
-		const json::object &content
-		{
-			json::at<m::name::content>(event)
-		};
-
-		const auto &existing_membership
-		{
-			unquote(content.at("membership"))
-		};
-
-		return membership == existing_membership;
-	}};
-
-	return m::events::test(member_event && membership_test);
-}
-
-bool
-ircd::m::room::members::is_member(const m::id::user &user_id)
-const
-{
-	const event::query<event::where::equal> member_event
-	{
-		{ "room_id",      room_id           },
-		{ "type",        "m.room.member"    },
-		{ "state_key",    user_id           },
-	};
-
-	return m::events::test(member_event);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/user.h
 //
 
+const ircd::m::room::id::buf
+accounts_room_id
+{
+	"accounts", ircd::my_host()
+};
+
 ircd::m::room
 ircd::m::user::accounts
 {
-	ircd::m::room::id{"!accounts:cdc.z"}
+	accounts_room_id
+};
+
+const ircd::m::room::id::buf
+sessions_room_id
+{
+	"sessions", ircd::my_host()
 };
 
 ircd::m::room
 ircd::m::user::sessions
 {
-	ircd::m::room::id{"!sessions:cdc.z"}
+	sessions_room_id
 };
 
 /// Register the user by joining them to the accounts room.
@@ -554,31 +893,7 @@ bool
 ircd::m::user::is_active()
 const
 {
-	const auto &room_id{accounts.room_id};
-	const m::event::query<event::where::equal> member_event
-	{
-		{ "room_id",      room_id        },
-		{ "type",        "m.room.member" },
-		{ "state_key",    user_id        },
-	};
-
-	const m::event::query<event::where::test> is_joined{[]
-	(const auto &event)
-	{
-		const json::object &content
-		{
-			json::val<m::name::content>(event)
-		};
-
-		const auto &membership
-		{
-			unquote(content["membership"])
-		};
-
-		return membership == "join";
-	}};
-
-	return events::test(member_event && is_joined);
+	return accounts.membership(user_id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1068,12 +1383,16 @@ ircd::ctx::view<const ircd::m::event>
 ircd::m::event::inserted
 {};
 
+ircd::m::event::id::buf
+ircd::m::event::head
+{};
+
 void
 ircd::m::event::insert(json::iov &iov)
 {
 	const id::event::buf generated_event_id
 	{
-		iov.has("event_id")? id::event::buf{} : id::event::buf{id::generate, "cdc.z"}
+		iov.has("event_id")? id::event::buf{} : id::event::buf{id::generate, my_host()}
 	};
 
 	const json::iov::add_if event_id
@@ -1083,7 +1402,7 @@ ircd::m::event::insert(json::iov &iov)
 
 	const json::iov::set origin_server_ts
 	{
-		iov, { "origin_server_ts", time<milliseconds>() }
+		iov, { "origin_server_ts", ircd::time<milliseconds>() }
 	};
 
 	const m::event event
@@ -1108,9 +1427,8 @@ ircd::m::event::insert(json::iov &iov)
 	};
 
 	append_indexes(event, txn);
-
 	txn(*event::events);
-
+	event::head = json::at<name::event_id>(event);
 	event::inserted.notify(event);
 }
 

@@ -81,6 +81,16 @@ client_module_LTLIBRARIES = \
 	client/client_voip_turnserver.la \
 	###
 
+# This puts the source in key/ but the installed
+# library is key_X.so in the main modules dir.
+key_moduledir = @moduledir@
+key_key_server_la_SOURCES = key/server.cc
+key_key_query_la_SOURCES = key/query.cc
+key_module_LTLIBRARIES = \
+	key/key_server.la \
+	key/key_query.la \
+	###
+
 if JS
 server_moduledir = @moduledir@
 server_server_console_la_SOURCES = server/console.cc
