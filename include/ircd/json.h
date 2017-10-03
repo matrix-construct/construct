@@ -92,6 +92,7 @@ namespace ircd::json
 	/// you pass to the template.
 	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
 	template<class... T> size_t print(char *const &buf, const size_t &max, T&&... t);
+	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 	template<class... T> std::string string(T&&... t);
 
 	size_t serialized(const string_view &);
@@ -124,6 +125,18 @@ ircd::json::stringify(const mutable_buffer &&mb,
 {
 	mutable_buffer mbc{mb};
 	return stringify(mbc, std::forward<T>(t)...);
+}
+
+///
+/// Convenience template using the syntax print(mutable_buffer, ...)
+/// which stringifies with null termination into buffer.
+///
+template<class... T>
+size_t
+ircd::json::print(const mutable_buffer &buf,
+                  T&&... t)
+{
+	return print(data(buf), size(buf), std::forward<T>(t)...);
 }
 
 ///
