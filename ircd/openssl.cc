@@ -22,16 +22,6 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// hash.h
-//
-
-namespace ircd::crh
-{
-	static void finalize(struct sha256::ctx *const &, const mutable_raw_buffer &);
-}
-
 template<class exception = ircd::error,
          int ERR_CODE = 0,
          class function,
@@ -53,6 +43,16 @@ call_openssl(function&& f, args&&... a)
 
 	return ret;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// hash.h
+//
+
+namespace ircd::crh
+{
+	static void finalize(struct sha256::ctx *const &, const mutable_raw_buffer &);
+}
 
 struct ircd::crh::sha256::ctx
 :SHA256_CTX
@@ -78,7 +78,7 @@ ircd::crh::sha256::sha256()
 
 /// One-shot functor. Immediately calls operator().
 ircd::crh::sha256::sha256(const mutable_raw_buffer &out,
-                          const const_buffer &in)
+                          const const_raw_buffer &in)
 :sha256{}
 {
 	operator()(out, in);
@@ -90,7 +90,7 @@ noexcept
 }
 
 void
-ircd::crh::sha256::update(const const_buffer &buf)
+ircd::crh::sha256::update(const const_raw_buffer &buf)
 {
 	call_openssl(::SHA256_Update, ctx.get(), data(buf), size(buf));
 }

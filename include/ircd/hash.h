@@ -54,12 +54,12 @@ struct ircd::crh::hash
 	virtual size_t length() const = 0;
 	virtual void finalize(const mutable_raw_buffer &) = 0;
 	virtual void extract(const mutable_raw_buffer &) const = 0;
-	virtual void update(const const_buffer &) = 0;
+	virtual void update(const const_raw_buffer &) = 0;
 
 	// conveniences
 	void finalize(const mutable_raw_buffer &) const;
-	void operator()(const mutable_raw_buffer &out, const const_buffer &in);
-	hash &operator+=(const const_buffer &);
+	void operator()(const mutable_raw_buffer &out, const const_raw_buffer &in);
+	hash &operator+=(const const_raw_buffer &);
 
 	virtual ~hash() noexcept;
 };
@@ -81,9 +81,9 @@ struct ircd::crh::sha256
 	size_t length() const override;
 	void finalize(const mutable_raw_buffer &) override;
 	void extract(const mutable_raw_buffer &) const override;
-	void update(const const_buffer &) override;
+	void update(const const_raw_buffer &) override;
 
-	sha256(const mutable_raw_buffer &, const const_buffer &);
+	sha256(const mutable_raw_buffer &, const const_raw_buffer &);
 	sha256();
 	~sha256() noexcept;
 };

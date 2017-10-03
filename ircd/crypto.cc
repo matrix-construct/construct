@@ -30,7 +30,7 @@ noexcept
 }
 
 ircd::crh::hash &
-ircd::crh::hash::operator+=(const const_buffer &buf)
+ircd::crh::hash::operator+=(const const_raw_buffer &buf)
 {
 	update(buf);
 	return *this;
@@ -38,7 +38,7 @@ ircd::crh::hash::operator+=(const const_buffer &buf)
 
 void
 ircd::crh::hash::operator()(const mutable_raw_buffer &out,
-                            const const_buffer &in)
+                            const const_raw_buffer &in)
 {
 	update(in);
 	finalize(out);
