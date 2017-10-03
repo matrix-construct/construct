@@ -344,17 +344,15 @@ ircd::http::request::request(const string_view &host,
 		         content.size())
 	};
 
-	char user_headers[printed_size(headers) + 2 + 1]; auto user_headers_len
+	char user_headers[printed_size(headers) + 2]; auto user_headers_len
 	{
 		print(user_headers, sizeof(user_headers), headers)
 	};
 
-	static const auto &terminator
-	{
-		"\r\n"
-	};
-
-	user_headers_len = strlcat(user_headers, terminator, sizeof(user_headers));
+	assert(user_headers_len + 3 == sizeof(user_headers));
+	user_headers[user_headers_len++] = '\r';
+	user_headers[user_headers_len++] = '\n';
+	//user_headers[user_headers_len++] = '\0';
 
 	const ilist<const_buffer> vector
 	{
