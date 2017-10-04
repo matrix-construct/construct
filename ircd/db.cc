@@ -89,7 +89,7 @@ namespace ircd::db
 	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 }
 
-struct ircd::db::database::logs
+struct ircd::db::database::logs final
 :std::enable_shared_from_this<struct database::logs>
 ,rocksdb::Logger
 {
@@ -105,7 +105,7 @@ struct ircd::db::database::logs
 	{}
 };
 
-struct ircd::db::database::stats
+struct ircd::db::database::stats final
 :std::enable_shared_from_this<struct ircd::db::database::stats>
 ,rocksdb::Statistics
 {
@@ -126,7 +126,7 @@ struct ircd::db::database::stats
 	{}
 };
 
-struct ircd::db::database::events
+struct ircd::db::database::events final
 :std::enable_shared_from_this<struct ircd::db::database::events>
 ,rocksdb::EventListener
 {
@@ -145,7 +145,7 @@ struct ircd::db::database::events
 	{}
 };
 
-struct ircd::db::database::mergeop
+struct ircd::db::database::mergeop final
 :std::enable_shared_from_this<struct ircd::db::database::mergeop>
 ,rocksdb::AssociativeMergeOperator
 {
@@ -161,7 +161,7 @@ struct ircd::db::database::mergeop
 	{}
 };
 
-struct ircd::db::database::comparator
+struct ircd::db::database::comparator final
 :rocksdb::Comparator
 {
 	using Slice = rocksdb::Slice;
@@ -181,7 +181,7 @@ struct ircd::db::database::comparator
 	{}
 };
 
-struct ircd::db::database::prefix_transform
+struct ircd::db::database::prefix_transform final
 :rocksdb::SliceTransform
 {
 	using Slice = rocksdb::Slice;
@@ -200,7 +200,7 @@ struct ircd::db::database::prefix_transform
 	{}
 };
 
-struct ircd::db::database::column
+struct ircd::db::database::column final
 :std::enable_shared_from_this<database::column>
 ,rocksdb::ColumnFamilyDescriptor
 {
