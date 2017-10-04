@@ -38,6 +38,7 @@ namespace ircd::fmt
 	struct vsnprintf;
 	struct snstringf;
 	struct vsnstringf;
+	template<size_t MAX> struct bsprintf;
 
 	//
 	// Module API
@@ -189,5 +190,25 @@ struct ircd::fmt::snstringf
 	:vsnstringf
 	{
 		max, fmt, va_rtti{std::forward<args>(a)...}
+	}{}
+};
+
+template<size_t MAX>
+struct ircd::fmt::bsprintf
+:snprintf
+,string_view
+{
+	std::array<char, MAX> buf;
+
+	template<class... args>
+	bsprintf(const char *const &fmt,
+	         args&&... a)
+	:snprintf
+	{
+		internal, buf.data(), buf.size(), fmt, va_rtti{std::forward<args>(a)...}
+	}
+	,string_view
+	{
+		buf.data(), size_t(static_cast<snprintf &>(*this))
 	}{}
 };
