@@ -138,7 +138,7 @@ sync(client &client, const resource::request &request)
 	{
 		const json::object &content
 		{
-			at<m::name::content>(event)
+			at<"content"_>(event)
 		};
 
 		head = unquote(content.at("event_id"));
@@ -329,7 +329,7 @@ synchronize(const m::event &event)
 {
 	const auto &room_id
 	{
-		json::val<m::name::room_id>(event)
+		json::get<"room_id"_>(event)
 	};
 
 	if(room_id)
@@ -378,7 +378,7 @@ update_sync_room(client &client,
                  const m::event &event)
 {
 	std::vector<std::string> state;
-	if(defined(json::val<m::name::state_key>(event)))
+	if(defined(json::get<"state_key"_>(event)))
 		state.emplace_back(json::string(event));
 
 	const auto state_serial
@@ -387,7 +387,7 @@ update_sync_room(client &client,
 	};
 
 	std::vector<std::string> timeline;
-	if(!defined(json::val<m::name::state_key>(event)))
+	if(!defined(json::get<"state_key"_>(event)))
 		timeline.emplace_back(json::string(event));
 
 	const auto timeline_serial
@@ -451,7 +451,7 @@ try
 
 	const string_view next_batch
 	{
-		at<m::name::event_id>(event)
+		at<"event_id"_>(event)
 	};
 
 	resource::response
@@ -508,7 +508,7 @@ initial_sync_room(client &client,
 			if(timeline.size() > 10)
 				return true;
 
-			if(!defined(json::val<m::name::state_key>(event)))
+			if(!defined(json::get<"state_key"_>(event)))
 				timeline.emplace_back(json::string(event));
 
 			return false;
@@ -545,9 +545,9 @@ initial_sync_rooms(client &client,
 	std::array<std::vector<json::member>, 3> m;
 	m::events::for_each(query, [&r, &m, &client, &request, &full_state](const auto &event)
 	{
-		const auto &content{json::val<m::name::content>(event)};
+		const auto &content{json::get<"content"_>(event)};
 		const auto &membership{unquote(content["membership"])};
-		const m::room::id &room_id{json::val<m::name::room_id>(event)};
+		const m::room::id &room_id{json::get<"room_id"_>(event)};
 		const auto i
 		{
 			membership == "join"? 0:

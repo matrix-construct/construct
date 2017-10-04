@@ -57,7 +57,7 @@ post_login_password(client &client,
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		unquote(at<name::user>(request)), my_host()
+		unquote(at<"user"_>(request)), my_host()
 	};
 
 	if(!user_id.valid() || user_id.host() != my_host())
@@ -68,7 +68,7 @@ post_login_password(client &client,
 
 	const auto &supplied_password
 	{
-		unquote(at<name::password>(request))
+		unquote(at<"password"_>(request))
 	};
 
 	m::user user
@@ -131,7 +131,7 @@ post_login(client &client, const resource::request::object<body> &request)
 	// Currently only "m.login.password" is supported.
 	const auto type
 	{
-		unquote(at<name::type>(request))
+		unquote(at<"type"_>(request))
 	};
 
 	if(type == "m.login.password")

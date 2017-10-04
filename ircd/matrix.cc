@@ -393,7 +393,7 @@ ircd::m::bootstrap_keys()
 	};
 
 	static char tls_fingerprints_buf[256];
-	json::val<name::tls_fingerprints>(my_key) = json::stringify(tls_fingerprints_buf, json::value
+	json::get<"tls_fingerprints"_>(my_key) = json::stringify(tls_fingerprints_buf, json::value
 	{
 		tlsfp, 1
 	});
@@ -409,7 +409,7 @@ ircd::m::bootstrap_keys()
 	};
 
 	static char signature[128], signatures[256];
-	json::val<name::signatures>(my_key) = json::stringify(signatures, json::members
+	json::get<"signatures"_>(my_key) = json::stringify(signatures, json::members
 	{
 		{ my_host(), json::members
 		{
@@ -425,12 +425,12 @@ ircd::m::keys::set(const key &key)
 {
 	const auto &state_key
 	{
-		at<name::server_name>(key)
+		at<"server_name"_>(key)
 	};
 
 	const m::user::id::buf sender
 	{
-		"ircd", at<name::server_name>(key)
+		"ircd", at<"server_name"_>(key)
 	};
 
 	const auto content
@@ -555,7 +555,7 @@ ircd::m::filter::filter(const string_view &filter_id,
 	m::events::test(query, [&buf, &len]
 	(const auto &event)
 	{
-		len = copy(buf, json::val<name::content>(event));
+		len = copy(buf, json::get<"content"_>(event));
 		return true;
 	});
 
@@ -576,7 +576,7 @@ ircd::m::filter::size(const string_view &filter_id)
 	m::events::test(query, [&ret]
 	(const auto &event)
 	{
-		ret = json::val<name::content>(event).size();
+		ret = json::get<"content"_>(event).size();
 		return true;
 	});
 
@@ -693,7 +693,7 @@ const
 	{
 		const json::object &content
 		{
-			json::at<m::name::content>(event)
+			json::at<"content"_>(event)
 		};
 
 		const auto &existing_membership
@@ -719,7 +719,7 @@ const
 	events::test(query, [&buf]
 	(const auto &event)
 	{
-		buf = json::val<name::event_id>(event);
+		buf = json::get<"event_id"_>(event);
 		return true;
 	});
 
@@ -870,7 +870,7 @@ const
 	{
 		const json::object &content
 		{
-			json::at<m::name::content>(event)
+			json::at<"content"_>(event)
 		};
 
 		const auto &correct_password
@@ -1244,9 +1244,9 @@ ircd::m::events::query(const event::query<> &where,
 			};
 
 			const auto &value{clause.value};
-			const auto &room_id{json::val<name::room_id>(value)};
-			const auto &type{json::val<name::type>(value)};
-			const auto &state_key{json::val<name::state_key>(value)};
+			const auto &room_id{json::get<"room_id"_>(value)};
+			const auto &type{json::get<"type"_>(value)};
+			const auto &state_key{json::get<"state_key"_>(value)};
 			if(room_id && type && state_key.defined())
 				return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
 
@@ -1410,10 +1410,10 @@ ircd::m::event::insert(json::iov &iov)
 		iov
 	};
 
-	if(!json::at<name::type>(event))
+	if(!json::at<"type"_>(event))
 		throw BAD_JSON("Required event field: '%s'", name::type);
 
-	if(!json::at<name::sender>(event))
+	if(!json::at<"sender"_>(event))
 		throw BAD_JSON("Required event field: '%s'", name::sender);
 
 	db::iov txn
@@ -1423,12 +1423,12 @@ ircd::m::event::insert(json::iov &iov)
 
 	db::iov::append
 	{
-		txn, json::at<name::event_id>(event), iov
+		txn, json::at<"event_id"_>(event), iov
 	};
 
 	append_indexes(event, txn);
 	txn(*event::events);
-	event::head = json::at<name::event_id>(event);
+	event::head = json::at<"event_id"_>(event);
 	event::inserted.notify(event);
 }
 

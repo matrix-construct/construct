@@ -60,7 +60,7 @@ get_messages(client &client,
 	{
 		[](const auto &event)
 		{
-			return !defined(json::val<m::name::state_key>(event));
+			return !defined(json::get<"state_key"_>(event));
 		}
 	};
 

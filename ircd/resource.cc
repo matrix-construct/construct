@@ -137,14 +137,14 @@ try
 			// key which must be part of the redaction process.
 			const json::object &unsigned_
 			{
-				json::val<m::name::unsigned_>(event)
+				json::get<"unsigned"_>(event)
 			};
 
 			if(unsigned_.has("redacted_because"))
 				return false;
 
-			assert(at<m::name::state_key>(event) == access_token);
-			request.user_id = at<m::name::sender>(event);
+			assert(at<"state_key"_>(event) == access_token);
+			request.user_id = at<"sender"_>(event);
 			return true;
 		})
 	};

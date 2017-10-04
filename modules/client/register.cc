@@ -51,7 +51,7 @@ handle_post_kind_user(client &client,
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
 	const auto &auth
 	{
-		at<name::auth>(request)
+		at<"auth"_>(request)
 	};
 
 	// 3.3.1 Required. The login type that the client is attempting to complete.
@@ -71,7 +71,7 @@ handle_post_kind_user(client &client,
 	// generate a Matrix ID local part.
 	const auto &username
 	{
-		unquote(get<name::username>(request))
+		unquote(json::get<"username"_>(request))
 	};
 
 	// Generate canonical mxid. The home_server is appended if one is not
@@ -88,14 +88,14 @@ handle_post_kind_user(client &client,
 	// 3.3.1 Required. The desired password for the account.
 	const auto &password
 	{
-		at<name::password>(request)
+		at<"password"_>(request)
 	};
 
 	// 3.3.1 If true, the server binds the email used for authentication to the
 	// Matrix ID with the ID Server. Defaults to false.
 	const auto &bind_email
 	{
-		get<name::bind_email>(request, false)
+		get<"bind_email"_>(request, false)
 	};
 
 	// Check if the password is acceptable for this server or throws

@@ -56,7 +56,7 @@ get_filter(client &client, const resource::request &request)
 	{
 		const json::object &filter
 		{
-			json::at<m::name::content>(event)
+			json::at<"content"_>(event)
 		};
 
 		resource::response
@@ -93,6 +93,7 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	{
 		urldecode(token(request.head.path, '/', 4), user_id)
 	};
+
 	user_id.validate();
 
 	// (5.2) List of event fields to include. If this list is absent then all fields are
@@ -102,7 +103,7 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	// fields than were requested.
 	const auto &event_fields
 	{
-		json::get<m::name::event_fields>(request)
+		json::get<"event_fields"_>(request)
 	};
 
 	// (5.2) The format to use for events. 'client' will return the events in a format suitable
@@ -110,30 +111,30 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	// The default is 'client'. One of: ["client", "federation"]
 	const auto &event_format
 	{
-		json::get<m::name::event_format>(request)
+		json::get<"event_format"_>(request)
 	};
 
 	// (5.2) The user account data that isn't associated with rooms to include.
 	const auto &account_data
 	{
-		json::val<m::name::account_data>(request)
+		json::get<"account_data"_>(request)
 	};
 
 	// (5.2) Filters to be applied to room data.
 	const auto &room
 	{
-		json::val<m::name::room>(request)
+		json::get<"room"_>(request)
 	};
 
 	const auto &state
 	{
-		json::val<m::name::state>(room)
+		json::get<"state"_>(room)
 	};
 
 	const auto &presence
 	{
 		// (5.2) The presence updates to include.
-		json::val<m::name::presence>(request)
+		json::get<"presence"_>(request)
 	};
 
 	const auto filter_id
