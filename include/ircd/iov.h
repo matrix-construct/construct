@@ -89,10 +89,10 @@ ircd::iov<T>::node::node(iov &iov,
 
 	const auto &address
 	{
-		reinterpret_cast<T *>(&list_node)
+		reinterpret_cast<uint8_t *>(&list_node)
 	};
 
-	list.get_allocator().s->next = address;
+	list.get_allocator().s->next = reinterpret_cast<T *>(address);
 	list.emplace_front(std::forward<args>(a)...);
 }
 
