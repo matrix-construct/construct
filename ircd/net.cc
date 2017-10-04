@@ -836,7 +836,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p): async handler: unhandled user exception: %s",
+	log::error("socket(%p): async handler: unhandled exception: %s",
 	           this,
 	           e.what());
 

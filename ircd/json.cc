@@ -324,17 +324,14 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &head,
                       const iov &iov)
 {
-	const auto num{iov.size()};
-	const member *m[num];
-
-	size_t i(0);
-	std::for_each(std::begin(iov), std::end(iov), [&i, &m]
-	(const auto &member)
+	const member *m[iov.size()];
+	std::transform(std::begin(iov), std::end(iov), m, []
+	(const member &m)
 	{
-		m[i++] = &member;
+		return &m;
 	});
 
-	return stringify(head, m, m + num);
+	return stringify(head, m, m + iov.size());
 }
 
 size_t

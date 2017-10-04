@@ -726,7 +726,7 @@ ircd::b64decode(const mutable_raw_buffer &out,
 		std::distance(begin(out), e)
 	};
 
-	assert(len <= size(out));
+	assert(size_t(len) <= size(out));
 	return { data(out), size_t(len) };
 }
 
