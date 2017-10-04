@@ -115,7 +115,10 @@ void
 ircd::log::debug(const char *const &fmt,
                  args&&... a)
 {
+	// got DCE?
+	#ifdef RB_DEBUG
 	vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+	#endif
 }
 
 template<class... args>
@@ -163,7 +166,9 @@ void
 ircd::log::log::debug(const char *const &fmt,
                       args&&... a)
 {
+	#ifdef RB_DEBUG
 	operator()(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+	#endif
 }
 
 template<class... args>
