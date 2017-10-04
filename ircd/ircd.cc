@@ -67,7 +67,7 @@ try
 {
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash.
-	if(RB_DEBUG || debugmode)
+	if(RB_DEBUG_LEVEL || debugmode)
 		enable_coredumps();
 
 	assert(runlevel == runlevel::STOPPED);
@@ -100,7 +100,7 @@ try
 	          __VERSION__,
 	          RB_DATE_CONFIGURED,
 	          __TIMESTAMP__,
-	          RB_DEBUG? "(DEBUG MODE)" : "");
+	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
 
 	ircd::set_runlevel(runlevel::READY);
 }

@@ -152,10 +152,12 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 	AC_SUBST(DEBUG, 1)
 	CXXFLAGS+=" -O0 -ggdb"
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
+	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
 	AC_SUBST(DEBUG, 0)
 	CXXFLAGS+=" -O3"
 	CPPDEFINE([NDEBUG])
+	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
 ])
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
