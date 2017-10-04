@@ -56,6 +56,20 @@ AM_INIT_AUTOMAKE([subdir-objects])
 
 
 dnl
+dnl Initialization of variables exported to Makefile.am.
+dnl These will be further composed throughout this file...
+dnl
+
+AC_SUBST(CC)
+AC_SUBST(CXX)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(LIBS)
+
+
+dnl
 dnl Recursive local targets (clean-local is implied)
 dnl
 
@@ -84,19 +98,6 @@ AM_CONDITIONAL([CYGWIN],     [[[[ $host_os = *cygwin* ]]]])
 AM_CONDITIONAL([INTERIX],    [[[[ $host_os = *interix* ]]]])
 AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
 
-
-dnl
-dnl Initialization of variables exported to Makefile.am.
-dnl These will be further composed throughout this file...
-dnl
-
-AC_SUBST(CC)
-AC_SUBST(CXX)
-AC_SUBST(CFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(LIBS)
 
 
 dnl ***************************************************************************
@@ -150,12 +151,10 @@ AC_MSG_CHECKING(if you want to enable debugging)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
 	AC_SUBST(DEBUG, 1)
-	CXXFLAGS+=" -O0 -ggdb"
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
 	AC_SUBST(DEBUG, 0)
-	CXXFLAGS+=" -O3"
 	CPPDEFINE([NDEBUG])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
 ])
@@ -214,6 +213,7 @@ dnl Compiler warnings
 dnl
 
 STACK_USAGE_WARNING=16384
+FRAME_SIZE_WARNING=8192
 CWARNS=""
 AC_MSG_CHECKING(if you want to disable warnings)
 AC_ARG_ENABLE(warnings,
@@ -234,7 +234,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wundef], charybdis_cv_c_gcc_w_undef)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wpacked], charybdis_cv_c_gcc_w_packed)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unused -Wno-unused-function -Wno-unused-label -Wno-unused-value -Wno-unused-variable -Wno-unused-parameter], charybdis_cv_c_gcc_w_unused)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wformat-nonliteral], charybdis_cv_c_gcc_w_format)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wstrict-aliasing -Wstrict-overflow], charybdis_cv_c_gcc_w_strict)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wstrict-aliasing=2 -Wstrict-overflow=5], charybdis_cv_c_gcc_w_strict)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wdisabled-optimization], charybdis_cv_c_gcc_w_disabled_optimization)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Winvalid-pch], charybdis_cv_c_gcc_w_invalid_pch)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Winit-self], charybdis_cv_c_gcc_w_init_self)
@@ -244,6 +244,19 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overlo
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wchkp], charybdis_cv_c_gcc_w_chkp)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wsized-deallocation], charybdis_cv_c_gcc_w_sized_deallocation)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wctor-dtor-privacy], charybdis_cv_c_gcc_w_ctor_dtor_privacy)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wsign-promo], charybdis_cv_c_gcc_w_sign_promo)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wtrampolines], charybdis_cv_c_gcc_w_trampolines)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wduplicate-cond], charybdis_cv_c_gcc_w_duplicate_cond)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wduplicate-branches], charybdis_cv_c_gcc_w_duplicate_branches)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wrestrict], charybdis_cv_c_gcc_w_restrict)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wnull-dereference], charybdis_cv_c_gcc_w_null_dereference)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wplacement-new=2], charybdis_cv_c_gcc_w_placement_new)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wundef], charybdis_cv_c_gcc_w_undef)
 
 AM_COND_IF([GCC],
 [
@@ -251,6 +264,7 @@ AM_COND_IF([GCC],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat-security], charybdis_cv_c_gcc_w_format_security)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
 ],[])
 
 AM_COND_IF([CLANG],
@@ -268,14 +282,67 @@ dnl
 dnl Misc
 dnl
 
-dnl -ffriend-injection allows us to deduplicate declarations of friend
-dnl functions in both the friend class and the enclosing namespace
+AM_COND_IF([DEBUG],
+[
+	CXXFLAGS+=" -O0 -ggdb"
+], [
+	CXXFLAGS+=" -O3"
+	CXXFLAGS+=" -fweb"
+	CXXFLAGS+=" -fdata-sections"
+	CXXFLAGS+=" -ffunction-sections"
+	CXXFLAGS+=" -ftree-vectorize"
+	CXXFLAGS+=" -fgcse-sm"
+	CXXFLAGS+=" -fgcse-las"
+	CXXFLAGS+=" -fgcse-after-reload"
+	CXXFLAGS+=" -fsched-stalled-insns=0"
+	CXXFLAGS+=" -frename-registers"
+])
+
+dnl  -ffriend-injection allows us to deduplicate declarations of friend
+dnl  functions in both the friend class and the enclosing namespace
 CXXFLAGS+=" -ffriend-injection"
+
+dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
+dnl  functions won't be the same between translation units
+CXXFLAGS+=" -fvisibility-inlines-hidden"
 
 
 
 dnl ***************************************************************************
-dnl Header file checks
+dnl Philology checks
+dnl
+
+AC_ISC_POSIX
+AC_C_CONST
+AC_C_INLINE
+if test "$ac_cv_header_machine_endian_h" = "no" ; then
+    AC_C_BIGENDIAN
+fi
+
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UID_T
+AC_TYPE_PID_T
+
+AC_CHECK_TYPES([intptr_t])
+AC_CHECK_TYPES([uintptr_t])
+AC_CHECK_TYPES([__int128])
+
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(__int128)
+
+
+dnl -fsigned-char ensures 'char' is signed on all platforms
+CXXFLAGS+=" -fsigned-char"
+
+
+dnl
+dnl Header files
 dnl
 
 AC_DEFUN([RB_CHK_SYSHEADER],
@@ -348,34 +415,9 @@ RB_CHK_SYSHEADER([ws2tcpip.h],     [WS2TCPIP_H])
 RB_CHK_SYSHEADER([iphlpapi.h],     [IPHLPAPI_H])
 
 
-
-dnl ***************************************************************************
-dnl Philology checks
 dnl
-
-AC_ISC_POSIX
-AC_C_CONST
-AC_C_INLINE
-if test "$ac_cv_header_machine_endian_h" = "no" ; then
-    AC_C_BIGENDIAN
-fi
-
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_TYPE_SSIZE_T
-AC_TYPE_UID_T
-AC_TYPE_PID_T
-
-AC_CHECK_TYPES([intptr_t])
-AC_CHECK_TYPES([uintptr_t])
-AC_CHECK_TYPES([__int128])
-
-AC_CHECK_SIZEOF(char)
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(__int128)
+dnl Specific function checks
+dnl
 
 AC_CHECK_FUNCS([        \
 	strlcpy             \
@@ -723,7 +765,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
 
-	AC_SUBST(ROCKSDB_CPPFLAGS, ["-I$PWD/rocksdb/include"])
+	AC_SUBST(ROCKSDB_CPPFLAGS, ["-isystem $PWD/rocksdb/include"])
 	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/rocksdb/"])
 
 	AC_MSG_CHECKING([whether to use shared RocksDB])
