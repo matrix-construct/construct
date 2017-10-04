@@ -676,15 +676,22 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	char buf[256];
-	const auto rule(ircd::string(e.what_));
-	fmt::snprintf(buf, sizeof(buf),
-	              "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
-	              between(rule, "<", ">"),
-	              ssize_t(e.last - e.first),
-	              string_view{e.first, e.last});
+	const auto rule
+	{
+		ircd::string(e.what_)
+	};
 
-	throw error(code::BAD_REQUEST, buf);
+	throw error
+	{
+		code::BAD_REQUEST, fmt::snstringf
+		{
+			BUFSIZE,
+			"I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+			between(rule, "<", ">"),
+			size_t(e.last - e.first),
+			string_view{e.first, e.last}
+		}
+	};
 }
 
 ircd::http::line::response::response(const line &line)
@@ -713,15 +720,22 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	char buf[256];
-	const auto rule(ircd::string(e.what_));
-	fmt::snprintf(buf, sizeof(buf),
-	              "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
-	              between(rule, "<", ">"),
-	              ssize_t(e.last - e.first),
-	              string_view{e.first, e.last});
+	const auto rule
+	{
+		ircd::string(e.what_)
+	};
 
-	throw error(code::BAD_REQUEST, buf);
+	throw error
+	{
+		code::BAD_REQUEST, fmt::snstringf
+		{
+			BUFSIZE,
+			"I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+			between(rule, "<", ">"),
+			size_t(e.last - e.first),
+			string_view{e.first, e.last}
+		}
+	};
 }
 
 ircd::http::line::line(parse::capstan &pc)
@@ -938,15 +952,22 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	char err[256];
-	const auto rule(ircd::string(e.what_));
-	fmt::snprintf(err, sizeof(err),
-	              "I require a valid urlencoded %s. You sent %zu invalid chars starting with `%s'.",
-	              between(rule, "<", ">"),
-	              ssize_t(e.last - e.first),
-	              string_view{e.first, e.last});
+	const auto rule
+	{
+		ircd::string(e.what_)
+	};
 
-	throw error(code::BAD_REQUEST, err);
+	throw error
+	{
+		code::BAD_REQUEST, fmt::snstringf
+		{
+			BUFSIZE,
+			"I require a valid urlencoded %s. You sent %zu invalid chars starting with `%s'.",
+			between(rule, "<", ">"),
+			size_t(e.last - e.first),
+			string_view{e.first, e.last}
+		}
+	};
 }
 
 ircd::string_view
