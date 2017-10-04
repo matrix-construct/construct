@@ -27,14 +27,30 @@
 
 namespace ircd
 {
+	// constexpr bernstein string hasher suite; these functions will hash the
+	// string at compile time leaving an integer residue at runtime.
 	constexpr size_t hash(const char *const &str, const size_t i = 0);
 	constexpr size_t hash(const char16_t *const &str, const size_t i = 0);
 
+	// Note that at runtime this hash uses multiplication on every character
+	// which can consume many cycles...
 	size_t hash(const std::string &str, const size_t i = 0);
 	size_t hash(const std::u16string &str, const size_t i = 0);
 	size_t hash(const std::string_view &str, const size_t i = 0);
+
+	/// ircd reserves the $ character (in our namespace of course) as an alias
+	/// for hashing string literals at compile time.
+	template<class string>
+	constexpr size_t $(string&& s)
+	{
+		return hash(std::forward<string>(s));
+	}
 }
 
+/// Collision-Resistant Hashing
+///
+/// ircd::crh contains support for collision-resistant hash functions including
+/// cryptographic hash functions.
 namespace ircd::crh
 {
 	IRCD_EXCEPTION(ircd::error, error)
@@ -43,12 +59,16 @@ namespace ircd::crh
 	struct sha256;
 }
 
+// Export aliases down to ircd::
 namespace ircd
 {
 	using crh::hash;
 	using crh::sha256;
 }
 
+/// Abstract interface to a hashing context for any algorithm in ircd::crh
+///
+/// Use this type when dealing with algorithm-agnostic hashing.
 struct ircd::crh::hash
 {
 	virtual size_t length() const = 0;
