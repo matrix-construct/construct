@@ -37,7 +37,11 @@ struct ircd::json::property
 	using key_type = const char *const &;
 	using value_type = T;
 
-	static constexpr auto &key{name};
+	static constexpr auto &key
+	{
+		name
+	};
+
 	T value;
 
 	operator const T &() const;

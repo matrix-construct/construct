@@ -22,6 +22,19 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
 
+namespace ircd::json
+{
+	constexpr size_t operator ""_(const char *const text, const size_t len)
+	{
+		return ircd::hash(text);
+	}
+}
+
+namespace ircd
+{
+	using json::operator ""_;
+}
+
 namespace ircd {
 namespace json {
 
@@ -142,6 +155,29 @@ key(const tuple &t)
 }
 
 template<class tuple,
+         size_t hash,
+         size_t i>
+constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
+indexof()
+{
+	return size<tuple>();
+}
+
+template<class tuple,
+         size_t hash,
+         size_t i = 0>
+constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+indexof()
+{
+	const auto equal
+	{
+		ircd::hash(key<tuple, i>()) == hash
+	};
+
+	return equal? i : indexof<tuple, hash, i + 1>();
+}
+
+template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof(const char *const &name)
@@ -193,17 +229,9 @@ key_exists(const string_view &key)
 template<size_t i,
          class tuple>
 enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
-get(tuple &t)
+val(tuple &t)
 {
-	return std::get<i>(t);
-}
-
-template<size_t i,
-         class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
-get(const tuple &t)
-{
-	return std::get<i>(t);
+	return static_cast<tuple_value_type<tuple, i> &>(std::get<i>(t));
 }
 
 template<size_t i,
@@ -211,33 +239,115 @@ template<size_t i,
 enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
 {
-	using value_type = tuple_value_type<tuple, i>;
-	return static_cast<const value_type &>(get<i>(t));
+	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
 }
 
-template<size_t i,
-         class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
-val(tuple &t)
+template<size_t hash,
+         class... T>
+const tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
+get(const tuple<T...> &t)
 {
-	using value_type = tuple_value_type<tuple, i>;
-	return static_cast<value_type &>(get<i>(t));
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>, hash>()
+	};
+
+	return val<idx>(t);
 }
 
-template<const char *const &name,
-         class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple>(name)> &>
-val(const tuple &t)
+template<size_t hash,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()>
+get(const tuple<T...> &t,
+    const tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &def)
 {
-	return val<indexof<tuple>(name)>(t);
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>, hash>()
+	};
+
+	const auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple<T...>, idx>;
+
+	//TODO: undefined
+	return ret != value_type{}? ret : def;
 }
 
-template<const char *const &name,
-         class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple>(name)> &>
-val(tuple &t)
+template<size_t hash,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
+get(tuple<T...> &t)
 {
-	return val<indexof<tuple>(name)>(t);
+	constexpr size_t idx
+	{
+		indexof<tuple<T...>, hash>()
+	};
+
+	return val<idx>(t);
+}
+
+template<size_t hash,
+         class... T>
+tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
+get(tuple<T...> &t,
+    tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &def)
+{
+	//TODO: undefined
+	auto &ret{get<hash, T...>(t)};
+	using value_type = decltype(ret);
+	return ret != value_type{}? ret : def;
+}
+
+template<size_t hash,
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
+at(const tuple &t)
+{
+	constexpr size_t idx
+	{
+		indexof<tuple, hash>()
+	};
+
+	auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple, idx>;
+
+	//TODO: undefined
+	if(ret == value_type{})
+		throw not_found("%s", key<idx>(t));
+
+	return ret;
+}
+
+template<size_t hash,
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+at(tuple &t)
+{
+	constexpr size_t idx
+	{
+		indexof<tuple, hash>()
+	};
+
+	auto &ret
+	{
+		val<idx>(t)
+	};
+
+	using value_type = tuple_value_type<tuple, idx>;
+
+	//TODO: undefined
+	if(ret == value_type{})
+		throw not_found("%s", key<idx>(t));
+
+	return ret;
 }
 
 template<const char *const &name,
@@ -288,51 +398,52 @@ at(tuple &t)
 	return ret;
 }
 
-template<const char *const &name,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)>
-get(const tuple<T...> &t,
-    const tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &def = {})
+template<class tuple,
+         class function,
+         size_t i>
+typename std::enable_if<i == size<tuple>(), void>::type
+at(tuple &t,
+   const string_view &name,
+   function&& f)
 {
-	constexpr size_t idx
-	{
-		indexof<tuple<T...>>(name)
-	};
-
-	const auto &ret
-	{
-		val<idx>(t)
-	};
-
-	using value_type = tuple_value_type<tuple<T...>, idx>;
-
-	//TODO: undefined
-	return ret != value_type{}? ret : def;
 }
 
-template<const char *const &name,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
-get(tuple<T...> &t)
+template<class tuple,
+         class function,
+         size_t i = 0>
+typename std::enable_if<i < size<tuple>(), void>::type
+at(tuple &t,
+   const string_view &name,
+   function&& f)
 {
-	constexpr size_t idx
-	{
-		indexof<tuple<T...>>(name)
-	};
-
-	return val<idx>(t);
+	if(indexof<tuple>(name) == i)
+		f(val<i>(t));
+	else
+		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
-template<const char *const &name,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &
-get(tuple<T...> &t,
-    tuple_value_type<tuple<T...>, indexof<tuple<T...>>(name)> &def)
+template<class tuple,
+         class function,
+         size_t i>
+typename std::enable_if<i == size<tuple>(), void>::type
+at(const tuple &t,
+   const string_view &name,
+   function&& f)
 {
-	//TODO: undefined
-	auto &ret{get<name, T...>(t)};
-	using value_type = decltype(ret);
-	return ret != value_type{}? ret : def;
+}
+
+template<class tuple,
+         class function,
+         size_t i = 0>
+typename std::enable_if<i < size<tuple>(), void>::type
+at(const tuple &t,
+   const string_view &name,
+   function&& f)
+{
+	if(indexof<tuple>(name) == i)
+		f(val<i>(t));
+	else
+		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
 template<size_t i,
@@ -521,54 +632,6 @@ runtil(tuple &t,
 	return f(key<i>(t), val<i>(t))?
 	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
 	       false;
-}
-
-template<class tuple,
-         class function,
-         size_t i>
-typename std::enable_if<i == size<tuple>(), void>::type
-at(tuple &t,
-   const string_view &name,
-   function&& f)
-{
-}
-
-template<class tuple,
-         class function,
-         size_t i = 0>
-typename std::enable_if<i < size<tuple>(), void>::type
-at(tuple &t,
-   const string_view &name,
-   function&& f)
-{
-	if(indexof<tuple>(name) == i)
-		f(val<i>(t));
-	else
-		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
-}
-
-template<class tuple,
-         class function,
-         size_t i>
-typename std::enable_if<i == size<tuple>(), void>::type
-at(const tuple &t,
-   const string_view &name,
-   function&& f)
-{
-}
-
-template<class tuple,
-         class function,
-         size_t i = 0>
-typename std::enable_if<i < size<tuple>(), void>::type
-at(const tuple &t,
-   const string_view &name,
-   function&& f)
-{
-	if(indexof<tuple>(name) == i)
-		f(val<i>(t));
-	else
-		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
 template<class dst,
