@@ -139,14 +139,14 @@ struct name                                                                   \
     }                                                                         \
 };
 
-/// Root error exception type. Inherit from this.
-/// List your own exception somewhere else (unless you're overhauling libircd).
-/// example, in your namespace:
-///
-/// IRCD_EXCEPTION(ircd::error, error)
-///
 namespace ircd
 {
+	/// Root error exception type. Inherit from this.
+	/// List your own exception somewhere else (unless you're overhauling libircd).
+	/// example, in your namespace:
+	///
+	/// IRCD_EXCEPTION(ircd::error, error)
+	///
 	IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
 	IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
 }
