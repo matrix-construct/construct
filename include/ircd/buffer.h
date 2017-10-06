@@ -55,7 +55,13 @@ namespace ircd::buffer
 	struct mutable_buffer;
 	struct const_raw_buffer;
 	struct mutable_raw_buffer;
+	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer, uint align = 16> struct unique_buffer;
+
+	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
+	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
+	template<size_t SIZE> using fixed_const_raw_buffer = fixed_buffer<const_raw_buffer, SIZE>;
+	template<size_t SIZE> using fixed_mutable_raw_buffer = fixed_buffer<mutable_raw_buffer, SIZE>;
 
 	template<template<class> class I> using const_buffers = I<const_buffer>;
 	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
@@ -100,8 +106,13 @@ namespace ircd
 	using buffer::mutable_buffer;
 	using buffer::const_raw_buffer;
 	using buffer::mutable_raw_buffer;
+	using buffer::fixed_buffer;
 	using buffer::unique_buffer;
 	using buffer::null_buffer;
+	using buffer::fixed_const_buffer;
+	using buffer::fixed_mutable_buffer;
+	using buffer::fixed_const_raw_buffer;
+	using buffer::fixed_mutable_raw_buffer;
 
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
@@ -175,7 +186,9 @@ struct ircd::buffer::mutable_buffer_base
 	}
 
 	using buffer<T>::buffer;
-	mutable_buffer_base(): buffer<iterator>{} {}
+
+	mutable_buffer_base()
+	:buffer<iterator>{} {}
 
 	template<size_t SIZE>
 	mutable_buffer_base(value_type (&buf)[SIZE])
@@ -205,6 +218,11 @@ struct ircd::buffer::mutable_buffer
 	operator boost::asio::mutable_buffer() const;
 
 	using mutable_buffer_base<char *>::mutable_buffer_base;
+
+	mutable_buffer(const std::function<void (const mutable_buffer &)> &closure)
+	{
+		closure(*this);
+	}
 };
 
 /// A writable buffer of unsigned signed char data. Convention is for this
@@ -224,6 +242,11 @@ struct ircd::buffer::mutable_raw_buffer
 	mutable_raw_buffer(const mutable_buffer &b)
 	:mutable_buffer_base<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
 	{}
+
+	mutable_raw_buffer(const std::function<void (const mutable_raw_buffer &)> &closure)
+	{
+		closure(*this);
+	}
 };
 
 namespace ircd::buffer
@@ -240,7 +263,10 @@ struct ircd::buffer::const_buffer_base
 	using mutable_value_type = typename std::remove_const<value_type>::type;
 
 	using buffer<T>::buffer;
-	const_buffer_base(): buffer<iterator>{} {}
+
+	const_buffer_base()
+	:buffer<iterator>{}
+	{}
 
 	template<size_t SIZE>
 	const_buffer_base(const value_type (&buf)[SIZE])
@@ -295,6 +321,45 @@ struct ircd::buffer::const_raw_buffer
 	explicit const_raw_buffer(const std::string &s)
 	:const_buffer_base{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
+};
+
+/// fixed_buffer wraps an std::array with construction and conversions apropos
+/// the ircd::buffer suite
+///
+template<class buffer,
+         size_t SIZE>
+struct ircd::buffer::fixed_buffer
+:std::array<typename std::remove_const<typename buffer::value_type>::type, SIZE>
+{
+	using mutable_type = typename std::remove_const<typename buffer::value_type>::type;
+	using const_type = typename std::add_const<mutable_type>::type;
+	using array_type = std::array<mutable_type, SIZE>;
+
+	operator buffer() const
+	{
+		return { std::begin(*this), std::end(*this) };
+	}
+
+	operator buffer()
+	{
+		return { std::begin(*this), std::end(*this) };
+	}
+
+	using array_type::array_type;
+	fixed_buffer(const nullptr_t &)
+	:array_type{{0}}
+	{}
+
+	fixed_buffer(const std::function<void (const mutable_raw_buffer &)> &closure)
+	{
+		closure(mutable_raw_buffer{std::begin(*this), std::end(*this)});
+	}
+
+	fixed_buffer(buffer b)
+	:array_type{std::begin(b), std::end(b)}
+	{}
+
+	fixed_buffer() = default;
 };
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
