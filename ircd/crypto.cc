@@ -44,13 +44,6 @@ ircd::crh::hash::operator()(const mutable_raw_buffer &out,
 	finalize(out);
 }
 
-void
-ircd::crh::hash::finalize(const mutable_raw_buffer &buf)
-const
-{
-	extract(buf);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // rand.h

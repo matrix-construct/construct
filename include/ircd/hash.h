@@ -38,8 +38,7 @@ namespace ircd
 	size_t hash(const std::u16string &str, const size_t i = 0);
 	size_t hash(const std::string_view &str, const size_t i = 0);
 
-	/// ircd reserves the $ character (in our namespace of course) as an alias
-	/// for hashing string literals at compile time.
+	/// ircd:: reserves the $ character over a string as an alias for hash()
 	template<class string>
 	constexpr size_t $(string&& s)
 	{
@@ -71,25 +70,39 @@ namespace ircd
 /// Use this type when dealing with algorithm-agnostic hashing.
 struct ircd::crh::hash
 {
+	/// Returns the byte length of the mutable_raw_buffer for digests
 	virtual size_t length() const = 0;
-	virtual void finalize(const mutable_raw_buffer &) = 0;
-	virtual void extract(const mutable_raw_buffer &) const = 0;
+
+	/// Samples the digest at the current state (without modifying)
+	virtual void digest(const mutable_raw_buffer &) const = 0;
+
+	/// Samples the digest and modifies the state (depending on impl)
+	virtual void finalize(const mutable_raw_buffer &b)
+	{
+		digest(b);
+	}
+
+	/// Appends to the message
 	virtual void update(const const_raw_buffer &) = 0;
 
-	// conveniences
-	void finalize(const mutable_raw_buffer &) const;
+	// conveniences for output
+	template<size_t SIZE> fixed_const_raw_buffer<SIZE> digest() const;
+	template<size_t SIZE> operator fixed_const_raw_buffer<SIZE>() const;
+
+	// conveniences for input
 	void operator()(const mutable_raw_buffer &out, const const_raw_buffer &in);
 	hash &operator+=(const const_raw_buffer &);
 
 	virtual ~hash() noexcept;
 };
 
+/// SHA-256 hashing device.
 struct ircd::crh::sha256
 :hash
 {
 	struct ctx;
 
-	static constexpr const size_t bytes
+	static constexpr const size_t digest_size
 	{
 		256 / 8
 	};
@@ -98,16 +111,43 @@ struct ircd::crh::sha256
 	std::unique_ptr<ctx> ctx;
 
   public:
-	size_t length() const override;
-	void finalize(const mutable_raw_buffer &) override;
-	void extract(const mutable_raw_buffer &) const override;
-	void update(const const_raw_buffer &) override;
+	size_t length() const override final;
+	void digest(const mutable_raw_buffer &) const override final;
+	void finalize(const mutable_raw_buffer &) override final;
+	void update(const const_raw_buffer &) override final;
 
 	sha256(const mutable_raw_buffer &, const const_raw_buffer &);
+	sha256(const const_raw_buffer &);
 	sha256();
 	~sha256() noexcept;
 };
 
+/// Automatic gratification from hash::digest()
+template<size_t SIZE>
+ircd::crh::hash::operator
+fixed_const_raw_buffer<SIZE>()
+const
+{
+	return digest<SIZE>();
+}
+
+/// Digests the hash into the buffer of the specified SIZE and returns it
+template<size_t SIZE>
+ircd::fixed_const_raw_buffer<SIZE>
+ircd::crh::hash::digest()
+const
+{
+	assert(SIZE >= length());
+	return fixed_const_raw_buffer<SIZE>
+	{
+		[this](const auto &buffer)
+		{
+			this->digest(buffer);
+		}
+	};
+}
+
+/// Runtime hashing of a string_view. Non-cryptographic.
 inline size_t
 ircd::hash(const std::string_view &str,
            const size_t i)
@@ -115,6 +155,7 @@ ircd::hash(const std::string_view &str,
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
+/// Runtime hashing of a std::u16string (for js). Non-cryptographic.
 inline size_t
 ircd::hash(const std::u16string &str,
            const size_t i)
@@ -122,6 +163,7 @@ ircd::hash(const std::u16string &str,
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
+/// Runtime hashing of a std::string. Non-cryptographic.
 inline size_t
 ircd::hash(const std::string &str,
            const size_t i)
@@ -129,6 +171,7 @@ ircd::hash(const std::string &str,
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
 }
 
+/// Compile-time hashing of a wider string literal (for js). Non-cryptographic.
 constexpr size_t
 ircd::hash(const char16_t *const &str,
            const size_t i)
@@ -136,6 +179,7 @@ ircd::hash(const char16_t *const &str,
 	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
 }
 
+/// Compile-time hashing of a string literal. Non-cryptographic.
 constexpr size_t
 ircd::hash(const char *const &str,
            const size_t i)

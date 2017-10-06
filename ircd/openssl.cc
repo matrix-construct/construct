@@ -76,6 +76,13 @@ ircd::crh::sha256::sha256()
 {
 }
 
+/// One-shot functor. Immediately calls update(); no output
+ircd::crh::sha256::sha256(const const_raw_buffer &in)
+:sha256{}
+{
+	update(in);
+}
+
 /// One-shot functor. Immediately calls operator().
 ircd::crh::sha256::sha256(const mutable_raw_buffer &out,
                           const const_raw_buffer &in)
@@ -96,7 +103,7 @@ ircd::crh::sha256::update(const const_raw_buffer &buf)
 }
 
 void
-ircd::crh::sha256::extract(const mutable_raw_buffer &buf)
+ircd::crh::sha256::digest(const mutable_raw_buffer &buf)
 const
 {
 	auto copy(*ctx);
@@ -113,7 +120,7 @@ size_t
 ircd::crh::sha256::length()
 const
 {
-	return bytes;
+	return digest_size;
 }
 
 void
