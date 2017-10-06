@@ -94,6 +94,7 @@ namespace ircd::json
 	template<class... T> size_t print(char *const &buf, const size_t &max, T&&... t);
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 	template<class... T> std::string string(T&&... t);
+	template<size_t SIZE> struct buffer;
 
 	size_t serialized(const string_view &);
 
@@ -112,6 +113,18 @@ namespace ircd
 {
 	using json::operator<<;
 }
+
+template<size_t SIZE>
+struct ircd::json::buffer
+:string_view
+{
+	std::array<char, SIZE> b;
+
+	template<class... T>
+	buffer(T&&... t)
+	:string_view{stringify(b, std::forward<T>(t)...)}
+	{}
+};
 
 ///
 /// Convenience template for const rvalue mutable_buffers or basically
