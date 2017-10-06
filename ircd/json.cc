@@ -51,7 +51,6 @@ namespace ircd::json
 	using karma::double_;
 	using karma::bool_;
 	using karma::maxwidth;
-	using karma::buffer;
 	using karma::eps;
 	using karma::attr_cast;
 
@@ -716,7 +715,7 @@ ircd::json::array::stringify(mutable_buffer &buf,
 	{
 		[](mutable_buffer &buf, const string_view &element)
 		{
-			if(!consume(buf, buffer::copy(buf, element)))
+			if(!consume(buf, ircd::buffer::copy(buf, element)))
 				throw print_error("The JSON generator ran out of space in supplied buffer");
 		}
 	};
