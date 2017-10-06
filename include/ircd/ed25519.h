@@ -50,19 +50,23 @@ class ircd::ed25519::sk
 };
 
 struct ircd::ed25519::pk
-:std::array<uint8_t, PK_SZ>
+:fixed_mutable_raw_buffer<PK_SZ>
 {
-	using array_type = std::array<uint8_t, PK_SZ>;
-
 	bool verify(const const_raw_buffer &msg, const sig &) const;
 
-	using array_type::array_type;
-	pk(): array_type{0} {}
+	using fixed_mutable_raw_buffer<PK_SZ>::fixed_mutable_raw_buffer;
+
+	pk()
+	:fixed_mutable_raw_buffer<PK_SZ>{nullptr}
+	{}
 };
 
 struct ircd::ed25519::sig
-:std::array<uint8_t, SIG_SZ>
+:fixed_mutable_raw_buffer<SIG_SZ>
 {
-	using array_type = std::array<uint8_t, SIG_SZ>;
-	using array_type::array_type;
+	using fixed_mutable_raw_buffer<SIG_SZ>::fixed_mutable_raw_buffer;
+
+	sig()
+	:fixed_mutable_raw_buffer<SIG_SZ>{nullptr}
+	{}
 };
