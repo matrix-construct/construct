@@ -560,6 +560,40 @@ ircd::try_lex_cast<long double>(const string_view &s)
 // ircd/stringops.h
 //
 
+std::string
+ircd::replace(const string_view &s,
+              const char &before,
+              const string_view &after)
+{
+	const auto occurs
+	{
+		std::count(begin(s), end(s), before)
+	};
+
+	const size_t size
+	{
+		occurs? s.size() + (occurs * after.size()):
+		        s.size() - occurs
+	};
+
+	std::string ret(size, char{});
+	auto *p{const_cast<char *>(ret.data())};
+	std::for_each(begin(s), end(s), [&before, &after, &p]
+	(const char &c)
+	{
+		if(c == before)
+		{
+			memcpy(p, after.data(), after.size());
+			p += after.size();
+		}
+		else *p++ = c;
+	});
+
+	//assert(ret.size() == size_t(std::distance(ret.data(), const_cast<const char *>(p))));
+	ret.resize(std::distance(ret.data(), const_cast<const char *>(p)));
+	return ret;
+}
+
 namespace ircd
 {
 	const char _b64_pad_

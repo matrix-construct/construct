@@ -95,10 +95,22 @@ namespace ircd
 	string_view unquote(const string_view &str);
 	std::string unquote(std::string &&);
 
+	std::string replace(std::string, const char &before, const char &after);
+	std::string replace(const string_view &, const char &before, const string_view &after);
+
 	// Legacy
 	char *strip_colour(char *string);
 	char *strip_unprintable(char *string);
 	char *reconstruct_parv(int parc, const char **parv);
+}
+
+inline std::string
+ircd::replace(std::string s,
+              const char &before,
+              const char &after)
+{
+	std::replace(begin(s), end(s), before, after);
+	return s;
 }
 
 /// Remove quotes on an std::string. Only operates on an rvalue reference so
