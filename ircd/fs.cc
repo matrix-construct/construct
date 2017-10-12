@@ -175,7 +175,7 @@ ircd::fs::read(const std::string &path,
 		return {};
 
 	file.read(reinterpret_cast<char *>(data(buf)), size(buf));
-	return { reinterpret_cast<const char *>(data(buf)), file.gcount() };
+	return { reinterpret_cast<const char *>(data(buf)), size_t(file.gcount()) };
 }
 
 void
