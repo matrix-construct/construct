@@ -1163,5 +1163,14 @@ struct unlock_guard
 };
 
 
+struct is_zero
+{
+	bool operator()(const size_t &value) const
+	{
+		return value == 0;
+	}
+};
+
+
 } // namespace util
 } // namespace ircd
