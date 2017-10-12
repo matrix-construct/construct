@@ -31,12 +31,12 @@ namespace ircd
 	// string at compile time leaving an integer residue at runtime.
 	constexpr size_t hash(const char *const &str, const size_t i = 0);
 	constexpr size_t hash(const char16_t *const &str, const size_t i = 0);
+	constexpr size_t hash(const std::string_view &str, const size_t i = 0);
 
 	// Note that at runtime this hash uses multiplication on every character
 	// which can consume many cycles...
 	size_t hash(const std::string &str, const size_t i = 0);
 	size_t hash(const std::u16string &str, const size_t i = 0);
-	size_t hash(const std::string_view &str, const size_t i = 0);
 
 	/// ircd:: reserves the $ character over a string as an alias for hash()
 	template<class string>
@@ -107,6 +107,8 @@ struct ircd::crh::sha256
 		256 / 8
 	};
 
+	using buf = fixed_const_raw_buffer<digest_size>;
+
   protected:
 	std::unique_ptr<ctx> ctx;
 
@@ -147,14 +149,6 @@ const
 	};
 }
 
-/// Runtime hashing of a string_view. Non-cryptographic.
-inline size_t
-ircd::hash(const std::string_view &str,
-           const size_t i)
-{
-	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
-}
-
 /// Runtime hashing of a std::u16string (for js). Non-cryptographic.
 inline size_t
 ircd::hash(const std::u16string &str,
@@ -166,6 +160,14 @@ ircd::hash(const std::u16string &str,
 /// Runtime hashing of a std::string. Non-cryptographic.
 inline size_t
 ircd::hash(const std::string &str,
+           const size_t i)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
+}
+
+/// Runtime hashing of a string_view. Non-cryptographic.
+constexpr size_t
+ircd::hash(const std::string_view &str,
            const size_t i)
 {
 	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
