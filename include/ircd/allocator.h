@@ -297,12 +297,12 @@ struct ircd::allocator::node<T>::allocator
 	template<class U, class... args>
 	void construct(U *p, args&&... a)
 	{
-		new(p) U(std::forward<args>(a)...);
+		new (p) U(std::forward<args>(a)...);
 	}
 
 	void construct(pointer p, const_reference val)
 	{
-		new(p) T(val);
+		new (p) T(val);
 	}
 
 	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
