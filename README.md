@@ -8,10 +8,11 @@ made its way to William Pitcock et al, whom after 2005 developed the project und
 *Charybdis*.
 
 In 2014 a protocol was proposed to reinvigorate real-time communication in lieu of growing
-commercial competition and a lack of innovation from open source alternatives to
+proprietary competition and a lack of innovation from open source alternatives to
 compete. This protocol is known as the **Matrix protocol**.
 
-**IRCd now implements the Matrix protocol.**
+**IRCd now implements the Matrix protocol** using some of the latest techniques available
+for modern C++ free software.
 
 
 # Charybdis/5

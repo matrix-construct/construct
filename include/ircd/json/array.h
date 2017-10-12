@@ -40,7 +40,7 @@ namespace ircd::json
 /// iterating this array by incrementing your own numerical index and making
 /// calls into this object is NOT efficient. Simply put, do not do something
 /// like `for(int x=0; x<array.count(); x++) array.at(x)` as that will parse
-/// the array from the beginning on every single iteration. Instead, use the
+/// the array from the beginning on every single increment. Instead, use the
 /// provided iterator object.
 ///
 struct ircd::json::array

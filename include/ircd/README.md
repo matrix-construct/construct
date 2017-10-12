@@ -32,14 +32,11 @@ design decision for making IRCd easier to understand for contributors.
 
 The library is based around the `boost::asio::io_service` event loop. It is still
 an asynchronous event-based system. We process one event at a time; developers must
-not block execution. Events are never processed concurrently on different threads✝.
+not block execution. Events are never processed concurrently on different threads.
 
-However, there are some ✝'s here which must be addressed. We have introduced
-additional standard threads to libircd with the purpose of "offloading" operations
-from some library dependencies that don't cooperate asynchronously. This ensures the
-"main thread" running the actual event loop is never blocked in any case. Furthermore,
-some 3rd party dependencies like RocksDB (and boost::asio's DNS resolver) may
-introduce threads into the address space which they handle privately.
+✝ If there is ever a truly long-running computation or a call to a 3rd party
+library which will do IO and block the event loop, we may use an additional
+`std::thread` to "offload" this operation.
 
 ##### libircd introduces userspace threading
 

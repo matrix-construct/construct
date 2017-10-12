@@ -90,6 +90,10 @@ ircd::ctx::ctx::ctx(const char *const &name,
 {
 }
 
+/// Base frame for a context.
+///
+/// This function is the first thing executed on the new context's stack
+/// and calls the user's function.
 void
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
                            const std::function<void ()> func)
@@ -123,6 +127,10 @@ noexcept
 		func();
 }
 
+/// Direct context switch to this context.
+///
+/// This currently doesn't work yet because the suspension state of this
+/// context has to be ready to be jumped to and that isn't implemented yet.
 void
 ircd::ctx::ctx::jump()
 {
@@ -146,6 +154,13 @@ ircd::ctx::ctx::jump()
 	interruption_point();
 }
 
+/// Yield (suspend) this context until notified.
+///
+/// This context must be currently running otherwise bad things. Returns false
+/// if the context was notified before actually suspending; the note is then
+/// considered handled an another attempt to `wait()` can be made. Returns true
+/// if the context suspended and was notified. When a context wakes up the
+/// note counter is reset.
 bool
 ircd::ctx::ctx::wait()
 {
@@ -168,6 +183,10 @@ ircd::ctx::ctx::wait()
 	return true;
 }
 
+/// Notifies this context to resume (wake up from waiting).
+///
+/// Returns true if this note was the first note received by this context
+/// while it's been suspended or false if it's already been notified.
 bool
 ircd::ctx::ctx::note()
 {
@@ -178,6 +197,7 @@ ircd::ctx::ctx::note()
 	return true;
 }
 
+/// Wakes a context without a note (internal)
 void
 ircd::ctx::ctx::wake()
 try
@@ -189,6 +209,8 @@ catch(const boost::system::system_error &e)
 	ircd::log::error("ctx::wake(%p): %s", this, e.what());
 }
 
+/// Throws if this context has been flagged for interruption and clears
+/// the flag.
 void
 ircd::ctx::ctx::interruption_point()
 {
@@ -196,6 +218,8 @@ ircd::ctx::ctx::interruption_point()
 		throw interrupted("ctx(%p) '%s'", (const void *)this, name);
 }
 
+/// Returns true if this context has been flagged for interruption and
+/// clears the flag.
 bool
 ircd::ctx::ctx::interruption_point(std::nothrow_t)
 {
@@ -216,12 +240,17 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 //
 __thread ircd::ctx::ctx *ircd::ctx::current;
 
+/// Yield the currently running context until `time_point` ignoring notes
 void
 ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
 {
 	while(!wait_until(tp, std::nothrow));
 }
 
+/// Yield the currently running context until notified or `time_point`.
+///
+/// Returns true if this function returned because `time_point` was hit or
+/// false because this context was notified.
 bool
 ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
                                 const std::nothrow_t &)
@@ -233,6 +262,10 @@ ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
 	return std::chrono::steady_clock::now() >= tp;
 }
 
+/// Yield the currently running context for `duration` or until notified.
+///
+/// Returns the duration remaining if notified, or <= 0 if suspended for
+/// the full duration, or unchanged if no suspend ever took place.
 std::chrono::microseconds
 ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
                           const std::nothrow_t &)
@@ -243,11 +276,12 @@ ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
 	const auto ret(c.alarm.expires_from_now());
 
 	// return remaining duration.
-	// this is > 0 if notified or interrupted
+	// this is > 0 if notified
 	// this is unchanged if a note prevented any wait at all
 	return std::chrono::duration_cast<std::chrono::microseconds>(ret);
 }
 
+/// Yield the currently running context until notified.
 void
 ircd::ctx::this_ctx::wait()
 {
@@ -256,6 +290,9 @@ ircd::ctx::this_ctx::wait()
 	c.wait(); // now you're yielding with portals
 }
 
+/// Post the currently running context to the event queue and then suspend to
+/// allow other contexts in the queue to run. Until we have our own queue the
+/// ios queue makes no guarantees if the queue is FIFO or LIFO etc :-/
 void
 ircd::ctx::this_ctx::yield()
 {
@@ -274,18 +311,25 @@ ircd::ctx::this_ctx::yield()
 	while(!done);
 }
 
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
 void
 ircd::ctx::this_ctx::interruption_point()
 {
 	return cur().interruption_point();
 }
 
+/// Returns true if the currently running context was interrupted and clears
+/// the interrupt flag.
 bool
 ircd::ctx::this_ctx::interruption_requested()
 {
 	return interruption(cur());
 }
 
+/// Yield to context `ctx`.
+///
+///
 void
 ircd::ctx::yield(ctx &ctx)
 {
@@ -305,6 +349,7 @@ ircd::ctx::yield(ctx &ctx)
 	notify(ctx);
 }
 
+/// Notifies `ctx` to wake up from another std::thread
 void
 ircd::ctx::notify(ctx &ctx,
                   threadsafe_t)
@@ -315,12 +360,17 @@ ircd::ctx::notify(ctx &ctx,
 	});
 }
 
+/// Notifies `ctx` to wake up. This will enqueue the resumption, not jump
+/// directly to `ctx`.
 bool
 ircd::ctx::notify(ctx &ctx)
 {
 	return ctx.note();
 }
 
+/// Executes `func` sometime between executions of `ctx` with thread-safety
+/// so `func` and `ctx` are never executed concurrently no matter how many
+/// threads the io_service has available to execute events on.
 void
 ircd::ctx::signal(ctx &ctx,
                   std::function<void ()> func)
@@ -328,6 +378,9 @@ ircd::ctx::signal(ctx &ctx,
 	ctx.strand.post(std::move(func));
 }
 
+/// Marks `ctx` for interruption and enqueues it for resumption to receive the
+/// interrupt which will be an exception coming out of the point where the
+/// `ctx` was yielding.
 void
 ircd::ctx::interrupt(ctx &ctx)
 {
@@ -335,36 +388,42 @@ ircd::ctx::interrupt(ctx &ctx)
 	ctx.wake();
 }
 
+/// Indicates if `ctx` was ever jumped to
 bool
 ircd::ctx::started(const ctx &ctx)
 {
 	return ctx.started();
 }
 
+/// Indicates if the base frame for `ctx` returned
 bool
 ircd::ctx::finished(const ctx &ctx)
 {
 	return ctx.finished();
 }
 
+/// Indicates if `ctx` was interrupted; does not clear the flag
 bool
 ircd::ctx::interruption(const ctx &c)
 {
 	return c.flags & context::INTERRUPTED;
 }
 
+/// Returns the notification count for `ctx
 const int64_t &
 ircd::ctx::notes(const ctx &ctx)
 {
 	return ctx.notes;
 }
 
+/// Returns the developer's optional name literal for `ctx`
 ircd::string_view
 ircd::ctx::name(const ctx &ctx)
 {
 	return ctx.name;
 }
 
+/// Returns a reference to unique ID for `ctx` (which will go away with `ctx`)
 const uint64_t &
 ircd::ctx::id(const ctx &ctx)
 {

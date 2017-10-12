@@ -51,7 +51,6 @@ namespace ircd::ctx
 /// complete. If the child context does not cooperate the destructor will hang.
 /// To prevent this behavior `detach()` the ctx from this handler object; the
 /// detached context will free its own resources when finished executing.
-/// This is bad practice except in certain cases.
 ///
 /// To wait for the child context to finish use `join()`. Calling `interrupt()`
 /// will cause an `interrupted` exception to be thrown down the child's stack

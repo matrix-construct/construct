@@ -324,7 +324,8 @@ struct ircd::buffer::const_raw_buffer
 };
 
 /// fixed_buffer wraps an std::array with construction and conversions apropos
-/// the ircd::buffer suite
+/// the ircd::buffer suite. fixed_buffer should be punnable. Its only memory
+/// footprint is the array itself and
 ///
 template<class buffer,
          size_t SIZE>

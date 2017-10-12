@@ -37,6 +37,12 @@
  */
 
 /// Tools for working with the local filesystem.
+///
+/// IRCd has wrapped operations for the local filesystem to maintain a
+/// cross-platform implementation of asynchronous file IO in conjunction with
+/// the ircd::ctx userspace context system. These operations will yield your
+/// ircd::ctx when necessary to not block the event loop on the main thread
+/// during IOs.
 namespace ircd::fs
 {
 	IRCD_EXCEPTION(ircd::error, error)
@@ -94,6 +100,7 @@ namespace ircd::fs
 	void chdir(const std::string &path);
 	bool mkdir(const std::string &path);
 
+	// This suite of IO functions may yield your context.
 	std::string read(const std::string &name);
 	string_view read(const std::string &name, const mutable_raw_buffer &buf);
 	bool write(const std::string &name, const const_raw_buffer &buf);
