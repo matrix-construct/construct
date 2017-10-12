@@ -129,6 +129,7 @@ struct ircd::json::value
 	friend bool operator>(const value &a, const value &b);
 
 	friend enum type type(const value &a);
+	friend bool defined(const value &);
 	friend size_t serialized(const value &);
 	friend string_view stringify(mutable_buffer &, const value &);
 	friend std::ostream &operator<<(std::ostream &, const value &);
@@ -330,6 +331,12 @@ noexcept
 	other.alloc = false;
 	floats = other.floats;
 	return *this;
+}
+
+inline bool
+ircd::json::defined(const value &a)
+{
+	return !a.undefined();
 }
 
 inline enum ircd::json::type

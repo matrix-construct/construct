@@ -58,6 +58,7 @@ struct ircd::json::member
 	friend bool operator!=(const member &a, const string_view &b);
 	friend bool operator<(const member &a, const string_view &b);
 
+	friend bool defined(const member &);
 	friend size_t serialized(const member &);
 	friend string_view stringify(mutable_buffer &, const member &);
 	friend std::ostream &operator<<(std::ostream &, const member &);
@@ -131,4 +132,10 @@ inline bool
 ircd::json::operator==(const member &a, const string_view &b)
 {
 	return string_view{a.first.string, a.first.len} == b;
+}
+
+inline bool
+ircd::json::defined(const member &a)
+{
+	return defined(a.second);
 }
