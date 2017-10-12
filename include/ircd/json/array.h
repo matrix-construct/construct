@@ -60,6 +60,7 @@ struct ircd::json::array
 
 	const_iterator find(size_t i) const;
 	size_t count() const;
+	size_t size() const;
 
 	template<class T> T at(const size_t &i) const;
 	string_view at(const size_t &i) const;
@@ -145,6 +146,14 @@ const
 	auto it(begin());
 	for(; it != end() && i; ++it, i--);
 	return it;
+}
+
+__attribute__((warning("Taking string_view::size() not the count() of array elements")))
+inline size_t
+ircd::json::array::size()
+const
+{
+	return count();
 }
 
 inline size_t

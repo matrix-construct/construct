@@ -84,6 +84,7 @@ struct ircd::json::object
 
 	// util
 	size_t count() const;
+	size_t size() const; // warns if used; use count()
 	bool has(const string_view &key) const;
 	bool has(const path &) const;
 
@@ -284,6 +285,14 @@ const try
 catch(const bad_lex_cast &e)
 {
 	return def;
+}
+
+__attribute__((warning("Taking string_view::size() not the count() of members in the object")))
+inline size_t
+ircd::json::object::size()
+const
+{
+	return string_view::size();
 }
 
 inline size_t
