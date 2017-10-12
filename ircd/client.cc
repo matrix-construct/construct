@@ -48,7 +48,7 @@ const auto request_timeout
 // in a synchronous manner as if each connection had its own thread.
 ctx::pool request
 {
-	"request", 1_MiB
+	"request", 256_KiB
 };
 
 // Container for all active clients (connections) for iteration purposes.
@@ -226,8 +226,14 @@ bool
 ircd::client::main()
 noexcept try
 {
-	char buffer[8192];
-	parse::buffer pb{buffer, buffer + sizeof(buffer)};
+	const auto header_max{8192};
+	const auto content_max{65536};
+	unique_buffer<mutable_buffer> buffer
+	{
+		header_max + content_max
+	};
+
+	parse::buffer pb{buffer};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
 		if(!handle_request(*this, pc))
