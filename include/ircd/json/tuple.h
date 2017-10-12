@@ -22,19 +22,6 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
 
-namespace ircd::json
-{
-	constexpr size_t operator ""_(const char *const text, const size_t len)
-	{
-		return ircd::hash(text);
-	}
-}
-
-namespace ircd
-{
-	using json::operator ""_;
-}
-
 namespace ircd {
 namespace json {
 
@@ -169,7 +156,7 @@ template<class tuple,
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof()
 {
-	const auto equal
+	constexpr auto equal
 	{
 		ircd::hash(key<tuple, i>()) == hash
 	};
@@ -190,7 +177,7 @@ template<class tuple,
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof(const char *const &name)
 {
-	const auto equal
+	constexpr auto equal
 	{
 		_constexpr_equal(key<tuple, i>(), name)
 	};

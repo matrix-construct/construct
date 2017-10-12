@@ -25,6 +25,9 @@
 namespace ircd::json
 {
 	struct object;
+
+	template<name_hash_t key, class T = string_view> T at(const object &);
+	template<name_hash_t key, class T = string_view> T get(const object &, const T &def = {});
 }
 
 /// Lightweight interface to a JSON object string.
@@ -81,6 +84,7 @@ struct ircd::json::object
 	const_iterator end() const;
 	const_iterator begin() const;
 	const_iterator find(const string_view &key) const;
+	const_iterator find(const name_hash_t &key) const;
 
 	// util
 	size_t count() const;
@@ -214,6 +218,25 @@ catch(const bad_lex_cast &e)
 	                 typeid(T).name());
 }
 
+template<ircd::json::name_hash_t key,
+         class T>
+T
+ircd::json::at(const object &object)
+try
+{
+	const auto it(object.find(key));
+	if(it == end(object))
+		throw not_found("[key hash] '%zu'", key);
+
+	return lex_cast<T>(it->second);
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error("[key hash] '%zu' must cast to type %s",
+	                 key,
+	                 typeid(T).name());
+}
+
 template<class T>
 T
 ircd::json::object::at(const string_view &key)
@@ -267,6 +290,25 @@ const try
 	}));
 
 	return it == std::end(path)? lex_cast<T>(object) : def;
+}
+catch(const bad_lex_cast &e)
+{
+	return def;
+}
+
+template<ircd::json::name_hash_t key,
+         class T>
+ircd::string_view
+ircd::json::get(const object &object,
+                const T &def)
+try
+{
+	const auto it{object.find(key)};
+	if(it == end(object))
+		return def;
+
+	const string_view sv{it->second};
+	return !sv.empty()? lex_cast<T>(sv) : def;
 }
 catch(const bad_lex_cast &e)
 {
@@ -327,6 +369,17 @@ ircd::json::object::has(const string_view &key)
 const
 {
 	return find(key) != end();
+}
+
+inline ircd::json::object::const_iterator
+ircd::json::object::find(const name_hash_t &key)
+const
+{
+	return std::find_if(begin(), end(), [&key]
+	(const auto &member)
+	{
+		return name_hash(member.first) == key;
+	});
 }
 
 inline ircd::json::object::const_iterator

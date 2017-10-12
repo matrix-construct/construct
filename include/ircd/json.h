@@ -50,6 +50,11 @@ namespace ircd::json
 	enum type type(const string_view &, std::nothrow_t);
 	string_view reflect(const enum type &);
 
+	using name_hash_t = size_t;
+	constexpr name_hash_t name_hash(const char *const name, const size_t len = 0);
+	constexpr name_hash_t name_hash(const string_view &name);
+	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
+
 	/// Higher order type beyond a string to cleanly delimit multiple keys.
 	using path = std::initializer_list<string_view>;
 	std::ostream &operator<<(std::ostream &, const path &);
@@ -78,6 +83,7 @@ namespace ircd::json
 
 namespace ircd
 {
+	using json::operator ""_;
 	using json::operator<<;
 }
 
@@ -187,4 +193,22 @@ ircd::json::operator<<(std::ostream &s, const path &p)
 		s << '.' << *it;
 
 	return s;
+}
+
+constexpr ircd::json::name_hash_t
+ircd::json::operator ""_(const char *const text, const size_t len)
+{
+	return name_hash(text, len);
+}
+
+constexpr ircd::json::name_hash_t
+ircd::json::name_hash(const string_view &name)
+{
+	return ircd::hash(name);
+}
+
+constexpr ircd::json::name_hash_t
+ircd::json::name_hash(const char *const name, const size_t len)
+{
+	return ircd::hash(name);
 }
