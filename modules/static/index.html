@@ -776,11 +776,9 @@ type="text/ng-template"
 		ng-if="!attr.show || attr.show(room, member) !== false"
 		>
 			<h3>
-				{{ attr.name? attr.name(room, member) : name }}
+				{{ attr.name? attr.name(room, member) : name; }}
 			</h3>
-			<p>
-				{{ attr.value(room, member) }}
-			</p>
+			<p>{{attr.value(room, member)}}</p>
 		</div>
 	</div>
 	<div

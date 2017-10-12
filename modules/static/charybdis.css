@@ -25,11 +25,14 @@
 	/* Font size ratios */
 	--fs: (1vw + 0.5625vh) * 0.5625;
 
+	/* Icon size ratios */
+	--fsI: (1vh + 0.5625vw) * 0.5625;
+
 	/* Headers */
 	--fsA: var(--fs) * 2.5;
 	--fsB: var(--fs) * 1.5;
 	--fsC: var(--fs) * 1.25;
-	--fsD: var(--fs) * 1.00;
+	--fsD: var(--fs) * 0.95;
 	--fsE: var(--fs) * 0.80;
 	--fsF: 11px;
 	--fsG: 9px;
@@ -38,12 +41,12 @@
 	--fsP: 15px;
 
 	/* Icons */
-	--fsIA: var(--fs) * 5.0;
-	--fsIB: var(--fs) * 3.25;
-	--fsIC: var(--fs) * 2.75;
-	--fsID: var(--fs) * 2.50;
-	--fsIE: var(--fs) * 1.75;
-	--fsIF: var(--fs) * 1.5;
+	--fsIA: var(--fsI) * 5.0;
+	--fsIB: var(--fsI) * 3.25;
+	--fsIC: var(--fsI) * 2.75;
+	--fsID: var(--fsI) * 2.40;
+	--fsIE: var(--fsI) * 1.75;
+	--fsIF: var(--fsI) * 1.5;
 
 	/* Text shadows */
 	--tsA: 1px 1px #484848;
@@ -2343,6 +2346,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 	justify-content: stretch;
 	margin: 1px 0px 1px 0px;
 	padding: 0px 0px 0px 0px;
+	color: var(--pal-AA);
 }
 
 .ircd .room div.event.control div.state div.slots div.slot > h4
@@ -2350,12 +2354,17 @@ div.main div.list div.item div.head div.focus:hover.selected
 	min-width: 22ch;
 	justify-content: flex-end;
 	padding: 1px 5px 1px 1px;
-	color: var(--pal-AE);
+	color: var(--pal-AA);
 }
 
 .ircd .room div.event.control div.state div.slots div.slot.active > h4
 {
-	color: var(--pal-DD);
+	color: var(--pal-AA);
+}
+
+.ircd .room div.event.control div.state div.slots div.slot.disabled > h4
+{
+	color: var(--pal-AE);
 }
 
 .ircd .room div.event.control div.state div.slots div.slot input,
@@ -2378,13 +2387,13 @@ div.main div.list div.item div.head div.focus:hover.selected
 .ircd .room div.event.control div.state div.slots div.slot.empty input
 {
 	border: 1px solid var(--pal-CE);
-	background-color: var(--pal-AD);
+	background-color: var(--pal-DE);
 }
 
 .ircd .room div.event.control div.state div.slots div.slot.disabled input
 {
-	background-color: var(--pal-AE);
 	border: 0px solid var(--pal-CE);
+	background-color: var(--pal-DE);
 }
 
 .ircd .room div.event.control div.state div.slots div.slot .id
@@ -2397,7 +2406,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 .ircd .room div.event.control div.state div.slots div.slot .sender
 {
 	font-weight: bold;
-	font-size: calc(var(--fsE));
+	font-size: calc(var(--fsF));
 }
 
 .ircd .room div.event.control div.capstan
@@ -2498,6 +2507,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-shrink: 0;
 	align-items: stretch;
 	align-content: stretch;
+	background-color: var(--pal-AA);
 }
 
 .ircd .room form.event.player button
@@ -2758,8 +2768,8 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-shrink: 0;
 	flex-flow: column nowrap;
 	align-items: stretch;
-	padding: 0px 0px 5px 0px;
-	margin: 0px 0px 5px 0px;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
 	text-align: left;
 }
 
@@ -2775,6 +2785,9 @@ div.main div.list div.item div.head div.focus:hover.selected
 .ircd .room div.members div.list .member .info div.mxid p
 {
 	font-weight: bold;
+	flex-basis: 100%;
+	letter-spacing: 1px;
+	justify-content: center;
 }
 
 .ircd .room div.members div.list .member div.info div.data
@@ -2791,6 +2804,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 {
 	flex-grow: 1;
 	justify-content: flex-end;
+	min-height: 150px;
 }
 
 .ircd .room div.members div.list .member .info div.avatar img
@@ -2808,24 +2822,21 @@ div.main div.list div.item div.head div.focus:hover.selected
 {
 	flex-flow: column nowrap;
 	align-items: stretch;
-	padding: 0px 5px 0px 5px;
+	padding: 5px 5px 5px 5px;
 }
 
-.ircd .room div.members div.list .member div.info div.data div.attrs > div
+.ircd .room div.members div.list .member div.info div.attrs div.attr
 {
-	flex-grow: 1;
-	flex-flow: row nowrap;
-	align-items: center;
+	flex-flow: column nowrap;
+	align-items: flex-start;
 	justify-content: flex-start;
-	padding: 0px 0px 0px 0px;
+	padding: 5px 0px 0px 0px;
 	text-align: left;
 }
 
 .ircd .room div.members div.list .member .info h3
 {
-	flex-basis: 20%;
-	justify-content: flex-end;
-	margin-right: 8px;
+	justify-content: flex-start;
 	font-size: calc(var(--fsE));
 	font-weight: bold;
 	color: var(--pal-AC);
@@ -2835,6 +2846,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 
 .ircd .room div.members div.list .member .info p
 {
+	margin: 5px 5px 5px 5px;
 	font-size: calc(var(--fsD));
 	color: var(--pal-AB);
 	line-break: normal;
@@ -2844,15 +2856,20 @@ div.main div.list div.item div.head div.focus:hover.selected
 
 .ircd .room div.members div.list .member .info div.event
 {
-	align-self: flex-end;
+	align-self: stretch;
 	align-items: center;
+	justify-content: flex-end;
 	padding: 0px 5px 0px 5px;
+	background-color: var(--pal-AA);
 	cursor: pointer;
 }
 
 .ircd .room div.members div.list .member .info div.event p
 {
 	font-size: calc(var(--fsE));
+	font-family: courier;
+	font-weight: bold;
+	color: white;
 }
 
 .ircd .room div.members div.list .member .info div.event p:hover
@@ -2866,8 +2883,8 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: center;
-	background-color: var(--pal-AA);
-	padding: 3px 2px 3px 2px;
+	padding: 0px 0px 4px 0px;
+	border-top: 1px solid var(--pal-AD);
 }
 
 .ircd .room div.members div.list .member .info .menu .item
@@ -2876,7 +2893,9 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-flow: column nowrap;
 	align-items: center;
 	justify-content: center;
-	background-color: var(--pal-AD);
+	background-color: var(--pal-AA);
+	margin: 4px 4px 0px 4px;
+	border-radius: 5px;
 }
 
 .ircd .room div.members div.list .member .info .menu .item:hover
@@ -3309,6 +3328,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 {
 	align-self: stretch;
 	font-weight: bold;
+	font-family: NixieOne;
 	padding: 5px 5px 5px 5px;
 	font-size: calc(var(--fsD));
 	color: black;
@@ -3317,6 +3337,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 .ircd .room .main .event .message .image.zoom .label
 {
 	background-color: var(--pal-DD);
+	/* justify-content: center; */ /* detracts */ /* (art) */
 }
 
 

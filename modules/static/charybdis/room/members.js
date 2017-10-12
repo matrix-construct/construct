@@ -231,8 +231,11 @@ value:
 {
 	"NAME":
 	{
+		show: (room, member) =>
+			!empty(member.content.displayname),
+
 		value: (room, member) =>
-			member.content.displayname,
+			member.content.displayname? member.content.displayname : "",
 	},
 
 	"POWER":
@@ -246,6 +249,9 @@ value:
 
 	"IDLE":
 	{
+		show: (room, member) =>
+			defined(maybe(() => mc.users[member.user_id].last_active_ago)),
+
 		value: (room, member) =>
 			mc.date.describe.elapsed(mc.users[member.user_id].last_active_ago),
 	},

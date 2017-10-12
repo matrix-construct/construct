@@ -33,6 +33,11 @@
  *
  */
 
+/**
+ */
+let defined = (value) =>
+	value !== undefined;
+
 /** typeif - Functional if(typeof(foo) == "bar") { ... }
  */
 let typeif = (value, type, closure) =>

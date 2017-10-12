@@ -95,21 +95,34 @@ room.scroll.on = function(event)
 {
 	let e = event.delegateTarget;
 	let pos = this.scroll.at(e);
-
-	let at_top = this.scroll.at.top(e);
-	let at_bottom = this.scroll.at.bottom(e);
-	let pcts = this.scroll.pct(e);
-	//debug.object({pos: pos, at_top: at_top, at_bottom: at_bottom, pcts: pcts}, 3);
+	if(this.control.scroll_pos_last == pos)
+		return;
 
 	let going_up = pos < this.control.scroll_pos_last;
 	let going_down = pos > this.control.scroll_pos_last;
 
-	if(going_up && !at_bottom && this.control.mode == "LIVE")
+	let at_top = this.scroll.at.top(e);
+	let at_bottom = this.scroll.at.bottom(e);
+	let pcts = this.scroll.pct(e);
+
+/*
+	debug.object(
+	{
+		pos: pos,
+		at_top: at_top,
+		at_bottom: at_bottom,
+		pcts: pcts,
+		going_up: going_up,
+		going_down: going_down
+	}, 3);
+*/
+
+	if(going_up && !at_bottom && this.control.mode == "LIVE" && pcts.bottom > 0.05)
 	{
 		this.control.mode = "PAST";
 		mc.ng.apply();
 	}
-	else if(at_bottom && this.control.mode == "PAST")
+	else if(at_bottom && this.control.mode == "PAST" && pcts.bottom < 0.025)
 	{
 		this.control.mode = "LIVE";
 		mc.ng.apply();
