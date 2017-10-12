@@ -66,6 +66,7 @@ enum ircd::http::code
 	NO_CONTENT                              = 204,
 	PARTIAL_CONTENT                         = 206,
 
+	MULTIPLE_CHOICES                        = 300,
 	MOVED_PERMANENTLY                       = 301,
 	FOUND                                   = 302,
 	SEE_OTHER                               = 303,
@@ -113,6 +114,11 @@ struct ircd::http::line
 	using string_view::string_view;
 	line(parse::capstan &);
 };
+
+namespace ircd::http
+{
+	using header = line::header;
+}
 
 struct ircd::http::line::request
 {
@@ -175,6 +181,7 @@ struct ircd::http::line::header
 
 // HTTP headers are read once off the tape and proffered to the closure.
 struct ircd::http::headers
+:string_view
 {
 	using header = line::header;
 	using closure = std::function<void (const header &)>;
@@ -246,6 +253,8 @@ struct ircd::http::response::head
 	size_t content_length {0};
 	string_view transfer_encoding;
 
+	string_view headers;
+
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
@@ -297,7 +306,10 @@ struct ircd::http::request::head
 	string_view host;
 	string_view expect;
 	string_view te;
+	string_view authorization;
 	size_t content_length {0};
+
+	string_view headers;
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 };

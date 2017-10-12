@@ -47,6 +47,8 @@ namespace ircd::http
 
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;
+	struct urlencoder extern const urlencoder;
+	struct urldecoder extern const urldecoder;
 
 	size_t printed_size(const vector_view<const line::header> &headers);
 	size_t print(char *const &buf, const size_t &max, const vector_view<const line::header> &headers);
@@ -66,6 +68,7 @@ const decltype(ircd::http::reason) ircd::http::reason
 	{ code::NO_CONTENT,                          "No Content"                                      },
 	{ code::PARTIAL_CONTENT,                     "Partial Content"                                 },
 
+	{ code::MULTIPLE_CHOICES,                    "Multiple Choices"                                },
 	{ code::MOVED_PERMANENTLY,                   "Moved Permanently"                               },
 	{ code::FOUND,                               "Found"                                           },
 	{ code::SEE_OTHER,                           "See Other"                                       },
@@ -364,21 +367,26 @@ ircd::http::request::request(const string_view &host,
 ircd::http::request::head::head(parse::capstan &pc,
                                 const headers::closure &c)
 :line::request{pc}
+,headers
 {
-	headers{pc, [this, &c](const auto &h)
+	http::headers{pc, [this, &c](const auto &h)
 	{
 		if(iequals(h.first, "host"s))
-			host = h.second;
+			this->host = h.second;
 		else if(iequals(h.first, "expect"s))
-			expect = h.second;
+			this->expect = h.second;
 		else if(iequals(h.first, "te"s))
-			te = h.second;
+			this->te = h.second;
 		else if(iequals(h.first, "content-length"s))
-			content_length = parser.content_length(h.second);
+			this->content_length = parser.content_length(h.second);
+		else if(iequals(h.first, "authorization"s))
+			this->authorization = h.second;
 
 		if(c)
 			c(h);
-	}};
+	}}
+}
+{
 }
 
 ircd::http::response::response(parse::capstan &pc,
@@ -545,18 +553,21 @@ ircd::http::response::chunked::chunk::chunk(chunked &chunked,
 ircd::http::response::head::head(parse::capstan &pc,
                                  const headers::closure &c)
 :line::response{pc}
+,headers
 {
-	headers{pc, [this, &c](const auto &h)
+	http::headers{pc, [this, &c](const auto &h)
 	{
 		if(iequals(h.first, "content-length"s))
-			content_length = parser.content_length(h.second);
+			this->content_length = parser.content_length(h.second);
 
 		else if(iequals(h.first, "transfer-encoding"s))
-			transfer_encoding = h.second;
+			this->transfer_encoding = h.second;
 
 		if(c)
 			c(h);
-	}};
+	}}
+}
+{
 }
 
 ircd::http::content::content(parse::capstan &pc,
@@ -662,10 +673,18 @@ ircd::http::content::content(parse::capstan &pc,
 
 ircd::http::headers::headers(parse::capstan &pc,
                              const closure &c)
+:string_view{[&pc, &c]
+() -> string_view
 {
-	for(line::header h{pc}; !h.first.empty(); h = line::header{pc})
+	line::header h{pc};
+	const char *const &started{h.first.data()}, *stopped{started};
+	for(; !h.first.empty(); stopped = h.second.data() + h.second.size(), h = line::header{pc})
 		if(c)
 			c(h);
+
+	return { started, stopped };
+}()}
+{
 }
 
 ircd::http::line::header::header(const line &line)
@@ -839,38 +858,6 @@ const
 	qi::parse(start, stop, grammar);
 }
 
-ircd::http::error::error(const enum code &code,
-                         std::string content)
-:ircd::error{generate_skip}
-,code{code}
-,content{std::move(content)}
-{
-	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).data());
-}
-
-ircd::http::code
-ircd::http::status(const string_view &str)
-{
-	static const auto grammar
-	{
-		parser.status_code
-	};
-
-	short ret;
-	const char *start(str.data());
-	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
-	if(!parsed || ret < 0 || ret >= 1000)
-		throw ircd::error("Invalid HTTP status code");
-
-	return http::code(ret);
-}
-
-ircd::string_view
-ircd::http::status(const enum code &code)
-{
-	return reason.at(code);
-}
-
 size_t
 ircd::http::parser::content_length(const string_view &str)
 {
@@ -886,12 +873,6 @@ ircd::http::parser::content_length(const string_view &str)
 		throw error(BAD_REQUEST, "Invalid content-length value");
 
 	return ret;
-}
-
-namespace ircd::http
-{
-	struct urlencoder extern const urlencoder;
-	struct urldecoder extern const urldecoder;
 }
 
 struct ircd::http::urlencoder
@@ -986,4 +967,36 @@ ircd::http::urlencode(const string_view &url,
 	char *out{data(buf)};
 	karma::generate(out, maxwidth(size(buf))[urlencoder], url);
 	return string_view{data(buf), size_t(std::distance(data(buf), out))};
+}
+
+ircd::http::error::error(const enum code &code,
+                         std::string content)
+:ircd::error{generate_skip}
+,code{code}
+,content{std::move(content)}
+{
+	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).data());
+}
+
+ircd::http::code
+ircd::http::status(const string_view &str)
+{
+	static const auto grammar
+	{
+		parser.status_code
+	};
+
+	short ret;
+	const char *start(str.data());
+	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
+	if(!parsed || ret < 0 || ret >= 1000)
+		throw ircd::error("Invalid HTTP status code");
+
+	return http::code(ret);
+}
+
+ircd::string_view
+ircd::http::status(const enum code &code)
+{
+	return reason.at(code);
 }
