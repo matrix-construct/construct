@@ -41,6 +41,8 @@ namespace ircd
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
 	bool null(const string_view &);
+
+	constexpr string_view operator ""_sv(const char *const literal, const size_t size);
 }
 
 /// Customized std::string_view (experimental TS / C++17)
@@ -136,7 +138,7 @@ struct ircd::string_view
 
 	// (non-standard) our array based constructor
 	template<size_t SIZE>
-	string_view(const std::array<char, SIZE> &array)
+	constexpr string_view(const std::array<char, SIZE> &array)
 	:string_view
 	{
 		array.data(), std::find(array.begin(), array.end(), '\0')
@@ -144,7 +146,7 @@ struct ircd::string_view
 
 	// (non-standard) our buffer based constructor
 	template<size_t SIZE>
-	string_view(const char (&buf)[SIZE])
+	constexpr string_view(const char (&buf)[SIZE])
 	:string_view
 	{
 		buf, std::find(buf, buf + SIZE, '\0')
@@ -156,18 +158,25 @@ struct ircd::string_view
 	//{}
 
 	// Required due to current instability in stdlib
-	string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
+	constexpr string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
 	:std::string_view{bsv}
 	{}
 
 	/// Our default constructor sets the elements to 0 for best behavior by
 	/// defined() and null() et al.
-	string_view()
+	constexpr string_view()
 	:std::string_view{nullptr, 0}
 	{}
 
 	using std::string_view::string_view;
 };
+
+/// Compile-time conversion from a string literal into a string_view.
+constexpr ircd::string_view
+ircd::operator ""_sv(const char *const literal, const size_t size)
+{
+	return string_view{literal, size};
+}
 
 template<class T>
 struct ircd::vector_view
