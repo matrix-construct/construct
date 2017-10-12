@@ -24,6 +24,7 @@
  */
 
 #include <boost/filesystem.hpp>
+#include <ircd/asio.h>
 
 namespace ircd {
 namespace fs   {
@@ -88,6 +89,72 @@ ircd::fs::append(const std::string &path,
 	return true;
 }
 
+ircd::fs::init::init()
+{
+	#if 0
+	struct aioinit aio {0};
+	aio.aio_threads = 0;
+	aio.aio_num = 64;
+	aio.aio_idle_time = 0;
+	aio_init(&aio);
+	#endif
+}
+
+ircd::fs::init::~init()
+noexcept
+{
+}
+
+#if 0 //_WIN32
+namespace ircd::fs
+{
+
+
+}
+
+/// Reads the file at path into a string; yields your ircd::ctx.
+///
+std::string
+ircd::fs::read(const std::string &path)
+{
+	const int fd
+	{
+		syscall(::open, path.c_str(), O_CLOEXEC, O_RDONLY)
+	};
+
+	const unwind close{[&fd]
+	{
+		syscall(::close, fd);
+	}};
+
+	struct stat stat;
+	syscall(::fstat, fd, &stat);
+	const auto &size{stat.st_size};
+
+	std::string ret(size, char{});
+	const mutable_buffer buf
+	{
+		const_cast<char *>(ret.data()), ret.size()
+	};
+
+	struct aiocb cb
+	{
+		fd, 0, data(buf), size(buf), 0
+	};
+
+	syscall(::aio_read, &cb);
+
+	struct aiocb cbs[]
+	{
+		&cb
+	};
+
+	syscall(::aio_suspend, &cbs, sizeof(cbs) / sizeof(aiocb), nullptr);
+
+	ret.resize(read);
+	return ret;
+}
+#else
 std::string
 ircd::fs::read(const std::string &path)
 {
@@ -97,6 +164,7 @@ ircd::fs::read(const std::string &path)
 	std::istream_iterator<char> e{};
 	return std::string{b, e};
 }
+#endif
 
 ircd::string_view
 ircd::fs::read(const std::string &path,

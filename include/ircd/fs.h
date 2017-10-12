@@ -106,4 +106,12 @@ namespace ircd::fs
 	bool write(const std::string &name, const const_raw_buffer &buf);
 	bool append(const std::string &name, const const_raw_buffer &buf);
 	bool overwrite(const std::string &name, const const_raw_buffer &buf);
+
+	struct init;
 }
+
+struct ircd::fs::init
+{
+	init();
+	~init() noexcept;
+};
