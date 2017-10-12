@@ -138,16 +138,16 @@ ircd::token(const string_view &str,
 }
 
 size_t
-ircd::tokens_count(const string_view &str,
-                   const char &sep)
+ircd::token_count(const string_view &str,
+                  const char &sep)
 {
 	const char ssep[2] { sep, '\0' };
-	return tokens_count(str, ssep);
+	return token_count(str, ssep);
 }
 
 size_t
-ircd::tokens_count(const string_view &str,
-                   const char *const &sep)
+ircd::token_count(const string_view &str,
+                  const char *const &sep)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;

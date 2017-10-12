@@ -67,7 +67,7 @@ ircd::util::params::at(const size_t &i,
                         const T &def)
 const try
 {
-	return tokens_count(in, sep) > i? at<T>(i) : def;
+	return token_count(in, sep) > i? at<T>(i) : def;
 }
 catch(const bad_lex_cast &e)
 {
@@ -101,7 +101,7 @@ inline ircd::string_view
 ircd::util::params::operator[](const size_t &i)
 const
 {
-	return tokens_count(in, sep) > i? token(in, sep, i) : string_view{};
+	return token_count(in, sep) > i? token(in, sep, i) : string_view{};
 }
 
 inline const char *

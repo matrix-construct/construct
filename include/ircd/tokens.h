@@ -83,8 +83,8 @@ namespace ircd
 	C<T, Comp, A> tokens(const string_view &str, const sep &);
 
 	// Convenience to get individual tokens
-	size_t tokens_count(const string_view &str, const char &sep);
-	size_t tokens_count(const string_view &str, const char *const &sep);
+	size_t token_count(const string_view &str, const char &sep);
+	size_t token_count(const string_view &str, const char *const &sep);
 	string_view token(const string_view &str, const char &sep, const size_t &at);
 	string_view token(const string_view &str, const char *const &sep, const size_t &at);
 	string_view token_last(const string_view &str, const char &sep);
