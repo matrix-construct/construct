@@ -127,6 +127,9 @@ namespace ircd
 	using ctx::timeout;
 	using ctx::context;
 	using ctx::sleep;
+
+	using ctx::promise;
+	using ctx::future;
 }
 
 /// An instance of critical_assertion detects an attempt to context switch
