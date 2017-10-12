@@ -820,19 +820,48 @@ struct values
 };
 
 
+//
+// Error-checking closure for POSIX system calls. Note the usage is
+// syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
+//
+template<long ERROR_CODE = -1,
+         class function,
+         class... args>
+auto
+syscall(function&& f,
+        args&&... a)
+-> typename std::enable_if<std::is_same<int, decltype(f(a...))>::value, int>::type
+{
+	const int ret
+	{
+		f(std::forward<args>(a)...)
+	};
+
+	if(unlikely(ret == ERROR_CODE))
+		throw std::system_error(errno, std::system_category());
+
+	return ret;
+}
 
 //
 // Error-checking closure for POSIX system calls. Note the usage is
 // syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
 //
-template<class function,
+template<long ERROR_CODE = -1,
+         class function,
          class... args>
 auto
-syscall(function&& f,
-        args&&... a)
+uninterruptible_syscall(function&& f,
+                        args&&... a)
+-> typename std::enable_if<std::is_same<int, decltype(f(a...))>::value, int>::type
 {
-	const auto ret(f(a...));
-	if(unlikely(long(ret) == -1))
+	int ret; do
+	{
+		ret = f(std::forward<args>(a)...);
+	}
+	while(unlikely(ret == ERROR_CODE && errno == EINTR));
+
+	if(unlikely(ret == ERROR_CODE))
 		throw std::system_error(errno, std::system_category());
 
 	return ret;
