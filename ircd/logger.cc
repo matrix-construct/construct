@@ -69,13 +69,6 @@ namespace ircd::log
 	static void open(const facility &fac);
 	static void prefix(const facility &fac, const char *const &date);
 	static void suffix(const facility &fac);
-
-	const auto main_thread_id
-	{
-		std::this_thread::get_id()
-	};
-
-	void thread_assertion();
 }
 
 void
@@ -226,12 +219,39 @@ void
 ircd::log::mark(const facility &fac,
                 const char *const &msg)
 {
-	slog(fac, [&msg]
-	(std::ostream &s)
+	static const auto name{"*"s};
+	vlog(fac, name, "mark", {});
+}
+
+namespace ircd::log
+{
+	void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
+}
+
+/// ircd::log is not thread-safe. This internal function is called when the
+/// normal vlog() detects it's not on the main IRCd thread. It then generates
+/// the formatted log message on this thread, and posts the message to the
+/// main IRCd event loop which is running on the main thread.
+void
+ircd::log::vlog_threadsafe(const facility &fac,
+                           const std::string &name,
+                           const char *const &fmt,
+                           const va_rtti &ap)
+{
+	// Generate the formatted message on this thread first
+	std::string buf
 	{
-		static const auto name{'*'};
-		s << std::left << std::setw(9) << name << std::right << " :";
-		s << (msg? msg : "mark");
+		fmt::vsnstringf(1024, fmt, ap)
+	};
+
+	// The reference to name has to be safely maintained
+	ircd::post([fac, buf(std::move(buf)), &name]
+	{
+		slog(fac, [&buf, &name]
+		(std::ostream &s)
+		{
+			s << std::left << std::setw(9) << name << std::right << " :" << buf;
+		});
 	});
 }
 
@@ -240,14 +260,8 @@ ircd::log::vlog(const facility &fac,
                 const char *const &fmt,
                 const va_rtti &ap)
 {
-	char buf[1024];
-	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
-	slog(fac, [&buf]
-	(std::ostream &s)
-	{
-		static const auto name{"ircd"};
-		s << std::left << std::setw(9) << name << std::right << " :" << buf;
-	});
+	static const auto name{"ircd"s};
+	vlog(fac, name, fmt, ap);
 }
 
 void
@@ -256,6 +270,12 @@ ircd::log::vlog(const facility &fac,
                 const char *const &fmt,
                 const va_rtti &ap)
 {
+	if(!is_main_thread())
+	{
+		vlog_threadsafe(fac, name, fmt, ap);
+		return;
+	}
+
 	char buf[1024];
 	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
 	slog(fac, [&buf, &name]
@@ -269,10 +289,10 @@ void
 ircd::log::slog(const facility &fac,
                 const std::function<void (std::ostream &)> &closure)
 {
-	void thread_assertion();
-
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
 		return;
+
+	assert_main_thread();
 
 	const unwind always_newline([&fac]
 	{
@@ -391,11 +411,4 @@ ircd::smalldate(const time_t &ltime)
 	         lt->tm_min);
 
 	return buf;
-}
-
-void
-ircd::log::thread_assertion()
-{
-	// Trying to log from another thread is not yet allowed
-	assert(std::this_thread::get_id() == main_thread_id);
 }
