@@ -78,8 +78,9 @@ struct ircd::resource::request
 	http::request::content &content;
 	http::query::string query;
 	m::user::id::buf user_id;
+	vector_view<string_view> parv;
 
-	request(const http::request::head &head, http::request::content &content, http::query::string query);
+	request(const http::request::head &head, http::request::content &content, http::query::string query, const vector_view<string_view> &parv);
 };
 
 template<class tuple>
@@ -90,6 +91,7 @@ struct ircd::resource::request::object
 	const http::request::head &head;
 	const http::request::content &content;
 	const http::query::string &query;
+	const vector_view<string_view> &parv;
 	const json::object &body;
 
 	object(resource::request &r)
@@ -98,6 +100,7 @@ struct ircd::resource::request::object
 	,head{r.head}
 	,content{r.content}
 	,query{r.query}
+	,parv{r.parv}
 	,body{r}
 	{}
 };

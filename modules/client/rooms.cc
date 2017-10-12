@@ -24,16 +24,11 @@ using namespace ircd;
 struct room
 :resource
 {
-	static constexpr const auto base_url
-	{
-		"_matrix/client/r0/rooms"
-	};
-
 	using resource::resource;
 }
 rooms_resource
 {
-	room::base_url, resource::opts
+	"/_matrix/client/r0/rooms/", resource::opts
 	{
 		resource::DIRECTORY,
 		"Rooms (7.0)"
@@ -48,7 +43,6 @@ mapi::header IRCD_MODULE
 resource::response
 get_messages(client &client,
              const resource::request &request,
-             const string_view &params,
              const m::room::id &room_id)
 {
 	const m::event::query<m::event::where::equal> event_in_room
@@ -101,7 +95,6 @@ get_messages(client &client,
 resource::response
 get_members(client &client,
             const resource::request &request,
-            const string_view &params,
             const m::room::id &room_id)
 {
 
@@ -144,7 +137,6 @@ get_members(client &client,
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const string_view &params,
           const m::event::query<> &query)
 {
 	const auto count
@@ -179,7 +171,6 @@ get_state(client &client,
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const string_view &params,
           const m::room::id &room_id,
           const string_view &type,
           const string_view &state_key)
@@ -191,13 +182,12 @@ get_state(client &client,
 		{ "state_key",  state_key  },
 	};
 
-	return get_state(client, request, params, query);
+	return get_state(client, request, query);
 }
 
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const string_view &params,
           const m::room::id &room_id,
           const string_view &type)
 {
@@ -207,33 +197,29 @@ get_state(client &client,
 		{ "type",       type       }
 	};
 
-	return get_state(client, request, params, query);
+	return get_state(client, request, query);
 }
 
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const string_view &params,
           const m::room::id &room_id)
 {
-	string_view token[4];
-	tokens(params, "/", token);
-
 	const string_view &type
 	{
-		token[2]
+		request.parv[2]
 	};
 
 	const string_view &state_key
 	{
-		token[3]
+		request.parv[3]
 	};
 
 	if(type && state_key)
-		return get_state(client, request, params, room_id, type, state_key);
+		return get_state(client, request, room_id, type, state_key);
 
 	if(type)
-		return get_state(client, request, params, room_id, type);
+		return get_state(client, request, room_id, type);
 
 	const m::event::query<m::event::where::equal> query
 	{
@@ -241,18 +227,17 @@ get_state(client &client,
 		{ "state_key",  ""         },
 	};
 
-	return get_state(client, request, params, query);
+	return get_state(client, request, query);
 }
 
 resource::response
 get_context(client &client,
             const resource::request &request,
-            const string_view &params,
             const m::room::id &room_id)
 {
 	const m::event::id &event_id
 	{
-		token(params, '/', 2)
+		request.parv[2]
 	};
 
 	const auto it
@@ -280,35 +265,35 @@ get_context(client &client,
 resource::response
 get_rooms(client &client, const resource::request &request)
 {
-	const auto params
-	{
-		lstrip(request.head.path, room::base_url)
-	};
-
-	string_view token[2];
-	if(tokens(params, '/', token) != 2)
-		throw m::BAD_REQUEST{"/rooms command required"};
+	if(request.parv.size() != 2)
+		throw m::error
+		{
+			http::MULTIPLE_CHOICES, "/rooms command required"
+		};
 
 	m::room::id::buf room_id
 	{
-		urldecode(token[0], room_id)
+		urldecode(request.parv[0], room_id)
 	};
 
-	const string_view &cmd{token[1]};
+	const string_view &cmd{request.parv[1]};
 
 	if(cmd == "context")
-		return get_context(client, request, params, room_id);
+		return get_context(client, request, room_id);
 
 	if(cmd == "state")
-		return get_state(client, request, params, room_id);
+		return get_state(client, request, room_id);
 
 	if(cmd == "members")
-		return get_members(client, request, params, room_id);
+		return get_members(client, request, room_id);
 
 	if(cmd == "messages")
-		return get_messages(client, request, params, room_id);
+		return get_messages(client, request, room_id);
 
-	throw m::NOT_FOUND{"/rooms command not found"};
+	throw m::NOT_FOUND
+	{
+		"/rooms command not found"
+	};
 }
 
 resource::method method_get
@@ -319,20 +304,16 @@ resource::method method_get
 resource::response
 put_send(client &client,
          const resource::request &request,
-         const string_view &params,
          const m::room::id &room_id)
 {
-	string_view token[4];
-	tokens(params, '/', token);
-
 	const string_view &type
 	{
-		token[2]
+		request.parv[2]
 	};
 
 	const string_view &txnid
 	{
-		token[3]
+		request.parv[3]
 	};
 
 	json::iov event;
@@ -374,27 +355,21 @@ put_send(client &client,
 resource::response
 put_rooms(client &client, const resource::request &request)
 {
-	const auto params
-	{
-		lstrip(request.head.path, room::base_url)
-	};
-
-	string_view token[2];
-	if(tokens(params, "/", token) != 2)
+	if(request.parv.size() != 2)
 		throw m::BAD_REQUEST{"/rooms command required"};
 
-	const m::room::id &room_id
+	m::room::id::buf room_id
 	{
-		token[0]
+		urldecode(request.parv[0], room_id)
 	};
 
 	const string_view &cmd
 	{
-		token[1]
+		request.parv[1]
 	};
 
 	if(cmd == "send")
-		return put_send(client, request, params, room_id);
+		return put_send(client, request, room_id);
 
 	throw m::NOT_FOUND{"/rooms command not found"};
 }
@@ -410,42 +385,41 @@ resource::method method_put
 resource::response
 post_receipt(client &client,
              const resource::request &request,
-             const string_view &params,
              const m::room::id &room_id)
 {
-	string_view token[4];
-	if(tokens(params, '/', token) != 4)
+	if(request.parv.size() != 4)
 		throw m::BAD_REQUEST{"receipt type and event_id required"};
 
-	const string_view &receipt_type{token[2]};
-	const string_view &event_id{token[3]};
+	const string_view &receipt_type{request.parv[2]};
+	const string_view &event_id{request.parv[3]};
 	std::cout << "type: " << receipt_type << " eid: " << event_id << std::endl;
 }
 
 resource::response
-post_rooms(client &client, const resource::request &request)
+post_rooms(client &client,
+           const resource::request &request)
 {
-	const auto params
-	{
-		lstrip(request.head.path, room::base_url)
-	};
-
-	string_view token[2];
-	if(tokens(params, '/', token) != 2)
+	if(request.parv.size() != 2)
 		throw m::BAD_REQUEST{"/rooms command required"};
 
-	m::room::id::buf room_id;
-	urldecode(token[0], room_id);
-	const string_view &cmd{token[1]};
+	m::room::id::buf room_id
+	{
+		urldecode(request.parv[0], room_id)
+	};
+
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
 
 	if(cmd == "receipt")
-		return post_receipt(client, request, params, room_id);
+		return post_receipt(client, request, room_id);
 }
 
-resource::method method_POST
+resource::method method_post
 {
 	rooms_resource, "POST", post_rooms,
 	{
-		method_put.REQUIRES_AUTH
+		method_post.REQUIRES_AUTH
 	}
 };

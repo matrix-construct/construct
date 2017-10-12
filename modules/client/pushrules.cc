@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource pushrules
 {
-	"_matrix/client/r0/pushrules", R"(
+	"/_matrix/client/r0/pushrules", R"(
 	Retrieve all push rulesets for this user. Clients can "drill-down" on the rulesets by
 	suffixing a scope to this path e.g. /pushrules/global/. This will return a subset of this data
 	under the specified key e.g. the global key. (11.10.1.4.6)
@@ -44,7 +44,7 @@ catch(...)
 	throw;
 }
 
-resource::method get
+resource::method get_method
 {
 	pushrules, "GET", get_pushrules
 };

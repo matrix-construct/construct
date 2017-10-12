@@ -35,7 +35,7 @@ to the state, and to receive new messages.
 
 resource sync_resource
 {
-	"_matrix/client/r0/sync",
+	"/_matrix/client/r0/sync",
 	sync_description
 };
 

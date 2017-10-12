@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource logout_resource
 {
-	"_matrix/client/r0/logout",
+	"/_matrix/client/r0/logout",
 	"Invalidates an existing access token, so that it can no longer be used for "
 	"authorization. (3.2.3)"
 };
@@ -42,11 +42,11 @@ logout(client &client, const resource::request &request)
 	};
 }
 
-resource::method post
+resource::method post_method
 {
 	logout_resource, "POST", logout,
 	{
-		post.REQUIRES_AUTH
+		post_method.REQUIRES_AUTH
 	}
 };
 

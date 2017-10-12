@@ -175,7 +175,7 @@ handle_post(client &client,
 
 resource register_resource
 {
-	"_matrix/client/r0/register",
+	"/_matrix/client/r0/register",
 	"Register for an account on this homeserver. (3.3.1)"
 };
 

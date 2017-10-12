@@ -31,8 +31,7 @@ resource::resources
 ircd::resource &
 ircd::resource::find(string_view path)
 {
-	path = strip(path, '/');
-
+	path = rstrip(path, '/');
 	auto it(resources.lower_bound(path));
 	if(it == end(resources)) try
 	{
@@ -176,9 +175,21 @@ ircd::resource::operator()(client &client,
 {
 	auto &method(operator[](head.method));
 	http::request::content content{pc, head};
+
+	const auto pathparm
+	{
+		lstrip(head.path, this->path)
+	};
+
+	string_view param[8];
+	const vector_view<string_view> parv
+	{
+		param, tokens(pathparm, '/', param)
+	};
+
 	resource::request request
 	{
-		head, content, head.query
+		head, content, head.query, parv
 	};
 
 	if(method.flags & method.REQUIRES_AUTH)
@@ -286,11 +297,13 @@ catch(const std::bad_function_call &e)
 
 ircd::resource::request::request(const http::request::head &head,
                                  http::request::content &content,
-                                 http::query::string query)
+                                 http::query::string query,
+                                 const vector_view<string_view> &parv)
 :json::object{content}
 ,head{head}
 ,content{content}
 ,query{std::move(query)}
+,parv{parv}
 {
 }
 

@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource user_resource
 {
-	"_matrix/client/r0/user",
+	"/_matrix/client/r0/user/",
 	"User resource",
 	{
 		resource::DIRECTORY
@@ -35,12 +35,12 @@ get_filter(client &client, const resource::request &request)
 {
 	m::user::id::buf user_id
 	{
-		urldecode(token(request.head.path, '/', 4), user_id)
+		urldecode(request.parv[4], user_id)
 	};
 
-	const auto filter_id
+	const auto &filter_id
 	{
-		token(request.head.path, '/', 6)
+		request.parv[6]
 	};
 
 	const m::event::query<m::event::where::equal> query
@@ -74,11 +74,11 @@ get_filter(client &client, const resource::request &request)
 	return {};
 }
 
-resource::method get
+resource::method get_method
 {
 	user_resource, "GET", get_filter,
 	{
-		resource::method::REQUIRES_AUTH
+		get_method.REQUIRES_AUTH
 	}
 };
 
@@ -91,7 +91,7 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	// token must be authorized to make requests for this user id.
 	m::user::id::buf user_id
 	{
-		urldecode(token(request.head.path, '/', 4), user_id)
+		urldecode(request.parv[4], user_id)
 	};
 
 	user_id.validate();
@@ -161,11 +161,11 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	};
 }
 
-resource::method post
+resource::method post_method
 {
 	user_resource, "POST", post_filter,
 	{
-		post.REQUIRES_AUTH
+		post_method.REQUIRES_AUTH
 	}
 };
 

@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource versions_resource
 {
-	"_matrix/client/versions",
+	"/_matrix/client/versions",
 	"Gets the versions of the specification supported by the server (2.1)"
 };
 

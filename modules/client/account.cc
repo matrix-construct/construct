@@ -26,13 +26,13 @@ struct account
 {
 	resource deactivate
 	{
-		"_matrix/client/r0/account/deactivate",
+		"/_matrix/client/r0/account/deactivate",
 		"Deactivate the user's account, removing all ability for the user to login again. (3.3.3)"
 	};
 
 	resource password
 	{
-		"_matrix/client/r0/account/password",
+		"/_matrix/client/r0/account/password",
 		"Changes the password for an account on this homeserver. (3.3.4)"
 	};
 
@@ -40,7 +40,7 @@ struct account
 }
 account_resource
 {
-	"_matrix/client/r0/account",
+	"/_matrix/client/r0/account",
 	"Account management (3.3)"
 };
 

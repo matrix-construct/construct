@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource events_resource
 {
-	"_matrix/client/r0/events",
+	"/_matrix/client/r0/events",
 	"Events (6.2.3) (10.x)"
 };
 

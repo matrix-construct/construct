@@ -29,16 +29,11 @@ mapi::header IRCD_MODULE
 struct server
 :resource
 {
-	static constexpr const auto base_url
-	{
-		"_matrix/key/v2/server/"
-	};
-
 	using resource::resource;
 }
 server_resource
 {
-	server::base_url, resource::opts
+	"/_matrix/key/v2/server/", resource::opts
 	{
 		resource::DIRECTORY,
 		"federation 2.2.1.1: Publishing Keys"
@@ -52,11 +47,11 @@ handle_get(client &client,
 	char key_id_buf[256];
 	const auto key_id
 	{
-		urldecode(split(request.head.path, server_resource.base_url).second, key_id_buf)
+		urldecode(request.parv[0], key_id_buf)
 	};
 
 	std::string my_key;
-	m::keys::get(my_host(), [&my_key](const auto &key)
+	m::keys::get(my_host(), key_id, [&my_key](const auto &key)
 	{
 		my_key = json::string(key);
 	});

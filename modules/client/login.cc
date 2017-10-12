@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource login_resource
 {
-	"_matrix/client/r0/login",
+	"/_matrix/client/r0/login",
 	"Authenticates the user by password, and issues an access token "
 	"they can use to authorize themself in subsequent requests. (3.2.2)"
 };

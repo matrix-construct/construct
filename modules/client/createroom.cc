@@ -23,7 +23,7 @@ using namespace ircd;
 
 resource createroom
 {
-	"_matrix/client/r0/createRoom",
+	"/_matrix/client/r0/createRoom",
 	"Create a new room with various configuration options. (7.1.1)"
 };
 
@@ -94,11 +94,11 @@ catch(const db::not_found &e)
 	};
 }
 
-resource::method post
+resource::method post_method
 {
 	createroom, "POST", room_create,
 	{
-		post.REQUIRES_AUTH
+		post_method.REQUIRES_AUTH
 	}
 };
 
