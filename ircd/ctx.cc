@@ -909,3 +909,20 @@ ircd::ctx::ole::pop()
 	queue.pop_front();
 	return std::move(c);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/ios.h
+//
+
+void
+ircd::post(std::function<void ()> function)
+{
+	ircd::ios->post(std::move(function));
+}
+
+void
+ircd::dispatch(std::function<void ()> function)
+{
+	ircd::ios->dispatch(std::move(function));
+}

@@ -34,8 +34,36 @@ namespace boost::asio
 
 namespace ircd
 {
-	namespace asio = boost::asio;          // Alias so that asio:: can be used
+	/// Alias so that asio:: can be used
+	namespace asio = boost::asio;
 
-	extern asio::io_service *ios;          // The user's io_service;
-	struct strand extern *strand;          // IRCd's strand.
+	/// A record of the thread ID when static initialization took place (for ircd.cc)
+	extern const std::thread::id static_thread_id;
+
+	/// The thread ID of the main IRCd thread running the event loop.
+	extern std::thread::id thread_id;
+
+	/// The user's io_service
+	extern asio::io_service *ios;
+
+	/// IRCd's strand of the io_service
+	struct strand extern *strand;
+
+	bool is_main_thread();
+	void assert_main_thread();
+
+	void post(std::function<void ()>);
+	void dispatch(std::function<void ()>);
+}
+
+inline void
+ircd::assert_main_thread()
+{
+	assert(is_main_thread());
+}
+
+inline bool
+ircd::is_main_thread()
+{
+	return std::this_thread::get_id() == ircd::thread_id;
 }

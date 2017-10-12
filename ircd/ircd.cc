@@ -43,6 +43,16 @@ namespace ircd
 	void main();
 }
 
+const std::thread::id
+ircd::static_thread_id
+{
+	std::this_thread::get_id()
+};
+
+std::thread::id
+ircd::thread_id
+{};
+
 void
 ircd::init(boost::asio::io_service &ios,
            runlevel_handler function)
@@ -72,6 +82,7 @@ try
 
 	assert(runlevel == runlevel::STOPPED);
 
+	ircd::thread_id = std::this_thread::get_id();
 	ircd::ios = &ios;
 	ircd::strand = new struct strand(ios);
 
