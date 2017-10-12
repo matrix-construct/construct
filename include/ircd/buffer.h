@@ -351,9 +351,9 @@ struct ircd::buffer::fixed_buffer
 	:array_type{{0}}
 	{}
 
-	fixed_buffer(const std::function<void (const mutable_raw_buffer &)> &closure)
+	fixed_buffer(const std::function<void (const mutable_buffer &)> &closure)
 	{
-		closure(mutable_raw_buffer{std::begin(*this), std::end(*this)});
+		closure(mutable_buffer{reinterpret_cast<mutable_buffer::iterator>(this->data()), this->size()});
 	}
 
 	fixed_buffer(buffer b)
@@ -362,6 +362,13 @@ struct ircd::buffer::fixed_buffer
 
 	fixed_buffer() = default;
 };
+
+static_assert
+(
+	// Assertion over an arbitrary but common template configuration.
+	std::is_standard_layout<ircd::buffer::fixed_buffer<ircd::buffer::const_buffer, 32>>::value,
+	"ircd::buffer::fixed_buffer must be standard layout"
+);
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
 ///
