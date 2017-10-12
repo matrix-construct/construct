@@ -578,13 +578,6 @@ initial_sync(client &client,
              const bool &full_state,
              const string_view &set_presence)
 {
-	char buf[4096] {0};
-	json::mutable_object body{buf};
-	body.insert({"foo","bar"});
-	body.insert({"baz","bam"});
-
-	std::cout << buf << std::endl;
-
 	const std::string rooms
 	{
 		initial_sync_rooms(client, request, filter_id, full_state)

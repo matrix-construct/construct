@@ -87,63 +87,6 @@ noexcept
 	request.join();
 }
 
-ircd::string_view
-ircd::readline(client &client,
-               char *&start,
-               char *const &stop)
-{
-	auto &sock(*client.sock);
-
-	size_t pos;
-	string_view ret;
-	char *const base(start); do
-	{
-		const std::array<mutable_buffer, 1> bufs
-		{{
-			{ start, stop }
-		}};
-
-		start += sock.read_some(bufs);
-		ret = {base, start};
-		pos = ret.find("\r\n");
-	}
-	while(pos != std::string_view::npos);
-
-	return { begin(ret), std::next(begin(ret), pos + 2) };
-}
-
-char *
-ircd::read(client &client,
-           char *&start,
-           char *const &stop)
-{
-	auto &sock(*client.sock);
-	const std::array<mutable_buffer, 1> bufs
-	{{
-		{ start, stop }
-	}};
-
-	char *const base(start);
-	start += sock.read_some(bufs);
-	return base;
-}
-
-const char *
-ircd::write(client &client,
-            const char *&start,
-            const char *const &stop)
-{
-	auto &sock(*client.sock);
-	const std::array<const_buffer, 1> bufs
-	{{
-		{ start, stop }
-	}};
-
-	const char *const base(start);
-	start += sock.write(bufs);
-	return base;
-}
-
 ircd::hostport
 ircd::local(const client &client)
 {
@@ -210,6 +153,42 @@ ircd::read_closure(client &client)
 		}
     };
 }
+
+char *
+ircd::read(client &client,
+           char *&start,
+           char *const &stop)
+{
+	auto &sock(*client.sock);
+	const std::array<mutable_buffer, 1> bufs
+	{{
+		{ start, stop }
+	}};
+
+	char *const base(start);
+	start += sock.read_some(bufs);
+	return base;
+}
+
+const char *
+ircd::write(client &client,
+            const char *&start,
+            const char *const &stop)
+{
+	auto &sock(*client.sock);
+	const std::array<const_buffer, 1> bufs
+	{{
+		{ start, stop }
+	}};
+
+	const char *const base(start);
+	start += sock.write(bufs);
+	return base;
+}
+
+//
+// client
+//
 
 ircd::client::client()
 :client{std::shared_ptr<socket>{}}
