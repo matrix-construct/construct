@@ -42,7 +42,7 @@ namespace ircd
 	using system_point = time_point<system_clock>;
 
 	microtime_t microtime();
-	ssize_t microtime(char *const &buf, const size_t &size);
+	string_view microtime(const mutable_buffer &);
 	std::ostream &operator<<(std::ostream &, const microtime_t &);
 
 	template<class unit = seconds> unit now();
@@ -52,6 +52,84 @@ namespace ircd
 	template<class unit = seconds> time_t &time(time_t &ref);
 	template<class unit = seconds> time_t time();
 	template<class unit = seconds> time_t time(time_t *const &ptr);
+
+	const char *const rfc7231_fmt
+	{
+		"%a, %d %b %Y %T %z"
+	};
+
+	IRCD_OVERLOAD(localtime)
+	string_view timef(const mutable_buffer &out, const struct tm &tm, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, const time_t &epoch, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, const time_t &epoch, localtime_t, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, localtime_t, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, const char *const &fmt = rfc7231_fmt);
+	template<class... args> std::string timestr(args&&...);
+}
+
+template<class... args>
+std::string
+ircd::timestr(args&&... a)
+{
+	std::string ret(128, char{});
+	const mutable_buffer buf
+	{
+		const_cast<char *>(ret.data()), ret.size()
+	};
+
+	ret.resize(timef(buf, std::forward<args>(a)...).size());
+	return ret;
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const char *const &fmt)
+{
+	const auto epoch{time()};
+	return timef(out, epoch, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            localtime_t,
+            const char *const &fmt)
+{
+	const auto epoch{time()};
+	return timef(out, epoch, localtime, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const time_t &epoch,
+            localtime_t,
+            const char *const &fmt)
+{
+	struct tm tm;
+	localtime_r(&epoch, &tm);
+	return timef(out, tm, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const time_t &epoch,
+            const char *const &fmt)
+{
+	struct tm tm;
+	gmtime_r(&epoch, &tm);
+	return timef(out, tm, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const struct tm &tm,
+            const char *const &fmt)
+{
+	const auto len
+	{
+		strftime(data(out), size(out), fmt, &tm)
+	};
+
+	return { data(out), len };
 }
 
 template<class unit>
@@ -113,17 +191,23 @@ inline std::ostream &
 ircd::operator<<(std::ostream &s, const microtime_t &t)
 {
 	char buf[64];
-	const size_t len(microtime(buf, sizeof(buf)));
-	s << string_view{buf, len};
+	s << microtime(buf);
 	return s;
 }
 
-inline ssize_t
-ircd::microtime(char *const &buf,
-                const size_t &size)
+inline ircd::string_view
+ircd::microtime(const mutable_buffer &buf)
 {
-	const auto mt(microtime());
-	return snprintf(buf, size, "%zd.%06d", mt.first, mt.second);
+	const auto mt{microtime()};
+	const auto length
+	{
+		snprintf(data(buf), size(buf), "%zd.%06d", mt.first, mt.second)
+	};
+
+	return string_view
+	{
+		data(buf), size_t(length)
+	};
 }
 
 inline ircd::microtime_t

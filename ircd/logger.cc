@@ -67,7 +67,7 @@ namespace ircd::log
 	*/
 
 	static void open(const facility &fac);
-	static void prefix(const facility &fac, const char *const &date);
+	static void prefix(const facility &fac, const string_view &date);
 	static void suffix(const facility &fac);
 }
 
@@ -301,8 +301,7 @@ ircd::log::slog(const facility &fac,
 
 	//TODO: XXX: Add option toggle for smalldate()
 	char date[64];
-	microtime(date, sizeof(date));
-	prefix(fac, date);
+	prefix(fac, microtime(date));
 
 	if(console_err[fac])
 		closure(std::cerr);
@@ -316,7 +315,7 @@ ircd::log::slog(const facility &fac,
 
 void
 ircd::log::prefix(const facility &fac,
-                  const char *const &date)
+                  const string_view &date)
 {
 	const auto console_prefix([&fac, &date]
 	(auto &stream)
@@ -401,14 +400,15 @@ ircd::smalldate(const time_t &ltime)
 		32 // maximum string length for a date string (ircd_defs.h)
 	};
 
+	struct tm lt;
+	localtime_r(&ltime, &lt);
 	static char buf[MAX_DATE_STRING];
-	struct tm *const lt(localtime(&ltime));
 	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
-	         lt->tm_year + 1900,
-	         lt->tm_mon + 1,
-	         lt->tm_mday,
-	         lt->tm_hour,
-	         lt->tm_min);
+	         lt.tm_year + 1900,
+	         lt.tm_mon + 1,
+	         lt.tm_mday,
+	         lt.tm_hour,
+	         lt.tm_min);
 
 	return buf;
 }

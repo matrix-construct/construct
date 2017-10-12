@@ -423,13 +423,22 @@ ircd::http::response::response(const code &code,
 		0
 	};
 
-	const time_t ltime(time());
-	struct tm *const tm(localtime(&ltime));
-	char date_line[128]; const auto date_line_len
+	fixed_buffer<mutable_buffer, 128> date_line_buf;
+	const string_view date_line
 	{
-		code < 400 || code >= 500?
-		strftime(date_line, sizeof(date_line), "Date: %a, %d %b %Y %T %z\r\n", tm):
-		0
+		[&date_line_buf, &code]() -> string_view
+		{
+			if(code >= 400)
+				return {};
+
+			fixed_buffer<mutable_buffer, 128> date_buf;
+			const auto datestr{timef(date_buf, ircd::localtime)};
+			date_buf[std::min(date_buf.size() - 1, datestr.size())] = '\0';
+
+			const mutable_buffer line{date_line_buf};
+			const auto length{snprintf(data(line), size(line), "Date: %s\r\n", datestr.data())};
+			return { data(line), size_t(length) };
+		}()
 	};
 
 	char cache_line[64]; const auto cache_line_len
@@ -472,7 +481,7 @@ ircd::http::response::response(const code &code,
 	{
 		{ status_line,      size_t(status_line_len)     },
 		{ server_line,      size_t(server_line_len)     },
-		{ date_line,        size_t(date_line_len)       },
+		{ date_line                                     },
 		{ cache_line,       size_t(cache_line_len)      },
 		{ user_headers,     size_t(user_headers_len)    },
 		{ content_len,      size_t(content_len_len)     },
