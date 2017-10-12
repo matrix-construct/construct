@@ -160,8 +160,7 @@ ircd::json::string(T&&... t)
 		serialized(std::forward<T>(t)...)
 	};
 
-	std::string ret;
-	ret.resize(size, char{});
+	std::string ret(size, char{});
 	const auto buf{const_cast<char *>(ret.data())};
 	const auto max{ret.size() + 1};
 

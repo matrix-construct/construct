@@ -50,8 +50,7 @@ ircd::net::init::~init()
 std::string
 ircd::net::string(const hostport &pair)
 {
-	std::string ret;
-	ret.resize(256, char{});
+	std::string ret(256, char{});
 	ret.resize(string(pair, mutable_buffer{ret}).size());
 	return ret;
 }
@@ -462,9 +461,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 ircd::net::listener::acceptor::operator std::string()
 const
 {
-	std::string ret;
-	ret.resize(256, char{});
-
+	std::string ret(256, char{});
 	const auto length
 	{
 		fmt::sprintf(mutable_buffer{ret}, "'%s' @ [%s]:%u",
@@ -536,8 +533,7 @@ ircd::net::string(const ip::address &addr)
 std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
-	std::string ret;
-	ret.resize(256, char{});
+	std::string ret(256, char{});
 	ret.resize(fmt::sprintf(mutable_buffer{ret}, "%s:%u", string(address(ep)), port(ep)));
 	return ret;
 }

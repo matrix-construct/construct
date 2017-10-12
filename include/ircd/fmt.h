@@ -172,8 +172,7 @@ struct ircd::fmt::vsnstringf
 	{
 		[&max, &fmt, &ap]
 		{
-			std::string ret;
-			ret.resize(max, char{});
+			std::string ret(max, char{});
 			ret.resize(vsnprintf(const_cast<char *>(ret.data()), ret.size() + 1, fmt, ap));
 			return ret;
 		}()

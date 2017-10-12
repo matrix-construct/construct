@@ -603,8 +603,7 @@ ircd::_b64encode(const const_raw_buffer &in,
 		ceil(size(in) * (4.0 / 3.0)) + 4
 	};
 
-	std::string ret;
-	ret.resize(max, char{});
+	std::string ret(max, char{});
 	const mutable_buffer buf
 	{
 		const_cast<char *>(ret.data()), ret.size()
@@ -684,8 +683,7 @@ ircd::b64decode(const string_view &in)
 		ceil(size(in) * 0.75) + 4
 	};
 
-	std::string ret;
-	ret.resize(max, char{});
+	std::string ret(max, char{});
 	const mutable_raw_buffer buf
 	{
 		reinterpret_cast<unsigned char *>(const_cast<char *>(ret.data())), ret.size()
