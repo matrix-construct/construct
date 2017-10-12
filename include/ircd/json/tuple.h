@@ -914,7 +914,7 @@ template<class T>
 typename std::enable_if<serialized_lex_cast<T>(), bool>::type
 defined(T&& t)
 {
-	return t != T{};
+	return t != T{0};
 }
 
 template<class... T>
@@ -926,24 +926,26 @@ serialized(const tuple<T...> &t)
 		tuple<T...>::size()
 	};
 
-	std::array<size_t, member_count> sizes;
+	std::array<size_t, member_count> sizes {0};
 	const auto e{_member_transform_if(t, begin(sizes), end(sizes), []
-	(auto&& ret, const string_view &key, auto&& val)
+	(auto &ret, const string_view &key, auto&& val)
 	{
 		if(!defined(val))
 			return false;
 
-		//     "                "   :                    ,
+		//    "                "   :                     ,
 		ret = 1 + key.size() + 1 + 1 + serialized(val) + 1;
 		return true;
 	})};
 
 	// Subtract one to get the final size when an extra comma is
 	// accumulated on non-empty objects.
-	const size_t overhead{2};
-	auto ret{std::accumulate(begin(sizes), e, overhead)};
-	ret -= e != begin(sizes);
-	return ret;
+	const auto overhead
+	{
+		1 + std::all_of(begin(sizes), e, is_zero{})
+	};
+
+	return std::accumulate(begin(sizes), e, size_t(overhead));
 }
 
 template<class... T>
@@ -952,8 +954,14 @@ stringify(mutable_buffer &buf,
           const tuple<T...> &tuple)
 {
 	std::array<member, tuple.size()> members;
+	std::sort(begin(members), end(members), []
+	(const auto &a, const auto &b)
+	{
+		return a.first < b.first;
+	});
+
 	const auto e{_member_transform_if(tuple, begin(members), end(members), []
-	(auto&& ret, const string_view &key, auto&& val)
+	(auto &ret, const string_view &key, auto&& val)
 	{
 		if(!defined(val))
 			return false;

@@ -32,10 +32,10 @@ namespace ircd::json
 	IRCD_EXCEPTION(error, type_error);
 	IRCD_EXCEPTION(error, not_found);
 
-	struct array;
-	struct object;
 	struct value;
 	struct member;
+	struct object;
+	struct array;
 	struct iov;
 
 	enum type
@@ -169,11 +169,15 @@ ircd::json::string(T&&... t)
 	std::string ret(size, char{});
 	const auto buf{const_cast<char *>(ret.data())};
 	const auto max{ret.size() + 1};
-
 	const auto printed
 	{
 		print(buf, max, std::forward<T>(t)...)
 	};
+
+	#ifdef RB_DEBUG
+	if(unlikely(printed != ret.size()))
+		std::cerr << printed << " != " << ret.size() << std::endl << ret << std::endl;
+	#endif
 
 	assert(printed == ret.size());
 	return ret;
