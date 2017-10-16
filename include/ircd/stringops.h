@@ -98,10 +98,20 @@ namespace ircd
 	std::string replace(std::string, const char &before, const char &after);
 	std::string replace(const string_view &, const char &before, const string_view &after);
 
+	// Truncate view at maximum length
+	string_view trunc(const string_view &, const size_t &max);
+
 	// Legacy
 	char *strip_colour(char *string);
 	char *strip_unprintable(char *string);
 	char *reconstruct_parv(int parc, const char **parv);
+}
+
+inline ircd::string_view
+ircd::trunc(const string_view &s,
+            const size_t &max)
+{
+	return { s.data(), std::min(s.size(), max) };
 }
 
 inline std::string
