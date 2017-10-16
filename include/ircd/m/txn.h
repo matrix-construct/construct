@@ -23,36 +23,36 @@
  */
 
 #pragma once
-#define HAVE_IRCD_M_H
-
-
-#include "m/error.h"
-#include "m/id.h"
-#include "m/event.h"
-#include "m/events.h"
-#include "m/room.h"
-#include "m/user.h"
-#include "m/filter.h"
-#include "m/txn.h"
-#include "m/request.h"
-#include "m/session.h"
-
-namespace ircd::m::dbs
-{
-	struct init
-	{
-		init();
-		~init() noexcept;
-	};
-}
+#define HAVE_IRCD_M_TXN_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 namespace ircd::m
 {
-	struct init
-	{
-		dbs::init dbs;
-
-		init();
-		~init() noexcept;
-	};
+	struct txn;
 }
+
+namespace ircd::m::name
+{
+	constexpr const char *const edus {"edus"};
+//	constexpr const char *const origin {"origin"};
+//	constexpr const char *const origin_server_ts {"origin_server_ts"};
+	constexpr const char *const pdu_failures {"pdu_failures"};
+	constexpr const char *const pdus {"pdus"};
+}
+
+struct ircd::m::txn
+:json::tuple
+<
+	json::property<name::edus, string_view>,
+	json::property<name::origin, string_view>,
+	json::property<name::origin_server_ts, time_t>,
+	json::property<name::pdu_failures, string_view>,
+	json::property<name::pdus, string_view>
+>
+{
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+#pragma GCC diagnostic pop
