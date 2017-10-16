@@ -956,7 +956,9 @@ ircd::json::serialized(const value &v)
 			return v.serial? v.len : serialized(v.array, v.array + v.len);
 
 		case LITERAL:
-			return v.len;
+		{
+			return v.serial? v.len : serialized(bool(v.integer));
+		}
 
 		case NUMBER:
 		{

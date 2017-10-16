@@ -26,9 +26,10 @@ namespace ircd::json
 {
 	struct value;
 
-	using values = std::initializer_list<value>;
-
+	size_t serialized(const bool &);
 	size_t serialized(const value *const &begin, const value *const &end);
+
+	using values = std::initializer_list<value>;
 	size_t serialized(const values &);
 
 	string_view stringify(mutable_buffer &, const value *const &begin, const value *const &end);
@@ -343,4 +344,20 @@ inline enum ircd::json::type
 ircd::json::type(const value &a)
 {
 	return a.type;
+}
+
+inline size_t
+ircd::json::serialized(const bool &b)
+{
+	constexpr const size_t t
+	{
+		strlen("true")
+	};
+
+	constexpr const size_t f
+	{
+		strlen("false")
+	};
+
+	return b? t : f;
 }
