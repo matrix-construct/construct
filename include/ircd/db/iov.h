@@ -82,6 +82,7 @@ struct ircd::db::iov::append
 	append(iov &, const row::delta &);
 	append(iov &, const delta &);
 	append(iov &, const string_view &key, const json::iov &);
+	template<class... T> append(iov &, const string_view &key, const json::tuple<T...> &);
 };
 
 struct ircd::db::iov::checkpoint
@@ -97,3 +98,20 @@ struct ircd::db::iov::opts
 	size_t reserve_bytes = 0;
 	size_t max_bytes = 0;
 };
+
+template<class... T>
+ircd::db::iov::append::append(iov &iov,
+                              const string_view &key,
+                              const json::tuple<T...> &tuple)
+{
+	for_each(tuple, [&iov, &key](const auto &col, auto&& val)
+	{
+		if(defined(val)) append
+		{
+			iov, delta
+			{
+				col, key, byte_view<string_view>{val}
+			}
+		};
+	});
+}
