@@ -40,7 +40,7 @@ init_0()
 	// TODO: XXX
 	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static"))
 	{
-		const auto name(tokens_after(file, "/", 5));
+		const auto name(tokens_after(file, '/', 5));
 		files.emplace(std::string(name), file);
 	}
 }
@@ -53,16 +53,14 @@ get_root(client &client, const resource::request &request)
 		request.head.path?: "index.html"
 	};
 
-	auto it(files.find(path));
+	auto it(files.find(lstrip(path, '/')));
 	if(it == end(files))
 		throw http::error{http::NOT_FOUND};
 
 	const auto &filename(it->second);
-	std::ifstream file(filename);
-	std::noskipws(file);
 	const std::string content
 	{
-		std::istream_iterator<char>{file}, std::istream_iterator<char>{}
+		ircd::fs::read(filename)
 	};
 
 	string_view content_type; switch(hash(rsplit(filename, '.').second))
@@ -89,7 +87,7 @@ get_root(client &client, const resource::request &request)
 
 resource root_resource
 {
-	"", "Root resource",
+	"/", "Root resource",
 	{
 		root_resource.DIRECTORY
 	}

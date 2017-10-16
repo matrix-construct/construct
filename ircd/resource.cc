@@ -37,7 +37,7 @@ ircd::resource::find(string_view path)
 	{
 		--it;
 		if(it == begin(resources) || !startswith(path, rstrip(it->first, '/')))
-			return *resources.at(string_view{});
+			return *resources.at("/");
 	}
 	catch(const std::out_of_range &e)
 	{

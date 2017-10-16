@@ -180,7 +180,7 @@ struct ircd::http::grammar
 	};
 
 	rule<string_view> method           { token                                           ,"method" };
-	rule<string_view> path             { -slash >> raw[*(char_ - query_illegal)]           ,"path" };
+	rule<string_view> path             { raw[-slash >> *(char_ - query_illegal)]           ,"path" };
 	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
 	rule<string_view> version          { token                                          ,"version" };
 
