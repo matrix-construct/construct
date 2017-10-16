@@ -86,8 +86,20 @@ class ircd::fmt::specifier
 // User API
 //
 
-// * The arguments are not restricted by stdarg limitations. You can pass a real std::string.
-// * The function participates in the custom protocol-safe ruleset.
+/// Typesafe snprintf() from formal grammar and RTTI.
+///
+/// This function accepts a format string and a variable number of arguments
+/// composing formatted null-terminated output in the provided output buffer.
+/// The format string is compliant with standard snprintf() (TODO: not yet).
+/// The type information of the arguments is grabbed from the variadic template
+/// and references are passed to the formal output grammars. This means you can
+/// pass an std::string directly without calling c_str(), as well as pass a
+/// non-null-terminated string_view safely.
+///
+/// Furthermore, other features of ircd::fmt enable custom format specifiers
+/// and handling of types not recognized by existing grammars through this
+/// function.
+///
 class ircd::fmt::snprintf
 {
 	const char *fstart;                          // Current running position in the fmtstr
@@ -137,6 +149,17 @@ struct ircd::fmt::sprintf
 	}{}
 };
 
+/// A complement to fmt::snprintf() accepting an already-made va_rtti.
+///
+/// This function has no variadic template; instead it accepts the type
+/// which would be composed by such a variadic template called
+/// ircd::va_rtti directly.
+///
+/// ircd::va_rtti is a lightweight pairing of argument pointers to runtime
+/// type indexes. ircd::va_rtti is not a template itself because its purpose
+/// is to bring this type information out of the header files to where the
+/// grammar is instantiated.
+///
 struct ircd::fmt::vsnprintf
 :snprintf
 {

@@ -26,6 +26,43 @@
 #pragma once
 #define HAVE_IRCD_ALLOCATOR_H
 
+/// Suite of custom allocator templates for special behavior and optimization
+///
+/// These tools can be used as alternatives to the standard allocator. Most
+/// templates implement the std::allocator concept and can be used with
+/// std:: containers by specifying them in the container's template parameter.
+///
+/// The C++ standard library assumes the availability of dynamic memory. This
+/// is a reasonable assumption to enjoy a huge simplification of the std::
+/// interface. Standard dynamic allocation can also be fast and unintrusive for
+/// a vast majority of cases. Unfortunately STL container's use of allocators
+/// can lead to a huge number of allocations and frees and in many trivial
+/// circumstances which won't be optimized as well as they ought to be.
+/// Furthermore, the std::allocator using `new` requires synchronization in
+/// multi-threaded environments. tcmalloc may be used for IRCd but its presence
+/// and performance should not be blindly assumed either. The fact remains,
+/// containers are very nice to work with but there is room for optimizing
+/// their backend through the allocator template.
+///
+/// The ircd::allocator::fixed is the prototypical justification for these
+/// tools. It allows you to build a memory pool with a size known at compile-
+/// time at the place of your choosing (i.e the stack) for any STL container. A
+/// simple std::vector constructed on the stack with a fixed number of elements
+/// known at construction time won't otherwise magically optimize away the
+/// allocation for the elements; worse, a non-contiguous container like
+/// std::list, std::map or std::set will conduct allocations for each modifying
+/// operation. Having the fixed pool on the stack plugged into these containers
+/// trivializes those requests and releases of memory.
+///
+/// The ircd::allocator::dynamic performs a single allocation of a contiguous
+/// memory block with a size specified at runtime. This block can then be used
+/// by a container.
+///
+/// The ircd::allocator::node is an interface for allowing one to manually deal
+/// with the elements of an STL container similar to a C style container where
+/// a "node" is constructed at the user's discretion and then inserted and
+/// removed from the container.
+///
 namespace ircd::allocator
 {
 	struct state;
@@ -34,6 +71,16 @@ namespace ircd::allocator
 	template<class T> struct node;
 };
 
+/// Internal state structure for some of these tools. This is a very small and
+/// simple interface to a bit array representing the availability of an element
+/// in a pool of elements. The actual array of the proper number of bits must
+/// be supplied by the user of the state. The allocator using this interface
+/// can use any strategy to flip these bits but the default next()/allocate()
+/// functions scan for the next available contiguous block of zero bits and
+/// then wrap around when reaching the end of the array. Once a full iteration
+/// of the array is made without finding satisfaction, an std::bad_alloc is
+/// thrown.
+///
 struct ircd::allocator::state
 {
 	using word_t                                 = unsigned long long;
@@ -63,6 +110,15 @@ struct ircd::allocator::state
 	{}
 };
 
+/// The fixed allocator creates a block of data with a size known at compile-
+/// time. This structure itself is the state object for the actual allocator
+/// instance used in the container. Create an instance of this structure,
+/// perhaps on your stack. Then specify the ircd::allocator::fixed::allocator
+/// in the template for the container. Then pass a reference to the state
+/// object as an argument to the container when constructing. STL containers
+/// have an overloaded constructor for this when specializing the allocator
+/// template as we are here.
+///
 template<class T,
          size_t max>
 struct ircd::allocator::fixed
@@ -82,6 +138,14 @@ struct ircd::allocator::fixed
 	{}
 };
 
+/// The actual allocator template as used by the container.
+///
+/// This has to be a very light, small and copyable object which cannot hold
+/// our actual memory or state (lest we just use dynamic allocation for that!)
+/// which means we have to pass this a reference to our ircd::allocator::fixed
+/// instance. We can do that through the container's custom-allocator overload
+/// at its construction.
+///
 template<class T,
          size_t size>
 struct ircd::allocator::fixed<T, size>::allocator
@@ -157,6 +221,14 @@ allocator()
 	return { *this };
 }
 
+/// The dynamic allocator provides a pool of a fixed size known at runtime.
+///
+/// This allocator conducts a single new and delete for a pool allowing an STL
+/// container to operate without interacting with the rest of the system and
+/// without fragmentation. This is not as useful as the allocator::fixed in
+/// practice as the standard allocator is as good as this in many cases. This
+/// is still available as an analog to the fixed allocator in this suite.
+///
 template<class T>
 struct ircd::allocator::dynamic
 :state
@@ -188,6 +260,10 @@ struct ircd::allocator::dynamic
 	}
 };
 
+/// The actual template passed to containers for using the dynamic allocator.
+///
+/// See the notes for ircd::allocator::fixed::allocator for details.
+///
 template<class T>
 struct ircd::allocator::dynamic<T>::allocator
 {
@@ -260,6 +336,23 @@ allocator()
 	return { *this };
 }
 
+/// Allows elements of an STL container to be manually handled by the user.
+///
+/// C library containers usually allow the user to manually construct a node
+/// and then insert it and remove it from the container. With STL containers
+/// we can use devices like allocator::fixed, but what if we don't want to have
+/// a bound on the allocator's size either at compile time or at runtime? What
+/// if we simply want to manually handle the container's elements, like on the
+/// stack, and in different frames, and then manipulate the container -- or
+/// even better and safer: have the elements add and remove themselves while
+/// storing the container's node data too?
+///
+/// This device helps the user achieve that by simply providing a variable
+/// set by the user indicating where the 'next' block of memory is when the
+/// container requests it. Whether the container is requesting memory which
+/// should be fulfilled by that 'next' block must be ensured and asserted by
+/// the user, but this is likely the case.
+///
 template<class T>
 struct ircd::allocator::node
 {
@@ -271,6 +364,10 @@ struct ircd::allocator::node
 	node() = default;
 };
 
+/// The actual template passed to containers for using the allocator.
+///
+/// See the notes for ircd::allocator::fixed::allocator for details.
+///
 template<class T>
 struct ircd::allocator::node<T>::allocator
 {

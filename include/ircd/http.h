@@ -95,6 +95,7 @@ enum ircd::http::code
 	INSUFFICIENT_STORAGE                    = 507,
 };
 
+/// Root exception for HTTP.
 struct ircd::http::error
 :ircd::error
 {
@@ -104,6 +105,13 @@ struct ircd::http::error
 	error(const enum code &, std::string content = {});
 };
 
+/// Represents a single \r\n delimited line used in HTTP.
+///
+/// This object is just a string_view of that line. The actual data backing
+/// that view is the responsibility of the user. This object is constructed
+/// with an ircd::parse::capstan argument which is used by the formal grammar
+/// in the constructor.
+///
 struct ircd::http::line
 :string_view
 {
@@ -120,6 +128,14 @@ namespace ircd::http
 	using header = line::header;
 }
 
+/// Represents a 'request line' or the first line a client sends to a server.
+///
+/// This is a dual-use class. For HTTP clients, one may simply connect the
+/// members to the proper strings and then pass this structure to a function
+/// making a client request. For HTTP servers, pass an http::line to the ctor
+/// and the formal grammar will set the members appropriately. The actual data
+/// behind these members is the responsibility of the user.
+///
 struct ircd::http::line::request
 {
 	string_view method;
@@ -132,6 +148,13 @@ struct ircd::http::line::request
 	request() = default;
 };
 
+/// Represents a 'response line' or the first line a server sends to a client.
+///
+/// This is a dual-use class and symmetric to the http::line::request class.
+/// Servers may set the members and then use this object to respond to a client
+/// while clients should provide an http::line to the constructor which will
+/// fill in the members.
+///
 struct ircd::http::line::response
 {
 	string_view version;
@@ -142,6 +165,11 @@ struct ircd::http::line::response
 	response() = default;
 };
 
+/// Represents a single key/value pair in a query string.
+///
+/// This is used by the ircd::http::query::string object when parsing query
+/// strings.
+///
 struct ircd::http::query
 :std::pair<string_view, string_view>
 {
@@ -154,8 +182,14 @@ struct ircd::http::query
 	query() = default;
 };
 
-// Query string is read as a complete string off the tape (into request.query) and
-// not parsed further. To make queries into that string use this class to view it.
+/// Tool for parsing an HTTP query string.
+///
+/// Query string is read as a complete string off the tape (into request.query)
+/// and not parsed further. To make queries into that string use this class to
+/// view it. Once this object is constructed by viewing the whole query string,
+/// the member functions invoke the formal grammar to get individual key/value
+/// pairs.
+///
 struct ircd::http::query::string
 :string_view
 {
@@ -168,6 +202,12 @@ struct ircd::http::query::string
 	using string_view::string_view;
 };
 
+/// Represents an HTTP header key/value pair.
+///
+/// This is a dual-use class. Those sending headers will simply fill in the
+/// components of the std::pair. Those receiving headers can pass the ctor an
+/// ircd::http::line which will construct the pair using the formal grammars.
+///
 struct ircd::http::line::header
 :std::pair<string_view, string_view>
 {
@@ -179,7 +219,12 @@ struct ircd::http::line::header
 	header() = default;
 };
 
-// HTTP headers are read once off the tape and proffered to the closure.
+/// This device allows parsing HTTP headers directly off the wire without state
+///
+/// The constructor of this object contains the grammar to read HTTP headers
+/// from the capstan and then proffer them one by one to the provided closure,
+/// that's all it does.
+///
 struct ircd::http::headers
 :string_view
 {
@@ -189,9 +234,16 @@ struct ircd::http::headers
 	headers(parse::capstan &, const closure & = {});
 };
 
-// Use the request::content / response::content wrappers. They ensure the proper amount
-// of content is read and the tape is in the right position for the next request
-// with exception safety.
+/// Represents the content of an HTTP request after the head.
+///
+/// Use the request::content / response::content wrappers. They ensure the
+/// proper amount of content is read and the tape is in the right position
+/// for the next request with exception safety. In other words, this object
+/// ensures the capstan is in the proper place for the next request no matter
+/// what happens; whether an exception happened, or whether the user simply
+/// didn't care to read the content. The capstan MUST advance Content-Length
+/// bytes in any case.
+///
 struct ircd::http::content
 :string_view
 {
@@ -204,6 +256,8 @@ struct ircd::http::content
 	content() = default;
 };
 
+/// HTTP response suite. Functionality to send and receive responses.
+///
 struct ircd::http::response
 {
 	struct head;
@@ -247,6 +301,8 @@ struct ircd::http::response::chunked::chunk
 	chunk(chunked &, const const_buffer &);
 };
 
+/// Represents an HTTP response head. This is for receiving responses only.
+///
 struct ircd::http::response::head
 :line::response
 {
@@ -258,6 +314,8 @@ struct ircd::http::response::head
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
+/// Represents an HTTP response content. This is for receiving only.
+///
 struct ircd::http::response::content
 :http::content
 {
@@ -276,6 +334,8 @@ struct ircd::http::response::content
 	content() = default;
 };
 
+/// HTTP request suite. Functionality to send and receive requests.
+///
 struct ircd::http::request
 {
 	struct head;
@@ -300,6 +360,8 @@ struct ircd::http::request
 	        const headers::closure &  = {});
 };
 
+/// Represents an HTTP request head. This is only for receiving requests.
+///
 struct ircd::http::request::head
 :line::request
 {
@@ -314,6 +376,8 @@ struct ircd::http::request::head
 	head(parse::capstan &pc, const headers::closure &c = {});
 };
 
+/// Represents an HTTP request content. This is only for receiving content.
+///
 struct ircd::http::request::content
 :http::content
 {
