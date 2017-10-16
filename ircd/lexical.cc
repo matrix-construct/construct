@@ -415,7 +415,9 @@ ircd::lex_cast(long double i,
 template<> bool
 ircd::lex_cast(const string_view &s)
 {
-	return _lex_cast<bool>(s);
+	return s == "true"? true:
+	       s == "false"? false:
+	       _lex_cast<bool>(s);
 }
 
 template<> int8_t
