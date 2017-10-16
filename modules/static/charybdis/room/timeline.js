@@ -48,6 +48,7 @@ room.timeline = class extends Array
 	{
 		super(...events);
 		this.opts = Object.copy(room.timeline.opts);
+		this.id = null;
 	}
 
 	static get [Symbol.species]()

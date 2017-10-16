@@ -182,6 +182,10 @@ room.scroll.io = async function(limit = 64, dir = "b")
 		this.control.messages.start = data.start;
 		this.control.messages.end = data.end;
 	}
+	catch(e)
+	{
+		console.error(e);
+	}
 	finally
 	{
 		this.control.scroll_requested = false;

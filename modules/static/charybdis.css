@@ -2150,11 +2150,11 @@ div.main div.list div.item div.head div.focus:hover.selected
 
 .ircd .room div.status div.explore
 {
+	display: none;
 }
 
 .ircd .room div.status div.explore i
 {
-	align-self: center;
 }
 
 /* detail control bar */
@@ -2463,6 +2463,11 @@ div.main div.list div.item div.head div.focus:hover.selected
 {
 	align-items: flex-start;
 	justify-content: flex-start;
+}
+
+.ircd .room div.event.control div.capstan div.viewport
+{
+	display: none;
 }
 
 .ircd .room div.event.control div.capstan div.head > div
@@ -2882,19 +2887,20 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-grow: 1;
 	flex-flow: column nowrap;
 	align-items: stretch;
-	justify-content: center;
-	padding: 0px 0px 4px 0px;
+	justify-content: flex-start;
+	padding: 5px 5px 5px 5px;
 	border-top: 1px solid var(--pal-AD);
 }
 
 .ircd .room div.members div.list .member .info .menu .item
 {
+	flex-grow: 0;
 	position: relative;
-	flex-flow: column nowrap;
+	flex-flow: row nowrap;
 	align-items: center;
-	justify-content: center;
-	background-color: var(--pal-AA);
-	margin: 4px 4px 0px 4px;
+	justify-content: stretch;
+	background-color: var(--pal-AD);
+	margin: 4px 5px 5px 5px;
 	border-radius: 5px;
 }
 
@@ -2910,6 +2916,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 
 .ircd .room div.members div.list .member .menu .item .icon
 {
+	position: absolute;
 	font-size: calc(var(--fsIB));
 }
 

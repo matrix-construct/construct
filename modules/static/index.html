@@ -1699,9 +1699,10 @@ type="text/ng-template"
 	</div>
 	<div
 	class="id"
-	ng-click="room.control.show_detail = !room.control.show_detail"
+	ng-dblclick="room.control.show_detail = !room.control.show_detail; $event.preventDefault();"
 	>
 		<button
+		ng-click="room.control.show_detail = !room.control.show_detail"
 		ng-class="
 		{
 			selected: room.control.show_detail,

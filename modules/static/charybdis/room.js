@@ -58,6 +58,8 @@ mc.room = class
 
 		// Event Machine
 		this.timeline = new room.timeline;
+		this.timeline.id = this.id; //tmp
+
 		this.oracle = new room.state(this.timeline);
 		this.state = new Proxy(this.oracle.cache, this.oracle);
 		this.content = new Proxy(this.state, this.oracle.content);
