@@ -33,6 +33,7 @@
 #include "m/room.h"
 #include "m/user.h"
 #include "m/filter.h"
+#include "m/keys.h"
 #include "m/txn.h"
 #include "m/request.h"
 #include "m/session.h"

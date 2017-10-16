@@ -34,9 +34,10 @@ namespace ircd::m
 
 namespace ircd::my
 {
-	extern ed25519::pk public_key;
 	extern ed25519::sk secret_key;
+	extern ed25519::pk public_key;
 	extern std::string public_key_b64;
+	extern std::string public_key_id;
 }
 
 namespace ircd::m::name
@@ -72,6 +73,8 @@ struct ircd::m::key
 {
 	static room keys;
 
+	bool verify() const noexcept;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
@@ -80,8 +83,9 @@ namespace ircd::m::keys
 {
 	using closure = std::function<void (const key &)>;
 
-	bool get(const string_view &server_name, const closure &);
 	void set(const key &);
+	bool get(const string_view &server_name, const string_view &key_id, const closure &);
+	bool get(const string_view &server_name, const closure &);
 }
 
 #pragma GCC diagnostic pop
