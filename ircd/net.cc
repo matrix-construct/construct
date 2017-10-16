@@ -636,7 +636,7 @@ ircd::net::socket::socket(const ip::tcp::endpoint &remote,
 try
 :socket{ssl, ios}
 {
-	log::debug("socket(%p) connecting to remote: %s timeout: %ld$ms",
+	log::debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
 	           this,
 	           string(remote),
 	           timeout.count());
@@ -678,8 +678,21 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 }
 
 ircd::net::socket::~socket()
-noexcept
+noexcept try
 {
+	if(ctx::current) try
+	{
+		disconnect(dc::SSL_NOTIFY_YIELD);
+	}
+	catch(const boost::system::system_error &e)
+	{
+		log::debug("socket(%p): close: %s", this, e.what());
+	}
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p): close: %s", this, e.what());
+	return;
 }
 
 void
@@ -696,6 +709,12 @@ ircd::net::socket::disconnect(const dc &type)
 {
 	if(timer.expires_from_now() > 0ms)
 		timer.cancel();
+
+	if(sd.is_open())
+		log::debug("socket(%p): disconnect: %s type: %d",
+		           this,
+		           string(remote()),
+		           uint(type));
 
 	if(sd.is_open()) switch(type)
 	{
