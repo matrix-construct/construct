@@ -47,7 +47,7 @@ dnl  (serial version number 13).
 AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   m4_if([$1], [11], [],
         [$1], [14], [],
-        [$1], [17], [m4_fatal([support for C++17 not yet implemented in AX_CXX_COMPILE_STDCXX])],
+        [$1], [17], [],
         [m4_fatal([invalid first argument `$1' to AX_CXX_COMPILE_STDCXX])])dnl
   m4_if([$2], [], [],
         [$2], [gnu], [],
@@ -119,7 +119,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   AC_LANG_POP([C++])
   if test x$ax_cxx_compile_cxx$1_required = xtrue; then
     if test x$ac_success = xno; then
-      AC_MSG_ERROR([*** A compiler with support for C++$1 language features is required.])
+      AC_MSG_ERROR([*** A compiler with support for C++$1 with SD-6 $4 language features is required. Ubuntu users may want to try: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update])
     fi
   fi
   if test x$ac_success = xno; then
@@ -144,6 +144,14 @@ m4_define([_AX_CXX_COMPILE_STDCXX_testbody_11],
 dnl  Test body for checking C++14 support
 
 m4_define([_AX_CXX_COMPILE_STDCXX_testbody_14],
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
+)
+
+
+dnl  Test body for checking C++17 support
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_17],
   _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
   _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
 )
