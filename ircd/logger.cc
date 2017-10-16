@@ -220,12 +220,13 @@ ircd::log::mark(const facility &fac,
                 const char *const &msg)
 {
 	static const auto name{"*"s};
-	vlog(fac, name, "mark", {});
+	vlog(fac, name, "%s", msg);
 }
 
 namespace ircd::log
 {
 	void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
+	std::ostream &compose(std::ostream &s, const string_view &buf, const string_view &name);
 }
 
 /// ircd::log is not thread-safe. This internal function is called when the
@@ -247,10 +248,9 @@ ircd::log::vlog_threadsafe(const facility &fac,
 	// The reference to name has to be safely maintained
 	ircd::post([fac, buf(std::move(buf)), &name]
 	{
-		slog(fac, [&buf, &name]
-		(std::ostream &s)
+		slog(fac, [&buf, &name](std::ostream &s)
 		{
-			s << std::left << std::setw(9) << name << std::right << " :" << buf;
+			compose(s, buf, name);
 		});
 	});
 }
@@ -278,11 +278,33 @@ ircd::log::vlog(const facility &fac,
 
 	char buf[1024];
 	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
-	slog(fac, [&buf, &name]
-	(std::ostream &s)
+	slog(fac, [&buf, &name](std::ostream &s)
 	{
-		s << std::left << std::setw(9) << name << std::right << " :" << buf;
+		compose(s, buf, name);
 	});
+}
+
+std::ostream &
+ircd::log::compose(std::ostream &s,
+                   const string_view &buf,
+                   const string_view &name)
+{
+	s << std::setw(9)
+	  << std::right
+	  << name
+	  << ' '
+	  << std::left
+	  << std::setw(8)
+	  << trunc(ctx::name(), 8)
+	  << ' '
+	  << std::right
+	  << std::setw(6)
+	  << ctx::id()
+	  << std::right
+	  << " :"
+	  << buf;
+
+	return s;
 }
 
 void
