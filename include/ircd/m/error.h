@@ -70,6 +70,7 @@ namespace ircd::m
 	IRCD_M_EXCEPTION(error, BAD_REQUEST, http::BAD_REQUEST);
 	IRCD_M_EXCEPTION(error, BAD_JSON, http::BAD_REQUEST);
 	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
+	IRCD_M_EXCEPTION(error, BAD_SIGNATURE, http::UNAUTHORIZED);
 }
 
 inline
@@ -85,13 +86,13 @@ ircd::m::error::error(const http::code &c)
 inline
 ircd::m::error::error(const http::code &c,
                       const json::members &members)
-:http::error{c, json::string(members)}
+:http::error{c, json::strung(members)}
 {}
 
 inline
 ircd::m::error::error(const http::code &c,
                       const json::iov &iov)
-:http::error{c, json::string(iov)}
+:http::error{c, json::strung(iov)}
 {}
 
 inline
@@ -116,17 +117,17 @@ ircd::m::error::error(const http::code &status,
                       args&&... a)
 :http::error
 {
-	status, [&]() -> std::string
+	status, [&]() -> json::strung
 	{
-		char estr[512]; const auto estr_len
+		char estr[512]; const auto len
 		{
-			fmt::snprintf{estr, sizeof(estr), fmt, std::forward<args>(a)...}
+			fmt::sprintf{estr, fmt, std::forward<args>(a)...}
 		};
 
-		return json::string(json::members
+		return json::members
 		{
-			{ "errcode",  errcode                      },
-			{ "error",    string_view(estr, estr_len)  }
-		});
+			{ "errcode",  errcode                        },
+			{ "error",    string_view{estr, size_t(len)} }
+		};
 	}()
 }{}
