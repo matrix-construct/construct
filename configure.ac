@@ -32,7 +32,7 @@ AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_LANG(C++)
 AC_CONFIG_HEADER(include/ircd/config.h)
-AX_CXX_COMPILE_STDCXX([14], [gnu], [mandatory], 201300)
+AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201411)
 
 
 dnl ***************************************************************************
