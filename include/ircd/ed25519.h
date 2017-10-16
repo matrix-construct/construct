@@ -27,6 +27,9 @@
 
 namespace ircd::ed25519
 {
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, bad_sig)
+
 	const size_t SK_SZ { 32 + 32 };
 	const size_t PK_SZ { 32 };
 	const size_t SIG_SZ { 64 };
