@@ -1,6 +1,8 @@
-# IRCd
+# IRCd<sup><img src="http://www.iconj.com/ico/p/s/ps5wyionii.ico" /></sup>
 
-**I**nternet **R**elay **C**hat **d**aemon: *Charybdis*
+<img align="right" src="https://i.imgur.com/mHGxDyC.png" />
+
+### Internet Relay Chat daemon: *Charybdis*
 
 IRCd is a free and open source server which facilitates real-time communication over the
 internet. It was started in 1988 by Jarkko Oikarinen in the University of Oulu and eventually
