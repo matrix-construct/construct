@@ -126,6 +126,7 @@ struct ircd::resource::method
 	{
 		REQUIRES_AUTH  = 0x01,
 		RATE_LIMITED   = 0x02,
+		VERIFY_ORIGIN  = 0x04,
 	};
 
 	struct opts

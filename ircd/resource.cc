@@ -104,12 +104,16 @@ noexcept
 	log::info("Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path);
 }
 
-namespace ircd {
+namespace ircd
+{
+	static void verify_origin(client &client, resource::method &method, resource::request &request);
+	static void authenticate(client &client, resource::method &method, resource::request &request);
+}
 
-static void
-authenticate(client &client,
-             resource::method &method,
-             resource::request &request)
+void
+ircd::authenticate(client &client,
+                   resource::method &method,
+                   resource::request &request)
 try
 {
 	const string_view &access_token
@@ -117,7 +121,7 @@ try
 		request.query.at("access_token")
 	};
 
-	// Sets up the query to find the access_token in the sessions rooms
+	// Sets up the query to find the access_token in the sessions room
 	const m::event::query<m::event::where::equal> query
 	{
 		{ "type",        "ircd.access_token"         },
@@ -166,7 +170,32 @@ catch(const std::out_of_range &e)
 	};
 }
 
-} // namespace ircd
+void
+ircd::verify_origin(client &client,
+                    resource::method &method,
+                    resource::request &request)
+{
+	const auto &authorization
+	{
+		request.head.authorization
+	};
+
+	const fmt::bsprintf<1024> uri
+	{
+		"%s%s%s", request.head.path, request.query? "?" : "", request.query
+	};
+
+	const auto verified
+	{
+		m::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
+	};
+
+	if(!verified)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_INVALID_SIGNATURE", "The X-Matrix Authorization is invalid."
+		};
+}
 
 void
 ircd::resource::operator()(client &client,
@@ -195,21 +224,10 @@ ircd::resource::operator()(client &client,
 	if(method.flags & method.REQUIRES_AUTH)
 		authenticate(client, method, request);
 
-	handle_request(client, method, request);
-}
+	if(method.flags & method.VERIFY_ORIGIN)
+		verify_origin(client, method, request);
 
-ircd::resource::method &
-ircd::resource::operator[](const string_view &name)
-try
-{
-	return *methods.at(name);
-}
-catch(const std::out_of_range &e)
-{
-	throw http::error
-	{
-		http::METHOD_NOT_ALLOWED
-	};
+	handle_request(client, method, request);
 }
 
 void
@@ -249,6 +267,20 @@ catch(const std::out_of_range &e)
 	throw m::error
 	{
 		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
+	};
+}
+
+ircd::resource::method &
+ircd::resource::operator[](const string_view &name)
+try
+{
+	return *methods.at(name);
+}
+catch(const std::out_of_range &e)
+{
+	throw http::error
+	{
+		http::METHOD_NOT_ALLOWED
 	};
 }
 
