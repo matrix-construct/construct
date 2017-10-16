@@ -220,7 +220,7 @@ try
 
 	modules.emplace("root.so"s, "root.so"s);
 
-	const auto options{json::string(json::members
+	const auto options{json::strung(json::members
 	{
 		{ "name", "Chat Matrix" },
 		{ "host", "0.0.0.0" },

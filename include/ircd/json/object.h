@@ -214,7 +214,7 @@ const try
 catch(const bad_lex_cast &e)
 {
 	throw type_error("'%s' must cast to type %s",
-	                 string(path),
+	                 ircd::string(path),
 	                 typeid(T).name());
 }
 

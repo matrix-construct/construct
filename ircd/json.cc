@@ -315,7 +315,7 @@ ircd::json::printer::list_protocol(mutable_buffer &buffer,
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const iov &iov)
 {
-	s << json::string(iov);
+	s << json::strung(iov);
 	return s;
 }
 
@@ -514,7 +514,7 @@ ircd::json::serialized(const member &member)
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const object::member &member)
 {
-	s << json::string(member);
+	s << json::strung(member);
 	return s;
 }
 
@@ -538,7 +538,7 @@ ircd::json::serialized(const object::member &member)
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const object &object)
 {
-	s << json::string(object);
+	s << json::strung(object);
 	return s;
 }
 
@@ -612,7 +612,7 @@ catch(const qi::expectation_failure<const char *> &e)
 ircd::json::object::operator std::string()
 const
 {
-	return json::string(*this);
+	return json::strung(*this);
 }
 
 ircd::json::object::const_iterator
@@ -730,7 +730,7 @@ ircd::json::array::stringify(mutable_buffer &buf,
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const array &a)
 {
-	s << json::string(a);
+	s << json::strung(a);
 	return s;
 }
 
@@ -761,7 +761,7 @@ catch(const qi::expectation_failure<const char *> &e)
 ircd::json::array::operator std::string()
 const
 {
-	return json::string(*this);
+	return json::strung(*this);
 }
 
 ircd::json::array::const_iterator
@@ -817,7 +817,7 @@ const ircd::string_view ircd::json::value::empty_array {"[]"};
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
 {
-	s << json::string(v);
+	s << json::strung(v);
 	return s;
 }
 
@@ -1104,7 +1104,7 @@ noexcept
 ircd::json::value::operator std::string()
 const
 {
-	return json::string(*this);
+	return json::strung(*this);
 }
 
 ircd::json::value::operator string_view()

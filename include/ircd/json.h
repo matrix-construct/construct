@@ -65,16 +65,34 @@ namespace ircd::json
 	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
 	template<class... T> size_t print(char *const &buf, const size_t &max, T&&... t);
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
-	template<class... T> std::string string(T&&... t);
 	template<size_t SIZE> struct buffer;
+	struct strung;
 
 	size_t serialized(const string_view &);
 
+	struct string;
 	using members = std::initializer_list<member>;
 }
 
+/// Strong type representing quoted strings in JSON (which may be unquoted
+/// automatically when this type is encountered in a tuple etc)
+struct ircd::json::string
+:string_view
+{
+	using string_view::string_view;
+};
+
 #include "json/array.h"
 #include "json/object.h"
+
+/// Convenience template to allocate std::string and print() arguments to it.
+///
+struct ircd::json::strung
+:std::string
+{
+	template<class... T> strung(T&&... t);
+};
+
 #include "json/value.h"
 #include "json/member.h"
 #include "json/property.h"
@@ -153,13 +171,9 @@ ircd::json::print(char *const &buf,
 	return sv.size();
 }
 
-///
-/// Convenience template using the syntax string(...) which returns
-/// an std::string of the printed JSON
-///
 template<class... T>
-std::string
-ircd::json::string(T&&... t)
+ircd::json::strung::strung(T&&... t)
+:std::string{[&]() -> std::string
 {
 	const auto size
 	{
@@ -181,6 +195,8 @@ ircd::json::string(T&&... t)
 
 	assert(printed == ret.size());
 	return ret;
+}()}
+{
 }
 
 inline std::ostream &

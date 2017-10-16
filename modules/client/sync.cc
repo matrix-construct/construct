@@ -379,20 +379,20 @@ update_sync_room(client &client,
 {
 	std::vector<std::string> state;
 	if(defined(json::get<"state_key"_>(event)))
-		state.emplace_back(json::string(event));
+		state.emplace_back(json::strung(event));
 
 	const auto state_serial
 	{
-		json::string(state.data(), state.data() + state.size())
+		json::strung(state.data(), state.data() + state.size())
 	};
 
 	std::vector<std::string> timeline;
 	if(!defined(json::get<"state_key"_>(event)))
-		timeline.emplace_back(json::string(event));
+		timeline.emplace_back(json::strung(event));
 
 	const auto timeline_serial
 	{
-		json::string(timeline.data(), timeline.data() + timeline.size())
+		json::strung(timeline.data(), timeline.data() + timeline.size())
 	};
 
 	const json::members body
@@ -401,7 +401,7 @@ update_sync_room(client &client,
 		{ "timeline",   json::member { "events", timeline_serial }  }
 	};
 
-	return json::string(body);
+	return json::strung(body);
 }
 
 std::string
@@ -417,10 +417,10 @@ update_sync_rooms(client &client,
 	r[0].emplace_back(update_sync_room(client, room, since, event));
 	m[0].emplace_back(room.room_id, r[0].back());
 
-	const std::string join{json::string(m[0].data(), m[0].data() + m[0].size())};
-	const std::string leave{json::string(m[1].data(), m[1].data() + m[1].size())};
-	const std::string invite{json::string(m[2].data(), m[2].data() + m[2].size())};
-	return json::string(json::members
+	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
+	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
+	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
+	return json::strung(json::members
 	{
 		{ "join",     join    },
 		{ "leave",    leave   },
@@ -481,19 +481,19 @@ initial_sync_room(client &client,
 	{
 		const m::event::query<m::event::where::equal> state_query
 		{
-			{ "room_id",      room.room_id     },
-			{ "state_key",    ""               },
+			{ "room_id",    room.room_id     },
+			{ "is_state",   true             },
 		};
 
 		m::events::for_each(state_query, [&state](const auto &event)
 		{
-			state.emplace_back(json::string(event));
+			state.emplace_back(json::strung(event));
 		});
 	}
 
 	const auto state_serial
 	{
-		json::string(state.data(), state.data() + state.size())
+		json::strung(state.data(), state.data() + state.size())
 	};
 
 	std::vector<std::string> timeline;
@@ -509,7 +509,7 @@ initial_sync_room(client &client,
 				return true;
 
 			if(!defined(json::get<"state_key"_>(event)))
-				timeline.emplace_back(json::string(event));
+				timeline.emplace_back(json::strung(event));
 
 			return false;
 		});
@@ -517,7 +517,7 @@ initial_sync_room(client &client,
 
 	const auto timeline_serial
 	{
-		json::string(timeline.data(), timeline.data() + timeline.size())
+		json::strung(timeline.data(), timeline.data() + timeline.size())
 	};
 
 	const json::members body
@@ -526,7 +526,7 @@ initial_sync_room(client &client,
 		{ "timeline",   json::member { "events", timeline_serial }  }
 	};
 
-	return json::string(body);
+	return json::strung(body);
 }
 
 std::string
@@ -560,10 +560,10 @@ initial_sync_rooms(client &client,
 		m.at(i).emplace_back(room_id, r.at(i).back());
 	});
 
-	const std::string join{json::string(m[0].data(), m[0].data() + m[0].size())};
-	const std::string leave{json::string(m[1].data(), m[1].data() + m[1].size())};
-	const std::string invite{json::string(m[2].data(), m[2].data() + m[2].size())};
-	return json::string(json::members
+	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
+	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
+	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
+	return json::strung(json::members
 	{
 		{ "join",     join    },
 		{ "leave",    leave   },

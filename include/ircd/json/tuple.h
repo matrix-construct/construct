@@ -625,7 +625,21 @@ template<class dst,
          class src>
 typename std::enable_if
 <
-	std::is_convertible<src, dst>::value,
+	std::is_base_of<json::string, dst>() &&
+	std::is_convertible<src, ircd::string_view>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = unquote(string_view{std::forward<src>(s)});
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	!std::is_base_of<json::string, dst>() &&
+	std::is_convertible<src, dst>(),
 void>::type
 _assign(dst &d,
         src&& s)
@@ -914,7 +928,7 @@ template<class T>
 typename std::enable_if<serialized_lex_cast<T>(), bool>::type
 defined(T&& t)
 {
-	return t != T{0};
+	return t != typename std::remove_reference<T>::type {0};
 }
 
 template<class... T>
@@ -977,7 +991,7 @@ template<class... T>
 std::ostream &
 operator<<(std::ostream &s, const tuple<T...> &t)
 {
-    s << json::string(t);
+    s << json::strung(t);
     return s;
 }
 
