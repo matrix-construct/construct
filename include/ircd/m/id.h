@@ -47,6 +47,7 @@ struct ircd::m::id
 	struct user;
 	struct room;
 	struct alias;
+
 	template<class T, size_t SIZE = 256> struct buf;
 
 	enum sigil
@@ -66,18 +67,19 @@ struct ircd::m::id
 	// Extract elements
 	string_view local() const                    { return split(*this, ':').first;                 }
 	string_view host() const                     { return split(*this, ':').second;                }
-	string_view name() const                     { return lstrip(local(), '@');                    }
+	string_view name() const                     { return lstrip(local(), sigil);                  }
+	string_view hostname() const;
+	uint16_t hostport() const;
 
-  private:
-	static string_view generate_random_timebased(const enum sigil &, char *const &buf, const size_t &max);
-	static string_view generate_random_prefixed(const enum sigil &, const string_view &prefix, char *const &buf, const size_t &max);
+  protected:
+	struct generator;
 
   public:
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
-	id(const enum sigil &, char *const &buf, const size_t &max, const generate_t &, const string_view &host);
-	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &name, const string_view &host);
-	id(const enum sigil &, char *const &buf, const size_t &max, const string_view &id);
+	id(const enum sigil &, const mutable_buffer &, const generate_t &, const string_view &host);
+	id(const enum sigil &, const mutable_buffer &, const string_view &name, const string_view &host);
+	id(const enum sigil &, const mutable_buffer &, const string_view &id);
 	id(const enum sigil &, const string_view &id);
 	id(const enum sigil &);
 	id(const string_view &id);
@@ -108,10 +110,10 @@ struct ircd::m::id::buf
 	};
 
   private:
-	std::array<char, SIZE> b;
+	fixed_buffer<mutable_buffer, SIZE> b;
 
   public:
-	operator const_buffer() const
+	operator const fixed_buffer<mutable_buffer, SIZE> &() const
 	{
 		return b;
 	}
@@ -123,13 +125,13 @@ struct ircd::m::id::buf
 
 	template<class... args>
 	buf(args&&... a)
-	:T{b.data(), b.size(), std::forward<args>(a)...}
+	:T{b, std::forward<args>(a)...}
 	{}
 
 	buf() = default;
 	buf &operator=(const string_view &s)
 	{
-		static_cast<T &>(*this) = T{b.data(), b.size(), s};
+		static_cast<T &>(*this) = T{b, s};
 		return *this;
 	}
 };
@@ -165,3 +167,26 @@ struct ircd::m::id::alias
 	using buf = m::id::buf<alias>;
 	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
 };
+
+inline uint16_t
+ircd::m::id::hostport()
+const try
+{
+	const auto port
+	{
+		split(host(), ':').second
+	};
+
+	return port? lex_cast<uint16_t>(port) : 8448;
+}
+catch(const std::exception &e)
+{
+	return 8448;
+}
+
+inline ircd::string_view
+ircd::m::id::hostname()
+const
+{
+	return split(host(), ':').first;
+}

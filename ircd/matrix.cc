@@ -1678,6 +1678,12 @@ std::set<std::shared_ptr<ircd::m::indexer>> ircd::m::indexers
 // m/id.h
 //
 
+struct ircd::m::id::generator
+{
+	static string_view random_timebased(const enum sigil &, const mutable_buffer &);
+	static string_view random_prefixed(const enum sigil &, const string_view &prefix, const mutable_buffer &);
+};
+
 ircd::m::id::id(const string_view &id)
 :string_view{id}
 ,sigil{m::sigil(id)}
@@ -1700,12 +1706,11 @@ ircd::m::id::id(const enum sigil &sigil,
 }
 
 ircd::m::id::id(const enum sigil &sigil,
-                char *const &buf,
-                const size_t &max,
+                const mutable_buffer &buf,
                 const string_view &id)
 :string_view
 {
-	buf, strlcpy(buf, id, max)
+	buffer::data(buf), strlcpy(buffer::data(buf), id, buffer::size(buf))
 }
 ,sigil{sigil}
 {
@@ -1714,12 +1719,15 @@ ircd::m::id::id(const enum sigil &sigil,
 }
 
 ircd::m::id::id(const enum sigil &sigil,
-                char *const &buf,
-                const size_t &max,
+                const mutable_buffer &buf,
                 const string_view &name,
                 const string_view &host)
 :string_view{[&]() -> string_view
 {
+	using buffer::data;
+	using buffer::size;
+
+	const size_t &max{size(buf)};
 	if(!max)
 		return {};
 
@@ -1734,39 +1742,35 @@ ircd::m::id::id(const enum sigil &sigil,
 
 	if(!has_sep && host.empty())
 	{
-		len += strlcpy(buf + len, name, max - len);
+		len += strlcpy(data(buf) + len, name, max - len);
 	}
 	else if(!has_sep && !host.empty())
 	{
-		len += fmt::snprintf(buf + len, max - len, "%s:%s",
+		len += fmt::snprintf(data(buf) + len, max - len, "%s:%s",
 		                     name,
 		                     host);
 	}
 	else if(has_sep == 1 && !host.empty() && !split(name, ':').second.empty())
 	{
-		len += strlcpy(buf + len, name, max - len);
+		len += strlcpy(data(buf) + len, name, max - len);
 	}
-	else if(has_sep == 1 && !host.empty())
+	else if(has_sep >= 1 && !host.empty())
 	{
 		if(split(name, ':').second != host)
 			throw INVALID_MXID("MXID must be on host '%s'", host);
 
-		len += strlcpy(buf + len, name, max - len);
+		len += strlcpy(data(buf) + len, name, max - len);
 	}
-	else if(has_sep && !host.empty())
-	{
-		throw INVALID_MXID("Not a valid '%s' mxid", reflect(sigil));
-	}
+	//else throw INVALID_MXID("Not a valid '%s' mxid", reflect(sigil));
 
-	return { buf, len };
+	return { data(buf), len };
 }()}
 ,sigil{sigil}
 {
 }
 
 ircd::m::id::id(const enum sigil &sigil,
-                char *const &buf,
-                const size_t &max,
+                const mutable_buffer &buf,
                 const generate_t &,
                 const string_view &host)
 :string_view{[&]
@@ -1774,26 +1778,24 @@ ircd::m::id::id(const enum sigil &sigil,
 	char name[64]; switch(sigil)
 	{
 		case sigil::USER:
-			generate_random_prefixed(sigil::USER, "guest", name, sizeof(name));
+			generator::random_prefixed(sigil::USER, "guest", name);
 			break;
 
 		case sigil::ALIAS:
-			generate_random_prefixed(sigil::ALIAS, "", name, sizeof(name));
+			generator::random_prefixed(sigil::ALIAS, "", name);
 			break;
 
 		default:
-			generate_random_timebased(sigil, name, sizeof(name));
+			generator::random_timebased(sigil, name);
 			break;
 	};
 
 	const auto len
 	{
-		fmt::snprintf(buf, max, "%s:%s",
-		              name,
-		              host)
+		fmt::sprintf(buf, "%s:%s", name, host)
 	};
 
-	return string_view { buf, size_t(len) };
+	return string_view { buffer::data(buf), size_t(len) };
 }()}
 ,sigil{sigil}
 {
@@ -1849,24 +1851,34 @@ const
 }
 
 ircd::string_view
-ircd::m::id::generate_random_prefixed(const enum sigil &sigil,
-                                      const string_view &prefix,
-                                      char *const &buf,
-                                      const size_t &max)
+ircd::m::id::generator::random_prefixed(const enum sigil &sigil,
+                                        const string_view &prefix,
+                                        const mutable_buffer &buf)
 {
-	const uint32_t num(rand::integer());
-	const size_t len(fmt::snprintf(buf, max, "%c%s%u", char(sigil), prefix, num));
-	return { buf, len };
+	using buffer::data;
+
+	const auto len
+	{
+		fmt::sprintf(buf, "%c%s%u", char(sigil), prefix, rand::integer())
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::m::id::generate_random_timebased(const enum sigil &sigil,
-                                       char *const &buf,
-                                       const size_t &max)
+ircd::m::id::generator::random_timebased(const enum sigil &sigil,
+                                         const mutable_buffer &buf)
 {
+	using buffer::data;
+	using buffer::size;
+
 	const auto utime(microtime());
-	const size_t len(snprintf(buf, max, "%c%zd%06d", char(sigil), utime.first, utime.second));
-	return { buf, len };
+	const auto len
+	{
+		snprintf(data(buf), size(buf), "%c%zd%06d", char(sigil), utime.first, utime.second)
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 enum ircd::m::id::sigil
