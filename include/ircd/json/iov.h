@@ -69,9 +69,8 @@ struct ircd::json::iov
 struct ircd::json::iov::push
 :protected ircd::json::iov::node
 {
-	template<class... args>
-	push(iov &iov, args&&... a)
-	:node{iov, std::forward<args>(a)...}
+	push(iov &iov, json::member m)
+	:node{iov, std::move(m)}
 	{}
 
 	push() = default;
