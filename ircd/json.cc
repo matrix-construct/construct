@@ -330,6 +330,12 @@ ircd::json::stringify(mutable_buffer &head,
 		return &m;
 	});
 
+	std::sort(m, m + iov.size(), []
+	(const member *const &a, const member *const &b)
+	{
+		return *a < *b;
+	});
+
 	return stringify(head, m, m + iov.size());
 }
 
