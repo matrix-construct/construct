@@ -89,9 +89,12 @@ struct string_specifier
 	static const std::tuple
 	<
 		const char *,
-		ircd::string_view,
+		std::string,
 		std::string_view,
-		std::string
+		ircd::string_view,
+		ircd::json::string,
+		ircd::json::object,
+		ircd::json::array
 	>
 	types;
 
@@ -769,7 +772,10 @@ fmt::generate_string(char *&out,
 
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
-	if(type == typeid(ircd::string_view))
+	if(type == typeid(ircd::string_view) ||
+	   type == typeid(ircd::json::string) ||
+	   type == typeid(ircd::json::object) ||
+	   type == typeid(ircd::json::array))
 	{
 		const auto &str(*static_cast<const ircd::string_view *>(ptr));
 		return karma::generate(out, gen, str);
