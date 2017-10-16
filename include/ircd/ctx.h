@@ -82,6 +82,9 @@ namespace ircd::ctx { inline namespace this_ctx
 
 	ctx &cur();                                  // Assumptional reference to *current
 
+	const uint64_t &id();                        // Unique ID for cur ctx
+	string_view name();                          // Optional label for cur ctx
+
 	void wait();                                 // Returns when context is woken up.
 	void yield();                                // Allow other contexts to run before returning.
 

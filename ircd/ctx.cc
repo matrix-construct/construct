@@ -57,7 +57,7 @@ struct ircd::ctx::ctx
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 
-	ctx(const char *const &name                  = "<unnamed context>",
+	ctx(const char *const &name                  = "<noname>",
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
 	    const context::flags &flags              = (context::flags)0,
 	    boost::asio::io_service *const &ios      = ircd::ios);
@@ -327,6 +327,22 @@ ircd::ctx::this_ctx::interruption_requested()
 	return interruption(cur());
 }
 
+/// Returns unique ID of currently running context
+const uint64_t &
+ircd::ctx::this_ctx::id()
+{
+	static const uint64_t zero{0};
+	return current? id(cur()) : zero;
+}
+
+/// Returns optional developer-given name for currently running context
+ircd::string_view
+ircd::ctx::this_ctx::name()
+{
+	static const string_view nada{"*"};
+	return current? name(cur()) : nada;
+}
+
 /// Yield to context `ctx`.
 ///
 ///
@@ -569,7 +585,7 @@ ircd::ctx::context::context(function func,
                             const flags &flags)
 :context
 {
-	"<unnamed context>", DEFAULT_STACK_SIZE, flags, std::move(func)
+	"<noname>", DEFAULT_STACK_SIZE, flags, std::move(func)
 }
 {
 }
