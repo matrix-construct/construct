@@ -214,6 +214,6 @@ inline ircd::microtime_t
 ircd::microtime()
 {
 	struct timeval tv;
-	gettimeofday(&tv, nullptr);
+	syscall(::gettimeofday, &tv, nullptr);
 	return { tv.tv_sec, tv.tv_usec };
 }
