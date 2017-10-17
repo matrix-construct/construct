@@ -161,23 +161,21 @@ ircd::token_count(const string_view &str,
 size_t
 ircd::tokens(const string_view &str,
              const char &sep,
-             char *const &buf,
-             const size_t &max,
+             const mutable_buffer &buf,
              const token_view &closure)
 {
 	const char ssep[2] { sep, '\0' };
-	return tokens(str, ssep, buf, max, closure);
+	return tokens(str, ssep, buf, closure);
 }
 
 size_t
 ircd::tokens(const string_view &str,
              const char *const &sep,
-             char *const &buf,
-             const size_t &max,
+             const mutable_buffer &buf,
              const token_view &closure)
 {
-	char *ptr(buf);
-	char *const stop(buf + max);
+	char *ptr(data(buf));
+	char *const stop(data(buf) + size(buf));
 	tokens(str, sep, [&closure, &ptr, &stop]
 	(const string_view &token)
 	{
@@ -191,7 +189,7 @@ ircd::tokens(const string_view &str,
 		closure(string_view(dest, token.size()));
 	});
 
-	return std::distance(buf, ptr);
+	return std::distance(data(buf), ptr);
 }
 
 size_t
@@ -266,7 +264,7 @@ namespace ircd
 	thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
 	thread_local uint lex_cast_cur;
 
-	template<size_t N, class T> static string_view _lex_cast(const T &i, char *buf, size_t max);
+	template<size_t N, class T> static string_view _lex_cast(const T &i, mutable_buffer buf);
 	template<class T> static T _lex_cast(const string_view &s);
 }
 
@@ -276,8 +274,7 @@ template<size_t N,
          class T>
 ircd::string_view
 ircd::_lex_cast(const T &i,
-                char *buf,
-                size_t max)
+                mutable_buffer buf)
 try
 {
 	using array = std::array<char, N>;
@@ -285,14 +282,13 @@ try
 	if(!buf)
 	{
 		buf = lex_cast_buf[lex_cast_cur++];
-		max = LEX_CAST_BUFSIZE;
 		lex_cast_cur %= LEX_CAST_BUFS;
 	}
 
-	assert(max >= N);
-	auto &a(*reinterpret_cast<array *>(buf));
+	assert(size(buf) >= N);
+	auto &a(*reinterpret_cast<array *>(data(buf)));
 	a = boost::lexical_cast<array>(i);
-	return { buf, strnlen(buf, max) };
+	return { data(buf), strnlen(data(buf), size(buf)) };
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -315,101 +311,122 @@ catch(const boost::bad_lexical_cast &e)
 
 template<> ircd::string_view
 ircd::lex_cast(bool i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(8);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(int8_t i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(8);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(uint8_t i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(8);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(short i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(8);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(ushort i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(8);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(int i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(16);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(uint i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(16);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(long i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(32);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(ulong i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(32);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(double i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(64);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
 }
 
 template<> ircd::string_view
 ircd::lex_cast(long double i,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	static const size_t MAX(64);
-	return _lex_cast<MAX>(i, buf, max);
+	return _lex_cast<MAX>(i, buf);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(nanoseconds i,
+               const mutable_buffer &buf)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i.count(), buf);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(microseconds i,
+               const mutable_buffer &buf)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i.count(), buf);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(milliseconds i,
+               const mutable_buffer &buf)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i.count(), buf);
+}
+
+template<> ircd::string_view
+ircd::lex_cast(seconds i,
+               const mutable_buffer &buf)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i.count(), buf);
 }
 
 template<> bool
@@ -478,6 +495,30 @@ template<> long double
 ircd::lex_cast(const string_view &s)
 {
 	return _lex_cast<long double>(s);
+}
+
+template<> ircd::nanoseconds
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<1L, 1000000000L>>(_lex_cast<time_t>(s));
+}
+
+template<> ircd::microseconds
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<1L, 1000000L>>(_lex_cast<time_t>(s));
+}
+
+template<> ircd::milliseconds
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<1L, 1000L>>(_lex_cast<time_t>(s));
+}
+
+template<> ircd::seconds
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<1L, 1L>>(_lex_cast<time_t>(s));
 }
 
 template<> bool
@@ -554,6 +595,34 @@ template<> bool
 ircd::try_lex_cast<long double>(const string_view &s)
 {
 	long double i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<ircd::nanoseconds>(const string_view &s)
+{
+	time_t i; //TODO: XXX
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<ircd::microseconds>(const string_view &s)
+{
+	time_t i; //TODO: XXX
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<ircd::milliseconds>(const string_view &s)
+{
+	time_t i; //TODO: XXX
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<ircd::seconds>(const string_view &s)
+{
+	time_t i; //TODO: XXX
 	return boost::conversion::try_lexical_convert(s, i);
 }
 

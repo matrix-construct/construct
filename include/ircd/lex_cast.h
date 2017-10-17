@@ -38,7 +38,7 @@ namespace ircd
 	template<class T> T lex_cast(const string_view &);
 
 	// User supplied destination buffer
-	template<class T> string_view lex_cast(T, char *const &buf, const size_t &max);
+	template<class T> string_view lex_cast(T, const mutable_buffer &buf);
 
 	// Circular static thread_local buffer
 	const size_t LEX_CAST_BUFS {256}; // plenty
@@ -77,6 +77,10 @@ namespace ircd
 	template<> bool try_lex_cast<uint8_t>(const string_view &);
 	template<> bool try_lex_cast<int8_t>(const string_view &);
 	template<> bool try_lex_cast<bool>(const string_view &);
+	template<> bool try_lex_cast<seconds>(const string_view &);
+	template<> bool try_lex_cast<milliseconds>(const string_view &);
+	template<> bool try_lex_cast<microseconds>(const string_view &);
+	template<> bool try_lex_cast<nanoseconds>(const string_view &);
 
 	template<> std::string &lex_cast(std::string &);                          // trivial
 	template<> std::string lex_cast(const std::string &);                     // trivial
@@ -93,21 +97,29 @@ namespace ircd
 	template<> uint8_t lex_cast(const string_view &);
 	template<> int8_t lex_cast(const string_view &);
 	template<> bool lex_cast(const string_view &);
+	template<> seconds lex_cast(const string_view &);
+	template<> milliseconds lex_cast(const string_view &);
+	template<> microseconds lex_cast(const string_view &);
+	template<> nanoseconds lex_cast(const string_view &);
 
-	template<> string_view lex_cast(const std::string &, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(const std::string_view &, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(const string_view &, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(long double, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(double, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(ulong, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(long, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(uint, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(int, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(ushort, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(short, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(uint8_t, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(int8_t, char *const &buf, const size_t &max);
-	template<> string_view lex_cast(bool, char *const &buf, const size_t &max);
+	template<> string_view lex_cast(const std::string &, const mutable_buffer &buf);
+	template<> string_view lex_cast(const std::string_view &, const mutable_buffer &buf);
+	template<> string_view lex_cast(const string_view &, const mutable_buffer &buf);
+	template<> string_view lex_cast(seconds, const mutable_buffer &buf);
+	template<> string_view lex_cast(milliseconds, const mutable_buffer &buf);
+	template<> string_view lex_cast(microseconds, const mutable_buffer &buf);
+	template<> string_view lex_cast(nanoseconds, const mutable_buffer &buf);
+	template<> string_view lex_cast(long double, const mutable_buffer &buf);
+	template<> string_view lex_cast(double, const mutable_buffer &buf);
+	template<> string_view lex_cast(ulong, const mutable_buffer &buf);
+	template<> string_view lex_cast(long, const mutable_buffer &buf);
+	template<> string_view lex_cast(uint, const mutable_buffer &buf);
+	template<> string_view lex_cast(int, const mutable_buffer &buf);
+	template<> string_view lex_cast(ushort, const mutable_buffer &buf);
+	template<> string_view lex_cast(short, const mutable_buffer &buf);
+	template<> string_view lex_cast(uint8_t, const mutable_buffer &buf);
+	template<> string_view lex_cast(int8_t, const mutable_buffer &buf);
+	template<> string_view lex_cast(bool, const mutable_buffer &buf);
 }
 
 /// Convert a native number to a string. The returned value is a view of the
@@ -117,7 +129,7 @@ template<class T>
 ircd::string_view
 ircd::lex_cast(const T &t)
 {
-	return lex_cast<T>(t, nullptr, 0);
+	return lex_cast<T>(t, null_buffer);
 }
 
 /// Conversion to an std::string creates a copy when the input is a
@@ -192,11 +204,10 @@ template<>
 __attribute__((warning("unnecessary lexical cast")))
 inline ircd::string_view
 ircd::lex_cast(const string_view &s,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
-	s.copy(buf, max);
-	return { buf, max };
+	s.copy(data(buf), size(buf));
+	return { data(buf), s.size() };
 }
 
 /// Specialization of a string to string conversion to user's buffer;
@@ -206,11 +217,10 @@ template<>
 __attribute__((warning("unnecessary lexical cast")))
 inline ircd::string_view
 ircd::lex_cast(const std::string_view &s,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
-	s.copy(buf, max);
-	return { buf, max };
+	s.copy(data(buf), size(buf));
+	return { data(buf), s.size() };
 }
 
 /// Specialization of a string to string conversion to user's buffer;
@@ -220,11 +230,10 @@ template<>
 __attribute__((warning("unnecessary lexical cast")))
 inline ircd::string_view
 ircd::lex_cast(const std::string &s,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
-	s.copy(buf, max);
-	return { buf, max };
+	s.copy(data(buf), size(buf));
+	return { data(buf), s.size() };
 }
 
 /// Template basis; if no specialization is matched there is no fallback here
@@ -232,8 +241,7 @@ template<class T>
 __attribute__((error("unsupported lexical cast")))
 ircd::string_view
 ircd::lex_cast(T t,
-               char *const &buf,
-               const size_t &max)
+               const mutable_buffer &buf)
 {
 	assert(0);
 	return {};
