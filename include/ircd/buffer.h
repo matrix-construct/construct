@@ -81,6 +81,9 @@ namespace ircd::buffer
 	template<class it> it rend(const buffer<it> &buffer);
 
 	// Single buffer tools
+	template<class it> bool null(const buffer<it> &buffer);
+	template<class it> bool empty(const buffer<it> &buffer);
+	template<class it> bool operator!(const buffer<it> &buffer);
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
@@ -567,6 +570,27 @@ ircd::buffer::size(const buffer<it> &buffer)
 {
 	assert(get<0>(buffer) <= get<1>(buffer));
 	return std::distance(get<0>(buffer), get<1>(buffer));
+}
+
+template<class it>
+bool
+ircd::buffer::operator!(const buffer<it> &buffer)
+{
+	return empty(buffer);
+}
+
+template<class it>
+bool
+ircd::buffer::empty(const buffer<it> &buffer)
+{
+	return null(buffer) || !std::distance(get<0>(buffer), get<1>(buffer));
+}
+
+template<class it>
+bool
+ircd::buffer::null(const buffer<it> &buffer)
+{
+	return get<0>(buffer) == nullptr;
 }
 
 template<class it>
