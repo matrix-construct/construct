@@ -2331,7 +2331,9 @@ size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
-	assert(!r.empty());
+	if(r.empty())
+		return 0;
+
 	const column &c(r[0]);
 	const database &d(c);
 	const ircd::timer timer;
@@ -3411,16 +3413,18 @@ ircd::db::_seek(database::column &c,
 		return valid(*it);
 	}
 
+	const auto it_key
+	{
+		valid_it? slice(it->key()) : string_view{}
+	};
+
 	const auto blocking_it
 	{
-		_seek_offload(c, opts, [&valid_it, &it, &p]
+		_seek_offload(c, opts, [&valid_it, &it_key, &p]
 		(rocksdb::Iterator &blocking_it)
 		{
 			if(valid_it)
-			{
-				assert(valid(*it));
-				_seek_(blocking_it, slice(it->key()));
-			}
+				_seek_(blocking_it, it_key);
 
 			_seek_(blocking_it, p);
 		})
