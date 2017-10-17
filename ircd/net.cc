@@ -534,7 +534,9 @@ std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
 	std::string ret(256, char{});
-	ret.resize(fmt::sprintf(mutable_buffer{ret}, "%s:%u", string(address(ep)), port(ep)));
+	const auto addr{string(address(ep))};
+	const auto data{const_cast<char *>(ret.data())};
+	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
 	return ret;
 }
 
@@ -712,7 +714,7 @@ ircd::net::socket::disconnect(const dc &type)
 
 	if(sd.is_open())
 		log::debug("socket(%p): disconnect: %s type: %d",
-		           this,
+		           (const void *)this,
 		           string(remote()),
 		           uint(type));
 
