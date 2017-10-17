@@ -237,27 +237,27 @@ struct ircd::vector_view
 	{}
 
 	vector_view(T *const &start, const size_t &size)
-	:vector_view{start, start + size}
+	:vector_view(start, start + size)
 	{}
 
-	vector_view(const std::initializer_list<const T> &list)
-	:vector_view{std::begin(list), std::end(list)}
+	vector_view(const std::initializer_list<T> &list)
+	:vector_view(std::begin(list), std::end(list))
 	{}
 
 	template<class U,
 	         class A>
 	vector_view(std::vector<U, A> &v)
-	:vector_view{v.data(), v.size()}
+	:vector_view(v.data(), v.size())
 	{}
 
 	template<size_t SIZE>
 	vector_view(T (&buffer)[SIZE])
-	:vector_view{buffer, SIZE}
+	:vector_view(buffer, SIZE)
 	{}
 
 	template<size_t SIZE>
 	vector_view(std::array<T, SIZE> &array)
-	:vector_view{array.data(), array.size()}
+	:vector_view(array.data(), array.size())
 	{}
 
 	vector_view() = default;
