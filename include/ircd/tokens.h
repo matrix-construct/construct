@@ -38,8 +38,8 @@ namespace ircd
 	size_t tokens(const string_view &str, const char *const &sep, const size_t &limit, const token_view &);
 
 	// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
-	size_t tokens(const string_view &str, const char &sep, char *const &buf, const size_t &max, const token_view &);
-	size_t tokens(const string_view &str, const char *const &sep, char *const &buf, const size_t &max, const token_view &);
+	size_t tokens(const string_view &str, const char &sep, const mutable_buffer &buf, const token_view &);
+	size_t tokens(const string_view &str, const char *const &sep, const mutable_buffer &buf, const token_view &);
 
 	// Receive token view into iterator range
 	template<class it, class sep> it tokens(const string_view &str, const sep &, const it &b, const it &e);
