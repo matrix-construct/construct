@@ -106,7 +106,6 @@ namespace ircd
 	using json::defined;
 	using json::for_each;
 	using json::until;
-	using json::get;
 }
 
 template<size_t SIZE>

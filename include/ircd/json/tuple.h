@@ -231,27 +231,27 @@ val(const tuple &t)
 }
 
 template<size_t hash,
-         class... T>
-const tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
-get(const tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
+get(const tuple &t)
 {
 	constexpr size_t idx
 	{
-		indexof<tuple<T...>, hash>()
+		indexof<tuple, hash>()
 	};
 
 	return val<idx>(t);
 }
 
 template<size_t hash,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()>
-get(const tuple<T...> &t,
-    const tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &def)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()>>
+get(const tuple &t,
+    const tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 {
 	constexpr size_t idx
 	{
-		indexof<tuple<T...>, hash>()
+		indexof<tuple, hash>()
 	};
 
 	const auto &ret
@@ -259,33 +259,33 @@ get(const tuple<T...> &t,
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple<T...>, idx>;
+	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: undefined
 	return ret != value_type{}? ret : def;
 }
 
 template<size_t hash,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
-get(tuple<T...> &t)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+get(tuple &t)
 {
 	constexpr size_t idx
 	{
-		indexof<tuple<T...>, hash>()
+		indexof<tuple, hash>()
 	};
 
 	return val<idx>(t);
 }
 
 template<size_t hash,
-         class... T>
-tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &
-get(tuple<T...> &t,
-    tuple_value_type<tuple<T...>, indexof<tuple<T...>, hash>()> &def)
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+get(tuple &t,
+    tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 {
 	//TODO: undefined
-	auto &ret{get<hash, T...>(t)};
+	auto &ret{get<hash, tuple>(t)};
 	using value_type = decltype(ret);
 	return ret != value_type{}? ret : def;
 }
