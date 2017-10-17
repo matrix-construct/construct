@@ -191,7 +191,8 @@ struct ircd::buffer::mutable_buffer_base
 	using buffer<T>::buffer;
 
 	mutable_buffer_base()
-	:buffer<iterator>{} {}
+	:buffer<iterator>{}
+	{}
 
 	template<size_t SIZE>
 	mutable_buffer_base(value_type (&buf)[SIZE])
@@ -226,6 +227,8 @@ struct ircd::buffer::mutable_buffer
 	{
 		closure(*this);
 	}
+
+	mutable_buffer() = default;
 };
 
 /// A writable buffer of unsigned signed char data. Convention is for this
@@ -250,6 +253,8 @@ struct ircd::buffer::mutable_raw_buffer
 	{
 		closure(*this);
 	}
+
+	mutable_raw_buffer() = default;
 };
 
 namespace ircd::buffer
