@@ -54,6 +54,16 @@ namespace ircd::log
 	std::array<const char *, num_of<facility>()> fname;
 	std::array<std::ofstream, num_of<facility>()> file;
 
+	std::ostream &out_console
+	{
+		std::cout
+	};
+
+	std::ostream &err_console
+	{
+		std::cerr
+	};
+
 	/*
 	ConfEntry conf_log_table[] =
 	{
@@ -66,9 +76,13 @@ namespace ircd::log
 	};
 	*/
 
+	static void check(std::ostream &) noexcept;
 	static void open(const facility &fac);
 	static void prefix(const facility &fac, const string_view &date);
 	static void suffix(const facility &fac);
+	static std::ostream &compose(std::ostream &s, const string_view &buf, const string_view &name);
+	static void slog(const facility &fac, const std::function<void (std::ostream &)> &closure) noexcept;
+	static void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
 }
 
 void
@@ -81,7 +95,8 @@ ircd::log::init()
 	console_err[CRITICAL]    = true;
 	console_err[ERROR]       = true;
 	console_err[WARNING]     = true;
-	console_err[NOTICE]      = true;
+
+	console_out[NOTICE]      = true;
 	console_out[INFO]        = true;
 	console_out[DEBUG]       = ircd::debugmode;
 
@@ -223,12 +238,6 @@ ircd::log::mark(const facility &fac,
 	vlog(fac, name, "%s", msg);
 }
 
-namespace ircd::log
-{
-	void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
-	std::ostream &compose(std::ostream &s, const string_view &buf, const string_view &name);
-}
-
 /// ircd::log is not thread-safe. This internal function is called when the
 /// normal vlog() detects it's not on the main IRCd thread. It then generates
 /// the formatted log message on this thread, and posts the message to the
@@ -240,17 +249,17 @@ ircd::log::vlog_threadsafe(const facility &fac,
                            const va_rtti &ap)
 {
 	// Generate the formatted message on this thread first
-	std::string buf
+	std::string str
 	{
 		fmt::vsnstringf(1024, fmt, ap)
 	};
 
 	// The reference to name has to be safely maintained
-	ircd::post([fac, buf(std::move(buf)), &name]
+	ircd::post([fac, str(std::move(str)), name(std::move(name))]
 	{
-		slog(fac, [&buf, &name](std::ostream &s)
+		slog(fac, [&str, &name](std::ostream &s)
 		{
-			compose(s, buf, name);
+			compose(s, str, name);
 		});
 	});
 }
@@ -277,48 +286,40 @@ ircd::log::vlog(const facility &fac,
 	}
 
 	char buf[1024];
-	fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
-	slog(fac, [&buf, &name](std::ostream &s)
+	const auto len
 	{
-		compose(s, buf, name);
+		fmt::vsprintf(buf, fmt, ap)
+	};
+
+	const string_view msg{buf, size_t(len)};
+	slog(fac, [&msg, &name](std::ostream &s)
+	{
+		compose(s, msg, name);
 	});
-}
-
-std::ostream &
-ircd::log::compose(std::ostream &s,
-                   const string_view &buf,
-                   const string_view &name)
-{
-	s << std::setw(9)
-	  << std::right
-	  << name
-	  << ' '
-	  << std::left
-	  << std::setw(8)
-	  << trunc(ctx::name(), 8)
-	  << ' '
-	  << std::right
-	  << std::setw(6)
-	  << ctx::id()
-	  << std::right
-	  << " :"
-	  << buf;
-
-	return s;
 }
 
 void
 ircd::log::slog(const facility &fac,
                 const std::function<void (std::ostream &)> &closure)
+noexcept
 {
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
 		return;
 
+	// Have to be on the main thread to call slog(). If slog() yields for some
+	// reason it's a problem too. During the composition of this log message,
+	// if another log message is created from calls for normal reasons or from
+	// errors, that's not good either. We can only have one log slog() at a
+	// time for now...
 	assert_main_thread();
-
-	const unwind always_newline([&fac]
+	const ctx::critical_assertion ca;
+	static bool entered;
+	assert(!entered);
+	entered = true;
+	const unwind leaving([&fac]
 	{
 		suffix(fac);
+		entered = false;
 	});
 
 	//TODO: XXX: Add option toggle for smalldate()
@@ -326,13 +327,37 @@ ircd::log::slog(const facility &fac,
 	prefix(fac, microtime(date));
 
 	if(console_err[fac])
-		closure(std::cerr);
+		closure(err_console);
 
 	if(console_out[fac])
-		closure(std::cout);
+		closure(out_console);
 
 	if(file[fac].is_open())
 		closure(file[fac]);
+}
+
+std::ostream &
+ircd::log::compose(std::ostream &s,
+                   const string_view &buf,
+                   const string_view &name)
+{
+	assert(s.good());
+
+	s << std::setw(9)
+	  << std::right
+	  << name
+	  << ' '
+	  << std::setw(8)
+	  << trunc(ctx::name(), 8)
+	  << ' '
+	  << std::setw(6)
+	  << std::right
+	  << ctx::id()
+	  << " :"
+	  << buf;
+
+	assert(s.good());
+	return s;
 }
 
 void
@@ -342,26 +367,30 @@ ircd::log::prefix(const facility &fac,
 	const auto console_prefix([&fac, &date]
 	(auto &stream)
 	{
-		stream << date << ' ';
+		check(stream);
 
-		if(console_ansi[fac])
-			stream << console_ansi[fac];
+		stream << date
+		       << ' '
+		       << (console_ansi[fac]? console_ansi[fac] : "");
 
-		stream << std::setw(8) << std::right << reflect(fac);
+		assert(stream.good());
 
-		if(console_ansi[fac])
-			stream << "\033[0m ";
-		else
-			stream << ' ';
+		stream << std::setw(8)
+		       << std::right
+		       << reflect(fac)
+		       << (console_ansi[fac]? "\033[0m " : " ");
+
+		assert(stream.good());
 	});
 
 	if(console_err[fac])
-		console_prefix(std::cerr);
+		console_prefix(err_console);
 
 	if(console_out[fac])
-		console_prefix(std::cout);
+		console_prefix(out_console);
 
-	file[fac] << date << ' ' << reflect(fac) << ' ';
+	if(file[fac].good())
+		file[fac] << date << ' ' << reflect(fac) << ' ';
 }
 
 void
@@ -370,31 +399,57 @@ ircd::log::suffix(const facility &fac)
 	const auto console_newline([&fac]
 	(auto &stream)
 	{
-		if(console_flush[fac])
-			stream << std::endl;
-		else
-			stream << '\n';
+		assert(stream.good());
+
+		stream << "\r\n";
+		assert(stream.good());
+
+		if(console_flush[fac] || std::current_exception())
+		{
+			std::flush(stream);
+			assert(stream.good());
+		}
 	});
 
 	if(console_err[fac])
-		console_newline(std::cerr);
+		console_newline(err_console);
 
 	if(console_out[fac])
-		console_newline(std::cout);
+		console_newline(out_console);
 
-	// If the user's own code triggered an exception while streaming we still want to
-	// provide a newline. But if the exception is an actual log file exception don't
-	// touch the stream anymore.
-	if(unlikely(std::current_exception() && !file[fac].good()))
-		return;
-
-	if(!file[fac].is_open())
-		return;
-
-	if(file_flush[fac])
-		file[fac] << std::endl;
-	else
+	if(file[fac].is_open() && file[fac].good() && !std::current_exception())
+	{
 		file[fac] << '\n';
+
+		if(file_flush[fac])
+			file[fac].flush();
+	}
+}
+
+void
+ircd::log::check(std::ostream &s)
+noexcept try
+{
+	if(likely(s.good()))
+		return;
+
+	char buf[128];
+	snprintf(buf, sizeof(buf), "fatal: log stream good[%d] bad[%d] fail[%d] eof[%d]",
+	         s.good(),
+	         s.bad(),
+	         s.fail(),
+	         s.eof());
+
+	fprintf(stderr, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
+	fprintf(stdout, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
+	s.exceptions(s.eofbit | s.failbit | s.badbit);
+	throw std::runtime_error(buf);
+}
+catch(const std::exception &e)
+{
+	fprintf(stderr, "%s\n", e.what());
+	fprintf(stdout, "%s\n", e.what());
+	std::terminate();
 }
 
 const char *

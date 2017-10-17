@@ -53,7 +53,6 @@ namespace ircd::log
 	struct log;
 	struct console_quiet;
 
-	void slog(const facility &, const std::function<void (std::ostream &)> &);
 	void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
 	void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
 	void mark(const facility &, const char *const &msg = nullptr);
