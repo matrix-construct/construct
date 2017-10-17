@@ -383,11 +383,22 @@ struct ircd::buffer::unique_buffer
 {
 	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
 	unique_buffer(const size_t &size);
-	unique_buffer() = default;
+	unique_buffer();
 	unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
+	unique_buffer &operator=(unique_buffer &&) noexcept;
+	unique_buffer &operator=(const unique_buffer &) = delete;
 	~unique_buffer() noexcept;
 };
+
+template<class buffer,
+         uint alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer()
+:buffer
+{
+	nullptr, nullptr
+}
+{}
 
 template<class buffer,
          uint alignment>
@@ -397,8 +408,7 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<ui
 {
 	typename buffer::iterator(b.release()), size
 }
-{
-}
+{}
 
 template<class buffer,
          uint alignment>
@@ -426,10 +436,24 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&ot
 noexcept
 :buffer
 {
-	std::move(other)
+	std::move(static_cast<buffer &>(other))
 }
 {
 	get<0>(other) = nullptr;
+}
+
+template<class buffer,
+         uint alignment>
+ircd::buffer::unique_buffer<buffer, alignment> &
+ircd::buffer::unique_buffer<buffer, alignment>::operator=(unique_buffer &&other)
+noexcept
+{
+	this->~unique_buffer();
+
+	static_cast<buffer &>(*this) = std::move(static_cast<buffer &>(other));
+	get<0>(other) = nullptr;
+
+	return *this;
 }
 
 template<class buffer,
