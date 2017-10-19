@@ -346,14 +346,13 @@ noexcept try
 	          string(sock->remote()));
 
 	add_client(sock);
-	next();
 }
 catch(const std::exception &e)
 {
 	log.error("%s: in handshake(): socket(%p)[%s]: %s",
 	          std::string(*this),
 	          sock.get(),
-	          string(sock->remote()),
+	          sock->connected()? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
@@ -487,8 +486,10 @@ ircd::net::sslv23_client
 
 size_t
 ircd::net::available(const socket &s)
+noexcept
 {
-	return s.sd.available();
+	boost::system::error_code ec;
+	return s.sd.available(ec);
 }
 
 ircd::net::hostport
@@ -751,11 +752,19 @@ ircd::net::socket::disconnect(const dc &type)
 	}
 }
 
-void
+bool
 ircd::net::socket::cancel()
+noexcept
 {
-	timer.cancel();
-	sd.cancel();
+	boost::system::error_code ec[2];
+
+	timer.cancel(ec[0]);
+	sd.cancel(ec[1]);
+
+	return std::all_of(begin(ec), end(ec), [](const auto &ec)
+	{
+		return ec == boost::system::errc::success;
+	});
 }
 
 /// Asynchronous callback when the socket is ready
@@ -812,17 +821,9 @@ ircd::net::socket::handle(const std::weak_ptr<socket> wp,
                           const handler callback,
                           const error_code &ec,
                           const size_t &bytes)
-noexcept
+noexcept try
 {
-	// This handler may still be registered with asio after the socket destructs, so
-	// the weak_ptr will indicate that fact. However, this is never intended and is
-	// a debug assertion which should be corrected.
-	if(unlikely(wp.expired()))
-	{
-		log::warning("socket(%p): belated callback to handler...", this);
-		assert(0);
-		return;
-	}
+	const life_guard<socket> s{wp};
 
 	// This handler and the timeout handler are responsible for canceling each other
 	// when one or the other is entered. If the timeout handler has already fired for
@@ -843,6 +844,23 @@ noexcept
 
 	call_user(callback, ec);
 }
+catch(const std::bad_weak_ptr &e)
+{
+	// This handler may still be registered with asio after the socket destructs, so
+	// the weak_ptr will indicate that fact. However, this is never intended and is
+	// a debug assertion which should be corrected.
+	log::warning("socket(%p): belated callback to handler... (%s)",
+	             this,
+	             e.what());
+	assert(0);
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p): handle: %s",
+	           this,
+	           e.what());
+	assert(0);
+}
 
 void
 ircd::net::socket::call_user(const handler &callback,
@@ -856,9 +874,6 @@ catch(const std::exception &e)
 	log::error("socket(%p): async handler: unhandled exception: %s",
 	           this,
 	           e.what());
-
-	if(ircd::debugmode)
-		std::terminate();
 }
 
 bool
@@ -896,6 +911,7 @@ ircd::net::socket::handle_error(const error_code &ec)
 void
 ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
                                   const error_code &ec)
+noexcept try
 {
  	using namespace boost::system::errc;
 
@@ -904,7 +920,7 @@ ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
 		// A 'success' for this handler means there was a timeout on the socket
 		case success:
 			timedout = true;
-			cancel();
+			sd.cancel();
 			break;
 
 		// A cancelation means there was no timeout.
@@ -914,10 +930,27 @@ ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
 
 		// All other errors are unexpected, logged and ignored here.
 		default:
-			log::error("socket::handle_timeout(): unexpected: %s\n",
-			           ec.message());
-			break;
+			throw boost::system::system_error(ec);
 	}
+}
+catch(const boost::system::system_error &e)
+{
+	log::error("socket(%p): handle_timeout: unexpected: %s\n",
+	           (const void *)this,
+			   e.what());
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p): handle timeout: %s",
+	           (const void *)this,
+	           e.what());
+}
+
+size_t
+ircd::net::socket::available()
+const
+{
+	return sd.available();
 }
 
 bool

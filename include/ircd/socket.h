@@ -93,7 +93,7 @@ struct ircd::net::socket
 
 	void call_user(const handler &, const error_code &) noexcept;
 	bool handle_error(const error_code &ec);
-	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec);
+	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec) noexcept;
 	void handle(std::weak_ptr<socket>, handler, const error_code &, const size_t &) noexcept;
 
   public:
@@ -102,6 +102,9 @@ struct ircd::net::socket
 
 	ip::tcp::endpoint remote() const             { return sd.remote_endpoint();                    }
 	ip::tcp::endpoint local() const              { return sd.local_endpoint();                     }
+
+	bool connected() const noexcept;
+	size_t available() const;
 
 	template<class iov> auto read_some(const iov &, error_code &);
 	template<class iov> auto read_some(const iov &);
@@ -119,9 +122,8 @@ struct ircd::net::socket
 	// Asynchronous 'ready' closure
 	void operator()(const milliseconds &timeout, handler);
 	void operator()(handler);
-	void cancel();
+	bool cancel() noexcept;
 
-	bool connected() const noexcept;
 	void disconnect(const dc &type = dc::SSL_NOTIFY);
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = -1ms);
 

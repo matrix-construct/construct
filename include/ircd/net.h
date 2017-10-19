@@ -41,9 +41,9 @@ namespace ircd::net
 	string_view string(const hostport &, const mutable_buffer &buf);
 
 	bool connected(const socket &) noexcept;
+	size_t available(const socket &) noexcept;
 	hostport local_hostport(const socket &);
 	hostport remote_hostport(const socket &);
-	size_t available(const socket &);
 
 	size_t write(socket &, const ilist<const_buffer> &);     // write_all
 	size_t write(socket &, const iov<const_buffer> &);       // write_all
