@@ -209,7 +209,7 @@ namespace ircd
 #include "db.h"
 #include "js.h"
 #include "mods.h"
-#include "net.h"
+#include "net/net.h"
 #include "m.h"
 #include "resource.h"
 #include "client.h"

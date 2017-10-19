@@ -64,7 +64,7 @@ struct ircd::strand
 ///
 
 #include <ircd/ctx/continuation.h>
-#include <ircd/socket.h>
+#include <ircd/net/socket.h>
 
 inline ircd::strand::operator
 asio::io_service &()

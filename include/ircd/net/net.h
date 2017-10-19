@@ -22,6 +22,14 @@
 #pragma once
 #define HAVE_IRCD_NET_H
 
+/// Network IO subsystem.
+///
+/// Some parts of this system are not automatically included here when they
+/// involve types which cannot be forward declared without boost headers.
+/// This should not concern most developers as we have wrapped (or you should
+/// wrap!) anything we need to expose to the rest of the project, or low-level
+/// access may be had by including the asio.h header.
+///
 namespace ircd::net
 {
 	IRCD_EXCEPTION(ircd::error, error)
@@ -34,12 +42,17 @@ namespace ircd::net
 
 	using hostport_pair = std::pair<std::string, uint16_t>;
 	using hostport = IRCD_WEAK_T(hostport_pair);
-
 	const auto &host(const hostport &);
 	const auto &port(const hostport &);
 	std::string string(const hostport &);
 	string_view string(const hostport &, const mutable_buffer &buf);
+}
 
+#include "listener.h"
+
+// Public interface to socket.h because it is not included here.
+namespace ircd::net
+{
 	bool connected(const socket &) noexcept;
 	size_t available(const socket &) noexcept;
 	hostport local_hostport(const socket &);
@@ -64,21 +77,6 @@ namespace ircd
 	using net::port;
 	using net::string;
 }
-
-struct ircd::net::listener
-{
-	struct acceptor;
-
-	IRCD_EXCEPTION(ircd::error, error)
-
-  private:
-	std::unique_ptr<struct acceptor> acceptor;
-
-  public:
-	listener(const json::object &options);
-	listener(const std::string &options);
-	~listener() noexcept;
-};
 
 struct ircd::net::init
 {
