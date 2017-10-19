@@ -286,13 +286,13 @@ noexcept try
 	          std::string(*this),
 	          string(sock->remote()));
 
-/*
-	static const asio::socket_base::keep_alive keep_alive(true);
-	static const asio::socket_base::linger linger(true, 30);
-	sock->sd.set_option(keep_alive);
-	sock->sd.set_option(linger);
-	sock->sd.non_blocking(true);
-*/
+	//static const asio::socket_base::keep_alive keep_alive(true);
+	//sock->sd.set_option(keep_alive);
+
+	//static const asio::socket_base::linger linger(true, 30);
+	//sock->sd.set_option(linger);
+
+	//sock->sd.non_blocking(false);
 
 	static const auto handshake_type
 	{
@@ -304,7 +304,8 @@ noexcept try
 		std::bind(&acceptor::handshake, this, ph::_1, sock)
 	};
 
-	sock->ssl.async_handshake(handshake_type, handshake);
+	sock->ssl.async_handshake(handshake_type, std::move(handshake));
+	next();
 }
 catch(const std::exception &e)
 {
@@ -382,14 +383,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 
 	ssl.set_options
 	(
-		ssl.default_workarounds
+		//ssl.default_workarounds
 		//| ssl.no_tlsv1
 		//| ssl.no_tlsv1_1
-		| ssl.no_tlsv1_2
+		//| ssl.no_tlsv1_2
 		//| ssl.no_sslv2
-		| ssl.no_sslv3
-		//| ssl.single_dh_use
+		//| ssl.no_sslv3
+		ssl.single_dh_use
 	);
+
 
 	//TODO: XXX
 	ssl.set_password_callback([this]
