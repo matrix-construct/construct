@@ -683,14 +683,12 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
-	if(ctx::current) try
-	{
-		disconnect(dc::SSL_NOTIFY_YIELD);
-	}
-	catch(const boost::system::system_error &e)
-	{
-		log::debug("socket(%p): close: %s", this, e.what());
-	}
+	disconnect(dc::RST);
+}
+catch(const boost::system::system_error &e)
+{
+	log::debug("socket(%p): close: %s", this, e.what());
+	return;
 }
 catch(const std::exception &e)
 {
@@ -722,22 +720,33 @@ ircd::net::socket::disconnect(const dc &type)
 	if(sd.is_open()) switch(type)
 	{
 		default:
-		case dc::RST:       sd.close();                                      break;
-		case dc::FIN:       sd.shutdown(ip::tcp::socket::shutdown_both);     break;
-		case dc::FIN_SEND:  sd.shutdown(ip::tcp::socket::shutdown_send);     break;
-		case dc::FIN_RECV:  sd.shutdown(ip::tcp::socket::shutdown_receive);  break;
+		case dc::RST:
+			sd.close();
+			break;
+
+		case dc::FIN:
+			sd.shutdown(ip::tcp::socket::shutdown_both);
+			break;
+
+		case dc::FIN_SEND:
+			sd.shutdown(ip::tcp::socket::shutdown_send);
+			break;
+
+		case dc::FIN_RECV:
+			sd.shutdown(ip::tcp::socket::shutdown_receive);
+			break;
 
 		case dc::SSL_NOTIFY:
 		{
-			ssl.async_shutdown([socket(shared_from_this())]
+			ssl.async_shutdown([s(shared_from_this())]
 			(boost::system::error_code ec)
 			{
 				if(!ec)
-					socket->sd.close(ec);
+					s->sd.close(ec);
 
 				if(ec)
 					log::warning("socket(%p): disconnect(): %s",
-					             socket.get(),
+					             s.get(),
 					             ec.message());
 			});
 			break;
