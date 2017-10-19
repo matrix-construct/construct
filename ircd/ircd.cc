@@ -28,6 +28,7 @@
 namespace ircd
 {
 	extern const uint boost_version[3];
+	struct tc_version extern const tc_version;
 
 	enum runlevel _runlevel;
 	const enum runlevel &runlevel{_runlevel};
@@ -42,6 +43,14 @@ namespace ircd
 	void at_main_exit() noexcept;
 	void main();
 }
+
+struct ircd::tc_version
+{
+	int major, minor;
+	char patch[64];
+	std::string version;
+	tc_version();
+};
 
 const std::thread::id
 ircd::static_thread_id
@@ -275,6 +284,24 @@ ircd::reflect(const enum runlevel &level)
 
 	return "??????";
 }
+
+/*
+const char* tc_version(int* major, int* minor, const char** patch);
+ircd::tc_version::tc_version()
+:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
+{}
+*/
+
+ircd::tc_version::tc_version()
+:major{0}
+,minor{0}
+,patch{0}
+,version{"unavailable"}
+{}
+
+struct ircd::tc_version
+const ircd::tc_version
+{};
 
 const uint
 ircd::boost_version[3]
