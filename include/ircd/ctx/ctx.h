@@ -107,22 +107,22 @@ namespace ircd::ctx { inline namespace this_ctx
 	void sleep(const int &secs);
 }}
 
-#include "ctx/context.h"
-#include "ctx/prof.h"
-#include "ctx/dock.h"
-#include "ctx/queue.h"
-#include "ctx/mutex.h"
-#include "ctx/shared_mutex.h"
-#include "ctx/peek.h"
-#include "ctx/view.h"
-#include "ctx/shared_view.h"
-#include "ctx/shared_state.h"
-#include "ctx/promise.h"
-#include "ctx/future.h"
-#include "ctx/async.h"
-#include "ctx/pool.h"
-#include "ctx/ole.h"
-#include "ctx/fault.h"
+#include "context.h"
+#include "prof.h"
+#include "dock.h"
+#include "queue.h"
+#include "mutex.h"
+#include "shared_mutex.h"
+#include "peek.h"
+#include "view.h"
+#include "shared_view.h"
+#include "shared_state.h"
+#include "promise.h"
+#include "future.h"
+#include "async.h"
+#include "pool.h"
+#include "ole.h"
+#include "fault.h"
 
 namespace ircd
 {

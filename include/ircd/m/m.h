@@ -25,18 +25,33 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
+namespace ircd::m
+{
+	extern struct user me;
+	extern struct room my_room;
 
-#include "m/error.h"
-#include "m/id.h"
-#include "m/event.h"
-#include "m/events.h"
-#include "m/room.h"
-#include "m/user.h"
-#include "m/filter.h"
-#include "m/keys.h"
-#include "m/txn.h"
-#include "m/request.h"
-#include "m/session.h"
+	string_view my_host();
+	bool my_host(const string_view &);
+}
+
+namespace ircd
+{
+	using m::my_host;
+}
+
+#include "error.h"
+#include "id.h"
+#include "sig.h"
+#include "event.h"
+#include "room.h"
+#include "io.h"
+#include "vm.h"
+#include "user.h"
+#include "filter.h"
+#include "keys.h"
+#include "txn.h"
+#include "request.h"
+#include "session.h"
 
 namespace ircd::m::dbs
 {

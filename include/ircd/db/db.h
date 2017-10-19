@@ -130,20 +130,20 @@ enum ircd::db::op
 	SINGLE_DELETE,           // (batch.SingleDelete)
 };
 
-#include "db/delta.h"
-#include "db/comparator.h"
-#include "db/prefix.h"
-#include "db/merge.h"
-#include "db/database.h"
-#include "db/opts.h"
-#include "db/column.h"
-#include "db/cell.h"
-#include "db/row.h"
-#include "db/index.h"
-#include "db/json.h"
-#include "db/iov.h"
-#include "db/query.h"
-#include "db/cursor.h"
+#include "delta.h"
+#include "comparator.h"
+#include "prefix.h"
+#include "merge.h"
+#include "database.h"
+#include "opts.h"
+#include "column.h"
+#include "cell.h"
+#include "row.h"
+#include "index.h"
+#include "json.h"
+#include "iov.h"
+#include "query.h"
+#include "cursor.h"
 
 namespace ircd
 {

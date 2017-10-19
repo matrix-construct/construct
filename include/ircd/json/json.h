@@ -82,8 +82,8 @@ struct ircd::json::string
 	using string_view::string_view;
 };
 
-#include "json/array.h"
-#include "json/object.h"
+#include "array.h"
+#include "object.h"
 
 /// Convenience template to allocate std::string and print() arguments to it.
 ///
@@ -93,11 +93,11 @@ struct ircd::json::strung
 	template<class... T> strung(T&&... t);
 };
 
-#include "json/value.h"
-#include "json/member.h"
-#include "json/property.h"
-#include "json/iov.h"
-#include "json/tuple.h"
+#include "value.h"
+#include "member.h"
+#include "property.h"
+#include "iov.h"
+#include "tuple.h"
 
 namespace ircd
 {

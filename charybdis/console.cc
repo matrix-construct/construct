@@ -21,7 +21,6 @@
 
 #include <ircd/ircd.h>
 #include <ircd/asio.h>
-#include <ircd/m.h>
 #include "charybdis.h"
 
 const char *const generic_message
