@@ -124,18 +124,6 @@ ircd::write_closure(client &client)
 ircd::parse::read_closure
 ircd::read_closure(client &client)
 {
-	static const auto handle_error([]
-	(const boost::system::system_error &e)
-	{
-		using namespace boost::system::errc;
-
-		switch(e.code().value())
-		{
-			case operation_canceled:     throw http::error(http::REQUEST_TIMEOUT);
-			default:                     throw boost::system::system_error(e);
-		}
-	});
-
 	// Returns a function the parser can call when it wants more data
 	return [&client](char *&start, char *const &stop)
 	{
@@ -149,7 +137,16 @@ ircd::read_closure(client &client)
 		}
 		catch(const boost::system::system_error &e)
 		{
-			handle_error(e);
+			using namespace boost::system::errc;
+
+			switch(e.code().value())
+			{
+				case operation_canceled:
+					throw http::error(http::REQUEST_TIMEOUT);
+
+				default:
+					throw;
+			}
 		}
     };
 }
@@ -425,9 +422,7 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 	noexcept
 	{
 		// Right here this handler is executing on the main stack (not in any
-		// ircd::context). We handle any socket errors now, and if this function
-		// returns here the client's shared_ptr may expire and that will be the
-		// end of this client, socket, and connection...
+		// ircd::context).
 		if(!handle_ec(*client, ec))
 			return;
 
@@ -440,7 +435,10 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 			// Right here this handler is executing on an ircd::context with its own
 			// stack dedicated to the lifetime of this request. If client::main()
 			// returns true, we bring the client back into async mode to wait for
-			// the next request.
+			// the next request. Otherwise, unless the client was preserved by
+			// functionality in main(), it will go out of scope after this which
+			// will disconnect the socket and destroy the client and return this
+			// context to the request pool.
 			if(client->main())
 				async_recv_next(client, timeout);
 		});
@@ -477,10 +475,13 @@ bool
 ircd::handle_ec_eof(client &client)
 try
 {
-	log::debug("client[%s]: EOF",
-	           string(remote(client)));
+	assert(bool(client.sock));
+	auto &sock(*client.sock);
+	log::debug("client[%s]: EOF (avail: %zu)",
+	           string(remote(client)),
+	           available(sock));
 
-	client.sock->disconnect(socket::FIN_RECV);
+	sock.disconnect(socket::RST);
 	return false;
 }
 catch(const std::exception &e)
@@ -496,6 +497,7 @@ bool
 ircd::handle_ec_timeout(client &client)
 try
 {
+	assert(bool(client.sock));
 	auto &sock(*client.sock);
 	log::debug("client[%s]: disconnecting after inactivity timeout",
 	           string(remote(client)));
