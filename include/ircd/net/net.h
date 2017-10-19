@@ -33,6 +33,7 @@
 namespace ircd::net
 {
 	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, nxdomain)
 	IRCD_EXCEPTION(error, broken_pipe)
 	IRCD_EXCEPTION(error, disconnected)
 
@@ -47,8 +48,6 @@ namespace ircd::net
 	std::string string(const hostport &);
 	string_view string(const hostport &, const mutable_buffer &buf);
 }
-
-#include "listener.h"
 
 // Public interface to socket.h because it is not included here.
 namespace ircd::net
@@ -68,6 +67,8 @@ namespace ircd::net
 	size_t read(socket &, const mutable_buffer &);           // read_all
 	size_t read(socket &, iov<mutable_buffer> &);            // read_some
 }
+
+#include "listener.h"
 
 namespace ircd
 {

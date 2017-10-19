@@ -31,11 +31,15 @@ namespace ircd::net
 	ip::tcp::resolver *resolver;
 }
 
+/// Network subsystem initialization
+///
 ircd::net::init::init()
 {
 	net::resolver = new ip::tcp::resolver{*ircd::ios};
 }
 
+/// Network subsystem shutdown
+///
 ircd::net::init::~init()
 {
 	assert(net::resolver);
@@ -44,7 +48,7 @@ ircd::net::init::~init()
 }
 
 //
-// net.h
+// host / port utils
 //
 
 std::string
@@ -66,6 +70,10 @@ ircd::net::string(const hostport &pair,
 
 	return { data(buf), size_t(len) };
 }
+
+//
+// socket (public)
+//
 
 size_t
 ircd::net::read(socket &socket,
@@ -561,9 +569,18 @@ ircd::net::address(const ip::tcp::endpoint &ep)
 ircd::net::socket::io::io(struct socket &sock,
                           struct stat &stat,
                           const std::function<size_t ()> &closure)
+:io
+{
+	sock, stat, closure()
+}
+{}
+
+ircd::net::socket::io::io(struct socket &sock,
+                          struct stat &stat,
+                          const size_t &bytes)
 :sock{sock}
 ,stat{stat}
-,bytes{closure()}
+,bytes{bytes}
 {
 	stat.bytes += bytes;
 	stat.calls++;
@@ -593,16 +610,69 @@ ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
 
 ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
                                                 const milliseconds &timeout,
-                                                const socket::handler &handler)
+                                                socket::handler handler)
 :s{&socket}
 {
-	socket.set_timeout(timeout, handler);
+	socket.set_timeout(timeout, std::move(handler));
+}
+
+ircd::net::socket::scope_timeout::scope_timeout(scope_timeout &&other)
+noexcept
+:s{std::move(other.s)}
+{
+	other.s = nullptr;
+}
+
+ircd::net::socket::scope_timeout &
+ircd::net::socket::scope_timeout::operator=(scope_timeout &&other)
+noexcept
+{
+	this->~scope_timeout();
+	s = std::move(other.s);
+	return *this;
 }
 
 ircd::net::socket::scope_timeout::~scope_timeout()
-noexcept
+noexcept try
 {
+	if(s)
+		s->timer.cancel();
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p) ~scope_timeout: %s",
+	           (const void *)s,
+	           e.what());
+	return;
+}
+
+bool
+ircd::net::socket::scope_timeout::cancel()
+noexcept try
+{
+	if(!this->s)
+		return false;
+
+	auto *const s{this->s};
+	this->s = nullptr;
 	s->timer.cancel();
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error("socket(%p) scope_timeout::cancel: %s",
+	           (const void *)s,
+	           e.what());
+
+	return false;
+}
+
+bool
+ircd::net::socket::scope_timeout::release()
+{
+	const auto s{this->s};
+	this->s = nullptr;
+	return s != nullptr;
 }
 
 //
@@ -703,6 +773,8 @@ catch(const std::exception &e)
 	return;
 }
 
+/// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
+///
 void
 ircd::net::socket::connect(const ip::tcp::endpoint &ep,
                            const milliseconds &timeout)
@@ -710,6 +782,43 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 	const scope_timeout ts(*this, timeout);
 	sd.async_connect(ep, yield_context{to_asio{}});
 	ssl.async_handshake(socket::handshake_type::client, yield_context{to_asio{}});
+}
+
+/// Attempt to connect and ssl handshake; asynchronous, callback when done.
+///
+void
+ircd::net::socket::connect(const ip::tcp::endpoint &ep,
+                           const milliseconds &timeout,
+                           handler callback)
+{
+	auto handshake_handler{[this, callback(std::move(callback))]
+	(const error_code &ec)
+	noexcept
+	{
+		if(!timedout)
+			cancel_timeout();
+		else
+			assert(ec == boost::system::errc::operation_canceled);
+
+		callback(ec);
+	}};
+
+	auto connect_handler{[this, handshake_handler(std::move(handshake_handler))]
+	(const error_code &ec)
+	noexcept
+	{
+		if(ec)
+		{
+			handshake_handler(ec);
+			return;
+		}
+
+		static const auto handshake{socket::handshake_type::client};
+		ssl.async_handshake(handshake, std::move(handshake_handler));
+	}};
+
+	set_timeout(timeout);
+	sd.async_connect(ep, std::move(connect_handler));
 }
 
 void
@@ -980,6 +1089,15 @@ catch(const boost::system::system_error &e)
 	return false;
 }
 
+ircd::net::error_code
+ircd::net::socket::cancel_timeout()
+noexcept
+{
+	boost::system::error_code ec;
+	timer.cancel(ec);
+	return ec;
+}
+
 void
 ircd::net::socket::set_timeout(const milliseconds &t)
 {
@@ -992,7 +1110,7 @@ ircd::net::socket::set_timeout(const milliseconds &t)
 
 void
 ircd::net::socket::set_timeout(const milliseconds &t,
-                          handler h)
+                               handler h)
 {
 	if(t < milliseconds(0))
 		return;
