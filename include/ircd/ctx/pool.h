@@ -72,6 +72,8 @@ struct ircd::ctx::pool
 	pool &operator=(pool &&) = delete;
 	pool &operator=(const pool &) = delete;
 	~pool() noexcept;
+
+	friend void debug_stats(const pool &);
 };
 
 template<class F,

@@ -733,6 +733,19 @@ catch(const std::exception &e)
 	              e.what());
 }
 
+void
+ircd::ctx::debug_stats(const pool &pool)
+{
+	log::debug("pool '%s' (stack size: %zu) total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
+	           pool.name,
+	           pool.stack_size,
+	           pool.size(),
+	           pool.avail(),
+	           pool.queued(),
+	           pool.active(),
+	           pool.pending());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ctx_prof.h
