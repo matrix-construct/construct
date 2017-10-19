@@ -207,6 +207,12 @@ ircd::log::console_quiet::~console_quiet()
 {
 	std::copy(begin(quieted_out), end(quieted_out), begin(console_out));
 	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
+
+	std::cout << std::flush;
+	std::cout.clear();
+
+	std::cerr << std::flush;
+	std::cerr.clear();
 }
 
 ircd::log::log::log(const std::string &name)
@@ -406,7 +412,7 @@ ircd::log::suffix(const facility &fac)
 
 		if(console_flush[fac] || std::current_exception())
 		{
-			std::flush(stream);
+			stream << std::flush;
 			assert(stream.good());
 		}
 	});

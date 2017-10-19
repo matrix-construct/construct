@@ -184,8 +184,14 @@ catch(const std::exception &e)
 	std::cout << "***\n";
 	std::cout << "*** The console session has ended: " << e.what() << "\n";
 	std::cout << "***" << std::endl;
+
+	std::cout << std::flush;
+	std::cout.clear();
+
+	std::cerr << std::flush;
+	std::cerr.clear();
+
 	ircd::log::debug("The console session has ended: %s", e.what());
-	return;
 }
 
 bool
