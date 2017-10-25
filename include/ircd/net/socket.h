@@ -39,19 +39,20 @@ namespace ircd::net
 
 	extern asio::ssl::context sslv23_client;
 
+	uint16_t port(const ip::tcp::endpoint &);
+	ip::address addr(const ip::tcp::endpoint &);
+	std::string host(const ip::tcp::endpoint &);
+
 	std::string string(const ip::address &);
 	std::string string(const ip::tcp::endpoint &);
-	ip::address address(const ip::tcp::endpoint &);
-	std::string hostaddr(const ip::tcp::endpoint &);
-	uint16_t port(const ip::tcp::endpoint &);
 }
 
 namespace ircd
 {
 	using net::error_code;
 	using net::string;
-	using net::address;
-	using net::hostaddr;
+	using net::addr;
+	using net::host;
 	using net::port;
 }
 
@@ -74,8 +75,8 @@ struct ircd::net::socket
 	using handler = std::function<void (const error_code &) noexcept>;
 	using xfer_handler = std::function<void (const error_code &, const size_t &) noexcept>;
 
-	asio::ssl::stream<ip::tcp::socket> ssl;
-	ip::tcp::socket &sd;
+	ip::tcp::socket sd;
+	asio::ssl::stream<ip::tcp::socket &> ssl;
 	steady_timer timer;
 	stat in, out;
 	bool timedout;
@@ -91,8 +92,8 @@ struct ircd::net::socket
 	operator ip::tcp::socket &()                 { return sd;                                      }
 
 	// Observers
-	ip::tcp::endpoint remote() const             { return sd.remote_endpoint();                    }
-	ip::tcp::endpoint local() const              { return sd.local_endpoint();                     }
+	ip::tcp::endpoint remote() const;            // getpeername(); throws if not conn
+	ip::tcp::endpoint local() const;             // getsockname(); throws if not conn/bound
 	bool connected() const noexcept;             // false on any sock errs
 	size_t available() const;                    // throws on errors; use friend variant for noex..
 
@@ -124,19 +125,19 @@ struct ircd::net::socket
 
 	// Connect to host; synchronous (yield) and asynchronous (callback) variants
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout, handler callback);
-	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = -1ms);
+	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = 30000ms);
+	void connect(const net::remote &, const milliseconds &timeout = 30000ms);
 	void disconnect(const dc &type);
 
 	// Construct, resolve and connect client socket to remote host (yields)
-	socket(const std::string &host,
-	       const uint16_t &port,
-	       const milliseconds &timeout           = -1ms,
+	socket(const net::remote &,
+	       const milliseconds &timeout           = 30000ms,
 	       asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 
 	// Construct and connect client socket to remote host (yields)
 	socket(const ip::tcp::endpoint &remote,
-	       const milliseconds &timeout           = -1ms,
+	       const milliseconds &timeout           = 30000ms,
 	       asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 

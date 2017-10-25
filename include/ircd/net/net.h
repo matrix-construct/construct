@@ -33,29 +33,32 @@
 namespace ircd::net
 {
 	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, invalid_argument)
 	IRCD_EXCEPTION(error, nxdomain)
 	IRCD_EXCEPTION(error, broken_pipe)
 	IRCD_EXCEPTION(error, disconnected)
 
 	struct init;
+	struct remote;
 	struct socket;
 	struct listener;
 
-	using hostport_pair = std::pair<std::string, uint16_t>;
-	using hostport = IRCD_WEAK_T(hostport_pair);
-	const auto &host(const hostport &);
-	const auto &port(const hostport &);
-	std::string string(const hostport &);
-	string_view string(const hostport &, const mutable_buffer &buf);
+	// SNOMASK 'N' "net"
+	extern struct log::log log;
 }
+
+#include "remote.h"
+#include "listener.h"
 
 // Public interface to socket.h because it is not included here.
 namespace ircd::net
 {
 	bool connected(const socket &) noexcept;
 	size_t available(const socket &) noexcept;
-	hostport local_hostport(const socket &);
-	hostport remote_hostport(const socket &);
+	ipport local_ipport(const socket &) noexcept;
+	ipport remote_ipport(const socket &) noexcept;
+	hostport local_hostport(const socket &) noexcept;
+	hostport remote_hostport(const socket &) noexcept;
 
 	size_t write(socket &, const ilist<const_buffer> &);     // write_all
 	size_t write(socket &, const iov<const_buffer> &);       // write_all
@@ -67,8 +70,6 @@ namespace ircd::net
 	size_t read(socket &, const mutable_buffer &);           // read_all
 	size_t read(socket &, iov<mutable_buffer> &);            // read_some
 }
-
-#include "listener.h"
 
 namespace ircd
 {
@@ -84,15 +85,3 @@ struct ircd::net::init
 	init();
 	~init() noexcept;
 };
-
-inline const auto &
-ircd::net::port(const hostport &hostport)
-{
-	return hostport.second;
-}
-
-inline const auto &
-ircd::net::host(const hostport &hostport)
-{
-	return hostport.first;
-}

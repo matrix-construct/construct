@@ -31,6 +31,12 @@ namespace ircd::net
 	ip::tcp::resolver *resolver;
 }
 
+struct ircd::log::log
+ircd::net::log
+{
+	"net", 'N'
+};
+
 /// Network subsystem initialization
 ///
 ircd::net::init::init()
@@ -45,30 +51,6 @@ ircd::net::init::~init()
 	assert(net::resolver);
 	delete net::resolver;
 	net::resolver = nullptr;
-}
-
-//
-// host / port utils
-//
-
-std::string
-ircd::net::string(const hostport &pair)
-{
-	std::string ret(256, char{});
-	ret.resize(string(pair, mutable_buffer{ret}).size());
-	return ret;
-}
-
-ircd::string_view
-ircd::net::string(const hostport &pair,
-                  const mutable_buffer &buf)
-{
-	const auto len
-	{
-		fmt::sprintf(buf, "%s:%u", pair.first, pair.second)
-	};
-
-	return { data(buf), size_t(len) };
 }
 
 //
@@ -214,7 +196,8 @@ try
 }
 ,backlog
 {
-	opts.get<size_t>("backlog", asio::socket_base::max_connections - 2)
+	//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
+	opts.get<size_t>("backlog", SOMAXCONN) //TODO: XXX
 }
 ,ssl
 {
@@ -230,7 +213,16 @@ try
 	*ircd::ios
 }
 {
-	static const ip::tcp::acceptor::reuse_address reuse_address{true};
+	static const auto &max_connections
+	{
+		//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
+		SOMAXCONN //TODO: XXX
+	};
+
+	static const ip::tcp::acceptor::reuse_address reuse_address
+	{
+		true
+	};
 
 	configure(opts);
 
@@ -247,9 +239,10 @@ try
 	          std::string(*this));
 
 	a.listen(backlog);
-	log.debug("%s listening (backlog: %lu)",
+	log.debug("%s listening (backlog: %lu, max connections: %zu)",
 	          std::string(*this),
-	          backlog);
+	          backlog,
+	          max_connections);
 
 	next();
 }
@@ -269,13 +262,13 @@ ircd::net::listener::acceptor::next()
 try
 {
 	auto sock(std::make_shared<ircd::socket>(ssl));
-	log.debug("%s: listening with next socket(%p)",
+	log.debug("%s: socket(%p) is the next socket to accept",
 	          std::string(*this),
 	          sock.get());
 
 	// The context blocks here until the next client is connected.
-	auto accept(std::bind(&acceptor::accept, this, ph::_1, sock));
-	a.async_accept(sock->sd, accept);
+	ip::tcp::socket &sd(*sock);
+	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock));
 }
 catch(const std::exception &e)
 {
@@ -295,19 +288,26 @@ noexcept try
 	if(accept_error(ec))
 		return;
 
-	log.debug("%s: accepted %s",
+	const unwind next{[this]
+	{
+		this->next();
+	}};
+
+	ip::tcp::socket &sd(*sock);
+	log.debug("%s: socket(%p) accepted %s",
 	          std::string(*this),
+	          sock.get(),
 	          string(sock->remote()));
 
 	//static const asio::socket_base::keep_alive keep_alive(true);
-	//sock->sd.set_option(keep_alive);
+	//sd.set_option(keep_alive);
 
-	//static const asio::socket_base::linger linger(true, 30);
-	//sock->sd.set_option(linger);
+	static const asio::socket_base::linger linger{true, 10};
+	sd.set_option(linger);
 
-	//sock->sd.non_blocking(false);
+	//sd.non_blocking(false);
 
-	static const auto handshake_type
+	static const socket::handshake_type handshake_type
 	{
 		socket::handshake_type::server
 	};
@@ -318,15 +318,13 @@ noexcept try
 	};
 
 	sock->ssl.async_handshake(handshake_type, std::move(handshake));
-	next();
 }
 catch(const std::exception &e)
 {
-	log.error("%s: in accept(): socket(%p): %s",
+	log.error("%s: socket(%p) in accept(): %s",
 	          std::string(*this),
 	          sock.get(),
 	          e.what());
-	next();
 }
 
 bool
@@ -355,15 +353,16 @@ noexcept try
 	if(handshake_error(ec))
 		return;
 
-	log.debug("%s SSL handshook %s",
+	log.debug("%s socket(%p) SSL handshook %s",
 	          std::string(*this),
+	          sock.get(),
 	          string(sock->remote()));
 
 	add_client(sock);
 }
 catch(const std::exception &e)
 {
-	log.error("%s: in handshake(): socket(%p)[%s]: %s",
+	log.error("%s: socket(%p) in handshake(): [%s]: %s",
 	          std::string(*this),
 	          sock.get(),
 	          sock->connected()? string(sock->remote()) : "<gone>",
@@ -499,26 +498,81 @@ ircd::net::sslv23_client
 	boost::asio::ssl::context::method::sslv23_client
 };
 
+ircd::net::hostport
+ircd::net::local_hostport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.local());
+    return { host(ep), port(ep) };
+}
+catch(...)
+{
+	return { std::string{}, 0 };
+}
+
+ircd::net::hostport
+ircd::net::remote_hostport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.remote());
+    return { host(ep), port(ep) };
+}
+catch(...)
+{
+	return { std::string{}, 0 };
+}
+
+ircd::net::ipport
+ircd::net::local_ipport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.local());
+    const auto &a(addr(ep));
+
+	ipport ret;
+	if(a.is_v6())
+	{
+		std::get<ret.IP>(ret) = a.to_v6().to_bytes();
+		std::reverse(std::get<ret.IP>(ret).begin(), std::get<ret.IP>(ret).end());
+	}
+	else host4(ret) = a.to_v4().to_ulong();
+
+	return ret;
+}
+catch(...)
+{
+	return {};
+}
+
+ircd::net::ipport
+ircd::net::remote_ipport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.remote());
+    const auto &a(addr(ep));
+
+	ipport ret;
+	if(a.is_v6())
+	{
+		std::get<ret.IP>(ret) = a.to_v6().to_bytes();
+		std::reverse(std::get<ret.IP>(ret).begin(), std::get<ret.IP>(ret).end());
+	}
+	else host4(ret) = a.to_v4().to_ulong();
+
+	return ret;
+}
+catch(...)
+{
+	return {};
+}
+
 size_t
 ircd::net::available(const socket &s)
 noexcept
 {
 	boost::system::error_code ec;
-	return s.sd.available(ec);
-}
-
-ircd::net::hostport
-ircd::net::local_hostport(const socket &socket)
-{
-    const auto &ep(socket.local());
-    return { hostaddr(ep), port(ep) };
-}
-
-ircd::net::hostport
-ircd::net::remote_hostport(const socket &socket)
-{
-    const auto &ep(socket.remote());
-    return { hostaddr(ep), port(ep) };
+	const ip::tcp::socket &sd(s);
+	return sd.available(ec);
 }
 
 bool
@@ -535,9 +589,9 @@ ircd::net::port(const ip::tcp::endpoint &ep)
 }
 
 std::string
-ircd::net::hostaddr(const ip::tcp::endpoint &ep)
+ircd::net::host(const ip::tcp::endpoint &ep)
 {
-	return string(address(ep));
+	return string(addr(ep));
 }
 
 std::string
@@ -550,14 +604,14 @@ std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
 	std::string ret(256, char{});
-	const auto addr{string(address(ep))};
+	const auto addr{string(net::addr(ep))};
 	const auto data{const_cast<char *>(ret.data())};
 	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
 	return ret;
 }
 
 boost::asio::ip::address
-ircd::net::address(const ip::tcp::endpoint &ep)
+ircd::net::addr(const ip::tcp::endpoint &ep)
 {
 	return ep.address();
 }
@@ -600,12 +654,7 @@ ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
                                                 const milliseconds &timeout)
 :s{&socket}
 {
-    socket.set_timeout(timeout, [&socket]
-    (const error_code &ec)
-    {
-        if(!ec)
-            socket.sd.cancel();
-    });
+	socket.set_timeout(timeout);
 }
 
 ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
@@ -679,29 +728,20 @@ ircd::net::socket::scope_timeout::release()
 // socket
 //
 
-ircd::net::socket::socket(const std::string &host,
-                          const uint16_t &port,
+ircd::net::socket::socket(const net::remote &remote,
                           const milliseconds &timeout,
                           asio::ssl::context &ssl,
                           boost::asio::io_service *const &ios)
 :socket
 {
-	[&host, &port]() -> ip::tcp::endpoint
+	is_v6(remote)? asio::ip::tcp::endpoint
 	{
-		assert(resolver);
-		const ip::tcp::resolver::query query(host, string(lex_cast(port)));
-		auto epit(resolver->async_resolve(query, yield_context{to_asio{}}));
-		static const ip::tcp::resolver::iterator end;
-		if(epit == end)
-			throw nxdomain("host '%s' not found", host.data());
-
-		log::debug("resolved remote %s:%u => %s",
-		           host,
-		           port,
-		           string(*epit));
-
-		return *epit;
-	}(),
+		asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
+	}
+	: asio::ip::tcp::endpoint
+	{
+		asio::ip::address_v4 { host4(remote) }, port(remote)
+	},
 	timeout,
 	ssl,
 	ios
@@ -738,13 +778,13 @@ catch(const std::exception &e)
 
 ircd::net::socket::socket(asio::ssl::context &ssl,
                           boost::asio::io_service *const &ios)
-:ssl
+:sd
 {
-	*ios, ssl
+	*ios
 }
-,sd
+,ssl
 {
-	this->ssl.next_layer()
+	this->sd, ssl
 }
 ,timer
 {
@@ -760,12 +800,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
-	disconnect(dc::RST);
-}
-catch(const boost::system::system_error &e)
-{
-	log::debug("socket(%p): close: %s", this, e.what());
-	return;
+	//disconnect(dc::RST);
 }
 catch(const std::exception &e)
 {
@@ -779,9 +814,31 @@ void
 ircd::net::socket::connect(const ip::tcp::endpoint &ep,
                            const milliseconds &timeout)
 {
-	const scope_timeout ts(*this, timeout);
+	const scope_timeout ts{*this, timeout};
+	ip::tcp::socket &sd(*this);
 	sd.async_connect(ep, yield_context{to_asio{}});
 	ssl.async_handshake(socket::handshake_type::client, yield_context{to_asio{}});
+}
+
+/// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
+///
+void
+ircd::net::socket::connect(const net::remote &remote,
+                           const milliseconds &timeout)
+{
+	const ip::tcp::endpoint ep
+	{
+		is_v6(remote)? asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
+		}
+		: asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v4 { host4(remote) }, port(remote)
+		},
+	};
+
+	this->connect(ep, timeout);
 }
 
 /// Attempt to connect and ssl handshake; asynchronous, callback when done.
@@ -818,11 +875,13 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 	}};
 
 	set_timeout(timeout);
+	ip::tcp::socket &sd(*this);
 	sd.async_connect(ep, std::move(connect_handler));
 }
 
 void
 ircd::net::socket::disconnect(const dc &type)
+try
 {
 	if(timer.expires_from_now() > 0ms)
 		timer.cancel();
@@ -852,29 +911,45 @@ ircd::net::socket::disconnect(const dc &type)
 			sd.shutdown(ip::tcp::socket::shutdown_receive);
 			break;
 
-		case dc::SSL_NOTIFY:
-		{
-			ssl.async_shutdown([s(shared_from_this())]
-			(boost::system::error_code ec)
-			{
-				if(!ec)
-					s->sd.close(ec);
-
-				if(ec)
-					log::warning("socket(%p): disconnect(): %s",
-					             s.get(),
-					             ec.message());
-			});
-			break;
-		}
-
 		case dc::SSL_NOTIFY_YIELD:
 		{
 			ssl.async_shutdown(yield_context{to_asio{}});
 			sd.close();
 			break;
 		}
+
+		case dc::SSL_NOTIFY:
+		{
+			ssl.async_shutdown([s(shared_from_this())]
+			(boost::system::error_code ec) noexcept
+			{
+				if(ec)
+				{
+					log::warning("socket(%p): close_notify: %s",
+					             s.get(),
+					             ec.message());
+					return;
+				}
+
+				if(s->sd.is_open())
+					s->sd.close(ec);
+
+				if(ec)
+					log::warning("socket(%p): close(): %s",
+					             s.get(),
+					             ec.message());
+			});
+			break;
+		}
 	}
+}
+catch(const boost::system::system_error &e)
+{
+	log::warning("socket(%p): disconnect: type: %d: %s",
+	             (const void *)this,
+	             uint(type),
+	             e.what());
+	throw;
 }
 
 bool
@@ -882,9 +957,8 @@ ircd::net::socket::cancel()
 noexcept
 {
 	boost::system::error_code ec[2];
-
-	timer.cancel(ec[0]);
-	sd.cancel(ec[1]);
+	sd.cancel(ec[0]);
+	timer.cancel(ec[1]);
 
 	return std::all_of(begin(ec), end(ec), [](const auto &ec)
 	{
@@ -1044,9 +1118,11 @@ noexcept try
 	{
 		// A 'success' for this handler means there was a timeout on the socket
 		case success:
-			timedout = true;
+		{
 			sd.cancel();
+			timedout = true;
 			break;
+		}
 
 		// A cancelation means there was no timeout.
 		case operation_canceled:
@@ -1098,6 +1174,20 @@ noexcept
 	return ec;
 }
 
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::local()
+const
+{
+	return sd.local_endpoint();
+}
+
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::remote()
+const
+{
+	return sd.remote_endpoint();
+}
+
 void
 ircd::net::socket::set_timeout(const milliseconds &t)
 {
@@ -1117,6 +1207,339 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(h));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/remote.h
+//
+
+//
+// host / port utils
+//
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const hostport &t)
+{
+	char buf[256];
+	s << string(t, buf);
+	return s;
+}
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const ipport &t)
+{
+	char buf[256];
+	s << string(t, buf);
+	return s;
+}
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const remote &t)
+{
+	char buf[256];
+	s << string(t, buf);
+	return s;
+}
+
+namespace ircd::net
+{
+	template<class T> std::string _string(const T &t);
+}
+
+template<class T>
+std::string
+ircd::net::_string(const T &t)
+{
+	std::string ret(256, char{});
+	ret.resize(net::string(t, mutable_buffer{ret}).size());
+	return ret;
+}
+
+std::string
+ircd::net::string(const uint32_t &t)
+{
+	return _string(t);
+}
+
+std::string
+ircd::net::string(const uint128_t &t)
+{
+	return _string(t);
+}
+
+std::string
+ircd::net::string(const hostport &t)
+{
+	return _string(t);
+}
+
+std::string
+ircd::net::string(const ipport &t)
+{
+	return _string(t);
+}
+
+std::string
+ircd::net::string(const remote &t)
+{
+	return _string(t);
+}
+
+ircd::string_view
+ircd::net::string(const uint32_t &ip,
+                  const mutable_buffer &buf)
+{
+	const auto len
+	{
+		fmt::sprintf(buf, "%s:%u", ip::address_v4{ip}.to_string())
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const uint128_t &ip,
+                  const mutable_buffer &buf)
+{
+	const auto &pun
+	{
+		reinterpret_cast<const uint8_t (&)[16]>(ip)
+	};
+
+	const auto &punpun
+	{
+		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
+	};
+
+	const auto len
+	{
+		fmt::sprintf(buf, "%s:%u", ip::address_v6{punpun}.to_string())
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const hostport &pair,
+                  const mutable_buffer &buf)
+{
+	const auto len
+	{
+		fmt::sprintf(buf, "%s:%u", pair.first, pair.second)
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const ipport &ipp,
+                  const mutable_buffer &buf)
+{
+	const auto len
+	{
+		is_v4(ipp)?
+		fmt::sprintf(buf, "%s:%u",
+		             ip::address_v4{host4(ipp)}.to_string(),
+		             port(ipp)):
+
+		is_v6(ipp)?
+		fmt::sprintf(buf, "%s:%u",
+		             ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
+		             port(ipp)):
+
+		0
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const remote &remote,
+                  const mutable_buffer &buf)
+{
+	const auto &ipp
+	{
+		static_cast<const ipport &>(remote)
+	};
+
+	if(!ipp && !remote.hostname)
+	{
+		const auto len{strlcpy(data(buf), "0.0.0.0", size(buf))};
+		return { data(buf), size_t(len) };
+	}
+	else if(!ipp)
+	{
+		const auto len{strlcpy(data(buf), remote.hostname, size(buf))};
+		return { data(buf), size_t(len) };
+	}
+	else return string(ipp, buf);
+}
+
+//
+// remote
+//
+
+ircd::net::remote::remote(hostport hp)
+:remote{std::move(hp.first), hp.second}
+{
+}
+
+ircd::net::remote::remote(const string_view &host,
+                          const uint16_t &port)
+:remote
+{
+	std::string(host), std::string(lex_cast(port))
+}
+{
+}
+
+ircd::net::remote::remote(const string_view &host,
+                          const string_view &port)
+:remote
+{
+	std::string(host), std::string(port)
+}
+{
+}
+
+ircd::net::remote::remote(std::string host,
+                          const uint16_t &port)
+:ipport{host, port}
+,hostname{std::move(host)}
+{
+}
+
+ircd::net::remote::remote(std::string host,
+                          const std::string &port)
+:ipport{host, port}
+,hostname{std::move(host)}
+{
+}
+
+ircd::net::remote::remote(const ipport &ipp)
+:ipport{ipp}
+{
+}
+
+//
+// ipport
+//
+
+ircd::net::ipport::ipport(const hostport &hp)
+:ipport
+{
+	hp.first, std::string(lex_cast(port(hp)))
+}
+{
+}
+
+ircd::net::ipport::ipport(const string_view &host,
+                          const uint16_t &port)
+:ipport
+{
+	std::string(host), std::string(lex_cast(port))
+}
+{
+}
+
+ircd::net::ipport::ipport(const string_view &host,
+                          const string_view &port)
+:ipport
+{
+	std::string(host), std::string(port)
+}
+{
+}
+
+ircd::net::ipport::ipport(const std::string &host,
+                          const uint16_t &port)
+:ipport
+{
+	host, std::string{lex_cast(port)}
+}
+{
+}
+
+ircd::net::ipport::ipport(const std::string &host,
+                          const std::string &port)
+:ipport
+{
+	uint32_t{0},
+	lex_cast<uint16_t>(port)
+}
+{
+	assert(resolver);
+	const ip::tcp::resolver::query query
+	{
+		host, port
+	};
+
+	auto epit
+	{
+		resolver->async_resolve(query, yield_context{to_asio{}})
+	};
+
+	static const ip::tcp::resolver::iterator end;
+	if(epit == end)
+		throw nxdomain("host '%s' not found", host);
+
+	const ip::tcp::endpoint &ep
+	{
+		*epit
+	};
+
+	const asio::ip::address &address
+	{
+		ep.address()
+	};
+
+	std::get<TYPE>(*this) = address.is_v6();
+
+	if(is_v6(*this))
+	{
+		std::get<IP>(*this) = address.to_v6().to_bytes();
+		std::reverse(std::get<IP>(*this).begin(), std::get<IP>(*this).end());
+	}
+	else host4(*this) = address.to_v4().to_ulong();
+
+	log::debug("resolved remote %s:%u => %s %s",
+	           host,
+	           net::port(*this),
+	           is_v6(*this)? "IP6" : "IP4",
+	           string(*this));
+}
+
+//
+// hostport
+//
+
+ircd::net::hostport::hostport(std::string s,
+                              const uint16_t &port)
+try
+:std::pair<std::string, uint16_t>
+{
+	std::move(s), port
+}
+{
+	if(port != 8448)
+		return;
+
+	//TODO: ipv6
+	const auto port_suffix
+	{
+		rsplit(first, ':').second
+	};
+
+	if(!port_suffix.empty() && port_suffix != "8448")
+		second = lex_cast<uint16_t>(port_suffix);
+}
+catch(const std::exception &e)
+{
+	throw net::invalid_argument
+	{
+		"Supplied host name and/or port number: ", e.what()
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
