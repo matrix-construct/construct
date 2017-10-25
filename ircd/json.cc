@@ -434,6 +434,38 @@ ircd::json::iov::set_if::set_if(iov &iov,
 		iov.pop_front();
 }
 
+ircd::json::iov::defaults::defaults(iov &iov,
+                                    member member)
+:node
+{
+	iov, std::move(member)
+}
+{
+	const auto count
+	{
+		std::count_if(std::begin(iov), std::end(iov), [&member]
+		(const auto &existing)
+		{
+			return string_view{existing.first} == string_view{member.first};
+		})
+	};
+
+	if(count > 1)
+		iov.pop_front();
+}
+
+ircd::json::iov::defaults_if::defaults_if(iov &iov,
+                                          const bool &b,
+                                          member member)
+:node
+{
+	iov, std::move(member)
+}
+{
+	if(!b)
+		iov.pop_front();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/member.h

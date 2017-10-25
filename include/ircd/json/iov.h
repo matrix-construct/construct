@@ -54,6 +54,8 @@ struct ircd::json::iov
 	struct add_if;
 	struct set;
 	struct set_if;
+	struct defaults;
+	struct defaults_if;
 
   public:
 	bool has(const string_view &key) const;
@@ -102,4 +104,20 @@ struct ircd::json::iov::set_if
 {
 	set_if(iov &, const bool &, member);
 	set_if() = default;
+};
+
+/// Add member to the object vector if doesn't exist; otherwise ignored
+struct ircd::json::iov::defaults
+:protected ircd::json::iov::node
+{
+	defaults(iov &, member);
+	defaults() = default;
+};
+
+/// iov::defaults only if the bool argument is true for your condition
+struct ircd::json::iov::defaults_if
+:protected ircd::json::iov::node
+{
+	defaults_if(iov &, const bool &, member);
+	defaults_if() = default;
 };
