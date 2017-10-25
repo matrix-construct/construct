@@ -1022,11 +1022,21 @@ struct unique_iterator
 	{}
 
 	unique_iterator(const unique_iterator &) = delete;
-	unique_iterator(unique_iterator &&o)
+	unique_iterator(unique_iterator &&o) noexcept
 	:c{std::move(o.c)}
 	,it{std::move(o.it)}
 	{
 		o.c = nullptr;
+	}
+
+	unique_iterator &operator=(const unique_iterator &) = delete;
+	unique_iterator &operator=(unique_iterator &&o) noexcept
+	{
+		this->~unique_iterator();
+		c = std::move(o.c);
+		it = std::move(o.it);
+		o.c = nullptr;
+		return *this;
 	}
 
 	~unique_iterator() noexcept
