@@ -50,8 +50,6 @@ namespace ircd
 #include "filter.h"
 #include "keys.h"
 #include "txn.h"
-#include "request.h"
-#include "session.h"
 
 namespace ircd::m::dbs
 {

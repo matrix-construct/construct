@@ -45,27 +45,15 @@ get_messages(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	const m::event::query<m::event::where::equal> event_in_room
+	const m::event::query<m::event::where::equal> query
 	{
-		{ "room_id", room_id }
-	};
-
-	const m::event::query<m::event::where::test> event_not_state
-	{
-		[](const auto &event)
-		{
-			return !defined(json::get<"state_key"_>(event));
-		}
-	};
-
-	const auto query
-	{
-		event_in_room && event_not_state
+		{ "room_id",   room_id  },
+		{ "is_state",  false    },
 	};
 
 	const size_t count
 	{
-		std::min(m::events::count(query), 128UL)
+		std::min(m::vm::count(query), 128UL)
 	};
 
 	if(!count)
@@ -75,8 +63,8 @@ get_messages(client &client,
 		};
 
 	size_t j(0);
-	json::value ret[count];
-	m::events::for_each(query, [&count, &j, &ret]
+	std::vector<json::value> ret(count);
+	m::vm::for_each(query, [&count, &j, &ret]
 	(const auto &event)
 	{
 		if(j < count)
@@ -87,7 +75,7 @@ get_messages(client &client,
 	{
 		client, json::members
 		{
-			{ "chunk", json::value { ret, j } }
+			{ "chunk", json::value { ret.data(), j } }
 		}
 	};
 }
@@ -102,12 +90,11 @@ get_members(client &client,
 	{
 		{ "room_id",    room_id         },
 		{ "type",       "m.room.member" },
-		{ "state_key",  ""              },
 	};
 
 	const auto count
 	{
-		m::events::count(query)
+		m::vm::count(query)
 	};
 
 	if(!count)
@@ -117,8 +104,8 @@ get_members(client &client,
 		};
 
 	size_t j(0);
-	json::value ret[count];
-	m::events::for_each(query, [&count, &j, &ret]
+	std::vector<json::value> ret(count);
+	m::vm::for_each(query, [&count, &j, &ret]
 	(const auto &event)
 	{
 		if(j < count)
@@ -129,7 +116,7 @@ get_members(client &client,
 	{
 		client, json::members
 		{
-			{ "chunk", json::value { ret, j } }
+			{ "chunk", json::value { ret.data(), j } }
 		}
 	};
 }
@@ -141,7 +128,7 @@ get_state(client &client,
 {
 	const auto count
 	{
-		m::events::count(query)
+		m::vm::count(query)
 	};
 
 	if(!count)
@@ -151,8 +138,8 @@ get_state(client &client,
 		};
 
 	size_t j(0);
-	json::value ret[count];
-	m::events::for_each(query, [&count, &j, &ret]
+	std::vector<json::value> ret(count);
+	m::vm::for_each(query, [&count, &j, &ret]
 	(const auto &event)
 	{
 		if(j < count)
@@ -163,7 +150,7 @@ get_state(client &client,
 	{
 		client, json::value
 		{
-			ret, j
+			ret.data(), j
 		}
 	};
 }
@@ -180,6 +167,7 @@ get_state(client &client,
 		{ "room_id",    room_id    },
 		{ "type",       type       },
 		{ "state_key",  state_key  },
+		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);
@@ -194,7 +182,8 @@ get_state(client &client,
 	const m::event::query<m::event::where::equal> query
 	{
 		{ "room_id",    room_id    },
-		{ "type",       type       }
+		{ "type",       type       },
+		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);
@@ -205,14 +194,16 @@ get_state(client &client,
           const resource::request &request,
           const m::room::id &room_id)
 {
+	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
 	{
-		request.parv[2]
+		urldecode(request.parv[2], type_buf)
 	};
 
+	char skey_buf[uint(256 * 1.34 + 1)];
 	const string_view &state_key
 	{
-		request.parv[3]
+		urldecode(request.parv[3], skey_buf)
 	};
 
 	if(type && state_key)
@@ -224,7 +215,7 @@ get_state(client &client,
 	const m::event::query<m::event::where::equal> query
 	{
 		{ "room_id",    room_id    },
-		{ "state_key",  ""         },
+		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);
@@ -235,29 +226,36 @@ get_context(client &client,
             const resource::request &request,
             const m::room::id &room_id)
 {
-	const m::event::id &event_id
+	m::event::id::buf event_id
 	{
-		request.parv[2]
+		urldecode(request.parv[2], event_id)
 	};
 
-	const auto it
+	const m::event::query<m::event::where::equal> query
 	{
-		m::event::find(event_id)
+		{ "room_id",   room_id   },
+		{ "event_id",  event_id  },
 	};
 
-	if(!it)
+	std::string ret;
+	const bool found
+	{
+		m::vm::test(query, [&ret]
+		(const m::event &event)
+		{
+			ret = json::strung{event};
+			return true;
+		})
+	};
+
+	if(!found)
 		throw m::NOT_FOUND{"event not found"};
-
-	const auto event
-	{
-		json::string(*it)
-	};
 
 	return resource::response
 	{
 		client, json::members
 		{
-			{ "event", event }
+			{ "event", ret }
 		}
 	};
 }
@@ -265,10 +263,10 @@ get_context(client &client,
 resource::response
 get_rooms(client &client, const resource::request &request)
 {
-	if(request.parv.size() != 2)
+	if(request.parv.size() < 2)
 		throw m::error
 		{
-			http::MULTIPLE_CHOICES, "/rooms command required"
+			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "/rooms command required"
 		};
 
 	m::room::id::buf room_id
@@ -276,7 +274,10 @@ get_rooms(client &client, const resource::request &request)
 		urldecode(request.parv[0], room_id)
 	};
 
-	const string_view &cmd{request.parv[1]};
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
 
 	if(cmd == "context")
 		return get_context(client, request, room_id);
@@ -306,10 +307,16 @@ put_send(client &client,
          const resource::request &request,
          const m::room::id &room_id)
 {
+	if(request.parv.size() < 3)
+		throw m::BAD_REQUEST{"type parameter missing"};
+
 	const string_view &type
 	{
 		request.parv[2]
 	};
+
+	if(request.parv.size() < 4)
+		throw m::BAD_REQUEST{"txnid parameter missing"};
 
 	const string_view &txnid
 	{
@@ -320,17 +327,17 @@ put_send(client &client,
 
 	const json::iov::push _type
 	{
-		event, "type", type
+		event, { "type", type }
 	};
 
 	const json::iov::push _sender
 	{
-		event, "sender", request.user_id
+		event, { "sender", request.user_id }
 	};
 
 	const json::iov::push _content
 	{
-		event, "content", json::object{request}
+		event, { "content", json::object{request} }
 	};
 
 	m::room room
@@ -353,9 +360,48 @@ put_send(client &client,
 }
 
 resource::response
+put_typing(client &client,
+           const resource::request &request,
+           const m::room::id &room_id)
+{
+	if(request.parv.size() < 3)
+		throw m::BAD_REQUEST{"user_id parameter missing"};
+
+	m::user::id::buf user_id
+	{
+		urldecode(request.parv[2], user_id)
+	};
+
+	static const milliseconds timeout_default
+	{
+		30 * 1000
+	};
+
+	const auto timeout
+	{
+		request.get("timeout", timeout_default)
+	};
+
+	const auto typing
+	{
+		request.at<bool>("typing")
+	};
+
+	log::debug("%s typing: %d timeout: %ld",
+	           user_id,
+	           typing,
+	           timeout.count());
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+resource::response
 put_rooms(client &client, const resource::request &request)
 {
-	if(request.parv.size() != 2)
+	if(request.parv.size() < 2)
 		throw m::BAD_REQUEST{"/rooms command required"};
 
 	m::room::id::buf room_id
@@ -370,6 +416,9 @@ put_rooms(client &client, const resource::request &request)
 
 	if(cmd == "send")
 		return put_send(client, request, room_id);
+
+	if(cmd == "typing")
+		return put_typing(client, request, room_id);
 
 	throw m::NOT_FOUND{"/rooms command not found"};
 }
@@ -387,19 +436,20 @@ post_receipt(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	if(request.parv.size() != 4)
+	if(request.parv.size() < 4)
 		throw m::BAD_REQUEST{"receipt type and event_id required"};
 
 	const string_view &receipt_type{request.parv[2]};
 	const string_view &event_id{request.parv[3]};
-	std::cout << "type: " << receipt_type << " eid: " << event_id << std::endl;
+	//std::cout << "type: " << receipt_type << " eid: " << event_id << std::endl;
+	return {};
 }
 
 resource::response
 post_rooms(client &client,
            const resource::request &request)
 {
-	if(request.parv.size() != 2)
+	if(request.parv.size() < 2)
 		throw m::BAD_REQUEST{"/rooms command required"};
 
 	m::room::id::buf room_id
@@ -414,6 +464,11 @@ post_rooms(client &client,
 
 	if(cmd == "receipt")
 		return post_receipt(client, request, room_id);
+
+	throw m::error
+	{
+		http::MULTIPLE_CHOICES, "M_NOT_FOUND", "/rooms command required"
+	};
 }
 
 resource::method method_post

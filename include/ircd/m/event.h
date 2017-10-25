@@ -24,6 +24,8 @@
 
 #pragma once
 #define HAVE_IRCD_M_EVENT_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Protocol notes
@@ -55,12 +57,12 @@ namespace ircd::m::name
 	constexpr const char *const depth {"depth"};
 	constexpr const char *const event_id {"event_id"};
 	constexpr const char *const hashes {"hashes"};
+	constexpr const char *const is_state {"is_state"};
 	constexpr const char *const membership {"membership"};
 	constexpr const char *const origin {"origin"};
 	constexpr const char *const origin_server_ts {"origin_server_ts"};
-	constexpr const char *const prev_ids {"prev_ids"};
-	constexpr const char *const prev_events {"prev_ids"};
-	constexpr const char *const prev_state {"prev_ids"};
+	constexpr const char *const prev_events {"prev_events"};
+	constexpr const char *const prev_state {"prev_state"};
 	constexpr const char *const room_id {"room_id"};
 	constexpr const char *const sender {"sender"};
 	constexpr const char *const signatures {"signatures"};
@@ -75,22 +77,27 @@ struct ircd::m::event
 	json::property<name::auth_events, string_view>,
 	json::property<name::content, json::object>,
 	json::property<name::depth, int64_t>,
-	json::property<name::event_id, string_view>,
-	json::property<name::hashes, string_view>,
-	json::property<name::membership, string_view>,
-	json::property<name::origin, string_view>,
+	json::property<name::event_id, json::string>,
+	json::property<name::hashes, json::object>,
+	json::property<name::is_state, bool>,
+	json::property<name::membership, json::string>,
+	json::property<name::origin, json::string>,
 	json::property<name::origin_server_ts, time_t>,
-	json::property<name::prev_ids, string_view>,
-	json::property<name::prev_events, string_view>,
-	json::property<name::prev_state, string_view>,
-	json::property<name::room_id, string_view>,
-	json::property<name::sender, string_view>,
-	json::property<name::signatures, string_view>,
-	json::property<name::state_key, string_view>,
-	json::property<name::type, string_view>,
+	json::property<name::prev_events, json::array>,
+	json::property<name::prev_state, json::array>,
+	json::property<name::room_id, json::string>,
+	json::property<name::sender, json::string>,
+	json::property<name::signatures, json::object>,
+	json::property<name::state_key, json::string>,
+	json::property<name::type, json::string>,
 	json::property<name::unsigned_, string_view>
 >
 {
+	enum lineage : int;
+	enum temporality : int;
+
+	struct fetch;
+
 	using id = m::id::event;
 
 	static database *events;
@@ -100,13 +107,36 @@ struct ircd::m::event
 	using where = db::where;
 	template<enum db::where w = where::noop> using query = cursor::query_type<w>;
 
-	// Queue of contexts waiting to see the next inserted event
-	static ctx::view<const event> inserted;
-	static id::buf head;
-
 	static const_iterator find(const id &);
-	static void insert(json::iov &);
 
 	using super_type::tuple;
 	using super_type::operator=;
 };
+
+namespace ircd::m
+{
+	string_view reflect(const event::temporality &);
+	event::temporality temporality(const event &, const int64_t &rel);
+
+	string_view reflect(const event::lineage &);
+	event::lineage lineage(const event &);
+}
+
+
+enum ircd::m::event::temporality
+:int
+{
+	FUTURE      = 1,   ///< Event has a depth 1 or more into the future.
+	PRESENT     = 0,   ///< Event has a depth equal to the current depth.
+	PAST        = -1,  ///< Event has a depth less than the current depth.
+};
+
+enum ircd::m::event::lineage
+:int
+{
+	ROOT        = 0,   ///< Event has no parents (must be m.room.create then)
+	FORWARD     = 1,   ///< Event has one parent at the previous depth
+	MERGE       = 2,   ///< Event has multiple parents at the previous depth
+};
+
+#pragma GCC diagnostic pop

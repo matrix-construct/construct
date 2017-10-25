@@ -945,7 +945,7 @@ try
 				token_count(args, ' ') >= 2? lex_cast<uint>(token(args, ' ', 2)) : 0U
 			};
 
-			m::backfill(room, event_id, limit);
+			m::vm::backfill(room, event_id, limit);
 			break;
 		}
 
@@ -1025,13 +1025,7 @@ try
 				token(args, ' ', 1)
 			};
 
-			m::room room
-			{
-				room_id
-			};
-
-			json::iov content{};
-			room.join(user_id, content);
+			m::join(room_id, user_id);
 			break;
 		}
 
@@ -1052,12 +1046,12 @@ try
 				token(args, ' ', 1)
 			};
 
-			m::state(room, event_id);
+			m::vm::state(room, event_id);
 
 			break;
 		}
 
-		case hash("fetch"):
+		case hash("get"):
 		{
 			const auto args
 			{
@@ -1074,6 +1068,92 @@ try
 			break;
 		}
 
+		case hash("fetch"):
+		{
+			const auto args
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+			const m::event::id event_id
+			{
+				token(args, ' ', 0)
+			};
+
+			const net::remote remote
+			{
+				token(args, ' ', 1)
+			};
+
+			static char buf[65536];
+			m::event::fetch fetch
+			{
+				event_id, buf, remote
+			};
+
+			std::cout << m::io::acquire(fetch) << std::endl;
+			break;
+		}
+
+		case hash("mfetch"):
+		{
+			const auto args
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+			const auto event_ids
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+//			const net::remote remote
+//			{
+//				token(args, ' ', 0)
+//			};
+
+			string_view event_id[8];
+			const auto count
+			{
+				tokens(event_ids, ' ', event_id)
+			};
+
+			static char buf[8][65536];
+			m::event::fetch tab[count];
+			for(size_t i(0); i < count; ++i)
+			{
+				tab[i].event_id = event_id[i];
+				tab[i].buf = buf[i];
+//				tab[i].hint = remote;
+			}
+
+			m::io::acquire({tab, count});
+
+			for(size_t i(0); i < count; ++i)
+			{
+				std::cout << tab[i].event_id << ": size: " << string_view{tab[i].pdu}.size() << std::endl;
+			}
+
+			break;
+		}
+
+		case hash("acquire"):
+		{
+			const auto args
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+			const m::event::id event_id
+			{
+				token(args, ' ', 0)
+			};
+
+			static char buf[65536];
+			std::cout << m::vm::acquire(event_id, buf) << std::endl;
+			break;
+		}
+
 		case hash("trace"):
 		{
 			const auto args
@@ -1086,7 +1166,7 @@ try
 				token(args, ' ', 0)
 			};
 
-			m::trace(event_id, []
+			m::vm::trace(event_id, []
 			(const auto &event, auto &next)
 			{
 				std::cout << event << std::endl << std::endl;

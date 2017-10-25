@@ -133,15 +133,15 @@ sync(client &client, const resource::request &request)
 		{ "state_key",  request.query.at("access_token") },
 	};
 
-	m::event::id::buf head;
-	if(!m::events::test(query, [&head](const auto &event)
+	int64_t sequence{0};
+	if(!m::vm::test(query, [&sequence](const auto &event)
 	{
 		const json::object &content
 		{
 			at<"content"_>(event)
 		};
 
-		head = unquote(content.at("event_id"));
+		sequence = content.at<int64_t>("sequence");
 		return true;
 	}))
 		throw m::NOT_FOUND{"since parameter invalid"};
@@ -300,15 +300,15 @@ try
 {
 	while(1) try
 	{
-		std::unique_lock<decltype(m::event::inserted)> lock
+		std::unique_lock<decltype(m::vm::inserted)> lock
 		{
-			m::event::inserted
+			m::vm::inserted
 		};
 
 		// reference to the event on the inserter's stack
 		const auto &event
 		{
-			m::event::inserted.wait(lock)
+			m::vm::inserted.wait(lock)
 		};
 
 		if(!syncpoll::polling.empty())
@@ -485,7 +485,7 @@ initial_sync_room(client &client,
 			{ "is_state",   true             },
 		};
 
-		m::events::for_each(state_query, [&state](const auto &event)
+		m::vm::for_each(state_query, [&state](const auto &event)
 		{
 			state.emplace_back(json::strung(event));
 		});
@@ -503,7 +503,7 @@ initial_sync_room(client &client,
 			{ "room_id", room.room_id },
 		};
 
-		m::events::query(timeline_query, [&timeline](const auto &event)
+		m::vm::query(timeline_query, [&timeline](const auto &event)
 		{
 			if(timeline.size() > 10)
 				return true;
@@ -543,7 +543,7 @@ initial_sync_rooms(client &client,
 
 	std::array<std::vector<std::string>, 3> r;
 	std::array<std::vector<json::member>, 3> m;
-	m::events::for_each(query, [&r, &m, &client, &request, &full_state](const auto &event)
+	m::vm::for_each(query, [&r, &m, &client, &request, &full_state](const auto &event)
 	{
 		const auto &content{json::get<"content"_>(event)};
 		const auto &membership{unquote(content["membership"])};
@@ -588,14 +588,14 @@ initial_sync(client &client,
 		"{}"
 	};
 
-	const string_view next_batch
+	const int64_t &next_batch
 	{
-		m::event::head
+		m::vm::current_sequence
 	};
 
 	const json::members content
 	{
-		{ "event_id",  next_batch }
+		{ "sequence",  next_batch }
 	};
 
 	m::user::sessions.send(

@@ -50,7 +50,9 @@ get_root(client &client, const resource::request &request)
 {
 	const auto &path
 	{
-		request.head.path?: "index.html"
+		!request.head.path? "index.html":
+		request.head.path == "/"? "index.html":
+		request.head.path
 	};
 
 	auto it(files.find(lstrip(path, '/')));

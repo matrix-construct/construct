@@ -35,12 +35,12 @@ get_filter(client &client, const resource::request &request)
 {
 	m::user::id::buf user_id
 	{
-		urldecode(request.parv[4], user_id)
+		urldecode(request.parv[0], user_id)
 	};
 
 	const auto &filter_id
 	{
-		request.parv[6]
+		request.parv[2]
 	};
 
 	const m::event::query<m::event::where::equal> query
@@ -67,7 +67,7 @@ get_filter(client &client, const resource::request &request)
 		return true;
 	}};
 
-	if(!m::events::test(query, result))
+	if(!m::vm::test(query, result))
 		throw m::NOT_FOUND("No matching filter with that ID");
 
 	// Response already made
@@ -91,7 +91,7 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	// token must be authorized to make requests for this user id.
 	m::user::id::buf user_id
 	{
-		urldecode(request.parv[4], user_id)
+		urldecode(request.parv[0], user_id)
 	};
 
 	user_id.validate();

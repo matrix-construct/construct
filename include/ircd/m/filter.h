@@ -24,6 +24,8 @@
 
 #pragma once
 #define HAVE_IRCD_M_FILTER_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 namespace ircd::m
 {
@@ -118,3 +120,5 @@ struct ircd::m::filter
 
 	filter(const string_view &filter_id, const mutable_buffer &);
 };
+
+#pragma GCC diagnostic pop

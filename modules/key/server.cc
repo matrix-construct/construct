@@ -53,7 +53,7 @@ handle_get(client &client,
 	std::string my_key;
 	m::keys::get(my_host(), key_id, [&my_key](const auto &key)
 	{
-		my_key = json::string(key);
+		my_key = json::strung(key);
 	});
 
 	return resource::response
@@ -116,7 +116,7 @@ void foop()
 	<< std::endl;
 
 	std::cout <<
-	test(json::string(json::members
+	test(json::strung(json::members
 	{
 		{ "one", 1 },
 		{ "two", "Two" }

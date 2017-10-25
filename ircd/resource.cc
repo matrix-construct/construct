@@ -131,7 +131,7 @@ try
 
 	const bool result
 	{
-		m::events::test(query, [&request, &access_token](const m::event &event)
+		m::vm::test(query, [&request, &access_token](const m::event &event)
 		{
 			// Checks if the access token has expired. Tokens are expired when
 			// an m.room.redaction event is issued for the ircd.access_token
@@ -187,7 +187,7 @@ ircd::verify_origin(client &client,
 
 	const auto verified
 	{
-		m::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
+		m::io::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
 	};
 
 	if(!verified)

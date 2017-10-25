@@ -41,38 +41,31 @@ try
 		unquote(request["visibility"])
 	};
 
+	const m::id::user sender_id
+	{
+		request.user_id
+	};
+
 	const m::id::room::buf room_id
 	{
-		m::id::generate, "localhost"
+		m::id::generate, my_host()
 	};
 
-	const m::id::user::buf sender_id
+	json::iov event;
+	json::iov content;
+	const json::iov::push push[]
 	{
-		m::id::generate, "localhost"
+		{ event,    { "sender",   sender_id  }},
+		{ content,  { "creator",  sender_id  }},
 	};
 
-	const m::id::event::buf create_event_id
+	m::room room
 	{
-		m::id::generate, "localhost",
+		room_id
 	};
 
-	const time_t origin_server_ts
-	{
-		time(NULL)
-	};
-/*
-	db::object<m::db::events, m::event> event
-	{
-		create_event_id
-	};
+	room.create(event, content);
 
-	db::write
-	({
-		{ event["type"],               "m.room.create"                },
-		{ event["room_id"],            room_id                        },
-		{ event["origin_server_ts"],   binary_view(origin_server_ts)  },
-	});
-*/
 	return resource::response
 	{
 		client, http::CREATED,

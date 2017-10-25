@@ -23,9 +23,9 @@
  */
 
 #pragma once
-#define HAVE_IRCD_M_EVENTS_H
+#define HAVE_IRCD_M_VM_H
 
-namespace ircd::m::events
+namespace ircd::m::vm
 {
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
@@ -42,3 +42,26 @@ namespace ircd::m::events
 	bool test(const event::query<> &, const closure_bool &);
 	bool test(const event::query<> &);
 };
+
+namespace ircd::m::vm
+{
+	extern uint64_t current_sequence;
+	extern ctx::view<const event> inserted;
+
+	// Synchronous fetch and eval
+	size_t acquire(const vector_view<id::event> &, const vector_view<mutable_buffer> &);
+	json::object acquire(const id::event &, const mutable_buffer &);
+    void state(const room::id &, const event::id &);
+    void backfill(const room::id &, const event::id &v, const size_t &limit);
+
+	using tracer = std::function<bool (const event &, event::id::buf &)>;
+	void trace(const id::event &, const tracer &);
+
+	// Hypostasis
+	void eval(const vector_view<event> &);
+	void eval(const json::array &);
+	void eval(const event &);
+
+	event::id::buf commit(json::iov &event);
+    event::id::buf join(const room::id &, json::iov &iov);
+}

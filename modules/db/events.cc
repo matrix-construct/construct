@@ -169,6 +169,24 @@ const database::descriptor events_state_key_descriptor
 	}
 };
 
+const database::descriptor events_is_state_descriptor
+{
+	// name
+	"is_state",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(bool)
+	}
+};
+
 const database::descriptor events_origin_descriptor
 {
 	// name
@@ -212,31 +230,6 @@ const database::descriptor events_origin_server_ts_descriptor
 	// typing (key, value)
 	{
 		typeid(string_view), typeid(time_t)
-	}
-};
-
-const database::descriptor events_prev_ids_descriptor
-{
-	// name
-	"prev_ids",
-
-	// explanation
-	R"(### protocol note:
-
-	FEDERATION 4.1 (INCONSISTENT)
-	List of (String, String, Object) Triplets
-	The originating homeserver, PDU ids and hashes of the most recent PDUs the homeserver was
-	aware of for the room when it made this PDU. ["blue.example.com","99d16afbc8", {"sha256":
-	"abase64encodedsha256hashshouldbe43byteslong"}]
-
-	### developer note:
-	key is event_id
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(string_view), typeid(string_view)
 	}
 };
 
@@ -457,7 +450,7 @@ const database::descriptor event_id_in_room_id
 	{},
 
 	// comparator - sorts from highest to lowest
-	ircd::db::reverse_cmp_string_view{},
+	{}, //ircd::db::reverse_cmp_string_view{},
 
 	// prefix transform
 	event_id_in,
@@ -585,6 +578,7 @@ const database::description events_description
 	events_room_id_descriptor,
 	events_sender_descriptor,
 	events_state_key_descriptor,
+	events_is_state_descriptor,
 	events_origin_descriptor,
 	events_origin_server_ts_descriptor,
 	events_prev_ids_descriptor,

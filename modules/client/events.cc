@@ -41,14 +41,14 @@ get_events(client &client, const resource::request &request)
 	};
 
 	size_t i(0);
-	m::events::for_each(query, [&i](const auto &event)
+	m::vm::for_each(query, [&i](const auto &event)
 	{
 		++i;
 	});
 
 	size_t j(0);
 	json::value ret[i];
-	m::events::for_each(query, [&i, &j, &ret](const m::event &event)
+	m::vm::for_each(query, [&i, &j, &ret](const m::event &event)
 	{
 		if(j < i)
 			ret[j++] = event;

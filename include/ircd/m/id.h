@@ -95,10 +95,8 @@ namespace ircd::m
 	const char *reflect(const enum id::sigil &);
 }
 
-//
-// ID object backed by an internal buffer. Useful for creating or composing
-// a new ID.
-//
+/// ID object backed by an internal buffer of wost-case size.
+///
 template<class T,
          size_t MAX = 256>
 struct ircd::m::id::buf
