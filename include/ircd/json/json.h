@@ -123,7 +123,10 @@ struct ircd::json::buffer
 ///
 /// Convenience template for const rvalue mutable_buffers or basically
 /// allowing a bracket initialization of a mutable_buffer in the argument
-/// to stringify()
+/// to stringify(). The const rvalue reference is on purpose. The stringify()
+/// family of friends all use a non-const lvalue mutable_buffer as an append
+/// only "stream" buffer. We don't want to modify any non-const instances of
+/// the mutable_buffer you pass here by offering a `mutable_buffer &` overload
 ///
 template<class... T>
 ircd::string_view

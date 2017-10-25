@@ -68,6 +68,7 @@ struct ircd::json::iov
 	friend size_t serialized(const iov &);
 };
 
+/// Unconditionally append a member to the object vector
 struct ircd::json::iov::push
 :protected ircd::json::iov::node
 {
@@ -78,6 +79,7 @@ struct ircd::json::iov::push
 	push() = default;
 };
 
+/// Add a new member to the object vector; throws if exists
 struct ircd::json::iov::add
 :protected ircd::json::iov::node
 {
@@ -85,6 +87,7 @@ struct ircd::json::iov::add
 	add() = default;
 };
 
+/// iov::add only if the bool argument is true for your condition
 struct ircd::json::iov::add_if
 :protected ircd::json::iov::node
 {
@@ -92,6 +95,7 @@ struct ircd::json::iov::add_if
 	add_if() = default;
 };
 
+/// Add or overwrite a member in the object vector.
 struct ircd::json::iov::set
 :protected ircd::json::iov::node
 {
@@ -99,6 +103,7 @@ struct ircd::json::iov::set
 	set() = default;
 };
 
+/// iov::set only if the bool argument is true for your condition
 struct ircd::json::iov::set_if
 :protected ircd::json::iov::node
 {
