@@ -44,8 +44,8 @@ struct ircd::ctx::ctx
 	ctx *adjoindre;                              // context waiting for this to join()
 	microseconds awake;                          // monotonic counter
 
-	bool finished() const                        { return yc == nullptr;                           }
-	bool started() const                         { return bool(yc);                                }
+	bool started() const                         { return stack_base != 0;                         }
+	bool finished() const                        { return started() && yc == nullptr;              }
 
 	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
 	void interruption_point();                   // throws interrupted
@@ -511,40 +511,58 @@ const
 // ctx/context.h
 //
 
+namespace ircd::ctx
+{
+	static void spawn(ctx *const c, context::function func);
+}
+
+void
+ircd::ctx::spawn(ctx *const c,
+	             context::function func)
+{
+	const boost::coroutines::attributes attrs
+	{
+		c->stack_max,
+		boost::coroutines::stack_unwind
+	};
+
+	auto bound
+	{
+		std::bind(&ctx::operator(), c, ph::_1, std::move(func))
+	};
+
+	boost::asio::spawn(c->strand, std::move(bound), attrs);
+}
+
 ircd::ctx::context::context(const char *const &name,
                             const size_t &stack_sz,
                             const flags &flags,
                             function func)
 :c{std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)}
 {
-	auto spawn([stack_sz, c(c.get()), func(std::move(func))]
-	{
-		auto bound(std::bind(&ctx::operator(), c, ph::_1, std::move(func)));
-		const boost::coroutines::attributes attrs
-		{
-			stack_sz,
-			boost::coroutines::stack_unwind
-		};
-
-		boost::asio::spawn(c->strand, std::move(bound), attrs);
-	});
-
-	// The current context must be reasserted if spawn returns here
-	const unwind recurrent([current(ircd::ctx::current)]
-	{
-		ircd::ctx::current = current;
-	});
-
 	// The profiler is told about the spawn request here, not inside the closure
 	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
 	mark(prof::event::SPAWN);
+
+	auto spawn
+	{
+		std::bind(&ircd::ctx::spawn, c.get(), std::move(func))
+	};
 
 	if(flags & POST)
 		ios->post(std::move(spawn));
 	else if(flags & DISPATCH)
 		ios->dispatch(std::move(spawn));
 	else
+	{
+		// The current context must be reasserted if spawn returns here
+		const unwind recurrent([current(ircd::ctx::current)]
+		{
+			ircd::ctx::current = current;
+		});
+
 		spawn();
+	}
 
 	if(flags & DETACH)
 		c.release();
@@ -597,11 +615,21 @@ noexcept
 		return;
 
 	// Can't join to bare metal, only from within another context.
-	if(!current)
-		return;
+	if(current)
+	{
+		interrupt();
+		join();
+	}
 
-	interrupt();
-	join();
+	// because *this uses unique_ptr's, if we dtor the ircd::ctx from
+	// right here and ircd::ctx hasn't been entered yet because the user
+	// passed the POST flag, the ctx::spawn() is still sitting in the ios
+	// queue.
+	if(c && !started(*c))
+	{
+		c->flags |= context::DETACH;
+		c.release();
+	}
 }
 
 void
