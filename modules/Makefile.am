@@ -90,6 +90,24 @@ key_module_LTLIBRARIES = \
 	key/key_query.la \
 	###
 
+# This puts the source in federation/ but the installed
+# library is federation_X.so in the main modules dir.
+federation_moduledir = @moduledir@
+federation_federation_send_la_SOURCES = federation/send.cc
+federation_federation_event_la_SOURCES = federation/event.cc
+federation_module_LTLIBRARIES = \
+	federation/federation_send.la \
+	federation/federation_event.la \
+	###
+
+# This puts the source in media/ but the installed
+# library is media_X.so in the main modules dir.
+media_moduledir = @moduledir@
+media_media_download_la_SOURCES = media/download.cc
+media_module_LTLIBRARIES = \
+	media/media_download.la \
+	###
+
 if JS
 server_moduledir = @moduledir@
 server_server_console_la_SOURCES = server/console.cc
