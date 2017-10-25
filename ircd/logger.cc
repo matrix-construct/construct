@@ -76,12 +76,8 @@ namespace ircd::log
 	};
 	*/
 
-	static void check(std::ostream &) noexcept;
 	static void open(const facility &fac);
-	static void prefix(const facility &fac, const string_view &date);
-	static void suffix(const facility &fac);
-	static std::ostream &compose(std::ostream &s, const string_view &buf, const string_view &name);
-	static void slog(const facility &fac, const std::function<void (std::ostream &)> &closure) noexcept;
+	static void slog(const facility &fac, const std::function<void (mutable_buffer &)> &closure) noexcept;
 	static void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
 }
 
@@ -250,6 +246,12 @@ ircd::log::mark(const facility &fac,
 	vlog(fac, name, "%s", msg);
 }
 
+namespace ircd::log
+{
+	static void check(std::ostream &) noexcept;
+	static mutable_buffer compose(mutable_buffer &out, const string_view &buf, const string_view &name);
+}
+
 /// ircd::log is not thread-safe. This internal function is called when the
 /// normal vlog() detects it's not on the main IRCd thread. It then generates
 /// the formatted log message on this thread, and posts the message to the
@@ -269,9 +271,9 @@ ircd::log::vlog_threadsafe(const facility &fac,
 	// The reference to name has to be safely maintained
 	ircd::post([fac, str(std::move(str)), name(std::move(name))]
 	{
-		slog(fac, [&str, &name](std::ostream &s)
+		slog(fac, [&str, &name](mutable_buffer &out)
 		{
-			compose(s, str, name);
+			compose(out, str, name);
 		});
 	});
 }
@@ -304,15 +306,15 @@ ircd::log::vlog(const facility &fac,
 	};
 
 	const string_view msg{buf, size_t(len)};
-	slog(fac, [&msg, &name](std::ostream &s)
+	slog(fac, [&msg, &name](mutable_buffer &out)
 	{
-		compose(s, msg, name);
+		compose(out, msg, name);
 	});
 }
 
 void
 ircd::log::slog(const facility &fac,
-                const std::function<void (std::ostream &)> &closure)
+                const std::function<void (mutable_buffer &)> &closure)
 noexcept
 {
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
@@ -328,33 +330,73 @@ noexcept
 	static bool entered;
 	assert(!entered);
 	entered = true;
-	const unwind leaving([&fac]
+	const unwind leaving([]
 	{
-		suffix(fac);
 		entered = false;
 	});
 
+	char buf[1024];
+	std::stringstream s;
+	s.rdbuf()->pubsetbuf(buf, sizeof(buf));
+
 	//TODO: XXX: Add option toggle for smalldate()
 	char date[64];
-	prefix(fac, microtime(date));
+	s << microtime(date)
+	  << ' '
+	  << (console_ansi[fac]? console_ansi[fac] : "")
+	  << std::setw(8)
+	  << std::right
+	  << reflect(fac)
+	  << (console_ansi[fac]? "\033[0m " : " ");
+
+	mutable_buffer mb
+	{
+		buf + s.tellp(), sizeof(buf) - s.tellp()
+	};
+
+	closure(mb);
+	consume(mb, copy(mb, string_view{"\r\n"}));
+
+	const mutable_buffer out
+	{
+		buf, size_t(std::distance(buf, data(mb)))
+	};
+
+	const auto write{[&out](std::ostream &s)
+	{
+		check(s);
+		s.write(data(out), size(out));
+	}};
 
 	if(console_err[fac])
-		closure(err_console);
+	{
+		write(err_console);
+		if(console_flush[fac])
+			std::flush(err_console);
+	}
 
 	if(console_out[fac])
-		closure(out_console);
+	{
+		write(out_console);
+		if(console_flush[fac])
+			std::flush(out_console);
+	}
 
 	if(file[fac].is_open())
-		closure(file[fac]);
+	{
+		write(file[fac]);
+		if(file_flush[fac])
+			std::flush(file[fac]);
+	}
 }
 
-std::ostream &
-ircd::log::compose(std::ostream &s,
+ircd::mutable_buffer
+ircd::log::compose(mutable_buffer &out,
                    const string_view &buf,
                    const string_view &name)
 {
-	assert(s.good());
-
+	std::stringstream s;
+	s.rdbuf()->pubsetbuf(data(out), size(out));
 	s << std::setw(9)
 	  << std::right
 	  << name
@@ -368,74 +410,13 @@ ircd::log::compose(std::ostream &s,
 	  << " :"
 	  << buf;
 
-	assert(s.good());
-	return s;
-}
-
-void
-ircd::log::prefix(const facility &fac,
-                  const string_view &date)
-{
-	const auto console_prefix([&fac, &date]
-	(auto &stream)
+	const mutable_buffer ret
 	{
-		check(stream);
+		data(out), size_t(s.tellp())
+	};
 
-		stream << date
-		       << ' '
-		       << (console_ansi[fac]? console_ansi[fac] : "");
-
-		assert(stream.good());
-
-		stream << std::setw(8)
-		       << std::right
-		       << reflect(fac)
-		       << (console_ansi[fac]? "\033[0m " : " ");
-
-		assert(stream.good());
-	});
-
-	if(console_err[fac])
-		console_prefix(err_console);
-
-	if(console_out[fac])
-		console_prefix(out_console);
-
-	if(file[fac].good())
-		file[fac] << date << ' ' << reflect(fac) << ' ';
-}
-
-void
-ircd::log::suffix(const facility &fac)
-{
-	const auto console_newline([&fac]
-	(auto &stream)
-	{
-		assert(stream.good());
-
-		stream << "\r\n";
-		assert(stream.good());
-
-		if(console_flush[fac] || std::current_exception())
-		{
-			stream << std::flush;
-			assert(stream.good());
-		}
-	});
-
-	if(console_err[fac])
-		console_newline(err_console);
-
-	if(console_out[fac])
-		console_newline(out_console);
-
-	if(file[fac].is_open() && file[fac].good() && !std::current_exception())
-	{
-		file[fac] << '\n';
-
-		if(file_flush[fac])
-			file[fac].flush();
-	}
+	begin(out) += s.tellp();
+	return ret;
 }
 
 void
