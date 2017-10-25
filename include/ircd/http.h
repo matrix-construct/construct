@@ -369,6 +369,7 @@ struct ircd::http::request::head
 	string_view expect;
 	string_view te;
 	string_view authorization;
+	string_view connection;
 	size_t content_length {0};
 
 	string_view headers;

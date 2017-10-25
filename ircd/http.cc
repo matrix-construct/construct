@@ -381,6 +381,8 @@ ircd::http::request::head::head(parse::capstan &pc,
 			this->content_length = parser.content_length(h.second);
 		else if(iequals(h.first, "authorization"s))
 			this->authorization = h.second;
+		else if(iequals(h.first, "connection"s))
+			this->connection = h.second;
 
 		if(c)
 			c(h);
