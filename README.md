@@ -5,31 +5,44 @@
 ### Internet Relay Chat daemon: *Charybdis*
 
 IRCd is a free and open source server which facilitates real-time communication over the
-internet. It was started in 1988 by Jarkko Oikarinen in the University of Oulu and eventually
-made its way to William Pitcock et al, whom after 2005 developed the project under the brand
-*Charybdis*.
+internet. It was started in 1988 by Jarkko Oikarinen at the University of Oulu and [its
+derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
+underpinned the major IRC networks for decades. Eventually the project found itself
+under the curation of William Pitcock et al, whom after 2005 further developed it under
+the brand *Charybdis*.
 
-In 2014 a protocol was proposed to reinvigorate real-time communication in lieu of growing
-proprietary competition and a lack of innovation from open source alternatives to
-compete. This protocol is known as the **Matrix protocol**.
+In 2014 a new approach was proposed to reinvigorate real-time communication in lieu of growing
+proprietary competition from opaque cloud services. This is known as the
+[*Matrix Protocol*](https://matrix.org/docs/spec/): a superset of IRC that evolves it into a federation
+of networks and provides a means for interoperability with the modern 21st century internet messaging
+ecosystem.
 
-**IRCd now implements the Matrix protocol** using some of the latest techniques available
-for modern C++ free software.
+**IRCd has been rewritten to implement the _Matrix Protocol_** using some of the latest techniques
+available for modern C++ free software. Just like the first iteration of IRCd, the latest Charybdis
+employs technologies in vogue for this era which provide a fulfilling experience for users and a
+powerfully extensible environment for developers.
 
-
-# Charybdis/5
+### Charybdis/5
 
 Charybdis is designed to be fast and highly scalable, and to be community
-developed by volunteer contributors over the internet. This mission strives to
-make the software easy to understand, modify, audit, and extend.
+developed by volunteer contributors over the internet. This mission strives to make
+the software easy to understand, modify, audit, and extend. It remains true to its
+roots with its modular design and having minimal requirements. Even though almost all
+of the old code has been rewritten, the same spirit and _philosophy of the
+predecessor_ is still obvious throughout.
 
-Charybdis Five is the first implementation of *Matrix* written in C++. It remains
-true to its roots for being highly scalable, modular and having minimal requirements.
-Most of the old code has been rewritten but with the same architecture and spirit of
-the original.
+This is the first implementation of a Matrix homeserver written in C++. It serves
+matrix clients over HTTP. Additionally the RFC1459 family of legacy grammars are
+employed to translate matrix to and from legacy IRC networks supporting TS6.
+
+#### Link charybdis/4 to charybdis/5 to federate your IRC network clients.
 
 
 ## Installation
+
+Getting up and running with Charybdis is easy. A deployment can scale from as little as
+a low-end virtual machine running a stock linux distribution to a large load balanced
+cluster operating in synchrony.
 
 
 #### Dependencies

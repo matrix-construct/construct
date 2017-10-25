@@ -38,12 +38,15 @@ not block execution. Events are never processed concurrently on different thread
 library which will do IO and block the event loop, we may use an additional
 `std::thread` to "offload" this operation.
 
-##### libircd introduces userspace threading
+##### libircd introduces userspace threading✝
 
 IRCd presents an interface introducing stackful coroutines, a.k.a. userspace context
-switching, or green threads. The library does not use callbacks as the way to break
-up execution when waiting for events. Instead, we harken back to the simple old ways
-of synchronous programming, where control flow and data are easy to follow.
+switching, or green threads. The library avoids callbacks as the way to break up
+execution when waiting for events. Instead, we harken back to the simple old ways
+of synchronous programming where control flow and data are easy to follow.
+
+✝ If there are certain cases where we don't want a stack to linger which may
+jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
 
 ##### libircd innovates with formal grammars
 
