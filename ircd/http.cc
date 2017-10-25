@@ -427,7 +427,7 @@ ircd::http::response::response(const code &code,
 	char server_line[128]; const auto server_line_len
 	{
 		code >= 200 && code < 300?
-		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd) %s\r\n",
+		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd %s)\r\n",
 		         BRANDING_NAME,
 		         BRANDING_VERSION):
 		0
