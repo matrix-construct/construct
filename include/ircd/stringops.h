@@ -34,6 +34,8 @@ namespace ircd
 	struct iequals;
 
 	// Vintage
+	size_t strlcpy(const mutable_buffer &dst, const string_view &src);
+	size_t strlcat(const mutable_buffer &dst, const string_view &src);
 	size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
 	size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
 	size_t strlcpy(char *const &dest, const string_view &src, const size_t &bufmax);
@@ -446,6 +448,13 @@ ircd::lstrip(const string_view &str,
 	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
 }
 
+inline size_t
+ircd::strlcpy(const mutable_buffer &dst,
+              const string_view &src)
+{
+	return strlcpy(data(dst), src, size(dst));
+}
+
 /// Copy a string to dst will guaranteed null terminated output
 inline size_t
 ircd::strlcpy(char *const &dst,
@@ -482,6 +491,13 @@ ircd::strlcpy(char *const &dst,
 	return ::strlcpy(dst, src, max);
 }
 #endif
+
+inline size_t
+ircd::strlcat(const mutable_buffer &dst,
+              const string_view &src)
+{
+	return strlcat(data(dst), src, size(dst));
+}
 
 /// Append a string to dst will guaranteed null terminated output; Expects
 /// dst to have null termination before calling this function.
