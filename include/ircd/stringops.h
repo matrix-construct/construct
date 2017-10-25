@@ -41,6 +41,9 @@ namespace ircd
 	size_t strlcpy(char *const &dest, const string_view &src, const size_t &bufmax);
 	size_t strlcat(char *const &dest, const string_view &src, const size_t &bufmax);
 
+	// wrapper to find(T) != npos
+	template<class T> bool has(const string_view &, const T &);
+
 	// return view without trailing c
 	string_view rstrip(const string_view &str, const char &c = ' ');
 	string_view rstrip(const string_view &str, const string_view &c);
@@ -446,6 +449,14 @@ ircd::lstrip(const string_view &str,
 {
 	const auto pos(str.find_first_not_of(c));
 	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
+}
+
+template<class T>
+bool
+ircd::has(const string_view &s,
+          const T &t)
+{
+	return s.find(t) != s.npos;
 }
 
 inline size_t
