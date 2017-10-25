@@ -689,9 +689,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p) ~scope_timeout: %s",
-	           (const void *)s,
-	           e.what());
+	log.error("socket(%p) ~scope_timeout: %s",
+	          (const void *)s,
+	          e.what());
 	return;
 }
 
@@ -709,9 +709,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p) scope_timeout::cancel: %s",
-	           (const void *)s,
-	           e.what());
+	log.error("socket(%p) scope_timeout::cancel: %s",
+	          (const void *)s,
+	          e.what());
 
 	return false;
 }
@@ -753,27 +753,9 @@ ircd::net::socket::socket(const ip::tcp::endpoint &remote,
                           const milliseconds &timeout,
                           asio::ssl::context &ssl,
                           boost::asio::io_service *const &ios)
-try
 :socket{ssl, ios}
 {
-	log::debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
-	           this,
-	           string(remote),
-	           timeout.count());
-
 	connect(remote, timeout);
-
-	log::debug("socket(%p) connected to remote: %s from local: %s",
-	           this,
-	           string(remote),
-	           string(local()));
-}
-catch(const std::exception &e)
-{
-	log::debug("socket(%p) failed to connect to remote %s: %s",
-	           this,
-	           string(remote),
-	           e.what());
 }
 
 ircd::net::socket::socket(asio::ssl::context &ssl,
@@ -804,7 +786,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p): close: %s", this, e.what());
+	log.error("socket(%p): close: %s", this, e.what());
 	return;
 }
 
@@ -813,11 +795,33 @@ catch(const std::exception &e)
 void
 ircd::net::socket::connect(const ip::tcp::endpoint &ep,
                            const milliseconds &timeout)
+try
 {
-	const scope_timeout ts{*this, timeout};
+	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
+	          this,
+	          string(ep),
+	          timeout.count());
+
 	ip::tcp::socket &sd(*this);
+	const scope_timeout ts{*this, timeout};
 	sd.async_connect(ep, yield_context{to_asio{}});
+	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake...",
+	          this,
+	          string(ep),
+	          string(local()));
+
 	ssl.async_handshake(socket::handshake_type::client, yield_context{to_asio{}});
+	log.debug("socket(%p) secure session with %s from local: %s established.",
+	          this,
+	          string(ep),
+	          string(local()));
+}
+catch(const std::exception &e)
+{
+	log.debug("socket(%p) failed to connect to remote %s: %s",
+	          this,
+	          string(ep),
+	          e.what());
 }
 
 /// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
@@ -887,10 +891,10 @@ try
 		timer.cancel();
 
 	if(sd.is_open())
-		log::debug("socket(%p): disconnect: %s type: %d",
-		           (const void *)this,
-		           string(remote()),
-		           uint(type));
+		log.debug("socket(%p): disconnect: %s type: %d",
+		          (const void *)this,
+		          string(remote()),
+		          uint(type));
 
 	if(sd.is_open()) switch(type)
 	{
@@ -925,9 +929,9 @@ try
 			{
 				if(ec)
 				{
-					log::warning("socket(%p): close_notify: %s",
-					             s.get(),
-					             ec.message());
+					log.warning("socket(%p): close_notify: %s",
+					            s.get(),
+					            ec.message());
 					return;
 				}
 
@@ -935,9 +939,9 @@ try
 					s->sd.close(ec);
 
 				if(ec)
-					log::warning("socket(%p): close(): %s",
-					             s.get(),
-					             ec.message());
+					log.warning("socket(%p): close(): %s",
+					            s.get(),
+					            ec.message());
 			});
 			break;
 		}
@@ -945,10 +949,10 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	log::warning("socket(%p): disconnect: type: %d: %s",
-	             (const void *)this,
-	             uint(type),
-	             e.what());
+	log.warning("socket(%p): disconnect: type: %d: %s",
+	            (const void *)this,
+	            uint(type),
+	            e.what());
 	throw;
 }
 
@@ -1037,7 +1041,7 @@ noexcept try
 	// user's callback. Otherwise they are passed up.
 	if(!handle_error(ec))
 	{
-		log::debug("socket(%p): %s", this, ec.message());
+		log.debug("socket(%p): %s", this, ec.message());
 		return;
 	}
 
@@ -1048,16 +1052,16 @@ catch(const std::bad_weak_ptr &e)
 	// This handler may still be registered with asio after the socket destructs, so
 	// the weak_ptr will indicate that fact. However, this is never intended and is
 	// a debug assertion which should be corrected.
-	log::warning("socket(%p): belated callback to handler... (%s)",
-	             this,
-	             e.what());
+	log.warning("socket(%p): belated callback to handler... (%s)",
+	            this,
+	            e.what());
 	assert(0);
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p): handle: %s",
-	           this,
-	           e.what());
+	log.error("socket(%p): handle: %s",
+	          this,
+	          e.what());
 	assert(0);
 }
 
@@ -1070,9 +1074,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p): async handler: unhandled exception: %s",
-	           this,
-	           e.what());
+	log.error("socket(%p): async handler: unhandled exception: %s",
+	          this,
+	          e.what());
 }
 
 bool
@@ -1136,15 +1140,15 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log::error("socket(%p): handle_timeout: unexpected: %s\n",
-	           (const void *)this,
-			   e.what());
+	log.error("socket(%p): handle_timeout: unexpected: %s\n",
+	          (const void *)this,
+		   e.what());
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p): handle timeout: %s",
-	           (const void *)this,
-	           e.what());
+	log.error("socket(%p): handle timeout: %s",
+	          (const void *)this,
+	          e.what());
 }
 
 size_t
@@ -1503,11 +1507,11 @@ ircd::net::ipport::ipport(const std::string &host,
 	}
 	else host4(*this) = address.to_v4().to_ulong();
 
-	log::debug("resolved remote %s:%u => %s %s",
-	           host,
-	           net::port(*this),
-	           is_v6(*this)? "IP6" : "IP4",
-	           string(*this));
+	log.debug("resolved remote %s:%u => %s %s",
+	          host,
+	          net::port(*this),
+	          is_v6(*this)? "IP6" : "IP4",
+	          string(*this));
 }
 
 //
