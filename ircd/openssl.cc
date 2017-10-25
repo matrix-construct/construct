@@ -22,27 +22,14 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-template<class exception = ircd::error,
-         int ERR_CODE = 0,
-         class function,
-         class... args>
-int
-call_openssl(function&& f, args&&... a)
+namespace ircd::openssl
 {
-	const int ret
-	{
-		f(std::forward<args>(a)...)
-	};
-
-	if(unlikely(ret == ERR_CODE))
-	{
-		const unsigned long code{ERR_get_error()};
-		const auto &msg{ERR_reason_error_string(code)?: "UNKNOWN ERROR"};
-		throw exception("OpenSSL #%lu: %s", code, msg);
-	}
-
-	return ret;
-};
+	template<class exception = ircd::error,
+	         int ERR_CODE = 0,
+	         class function,
+	         class... args>
+	static int call(function&& f, args&&... a);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -63,7 +50,7 @@ struct ircd::crh::sha256::ctx
 
 ircd::crh::sha256::ctx::ctx()
 {
-	call_openssl(::SHA256_Init, this);
+	openssl::call(::SHA256_Init, this);
 }
 
 ircd::crh::sha256::ctx::~ctx()
@@ -99,7 +86,7 @@ noexcept
 void
 ircd::crh::sha256::update(const const_raw_buffer &buf)
 {
-	call_openssl(::SHA256_Update, ctx.get(), data(buf), size(buf));
+	openssl::call(::SHA256_Update, ctx.get(), data(buf), size(buf));
 }
 
 void
@@ -132,5 +119,232 @@ ircd::crh::finalize(struct sha256::ctx *const &ctx,
 		reinterpret_cast<uint8_t *>(data(buf))
 	};
 
-	call_openssl(::SHA256_Final, md, ctx);
+	openssl::call(::SHA256_Final, md, ctx);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Internal section for OpenSSL locking.
+//
+// This is delicate because we really shouldn't need this, and as a library it
+// is not nice to other libraries to assume this interface for ourselves.
+// Nevertheless, I have specified it here foremost for debugging and if at some
+// point in the future we really require it.
+//
+
+namespace ircd::openssl::locking
+{
+	const int READ_LOCK     { CRYPTO_LOCK + CRYPTO_READ    };
+	const int WRITE_LOCK    { CRYPTO_LOCK + CRYPTO_WRITE   };
+	const int READ_UNLOCK   { CRYPTO_UNLOCK + CRYPTO_READ  };
+	const int WRITE_UNLOCK  { CRYPTO_UNLOCK + CRYPTO_WRITE };
+
+	std::shared_mutex mutex[CRYPTO_NUM_LOCKS];
+
+	static ircd::string_view reflect(const int &mode);
+	static std::string debug(const int, const int, const char *const, const int);
+	static void callback(const int, const int, const char *const, const int) noexcept;
+	static void id_callback(CRYPTO_THREADID *const tid) noexcept;
+}
+
+void
+ircd::openssl::locking::id_callback(CRYPTO_THREADID *const tid)
+noexcept try
+{
+	const auto ttid
+	{
+		std::this_thread::get_id()
+	};
+
+	const auto otid
+	{
+		uint32_t(std::hash<std::thread::id>{}(ttid)) % std::numeric_limits<uint32_t>::max()
+	};
+
+//	log::debug("OpenSSL thread id callback: setting %p to %u",
+//	           (const void *)tid,
+//	           otid);
+
+	CRYPTO_THREADID_set_numeric(tid, otid);
+}
+catch(const std::exception &e)
+{
+	log::critical("OpenSSL thread id callback (tid=%p): %s",
+	              (const void *)tid,
+	              e.what());
+
+	std::terminate();
+}
+
+void
+ircd::openssl::locking::callback(const int mode,
+                                 const int num,
+                                 const char *const file,
+                                 const int line)
+noexcept try
+{
+	log::debug("OpenSSL: %s", debug(mode, num, file, line));
+
+	auto &mutex
+	{
+		locking::mutex[num]
+	};
+
+	switch(mode)
+	{
+		case CRYPTO_LOCK:
+		case WRITE_LOCK:     mutex.lock();            break;
+		case READ_LOCK:      mutex.lock_shared();     break;
+		case CRYPTO_UNLOCK:
+		case WRITE_UNLOCK:   mutex.unlock();          break;
+		case READ_UNLOCK:    mutex.unlock_shared();   break;
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical("OpenSSL locking callback (%s): %s",
+	              debug(mode, num, file, line),
+	              e.what());
+
+	std::terminate();
+}
+
+std::string
+ircd::openssl::locking::debug(const int mode,
+                              const int num,
+                              const char *const file,
+                              const int line)
+{
+	return fmt::snstringf
+	{
+		1024, "[%02d] %-15s main thread: %d ctx: %u %s %d",
+		num,
+		reflect(mode),
+		is_main_thread(),
+		ctx::id(),
+		file,
+		line
+	};
+}
+
+ircd::string_view
+ircd::openssl::locking::reflect(const int &mode)
+{
+	switch(mode)
+	{
+		case CRYPTO_LOCK:    return "LOCK";
+		case WRITE_LOCK:     return "WRITE_LOCK";
+		case READ_LOCK:      return "READ_LOCK";
+		case CRYPTO_UNLOCK:  return "UNLOCK";
+		case WRITE_UNLOCK:   return "WRITE_UNLOCK";
+		case READ_UNLOCK:    return "READ_UNLOCK";
+	}
+
+	return "?????";
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Misc internal
+//
+
+void
+ircd::openssl::clear_error()
+{
+	ERR_clear_error();
+}
+
+ulong
+ircd::openssl::get_error()
+{
+	return ERR_get_error();
+}
+
+ulong
+ircd::openssl::peek_error()
+{
+	return ERR_peek_error();
+}
+
+ircd::string_view
+ircd::openssl::error_string(const mutable_buffer &buf,
+                            const ulong &e)
+{
+	ERR_error_string_n(e, data(buf), size(buf));
+	return { data(buf), strnlen(data(buf), size(buf)) };
+}
+
+ircd::string_view
+ircd::openssl::version()
+{
+	return SSLeay_version(SSLEAY_VERSION);
+}
+
+//
+// init
+//
+
+ircd::openssl::init::init()
+{
+	OPENSSL_init();
+	ERR_load_crypto_strings();
+	ERR_load_ERR_strings();
+
+/*
+	const auto their_id_callback
+	{
+		CRYPTO_THREADID_get_callback()
+	};
+
+	assert(their_id_callback == nullptr);
+	CRYPTO_THREADID_set_callback(locking::id_callback);
+*/
+
+/*
+	const auto their_locking_callback
+	{
+		CRYPTO_get_locking_callback()
+	};
+
+	if(their_locking_callback)
+		throw error("Overwrite their locking callback @ %p ???",
+		            their_locking_callback);
+
+	CRYPTO_set_locking_callback(locking::callback);
+*/
+}
+
+ircd::openssl::init::~init()
+{
+	//assert(CRYPTO_get_locking_callback() == locking::callback);
+	//assert(CRYPTO_THREADID_get_callback() == locking::id_callback);
+
+	ERR_free_strings();
+}
+
+//
+// call()
+//
+
+template<class exception,
+         int ERR_CODE,
+         class function,
+         class... args>
+static int
+ircd::openssl::call(function&& f,
+                    args&&... a)
+{
+	const int ret
+	{
+		f(std::forward<args>(a)...)
+	};
+
+	if(unlikely(ret == ERR_CODE))
+	{
+		const unsigned long code{ERR_get_error()};
+		const auto &msg{ERR_reason_error_string(code)?: "UNKNOWN ERROR"};
+		throw exception("OpenSSL #%lu: %s", code, msg);
+	}
+
+	return ret;
+};

@@ -188,6 +188,7 @@ namespace ircd
 #include "date.h"
 #include "timer.h"
 #include "logger.h"
+#include "openssl.h"
 #include "nacl.h"
 #include "rand.h"
 #include "hash.h"
