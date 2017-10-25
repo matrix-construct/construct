@@ -196,7 +196,7 @@ ircd::client::client(const hostport &host_port,
                      const seconds &timeout)
 :client
 {
-	std::make_shared<socket>(host_port.first, host_port.second, timeout)
+	std::make_shared<socket>(host_port, timeout)
 }
 {
 }
@@ -209,8 +209,15 @@ ircd::client::client(std::shared_ptr<socket> sock)
 }
 
 ircd::client::~client()
-noexcept
+noexcept try
 {
+	if(sock)
+		sock->disconnect(socket::dc::SSL_NOTIFY);
+}
+catch(const std::exception &e)
+{
+	log::error("~client(%p): %s", this, e.what());
+	return;
 }
 
 namespace ircd
@@ -268,7 +275,7 @@ catch(const boost::system::system_error &e)
 
 	log::critical("(unexpected) system_error: %s", e.what());
 	if(ircd::debugmode)
-		std::terminate();
+		throw;
 
 	return false;
 }
@@ -279,7 +286,7 @@ catch(const std::exception &e)
 	           e.what());
 
 	if(ircd::debugmode)
-		std::terminate();
+		throw;
 
 	return false;
 }
@@ -297,17 +304,19 @@ try
 			client.sock->cancel();
 	});
 
+	bool ret{true};
 	http::request
 	{
-		pc, nullptr, write_closure(client), [&client, &pc]
+		pc, nullptr, write_closure(client), [&client, &pc, &ret]
 		(const auto &head)
 		{
 			client.sock->timer.cancel();
 			handle_request(client, pc, head);
+			ret = !iequals(head.connection, "close"s);
 		}
 	};
 
-	return true;
+	return ret;
 }
 catch(const http::error &e)
 {
@@ -460,6 +469,7 @@ ircd::handle_ec(client &client,
 		default:
 		{
 			log::debug("client(%p): %s", &client, ec.message());
+			disconnect(client, socket::dc::RST);
 			return false;
 		}
 	}
@@ -475,13 +485,10 @@ bool
 ircd::handle_ec_eof(client &client)
 try
 {
-	assert(bool(client.sock));
-	auto &sock(*client.sock);
-	log::debug("client[%s]: EOF (avail: %zu)",
-	           string(remote(client)),
-	           available(sock));
+	log::debug("client[%s]: EOF",
+	           string(remote(client)));
 
-	sock.disconnect(socket::RST);
+	disconnect(client, socket::dc::RST);
 	return false;
 }
 catch(const std::exception &e)
@@ -498,11 +505,10 @@ ircd::handle_ec_timeout(client &client)
 try
 {
 	assert(bool(client.sock));
-	auto &sock(*client.sock);
 	log::debug("client[%s]: disconnecting after inactivity timeout",
 	           string(remote(client)));
 
-	sock.disconnect();
+	disconnect(client, socket::dc::SSL_NOTIFY);
 	return false;
 }
 catch(const std::exception &e)
