@@ -534,7 +534,7 @@ try
 		{
 			sync(*this);
 			this->columns.clear();
-			log.debug("'%s': closed columns; synchronizing with hardware...",
+			log.debug("'%s': closed columns; synchronized with hardware.",
 			          this->name);
 
 			const auto sequence
@@ -3327,7 +3327,7 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-		log.debug("'%s' %lu:%lu SEEK %s %s in %ld$us '%s'",
+/*		log.debug("'%s' %lu:%lu SEEK %s %s in %ld$us '%s'",
 		          name(d),
 		          sequence(d),
 		          sequence(opts.snapshot),
@@ -3335,7 +3335,7 @@ ircd::db::_seek(database::column &c,
 		          valid(*it)? "VALID" : "INVALID",
 		          timer.at<microseconds>().count(),
 		          name(c));
-
+*/
 		return valid(*it);
 	}
 
