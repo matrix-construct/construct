@@ -159,6 +159,9 @@ namespace ircd
 	using namespace std::string_literals;
 	using namespace std::literals::chrono_literals;
 	template<class... T> using ilist = std::initializer_list<T...>;
+
+	using int128_t = signed __int128;
+	using uint128_t = unsigned __int128;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
