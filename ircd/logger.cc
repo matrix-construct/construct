@@ -201,6 +201,12 @@ ircd::log::console_quiet::console_quiet(const bool &showmsg)
 	std::copy(begin(console_err), end(console_err), begin(quieted_err));
 	std::fill(begin(console_out), end(console_out), false);
 	std::fill(begin(console_err), end(console_err), false);
+
+	// Make a special amend to never suppress CRITICAL messages because
+	// these are usually for a crash or major b0rk where the console
+	// user probably won't be continuing normally anyway...
+	if(quieted_out[CRITICAL]) console_out[CRITICAL] = true;
+	if(quieted_err[CRITICAL]) console_err[CRITICAL] = true;
 }
 
 ircd::log::console_quiet::~console_quiet()
