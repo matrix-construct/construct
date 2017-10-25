@@ -175,6 +175,7 @@ namespace ircd
 	constexpr size_t BUFSIZE { 512 };
 
 	struct client;
+	struct server;
 
 	std::string demangle(const std::string &symbol);
 	template<class T> std::string demangle();
@@ -216,6 +217,7 @@ namespace ircd
 #include "net/net.h"
 #include "m/m.h"
 #include "resource.h"
+#include "server.h"
 #include "client.h"
 
 template<class T>
