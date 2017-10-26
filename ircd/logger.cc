@@ -370,6 +370,7 @@ noexcept
 
 	if(console_err[fac])
 	{
+		err_console.clear();
 		write(err_console);
 		if(console_flush[fac])
 			std::flush(err_console);
@@ -377,6 +378,7 @@ noexcept
 
 	if(console_out[fac])
 	{
+		out_console.clear();
 		write(out_console);
 		if(console_flush[fac])
 			std::flush(out_console);
@@ -384,6 +386,7 @@ noexcept
 
 	if(file[fac].is_open())
 	{
+		file[fac].clear();
 		write(file[fac]);
 		if(file_flush[fac])
 			std::flush(file[fac]);
@@ -435,6 +438,8 @@ noexcept try
 
 	fprintf(stderr, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
 	fprintf(stdout, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
+	fflush(stderr);
+	fflush(stdout);
 	s.exceptions(s.eofbit | s.failbit | s.badbit);
 	throw std::runtime_error(buf);
 }
@@ -442,6 +447,8 @@ catch(const std::exception &e)
 {
 	fprintf(stderr, "%s\n", e.what());
 	fprintf(stdout, "%s\n", e.what());
+	fflush(stderr);
+	fflush(stdout);
 	std::terminate();
 }
 
