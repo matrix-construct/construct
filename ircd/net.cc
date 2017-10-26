@@ -293,17 +293,18 @@ noexcept try
 		this->next();
 	}};
 
-	ip::tcp::socket &sd(*sock);
 	log.debug("%s: socket(%p) accepted %s",
 	          std::string(*this),
 	          sock.get(),
 	          string(sock->remote()));
 
+	//ip::tcp::socket &sd(*sock);
+
 	//static const asio::socket_base::keep_alive keep_alive(true);
 	//sd.set_option(keep_alive);
 
-	static const asio::socket_base::linger linger{true, 10};
-	sd.set_option(linger);
+	//static const asio::socket_base::linger linger{true, 10};
+	//sd.set_option(linger);
 
 	//sd.non_blocking(false);
 
@@ -330,7 +331,9 @@ catch(const std::exception &e)
 bool
 ircd::net::listener::acceptor::accept_error(const error_code &ec)
 {
-	switch(ec.value())
+	using boost::system::get_system_category;
+
+	if(ec.category() == get_system_category()) switch(ec.value())
 	{
 		using namespace boost::system::errc;
 
@@ -341,8 +344,10 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec)
 			return true;
 
 		default:
-			throw boost::system::system_error(ec);
+			break;
 	}
+
+	throw boost::system::system_error(ec);
 }
 
 void
@@ -372,7 +377,9 @@ catch(const std::exception &e)
 bool
 ircd::net::listener::acceptor::handshake_error(const error_code &ec)
 {
-	switch(ec.value())
+	using boost::system::get_system_category;
+
+	if(ec.category() == get_system_category()) switch(ec.value())
 	{
 		using namespace boost::system::errc;
 
@@ -383,8 +390,10 @@ ircd::net::listener::acceptor::handshake_error(const error_code &ec)
 			return true;
 
 		default:
-			throw boost::system::system_error(ec);
+			break;
 	}
+
+	throw boost::system::system_error(ec);
 }
 
 void
@@ -724,39 +733,56 @@ ircd::net::socket::scope_timeout::release()
 	return s != nullptr;
 }
 
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const net::remote &remote,
+                   const milliseconds &timeout)
+{
+	const asio::ip::tcp::endpoint ep
+	{
+		is_v6(remote)? asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
+		}
+		: asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v4 { host4(remote) }, port(remote)
+		},
+	};
+
+	return connect(ep, timeout);
+}
+
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const ip::tcp::endpoint &remote,
+                   const milliseconds &timeout)
+{
+	const auto ret(std::make_shared<socket>());
+	ret->connect(remote, timeout);
+	return ret;
+}
+
+bool
+ircd::net::disconnect(socket &socket,
+                      const dc &type)
+noexcept try
+{
+	socket.disconnect(type);
+	return true;
+}
+catch(const std::exception &e)
+{
+/*
+	log::error("socket(%p): disconnect: type: %d: %s",
+	           this,
+	           int(type),
+	           e.what());
+*/
+	return false;
+}
+
 //
 // socket
 //
-
-ircd::net::socket::socket(const net::remote &remote,
-                          const milliseconds &timeout,
-                          asio::ssl::context &ssl,
-                          boost::asio::io_service *const &ios)
-:socket
-{
-	is_v6(remote)? asio::ip::tcp::endpoint
-	{
-		asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
-	}
-	: asio::ip::tcp::endpoint
-	{
-		asio::ip::address_v4 { host4(remote) }, port(remote)
-	},
-	timeout,
-	ssl,
-	ios
-}
-{
-}
-
-ircd::net::socket::socket(const ip::tcp::endpoint &remote,
-                          const milliseconds &timeout,
-                          asio::ssl::context &ssl,
-                          boost::asio::io_service *const &ios)
-:socket{ssl, ios}
-{
-	connect(remote, timeout);
-}
 
 ircd::net::socket::socket(asio::ssl::context &ssl,
                           boost::asio::io_service *const &ios)
@@ -779,10 +805,18 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 {
 }
 
+/// The dtor asserts that the socket is not open/connected requiring a
+/// an SSL close_notify. There's no more room for async callbacks via
+/// shared_ptr after this dtor.
 ircd::net::socket::~socket()
 noexcept try
 {
-	//disconnect(dc::RST);
+	if(unlikely(RB_DEBUG_LEVEL && connected()))
+		log.critical("Failed to ensure socket(%p) is disconnected from %s before dtor.",
+		             this,
+		             string(remote()));
+
+	assert(!connected());
 }
 catch(const std::exception &e)
 {
@@ -797,13 +831,13 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
                            const milliseconds &timeout)
 try
 {
+	const life_guard<socket> lg{*this};
+	const scope_timeout ts{*this, timeout};
 	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
 	          this,
 	          string(ep),
 	          timeout.count());
 
-	ip::tcp::socket &sd(*this);
-	const scope_timeout ts{*this, timeout};
 	sd.async_connect(ep, yield_context{to_asio{}});
 	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake...",
 	          this,
@@ -822,6 +856,9 @@ catch(const std::exception &e)
 	          this,
 	          string(ep),
 	          e.what());
+
+	disconnect(dc::RST);
+	throw;
 }
 
 /// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
@@ -856,18 +893,37 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 	(const error_code &ec)
 	noexcept
 	{
-		if(!timedout)
-			cancel_timeout();
-		else
+		if(timedout)
 			assert(ec == boost::system::errc::operation_canceled);
 
-		callback(ec);
+		if(!timedout)
+			cancel_timeout();
+
+		try
+		{
+			callback(ec);
+		}
+		catch(const std::exception &e)
+		{
+			log.error("socket(%p): connect: unhandled exception from user callback: %s",
+			          (const void *)this,
+			          e.what());
+		}
 	}};
 
 	auto connect_handler{[this, handshake_handler(std::move(handshake_handler))]
 	(const error_code &ec)
 	noexcept
 	{
+		// Even though the branch on ec below should cancel the timeout on
+		// error, the timeout still needs to be canceled if else anything bad
+		// happens in the remainder of this frame too.
+		const unwind::exceptional cancels{[this]
+		{
+			cancel_timeout();
+		}};
+
+		// A connect error
 		if(ec)
 		{
 			handshake_handler(ec);
@@ -878,12 +934,11 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 		ssl.async_handshake(handshake, std::move(handshake_handler));
 	}};
 
-	set_timeout(timeout);
-	ip::tcp::socket &sd(*this);
 	sd.async_connect(ep, std::move(connect_handler));
+	set_timeout(timeout);
 }
 
-void
+bool
 ircd::net::socket::disconnect(const dc &type)
 try
 {
@@ -901,51 +956,58 @@ try
 		default:
 		case dc::RST:
 			sd.close();
-			break;
+			return true;
 
 		case dc::FIN:
 			sd.shutdown(ip::tcp::socket::shutdown_both);
-			break;
+			return true;
 
 		case dc::FIN_SEND:
 			sd.shutdown(ip::tcp::socket::shutdown_send);
-			break;
+			return true;
 
 		case dc::FIN_RECV:
 			sd.shutdown(ip::tcp::socket::shutdown_receive);
-			break;
+			return true;
 
 		case dc::SSL_NOTIFY_YIELD:
 		{
+			const life_guard<socket> lg{*this};
+			const scope_timeout ts{*this, 8s};
 			ssl.async_shutdown(yield_context{to_asio{}});
-			sd.close();
-			break;
+			return true;
 		}
 
 		case dc::SSL_NOTIFY:
 		{
+			set_timeout(8s);
 			ssl.async_shutdown([s(shared_from_this())]
 			(boost::system::error_code ec) noexcept
 			{
+				if(!s->timedout)
+					s->cancel_timeout();
+
 				if(ec)
-				{
-					log.warning("socket(%p): close_notify: %s",
+					log.warning("socket(%p): SSL_NOTIFY: %s: %s",
 					            s.get(),
+					            ec.category().name(),
 					            ec.message());
-					return;
-				}
 
-				if(s->sd.is_open())
-					s->sd.close(ec);
+				if(!s->sd.is_open())
+					return;
+
+				s->sd.close(ec);
 
 				if(ec)
-					log.warning("socket(%p): close(): %s",
+					log.warning("socket(%p): after SSL_NOTIFY: %s: %s",
 					            s.get(),
+					            ec.category().name(),
 					            ec.message());
 			});
-			break;
+			return true;
 		}
 	}
+	else return false;
 }
 catch(const boost::system::system_error &e)
 {
@@ -953,6 +1015,18 @@ catch(const boost::system::system_error &e)
 	            (const void *)this,
 	            uint(type),
 	            e.what());
+
+	if(!sd.is_open())
+		throw;
+
+	boost::system::error_code ec;
+	sd.close(ec);
+
+	if(ec)
+		log.warning("socket(%p): after disconnect: %s: %s",
+		            this,
+		            ec.category().name(),
+		            ec.message());
 	throw;
 }
 
@@ -1041,7 +1115,10 @@ noexcept try
 	// user's callback. Otherwise they are passed up.
 	if(!handle_error(ec))
 	{
-		log.debug("socket(%p): %s", this, ec.message());
+		log.warning("socket(%p): %s",
+		            this,
+		            ec.category().name(),
+		            ec.message());
 		return;
 	}
 
@@ -1083,8 +1160,17 @@ bool
 ircd::net::socket::handle_error(const error_code &ec)
 {
  	using namespace boost::system::errc;
+	using boost::system::get_system_category;
+	using boost::asio::error::get_ssl_category;
+	using boost::asio::error::get_misc_category;
 
-	switch(ec.value())
+	if(ec != success)
+		log.error("socket(%p): handle error: %s: %s",
+		          this,
+		          ec.category().name(),
+		          ec.message());
+
+	if(ec.category() == get_system_category()) switch(ec.value())
 	{
 		// A success is not an error; can call the user handler
 		case success:
@@ -1096,11 +1182,6 @@ ircd::net::socket::handle_error(const error_code &ec)
 		case operation_canceled:
 			return timedout;
 
-		// This indicates the remote closed the socket, we still
-		// pass this up to the user so they can handle it.
-		case boost::asio::error::eof:
-			return true;
-
 		// This is a condition which we hide from the user.
 		case bad_file_descriptor:
 			return false;
@@ -1109,6 +1190,28 @@ ircd::net::socket::handle_error(const error_code &ec)
 		default:
 			return true;
 	}
+	else if(ec.category() == get_misc_category()) switch(ec.value())
+	{
+		// This indicates the remote closed the socket, we still
+		// pass this up to the user so they can know that too.
+		case boost::asio::error::eof:
+			return true;
+
+		default:
+			return true;
+	}
+	else if(ec.category() == get_ssl_category()) switch(ec.value())
+	{
+		// Docs say this means we read less bytes off the socket than desired.
+		case SSL_R_SHORT_READ:
+			return true;
+
+		default:
+			return true;
+	}
+
+	assert(0);
+	return true;
 }
 
 void
@@ -1130,6 +1233,7 @@ noexcept try
 
 		// A cancelation means there was no timeout.
 		case operation_canceled:
+			assert(ec.category() == boost::system::get_system_category());
 			timedout = false;
 			break;
 
@@ -1142,7 +1246,7 @@ catch(const boost::system::system_error &e)
 {
 	log.error("socket(%p): handle_timeout: unexpected: %s\n",
 	          (const void *)this,
-		   e.what());
+	          e.what());
 }
 catch(const std::exception &e)
 {

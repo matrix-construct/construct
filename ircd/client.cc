@@ -54,15 +54,11 @@ ctx::pool request
 // Container for all active clients (connections) for iteration purposes.
 client::list client::clients;
 
-bool handle_ec_timeout(client &);
-bool handle_ec_eof(client &);
-bool handle_ec_success(client &);
-bool handle_ec(client &, const net::error_code &);
-
+static bool handle_ec(client &, const net::error_code &);
 void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
 void async_recv_next(std::shared_ptr<client>);
 
-void disconnect(client &, const socket::dc & = socket::dc::RST);
+void disconnect(client &, const net::dc & = net::dc::RST);
 void disconnect_all();
 
 template<class... args> std::shared_ptr<client> make_client(args&&...);
@@ -196,7 +192,7 @@ ircd::client::client(const hostport &host_port,
                      const seconds &timeout)
 :client
 {
-	std::make_shared<socket>(host_port, timeout)
+	net::connect(host_port, timeout)
 }
 {
 }
@@ -211,8 +207,7 @@ ircd::client::client(std::shared_ptr<socket> sock)
 ircd::client::~client()
 noexcept try
 {
-	if(sock)
-		sock->disconnect(socket::dc::SSL_NOTIFY);
+	disconnect(*this, net::dc::SSL_NOTIFY);
 }
 catch(const std::exception &e)
 {
@@ -232,7 +227,7 @@ noexcept try
 {
 	const auto header_max{8192};
 	const auto content_max{65536};
-	unique_buffer<mutable_buffer> buffer
+	const unique_buffer<mutable_buffer> buffer
 	{
 		header_max + content_max
 	};
@@ -251,18 +246,21 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	using boost::asio::error::eof;
-	using boost::asio::error::broken_pipe;
-	using boost::asio::error::connection_reset;
 	using namespace boost::system::errc;
+	using boost::system::get_system_category;
+	using boost::asio::error::get_ssl_category;
+	using boost::asio::error::get_misc_category;
 
-	switch(e.code().value())
+	const auto ec
+	{
+		e.code()
+	};
+
+	if(ec.category() == get_system_category()) switch(ec.value())
 	{
 		case success:
-			assert(0);
 			return true;
 
-		case eof:
 		case broken_pipe:
 		case connection_reset:
 		case not_connected:
@@ -272,8 +270,27 @@ catch(const boost::system::system_error &e)
 		default:
 			break;
 	}
+	else if(ec.category() == get_misc_category()) switch(ec.value())
+	{
+		case boost::asio::error::eof:
+			return false;
 
-	log::critical("(unexpected) system_error: %s", e.what());
+		default:
+			break;
+	}
+	else if(ec.category() == get_ssl_category()) switch(ec.value())
+	{
+		case SSL_R_SHORT_READ:
+			return false;
+
+		default:
+			break;
+	}
+
+	log::critical("client(%p): (unexpected) system_error: %s",
+	              (const void *)this,
+	              e.what());
+
 	if(ircd::debugmode)
 		throw;
 
@@ -297,11 +314,11 @@ ircd::handle_request(client &client,
 try
 {
 	client.request_timer = ircd::timer{};
-	client.sock->set_timeout(request_timeout, [&client]
+	client.sock->set_timeout(request_timeout, [client(shared_from(client))]
 	(const net::error_code &ec)
 	{
 		if(!ec)
-			client.sock->cancel();
+			disconnect(*client, net::dc::SSL_NOTIFY_YIELD);
 	});
 
 	bool ret{true};
@@ -328,10 +345,13 @@ catch(const http::error &e)
 
 	switch(e.code)
 	{
-		case http::BAD_REQUEST:               return false;
-		case http::INTERNAL_SERVER_ERROR:     return false;
-		case http::REQUEST_TIMEOUT:           return false;
-		default:                              return true;
+		case http::BAD_REQUEST:
+		case http::REQUEST_TIMEOUT:
+		case http::INTERNAL_SERVER_ERROR:
+			return false;
+
+		default:
+			return true;
 	}
 }
 
@@ -382,7 +402,7 @@ ircd::disconnect_all()
 {
 	for(auto &client : client::clients) try
 	{
-		disconnect(*client, socket::dc::RST);
+		disconnect(*client, net::dc::RST);
 	}
 	catch(const std::exception &e)
 	{
@@ -392,10 +412,10 @@ ircd::disconnect_all()
 
 void
 ircd::disconnect(client &client,
-                 const socket::dc &type)
+                 const net::dc &type)
 {
-	auto &sock(*client.sock);
-	sock.disconnect(type);
+	if(likely(client.sock))
+		disconnect(*client.sock, type);
 }
 
 void
@@ -439,19 +459,25 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 		// of the ircd::context system. The context the closure ends up getting is the next
 		// available from the request pool, which may not be available immediately so this
 		// handler might be queued for some time after this call returns.
-		request([client(std::move(client)), timeout]
+		request([ec, client, timeout]
 		{
 			// Right here this handler is executing on an ircd::context with its own
 			// stack dedicated to the lifetime of this request. If client::main()
 			// returns true, we bring the client back into async mode to wait for
-			// the next request. Otherwise, unless the client was preserved by
-			// functionality in main(), it will go out of scope after this which
-			// will disconnect the socket and destroy the client and return this
-			// context to the request pool.
+			// the next request.
 			if(client->main())
 				async_recv_next(client, timeout);
 		});
 	});
+}
+
+namespace ircd
+{
+	static bool handle_ec_success(client &);
+	static bool handle_ec_timeout(client &);
+	static bool handle_ec_eof(client &);
+	static bool handle_ec_short_read(client &);
+	static bool handle_ec_default(client &, const net::error_code &);
 }
 
 bool
@@ -459,26 +485,59 @@ ircd::handle_ec(client &client,
                 const net::error_code &ec)
 {
 	using namespace boost::system::errc;
-	using boost::asio::error::eof;
+	using boost::system::get_system_category;
+	using boost::asio::error::get_ssl_category;
+	using boost::asio::error::get_misc_category;
 
-	switch(ec.value())
+	if(ec.category() == get_system_category()) switch(ec.value())
 	{
 		case success:                return handle_ec_success(client);
-		case eof:                    return handle_ec_eof(client);
 		case operation_canceled:     return handle_ec_timeout(client);
-		default:
-		{
-			log::debug("client(%p): %s", &client, ec.message());
-			disconnect(client, socket::dc::RST);
-			return false;
-		}
+		default:                     return handle_ec_default(client, ec);
 	}
+	else if(ec.category() == get_misc_category()) switch(ec.value())
+	{
+		case asio::error::eof:       return handle_ec_eof(client);
+		default:                     return handle_ec_default(client, ec);
+	}
+	else if(ec.category() == get_ssl_category()) switch(ec.value())
+	{
+		case SSL_R_SHORT_READ:       return handle_ec_short_read(client);
+		default:                     return handle_ec_default(client, ec);
+	}
+	else return handle_ec_default(client, ec);
 }
 
 bool
-ircd::handle_ec_success(client &client)
+ircd::handle_ec_default(client &client,
+                        const net::error_code &ec)
 {
-	return true;
+	log::debug("client(%p): %s: %s",
+	           &client,
+	           ec.category().name(),
+	           ec.message());
+
+	disconnect(client, net::dc::SSL_NOTIFY);
+	return false;
+}
+
+bool
+ircd::handle_ec_short_read(client &client)
+try
+{
+	log::debug("client[%s]: short_read",
+	           string(remote(client)));
+
+	disconnect(client, net::dc::RST);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::warning("client(%p): short_read: %s",
+	             &client,
+	             e.what());
+
+	return false;
 }
 
 bool
@@ -488,7 +547,7 @@ try
 	log::debug("client[%s]: EOF",
 	           string(remote(client)));
 
-	disconnect(client, socket::dc::RST);
+	disconnect(client, net::dc::RST);
 	return false;
 }
 catch(const std::exception &e)
@@ -508,7 +567,7 @@ try
 	log::debug("client[%s]: disconnecting after inactivity timeout",
 	           string(remote(client)));
 
-	disconnect(client, socket::dc::SSL_NOTIFY);
+	disconnect(client, net::dc::SSL_NOTIFY);
 	return false;
 }
 catch(const std::exception &e)
@@ -518,4 +577,10 @@ catch(const std::exception &e)
 	             e.what());
 
 	return false;
+}
+
+bool
+ircd::handle_ec_success(client &client)
+{
+	return true;
 }

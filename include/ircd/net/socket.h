@@ -42,9 +42,9 @@ namespace ircd::net
 	uint16_t port(const ip::tcp::endpoint &);
 	ip::address addr(const ip::tcp::endpoint &);
 	std::string host(const ip::tcp::endpoint &);
-
 	std::string string(const ip::address &);
 	std::string string(const ip::tcp::endpoint &);
+	std::shared_ptr<socket> connect(const ip::tcp::endpoint &remote, const milliseconds &timeout);
 }
 
 namespace ircd
@@ -62,7 +62,6 @@ struct ircd::net::socket
 	struct io;
 	struct stat;
 	struct scope_timeout;
-	enum class dc;
 
 	struct stat
 	{
@@ -127,21 +126,8 @@ struct ircd::net::socket
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout, handler callback);
 	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = 30000ms);
 	void connect(const net::remote &, const milliseconds &timeout = 30000ms);
-	void disconnect(const dc &type);
+	bool disconnect(const dc &type);
 
-	// Construct, resolve and connect client socket to remote host (yields)
-	socket(const net::remote &,
-	       const milliseconds &timeout           = 30000ms,
-	       asio::ssl::context &ssl               = sslv23_client,
-	       boost::asio::io_service *const &ios   = ircd::ios);
-
-	// Construct and connect client socket to remote host (yields)
-	socket(const ip::tcp::endpoint &remote,
-	       const milliseconds &timeout           = 30000ms,
-	       asio::ssl::context &ssl               = sslv23_client,
-	       boost::asio::io_service *const &ios   = ircd::ios);
-
-	// Construct socket only
 	socket(asio::ssl::context &ssl               = sslv23_client,
 	       boost::asio::io_service *const &ios   = ircd::ios);
 
@@ -180,16 +166,6 @@ class ircd::net::socket::io
 
 	io(struct socket &, struct stat &, const size_t &bytes);
 	io(struct socket &, struct stat &, const std::function<size_t ()> &closure);
-};
-
-enum class ircd::net::socket::dc
-{
-	RST,                // hardest disconnect
-	FIN,                // graceful shutdown both directions
-	FIN_SEND,           // graceful shutdown send side
-	FIN_RECV,           // graceful shutdown recv side
-	SSL_NOTIFY,         // SSL close_notify (async, errors ignored)
-	SSL_NOTIFY_YIELD,   // SSL close_notify (yields context, throws)
 };
 
 template<class iov>
