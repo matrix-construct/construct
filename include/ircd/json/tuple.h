@@ -68,6 +68,7 @@ struct tuple
 
 	static constexpr size_t size();
 
+	template<class... U> tuple(const tuple<U...> &);
 	tuple(const json::object &);
 	tuple(const json::iov &);
 	tuple(const std::initializer_list<member> &);
@@ -793,6 +794,17 @@ tuple<T...>::tuple(const std::initializer_list<member> &members)
 	(const auto &member)
 	{
 		set(*this, member.first, member.second);
+	});
+}
+
+template<class... T>
+template<class... U>
+tuple<T...>::tuple(const tuple<U...> &t)
+{
+	for_each(t, [this]
+	(const auto &key, const auto &val)
+	{
+		set(*this, key, val);
 	});
 }
 
