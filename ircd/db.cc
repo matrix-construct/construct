@@ -2690,6 +2690,13 @@ ircd::db::write(column &column,
 	};
 }
 
+///
+/// TODO: As soon as rocksdb regressed from allowing a null value argument
+/// to the query, we are forced to watch rocksdb allocate and copy the value
+/// into our string `discard` for no reason at all. If this regression remains
+/// it may be more efficient to use a regular iterator seek like everything
+/// else. Otherwise if they fix this, the discard string should become a
+/// nullptr instead.
 bool
 ircd::db::has(column &column,
               const string_view &key,
@@ -2705,19 +2712,22 @@ ircd::db::has(column &column,
 	opts.read_tier = NON_BLOCKING;
 
 	// Perform a co-RP query to the filtration
-	if(!d.d->KeyMayExist(opts, c, k, nullptr, nullptr))
+	bool value{false};
+	static thread_local std::string discard;
+	const bool may_exist{d.d->KeyMayExist(opts, c, k, &discard, &value)};
+
+	if(!may_exist)
 		return false;
 
 	// Perform a query to the cache
-	static std::string *const null_str_ptr(nullptr);
-	auto status(d.d->Get(opts, c, k, null_str_ptr));
+	auto status(d.d->Get(opts, c, k, &discard));
 	if(status.IsIncomplete())
 	{
 		// DB cache miss; next query requires I/O, offload it
 		opts.read_tier = BLOCKING;
 		ctx::offload([&d, &c, &k, &opts, &status]
 		{
-			status = d.d->Get(opts, c, k, null_str_ptr);
+			status = d.d->Get(opts, c, k, &discard);
 		});
 	}
 
