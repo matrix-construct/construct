@@ -95,6 +95,38 @@ namespace ircd::m
 	const char *reflect(const enum id::sigil &);
 }
 
+//
+// convenience typedefs
+//
+
+struct ircd::m::id::event
+:ircd::m::id
+{
+	using buf = m::id::buf<event>;
+	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
+};
+
+struct ircd::m::id::user
+:ircd::m::id
+{
+	using buf = m::id::buf<user>;
+	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
+};
+
+struct ircd::m::id::room
+:ircd::m::id
+{
+	using buf = m::id::buf<room>;
+	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
+};
+
+struct ircd::m::id::alias
+:ircd::m::id
+{
+	using buf = m::id::buf<alias>;
+	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
+};
+
 /// ID object backed by an internal buffer of wost-case size.
 ///
 template<class T,
@@ -127,43 +159,32 @@ struct ircd::m::id::buf
 	{}
 
 	buf() = default;
+
+	buf(buf &&other) noexcept
+	:T{b, std::move(other)}
+	{}
+
+	buf(const buf &other)
+	:T{b, other}
+	{}
+
+	buf &operator=(const buf &other)
+	{
+		static_cast<T &>(*this) = T{b, other};
+		return *this;
+	}
+
+	buf &operator=(buf &&other) noexcept
+	{
+		static_cast<T &>(*this) = T{b, std::move(other)};
+		return *this;
+	}
+
 	buf &operator=(const string_view &s)
 	{
 		static_cast<T &>(*this) = T{b, s};
 		return *this;
 	}
-};
-
-//
-// convenience typedefs
-//
-
-struct ircd::m::id::event
-:ircd::m::id
-{
-	using buf = m::id::buf<event>;
-	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
-};
-
-struct ircd::m::id::user
-:ircd::m::id
-{
-	using buf = m::id::buf<user>;
-	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
-};
-
-struct ircd::m::id::room
-:ircd::m::id
-{
-	using buf = m::id::buf<room>;
-	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
-};
-
-struct ircd::m::id::alias
-:ircd::m::id
-{
-	using buf = m::id::buf<alias>;
-	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
 };
 
 inline uint16_t
