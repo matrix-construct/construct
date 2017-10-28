@@ -717,6 +717,33 @@ string(const uint8_t *const &buf, const size_t &size)
 }
 
 
+//
+// stringstream buffer set macros
+//
+
+inline std::string &
+pubsetbuf(std::stringstream &ss,
+          std::string &s)
+{
+	auto *const &data
+	{
+		const_cast<char *>(s.data())
+	};
+
+	ss.rdbuf()->pubsetbuf(data, s.size());
+	return s;
+}
+
+inline std::string &
+pubsetbuf(std::stringstream &ss,
+          std::string &s,
+          const size_t &size)
+{
+	s.resize(size, char{});
+	return pubsetbuf(ss, s);
+}
+
+
 /* This is a template alternative to nothrow overloads, which
  * allows keeping the function arguments sanitized of the thrownness.
  */
