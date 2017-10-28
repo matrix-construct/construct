@@ -376,22 +376,22 @@ try
 		serialized(value)
 	};
 
-	char buffer[size]; mutable_buffer mb
+	const unique_buffer<mutable_buffer> buffer
 	{
-		buffer, size
+		size
 	};
 
 	switch(type(value))
 	{
 		case json::ARRAY:
 		{
-			response(client, json::array{stringify(mb, value)}, code);
+			response(client, json::array{stringify(mutable_buffer{buffer}, value)}, code);
 			return;
 		}
 
 		case json::OBJECT:
 		{
-			response(client, json::object{stringify(mb, value)}, code);
+			response(client, json::object{stringify(mutable_buffer{buffer}, value)}, code);
 			return;
 		}
 
@@ -419,10 +419,14 @@ try
 		serialized(members)
 	};
 
-	char buffer[size];
+	const unique_buffer<mutable_buffer> buffer
+	{
+		size
+	};
+
 	const json::object object
 	{
-		stringify(mutable_buffer{buffer, buffer + size}, members)
+		stringify(mutable_buffer{buffer}, members)
 	};
 
 	response(client, object, code);
@@ -445,10 +449,14 @@ try
 		serialized(members)
 	};
 
-	char buffer[size];
+	const unique_buffer<mutable_buffer> buffer
+	{
+		size
+	};
+
 	const json::object object
 	{
-		stringify(mutable_buffer{buffer, buffer + size}, members)
+		stringify(mutable_buffer{buffer}, members)
 	};
 
 	response(client, object, code);
