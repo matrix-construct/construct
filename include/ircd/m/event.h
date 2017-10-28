@@ -97,6 +97,7 @@ struct ircd::m::event
 	enum temporality : int;
 
 	struct fetch;
+	struct prev;
 
 	using id = m::id::event;
 
@@ -113,15 +114,43 @@ struct ircd::m::event
 	using super_type::operator=;
 };
 
+struct ircd::m::event::prev
+:json::tuple
+<
+	json::property<name::auth_events, json::array>,
+	json::property<name::prev_events, json::array>,
+	json::property<name::prev_state, json::array>
+>
+{
+	enum cond :int;
+
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+enum ircd::m::event::prev::cond
+:int
+{
+	SELF_LOOP,
+};
+
 namespace ircd::m
 {
-	string_view reflect(const event::temporality &);
-	event::temporality temporality(const event &, const int64_t &rel);
+	size_t outdegree(const event::prev &);
+	size_t outdegree(const event &);
 
+	std::string pretty(const event &);
+	std::string pretty(const event::prev &);
+
+	std::string pretty_oneline(const event &);
+	std::string pretty_oneline(const event::prev &);
+
+	string_view reflect(const event::temporality &);
 	string_view reflect(const event::lineage &);
+
+	event::temporality temporality(const event &, const int64_t &rel);
 	event::lineage lineage(const event &);
 }
-
 
 enum ircd::m::event::temporality
 :int
@@ -138,5 +167,23 @@ enum ircd::m::event::lineage
 	FORWARD     = 1,   ///< Event has one parent at the previous depth
 	MERGE       = 2,   ///< Event has multiple parents at the previous depth
 };
+
+inline size_t
+ircd::m::outdegree(const event &event)
+{
+	return outdegree(event::prev{event});
+}
+
+inline size_t
+ircd::m::outdegree(const event::prev &prev)
+{
+	size_t ret(0);
+	for_each(prev, [&ret](const auto &key, const json::array &val)
+	{
+		ret += val.count();
+	});
+
+	return ret;
+}
 
 #pragma GCC diagnostic pop

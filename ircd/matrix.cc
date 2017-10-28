@@ -2193,24 +2193,16 @@ ircd::m::vm::commit(json::iov &iov)
 	if(!json::get<"sender"_>(event))
 		throw BAD_JSON("Required event field: sender");
 
-	log.debug("injecting event %s '%s' from %s :%s %s (mark: %ld)",
-	          at<"event_id"_>(event),
-	          at<"type"_>(event),
-	          at<"sender"_>(event),
-	          at<"origin"_>(event),
-	          json::get<"is_state"_>(event)? "state" : "",
-	          vm::current_sequence);
+	log.debug("injecting event(mark: %ld) %s",
+	          vm::current_sequence,
+	          pretty_oneline(event));
 
 	ircd::timer timer;
 
 	vm::eval(event);
 
-	log.debug("committed event %s '%s' from %s :%s %s (mark: %ld time: %ld$ms)",
-	          at<"event_id"_>(event),
-	          at<"type"_>(event),
-	          at<"sender"_>(event),
-	          at<"origin"_>(event),
-	          json::get<"is_state"_>(event)? "state" : "",
+	log.debug("committed event %s (mark: %ld time: %ld$ms)",
+	          pretty_oneline(event),
 	          vm::current_sequence,
 	          timer.at<milliseconds>().count());
 
@@ -2944,6 +2936,203 @@ ircd::m::reflect(const event::temporality &temporality)
 	}
 
 	return "?????";
+}
+
+std::string
+ircd::m::pretty(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 2048);
+
+	const auto out{[&s]
+	(const string_view &key, auto&& val)
+	{
+		if(json::defined(val))
+			s << key << ": " << val << std::endl;
+	}};
+
+	const auto &auth_events{json::get<"auth_events"_>(prev)};
+	for(const json::array auth_event : auth_events)
+		out("auth_event", unquote(auth_event[0]));
+
+	const auto &prev_states{json::get<"prev_state"_>(prev)};
+	for(const json::array prev_state : prev_states)
+		out("prev_state", unquote(prev_state[0]));
+
+	const auto &prev_events{json::get<"prev_events"_>(prev)};
+	for(const json::array prev_event : prev_events)
+		out("prev_event", unquote(prev_event[0]));
+
+	return s.str();
+}
+
+std::string
+ircd::m::pretty_oneline(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 1024);
+
+	const auto &auth_events{json::get<"auth_events"_>(prev)};
+	s << "A[ ";
+	for(const json::array auth_event : auth_events)
+		s << unquote(auth_event[0]) << " ";
+	s << "] ";
+
+	const auto &prev_states{json::get<"prev_state"_>(prev)};
+	s << "S[ ";
+	for(const json::array prev_state : prev_states)
+		s << unquote(prev_state[0]) << " ";
+	s << "] ";
+
+	const auto &prev_events{json::get<"prev_events"_>(prev)};
+	s << "E[ ";
+	for(const json::array prev_event : prev_events)
+		s << unquote(prev_event[0]) << " ";
+	s << "] ";
+
+	return s.str();
+}
+
+std::string
+ircd::m::pretty(const event &event)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 2048);
+
+	const auto out{[&s]
+	(const string_view &key, auto&& val)
+	{
+		if(json::defined(val))
+			s << std::setw(16) << std::right << key << ": " << val << std::endl;
+	}};
+
+	const string_view top_keys[]
+	{
+		"origin",
+		"event_id",
+		"room_id",
+		"sender",
+		"type",
+		"depth",
+	};
+
+	json::for_each(event, top_keys, out);
+
+	const auto &hashes{json::get<"hashes"_>(event)};
+	for(const auto &hash : hashes)
+	{
+		s << std::setw(16) << std::right << "[hash]" << ": "
+		  << hash.first
+		  //<< " "
+		  //<< hash.second
+		  << std::endl;
+	}
+
+	const auto &signatures{json::get<"signatures"_>(event)};
+	for(const auto &signature : signatures)
+	{
+		s << std::setw(16) << std::right << "[signature]" << ": "
+		  << signature.first << " ";
+
+		for(const auto &key : json::object{signature.second})
+			s << key.first << " ";
+
+		s << std::endl;
+	}
+
+	const json::object &contents{json::get<"content"_>(event)};
+	if(!contents.empty())
+	{
+		s << std::setw(16) << std::right << "[content]" << ": ";
+		for(const auto &content : contents)
+			s << content.first << ", ";
+		s << std::endl;
+	}
+
+	const auto &auth_events{json::get<"auth_events"_>(event)};
+	for(const json::array auth_event : auth_events)
+		out("[auth_event]", unquote(auth_event[0]));
+
+	const auto &prev_states{json::get<"prev_state"_>(event)};
+	for(const json::array prev_state : prev_states)
+		out("[prev_state]", unquote(prev_state[0]));
+
+	const auto &prev_events{json::get<"prev_events"_>(event)};
+	for(const json::array prev_event : prev_events)
+		out("[prev_event]", unquote(prev_event[0]));
+
+	return s.str();
+}
+
+std::string
+ircd::m::pretty_oneline(const event &event)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 1024);
+
+	const auto out{[&s]
+	(const string_view &key, auto&& val)
+	{
+		if(json::defined(val))
+			s << val << " ";
+		else
+			s << "* ";
+	}};
+
+	const string_view top_keys[]
+	{
+		"origin",
+		"event_id",
+		"room_id",
+		"sender",
+		"depth",
+	};
+
+	s << ':';
+	json::for_each(event, top_keys, out);
+
+	const auto &auth_events{json::get<"auth_events"_>(event)};
+	s << "pa:" << auth_events.count() << " ";
+
+	const auto &prev_states{json::get<"prev_state"_>(event)};
+	s << "ps:" << prev_states.count() << " ";
+
+	const auto &prev_events{json::get<"prev_events"_>(event)};
+	s << "pe:" << prev_events.count() << " ";
+
+	const auto &hashes{json::get<"hashes"_>(event)};
+	s << "[ ";
+	for(const auto &hash : hashes)
+		s << hash.first << " ";
+	s << "] ";
+
+	const auto &signatures{json::get<"signatures"_>(event)};
+	s << "[ ";
+	for(const auto &signature : signatures)
+	{
+		s << signature.first << "[ ";
+		for(const auto &key : json::object{signature.second})
+			s << key.first << " ";
+
+		s << "] ";
+	}
+	s << "] ";
+
+	out("type", at<"type"_>(event));
+
+	const json::object &contents{json::get<"content"_>(event)};
+	if(!contents.empty())
+	{
+		s << "+" << string_view{contents}.size() << " bytes :";
+		for(const auto &content : contents)
+			s << content.first << " ";
+	}
+
+	return s.str();
 }
 
 namespace ircd::m

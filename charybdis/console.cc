@@ -1169,7 +1169,8 @@ try
 			m::vm::trace(event_id, []
 			(const auto &event, auto &next)
 			{
-				std::cout << event << std::endl << std::endl;
+				std::cout << m::pretty_oneline(event) << std::endl;
+				std::cout << m::pretty(m::event::prev{event}) << std::endl;
 				return true;
 			});
 
