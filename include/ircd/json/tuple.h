@@ -474,6 +474,42 @@ for_each(tuple &t,
 }
 
 template<class tuple,
+         class function>
+void
+for_each(const tuple &t,
+         const vector_view<const string_view> &mask,
+         function&& f)
+{
+	std::for_each(std::begin(mask), std::end(mask), [&t, &f]
+	(const auto &key)
+	{
+		at(t, key, [&f, &key]
+		(auto&& val)
+		{
+			f(key, val);
+		});
+	});
+}
+
+template<class tuple,
+         class function>
+void
+for_each(tuple &t,
+         const vector_view<const string_view> &mask,
+         function&& f)
+{
+	std::for_each(std::begin(mask), std::end(mask), [&t, &f]
+	(const auto &key)
+	{
+		at(t, key, [&f, &key]
+		(auto&& val)
+		{
+			f(key, val);
+		});
+	});
+}
+
+template<class tuple,
          class function,
          ssize_t i>
 typename std::enable_if<(i < 0), void>::type
