@@ -116,7 +116,7 @@ window.addEventListener("error", (msg, url, line, column, error) => mc.abort(
  * Where exceptions are sent after being handled (or not) in some JS callstack. This
  * propagates the exception to the DOM for display to the user, and eventually if no
  * viable DOM catch directive displays it, propagation continues to the root element
- * of the application which will smother the whole app with the error.
+ * of the application which will smother the whole app with the black screen of doom.
  */
 mc.unhandled = function(error)
 {
@@ -128,7 +128,7 @@ mc.unhandled = function(error)
 
 	try
 	{
-		let root = mc.root_scope();
+		let root = mc.ng.root();
 		root.error = error;
 	}
 	catch(e)

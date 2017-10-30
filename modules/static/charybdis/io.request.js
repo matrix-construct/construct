@@ -517,7 +517,7 @@ mc.io.request.error = function(event)
 		message:
 			!empty(this.reason)? this.reason:
 			response && xhr.responseType == "text"? response:
-			"There may be a network connectivity problem.",
+			"Unknown error. There may be a network connectivity problem.",
 
 		request_stack:
 			this.stack,
