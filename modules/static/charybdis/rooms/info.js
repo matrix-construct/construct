@@ -71,20 +71,25 @@ mc.rooms.info.menu =
 
 mc.rooms.info.menu["JOIN"].click = async function($event, room_id)
 {
-	let room = mc.rooms[room_id];
-	if(!room)
-		throw mc.error("no room");
+	if(!room_id)
+		room_id = mc.rooms.search.value;
 
-	// Try to join room by alias first
+	if(!(room_id in mc.rooms))
+		mc.rooms[room_id] = new mc.room({room_id: room_id});
+
+	let room = mc.rooms[room_id];
+
+	// Try to join room by canon alias first
 	let alias = room.state['m.room.canonical_alias'].content.alias;
 
 	// Fallback to any alias
-	if(empty(alias))
+	if(empty(alias)) try
 	{
 		let aliases = room.state['m.room.aliases'];
 		let state_key = Object.keys(aliases)[0];
 		alias = aliases[state_key].content.aliases[0];
 	}
+	catch(e) {}
 
 	// Fallback to room id
 	if(empty(alias))
