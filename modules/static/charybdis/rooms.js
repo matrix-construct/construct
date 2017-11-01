@@ -107,7 +107,7 @@ mc.rooms.menu["JOINED"].click = function($event)
 
 mc.rooms.menu["LEFT"] =
 {
-	order: 4,
+	order: 2,
 	icon: "fa-thumbs-down",
 	selected: () => mc.rooms.mode == "LEFT",
 };
@@ -120,14 +120,14 @@ mc.rooms.menu["LEFT"].click = function($event)
 
 mc.rooms.menu["FEED"] =
 {
-	order: 2,
+	order: 3,
 	icon: "fa-newspaper-o",
 	selected: () => mc.rooms.mode == "FEED",
 };
 
 mc.rooms.menu["CREATE"] =
 {
-	order: 3,
+	order: 4,
 	icon: "fa-lightbulb-o",
 	selected: () => mc.rooms.mode == "CREATE",
 };

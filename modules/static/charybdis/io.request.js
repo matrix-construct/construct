@@ -509,15 +509,17 @@ mc.io.request.error = function(event)
 			                            xhr.statusText,
 
 		status:
-			xhr.status != 0? xhr.status : "Client Side",
+			xhr.status != 0? xhr.status : "client side",
 
 		m:
 			xhr.responseType == "json"? xhr.response : undefined,
 
 		message:
-			!empty(this.reason)? this.reason:
-			response && xhr.responseType == "text"? response:
-			"Unknown error. There may be a network connectivity problem.",
+			!empty(this.reason)?
+				this.reason:
+			response && xhr.responseType == "text"?
+				response:
+			"There may be a network connectivity problem.",
 
 		request_stack:
 			this.stack,

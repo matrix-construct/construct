@@ -380,6 +380,7 @@ body.loaded
 .ircd .selected i.icon
 {
 	color: var(--pal-CA) !important;
+	text-shadow: 0px 1px #505050;
 }
 
 @keyframes spinner
@@ -774,6 +775,7 @@ body.loaded
 	/* box-shadow: 1px 1px 2px #383838; */
 	border-radius: inherit;
 	background-color: var(--pal-CB);
+	font-family: monospace;
 	opacity: 0.90;
 	color: white;
 }
@@ -1074,6 +1076,7 @@ body.loaded
 	margin: 1px 1px 1px 1px;
 	padding: 1vh 1vw 1vh 1vw;
 	background-color: inherit;
+	color: var(--pal-DE);
 	outline: none;
 }
 
@@ -1108,6 +1111,10 @@ body.loaded
 	display: none;
 }
 
+.ircd .menu button.selected h2
+{
+	color: white;
+}
 
  /* This is the main menu */
 #charybdis_menu
@@ -1124,7 +1131,6 @@ body.loaded
 	flex-shrink: 1;
 	margin: 5px;
 }
-
 
 /************************************************
  *  MOTD
@@ -1211,7 +1217,7 @@ body.loaded
 {
 	font-size: 1.5vw;
 	align-self: flex-end;
-	text-shadow: 1px 2px #707070;
+	text-shadow: 1px 2px #505050;
 	align-items: center;
 }
 
@@ -1364,6 +1370,7 @@ div.main > div.head
 	position: relative;
 	flex-flow: column nowrap;
 	flex-shrink: 0;
+	border-bottom: 1px solid var(--pal-AA);
 	background-color: var(--pal-AD);
 }
 
@@ -1372,27 +1379,40 @@ div.main > div.head
 div.main > div.head form.menu
 {
 	position: relative;
-	flex-flow: row wrap;
-	align-items: stretch;
+	flex-flow: row nowrap;
 	padding: 5px 5px 5px 5px;
 }
 
 .ircd .rooms
 div.main > div.head form.menu button
 {
-	width: 30%;
+	flex-grow: 0;
+	padding: 15px 5px 15px 5px;
 }
 
 .ircd .rooms
 div.main > div.head form.menu button h3
 {
-	width: 9ch;
+	width: 8ch;
+	font-size: calc(var(--fsD));
+}
+
+.ircd .rooms
+div.main > div.head form.menu button.selected h3
+{
+	color: white;
 }
 
 .ircd .rooms
 div.main > div.head form.menu button i
 {
-	font-size: calc(var(--fsIB));
+	font-size: calc(var(--fsIC));
+}
+
+.ircd .rooms
+div.main > div.head form.menu button:hover h3
+{
+	color: white;
 }
 
 .ircd .rooms
@@ -1401,41 +1421,13 @@ div.main > div.head form.menu button.highlight
 	border: 1px dotted var(--pal-BE);
 }
 
-/***  rooms search ***/
-.ircd .rooms
-div.main > div.head form.search
-{
-	display: flex;
-	flex-shrink: 0;
-	flex-flow: column nowrap;
-	align-self: stretch;
-	align-items: stretch;
-	justify-content: stretch;
-	padding: 10px 10px 10px 10px;
-}
-
-/***  rooms search ***/
-.ircd .rooms
-div.main > div.head form.search.selected
-{
-	background-color: var(--pal-AC);
-}
-
-.ircd .rooms
-div.main > div.head form.search input
-{
-	padding: 5px 10px 5px 10px;
-	margin: 5px 0px 1px 0px;
-	border-radius: 3px;
-}
-
 /***  rooms list ***/
 .ircd .rooms
 div.main div.list
 {
 	position: relative;
-	flex-grow: 1;
 	flex-flow: column nowrap;
+	flex-grow: 1;
 	align-items: stretch;
 	justify-content: flex-start;
 	padding: 0px 0px 0px 0px;
@@ -1545,6 +1537,13 @@ div.main div.list div.item div.head h3.right
 }
 
 .ircd .rooms
+div.main div.list div.item div.head h3.id
+{
+	font-family: courier;
+	font-size: calc(var(--fsD));
+}
+
+.ircd .rooms
 div.main div.list div.item div.head .left
 {
 	flex-flow: row nowrap;
@@ -1638,7 +1637,8 @@ div.main div.list div.item div.head div.focus:hover.selected
 	background-color: var(--pal-AB) !important;
 }
 
-.ircd .rooms .main .list .item div.info
+.ircd .rooms
+div.main div.list div.item div.info
 {
 	flex-grow: 10;
 	flex-shrink: 0;
@@ -1649,7 +1649,6 @@ div.main div.list div.item div.head div.focus:hover.selected
 	justify-content: center;
 	padding: 0px 0px 0px 0px;
 	background-color: var(--pal-DE);
-	border-top: 1px solid var(--pal-AD);
 }
 
 .ircd .rooms .main .list .item div.info > div.id,
@@ -1668,6 +1667,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 	padding: 10px 10px 10px 10px;
 	border-bottom: 1px solid var(--pal-DA);
 	background-color: var(--pal-DD);
+	justify-content: right;
 	color: black;
 }
 
@@ -1724,7 +1724,7 @@ div.main div.list div.item div.head div.focus:hover.selected
 	align-items: center;
 	justify-content: flex-start;
 	padding: 15px 10px 15px 10px;
-	margin: 5px 10px 5px 10px;
+	margin: 5px 5px 5px 5px;
 	background-color: var(--pal-AD);
 	cursor: pointer;
 }
@@ -1747,6 +1747,44 @@ div.main div.list div.item div.head div.focus:hover.selected
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
+}
+
+/***  rooms search ***/
+.ircd .rooms
+div.main > form.search
+{
+	display: flex;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-self: stretch;
+	align-items: stretch;
+	justify-content: stretch;
+	margin: 10px 0px 0px 0px;
+	border-radius: 0px;
+	color: var(--pal-AC);
+}
+
+.ircd .rooms
+div.main > form.search.selected
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd .rooms
+div.main > form.search input
+{
+	height: 24px;
+	border-top: 1px solid var(--pal-AE);
+	padding: 5px 10px 5px 10px;
+	margin: 0px 0px 0px 0px;
+	font-size: 16px;
+}
+
+.ircd .rooms
+div.main > form.search label
+{
+	padding: 2px 3px 2px 3px;
+	align-self: flex-end;
 }
 
 .ircd div.rooms div.current
@@ -2557,48 +2595,11 @@ div.main div.list div.item div.head div.focus:hover.selected
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: flex-start;
-	background-color: var(--pal-AA);
+	background-color: var(--pal-DE);
 	border-left: 1px solid var(--pal-AA);
 	border-top: 1px solid var(--pal-AD);
 	overflow-y: auto;
 	overflow-x: hidden;
-}
-
-.ircd .room div.members > div,
-.ircd .room div.members > form,
-.ircd .room div.members > select
-{
-}
-
-.ircd .room div.members form,
-.ircd .room div.members select
-{
-	flex-shrink: 0;
-}
-
-.ircd .room div.members form input
-{
-	display: flex;
-	flex-shrink: 0;
-	border-radius: 3px;
-}
-
-.ircd .room div.members form h6
-{
-	display: flex;
-	text-shadow: 0px 0px var(--pal-AE);
-}
-
-.ircd .room div.members form.search
-{
-	flex-flow: column nowrap;
-	align-self: stretch;
-	margin: 0px 5px 5px 5px;
-}
-
-.ircd .room div.members .search input
-{
-	padding: 4px 2px 4px 2px;
 }
 
 .ircd .room div.members div.menu
@@ -2606,7 +2607,9 @@ div.main div.list div.item div.head div.focus:hover.selected
 	position: relative;
 	flex-flow: row nowrap;
 	align-items: stretch;
-	margin: 5px 4px 5px 4px;
+	padding: 5px 4px 5px 4px;
+	background-color: var(--pal-AA);
+	border-bottom: 1px solid var(--pal-AC);
 }
 
 .ircd .room div.members .menu .item
@@ -2644,7 +2647,6 @@ div.main div.list div.item div.head div.focus:hover.selected
 	align-items: stretch;
 	justify-content: flex-start;
 	background-color: var(--pal-DE);
-	border-top: 1px solid var(--pal-AD);
 }
 
 .ircd .room div.members div.list .loading i
@@ -2962,6 +2964,33 @@ div.main div.list div.item div.head div.focus:hover.selected
 	outline: none;
 }
 
+.ircd .room div.members form.search
+{
+	position: relative;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	background-color: var(--pal-DE);
+}
+
+.ircd .room div.members form.search label
+{
+	padding: 2px 4px 2px 4px;
+	align-self: flex-end;
+	color: var(--pal-AC);
+}
+
+.ircd .room div.members form.search input
+{
+	height: 24px;
+	width: 100%;
+	border-top: 1px solid var(--pal-AE);
+	padding: 5px 10px 5px 10px;
+	margin: 0px 0px 0px 0px;
+	font-size: 16px;
+}
 
 /**
  * Main room inner content

@@ -46,7 +46,10 @@ mc.rooms.sync["join"] = function(room_id, data)
 
 	let room = mc.rooms[room_id];
 	if(!(room_id in mc.rooms.joined))
+	{
 		mc.rooms.joined[room.id] = room;
+		mc.rooms.menu["JOINED"].click();
+	}
 
 	room.sync(data, "join");
 	if((mc.rooms.current.empty() && empty(mc.session.rooms.history))
@@ -55,6 +58,9 @@ mc.rooms.sync["join"] = function(room_id, data)
 		mc.rooms.current.add(room.id);
 		room.scroll.to.bottom();
 	}
+
+	if(!mc.rooms.current_mode)
+		mc.rooms.menu["JOINED"].click();
 };
 
 mc.rooms.sync["invite"] = function(room_id, data)

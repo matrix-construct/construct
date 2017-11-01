@@ -149,7 +149,10 @@ mc.rooms.search.by = {};
 
 mc.rooms.search.by.id = async function(room_id)
 {
-	let summary = await mc.rooms.search.by.state(room_id, undefined, undefined);
+	let event_id = room_id.split(' ')[1];
+	room_id = room_id.split(' ')[0];
+
+	let summary = await mc.rooms.search.by.state(room_id, undefined, undefined, event_id);
 	return [mc.rooms.get(summary)];
 };
 
@@ -179,9 +182,17 @@ mc.rooms.search.by.alias = async function(alias)
 	}
 };
 
-mc.rooms.search.by.state = async function(room_id, type = undefined, state_key = undefined)
+mc.rooms.search.by.state = async function(room_id, type = undefined, state_key = undefined, event_id = undefined)
 {
-	mc.rooms.search.request = mc.m.rooms.state.get(room_id, type, state_key); try
+	let opts =
+	{
+		query:
+		{
+			event_id: event_id
+		},
+	};
+
+	mc.rooms.search.request = mc.m.rooms.state.get(room_id, type, state_key, opts); try
 	{
 		let summary = await mc.rooms.search.request.response;
 		return [mc.rooms.get(summary)];

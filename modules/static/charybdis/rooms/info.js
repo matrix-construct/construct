@@ -72,7 +72,7 @@ mc.rooms.info.menu =
 mc.rooms.info.menu["JOIN"].click = async function($event, room_id)
 {
 	if(!room_id)
-		room_id = mc.rooms.search.value;
+		room_id = mc.rooms.search.value.split(" ")[0];
 
 	if(!(room_id in mc.rooms))
 		mc.rooms[room_id] = new mc.room({room_id: room_id});

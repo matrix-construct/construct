@@ -66,6 +66,18 @@ mc.opts =
 	// Quick setting to debug incoming sync messages on the console
 	sync_debug: 10,
 
+	// Option for how events are ordered on the timeline
+	//
+	// 0: no ordering / receive ordering - events are appended as they are
+	// received.
+	//
+	// 1: client ordering - best effort is made to order events based on their
+	// references to other events, falling back on timestamps or other hints.
+	//
+	// 2: client fallback ordering - events are ordered based on their
+	// timestamp.
+	ordering: true,
+
 	account_data:
 	{
 		key: "ircd_storage",

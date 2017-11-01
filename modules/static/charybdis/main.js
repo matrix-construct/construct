@@ -205,6 +205,7 @@ mc.main.fault["M_MISSING_TOKEN"] = async function(error)
 	}
 
 	mc.main.on_logout();
+	mc.ng.apply();
 	return false;
 };
 

@@ -155,6 +155,15 @@ type="text/ng-template"
 		ng-include="'ircd_rooms_list'"
 		>
 		</div>
+		<form
+		id="charybdis_rooms_search"
+		class="search"
+		ng-include="'ircd_rooms_search'"
+		ng-class="
+		{
+			selected: mc.rooms.mode == 'SEARCH',
+		}">
+		</form>
 	</div>
 </script>
 
@@ -174,15 +183,6 @@ type="text/ng-template"
 	ng-controller="menu as menu"
 	ng-include="'ircd_rooms_menu'"
 	>
-	</form>
-	<form
-	id="charybdis_rooms_search"
-	class="search"
-	ng-include="'ircd_rooms_search'"
-	ng-class="
-	{
-		selected: mc.rooms.mode == 'SEARCH',
-	}">
 	</form>
 </script>
 
@@ -224,17 +224,6 @@ type="text/ng-template"
 id="ircd_rooms_search"
 type="text/ng-template"
 >
-	<input
-	name="name"
-	type="text"
-	autocomplete="off"
-	ng-model="mc.rooms.search.value"
-	ng-model-options="{debounce: 100}"
-	ng-change="mc.rooms.search.on.change($event);"
-	ng-keypress="mc.rooms.search.on.keypress($event);"
-	ng-focus="mc.rooms.search.on.focus($event);"
-	ng-blur="mc.rooms.search.on.blur($event);"
-	/>
 	<label
 	class="h6"
 	>
@@ -246,6 +235,17 @@ type="text/ng-template"
 			{{ mc.rooms.search.feedback }}
 		</span>
 	</label>
+	<input
+	name="name"
+	type="text"
+	autocomplete="off"
+	ng-model="mc.rooms.search.value"
+	ng-model-options="{debounce: 100}"
+	ng-change="mc.rooms.search.on.change($event);"
+	ng-keypress="mc.rooms.search.on.keypress($event);"
+	ng-focus="mc.rooms.search.on.focus($event);"
+	ng-blur="mc.rooms.search.on.blur($event);"
+	/>
 </script>
 
 
@@ -547,11 +547,6 @@ type="text/ng-template"
 	ng-include="'ircd_room_members_menu'"
 	>
 	</div>
-	<form
-	class="search"
-	ng-include="'ircd_room_members_search'"
-	>
-	</form>
 	<div
 	class="list"
 	ang-scroll="members.scroll($event)"
@@ -559,12 +554,11 @@ type="text/ng-template"
 	ircd-catch
 	>
 	</div>
-	<div
-	class="invite member"
-	ng-show="members.filter == 'invite'"
-	ng-include="'ircd_room_members_invite'"
+	<form
+	class="search"
+	ng-include="'ircd_room_members_search'"
 	>
-	</div>
+	</form>
 </script>
 
 
@@ -604,16 +598,25 @@ type="text/ng-template"
 id="ircd_room_members_search"
 type="text/ng-template"
 >
+	<label
+	class="h6"
+	ng-hide="members.filter == 'invite'"
+	>
+		SEARCH MEMBERS
+	</label>
+
+	<label
+	class="h6"
+	ng-show="members.filter == 'invite'"
+	>
+		INVITE MEMBER
+	</label>
+
 	<input
 	name="pattern"
 	type="text"
 	autocomplete="off"
 	/>
-	<label
-	class="h6"
-	>
-		SEARCH MEMBERS
-	</h6>
 </script>
 
 
