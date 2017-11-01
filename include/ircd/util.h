@@ -859,7 +859,7 @@ struct values
 // Error-checking closure for POSIX system calls. Note the usage is
 // syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
 //
-template<long ERROR_CODE = -1,
+template<int ERROR_CODE = -1,
          class function,
          class... args>
 auto
@@ -882,7 +882,7 @@ syscall(function&& f,
 // Error-checking closure for POSIX system calls. Note the usage is
 // syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
 //
-template<long ERROR_CODE = -1,
+template<int ERROR_CODE = -1,
          class function,
          class... args>
 auto
