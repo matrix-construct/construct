@@ -549,23 +549,28 @@ ircd::ctx::context::context(const char *const &name,
 		std::bind(&ircd::ctx::spawn, c.get(), std::move(func))
 	};
 
-	if(flags & POST)
-		ios->post(std::move(spawn));
-	else if(flags & DISPATCH)
-		ios->dispatch(std::move(spawn));
-	else
+	const unwind release{[this, &flags]
 	{
-		// The current context must be reasserted if spawn returns here
-		const unwind recurrent([current(ircd::ctx::current)]
-		{
-			ircd::ctx::current = current;
-		});
+		if(flags & DETACH)
+			this->c.release();
+	}};
 
-		spawn();
+	if(flags & POST)
+	{
+		ios->post(std::move(spawn));
+		return;
 	}
 
-	if(flags & DETACH)
-		c.release();
+	// The current context must be reasserted if spawn returns here
+	const unwind recurrent([current(ircd::ctx::current)]
+	{
+		ircd::ctx::current = current;
+	});
+
+	if(flags & DISPATCH)
+		ios->dispatch(std::move(spawn));
+	else
+		spawn();
 }
 
 ircd::ctx::context::context(const char *const &name,
