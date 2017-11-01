@@ -743,6 +743,14 @@ pubsetbuf(std::stringstream &ss,
 	return pubsetbuf(ss, s);
 }
 
+inline std::string &
+resizebuf(std::stringstream &ss,
+          std::string &s)
+{
+	s.resize(ss.tellp());
+	return s;
+}
+
 
 /* This is a template alternative to nothrow overloads, which
  * allows keeping the function arguments sanitized of the thrownness.
