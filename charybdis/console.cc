@@ -145,6 +145,7 @@ try
 		console_active = false;
 		console_in = nullptr;
 		delete moi; moi = nullptr;
+		std::cin.clear();
 	});
 
 	console_active = true;
@@ -171,6 +172,7 @@ try
 		}
 
 		std::getline(is, line);
+		std::cin.clear();
 		if(line.empty())
 			continue;
 
@@ -187,8 +189,6 @@ catch(const std::exception &e)
 
 	std::cout << std::flush;
 	std::cout.clear();
-
-	std::cerr << std::flush;
 	std::cerr.clear();
 
 	ircd::log::debug("The console session has ended: %s", e.what());

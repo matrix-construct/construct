@@ -212,8 +212,6 @@ ircd::log::console_quiet::~console_quiet()
 
 	std::cout << std::flush;
 	std::cout.clear();
-
-	std::cerr << std::flush;
 	std::cerr.clear();
 }
 
@@ -372,8 +370,6 @@ noexcept
 	{
 		err_console.clear();
 		write(err_console);
-		if(console_flush[fac])
-			std::flush(err_console);
 	}
 
 	if(console_out[fac])
