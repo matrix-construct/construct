@@ -707,6 +707,12 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const array &v)
 {
+	if(string_view{v}.empty())
+	{
+		consume(buf, copy(buf, value::empty_array));
+		return value::empty_array;
+	}
+
 	consume(buf, copy(buf, string_view{v}));
 	return string_view{v};
 }
