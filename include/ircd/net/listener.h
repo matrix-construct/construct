@@ -34,7 +34,7 @@ struct ircd::net::listener
 	IRCD_EXCEPTION(ircd::error, error)
 
   private:
-	std::unique_ptr<struct acceptor> acceptor;
+	std::shared_ptr<struct acceptor> acceptor;
 
   public:
 	listener(const json::object &options);

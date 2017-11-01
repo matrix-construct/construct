@@ -31,29 +31,13 @@
 
 namespace ircd::net
 {
-	namespace ip = asio::ip;
-	using boost::system::error_code;
 	using asio::steady_timer;
 
 	struct socket;
 
 	extern asio::ssl::context sslv23_client;
 
-	uint16_t port(const ip::tcp::endpoint &);
-	ip::address addr(const ip::tcp::endpoint &);
-	std::string host(const ip::tcp::endpoint &);
-	std::string string(const ip::address &);
-	std::string string(const ip::tcp::endpoint &);
 	std::shared_ptr<socket> connect(const ip::tcp::endpoint &remote, const milliseconds &timeout);
-}
-
-namespace ircd
-{
-	using net::error_code;
-	using net::string;
-	using net::addr;
-	using net::host;
-	using net::port;
 }
 
 struct ircd::net::socket
@@ -78,7 +62,7 @@ struct ircd::net::socket
 	asio::ssl::stream<ip::tcp::socket &> ssl;
 	steady_timer timer;
 	stat in, out;
-	bool timedout;
+	bool timedout {false};
 
 	void call_user(const handler &, const error_code &) noexcept;
 	bool handle_error(const error_code &ec);

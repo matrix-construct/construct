@@ -204,6 +204,12 @@ try
 	js::init _js_;           // SpiderMonkey
 	m::init _matrix_;        // Matrix
 
+	// Any deinits which have to be done with all subsystems intact
+	const unwind shutdown{[&]
+	{
+		_client_.interrupt();
+	}};
+
 	// IRCd will now transition to the RUN state indicating full functionality.
 	ircd::set_runlevel(runlevel::RUN);
 
@@ -257,10 +263,14 @@ try
 	if(ircd::runlevel_changed)
 		ios->post([new_runlevel]
 		{
+			if(new_runlevel == runlevel::STOPPED)
+				log::notice("IRCd %s", reflect(new_runlevel));
+
 			ircd::runlevel_changed(new_runlevel);
 		});
 
-	log::notice("IRCd %s", reflect(ircd::runlevel));
+	if(new_runlevel != runlevel::STOPPED)
+		log::notice("IRCd %s", reflect(new_runlevel));
 }
 catch(const std::exception &e)
 {

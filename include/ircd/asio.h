@@ -64,6 +64,7 @@ struct ircd::strand
 ///
 
 #include <ircd/ctx/continuation.h>
+#include <ircd/net/asio.h>
 #include <ircd/net/socket.h>
 
 inline ircd::strand::operator

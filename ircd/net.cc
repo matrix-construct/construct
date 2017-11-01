@@ -125,30 +125,8 @@ ircd::net::write(socket &socket,
 // net/listener.h
 //
 
-//
-// ircd::net::listener
-//
-
-ircd::net::listener::listener(const std::string &opts)
-:listener{json::object{opts}}
-{
-}
-
-ircd::net::listener::listener(const json::object &opts)
-:acceptor{std::make_unique<struct acceptor>(opts)}
-{
-}
-
-ircd::net::listener::~listener()
-noexcept
-{
-}
-
-//
-// ircd::net::listener::acceptor
-//
-
 struct ircd::net::listener::acceptor
+:std::enable_shared_from_this<struct ircd::net::listener::acceptor>
 {
 	using error_code = boost::system::error_code;
 
@@ -159,24 +137,93 @@ struct ircd::net::listener::acceptor
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
+	size_t accepting {0};
+	size_t handshaking {0};
+	bool interrupting {false};
+	ctx::dock joining;
 
 	explicit operator std::string() const;
 	void configure(const json::object &opts);
 
 	// Handshake stack
-	bool handshake_error(const error_code &ec);
-	void handshake(const error_code &ec, std::shared_ptr<socket>) noexcept;
+	bool handshake_error(const error_code &ec, socket &);
+	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
 	// Acceptance stack
-	bool accept_error(const error_code &ec);
-	void accept(const error_code &ec, std::shared_ptr<socket>) noexcept;
+	bool accept_error(const error_code &ec, socket &);
+	void accept(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
 	// Accept next
 	void next();
 
+	// Acceptor shutdown
+	bool interrupt() noexcept;
+	void join() noexcept;
+
 	acceptor(const json::object &opts);
 	~acceptor() noexcept;
 };
+
+//
+// ircd::net::listener
+//
+
+ircd::net::listener::listener(const std::string &opts)
+:listener{json::object{opts}}
+{
+}
+
+ircd::net::listener::listener(const json::object &opts)
+:acceptor{std::make_shared<struct acceptor>(opts)}
+{
+	// Starts the first asynchronous accept. This has to be done out here after
+	// the acceptor's shared object is constructed.
+	acceptor->next();
+}
+
+/// Cancels all pending accepts and handshakes and waits (yields ircd::ctx)
+/// until report.
+///
+ircd::net::listener::~listener()
+noexcept
+{
+	if(acceptor)
+		acceptor->join();
+}
+
+void
+ircd::net::listener::acceptor::join()
+noexcept try
+{
+	interrupt();
+	joining.wait([this]
+	{
+		return !accepting && !handshaking;
+	});
+}
+catch(const std::exception &e)
+{
+	log.error("acceptor(%p): join: %s",
+	          this,
+	          e.what());
+}
+
+bool
+ircd::net::listener::acceptor::interrupt()
+noexcept try
+{
+	a.cancel();
+	interrupting = true;
+	return true;
+}
+catch(const boost::system::system_error &e)
+{
+	log.error("acceptor(%p): interrupt: %s",
+	          this,
+	          string(e));
+
+	return false;
+}
 
 //
 // ircd::net::listener::acceptor
@@ -243,8 +290,6 @@ try
 	          std::string(*this),
 	          backlog,
 	          max_connections);
-
-	next();
 }
 catch(const boost::system::system_error &e)
 {
@@ -254,9 +299,13 @@ catch(const boost::system::system_error &e)
 ircd::net::listener::acceptor::~acceptor()
 noexcept
 {
-	a.cancel();
 }
 
+/// Sets the next asynchronous handler to start the next accept sequence.
+/// Each call to next() sets one handler which handles the connect for one
+/// socket. After the connect, an asynchronous SSL handshake handler is set
+/// for the socket, and next() is called again to setup for the next socket
+/// too.
 void
 ircd::net::listener::acceptor::next()
 try
@@ -266,9 +315,9 @@ try
 	          std::string(*this),
 	          sock.get());
 
-	// The context blocks here until the next client is connected.
 	ip::tcp::socket &sd(*sock);
-	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock));
+	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this)));
+	++accepting;
 }
 catch(const std::exception &e)
 {
@@ -280,18 +329,36 @@ catch(const std::exception &e)
 		throw;
 }
 
+/// Callback for a socket connected. This handler then invokes the
+/// asynchronous SSL handshake sequence.
+///
 void
 ircd::net::listener::acceptor::accept(const error_code &ec,
-                                      const std::shared_ptr<socket> sock)
+                                      const std::shared_ptr<socket> sock,
+                                      const std::weak_ptr<acceptor> a)
 noexcept try
 {
-	if(accept_error(ec))
+	if(unlikely(a.expired()))
 		return;
 
-	const unwind next{[this]
+	--accepting;
+	const unwind::nominal next{[this]
 	{
 		this->next();
 	}};
+
+	const unwind::exceptional drop{[&sock]
+	{
+		assert(bool(sock));
+		disconnect(*sock, dc::RST);
+	}};
+
+	assert(bool(sock));
+	if(unlikely(accept_error(ec, *sock)))
+	{
+		disconnect(*sock, dc::RST);
+		return;
+	}
 
 	log.debug("%s: socket(%p) accepted %s",
 	          std::string(*this),
@@ -315,23 +382,42 @@ noexcept try
 
 	auto handshake
 	{
-		std::bind(&acceptor::handshake, this, ph::_1, sock)
+		std::bind(&acceptor::handshake, this, ph::_1, sock, a)
 	};
 
 	sock->ssl.async_handshake(handshake_type, std::move(handshake));
+	++handshaking;
+}
+catch(const ctx::interrupted &e)
+{
+	log.debug("%s: acceptor interrupted socket(%p): %s",
+	          std::string(*this),
+	          sock.get(),
+	          string(ec));
+
+	joining.notify_all();
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p) in accept(): %s",
+	log.error("%s: socket(%p): in accept(): [%s]: %s",
 	          std::string(*this),
 	          sock.get(),
+	          sock->connected()? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
+/// Error handler for the accept socket callback. This handler determines
+/// whether or not the handler should return or continue processing the
+/// result.
+///
 bool
-ircd::net::listener::acceptor::accept_error(const error_code &ec)
+ircd::net::listener::acceptor::accept_error(const error_code &ec,
+                                            socket &sock)
 {
 	using boost::system::get_system_category;
+
+	if(unlikely(interrupting))
+		throw ctx::interrupted();
 
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
@@ -341,7 +427,7 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec)
 			return false;
 
 		case operation_canceled:
-			return true;
+			return false;
 
 		default:
 			break;
@@ -352,32 +438,63 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec)
 
 void
 ircd::net::listener::acceptor::handshake(const error_code &ec,
-                                         const std::shared_ptr<socket> sock)
+                                         const std::shared_ptr<socket> sock,
+                                         const std::weak_ptr<acceptor> a)
 noexcept try
 {
-	if(handshake_error(ec))
+	if(unlikely(a.expired()))
 		return;
 
-	log.debug("%s socket(%p) SSL handshook %s",
+	--handshaking;
+	assert(bool(sock));
+	const unwind::exceptional drop{[&sock]
+	{
+		disconnect(*sock, dc::RST);
+	}};
+
+	if(unlikely(handshake_error(ec, *sock)))
+	{
+		disconnect(*sock, dc::RST);
+		return;
+	}
+
+	log.debug("%s socket(%p): SSL handshook %s",
 	          std::string(*this),
 	          sock.get(),
 	          string(sock->remote()));
 
 	add_client(sock);
 }
+catch(const ctx::interrupted &e)
+{
+	log.debug("%s: SSL handshake interrupted socket(%p): %s",
+	          std::string(*this),
+	          sock.get(),
+	          string(ec));
+
+	joining.notify_all();
+}
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p) in handshake(): [%s]: %s",
+	log.error("%s: socket(%p): in handshake(): [%s]: %s",
 	          std::string(*this),
 	          sock.get(),
 	          sock->connected()? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
+/// Error handler for the SSL handshake callback. This handler determines
+/// whether or not the handler should return or continue processing the
+/// result.
+///
 bool
-ircd::net::listener::acceptor::handshake_error(const error_code &ec)
+ircd::net::listener::acceptor::handshake_error(const error_code &ec,
+                                               socket &sock)
 {
 	using boost::system::get_system_category;
+
+	if(unlikely(interrupting))
+		throw ctx::interrupted();
 
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
@@ -387,7 +504,7 @@ ircd::net::listener::acceptor::handshake_error(const error_code &ec)
 			return false;
 
 		case operation_canceled:
-			return true;
+			return false;
 
 		default:
 			break;
@@ -483,17 +600,10 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 ircd::net::listener::acceptor::operator std::string()
 const
 {
-	std::string ret(256, char{});
-	const auto length
+	return fmt::snstringf
 	{
-		fmt::sprintf(mutable_buffer{ret}, "'%s' @ [%s]:%u",
-		             name,
-		             string(ep.address()),
-		             ep.port())
+		256, "'%s' @ [%s]:%u", name, string(ep.address()), ep.port()
 	};
-
-	ret.resize(length);
-	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -591,40 +701,6 @@ noexcept
 	return s.connected();
 }
 
-uint16_t
-ircd::net::port(const ip::tcp::endpoint &ep)
-{
-	return ep.port();
-}
-
-std::string
-ircd::net::host(const ip::tcp::endpoint &ep)
-{
-	return string(addr(ep));
-}
-
-std::string
-ircd::net::string(const ip::address &addr)
-{
-	return addr.to_string();
-}
-
-std::string
-ircd::net::string(const ip::tcp::endpoint &ep)
-{
-	std::string ret(256, char{});
-	const auto addr{string(net::addr(ep))};
-	const auto data{const_cast<char *>(ret.data())};
-	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
-	return ret;
-}
-
-boost::asio::ip::address
-ircd::net::addr(const ip::tcp::endpoint &ep)
-{
-	return ep.address();
-}
-
 //
 // socket::io
 //
@@ -691,17 +767,9 @@ noexcept
 }
 
 ircd::net::socket::scope_timeout::~scope_timeout()
-noexcept try
+noexcept
 {
-	if(s)
-		s->timer.cancel();
-}
-catch(const std::exception &e)
-{
-	log.error("socket(%p) ~scope_timeout: %s",
-	          (const void *)s,
-	          e.what());
-	return;
+	cancel();
 }
 
 bool
@@ -713,7 +781,7 @@ noexcept try
 
 	auto *const s{this->s};
 	this->s = nullptr;
-	s->timer.cancel();
+	s->cancel_timeout();
 	return true;
 }
 catch(const std::exception &e)
@@ -798,10 +866,6 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 {
 	*ios
 }
-,timedout
-{
-	false
-}
 {
 }
 
@@ -820,7 +884,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.error("socket(%p): close: %s", this, e.what());
+	log.critical("socket(%p): close: %s", this, e.what());
 	return;
 }
 
@@ -905,9 +969,9 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 		}
 		catch(const std::exception &e)
 		{
-			log.error("socket(%p): connect: unhandled exception from user callback: %s",
-			          (const void *)this,
-			          e.what());
+			log.critical("socket(%p): connect: unhandled exception from user callback: %s",
+			             (const void *)this,
+			             e.what());
 		}
 	}};
 
@@ -934,8 +998,8 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 		ssl.async_handshake(handshake, std::move(handshake_handler));
 	}};
 
-	sd.async_connect(ep, std::move(connect_handler));
 	set_timeout(timeout);
+	sd.async_connect(ep, std::move(connect_handler));
 }
 
 bool
@@ -970,11 +1034,17 @@ try
 			sd.shutdown(ip::tcp::socket::shutdown_receive);
 			return true;
 
-		case dc::SSL_NOTIFY_YIELD:
+		case dc::SSL_NOTIFY_YIELD: if(likely(ctx::current))
 		{
 			const life_guard<socket> lg{*this};
 			const scope_timeout ts{*this, 8s};
 			ssl.async_shutdown(yield_context{to_asio{}});
+			error_code ec;
+			sd.close(ec);
+			if(ec)
+				log.error("socket(%p): close: %s: %s",
+				          this,
+				          string(ec));
 			return true;
 		}
 
@@ -982,7 +1052,8 @@ try
 		{
 			set_timeout(8s);
 			ssl.async_shutdown([s(shared_from_this())]
-			(boost::system::error_code ec) noexcept
+			(error_code ec)
+			noexcept
 			{
 				if(!s->timedout)
 					s->cancel_timeout();
@@ -990,8 +1061,7 @@ try
 				if(ec)
 					log.warning("socket(%p): SSL_NOTIFY: %s: %s",
 					            s.get(),
-					            ec.category().name(),
-					            ec.message());
+					            string(ec));
 
 				if(!s->sd.is_open())
 					return;
@@ -1001,8 +1071,7 @@ try
 				if(ec)
 					log.warning("socket(%p): after SSL_NOTIFY: %s: %s",
 					            s.get(),
-					            ec.category().name(),
-					            ec.message());
+					            string(ec));
 			});
 			return true;
 		}
@@ -1025,8 +1094,7 @@ catch(const boost::system::system_error &e)
 	if(ec)
 		log.warning("socket(%p): after disconnect: %s: %s",
 		            this,
-		            ec.category().name(),
-		            ec.message());
+		            string(ec));
 	throw;
 }
 
@@ -1063,12 +1131,6 @@ ircd::net::socket::operator()(handler h)
 /// blocking any context and using any stack space whatsoever, i.e full
 /// asynchronous mode.
 ///
-/// boost::asio has no direct way to accomplish this because the buffer size
-/// must be positive so we use a little trick to read a single byte with
-/// MSG_PEEK as our indication. This is done directly on the socket and
-/// not through the SSL cipher, but we don't want this byte anyway. This
-/// isn't such a great trick.
-///
 void
 ircd::net::socket::operator()(const milliseconds &timeout,
                               handler callback)
@@ -1078,7 +1140,7 @@ ircd::net::socket::operator()(const milliseconds &timeout,
 		ip::tcp::socket::message_peek
 	};
 
-	static char buffer[1];
+	static char buffer[0];
 	static const asio::mutable_buffers_1 buffers
 	{
 		buffer, sizeof(buffer)
@@ -1089,6 +1151,7 @@ ircd::net::socket::operator()(const milliseconds &timeout,
 		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1, ph::_2)
 	};
 
+	assert(connected());
 	set_timeout(timeout);
 	sd.async_receive(buffers, flags, std::move(handler));
 }
@@ -1101,13 +1164,17 @@ ircd::net::socket::handle(const std::weak_ptr<socket> wp,
 noexcept try
 {
 	const life_guard<socket> s{wp};
+	log.debug("socket(%p): %zu bytes: %s: %s",
+	          this,
+	          bytes,
+	          string(ec));
 
 	// This handler and the timeout handler are responsible for canceling each other
 	// when one or the other is entered. If the timeout handler has already fired for
 	// a timeout on the socket, `timedout` will be `true` and this handler will be
 	// entered with an `operation_canceled` error.
 	if(!timedout)
-		timer.cancel();
+		cancel_timeout();
 	else
 		assert(ec == boost::system::errc::operation_canceled);
 
@@ -1115,10 +1182,9 @@ noexcept try
 	// user's callback. Otherwise they are passed up.
 	if(!handle_error(ec))
 	{
-		log.warning("socket(%p): %s",
-		            this,
-		            ec.category().name(),
-		            ec.message());
+		log.error("socket(%p): %s",
+		          this,
+		          string(ec));
 		return;
 	}
 
@@ -1132,6 +1198,13 @@ catch(const std::bad_weak_ptr &e)
 	log.warning("socket(%p): belated callback to handler... (%s)",
 	            this,
 	            e.what());
+	assert(0);
+}
+catch(const boost::system::system_error &e)
+{
+	log.error("socket(%p): handle: %s %s",
+	          this,
+	          string(ec));
 	assert(0);
 }
 catch(const std::exception &e)
@@ -1151,9 +1224,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.error("socket(%p): async handler: unhandled exception: %s",
-	          this,
-	          e.what());
+	log.critical("socket(%p): async handler: unhandled exception: %s",
+	             this,
+	             e.what());
 }
 
 bool
@@ -1165,10 +1238,9 @@ ircd::net::socket::handle_error(const error_code &ec)
 	using boost::asio::error::get_misc_category;
 
 	if(ec != success)
-		log.error("socket(%p): handle error: %s: %s",
-		          this,
-		          ec.category().name(),
-		          ec.message());
+		log.warning("socket(%p): handle error: %s: %s",
+		            this,
+		            string(ec));
 
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
@@ -1227,15 +1299,19 @@ noexcept try
 		case success:
 		{
 			sd.cancel();
+			assert(timedout == false);
 			timedout = true;
 			break;
 		}
 
 		// A cancelation means there was no timeout.
 		case operation_canceled:
+		{
 			assert(ec.category() == boost::system::get_system_category());
+			assert(timedout == false);
 			timedout = false;
 			break;
+		}
 
 		// All other errors are unexpected, logged and ignored here.
 		default:
@@ -1278,6 +1354,7 @@ ircd::net::socket::cancel_timeout()
 noexcept
 {
 	boost::system::error_code ec;
+	timedout = false;
 	timer.cancel(ec);
 	return ec;
 }
@@ -1299,6 +1376,7 @@ const
 void
 ircd::net::socket::set_timeout(const milliseconds &t)
 {
+	cancel_timeout();
 	if(t < milliseconds(0))
 		return;
 
@@ -1310,11 +1388,87 @@ void
 ircd::net::socket::set_timeout(const milliseconds &t,
                                handler h)
 {
+	cancel_timeout();
 	if(t < milliseconds(0))
 		return;
 
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(h));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/asio.h
+//
+
+std::string
+ircd::net::string(const ip::address &addr)
+{
+	return addr.to_string();
+}
+
+std::string
+ircd::net::string(const ip::tcp::endpoint &ep)
+{
+	std::string ret(256, char{});
+	const auto addr{string(net::addr(ep))};
+	const auto data{const_cast<char *>(ret.data())};
+	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
+	return ret;
+}
+
+std::string
+ircd::net::host(const ip::tcp::endpoint &ep)
+{
+	return string(addr(ep));
+}
+
+boost::asio::ip::address
+ircd::net::addr(const ip::tcp::endpoint &ep)
+{
+	return ep.address();
+}
+
+uint16_t
+ircd::net::port(const ip::tcp::endpoint &ep)
+{
+	return ep.port();
+}
+
+std::string
+ircd::net::string(const boost::system::system_error &e)
+{
+	return string(e.code());
+}
+
+std::string
+ircd::net::string(const boost::system::error_code &ec)
+{
+	std::string ret(128, char{});
+	ret.resize(string(mutable_buffer{ret}, ec).size());
+	return ret;
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const boost::system::system_error &e)
+{
+	return string(buf, e.code());
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const boost::system::error_code &ec)
+{
+	const auto len
+	{
+		fmt::sprintf
+		{
+			buf, "%s: %s", ec.category().name(), ec.message()
+		}
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -71,6 +71,8 @@ struct ircd::client
 
 struct ircd::client::init
 {
+	void interrupt();
+
 	init();
 	~init() noexcept;
 };
