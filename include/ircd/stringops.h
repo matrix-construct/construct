@@ -135,10 +135,10 @@ ircd::replace(std::string s,
 inline std::string
 ircd::unquote(std::string &&str)
 {
-	if(endswith(str, '"'))
+	if(endswith(string_view{str}, '"'))
 		str.pop_back();
 
-	if(startswith(str, '"'))
+	if(startswith(string_view{str}, '"'))
 		str = str.substr(1);
 
 	return std::move(str);
@@ -332,13 +332,11 @@ ircd::rsplit(const string_view &str,
 	const auto pos(str.rfind(delim));
 	if(pos == string_view::npos) return
 	{
-		str,
-		string_view{}
+		str, string_view{}
 	};
 	else return
 	{
-		str.substr(0, pos),
-		str.substr(pos + delim.size())
+		str.substr(0, pos), str.substr(pos + delim.size())
 	};
 }
 
@@ -351,13 +349,11 @@ ircd::rsplit(const string_view &str,
 	const auto pos(str.find_last_of(delim));
 	if(pos == string_view::npos) return
 	{
-		str,
-		string_view{}
+		str, string_view{}
 	};
 	else return
 	{
-		str.substr(0, pos),
-		str.substr(pos + 1)
+		str.substr(0, pos), str.substr(pos + 1)
 	};
 }
 
@@ -370,13 +366,11 @@ ircd::split(const string_view &str,
 	const auto pos(str.find(delim));
 	if(pos == string_view::npos) return
 	{
-		str,
-		string_view{}
+		str, string_view{}
 	};
 	else return
 	{
-		str.substr(0, pos),
-		str.substr(pos + delim.size())
+		str.substr(0, pos), str.substr(pos + delim.size())
 	};
 }
 
@@ -389,13 +383,11 @@ ircd::split(const string_view &str,
 	const auto pos(str.find(delim));
 	if(pos == string_view::npos) return
 	{
-		str,
-		string_view{}
+		str, string_view{}
 	};
 	else return
 	{
-		str.substr(0, pos),
-		str.substr(pos + 1)
+		str.substr(0, pos), str.substr(pos + 1)
 	};
 }
 

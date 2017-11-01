@@ -96,7 +96,8 @@ struct ircd::string_view
 	// (non-standard) our iterator-based assign
 	string_view &assign(const char *const &begin, const char *const &end)
 	{
-		*this = std::string_view{begin, size_t(std::distance(begin, end))};
+		this->~string_view();
+		new (this) string_view{begin, size_t(std::distance(begin, end))};
 		return *this;
 	}
 
@@ -153,13 +154,25 @@ struct ircd::string_view
 	}{}
 
 	// Required due to current instability in stdlib
-	//string_view(const std::experimental::string_view &esv)
-	//:std::string_view{esv}
-	//{}
+//	string_view(const std::experimental::string_view &esv)
+//	:std::string_view{esv}
+//	{}
 
-	// Required due to current instability in stdlib
-	constexpr string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
-	:std::string_view{bsv}
+	// Required due to instability in stdlib
+//	constexpr string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
+//	:std::string_view{bsv}
+//	{}
+
+//	constexpr string_view(const char *const &start, const size_t &size)
+//	:std::string_view{start, size}
+//	{}
+
+	explicit string_view(const std::string &string)
+	:std::string_view{string.data(), string.size()}
+	{}
+
+	constexpr string_view(const std::string_view &sv)
+	:std::string_view{sv}
 	{}
 
 	/// Our default constructor sets the elements to 0 for best behavior by
