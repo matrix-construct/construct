@@ -1,11 +1,11 @@
-# IRCd<sup><img src="http://www.iconj.com/ico/p/s/ps5wyionii.ico" /></sup>
+# IRC++d
 
 <img align="right" src="https://i.imgur.com/mHGxDyC.png" />
 
-### Internet Relay Chat daemon: *Charybdis*
+### Internet Relay Chat daemon: *charybdis/5*<sup><img src="http://www.iconj.com/ico/p/s/ps5wyionii.ico" /></sup>
 
 IRCd is a free and open source server which facilitates real-time communication over the
-internet. It was started in 1988 by Jarkko Oikarinen at the University of Oulu and [its
+internet. It was started by Jarkko Oikarinen in 1988 at the University of Oulu and [its
 derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
 underpinned the major IRC networks for decades. Eventually the project found itself
 under the curation of William Pitcock et al, whom after 2005 further developed it under
@@ -22,8 +22,6 @@ available for modern C++ free software. Just like the first iteration of IRCd, t
 employs technologies in vogue for this era which provide a fulfilling experience for users and a
 powerfully extensible environment for developers.
 
-### Charybdis/5
-
 Charybdis is designed to be fast and highly scalable, and to be community
 developed by volunteer contributors over the internet. This mission strives to make
 the software easy to understand, modify, audit, and extend. It remains true to its
@@ -31,11 +29,14 @@ roots with its modular design and having minimal requirements. Even though almos
 of the old code has been rewritten, the same spirit and _philosophy of the
 predecessor_ is still obvious throughout.
 
-This is the first implementation of a Matrix homeserver written in C++. It serves
-matrix clients over HTTP. Additionally the RFC1459 family of legacy grammars are
-employed to translate matrix to and from legacy IRC networks supporting TS6.
+#### charybdis/5 federates your IRC network with the atheme/8 module
 
-#### Link charybdis/4 to charybdis/5 to federate your IRC network clients.
+This is the first implementation of a Matrix homeserver written in C++; it serves
+matrix clients over HTTP. The RFC1459 family of legacy grammars are employed to
+translate matrix to and from legacy IRC networks supporting TS6 in a module called
+**atheme/8**.
+
+##### Link charybdis/4 to charybdis/5 by loading the atheme/8 module.
 
 
 ## Installation
