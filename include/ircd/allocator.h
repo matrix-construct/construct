@@ -32,18 +32,6 @@
 /// templates implement the std::allocator concept and can be used with
 /// std:: containers by specifying them in the container's template parameter.
 ///
-/// The C++ standard library assumes the availability of dynamic memory. This
-/// is a reasonable assumption to enjoy a huge simplification of the std::
-/// interface. Standard dynamic allocation can also be fast and unintrusive for
-/// a vast majority of cases. Unfortunately STL container's use of allocators
-/// can lead to a huge number of allocations and frees and in many trivial
-/// circumstances which won't be optimized as well as they ought to be.
-/// Furthermore, the std::allocator using `new` requires synchronization in
-/// multi-threaded environments. tcmalloc may be used for IRCd but its presence
-/// and performance should not be blindly assumed either. The fact remains,
-/// containers are very nice to work with but there is room for optimizing
-/// their backend through the allocator template.
-///
 /// The ircd::allocator::fixed is the prototypical justification for these
 /// tools. It allows you to build a memory pool with a size known at compile-
 /// time at the place of your choosing (i.e the stack) for any STL container. A
