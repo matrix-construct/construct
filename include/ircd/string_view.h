@@ -38,6 +38,7 @@ namespace ircd
 	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
 	size_t size(const string_view &);
+	bool empty(const string_view &);
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
 	bool null(const string_view &);
@@ -326,6 +327,12 @@ struct ircd::byte_view<ircd::string_view>
 
 inline bool
 ircd::operator!(const string_view &str)
+{
+	return empty(str);
+}
+
+inline bool
+ircd::empty(const string_view &str)
 {
 	return str.empty();
 }
