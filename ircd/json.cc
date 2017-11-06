@@ -54,6 +54,8 @@ namespace ircd::json
 	using karma::eps;
 	using karma::attr_cast;
 
+	struct expectation_failure;
+
 	template<class it> struct input;
 	template<class it> struct output;
 
@@ -202,6 +204,22 @@ struct ircd::json::output
 	output()
 	:output::base_type{rule<>{}}
 	{}
+};
+
+struct ircd::json::expectation_failure
+:parse_error
+{
+	expectation_failure(const char *const &start,
+	                    const qi::expectation_failure<const char *> &e,
+	                    const ssize_t &show_max = 64)
+	:parse_error
+	{
+		"Expected %s. You input %zd invalid characters at position %zd: %s",
+		ircd::string(e.what_),
+		std::distance(e.first, e.last),
+		std::distance(start, e.first),
+		string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
+	}{}
 };
 
 struct ircd::json::parser
@@ -637,14 +655,7 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule(ircd::string(e.what_));
-	const long size(std::distance(e.first, e.last));
-	const long cat(std::distance(start, e.first));
-	throw parse_error("Expected %s. You input %zd invalid characters at position %zd: %s",
-	                  between(rule, "<", ">"),
-	                  size,
-	                  cat,
-	                  string_view(e.first, e.first + std::min(size, 64L)));
+	throw expectation_failure(start, e);
 }
 
 ircd::json::object::operator std::string()
@@ -674,21 +685,14 @@ const try
 		string_view::begin(), string_view::end()
 	};
 
-	if(!empty())
+	if(!string_view{*this}.empty())
 		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
 
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule(ircd::string(e.what_));
-	const long size(std::distance(e.first, e.last));
-	const long cat(std::distance(string_view::data(), e.first));
-	throw parse_error("Expected %s. You input %zd invalid characters at position %zd: %s.",
-	                  between(rule, "<", ">"),
-	                  size,
-	                  cat,
-	                  string_view(e.first, e.first + std::min(size, 64L)));
+	throw expectation_failure(string_view::begin(), e);
 }
 
 ircd::json::object::const_iterator
@@ -794,12 +798,7 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule(ircd::string(e.what_));
-	const long size(std::distance(e.first, e.last));
-	throw parse_error("Expected JSON %s. You input %zd invalid characters starting with `%s`.",
-	                  between(rule, "<", ">"),
-	                  size,
-	                  string_view(e.first, e.first + std::min(size, 64L)));
+	throw expectation_failure(start, e);
 }
 
 ircd::json::array::operator std::string()
@@ -823,19 +822,14 @@ const try
 		string_view::begin(), string_view::end()
 	};
 
-	if(!empty())
+	if(!string_view{*this}.empty())
 		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
 
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule(ircd::string(e.what_));
-	const long size(std::distance(e.first, e.last));
-	throw parse_error("Expected JSON %s. You input %zd invalid characters starting with `%s`.",
-	                  between(rule, "<", ">"),
-	                  size,
-	                  string_view(e.first, e.first + std::min(size, 64L)));
+	throw expectation_failure(string_view::begin(), e);
 }
 
 ircd::json::array::const_iterator
