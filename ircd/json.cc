@@ -486,6 +486,67 @@ ircd::json::iov::defaults_if::defaults_if(iov &iov,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// json/vector.h
+//
+
+ircd::json::vector::const_iterator &
+ircd::json::vector::const_iterator::operator++()
+try
+{
+	static const qi::rule<const char *, string_view> parse_next
+	{
+		parser.object | qi::eoi
+		,"next vector element or end"
+	};
+
+	string_view state;
+	qi::parse(start, stop, eps > parse_next, state);
+	this->state = state;
+	return *this;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure(start, e);
+}
+
+ircd::json::vector::const_iterator
+ircd::json::vector::begin()
+const try
+{
+	static const qi::rule<const char *, string_view> parse_begin
+	{
+		parser.object
+		,"object vector element"
+	};
+
+	const_iterator ret
+	{
+		string_view::begin(), string_view::end()
+	};
+
+	if(!string_view{*this}.empty())
+	{
+		string_view state;
+		qi::parse(ret.start, ret.stop, eps > parse_begin, state);
+		ret.state = state;
+	}
+
+	return ret;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure(string_view::begin(), e);
+}
+
+ircd::json::vector::const_iterator
+ircd::json::vector::end()
+const
+{
+	return { string_view::end(), string_view::end() };
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // json/member.h
 //
 

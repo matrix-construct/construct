@@ -34,8 +34,9 @@ namespace ircd::json
 
 	struct value;
 	struct member;
-	struct object;
 	struct array;
+	struct object;
+	struct vector;
 	struct iov;
 
 	enum type
@@ -84,6 +85,7 @@ struct ircd::json::string
 
 #include "array.h"
 #include "object.h"
+#include "vector.h"
 
 /// Convenience template to allocate std::string and print() arguments to it.
 ///
