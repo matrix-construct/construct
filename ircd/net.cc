@@ -414,18 +414,17 @@ bool
 ircd::net::listener::acceptor::accept_error(const error_code &ec,
                                             socket &sock)
 {
+	using namespace boost::system::errc;
 	using boost::system::get_system_category;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
 
+	if(likely(ec == success))
+		return false;
+
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
-		using namespace boost::system::errc;
-
-		case success:
-			return false;
-
 		case operation_canceled:
 			return false;
 
@@ -492,17 +491,16 @@ ircd::net::listener::acceptor::handshake_error(const error_code &ec,
                                                socket &sock)
 {
 	using boost::system::get_system_category;
+	using namespace boost::system::errc;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
 
+	if(likely(ec == success))
+		return false;
+
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
-		using namespace boost::system::errc;
-
-		case success:
-			return false;
-
 		case operation_canceled:
 			return false;
 
@@ -1237,17 +1235,15 @@ ircd::net::socket::handle_error(const error_code &ec)
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	if(ec != success)
-		log.warning("socket(%p): handle error: %s: %s",
-		            this,
-		            string(ec));
+	if(likely(ec == success))
+		return true;
+
+	log.warning("socket(%p): handle error: %s: %s",
+	            this,
+	            string(ec));
 
 	if(ec.category() == get_system_category()) switch(ec.value())
 	{
-		// A success is not an error; can call the user handler
-		case success:
-			return true;
-
 		// A cancel is triggered either by the timeout handler or by
 		// a request to shutdown/close the socket. We only call the user's
 		// handler for a timeout, otherwise this is hidden from the user.
