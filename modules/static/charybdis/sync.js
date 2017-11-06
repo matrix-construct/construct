@@ -46,18 +46,22 @@ mc.sync = async function(opts = {})
 	});
 
 	let request = mc.m.sync.get(opts);
-	let data = await request.response;
-	opts.query.since = maybe(() => data.next_batch);
-
-	if(mc.opts.sync_debug)
-		debug.object(data, mc.opts.sync_debug);
-
-	for(let key in data)
 	{
-		let handler = mc.sync[key];
-		if(handler !== undefined)
-			handler(data[key]);
+		let data = await request.response;
+		opts.query.since = maybe(() => data.next_batch);
+
+		if(mc.opts.sync_debug)
+			debug.object(data, mc.opts.sync_debug);
+
+		for(let key in data)
+		{
+			let handler = mc.sync[key];
+			if(handler !== undefined)
+				handler(data[key]);
+		}
 	}
+
+	return true;
 };
 
 mc.sync["rooms"] = function(rooms)

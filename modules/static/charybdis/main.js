@@ -101,6 +101,15 @@ mc.main.init = async function()
  */
 mc.main.fini = async function()
 {
+	console.log("Synchronizing WebStorage..."); try
+	{
+		mc.storage.sync();
+	}
+	catch(error)
+	{
+		console.error("Error synchronizing WebStorage: " + error);
+	}
+
 	console.log("Stopping remaining tasks..."); try
 	{
 		await mc.main.interrupt();
@@ -132,13 +141,22 @@ mc.main.fini = async function()
 		mc.main.on_logout();
 	}
 
-	console.log("Synchronizing WebStorage..."); try
+	console.log("Resynchronizing WebStorage..."); try
 	{
 		mc.storage.sync();
 	}
 	catch(error)
 	{
 		console.error("Error synchronizing WebStorage: " + error);
+	}
+
+	console.log("Final angular repaint..."); try
+	{
+		mc.ng.apply();
+	}
+	catch(error)
+	{
+		console.error("Error repainting: " + error);
 	}
 };
 
@@ -172,13 +190,39 @@ mc.main.fault = async function(error)
 
 	switch(error.status)
 	{
-		case "Client Side":
-			if(error.name == "abort")
+		case "Client":
+			if(error.name == "disconnected")
+			{
+				console.warn("client disconnected");
+				mc.unhandled(error);
 				return false;
+			}
+
+			if(error.name == "killed")
+			{
+				console.error("client fatal");
+				mc.unhandled(error);
+				return false;
+			}
+
+			if(error.name == "timeout")
+			{
+				console.warn("client timeout");
+				mc.ng.root().error = undefined;
+				mc.ng.mc().error = undefined;
+				return true;
+			}
+
+			console.warn("client unhandled " + error);
+			mc.unhandled(error);
+			return false;
 
 		default:
+			console.error("fault unhandled");
 			throw error;
 	}
+
+	return false;
 };
 
 /**

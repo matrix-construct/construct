@@ -2249,6 +2249,42 @@ type="text/ng-template"
 </script>
 
 <script
+id="ircd_room_event__name"
+type="text/ng-template"
+>
+	<div
+	class="changed"
+	>
+		<h3
+		ng-if="room.name"
+		>
+			Changed the room name
+		</h3>
+		<h3
+		ng-if="!room.name"
+		>
+			Named the room
+		</h3>
+	</div>
+	<div
+	class="name row nowrap grow center"
+	>
+		<h2
+		class="name full-center"
+		ng-if="room.name"
+		>
+			from {{ room.name }} to {{ event.content.name }}
+		</h2>
+		<h2
+		class="name full-center"
+		ng-if="!room.name"
+		>
+			{{ event.content.name }}
+		</h2>
+	</div>
+</script>
+
+<script
 id="ircd_room_event_unhandled"
 type="text/ng-template"
 >
@@ -2493,6 +2529,16 @@ type="text/ng-template"
 		>
 			<div
 			ng-include="'ircd_room_event__aliases'"
+			>
+			</div>
+		</div>
+
+		<div
+		class="state name"
+		ng-switch-when="m.room.name"
+		>
+			<div
+			ng-include="'ircd_room_event__name'"
 			>
 			</div>
 		</div>

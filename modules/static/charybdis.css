@@ -2614,6 +2614,8 @@ div.main > form.search label
 
 .ircd .room div.members .menu .item
 {
+	padding-left: 0px;
+	padding-right: 0px;
 }
 
 .ircd .room div.members .menu .item .name

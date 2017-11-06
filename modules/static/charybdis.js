@@ -71,7 +71,8 @@ mc.ready = async function(event)
 	catch(error)
 	{
 		console.error("IRCd Charybdis Client: Main exited (error): " + error + " " + error.stack);
-		mc.unhandled(error);
+		//mc.unhandled(error);
+		mc.abort(error);
 	}
 	finally
 	{

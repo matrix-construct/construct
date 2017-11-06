@@ -161,6 +161,8 @@ mc.io.request.constructor = function(ctx = {})
 	// Insert request into active table. The request can be aborted hereafter.
 	mc.io.requests.insert(this);
 
+	this.started = mc.now();
+
 	// This should be done here for now
 	this.xhr.open(this.ctx.method, this.ctx.url);
 
@@ -390,6 +392,7 @@ mc.io.request.on.readystatechange = function(event)
 {
 	let state = this.xhr.readyState;
 	let handler = mc.io.request.on.readystatechange[state];
+	this.event = event;
 
 	// The promise is resolved for the user before the lib's handlers are called.
 	// This is because the DONE handler has to fulfill all outstanding promises for
@@ -499,40 +502,56 @@ mc.io.request.success = function(event)
 
 mc.io.request.error = function(event)
 {
-	let xhr = this.xhr;
-	let response = xhr.response;
-	let error =
+	let error = new mc.error(
 	{
-		name:
-			xhr.statusText == "error"?  "Network Request Error":
-			empty(xhr.statusText)?      "abort":
-			                            xhr.statusText,
-
-		status:
-			xhr.status != 0? xhr.status : "client side",
-
-		m:
-			xhr.responseType == "json"? xhr.response : undefined,
-
 		message:
 			!empty(this.reason)?
 				this.reason:
-			response && xhr.responseType == "text"?
-				response:
-			"There may be a network connectivity problem.",
+			this.response && this.xhr.responseType == "text"?
+				this.xhr.responseText:
+			this.started + this.ctx.timeout <= mc.now()?
+				"timeout":
+			maybe(() => this.event.detail)?
+				this.event.detail:
+			undefined,
+
+		name:
+			this.xhr.statusText == "error"?
+				"Network Request Error":
+			this.xhr.statusText == "abort"?
+				"Network Request Canceled":
+			!empty(this.xhr.statusText)?
+				this.xhr.statusText:
+			this.started + this.ctx.timeout <= mc.now()?
+				"timeout":
+			!empty(this.reason)?
+				this.reason:
+			!window.navigator.onLine?
+				"disconnected":
+			this.started + 10 > mc.now()?
+				"killed":
+			"timeout",
+
+		status:
+			this.xhr.status != 0? this.xhr.status : "Client",
+
+		m:
+			this.xhr.responseType == "json"? this.xhr.response : undefined,
 
 		request_stack:
 			this.stack,
 
+		event:
+			this.event,
+
 		element:
 			this.ctx.element,
-	};
+	});
 
-	if(!empty(error.m))
-		delete error.message;
+	//if(!empty(error.m))
+	//	delete error.message;
 
 	let data = undefined;
-	error = new mc.error(error);
 	mc.io.request.continuation.call(this, error, data);
 };
 
