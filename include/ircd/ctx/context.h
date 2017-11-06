@@ -60,6 +60,7 @@ namespace ircd::ctx
 struct ircd::ctx::context
 {
 	enum flags
+	:uint
 	{
 		POST            = 0x01,   ///< Defers spawn with an ios.post()
 		DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)

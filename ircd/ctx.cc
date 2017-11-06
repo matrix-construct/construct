@@ -540,20 +540,29 @@ ircd::ctx::context::context(const char *const &name,
                             function func)
 :c{std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)}
 {
-	// The profiler is told about the spawn request here, not inside the closure
-	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
-	mark(prof::event::SPAWN);
-
 	auto spawn
 	{
 		std::bind(&ircd::ctx::spawn, c.get(), std::move(func))
 	};
 
-	const unwind release{[this, &flags]
+	// The profiler is told about the spawn request here, not inside the closure
+	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
+	mark(prof::event::SPAWN);
+
+	// When the user passes the DETACH flag we want to release the unique_ptr
+	// of the ctx if and only if that ctx is committed to freeing itself. Our
+	// commitment ends at the 180 of this function. If no exception was thrown
+	// we expect the context to be committed to entry. If the POST flag is
+	// supplied and it gets lost in the asio queue it will not be entered, and
+	// will not be able to free itself; that will leak.
+	const unwind::nominal release
 	{
-		if(flags & DETACH)
-			this->c.release();
-	}};
+		[this, &flags]
+		{
+			if(flags & context::DETACH)
+				this->detach();
+		}
+	};
 
 	if(flags & POST)
 	{
@@ -644,6 +653,7 @@ ircd::ctx::context::join()
 		return;
 
 	mark(prof::event::JOIN);
+	assert(bool(c));
 	assert(!c->adjoindre);
 	c->adjoindre = &cur();       // Set the target context to notify this context when it finishes
 	wait();
@@ -653,6 +663,7 @@ ircd::ctx::context::join()
 ircd::ctx::ctx *
 ircd::ctx::context::detach()
 {
+	assert(bool(c));
 	c->flags |= DETACH;
 	return c.release();
 }
