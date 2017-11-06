@@ -38,13 +38,6 @@ namespace ircd
 	// which can consume many cycles...
 	template<size_t PRIME = 7681> size_t hash(const std::string &str, const size_t i = 0);
 	template<size_t PRIME = 7681> size_t hash(const std::u16string &str, const size_t i = 0);
-
-	/// ircd:: reserves the $ character over a string as an alias for hash()
-	template<class string>
-	constexpr size_t $(string&& s)
-	{
-		return hash(std::forward<string>(s));
-	}
 }
 
 /// Collision-Resistant Hashing
