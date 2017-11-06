@@ -38,7 +38,7 @@ namespace ircd
 {
 	struct init;
 
-	enum class runlevel;
+	enum class runlevel: uint;
 	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
 	extern bool debugmode;                      ///< Toggled by command line to indicate debug behavior
@@ -49,15 +49,34 @@ namespace ircd
 
 	void init(boost::asio::io_service &ios, const std::string &conf, runlevel_handler = {});
 	void init(boost::asio::io_service &ios, runlevel_handler = {});
-	bool stop() noexcept;
+
+	bool quit() noexcept;
 }
 
+/// The runlevel allows all observers to know the coarse state of IRCd and to
+/// react accordingly. This can be used by the embedder of libircd to know
+/// when it's safe to use or delete libircd resources. It is also used
+/// similarly by the library and its modules.
+///
+/// Primary modes:
+///
+/// * HALT is the off mode. Nothing is/will be running in libircd until
+/// an invocation of ircd::init();
+///
+/// * RUN is the service mode. Full client and application functionality
+/// exists in this mode. Leaving the RUN mode is done with ircd::quit();
+///
+/// - Transitional modes: Modes which are working towards the next mode.
+/// - Interventional modes:  Modes which are *not* working towards the next
+/// mode and may require some user action to continue.
+///
 enum class ircd::runlevel
+:uint
 {
-	FAULT    = -1,
-	STOPPED  = 0,
-	READY    = 1,
-	START    = 2,
-	RUN      = 3,
-	STOP     = 4,
+	HALT     = 0x00,    ///< [inter] IRCd Powered off.
+	READY    = 0x01,    ///< [inter] Ready for user to run ios event loop.
+	START    = 0x02,    ///< [trans] Starting up subsystems for service.
+	RUN      = 0x04,    ///< [inter] IRCd in service.
+	QUIT     = 0x10,    ///< [trans] Clean shutdown in progress
+	FAULT    = 0xFF,    ///< [trans] QUIT with exception (dirty shutdown)
 };

@@ -129,7 +129,7 @@ try
 	{
 		switch(mode)
 		{
-			case ircd::runlevel::STOPPED:
+			case ircd::runlevel::HALT:
 			case ircd::runlevel::FAULT:
 				sigs.cancel();
 				break;
@@ -253,7 +253,7 @@ handle_quit()
 try
 {
 	console_cancel();
-	ircd::stop();
+	ircd::quit();
 }
 catch(const std::exception &e)
 {

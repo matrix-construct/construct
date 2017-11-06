@@ -208,7 +208,7 @@ try
 
 	if(line == "exit" || line == "die")
 	{
-		ircd::stop();
+		ircd::quit();
 		return false;
 	}
 

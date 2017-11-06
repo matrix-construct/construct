@@ -70,17 +70,36 @@ ircd::client::init::init()
 	request.add(2);
 }
 
-ircd::client::init::~init()
-noexcept
+void
+ircd::client::init::interrupt()
 {
-	log::debug("Interrupting %zu requests; dropping %zu requests; disconnecting %zu clients.",
-	           request.active(),
-	           request.pending(),
-	           client::clients.size());
+	if(request.active() || !client::clients.empty())
+		log::warning("Interrupting %zu requests; dropping %zu requests; disconnecting %zu clients...",
+		             request.active(),
+		             request.pending(),
+		             client::clients.size());
 
 	request.interrupt();
 	disconnect_all();
+}
+
+ircd::client::init::~init()
+noexcept
+{
+	interrupt();
+
+	if(request.active() || request.size())
+		log::warning("Joining %zu active of %zu remaining request contexts...",
+		             request.active(),
+		             request.size());
+
 	request.join();
+
+	if(unlikely(!client::clients.empty()))
+	{
+		log::error("%zu clients are unterminated...", client::clients.size());
+		assert(client::clients.empty());
+	}
 }
 
 ircd::hostport

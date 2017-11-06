@@ -44,23 +44,42 @@ namespace ircd
 	void main();
 }
 
+/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
 struct ircd::tc_version
 {
-	int major, minor;
-	char patch[64];
-	std::string version;
-	tc_version();
-};
+	int major{0}, minor{0};
+	char patch[64] {0};
+	std::string version {"unavailable"};
+}
+const ircd::tc_version;
 
+/*
+const char* tc_version(int* major, int* minor, const char** patch);
+ircd::tc_version::tc_version()
+:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
+{}
+*/
+
+/// Record of the ID of the thread static initialization took place on.
 const std::thread::id
 ircd::static_thread_id
 {
 	std::this_thread::get_id()
 };
 
+/// "main" thread for IRCd; the one the main context landed on.
 std::thread::id
 ircd::thread_id
 {};
+
+/// Boost version indicator for compiled header files.
+const uint
+ircd::boost_version[3]
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
 
 void
 ircd::init(boost::asio::io_service &ios,
@@ -69,7 +88,6 @@ ircd::init(boost::asio::io_service &ios,
 	init(ios, std::string{}, std::move(function));
 }
 
-///
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
 /// Pass your io_service instance, it will share it with the rest of your program.
@@ -78,34 +96,64 @@ ircd::init(boost::asio::io_service &ios,
 /// This function will setup the main program loop of libircd. The execution will
 /// occur when your io_service.run() or poll() is further invoked.
 ///
+/// init() can only be called from a runlevel::HALT state
 void
 ircd::init(boost::asio::io_service &ios,
            const std::string &configfile,
            runlevel_handler runlevel_changed)
 try
 {
+	if(runlevel != runlevel::HALT)
+		throw error("Cannot init() IRCd from runlevel %s",
+		            reflect(runlevel));
+
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash.
 	if(RB_DEBUG_LEVEL || debugmode)
 		enable_coredumps();
 
-	assert(runlevel == runlevel::STOPPED);
-
+	// Samples the thread this context was executed on which should be where
+	// the user ran ios.run(). The user may have invoked ios.run() on multiple
+	// threads, but we consider this one thread a main thread for now...
 	ircd::thread_id = std::this_thread::get_id();
+
+	// Global ircd:: reference to the user's io_service and setup our main
+	// strand on that service.
 	ircd::ios = &ios;
 	ircd::strand = new struct strand(ios);
 
+	// Saves the user's runlevel_changed callback which we invoke.
+	ircd::runlevel_changed = std::move(runlevel_changed);
+
 	// The log is available, but it is console-only until conf opens files.
 	log::init();
-	log::mark("START");
+	log::mark("READY");
 
+	// Setup the main context, which is a new stack executing the function
+	// ircd::main(). The main_context is the first ircd::ctx to be spawned
+	// and will be the last to finish.
+	//
+	// The context::POST will delay this spawn until the next io_service
+	// event slice, so no context switch will occur here. Note that POST has
+	// to be used here because: A. This init() function is executing on the
+	// main stack, and context switches can only occur between context stacks,
+	// not between contexts and the main stack. B. The user's io_service may or
+	// may not even be running yet anyway.
+	//
 	ircd::context main_context
 	{
 		"main", 256_KiB, &ircd::main, context::POST
 	};
 
+	// The default behavior for ircd::context is to join the ctx on dtor. We
+	// can't have that here because this is strictly an asynchronous function
+	// on the main stack. Under normal circumstances, the mc will be entered
+	// and be able to delete this pointer itself when it finishes. Otherwise
+	// this must be manually deleted with assurance that mc will never enter.
 	ircd::main_context = main_context.detach();
-	ircd::runlevel_changed = std::move(runlevel_changed);
+
+	// This message flashes information about our dependencies which are being
+	// assumed for this execution.
 	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
 	          PACKAGE_STRING,
 	          boost_version[0],
@@ -115,6 +163,7 @@ try
 	          nacl::version(),
 	          openssl::version());
 
+	// This message flashes information about IRCd itself for this execution
 	log::info("%s %ld %s. configured: %s. compiled: %s %s",
 	          BRANDING_VERSION,
 	          __cplusplus,
@@ -123,6 +172,9 @@ try
 	          __TIMESTAMP__,
 	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
 
+	// Finally, without prior exception, the commitment to runlevel::READY
+	// is made here. The user can now invoke their ios.run(), or, if they
+	// have already, IRCd will begin main execution shortly...
 	ircd::set_runlevel(runlevel::READY);
 }
 catch(const std::exception &e)
@@ -132,21 +184,19 @@ catch(const std::exception &e)
 	throw;
 }
 
-///
 /// Notifies IRCd to shutdown. A shutdown will occur asynchronously and this
-/// function will return immediately. main_exit_cb will be called when IRCd
-/// has no more work for the ios (main_exit_cb will be the last operation from
-/// IRCd posted to the ios).
+/// function will return immediately. A runlevel change to HALT will be
+/// indicated when IRCd has no more work for the ios. When the HALT state
+/// is observed the user is free to destruct all resources related to libircd.
 ///
 /// This function is the proper way to shutdown libircd after an init(), and while
 /// your io_service.run() is invoked without stopping your io_service shared by
 /// other activities unrelated to libircd. If your io_service has no other activities
-/// the run() will then return.
-///
-/// This is useful when your other activities prevent run() from returning.
+/// the run() will then return immediately after IRCd posts its transition to
+/// the HALT state.
 ///
 bool
-ircd::stop()
+ircd::quit()
 noexcept
 {
 	if(runlevel != runlevel::RUN)
@@ -170,7 +220,7 @@ noexcept
 /// The status of this function and IRCd overall can be observed through
 /// the ircd::runlevel. The ircd::runlevel_changed callback can be set
 /// to be notified on a runlevel change. The user should wait for a runlevel
-/// of STOPPED before destroying IRCd related resources and stopping their
+/// of HALT before destroying IRCd related resources and stopping their
 /// io_service from running more jobs.
 ///
 void
@@ -182,11 +232,11 @@ try
 	ircd::set_runlevel(runlevel::START);
 
 	// When this function completes, subsystems are done shutting down and IRCd
-	// transitions to STOPPED.
-	const unwind stopped{[]
+	// transitions to HALT.
+	const unwind halted{[]
 	{
 		at_main_exit();
-		set_runlevel(runlevel::STOPPED);
+		set_runlevel(runlevel::HALT);
 	}};
 
 	// These objects are the init()'s and fini()'s for each subsystem.
@@ -210,14 +260,21 @@ try
 		_client_.interrupt();
 	}};
 
-	// IRCd will now transition to the RUN state indicating full functionality.
-	ircd::set_runlevel(runlevel::RUN);
-
 	// When the call to wait() below completes, IRCd exits from the RUN state
 	// and enters one of the two states below depending on whether the unwind
 	// is taking place normally or because of an exception.
-	const unwind::nominal nominal{std::bind(&ircd::set_runlevel, runlevel::STOP)};
-	const unwind::exceptional exceptional{std::bind(&ircd::set_runlevel, runlevel::FAULT)};
+	const unwind::nominal nominal
+	{
+		std::bind(&ircd::set_runlevel, runlevel::QUIT)
+	};
+
+	const unwind::exceptional exceptional
+	{
+		std::bind(&ircd::set_runlevel, runlevel::FAULT)
+	};
+
+	// IRCd will now transition to the RUN state indicating full functionality.
+	ircd::set_runlevel(runlevel::RUN);
 
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
@@ -246,6 +303,14 @@ noexcept
 	});
 }
 
+/// Sets the runlevel of IRCd and notifies users. This should never be called
+/// manually/directly, as it doesn't trigger a runlevel change itself, it just
+/// notifies of one.
+///
+/// The notification will be posted to the io_service. This is important to
+/// prevent the callback from continuing execution on some ircd::ctx stack and
+/// instead invoke their function on the main stack in their own io_service
+/// event slice.
 void
 ircd::set_runlevel(const enum runlevel &new_runlevel)
 try
@@ -263,13 +328,13 @@ try
 	if(ircd::runlevel_changed)
 		ios->post([new_runlevel]
 		{
-			if(new_runlevel == runlevel::STOPPED)
+			if(new_runlevel == runlevel::HALT)
 				log::notice("IRCd %s", reflect(new_runlevel));
 
 			ircd::runlevel_changed(new_runlevel);
 		});
 
-	if(new_runlevel != runlevel::STOPPED)
+	if(new_runlevel != runlevel::HALT)
 		log::notice("IRCd %s", reflect(new_runlevel));
 }
 catch(const std::exception &e)
@@ -286,42 +351,16 @@ ircd::reflect(const enum runlevel &level)
 {
 	switch(level)
 	{
-		case runlevel::FAULT:     return "FAULT";
-		case runlevel::STOPPED:   return "STOPPED";
+		case runlevel::HALT:      return "HALT";
 		case runlevel::READY:     return "READY";
 		case runlevel::START:     return "START";
 		case runlevel::RUN:       return "RUN";
-		case runlevel::STOP:      return "STOP";
+		case runlevel::QUIT:      return "QUIT";
+		case runlevel::FAULT:     return "FAULT";
 	}
 
 	return "??????";
 }
-
-/*
-const char* tc_version(int* major, int* minor, const char** patch);
-ircd::tc_version::tc_version()
-:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
-{}
-*/
-
-ircd::tc_version::tc_version()
-:major{0}
-,minor{0}
-,patch{0}
-,version{"unavailable"}
-{}
-
-struct ircd::tc_version
-const ircd::tc_version
-{};
-
-const uint
-ircd::boost_version[3]
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
 
 void
 #ifdef HAVE_SYS_RESOURCE_H
