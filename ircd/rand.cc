@@ -19,36 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// hash.h
-//
-
-ircd::crh::hash::~hash()
-noexcept
-{
-}
-
-ircd::crh::hash &
-ircd::crh::hash::operator+=(const const_raw_buffer &buf)
-{
-	update(buf);
-	return *this;
-}
-
-void
-ircd::crh::hash::operator()(const mutable_raw_buffer &out,
-                            const const_raw_buffer &in)
-{
-	update(in);
-	finalize(out);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// rand.h
-//
-
 decltype(ircd::rand::device) ircd::rand::device
 {
 	// on linux: uses RDRND or /dev/urandom

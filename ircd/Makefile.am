@@ -60,7 +60,8 @@ libircd_la_LIBADD = \
 
 libircd_la_SOURCES =   \
 	client.cc          \
-	crypto.cc          \
+	hash.cc            \
+	rand.cc            \
 	ctx.cc             \
 	db.cc              \
 	exception.cc       \
