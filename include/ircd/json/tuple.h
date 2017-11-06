@@ -677,7 +677,8 @@ template<class dst,
 typename std::enable_if
 <
 	!std::is_base_of<json::string, dst>() &&
-	std::is_convertible<src, dst>(),
+	std::is_convertible<src, dst>() &&
+	!ircd::json::is_tuple<dst>(),
 void>::type
 _assign(dst &d,
         src&& s)
