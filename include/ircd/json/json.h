@@ -70,6 +70,7 @@ namespace ircd::json
 	struct strung;
 
 	size_t serialized(const string_view &);
+	string_view stringify(mutable_buffer &, const string_view &);
 
 	struct string;
 	using members = std::initializer_list<member>;

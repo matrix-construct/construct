@@ -659,6 +659,28 @@ runtil(tuple &t,
 	       false;
 }
 
+template<class T>
+constexpr bool
+serialized_lex_cast()
+{
+	using type = typename std::remove_reference<T>::type;
+	return std::is_arithmetic<type>::value;
+}
+
+template<class T>
+typename std::enable_if<serialized_lex_cast<T>(), size_t>::type
+serialized(T&& t)
+{
+	return lex_cast(t).size();
+}
+
+template<class T>
+typename std::enable_if<serialized_lex_cast<T>(), bool>::type
+defined(T&& t)
+{
+	return t != typename std::remove_reference<T>::type {0};
+}
+
 template<class dst,
          class src>
 typename std::enable_if
@@ -957,28 +979,6 @@ _member_transform(const tuple<T...> &tuple,
 		ret = member { key, val };
 		return true;
 	});
-}
-
-template<class T>
-constexpr bool
-serialized_lex_cast()
-{
-	using type = typename std::remove_reference<T>::type;
-	return std::is_arithmetic<type>::value;
-}
-
-template<class T>
-typename std::enable_if<serialized_lex_cast<T>(), size_t>::type
-serialized(T&& t)
-{
-	return lex_cast(t).size();
-}
-
-template<class T>
-typename std::enable_if<serialized_lex_cast<T>(), bool>::type
-defined(T&& t)
-{
-	return t != typename std::remove_reference<T>::type {0};
 }
 
 template<class... T>

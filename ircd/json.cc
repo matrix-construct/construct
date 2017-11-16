@@ -1486,6 +1486,20 @@ ircd::json::operator==(const value &a, const value &b)
 // json.h
 //
 
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const string_view &v)
+{
+	if(v.empty() && defined(v))
+	{
+		consume(buf, copy(buf, value::empty_string));
+		return value::empty_string;
+	}
+
+	consume(buf, copy(buf, string_view{v}));
+	return string_view{v};
+}
+
 size_t
 ircd::json::serialized(const string_view &s)
 {
