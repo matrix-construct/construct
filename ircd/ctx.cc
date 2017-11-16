@@ -518,7 +518,7 @@ namespace ircd::ctx
 
 void
 ircd::ctx::spawn(ctx *const c,
-	             context::function func)
+                 context::function func)
 {
 	const boost::coroutines::attributes attrs
 	{
@@ -811,12 +811,12 @@ namespace ircd::ctx::prof
 
 struct ircd::ctx::prof::settings ircd::ctx::prof::settings
 {
-	0.46,        // stack_usage_warning
-	0.67,        // stack_usage_assertion
+	0.33,        // stack_usage_warning at 1/3 engineering tolerance
+	0.50,        // stack_usage_assertion at 1/2 engineering tolerance
 
-	50ms,        // slice_warning
-	0us,         // slice_interrupt
-	0us,         // slice_assertion
+	50ms,        // slice_warning at 1/20 slices per second
+	0us,         // slice_interrupt unused until project more mature...
+	0us,         // slice_assertion unused; warning sufficient for now...
 };
 
 void

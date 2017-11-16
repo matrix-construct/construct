@@ -59,16 +59,7 @@ namespace ircd::ctx
 ///
 struct ircd::ctx::context
 {
-	enum flags
-	:uint
-	{
-		POST            = 0x01,   ///< Defers spawn with an ios.post()
-		DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)
-		DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
-
-		INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
-	};
-
+	enum flags :uint;
 	using function = std::function<void ()>;
 
   private:
@@ -116,6 +107,16 @@ struct ircd::ctx::context
 	~context() noexcept;
 
 	friend void swap(context &a, context &b) noexcept;
+};
+
+enum ircd::ctx::context::flags
+:uint
+{
+	POST            = 0x01,   ///< Defers spawn with an ios.post()
+	DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)
+	DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
+
+	INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
 };
 
 inline void
