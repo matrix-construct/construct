@@ -1269,5 +1269,12 @@ struct is_zero
 };
 
 
+constexpr bool
+is_powerof2(const long long v)
+{
+	return v && !(v & (v - 1LL));
+}
+
+
 } // namespace util
 } // namespace ircd
