@@ -74,7 +74,10 @@ libircd_la_SOURCES =   \
 	lexical.cc         \
 	locale.cc          \
 	logger.cc          \
-	matrix.cc          \
+	m_id.cc            \
+	m_io.cc            \
+	m_vm.cc            \
+	m.cc               \
 	mods.cc            \
 	net.cc             \
 	openssl.cc         \
