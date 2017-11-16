@@ -1447,11 +1447,19 @@ try
 		{ event,  { "type",      "ircd.password"  }},
 		{ event,  { "state_key",  user_id         }},
 		{ event,  { "sender",     user_id         }},
-		{ event,  { "content",    json::members
-		{
-			{ "plaintext", password }
-		}}},
 	};
+
+	char b64[64];
+	uint8_t hash[32];
+	sha256{hash, const_buffer{password}};
+	const auto digest{b64encode_unpadded(b64, hash)};
+	json::iov::push content{event,
+	{
+		"content", json::members
+		{
+			{ "sha256", digest }
+		},
+	}};
 
 	accounts.send(event);
 }
@@ -1474,7 +1482,11 @@ const
 		{ "state_key",    user_id           },
 	};
 
-	const vm::query<vm::where::test> correct_password{[&supplied_password]
+	char b64[64];
+	uint8_t hash[32];
+	sha256{hash, const_buffer{supplied_password}};
+	const auto supplied_hash{b64encode_unpadded(b64, hash)};
+	const vm::query<vm::where::test> correct_password{[&supplied_hash]
 	(const auto &event)
 	{
 		const json::object &content
@@ -1482,12 +1494,12 @@ const
 			json::at<"content"_>(event)
 		};
 
-		const auto &correct_password
+		const auto &correct_hash
 		{
-			unquote(content.at("plaintext"))
+			unquote(content.at("sha256"))
 		};
 
-		return supplied_password == correct_password;
+		return supplied_hash == correct_hash;
 	}};
 
 	const auto query
