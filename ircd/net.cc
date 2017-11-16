@@ -1170,11 +1170,15 @@ ircd::net::socket::handle(const std::weak_ptr<socket> wp,
                           const size_t &bytes)
 noexcept try
 {
+	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-	log.debug("socket(%p): %zu bytes: %s: %s",
+
+/*
+	log.debug("socket(%p): %zu bytes; %s: %s",
 	          this,
 	          bytes,
 	          string(ec));
+*/
 
 	// This handler and the timeout handler are responsible for canceling each other
 	// when one or the other is entered. If the timeout handler has already fired for

@@ -2358,7 +2358,7 @@ ircd::db::seek(row &r,
 
 	const column &c(r[0]);
 	const database &d(c);
-	const ircd::timer timer;
+//	const ircd::timer timer;
 	const auto ret
 	{
 		std::count_if(begin(r), end(r), [&p]
@@ -2367,7 +2367,7 @@ ircd::db::seek(row &r,
 			return seek(cell, p);
 		})
 	};
-
+/*
 	log.debug("'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
 	          name(d),
 	          sequence(d),
@@ -2376,7 +2376,7 @@ ircd::db::seek(row &r,
 	          ret,
 	          r.size(),
 	          timer.at<microseconds>().count());
-
+*/
 	return ret;
 }
 template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
@@ -2753,14 +2753,14 @@ ircd::db::has(column &column,
 		});
 	}
 
-	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s [%s]",
+	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s%s",
 	          name(d),
 	          sequence(d),
 	          sequence(opts.snapshot),
 	          name(c),
 	          key.size(),
 	          status.ok()? "YES"s : "NO"s,
-	          opts.read_tier == BLOCKING? "CACHE MISS"s : "CACHE HIT"s);
+	          opts.read_tier == BLOCKING? " CACHE MISS"s : ""s);
 
 	// Finally the result
 	switch(status.code())
@@ -3431,6 +3431,7 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
+/*
 		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s in %ld$us '%s'",
 		          name(d),
 		          sequence(d),
@@ -3441,7 +3442,7 @@ ircd::db::_seek(database::column &c,
 		          valid(*it)? "VALID" : "INVALID",
 		          timer.at<microseconds>().count(),
 		          name(c));
-
+*/
 		return valid(*it);
 	}
 
