@@ -425,22 +425,28 @@ ircd::rstrip(const string_view &str,
 	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
 }
 
-/// Remove leading instances of c from the returned view
+/// Remove leading instances of c from the returned view.
+/// Note in case the strip results in an empty view, we return a string_view
+/// with the original pointer and size 0 so it carries through the defined().
 inline ircd::string_view
 ircd::lstrip(const string_view &str,
              const char &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
+	return pos != string_view::npos? string_view{str.substr(pos)}:
+	                                 string_view{str.data(), size_t{0}};
 }
 
 /// Remove leading instances of c from the returned view
+/// Note in case the strip results in an empty view, we return a string_view
+/// with the original pointer and size 0 so it carries through the defined().
 inline ircd::string_view
 ircd::lstrip(const string_view &str,
              const string_view &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)} : string_view{};
+	return pos != string_view::npos? string_view{str.substr(pos)}:
+	                                 string_view{str.data(), size_t{0}};
 }
 
 template<class T>
