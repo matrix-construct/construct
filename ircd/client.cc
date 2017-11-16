@@ -106,7 +106,7 @@ ircd::hostport
 ircd::local(const client &client)
 {
 	if(!client.sock)
-		return { "0.0.0.0"s, 0 };
+		return hostport::null;
 
 	return net::local_hostport(*client.sock);
 }
@@ -115,7 +115,7 @@ ircd::hostport
 ircd::remote(const client &client)
 {
 	if(!client.sock)
-		return { "0.0.0.0"s, 0 };
+		return hostport::null;
 
 	return net::remote_hostport(*client.sock);
 }

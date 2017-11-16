@@ -1643,6 +1643,14 @@ ircd::net::remote::remote(hostport hp)
 {
 }
 
+ircd::net::remote::remote(const string_view &host)
+:remote
+{
+	std::string(host), "8448"s
+}
+{
+}
+
 ircd::net::remote::remote(const string_view &host,
                           const uint16_t &port)
 :remote
@@ -1657,6 +1665,14 @@ ircd::net::remote::remote(const string_view &host,
 :remote
 {
 	std::string(host), std::string(port)
+}
+{
+}
+
+ircd::net::remote::remote(std::string host)
+:remote
+{
+	std::move(host), "8448"s
 }
 {
 }
@@ -1771,6 +1787,12 @@ ircd::net::ipport::ipport(const std::string &host,
 //
 // hostport
 //
+
+const ircd::net::hostport
+ircd::net::hostport::null
+{
+	"0.0.0.0"s, 0
+};
 
 ircd::net::hostport::hostport(std::string s,
                               const uint16_t &port)

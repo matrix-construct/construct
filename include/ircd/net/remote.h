@@ -66,6 +66,8 @@ namespace ircd::net
 struct ircd::net::hostport
 :std::pair<std::string, uint16_t>
 {
+	static const hostport null;
+
 	hostport(std::string s, const uint16_t &port = 8448);
 
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
@@ -97,8 +99,8 @@ struct ircd::net::ipport
 	ipport(const uint128_t &ip, const uint16_t &port);
 
 	// DNS lookup! May yield ircd::ctx!
-	explicit ipport(const std::string &hostname, const std::string &port);
-	explicit ipport(const std::string &hostname, const uint16_t &port);
+	ipport(const std::string &hostname, const std::string &port);
+	ipport(const std::string &hostname, const uint16_t &port);
 	ipport(const string_view &hostname, const string_view &port = "8448");
 	ipport(const string_view &hostname, const uint16_t &port);
 	ipport(const hostport &);
@@ -120,10 +122,12 @@ struct ircd::net::remote
 	operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
-	explicit remote(std::string hostname, const std::string &port = "8448"s);
+	remote(std::string hostname, const std::string &port);
 	remote(std::string hostname, const uint16_t &port);
-	remote(const string_view &hostname, const string_view &port = "8448");
-	remote(const string_view &hostname, const uint16_t &port);
+	remote(std::string hostname);
+	explicit remote(const string_view &hostname, const string_view &port);
+	explicit remote(const string_view &hostname, const uint16_t &port);
+	remote(const string_view &hostname);
 	explicit remote(const ipport &);
 	remote(hostport);
 	remote() = default;
