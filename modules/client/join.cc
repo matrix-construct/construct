@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -21,54 +21,49 @@
 
 using namespace ircd;
 
-resource events_resource
+resource join_resource
 {
-	"/_matrix/client/r0/events",
-	"Events (6.2.3) (10.x)"
+	"/_matrix/client/r0/join/", resource::opts
+	{
+		resource::DIRECTORY,
+		"join"
+	}
+};
+
+mapi::header IRCD_MODULE
+{
+	"registers the resource 'client/join'"
 };
 
 resource::response
-get_events(client &client, const resource::request &request)
+post_join(client &client, const resource::request &request)
 {
-	const m::room::id &room_id
+	if(request.parv.size() < 1)
+		throw http::error
+		{
+			http::MULTIPLE_CHOICES, "/join room_id required"
+		};
+
+	m::room::id::buf room_id
 	{
-		unquote(request["room_id"])
+		urldecode(request.parv[0], room_id)
 	};
 
-	const m::vm::query<m::vm::where::equal> query
-	{
-		{ "room_id", room_id }
-	};
-
-	size_t i(0);
-	m::vm::for_each(query, [&i](const auto &event)
-	{
-		++i;
-	});
-
-	size_t j(0);
-	json::value ret[i];
-	m::vm::for_each(query, [&i, &j, &ret](const m::event &event)
-	{
-		if(j < i)
-			ret[j++] = event;
-	});
+	m::join(room_id, request.user_id);
 
 	return resource::response
 	{
 		client, json::members
 		{
-			{ "chunk", { ret, j } }
+			{ "room_id", room_id }
 		}
 	};
 }
 
-resource::method method_get
+resource::method method_post
 {
-	events_resource, "GET", get_events
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/events' and hosts the events database"
+	join_resource, "POST", post_join,
+	{
+		method_post.REQUIRES_AUTH
+	}
 };

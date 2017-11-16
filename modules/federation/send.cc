@@ -21,9 +21,26 @@
 
 using namespace ircd;
 
+void sender_worker();
+ircd::context sender_context
+{
+	"sender",
+	256_KiB,
+	&sender_worker,
+	ircd::context::POST,
+};
+
+const auto on_unload{[]
+{
+	sender_context.interrupt();
+	sender_context.join();
+}};
+
 mapi::header IRCD_MODULE
 {
-	"federation send"
+	"federation send",
+	nullptr,
+	on_unload
 };
 
 struct send
@@ -47,9 +64,9 @@ handle_edu(client &client,
            const json::object &edu)
 {
 	//std::cout << edu << std::endl;
-	log::debug("%s | %s | %s | %s",
-	           at<"origin"_>(request),
+	log::debug("%s :%s | %s | %s",
 	           txn_id,
+	           at<"origin"_>(request),
 	           edu.at("edu_type"),
 	           edu.get("sender", string_view{"*"}));
 }
@@ -62,15 +79,11 @@ handle_pdu(client &client,
 try
 {
 	//std::cout << event << std::endl;
-	log::debug("%s | %s | %s | %s %s %s",
-	           at<"origin"_>(request),
+	log::debug("%s %s",
 	           txn_id,
-	           at<"type"_>(event),
-	           at<"sender"_>(event),
-	           at<"room_id"_>(event),
-	           at<"event_id"_>(event));
+	           pretty_oneline(event));
 
-	m::vm::eval(event);
+	m::vm::eval{event};
 }
 catch(const ed25519::bad_sig &e)
 {
@@ -90,9 +103,9 @@ handle_pdu_failure(client &client,
                    const string_view &txn_id,
                    const json::object &pdu_failure)
 {
-	log::debug("%s | %s | (pdu_failure) %s",
-	           at<"origin"_>(request),
+	log::debug("%s :%s | (pdu_failure) %s",
 	           txn_id,
+	           at<"origin"_>(request),
 	           pdu_failure.get("sender", string_view{"*"}),
 	           string_view{pdu_failure});
 }
@@ -135,9 +148,9 @@ handle_put(client &client,
 	for(const auto &pdu : pdus)
 		handle_pdu(client, request, txn_id, m::event{pdu});
 
-	log::debug("%s | %s | %s --> edus:%zu pdus:%zu errors:%zu",
-	           origin,
+	log::debug("%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
 	           txn_id,
+	           origin,
 	           string(remote(client)),
 	           edus.count(),
 	           pdus.count(),
@@ -145,7 +158,7 @@ handle_put(client &client,
 
 	return resource::response
 	{
-		client, json::members{}
+		client, http::OK
 	};
 }
 
@@ -156,3 +169,72 @@ resource::method method_put
 		method_put.VERIFY_ORIGIN
 	}
 };
+
+//
+// Main worker stack
+//
+
+void sender_handle(const m::event &, const m::room::id &room_id);
+void sender_handle(const m::event &);
+
+void
+sender_worker()
+{
+	while(1) try
+	{
+		std::unique_lock<decltype(m::vm::inserted)> lock
+		{
+			m::vm::inserted
+		};
+
+		// reference to the event on the inserter's stack
+		const auto &event
+		{
+			m::vm::inserted.wait(lock)
+		};
+
+		sender_handle(event);
+	}
+	catch(const ircd::ctx::interrupted &e)
+	{
+		ircd::log::debug("sender worker interrupted");
+		return;
+	}
+	catch(const timeout &e)
+	{
+		ircd::log::debug("sender worker: %s", e.what());
+	}
+	catch(const std::exception &e)
+	{
+		ircd::log::error("sender worker: %s", e.what());
+	}
+}
+
+void
+sender_handle(const m::event &event)
+{
+	const auto &room_id
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	if(room_id)
+	{
+		sender_handle(event, room_id);
+		return;
+	}
+
+	assert(0);
+}
+
+void
+sender_handle(const m::event &event,
+              const m::room::id &room_id)
+{
+	const m::room room
+	{
+		room_id
+	};
+
+	std::cout << "sender handle: " << at<"event_id"_>(event) << " " << room_id << std::endl;
+}

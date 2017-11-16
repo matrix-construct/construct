@@ -38,6 +38,7 @@ namespace ircd::m
 	room create(const id::room &room_id, const id::user &creator, const id::room &parent, const string_view &type);
 	room create(const id::room &room_id, const id::user &creator, const string_view &type = {});
 
+	void message(const id::room &room_id, const m::id::user &, const string_view &body, const string_view &msgtype = "m.text");
 	void membership(const id::room &room_id, const m::id::user &, const string_view &membership);
 	void leave(const id::room &room_id, const m::id::user &);
 	void join(const id::room &room_id, const m::id::user &);
@@ -49,15 +50,13 @@ struct ircd::m::room
 	struct state;
 	struct members;
 	struct fetch;
+	struct branch;
 
 	using id = m::id::room;
 
 	id room_id;
 
-	operator const id &() const
-	{
-		return room_id;
-	}
+	operator const id &() const        { return room_id;                       }
 
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 
@@ -68,15 +67,13 @@ struct ircd::m::room
 	event::id::buf send(json::iov &event);
 	event::id::buf send(const json::members &event);
 
+	void message(json::iov &event, json::iov &content);
 	void membership(json::iov &event, json::iov &content);
 	void create(json::iov &event, json::iov &content);
 
+	room(const id::alias &alias);
 	room(const id &room_id)
 	:room_id{room_id}
-	{}
-
-	room(const id::alias &alias)
-	:room_id{}
 	{}
 };
 
@@ -88,13 +85,32 @@ namespace ircd::m::name
 	constexpr const char *const m_room_join_rules {"m.room.join_rules"};
 	constexpr const char *const m_room_member {"m.room.member"};
 	constexpr const char *const m_room_power_levels {"m.room.power_levels"};
-	constexpr const char *const m_room_redaction {"m.room.redaction"};
 	constexpr const char *const m_room_message {"m.room.message"};
 	constexpr const char *const m_room_name {"m.room.name"};
 	constexpr const char *const m_room_topic {"m.room.topic"};
 	constexpr const char *const m_room_avatar {"m.room.avatar"};
+	constexpr const char *const m_room_pinned_events {"m.room.pinned_events"};
+	constexpr const char *const m_room_history_visibility {"m.room.history_visibility"};
+	constexpr const char *const m_room_third_party_invite {"m.room.third_party_invite"};
+	constexpr const char *const m_room_guest_access {"m.room.guest_access"};
 }
 
+/// Tuple to represent fundamental room state singletons (state_key = "")
+///
+/// This is not a complete representation of room state. Missing from here
+/// are any state events with a state_key which is not an empty string. When
+/// the state_key is not "", multiple events of that type contribute to the
+/// room's eigenvalue. Additionally, state events which are not related to
+/// the matrix protocol `m.room.*` are not represented here.
+///
+/// NOTE that in C++-land state_key="" is represented as a valid but empty
+/// character pointer. It is not a string containing "". Testing for a
+/// "" state_key `ircd::defined(string_view) && ircd::empty(string_view)`
+/// analogous to `data() && !*data()`. A default constructed string_view{}
+/// is considered "JS undefined" because the character pointers are null.
+/// A "JS null" is rarer and carried with a hack which will not be discussed
+/// here.
+///
 struct ircd::m::room::state
 :json::tuple
 <
@@ -102,16 +118,43 @@ struct ircd::m::room::state
 	json::property<m::name::m_room_canonical_alias, event>,
 	json::property<m::name::m_room_create, event>,
 	json::property<m::name::m_room_join_rules, event>,
-	json::property<m::name::m_room_member, event>,
 	json::property<m::name::m_room_power_levels, event>,
-	json::property<m::name::m_room_redaction, event>,
 	json::property<m::name::m_room_message, event>,
 	json::property<m::name::m_room_name, event>,
 	json::property<m::name::m_room_topic, event>,
-	json::property<m::name::m_room_avatar, event>
+	json::property<m::name::m_room_avatar, event>,
+	json::property<m::name::m_room_pinned_events, event>,
+	json::property<m::name::m_room_history_visibility, event>,
+	json::property<m::name::m_room_third_party_invite, event>,
+	json::property<m::name::m_room_guest_access, event>
 >
 {
 	struct fetch;
+
+	using super_type::tuple;
+
+	state(const json::array &pdus);
+	state(fetch &);
+	state(const room::id &, const event::id &, const mutable_buffer &);
+	state() = default;
+	using super_type::operator=;
+
+	friend std::string pretty(const room::state &);
+	friend std::string pretty_oneline(const room::state &);
+};
+
+struct ircd::m::room::branch
+{
+	event::id::buf event_id;
+	unique_buffer<mutable_buffer> buf;
+	json::object pdu;
+
+	branch() = default;
+	branch(const event::id &event_id)
+	:event_id{event_id}
+	,buf{64_KiB}
+	,pdu{}
+	{}
 };
 
 #pragma GCC diagnostic pop

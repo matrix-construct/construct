@@ -47,6 +47,7 @@ static void validate_password(const string_view &password);
 resource::response
 handle_post_kind_user(client &client,
                       const resource::request::object<body> &request)
+try
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
 	const auto &auth
@@ -131,6 +132,16 @@ handle_post_kind_user(client &client,
 		}
 	};
 }
+catch(const m::INVALID_MXID &e)
+{
+	throw m::error
+	{
+		http::BAD_REQUEST,
+		"M_INVALID_USERNAME",
+		"The desired user ID is not a valid user name: %s",
+		e.content
+	};
+};
 
 resource::response
 handle_post_kind_guest(client &client,
@@ -169,7 +180,9 @@ handle_post(client &client,
 
 	throw m::error
 	{
-		http::BAD_REQUEST, "M_UNKNOWN", "Unknown 'kind' of registration specified in query."
+		http::BAD_REQUEST,
+		"M_UNKNOWN",
+		"Unknown 'kind' of registration specified in query."
 	};
 }
 
@@ -192,16 +205,13 @@ mapi::header IRCD_MODULE
 void
 validate_user_id(const m::id::user &user_id)
 {
-	if(!user_id.valid())
-		throw m::error
-		{
-			"M_INVALID_USERNAME", "The desired user ID is not a valid user name."
-		};
-
 	if(user_id.host() != my_host())
 		throw m::error
 		{
-			"M_INVALID_USERNAME", "Can only register with host '%s'", my_host()
+			http::BAD_REQUEST,
+			"M_INVALID_USERNAME",
+			"Can only register with host '%s'",
+			my_host()
 		};
 }
 
@@ -211,6 +221,8 @@ validate_password(const string_view &password)
 	if(password.size() > 255)
 		throw m::error
 		{
-			"M_INVALID_PASSWORD", "The desired password is too long"
+			http::BAD_REQUEST,
+			"M_INVALID_PASSWORD",
+			"The desired password is too long"
 		};
 }

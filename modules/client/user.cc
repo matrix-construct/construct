@@ -43,7 +43,7 @@ get_filter(client &client, const resource::request &request)
 		request.parv[2]
 	};
 
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",      m::filter::filters.room_id  },
 		{ "type",        "ircd.filter"                },
@@ -93,8 +93,6 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	{
 		urldecode(request.parv[0], user_id)
 	};
-
-	user_id.validate();
 
 	// (5.2) List of event fields to include. If this list is absent then all fields are
 	// included. The entries may include '.' charaters to indicate sub-fields. So

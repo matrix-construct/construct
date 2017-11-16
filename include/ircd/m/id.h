@@ -50,49 +50,52 @@ struct ircd::m::id
 
 	template<class T, size_t SIZE = 256> struct buf;
 
-	enum sigil
-	{
-		EVENT  = '$',
-		USER   = '@',
-		ROOM   = '!',
-		ALIAS  = '#',
-	}
-	sigil;
+	struct parser;
+	struct generator;
+	enum sigil :char;
 
-	// Checks
-	bool valid() const;                          // Fully qualified mxid
-	bool valid_local() const;                    // Local part is valid (may or may not have host)
-	void validate() const;                       // valid() | throws
+  protected:
+	struct parser static const parser;
 
+  public:
 	// Extract elements
 	string_view local() const                    { return split(*this, ':').first;                 }
 	string_view host() const                     { return split(*this, ':').second;                }
-	string_view name() const                     { return lstrip(local(), sigil);                  }
+	string_view name() const                     { return lstrip(local(), at(0));                  }
 	string_view hostname() const;
 	uint16_t hostport() const;
 
-  protected:
-	struct generator;
-
-  public:
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
 	id(const enum sigil &, const mutable_buffer &, const generate_t &, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &name, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &id);
 	id(const enum sigil &, const string_view &id);
-	id(const enum sigil &);
 	id(const string_view &id);
 	id() = default;
 };
 
+enum ircd::m::id::sigil
+:char
+{
+	EVENT  = '$',
+	USER   = '@',
+	ROOM   = '!',
+	ALIAS  = '#',
+};
+
 namespace ircd::m
 {
+	id::sigil sigil(const char &c);
+	id::sigil sigil(const string_view &id);
+	const char *reflect(const id::sigil &);
+
+	// Checks
 	bool valid_sigil(const char &c);
 	bool valid_sigil(const string_view &id);
-	enum id::sigil sigil(const char &c);
-	enum id::sigil sigil(const string_view &id);
-	const char *reflect(const enum id::sigil &);
+	bool valid(const id::sigil &, const string_view &) noexcept;
+	bool valid_local(const id::sigil &, const string_view &);  // Local part is valid
+	void validate(const id::sigil &, const string_view &);    // valid() | throws
 }
 
 //
@@ -104,6 +107,7 @@ struct ircd::m::id::event
 {
 	using buf = m::id::buf<event>;
 	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
+	event() = default;
 };
 
 struct ircd::m::id::user
@@ -111,6 +115,7 @@ struct ircd::m::id::user
 {
 	using buf = m::id::buf<user>;
 	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
+	user() = default;
 };
 
 struct ircd::m::id::room
@@ -118,6 +123,7 @@ struct ircd::m::id::room
 {
 	using buf = m::id::buf<room>;
 	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
+	room() = default;
 };
 
 struct ircd::m::id::alias
@@ -125,6 +131,7 @@ struct ircd::m::id::alias
 {
 	using buf = m::id::buf<alias>;
 	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
+	alias() = default;
 };
 
 /// ID object backed by an internal buffer of wost-case size.

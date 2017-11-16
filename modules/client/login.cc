@@ -60,12 +60,6 @@ post_login_password(client &client,
 		unquote(at<"user"_>(request)), my_host()
 	};
 
-	if(!user_id.valid() || user_id.host() != my_host())
-		throw m::error
-		{
-			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
-		};
-
 	const auto &supplied_password
 	{
 		unquote(at<"password"_>(request))

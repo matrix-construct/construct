@@ -27,11 +27,23 @@
 
 namespace ircd::m
 {
+	extern struct log::log log;
+
 	extern struct user me;
 	extern struct room my_room;
+	extern struct room control;
+}
 
-	string_view my_host();
-	bool my_host(const string_view &);
+namespace ircd::m::self
+{
+	string_view host();
+	bool host(const string_view &);
+}
+
+namespace ircd::m
+{
+	inline string_view my_host()                 { return self::host();        }
+	inline bool my_host(const string_view &h)    { return self::host(h);       }
 }
 
 namespace ircd
@@ -43,6 +55,8 @@ namespace ircd
 #include "id.h"
 #include "sig.h"
 #include "event.h"
+#include "query.h"
+#include "cursor.h"
 #include "room.h"
 #include "io.h"
 #include "vm.h"

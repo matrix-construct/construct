@@ -11,6 +11,9 @@ AM_CPPFLAGS = \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
+	-include $(top_srcdir)/include/ircd/server.h \
+	-include $(top_srcdir)/include/ircd/m/m.h \
+	-include $(top_srcdir)/include/ircd/resource.h \
 	-include $(top_srcdir)/include/ircd/mapi.h \
 	###
 
@@ -63,6 +66,7 @@ client_client_publicrooms_la_SOURCES = client/publicrooms.cc
 client_client_createroom_la_SOURCES = client/createroom.cc
 client_client_pushrules_la_SOURCES = client/pushrules.cc
 client_client_user_la_SOURCES = client/user.cc
+client_client_join_la_SOURCES = client/join.cc
 client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -77,6 +81,7 @@ client_module_LTLIBRARIES = \
 	client/client_createroom.la \
 	client/client_pushrules.la \
 	client/client_user.la \
+	client/client_join.la \
 	client/client_voip_turnserver.la \
 	###
 
@@ -106,6 +111,14 @@ media_moduledir = @moduledir@
 media_media_download_la_SOURCES = media/download.cc
 media_module_LTLIBRARIES = \
 	media/media_download.la \
+	###
+
+# This puts the source in vm/ but the installed
+# library is vm_X.so in the main modules dir.
+m_moduledir = @moduledir@
+m_noop_la_SOURCES = m_noop.cc
+m_module_LTLIBRARIES = \
+	m_noop.la \
 	###
 
 if JS

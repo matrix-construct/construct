@@ -21,25 +21,23 @@
  */
 
 #pragma once
-#define HAVE_IRCD_DB_CURSOR_H
+#define HAVE_IRCD_M_VM_CURSOR_H
 
-namespace ircd::db
+namespace ircd::m::vm
 {
-	template<database *const &d, class tuple> struct cursor;
+	struct cursor;
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
-struct ircd::db::cursor
+struct ircd::m::vm::cursor
 {
 	template<class index_iterator> struct const_iterator_base;
 	struct const_reverse_iterator;
 	struct const_iterator;
 
-	template<enum where where = where::noop> using query_type = db::query<tuple, where>;
+	template<enum where where = where::noop> using query_type = vm::query<where>;
 	using iterator_type = const_iterator;
 
-	struct index index;
+	db::index index;
 	const query_type<> *query{nullptr};
 
 	const_iterator end(const string_view &key = {});
@@ -49,17 +47,15 @@ struct ircd::db::cursor
 	const_reverse_iterator rbegin(const string_view &key = {});
 
 	cursor(const string_view &index, const query_type<> *const &query = nullptr)
-	:index{*d, index}
+	:index{*event::events, index}
 	,query{query}
 	{}
 };
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
-struct ircd::db::cursor<d, tuple>::const_iterator_base
+struct ircd::m::vm::cursor::const_iterator_base
 {
-	using value_type = const tuple;
+	using value_type = const event;
 	using pointer = value_type *;
 	using reference = value_type &;
 	using difference_type = size_t;
@@ -68,9 +64,9 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 
 	const query_type<> *query{nullptr};
 	index_iterator idx;
-	std::array<db::cell, tuple::size()> cell;
+	std::array<db::cell, event::size()> cell;
 	db::row row;
-	mutable tuple v;
+	mutable event v;
 	mutable bool stale{true};
 	bool invalid{true};
 
@@ -106,57 +102,45 @@ struct ircd::db::cursor<d, tuple>::const_iterator_base
 	const_iterator_base &operator--();
 
 	const_iterator_base();
-	const_iterator_base(const cursor &, index_iterator, const gopts & = {});
+	const_iterator_base(const cursor &, index_iterator, const db::gopts & = {});
 };
 
-template<ircd::db::database *const &d,
-         class tuple>
-struct ircd::db::cursor<d, tuple>::const_iterator
-:const_iterator_base<index::const_iterator>
+struct ircd::m::vm::cursor::const_iterator
+:const_iterator_base<db::index::const_iterator>
 {
-	using const_iterator_base<index::const_iterator>::const_iterator_base;
+	using const_iterator_base<db::index::const_iterator>::const_iterator_base;
 };
 
-template<ircd::db::database *const &d,
-         class tuple>
-struct ircd::db::cursor<d, tuple>::const_reverse_iterator
-:const_iterator_base<index::const_reverse_iterator>
+struct ircd::m::vm::cursor::const_reverse_iterator
+:const_iterator_base<db::index::const_reverse_iterator>
 {
-	using const_iterator_base<index::const_reverse_iterator>::const_iterator_base;
+	using const_iterator_base<db::index::const_reverse_iterator>::const_iterator_base;
 };
 
 //
 // cursor
 //
 
-template<ircd::db::database *const &d,
-         class tuple>
-typename ircd::db::cursor<d, tuple>::const_reverse_iterator
-ircd::db::cursor<d, tuple>::rbegin(const string_view &key)
+inline ircd::m::vm::cursor::const_reverse_iterator
+ircd::m::vm::cursor::rbegin(const string_view &key)
 {
 	return const_reverse_iterator { *this, index.rbegin(key), {} };
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
-typename ircd::db::cursor<d, tuple>::const_reverse_iterator
-ircd::db::cursor<d, tuple>::rend(const string_view &key)
+inline ircd::m::vm::cursor::const_reverse_iterator
+ircd::m::vm::cursor::rend(const string_view &key)
 {
 	return const_reverse_iterator { *this, index.rend(key), {} };
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
-typename ircd::db::cursor<d, tuple>::const_iterator
-ircd::db::cursor<d, tuple>::begin(const string_view &key)
+inline ircd::m::vm::cursor::const_iterator
+ircd::m::vm::cursor::begin(const string_view &key)
 {
 	return const_iterator { *this, index.begin(key), {} };
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
-typename ircd::db::cursor<d, tuple>::const_iterator
-ircd::db::cursor<d, tuple>::end(const string_view &key)
+inline ircd::m::vm::cursor::const_iterator
+ircd::m::vm::cursor::end(const string_view &key)
 {
 	return const_iterator { *this, index.end(key), {} };
 }
@@ -165,22 +149,20 @@ ircd::db::cursor<d, tuple>::end(const string_view &key)
 // const iterator
 //
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
-                                                                                     index_iterator idx,
-                                                                                     const gopts &opts)
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
+                                                                              index_iterator idx,
+                                                                              const db::gopts &opts)
 :query{c.query}
 ,idx{std::move(idx)}
 ,cell{}
 ,row
 {
-	*d,
+	*event::events,
 	bool(this->idx) && this->idx->second? this->idx->second:
 	bool(this->idx)?                      this->idx->first:
 	                                      string_view{},
-	tuple{},
+	event{},
 	cell,
 	opts
 }
@@ -203,11 +185,9 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::const_iterator_
 		this->operator++();
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator> &
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator++()
+ircd::m::vm::cursor::const_iterator_base<index_iterator> &
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator++()
 {
 	while(!(invalid = !bool(++idx)))
 		if(seek_row())
@@ -216,11 +196,9 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator++()
 	return *this;
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator> &
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator--()
+ircd::m::vm::cursor::const_iterator_base<index_iterator> &
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator--()
 {
 	while(!(invalid = !bool(--idx)))
 		if(seek_row())
@@ -229,11 +207,9 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator--()
 	return *this;
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 bool
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::seek_row()
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::seek_row()
 {
 	if(!db::seek(row, row_key()))
 		return false;
@@ -245,21 +221,17 @@ ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::seek_row()
 	return true;
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 bool
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::row_valid()
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::row_valid()
 const
 {
 	return row.valid(row_key());
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 ircd::string_view
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::row_key()
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::row_key()
 const
 {
 	if(!idx)
@@ -272,20 +244,16 @@ const
 	return idx->first;
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 bool
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator!()
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator!()
 const
 {
 	return !static_cast<bool>(*this);
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator
 bool()
 const
 {
@@ -298,21 +266,17 @@ const
 	return row_valid();
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 bool
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator!=(const const_iterator_base<index_iterator> &o)
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator!=(const const_iterator_base<index_iterator> &o)
 const
 {
 	return !(*this == o);
 }
 
-template<ircd::db::database *const &d,
-         class tuple>
 template<class index_iterator>
 bool
-ircd::db::cursor<d, tuple>::const_iterator_base<index_iterator>::operator==(const const_iterator_base<index_iterator> &o)
+ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator==(const const_iterator_base<index_iterator> &o)
 const
 {
 	if(row_key() != o.row_key())

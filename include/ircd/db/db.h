@@ -142,8 +142,6 @@ enum ircd::db::op
 #include "index.h"
 #include "json.h"
 #include "iov.h"
-#include "query.h"
-#include "cursor.h"
 
 namespace ircd
 {

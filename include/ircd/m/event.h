@@ -48,6 +48,13 @@
 namespace ircd::m
 {
 	struct event;
+
+	bool my(const id::event &);
+	bool my(const event &);
+
+	size_t degree(const event &);
+	std::string pretty(const event &);
+	std::string pretty_oneline(const event &);
 }
 
 namespace ircd::m::name
@@ -71,10 +78,18 @@ namespace ircd::m::name
 	constexpr const char *const unsigned_ {"unsigned"};
 }
 
+/// The _Main Event_. Most fundamental primitive of the Matrix protocol.
+///
+/// This json::tuple provides at least all of the legal members of the matrix
+/// standard event. This is the fundamental building block of the matrix
+/// system. Rooms are collections of events. Messages between servers are
+/// passed as bundles of events (or directly). Due to the ubiquitous usage,
+/// and diversity of extensions, the class member interface is somewhat minimal.
+///
 struct ircd::m::event
 :json::tuple
 <
-	json::property<name::auth_events, string_view>,
+	json::property<name::auth_events, json::array>,
 	json::property<name::content, json::object>,
 	json::property<name::depth, int64_t>,
 	json::property<name::event_id, json::string>,
@@ -97,29 +112,42 @@ struct ircd::m::event
 	enum temporality : int;
 
 	struct fetch;
+	struct sync;
 	struct prev;
 
 	using id = m::id::event;
 
 	static database *events;
-	using cursor = db::cursor<events, event>;
-	using const_iterator = cursor::const_iterator;
-	using iterator = const_iterator;
-	using where = db::where;
-	template<enum db::where w = where::noop> using query = cursor::query_type<w>;
-
-	static const_iterator find(const id &);
 
 	using super_type::tuple;
+	event(const id &, const mutable_buffer &buf);
+	event(fetch &);
+	event() = default;
 	using super_type::operator=;
 };
+
+namespace ircd::m
+{
+	void for_each(const event::prev &, const std::function<void (const event::id &)> &);
+	size_t degree(const event::prev &);
+	size_t count(const event::prev &);
+
+	std::string pretty(const event::prev &);
+	std::string pretty_oneline(const event::prev &);
+
+	string_view reflect(const event::temporality &);
+	string_view reflect(const event::lineage &);
+
+	event::temporality temporality(const event &, const int64_t &rel);
+	event::lineage lineage(const event &);
+}
 
 struct ircd::m::event::prev
 :json::tuple
 <
 	json::property<name::auth_events, json::array>,
-	json::property<name::prev_events, json::array>,
-	json::property<name::prev_state, json::array>
+	json::property<name::prev_state, json::array>,
+	json::property<name::prev_events, json::array>
 >
 {
 	enum cond :int;
@@ -133,24 +161,6 @@ enum ircd::m::event::prev::cond
 {
 	SELF_LOOP,
 };
-
-namespace ircd::m
-{
-	size_t outdegree(const event::prev &);
-	size_t outdegree(const event &);
-
-	std::string pretty(const event &);
-	std::string pretty(const event::prev &);
-
-	std::string pretty_oneline(const event &);
-	std::string pretty_oneline(const event::prev &);
-
-	string_view reflect(const event::temporality &);
-	string_view reflect(const event::lineage &);
-
-	event::temporality temporality(const event &, const int64_t &rel);
-	event::lineage lineage(const event &);
-}
 
 enum ircd::m::event::temporality
 :int
@@ -168,22 +178,16 @@ enum ircd::m::event::lineage
 	MERGE       = 2,   ///< Event has multiple parents at the previous depth
 };
 
-inline size_t
-ircd::m::outdegree(const event &event)
+inline bool
+ircd::m::my(const event &event)
 {
-	return outdegree(event::prev{event});
+	return my(event::id(at<"event_id"_>(event)));
 }
 
-inline size_t
-ircd::m::outdegree(const event::prev &prev)
+inline bool
+ircd::m::my(const id::event &event_id)
 {
-	size_t ret(0);
-	for_each(prev, [&ret](const auto &key, const json::array &val)
-	{
-		ret += val.count();
-	});
-
-	return ret;
+	return self::host(event_id.host());
 }
 
 #pragma GCC diagnostic pop

@@ -45,7 +45,7 @@ get_messages(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",   room_id  },
 		{ "is_state",  false    },
@@ -68,7 +68,10 @@ get_messages(client &client,
 	(const auto &event)
 	{
 		if(j < count)
-			ret[j++] = event;
+		{
+			if(!defined(json::get<"state_key"_>(event)))
+				ret[j++] = event;
+		}
 	});
 
 	return resource::response
@@ -86,7 +89,7 @@ get_members(client &client,
             const m::room::id &room_id)
 {
 
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",    room_id         },
 		{ "type",       "m.room.member" },
@@ -124,7 +127,7 @@ get_members(client &client,
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const m::event::query<> &query)
+          const m::vm::query<> &query)
 {
 	const auto count
 	{
@@ -159,12 +162,14 @@ resource::response
 get_state(client &client,
           const resource::request &request,
           const m::room::id &room_id,
+          const string_view &event_id,
           const string_view &type,
           const string_view &state_key)
 {
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",    room_id    },
+		{ "event_id",   event_id   },
 		{ "type",       type       },
 		{ "state_key",  state_key  },
 		{ "is_state",   true       },
@@ -177,11 +182,13 @@ resource::response
 get_state(client &client,
           const resource::request &request,
           const m::room::id &room_id,
+          const string_view &event_id,
           const string_view &type)
 {
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",    room_id    },
+		{ "event_id",   event_id   },
 		{ "type",       type       },
 		{ "is_state",   true       },
 	};
@@ -206,15 +213,24 @@ get_state(client &client,
 		urldecode(request.parv[3], skey_buf)
 	};
 
+	// (non-standard) Allow an event_id to be passed in the query string
+	// for reference framing.
+	char evid_buf[uint(256 * 1.34 + 1)];
+	const string_view &event_id
+	{
+		urldecode(request.query["event_id"], evid_buf)
+	};
+
 	if(type && state_key)
-		return get_state(client, request, room_id, type, state_key);
+		return get_state(client, request, room_id, event_id, type, state_key);
 
 	if(type)
-		return get_state(client, request, room_id, type);
+		return get_state(client, request, room_id, event_id, type);
 
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",    room_id    },
+		{ "event_id",   event_id   },
 		{ "is_state",   true       },
 	};
 
@@ -231,7 +247,7 @@ get_context(client &client,
 		urldecode(request.parv[2], event_id)
 	};
 
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",   room_id   },
 		{ "event_id",  event_id  },
@@ -446,6 +462,22 @@ post_receipt(client &client,
 }
 
 resource::response
+post_join(client &client,
+          const resource::request &request,
+          const m::room::id &room_id)
+{
+	m::join(room_id, request.user_id);
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "room_id", room_id }
+		}
+	};
+}
+
+resource::response
 post_rooms(client &client,
            const resource::request &request)
 {
@@ -464,6 +496,9 @@ post_rooms(client &client,
 
 	if(cmd == "receipt")
 		return post_receipt(client, request, room_id);
+
+	if(cmd == "join")
+		return post_join(client, request, room_id);
 
 	throw m::error
 	{

@@ -568,7 +568,23 @@ const database::descriptor event_id_for_type_state_key_in_room_id
 	// prefix transform
 	type_state_key_in_room_id
 };
+/*
+const database::descriptor event_id_timeline_prev
+{
+	// name
+	"event_id_timeline_prev",
 
+	// explanation
+	R"(### protocol note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	}
+};
+*/
 const database::description events_description
 {
 	{ "default" },
@@ -581,7 +597,6 @@ const database::description events_description
 	events_is_state_descriptor,
 	events_origin_descriptor,
 	events_origin_server_ts_descriptor,
-	events_prev_ids_descriptor,
 	events_unsigned_descriptor,
 	events_signatures_descriptor,
 	events_auth_events_descriptor,
@@ -595,6 +610,9 @@ const database::description events_description
 	event_id_for_room_id_in_type,
 	event_id_for_room_id_in_sender,
 	event_id_for_type_state_key_in_room_id,
+//	event_id_timeline_prev,
+//	event_id_timeline_next,
+//	event_id_for_type_timeline_prev,
 };
 
 std::shared_ptr<database> events_database

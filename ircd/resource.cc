@@ -122,7 +122,7 @@ try
 	};
 
 	// Sets up the query to find the access_token in the sessions room
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "type",        "ircd.access_token"         },
 		{ "state_key",   access_token                },

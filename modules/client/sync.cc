@@ -126,7 +126,7 @@ sync(client &client, const resource::request &request)
 		return initial_sync(client, request, filter_id, full_state, set_presence);
 
 	// The ircd.tape.head
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "room_id",    m::user::sessions.room_id        },
 		{ "type",       "ircd.tape.head"                 },
@@ -296,7 +296,6 @@ void synchronize(const m::event &);
 
 void
 synchronizer_worker()
-try
 {
 	while(1) try
 	{
@@ -314,14 +313,19 @@ try
 		if(!syncpoll::polling.empty())
 			synchronize(event);
 	}
+	catch(const ircd::ctx::interrupted &e)
+	{
+		ircd::log::debug("Synchronizer worker interrupted");
+		return;
+	}
 	catch(const timeout &e)
 	{
 		ircd::log::debug("Synchronizer worker: %s", e.what());
 	}
-}
-catch(const ircd::ctx::interrupted &e)
-{
-	ircd::log::debug("Synchronizer worker interrupted");
+	catch(const std::exception &e)
+	{
+		ircd::log::error("Synchronizer worker: %s", e.what());
+	}
 }
 
 void
@@ -479,15 +483,15 @@ initial_sync_room(client &client,
 {
 	std::vector<std::string> state;
 	{
-		const m::event::query<m::event::where::equal> state_query
+		const m::vm::query<m::vm::where::equal> state_query
 		{
 			{ "room_id",    room.room_id     },
-			{ "is_state",   true             },
 		};
 
 		m::vm::for_each(state_query, [&state](const auto &event)
 		{
-			state.emplace_back(json::strung(event));
+			if(!null(json::get<"state_key"_>(event)))
+				state.emplace_back(json::strung(event));
 		});
 	}
 
@@ -498,17 +502,17 @@ initial_sync_room(client &client,
 
 	std::vector<std::string> timeline;
 	{
-		const m::event::query<m::event::where::equal> timeline_query
+		const m::vm::query<m::vm::where::equal> query
 		{
-			{ "room_id", room.room_id },
+			{ "room_id",   room.room_id  },
 		};
 
-		m::vm::query(timeline_query, [&timeline](const auto &event)
+		m::vm::test(query, [&timeline](const auto &event)
 		{
 			if(timeline.size() > 10)
 				return true;
 
-			if(!defined(json::get<"state_key"_>(event)))
+			if(null(json::get<"state_key"_>(event)))
 				timeline.emplace_back(json::strung(event));
 
 			return false;
@@ -535,7 +539,7 @@ initial_sync_rooms(client &client,
                    const string_view &filter_id,
                    const bool &full_state)
 {
-	const m::event::query<m::event::where::equal> query
+	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "type",        "m.room.member"   },
 		{ "state_key",    request.user_id  },
