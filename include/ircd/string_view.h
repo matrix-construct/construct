@@ -30,13 +30,9 @@ namespace ircd
 {
 	struct string_view;
 
-	template<class T> struct vector_view;
-
-	template<class T = string_view> struct byte_view;
-	template<> struct byte_view<string_view>;
-
 	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
 
+	const char *data(const string_view &);
 	size_t size(const string_view &);
 	bool empty(const string_view &);
 	bool operator!(const string_view &);
@@ -44,6 +40,13 @@ namespace ircd
 	bool null(const string_view &);
 
 	constexpr string_view operator ""_sv(const char *const literal, const size_t size);
+}
+
+namespace std
+{
+	template<> struct std::hash<ircd::string_view>;
+	template<> struct std::less<ircd::string_view>;
+	template<> struct std::equal_to<ircd::string_view>;
 }
 
 /// Customized std::string_view (experimental TS / C++17)
@@ -185,145 +188,39 @@ struct ircd::string_view
 	using std::string_view::string_view;
 };
 
+/// Specialization for std::hash<> participation
+template<>
+struct std::hash<ircd::string_view>
+:std::hash<std::string_view>
+{
+	using std::hash<std::string_view>::operator();
+	using std::hash<std::string_view>::hash;
+};
+
+/// Specialization for std::less<> participation
+template<>
+struct std::less<ircd::string_view>
+:std::less<std::string_view>
+{
+	using std::less<std::string_view>::operator();
+	using std::less<std::string_view>::less;
+};
+
+/// Specialization for std::equal_to<> participation
+template<>
+struct std::equal_to<ircd::string_view>
+:std::equal_to<std::string_view>
+{
+	using std::equal_to<std::string_view>::operator();
+	using std::equal_to<std::string_view>::equal_to;
+};
+
 /// Compile-time conversion from a string literal into a string_view.
 constexpr ircd::string_view
 ircd::operator ""_sv(const char *const literal, const size_t size)
 {
 	return string_view{literal, size};
 }
-
-template<class T>
-struct ircd::vector_view
-{
-	using value_type = T;
-	using pointer = T *;
-	using reference = T &;
-	using difference_type = size_t;
-	using iterator = T *;
-	using const_iterator = const T *;
-
-	T *_data                                     { nullptr                                         };
-	T *_stop                                     { nullptr                                         };
-
-  public:
-	const T *data() const                        { return _data;                                   }
-	T *data()                                    { return _data;                                   }
-
-	size_t size() const                          { return std::distance(_data, _stop);             }
-	bool empty() const                           { return !size();                                 }
-
-	const_iterator begin() const                 { return data();                                  }
-	const_iterator end() const                   { return _stop;                                   }
-	const_iterator cbegin()                      { return data();                                  }
-	const_iterator cend()                        { return _stop;                                   }
-	iterator begin()                             { return data();                                  }
-	iterator end()                               { return _stop;                                   }
-
-	const T &operator[](const size_t &pos) const
-	{
-		return *(data() + pos);
-	}
-
-	T &operator[](const size_t &pos)
-	{
-		return *(data() + pos);
-	}
-
-	const T &at(const size_t &pos) const
-	{
-		if(unlikely(pos >= size()))
-			throw std::out_of_range("vector_view::range_check");
-
-		return operator[](pos);
-	}
-
-	T &at(const size_t &pos)
-	{
-		if(unlikely(pos >= size()))
-			throw std::out_of_range("vector_view::range_check");
-
-		return operator[](pos);
-	}
-
-	vector_view(T *const &start, T *const &stop)
-	:_data{start}
-	,_stop{stop}
-	{}
-
-	vector_view(T *const &start, const size_t &size)
-	:vector_view(start, start + size)
-	{}
-
-	vector_view(const std::initializer_list<T> &list)
-	:vector_view(std::begin(list), std::end(list))
-	{}
-
-	template<class U,
-	         class A>
-	vector_view(std::vector<U, A> &v)
-	:vector_view(v.data(), v.size())
-	{}
-
-	template<size_t SIZE>
-	vector_view(T (&buffer)[SIZE])
-	:vector_view(buffer, SIZE)
-	{}
-
-	template<size_t SIZE>
-	vector_view(std::array<T, SIZE> &array)
-	:vector_view(array.data(), array.size())
-	{}
-
-	vector_view() = default;
-};
-
-/// string_view -> bytes
-template<class T>
-struct ircd::byte_view
-{
-	string_view s;
-
-	operator const T &() const
-	{
-		if(unlikely(sizeof(T) > s.size()))
-			throw std::bad_cast();
-
-		return *reinterpret_cast<const T *>(s.data());
-	}
-
-	byte_view(const string_view &s = {})
-	:s{s}
-	{
-		if(unlikely(sizeof(T) > s.size()))
-			throw std::bad_cast();
-	}
-
-	// bytes -> bytes (completeness)
-	byte_view(const T &t)
-	:s{byte_view<string_view>{t}}
-	{}
-};
-
-/// bytes -> string_view. A byte_view<string_view> is raw data of byte_view<T>.
-///
-/// This is an important specialization to take note of. When you see
-/// byte_view<string_view> know that another type's bytes are being represented
-/// by the string_view if that type is not string_view family itself.
-template<>
-struct ircd::byte_view<ircd::string_view>
-:string_view
-{
-	template<class T,
-	         typename std::enable_if<!std::is_base_of<std::string_view, T>::value, int *>::type = nullptr>
-	byte_view(const T &t)
-	:string_view{reinterpret_cast<const char *>(&t), sizeof(T)}
-	{}
-
-	/// string_view -> string_view (completeness)
-	byte_view(const string_view &t)
-	:string_view{t}
-	{}
-};
 
 inline bool
 ircd::operator!(const string_view &str)
@@ -353,6 +250,12 @@ inline size_t
 ircd::size(const string_view &str)
 {
 	return str.size();
+}
+
+inline const char *
+ircd::data(const string_view &str)
+{
+	return str.data();
 }
 
 template<int (&test)(int)>
