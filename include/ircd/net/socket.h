@@ -70,11 +70,11 @@ struct ircd::net::socket
 	void handle(std::weak_ptr<socket>, handler, const error_code &, const size_t &) noexcept;
 
   public:
-	// Getters for boost socket struct
 	operator const ip::tcp::socket &() const     { return sd;                                      }
 	operator ip::tcp::socket &()                 { return sd;                                      }
+	operator const SSL &() const;
+	operator SSL &();
 
-	// Observers
 	ip::tcp::endpoint remote() const;            // getpeername(); throws if not conn
 	ip::tcp::endpoint local() const;             // getsockname(); throws if not conn/bound
 	bool connected() const noexcept;             // false on any sock errs

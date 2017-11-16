@@ -25,20 +25,46 @@
 #pragma once
 #define HAVE_IRCD_OPENSSL_H
 
+// Forward declarations for OpenSSL because it is not included here.
+struct ssl_st;
+struct x509_st;
+
+/// OpenSSL library interface. Provides things we need to expose from OpenSSL
+/// to the rest of the project. Anything that employs forward declared types
+/// here is lower level meant for definition files which may or may not include
+/// OpenSSL directly but use this interface for DRY nonetheless. Otherwise
+/// higher level wrappers should be used if available here.
 namespace ircd::openssl
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
 	struct init;
 
+	using SSL = ::ssl_st;
+	using X509 = ::x509_st;
+
 	string_view version();
 
+	// Observers
 	string_view error_string(const mutable_buffer &buf, const ulong &);
 	ulong peek_error();
 
 	// Using these will clobber other libraries (like boost); so don't
 	ulong get_error();
 	void clear_error();
+
+	// Convert PEM string to X509
+	X509 &read(X509 *out, const string_view &cert);
+
+	// Convert X509 certificate to DER encoding
+	const_raw_buffer i2d(const mutable_raw_buffer &out, const X509 &);
+
+	// Convert PEM string to DER
+	const_raw_buffer cert2d(const mutable_raw_buffer &out, const string_view &cert);
+
+	// Get X509 certificate from struct SSL (get SSL from a socket)
+	const X509 &get_peer_cert(const SSL &);
+	X509 &get_peer_cert(SSL &);
 }
 
 struct ircd::openssl::init

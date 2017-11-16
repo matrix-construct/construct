@@ -57,6 +57,62 @@ ircd::net::init::~init()
 // socket (public)
 //
 
+ircd::const_raw_buffer
+ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
+                         const socket &socket)
+{
+	const SSL &ssl(socket);
+	const X509 &cert(openssl::get_peer_cert(ssl));
+	return openssl::i2d(buf, cert);
+}
+
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const net::remote &remote,
+                   const milliseconds &timeout)
+{
+	const asio::ip::tcp::endpoint ep
+	{
+		is_v6(remote)? asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
+		}
+		: asio::ip::tcp::endpoint
+		{
+			asio::ip::address_v4 { host4(remote) }, port(remote)
+		},
+	};
+
+	return connect(ep, timeout);
+}
+
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const ip::tcp::endpoint &remote,
+                   const milliseconds &timeout)
+{
+	const auto ret(std::make_shared<socket>());
+	ret->connect(remote, timeout);
+	return ret;
+}
+
+bool
+ircd::net::disconnect(socket &socket,
+                      const dc &type)
+noexcept try
+{
+	socket.disconnect(type);
+	return true;
+}
+catch(const std::exception &e)
+{
+/*
+	log::error("socket(%p): disconnect: type: %d: %s",
+	           this,
+	           int(type),
+	           e.what());
+*/
+	return false;
+}
+
 size_t
 ircd::net::read(socket &socket,
                 iov<mutable_buffer> &bufs)
@@ -799,53 +855,6 @@ ircd::net::socket::scope_timeout::release()
 	return s != nullptr;
 }
 
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const net::remote &remote,
-                   const milliseconds &timeout)
-{
-	const asio::ip::tcp::endpoint ep
-	{
-		is_v6(remote)? asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
-		}
-		: asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v4 { host4(remote) }, port(remote)
-		},
-	};
-
-	return connect(ep, timeout);
-}
-
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const ip::tcp::endpoint &remote,
-                   const milliseconds &timeout)
-{
-	const auto ret(std::make_shared<socket>());
-	ret->connect(remote, timeout);
-	return ret;
-}
-
-bool
-ircd::net::disconnect(socket &socket,
-                      const dc &type)
-noexcept try
-{
-	socket.disconnect(type);
-	return true;
-}
-catch(const std::exception &e)
-{
-/*
-	log::error("socket(%p): disconnect: type: %d: %s",
-	           this,
-	           int(type),
-	           e.what());
-*/
-	return false;
-}
-
 //
 // socket
 //
@@ -1390,6 +1399,23 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(h));
+}
+
+ircd::net::socket::operator
+SSL &()
+{
+	assert(ssl.native_handle());
+	return *ssl.native_handle();
+}
+
+ircd::net::socket::operator
+const SSL &()
+const
+{
+	using type = typename std::remove_const<decltype(socket::ssl)>::type;
+	auto &ssl(const_cast<type &>(this->ssl));
+	assert(ssl.native_handle());
+	return *ssl.native_handle();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -83,6 +83,8 @@ namespace ircd::net
 
 	std::shared_ptr<socket> connect(const remote &, const milliseconds &timeout = 30000ms);
 	bool disconnect(socket &, const dc &type = dc::SSL_NOTIFY) noexcept;
+
+	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
 }
 
 namespace ircd
