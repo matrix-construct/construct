@@ -41,6 +41,7 @@ class ircd::util::params
 	IRCD_EXCEPTION(error, missing)
 	IRCD_EXCEPTION(error, invalid)
 
+	size_t count() const;
 	string_view operator[](const size_t &i) const;                  // returns empty
 	template<class T> T at(const size_t &i, const T &def) const;    // throws invalid
 	template<class T> T at(const size_t &i) const;                  // throws missing or invalid
@@ -67,7 +68,7 @@ ircd::util::params::at(const size_t &i,
                         const T &def)
 const try
 {
-	return token_count(in, sep) > i? at<T>(i) : def;
+	return count() > i? at<T>(i) : def;
 }
 catch(const bad_lex_cast &e)
 {
@@ -101,7 +102,14 @@ inline ircd::string_view
 ircd::util::params::operator[](const size_t &i)
 const
 {
-	return token_count(in, sep) > i? token(in, sep, i) : string_view{};
+	return count() > i? token(in, sep, i) : string_view{};
+}
+
+inline size_t
+ircd::util::params::count()
+const
+{
+	return token_count(in, sep);
 }
 
 inline const char *
