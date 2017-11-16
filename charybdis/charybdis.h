@@ -30,6 +30,7 @@ extern std::unique_ptr<boost::asio::io_service> ios;
 //
 
 void console_spawn();
+void console_execute(const std::vector<std::string> &lines);
 void console_cancel();
 void console_hangup();
 void console_termstop();

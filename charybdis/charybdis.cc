@@ -51,6 +51,7 @@ bool printversion;
 bool testing_conf;
 bool cmdline;
 const char *configfile;
+const char *execute;
 lgetopt opts[] =
 {
 	{ "help",       nullptr,          lgetopt::USAGE,   "Print this text" },
@@ -59,6 +60,7 @@ lgetopt opts[] =
 	{ "conftest",   &testing_conf,    lgetopt::YESNO,   "Test the configuration files and exit" },
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
 	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
+	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
@@ -143,6 +145,9 @@ try
 	// send a ctrl-c for it, that is provided here.
 	if(cmdline)
 		console_spawn();
+
+	if(execute)
+		console_execute({execute});
 
 	// Execution.
 	// Blocks until a clean exit from a stop() or an exception comes out of it.

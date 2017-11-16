@@ -31,12 +31,31 @@ const char *const generic_message
 ***
 )"};
 
+const size_t stack_sz
+{
+	1_MiB
+};
+
 bool console_active;
+bool console_inwork;
 ircd::ctx::ctx *console_ctx;
 boost::asio::posix::stream_descriptor *console_in;
 
 static bool handle_line(const std::string &line);
+static void execute(const std::vector<std::string> lines);
 static void console();
+
+void
+console_execute(const std::vector<std::string> &lines)
+{
+	if(console_active)
+		return;
+
+	ircd::context
+	{
+		"execute", stack_sz, std::bind(&execute, lines), ircd::context::DETACH
+	};
+}
 
 void
 console_spawn()
@@ -46,7 +65,10 @@ console_spawn()
 
 	// The console function is executed asynchronously.
 	// The DETACH indicates it will clean itself up.
-	ircd::context("console", std::bind(&console), ircd::context::DETACH);
+	ircd::context
+	{
+		"console", stack_sz, std::bind(&console), ircd::context::DETACH
+	};
 }
 
 void
@@ -56,11 +78,17 @@ try
 	if(!console_active)
 		return;
 
-	if(!console_in)
+	if(console_inwork && console_ctx)
+	{
+		interrupt(*console_ctx);
 		return;
+	}
 
-	console_in->cancel();
-	console_in->close();
+	if(console_in)
+	{
+		console_in->cancel();
+		console_in->close();
+	}
 }
 catch(const std::exception &e)
 {
@@ -71,7 +99,6 @@ void
 console_hangup()
 try
 {
-	using namespace ircd;
 	using log::console_quiet;
 
 	console_cancel();
@@ -138,7 +165,8 @@ void
 console()
 try
 {
-	using namespace ircd;
+	if(ircd::runlevel != ircd::runlevel::RUN)
+		return;
 
 	const unwind atexit([]
 	{
@@ -189,16 +217,59 @@ catch(const std::exception &e)
 
 	std::cout << std::flush;
 	std::cout.clear();
-	std::cerr.clear();
 
 	ircd::log::debug("The console session has ended: %s", e.what());
+}
+
+void
+execute(const std::vector<std::string> lines)
+try
+{
+	if(ircd::runlevel != ircd::runlevel::RUN)
+		return;
+
+	const unwind atexit([]
+	{
+		console_active = false;
+		delete moi; moi = nullptr;
+	});
+
+	console_active = true;
+	console_ctx = &ctx::cur();
+
+	for(const auto &line : lines)
+	{
+		if(line.empty())
+			continue;
+
+		if(!handle_line(line))
+			break;
+	}
+}
+catch(const std::exception &e)
+{
+	std::cout << std::endl;
+	std::cout << "***\n";
+	std::cout << "*** The execution aborted: " << e.what() << "\n";
+	std::cout << "***" << std::endl;
+
+	std::cout << std::flush;
+	std::cout.clear();
+
+	ircd::log::debug("The execution aborted: %s", e.what());
 }
 
 bool
 handle_line(const std::string &line)
 try
 {
-	using namespace ircd;
+	// _theirs is copied for recursive reentrance
+	const unwind outwork{[console_inwork_theirs(console_inwork)]
+	{
+		console_inwork = console_inwork_theirs;
+	}};
+
+	console_inwork = true;
 
 	if(line == "ABORT")
 		abort();
