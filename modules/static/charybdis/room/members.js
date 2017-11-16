@@ -90,7 +90,7 @@ room.membership.count = function(type = "join")
 };
 
 /**
- * List mxids for a certain membership type, i.e "join", "left" etc.
+ * List mxids for a certain membership type, i.e "join", "leave" etc.
  */
 room.membership.list = function(type = "join")
 {
@@ -146,6 +146,7 @@ room.membership.controller = class extends mc.ng.controller
 	{
 		super("room.membership", $scope);
 		this.room = this.$scope.room;
+		this.room.membership.control = this;
 
 		this.filter = "join";
 		this.frame = 64;
@@ -206,6 +207,21 @@ room.membership.controller.prototype.scroll.down = function()
 };
 
 /**
+ * Select the first membership type which will show a non-empty
+ * list. This is so the members list doesn't default to "join"
+ * with an empty pane.
+ */
+room.membership.first_nonempty_type = function(precedence =
+[
+	"join", "leave", "invite", "ban",
+])
+{
+	for(let i in precedence)
+		if(this.membership.count(precedence[i]))
+			return precedence[i];
+};
+
+/**
  * TODO: XXX: repurpose
  */
 room.membership.controller.prototype.fetch = async function(opts = {})
@@ -220,6 +236,10 @@ room.membership.controller.prototype.fetch = async function(opts = {})
 	// Remove the temporary member count now that we have valid data.
 	delete this.room.membership._num_joined_members;
 
+	// Select a non-empty list type for when the membership pane first
+	// opens. We can do that now because the lists are downloaded.
+	this.filter = this.room.membership.first_nonempty_type();
+
 	return true;
 };
 
@@ -232,10 +252,10 @@ value:
 	"NAME":
 	{
 		show: (room, member) =>
-			!empty(member.content.displayname),
+			!empty(maybe(() => member.content.displayname)),
 
 		value: (room, member) =>
-			member.content.displayname? member.content.displayname : "",
+			maybe(() => member.content.displayname)? member.content.displayname : "",
 	},
 
 	"POWER":
@@ -318,10 +338,10 @@ value:
 }});
 
 /**
- * Drives the status indicator bar at the top of the room
+ * Drives the status frieze bar at the top of the room
  * apropos member information.
  */
-Object.defineProperty(room.membership, 'indicator', {
+Object.defineProperty(room.membership, 'frieze', {
 writable: false,
 enumerable: false,
 configurable: false,
@@ -332,7 +352,7 @@ value:
 		count: (room) => room.membership.count('knock'),
 		click: (room, $event) =>
 		{
-			room.control.member_filter = 'knock';
+			//room.control.show_members_filter = 'knock';
 			room.control.show_members = true;
 		},
 	},
@@ -342,7 +362,7 @@ value:
 		count: (room) => room.membership.count('invite'),
 		click: (room, $event) =>
 		{
-			room.control.member_filter = 'invite';
+			//room.control.show_members_filter = 'invite';
 			room.control.show_members = true;
 		},
 	},
@@ -352,7 +372,7 @@ value:
 		count: (room) => room.membership.count('join'),
 		click: (room, $event) =>
 		{
-			room.control.member_filter = 'join';
+			//room.membership.control.filter = 'join';
 			room.control.show_members = true;
 		},
 	},
@@ -360,9 +380,9 @@ value:
 	"LEFT":
 	{
 		count: (room) => room.membership.count('leave'),
-		click: (room, $event) =>
+		click: (room, $event, members) =>
 		{
-			room.control.member_filter = 'leave';
+			//members.list = room.membership.list('leave');
 			room.control.show_members = true;
 		},
 	},
@@ -372,7 +392,7 @@ value:
 		count: (room) => room.membership.count('ban'),
 		click: (room, $event) =>
 		{
-			room.control.member_filter = 'ban';
+			//room.membership.control.filter = 'ban';
 			room.control.show_members = true;
 		},
 	},

@@ -45,8 +45,12 @@ mc.main = async function()
 	let sopts = {};
 	if(await mc.main.init()) while(1) try
 	{
-		// longpolls and processes data from a /sync request
+		// Calling apply() before and after the await is insufficient because
+		// we want an application of what mc.sync() also did before waiting a
+		// long time for the response. The apply.later() pushes an async apply
+		// to the js queue which paints once after this stack starts to wait.
 		mc.ng.apply.later();
+
 		await mc.sync(sopts);
 	}
 	catch(error)
@@ -56,8 +60,9 @@ mc.main = async function()
 		// here (double fault) results in program abort.
 		if((await mc.main.fault(error)) === true)
 			continue;
-		else
-			break;
+
+		console.error("Unable to recover from main fault: shutting down...");
+		break;
 	}
 
 	// The destruction sequence should always be reached except on abort.
@@ -91,9 +96,28 @@ mc.main.init = async function()
 	});
 
 	// Fault this manually to ensure authenticity for now.
-	console.log("Logging in...");
-	let errors = {};
-	return await mc.main.fault["M_MISSING_TOKEN"](errors);
+	console.log("Initial login attempt...");
+	let errors =
+	{
+		m:
+		{
+			errcode: "M_MISSING_TOKEN",
+		},
+	};
+
+	mc.apply.later();
+	if(!(await mc.main.fault(errors)))
+	{
+		let catch_elem = (idx, flow) =>
+			flow.result.element = $("#charybdis_login_form");
+
+		Object.each(errors.auth, catch_elem);
+		return false;
+	}
+
+	mc.storage.sync();
+	mc.apply();
+	return true;
 };
 
 /**
@@ -152,6 +176,8 @@ mc.main.fini = async function()
 
 	console.log("Final angular repaint..."); try
 	{
+		delete mc.ng.root().error;
+		delete mc.ng.mc().error;
 		mc.ng.apply();
 	}
 	catch(error)
@@ -208,8 +234,11 @@ mc.main.fault = async function(error)
 			if(error.name == "timeout")
 			{
 				console.warn("client timeout");
+				delete mc.ng.root().error;
+				delete mc.ng.mc().error;
 				mc.ng.root().error = undefined;
 				mc.ng.mc().error = undefined;
+				mc.ng.apply.later();
 				return true;
 			}
 
@@ -375,7 +404,7 @@ mc.main.menu =
 		hide: true,
 		click: (event) =>
 		{
-			mc.auth.logout.event = event;
+			mc.auth.logout();
 		},
 	},
 };

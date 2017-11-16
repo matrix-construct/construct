@@ -111,5 +111,9 @@ room.events.prototype.can_show = function(event, $index)
 	if($index < this.room.timeline.horizon)
 		return false;
 
+	if(this.room.timeline.length > this.room.timeline.opts.limit)
+		if($index < this.room.timeline.opts.limit)
+			return false;
+
 	return true;
 };

@@ -110,6 +110,7 @@ type="text/ng-template"
 	class="login_ pane"
 	ng-show="mc.show['#charybdis_login']"
 	ng-include="'charybdis_login'"
+	ircd-catch
 	>
 	</div>
 </script>
@@ -149,7 +150,6 @@ type="text/ng-template"
 		<div
 		id="charybdis_rooms_list"
 		class="list"
-		ng-if="!empty(mc.rooms.list)"
 		ng-controller="rooms.list as list"
 		ang-scroll="list.scroll($event)"
 		ng-include="'ircd_rooms_list'"
@@ -467,9 +467,9 @@ type="text/ng-template"
 	>
 	</div>
 	<div
-	class="status indicator bar"
-	ng-show="room.control.show_status_indicator"
-	ng-include="'ircd_room_control_indicator'"
+	class="status frieze bar"
+	ng-show="room.control.show_status_frieze"
+	ng-include="'ircd_room_control_frieze'"
 	>
 	</div>
 	<div
@@ -493,7 +493,7 @@ type="text/ng-template"
 	<div
 	class="members"
 	ng-if="room.control.show_members"
-	ng-controller="room.membership as members"
+	ng-controller="mc.room.membership.controller as members"
 	ng-include="'ircd_room_members'"
 	>
 	</div>
@@ -522,6 +522,10 @@ type="text/ng-template"
  	ng-include="'ircd_room_search'"
  	>
 	</form>
+	<div
+	class="filler grow"
+	>
+	</div>
 	<div
 	class="events"
 	ng-controller="room.events as events"
@@ -574,6 +578,9 @@ type="text/ng-template"
 	"
 		room.control.show_members = members.filter != name;
 		members.filter = name;
+		members.info = undefined;
+		members.list = room.membership.sorted(name);
+		item.click(room, $event, members);
 	"
 	ng-class="
 	{
@@ -1667,7 +1674,7 @@ type="text/ng-template"
 </script>
 
 <script
-id="ircd_room_control_indicator"
+id="ircd_room_control_frieze"
 type="text/ng-template"
 >
 	<div
@@ -1741,18 +1748,6 @@ type="text/ng-template"
 			</i>
 		</button>
 		<div
-		class="state"
-		>
-			<p
-			class="count"
-			>
-				{{ Object.keys(room.state).length }}
-			</p>
-			<h5>
-				ST
-			</h5>
-		</div>
-		<div
 		class="timeline"
 		>
 			<p
@@ -1762,6 +1757,30 @@ type="text/ng-template"
 			</p>
 			<h5>
 				TL
+			</h5>
+		</div>
+		<div
+		class="state"
+		>
+			<p
+			class="count"
+			>
+				{{ room.timeline.stats().state }}
+			</p>
+			<h5>
+				ST
+			</h5>
+		</div>
+		<div
+		class="servers"
+		>
+			<p
+			class="count"
+			>
+				{{ room.timeline.servers().length }}
+			</p>
+			<h5>
+				HS
 			</h5>
 		</div>
 		<div
@@ -1818,7 +1837,7 @@ type="text/ng-template"
 			</i>
 		</button>
 		<div
-		ng-repeat="(name, item) in mc.room.membership.indicator"
+		ng-repeat="(name, item) in mc.room.membership.frieze"
 		ng-if="item.show !== false && item.count(room)"
 		ng-click="item.click(room, $event); $event.stopPropagation();"
 		>
@@ -1853,13 +1872,13 @@ type="text/ng-template"
 	<div
 	class="menu_toggle"
 	ng-hide="mc.show['#charybdis_menu']"
-	ng-include="'ircd_room_control_indicator_charybdis_menu'"
+	ng-include="'ircd_room_control_frieze_charybdis_menu'"
 	>
 	</div>
 </script>
 
 <script
-id="ircd_room_control_indicator_charybdis_menu"
+id="ircd_room_control_frieze_charybdis_menu"
 type="text/ng-template"
 >
 	<button
@@ -1967,19 +1986,17 @@ type="text/ng-template"
 		<span
 		ng-if="!mc.users[event.sender].displayname"
 		>
-			{{ mc.m.sid(event.sender) }}
+			{{this.sender_sid(event.sender)}}
 		</span>
 	</span>
 
-	&nbsp;
-
 	<span
 	class="domain"
-	>{{ mc.m.domid(event.sender) }}</span>
+	>{{this.sender_domid(event.sender)}}</span>
 
 	<span
 	class="close bracket"
-	>{{ this.close_bracket(event) }}</span>
+	>{{this.close_bracket(event)}}</span>
 
 </script>
 
@@ -2008,88 +2025,86 @@ type="text/ng-template"
 </script>
 
 <script
-id="ircd_room_event__member"
-type="text/ng-template"
->
-	<p
-	class="join"
-	ng-switch-when="join"
-	>
-		{{ event.content.displayname }} joined the channel.
-	</p>
-
-	<p
-	class="leave"
-	ng-switch-when="leave"
-	ng-if="!event.target || event.target == event.sender"
-	>
-		{{ event.content.displayname }} left the channel.
-	</p>
-
-	<p
-	class="leave"
-	ng-switch-when="leave"
-	ng-if="event.target && event.target != event.sender"
-	>
-		<b>kicked</b> {{ event.content.displayname }}
-	</p>
-
-	<p
-	class="invite"
-	ng-switch-when="invite"
-	>
-		<b>invited</b> {{ event.content.displayname }}
-	</p>
-
-	<p
-	class="default unhandled"
-	ng-switch-default
-	>
-		unhandled m.room.member type '{{ event.content.membership }}'
-	</p>
-</script>
-
-<script
-id="ircd_room_event__message"
-type="text/ng-template"
->
-</script>
-
-<script
-id="ircd_room_event__create"
+id="ircd_room_event__m_room_member"
 type="text/ng-template"
 >
 	<div
 	class="changed"
+	ng-class="event.content.membership"
 	>
-		<h5>
-			created
-		</h5>
-		<h3>
-			ROOM
+		<h1>
+			{{event.content.membership.toUpperCase()}}
+		</h1>
+
+		<h3
+		ng-switch on="event.content.membership"
+		>
+			<span
+			class="state_key"
+			ng-if="empty(event.content.displayname)"
+			>
+				{{mc.m.sid(event.state_key)}}
+			</span>
+			<span
+			class="displayname state_key"
+			ng-if="!empty(event.content.displayname)"
+			>
+				{{event.content.displayname}}&nbsp; a.k.a &nbsp;{{mc.m.sid(event.state_key)}}
+			</span>
+			&nbsp;of&nbsp;
+			<span
+			class="domain"
+			>
+				{{mc.m.domid(event.state_key)}}
+			</span>
+			&nbsp;
+			<span ng-switch-when="join">joined</span>
+			<span ng-switch-when="leave">left</span>
+			<span ng-switch-when="invite">invited to</span>
+			<span
+			class="default unhandled"
+			ng-switch-default
+			>
+				{{event.content.membership}}
+			</span>
+			&nbsp;the room.
 		</h3>
 	</div>
-	<h1>
-		{{ id }}
-	</h1>
 </script>
 
 <script
-id="ircd_room_event__power_levels"
+id="ircd_room_event__m_room_create"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
-			PRIVILEGE LEVELS
-		</h3>
+		<h1>
+			CREATE
+		</h1>
+		<h2>
+			{{ room.id }}
+		</h2>
+	</div>
+</script>
+
+<script
+id="ircd_room_event__m_room_power_levels"
+type="text/ng-template"
+>
+	<div
+	class="changed"
+	>
+		<h1>
+			POWER LEVELS
+		</h1>
+		<h2>
+			&nbsp;
+		</h2>
 	</div>
 	<div
 	class="new levels"
+	style="display: none"
 	>
 		<div
 		class="level"
@@ -2128,40 +2143,38 @@ type="text/ng-template"
 </script>
 
 <script
-id="ircd_room_event__canonical_alias"
+id="ircd_room_event__m_room_canonical_alias"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
+		<h1>
 			CANONICAL ALIAS
-		</h3>
+		</h1>
+		<h2>
+			{{ event.content.alias }}
+		</h2>
 	</div>
-	<h2>
-		{{ event.content.alias }}
-	</h2>
 </script>
 
 <script
-id="ircd_room_event__join_rules"
+id="ircd_room_event__m_room_join_rules"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
+		<h1>
 			JOIN RULES
-		</h3>
+		</h1>
+		<h2>
+			{{ event.content.join_rule }}
+		</h2>
 	</div>
 	<div
 	class="join_rules menu"
+	style="display: none"
 	>
 		<button
 		class="item"
@@ -2185,102 +2198,178 @@ type="text/ng-template"
 </script>
 
 <script
-id="ircd_room_event__history_visibility"
+id="ircd_room_event__m_room_history_visibility"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
+		<h1>
 			HISTORY VISIBILITY
-		</h3>
+		</h1>
+		<h2>
+			{{ event.content.history_visibility }}
+		</h2>
 	</div>
-	<h2>
-		{{ event.content.history_visibility }}
-	</h2>
 </script>
 
 <script
-id="ircd_room_event__guest_access"
+id="ircd_room_event__m_room_guest_access"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
+		<h1>
 			GUEST ACCESS
-		</h3>
+		</h1>
+		<h2>
+			{{ event.content.guest_access }}
+		</h2>
 	</div>
-	<h2>
-		{{ event.content.guest_access }}
-	</h2>
 </script>
 
 <script
-id="ircd_room_event__aliases"
+id="ircd_room_event__m_room_aliases"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h5>
-			changed
-		</h5>
-		<h3>
+		<h1>
 			ALIASES
-		</h3>
+		</h1>
+		<h2>
+			&nbsp;
+		</h2>
 	</div>
 	<div
-	class="aliases row nowrap grow center"
+	class="aliases"
 	>
-		<h2
-		class="alias full-center"
+		<h3
+		class="alias"
 		ng-repeat="alias in event.content.aliases"
 		>
 			{{ alias }}
-		</h2>
+		</h3>
 	</div>
 </script>
 
 <script
-id="ircd_room_event__name"
+id="ircd_room_event__m_room_name"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h3
-		ng-if="room.name"
-		>
-			Changed the room name
-		</h3>
-		<h3
-		ng-if="!room.name"
-		>
-			Named the room
-		</h3>
-	</div>
-	<div
-	class="name row nowrap grow center"
-	>
-		<h2
-		class="name full-center"
-		ng-if="room.name"
-		>
-			from {{ room.name }} to {{ event.content.name }}
-		</h2>
+		<h1>
+			ROOM NAME
+		</h1>
 		<h2
 		class="name full-center"
 		ng-if="!room.name"
 		>
 			{{ event.content.name }}
 		</h2>
+		<h3
+		class="name full-center"
+		ng-if="room.name"
+		>
+			from <b>{{ room.name }}</b> to <b>{{ event.content.name }}</b>
+		</h3>
+	</div>
+</script>
+
+<script
+id="ircd_room_event__m_room_message"
+type="text/ng-template"
+>
+	<div
+	class="message"
+	ng-switch on="event.content.msgtype"
+	>
+		<div
+		class="notice"
+		ng-switch-when="m.notice"
+		>{{event.content.body}}</div>
+		
+		<p
+		class="text"
+		ng-switch-when="m.text"
+		>{{event.content.body}}</p>
+		
+		<p
+		class="emote"
+		ng-switch-when="m.emote"
+		>{{event.content.body}}</p>
+		
+		<div
+		class="image"
+		ng-switch-when="m.image"
+		ng-class="
+		{
+			zoom: room.control.content.zoom == event.event_id,
+		}">
+			<h6
+			class="label"
+			>
+				{{ event.content.body }}
+			</h6>
+			<img
+			ng-click="room.dom.zoom($event, event);"
+			ng-src="{{mc.m.xc(event.content.url)}}"
+			alt="{{event.content.body}}"
+			/>
+		</div>
+		
+		<a
+		class="video"
+		ng-switch-when="m.video"
+		>
+			<img
+			ng-src="{{event.content.info.thumbnail_url}}"
+			ng-if="event.content.info.thumbnail_url !== undefined"
+			ng-show="event.content.info"
+			alt="{{event.content.body}}"
+			/>
+		
+			<iframe
+			ng-if="false"
+			class="ytplayer"
+			type="text/html"
+			width="480"
+			height="260"
+			ng-src="{{mc.embed(event.content.url)}}"
+			frameborder="0"
+			>
+			</iframe>
+		</a>
+		
+		<p
+		class="default"
+		ng-switch-default
+		>
+			<span
+			ng-if="empty(event.content)"
+			>
+				Message content is empty.
+			</span>
+			<span
+			ng-if="!empty(event.content)"
+			>
+				<span
+				ng-if="!empty(event.content.msgtype)"
+				>
+					No msgtype in content.
+				</span>
+				<span
+				ng-if="!empty(event.content.msgtype)"
+				class="unhandled"
+				>
+					Unhandled msgtype: {{event.content.msgtype}}
+				</span>
+			</span>
+		</p>
 	</div>
 </script>
 
@@ -2288,10 +2377,17 @@ type="text/ng-template"
 id="ircd_room_event_unhandled"
 type="text/ng-template"
 >
-	<h4>
-		UNHANDLED EVENT
-	</h4>
+	<div
+	class="changed"
+	>
+		<h1>
+			{{event.type}}
+		</h1>
+		<h2>
+		</h2>
+	</div>
 	<p
+	class="guru"
 	style="white-space: pre-wrap;"
 	>
 		{{ debug.stringify(event, 2) }}
@@ -2348,13 +2444,13 @@ id="ircd_room_events"
 type="text/ng-template"
 >
 	<div
-	class="event"
 	ng-repeat="event in room.timeline"
 	ng-if="events.can_render(event, $index)"
 	ng-show="events.can_show(event, $index)"
-	ng-switch on="event.type"
+	class="event"
 	ng-class="
 	{
+		state: mc.event.is_state(event),
 		zoom: room.control.content.zoom == event.event_id,
 	}">
 		<label
@@ -2383,176 +2479,20 @@ type="text/ng-template"
 		</h4>
 	
 		<div
-		class="member"
-		ng-switch-when="m.room.member"
+		class="handler"
+		ng-class="this.dots_to_underscores(event.type)"
+		ng-if="handler_exists(event.type)"
+		ng-include="'ircd_room_event__' + this.dots_to_underscores(event.type)"
 		>
-			<div
-			ng-switch on="event.content.membership"
-			ng-include="'ircd_room_event__member'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="message"
-		ng-switch-when="m.room.message"
-		ng-switch on="event.content.msgtype"
-		>
-			<div
-			class="notice"
-			ng-switch-when="m.notice"
-			>{{event.content.body}}</div>
-		
-			<p
-			class="text"
-			ng-switch-when="m.text"
-			>{{event.content.body}}</p>
-		
-			<p
-			class="emote"
-			ng-switch-when="m.emote"
-			>{{event.content.body}}</p>
-		
-			<div
-			class="image"
-			ng-switch-when="m.image"
-			ng-class="
-			{
-				zoom: room.control.content.zoom == event.event_id,
-			}">
-				<h6
-				class="label"
-				>
-					{{ event.content.body }}
-				</h6>
-				<img
-				ng-click="room.dom.zoom($event, event);"
-				ng-src="{{mc.m.xc(event.content.url)}}"
-				alt="{{event.content.body}}"
-				/>
-			</div>
-		
-			<a
-			class="video"
-			ng-switch-when="m.video"
-			>
-				<img
-				ng-src="{{event.content.info.thumbnail_url}}"
-				ng-if="event.content.info.thumbnail_url !== undefined"
-				ng-show="event.content.info"
-				alt="{{event.content.body}}"
-				/>
-		
-				<iframe
-				ng-if="false"
-				class="ytplayer"
-				type="text/html"
-				width="480"
-				height="260"
-				ng-src="{{mc.embed(event.content.url)}}"
-				frameborder="0"
-				>
-				</iframe>
-			</a>
-		
-			<p
-			class="default unhandled"
-			ng-switch-default
-			>
-				unhandled message type '{{ event.content.msgtype }}'
-			</p>
 		</div>
 
 		<div
-		class="state create"
-		ng-switch-when="m.room.create"
+		class="handler unhandled"
+		ng-if="!handler_exists(event.type)"
+		ng-include="'ircd_room_event_unhandled'"
 		>
-			<div
-			ng-include="'ircd_room_event__create'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="state power_levels" 
-		ng-switch-when="m.room.power_levels"
-		>
-			<div
-			ng-include="'ircd_room_event__power_levels'"
-			>
-			</div>
 		</div>
 
-		<div
-		class="state canonical_alias"
-		ng-switch-when="m.room.canonical_alias"
-		>
-			<div
-			ng-include="'ircd_room_event__canonical_alias'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="state join_rules" 
-		ng-switch-when="m.room.join_rules"
-		>
-			<div
-			ng-include="'ircd_room_event__join_rules'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="state history_visibility"
-		ng-switch-when="m.room.history_visibility"
-		>
-			<div
-			ng-include="'ircd_room_event__history_visibility'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="state guest_access"
-		ng-switch-when="m.room.guest_access"
-		>
-			<div
-			ng-include="'ircd_room_event__guest_access'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="state aliases"
-		ng-switch-when="m.room.aliases"
-		>
-			<div
-			ng-include="'ircd_room_event__aliases'"
-			>
-			</div>
-		</div>
-
-		<div
-		class="state name"
-		ng-switch-when="m.room.name"
-		>
-			<div
-			ng-include="'ircd_room_event__name'"
-			>
-			</div>
-		</div>
-	
-		<div
-		class="default unhandled"
-		ng-switch-default
-		>
-			<div
-			ng-include="'ircd_room_event_unhandled'"
-			>
-			</div>
-		</div>
-	
 		<h3
 		class="target"
 		ng-if="this.should_show_target(event)"

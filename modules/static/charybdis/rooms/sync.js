@@ -36,40 +36,49 @@ mc.rooms.sync = function(action, room_id, data)
 	if(!handler)
 		return;
 
-	handler(room_id, data);
-};
-
-mc.rooms.sync["join"] = function(room_id, data)
-{
 	if(!(room_id in mc.rooms))
 		mc.rooms[room_id] = new mc.room({room_id: room_id});
 
 	let room = mc.rooms[room_id];
-	if(!(room_id in mc.rooms.joined))
-	{
+	handler(room, data);
+};
+
+mc.rooms.sync["join"] = function(room, data)
+{
+	if(!(room.id in mc.rooms.joined))
 		mc.rooms.joined[room.id] = room;
-		mc.rooms.menu["JOINED"].click();
-	}
 
 	room.sync(data, "join");
 	if((mc.rooms.current.empty() && empty(mc.session.rooms.history))
-	|| (mc.session.rooms.history[0] == room_id))
+	|| (mc.session.rooms.history[0] == room.id))
 	{
 		mc.rooms.current.add(room.id);
 		room.scroll.to.bottom();
 	}
 
-	if(!mc.rooms.current_mode)
+	delete mc.rooms.invited[room.id];
+	delete mc.rooms.left[room.id];
+
+	if(!mc.rooms.mode || mc.rooms.mode == "JOINED")
 		mc.rooms.menu["JOINED"].click();
 };
 
-mc.rooms.sync["invite"] = function(room_id, data)
+mc.rooms.sync["leave"] = function(room, data)
+{
+	if(!(room.id in mc.rooms.left))
+		mc.rooms.left[room.id] = room;
+
+	room.sync(data, "leave");
+
+	delete mc.rooms.invited[room.id];
+	delete mc.rooms.joined[room.id];
+
+	if(!mc.rooms.mode)
+		mc.rooms.menu["LEFT"].click();
+};
+
+mc.rooms.sync["invite"] = function(room, data)
 {
 	debug.object({invite: data}, 5);
 
-};
-
-mc.rooms.sync["leave"] = function(room_id, data)
-{
-	debug.object({leave: data}, 5);
 };

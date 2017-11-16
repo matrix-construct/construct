@@ -108,6 +108,10 @@ room.sync.handle["state"] = function(data, action)
 	});
 
 	this.timeline.insert(events);
+	events.forEach((event) =>
+	{
+		this.oracle.invalidate(event.type);
+	});
 };
 
 room.sync.handle["timeline"] = function(data, action)

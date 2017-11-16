@@ -109,7 +109,7 @@ room.control =
 {
 	show_members: false,
 	show_main_input: true,
-	show_status_indicator: true,
+	show_status_frieze: true,
 	show_event_detail: false,
 	show_event_info: {},
 

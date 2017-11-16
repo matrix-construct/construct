@@ -39,6 +39,7 @@ mc.ng.app.controller('mc', class extends mc.ng.controller
 		super("mc", $scope, $timeout);
 
 		$scope['$'] = $;
+		$scope.exists = (id) => $(id).length > 0;
 		$scope.Object = Object;
 		$scope.JSON = JSON;
 		$scope.parseInt = parseInt;

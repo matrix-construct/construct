@@ -29,7 +29,7 @@
  * Authentication flow
  *
  */
-mc.auth = async function(flows = {})
+mc.auth = async function(flows = {}, opts = {})
 {
 	let request = mc.m.login.get();
 	let login = await request.response;
@@ -41,7 +41,7 @@ mc.auth = async function(flows = {})
 		let handler = mc.auth[type];
 		if(handler === undefined)
 		{
-			flow.result = new mc.error("unsupported");
+			flow.result = new mc.error("authentication flow type unsupported");
 		}
 		else try
 		{
@@ -84,6 +84,7 @@ mc.auth["m.login.password"] = async function(opts = {})
 	}
 	catch(error)
 	{
+		console.warn("The user's password failed; deleting.");
 		delete mc.local.wasspord;
 		throw error;
 	}

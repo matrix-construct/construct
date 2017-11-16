@@ -120,16 +120,26 @@ window.addEventListener("error", (msg, url, line, column, error) => mc.abort(
  */
 mc.unhandled = function(error)
 {
-	if(!(error instanceof mc.error))
-		error = new mc.error(error);
-
-	if(error.element === undefined)
-		error.element = $("#charybdis");
-
 	try
 	{
-		let root = mc.ng.root();
-		root.error = error;
+		if(error.name == "timeout")
+			return;
+
+		if(!error.element)
+		{
+			console.warn("No element found to place unhandled exception...");
+			error.element = angular.element("#charybdis");
+		}
+
+		if(!(error instanceof mc.error))
+			error = new mc.error(error);
+
+		let scope = maybe(() => error.element.scope());
+		if(!scope)
+			scope = mc.ng.mc();
+
+		if(scope)
+			scope.error = error;
 	}
 	catch(e)
 	{

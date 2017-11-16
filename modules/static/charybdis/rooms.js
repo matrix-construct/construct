@@ -95,7 +95,7 @@ mc.rooms.menu["JOINED"] =
 	order: 1,
 	icon: "fa-thumbs-up",
 	selected: () => mc.rooms.mode == "JOINED",
-	tooltip: "List the rooms you have joined",
+	tooltip: "List the rooms you have joined.",
 };
 
 mc.rooms.menu["JOINED"].click = function($event)
@@ -110,12 +110,14 @@ mc.rooms.menu["LEFT"] =
 	order: 2,
 	icon: "fa-thumbs-down",
 	selected: () => mc.rooms.mode == "LEFT",
+	tooltip: "List the rooms from which you have parted company.",
 };
 
 mc.rooms.menu["LEFT"].click = function($event)
 {
+	let rooms = Object.values(mc.rooms.left);
+	mc.rooms.list = mc.rooms.sort.focused(rooms);
 	mc.rooms.mode = "LEFT";
-	mc.rooms.list = [];
 };
 
 mc.rooms.menu["FEED"] =

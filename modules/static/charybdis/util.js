@@ -560,7 +560,7 @@ const Class =
 };
 
 /** Bind a tree of functions organized into namespaces (using
- * a nested object heirarchy) to a this value
+ * a nested object hierarchy) to a this value
  */
 Function.bindtree = function(obj, that, ...args)
 {
@@ -620,7 +620,7 @@ Function.bindtree = function(obj, that, ...args)
 };
 
 /** Bind a tree of functions organized into namespaces (using
- * a nested object heirarchy) to a this value
+ * a nested object hierarchy) to a this value
  */
 Function.bindtree.self = function(self, obj, that = self)
 {

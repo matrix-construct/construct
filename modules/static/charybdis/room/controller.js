@@ -31,9 +31,13 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 		super("room", $scope);
 		$scope.open_bracket = this.open_bracket;
 		$scope.close_bracket = this.close_bracket;
+		$scope.sender_domid = this.sender_domid;
+		$scope.sender_sid = this.sender_sid;
 		$scope.delta = this.delta;
 		$scope.should_show_target = this.should_show_target;
 		$scope.should_show_avatar = this.should_show_avatar;
+		$scope.dots_to_underscores = this.dots_to_underscores;
+		$scope.handler_exists = this.handler_exists;
 	}
 
 	destructor()
@@ -76,6 +80,27 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 
 		return url.startsWith("http://") ||
 		       url.startsWith("https://");
+	}
+
+	sender_domid(sender)
+	{
+		let sid = this.sender_sid(sender);
+		let domid = mc.m.domid(sender);
+		let remain = 26 - sid.length;
+		let start = remain < domid.length?  domid.length - remain : 0;
+		let ret = domid.substr(start, remain);
+		if(ret.length < domid.length)
+			ret = "..." + ret;
+
+		return ret;
+	}
+
+	sender_sid(sender)
+	{
+		let displayname = maybe(() => mc.users[sender].displayname);
+		let str = displayname? displayname : mc.m.sid(sender);
+		let len = 28 - 2;
+		return str.substr(0, len);
 	}
 
 	open_bracket(event)
@@ -126,5 +151,16 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 			default:
 				return '>';
 		}
+	}
+
+	dots_to_underscores(str)
+	{
+		return str.replace(/\./g, '_');
+	}
+
+	handler_exists(type)
+	{
+		let sel = "#ircd_room_event__" + this.dots_to_underscores(type);
+		return $(sel).length > 0;
 	}
 });

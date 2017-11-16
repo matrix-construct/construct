@@ -179,8 +179,8 @@ room.timeline.prototype.only = function(condition, closure)
  */
 room.timeline.prototype.count = function(condition)
 {
-	let mapper = (...event) =>
-		condition(...event)? true : false;
+	let mapper = (event) =>
+		condition(event)? true : false;
 
 	let reducer = (acc, val) =>
 		acc + val;
