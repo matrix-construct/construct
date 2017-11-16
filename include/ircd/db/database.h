@@ -61,6 +61,7 @@ struct ircd::db::database
 	struct comparator;
 	struct prefix_transform;
 	struct column;
+
 	using description = std::vector<descriptor>;
 
 	// central collection of open databases for iteration (non-owning)
@@ -74,7 +75,9 @@ struct ircd::db::database
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
 	std::shared_ptr<rocksdb::Cache> cache;
-	std::map<std::string, size_t, std::less<>> column_names;
+	std::vector<descriptor> descriptors;
+	std::vector<string_view> column_names;
+	std::unordered_map<string_view, size_t> column_index;
 	std::vector<std::shared_ptr<column>> columns;
 	custom_ptr<rocksdb::DB> d;
 	unique_const_iterator<decltype(dbs)> dbs_it;

@@ -408,28 +408,42 @@ try
 	const auto lru_cache_size{64_MiB};
 	return rocksdb::NewLRUCache(lru_cache_size);
 }()}
-,column_names{[this, &description]
+,descriptors
 {
-	// Existing columns
-	const auto opts(make_dbopts(std::string(this->optstr)));
+	std::move(description)
+}
+,column_names{[this]
+{
+	// Existing columns at path. If any are left the descriptor set did not
+	// describe all of the columns found in the database at path.
+	const auto opts{make_dbopts(std::string(this->optstr))};
+	const auto required{db::column_names(path, opts)};
+	std::set<string_view> existing{begin(required), end(required)};
 
-	std::set<std::string> existing;
-	for(auto &column_name : db::column_names(path, opts))
-		existing.emplace(std::move(column_name));
-
-	decltype(this->column_names) ret;
-	for(const auto &descriptor : description)
+	// The names of the columns extracted from the descriptor set
+	std::vector<string_view> ret(descriptors.size());
+	std::transform(begin(descriptors), end(descriptors), begin(ret), [&existing]
+	(const auto &descriptor) -> string_view
 	{
 		existing.erase(descriptor.name);
-		ret.emplace(descriptor.name, -1);
-	}
+		return descriptor.name;
+	});
 
 	for(const auto &remain : existing)
-		throw error("Failed to describe existing column '%s'", remain);
+		throw error("Failed to describe existing column '%s' (and %zd others...)",
+		            remain,
+		            existing.size() - 1);
+	return ret;
+}()}
+,column_index{[this]
+{
+	decltype(this->column_index) ret;
+	for(const auto &descriptor : this->descriptors)
+		ret.emplace(descriptor.name, -1);
 
 	return ret;
 }()}
-,d{[this, &description]
+,d{[this]
 {
 	bool fsck{false};
 	bool read_only{false};
@@ -462,7 +476,7 @@ try
 	opts.row_cache = this->cache;
 
 	// Setup column families
-	for(const auto &desc : description)
+	for(const auto &desc : descriptors)
 	{
 		const auto c
 		{
@@ -515,18 +529,26 @@ try
 			rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
 		};
 
-	for(const auto &handle : handles)
+	try // Assign the column index numbers given by db
 	{
-		this->columns.at(handle->GetID())->handle.reset(handle);
-		this->column_names.at(handle->GetName()) = handle->GetID();
-	}
+		for(const auto &handle : handles)
+		{
+			this->columns.at(handle->GetID())->handle.reset(handle);
+			this->column_index.at(handle->GetName()) = handle->GetID();
+		}
 
-	for(size_t i(0); i < this->columns.size(); ++i)
-		if(db::id(*this->columns[i]) != i)
-			throw error("Columns misaligned: expecting id[%zd] got id[%u] '%s'",
-			            i,
-			            db::id(*this->columns[i]),
-			            db::name(*this->columns[i]));
+		for(size_t i(0); i < this->columns.size(); ++i)
+			if(db::id(*this->columns[i]) != i)
+				throw error("Columns misaligned: expecting id[%zd] got id[%u] '%s'",
+				            i,
+				            db::id(*this->columns[i]),
+				            db::name(*this->columns[i]));
+	}
+	catch(const std::exception &e)
+	{
+		delete ptr;
+		throw;
+	}
 
 	return custom_ptr<rocksdb::DB>
 	{
@@ -645,8 +667,8 @@ ircd::db::database::operator()(const sopts &sopts,
 ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 {
-	const auto it{column_names.find(name)};
-	if(unlikely(it == std::end(column_names)))
+	const auto it{column_index.find(name)};
+	if(unlikely(it == std::end(column_index)))
 		throw schema_error("'%s': column '%s' is not available or specified in schema",
 		                   this->name,
 		                   name);
@@ -671,8 +693,8 @@ const ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 const
 {
-	const auto it{column_names.find(name)};
-	if(unlikely(it == std::end(column_names)))
+	const auto it{column_index.find(name)};
+	if(unlikely(it == std::end(column_index)))
 		throw schema_error("'%s': column '%s' is not available or specified in schema",
 		                   this->name,
 		                   name);
