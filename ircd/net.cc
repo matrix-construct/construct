@@ -1271,20 +1271,20 @@ ircd::net::socket::handle_error(const error_code &ec)
 		default:
 			return true;
 	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
+	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
 	{
-		// This indicates the remote closed the socket, we still
-		// pass this up to the user so they can know that too.
-		case boost::asio::error::eof:
+		// Docs say this means we read less bytes off the socket than desired.
+		case SSL_R_SHORT_READ:
 			return true;
 
 		default:
 			return true;
 	}
-	else if(ec.category() == get_ssl_category()) switch(ec.value())
+	else if(ec.category() == get_misc_category()) switch(ec.value())
 	{
-		// Docs say this means we read less bytes off the socket than desired.
-		case SSL_R_SHORT_READ:
+		// This indicates the remote closed the socket, we still
+		// pass this up to the user so they can know that too.
+		case boost::asio::error::eof:
 			return true;
 
 		default:

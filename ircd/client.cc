@@ -270,12 +270,10 @@ catch(const boost::system::system_error &e)
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	const auto ec
-	{
-		e.code()
-	};
+	const error_code &ec{e.code()};
+	const int &value{ec.value()};
 
-	if(ec.category() == get_system_category()) switch(ec.value())
+	if(ec.category() == get_system_category()) switch(value)
 	{
 		case success:
 			assert(0);
@@ -297,18 +295,18 @@ catch(const boost::system::system_error &e)
 		default:
 			break;
 	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
+	else if(ec.category() == get_ssl_category()) switch(uint8_t(value))
 	{
-		case boost::asio::error::eof:
+		case SSL_R_SHORT_READ:
 			disconnect(*this, net::dc::RST);
 			return false;
 
 		default:
 			break;
 	}
-	else if(ec.category() == get_ssl_category()) switch(ec.value())
+	else if(ec.category() == get_misc_category()) switch(value)
 	{
-		case SSL_R_SHORT_READ:
+		case boost::asio::error::eof:
 			disconnect(*this, net::dc::RST);
 			return false;
 
@@ -319,7 +317,7 @@ catch(const boost::system::system_error &e)
 	log::error("client(%p): (unexpected) %s: (%d) %s",
 	           (const void *)this,
 	            ec.category().name(),
-	            int{ec.value()},
+	            value,
 	            ec.message());
 
 	disconnect(*this, net::dc::RST);
