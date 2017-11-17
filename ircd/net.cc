@@ -1019,7 +1019,7 @@ try
 	if(sd.is_open())
 		log.debug("socket(%p): disconnect: %s type: %d",
 		          (const void *)this,
-		          string(remote()),
+		          string(remote_ipport(*this)),
 		          uint(type));
 
 	if(sd.is_open()) switch(type)
@@ -1092,16 +1092,16 @@ catch(const boost::system::system_error &e)
 	            uint(type),
 	            e.what());
 
-	if(!sd.is_open())
-		throw;
+	if(sd.is_open())
+	{
+		boost::system::error_code ec;
+		sd.close(ec);
+		if(ec)
+			log.warning("socket(%p): after disconnect: %s: %s",
+			            this,
+			            string(ec));
+	}
 
-	boost::system::error_code ec;
-	sd.close(ec);
-
-	if(ec)
-		log.warning("socket(%p): after disconnect: %s: %s",
-		            this,
-		            string(ec));
 	throw;
 }
 
