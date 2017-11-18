@@ -572,8 +572,9 @@ ircd::buffer::copy(it &dest,
 {
 	const it ret{dest};
 	const size_t remain(stop - dest);
-	dest += std::min(size(src), remain);
-	memcpy(ret, data(src), dest - ret);
+	const size_t cpsz{std::min(size(src), remain)};
+	memcpy(ret, data(src), cpsz);
+	dest += cpsz;
 	return ret;
 }
 
