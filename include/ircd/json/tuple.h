@@ -82,8 +82,14 @@ is_tuple()
 	return std::is_base_of<tuple_base, tuple>::value;
 }
 
-template<class tuple, class R>
+template<class tuple,
+         class R>
 using enable_if_tuple = typename std::enable_if<is_tuple<tuple>(), R>::type;
+
+template<class tuple,
+         class test,
+         class R>
+using enable_if_tuple_and = typename std::enable_if<is_tuple<tuple>() && test(), R>::type;
 
 template<class tuple>
 using tuple_type = typename tuple::tuple_type;
@@ -229,6 +235,147 @@ enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
 {
 	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
+}
+
+template<class T>
+constexpr bool
+is_number()
+{
+	using type = typename std::remove_reference<T>::type;
+	return std::is_arithmetic<type>::value;
+}
+
+template<class T>
+constexpr bool
+is_floating()
+{
+	using type = typename std::remove_reference<T>::type;
+	return std::is_arithmetic<type>() && std::is_floating_point<type>();
+}
+
+template<class T>
+constexpr bool
+is_integer()
+{
+	return is_number<T>() && !is_floating<T>();
+}
+
+template<class T>
+typename std::enable_if<is_number<T>(), size_t>::type
+serialized(T&& t)
+{
+	return lex_cast(t).size();
+}
+
+template<class T>
+typename std::enable_if<is_number<T>(), bool>::type
+defined(T&& t)
+{
+	return !is_zero{}(t);
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_base_of<json::string, dst>() &&
+	std::is_convertible<src, ircd::string_view>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = unquote(string_view{std::forward<src>(s)});
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	!std::is_base_of<json::string, dst>() &&
+	std::is_convertible<src, dst>() &&
+	!ircd::json::is_tuple<dst>() &&
+	!std::is_same<bool, dst>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = std::forward<src>(s);
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	!std::is_base_of<json::string, dst>() &&
+	std::is_convertible<src, dst>() &&
+	!ircd::json::is_tuple<dst>() &&
+	std::is_same<bool, dst>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	static const is_zero test{};
+	d = test(std::forward<src>(s));
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_arithmetic<dst>() &&
+	std::is_base_of<std::string_view, typename std::remove_reference<src>::type>() &&
+	!std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+try
+{
+	d = lex_cast<dst>(std::forward<src>(s));
+}
+catch(const bad_lex_cast &e)
+{
+	throw parse_error("cannot convert '%s' to '%s'",
+	                  demangle<src>(),
+	                  demangle<dst>());
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_arithmetic<dst>() &&
+	std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	assert(!s.empty());
+	d = byte_view<dst>(std::forward<src>(s));
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	std::is_base_of<std::string_view, dst>() &&
+	std::is_pod<typename std::remove_reference<src>::type>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = byte_view<string_view>(std::forward<src>(s));
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	ircd::json::is_tuple<dst>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = dst{std::forward<src>(s)};
 }
 
 template<size_t hash,
@@ -657,115 +804,6 @@ runtil(tuple &t,
 	return f(key<i>(t), val<i>(t))?
 	       runtil<tuple, function, i - 1>(t, std::forward<function>(f)):
 	       false;
-}
-
-template<class T>
-constexpr bool
-serialized_lex_cast()
-{
-	using type = typename std::remove_reference<T>::type;
-	return std::is_arithmetic<type>::value;
-}
-
-template<class T>
-typename std::enable_if<serialized_lex_cast<T>(), size_t>::type
-serialized(T&& t)
-{
-	return lex_cast(t).size();
-}
-
-template<class T>
-typename std::enable_if<serialized_lex_cast<T>(), bool>::type
-defined(T&& t)
-{
-	return t != typename std::remove_reference<T>::type {0};
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	std::is_base_of<json::string, dst>() &&
-	std::is_convertible<src, ircd::string_view>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-{
-	d = unquote(string_view{std::forward<src>(s)});
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	!std::is_base_of<json::string, dst>() &&
-	std::is_convertible<src, dst>() &&
-	!ircd::json::is_tuple<dst>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-{
-	d = std::forward<src>(s);
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	std::is_arithmetic<dst>() &&
-	std::is_base_of<std::string_view, typename std::remove_reference<src>::type>() &&
-	!std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-try
-{
-	d = lex_cast<dst>(std::forward<src>(s));
-}
-catch(const bad_lex_cast &e)
-{
-	throw parse_error("cannot convert '%s' to '%s'",
-	                  demangle<src>(),
-	                  demangle<dst>());
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	std::is_arithmetic<dst>() &&
-	std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-{
-	assert(!s.empty());
-	d = byte_view<dst>(std::forward<src>(s));
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	std::is_base_of<std::string_view, dst>() &&
-	std::is_pod<typename std::remove_reference<src>::type>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-{
-	d = byte_view<string_view>(std::forward<src>(s));
-}
-
-template<class dst,
-         class src>
-typename std::enable_if
-<
-	ircd::json::is_tuple<dst>(),
-void>::type
-_assign(dst &d,
-        src&& s)
-{
-	d = dst{std::forward<src>(s)};
 }
 
 template<class V,
