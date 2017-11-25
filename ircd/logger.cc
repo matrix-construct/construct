@@ -334,8 +334,11 @@ noexcept
 	});
 
 	char buf[1024];
+	static const string_view terminator{"\r\n"};
+	const size_t max(sizeof(buf) - size(terminator));
+
 	std::stringstream s;
-	s.rdbuf()->pubsetbuf(buf, sizeof(buf));
+	s.rdbuf()->pubsetbuf(buf, max);
 
 	//TODO: XXX: Add option toggle for smalldate()
 	char date[64];
@@ -347,17 +350,28 @@ noexcept
 	  << reflect(fac)
 	  << (console_ansi[fac]? "\033[0m " : " ");
 
-	mutable_buffer mb
-	{
-		buf + s.tellp(), sizeof(buf) - s.tellp()
-	};
-
+	// We setup a buffer starting directly after the prefix and pass it
+	// to the user's closure. `mb` is used as a stream buffer here: as it
+	// is consumed its data pointer is advanced and thus its size decreases.
+	const size_t consumed{std::min(size_t(s.tellp()), max)};
+	mutable_buffer mb{buf + consumed, max - consumed};
+	assert(!full(mb));
 	closure(mb);
-	consume(mb, copy(mb, string_view{"\r\n"}));
 
+	// In all of the above, some extra space for the newline terminator
+	// was left at the end; we shift the buffer window past where `mb`
+	// stopped and append it here.
+	mb = mutable_buffer{data(mb), size(terminator)};
+	assert(!full(mb));
+	consume(mb, copy(mb, terminator));
+
+	// The final output view starts at the very beginning and its size is
+	// determined by where the `mb` data pointer currently points.
+	const size_t outsz(std::distance(buf, data(mb)));
+	assert(outsz <= sizeof(buf));
 	const mutable_buffer out
 	{
-		buf, size_t(std::distance(buf, data(mb)))
+		buf, outsz
 	};
 
 	const auto write{[&out](std::ostream &s)
@@ -366,12 +380,14 @@ noexcept
 		s.write(data(out), size(out));
 	}};
 
+	// copy to std::cerr
 	if(console_err[fac])
 	{
 		err_console.clear();
 		write(err_console);
 	}
 
+	// copy to std::cout
 	if(console_out[fac])
 	{
 		out_console.clear();
@@ -380,6 +396,7 @@ noexcept
 			std::flush(out_console);
 	}
 
+	// copy to file
 	if(file[fac].is_open())
 	{
 		file[fac].clear();
@@ -409,12 +426,15 @@ ircd::log::compose(mutable_buffer &out,
 	  << " :"
 	  << buf;
 
+	const size_t tell(s.tellp());
+	const size_t retsz{std::min(tell, size(out))};
 	const mutable_buffer ret
 	{
-		data(out), size_t(s.tellp())
+		data(out), retsz
 	};
 
-	begin(out) += s.tellp();
+	assert(retsz <= size(out));
+	consume(out, retsz);
 	return ret;
 }
 
