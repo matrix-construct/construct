@@ -263,6 +263,25 @@ noexcept try
 
 	return true;
 }
+catch(const http::error &e)
+{
+	log::debug("client[%s] HTTP %s in %ld$us %s",
+	           string(remote(*this)),
+	           e.what(),
+	           request_timer.at<microseconds>().count(),
+	           e.content);
+
+	switch(e.code)
+	{
+		case http::BAD_REQUEST:
+		case http::REQUEST_TIMEOUT:
+		case http::INTERNAL_SERVER_ERROR:
+			return false;
+
+		default:
+			return true;
+	}
+}
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -298,6 +317,7 @@ catch(const boost::system::system_error &e)
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(value))
 	{
 		case SSL_R_SHORT_READ:
+		case SSL_R_PROTOCOL_IS_SHUTDOWN:
 			disconnect(*this, net::dc::RST);
 			return false;
 
@@ -339,7 +359,6 @@ catch(const std::exception &e)
 bool
 ircd::handle_request(client &client,
                      parse::capstan &pc)
-try
 {
 	client.request_timer = ircd::timer{};
 	const socket::scope_timeout timeout
@@ -364,25 +383,6 @@ try
 	};
 
 	return ret;
-}
-catch(const http::error &e)
-{
-	log::debug("client[%s] HTTP %s in %ld$us %s",
-	           string(remote(client)),
-	           e.what(),
-	           client.request_timer.at<microseconds>().count(),
-	           e.content);
-
-	switch(e.code)
-	{
-		case http::BAD_REQUEST:
-		case http::REQUEST_TIMEOUT:
-		case http::INTERNAL_SERVER_ERROR:
-			return false;
-
-		default:
-			return true;
-	}
 }
 
 void
