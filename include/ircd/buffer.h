@@ -82,6 +82,7 @@ namespace ircd::buffer
 
 	// Single buffer tools
 	template<class it> bool null(const buffer<it> &buffer);
+	template<class it> bool full(const buffer<it> &buffer);
 	template<class it> bool empty(const buffer<it> &buffer);
 	template<class it> bool operator!(const buffer<it> &buffer);
 	template<class it> size_t size(const buffer<it> &buffer);
@@ -491,16 +492,20 @@ size_t
 ircd::buffer::consume(buffers<T> &b,
                       const size_t &bytes)
 {
-	size_t remain(bytes);
+	ssize_t remain(bytes);
 	for(auto it(std::begin(b)); it != std::end(b) && remain > 0; ++it)
 	{
 		using buffer = typename buffers<T>::value_type;
 		using iterator = typename buffer::iterator;
 
 		buffer &b(const_cast<buffer &>(*it));
-		remain -= consume(b, remain);
+		const ssize_t bsz(size(b));
+		const ssize_t csz{std::min(remain, bsz)};
+		remain -= consume(b, csz);
+		assert(remain >= 0);
 	}
 
+	assert(ssize_t(bytes) >= remain);
 	return bytes - remain;
 }
 
@@ -535,6 +540,7 @@ template<class it>
 std::ostream &
 ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 {
+	assert(!null(buffer));
 	s.write(data(buffer), size(buffer));
 	return s;
 }
@@ -545,6 +551,7 @@ ircd::buffer::copy(const mutable_raw_buffer &dst,
 {
 	auto e{begin(dst)};
 	copy(e, end(dst), src);
+	assert(std::distance(begin(dst), e) >= 0);
 	return std::distance(begin(dst), e);
 }
 
@@ -557,11 +564,15 @@ ircd::buffer::copy(const it &dest,
 	if(!max)
 		return 0;
 
-	it out{dest};
-	const it stop{dest + max - 1};
-	copy(out, stop, const_raw_buffer{src});
-	*out = '\0';
-	return std::distance(dest, out);
+	auto start{dest};
+	const auto stop{dest + max - 1};
+	assert(stop >= start);
+	copy<it>(start, stop, src);
+	assert(start <= stop);
+	assert(start < dest + max);
+	*start = '\0';
+	assert(std::distance(dest, start) >= 1);
+	return std::distance(dest, start);
 }
 
 template<class it>
@@ -571,10 +582,16 @@ ircd::buffer::copy(it &dest,
                    const const_raw_buffer &src)
 {
 	const it ret{dest};
-	const size_t remain(stop - dest);
-	const size_t cpsz{std::min(size(src), remain)};
+	const ssize_t srcsz(size(src));
+	assert(ret <= stop);
+	const ssize_t remain{std::distance(ret, stop)};
+	const ssize_t cpsz{std::min(srcsz, remain)};
+	assert(cpsz <= srcsz);
+	assert(cpsz <= remain);
+	assert(remain >= 0);
 	memcpy(ret, data(src), cpsz);
 	dest += cpsz;
+	assert(dest <= stop);
 	return ret;
 }
 
@@ -583,7 +600,10 @@ size_t
 ircd::buffer::consume(buffer<it> &buffer,
                       const size_t &bytes)
 {
-	get<0>(buffer) += std::min(size(buffer), bytes);
+	assert(!null(buffer));
+	assert(bytes <= size(buffer));
+	get<0>(buffer) += bytes;
+	assert(get<0>(buffer) <= get<1>(buffer));
 	return size(buffer);
 }
 
@@ -599,6 +619,7 @@ size_t
 ircd::buffer::size(const buffer<it> &buffer)
 {
 	assert(get<0>(buffer) <= get<1>(buffer));
+	assert(!null(buffer) || get<1>(buffer) == nullptr);
 	return std::distance(get<0>(buffer), get<1>(buffer));
 }
 
@@ -613,7 +634,14 @@ template<class it>
 bool
 ircd::buffer::empty(const buffer<it> &buffer)
 {
-	return null(buffer) || !std::distance(get<0>(buffer), get<1>(buffer));
+	return null(buffer) || std::distance(get<0>(buffer), get<1>(buffer)) == 0;
+}
+
+template<class it>
+bool
+ircd::buffer::full(const buffer<it> &buffer)
+{
+	return std::distance(get<0>(buffer), get<1>(buffer)) == 0;
 }
 
 template<class it>
