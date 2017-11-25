@@ -27,8 +27,8 @@ for if and how a party will pass these keys. To dive right in, here's the list
 of recognized keys for an `event`:
 
 ```
-auth_events, content, depth, event_id, hashes, membership, origin, origin_server_ts, prev_events,
-prev_state, room_id, sender, signatures, state_key, type
+auth_events, content, depth, event_id, hashes, membership, origin, origin_server_ts,
+prev_events, prev_state, room_id, sender, signatures, state_key, type
 ```
 
 In the event structure, the value for `sender` and `room_id` and `event_id` are
@@ -78,7 +78,7 @@ consists of a `state` built by a `timeline` of `event` objects. The matrix
 protocol specifies certain `event` types which are recognized to affect
 the behavior of the `room`. Here's a list of some of those events:
 
-```
+`
 m.room.name
 m.room.create
 m.room.topic
@@ -90,7 +90,7 @@ m.room.power_levels
 m.room.member
 m.room.message
 ...
-```
+`
 
 Some of these events are `state` events and some are ephemeral. These will be
 detailed later. All `m.room.*` namespaced events govern the functionality of the
@@ -130,8 +130,9 @@ subset of actors for a few important updates to the graph. For example, a
 two-phase commit of an important state event *or the re-introduction of
 the classic IRC mode change indicating a commitment to change state.*
 
-
 References to previous events:
+
+<code>
 
  [A0] <-- [A1] <-- [A2]       | A has seen B1 and includes a reference in A2
   ^                 |
@@ -145,15 +146,22 @@ References to previous events:
 [T3]  A acquire B1  :  B release B2
 [T4]  A release A2  :
 
+</code>
+
 Both actors will have their clock (depth) now set to 2 and will issue the
 next new message at clock cycle 3 referencing all messages from cycle 2 to
 merge the split in the illustration above which is happening.
+
+<code>
 
  [A0] <-- [A1] <-- [A2]            [A4]      | A now sees B3, B2, and B1
  ^                 |  |            |
  |        <---<----<  ^--<--<   <--<
  |        |                 |   |
  ^------- [B1] <-- [B2] <-- [B3]             | B now sees A2, A1, and A0
+
+</code>
+
 
 ### Implementation
 
@@ -313,6 +321,8 @@ way the federation scales.
 
 Interference pattern of two IRCd'en:
 
+<code>
+
   ::::::::::::::::::::::::::::::::::::
   --------\:::::::/--\:::::::/--------
            |||||||    |||||||
@@ -322,3 +332,5 @@ Interference pattern of two IRCd'en:
            //|||\\    //|||\\
          //|// \\|\\//|// \\|\\
         /|/|/|\|\|\/|/|/|\|\|\|\
+
+</code>
