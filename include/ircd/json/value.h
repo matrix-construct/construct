@@ -139,6 +139,7 @@ struct ircd::json::value
 namespace ircd::json
 {
 	template<> value::value(const double &floating);
+	template<> value::value(const uint64_t &integer);
 	template<> value::value(const int64_t &integer);
 	template<> value::value(const float &floating);
 	template<> value::value(const int32_t &integer);
@@ -289,6 +290,13 @@ ircd::json::value::value(const double &floating)
 ,serial{false}
 ,alloc{false}
 ,floats{true}
+{}
+
+template<>
+__attribute__((warning("uint64_t narrows to int64_t when used in json::value")))
+inline
+ircd::json::value::value(const uint64_t &integer)
+:value{int64_t(integer)}
 {}
 
 template<> inline
