@@ -91,10 +91,9 @@ catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
 
-	log::error("read error: %s: %s: %s",
+	log::error("read error: %s: %s",
 	           string(server.n->remote),
-	           e.code().category().name(),
-	           e.what());
+	           string(e));
 
 	if(ircd::runlevel == ircd::runlevel::QUIT)
 		throw;
@@ -136,11 +135,9 @@ catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
 
-	log::error("write error: %s: (%s #%d) %s",
+	log::error("write error: %s %s",
 	           string(server.n->remote),
-	           e.code().category().name(),
-	           e.code().value(),
-	           e.what());
+	           string(e));
 
 	switch(e.code().value())
 	{
