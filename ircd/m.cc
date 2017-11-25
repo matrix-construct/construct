@@ -253,276 +253,6 @@ ircd::m::dbs::init_modules()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// m/session.h
-//
-
-ircd::m::io::session::session(const net::remote &remote)
-:server{remote}
-,destination{remote.hostname}
-{
-}
-
-ircd::json::object
-ircd::m::io::session::operator()(parse::buffer &pb,
-                                 request &request)
-{
-	request.destination = destination;
-	request(server);
-	return response
-	{
-		server, pb
-	};
-}
-
-//
-// response
-//
-
-ircd::m::io::response::response(server &server,
-                                parse::buffer &pb)
-{
-	http::code status;
-	json::object &object
-	{
-		static_cast<json::object &>(*this)
-	};
-
-	parse::capstan pc
-	{
-		pb, read_closure(server)
-	};
-
-	http::response
-	{
-		pc,
-		nullptr,
-		[&pc, &status, &object](const http::response::head &head)
-		{
-			status = http::status(head.status);
-			object = http::response::content{pc, head};
-		},
-		[](const auto &header)
-		{
-			//std::cout << header.first << " :" << header.second << std::endl;
-		}
-	};
-
-	if(status < 200 || status >= 300)
-		throw m::error(status, object);
-}
-
-//
-// request
-//
-
-namespace ircd::m::name
-{
-//	constexpr const char *const content {"content"};
-	constexpr const char *const destination {"destination"};
-	constexpr const char *const method {"method"};
-//	constexpr const char *const origin {"origin"};
-	constexpr const char *const uri {"uri"};
-}
-
-struct ircd::m::io::request::authorization
-:json::tuple
-<
-	json::property<name::content, string_view>,
-	json::property<name::destination, string_view>,
-	json::property<name::method, string_view>,
-	json::property<name::origin, string_view>,
-	json::property<name::uri, string_view>
->
-{
-	string_view generate(const mutable_buffer &out);
-
-	using super_type::tuple;
-};
-
-void
-ircd::m::io::request::operator()(const vector_view<const http::header> &addl_headers)
-const
-{
-}
-
-void
-ircd::m::io::request::operator()(server &server,
-                                 const vector_view<const http::header> &addl_headers)
-const
-{
-	const size_t addl_headers_size
-	{
-		std::min(addl_headers.size(), size_t(64UL))
-	};
-
-	size_t headers{2 + addl_headers_size};
-	http::line::header header[headers + 1]
-	{
-		{ "User-Agent",    BRANDING_NAME " (IRCd " BRANDING_VERSION ")" },
-		{ "Content-Type",  "application/json"                           },
-	};
-
-	for(size_t i(0); i < addl_headers_size; ++i)
-		header[headers++] = addl_headers.at(i);
-
-	char x_matrix[1024];
-	if(startswith(path, "_matrix/federation"))
-		header[headers++] =
-		{
-			"Authorization",  generate_authorization(x_matrix)
-		};
-
-	http::request
-	{
-		destination,
-		method,
-		path,
-		query,
-		content,
-		write_closure(server),
-		{ header, headers }
-	};
-}
-
-ircd::string_view
-ircd::m::io::request::generate_authorization(const mutable_buffer &out)
-const
-{
-	const fmt::bsprintf<2048> uri
-	{
-		"/%s%s%s", lstrip(path, '/'), query? "?" : "", query
-	};
-
-	request::authorization authorization
-	{
-		json::members
-		{
-			{ "destination",  destination  },
-			{ "method",       method       },
-			{ "origin",       my_host()    },
-			{ "uri",          uri          },
-		}
-	};
-
-	if(string_view{content}.size() > 2)
-		json::get<"content"_>(authorization) = content;
-
-	return authorization.generate(out);
-}
-
-ircd::string_view
-ircd::m::io::request::authorization::generate(const mutable_buffer &out)
-{
-	// Any buffers here can be comfortably large if they're not on a stack and
-	// nothing in this procedure has a yield which risks decohering static
-	// buffers; the assertion is tripped if so.
-	ctx::critical_assertion ca;
-
-	static fixed_buffer<mutable_buffer, 131072> request_object_buf;
-	const auto request_object
-	{
-		json::stringify(request_object_buf, *this)
-	};
-
-	const ed25519::sig sig
-	{
-		self::secret_key.sign(request_object)
-	};
-
-	static fixed_buffer<mutable_buffer, 128> signature_buf;
-	const auto x_matrix_len
-	{
-		fmt::sprintf(out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\"",
-		             unquote(string_view{at<"origin"_>(*this)}),
-		             self::public_key_id,
-		             b64encode_unpadded(signature_buf, sig))
-	};
-
-	return
-	{
-		data(out), size_t(x_matrix_len)
-	};
-}
-
-bool
-ircd::m::io::verify_x_matrix_authorization(const string_view &x_matrix,
-                                           const string_view &method,
-                                           const string_view &uri,
-                                           const string_view &content)
-{
-	string_view tokens[3], origin, key, sig;
-	if(ircd::tokens(split(x_matrix, ' ').second, ',', tokens) != 3)
-		return false;
-
-	for(const auto &token : tokens)
-	{
-		const auto &key_value
-		{
-			split(token, '=')
-		};
-
-		switch(hash(key_value.first))
-		{
-			case hash("origin"):  origin = unquote(key_value.second);  break;
-			case hash("key"):     key = unquote(key_value.second);     break;
-			case hash("sig"):     sig = unquote(key_value.second);     break;
-		}
-	}
-
-	request::authorization authorization
-	{
-		json::members
-		{
-			{ "destination",  my_host() },
-			{ "method",       method    },
-			{ "origin",       origin    },
-			{ "uri",          uri       },
-		}
-	};
-
-	if(content.size() > 2)
-		json::get<"content"_>(authorization) = content;
-
-	//TODO: XXX
-	const json::strung request_object
-	{
-		authorization
-	};
-
-	const ed25519::sig _sig
-	{
-		[&sig](auto &buf)
-		{
-			b64decode(buf, sig);
-		}
-	};
-
-	const ed25519::pk pk
-	{
-		[&origin, &key](auto &buf)
-		{
-			m::keys::get(origin, key, [&key, &buf](const auto &keys)
-			{
-				const json::object vks
-				{
-					at<"verify_keys"_>(keys)
-				};
-
-				const json::object vkk
-				{
-					vks.at(key)
-				};
-
-				b64decode(buf, unquote(vkk.at("key")));
-			});
-		}
-	};
-
-	return pk.verify(const_raw_buffer{request_object}, _sig);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // m/keys.h
 //
 
@@ -532,8 +262,10 @@ keys_room_id
 	"keys", ircd::my_host()
 };
 
+/// The keys room is where the public key data for each server is stored as
+/// state indexed by the server name.
 ircd::m::room
-ircd::m::key::keys
+ircd::m::keys::room
 {
 	keys_room_id
 };
@@ -636,7 +368,7 @@ ircd::m::init_keys(const json::object &options)
 static void
 ircd::m::bootstrap_keys()
 {
-	create(key::keys, me.user_id);
+	create(keys::room, me.user_id);
 
 	const json::strung verify_keys
 	{
@@ -649,7 +381,7 @@ ircd::m::bootstrap_keys()
 		}}
 	};
 
-	key my_key;
+	keys my_key;
 	json::get<"verify_keys"_>(my_key) = verify_keys;
 	json::get<"server_name"_>(my_key) = my_host();
 	json::get<"old_verify_keys"_>(my_key) = "{}";
@@ -695,25 +427,209 @@ ircd::m::bootstrap_keys()
 	keys::set(my_key);
 }
 
-bool
-ircd::m::keys::get(const string_view &server_name,
-                   const closure &closure)
-{
-	return get(server_name, string_view{}, closure);
-}
-
-bool
+void
 ircd::m::keys::get(const string_view &server_name,
                    const string_view &key_id,
-                   const closure &closure)
+                   const key_closure &closure)
+try
+{
+	get(server_name, [&key_id, &closure](const keys &keys)
+	{
+		const json::object vks
+		{
+			at<"verify_keys"_>(keys)
+		};
+
+		const json::object vkk
+		{
+			vks.at(key_id)
+		};
+
+		// The key is not unquote() because some types of keys may be
+		// more complex than just a string one day; think: RLWE.
+		const string_view &key
+		{
+			vkk.at("key")
+		};
+
+		closure(key);
+	});
+}
+catch(const json::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"Failed to find key '%s' for '%s': %s",
+		key_id,
+		server_name,
+		e.what()
+	};
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const keys_closure &closure)
 {
 	assert(!server_name.empty());
 
+	if(get_local(server_name, closure))
+		return;
+
+	if(server_name == my_host())
+		throw m::NOT_FOUND
+		{
+			"keys for '%s' (that's myself) not found", server_name
+		};
+
+	log.debug("Keys for %s not cached; querying network...",
+	          server_name);
+
+	char url[1024]; const auto url_len
+	{
+		fmt::snprintf(url, sizeof(url), "_matrix/key/v2/server/")
+	};
+
+	//TODO: XXX
+	const unique_buffer<mutable_buffer> buffer
+	{
+		8192
+	};
+
+	ircd::parse::buffer pb{mutable_buffer{buffer}};
+	m::request request{"GET", url, {}, {}};
+	m::session session{server_name};
+	const json::object response
+	{
+		session(pb, request)
+	};
+
+	const m::keys &keys
+	{
+		response
+	};
+
+	if(!verify(keys))
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+			"Failed to verify keys for '%s'", server_name
+		};
+
+	log.debug("Verified keys from '%s'",
+	          server_name);
+
+	set(keys);
+	closure(keys);
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
+                   const string_view &query_server,
+                   const keys_closure &closure)
+try
+{
+	assert(!server_name.empty());
+	assert(!query_server.empty());
+
+	char key_id_buf[1024];
+	char server_name_buf[1024];
+	char url[1024]; const auto url_len
+	{
+		fmt::snprintf(url, sizeof(url), "_matrix/key/v2/query/%s/%s/",
+		              urlencode(server_name, server_name_buf),
+		              urlencode(key_id, key_id_buf))
+	};
+
+	//TODO: XXX
+	const unique_buffer<mutable_buffer> buffer
+	{
+		8192
+	};
+
+	// Make request and receive response synchronously.
+	// This ircd::ctx will block here fetching.
+	ircd::parse::buffer pb{mutable_buffer{buffer}};
+	m::request request{"GET", url, {}, {}};
+	m::session session{server_name};
+	const json::object response
+	{
+		session(pb, request)
+	};
+
+	const json::array &keys
+	{
+		response.at("server_keys")
+	};
+
+	log::debug("Fetched %zu candidate keys seeking '%s' for '%s' from '%s' (%s)",
+	           keys.count(),
+	           empty(key_id)? "*" : key_id,
+	           server_name,
+	           query_server,
+	           string(net::remote(session.server)));
+
+	bool ret{false};
+	for(auto it(begin(keys)); it != end(keys); ++it)
+	{
+		const m::keys &keys{*it};
+		const auto &_server_name
+		{
+			at<"server_name"_>(keys)
+		};
+
+		if(!verify(keys))
+			throw m::error
+			{
+				http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+				"Failed to verify keys for '%s' from '%s'",
+				_server_name,
+				query_server
+			};
+
+		log.debug("Verified keys for '%s' from '%s'",
+		          _server_name,
+		          query_server);
+
+		set(keys);
+		const json::object vks{json::get<"verify_keys"_>(keys)};
+		if(_server_name == server_name)
+		{
+			closure(keys);
+			ret = true;
+		}
+	}
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"Failed to get any keys for '%s' from '%s' (got %zu total keys otherwise)",
+			server_name,
+			query_server,
+			keys.count()
+		};
+}
+catch(const json::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"Failed to find key '%s' for '%s' when querying '%s': %s",
+		key_id,
+		server_name,
+		query_server,
+		e.what()
+	};
+}
+
+bool
+ircd::m::keys::get_local(const string_view &server_name,
+                         const keys_closure &closure)
+{
 	const m::vm::query<m::vm::where::equal> query
 	{
-		{ "room_id",      key::keys.room_id   },
-		{ "type",        "ircd.key"           },
-		{ "state_key",    server_name         },
+		{ "room_id",      keys::room.room_id   },
+		{ "type",        "ircd.key"            },
+		{ "state_key",    server_name          },
 	};
 
 	const auto have
@@ -725,110 +641,25 @@ ircd::m::keys::get(const string_view &server_name,
 		}
 	};
 
-	if(m::vm::test(query, have))
-		return true;
-
-	if(server_name == my_host())
-		throw m::NOT_FOUND
-		{
-			"key '%s' for '%s' not found", key_id?: "<unspecified>", server_name
-		};
-
-	log.debug("Key %s for %s not cached; querying network...",
-	          key_id?: "<unspecified>",
-	          server_name);
-
-	char key_id_buf[1024], server_name_buf[1024];
-	char url[1024]; const auto url_len
-	{
-/*
-		fmt::snprintf(url, sizeof(url), "_matrix/key/v2/query/%s/%s",
-		              server_name,
-		              key_id):
-*/
-		fmt::snprintf(url, sizeof(url), "_matrix/key/v2/server/%s",
-		              urlencode(key_id, key_id_buf))
-	};
-
-	//TODO: XXX
-	const unique_buffer<mutable_buffer> buffer
-	{
-		8192
-	};
-
-	ircd::parse::buffer pb{mutable_buffer{buffer}};
-	m::request request
-	{
-		"GET", url, {}, {}
-	};
-
-	m::session session
-	{
-		server_name
-	};
-
-	const string_view response
-	{
-		session(pb, request)
-	};
-
-/*
-	const json::array &keys
-	{
-		response.at("server_keys")
-	};
-
-	log::debug("Fetched %zu candidate keys from '%s' (%s)",
-	           keys.size(),
-	           server_name,
-	           string(remote(*session.client)));
-
-	if(keys.empty())
-		throw m::NOT_FOUND
-		{
-			"Failed to get key '%s' for '%s'", key_id, server_name
-		};
-
-	const m::key &key
-	{
-		keys[0]
-	};
-*/
-	const m::key &key
-	{
-		response
-	};
-
-	if(!key.verify())
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_INVALID_SIGNATURE", "Failed to verify key from '%s'", server_name
-		};
-
-	log.debug("Verified key from '%s'",
-	          server_name);
-
-	m::keys::set(key);
-	closure(key);
-	return true;
+	return m::vm::test(query, have);
 }
 
 void
-ircd::m::keys::set(const key &key)
+ircd::m::keys::set(const keys &keys)
 {
 	const auto &state_key
 	{
-		unquote(at<"server_name"_>(key))
+		unquote(at<"server_name"_>(keys))
 	};
 
 	const m::user::id::buf sender
 	{
-		"ircd", unquote(at<"server_name"_>(key))
+		"ircd", unquote(at<"server_name"_>(keys))
 	};
 
 	const json::strung content
 	{
-		key
+		keys
 	};
 
 	json::iov event;
@@ -840,17 +671,17 @@ ircd::m::keys::set(const key &key)
 		{ event, json::member { "content",    content      }}
 	};
 
-	key::keys.send(event);
+	keys::room.send(event);
 }
 
 /// Verify this key data (with itself).
 bool
-ircd::m::key::verify()
-const noexcept try
+ircd::m::keys::verify(const keys &keys)
+noexcept try
 {
 	const auto &valid_until_ts
 	{
-		at<"valid_until_ts"_>(*this)
+		at<"valid_until_ts"_>(keys)
 	};
 
 	if(valid_until_ts < ircd::time<milliseconds>())
@@ -858,7 +689,7 @@ const noexcept try
 
 	const json::object &verify_keys
 	{
-		at<"verify_keys"_>(*this)
+		at<"verify_keys"_>(keys)
 	};
 
 	const string_view &key_id
@@ -881,12 +712,12 @@ const noexcept try
 
 	const json::object &signatures
 	{
-		at<"signatures"_>(*this)
+		at<"signatures"_>(keys)
 	};
 
 	const string_view &server_name
 	{
-		unquote(at<"server_name"_>(*this))
+		unquote(at<"server_name"_>(keys))
 	};
 
 	const json::object &server_signatures
@@ -900,15 +731,15 @@ const noexcept try
 	}};
 
 	///TODO: XXX
-	m::key copy{*this};
+	m::keys copy{keys};
 	at<"signatures"_>(copy) = string_view{};
-	const std::string preimage{json::strung(copy)};
+	const json::strung preimage{copy};
 	return pk.verify(const_raw_buffer{preimage}, sig);
 }
 catch(const std::exception &e)
 {
 	log.error("key verification for '%s' failed: %s",
-	          json::get<"server_name"_>(*this, "<no server name>"_sv),
+	          json::get<"server_name"_>(keys, "<no server name>"_sv),
 	          e.what());
 
 	return false;

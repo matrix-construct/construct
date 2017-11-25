@@ -89,7 +89,7 @@ try
 	// 3.3.1 Required. The desired password for the account.
 	const auto &password
 	{
-		at<"password"_>(request)
+		unquote(at<"password"_>(request))
 	};
 
 	// 3.3.1 If true, the server binds the email used for authentication to the

@@ -517,9 +517,273 @@ try
 	}};
 
 	return m::vm::test(query, test);
+*/
+	return false;
 }
 catch(const std::exception &e)
 {
 	tab.error = std::make_exception_ptr(e);
 	return false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/session.h
+//
+
+ircd::m::io::session::session(const net::remote &remote)
+:server{remote}
+,destination{remote.hostname}
+{
+}
+
+ircd::json::object
+ircd::m::io::session::operator()(parse::buffer &pb,
+                                 request &request)
+{
+	request.destination = destination;
+	request(server);
+	return response
+	{
+		server, pb
+	};
+}
+
+//
+// response
+//
+
+ircd::m::io::response::response(server &server,
+                                parse::buffer &pb)
+{
+	http::code status;
+	json::object &object
+	{
+		static_cast<json::object &>(*this)
+	};
+
+	parse::capstan pc
+	{
+		pb, read_closure(server)
+	};
+
+	http::response
+	{
+		pc,
+		nullptr,
+		[&pc, &status, &object](const http::response::head &head)
+		{
+			status = http::status(head.status);
+			object = http::response::content{pc, head};
+		},
+		[](const auto &header)
+		{
+			//std::cout << header.first << " :" << header.second << std::endl;
+		}
+	};
+
+	if(status < 200 || status >= 300)
+		throw m::error(status, object);
+}
+
+//
+// request
+//
+
+namespace ircd::m::name
+{
+//	constexpr const char *const content {"content"};
+	constexpr const char *const destination {"destination"};
+	constexpr const char *const method {"method"};
+//	constexpr const char *const origin {"origin"};
+	constexpr const char *const uri {"uri"};
+}
+
+struct ircd::m::io::request::authorization
+:json::tuple
+<
+	json::property<name::content, string_view>,
+	json::property<name::destination, string_view>,
+	json::property<name::method, string_view>,
+	json::property<name::origin, string_view>,
+	json::property<name::uri, string_view>
+>
+{
+	string_view generate(const mutable_buffer &out);
+
+	using super_type::tuple;
+};
+
+void
+ircd::m::io::request::operator()(const vector_view<const http::header> &addl_headers)
+const
+{
+}
+
+void
+ircd::m::io::request::operator()(server &server,
+                                 const vector_view<const http::header> &addl_headers)
+const
+{
+	const size_t addl_headers_size
+	{
+		std::min(addl_headers.size(), size_t(64UL))
+	};
+
+	size_t headers{2 + addl_headers_size};
+	http::line::header header[headers + 1]
+	{
+		{ "User-Agent",    BRANDING_NAME " (IRCd " BRANDING_VERSION ")" },
+		{ "Content-Type",  "application/json"                           },
+	};
+
+	for(size_t i(0); i < addl_headers_size; ++i)
+		header[headers++] = addl_headers.at(i);
+
+	char x_matrix[1024];
+	if(startswith(path, "_matrix/federation"))
+		header[headers++] =
+		{
+			"Authorization",  generate_authorization(x_matrix)
+		};
+
+	http::request
+	{
+		destination,
+		method,
+		path,
+		query,
+		content,
+		write_closure(server),
+		{ header, headers }
+	};
+}
+
+ircd::string_view
+ircd::m::io::request::generate_authorization(const mutable_buffer &out)
+const
+{
+	const fmt::bsprintf<2048> uri
+	{
+		"/%s%s%s", lstrip(path, '/'), query? "?" : "", query
+	};
+
+	request::authorization authorization
+	{
+		json::members
+		{
+			{ "destination",  destination  },
+			{ "method",       method       },
+			{ "origin",       my_host()    },
+			{ "uri",          uri          },
+		}
+	};
+
+	if(string_view{content}.size() > 2)
+		json::get<"content"_>(authorization) = content;
+
+	return authorization.generate(out);
+}
+
+ircd::string_view
+ircd::m::io::request::authorization::generate(const mutable_buffer &out)
+{
+	// Any buffers here can be comfortably large if they're not on a stack and
+	// nothing in this procedure has a yield which risks decohering static
+	// buffers; the assertion is tripped if so.
+	ctx::critical_assertion ca;
+
+	static fixed_buffer<mutable_buffer, 131072> request_object_buf;
+	const auto request_object
+	{
+		json::stringify(request_object_buf, *this)
+	};
+
+	const ed25519::sig sig
+	{
+		self::secret_key.sign(request_object)
+	};
+
+	static fixed_buffer<mutable_buffer, 128> signature_buf;
+	const auto x_matrix_len
+	{
+		fmt::sprintf(out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\"",
+		             unquote(string_view{at<"origin"_>(*this)}),
+		             self::public_key_id,
+		             b64encode_unpadded(signature_buf, sig))
+	};
+
+	return
+	{
+		data(out), size_t(x_matrix_len)
+	};
+}
+
+bool
+ircd::m::io::verify_x_matrix_authorization(const string_view &x_matrix,
+                                           const string_view &method,
+                                           const string_view &uri,
+                                           const string_view &content)
+{
+	string_view tokens[3], origin, key, sig;
+	if(ircd::tokens(split(x_matrix, ' ').second, ',', tokens) != 3)
+		return false;
+
+	for(const auto &token : tokens)
+	{
+		const auto &key_value
+		{
+			split(token, '=')
+		};
+
+		switch(hash(key_value.first))
+		{
+			case hash("origin"):  origin = unquote(key_value.second);  break;
+			case hash("key"):     key = unquote(key_value.second);     break;
+			case hash("sig"):     sig = unquote(key_value.second);     break;
+		}
+	}
+
+	request::authorization authorization
+	{
+		json::members
+		{
+			{ "destination",  my_host() },
+			{ "method",       method    },
+			{ "origin",       origin    },
+			{ "uri",          uri       },
+		}
+	};
+
+	if(content.size() > 2)
+		json::get<"content"_>(authorization) = content;
+
+	//TODO: XXX
+	const json::strung request_object
+	{
+		authorization
+	};
+
+	const ed25519::sig _sig
+	{
+		[&sig](auto &buf)
+		{
+			b64decode(buf, sig);
+		}
+	};
+
+	const ed25519::pk pk
+	{
+		[&origin, &key](auto &buf)
+		{
+			m::keys::get(origin, key, [&buf]
+			(const string_view &key)
+			{
+				b64decode(buf, unquote(key));
+			});
+		}
+	};
+
+	return pk.verify(const_raw_buffer{request_object}, _sig);
 }

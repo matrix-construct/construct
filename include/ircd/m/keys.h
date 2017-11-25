@@ -29,7 +29,7 @@
 
 namespace ircd::m
 {
-	struct key;
+	struct keys;
 }
 
 namespace ircd::m::self
@@ -53,6 +53,16 @@ namespace ircd::m::name
 	constexpr const char *const valid_until_ts {"valid_until_ts"};
 }
 
+/// Contains the public keys and proof of identity for a remote server.
+///
+/// A user who wishes to verify a signature from a remote server must have
+/// the name of the server (origin) and the key_id. Calling the appropriate
+/// static function of this class will attempt to fetch the key from the db
+/// or make network requests, with valid response being saved to the db. Keys
+/// are thus managed internally so the user doesn't supply a buffer or ever
+/// construct this object; instead this object backed by internal db data is
+/// presented in the supplied synchronous closure.
+///
 /// 2.2.1.1 Publishing Keys
 ///
 /// Key                 Type, Description
@@ -63,7 +73,7 @@ namespace ircd::m::name
 /// tls_fingerprints    Array of Objects, Hashes of X.509 TLS certificates used by this this server encoded as Unpadded Base64.
 /// valid_until_ts      Integer, POSIX timestamp when the list of valid keys should be refreshed.
 ///
-struct ircd::m::key
+struct ircd::m::keys
 :json::tuple
 <
 	json::property<name::old_verify_keys, json::object>,
@@ -74,21 +84,22 @@ struct ircd::m::key
 	json::property<name::verify_keys, json::object>
 >
 {
-	static room keys;
+	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
+	using keys_closure = std::function<void (const keys &)>;
 
-	bool verify() const noexcept;
+	static m::room room;
+
+	static bool get_local(const string_view &server_name, const keys_closure &);
+	static bool verify(const keys &) noexcept;
+	static void set(const keys &);
+
+  public:
+	static void get(const string_view &server_name, const string_view &key_id, const string_view &query_server, const keys_closure &);
+	static void get(const string_view &server_name, const string_view &key_id, const key_closure &);
+	static void get(const string_view &server_name, const keys_closure &);
 
 	using super_type::tuple;
 	using super_type::operator=;
 };
-
-namespace ircd::m::keys
-{
-	using closure = std::function<void (const key &)>;
-
-	void set(const key &);
-	bool get(const string_view &server_name, const string_view &key_id, const closure &);
-	bool get(const string_view &server_name, const closure &);
-}
 
 #pragma GCC diagnostic pop
