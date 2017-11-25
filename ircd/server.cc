@@ -91,12 +91,27 @@ catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
 
-	log::error("read error: %s: %s",
+	log::error("read error: %s: %s: %s",
 	           string(server.n->remote),
+	           e.code().category().name(),
 	           e.what());
+
+	if(ircd::runlevel == ircd::runlevel::QUIT)
+		throw;
 
 	switch(e.code().value())
 	{
+		case SSL_R_SHORT_READ:
+		case boost::asio::error::eof:
+		{
+			auto &link{*begin(server.n->links)};
+			link.disconnect();
+			if(!link.connect(server.n->remote))
+				throw;
+
+			return read(server, start, stop);
+		}
+
 		case operation_canceled:
 			throw http::error(http::REQUEST_TIMEOUT);
 
@@ -121,12 +136,27 @@ catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
 
-	log::error("write error: %s: %s",
+	log::error("write error: %s: (%s #%d) %s",
 	           string(server.n->remote),
+	           e.code().category().name(),
+	           e.code().value(),
 	           e.what());
 
 	switch(e.code().value())
 	{
+		case SSL_R_SHORT_READ:
+		case boost::asio::error::eof:
+		case protocol_error:
+		case broken_pipe:
+		{
+			auto &link{*begin(server.n->links)};
+			link.disconnect();
+			if(!link.connect(server.n->remote))
+				throw;
+
+			return write(server, iov);
+		}
+
 		case operation_canceled:
 			throw http::error(http::REQUEST_TIMEOUT);
 
@@ -216,7 +246,31 @@ ircd::server::node::del(const size_t &num)
 //
 
 ircd::server::link::link(const net::remote &remote)
-:s{std::make_shared<net::socket>(remote)}
+:s{std::make_shared<net::socket>()}
 ,state{state::DEAD}
 {
+	connect(remote);
+}
+
+bool
+ircd::server::link::disconnect()
+{
+	return net::disconnect(*s);
+}
+
+bool
+ircd::server::link::connect(const net::remote &remote)
+{
+	if(connected())
+		return false;
+
+	s->connect(remote, 30000ms);
+	return true;
+}
+
+bool
+ircd::server::link::connected()
+const noexcept
+{
+	return net::connected(*s);
 }

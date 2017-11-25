@@ -84,6 +84,10 @@ struct ircd::server::link
 	std::deque<server *> q;
 	enum state state;
 
+	bool connected() const noexcept;
+	bool connect(const net::remote &);
+	bool disconnect();
+
 	link(const net::remote &remote);
 };
 
