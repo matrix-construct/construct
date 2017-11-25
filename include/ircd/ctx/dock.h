@@ -76,7 +76,7 @@ noexcept
 /// Wake up the next context waiting on the dock
 ///
 /// Unlike notify_one(), the next context in the queue is repositioned in the
-/// back before being woken up for better fairness.
+/// back before being woken up for fairness.
 inline void
 ircd::ctx::dock::notify()
 noexcept
