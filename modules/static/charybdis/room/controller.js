@@ -84,9 +84,15 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 
 	sender_domid(sender)
 	{
+		if(!sender)
+			return sender;
+
 		let sid = this.sender_sid(sender);
 		let domid = mc.m.domid(sender);
-		let remain = 26 - sid.length;
+		if(!domid)
+			return sender;
+
+		let remain = 24 - sid.length;
 		let start = remain < domid.length?  domid.length - remain : 0;
 		let ret = domid.substr(start, remain);
 		if(ret.length < domid.length)
@@ -99,8 +105,8 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 	{
 		let displayname = maybe(() => mc.users[sender].displayname);
 		let str = displayname? displayname : mc.m.sid(sender);
-		let len = 28 - 2;
-		return str.substr(0, len);
+		let len = 28 - 3;
+		return str? str.substr(0, len) : sender;
 	}
 
 	open_bracket(event)
@@ -155,7 +161,7 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 
 	dots_to_underscores(str)
 	{
-		return str.replace(/\./g, '_');
+		return defined(str)? str.replace(/\./g, '_') : str;
 	}
 
 	handler_exists(type)

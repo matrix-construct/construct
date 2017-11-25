@@ -91,6 +91,10 @@ room.events.prototype.can_render = function(event, $index)
 	if(this.room.control.content.type[event.type] === false)
 		return false;
 
+	//if(this.room.timeline.length > this.room.timeline.opts.limit)
+	//	if($index < this.room.timeline.horizon)
+	//		return false;
+
 	return true;
 };
 
@@ -108,12 +112,49 @@ room.events.prototype.can_show = function(event, $index)
 	if(this.room.control.content.event_id[event.event_id] === false)
 		return false;
 
-	if($index < this.room.timeline.horizon)
-		return false;
-
-	if(this.room.timeline.length > this.room.timeline.opts.limit)
-		if($index < this.room.timeline.opts.limit)
+	if($index < this.room.timeline.length - this.room.timeline.opts.limit)
+		if($index < this.room.timeline.horizon)
 			return false;
 
 	return true;
+};
+
+/* Right now before (if ever) the event timeline is split up into groupings
+ * of events to provide margins and collapse for a grouping we use this to
+ * determine if the event before it is
+ */
+room.events.prototype.is_grouping_start = function(event, $index)
+{
+	let prev = this.room.timeline[$index - 1];
+	if(!prev)
+		return true;
+
+	if(event.type == "m.room.message" && prev.type != event.type)
+		return true;
+
+	if(event.type == "m.room.message" && event.sender != prev.sender)
+		return true;
+
+	if(event.type != "m.room.message" && prev.type == "m.room.message")
+		return true;
+
+	return false;
+};
+
+room.events.prototype.is_grouping_end = function(event, $index)
+{
+	let next = this.room.timeline[$index + 1];
+	if(!next)
+		return false;
+
+	if(event.type == "m.room.message" && next.type != event.type)
+		return true;
+
+	if(event.type == "m.room.message" && next.sender != event.sender)
+		return true;
+
+	if(event.type != "m.room.message" && next.type == "m.room.message")
+		return true;
+
+	return false;
 };

@@ -14,7 +14,7 @@ lang="en"
 	/>
 	<meta
 	name="description"
-	content="Charybdis Five Internet Relay Chat Matrix"
+	content="Matrix Construct"
 	/>
 
 	<link
@@ -38,7 +38,7 @@ lang="en"
 	-->
 
 	<title>
-		Charybdis 5 - Internet Relay Chat Matrix
+		Matrix Construct
 	</title>
 </head>
 
@@ -48,7 +48,7 @@ ng-app="ircd"
 ng-class="{ loaded: true }"
 >
 
-<!----------------------------------------------------------------------------
+<!-- --------------------------------------------------------------------------
 
 	Charybdis 5 Client
 
@@ -75,7 +75,7 @@ ng-class="{ loaded: true }"
 	ng-foo="foo"
 	>
 
------------------------------------------------------------------------------>
+--------------------------------------------------------------------------- -->
 
 	
 <script
@@ -116,11 +116,11 @@ type="text/ng-template"
 </script>
 
 
-<!----------------------------------------------------------------------------
+<!-- --------------------------------------------------------------------------
 
 Rooms
 
------------------------------------------------------------------------------>
+--------------------------------------------------------------------------- -->
 
 
 <script
@@ -1074,7 +1074,10 @@ type="text/ng-template"
 	ircd-catch
 	>
 		<h3>
-			<b>I</b>nternet &nbsp; <b>R</b>elay &nbsp; <b>C</b>hat
+			<!-- <span class="matrix"><b>I</b>nter<b>A</b>ctive</span> -->
+			<span class="matrix"><b>M</b>atrix</span>
+			&nbsp;
+			<span class="construct"><b>C</b>onstruct</span>
 		</h3>
 		<input
 		name="username"
@@ -2033,8 +2036,12 @@ type="text/ng-template"
 	ng-class="event.content.membership"
 	>
 		<h1>
-			{{event.content.membership.toUpperCase()}}
+			MEMBER
 		</h1>
+
+		<h2>
+			{{event.content.membership.toUpperCase()}}
+		</h2>
 
 		<h3
 		ng-switch on="event.content.membership"
@@ -2045,29 +2052,45 @@ type="text/ng-template"
 			>
 				{{mc.m.sid(event.state_key)}}
 			</span>
+
 			<span
 			class="displayname state_key"
 			ng-if="!empty(event.content.displayname)"
 			>
-				{{event.content.displayname}}&nbsp; a.k.a &nbsp;{{mc.m.sid(event.state_key)}}
+				{{event.content.displayname}}
 			</span>
+			<span
+			ng-if="!empty(event.content.displayname)"
+			>
+				&nbsp;a.k.a.&nbsp;
+			</span>
+			<span
+			class="displayname state_key"
+			ng-if="!empty(event.content.displayname)"
+			>
+				{{mc.m.sid(event.state_key)}}
+			</span>
+
 			&nbsp;of&nbsp;
+
 			<span
 			class="domain"
 			>
 				{{mc.m.domid(event.state_key)}}
 			</span>
+
+			<!--
 			&nbsp;
 			<span ng-switch-when="join">joined</span>
 			<span ng-switch-when="leave">left</span>
-			<span ng-switch-when="invite">invited to</span>
+			<span ng-switch-when="invite">invited</span>
 			<span
 			class="default unhandled"
 			ng-switch-default
 			>
 				{{event.content.membership}}
 			</span>
-			&nbsp;the room.
+			-->
 		</h3>
 	</div>
 </script>
@@ -2082,9 +2105,9 @@ type="text/ng-template"
 		<h1>
 			CREATE
 		</h1>
-		<h2>
+		<h4>
 			{{ room.id }}
-		</h2>
+		</h4>
 	</div>
 </script>
 
@@ -2098,9 +2121,9 @@ type="text/ng-template"
 		<h1>
 			POWER LEVELS
 		</h1>
-		<h2>
+		<h4>
 			&nbsp;
-		</h2>
+		</h4>
 	</div>
 	<div
 	class="new levels"
@@ -2152,9 +2175,9 @@ type="text/ng-template"
 		<h1>
 			CANONICAL ALIAS
 		</h1>
-		<h2>
+		<h4>
 			{{ event.content.alias }}
-		</h2>
+		</h4>
 	</div>
 </script>
 
@@ -2168,9 +2191,9 @@ type="text/ng-template"
 		<h1>
 			JOIN RULES
 		</h1>
-		<h2>
+		<h4>
 			{{ event.content.join_rule }}
-		</h2>
+		</h4>
 	</div>
 	<div
 	class="join_rules menu"
@@ -2207,9 +2230,9 @@ type="text/ng-template"
 		<h1>
 			HISTORY VISIBILITY
 		</h1>
-		<h2>
+		<h4>
 			{{ event.content.history_visibility }}
-		</h2>
+		</h4>
 	</div>
 </script>
 
@@ -2223,9 +2246,9 @@ type="text/ng-template"
 		<h1>
 			GUEST ACCESS
 		</h1>
-		<h2>
+		<h4>
 			{{ event.content.guest_access }}
-		</h2>
+		</h4>
 	</div>
 </script>
 
@@ -2239,9 +2262,9 @@ type="text/ng-template"
 		<h1>
 			ALIASES
 		</h1>
-		<h2>
+		<h4>
 			&nbsp;
-		</h2>
+		</h4>
 	</div>
 	<div
 	class="aliases"
@@ -2265,18 +2288,43 @@ type="text/ng-template"
 		<h1>
 			ROOM NAME
 		</h1>
-		<h2
-		class="name full-center"
+		<h4
+		class="name center"
 		ng-if="!room.name"
 		>
 			{{ event.content.name }}
-		</h2>
-		<h3
-		class="name full-center"
+		</h4>
+		<h4
+		class="name center"
 		ng-if="room.name"
 		>
 			from <b>{{ room.name }}</b> to <b>{{ event.content.name }}</b>
-		</h3>
+		</h4>
+	</div>
+</script>
+
+<script
+id="ircd_room_event__m_room_topic"
+type="text/ng-template"
+>
+	<div
+	class="changed"
+	>
+		<h1>
+			TOPIC
+		</h1>
+		<h4
+		class="center"
+		>
+			&nbsp;
+		</h4>
+	</div>
+	<div
+	class="topic"
+	>
+		<p>
+			{{ event.content.topic }}
+		</p>
 	</div>
 </script>
 
@@ -2297,7 +2345,7 @@ type="text/ng-template"
 		class="text"
 		ng-switch-when="m.text"
 		>{{event.content.body}}</p>
-		
+
 		<p
 		class="emote"
 		ng-switch-when="m.emote"
@@ -2383,8 +2431,8 @@ type="text/ng-template"
 		<h1>
 			{{event.type}}
 		</h1>
-		<h2>
-		</h2>
+		<h4>
+		</h4>
 	</div>
 	<p
 	class="guru"
@@ -2452,6 +2500,10 @@ type="text/ng-template"
 	{
 		state: mc.event.is_state(event),
 		zoom: room.control.content.zoom == event.event_id,
+		grouping_start: events.is_grouping_start(event, $index),
+		grouping_end: events.is_grouping_end(event, $index),
+		show_info: room.control.show_event_info[event.event_id] !== undefined,
+		highlight: room.control.show_event_info[event.event_id] !== undefined,
 	}">
 		<label
 		for="{{event.event_id}}"

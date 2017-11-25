@@ -192,7 +192,6 @@ mc.main["beforeunload"] = function(event)
 {
 	mc.main.interrupt();
 	event.preventDefault();
-	event.stopPropagation();
 	return false;
 };
 
@@ -234,11 +233,17 @@ mc.main.fault = async function(error)
 			if(error.name == "timeout")
 			{
 				console.warn("client timeout");
-				delete mc.ng.root().error;
-				delete mc.ng.mc().error;
 				mc.ng.root().error = undefined;
 				mc.ng.mc().error = undefined;
 				mc.ng.apply.later();
+				await new Promise((res, rej) =>
+				{
+					mc.timeout(5000, () =>
+					{
+						res();
+					});
+				});
+
 				return true;
 			}
 

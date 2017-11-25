@@ -38,6 +38,11 @@
 	--fsG: 9px;
 
 	/* Paragraphs */
+	--fsPA: 19px;
+	--fsPB: 17px;
+	--fsPC: 16px;
+	--fsPD: 15px;
+	--fsPE: 11px;
 	--fsP: 15px;
 
 	/* Icons */
@@ -121,6 +126,7 @@ body.loaded
 	opacity: 1.0 !important;
 	transition: opacity 1.5s cubic-bezier(0.25, 0.01, 1.0, 1.0);
 }
+
 
 /**************************************************************
  * IRCd root class
@@ -250,6 +256,7 @@ body.loaded
 	font-size: var(--fsP);
 	font-family: NixieOne;
 	letter-spacing: 0.15pt;
+	line-height: 1.2em;
 	color: inherit;
 }
 
@@ -1034,16 +1041,6 @@ body.loaded
 
 
 /************************************************
- *  Event
- */
-
-.ircd form.event
-{
-
-}
-
-
-/************************************************
  ************************************************
  *
  * This is the root element of the application.
@@ -1193,34 +1190,31 @@ body.loaded
 #charybdis_login
 {
 	position: relative;
+	height: 100%;
 	flex-flow: column nowrap;
 	min-width: 25vw;
-	flex-shrink: 0;
-	align-self: stretch;
 	align-items: stretch;
 	justify-content: center;
 	background-color: var(--pal-AA);
 }
 
-#charybdis_login_form
-{
-	align-items: flex-end;
-	margin: 0px 1vw 0px 1vw;
-}
-
 .ircd .login_
 {
 	max-width: 50vw;
-	word-wrap: break-word;
+}
+
+#charybdis_login_form
+{
 }
 
 .ircd .login_ form
 {
-	display: flex;
 	position: relative;
 	flex-flow: column nowrap;
 	align-items: center;
 	justify-content: center;
+	margin: 0px;
+	padding: 0px;
 }
 
 /* This doesn't exist in the HTML until generated */
@@ -1254,19 +1248,28 @@ body.loaded
 
 .ircd .login_ h3
 {
-	font-size: 2.25vw;
-	align-self: center;
-	text-shadow: 1px 1px 0px var(--pal-AC);
+	font-size: 1.50vw;
+	align-self: flex-end;
 	align-items: baseline;
-	letter-spacing: -2px;
-	color: var(--pal-AD);
+	letter-spacing: -1px;
+	margin: 0px 10px 0px 10px;
 }
 
 .ircd .login_ h3 b
 {
-	text-shadow: 2px 1px 0px var(--pal-AC);
+	font-size: 1.95vw;
+}
+
+.ircd .login_ h3 .matrix
+{
+	text-shadow: 1px 1px 0px var(--pal-AB);
+	color: var(--pal-AD);
+}
+
+.ircd .login_ h3 .construct
+{
+	text-shadow: 1px 1px 0px var(--pal-AB);
 	color: var(--pal-CD);
-	font-size: 5vw;
 }
 
 .ircd .login_ h1:hover
@@ -1279,10 +1282,11 @@ body.loaded
 {
 	height: 65px;
 	width: 100%;
+	flex-grow: 0;
 	box-sizing: border-box;
-	margin: 10px 0px 0px 0px;
+	margin: 5px 0px 5px 0px;
 	padding: 0px 4px 0px 4px;
-	border-radius: 3px;
+	border-radius: 0px;
 }
 
 .ircd .login_ div.submit
@@ -1298,8 +1302,10 @@ body.loaded
 {
 	align-items: center;
 	justify-content: center;
+	margin: 5px 0px 5px 0px;
 	padding: 10px 15px 10px 15px;
-	border: 1px solid var(--pal-AD);
+	border-top: 1px solid var(--pal-AD);
+	border-bottom: 1px solid var(--pal-AD);
 	letter-spacing: 1px;
 	font-weight: bold;
 	font-size: 17px;
@@ -1308,12 +1314,10 @@ body.loaded
 
 .ircd .login_ .submit button[name=login_]
 {
-	margin-right: 5px;
 }
 
 .ircd .login_ .submit button[name=register]
 {
-	margin-left: 5px;
 }
 
 .ircd .login_ button.submit:hover
@@ -1367,19 +1371,18 @@ div.main
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: flex-start;
-	border-left: 1px solid var(--pal-AC);
 }
 
 .ircd .rooms
-.main h1
+div.main > *
 {
-	display: flex;
-	flex-grow: 1;
-	flex-shrink: 0;
-	align-items: flex-end;
-	justify-content: center;
-	margin-top: 5px;
-	margin-bottom: 5px;
+	border-left: 1px solid var(--pal-AB);
+}
+
+.ircd .rooms
+div.main > div:first-child
+{
+	border-left: 1px solid var(--pal-AC);
 }
 
 .ircd .rooms
@@ -1809,7 +1812,8 @@ div.main > form.search label
 
 .ircd div.rooms div.current
 {
-	flex-flow: column nowrap;
+	flex-flow: row nowrap;
+	flex-grow: 1;
 }
 
 /************************************************
@@ -1817,12 +1821,6 @@ div.main > form.search label
  *  Room
  *
  */
-
-#charybdis_room
-{
-	flex-grow: 1;
-	flex-basis: 100%
-}
 
 .ircd div.room
 {
@@ -2620,8 +2618,7 @@ div.main > form.search label
 	justify-content: flex-start;
 	background-color: var(--pal-DE);
 	border-top: 1px solid var(--pal-AD);
-	overflow-y: auto;
-	overflow-x: hidden;
+	border-left: 1px solid var(--pal-AE);
 }
 
 .ircd .room div.members div.menu
@@ -2630,7 +2627,6 @@ div.main > form.search label
 	flex-flow: row nowrap;
 	align-items: stretch;
 	padding: 5px 4px 5px 4px;
-	border-bottom: 1px solid var(--pal-AD);
 	background-color: var(--pal-AA);
 }
 
@@ -2672,7 +2668,23 @@ div.main > form.search label
 	align-items: stretch;
 	justify-content: flex-start;
 	background-color: var(--pal-DE);
-	border-left: 1px solid var(--pal-AE);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.ircd .room div.main div.members ::-webkit-scrollbar-thumb
+{
+	background-color: var(--pal-DE);
+}
+
+.ircd .room div.main div.members ::-webkit-scrollbar-track
+{
+	background-color: var(--pal-AA);
+}
+
+.ircd .room div.main div.members ::-webkit-scrollbar-button
+{
+	background-color: var(--pal-AA);
 }
 
 .ircd .room div.members div.list .loading i
@@ -2683,6 +2695,7 @@ div.main > form.search label
 
 .ircd .room div.members div.list div.member
 {
+	flex-grow: 1;
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: center;
@@ -2693,6 +2706,7 @@ div.main > form.search label
 
 .ircd .room div.members div.list .member div.head
 {
+	flex-grow: 1;
 	position: relative;
 	flex-flow: row nowrap;
 	align-items: center;
@@ -2726,6 +2740,7 @@ div.main > form.search label
 {
 	padding: 1px 2px 1px 2px;
 	border-radius: 3px;
+	font-size: calc(var(--fsF));
 }
 
 .ircd .room div.members div.list .member.active div.head .idle
@@ -2746,7 +2761,6 @@ div.main > form.search label
 
 .ircd .room div.members div.list .member div.head .domain
 {
-	align-self: flex-end;
 	padding: 1px 3px 1px 3px;
 	max-width: 20ch;
 	text-overflow: ellipsis;
@@ -2797,7 +2811,7 @@ div.main > form.search label
 
 .ircd .room div.members div.list .member div.info
 {
-	flex-grow: 1;
+	flex-grow: 8;
 	flex-shrink: 0;
 	flex-flow: column nowrap;
 	align-items: stretch;
@@ -2893,16 +2907,16 @@ div.main > form.search label
 	align-items: center;
 	justify-content: flex-end;
 	padding: 0px 5px 0px 5px;
-	background-color: var(--pal-AA);
 	cursor: pointer;
 }
 
 .ircd .room div.members div.list .member .info div.event p
 {
+	word-wrap: break-word;
 	font-size: calc(var(--fsE));
 	font-family: courier;
 	font-weight: bold;
-	color: white;
+	color: var(--pal-AA);
 }
 
 .ircd .room div.members div.list .member .info div.event p:hover
@@ -2915,37 +2929,26 @@ div.main > form.search label
 	flex-grow: 1;
 	flex-flow: column nowrap;
 	align-items: stretch;
-	justify-content: flex-start;
-	padding: 5px 5px 5px 5px;
-	border-top: 1px solid var(--pal-AD);
+	padding: 2px;
 }
 
 .ircd .room div.members div.list .member .info .menu .item
 {
-	flex-grow: 0;
-	position: relative;
-	flex-flow: row nowrap;
+	flex-flow: column nowrap;
 	align-items: center;
-	justify-content: stretch;
-	background-color: var(--pal-AD);
-	margin: 4px 5px 5px 5px;
-	border-radius: 5px;
-}
-
-.ircd .room div.members div.list .member .info .menu .item:hover
-{
-	background-color: var(--pal-AC);
-}
-
-.ircd .room div.members div.list .member .info .menu .item .name
-{
-	align-self: center;
+	justify-content: center;
+	background-color: var(--pal-AA);
 }
 
 .ircd .room div.members div.list .member .menu .item .icon
 {
-	position: absolute;
 	font-size: calc(var(--fsIB));
+}
+
+.ircd .room div.members div.list .member .info .menu .item .name
+{
+	text-align: center;
+	font-size: calc(var(--fsC));
 }
 
 .ircd .room div.members div.invite
@@ -2994,12 +2997,12 @@ div.main > form.search label
 .ircd .room div.members form.search
 {
 	position: relative;
+	flex-shrink: 0;
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: stretch;
 	margin: 0px 0px 0px 0px;
 	padding: 0px 0px 0px 0px;
-	border-left: 1px solid var(--pal-AE);
 	background-color: var(--pal-DE);
 }
 
@@ -3008,12 +3011,12 @@ div.main > form.search label
 	padding: 2px 4px 2px 4px;
 	align-self: flex-end;
 	color: var(--pal-AC);
+	display: none;
 }
 
 .ircd .room div.members form.search input
 {
 	height: 24px;
-	width: 100%;
 	border-top: 1px solid var(--pal-AE);
 	padding: 5px 10px 5px 10px;
 	margin: 0px 0px 0px 0px;
@@ -3132,7 +3135,7 @@ div.main > form.search label
 	flex-shrink: 0;
 	position: relative;
 	flex-flow: row nowrap;
-	align-items: flex-start;
+	align-items: first baseline;
 	justify-content: flex-start;
 	align-content: flex-start;
 	direction: ltr;
@@ -3149,6 +3152,21 @@ div.main > form.search label
 .ircd .room div.main div.event.zoom
 {
 	margin-top: 5px;
+}
+
+.ircd .room .main div.event.grouping_start
+{
+	padding-top: 6px;
+}
+
+.ircd .room .main div.event.grouping_end
+{
+	padding-bottom: 6px;
+}
+
+.ircd .room div.main div.event.show_info
+{
+	border: 1px dashed var(--pal-DC);
 }
 
 .ircd .room div.main div.event div.timeline
@@ -3178,40 +3196,90 @@ div.main > form.search label
 
 .ircd .room div.main div.event div.timeline div.info
 {
-	padding: 10px 10px 10px 5px;
+	position: relative;
+	padding: 5px 5px 5px 5px;
 	border-radius: 0px 5px 5px 0px;
-	background-color: var(--pal-AD);
+	background-color: var(--pal-AA);
 }
 
 .ircd .room div.main div.event div.timeline div.info .id
 {
 	align-items: flex-end;
-	font-size: calc(var(--fsD));
+	font-size: calc(var(--fsE));
+	font-family: monospace;
 	font-weight: bold;
 	color: white;
-	border-bottom: 1px dotted var(--pal-AE);
+	border-bottom: 1px solid var(--pal-AD);
 }
 
 .ircd .room div.main div.event div.timeline div.info form
 {
-	margin: 10px 0px 10px 0px;
+	position: relative;
 }
 
 .ircd .room div.main div.event div.timeline div.info form.event
 {
-	padding-top: 5px;
 	border-left: 0px;
-	background-color: var(--pal-AD);
 	border-radius: 0px 0px 0px 0px;
+}
+
+.ircd .room div.main div.event div.timeline div.info form.event div.object
+{
+	flex-grow: 1;
+	box-sizing: border-box;
+	border-top: 0px solid var(--pal-AD);
+	border-bottom: 0px solid var(--pal-AD);
+	border-left: 0px solid var(--pal-AD);
+	border-radius: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+.ircd .room div.main div.event div.timeline div.info form.event div.member
+{
+	box-sizing: border-box;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 1px 0px;
+}
+
+.ircd .room div.main div.event div.timeline div.info form.event div.member:first-child
+{
+	margin-top: 0px;
+	padding-top: 0px;
+}
+
+.ircd .room div.main div.event div.timeline div.info form.event div.member:last-child
+{
+	margin-bottom: 0px;
+	padding-bottom: 0px;
 }
 
 .ircd .room div.main div.event div.timeline div.info form.event .key
 {
+	box-sizing: border-box;
+	align-self: stretch;
+	align-items: center;
+	justify-content: flex-start;
+	border-bottom: 1px solid var(--pal-AD);
+	font-size: calc(var(--fsF));
 	color: white;
+	text-align: center;
+}
+
+.ircd .room div.main div.event div.timeline div.info form.event input.value
+{
+	box-sizing: border-box;
+	margin: 0px 1px 0px 1px;
+	padding: 0px 5px 0px 5px;
+	align-items: center;
+	justify-content: center;
+	font-family: courier;
+	font-size: calc(var(--fsE));
 }
 
 .ircd .room div.main div.event div.timeline div.info form.menu
 {
+	display: none
 }
 
 .ircd .room div.main div.event div.timeline div.info form.menu .name
@@ -3236,10 +3304,13 @@ div.main > form.search label
 .ircd .room div.main div.event .sender,
 .ircd .room div.main div.event .target
 {
+	flex-shrink: 0;
 	flex-flow: row nowrap;
-	align-self: flex-start;
-	align-items: center;
+	align-self: first baseline;
+	align-items: first baseline;
 	justify-content: flex-end;
+	font-size: 16px;
+	width: 20ch;
 	white-space: nowrap;
 	/* overflow-wrap: break-word; */
 	/* overflow: hidden; */
@@ -3248,12 +3319,11 @@ div.main > form.search label
 	letter-spacing: 0px;
 	font-weight: normal;
 	color: var(--pal-AB);
-	width: 25ch;
 }
 
 .ircd .room div.main div.event .sender
 {
-	padding: 0px 10px 0px 5px;
+	padding: 0px 15px 0px 5px;
 }
 
 .ircd .room div.main div.event .target
@@ -3265,7 +3335,6 @@ div.main > form.search label
 .ircd .room div.main div.event .target .name
 {
 	font-weight: normal;
-	font-size: 16px;
 	color: var(--pal-BB);
 }
 
@@ -3295,7 +3364,7 @@ div.main > form.search label
 .ircd .room div.main div.event .sender .bracket,
 .ircd .room div.main div.event .target .bracket
 {
-	display: inline-flex;
+	align-self: center;
 }
 
 .ircd .room div.main div.event .sender .domain,
@@ -3304,17 +3373,21 @@ div.main > form.search label
 	align-self: center;
 	font-size: 11px;
 	color: var(--pal-AD);
-	padding: 0px 1px 0px 2px;
+	padding: 0px 1px 1px 2px;
 }
 
 /* Message events */
 
 .ircd .room div.main div.event div.message
 {
-	align-self: stretch;
-	align-items: flex-start;
+	align-self: flex-start;
+	align-items: center;
+	justify-content: flex-start;
+	text-align: left;
 	line-break: strict;
 	color: var(--pal-AB);
+	overflow-wrap: normal;
+	padding-right: 8ch; /* added for the timestamp for now */
 }
 
 .ircd .room div.main div.event .message .default
@@ -3327,17 +3400,20 @@ div.main > form.search label
 	justify-content: flex-end;
 }
 
-.ircd .room div.main div.event .message .text
+.ircd .room div.main div.event .message p.text
 {
 	flex-grow: 0;
-	font-family: Lato;
-	padding: 0px 5px 0px 5px;
-	font-size: calc(var(--fsP));
-	line-height: 1em;
+	font-family: Helvetica;
+	padding: 0px 0px 0px 0px;
+	font-size: calc(var(--fsPC));
 	line-break: strict;
 	word-wrap: normal;
 	overflow-wrap: normal;
 	white-space: pre-wrap;
+	font-smoothing: antialiased;
+	-moz-font-smoothing: antialiased;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 	color: black;
 }
 
@@ -3360,6 +3436,10 @@ div.main > form.search label
 
 .ircd .room div.main div.event .message .emote
 {
+	flex-grow: 0;
+	font-family: Arial;
+	line-height: 1em;
+	color: var(--pal-AC);
 }
 
 .ircd .room div.main div.event .message .image
@@ -3463,27 +3543,27 @@ div.main > form.search label
 	align-items: stretch;
 	justify-content: flex-start;
 	padding: 0px 0px 0px 0px;
-	margin: 1px 0px 0px 0px;
+	margin: 0px 0px 1px 0px;
 }
 
 .ircd .room .main div.state.event div.handler div.changed h1
 {
 	flex-grow: 0;
+	flex-shrink: 0;
 	flex-basis: 25%;
+	max-width: 20ch;
 	align-self: stretch;
 	align-items: center;
-	text-align: center;
 	justify-content: center;
-	padding: 5px 10px 5px 10px;
 	margin: 0px;
-	font-size: calc(var(--fsB));
-	background-color: var(--pal-AA);
-	text-shadow: 0px 0px var(--pal-AC);
+	padding: 1px 10px 1px 10px;
 	border-top: 1px solid var(--pal-AB);
 	border-left: 1px solid var(--pal-AB);
-	border-bottom: 1px solid var(--pal-AB);
-	border-right: 1px solid var(--pal-AD);
-	border-radius: 3px 0px 0px 3px;
+	border-radius: 3px 0px 0px 0px;
+	background-color: var(--pal-AA);
+	font-size: calc(var(--fsC));
+	text-shadow: 0px 0px var(--pal-AC);
+	text-align: center;
 	color: var(--pal-DE);
 }
 
@@ -3492,9 +3572,39 @@ div.main > form.search label
 	border: 2px dotted var(--pal-DF);
 }
 
-	/* background: -webkit-linear-gradient(left, var(--pal-DD), var(--pal-DE)); */
-
 .ircd .room .main div.state.event div.handler div.changed h2
+{
+	flex-grow: 0;
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	width: 12ch;
+	padding: 1px 5px 1px 5px;
+	margin: 0px;
+	font-size: calc(var(--fsC));
+	border-top: 1px solid var(--pal-DA);
+	border-right: 1px solid var(--pal-DA);
+	background-color: var(--pal-DD);
+	color: var(--pal-AC);
+}
+
+.ircd .room .main div.state.event div.handler div.changed h3
+{
+	flex-grow: 1;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0px 10px 0px 10px;
+	margin: 0px 0px 0px 0px;
+	font-size: calc(var(--fsE));
+	border-top: 1px solid var(--pal-DD);
+	border-right: 1px solid var(--pal-DD);
+	border-radius: 0px 3px 0px 0px;
+	font-weight: normal;
+	color: black;
+}
+
+.ircd .room .main div.state.event div.handler div.changed h4
 {
 	flex-grow: 1;
 	align-self: stretch;
@@ -3502,58 +3612,38 @@ div.main > form.search label
 	justify-content: center;
 	padding: 0px 0px 0px 0px;
 	margin: 0px 0px 0px 0px;
-	font-size: calc(var(--fsB));
-	border-top: 1px solid var(--pal-DA);
-	border-right: 1px solid var(--pal-DA);
-	border-bottom: 1px solid var(--pal-DA);
-	border-radius: 0px 3px 3px 0px;
+	font-size: calc(var(--fsC));
+	border-top: 1px solid var(--pal-DD);
+	border-right: 1px solid var(--pal-DD);
+	border-radius: 0px 3px 0px 0px;
 	color: black;
 }
 
-.ircd .room .main div.state.event div.handler.unhandled div.changed h2
+.ircd .room .main div.state.event div.handler.unhandled div.changed h3
 {
 	color: var(--pal-CC);
 	font-family: monospace;
 }
 
-.ircd .room .main div.state.event div.handler div.changed h3
-{
-	flex-grow: 1;
-	flex-flow: row nowrap;
-	align-self: stretch;
-	align-items: center;
-	justify-content: flex-start;
-	letter-spacing: 1px;
-	padding: 0px 10px 0px 10px;
-	margin: 0px;
-	font-size: calc(var(--fsC));
-	border-top: 1px solid var(--pal-DA);
-	border-right: 1px solid var(--pal-DA);
-	border-bottom: 1px solid var(--pal-DA);
-	border-radius: 0px 3px 3px 0px;
-	color: var(--pal-AB);
-}
-
 .ircd .room .main div.state.event div.handler div.changed > *
 {
-	align-self: center;
 }
 
 .ircd .room .main div.state.event div.m_room_member div.changed span
 {
-	font-weight: bold;
 }
 
 .ircd .room .main div.state.event div.m_room_member div.changed span.state_key
 {
 	color: var(--pal-BB);
-	font-size: calc(var(--fsB));
+	font-size: calc(var(--fsD));
 }
 
 .ircd .room .main div.state.event div.m_room_member div.changed span.domain
 {
 	color: var(--pal-AA);
-	font-size: calc(var(--fsB));
+	font-size: calc(var(--fsD));
+	font-weight: normal;
 }
 
 .ircd .room .main div.event.state div.m_room_power_levels div.levels

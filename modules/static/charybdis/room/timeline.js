@@ -71,7 +71,7 @@ room.timeline.opts =
 	// The number of non-state events in the timeline is trimmed to this value
 	// on the antipode to the last insertion. Increasing this value can make
 	// scrolling smoother. Decreasing this value can save memory.
-	limit: 512,
+	limit: mc.opts.timeline_limit,
 
 	// Keeps the timeline filled to the limit
 	autofill: true,

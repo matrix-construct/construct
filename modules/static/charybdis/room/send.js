@@ -141,8 +141,8 @@ room.send.message.text = function(text, opts = {})
 	{
 		content:
 		{
-			msgtype: "m.text",
 			body: text,
+			msgtype: "m.text",
 		},
 	});
 
@@ -158,8 +158,8 @@ room.send.message.emote = function(text, opts = {})
 	{
 		content:
 		{
-			msgtype: "m.emote",
 			body: text,
+			msgtype: "m.emote",
 		}
 	});
 
@@ -175,9 +175,9 @@ room.send.message.image = function(url, body = url, opts = {})
 	{
 		content:
 		{
+			body: body,
 			msgtype: "m.image",
 			url: url,
-			body: body,
 		},
 	});
 
@@ -193,13 +193,13 @@ room.send.message.video = function(url, body = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef
 	{
 		content:
 		{
-			url: url,
-			msgtype: "m.video",
+			body: body,
 			info:
 			{
 				mimetype: "text/plain"
 			},
-			body: body,
+			msgtype: "m.video",
+			url: url,
 		},
 	});
 

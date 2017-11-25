@@ -78,6 +78,9 @@ mc.opts =
 	// timestamp.
 	ordering: true,
 
+	// Default setting for number of events rendered/shown by the timeline
+	timeline_limit: 256,
+
 	account_data:
 	{
 		key: "ircd_storage",
