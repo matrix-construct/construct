@@ -33,7 +33,7 @@ const char *const generic_message
 
 const size_t stack_sz
 {
-	1_MiB
+	8_MiB
 };
 
 bool console_active;
@@ -45,12 +45,17 @@ static bool handle_line(const std::string &line);
 static void execute(const std::vector<std::string> lines);
 static void console();
 
+static
+void check_console_active()
+{
+	if(console_active)
+		throw ircd::error("Console is already active and cannot be reentered");
+}
+
 void
 console_execute(const std::vector<std::string> &lines)
 {
-	if(console_active)
-		return;
-
+	check_console_active();
 	ircd::context
 	{
 		"execute", stack_sz, std::bind(&execute, lines), ircd::context::DETACH
@@ -60,11 +65,7 @@ console_execute(const std::vector<std::string> &lines)
 void
 console_spawn()
 {
-	if(console_active)
-		return;
-
-	// The console function is executed asynchronously.
-	// The DETACH indicates it will clean itself up.
+	check_console_active();
 	ircd::context
 	{
 		"console", stack_sz, std::bind(&console), ircd::context::DETACH
@@ -778,8 +779,8 @@ try
 			{
 				"PUT", url, query, json::members
 				{
-					{ "msgtype", msgtype },
-					{ "body", text }
+					{ "body", text },
+					{ "msgtype", msgtype }
 				}
 			};
 
@@ -968,29 +969,47 @@ try
 				token_count(args, " ")
 			};
 
+			size_t arg(0);
 			const string_view server_name
 			{
-				argc >= 1? token(args, " ", 0) : ""
+				token(args, " ", arg++)
 			};
 
 			const string_view key_id
 			{
-				argc >= 2? token(args, " ", 1) : ""
+				argc >= ++arg? token(args, " ", arg - 1) : ""
 			};
 
-			const auto got
+			const string_view query_server
 			{
+				argc >= ++arg? token(args, " ", arg - 1) : ""
+			};
+
+			if(key_id && query_server)
+			{
+				m::keys::get(server_name, key_id, query_server, []
+				(const auto &keys)
+				{
+					std::cout << keys << std::endl;
+				});
+			}
+			else if(key_id)
+			{
+				const string_view key_id{token(args, " ", 1)};
 				m::keys::get(server_name, key_id, []
 				(const auto &key)
 				{
-					std::cout << key.verify() << std::endl;
 					std::cout << key << std::endl;
-				})
-			};
-
-			if(!got)
-				std::cerr << "failed" << std::endl;
-
+				});
+			}
+			else
+			{
+				m::keys::get(server_name, []
+				(const auto &keys)
+				{
+					std::cout << keys << std::endl;
+				});
+			}
 			break;
 		}
 
@@ -1017,6 +1036,65 @@ try
 			};
 
 			m::vm::backfill(room, event_id, limit);
+			break;
+		}
+
+		case hash("statefill"):
+		{
+			const auto args
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+			const m::room::id room_id
+			{
+				token(args, ' ', 0)
+			};
+
+			const m::event::id event_id
+			{
+				token(args, ' ', 1)
+			};
+
+			m::vm::statefill(room_id, event_id);
+			break;
+		}
+
+		case hash("fedstate"):
+		{
+			const auto args
+			{
+				tokens_after(line, ' ', 0)
+			};
+
+			const m::room::id room_id
+			{
+				token(args, ' ', 0)
+			};
+
+			const m::event::id event_id
+			{
+				token(args, ' ', 1)
+			};
+
+			const unique_buffer<mutable_buffer> buf
+			{
+				64_MiB
+			};
+
+			const m::room::state state
+			{
+				room_id, event_id, buf
+			};
+
+			std::cout << pretty(state) << std::endl;
+
+			for_each(state, [](const auto &key, const auto &val)
+			{
+				if(bool(json::get<"event_id"_>(val)))
+					std::cout << pretty_oneline(val) << std::endl;
+			});
+
 			break;
 		}
 
@@ -1096,29 +1174,13 @@ try
 				token(args, ' ', 1)
 			};
 
-			m::join(room_id, user_id);
-			break;
-		}
-
-		case hash("fedstate"):
-		{
-			const auto args
+			json::iov iov;
+			json::iov::push push[]
 			{
-				tokens_after(line, ' ', 0)
+				{ iov, { "sender", user_id } }
 			};
 
-			const m::room room
-			{
-				m::room::id{token(args, ' ', 0)}
-			};
-
-			const m::event::id event_id
-			{
-				token(args, ' ', 1)
-			};
-
-			m::vm::state(room, event_id);
-
+			m::vm::join(room_id, iov);
 			break;
 		}
 
@@ -1135,7 +1197,12 @@ try
 			};
 
 			static char buf[65536];
-			std::cout << m::get(event_id, buf) << std::endl;
+			const m::event event
+			{
+				event_id, buf
+			};
+
+			std::cout << event << std::endl;
 			break;
 		}
 
@@ -1151,7 +1218,8 @@ try
 				token(args, ' ', 0)
 			};
 
-			const net::remote remote
+			struct m::io::fetch::opts opts;
+			opts.hint = net::remote
 			{
 				token(args, ' ', 1)
 			};
@@ -1159,7 +1227,7 @@ try
 			static char buf[65536];
 			m::event::fetch fetch
 			{
-				event_id, buf, remote
+				event_id, buf, &opts
 			};
 
 			std::cout << m::io::acquire(fetch) << std::endl;
@@ -1208,20 +1276,139 @@ try
 			break;
 		}
 
-		case hash("acquire"):
+		case hash("eval"):
+		{
+			const auto args{tokens_after(line, ' ', 0)};
+			const params token{args, " ",
+			{
+				"event_id"
+			}};
+
+			m::event::id event_id
+			{
+				token.at(0)
+			};
+
+			if(m::vm::exists(event_id))
+			{
+				std::cout << "exists" << std::endl;
+				break;
+			}
+
+			static char buf[65536];
+			m::event::fetch fetch
+			{
+				event_id, buf
+			};
+
+			m::io::acquire(fetch);
+			if(bool(fetch.error))
+				std::rethrow_exception(fetch.error);
+
+			assert(bool(fetch.pdu));
+			const m::event event
+			{
+				fetch.pdu
+			};
+
+			m::vm::eval{event};
+			std::cout << pretty_oneline(event) << std::endl;
+			break;
+		}
+
+		case hash("exec"):
 		{
 			const auto args
 			{
 				tokens_after(line, ' ', 0)
 			};
 
-			const m::event::id event_id
+			const params token{args, " ",
 			{
-				token(args, ' ', 0)
+				"file path", "limit"
+			}};
+
+			const auto path
+			{
+				token.at(0)
 			};
 
-			static char buf[65536];
-			std::cout << m::vm::acquire(event_id, buf) << std::endl;
+			const auto limit
+			{
+				token.at<size_t>(1)
+			};
+
+			const auto start
+			{
+				token[2]? lex_cast<size_t>(token[2]) : 0
+			};
+
+			//TODO: The file might be too large for a single read into ram for
+			// a big synapse server. We will need an iteration of the file
+			// instead.
+
+			const std::string data
+			{
+				ircd::fs::read(std::string(path))
+			};
+
+			std::cout << "read " << data.size() << " bytes " << std::endl;
+
+			const json::vector vector
+			{
+				data
+			};
+
+			struct ircd::m::vm::opts opts;
+			ircd::m::vm::eval eval
+			{
+				opts
+			};
+
+			size_t j(0), s(0);
+			static const auto max{1024};
+			for(auto it(begin(vector)); it != end(vector) && j < limit;)
+			{
+				if(s++ < start)
+				{
+					++it;
+					continue;
+				}
+
+				size_t i(0);
+				std::array<m::event, max> a;
+				for(; i < max && it != end(vector) && j < limit; ++it)
+				{
+					const json::object obj{*it};
+					{
+						a[i] = m::event{*it};
+						++i, ++j;
+					}
+				}
+
+				switch(eval(vector_view<const m::event>(a.data(), i)))
+				{
+					using fault = m::vm::fault;
+
+					case fault::ACCEPT:
+						continue;
+
+					case fault::EVENT:
+						std::cout << "EVENT FAULT " << eval.ef.size() << std::endl;
+						//for(const auto &eid : eval.ef)
+						//	std::cout << eid << std::endl;
+						break;
+
+					case fault::STATE:
+						std::cout << "STATE FAULT " << std::endl;
+						break;
+
+					default:
+						std::cout << "FAULT " << std::endl;
+						break;
+				}
+			}
+
 			break;
 		}
 
