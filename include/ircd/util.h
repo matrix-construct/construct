@@ -1260,11 +1260,78 @@ struct unlock_guard
 };
 
 
+template<class T>
+constexpr bool
+is_bool()
+{
+	using type = typename std::remove_reference<T>::type;
+	return std::is_same<type, bool>::value;
+}
+
+template<class T>
+constexpr bool
+is_number()
+{
+	using type = typename std::remove_reference<T>::type;
+	return std::is_arithmetic<type>::value;
+}
+
+template<class T>
+constexpr bool
+is_floating()
+{
+	using type = typename std::remove_reference<T>::type;
+	return is_number<T>() && std::is_floating_point<type>();
+}
+
+template<class T>
+constexpr bool
+is_integer()
+{
+	return is_number<T>() && !is_floating<T>();
+}
+
 struct is_zero
 {
-	bool operator()(const size_t &value) const
+	template<class T>
+	typename std::enable_if
+	<
+		is_bool<T>(),
+	bool>::type
+	test(const bool &value)
+	const
+	{
+		return !value;
+	}
+
+	template<class T>
+	typename std::enable_if
+	<
+		is_integer<T>() &&
+		!is_bool<T>(),
+	bool>::type
+	test(const size_t &value)
+	const
 	{
 		return value == 0;
+	}
+
+	template<class T>
+	typename std::enable_if
+	<
+		is_floating<T>(),
+	bool>::type
+	test(const double &value)
+	const
+	{
+		return !(value > 0.0 || value < 0.0);
+	}
+
+	template<class T>
+	bool operator()(T&& t)
+	const
+	{
+		return test<T>(std::forward<T>(t));
 	}
 };
 
