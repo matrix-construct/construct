@@ -88,10 +88,13 @@ noexcept
 {
 	interrupt();
 
-	if(request.active() || request.size())
+	if(request.active())
 		log::warning("Joining %zu active of %zu remaining request contexts...",
 		             request.active(),
 		             request.size());
+	else
+		log::debug("Waiting for %zu request contexts to join...",
+		           request.size());
 
 	request.join();
 
