@@ -26,20 +26,22 @@
 #include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
-namespace ircd {
-namespace fs   {
-
-using namespace boost::filesystem;
-
-enum
+namespace ircd::fs
 {
-	NAME  = 0,
-	PATH  = 1,
-};
+	using namespace boost::filesystem;
 
-using ent = std::pair<std::string, std::string>;
+	enum
+	{
+		NAME  = 0,
+		PATH  = 1,
+	};
 
-std::array<ent, num_of<index>()> paths
+	using ent = std::pair<std::string, std::string>;
+	extern const std::array<ent, num_of<index>()> paths;
+}
+
+decltype(ircd::fs::paths)
+ircd::fs::paths
 {{
 	{ "prefix",            DPATH         },
 	{ "binary dir",        BINPATH       },
@@ -47,19 +49,10 @@ std::array<ent, num_of<index>()> paths
 	{ "log",               LOGPATH       },
 	{ "libexec dir",       PKGLIBEXECDIR },
 	{ "modules",           MODPATH       },
-	{ "user help",         UHPATH        },
-	{ "oper help",         HPATH         },
 	{ "ircd.conf",         CPATH         },
 	{ "ircd binary",       SPATH         },
-	{ "ircd.motd",         MPATH         },
-	{ "ircd.log",          LPATH         },
-	{ "oper motd",         OPATH         },
-	{ "bandb",             BDBPATH       },
 	{ "db",                DBPATH        },
 }};
-
-} // namespace fs
-} // namespace ircd
 
 bool
 ircd::fs::write(const std::string &path,

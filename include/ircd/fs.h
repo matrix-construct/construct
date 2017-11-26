@@ -50,18 +50,12 @@ namespace ircd::fs
 
 	constexpr auto DPATH = IRCD_PREFIX;
 	constexpr auto BINPATH = IRCD_PREFIX "/bin";
-	constexpr auto MODPATH = RB_MODULE_DIR;
 	constexpr auto ETCPATH = RB_ETC_DIR;
 	constexpr auto LOGPATH = RB_LOG_DIR;
-	constexpr auto UHPATH = RB_HELP_DIR "/users";
-	constexpr auto HPATH = RB_HELP_DIR "/opers";
-	constexpr auto SPATH = RB_BIN_DIR "/" BRANDING_NAME;         // ircd executable
+	constexpr auto MODPATH = RB_MODULE_DIR;
 	constexpr auto CPATH = RB_ETC_DIR "/ircd.conf";              // ircd.conf file
-	constexpr auto MPATH = RB_ETC_DIR "/ircd.motd";              // MOTD file
-	constexpr auto LPATH = RB_LOG_DIR "/ircd.log";               // ircd logfile
-	constexpr auto OPATH = RB_ETC_DIR "/opers.motd";             // oper MOTD file
+	constexpr auto SPATH = RB_BIN_DIR "/" BRANDING_NAME;         // ircd executable
 	constexpr auto DBPATH = PKGLOCALSTATEDIR "/db";              // database prefix
-	constexpr auto BDBPATH = PKGLOCALSTATEDIR "/ban.db";         // bandb file
 
 	// Below are the elements for default paths.
 	enum index
@@ -72,15 +66,10 @@ namespace ircd::fs
 		LOG,
 		LIBEXEC,
 		MODULES,
-		USERHELP,
-		OPERHELP,
 		IRCD_CONF,
 		IRCD_EXEC,
-		IRCD_MOTD,
-		IRCD_LOG,
-		IRCD_OMOTD,
-		BANDB,
 		DB,
+
 		_NUM_
 	};
 
