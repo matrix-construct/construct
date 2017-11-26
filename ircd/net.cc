@@ -605,10 +605,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			unquote(opts["ssl_certificate_chain_file"])
 		};
 
+		if(!fs::exists(filename))
+			throw error("%s: SSL certificate chain file @ `%s' not found",
+			            std::string(*this),
+			            filename);
+
 		ssl.use_certificate_chain_file(filename);
 		log.info("%s using certificate chain file '%s'",
-		          std::string(*this),
-		          filename);
+		         std::string(*this),
+		         filename);
 	}
 
 	if(opts.has("ssl_certificate_file_pem"))
@@ -618,10 +623,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			unquote(opts["ssl_certificate_file_pem"])
 		};
 
+		if(!fs::exists(filename))
+			throw error("%s: SSL certificate pem file @ `%s' not found",
+			            std::string(*this),
+			            filename);
+
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
 		log.info("%s using certificate file '%s'",
-		          std::string(*this),
-		          filename);
+		         std::string(*this),
+		         filename);
 	}
 
 	if(opts.has("ssl_private_key_file_pem"))
@@ -631,10 +641,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			unquote(opts["ssl_private_key_file_pem"])
 		};
 
+		if(!fs::exists(filename))
+			throw error("%s: SSL private key file @ `%s' not found",
+			            std::string(*this),
+			            filename);
+
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
 		log.info("%s using private key file '%s'",
-		          std::string(*this),
-		          filename);
+		         std::string(*this),
+		         filename);
 	}
 
 	if(opts.has("ssl_tmp_dh_file"))
@@ -644,10 +659,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			unquote(opts["ssl_tmp_dh_file"])
 		};
 
+		if(!fs::exists(filename))
+			throw error("%s: SSL tmp dh file @ `%s' not found",
+			            std::string(*this),
+			            filename);
+
 		ssl.use_tmp_dh_file(filename);
 		log.info("%s using tmp dh file '%s'",
-		          std::string(*this),
-		          filename);
+		         std::string(*this),
+		         filename);
 	}
 }
 
