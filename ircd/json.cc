@@ -1486,6 +1486,31 @@ ircd::json::operator==(const value &a, const value &b)
 // json.h
 //
 
+bool
+ircd::json::valid(const string_view &s,
+                  std::nothrow_t)
+noexcept try
+{
+	const char *start(begin(s)), *const stop(end(s));
+	return qi::parse(start, stop, parser.value >> eoi);
+}
+catch(...)
+{
+	return false;
+}
+
+void
+ircd::json::valid(const string_view &s)
+try
+{
+	const char *start(begin(s)), *const stop(end(s));
+	qi::parse(start, stop, eps > (parser.value >> eoi));
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure(begin(s), e);
+}
+
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const string_view &v)

@@ -74,6 +74,10 @@ namespace ircd::json
 
 	struct string;
 	using members = std::initializer_list<member>;
+
+	// Validate JSON - checks if canonical value.
+	bool valid(const string_view &, std::nothrow_t) noexcept;
+	void valid(const string_view &);
 }
 
 /// Strong type representing quoted strings in JSON (which may be unquoted
