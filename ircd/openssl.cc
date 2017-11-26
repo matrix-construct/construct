@@ -27,10 +27,10 @@
 namespace ircd::openssl
 {
 	template<class exception = openssl::error>
-	static void throw_error(const ulong &);
+	[[noreturn]] static void throw_error(const ulong &);
 
 	template<class exception = openssl::error>
-	static void throw_error();
+	[[noreturn]] static void throw_error();
 
 	template<class exception = openssl::error,
 	         int ERR_CODE = 0,
@@ -68,10 +68,7 @@ ircd::openssl::read(X509 *out,
 	};
 
 	if(unlikely(ret != out))
-	{
 		throw_error();
-		__builtin_unreachable();
-	}
 
 	return *ret;
 }
@@ -91,10 +88,7 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 	};
 
 	if(unlikely(len < 0))
-	{
 		throw_error();
-		__builtin_unreachable();
-	}
 
 	if(unlikely(size(buf) < size_t(len)))
 		throw error
@@ -105,8 +99,7 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 	uint8_t *out(data(buf));
 	const const_raw_buffer ret
 	{
-		data(buf),
-		size_t(i2d_X509(&cert, &out))
+		data(buf), size_t(i2d_X509(&cert, &out))
 	};
 
 	if(unlikely(size(ret) != size_t(len)))
@@ -453,7 +446,11 @@ template<class exception>
 static void
 ircd::openssl::throw_error(const unsigned long &code)
 {
-	const auto &msg{ERR_reason_error_string(code)?: "UNKNOWN ERROR"};
+	const auto &msg
+	{
+		ERR_reason_error_string(code)?: "UNKNOWN ERROR"
+	};
+
 	throw exception("OpenSSL #%lu: %s", code, msg);
 }
 
@@ -461,7 +458,10 @@ template<class exception>
 static void
 ircd::openssl::throw_error()
 {
-	const auto code{get_error()};
+	const auto code
+	{
+		get_error()
+	};
+
 	throw_error(code);
-	__builtin_unreachable();
 }
