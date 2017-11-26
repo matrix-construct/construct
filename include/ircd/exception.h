@@ -29,6 +29,14 @@
 namespace ircd
 {
 	struct exception;
+
+	// Prefer ircd::terminate() to std::terminate() if possible.
+	[[noreturn]] void terminate(const std::exception &) noexcept;
+	[[noreturn]] void terminate(std::exception_ptr) noexcept;
+	[[noreturn]] void terminate() noexcept;
+
+	// Can be used to clobber the std::terminate_handler
+	void aborting() noexcept;
 }
 
 /// The root exception type.

@@ -356,7 +356,7 @@ catch(const std::exception &e)
 	              (const void *)tid,
 	              e.what());
 
-	std::terminate();
+	ircd::terminate();
 }
 
 void
@@ -389,7 +389,7 @@ catch(const std::exception &e)
 	              debug(mode, num, file, line),
 	              e.what());
 
-	std::terminate();
+	ircd::terminate();
 }
 
 std::string

@@ -1228,13 +1228,13 @@ ircd::js::trap::from(const JSObject *const &o)
 	if(!c)
 	{
 		log.critical("trap::from(): Trapped on an object without a JSClass!");
-		std::terminate(); //TODO: exception
+		ircd::terminate(); //TODO: exception
 	}
 
 	if(!c->reserved[0])
 	{
 		log.critical("trap::from(): Trap called on a trap instance that has gone out of scope!");
-		std::terminate(); //TODO: exception
+		ircd::terminate(); //TODO: exception
 	}
 
 	return *static_cast<trap *>(c->reserved[0]);  //TODO: ???
@@ -3453,7 +3453,7 @@ noexcept try
 catch(const std::exception &e)
 {
 	log.critical("triple fault: %s\n", e.what());
-	std::terminate();
+	ircd::terminate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4290,7 +4290,7 @@ __attribute__((noreturn))
 js::ReportOutOfMemory(ExclusiveContext *const c)
 {
 	ircd::js::log.critical("jsalloc(): Reported out of memory (ExclusiveContext: %p)", (const void *)c);
-	std::terminate();
+	ircd::terminate();
 }
 #endif //IRCD_JS_FIX
 

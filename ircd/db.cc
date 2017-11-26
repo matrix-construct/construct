@@ -1469,7 +1469,7 @@ catch(const std::exception &e)
 {
 	_continue = false;
 	log::critical("iov::handler: cfid[%u]: %s", cfid, e.what());
-	std::terminate();
+	ircd::terminate();
 }
 
 rocksdb::Status

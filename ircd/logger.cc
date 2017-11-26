@@ -465,7 +465,7 @@ catch(const std::exception &e)
 	fprintf(stdout, "%s\n", e.what());
 	fflush(stderr);
 	fflush(stdout);
-	std::terminate();
+	ircd::terminate();
 }
 
 const char *

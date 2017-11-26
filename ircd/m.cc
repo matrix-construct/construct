@@ -135,6 +135,7 @@ try
 catch(const m::error &e)
 {
 	log.critical("%s %s", e.what(), e.content);
+	throw;
 }
 
 ircd::m::init::~init()
@@ -148,7 +149,7 @@ noexcept try
 catch(const m::error &e)
 {
 	log.critical("%s %s", e.what(), e.content);
-	std::terminate();
+	ircd::terminate();
 }
 
 void

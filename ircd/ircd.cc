@@ -287,11 +287,21 @@ catch(const ctx::interrupted &e)
 {
 	log::warning("IRCd main interrupted...");
 }
+#ifndef RB_DEBUG
 catch(const std::exception &e)
 {
-	log::critical("IRCd terminated: %s", e.what());
-	std::terminate();
+	// When not in debug mode this is a clean return to not crash through
+	// the embedder's ios.run() which would terminate the rest of their
+	// program. Instead they have the right to handle the error and try again.
+	log::critical("IRCd main exited: %s", e.what());
 }
+#else
+catch(...)
+{
+	// In debug mode we terminate with a message and a coredump
+	ircd::terminate();
+}
+#endif // RB_DEBUG
 
 void
 ircd::at_main_exit()
@@ -344,7 +354,7 @@ catch(const std::exception &e)
 	              reflect(new_runlevel),
 	              e.what());
 
-	std::terminate();
+	ircd::terminate();
 }
 
 ircd::string_view

@@ -46,3 +46,49 @@ noexcept
 
 	return size;
 }
+
+void
+ircd::terminate()
+noexcept
+{
+	terminate(std::current_exception());
+}
+
+void
+ircd::terminate(std::exception_ptr eptr)
+noexcept
+{
+	if(eptr) try
+	{
+		std::rethrow_exception(eptr);
+	}
+	catch(const std::exception &e)
+	{
+		terminate(e);
+	}
+
+	log::critical("IRCd Terminate without exception");
+	std::terminate();
+}
+
+void
+ircd::terminate(const std::exception &e)
+noexcept
+{
+	log::critical("IRCd Terminated: %s", e.what());
+	std::terminate();
+}
+
+[[noreturn]] static void
+ircd_terminate_handler()
+noexcept
+{
+	std::abort();
+}
+
+void
+ircd::aborting()
+noexcept
+{
+	std::set_terminate(&ircd_terminate_handler);
+}
