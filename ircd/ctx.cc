@@ -678,7 +678,8 @@ ircd::ctx::pool::pool(const char *const &name,
                       const size_t &size)
 :name{name}
 ,stack_size{stack_size}
-,available{0}
+,running{0}
+,working{0}
 {
 	add(size);
 }
@@ -729,10 +730,10 @@ void
 ircd::ctx::pool::main()
 try
 {
-	++available;
+	++running;
 	const unwind avail([this]
 	{
-		--available;
+		--running;
 	});
 
 	while(1)
@@ -755,10 +756,10 @@ try
 		return !queue.empty();
 	});
 
-	--available;
+	++working;
 	const unwind avail([this]
 	{
-		++available;
+		--working;
 	});
 
 	const auto func(std::move(queue.front()));

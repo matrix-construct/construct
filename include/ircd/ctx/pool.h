@@ -34,7 +34,8 @@ struct ircd::ctx::pool
   private:
 	const char *name;
 	size_t stack_size;
-	size_t available;
+	size_t running;
+	size_t working;
 	struct dock dock;
 	std::deque<closure> queue;
 	std::vector<context> ctxs;
@@ -45,9 +46,9 @@ struct ircd::ctx::pool
   public:
 	// indicators
 	auto size() const                            { return ctxs.size();                             }
-	auto avail() const                           { return available;                               }
 	auto queued() const                          { return queue.size();                            }
-	auto active() const                          { return size() - avail();                        }
+	auto active() const                          { return working;                                 }
+	auto avail() const                           { return running - working;                       }
 	auto pending() const                         { return active() + queued();                     }
 
 	// control panel
