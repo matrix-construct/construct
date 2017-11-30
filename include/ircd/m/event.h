@@ -115,7 +115,10 @@ struct ircd::m::event
 	struct sync;
 	struct prev;
 
+	// Common convenience aliases
 	using id = m::id::event;
+	using closure = std::function<void (const event &)>;
+	using closure_bool = std::function<bool (const event &)>;
 
 	static database *events;
 
