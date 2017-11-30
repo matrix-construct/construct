@@ -21,20 +21,336 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/rfc1459_parse.h>
-#include <ircd/rfc1459_gen.h>
+#include <ircd/spirit.h>
 
 namespace qi = boost::spirit::qi;
 namespace karma = boost::spirit::karma;
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+	ircd::rfc1459::pfx
+	,( decltype(ircd::rfc1459::pfx::nick),  nick )
+	,( decltype(ircd::rfc1459::pfx::user),  user )
+	,( decltype(ircd::rfc1459::pfx::host),  host )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+	ircd::rfc1459::line
+	,( decltype(ircd::rfc1459::line::pfx),   pfx  )
+	,( decltype(ircd::rfc1459::line::cmd),   cmd  )
+	,( decltype(ircd::rfc1459::line::parv),  parv )
+)
 
 namespace ircd    {
 namespace rfc1459 {
 namespace parse   {
 
-decltype(head) head;
-decltype(capstan) capstan;
+namespace qi = boost::spirit::qi;
+
+using qi::lit;
+using qi::char_;
+using qi::repeat;
+using qi::attr;
+using qi::eps;
+using qi::raw;
+using qi::omit;
+
+/* The grammar template class.
+ * This aggregates all the rules under one template to make composing them easier.
+ *
+ * The grammar template is instantiated by individual parsers depending on the goal
+ * for the specific parse, or the "top level." The first top-level was an IRC line, so
+ * a class was created `struct head` specifying grammar::line as the top rule, and
+ * rfc1459::line as the top output target to parse into.
+ */
+template<class it,
+         class top>
+struct grammar
+:qi::grammar<it, top>
+{
+	qi::rule<it> space;
+	qi::rule<it> colon;
+	qi::rule<it> nulcrlf;
+	qi::rule<it> spnulcrlf;
+	qi::rule<it> terminator;
+
+	qi::rule<it, rfc1459::host> hostname;
+	qi::rule<it, rfc1459::host> server;
+	qi::rule<it, rfc1459::user> user;
+	qi::rule<it, rfc1459::nick> nick;
+	qi::rule<it, rfc1459::pfx> prefix;
+
+	qi::rule<it, string_view> trailing;
+	qi::rule<it, string_view> middle;
+	qi::rule<it, rfc1459::parv> params;
+
+	qi::rule<it, string_view> numeric;
+	qi::rule<it, rfc1459::cmd> command;
+
+	qi::rule<it, rfc1459::line> line;
+	qi::rule<it, std::deque<rfc1459::line>> tape;
+
+	grammar(qi::rule<it, top> &top_rule);
+};
+
+template<class it,
+         class top>
+grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
+:grammar<it, top>::base_type
+{
+	top_rule
+}
+,space // A single space character
+{
+	/* TODO: RFC says:
+	 *   1) <SPACE> is consists only of SPACE character(s) (0x20).
+	 *      Specially notice that TABULATION, and all other control
+	 *      characters are considered NON-WHITE-SPACE.
+	 * But our table in this namespace has control characters labeled as SPACE.
+	 * This needs to be fixed.
+	 */
+
+	//char_(charset(character::SPACE))
+	lit(' ')
+	,"space"
+}
+,colon // A single colon character
+{
+	lit(':')
+	,"colon"
+}
+,nulcrlf // Match on NUL or CR or LF
+{
+	lit('\0') | lit('\r') | lit('\n')
+	,"nulcrlf"
+}
+,spnulcrlf // Match on space or nulcrlf
+{
+	space | nulcrlf
+	,"spnulcrlf"
+}
+,terminator // The message terminator
+{
+	lit('\r') >> lit('\n')
+	,"terminator"
+}
+,hostname // A valid hostname
+{
+	raw[+char_(charset(character::HOST))] // TODO: https://tools.ietf.org/html/rfc952
+	,"hostname"
+}
+,server // A valid servername
+{
+	hostname
+	,"server"
+}
+,user // A valid username
+{
+	raw[+char_(charset(character::USER))]
+	,"user"
+}
+,nick // A valid nickname, leading letter followed by any NICK chars
+{
+	raw[char_(charset(character::ALPHA)) >> *char_(charset(character::NICK))]
+	,"nick"
+}
+,prefix // A valid prefix, required name, optional user and host (or empty placeholders)
+{
+	colon >> (nick | server) >> -(lit('!') >> user) >> -(lit('@') >> hostname)
+	,"prefix"
+}
+,trailing // Trailing string pinch
+{
+	colon >> raw[+(char_ - nulcrlf)]
+	,"trailing"
+}
+,middle // Spaced parameters
+{
+	!colon >> raw[+(char_ - spnulcrlf)]
+	,"middle"
+}
+,params // Parameter vector
+{
+	*(+space >> middle) >> -(+space >> trailing)
+	,"params"
+}
+,numeric // \d\d\d numeric
+{
+	repeat(3)[char_(charset(character::DIGIT))]
+	,"numeric"
+}
+,command // A command or numeric
+{
+	raw[+char_(charset(character::ALPHA)) | numeric]
+	,"command"
+}
+,line
+{
+	-(prefix >> +space) >> command >> params
+	,"line"
+}
+,tape
+{
+	+(-line >> +terminator)
+	,"tape"
+}
+{
+}
+
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::line object.
+// The top rule is inherited and then specified as grammar::line, which is compatible
+// with an rfc1459::line object.
+//
+struct head
+:parse::grammar<const char *, rfc1459::line>
+{
+    head(): grammar{grammar::line} {}
+}
+const head;
+
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::tape object.
+// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
+//
+struct capstan
+:parse::grammar<const char *, std::deque<rfc1459::line>>
+{
+    capstan(): grammar{grammar::tape} {}
+}
+const capstan;
 
 } // namespace parse
+} // namespace rfc1459
+} // namespace ircd
+
+namespace ircd    {
+namespace rfc1459 {
+namespace gen     {
+
+namespace karma = boost::spirit::karma;
+using karma::lit;
+using karma::int_;
+using karma::char_;
+using karma::buffer;
+using karma::repeat;
+
+template<class it,
+         class top>
+struct grammar
+:karma::grammar<it, top>
+{
+	std::string trail_save;
+
+	karma::rule<it> space;
+	karma::rule<it> colon;
+	karma::rule<it> terminator;
+
+	karma::rule<it, rfc1459::host> hostname;
+	karma::rule<it, rfc1459::user> user;
+	karma::rule<it, rfc1459::nick> nick;
+	karma::rule<it, rfc1459::pfx> prefix;
+	karma::rule<it, rfc1459::pfx> prefix_optionals;
+
+	karma::rule<it, string_view> trailing;
+	karma::rule<it, string_view> middle;
+	karma::rule<it, rfc1459::parv> params;
+
+	karma::rule<it, rfc1459::cmd> command_numeric;
+	karma::rule<it, rfc1459::cmd> command_alpha;
+	karma::rule<it, rfc1459::cmd> command;
+	karma::rule<it, rfc1459::line> line;
+
+	grammar(karma::rule<it, top> &top_rule);
+};
+
+template<class it,
+         class top>
+rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
+:grammar<it, top>::base_type
+{
+	top_rule
+}
+,space // A single space character
+{
+	lit(' ')
+	,"space"
+}
+,colon // A single colon character
+{
+	lit(':')
+	,"colon"
+}
+,terminator // The message terminator
+{
+	lit('\r') << lit('\n')
+	,"terminator"
+}
+,hostname // A valid hostname
+{
+	+char_(charset(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	,"hostname"
+}
+,user // A valid username
+{
+	+char_(charset(character::USER))
+	,"user"
+}
+,nick // A valid nickname, leading letter followed by any NICK chars
+{
+	buffer[char_(charset(character::ALPHA)) << *char_(charset(character::NICK))]
+	,"nick"
+}
+,prefix
+{
+	colon << nick << lit('!') << user << lit('@') << hostname
+	,"prefix"
+}
+,prefix_optionals
+{
+	colon        << (nick      | lit('*'))
+	<< lit('!')  << (user      | lit('*'))
+	<< lit('@')  << (hostname  | lit('*'))
+	,"prefix_optionals"
+}
+,trailing
+{
+	colon << +(~char_("\r\n"))
+	,"trailing"
+}
+,middle // Spaced parameters
+{
+	~char_(":\x20\r\n") << *(~char_("\x20\r\n"))
+	,"middle"
+}
+,params //TODO: this doesn't work yet, don't use
+{
+	*(middle % space) << buffer[-trailing]
+	,"params"
+}
+,command_numeric // \d\d\d numeric
+{
+	repeat(3)[char_(charset(character::DIGIT))]
+	,"command_numeric"
+}
+,command_alpha
+{
+	+char_(charset(character::ALPHA))
+	,"command_alpha"
+}
+,command
+{
+	command_alpha | command_numeric
+	,"command"
+}
+,line
+{
+	prefix << command << space << params << terminator
+	,"line"
+}
+{
+}
+
+} // namespace gen
 } // namespace rfc1459
 } // namespace ircd
 
