@@ -469,8 +469,8 @@ try
 
 	// Setup journal recovery options
 	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
-	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
+	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
 
 	// Setup cache
 	opts.row_cache = this->cache;
@@ -3835,6 +3835,7 @@ rocksdb::WriteOptions
 ircd::db::make_opts(const sopts &opts)
 {
 	rocksdb::WriteOptions ret;
+	//ret.no_slowdown = true;    // read_tier = NON_BLOCKING for writes
 	ret += opts;
 	return ret;
 }
