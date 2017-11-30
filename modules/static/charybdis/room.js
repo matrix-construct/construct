@@ -39,8 +39,12 @@ mc.room = class
 		if(maybe(() => summary.room_id.endsWith(":localhost")))
 			this.opts.local = true;
 
+		if(!Array.isArray(summary))
+			this.id = summary.room_id;
+		else
+			this.id = summary[0].room_id;
+
 		// Identity
-		this.id = summary.room_id;
 		this.sid = mc.m.sid(this.id);
 		this.uri = encodeURIComponent(this.id);
 
@@ -78,7 +82,10 @@ mc.room = class
 		this.sync = Function.bindtree(room.sync, this);
 
 		// Generate some initial pseudo-state from the summary data.
-		this.timeline.insert(room.state.summary.parse(summary));
+		if(!Array.isArray(summary))
+			this.timeline.insert(room.state.summary.parse(summary));
+		else
+			this.timeline.insert(summary);
 	}
 
 	get summary()

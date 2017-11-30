@@ -158,8 +158,8 @@ mc.rooms.get = function(summary, opts = {})
 {
 	let room_id = typeswitch(summary,
 	{
-		"object": summary.room_id,
 		"string": summary,
+		"object": () => Array.isArray(summary)? summary[0].room_id : summary.room_id,
 	});
 
 	let room = mc.rooms[room_id];
@@ -168,10 +168,5 @@ mc.rooms.get = function(summary, opts = {})
 
 	// Ensures the summary is valid when the argument
 	// to this function is just a quick room_id string.
-	summary = typeof(summary) == "object"? summary:
-	{
-		room_id: room_id,
-	};
-
 	return mc.rooms.create.room(summary, opts);
 };
