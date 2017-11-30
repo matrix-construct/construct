@@ -30,16 +30,22 @@ namespace ircd
 	extern const uint boost_version[3];
 	struct tc_version extern const tc_version;
 
-	enum runlevel _runlevel;
-	const enum runlevel &runlevel{_runlevel};
-	runlevel_handler runlevel_changed;
-	boost::asio::io_service *ios;                // user's io service
-	struct strand *strand;               // our main strand
-	ctx::ctx *main_context;
-	bool debugmode;
+	enum runlevel _runlevel;                     // Current libircd runlevel
+	const enum runlevel &runlevel{_runlevel};    // Observer for current RL
+	runlevel_handler runlevel_changed;           // user's callback
 
-	void set_runlevel(const enum runlevel &);
+	boost::asio::io_service *ios;                // user's io service
+	struct strand *strand;                       // libircd event serializer
+
+	std::string _conf;                           // JSON read from configfile
+	const std::string &conf{_conf};              // Observer for conf data
+
+	ctx::ctx *main_context;                      // Main program loop
+	bool debugmode;                              // meaningful ifdef RB_DEBUG
+
 	void enable_coredumps();
+	std::string read_conf(std::string file);
+	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;
 	void main();
 }
@@ -129,6 +135,43 @@ try
 	log::init();
 	log::mark("READY");
 
+	// This message flashes information about our dependencies which are being
+	// assumed for this execution.
+	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
+	          PACKAGE_STRING,
+	          boost_version[0],
+	          boost_version[1],
+	          boost_version[2],
+	          db::version,
+	          nacl::version(),
+	          openssl::version());
+
+	// This message flashes information about IRCd itself for this execution
+	log::info("%s %ld %s. configured: %s. compiled: %s %s",
+	          BRANDING_VERSION,
+	          __cplusplus,
+	          __VERSION__,
+	          RB_DATE_CONFIGURED,
+	          __TIMESTAMP__,
+	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
+
+	// The configuration file is a user-converted Synapse homeserver.yaml
+	// converted into JSON. The configuration file is only truly meaningful
+	// the first time IRCd is ever run. Subsequently, only the database must
+	// be found. Real configuration is stored in the !config channel.
+	//
+	// This subroutine reads a file either at the user-supplied path or the
+	// default path specified in ircd::fs, vets for basic syntax issues, and
+	// then returns a string of JSON (the file's contents). The validity of
+	// the actual configuration is not known until specific subsystems are
+	// init'ed later.
+	//
+	// *NOTE* This expects *canonical JSON* right now. That means converting
+	// your homeserver.yaml may be a two step process: 1. YAML to JSON, 2.
+	// whitespace-stripping the JSON. Tools to do both of these things are
+	// first hits in a google search.
+	ircd::_conf = read_conf(configfile);
+
 	// Setup the main context, which is a new stack executing the function
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned
 	// and will be the last to finish.
@@ -151,26 +194,6 @@ try
 	// and be able to delete this pointer itself when it finishes. Otherwise
 	// this must be manually deleted with assurance that mc will never enter.
 	ircd::main_context = main_context.detach();
-
-	// This message flashes information about our dependencies which are being
-	// assumed for this execution.
-	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
-	          PACKAGE_STRING,
-	          boost_version[0],
-	          boost_version[1],
-	          boost_version[2],
-	          db::version,
-	          nacl::version(),
-	          openssl::version());
-
-	// This message flashes information about IRCd itself for this execution
-	log::info("%s %ld %s. configured: %s. compiled: %s %s",
-	          BRANDING_VERSION,
-	          __cplusplus,
-	          __VERSION__,
-	          RB_DATE_CONFIGURED,
-	          __TIMESTAMP__,
-	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
 
 	// Finally, without prior exception, the commitment to runlevel::READY
 	// is made here. The user can now invoke their ios.run(), or, if they
@@ -371,6 +394,51 @@ ircd::reflect(const enum runlevel &level)
 	}
 
 	return "??????";
+}
+
+std::string
+ircd::read_conf(std::string filename)
+try
+{
+	if(!filename.empty())
+		log::debug("User supplied a configuration file path: `%s'", filename);
+
+	if(filename.empty())
+		filename = fs::CPATH;
+
+	if(!fs::exists(filename))
+		return {};
+
+	std::string read
+	{
+		fs::read(filename)
+	};
+
+	// ensure any trailing cruft is removed to not set off the validator
+	if(endswith(read, '\n'))
+		read.pop_back();
+
+	if(endswith(read, '\r'))
+		read.pop_back();
+
+	// grammar check; throws on error
+	json::valid(read);
+
+	const json::object object{read};
+	const size_t key_count{object.count()};
+	log::info("Using configuration from: `%s': JSON object with %zu members in %zu bytes",
+	          filename,
+	          key_count,
+	          read.size());
+
+	return read;
+}
+catch(const std::exception &e)
+{
+	log::error("Configuration @ `%s': %s",
+	           filename,
+	           e.what());
+	throw;
 }
 
 void

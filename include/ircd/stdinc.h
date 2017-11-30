@@ -172,10 +172,13 @@ namespace ircd
 // Unsorted section
 namespace ircd
 {
-	constexpr size_t BUFSIZE { 512 };
-
 	struct client;
 	struct server;
+	enum class runlevel :uint;
+
+	constexpr size_t BUFSIZE { 512 };
+	extern const std::string &conf;
+	extern const enum runlevel &runlevel;
 
 	std::string demangle(const std::string &symbol);
 	template<class T> std::string demangle();

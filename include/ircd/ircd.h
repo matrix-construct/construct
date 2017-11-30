@@ -38,7 +38,7 @@ namespace ircd
 {
 	struct init;
 
-	enum class runlevel: uint;
+	enum class runlevel :uint;
 	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
 	extern bool debugmode;                      ///< Toggled by command line to indicate debug behavior
