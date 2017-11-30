@@ -691,6 +691,7 @@ dnl boost support
 dnl
 
 BOOST_VERSION_MIN="1.61"
+BOOST_VERSION_MIN_PATCH="0"
 BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
@@ -728,7 +729,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	fi
 
 	boost_linkage="$withval"
-	boost_version="boost-${BOOST_VERSION_MIN}.0"
+	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
 	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release $withval multi $boost_version
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
