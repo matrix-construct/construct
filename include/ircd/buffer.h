@@ -540,7 +540,7 @@ template<class it>
 std::ostream &
 ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 {
-	assert(!null(buffer));
+	assert(!null(buffer) || get<1>(buffer) == nullptr);
 	s.write(data(buffer), size(buffer));
 	return s;
 }
