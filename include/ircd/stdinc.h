@@ -1,23 +1,22 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
- *  stdinc.h: Pull in all of the necessary system headers
+ * Copyright (C) 2017 Matrix Construct Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
- *  Copyright (C) 2002 Aaron Sethman <androsyn@ratbox.org>
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice is present in all copies.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -144,9 +143,10 @@ namespace std
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Some items imported into our namespace.
+// libircd API
 //
 
+// Some items imported into our namespace.
 namespace ircd
 {
 	using std::nullptr_t;
@@ -166,21 +166,17 @@ namespace ircd
 	using uint128_t = unsigned __int128;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// libircd API
-//
-
-// Unsorted section
 namespace ircd
 {
 	struct client;
 	struct server;
-	enum class runlevel :uint;
+	enum class runlevel :int;
+	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
 	constexpr size_t BUFSIZE { 512 };
-	extern const std::string &conf;
 	extern const enum runlevel &runlevel;
+	extern const std::string &conf;
+	extern bool debugmode; ///< Toggle; available only ifdef RB_DEBUG
 
 	std::string demangle(const std::string &symbol);
 	template<class T> std::string demangle();
@@ -224,14 +220,7 @@ namespace ircd
 #include "js.h"
 #include "mods.h"
 #include "net/net.h"
-#include "m/m.h"
-#include "resource.h"
 #include "server.h"
 #include "client.h"
-
-template<class T>
-std::string
-ircd::demangle()
-{
-	return demangle(typeid(T).name());
-}
+#include "m/m.h"
+#include "resource.h"

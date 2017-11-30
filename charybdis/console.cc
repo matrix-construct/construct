@@ -21,6 +21,7 @@
 
 #include <ircd/ircd.h>
 #include <ircd/asio.h>
+#include <ircd/m/m.h>
 #include "charybdis.h"
 
 using namespace ircd;

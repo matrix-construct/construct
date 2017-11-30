@@ -9,17 +9,24 @@ AM_CXXFLAGS = \
 	###
 
 if GCC
-AM_CXXFLAGS += -fpch-deps
+AM_CXXFLAGS += \
+	-fpch-deps \
+	###
 endif
 
 if DEBUG
 if GCC
-AM_CXXFLAGS += -fmax-errors=2
+AM_CXXFLAGS += \
+	-fmax-errors=2 \
+	###
 endif
 endif
 
 if BUILD_PCH
-BUILT_SOURCES = stdinc.h.gch stdinc.pic.h.gch
+BUILT_SOURCES = \
+	stdinc.h.gch \
+	stdinc.pic.h.gch \
+	###
 endif
 
 stdinc.h.gch:

@@ -1,25 +1,23 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
- *  ircd.h: A header for the ircd startup routines.
+ * Copyright (C) 2017 Matrix Construct Development Team
+ * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
- *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2004 ircd-ratbox development team
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice is present in all copies.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
  */
 
 #pragma once
@@ -38,18 +36,11 @@ namespace ircd
 {
 	struct init;
 
-	enum class runlevel :uint;
-	using runlevel_handler = std::function<void (const enum runlevel &)>;
-
-	extern bool debugmode;                      ///< Toggled by command line to indicate debug behavior
-	extern const enum runlevel &runlevel;       ///< Reflects current running mode of library
-	extern runlevel_handler runlevel_changed;   ///< User hook to get called on runlevel change.
+	extern runlevel_handler runlevel_changed;
 
 	string_view reflect(const enum runlevel &);
-
 	void init(boost::asio::io_service &ios, const std::string &conf, runlevel_handler = {});
 	void init(boost::asio::io_service &ios, runlevel_handler = {});
-
 	bool quit() noexcept;
 }
 
@@ -71,12 +62,19 @@ namespace ircd
 /// mode and may require some user action to continue.
 ///
 enum class ircd::runlevel
-:uint
+:int
 {
-	HALT     = 0x00,    ///< [inter] IRCd Powered off.
-	READY    = 0x01,    ///< [inter] Ready for user to run ios event loop.
-	START    = 0x02,    ///< [trans] Starting up subsystems for service.
-	RUN      = 0x04,    ///< [inter] IRCd in service.
-	QUIT     = 0x10,    ///< [trans] Clean shutdown in progress
-	FAULT    = 0xFF,    ///< [trans] QUIT with exception (dirty shutdown)
+	HALT     = 0,    ///< [inter] IRCd Powered off.
+	READY    = 1,    ///< [inter] Ready for user to run ios event loop.
+	START    = 2,    ///< [trans] Starting up subsystems for service.
+	RUN      = 3,    ///< [inter] IRCd in service.
+	QUIT     = 4,    ///< [trans] Clean shutdown in progress
+	FAULT    = -1,   ///< [trans] QUIT with exception (dirty shutdown)
 };
+
+template<class T>
+std::string
+ircd::demangle()
+{
+	return demangle(typeid(T).name());
+}

@@ -19,6 +19,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ircd/m/m.h>
+
 namespace ircd::m::io
 {
 	bool acquire_local(event::fetch &);

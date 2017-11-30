@@ -31,8 +31,8 @@ This is the first implementation of a Matrix homeserver written in C++. The road
 for service is as follows:
 
 - [✓] Phase One: Matrix clients using HTTP.
-- [ ] Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
-- [ ] Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
+- Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
+- Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
 
 
 ## Installation
@@ -126,8 +126,7 @@ which may introduce the actual application features (or the "business logic")
 of the server. These additional modules are found in the `modules/` directory;
 
 This library can be embedded by developers creating their own server or those
-who simply want to use the library of routines it provides. See the section for
-`Using libircd`.
+who simply want to use the library of routines it provides.
 
 ##### libircd can be embedded in your application with very minimal overhead.
 
@@ -157,15 +156,15 @@ on multiple threads by the embedder's application, libircd will use a single
 `io_service::strand`.
 
 This methodology ensures there is an uninterrupted execution working through
-a single event queue providing service which is not otherwise computationally
-bound. Even if there are periods of execution which are computationally intense
-like parsing, hashing, signature verification etc -- this is insignificant
-compared to the amortized cost of thread synchronization and bus contention
-for a network application.
+a single event queue providing service. Even if there are periods of execution
+which are computationally intense like parsing, hashing, cryptography etc -- this
+is absorbed in lieu of thread synchronization and bus contention. Scaling this
+system is done through running multiple instances which synchronize at the
+application level.
 
-✝ However, don't start assuming a truly threadless execution. If there is
-ever a truly long-running background computation or a call to a 3rd
-party library which will do IO and block the event loop, we may use an
+✝ However, don't start assuming a truly threadless execution for the entire
+address space. If there is ever a long-running background computation or a call
+to a 3rd party library which will do IO and block the event loop, we may use an
 additional `std::thread` to "offload" such an operation. Thus we do have
 a threading model, but it is heterogeneous.
 

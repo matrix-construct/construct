@@ -26,6 +26,8 @@
  */
 
 #include <ircd/asio.h>
+#include <ircd/m/m.h>
+#include <ircd/resource.h>
 
 namespace ircd {
 
@@ -33,14 +35,14 @@ namespace ircd {
 // (or idle mode) after which it is disconnected.
 const auto async_timeout
 {
-	300s
+	40s
 };
 
 // Time limit for how long a connected client can be in "request mode." This
 // should never be hit unless there's an error in the handling code.
 const auto request_timeout
 {
-	60s
+	20s
 };
 
 // The pool of request contexts. When a client makes a request it does so by acquiring
@@ -48,7 +50,7 @@ const auto request_timeout
 // in a synchronous manner as if each connection had its own thread.
 ctx::pool request
 {
-	"request", 256_KiB
+	"request", 4_MiB
 };
 
 // Container for all active clients (connections) for iteration purposes.
@@ -67,7 +69,7 @@ template<class... args> std::shared_ptr<client> make_client(args&&...);
 
 ircd::client::init::init()
 {
-	request.add(2);
+	request.add(32);
 }
 
 void
@@ -247,8 +249,9 @@ bool
 ircd::client::main()
 noexcept try
 {
-	const auto header_max{8192};
-	const auto content_max{65536};
+	const auto header_max{8_KiB};
+	//const auto content_max{64_KiB};
+	const auto content_max{8_MiB};
 	const unique_buffer<mutable_buffer> buffer
 	{
 		header_max + content_max
