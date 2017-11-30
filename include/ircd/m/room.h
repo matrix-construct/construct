@@ -35,13 +35,21 @@ namespace ircd::m
 
 	struct room;
 
-	room create(const id::room &room_id, const id::user &creator, const id::room &parent, const string_view &type);
-	room create(const id::room &room_id, const id::user &creator, const string_view &type = {});
+	bool exists(const id::room &);
 
-	void message(const id::room &room_id, const m::id::user &, const string_view &body, const string_view &msgtype = "m.text");
-	void membership(const id::room &room_id, const m::id::user &, const string_view &membership);
-	void leave(const id::room &room_id, const m::id::user &);
-	void join(const id::room &room_id, const m::id::user &);
+	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const json::iov &content);
+	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const json::members &content);
+	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
+	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
+
+	event::id::buf message(const id::room &, const m::id::user &sender, const json::members &content);
+	event::id::buf message(const id::room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
+	event::id::buf membership(const id::room &, const m::id::user &, const string_view &membership);
+	event::id::buf leave(const id::room &, const m::id::user &);
+	event::id::buf join(const id::room &, const m::id::user &);
+
+	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
+	room create(const id::room &, const id::user &creator, const string_view &type = {});
 }
 
 struct ircd::m::room
@@ -58,18 +66,27 @@ struct ircd::m::room
 
 	operator const id &() const        { return room_id;                       }
 
-	bool membership(const m::id::user &, const string_view &membership = "join") const;
+	// observer
+	bool test(const string_view &type, const event::closure_bool &view) const;
+	void for_each(const string_view &type, const event::closure &view) const;
+	bool has(const string_view &type, const string_view &state_key) const;
+	bool has(const string_view &type) const;
+	bool get(const string_view &type, const string_view &state_key, const event::closure &) const;
+	bool get(const string_view &type, const event::closure &view) const;
 
-	std::vector<std::string> barren(const int64_t &min_depth = 0) const;
+	// observer misc
+	bool membership(const m::id::user &, const string_view &membership = "join") const;
 	uint64_t maxdepth(event::id::buf &) const;
 	uint64_t maxdepth() const;
 
+	// modify
 	event::id::buf send(json::iov &event);
-	event::id::buf send(const json::members &event);
+	event::id::buf send(json::iov &event, const json::iov &content);
 
-	void message(json::iov &event, json::iov &content);
-	void membership(json::iov &event, json::iov &content);
-	void create(json::iov &event, json::iov &content);
+	// modify misc
+	event::id::buf message(json::iov &event, const json::iov &content);
+	event::id::buf membership(json::iov &event, const json::iov &content);
+	event::id::buf create(json::iov &event, json::iov &content);
 
 	room(const id::alias &alias);
 	room(const id &room_id)

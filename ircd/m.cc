@@ -32,13 +32,15 @@ namespace ircd::m
 	};
 
 	std::map<std::string, ircd::module> modules;
-	ircd::net::listener *listener;
+	std::list<ircd::net::listener> listeners;
 
 	static void leave_ircd_room();
 	static void join_ircd_room();
-	static void bootstrap();
-	static void init_keys(const json::object &options);
-	static void init_cert(const json::object &options);
+	static void init_bootstrap(const json::object &conf);
+	static void init_listeners(const json::object &conf);
+	static void init_modules(const json::object &conf);
+	static void init_cert(const json::object &conf);
+	static void init_keys(const json::object &conf);
 }
 
 const ircd::m::room::id::buf
@@ -98,21 +100,111 @@ ircd::m::self::host()
 ircd::m::init::init()
 try
 {
+	const json::object conf
+	{
+		ircd::conf
+	};
+
+	init_modules(conf);
+	init_keys(conf);
+	init_cert(conf);
+	init_bootstrap(conf);
+	init_listeners(conf);
+	join_ircd_room();
+}
+catch(const m::error &e)
+{
+	log.error("%s %s", e.what(), e.content);
+	throw;
+}
+catch(const std::exception &e)
+{
+	log.error("%s", e.what());
+	throw;
+}
+
+ircd::m::init::~init()
+noexcept try
+{
+	leave_ircd_room();
+	listeners.clear();
+	vm::fronts.map.clear();
+	modules.clear();
+}
+catch(const m::error &e)
+{
+	log.critical("%s %s", e.what(), e.content);
+	ircd::terminate();
+}
+
+namespace ircd::m
+{
+	static void init_listener(const json::object &conf, const json::object &opts, const string_view &bindaddr);
+	static void init_listener(const json::object &conf, const json::object &opts);
+}
+
+static void
+ircd::m::init_listeners(const json::object &conf)
+{
+	const json::array listeners
+	{
+		conf["listeners"]
+	};
+
+	if(listeners.empty())
+		init_listener(conf, {});
+	else
+		for(const json::object opts : listeners)
+			init_listener(conf, opts);
+}
+
+static void
+ircd::m::init_listener(const json::object &conf,
+                       const json::object &opts)
+{
+	const json::array binds
+	{
+		opts["bind_addresses"]
+	};
+
+	if(binds.empty())
+		init_listener(conf, opts, "0.0.0.0");
+	else
+		for(const auto &bindaddr : binds)
+			init_listener(conf, opts, unquote(bindaddr));
+}
+
+static void
+ircd::m::init_listener(const json::object &conf,
+                       const json::object &opts,
+                       const string_view &host)
+{
+	const json::array resources
+	{
+		opts["resources"]
+	};
+
+	// resources has multiple names with different configs which are being
+	// ignored :-/
+	const std::string name{"Matrix"s};
+
+	// Translate synapse options to our options (which reflect asio::ssl)
 	const json::strung options{json::members
 	{
-		{ "name", "Chat Matrix" },
-		{ "host", "0.0.0.0" },
-		{ "port", 8448 },
-		{ "ssl_certificate_file", "/home/jason/.synapse/zemos.net.crt" },
-		{ "ssl_certificate_chain_file", "/home/jason/.synapse/zemos.net.crt" },
-		{ "ssl_tmp_dh_file", "/home/jason/.synapse/cdc.z.tls.dh" },
-		{ "ssl_private_key_file_pem", "/home/jason/.synapse/cdc.z.tls.key" },
-		{ "secret_key_file", "/home/jason/charybdis.sk" },
+		{ "name",                      name                          },
+		{ "host",                      host                          },
+		{ "port",                      opts.get("port", 8448)        },
+		{ "ssl_certificate_file_pem",  conf["tls_certificate_path"]  },
+		{ "ssl_private_key_file_pem",  conf["tls_private_key_path"]  },
+		{ "ssl_tmp_dh_file",           conf["tls_dh_params_path"]    },
 	}};
 
-	init_keys(options);
-	init_cert(options);
+	listeners.emplace_back(options);
+}
 
+static void
+ircd::m::init_modules(const json::object &conf)
+{
 	const string_view prefixes[]
 	{
 		"m_", "client_", "key_", "federation_", "media_"
@@ -122,34 +214,7 @@ try
 		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
 			modules.emplace(name, name);
 
-	if(db::sequence(*event::events) == 0)
-		bootstrap();
-
 	modules.emplace("root.so"s, "root.so"s);
-
-	//TODO: conf obviously
-	listener = new ircd::net::listener{options};
-
-	join_ircd_room();
-}
-catch(const m::error &e)
-{
-	log.critical("%s %s", e.what(), e.content);
-	throw;
-}
-
-ircd::m::init::~init()
-noexcept try
-{
-	leave_ircd_room();
-
-	delete listener;
-	modules.clear();
-}
-catch(const m::error &e)
-{
-	log.critical("%s %s", e.what(), e.content);
-	ircd::terminate();
 }
 
 void
@@ -172,6 +237,14 @@ ircd::m::leave_ircd_room()
 namespace ircd::m
 {
 	static void bootstrap_keys();
+	static void bootstrap();
+}
+
+void
+ircd::m::init_bootstrap(const json::object &conf)
+{
+	if(db::sequence(*event::events) == 0)
+		bootstrap();
 }
 
 void
@@ -187,11 +260,36 @@ ircd::m::bootstrap()
 	);
 
 	create(my_room, me.user_id);
+	send(my_room, me.user_id, "m.room.name", "",
+	{
+		{ "name", "IRCd's Room" }
+	});
+
 	create(control, me.user_id);
+	send(control, me.user_id, "m.room.name", "",
+	{
+		{ "name", "Control Room" }
+	});
+
 	create(user::accounts, me.user_id);
-	create(user::sessions, me.user_id);
-	create(filter::filters, me.user_id);
 	join(user::accounts, me.user_id);
+	send(user::accounts, me.user_id, "m.room.name", "",
+	{
+		{ "name", "User Accounts" }
+	});
+
+	create(user::sessions, me.user_id);
+	send(user::sessions, me.user_id, "m.room.name", "",
+	{
+		{ "name", "User Sessions" }
+	});
+
+	create(filter::filters, me.user_id);
+	send(filter::filters, me.user_id, "m.room.name", "",
+	{
+		{ "name", "User Filters Database" }
+	});
+
 	bootstrap_keys();
 
 	message(control, me.user_id, "Welcome to the control room.");
@@ -298,14 +396,17 @@ ircd::m::self::tls_cert_der_sha256_b64
 static void
 ircd::m::init_cert(const json::object &options)
 {
-	const string_view &cert_file
+	const std::string cert_file
 	{
-		unquote(options.at("ssl_certificate_file"))
+		unquote(options.at("tls_certificate_path"))
 	};
+
+	if(!fs::exists(cert_file))
+		throw fs::error("Failed to find SSL certificate @ `%s'", cert_file);
 
 	const auto cert_pem
 	{
-		fs::read(std::string(cert_file))
+		fs::read(cert_file)
 	};
 
 	const unique_buffer<mutable_raw_buffer> der_buf
@@ -338,14 +439,19 @@ ircd::m::init_cert(const json::object &options)
 static void
 ircd::m::init_keys(const json::object &options)
 {
-	const auto &sk_file
+	const std::string sk_file
 	{
-		unquote(options.at("secret_key_file"))
+		unquote(options.get("signing_key_path", "construct.sk"))
 	};
+
+	if(fs::exists(sk_file))
+		log.info("Using ed25519 secret key @ `%s'", sk_file);
+	else
+		log.notice("Creating new ed25519 secret key @ `%s'", sk_file);
 
 	self::secret_key = ed25519::sk
 	{
-		std::string{sk_file}, &self::public_key
+		sk_file, &self::public_key
 	};
 
 	self::public_key_b64 = b64encode_unpadded(self::public_key);
@@ -359,7 +465,10 @@ ircd::m::init_keys(const json::object &options)
 		b64encode_unpadded(hash)
 	};
 
-	self::public_key_id = fmt::snstringf(BUFSIZE, "ed25519:%s", public_key_hash_b64);
+	self::public_key_id = fmt::snstringf
+	{
+		BUFSIZE, "ed25519:%s", public_key_hash_b64
+	};
 
 	log.info("Current key is '%s' and the public key is: %s",
 	         self::public_key_id,
@@ -370,6 +479,10 @@ static void
 ircd::m::bootstrap_keys()
 {
 	create(keys::room, me.user_id);
+	send(keys::room, me.user_id, "m.room.name", "",
+	{
+		{ "name", "Key Room" }
+	});
 
 	const json::strung verify_keys
 	{
@@ -398,10 +511,10 @@ ircd::m::bootstrap_keys()
 		{ tlsfps }
 	};
 
-	const auto tls_fingerprints{json::strung(json::value
+	const json::strung tls_fingerprints{json::value
 	{
 		tlsfp, 1
-	})};
+	}};
 
 	json::get<"tls_fingerprints"_>(my_key) = tls_fingerprints;
 
@@ -416,13 +529,13 @@ ircd::m::bootstrap_keys()
 	};
 
 	static char signature[256];
-	const auto signatures{json::strung(json::members
+	const json::strung signatures{json::members
 	{
-		{ my_host(),
+		{ my_host(), json::members
 		{
 			{ string_view{self::public_key_id}, b64encode_unpadded(signature, sig) }
 		}}
-	})};
+	}};
 
 	json::get<"signatures"_>(my_key) = signatures;
 	keys::set(my_key);
@@ -666,10 +779,10 @@ ircd::m::keys::set(const keys &keys)
 	json::iov event;
 	json::iov::push members[]
 	{
-		{ event, json::member { "type",       "ircd.key"   }},
-		{ event, json::member { "state_key",  state_key    }},
-		{ event, json::member { "sender",     sender       }},
-		{ event, json::member { "content",    content      }}
+		{ event, { "type",       "ircd.key"  }},
+		{ event, { "state_key",  state_key   }},
+		{ event, { "sender",     sender      }},
+		{ event, { "content",    content     }}
 	};
 
 	keys::room.send(event);
@@ -905,47 +1018,21 @@ ircd::m::create(const id::room &room_id,
 	return room;
 }
 
-void
-ircd::m::room::create(json::iov &event,
-                      json::iov &content)
-{
-	const json::iov::defaults defaults[]
-	{
-		{ event,    { "sender",   me.user_id  }},
-		{ content,  { "creator",  me.user_id  }},
-	};
-
-	const json::strung _content
-	{
-		content
-	};
-
-	json::iov::set set[]
-	{
-		{ event,  { "depth",       1                }},
-		{ event,  { "type",        "m.room.create"  }},
-		{ event,  { "state_key",   ""               }},
-		{ event,  { "content",     _content         }}
-	};
-
-	send(event);
-}
-
-void
+ircd::m::event::id::buf
 ircd::m::join(const m::room::id &room_id,
               const m::id::user &user_id)
 {
-	membership(room_id, user_id, "join");
+	return membership(room_id, user_id, "join");
 }
 
-void
+ircd::m::event::id::buf
 ircd::m::leave(const m::room::id &room_id,
                const m::id::user &user_id)
 {
-	membership(room_id, user_id, "leave");
+	return membership(room_id, user_id, "leave");
 }
 
-void
+ircd::m::event::id::buf
 ircd::m::membership(const m::id::room &room_id,
                     const m::id::user &user_id,
                     const string_view &membership)
@@ -963,22 +1050,59 @@ ircd::m::membership(const m::id::room &room_id,
 		room_id
 	};
 
-	room.membership(event, content);
+	return room.membership(event, content);
 }
 
-void
+ircd::m::event::id::buf
 ircd::m::message(const m::id::room &room_id,
-                 const m::id::user &user_id,
+                 const m::id::user &sender,
                  const string_view &body,
                  const string_view &msgtype)
 {
-	json::iov event;
-	json::iov content;
-	json::iov::push push[]
+	return message(room_id, sender,
 	{
-		{ event,    { "sender",      user_id     }},
-		{ content,  { "body",        body        }},
-		{ content,  { "msgtype",     msgtype     }},
+		{ "body",      body     },
+		{ "msgtype",   msgtype  }
+	});
+}
+
+ircd::m::event::id::buf
+ircd::m::message(const m::id::room &room_id,
+                 const m::id::user &sender,
+                 const json::members &contents)
+{
+	return send(room_id, sender, "m.room.message", contents);
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const m::id::room &room_id,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::members &contents)
+{
+	size_t i(0);
+	json::iov content;
+	json::iov::push _content[contents.size()];
+	for(const auto &member : contents)
+		new (_content + i++) json::iov::push(content, member);
+
+	return send(room_id, sender, type, state_key, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const m::id::room &room_id,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",     sender     }},
+		{ event,    { "type",       type       }},
+		{ event,    { "state_key",  state_key  }},
 	};
 
 	room room
@@ -986,19 +1110,91 @@ ircd::m::message(const m::id::room &room_id,
 		room_id
 	};
 
-	room.message(event, content);
+	return room.send(event, content);
 }
 
-void
+ircd::m::event::id::buf
+ircd::m::send(const m::id::room &room_id,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::members &contents)
+{
+	size_t i(0);
+	json::iov content;
+	json::iov::push _content[contents.size()];
+	for(const auto &member : contents)
+		new (_content + i++) json::iov::push(content, member);
+
+	room room
+	{
+		room_id
+	};
+
+	return send(room_id, sender, type, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const m::id::room &room_id,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",  sender  }},
+		{ event,    { "type",    type    }},
+	};
+
+	room room
+	{
+		room_id
+	};
+
+	return room.send(event, content);
+}
+
+bool
+ircd::m::exists(const id::room &room_id)
+{
+	const vm::query<vm::where::equal> query
+	{
+		{ "room_id", room_id },
+	};
+
+	return m::vm::test(query);
+}
+
+ircd::m::event::id::buf
+ircd::m::room::create(json::iov &event,
+                      json::iov &content)
+{
+	const json::iov::defaults defaults[]
+	{
+		{ event,    { "sender",   me.user_id  }},
+		{ content,  { "creator",  me.user_id  }},
+	};
+
+	json::iov::set _set[]
+	{
+		{ event,  { "depth",       1                }},
+		{ event,  { "type",        "m.room.create"  }},
+		{ event,  { "state_key",   ""               }},
+	};
+
+	return send(event, content);
+}
+
+ircd::m::event::id::buf
 ircd::m::room::membership(json::iov &event,
-                          json::iov &content)
+                          const json::iov &content)
 {
 	const user::id &user_id
 	{
 		event.at("sender")
 	};
 
-	const string_view &membership
+	const string_view membership
 	{
 		content.at("membership")
 	};
@@ -1009,38 +1205,74 @@ ircd::m::room::membership(json::iov &event,
 			"Member '%s' is already '%s'.", string_view{user_id}, membership
 		};
 
-	const json::strung c //TODO: child iov
-	{
-		content
-	};
-
 	const json::iov::set _event[]
 	{
 		{ event,  { "type",       "m.room.member"  }},
 		{ event,  { "state_key",   user_id         }},
 		{ event,  { "membership",  membership      }},
-		{ event,  { "content",     string_view{c}  }},
 	};
 
-	send(event);
+	return send(event, content);
 }
 
-void
+ircd::m::event::id::buf
 ircd::m::room::message(json::iov &event,
-                       json::iov &content)
+                       const json::iov &content)
+{
+	const json::iov::set _type[]
+	{
+		{ event,  { "type", "m.room.message" }},
+	};
+
+	const json::strung c //TODO: child iov
+	{
+		content
+	};
+
+	const json::iov::set_if _content[]
+	{
+		{ event, !content.empty(), { "content", string_view{c} }},
+	};
+
+	return send(event);
+}
+
+ircd::m::event::id::buf
+ircd::m::room::send(json::iov &event,
+                    const json::iov &content)
 {
 	const json::strung c //TODO: child iov
 	{
 		content
 	};
 
-	const json::iov::set _event[]
+	const json::iov::set_if _content[]
 	{
-		{ event,  { "type",       "m.room.message"  }},
-		{ event,  { "content",     string_view{c}   }},
+		{ event, !content.empty(), { "content", string_view{c} }},
 	};
 
-	send(event);
+	return send(event);
+}
+
+ircd::m::event::id::buf
+ircd::m::room::send(json::iov &event)
+{
+	const json::iov::set room_id
+	{
+		event, { "room_id", this->room_id }
+	};
+
+	//std::cout << this->room_id << " at " << this->maxdepth() << std::endl;
+
+	// TODO: XXX
+	// commitment to room here @ exclusive acquisition of depth
+
+	const json::iov::defaults depth
+	{
+		event, { "depth", int64_t(this->maxdepth()) + 1 }
+	};
+
+	return m::vm::commit(event);
 }
 
 bool
@@ -1077,12 +1309,86 @@ const
 	return m::vm::test(member_event && membership_test);
 }
 
-/// academic search
-std::vector<std::string>
-ircd::m::room::barren(const int64_t &min_depth)
+bool
+ircd::m::room::get(const string_view &type,
+                   const event::closure &closure)
 const
 {
-	return {};
+	return get(type, "", closure);
+}
+
+bool
+ircd::m::room::get(const string_view &type,
+                   const string_view &state_key,
+                   const event::closure &closure)
+const
+{
+	const vm::query<vm::where::equal> query
+	{
+		{ "room_id",      room_id           },
+		{ "type",         type              },
+		{ "state_key",    state_key         },
+	};
+
+	return m::vm::test(query, [&closure]
+	(const auto &event)
+	{
+		closure(event);
+		return true;
+	});
+}
+
+bool
+ircd::m::room::has(const string_view &type)
+const
+{
+	return test(type, [](const auto &event)
+	{
+		return true;
+	});
+}
+
+bool
+ircd::m::room::has(const string_view &type,
+                   const string_view &state_key)
+const
+{
+	const vm::query<vm::where::equal> query
+	{
+		{ "room_id",      room_id           },
+		{ "type",         type              },
+		{ "state_key",    state_key         },
+	};
+
+	return m::vm::test(query);
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::closure &closure)
+const
+{
+	const vm::query<vm::where::equal> query
+	{
+		{ "room_id",      room_id           },
+		{ "type",         type              },
+	};
+
+	return m::vm::for_each(query, closure);
+}
+
+bool
+ircd::m::room::test(const string_view &type,
+                    const event::closure_bool &closure)
+const
+{
+	const vm::query<vm::where::equal> query
+	{
+		{ "room_id",      room_id           },
+		{ "type",         type              },
+	};
+
+	return m::vm::test(query, closure);
 }
 
 /// academic search
@@ -1116,39 +1422,6 @@ const
 	});
 
 	return depth;
-}
-
-ircd::m::event::id::buf
-ircd::m::room::send(const json::members &event)
-{
-	size_t i(0);
-	json::iov iov;
-	json::iov::push members[event.size()];
-	for(const auto &member : event)
-		new (members + i++) json::iov::push(iov, member);
-
-	return send(iov);
-}
-
-ircd::m::event::id::buf
-ircd::m::room::send(json::iov &event)
-{
-	const json::iov::set room_id
-	{
-		event, { "room_id", this->room_id }
-	};
-
-	//std::cout << this->room_id << " at " << this->maxdepth() << std::endl;
-
-	// TODO: XXX
-	// commitment to room here @ exclusive acquisition of depth
-
-	const json::iov::defaults depth
-	{
-		event, { "depth", int64_t(this->maxdepth()) + 1 }
-	};
-
-	return m::vm::commit(event);
 }
 
 std::string
@@ -1236,16 +1509,18 @@ void
 ircd::m::user::activate(const json::members &contents)
 try
 {
-	json::iov event;
 	json::iov content;
 	json::iov::push push[]
 	{
-		{ event,    { "sender",      user_id     }},
-		{ content,  { "membership",  "join"      }},
+		{ content, { "membership", "join" }},
 	};
 
-	accounts.membership(event, content);
-	control.membership(event, content);
+	size_t i(0);
+	json::iov::push _content[contents.size()];
+	for(const auto &member : contents)
+		new (_content + i++) json::iov::push(content, member);
+
+	send(accounts, me.user_id, "ircd.user", user_id, content);
 }
 catch(const m::ALREADY_MEMBER &e)
 {
@@ -1258,42 +1533,33 @@ catch(const m::ALREADY_MEMBER &e)
 void
 ircd::m::user::deactivate(const json::members &contents)
 {
-	json::iov event;
 	json::iov content;
 	json::iov::push push[]
 	{
-		{ event,    { "sender",      user_id     }},
-		{ content,  { "membership",  "leave"     }},
+		{ content, { "membership", "leave" }},
 	};
 
-	accounts.membership(event, content);
+	size_t i(0);
+	json::iov::push _content[contents.size()];
+	for(const auto &member : contents)
+		new (_content + i++) json::iov::push(content, member);
+
+	send(accounts, me.user_id, "ircd.user", user_id, content);
 }
 
 void
 ircd::m::user::password(const string_view &password)
 try
 {
-	json::iov event;
-	json::iov::push members[]
-	{
-		{ event,  { "type",      "ircd.password"  }},
-		{ event,  { "state_key",  user_id         }},
-		{ event,  { "sender",     user_id         }},
-	};
-
+	//TODO: ADD SALT
 	char b64[64];
 	uint8_t hash[32];
 	sha256{hash, const_buffer{password}};
 	const auto digest{b64encode_unpadded(b64, hash)};
-	json::iov::push content{event,
+	send(accounts, me.user_id, "ircd.password", user_id,
 	{
-		"content", json::members
-		{
-			{ "sha256", digest }
-		},
-	}};
-
-	accounts.send(event);
+		{ "sha256", digest }
+	});
 }
 catch(const m::ALREADY_MEMBER &e)
 {
@@ -1314,6 +1580,7 @@ const
 		{ "state_key",    user_id           },
 	};
 
+	//TODO: ADD SALT
 	char b64[64];
 	uint8_t hash[32];
 	sha256{hash, const_buffer{supplied_password}};
@@ -1346,7 +1613,19 @@ bool
 ircd::m::user::is_active()
 const
 {
-	return accounts.membership(user_id);
+	bool ret{false};
+	accounts.get("ircd.user", user_id, [&ret]
+	(const auto &event)
+	{
+		const json::object &content
+		{
+			at<"content"_>(event)
+		};
+
+		ret = unquote(content.at("membership")) == "join";
+	});
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
