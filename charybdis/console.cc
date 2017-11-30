@@ -23,6 +23,8 @@
 #include <ircd/asio.h>
 #include "charybdis.h"
 
+using namespace ircd;
+
 const char *const generic_message
 {R"(
 *** - To end the console session: type ctrl-d             -> EOF
@@ -311,6 +313,35 @@ try
 					std::cout << std::endl;
 					break;
 				}
+
+				case hash("front"):
+				{
+					for(const auto &front : ircd::m::vm::fronts.map)
+						for(const auto &map : front.second.map)
+							std::cout << std::setw(48) << std::right << front.first << " " << map.second << " " << map.first << std::endl;
+
+					break;
+				}
+
+				case hash("conf"):
+				{
+					const json::object &conf{ircd::conf};
+					for(const auto &kv : conf)
+						std::cout << std::setw(32) << std::right << kv.first << "  " << kv.second << std::endl;
+
+					break;
+				}
+			}
+
+			if(startswith(what, '$'))
+			{
+				static char buf[65536];
+				const m::event event
+				{
+					m::event::id{what}, buf
+				};
+
+				std::cout << pretty(event) << std::endl;
 			}
 
 			break;
