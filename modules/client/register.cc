@@ -113,7 +113,7 @@ try
 	// throws 409 Conflict; otherwise the user is registered after this call.
 	user.activate(
 	{
-		{ "bind_email",     bind_email },
+		{ "bind_email", bind_email },
 	});
 
 	// Set the password for the account. This issues an ircd.password state

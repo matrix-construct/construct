@@ -28,6 +28,40 @@ resource publicrooms_resource
 	"This API returns paginated responses. (7.5)"
 };
 
+const ircd::m::room::id::buf
+public_room_id
+{
+    "public", ircd::my_host()
+};
+
+m::room public_
+{
+	public_room_id
+};
+
+//TODO: not a vm witness; use event release state update hook
+struct witness
+:m::vm::witness
+{
+	int add(m::vm::accumulator *const &a, const m::event &event) override final
+	{
+		if(json::get<"type"_>(event) != "m.room.join_rules")
+			return -1;
+
+		const json::object &content{at<"content"_>(event)};
+		const auto &join_rule{content.at("join_rule")};
+		return -1;
+	}
+
+	int del(m::vm::accumulator *const &a, const m::event &event) override final
+	{
+		if(json::get<"type"_>(event) != "m.room.join_rules")
+			return -1;
+
+		return -1;
+	}
+};
+
 resource::response
 get_publicrooms(client &client, const resource::request &request)
 {

@@ -46,7 +46,6 @@ struct ircd::m::vm::isa
 	{
 		const event::prev &prev{event};
 
-		//std::cout << "added: " << iit.second << std::endl;
 		return -1;
 	}
 

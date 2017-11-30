@@ -94,16 +94,10 @@ post_login_password(client &client,
 	// Log the user in by issuing an event in the sessions room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
-	m::user::sessions.send(
+	m::send(m::user::sessions, user_id, "ircd.access_token", access_token,
 	{
-		{ "type",      "ircd.access_token"   },
-		{ "sender",     user_id              },
-		{ "state_key",  access_token         },
-		{ "content",    json::members
-		{
-			{ "ip",      string(remote(client)) },
-			{ "device",  "unknown"              },
-		}}
+		{ "ip",      string(remote(client)) },
+		{ "device",  "unknown"              },
 	});
 
 	// Send response to user

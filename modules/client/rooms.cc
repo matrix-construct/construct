@@ -47,8 +47,8 @@ get_messages(client &client,
 {
 	const m::vm::query<m::vm::where::equal> query
 	{
-		{ "room_id",   room_id  },
-		{ "is_state",  false    },
+		{ "room_id",    room_id  },
+		{ "state_key",  nullptr  },
 	};
 
 	const size_t count
@@ -56,7 +56,7 @@ get_messages(client &client,
 		std::min(m::vm::count(query), 128UL)
 	};
 
-	if(!count)
+	if(!count && !exists(room_id))
 		throw m::NOT_FOUND
 		{
 			"No messages."
@@ -146,7 +146,10 @@ get_state(client &client,
 	(const auto &event)
 	{
 		if(j < count)
-			ret[j++] = event;
+		{
+			if(defined(json::get<"state_key"_>(event)))
+				ret[j++] = event;
+		}
 	});
 
 	return resource::response
@@ -172,7 +175,6 @@ get_state(client &client,
 		{ "event_id",   event_id   },
 		{ "type",       type       },
 		{ "state_key",  state_key  },
-		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);
@@ -190,7 +192,6 @@ get_state(client &client,
 		{ "room_id",    room_id    },
 		{ "event_id",   event_id   },
 		{ "type",       type       },
-		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);
@@ -231,7 +232,6 @@ get_state(client &client,
 	{
 		{ "room_id",    room_id    },
 		{ "event_id",   event_id   },
-		{ "is_state",   true       },
 	};
 
 	return get_state(client, request, query);

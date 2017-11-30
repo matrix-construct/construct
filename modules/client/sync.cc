@@ -597,17 +597,14 @@ initial_sync(client &client,
 		m::vm::current_sequence
 	};
 
-	const json::members content
+	const auto state_key
 	{
-		{ "sequence",  next_batch }
+		request.query.at("access_token")
 	};
 
-	m::user::sessions.send(
+	m::send(m::user::sessions, request.user_id, "ircd.tape.head", state_key,
 	{
-		{ "type",       "ircd.tape.head"                 },
-		{ "state_key",  request.query.at("access_token") },
-		{ "sender",     request.user_id                  },
-		{ "content",    content                          },
+		{ "sequence",  next_batch }
 	});
 
 	return resource::response
