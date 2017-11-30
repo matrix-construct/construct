@@ -287,7 +287,7 @@ try
 {
 	const auto dbdir(fs::get(fs::DB));
 	if(fs::mkdir(dbdir))
-		log.warning("Created new database directory at `%s'", dbdir);
+		log.notice("Created new database directory at `%s'", dbdir);
 	else
 		log.info("Using database directory at `%s'", dbdir);
 }
