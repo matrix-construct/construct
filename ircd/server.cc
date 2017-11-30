@@ -36,6 +36,12 @@ noexcept
 	ircd::server::nodes.clear();
 }
 
+void
+ircd::server::init::interrupt()
+{
+	ircd::server::nodes.clear();
+}
+
 //
 // server
 //

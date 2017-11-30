@@ -281,6 +281,7 @@ try
 	// Any deinits which have to be done with all subsystems intact
 	const unwind shutdown{[&]
 	{
+		_server_.interrupt();
 		_client_.interrupt();
 	}};
 

@@ -117,6 +117,8 @@ struct ircd::server::node
 
 struct ircd::server::init
 {
+	void interrupt();
+
 	init();
 	~init() noexcept;
 };
