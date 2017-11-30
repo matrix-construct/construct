@@ -39,6 +39,11 @@ ircd::m::vm::fronts
 {
 };
 
+decltype(ircd::m::vm::pipe)
+ircd::m::vm::pipe
+{
+};
+
 void
 ircd::m::vm::trace(const id::event &event_id,
                    const tracer &closure)
@@ -117,7 +122,7 @@ try
 {
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_MiB //TODO: XXX
+		32_MiB //TODO: XXX
 	};
 
 	room::state::fetch tab
@@ -163,7 +168,7 @@ try
 {
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_MiB //TODO: XXX
+		32_MiB //TODO: XXX
 	};
 
 	room::fetch tab
@@ -506,10 +511,60 @@ ircd::m::vm::join(const room::id &room_id,
 ircd::m::event::id::buf
 ircd::m::vm::commit(json::iov &iov)
 {
+	const room::id &room_id
+	{
+		iov.at("room_id")
+	};
+
+	std::string prev_events; try
+	{
+		auto &front(fronts.get(room_id, iov));
+		if(!front.map.empty())
+		{
+			std::string prev_id
+			{
+				front.map.begin()->first
+			};
+
+			const json::value prev[]
+			{
+				string_view{prev_id}
+			};
+
+			const json::value prev2[]
+			{
+				{ prev, 1 }
+			};
+
+			const json::value prevs
+			{
+				prev2, 1
+			};
+
+			prev_events = json::strung(prevs);
+		}
+	}
+	catch(const std::exception &e)
+	{
+
+	}
+
+	std::string auth_events; try
+	{
+
+
+	}
+	catch(const std::exception &e)
+	{
+
+	}
+
 	const json::iov::set set[]
 	{
 		{ iov, { "origin_server_ts",  ircd::time<milliseconds>() }},
 		{ iov, { "origin",            my_host()                  }},
+		{ iov, { "prev_events",       prev_events                }},
+		{ iov, { "auth_events",       auth_events                }},
 	};
 
 	// Need this for now
@@ -635,9 +690,9 @@ namespace ircd::m::vm
 	int _query_where(eval &, const query<where::equal> &where, const closure_bool &closure);
 	int _query_where(eval &, const query<where::logical_and> &where, const closure_bool &closure);
 
-	bool evaluate(eval &, const vector_view<eval::port> &, const size_t &i);
-	enum eval::fault evaluate(eval &, const event &);
-	enum eval::fault evaluate(eval &, const vector_view<const event> &);
+	bool evaluate(eval &, const vector_view<port> &, const size_t &i);
+	enum fault evaluate(eval &, const event &);
+	enum fault evaluate(eval &, const vector_view<const event> &);
 }
 
 decltype(ircd::m::vm::eval::default_opts)
@@ -654,14 +709,14 @@ ircd::m::vm::eval::eval(const struct opts &opts)
 {
 }
 
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()()
 {
 	assert(0);
 	return fault::ACCEPT;
 }
 
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const json::array &events)
 {
 	std::vector<m::event> event;
@@ -674,7 +729,7 @@ ircd::m::vm::eval::operator()(const json::array &events)
 	return operator()(vector_view<const m::event>(event));
 }
 
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const json::vector &events)
 {
 	std::vector<m::event> event;
@@ -687,7 +742,13 @@ ircd::m::vm::eval::operator()(const json::vector &events)
 	return operator()(vector_view<const m::event>(event));
 }
 
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(const event &event)
+{
+	return operator()(vector_view<const m::event>(&event, 1));
+}
+
+enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const vector_view<const event> &events)
 {
 	static const size_t max
@@ -717,36 +778,18 @@ ircd::m::vm::eval::operator()(const vector_view<const event> &events)
 	return fault::ACCEPT;
 }
 
-enum ircd::m::vm::eval::fault
-ircd::m::vm::eval::operator()(const event &event)
-{
-	const auto code
-	{
-		evaluate(*this, {&event, 1})
-	};
-
-	switch(code)
-	{
-		case ACCEPT:
-			break;
-
-		default:
-			return code;
-	}
-}
-
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
 ircd::m::vm::evaluate(eval &eval,
                       const vector_view<const event> &events)
 {
-	const std::unique_ptr<eval::port[]> port
+	const std::unique_ptr<port[]> port_buf
 	{
-		new eval::port[events.size()]
+		new port[events.size()]
 	};
 
-	const vector_view<eval::port> p
+	const vector_view<port> p
 	{
-		port.get(), events.size()
+		port_buf.get(), events.size()
 	};
 
 	auto &ef{eval.ef};
@@ -782,19 +825,20 @@ ircd::m::vm::evaluate(eval &eval,
 			{
 				log.info("%s", pretty_oneline(*p[i].event));
 				vm::inserted.notify(*p[i].event);
-				p[i] = eval::port{};
+				p[i] = port{};
 			}
 		}
 	}
 
-	return cs == events.size()? eval.fault::ACCEPT:
-	                            eval.fault::EVENT;
+	return cs == events.size()? fault::ACCEPT:
+	                            fault::EVENT;
 }
 
 bool
 ircd::m::vm::evaluate(eval &eval,
-                      const vector_view<eval::port> &pv,
+                      const vector_view<port> &pv,
                       const size_t &i)
+try
 {
 	auto &ef{eval.ef};
 	auto &p{pv[i]};
@@ -804,14 +848,14 @@ ircd::m::vm::evaluate(eval &eval,
 	auto &event{*p.event};
 	switch((p.code = evaluate(eval, event)))
 	{
-		case eval.fault::ACCEPT:
+		case fault::ACCEPT:
 		{
 			p.w = true;
 			ef.erase(at<"event_id"_>(event));
 			return true;
 		}
 
-		case eval.fault::EVENT:
+		case fault::EVENT:
 		{
 			const auto it(std::find_if(begin(pv), end(pv), [&ef]
 			(const auto &port) -> bool
@@ -822,15 +866,20 @@ ircd::m::vm::evaluate(eval &eval,
 			return it == end(pv);
 		}
 
-		case eval.fault::STATE:
+		case fault::STATE:
 			return true;
 
 		default:
 			return true;
 	}
 }
+catch(const std::exception &e)
+{
+	log.error("%s", e.what());
+	return true;
+}
 
-enum ircd::m::vm::eval::fault
+enum ircd::m::vm::fault
 ircd::m::vm::evaluate(eval &eval,
                       const event &event)
 {
@@ -844,9 +893,21 @@ ircd::m::vm::evaluate(eval &eval,
 		at<"depth"_>(event)
 	};
 
+	const auto &room_id
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	auto &front
+	{
+		fronts.get(room_id, event)
+	};
+
+	front.top = depth;
+
 	auto code
 	{
-		eval.fault::ACCEPT
+		fault::ACCEPT
 	};
 
 	const m::event::prev prev{event};
@@ -859,8 +920,8 @@ ircd::m::vm::evaluate(eval &eval,
 
 		if(eval.capstan.test(q) != true)
 		{
-			eval.ef.emplace(event_id);
-			code = eval.fault::EVENT;
+			//eval.ef.emplace(event_id);
+			//code = fault::EVENT;
 		}
 	});
 
@@ -868,7 +929,7 @@ ircd::m::vm::evaluate(eval &eval,
 	          reflect(code),
 	          pretty_oneline(event));
 
-	if(code == eval.fault::ACCEPT)
+	if(code == fault::ACCEPT)
 		eval.capstan.fwd(event);
 
 	return code;
@@ -890,9 +951,9 @@ ircd::m::vm::write(eval &eval)
 bool
 ircd::m::vm::check_fault_resume(eval &eval)
 {
-	switch(eval.fault)
+	switch(fault)
 	{
-		case eval.fault::ACCEPT:
+		case fault::ACCEPT:
 			return true;
 
 		default:
@@ -909,18 +970,18 @@ ircd::m::vm::check_fault_throw(eval &eval)
 	if(eval.opts->nothrow)
 		return;
 
-	switch(eval.fault)
+	switch(fault)
 	{
-		case eval.fault::ACCEPT:
+		case fault::ACCEPT:
 			return;
 
-		case eval.fault::GENERAL:
+		case fault::GENERAL:
 			if(eval.error)
 				std::rethrow_exception(eval.error);
 			// [[fallthrough]]
 
 		default:
-			throw VM_FAULT("(%u): %s", uint(eval.fault), reflect(eval.fault));
+			throw VM_FAULT("(%u): %s", uint(fault), reflect(fault));
     }
 }
 */
@@ -982,15 +1043,16 @@ ircd::m::vm::_query_where(eval &eval,
                           const query<where::equal> &where,
                           const closure_bool &closure)
 {
-	log.debug("eval(%p): Query [%s]: %s",
-	          &eval,
-	          "where equal",
-	          pretty_oneline(where.value));
-
 	const int ret
 	{
 		eval.capstan.test(where)
 	};
+
+	log.debug("eval(%p): Query [%s]: %s -> %d",
+	          &eval,
+	          "where equal",
+	          pretty_oneline(where.value),
+	          ret);
 
 	return ret;
 }
@@ -1207,43 +1269,45 @@ ircd::m::vm::fetch(const room::id &room_id,
 	{
 		at<"event_id"_>(event)
 	};
-/*
+
 	if(!my_host(room_id.host()))
 	{
 		log.debug("No fronts available for %s; acquiring state eigenvalue at %s...",
 		          string_view{room_id},
 		          string_view{event_id});
 
-		statefill(room_id, event_id);
+		if(event_id.host() == "matrix.org" && room_id.host() == "matrix.org")
+			statefill(room_id, event_id);
+
 		return front;
 	}
-*/
+
 	log.debug("No fronts available for %s using %s",
 	          string_view{room_id},
 	          string_view{event_id});
 
 	front.map.emplace(at<"event_id"_>(event), json::get<"depth"_>(event));
 	front.top = json::get<"depth"_>(event);
-/*
+
 	if(!my_host(room_id.host()))
 	{
 		backfill(room_id, event_id, 64);
 		return front;
 	}
-*/
+
 	return front;
 }
 
 ircd::string_view
-ircd::m::vm::reflect(const enum eval::fault &code)
+ircd::m::vm::reflect(const enum fault &code)
 {
 	switch(code)
 	{
-		case eval::fault::ACCEPT:       return "ACCEPT";
-		case eval::fault::GENERAL:      return "GENERAL";
-		case eval::fault::DEBUGSTEP:    return "DEBUGSTEP";
-		case eval::fault::BREAKPOINT:   return "BREAKPOINT";
-		case eval::fault::EVENT:        return "EVENT";
+		case fault::ACCEPT:       return "ACCEPT";
+		case fault::GENERAL:      return "GENERAL";
+		case fault::DEBUGSTEP:    return "DEBUGSTEP";
+		case fault::BREAKPOINT:   return "BREAKPOINT";
+		case fault::EVENT:        return "EVENT";
 	}
 
 	return "??????";
@@ -1530,23 +1594,26 @@ int
 ircd::m::vm::_query_where_room_id_at_event_id(const query<where::equal> &where,
                                               const closure_bool &closure)
 {
-	//std::cout << "where room id at event id?" << std::endl;
+	std::cout << "where room id at event id?" << std::endl;
 	const auto &value{where.value};
 	const auto &room_id{json::get<"room_id"_>(value)};
 	const auto &event_id{json::get<"event_id"_>(value)};
 	const auto &state_key{json::get<"state_key"_>(value)};
+
+	auto &front{fronts.get(room_id, value)};
+
 	if(!defined(state_key))
 		return _query_where_event_id(where, closure);
 
-	if(my(event_id))
+	if(my(room_id))
 	{
 		std::cout << "GET LOCAL STATE? " << event_id << std::endl;
 		return -1;
 	}
 
-	std::cout << "GET REMOTE STATE? " << event_id << std::endl;
-	vm::statefill(room_id, event_id);
-	auto &front{fronts.get(room_id)};
+	//std::cout << "GET REMOTE STATE? " << event_id << std::endl;
+	//vm::statefill(room_id, event_id);
+	//auto &front{fronts.get(room_id)};
 
 	const auto &type{json::get<"type"_>(value)};
 	if(type && state_key)
@@ -1559,15 +1626,16 @@ int
 ircd::m::vm::_query_where_room_id(const query<where::equal> &where,
                                   const closure_bool &closure)
 {
-	//std::cout << "where room id?" << std::endl;
 	const auto &value{where.value};
 	const auto &room_id{json::get<"room_id"_>(value)};
 	const auto &event_id{json::get<"event_id"_>(value)};
 	if(event_id)
 		return _query_where_room_id_at_event_id(where, closure);
 
-	//auto &front{fronts.get(room_id)};
-	//std::cout << "where room id..." << std::endl;
+	//std::cout << "where room id?" << std::endl;
+	//auto &front{fronts.get(room_id, value)};
+	//std::cout << "where room id front..." << std::endl;
+
 	const auto &type{json::get<"type"_>(value)};
 	const auto &state_key{json::get<"state_key"_>(value)};
 	const bool is_state{defined(state_key) == true};

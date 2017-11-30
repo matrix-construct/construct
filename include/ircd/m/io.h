@@ -157,6 +157,7 @@ struct ircd::m::event::sync
 {
 	// out
 	string_view destination;
+	uint64_t txnid {0};
 
 	// in
 	std::exception_ptr error;

@@ -57,12 +57,17 @@ namespace ircd::m::vm
 	IRCD_M_EXCEPTION(m::error, VM_ERROR, http::INTERNAL_SERVER_ERROR);
 	IRCD_M_EXCEPTION(VM_ERROR, VM_FAULT, http::BAD_REQUEST);
 
+	enum fault :uint;
 	struct frame;
 	struct capstan;
 	struct witness;
 	struct accumulator;
 	struct front;
 	struct eval;
+	struct pipe;
+	struct port;
+	struct space;
+	struct opts;
 
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
@@ -71,6 +76,7 @@ namespace ircd::m::vm
 	extern uint64_t current_sequence;
 	extern ctx::view<const event> inserted;
 	extern struct fronts fronts;
+	extern struct pipe pipe;
 
 	bool test(const query<> &, const closure_bool &);
 	bool test(const query<> &);
@@ -84,97 +90,8 @@ namespace ircd::m::vm
 	int test(eval &, const query<> &);
 }
 
-struct ircd::m::vm::capstan
-{
-	int64_t dc{0};
-	std::vector<std::unique_ptr<vm::accumulator>> acc;
-
-	ssize_t count(const query<> &) const;
-	int test(const query<> &) const;
-
-	void fwd(const event &);
-	void rev(const event &);
-
-	capstan();
-	~capstan() noexcept;
-};
-
-/// Event Evaluation Device
-///
-/// This object conducts the evaluation of an event or a tape of multiple
-/// events. An event is evaluated in an attempt to execute it. Events which
-/// fail during evaluation won't be executed; such is the case for events which
-/// have already been executed, or events which are invalid or lead to invalid
-/// transitions or actions of the machine etc.
-///
-/// Basic usage of the eval is simply calling the ctor like a function with an
-/// event; with the default options this evaluates and executes the event
-/// throwing all errors. Advanced usage of eval takes the form of an instance
-/// constructed with options; the user then drives the eval in a loop,
-/// responding to its needs for more data or other issues, and then continuing
-/// the loop until satisfied.
-///
-/// The back-end interface consists of a set of modules which register with the
-/// vm::eval class and provide their piece of eval functionality to instances.
-///
-struct ircd::m::vm::eval
-{
-	struct opts;
-	enum fault :uint;
-
-	struct port
-	{
-		const m::event *event {nullptr};
-		std::exception_ptr error;
-		enum fault code;
-		bool h {false};
-		bool w {false};
-	};
-
-	static const opts default_opts;
-
-	const struct opts *opts;
-	struct capstan capstan;
-	std::set<event::id> ef;
-	db::iov txn{*event::events};
-	uint64_t cs {0};
-
-	enum fault operator()();
-	enum fault operator()(const event &);
-	enum fault operator()(const vector_view<const event> &);
-	enum fault operator()(const json::vector &);
-	enum fault operator()(const json::array &);
-
-	template<class events> eval(const struct opts &, events&&);
-	template<class events> eval(const events &);
-	eval(const struct opts &);
-	eval();
-
-	friend string_view reflect(const enum fault &);
-};
-
-/// Individual evaluation state
-///
-/// Evaluation faults. These are reasons which evaluation has halted but may
-/// continue after the user defaults the fault. They are basically types of
-/// interrupts and traps, which are recoverable. Only the GENERAL protection
-/// fault (#gp) is an abort and is not recoverable. An exception_ptr will be
-/// set; aborts are otherwise just thrown as exceptions from eval. If any
-/// fault isn't handled properly that is an abort.
-///
-enum ircd::m::vm::eval::fault
-:uint
-{
-	ACCEPT,          ///< No fault.
-	DEBUGSTEP,       ///< Debug step. (#db)
-	BREAKPOINT,      ///< Debug breakpoint. (#bp)
-	GENERAL,         ///< General protection fault. (#gp)
-	EVENT,           ///< Eval requires addl events in the ef register (#ef)
-	STATE,           ///< Required state is missing (#st)
-};
-
 /// Evaluation Options
-struct ircd::m::vm::eval::opts
+struct ircd::m::vm::opts
 {
 	/// Setting to false will disable the eval from exiting with a fault and
 	/// instead consider all faults as errors which throw exceptions. If
@@ -219,6 +136,103 @@ struct ircd::m::vm::eval::opts
 
 	/// Option to skip event signature verification when false.
 	bool verify_signature {true};
+};
+
+/// Individual evaluation state
+///
+/// Evaluation faults. These are reasons which evaluation has halted but may
+/// continue after the user defaults the fault. They are basically types of
+/// interrupts and traps, which are recoverable. Only the GENERAL protection
+/// fault (#gp) is an abort and is not recoverable. An exception_ptr will be
+/// set; aborts are otherwise just thrown as exceptions from eval. If any
+/// fault isn't handled properly that is an abort.
+///
+enum ircd::m::vm::fault
+:uint
+{
+	ACCEPT,          ///< No fault.
+	DEBUGSTEP,       ///< Debug step. (#db)
+	BREAKPOINT,      ///< Debug breakpoint. (#bp)
+	GENERAL,         ///< General protection fault. (#gp)
+	EVENT,           ///< Eval requires addl events in the ef register (#ef)
+	STATE,           ///< Required state is missing (#st)
+};
+
+struct ircd::m::vm::capstan
+{
+	int64_t dc{0};
+	std::vector<std::unique_ptr<vm::accumulator>> acc;
+
+	ssize_t count(const query<> &) const;
+	int test(const query<> &) const;
+
+	void fwd(const event &);
+	void rev(const event &);
+
+	capstan();
+	~capstan() noexcept;
+};
+
+struct ircd::m::vm::port
+{
+	const m::event *event {nullptr};
+	std::exception_ptr error;
+	fault code;
+	bool h {false};
+	bool w {false};
+};
+
+struct ircd::m::vm::space
+{
+	struct capstan capstan;
+};
+
+struct ircd::m::vm::pipe
+{
+	std::unordered_map<string_view, space> s;
+	std::deque<port> p;
+};
+
+/// Event Evaluation Device
+///
+/// This object conducts the evaluation of an event or a tape of multiple
+/// events. An event is evaluated in an attempt to execute it. Events which
+/// fail during evaluation won't be executed; such is the case for events which
+/// have already been executed, or events which are invalid or lead to invalid
+/// transitions or actions of the machine etc.
+///
+/// Basic usage of the eval is simply calling the ctor like a function with an
+/// event; with the default options this evaluates and executes the event
+/// throwing all errors. Advanced usage of eval takes the form of an instance
+/// constructed with options; the user then drives the eval in a loop,
+/// responding to its needs for more data or other issues, and then continuing
+/// the loop until satisfied.
+///
+/// The back-end interface consists of a set of modules which register with the
+/// vm::eval class and provide their piece of eval functionality to instances.
+///
+struct ircd::m::vm::eval
+{
+	static const struct opts default_opts;
+
+	const struct opts *opts;
+	struct capstan capstan;
+	db::iov txn{*event::events};
+	std::set<event::id> ef;
+	uint64_t cs {0};
+
+	fault operator()();
+	fault operator()(const event &);
+	fault operator()(const vector_view<const event> &);
+	fault operator()(const json::vector &);
+	fault operator()(const json::array &);
+
+	template<class events> eval(const struct opts &, events&&);
+	template<class events> eval(const events &);
+	eval(const struct opts &);
+	eval();
+
+	friend string_view reflect(const fault &);
 };
 
 /// Convenience construction passes events through to operator().

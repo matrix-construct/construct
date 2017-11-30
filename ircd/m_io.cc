@@ -96,22 +96,10 @@ ircd::m::io::acquire(event::fetch &tab)
 //TODO: XXX
 namespace ircd::m::io
 {
-	size_t txn_ctr
-	{
-		1
-	};
-
 	net::remote
 	destination_remote(const string_view &destination)
 	{
 		return net::remote{destination};
-	}
-
-	m::event::id
-	event_id(const event::sync &es)
-	{
-		const json::object &event{es.buf};
-		return event.get("event_id");
 	}
 }
 
@@ -134,7 +122,7 @@ ircd::m::io::release(vector_view<event::sync> tab)
 
 		url[i] = fmt::snstringf
 		{
-			1024, "_matrix/federation/v1/send/%zu", txn_ctr++
+			1024, "_matrix/federation/v1/send/%zu/", tab[i].txnid
 		};
 
 		session[i] =
@@ -154,8 +142,8 @@ ircd::m::io::release(vector_view<event::sync> tab)
 	catch(const std::exception &e)
 	{
 		tab[i].error = std::make_exception_ptr(e);
-		log.warning("sync %s will not succeed: %s",
-		            string_view{event_id(tab[i])},
+		log.warning("sync txn %ld will not succeed: %s",
+		            tab[i].txnid,
 		            e.what());
 	}
 
@@ -185,18 +173,26 @@ ircd::m::io::release(vector_view<event::sync> tab)
 		ret += !tab[i].error;
 		++in;
 
-		log.debug("%s received event %s (size: %zu) error: %d",
+		log.debug("%s received txn %ld (size: %zu) error: %d",
 		          string(net::remote{session[i].server}),
-		          string_view{event_id(tab[i])},
+		          tab[i].txnid,
 		          size(tab[i].buf),
 		          bool(tab[i].error));
+	}
+	catch(const http::error &e)
+	{
+		tab[i].error = std::make_exception_ptr(e);
+		log.error("request to sync txn %ld failed: %s: %s",
+		          tab[i].txnid,
+		          e.what(),
+		          e.content);
 	}
 	catch(const std::exception &e)
 	{
 		tab[i].error = std::make_exception_ptr(e);
-		log.warning("request to sync event_id %s failed: %s",
-		            string_view{event_id(tab[i])},
-		            e.what());
+		log.error("request to sync txn %ld failed: %s",
+		          tab[i].txnid,
+		          e.what());
 	}
 
 	return ret;
@@ -240,7 +236,7 @@ ircd::m::io::acquire(vector_view<room::state::fetch> tab)
 
 		request[i] =
 		{
-			"GET", url[i], query[i], {}
+			"GET", url[i], query[i], json::object{}
 		};
 
 		session[i] =
@@ -505,6 +501,7 @@ bool
 ircd::m::io::acquire_local(event::fetch &tab)
 try
 {
+/*
 	const m::vm::query<m::vm::where::equal> query
 	{
 		{ "event_id", tab.event_id },

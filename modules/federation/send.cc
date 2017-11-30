@@ -227,14 +227,31 @@ sender_handle(const m::event &event)
 	assert(0);
 }
 
+ssize_t txn_ctr
+{
+	8
+};
+
 void
 sender_handle(const m::event &event,
               const m::room::id &room_id)
+try
 {
 	const m::room room
 	{
 		room_id
 	};
 
-	std::cout << "sender handle: " << at<"event_id"_>(event) << " " << room_id << std::endl;
+	const m::event::id &event_id
+	{
+		json::get<"event_id"_>(event)
+	};
+}
+catch(const http::error &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw;
 }
