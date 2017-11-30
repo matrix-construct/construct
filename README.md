@@ -58,15 +58,11 @@ and have furthered the mission of eliminating the need for external "IRC service
 
 #### Platforms
 
-[![Charybdis](http://img.shields.io/SemVer/v5.0.0-dev.png)](https://github.com/charybdis-ircd/charybdis/tree/master)
-*This branch is not meant for production. Use at your own risk.*
+[![Construct](https://img.shields.io/SemVer/v5.0.0-dev.png)](https://github.com/jevolk/charybdis/tree/master)
 
 | <sub> Continuously Integrated Host </sub>   | <sub> Compiler </sub>    | <sub> Third party </sub> | <sub> Status </sub> |
 |:------------------------------------------- |:------------------------ |:------------------------ |:------------------- |
-| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Linux Ubuntu 14.04 Xenial </sub>      | <sub> Clang 3.8   </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Apple Darwin 15.5 </sub>              | <sub> LLVM 7.3.0  </sub> | <sub> Boost 1.62 </sub>  | [![POSIX Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis) |
-| <sub> Windows </sub>                        | <sub> mingw 3.5   </sub> | <sub> Boost 1.62 </sub>  | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/is0obsml8xyq2qk7/branch/master?svg=true)](https://ci.appveyor.com/project/kaniini/charybdis/branch/master) |
+| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
 
 
 ### Building from git (production)
