@@ -55,7 +55,10 @@ room.sync = function(data, action)
 		if(this.control.mode == "LIVE") try
 		{
 			this.scroll.to.bottom("fast");
-			this.receipt.send.current();
+
+			//TODO: riot's behavior is to only send the receipt when the
+			//TODO: user does something next ensuring they aren't AFK
+			//this.receipt.send.current();
 		}
 		catch(e)
 		{

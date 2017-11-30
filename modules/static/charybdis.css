@@ -456,7 +456,6 @@ body.loaded
 	text-shadow: 0px 0px #000000;
 }
 
-.ircd .selected,
 .ircd button.selected
 {
 	background-color: var(--pal-AC) !important;
@@ -924,47 +923,88 @@ body.loaded
  * Object explorer
  */
 
-.ircd .explore2.object,
-.ircd .explore2 .object
+.ircd form.explore2
 {
+	position: relative;
+	flex-flow: column nowrap;
+	justify-content: flex-start;
+	align-items: flex-start;
+	border-left: 0px;
+	border-radius: 0px 0px 0px 0px;
+}
+
+.ircd form.explore2.object,
+.ircd form.explore2 .object
+{
+	flex-grow: 1;
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: center;
-	margin: 5px 0px 5px 0px;
+	box-sizing: border-box;
+	border-top: 0px solid var(--pal-AD);
+	border-bottom: 0px solid var(--pal-AD);
+	border-left: 0px solid var(--pal-AD);
+	border-radius: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
 	padding: 0px 0px 0px 0px;
-	border-radius: 3px 0px 0px 0px;
-	border-left: 1px dotted var(--pal-AE);
 }
 
-.ircd .explore2 div.member
+.ircd form.explore2 div.member
 {
+	width: 100%;
 	flex-flow: row nowrap;
-	align-items: stretch;
-	margin: 1px 0px 1px 0px;
+	align-items: center;
+	justify-content: stretch;
+	box-sizing: border-box;
+	margin: 0px 0px 0px 0px;
+	padding: 1px 0px 0px 0px;
+	border-bottom: 1px solid var(--pal-AD);
 }
 
-.ircd .explore2 .key
+.ircd form.explore2 div.member
+:first-child
+{
+	margin-top: 0px;
+	padding-top: 0px;
+}
+
+.ircd form.explore2 div.member
+:last-child
+{
+	margin-bottom: 0px;
+	padding-bottom: 0px;
+}
+
+.ircd form.explore2 .key
 {
 	flex-grow: 1;
 	align-items: center;
 	justify-content: flex-start;
-	margin: 0px 20px 0px 5px;
+	margin: 0px 15px 0px 0px;
+	box-sizing: border-box;
+	font-size: calc(var(--fsF));
+	color: white;
 }
 
-.ircd .explore2 input.value
+.ircd form.explore2 input.value
 {
 	flex-grow: 0;
-	min-width: 48ch;
-	padding: 2px 5px 2px 5px;
+	min-width: 96ch;
+	align-self: stretch;
+	align-items: center;
+	justify-content: center;
+	line-height: 1em;
 	border-radius: 2px;
 	font-family: monospace;
 	font-size: calc(var(--fsE));
+	padding: 1px 1px 1px 1px;
+	margin: 1px 1px 0px 1px;
 }
 
 /*
  * Old explorer
  */
-
+/*
 .ircd div.object
 {
 	display: inline-flex;
@@ -1038,7 +1078,7 @@ body.loaded
 	font-family: FreeMono;
 	font-size: 18px;
 }
-
+*/
 
 /************************************************
  ************************************************
@@ -1213,7 +1253,7 @@ body.loaded
 	flex-flow: column nowrap;
 	align-items: center;
 	justify-content: center;
-	margin: 0px;
+	margin: 10px;
 	padding: 0px;
 }
 
@@ -1252,7 +1292,7 @@ body.loaded
 	align-self: flex-end;
 	align-items: baseline;
 	letter-spacing: -1px;
-	margin: 0px 10px 0px 10px;
+	margin: 0px 2px 0px 0px;
 }
 
 .ircd .login_ h3 b
@@ -1286,7 +1326,7 @@ body.loaded
 	box-sizing: border-box;
 	margin: 5px 0px 5px 0px;
 	padding: 0px 4px 0px 4px;
-	border-radius: 0px;
+	border-radius: 3px;
 }
 
 .ircd .login_ div.submit
@@ -1304,8 +1344,7 @@ body.loaded
 	justify-content: center;
 	margin: 5px 0px 5px 0px;
 	padding: 10px 15px 10px 15px;
-	border-top: 1px solid var(--pal-AD);
-	border-bottom: 1px solid var(--pal-AD);
+	border: 1px solid var(--pal-AD);
 	letter-spacing: 1px;
 	font-weight: bold;
 	font-size: 17px;
@@ -1314,10 +1353,12 @@ body.loaded
 
 .ircd .login_ .submit button[name=login_]
 {
+	margin-right: 5px;
 }
 
 .ircd .login_ .submit button[name=register]
 {
+	margin-left: 5px;
 }
 
 .ircd .login_ button.submit:hover
@@ -1781,7 +1822,7 @@ div.main > form.search
 	align-items: stretch;
 	justify-content: stretch;
 	margin: 0px 0px 0px 0px;
-	padding-top: 3px;
+	padding-top: 1px;
 	border-radius: 0px;
 	background-color: var(--pal-DE);
 	color: var(--pal-AC);
@@ -1790,7 +1831,7 @@ div.main > form.search
 .ircd .rooms
 div.main > form.search.selected
 {
-	background-color: var(--pal-AC);
+	background-color: var(--pal-DD);
 }
 
 .ircd .rooms
@@ -1801,6 +1842,12 @@ div.main > form.search input
 	padding: 5px 10px 5px 10px;
 	margin: 0px 0px 0px 0px;
 	font-size: 16px;
+}
+
+.ircd .rooms
+div.main > form.search.selected input
+{
+	border-top: 1px solid var(--pal-DA);
 }
 
 .ircd .rooms
@@ -3212,69 +3259,11 @@ div.main > form.search label
 	border-bottom: 1px solid var(--pal-AD);
 }
 
-.ircd .room div.main div.event div.timeline div.info form
-{
-	position: relative;
-}
-
 .ircd .room div.main div.event div.timeline div.info form.event
 {
-	border-left: 0px;
-	border-radius: 0px 0px 0px 0px;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event div.object
-{
-	flex-grow: 1;
-	box-sizing: border-box;
-	border-top: 0px solid var(--pal-AD);
-	border-bottom: 0px solid var(--pal-AD);
-	border-left: 0px solid var(--pal-AD);
-	border-radius: 0px 0px 0px 0px;
-	margin: 0px 0px 0px 0px;
-	padding: 0px 0px 0px 0px;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event div.member
-{
-	box-sizing: border-box;
-	margin: 0px 0px 0px 0px;
-	padding: 0px 0px 1px 0px;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event div.member:first-child
-{
-	margin-top: 0px;
-	padding-top: 0px;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event div.member:last-child
-{
-	margin-bottom: 0px;
-	padding-bottom: 0px;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event .key
-{
-	box-sizing: border-box;
-	align-self: stretch;
-	align-items: center;
-	justify-content: flex-start;
-	border-bottom: 1px solid var(--pal-AD);
-	font-size: calc(var(--fsF));
-	color: white;
-	text-align: center;
-}
-
-.ircd .room div.main div.event div.timeline div.info form.event input.value
-{
-	box-sizing: border-box;
-	margin: 0px 1px 0px 1px;
-	padding: 0px 5px 0px 5px;
-	align-items: center;
-	justify-content: center;
-	font-family: courier;
-	font-size: calc(var(--fsE));
+	position: relative;
+	margin-top: 5px;
+	margin-bottom: 5px;
 }
 
 .ircd .room div.main div.event div.timeline div.info form.menu
@@ -3306,8 +3295,8 @@ div.main > form.search label
 {
 	flex-shrink: 0;
 	flex-flow: row nowrap;
-	align-self: first baseline;
-	align-items: first baseline;
+	align-self: stretch;
+	align-items: flex-start;
 	justify-content: flex-end;
 	font-size: 16px;
 	width: 20ch;
@@ -3565,6 +3554,12 @@ div.main > form.search label
 	text-shadow: 0px 0px var(--pal-AC);
 	text-align: center;
 	color: var(--pal-DE);
+	cursor: pointer;
+}
+
+.ircd .room .main div.event.state div.handler.selected div.changed h1
+{
+	background-color: var(--pal-AC) !important;
 }
 
 .ircd .room .main div.state.event div.handler.unhandled div.changed h1
@@ -3613,10 +3608,15 @@ div.main > form.search label
 	padding: 0px 0px 0px 0px;
 	margin: 0px 0px 0px 0px;
 	font-size: calc(var(--fsC));
-	border-top: 1px solid var(--pal-DD);
+	border-top: 1px solid var(--pal-DA);
 	border-right: 1px solid var(--pal-DD);
 	border-radius: 0px 3px 0px 0px;
 	color: black;
+}
+
+.ircd .room .main div.event.state div.handler.selected div.changed h4
+{
+	background-color: var(--pal-DD) !important;
 }
 
 .ircd .room .main div.state.event div.handler.unhandled div.changed h3
@@ -3699,6 +3699,36 @@ div.main > form.search label
 	border-radius: 0px;
 	border-left: 1px solid var(--pal-AA);
 	background-color: var(--pal-DD);
+}
+
+.ircd .room .main div.event.state div.ircd_key form.explore2
+{
+	position: relative;
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+
+.ircd .room .main div.event.state div.ircd_key form.explore2 div.object
+{
+}
+
+.ircd .room .main div.event.state div.ircd_key form.explore2 div.member
+{
+	padding-top: 0px;
+	border-left: 1px solid var(--pal-AD);
+}
+
+.ircd .room .main div.event.state div.ircd_key form.explore2 .key
+{
+}
+
+.ircd .room .main div.event.state div.ircd_key form.explore2 input.value
+{
+	max-width: 50vw;
+	border-radius: 0px;
+	margin-top: 0px;
+	padding-left: 5px;
+	padding-right: 5px;
 }
 
 .ircd .room .main div.event div.right

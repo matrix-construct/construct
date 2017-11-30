@@ -1745,7 +1745,7 @@ type="text/ng-template"
 			selected: room.control.show_event_control,
 		}">
 			<i
-			class="members icon fa fa-gears pointer"
+			class="members icon fa fa-gear pointer"
 			aria-hidden="true"
 			>
 			</i>
@@ -1976,6 +1976,7 @@ type="text/ng-template"
 
 	<span
 	class="name"
+	ng-if="!this.sender_is_server(event)"
 	ng-class="
 	{
 		me: event.sender == mc.session.user_id,
@@ -2329,6 +2330,32 @@ type="text/ng-template"
 </script>
 
 <script
+id="ircd_room_event__ircd_key"
+type="text/ng-template"
+>
+	<div
+	class="changed"
+	>
+		<h1
+		ng-click="event.$mc$selected =! event.$mc$selected"
+		>
+			SERVER KEY
+		</h1>
+		<h4>
+			{{event.content.server_name}}
+		</h4>
+	</div>
+	<form
+	class="explore2"
+	ng-if="event.$mc$selected === true"
+	ng-include="'ircd_object'"
+	ng-init="object = event.content;"
+	ng-controller="explore"
+	>
+	</form>
+</script>
+
+<script
 id="ircd_room_event__m_room_message"
 type="text/ng-template"
 >
@@ -2503,7 +2530,7 @@ type="text/ng-template"
 		grouping_start: events.is_grouping_start(event, $index),
 		grouping_end: events.is_grouping_end(event, $index),
 		show_info: room.control.show_event_info[event.event_id] !== undefined,
-		highlight: room.control.show_event_info[event.event_id] !== undefined,
+		highlight: room.control.show_event_timeline && room.control.show_event_info[event.event_id] !== undefined,
 	}">
 		<label
 		for="{{event.event_id}}"
@@ -2532,9 +2559,13 @@ type="text/ng-template"
 	
 		<div
 		class="handler"
-		ng-class="this.dots_to_underscores(event.type)"
 		ng-if="handler_exists(event.type)"
 		ng-include="'ircd_room_event__' + this.dots_to_underscores(event.type)"
+		ng-class="
+		{
+			selected: event.$mc$selected === true,
+			[this.dots_to_underscores(event.type)]: true,
+		}"
 		>
 		</div>
 
@@ -2950,6 +2981,7 @@ ircd-catch
 <script src="charybdis/datetime.js"></script>
 <script src="charybdis/random.js"></script>
 <script src="charybdis/ui.js"></script>
+<script src="charybdis/explore.js"></script>
 <script src="charybdis/scroll.js"></script>
 <script src="charybdis/menu.js"></script>
 <script src="charybdis/io.js"></script>

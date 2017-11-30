@@ -38,6 +38,7 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 		$scope.should_show_avatar = this.should_show_avatar;
 		$scope.dots_to_underscores = this.dots_to_underscores;
 		$scope.handler_exists = this.handler_exists;
+		$scope.sender_is_server = this.sender_is_server;
 	}
 
 	destructor()
@@ -168,5 +169,15 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 	{
 		let sel = "#ircd_room_event__" + this.dots_to_underscores(type);
 		return $(sel).length > 0;
+	}
+
+	//TODO: arbitrary
+	sender_is_server(event)
+	{
+		let sender = maybe(() => event.sender);
+		if(!sender)
+			return false;
+
+		return mc.m.sid(sender) == "ircd";
 	}
 });
