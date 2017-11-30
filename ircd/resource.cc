@@ -473,11 +473,12 @@ ircd::resource::response::response(client &client,
                                    const json::object &object,
                                    const http::code &code)
 {
-	const auto content_type
+	static const auto content_type
 	{
 		"application/json; charset=utf-8"
 	};
 
+	assert(json::valid(object, std::nothrow));
 	response(client, object, content_type, code);
 }
 
@@ -485,11 +486,12 @@ ircd::resource::response::response(client &client,
                                    const json::array &array,
                                    const http::code &code)
 {
-	const auto content_type
+	static const auto content_type
 	{
 		"application/json; charset=utf-8"
 	};
 
+	assert(json::valid(array, std::nothrow));
 	response(client, array, content_type, code);
 }
 

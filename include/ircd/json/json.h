@@ -180,6 +180,7 @@ ircd::json::print(char *const &buf,
 	};
 
 	assert(sv.size() < max);
+	assert(valid(sv, std::nothrow));
 	buf[sv.size()] = '\0';
 	return sv.size();
 }
