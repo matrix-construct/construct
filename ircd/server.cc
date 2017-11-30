@@ -79,9 +79,14 @@ ircd::read(server &server,
            char *const &stop)
 try
 {
+	auto &link
+	{
+		*begin(server.n->links)
+	};
+
 	auto &sock
 	{
-		*(*begin(server.n->links)).s
+		*link.s
 	};
 
 	const std::array<mutable_buffer, 1> bufs
