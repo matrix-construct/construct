@@ -19,7 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/server.h>
 #include <ircd/asio.h>
 
 //

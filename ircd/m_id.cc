@@ -20,7 +20,6 @@
  */
 
 #include <ircd/spirit.h>
-#include <ircd/server.h>
 #include <ircd/m/m.h>
 
 namespace spirit = boost::spirit;
