@@ -1035,7 +1035,8 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			consume(buf, copy(buf, v.literal_null));
+			//consume(buf, copy(buf, v.literal_null));
+			consume(buf, copy(buf, v.empty_object));
 			break;
 		}
 
@@ -1053,7 +1054,8 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			consume(buf, copy(buf, v.literal_null));
+			//consume(buf, copy(buf, v.literal_null));
+			consume(buf, copy(buf, v.empty_array));
 			break;
 		}
 
@@ -1061,11 +1063,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			if(v.serial)
 			{
-				if(v.floats)
-					printer(buf, double_, string_view{v});
-				else
-					printer(buf, long_, string_view{v});
-
+				printer(buf, printer.number, string_view{v});
 				break;
 			}
 
