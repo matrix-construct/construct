@@ -309,7 +309,7 @@ try
 ,ep
 {
 	ip::address::from_string(unquote(opts.get("host", "127.0.0.1"s))),
-	opts.get<uint16_t>("port", 6667)
+	opts.at<uint16_t>("port")
 }
 ,a
 {
