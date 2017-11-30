@@ -44,6 +44,7 @@ namespace ircd::json
 	using qi::eoi;
 	using qi::eps;
 	using qi::attr;
+	using qi::repeat;
 
 	using karma::lit;
 	using karma::char_;
@@ -105,42 +106,84 @@ struct ircd::json::input
 	rule<> array_end                   { lit(']')                                     ,"array end" };
 	rule<> name_sep                    { lit(':')                                      ,"name sep" };
 	rule<> value_sep                   { lit(',')                                     ,"value sep" };
+	rule<> escape                      { lit('\\')                                       ,"escape" };
+	rule<> quote                       { lit('"')                                         ,"quote" };
+	rule<> escaped
+	{
+		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t')
+		,"escaped"
+	};
+
+	rule<> escaper
+	{
+		lit('\\') |
+		lit('"')  |
+		lit('b')  |
+		lit('f')  |
+		lit('n')  |
+		lit('r')  |
+		lit('t')  |
+		(lit('u') >> qi::uint_parser<char, 16, 4, 4>{})
+		,"escaped"
+	};
+
+	rule<> escaper_nc
+	{
+		escaper | lit('/')
+	};
+
+	// string
+	rule<string_view> chars
+	{
+		raw[*((char_ - (escape | quote)) | (escape >> escaper_nc))]
+		,"characters"
+	};
+
+	rule<string_view> string
+	{
+		quote >> chars >> (!escape >> quote)
+		,"string"
+	};
 
 	// literal
-	rule<string_view> lit_false        { lit("false")                             ,"literal false" };
-	rule<string_view> lit_true         { lit("true")                               ,"literal true" };
-	rule<string_view> lit_null         { lit("null")                                       ,"null" };
+	rule<> lit_false                   { lit("false")                             ,"literal false" };
+	rule<> lit_true                    { lit("true")                               ,"literal true" };
+	rule<> lit_null                    { lit("null")                                       ,"null" };
 
-	rule<> quote                       { lit('"')                                         ,"quote" };
-	rule<string_view> chars            { raw[*(char_ - quote)]                       ,"characters" };
-	rule<string_view> string           { quote >> chars >> quote                         ,"string" };
-	rule<string_view> name             { quote >> raw[+(char_ - quote)] >> quote           ,"name" };
+	rule<> boolean                     { lit_true | lit_false                           ,"boolean" };
+	rule<> literal                     { lit_true | lit_false | lit_null                ,"literal" };
+	rule<> number                      { double_                                         ,"number" };
 
-	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
-	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
-	rule<string_view> number           { raw[double_]                                    ,"number" };
+	// container
+	rule<string_view> name
+	{
+		string
+		,"name"
+	};
 
-	rule<json::object::member> member
+	rule<> member
 	{
 		name >> name_sep >> value
 		,"member"
 	};
 
-	rule<string_view> object
+	rule<> object
 	{
-		raw[object_begin >> -(member % value_sep) >> object_end]
+		//TODO: XXX: Recursion depth check attribute
+		object_begin >> -(member % value_sep) >> object_end
 		,"object"
 	};
 
-	rule<string_view> array
+	rule<> array
 	{
-		raw[array_begin >> -(value % value_sep) >> array_end]
+		//TODO: XXX: Recursion depth check attribute
+		array_begin >> -(value % value_sep) >> array_end
 		,"array"
 	};
 
-	rule<string_view> value
+	rule<> value
 	{
-		raw[lit_false | lit_null | lit_true | object | array | number | string]
+		lit_false | lit_null | lit_true | object | array | number | string
 		,"value"
 	};
 
@@ -157,9 +200,11 @@ struct ircd::json::input
 	input()
 	:input::base_type{rule<>{}}
 	{
+		//TODO: Recursion seems to require these restatements
+		//TODO: Can they be eliminated for DRY?
 		member %= name >> name_sep >> value;
-		array %= raw[array_begin >> -(value % value_sep) >> array_end];
-		object %= raw[object_begin >> -(member % value_sep) >> object_end];
+		array %= array_begin >> -(value % value_sep) >> array_end;
+		object %= object_begin >> -(member % value_sep) >> object_end;
 	}
 };
 
@@ -495,7 +540,7 @@ try
 {
 	static const qi::rule<const char *, string_view> parse_next
 	{
-		parser.object | qi::eoi
+		raw[parser.object] | qi::eoi
 		,"next vector element or end"
 	};
 
@@ -515,7 +560,7 @@ const try
 {
 	static const qi::rule<const char *, string_view> parse_begin
 	{
-		parser.object
+		raw[parser.object]
 		,"object vector element"
 	};
 
@@ -699,7 +744,7 @@ try
 {
 	static const qi::rule<const char *, json::object::member> member
 	{
-		parser.name >> parser.name_sep >> parser.value
+		parser.name >> parser.name_sep >> raw[parser.value]
 		,"next object member"
 	};
 
@@ -731,7 +776,7 @@ const try
 {
 	static const qi::rule<const char *, json::object::member> object_member
 	{
-		parser.name >> parser.name_sep >> parser.value
+		parser.name >> parser.name_sep >> raw[parser.value]
 		,"object member"
 	};
 
@@ -847,9 +892,15 @@ ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
 try
 {
+	static const qi::rule<const char *, string_view> value
+	{
+		raw[parser.value]
+		,"array element"
+	};
+
 	static const qi::rule<const char *, string_view> parse_next
 	{
-		parser.array_end | (parser.value_sep >> parser.value)
+		parser.array_end | (parser.value_sep >> value)
 		,"next array element or end"
 	};
 
@@ -872,9 +923,15 @@ ircd::json::array::const_iterator
 ircd::json::array::begin()
 const try
 {
+	static const qi::rule<const char *, string_view> value
+	{
+		raw[parser.value]
+		,"array element"
+	};
+
 	static const qi::rule<const char *, string_view> parse_begin
 	{
-		parser.array_begin >> (parser.array_end | parser.value)
+		parser.array_begin >> (parser.array_end | value)
 		,"array begin and element or end"
 	};
 
