@@ -135,10 +135,12 @@ extern "C" {
 #define AFGP(a, b)      __attribute__((format(gnu_printf, a, b)))
 
 // Experimental std::string_view
+#if __cplusplus <= 201703 //TODO: refine
 namespace std
 {
 	using experimental::string_view;
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
