@@ -48,8 +48,13 @@ ircd::const_raw_buffer
 ircd::openssl::cert2d(const mutable_raw_buffer &out,
                       const string_view &cert)
 {
-	X509 x509 {0};
-	return i2d(out, read(&x509, cert));
+	const custom_ptr<X509> x509
+	{
+		X509_new(),
+		[](X509 *const x509) { X509_free(x509); }
+	};
+
+	return i2d(out, read(x509.get(), cert));
 }
 
 X509 &
