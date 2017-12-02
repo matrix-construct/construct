@@ -30,20 +30,28 @@ namespace ircd::mods
 	IRCD_EXCEPTION(error, invalid_export)
 	IRCD_EXCEPTION(error, expired_symbol)
 	IRCD_EXCEPTION(error, undefined_symbol)
+	IRCD_EXCEPTION(error, demangle_error)
+	IRCD_EXCEPTION(demangle_error, not_mangled)
 
 	struct mod;
 	struct module;
 	struct sym_ptr;
 	template<class T> struct import;
 	template<class T> struct import_shared;
+
 	struct paths extern paths;
 
+	// Platform (.so|.dll) postfixing
 	std::string postfixed(const std::string &name);
 	std::string unpostfixed(const std::string &name);
 
+	// Section & Symbol utilites
+	std::vector<std::string> sections(const std::string &fullpath);
 	std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
 	std::vector<std::string> symbols(const std::string &fullpath);
-	std::vector<std::string> sections(const std::string &fullpath);
+	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
+	std::unordered_map<std::string, std::string> mangles(const std::string &fullpath, const std::string &section);
+	std::unordered_map<std::string, std::string> mangles(const std::string &fullpath);
 
 	// Find module names where symbol resides
 	bool has_symbol(const std::string &name, const std::string &symbol);
@@ -83,8 +91,9 @@ struct ircd::mods::paths
 struct ircd::mods::module
 :std::shared_ptr<mod>
 {
-	std::string name() const;
-	std::string path() const;
+	const std::string &name() const;
+	const std::string &path() const;
+	const std::string &mangle(const std::string &) const;
 
 	bool has(const std::string &name) const;
 
@@ -108,6 +117,38 @@ namespace ircd::mods
 	template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
 }
 
+template<class T>
+T &
+ircd::mods::module::get(const std::string &name)
+{
+	return *ptr<T>(name);
+}
+
+template<class T>
+const T &
+ircd::mods::module::get(const std::string &name)
+const
+{
+	return *ptr<T>(name);
+}
+
+template<class T>
+T *
+ircd::mods::module::ptr(const std::string &name)
+{
+	return reinterpret_cast<T *>(ptr<uint8_t>(name));
+}
+
+template<class T>
+const T *
+ircd::mods::module::ptr(const std::string &name)
+const
+{
+	return reinterpret_cast<const T *>(ptr<const uint8_t>(name));
+}
+
+/// Representation of a symbol in a loaded library (non-template; low level).
+///
 class ircd::mods::sym_ptr
 :std::weak_ptr<mod>
 {
@@ -129,55 +170,6 @@ class ircd::mods::sym_ptr
 	sym_ptr(const std::string &modname, const std::string &symname);
 	~sym_ptr() noexcept;
 };
-
-template<class T>
-struct ircd::mods::import
-:sym_ptr
-{
-	template<class... args>
-	auto operator()(args&&... a) const
-	{
-		return sym_ptr::operator()<T>(std::forward<args>(a)...);
-	}
-
-	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
-	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
-	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
-
-	T *operator->()                              { return sym_ptr::operator-><T>();                }
-	T &operator*()                               { return sym_ptr::operator*<T>();                 }
-	operator T &()                               { return sym_ptr::operator*<T>();                 }
-
-	using sym_ptr::sym_ptr;
-};
-
-template<class T>
-struct ircd::mods::import_shared
-:import<std::shared_ptr<T>>
-,std::shared_ptr<T>
-{
-	using std::shared_ptr<T>::get;
-	using std::shared_ptr<T>::operator bool;
-	using std::shared_ptr<T>::operator->;
-	using std::shared_ptr<T>::operator*;
-
-	operator const T &() const                   { return std::shared_ptr<T>::operator*();         }
-	operator T &()                               { return std::shared_ptr<T>::operator*();         }
-
-	import_shared(const std::string &modname, const std::string &symname);
-};
-
-template<class T>
-ircd::mods::import_shared<T>::import_shared(const std::string &modname,
-                                            const std::string &symname)
-:import<std::shared_ptr<T>>
-{
-	modname, symname
-}
-,std::shared_ptr<T>
-{
-	import<std::shared_ptr<T>>::operator*()
-}{}
 
 template<class T>
 T &
@@ -239,32 +231,55 @@ const
 	return reinterpret_cast<const T *>(ptr);
 }
 
+/// Representation of a symbol in a loaded shared library
+///
 template<class T>
-T &
-ircd::mods::module::get(const std::string &name)
+struct ircd::mods::import
+:sym_ptr
 {
-	return *ptr<T>(name);
-}
+	template<class... args>
+	auto operator()(args&&... a) const
+	{
+		return sym_ptr::operator()<T>(std::forward<args>(a)...);
+	}
+
+	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
+	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
+	operator const T &() const                   { return sym_ptr::operator*<T>();                 }
+
+	T *operator->()                              { return sym_ptr::operator-><T>();                }
+	T &operator*()                               { return sym_ptr::operator*<T>();                 }
+	operator T &()                               { return sym_ptr::operator*<T>();                 }
+
+	using sym_ptr::sym_ptr;
+};
+
+/// Convenience for importing an std::shared_ptr<T> from a loaded lib
+///
+template<class T>
+struct ircd::mods::import_shared
+:import<std::shared_ptr<T>>
+,std::shared_ptr<T>
+{
+	using std::shared_ptr<T>::get;
+	using std::shared_ptr<T>::operator bool;
+	using std::shared_ptr<T>::operator->;
+	using std::shared_ptr<T>::operator*;
+
+	operator const T &() const                   { return std::shared_ptr<T>::operator*();         }
+	operator T &()                               { return std::shared_ptr<T>::operator*();         }
+
+	import_shared(const std::string &modname, const std::string &symname);
+};
 
 template<class T>
-const T &
-ircd::mods::module::get(const std::string &name)
-const
+ircd::mods::import_shared<T>::import_shared(const std::string &modname,
+                                            const std::string &symname)
+:import<std::shared_ptr<T>>
 {
-	return *ptr<T>(name);
+	modname, symname
 }
-
-template<class T>
-T *
-ircd::mods::module::ptr(const std::string &name)
+,std::shared_ptr<T>
 {
-	return reinterpret_cast<T *>(ptr<uint8_t>(name));
-}
-
-template<class T>
-const T *
-ircd::mods::module::ptr(const std::string &name)
-const
-{
-	return reinterpret_cast<const T *>(ptr<const uint8_t>(name));
-}
+	import<std::shared_ptr<T>>::operator*()
+}{}

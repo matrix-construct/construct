@@ -31,12 +31,60 @@
 namespace filesystem = boost::filesystem;
 namespace load_mode = boost::dll::load_mode;
 
+#include <ircd/asio.h>
 #include <ircd/mapi.h>  // Module's internal API
 
-namespace ircd {
-namespace mods {
+namespace ircd::mods
+{
+	struct mod;
 
-struct mod
+    struct log::log extern log;
+	extern const filesystem::path suffix;
+
+	filesystem::path prefix_if_relative(const filesystem::path &path);
+	filesystem::path postfixed(const filesystem::path &path);
+	filesystem::path unpostfixed(const filesystem::path &path);
+	std::string postfixed(const std::string &name);
+	std::string unpostfixed(const std::string &name);
+
+	template<class R, class F> R info(const filesystem::path &, F&& closure);
+	std::vector<std::string> sections(const filesystem::path &path);
+	std::vector<std::string> symbols(const filesystem::path &path);
+	std::vector<std::string> symbols(const filesystem::path &path, const std::string &section);
+	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
+	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path);
+	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path, const std::string &section);
+
+	// Get the full path of a [valid] available module by name
+	filesystem::path fullpath(const std::string &name);
+
+	// Checks if loadable module containing a mapi header (does not verify the magic)
+	bool is_module(const filesystem::path &);
+	bool is_module(const filesystem::path &, std::string &why);
+	bool is_module(const filesystem::path &, std::nothrow_t);
+	bool is_module(const std::string &fullpath, std::string &why);
+	bool is_module(const std::string &fullpath, std::nothrow_t);
+	bool is_module(const std::string &fullpath);
+}
+
+ircd::log::log
+ircd::mods::log
+{
+	"modules", 'M'
+};
+
+const filesystem::path
+ircd::mods::suffix
+{
+	boost::dll::shared_library::suffix()
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// mod (internal)
+//
+
+struct ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
 	static std::stack<mod *> loading;            // State of current dlopen() recursion.
@@ -45,17 +93,22 @@ struct mod
 	filesystem::path path;
 	load_mode::type mode;
 	std::deque<mod *> children;
+	std::unordered_map<std::string, std::string> mangles;
 	boost::dll::shared_library handle;
+	const std::string _name;
+	const std::string _location;
 	mapi::header *header;
 
 	// Metadata
 	auto &operator[](const std::string &s) const { return header->meta.operator[](s);              }
 	auto &operator[](const std::string &s)       { return header->meta.operator[](s);              }
 
-	auto name() const                            { return handle.location().filename().string();   }
-	auto location() const                        { return handle.location().string();              }
+	auto &name() const                           { return _name;                                   }
+	auto &location() const                       { return _location;                               }
 	auto &version() const                        { return header->version;                         }
 	auto &description() const                    { return (*this)["description"];                  }
+
+	const std::string &mangle(const std::string &name) const;
 
 	bool has(const std::string &name) const;
 	template<class T> const T &get(const std::string &name) const;
@@ -71,40 +124,237 @@ struct mod
 	~mod() noexcept;
 };
 
-static const auto suffix
+std::stack<ircd::mods::mod *>
+ircd::mods::mod::loading
+{};
+
+std::map<std::string, ircd::mods::mod *>
+ircd::mods::mod::loaded
+{};
+
+ircd::mods::mod::mod(const filesystem::path &path,
+                     const load_mode::type &mode)
+try
+:path{path}
+,mode{mode}
+,mangles{mods::mangles(path)}
+,handle{[this, &path, &mode]
 {
-	boost::dll::shared_library::suffix()
-};
+	const auto theirs
+	{
+		std::get_terminate()
+	};
 
-filesystem::path prefix_if_relative(const filesystem::path &path);
-filesystem::path postfixed(const filesystem::path &path);
-filesystem::path unpostfixed(const filesystem::path &path);
-std::string postfixed(const std::string &name);
-std::string unpostfixed(const std::string &name);
+	const auto ours([]
+	{
+		log.critical("std::terminate() called during the static construction of a module.");
 
-template<class R, class F> R info(const filesystem::path &, F&& closure);
-std::vector<std::string> sections(const filesystem::path &path);
-std::vector<std::string> symbols(const filesystem::path &path);
-std::vector<std::string> symbols(const filesystem::path &path, const std::string &section);
+		if(std::current_exception()) try
+		{
+			std::rethrow_exception(std::current_exception());
+		}
+		catch(const std::exception &e)
+		{
+			log.error("%s", e.what());
+		}
+	});
 
-// Get the full path of a [valid] available module by name
-filesystem::path fullpath(const std::string &name);
+	const unwind reset{[this, &theirs]
+	{
+		assert(loading.top() == this);
+		loading.pop();
+		std::set_terminate(theirs);
+	}};
 
-// Checks if loadable module containing a mapi header (does not verify the magic)
-bool is_module(const filesystem::path &);
-bool is_module(const filesystem::path &, std::string &why);
-bool is_module(const filesystem::path &, std::nothrow_t);
-bool is_module(const std::string &fullpath, std::string &why);
-bool is_module(const std::string &fullpath, std::nothrow_t);
-bool is_module(const std::string &fullpath);
-
-struct log::log log
+	loading.push(this);
+	std::set_terminate(ours);
+	return boost::dll::shared_library{path, mode};
+}()}
+,_name
 {
-	"modules", 'M'
-};
+	handle.location().filename().string()
+}
+,_location
+{
+	handle.location().string()
+}
+,header
+{
+	&handle.get<mapi::header>(mapi::header_symbol_name)
+}
+{
+	log.debug("Loaded static segment of '%s' @ `%s' with %zu symbols",
+	          name(),
+	          location(),
+	          mangles.size());
 
-} // namespace mods
-} // namespace ircd
+	if(unlikely(!header))
+		throw error("Unexpected null header");
+
+	if(header->magic != mapi::MAGIC)
+		throw error("Bad magic [%04x] need: [%04x]",
+		            header->magic,
+		            mapi::MAGIC);
+
+	// Set some basic metadata
+	auto &meta(header->meta);
+	meta["name"] = name();
+	meta["location"] = location();
+
+	if(!loading.empty())
+	{
+		const auto &m(mod::loading.top());
+		m->children.emplace_back(this);
+		log.debug("Module '%s' recursively loaded by '%s'",
+		          name(),
+		          m->path.filename().string());
+	}
+
+	// If init throws an exception from here the loading process will back out.
+	if(header->init)
+		header->init();
+
+	log.info("Loaded module %s v%u \"%s\"",
+	         name(),
+	         header->version,
+	         description().size()? description() : "<no description>"s);
+
+	// Without init exception, the module is now considered loaded.
+	loaded.emplace(name(), this);
+}
+catch(const boost::system::system_error &e)
+{
+	switch(e.code().value())
+	{
+		case boost::system::errc::bad_file_descriptor:
+		{
+			const string_view what(e.what());
+			const auto pos(what.find("undefined symbol: "));
+			if(pos == std::string_view::npos)
+				break;
+
+			const string_view msg(what.substr(pos));
+			const std::string mangled(between(msg, ": ", ")"));
+			const std::string demangled(demangle(mangled));
+			throw error("undefined symbol: '%s' (%s)",
+			            demangled,
+			            mangled);
+		}
+
+		default:
+			break;
+	}
+
+	throw error("%s", string(e));
+}
+
+// Allows module to communicate static destruction is taking place when mapi::header
+// destructs. If dlclose() returns without this being set, dlclose() lied about really
+// unloading the module. That is considered a "stuck" module.
+bool ircd::mapi::static_destruction;
+
+ircd::mods::mod::~mod()
+noexcept try
+{
+	unload();
+}
+catch(const std::exception &e)
+{
+	log::critical("Module @%p unload: %s", (const void *)this, e.what());
+
+	if(!ircd::debugmode)
+		return;
+}
+
+bool
+ircd::mods::mod::unload()
+{
+	if(!handle.is_loaded())
+		return false;
+
+	const auto name(this->name());
+	log.debug("Attempting unload module '%s' @ `%s'", name, location());
+	const size_t erased(loaded.erase(name));
+	assert(erased == 1);
+
+	if(header->fini)
+		header->fini();
+
+	// Save the children! dlclose() does not like to be called recursively during static
+	// destruction of a module. The mod ctor recorded all of the modules loaded while this
+	// module was loading so we can reverse the record and unload them here.
+	// Note: If the user loaded more modules from inside their module they will have to dtor them
+	// before 'static destruction' does. They can also do that by adding them to this vector.
+	std::for_each(rbegin(this->children), rend(this->children), []
+	(mod *const &ptr)
+	{
+		if(shared_from(*ptr).use_count() <= 2)
+			ptr->unload();
+	});
+
+	log.debug("Attempting static unload for '%s' @ `%s'", name, location());
+	mapi::static_destruction = false;
+	handle.unload();
+	assert(!handle.is_loaded());
+	if(!mapi::static_destruction)
+	{
+		log.error("Module \"%s\" is stuck and failing to unload.", name);
+		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name);
+	} else {
+		log.info("Unloaded '%s'", name);
+	}
+
+	return true;
+}
+
+const std::string &
+ircd::mods::mod::mangle(const std::string &name)
+const
+{
+	const auto it(mangles.find(name));
+	if(it == end(mangles))
+		return name;
+
+	const auto &mangled(it->second);
+	return mangled;
+}
+
+template<class T>
+T *
+ircd::mods::mod::ptr(const std::string &name)
+{
+	return &handle.get<T>(name);
+}
+
+template<class T>
+const T *
+ircd::mods::mod::ptr(const std::string &name)
+const
+{
+	return &handle.get<T>(name);
+}
+
+template<class T>
+T &
+ircd::mods::mod::get(const std::string &name)
+{
+	handle.get<T>(name);
+}
+
+template<class T>
+const T &
+ircd::mods::mod::get(const std::string &name)
+const
+{
+	handle.get<T>(name);
+}
+
+bool
+ircd::mods::mod::has(const std::string &name)
+const
+{
+	return handle.has(name);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -148,23 +398,29 @@ noexcept
 {
 }
 
-std::string
+const std::string &
 ircd::mods::module::path()
 const
 {
 	if(unlikely(!*this))
-		return std::string{};
+	{
+		static const std::string empty;
+		return empty;
+	}
 
 	auto &mod(**this);
 	return mod.location();
 }
 
-std::string
+const std::string &
 ircd::mods::module::name()
 const
 {
 	if(unlikely(!*this))
-		return std::string{};
+	{
+		static const std::string empty;
+		return empty;
+	}
 
 	auto &mod(**this);
 	return mod.name();
@@ -174,7 +430,7 @@ template<> uint8_t *
 ircd::mods::module::ptr<uint8_t>(const std::string &name)
 {
 	auto &mod(**this);
-	return mod.ptr<uint8_t>(name);
+	return mod.ptr<uint8_t>(mangle(name));
 }
 
 template<>
@@ -183,7 +439,7 @@ ircd::mods::module::ptr<const uint8_t>(const std::string &name)
 const
 {
 	const auto &mod(**this);
-	return mod.ptr<const uint8_t>(name);
+	return mod.ptr<const uint8_t>(mangle(name));
 }
 
 bool
@@ -194,8 +450,23 @@ const
 		return false;
 
 	const auto &mod(**this);
-	return mod.has(name);
+	return mod.has(mangle(name));
 }
+
+const std::string &
+ircd::mods::module::mangle(const std::string &name)
+const
+{
+	if(unlikely(!*this))
+	{
+		static const std::string empty;
+		return empty;
+	}
+
+	const auto &mod(**this);
+	return mod.mangle(name);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -210,12 +481,18 @@ ircd::mods::sym_ptr::sym_ptr(const std::string &modname,
 }
 ,ptr{[this, &modname, &symname]
 {
-	const life_guard<mods::mod> mod(*this);
+	const life_guard<mods::mod> mod{*this};
+	const auto &mangled(mod->mangle(symname));
+	if(unlikely(!mod->has(mangled)))
+		throw undefined_symbol
+		{
+			"Could not find symbol '%s' (%s) in module '%s'",
+			symname,
+			mangled,
+			mod->name()
+		};
 
-	if(unlikely(!mod->has(symname)))
-		throw undefined_symbol("Could not find symbol '%s' in module '%s'", symname, mod->name());
-
-	return mod->ptr(symname);
+	return mod->ptr(mangled);
 }()}
 {
 }
@@ -392,12 +669,6 @@ catch(const std::exception &e)
 bool
 ircd::mods::is_module(const filesystem::path &path)
 {
-	if(!exists(path))
-		throw filesystem_error("`%s' does not exist", path.string());
-
-	if(!is_regular_file(path))
-		throw filesystem_error("`%s' is not a file", path.string());
-
 	const auto syms(symbols(path));
 	const auto &header_name(mapi::header_symbol_name);
 	const auto it(std::find(begin(syms), end(syms), header_name));
@@ -407,10 +678,46 @@ ircd::mods::is_module(const filesystem::path &path)
 	return true;
 }
 
-std::vector<std::string>
-ircd::mods::sections(const std::string &fullpath)
+std::unordered_map<std::string, std::string>
+ircd::mods::mangles(const std::string &fullpath)
 {
-	return sections(filesystem::path(fullpath));
+	return mangles(filesystem::path(fullpath));
+}
+
+std::unordered_map<std::string, std::string>
+ircd::mods::mangles(const std::string &fullpath,
+                    const std::string &section)
+{
+	return mangles(filesystem::path(fullpath), section);
+}
+
+std::unordered_map<std::string, std::string>
+ircd::mods::mangles(const filesystem::path &path)
+{
+	return mangles(mods::symbols(path));
+}
+
+std::unordered_map<std::string, std::string>
+ircd::mods::mangles(const filesystem::path &path,
+                    const std::string &section)
+{
+	return mangles(mods::symbols(path, section));
+}
+
+std::unordered_map<std::string, std::string>
+ircd::mods::mangles(const std::vector<std::string> &symbols)
+{
+	std::unordered_map<std::string, std::string> ret;
+	for(const auto &sym : symbols) try
+	{
+		ret.emplace(demangle(sym), sym);
+	}
+	catch(const not_mangled &e)
+	{
+		ret.emplace(sym, sym);
+	}
+
+	return ret;
 }
 
 std::vector<std::string>
@@ -424,16 +731,6 @@ ircd::mods::symbols(const std::string &fullpath,
                     const std::string &section)
 {
 	return symbols(filesystem::path(fullpath), section);
-}
-
-std::vector<std::string>
-ircd::mods::sections(const filesystem::path &path)
-{
-	return info<std::vector<std::string>>(path, []
-	(boost::dll::library_info &info)
-	{
-		return info.sections();
-	});
 }
 
 std::vector<std::string>
@@ -454,6 +751,22 @@ ircd::mods::symbols(const filesystem::path &path,
 	(boost::dll::library_info &info)
 	{
 		return info.symbols(section);
+	});
+}
+
+std::vector<std::string>
+ircd::mods::sections(const std::string &fullpath)
+{
+	return sections(filesystem::path(fullpath));
+}
+
+std::vector<std::string>
+ircd::mods::sections(const filesystem::path &path)
+{
+	return info<std::vector<std::string>>(path, []
+	(boost::dll::library_info &info)
+	{
+		return info.sections();
 	});
 }
 
@@ -478,18 +791,15 @@ ircd::mods::info(const filesystem::path &path,
 // paths
 //
 
-namespace ircd {
-namespace mods {
-
-const filesystem::path modroot
+namespace ircd::mods
 {
-	ircd::fs::get(ircd::fs::MODULES)
-};
+	const filesystem::path modroot
+	{
+		ircd::fs::get(ircd::fs::MODULES)
+	};
 
-struct paths paths;
-
-} // namespace mods
-} // namespace ircd
+	struct paths paths;
+}
 
 ircd::mods::paths::paths()
 :std::vector<std::string>
@@ -596,228 +906,24 @@ ircd::demangle(const std::string &symbol)
 
 	switch(status)
 	{
-		case 0:   break;
-		case -1:  throw error("Demangle failed -1: memory allocation failure");
-		case -2:  throw error("Demangle failed -2: mangled name is not valid");
-		case -3:  throw error("Demangle failed -3: invalid argument");
-		default:  throw error("Demangle failed %d: unknown error", status);
+		case 0:
+			break;
+
+		case -1:
+			throw mods::demangle_error("Demangle failed -1: memory allocation failure");
+
+		case -2:
+			throw mods::not_mangled("Demangle failed -2: mangled name '%s' is not valid", symbol);
+
+		case -3:
+			throw mods::demangle_error("Demangle failed -3: invalid argument");
+
+		default:
+			throw mods::demangle_error("Demangle failed %d: unknown error", status);
 	}
 
 	if(unlikely(!len))
 		return {};
 
 	return std::string { buf.get(), strnlen(buf.get(), len) };
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// mod (internal)
-//
-
-namespace ircd {
-namespace mods {
-
-std::stack<mod *> mod::loading;
-std::map<std::string, mod *> mod::loaded;
-
-} // namespace mods
-} // namespace ircd
-
-ircd::mods::mod::mod(const filesystem::path &path,
-                     const load_mode::type &mode)
-try
-:path{path}
-,mode{mode}
-,handle{[this, &path, &mode]
-{
-	const auto theirs
-	{
-		std::get_terminate()
-	};
-
-	const auto ours([]
-	{
-		log.critical("std::terminate() called during the static construction of a module.");
-
-		if(std::current_exception()) try
-		{
-			std::rethrow_exception(std::current_exception());
-		}
-		catch(const std::exception &e)
-		{
-			log.error("%s", e.what());
-		}
-	});
-
-	const unwind reset{[this, &theirs]
-	{
-		assert(loading.top() == this);
-		loading.pop();
-
-		std::set_terminate(theirs);
-	}};
-
-	loading.push(this);
-	std::set_terminate(ours);
-	return boost::dll::shared_library{path, mode};
-}()}
-,header
-{
-	&handle.get<mapi::header>(mapi::header_symbol_name)
-}
-{
-	log.debug("Loaded static segment of '%s' @ `%s'", name(), path.string());
-
-	if(unlikely(!header))
-		throw error("Unexpected null header");
-
-	if(header->magic != mapi::MAGIC)
-		throw error("Bad magic [%04x] need: [%04x]", header->magic, mapi::MAGIC);
-
-	// Set some basic metadata
-	auto &meta(header->meta);
-	meta["name"] = name();
-	meta["location"] = location();
-
-	if(!loading.empty())
-	{
-		const auto &m(mod::loading.top());
-		m->children.emplace_back(this);
-		log.debug("Module '%s' recursively loaded by '%s'",
-		          name(),
-		          m->path.filename().string());
-	}
-
-	// If init throws an exception from here the loading process will back out.
-	if(header->init)
-		header->init();
-
-	log.info("Loaded module %s v%u \"%s\"",
-	         name(),
-	         header->version,
-	         description().size()? description() : "<no description>"s);
-
-	// Without init exception, the module is now considered loaded.
-	loaded.emplace(name(), this);
-}
-catch(const boost::system::system_error &e)
-{
-	switch(e.code().value())
-	{
-		case boost::system::errc::bad_file_descriptor:
-		{
-			const string_view what(e.what());
-			const auto pos(what.find("undefined symbol: "));
-			if(pos == std::string_view::npos)
-				break;
-
-			const string_view msg(what.substr(pos));
-			const std::string mangled(between(msg, ": ", ")"));
-			const std::string demangled(demangle(mangled));
-			throw error("undefined symbol: '%s' (%s)",
-			            demangled,
-			            mangled);
-		}
-
-		default:
-			break;
-	}
-
-	throw error("%s", e.what());
-}
-
-// Allows module to communicate static destruction is taking place when mapi::header
-// destructs. If dlclose() returns without this being set, dlclose() lied about really
-// unloading the module. That is considered a "stuck" module.
-bool ircd::mapi::static_destruction;
-
-ircd::mods::mod::~mod()
-noexcept try
-{
-	unload();
-}
-catch(const std::exception &e)
-{
-	log::critical("Module @%p unload: %s", (const void *)this, e.what());
-
-	if(!ircd::debugmode)
-		return;
-}
-
-bool
-ircd::mods::mod::unload()
-{
-	if(!handle.is_loaded())
-		return false;
-
-	const auto name(this->name());
-	log.debug("Attempting unload module '%s' @ `%s'", name, location());
-	const size_t erased(loaded.erase(name));
-	assert(erased == 1);
-
-	if(header->fini)
-		header->fini();
-
-	// Save the children! dlclose() does not like to be called recursively during static
-	// destruction of a module. The mod ctor recorded all of the modules loaded while this
-	// module was loading so we can reverse the record and unload them here.
-	// Note: If the user loaded more modules from inside their module they will have to dtor them
-	// before 'static destruction' does. They can also do that by adding them to this vector.
-	std::for_each(rbegin(this->children), rend(this->children), []
-	(mod *const &ptr)
-	{
-		if(shared_from(*ptr).use_count() <= 2)
-			ptr->unload();
-	});
-
-	log.debug("Attempting static unload for '%s' @ `%s'", name, location());
-	mapi::static_destruction = false;
-	handle.unload();
-	assert(!handle.is_loaded());
-	if(!mapi::static_destruction)
-	{
-		log.error("Module \"%s\" is stuck and failing to unload.", name);
-		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name);
-	} else {
-		log.info("Unloaded '%s'", name);
-	}
-
-	return true;
-}
-
-template<class T>
-T *
-ircd::mods::mod::ptr(const std::string &name)
-{
-	return &handle.get<T>(name);
-}
-
-template<class T>
-const T *
-ircd::mods::mod::ptr(const std::string &name)
-const
-{
-	return &handle.get<T>(name);
-}
-
-template<class T>
-T &
-ircd::mods::mod::get(const std::string &name)
-{
-	handle.get<T>(name);
-}
-
-template<class T>
-const T &
-ircd::mods::mod::get(const std::string &name)
-const
-{
-	handle.get<T>(name);
-}
-
-bool
-ircd::mods::mod::has(const std::string &name)
-const
-{
-	return handle.has(name);
 }
