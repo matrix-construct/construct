@@ -55,6 +55,9 @@ and have furthered the mission of eliminating the need for external "IRC service
 *Build dependencies:* **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 
+*Notes*:
+- libircd requires a platform capable of loading dynamic shared objects at runtime.
+
 
 #### Platforms
 
@@ -152,8 +155,8 @@ on multiple threads by the embedder's application, libircd will use a single
 `io_service::strand`.
 
 This methodology ensures there is an uninterrupted execution working through
-a single event queue providing service. Even if there are periods of execution
-which are computationally intense like parsing, hashing, cryptography etc -- this
+a single event queue providing service. If there are periods of execution
+which are computationally intense like parsing, hashing, cryptography, etc: this
 is absorbed in lieu of thread synchronization and bus contention. Scaling this
 system is done through running multiple instances which synchronize at the
 application level.
@@ -176,9 +179,9 @@ jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
 
 ##### libircd innovates with formal grammars
 
-We leverage the boost::spirit system of parsing and printing through formal grammars,
+We leverage the `boost::spirit` system of parsing and printing through formal grammars,
 rather than writing our own parsers manually. In addition, we build several tools
 on top of such formal devices like a type-safe format string library acting as a
-drop-in for ::sprintf(), but accepting objects like std::string without .c_str()
+drop-in for `::sprintf()`, but accepting objects like `std::string` without `.c_str()`
 and prevention of outputting unprintable/unwanted characters that may have been
 injected into the system somewhere prior.

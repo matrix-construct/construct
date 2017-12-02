@@ -26,9 +26,24 @@ protocol can be included directly in the `event` object but there are no guarant
 for if and how a party will pass these keys. To dive right in, here's the list
 of recognized keys for an `event`:
 
+
 ```
-auth_events, content, depth, event_id, hashes, membership, origin, origin_server_ts,
-prev_events, prev_state, room_id, sender, signatures, state_key, type
+auth_events
+content
+depth
+event_id
+hashes
+membership
+origin
+origin_server_ts
+prev_events
+prev_state
+room_id
+sender
+signatures
+state_key
+type
+
 ```
 
 In the event structure, the value for `sender` and `room_id` and `event_id` are
@@ -74,11 +89,21 @@ value of the `state_key` is a user `mxid`.
 #### Rooms
 
 The `room` structure encapsulates an instance of the matrix machine. A room
-consists of a `state` built by a `timeline` of `event` objects. The matrix
-protocol specifies certain `event` types which are recognized to affect
-the behavior of the `room`. Here's a list of some of those events:
+is a container of `event` objects in the form of a timeline. The query
+complexity for information in a room timeline is as follows:
 
-`
+- Message (non-state) events in the timeline have a linear lookup time:
+the timeline must be iterated in sequence to find a satisfying message.
+
+- State events in the timeline have logarithmic lookup: the implementation
+is expected to maintain a map of the `state_key` values for state events
+present in the timeline.
+
+The matrix protocol specifies certain `event` types which are recognized to
+affect the behavior of the `room`; here is a list of some types:
+
+
+```
 m.room.name
 m.room.create
 m.room.topic
@@ -90,7 +115,8 @@ m.room.power_levels
 m.room.member
 m.room.message
 ...
-`
+```
+
 
 Some of these events are `state` events and some are ephemeral. These will be
 detailed later. All `m.room.*` namespaced events govern the functionality of the
@@ -132,8 +158,8 @@ the classic IRC mode change indicating a commitment to change state.*
 
 References to previous events:
 
-<code>
 
+```
  [A0] <-- [A1] <-- [A2]       | A has seen B1 and includes a reference in A2
   ^                 |
   |        <---<----<
@@ -145,22 +171,21 @@ References to previous events:
 [T2]                :  B release B1
 [T3]  A acquire B1  :  B release B2
 [T4]  A release A2  :
+```
 
-</code>
 
 Both actors will have their clock (depth) now set to 2 and will issue the
 next new message at clock cycle 3 referencing all messages from cycle 2 to
 merge the split in the illustration above which is happening.
 
-<code>
 
+```
  [A0] <-- [A1] <-- [A2]            [A4]      | A now sees B3, B2, and B1
  ^                 |  |            |
  |        <---<----<  ^--<--<   <--<
  |        |                 |   |
  ^------- [B1] <-- [B2] <-- [B3]             | B now sees A2, A1, and A0
-
-</code>
+```
 
 
 ### Implementation
@@ -321,8 +346,8 @@ way the federation scales.
 
 Interference pattern of two IRCd'en:
 
-<code>
 
+```
   ::::::::::::::::::::::::::::::::::::
   --------\:::::::/--\:::::::/--------
            |||||||    |||||||
@@ -332,5 +357,4 @@ Interference pattern of two IRCd'en:
            //|||\\    //|||\\
          //|// \\|\\//|// \\|\\
         /|/|/|\|\|\/|/|/|\|\|\|\
-
-</code>
+```
