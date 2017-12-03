@@ -5,10 +5,9 @@ The database is an object store built from the primitives of `cell`, `column`, a
 #### Columns
 While a simple key-value store could naively store a JSON document as a textual
 value, we provide additional structure schematized before opening a database:
-Every member of a JSON object is a `column` in this database. To address members
-within nested objects, we specify a `column` with a "foo.bar.baz" path syntax. This
-puts all columns at the same level in our code, even though they may represent
-deeply nested values.
+Every member of a JSON object is a `column` in this database. There is no
+specific support for recursion at this time, though that could be addressed
+by adding additional columns for the nested values.
 
 #### Rows
 Since `columns` are technically independent key-value stores (they have their own
@@ -20,20 +19,6 @@ takes the form of a single JSON object and any member lookup happens on a user's
 #### Cells
 A `cell` is a single value in a `column` indexed by a key that should be able to form
 a `row` between columns. Consider the following near-json expression:
-
-	users["root"] = {"password", "foobar"};
-
-In the users database, we find the `column` "password" and the `row` for "root" and
-set that `cell` to "foobar"
-
-Consider these expressions for objects at some depth:
-
-	users["root"] = {"password.plaintext", "foobar"};
-	users["root"] = {"password", {"plaintext, "foobar"}};
-
-The column is always found as "password.plaintext". We find it (and can iterate its members
-if it were an object) by string-manipulating these full paths which all sit in a single map
-and are always open, even if the cell is empty for some row.
 
 ### Important notes
 
