@@ -752,6 +752,7 @@ noexcept try
 	}
 	else host4(ret) = a.to_v4().to_ulong();
 
+	port(ret) = port(ep);
 	return ret;
 }
 catch(...)
@@ -1600,7 +1601,7 @@ ircd::net::string(const uint32_t &ip,
 {
 	const auto len
 	{
-		fmt::sprintf(buf, "%s:%u", ip::address_v4{ip}.to_string())
+		fmt::sprintf(buf, "%s", ip::address_v4{ip}.to_string())
 	};
 
 	return { data(buf), size_t(len) };
@@ -1622,7 +1623,7 @@ ircd::net::string(const uint128_t &ip,
 
 	const auto len
 	{
-		fmt::sprintf(buf, "%s:%u", ip::address_v6{punpun}.to_string())
+		fmt::sprintf(buf, "%s", ip::address_v6{punpun}.to_string())
 	};
 
 	return { data(buf), size_t(len) };
