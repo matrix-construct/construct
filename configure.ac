@@ -430,6 +430,7 @@ RB_CHK_SYSHEADER([mutex],          [MUTEX])
 RB_CHK_SYSHEADER([shared_mutex],   [SHARED_MUTEX])
 RB_CHK_SYSHEADER([condition_variable], [CONDITION_VARIABLE])
 RB_CHK_SYSHEADER([random],         [RANDOM])
+RB_CHK_SYSHEADER([bitset],         [BITSET])
 
 dnl experimental
 RB_CHK_SYSHEADER([string_view],                 [STRING_VIEW])

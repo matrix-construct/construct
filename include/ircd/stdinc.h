@@ -116,6 +116,7 @@ extern "C" {
 #include <RB_INC_SHARED_MUTEX
 #include <RB_INC_CONDITION_VARIABLE
 #include <RB_INC_RANDOM
+#include <RB_INC_BITSET
 
 ///////////////////////////////////////////////////////////////////////////////
 //
