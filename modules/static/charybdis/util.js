@@ -122,6 +122,16 @@ let mayif = (test = () => true, closure = () => undefined) =>
 };
 
 /**
+ */
+let toggle = (obj, key, value = undefined) =>
+{
+	if(value === undefined)
+		obj[key] =! obj[key];
+	else
+		obj[key] = value;
+};
+
+/**
  * Like "toggle" but prunes the object of the key when switching
  * to the false state.
  */
