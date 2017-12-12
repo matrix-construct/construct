@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2017 Charybdis Development Team
  * Copyright (C) 2017 Jason Volk <jason@zemos.net>
  *
@@ -21,83 +21,35 @@
 
 using namespace ircd;
 
-resource createroom
+resource directory_room_resource
 {
-	"/_matrix/client/r0/createRoom",
+	"/_matrix/client/r0/directory/room",
 	{
-		"Create a new room with various configuration options. (7.1.1)"
+		"(7.2) Room aliases",
+		directory_room_resource.DIRECTORY
 	}
+};
+
+resource::response
+get_directory_room(client &client, const resource::request &request)
+{
+	m::room::alias::buf room_alias
+	{
+		url::decode(request.parv[0], room_alias)
+	};
+
+	return resource::response
+	{
+		client, http::NOT_FOUND
+	};
+}
+
+resource::method directory_room_get
+{
+	directory_room_resource, "GET", get_directory_room
 };
 
 mapi::header IRCD_MODULE
 {
-	"registers the resource 'client/createRoom' to handle requests"
-};
-
-resource::response
-room_create(client &client, const resource::request &request)
-try
-{
-	const auto name
-	{
-		unquote(request["name"])
-	};
-
-	const auto visibility
-	{
-		unquote(request["visibility"])
-	};
-
-	const m::id::user sender_id
-	{
-		request.user_id
-	};
-
-	const m::id::room::buf room_id
-	{
-		m::id::generate, my_host()
-	};
-
-	json::iov event;
-	json::iov content;
-	const json::iov::push push[]
-	{
-		{ event,    { "sender",   sender_id  }},
-		{ content,  { "creator",  sender_id  }},
-	};
-
-	m::room room
-	{
-		room_id
-	};
-
-	//room.create(event, content);
-
-	return resource::response
-	{
-		client, http::CREATED,
-		{
-			{ "room_id", string_view{room_id} }
-		}
-	};
-}
-catch(const db::not_found &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_ROOM_IN_USE", "The desired room name is in use."
-	};
-
-	throw m::error
-	{
-		http::CONFLICT, "M_ROOM_ALIAS_IN_USE", "An alias of the desired room is in use."
-	};
-}
-
-resource::method post_method
-{
-	createroom, "POST", room_create,
-	{
-		post_method.REQUIRES_AUTH
-	}
+	"registers the resource 'client/directory/room' to manage the Matrix room directory"
 };

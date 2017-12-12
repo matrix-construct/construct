@@ -225,5 +225,4 @@ namespace ircd
 #include "net/net.h"
 #include "server.h"
 #include "client.h"
-#include "m/m.h"
 #include "resource.h"

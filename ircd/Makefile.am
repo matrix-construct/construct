@@ -75,8 +75,11 @@ libircd_la_SOURCES =   \
 	lexical.cc         \
 	locale.cc          \
 	logger.cc          \
+	m/event.cc         \
 	m/id.cc            \
 	m/io.cc            \
+	m/keys.cc          \
+	m/room.cc          \
 	m/vm.cc            \
 	m/m.cc             \
 	mods.cc            \

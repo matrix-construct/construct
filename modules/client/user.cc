@@ -94,6 +94,14 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 		url::decode(request.parv[0], user_id)
 	};
 
+	if(user_id != request.user_id)
+		throw m::ACCESS_DENIED
+		{
+			"Trying to post a filter for `%s' but you are `%s'",
+			user_id,
+			request.user_id
+		};
+
 	// (5.2) List of event fields to include. If this list is absent then all fields are
 	// included. The entries may include '.' charaters to indicate sub-fields. So
 	// ['content.body'] will include the 'body' field of the 'content' object. A literal '.'

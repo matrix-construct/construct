@@ -25,13 +25,24 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
+#include <ircd/server.h>
+
+/// Matrix Protocol System
 namespace ircd::m
 {
-	extern struct log::log log;
+	struct init;
+
+	namespace dbs
+	{
+		struct init;
+	}
 
 	extern struct user me;
 	extern struct room my_room;
 	extern struct room control;
+	extern struct log::log log;
+
+	IRCD_OVERLOAD(generate)
 }
 
 namespace ircd::m::self
@@ -65,22 +76,24 @@ namespace ircd
 #include "keys.h"
 #include "txn.h"
 
-namespace ircd::m::dbs
+struct ircd::m::dbs::init
 {
-	struct init
-	{
-		init();
-		~init() noexcept;
-	};
-}
+	init();
+	~init() noexcept;
+};
 
-namespace ircd::m
+struct ircd::m::init
 {
-	struct init
-	{
-		dbs::init dbs;
+	json::object conf;
 
-		init();
-		~init() noexcept;
-	};
-}
+	void bootstrap();
+	void listeners();
+	void modules();
+
+	dbs::init _dbs;
+	keys::init _keys;
+
+  public:
+	init();
+	~init() noexcept;
+};

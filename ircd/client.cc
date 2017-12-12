@@ -26,8 +26,6 @@
  */
 
 #include <ircd/asio.h>
-#include <ircd/m/m.h>
-#include <ircd/resource.h>
 
 namespace ircd {
 

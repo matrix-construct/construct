@@ -35,44 +35,68 @@ namespace ircd::m
 
 	struct room;
 
+	bool my(const room &);
 	bool exists(const id::room &);
 
-	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const json::iov &content);
-	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const json::members &content);
-	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
-	event::id::buf send(const id::room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
+	event::id::buf send(room, const m::id::user &sender, const string_view &type, const json::iov &content);
+	event::id::buf send(room, const m::id::user &sender, const string_view &type, const json::members &content);
+	event::id::buf send(room, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
+	event::id::buf send(room, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
 
-	event::id::buf message(const id::room &, const m::id::user &sender, const json::members &content);
-	event::id::buf message(const id::room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
-	event::id::buf membership(const id::room &, const m::id::user &, const string_view &membership);
-	event::id::buf leave(const id::room &, const m::id::user &);
-	event::id::buf join(const id::room &, const m::id::user &);
+	event::id::buf message(room, const m::id::user &sender, const json::members &content);
+	event::id::buf message(room, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
+	event::id::buf membership(room, const m::id::user &, const string_view &membership);
+	event::id::buf leave(room, const m::id::user &);
+	event::id::buf join(room, const m::id::user &);
 
 	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
 	room create(const id::room &, const id::user &creator, const string_view &type = {});
 }
 
+/// Interface to a room.
+///
+/// This is a lightweight object which uses a room_id and an optional event_id
+/// to provide an interface to a matrix room. This object itself isn't the
+/// actual room data since that takes the form of events in the database;
+/// this is just a handle with aforementioned string_view's used by its member
+/// functions.
+///
+/// This object allows the programmer to represent the room either at its
+/// present state, or if an event_id is given, at the point of that event.
+///
+/// Many convenience functions are provided outside of this class to
+/// accomplish general tasks using rooms in one statement. Additionally,
+/// several sub-classes provide functionality even more specific than this
+/// interface too. If a subclass is provided, for example: `struct members`,
+/// such an interface may employ optimized tactics for its specific task.
+///
 struct ircd::m::room
 {
-	struct alias;
 	struct state;
 	struct members;
 	struct fetch;
-	struct branch;
 
 	using id = m::id::room;
+	using alias = m::id::room_alias;
 
 	id room_id;
+	event::id event_id;
 
 	operator const id &() const        { return room_id;                       }
 
 	// observer
-	bool test(const string_view &type, const event::closure_bool &view) const;
 	void for_each(const string_view &type, const event::closure &view) const;
+	bool test(const string_view &type, const event::closure_bool &view) const;
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool has(const string_view &type) const;
+
 	bool get(const string_view &type, const string_view &state_key, const event::closure &) const;
 	bool get(const string_view &type, const event::closure &view) const;
+	bool get(const event::closure &view) const;
+
+	bool prev(const string_view &type, const string_view &state_key, const event::closure &) const;
+	bool prev(const string_view &type, const event::closure &view) const;
+	bool prev(const event::closure &view) const;
 
 	// observer misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
@@ -82,15 +106,53 @@ struct ircd::m::room
 	// modify
 	event::id::buf send(json::iov &event);
 	event::id::buf send(json::iov &event, const json::iov &content);
-
-	// modify misc
 	event::id::buf message(json::iov &event, const json::iov &content);
-	event::id::buf membership(json::iov &event, const json::iov &content);
-	event::id::buf create(json::iov &event, json::iov &content);
 
-	room(const id::alias &alias);
-	room(const id &room_id)
+	room(const alias &, const event::id &event_id = {});
+	room(const id &room_id, const event::id &event_id = {})
 	:room_id{room_id}
+	,event_id{event_id}
+	{}
+};
+
+/// Interface to the members of a room.
+///
+/// This interface focuses specifically on room membership and its routines
+/// are optimized for this area of room functionality.
+///
+struct ircd::m::room::members
+{
+	struct origins;
+
+	m::room room;
+
+	bool until(const string_view &membership, const event::closure_bool &view) const;
+	bool until(const event::closure_bool &view) const;
+
+	members(m::room room)
+	:room{room}
+	{}
+};
+
+/// Interface to the origins of members of a room
+///
+/// This interface focuses even more specifically on the servers (origins) for
+/// the members of a room. As multiple users from the same origin may be
+/// members of a room -- all in different membership states etc -- this
+/// interface distills that fact away from what would otherwise burden users
+/// of the more general room::members interface.
+///
+struct ircd::m::room::members::origins
+{
+	using closure = std::function<void (const string_view &)>;
+	using closure_bool = std::function<bool (const string_view &)>;
+
+	m::room room;
+
+	bool until(const closure_bool &view) const;
+
+	origins(m::room room)
+	:room{room}
 	{}
 };
 
@@ -158,20 +220,6 @@ struct ircd::m::room::state
 
 	friend std::string pretty(const room::state &);
 	friend std::string pretty_oneline(const room::state &);
-};
-
-struct ircd::m::room::branch
-{
-	event::id::buf event_id;
-	unique_buffer<mutable_buffer> buf;
-	json::object pdu;
-
-	branch() = default;
-	branch(const event::id &event_id)
-	:event_id{event_id}
-	,buf{64_KiB}
-	,pdu{}
-	{}
 };
 
 #pragma GCC diagnostic pop

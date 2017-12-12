@@ -80,6 +80,8 @@ namespace ircd::m::vm
 
 	bool test(const query<> &, const closure_bool &);
 	bool test(const query<> &);
+	bool until(const query<> &, const closure_bool &);
+	bool until(const query<> &);
 	void for_each(const query<> &, const closure &);
 	void for_each(const closure &);
 	size_t count(const query<> &, const closure_bool &);

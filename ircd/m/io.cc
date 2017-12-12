@@ -549,10 +549,6 @@ ircd::m::io::session::operator()(parse::buffer &pb,
 	};
 }
 
-//
-// response
-//
-
 ircd::m::io::response::response(server &server,
                                 parse::buffer &pb)
 {
@@ -585,34 +581,6 @@ ircd::m::io::response::response(server &server,
 	if(status < 200 || status >= 300)
 		throw m::error(status, object);
 }
-
-//
-// request
-//
-
-namespace ircd::m::name
-{
-//	constexpr const char *const content {"content"};
-	constexpr const char *const destination {"destination"};
-	constexpr const char *const method {"method"};
-//	constexpr const char *const origin {"origin"};
-	constexpr const char *const uri {"uri"};
-}
-
-struct ircd::m::io::request::authorization
-:json::tuple
-<
-	json::property<name::content, string_view>,
-	json::property<name::destination, string_view>,
-	json::property<name::method, string_view>,
-	json::property<name::origin, string_view>,
-	json::property<name::uri, string_view>
->
-{
-	string_view generate(const mutable_buffer &out);
-
-	using super_type::tuple;
-};
 
 void
 ircd::m::io::request::operator()(const vector_view<const http::header> &addl_headers)
@@ -658,6 +626,30 @@ const
 		{ header, headers }
 	};
 }
+
+namespace ircd::m::name
+{
+//	constexpr const char *const content {"content"};
+	constexpr const char *const destination {"destination"};
+	constexpr const char *const method {"method"};
+//	constexpr const char *const origin {"origin"};
+	constexpr const char *const uri {"uri"};
+}
+
+struct ircd::m::io::request::authorization
+:json::tuple
+<
+	json::property<name::content, string_view>,
+	json::property<name::destination, string_view>,
+	json::property<name::method, string_view>,
+	json::property<name::origin, string_view>,
+	json::property<name::uri, string_view>
+>
+{
+	string_view generate(const mutable_buffer &out);
+
+	using super_type::tuple;
+};
 
 ircd::string_view
 ircd::m::io::request::generate_authorization(const mutable_buffer &out)
@@ -731,16 +723,13 @@ ircd::m::io::verify_x_matrix_authorization(const string_view &x_matrix,
 
 	for(const auto &token : tokens)
 	{
-		const auto &key_value
+		const auto &kv{split(token, '=')};
+		const auto &val{unquote(kv.second)};
+		switch(hash(kv.first))
 		{
-			split(token, '=')
-		};
-
-		switch(hash(key_value.first))
-		{
-			case hash("origin"):  origin = unquote(key_value.second);  break;
-			case hash("key"):     key = unquote(key_value.second);     break;
-			case hash("sig"):     sig = unquote(key_value.second);     break;
+			case hash("origin"):  origin = val;  break;
+			case hash("key"):     key = val;     break;
+			case hash("sig"):     sig = val;     break;
 		}
 	}
 

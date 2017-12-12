@@ -84,6 +84,8 @@ struct ircd::m::keys
 	json::property<name::verify_keys, json::object>
 >
 {
+	struct init;
+
 	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
 	using keys_closure = std::function<void (const keys &)>;
 
@@ -100,6 +102,20 @@ struct ircd::m::keys
 
 	using super_type::tuple;
 	using super_type::operator=;
+};
+
+struct ircd::m::keys::init
+{
+	json::object conf;
+
+	void certificate();
+	void signing();
+
+  public:
+	void bootstrap();
+
+	init(const json::object &conf);
+	~init() noexcept;
 };
 
 #pragma GCC diagnostic pop

@@ -438,6 +438,57 @@ const database::descriptor event_id_in_room_id
 	event_id_in,
 };
 
+/// prefix transform for origin in
+///
+/// This transform expects a concatenation ending with an origin which means
+/// the prefix can be the same for multiple origins; therefor we can find
+/// or iterate "origin in X" where X is some repeated prefix
+///
+/// TODO: strings will have character conflicts. must address
+const ircd::db::prefix_transform origin_in
+{
+	"origin in",
+	[](const string_view &key)
+	{
+		return has(key, ":::");
+		//return key.find(':') != key.npos;
+	},
+	[](const string_view &key)
+	{
+		return split(key, ":::").first;
+		//return rsplit(key, ':').first;
+	}
+};
+
+const database::descriptor origin_in_room_id
+{
+	// name
+	"origin in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id:origin"
+	the prefix transform is in effect. this column indexes origins in a
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator - sorts from highest to lowest
+	{}, //ircd::db::reverse_cmp_string_view{},
+
+	// prefix transform
+	origin_in,
+};
+
 /// prefix transform for room_id
 ///
 /// This transform expects a concatenation ending with a room_id which means
@@ -455,31 +506,6 @@ const ircd::db::prefix_transform room_id_in
 	{
 		return rsplit(key, '!').first;
 	}
-};
-
-const database::descriptor event_id_for_room_id_in_type
-{
-	// name
-	"event_id for room_id in type",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(string_view), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	room_id_in,
 };
 
 const database::descriptor event_id_for_room_id_in_sender
@@ -513,6 +539,8 @@ const database::descriptor event_id_for_room_id_in_sender
 /// in that order with prefix being the room_id (this may change to room_id+
 /// type
 ///
+/// TODO: arbitrary type strings will have character conflicts. must address
+/// TODO: with grammars.
 const ircd::db::prefix_transform type_state_key_in_room_id
 {
 	"type,state_key in room_id",
@@ -550,26 +578,88 @@ const database::descriptor event_id_for_type_state_key_in_room_id
 	// prefix transform
 	type_state_key_in_room_id
 };
-/*
-const database::descriptor event_id_timeline_prev
+
+const database::descriptor prev_event_id_for_event_id_in_room_id
 {
 	// name
-	"event_id_timeline_prev",
+	"prev_event_id for event_id in room_id",
 
 	// explanation
-	R"(### protocol note:
+	R"(### developer note:
 
 	)",
 
 	// typing (key, value)
 	{
 		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in
+};
+
+/// prefix transform for event_id in room_id,type,state_key
+///
+/// This transform is special for concatenating room_id with type and state_key
+/// and event_id in that order with prefix being the room_id,type,state_key. This
+/// will index multiple event_ids with the same type,state_key in a room which
+/// allows for a temporal depth to the database; event_id for type,state_key only
+/// resolves to a single latest event and overwrites itself as per the room state
+/// algorithm whereas this can map all of them and then allows for tracing.
+///
+/// TODO: arbitrary type strings will have character conflicts. must address
+/// TODO: with grammars.
+const ircd::db::prefix_transform event_id_in_room_id_type_state_key
+{
+	"event_id in room_id,type_state_key",
+	[](const string_view &key)
+	{
+		return has(key, '$');
+	},
+	[](const string_view &key)
+	{
+		return split(key, '$').first;
 	}
 };
-*/
+
+const database::descriptor prev_event_id_for_type_state_key_event_id_in_room_id
+{
+	// name
+	"prev_event_id for type,state_key,event_id in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in_room_id_type_state_key
+};
+
 const database::description events_description
 {
 	{ "default" },
+
+	// These columns directly represent event fields indexed by event_id and
+	// the value is the actual event values. Some values may be JSON, like
+	// content.
 	events_event_id_descriptor,
 	events_type_descriptor,
 	events_content_descriptor,
@@ -586,14 +676,44 @@ const database::description events_description
 	events_membership_descriptor,
 	events_prev_events_descriptor,
 	events_prev_state_descriptor,
+
+	// These columns are metadata composed from the event data. Each column has
+	// a different approach specific to what the query is and value being sought.
+
+	// (sender, event_id) => ()
+	// All events for a sender
+	// * broad but useful in cases
 	event_id_in_sender,
+
+	// (room_id, event_id) => ()
+	// All events for a room
+	// * broad but useful in cases
+	// * ?eliminate for prev_event?
 	event_id_in_room_id,
-	event_id_for_room_id_in_type,
+
+	// (room_id, origin) => ()
+	// All origins for a room
+	origin_in_room_id,
+
+	// (sender, room_id) => (event_id)
+	// The _last written_ event from a sender in a room
 	event_id_for_room_id_in_sender,
+
+	// (room_id, type, state_key) => (event_id)
+	// The _last written_ event of type + state_key in a room
+	// * Proper for room state algorithm, but only works in the present based
+	// on our subjective tape order.
 	event_id_for_type_state_key_in_room_id,
-//	event_id_timeline_prev,
-//	event_id_timeline_next,
-//	event_id_for_type_timeline_prev,
+
+	// (room_id, event_id) => (prev event_id)
+	// Events in a room resolving to the previous event in a room in
+	// our subjective euclidean tape order.
+	prev_event_id_for_event_id_in_room_id,
+
+	// (room_id, type, state_key, event_id) => (prev event_id)
+	// Events of a (type, state_key) in a room resolving to the previous event
+	// of (type, state_key) in a room in our subjective euclidean tape order.
+	prev_event_id_for_type_state_key_event_id_in_room_id,
 };
 
 std::shared_ptr<database> events_database

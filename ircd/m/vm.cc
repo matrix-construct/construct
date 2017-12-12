@@ -21,15 +21,6 @@
 
 #include <ircd/m/m.h>
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/vm.h
-//
-
-namespace ircd::m::vm
-{
-}
-
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
@@ -45,77 +36,6 @@ decltype(ircd::m::vm::pipe)
 ircd::m::vm::pipe
 {
 };
-
-void
-ircd::m::vm::trace(const id::event &event_id,
-                   const tracer &closure)
-{
-	std::multimap<uint64_t, room::branch> tree;
-
-	room::branch root{event_id};
-	event::fetch tab{root.event_id, root.buf};
-	io::acquire(tab);
-	root.pdu = tab.pdu;
-	const event event{root.pdu};
-	const auto &depth{at<"depth"_>(event)};
-	tree.emplace(depth, std::move(root));
-
-	for(int64_t d(depth); d > 0; --d)
-	{
-		const auto pit(tree.equal_range(d));
-		if(pit.first == pit.second)
-			if(tree.lower_bound(d - 1) == end(tree))
-				break;
-
-		for(auto it(pit.first); it != pit.second; ++it)
-		{
-			room::branch &b(it->second);
-			const m::event event{b.pdu};
-			const json::array &prev_events
-			{
-				json::get<"prev_events"_>(event)
-			};
-
-			const auto count
-			{
-				prev_events.count()
-			};
-
-			room::branch child[count];
-			event::fetch tab[count];
-			for(size_t i(0); i < count; ++i)
-			{
-				const json::array &prev_event{prev_events[i]};
-				child[i] = room::branch { unquote(prev_event[0]) };
-				tab[i] = { child[i].event_id, child[i].buf };
-			}
-
-			io::acquire({tab, count});
-
-			for(size_t i(0); i < count; ++i)
-			{
-				child[i].pdu = tab[i].pdu;
-				if(tab[i].error)
-					continue;
-
-				event::id::buf tmp;
-				const m::event event{child[i].pdu};
-				if(!closure(event, tmp))
-					return;
-
-				const auto &depth{at<"depth"_>(event)};
-				tree.emplace(depth, std::move(child[i]));
-			}
-		}
-	}
-
-	for(const auto &pit : tree)
-	{
-		const auto &depth(pit.first);
-		const auto &branch(pit.second);
-		std::cout << pretty_oneline(m::event{branch.pdu}) << std::endl;
-	}
-}
 
 void
 ircd::m::vm::statefill(const room::id &room_id,
@@ -488,16 +408,19 @@ ircd::m::vm::join(const room::id &room_id,
 /// Insert a new event originating from this server.
 ///
 /// Figure 1:
-///          in    .
-///    ___:::::::__V  <-- this function
-///    |  ||||||| //
+///          in     .  <-- injection
+///    ___:::::::__//
+///    |  ||||||| //   <-- this function
 ///    |   \\|// //|
-///    |    ||| // |
-///    |    ||//   |
+///    |    ||| // |   | acceleration
+///    |    |||//  |   |
+///    |    |||/   |   V
+///    |    |||    |
 ///    |    !!!    |
-///    |     *     |   <----- IRCd core
-///    | |//|||\\| |
-///    |/|/|/|\|\|\|    <---- release commitment propagation cone
+///    |     *     |   <----- nozzle
+///    | ///|||\\\ |
+///    |/|/|/|\|\|\|   <---- propagation cone
+///  _/|/|/|/|\|\|\|\_
 ///         out
 ///
 /// This function takes an event object vector and adds our origin and event_id
@@ -688,10 +611,6 @@ namespace ircd::m::vm
 	void write(const event &, db::iov &txn);
 	void write(eval &);
 
-	int _query(eval &, const query<> &, const closure_bool &);
-	int _query_where(eval &, const query<where::equal> &where, const closure_bool &closure);
-	int _query_where(eval &, const query<where::logical_and> &where, const closure_bool &closure);
-
 	bool evaluate(eval &, const vector_view<port> &, const size_t &i);
 	enum fault evaluate(eval &, const event &);
 	enum fault evaluate(eval &, const vector_view<const event> &);
@@ -780,6 +699,13 @@ ircd::m::vm::eval::operator()(const vector_view<const event> &events)
 	return fault::ACCEPT;
 }
 
+namespace ircd::m
+{
+	//TODO: XXX
+	void _index_special0(const event &event, db::iov &iov, const string_view &prev_event_id);
+	void _index_special1(const event &event, db::iov &iov, const string_view &prev_event_id);
+}
+
 enum ircd::m::vm::fault
 ircd::m::vm::evaluate(eval &eval,
                       const vector_view<const event> &events)
@@ -808,6 +734,43 @@ ircd::m::vm::evaluate(eval &eval,
 		{
 			if(p[i].w)
 			{
+				const auto &event{*p[i].event};
+				if(defined(json::get<"state_key"_>(event)))
+				{
+					event::id::buf prev_event_id;
+					const query<where::equal> q
+					{
+						{ "room_id",   at<"room_id"_>(event)   },
+						{ "type",      at<"type"_>(event)      },
+						{ "state_key", at<"state_key"_>(event) },
+					};
+
+					if(test(q, [&prev_event_id](const auto &event)
+					{
+						prev_event_id = at<"event_id"_>(event);
+						std::cout << "got prev S: " << prev_event_id << std::endl;
+						return true;
+					}))
+						_index_special0(event, eval.txn, prev_event_id);
+				}
+
+				{
+					event::id::buf prev_event_id;
+					const query<where::equal> q
+					{
+						{ "room_id",   at<"room_id"_>(event)   },
+						{ "depth",     at<"depth"_>(event) - 1 },
+					};
+
+					if(test(q, [&prev_event_id](const auto &event)
+					{
+						prev_event_id = at<"event_id"_>(event);
+						std::cout << "got prev E: " << prev_event_id << std::endl;
+						return true;
+					}))
+						_index_special1(event, eval.txn, prev_event_id);
+				}
+
 				write(*p[i].event, eval.txn);
 				++eval.cs;
 			}
@@ -987,95 +950,7 @@ ircd::m::vm::check_fault_throw(eval &eval)
     }
 }
 */
-int
-ircd::m::vm::test(eval &eval,
-                  const query<> &where)
-{
-	return test(eval, where, [](const auto &event)
-	{
-		return true;
-	});
-}
 
-int
-ircd::m::vm::test(eval &eval,
-                  const query<> &clause,
-                  const closure_bool &closure)
-{
-	return _query(eval, clause, [&closure](const auto &event)
-	{
-		return closure(event);
- 	});
-}
-
-int
-ircd::m::vm::_query(eval &eval,
-                    const query<> &clause,
-                    const closure_bool &closure)
-{
-	switch(clause.type)
-	{
-		case where::equal:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::equal> &>(clause)
-			};
-
-			return _query_where(eval, c, closure);
-		}
-
-		case where::logical_and:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::logical_and> &>(clause)
-			};
-
-			return _query_where(eval, c, closure);
-		}
-
-		default:
-			return -1;
-	}
-}
-
-int
-ircd::m::vm::_query_where(eval &eval,
-                          const query<where::equal> &where,
-                          const closure_bool &closure)
-{
-	const int ret
-	{
-		eval.capstan.test(where)
-	};
-
-	log.debug("eval(%p): Query [%s]: %s -> %d",
-	          &eval,
-	          "where equal",
-	          pretty_oneline(where.value),
-	          ret);
-
-	return ret;
-}
-
-int
-ircd::m::vm::_query_where(eval &eval,
-                          const query<where::logical_and> &where,
-                          const closure_bool &closure)
-{
-	const auto &lhs{*where.a}, &rhs{*where.b};
-	const auto reclosure{[&lhs, &rhs, &closure]
-	(const auto &event)
-	{
-		if(!rhs(event))
-			return false;
-
-		return closure(event);
-	}};
-
-	return _query(eval, lhs, reclosure);
-}
 
 ircd::ctx::view<const ircd::m::event>
 ircd::m::vm::inserted
@@ -1336,12 +1211,12 @@ ircd::m::vm::write(const event &event,
 	append_indexes(event, txn);
 }
 
-//
-// Query
-//
-
 namespace ircd::m::vm
 {
+	int _query(eval &, const query<> &, const closure_bool &);
+	int _query_where(eval &, const query<where::equal> &where, const closure_bool &closure);
+	int _query_where(eval &, const query<where::logical_and> &where, const closure_bool &closure);
+
 	bool _query(const query<> &, const closure_bool &);
 
 	bool _query_event_id(const query<> &, const closure_bool &);
@@ -1373,6 +1248,28 @@ ircd::m::vm::exists(const event::id &event_id)
 	return has(column, event_id);
 }
 
+int
+ircd::m::vm::test(eval &eval,
+                  const query<> &where)
+{
+	return test(eval, where, [](const auto &event)
+	{
+		return true;
+	});
+}
+
+int
+ircd::m::vm::test(eval &eval,
+                  const query<> &clause,
+                  const closure_bool &closure)
+{
+	return _query(eval, clause, [&closure](const auto &event)
+	{
+		return closure(event);
+	});
+}
+
+
 bool
 ircd::m::vm::test(const query<> &where)
 {
@@ -1392,6 +1289,29 @@ ircd::m::vm::test(const query<> &clause,
 		ret = closure(event);
 		return true;
  	});
+
+	return ret;
+}
+
+bool
+ircd::m::vm::until(const query<> &where)
+{
+	return until(where, [](const auto &event)
+	{
+		return true;
+	});
+}
+
+bool
+ircd::m::vm::until(const query<> &clause,
+                   const closure_bool &closure)
+{
+	bool ret{true};
+	_query(clause, [&ret, &closure](const auto &event)
+	{
+		ret = closure(event);
+		return ret;
+	});
 
 	return ret;
 }
@@ -1469,6 +1389,75 @@ ircd::m::vm::for_each(const query<> &clause,
 		closure(event);
 		return false;
 	});
+}
+
+int
+ircd::m::vm::_query(eval &eval,
+                    const query<> &clause,
+                    const closure_bool &closure)
+{
+	switch(clause.type)
+	{
+		case where::equal:
+		{
+			const auto &c
+			{
+				dynamic_cast<const query<where::equal> &>(clause)
+			};
+
+			return _query_where(eval, c, closure);
+		}
+
+		case where::logical_and:
+		{
+			const auto &c
+			{
+				dynamic_cast<const query<where::logical_and> &>(clause)
+			};
+
+			return _query_where(eval, c, closure);
+		}
+
+		default:
+			return -1;
+	}
+}
+
+int
+ircd::m::vm::_query_where(eval &eval,
+                          const query<where::equal> &where,
+                          const closure_bool &closure)
+{
+	const int ret
+	{
+		eval.capstan.test(where)
+	};
+
+	log.debug("eval(%p): Query [%s]: %s -> %d",
+	          &eval,
+	          "where equal",
+	          pretty_oneline(where.value),
+	          ret);
+
+	return ret;
+}
+
+int
+ircd::m::vm::_query_where(eval &eval,
+                          const query<where::logical_and> &where,
+                          const closure_bool &closure)
+{
+	const auto &lhs{*where.a}, &rhs{*where.b};
+	const auto reclosure{[&lhs, &rhs, &closure]
+	(const auto &event)
+	{
+		if(!rhs(event))
+			return false;
+
+		return closure(event);
+	}};
+
+	return _query(eval, lhs, reclosure);
 }
 
 bool
@@ -1596,9 +1585,8 @@ int
 ircd::m::vm::_query_where_room_id_at_event_id(const query<where::equal> &where,
                                               const closure_bool &closure)
 {
-	std::cout << "where room id at event id?" << std::endl;
 	const auto &value{where.value};
-	const auto &room_id{json::get<"room_id"_>(value)};
+	const room::id &room_id{json::get<"room_id"_>(value)};
 	const auto &event_id{json::get<"event_id"_>(value)};
 	const auto &state_key{json::get<"state_key"_>(value)};
 
@@ -1686,10 +1674,10 @@ ircd::m::vm::_query_in_room_id(const query<> &query,
 
 bool
 ircd::m::vm::_query_for_type_state_key_in_room_id(const query<> &query,
-                                                      const closure_bool &closure,
-                                                      const room::id &room_id,
-                                                      const string_view &type,
-                                                      const string_view &state_key)
+                                                  const closure_bool &closure,
+                                                  const room::id &room_id,
+                                                  const string_view &type,
+                                                  const string_view &state_key)
 {
 	cursor cursor
 	{
@@ -1724,6 +1712,23 @@ ircd::m::vm::_query_for_type_state_key_in_room_id(const query<> &query,
 	return false;
 }
 
+ircd::string_view
+ircd::m::vm::reflect(const where &w)
+{
+	switch(w)
+	{
+		case where::noop:           return "noop";
+		case where::test:           return "test";
+		case where::equal:          return "equal";
+		case where::not_equal:      return "not_equal";
+		case where::logical_or:     return "logical_or";
+		case where::logical_and:    return "logical_and";
+		case where::logical_not:    return "logical_not";
+	}
+
+	return "?????";
+}
+
 namespace ircd::m
 {
 	struct indexer;
@@ -1733,13 +1738,16 @@ namespace ircd::m
 
 struct ircd::m::indexer
 {
+	//TODO: collapse
 	struct concat;
+	struct concat_s; //TODO: special
 	struct concat_v;
 	struct concat_2v;
+	struct concat_3vs; //TODO: special
 
 	std::string name;
 
-	virtual void operator()(const event &, db::iov &iov) const = 0;
+	virtual void operator()(const event &, db::iov &iov) const {}
 
 	indexer(std::string name)
 	:name{std::move(name)}
@@ -1764,14 +1772,13 @@ ircd::m::append_indexes(const event &event,
 	}
 }
 
-
 struct ircd::m::indexer::concat
 :indexer
 {
 	std::string col_a;
 	std::string col_b;
 
-	void operator()(const event &, db::iov &) const override;
+	void operator()(const event &, db::iov &) const final override;
 
 	concat(std::string col_a, std::string col_b)
 	:indexer
@@ -1820,6 +1827,62 @@ const
 	};
 }
 
+struct ircd::m::indexer::concat_s
+:indexer
+{
+	std::string col_a;
+	std::string col_b;
+
+	void operator()(const event &, db::iov &) const final override;
+
+	concat_s(std::string col_a, std::string col_b)
+	:indexer
+	{
+		fmt::snstringf(512, "%s in %s", col_a, col_b)
+	}
+	,col_a{col_a}
+	,col_b{col_b}
+	{}
+};
+
+void
+ircd::m::indexer::concat_s::operator()(const event &event,
+                                       db::iov &iov)
+const
+{
+	if(!iov.has(db::op::SET, col_a) || !iov.has(db::op::SET, col_b))
+		return;
+
+	static const size_t buf_max
+	{
+		1024
+	};
+
+	char index[buf_max];
+	index[0] = '\0';
+	const auto function
+	{
+		[&index](auto &val)
+		{
+			strlcat(index, byte_view<string_view>{val}, buf_max);
+		}
+	};
+
+	at(event, col_b, function);
+	strlcat(index, ":::", buf_max);  //TODO: special
+	at(event, col_a, function);
+
+	db::iov::append
+	{
+		iov, db::delta
+		{
+			name,        // col
+			index,       // key
+			{},          // val
+		}
+	};
+}
+
 struct ircd::m::indexer::concat_v
 :indexer
 {
@@ -1827,7 +1890,8 @@ struct ircd::m::indexer::concat_v
 	std::string col_b;
 	std::string col_c;
 
-	void operator()(const event &, db::iov &) const override;
+	void operator()(const event &, db::iov &) const final override;
+	void operator()(const event &, db::iov &, const string_view &) const;
 
 	concat_v(std::string col_a, std::string col_b, std::string col_c)
 	:indexer
@@ -1883,6 +1947,41 @@ const
 	};
 }
 
+void
+ircd::m::indexer::concat_v::operator()(const event &event,
+                                       db::iov &iov,
+                                       const string_view &val)
+const
+{
+	static const size_t buf_max
+	{
+		1024
+	};
+
+	char index[buf_max];
+	index[0] = '\0';
+	const auto concat
+	{
+		[&index](auto &val)
+		{
+			strlcat(index, byte_view<string_view>{val}, buf_max);
+		}
+	};
+
+	at(event, col_c, concat);
+	at(event, col_b, concat);
+
+	db::iov::append
+	{
+		iov, db::delta
+		{
+			name,        // col
+			index,       // key
+			val,         // val
+		}
+	};
+}
+
 struct ircd::m::indexer::concat_2v
 :indexer
 {
@@ -1891,7 +1990,7 @@ struct ircd::m::indexer::concat_2v
 	std::string col_b1;
 	std::string col_c;
 
-	void operator()(const event &, db::iov &) const override;
+	void operator()(const event &, db::iov &) const final override;
 
 	concat_2v(std::string col_a, std::string col_b0, std::string col_b1, std::string col_c)
 	:indexer
@@ -1950,28 +2049,108 @@ const
 	};
 }
 
+struct ircd::m::indexer::concat_3vs
+:indexer
+{
+	std::string col_a;
+	std::string col_b0;
+	std::string col_b1;
+	std::string col_b2;
+	std::string col_c;
+
+	void operator()(const event &, db::iov &, const string_view &prev_event_id) const;
+
+	concat_3vs(std::string col_a, std::string col_b0, std::string col_b1, std::string col_b2, std::string col_c)
+	:indexer
+	{
+		fmt::snstringf(512, "%s for %s,%s,%s in %s", col_a, col_b0, col_b1, col_b2, col_c)
+	}
+	,col_a{col_a}
+	,col_b0{col_b0}
+	,col_b1{col_b1}
+	,col_b2{col_b2}
+	,col_c{col_c}
+	{}
+}
+const concat_3vs
+{
+	"prev_event_id", "type", "state_key", "event_id", "room_id"
+};
+
+// Non-participating
+void
+ircd::m::_index_special0(const event &event,
+                         db::iov &iov,
+                         const string_view &prev_event_id)
+{
+	concat_3vs(event, iov, prev_event_id);
+}
+
+// Non-participating
+void
+ircd::m::_index_special1(const event &event,
+                         db::iov &iov,
+                         const string_view &prev_event_id)
+{
+	static const ircd::m::indexer::concat_v idxr
+	{
+		"prev_event_id", "event_id", "room_id"
+	};
+
+	idxr(event, iov, prev_event_id);
+}
+
+// Non-participating
+void
+ircd::m::indexer::concat_3vs::operator()(const event &event,
+                                         db::iov &iov,
+                                         const string_view &prev_event_id)
+const
+{
+	if(!iov.has(db::op::SET, col_c) ||
+	   !iov.has(db::op::SET, col_b0) ||
+	   !iov.has(db::op::SET, col_b1) ||
+	   !iov.has(db::op::SET, col_b2))
+		return;
+
+	static const size_t buf_max
+	{
+		2048
+	};
+
+	char index[buf_max];
+	index[0] = '\0';
+	const auto concat
+	{
+		[&index](auto &val)
+		{
+			strlcat(index, byte_view<string_view>{val}, buf_max);
+		}
+	};
+
+	at(event, col_c, concat);
+	strlcat(index, "..", buf_max);  //TODO: special
+	at(event, col_b0, concat);
+	at(event, col_b1, concat);
+	at(event, col_b2, concat);
+
+	db::iov::append
+	{
+		iov, db::delta
+		{
+			name,           // col
+			index,          // key
+			prev_event_id,  // val
+		}
+	};
+}
+
 std::set<std::shared_ptr<ircd::m::indexer>> ircd::m::indexers
 {{
 	std::make_shared<ircd::m::indexer::concat>("event_id", "sender"),
 	std::make_shared<ircd::m::indexer::concat>("event_id", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_v>("event_id", "room_id", "type"),
+	std::make_shared<ircd::m::indexer::concat_s>("origin", "room_id"),
 	std::make_shared<ircd::m::indexer::concat_v>("event_id", "room_id", "sender"),
 	std::make_shared<ircd::m::indexer::concat_2v>("event_id", "type", "state_key", "room_id"),
+	std::make_shared<ircd::m::indexer::concat_3vs>("prev_event_id", "type", "state_key", "event_id", "room_id"),
 }};
-
-ircd::string_view
-ircd::m::vm::reflect(const where &w)
-{
-	switch(w)
-	{
-		case where::noop:           return "noop";
-		case where::test:           return "test";
-		case where::equal:          return "equal";
-		case where::not_equal:      return "not_equal";
-		case where::logical_or:     return "logical_or";
-		case where::logical_and:    return "logical_and";
-		case where::logical_not:    return "logical_not";
-	}
-
-	return "?????";
-}

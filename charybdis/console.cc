@@ -1444,29 +1444,6 @@ try
 			break;
 		}
 
-		case hash("trace"):
-		{
-			const auto args
-			{
-				tokens_after(line, ' ', 0)
-			};
-
-			m::event::id event_id
-			{
-				token(args, ' ', 0)
-			};
-
-			m::vm::trace(event_id, []
-			(const auto &event, auto &next)
-			{
-				std::cout << m::pretty_oneline(event) << std::endl;
-				std::cout << m::pretty(m::event::prev{event}) << std::endl;
-				return true;
-			});
-
-			break;
-		}
-
 		case hash("directory"):
 		{
 			if(!moi)
