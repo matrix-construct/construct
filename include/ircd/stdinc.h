@@ -169,8 +169,6 @@ namespace ircd
 
 namespace ircd
 {
-	struct client;
-	struct server;
 	enum class runlevel :int;
 	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
