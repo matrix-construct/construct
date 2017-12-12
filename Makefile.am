@@ -6,7 +6,6 @@ SUBDIRS += ircd
 SUBDIRS += modules
 SUBDIRS += charybdis
 SUBDIRS += tools
-SUBDIRS += help
 SUBDIRS += doc
 
 .PHONY:      subdirs $(SUBDIRS)

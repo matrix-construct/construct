@@ -46,10 +46,8 @@ AC_CONFIG_FILES(\
 	charybdis/Makefile      \
 	ircd/Makefile           \
 	doc/Makefile            \
-	help/Makefile           \
 	modules/Makefile        \
 	tools/Makefile          \
-	tools/genssl
 )
 
 AM_INIT_AUTOMAKE([subdir-objects])
