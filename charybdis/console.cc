@@ -171,6 +171,8 @@ const char *const console_message
 *** This is a client and your commands will originate from the server itself.
 ***)"};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wframe-larger-than="
 void
 console()
 try
@@ -1579,3 +1581,4 @@ catch(const std::exception &e)
 	ircd::log::error("%s", e.what());
 	return true;
 }
+#pragma GCC diagnostic pop
