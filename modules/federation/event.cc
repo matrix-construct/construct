@@ -33,10 +33,10 @@ struct send
 }
 event_resource
 {
-	"/_matrix/federation/v1/event/", resource::opts
+	"/_matrix/federation/v1/event/",
 	{
+		"federation event",
 		resource::DIRECTORY,
-		"federation event"
 	}
 };
 

@@ -35,8 +35,8 @@ download_resource
 {
 	"/_matrix/media/r0/download/", resource::opts
 	{
+		"media download",
 		resource::DIRECTORY,
-		"media download"
 	}
 };
 

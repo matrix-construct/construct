@@ -24,8 +24,10 @@ using namespace ircd;
 resource publicrooms_resource
 {
 	"/_matrix/client/r0/publicRooms",
-	"Lists the public rooms on the server. "
-	"This API returns paginated responses. (7.5)"
+	{
+		"Lists the public rooms on the server. "
+		"This API returns paginated responses. (7.5)"
+	}
 };
 
 const ircd::m::room::id::buf

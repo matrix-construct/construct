@@ -35,8 +35,8 @@ server_resource
 {
 	"/_matrix/key/v2/server/", resource::opts
 	{
+		"federation 2.2.1.1: Publishing Keys",
 		resource::DIRECTORY,
-		"federation 2.2.1.1: Publishing Keys"
 	}
 };
 

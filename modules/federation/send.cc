@@ -50,10 +50,10 @@ struct send
 }
 send_resource
 {
-	"/_matrix/federation/v1/send/", resource::opts
+	"/_matrix/federation/v1/send/",
 	{
+		"federation send",
 		resource::DIRECTORY,
-		"federation send"
 	}
 };
 

@@ -138,8 +138,7 @@ catch(const m::INVALID_MXID &e)
 	{
 		http::BAD_REQUEST,
 		"M_INVALID_USERNAME",
-		"The desired user ID is not a valid user name: %s",
-		e.content
+		"Not a valid username. Please try again."
 	};
 };
 
@@ -189,7 +188,9 @@ handle_post(client &client,
 resource register_resource
 {
 	"/_matrix/client/r0/register",
-	"Register for an account on this homeserver. (3.3.1)"
+	{
+		"Register for an account on this homeserver. (3.3.1)"
+	}
 };
 
 resource::method post

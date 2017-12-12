@@ -89,8 +89,9 @@ get_root(client &client, const resource::request &request)
 
 resource root_resource
 {
-	"/", "Root resource",
+	"/",
 	{
+		"Webroot resource",
 		root_resource.DIRECTORY
 	}
 };

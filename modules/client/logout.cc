@@ -24,8 +24,10 @@ using namespace ircd;
 resource logout_resource
 {
 	"/_matrix/client/r0/logout",
-	"Invalidates an existing access token, so that it can no longer be used for "
-	"authorization. (3.2.3)"
+	{
+		"Invalidates an existing access token, so that it can no longer be used for "
+		"authorization. (3.2.3)"
+	}
 };
 
 resource::response

@@ -24,7 +24,9 @@ using namespace ircd;
 resource versions_resource
 {
 	"/_matrix/client/versions",
-	"Gets the versions of the specification supported by the server (2.1)"
+	{
+		"Gets the versions of the specification supported by the server (2.1)"
+	}
 };
 
 resource::method getter

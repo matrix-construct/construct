@@ -36,7 +36,9 @@ to the state, and to receive new messages.
 resource sync_resource
 {
 	"/_matrix/client/r0/sync",
-	sync_description
+	{
+		sync_description
+	}
 };
 
 void longpoll(client &client, const resource::request &request, const steady_point &timeout);

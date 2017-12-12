@@ -30,8 +30,8 @@ rooms_resource
 {
 	"/_matrix/client/r0/rooms/", resource::opts
 	{
+		"Rooms (7.0)",
 		resource::DIRECTORY,
-		"Rooms (7.0)"
 	}
 };
 

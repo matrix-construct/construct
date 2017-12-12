@@ -29,8 +29,10 @@ mapi::header IRCD_MODULE
 resource turnserver_resource
 {
 	"/_matrix/client/r0/voip/turnServer",
-	"This API provides credentials for the client to use when initiating calls."
-	"(11.3.3)"
+	{
+		"(11.3.3) "
+		"This API provides credentials for the client to use when initiating calls."
+	}
 };
 
 resource::response

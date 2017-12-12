@@ -20,7 +20,6 @@
  */
 
 #include <ircd/m/m.h>
-#include <ircd/resource.h>
 
 namespace ircd {
 
@@ -71,20 +70,18 @@ ircd::resource::find(string_view path)
 	return *it->second;
 }
 
-ircd::resource::resource(const string_view &path,
-                         opts opts)
+ircd::resource::resource(const string_view &path)
 :resource
 {
-	path, opts.description, opts
+	path, opts{}
 }
 {
 }
 
 ircd::resource::resource(const string_view &path,
-                         const string_view &description,
-                         opts opts)
+                         const opts &opts)
 :path{path}
-,description{description}
+,description{opts.description}
 ,flags{opts.flags}
 ,resources_it{[this, &path]
 {
@@ -150,7 +147,7 @@ try
 				return false;
 
 			assert(at<"state_key"_>(event) == access_token);
-			request.user_id = at<"sender"_>(event);
+			request.user_id = m::user::id{at<"sender"_>(event)};
 			return true;
 		})
 	};

@@ -24,9 +24,9 @@ using namespace ircd;
 resource user_resource
 {
 	"/_matrix/client/r0/user/",
-	"User resource",
 	{
-		resource::DIRECTORY
+		"User resource",
+		resource::DIRECTORY,
 	}
 };
 

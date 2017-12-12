@@ -31,26 +31,17 @@ struct ircd::resource
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
+	enum flag :uint;
+	struct opts;
 	struct method;
 	struct request;
 	struct response;
-
-	enum flag
-	{
-		DIRECTORY  = 0x01,
-	};
-
-	struct opts
-	{
-		flag flags{flag(0)};
-		string_view description;
-	};
 
 	static std::map<string_view, resource *, iless> resources;
 
 	string_view path;
 	string_view description;
-	flag flags;
+	enum flag flags;
 	std::map<string_view, method *> methods;
 	unique_const_iterator<decltype(resources)> resources_it;
 
@@ -61,12 +52,40 @@ struct ircd::resource
 	method &operator[](const string_view &path);
 	void operator()(client &, parse::capstan &, const http::request::head &);
 
-	resource(const string_view &path, const string_view &description, opts = {{}});
-	resource(const string_view &path, opts = {{}});
+	resource(const string_view &path, const opts &);
+	resource(const string_view &path);
 	resource() = default;
 	virtual ~resource() noexcept;
 
 	static resource &find(string_view path);
+};
+
+enum ircd::resource::flag
+:uint
+{
+	DIRECTORY  = 0x01,
+};
+
+struct ircd::resource::opts
+{
+	/// developer's literal description of the resource
+	string_view description
+	{
+		"no description"
+	};
+
+	/// flags for the resource
+	flag flags
+	{
+		flag(0)
+	};
+
+	/// parameter count limits (DIRECTORY only)
+	std::pair<short, short> parc
+	{
+		0,   // minimum params
+		15   // maximum params
+	};
 };
 
 struct ircd::resource::request
@@ -77,7 +96,7 @@ struct ircd::resource::request
 	const http::request::head &head;
 	http::request::content &content;
 	http::query::string query;
-	m::user::id::buf user_id;
+	string_view user_id; //m::user::id::buf user_id; //TODO: bleeding
 	vector_view<string_view> parv;
 
 	request(const http::request::head &head, http::request::content &content, http::query::string query, const vector_view<string_view> &parv);
@@ -91,6 +110,7 @@ struct ircd::resource::request::object
 	const http::request::head &head;
 	const http::request::content &content;
 	const http::query::string &query;
+	const decltype(r.user_id) &user_id;
 	const vector_view<string_view> &parv;
 	const json::object &body;
 
@@ -100,6 +120,7 @@ struct ircd::resource::request::object
 	,head{r.head}
 	,content{r.content}
 	,query{r.query}
+	,user_id{r.user_id}
 	,parv{r.parv}
 	,body{r}
 	{}

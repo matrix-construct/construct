@@ -24,7 +24,9 @@ using namespace ircd;
 resource events_resource
 {
 	"/_matrix/client/r0/events",
-	"Events (6.2.3) (10.x)"
+	{
+		"Events (6.2.3) (10.x)"
+	}
 };
 
 resource::response

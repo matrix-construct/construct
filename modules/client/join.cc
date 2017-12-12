@@ -25,8 +25,8 @@ resource join_resource
 {
 	"/_matrix/client/r0/join/", resource::opts
 	{
+		"join",
 		resource::DIRECTORY,
-		"join"
 	}
 };
 

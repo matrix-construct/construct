@@ -24,7 +24,14 @@ using namespace ircd;
 resource createroom
 {
 	"/_matrix/client/r0/createRoom",
-	"Create a new room with various configuration options. (7.1.1)"
+	{
+		"Create a new room with various configuration options. (7.1.1)"
+	}
+};
+
+mapi::header IRCD_MODULE
+{
+	"registers the resource 'client/createRoom' to handle requests"
 };
 
 resource::response
@@ -93,9 +100,4 @@ resource::method post_method
 	{
 		post_method.REQUIRES_AUTH
 	}
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/createRoom' to handle requests"
 };
