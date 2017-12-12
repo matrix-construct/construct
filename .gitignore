@@ -52,3 +52,4 @@ m4/lt~obsolete.m4
 *.dSYM/
 install-sh
 ylwrap
+build
