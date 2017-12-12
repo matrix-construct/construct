@@ -383,6 +383,42 @@ size(std::ostream &s)
 	return ret;
 }
 
+template<size_t SIZE>
+constexpr size_t
+size(const char (&buf)[SIZE])
+{
+	return SIZE;
+}
+
+template<size_t SIZE>
+constexpr size_t
+size(const std::array<const char, SIZE> &buf)
+{
+	return SIZE;
+}
+
+template<size_t SIZE>
+constexpr size_t
+size(const std::array<char, SIZE> &buf)
+{
+	return SIZE;
+}
+
+
+template<size_t SIZE>
+constexpr const char *
+data(const char (&buf)[SIZE])
+{
+	return buf;
+}
+
+template<size_t SIZE>
+constexpr char *
+data(char (&buf)[SIZE])
+{
+	return buf;
+}
+
 
 template<class T>
 auto
