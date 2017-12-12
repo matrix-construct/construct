@@ -61,7 +61,10 @@ console_execute(const std::vector<std::string> &lines)
 	check_console_active();
 	ircd::context
 	{
-		"execute", stack_sz, std::bind(&execute, lines), ircd::context::DETACH
+		"execute",
+		stack_sz,
+		std::bind(&execute, lines),
+		ircd::context::DETACH | ircd::context::POST
 	};
 }
 
@@ -71,7 +74,10 @@ console_spawn()
 	check_console_active();
 	ircd::context
 	{
-		"console", stack_sz, std::bind(&console), ircd::context::DETACH
+		"console",
+		stack_sz,
+		std::bind(&console),
+		ircd::context::DETACH | ircd::context::POST
 	};
 }
 
