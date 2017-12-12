@@ -64,7 +64,6 @@ namespace ircd::m::name
 	constexpr const char *const depth {"depth"};
 	constexpr const char *const event_id {"event_id"};
 	constexpr const char *const hashes {"hashes"};
-	constexpr const char *const is_state {"is_state"};
 	constexpr const char *const membership {"membership"};
 	constexpr const char *const origin {"origin"};
 	constexpr const char *const origin_server_ts {"origin_server_ts"};
@@ -94,7 +93,6 @@ struct ircd::m::event
 	json::property<name::depth, int64_t>,
 	json::property<name::event_id, json::string>,
 	json::property<name::hashes, json::object>,
-	json::property<name::is_state, bool>,
 	json::property<name::membership, json::string>,
 	json::property<name::origin, json::string>,
 	json::property<name::origin_server_ts, time_t>,

@@ -169,24 +169,6 @@ const database::descriptor events_state_key_descriptor
 	}
 };
 
-const database::descriptor events_is_state_descriptor
-{
-	// name
-	"is_state",
-
-	// explanation
-	R"(### protocol note:
-
-	### developer note:
-	key is event_id
-	)",
-
-	// typing (key, value)
-	{
-		typeid(string_view), typeid(bool)
-	}
-};
-
 const database::descriptor events_origin_descriptor
 {
 	// name
@@ -594,7 +576,6 @@ const database::description events_description
 	events_room_id_descriptor,
 	events_sender_descriptor,
 	events_state_key_descriptor,
-	events_is_state_descriptor,
 	events_origin_descriptor,
 	events_origin_server_ts_descriptor,
 	events_unsigned_descriptor,
