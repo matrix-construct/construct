@@ -47,8 +47,6 @@ namespace ircd::http
 
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;
-	struct urlencoder extern const urlencoder;
-	struct urldecoder extern const urldecoder;
 
 	size_t printed_size(const vector_view<const line::header> &headers);
 	size_t print(char *const &buf, const size_t &max, const vector_view<const line::header> &headers);
@@ -875,100 +873,6 @@ ircd::http::parser::content_length(const string_view &str)
 		throw error(BAD_REQUEST, "Invalid content-length value");
 
 	return ret;
-}
-
-struct ircd::http::urlencoder
-:karma::grammar<char *, const string_view &>
-{
-	void throw_illegal()
-	{
-		throw error(code::BAD_REQUEST, "Generator Protection: urlencode");
-	}
-
-	karma::rule<char *, const string_view &> url_encoding
-	{
-		*(karma::char_("A-Za-z0-9") | (karma::lit('%') << karma::hex))
-		,"url encoding"
-	};
-
-	urlencoder(): urlencoder::base_type{url_encoding} {}
-}
-const ircd::http::urlencoder;
-
-struct ircd::http::urldecoder
-:qi::grammar<const char *, mutable_buffer>
-{
-	template<class R = unused_type, class... S> using rule = qi::rule<const char *, R, S...>;
-
-	rule<> url_illegal
-	{
-		char_(0x00, 0x1f)
-		,"url illegal"
-	};
-
-	rule<char()> url_encodable
-	{
-		char_("A-Za-z0-9")
-		,"url encodable character"
-	};
-
-	rule<char()> urlencoded_character
-	{
-		'%' > qi::uint_parser<char, 16, 2, 2>{}
-		,"urlencoded character"
-	};
-
-	rule<mutable_buffer> url_decode
-	{
-		*((char_ - '%') | urlencoded_character)
-		,"urldecode"
-	};
-
-	urldecoder(): urldecoder::base_type { url_decode } {}
-}
-const ircd::http::urldecoder;
-
-ircd::string_view
-ircd::http::urldecode(const string_view &url,
-                      const mutable_buffer &buf)
-try
-{
-	const char *start{url.data()}, *const stop
-	{
-		url.data() + std::min(url.size(), size(buf))
-	};
-
-	mutable_buffer mb{data(buf), size_t(0)};
-	qi::parse(start, stop, urldecoder.url_decode, mb);
-	return string_view{data(mb), size(mb)};
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	const auto rule
-	{
-		ircd::string(e.what_)
-	};
-
-	throw error
-	{
-		code::BAD_REQUEST, fmt::snstringf
-		{
-			BUFSIZE,
-			"I require a valid urlencoded %s. You sent %zu invalid chars starting with `%s'.",
-			between(rule, "<", ">"),
-			size_t(e.last - e.first),
-			string_view{e.first, e.last}
-		}
-	};
-}
-
-ircd::string_view
-ircd::http::urlencode(const string_view &url,
-                      const mutable_buffer &buf)
-{
-	char *out{data(buf)};
-	karma::generate(out, maxwidth(size(buf))[urlencoder], url);
-	return string_view{data(buf), size_t(std::distance(data(buf), out))};
 }
 
 ircd::http::error::error(const enum code &code,

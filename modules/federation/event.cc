@@ -46,7 +46,7 @@ handle_get(client &client,
 {
 	m::event::id::buf event_id
 	{
-		urldecode(request.parv[0], event_id)
+		url::decode(request.parv[0], event_id)
 	};
 
 	const unique_buffer<mutable_buffer> buffer

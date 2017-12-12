@@ -374,7 +374,7 @@ try
 			char url[512]; const auto url_len
 			{
 				fmt::sprintf(url, "_matrix/client/r0/rooms/%s/messages",
-				             urlencode(room_id, room_id_encoded))
+				             url::encode(room_id, room_id_encoded))
 			};
 
 			char query[1024];
@@ -416,7 +416,7 @@ try
 			char url[512]; const auto url_len
 			{
 				fmt::sprintf(url, "_matrix/client/r0/rooms/%s/members",
-				             urlencode(room_id, room_id_encoded))
+				             url::encode(room_id, room_id_encoded))
 			};
 
 			char query[1024];
@@ -451,8 +451,8 @@ try
 			const params token{args, " ", {"room_id", "event_id"}};
 
 			char room_id_buf[768], event_id_buf[768];
-			const auto room_id{urlencode(token.at(0), room_id_buf)};
-			const auto event_id{urlencode(token.at(1), event_id_buf)};
+			const auto room_id{url::encode(token.at(0), room_id_buf)};
+			const auto event_id{url::encode(token.at(1), event_id_buf)};
 
 			char url[512]; const auto url_len
 			{
@@ -487,14 +487,14 @@ try
 			const params token{args, " ", {"room_id", "event_type", "state_key"}};
 
 			char room_id_buf[512];
-			const auto room_id{urlencode(token.at(0), room_id_buf)};
+			const auto room_id{url::encode(token.at(0), room_id_buf)};
 
 			const auto event_type{token[1]};
 
 			char state_key_buf[512];
 			const auto state_key
 			{
-				urlencode(token[2], state_key_buf)
+				url::encode(token[2], state_key_buf)
 			};
 
 			char url[512]; const auto url_len
@@ -1151,7 +1151,7 @@ try
 			char origin_buf[512];
 			const auto origin
 			{
-				urlencode(origin_token, origin_buf)
+				url::encode(origin_token, origin_buf)
 			};
 
 			const auto event_id_token
@@ -1162,7 +1162,7 @@ try
 			char event_id_buf[512];
 			const auto event_id
 			{
-				urlencode(event_id_token, event_id_buf)
+				url::encode(event_id_token, event_id_buf)
 			};
 
 			static char url[128]; const auto url_len
@@ -1493,7 +1493,7 @@ try
 			char room_alias_buf[512];
 			const auto room_alias
 			{
-				urlencode(room_alias_token, room_alias_buf)
+				url::encode(room_alias_token, room_alias_buf)
 			};
 
 			static char url[128]; const auto url_len
@@ -1547,7 +1547,7 @@ try
 			char user_id_buf[512];
 			const auto user_id
 			{
-				urlencode(user_id_token, user_id_buf)
+				url::encode(user_id_token, user_id_buf)
 			};
 
 			static char url[128]; const auto url_len

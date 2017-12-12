@@ -228,12 +228,12 @@ ircd::m::io::acquire(vector_view<room::state::fetch> tab)
 		static char tmp[768];
 		url[i] = fmt::snstringf
 		{
-			1024, "_matrix/federation/v1/state/%s/", urlencode(tab[i].room_id, tmp)
+			1024, "_matrix/federation/v1/state/%s/", url::encode(tab[i].room_id, tmp)
 		};
 
 		query[i] = fmt::snstringf
 		{
-			1024, "event_id=%s", urlencode(tab[i].event_id, tmp)
+			1024, "event_id=%s", url::encode(tab[i].event_id, tmp)
 		};
 
 		request[i] =
@@ -320,12 +320,12 @@ ircd::m::io::acquire(vector_view<room::fetch> tab)
 		static char tmp[768];
 		url[i] = fmt::snstringf
 		{
-			1024, "_matrix/federation/v1/backfill/%s/", urlencode(tab[i].room_id, tmp)
+			1024, "_matrix/federation/v1/backfill/%s/", url::encode(tab[i].room_id, tmp)
 		};
 
 		query[i] = fmt::snstringf
 		{
-			1024, "limit=%zu&v=%s", tab[i].opts->limit, urlencode(tab[i].event_id, tmp)
+			1024, "limit=%zu&v=%s", tab[i].opts->limit, url::encode(tab[i].event_id, tmp)
 		};
 
 		session[i] =
@@ -411,7 +411,7 @@ ircd::m::io::acquire(vector_view<event::fetch> tab)
 		static char tmp[768];
 		url[i] = fmt::snstringf
 		{
-			1024, "_matrix/federation/v1/event/%s/", urlencode(tab[i].event_id, tmp)
+			1024, "_matrix/federation/v1/event/%s/", url::encode(tab[i].event_id, tmp)
 		};
 
 		session[i] =

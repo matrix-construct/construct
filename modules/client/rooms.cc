@@ -205,13 +205,13 @@ get_state(client &client,
 	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
 	{
-		urldecode(request.parv[2], type_buf)
+		url::decode(request.parv[2], type_buf)
 	};
 
 	char skey_buf[uint(256 * 1.34 + 1)];
 	const string_view &state_key
 	{
-		urldecode(request.parv[3], skey_buf)
+		url::decode(request.parv[3], skey_buf)
 	};
 
 	// (non-standard) Allow an event_id to be passed in the query string
@@ -219,7 +219,7 @@ get_state(client &client,
 	char evid_buf[uint(256 * 1.34 + 1)];
 	const string_view &event_id
 	{
-		urldecode(request.query["event_id"], evid_buf)
+		url::decode(request.query["event_id"], evid_buf)
 	};
 
 	if(type && state_key)
@@ -244,7 +244,7 @@ get_context(client &client,
 {
 	m::event::id::buf event_id
 	{
-		urldecode(request.parv[2], event_id)
+		url::decode(request.parv[2], event_id)
 	};
 
 	const m::vm::query<m::vm::where::equal> query
@@ -287,7 +287,7 @@ get_rooms(client &client, const resource::request &request)
 
 	m::room::id::buf room_id
 	{
-		urldecode(request.parv[0], room_id)
+		url::decode(request.parv[0], room_id)
 	};
 
 	const string_view &cmd
@@ -385,7 +385,7 @@ put_typing(client &client,
 
 	m::user::id::buf user_id
 	{
-		urldecode(request.parv[2], user_id)
+		url::decode(request.parv[2], user_id)
 	};
 
 	static const milliseconds timeout_default
@@ -422,7 +422,7 @@ put_rooms(client &client, const resource::request &request)
 
 	m::room::id::buf room_id
 	{
-		urldecode(request.parv[0], room_id)
+		url::decode(request.parv[0], room_id)
 	};
 
 	const string_view &cmd
@@ -486,7 +486,7 @@ post_rooms(client &client,
 
 	m::room::id::buf room_id
 	{
-		urldecode(request.parv[0], room_id)
+		url::decode(request.parv[0], room_id)
 	};
 
 	const string_view &cmd

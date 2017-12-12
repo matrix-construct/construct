@@ -35,7 +35,7 @@ get_filter(client &client, const resource::request &request)
 {
 	m::user::id::buf user_id
 	{
-		urldecode(request.parv[0], user_id)
+		url::decode(request.parv[0], user_id)
 	};
 
 	const auto &filter_id
@@ -91,7 +91,7 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	// token must be authorized to make requests for this user id.
 	m::user::id::buf user_id
 	{
-		urldecode(request.parv[0], user_id)
+		url::decode(request.parv[0], user_id)
 	};
 
 	// (5.2) List of event fields to include. If this list is absent then all fields are

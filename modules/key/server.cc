@@ -47,7 +47,7 @@ handle_get(client &client,
 	char key_id_buf[256];
 	const auto key_id
 	{
-		urldecode(request.parv[0], key_id_buf)
+		url::decode(request.parv[0], key_id_buf)
 	};
 
 	std::string my_key;

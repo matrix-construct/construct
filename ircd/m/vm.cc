@@ -261,13 +261,13 @@ ircd::m::vm::join(const room::id &room_id,
 	char room_id_urle_buf[768];
 	const auto room_id_urle
 	{
-		urlencode(room_id, room_id_urle_buf),
+		url::encode(room_id, room_id_urle_buf),
 	};
 
 	char user_id_urle_buf[768];
 	const auto user_id_urle
 	{
-		urlencode(user_id, user_id_urle_buf)
+		url::encode(user_id, user_id_urle_buf)
 	};
 
 	const fmt::snstringf url
@@ -415,7 +415,7 @@ ircd::m::vm::join(const room::id &room_id,
 	char event_id_urle_buf[768];
 	const auto event_id_urle
 	{
-		urlencode(event.at("event_id"), event_id_urle_buf)
+		url::encode(event.at("event_id"), event_id_urle_buf)
 	};
 
 	const fmt::bsprintf<1024> send_join_url

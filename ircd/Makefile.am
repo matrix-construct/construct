@@ -85,6 +85,7 @@ libircd_la_SOURCES =   \
 	parse.cc           \
 	resource.cc        \
 	rfc1459.cc         \
+	rfc3986.cc         \
 	server.cc          \
 	sodium.cc          \
 	###

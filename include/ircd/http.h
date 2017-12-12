@@ -39,15 +39,6 @@ namespace ircd::http
 
 	string_view status(const enum code &);
 	enum code status(const string_view &);
-
-	string_view urlencode(const string_view &url, const mutable_buffer &);
-	string_view urldecode(const string_view &url, const mutable_buffer &);
-}
-
-namespace ircd
-{
-	using http::urldecode;
-	using http::urlencode;
 }
 
 //

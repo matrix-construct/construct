@@ -19,51 +19,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-using namespace ircd;
+#pragma once
+#define HAVE_IRCD_RFC3986_H
 
-resource join_resource
+/// Universal Resource Indicator (URI) grammars & tools
+namespace ircd::rfc3986
 {
-	"/_matrix/client/r0/join/", resource::opts
-	{
-		resource::DIRECTORY,
-		"join"
-	}
-};
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, coding_error)
+	IRCD_EXCEPTION(coding_error, encoding_error)
+	IRCD_EXCEPTION(coding_error, decoding_error)
 
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/join'"
-};
+	struct parser extern const parser;
+	struct encoder extern const encoder;
+	struct decoder extern const decoder;
 
-resource::response
-post_join(client &client, const resource::request &request)
-{
-	if(request.parv.size() < 1)
-		throw http::error
-		{
-			http::MULTIPLE_CHOICES, "/join room_id required"
-		};
-
-	m::room::id::buf room_id
-	{
-		url::decode(request.parv[0], room_id)
-	};
-
-	m::join(room_id, request.user_id);
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "room_id", room_id }
-		}
-	};
+	string_view encode(const string_view &url, const mutable_buffer &);
+	string_view decode(const string_view &url, const mutable_buffer &);
 }
 
-resource::method method_post
+namespace ircd
 {
-	join_resource, "POST", post_join,
-	{
-		method_post.REQUIRES_AUTH
-	}
-};
+	namespace url = rfc3986;
+}

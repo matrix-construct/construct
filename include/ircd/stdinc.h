@@ -221,6 +221,7 @@ namespace ircd
 #include "db/db.h"
 #include "js.h"
 #include "mods.h"
+#include "rfc3986.h"
 #include "net/net.h"
 #include "server.h"
 #include "client.h"
