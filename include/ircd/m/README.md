@@ -95,8 +95,8 @@ complexity for information in a room timeline is as follows:
 - Message (non-state) events in the timeline have a linear lookup time:
 the timeline must be iterated in sequence to find a satisfying message.
 
-- State events in the timeline have logarithmic lookup: the implementation
-is expected to maintain a map of the `state_key` values for state events
+- State events in the timeline have a logarithmic lookup: the implementation
+is expected to maintain a map of the `type`,`state_key` values for events
 present in the timeline.
 
 The matrix protocol specifies certain `event` types which are recognized to
@@ -189,6 +189,33 @@ merge the split in the illustration above which is happening.
 
 
 ### Implementation
+
+#### Model
+
+This system embraces the fact that "everything is an event." It then follows
+that everything is a room. We use rooms for both communication and storage of
+everything.
+
+There is only one† backend database and it stores events. For example: there
+is no "user accounts database" holding all of the user data for the server-
+instead there is an `!accounts` *room*. To use these rooms as efficient
+databases we categorize a piece of data with an event `type` and key it with
+the event `state_key` and the value is the event `content`. Iteration of these
+events is also possible. This is now a sufficient key-value store as good as
+any other approach; better though, since such a databasing room retains all
+features and distributed capabilities of any other room. We then focus our
+efforts to optimize the behavior of a room, to the benefit of all rooms, and
+all things.
+
+† Under special circumstances other databases may exist but they are purely
+slave to the events database: i.e one could `rm -rf` a slave database and it
+would be rebuilt from the events database. These databases only exist if an
+event is *truly* inappropriate and doesn't fit the model even by a stretch.
+An example of this is the search-terms database which specializes in indexing
+individual words to the events where they are found so content searches can be
+efficient.
+
+#### Flow
 
 This is a single-writer/multiple-reader approach. The "core" is the only writer.
 The write itself is just the saving of an event. This serves as a transaction
