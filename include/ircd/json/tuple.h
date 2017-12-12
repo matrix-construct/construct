@@ -60,6 +60,7 @@ struct tuple
 :std::tuple<T...>
 ,tuple_base
 {
+	struct keys;
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
 
@@ -959,6 +960,84 @@ _key_transform(const tuple<T...> &tuple,
 
 	return it;
 }
+
+template<class... T>
+struct tuple<T...>::keys
+:std::array<string_view, tuple<T...>::size()>
+{
+	struct selection;
+	struct include;
+	struct exclude;
+
+	constexpr keys()
+	{
+		_key_transform<tuple<T...>>(this->begin(), this->end());
+	}
+};
+
+template<class... T>
+struct tuple<T...>::keys::selection
+:std::bitset<tuple<T...>::size()>
+{
+	template<class closure>
+	constexpr bool until(closure &&function) const
+	{
+		for(size_t i(0); i < this->size(); ++i)
+			if(this->test(i))
+				if(!function(key<tuple<T...>, i>()))
+					return false;
+
+		return true;
+	}
+
+	template<class closure>
+	constexpr void for_each(closure &&function) const
+	{
+		this->until([&function](auto&& key)
+		{
+			function(key);
+			return true;
+		});
+	}
+
+	template<class it_a,
+	         class it_b>
+	constexpr auto transform(it_a it, const it_b end) const
+	{
+		this->until([&it, &end](auto&& key)
+		{
+			if(it == end)
+				return false;
+
+			*it = key;
+			++it;
+			return true;
+		});
+	}
+};
+
+template<class... T>
+struct tuple<T...>::keys::include
+:selection
+{
+	constexpr include(const std::initializer_list<string_view> &list)
+	{
+		for(const auto &key : list)
+			this->set(indexof<tuple<T...>>(key), true);
+	}
+};
+
+template<class... T>
+struct tuple<T...>::keys::exclude
+:selection
+{
+	constexpr exclude(const std::initializer_list<string_view> &list)
+	{
+		this->set();
+		for(const auto &key : list)
+			this->set(indexof<tuple<T...>>(key), false);
+	}
+};
 
 template<class it_a,
          class it_b,
