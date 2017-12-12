@@ -27,41 +27,55 @@
 
 namespace ircd::m
 {
+	struct id;
+
 	IRCD_M_EXCEPTION(error, INVALID_MXID, http::BAD_REQUEST)
 	IRCD_M_EXCEPTION(INVALID_MXID, BAD_SIGIL, http::BAD_REQUEST)
 
-	IRCD_OVERLOAD(generate)
-
-	struct id;
+	bool my(const id &);
 }
 
-//
-// Interface to a string representing an mxid. The m::id itself is just a
-// string_view over some existing data. m::id::buf is an m::id with an
-// internal array providing the buffer.
-//
+/// (Appendix 4.2) Common Identifier Format
+///
+/// The Matrix protocol uses a common format to assign unique identifiers to
+/// a number of entities, including users, events and rooms. Each identifier
+/// takes the form: `&localpart:domain` where & represents a 'sigil' character;
+/// domain is the server name of the homeserver which allocated the identifier,
+/// and localpart is an identifier allocated by that homeserver. The precise
+/// grammar defining the allowable format of an identifier depends on the type
+/// of identifier.
+///
+/// This structure is an interface to a string representing an mxid. The m::id
+/// itself is just a string_view over some existing data. m::id::buf is an
+/// m::id with an internal array providing the buffer.
+///
 struct ircd::m::id
 :string_view
 {
 	struct event;
 	struct user;
 	struct room;
-	struct alias;
+	struct room_alias;
+	struct group;
+	struct origin;
 
-	template<class T, size_t SIZE = 256> struct buf;
-
-	struct parser;
-	struct generator;
 	enum sigil :char;
+	template<class T, size_t SIZE = 256> struct buf;
+	template<class it> struct input;
+	template<class it> struct output;
+	struct parser;
+	struct printer;
+	struct validator;
 
-  protected:
 	struct parser static const parser;
+	struct printer static const printer;
+	struct validator static const validator;
 
   public:
 	// Extract elements
-	string_view local() const                    { return split(*this, ':').first;                 }
-	string_view host() const                     { return split(*this, ':').second;                }
-	string_view name() const                     { return lstrip(local(), at(0));                  }
+	string_view local() const;
+	string_view host() const;
+	string_view name() const;
 	string_view hostname() const;
 	uint16_t hostport() const;
 
@@ -75,15 +89,109 @@ struct ircd::m::id
 	id() = default;
 };
 
+/// (4.2) The sigil characters
 enum ircd::m::id::sigil
 :char
 {
-	EVENT  = '$',
-	USER   = '@',
-	ROOM   = '!',
-	ALIAS  = '#',
+	USER        = '@',     ///< User ID (4.2.1)
+	EVENT       = '$',     ///< Event ID (4.2.2)
+	ROOM        = '!',     ///< Room ID (4.2.2)
+	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
+	GROUP       = '+',     ///< Group ID (experimental)
+	ORIGIN      = ':',     ///< Origin ID (experimental)
 };
 
+/// (Appendix 4.2.1) User Identifiers
+///
+/// Users within Matrix are uniquely identified by their Matrix user ID. The
+/// user ID is namespaced to the homeserver which allocated the account and
+/// has the form: `@localpart:domain` The localpart of a user ID is an opaque
+/// identifier for that user. It MUST NOT be empty, and MUST contain only the
+/// characters a-z, 0-9, ., _, =, -, and /. The domain of a user ID is the
+/// server name of the homeserver which allocated the account. The length of
+/// a user ID, including the @ sigil and the domain, MUST NOT exceed 255
+/// characters.
+///
+struct ircd::m::id::user
+:ircd::m::id
+{
+	using buf = m::id::buf<user>;
+	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
+	user() = default;
+};
+
+/// (Appendix 4.2.2) Room IDs and Event IDs
+///
+/// An event has exactly one event ID. An event ID has the format:
+/// `$opaque_id:domain` The domain of an event ID is the server name of the
+/// homeserver which created the event. The domain is used only for namespacing
+/// to avoid the risk of clashes of identifiers between different homeservers.
+/// There is no implication that the event in question is still available at
+/// the corresponding homeserver. Event IDs are case-sensitive. They are not
+/// meant to be human readable.
+///
+struct ircd::m::id::event
+:ircd::m::id
+{
+	using buf = m::id::buf<event>;
+	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
+	event() = default;
+};
+
+/// (Appendix 4.2.2) Room IDs and Event IDs
+///
+/// A room has exactly one room ID. A room ID has the format:
+/// `!opaque_id:domain` The domain of a room ID is the server name of the
+/// homeserver which created the room. The domain is used only for namespacing
+/// to avoid the risk of clashes of identifiers between different homeservers.
+/// There is no implication that the room in question is still available at
+/// the corresponding homeserver. Room IDs are case-sensitive. They are not
+/// meant to be human readable.
+///
+struct ircd::m::id::room
+:ircd::m::id
+{
+	using buf = m::id::buf<room>;
+	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
+	room() = default;
+};
+
+/// (Appendix 4.2.3) Room Aliases
+/// A room may have zero or more aliases. A room alias has the format:
+/// `#room_alias:domain` The domain of a room alias is the server name of the
+/// homeserver which created the alias. Other servers may contact this
+/// homeserver to look up the alias. Room aliases MUST NOT exceed 255 bytes
+/// (including the # sigil and the domain).
+///
+struct ircd::m::id::room_alias
+:ircd::m::id
+{
+	using buf = m::id::buf<room_alias>;
+	template<class... args> room_alias(args&&... a) :m::id{ROOM_ALIAS, std::forward<args>(a)...} {}
+	room_alias() = default;
+};
+
+/// Group ID (EXPERIMENTAL)
+///
+struct ircd::m::id::group
+:ircd::m::id
+{
+	using buf = m::id::buf<group>;
+	template<class... args> group(args&&... a) :m::id{GROUP, std::forward<args>(a)...} {}
+	group() = default;
+};
+
+/// Group ID (EXPERIMENTAL)
+///
+struct ircd::m::id::origin
+:ircd::m::id
+{
+	using buf = m::id::buf<origin>;
+	template<class... args> origin(args&&... a) :m::id{ORIGIN, std::forward<args>(a)...} {}
+	origin() = default;
+};
+
+// Utilities
 namespace ircd::m
 {
 	id::sigil sigil(const char &c);
@@ -98,43 +206,7 @@ namespace ircd::m
 	void validate(const id::sigil &, const string_view &);    // valid() | throws
 }
 
-//
-// convenience typedefs
-//
-
-struct ircd::m::id::event
-:ircd::m::id
-{
-	using buf = m::id::buf<event>;
-	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
-	event() = default;
-};
-
-struct ircd::m::id::user
-:ircd::m::id
-{
-	using buf = m::id::buf<user>;
-	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
-	user() = default;
-};
-
-struct ircd::m::id::room
-:ircd::m::id
-{
-	using buf = m::id::buf<room>;
-	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
-	room() = default;
-};
-
-struct ircd::m::id::alias
-:ircd::m::id
-{
-	using buf = m::id::buf<alias>;
-	template<class... args> alias(args&&... a) :m::id{ALIAS, std::forward<args>(a)...} {}
-	alias() = default;
-};
-
-/// ID object backed by an internal buffer of wost-case size.
+/// ID object backed by an internal buffer of default worst-case size.
 ///
 template<class T,
          size_t MAX = 256>
@@ -193,26 +265,3 @@ struct ircd::m::id::buf
 		return *this;
 	}
 };
-
-inline uint16_t
-ircd::m::id::hostport()
-const try
-{
-	const auto port
-	{
-		split(host(), ':').second
-	};
-
-	return port? lex_cast<uint16_t>(port) : 8448;
-}
-catch(const std::exception &e)
-{
-	return 8448;
-}
-
-inline ircd::string_view
-ircd::m::id::hostname()
-const
-{
-	return split(host(), ':').first;
-}
