@@ -64,10 +64,10 @@ struct tuple
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
 
+	static constexpr size_t size();
+
 	operator json::value() const;
 	operator crh::sha256::buf() const;
-
-	static constexpr size_t size();
 
 	template<class... U> tuple(const tuple<U...> &);
 	tuple(const json::object &);
@@ -411,7 +411,7 @@ get(const tuple &t,
 	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: undefined
-	return ret != value_type{}? ret : def;
+	return defined(ret)? ret : def;
 }
 
 template<size_t hash,
@@ -436,7 +436,7 @@ get(tuple &t,
 	//TODO: undefined
 	auto &ret{get<hash, tuple>(t)};
 	using value_type = decltype(ret);
-	return ret != value_type{}? ret : def;
+	return defined(ret)? ret : def;
 }
 
 template<size_t hash,
@@ -456,8 +456,8 @@ at(const tuple &t)
 
 	using value_type = tuple_value_type<tuple, idx>;
 
-	//TODO: undefined
-	if(ret == value_type{})
+	//TODO: XXX
+	if(!defined(ret))
 		throw not_found("%s", key<idx>(t));
 
 	return ret;
@@ -480,8 +480,8 @@ at(tuple &t)
 
 	using value_type = tuple_value_type<tuple, idx>;
 
-	//TODO: undefined
-	if(ret == value_type{})
+	//TODO: XXX
+	if(!defined(ret))
 		throw not_found("%s", key<idx>(t));
 
 	return ret;
@@ -505,7 +505,7 @@ at(const tuple &t)
 	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: undefined
-	if(ret == value_type{})
+	if(!defined(ret))
 		throw not_found("%s", name);
 
 	return ret;
@@ -529,7 +529,7 @@ at(tuple &t)
 	using value_type = tuple_value_type<tuple, idx>;
 
 	//TODO: undefined
-	if(ret == value_type{})
+	if(!defined(ret))
 		throw not_found("%s", name);
 
 	return ret;
