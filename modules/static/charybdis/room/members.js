@@ -60,7 +60,7 @@ room.prototype.member = function(mxid)
  */
 room.membership.members = function()
 {
-	return this.state['m.room.member'];
+	return this.content['m.room.member'];
 };
 
 // Alias
@@ -95,7 +95,7 @@ room.membership.count = function(type = "join")
 room.membership.list = function(type = "join")
 {
 	let members = this.membership.members();
-	let filter = (mxid) => members[mxid].content.membership == type;
+	let filter = (mxid) => members[mxid].membership == type;
 	return Object.keys(members).filter(filter);
 };
 
@@ -252,19 +252,19 @@ value:
 	"NAME":
 	{
 		show: (room, member) =>
-			!empty(maybe(() => member.content.displayname)),
+			!empty(maybe(() => member.displayname)),
 
 		value: (room, member) =>
-			maybe(() => member.content.displayname)? member.content.displayname : "",
+			maybe(() => member.displayname)? member.displayname : "",
 	},
 
 	"POWER":
 	{
 		show: (room, member) =>
-			maybe(() => (member.user_id in room.state['m.room.power_levels'].content.users)),
+			maybe(() => (member.user_id in room.content['m.room.power_levels'][''].users)),
 
 		value: (room, member) =>
-			maybe(() => room.state['m.room.power_levels'].content.users[member.user_id]),
+			maybe(() => room.content['m.room.power_levels'][''].users[member.user_id]),
 	},
 
 	"IDLE":
@@ -279,7 +279,7 @@ value:
 	"TS":
 	{
 		name: (room, member) =>
-			maybe(() => mc.room.membership.menu[member.content.membership].name),
+			maybe(() => mc.room.membership.menu[member.membership].name),
 
 		show: (room, member) =>
 			member.origin_server_ts,

@@ -76,14 +76,7 @@ room.state.prototype.get = function(state, type)
 		return state[type];
 
 	this.update(type);
-	return event.state_key.length? this._get_aggreg(state, type, idx):
-	                               this._get_single(state, type, idx);
-};
-
-room.state.prototype._get_single = function(state, type, idx)
-{
-	state[type] = this.timeline[idx[0]];
-	return state[type];
+	return this._get_aggreg(state, type, idx);
 };
 
 room.state.prototype._get_aggreg = function(state, type, idx)
@@ -140,7 +133,6 @@ room.state.content = class
 	constructor(state, depth = 0)
 	{
 		this.state = state;
-		this.depth = depth;
 	}
 };
 
@@ -152,27 +144,11 @@ room.state.content.prototype.set = function(state, key, val)
 
 room.state.content.prototype.get = function(state, key)
 {
-	for(let full in state)
-	{
-		let type = full.split(".");
-		for(let i = 0; i < this.depth; i++)
-			type.shift();
+	let ret = {};
+	for(let state_key in state[key])
+		ret[state_key] = state[key][state_key].content;
 
-		let part = type.shift();
-		if(part != key)
-			continue;
-
-		if(type.length > 0)
-		{
-			let handler = new room.state.content(this.state, this.depth + 1);
-			return new Proxy(state, handler);
-		}
-
-		if(state[full].content)
-			return state[full].content;
-		else
-			return Object.map(state[full], (key, event) => event.content);
-	}
+	return ret;
 };
 
 Object.defineProperty(room.state, 'defaults', {
@@ -190,27 +166,36 @@ value:
 	// 10.5.2: m.room.canonical_alias - main event
 	"m.room.canonical_alias":
 	{
-		content:
+		"":
 		{
-			alias: undefined,
+			content:
+			{
+				alias: undefined,
+			},
 		},
 	},
 
 	// 10.5.3: m.room.create - main event
 	"m.room.create":
 	{
-		content:
+		"":
 		{
-			creator: undefined,
+			content:
+			{
+				creator: undefined,
+			},
 		},
 	},
 
 	// 10.5.4: m.room.join_rules - main event
 	"m.room.join_rules":
 	{
-		content:
+		"":
 		{
-			join_rule: undefined,
+			content:
+			{
+				join_rule: undefined,
+			},
 		},
 	},
 
@@ -223,69 +208,87 @@ value:
 	// 10.5.6: m.room.power_levels - main event
 	"m.room.power_levels":
 	{
-		content:
+		"":
 		{
-			// Defaults
-			events_default: 0,
-			state_default: 0,
-			users_default: 0,
+			content:
+			{
+				// Defaults
+				events_default: 0,
+				state_default: 0,
+				users_default: 0,
 
-			// Actions (10.5.6: defaults to 50 if unspecified)
-			ban: 50,
-			invite: 50,
-			kick: 50,
-			redact: 50,
+				// Actions (10.5.6: defaults to 50 if unspecified)
+				ban: 50,
+				invite: 50,
+				kick: 50,
+				redact: 50,
 
-			// Access maps
-			events: {},           // Power level required for event type; { "m.room.type": power }
-			users: {},            // Power level available to user; { mxid: power }
+				// Access maps
+				events: {},           // Power level required for event type; { "m.room.type": power }
+				users: {},            // Power level available to user; { mxid: power }
+			},
 		},
 	},
 
 	// 11.2.1.3: m.room.name - main event
 	"m.room.name":
 	{
-		content:
+		"":
 		{
-			name: undefined,
+			content:
+			{
+				name: undefined,
+			},
 		},
 	},
 
 	// 11.2.1.4: m.room.topic - main event
 	"m.room.topic":
 	{
-		content:
+		"":
 		{
-			topic: undefined,
+			content:
+			{
+				topic: undefined,
+			},
 		},
 	},
 
 	// 11.2.1.5: m.room.avatar - main event
 	"m.room.avatar":
 	{
-		content:
+		"":
 		{
-			info: {},
-			url: undefined,
+			content:
+			{
+				info: {},
+				url: undefined,
+			},
 		},
 	},
 
 	// 11.9.1.1: m.room.history_visibility - main event
 	"m.room.history_visibility":
 	{
-		content:
+		"":
 		{
-			history_visibility: "shared", // 11.9.3: defaults to 'shared'
+			content:
+			{
+				history_visibility: "shared", // 11.9.3: defaults to 'shared'
+			},
 		},
 	},
 
 	// 11.13.1.1: m.room.guest_access - main event
 	"m.room.guest_access":
 	{
-		content:
+		"":
 		{
-			guest_access: "forbidden",
-		}
+			content:
+			{
+				guest_access: "forbidden",
+			}
+		},
 	},
 }});
 
@@ -313,12 +316,12 @@ room.state.summary = function(state)
 	});
 
 	return {
-		room_id: state['m.room.create'].room_id,
-		name: state['m.room.name'].content.name,
-		topic: state['m.room.topic'].content.topic,
-		canonical_alias: state['m.room.canonical_alias'].content.alias,
-		world_readable: state['m.room.history_visibility'].content.history_visibility == "world_readable",
-		guest_can_join: state['m.room.guest_access'].content.guest_access == "can_join",
+		room_id: state['m.room.create'][''].room_id,
+		name: state['m.room.name'][''].content.name,
+		topic: state['m.room.topic'][''].content.topic,
+		canonical_alias: state['m.room.canonical_alias'][''].content.alias,
+		world_readable: state['m.room.history_visibility'][''].content.history_visibility == "world_readable",
+		guest_can_join: state['m.room.guest_access'][''].content.guest_access == "can_join",
 		num_joined_members: Array.count(Object.keys(members), is_join),
 		aliases: aliases,
 	};
@@ -364,6 +367,13 @@ room.state.summary.parse = function(summary)
 // Collection of handlers.
 room.state.summary.parse.on = {};
 
+// 'opts' is not part of the matrix room summary;
+// this stub prevents a console warning for it being unhandled.
+room.state.summary.parse.on["opts"] = function()
+{
+	return;
+};
+
 room.state.summary.parse.on["room_id"] = function(room_id)
 {
 	return;
@@ -390,7 +400,7 @@ room.state.summary.parse.on["topic"] = function(topic)
 		state_key: "",
 		content:
 		{
-			alias: topic,
+			topic: topic,
 		}
 	};
 };

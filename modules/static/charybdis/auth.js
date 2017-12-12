@@ -123,14 +123,14 @@ mc.auth["m.register.guest"] = async function(opts = {})
 	}
 	catch(error)
 	{
+		error.element = $("#charybdis_login_form");
 		switch(error.status)
 		{
 			case 403:
 				mc.auth["m.register.guest"].disabled = true;
-				throw error;
 
 			default:
-				throw error;
+				throw new mc.error(error);
 		}
 	}
 };
@@ -161,6 +161,8 @@ mc.auth["m.register.user"] = async function(opts = {})
 	}
 	catch(error)
 	{
+		error.element = $("#charybdis_login_form");
+		delete mc.local.wasspord;
 		switch(error.status)
 		{
 			case 403:

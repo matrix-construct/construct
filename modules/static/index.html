@@ -98,14 +98,6 @@ type="text/ng-template"
 	>
 	</div>
 	<div
-	id="charybdis_motd"
-	class="motd pane"
-	ng-show="mc.show['#charybdis_motd']"
-	ng-dblclick="mc.show['#charybdis_motd'] = false"
-	ng-include="'ircd_motd'"
-	>
-	</div>
-	<div
 	id="charybdis_login"
 	class="login_ pane"
 	ng-show="mc.show['#charybdis_login']"
@@ -118,294 +110,47 @@ type="text/ng-template"
 
 <!-- --------------------------------------------------------------------------
 
-Rooms
+	Main Menu
 
 --------------------------------------------------------------------------- -->
 
-
 <script
-id="ircd_rooms"
-type="text/ng-template"
->
-	<div
-	id="charybdis_room"
-	class="current no-animate"
-	ng-hide="!mc.rooms.current.list.length"
-	ng-include="'ircd_rooms_current'"
-	>
-	</div>
-	<div
-	id="charybdis_rooms_main"
-	class="main"
-	ng-if="mc.show['#charybdis_rooms_main']"
-	ircd-catch='{"delegate": "#charybdis_rooms_list"}'
-	>
-		<div
-		id="charybdis_rooms_head"
-		class="head"
-		ng-show="mc.show['#charybdis_menu']"
-		ng-include="'ircd_rooms_head'"
-		>
-		</div>
-		<div
-		id="charybdis_rooms_list"
-		class="list"
-		ng-controller="rooms.list as list"
-		ang-scroll="list.scroll($event)"
-		ng-include="'ircd_rooms_list'"
-		>
-		</div>
-		<form
-		id="charybdis_rooms_search"
-		class="search"
-		ng-include="'ircd_rooms_search'"
-		ng-class="
-		{
-			selected: mc.rooms.mode == 'SEARCH',
-		}">
-		</form>
-	</div>
-</script>
-
-
-<script
-id="ircd_rooms_head"
-type="text/ng-template"
->
-	<h1
-	ng-hide="mc.show['#charybdis_menu']"
-	>
-		ROOMS
-	</h1>
-	<form
-	id="charybdis_rooms_menu"
-	class="menu"
-	ng-controller="menu as menu"
-	ng-include="'ircd_rooms_menu'"
-	>
-	</form>
-</script>
-
-
-<script
-id="ircd_rooms_menu"
+id="ircd_main_menu"
 type="text/ng-template"
 >
 	<button
-	class="item"
-	ng-repeat="(name, item) in mc.rooms.menu"
-	ang-click="menu.toggle(mc.rooms.menu, name, $event)"
-	style="order: {{item.order !== undefined? item.order : 'initial'}}"
-	title="{{item.tooltip}}"
-	ng-hide="item.hide()"
+	class="item column wrap"
+	ng-repeat="(name, item) in mc.main.menu"
+	ng-hide="item.hide == true"
+	ang-click="menu.toggle(mc.main.menu, name, $event);"
 	ng-class="
 	{
-		selected: menu.selected(mc.rooms.menu, name, item),
-		error: item.error !== undefined,
-		disabled: item.disabled === true,
-		choice: item.choice(),
-	}">
+		order: item.order,
+		sticky: item.sticky,
+		selected: menu.selected(mc.main.menu, name, item)
+	}"
+	>
 		<i
-		class="fa icon"
-		ng-class="item.icon"
+		class="fa icon {{ item.icon }}"
 		aria-hidden="true"
 		>
 		</i>
-		<h3
+		<h2
 		class="name"
+		ng-bind="name"
 		>
-			{{ name }}
-		</h3>
+		</h2>
 	</button>
 </script>
 
 
 <script
-id="ircd_rooms_search"
-type="text/ng-template"
->
-	<label
-	class="h6"
-	>
-		SEARCH ROOMS
-		<span
-		ng-hide="empty(mc.rooms.search.value)"
-		class="feedback"
-		>
-			{{ mc.rooms.search.feedback }}
-		</span>
-	</label>
-	<input
-	name="name"
-	type="text"
-	autocomplete="off"
-	ng-model="mc.rooms.search.value"
-	ng-model-options="{debounce: 100}"
-	ng-change="mc.rooms.search.on.change($event);"
-	ng-keypress="mc.rooms.search.on.keypress($event);"
-	ng-focus="mc.rooms.search.on.focus($event);"
-	ng-blur="mc.rooms.search.on.blur($event);"
-	/>
-</script>
-
-
-<script
-id="ircd_rooms_list"
-type="text/ng-template"
->
-	<div
-	class="item"
-	ng-repeat="room in mc.rooms.list"
-	ng-show="!mc.rooms.info.model || mc.rooms.info.model == room.id"
-	ng-include="'ircd_rooms_list_item'"
-	>
-	</div>
-</script>
-
-
-<script
-id="ircd_rooms_list_item"
-type="text/ng-template"
->
-	<div
-	class="head"
-	ng-click="mc.rooms.info(room.id); mc.rooms.current.add(room.id); $event.stopPropagation();"
-	ng-include="'ircd_rooms_list_item_head'"
-	ng-class="
-	{
-		joined: mc.rooms.joined[room.id] !== undefined,
-		invited: mc.rooms.invited[room.id] !== undefined,
-	}">
-	</div>
-	<div
-	class="info"
-	ng-if="mc.rooms.info.model == room.id;"
-	ng-include="'ircd_rooms_list_item_info'"
-	>
-	</div>
-</script>
-
-
-<script
-id="ircd_rooms_list_item_head"
-type="text/ng-template"
->
-	<div
-	class="left focus"
-	ng-click="mc.rooms.current.add(room.id); mc.rooms.info(room.id); $event.stopPropagation();"
-	ng-class="
-	{
-		'grow': mc.rooms.info.model == room.id,
-		joined: mc.rooms.joined[room.id] !== undefined,
-		invited: mc.rooms.invited[room.id] !== undefined,
-		selected: mc.rooms.current(room.id) !== undefined,
-	}">
-		<i
-		class="left fa icon"
-		ng-class="
-		{
-			'fa-minus': mc.rooms.info.model == room.id,
-			'fa-plus-square': mc.rooms.info.model != room.id,
-		}">
-		</i>
-	</div>
-	<h3
-	class="right id grow"
-	ng-if="empty(room.state['m.room.name'].content.name) &&
-	       empty(room.state['m.room.canonical_alias'].content.alias)"
-	>
-		{{ room.id }}
-	</h3>
-	<h3
-	class="right name grow"
-	ng-if="!empty(room.state['m.room.name'].content.name) &&
-	       empty(room.state['m.room.canonical_alias'].content.alias)"
-	>
-		{{ room.state['m.room.name'].content.name }}
-	</h3>
-	<h3
-	class="right alias grow"
-	ng-if="!empty(room.state['m.room.canonical_alias'].content.alias)"
-	>
-		{{ room.state['m.room.canonical_alias'].content.alias }}
-	</h3>
-	<h4
-	class="right highlight_count"
-	ng-show="room.notifications.highlight_count"
-	>
-		{{ room.notifications.highlight_count }}
-	</h4>
-	<h4
-	class="right notification_count"
-	ng-show="room.notifications.notification_count"
-	>
-		{{ room.notifications.notification_count }}
-	</h4>
-	<h4
-	class="right member_count"
-	>
-		{{ room.membership.count('join') }}
-	</h4>
-</script>
-
-
-<script
-id="ircd_rooms_list_item_info"
-type="text/ng-template"
->
-	<div
-	class="name"
-	>
-		<h3>
-			{{ room.state['m.room.name'].content.name }}
-		</h3>
-	</div>
-	<div
-	class="id"
-	>
-		<h4>
-			{{ room.id }}
-		</h4>
-	</div>
-	<div
-	class="stats"
-	>
-		<div
-		class="joined"
-		ng-if="mc.rooms.joined[room.id] !== undefined"
-		>
-			<h5
-			class="label"
-			>
-				JOINED
-			</h5>
-			<p>
-				{{mc.date.describe.since(mc.rooms.joined[room.id].membership.me().origin_server_ts)}} ago
-				({{mc.date.local.pretty(mc.rooms.joined[room.id].membership.me().origin_server_ts)}})
-			</p>
-		</div>
-	</div>
-	<form
-	class="menu"
-	ng-controller="menu as menu"
-	ng-include="'ircd_rooms_list_item_info_menu'"
-	>
-	</form>
-</script>
-
-
-<script
-id="ircd_rooms_list_item_info_menu"
+id="ircd_menu_item"
 type="text/ng-template"
 >
 	<button
-	type="submit"
 	class="item"
-	ng-repeat="(name, item) in mc.rooms.info.menu"
-	ng-hide="item.hide(room.id)"
-	ang-mousedown="menu.hold(mc.rooms.info.menu, name, $event, room.id);"
-	ang-mouseup="menu.hold(mc.rooms.info.menu, name, $event, room.id);"
-	ang-click="menu.toggle(mc.rooms.info.menu, name, $event, room.id);"
+	ng-repeat="item in items"
 	ng-class="item.classes"
 	>
 		<i
@@ -414,17 +159,93 @@ type="text/ng-template"
 		aria-hidden="true"
 		>
 		</i>
-		<h3
+		<h1
 		class="name"
 		>
-			{{ name }}
-		</h3>
+			{{ item.name }}
+		</h1>
 	</button>
 </script>
 
+<script
+id="ircd_menu"
+type="text/ng-template"
+>
+	<form
+	class="menu"
+	ng-include="'ircd_menu_item'"
+	>
+	</form>
+</script>
+
+
+<!-- --------------------------------------------------------------------------
+
+	Main Login
+
+--------------------------------------------------------------------------- -->
+
 
 <script
-id="ircd_rooms_current"
+id="charybdis_login"
+type="text/ng-template"
+>
+	<form
+	id="charybdis_login_form"
+	>
+		<h3>
+			<!-- <span class="matrix"><b>Z</b>emos <b>I</b>nter<b>A</b>ctive</span> -->
+			<span class="matrix"><b>M</b>atrix</span>
+			&nbsp;
+			<span class="construct"><b>C</b>onstruct</span>
+		</h3>
+		<input
+		name="username"
+		type="text"
+		ng-model="mc.local.user_id"
+		/>
+		<input
+		name="password"
+		type="password"
+		ng-model="mc.local.wasspord"
+		/>
+		<div
+		class="submit"
+		>
+			<button
+			name="login_"
+			type="submit"
+			class="submit button"
+			ng-click="mc.run()"
+			>
+				LOGIN
+			</button>
+			<button
+			name="register"
+			type="submit"
+			class="submit button"
+			ng-class="
+			{
+				disabled: mc.auth['m.register.user'].disabled,
+			}"
+			ng-click="mc.auth['m.register.user']() && mc.run()"
+			>
+				REGISTER
+			</button>
+		</div>
+	</form>
+</script>
+
+
+<!-- --------------------------------------------------------------------------
+
+	Rooms
+
+--------------------------------------------------------------------------- -->
+
+
+<script
+id="ircd_rooms"
 type="text/ng-template"
 >
 	<div
@@ -439,10 +260,9 @@ type="text/ng-template"
 
 <!-- --------------------------------------------------------------------------
 
-Room
+	Room
 
 --------------------------------------------------------------------------- -->
-
 
 <script
 id="ircd_room"
@@ -468,7 +288,7 @@ type="text/ng-template"
 	</div>
 	<div
 	class="status frieze bar"
-	ng-show="room.control.show_status_frieze"
+	ng-if="room.content['mc.room.config']['show'].frieze !== false"
 	ng-include="'ircd_room_control_frieze'"
 	>
 	</div>
@@ -492,7 +312,7 @@ type="text/ng-template"
 	</div>
 	<div
 	class="members"
-	ng-if="room.control.show_members"
+	ng-if="room.content['mc.room.config']['show'].members"
 	ng-controller="mc.room.membership.controller as members"
 	ng-include="'ircd_room_members'"
 	>
@@ -535,11 +355,15 @@ type="text/ng-template"
 	</div>
 	<form
 	class="input"
+	ng-if="room.content['mc.room.config']['show'].input !== false"
  	ng-show="room.control.show_main_input && room.control.mode == 'LIVE'"
  	ng-include="'ircd_room_input'"
  	>
 	</form>
 </script>
+
+
+<!--  Room Members  -->
 
 
 <script
@@ -576,7 +400,7 @@ type="text/ng-template"
 	ng-show="item.show === true"
 	ng-click=
 	"
-		room.control.show_members = members.filter != name;
+		room.content['mc.room.config']['show']._members = members.filter != name;
 		members.filter = name;
 		members.info = undefined;
 		members.list = room.membership.sorted(name);
@@ -827,295 +651,288 @@ type="text/ng-template"
 </script>
 
 
-
-
 <script
-id="ircd_error"
+id="ircd_room_explore"
 type="text/ng-template"
 >
 	<div
-	class="error"
-	tabindex="0"
-	ng-controller="errors as this"
-	ng-dblclick="this.close($event);"
-	ng-blur="this.close($event);"
-	>
-		<div
-		class="header row nowrap"
-		>
-			<h4
-			ng-show="this.error.m.errcode && this.error.m.errcode != 'M_UNKNOWN'"
-			>
-				{{ mc.m.pretty_errcode(this.error.m.errcode); }}
-			</h4>
-			<h5
-			style="justify-content: flex-end; flex-grow: 1"
-			>
-				{{ this.error.status }} {{ this.error.name }}
-			</h5>
-		</div>
-		<div
-		class="message grow column nowrap"
-		>
-			<p
-			ng-show="this.error.m.error"
-			>
-				{{ this.error.m.error }}
-			</p>
-
-			<p
-			ng-show="this.error.message"
-			>
-				{{ this.error.message }}
-			</p>
-		</div>
-		<div
-		class="footer row nowrap"
-		>
-			<i
-			class="fa fa-code guru icon"
-			aria-hidden="true"
-			ng-show="this.error.stack || this.error.request_stack || this.error.response_stack"
-			ng-click="this.guru = !this.guru; $event.stopPropagation();"
-			>
-			</i>
-			<div
-			class="grow"
-			>
-			</div>
-			<i
-			class="fa fa-remove icon"
-			aria-hidden="true"
-			ng-hide="this.error.fatal"
-			ng-click="this.close($event);"
-			>
-			</i>
-		</div>
-		<div
-		class="guru column nowrap"
-		ng-show="this.guru === true"
-		ng-dblclick="this.guru = !this.guru; $event.stopPropagation();"
-		>
-			<i
-			class="fa fa-remove icon"
-			aria-hidden="true"
-			ng-click="this.guru = !this.guru; $event.stopPropagation();"
-			>
-			</i>
-			<div
-			class="stack row nowrap"
-			>
-				<div
-				class="stack column nowrap"
-				ng-if="this.error.request_stack"
-				>
-					<h3>
-						REQUEST STACK
-					</h3>
-					<p
-					class="request stack"
-					>{{this.error.request_stack}}</p>
-				</div>
-				<div
-				class="stack column nowrap"
-				ng-if="this.error.response_stack"
-				>
-					<h3>
-						RESPONSE STACK
-					</h3>
-					<p
-					class="response stack"	
-					>{{this.error.response_stack}}</p>
-				</div>
-				<div
-				class="stack column nowrap"
-				ng-if="!this.error.response_stack && !error_request_stack && this.error.stack"
-				>
-					<h3>
-						EXCEPTION STACK
-					</h3>
-					<p
-					class="stack"
-					>{{this.error.stack}}</p>
-				</div>
-			</div>
-			<div
-			class="json column nowrap"
-			ng-if="this.error.m"
-			>
-				<p
-				class="json"
-				>{{debug.stringify(this.error.m, 3)}}</p>
-			</div>
-		</div>
-	</div>
-</script>
-
-
-<!--
-	Old jquery explorer
--->
-
-<script
-id="json_member"
-type="text/ng-template"
->
-	<div
-	class="member"
-	>
-		<div
-		class="key"
-		>
-			<i
-			class="icon fa"
-			>
-			</i>
-			<p
-			class="name"
-			>
-			</p>
-		</div>
-		<div
-		class="value"
-		style="display: none"
-		>
-		</div>
-	</div>
-</script>
-
-
-<script
-id="json_object"
-type="text/ng-template"
->
-	<div
-	class="object"
-	>
-	</div>
-</script>
-
-
-<!--
-	New explorer
--->
-
-<script
-id="ircd_object"
-type="text/ng-template"
->
-	<div
-	class="member"
-	ng-repeat="(key, val) in object"
-	>
-		<h5
-		class="key"
-		ng-if="_typeof(val) !== 'undefined'"
-		>
-			{{ key }}
-		</h5>
-		<input
-		type="text"
-		ng-value="val"
-		ng-if="_typeof(val) != 'object' && _typeof(val) != 'undefined'"
-		class="value"
-		/>
-		<div
-		class="object"
-		ng-include="'ircd_object'"
-		ng-if="_typeof(val) == 'object'"
-		ng-init="object = val;"
-		>
-		</div>
-	</div>
-</script>
-
-
-<script
-id="ircd_menu_item"
-type="text/ng-template"
->
-	<button
-	class="item"
-	ng-repeat="item in items"
-	ng-class="item.classes"
+	class="control bar"
 	>
 		<i
-		class="fa icon"
-		ng-class="item.icon"
+		class="refresh icon fa fa-refresh"
+		ng-click="$event.stopPropagation(); room.refresh_explore($event);"
 		aria-hidden="true"
 		>
 		</i>
-		<h1
-		class="name"
+	</div>
+	<div
+	class="content"
+	>
+	</div>
+</script>
+
+<script
+id="ircd_room_input_files"
+type="text/ng-template"
+>
+	<div
+	class="file"
+	ng-repeat="(name, file) in room.control.files"
+	ng-class="
+	{
+		start:        file.ajax === undefined && file.reader.readyState == file.reader.EMPTY,
+		loading:      file.ajax === undefined && file.reader.readyState == file.reader.LOADING,
+		loaded:       file.ajax === undefined && file.reader.readyState == file.reader.DONE,
+		uploading:    file.ajax !== undefined && file.progress.loaded != file.progress.total,
+		uploaded:     file.ajax !== undefined && file.progress.loaded == file.progress.total,
+		failed:       file.progress.type == 'error',
+	}">
+		<div
+		class="progress"
+		ng-if="file.progress.loaded != file.progress.total"
+		style="width: {{(file.progress.loaded / file.progress.total) * 100}}%;"
 		>
-			{{ item.name }}
-		</h1>
+		</div>
+
+		<div
+		class="error"
+		ng-if="file.progress.type == 'error'"
+		ng-init="error = new mc.error(file.error)"
+		ng-include="'ircd_error'"
+		>
+		</div>
+
+		<button
+		class="remove"
+		ng-click="mc.room.attach.cancel.call(room, $event, file); $event.stopPropagation();"
+		>
+			<i
+			class="fa icon fa-close"
+			aria-hidden="true"
+			>
+			</i>
+		</button>
+		<img
+		ng-if="file.opts.content.url !== undefined"
+		ng-src="{{mc.m.xc(file.opts.content.url)}}"
+		>
+		</img>
+		<h5
+		class="name"
+		ng-if="file.opts.content.url === undefined"
+		>
+			{{ file.name }}
+		</h5>
+		<h5
+		class="url"
+		ng-if="file.opts.content.url !== undefined"
+		>
+			{{ file.opts.content.url }}
+		</h5>
+		<div
+		class="status"
+		>
+			<p
+			class="bytes loaded"
+			ng-if="file.progress.loaded != file.progress.total"
+			>
+				{{ mc.space.describe.bytes(file.progress.loaded) }} of
+			</p>
+			<p
+			class="bytes total"
+			>
+				{{ mc.space.describe.bytes(file.progress.total) }}
+			</p>
+			<p
+			class="state"
+			ng-if="file.reader.readyState == file.reader.LOADING"
+			>
+				READING
+			</p>
+			<p
+			class="state"
+			ng-if="file.ajax === undefined && file.reader.readyState == file.reader.DONE"
+			>
+				READY
+			</p>
+			<p
+			class="state"
+			ng-if="file.ajax !== undefined && file.progress.type == 'loadend'"
+			>
+				UPLOADED
+			</p>
+		</div>
+		<div
+		class="text"
+		ng-if="file.opts.content.url !== undefined"
+		>
+			<h6
+			class="label"
+			>
+				TEXT
+			</h6>
+			<input
+			name="caption"
+			class="caption"
+			ng-model="file.opts.content.body"
+			/>
+		</div>
+		<button
+		class="post"
+		ng-if="file.opts.content.url !== undefined"
+		ang-click="mc.room.send.message.image.call(room, file.opts.content.url, file.opts.content.body); $event.stopPropagation()"
+		>
+			<i
+			class="fa icon fa-reply"
+			aria-hidden="true"
+			>
+			</i>
+		</button>
+	</div>
+	<div
+	class="summary"
+	ng-if="length(room.control.files) > 1"
+	ng-if="false"
+	>
+	</div>
+</script>
+
+<script
+id="ircd_room_input_message"
+type="text/ng-template"
+>
+	<div
+	class="attach"
+	>
+		<i
+		class="reply icon fa fa-paperclip"
+		aria-hidden="true"
+		>
+		</i>
+		<input
+		name="file"
+		type="file"
+		class="file"
+		multiple
+		onchange=
+		"
+			let scope = angular.element(this).scope();
+			scope.room.attach(event);
+			scope.$apply();
+		" />
+	</div>
+	<textarea
+	name="message"
+	class="message"
+	autocomplete="off"
+	rows="1"
+	style="white-space: normal;"
+	ng-model="room.control.input"
+	ng-change="room.input.change($event)"
+	ng-keydown="room.input.keydown($event)"
+	ng-blur="room.input.blur($event)"
+	>
+	</textarea>
+	<button
+	name="submit"
+	type="submit"
+	class="submit"
+	ng-hide="empty(room.control.input)"
+	ng-click="room.input.submit($event)"
+	ng-class="
+	{
+		eval: room.control.evalmode || room.opts.local,
+		empty: empty(room.control.input),
+	}">
+		<i
+		class="reply icon fa fa-reply"
+		aria-hidden="true"
+		>
+		</i>
+		<span
+		ng-if="false"
+		ng-show="!room.control.evalmode && !room.opts.local"
+		>
+			SEND
+		</span>
+		<span
+		ng-show="room.control.evalmode || room.opts.local"
+		>
+			EVAL
+		</span>
 	</button>
 </script>
 
 <script
-id="ircd_menu"
+id="ircd_room_input"
 type="text/ng-template"
 >
-	<form
-	class="menu"
-	ng-include="'ircd_menu_item'"
+	<div
+	class="files"
+	ng-include="'ircd_room_input_files'"
 	>
-	</form>
+	</div>
+	<div
+	class="message"
+	ng-include="'ircd_room_input_message'"
+	>
+	</div>
 </script>
 
+
+<!--  Room Search  -->
 
 <script
-id="charybdis_login"
+id="ircd_room_search"
 type="text/ng-template"
 >
-	<form
-	id="charybdis_login_form"
-	ircd-catch
+	<div
+	class="row nowrap"
 	>
-		<h3>
-			<!-- <span class="matrix"><b>I</b>nter<b>A</b>ctive</span> -->
-			<span class="matrix"><b>M</b>atrix</span>
-			&nbsp;
-			<span class="construct"><b>C</b>onstruct</span>
-		</h3>
-		<input
-		name="username"
-		type="text"
-		ng-model="mc.local.user_id"
-		/>
-		<input
-		name="password"
-		type="password"
-		ng-model="mc.local.wasspord"
-		/>
 		<div
-		class="submit"
+		class="column nowrap grow"
+		>
+			<input
+			name="query"
+			class="query"
+			autocomplete="off"
+			style="white-space: normal;"
+			ng-model="room.control.search_query"
+			ng-change="room.search($event);"
+			ng-model-options="{debounce: 250}"
+			/>
+			<h6
+			class="label"
+			>
+				SEARCH {{ room.content['m.room.name'][''].name }}			
+			</h6>
+		</div>
+		<div
+		class="menu row nowrap"
+		ng-controller="menu as menu"
 		>
 			<button
-			name="login_"
-			type="submit"
-			class="submit button"
-			ng-click="mc.auth['m.login.password'](); mc.run(); $event.stopPropagation();"
-			>
-				LOGIN
-			</button>
-			<button
-			name="register"
-			type="submit"
-			class="submit button"
+			class="item"
+			ng-repeat="(name, item) in room.search_menu"
+			ng-click="menu.toggle(room.search_menu, name, item, event);"
 			ng-class="
 			{
-				disabled: mc.auth['m.register.user'].disabled,
-			}"
-			ng-click="mc.auth['m.register.user'](); mc.run(); $event.stopPropagation();"
-			>
-				REGISTER
+				selected: menu.selected(room.search_menu, name, item),
+			}">
+				<i
+				class="fa icon {{item.icon}}"
+				aria-hidden="true"
+				>
+				</i>
+				<p
+				class="name"
+				>
+					{{ name }}
+				</p>
 			</button>
 		</div>
-	</form>
+	</div>
 </script>
-
 
 <script
 id="ircd_room_events_player"
@@ -1140,6 +957,10 @@ type="text/ng-template"
 		</h3>
 	</button>
 </script>
+
+
+<!--  Room Control  -->
+
 
 <script
 id="ircd_room_control_events_state"
@@ -1356,8 +1177,8 @@ type="text/ng-template"
 		});"
 		ng-class="
 		{
-			selected: room.state['m.room.history_visibility'].content.history_visibility == name,
-			pending: room.pending['m.room.history_visibility'].content.history_visibility == name,
+			selected: room.content['m.room.history_visibility'][''].history_visibility == name,
+			pending: room.pending['m.room.history_visibility'][''].history_visibility == name,
 		}">
 			<i
 			class="fa icon {{item.icon}}"
@@ -1399,8 +1220,8 @@ type="text/ng-template"
 		});"
 		ng-class="
 		{
-			selected: room.state['m.room.join_rules'].content.join_rule == name,
-			pending: room.pending['m.room.join_rules'].content.join_rule == name,
+			selected: room.content['m.room.join_rules'][''].join_rule == name,
+			pending: room.pending['m.room.join_rules'][''].join_rule == name,
 		}">
 			<i
 			class="fa icon {{item.icon}}"
@@ -1442,8 +1263,8 @@ type="text/ng-template"
 		});"
 		ng-class="
 		{
-			selected: room.state['m.room.guest_access'].content.guest_access == name,
-			pending: room.pending['m.room.guest_access'].content.guest_access == name,
+			selected: room.content['m.room.guest_access'][''].guest_access == name,
+			pending: room.pending['m.room.guest_access'][''].guest_access == name,
 		}">
 			<i
 			class="fa icon"
@@ -1472,7 +1293,7 @@ type="text/ng-template"
 	>
 		<div
 		class="level"
-		ng-repeat="(name, level) in room.state['m.room.power_levels'].content"
+		ng-repeat="(name, level) in room.content['m.room.power_levels']['']"
 		ng-if="_typeof(level) === 'number'"
 		>
 			<h5
@@ -1576,7 +1397,7 @@ type="text/ng-template"
 	name="name"
 	type="text"
 	autocomplete="off"
-	ng-value="room.state['m.room.name'].content.name"
+	ng-value="room.content['m.room.name'][''].name"
 	ng-model="room.pending['m.room.name'].content.name"
 	ng-model-options="{ updateOn: 'blur', getterSetter: false }"
 	ng-change="room.restate($event, 'm.room.name');"
@@ -1641,7 +1462,7 @@ type="text/ng-template"
 	style="white-space: normal"
 	>
 		{{
-			room.state['m.room.topic'].content.topic || 'topic'
+			room.content['m.room.topic'][''].topic || 'topic'
 		}}
 	</textarea>
 </script>
@@ -1691,7 +1512,7 @@ type="text/ng-template"
 		<h3
 		class="name"
 		>
-			{{ room.state['m.room.name'].content.name }}
+			{{ room.content['m.room.name'][''].name }}
 		</h3>
 		<button
 		ng-class="
@@ -1707,11 +1528,12 @@ type="text/ng-template"
 		<h3
 		class="alias"
 		>
-			{{room.state['m.room.canonical_alias'].content.alias}}
+			{{room.content['m.room.canonical_alias'][''].alias}}
 		</h3>
 	</div>
 	<div
 	class="id"
+	ng-if="room.content['mc.room.config']['show'].control !== false"
 	ng-dblclick="room.control.show_detail = !room.control.show_detail; $event.preventDefault();"
 	>
 		<button
@@ -1734,6 +1556,7 @@ type="text/ng-template"
 	</div>
 	<div
 	class="events"
+	ng-if="room.content['mc.room.config']['show'].player !== false"
 	ng-click=
 	"
 		room.control.show_event_control = !room.control.show_event_control;
@@ -1826,12 +1649,12 @@ type="text/ng-template"
 	<div
 	class="members"
 	ng-if="!room.opts.local"
-	ng-click="room.control.show_members = !room.control.show_members"
+	ng-click="toggle(room.content['mc.room.config']['show'], 'members')"
 	>
 		<button
 		ng-class="
 		{
-			selected: room.control.show_members,
+			selected: room.content['mc.room.config']['show'].members,
 		}">
 			<i
 			class="members icon fa fa-users"
@@ -1899,6 +1722,99 @@ type="text/ng-template"
 	</button>
 </script>
 
+
+<!--  Room Timeline  -->
+
+
+<script
+id="ircd_room_events"
+type="text/ng-template"
+>
+	<div
+	ng-repeat="event in room.timeline"
+	ng-if="events.can_render(event, $index)"
+	ng-show="events.can_show(event, $index)"
+	class="event"
+	ng-class="
+	{
+		state: mc.event.is_state(event),
+		zoom: room.control.content.zoom == event.event_id,
+		grouping_start: events.is_grouping_start(event, $index),
+		grouping_end: events.is_grouping_end(event, $index),
+		show_info: room.control.show_event_info[event.event_id] !== undefined,
+		highlight: room.control.show_event_timeline && room.control.show_event_info[event.event_id] !== undefined,
+	}">
+		<label
+		for="{{event.event_id}}"
+		>
+		</label>
+
+		<div
+		class="timeline"
+		ng-if="room.control.show_event_timeline"
+		ng-click="togdel(room.control.show_event_info, event.event_id);"
+		ng-include="'ircd_room_event_timeline'"
+		>
+		</div>
+
+		<h4
+		class="sender"
+		ng-if="event.sender"
+		ng-include="'ircd_room_event_sender'"
+		ng-dblclick=
+		"
+			room.control.show_event_timeline = !room.control.show_event_timeline;
+			togdel(room.control.show_event_info, event.event_id);
+			$event.stopPropagation();
+			$event.preventDefault();
+		">
+		</h4>
+	
+		<div
+		class="handler"
+		ng-if="handler_exists(event.type)"
+		ng-include="handler_path(event.type)"
+h		ng-class="
+		{
+			selected: event.$mc$selected === true,
+			[this.dots_to_underscores(event.type)]: true,
+		}"
+		>
+		</div>
+
+		<div
+		class="handler unhandled"
+		ng-if="!handler_exists(event.type)"
+		ng-include="'ircd_room_event_unhandled'"
+		>
+		</div>
+
+		<h3
+		class="target"
+		ng-if="this.should_show_target(event)"
+		ng-include="'ircd_room_event_target'"
+		>
+		</h3>
+		<div
+		class="right"
+		>
+			<div
+			class="timestamp"
+			>
+				<p>
+					+{{ mc.date.describe.elapsed(mc.date.ago(event.origin_server_ts)); }}
+				</p>
+			</div>
+		</div>
+	</div>
+	<div
+	class="present event"
+	ng-include="'ircd_room_event_present'"
+	>
+	</div>
+</script>
+
+
 <script
 id="ircd_room_event_timeline"
 type="text/ng-template"
@@ -1964,12 +1880,12 @@ type="text/ng-template"
 	<a
 	class="avatar"
 	ng-if="false"
-	ng-if="room.state['m.room.member'][event.sender].content.avatar_url"
-	ng-href="room.state['m.room.member'][event.sender].content.avatar_url"
+	ng-if="room.content['m.room.member'][event.sender].avatar_url"
+	ng-href="room.content['m.room.member'][event.sender].avatar_url"
 	>
 		<img
-		ng-src="room.state['m.room.member'][event.sender].content.avatar_url"
-		alt="{{ room.state['m.room.member'][event.sender].content.avatar_url }}"
+		ng-src="room.content['m.room.member'][event.sender].avatar_url"
+		alt="{{ room.content['m.room.member'][event.sender].avatar_url }}"
 		target="_blank"
 		/>
 	</a>
@@ -2026,6 +1942,209 @@ type="text/ng-template"
 	class="close bracket"
 	>&gt;</span>
 
+</script>
+
+
+<script
+id="ircd_room_event_present"
+type="text/ng-template"
+>
+	<div
+	class="typing"
+	>
+		<i
+		class="fa icon fa-keyboard-o"
+		ng-hide="empty(room.typing.active)"
+		>
+		</i>
+		<div
+		class="typer"
+		ng-repeat="(mxid, state) in room.typing.active"
+		ng-if="state === true"
+		>
+			<h1>
+				&lt;{{mc.m.sid(mxid)}}&gt;
+			</h1>
+		</div>
+	</div>
+
+	<div
+	class="receipts"
+	ng-if="!empty(room.current_event()['m.read'])"
+	>
+		<div
+		class="receipt"
+		ng-repeat="mxid in Object.keys(room.current_event()['m.read']) | reverse"
+		>
+			<h1>
+				{{ mc.m.sid(mxid) }}
+			</h1>
+			<p>
+				{{ mc.date.describe.since(room.current_event()['m.read'][mxid].ts, true) }}
+			</p>
+		</div>
+		<i
+		class="fa icon fa-eye"
+		>
+		</i>
+	</div>
+</script>
+
+
+<script
+id="ircd_room_event_unhandled"
+type="text/ng-template"
+>
+	<div
+	class="changed"
+	>
+		<h1>
+			{{event.type}}
+		</h1>
+		<h4>
+		</h4>
+	</div>
+	<p
+	class="guru"
+	style="white-space: pre-wrap;"
+	>
+		{{ debug.stringify(event, 2) }}
+	</p>
+</script>
+
+
+<!-- --------------------------------------------------------------------------
+
+	Room Timeline Event Handlers
+
+--------------------------------------------------------------------------- -->
+
+
+<script
+id="ircd_room_event__m_room_message"
+type="text/ng-template"
+>
+	<div
+	class="message"
+	ng-if="handler_exists(['m.room.message', event.content.msgtype])"
+	ng-include="handler_path(['m.room.message', event.content.msgtype])"
+	>
+	</div>
+	<div
+	class="message"
+	ng-if="!handler_exists(['m.room.message', event.content.msgtype])"
+	ng-include="handler_path(['m.room.message', '_unhandled'])"
+	>
+	</div>
+</script>
+
+<script
+id="ircd_room_event__m_room_message__m_text"
+type="text/ng-template"
+>
+	<p
+	class="text"
+	>{{event.content.body}}</p>
+</script>
+
+<script
+id="ircd_room_event__m_room_message__m_notice"
+type="text/ng-template"
+>
+	<div
+	class="notice"
+	>{{event.content.body}}</div>
+</script>
+
+<script
+id="ircd_room_event__m_room_message__m_emote"
+type="text/ng-template"
+>
+	<p
+	class="emote"
+	>{{event.content.body}}</p>
+</script>
+
+<script
+id="ircd_room_event__m_room_message__m_image"
+type="text/ng-template"
+>
+	<div
+	class="image"
+	ng-class="
+	{
+		zoom: room.control.content.zoom == event.event_id,
+	}">
+		<h6
+		class="label"
+		>
+			{{ event.content.body }}
+		</h6>
+		<img
+		ng-click="room.dom.zoom($event, event);"
+		ng-src="{{mc.m.xc(event.content.url)}}"
+		alt="{{event.content.body}}"
+		/>
+	</div>
+</script>
+
+
+<script
+id="ircd_room_event__m_room_message__m_video"
+type="text/ng-template"
+>
+	<a
+	class="video"
+	ng-switch-when="m.video"
+	>
+		<img
+		ng-src="{{event.content.info.thumbnail_url}}"
+		ng-if="event.content.info.thumbnail_url !== undefined"
+		ng-show="event.content.info"
+		alt="{{event.content.body}}"
+		/>
+		
+		<iframe
+		ng-if="false"
+		class="ytplayer"
+		type="text/html"
+		width="480"
+		height="260"
+		ng-src="{{mc.embed(event.content.url)}}"
+		frameborder="0"
+		>
+		</iframe>
+	</a>
+</script>
+		
+<script
+id="ircd_room_event__m_room_message___unhandled"
+type="text/ng-template"
+>
+	<p
+	class="default"
+	>
+		<span
+		ng-if="empty(event.content)"
+		>
+			Message content is empty.
+		</span>
+		<span
+		ng-if="!empty(event.content)"
+		>
+			<span
+			ng-if="!empty(event.content.msgtype)"
+			>
+				No msgtype in content.
+			</span>
+			<span
+			ng-if="!empty(event.content.msgtype)"
+			class="unhandled"
+			>
+				Unhandled msgtype: {{event.content.msgtype}}
+			</span>
+		</span>
+	</p>
 </script>
 
 <script
@@ -2287,7 +2406,7 @@ type="text/ng-template"
 	class="changed"
 	>
 		<h1>
-			ROOM NAME
+			NAME
 		</h1>
 		<h4
 		class="name center"
@@ -2311,23 +2430,27 @@ type="text/ng-template"
 	<div
 	class="changed"
 	>
-		<h1>
+		<h1
+		ng-click="event.$mc$selected =! event.$mc$selected"
+		>
 			TOPIC
 		</h1>
 		<h4
 		class="center"
 		>
-			&nbsp;
+			{{ event.content.topic.split('\n')[0] }}
 		</h4>
 	</div>
 	<div
 	class="topic"
+	ng-if="event.$mc$selected === true"
 	>
 		<p>
 			{{ event.content.topic }}
 		</p>
 	</div>
 </script>
+
 
 <script
 id="ircd_room_event__ircd_key"
@@ -2355,586 +2478,125 @@ type="text/ng-template"
 	</form>
 </script>
 
-<script
-id="ircd_room_event__m_room_message"
-type="text/ng-template"
->
-	<div
-	class="message"
-	ng-switch on="event.content.msgtype"
-	>
-		<div
-		class="notice"
-		ng-switch-when="m.notice"
-		>{{event.content.body}}</div>
-		
-		<p
-		class="text"
-		ng-switch-when="m.text"
-		>{{event.content.body}}</p>
-
-		<p
-		class="emote"
-		ng-switch-when="m.emote"
-		>{{event.content.body}}</p>
-		
-		<div
-		class="image"
-		ng-switch-when="m.image"
-		ng-class="
-		{
-			zoom: room.control.content.zoom == event.event_id,
-		}">
-			<h6
-			class="label"
-			>
-				{{ event.content.body }}
-			</h6>
-			<img
-			ng-click="room.dom.zoom($event, event);"
-			ng-src="{{mc.m.xc(event.content.url)}}"
-			alt="{{event.content.body}}"
-			/>
-		</div>
-		
-		<a
-		class="video"
-		ng-switch-when="m.video"
-		>
-			<img
-			ng-src="{{event.content.info.thumbnail_url}}"
-			ng-if="event.content.info.thumbnail_url !== undefined"
-			ng-show="event.content.info"
-			alt="{{event.content.body}}"
-			/>
-		
-			<iframe
-			ng-if="false"
-			class="ytplayer"
-			type="text/html"
-			width="480"
-			height="260"
-			ng-src="{{mc.embed(event.content.url)}}"
-			frameborder="0"
-			>
-			</iframe>
-		</a>
-		
-		<p
-		class="default"
-		ng-switch-default
-		>
-			<span
-			ng-if="empty(event.content)"
-			>
-				Message content is empty.
-			</span>
-			<span
-			ng-if="!empty(event.content)"
-			>
-				<span
-				ng-if="!empty(event.content.msgtype)"
-				>
-					No msgtype in content.
-				</span>
-				<span
-				ng-if="!empty(event.content.msgtype)"
-				class="unhandled"
-				>
-					Unhandled msgtype: {{event.content.msgtype}}
-				</span>
-			</span>
-		</p>
-	</div>
-</script>
 
 <script
-id="ircd_room_event_unhandled"
+id="ircd_room_event__mc_room"
 type="text/ng-template"
 >
 	<div
 	class="changed"
 	>
-		<h1>
-			{{event.type}}
+		<h1
+		ng-click="event.$mc$selected =! event.$mc$selected"
+		>
+			ROOM
 		</h1>
-		<h4>
-		</h4>
-	</div>
-	<p
-	class="guru"
-	style="white-space: pre-wrap;"
-	>
-		{{ debug.stringify(event, 2) }}
-	</p>
-</script>
-
-<script
-id="ircd_room_event_present"
-type="text/ng-template"
->
-	<div
-	class="typing"
-	>
-		<i
-		class="fa icon fa-keyboard-o"
-		ng-hide="empty(room.typing.active)"
-		>
-		</i>
-		<div
-		class="typer"
-		ng-repeat="(mxid, state) in room.typing.active"
-		ng-if="state === true"
-		>
-			<h1>
-				&lt;{{mc.m.sid(mxid)}}&gt;
-			</h1>
-		</div>
-	</div>
-
-	<div
-	class="receipts"
-	ng-if="!empty(room.current_event()['m.read'])"
-	>
-		<div
-		class="receipt"
-		ng-repeat="mxid in Object.keys(room.current_event()['m.read']) | reverse"
-		>
-			<h1>
-				{{ mc.m.sid(mxid) }}
-			</h1>
-			<p>
-				{{ mc.date.describe.since(room.current_event()['m.read'][mxid].ts, true) }}
-			</p>
-		</div>
-		<i
-		class="fa icon fa-eye"
-		>
-		</i>
-	</div>
-</script>
-
-<script
-id="ircd_room_events"
-type="text/ng-template"
->
-	<div
-	ng-repeat="event in room.timeline"
-	ng-if="events.can_render(event, $index)"
-	ng-show="events.can_show(event, $index)"
-	class="event"
-	ng-class="
-	{
-		state: mc.event.is_state(event),
-		zoom: room.control.content.zoom == event.event_id,
-		grouping_start: events.is_grouping_start(event, $index),
-		grouping_end: events.is_grouping_end(event, $index),
-		show_info: room.control.show_event_info[event.event_id] !== undefined,
-		highlight: room.control.show_event_timeline && room.control.show_event_info[event.event_id] !== undefined,
-	}">
-		<label
-		for="{{event.event_id}}"
-		>
-		</label>
-
-		<div
-		class="timeline"
-		ng-if="room.control.show_event_timeline"
-		ng-click="togdel(room.control.show_event_info, event.event_id);"
-		ng-include="'ircd_room_event_timeline'"
-		>
-		</div>
-
-		<h4
-		class="sender"
-		ng-include="'ircd_room_event_sender'"
-		ng-dblclick=
-		"
-			room.control.show_event_timeline = !room.control.show_event_timeline;
-			togdel(room.control.show_event_info, event.event_id);
-			$event.stopPropagation();
-			$event.preventDefault();
-		">
-		</h4>
-	
-		<div
-		class="handler"
-		ng-if="handler_exists(event.type)"
-		ng-include="'ircd_room_event__' + this.dots_to_underscores(event.type)"
-		ng-class="
-		{
-			selected: event.$mc$selected === true,
-			[this.dots_to_underscores(event.type)]: true,
-		}"
-		>
-		</div>
-
-		<div
-		class="handler unhandled"
-		ng-if="!handler_exists(event.type)"
-		ng-include="'ircd_room_event_unhandled'"
-		>
-		</div>
-
-		<h3
-		class="target"
-		ng-if="this.should_show_target(event)"
-		ng-include="'ircd_room_event_target'"
-		>
+		<h2>
+			{{event.membership}}
+		</h2>
+		<h3>
+			{{event.state_key}}
 		</h3>
-		<div
-		class="right"
-		>
-			<div
-			class="timestamp"
-			>
-				<p>
-					+{{ mc.date.describe.elapsed(mc.date.ago(event.origin_server_ts)); }}
-				</p>
-			</div>
-		</div>
 	</div>
+
 	<div
-	class="present event"
-	ng-include="'ircd_room_event_present'"
+	class="item"
+	ng-init="room = mc.rooms[event.membership][event.state_key]"
+	ng-include="'ircd_rooms_list_item'"
 	>
 	</div>
 </script>
 
+
 <script
-id="ircd_room_explore"
+id="ircd_room_event__mc_menu"
 type="text/ng-template"
 >
 	<div
-	class="control bar"
+	class="changed"
 	>
-		<i
-		class="refresh icon fa fa-refresh"
-		ng-click="$event.stopPropagation(); room.refresh_explore($event);"
-		aria-hidden="true"
+		<h1
+		ng-click="event.$mc$selected =! event.$mc$selected"
 		>
-		</i>
+			MENU
+		</h1>
+		<h2
+		ng-click="event.$mc$selected =! event.$mc$selected"
+		>
+			{{ event.state_key }}
+		</h2>
+	</div>
+
+	<div
+	class="menu"
+	ng-if="handler_exists(['mc.menu', event.state_key])"
+	ng-include="handler_path(['mc.menu', event.state_key])"
+	>
 	</div>
 	<div
-	class="content"
+	class="unhandled"
+	ng-if="!handler_exists(['mc.menu', event.state_key])"
+	ng-include="'ircd_room_event___unhandled'"
 	>
 	</div>
 </script>
 
+
 <script
-id="ircd_room_input_files"
+id="ircd_room_event__mc_room_config"
 type="text/ng-template"
 >
 	<div
-	class="file"
-	ng-repeat="(name, file) in room.control.files"
-	ng-class="
-	{
-		start:        file.ajax === undefined && file.reader.readyState == file.reader.EMPTY,
-		loading:      file.ajax === undefined && file.reader.readyState == file.reader.LOADING,
-		loaded:       file.ajax === undefined && file.reader.readyState == file.reader.DONE,
-		uploading:    file.ajax !== undefined && file.progress.loaded != file.progress.total,
-		uploaded:     file.ajax !== undefined && file.progress.loaded == file.progress.total,
-		failed:       file.progress.type == 'error',
-	}">
-		<div
-		class="progress"
-		ng-if="file.progress.loaded != file.progress.total"
-		style="width: {{(file.progress.loaded / file.progress.total) * 100}}%;"
+	class="changed"
+	>
+		<h1
+		ng-click="event.$mc$selected =! event.$mc$selected"
 		>
-		</div>
-
-		<div
-		class="error"
-		ng-if="file.progress.type == 'error'"
-		ng-init="error = new mc.error(file.error)"
-		ng-include="'ircd_error'"
+			CONFIG
+		</h1>
+		<h2
+		ng-click="event.$mc$selected =! event.$mc$selected"
 		>
-		</div>
-
+			{{ event.state_key }}
+		</h2>
+	</div>
+	<div
+	class="config"
+	>
 		<button
-		class="remove"
-		ng-click="mc.room.attach.cancel.call(room, $event, file); $event.stopPropagation();"
+		class="item"
+		ng-repeat="(key, value) in event.content"
+		ng-click="event.content[key] =! event.content[key]"
 		>
 			<i
-			class="fa icon fa-close"
+			class="fa icon {{ item.icon }}"
 			aria-hidden="true"
 			>
 			</i>
-		</button>
-		<img
-		ng-if="file.opts.content.url !== undefined"
-		ng-src="{{mc.m.xc(file.opts.content.url)}}"
-		>
-		</img>
-		<h5
-		class="name"
-		ng-if="file.opts.content.url === undefined"
-		>
-			{{ file.name }}
-		</h5>
-		<h5
-		class="url"
-		ng-if="file.opts.content.url !== undefined"
-		>
-			{{ file.opts.content.url }}
-		</h5>
-		<div
-		class="status"
-		>
-			<p
-			class="bytes loaded"
-			ng-if="file.progress.loaded != file.progress.total"
+			<h2
+			class="name"
+			ng-bind="key"
 			>
-				{{ mc.space.describe.bytes(file.progress.loaded) }} of
-			</p>
-			<p
-			class="bytes total"
-			>
-				{{ mc.space.describe.bytes(file.progress.total) }}
-			</p>
-			<p
-			class="state"
-			ng-if="file.reader.readyState == file.reader.LOADING"
-			>
-				READING
-			</p>
-			<p
-			class="state"
-			ng-if="file.ajax === undefined && file.reader.readyState == file.reader.DONE"
-			>
-				READY
-			</p>
-			<p
-			class="state"
-			ng-if="file.ajax !== undefined && file.progress.type == 'loadend'"
-			>
-				UPLOADED
-			</p>
-		</div>
-		<div
-		class="text"
-		ng-if="file.opts.content.url !== undefined"
-		>
-			<h6
-			class="label"
-			>
-				TEXT
-			</h6>
-			<input
-			name="caption"
-			class="caption"
-			ng-model="file.opts.content.body"
-			/>
-		</div>
-		<button
-		class="post"
-		ng-if="file.opts.content.url !== undefined"
-		ang-click="mc.room.send.message.image.call(room, file.opts.content.url, file.opts.content.body); $event.stopPropagation()"
-		>
-			<i
-			class="fa icon fa-reply"
-			aria-hidden="true"
-			>
-			</i>
-		</button>
-	</div>
-	<div
-	class="summary"
-	ng-if="length(room.control.files) > 1"
-	ng-if="false"
-	>
-	</div>
-</script>
-
-<script
-id="ircd_room_input_message"
-type="text/ng-template"
->
-	<div
-	class="attach"
-	>
-		<i
-		class="reply icon fa fa-paperclip"
-		aria-hidden="true"
-		>
-		</i>
-		<input
-		name="file"
-		type="file"
-		class="file"
-		multiple
-		onchange=
-		"
-			let scope = angular.element(this).scope();
-			scope.room.attach(event);
-			scope.$apply();
-		" />
-	</div>
-	<textarea
-	name="message"
-	class="message"
-	autocomplete="off"
-	rows="1"
-	style="white-space: normal;"
-	ng-model="room.control.input"
-	ng-change="room.input.change($event)"
-	ng-keydown="room.input.keydown($event)"
-	ng-blur="room.input.blur($event)"
-	>
-	</textarea>
-	<button
-	name="submit"
-	type="submit"
-	class="submit"
-	ng-hide="empty(room.control.input)"
-	ng-click="room.input.submit($event)"
-	ng-class="
-	{
-		eval: room.control.evalmode || room.opts.local,
-		empty: empty(room.control.input),
-	}">
-		<i
-		class="reply icon fa fa-reply"
-		aria-hidden="true"
-		>
-		</i>
-		<span
-		ng-if="false"
-		ng-show="!room.control.evalmode && !room.opts.local"
-		>
-			SEND
-		</span>
-		<span
-		ng-show="room.control.evalmode || room.opts.local"
-		>
-			EVAL
-		</span>
-	</button>
-</script>
-
-<script
-id="ircd_room_input"
-type="text/ng-template"
->
-	<div
-	class="files"
-	ng-include="'ircd_room_input_files'"
-	>
-	</div>
-	<div
-	class="message"
-	ng-include="'ircd_room_input_message'"
-	>
-	</div>
-</script>
-
-<script
-id="ircd_room_search"
-type="text/ng-template"
->
-	<div
-	class="row nowrap"
-	>
-		<div
-		class="column nowrap grow"
-		>
-			<input
-			name="query"
-			class="query"
-			autocomplete="off"
-			style="white-space: normal;"
-			ng-model="room.control.search_query"
-			ng-change="room.search($event);"
-			ng-model-options="{debounce: 250}"
-			/>
-			<h6
-			class="label"
-			>
-				SEARCH {{ room.state['m.room.name'].content.name }}			
-			</h6>
-		</div>
-		<div
-		class="menu row nowrap"
-		ng-controller="menu as menu"
-		>
-			<button
-			class="item"
-			ng-repeat="(name, item) in room.search_menu"
-			ng-click="menu.toggle(room.search_menu, name, item, event);"
-			ng-class="
-			{
-				selected: menu.selected(room.search_menu, name, item),
-			}">
-				<i
-				class="fa icon {{item.icon}}"
-				aria-hidden="true"
-				>
-				</i>
-				<p
-				class="name"
-				>
-					{{ name }}
-				</p>
-			</button>
+			</h2>
 		</div>
 	</div>
 </script>
 
-<script
-id="ircd_motd"
-type="text/ng-template"
->
-	<h3>
-		WELCOME TO CHARYBDIS 5
-	</h3>
-	<p>
-		The free and open-source Internet Relay Collaboration daemon implementing the
-		<b>Matrix</b> chat federation protocol.
-	</p>
-	<h3>
-		FREE & OPEN SOURCE SOFTWARE COLLABORATION
-	</h3>
-	<p>
-		Charybdis extends the Matrix chat protocol to facilitate collaboration with IRC<sup>3</sup>
-		("IRC cubed" or "Internet Relay Collaboration") protocol. For capable clients, project files can
-		be edited by developers and observed by contributors in realtime; live discussions take place
-		adjacent to the code being developed; a timeline of updates form a commit made to git; webhooks
-		to Github and <i>continuous integration</i> are conducted by the server.
-	</p>
-	<h3>
-		CHARYBDIS CLUSTER
-	</h3>
-	<p>
-		<i>Cluster</i> facilitates load-balancing and redundancy for groups of
-		trusted servers. Cluster introduces a technology called <i>Proteus</i>: a <b>single
-		shared content and event repository among servers</b>, without replicating copies
-		between them and thus reducing storage cost.
-	</p>
-	<h3>
-		CHARYBDIS PEERING
-	</h3>
-	<p>
-		<i>Peering</i> allows groups of <i>untrusted</i> servers in the federation
-		that have formed a <i>clique</i> of users, rooms, assets, etc to utilize the same technology
-		as <i>Charybdis Cluster</i> at a larger scale.
-	</p>
-</script>
 
 <script
-id="ircd_main_menu"
+id="ircd_room_event__mc_menu__rooms"
 type="text/ng-template"
 >
 	<button
-	class="item column wrap"
-	ng-repeat="(name, item) in mc.main.menu"
+	class="item"
+	ng-repeat="(name, item) in mc.rooms.menu"
 	ng-hide="item.hide == true"
-	ang-click="menu.toggle(mc.main.menu, name, $event);"
+	ang-click="menu.toggle(mc.rooms.menu, name, $event);"
 	ng-class="
 	{
 		order: item.order,
 		sticky: item.sticky,
-		selected: menu.selected(mc.main.menu, name, item)
+		selected: menu.selected(mc.rooms.menu, name, item)
 	}"
 	>
 		<i
@@ -2948,6 +2610,374 @@ type="text/ng-template"
 		>
 		</h2>
 	</button>
+</script>
+
+
+<script
+id="ircd_rooms_list_item"
+type="text/ng-template"
+>
+	<div
+	class="head"
+	ng-click="mc.rooms.info(room.id); mc.rooms.current.add(room.id); $event.stopPropagation();"
+	ng-include="'ircd_rooms_list_item_head'"
+	ng-class="
+	{
+		joined: mc.rooms.join[room.id] !== undefined,
+		invited: mc.rooms.invite[room.id] !== undefined,
+	}">
+	</div>
+	<div
+	class="info"
+	ng-if="mc.rooms.info.model == room.id;"
+	ng-include="'ircd_rooms_list_item_info'"
+	>
+	</div>
+</script>
+
+
+<script
+id="ircd_rooms_list_item_head"
+type="text/ng-template"
+>
+	<div
+	class="left focus"
+	ng-click="mc.rooms.current.add(room.id); mc.rooms.info(room.id); $event.stopPropagation();"
+	ng-class="
+	{
+		'grow': mc.rooms.info.model == room.id,
+		joined: mc.rooms.join[room.id] !== undefined,
+		invited: mc.rooms.invite[room.id] !== undefined,
+		selected: mc.rooms.current(room.id) !== undefined,
+	}">
+		<i
+		class="left fa icon"
+		ng-class="
+		{
+			'fa-minus': mc.rooms.info.model == room.id,
+			'fa-plus-square': mc.rooms.info.model != room.id,
+		}">
+		</i>
+	</div>
+	<h3
+	class="right id grow"
+	ng-if="empty(room.content['m.room.name'][''].name) &&
+	       empty(room.content['m.room.canonical_alias'][''].alias)"
+	>
+		{{ room.id }}
+	</h3>
+	<h3
+	class="right name grow"
+	ng-if="!empty(room.content['m.room.name'][''].name) &&
+	       empty(room.content['m.room.canonical_alias'][''].alias)"
+	>
+		{{ room.content['m.room.name'][''].name }}
+	</h3>
+	<h3
+	class="right alias grow"
+	ng-if="!empty(room.content['m.room.canonical_alias'][''].alias)"
+	>
+		{{ room.content['m.room.canonical_alias'][''].alias }}
+	</h3>
+	<h4
+	class="right highlight_count"
+	ng-show="room.notifications.highlight_count"
+	>
+		{{ room.notifications.highlight_count }}
+	</h4>
+	<h4
+	class="right notification_count"
+	ng-show="room.notifications.notification_count"
+	>
+		{{ room.notifications.notification_count }}
+	</h4>
+	<h4
+	class="right member_count"
+	>
+		{{ room.membership.count('join') }}
+	</h4>
+</script>
+
+
+<script
+id="ircd_rooms_list_item_info"
+type="text/ng-template"
+>
+	<div
+	class="name"
+	>
+		<h3>
+			{{ room.content['m.room.name'][''].name }}
+		</h3>
+	</div>
+	<div
+	class="id"
+	>
+		<h4>
+			{{ room.id }}
+		</h4>
+	</div>
+	<div
+	class="stats"
+	>
+		<div
+		class="joined"
+		ng-if="mc.rooms.join[room.id] !== undefined"
+		>
+			<h5
+			class="label"
+			>
+				JOINED
+			</h5>
+			<p>
+				{{mc.date.describe.since(mc.rooms.join[room.id].membership.me().origin_server_ts)}} ago
+				({{mc.date.local.pretty(mc.rooms.join[room.id].membership.me().origin_server_ts)}})
+			</p>
+		</div>
+	</div>
+	<form
+	class="menu"
+	ng-controller="menu as menu"
+	ng-include="'ircd_rooms_list_item_info_menu'"
+	>
+	</form>
+</script>
+
+
+<script
+id="ircd_rooms_list_item_info_menu"
+type="text/ng-template"
+>
+	<button
+	type="submit"
+	class="item"
+	ng-repeat="(name, item) in mc.rooms.info.menu"
+	ng-hide="item.hide(room.id)"
+	ang-mousedown="menu.hold(mc.rooms.info.menu, name, $event, room.id);"
+	ang-mouseup="menu.hold(mc.rooms.info.menu, name, $event, room.id);"
+	ang-click="menu.toggle(mc.rooms.info.menu, name, $event, room.id);"
+	ng-class="item.classes"
+	>
+		<i
+		class="fa icon"
+		ng-class="item.icon"
+		aria-hidden="true"
+		>
+		</i>
+		<h3
+		class="name"
+		>
+			{{ name }}
+		</h3>
+	</button>
+</script>
+
+
+<!-- --------------------------------------------------------------------------
+
+	Util
+
+--------------------------------------------------------------------------- -->
+
+
+<script
+id="ircd_error"
+type="text/ng-template"
+>
+	<div
+	class="error"
+	tabindex="0"
+	ng-controller="errors as this"
+	ng-dblclick="this.close($event);"
+	ng-blur="this.close($event);"
+	>
+		<div
+		class="header row nowrap"
+		>
+			<h4
+			ng-show="this.error.m.errcode && this.error.m.errcode != 'M_UNKNOWN'"
+			>
+				{{ mc.m.pretty_errcode(this.error.m.errcode); }}
+			</h4>
+			<h5
+			style="justify-content: flex-end; flex-grow: 1"
+			>
+				{{ this.error.status }} {{ this.error.name }}
+			</h5>
+		</div>
+		<div
+		class="message grow column nowrap"
+		>
+			<p
+			ng-show="this.error.m.error"
+			>
+				{{ this.error.m.error }}
+			</p>
+
+			<p
+			ng-show="this.error.message"
+			>
+				{{ this.error.message }}
+			</p>
+		</div>
+		<div
+		class="footer row nowrap"
+		>
+			<i
+			class="fa fa-code guru icon"
+			aria-hidden="true"
+			ng-show="this.error.stack || this.error.request_stack || this.error.response_stack"
+			ng-click="this.guru = !this.guru; $event.stopPropagation();"
+			>
+			</i>
+			<div
+			class="grow"
+			>
+			</div>
+			<i
+			class="fa fa-remove icon"
+			aria-hidden="true"
+			ng-hide="this.error.fatal"
+			ng-click="this.close($event);"
+			>
+			</i>
+		</div>
+		<div
+		class="guru column nowrap"
+		ng-show="this.guru === true"
+		ng-dblclick="this.guru = !this.guru; $event.stopPropagation();"
+		>
+			<i
+			class="fa fa-remove icon"
+			aria-hidden="true"
+			ng-click="this.guru = !this.guru; $event.stopPropagation();"
+			>
+			</i>
+			<div
+			class="stack row nowrap"
+			>
+				<div
+				class="stack column nowrap"
+				ng-if="this.error.request_stack"
+				>
+					<h3>
+						REQUEST STACK
+					</h3>
+					<p
+					class="request stack"
+					>{{this.error.request_stack}}</p>
+				</div>
+				<div
+				class="stack column nowrap"
+				ng-if="this.error.response_stack"
+				>
+					<h3>
+						RESPONSE STACK
+					</h3>
+					<p
+					class="response stack"	
+					>{{this.error.response_stack}}</p>
+				</div>
+				<div
+				class="stack column nowrap"
+				ng-if="!this.error.response_stack && !error_request_stack && this.error.stack"
+				>
+					<h3>
+						EXCEPTION STACK
+					</h3>
+					<p
+					class="stack"
+					>{{this.error.stack}}</p>
+				</div>
+			</div>
+			<div
+			class="json column nowrap"
+			ng-if="this.error.m"
+			>
+				<p
+				class="json"
+				>{{debug.stringify(this.error.m, 3)}}</p>
+			</div>
+		</div>
+	</div>
+</script>
+
+
+<!--
+	Old jquery explorer
+-->
+
+<script
+id="json_member"
+type="text/ng-template"
+>
+	<div
+	class="member"
+	>
+		<div
+		class="key"
+		>
+			<i
+			class="icon fa"
+			>
+			</i>
+			<p
+			class="name"
+			>
+			</p>
+		</div>
+		<div
+		class="value"
+		style="display: none"
+		>
+		</div>
+	</div>
+</script>
+
+
+<script
+id="json_object"
+type="text/ng-template"
+>
+	<div
+	class="object"
+	>
+	</div>
+</script>
+
+
+<!--
+	New explorer
+-->
+
+<script
+id="ircd_object"
+type="text/ng-template"
+>
+	<div
+	class="member"
+	ng-repeat="(key, val) in object"
+	>
+		<h5
+		class="key"
+		ng-if="_typeof(val) !== 'undefined'"
+		>
+			{{ key }}
+		</h5>
+		<input
+		type="text"
+		ng-value="val"
+		ng-if="_typeof(val) != 'object' && _typeof(val) != 'undefined'"
+		class="value"
+		/>
+		<div
+		class="object"
+		ng-include="'ircd_object'"
+		ng-if="_typeof(val) == 'object'"
+		ng-init="object = val;"
+		>
+		</div>
+	</div>
 </script>
 
 
@@ -3012,13 +3042,6 @@ ircd-catch
 <script src="charybdis/room/controller.js"></script>
 <script src="charybdis/room/misc.js"></script>
 <script src="charybdis/rooms.js"></script>
-<script src="charybdis/rooms/current.js"></script>
-<script src="charybdis/rooms/create.js"></script>
-<script src="charybdis/rooms/info.js"></script>
-<script src="charybdis/rooms/search.js"></script>
-<script src="charybdis/rooms/public.js"></script>
-<script src="charybdis/rooms/sync.js"></script>
-<script src="charybdis/rooms/list.js"></script>
 <script src="charybdis/console.js"></script>
 <script src="charybdis/settings.js"></script>
 <script src="charybdis/filter.js"></script>

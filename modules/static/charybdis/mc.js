@@ -85,6 +85,14 @@ mc.opts =
 	{
 		key: "ircd_storage",
 	},
+
+	rooms:
+	{
+		current:
+		{
+			max: 2,
+		},
+	},
 };
 
 /**

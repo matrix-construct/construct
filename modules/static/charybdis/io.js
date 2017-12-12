@@ -97,7 +97,7 @@ mc.io.cancel.all = function(reason = "Aborted")
 	let urls = Object.keys(mc.io.requests);
 
 	let count = urls.length;
-    console.warn("Interrupting " + count + " pending IO requests (reason: " + reason + ")");
+	console.warn("Interrupting " + count + " pending IO requests (reason: " + reason + ")");
 
 	let futures = urls.map(cancel);
 	return Promise.all(futures);

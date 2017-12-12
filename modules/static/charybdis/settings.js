@@ -35,9 +35,9 @@ mc.settings.init = function()
 	let room = mc.rooms.get(
 	{
 		name: "Client Settings",
-		room_id: "!settings:localhost",
-		canonical_alias: "#settings:localhost",
-		topic: "Client-only (local) room representing the client's configuration."
+		room_id: "!settings:mc",
+		canonical_alias: "#settings:mc",
+		topic: "Construct client configuration"
 	});
 
 	room.timeline.insert(new mc.event(

@@ -68,7 +68,7 @@ mc.sync["rooms"] = function(rooms)
 {
 	Object.each(rooms, (action, rooms) =>
 		Object.each(rooms, (room_id, room) =>
-			mc.rooms.sync(action, room_id, room)));
+			mc.sync["rooms"].room(action, room_id, room)));
 };
 
 mc.sync["presence"] = function(presence)
@@ -110,4 +110,50 @@ mc.sync["to_device"] = function(to_device)
 mc.sync["device_lists"] = function(device_lists)
 {
 	//debug.object({device_lists: device_lists}, 3);
+};
+
+mc.sync["rooms"].room = function(action, room_id, data)
+{
+	let handler = mc.sync["rooms"].room[action];
+	if(!handler)
+		return;
+
+	let room = mc.rooms.get({room_id: room_id});
+	mc.rooms.set(room.id, action, room);
+	handler(room, data);
+};
+
+mc.sync["rooms"].room["join"] = function(room, data)
+{
+	room.sync(data, "join");
+
+	let no_current = (mc.rooms.current.empty() && empty(mc.session.rooms.history));
+	let is_current = (mc.session.rooms.history[0] == room.id);
+	if(no_current || is_current)
+	{
+		mc.rooms.current.add(room.id);
+		room.scroll.to.bottom();
+	}
+
+	delete mc.rooms.invite[room.id];
+	delete mc.rooms.leave[room.id];
+
+	if(!mc.rooms.mode || mc.rooms.mode == "JOINED")
+		mc.rooms.menu["JOINED"].click();
+};
+
+mc.sync["rooms"].room["leave"] = function(room, data)
+{
+	room.sync(data, "leave");
+
+	delete mc.rooms.invite[room.id];
+	delete mc.rooms.join[room.id];
+
+	if(!mc.rooms.mode)
+		mc.rooms.menu["LEFT"].click();
+};
+
+mc.sync["rooms"].room["invite"] = function(room, data)
+{
+	debug.object({invite: data}, 5);
 };

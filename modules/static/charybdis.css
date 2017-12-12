@@ -23,10 +23,10 @@
 	--pal-AE: #C3C9E8;   --pal-BE: #C0EBD1;   --pal-CE: #FFD9D0;   --pal-DE: #FFF2D0;
 	                                          --pal-CF: #FFE5DC;   --pal-DF: #FFFFFF;
 	/* Font size ratios */
-	--fs: (1vh + 0.5625vw) * 0.5625;
+	--fs: (1.33vh + 0.5625vw) * 0.5625;
 
 	/* Icon size ratios */
-	--fsI: (1vh + 0.5625vw) * 0.5625;
+	--fsI: (0.95vh + 0.5625vw) * 0.5625;
 
 	/* Headers */
 	--fsA: var(--fs) * 2.5;
@@ -124,7 +124,7 @@ body
 body.loaded
 {
 	opacity: 1.0 !important;
-	transition: opacity 1.5s cubic-bezier(0.25, 0.01, 1.0, 1.0);
+	transition: opacity 0.66s cubic-bezier(0.25, 0.01, 1.0, 1.0);
 }
 
 
@@ -996,8 +996,8 @@ body.loaded
 	line-height: 1em;
 	border-radius: 2px;
 	font-family: monospace;
-	font-size: calc(var(--fsE));
-	padding: 1px 1px 1px 1px;
+	font-size: calc(var(--fsD));
+	padding: 1px 2px 2px 2px;
 	margin: 1px 1px 0px 1px;
 }
 
@@ -1402,466 +1402,11 @@ body.loaded
 	flex-grow: 1;
 	flex-basis: 100%;
 	flex-flow: row nowrap;
-	background-color: var(--pal-AD);
-}
-
-.ircd .rooms
-div.main
-{
-	flex-grow: 0;
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: flex-start;
-}
-
-.ircd .rooms
-div.main > *
-{
-	border-left: 1px solid var(--pal-AB);
-}
-
-.ircd .rooms
-div.main > div:first-child
-{
-	border-left: 1px solid var(--pal-AC);
-}
-
-.ircd .rooms
-div.main > div.head
-{
-	position: relative;
-	flex-flow: column nowrap;
-	flex-shrink: 0;
-}
-
-/***  rooms menu ***/
-.ircd .rooms
-div.main > div.head form.menu
-{
-	position: relative;
-	flex-flow: row nowrap;
-	padding: 0.33vw 0.33vw 0.33vw 0.33vw;
-}
-
-.ircd .rooms
-div.main > div.head form.menu button
-{
-	flex-grow: 0;
-	padding: 15px 5px 15px 5px;
-}
-
-.ircd .rooms
-div.main > div.head form.menu button h3
-{
-	width: 8ch;
-	font-size: calc(var(--fsD));
-}
-
-.ircd .rooms
-div.main > div.head form.menu button.selected h3
-{
-	color: white;
-}
-
-.ircd .rooms
-div.main > div.head form.menu button i
-{
-	font-size: calc(var(--fsIC));
-}
-
-.ircd .rooms
-div.main > div.head form.menu button:hover h3
-{
-	color: white;
-}
-
-.ircd .rooms
-div.main > div.head form.menu button.highlight
-{
-	border: 1px dotted var(--pal-BE);
-}
-
-/***  rooms list ***/
-.ircd .rooms
-div.main > div.list
-{
-	position: relative;
-	flex-flow: column nowrap;
-	flex-grow: 1;
-	align-items: stretch;
-	justify-content: flex-start;
-	padding: 0px 0px 0px 0px;
-	overflow-y: auto;
-	border-radius: 0px 4px 0px 0px;
-	background-color: var(--pal-DE);
-	/* resize: horizontal; */
-}
-
-.ircd .rooms
-div.main div.list::-webkit-scrollbar-thumb
-{
-	background-color: var(--pal-DE);
-}
-
-.ircd .rooms
-div.main div.list::-webkit-scrollbar-track
-{
-	background-color: var(--pal-AD);
-}
-
-.ircd .rooms
-div.main div.list::-webkit-scrollbar-button
-{
-	background-color: var(--pal-AD);
-}
-
-.ircd .rooms
-div.main div.list div.loading
-{
-	align-self: flex-end;
-}
-
-.ircd .rooms
-div.main div.list .loading i
-{
-	font-size: calc(var(--fsIA));
-	color: var(--pal-AB);
-}
-
-.ircd .rooms
-div.main div.list div.item
-{
-	flex-grow: 1;
-	flex-shrink: 0;
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: center;
-	background-color: var(--pal-AD);
-}
-
-.ircd .rooms
-div.main div.list div.item i
-{
-	align-self: center;
-	cursor: pointer;
-	color: var(--pal-CD);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head
-{
-	flex-grow: 1;
-	flex-flow: row nowrap;
-	align-items: stretch;
-	justify-content: center;
-	overflow: hidden;
-	overflow-wrap: nowrap;
-	text-overflow: ellipsis;
-	background-color: var(--pal-DE);
-	padding-right: 5px;
-	color: var(--pal-AB);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head:hover
-{
-	background-color: var(--pal-AC);
-	color: white;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head:hover i
-{
-	color: var(--pal-CA);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head .right
-{
-	flex-flow: row nowrap;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	padding: 0px 5px 0px 5px;
-	text-shadow: 0px 0px #000000;
-	line-height: 0.8em;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head h3.right
-{
-	overflow: hidden;
-	white-space: nowrap;
-	overflow-wrap: nowrap;
-	text-overflow: ellipsis;
-	justify-content: flex-start;
-	width: 30ch;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head h3.id
-{
-	font-family: sans-serif;
-	font-size: calc(var(--fsD));
-}
-
-.ircd .rooms
-div.main div.list div.item div.head .left
-{
-	flex-flow: row nowrap;
-	align-items: stretch;
-	justify-content: center;
-	line-height: 0.95em;
-	font-weight: bold;
-	padding: 0px 5px 0px 5px;
-	margin: 0px 0px 0px 0px;
-	cursor: pointer;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head .member_count
-{
-	width: 4ch;
-	padding: 0px 2px 0px 2px;
-	margin: 0px 2px 0px 2px;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head .notification_count
-{
-	width: 3ch;
-	padding: 1px 2px 1px 2px;
-	margin: 1px 2px 1px 2px;
-	border-radius: 3px;
-	background-color: var(--pal-DA);
-	border: 1px solid var(--pal-BC);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head .highlight_count
-{
-	width: 3ch;
-	padding: 1px 2px 1px 2px;
-	margin: 1px 2px 1px 2px;
-	border-radius: 3px;
-	border: 1px solid var(--pal-BA);
-	background-color: var(--pal-CC);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus
-{
-	flex-flow: row nowrap;
-	align-items: center;
-	justify-content: center;
-	margin: 0px 0px 0px 0px;
-	padding: 0px 0px 0px 0px;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus i
-{
-	text-shadow: initial;
-	padding-right: 7px;
-	padding-left: 5px;
-	padding-top: 1px;
-	margin: 1px 0px 0px 0px;
-	color: var(--pal-CD);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus.selected i
-{
-	visibility: inherit;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head:hover div.focus
-{
-	background-color: var(--pal-AC);
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus:hover
-{
-	background-color: var(--pal-AB) !important;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus.selected
-{
-	background-color: var(--pal-AC) !important;
-}
-
-.ircd .rooms
-div.main div.list div.item div.head div.focus:hover.selected
-{
-	background-color: var(--pal-AB) !important;
-}
-
-.ircd .rooms
-div.main div.list div.item div.info
-{
-	flex-grow: 10;
-	flex-shrink: 0;
-	box-sizing: border-box;
-	align-self: stretch;
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: center;
-	padding: 0px 0px 0px 0px;
-	background-color: var(--pal-DE);
-}
-
-.ircd .rooms .main .list .item div.info > div.id,
-.ircd .rooms .main .list .item div.info > div.name
-{
-}
-
-.ircd .rooms .main .list .item div.info > div.name h3,
-.ircd .rooms .main .list .item div.info > div.id h4
-{
-	text-shadow: initial;
-}
-
-.ircd .rooms .main .list .item div.info > div.name
-{
-	padding: 10px 10px 10px 10px;
-	border-bottom: 1px solid var(--pal-DA);
-	background-color: var(--pal-DD);
-	justify-content: right;
-	color: black;
-}
-
-.ircd .rooms .main .list .item div.info > div.id
-{
-	justify-content: flex-end;
-	padding: 5px 10px 5px 10px;
-	border-bottom: 1px solid var(--pal-DD);
-	color: var(--pal-AB);
-}
-
-.ircd .rooms .main .list .item div.info > div.stats
-{
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: center;
-	padding-top: 5px;
-}
-
-.ircd .rooms .main .list .item div.info > div.stats > div
-{
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: flex-start;
-	padding: 5px 10px 5px 10px;
-}
-
-.ircd .rooms .main .list .item .info .label
-{
-	color: var(--pal-AB);
-}
-
-.ircd .rooms .main .list .item .info p
-{
-	color: black;
-}
-
-.ircd .rooms .main .list .item .info form.menu,
-.ircd .rooms .main .list .item .info select.menu
-{
-	position: relative;
-	flex-grow: 1;
-	flex-flow: column nowrap;
-	align-items: stretch;
-	justify-content: flex-start;
-	padding: 10px 0px 10px 0px;
-}
-
-.ircd .rooms .main .list .item .info .menu button
-{
-	flex-grow: 0;
-	position: relative;
-	flex-flow: row nowrap;
-	align-items: center;
-	justify-content: flex-start;
-	padding: 15px 10px 15px 10px;
-	margin: 5px 10px 5px 10px;
-	background-color: var(--pal-AD);
-	cursor: pointer;
-}
-
-.ircd .rooms .main .list .item .info .menu button:hover
-{
-	background-color: var(--pal-AB);
-}
-
-.ircd .rooms .main .list .item .info .menu i
-{
-	font-size: calc(var(--fsIC));
-	color: var(--pal-CD);
-}
-
-.ircd .rooms .main .list .item .info .menu .name
-{
-	position: absolute;
-	left: 0px;
-	width: 100%;
-	height: 100%;
-	box-sizing: border-box;
-}
-
-/***  rooms search ***/
-.ircd .rooms
-div.main > form.search
-{
-	display: flex;
-	flex-shrink: 0;
-	flex-flow: column nowrap;
-	align-self: stretch;
 	align-items: stretch;
 	justify-content: stretch;
-	margin: 0px 0px 0px 0px;
-	padding-top: 1px;
-	border-radius: 0px;
-	background-color: var(--pal-DE);
-	color: var(--pal-AC);
+	background-color: var(--pal-AD);
 }
 
-.ircd .rooms
-div.main > form.search.selected
-{
-	background-color: var(--pal-DD);
-}
-
-.ircd .rooms
-div.main > form.search input
-{
-	height: 24px;
-	border-top: 1px solid var(--pal-AE);
-	padding: 5px 10px 5px 10px;
-	margin: 0px 0px 0px 0px;
-	font-size: 16px;
-}
-
-.ircd .rooms
-div.main > form.search.selected input
-{
-	border-top: 1px solid var(--pal-DA);
-}
-
-.ircd .rooms
-div.main > form.search label
-{
-	padding: 2px 3px 2px 3px;
-	align-self: flex-end;
-}
-
-.ircd div.rooms div.current
-{
-	flex-flow: row nowrap;
-	flex-grow: 1;
-}
 
 /************************************************
  *
@@ -2638,6 +2183,7 @@ div.main > form.search label
 	font-size: calc(var(--fsIA));
 }
 
+
 /***
  *
  * Main room outer frame
@@ -3312,7 +2858,7 @@ div.main > form.search label
 
 .ircd .room div.main div.event .sender
 {
-	padding: 0px 15px 0px 5px;
+	padding: 0px 5px 0px 5px;
 }
 
 .ircd .room div.main div.event .target
@@ -3501,7 +3047,7 @@ div.main > form.search label
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: center;
-	margin-right: 3px;
+	margin: 0px 3px 0px 5px;
 }
 
 .ircd .room .main div.state.event div.handler h1,
@@ -3539,8 +3085,7 @@ div.main > form.search label
 {
 	flex-grow: 0;
 	flex-shrink: 0;
-	flex-basis: 25%;
-	max-width: 20ch;
+	width: 20ch;
 	align-self: stretch;
 	align-items: center;
 	justify-content: center;
@@ -3729,6 +3274,252 @@ div.main > form.search label
 	margin-top: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
+}
+
+.ircd .room .main div.event.state div.mc_room_config div.config
+{
+	flex-flow: column nowrap;
+	align-items: flex-start;
+	justify-content: flex-start;
+	border-radius: 0px;
+	border-left: 1px solid var(--pal-AA);
+}
+
+.ircd .room .main div.event.state div.mc_room_config div.config div.item
+{
+	width: 18ch;
+}
+
+.ircd .room .main div.event.state div.mc_room_config div.config div.item .key
+{
+	padding: 0px 3px 0px 3px;
+	background-color: var(--pal-DD);
+}
+
+.ircd .room .main div.event.state div.mc_room_config div.config div.item .value
+{
+	padding: 0px 5px 0px 5px;
+}
+
+.ircd div.event div.mc_room
+div.rooms
+{
+	flex-grow: 1;
+	flex-shrink: 0;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	background-color: var(--pal-AD);
+}
+
+.ircd div.event div.mc_room
+div.rooms i
+{
+	align-self: center;
+	cursor: pointer;
+	color: var(--pal-CD);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head
+{
+	flex-grow: 1;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: center;
+	overflow: hidden;
+	overflow-wrap: nowrap;
+	text-overflow: ellipsis;
+	background-color: var(--pal-DE);
+	padding-right: 5px;
+	color: var(--pal-AB);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head:hover
+{
+	background-color: var(--pal-AC);
+	color: white;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head:hover i
+{
+	color: var(--pal-CA);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head .right
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	padding: 0px 5px 0px 5px;
+	text-shadow: 0px 0px #000000;
+	line-height: 0.8em;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head h3.right
+{
+	overflow: hidden;
+	white-space: nowrap;
+	overflow-wrap: nowrap;
+	text-overflow: ellipsis;
+	justify-content: flex-start;
+	width: 30ch;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head h3.id
+{
+	font-family: sans-serif;
+	font-size: calc(var(--fsD));
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head .left
+{
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: center;
+	line-height: 0.95em;
+	font-weight: bold;
+	padding: 0px 5px 0px 5px;
+	margin: 0px 0px 0px 0px;
+	cursor: pointer;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head .member_count
+{
+	width: 4ch;
+	padding: 0px 2px 0px 2px;
+	margin: 0px 2px 0px 2px;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head .notification_count
+{
+	width: 3ch;
+	padding: 1px 2px 1px 2px;
+	margin: 1px 2px 1px 2px;
+	border-radius: 3px;
+	background-color: var(--pal-DA);
+	border: 1px solid var(--pal-BC);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head .highlight_count
+{
+	width: 3ch;
+	padding: 1px 2px 1px 2px;
+	margin: 1px 2px 1px 2px;
+	border-radius: 3px;
+	border: 1px solid var(--pal-BA);
+	background-color: var(--pal-CC);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus
+{
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus i
+{
+	text-shadow: initial;
+	padding-right: 7px;
+	padding-left: 5px;
+	padding-top: 1px;
+	margin: 1px 0px 0px 0px;
+	color: var(--pal-CD);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus.selected i
+{
+	visibility: inherit;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head:hover div.focus
+{
+	background-color: var(--pal-AC);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus:hover
+{
+	background-color: var(--pal-AB) !important;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus.selected
+{
+	background-color: var(--pal-AC) !important;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.head div.focus:hover.selected
+{
+	background-color: var(--pal-AB) !important;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.info
+{
+	flex-grow: 10;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	align-self: stretch;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	padding: 0px 0px 0px 0px;
+	background-color: var(--pal-DE);
+}
+
+.ircd div.event div.mc_room
+div.rooms div.info > div.name
+{
+	padding: 10px 10px 10px 10px;
+	border-bottom: 1px solid var(--pal-DA);
+	background-color: var(--pal-DD);
+	justify-content: right;
+	color: black;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.info > div.id
+{
+	justify-content: flex-end;
+	padding: 5px 10px 5px 10px;
+	border-bottom: 1px solid var(--pal-DD);
+	color: var(--pal-AB);
+}
+
+.ircd div.event div.mc_room div.event
+div.rooms div.info > div.id h4,
+.ircd div.event div.mc_room div.event
+div.rooms div.info > div.name h3
+{
+	text-shadow: initial;
+}
+
+.ircd div.event div.mc_room
+div.rooms div.info > div.stats
+{
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: center;
+	padding-top: 5px;
 }
 
 .ircd .room .main div.event div.right

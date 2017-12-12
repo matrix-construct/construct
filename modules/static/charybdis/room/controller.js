@@ -37,6 +37,7 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 		$scope.should_show_target = this.should_show_target;
 		$scope.should_show_avatar = this.should_show_avatar;
 		$scope.dots_to_underscores = this.dots_to_underscores;
+		$scope.handler_path = this.handler_path;
 		$scope.handler_exists = this.handler_exists;
 		$scope.sender_is_server = this.sender_is_server;
 	}
@@ -165,10 +166,20 @@ mc.ng.app.controller('room', class extends mc.ng.controller
 		return defined(str)? str.replace(/\./g, '_') : str;
 	}
 
+	handler_path(type)
+	{
+		let part = Array.isArray(type)? type : [type];
+		let sel = "ircd_room_event";
+		for(let i in part)
+			sel += "__" + this.dots_to_underscores(part[i]);
+
+		return sel;
+	}
+
 	handler_exists(type)
 	{
-		let sel = "#ircd_room_event__" + this.dots_to_underscores(type);
-		return $(sel).length > 0;
+		let path = "#" + this.handler_path(type);
+		return $(path).length > 0;
 	}
 
 	//TODO: arbitrary

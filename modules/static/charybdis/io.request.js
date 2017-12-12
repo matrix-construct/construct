@@ -566,7 +566,6 @@ mc.io.request.continuation = function(error, data)
 			mc.io.request.promise.reject.all.call(this, error);
 		else
 			mc.io.request.promise.resolve.call(this, "response", data);
-
 	}
 	catch(exception)
 	{

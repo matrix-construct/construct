@@ -45,7 +45,7 @@ mc.event = class
 	static is_not_state(event)         { return !mc.event.is_state(event);                         }
 	static is_type(type, event)        { return event.type == type;                                }
 	static is_pending(event)           { return !event.event_id.startsWith("$");                   }
-	static is_local(event)             { return mc.m.domid(event.event_id) == "localhost";         }
+	static is_local(event)             { return mc.m.domid(event.event_id) == "mc";                }
 	static is_not_local(event)         { return !mc.event.is_local(event);                         }
 	static cmp(a, b)                   { return a.cmp(b);                                          }
 };

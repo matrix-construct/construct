@@ -38,6 +38,11 @@
  */
 room.sync = function(data, action)
 {
+	// `data` can be a single event which is reprocessed into the standard
+	// sync structure; see: `room.sync.one()`
+	if((data instanceof mc.event))
+		return this.sync.one(data, action);
+
 	Object.each(data, (name, data) =>
 	{
 		if(!(name in this.sync.handle))
@@ -55,9 +60,7 @@ room.sync = function(data, action)
 		if(this.control.mode == "LIVE") try
 		{
 			this.scroll.to.bottom("fast");
-
-			//TODO: riot's behavior is to only send the receipt when the
-			//TODO: user does something next ensuring they aren't AFK
+			//TODO: only call this after some user activity.
 			//this.receipt.send.current();
 		}
 		catch(e)
@@ -66,6 +69,18 @@ room.sync = function(data, action)
 		}
 	}
 };
+
+room.sync.one = function(event, action = undefined)
+{
+	if(!(event instanceof mc.event))
+		event = new mc.event(event);
+
+	let data = {};
+	let key = defined(event.state_key)? "state" : "timeline";
+	data[key] = {};
+	data[key].events = [event];
+	this.sync(data, action);
+}
 
 room.sync.activity = function()
 {
@@ -86,6 +101,9 @@ room.sync.fix_event = function(event, action)
 		if(event.state_key == mc.my.mxid)
 			if(!event.membership && !maybe(() => event.content.membership) && action !== undefined)
 				event.membership = action;
+
+	if(!event.origin_server_ts)
+		event.origin_server_ts = mc.now();
 };
 
 /** Handlers for members of the sync data for this room. Each member of this

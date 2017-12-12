@@ -411,6 +411,9 @@ room.timeline.prototype.fix = function(event)
 {
 	if(event.room_id === undefined)
 		event.room_id = this.id;
+
+	if(!event.origin_server_ts)
+		event.origin_server_ts = mc.now();
 };
 
 /** The index of the horizon. Before this index, all events are state

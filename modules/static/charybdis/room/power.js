@@ -38,7 +38,7 @@ room.power = {};
  */
 room.power.levels = function()
 {
-	return this.state['m.room.power_levels'].content;
+	return this.content['m.room.power_levels'][''];
 };
 
 /**

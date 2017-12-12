@@ -85,6 +85,7 @@ mc.main.init = async function()
 
 	// Local room interfaces
 	console.log("Creating local pseudo-rooms...");
+	mc.rooms.init();
 	mc.settings.init();
 	mc.console.init();
 
@@ -297,6 +298,7 @@ mc.main.on_login = async function()
 	mc.main.menu["ROOMS"].hide = false;
 	mc.main.menu["MENU"].hide = false;
 	mc.show["#charybdis_rooms"] = true;
+	mc.rooms.current.add("!rooms:mc");
 
 	if(!mc.session.guest)
 	{
@@ -305,16 +307,11 @@ mc.main.on_login = async function()
 		mc.main.menu["LOGIN"].hide = true;
 	}
 
-	if(empty(maybe(() => mc.local.rooms.current)))
+	if(!maybe(() => mc.rooms.current.list.length))
 	{
 		mc.show["#charybdis_menu"] = true;
-		if(mc.session.guest)
-			mc.show["#charybdis_motd"] = true;
-		else
-			mc.show["#charybdis_motd"] = false;
 	} else {
 		mc.show["#charybdis_menu"] = false;
-		mc.show["#charybdis_motd"] = false;
 	}
 };
 
@@ -328,6 +325,7 @@ mc.main.on_logout = function()
 	mc.main.menu["LOGIN"].hide = false;
 	mc.main.menu["LOGOUT"].hide = true;
 	mc.main.menu["MENU"].hide = true;
+	mc.rooms.current.clear();
 	mc.show["#charybdis_menu"] = true;
 	mc.show["#charybdis_login"] = true;
 	mc.show["#charybdis_rooms"] = false;
@@ -345,17 +343,32 @@ mc.main.menu =
 		hide: true,
 	},
 
-	"IRCd":
-	{
-		icon: "fa-home",
-	},
-
 	"ROOMS":
 	{
 		icon: "fa-th",
 		hide: true,
 		sticky: true,
-		target: "#charybdis_rooms_main",
+		selected: () => mc.rooms.current("!rooms:mc"),
+		click: function(event)
+		{
+			if(this.selected())
+				mc.rooms.current.del("!rooms:mc");
+			else
+				mc.rooms.current.add("!rooms:mc");
+		},
+	},
+
+	"IRCd":
+	{
+		icon: "fa-home",
+		selected: () => mc.rooms.current("!home:mc"),
+		click: function(event)
+		{
+			if(this.selected())
+				mc.rooms.current.del("!home:mc");
+			else
+				mc.rooms.current.add("!home:mc");
+		},
 	},
 
 	"USERS":
@@ -377,19 +390,28 @@ mc.main.menu =
 	"SETTINGS":
 	{
 		icon: "fa-cogs",
-		selected: () => mc.rooms.current("!settings:localhost"),
+		selected: () => mc.rooms.current("!settings:mc"),
 		click: function(event)
 		{
 			if(this.selected())
-				mc.rooms.current.del("!settings:localhost");
+				mc.rooms.current.del("!settings:mc");
 			else
-				mc.rooms.current.add("!settings:localhost");
+				mc.rooms.current.add("!settings:mc");
 		},
 	},
 
 	"HELP":
 	{
 		icon: "fa-question-circle",
+		selected: () => mc.rooms.current("!help:mc"),
+		sticky: true,
+		click: function(event)
+		{
+			if(this.selected())
+				mc.rooms.current.del("!help:mc");
+			else
+				mc.rooms.current.add("!help:mc");
+		},
 	},
 
 	"LOGIN":

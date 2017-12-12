@@ -151,7 +151,7 @@ room.prototype.tab_completion = function(e)
 room.prototype.console_clear = function()
 {
 	let filter = (event) =>
-		event.sender != "@console:localhost";
+		event.sender != "@console:mc";
 
 	//this.timeline = this.timeline.filter(filter);
 };
@@ -161,8 +161,8 @@ room.prototype.console_push = function(text)
 	this.timeline.insert(new client.event(
 	{
 		type: "m.room.message",
-		sender: "@console:localhost",
-		event_id: client.m.random.mxid("$", "localhost"),
+		sender: "@console:mc",
+		event_id: client.m.random.mxid("$", "mc"),
 		origin_server_ts: (new Date).getTime(),
 		content:
 		{
