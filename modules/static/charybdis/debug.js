@@ -153,6 +153,15 @@ const debug =
 	},
 };
 
+/** Convenience because I keep typing it
+ */
+Object.debug = function(...obj)
+{
+	return debug.object(...obj);
+};
+
+/**
+ */
 function stacktrace()
 {
 	function _stacktrace(caller)
