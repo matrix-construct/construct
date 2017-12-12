@@ -23,8 +23,38 @@
 
 #include <ircd/spirit.h>
 
-namespace qi = boost::spirit::qi;
-namespace karma = boost::spirit::karma;
+namespace ircd::rfc1459
+{
+	namespace spirit = boost::spirit;
+	namespace karma = spirit::karma;
+	namespace qi = spirit::qi;
+}
+
+namespace ircd::rfc1459::parse
+{
+	using qi::lit;
+	using qi::char_;
+	using qi::repeat;
+	using qi::attr;
+	using qi::eps;
+	using qi::raw;
+	using qi::omit;
+
+	template<class it, class top> struct grammar;
+	struct capstan extern const capstan;
+	struct head extern const head;
+}
+
+namespace ircd::rfc1459::gen
+{
+	using karma::lit;
+	using karma::int_;
+	using karma::char_;
+	using karma::buffer;
+	using karma::repeat;
+
+	template<class it, class top> struct grammar;
+}
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -42,20 +72,6 @@ BOOST_FUSION_ADAPT_STRUCT
 	,( decltype(ircd::rfc1459::line::parv),  parv )
 )
 
-namespace ircd    {
-namespace rfc1459 {
-namespace parse   {
-
-namespace qi = boost::spirit::qi;
-
-using qi::lit;
-using qi::char_;
-using qi::repeat;
-using qi::attr;
-using qi::eps;
-using qi::raw;
-using qi::omit;
-
 /* The grammar template class.
  * This aggregates all the rules under one template to make composing them easier.
  *
@@ -66,7 +82,7 @@ using qi::omit;
  */
 template<class it,
          class top>
-struct grammar
+struct ircd::rfc1459::parse::grammar
 :qi::grammar<it, top>
 {
 	qi::rule<it> space;
@@ -96,8 +112,8 @@ struct grammar
 
 template<class it,
          class top>
-grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
-:grammar<it, top>::base_type
+ircd::rfc1459::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
+:qi::grammar<it, top>::base_type
 {
 	top_rule
 }
@@ -202,41 +218,26 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 // The top rule is inherited and then specified as grammar::line, which is compatible
 // with an rfc1459::line object.
 //
-struct head
+struct ircd::rfc1459::parse::head
 :parse::grammar<const char *, rfc1459::line>
 {
-    head(): grammar{grammar::line} {}
+    head(): grammar{line} {}
 }
-const head;
+const ircd::rfc1459::parse::head;
 
 // Instantiate the input grammar to parse a const char* buffer into an rfc1459::tape object.
 // The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
 //
-struct capstan
+struct ircd::rfc1459::parse::capstan
 :parse::grammar<const char *, std::deque<rfc1459::line>>
 {
-    capstan(): grammar{grammar::tape} {}
+    capstan(): grammar{tape} {}
 }
-const capstan;
-
-} // namespace parse
-} // namespace rfc1459
-} // namespace ircd
-
-namespace ircd    {
-namespace rfc1459 {
-namespace gen     {
-
-namespace karma = boost::spirit::karma;
-using karma::lit;
-using karma::int_;
-using karma::char_;
-using karma::buffer;
-using karma::repeat;
+const ircd::rfc1459::parse::capstan;
 
 template<class it,
          class top>
-struct grammar
+struct ircd::rfc1459::gen::grammar
 :karma::grammar<it, top>
 {
 	std::string trail_save;
@@ -265,8 +266,8 @@ struct grammar
 
 template<class it,
          class top>
-rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
-:grammar<it, top>::base_type
+ircd::rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
+:karma::grammar<it, top>::base_type
 {
 	top_rule
 }
@@ -350,16 +351,10 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 {
 }
 
-} // namespace gen
-} // namespace rfc1459
-} // namespace ircd
-
-using namespace ircd;
-
 //NOTE: unterminated
 //TODO: Fix carriage
 std::ostream &
-rfc1459::operator<<(std::ostream &s, const line &line)
+ircd::rfc1459::operator<<(std::ostream &s, const line &line)
 {
 	struct carriage
 	:gen::grammar<karma::ostream_iterator<char>, rfc1459::line>
@@ -380,7 +375,7 @@ rfc1459::operator<<(std::ostream &s, const line &line)
 }
 
 std::ostream &
-rfc1459::operator<<(std::ostream &s, const parv &parv)
+ircd::rfc1459::operator<<(std::ostream &s, const parv &parv)
 {
 	using karma::delimit;
 
@@ -412,7 +407,7 @@ rfc1459::operator<<(std::ostream &s, const parv &parv)
 }
 
 std::ostream &
-rfc1459::operator<<(std::ostream &s, const cmd &cmd)
+ircd::rfc1459::operator<<(std::ostream &s, const cmd &cmd)
 {
 	struct generate_command
 	:gen::grammar<karma::ostream_iterator<char>, rfc1459::cmd>
@@ -429,7 +424,7 @@ rfc1459::operator<<(std::ostream &s, const cmd &cmd)
 }
 
 std::ostream &
-rfc1459::operator<<(std::ostream &s, const pfx &pfx)
+ircd::rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 {
 	struct generate_prefix
 	:gen::grammar<karma::ostream_iterator<char>, rfc1459::pfx>
@@ -445,11 +440,16 @@ rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 	return s;
 }
 
-rfc1459::line::line(const char *&start,
-                    const char *const &stop)
+ircd::rfc1459::line::line(const char *&start,
+                          const char *const &stop)
 try
 {
-	qi::parse(start, stop, parse::head, *this);
+	static const auto &grammar
+	{
+		parse::head
+	};
+
+	qi::parse(start, stop, grammar, *this);
 }
 catch(const boost::spirit::qi::expectation_failure<const char *> &e)
 {
@@ -459,7 +459,7 @@ catch(const boost::spirit::qi::expectation_failure<const char *> &e)
 }
 
 bool
-rfc1459::line::empty()
+ircd::rfc1459::line::empty()
 const
 {
 	return pfx.empty() &&
@@ -468,7 +468,7 @@ const
 }
 
 bool
-rfc1459::pfx::empty()
+ircd::rfc1459::pfx::empty()
 const
 {
 	return nick.empty() &&
@@ -477,7 +477,7 @@ const
 }
 
 std::string
-rfc1459::character::charset(const attr &attr)
+ircd::rfc1459::character::charset(const attr &attr)
 {
 	uint8_t buf[256];
 	const size_t len(charset(attr, buf, sizeof(buf)));
@@ -485,9 +485,9 @@ rfc1459::character::charset(const attr &attr)
 }
 
 size_t
-rfc1459::character::charset(const attr &attr,
-                            uint8_t *const &buf,
-                            const size_t &max)
+ircd::rfc1459::character::charset(const attr &attr,
+                                  uint8_t *const &buf,
+                                  const size_t &max)
 {
 	const auto len(gather(attr, buf, max));
 	std::sort(buf, buf + len, []
@@ -504,7 +504,7 @@ rfc1459::character::charset(const attr &attr,
 }
 
 std::string
-rfc1459::character::gather(const attr &attr)
+ircd::rfc1459::character::gather(const attr &attr)
 {
 	uint8_t buf[256];
 	const size_t len(gather(attr, buf, sizeof(buf)));
@@ -512,9 +512,9 @@ rfc1459::character::gather(const attr &attr)
 }
 
 size_t
-rfc1459::character::gather(const attr &attr,
-                           uint8_t *const &buf,
-                           const size_t &max)
+ircd::rfc1459::character::gather(const attr &attr,
+                                 uint8_t *const &buf,
+                                 const size_t &max)
 {
 	size_t ret(0);
 	for(ssize_t i(attrs.size() - 1); i >= 0 && ret < max; --i)
@@ -524,8 +524,8 @@ rfc1459::character::gather(const attr &attr,
 	return ret;
 }
 
-decltype(rfc1459::character::tolower_tab)
-rfc1459::character::tolower_tab
+decltype(ircd::rfc1459::character::tolower_tab)
+ircd::rfc1459::character::tolower_tab
 {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
 	0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14,
@@ -561,8 +561,8 @@ rfc1459::character::tolower_tab
 	0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
 
-decltype(rfc1459::character::toupper_tab)
-rfc1459::character::toupper_tab
+decltype(ircd::rfc1459::character::toupper_tab)
+ircd::rfc1459::character::toupper_tab
 {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
 	0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14,
@@ -604,8 +604,8 @@ rfc1459::character::toupper_tab
  * NOTE: RFC 1459 sez: anything but a ^G, comma, or space is allowed
  * for channel names
  */
-const decltype(rfc1459::character::attrs)
-rfc1459::character::attrs
+const decltype(ircd::rfc1459::character::attrs)
+ircd::rfc1459::character::attrs
 {{
 /* 0     */  CNTRL,
 /* 1     */  CNTRL | CHAN | NONEOS,
