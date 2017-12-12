@@ -367,10 +367,11 @@ ircd::net::listener::acceptor::next()
 try
 {
 	auto sock(std::make_shared<ircd::socket>(ssl));
+/*
 	log.debug("%s: socket(%p) is the next socket to accept",
 	          std::string(*this),
 	          sock.get());
-
+*/
 	ip::tcp::socket &sd(*sock);
 	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this)));
 	++accepting;
