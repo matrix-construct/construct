@@ -81,17 +81,15 @@ info::ircd_version
 const std::vector<std::string>
 info::credits
 {{
-	"charybdis",
-	"Based on the original code written by Jarkko Oikarinen",
-	"Copyright (c) 1988-1991 University of Oulu, Computing Center",
-	"Copyright (c) 1996-2001 Hybrid Development Team",
-	"Copyright (c) 2002-2009 ircd-ratbox Development Team",
-	"Copyright (c) 2005-2017 charybdis development team",
+
+	"Inspired by the original Internet Relay Chat daemon by Jarkko Oikarinen",
 	" ",
-	"This program is free software; you can redistribute it and/or",
-	"modify it under the terms of the GNU General Public License as",
-	"published by the Free Software Foundation; either version 2, or",
-	"(at your option) any later version.",
+	"Internet Relay Chat daemon: Matrix Construct",
+	" ",
+	"* Copyright (C) 2016-2017 Matrix Construct developers",
+	"* Permission to use, copy, modify, and/or distribute this software for any",
+	"* purpose with or without fee is hereby granted, provided that the above",
+	"* copyright notice and this permission notice is present in all copies.",
 	" ",
 }};
 
