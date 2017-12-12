@@ -12,9 +12,6 @@ Makefile
 .deps
 .dirstamp
 .libs
-authd/authd
-bandb/bandb
-bandb/bantool
 autom4te.cache
 aclocal.m4
 compile
@@ -28,12 +25,8 @@ config.log
 config.status
 configure
 stamp-h1
-libltdl/
 scripts/*.tar.bz2
 scripts/*.tar.gz
-ssld/ssld
-wsockd/wsockd
-testsuite/ircd.pid.*
 tools/charybdis-mkpasswd
 tools/charybdis-mkfingerprint
 tools/genssl
