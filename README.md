@@ -114,6 +114,8 @@ make install
 
 ## Developers
 
+[![](https://img.shields.io/badge/License-BSD-brightgreen.svg)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)]()
+
  * Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
  directory is doc/html. Browse to doc/html/index.html
 
