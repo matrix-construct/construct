@@ -247,6 +247,63 @@ struct ircd::http::content
 	content() = default;
 };
 
+/// HTTP request suite. Functionality to send and receive requests.
+///
+struct ircd::http::request
+{
+	struct head;
+	struct content;
+
+	using write_closure = std::function<void (const ilist<const_buffer> &)>;
+	using proffer = std::function<void (const head &)>;
+	using header = line::header;
+
+	request(const string_view &host            = {},
+	        const string_view &method          = "GET",
+	        const string_view &path            = "/",
+	        const string_view &query           = {},
+	        const string_view &content         = {},
+	        const write_closure &              = nullptr,
+	        const vector_view<const header> &  = {});
+
+	request(parse::capstan &,
+	        content *const &          = nullptr,
+	        const write_closure &     = nullptr,
+	        const proffer &           = nullptr,
+	        const headers::closure &  = {});
+};
+
+/// Represents an HTTP request head. This is only for receiving requests.
+///
+struct ircd::http::request::head
+:line::request
+{
+	string_view host;
+	string_view expect;
+	string_view te;
+	string_view authorization;
+	string_view connection;
+	size_t content_length {0};
+
+	string_view headers;
+
+	head(parse::capstan &pc, const headers::closure &c = {});
+};
+
+/// Represents an HTTP request content. This is only for receiving content.
+///
+struct ircd::http::request::content
+:http::content
+{
+	content(parse::capstan &pc, const head &h, discard_t)
+	:http::content{pc, h.content_length, discard}
+	{}
+
+	content(parse::capstan &pc, const head &h)
+	:http::content{pc, h.content_length}
+	{}
+};
+
 /// HTTP response suite. Functionality to send and receive responses.
 ///
 struct ircd::http::response
@@ -323,61 +380,4 @@ struct ircd::http::response::content
 	{}
 
 	content() = default;
-};
-
-/// HTTP request suite. Functionality to send and receive requests.
-///
-struct ircd::http::request
-{
-	struct head;
-	struct content;
-
-	using write_closure = std::function<void (const ilist<const_buffer> &)>;
-	using proffer = std::function<void (const head &)>;
-	using header = line::header;
-
-	request(const string_view &host            = {},
-	        const string_view &method          = "GET",
-	        const string_view &path            = "/",
-	        const string_view &query           = {},
-	        const string_view &content         = {},
-	        const write_closure &              = nullptr,
-	        const vector_view<const header> &  = {});
-
-	request(parse::capstan &,
-	        content *const &          = nullptr,
-	        const write_closure &     = nullptr,
-	        const proffer &           = nullptr,
-	        const headers::closure &  = {});
-};
-
-/// Represents an HTTP request head. This is only for receiving requests.
-///
-struct ircd::http::request::head
-:line::request
-{
-	string_view host;
-	string_view expect;
-	string_view te;
-	string_view authorization;
-	string_view connection;
-	size_t content_length {0};
-
-	string_view headers;
-
-	head(parse::capstan &pc, const headers::closure &c = {});
-};
-
-/// Represents an HTTP request content. This is only for receiving content.
-///
-struct ircd::http::request::content
-:http::content
-{
-	content(parse::capstan &pc, const head &h, discard_t)
-	:http::content{pc, h.content_length, discard}
-	{}
-
-	content(parse::capstan &pc, const head &h)
-	:http::content{pc, h.content_length}
-	{}
 };

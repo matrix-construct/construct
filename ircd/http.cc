@@ -54,6 +54,38 @@ namespace ircd::http
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
 }
 
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::request,
+    ( decltype(ircd::http::line::request::method),    method   )
+    ( decltype(ircd::http::line::request::path),      path     )
+    ( decltype(ircd::http::line::request::query),     query    )
+    ( decltype(ircd::http::line::request::fragment),  fragment )
+    ( decltype(ircd::http::line::request::version),   version  )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::response,
+    ( decltype(ircd::http::line::response::version),  version )
+    ( decltype(ircd::http::line::response::status),   status  )
+    ( decltype(ircd::http::line::response::reason),   reason  )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::header,
+    ( decltype(ircd::http::line::header::first),   first  )
+    ( decltype(ircd::http::line::header::second),  second )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::query,
+    ( decltype(ircd::http::query::first),   first  )
+    ( decltype(ircd::http::query::second),  second )
+)
+
 const decltype(ircd::http::reason) ircd::http::reason
 {
 	{ code::CONTINUE,                            "Continue"                                        },
@@ -94,38 +126,6 @@ const decltype(ircd::http::reason) ircd::http::reason
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
 };
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::request,
-    ( decltype(ircd::http::line::request::method),    method   )
-    ( decltype(ircd::http::line::request::path),      path     )
-    ( decltype(ircd::http::line::request::query),     query    )
-    ( decltype(ircd::http::line::request::fragment),  fragment )
-    ( decltype(ircd::http::line::request::version),   version  )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::response,
-    ( decltype(ircd::http::line::response::version),  version )
-    ( decltype(ircd::http::line::response::status),   status  )
-    ( decltype(ircd::http::line::response::reason),   reason  )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::line::header,
-    ( decltype(ircd::http::line::header::first),   first  )
-    ( decltype(ircd::http::line::header::second),  second )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::query,
-    ( decltype(ircd::http::query::first),   first  )
-    ( decltype(ircd::http::query::second),  second )
-)
 
 template<class it,
          class top>
@@ -171,16 +171,16 @@ struct ircd::http::grammar
 	rule<string_view> query_key        { raw[+(char_ - query_illegal)]                ,"query key" };
 	rule<string_view> query_val        { raw[*(char_ - query_illegal)]              ,"query value" };
 
+	rule<string_view> method           { token                                           ,"method" };
+	rule<string_view> path             { raw[-slash >> *(char_ - query_illegal)]           ,"path" };
+	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
+	rule<string_view> version          { token                                          ,"version" };
+
 	rule<size_t> chunk_size
 	{
 		qi::uint_parser<size_t, 16, 1, 8>{} >> CRLF
 		,"chunk size"
 	};
-
-	rule<string_view> method           { token                                           ,"method" };
-	rule<string_view> path             { raw[-slash >> *(char_ - query_illegal)]           ,"path" };
-	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
-	rule<string_view> version          { token                                          ,"version" };
 
 	rule<http::query> query
 	{
@@ -321,17 +321,17 @@ ircd::http::request::request(const string_view &host,
 	char request_line[2048]; const auto request_line_len
 	{
 		snprintf(request_line, sizeof(request_line), "%s /%s%s%s %s\r\n",
-		         method.data(),
-		         path.data(),
+		         method.c_str(),
+		         path.c_str(),
 		         query.empty()? "" : "?",
-		         query.empty()? "" : query.data(),
+		         query.empty()? "" : query.c_str(),
 		         version)
 	};
 
 	char host_line[128] {"Host: "}; const auto host_line_len
 	{
 		6 + snprintf(host_line + 6, std::min(sizeof(host_line) - 6, host.size() + 3), "%s\r\n",
-		             host.data())
+		             host.c_str())
 	};
 
 	char content_len[64]; const auto content_len_len
@@ -431,22 +431,12 @@ ircd::http::response::response(const code &code,
 		0
 	};
 
-	fixed_buffer<mutable_buffer, 128> date_line_buf;
-	const string_view date_line
+	char date_line[128], date_buf[96]; const auto date_line_len
 	{
-		[&date_line_buf, &code]() -> string_view
-		{
-			if(code >= 400)
-				return {};
-
-			fixed_buffer<mutable_buffer, 128> date_buf;
-			const auto datestr{timef(date_buf, ircd::localtime)};
-			date_buf[std::min(date_buf.size() - 1, datestr.size())] = '\0';
-
-			const mutable_buffer line{date_line_buf};
-			const auto length{snprintf(data(line), size(line), "Date: %s\r\n", datestr.data())};
-			return { data(line), size_t(length) };
-		}()
+		code < 400?
+		snprintf(data(date_line), size(date_line), "Date: %s\r\n",
+		         timef(date_buf, ircd::localtime).c_str()):
+		0
 	};
 
 	char cache_line[64]; const auto cache_line_len
@@ -489,7 +479,7 @@ ircd::http::response::response(const code &code,
 	{
 		{ status_line,      size_t(status_line_len)     },
 		{ server_line,      size_t(server_line_len)     },
-		{ date_line                                     },
+		{ date_line,        size_t(date_line_len)       },
 		{ cache_line,       size_t(cache_line_len)      },
 		{ user_headers,     size_t(user_headers_len)    },
 		{ content_len,      size_t(content_len_len)     },
