@@ -72,15 +72,15 @@ namespace ircd::ctx
 	void yield(ctx &);                           // Direct context switch to arg
 }
 
-/// Interface to the currently running context
 namespace ircd::ctx { inline namespace this_ctx
+/// Interface to the currently running context
 {
 	struct critical_assertion;                   // Assert no yielding for a section
 
-	// Always set to the currently running context or null for main stack
+	/// Points to the currently running context or null for main stack (do not modify)
 	extern __thread struct ctx *current;
 
-	ctx &cur();                                  // Assumptional reference to *current
+	ctx &cur();                                  ///< Assumptional reference to *current
 
 	const uint64_t &id();                        // Unique ID for cur ctx
 	string_view name();                          // Optional label for cur ctx
@@ -135,13 +135,14 @@ namespace ircd
 	using ctx::future;
 }
 
-/// An instance of critical_assertion detects an attempt to context switch
-/// when the developer specifically does not want any yielding in that section
-/// or anywhere up the stack from it. This device does not prevent a switch
-/// and may carry no meaning outside of debug-mode compilation. It is good
-/// practice to use this device even when it appears obvious the section's
-/// callgraph has no chance of yielding; code changes, and everything up the
-/// graph can change without taking notice of your section.
+/// An instance of critical_assertion detects an attempt to context switch.
+///
+/// For when the developer specifically does not want any yielding in a
+/// section or anywhere up the stack from it. This device does not prevent
+/// a switch and may carry no meaning outside of debug-mode compilation. It is
+/// good practice to use this device even when it appears obvious the
+/// section's callgraph has no chance of yielding: code changes, and everything
+/// up the graph can change without taking notice of your section.
 ///
 class ircd::ctx::this_ctx::critical_assertion
 {

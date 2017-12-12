@@ -26,8 +26,9 @@
 #pragma once
 #define HAVE_IRCD_RFC1459_H
 
-namespace ircd      {
-namespace rfc1459   {
+/// Legacy IRC grammars & tools
+namespace ircd::rfc1459
+{
 
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, syntax_error)
@@ -234,5 +235,4 @@ character::is(const uint8_t &c,
 	return (attrs[c] & attr) == attr;
 }
 
-} // namespace rfc1459
-} // namespace ircd
+}

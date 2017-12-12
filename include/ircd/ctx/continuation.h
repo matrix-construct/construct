@@ -22,10 +22,10 @@
 #pragma once
 #define HAVE_IRCD_CTX_CONTINUATION_H
 
-/// This file is not included with the IRCd standard include stack because
-/// it requires symbols we can't forward declare without boost headers. It
-/// is part of the <ircd/asio.h> stack which can be included in your
-/// definition file if necessary.
+// This file is not included with the IRCd standard include stack because
+// it requires symbols we can't forward declare without boost headers. It
+// is part of the <ircd/asio.h> stack which can be included in your
+// definition file if necessary.
 
 namespace ircd::ctx
 {

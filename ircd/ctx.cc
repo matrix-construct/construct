@@ -66,6 +66,8 @@ struct ircd::ctx::ctx
 	ctx(const ctx &) = delete;
 };
 
+/// Monotonic ctx id counter state. This counter is incremented for each
+/// newly created context.
 decltype(ircd::ctx::ctx::id_ctr)
 ircd::ctx::ctx::id_ctr
 {
@@ -238,6 +240,7 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 //
 // ctx/ctx.h
 //
+
 __thread ircd::ctx::ctx *ircd::ctx::current;
 
 /// Yield the currently running context until `time_point` ignoring notes
@@ -291,8 +294,12 @@ ircd::ctx::this_ctx::wait()
 }
 
 /// Post the currently running context to the event queue and then suspend to
-/// allow other contexts in the queue to run. Until we have our own queue the
-/// ios queue makes no guarantees if the queue is FIFO or LIFO etc :-/
+/// allow other contexts in the queue to run.
+///
+/// Until we have our own queue the ios queue makes no guarantees if the queue
+/// is FIFO or LIFO etc :-/ It is generally bad practice to use this function,
+/// as one should make the effort to devise a specific cooperative strategy for
+/// how context switching occurs rather than this coarse/brute technique.
 void
 ircd::ctx::this_ctx::yield()
 {
