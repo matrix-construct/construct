@@ -80,6 +80,21 @@ struct ircd::string_view
 		return !undefined();
 	}
 
+	/// (non-standard) string_view's have no guarantee to be null terminated
+	/// and most likely aren't. The std::string_view does not offer the
+	/// c_str() function because using it is overwhelmingly likely to be wrong.
+	/// Nevertheless if our developer is certain their view is of a null
+	/// terminated string where the terminator is one past the end they can
+	/// invoke this function rather than data() to assert their intent. Note
+	/// that this assertion is still not foolproof because reading beyond
+	/// size() might still be incorrect whether or not a null is found there
+	/// and there is nothing else we can do. The developer must be sure.
+	auto c_str() const
+	{
+		assert(!data() || data()[size()] == '\0');
+		return data();
+	}
+
 	/// (non-standard) After using data() == nullptr for undefined, we're fresh
 	/// out of legitimate bits here to represent the null type string. In this
 	/// case we expect a hack pointer of 0x1 which will mean JS null
