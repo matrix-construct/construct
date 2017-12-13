@@ -1,7 +1,7 @@
-# How to CPP for Charybdis
+# How to CPP for IRCd
 
 
-In the post-C++11 world it is time to leave C99 behind and seriously consider
+In the post-C++11 world it is time to leave C99+ behind and seriously consider
 C++ as C proper. It has been a hard 30 year journey to finally earn that, but
 now it is time. This document is the effective style guide for how Charybdis
 will integrate -std=gnu++14 and how developers should approach it.
@@ -31,9 +31,6 @@ of the structure fill in the pointers with their own functionality. -> Think
 virtual functions.
 
 
-======
-
-
 #### Encapsulation will be relaxed
 
 
@@ -53,7 +50,8 @@ immediately following it be private.
 
 Use `=` only for assignment to an existing object. *Break your C habit right now.*
 Use bracket initialization `{}` of all variables and objects. Fall back to parens `()`
-if absolutely necessary to quash warnings about conversions.
+if brackets conflict with an initializer_list constructor (such as with STL containers)
+or if absolutely necessary to quash warnings about conversions.
 
 * Do not put uninitialized variables at the top of a function and assign them later.
 
@@ -67,8 +65,8 @@ if absolutely necessary to quash warnings about conversions.
 > ```
 >
 
-* Use allman style for complex/long initialization statements. It's like a function
-  returning the value to your new object; it is easier to read then one giant line.
+* Use Allman style for complex/long initialization statements. It's like a function
+  returning the value to your new object; it is easier to read than one giant line.
 
 > ```C++
 > const auto sum
@@ -108,7 +106,7 @@ or fully failed. Everything is a **transaction**. Nothing in the future exists.
 There is nothing you need from the future to give things a consistent state.
 
 * The program should be effectively reversible -- should be able to "go backwards"
-or "unwind" from any point. **Think in terms of stacks, not linear procedures.**
+or "unwind" from any point. Think in terms of stacks, not linear procedures.
 This means when a variable, or member (a **resource**) first comes into scope,
 i.e. it is declared or accessible (**acquired**), it must be **initialized**
 to a completely consistent state at that point.
@@ -126,15 +124,15 @@ against `if()` statement clutter and checking return types and passing errors
 down the stack.
 
 * Object construction (logic in the initialization list, constructor body, etc)
-is actual real program logic. Object construction is **not something to just
-prepare some memory, like initializing it to zero**, leaving an instance
+is actual real program logic. Object construction is not something to just
+prepare some memory, like initializing it to zero, leaving an instance
 somewhere for further functions to conduct operations on. Your whole program
 could be running - the entire universe could be running - in some member
 initializer somewhere. The only way to error out of this is to throw, and it
 is perfectly legitimate to do so.
 
-* **Function bodies and return types should not be concerned with error
-handling and passing of such. They only cause and generate the errors.**
+* Function bodies and return types should not be concerned with error
+handling and passing of such. They only cause and generate the errors.
 
 * Try/catch style note: We specifically discourage naked try/catch blocks.
 In other words, **most try-catch blocks are of the
@@ -167,6 +165,13 @@ would have been.
 
 #### Pointers and References
 
+* The `&` or `*` prefixes the variable name; it does not postfix the type.
+This is evidenced by comma-delimited declarations. There is only one exception
+to this for universal references which is described later.
+
+> ```C++
+> int a, &b{a}, *c{&b}, *const d{&b}, *const *const e{&c};
+> ```
 
 * Biblical maxim: Use references when you can, pointers when you must.
 
@@ -175,7 +180,9 @@ reference `foo &bar` if you must.
 
 * Use const references even if you're not referring to anything created yet.
 const references can construct, contain, and refer to an instance of the type
-with all in one magic.
+with all in one magic. This style has no sympathy for erroneously expecting
+that a const reference is not a local construction; expert C++ developers
+do not make this error. See reasons for using a pointer below.
 
 * Passing by value indicates some kind of need for object construction in
 the argument, or that something may be std::move()'ed to and from it. Except
@@ -189,12 +196,13 @@ function.
 the prototype for something in the template `void func(foo &&bar)` is actually
 a [universal reference](https://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers)
 which has some differences from a normal rvalue reference. To make this clear
-our style is to move the `&&` like so `void func(foo&& bar)`. This actually has
-a real use, because a variadic template foo
-`template<class... foo>` will require the prototype `void func(foo&&... bar)`.
+our style is to move the `&&` like so `void func(foo&& bar)`. This is actually
+useful because a variadic template foo `template<class... foo>` will require
+the prototype `void func(foo&&... bar)`.
 
 * Passing a pointer, or pointer arguments in general, indicates something may
-be null, or optional. Otherwise suspect.
+be null (optional), or to explicitly prevent local const construction which is
+a rare reason. Otherwise suspect.
 
 * Avoid using references as object members, you're most likely just limiting
 the ability to assign, move, and reuse the object because references cannot be
@@ -227,8 +235,8 @@ sacrificing type safety with our RTTI-based fmt library.
 * ~~varargs are still legitimate.~~ There are just many cases when template
 varargs, now being available, are a better choice; they can also be inlined.
 
-	* I think a better case to use our template va_rtti is starting to emerge in
-	most of our uses for varags.
+	* Our template va_rtti is starting to emerge as a suitable replacement
+	for any use of varags.
 
 * When using a `switch` over an `enum` type, put what would be the `default` case after/outside
 of the `switch` unless the situation specifically calls for one. We use -Wswitch so changes to
@@ -238,5 +246,5 @@ the enum will provide a good warning to update any `switch`.
 such a name is redundant because the type carries enough information to make it obvious. In
 other words, if you have a prototype like `foo(const std::string &message)` you should name
 `message` because std::string is common and *what* the string is for is otherwise opaque.
-OTOH, if you have `foo(const options &, const std::string &message)` one should skip the name
-for `options &` as it just adds redundant text to the prototype.
+OTOH, if you have `foo(const options &options, const std::string &message)` one should skip
+the name for `options &` as it just adds redundant text to the prototype.
