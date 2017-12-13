@@ -504,14 +504,32 @@ template<class T,
          class = void>
 struct is_complete
 :std::false_type
-{
-};
+{};
 
 template<class T>
 struct is_complete<T, decltype(void(sizeof(T)))>
 :std::true_type
-{
-};
+{};
+
+
+//
+// Test if type is a specialization of a template
+//
+
+template<class,
+         template<class...>
+                  class>
+struct is_specialization_of
+:std::false_type
+{};
+
+template<template<class...>
+                  class T,
+                  class... args>
+struct is_specialization_of<T<args...>, T>
+:std::true_type
+{};
+
 
 
 //
