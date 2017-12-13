@@ -61,7 +61,7 @@ mc.opts =
 	// We can reapply the stylesheet dynamically if its path is specified here. This is
 	// useful for developers, and accomplished using the mc.ctrl system which may hook
 	// ctrl+r to refresh the style rather than the whole application.
-	style: "charybdis.css",
+	style: "construct.css",
 
 	// Quick setting to debug incoming sync messages on the console
 	sync_debug: 0,

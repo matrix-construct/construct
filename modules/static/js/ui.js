@@ -31,7 +31,7 @@
 /**
  * Refresh a stylesheet over the DOM
  */
-function reload_stylesheet(name = "charybdis.css")
+function reload_stylesheet(name = "construct.css")
 {
 	let do_reload = (elem, name) =>
 	{
