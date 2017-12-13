@@ -106,13 +106,6 @@ template<class tuple,
          size_t i>
 using tuple_value_type = typename tuple_element<tuple, i>::value_type;
 
-template<class... T>
-constexpr size_t
-tuple<T...>::size()
-{
-	return std::tuple_size<tuple_type>();
-}
-
 template<class tuple>
 auto &
 stdcast(const tuple &o)
@@ -904,6 +897,13 @@ tuple<T...>::tuple(const tuple<U...> &t)
 	{
 		set(*this, key, val);
 	});
+}
+
+template<class... T>
+constexpr size_t
+tuple<T...>::size()
+{
+	return std::tuple_size<tuple_type>();
 }
 
 template<class tuple,

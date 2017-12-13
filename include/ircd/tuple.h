@@ -33,6 +33,27 @@
 namespace ircd::util
 {
 
+template<class tuple>
+constexpr bool
+is_tuple()
+{
+	return is_specialization_of<tuple, std::tuple>::value;
+}
+
+template<class tuple>
+constexpr typename std::enable_if<is_tuple<tuple>(), size_t>::type
+size()
+{
+	return std::tuple_size<tuple>::value;
+}
+
+template<class... args>
+constexpr size_t
+size(const std::tuple<args...> &t)
+{
+	return size<std::tuple<args...>>();
+}
+
 //
 // Iteration of a tuple
 //
@@ -41,8 +62,7 @@ namespace ircd::util
 template<size_t i,
          class func,
          class... args>
-constexpr
-typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
+constexpr typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
 for_each(std::tuple<args...> &t,
          func&& f)
 {}
@@ -250,8 +270,7 @@ runtil(const std::tuple<args...> &t,
 template<ssize_t i,
          class func,
          class... args>
-constexpr
-typename std::enable_if<(i > 0), bool>::type
+constexpr typename std::enable_if<(i > 0), bool>::type
 runtil(std::tuple<args...> &t,
        func&& f)
 {
@@ -261,8 +280,7 @@ runtil(std::tuple<args...> &t,
 template<ssize_t i = -1,
          class func,
          class... args>
-constexpr
-typename std::enable_if<(i == -1), bool>::type
+constexpr typename std::enable_if<(i == -1), bool>::type
 runtil(const std::tuple<args...> &t,
        func&& f)
 {
@@ -277,8 +295,7 @@ runtil(const std::tuple<args...> &t,
 template<ssize_t i = -1,
          class func,
          class... args>
-constexpr
-typename std::enable_if<(i == -1), bool>::type
+constexpr typename std::enable_if<(i == -1), bool>::type
 runtil(std::tuple<args...> &t,
        func&& f)
 {
@@ -288,6 +305,37 @@ runtil(std::tuple<args...> &t,
 	};
 
 	return runtil<size>(t, std::forward<func>(f));
+}
+
+//
+// test() is a logical inversion of until() for intuitive find()-like
+// boolean semantics.
+//
+
+template<size_t i,
+         class func,
+         class... args>
+constexpr auto
+test(std::tuple<args...> &t,
+     func&& f)
+{
+	return !until(t, [&f](auto&& arg)
+	{
+		return !f(arg);
+	});
+}
+
+template<size_t i,
+         class func,
+         class... args>
+constexpr auto
+rtest(std::tuple<args...> &t,
+      func&& f)
+{
+	return !runtil(t, [&f](auto&& arg)
+	{
+		return !f(arg);
+	});
 }
 
 //
