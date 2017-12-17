@@ -270,7 +270,6 @@ ircd::http::request::request(parse::capstan &pc,
                              const write_closure &write_closure,
                              const proffer &proffer,
                              const headers::closure &headers_closure)
-try
 {
 	const head h{pc, headers_closure};
 	const char *const content_mark(pc.parsed);
@@ -286,20 +285,6 @@ try
 
 	if(c)
 		*c = content{pc, h};
-}
-catch(const http::error &e)
-{
-	if(write_closure)
-		http::response{e.code, e.content, write_closure};
-
-	throw;
-}
-catch(const std::exception &e)
-{
-	if(write_closure)
-		http::response{http::INTERNAL_SERVER_ERROR, e.what(), write_closure};
-
-	throw;
 }
 
 ircd::http::request::request(const string_view &host,

@@ -363,6 +363,7 @@ catch(const std::exception &e)
 bool
 ircd::handle_request(client &client,
                      parse::capstan &pc)
+try
 {
 	client.request_timer = ircd::timer{};
 	const socket::scope_timeout timeout
@@ -387,6 +388,32 @@ ircd::handle_request(client &client,
 	};
 
 	return ret;
+}
+catch(const http::error &e)
+{
+	log::error("client[%s]: %s",
+	           string(remote(client)),
+	           e.what());
+
+	http::response
+	{
+		e.code, e.content, write_closure(client)
+	};
+
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error("client[%s]: %s",
+	           string(remote(client)),
+	           e.what());
+
+	http::response
+	{
+		http::INTERNAL_SERVER_ERROR, e.what(), write_closure(client)
+	};
+
+	throw;
 }
 
 void
