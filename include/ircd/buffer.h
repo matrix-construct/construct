@@ -91,6 +91,8 @@ namespace ircd::buffer
 	template<class it> it copy(it &dest, const it &stop, const const_raw_buffer &);
 	template<class it> size_t copy(const it &dest, const size_t &max, const const_raw_buffer &buffer);
 	size_t copy(const mutable_raw_buffer &dst, const const_raw_buffer &src);
+	size_t reverse(const mutable_raw_buffer &dst, const const_raw_buffer &src);
+	void reverse(const mutable_raw_buffer &buf);
 	void zero(const mutable_raw_buffer &buf);
 
 	// Iterable of buffers tools
@@ -543,6 +545,21 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 	assert(!null(buffer) || get<1>(buffer) == nullptr);
 	s.write(data(buffer), size(buffer));
 	return s;
+}
+
+inline void
+ircd::buffer::reverse(const mutable_raw_buffer &buf)
+{
+	std::reverse(data(buf), data(buf) + size(buf));
+}
+
+inline size_t
+ircd::buffer::reverse(const mutable_raw_buffer &dst,
+                      const const_raw_buffer &src)
+{
+	const size_t ret{std::min(size(dst), size(src))};
+	std::reverse_copy(data(src), data(src) + ret, data(dst));
+	return ret;
 }
 
 inline size_t
