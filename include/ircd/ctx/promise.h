@@ -40,9 +40,9 @@ class ircd::ctx::promise
 	std::shared_ptr<shared_state<T>> st;
 
   public:
-    using value_type                             = typename shared_state<T>::value_type;
-    using pointer_type                           = typename shared_state<T>::pointer_type;
-    using reference_type                         = typename shared_state<T>::reference_type;
+	using value_type                             = typename shared_state<T>::value_type;
+	using pointer_type                           = typename shared_state<T>::pointer_type;
+	using reference_type                         = typename shared_state<T>::reference_type;
 
 	bool valid() const                           { return bool(st);                                }
 	bool operator!() const                       { return !valid();                                }
@@ -70,7 +70,7 @@ class ircd::ctx::promise<void>
 	std::shared_ptr<shared_state<void>> st;
 
   public:
-    using value_type                             = typename shared_state<void>::value_type;
+	using value_type                             = typename shared_state<void>::value_type;
 
 	bool valid() const                           { return bool(st);                                }
 	bool operator!() const                       { return !valid();                                }
@@ -90,21 +90,21 @@ class ircd::ctx::promise<void>
 };
 
 inline
-ircd::ctx::promise<void>::promise():
-st(std::make_shared<shared_state<void>>())
+ircd::ctx::promise<void>::promise()
+:st{std::make_shared<shared_state<void>>()}
 {
 }
 
 template<class T>
-ircd::ctx::promise<T>::promise():
-st(std::make_shared<shared_state<T>>())
+ircd::ctx::promise<T>::promise()
+:st{std::make_shared<shared_state<T>>()}
 {
 }
 
 template<class T>
 ircd::ctx::promise<T>::promise(promise<T> &&o)
-noexcept:
-st(std::move(o.st))
+noexcept
+:st{std::move(o.st)}
 {
 }
 

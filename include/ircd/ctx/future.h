@@ -116,26 +116,26 @@ noexcept
 }
 
 inline
-ircd::ctx::future<void>::future():
-st(nullptr)
+ircd::ctx::future<void>::future()
+:st{nullptr}
 {
 }
 
 template<class T>
-ircd::ctx::future<T>::future():
-st(nullptr)
+ircd::ctx::future<T>::future()
+:st{nullptr}
 {
 }
 
 inline
-ircd::ctx::future<void>::future(promise<void> &promise):
-st(promise.get_state().share())
+ircd::ctx::future<void>::future(promise<void> &promise)
+:st{promise.get_state().share()}
 {
 }
 
 template<class T>
-ircd::ctx::future<T>::future(promise<T> &promise):
-st(promise.get_state().share())
+ircd::ctx::future<T>::future(promise<T> &promise)
+:st{promise.get_state().share()}
 {
 }
 
