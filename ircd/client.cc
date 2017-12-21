@@ -243,6 +243,24 @@ namespace ircd
 	bool handle_request(client &client, parse::capstan &pc);
 }
 
+/// Main client loop.
+///
+/// This function parses requests off the socket in a loop until there are no
+/// more requests or there is a fatal error. The ctx will "block" to wait for
+/// more data off the socket during the middle of a request until the request
+/// timeout is reached. main() will not "block" to wait for more data after a
+/// request; it will simply `return true` which puts this client back into
+/// async mode and relinquishes this stack. returning false will disconnect
+/// the client rather than putting it back into async mode. Exceptions do not
+/// pass below main() therefor anything unhandled is an internal server error
+/// and the client is disconnected as well.
+///
+/// Before main(), the client had been sitting in async mode waiting for
+/// socket activity. Once activity with data was detected indicating a request,
+/// the client was dispatched to the request pool where it is paired to an
+/// ircd::ctx with a stack. main() is then invoked on that ircd::ctx stack.
+/// Nothing from the socket has been read into userspace before main().
+///
 bool
 ircd::client::main()
 noexcept try
@@ -267,25 +285,6 @@ noexcept try
 
 	return true;
 }
-catch(const http::error &e)
-{
-	log::debug("client[%s] HTTP %s in %ld$us %s",
-	           string(remote(*this)),
-	           e.what(),
-	           request_timer.at<microseconds>().count(),
-	           e.content);
-
-	switch(e.code)
-	{
-		case http::BAD_REQUEST:
-		case http::REQUEST_TIMEOUT:
-		case http::INTERNAL_SERVER_ERROR:
-			return false;
-
-		default:
-			return true;
-	}
-}
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -295,7 +294,6 @@ catch(const boost::system::system_error &e)
 
 	const error_code &ec{e.code()};
 	const int &value{ec.value()};
-
 	if(ec.category() == get_system_category()) switch(value)
 	{
 		case success:
@@ -360,6 +358,17 @@ catch(const std::exception &e)
 	#endif
 }
 
+/// Handle a single request within the client main() loop.
+///
+/// This function returns false if the main() loop should exit
+/// and thus disconnect the client. It should return true in most
+/// cases even for lightly erroneous requests that won't affect
+/// the next requests on the tape.
+///
+/// This function is timed. The timeout will prevent a client from
+/// sending a partial request and leave us waiting for the rest.
+/// As of right now this timeout extends to our handling of the
+/// request too.
 bool
 ircd::handle_request(client &client,
                      parse::capstan &pc)
@@ -391,21 +400,35 @@ try
 }
 catch(const http::error &e)
 {
-	log::error("client[%s]: %s",
+	log::debug("client[%s] HTTP %s in %ld$us %s",
 	           string(remote(client)),
-	           e.what());
+	           e.what(),
+	           client.request_timer.at<microseconds>().count(),
+	           e.content);
 
 	http::response
 	{
 		e.code, e.content, write_closure(client)
 	};
 
-	throw;
+	switch(e.code)
+	{
+		case http::BAD_REQUEST:
+		case http::REQUEST_TIMEOUT:
+			return false;
+
+		case http::INTERNAL_SERVER_ERROR:
+			throw;
+
+		default:
+			return true;
+	}
 }
 catch(const std::exception &e)
 {
-	log::error("client[%s]: %s",
+	log::error("client[%s]: in %ld$us: %s",
 	           string(remote(client)),
+	           client.request_timer.at<microseconds>().count(),
 	           e.what());
 
 	http::response
