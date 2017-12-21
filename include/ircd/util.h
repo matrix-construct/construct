@@ -404,6 +404,13 @@ size(const std::array<char, SIZE> &buf)
 	return SIZE;
 }
 
+template<class T>
+constexpr typename std::enable_if<std::is_pod<T>::value, size_t>::type
+size(const T &val)
+{
+	return sizeof(T);
+}
+
 
 template<size_t SIZE>
 constexpr const char *
@@ -417,6 +424,20 @@ constexpr char *
 data(char (&buf)[SIZE])
 {
 	return buf;
+}
+
+template<class T>
+constexpr typename std::enable_if<std::is_pod<T>::value, const uint8_t *>::type
+data(const T &val)
+{
+	return reinterpret_cast<const uint8_t *>(&val);
+}
+
+template<class T>
+constexpr typename std::enable_if<std::is_pod<T>::value, uint8_t *>::type
+data(T &val)
+{
+	return reinterpret_cast<uint8_t *>(&val);
 }
 
 
@@ -1041,6 +1062,25 @@ constexpr bool
 is_powerof2(const long long v)
 {
 	return v && !(v & (v - 1LL));
+}
+
+
+template<class T>
+T &
+bswap(T *const &val)
+{
+	assert(val != nullptr);
+	std::reverse(data(*val), data(*val) + size(*val));
+	return *val;
+}
+
+template<class T>
+T
+bswap(const T &val)
+{
+	T ret;
+	std::reverse_copy(data(val), data(val) + size(val), data(ret));
+	return ret;
 }
 
 
