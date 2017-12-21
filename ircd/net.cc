@@ -422,16 +422,6 @@ noexcept try
 	          sock.get(),
 	          string(sock->remote()));
 
-	//ip::tcp::socket &sd(*sock);
-
-	//static const asio::socket_base::keep_alive keep_alive(true);
-	//sd.set_option(keep_alive);
-
-	//static const asio::socket_base::linger linger{true, 10};
-	//sd.set_option(linger);
-
-	//sd.non_blocking(false);
-
 	static const socket::handshake_type handshake_type
 	{
 		socket::handshake_type::server

@@ -461,6 +461,15 @@ ircd::handle_request(client &client,
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
+	//ip::tcp::socket &sd(*s);
+	//sd.non_blocking(false);
+
+	//static const asio::socket_base::keep_alive keep_alive(true);
+	//sd.set_option(keep_alive);
+
+	//static const asio::socket_base::linger linger{true, 10};
+	//sd.set_option(linger);
+
 	const auto client
 	{
 		make_client(std::move(s))
