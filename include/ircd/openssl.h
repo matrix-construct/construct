@@ -25,9 +25,16 @@
 #pragma once
 #define HAVE_IRCD_OPENSSL_H
 
-// Forward declarations for OpenSSL because it is not included here.
+// Forward declarations for OpenSSL because it is not included here. Note
+// that these are declared in the extern namespace outside of ircd:: but
+// match those in the OpenSSL headers and should not be too much trouble.
 struct ssl_st;
+struct rsa_st;
 struct x509_st;
+struct bignum_st;
+struct bignum_ctx;
+struct bio_st;
+struct evp_pkey_st;
 
 /// OpenSSL library interface. Provides things we need to expose from OpenSSL
 /// to the rest of the project. Anything that employs forward declared types
@@ -37,12 +44,20 @@ struct x509_st;
 namespace ircd::openssl
 {
 	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, buffer_error)
 
 	struct init;
+	struct bignum;
 
 	using SSL = ::ssl_st;
+	using RSA = ::rsa_st;
 	using X509 = ::x509_st;
+	using BIGNUM = ::bignum_st;
+	using BN_CTX = ::bignum_ctx;
+	using EVP_PKEY = ::evp_pkey_st;
+	using BIO = ::bio_st;
 
+	// Library general
 	string_view version();
 
 	// Observers
@@ -53,19 +68,96 @@ namespace ircd::openssl
 	ulong get_error();
 	void clear_error();
 
-	// Convert PEM string to X509
-	X509 &read(X509 *out, const string_view &cert);
+	// Envelope suite
+	EVP_PKEY &read_pem_pub(EVP_PKEY &out, const string_view &pem);
+	EVP_PKEY &read_pem_priv(EVP_PKEY &out, const string_view &pem);
+	string_view write_pem_pub(const mutable_buffer &out, const EVP_PKEY &);
+	string_view write_pem_priv(const mutable_buffer &out, const EVP_PKEY &);
 
-	// Convert X509 certificate to DER encoding
+	// RSA suite
+	void check(const RSA &);
+	bool check(const RSA &, std::nothrow_t);
+	size_t size(const RSA &); // RSA_size() / mod size in bytes
+	string_view print(const mutable_buffer &buf, const RSA &, const off_t &offset = 0);
+	RSA &genrsa(RSA &out, const uint &bits = 2048, const uint &e = 0x10001);
+	void genrsa(const string_view &skfile, const string_view &pkfile, const json::object &opts = {});
+	void set(EVP_PKEY &out, RSA &in);
+
+	// X.509 suite
 	const_raw_buffer i2d(const mutable_raw_buffer &out, const X509 &);
-
-	// Convert PEM string to DER
-	const_raw_buffer cert2d(const mutable_raw_buffer &out, const string_view &cert);
-
-	// Get X509 certificate from struct SSL (get SSL from a socket)
+	const_raw_buffer cert2d(const mutable_raw_buffer &out, const string_view &pem);
+	X509 &read_pem(X509 &out, const string_view &pem);
+	string_view write_pem(const mutable_buffer &out, const X509 &);
+	string_view print(const mutable_buffer &buf, const X509 &);
+	string_view genX509(const mutable_buffer &out, const json::object &opts);
 	const X509 &get_peer_cert(const SSL &);
 	X509 &get_peer_cert(SSL &);
 }
+
+/// OpenSSL BIO convenience utils and wraps; also secure file IO closures
+namespace ircd::openssl::bio
+{
+	// Presents a memory BIO closure hiding boilerplate
+	using closure = std::function<void (BIO *const &)>;
+	string_view write(const mutable_buffer &, const closure &);
+	void read(const const_buffer &, const closure &);
+
+	// Presents a secure buffer file IO closure for writing to path
+	using mb_closure = std::function<string_view (const mutable_buffer &)>;
+	void write_file(const string_view &path, const mb_closure &closure, const size_t &bufsz = 64_KiB);
+
+	// Presents a secure buffer file IO closure with data read from path
+	using cb_closure = std::function<void (const string_view &)>;
+	void read_file(const string_view &path, const cb_closure &closure);
+}
+
+// OpenSSL BIGNUM convenience utils and wraps.
+namespace ircd::openssl
+{
+	size_t size(const BIGNUM *const &); // bytes binary
+	mutable_raw_buffer data(const mutable_raw_buffer &out, const BIGNUM *const &); // le
+	string_view u2a(const mutable_buffer &out, const BIGNUM *const &);
+}
+
+/// Light semantic-complete wrapper for BIGNUM.
+class ircd::openssl::bignum
+{
+	BIGNUM *a;
+
+  public:
+	const BIGNUM *get() const;
+	BIGNUM *get();
+	BIGNUM *release();
+
+	size_t bits() const;
+	size_t bytes() const;
+
+	explicit operator uint128_t() const;
+	operator const BIGNUM *() const;
+	operator const BIGNUM &() const;
+	operator BIGNUM *const &();
+	operator BIGNUM **();
+	operator BIGNUM &();
+
+	// default constructor does not BN_new()
+	bignum()
+	:a{nullptr}
+	{}
+
+	// acquisitional constructor for OpenSSL API return values
+	explicit bignum(BIGNUM *const &a)
+	:a{a}
+	{}
+
+	explicit bignum(const uint128_t &val);
+	bignum(const const_raw_buffer &bin); // le
+	explicit bignum(const BIGNUM &a);
+	bignum(const bignum &);
+	bignum(bignum &&) noexcept;
+	bignum &operator=(const bignum &);
+	bignum &operator=(bignum &&) noexcept;
+	~bignum() noexcept;
+};
 
 struct ircd::openssl::init
 {
