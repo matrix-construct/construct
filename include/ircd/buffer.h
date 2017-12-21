@@ -122,6 +122,11 @@ namespace ircd
 
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
+
+	using buffer::size;
+	using buffer::data;
+	using buffer::copy;
+	using buffer::consume;
 }
 
 /// Base for all buffer types
