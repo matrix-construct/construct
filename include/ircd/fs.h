@@ -95,9 +95,11 @@ namespace ircd::fs
 	// This suite of IO functions may yield your context.
 	std::string read(const std::string &name);
 	string_view read(const std::string &name, const mutable_raw_buffer &buf);
+	string_view read(const string_view &name, const mutable_raw_buffer &buf);
 	bool write(const std::string &name, const const_raw_buffer &buf);
 	bool append(const std::string &name, const const_raw_buffer &buf);
 	bool overwrite(const std::string &name, const const_raw_buffer &buf);
+	bool overwrite(const string_view &name, const const_raw_buffer &buf);
 
 	struct init;
 }

@@ -65,6 +65,13 @@ ircd::fs::write(const std::string &path,
 }
 
 bool
+ircd::fs::overwrite(const string_view &path,
+                    const const_raw_buffer &buf)
+{
+	return overwrite(std::string{path}, buf);
+}
+
+bool
 ircd::fs::overwrite(const std::string &path,
                     const const_raw_buffer &buf)
 {
@@ -158,6 +165,13 @@ ircd::fs::read(const std::string &path)
 	return std::string{b, e};
 }
 #endif
+
+ircd::string_view
+ircd::fs::read(const string_view &path,
+               const mutable_raw_buffer &buf)
+{
+	return ircd::fs::read(std::string{path}, buf);
+}
 
 ircd::string_view
 ircd::fs::read(const std::string &path,
