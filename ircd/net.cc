@@ -1039,10 +1039,12 @@ try
 		timer.cancel();
 
 	if(sd.is_open())
-		log.debug("socket(%p): disconnect: %s type: %d",
+		log.debug("socket(%p): disconnect: %s type:%d user: in:%zu out:%zu",
 		          (const void *)this,
 		          string(remote_ipport(*this)),
-		          uint(type));
+		          uint(type),
+		          in.bytes,
+		          out.bytes);
 
 	if(sd.is_open()) switch(type)
 	{
