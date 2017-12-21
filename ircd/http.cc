@@ -267,7 +267,6 @@ ircd::http::printed_size(const vector_view<const line::header> &headers)
 
 ircd::http::request::request(parse::capstan &pc,
                              content *const &c,
-                             const write_closure &write_closure,
                              const proffer &proffer,
                              const headers::closure &headers_closure)
 {

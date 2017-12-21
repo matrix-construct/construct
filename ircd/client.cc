@@ -379,7 +379,7 @@ try
 	bool ret{true};
 	http::request
 	{
-		pc, nullptr, write_closure(client), [&client, &pc, &ret]
+		pc, nullptr, [&client, &pc, &ret]
 		(const auto &head)
 		{
 			handle_request(client, pc, head);

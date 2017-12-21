@@ -268,7 +268,6 @@ struct ircd::http::request
 
 	request(parse::capstan &,
 	        content *const &          = nullptr,
-	        const write_closure &     = nullptr,
 	        const proffer &           = nullptr,
 	        const headers::closure &  = {});
 };
