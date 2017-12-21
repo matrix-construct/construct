@@ -246,6 +246,18 @@ catch(const fs::filesystem_error &e)
 	throw filesystem_error("%s", e.what());
 }
 
+size_t
+ircd::fs::size(const string_view &path)
+{
+	return ircd::fs::size(std::string{path});
+}
+
+size_t
+ircd::fs::size(const std::string &path)
+{
+	return fs::file_size(path);
+}
+
 bool
 ircd::fs::is_reg(const std::string &path)
 try
