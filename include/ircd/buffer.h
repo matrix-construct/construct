@@ -57,6 +57,7 @@ namespace ircd::buffer
 	struct mutable_raw_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer, uint align = 16> struct unique_buffer;
+	struct stream_buffer;
 
 	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
 	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
@@ -100,7 +101,7 @@ namespace ircd::buffer
 	template<template<class> class I, class T> size_t copy(const mutable_raw_buffer &, const I<T> &buffer);
 	template<template<class> class I, class T> size_t consume(I<T> &buffers, const size_t &bytes);
 
-	// Convenience copy to stream
+	// Convenience copy to std stream
 	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
 	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
 }
@@ -115,6 +116,7 @@ namespace ircd
 	using buffer::fixed_buffer;
 	using buffer::unique_buffer;
 	using buffer::null_buffer;
+	using buffer::stream_buffer;
 	using buffer::fixed_const_buffer;
 	using buffer::fixed_mutable_buffer;
 	using buffer::fixed_const_raw_buffer;
@@ -385,6 +387,50 @@ static_assert
 	std::is_standard_layout<ircd::buffer::fixed_buffer<ircd::buffer::const_buffer, 32>>::value,
 	"ircd::buffer::fixed_buffer must be standard layout"
 );
+
+struct ircd::buffer::stream_buffer
+:mutable_buffer
+{
+	mutable_buffer base;
+
+	/// Bytes remaining for writes to the stream buffer (same as size(*this))
+	size_t remaining() const
+	{
+		assert(begin() <= base.end());
+		const size_t ret(std::distance(begin(), base.end()));
+		assert(ret == size(*this));
+		return ret;
+	}
+
+	/// Bytes used by writes to the stream buffer
+	size_t consumed() const
+	{
+		assert(begin() >= base.begin());
+		assert(begin() <= base.end());
+		return std::distance(base.begin(), begin());
+	}
+
+	/// View the completed portion of the stream
+	const_buffer completed() const
+	{
+		assert(base.begin() <= begin());
+		assert(base.begin() + consumed() <= base.end());
+		return { base.begin(), base.begin() + consumed() };
+	}
+
+	/// Convenience closure presenting the writable window and advancing the
+	/// window with a consume() for the bytes written in the closure.
+	using closure = std::function<size_t (const mutable_buffer &)>;
+	void operator()(const closure &closure)
+	{
+		consume(*this, closure(*this));
+	}
+
+	stream_buffer(const mutable_buffer &base)
+	:mutable_buffer{base}
+	,base{base}
+	{}
+};
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
 ///
