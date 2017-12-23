@@ -93,7 +93,6 @@ If the compiler can't figure out the auto, that's when you indicate the type.
 
 #### RAII will be in full force
 
-
 All variables, whether they're function-local, class-members, even globals,
 must always be under some protection at all times. There must be the
 expectation at *absolutely any point* including *between those points*
@@ -110,6 +109,24 @@ or "unwind" from any point. Think in terms of stacks, not linear procedures.
 This means when a variable, or member (a **resource**) first comes into scope,
 i.e. it is declared or accessible (**acquired**), it must be **initialized**
 to a completely consistent state at that point.
+
+* Window shade analogy:
+>
+> Imagine pulling down a window shade to hide the sun. As you pull down, the canvas
+> unrolls from its spool at the top. Your goal is to hook the shade on to the nail
+> at the bottom of the window: that is a commitment. If you slip and let go, the
+> shade will roll back up into the spool at the top: that is an exception.
+>
+> What you can't do is prepare work on the way down which needs _any_ further pulling
+> to be in a consistent state and not leak. You might slip and let go at any time for
+> any reason. A `malloc()` on one line and a `free()` following it is an example of
+> requiring more pulling.
+>
+> Indeed slipping and letting go is an accident -- but the point is that *accidents
+> happen*. They're not always your fault, and many times are outside of your control.
+> This is a good approach for robust and durable code over long-lived large-scale
+> projects.
+>
 
 
 #### Exceptions will be used
