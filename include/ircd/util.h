@@ -237,6 +237,25 @@ struct unwind::exceptional
 };
 
 
+/// Simple assert for reentrancy; useful when static variables are in play.
+/// You have to place `entered` and give it the proper linkage you want.
+template<bool &entered>
+struct reentrance_assertion
+{
+	reentrance_assertion()
+	{
+		assert(!entered);
+		entered = true;
+	}
+
+	~reentrance_assertion()
+	{
+		assert(entered);
+		entered = false;
+	}
+};
+
+
 template<class T>
 using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
 
