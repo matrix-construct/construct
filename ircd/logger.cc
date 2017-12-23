@@ -310,6 +310,12 @@ ircd::log::vlog(const facility &fac,
 	});
 }
 
+namespace ircd::log
+{
+	// linkage for slog() reentrance assertion
+	bool entered;
+}
+
 void
 ircd::log::slog(const facility &fac,
                 const std::function<void (mutable_buffer &)> &closure)
@@ -318,22 +324,20 @@ noexcept
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
 		return;
 
-	// Have to be on the main thread to call slog(). If slog() yields for some
-	// reason it's a problem too. During the composition of this log message,
-	// if another log message is created from calls for normal reasons or from
-	// errors, that's not good either. We can only have one log slog() at a
-	// time for now...
+	// Have to be on the main thread to call slog().
 	assert_main_thread();
-	const ctx::critical_assertion ca;
-	static bool entered;
-	assert(!entered);
-	entered = true;
-	const unwind leaving([]
-	{
-		entered = false;
-	});
 
-	char buf[1024];
+	// During the composition of this log message, if another log message
+	// is created from calls for normal reasons or from errors, it's a
+	// problem too. We can only have one log slog() at a time for now...
+	const reentrance_assertion<entered> ra;
+
+	// If slog() yields for some reason that's not good either...
+	const ctx::critical_assertion ca;
+
+	// The principal buffer doesn't have to be static but courtesy of all the
+	// above effort we might as well take advantage...
+	static char buf[1024];
 	static const string_view terminator{"\r\n"};
 	const size_t max(sizeof(buf) - size(terminator));
 
@@ -341,7 +345,7 @@ noexcept
 	s.rdbuf()->pubsetbuf(buf, max);
 
 	//TODO: XXX: Add option toggle for smalldate()
-	char date[64];
+	static char date[64];
 	s << microtime(date)
 	  << ' '
 	  << (console_ansi[fac]? console_ansi[fac] : "")
