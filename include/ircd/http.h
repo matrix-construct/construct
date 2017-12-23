@@ -254,20 +254,23 @@ struct ircd::http::request
 	struct head;
 	struct content;
 
-	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
 	using header = line::header;
 
-	request(const string_view &host            = {},
+	// send
+	request(stream_buffer &,
+	        const string_view &host,
 	        const string_view &method          = "GET",
 	        const string_view &path            = "/",
 	        const string_view &query           = {},
-	        const string_view &content         = {},
-	        const write_closure &              = nullptr,
-	        const vector_view<const header> &  = {});
+	        const size_t &content_length       = 0,
+	        const string_view &content_type    = {},
+	        const vector_view<const header> &  = {},
+	        const bool &termination            = true);
 
+	// recv
 	request(parse::capstan &,
-	        content *const &          = nullptr,
+	        content *const &,
 	        const proffer &           = nullptr,
 	        const headers::closure &  = {});
 };
@@ -315,13 +318,18 @@ struct ircd::http::response
 	using proffer = std::function<void (const head &)>;
 	using header = line::header;
 
-	response(const code &,
-	         const string_view &content,
-	         const write_closure &,
-	         const vector_view<const header> & = {});
+	// send
+	response(stream_buffer &,
+	         const code &                       = code::OK,
+	         const size_t &content_length       = 0,
+	         const string_view &content_type    = {},
+	         const string_view &cache_control   = {},
+	         const vector_view<const header> &  = {},
+	         const bool &termination            = true);
 
+	// recv
 	response(parse::capstan &,
-	         content *const &          = nullptr,
+	         content *const &,
 	         const proffer &           = nullptr,
 	         const headers::closure &  = {});
 

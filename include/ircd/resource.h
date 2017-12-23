@@ -128,7 +128,7 @@ struct ircd::resource::request::object
 
 struct ircd::resource::response
 {
-	response(client &, const string_view &str, const string_view &ct = "text/plain; charset=utf8", const http::code & = http::OK);
+	response(client &, const string_view &str, const string_view &content_type, const http::code & = http::OK);
 	response(client &, const json::object &str, const http::code & = http::OK);
 	response(client &, const json::array &str, const http::code & = http::OK);
 	response(client &, const json::members & = {}, const http::code & = http::OK);

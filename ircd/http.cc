@@ -48,20 +48,25 @@ namespace ircd::http
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;
 
-	size_t printed_size(const vector_view<const line::header> &headers);
-	size_t print(char *const &buf, const size_t &max, const vector_view<const line::header> &headers);
-
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
+
+	size_t serialized(const vector_view<const line::header> &headers);
+	void writeline(stream_buffer &, const stream_buffer::closure &);
+	void writeline(stream_buffer &);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-    ircd::http::line::request,
-    ( decltype(ircd::http::line::request::method),    method   )
-    ( decltype(ircd::http::line::request::path),      path     )
-    ( decltype(ircd::http::line::request::query),     query    )
-    ( decltype(ircd::http::line::request::fragment),  fragment )
-    ( decltype(ircd::http::line::request::version),   version  )
+    ircd::http::query,
+    ( decltype(ircd::http::query::first),   first  )
+    ( decltype(ircd::http::query::second),  second )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::http::line::header,
+    ( decltype(ircd::http::line::header::first),   first  )
+    ( decltype(ircd::http::line::header::second),  second )
 )
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -74,16 +79,12 @@ BOOST_FUSION_ADAPT_STRUCT
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-    ircd::http::line::header,
-    ( decltype(ircd::http::line::header::first),   first  )
-    ( decltype(ircd::http::line::header::second),  second )
-)
-
-BOOST_FUSION_ADAPT_STRUCT
-(
-    ircd::http::query,
-    ( decltype(ircd::http::query::first),   first  )
-    ( decltype(ircd::http::query::second),  second )
+    ircd::http::line::request,
+    ( decltype(ircd::http::line::request::method),    method   )
+    ( decltype(ircd::http::line::request::path),      path     )
+    ( decltype(ircd::http::line::request::query),     query    )
+    ( decltype(ircd::http::line::request::fragment),  fragment )
+    ( decltype(ircd::http::line::request::version),   version  )
 )
 
 const decltype(ircd::http::reason) ircd::http::reason
@@ -236,35 +237,6 @@ struct ircd::http::parser
 }
 const ircd::http::parser;
 
-size_t
-ircd::http::print(char *const &buf,
-                  const size_t &max,
-                  const vector_view<const line::header> &headers)
-{
-	size_t ret(0);
-	for(auto it(std::begin(headers)); it != std::end(headers); ++it)
-	{
-		ret += fmt::snprintf(buf + ret, max - ret, "%s: %s",
-		                     it->first,
-		                     it->second);
-
-		ret += snprintf(buf + ret, max - ret, "\r\n");
-	}
-
-	return ret;
-}
-
-size_t
-ircd::http::printed_size(const vector_view<const line::header> &headers)
-{
-	return std::accumulate(std::begin(headers), std::end(headers), size_t(1), []
-	(auto &ret, const auto &pair)
-	{
-		//            key                 :   SP  value                CRLF
-		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
-	});
-}
-
 ircd::http::request::request(parse::capstan &pc,
                              content *const &c,
                              const proffer &proffer,
@@ -286,64 +258,77 @@ ircd::http::request::request(parse::capstan &pc,
 		*c = content{pc, h};
 }
 
-ircd::http::request::request(const string_view &host,
+/// Compose a request. This prints an HTTP head into the buffer. No real IO is
+/// done here. After composing into the buffer, the user can then drive the
+/// socket by sending the header and the content as specified.
+///
+/// If termination is false, no extra CRLF is printed to the buffer allowing
+/// additional headers not specified to be appended later.
+ircd::http::request::request(stream_buffer &out,
+                             const string_view &host,
                              const string_view &method,
                              const string_view &path,
                              const string_view &query,
-                             const string_view &content,
-                             const write_closure &closure,
-                             const vector_view<const header> &headers)
+                             const size_t &content_length,
+                             const string_view &content_type,
+                             const vector_view<const header> &headers,
+                             const bool &termination)
 {
-	assert(!method.empty());
-	assert(!path.empty());
-
-	static const auto &version
+	writeline(out, [&method, &path, &query](const mutable_buffer &out) -> size_t
 	{
-		"HTTP/1.1"
-	};
+		assert(!path.empty());
+		assert(!method.empty());
+		return fmt::sprintf
+		{
+			out, "%s /%s%s%s HTTP/1.1",
+		    method,
+		    path,
+		    query.empty()? "" : "?",
+		    query.empty()? "" : query
+		};
+	});
 
-	char request_line[2048]; const auto request_line_len
+	writeline(out, [&host](const mutable_buffer &out) -> size_t
 	{
-		snprintf(request_line, sizeof(request_line), "%s /%s%s%s %s\r\n",
-		         method.c_str(),
-		         path.c_str(),
-		         query.empty()? "" : "?",
-		         query.empty()? "" : query.c_str(),
-		         version)
-	};
+		assert(!host.empty());
+		return fmt::sprintf
+		{
+			out, "Host: %s", host
+		};
+	});
 
-	char host_line[128] {"Host: "}; const auto host_line_len
+	if(content_length)
+		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "Content-Type: %s", content_type?: "text/plain; charset=utf-8"
+			};
+		});
+
+	writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 	{
-		6 + snprintf(host_line + 6, std::min(sizeof(host_line) - 6, host.size() + 3), "%s\r\n",
-		             host.c_str())
-	};
+		return fmt::sprintf
+		{
+			out, "Content-Length: %zu", content_length
+		};
+	});
 
-	char content_len[64]; const auto content_len_len
+	for(const auto &header : headers)
 	{
-		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
-		         content.size())
-	};
+		assert(!header.first.empty());
+		assert(!header.second.empty());
+		writeline(out, [&header](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "%s: %s", header.first, header.second
+			};
+		});
+	}
 
-	char user_headers[printed_size(headers) + 2]; auto user_headers_len
-	{
-		print(user_headers, sizeof(user_headers), headers)
-	};
-
-	assert(user_headers_len + 3 == sizeof(user_headers));
-	user_headers[user_headers_len++] = '\r';
-	user_headers[user_headers_len++] = '\n';
-	//user_headers[user_headers_len++] = '\0';
-
-	const ilist<const_buffer> vector
-	{
-		{ request_line,      size_t(request_line_len)  },
-		{ host_line,         size_t(host_line_len)     },
-		{ content_len,       size_t(content_len_len)   },
-		{ user_headers,      size_t(user_headers_len)  },
-		{ content.data(),    content.size()            },
-	};
-
-	closure(vector);
+	if(termination)
+		writeline(out);
 }
 
 ircd::http::request::head::head(parse::capstan &pc,
@@ -394,84 +379,92 @@ ircd::http::response::response(parse::capstan &pc,
 		*c = content{pc, h};
 }
 
-ircd::http::response::response(const code &code,
-                               const string_view &content,
-                               const write_closure &closure,
-                               const vector_view<const header> &headers)
+ircd::http::response::response(stream_buffer &out,
+                               const code &code,
+                               const size_t &content_length,
+                               const string_view &content_type,
+                               const string_view &cache_control,
+                               const vector_view<const header> &headers,
+                               const bool &termination)
 {
-	char status_line[128]; const auto status_line_len
+	writeline(out, [&code](const mutable_buffer &out) -> size_t
 	{
-		snprintf(status_line, sizeof(status_line), "HTTP/1.1 %u %s\r\n",
-		         uint(code),
-		         status(code).data())
-	};
+		return fmt::sprintf
+		{
+			out, "HTTP/1.1 %u %s", uint(code), status(code)
+		};
+	});
 
-	char server_line[128]; const auto server_line_len
-	{
-		code >= 200 && code < 300?
-		snprintf(server_line, sizeof(server_line), "Server: %s (IRCd %s)\r\n",
-		         BRANDING_NAME,
-		         BRANDING_VERSION):
-		0
-	};
+	if(code >= 200 && code < 300)
+		writeline(out, [&code](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "Server: %s (IRCd %s)", BRANDING_NAME, BRANDING_VERSION
+			};
+		});
 
-	char date_line[128], date_buf[96]; const auto date_line_len
-	{
-		code < 400?
-		snprintf(data(date_line), size(date_line), "Date: %s\r\n",
-		         timef(date_buf, ircd::localtime).c_str()):
-		0
-	};
+	if(code < 400)
+		writeline(out, [](const mutable_buffer &out) -> size_t
+		{
+			char date_buf[96];
+			return fmt::sprintf
+			{
+				out, "Date: %s", timef(date_buf, ircd::localtime)
+			};
+		});
 
-	char cache_line[64]; const auto cache_line_len
-	{
-		//TODO: real cache control subsystem
-		(code >= 200 && code < 300) || (code >= 403 && code <= 405) || (code >= 300 && code < 400)?
-		snprintf(cache_line, sizeof(cache_line), "Cache-Control: %s\r\n",
-		         "no-cache"):
-		0
-	};
+	if((code >= 200 && code < 300) || (code >= 403 && code <= 405) || (code >= 300 && code < 400))
+		writeline(out, [&cache_control](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "Cache-Control: %s", cache_control?: "no-cache"
+			};
+		});
 
 	const bool has_transfer_encoding
 	{
 		std::any_of(std::begin(headers), std::end(headers), []
 		(const auto &header)
 		{
-			return header == "Transfer-Encoding";
+			return iequals(header.first, "transfer-encoding"s);
 		})
 	};
 
-	char content_len[64]; const auto content_len_len
-	{
-		code != NO_CONTENT && !has_transfer_encoding?
-		snprintf(content_len, sizeof(content_len), "Content-Length: %zu\r\n",
-		         content.size()):
-		0
-	};
+	if((content_length && code != NO_CONTENT) || has_transfer_encoding)
+		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "Content-Type: %s", content_type?: "text/plain; charset=utf-8"
+			};
+		});
 
-	const auto user_headers_bufsize
-	{
-		printed_size(headers)
-	};
+	if(code != NO_CONTENT && !has_transfer_encoding)
+		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "Content-Length: %zu", content_length
+			};
+		});
 
-	char user_headers[user_headers_bufsize]; const auto user_headers_len
+	for(const auto &header : headers)
 	{
-		print(user_headers, sizeof(user_headers), headers)
-	};
+		assert(!header.first.empty());
+		assert(!header.second.empty());
+		writeline(out, [&header](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "%s: %s", header.first, header.second
+			};
+		});
+	}
 
-	const ilist<const_buffer> iov
-	{
-		{ status_line,      size_t(status_line_len)     },
-		{ server_line,      size_t(server_line_len)     },
-		{ date_line,        size_t(date_line_len)       },
-		{ cache_line,       size_t(cache_line_len)      },
-		{ user_headers,     size_t(user_headers_len)    },
-		{ content_len,      size_t(content_len_len)     },
-		{ "\r\n",           2                           },
-		{ content.data(),   content.size()              },
-	};
-
-	closure(iov);
+	if(termination)
+		writeline(out);
 }
 
 ircd::http::response::chunked::chunked(const code &code,
@@ -491,10 +484,14 @@ ircd::http::response::chunked::chunked(const code &code,
 
 	std::copy(begin(user_headers), end(user_headers), headers + 1);
 
+	//TODO: bitrot
+	assert(0);
+/*
 	response
 	{
 		code, {}, closure, { headers, headers + num_headers }
 	};
+*/
 }
 
 ircd::http::response::chunked::~chunked()
@@ -849,13 +846,53 @@ ircd::http::parser::content_length(const string_view &str)
 	return ret;
 }
 
+/// Close over the user's closure to append a newline.
+void
+ircd::http::writeline(stream_buffer &write,
+                      const stream_buffer::closure &closure)
+{
+	// A new stream_buffer is implicit constructed out of the mutable_buffer
+	// otherwise presented to this closure as its write window.
+	write([&closure](stream_buffer write)
+	{
+		const auto newline{[](const mutable_buffer &out)
+		{
+			return copy(out, "\r\n"_sv);
+		}};
+
+		write(closure);
+		write(newline);
+		return write.consumed();
+	});
+}
+
+void
+ircd::http::writeline(stream_buffer &write)
+{
+	writeline(write, [](const mutable_buffer &out)
+	{
+		return 0;
+	});
+}
+
+size_t
+ircd::http::serialized(const vector_view<const line::header> &headers)
+{
+	return std::accumulate(std::begin(headers), std::end(headers), size_t{0}, []
+	(auto &ret, const auto &pair)
+	{
+		//            key                 :   SP  value                CRLF
+		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
+	});
+}
+
 ircd::http::error::error(const enum code &code,
                          std::string content)
 :ircd::error{generate_skip}
 ,code{code}
 ,content{std::move(content)}
 {
-	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).data());
+	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).c_str());
 }
 
 ircd::http::code

@@ -496,7 +496,7 @@ ircd::resource::response::response(client &client,
 }
 
 ircd::resource::response::response(client &client,
-                                   const string_view &str,
+                                   const string_view &content,
                                    const string_view &content_type,
                                    const http::code &code)
 {
@@ -507,19 +507,31 @@ ircd::resource::response::response(client &client,
 
 	char rtime[64]; const auto rtime_len
 	{
-		snprintf(rtime, sizeof(rtime), "%zdus",
-		         request_time)
+		snprintf(rtime, sizeof(rtime), "%zdus", request_time)
 	};
 
+	char head_buf[2048];
+	stream_buffer head{head_buf};
 	http::response
 	{
-		code, str, write_closure(client),
+		head,
+		code,
+		content.size(),
+		content_type,
+		string_view{}, // cache_control
 		{
-			{ "Content-Type", content_type },
 			{ "Access-Control-Allow-Origin", "*" }, //TODO: XXX
 			{ "X-IRCd-Request-Timer", string_view{rtime, size_t(rtime_len)} }
 		}
 	};
+
+	const ilist<const_buffer> vector
+	{
+		head.completed(),
+		content
+	};
+
+	write_closure(client)(vector);
 
 	log::debug("client[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length: %zu",
 	           string(remote(client)),
@@ -528,5 +540,5 @@ ircd::resource::response::response(client &client,
 	           request_time,
 	           (client.request_timer.at<microseconds>().count() - request_time),
 	           content_type,
-	           str.size());
+	           content.size());
 }

@@ -598,11 +598,10 @@ const
 		std::min(addl_headers.size(), size_t(64UL))
 	};
 
-	size_t headers{2 + addl_headers_size};
-	http::line::header header[headers + 1]
+	size_t headers{1};
+	http::line::header header[headers + addl_headers_size]
 	{
-		{ "User-Agent",    BRANDING_NAME " (IRCd " BRANDING_VERSION ")" },
-		{ "Content-Type",  "application/json"                           },
+		{ "User-Agent", BRANDING_NAME " (IRCd " BRANDING_VERSION ")" },
 	};
 
 	for(size_t i(0); i < addl_headers_size; ++i)
@@ -615,16 +614,32 @@ const
 			"Authorization",  generate_authorization(x_matrix)
 		};
 
+	static const auto content_type
+	{
+		"application/json; charset=utf-8"
+	};
+
+	const unique_buffer<mutable_buffer> head_buf{8192};
+	stream_buffer head{head_buf};
 	http::request
 	{
+		head,
 		destination,
 		method,
 		path,
 		query,
-		content,
-		write_closure(server),
+		content.size(),
+		content_type,
 		{ header, headers }
 	};
+
+	const ilist<const_buffer> vector
+	{
+		head.completed(),
+		content
+	};
+
+	write_closure(server)(vector);
 }
 
 namespace ircd::m::name
