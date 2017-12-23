@@ -529,8 +529,10 @@ template<template<class>
 std::ostream &
 ircd::buffer::operator<<(std::ostream &s, const buffers<T> &b)
 {
+	using it = typename T::iterator;
+
 	std::for_each(std::begin(b), std::end(b), [&s]
-	(const T &b)
+	(const buffer<it> &b)
 	{
 		s << b;
 	});
@@ -569,8 +571,10 @@ size_t
 ircd::buffer::copy(const mutable_raw_buffer &dest,
                    const buffers<T> &b)
 {
+	using it = typename T::iterator;
+
 	size_t ret(0);
-	for(const T &b : b)
+	for(const buffer<it> &b : b)
 		ret += copy(data(dest) + ret, size(dest) - ret, b);
 
 	return ret;
@@ -582,8 +586,10 @@ template<template<class>
 size_t
 ircd::buffer::size(const buffers<T> &b)
 {
+	using it = typename T::iterator;
+
 	return std::accumulate(std::begin(b), std::end(b), size_t(0), []
-	(auto ret, const T &b)
+	(auto ret, const buffer<it> &b)
 	{
 		return ret += size(b);
 	});
