@@ -342,17 +342,5 @@ ircd::ctx::shared_mutex::try_lock()
 inline void
 ircd::ctx::shared_mutex::release()
 {
-	ctx *next; do
-	{
-		if(!q.empty())
-		{
-			next = q.front();
-			q.pop_front();
-		}
-		else next = nullptr;
-	}
-	while(next == &cur());
-
-	if(next)
-		yield(*next);
+	release_sequence(q);
 }

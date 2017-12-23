@@ -25,6 +25,8 @@
 namespace ircd::ctx
 {
 	class mutex;
+
+	template<class queue> void release_sequence(queue &);
 }
 
 //
@@ -67,22 +69,8 @@ inline void
 ircd::ctx::mutex::unlock()
 {
 	assert(m);
-
-	ctx *next; do
-	{
-		if(!q.empty())
-		{
-			next = q.front();
-			q.pop_front();
-		}
-		else next = nullptr;
-	}
-	while(next == &cur());
-
 	m = false;
-
-	if(next)
-		yield(*next);
+	release_sequence(q);
 }
 
 inline void
@@ -133,4 +121,23 @@ ircd::ctx::mutex::try_lock()
 
 	m = true;
 	return true;
+}
+
+template<class queue>
+void
+ircd::ctx::release_sequence(queue &q)
+{
+	ctx *next; do
+	{
+		if(!q.empty())
+		{
+			next = q.front();
+			q.pop_front();
+		}
+		else next = nullptr;
+	}
+	while(next == current);
+
+	if(next)
+		yield(*next);
 }
