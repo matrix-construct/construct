@@ -142,6 +142,10 @@ namespace std
 }
 #endif
 
+// OpenSSL
+// Additional forward declarations in the extern namespace are introduced
+// by ircd/openssl.h
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // libircd API
@@ -193,7 +197,6 @@ namespace ircd
 #include "date.h"
 #include "timer.h"
 #include "logger.h"
-#include "openssl.h"
 #include "nacl.h"
 #include "rand.h"
 #include "hash.h"
@@ -211,6 +214,7 @@ namespace ircd
 #include "parse.h"
 #include "rfc1459.h"
 #include "json/json.h"
+#include "openssl.h"
 #include "http.h"
 #include "fmt.h"
 #include "fs.h"
