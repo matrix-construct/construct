@@ -129,9 +129,9 @@ ircd::write_closure(client &client)
 	// returns a function that can be called to send an iovector of data to a client
 	return [&client](const ilist<const_buffer> &iov)
 	{
-		//std::cout << "<<<<" << std::endl;
+		//std::cout << "<<<< " << size(iov) << std::endl;
 		//std::cout << iov << std::endl;
-		//std::cout << "----" << std::endl;
+		//std::cout << "---- " << std::endl;
 		const auto written
 		{
 			write(*client.sock, iov)
@@ -147,9 +147,9 @@ ircd::read_closure(client &client)
 	{
 		try
 		{
-			const char *const got(start);
+			char *const got(start);
 			read(client, start, stop);
-			//std::cout << ">>>>" << std::endl;
+			//std::cout << ">>>> " << std::distance(got, start) << std::endl;
 			//std::cout << string_view{got, start} << std::endl;
 			//std::cout << "----" << std::endl;
 		}

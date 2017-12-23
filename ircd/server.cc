@@ -51,7 +51,7 @@ ircd::write_closure(server &server)
 	// returns a function that can be called to send an iovector of data to a server
 	return [&server](const ilist<const_buffer> &iov)
 	{
-		//std::cout << "<<<<" << std::endl;
+		//std::cout << "<<<< " << size(iov) << std::endl;
 		//std::cout << iov << std::endl;
 		//std::cout << "----" << std::endl;
 		write(server, iov);
@@ -66,7 +66,7 @@ ircd::read_closure(server &server)
 	{
 		char *const s(start);
 		read(server, start, stop);
-		//std::cout << ">>>>" << std::endl;
+		//std::cout << ">>>> " << std::distance(s, start) << std::endl;
 		//std::cout << string_view{s, start} << std::endl;
 		//std::cout << "----" << std::endl;
     };
