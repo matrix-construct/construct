@@ -405,7 +405,7 @@ size(const std::array<char, SIZE> &buf)
 }
 
 template<class T>
-constexpr typename std::enable_if<std::is_pod<T>::value, size_t>::type
+constexpr typename std::enable_if<std::is_integral<T>::value, size_t>::type
 size(const T &val)
 {
 	return sizeof(T);
