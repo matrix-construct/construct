@@ -4,35 +4,38 @@
 
 #### Internet Relay Chat daemon: *Matrix Construct*
 
-IRCd is a free and open source server which facilitates real-time communication over the
+IRCd was a free and open source server which facilitated real-time communication over the
 internet. It was started by Jarkko Oikarinen in 1988 at the University of Oulu and [its
 derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
 underpinned the major IRC networks for decades.
 
-In 2014 a new approach was proposed to reinvigorate real-time communication in lieu of growing
-proprietary competition from opaque cloud services. This is known as the
-[*Matrix Protocol*](https://matrix.org/docs/spec/): a superset of IRC that evolves it into a federation
-of networks and provides a means for interoperability with the modern 21st century internet messaging
-ecosystem.
+Due to its age and stagnation since the mid-2000's, a growing number of proprietary cloud services
+are now filling the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
+real-time communication for [free & open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software):
+a **federation of networks** known as *the matrix*.
 
-**IRCd has been rewritten to implement the _Matrix Protocol_** using some of the latest techniques
-available for modern C++ free software. Just like the first iteration of IRCd, the latest Construct
-employs technologies in vogue for this era which provide a fulfilling experience for users and a
-powerfully extensible environment for developers.
+**IRCd has been rewritten to implement the [Matrix Protocol](https://matrix.org/docs/spec/)**.
 
-Construct is designed to be fast and highly scalable, and to be community
-developed by volunteer contributors over the internet. This mission strives to make
-the software easy to understand, modify, audit, and extend. It remains true to its
-roots with its modular design and having minimal requirements. Even though almost all
-of the old code has been rewritten, the same spirit and _philosophy of the
-predecessor_ is still obvious throughout.
+This is the opportunity to take back control of your communication and relegate the
+opaque cloud services to being just another provider to the federation of networks.
+Though not syntactically backwards-compatible with the legacy IRC protocol, it is easily
+translated as a superset. Similar to the legacy IRC protocol's origins, it wisely leverages
+technologies in vogue for its day to aid the virility of implementations. A vibrant and
+growing ecosystem [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
-This is the first implementation of a Matrix homeserver written in C++. The roadmap
-for service is as follows:
+This is the Construct. It is designed to be fast and highly scalable, and to be community
+developed by volunteer contributors over the internet. This mission strives to make the
+software easy to understand, modify, audit, and extend. It remains true to its roots with
+its modular design and having minimal requirements. Even though all of the old code has
+been rewritten, the same spirit, philosophy, and _respect for its predecessors_ is still
+obvious throughout.
 
-- [✓] Phase One: Matrix clients using HTTP.
-- Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
-- Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
+The Construct is the first implementation of a Matrix homeserver written in C++. The
+roadmap for service is as follows:
+
+- [✓] Phase One: Matrix clients using HTTPS.
+- [ ] Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
+- [ ] Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
 
 
 ## Installation
@@ -44,16 +47,36 @@ cluster operating in synchrony over a network.
 
 #### Dependencies
 
-**Boost** (1.61 or later) - We have replaced libratbox with the well known and actively
-developed Boost libraries. These are included as a submodule in this repository.
+- **Boost** (1.61 or later)
+Replacing libratbox with the rich and actively developed libraries.
 
-**RocksDB** (based on LevelDB) - We replace sqlite3 with a lightweight and embedded database
-and have furthered the mission of eliminating the need for external "IRC services"
+- **RocksDB** (based on LevelDB):
+A lightweight and embedded database superseding sqlite3.
 
-*Other dependencies:* **sodium** (NaCl crypto), **OpenSSL**, **zlib**, **snappy** (for rocksdb)
+- **Sodium** (NaCl crypto):
+Provides ed25519 required for the Matrix Federation.
 
-*Build dependencies:* **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
+- **OpenSSL** (libssl/libcrypto):
+Provides HTTPS TLS / X.509 / etc.
+
+- **snappy** (libsnappy compression):
+A dependency of RocksDB.
+
+*Additional dependencies:*
+**zlib**, **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
+
+*Upcoming dependencies*:
+
+- **libmozjs** (Optional JavaScript embedding):
+The matrix room is directly represented as a javascript object.
+Usage hint: `m.room.script` Have fun :)
+
+- **libpbc** (Pairing Based Cryptography):
+Heads up! Heavy items are falling from the ivory tower!
+
+- **libgmp** (Custom Maths):
+Experimental Post-Quantum Ideal Lattice Cryptography.
 
 *Notes*:
 - libircd requires a platform capable of loading dynamic shared objects at runtime.
@@ -179,9 +202,9 @@ of synchronous programming where control flow and data are easy to follow.
 ✝ If there are certain cases where we don't want a stack to linger which may
 jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
 
-##### libircd innovates with formal grammars
+##### libircd leverages formal grammars
 
-We leverage the `boost::spirit` system of parsing and printing through formal grammars,
+We utilize the `boost::spirit` system of parsing and printing through formal grammars,
 rather than writing our own parsers manually. In addition, we build several tools
 on top of such formal devices like a type-safe format string library acting as a
 drop-in for `::sprintf()`, but accepting objects like `std::string` without `.c_str()`
