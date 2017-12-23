@@ -77,7 +77,6 @@ namespace ircd::log
 	*/
 
 	static void open(const facility &fac);
-	static void slog(const facility &fac, const std::function<void (mutable_buffer &)> &closure) noexcept;
 	static void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
 }
 
@@ -247,7 +246,7 @@ ircd::log::mark(const facility &fac,
 namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
-	static mutable_buffer compose(mutable_buffer &out, const string_view &buf, const string_view &name);
+	static void slog(const facility &fac, const string_view &name, const stream_buffer::closure &) noexcept;
 }
 
 /// ircd::log is not thread-safe. This internal function is called when the
@@ -269,9 +268,9 @@ ircd::log::vlog_threadsafe(const facility &fac,
 	// The reference to name has to be safely maintained
 	ircd::post([fac, str(std::move(str)), name(std::move(name))]
 	{
-		slog(fac, [&str, &name](mutable_buffer &out)
+		slog(fac, name, [&str](const mutable_buffer &out) -> size_t
 		{
-			compose(out, str, name);
+			return copy(out, string_view{str});
 		});
 	});
 }
@@ -297,16 +296,9 @@ ircd::log::vlog(const facility &fac,
 		return;
 	}
 
-	char buf[1024];
-	const auto len
+	slog(fac, name, [&fmt, &ap](const mutable_buffer &out) -> size_t
 	{
-		fmt::vsprintf(buf, fmt, ap)
-	};
-
-	const string_view msg{buf, size_t(len)};
-	slog(fac, [&msg, &name](mutable_buffer &out)
-	{
-		compose(out, msg, name);
+		return fmt::vsprintf(out, fmt, ap);
 	});
 }
 
@@ -318,7 +310,8 @@ namespace ircd::log
 
 void
 ircd::log::slog(const facility &fac,
-                const std::function<void (mutable_buffer &)> &closure)
+                const string_view &name,
+                const stream_buffer::closure &closure)
 noexcept
 {
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
@@ -337,51 +330,52 @@ noexcept
 
 	// The principal buffer doesn't have to be static but courtesy of all the
 	// above effort we might as well take advantage...
-	static char buf[1024];
-	static const string_view terminator{"\r\n"};
-	const size_t max(sizeof(buf) - size(terminator));
+	static char buf[1024], date[64];
 
+	// Maximum size of log line leaving 2 characters for \r\n
+	const size_t max(sizeof(buf) - 2);
+
+	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
 	s.rdbuf()->pubsetbuf(buf, max);
-
-	//TODO: XXX: Add option toggle for smalldate()
-	static char date[64];
 	s << microtime(date)
 	  << ' '
 	  << (console_ansi[fac]? console_ansi[fac] : "")
 	  << std::setw(8)
 	  << std::right
 	  << reflect(fac)
-	  << (console_ansi[fac]? "\033[0m " : " ");
+	  << (console_ansi[fac]? "\033[0m " : " ")
+	  << std::setw(9)
+	  << std::right
+	  << name
+	  << ' '
+	  << std::setw(8)
+	  << trunc(ctx::name(), 8)
+	  << ' '
+	  << std::setw(6)
+	  << std::right
+	  << ctx::id()
+	  << " :";
 
-	// We setup a buffer starting directly after the prefix and pass it
-	// to the user's closure. `mb` is used as a stream buffer here: as it
-	// is consumed its data pointer is advanced and thus its size decreases.
-	const size_t consumed{std::min(size_t(s.tellp()), max)};
-	mutable_buffer mb{buf + consumed, max - consumed};
-	assert(!full(mb));
-	closure(mb);
+	// Compose the user message after prefix
+	const size_t pos(s.tellp());
+	const mutable_buffer userspace{buf + pos, max - pos};
+	stream_buffer sb{userspace};
+	sb(closure);
 
-	// In all of the above, some extra space for the newline terminator
-	// was left at the end; we shift the buffer window past where `mb`
-	// stopped and append it here.
-	mb = mutable_buffer{data(mb), size(terminator)};
-	assert(!full(mb));
-	consume(mb, copy(mb, terminator));
+	// Compose the newline after user message.
+	size_t len{pos + sb.consumed()};
+	assert(len + 2 <= sizeof(buf));
+	buf[len++] = '\r';
+	buf[len++] = '\n';
 
-	// The final output view starts at the very beginning and its size is
-	// determined by where the `mb` data pointer currently points.
-	const size_t outsz(std::distance(buf, data(mb)));
-	assert(outsz <= sizeof(buf));
-	const mutable_buffer out
-	{
-		buf, outsz
-	};
-
-	const auto write{[&out](std::ostream &s)
+	// Closure to copy the message to various places
+	assert(len <= sizeof(buf));
+	const string_view msg{buf, len};
+	const auto write{[&msg](std::ostream &s)
 	{
 		check(s);
-		s.write(data(out), size(out));
+		s.write(data(msg), size(msg));
 	}};
 
 	// copy to std::cerr
@@ -408,38 +402,6 @@ noexcept
 		if(file_flush[fac])
 			std::flush(file[fac]);
 	}
-}
-
-ircd::mutable_buffer
-ircd::log::compose(mutable_buffer &out,
-                   const string_view &buf,
-                   const string_view &name)
-{
-	std::stringstream s;
-	s.rdbuf()->pubsetbuf(data(out), size(out));
-	s << std::setw(9)
-	  << std::right
-	  << name
-	  << ' '
-	  << std::setw(8)
-	  << trunc(ctx::name(), 8)
-	  << ' '
-	  << std::setw(6)
-	  << std::right
-	  << ctx::id()
-	  << " :"
-	  << buf;
-
-	const size_t tell(s.tellp());
-	const size_t retsz{std::min(tell, size(out))};
-	const mutable_buffer ret
-	{
-		data(out), retsz
-	};
-
-	assert(retsz <= size(out));
-	consume(out, retsz);
-	return ret;
 }
 
 void
