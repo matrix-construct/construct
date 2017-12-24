@@ -418,6 +418,12 @@ struct ircd::buffer::stream_buffer
 		return { base.begin(), base.begin() + consumed() };
 	}
 
+	/// Convenience conversion to get the completed portion
+	explicit operator const_buffer() const
+	{
+		return completed();
+	}
+
 	/// Convenience closure presenting the writable window and advancing the
 	/// window with a consume() for the bytes written in the closure.
 	using closure = std::function<size_t (const mutable_buffer &)>;
