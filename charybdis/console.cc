@@ -223,12 +223,9 @@ try
 catch(const std::exception &e)
 {
 	std::cout << std::endl;
-	std::cout << "***\n";
-	std::cout << "*** The console session has ended: " << e.what() << "\n";
 	std::cout << "***" << std::endl;
-
-	std::cout << std::flush;
-	std::cout.clear();
+	std::cout << "*** The console session has ended: " << e.what() << std::endl;
+	std::cout << "***" << std::endl;
 
 	ircd::log::debug("The console session has ended: %s", e.what());
 }
