@@ -32,6 +32,7 @@ namespace ircd::http
 	struct error;
 	struct line;
 	struct query;
+	struct header;
 	struct headers;
 	struct content;
 	struct request;
@@ -39,6 +40,14 @@ namespace ircd::http
 
 	string_view status(const enum code &);
 	enum code status(const string_view &);
+
+	void writeline(stream_buffer &);
+	void writeline(stream_buffer &, const stream_buffer::closure &);
+
+	void write(stream_buffer &out, const header &);
+	void write(stream_buffer &out, const vector_view<const header> &);
+	size_t serialized(const vector_view<const header> &);
+	std::string strung(const vector_view<const header> &);
 }
 
 //
@@ -92,8 +101,10 @@ struct ircd::http::error
 {
 	enum code code;
 	std::string content;
+	std::string headers;
 
-	error(const enum code &, std::string content = {});
+	error(const enum code &, std::string content = {}, std::string headers = {});
+	error(const enum code &, std::string content, const vector_view<const header> &);
 };
 
 /// Represents a single \r\n delimited line used in HTTP.
@@ -108,16 +119,10 @@ struct ircd::http::line
 {
 	struct request;
 	struct response;
-	struct header;
 
 	using string_view::string_view;
 	line(parse::capstan &);
 };
-
-namespace ircd::http
-{
-	using header = line::header;
-}
 
 /// Represents a 'request line' or the first line a client sends to a server.
 ///
@@ -199,7 +204,7 @@ struct ircd::http::query::string
 /// components of the std::pair. Those receiving headers can pass the ctor an
 /// ircd::http::line which will construct the pair using the formal grammars.
 ///
-struct ircd::http::line::header
+struct ircd::http::header
 :std::pair<string_view, string_view>
 {
 	bool operator<(const string_view &s) const   { return iless(first, s);                         }
@@ -219,7 +224,6 @@ struct ircd::http::line::header
 struct ircd::http::headers
 :string_view
 {
-	using header = line::header;
 	using closure = std::function<void (const header &)>;
 
 	headers(parse::capstan &, const closure & = {});
@@ -255,7 +259,6 @@ struct ircd::http::request
 	struct content;
 
 	using proffer = std::function<void (const head &)>;
-	using header = line::header;
 
 	// send
 	request(stream_buffer &,
@@ -316,14 +319,13 @@ struct ircd::http::response
 
 	using write_closure = std::function<void (const ilist<const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
-	using header = line::header;
 
 	// send
 	response(stream_buffer &,
 	         const code &                       = code::OK,
 	         const size_t &content_length       = 0,
 	         const string_view &content_type    = {},
-	         const string_view &cache_control   = {},
+	         const string_view &headers         = {},
 	         const vector_view<const header> &  = {},
 	         const bool &termination            = true);
 

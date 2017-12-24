@@ -62,15 +62,9 @@ try
 }
 catch(const http::error &e)
 {
-	log::debug("client[%s] HTTP %s in %ld$us %s",
-	           string(remote(client)),
-	           e.what(),
-	           client.request_timer.at<microseconds>().count(),
-	           e.content);
-
 	resource::response
 	{
-		client, e.content, "text/html; charset=utf8", e.code
+		client, e.content, "text/html; charset=utf8", e.code, e.headers
 	};
 
 	switch(e.code)
@@ -593,16 +587,41 @@ ircd::resource::response::response(client &client,
 ircd::resource::response::response(client &client,
                                    const string_view &content,
                                    const string_view &content_type,
-                                   const http::code &code)
+                                   const http::code &code,
+                                   const vector_view<const http::header> &headers)
+{
+	char buf[serialized(headers)];
+	const mutable_buffer mb{buf, sizeof(buf)};
+	stream_buffer sb{mb};
+	write(sb, headers);
+	response
+	{
+		client, content, content_type, code, sb.completed()
+	};
+}
+
+ircd::resource::response::response(client &client,
+                                   const string_view &content,
+                                   const string_view &content_type,
+                                   const http::code &code,
+                                   const string_view &headers)
 {
 	const auto request_time
 	{
 		client.request_timer.at<microseconds>().count()
 	};
 
-	char rtime[64]; const auto rtime_len
+	const fmt::bsprintf<64> rtime
 	{
-		snprintf(rtime, sizeof(rtime), "%zdus", request_time)
+		"%zdus", request_time
+	};
+
+	const string_view cache_control
+	{
+		(code >= 200 && code < 300) ||
+		(code >= 403 && code <= 405) ||
+		(code >= 300 && code < 400)? "no-cache":
+		""
 	};
 
 	char head_buf[2048];
@@ -613,11 +632,12 @@ ircd::resource::response::response(client &client,
 		code,
 		content.size(),
 		content_type,
-		string_view{}, // cache_control
+		headers,
 		{
-			{ "Access-Control-Allow-Origin", "*" }, //TODO: XXX
-			{ "X-IRCd-Request-Timer", string_view{rtime, size_t(rtime_len)} }
-		}
+			{ "Access-Control-Allow-Origin",   "*"            }, //TODO: XXX
+			{ "Cache-Control",                 cache_control  },
+			{ "X-IRCd-Request-Timer",          rtime,         },
+		},
 	};
 
 	const ilist<const_buffer> vector

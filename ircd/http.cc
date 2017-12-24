@@ -49,10 +49,6 @@ namespace ircd::http
 	struct parser extern const parser;
 
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
-
-	size_t serialized(const vector_view<const line::header> &headers);
-	void writeline(stream_buffer &, const stream_buffer::closure &);
-	void writeline(stream_buffer &);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -64,9 +60,9 @@ BOOST_FUSION_ADAPT_STRUCT
 
 BOOST_FUSION_ADAPT_STRUCT
 (
-    ircd::http::line::header,
-    ( decltype(ircd::http::line::header::first),   first  )
-    ( decltype(ircd::http::line::header::second),  second )
+    ircd::http::header,
+    ( decltype(ircd::http::header::first),   first  )
+    ( decltype(ircd::http::header::second),  second )
 )
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -164,7 +160,7 @@ struct ircd::http::grammar
 
 	rule<string_view> head_key         { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
 	rule<string_view> head_val         { string                                      ,"head value" };
-	rule<line::header> header          { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
+	rule<http::header> header          { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
 	rule<unused_type> headers          { (header % (*ws >> CRLF))                       ,"headers" };
 
 	rule<> query_terminator            { equal | question | ampersand | pound  ,"query terminator" };
@@ -314,18 +310,7 @@ ircd::http::request::request(stream_buffer &out,
 		};
 	});
 
-	for(const auto &header : headers)
-	{
-		assert(!header.first.empty());
-		assert(!header.second.empty());
-		writeline(out, [&header](const mutable_buffer &out) -> size_t
-		{
-			return fmt::sprintf
-			{
-				out, "%s: %s", header.first, header.second
-			};
-		});
-	}
+	write(out, headers);
 
 	if(termination)
 		writeline(out);
@@ -383,8 +368,8 @@ ircd::http::response::response(stream_buffer &out,
                                const code &code,
                                const size_t &content_length,
                                const string_view &content_type,
-                               const string_view &cache_control,
-                               const vector_view<const header> &headers,
+                               const string_view &headers_string,
+                               const vector_view<const header> &headers_vector,
                                const bool &termination)
 {
 	writeline(out, [&code](const mutable_buffer &out) -> size_t
@@ -414,25 +399,7 @@ ircd::http::response::response(stream_buffer &out,
 			};
 		});
 
-	if((code >= 200 && code < 300) || (code >= 403 && code <= 405) || (code >= 300 && code < 400))
-		writeline(out, [&cache_control](const mutable_buffer &out) -> size_t
-		{
-			return fmt::sprintf
-			{
-				out, "Cache-Control: %s", cache_control?: "no-cache"
-			};
-		});
-
-	const bool has_transfer_encoding
-	{
-		std::any_of(std::begin(headers), std::end(headers), []
-		(const auto &header)
-		{
-			return iequals(header.first, "transfer-encoding"s);
-		})
-	};
-
-	if((content_length && code != NO_CONTENT) || has_transfer_encoding)
+	if(code != NO_CONTENT && content_type && content_length)
 		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -441,7 +408,7 @@ ircd::http::response::response(stream_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && !has_transfer_encoding)
+	if(code != NO_CONTENT && content_length != std::numeric_limits<size_t>::max())
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -450,18 +417,14 @@ ircd::http::response::response(stream_buffer &out,
 			};
 		});
 
-	for(const auto &header : headers)
-	{
-		assert(!header.first.empty());
-		assert(!header.second.empty());
-		writeline(out, [&header](const mutable_buffer &out) -> size_t
+	if(!headers_string.empty())
+		out([&headers_string](const mutable_buffer &out)
 		{
-			return fmt::sprintf
-			{
-				out, "%s: %s", header.first, header.second
-			};
+			return copy(out, headers_string);
 		});
-	}
+
+	if(!headers_vector.empty())
+		write(out, headers_vector);
 
 	if(termination)
 		writeline(out);
@@ -477,7 +440,7 @@ ircd::http::response::chunked::chunked(const code &code,
 		user_headers.size() + 1
 	};
 
-	line::header headers[num_headers]
+	header headers[num_headers]
 	{
 		{ "Transfer-Encoding", "chunked" }
 	};
@@ -647,9 +610,9 @@ ircd::http::headers::headers(parse::capstan &pc,
 :string_view{[&pc, &c]
 () -> string_view
 {
-	line::header h{pc};
+	header h{pc};
 	const char *const &started{h.first.data()}, *stopped{started};
-	for(; !h.first.empty(); stopped = h.second.data() + h.second.size(), h = line::header{pc})
+	for(; !h.first.empty(); stopped = h.second.data() + h.second.size(), h = header{pc})
 		if(c)
 			c(h);
 
@@ -658,7 +621,7 @@ ircd::http::headers::headers(parse::capstan &pc,
 {
 }
 
-ircd::http::line::header::header(const line &line)
+ircd::http::header::header(const line &line)
 try
 {
 	static const auto grammar
@@ -846,6 +809,65 @@ ircd::http::parser::content_length(const string_view &str)
 	return ret;
 }
 
+std::string
+ircd::http::strung(const vector_view<const header> &headers)
+{
+	std::string ret(serialized(headers), char{});
+	stream_buffer out{ret};
+	write(out, headers);
+	assert(out.consumed() <= ret.size());
+	ret.resize(out.consumed());
+	assert(out.consumed() == ret.size());
+	return ret;
+}
+
+/// Indicates the buffer size required to write these headers. This size
+/// may include room for a terminating null character which may be written
+/// by write(headers). Only use write(headers) to know the actually written
+/// string size (without null) not this.
+size_t
+ircd::http::serialized(const vector_view<const header> &headers)
+{
+	// Because the write(header) functions use fmt::sprintf we have to
+	// indicate an extra space for a null string terminator to not overlof
+	static const size_t initial{1};
+
+	return std::accumulate(std::begin(headers), std::end(headers), initial, []
+	(auto &ret, const auto &pair)
+	{
+		//            key                 :   SP  value                CRLF
+		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
+	});
+}
+
+void
+ircd::http::write(stream_buffer &out,
+                  const vector_view<const header> &headers)
+{
+	for(const auto &header : headers)
+		write(out, header);
+}
+
+void
+ircd::http::write(stream_buffer &out,
+                  const header &header)
+{
+	if(header.second.empty())
+		return;
+
+	assert(!header.first.empty());
+	if(unlikely(header.first.empty()))
+		return;
+
+	writeline(out, [&header](const mutable_buffer &out) -> size_t
+	{
+		return fmt::sprintf
+		{
+			out, "%s: %s", header.first, header.second
+		};
+	});
+}
+
 /// Close over the user's closure to append a newline.
 void
 ircd::http::writeline(stream_buffer &write,
@@ -875,22 +897,23 @@ ircd::http::writeline(stream_buffer &write)
 	});
 }
 
-size_t
-ircd::http::serialized(const vector_view<const line::header> &headers)
+ircd::http::error::error(const enum code &code,
+                         std::string content,
+                         const vector_view<const header> &headers)
+:error
 {
-	return std::accumulate(std::begin(headers), std::end(headers), size_t{0}, []
-	(auto &ret, const auto &pair)
-	{
-		//            key                 :   SP  value                CRLF
-		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
-	});
+	code, std::move(content), strung(headers)
+}
+{
 }
 
 ircd::http::error::error(const enum code &code,
-                         std::string content)
+                         std::string content,
+                         std::string headers)
 :ircd::error{generate_skip}
 ,code{code}
 ,content{std::move(content)}
+,headers{std::move(headers)}
 {
 	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).c_str());
 }
