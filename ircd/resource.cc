@@ -366,10 +366,25 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	//TODO: This will have to respond with an Accept header listing methods.
+	size_t len(0);
+	char buf[128]; buf[0] = '\0';
+	auto it(begin(methods));
+	if(it != end(methods))
+	{
+		len = strlcat(buf, it->first);
+		for(++it; it != end(methods); ++it)
+		{
+			len = strlcat(buf, " ");
+			len = strlcat(buf, it->first);
+		}
+	}
+
 	throw http::error
 	{
-		http::METHOD_NOT_ALLOWED
+		http::METHOD_NOT_ALLOWED, {},
+		{
+			{ "Allow", string_view{buf, len} }
+		}
 	};
 }
 
