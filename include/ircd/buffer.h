@@ -90,7 +90,6 @@ namespace ircd::buffer
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> it copy(it &dest, const it &stop, const const_raw_buffer &);
-	template<class it> size_t copy(const it &dest, const size_t &max, const const_raw_buffer &buffer);
 	size_t copy(const mutable_raw_buffer &dst, const const_raw_buffer &src);
 	size_t reverse(const mutable_raw_buffer &dst, const const_raw_buffer &src);
 	void reverse(const mutable_raw_buffer &buf);
@@ -633,26 +632,6 @@ ircd::buffer::copy(const mutable_raw_buffer &dst,
 	copy(e, end(dst), src);
 	assert(std::distance(begin(dst), e) >= 0);
 	return std::distance(begin(dst), e);
-}
-
-template<class it>
-size_t
-ircd::buffer::copy(const it &dest,
-                   const size_t &max,
-                   const const_raw_buffer &src)
-{
-	if(!max)
-		return 0;
-
-	auto start{dest};
-	const auto stop{dest + max - 1};
-	assert(stop >= start);
-	copy<it>(start, stop, src);
-	assert(start <= stop);
-	assert(start < dest + max);
-	*start = '\0';
-	assert(std::distance(dest, start) >= 1);
-	return std::distance(dest, start);
 }
 
 template<class it>
