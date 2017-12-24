@@ -57,9 +57,9 @@ class ircd::ctx::promise
 	void reset();
 
 	promise();
-	promise(promise &&o) noexcept;
+	promise(promise &&o) noexcept = default;
 	promise(const promise &) = delete;
-	promise &operator=(promise &&o) noexcept;
+	promise &operator=(promise &&o) noexcept = default;
 	promise &operator=(const promise &) = delete;
 	~promise() noexcept;
 };
@@ -84,7 +84,9 @@ class ircd::ctx::promise<void>
 	void reset();
 
 	promise();
+	promise(promise &&o) noexcept = default;
 	promise(const promise &) = delete;
+	promise &operator=(promise &&) noexcept = default;
 	promise &operator=(const promise &) = delete;
 	~promise() noexcept;
 };
@@ -99,22 +101,6 @@ template<class T>
 ircd::ctx::promise<T>::promise()
 :st{std::make_shared<shared_state<T>>()}
 {
-}
-
-template<class T>
-ircd::ctx::promise<T>::promise(promise<T> &&o)
-noexcept
-:st{std::move(o.st)}
-{
-}
-
-template<class T>
-ircd::ctx::promise<T> &
-ircd::ctx::promise<T>::operator=(promise<T> &&o)
-noexcept
-{
-	st = std::move(o.st);
-	return *this;
 }
 
 inline
