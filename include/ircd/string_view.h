@@ -273,6 +273,9 @@ ircd::data(const string_view &str)
 	return str.data();
 }
 
+/// ctype test for a string_view. Returns the character position where the
+/// test fails. Returns -1 on success. The test is a function specified in
+/// the template simply as `ctype<std::isprint>(string_view{"hi"});`
 template<int (&test)(int)>
 auto
 ircd::ctype(const string_view &s)
