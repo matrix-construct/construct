@@ -21,14 +21,104 @@
 
 #include <ircd/m/m.h>
 
-namespace ircd {
+namespace ircd
+{
+	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
+}
 
 IRCD_INIT_PRIORITY(STD_CONTAINER)
-decltype(resource::resources)
-resource::resources
+decltype(ircd::resource::resources)
+ircd::resource::resources
 {};
 
-} // namespace ircd
+/// Handle a single request within the client main() loop.
+///
+/// This function returns false if the main() loop should exit
+/// and thus disconnect the client. It should return true in most
+/// cases even for lightly erroneous requests that won't affect
+/// the next requests on the tape.
+///
+/// This function is timed. The timeout will prevent a client from
+/// sending a partial request and leave us waiting for the rest.
+/// As of right now this timeout extends to our handling of the
+/// request too.
+bool
+ircd::handle_request(client &client,
+                     parse::capstan &pc)
+try
+{
+	bool ret{true};
+	http::request
+	{
+		pc, nullptr, [&client, &pc, &ret]
+		(const auto &head)
+		{
+			handle_request(client, pc, head);
+			ret = !iequals(head.connection, "close"s);
+		}
+	};
+
+	return ret;
+}
+catch(const http::error &e)
+{
+	log::debug("client[%s] HTTP %s in %ld$us %s",
+	           string(remote(client)),
+	           e.what(),
+	           client.request_timer.at<microseconds>().count(),
+	           e.content);
+
+	resource::response
+	{
+		client, e.content, "text/html; charset=utf8", e.code
+	};
+
+	switch(e.code)
+	{
+		case http::BAD_REQUEST:
+		case http::REQUEST_TIMEOUT:
+			return false;
+
+		case http::INTERNAL_SERVER_ERROR:
+			throw;
+
+		default:
+			return true;
+	}
+}
+catch(const std::exception &e)
+{
+	log::error("client[%s]: in %ld$us: %s",
+	           string(remote(client)),
+	           client.request_timer.at<microseconds>().count(),
+	           e.what());
+
+	resource::response
+	{
+		client, e.what(), {}, http::INTERNAL_SERVER_ERROR
+	};
+
+	throw;
+}
+
+void
+ircd::handle_request(client &client,
+                     parse::capstan &pc,
+                     const http::request::head &head)
+{
+	log::debug("client[%s] HTTP %s `%s' (content-length: %zu)",
+	           string(remote(client)),
+	           head.method,
+	           head.path,
+	           head.content_length);
+
+	auto &resource
+	{
+		ircd::resource::find(head.path)
+	};
+
+	resource(client, pc, head);
+}
 
 ircd::resource &
 ircd::resource::find(string_view path)
@@ -69,6 +159,10 @@ ircd::resource::find(string_view path)
 
 	return *it->second;
 }
+
+//
+// resource
+//
 
 ircd::resource::resource(const string_view &path)
 :resource
@@ -278,6 +372,7 @@ try
 }
 catch(const std::out_of_range &e)
 {
+	//TODO: This will have to respond with an Accept header listing methods.
 	throw http::error
 	{
 		http::METHOD_NOT_ALLOWED

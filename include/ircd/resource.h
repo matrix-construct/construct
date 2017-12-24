@@ -25,6 +25,8 @@
 namespace ircd
 {
 	struct resource;
+
+	bool handle_request(client &client, parse::capstan &pc);
 }
 
 struct ircd::resource

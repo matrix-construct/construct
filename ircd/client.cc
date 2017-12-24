@@ -201,6 +201,64 @@ ircd::write(client &client,
 	return base;
 }
 
+void
+ircd::async_recv_next(std::shared_ptr<client> client)
+{
+	async_recv_next(std::move(client), milliseconds(-1));
+}
+
+///
+/// This function is the basis for the client's request loop. We still use
+/// an asynchronous pattern until there is activity on the socket (a request)
+/// in which case the switch to synchronous mode is made by jumping into an
+/// ircd::context drawn from the request pool. When the request is finished,
+/// the client exits back into asynchronous mode until the next request is
+/// received and rinse and repeat.
+//
+/// This sequence exists to avoid any possible c10k-style limitation imposed by
+/// dedicating a context and its stack space to the lifetime of a connection.
+/// This is similar to the thread-per-request pattern before async was in vogue.
+//
+/// Developers: Pay close attention to the comments to know exactly where you
+/// are and what you can do at any given point in this sequence.
+///
+void
+ircd::async_recv_next(std::shared_ptr<client> client,
+                      const milliseconds &timeout)
+{
+	assert(bool(client));
+	assert(bool(client->sock));
+
+	// This call returns immediately so we no longer block the current context and
+	// its stack while waiting for activity on idle connections between requests.
+
+	auto &sock(*client->sock);
+	sock(timeout, [client(std::move(client)), timeout](const net::error_code &ec)
+	noexcept
+	{
+		// Right here this handler is executing on the main stack (not in any
+		// ircd::context).
+		if(!handle_ec(*client, ec))
+			return;
+
+		// This call returns immediately because we can never block the main stack outside
+		// of the ircd::context system. The context the closure ends up getting is the next
+		// available from the request pool, which may not be available immediately so this
+		// handler might be queued for some time after this call returns.
+		request([ec, client(std::move(client)), timeout]
+		{
+			// Right here this handler is executing on an ircd::context with its own
+			// stack dedicated to the lifetime of this request. If client::main()
+			// returns true, we bring the client back into async mode to wait for
+			// the next request.
+			if(client->main())
+				async_recv_next(std::move(client), timeout);
+			else
+				disconnect(*client, net::dc::SSL_NOTIFY_YIELD);
+		});
+	});
+}
+
 //
 // client
 //
@@ -237,12 +295,6 @@ catch(const std::exception &e)
 	return;
 }
 
-namespace ircd
-{
-	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
-	bool handle_request(client &client, parse::capstan &pc);
-}
-
 /// Main client loop.
 ///
 /// This function parses requests off the socket in a loop until there are no
@@ -276,6 +328,17 @@ noexcept try
 	parse::buffer pb{buffer};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
+		request_timer = ircd::timer{};
+		const socket::scope_timeout timeout
+		{
+			*sock, request_timeout, [client(shared_from(*this))]
+			(const net::error_code &ec)
+			{
+				if(!ec)
+					disconnect(*client, net::dc::SSL_NOTIFY_YIELD);
+			}
+		};
+
 		if(!handle_request(*this, pc))
 			return false;
 
@@ -358,106 +421,6 @@ catch(const std::exception &e)
 	#endif
 }
 
-/// Handle a single request within the client main() loop.
-///
-/// This function returns false if the main() loop should exit
-/// and thus disconnect the client. It should return true in most
-/// cases even for lightly erroneous requests that won't affect
-/// the next requests on the tape.
-///
-/// This function is timed. The timeout will prevent a client from
-/// sending a partial request and leave us waiting for the rest.
-/// As of right now this timeout extends to our handling of the
-/// request too.
-bool
-ircd::handle_request(client &client,
-                     parse::capstan &pc)
-try
-{
-	client.request_timer = ircd::timer{};
-	const socket::scope_timeout timeout
-	{
-		*client.sock, request_timeout, [client(shared_from(client))]
-		(const net::error_code &ec)
-		{
-			if(!ec)
-				disconnect(*client, net::dc::SSL_NOTIFY_YIELD);
-		}
-	};
-
-	bool ret{true};
-	http::request
-	{
-		pc, nullptr, [&client, &pc, &ret]
-		(const auto &head)
-		{
-			handle_request(client, pc, head);
-			ret = !iequals(head.connection, "close"s);
-		}
-	};
-
-	return ret;
-}
-catch(const http::error &e)
-{
-	log::debug("client[%s] HTTP %s in %ld$us %s",
-	           string(remote(client)),
-	           e.what(),
-	           client.request_timer.at<microseconds>().count(),
-	           e.content);
-
-	http::response
-	{
-		e.code, e.content, write_closure(client)
-	};
-
-	switch(e.code)
-	{
-		case http::BAD_REQUEST:
-		case http::REQUEST_TIMEOUT:
-			return false;
-
-		case http::INTERNAL_SERVER_ERROR:
-			throw;
-
-		default:
-			return true;
-	}
-}
-catch(const std::exception &e)
-{
-	log::error("client[%s]: in %ld$us: %s",
-	           string(remote(client)),
-	           client.request_timer.at<microseconds>().count(),
-	           e.what());
-
-	http::response
-	{
-		http::INTERNAL_SERVER_ERROR, e.what(), write_closure(client)
-	};
-
-	throw;
-}
-
-void
-ircd::handle_request(client &client,
-                     parse::capstan &pc,
-                     const http::request::head &head)
-{
-	log::debug("client[%s] HTTP %s `%s' (content-length: %zu)",
-	           string(remote(client)),
-	           head.method,
-	           head.path,
-	           head.content_length);
-
-	auto &resource
-	{
-		ircd::resource::find(head.path)
-	};
-
-	resource(client, pc, head);
-}
-
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
@@ -514,64 +477,6 @@ ircd::disconnect(client &client,
 {
 	if(likely(client.sock))
 		disconnect(*client.sock, type);
-}
-
-void
-ircd::async_recv_next(std::shared_ptr<client> client)
-{
-	async_recv_next(std::move(client), milliseconds(-1));
-}
-
-///
-/// This function is the basis for the client's request loop. We still use
-/// an asynchronous pattern until there is activity on the socket (a request)
-/// in which case the switch to synchronous mode is made by jumping into an
-/// ircd::context drawn from the request pool. When the request is finished,
-/// the client exits back into asynchronous mode until the next request is
-/// received and rinse and repeat.
-//
-/// This sequence exists to avoid any possible c10k-style limitation imposed by
-/// dedicating a context and its stack space to the lifetime of a connection.
-/// This is similar to the thread-per-request pattern before async was in vogue.
-//
-/// Developers: Pay close attention to the comments to know exactly where you
-/// are and what you can do at any given point in this sequence.
-///
-void
-ircd::async_recv_next(std::shared_ptr<client> client,
-                      const milliseconds &timeout)
-{
-	assert(bool(client));
-	assert(bool(client->sock));
-
-	// This call returns immediately so we no longer block the current context and
-	// its stack while waiting for activity on idle connections between requests.
-
-	auto &sock(*client->sock);
-	sock(timeout, [client(std::move(client)), timeout](const net::error_code &ec)
-	noexcept
-	{
-		// Right here this handler is executing on the main stack (not in any
-		// ircd::context).
-		if(!handle_ec(*client, ec))
-			return;
-
-		// This call returns immediately because we can never block the main stack outside
-		// of the ircd::context system. The context the closure ends up getting is the next
-		// available from the request pool, which may not be available immediately so this
-		// handler might be queued for some time after this call returns.
-		request([ec, client(std::move(client)), timeout]
-		{
-			// Right here this handler is executing on an ircd::context with its own
-			// stack dedicated to the lifetime of this request. If client::main()
-			// returns true, we bring the client back into async mode to wait for
-			// the next request.
-			if(client->main())
-				async_recv_next(std::move(client), timeout);
-			else
-				disconnect(*client, net::dc::SSL_NOTIFY_YIELD);
-		});
-	});
 }
 
 namespace ircd
