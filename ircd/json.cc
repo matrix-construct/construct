@@ -108,6 +108,13 @@ struct ircd::json::input
 	rule<> value_sep                   { lit(',')                                     ,"value sep" };
 	rule<> escape                      { lit('\\')                                       ,"escape" };
 	rule<> quote                       { lit('"')                                         ,"quote" };
+
+	rule<> unicode
+	{
+		lit('u') >> qi::uint_parser<char, 16, 4, 4>{}
+		,"escaped unicode"
+	};
+
 	rule<> escaped
 	{
 		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t')
@@ -116,14 +123,7 @@ struct ircd::json::input
 
 	rule<> escaper
 	{
-		lit('\\') |
-		lit('"')  |
-		lit('b')  |
-		lit('f')  |
-		lit('n')  |
-		lit('r')  |
-		lit('t')  |
-		(lit('u') >> qi::uint_parser<char, 16, 4, 4>{})
+		lit('"') | lit('\\') | lit('b') | lit('f') | lit('n') | lit('r') | lit('t') | unicode
 		,"escaped"
 	};
 
@@ -312,13 +312,16 @@ ircd::json::printer::operator()(char *&out,
                                 attr&& a)
 const
 {
-	const auto throws([&out, &stop]
+	const auto throws{[&out, &stop]
 	{
-		throw print_error("Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
-		                  demangle<decltype(a)>(),
-		                  demangle<decltype(g)>(),
-		                  size_t(stop - out));
-	});
+		throw print_error
+		{
+			"Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
+			demangle<decltype(a)>(),
+			demangle<decltype(g)>(),
+			size_t(stop - out)
+		};
+	}};
 
 	const auto gg
 	{
@@ -335,12 +338,15 @@ ircd::json::printer::operator()(char *&out,
                                 gen&& g)
 const
 {
-	const auto throws([&out, &stop]
+	const auto throws{[&out, &stop]
 	{
-		throw print_error("Failed to print generator '%s' (%zd bytes in buffer)",
-		                  demangle<decltype(g)>(),
-		                  size_t(stop - out));
-	});
+		throw print_error
+		{
+			"Failed to print generator '%s' (%zd bytes in buffer)",
+			demangle<decltype(g)>(),
+			size_t(stop - out)
+		};
+	}};
 
 	const auto gg
 	{
@@ -1274,7 +1280,7 @@ const
 		case NUMBER:
 			return serial? string_view{string, len}:
 			       floats? byte_view<string_view>{floating}:
-				           byte_view<string_view>{integer};
+			               byte_view<string_view>{integer};
 		case ARRAY:
 		case OBJECT:
 		case LITERAL:
