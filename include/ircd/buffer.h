@@ -318,6 +318,8 @@ struct ircd::buffer::const_buffer
 	explicit const_buffer(const std::string &s)
 	:const_buffer_base{s}
 	{}
+
+	const_buffer() = default;
 };
 
 struct ircd::buffer::const_raw_buffer
@@ -338,6 +340,8 @@ struct ircd::buffer::const_raw_buffer
 	explicit const_raw_buffer(const std::string &s)
 	:const_buffer_base{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
+
+	const_raw_buffer() = default;
 };
 
 /// fixed_buffer wraps an std::array with construction and conversions apropos
