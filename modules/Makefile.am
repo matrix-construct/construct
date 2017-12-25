@@ -109,8 +109,10 @@ federation_module_LTLIBRARIES = \
 # library is media_X.so in the main modules dir.
 media_moduledir = @moduledir@
 media_media_download_la_SOURCES = media/download.cc
+media_media_upload_la_SOURCES = media/upload.cc
 media_module_LTLIBRARIES = \
 	media/media_download.la \
+	media/media_upload.la \
 	###
 
 # This puts the source in vm/ but the installed
