@@ -1516,6 +1516,10 @@ ircd::net::string(const mutable_buffer &buf,
 // net/remote.h
 //
 
+const ircd::net::remote
+ircd::net::null_remote
+{};
+
 //
 // host / port utils
 //
