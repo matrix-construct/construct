@@ -23,19 +23,12 @@ translated as a superset. Similar to the legacy IRC protocol's origins, it wisel
 technologies in vogue for its day to aid the virility of implementations. A vibrant and
 growing ecosystem [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
-This is the Construct. It is designed to be fast and highly scalable, and to be community
-developed by volunteer contributors over the internet. This mission strives to make the
-software easy to understand, modify, audit, and extend. It remains true to its roots with
-its modular design and having minimal requirements. Even though all of the old code has
-been rewritten, the same spirit, philosophy, and _respect for its predecessors_ is still
-obvious throughout.
-
-The Construct is the first implementation of a Matrix homeserver written in C++. The
-roadmap for service is as follows:
-
-- [✓] Phase One: Matrix clients using HTTPS.
-- [ ] Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
-- [ ] Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
+**This is the Construct** — the first Matrix server written in C++. It is designed to be
+fast and highly scalable, and to be community developed by volunteer contributors over
+the internet. This mission strives to make the software easy to understand, modify, audit,
+and extend. It remains true to its roots with its modular design and having minimal
+requirements. Even though all of the old code has been rewritten, the same spirit and
+_philosophy of its predecessors_ is still obvious throughout.
 
 
 ## Installation
@@ -63,20 +56,20 @@ Provides HTTPS TLS / X.509 / etc.
 A dependency of RocksDB.
 
 *Additional dependencies:*
+
 **zlib**, **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 
 *Upcoming dependencies*:
 
 - **libmozjs** (Optional JavaScript embedding):
-The matrix room is directly represented as a javascript object.
-Usage hint: `m.room.script` Have fun :)
+The matrix room is directly represented as a javascript object. :art:
 
 - **libpbc** (Pairing Based Cryptography):
 Heads up! Heavy items are falling from the ivory tower!
 
 - **libgmp** (Custom Maths):
-Experimental Post-Quantum Ideal Lattice Cryptography.
+Experimental Post-Quantum Ideal Lattice Cryptography. :open_mouth:
 
 *Notes*:
 - libircd requires a platform capable of loading dynamic shared objects at runtime.
@@ -141,6 +134,42 @@ make install
 
  * Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
  directory is doc/html. Browse to doc/html/index.html
+
+### Plan
+
+The roadmap for service is as follows:
+
+- [x] Phase One: Matrix clients using HTTPS.
+- [ ] Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
+- [ ] Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
+
+The roadmap for innovation is as follows:
+
+- [x] Phase Zero: **Core libircd**
+> Utils; Modules; Userspace contexts; Format strings; JSON; Database; Networking; HTTP; etc...
+
+- [x] Phase One: **Matrix Protocol**
+> Core VM; Core modules; Protocol endpoints; Angular/JS client.
+
+- [ ] Phase Two: **Construct Clustering**
+> Kademlia sharding of events database; Maymounkov's erasure codes over shards.
+
+- [ ] Phase Three: **Federation Scaling**
+> Federation routing techniques; Aggregate signatures from pairing curves;
+> All the other pairing gimmicks from Boneh/Bishop/Waters et al;
+
+- [ ] Phase Four: Graduation
+> Tromer/Virza's zkSNARK applied to JavaScript XDR evaluation verifying the distributed
+> execution of a matrix room using MNT pairing curves.
+
+- [ ] Phase Five: Dissertation
+> Phase Two + Phase Four **_with RingLWE_**; GPU accelerated matrix multiplication for
+> the number theoretic transform... Secure MultiParty Computation from Somewhat
+> Homomorphic Encryption; Other gimmicks from Damgård et al...
+
+- [ ] Phase Six: Habilitation
+> Gentry's bootstrapping of Phase Five **_under fully homomorphic encryption_**.
+
 
 ### IRCd Library
 
