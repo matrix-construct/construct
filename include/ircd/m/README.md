@@ -61,7 +61,7 @@ over the internet. That's it.
 The data tape of the matrix machine consists of a singly-linked list of `event`
 objects with each referencing the `event_id` of its preceding parent somewhere
 in the `prev_` keys; this is called the `timeline`. Each event is signed by its
-creator and affirms all events in the chain preceding it. This is a very similar
+creator and affirms all referenced events preceding it. This is a very similar
 structure to that used by software like Git, and Bitcoin. It allows looking back
 into the past from any point, but doesn't force a party to accept a future and
 leaves dispute resolution open-ended (which will be explained later).
@@ -92,7 +92,7 @@ The `room` structure encapsulates an instance of the matrix machine. A room
 is a container of `event` objects in the form of a timeline. The query
 complexity for information in a room timeline is as follows:
 
-- Message (non-state) events in the timeline have a linear lookup time:
+- Ephemeral (non-state) events in the timeline have a linear lookup time:
 the timeline must be iterated in sequence to find a satisfying message.
 
 - State events in the timeline have a logarithmic lookup: the implementation
@@ -118,9 +118,9 @@ m.room.message
 ```
 
 
-Some of these events are `state` events and some are ephemeral. These will be
-detailed later. All `m.room.*` namespaced events govern the functionality of the
-room. Rooms may contain events of any type, but we don't invent new `m.room.*`
+Some of these events are state events and some are ephemeral (these will be
+detailed later). All `m.room.*` namespaced events govern the functionality of the
+room. Rooms may contain events of any `type`, but we don't invent new `m.room.*`
 type events ourselves. This project tends to create events in the namespace
 `ircd.*` These events should not alter the room's functionality for a client
 with knowledge of only the published `m.room.*` events wouldn't understand.
@@ -130,31 +130,21 @@ with knowledge of only the published `m.room.*` events wouldn't understand.
 
 Matrix is specified as a directed acyclic graph of messages. The conversation of
 messages moves in one direction: past to future. Messages only reference other
-messages which have a lower degree of separation (depth) from the first message
-in the graph (m.room.create). Specifically, each message makes a reference to all
-known messages at the last depth.
+messages which have a lower degree of separation indicated by the `depth` from
+the first message in the graph (where `type` was `m.room.create`). Specifically,
+each message makes a reference to all known messages at the last `depth`, or all
+previously unknown messages at some lower `depth`. Each new message is broadcast
+to all participants in a room.
 
-* The strong ordering of this system contributes to an intuitive "light cone"
+* The monotonic increase in `depth` contributes to an intuitive "light cone"
 read coherence. Knowledge of any piece of information (like an event) offers
-coherent knowledge of all known information which preceded it at that point.
+strongly ordered knowledge of all known information which preceded it at
+that point.
 
 * Write consistency is relaxed. Multiple messages may be issued at the same
-depth from independent actors and multiple reference chains may form
+depth from independent actors and multiple reference trees may form
 independent of others. This provides the scalar for performance in a large
 distributed internet system.
-
-* Write incoherence must then be resolved with entry consistency because of the
-relaxed release sequence. While parties broadcast all of their new messages,
-they make no guarantees for their arrival integration with destinations at
-the point of release. This wouldn't be as practical. This means a write which
-wishes to be coherent can only use the best available state they have been
-made aware of and commit a new message to it.
-
-The system has no other method of resolving incoherence. As a future thought,
-some form of release commitment will have to be integrated among at least a
-subset of actors for a few important updates to the graph. For example, a
-two-phase commit of an important state event *or the re-introduction of
-the classic IRC mode change indicating a commitment to change state.*
 
 References to previous events:
 
@@ -173,7 +163,6 @@ References to previous events:
 [T4]  A release A2  :
 ```
 
-
 Both actors will have their clock (depth) now set to 2 and will issue the
 next new message at clock cycle 3 referencing all messages from cycle 2 to
 merge the split in the illustration above which is happening.
@@ -187,8 +176,69 @@ merge the split in the illustration above which is happening.
  ^------- [B1] <-- [B2] <-- [B3]             | B now sees A2, A1, and A0
 ```
 
+Keen observers may have realized by now this system is not fully coherent.
+To be coherent, a system must leverage *entry consistency* and/or *release
+consistency*. Translated to this system:
+
+* *Entry* is the point where an event is created containing references to
+all previous events. *Entry consistency* would mean that the knowledge
+of all those references is revealed from all parties to the issuer such that
+the issuer would not be issuing a conflicting event.
+
+* *Release* is the act of broadcasting that event to other servers. *Release
+consistency* would mean that the integration of the newly issued event does not
+conflict at the point of acceptance by each and every party.
+
+This system appears to strive for *eventual consistency*. To be pedantic, that
+is not a third lemma supplementing the above: it's a higher order composite (like
+mutual exclusion, or other algorithms). What this system wants to achieve is a
+byzantine tolerance which can be continuously corrected as more information is
+learned. This is a *tolerance*, not a *prevention*, because the relaxed write
+consistency is of extreme practical importance.
+
+For *eventual consistency* to be coherent, the "seeds" of a correction have to
+be planted early on before any fault. When the fault occurs, all deviations
+can be corrected toward some single coherent state as each party learns more
+information. Once all parties learn all information from the system, there is
+no possibility for incoherence. The caveat is that some parties may need to
+roll back certain decisions they made without complete information.
+
+Consider the following: `Alice` is a room founder and has one other member
+`Bob` who is an op. `Alice` outranks `Bob`. Consider the following scenario:
+
+> 1. `Charlie` joins the room. Now the room has three members. Everyone is
+> still in full agreement.
+>
+> 2. `GNAA` ddos's `Alice` so she can't reach the internet but she can still
+> use her server on her LAN.
+>
+> 3. `Alice` likes `Charlie` so she gives him `+e` or some ban immunity.
+>
+> 4. `Bob` doesn't like `Charlie` so he bans him.
+
+Now there is a classic byzantine fault. The internet sees a room with two
+members `Alice` and `Bob` again while `Alice` sees a room with three: `Alice`, `Bob`
+and `Charlie`.
+
+> 5. `GNAA` stops the ddos.
+
+This fault now has to be resolved. This is called "state conflict resolution"
+and the matrix specification does not know how to do this. What is currently
+specified is that `Alice` and `Bob` can only perform actions that are valid
+with the knowledge they had when they performed them. In fact, that was true
+in this scenario.
+
+Intuitively, `Alice` needs to dominate the resolution because `Alice` outranks
+`Bob`. `Charlie` must not be banned and the room must continue with three
+members. Exactly how to roll back the ban and reinstate `Charlie` may seem
+obvious but there are practicalities to consider: Perhaps `Alice` is ddosed for
+something like a year straight and `Charlie` has entirely given up on socializing
+over the internet. A seemingly random and irrelevant correction will be in store
+for the room and the effects might be far more complicated.
+
 
 ### Implementation
+
 
 #### Model
 
