@@ -1068,7 +1068,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 	const auto str
 	{
 		// RocksDB adds annoying leading whitespace to attempt to right-justify things and idc
-		lstrip(buf, ' ')
+		lstrip(string_view{buf, size_t(len)}, ' ')
 	};
 
 	// Skip the options for now
