@@ -430,6 +430,7 @@ RB_CHK_SYSHEADER([condition_variable], [CONDITION_VARIABLE])
 RB_CHK_SYSHEADER([random], [RANDOM])
 RB_CHK_SYSHEADER([bitset], [BITSET])
 RB_CHK_SYSHEADER([string_view], [STRING_VIEW])
+RB_CHK_SYSHEADER([optional], [OPTIONAL])
 
 dnl windows platform
 RB_CHK_SYSHEADER([windows.h], [WINDOWS_H])
