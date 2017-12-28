@@ -123,6 +123,7 @@ struct ircd::net::remote
 
 	operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
+	bool resolved() const;
 
 	remote(std::string hostname, const std::string &port);
 	remote(std::string hostname, const uint16_t &port);
@@ -137,11 +138,18 @@ struct ircd::net::remote
 	friend std::ostream &operator<<(std::ostream &, const remote &);
 };
 
+inline bool
+ircd::net::remote::resolved()
+const
+{
+	return bool(static_cast<const ipport &>(*this));
+}
+
 inline ircd::net::remote::operator
 bool()
 const
 {
-	return bool(static_cast<const ipport &>(*this)) || !hostname.empty();
+	return resolved() || !hostname.empty();
 }
 
 inline
