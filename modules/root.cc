@@ -19,8 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iterator>
-
 using namespace ircd;
 
 mapi::header IRCD_MODULE
