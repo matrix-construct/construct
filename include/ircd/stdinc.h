@@ -93,7 +93,6 @@ extern "C" {
 #include <RB_INC_STRING
 #include <RB_INC_CSTRING
 #include <RB_INC_STRING_VIEW
-#include <RB_INC_EXPERIMENTAL_STRING_VIEW
 #include <RB_INC_LOCALE
 #include <RB_INC_CODECVT
 #include <RB_INC_MAP
@@ -117,6 +116,10 @@ extern "C" {
 #include <RB_INC_CONDITION_VARIABLE
 #include <RB_INC_RANDOM
 #include <RB_INC_BITSET
+#include <RB_INC_OPTIONAL
+
+#include <RB_INC_EXPERIMENTAL_STRING_VIEW
+#include <RB_INC_EXPERIMENTAL_OPTIONAL
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -139,6 +142,14 @@ extern "C" {
 namespace std
 {
 	using experimental::string_view;
+}
+#endif
+
+// Experimental std::optional
+#if __cplusplus <= 20170519 //TODO: refine
+namespace std
+{
+	using experimental::optional;
 }
 #endif
 

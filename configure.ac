@@ -440,6 +440,7 @@ RB_CHK_SYSHEADER([iphlpapi.h], [IPHLPAPI_H])
 
 dnl experimental
 RB_CHK_SYSHEADER([experimental/string_view], [EXPERIMENTAL_STRING_VIEW])
+RB_CHK_SYSHEADER([experimental/optional], [EXPERIMENTAL_OPTIONAL])
 
 
 dnl
