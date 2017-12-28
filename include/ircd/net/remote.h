@@ -54,8 +54,6 @@ namespace ircd::net
 	std::string string(const hostport &);
 	std::string string(const ipport &);
 	std::string string(const remote &);
-
-	extern const remote null_remote;
 }
 
 /// This structure holds a hostname and port usually fresh from user input
@@ -119,6 +117,8 @@ struct ircd::net::ipport
 struct ircd::net::remote
 :ircd::net::ipport
 {
+	static const remote null;
+
 	std::string hostname;
 
 	operator bool() const;

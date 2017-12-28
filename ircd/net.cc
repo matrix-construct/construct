@@ -1516,10 +1516,6 @@ ircd::net::string(const mutable_buffer &buf,
 // net/remote.h
 //
 
-const ircd::net::remote
-ircd::net::null_remote
-{};
-
 //
 // host / port utils
 //
@@ -1685,6 +1681,10 @@ ircd::net::string(const remote &remote,
 //
 // remote
 //
+
+const ircd::net::remote
+ircd::net::remote::null
+{};
 
 ircd::net::remote::remote(hostport hp)
 :remote{std::move(hp.first), hp.second}
