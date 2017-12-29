@@ -58,9 +58,7 @@ class ircd::ctx::promise
 
 	promise();
 	promise(promise &&o) noexcept = default;
-	promise(const promise &) = delete;
-	promise &operator=(promise &&o) noexcept = default;
-	promise &operator=(const promise &) = delete;
+	promise(const promise &);
 	~promise() noexcept;
 };
 
@@ -85,9 +83,7 @@ class ircd::ctx::promise<void>
 
 	promise();
 	promise(promise &&o) noexcept = default;
-	promise(const promise &) = delete;
-	promise &operator=(promise &&) noexcept = default;
-	promise &operator=(const promise &) = delete;
+	promise(const promise &);
 	~promise() noexcept;
 };
 
@@ -95,28 +91,52 @@ inline
 ircd::ctx::promise<void>::promise()
 :st{std::make_shared<shared_state<void>>()}
 {
+	++st->promise_refcnt;
+	assert(st->promise_refcnt == 1);
 }
 
 template<class T>
 ircd::ctx::promise<T>::promise()
 :st{std::make_shared<shared_state<T>>()}
 {
+	++st->promise_refcnt;
+	assert(st->promise_refcnt == 1);
+}
+
+inline
+ircd::ctx::promise<void>::promise(const promise<void> &o)
+:st{o.st}
+{
+	++st->promise_refcnt;
+	assert(st->promise_refcnt > 1);
+}
+
+template<class T>
+ircd::ctx::promise<T>::promise(const promise<T> &o)
+:st{o.st}
+{
+	++st->promise_refcnt;
+	assert(st->promise_refcnt > 1);
 }
 
 inline
 ircd::ctx::promise<void>::~promise()
 noexcept
 {
-	if(valid() && !st->finished && !st.unique())
-		set_exception(std::make_exception_ptr(broken_promise()));
+	if(valid())
+		if(!--st->promise_refcnt)
+			if(!st->finished && !st.unique())
+				set_exception(std::make_exception_ptr(broken_promise()));
 }
 
 template<class T>
 ircd::ctx::promise<T>::~promise()
 noexcept
 {
-	if(valid() && !st->finished && !st.unique())
-		set_exception(std::make_exception_ptr(broken_promise()));
+	if(valid())
+		if(!--st->promise_refcnt)
+			if(!st->finished && !st.unique())
+				set_exception(std::make_exception_ptr(broken_promise()));
 }
 
 inline void

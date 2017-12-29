@@ -33,7 +33,8 @@ struct ircd::ctx::shared_state_base
 {
 	dock cond;
 	std::exception_ptr eptr;
-	bool finished = false;
+	uint promise_refcnt {0};
+	bool finished {false};
 
 	void reset();
 };
