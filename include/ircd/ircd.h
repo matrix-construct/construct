@@ -39,8 +39,8 @@ namespace ircd
 	extern runlevel_handler runlevel_changed;
 
 	string_view reflect(const enum runlevel &);
-	void init(boost::asio::io_service &ios, const std::string &conf, runlevel_handler = {});
-	void init(boost::asio::io_service &ios, runlevel_handler = {});
+	void init(boost::asio::io_context &ios, const std::string &conf, runlevel_handler = {});
+	void init(boost::asio::io_context &ios, runlevel_handler = {});
 	bool quit() noexcept;
 }
 

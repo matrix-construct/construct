@@ -351,13 +351,13 @@ noexcept try
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
-	using boost::system::get_system_category;
+	using boost::system::system_category;
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
 	const error_code &ec{e.code()};
 	const int &value{ec.value()};
-	if(ec.category() == get_system_category()) switch(value)
+	if(ec.category() == system_category()) switch(value)
 	{
 		case success:
 			assert(0);
@@ -493,11 +493,11 @@ ircd::handle_ec(client &client,
                 const net::error_code &ec)
 {
 	using namespace boost::system::errc;
-	using boost::system::get_system_category;
+	using boost::system::system_category;
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	if(ec.category() == get_system_category()) switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:                return handle_ec_success(client);
 		case operation_canceled:     return handle_ec_timeout(client);

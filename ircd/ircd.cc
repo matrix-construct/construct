@@ -35,7 +35,7 @@ namespace ircd
 	const enum runlevel &runlevel{_runlevel};    // Observer for current RL
 	runlevel_handler runlevel_changed;           // user's callback
 
-	boost::asio::io_service *ios;                // user's io service
+	boost::asio::io_context *ios;                // user's io service
 	struct strand *strand;                       // libircd event serializer
 
 	std::string _conf;                           // JSON read from configfile
@@ -89,7 +89,7 @@ ircd::boost_version[3]
 };
 
 void
-ircd::init(boost::asio::io_service &ios,
+ircd::init(boost::asio::io_context &ios,
            runlevel_handler function)
 {
 	init(ios, std::string{}, std::move(function));
@@ -97,15 +97,15 @@ ircd::init(boost::asio::io_service &ios,
 
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
-/// Pass your io_service instance, it will share it with the rest of your program.
+/// Pass your io_context instance, it will share it with the rest of your program.
 /// An exception will be thrown on error.
 ///
 /// This function will setup the main program loop of libircd. The execution will
-/// occur when your io_service.run() or poll() is further invoked.
+/// occur when your io_context.run() or poll() is further invoked.
 ///
 /// init() can only be called from a runlevel::HALT state
 void
-ircd::init(boost::asio::io_service &ios,
+ircd::init(boost::asio::io_context &ios,
            const std::string &configfile,
            runlevel_handler runlevel_changed)
 try
@@ -124,7 +124,7 @@ try
 	// threads, but we consider this one thread a main thread for now...
 	ircd::thread_id = std::this_thread::get_id();
 
-	// Global ircd:: reference to the user's io_service and setup our main
+	// Global ircd:: reference to the user's io_context and setup our main
 	// strand on that service.
 	ircd::ios = &ios;
 	ircd::strand = new struct strand(ios);
@@ -177,11 +177,11 @@ try
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned
 	// and will be the last to finish.
 	//
-	// The context::POST will delay this spawn until the next io_service
+	// The context::POST will delay this spawn until the next io_context
 	// event slice, so no context switch will occur here. Note that POST has
 	// to be used here because: A. This init() function is executing on the
 	// main stack, and context switches can only occur between context stacks,
-	// not between contexts and the main stack. B. The user's io_service may or
+	// not between contexts and the main stack. B. The user's io_context may or
 	// may not even be running yet anyway.
 	//
 	ircd::context main_context
@@ -214,8 +214,8 @@ catch(const std::exception &e)
 /// is observed the user is free to destruct all resources related to libircd.
 ///
 /// This function is the proper way to shutdown libircd after an init(), and while
-/// your io_service.run() is invoked without stopping your io_service shared by
-/// other activities unrelated to libircd. If your io_service has no other activities
+/// your io_context.run() is invoked without stopping your io_context shared by
+/// other activities unrelated to libircd. If your io_context has no other activities
 /// the run() will then return immediately after IRCd posts its transition to
 /// the HALT state.
 ///
@@ -245,7 +245,7 @@ noexcept
 /// the ircd::runlevel. The ircd::runlevel_changed callback can be set
 /// to be notified on a runlevel change. The user should wait for a runlevel
 /// of HALT before destroying IRCd related resources and stopping their
-/// io_service from running more jobs.
+/// io_context from running more jobs.
 ///
 void
 ircd::main()
@@ -343,9 +343,9 @@ noexcept
 /// manually/directly, as it doesn't trigger a runlevel change itself, it just
 /// notifies of one.
 ///
-/// The notification will be posted to the io_service. This is important to
+/// The notification will be posted to the io_context. This is important to
 /// prevent the callback from continuing execution on some ircd::ctx stack and
-/// instead invoke their function on the main stack in their own io_service
+/// instead invoke their function on the main stack in their own io_context
 /// event slice.
 void
 ircd::set_runlevel(const enum runlevel &new_runlevel)
@@ -359,7 +359,7 @@ try
 	ircd::_runlevel = new_runlevel;
 
 	// This function will notify the user of the change to IRCd. The
-	// notification is posted to the io_service ensuring THERE IS NO
+	// notification is posted to the io_context ensuring THERE IS NO
 	// CONTINUATION ON THIS STACK by the user.
 	if(ircd::runlevel_changed)
 		ios->post([new_runlevel]

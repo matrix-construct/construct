@@ -462,7 +462,7 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec,
                                             socket &sock)
 {
 	using namespace boost::system::errc;
-	using boost::system::get_system_category;
+	using boost::system::system_category;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
@@ -470,7 +470,7 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec,
 	if(likely(ec == success))
 		return false;
 
-	if(ec.category() == get_system_category()) switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case operation_canceled:
 			return false;
@@ -537,7 +537,7 @@ bool
 ircd::net::listener::acceptor::handshake_error(const error_code &ec,
                                                socket &sock)
 {
-	using boost::system::get_system_category;
+	using boost::system::system_category;
 	using namespace boost::system::errc;
 
 	if(unlikely(interrupting))
@@ -546,7 +546,7 @@ ircd::net::listener::acceptor::handshake_error(const error_code &ec,
 	if(likely(ec == success))
 		return false;
 
-	if(ec.category() == get_system_category()) switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case operation_canceled:
 			return false;
@@ -1258,7 +1258,7 @@ bool
 ircd::net::socket::handle_error(const error_code &ec)
 {
  	using namespace boost::system::errc;
-	using boost::system::get_system_category;
+	using boost::system::system_category;
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
@@ -1269,7 +1269,7 @@ ircd::net::socket::handle_error(const error_code &ec)
 	            this,
 	            string(ec));
 
-	if(ec.category() == get_system_category()) switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		// A cancel is triggered either by the timeout handler or by
 		// a request to shutdown/close the socket. We only call the user's
@@ -1330,7 +1330,7 @@ noexcept try
 		// A cancelation means there was no timeout.
 		case operation_canceled:
 		{
-			assert(ec.category() == boost::system::get_system_category());
+			assert(ec.category() == boost::system::system_category());
 			assert(timedout == false);
 			timedout = false;
 			break;

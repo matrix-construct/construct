@@ -29,7 +29,7 @@
 /// forward declarations.
 namespace boost::asio
 {
-	struct io_service;       // Allow a reference to an ios to be passed to ircd
+	struct io_context;
 }
 
 namespace ircd
@@ -44,7 +44,7 @@ namespace ircd
 	extern std::thread::id thread_id;
 
 	/// The user's io_service
-	extern asio::io_service *ios;
+	extern asio::io_context *ios;
 
 	/// IRCd's strand of the io_service
 	struct strand extern *strand;

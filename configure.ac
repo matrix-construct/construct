@@ -692,7 +692,7 @@ dnl
 dnl boost support
 dnl
 
-BOOST_VERSION_MIN="1.61"
+BOOST_VERSION_MIN="1.66"
 BOOST_VERSION_MIN_PATCH="0"
 BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
 

@@ -64,11 +64,11 @@ lgetopt opts[] =
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
-std::unique_ptr<boost::asio::io_service> ios
+std::unique_ptr<boost::asio::io_context> ios
 {
 	// Having trouble with static destruction in clang so this
 	// has to become still-reachable
-	std::make_unique<boost::asio::io_service>()
+	std::make_unique<boost::asio::io_context>()
 };
 
 boost::asio::signal_set sigs
@@ -103,14 +103,14 @@ try
 		configfile?: fs::get(fs::IRCD_CONF)
 	};
 
-	// Associates libircd with our io_service and posts the initial routines
-	// to that io_service. Execution of IRCd will then occur during ios::run()
+	// Associates libircd with our io_context and posts the initial routines
+	// to that io_context. Execution of IRCd will then occur during ios::run()
 	ircd::init(*ios, confpath);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling
-	// is done properly through the io_service which registers the handler for
-	// the platform and then safely posts the received signal to the io_service
+	// is done properly through the io_context which registers the handler for
+	// the platform and then safely posts the received signal to the io_context
 	// event loop. This means we lose the true instant hardware-interrupt gratitude
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
@@ -123,7 +123,7 @@ try
 	sigs.add(SIGUSR2);
 	sigs.async_wait(sigfd_handler);
 
-	// Because we registered signal handlers with the io_service, ios->run()
+	// Because we registered signal handlers with the io_context, ios->run()
 	// is now shared between those handlers and libircd. This means the run()
 	// won't return even if we call ircd::stop(). We use the callback to then
 	// cancel the handlers so run() can return and the program can exit.
