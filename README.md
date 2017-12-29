@@ -154,21 +154,16 @@ The roadmap for innovation is as follows:
 - [ ] Phase Two: **Construct Clustering**
 > Kademlia sharding of events database; Maymounkov's erasure codes over shards.
 
-- [ ] Phase Three: **Federation Scaling**
-> Federation routing techniques; Aggregate signatures from pairing curves;
-> All the other pairing gimmicks from Boneh/Bishop/Waters et al;
-
-- [ ] Phase Four: Graduation
+- [ ] Phase Three: Graduation
 > Tromer/Virza's zkSNARK applied to JavaScript XDR evaluation verifying the distributed
 > execution of a matrix room using MNT pairing curves.
 
-- [ ] Phase Five: Dissertation
-> Phase Two + Phase Four **_with RingLWE_**; GPU accelerated matrix multiplication for
-> the number theoretic transform... Secure MultiParty Computation from Somewhat
-> Homomorphic Encryption; Other gimmicks from Damgård et al...
+- [ ] Phase Four: Dissertation
+> Phase Three **_with RingLWE_**; GPU accelerated matrix multiplication for
+> the number theoretic transform...
 
-- [ ] Phase Six: Habilitation
-> Gentry's bootstrapping of Phase Five **_under fully homomorphic encryption_**.
+- [ ] Phase Five: Habilitation
+> Phase Four **_under fully homomorphic encryption_**.
 
 
 ### IRCd Library
