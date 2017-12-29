@@ -105,22 +105,22 @@ noexcept
 	}
 }
 
-ircd::hostport
+ircd::ipport
 ircd::local(const client &client)
 {
 	if(!client.sock)
-		return hostport::null;
+		return {};
 
-	return net::local_hostport(*client.sock);
+	return net::local_ipport(*client.sock);
 }
 
-ircd::hostport
+ircd::ipport
 ircd::remote(const client &client)
 {
 	if(!client.sock)
-		return hostport::null;
+		return {};
 
-	return net::remote_hostport(*client.sock);
+	return net::remote_ipport(*client.sock);
 }
 
 ircd::http::response::write_closure

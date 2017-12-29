@@ -353,6 +353,43 @@ try
 			break;
 		}
 
+		case hash("resolve"):
+		{
+			const auto args(tokens_after(line, " ", 0));
+			const params token{args, " ", {"what", "host", "port"}};
+			const auto &what(token.at(0));
+			const auto &host{token.at(1)};
+			const auto &port{token.at(2)};
+			const net::hostport hostport
+			{
+				host, port
+			};
+
+			switch(hash(what))
+			{
+				case hash("ips"):
+				{
+					ctx::future<std::vector<net::ipport>> future;
+					net::resolve{hostport, future};
+					const auto ips{future.get()};
+					for(const auto &ip : ips)
+						std::cout << ip << std::endl;
+
+					break;
+				}
+
+				case hash("ip"):
+				{
+					ctx::future<net::ipport> future;
+					net::resolve{hostport, future};
+					std::cout << future.get() << std::endl;
+					break;
+				}
+			}
+
+			break;
+		}
+
 		case hash("reconnect"):
 		{
 			handle_line("disconnect");

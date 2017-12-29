@@ -29,6 +29,8 @@
 namespace ircd::net
 {
 	ip::tcp::resolver *resolver;
+
+	ipport make_ipport(const boost::asio::ip::tcp::endpoint &);
 }
 
 struct ircd::log::log
@@ -682,46 +684,12 @@ ircd::net::sslv23_client
 	boost::asio::ssl::context::method::sslv23_client
 };
 
-ircd::net::hostport
-ircd::net::local_hostport(const socket &socket)
-noexcept try
-{
-    const auto &ep(socket.local());
-    return { host(ep), port(ep) };
-}
-catch(...)
-{
-	return { std::string{}, 0 };
-}
-
-ircd::net::hostport
-ircd::net::remote_hostport(const socket &socket)
-noexcept try
-{
-    const auto &ep(socket.remote());
-    return { host(ep), port(ep) };
-}
-catch(...)
-{
-	return { std::string{}, 0 };
-}
-
 ircd::net::ipport
 ircd::net::local_ipport(const socket &socket)
 noexcept try
 {
     const auto &ep(socket.local());
-    const auto &a(addr(ep));
-
-	ipport ret;
-	if(a.is_v6())
-	{
-		std::get<ret.IP>(ret) = a.to_v6().to_bytes();
-		std::reverse(std::get<ret.IP>(ret).begin(), std::get<ret.IP>(ret).end());
-	}
-	else host4(ret) = a.to_v4().to_ulong();
-
-	return ret;
+	return make_ipport(ep);
 }
 catch(...)
 {
@@ -733,18 +701,7 @@ ircd::net::remote_ipport(const socket &socket)
 noexcept try
 {
     const auto &ep(socket.remote());
-    const auto &a(addr(ep));
-
-	ipport ret;
-	if(a.is_v6())
-	{
-		std::get<ret.IP>(ret) = a.to_v6().to_bytes();
-		std::reverse(std::get<ret.IP>(ret).begin(), std::get<ret.IP>(ret).end());
-	}
-	else host4(ret) = a.to_v4().to_ulong();
-
-	port(ret) = port(ep);
-	return ret;
+	return make_ipport(ep);
 }
 catch(...)
 {
@@ -1031,7 +988,7 @@ try
 	if(sd.is_open())
 		log.debug("socket(%p): disconnect: %s type:%d user: in:%zu out:%zu",
 		          (const void *)this,
-		          string(remote_ipport(*this)),
+		          ircd::string(remote_ipport(*this)),
 		          uint(type),
 		          in.bytes,
 		          out.bytes);
@@ -1520,89 +1477,21 @@ ircd::net::string(const mutable_buffer &buf,
 // host / port utils
 //
 
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const hostport &t)
-{
-	char buf[256];
-	s << string(t, buf);
-	return s;
-}
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const ipport &t)
-{
-	char buf[256];
-	s << string(t, buf);
-	return s;
-}
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const remote &t)
-{
-	char buf[256];
-	s << string(t, buf);
-	return s;
-}
-
-namespace ircd::net
-{
-	template<class T> std::string _string(const T &t);
-}
-
-template<class T>
-std::string
-ircd::net::_string(const T &t)
-{
-	std::string ret(256, char{});
-	ret.resize(net::string(t, mutable_buffer{ret}).size());
-	return ret;
-}
-
-std::string
-ircd::net::string(const uint32_t &t)
-{
-	return _string(t);
-}
-
-std::string
-ircd::net::string(const uint128_t &t)
-{
-	return _string(t);
-}
-
-std::string
-ircd::net::string(const hostport &t)
-{
-	return _string(t);
-}
-
-std::string
-ircd::net::string(const ipport &t)
-{
-	return _string(t);
-}
-
-std::string
-ircd::net::string(const remote &t)
-{
-	return _string(t);
-}
-
 ircd::string_view
-ircd::net::string(const uint32_t &ip,
-                  const mutable_buffer &buf)
+ircd::net::string(const mutable_buffer &buf,
+                  const uint32_t &ip)
 {
 	const auto len
 	{
-		fmt::sprintf(buf, "%s", ip::address_v4{ip}.to_string())
+		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
 	};
 
 	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::net::string(const uint128_t &ip,
-                  const mutable_buffer &buf)
+ircd::net::string(const mutable_buffer &buf,
+                  const uint128_t &ip)
 {
 	const auto &pun
 	{
@@ -1616,27 +1505,32 @@ ircd::net::string(const uint128_t &ip,
 
 	const auto len
 	{
-		fmt::sprintf(buf, "%s", ip::address_v6{punpun}.to_string())
+		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
 	};
 
 	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::net::string(const hostport &pair,
-                  const mutable_buffer &buf)
+ircd::net::string(const mutable_buffer &buf,
+                  const hostport &hp)
 {
 	const auto len
 	{
-		fmt::sprintf(buf, "%s:%u", pair.first, pair.second)
+		fmt::sprintf
+		{
+			buf, "%s:%s",
+			hp.host,
+			hp.portnum? lex_cast(hp.portnum) : hp.port
+		}
 	};
 
 	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::net::string(const ipport &ipp,
-                  const mutable_buffer &buf)
+ircd::net::string(const mutable_buffer &buf,
+                  const ipport &ipp)
 {
 	const auto len
 	{
@@ -1657,8 +1551,8 @@ ircd::net::string(const ipport &ipp,
 }
 
 ircd::string_view
-ircd::net::string(const remote &remote,
-                  const mutable_buffer &buf)
+ircd::net::string(const mutable_buffer &buf,
+                  const remote &remote)
 {
 	const auto &ipp
 	{
@@ -1675,147 +1569,52 @@ ircd::net::string(const remote &remote,
 		const auto len{strlcpy(data(buf), remote.hostname, size(buf))};
 		return { data(buf), size_t(len) };
 	}
-	else return string(ipp, buf);
+	else return string(buf, ipp);
 }
 
 //
 // remote
 //
 
-const ircd::net::remote
-ircd::net::remote::null
-{};
-
-ircd::net::remote::remote(hostport hp)
-:remote{std::move(hp.first), hp.second}
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const remote &t)
 {
-}
-
-ircd::net::remote::remote(const string_view &host)
-:remote
-{
-	std::string(host), "8448"s
-}
-{
-}
-
-ircd::net::remote::remote(const string_view &host,
-                          const uint16_t &port)
-:remote
-{
-	std::string(host), std::string(lex_cast(port))
-}
-{
-}
-
-ircd::net::remote::remote(const string_view &host,
-                          const string_view &port)
-:remote
-{
-	std::string(host), std::string(port)
-}
-{
-}
-
-ircd::net::remote::remote(std::string host)
-:remote
-{
-	std::move(host), "8448"s
-}
-{
-}
-
-ircd::net::remote::remote(std::string host,
-                          const uint16_t &port)
-:ipport{host, port}
-,hostname{std::move(host)}
-{
-}
-
-ircd::net::remote::remote(std::string host,
-                          const std::string &port)
-:ipport{host, port}
-,hostname{std::move(host)}
-{
-}
-
-ircd::net::remote::remote(const ipport &ipp)
-:ipport{ipp}
-{
+	char buf[256];
+	s << string(buf, t);
+	return s;
 }
 
 //
 // ipport
 //
 
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const ipport &t)
+{
+	char buf[256];
+	s << string(buf, t);
+	return s;
+}
+
+ircd::net::ipport
+ircd::net::make_ipport(const boost::asio::ip::tcp::endpoint &ep)
+{
+	return ipport
+	{
+		ep.address(), ep.port()
+	};
+}
+
 ircd::net::ipport::ipport(const hostport &hp)
-:ipport
 {
-	hp.first, std::string(lex_cast(port(hp)))
-}
-{
+	ctx::future<ipport> future;
+	resolve{hp, future};
+	*this = future.get();
 }
 
-ircd::net::ipport::ipport(const string_view &host,
+ircd::net::ipport::ipport(const boost::asio::ip::address &address,
                           const uint16_t &port)
-:ipport
 {
-	std::string(host), std::string(lex_cast(port))
-}
-{
-}
-
-ircd::net::ipport::ipport(const string_view &host,
-                          const string_view &port)
-:ipport
-{
-	std::string(host), std::string(port)
-}
-{
-}
-
-ircd::net::ipport::ipport(const std::string &host,
-                          const uint16_t &port)
-:ipport
-{
-	host, std::string{lex_cast(port)}
-}
-{
-}
-
-ircd::net::ipport::ipport(const std::string &host,
-                          const std::string &port)
-:ipport
-{
-	uint32_t{0},
-	lex_cast<uint16_t>(port)
-}
-{
-	assert(resolver);
-	const ip::tcp::resolver::query query
-	{
-		host, port
-	};
-
-	auto epit
-	{
-		resolver->async_resolve(query, yield_context{to_asio{}})
-	};
-
-	static const ip::tcp::resolver::iterator end;
-	if(epit == end)
-		throw nxdomain("host '%s' not found", host);
-
-	const ip::tcp::endpoint &ep
-	{
-		*epit
-	};
-
-	const asio::ip::address &address
-	{
-		ep.address()
-	};
-
 	std::get<TYPE>(*this) = address.is_v6();
 
 	if(is_v6(*this))
@@ -1825,49 +1624,149 @@ ircd::net::ipport::ipport(const std::string &host,
 	}
 	else host4(*this) = address.to_v4().to_ulong();
 
-	log.debug("resolved remote %s:%u => %s %s",
-	          host,
-	          net::port(*this),
-	          is_v6(*this)? "IP6" : "IP4",
-	          string(*this));
+	net::port(*this) = port;
+}
+
+//
+// resolve
+//
+
+namespace ircd::net
+{
+	// Internal resolve base (requires boost syms)
+	using resolve_callback = std::function<void (std::exception_ptr, ip::tcp::resolver::results_type)>;
+	void async_resolve(const hostport &, ip::tcp::resolver::flags, resolve_callback);
+}
+
+ircd::net::resolve::resolve(const hostport &hostport,
+                            ctx::future<ipport> &future)
+{
+	ctx::promise<ipport> p;
+	future = ctx::future<ipport>{p};
+	resolve(hostport, [p(std::move(p))]
+	(std::exception_ptr eptr, const ipport &ip)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(ip);
+	});
+}
+
+ircd::net::resolve::resolve(const hostport &hostport,
+                            ctx::future<std::vector<ipport>> &future)
+{
+	ctx::promise<std::vector<ipport>> p;
+	future = ctx::future<std::vector<ipport>>{p};
+	resolve(hostport, [p(std::move(p))]
+	(std::exception_ptr eptr, const vector_view<ipport> &ips)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(std::vector<ipport>(begin(ips), end(ips)));
+	});
+}
+
+ircd::net::resolve::resolve(const hostport &hostport,
+                            callback_one callback)
+{
+	resolve(hostport, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const vector_view<ipport> &ips)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		if(ips.empty())
+			return callback(std::make_exception_ptr(nxdomain{}), {});
+
+		callback(std::move(eptr), ips.at(0));
+	});
+}
+
+ircd::net::resolve::resolve(const hostport &hostport,
+                            callback_many callback)
+{
+	static const ip::tcp::resolver::flags flags{};
+	async_resolve(hostport, flags, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		static const size_t max{64};
+		const size_t result_count{results.size()};
+		const size_t count{std::min(max, result_count)};
+
+		ipport vector[count];
+		std::transform(begin(results), end(results), vector, []
+		(const auto &entry)
+		{
+			return make_ipport(entry.endpoint());
+		});
+
+		assert(!eptr);
+		callback(std::move(eptr), vector_view<ipport>(vector, count));
+	});
+}
+
+void
+ircd::net::async_resolve(const hostport &hostport,
+                         ip::tcp::resolver::flags flags,
+                         resolve_callback callback)
+{
+	// Trivial host string
+	const string_view &host
+	{
+		hostport.host
+	};
+
+	// Determine if the port is a string or requires a lex_cast to one.
+	char portbuf[8];
+	const string_view &port
+	{
+		hostport.portnum? lex_cast(hostport.portnum, portbuf) : hostport.port
+	};
+
+	// Determine if the port is numeric and hint to avoid name lookup if so.
+	if(hostport.portnum || ctype<std::isdigit>(hostport.port) == -1)
+		flags |= ip::tcp::resolver::numeric_service;
+
+	// This base handler will provide exception guarantees for the entire stack.
+	// It may invoke callback twice in the case when callback throws unhandled,
+	// but the latter invocation will always have an the eptr set.
+	assert(bool(ircd::net::resolver));
+	resolver->async_resolve(host, port, flags, [callback(std::move(callback))]
+	(const error_code &ec, ip::tcp::resolver::results_type results)
+	noexcept
+	{
+		if(ec)
+		{
+			callback(std::make_exception_ptr(boost::system::system_error{ec}), {});
+		}
+		else try
+		{
+			callback({}, std::move(results));
+		}
+		catch(...)
+		{
+			callback(std::make_exception_ptr(std::current_exception()), {});
+		}
+	});
 }
 
 //
 // hostport
 //
 
-const ircd::net::hostport
-ircd::net::hostport::null
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const hostport &t)
 {
-	"0.0.0.0"s, 0
-};
-
-ircd::net::hostport::hostport(std::string s,
-                              const uint16_t &port)
-try
-:std::pair<std::string, uint16_t>
-{
-	std::move(s), port
-}
-{
-	if(port != 8448)
-		return;
-
-	//TODO: ipv6
-	const auto port_suffix
-	{
-		rsplit(first, ':').second
-	};
-
-	if(!port_suffix.empty() && port_suffix != "8448")
-		second = lex_cast<uint16_t>(port_suffix);
-}
-catch(const std::exception &e)
-{
-	throw net::invalid_argument
-	{
-		"Supplied host name and/or port number: ", e.what()
-	};
+	char buf[256];
+	s << string(buf, t);
+	return s;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

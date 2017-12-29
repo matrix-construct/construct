@@ -68,8 +68,6 @@ namespace ircd::net
 	size_t available(const socket &) noexcept;
 	ipport local_ipport(const socket &) noexcept;
 	ipport remote_ipport(const socket &) noexcept;
-	hostport local_hostport(const socket &) noexcept;
-	hostport remote_hostport(const socket &) noexcept;
 
 	size_t write(socket &, const ilist<const_buffer> &);     // write_all
 	size_t write(socket &, const iov<const_buffer> &);       // write_all
@@ -87,17 +85,13 @@ namespace ircd::net
 	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
 }
 
-namespace ircd
-{
-	using net::socket;
-	using net::hostport;
-	using net::host;
-	using net::port;
-	using net::string;
-}
-
 struct ircd::net::init
 {
 	init();
 	~init() noexcept;
 };
+
+namespace ircd
+{
+	using net::socket;
+}

@@ -22,15 +22,20 @@
 #pragma once
 #define HAVE_IRCD_NET_REMOTE_H
 
+// Forward declarations for boost because it is not included here.
+namespace boost::asio::ip
+{
+	struct address;
+};
+
 namespace ircd::net
 {
-	struct remote;
-	struct ipport;
 	struct hostport;
+	struct resolve;
+	struct ipport;
+	struct remote;
 
-	const uint16_t &port(const hostport &);
 	const uint16_t &port(const ipport &);
-	uint16_t &port(hostport &);
 	uint16_t &port(ipport &);
 
 	bool is_v6(const ipport &);
@@ -43,17 +48,20 @@ namespace ircd::net
 	uint32_t &host4(ipport &);
 	auto &host(hostport &);
 
-	string_view string(const uint32_t &, const mutable_buffer &buf);
-	string_view string(const uint128_t &, const mutable_buffer &buf);
-	string_view string(const hostport &, const mutable_buffer &buf);
-	string_view string(const ipport &, const mutable_buffer &buf);
-	string_view string(const remote &, const mutable_buffer &buf);
+	string_view string(const mutable_buffer &out, const uint32_t &);
+	string_view string(const mutable_buffer &out, const uint128_t &);
+	string_view string(const mutable_buffer &out, const hostport &);
+	string_view string(const mutable_buffer &out, const ipport &);
+	string_view string(const mutable_buffer &out, const remote &);
+}
 
-	std::string string(const uint32_t &);
-	std::string string(const uint128_t &);
-	std::string string(const hostport &);
-	std::string string(const ipport &);
-	std::string string(const remote &);
+namespace ircd
+{
+	using net::hostport;
+	using net::ipport;
+	using net::remote;
+	using net::host;
+	using net::port;
 }
 
 /// This structure holds a hostname and port usually fresh from user input
@@ -64,13 +72,43 @@ namespace ircd::net
 /// then 8448 is assumed.
 ///
 struct ircd::net::hostport
-:std::pair<std::string, uint16_t>
 {
-	static const hostport null;
+	string_view host {"0.0.0.0"};
+	string_view port {"8448"};
+	uint16_t portnum {0};
 
-	hostport(std::string s, const uint16_t &port = 8448);
+	hostport(const string_view &host, const string_view &port)
+	:host{host}
+	,port{port}
+	{}
+
+	hostport(const string_view &host, const uint16_t &portnum)
+	:host{host}
+	,port{}
+	,portnum{portnum}
+	{}
+
+	hostport(const string_view &amalgam)
+	:host{rsplit(amalgam, ':').first}
+	,port{rsplit(amalgam, ':').second}
+	{}
+
+	hostport() = default;
 
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
+};
+
+/// DNS resolution section
+///
+struct ircd::net::resolve
+{
+	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
+	using callback_many = std::function<void (std::exception_ptr, vector_view<ipport>)>;
+
+	resolve(const hostport &, callback_one);
+	resolve(const hostport &, callback_many);
+	resolve(const hostport &, ctx::future<ipport> &);
+	resolve(const hostport &, ctx::future<std::vector<ipport>> &);
 };
 
 /// This lightweight structure holds an IP address and port in native byte
@@ -94,16 +132,13 @@ struct ircd::net::ipport
 	operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
+	// DNS lookup! May yield ircd::ctx!
+	ipport(const hostport &);
+
 	// Trivial constructors
 	ipport(const uint32_t &ip, const uint16_t &port);
 	ipport(const uint128_t &ip, const uint16_t &port);
-
-	// DNS lookup! May yield ircd::ctx!
-	ipport(const std::string &hostname, const std::string &port);
-	ipport(const std::string &hostname, const uint16_t &port);
-	ipport(const string_view &hostname, const string_view &port = "8448");
-	ipport(const string_view &hostname, const uint16_t &port);
-	ipport(const hostport &);
+	ipport(const boost::asio::ip::address &, const uint16_t &port);
 	ipport();
 
 	friend std::ostream &operator<<(std::ostream &, const ipport &);
@@ -117,22 +152,21 @@ struct ircd::net::ipport
 struct ircd::net::remote
 :ircd::net::ipport
 {
-	static const remote null;
-
 	std::string hostname;
 
 	operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 	bool resolved() const;
 
-	remote(std::string hostname, const std::string &port);
-	remote(std::string hostname, const uint16_t &port);
-	remote(std::string hostname);
-	explicit remote(const string_view &hostname, const string_view &port);
-	explicit remote(const string_view &hostname, const uint16_t &port);
-	remote(const string_view &hostname);
-	explicit remote(const ipport &);
-	remote(hostport);
+	explicit remote(const ipport &ipp)
+	:ipport{ipp}
+	{}
+
+	remote(const hostport &hp)
+	:ipport{hp}
+	,hostname{std::string{hp.host}}
+	{}
+
 	remote() = default;
 
 	friend std::ostream &operator<<(std::ostream &, const remote &);
@@ -157,8 +191,8 @@ ircd::net::ipport::ipport()
 {
 	std::get<PORT>(*this) = 0;
 	std::get<TYPE>(*this) = 0;
-	//auto &ip(std::get<IP>(*this));
-	//std::fill(begin(ip), end(ip), 0x00);
+	auto &ip(std::get<IP>(*this));
+	std::fill(begin(ip), end(ip), 0x0);
 }
 
 inline
@@ -229,13 +263,13 @@ ircd::net::is_v4(const ipport &ipp)
 inline auto &
 ircd::net::host(hostport &hp)
 {
-	return hp.first;
+	return hp.host;
 }
 
 inline const auto &
 ircd::net::host(const hostport &hp)
 {
-	return hp.first;
+	return hp.host;
 }
 
 inline uint16_t &
@@ -248,16 +282,4 @@ inline const uint16_t &
 ircd::net::port(const ipport &ipp)
 {
 	return std::get<ipp.PORT>(ipp);
-}
-
-inline uint16_t &
-ircd::net::port(hostport &hp)
-{
-	return hp.second;
-}
-
-inline const uint16_t &
-ircd::net::port(const hostport &hp)
-{
-	return hp.second;
 }
