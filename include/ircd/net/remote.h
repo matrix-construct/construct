@@ -105,12 +105,17 @@ struct ircd::net::resolve
 {
 	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
 	using callback_many = std::function<void (std::exception_ptr, vector_view<ipport>)>;
+	using callback_reverse = std::function<void (std::exception_ptr, std::string)>;
 
 	resolve(const hostport &, callback_one);
 	resolve(const hostport &, callback_many);
+	resolve(const ipport &, callback_reverse);
+
 	resolve(const hostport &, ctx::future<ipport> &);
 	resolve(const hostport &, ctx::future<std::vector<ipport>> &);
+
 	resolve(const vector_view<hostport> &in, const vector_view<ipport> &out);
+	resolve(const vector_view<ipport> &in, const vector_view<std::string> &out);
 };
 
 /// This lightweight structure holds an IP address and port in native byte
@@ -134,10 +139,7 @@ struct ircd::net::ipport
 	operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
-	// DNS lookup! May yield ircd::ctx!
-	ipport(const hostport &);
-
-	// Trivial constructors
+	ipport(const hostport &);          // DNS lookup! May yield ircd::ctx!
 	ipport(const uint32_t &ip, const uint16_t &port);
 	ipport(const uint128_t &ip, const uint16_t &port);
 	ipport(const boost::asio::ip::address &, const uint16_t &port);

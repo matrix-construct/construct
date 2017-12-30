@@ -44,6 +44,9 @@ namespace ircd::net
 	std::string host(const ip::tcp::endpoint &);
 	std::string string(const ip::address &);
 	std::string string(const ip::tcp::endpoint &);
+
+	ipport make_ipport(const boost::asio::ip::tcp::endpoint &);
+	ip::tcp::endpoint make_endpoint(const ipport &);
 }
 
 namespace ircd

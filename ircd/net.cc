@@ -29,8 +29,6 @@
 namespace ircd::net
 {
 	ip::tcp::resolver *resolver;
-
-	ipport make_ipport(const boost::asio::ip::tcp::endpoint &);
 }
 
 struct ircd::log::log
@@ -72,18 +70,7 @@ std::shared_ptr<ircd::net::socket>
 ircd::net::connect(const net::remote &remote,
                    const milliseconds &timeout)
 {
-	const asio::ip::tcp::endpoint ep
-	{
-		is_v6(remote)? asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
-		}
-		: asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v4 { host4(remote) }, port(remote)
-		},
-	};
-
+	const auto ep{make_endpoint(remote)};
 	return connect(ep, timeout);
 }
 
@@ -1605,6 +1592,22 @@ ircd::net::make_ipport(const boost::asio::ip::tcp::endpoint &ep)
 	};
 }
 
+boost::asio::ip::tcp::endpoint
+ircd::net::make_endpoint(const ipport &ipport)
+{
+	return
+	{
+		is_v6(ipport)? ip::tcp::endpoint
+		{
+			asio::ip::address_v6 { std::get<ipport.IP>(ipport) }, port(ipport)
+		}
+		: ip::tcp::endpoint
+		{
+			asio::ip::address_v4 { host4(ipport) }, port(ipport)
+		},
+	};
+}
+
 ircd::net::ipport::ipport(const hostport &hp)
 {
 	ctx::future<ipport> future;
@@ -1635,7 +1638,54 @@ namespace ircd::net
 {
 	// Internal resolve base (requires boost syms)
 	using resolve_callback = std::function<void (std::exception_ptr, ip::tcp::resolver::results_type)>;
-	void async_resolve(const hostport &, ip::tcp::resolver::flags, resolve_callback);
+	void _resolve(const hostport &, ip::tcp::resolver::flags, resolve_callback);
+	void _resolve(const ipport &, resolve_callback);
+}
+
+ircd::net::resolve::resolve(const vector_view<ipport> &in,
+                            const vector_view<std::string> &out)
+{
+	assert(in.size() == out.size());
+
+	size_t a{0}, b{0};
+	ctx::ctx &c{ctx::cur()};
+	const size_t count{std::min(in.size(), out.size())};
+	for(; a < count; ++a) resolve
+	{
+		in[a], [&b, &c, &count, &ret(out[a])]
+		(std::exception_ptr eptr, std::string hostname) noexcept
+		{
+			ret = std::move(hostname);
+			if(++b >= count)
+				notify(c);
+		}
+	};
+
+	while(b < count)
+		ctx::wait();
+}
+
+ircd::net::resolve::resolve(const vector_view<hostport> &in,
+                            const vector_view<ipport> &out)
+{
+	assert(in.size() == out.size());
+
+	size_t a{0}, b{0};
+	ctx::ctx &c{ctx::cur()};
+	const size_t count{std::min(in.size(), out.size())};
+	for(; a < count; ++a) resolve
+	{
+		in[a], [&b, &c, &count, &ret(out[a])]
+		(std::exception_ptr eptr, const ipport &ip) noexcept
+		{
+			ret = ip;
+			if(++b >= count)
+				notify(c);
+		}
+	};
+
+	while(b < count)
+		ctx::wait();
 }
 
 ircd::net::resolve::resolve(const hostport &hostport,
@@ -1670,6 +1720,24 @@ ircd::net::resolve::resolve(const hostport &hostport,
 	});
 }
 
+ircd::net::resolve::resolve(const ipport &ipport,
+                            callback_reverse callback)
+{
+	_resolve(ipport, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		if(results.empty())
+			return callback({}, {});
+
+		assert(results.size() <= 1);
+		const auto &result(*begin(results));
+		callback({}, result.host_name());
+	});
+}
+
 ircd::net::resolve::resolve(const hostport &hostport,
                             callback_one callback)
 {
@@ -1686,37 +1754,11 @@ ircd::net::resolve::resolve(const hostport &hostport,
 	});
 }
 
-ircd::net::resolve::resolve(const vector_view<hostport> &in,
-                            const vector_view<ipport> &out)
-{
-	assert(in.size() == out.size());
-	const size_t count
-	{
-		std::min(in.size(), out.size())
-	};
-
-	size_t a{0}, b{0};
-	ctx::ctx &c{ctx::cur()};
-	for(; a < count; ++a) resolve
-	{
-		in[a], [&b, &c, &count, &ret(out[a])]
-		(std::exception_ptr eptr, const ipport &ip) noexcept
-		{
-			ret = ip;
-			if(++b >= count)
-				notify(c);
-		}
-	};
-
-	while(b < count)
-		ctx::wait();
-}
-
 ircd::net::resolve::resolve(const hostport &hostport,
                             callback_many callback)
 {
 	static const ip::tcp::resolver::flags flags{};
-	async_resolve(hostport, flags, [callback(std::move(callback))]
+	_resolve(hostport, flags, [callback(std::move(callback))]
 	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
 	{
 		if(eptr)
@@ -1738,10 +1780,11 @@ ircd::net::resolve::resolve(const hostport &hostport,
 	});
 }
 
+/// Internal A/AAAA record resolver function
 void
-ircd::net::async_resolve(const hostport &hostport,
-                         ip::tcp::resolver::flags flags,
-                         resolve_callback callback)
+ircd::net::_resolve(const hostport &hostport,
+                    ip::tcp::resolver::flags flags,
+                    resolve_callback callback)
 {
 	// Trivial host string
 	const string_view &host
@@ -1770,7 +1813,32 @@ ircd::net::async_resolve(const hostport &hostport,
 	{
 		if(ec)
 		{
-			callback(std::make_exception_ptr(boost::system::system_error{ec}), {});
+			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
+		}
+		else try
+		{
+			callback({}, std::move(results));
+		}
+		catch(...)
+		{
+			callback(std::make_exception_ptr(std::current_exception()), {});
+		}
+	});
+}
+
+/// Internal PTR record resolver function
+void
+ircd::net::_resolve(const ipport &ipport,
+                    resolve_callback callback)
+{
+	assert(bool(ircd::net::resolver));
+	resolver->async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
+	(const error_code &ec, ip::tcp::resolver::results_type results)
+	noexcept
+	{
+		if(ec)
+		{
+			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
 		}
 		else try
 		{

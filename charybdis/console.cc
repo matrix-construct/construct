@@ -385,6 +385,21 @@ try
 					std::cout << future.get() << std::endl;
 					break;
 				}
+
+				case hash("ptr"):
+				{
+					net::ipport in[1]
+					{
+						net::hostport { host, port },
+					};
+
+					std::string out[1];
+					net::resolve{in, out};
+					for(const auto &ptr : out)
+						std::cout << ptr << std::endl;
+
+					break;
+				}
 			}
 
 			break;
