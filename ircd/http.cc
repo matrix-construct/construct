@@ -573,9 +573,12 @@ ircd::http::content::content(parse::capstan &pc,
 
 	//assert(pc.parsed == base + length);
 	if(unlikely(pc.parsed < base + length))
-		throw parse::buffer_error("parse buffer short by %zu to hold %zu total bytes of content",
-		                          remain,
-		                          length);
+		throw parse::buffer_error
+		{
+			"parse buffer short by %zu to hold %zu total bytes of content",
+			remain,
+			length
+		};
 
 	if(pc.remaining())
 		*pc.read = '\0';
@@ -730,7 +733,7 @@ const
 {
 	const auto ret(operator[](key));
 	if(ret.empty())
-		throw std::out_of_range("Failed to find value for required query string key");
+		throw std::out_of_range{"Failed to find value for required query string key"};
 
 	return ret;
 }
@@ -804,7 +807,10 @@ ircd::http::parser::content_length(const string_view &str)
 	const char *start(str.data());
 	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
 	if(!parsed || ret < 0)
-		throw error(BAD_REQUEST, "Invalid content-length value");
+		throw error
+		{
+			BAD_REQUEST, "Invalid content-length value"
+		};
 
 	return ret;
 }
@@ -930,7 +936,7 @@ ircd::http::status(const string_view &str)
 	const char *start(str.data());
 	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
 	if(!parsed || ret < 0 || ret >= 1000)
-		throw ircd::error("Invalid HTTP status code");
+		throw ircd::error{"Invalid HTTP status code"};
 
 	return http::code(ret);
 }

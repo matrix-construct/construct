@@ -261,9 +261,10 @@ ircd::openssl::read_pem(X509 &out_,
 	});
 
 	if(unlikely(ret != out))
-		throw error("Failed to read X509 PEM @ %p (len: %zu)",
-		            pem.data(),
-		            pem.length());
+		throw error
+		{
+			"Failed to read X509 PEM @ %p (len: %zu)", pem.data(), pem.length()
+		};
 
 	return *ret;
 }
@@ -476,7 +477,7 @@ void
 ircd::openssl::check(const RSA &key)
 {
 	if(call<error, -1>(::RSA_check_key, const_cast<RSA *>(&key)) == 0)
-		throw error("Invalid RSA");
+		throw error{"Invalid RSA"};
 }
 
 bool
@@ -566,9 +567,10 @@ ircd::openssl::read_pem_priv(EVP_PKEY &out_,
 	});
 
 	if(unlikely(!ret))
-		throw error("Failed to read Private Key PEM @ %p (len: %zu)",
-		            pem.data(),
-		            pem.length());
+		throw error
+		{
+			"Failed to read Private Key PEM @ %p (len: %zu)", pem.data(), pem.length()
+		};
 
 	return *out;
 }
@@ -599,9 +601,10 @@ ircd::openssl::read_pem_pub(EVP_PKEY &out_,
 	});
 
 	if(unlikely(!ret))
-		throw error("Failed to read Public Key PEM @ %p (len: %zu)",
-		            pem.data(),
-		            pem.length());
+		throw error
+		{
+			"Failed to read Public Key PEM @ %p (len: %zu)", pem.data(), pem.length()
+		};
 
 	return *out;
 }
@@ -812,7 +815,7 @@ ircd::openssl::bignum::bignum(const const_raw_buffer &bin)
 }()}
 {
 	if(unlikely(!a))
-		throw error("Error creating bignum from binary buffer...");
+		throw error{"Error creating bignum from binary buffer..."};
 }
 
 ircd::openssl::bignum::bignum(const BIGNUM &a)
@@ -836,7 +839,10 @@ ircd::openssl::bignum &
 ircd::openssl::bignum::operator=(const bignum &o)
 {
 	if(unlikely(!BN_copy(a, o.a)))
-		throw error("Failed to copy bignum from %p to %p", &o, this);
+		throw error
+		{
+			"Failed to copy bignum from %p to %p", &o, this
+		};
 
 	return *this;
 }
@@ -1226,7 +1232,10 @@ ircd::openssl::throw_error(const unsigned long &code)
 		ERR_reason_error_string(code)?: "UNKNOWN ERROR"
 	};
 
-	throw exception("OpenSSL #%lu: %s", code, msg);
+	throw exception
+	{
+		"OpenSSL #%lu: %s", code, msg
+	};
 }
 
 template<class exception>
