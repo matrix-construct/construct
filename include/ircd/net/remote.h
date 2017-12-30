@@ -31,7 +31,6 @@ namespace boost::asio::ip
 namespace ircd::net
 {
 	struct hostport;
-	struct resolve;
 	struct ipport;
 	struct remote;
 
@@ -96,26 +95,6 @@ struct ircd::net::hostport
 	hostport() = default;
 
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
-};
-
-/// DNS resolution suite.
-///
-/// There are plenty of ways to resolve plenty of things. Still more to come.
-struct ircd::net::resolve
-{
-	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
-	using callback_many = std::function<void (std::exception_ptr, vector_view<ipport>)>;
-	using callback_reverse = std::function<void (std::exception_ptr, std::string)>;
-
-	resolve(const hostport &, callback_one);
-	resolve(const hostport &, callback_many);
-	resolve(const ipport &, callback_reverse);
-
-	resolve(const hostport &, ctx::future<ipport> &);
-	resolve(const hostport &, ctx::future<std::vector<ipport>> &);
-
-	resolve(const vector_view<hostport> &in, const vector_view<ipport> &out);
-	resolve(const vector_view<ipport> &in, const vector_view<std::string> &out);
 };
 
 /// This lightweight structure holds an IP address and port in native byte

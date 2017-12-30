@@ -49,6 +49,7 @@ namespace ircd::net
 }
 
 #include "remote.h"
+#include "resolve.h"
 #include "listener.h"
 
 enum class ircd::net::dc
