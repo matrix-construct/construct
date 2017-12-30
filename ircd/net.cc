@@ -1686,6 +1686,32 @@ ircd::net::resolve::resolve(const hostport &hostport,
 	});
 }
 
+ircd::net::resolve::resolve(const vector_view<hostport> &in,
+                            const vector_view<ipport> &out)
+{
+	assert(in.size() == out.size());
+	const size_t count
+	{
+		std::min(in.size(), out.size())
+	};
+
+	size_t a{0}, b{0};
+	ctx::ctx &c{ctx::cur()};
+	for(; a < count; ++a) resolve
+	{
+		in[a], [&b, &c, &count, &ret(out[a])]
+		(std::exception_ptr eptr, const ipport &ip) noexcept
+		{
+			ret = ip;
+			if(++b >= count)
+				notify(c);
+		}
+	};
+
+	while(b < count)
+		ctx::wait();
+}
+
 ircd::net::resolve::resolve(const hostport &hostport,
                             callback_many callback)
 {

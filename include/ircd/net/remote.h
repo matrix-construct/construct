@@ -98,8 +98,9 @@ struct ircd::net::hostport
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
 };
 
-/// DNS resolution section
+/// DNS resolution suite.
 ///
+/// There are plenty of ways to resolve plenty of things. Still more to come.
 struct ircd::net::resolve
 {
 	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
@@ -109,6 +110,7 @@ struct ircd::net::resolve
 	resolve(const hostport &, callback_many);
 	resolve(const hostport &, ctx::future<ipport> &);
 	resolve(const hostport &, ctx::future<std::vector<ipport>> &);
+	resolve(const vector_view<hostport> &in, const vector_view<ipport> &out);
 };
 
 /// This lightweight structure holds an IP address and port in native byte
