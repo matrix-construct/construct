@@ -1382,81 +1382,6 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// net/asio.h
-//
-
-std::string
-ircd::net::string(const ip::address &addr)
-{
-	return addr.to_string();
-}
-
-std::string
-ircd::net::string(const ip::tcp::endpoint &ep)
-{
-	std::string ret(256, char{});
-	const auto addr{string(net::addr(ep))};
-	const auto data{const_cast<char *>(ret.data())};
-	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
-	return ret;
-}
-
-std::string
-ircd::net::host(const ip::tcp::endpoint &ep)
-{
-	return string(addr(ep));
-}
-
-boost::asio::ip::address
-ircd::net::addr(const ip::tcp::endpoint &ep)
-{
-	return ep.address();
-}
-
-uint16_t
-ircd::net::port(const ip::tcp::endpoint &ep)
-{
-	return ep.port();
-}
-
-std::string
-ircd::net::string(const boost::system::system_error &e)
-{
-	return string(e.code());
-}
-
-std::string
-ircd::net::string(const boost::system::error_code &ec)
-{
-	std::string ret(128, char{});
-	ret.resize(string(mutable_buffer{ret}, ec).size());
-	return ret;
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const boost::system::system_error &e)
-{
-	return string(buf, e.code());
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const boost::system::error_code &ec)
-{
-	const auto len
-	{
-		fmt::sprintf
-		{
-			buf, "%s: %s", ec.category().name(), ec.message()
-		}
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // net/resolve.h
 //
 
@@ -1479,7 +1404,8 @@ ircd::net::resolve::resolve(const vector_view<ipport> &in,
 	for(; a < count; ++a) resolve
 	{
 		in[a], [&b, &c, &count, &ret(out[a])]
-		(std::exception_ptr eptr, std::string hostname) noexcept
+		(std::exception_ptr eptr, std::string hostname)
+		noexcept
 		{
 			ret = std::move(hostname);
 			if(++b >= count)
@@ -1502,7 +1428,8 @@ ircd::net::resolve::resolve(const vector_view<hostport> &in,
 	for(; a < count; ++a) resolve
 	{
 		in[a], [&b, &c, &count, &ret(out[a])]
-		(std::exception_ptr eptr, const ipport &ip) noexcept
+		(std::exception_ptr eptr, const ipport &ip)
+		noexcept
 		{
 			ret = ip;
 			if(++b >= count)
@@ -1862,6 +1789,81 @@ ircd::net::operator<<(std::ostream &s, const hostport &t)
 	char buf[256];
 	s << string(buf, t);
 	return s;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/asio.h
+//
+
+std::string
+ircd::net::string(const ip::address &addr)
+{
+	return addr.to_string();
+}
+
+std::string
+ircd::net::string(const ip::tcp::endpoint &ep)
+{
+	std::string ret(256, char{});
+	const auto addr{string(net::addr(ep))};
+	const auto data{const_cast<char *>(ret.data())};
+	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
+	return ret;
+}
+
+std::string
+ircd::net::host(const ip::tcp::endpoint &ep)
+{
+	return string(addr(ep));
+}
+
+boost::asio::ip::address
+ircd::net::addr(const ip::tcp::endpoint &ep)
+{
+	return ep.address();
+}
+
+uint16_t
+ircd::net::port(const ip::tcp::endpoint &ep)
+{
+	return ep.port();
+}
+
+std::string
+ircd::net::string(const boost::system::system_error &e)
+{
+	return string(e.code());
+}
+
+std::string
+ircd::net::string(const boost::system::error_code &ec)
+{
+	std::string ret(128, char{});
+	ret.resize(string(mutable_buffer{ret}, ec).size());
+	return ret;
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const boost::system::system_error &e)
+{
+	return string(buf, e.code());
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const boost::system::error_code &ec)
+{
+	const auto len
+	{
+		fmt::sprintf
+		{
+			buf, "%s: %s", ec.category().name(), ec.message()
+		}
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
