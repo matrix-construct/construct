@@ -1517,11 +1517,13 @@ ircd::net::resolve::resolve(const hostport &hostport,
 		if(eptr)
 			return callback(std::move(eptr), {});
 
-		static const size_t max{64};
-		const size_t result_count{results.size()};
-		const size_t count{std::min(max, result_count)};
+		static const size_t max{32};
+		const size_t count
+		{
+			results.size()
+		};
 
-		ipport vector[count];
+		ipport vector[max];
 		std::transform(begin(results), end(results), vector, []
 		(const auto &entry)
 		{
@@ -1529,7 +1531,7 @@ ircd::net::resolve::resolve(const hostport &hostport,
 		});
 
 		assert(!eptr);
-		callback(std::move(eptr), vector_view<ipport>(vector, count));
+		callback(std::move(eptr), vector);
 	});
 }
 
