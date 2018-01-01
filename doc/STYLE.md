@@ -227,6 +227,21 @@ reseated; then the "~~big three~~" "big five" custom constructors have to be
 created and maintained, and it becomes an unnecessary mess.
 
 
+#### Comments
+
+* `/* */` Multi-line comments are not normally used. We reserve this for
+debugging and temporary multi-line grey-outs. The goal for rarely using this
+is to not impede anybody attempting to refactor or grey-out a large swath of
+code.
+
+* `//` Primary developer comment; used even on multiple lines.
+
+* `///` Documentation comment; the same style as the single line comment; the
+documentation is applied to code that follows the comment block.
+
+* `///<` Documentation comment; this documents code preceding the comment.
+
+
 #### Miscellaneous
 
 
