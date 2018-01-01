@@ -1888,13 +1888,13 @@ ircd::string(const mutable_buffer &buf,
 const ircd::buffer::mutable_buffer
 ircd::buffer::null_buffer
 {
-    nullptr, nullptr
+	nullptr, nullptr
 };
 
 const ircd::ilist<ircd::buffer::mutable_buffer>
 ircd::buffer::null_buffers
 {{
-    null_buffer
+	null_buffer
 }};
 
 ircd::buffer::mutable_buffer::operator

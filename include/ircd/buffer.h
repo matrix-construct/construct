@@ -69,10 +69,6 @@ namespace ircd::buffer
 	template<template<class> class I> using const_raw_buffers = I<const_raw_buffer>;
 	template<template<class> class I> using mutable_raw_buffers = I<mutable_raw_buffer>;
 
-	// Preconstructed null buffers
-	extern const mutable_buffer null_buffer;
-	extern const ilist<mutable_buffer> null_buffers;
-
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
 	template<class it> const it &end(const buffer<it> &buffer);
@@ -103,6 +99,10 @@ namespace ircd::buffer
 	// Convenience copy to std stream
 	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
 	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
+
+	// Preconstructed null buffers
+	extern const mutable_buffer null_buffer;
+	extern const ilist<mutable_buffer> null_buffers;
 }
 
 // Export these important aliases down to main ircd namespace
