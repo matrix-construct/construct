@@ -43,6 +43,16 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/io_service.hpp>
 
+namespace ircd
+{
+	std::exception_ptr make_eptr(const boost::system::error_code &ec);
+
+	string_view string(const mutable_buffer &, const boost::system::error_code &);
+	string_view string(const mutable_buffer &, const boost::system::system_error &);
+	std::string string(const boost::system::error_code &);
+	std::string string(const boost::system::system_error &);
+}
+
 struct ircd::strand
 :asio::io_service::strand
 {

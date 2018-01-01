@@ -115,7 +115,7 @@ struct ircd::net::ipport
 {
 	enum { IP, PORT, TYPE };
 
-	operator bool() const;
+	explicit operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
 	ipport(const hostport &);          // DNS lookup! May yield ircd::ctx!
@@ -137,7 +137,7 @@ struct ircd::net::remote
 {
 	std::string hostname;
 
-	operator bool() const;
+	explicit operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 	bool resolved() const;
 

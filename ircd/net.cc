@@ -1832,14 +1832,26 @@ ircd::net::port(const ip::tcp::endpoint &ep)
 	return ep.port();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// asio.h
+//
+
+std::exception_ptr
+ircd::make_eptr(const boost::system::error_code &ec)
+{
+	return bool(ec)? std::make_exception_ptr(boost::system::system_error(ec)):
+	                 std::exception_ptr{};
+}
+
 std::string
-ircd::net::string(const boost::system::system_error &e)
+ircd::string(const boost::system::system_error &e)
 {
 	return string(e.code());
 }
 
 std::string
-ircd::net::string(const boost::system::error_code &ec)
+ircd::string(const boost::system::error_code &ec)
 {
 	std::string ret(128, char{});
 	ret.resize(string(mutable_buffer{ret}, ec).size());
@@ -1847,15 +1859,15 @@ ircd::net::string(const boost::system::error_code &ec)
 }
 
 ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const boost::system::system_error &e)
+ircd::string(const mutable_buffer &buf,
+             const boost::system::system_error &e)
 {
 	return string(buf, e.code());
 }
 
 ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const boost::system::error_code &ec)
+ircd::string(const mutable_buffer &buf,
+             const boost::system::error_code &ec)
 {
 	const auto len
 	{

@@ -32,13 +32,11 @@
 
 namespace ircd::net
 {
-	using boost::system::error_code;
-	string_view string(const mutable_buffer &, const boost::system::error_code &);
-	string_view string(const mutable_buffer &, const boost::system::system_error &);
-	std::string string(const boost::system::error_code &);
-	std::string string(const boost::system::system_error &);
-
 	namespace ip = asio::ip;
+	using boost::system::error_code;
+	using asio::steady_timer;
+	using ircd::string;
+
 	uint16_t port(const ip::tcp::endpoint &);
 	ip::address addr(const ip::tcp::endpoint &);
 	std::string host(const ip::tcp::endpoint &);
