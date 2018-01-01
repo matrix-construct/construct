@@ -69,5 +69,16 @@ which count characters printed *not including null*. They may return a
 - Consider any code inside a runtime `assert()` statement to **entirely**
 disappear in optimized builds. Some implementations of `assert()` may only
 elide the boolean check and thus preserve the inner statement and the effects
-of its execution. We do not rely on this. Consider `assert()` to be a
-preprocessor macro like assert(*actual characters entirely erased*).
+of its execution. We do not rely on this. Do not use `assert()` to check
+return values of statements that need to be executed in optimized builds.
+
+- Furthermore, consider the **assert statement itself to be physically erased**
+from the code during optimized builds. Thus the following is a big mistake:
+
+```
+	if(foo)
+		assert(!bar);
+
+	if(baz)
+		bam();
+```
