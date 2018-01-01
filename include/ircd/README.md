@@ -61,5 +61,13 @@ to move *back* to `strn*` style but it's not prudent at this time.
 
 - Anything named `print*` like `print(mutable_buffer, T)` always composes null
 terminated output into the buffer. These functions usually return a size_t
-which indicates characters printed *not including null*. They may return a
+which count characters printed *not including null*. They may return a
 `string_view`/`const_buffer` of that size (never viewing the null).
+
+#### assert() volatility
+
+- Consider any code inside a runtime `assert()` statement to **entirely**
+disappear in optimized builds. Some implementations of `assert()` may only
+elide the boolean check and thus preserve the inner statement and the effects
+of its execution. We do not rely on this. Consider `assert()` to be a
+preprocessor macro like assert(*actual characters entirely erased*).
