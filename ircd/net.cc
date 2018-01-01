@@ -552,7 +552,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 {
 	log.debug("%s preparing listener socket configuration...",
 	          std::string(*this));
-
+/*
 	ssl.set_options
 	(
 		//ssl.default_workarounds
@@ -561,10 +561,9 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		//| ssl.no_tlsv1_2
 		//| ssl.no_sslv2
 		//| ssl.no_sslv3
-		ssl.single_dh_use
+		//| ssl.single_dh_use
 	);
-
-
+*/
 	//TODO: XXX
 	ssl.set_password_callback([this]
 	(const auto &size, const auto &purpose)
@@ -812,6 +811,17 @@ ircd::net::socket::scope_timeout::release()
 }
 
 //
+// socket::xfer
+//
+
+ircd::net::socket::xfer::xfer(const error_code &error_code,
+                              const size_t &bytes)
+:eptr{make_eptr(error_code)}
+,bytes{bytes}
+{
+}
+
+//
 // socket
 //
 
@@ -886,27 +896,6 @@ catch(const std::exception &e)
 
 	disconnect(dc::RST);
 	throw;
-}
-
-/// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
-///
-void
-ircd::net::socket::connect(const net::remote &remote,
-                           const milliseconds &timeout)
-{
-	const ip::tcp::endpoint ep
-	{
-		is_v6(remote)? asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v6 { std::get<remote.IP>(remote) }, port(remote)
-		}
-		: asio::ip::tcp::endpoint
-		{
-			asio::ip::address_v4 { host4(remote) }, port(remote)
-		},
-	};
-
-	this->connect(ep, timeout);
 }
 
 /// Attempt to connect and ssl handshake; asynchronous, callback when done.
@@ -1067,14 +1056,15 @@ bool
 ircd::net::socket::cancel()
 noexcept
 {
+	static const auto good{[](const auto &ec)
+	{
+		return ec == boost::system::errc::success;
+	}};
+
 	boost::system::error_code ec[2];
 	sd.cancel(ec[0]);
 	timer.cancel(ec[1]);
-
-	return std::all_of(begin(ec), end(ec), [](const auto &ec)
-	{
-		return ec == boost::system::errc::success;
-	});
+	return std::all_of(begin(ec), end(ec), good);
 }
 
 /// Asynchronous callback when the socket is ready
@@ -1082,79 +1072,86 @@ noexcept
 /// Overload for operator() without a timeout. see: operator()
 ///
 void
-ircd::net::socket::operator()(handler h)
+ircd::net::socket::operator()(const wait_type &type,
+                              handler h)
 {
-	operator()(milliseconds(-1), std::move(h));
+	operator()(type, milliseconds(-1), std::move(h));
 }
 
 /// Asynchronous callback when the socket is ready
 ///
-/// This function calls back the handler when the socket has received
-/// something and is ready to be read from.
-///
-/// The purpose here is to allow waiting for data from the socket without
-/// blocking any context and using any stack space whatsoever, i.e full
-/// asynchronous mode.
+/// This function calls back the handler when the socket is ready
+/// for the operation of the specified type.
 ///
 void
-ircd::net::socket::operator()(const milliseconds &timeout,
+ircd::net::socket::operator()(const wait_type &type,
+                              const milliseconds &timeout,
                               handler callback)
 {
-	static const auto flags
+	auto handle
 	{
-		ip::tcp::socket::message_peek
-	};
-
-	static char buffer[0];
-	static const asio::mutable_buffers_1 buffers
-	{
-		buffer, sizeof(buffer)
-	};
-
-	auto handler
-	{
-		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1, ph::_2)
+		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1)
 	};
 
 	assert(connected());
 	set_timeout(timeout);
-	sd.async_receive(buffers, flags, std::move(handler));
+	switch(type)
+	{
+		case wait_type::wait_error:
+		case wait_type::wait_write:
+		{
+			sd.async_wait(type, std::move(handle));
+			break;
+		}
+
+		// There might be a bug in boost on linux which is only reproducible
+		// when serving a large number of assets: a ready status for the socket
+		// is not indicated when it ought to be, at random. This is fixed below
+		// by doing it the old way (pre boost-1.66 sd.async_wait()) with the
+		// proper peek.
+		case wait_type::wait_read:
+		{
+			static const auto flags{ip::tcp::socket::message_peek};
+			sd.async_receive(buffer::null_buffers, flags, std::move(handle));
+			break;
+		}
+	}
 }
 
 void
 ircd::net::socket::handle(const std::weak_ptr<socket> wp,
                           const handler callback,
-                          const error_code &ec,
-                          const size_t &bytes)
+                          const error_code &ec)
 noexcept try
 {
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-/*
-	log.debug("socket(%p): %zu bytes; %s: %s",
+	log.debug("socket(%p): handle: (%s)",
 	          this,
-	          bytes,
 	          string(ec));
-*/
 
-	// This handler and the timeout handler are responsible for canceling each other
-	// when one or the other is entered. If the timeout handler has already fired for
-	// a timeout on the socket, `timedout` will be `true` and this handler will be
-	// entered with an `operation_canceled` error.
 	if(!timedout)
 		cancel_timeout();
-	else
-		assert(ec == boost::system::errc::operation_canceled);
 
-	// We can handle a few errors at this level which don't ever need to invoke the
-	// user's callback. Otherwise they are passed up.
-	if(!handle_error(ec))
+	if(ec.category() == system_category()) switch(ec.value())
 	{
-		log.error("socket(%p): %s",
-		          this,
-		          string(ec));
-		return;
+		case operation_canceled:
+			if(timedout)
+				break;
+
+			return;
+
+		// This is a condition which we hide from the user.
+		case bad_file_descriptor:
+			return;
+
+		// Everything else is passed up to the user.
+		default:
+			break;
 	}
 
 	call_user(callback, ec);
@@ -1169,88 +1166,12 @@ catch(const std::bad_weak_ptr &e)
 	            e.what());
 	assert(0);
 }
-catch(const boost::system::system_error &e)
-{
-	log.error("socket(%p): handle: %s %s",
-	          this,
-	          string(ec));
-	assert(0);
-}
 catch(const std::exception &e)
 {
-	log.error("socket(%p): handle: %s",
-	          this,
-	          e.what());
-	assert(0);
-}
-
-void
-ircd::net::socket::call_user(const handler &callback,
-                             const error_code &ec)
-noexcept try
-{
-	callback(ec);
-}
-catch(const std::exception &e)
-{
-	log.critical("socket(%p): async handler: unhandled exception: %s",
+	log.critical("socket(%p): handle: %s",
 	             this,
 	             e.what());
-}
-
-bool
-ircd::net::socket::handle_error(const error_code &ec)
-{
- 	using namespace boost::system::errc;
-	using boost::system::system_category;
-	using boost::asio::error::get_ssl_category;
-	using boost::asio::error::get_misc_category;
-
-	if(likely(ec == success))
-		return true;
-
-	log.warning("socket(%p): handle error: %s: %s",
-	            this,
-	            string(ec));
-
-	if(ec.category() == system_category()) switch(ec.value())
-	{
-		// A cancel is triggered either by the timeout handler or by
-		// a request to shutdown/close the socket. We only call the user's
-		// handler for a timeout, otherwise this is hidden from the user.
-		case operation_canceled:
-			return timedout;
-
-		// This is a condition which we hide from the user.
-		case bad_file_descriptor:
-			return false;
-
-		// Everything else is passed up to the user.
-		default:
-			return true;
-	}
-	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
-	{
-		// Docs say this means we read less bytes off the socket than desired.
-		case SSL_R_SHORT_READ:
-			return true;
-
-		default:
-			return true;
-	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
-	{
-		// This indicates the remote closed the socket, we still
-		// pass this up to the user so they can know that too.
-		case boost::asio::error::eof:
-			return true;
-
-		default:
-			return true;
-	}
-
 	assert(0);
-	return true;
 }
 
 void
@@ -1265,9 +1186,9 @@ noexcept try
 		// A 'success' for this handler means there was a timeout on the socket
 		case success:
 		{
-			sd.cancel();
 			assert(timedout == false);
 			timedout = true;
+			sd.cancel();
 			break;
 		}
 
@@ -1287,9 +1208,10 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p): handle_timeout: unexpected: %s\n",
-	          (const void *)this,
-	          e.what());
+	log.critical("socket(%p): handle_timeout: unexpected: %s\n",
+	             (const void *)this,
+	              e.what());
+	assert(0);
 }
 catch(const std::exception &e)
 {
@@ -1298,11 +1220,103 @@ catch(const std::exception &e)
 	          e.what());
 }
 
+void
+ircd::net::socket::call_user(const handler &callback,
+                             const error_code &ec)
+noexcept try
+{
+	callback(ec);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): async handler: unhandled exception: %s",
+	             this,
+	             e.what());
+}
+
+void
+ircd::net::socket::blocking(const bool &b)
+{
+	sd.non_blocking(b);
+}
+
+void
+ircd::net::socket::wbufsz(const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::send_buffer_size option
+	{
+		int(bytes)
+	};
+
+	sd.set_option(option);
+}
+
+void
+ircd::net::socket::rbufsz(const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::receive_buffer_size option
+	{
+		int(bytes)
+	};
+
+	sd.set_option(option);
+}
+
+bool
+ircd::net::socket::blocking()
+const
+{
+	return !sd.non_blocking();
+}
+
+size_t
+ircd::net::socket::wbufsz()
+const
+{
+	ip::tcp::socket::send_buffer_size option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::socket::rbufsz()
+const
+{
+	ip::tcp::socket::receive_buffer_size option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::socket::readable()
+const
+{
+	ip::tcp::socket::bytes_readable command{true};
+	const_cast<ip::tcp::socket &>(sd).io_control(command);
+	return command.get();
+}
+
 size_t
 ircd::net::socket::available()
 const
 {
 	return sd.available();
+}
+
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::local()
+const
+{
+	return sd.local_endpoint();
+}
+
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::remote()
+const
+{
+	return sd.remote_endpoint();
 }
 
 bool
@@ -1324,20 +1338,6 @@ noexcept
 	timedout = false;
 	timer.cancel(ec);
 	return ec;
-}
-
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::local()
-const
-{
-	return sd.local_endpoint();
-}
-
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::remote()
-const
-{
-	return sd.remote_endpoint();
 }
 
 void

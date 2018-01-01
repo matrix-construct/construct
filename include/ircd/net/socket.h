@@ -31,8 +31,6 @@
 
 namespace ircd::net
 {
-	using asio::steady_timer;
-
 	struct socket;
 
 	extern asio::ssl::context sslv23_client;
@@ -45,7 +43,15 @@ struct ircd::net::socket
 {
 	struct io;
 	struct stat;
+	struct xfer;
 	struct scope_timeout;
+
+	using endpoint = ip::tcp::endpoint;
+	using wait_type = ip::tcp::socket::wait_type;
+	using message_flags = asio::socket_base::message_flags;
+	using handshake_type = asio::ssl::stream<ip::tcp::socket>::handshake_type;
+	using handler = std::function<void (const error_code &) noexcept>;
+	using xfer_handler = std::function<void (xfer) noexcept>;
 
 	struct stat
 	{
@@ -53,21 +59,15 @@ struct ircd::net::socket
 		size_t calls {0};
 	};
 
-	using message_flags = boost::asio::socket_base::message_flags;
-	using handshake_type = asio::ssl::stream<ip::tcp::socket>::handshake_type;
-	using handler = std::function<void (const error_code &) noexcept>;
-	using xfer_handler = std::function<void (const error_code &, const size_t &) noexcept>;
-
 	ip::tcp::socket sd;
 	asio::ssl::stream<ip::tcp::socket &> ssl;
 	steady_timer timer;
 	stat in, out;
 	bool timedout {false};
 
-	void call_user(const handler &, const error_code &) noexcept;
-	bool handle_error(const error_code &ec);
+	void call_user(const handler &, const error_code &ec) noexcept;
 	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec) noexcept;
-	void handle(std::weak_ptr<socket>, handler, const error_code &, const size_t &) noexcept;
+	void handle(std::weak_ptr<socket>, handler, const error_code &) noexcept;
 
   public:
 	operator const ip::tcp::socket &() const     { return sd;                                      }
@@ -75,25 +75,29 @@ struct ircd::net::socket
 	operator const SSL &() const;
 	operator SSL &();
 
-	ip::tcp::endpoint remote() const;            // getpeername(); throws if not conn
-	ip::tcp::endpoint local() const;             // getsockname(); throws if not conn/bound
 	bool connected() const noexcept;             // false on any sock errs
+	endpoint remote() const;                     // getpeername(); throws if not conn
+	endpoint local() const;                      // getsockname(); throws if not conn/bound
 	size_t available() const;                    // throws on errors; use friend variant for noex..
+	size_t readable() const;                     // throws on errors; ioctl
+	size_t rbufsz() const;                       // throws on errors; SO_RCVBUF
+	size_t wbufsz() const;                       // throws on errors; SO_SNDBUF
+	bool blocking() const;                       // throws on errors;
+
+	void rbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
+	void wbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
+	void blocking(const bool &);                 // throws; set blocking
 
 	// low level read suite
 	template<class iov> auto read_some(const iov &, xfer_handler);
-	template<class iov> auto read_some(const iov &, error_code &);
 	template<class iov> auto read_some(const iov &);
 	template<class iov> auto read(const iov &, xfer_handler);
-	template<class iov> auto read(const iov &, error_code &);
 	template<class iov> auto read(const iov &);
 
 	// low level write suite
 	template<class iov> auto write_some(const iov &, xfer_handler);
-	template<class iov> auto write_some(const iov &, error_code &);
 	template<class iov> auto write_some(const iov &);
 	template<class iov> auto write(const iov &, xfer_handler);
-	template<class iov> auto write(const iov &, error_code &);
 	template<class iov> auto write(const iov &);
 
 	// Timer for this socket
@@ -101,15 +105,14 @@ struct ircd::net::socket
 	void set_timeout(const milliseconds &);
 	error_code cancel_timeout() noexcept;
 
-	// Asynchronous callback when socket ready for read
-	void operator()(const milliseconds &timeout, handler);
-	void operator()(handler);
+	// Asynchronous callback when socket ready
+	void operator()(const wait_type &, const milliseconds &timeout, handler);
+	void operator()(const wait_type &, handler);
 	bool cancel() noexcept;
 
 	// Connect to host; synchronous (yield) and asynchronous (callback) variants
-	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout, handler callback);
-	void connect(const ip::tcp::endpoint &ep, const milliseconds &timeout = 30000ms);
-	void connect(const net::remote &, const milliseconds &timeout = 30000ms);
+	void connect(const endpoint &ep, const milliseconds &timeout, handler callback);
+	void connect(const endpoint &ep, const milliseconds &timeout = 30000ms);
 	bool disconnect(const dc &type);
 
 	socket(asio::ssl::context &ssl               = sslv23_client,
@@ -152,25 +155,22 @@ class ircd::net::socket::io
 	io(struct socket &, struct stat &, const std::function<size_t ()> &closure);
 };
 
+struct ircd::net::socket::xfer
+{
+	std::exception_ptr eptr;
+	size_t bytes {0};
+
+	xfer(const error_code &ec = {}, const size_t &bytes = 0);
+};
+
 template<class iov>
 auto
 ircd::net::socket::write(const iov &bufs)
 {
-	return io(*this, out, [&]
+	return io{*this, out, [&]
 	{
 		return async_write(ssl, bufs, asio::transfer_all(), yield_context{to_asio{}});
-	});
-}
-
-template<class iov>
-auto
-ircd::net::socket::write(const iov &bufs,
-                         error_code &ec)
-{
-	return io(*this, out, [&]
-	{
-		return async_write(ssl, bufs, asio::transfer_all(), yield_context{to_asio{}}[ec]);
-	});
+	}};
 }
 
 template<class iov>
@@ -183,7 +183,7 @@ ircd::net::socket::write(const iov &bufs,
 	noexcept
 	{
 		io{*this, out, bytes};
-		handler(ec, bytes);
+		handler(xfer{ec, bytes});
 	});
 }
 
@@ -191,21 +191,10 @@ template<class iov>
 auto
 ircd::net::socket::write_some(const iov &bufs)
 {
-	return io(*this, out, [&]
+	return io{*this, out, [&]
 	{
 		return ssl.async_write_some(bufs, yield_context{to_asio{}});
-	});
-}
-
-template<class iov>
-auto
-ircd::net::socket::write_some(const iov &bufs,
-                              error_code &ec)
-{
-	return io(*this, out, [&]
-	{
-		return ssl.async_write_some(bufs, yield_context{to_asio{}}[ec]);
-	});
+	}};
 }
 
 template<class iov>
@@ -218,7 +207,7 @@ ircd::net::socket::write_some(const iov &bufs,
 	noexcept
 	{
 		io{*this, out, bytes};
-		handler(ec, bytes);
+		handler(xfer{ec, bytes});
 	});
 }
 
@@ -226,26 +215,18 @@ template<class iov>
 auto
 ircd::net::socket::read(const iov &bufs)
 {
-	return io(*this, in, [&]
+	return io{*this, in, [&]
 	{
-		const size_t ret(async_read(ssl, bufs, yield_context{to_asio{}}));
+		const size_t ret
+		{
+			async_read(ssl, bufs, yield_context{to_asio{}})
+		};
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
 
 		return ret;
-	});
-}
-
-template<class iov>
-auto
-ircd::net::socket::read(const iov &bufs,
-                        error_code &ec)
-{
-	return io(*this, in, [&]
-	{
-		return async_read(ssl, bufs, yield_context{to_asio{}}[ec]);
-	});
+	}};
 }
 
 template<class iov>
@@ -258,7 +239,7 @@ ircd::net::socket::read(const iov &bufs,
 	noexcept
 	{
 		io{*this, in, bytes};
-		handler(ec, bytes);
+		handler(xfer{ec, bytes});
 	});
 }
 
@@ -266,26 +247,18 @@ template<class iov>
 auto
 ircd::net::socket::read_some(const iov &bufs)
 {
-	return io(*this, in, [&]
+	return io{*this, in, [&]
 	{
-		const size_t ret(ssl.async_read_some(bufs, yield_context{to_asio{}}));
+		const size_t ret
+		{
+			ssl.async_read_some(bufs, yield_context{to_asio{}})
+		};
 
 		if(unlikely(!ret))
 			throw boost::system::system_error(boost::asio::error::eof);
 
 		return ret;
-	});
-}
-
-template<class iov>
-auto
-ircd::net::socket::read_some(const iov &bufs,
-                             error_code &ec)
-{
-	return io(*this, in, [&]
-	{
-		return ssl.async_read_some(bufs, yield_context{to_asio{}}[ec]);
-	});
+	}};
 }
 
 template<class iov>
@@ -298,6 +271,6 @@ ircd::net::socket::read_some(const iov &bufs,
 	noexcept
 	{
 		io{*this, in, bytes};
-		handler(ec, bytes);
+		handler(xfer{ec, bytes});
 	});
 }

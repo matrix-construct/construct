@@ -233,7 +233,8 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 	// its stack while waiting for activity on idle connections between requests.
 
 	auto &sock(*client->sock);
-	sock(timeout, [client(std::move(client)), timeout](const net::error_code &ec)
+	static const auto op{sock.sd.wait_read};
+	sock(op, timeout, [client(std::move(client)), timeout](const net::error_code &ec)
 	noexcept
 	{
 		// Right here this handler is executing on the main stack (not in any
