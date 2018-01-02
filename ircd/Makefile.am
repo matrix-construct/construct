@@ -63,7 +63,6 @@ libircd_la_SOURCES =   \
 	hash.cc            \
 	rand.cc            \
 	ctx.cc             \
-	cuckoo.cc          \
 	db.cc              \
 	exception.cc       \
 	fmt.cc             \

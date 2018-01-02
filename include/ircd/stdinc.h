@@ -221,7 +221,6 @@ namespace ircd
 #include "tokens.h"
 #include "params.h"
 #include "iov.h"
-#include "cuckoo.h"
 #include "parse.h"
 #include "rfc1459.h"
 #include "json/json.h"

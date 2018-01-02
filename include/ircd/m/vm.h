@@ -22,8 +22,6 @@
  *
  */
 
-#include <ircd/cuckoo.h>
-
 #pragma once
 #define HAVE_IRCD_M_VM_H
 
