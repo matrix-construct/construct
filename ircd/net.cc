@@ -57,32 +57,6 @@ ircd::net::init::~init()
 // socket (public)
 //
 
-ircd::const_raw_buffer
-ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
-                         const socket &socket)
-{
-	const SSL &ssl(socket);
-	const X509 &cert(openssl::get_peer_cert(ssl));
-	return openssl::i2d(buf, cert);
-}
-
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const net::remote &remote,
-                   const milliseconds &timeout)
-{
-	const auto ep{make_endpoint(remote)};
-	return connect(ep, timeout);
-}
-
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const ip::tcp::endpoint &remote,
-                   const milliseconds &timeout)
-{
-	const auto ret(std::make_shared<socket>());
-	ret->connect(remote, timeout);
-	return ret;
-}
-
 bool
 ircd::net::disconnect(socket &socket,
                       const dc &type)
@@ -102,6 +76,23 @@ catch(const std::exception &e)
 	return false;
 }
 
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const net::remote &remote,
+                   const milliseconds &timeout)
+{
+	const auto ep{make_endpoint(remote)};
+	return connect(ep, timeout);
+}
+
+std::shared_ptr<ircd::net::socket>
+ircd::net::connect(const ip::tcp::endpoint &remote,
+                   const milliseconds &timeout)
+{
+	const auto ret(std::make_shared<socket>());
+	ret->connect(remote, timeout);
+	return ret;
+}
+
 size_t
 ircd::net::read(socket &socket,
                 iov<mutable_buffer> &bufs)
@@ -116,14 +107,6 @@ size_t
 ircd::net::read(socket &socket,
                 const iov<mutable_buffer> &bufs)
 {
-	return socket.read(bufs);
-}
-
-size_t
-ircd::net::read(socket &socket,
-                const mutable_buffer &buf)
-{
-	const ilist<mutable_buffer> bufs{buf};
 	return socket.read(bufs);
 }
 
@@ -148,21 +131,60 @@ ircd::net::write(socket &socket,
 
 size_t
 ircd::net::write(socket &socket,
-                 const const_buffer &buf)
-{
-	const ilist<const_buffer> bufs{buf};
-	const size_t wrote(socket.write(bufs));
-	assert(wrote == size(bufs));
-	return wrote;
-}
-
-size_t
-ircd::net::write(socket &socket,
                  const ilist<const_buffer> &bufs)
 {
 	const size_t wrote(socket.write(bufs));
 	assert(wrote == size(bufs));
 	return wrote;
+}
+
+ircd::const_raw_buffer
+ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
+                         const socket &socket)
+{
+	const SSL &ssl(socket);
+	const X509 &cert(openssl::get_peer_cert(ssl));
+	return openssl::i2d(buf, cert);
+}
+
+ircd::net::ipport
+ircd::net::local_ipport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.local());
+	return make_ipport(ep);
+}
+catch(...)
+{
+	return {};
+}
+
+ircd::net::ipport
+ircd::net::remote_ipport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.remote());
+	return make_ipport(ep);
+}
+catch(...)
+{
+	return {};
+}
+
+size_t
+ircd::net::available(const socket &s)
+noexcept
+{
+	boost::system::error_code ec;
+	const ip::tcp::socket &sd(s);
+	return sd.available(ec);
+}
+
+bool
+ircd::net::connected(const socket &s)
+noexcept
+{
+	return s.connected();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -669,46 +691,6 @@ ircd::net::sslv23_client
 {
 	boost::asio::ssl::context::method::sslv23_client
 };
-
-ircd::net::ipport
-ircd::net::local_ipport(const socket &socket)
-noexcept try
-{
-    const auto &ep(socket.local());
-	return make_ipport(ep);
-}
-catch(...)
-{
-	return {};
-}
-
-ircd::net::ipport
-ircd::net::remote_ipport(const socket &socket)
-noexcept try
-{
-    const auto &ep(socket.remote());
-	return make_ipport(ep);
-}
-catch(...)
-{
-	return {};
-}
-
-size_t
-ircd::net::available(const socket &s)
-noexcept
-{
-	boost::system::error_code ec;
-	const ip::tcp::socket &sd(s);
-	return sd.available(ec);
-}
-
-bool
-ircd::net::connected(const socket &s)
-noexcept
-{
-	return s.connected();
-}
 
 //
 // socket::io

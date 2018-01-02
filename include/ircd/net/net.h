@@ -70,20 +70,18 @@ namespace ircd::net
 	ipport local_ipport(const socket &) noexcept;
 	ipport remote_ipport(const socket &) noexcept;
 
+	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
+
 	size_t write(socket &, const ilist<const_buffer> &);     // write_all
 	size_t write(socket &, const iov<const_buffer> &);       // write_all
-	size_t write(socket &, const const_buffer &);            // write_all
 	size_t write(socket &, iov<const_buffer> &);             // write_some
 
 	size_t read(socket &, const ilist<mutable_buffer> &);    // read_all
 	size_t read(socket &, const iov<mutable_buffer> &);      // read_all
-	size_t read(socket &, const mutable_buffer &);           // read_all
 	size_t read(socket &, iov<mutable_buffer> &);            // read_some
 
 	std::shared_ptr<socket> connect(const remote &, const milliseconds &timeout = 30000ms);
 	bool disconnect(socket &, const dc &type = dc::SSL_NOTIFY) noexcept;
-
-	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
 }
 
 struct ircd::net::init
