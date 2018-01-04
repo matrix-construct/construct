@@ -22,16 +22,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// IRCd's namespacing is as follows:
-//
-// IRCD_     #define and macro namespace
-// RB_       #define and macro namespace (legacy, low-level)
-// ircd_     C namespace and demangled bindings
-// ircd::    C++ namespace
-//
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // Standard includes
 //
 // This header includes almost everything we use out of the standard library.
