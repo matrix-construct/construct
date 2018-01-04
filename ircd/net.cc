@@ -93,7 +93,7 @@ ircd::net::connect(const ip::tcp::endpoint &remote,
                    const milliseconds &timeout)
 {
 	const auto ret(std::make_shared<socket>());
-	ret->connect(remote, timeout);
+	ret->open(remote, timeout);
 	return ret;
 }
 
@@ -847,11 +847,9 @@ catch(const std::exception &e)
 	return;
 }
 
-/// Attempt to connect and ssl handshake remote; yields ircd::ctx; throws timeout
-///
 void
-ircd::net::socket::connect(const ip::tcp::endpoint &ep,
-                           const milliseconds &timeout)
+ircd::net::socket::open(const ip::tcp::endpoint &ep,
+                        const milliseconds &timeout)
 try
 {
 	const life_guard<socket> lg{*this};
@@ -861,13 +859,13 @@ try
 	          string(ep),
 	          timeout.count());
 
-	sd.async_connect(ep, yield_context{to_asio{}});
+	connect(ep);
 	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake...",
 	          this,
 	          string(ep),
 	          string(local()));
 
-	ssl.async_handshake(socket::handshake_type::client, yield_context{to_asio{}});
+	handshake(handshake_type::client);
 	log.debug("socket(%p) secure session with %s from local: %s established.",
 	          this,
 	          string(ep),
@@ -887,57 +885,48 @@ catch(const std::exception &e)
 /// Attempt to connect and ssl handshake; asynchronous, callback when done.
 ///
 void
+ircd::net::socket::open(const ip::tcp::endpoint &ep,
+                        const milliseconds &timeout,
+                        handler callback)
+{
+	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
+	          this,
+	          string(ep),
+	          timeout.count());
+
+	auto handler
+	{
+		std::bind(&socket::handle_connect, this, weak_from(*this), std::move(callback), ph::_1)
+	};
+
+	this->connect(ep, std::move(handler));
+	set_timeout(timeout);
+}
+
+void
+ircd::net::socket::connect(const ip::tcp::endpoint &ep)
+{
+	sd.async_connect(ep, yield_context{to_asio{}});
+}
+
+void
 ircd::net::socket::connect(const ip::tcp::endpoint &ep,
-                           const milliseconds &timeout,
                            handler callback)
 {
-	auto handshake_handler{[this, callback(std::move(callback))]
-	(const error_code &ec)
-	noexcept
-	{
-		if(timedout)
-			assert(ec == boost::system::errc::operation_canceled);
+	sd.async_connect(ep, std::move(callback));
+}
 
-		if(!timedout)
-			cancel_timeout();
+void
+ircd::net::socket::handshake(const handshake_type &type)
+{
+	ssl.async_handshake(type, yield_context{to_asio{}});
+}
 
-		try
-		{
-			callback(ec);
-		}
-		catch(const std::exception &e)
-		{
-			log.critical("socket(%p): connect: unhandled exception from user callback: %s",
-			             (const void *)this,
-			             e.what());
-		}
-	}};
-
-	auto connect_handler{[this, handshake_handler(std::move(handshake_handler))]
-	(const error_code &ec)
-	noexcept
-	{
-		// Even though the branch on ec below should cancel the timeout on
-		// error, the timeout still needs to be canceled if else anything bad
-		// happens in the remainder of this frame too.
-		const unwind::exceptional cancels{[this]
-		{
-			cancel_timeout();
-		}};
-
-		// A connect error
-		if(ec)
-		{
-			handshake_handler(ec);
-			return;
-		}
-
-		static const auto handshake{socket::handshake_type::client};
-		ssl.async_handshake(handshake, std::move(handshake_handler));
-	}};
-
-	set_timeout(timeout);
-	sd.async_connect(ep, std::move(connect_handler));
+void
+ircd::net::socket::handshake(const handshake_type &type,
+                             handler callback)
+{
+	ssl.async_handshake(type, std::move(callback));
 }
 
 bool
@@ -990,7 +979,6 @@ try
 
 		case dc::SSL_NOTIFY:
 		{
-			set_timeout(8s);
 			ssl.async_shutdown([s(shared_from_this())]
 			(error_code ec)
 			noexcept
@@ -1013,6 +1001,7 @@ try
 					            s.get(),
 					            string(ec));
 			});
+			set_timeout(8s);
 			return true;
 		}
 	}
@@ -1080,7 +1069,6 @@ ircd::net::socket::operator()(const wait_type &type,
 	};
 
 	assert(connected());
-	set_timeout(timeout);
 	switch(type)
 	{
 		case wait_type::wait_error:
@@ -1102,6 +1090,9 @@ ircd::net::socket::operator()(const wait_type &type,
 			break;
 		}
 	}
+
+	// Commit to timeout here in case exception was thrown earlier.
+	set_timeout(timeout);
 }
 
 void
@@ -1115,7 +1106,6 @@ noexcept try
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-
 	log.debug("socket(%p): handle: (%s)",
 	          this,
 	          string(ec));
@@ -1155,6 +1145,84 @@ catch(const std::bad_weak_ptr &e)
 catch(const std::exception &e)
 {
 	log.critical("socket(%p): handle: %s",
+	             this,
+	             e.what());
+	assert(0);
+}
+
+void
+ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
+                                  handler callback,
+                                  const error_code &ec)
+noexcept try
+{
+	const life_guard<socket> s{wp};
+	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	log.debug("socket(%p) connect from local: %s to remote: %s: %s",
+	          this,
+	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
+	          string(ec));
+
+	// A connect error
+	if(ec)
+	{
+		cancel_timeout();
+		call_user(callback, ec);
+		return;
+	}
+
+	auto handler
+	{
+		std::bind(&socket::handle_handshake, this, wp, std::move(callback), ph::_1)
+	};
+
+	handshake(handshake_type::client, std::move(handler));
+}
+catch(const std::bad_weak_ptr &e)
+{
+	log.warning("socket(%p): belated callback to handle_connect... (%s)",
+	            this,
+	            e.what());
+	assert(0);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): handle_connect: %s",
+	             this,
+	             e.what());
+	assert(0);
+}
+
+void
+ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
+                                    handler callback,
+                                    const error_code &ec)
+noexcept try
+{
+	const life_guard<socket> s{wp};
+	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	log.debug("socket(%p) handshake from local: %s to remote: %s: %s",
+	          this,
+	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
+	          string(ec));
+
+	if(!timedout)
+		cancel_timeout();
+
+	call_user(callback, ec);
+}
+catch(const std::bad_weak_ptr &e)
+{
+	log.warning("socket(%p): belated callback to handle_handshake... (%s)",
+	            this,
+	            e.what());
+	assert(0);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): handle_handshake: %s",
 	             this,
 	             e.what());
 	assert(0);
@@ -1316,14 +1384,20 @@ catch(const boost::system::system_error &e)
 	return false;
 }
 
-ircd::net::error_code
+ircd::milliseconds
 ircd::net::socket::cancel_timeout()
 noexcept
 {
+	const auto ret
+	{
+		timer.expires_from_now()
+	};
+
 	boost::system::error_code ec;
-	timedout = false;
 	timer.cancel(ec);
-	return ec;
+	assert(!ec);
+
+	return duration_cast<milliseconds>(ret);
 }
 
 void

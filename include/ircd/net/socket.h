@@ -67,6 +67,8 @@ struct ircd::net::socket
 
 	void call_user(const handler &, const error_code &ec) noexcept;
 	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec) noexcept;
+	void handle_handshake(std::weak_ptr<socket> wp, handler, const error_code &ec) noexcept;
+	void handle_connect(std::weak_ptr<socket> wp, handler, const error_code &ec) noexcept;
 	void handle(std::weak_ptr<socket>, handler, const error_code &) noexcept;
 
   public:
@@ -103,16 +105,25 @@ struct ircd::net::socket
 	// Timer for this socket
 	void set_timeout(const milliseconds &, handler);
 	void set_timeout(const milliseconds &);
-	error_code cancel_timeout() noexcept;
+	milliseconds cancel_timeout() noexcept;
 
 	// Asynchronous callback when socket ready
 	void operator()(const wait_type &, const milliseconds &timeout, handler);
 	void operator()(const wait_type &, handler);
 	bool cancel() noexcept;
 
-	// Connect to host; synchronous (yield) and asynchronous (callback) variants
-	void connect(const endpoint &ep, const milliseconds &timeout, handler callback);
-	void connect(const endpoint &ep, const milliseconds &timeout = 30000ms);
+	// SSL handshake after connect (untimed)
+	void handshake(const handshake_type &, handler callback);
+	void handshake(const handshake_type & = handshake_type::client);
+
+	// Connect to host (untimed)
+	void connect(const endpoint &ep, handler callback);
+	void connect(const endpoint &ep);
+
+	// Connect to host and handshake composit (timed)
+	void open(const endpoint &ep, const milliseconds &timeout, handler callback);
+	void open(const endpoint &ep, const milliseconds &timeout);
+
 	bool disconnect(const dc &type);
 
 	socket(asio::ssl::context &ssl               = sslv23_client,
