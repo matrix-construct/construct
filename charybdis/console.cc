@@ -360,44 +360,42 @@ try
 			const auto &what(token.at(0));
 			const auto &host{token.at(1)};
 			const auto &port{token.at(2)};
-			const net::hostport hostport
-			{
-				host, port
-			};
-
 			switch(hash(what))
 			{
-				case hash("ips"):
+				case hash("A"):
 				{
-					ctx::future<std::vector<net::ipport>> future;
-					net::resolve{hostport, future};
-					const auto ips{future.get()};
-					for(const auto &ip : ips)
-						std::cout << ip << std::endl;
+					const net::hostport hostport
+					{
+						host, port
+					};
 
-					break;
-				}
+					auto future
+					{
+						net::resolve(hostport)
+					};
 
-				case hash("ip"):
-				{
-					ctx::future<net::ipport> future;
-					net::resolve{hostport, future};
 					std::cout << future.get() << std::endl;
 					break;
 				}
 
-				case hash("ptr"):
+				case hash("PTR"):
 				{
-					net::ipport in[1]
+					const net::hostport hostport
 					{
-						net::hostport { host, port },
+						host, port
 					};
 
-					std::string out[1];
-					net::resolve{in, out};
-					for(const auto &ptr : out)
-						std::cout << ptr << std::endl;
+					const net::ipport ipport
+					{
+						hostport
+					};
 
+					auto future
+					{
+						net::resolve(ipport)
+					};
+
+					std::cout << future.get() << std::endl;
 					break;
 				}
 			}

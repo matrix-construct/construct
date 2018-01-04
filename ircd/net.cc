@@ -21,16 +21,23 @@
 
 #include <ircd/asio.h>
 
+/// Internal pimpl wrapping an instance of boost's resolver service. This
+/// class is a singleton with the instance as a static member of
+/// ircd::net::resolve. This service requires a valid ircd::ios which is not
+/// available during static initialization; instead it is tied to net::init.
+struct ircd::net::resolver
+:std::unique_ptr<ip::tcp::resolver>
+{
+	resolver() = default;
+	~resolver() noexcept = default;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/net.h
 //
 
-namespace ircd::net
-{
-	ip::tcp::resolver *resolver;
-}
-
+/// Network subsystem log facility with dedicated SNOMASK.
 struct ircd::log::log
 ircd::net::log
 {
@@ -38,19 +45,16 @@ ircd::net::log
 };
 
 /// Network subsystem initialization
-///
 ircd::net::init::init()
 {
-	net::resolver = new ip::tcp::resolver{*ircd::ios};
+	assert(ircd::ios);
+	resolve::resolver.reset(new ip::tcp::resolver{*ircd::ios});
 }
 
 /// Network subsystem shutdown
-///
 ircd::net::init::~init()
 {
-	assert(net::resolver);
-	delete net::resolver;
-	net::resolver = nullptr;
+	resolve::resolver.reset(nullptr);
 }
 
 //
@@ -1375,60 +1379,46 @@ namespace ircd::net
 	void _resolve(const ipport &, resolve_callback);
 }
 
-ircd::net::resolve::resolve(const vector_view<ipport> &in,
-                            const vector_view<std::string> &out)
+/// Singleton instance of the public interface ircd::net::resolve
+decltype(ircd::net::resolve)
+ircd::net::resolve
 {
-	assert(in.size() == out.size());
+};
 
-	size_t a{0}, b{0};
-	ctx::ctx &c{ctx::cur()};
-	const size_t count{std::min(in.size(), out.size())};
-	for(; a < count; ++a) resolve
+/// Singleton instance of the internal boost resolver wrapper.
+decltype(ircd::net::resolve::resolver)
+ircd::net::resolve::resolver
+{
+};
+
+/// Resolve a numerical address to a hostname string. This is a PTR record
+/// query or 'reverse DNS' lookup.
+ircd::ctx::future<std::string>
+ircd::net::resolve::operator()(const ipport &ipport)
+{
+	ctx::promise<std::string> p;
+	ctx::future<std::string> ret{p};
+	operator()(ipport, [p(std::move(p))]
+	(std::exception_ptr eptr, std::string ptr)
+	mutable
 	{
-		in[a], [&b, &c, &count, &ret(out[a])]
-		(std::exception_ptr eptr, std::string hostname)
-		noexcept
-		{
-			ret = std::move(hostname);
-			if(++b >= count)
-				notify(c);
-		}
-	};
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(ptr);
+	});
 
-	while(b < count)
-		ctx::wait();
+	return ret;
 }
 
-ircd::net::resolve::resolve(const vector_view<hostport> &in,
-                            const vector_view<ipport> &out)
-{
-	assert(in.size() == out.size());
-
-	size_t a{0}, b{0};
-	ctx::ctx &c{ctx::cur()};
-	const size_t count{std::min(in.size(), out.size())};
-	for(; a < count; ++a) resolve
-	{
-		in[a], [&b, &c, &count, &ret(out[a])]
-		(std::exception_ptr eptr, const ipport &ip)
-		noexcept
-		{
-			ret = ip;
-			if(++b >= count)
-				notify(c);
-		}
-	};
-
-	while(b < count)
-		ctx::wait();
-}
-
-ircd::net::resolve::resolve(const hostport &hostport,
-                            ctx::future<ipport> &future)
+/// Resolve a hostname (with service name/portnum) to a numerical address. This
+/// is an A or AAAA query (with automatic SRV query) returning a single result.
+ircd::ctx::future<ircd::net::ipport>
+ircd::net::resolve::operator()(const hostport &hostport)
 {
 	ctx::promise<ipport> p;
-	future = ctx::future<ipport>{p};
-	resolve(hostport, [p(std::move(p))]
+	ctx::future<ipport> ret{p};
+	operator()(hostport, [p(std::move(p))]
 	(std::exception_ptr eptr, const ipport &ip)
 	mutable
 	{
@@ -1437,26 +1427,15 @@ ircd::net::resolve::resolve(const hostport &hostport,
 		else
 			p.set_value(ip);
 	});
+
+	return ret;
 }
 
-ircd::net::resolve::resolve(const hostport &hostport,
-                            ctx::future<std::vector<ipport>> &future)
-{
-	ctx::promise<std::vector<ipport>> p;
-	future = ctx::future<std::vector<ipport>>{p};
-	resolve(hostport, [p(std::move(p))]
-	(std::exception_ptr eptr, const vector_view<ipport> &ips)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(std::vector<ipport>(begin(ips), end(ips)));
-	});
-}
-
-ircd::net::resolve::resolve(const ipport &ipport,
-                            callback_reverse callback)
+/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
+/// interface.
+void
+ircd::net::resolve::operator()(const ipport &ipport,
+                               callback_reverse callback)
 {
 	_resolve(ipport, [callback(std::move(callback))]
 	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
@@ -1473,24 +1452,11 @@ ircd::net::resolve::resolve(const ipport &ipport,
 	});
 }
 
-ircd::net::resolve::resolve(const hostport &hostport,
-                            callback_one callback)
-{
-	resolve(hostport, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const vector_view<ipport> &ips)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
-
-		if(ips.empty())
-			return callback(std::make_exception_ptr(nxdomain{}), {});
-
-		callback(std::move(eptr), ips.at(0));
-	});
-}
-
-ircd::net::resolve::resolve(const hostport &hostport,
-                            callback_many callback)
+/// Lower-level A or AAAA query (with automatic SRV query) with asynchronous
+/// callback interface. This returns only one result.
+void
+ircd::net::resolve::operator()(const hostport &hostport,
+                               callback_one callback)
 {
 	static const ip::tcp::resolver::flags flags{};
 	_resolve(hostport, flags, [callback(std::move(callback))]
@@ -1499,21 +1465,35 @@ ircd::net::resolve::resolve(const hostport &hostport,
 		if(eptr)
 			return callback(std::move(eptr), {});
 
-		static const size_t max{32};
-		const size_t count
-		{
-			results.size()
-		};
+		if(results.empty())
+			return callback(std::make_exception_ptr(nxdomain{}), {});
 
-		ipport vector[max];
-		std::transform(begin(results), end(results), vector, []
+		const auto &result(*begin(results));
+		callback(std::move(eptr), make_ipport(result));
+	});
+}
+
+/// Lower-level A+AAAA query (with automatic SRV query). This returns a vector
+/// of all results in the callback.
+void
+ircd::net::resolve::operator()(const hostport &hostport,
+                               callback_many callback)
+{
+	static const ip::tcp::resolver::flags flags{};
+	_resolve(hostport, flags, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		std::vector<ipport> vector(results.size());
+		std::transform(begin(results), end(results), begin(vector), []
 		(const auto &entry)
 		{
 			return make_ipport(entry.endpoint());
 		});
 
-		assert(!eptr);
-		callback(std::move(eptr), vector);
+		callback(std::move(eptr), std::move(vector));
 	});
 }
 
@@ -1543,8 +1523,8 @@ ircd::net::_resolve(const hostport &hostport,
 	// This base handler will provide exception guarantees for the entire stack.
 	// It may invoke callback twice in the case when callback throws unhandled,
 	// but the latter invocation will always have an the eptr set.
-	assert(bool(ircd::net::resolver));
-	resolver->async_resolve(host, port, flags, [callback(std::move(callback))]
+	assert(bool(ircd::net::resolve::resolver));
+	resolve::resolver->async_resolve(host, port, flags, [callback(std::move(callback))]
 	(const error_code &ec, ip::tcp::resolver::results_type results)
 	noexcept
 	{
@@ -1568,8 +1548,8 @@ void
 ircd::net::_resolve(const ipport &ipport,
                     resolve_callback callback)
 {
-	assert(bool(ircd::net::resolver));
-	resolver->async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
+	assert(bool(ircd::net::resolve::resolver));
+	resolve::resolver->async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
 	(const error_code &ec, ip::tcp::resolver::results_type results)
 	noexcept
 	{
@@ -1743,8 +1723,11 @@ ircd::net::make_endpoint(const ipport &ipport)
 
 ircd::net::ipport::ipport(const hostport &hp)
 {
-	ctx::future<ipport> future;
-	resolve{hp, future};
+	ctx::future<ipport> future
+	{
+		resolve(hp)
+	};
+
 	*this = future.get();
 }
 

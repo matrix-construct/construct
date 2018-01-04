@@ -24,25 +24,30 @@
 
 namespace ircd::net
 {
-	struct resolve;
+	struct resolve extern resolve;
 }
 
 /// DNS resolution suite.
 ///
-/// There are plenty of ways to resolve plenty of things. Still more to come.
+/// This is a singleton class; public usage is to make calls on the singleton
+/// object like `ircd::net::resolve()` etc.
+///
 struct ircd::net::resolve
 {
+	// Internal resolver service instance
+	struct resolver static resolver;
+
+  public:
 	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
-	using callback_many = std::function<void (std::exception_ptr, vector_view<ipport>)>;
+	using callback_many = std::function<void (std::exception_ptr, std::vector<ipport>)>;
 	using callback_reverse = std::function<void (std::exception_ptr, std::string)>;
 
-	resolve(const hostport &, callback_one);
-	resolve(const hostport &, callback_many);
-	resolve(const ipport &, callback_reverse);
+	// Callback-based interface
+	void operator()(const hostport &, callback_one);
+	void operator()(const hostport &, callback_many);
+	void operator()(const ipport &, callback_reverse);
 
-	resolve(const hostport &, ctx::future<ipport> &);
-	resolve(const hostport &, ctx::future<std::vector<ipport>> &);
-
-	resolve(const vector_view<hostport> &in, const vector_view<ipport> &out);
-	resolve(const vector_view<ipport> &in, const vector_view<std::string> &out);
+	// Future-based interface
+	ctx::future<ipport> operator()(const hostport &);
+	ctx::future<std::string> operator()(const ipport &);
 };
