@@ -80,6 +80,60 @@ catch(const std::exception &e)
 	return false;
 }
 
+ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
+ircd::net::open(const hostport &hostport,
+                const milliseconds &timeout)
+{
+	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
+	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
+	resolve(hostport, [p(std::move(p)), timeout]
+	(auto eptr, const ipport &ipport)
+	mutable
+	{
+		if(eptr)
+			return p.set_exception(std::move(eptr));
+
+		const auto ep{make_endpoint(ipport)};
+		const auto s(std::make_shared<socket>());
+		s->open(ep, timeout, [p(std::move(p)), s]
+		(const error_code &ec)
+		mutable
+		{
+			if(ec)
+			{
+				disconnect(*s, dc::RST);
+				p.set_exception(make_eptr(ec));
+			}
+			else p.set_value(s);
+		});
+	});
+
+	return f;
+}
+
+ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
+ircd::net::open(const ipport &ipport,
+                const milliseconds &timeout)
+{
+	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
+	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
+	const auto ep{make_endpoint(ipport)};
+	const auto s(std::make_shared<socket>());
+	s->open(ep, timeout, [p(std::move(p)), s]
+	(const error_code &ec)
+	mutable
+	{
+		if(ec)
+		{
+			disconnect(*s, dc::RST);
+			p.set_exception(make_eptr(ec));
+		}
+		else p.set_value(s);
+	});
+
+	return f;
+}
+
 std::shared_ptr<ircd::net::socket>
 ircd::net::connect(const net::remote &remote,
                    const milliseconds &timeout)

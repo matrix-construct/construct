@@ -82,6 +82,9 @@ namespace ircd::net
 
 	std::shared_ptr<socket> connect(const remote &, const milliseconds &timeout = 30000ms);
 	bool disconnect(socket &, const dc &type = dc::SSL_NOTIFY) noexcept;
+
+	ctx::future<std::shared_ptr<socket>> open(const ipport &, const milliseconds &timeout = 30000ms);
+	ctx::future<std::shared_ptr<socket>> open(const hostport &, const milliseconds &timeout = 30000ms);
 }
 
 struct ircd::net::init
