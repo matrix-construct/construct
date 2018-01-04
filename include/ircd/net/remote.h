@@ -118,7 +118,6 @@ struct ircd::net::ipport
 	explicit operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
-	ipport(const hostport &);          // DNS lookup! May yield ircd::ctx!
 	ipport(const uint32_t &ip, const uint16_t &port);
 	ipport(const uint128_t &ip, const uint16_t &port);
 	ipport(const boost::asio::ip::address &, const uint16_t &port);
@@ -145,11 +144,7 @@ struct ircd::net::remote
 	:ipport{ipp}
 	{}
 
-	remote(const hostport &hp)
-	:ipport{hp}
-	,hostname{std::string{hp.host}}
-	{}
-
+	remote(const hostport &hp);
 	remote() = default;
 
 	friend std::ostream &operator<<(std::ostream &, const remote &);

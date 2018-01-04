@@ -1676,6 +1676,18 @@ ircd::net::string(const mutable_buffer &buf,
 // remote
 //
 
+ircd::net::remote::remote(const hostport &hostport)
+:ipport
+{
+	resolve(hostport)
+}
+,hostname
+{
+	hostport.host
+}
+{
+}
+
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const remote &t)
 {
@@ -1719,16 +1731,6 @@ ircd::net::make_endpoint(const ipport &ipport)
 			asio::ip::address_v4 { host4(ipport) }, port(ipport)
 		},
 	};
-}
-
-ircd::net::ipport::ipport(const hostport &hp)
-{
-	ctx::future<ipport> future
-	{
-		resolve(hp)
-	};
-
-	*this = future.get();
 }
 
 ircd::net::ipport::ipport(const boost::asio::ip::address &address,
