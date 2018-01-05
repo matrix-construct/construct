@@ -57,6 +57,30 @@ namespace ircd::openssl
 	void append_entries(X509 &cert, const json::object &opts);
 }
 
+X509 &
+ircd::openssl::peer_cert(SSL &ssl)
+{
+	auto *const ret
+	{
+		SSL_get_peer_certificate(&ssl)
+	};
+
+	assert(ret);
+	return *ret;
+}
+
+const X509 &
+ircd::openssl::peer_cert(const SSL &ssl)
+{
+	const auto *const ret
+	{
+		SSL_get_peer_certificate(&ssl)
+	};
+
+	assert(ret);
+	return *ret;
+}
+
 ircd::string_view
 ircd::openssl::genX509(const mutable_buffer &out,
                        const json::object &opts)
@@ -314,30 +338,6 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 
 	assert(out - data(buf) == len);
 	return ret;
-}
-
-X509 &
-ircd::openssl::get_peer_cert(SSL &ssl)
-{
-	auto *const ret
-	{
-		SSL_get_peer_certificate(&ssl)
-	};
-
-	assert(ret);
-	return *ret;
-}
-
-const X509 &
-ircd::openssl::get_peer_cert(const SSL &ssl)
-{
-	const auto *const ret
-	{
-		SSL_get_peer_certificate(&ssl)
-	};
-
-	assert(ret);
-	return *ret;
 }
 
 //

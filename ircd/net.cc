@@ -201,7 +201,7 @@ ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
                          const socket &socket)
 {
 	const SSL &ssl(socket);
-	const X509 &cert(openssl::get_peer_cert(ssl));
+	const X509 &cert{openssl::peer_cert(ssl)};
 	return openssl::i2d(buf, cert);
 }
 

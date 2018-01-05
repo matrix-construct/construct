@@ -90,8 +90,8 @@ namespace ircd::openssl
 	string_view write_pem(const mutable_buffer &out, const X509 &);
 	string_view print(const mutable_buffer &buf, const X509 &);
 	string_view genX509(const mutable_buffer &out, const json::object &opts);
-	const X509 &get_peer_cert(const SSL &);
-	X509 &get_peer_cert(SSL &);
+	const X509 &peer_cert(const SSL &);
+	X509 &peer_cert(SSL &);
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures
