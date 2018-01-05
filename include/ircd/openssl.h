@@ -31,6 +31,7 @@
 struct ssl_st;
 struct rsa_st;
 struct x509_st;
+struct x509_store_ctx_st;
 struct bignum_st;
 struct bignum_ctx;
 struct bio_st;
@@ -52,6 +53,7 @@ namespace ircd::openssl
 	using SSL = ::ssl_st;
 	using RSA = ::rsa_st;
 	using X509 = ::x509_st;
+	using X509_STORE_CTX = ::x509_store_ctx_st;
 	using BIGNUM = ::bignum_st;
 	using BN_CTX = ::bignum_ctx;
 	using EVP_PKEY = ::evp_pkey_st;
@@ -92,6 +94,13 @@ namespace ircd::openssl
 	string_view genX509(const mutable_buffer &out, const json::object &opts);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);
+
+	int get_error(const X509_STORE_CTX &);
+	const char *cert_error_string(const long &);
+	const char *get_error_string(const X509_STORE_CTX &);
+	uint get_error_depth(const X509_STORE_CTX &);
+	const X509 &current_cert(const X509_STORE_CTX &);
+	X509 &current_cert(X509_STORE_CTX &);
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures

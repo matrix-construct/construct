@@ -58,6 +58,67 @@ namespace ircd::openssl
 }
 
 X509 &
+ircd::openssl::current_cert(X509_STORE_CTX &cx)
+{
+	auto *const ret
+	{
+		X509_STORE_CTX_get_current_cert(&cx)
+	};
+
+	if(!ret)
+		throw std::out_of_range{"No current certificate"};
+
+	return *ret;
+}
+
+const X509 &
+ircd::openssl::current_cert(const X509_STORE_CTX &cx)
+{
+	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	const auto *const ret
+	{
+		X509_STORE_CTX_get_current_cert(&mcx)
+	};
+
+	if(!ret)
+		throw std::out_of_range{"No current certificate"};
+
+	return *ret;
+}
+
+uint
+ircd::openssl::get_error_depth(const X509_STORE_CTX &cx)
+{
+	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	const int ret
+	{
+		X509_STORE_CTX_get_error_depth(&mcx)
+	};
+
+	assert(ret >= 0);
+	return ret;
+}
+
+const char *
+ircd::openssl::get_error_string(const X509_STORE_CTX &cx)
+{
+	return cert_error_string(get_error(cx));
+}
+
+const char *
+ircd::openssl::cert_error_string(const long &n)
+{
+	return X509_verify_cert_error_string(n);
+}
+
+int
+ircd::openssl::get_error(const X509_STORE_CTX &cx)
+{
+	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	return X509_STORE_CTX_get_error(&mcx);
+}
+
+X509 &
 ircd::openssl::peer_cert(SSL &ssl)
 {
 	auto *const ret
