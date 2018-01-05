@@ -1343,9 +1343,50 @@ catch(const std::exception &e)
 }
 
 void
+ircd::net::socket::flush()
+{
+	if(nodelay())
+		return;
+
+	nodelay(true);
+	nodelay(false);
+}
+
+void
+ircd::net::socket::nodelay(const bool &b)
+{
+	ip::tcp::no_delay option{b};
+	sd.set_option(option);
+}
+
+void
 ircd::net::socket::blocking(const bool &b)
 {
 	sd.non_blocking(b);
+}
+
+void
+ircd::net::socket::wlowat(const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::send_low_watermark option
+	{
+		int(bytes)
+	};
+
+	sd.set_option(option);
+}
+
+void
+ircd::net::socket::rlowat(const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::receive_low_watermark option
+	{
+		int(bytes)
+	};
+
+	sd.set_option(option);
 }
 
 void
@@ -1373,10 +1414,37 @@ ircd::net::socket::rbufsz(const size_t &bytes)
 }
 
 bool
+ircd::net::socket::nodelay()
+const
+{
+	ip::tcp::no_delay option;
+	sd.get_option(option);
+	return option.value();
+}
+
+bool
 ircd::net::socket::blocking()
 const
 {
 	return !sd.non_blocking();
+}
+
+size_t
+ircd::net::socket::wlowat()
+const
+{
+	ip::tcp::socket::send_low_watermark option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::socket::rlowat()
+const
+{
+	ip::tcp::socket::receive_low_watermark option{};
+	sd.get_option(option);
+	return option.value();
 }
 
 size_t

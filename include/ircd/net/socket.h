@@ -84,11 +84,18 @@ struct ircd::net::socket
 	size_t readable() const;                     // throws on errors; ioctl
 	size_t rbufsz() const;                       // throws on errors; SO_RCVBUF
 	size_t wbufsz() const;                       // throws on errors; SO_SNDBUF
+	size_t rlowat() const;                       // throws on errors; SO_RCVLOWAT
+	size_t wlowat() const;                       // throws on errors; SO_SNDLOWWAT
 	bool blocking() const;                       // throws on errors;
+	bool nodelay() const;                        // throws on errors;
 
 	void rbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
 	void wbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
+	void rlowat(const size_t &);                 // throws; set SO_RCVLOWAT bytes
+	void wlowat(const size_t &);                 // throws; set SO_SNDLOWAT bytes
 	void blocking(const bool &);                 // throws; set blocking
+	void nodelay(const bool &);                  // throws; TCP_NODELAY
+	void flush();                                // throws; toggles TCP_NODELAY
 
 	// low level read suite
 	template<class iov> auto read_some(const iov &, xfer_handler);
