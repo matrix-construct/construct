@@ -277,10 +277,10 @@ ircd::http::request::request(stream_buffer &out,
 		return fmt::sprintf
 		{
 			out, "%s /%s%s%s HTTP/1.1",
-		    method,
-		    path,
-		    query.empty()? "" : "?",
-		    query.empty()? "" : query
+			method,
+			path,
+			query.empty()? "" : "?",
+			query.empty()? "" : query
 		};
 	});
 
