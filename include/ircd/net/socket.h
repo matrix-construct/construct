@@ -33,9 +33,10 @@ namespace ircd::net
 {
 	struct socket;
 
-	extern asio::ssl::context sslv23_client;
-
 	std::shared_ptr<socket> connect(const ip::tcp::endpoint &remote, const milliseconds &timeout);
+
+	bool handle_verify(bool, asio::ssl::verify_context &) noexcept;
+	extern asio::ssl::context sslv23_client;
 }
 
 struct ircd::net::socket
@@ -66,9 +67,10 @@ struct ircd::net::socket
 	bool timedout {false};
 
 	void call_user(const handler &, const error_code &ec) noexcept;
+	bool handle_verify(bool, asio::ssl::verify_context &, std::string cn) noexcept;
 	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec) noexcept;
 	void handle_handshake(std::weak_ptr<socket> wp, handler, const error_code &ec) noexcept;
-	void handle_connect(std::weak_ptr<socket> wp, handler, const error_code &ec) noexcept;
+	void handle_connect(std::weak_ptr<socket> wp, std::string cn, handler, const error_code &ec) noexcept;
 	void handle(std::weak_ptr<socket>, handler, const error_code &) noexcept;
 
   public:
@@ -120,16 +122,16 @@ struct ircd::net::socket
 	bool cancel() noexcept;
 
 	// SSL handshake after connect (untimed)
-	void handshake(const handshake_type &, handler callback);
-	void handshake(const handshake_type & = handshake_type::client);
+	void handshake(const handshake_type &, std::string cn, handler callback);
+	void handshake(const handshake_type &, std::string cn);
 
 	// Connect to host (untimed)
 	void connect(const endpoint &ep, handler callback);
 	void connect(const endpoint &ep);
 
 	// Connect to host and handshake composit (timed)
-	void open(const endpoint &ep, const milliseconds &timeout, handler callback);
-	void open(const endpoint &ep, const milliseconds &timeout);
+	void open(const endpoint &ep, std::string cn, const milliseconds &timeout, handler callback);
+	void open(const endpoint &ep, std::string cn, const milliseconds &timeout);
 
 	bool disconnect(const dc &type);
 

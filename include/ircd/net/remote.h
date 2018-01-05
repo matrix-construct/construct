@@ -129,8 +129,9 @@ struct ircd::net::ipport
 /// This structure combines features of hostport and ipport to hold a remote's
 /// resolved IP in bytes, a port number, and an optional hostname string which
 /// may have been used to resolve the IP, or may have been resolved from the
-/// IP, or may just be empty, but either way still has some use being carried
-/// along as part of this struct.
+/// IP, or may be used for certificate Common Name verification, or may just
+/// be empty, but anyway still has some use in most cases being carried along.
+///
 struct ircd::net::remote
 :ircd::net::ipport
 {

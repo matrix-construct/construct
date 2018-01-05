@@ -49,6 +49,9 @@ ircd::net::init::init()
 {
 	assert(ircd::ios);
 	resolve::resolver.reset(new ip::tcp::resolver{*ircd::ios});
+	sslv23_client.set_verify_callback(net::handle_verify);
+	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
+	sslv23_client.set_default_verify_paths();
 }
 
 /// Network subsystem shutdown
@@ -86,7 +89,7 @@ ircd::net::open(const hostport &hostport,
 {
 	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
 	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
-	resolve(hostport, [p(std::move(p)), timeout]
+	resolve(hostport, [p(std::move(p)), timeout, cn(std::string(hostport.host))]
 	(auto eptr, const ipport &ipport)
 	mutable
 	{
@@ -95,7 +98,7 @@ ircd::net::open(const hostport &hostport,
 
 		const auto ep{make_endpoint(ipport)};
 		const auto s(std::make_shared<socket>());
-		s->open(ep, timeout, [p(std::move(p)), s]
+		s->open(ep, std::move(cn), timeout, [p(std::move(p)), s]
 		(const error_code &ec)
 		mutable
 		{
@@ -113,13 +116,14 @@ ircd::net::open(const hostport &hostport,
 
 ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
 ircd::net::open(const ipport &ipport,
+                std::string cn,
                 const milliseconds &timeout)
 {
 	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
 	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
 	const auto ep{make_endpoint(ipport)};
 	const auto s(std::make_shared<socket>());
-	s->open(ep, timeout, [p(std::move(p)), s]
+	s->open(ep, std::move(cn), timeout, [p(std::move(p)), s]
 	(const error_code &ec)
 	mutable
 	{
@@ -147,7 +151,7 @@ ircd::net::connect(const ip::tcp::endpoint &remote,
                    const milliseconds &timeout)
 {
 	const auto ret(std::make_shared<socket>());
-	ret->open(remote, timeout);
+	ret->open(remote, std::string{}, timeout);
 	return ret;
 }
 
@@ -903,6 +907,7 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::open(const ip::tcp::endpoint &ep,
+                        std::string cn,
                         const milliseconds &timeout)
 try
 {
@@ -914,12 +919,13 @@ try
 	          timeout.count());
 
 	connect(ep);
-	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake...",
+	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake to '%s'...",
 	          this,
 	          string(ep),
-	          string(local()));
+	          string(local()),
+	          cn);
 
-	handshake(handshake_type::client);
+	handshake(handshake_type::client, std::move(cn));
 	log.debug("socket(%p) secure session with %s from local: %s established.",
 	          this,
 	          string(ep),
@@ -940,17 +946,19 @@ catch(const std::exception &e)
 ///
 void
 ircd::net::socket::open(const ip::tcp::endpoint &ep,
+                        std::string cn,
                         const milliseconds &timeout,
                         handler callback)
 {
-	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
+	log.debug("socket(%p) attempting connect to remote: %s '%s' for the next %ld$ms",
 	          this,
 	          string(ep),
+	          cn,
 	          timeout.count());
 
 	auto handler
 	{
-		std::bind(&socket::handle_connect, this, weak_from(*this), std::move(callback), ph::_1)
+		std::bind(&socket::handle_connect, this, weak_from(*this), std::move(cn), std::move(callback), ph::_1)
 	};
 
 	this->connect(ep, std::move(handler));
@@ -971,15 +979,29 @@ ircd::net::socket::connect(const ip::tcp::endpoint &ep,
 }
 
 void
-ircd::net::socket::handshake(const handshake_type &type)
+ircd::net::socket::handshake(const handshake_type &type,
+                             std::string cn)
 {
+	auto handler
+	{
+		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::move(cn))
+	};
+
+	ssl.set_verify_callback(std::move(handler));
 	ssl.async_handshake(type, yield_context{to_asio{}});
 }
 
 void
 ircd::net::socket::handshake(const handshake_type &type,
+                             std::string cn,
                              handler callback)
 {
+	auto handler
+	{
+		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::move(cn))
+	};
+
+	ssl.set_verify_callback(std::move(handler));
 	ssl.async_handshake(type, std::move(callback));
 }
 
@@ -1206,6 +1228,7 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
+                                  std::string cn,
                                   handler callback,
                                   const error_code &ec)
 noexcept try
@@ -1231,7 +1254,7 @@ noexcept try
 		std::bind(&socket::handle_handshake, this, wp, std::move(callback), ph::_1)
 	};
 
-	handshake(handshake_type::client, std::move(handler));
+	handshake(handshake_type::client, std::move(cn), std::move(handler));
 }
 catch(const std::bad_weak_ptr &e)
 {
@@ -1326,6 +1349,66 @@ catch(const std::exception &e)
 	log.error("socket(%p): handle timeout: %s",
 	          (const void *)this,
 	          e.what());
+}
+
+bool
+ircd::net::socket::handle_verify(const bool valid,
+                                 asio::ssl::verify_context &vc,
+                                 std::string cn)
+noexcept try
+{
+	assert(vc.native_handle());
+	const auto &stctx{*vc.native_handle()};
+
+	bool verify;
+	switch(openssl::get_error(stctx))
+	{
+		case X509_V_OK:
+			assert(valid);
+			verify = true;
+			break;
+
+		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+			assert(openssl::get_error_depth(stctx) == 0);
+			verify = true;
+			break;
+
+		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
+			verify = true;
+			break;
+
+		default:
+			verify = false;
+			break;
+	}
+
+	log.debug("handle_verify: verify_context(%p) %s %s :%s",
+	          (const void *)&vc,
+	          valid? "VALID" : "INVALID",
+	          verify? "VERIFIABLE" : "UNVERIFIABLE",
+	          openssl::get_error_string(stctx));
+
+	bool verified;
+	if(verify)
+	{
+		boost::asio::ssl::rfc2818_verification verify_cn{cn};
+		verified = verify_cn(verify, vc);
+	}
+	else verified = false;
+
+	if(!verified)
+		log.error("Failed to verify peer '%s' certificate: %s %s %s",
+		          cn,
+		          valid? "VALID" : "INVALID",
+		          verify? "VERIFIABLE" : "UNVERIFIABLE",
+		          openssl::get_error_string(stctx));
+
+	return verified;
+}
+catch(const std::exception &e)
+{
+	log.critical("socket::handle_verify: %s", e.what());
+	return false;
 }
 
 void
@@ -1560,6 +1643,27 @@ const
 	auto &ssl(const_cast<type &>(this->ssl));
 	assert(ssl.native_handle());
 	return *ssl.native_handle();
+}
+
+bool
+ircd::net::handle_verify(const bool preverified,
+                         asio::ssl::verify_context &vc)
+noexcept try
+{
+	assert(vc.native_handle());
+	const auto &stctx{*vc.native_handle()};
+	const auto &cert{openssl::current_cert(stctx)};
+	log.debug("net::handle_verify: verify_context(%p): pre:%d :%s",
+	          (const void *)&vc,
+	          preverified,
+	          openssl::get_error_string(stctx));
+
+	return preverified;
+}
+catch(const std::exception &e)
+{
+	log.critical("net::handle_verify: %s", e.what());
+	return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
