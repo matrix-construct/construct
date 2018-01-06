@@ -311,6 +311,32 @@ catch(const error &e)
 }
 
 ircd::string_view
+ircd::openssl::subject_common_name(const mutable_buffer &out,
+                                   const X509 &cert)
+{
+	X509_NAME *const subject
+	{
+		X509_get_subject_name(const_cast<X509 *>(&cert))
+	};
+
+	if(!subject)
+		return {};
+
+	const auto len
+	{
+		X509_NAME_get_text_by_NID(subject, NID_commonName, data(out), size(out))
+	};
+
+	// NID_commonName does not exist in subject.
+	if(len < 0)
+		return {};
+
+	// Terminating NULL is written to buffer but is not counted in len.
+	assert(size_t(len) < size(out));
+	return { data(out), size_t(len) };
+}
+
+ircd::string_view
 ircd::openssl::print(const mutable_buffer &buf,
                      const X509 &cert)
 {

@@ -91,6 +91,7 @@ namespace ircd::openssl
 	X509 &read_pem(X509 &out, const string_view &pem);
 	string_view write_pem(const mutable_buffer &out, const X509 &);
 	string_view print(const mutable_buffer &buf, const X509 &);
+	string_view subject_common_name(const mutable_buffer &out, const X509 &);
 	string_view genX509(const mutable_buffer &out, const json::object &opts);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);
