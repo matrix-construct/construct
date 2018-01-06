@@ -25,17 +25,14 @@
 // This file is not included with the IRCd standard include stack because
 // it requires symbols we can't forward declare without boost headers. It
 // is part of the <ircd/asio.h> stack which can be included in your
-// definition file if you need low level access to this socket API. The
-// client.h still offers higher level access to sockets without requiring
-// boost headers; please check that for satisfaction before including this.
+// definition file if you need low level access to this socket API.
+//
+// The public API is available in <ircd/net/sockpub.h> which is included with
+// the standard include group. It contains many features which may suit you
+// in lieu of direct access to this interface.
 
 namespace ircd::net
 {
-	struct socket;
-
-	std::shared_ptr<socket> connect(const ip::tcp::endpoint &remote, const milliseconds &timeout);
-
-	bool handle_verify(bool, asio::ssl::verify_context &) noexcept;
 	extern asio::ssl::context sslv23_client;
 }
 
@@ -67,10 +64,10 @@ struct ircd::net::socket
 	bool timedout {false};
 
 	void call_user(const handler &, const error_code &ec) noexcept;
-	bool handle_verify(bool, asio::ssl::verify_context &, std::string cn) noexcept;
+	bool handle_verify(bool, asio::ssl::verify_context &, const connopts &) noexcept;
+	void handle_handshake(std::weak_ptr<socket> wp, const connopts &, handler, const error_code &ec) noexcept;
+	void handle_connect(std::weak_ptr<socket> wp, const connopts &, handler, const error_code &ec) noexcept;
 	void handle_timeout(std::weak_ptr<socket> wp, const error_code &ec) noexcept;
-	void handle_handshake(std::weak_ptr<socket> wp, handler, const error_code &ec) noexcept;
-	void handle_connect(std::weak_ptr<socket> wp, std::string cn, handler, const error_code &ec) noexcept;
 	void handle(std::weak_ptr<socket>, handler, const error_code &) noexcept;
 
   public:
@@ -79,25 +76,8 @@ struct ircd::net::socket
 	operator const SSL &() const;
 	operator SSL &();
 
-	bool connected() const noexcept;             // false on any sock errs
 	endpoint remote() const;                     // getpeername(); throws if not conn
 	endpoint local() const;                      // getsockname(); throws if not conn/bound
-	size_t available() const;                    // throws on errors; use friend variant for noex..
-	size_t readable() const;                     // throws on errors; ioctl
-	size_t rbufsz() const;                       // throws on errors; SO_RCVBUF
-	size_t wbufsz() const;                       // throws on errors; SO_SNDBUF
-	size_t rlowat() const;                       // throws on errors; SO_RCVLOWAT
-	size_t wlowat() const;                       // throws on errors; SO_SNDLOWWAT
-	bool blocking() const;                       // throws on errors;
-	bool nodelay() const;                        // throws on errors;
-
-	void rbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
-	void wbufsz(const size_t &);                 // throws; set SO_RCVBUF bytes
-	void rlowat(const size_t &);                 // throws; set SO_RCVLOWAT bytes
-	void wlowat(const size_t &);                 // throws; set SO_SNDLOWAT bytes
-	void blocking(const bool &);                 // throws; set blocking
-	void nodelay(const bool &);                  // throws; TCP_NODELAY
-	void flush();                                // throws; toggles TCP_NODELAY
 
 	// low level read suite
 	template<class iov> auto read_some(const iov &, xfer_handler);
@@ -112,6 +92,7 @@ struct ircd::net::socket
 	template<class iov> auto write(const iov &);
 
 	// Timer for this socket
+	bool has_timeout() const noexcept;
 	void set_timeout(const milliseconds &, handler);
 	void set_timeout(const milliseconds &);
 	milliseconds cancel_timeout() noexcept;
@@ -121,17 +102,8 @@ struct ircd::net::socket
 	void operator()(const wait_type &, handler);
 	bool cancel() noexcept;
 
-	// SSL handshake after connect (untimed)
-	void handshake(const handshake_type &, std::string cn, handler callback);
-	void handshake(const handshake_type &, std::string cn);
-
-	// Connect to host (untimed)
-	void connect(const endpoint &ep, handler callback);
-	void connect(const endpoint &ep);
-
-	// Connect to host and handshake composit (timed)
-	void open(const endpoint &ep, std::string cn, const milliseconds &timeout, handler callback);
-	void open(const endpoint &ep, std::string cn, const milliseconds &timeout);
+	void handshake(const connopts &, handler callback);
+	void connect(const endpoint &, const connopts &, handler callback);
 
 	bool disconnect(const dc &type);
 

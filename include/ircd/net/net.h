@@ -37,12 +37,9 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, nxdomain)
 	IRCD_EXCEPTION(error, broken_pipe)
 	IRCD_EXCEPTION(error, disconnected)
+	IRCD_EXCEPTION(error, inauthentic)
 
 	struct init;
-	struct remote;
-	struct socket;
-	struct listener;
-	enum class dc;
 
 	// SNOMASK 'N' "net"
 	extern struct log::log log;
@@ -51,49 +48,10 @@ namespace ircd::net
 #include "remote.h"
 #include "resolve.h"
 #include "listener.h"
-
-enum class ircd::net::dc
-{
-	RST,                ///< hardest immediate termination
-	FIN,                ///< sd graceful shutdown both directions
-	FIN_SEND,           ///< sd graceful shutdown send side
-	FIN_RECV,           ///< sd graceful shutdown recv side
-	SSL_NOTIFY,         ///< SSL close_notify (async, errors ignored)
-	SSL_NOTIFY_YIELD,   ///< SSL close_notify (yields context, throws)
-};
-
-// Public interface to socket.h because it is not included here.
-namespace ircd::net
-{
-	bool connected(const socket &) noexcept;
-	size_t available(const socket &) noexcept;
-	ipport local_ipport(const socket &) noexcept;
-	ipport remote_ipport(const socket &) noexcept;
-
-	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
-
-	size_t write(socket &, const ilist<const_buffer> &);     // write_all
-	size_t write(socket &, const iov<const_buffer> &);       // write_all
-	size_t write(socket &, iov<const_buffer> &);             // write_some
-
-	size_t read(socket &, const ilist<mutable_buffer> &);    // read_all
-	size_t read(socket &, const iov<mutable_buffer> &);      // read_all
-	size_t read(socket &, iov<mutable_buffer> &);            // read_some
-
-	std::shared_ptr<socket> connect(const remote &, const milliseconds &timeout = 30000ms);
-	bool disconnect(socket &, const dc &type = dc::SSL_NOTIFY) noexcept;
-
-	ctx::future<std::shared_ptr<socket>> open(const ipport &, std::string cn, const milliseconds &timeout = 30000ms);
-	ctx::future<std::shared_ptr<socket>> open(const hostport &, const milliseconds &timeout = 30000ms);
-}
+#include "sockpub.h"
 
 struct ircd::net::init
 {
 	init();
 	~init() noexcept;
 };
-
-namespace ircd
-{
-	using net::socket;
-}

@@ -49,7 +49,6 @@ ircd::net::init::init()
 {
 	assert(ircd::ios);
 	resolve::resolver.reset(new ip::tcp::resolver{*ircd::ios});
-	sslv23_client.set_verify_callback(net::handle_verify);
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
 }
@@ -60,9 +59,17 @@ ircd::net::init::~init()
 	resolve::resolver.reset(nullptr);
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// socket (public)
+// net/sockpub.h
 //
+
+bool
+ircd::net::disconnect(socket &socket)
+noexcept
+{
+	return disconnect(socket, dc::SSL_NOTIFY);
+}
 
 bool
 ircd::net::disconnect(socket &socket,
@@ -83,93 +90,71 @@ catch(const std::exception &e)
 	return false;
 }
 
+/// Attempt to connect and ssl handshake; future.
+///
 ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
-ircd::net::open(const hostport &hostport,
-                const milliseconds &timeout)
+ircd::net::open(const connopts &opts)
 {
-	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
-	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
-	resolve(hostport, [p(std::move(p)), timeout, cn(std::string(hostport.host))]
-	(auto eptr, const ipport &ipport)
+	ctx::promise<std::shared_ptr<socket>> p;
+	ctx::future<std::shared_ptr<socket>> f(p);
+	auto s{std::make_shared<socket>()};
+	open(*s, opts, [s, p(std::move(p))]
+	(std::exception_ptr eptr)
 	mutable
 	{
 		if(eptr)
-			return p.set_exception(std::move(eptr));
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(s);
+	});
+
+	return f;
+}
+
+/// Attempt to connect and ssl handshake; asynchronous, callback when done.
+///
+void
+ircd::net::open(socket &socket,
+                const connopts &opts,
+                std::function<void (std::exception_ptr)> handler)
+{
+	auto complete{[&socket, &opts, handler(std::move(handler))]
+	(std::exception_ptr eptr)
+	{
+		if(eptr)
+			disconnect(socket, dc::RST);
+
+		handler(std::move(eptr));
+	}};
+
+	auto connector{[&socket, &opts, complete(std::move(complete))]
+	(std::exception_ptr eptr, const ipport &ipport)
+	{
+		if(eptr)
+			return complete(std::move(eptr));
 
 		const auto ep{make_endpoint(ipport)};
-		const auto s(std::make_shared<socket>());
-		s->open(ep, std::move(cn), timeout, [p(std::move(p)), s]
+		socket.connect(ep, opts, [&socket, complete(std::move(complete))]
 		(const error_code &ec)
-		mutable
 		{
-			if(ec)
-			{
-				disconnect(*s, dc::RST);
-				p.set_exception(make_eptr(ec));
-			}
-			else p.set_value(s);
+			complete(make_eptr(ec));
 		});
-	});
+	}};
 
-	return f;
+	if(!opts.ipport)
+		resolve(opts.hostport, std::move(connector));
+	else
+		connector({}, opts.ipport);
 }
 
-ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
-ircd::net::open(const ipport &ipport,
-                std::string cn,
-                const milliseconds &timeout)
+void
+ircd::net::flush(socket &socket)
 {
-	ctx::promise<std::shared_ptr<ircd::net::socket>> p;
-	ctx::future<std::shared_ptr<ircd::net::socket>> f(p);
-	const auto ep{make_endpoint(ipport)};
-	const auto s(std::make_shared<socket>());
-	s->open(ep, std::move(cn), timeout, [p(std::move(p)), s]
-	(const error_code &ec)
-	mutable
-	{
-		if(ec)
-		{
-			disconnect(*s, dc::RST);
-			p.set_exception(make_eptr(ec));
-		}
-		else p.set_value(s);
-	});
+	if(nodelay(socket))
+		return;
 
-	return f;
-}
-
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const net::remote &remote,
-                   const milliseconds &timeout)
-{
-	const auto ep{make_endpoint(remote)};
-	return connect(ep, timeout);
-}
-
-std::shared_ptr<ircd::net::socket>
-ircd::net::connect(const ip::tcp::endpoint &remote,
-                   const milliseconds &timeout)
-{
-	const auto ret(std::make_shared<socket>());
-	ret->open(remote, std::string{}, timeout);
-	return ret;
-}
-
-size_t
-ircd::net::read(socket &socket,
-                iov<mutable_buffer> &bufs)
-{
-	const size_t read(socket.read_some(bufs));
-	const size_t consumed(buffer::consume(bufs, read));
-	assert(read == consumed);
-	return read;
-}
-
-size_t
-ircd::net::read(socket &socket,
-                const iov<mutable_buffer> &bufs)
-{
-	return socket.read(bufs);
+	nodelay(socket, true);
+	nodelay(socket, false);
 }
 
 size_t
@@ -200,6 +185,27 @@ ircd::net::write(socket &socket,
 	return wrote;
 }
 
+size_t
+ircd::net::read(socket &socket,
+                iov<mutable_buffer> &bufs)
+{
+	const size_t read(socket.read_some(bufs));
+	const size_t consumed(buffer::consume(bufs, read));
+	assert(read == consumed);
+	return read;
+}
+
+size_t
+ircd::net::read(socket &socket,
+                const iov<mutable_buffer> &bufs)
+{
+	return socket.read(bufs);
+}
+
+//
+// Active observers
+//
+
 ircd::const_raw_buffer
 ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
                          const socket &socket)
@@ -207,18 +213,6 @@ ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
 	const SSL &ssl(socket);
 	const X509 &cert{openssl::peer_cert(ssl)};
 	return openssl::i2d(buf, cert);
-}
-
-ircd::net::ipport
-ircd::net::local_ipport(const socket &socket)
-noexcept try
-{
-    const auto &ep(socket.local());
-	return make_ipport(ep);
-}
-catch(...)
-{
-	return {};
 }
 
 ircd::net::ipport
@@ -233,20 +227,262 @@ catch(...)
 	return {};
 }
 
+ircd::net::ipport
+ircd::net::local_ipport(const socket &socket)
+noexcept try
+{
+    const auto &ep(socket.local());
+	return make_ipport(ep);
+}
+catch(...)
+{
+	return {};
+}
+
 size_t
-ircd::net::available(const socket &s)
+ircd::net::available(const socket &socket)
 noexcept
 {
+	const ip::tcp::socket &sd(socket);
 	boost::system::error_code ec;
-	const ip::tcp::socket &sd(s);
 	return sd.available(ec);
 }
 
-bool
-ircd::net::connected(const socket &s)
-noexcept
+size_t
+ircd::net::readable(const socket &socket)
 {
-	return s.connected();
+	ip::tcp::socket &sd(const_cast<net::socket &>(socket));
+	ip::tcp::socket::bytes_readable command{true};
+	sd.io_control(command);
+	return command.get();
+}
+
+bool
+ircd::net::connected(const socket &socket)
+noexcept try
+{
+	const ip::tcp::socket &sd(socket);
+	return sd.is_open();
+}
+catch(...)
+{
+	return false;
+}
+
+//
+// Options
+//
+
+/// Construct sockopts with the current options from socket argument
+ircd::net::sockopts::sockopts(const socket &socket)
+:blocking{net::blocking(socket)}
+,nodelay{net::nodelay(socket)}
+,keepalive{net::keepalive(socket)}
+,linger{net::linger(socket)}
+,read_bufsz{ssize_t(net::read_bufsz(socket))}
+,write_bufsz{ssize_t(net::write_bufsz(socket))}
+,read_lowat{ssize_t(net::read_lowat(socket))}
+,write_lowat{ssize_t(net::write_lowat(socket))}
+{
+}
+
+/// Updates the socket with provided options. Defaulted / -1'ed options are
+/// ignored for updating.
+void
+ircd::net::set(socket &socket,
+               const sockopts &opts)
+{
+	if(opts.blocking != opts.IGN)
+		net::blocking(socket, opts.blocking);
+
+	if(opts.nodelay != opts.IGN)
+		net::nodelay(socket, opts.nodelay);
+
+	if(opts.keepalive != opts.IGN)
+		net::keepalive(socket, opts.keepalive);
+
+	if(opts.linger != opts.IGN)
+		net::linger(socket, opts.linger);
+
+	if(opts.read_bufsz != opts.IGN)
+		net::read_bufsz(socket, opts.read_bufsz);
+
+	if(opts.write_bufsz != opts.IGN)
+		net::write_bufsz(socket, opts.write_bufsz);
+
+	if(opts.read_lowat != opts.IGN)
+		net::read_lowat(socket, opts.read_lowat);
+
+	if(opts.write_lowat != opts.IGN)
+		net::write_lowat(socket, opts.write_lowat);
+}
+
+void
+ircd::net::write_lowat(socket &socket,
+                       const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::send_low_watermark option
+	{
+		int(bytes)
+	};
+
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::read_lowat(socket &socket,
+                      const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::receive_low_watermark option
+	{
+		int(bytes)
+	};
+
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::write_bufsz(socket &socket,
+                       const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::send_buffer_size option
+	{
+		int(bytes)
+	};
+
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::read_bufsz(socket &socket,
+                      const size_t &bytes)
+{
+	assert(bytes <= std::numeric_limits<int>::max());
+	ip::tcp::socket::receive_buffer_size option
+	{
+		int(bytes)
+	};
+
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::linger(socket &socket,
+                  const time_t &t)
+{
+	assert(t >= std::numeric_limits<int>::min());
+	assert(t <= std::numeric_limits<int>::max());
+	ip::tcp::socket::linger option
+	{
+		t >= 0,           // ON / OFF boolean
+		t >= 0? int(t) : 0     // Uses 0 when OFF
+	};
+
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::keepalive(socket &socket,
+                     const bool &b)
+{
+	ip::tcp::socket::keep_alive option{b};
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::nodelay(socket &socket,
+                   const bool &b)
+{
+	ip::tcp::no_delay option{b};
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
+void
+ircd::net::blocking(socket &socket,
+                    const bool &b)
+{
+	ip::tcp::socket &sd(socket);
+	sd.non_blocking(!b);
+}
+
+size_t
+ircd::net::write_lowat(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::send_low_watermark option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::read_lowat(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::receive_low_watermark option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::write_bufsz(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::send_buffer_size option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+size_t
+ircd::net::read_bufsz(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::receive_buffer_size option{};
+	sd.get_option(option);
+	return option.value();
+}
+
+time_t
+ircd::net::linger(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::linger option;
+	sd.get_option(option);
+	return option.enabled()? option.timeout() : -1;
+}
+
+bool
+ircd::net::keepalive(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::socket::keep_alive option;
+	sd.get_option(option);
+	return option.value();
+}
+
+bool
+ircd::net::nodelay(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::tcp::no_delay option;
+	sd.get_option(option);
+	return option.value();
+}
+
+bool
+ircd::net::blocking(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	return !sd.non_blocking();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -522,7 +758,7 @@ catch(const std::exception &e)
 	log.error("%s: socket(%p): in accept(): [%s]: %s",
 	          std::string(*this),
 	          sock.get(),
-	          sock->connected()? string(sock->remote()) : "<gone>",
+	          connected(*sock)? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
@@ -598,7 +834,7 @@ catch(const std::exception &e)
 	log.error("%s: socket(%p): in handshake(): [%s]: %s",
 	          std::string(*this),
 	          sock.get(),
-	          sock->connected()? string(sock->remote()) : "<gone>",
+	          connected(*sock)? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
@@ -755,117 +991,6 @@ ircd::net::sslv23_client
 };
 
 //
-// socket::io
-//
-
-ircd::net::socket::io::io(struct socket &sock,
-                          struct stat &stat,
-                          const std::function<size_t ()> &closure)
-:io
-{
-	sock, stat, closure()
-}
-{}
-
-ircd::net::socket::io::io(struct socket &sock,
-                          struct stat &stat,
-                          const size_t &bytes)
-:sock{sock}
-,stat{stat}
-,bytes{bytes}
-{
-	stat.bytes += bytes;
-	stat.calls++;
-}
-
-ircd::net::socket::io::operator size_t()
-const
-{
-	return bytes;
-}
-
-//
-// socket::scope_timeout
-//
-
-ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
-                                                const milliseconds &timeout)
-:s{&socket}
-{
-	socket.set_timeout(timeout);
-}
-
-ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
-                                                const milliseconds &timeout,
-                                                socket::handler handler)
-:s{&socket}
-{
-	socket.set_timeout(timeout, std::move(handler));
-}
-
-ircd::net::socket::scope_timeout::scope_timeout(scope_timeout &&other)
-noexcept
-:s{std::move(other.s)}
-{
-	other.s = nullptr;
-}
-
-ircd::net::socket::scope_timeout &
-ircd::net::socket::scope_timeout::operator=(scope_timeout &&other)
-noexcept
-{
-	this->~scope_timeout();
-	s = std::move(other.s);
-	return *this;
-}
-
-ircd::net::socket::scope_timeout::~scope_timeout()
-noexcept
-{
-	cancel();
-}
-
-bool
-ircd::net::socket::scope_timeout::cancel()
-noexcept try
-{
-	if(!this->s)
-		return false;
-
-	auto *const s{this->s};
-	this->s = nullptr;
-	s->cancel_timeout();
-	return true;
-}
-catch(const std::exception &e)
-{
-	log.error("socket(%p) scope_timeout::cancel: %s",
-	          (const void *)s,
-	          e.what());
-
-	return false;
-}
-
-bool
-ircd::net::socket::scope_timeout::release()
-{
-	const auto s{this->s};
-	this->s = nullptr;
-	return s != nullptr;
-}
-
-//
-// socket::xfer
-//
-
-ircd::net::socket::xfer::xfer(const error_code &error_code,
-                              const size_t &bytes)
-:eptr{make_eptr(error_code)}
-,bytes{bytes}
-{
-}
-
-//
 // socket
 //
 
@@ -892,12 +1017,12 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
-	if(unlikely(RB_DEBUG_LEVEL && connected()))
+	if(unlikely(RB_DEBUG_LEVEL && connected(*this)))
 		log.critical("Failed to ensure socket(%p) is disconnected from %s before dtor.",
 		             this,
 		             string(remote()));
 
-	assert(!connected());
+	assert(!connected(*this));
 }
 catch(const std::exception &e)
 {
@@ -906,103 +1031,47 @@ catch(const std::exception &e)
 }
 
 void
-ircd::net::socket::open(const ip::tcp::endpoint &ep,
-                        std::string cn,
-                        const milliseconds &timeout)
-try
+ircd::net::socket::connect(const endpoint &ep,
+                           const connopts &opts,
+                           handler callback)
 {
-	const life_guard<socket> lg{*this};
-	const scope_timeout ts{*this, timeout};
 	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
 	          this,
 	          string(ep),
-	          timeout.count());
+	          opts.connect_timeout.count());
 
-	connect(ep);
-	log.debug("socket(%p) connected to remote: %s from local: %s; performing handshake to '%s'...",
-	          this,
-	          string(ep),
-	          string(local()),
-	          cn);
-
-	handshake(handshake_type::client, std::move(cn));
-	log.debug("socket(%p) secure session with %s from local: %s established.",
-	          this,
-	          string(ep),
-	          string(local()));
-}
-catch(const std::exception &e)
-{
-	log.debug("socket(%p) failed to connect to remote %s: %s",
-	          this,
-	          string(ep),
-	          e.what());
-
-	disconnect(dc::RST);
-	throw;
-}
-
-/// Attempt to connect and ssl handshake; asynchronous, callback when done.
-///
-void
-ircd::net::socket::open(const ip::tcp::endpoint &ep,
-                        std::string cn,
-                        const milliseconds &timeout,
-                        handler callback)
-{
-	log.debug("socket(%p) attempting connect to remote: %s '%s' for the next %ld$ms",
-	          this,
-	          string(ep),
-	          cn,
-	          timeout.count());
-
-	auto handler
+	auto connect_handler
 	{
-		std::bind(&socket::handle_connect, this, weak_from(*this), std::move(cn), std::move(callback), ph::_1)
+		std::bind(&socket::handle_connect, this, weak_from(*this), std::cref(opts), std::move(callback), ph::_1)
 	};
 
-	this->connect(ep, std::move(handler));
-	set_timeout(timeout);
+	sd.async_connect(ep, std::move(connect_handler));
+	set_timeout(opts.connect_timeout);
 }
 
 void
-ircd::net::socket::connect(const ip::tcp::endpoint &ep)
-{
-	sd.async_connect(ep, yield_context{to_asio{}});
-}
-
-void
-ircd::net::socket::connect(const ip::tcp::endpoint &ep,
-                           handler callback)
-{
-	sd.async_connect(ep, std::move(callback));
-}
-
-void
-ircd::net::socket::handshake(const handshake_type &type,
-                             std::string cn)
-{
-	auto handler
-	{
-		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::move(cn))
-	};
-
-	ssl.set_verify_callback(std::move(handler));
-	ssl.async_handshake(type, yield_context{to_asio{}});
-}
-
-void
-ircd::net::socket::handshake(const handshake_type &type,
-                             std::string cn,
+ircd::net::socket::handshake(const connopts &opts,
                              handler callback)
 {
-	auto handler
+	log.debug("socket(%p) performing handshake with %s for '%s' for the next %ld$ms",
+	          this,
+	          string(remote()),
+	          opts.common_name,
+	          opts.handshake_timeout.count());
+
+	auto handshake_handler
 	{
-		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::move(cn))
+		std::bind(&socket::handle_handshake, this, weak_from(*this), std::cref(opts), std::move(callback), ph::_1)
 	};
 
-	ssl.set_verify_callback(std::move(handler));
-	ssl.async_handshake(type, std::move(callback));
+	auto verify_handler
+	{
+		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::cref(opts))
+	};
+
+	ssl.set_verify_callback(std::move(verify_handler));
+	ssl.async_handshake(handshake_type::client, std::move(handshake_handler));
+	set_timeout(opts.handshake_timeout);
 }
 
 bool
@@ -1144,7 +1213,7 @@ ircd::net::socket::operator()(const wait_type &type,
 		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1)
 	};
 
-	assert(connected());
+	assert(connected(*this));
 	switch(type)
 	{
 		case wait_type::wait_error:
@@ -1191,6 +1260,8 @@ noexcept try
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
+		// We expose a timeout condition to the user, but hide
+		// other cancellations from invoking the callback.
 		case operation_canceled:
 			if(timedout)
 				break;
@@ -1227,90 +1298,11 @@ catch(const std::exception &e)
 }
 
 void
-ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
-                                  std::string cn,
-                                  handler callback,
-                                  const error_code &ec)
-noexcept try
-{
-	const life_guard<socket> s{wp};
-	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) connect from local: %s to remote: %s: %s",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          string(ec));
-
-	// A connect error
-	if(ec)
-	{
-		cancel_timeout();
-		call_user(callback, ec);
-		return;
-	}
-
-	auto handler
-	{
-		std::bind(&socket::handle_handshake, this, wp, std::move(callback), ph::_1)
-	};
-
-	handshake(handshake_type::client, std::move(cn), std::move(handler));
-}
-catch(const std::bad_weak_ptr &e)
-{
-	log.warning("socket(%p): belated callback to handle_connect... (%s)",
-	            this,
-	            e.what());
-	assert(0);
-}
-catch(const std::exception &e)
-{
-	log.critical("socket(%p): handle_connect: %s",
-	             this,
-	             e.what());
-	assert(0);
-}
-
-void
-ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
-                                    handler callback,
-                                    const error_code &ec)
-noexcept try
-{
-	const life_guard<socket> s{wp};
-	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) handshake from local: %s to remote: %s: %s",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          string(ec));
-
-	if(!timedout)
-		cancel_timeout();
-
-	call_user(callback, ec);
-}
-catch(const std::bad_weak_ptr &e)
-{
-	log.warning("socket(%p): belated callback to handle_handshake... (%s)",
-	            this,
-	            e.what());
-	assert(0);
-}
-catch(const std::exception &e)
-{
-	log.critical("socket(%p): handle_handshake: %s",
-	             this,
-	             e.what());
-	assert(0);
-}
-
-void
 ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
                                   const error_code &ec)
 noexcept try
 {
- 	using namespace boost::system::errc;
+	using namespace boost::system::errc;
 
 	if(!wp.expired()) switch(ec.value())
 	{
@@ -1351,63 +1343,205 @@ catch(const std::exception &e)
 	          e.what());
 }
 
+void
+ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
+                                  const connopts &opts,
+                                  handler callback,
+                                  const error_code &ec)
+noexcept try
+{
+	const life_guard<socket> s{wp};
+	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	log.debug("socket(%p) connect to remote: %s from local: %s: %s",
+	          this,
+	          string(remote_ipport(*this)),
+	          string(local_ipport(*this)),
+	          string(ec));
+
+	// The timer was set by socket::connect() and may need to be canceled.
+	if(!timedout)
+		cancel_timeout();
+
+	// A connect error; abort here by calling the user back with error.
+	if(ec)
+		return call_user(callback, ec);
+
+	// Try to set the user's socket options now; if something fails
+	// we can invoke their callback with the error.
+	if(opts.sopts) try
+	{
+		set(*this, *opts.sopts);
+	}
+	catch(const boost::system::system_error &e)
+	{
+		return call_user(callback, e.code());
+	}
+
+	// The user can opt out of performing the handshake here.
+	if(!opts.handshake)
+		return call_user(callback, ec);
+
+	handshake(opts, std::move(callback));
+}
+catch(const std::bad_weak_ptr &e)
+{
+	log.warning("socket(%p): belated callback to handle_connect... (%s)",
+	            this,
+	            e.what());
+	assert(0);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): handle_connect: %s",
+	             this,
+	             e.what());
+	assert(0);
+}
+
+void
+ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
+                                    const connopts &opts,
+                                    handler callback,
+                                    const error_code &ec)
+noexcept try
+{
+	const life_guard<socket> s{wp};
+	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	log.debug("socket(%p) handshake from local: %s to remote: %s: %s",
+	          this,
+	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
+	          string(ec));
+
+	// The timer was set by socket::handshake() and may need to be canceled.
+	if(!timedout)
+		cancel_timeout();
+
+	// This is the end of the asynchronous call chain; the user is called
+	// back with or without error here.
+	call_user(callback, ec);
+}
+catch(const std::bad_weak_ptr &e)
+{
+	log.warning("socket(%p): belated callback to handle_handshake... (%s)",
+	            this,
+	            e.what());
+	assert(0);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): handle_handshake: %s",
+	             this,
+	             e.what());
+	assert(0);
+}
+
 bool
 ircd::net::socket::handle_verify(const bool valid,
                                  asio::ssl::verify_context &vc,
-                                 std::string cn)
+                                 const connopts &opts)
 noexcept try
 {
+	// `valid` indicates whether or not there's an anomaly with the
+	// certificate; if so, it is usually enumerated by the `switch()`
+	// statement below. If `valid` is false, this function can return
+	// true to continue but it appears this function will be called a
+	// second time with `valid=true`.
+	//
+	// TODO: XXX: This behavior must be confirmed since we return true
+	// TODO: XXX: early on recoverable errors and skip other checks
+	// TODO: XXX: expecting a second call..
+	//
+
+	// The user can set this option to bypass verification.
+	if(!opts.verify_certificate)
+		return true;
+
+	// X509_STORE_CTX &
 	assert(vc.native_handle());
 	const auto &stctx{*vc.native_handle()};
+	const auto &cert{openssl::current_cert(stctx)};
+	const auto required_common_name
+	{
+		opts.common_name? opts.common_name : opts.hostport.host
+	};
 
-	bool verify;
-	switch(openssl::get_error(stctx))
+	const auto reject{[&stctx, &required_common_name]
+	{
+		throw inauthentic
+		{
+			"%s #%ld: %s",
+			required_common_name,
+			openssl::get_error(stctx),
+			openssl::get_error_string(stctx)
+		};
+	}};
+
+	if(!valid)
+	{
+		char buf[256];
+		log.warning("verify: %s /CN=%s :%s",
+		            required_common_name,
+		            openssl::subject_common_name(buf, cert),
+		            openssl::get_error_string(stctx));
+	}
+
+	if(!valid) switch(openssl::get_error(stctx))
 	{
 		case X509_V_OK:
-			assert(valid);
-			verify = true;
+			assert(0);
+
+		default:
+			reject();
 			break;
 
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 			assert(openssl::get_error_depth(stctx) == 0);
-			verify = true;
+			if(opts.allow_self_signed)
+				return true;
+
+			reject();
 			break;
 
 		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-			verify = true;
-			break;
+			if(opts.allow_self_chain)
+				return true;
 
-		default:
-			verify = false;
+			reject();
 			break;
 	}
 
-	log.debug("handle_verify: verify_context(%p) %s %s :%s",
-	          (const void *)&vc,
-	          valid? "VALID" : "INVALID",
-	          verify? "VERIFIABLE" : "UNVERIFIABLE",
-	          openssl::get_error_string(stctx));
-
-	bool verified;
-	if(verify)
+	if(opts.verify_common_name)
 	{
-		boost::asio::ssl::rfc2818_verification verify_cn{cn};
-		verified = verify_cn(verify, vc);
+		//TODO: this object makes an std::string
+		boost::asio::ssl::rfc2818_verification verifier
+		{
+			std::string(required_common_name)
+		};
+
+		if(!verifier(true, vc))
+		{
+			char buf[256];
+			throw inauthentic
+			{
+				"/CN=%s does not match target host %s :%s",
+				openssl::subject_common_name(buf, cert),
+				required_common_name,
+				openssl::get_error_string(stctx)
+			};
+		}
 	}
-	else verified = false;
 
-	if(!verified)
-		log.error("Failed to verify peer '%s' certificate: %s %s %s",
-		          cn,
-		          valid? "VALID" : "INVALID",
-		          verify? "VERIFIABLE" : "UNVERIFIABLE",
-		          openssl::get_error_string(stctx));
-
-	return verified;
+	return true;
+}
+catch(const inauthentic &e)
+{
+	log.error("Certificate rejected: %s", e.what());
+	return false;
 }
 catch(const std::exception &e)
 {
-	log.critical("socket::handle_verify: %s", e.what());
+	log.critical("Certificate error: %s", e.what());
 	return false;
 }
 
@@ -1425,145 +1559,6 @@ catch(const std::exception &e)
 	             e.what());
 }
 
-void
-ircd::net::socket::flush()
-{
-	if(nodelay())
-		return;
-
-	nodelay(true);
-	nodelay(false);
-}
-
-void
-ircd::net::socket::nodelay(const bool &b)
-{
-	ip::tcp::no_delay option{b};
-	sd.set_option(option);
-}
-
-void
-ircd::net::socket::blocking(const bool &b)
-{
-	sd.non_blocking(b);
-}
-
-void
-ircd::net::socket::wlowat(const size_t &bytes)
-{
-	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::send_low_watermark option
-	{
-		int(bytes)
-	};
-
-	sd.set_option(option);
-}
-
-void
-ircd::net::socket::rlowat(const size_t &bytes)
-{
-	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::receive_low_watermark option
-	{
-		int(bytes)
-	};
-
-	sd.set_option(option);
-}
-
-void
-ircd::net::socket::wbufsz(const size_t &bytes)
-{
-	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::send_buffer_size option
-	{
-		int(bytes)
-	};
-
-	sd.set_option(option);
-}
-
-void
-ircd::net::socket::rbufsz(const size_t &bytes)
-{
-	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::receive_buffer_size option
-	{
-		int(bytes)
-	};
-
-	sd.set_option(option);
-}
-
-bool
-ircd::net::socket::nodelay()
-const
-{
-	ip::tcp::no_delay option;
-	sd.get_option(option);
-	return option.value();
-}
-
-bool
-ircd::net::socket::blocking()
-const
-{
-	return !sd.non_blocking();
-}
-
-size_t
-ircd::net::socket::wlowat()
-const
-{
-	ip::tcp::socket::send_low_watermark option{};
-	sd.get_option(option);
-	return option.value();
-}
-
-size_t
-ircd::net::socket::rlowat()
-const
-{
-	ip::tcp::socket::receive_low_watermark option{};
-	sd.get_option(option);
-	return option.value();
-}
-
-size_t
-ircd::net::socket::wbufsz()
-const
-{
-	ip::tcp::socket::send_buffer_size option{};
-	sd.get_option(option);
-	return option.value();
-}
-
-size_t
-ircd::net::socket::rbufsz()
-const
-{
-	ip::tcp::socket::receive_buffer_size option{};
-	sd.get_option(option);
-	return option.value();
-}
-
-size_t
-ircd::net::socket::readable()
-const
-{
-	ip::tcp::socket::bytes_readable command{true};
-	const_cast<ip::tcp::socket &>(sd).io_control(command);
-	return command.get();
-}
-
-size_t
-ircd::net::socket::available()
-const
-{
-	return sd.available();
-}
-
 boost::asio::ip::tcp::endpoint
 ircd::net::socket::local()
 const
@@ -1576,17 +1571,6 @@ ircd::net::socket::remote()
 const
 {
 	return sd.remote_endpoint();
-}
-
-bool
-ircd::net::socket::connected()
-const noexcept try
-{
-	return sd.is_open();
-}
-catch(const boost::system::system_error &e)
-{
-	return false;
 }
 
 ircd::milliseconds
@@ -1628,6 +1612,13 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	timer.async_wait(std::move(h));
 }
 
+bool
+ircd::net::socket::has_timeout()
+const noexcept
+{
+	return !timedout && timer.expires_from_now() != milliseconds{0};
+}
+
 ircd::net::socket::operator
 SSL &()
 {
@@ -1645,25 +1636,115 @@ const
 	return *ssl.native_handle();
 }
 
+//
+// socket::io
+//
+
+ircd::net::socket::io::io(struct socket &sock,
+                          struct stat &stat,
+                          const std::function<size_t ()> &closure)
+:io
+{
+	sock, stat, closure()
+}
+{}
+
+ircd::net::socket::io::io(struct socket &sock,
+                          struct stat &stat,
+                          const size_t &bytes)
+:sock{sock}
+,stat{stat}
+,bytes{bytes}
+{
+	stat.bytes += bytes;
+	stat.calls++;
+}
+
+ircd::net::socket::io::operator size_t()
+const
+{
+	return bytes;
+}
+
+//
+// socket::scope_timeout
+//
+
+ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
+                                                const milliseconds &timeout)
+:s{&socket}
+{
+	socket.set_timeout(timeout);
+}
+
+ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
+                                                const milliseconds &timeout,
+                                                socket::handler handler)
+:s{&socket}
+{
+	socket.set_timeout(timeout, std::move(handler));
+}
+
+ircd::net::socket::scope_timeout::scope_timeout(scope_timeout &&other)
+noexcept
+:s{std::move(other.s)}
+{
+	other.s = nullptr;
+}
+
+ircd::net::socket::scope_timeout &
+ircd::net::socket::scope_timeout::operator=(scope_timeout &&other)
+noexcept
+{
+	this->~scope_timeout();
+	s = std::move(other.s);
+	return *this;
+}
+
+ircd::net::socket::scope_timeout::~scope_timeout()
+noexcept
+{
+	cancel();
+}
+
 bool
-ircd::net::handle_verify(const bool preverified,
-                         asio::ssl::verify_context &vc)
+ircd::net::socket::scope_timeout::cancel()
 noexcept try
 {
-	assert(vc.native_handle());
-	const auto &stctx{*vc.native_handle()};
-	const auto &cert{openssl::current_cert(stctx)};
-	log.debug("net::handle_verify: verify_context(%p): pre:%d :%s",
-	          (const void *)&vc,
-	          preverified,
-	          openssl::get_error_string(stctx));
+	if(!this->s)
+		return false;
 
-	return preverified;
+	auto *const s{this->s};
+	this->s = nullptr;
+	s->cancel_timeout();
+	return true;
 }
 catch(const std::exception &e)
 {
-	log.critical("net::handle_verify: %s", e.what());
+	log.error("socket(%p) scope_timeout::cancel: %s",
+	          (const void *)s,
+	          e.what());
+
 	return false;
+}
+
+bool
+ircd::net::socket::scope_timeout::release()
+{
+	const auto s{this->s};
+	this->s = nullptr;
+	return s != nullptr;
+}
+
+//
+// socket::xfer
+//
+
+ircd::net::socket::xfer::xfer(const error_code &error_code,
+                              const size_t &bytes)
+:eptr{make_eptr(error_code)}
+,bytes{bytes}
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
