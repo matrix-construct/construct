@@ -655,7 +655,7 @@ ircd::resource::response::response(client &client,
 		},
 	};
 
-	const ilist<const_buffer> vector
+	const ilist<const const_buffer> vector
 	{
 		head.completed(),
 		content

@@ -385,14 +385,14 @@ try
 						host, port
 					};
 
-					const net::ipport ipport
+					const net::remote remote
 					{
 						hostport
 					};
 
 					auto future
 					{
-						net::resolve(ipport)
+						net::resolve(remote)
 					};
 
 					std::cout << future.get() << std::endl;
@@ -600,9 +600,9 @@ try
 
 			const auto args(tokens_after(line, " ", 0));
 			const params token{args, " ", {"host", "port"}};
-			const std::string host{token.at(0, "127.0.0.1"s)};
-			const auto port{token.at<uint16_t>(1, 8448)};
-			moi = new m::session{{host, port}};
+			const auto &host{token.at(0, "127.0.0.1"s)};
+			const auto &port{token.at<uint16_t>(1, 8448)};
+			moi = new m::session{net::hostport{host, port}};
 			break;
 		}
 

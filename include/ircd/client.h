@@ -65,8 +65,8 @@ struct ircd::client
 	client &operator=(const client &) = delete;
 	virtual ~client() noexcept;
 
-	friend hostport remote(const client &);
-	friend hostport local(const client &);
+	friend ipport remote(const client &);
+	friend ipport local(const client &);
 };
 
 struct ircd::client::init

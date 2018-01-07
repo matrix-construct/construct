@@ -472,7 +472,7 @@ ircd::http::response::chunked::chunk::chunk(chunked &chunked,
 		snprintf(size_buf, sizeof(size_buf), "%lx", size(buffer))
 	};
 
-	const ilist<const_buffer> iov
+	const ilist<const const_buffer> iov
 	{
 		{ size_buf,     size_t(size_size) },
 		{ "\r\n",       2                 },

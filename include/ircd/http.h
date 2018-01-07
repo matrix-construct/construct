@@ -317,7 +317,7 @@ struct ircd::http::response
 	struct content;
 	struct chunked;
 
-	using write_closure = std::function<void (const ilist<const_buffer> &)>;
+	using write_closure = std::function<void (const ilist<const const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
 
 	// send
