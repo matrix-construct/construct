@@ -2075,81 +2075,12 @@ ircd::net::_resolve(const ipport &ipport,
 // net/remote.h
 //
 
-//
-// host / port utils
-//
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const uint32_t &ip)
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const remote &t)
 {
-	const auto len
-	{
-		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const uint128_t &ip)
-{
-	const auto &pun
-	{
-		reinterpret_cast<const uint8_t (&)[16]>(ip)
-	};
-
-	const auto &punpun
-	{
-		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
-	};
-
-	const auto len
-	{
-		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const hostport &hp)
-{
-	const auto len
-	{
-		fmt::sprintf
-		{
-			buf, "%s:%s",
-			hp.host,
-			hp.portnum? lex_cast(hp.portnum) : hp.port
-		}
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const ipport &ipp)
-{
-	const auto len
-	{
-		is_v4(ipp)?
-		fmt::sprintf(buf, "%s:%u",
-		             ip::address_v4{host4(ipp)}.to_string(),
-		             port(ipp)):
-
-		is_v6(ipp)?
-		fmt::sprintf(buf, "%s:%u",
-		             ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
-		             port(ipp)):
-
-		0
-	};
-
-	return { data(buf), size_t(len) };
+	char buf[256];
+	s << string(buf, t);
+	return s;
 }
 
 ircd::string_view
@@ -2190,16 +2121,9 @@ ircd::net::remote::remote(const hostport &hostport)
 {
 }
 
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const remote &t)
-{
-	char buf[256];
-	s << string(buf, t);
-	return s;
-}
-
+///////////////////////////////////////////////////////////////////////////////
 //
-// ipport
+// net/ipport.h
 //
 
 std::ostream &
@@ -2208,6 +2132,62 @@ ircd::net::operator<<(std::ostream &s, const ipport &t)
 	char buf[256];
 	s << string(buf, t);
 	return s;
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const uint32_t &ip)
+{
+	const auto len
+	{
+		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const uint128_t &ip)
+{
+	const auto &pun
+	{
+		reinterpret_cast<const uint8_t (&)[16]>(ip)
+	};
+
+	const auto &punpun
+	{
+		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
+	};
+
+	const auto len
+	{
+		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const ipport &ipp)
+{
+	const auto len
+	{
+		is_v4(ipp)?
+		fmt::sprintf(buf, "%s:%u",
+		             ip::address_v4{host4(ipp)}.to_string(),
+		             port(ipp)):
+
+		is_v6(ipp)?
+		fmt::sprintf(buf, "%s:%u",
+		             ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
+		             port(ipp)):
+
+		0
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ircd::net::ipport
@@ -2235,6 +2215,10 @@ ircd::net::make_endpoint(const ipport &ipport)
 	};
 }
 
+//
+// ipport
+//
+
 ircd::net::ipport::ipport(const boost::asio::ip::address &address,
                           const uint16_t &port)
 {
@@ -2250,8 +2234,9 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 	net::port(*this) = port;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// hostport
+// net/hostport.h
 //
 
 std::ostream &
@@ -2260,6 +2245,23 @@ ircd::net::operator<<(std::ostream &s, const hostport &t)
 	char buf[256];
 	s << string(buf, t);
 	return s;
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const hostport &hp)
+{
+	const auto len
+	{
+		fmt::sprintf
+		{
+			buf, "%s:%s",
+			hp.host,
+			hp.portnum? lex_cast(hp.portnum) : hp.port
+		}
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ///////////////////////////////////////////////////////////////////////////////

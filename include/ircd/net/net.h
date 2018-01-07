@@ -46,6 +46,8 @@ namespace ircd::net
 	extern struct log::log log;
 }
 
+#include "hostport.h"
+#include "ipport.h"
 #include "remote.h"
 #include "resolve.h"
 #include "listener.h"

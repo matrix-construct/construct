@@ -20,55 +20,66 @@
  */
 
 #pragma once
-#define HAVE_IRCD_NET_REMOTE_H
+#define HAVE_IRCD_NET_HOSTPORT_H
 
 namespace ircd::net
 {
-	struct remote;
+	struct hostport;
 
-	string_view string(const mutable_buffer &out, const remote &);
+	const auto &host(const hostport &);
+	auto &host(hostport &);
+
+	string_view string(const mutable_buffer &out, const hostport &);
 }
 
 namespace ircd
 {
-	using net::remote;
+	using net::hostport;
+	using net::host;
 }
 
-/// This structure combines features of hostport and ipport to hold a remote's
-/// resolved IP in bytes, a port number, and an optional hostname string which
-/// may have been used to resolve the IP, or may have been resolved from the
-/// IP, or may be used for certificate Common Name verification, or may just
-/// be empty, but anyway still has some use in most cases being carried along.
+/// This structure holds a hostname and port usually fresh from user input
+/// intended for resolution.
 ///
-struct ircd::net::remote
-:ircd::net::ipport
+/// The host can be specified as a hostname or hostname:port string. If no
+/// port argument is specified and no port is present in the host string
+/// then 8448 is assumed.
+///
+struct ircd::net::hostport
 {
-	std::string hostname;
+	string_view host {"0.0.0.0"};
+	string_view port {"8448"};
+	uint16_t portnum {0};
 
-	explicit operator bool() const;
-	bool operator!() const             { return !static_cast<bool>(*this);     }
-	bool resolved() const;
-
-	explicit remote(const ipport &ipp)
-	:ipport{ipp}
+	hostport(const string_view &host, const string_view &port)
+	:host{host}
+	,port{port}
 	{}
 
-	remote(const hostport &hp);
-	remote() = default;
+	hostport(const string_view &host, const uint16_t &portnum)
+	:host{host}
+	,port{}
+	,portnum{portnum}
+	{}
 
-	friend std::ostream &operator<<(std::ostream &, const remote &);
+	hostport(const string_view &amalgam)
+	:host{rsplit(amalgam, ':').first}
+	,port{rsplit(amalgam, ':').second}
+	{}
+
+	hostport() = default;
+
+	friend std::ostream &operator<<(std::ostream &, const hostport &);
 };
 
-inline bool
-ircd::net::remote::resolved()
-const
+inline auto &
+ircd::net::host(hostport &hp)
 {
-	return bool(static_cast<const ipport &>(*this));
+	return hp.host;
 }
 
-inline ircd::net::remote::operator
-bool()
-const
+inline const auto &
+ircd::net::host(const hostport &hp)
 {
-	return resolved() || !hostname.empty();
+	return hp.host;
 }
