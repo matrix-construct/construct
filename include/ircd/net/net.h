@@ -40,6 +40,7 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, inauthentic)
 
 	struct init;
+	struct socket;
 
 	// SNOMASK 'N' "net"
 	extern struct log::log log;
@@ -48,7 +49,27 @@ namespace ircd::net
 #include "remote.h"
 #include "resolve.h"
 #include "listener.h"
-#include "sockpub.h"
+#include "sockopts.h"
+#include "open.h"
+#include "close.h"
+#include "read.h"
+#include "write.h"
+
+namespace ircd::net
+{
+	bool connected(const socket &) noexcept;
+	size_t readable(const socket &);
+	size_t available(const socket &) noexcept;
+	ipport local_ipport(const socket &) noexcept;
+	ipport remote_ipport(const socket &) noexcept;
+	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
+}
+
+// Exports to ircd::
+namespace ircd
+{
+	using net::socket;
+}
 
 struct ircd::net::init
 {

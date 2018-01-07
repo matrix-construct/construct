@@ -59,153 +59,6 @@ ircd::net::init::~init()
 	resolve::resolver.reset(nullptr);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// net/sockpub.h
-//
-
-bool
-ircd::net::disconnect(socket &socket)
-noexcept
-{
-	return disconnect(socket, dc::SSL_NOTIFY);
-}
-
-bool
-ircd::net::disconnect(socket &socket,
-                      const dc &type)
-noexcept try
-{
-	socket.disconnect(type);
-	return true;
-}
-catch(const std::exception &e)
-{
-/*
-	log::error("socket(%p): disconnect: type: %d: %s",
-	           this,
-	           int(type),
-	           e.what());
-*/
-	return false;
-}
-
-/// Attempt to connect and ssl handshake; future.
-///
-ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
-ircd::net::open(const connopts &opts)
-{
-	ctx::promise<std::shared_ptr<socket>> p;
-	ctx::future<std::shared_ptr<socket>> f(p);
-	auto s{std::make_shared<socket>()};
-	open(*s, opts, [s, p(std::move(p))]
-	(std::exception_ptr eptr)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(s);
-	});
-
-	return f;
-}
-
-/// Attempt to connect and ssl handshake; asynchronous, callback when done.
-///
-void
-ircd::net::open(socket &socket,
-                const connopts &opts,
-                std::function<void (std::exception_ptr)> handler)
-{
-	auto complete{[&socket, &opts, handler(std::move(handler))]
-	(std::exception_ptr eptr)
-	{
-		if(eptr)
-			disconnect(socket, dc::RST);
-
-		handler(std::move(eptr));
-	}};
-
-	auto connector{[&socket, &opts, complete(std::move(complete))]
-	(std::exception_ptr eptr, const ipport &ipport)
-	{
-		if(eptr)
-			return complete(std::move(eptr));
-
-		const auto ep{make_endpoint(ipport)};
-		socket.connect(ep, opts, [&socket, complete(std::move(complete))]
-		(const error_code &ec)
-		{
-			complete(make_eptr(ec));
-		});
-	}};
-
-	if(!opts.ipport)
-		resolve(opts.hostport, std::move(connector));
-	else
-		connector({}, opts.ipport);
-}
-
-void
-ircd::net::flush(socket &socket)
-{
-	if(nodelay(socket))
-		return;
-
-	nodelay(socket, true);
-	nodelay(socket, false);
-}
-
-size_t
-ircd::net::write(socket &socket,
-                 iov<const_buffer> &bufs)
-{
-	const size_t wrote(socket.write_some(bufs));
-	const size_t consumed(consume(bufs, wrote));
-	assert(wrote == consumed);
-	return consumed;
-}
-
-size_t
-ircd::net::write(socket &socket,
-                 const iov<const_buffer> &bufs)
-{
-	const size_t wrote(socket.write(bufs));
-	assert(wrote == size(bufs));
-	return wrote;
-}
-
-size_t
-ircd::net::write(socket &socket,
-                 const ilist<const_buffer> &bufs)
-{
-	const size_t wrote(socket.write(bufs));
-	assert(wrote == size(bufs));
-	return wrote;
-}
-
-size_t
-ircd::net::read(socket &socket,
-                iov<mutable_buffer> &bufs)
-{
-	const size_t read(socket.read_some(bufs));
-	const size_t consumed(buffer::consume(bufs, read));
-	assert(read == consumed);
-	return read;
-}
-
-size_t
-ircd::net::read(socket &socket,
-                const iov<mutable_buffer> &bufs)
-{
-	return socket.read(bufs);
-}
-
-//
-// Active observers
-//
-
 ircd::const_raw_buffer
 ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
                          const socket &socket)
@@ -269,8 +122,239 @@ catch(...)
 	return false;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// Options
+// net/write.h
+//
+
+void
+ircd::net::flush(socket &socket)
+{
+	if(nodelay(socket))
+		return;
+
+	nodelay(socket, true);
+	nodelay(socket, false);
+}
+
+/// Yields ircd::ctx until all buffers are sent.
+///
+/// This is blocking behavior; use this if the following are true:
+///
+/// * You put a timer on the socket so if the remote slows us down the data
+/// will not occupy the daemon's memory for a long time. Remember, *all* of
+/// the data will be sitting in memory even after some of it was ack'ed by
+/// the remote.
+///
+/// * You are willing to dedicate the ircd::ctx to sending all the data to
+/// the remote. The ircd::ctx will be yielding until everything is sent.
+///
+size_t
+ircd::net::write_all(socket &socket,
+                     const vector_view<const const_buffer> &buffers)
+{
+	return socket.write_all(buffers);
+}
+
+/// Writes as much as possible until one of the following is true:
+///
+/// * The kernel buffer for the socket is full.
+/// * The user buffer is exhausted.
+///
+/// This is non-blocking behavior. No yielding will take place; no timer is
+/// needed. Multiple syscalls will be composed to fulfill the above points.
+///
+size_t
+ircd::net::write_any(socket &socket,
+                     const vector_view<const const_buffer> &buffers)
+{
+	return socket.write_any(buffers);
+}
+
+/// Writes one "unit" of data or less; never more. The size of that unit
+/// is determined by the system. Less may be written if one of the following
+/// is true:
+///
+/// * The kernel buffer for the socket is full.
+/// * The user buffer is exhausted.
+///
+/// If neither are true, more can be written using additional calls;
+/// alternatively, use other variants of write_ for that.
+///
+/// This is non-blocking behavior. No yielding will take place; no timer is
+/// needed. Only one syscall will occur.
+///
+size_t
+ircd::net::write_one(socket &socket,
+                     const vector_view<const const_buffer> &buffers)
+{
+	return socket.write_one(buffers);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/read.h
+//
+
+/// Yields ircd::ctx until buffers are full.
+///
+/// Use this only if the following are true:
+///
+/// * You know the remote has made a guarantee to send you a specific amount
+/// of data.
+///
+/// * You put a timer on the socket so that if the remote runs short this
+/// call doesn't hang the ircd::ctx forever, otherwise it will until cancel.
+///
+/// * You are willing to dedicate the ircd::ctx to just this operation for
+/// that amount of time.
+///
+size_t
+ircd::net::read_all(socket &socket,
+                    const vector_view<const mutable_buffer> &buffers)
+{
+	return socket.read_all(buffers);
+}
+
+/// Yields ircd::ctx until remote has sent at least one frame. The buffers may
+/// be filled with any amount of data depending on what has accumulated.
+///
+/// Use this if the following are true:
+///
+/// * You know there is data to be read; you can do this asynchronously with
+/// other features of the socket. Otherwise this will hang the ircd::ctx.
+///
+/// * You are willing to dedicate the ircd::ctx to just this operation,
+/// which is non-blocking if data is known to be available, but may be
+/// blocking if this call is made in the blind.
+///
+size_t
+ircd::net::read_any(socket &socket,
+                    const vector_view<const mutable_buffer> &buffers)
+{
+	return socket.read_any(buffers);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/close.h
+//
+
+/// Static instance of default close options.
+ircd::net::close_opts
+const ircd::net::close_opts_default
+{
+};
+
+/// Static helper callback which may be passed to the callback-based overload
+/// of close(). This callback does nothing.
+ircd::net::close_callback
+const ircd::net::close_ignore{[]
+(std::exception_ptr eptr)
+{
+	return;
+}};
+
+ircd::ctx::future<void>
+ircd::net::close(socket &socket,
+                 const close_opts &opts)
+{
+	ctx::promise<void> p;
+	ctx::future<void> f(p);
+	close(socket, opts, [p(std::move(p))]
+	(std::exception_ptr eptr)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value();
+	});
+
+	return f;
+}
+
+void
+ircd::net::close(socket &socket,
+                 const close_opts &opts,
+                 close_callback callback)
+{
+	socket.disconnect(opts, std::move(callback));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/open.h
+//
+
+/// Open new socket with future-based report.
+///
+ircd::ctx::future<std::shared_ptr<ircd::net::socket>>
+ircd::net::open(const open_opts &opts)
+{
+	ctx::promise<std::shared_ptr<socket>> p;
+	ctx::future<std::shared_ptr<socket>> f(p);
+	auto s{std::make_shared<socket>()};
+	open(*s, opts, [s, p(std::move(p))]
+	(std::exception_ptr eptr)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(s);
+	});
+
+	return f;
+}
+
+/// Open existing socket with callback-based report.
+///
+std::shared_ptr<ircd::net::socket>
+ircd::net::open(const open_opts &opts,
+                open_callback handler)
+{
+	auto s{std::make_shared<socket>()};
+	open(*s, opts, std::move(handler));
+	return s;
+}
+
+/// Open existing socket with callback-based report.
+///
+void
+ircd::net::open(socket &socket,
+                const open_opts &opts,
+                open_callback handler)
+{
+	auto complete{[s(shared_from(socket)), &opts, handler(std::move(handler))]
+	(std::exception_ptr eptr)
+	{
+		if(eptr)
+			close(*s, dc::RST);
+
+		handler(std::move(eptr));
+	}};
+
+	auto connector{[&socket, &opts, complete(std::move(complete))]
+	(std::exception_ptr eptr, const ipport &ipport)
+	{
+		if(eptr)
+			return complete(std::move(eptr));
+
+		const auto ep{make_endpoint(ipport)};
+		socket.connect(ep, opts, std::move(complete));
+	}};
+
+	if(!opts.ipport)
+		resolve(opts.hostport, std::move(connector));
+	else
+		connector({}, opts.ipport);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/sopts.h
 //
 
 /// Construct sockopts with the current options from socket argument
@@ -407,6 +491,30 @@ ircd::net::nodelay(socket &socket,
 	sd.set_option(option);
 }
 
+/// Toggles the behavior of non-async asio calls.
+///
+/// This option affects very little in practice and only sets a flag in
+/// userspace in asio, not an actual ioctl(). Specifically:
+///
+/// * All sockets are already set by asio to FIONBIO=1 no matter what, thus
+/// nothing really blocks the event loop ever by default unless you try hard.
+///
+/// * All asio::async_ and sd.async_ and ssl.async_ calls will always do what
+/// the synchronous/blocking alternative would have accomplished but using
+/// the async methodology. i.e if a buffer is full you will always wait
+/// asynchronously: async_write() will wait for everything, async_write_some()
+/// will wait for something, etc -- but there will never be true non-blocking
+/// _effective behavior_ from these calls.
+///
+/// * All asio non-async calls conduct blocking by (on linux) poll()'ing the
+/// socket to get a real kernel-blocking operation out of it (this is the
+/// try-hard part).
+///
+/// This flag only controls the behavior of the last bullet. In practice,
+/// in this project there is never a reason to ever set this to true,
+/// however, sockets do get constructed by asio in blocking mode by default
+/// so we mostly use this function to set it to non-blocking.
+///
 void
 ircd::net::blocking(socket &socket,
                     const bool &b)
@@ -511,11 +619,11 @@ struct ircd::net::listener::acceptor
 	void configure(const json::object &opts);
 
 	// Handshake stack
-	bool handshake_error(const error_code &ec, socket &);
+	void check_handshake_error(const error_code &ec, socket &);
 	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
 	// Acceptance stack
-	bool accept_error(const error_code &ec, socket &);
+	void check_accept_error(const error_code &ec, socket &);
 	void accept(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
 	// Accept next
@@ -716,20 +824,18 @@ noexcept try
 	const unwind::exceptional drop{[&sock]
 	{
 		assert(bool(sock));
-		disconnect(*sock, dc::RST);
+		close(*sock, dc::RST, close_ignore);
 	}};
 
 	assert(bool(sock));
-	if(unlikely(accept_error(ec, *sock)))
-	{
-		disconnect(*sock, dc::RST);
-		return;
-	}
-
+	check_accept_error(ec, *sock);
 	log.debug("%s: socket(%p) accepted %s",
 	          std::string(*this),
 	          sock.get(),
 	          string(sock->remote()));
+
+	// Toggles the behavior of non-async functions; see func comment
+	blocking(*sock, false);
 
 	static const socket::handshake_type handshake_type
 	{
@@ -766,9 +872,9 @@ catch(const std::exception &e)
 /// whether or not the handler should return or continue processing the
 /// result.
 ///
-bool
-ircd::net::listener::acceptor::accept_error(const error_code &ec,
-                                            socket &sock)
+void
+ircd::net::listener::acceptor::check_accept_error(const error_code &ec,
+                                                  socket &sock)
 {
 	using namespace boost::system::errc;
 	using boost::system::system_category;
@@ -777,12 +883,12 @@ ircd::net::listener::acceptor::accept_error(const error_code &ec,
 		throw ctx::interrupted();
 
 	if(likely(ec == success))
-		return false;
+		return;
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case operation_canceled:
-			return false;
+			return;
 
 		default:
 			break;
@@ -801,18 +907,14 @@ noexcept try
 		return;
 
 	--handshaking;
-	assert(bool(sock));
 	const unwind::exceptional drop{[&sock]
 	{
-		disconnect(*sock, dc::RST);
+		if(bool(sock))
+			close(*sock, dc::RST, close_ignore);
 	}};
 
-	if(unlikely(handshake_error(ec, *sock)))
-	{
-		disconnect(*sock, dc::RST);
-		return;
-	}
-
+	assert(bool(sock));
+	check_handshake_error(ec, *sock);
 	log.debug("%s socket(%p): SSL handshook %s",
 	          std::string(*this),
 	          sock.get(),
@@ -842,9 +944,9 @@ catch(const std::exception &e)
 /// whether or not the handler should return or continue processing the
 /// result.
 ///
-bool
-ircd::net::listener::acceptor::handshake_error(const error_code &ec,
-                                               socket &sock)
+void
+ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
+                                                     socket &sock)
 {
 	using boost::system::system_category;
 	using namespace boost::system::errc;
@@ -853,12 +955,12 @@ ircd::net::listener::acceptor::handshake_error(const error_code &ec,
 		throw ctx::interrupted();
 
 	if(likely(ec == success))
-		return false;
+		return;
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case operation_canceled:
-			return false;
+			return;
 
 		default:
 			break;
@@ -1032,8 +1134,8 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::connect(const endpoint &ep,
-                           const connopts &opts,
-                           handler callback)
+                           const open_opts &opts,
+                           eptr_handler callback)
 {
 	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
 	          this,
@@ -1050,8 +1152,8 @@ ircd::net::socket::connect(const endpoint &ep,
 }
 
 void
-ircd::net::socket::handshake(const connopts &opts,
-                             handler callback)
+ircd::net::socket::handshake(const open_opts &opts,
+                             eptr_handler callback)
 {
 	log.debug("socket(%p) performing handshake with %s for '%s' for the next %ld$ms",
 	          this,
@@ -1074,101 +1176,72 @@ ircd::net::socket::handshake(const connopts &opts,
 	set_timeout(opts.handshake_timeout);
 }
 
-bool
-ircd::net::socket::disconnect(const dc &type)
+void
+ircd::net::socket::disconnect(const close_opts &opts,
+                              eptr_handler callback)
 try
 {
-	if(timer.expires_from_now() > 0ms)
-		timer.cancel();
-
-	if(sd.is_open())
-		log.debug("socket(%p): disconnect: %s type:%d user: in:%zu out:%zu",
-		          (const void *)this,
-		          ircd::string(remote_ipport(*this)),
-		          uint(type),
-		          in.bytes,
-		          out.bytes);
-
-	if(sd.is_open()) switch(type)
+	if(!sd.is_open())
 	{
-		default:
+		call_user(callback, {});
+		return;
+	}
+
+	const bool cancelation{cancel()};
+	log.debug("socket(%p): disconnect: %s type:%d user: in:%zu out:%zu cancel:%d",
+	          (const void *)this,
+	          ircd::string(remote_ipport(*this)),
+	          uint(opts.type),
+	          in.bytes,
+	          out.bytes,
+	          cancelation);
+
+	if(opts.sopts)
+		set(*this, *opts.sopts);
+
+	switch(opts.type)
+	{
 		case dc::RST:
 			sd.close();
-			return true;
+			break;
 
 		case dc::FIN:
 			sd.shutdown(ip::tcp::socket::shutdown_both);
-			return true;
+			break;
 
 		case dc::FIN_SEND:
 			sd.shutdown(ip::tcp::socket::shutdown_send);
-			return true;
+			break;
 
 		case dc::FIN_RECV:
 			sd.shutdown(ip::tcp::socket::shutdown_receive);
-			return true;
-
-		case dc::SSL_NOTIFY_YIELD: if(likely(ctx::current))
-		{
-			const life_guard<socket> lg{*this};
-			const scope_timeout ts{*this, 8s};
-			ssl.async_shutdown(yield_context{to_asio{}});
-			error_code ec;
-			sd.close(ec);
-			if(ec)
-				log.error("socket(%p): close: %s: %s",
-				          this,
-				          string(ec));
-			return true;
-		}
+			break;
 
 		case dc::SSL_NOTIFY:
 		{
-			ssl.async_shutdown([s(shared_from_this())]
-			(error_code ec)
-			noexcept
+			auto disconnect_handler
 			{
-				if(!s->timedout)
-					s->cancel_timeout();
+				std::bind(&socket::handle_disconnect, this, shared_from(*this), std::move(callback), ph::_1)
+			};
 
-				if(ec)
-					log.warning("socket(%p): SSL_NOTIFY: %s: %s",
-					            s.get(),
-					            string(ec));
-
-				if(!s->sd.is_open())
-					return;
-
-				s->sd.close(ec);
-
-				if(ec)
-					log.warning("socket(%p): after SSL_NOTIFY: %s: %s",
-					            s.get(),
-					            string(ec));
-			});
-			set_timeout(8s);
-			return true;
+			ssl.async_shutdown(std::move(disconnect_handler));
+			set_timeout(opts.timeout);
+			return;
 		}
 	}
-	else return false;
+
+	call_user(callback, {});
 }
 catch(const boost::system::system_error &e)
 {
-	log.warning("socket(%p): disconnect: type: %d: %s",
-	            (const void *)this,
-	            uint(type),
-	            e.what());
-
-	if(sd.is_open())
-	{
-		boost::system::error_code ec;
-		sd.close(ec);
-		if(ec)
-			log.warning("socket(%p): after disconnect: %s: %s",
-			            this,
-			            string(ec));
-	}
-
+	call_user(callback, e.code());
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): disconnect: type: %d: %s",
+	             (const void *)this,
+	             uint(opts.type),
+	             e.what());
 	throw;
 }
 
@@ -1193,7 +1266,7 @@ noexcept
 ///
 void
 ircd::net::socket::operator()(const wait_type &type,
-                              handler h)
+                              ec_handler h)
 {
 	operator()(type, milliseconds(-1), std::move(h));
 }
@@ -1206,7 +1279,7 @@ ircd::net::socket::operator()(const wait_type &type,
 void
 ircd::net::socket::operator()(const wait_type &type,
                               const milliseconds &timeout,
-                              handler callback)
+                              ec_handler callback)
 {
 	auto handle
 	{
@@ -1242,7 +1315,7 @@ ircd::net::socket::operator()(const wait_type &type,
 
 void
 ircd::net::socket::handle(const std::weak_ptr<socket> wp,
-                          const handler callback,
+                          const ec_handler callback,
                           const error_code &ec)
 noexcept try
 {
@@ -1279,6 +1352,15 @@ noexcept try
 
 	call_user(callback, ec);
 }
+catch(const boost::system::system_error &e)
+{
+	log.error("socket(%p): handle: %s",
+	          this,
+	          e.what());
+
+	assert(0);
+	call_user(callback, e.code());
+}
 catch(const std::bad_weak_ptr &e)
 {
 	// This handler may still be registered with asio after the socket destructs, so
@@ -1287,14 +1369,18 @@ catch(const std::bad_weak_ptr &e)
 	log.warning("socket(%p): belated callback to handler... (%s)",
 	            this,
 	            e.what());
+
 	assert(0);
+	call_user(callback, ec);
 }
 catch(const std::exception &e)
 {
 	log.critical("socket(%p): handle: %s",
 	             this,
 	             e.what());
+
 	assert(0);
+	call_user(callback, ec);
 }
 
 void
@@ -1345,8 +1431,8 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
-                                  const connopts &opts,
-                                  handler callback,
+                                  const open_opts &opts,
+                                  eptr_handler callback,
                                   const error_code &ec)
 noexcept try
 {
@@ -1366,16 +1452,13 @@ noexcept try
 	if(ec)
 		return call_user(callback, ec);
 
-	// Try to set the user's socket options now; if something fails
-	// we can invoke their callback with the error.
-	if(opts.sopts) try
-	{
+	// Toggles the behavior of non-async functions; see func comment
+	blocking(*this, false);
+
+	// Try to set the user's socket options now; if something fails we can
+	// invoke their callback with the error from the exception handler.
+	if(opts.sopts)
 		set(*this, *opts.sopts);
-	}
-	catch(const boost::system::system_error &e)
-	{
-		return call_user(callback, e.code());
-	}
 
 	// The user can opt out of performing the handshake here.
 	if(!opts.handshake)
@@ -1388,20 +1471,74 @@ catch(const std::bad_weak_ptr &e)
 	log.warning("socket(%p): belated callback to handle_connect... (%s)",
 	            this,
 	            e.what());
+
 	assert(0);
+	call_user(callback, ec);
+}
+catch(const boost::system::system_error &e)
+{
+	log.error("socket(%p): after connect: %s",
+	          this,
+	          e.what());
+
+	assert(0);
+	call_user(callback, e.code());
 }
 catch(const std::exception &e)
 {
 	log.critical("socket(%p): handle_connect: %s",
 	             this,
 	             e.what());
+
 	assert(0);
+	call_user(callback, ec);
+}
+
+void
+ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
+                                     eptr_handler callback,
+                                     const error_code &ec)
+noexcept try
+{
+	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	log.debug("socket(%p) disconnect from local: %s to remote: %s: %s",
+	          this,
+	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
+	          string(ec));
+
+	// The timer was set by socket::disconnect() and may need to be canceled.
+	if(!timedout)
+		cancel_timeout();
+
+	if(unlikely(sd.is_open()))
+		sd.close();
+
+	call_user(callback, ec);
+}
+catch(const boost::system::system_error &e)
+{
+	log.error("socket(%p): disconnect: %s",
+	          this,
+	          e.what());
+
+	assert(0);
+	call_user(callback, e.code());
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): disconnect: %s",
+	             this,
+	             e.what());
+
+	assert(0);
+	call_user(callback, ec);
 }
 
 void
 ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
-                                    const connopts &opts,
-                                    handler callback,
+                                    const open_opts &opts,
+                                    eptr_handler callback,
                                     const error_code &ec)
 noexcept try
 {
@@ -1421,12 +1558,22 @@ noexcept try
 	// back with or without error here.
 	call_user(callback, ec);
 }
+catch(const boost::system::system_error &e)
+{
+	log.error("socket(%p): after handshake: %s",
+	          this,
+	          e.what());
+
+	assert(0);
+	call_user(callback, e.code());
+}
 catch(const std::bad_weak_ptr &e)
 {
 	log.warning("socket(%p): belated callback to handle_handshake... (%s)",
 	            this,
 	            e.what());
 	assert(0);
+	call_user(callback, ec);
 }
 catch(const std::exception &e)
 {
@@ -1434,12 +1581,13 @@ catch(const std::exception &e)
 	             this,
 	             e.what());
 	assert(0);
+	call_user(callback, ec);
 }
 
 bool
 ircd::net::socket::handle_verify(const bool valid,
                                  asio::ssl::verify_context &vc,
-                                 const connopts &opts)
+                                 const open_opts &opts)
 noexcept try
 {
 	// `valid` indicates whether or not there's an anomaly with the
@@ -1546,11 +1694,25 @@ catch(const std::exception &e)
 }
 
 void
-ircd::net::socket::call_user(const handler &callback,
+ircd::net::socket::call_user(const ec_handler &callback,
                              const error_code &ec)
 noexcept try
 {
 	callback(ec);
+}
+catch(const std::exception &e)
+{
+	log.critical("socket(%p): async handler: unhandled exception: %s",
+	             this,
+	             e.what());
+}
+
+void
+ircd::net::socket::call_user(const eptr_handler &callback,
+                             const error_code &ec)
+noexcept try
+{
+	callback(make_eptr(ec));
 }
 catch(const std::exception &e)
 {
@@ -1602,7 +1764,7 @@ ircd::net::socket::set_timeout(const milliseconds &t)
 
 void
 ircd::net::socket::set_timeout(const milliseconds &t,
-                               handler h)
+                               ec_handler h)
 {
 	cancel_timeout();
 	if(t < milliseconds(0))
@@ -1637,36 +1799,6 @@ const
 }
 
 //
-// socket::io
-//
-
-ircd::net::socket::io::io(struct socket &sock,
-                          struct stat &stat,
-                          const std::function<size_t ()> &closure)
-:io
-{
-	sock, stat, closure()
-}
-{}
-
-ircd::net::socket::io::io(struct socket &sock,
-                          struct stat &stat,
-                          const size_t &bytes)
-:sock{sock}
-,stat{stat}
-,bytes{bytes}
-{
-	stat.bytes += bytes;
-	stat.calls++;
-}
-
-ircd::net::socket::io::operator size_t()
-const
-{
-	return bytes;
-}
-
-//
 // socket::scope_timeout
 //
 
@@ -1679,7 +1811,7 @@ ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
 
 ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
                                                 const milliseconds &timeout,
-                                                socket::handler handler)
+                                                socket::ec_handler handler)
 :s{&socket}
 {
 	socket.set_timeout(timeout, std::move(handler));
@@ -1734,17 +1866,6 @@ ircd::net::socket::scope_timeout::release()
 	const auto s{this->s};
 	this->s = nullptr;
 	return s != nullptr;
-}
-
-//
-// socket::xfer
-//
-
-ircd::net::socket::xfer::xfer(const error_code &error_code,
-                              const size_t &bytes)
-:eptr{make_eptr(error_code)}
-,bytes{bytes}
-{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
