@@ -11,13 +11,13 @@ underpinned the major IRC networks for decades.
 
 Due to its age and stagnation since the mid-2000's, a growing number of proprietary cloud services
 are now filling the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
-real-time communication for [free & open source software](https://en.wikipedia.org/wiki/Free_and_open-source_software):
-a **federation of networks** known as *the matrix*.
+real-time communication for free & open source software: a *federation of networks* known as
+*the matrix*.
 
-**IRCd has been rewritten to implement the [Matrix Protocol](https://matrix.org/docs/spec/)**.
+**IRCd has been rewritten to implement the [Matrix Federation](https://matrix.org/docs/spec/)**.
 
 This is the opportunity to take back control of your communication and relegate the
-opaque cloud services to being just another provider to the federation of networks.
+opaque cloud services to being just another provider to the federation.
 Though not syntactically backwards-compatible with the legacy IRC protocol, it is easily
 translated as a superset. Similar to the legacy IRC protocol's origins, it wisely leverages
 technologies in vogue for its day to aid the virility of implementations. A vibrant and
