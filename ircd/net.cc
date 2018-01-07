@@ -357,8 +357,8 @@ ircd::net::open(socket &socket,
 // net/sopts.h
 //
 
-/// Construct sockopts with the current options from socket argument
-ircd::net::sockopts::sockopts(const socket &socket)
+/// Construct sock_opts with the current options from socket argument
+ircd::net::sock_opts::sock_opts(const socket &socket)
 :blocking{net::blocking(socket)}
 ,nodelay{net::nodelay(socket)}
 ,keepalive{net::keepalive(socket)}
@@ -374,7 +374,7 @@ ircd::net::sockopts::sockopts(const socket &socket)
 /// ignored for updating.
 void
 ircd::net::set(socket &socket,
-               const sockopts &opts)
+               const sock_opts &opts)
 {
 	if(opts.blocking != opts.IGN)
 		net::blocking(socket, opts.blocking);

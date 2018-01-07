@@ -49,7 +49,7 @@ namespace ircd::net
 #include "remote.h"
 #include "resolve.h"
 #include "listener.h"
-#include "sockopts.h"
+#include "sock_opts.h"
 #include "open.h"
 #include "close.h"
 #include "read.h"

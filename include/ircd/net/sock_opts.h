@@ -20,11 +20,11 @@
  */
 
 #pragma once
-#define HAVE_IRCD_NET_SOCKOPTS_H
+#define HAVE_IRCD_NET_SOCK_OPTS_H
 
 namespace ircd::net
 {
-	struct sockopts;
+	struct sock_opts;
 
 	bool blocking(const socket &);
 	bool nodelay(const socket &);
@@ -44,14 +44,14 @@ namespace ircd::net
 	void read_lowat(socket &, const size_t &bytes);
 	void write_lowat(socket &, const size_t &bytes);
 
-	void set(socket &, const sockopts &);
+	void set(socket &, const sock_opts &);
 }
 
 /// Socket options convenience aggregate. This structure allows observation
 /// or manipulation of socket options all together. Pass an active socket to
-/// the constructor to observe all options. Use net::set(socket, sockopts) to
+/// the constructor to observe all options. Use net::set(socket, sock_opts) to
 /// set all non-ignored options.
-struct ircd::net::sockopts
+struct ircd::net::sock_opts
 {
 	/// Magic value to not set this option on a set() pass.
 	static constexpr int8_t IGN { std::numeric_limits<int8_t>::min() };
@@ -65,6 +65,6 @@ struct ircd::net::sockopts
 	ssize_t read_lowat { IGN };
 	ssize_t write_lowat { IGN };
 
-	sockopts(const socket &);          // Get options from socket
-	sockopts() = default;
+	sock_opts(const socket &);          // Get options from socket
+	sock_opts() = default;
 };

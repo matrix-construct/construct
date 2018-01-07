@@ -64,7 +64,7 @@ struct ircd::net::close_opts
 
 	/// If specified, these socket options will be applied when conducting
 	/// the disconnect (useful for adding an SO_LINGER time etc).
-	const sockopts *sopts { nullptr };
+	const sock_opts *sopts { nullptr };
 };
 
 /// Allows for implicit construction of close_opts in arguments to close()

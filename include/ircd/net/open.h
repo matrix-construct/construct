@@ -61,9 +61,9 @@ struct ircd::net::open_opts
 	/// The duration allowed for the TCP connection.
 	milliseconds connect_timeout { 8000ms };
 
-	/// Pointer to a sockopts structure which will be applied to this socket
+	/// Pointer to a sock_opts structure which will be applied to this socket
 	/// if given. Defaults to null; no application is made.
-	const sockopts *sopts { nullptr };
+	const sock_opts *sopts { nullptr };
 
 	/// Option to toggle whether to perform the SSL handshake; you want true.
 	bool handshake { true };
