@@ -67,8 +67,8 @@ struct ircd::net::socket
 	void call_user(const ec_handler &, const error_code &) noexcept;
 	bool handle_verify(bool, asio::ssl::verify_context &, const open_opts &) noexcept;
 	void handle_disconnect(std::shared_ptr<socket>, eptr_handler, const error_code &) noexcept;
-	void handle_handshake(std::weak_ptr<socket>, const open_opts &, eptr_handler, const error_code &) noexcept;
-	void handle_connect(std::weak_ptr<socket>, const open_opts &, eptr_handler, const error_code &) noexcept;
+	void handle_handshake(std::weak_ptr<socket>, eptr_handler, const error_code &) noexcept;
+	void handle_connect(std::weak_ptr<socket>, const open_opts, eptr_handler, const error_code &) noexcept;
 	void handle_timeout(std::weak_ptr<socket>, const error_code &) noexcept;
 	void handle(std::weak_ptr<socket>, ec_handler, const error_code &) noexcept;
 

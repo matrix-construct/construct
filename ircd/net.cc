@@ -327,7 +327,7 @@ ircd::net::open(socket &socket,
                 const open_opts &opts,
                 open_callback handler)
 {
-	auto complete{[s(shared_from(socket)), &opts, handler(std::move(handler))]
+	auto complete{[s(shared_from(socket)), handler(std::move(handler))]
 	(std::exception_ptr eptr)
 	{
 		if(eptr)
@@ -336,7 +336,7 @@ ircd::net::open(socket &socket,
 		handler(std::move(eptr));
 	}};
 
-	auto connector{[&socket, &opts, complete(std::move(complete))]
+	auto connector{[&socket, opts, complete(std::move(complete))]
 	(std::exception_ptr eptr, const ipport &ipport)
 	{
 		if(eptr)
@@ -1144,7 +1144,7 @@ ircd::net::socket::connect(const endpoint &ep,
 
 	auto connect_handler
 	{
-		std::bind(&socket::handle_connect, this, weak_from(*this), std::cref(opts), std::move(callback), ph::_1)
+		std::bind(&socket::handle_connect, this, weak_from(*this), opts, std::move(callback), ph::_1)
 	};
 
 	sd.async_connect(ep, std::move(connect_handler));
@@ -1163,12 +1163,12 @@ ircd::net::socket::handshake(const open_opts &opts,
 
 	auto handshake_handler
 	{
-		std::bind(&socket::handle_handshake, this, weak_from(*this), std::cref(opts), std::move(callback), ph::_1)
+		std::bind(&socket::handle_handshake, this, weak_from(*this), std::move(callback), ph::_1)
 	};
 
 	auto verify_handler
 	{
-		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, std::cref(opts))
+		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, opts)
 	};
 
 	ssl.set_verify_callback(std::move(verify_handler));
@@ -1431,7 +1431,7 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
-                                  const open_opts &opts,
+                                  const open_opts opts,
                                   eptr_handler callback,
                                   const error_code &ec)
 noexcept try
@@ -1537,7 +1537,6 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
-                                    const open_opts &opts,
                                     eptr_handler callback,
                                     const error_code &ec)
 noexcept try
