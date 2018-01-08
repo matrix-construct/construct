@@ -23,25 +23,30 @@ using namespace ircd;
 
 resource versions_resource
 {
-	"/_matrix/client/versions",
+	"/_matrix/client/versions", resource::opts
 	{
 		"Gets the versions of the specification supported by the server (2.1)"
 	}
 };
 
+resource::response
+get_versions(client &client,
+             resource::request &request)
+{
+	static const json::object object
+	{
+		R"({"versions":["r2.0.0"]})"
+	};
+
+	return resource::response
+	{
+		client, object
+	};
+}
+
 resource::method getter
 {
-	versions_resource, "GET", []
-	(client &client, resource::request &request)
-	-> resource::response
-	{
-		static const json::object object
-		{
-			R"({"versions":["r2.0.0"]})"
-		};
-
-		return resource::response { client, object };
-	}
+	versions_resource, "GET", get_versions
 };
 
 mapi::header IRCD_MODULE
