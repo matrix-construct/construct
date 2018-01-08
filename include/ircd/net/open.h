@@ -48,9 +48,9 @@ struct ircd::net::open_opts
 	friend string_view common_name(const open_opts &);
 
 	open_opts() = default;
-	open_opts(const net::ipport &ipport);
+	explicit open_opts(const net::ipport &ipport);
 	open_opts(const net::hostport &hostport);
-	explicit open_opts(const net::remote &remote);
+	open_opts(const net::remote &remote);
 
 	/// Remote's hostname and port. This will be used for address resolution
 	/// if an ipport is not also provided later. The hostname will also be used
