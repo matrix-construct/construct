@@ -1158,7 +1158,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 	log.debug("socket(%p) performing handshake with %s for '%s' for the next %ld$ms",
 	          this,
 	          string(remote()),
-	          opts.common_name,
+	          common_name(opts),
 	          opts.handshake_timeout.count());
 
 	auto handshake_handler
@@ -1608,17 +1608,12 @@ noexcept try
 	assert(vc.native_handle());
 	const auto &stctx{*vc.native_handle()};
 	const auto &cert{openssl::current_cert(stctx)};
-	const auto required_common_name
-	{
-		opts.common_name? opts.common_name : opts.hostport.host
-	};
-
-	const auto reject{[&stctx, &required_common_name]
+	const auto reject{[&stctx, &opts]
 	{
 		throw inauthentic
 		{
 			"%s #%ld: %s",
-			required_common_name,
+			common_name(opts),
 			openssl::get_error(stctx),
 			openssl::get_error_string(stctx)
 		};
@@ -1628,7 +1623,7 @@ noexcept try
 	{
 		char buf[256];
 		log.warning("verify: %s /CN=%s :%s",
-		            required_common_name,
+		            common_name(opts),
 		            openssl::subject_common_name(buf, cert),
 		            openssl::get_error_string(stctx));
 	}
@@ -1660,10 +1655,16 @@ noexcept try
 
 	if(opts.verify_common_name)
 	{
+		if(unlikely(empty(common_name(opts))))
+			throw inauthentic
+			{
+				"No common name specified in connection options"
+			};
+
 		//TODO: this object makes an std::string
 		boost::asio::ssl::rfc2818_verification verifier
 		{
-			std::string(required_common_name)
+			std::string(common_name(opts))
 		};
 
 		if(!verifier(true, vc))
@@ -1673,7 +1674,7 @@ noexcept try
 			{
 				"/CN=%s does not match target host %s :%s",
 				openssl::subject_common_name(buf, cert),
-				required_common_name,
+				common_name(opts),
 				openssl::get_error_string(stctx)
 			};
 		}

@@ -44,6 +44,9 @@ namespace ircd::net
 /// with it.
 struct ircd::net::open_opts
 {
+	// Get the proper target CN from the options structure
+	friend string_view common_name(const open_opts &);
+
 	open_opts() = default;
 	open_opts(const net::ipport &ipport);
 	open_opts(const net::hostport &hostport);
@@ -115,3 +118,9 @@ ircd::net::open_opts::open_opts(const net::remote &remote)
 :hostport{remote.hostname}
 ,ipport{remote}
 {}
+
+inline ircd::string_view
+ircd::net::common_name(const open_opts &opts)
+{
+	return opts.common_name?: opts.hostport.host;
+}
