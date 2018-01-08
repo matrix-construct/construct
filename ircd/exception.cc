@@ -48,6 +48,44 @@ noexcept
 }
 
 void
+ircd::assertion()
+noexcept(RB_DEBUG)
+{
+	if(std::uncaught_exceptions())
+	{
+		assertion(std::current_exception());
+	} else {
+		log::critical("IRCd Assertion without active exception.");
+		assert(0);
+		throw assertive{};
+	}
+}
+
+void
+ircd::assertion(std::exception_ptr eptr)
+noexcept(RB_DEBUG) try
+{
+	std::rethrow_exception(eptr);
+}
+catch(const std::exception &e)
+{
+	assertion(e);
+}
+
+void
+ircd::assertion(const std::exception &e)
+noexcept(RB_DEBUG)
+{
+	log::critical("IRCd Assertion %s", e.what());
+
+	#ifdef RB_DEBUG
+		terminate(e);
+	#else
+		throw e;
+	#endif
+}
+
+void
 ircd::terminate()
 noexcept
 {
@@ -76,7 +114,7 @@ ircd::terminate(const std::exception &e)
 noexcept
 {
 	log::critical("IRCd Terminated: %s", e.what());
-	std::terminate();
+	throw e;
 }
 
 [[noreturn]] static void

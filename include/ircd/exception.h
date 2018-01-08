@@ -28,12 +28,18 @@
 
 namespace ircd
 {
+	// Root exception
 	struct exception;
 
 	// Prefer ircd::terminate() to std::terminate() if possible.
 	[[noreturn]] void terminate(const std::exception &) noexcept;
 	[[noreturn]] void terminate(std::exception_ptr) noexcept;
 	[[noreturn]] void terminate() noexcept;
+
+	// Terminates in debug mode; throws in release mode; always logs critical.
+	[[noreturn]] void assertion(const std::exception &) noexcept(RB_DEBUG);
+	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG);
+	[[noreturn]] void assertion() noexcept(RB_DEBUG);
 
 	// Can be used to clobber the std::terminate_handler
 	void aborting() noexcept;
@@ -147,6 +153,31 @@ struct name                                                                   \
     }                                                                         \
 };
 
+/// Creates an assertion-type exception.
+///
+/// Throwable exception which will terminate on construction in debug mode
+/// but throw normally in release mode. Ideally this should never be thrown
+/// in release mode because the termination in debug means a test can never
+/// pass and the triggering callsite should be eliminated. Nevertheless it
+/// throws normally in release mode.
+#define IRCD_ASSERTION(parent, name)                                          \
+struct name                                                                   \
+:parent                                                                       \
+{                                                                             \
+    template<class... args>                                                   \
+    name(const char *const &fmt = " ", args&&... ap) noexcept(RB_DEBUG)       \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
+        ircd::assertion(*this);                                               \
+    }                                                                         \
+                                                                              \
+    name(generate_skip_t) noexcept(RB_DEBUG)                                  \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+    }                                                                         \
+};                                                                            \
+
 namespace ircd
 {
 	/// Root error exception type. Inherit from this.
@@ -155,6 +186,10 @@ namespace ircd
 	///
 	/// IRCD_EXCEPTION(ircd::error, error)
 	///
-	IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
+	IRCD_EXCEPTION(exception, error)             // throw ircd::error("something bad")
 	IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
+
+	// Assertion errors; see IRCD_ASSERTION docs.
+	IRCD_ASSERTION(exception, assertive)
+	IRCD_ASSERTION(assertive, not_implemented)
 }
