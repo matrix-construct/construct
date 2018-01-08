@@ -2218,10 +2218,29 @@ ircd::net::make_endpoint(const ipport &ipport)
 // ipport
 //
 
+ircd::net::ipport::ipport(const string_view &ip,
+                          const string_view &port)
+:ipport
+{
+	ip, lex_cast<uint16_t>(port)
+}
+{
+}
+
+ircd::net::ipport::ipport(const string_view &ip,
+                          const uint16_t &port)
+:ipport
+{
+	asio::ip::make_address(ip), port
+}
+{
+}
+
 ircd::net::ipport::ipport(const boost::asio::ip::address &address,
                           const uint16_t &port)
 {
 	std::get<TYPE>(*this) = address.is_v6();
+	std::get<PORT>(*this) = port;
 
 	if(is_v6(*this))
 	{
@@ -2229,8 +2248,6 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 		std::reverse(std::get<IP>(*this).begin(), std::get<IP>(*this).end());
 	}
 	else host4(*this) = address.to_v4().to_ulong();
-
-	net::port(*this) = port;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
