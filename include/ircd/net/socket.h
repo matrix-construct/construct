@@ -88,13 +88,14 @@ struct ircd::net::socket
 	milliseconds cancel_timeout() noexcept;
 
 	// low level write suite
-	template<class iov> size_t write_one(iov&&);
-	template<class iov> size_t write_any(iov&&);
-	template<class iov> size_t write_all(iov&&);
+	template<class iov> size_t write_one(iov&&); // non-blocking
+	template<class iov> size_t write_any(iov&&); // non-blocking
+	template<class iov> size_t write_all(iov&&); // yielding
 
 	// low level read suite
-	template<class iov> size_t read_any(iov&&);
-	template<class iov> size_t read_all(iov&&);
+	template<class iov> size_t read_one(iov&&);  // non-blocking
+	template<class iov> size_t read_any(iov&&);  // yielding
+	template<class iov> size_t read_all(iov&&);  // yielding
 
 	// Asynchronous callback when socket ready
 	void operator()(const wait_type &, const milliseconds &timeout, ec_handler);
@@ -173,6 +174,22 @@ ircd::net::socket::read_any(iov&& bufs)
 		{
 			boost::asio::error::eof
 		};
+
+	in.bytes += ret;
+	++in.calls;
+	return ret;
+}
+
+/// Non-blocking; One system call only; never throws eof;
+template<class iov>
+size_t
+ircd::net::socket::read_one(iov&& bufs)
+{
+	assert(!blocking(*this));
+	const size_t ret
+	{
+		ssl.read_some(std::forward<iov>(bufs))
+	};
 
 	in.bytes += ret;
 	++in.calls;
