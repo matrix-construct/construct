@@ -1384,48 +1384,56 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
+                                  ec_handler callback,
                                   const error_code &ec)
 noexcept try
 {
 	using namespace boost::system::errc;
 
-	if(!wp.expired()) switch(ec.value())
+	switch(ec.value())
 	{
 		// A 'success' for this handler means there was a timeout on the socket
-		case success:
+		case success: if(likely(!wp.expired()))
 		{
 			assert(timedout == false);
 			timedout = true;
 			sd.cancel();
 			break;
 		}
+		else break;
 
 		// A cancelation means there was no timeout.
-		case operation_canceled:
+		case operation_canceled: if(likely(!wp.expired()))
 		{
 			assert(ec.category() == boost::system::system_category());
 			assert(timedout == false);
 			timedout = false;
 			break;
 		}
+		else break;
 
 		// All other errors are unexpected, logged and ignored here.
 		default:
-			throw boost::system::system_error(ec);
+		{
+			log.critical("socket(%p): handle_timeout: unexpected: %s\n",
+			             (const void *)this,
+			             string(ec));
+			assert(0);
+			break;
+		}
 	}
-}
-catch(const boost::system::system_error &e)
-{
-	log.critical("socket(%p): handle_timeout: unexpected: %s\n",
-	             (const void *)this,
-	              e.what());
-	assert(0);
+
+	if(callback)
+		call_user(callback, ec);
 }
 catch(const std::exception &e)
 {
-	log.error("socket(%p): handle timeout: %s",
-	          (const void *)this,
-	          e.what());
+	log.critical("socket(%p): handle timeout: %s",
+	             (const void *)this,
+	             e.what());
+	assert(0);
+	if(callback)
+		call_user(callback, ec);
 }
 
 void
@@ -1746,31 +1754,31 @@ noexcept
 	boost::system::error_code ec;
 	timer.cancel(ec);
 	assert(!ec);
-
 	return duration_cast<milliseconds>(ret);
 }
 
 void
 ircd::net::socket::set_timeout(const milliseconds &t)
 {
-	cancel_timeout();
-	if(t < milliseconds(0))
-		return;
-
-	timer.expires_from_now(t);
-	timer.async_wait(std::bind(&socket::handle_timeout, this, weak_from(*this), ph::_1));
+	set_timeout(t, nullptr);
 }
 
 void
 ircd::net::socket::set_timeout(const milliseconds &t,
-                               ec_handler h)
+                               ec_handler callback)
 {
 	cancel_timeout();
+	timedout = false;
 	if(t < milliseconds(0))
 		return;
 
+	auto handler
+	{
+		std::bind(&socket::handle_timeout, this, weak_from(*this), std::move(callback), ph::_1)
+	};
+
 	timer.expires_from_now(t);
-	timer.async_wait(std::move(h));
+	timer.async_wait(std::move(handler));
 }
 
 bool

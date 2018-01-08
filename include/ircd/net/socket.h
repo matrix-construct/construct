@@ -48,8 +48,8 @@ struct ircd::net::socket
 	using wait_type = ip::tcp::socket::wait_type;
 	using message_flags = asio::socket_base::message_flags;
 	using handshake_type = asio::ssl::stream<ip::tcp::socket>::handshake_type;
-	using ec_handler = std::function<void (const error_code &) noexcept>;
-	using eptr_handler = std::function<void (std::exception_ptr) noexcept>;
+	using ec_handler = std::function<void (const error_code &)>;
+	using eptr_handler = std::function<void (std::exception_ptr)>;
 
 	struct stat
 	{
@@ -69,7 +69,7 @@ struct ircd::net::socket
 	void handle_disconnect(std::shared_ptr<socket>, eptr_handler, const error_code &) noexcept;
 	void handle_handshake(std::weak_ptr<socket>, eptr_handler, const error_code &) noexcept;
 	void handle_connect(std::weak_ptr<socket>, const open_opts, eptr_handler, const error_code &) noexcept;
-	void handle_timeout(std::weak_ptr<socket>, const error_code &) noexcept;
+	void handle_timeout(std::weak_ptr<socket>, ec_handler, const error_code &) noexcept;
 	void handle(std::weak_ptr<socket>, ec_handler, const error_code &) noexcept;
 
   public:
