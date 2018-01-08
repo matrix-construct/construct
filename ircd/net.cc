@@ -235,6 +235,17 @@ ircd::net::read_any(socket &socket,
 	return socket.read_any(buffers);
 }
 
+/// Reads one message or less in a single syscall. Non-blocking behavior.
+///
+/// This is intended for lowest-level/custom control and not preferred by
+/// default.
+///
+size_t
+ircd::net::read_one(socket &socket,
+                    const vector_view<const mutable_buffer> &buffers)
+{
+	return socket.read_one(buffers);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

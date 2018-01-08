@@ -24,6 +24,10 @@
 
 namespace ircd::net
 {
+	// Non-blocking; read into buffers in a single syscall
+	size_t read_one(socket &, const vector_view<const mutable_buffer> &);
+	size_t read_one(socket &, const mutable_buffer &);
+
 	// Yields until something is read into buffers.
 	size_t read_any(socket &, const vector_view<const mutable_buffer> &);
 	size_t read_any(socket &, const mutable_buffer &);
@@ -75,4 +79,16 @@ ircd::net::read_any(socket &socket,
 	};
 
 	return read_any(socket, buffers);
+}
+
+inline size_t
+ircd::net::read_one(socket &socket,
+                    const mutable_buffer &buffer)
+{
+	const mutable_buffer buffers[]
+	{
+		buffer
+	};
+
+	return read_one(socket, buffers);
 }
