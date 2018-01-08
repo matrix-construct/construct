@@ -30,6 +30,7 @@
 namespace boost::system
 {
 	struct error_code;
+	namespace errc {}
 }
 
 /// Forward declarations for boost::asio because it is not included here.
@@ -42,6 +43,7 @@ namespace ircd
 {
 	/// Alias so that asio:: can be used
 	namespace asio = boost::asio;
+	namespace errc = boost::system::errc;
 	using boost::system::error_code;
 
 	/// A record of the thread ID when static initialization took place (for ircd.cc)
