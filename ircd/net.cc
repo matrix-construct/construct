@@ -911,9 +911,10 @@ noexcept try
 
 	assert(bool(sock));
 	check_accept_error(ec, *sock);
-	log.debug("%s: socket(%p) accepted %s",
+	log.debug("%s: socket(%p) accepted(%zu) %s",
 	          std::string(*this),
 	          sock.get(),
+	          accepting,
 	          string(sock->remote()));
 
 	// Toggles the behavior of non-async functions; see func comment
@@ -997,9 +998,10 @@ noexcept try
 
 	assert(bool(sock));
 	check_handshake_error(ec, *sock);
-	log.debug("%s socket(%p): SSL handshook %s",
+	log.debug("%s socket(%p): SSL handshook(%zu) %s",
 	          std::string(*this),
 	          sock.get(),
+	          handshaking,
 	          string(sock->remote()));
 
 	add_client(sock);
@@ -1436,9 +1438,10 @@ noexcept try
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-	log.debug("socket(%p): handle: (%s)",
+	log.debug("socket(%p): handle: %s (available: %zu)",
 	          this,
-	          string(ec));
+	          string(ec),
+	          available(*this));
 
 	if(!timedout)
 		cancel_timeout();
