@@ -53,6 +53,7 @@ struct ircd::client
 	std::shared_ptr<socket> sock;
 	ircd::timer request_timer;
 
+	bool handle(parse::buffer &pb);
 	bool main() noexcept;
 
   public:

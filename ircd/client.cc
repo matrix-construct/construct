@@ -377,6 +377,10 @@ catch(const boost::system::system_error &e)
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
+	log::debug("client(%p): handle error: %s",
+	           (const void *)this,
+	           string(e.code()));
+
 	const error_code &ec{e.code()};
 	const int &value{ec.value()};
 	if(ec.category() == system_category()) switch(value)
@@ -404,6 +408,9 @@ catch(const boost::system::system_error &e)
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(value))
 	{
 		case SSL_R_SHORT_READ:
+			close(*this, net::dc::RST, net::close_ignore);
+			return false;
+
 		case SSL_R_PROTOCOL_IS_SHUTDOWN:
 			close(*this, net::dc::RST, net::close_ignore);
 			return false;

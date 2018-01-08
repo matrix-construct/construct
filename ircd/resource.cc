@@ -80,7 +80,7 @@ catch(const http::error &e)
 			return true;
 	}
 }
-catch(const std::exception &e)
+catch(const ircd::error &e)
 {
 	log::error("client[%s]: in %ld$us: %s",
 	           string(remote(client)),
@@ -606,9 +606,8 @@ ircd::resource::response::response(client &client,
                                    const vector_view<const http::header> &headers)
 {
 	char buf[serialized(headers)];
-	const mutable_buffer mb{buf, sizeof(buf)};
-	stream_buffer sb{mb};
-	write(sb, headers);
+	stream_buffer sb{{buf, sizeof(buf)}};
+	http::write(sb, headers);
 	response
 	{
 		client, content, content_type, code, sb.completed()
