@@ -60,15 +60,17 @@ ircd::ctx::async(F&& f,
 {
 	using R = typename std::result_of<F (A...)>::type;
 
-	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
-	auto p(std::make_shared<promise<R>>());
-	auto wrapper([p, func(std::move(func))]
-	() mutable -> void
+	promise<R> p;
+	future<R> ret{p};
+	auto wrapper
 	{
-		p->set_value(func());
-	});
+		[p(std::move(p)), func(std::bind(std::forward<F>(f), std::forward<A>(a)...))]
+		() mutable
+		{
+			p.set_value(func());
+		}
+	};
 
-	future<R> ret(*p);
 	//TODO: DEFER_POST?
 	context(stack_size, std::move(wrapper), context::DETACH | context::POST | flags);
 	return ret;
@@ -84,16 +86,23 @@ ircd::ctx::async(F&& f,
 {
 	using R = typename std::result_of<F (A...)>::type;
 
-	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
-	auto p(std::make_shared<promise<R>>());
-	auto wrapper([p, func(std::move(func))]
-	() mutable -> void
+	auto func
 	{
-		func();
-		p->set_value();
-	});
+		std::bind(std::forward<F>(f), std::forward<A>(a)...)
+	};
 
-	future<R> ret(*p);
+	promise<R> p;
+	future<R> ret{p};
+	auto wrapper
+	{
+		[p(std::move(p)), func(std::bind(std::forward<F>(f), std::forward<A>(a)...))]
+		() mutable
+		{
+			func();
+			p.set_value();
+		}
+	};
+
 	//TODO: DEFER_POST?
 	context(stack_size, std::move(wrapper), context::DETACH | context::POST | flags);
 	return ret;
