@@ -2101,7 +2101,11 @@ ircd::net::string(const mutable_buffer &buf,
 		const auto len{strlcpy(data(buf), remote.hostname, size(buf))};
 		return { data(buf), size_t(len) };
 	}
-	else return string(buf, ipp);
+	else
+	{
+		const auto len{fmt::sprintf(buf, "%s => %s", remote.hostname, string(ipp))};
+		return { data(buf), size_t(len) };
+	}
 }
 
 //
