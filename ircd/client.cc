@@ -257,8 +257,6 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 			// the next request.
 			if(client->main())
 				async_recv_next(std::move(client), timeout);
-			else
-				close(*client).wait();
 		});
 	});
 }
