@@ -249,6 +249,77 @@ ircd::net::read_one(socket &socket,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// net/wait.h
+//
+
+ircd::net::wait_opts
+const ircd::net::wait_opts_default
+{
+};
+
+/// Wait for socket to become "ready" using a ctx::future.
+ircd::ctx::future<void>
+ircd::net::wait(use_future_t,
+                socket &socket,
+                const wait_opts &wait_opts)
+{
+	ctx::promise<void> p;
+	ctx::future<void> f{p};
+	wait(socket, wait_opts, [p(std::move(p))]
+	(std::exception_ptr eptr)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value();
+	});
+
+	return f;
+}
+
+/// Wait for socket to become "ready"; yields ircd::ctx returning code.
+ircd::error_code
+ircd::net::wait(nothrow_t,
+                socket &socket,
+                const wait_opts &wait_opts)
+try
+{
+	wait(socket, wait_opts);
+	return {};
+}
+catch(const boost::system::system_error &e)
+{
+	return e.code();
+}
+
+/// Wait for socket to become "ready"; yields ircd::ctx; throws errors.
+void
+ircd::net::wait(socket &socket,
+                const wait_opts &wait_opts)
+{
+	socket.wait(wait_opts);
+}
+
+/// Wait for socket to become "ready"; callback with exception_ptr
+void
+ircd::net::wait(socket &socket,
+                const wait_opts &wait_opts,
+                wait_callback_eptr callback)
+{
+	socket.wait(wait_opts, std::move(callback));
+}
+
+void
+ircd::net::wait(socket &socket,
+                const wait_opts &wait_opts,
+                wait_callback_ec callback)
+{
+	socket.wait(wait_opts, std::move(callback));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // net/close.h
 //
 
@@ -1271,15 +1342,15 @@ noexcept
 	return std::all_of(begin(ec), end(ec), good);
 }
 
-/// Asynchronous callback when the socket is ready
-///
-/// Overload for operator() without a timeout. see: operator()
-///
 void
-ircd::net::socket::operator()(const wait_type &type,
-                              ec_handler h)
+ircd::net::socket::wait(const wait_opts &opts,
+                        wait_callback_eptr callback)
 {
-	operator()(type, milliseconds(-1), std::move(h));
+	wait(opts, [callback(std::move(callback))]
+	(const error_code &ec)
+	{
+		callback(make_eptr(ec));
+	});
 }
 
 /// Asynchronous callback when the socket is ready
@@ -1288,39 +1359,70 @@ ircd::net::socket::operator()(const wait_type &type,
 /// for the operation of the specified type.
 ///
 void
-ircd::net::socket::operator()(const wait_type &type,
-                              const milliseconds &timeout,
-                              ec_handler callback)
+ircd::net::socket::wait(const wait_opts &opts,
+                        wait_callback_ec callback)
 {
 	auto handle
 	{
 		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1)
 	};
 
-	assert(connected(*this));
-	switch(type)
+	switch(opts.type)
 	{
-		case wait_type::wait_error:
-		case wait_type::wait_write:
-		//case wait_type::wait_read:
-		{
-			sd.async_wait(type, std::move(handle));
+		case net::ready::ERROR:
+			sd.async_wait(wait_type::wait_error, std::move(handle));
 			break;
-		}
+
+		case net::ready::WRITE:
+			sd.async_wait(wait_type::wait_write, std::move(handle));
+			break;
 
 		// The new async_wait() on linux triggers a bug which is only
 		// reproducible when serving a large number of assets: a ready status
 		// for the socket is not indicated when it ought to be, at random.
 		// This is fixed below by doing it the old way.
-		case wait_type::wait_read:
-		{
+		case net::ready::READ:
 			sd.async_receive(buffer::null_buffers, std::move(handle));
 			break;
-		}
+
+		default:
+			throw ircd::not_implemented{};
 	}
 
 	// Commit to timeout here in case exception was thrown earlier.
-	set_timeout(timeout);
+	set_timeout(opts.timeout);
+}
+
+/// Asynchronous callback when the socket is ready
+///
+/// Overload for operator() without a timeout. see: operator()
+///
+void
+ircd::net::socket::wait(const wait_opts &opts)
+{
+	const scope_timeout timeout
+	{
+		*this, opts.timeout
+	};
+
+	switch(opts.type)
+	{
+		case net::ready::ERROR:
+			sd.async_wait(wait_type::wait_error, yield_context{to_asio{}});
+			break;
+
+		case net::ready::WRITE:
+			sd.async_wait(wait_type::wait_write, yield_context{to_asio{}});
+			break;
+
+		// See bug comment in callback version
+		case net::ready::READ:
+			sd.async_receive(buffer::null_buffers, yield_context{to_asio{}});
+			break;
+
+		default:
+			throw ircd::not_implemented{};
+	}
 }
 
 void

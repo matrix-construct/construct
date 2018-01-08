@@ -54,6 +54,7 @@ namespace ircd::net
 #include "sock_opts.h"
 #include "open.h"
 #include "close.h"
+#include "wait.h"
 #include "read.h"
 #include "write.h"
 

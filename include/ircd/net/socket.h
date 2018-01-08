@@ -97,10 +97,14 @@ struct ircd::net::socket
 	template<class iov> size_t read_any(iov&&);  // yielding
 	template<class iov> size_t read_all(iov&&);  // yielding
 
-	// Asynchronous callback when socket ready
-	void operator()(const wait_type &, const milliseconds &timeout, ec_handler);
-	void operator()(const wait_type &, ec_handler);
+	// low level wait suite
+	void wait(const wait_opts &);
+	void wait(const wait_opts &, wait_callback_ec);
+	void wait(const wait_opts &, wait_callback_eptr);
 	bool cancel() noexcept;
+
+	// Alias to wait()
+	template<class... args> auto operator()(args&&...);
 
 	void disconnect(const close_opts &, eptr_handler);
 	void handshake(const open_opts &, eptr_handler);
@@ -132,6 +136,13 @@ class ircd::net::socket::scope_timeout
 	scope_timeout &operator=(const scope_timeout &) = delete;
 	~scope_timeout() noexcept;
 };
+
+template<class... args>
+auto
+ircd::net::socket::operator()(args&&... a)
+{
+	return this->wait(std::forward<args>(a)...);
+}
 
 /// Yields ircd::ctx until buffers are full.
 template<class iov>
