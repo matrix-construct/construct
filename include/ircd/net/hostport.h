@@ -64,7 +64,7 @@ struct ircd::net::hostport
 
 	hostport(const string_view &amalgam)
 	:host{rsplit(amalgam, ':').first}
-	,port{rsplit(amalgam, ':').second}
+	,port{amalgam != host? rsplit(amalgam, ':').second : "8448"}
 	{}
 
 	hostport() = default;
