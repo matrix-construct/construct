@@ -48,14 +48,16 @@
 ///
 namespace ircd::ctx
 {
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, interrupted)
-	IRCD_EXCEPTION(error, timeout)
-
 	using std::chrono::steady_clock;
 	using time_point = steady_clock::time_point;
 
 	struct ctx;
+
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, interrupted)
+	IRCD_EXCEPTION(error, timeout)
+
+	IRCD_OVERLOAD(threadsafe)
 
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
@@ -64,7 +66,6 @@ namespace ircd::ctx
 	bool finished(const ctx &);                  // Context function returned (or exception).
 	bool started(const ctx &);                   // Context was ever entered.
 
-	IRCD_OVERLOAD(threadsafe)
 	void interrupt(ctx &);                       // Interrupt the context for termination.
 	void signal(ctx &, std::function<void ()>);  // Post function to context strand
 	void notify(ctx &, threadsafe_t);            // Notify context with threadsafety.
@@ -124,6 +125,7 @@ namespace ircd::ctx { inline namespace this_ctx
 #include "ole.h"
 #include "fault.h"
 
+// Exports to ircd::
 namespace ircd
 {
 	//using yield = boost::asio::yield_context;
@@ -133,6 +135,9 @@ namespace ircd
 
 	using ctx::promise;
 	using ctx::future;
+
+	using ctx::use_future_t;
+	using ctx::use_future;
 }
 
 /// An instance of critical_assertion detects an attempt to context switch.

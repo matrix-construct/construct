@@ -24,6 +24,8 @@
 
 namespace ircd::ctx
 {
+    IRCD_OVERLOAD(use_future)
+
 	template<class T = void> class future;
 	template<> class future<void>;
 	template<class... T> struct scoped_future;
