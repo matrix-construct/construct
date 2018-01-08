@@ -33,7 +33,6 @@
 namespace ircd::net
 {
 	namespace ip = asio::ip;
-	using boost::system::error_code;
 	using asio::steady_timer;
 	using ircd::string;
 
@@ -49,7 +48,6 @@ namespace ircd::net
 
 namespace ircd
 {
-	using net::error_code;
 	using net::string;
 	using net::addr;
 	using net::host;

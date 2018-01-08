@@ -22,11 +22,17 @@
 #pragma once
 #define HAVE_IRCD_IOS_H
 
+// Boost headers are not exposed to our users unless explicitly included by a
+// definition file. Other libircd headers may extend this namespace with more
+// forward declarations.
+
+/// Forward declarations for boost::system because it is not included here.
+namespace boost::system
+{
+	struct error_code;
+}
+
 /// Forward declarations for boost::asio because it is not included here.
-///
-/// Boost headers are not exposed to our users unless explicitly included by a
-/// definition file. Other libircd headers may extend this namespace with more
-/// forward declarations.
 namespace boost::asio
 {
 	struct io_context;
@@ -36,6 +42,7 @@ namespace ircd
 {
 	/// Alias so that asio:: can be used
 	namespace asio = boost::asio;
+	using boost::system::error_code;
 
 	/// A record of the thread ID when static initialization took place (for ircd.cc)
 	extern const std::thread::id static_thread_id;

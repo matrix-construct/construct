@@ -32,15 +32,15 @@
 ///
 namespace ircd::net
 {
+	struct init;
+	struct socket;
+
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, invalid_argument)
 	IRCD_EXCEPTION(error, nxdomain)
 	IRCD_EXCEPTION(error, broken_pipe)
 	IRCD_EXCEPTION(error, disconnected)
 	IRCD_EXCEPTION(error, inauthentic)
-
-	struct init;
-	struct socket;
 
 	// SNOMASK 'N' "net"
 	extern struct log::log log;

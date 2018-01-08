@@ -54,7 +54,7 @@ ctx::pool request
 // Container for all active clients (connections) for iteration purposes.
 client::list client::clients;
 
-static bool handle_ec(client &, const net::error_code &);
+static bool handle_ec(client &, const error_code &);
 void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
 void async_recv_next(std::shared_ptr<client>);
 
@@ -237,7 +237,7 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 
 	auto &sock(*client->sock);
 	static const auto &op{sock.sd.wait_read};
-	sock(op, timeout, [client(std::move(client)), timeout](const net::error_code &ec)
+	sock(op, timeout, [client(std::move(client)), timeout](const error_code &ec)
 	noexcept
 	{
 		// Right here this handler is executing on the main stack (not in any
@@ -356,7 +356,7 @@ try
 		const socket::scope_timeout timeout
 		{
 			*sock, request_timeout, [client(shared_from(*this))]
-			(const net::error_code &ec)
+			(const error_code &ec)
 			{
 				if(!ec)
 					close(*client, net::dc::SSL_NOTIFY, net::close_ignore);
@@ -498,12 +498,12 @@ namespace ircd
 	static bool handle_ec_timeout(client &);
 	static bool handle_ec_eof(client &);
 	static bool handle_ec_short_read(client &);
-	static bool handle_ec_default(client &, const net::error_code &);
+	static bool handle_ec_default(client &, const error_code &);
 }
 
 bool
 ircd::handle_ec(client &client,
-                const net::error_code &ec)
+                const error_code &ec)
 {
 	using namespace boost::system::errc;
 	using boost::system::system_category;
@@ -531,7 +531,7 @@ ircd::handle_ec(client &client,
 
 bool
 ircd::handle_ec_default(client &client,
-                        const net::error_code &ec)
+                        const error_code &ec)
 {
 	log::debug("client(%p): %s: %s",
 	           &client,
