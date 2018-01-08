@@ -1438,10 +1438,10 @@ noexcept try
 {
 	const life_guard<socket> s{wp};
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) connect to remote: %s from local: %s: %s",
+	log.debug("socket(%p) connect by local: %s: to remote: %s %s",
 	          this,
-	          string(remote_ipport(*this)),
 	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
 	          string(ec));
 
 	// The timer was set by socket::connect() and may need to be canceled.
@@ -1501,7 +1501,7 @@ ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
 noexcept try
 {
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) disconnect from local: %s to remote: %s: %s",
+	log.debug("socket(%p) disconnect by local: %s from remote: %s: %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
@@ -1543,7 +1543,7 @@ noexcept try
 {
 	const life_guard<socket> s{wp};
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) handshake from local: %s to remote: %s: %s",
+	log.debug("socket(%p) handshake by local: %s to remote: %s: %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
