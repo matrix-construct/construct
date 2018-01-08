@@ -1291,20 +1291,19 @@ ircd::net::socket::operator()(const wait_type &type,
 	{
 		case wait_type::wait_error:
 		case wait_type::wait_write:
+		//case wait_type::wait_read:
 		{
 			sd.async_wait(type, std::move(handle));
 			break;
 		}
 
-		// There might be a bug in boost on linux which is only reproducible
-		// when serving a large number of assets: a ready status for the socket
-		// is not indicated when it ought to be, at random. This is fixed below
-		// by doing it the old way (pre boost-1.66 sd.async_wait()) with the
-		// proper peek.
+		// The new async_wait() on linux triggers a bug which is only
+		// reproducible when serving a large number of assets: a ready status
+		// for the socket is not indicated when it ought to be, at random.
+		// This is fixed below by doing it the old way.
 		case wait_type::wait_read:
 		{
-			static const auto flags{ip::tcp::socket::message_peek};
-			sd.async_receive(buffer::null_buffers, flags, std::move(handle));
+			sd.async_receive(buffer::null_buffers, std::move(handle));
 			break;
 		}
 	}
