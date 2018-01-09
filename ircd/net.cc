@@ -318,6 +318,20 @@ ircd::net::wait(socket &socket,
 	socket.wait(wait_opts, std::move(callback));
 }
 
+ircd::string_view
+ircd::net::reflect(const ready &type)
+{
+	switch(type)
+	{
+		case ready::ANY:     return "ANY"_sv;
+		case ready::READ:    return "READ"_sv;
+		case ready::WRITE:   return "WRITE"_sv;
+		case ready::ERROR:   return "ERROR"_sv;
+	}
+
+	return "????"_sv;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/close.h
@@ -1067,7 +1081,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		//| ssl.no_tlsv1_2
 		//| ssl.no_sslv2
 		//| ssl.no_sslv3
-		//| ssl.single_dh_use
+		//ssl.single_dh_use
 	);
 */
 	//TODO: XXX
@@ -1366,25 +1380,21 @@ ircd::net::socket::wait(const wait_opts &opts,
 {
 	auto handle
 	{
-		std::bind(&socket::handle, this, weak_from(*this), std::move(callback), ph::_1)
+		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1)
 	};
 
 	switch(opts.type)
 	{
-		case net::ready::ERROR:
+		case ready::ERROR:
 			sd.async_wait(wait_type::wait_error, std::move(handle));
 			break;
 
-		case net::ready::WRITE:
+		case ready::WRITE:
 			sd.async_wait(wait_type::wait_write, std::move(handle));
 			break;
 
-		// The new async_wait() on linux triggers a bug which is only
-		// reproducible when serving a large number of assets: a ready status
-		// for the socket is not indicated when it ought to be, at random.
-		// This is fixed below by doing it the old way.
-		case net::ready::READ:
-			sd.async_receive(buffer::null_buffers, std::move(handle));
+		case ready::READ:
+			sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
 
 		default:
@@ -1409,18 +1419,16 @@ ircd::net::socket::wait(const wait_opts &opts)
 
 	switch(opts.type)
 	{
-		case net::ready::ERROR:
+		case ready::ERROR:
 			sd.async_wait(wait_type::wait_error, yield_context{to_asio{}});
 			break;
 
-		case net::ready::WRITE:
+		case ready::WRITE:
 			sd.async_wait(wait_type::wait_write, yield_context{to_asio{}});
 			break;
 
-		// See bug comment in callback version
-		case net::ready::READ:
-			sd.async_receive(buffer::null_buffers, yield_context{to_asio{}});
-			break;
+		case ready::READ:
+			sd.async_wait(wait_type::wait_read, yield_context{to_asio{}});
 
 		default:
 			throw ircd::not_implemented{};
@@ -1428,9 +1436,10 @@ ircd::net::socket::wait(const wait_opts &opts)
 }
 
 void
-ircd::net::socket::handle(const std::weak_ptr<socket> wp,
-                          const ec_handler callback,
-                          const error_code &ec)
+ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
+                                const net::ready type,
+                                const ec_handler callback,
+                                error_code ec)
 noexcept try
 {
 	using namespace boost::system::errc;
@@ -1438,8 +1447,11 @@ noexcept try
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-	log.debug("socket(%p): handle: %s (available: %zu)",
+	assert(ec == success || ec == operation_canceled);
+	log.debug("socket(%p)[%s]: ready %s: %s (available: %zu)",
 	          this,
+	          string(remote_ipport(*this)),
+	          reflect(type),
 	          string(ec),
 	          available(*this));
 
@@ -1448,6 +1460,20 @@ noexcept try
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
+		case success: if(type == ready::READ)
+		{
+			// The problem here is that the wait operation gives ec=success
+			// on both a socket error and when data is actually available. Ideally
+			// this should be giving the error, or at worst, something other than
+			// success with the expectation we also wait(ERROR) too. The workaround
+			// is to do a non-blocking peek here.
+			static char buf[1];
+			assert(!blocking(*this));
+			sd.receive(asio::mutable_buffers_1(buf, sizeof(buf)), sd.message_peek, ec);
+			break;
+		}
+		else break;
+
 		// We expose a timeout condition to the user, but hide
 		// other cancellations from invoking the callback.
 		case operation_canceled:

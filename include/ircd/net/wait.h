@@ -29,6 +29,8 @@ namespace ircd::net
 	using wait_callback_ec = std::function<void (const error_code &)>;
 	using wait_callback_eptr = std::function<void (std::exception_ptr)>;
 
+	string_view reflect(const ready &);
+
 	// Asynchronous callback when ready with error_code
 	void wait(socket &, const wait_opts &, wait_callback_ec);
 
