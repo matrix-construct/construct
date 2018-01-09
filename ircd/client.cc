@@ -26,45 +26,46 @@
  */
 
 #include <ircd/asio.h>
+#include <ircd/server.h>
 
-namespace ircd {
-
-// Default time limit for how long a client connection can be in "async mode"
-// (or idle mode) after which it is disconnected.
-const auto async_timeout
+namespace ircd
 {
-	40s
-};
+	// Default time limit for how long a client connection can be in "async mode"
+	// (or idle mode) after which it is disconnected.
+	const auto async_timeout
+	{
+		40s
+	};
 
-// Time limit for how long a connected client can be in "request mode." This
-// should never be hit unless there's an error in the handling code.
-const auto request_timeout
-{
-	20s
-};
+	// Time limit for how long a connected client can be in "request mode." This
+	// should never be hit unless there's an error in the handling code.
+	const auto request_timeout
+	{
+		15s
+	};
 
-// The pool of request contexts. When a client makes a request it does so by acquiring
-// a stack from this pool. The request handling and response logic can then be written
-// in a synchronous manner as if each connection had its own thread.
-ctx::pool request
-{
-	"request", 4_MiB
-};
+	// The pool of request contexts. When a client makes a request it does so by acquiring
+	// a stack from this pool. The request handling and response logic can then be written
+	// in a synchronous manner as if each connection had its own thread.
+	ctx::pool request
+	{
+		"request", 1_MiB
+	};
 
-// Container for all active clients (connections) for iteration purposes.
-client::list client::clients;
+	// Container for all active clients (connections) for iteration purposes.
+	client::list client::clients;
 
-static bool handle_ec(client &, const error_code &);
-void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
-void async_recv_next(std::shared_ptr<client>);
+	void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
+	void async_recv_next(std::shared_ptr<client>);
 
-void close(client &, const net::close_opts &, net::close_callback);
-ctx::future<void> close(client &, const net::close_opts & = {});
-void close_all();
+	void close_all();
 
-template<class... args> std::shared_ptr<client> make_client(args&&...);
+	template<class... args> std::shared_ptr<client> make_client(args&&...);
+}
 
-} // namespace ircd
+//
+// init
+//
 
 ircd::client::init::init()
 {
@@ -106,23 +107,9 @@ noexcept
 	}
 }
 
-ircd::ipport
-ircd::local(const client &client)
-{
-	if(!client.sock)
-		return {};
-
-	return net::local_ipport(*client.sock);
-}
-
-ircd::ipport
-ircd::remote(const client &client)
-{
-	if(!client.sock)
-		return {};
-
-	return net::remote_ipport(*client.sock);
-}
+//
+// util
+//
 
 ircd::http::response::write_closure
 ircd::write_closure(client &client)
@@ -204,13 +191,105 @@ ircd::write(client &client,
 	return base;
 }
 
+std::shared_ptr<ircd::client>
+ircd::add_client(std::shared_ptr<socket> s)
+{
+	const auto client
+	{
+		make_client(std::move(s))
+	};
+
+	log::debug("client[%s] CONNECTED local[%s]",
+	           string(remote(*client)),
+	           string(local(*client)));
+
+	async_recv_next(client, async_timeout);
+	return client;
+}
+
+template<class... args>
+std::shared_ptr<ircd::client>
+ircd::make_client(args&&... a)
+{
+	return std::make_shared<client>(std::forward<args>(a)...);
+}
+
+void
+ircd::close_all()
+{
+	auto it(begin(client::clients));
+	while(it != end(client::clients))
+	{
+		auto *const client(*it);
+		++it; try
+		{
+			close(*client, net::dc::RST, net::close_ignore);
+		}
+		catch(const std::exception &e)
+		{
+			log::warning("Error disconnecting client @%p: %s", client, e.what());
+		}
+	}
+}
+
+ircd::ctx::future<void>
+ircd::close(client &client,
+            const net::close_opts &opts)
+{
+	if(likely(client.sock))
+		return close(*client.sock, opts);
+	else
+		return {};
+}
+
+void
+ircd::close(client &client,
+            const net::close_opts &opts,
+            net::close_callback callback)
+{
+	close(*client.sock, opts, std::move(callback));
+}
+
+ircd::ipport
+ircd::local(const client &client)
+{
+	if(!client.sock)
+		return {};
+
+	return net::local_ipport(*client.sock);
+}
+
+ircd::ipport
+ircd::remote(const client &client)
+{
+	if(!client.sock)
+		return {};
+
+	return net::remote_ipport(*client.sock);
+}
+
+//
+// async loop
+//
+
+namespace ircd
+{
+	static bool handle_ec_default(client &, const error_code &);
+	static bool handle_ec_timeout(client &);
+	static bool handle_ec_short_read(client &);
+	static bool handle_ec_eof(client &);
+	static bool handle_ec(client &, const error_code &);
+
+	static void handle_client_request(std::shared_ptr<client>, milliseconds);
+	static void handle_client_ready(std::shared_ptr<client>, milliseconds, const error_code &ec);
+}
+
 void
 ircd::async_recv_next(std::shared_ptr<client> client)
 {
 	async_recv_next(std::move(client), milliseconds(-1));
 }
 
-///
 /// This function is the basis for the client's request loop. We still use
 /// an asynchronous pattern until there is activity on the socket (a request)
 /// in which case the switch to synchronous mode is made by jumping into an
@@ -221,48 +300,184 @@ ircd::async_recv_next(std::shared_ptr<client> client)
 /// This sequence exists to avoid any possible c10k-style limitation imposed by
 /// dedicating a context and its stack space to the lifetime of a connection.
 /// This is similar to the thread-per-request pattern before async was in vogue.
-//
-/// Developers: Pay close attention to the comments to know exactly where you
-/// are and what you can do at any given point in this sequence.
 ///
+/// This call returns immediately so we no longer block the current context and
+/// its stack while waiting for activity on idle connections between requests.
 void
 ircd::async_recv_next(std::shared_ptr<client> client,
                       const milliseconds &timeout)
 {
 	assert(bool(client));
 	assert(bool(client->sock));
-
-	// This call returns immediately so we no longer block the current context and
-	// its stack while waiting for activity on idle connections between requests.
-
+	auto &sock(*client->sock);
 	const net::wait_opts opts
 	{
 		net::ready::READ, timeout
 	};
 
-	auto &sock(*client->sock);
-	sock(opts, [client(std::move(client)), timeout](const error_code &ec)
-	noexcept
+	auto handler
 	{
-		// Right here this handler is executing on the main stack (not in any
-		// ircd::context).
-		if(!handle_ec(*client, ec))
-			return;
+		std::bind(ircd::handle_client_ready, std::move(client), timeout, ph::_1)
+	};
 
-		// This call returns immediately because we can never block the main stack outside
-		// of the ircd::context system. The context the closure ends up getting is the next
-		// available from the request pool, which may not be available immediately so this
-		// handler might be queued for some time after this call returns.
-		request([client(std::move(client)), timeout]
-		{
-			// Right here this handler is executing on an ircd::context with its own
-			// stack dedicated to the lifetime of this request. If client::main()
-			// returns true, we bring the client back into async mode to wait for
-			// the next request.
-			if(client->main())
-				async_recv_next(std::move(client), timeout);
-		});
-	});
+	sock(opts, std::move(handler));
+}
+
+/// The client's socket is ready for reading. This intermediate handler
+/// intercepts any errors otherwise dispatches the client to the request
+/// pool to be married with a stack. Right here this handler is executing on
+/// the main stack (not in any ircd::context).
+///
+/// The context the closure ends up getting is the next available from the
+/// request pool, which may not be available immediately so this handler might
+/// be queued for some time after this call returns.
+void
+ircd::handle_client_ready(std::shared_ptr<client> client,
+                          const milliseconds timeout,
+                          const error_code &ec)
+{
+	if(!handle_ec(*client, ec))
+		return;
+
+	auto handler
+	{
+		std::bind(ircd::handle_client_request, std::move(client), timeout)
+	};
+
+	request(std::move(handler));
+}
+
+/// A request context has been dispatched and is now handling this client.
+/// This function is executing on that ircd::ctx stack. client::main() will
+/// now be called and synchronous programming is possible. Afterward, the
+/// client will release this ctx and its stack and fall back to async mode
+/// or die.
+void
+ircd::handle_client_request(std::shared_ptr<client> client,
+                            const milliseconds timeout)
+{
+	if(!client->main())
+	{
+		//assert(!client->sock || !connected(*client->sock));
+		return;
+	}
+
+	async_recv_next(std::move(client), timeout);
+}
+
+/// This error handling switch is one of two places client errors
+/// are handled. This handles the errors when the client is in async
+/// mode rather than during a request. This executes on the main/callback
+/// stack, not in any ircd::ctx, and must be asynchronous.
+///
+bool
+ircd::handle_ec(client &client,
+                const error_code &ec)
+{
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+	using boost::asio::error::get_ssl_category;
+	using boost::asio::error::get_misc_category;
+
+	if(ec.category() == system_category()) switch(ec.value())
+	{
+		case success:                return true;
+		case operation_canceled:     return handle_ec_timeout(client);
+		default:                     return handle_ec_default(client, ec);
+	}
+	else if(ec.category() == get_misc_category()) switch(ec.value())
+	{
+		case asio::error::eof:       return handle_ec_eof(client);
+		default:                     return handle_ec_default(client, ec);
+	}
+	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
+	{
+		case SSL_R_SHORT_READ:       return handle_ec_short_read(client);
+		default:                     return handle_ec_default(client, ec);
+	}
+	else return handle_ec_default(client, ec);
+}
+
+/// The client indicated they will not be sending the data we have been
+/// waiting for. The proper behavior now is to initiate a clean shutdown.
+bool
+ircd::handle_ec_eof(client &client)
+try
+{
+	log::debug("client[%s]: EOF",
+	           string(remote(client)));
+
+	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::error("client(%p): EOF: %s",
+	           &client,
+	           e.what());
+
+	return false;
+}
+
+/// The client terminated the connection, likely improperly, and SSL
+/// is informing us with an opportunity to prevent truncation attacks.
+/// Best behavior here is to just close the sd.
+bool
+ircd::handle_ec_short_read(client &client)
+try
+{
+	log::warning("client[%s]: short_read",
+	             string(remote(client)));
+
+	close(client, net::dc::RST, net::close_ignore);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::error("client(%p): short_read: %s",
+	           &client,
+	           e.what());
+
+	return false;
+}
+
+/// The net:: system determined the client timed out because we set a timer
+/// on the socket waiting for data which never arrived. The client may very
+/// well still be there, so the best thing to do is to attempt a clean
+/// disconnect.
+bool
+ircd::handle_ec_timeout(client &client)
+try
+{
+	assert(bool(client.sock));
+	log::warning("client[%s]: disconnecting after inactivity timeout",
+	             string(remote(client)));
+
+	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::error("client(%p): timeout: %s",
+	           &client,
+	           e.what());
+
+	return false;
+}
+
+/// Unknown/untreated error. Probably not worth attempting a clean shutdown
+/// so a hard / immediate disconnect given instead.
+bool
+ircd::handle_ec_default(client &client,
+                        const error_code &ec)
+{
+	log::warning("client(%p)[%s]: %s",
+	             &client,
+	             string(remote(client)),
+	             string(ec));
+
+	close(client, net::dc::RST, net::close_ignore);
+	return false;
 }
 
 //
@@ -344,9 +559,13 @@ catch(const std::exception &e)
 /// timeout is reached. main() will not "block" to wait for more data after a
 /// request; it will simply `return true` which puts this client back into
 /// async mode and relinquishes this stack. returning false will disconnect
-/// the client rather than putting it back into async mode. Exceptions do not
-/// pass below main() therefor anything unhandled is an internal server error
-/// and the client is disconnected as well.
+/// the client rather than putting it back into async mode.
+///
+/// Exceptions do not pass below main() therefor anything unhandled is an
+/// internal server error and the client is disconnected. The exception handler
+/// here though is executing on a request ctx stack, and we can choose to take
+/// advantage of that; in contrast to the handle_ec() switch which handles
+/// errors on the main/callback stack and must be asynchronous.
 ///
 bool
 ircd::client::handle(parse::buffer &pb)
@@ -357,17 +576,16 @@ try
 		request_timer = ircd::timer{};
 		const socket::scope_timeout timeout
 		{
-			*sock, request_timeout, [client(shared_from(*this))]
-			(const error_code &ec)
-			{
-				if(!ec)
-					close(*client, net::dc::SSL_NOTIFY, net::close_ignore);
-			}
+			*sock, request_timeout
 		};
 
 		if(!handle_request(*this, pc))
 			return false;
 
+		// Should have nothing left in the userspace parse buffer after
+		// request otherwise too much was read and the pb.remove() will
+		// have to memmove() it; should never happen with good grammar.
+		assert(pb.unparsed() == 0);
 		pb.remove();
 	}
 	while(pc.unparsed());
@@ -425,7 +643,7 @@ catch(const boost::system::system_error &e)
 	else if(ec.category() == get_misc_category()) switch(value)
 	{
 		case boost::asio::error::eof:
-			close(*this, net::dc::RST, net::close_ignore);
+			close(*this, net::dc::SSL_NOTIFY).wait();
 			return false;
 
 		default:
@@ -440,177 +658,4 @@ catch(const boost::system::system_error &e)
 
 	close(*this, net::dc::RST, net::close_ignore);
 	return false;
-}
-
-std::shared_ptr<ircd::client>
-ircd::add_client(std::shared_ptr<socket> s)
-{
-	const auto client
-	{
-		make_client(std::move(s))
-	};
-
-	log::debug("client[%s] CONNECTED local[%s]",
-	           string(remote(*client)),
-	           string(local(*client)));
-
-	async_recv_next(client, async_timeout);
-	return client;
-}
-
-template<class... args>
-std::shared_ptr<ircd::client>
-ircd::make_client(args&&... a)
-{
-	return std::make_shared<client>(std::forward<args>(a)...);
-}
-
-void
-ircd::close_all()
-{
-	auto it(begin(client::clients));
-	while(it != end(client::clients))
-	{
-		auto *const client(*it);
-		++it; try
-		{
-			close(*client, net::dc::RST, net::close_ignore);
-		}
-		catch(const std::exception &e)
-		{
-			log::warning("Error disconnecting client @%p: %s", client, e.what());
-		}
-	}
-}
-
-ircd::ctx::future<void>
-ircd::close(client &client,
-            const net::close_opts &opts)
-{
-	if(likely(client.sock))
-		return close(*client.sock, opts);
-	else
-		return {};
-}
-
-void
-ircd::close(client &client,
-            const net::close_opts &opts,
-            net::close_callback callback)
-{
-	close(*client.sock, opts, std::move(callback));
-}
-
-namespace ircd
-{
-	static bool handle_ec_success(client &);
-	static bool handle_ec_timeout(client &);
-	static bool handle_ec_eof(client &);
-	static bool handle_ec_short_read(client &);
-	static bool handle_ec_default(client &, const error_code &);
-}
-
-bool
-ircd::handle_ec(client &client,
-                const error_code &ec)
-{
-	using namespace boost::system::errc;
-	using boost::system::system_category;
-	using boost::asio::error::get_ssl_category;
-	using boost::asio::error::get_misc_category;
-
-	if(ec.category() == system_category()) switch(ec.value())
-	{
-		case success:                return handle_ec_success(client);
-		case operation_canceled:     return handle_ec_timeout(client);
-		default:                     return handle_ec_default(client, ec);
-	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
-	{
-		case asio::error::eof:       return handle_ec_eof(client);
-		default:                     return handle_ec_default(client, ec);
-	}
-	else if(ec.category() == get_ssl_category()) switch(ec.value())
-	{
-		case SSL_R_SHORT_READ:       return handle_ec_short_read(client);
-		default:                     return handle_ec_default(client, ec);
-	}
-	else return handle_ec_default(client, ec);
-}
-
-bool
-ircd::handle_ec_default(client &client,
-                        const error_code &ec)
-{
-	log::debug("client(%p): %s: %s",
-	           &client,
-	           ec.category().name(),
-	           ec.message());
-
-	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
-	return false;
-}
-
-bool
-ircd::handle_ec_short_read(client &client)
-try
-{
-	log::warning("client[%s]: short_read",
-	             string(remote(client)));
-
-	close(client, net::dc::RST, net::close_ignore);
-	return false;
-}
-catch(const std::exception &e)
-{
-	log::error("client(%p): short_read: %s",
-	           &client,
-	           e.what());
-
-	return false;
-}
-
-bool
-ircd::handle_ec_eof(client &client)
-try
-{
-	log::debug("client[%s]: EOF",
-	           string(remote(client)));
-
-	close(client, net::dc::RST, net::close_ignore);
-	return false;
-}
-catch(const std::exception &e)
-{
-	log::error("client(%p): EOF: %s",
-	           &client,
-	           e.what());
-
-	return false;
-}
-
-bool
-ircd::handle_ec_timeout(client &client)
-try
-{
-	assert(bool(client.sock));
-	log::warning("client[%s]: disconnecting after inactivity timeout",
-	             string(remote(client)));
-
-	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
-	return false;
-}
-catch(const std::exception &e)
-{
-	log::error("client(%p): timeout: %s",
-	           &client,
-	           e.what());
-
-	return false;
-}
-
-bool
-ircd::handle_ec_success(client &client)
-{
-	return true;
 }

@@ -1393,9 +1393,20 @@ ircd::net::socket::wait(const wait_opts &opts,
 			sd.async_wait(wait_type::wait_write, std::move(handle));
 			break;
 
+		// The problem here is that the wait operation gives ec=success on both a
+		// socket error and when data is actually available. This should be giving
+		// the error in ec; asio should fix this. On linux, all epoll()'s
+		// unconditionally report errors and that error gets hidden by the ec=success;
+		// as a consequence net::ready::ERROR is also useless and never invoked
+		// except when it's canceled. Something here smells off.
 		case ready::READ:
-			sd.async_wait(wait_type::wait_read, std::move(handle));
+		{
+			static char buf[1];
+			static const asio::mutable_buffers_1 bufs{buf, sizeof(buf)};
+			sd.async_receive(bufs, sd.message_peek, std::move(handle));
+			//sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
+		}
 
 		default:
 			throw ircd::not_implemented{};
@@ -1447,8 +1458,7 @@ noexcept try
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-	assert(ec == success || ec == operation_canceled);
-	log.debug("socket(%p)[%s]: ready %s: %s (available: %zu)",
+	log.debug("socket(%p)[%s]: ready to %s: %s (available: %zu)",
 	          this,
 	          string(remote_ipport(*this)),
 	          reflect(type),
@@ -1460,20 +1470,6 @@ noexcept try
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
-		case success: if(type == ready::READ)
-		{
-			// The problem here is that the wait operation gives ec=success
-			// on both a socket error and when data is actually available. Ideally
-			// this should be giving the error, or at worst, something other than
-			// success with the expectation we also wait(ERROR) too. The workaround
-			// is to do a non-blocking peek here.
-			static char buf[1];
-			assert(!blocking(*this));
-			sd.receive(asio::mutable_buffers_1(buf, sizeof(buf)), sd.message_peek, ec);
-			break;
-		}
-		else break;
-
 		// We expose a timeout condition to the user, but hide
 		// other cancellations from invoking the callback.
 		case operation_canceled:

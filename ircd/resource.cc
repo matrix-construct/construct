@@ -71,6 +71,7 @@ catch(const http::error &e)
 	{
 		case http::BAD_REQUEST:
 		case http::REQUEST_TIMEOUT:
+			close(client).wait();
 			return false;
 
 		case http::INTERNAL_SERVER_ERROR:
@@ -292,6 +293,7 @@ ircd::resource::operator()(client &client,
 {
 	auto &method(operator[](head.method));
 	http::request::content content{pc, head};
+	assert(pc.unparsed() == 0);
 
 	const auto pathparm
 	{

@@ -37,6 +37,9 @@ namespace ircd
 	http::response::write_closure write_closure(client &);
 	parse::read_closure read_closure(client &);
 
+	void close(client &, const net::close_opts &, net::close_callback);
+	ctx::future<void> close(client &, const net::close_opts & = {});
+
 	std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 }
 
