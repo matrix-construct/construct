@@ -26,6 +26,8 @@ namespace ircd::net
 {
 	struct hostport;
 
+	uint16_t port(const hostport &);
+
 	const auto &host(const hostport &);
 	auto &host(hostport &);
 
@@ -82,4 +84,12 @@ inline const auto &
 ircd::net::host(const hostport &hp)
 {
 	return hp.host;
+}
+
+inline uint16_t
+ircd::net::port(const hostport &hp)
+{
+	return hp.portnum? hp.portnum:
+	       hp.port?    lex_cast<uint16_t>(hp.port):
+	       0;
 }

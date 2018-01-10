@@ -2254,22 +2254,6 @@ ircd::net::string(const mutable_buffer &buf,
 	}
 }
 
-//
-// remote
-//
-
-ircd::net::remote::remote(const hostport &hostport)
-:ipport
-{
-	resolve(hostport)
-}
-,hostname
-{
-	hostport.host
-}
-{
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/ipport.h
@@ -2421,9 +2405,7 @@ ircd::net::string(const mutable_buffer &buf,
 	{
 		fmt::sprintf
 		{
-			buf, "%s:%s",
-			hp.host,
-			hp.portnum? lex_cast(hp.portnum) : hp.port
+			buf, "%s:%u", host(hp), port(hp)
 		}
 	};
 
@@ -2444,7 +2426,7 @@ ircd::net::string(const ip::address &addr)
 std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
-	std::string ret(256, char{});
+	std::string ret(128, char{});
 	const auto addr{string(net::addr(ep))};
 	const auto data{const_cast<char *>(ret.data())};
 	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));

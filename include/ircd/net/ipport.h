@@ -96,6 +96,7 @@ ircd::net::ipport::ipport(const uint32_t &ip,
                           const uint16_t &p)
 {
 	std::get<TYPE>(*this) = false;
+	host6(*this) = 0;
 	host4(*this) = ip;
 	port(*this) = p;
 }

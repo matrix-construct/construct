@@ -53,7 +53,11 @@ struct ircd::net::remote
 	:ipport{ipp}
 	{}
 
-	remote(const hostport &hp);
+	explicit remote(const hostport &hostport)
+	:ipport{uint32_t(0), net::port(hostport)}
+	,hostname{net::host(hostport)}
+	{}
+
 	remote() = default;
 
 	friend std::ostream &operator<<(std::ostream &, const remote &);
