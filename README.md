@@ -1,6 +1,6 @@
 # This — is The **Construct**
 
-<img align="right" src="https://i.imgur.com/mHGxDyC.png" />
+<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
 
 #### Internet Relay Chat daemon: *Matrix Construct*
 
@@ -23,13 +23,14 @@ translated as a superset. Similar to the legacy IRC protocol's origins, it wisel
 technologies in vogue for its day to aid the virility of implementations. A vibrant and
 growing ecosystem [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
+<!-- <img align="left" src="https://i.imgur.com/mHGxDyC.png" /> -->
+
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
 the internet. This mission strives to make the software easy to understand, modify, audit,
 and extend. It remains true to its roots with its modular design and having minimal
 requirements. Even though all of the old code has been rewritten, the same spirit and
 _philosophy of its predecessors_ is still obvious throughout.
-
 
 ## Installation
 
