@@ -438,6 +438,9 @@ RB_CHK_SYSHEADER([winsock2.h], [WINSOCK2_H])
 RB_CHK_SYSHEADER([ws2tcpip.h], [WS2TCPIP_H])
 RB_CHK_SYSHEADER([iphlpapi.h], [IPHLPAPI_H])
 
+dnl linux platform
+RB_CHK_SYSHEADER([aio.h], [AIO_H])
+
 dnl experimental
 RB_CHK_SYSHEADER([experimental/string_view], [EXPERIMENTAL_STRING_VIEW])
 RB_CHK_SYSHEADER([experimental/optional], [EXPERIMENTAL_OPTIONAL])
@@ -498,6 +501,16 @@ AM_COND_IF(INTERIX,
 	CPPDEFINE([_XPG4_2])
 ],[])
 
+
+AM_COND_IF(LINUX,
+[
+	AC_ARG_ENABLE(aio,
+	AC_HELP_STRING([--enable-aio], [Enable AIO support on Linux platforms]),
+	[
+		IRCD_DEFINE(USE_AIO, [1], [Define to 1 if you want AIO support on linux])
+		LIBS="$LIBS -rt"
+	],[])
+],[])
 
 
 dnl ***************************************************************************

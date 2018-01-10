@@ -26,6 +26,10 @@
 #include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
+#ifdef IRCD_USE_AIO
+	#include <RB_INC_AIO_H
+#endif
+
 namespace ircd::fs
 {
 	using namespace boost::filesystem;
@@ -53,6 +57,16 @@ ircd::fs::paths
 	{ "ircd binary",       SPATH         },
 	{ "db",                DBPATH        },
 }};
+
+ircd::fs::init::init()
+:aio{std::make_unique<fs::aio>()}
+{
+}
+
+ircd::fs::init::~init()
+noexcept
+{
+}
 
 bool
 ircd::fs::write(const std::string &path,
@@ -89,72 +103,6 @@ ircd::fs::append(const std::string &path,
 	return true;
 }
 
-ircd::fs::init::init()
-{
-	#if 0
-	struct aioinit aio {0};
-	aio.aio_threads = 0;
-	aio.aio_num = 64;
-	aio.aio_idle_time = 0;
-	aio_init(&aio);
-	#endif
-}
-
-ircd::fs::init::~init()
-noexcept
-{
-}
-
-#if 0 //_WIN32
-namespace ircd::fs
-{
-
-
-}
-
-/// Reads the file at path into a string; yields your ircd::ctx.
-///
-std::string
-ircd::fs::read(const std::string &path)
-{
-	const int fd
-	{
-		syscall(::open, path.c_str(), O_CLOEXEC, O_RDONLY)
-	};
-
-	const unwind close{[&fd]
-	{
-		syscall(::close, fd);
-	}};
-
-	struct stat stat;
-	syscall(::fstat, fd, &stat);
-	const auto &size{stat.st_size};
-
-	std::string ret(size, char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	struct aiocb cb
-	{
-		fd, 0, data(buf), size(buf), 0
-	};
-
-	syscall(::aio_read, &cb);
-
-	struct aiocb cbs[]
-	{
-		&cb
-	};
-
-	syscall(::aio_suspend, &cbs, sizeof(cbs) / sizeof(aiocb), nullptr);
-
-	ret.resize(read);
-	return ret;
-}
-#else
 std::string
 ircd::fs::read(const std::string &path)
 {
@@ -164,7 +112,6 @@ ircd::fs::read(const std::string &path)
 	std::istream_iterator<char> e{};
 	return std::string{b, e};
 }
-#endif
 
 ircd::string_view
 ircd::fs::read(const string_view &path,
@@ -336,3 +283,120 @@ catch(const std::out_of_range &e)
 {
 	return nullptr;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// linux aio
+//
+
+namespace ircd::fs
+{
+	ctx::ctx *waiter;
+}
+
+void
+ircd::fs::notify()
+{
+	if(waiter)
+		notify(*waiter);
+}
+
+#ifndef IRCD_USE_AIO
+
+struct ircd::fs::aio
+{
+	aio() {}
+	~aio() noexcept {}
+};
+
+#else
+
+struct ircd::fs::aio
+{
+	aioinit init {0};
+
+	std::string read(const std::string &path);
+
+	aio();
+	~aio() noexcept;
+};
+
+ircd::fs::aio::aio()
+{
+	init.aio_threads = 0;
+	init.aio_num = 64;
+	init.aio_idle_time = 0;
+	aio_init(&init);
+
+	auto test{[this]
+	{
+		const auto got{this->read("/etc/passwd")};
+		std::cout << "got: " << got << std::endl;
+	}};
+
+	ircd::context
+	{
+		"aiotest", context::POST | context::DETACH, test
+	};
+}
+
+ircd::fs::aio::~aio()
+noexcept
+{
+}
+
+/// Reads the file at path into a string; yields your ircd::ctx.
+///
+std::string
+ircd::fs::aio::read(const std::string &path)
+{
+	const auto fd
+	{
+		syscall(::open, path.c_str(), O_CLOEXEC, O_RDONLY)
+	};
+
+	const unwind close{[&fd]
+	{
+		syscall(::close, fd);
+	}};
+
+	struct stat stat;
+	syscall(::fstat, fd, &stat);
+	const auto &size{stat.st_size};
+
+	std::string ret(size, char{});
+	const mutable_buffer buf
+	{
+		const_cast<char *>(ret.data()), ret.size()
+	};
+
+	struct aiocb cb {0};
+	cb.aio_fildes = fd;
+	cb.aio_offset = 0;
+	cb.aio_buf = buffer::data(buf);
+	cb.aio_nbytes = buffer::size(buf);
+	cb.aio_reqprio = 0;
+	cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+	cb.aio_sigevent.sigev_signo = SIGIO;
+	cb.aio_sigevent.sigev_value.sival_ptr = nullptr;
+
+	syscall(::aio_read, &cb);
+
+	waiter = ctx::current;
+	int errval; do
+	{
+		ctx::wait();
+	}
+	while((errval = ::aio_error(&cb)) == EINPROGRESS);
+
+	const ssize_t bytes
+	{
+		syscall(::aio_return, &cb)
+	};
+
+	assert(bytes >= 0);
+	ret.resize(size_t(bytes));
+	return ret;
+}
+
+#endif

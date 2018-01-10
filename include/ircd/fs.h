@@ -45,6 +45,9 @@
 /// during IOs.
 namespace ircd::fs
 {
+	struct aio;
+	struct init;
+
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, filesystem_error)
 
@@ -101,11 +104,13 @@ namespace ircd::fs
 	bool overwrite(const std::string &name, const const_raw_buffer &buf);
 	bool overwrite(const string_view &name, const const_raw_buffer &buf);
 
-	struct init;
+	void notify();
 }
 
 struct ircd::fs::init
 {
+	std::unique_ptr<fs::aio> aio;
+
 	init();
 	~init() noexcept;
 };

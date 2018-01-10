@@ -121,6 +121,7 @@ try
 	sigs.add(SIGTERM);
 	sigs.add(SIGUSR1);
 	sigs.add(SIGUSR2);
+	sigs.add(SIGIO);
 	sigs.async_wait(sigfd_handler);
 
 	// Because we registered signal handlers with the io_context, ios->run()
@@ -211,6 +212,7 @@ catch(const std::exception &e)
 	return false;
 }
 
+static void handle_io();
 static void handle_usr2();
 static void handle_usr1();
 static void handle_quit();
@@ -240,6 +242,7 @@ sigfd_handler(const boost::system::error_code &ec,
 
 	switch(signum)
 	{
+		case SIGIO:    handle_io();             break;
 		case SIGUSR1:  handle_usr1();           break;
 		case SIGUSR2:  handle_usr2();           break;
 		case SIGINT:   handle_interruption();   break;
@@ -286,6 +289,17 @@ try
 catch(const std::exception &e)
 {
 	ircd::log::error("SIGUSR2 handler: %s", e.what());
+}
+
+void
+handle_io()
+try
+{
+	ircd::fs::notify();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("SIGIO handler: %s", e.what());
 }
 
 void
