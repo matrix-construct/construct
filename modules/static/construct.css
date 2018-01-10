@@ -1113,7 +1113,7 @@ body.loaded
 	position: relative;
 	flex-shrink: 0;
 	align-items: center;
-	align-content: stretch;
+	align-content: center;
 	justify-content: center;
 }
 
