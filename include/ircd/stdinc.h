@@ -154,6 +154,7 @@ namespace std
 namespace ircd
 {
 	using std::nullptr_t;
+	using std::nothrow_t;
 	using std::begin;
 	using std::end;
 	using std::get;
