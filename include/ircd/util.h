@@ -641,15 +641,15 @@ struct values
 // Error-checking closure for POSIX system calls. Note the usage is
 // syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
 //
-template<int ERROR_CODE = -1,
+template<long ERROR_CODE = -1,
          class function,
          class... args>
 auto
 syscall(function&& f,
         args&&... a)
--> typename std::enable_if<std::is_same<int, decltype(f(a...))>::value, int>::type
+-> typename std::enable_if<std::is_convertible<long, decltype(f(a...))>::value, long>::type
 {
-	const int ret
+	const auto ret
 	{
 		f(std::forward<args>(a)...)
 	};
@@ -664,15 +664,15 @@ syscall(function&& f,
 // Error-checking closure for POSIX system calls. Note the usage is
 // syscall(read, foo, bar, baz) not a macro like syscall(read(foo, bar, baz));
 //
-template<int ERROR_CODE = -1,
+template<long ERROR_CODE = -1,
          class function,
          class... args>
 auto
 uninterruptible_syscall(function&& f,
                         args&&... a)
--> typename std::enable_if<std::is_same<int, decltype(f(a...))>::value, int>::type
+-> typename std::enable_if<std::is_convertible<long, decltype(f(a...))>::value, long>::type
 {
-	int ret; do
+	long ret; do
 	{
 		ret = f(std::forward<args>(a)...);
 	}
