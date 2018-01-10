@@ -517,7 +517,6 @@ AM_COND_IF(LINUX,
 	AC_HELP_STRING([--enable-aio], [Enable AIO support on Linux platforms]),
 	[
 		IRCD_DEFINE(USE_AIO, [1], [Define to 1 if you want AIO support on linux])
-		LIBS="$LIBS -rt"
 	],[])
 ],[])
 

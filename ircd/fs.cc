@@ -23,12 +23,13 @@
  *  USA
  */
 
-#include <boost/filesystem.hpp>
+#undef linux
+#include <RB_INC_UNISTD_H
+#include <RB_INC_SYS_SYSCALL_H
+#include <RB_INC_SYS_EVENTFD_H
+#include <RB_INC_LINUX_AIO_ABI_H
+#include <RB_INC_BOOST_FILESYSTEM_HPP
 #include <ircd/asio.h>
-
-#ifdef IRCD_USE_AIO
-	#include <RB_INC_AIO_H
-#endif
 
 namespace ircd::fs
 {
@@ -289,18 +290,6 @@ catch(const std::out_of_range &e)
 // linux aio
 //
 
-namespace ircd::fs
-{
-	ctx::ctx *waiter;
-}
-
-void
-ircd::fs::notify()
-{
-	if(waiter)
-		notify(*waiter);
-}
-
 #ifndef IRCD_USE_AIO
 
 struct ircd::fs::aio
@@ -313,7 +302,40 @@ struct ircd::fs::aio
 
 struct ircd::fs::aio
 {
-	aioinit init {0};
+	static constexpr const size_t &MAX_EVENTS
+	{
+		64
+	};
+
+	asio::posix::stream_descriptor resfd
+	{
+		*ircd::ios, int(syscall(::eventfd, 0, EFD_NONBLOCK))
+	};
+
+	aio_context_t idp
+	{
+		0
+	};
+
+	void handle_ready(const error_code &ec)
+	noexcept
+	{
+		std::array<io_event, MAX_EVENTS> events;
+
+		const auto nr
+		{
+			syscall<SYS_io_getevents>(idp, 0, events.size(), events.data(), nullptr)
+		};
+
+		for(ssize_t i(0); i < nr; ++i)
+		{
+			auto &event{events[i]};
+			auto &ctx{*reinterpret_cast<ctx::ctx *>(event.data)};
+			auto &cb{*reinterpret_cast<iocb *>(event.obj)};
+			cb.aio_data = event.res;
+			ircd::ctx::notify(ctx);
+		}
+	}
 
 	std::string read(const std::string &path);
 
@@ -323,10 +345,8 @@ struct ircd::fs::aio
 
 ircd::fs::aio::aio()
 {
-	init.aio_threads = 0;
-	init.aio_num = 64;
-	init.aio_idle_time = 0;
-	aio_init(&init);
+	syscall<SYS_io_setup>(MAX_EVENTS, &idp);
+	resfd.async_wait(resfd.wait_read, std::bind(&aio::handle_ready, this, ph::_1));
 
 	auto test{[this]
 	{
@@ -343,6 +363,7 @@ ircd::fs::aio::aio()
 ircd::fs::aio::~aio()
 noexcept
 {
+	syscall<SYS_io_destroy>(idp);
 }
 
 /// Reads the file at path into a string; yields your ircd::ctx.
@@ -370,32 +391,34 @@ ircd::fs::aio::read(const std::string &path)
 		const_cast<char *>(ret.data()), ret.size()
 	};
 
-	struct aiocb cb {0};
-	cb.aio_fildes = fd;
-	cb.aio_offset = 0;
-	cb.aio_buf = buffer::data(buf);
-	cb.aio_nbytes = buffer::size(buf);
+	struct iocb cb{0};
+	cb.aio_flags = IOCB_FLAG_RESFD;
 	cb.aio_reqprio = 0;
-	cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
-	cb.aio_sigevent.sigev_signo = SIGIO;
-	cb.aio_sigevent.sigev_value.sival_ptr = nullptr;
+	cb.aio_resfd = resfd.native_handle();
+	cb.aio_data = uintptr_t(ctx::current);
 
-	syscall(::aio_read, &cb);
+	cb.aio_lio_opcode = IOCB_CMD_PREAD;
+	cb.aio_fildes = fd;
+	cb.aio_buf = uintptr_t(buffer::data(buf));
+	cb.aio_nbytes = buffer::size(buf);
+	cb.aio_offset = 0;
 
-	waiter = ctx::current;
-	int errval; do
+	struct iocb *cbs[]
 	{
-		ctx::wait();
-	}
-	while((errval = ::aio_error(&cb)) == EINPROGRESS);
+		&cb
+	};
 
-	const ssize_t bytes
+	syscall<SYS_io_submit>(idp, 1, &cbs);  // there
+	ctx::wait();                           // back
+
+	const ssize_t &bytes
 	{
-		syscall(::aio_return, &cb)
+		reinterpret_cast<const ssize_t &>(cb.aio_data)
 	};
 
 	assert(bytes >= 0);
 	ret.resize(size_t(bytes));
+
 	return ret;
 }
 

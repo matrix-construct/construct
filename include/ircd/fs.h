@@ -103,8 +103,6 @@ namespace ircd::fs
 	bool append(const std::string &name, const const_raw_buffer &buf);
 	bool overwrite(const std::string &name, const const_raw_buffer &buf);
 	bool overwrite(const string_view &name, const const_raw_buffer &buf);
-
-	void notify();
 }
 
 struct ircd::fs::init
