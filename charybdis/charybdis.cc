@@ -27,7 +27,7 @@
 
 namespace fs = ircd::fs;
 
-static void sigfd_handler(const boost::system::error_code &, int);
+static void sigfd_handler(const boost::system::error_code &, int) noexcept;
 static bool startup_checks();
 static void enable_coredumps();
 static void print_version();
@@ -126,8 +126,6 @@ try
 	sigs.add(SIGTSTP);
 	sigs.add(SIGQUIT);
 	sigs.add(SIGTERM);
-	sigs.add(SIGUSR1);
-	sigs.add(SIGUSR2);
 	sigs.async_wait(sigfd_handler);
 
 	// Because we registered signal handlers with the io_context, ios->run()
@@ -218,8 +216,6 @@ catch(const std::exception &e)
 	return false;
 }
 
-static void handle_usr2();
-static void handle_usr1();
 void
 #ifdef HAVE_SYS_RESOURCE_H
 enable_coredumps()
@@ -254,6 +250,7 @@ static void handle_hangup();
 void
 sigfd_handler(const boost::system::error_code &ec,
               int signum)
+noexcept
 {
 	switch(ec.value())
 	{
@@ -273,8 +270,6 @@ sigfd_handler(const boost::system::error_code &ec,
 
 	switch(signum)
 	{
-		case SIGUSR1:  handle_usr1();           break;
-		case SIGUSR2:  handle_usr2();           break;
 		case SIGINT:   handle_interruption();   break;
 		case SIGTSTP:  handle_termstop();       break;
 		case SIGHUP:   handle_hangup();         break;
@@ -296,29 +291,6 @@ try
 catch(const std::exception &e)
 {
 	ircd::log::error("SIGQUIT handler: %s", e.what());
-}
-
-void
-handle_usr1()
-try
-{
-	// Do ircd rehash config
-}
-catch(const std::exception &e)
-{
-	ircd::log::error("SIGUSR1 handler: %s", e.what());
-}
-
-void
-handle_usr2()
-try
-{
-	// Do ircd rehash bans
-	// Do refresh motd
-}
-catch(const std::exception &e)
-{
-	ircd::log::error("SIGUSR2 handler: %s", e.what());
 }
 
 void
