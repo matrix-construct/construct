@@ -44,7 +44,6 @@ namespace ircd
 	ctx::ctx *main_context;                      // Main program loop
 	bool debugmode;                              // meaningful ifdef RB_DEBUG
 
-	void enable_coredumps();
 	std::string read_conf(std::string file);
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;
@@ -113,11 +112,6 @@ try
 	if(runlevel != runlevel::HALT)
 		throw error("Cannot init() IRCd from runlevel %s",
 		            reflect(runlevel));
-
-	// cores are not dumped without consent of the user to maintain the privacy
-	// of cryptographic key material in memory at the time of the crash.
-	if(RB_DEBUG_LEVEL || debugmode)
-		enable_coredumps();
 
 	// Samples the thread this context was executed on which should be where
 	// the user ran ios.run(). The user may have invoked ios.run() on multiple
@@ -442,32 +436,6 @@ catch(const std::exception &e)
 	           e.what());
 	throw;
 }
-
-void
-#ifdef HAVE_SYS_RESOURCE_H
-ircd::enable_coredumps()
-try
-{
-	//
-	// Setup corefile size immediately after boot -kre
-	//
-
-	rlimit rlim;	// resource limits
-	syscall(getrlimit, RLIMIT_CORE, &rlim);
-
-	// Set corefilesize to maximum
-	rlim.rlim_cur = rlim.rlim_max;
-	syscall(setrlimit, RLIMIT_CORE, &rlim);
-}
-catch(const std::exception &e)
-{
-	std::cerr << "Failed to adjust rlimit: " << e.what() << std::endl;
-}
-#else
-ircd::enable_coredumps()
-{
-}
-#endif
 
 // namespace ircd {
 

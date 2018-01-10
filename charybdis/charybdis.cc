@@ -21,6 +21,7 @@
 
 #include <ircd/ircd.h>
 #include <ircd/asio.h>
+#include <RB_INC_SYS_RESOURCE_H
 #include "lgetopt.h"
 #include "charybdis.h"
 
@@ -28,6 +29,7 @@ namespace fs = ircd::fs;
 
 static void sigfd_handler(const boost::system::error_code &, int);
 static bool startup_checks();
+static void enable_coredumps();
 static void print_version();
 
 const char *const fatalerrstr
@@ -89,6 +91,11 @@ try
 	parseargs(&argc, &argv, opts);
 	if(!startup_checks())
 		return 1;
+
+	// cores are not dumped without consent of the user to maintain the privacy
+	// of cryptographic key material in memory at the time of the crash.
+	if(RB_DEBUG_LEVEL || ircd::debugmode)
+		enable_coredumps();
 
 	if(printversion)
 	{
@@ -213,6 +220,32 @@ catch(const std::exception &e)
 
 static void handle_usr2();
 static void handle_usr1();
+void
+#ifdef HAVE_SYS_RESOURCE_H
+enable_coredumps()
+try
+{
+	//
+	// Setup corefile size immediately after boot -kre
+	//
+
+	rlimit rlim;    // resource limits
+	ircd::syscall(getrlimit, RLIMIT_CORE, &rlim);
+
+	// Set corefilesize to maximum
+	rlim.rlim_cur = rlim.rlim_max;
+	ircd::syscall(setrlimit, RLIMIT_CORE, &rlim);
+}
+catch(const std::exception &e)
+{
+	std::cerr << "Failed to adjust rlimit: " << e.what() << std::endl;
+}
+#else
+enable_coredumps()
+{
+}
+#endif
+
 static void handle_quit();
 static void handle_interruption();
 static void handle_termstop();
