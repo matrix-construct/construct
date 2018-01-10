@@ -185,7 +185,7 @@ namespace ircd
 	template<class T> std::string demangle();
 }
 
-#include "util.h"
+#include "util/util.h"
 #include "exception.h"
 #include "string_view.h"
 #include "vector_view.h"
@@ -216,7 +216,7 @@ namespace ircd
 #include "openssl.h"
 #include "http.h"
 #include "fmt.h"
-#include "fs.h"
+#include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"
 #include "db/db.h"
