@@ -561,7 +561,7 @@ ircd::net::linger(socket &socket,
 	assert(t <= std::numeric_limits<int>::max());
 	ip::tcp::socket::linger option
 	{
-		t >= 0,           // ON / OFF boolean
+		t >= 0,                // ON / OFF boolean
 		t >= 0? int(t) : 0     // Uses 0 when OFF
 	};
 
@@ -958,10 +958,9 @@ catch(const ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p): in accept(): [%s]: %s",
+	log.error("%s: socket(%p): in accept(): %s",
 	          std::string(*this),
 	          sock.get(),
-	          connected(*sock)? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
@@ -1031,10 +1030,9 @@ catch(const ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p): in handshake(): [%s]: %s",
+	log.error("%s: socket(%p): in handshake(): %s",
 	          std::string(*this),
 	          sock.get(),
-	          connected(*sock)? string(sock->remote()) : "<gone>",
 	          e.what());
 }
 
@@ -1072,18 +1070,19 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 {
 	log.debug("%s preparing listener socket configuration...",
 	          std::string(*this));
-/*
+
 	ssl.set_options
 	(
-		//ssl.default_workarounds
+		0
+		//| ssl.default_workarounds
 		//| ssl.no_tlsv1
 		//| ssl.no_tlsv1_1
 		//| ssl.no_tlsv1_2
 		//| ssl.no_sslv2
 		//| ssl.no_sslv3
-		//ssl.single_dh_use
+		//| ssl.single_dh_use
 	);
-*/
+
 	//TODO: XXX
 	ssl.set_password_callback([this]
 	(const auto &size, const auto &purpose)
