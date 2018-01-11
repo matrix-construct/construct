@@ -114,10 +114,11 @@ struct bool_specifier
 	static const std::tuple
 	<
 		bool,
-		char,  unsigned char,
-		short, unsigned short,
-		int,   unsigned int,
-		long,  unsigned long
+		char,       unsigned char,
+		short,      unsigned short,
+		int,        unsigned int,
+		long,       unsigned long,
+		long long,  unsigned long long
 	>
 	types;
 
@@ -139,10 +140,11 @@ struct signed_specifier
 	static const std::tuple
 	<
 		bool,
-		char,  unsigned char,
-		short, unsigned short,
-		int,   unsigned int,
-		long,  unsigned long
+		char,       unsigned char,
+		short,      unsigned short,
+		int,        unsigned int,
+		long,       unsigned long,
+		long long,  unsigned long long
 	>
 	types;
 
@@ -164,10 +166,11 @@ struct unsigned_specifier
 	static const std::tuple
 	<
 		bool,
-		char,  unsigned char,
-		short, unsigned short,
-		int,   unsigned int,
-		long,  unsigned long
+		char,       unsigned char,
+		short,      unsigned short,
+		int,        unsigned int,
+		long,       unsigned long,
+		long long,  unsigned long long
 	>
 	types;
 
@@ -185,10 +188,11 @@ struct hex_lowercase_specifier
 	static const std::tuple
 	<
 		bool,
-		char,  unsigned char,
-		short, unsigned short,
-		int,   unsigned int,
-		long,  unsigned long
+		char,       unsigned char,
+		short,      unsigned short,
+		int,        unsigned int,
+		long,       unsigned long,
+		long long,  unsigned long long
 	>
 	types;
 
