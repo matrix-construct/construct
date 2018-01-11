@@ -511,14 +511,26 @@ AM_COND_IF(INTERIX,
 ],[])
 
 
+dnl
+dnl Linux AIO support
+dnl
+
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(aio,
-	AC_HELP_STRING([--enable-aio], [Enable AIO support on Linux platforms]),
+	AC_ARG_ENABLE(aio, AC_HELP_STRING([--disable-aio], [Disable kernel AIO support]),
 	[
-		IRCD_DEFINE(USE_AIO, [1], [Define to 1 if you want AIO support on linux])
-	],[])
-],[])
+		aio=$enableval
+	],
+	[
+		aio=yes
+	])
+], [])
+
+if test "$aio" = "yes"; then
+	IRCD_DEFINE(USE_AIO, [1], [Linux AIO is supported and will be used])
+else
+	IRCD_DEFINE(USE_AIO, [0], [Define to 1 if you want AIO support (linux only)])
+fi
 
 
 dnl ***************************************************************************
@@ -1364,6 +1376,7 @@ echo
 echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
 echo "Version ........................... $RB_VERSION"
 echo "Configuration time ................ $RB_DATESTR"
+echo "Host OS ........................... $host_os"
 echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
@@ -1375,6 +1388,7 @@ echo "SSL support........................ $SSL_TYPE"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"
+echo "Linux AIO support ................. $aio"
 echo "Installing into ................... $prefix"
 echo
 echo "* Ready to build $PACKAGE_NAME"
