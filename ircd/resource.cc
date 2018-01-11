@@ -26,7 +26,6 @@ namespace ircd
 	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
 }
 
-IRCD_INIT_PRIORITY(STD_CONTAINER)
 decltype(ircd::resource::resources)
 ircd::resource::resources
 {};

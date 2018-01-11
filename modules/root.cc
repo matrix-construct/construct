@@ -21,19 +21,11 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
-{
-	"Web root content resource",
-};
-
-IRCD_INIT_PRIORITY(STD_CONTAINER)
 std::map<std::string, std::string, iless> files
-{
-};
+{};
 
-__attribute__((constructor))
 void
-init_0()
+init_files()
 {
 	// TODO: XXX
 	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static"))
@@ -97,4 +89,10 @@ resource root_resource
 resource::method root_get
 {
 	root_resource, "GET", get_root
+};
+
+mapi::header IRCD_MODULE
+{
+	"Web root content resource",
+	init_files
 };
