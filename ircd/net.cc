@@ -1400,7 +1400,7 @@ ircd::net::socket::wait(const wait_opts &opts,
 		// except when it's canceled. Something here smells off.
 		case ready::READ:
 		{
-			static char buf[1];
+			static char buf[1] alignas(16);
 			static const asio::mutable_buffers_1 bufs{buf, sizeof(buf)};
 			sd.async_receive(bufs, sd.message_peek, std::move(handle));
 			//sd.async_wait(wait_type::wait_read, std::move(handle));
@@ -1655,9 +1655,7 @@ noexcept try
 	if(!timedout)
 		cancel_timeout();
 
-	if(unlikely(sd.is_open()))
-		sd.close();
-
+	sd.close();
 	call_user(callback, ec);
 }
 catch(const boost::system::system_error &e)
