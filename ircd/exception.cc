@@ -23,6 +23,32 @@
  *
  */
 
+[[noreturn]] static void
+ircd_terminate_handler()
+noexcept
+{
+	std::abort();
+}
+
+void
+ircd::aborting()
+noexcept
+{
+	std::set_terminate(&ircd_terminate_handler);
+}
+
+void
+ircd::throw_system_error(const int &code)
+{
+	throw std::system_error(code, std::system_category());
+}
+
+std::exception_ptr
+ircd::make_system_error(const int &code)
+{
+	return std::make_exception_ptr(std::system_error(code, std::system_category()));
+}
+
 ssize_t
 ircd::exception::generate(const char *const &fmt,
                           const va_rtti &ap)
@@ -115,18 +141,4 @@ noexcept
 {
 	log::critical("IRCd Terminated: %s", e.what());
 	throw e;
-}
-
-[[noreturn]] static void
-ircd_terminate_handler()
-noexcept
-{
-	std::abort();
-}
-
-void
-ircd::aborting()
-noexcept
-{
-	std::set_terminate(&ircd_terminate_handler);
 }

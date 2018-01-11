@@ -41,6 +41,10 @@ namespace ircd
 	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG);
 	[[noreturn]] void assertion() noexcept(RB_DEBUG);
 
+	// util
+	std::exception_ptr make_system_error(const int &code = errno);
+	[[noreturn]] void throw_system_error(const int &code = errno);
+
 	// Can be used to clobber the std::terminate_handler
 	void aborting() noexcept;
 }
