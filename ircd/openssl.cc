@@ -337,6 +337,20 @@ ircd::openssl::subject_common_name(const mutable_buffer &out,
 }
 
 ircd::string_view
+ircd::openssl::printX509(const mutable_buffer &buf,
+                         const string_view &pem,
+                         ulong flags)
+{
+	const custom_ptr<X509> x509
+	{
+		X509_new(),
+		[](X509 *const x509) { X509_free(x509); }
+	};
+
+	return print(buf, read_pem(*x509, pem), flags);
+}
+
+ircd::string_view
 ircd::openssl::print(const mutable_buffer &buf,
                      const X509 &cert,
                      ulong flags)
