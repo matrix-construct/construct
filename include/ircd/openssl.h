@@ -36,6 +36,9 @@ struct bignum_st;
 struct bignum_ctx;
 struct bio_st;
 struct evp_pkey_st;
+struct ec_group_st;
+struct ec_point_st;
+struct ec_key_st;
 
 /// OpenSSL library interface. Provides things we need to expose from OpenSSL
 /// to the rest of the project. Anything that employs forward declared types
@@ -58,6 +61,9 @@ namespace ircd::openssl
 	using BN_CTX = ::bignum_ctx;
 	using EVP_PKEY = ::evp_pkey_st;
 	using BIO = ::bio_st;
+	using EC_GROUP = ::ec_group_st;
+	using EC_POINT = ::ec_point_st;
+	using EC_KEY = ::ec_key_st;
 
 	// Library general
 	string_view version();
@@ -75,6 +81,8 @@ namespace ircd::openssl
 	EVP_PKEY &read_pem_priv(EVP_PKEY &out, const string_view &pem);
 	string_view write_pem_pub(const mutable_buffer &out, const EVP_PKEY &);
 	string_view write_pem_priv(const mutable_buffer &out, const EVP_PKEY &);
+	void set(EVP_PKEY &out, RSA &in);
+	void set(EVP_PKEY &out, EC_KEY &in);
 
 	// RSA suite
 	void check(const RSA &);
@@ -83,7 +91,13 @@ namespace ircd::openssl
 	string_view print(const mutable_buffer &buf, const RSA &, const off_t &offset = 0);
 	RSA &genrsa(RSA &out, const uint &bits = 2048, const uint &e = 0x10001);
 	void genrsa(const string_view &skfile, const string_view &pkfile, const json::object &opts = {});
-	void set(EVP_PKEY &out, RSA &in);
+
+	// EC suite
+	extern const EC_GROUP *secp256k1;
+	void check(const EC_KEY &);
+	bool check(const EC_KEY &, const std::nothrow_t);
+	string_view print(const mutable_buffer &buf, const EC_KEY &, const off_t &offset = 0);
+	void genec(const string_view &skfile, const string_view &pkfile, const EC_GROUP *const & = secp256k1);
 
 	// X.509 suite
 	const_raw_buffer i2d(const mutable_raw_buffer &out, const X509 &);
@@ -92,7 +106,9 @@ namespace ircd::openssl
 	string_view write_pem(const mutable_buffer &out, const X509 &);
 	string_view print(const mutable_buffer &buf, const X509 &, ulong flags = -1);
 	string_view printX509(const mutable_buffer &buf, const string_view &pem, ulong flags = -1);
-	string_view genX509(const mutable_buffer &out, const json::object &opts);
+	string_view genX509(const mutable_buffer &out, EVP_PKEY &, const json::object &opts);
+	string_view genX509_rsa(const mutable_buffer &out, const json::object &opts);
+	string_view genX509_ec(const mutable_buffer &out, const json::object &opts);
 	string_view subject_common_name(const mutable_buffer &out, const X509 &);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);

@@ -22,6 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/ssl.h>
+#include <openssl/ec.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
@@ -142,14 +143,19 @@ ircd::openssl::peer_cert(const SSL &ssl)
 	return *ret;
 }
 
-ircd::string_view
-ircd::openssl::genX509(const mutable_buffer &out,
-                       const json::object &opts)
+namespace ircd::openssl
 {
-	const custom_ptr<RSA> rsa
+	static void genx509_readkeys(EVP_PKEY &, const json::object &);
+}
+
+ircd::string_view
+ircd::openssl::genX509_rsa(const mutable_buffer &out,
+                           const json::object &opts)
+{
+	const custom_ptr<RSA> priv
 	{
 		RSA_new(),
-		[](RSA *const rsa) { RSA_free(rsa); }
+		[](RSA *const key) { RSA_free(key); }
 	};
 
 	const custom_ptr<EVP_PKEY> pk
@@ -158,43 +164,74 @@ ircd::openssl::genX509(const mutable_buffer &out,
 		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
 	};
 
-	set(*pk, *rsa);
+	set(*pk, *priv);
+	genx509_readkeys(*pk, opts);
+	check(*pk->pkey.rsa);
+	return genX509(out, *pk, opts);
+}
+
+ircd::string_view
+ircd::openssl::genX509_ec(const mutable_buffer &out,
+                          const json::object &opts)
+{
+	const custom_ptr<EC_KEY> priv
+	{
+		EC_KEY_new(),
+		[](EC_KEY *const key) { EC_KEY_free(key); }
+	};
+
+	const custom_ptr<EVP_PKEY> pk
+	{
+		EVP_PKEY_new(),
+		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+	};
+
+	set(*pk, *priv);
+	genx509_readkeys(*pk, opts);
+	check(*pk->pkey.ec);
+	return genX509(out, *pk, opts);
+}
+
+void
+ircd::openssl::genx509_readkeys(EVP_PKEY &pk,
+                                const json::object &opts)
+{
+	const auto private_key_path
+	{
+		unquote(opts.at("tls_private_key_path"))
+	};
 
 	const auto public_key_path
 	{
 		unquote(opts.at("tls_public_key_path"))
 	};
 
-	bio::read_file(public_key_path, [&pk]
-	(const string_view &pem)
+	bio::read_file(private_key_path, [&pk](const string_view &pem)
 	{
-		read_pem_pub(*pk, pem);
+		read_pem_priv(pk, pem);
 	});
 
-	const auto private_key_path
+	bio::read_file(public_key_path, [&pk](const string_view &pem)
 	{
-		unquote(opts.at("tls_private_key_path"))
-	};
-
-	bio::read_file(private_key_path, [&pk]
-	(const string_view &pem)
-	{
-		read_pem_priv(*pk, pem);
+		read_pem_pub(pk, pem);
 	});
+}
 
-	check(*pk->pkey.rsa);
-
+ircd::string_view
+ircd::openssl::genX509(const mutable_buffer &out,
+                       EVP_PKEY &pk,
+                       const json::object &opts)
+{
 	const custom_ptr<X509> x509
 	{
 		X509_new(),
 		[](X509 *const x509) { X509_free(x509); }
 	};
 
-	call(::X509_set_pubkey, x509.get(), pk.get());
-	call(::X509_set_version, x509.get(), 2);
+	call(::X509_set_pubkey, x509.get(), &pk);
 	append_entries(*x509, opts);
 
-	call(::X509_sign, x509.get(), pk.get(), EVP_sha256());
+	call(::X509_sign, x509.get(), &pk, EVP_sha256());
 
 	return write_pem(out, *x509);
 }
@@ -448,6 +485,102 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 }
 
 //
+// EC
+//
+
+namespace ircd::openssl
+{
+	void ec_init();
+	void ec_fini() noexcept;
+}
+
+const EC_GROUP *
+ircd::openssl::secp256k1
+{};
+
+void
+ircd::openssl::ec_init()
+{
+	EC_GROUP *_secp256k1;
+	if(!(_secp256k1 = EC_GROUP_new_by_curve_name(OBJ_sn2nid("secp256k1"))))
+		throw error{"Failed to initialize EC_GROUP secp256k1"};
+
+	EC_GROUP_set_asn1_flag(_secp256k1, OPENSSL_EC_NAMED_CURVE);
+	EC_GROUP_set_point_conversion_form(_secp256k1, POINT_CONVERSION_COMPRESSED);
+	secp256k1 = _secp256k1;
+}
+
+void
+ircd::openssl::ec_fini()
+noexcept
+{
+	EC_GROUP_free(const_cast<EC_GROUP *>(secp256k1));
+}
+
+void
+ircd::openssl::genec(const string_view &skfile,
+                     const string_view &pkfile,
+                     const EC_GROUP *const &group)
+{
+	const custom_ptr<EC_KEY> key
+	{
+		EC_KEY_new(),
+		[](EC_KEY *const key) { EC_KEY_free(key); }
+	};
+
+	const custom_ptr<EVP_PKEY> pk
+	{
+		EVP_PKEY_new(),
+		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+	};
+
+	const auto write_priv{[&pk](const mutable_buffer &out)
+	{
+		return write_pem_priv(out, *pk);
+	}};
+
+	const auto write_pub{[&pk](const mutable_buffer &out)
+	{
+		return write_pem_pub(out, *pk);
+	}};
+
+	assert(group);
+	assert(EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE);
+	call(::EC_KEY_set_group, key.get(), group);
+	call(::EC_KEY_generate_key, key.get());
+	assert(EC_KEY_get0_public_key(key.get()));
+	set(*pk, *key);
+	bio::write_file(skfile, write_priv);
+	bio::write_file(pkfile, write_pub);
+}
+
+ircd::string_view
+ircd::openssl::print(const mutable_buffer &buf,
+                     const EC_KEY &key,
+                     const off_t &offset)
+{
+	return bio::write(buf, [&key, &offset]
+	(BIO *const &bio)
+	{
+		call(::EC_KEY_print, bio, &key, offset);
+	});
+}
+
+void
+ircd::openssl::check(const EC_KEY &key)
+{
+	if(!check(key, std::nothrow))
+		throw error{"Invalid Elliptic Curve Key"};
+}
+
+bool
+ircd::openssl::check(const EC_KEY &key,
+                     const std::nothrow_t)
+{
+	return EC_KEY_check_key(&key) == 1;
+}
+
+//
 // RSA
 //
 
@@ -566,13 +699,6 @@ ircd::openssl::print(const mutable_buffer &buf,
 	});
 }
 
-void
-ircd::openssl::set(EVP_PKEY &out,
-                   RSA &in)
-{
-	call(::EVP_PKEY_set1_RSA, &out, &in);
-}
-
 size_t
 ircd::openssl::size(const RSA &key)
 {
@@ -598,6 +724,20 @@ ircd::openssl::check(const RSA &key,
 // Envelope
 //
 
+void
+ircd::openssl::set(EVP_PKEY &out,
+                   RSA &in)
+{
+	call(::EVP_PKEY_set1_RSA, &out, &in);
+}
+
+void
+ircd::openssl::set(EVP_PKEY &out,
+                   EC_KEY &in)
+{
+	call(::EVP_PKEY_set1_EC_KEY, &out, &in);
+}
+
 ircd::string_view
 ircd::openssl::write_pem_priv(const mutable_buffer &out,
                               const EVP_PKEY &evp)
@@ -620,6 +760,10 @@ ircd::openssl::write_pem_priv(const mutable_buffer &out,
 				call(::PEM_write_bio_RSAPrivateKey, bio, p->pkey.rsa, enc, kstr, klen, pwcb, u);
 				break;
 
+			case EVP_PKEY_EC:
+				call(::PEM_write_bio_ECPrivateKey, bio, p->pkey.ec, enc, kstr, klen, pwcb, u);
+				break;
+
 			default:
 				call(::PEM_write_bio_PrivateKey, bio, p, enc, kstr, klen, pwcb, u);
 				break;
@@ -639,6 +783,10 @@ ircd::openssl::write_pem_pub(const mutable_buffer &out,
 		{
 			case EVP_PKEY_RSA:
 				call(::PEM_write_bio_RSAPublicKey, bio, p->pkey.rsa);
+				break;
+
+			case EVP_PKEY_EC:
+				call(::PEM_write_bio_EC_PUBKEY, bio, p->pkey.ec);
 				break;
 
 			default:
@@ -665,6 +813,11 @@ ircd::openssl::read_pem_priv(EVP_PKEY &out_,
 		{
 			case EVP_PKEY_RSA:
 				ret = PEM_read_bio_RSAPrivateKey(bio, &out->pkey.rsa, pwcb, u);
+				break;
+
+			case EVP_PKEY_EC:
+				ret = PEM_read_bio_ECPrivateKey(bio, &out->pkey.ec, pwcb, u);
+				EC_KEY_set_asn1_flag(out->pkey.ec, OPENSSL_EC_NAMED_CURVE);
 				break;
 
 			default:
@@ -699,6 +852,11 @@ ircd::openssl::read_pem_pub(EVP_PKEY &out_,
 		{
 			case EVP_PKEY_RSA:
 				ret = PEM_read_bio_RSAPublicKey(bio, &out->pkey.rsa, pwcb, u);
+				break;
+
+			case EVP_PKEY_EC:
+				ret = PEM_read_bio_EC_PUBKEY(bio, &out->pkey.ec, pwcb, u);
+				EC_KEY_set_asn1_flag(out->pkey.ec, OPENSSL_EC_NAMED_CURVE);
 				break;
 
 			default:
@@ -1062,6 +1220,7 @@ ircd::openssl::init::init()
 	OPENSSL_init();
 	ERR_load_crypto_strings();
 	ERR_load_ERR_strings();
+	ec_init();
 
 /*
 	const auto their_id_callback
@@ -1089,6 +1248,8 @@ ircd::openssl::init::init()
 
 ircd::openssl::init::~init()
 {
+	ec_fini();
+
 	//assert(CRYPTO_get_locking_callback() == locking::callback);
 	//assert(CRYPTO_THREADID_get_callback() == locking::id_callback);
 
