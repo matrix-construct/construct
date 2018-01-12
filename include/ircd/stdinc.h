@@ -153,22 +153,37 @@ namespace std
 // Some items imported into our namespace.
 namespace ircd
 {
-	using std::nullptr_t;
-	using std::nothrow_t;
-	using std::begin;
-	using std::end;
-	using std::get;
-	using std::static_pointer_cast;
-	using std::dynamic_pointer_cast;
-	using std::const_pointer_cast;
-	using ostream = std::ostream;
-	namespace ph = std::placeholders;
-	using namespace std::string_literals;
-	using namespace std::literals::chrono_literals;
-	template<class... T> using ilist = std::initializer_list<T...>;
-
 	using int128_t = signed __int128;
 	using uint128_t = unsigned __int128;
+
+	using std::get;
+	using std::end;
+	using std::begin;
+
+	using std::nullptr_t;
+	using std::nothrow_t;
+
+	using std::const_pointer_cast;
+	using std::static_pointer_cast;
+	using std::dynamic_pointer_cast;
+
+	using std::chrono::hours;
+	using std::chrono::seconds;
+	using std::chrono::milliseconds;
+	using std::chrono::microseconds;
+	using std::chrono::nanoseconds;
+	using std::chrono::duration_cast;
+	using std::chrono::system_clock;
+	using std::chrono::steady_clock;
+	using std::chrono::high_resolution_clock;
+	using std::chrono::time_point;
+
+	using namespace std::literals::chrono_literals;
+	using namespace std::string_literals;
+
+	namespace ph = std::placeholders;
+
+	template<class... T> using ilist = std::initializer_list<T...>;
 }
 
 namespace ircd
