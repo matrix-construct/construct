@@ -1,27 +1,21 @@
-/*
- * charybdis: 21st Century IRC++d
- * rfc1459.h: RFC1459 Specification API
- *
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #define HAVE_IRCD_RFC1459_H
@@ -29,35 +23,26 @@
 /// Legacy IRC grammars & tools
 namespace ircd::rfc1459
 {
+	struct nick;
+	struct user;
+	struct host;
+	struct cmd;
+	struct parv;
+	struct pfx;
+	struct line;
 
-IRCD_EXCEPTION(ircd::error, error)
-IRCD_EXCEPTION(error, syntax_error)
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, syntax_error)
 
-namespace character
+	std::ostream &operator<<(std::ostream &, const pfx &);
+	std::ostream &operator<<(std::ostream &, const cmd &);
+	std::ostream &operator<<(std::ostream &, const parv &);
+	std::ostream &operator<<(std::ostream &, const line &);   // unterminated
+}
+
+namespace ircd::rfc1459::character
 {
-	enum attr
-	:uint
-	{
-		PRINT    = 0x00000001,
-		CNTRL    = 0x00000002,
-		ALPHA    = 0x00000004,
-		PUNCT    = 0x00000008,
-		DIGIT    = 0x00000010,
-		SPACE    = 0x00000020,
-		NICK     = 0x00000040,
-		CHAN     = 0x00000080,
-		KWILD    = 0x00000100,
-		CHANPFX  = 0x00000200,
-		USER     = 0x00000400,
-		HOST     = 0x00000800,
-		NONEOS   = 0x00001000,
-		SERV     = 0x00002000,
-		EOL      = 0x00004000,
-		MWILD    = 0x00008000,
-		LET      = 0x00010000,    // an actual letter
-		FCHAN    = 0x00020000,    // a 'fake' channel char
-	};
-
+	enum attr :uint;
 	using attr_t = std::underlying_type<attr>::type;
 
 	extern const std::array<attr_t, 256> attrs;
@@ -79,6 +64,34 @@ namespace character
 	size_t charset(const attr &attr, uint8_t *const &buf, const size_t &max);
 	std::string charset(const attr &attr);
 }
+
+enum ircd::rfc1459::character::attr
+:uint
+{
+	PRINT    = 0x00000001,
+	CNTRL    = 0x00000002,
+	ALPHA    = 0x00000004,
+	PUNCT    = 0x00000008,
+	DIGIT    = 0x00000010,
+	SPACE    = 0x00000020,
+	NICK     = 0x00000040,
+	CHAN     = 0x00000080,
+	KWILD    = 0x00000100,
+	CHANPFX  = 0x00000200,
+	USER     = 0x00000400,
+	HOST     = 0x00000800,
+	NONEOS   = 0x00001000,
+	SERV     = 0x00002000,
+	EOL      = 0x00004000,
+	MWILD    = 0x00008000,
+	LET      = 0x00010000,    // an actual letter
+	FCHAN    = 0x00020000,    // a 'fake' channel char
+};
+
+
+namespace ircd::rfc1459 {
+
+struct less;
 
 using character::is;
 using character::toupper;
@@ -114,44 +127,39 @@ inline bool is_xdigit(const char &c)
 	return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
 }
 
-struct less
-{
-	bool operator()(const char *const &a, const char *const &b) const;
-	bool operator()(const std::string &a, const std::string &b) const;
-	bool operator()(const std::string_view &a, const std::string_view &b) const;
-};
+} // namespace ircd::rfc1459
 
-struct nick
+struct ircd::rfc1459::nick
 :string_view
 {
 	using string_view::string_view;
 };
 
-struct user
+struct ircd::rfc1459::user
 :string_view
 {
 	using string_view::string_view;
 };
 
-struct host
+struct ircd::rfc1459::host
 :string_view
 {
 	using string_view::string_view;
 };
 
-struct cmd
+struct ircd::rfc1459::cmd
 :string_view
 {
 	using string_view::string_view;
 };
 
-struct parv
+struct ircd::rfc1459::parv
 :std::vector<string_view>
 {
 	using std::vector<string_view>::vector;
 };
 
-struct pfx
+struct ircd::rfc1459::pfx
 {
 	struct nick nick;
 	struct user user;
@@ -160,7 +168,7 @@ struct pfx
 	bool empty() const;
 };
 
-struct line
+struct ircd::rfc1459::line
 {
 	struct pfx pfx;
 	struct cmd cmd;
@@ -174,15 +182,16 @@ struct line
 	line() = default;
 };
 
-std::ostream &operator<<(std::ostream &, const pfx &);
-std::ostream &operator<<(std::ostream &, const cmd &);
-std::ostream &operator<<(std::ostream &, const parv &);
-std::ostream &operator<<(std::ostream &, const line &);   // unterminated
-
+struct ircd::rfc1459::less
+{
+	bool operator()(const char *const &a, const char *const &b) const;
+	bool operator()(const std::string &a, const std::string &b) const;
+	bool operator()(const std::string_view &a, const std::string_view &b) const;
+};
 
 inline bool
-less::operator()(const std::string_view &a,
-                 const std::string_view &b)
+ircd::rfc1459::less::operator()(const std::string_view &a,
+                                const std::string_view &b)
 const
 {
 	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
@@ -193,8 +202,8 @@ const
 }
 
 inline bool
-less::operator()(const std::string &a,
-                 const std::string &b)
+ircd::rfc1459::less::operator()(const std::string &a,
+                                const std::string &b)
 const
 {
 	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
@@ -205,8 +214,8 @@ const
 }
 
 inline bool
-less::operator()(const char *const &a,
-                 const char *const &b)
+ircd::rfc1459::less::operator()(const char *const &a,
+                                const char *const &b)
 const
 {
 	return std::lexicographical_compare(a, a + strlen(a), b, b + strlen(b), []
@@ -217,22 +226,20 @@ const
 }
 
 inline const uint8_t &
-character::tolower(const uint8_t &c)
+ircd::rfc1459::character::tolower(const uint8_t &c)
 {
 	return tolower_tab[c];
 }
 
 inline const uint8_t &
-character::toupper(const uint8_t &c)
+ircd::rfc1459::character::toupper(const uint8_t &c)
 {
 	return toupper_tab[c];
 }
 
 inline bool
-character::is(const uint8_t &c,
-              const attr &attr)
+ircd::rfc1459::character::is(const uint8_t &c,
+                             const attr &attr)
 {
 	return (attrs[c] & attr) == attr;
-}
-
 }
