@@ -49,6 +49,9 @@ namespace ircd
 #include "unique_iterator.h"
 #include "instance_list.h"
 #include "bswap.h"
+#include "tuple.h"
+#include "timer.h"
+#include "life_guard.h"
 
 // Unsorted section
 namespace ircd {

@@ -45,7 +45,6 @@ namespace util {
 #define IRCD_USING_OVERLOAD(ALIAS, ORIGIN) \
     static constexpr const auto &ALIAS{ORIGIN}
 
-
 //
 // Typedef macros
 //
@@ -82,9 +81,8 @@ struct NAME                                                   \
 #define IRCD_STRONG_T(TYPE) \
     IRCD_STRONG_TYPEDEF(TYPE, IRCD_UNIQUE(strong_t))
 
-
 //
-// Debug size of structure at compile time.
+// Debug sizeof structure at compile time
 //
 
 /// Internal use only
@@ -100,7 +98,6 @@ struct _TEST_SIZEOF_;
 #define IRCD_TEST_SIZEOF(name) \
 	ircd::util::_TEST_SIZEOF_<sizeof(name)> _test_;
 
-
 //
 // Test if type is forward declared or complete
 //
@@ -115,7 +112,6 @@ template<class T>
 struct is_complete<T, decltype(void(sizeof(T)))>
 :std::true_type
 {};
-
 
 //
 // Test if type is a specialization of a template
@@ -135,6 +131,26 @@ struct is_specialization_of<T<args...>, T>
 :std::true_type
 {};
 
+//
+// Test if type is shared_from_this
+//
+
+/// Tests if type inherits from std::enable_shared_from_this<>
+template<class T>
+constexpr typename std::enable_if<is_complete<T>::value, bool>::type
+is_shared_from_this()
+{
+	return std::is_base_of<std::enable_shared_from_this<T>, T>();
+}
+
+/// Unconditional failure for fwd-declared incomplete types, which
+/// obviously don't inherit from std::enable_shared_from_this<>
+template<class T>
+constexpr typename std::enable_if<!is_complete<T>::value, bool>::type
+is_shared_from_this()
+{
+	return false;
+}
 
 //
 // Misc type testing boilerplates
@@ -171,7 +187,6 @@ is_integer()
 	return is_number<T>() && !is_floating<T>();
 }
 
-
 //
 // Convenience constexprs for iterators
 //
@@ -197,6 +212,19 @@ is_input_iterator()
 	return std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<It>::iterator_category>::value;
 }
 
+/// Convenience loop to test std::is* on a character sequence
+template<int (&test)(int) = std::isprint>
+ssize_t
+ctype(const char *begin,
+      const char *const &end)
+{
+	size_t i(0);
+	for(; begin != end; ++begin, ++i)
+		if(!test(static_cast<unsigned char>(*begin)))
+			return i;
+
+	return -1;
+}
 
 /// Zero testing functor (work in progress)
 ///
@@ -244,20 +272,5 @@ struct is_zero
 	}
 };
 
-
-/// Convenience loop to test std::is* on a character sequence
-template<int (&test)(int) = std::isprint>
-ssize_t
-ctype(const char *begin,
-      const char *const &end)
-{
-	size_t i(0);
-	for(; begin != end; ++begin, ++i)
-		if(!test(static_cast<unsigned char>(*begin)))
-			return i;
-
-	return -1;
-}
-
-} // namespace ircd
 } // namespace util
+} // namespace ircd
