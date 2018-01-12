@@ -196,6 +196,29 @@ ircd::net::write_one(socket &socket,
 // net/read.h
 //
 
+/// Yields ircd::ctx until len bytes have been received and discarded from the
+/// socket.
+///
+size_t
+ircd::net::discard_all(socket &socket,
+                       const size_t &len)
+{
+	static char buffer[512] alignas(16);
+
+	size_t remain{len}; while(remain)
+	{
+		const mutable_buffer mb
+		{
+			buffer, std::min(remain, sizeof(buffer))
+		};
+
+		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
+		read_all(socket, mb);
+	}
+
+	return len;
+}
+
 /// Yields ircd::ctx until buffers are full.
 ///
 /// Use this only if the following are true:

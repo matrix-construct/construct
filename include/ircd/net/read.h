@@ -39,6 +39,9 @@ namespace ircd::net
 	// Alias to read_any();
 	size_t read(socket &, const vector_view<const mutable_buffer> &);
 	size_t read(socket &, const mutable_buffer &);
+
+	// Yields until len has been discarded
+	size_t discard_all(socket &, const size_t &len);
 }
 
 /// Alias to read_any();
