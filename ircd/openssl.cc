@@ -374,6 +374,28 @@ ircd::openssl::subject_common_name(const mutable_buffer &out,
 }
 
 ircd::string_view
+ircd::openssl::print_subject(const mutable_buffer &buf,
+                             const X509 &cert,
+                             ulong flags)
+{
+	if(flags == ulong(-1))
+		flags = XN_FLAG_ONELINE;
+	else
+		flags = 0;
+
+	const X509_NAME *const subject
+	{
+		X509_get_subject_name(const_cast<X509 *>(&cert))
+	};
+
+	return bio::write(buf, [&subject, &flags]
+	(BIO *const &bio)
+	{
+		X509_NAME_print_ex(bio, const_cast<X509_NAME *>(subject), 0, flags);
+	});
+}
+
+ircd::string_view
 ircd::openssl::printX509(const mutable_buffer &buf,
                          const string_view &pem,
                          ulong flags)

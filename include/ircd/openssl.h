@@ -109,6 +109,7 @@ namespace ircd::openssl
 	string_view genX509(const mutable_buffer &out, EVP_PKEY &, const json::object &opts);
 	string_view genX509_rsa(const mutable_buffer &out, const json::object &opts);
 	string_view genX509_ec(const mutable_buffer &out, const json::object &opts);
+	string_view print_subject(const mutable_buffer &buf, const X509 &, ulong flags = -1);
 	string_view subject_common_name(const mutable_buffer &out, const X509 &);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);
