@@ -596,7 +596,7 @@ ircd::resource::response::response(client &client,
 
 	const fmt::bsprintf<64> rtime
 	{
-		"%zdus", request_time
+		"%zd$us", request_time
 	};
 
 	const string_view cache_control
@@ -619,11 +619,19 @@ ircd::resource::response::response(client &client,
 		content_type,
 		headers,
 		{
-			{ "Access-Control-Allow-Origin",   "*"            }, //TODO: XXX
-			{ "Cache-Control",                 cache_control  },
-			{ "X-IRCd-Request-Timer",          rtime,         },
+			{ "Access-Control-Allow-Origin",   "*"                  }, //TODO: XXX
+			{ "Cache-Control",                 cache_control        },
+			{ "X-IRCd-Request-Timer",          rtime,               },
 		},
 	};
+
+	// Maximum size is 2_KiB which is realistically ok but ideally a small
+	// maximum; this exception should hit the developer in testing.
+	if(unlikely(!head.remaining()))
+		throw assertive
+		{
+			"HTTP headers too large for buffer of %zu", sizeof(head_buf)
+		};
 
 	const ilist<const const_buffer> vector
 	{
