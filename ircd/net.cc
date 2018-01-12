@@ -1850,7 +1850,7 @@ noexcept try
 	}
 
 	{
-		thread_local char buf[512];
+		thread_local char buf[16_KiB];
 		const critical_assertion ca;
 		log.debug("verify[%s]: %s",
 		          common_name(opts),
