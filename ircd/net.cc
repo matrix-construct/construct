@@ -795,7 +795,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.error("acceptor(%p): join: %s",
+	log.error("acceptor(%p) join: %s",
 	          this,
 	          e.what());
 }
@@ -810,7 +810,7 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("acceptor(%p): interrupt: %s",
+	log.error("acceptor(%p) interrupt: %s",
 	          this,
 	          string(e));
 
@@ -1053,7 +1053,7 @@ catch(const ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p): in handshake(): %s",
+	log.error("%s: socket(%p) in handshake(): %s",
 	          std::string(*this),
 	          sock.get(),
 	          e.what());
@@ -1248,7 +1248,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): close: %s", this, e.what());
+	log.critical("socket(%p) close: %s", this, e.what());
 	return;
 }
 
@@ -1257,7 +1257,7 @@ ircd::net::socket::connect(const endpoint &ep,
                            const open_opts &opts,
                            eptr_handler callback)
 {
-	log.debug("socket(%p) attempting connect to remote: %s for the next %ld$ms",
+	log.debug("socket(%p) attempting connect remote[%s] to:%ld$ms",
 	          this,
 	          string(ep),
 	          opts.connect_timeout.count());
@@ -1267,17 +1267,18 @@ ircd::net::socket::connect(const endpoint &ep,
 		std::bind(&socket::handle_connect, this, weak_from(*this), opts, std::move(callback), ph::_1)
 	};
 
-	sd.async_connect(ep, std::move(connect_handler));
 	set_timeout(opts.connect_timeout);
+	sd.async_connect(ep, std::move(connect_handler));
 }
 
 void
 ircd::net::socket::handshake(const open_opts &opts,
                              eptr_handler callback)
 {
-	log.debug("socket(%p) performing handshake with %s for '%s' for the next %ld$ms",
+	log.debug("socket(%p) local[%s] remote[%s] handshaking for '%s' to:%ld$ms",
 	          this,
-	          string(remote()),
+	          string(local_ipport(*this)),
+	          string(remote_ipport(*this)),
 	          common_name(opts),
 	          opts.handshake_timeout.count());
 
@@ -1358,7 +1359,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): disconnect: type: %d: %s",
+	log.critical("socket(%p) disconnect: type: %d: %s",
 	             (const void *)this,
 	             uint(opts.type),
 	             e.what());
@@ -1511,7 +1512,7 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p): handle: %s",
+	log.error("socket(%p) handle: %s",
 	          this,
 	          e.what());
 
@@ -1523,7 +1524,7 @@ catch(const std::bad_weak_ptr &e)
 	// This handler may still be registered with asio after the socket destructs, so
 	// the weak_ptr will indicate that fact. However, this is never intended and is
 	// a debug assertion which should be corrected.
-	log.warning("socket(%p): belated callback to handler... (%s)",
+	log.warning("socket(%p) belated callback to handler... (%s)",
 	            this,
 	            e.what());
 
@@ -1532,7 +1533,7 @@ catch(const std::bad_weak_ptr &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): handle: %s",
+	log.critical("socket(%p) handle: %s",
 	             this,
 	             e.what());
 
@@ -1573,7 +1574,7 @@ noexcept try
 		// All other errors are unexpected, logged and ignored here.
 		default:
 		{
-			log.critical("socket(%p): handle_timeout: unexpected: %s\n",
+			log.critical("socket(%p) handle_timeout: unexpected: %s\n",
 			             (const void *)this,
 			             string(ec));
 			assert(0);
@@ -1586,7 +1587,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): handle timeout: %s",
+	log.critical("socket(%p) handle timeout: %s",
 	             (const void *)this,
 	             e.what());
 	assert(0);
@@ -1603,7 +1604,7 @@ noexcept try
 {
 	const life_guard<socket> s{wp};
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) connect by local: %s: to remote: %s %s",
+	log.debug("socket(%p) local[%s] remote[%s] connect %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
@@ -1633,7 +1634,7 @@ noexcept try
 }
 catch(const std::bad_weak_ptr &e)
 {
-	log.warning("socket(%p): belated callback to handle_connect... (%s)",
+	log.warning("socket(%p) belated callback to handle_connect... (%s)",
 	            this,
 	            e.what());
 
@@ -1642,7 +1643,7 @@ catch(const std::bad_weak_ptr &e)
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p): after connect: %s",
+	log.error("socket(%p) after connect: %s",
 	          this,
 	          e.what());
 
@@ -1651,7 +1652,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): handle_connect: %s",
+	log.critical("socket(%p) handle_connect: %s",
 	             this,
 	             e.what());
 
@@ -1666,7 +1667,7 @@ ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
 noexcept try
 {
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) disconnect by local: %s from remote: %s: %s",
+	log.debug("socket(%p) local[%s] remote[%s] disconnect %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
@@ -1681,7 +1682,7 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p): disconnect: %s",
+	log.error("socket(%p) disconnect: %s",
 	          this,
 	          e.what());
 
@@ -1690,7 +1691,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): disconnect: %s",
+	log.critical("socket(%p) disconnect: %s",
 	             this,
 	             e.what());
 
@@ -1706,7 +1707,7 @@ noexcept try
 {
 	const life_guard<socket> s{wp};
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
-	log.debug("socket(%p) handshake by local: %s to remote: %s: %s",
+	log.debug("socket(%p) local[%s] remote[%s] handshake %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
@@ -1722,7 +1723,7 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p): after handshake: %s",
+	log.error("socket(%p) after handshake: %s",
 	          this,
 	          e.what());
 
@@ -1731,7 +1732,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::bad_weak_ptr &e)
 {
-	log.warning("socket(%p): belated callback to handle_handshake... (%s)",
+	log.warning("socket(%p) belated callback to handle_handshake... (%s)",
 	            this,
 	            e.what());
 	assert(0);
@@ -1739,7 +1740,7 @@ catch(const std::bad_weak_ptr &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): handle_handshake: %s",
+	log.critical("socket(%p) handle_handshake: %s",
 	             this,
 	             e.what());
 	assert(0);
@@ -1875,7 +1876,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): async handler: unhandled exception: %s",
+	log.critical("socket(%p) async handler: unhandled exception: %s",
 	             this,
 	             e.what());
 }
@@ -1889,7 +1890,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p): async handler: unhandled exception: %s",
+	log.critical("socket(%p) async handler: unhandled exception: %s",
 	             this,
 	             e.what());
 }

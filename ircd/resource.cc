@@ -641,7 +641,9 @@ ircd::resource::response::response(client &client,
 
 	write_closure(client)(vector);
 
-	log::debug("client[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length: %zu",
+	log::debug("socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length:%zu",
+	           client.sock.get(),
+	           string(local(client)),
 	           string(remote(client)),
 	           int(code),
 	           http::status(code),

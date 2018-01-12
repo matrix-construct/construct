@@ -199,10 +199,6 @@ ircd::add_client(std::shared_ptr<socket> s)
 		make_client(std::move(s))
 	};
 
-	log::debug("client[%s] CONNECTED local[%s]",
-	           string(remote(*client)),
-	           string(local(*client)));
-
 	async_recv_next(client, async_timeout);
 	return client;
 }
@@ -404,7 +400,9 @@ bool
 ircd::handle_ec_eof(client &client)
 try
 {
-	log::debug("client[%s]: EOF",
+	log::debug("socket(%p) local[%s] remote[%s] end of file",
+	           client.sock.get(),
+	           string(local(client)),
 	           string(remote(client)));
 
 	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
@@ -412,8 +410,8 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("client(%p): EOF: %s",
-	           &client,
+	log::error("socket(%p) EOF: %s",
+	           client.sock.get(),
 	           e.what());
 
 	return false;
@@ -426,7 +424,9 @@ bool
 ircd::handle_ec_short_read(client &client)
 try
 {
-	log::warning("client[%s]: short_read",
+	log::warning("socket(%p) local[%s] remote[%s] short_read",
+	             client.sock.get(),
+	             string(local(client)),
 	             string(remote(client)));
 
 	close(client, net::dc::RST, net::close_ignore);
@@ -434,8 +434,8 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("client(%p): short_read: %s",
-	           &client,
+	log::error("socket(%p) short_read: %s",
+	           client.sock.get(),
 	           e.what());
 
 	return false;
@@ -450,7 +450,9 @@ ircd::handle_ec_timeout(client &client)
 try
 {
 	assert(bool(client.sock));
-	log::warning("client[%s]: disconnecting after inactivity timeout",
+	log::warning("socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
+	             client.sock.get(),
+	             string(local(client)),
 	             string(remote(client)));
 
 	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
@@ -458,8 +460,8 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("client(%p): timeout: %s",
-	           &client,
+	log::error("socket(%p) timeout: %s",
+	           client.sock.get(),
 	           e.what());
 
 	return false;
@@ -471,8 +473,9 @@ bool
 ircd::handle_ec_default(client &client,
                         const error_code &ec)
 {
-	log::warning("client(%p)[%s]: %s",
-	             &client,
+	log::warning("socket(%p) local[%s] remote[%s] %s",
+	             client.sock.get(),
+	             string(local(client)),
 	             string(remote(client)),
 	             string(ec));
 
@@ -512,7 +515,10 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical("~client(%p): %s", this, e.what());
+	log::critical("socket(%p) ~client(%p): %s",
+	              sock.get(),
+	              this,
+	              e.what());
 	return;
 }
 
@@ -600,8 +606,10 @@ catch(const boost::system::system_error &e)
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	log::debug("client(%p): handle error: %s",
-	           (const void *)this,
+	log::debug("socket(%p) local[%s] remote[%s] error during request: %s",
+	           sock.get(),
+	           string(local(*this)),
+	           string(remote(*this)),
 	           string(e.code()));
 
 	const error_code &ec{e.code()};
@@ -651,11 +659,11 @@ catch(const boost::system::system_error &e)
 			break;
 	}
 
-	log::error("client(%p): (unexpected) %s: (%d) %s",
-	           (const void *)this,
-	            ec.category().name(),
-	            value,
-	            ec.message());
+	log::error("socket(%p) (unexpected) %s: (%d) %s",
+	           sock.get(),
+	           ec.category().name(),
+	           value,
+	           ec.message());
 
 	close(*this, net::dc::RST, net::close_ignore);
 	return false;
