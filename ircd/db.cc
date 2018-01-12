@@ -1060,7 +1060,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 	if(level < GetInfoLogLevel())
 		return;
 
-	char buf[1024]; const auto len
+	thread_local char buf[1024]; const auto len
 	{
 		vsnprintf(buf, sizeof(buf), fmt, ap)
 	};
