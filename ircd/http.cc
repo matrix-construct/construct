@@ -234,27 +234,6 @@ struct ircd::http::parser
 }
 const ircd::http::parser;
 
-ircd::http::request::request(parse::capstan &pc,
-                             content *const &c,
-                             const proffer &proffer,
-                             const headers::closure &headers_closure)
-{
-	const head h{pc, headers_closure};
-	const char *const content_mark(pc.parsed);
-	const unwind discard_unused_content{[&pc, &h, &content_mark]
-	{
-		const size_t consumed(pc.parsed - content_mark);
-		const size_t remain(h.content_length - consumed);
-		http::content{pc, remain, content::discard};
-	}};
-
-	if(proffer)
-		proffer(h);
-
-	if(c)
-		*c = content{pc, h};
-}
-
 /// Compose a request. This prints an HTTP head into the buffer. No real IO is
 /// done here. After composing into the buffer, the user can then drive the
 /// socket by sending the header and the content as specified.

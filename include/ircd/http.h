@@ -271,12 +271,6 @@ struct ircd::http::request
 	        const string_view &content_type    = {},
 	        const vector_view<const header> &  = {},
 	        const bool &termination            = true);
-
-	// recv
-	request(parse::capstan &,
-	        content *const &,
-	        const proffer &           = nullptr,
-	        const headers::closure &  = {});
 };
 
 /// Represents an HTTP request head. This is only for receiving requests.
