@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_UTIL_RANDOM_H
+#define HAVE_IRCD_RAND_H
 
 /// Some character set dictionaries
 namespace ircd::rand::dict

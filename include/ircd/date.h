@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_UTIL_DATE_H
+#define HAVE_IRCD_DATE_H
 
 namespace ircd
 {
