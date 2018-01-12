@@ -384,10 +384,7 @@ ircd::http::response::response(stream_buffer &out,
 	if(code >= 200 && code < 300)
 		writeline(out, [&code](const mutable_buffer &out) -> size_t
 		{
-			return fmt::sprintf
-			{
-				out, "Server: %s (IRCd %s)", BRANDING_NAME, BRANDING_VERSION
-			};
+			return copy(out, "Server: " BRANDING_NAME " (IRCd " BRANDING_VERSION ")"_sv);
 		});
 
 	if(code < 400)
