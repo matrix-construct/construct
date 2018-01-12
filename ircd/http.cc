@@ -49,6 +49,8 @@ namespace ircd::http
 	struct parser extern const parser;
 
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
+
+	[[noreturn]] void throw_error(const qi::expectation_failure<const char *> &);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -618,22 +620,7 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule
-	{
-		ircd::string(e.what_)
-	};
-
-	throw error
-	{
-		code::BAD_REQUEST, fmt::snstringf
-		{
-			BUFSIZE,
-			"I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
-			between(rule, "<", ">"),
-			size_t(e.last - e.first),
-			string_view{e.first, e.last}
-		}
-	};
+	throw_error(e);
 }
 
 ircd::http::line::response::response(const line &line)
@@ -662,22 +649,7 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	const auto rule
-	{
-		ircd::string(e.what_)
-	};
-
-	throw error
-	{
-		code::BAD_REQUEST, fmt::snstringf
-		{
-			BUFSIZE,
-			"I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
-			between(rule, "<", ">"),
-			size_t(e.last - e.first),
-			string_view{e.first, e.last}
-		}
-	};
+	throw_error(e);
 }
 
 ircd::http::line::line(parse::capstan &pc)
@@ -878,6 +850,26 @@ ircd::http::writeline(stream_buffer &write)
 	{
 		return 0;
 	});
+}
+
+void
+ircd::http::throw_error(const qi::expectation_failure<const char *> &e)
+{
+	const auto rule
+	{
+		ircd::string(e.what_)
+	};
+
+	throw error
+	{
+		code::BAD_REQUEST, fmt::snstringf
+		{
+			512, "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+			between(rule, "<", ">"),
+			size_t(e.last - e.first),
+			string_view{e.first, e.last}
+		}
+	};
 }
 
 ircd::http::error::error(const enum code &code,
