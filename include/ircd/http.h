@@ -261,7 +261,7 @@ struct ircd::http::request
 
 	using proffer = std::function<void (const head &)>;
 
-	// send
+	// compose a request into buffer
 	request(stream_buffer &,
 	        const string_view &host,
 	        const string_view &method          = "GET",
@@ -283,11 +283,14 @@ struct ircd::http::request::head
 	string_view te;
 	string_view authorization;
 	string_view connection;
+	string_view content_type;
+	string_view user_agent;
 	size_t content_length {0};
 
 	string_view headers;
 
 	head(parse::capstan &pc, const headers::closure &c = {});
+	head() = default;
 };
 
 /// Represents an HTTP request content. This is only for receiving content.
@@ -315,7 +318,7 @@ struct ircd::http::response
 	using write_closure = std::function<void (const ilist<const const_buffer> &)>;
 	using proffer = std::function<void (const head &)>;
 
-	// send
+	// compose a response into buffer
 	response(stream_buffer &,
 	         const code &                       = code::OK,
 	         const size_t &content_length       = 0,
@@ -323,12 +326,6 @@ struct ircd::http::response
 	         const string_view &headers         = {},
 	         const vector_view<const header> &  = {},
 	         const bool &termination            = true);
-
-	// recv
-	response(parse::capstan &,
-	         content *const &,
-	         const proffer &           = nullptr,
-	         const headers::closure &  = {});
 
 	response() = default;
 };

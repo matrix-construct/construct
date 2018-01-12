@@ -305,45 +305,28 @@ ircd::http::request::head::head(parse::capstan &pc,
 {
 	http::headers{pc, [this, &c](const auto &h)
 	{
-		if(iequals(h.first, "host"s))
+		if(iequals(h.first, "host"_sv))
 			this->host = h.second;
-		else if(iequals(h.first, "expect"s))
+		else if(iequals(h.first, "expect"_sv))
 			this->expect = h.second;
-		else if(iequals(h.first, "te"s))
+		else if(iequals(h.first, "te"_sv))
 			this->te = h.second;
-		else if(iequals(h.first, "content-length"s))
+		else if(iequals(h.first, "content-length"_sv))
 			this->content_length = parser.content_length(h.second);
-		else if(iequals(h.first, "authorization"s))
+		else if(iequals(h.first, "authorization"_sv))
 			this->authorization = h.second;
-		else if(iequals(h.first, "connection"s))
+		else if(iequals(h.first, "connection"_sv))
 			this->connection = h.second;
+		else if(iequals(h.first, "content-type"_sv))
+			this->content_type = h.second;
+		else if(iequals(h.first, "user-agent"_sv))
+			this->user_agent = h.second;
 
 		if(c)
 			c(h);
 	}}
 }
 {
-}
-
-ircd::http::response::response(parse::capstan &pc,
-                               content *const &c,
-                               const proffer &proffer,
-                               const headers::closure &headers_closure)
-{
-	const head h{pc, headers_closure};
-	const char *const content_mark(pc.parsed);
-	const unwind discard_unused_content{[&pc, &h, &content_mark]
-	{
-		const size_t consumed(pc.parsed - content_mark);
-		const size_t remain(h.content_length - consumed);
-		http::content{pc, remain, content::discard};
-	}};
-
-	if(proffer)
-		proffer(h);
-
-	if(c)
-		*c = content{pc, h};
 }
 
 ircd::http::response::response(stream_buffer &out,
