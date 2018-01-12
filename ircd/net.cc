@@ -1474,8 +1474,8 @@ noexcept try
 	if(ec == success && type == ready::READ)
 	{
 		static char buf[16] alignas(16);
-		static const std::array<mutable_buffer, 1> bufs{{buf}};
-		sd.receive(bufs, sd.message_peek, ec);
+		__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
+		sd.receive(ilist<mutable_buffer>{buf}, sd.message_peek, ec);
 	}
 
 	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
