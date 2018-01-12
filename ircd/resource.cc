@@ -21,98 +21,9 @@
 
 #include <ircd/m/m.h>
 
-namespace ircd
-{
-	void handle_request(client &client, parse::capstan &pc, const http::request::head &head);
-}
-
 decltype(ircd::resource::resources)
 ircd::resource::resources
 {};
-
-/// Handle a single request within the client main() loop.
-///
-/// This function returns false if the main() loop should exit
-/// and thus disconnect the client. It should return true in most
-/// cases even for lightly erroneous requests that won't affect
-/// the next requests on the tape.
-///
-/// This function is timed. The timeout will prevent a client from
-/// sending a partial request and leave us waiting for the rest.
-/// As of right now this timeout extends to our handling of the
-/// request too.
-bool
-ircd::handle_request(client &client,
-                     parse::capstan &pc)
-try
-{
-	bool ret{true};
-	http::request
-	{
-		pc, nullptr, [&client, &pc, &ret]
-		(const auto &head)
-		{
-			handle_request(client, pc, head);
-			ret = !iequals(head.connection, "close"s);
-		}
-	};
-
-	return ret;
-}
-catch(const http::error &e)
-{
-	resource::response
-	{
-		client, e.content, "text/html; charset=utf8", e.code, e.headers
-	};
-
-	switch(e.code)
-	{
-		case http::BAD_REQUEST:
-		case http::REQUEST_TIMEOUT:
-			close(client).wait();
-			return false;
-
-		case http::INTERNAL_SERVER_ERROR:
-			throw;
-
-		default:
-			return true;
-	}
-}
-catch(const ircd::error &e)
-{
-	log::error("client[%s]: in %ld$us: %s",
-	           string(remote(client)),
-	           client.request_timer.at<microseconds>().count(),
-	           e.what());
-
-	resource::response
-	{
-		client, e.what(), {}, http::INTERNAL_SERVER_ERROR
-	};
-
-	throw;
-}
-
-void
-ircd::handle_request(client &client,
-                     parse::capstan &pc,
-                     const http::request::head &head)
-{
-	log::debug("client[%s] HTTP %s `%s' (content-length: %zu)",
-	           string(remote(client)),
-	           head.method,
-	           head.path,
-	           head.content_length);
-
-	auto &resource
-	{
-		ircd::resource::find(head.path)
-	};
-
-	resource(client, pc, head);
-}
 
 ircd::resource &
 ircd::resource::find(string_view path)
@@ -287,12 +198,53 @@ ircd::verify_origin(client &client,
 
 void
 ircd::resource::operator()(client &client,
-                           parse::capstan &pc,
-                           const http::request::head &head)
+                           const http::request::head &head,
+                           const string_view &content_partial,
+                           size_t &content_read)
 {
-	auto &method(operator[](head.method));
-	http::request::content content{pc, head};
-	assert(pc.unparsed() == 0);
+	// Find the method or METHOD_NOT_ALLOWED
+	auto &method
+	{
+		operator[](head.method)
+	};
+
+	// Bail out if the method limited the amount of content and it was exceeded.
+	if(head.content_length > method.opts.payload_max)
+		throw http::error
+		{
+			http::PAYLOAD_TOO_LARGE
+		};
+
+	assert(size(content_partial) <= head.content_length);
+	assert(size(content_partial) == content_read);
+	const size_t content_remain
+	{
+		head.content_length - content_read
+	};
+
+	unique_buffer<mutable_buffer> content_buffer;
+	string_view content{content_partial};
+	if(content_remain)
+	{
+		// Copy any partial content to the final contiguous allocated buffer;
+		content_buffer = unique_buffer<mutable_buffer>{head.content_length};
+		memcpy(data(content_buffer), data(content_partial), size(content_partial));
+
+		// Setup a window inside the buffer for the remaining socket read.
+		const mutable_buffer content_remain_buffer
+		{
+			data(content_buffer) + content_read, content_remain
+		};
+
+		//TODO: more discretion from the method.
+		// Read the remaining content off the socket.
+		content_read += read_all(*client.sock, content_remain_buffer);
+		assert(content_read == head.content_length);
+		content = string_view
+		{
+			data(content_buffer), head.content_length
+		};
+	}
 
 	const auto pathparm
 	{
@@ -310,10 +262,10 @@ ircd::resource::operator()(client &client,
 		head, content, head.query, parv
 	};
 
-	if(method.flags & method.REQUIRES_AUTH)
+	if(method.opts.flags & method.REQUIRES_AUTH)
 		authenticate(client, method, request);
 
-	if(method.flags & method.VERIFY_ORIGIN)
+	if(method.opts.flags & method.VERIFY_ORIGIN)
 		verify_origin(client, method, request);
 
 	handle_request(client, method, request);
@@ -391,12 +343,22 @@ catch(const std::out_of_range &e)
 
 ircd::resource::method::method(struct resource &resource,
                                const string_view &name,
+                               const handler &handler)
+:method
+{
+	resource, name, handler, {}
+}
+{
+}
+
+ircd::resource::method::method(struct resource &resource,
+                               const string_view &name,
                                const handler &handler,
-                               opts opts)
+                               const struct opts &opts)
 :name{name}
 ,resource{&resource}
 ,function{handler}
-,flags{opts.flags}
+,opts{opts}
 ,methods_it{[this, &name]
 {
 	const auto iit(this->resource->methods.emplace(this->name, this));
@@ -433,7 +395,7 @@ catch(const std::bad_function_call &e)
 }
 
 ircd::resource::request::request(const http::request::head &head,
-                                 http::request::content &content,
+                                 const string_view &content,
                                  http::query::string query,
                                  const vector_view<string_view> &parv)
 :json::object{content}

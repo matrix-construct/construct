@@ -34,14 +34,14 @@ namespace ircd
 	// (or idle mode) after which it is disconnected.
 	const auto async_timeout
 	{
-		40s
+		35s
 	};
 
 	// Time limit for how long a connected client can be in "request mode." This
 	// should never be hit unless there's an error in the handling code.
 	const auto request_timeout
 	{
-		15s
+		10s
 	};
 
 	// The pool of request contexts. When a client makes a request it does so by acquiring
@@ -358,7 +358,7 @@ ircd::handle_client_request(std::shared_ptr<client> client,
 {
 	if(!client->main())
 	{
-		//assert(!client->sock || !connected(*client->sock));
+		close(*client, net::dc::SSL_NOTIFY).wait();
 		return;
 	}
 
@@ -516,6 +516,12 @@ catch(const std::exception &e)
 	return;
 }
 
+namespace ircd
+{
+	bool handle_request(client &client, parse::capstan &pc, const http::request::head &head, size_t &content_consumed);
+	bool handle_request(client &client, parse::capstan &pc);
+}
+
 /// Client main.
 ///
 /// Before main(), the client had been sitting in async mode waiting for
@@ -528,14 +534,9 @@ bool
 ircd::client::main()
 noexcept try
 {
-	const auto header_max{8_KiB};
-	const auto content_max{8_MiB}; //TODO: XXX
-	const unique_buffer<const mutable_buffer> buffer
-	{
-		header_max + content_max
-	};
-
-	parse::buffer pb{buffer};
+	const auto header_max{4_KiB};
+	char header_buffer[header_max];
+	parse::buffer pb{header_buffer};
 	return handle(pb);
 }
 catch(const std::exception &e)
@@ -658,4 +659,141 @@ catch(const boost::system::system_error &e)
 
 	close(*this, net::dc::RST, net::close_ignore);
 	return false;
+}
+
+/// Handle a single request within the client main() loop.
+///
+/// This function returns false if the main() loop should exit
+/// and thus disconnect the client. It should return true in most
+/// cases even for lightly erroneous requests that won't affect
+/// the next requests on the tape.
+///
+/// This function is timed. The timeout will prevent a client from
+/// sending a partial request and leave us waiting for the rest.
+/// As of right now this timeout extends to our handling of the
+/// request too.
+bool
+ircd::handle_request(client &client,
+                     parse::capstan &pc)
+try
+{
+	// This is the first read off the wire. The headers are entirely read and
+	// the tape is advanced.
+	const http::request::head head{pc};
+
+	// The size of HTTP headers are never initially known, which means
+	// the above head parse could have read too much off the socket bleeding
+	// into the content or even the next request entirely. That's ok because
+	// the state of `pc` will reflect that back to the main() loop for the
+	// next request, but for this request we have to figure out how much of
+	// the content was accidentally read so far.
+	size_t content_consumed
+	{
+		std::min(pc.unparsed(), head.content_length)
+	};
+
+	bool ret
+	{
+		handle_request(client, pc, head, content_consumed)
+	};
+
+	if(ret && iequals(head.connection, "close"_sv))
+		ret = false;
+
+	return ret;
+}
+catch(const ircd::error &e)
+{
+	log::error("socket(%p) local[%s] remote[%s] in %ld$us: %s",
+	           client.sock.get(),
+	           string(local(client)),
+	           string(remote(client)),
+	           client.request_timer.at<microseconds>().count(),
+	           e.what());
+
+	resource::response
+	{
+		client, e.what(), {}, http::INTERNAL_SERVER_ERROR
+	};
+
+	throw;
+}
+
+bool
+ircd::handle_request(client &client,
+                     parse::capstan &pc,
+                     const http::request::head &head,
+                     size_t &content_consumed)
+try
+{
+	// The resource is responsible for reading content at its discretion, if
+	// at all. If we accidentally read some content it has to be presented.
+	const string_view content_partial
+	{
+		pc.parsed, pc.unparsed()
+	};
+
+	// Advance the tape up to the end of the partial content read. We no
+	// longer use the capstan after this point because the resource reads
+	// directly off the socket. The `pc` will be positioned properly for the
+	// next request so long as any remaining content is read off the socket.
+	pc.parsed += content_consumed;
+	assert(pc.parsed <= pc.read);
+	assert(content_partial.size() == content_consumed);
+	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu part:%zu",
+	           client.sock.get(),
+	           string(local(client)),
+	           string(remote(client)),
+	           head.method,
+	           head.path,
+	           head.content_length,
+	           content_consumed);
+
+	auto &resource
+	{
+		ircd::resource::find(head.path)
+	};
+
+	resource(client, head, content_partial, content_consumed);
+	return true;
+}
+catch(const http::error &e)
+{
+	resource::response
+	{
+		client, e.content, "text/html; charset=utf8", e.code, e.headers
+	};
+
+	switch(e.code)
+	{
+		// These codes are "recoverable" and allow the next HTTP request in
+		// a pipeline to take place. In order for that to happen, any content
+		// which wasn't read because of the exception has to be read now.
+		default:
+		{
+			assert(client.sock);
+			const size_t unconsumed{head.content_length - content_consumed};
+			log::debug("socket(%p) local[%s] remote[%s] discarding %zu of %zu unconsumed content...",
+			           client.sock.get(),
+			           string(local(client)),
+			           string(remote(client)),
+			           unconsumed,
+			           head.content_length);
+
+			net::discard_all(*client.sock, unconsumed);
+			return true;
+		}
+
+		// These codes are "unrecoverable" errors and no more HTTP can be
+		// conducted with this tape. The client must be disconnected.
+		case http::BAD_REQUEST:
+		case http::PAYLOAD_TOO_LARGE:
+		case http::REQUEST_TIMEOUT:
+			close(client).wait();
+			return false;
+
+		// The client must also be disconnected at some point down the stack.
+		case http::INTERNAL_SERVER_ERROR:
+			throw;
+	}
 }

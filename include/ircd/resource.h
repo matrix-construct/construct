@@ -25,8 +25,6 @@
 namespace ircd
 {
 	struct resource;
-
-	bool handle_request(client &client, parse::capstan &pc);
 }
 
 struct ircd::resource
@@ -52,7 +50,11 @@ struct ircd::resource
 
   public:
 	method &operator[](const string_view &path);
-	void operator()(client &, parse::capstan &, const http::request::head &);
+
+	void operator()(client &,
+	                const http::request::head &,
+	                const string_view &content_partial,
+	                size_t &content_consumed);
 
 	resource(const string_view &path, const opts &);
 	resource(const string_view &path);
@@ -96,12 +98,15 @@ struct ircd::resource::request
 	template<class> struct object;
 
 	const http::request::head &head;
-	http::request::content &content;
+	string_view content;
 	http::query::string query;
 	string_view user_id; //m::user::id::buf user_id; //TODO: bleeding
 	vector_view<string_view> parv;
 
-	request(const http::request::head &head, http::request::content &content, http::query::string query, const vector_view<string_view> &parv);
+	request(const http::request::head &head,
+	        const string_view &content,
+	        http::query::string query,
+	        const vector_view<string_view> &parv);
 };
 
 template<class tuple>
@@ -110,7 +115,7 @@ struct ircd::resource::request::object
 {
 	resource::request &r;
 	const http::request::head &head;
-	const http::request::content &content;
+	const string_view &content;
 	const http::query::string &query;
 	const decltype(r.user_id) &user_id;
 	const vector_view<string_view> &parv;
@@ -146,6 +151,8 @@ struct ircd::resource::response
 
 struct ircd::resource::method
 {
+	using handler = std::function<response (client &, request &)>;
+
 	enum flag
 	{
 		REQUIRES_AUTH  = 0x01,
@@ -155,20 +162,23 @@ struct ircd::resource::method
 
 	struct opts
 	{
-		flag flags{flag(0)};
-	};
+		flag flags {(flag)0};
 
-	using handler = std::function<response (client &, request &)>;
+		/// The maximum size of the Content-Length for this method. Anything
+		/// larger will be summarily rejected with a 413.
+		size_t payload_max {128_KiB};
+	};
 
 	string_view name;
 	struct resource *resource;
 	handler function;
-	flag flags;
+	struct opts opts;
 	unique_const_iterator<decltype(resource::methods)> methods_it;
 
   public:
 	virtual response operator()(client &, request &);
 
-	method(struct resource &, const string_view &name, const handler &, opts = {{}});
+	method(struct resource &, const string_view &name, const handler &, const struct opts &);
+	method(struct resource &, const string_view &name, const handler &);
 	virtual ~method() noexcept;
 };
