@@ -1788,12 +1788,12 @@ noexcept try
 
 	if(!valid)
 	{
-		thread_local char buf[256];
+		thread_local char buf[4_KiB];
 		const critical_assertion ca;
-		log.warning("verify: %s /CN=%s :%s",
+		log.warning("verify[%s]: %s :%s",
 		            common_name(opts),
-		            openssl::subject_common_name(buf, cert),
-		            openssl::get_error_string(stctx));
+		            openssl::get_error_string(stctx),
+		            openssl::print_subject(buf, cert));
 	}
 
 	if(!valid) switch(openssl::get_error(stctx))
@@ -1850,11 +1850,11 @@ noexcept try
 	}
 
 	{
-		thread_local char buf[16_KiB];
+		thread_local char buf[4_KiB];
 		const critical_assertion ca;
 		log.debug("verify[%s]: %s",
 		          common_name(opts),
-		          openssl::print(buf, cert));
+		          openssl::print_subject(buf, cert));
 	}
 
 	return true;
