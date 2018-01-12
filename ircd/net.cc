@@ -1403,22 +1403,35 @@ ircd::net::socket::wait(const wait_opts &opts,
 		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1)
 	};
 
+	set_timeout(opts.timeout);
+	const unwind::exceptional unset{[this]
+	{
+		cancel_timeout();
+	}};
+
 	switch(opts.type)
 	{
 		case ready::ERROR:
-			set_timeout(opts.timeout);
 			sd.async_wait(wait_type::wait_error, std::move(handle));
 			break;
 
 		case ready::WRITE:
-			set_timeout(opts.timeout);
 			sd.async_wait(wait_type::wait_write, std::move(handle));
 			break;
 
 		case ready::READ:
-			set_timeout(opts.timeout);
-			sd.async_wait(wait_type::wait_read, std::move(handle));
+		{
+			// The problem here is that the wait operation gives ec=success on both a
+			// socket error and when data is actually available. We then have to check
+			// using a non-blocking peek in the handler. By doing it this way here we
+			// just get the error in the handler's ec.
+			static char buf[16] alignas(16);
+			static const ilist<mutable_buffer> bufs{buf};
+			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
+			sd.async_receive(bufs, sd.message_peek, std::move(handle));
+			//sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
+		}
 
 		default:
 			throw ircd::not_implemented{};
@@ -1467,16 +1480,6 @@ noexcept try
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
-
-	// The problem here is that the wait operation gives ec=success on both a
-	// socket error and when data is actually available. This could be giving
-	// the error in ec.
-	if(ec == success && type == ready::READ)
-	{
-		static char buf[16] alignas(16);
-		__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
-		sd.receive(ilist<mutable_buffer>{buf}, sd.message_peek, ec);
-	}
 
 	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
 	          this,
