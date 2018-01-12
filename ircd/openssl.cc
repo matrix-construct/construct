@@ -894,8 +894,8 @@ ircd::openssl::bignum::bignum(const const_raw_buffer &bin)
 :a{[&bin]
 {
 	// Our binary buffer is little endian. We use
-	const ctx::critical_assertion ca;
-	static thread_local uint8_t tmp[64_KiB];
+	thread_local uint8_t tmp[64_KiB];
+	const critical_assertion ca;
 	const mutable_raw_buffer buf{tmp, size(bin)};
 	if(unlikely(size(buf) > sizeof(tmp)))
 		throw buffer_error

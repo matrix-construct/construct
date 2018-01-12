@@ -606,9 +606,15 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const vector_view<const http::header> &headers)
 {
-	char buf[serialized(headers)];
-	stream_buffer sb{{buf, sizeof(buf)}};
-	http::write(sb, headers);
+	// contents of this buffer get copied again when further passed to
+	// response{}; we can get this off the stack if that remains true.
+	thread_local char buffer[2_KiB];
+	stream_buffer sb{buffer};
+	{
+		const critical_assertion ca;
+		http::write(sb, headers);
+	}
+
 	response
 	{
 		client, content, content_type, code, sb.completed()
@@ -639,7 +645,9 @@ ircd::resource::response::response(client &client,
 		""
 	};
 
-	char head_buf[2048];
+	// This buffer will be passed to the socket and sent out;
+	// cannot be static/tls.
+	char head_buf[2_KiB];
 	stream_buffer head{head_buf};
 	http::response
 	{

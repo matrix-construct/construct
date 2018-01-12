@@ -1784,7 +1784,8 @@ noexcept try
 
 	if(!valid)
 	{
-		char buf[256];
+		thread_local char buf[256];
+		const critical_assertion ca;
 		log.warning("verify: %s /CN=%s :%s",
 		            common_name(opts),
 		            openssl::subject_common_name(buf, cert),
@@ -1832,7 +1833,8 @@ noexcept try
 
 		if(!verifier(true, vc))
 		{
-			char buf[256];
+			thread_local char buf[256];
+			const critical_assertion ca;
 			throw inauthentic
 			{
 				"/CN=%s does not match target host %s :%s",
@@ -1841,6 +1843,14 @@ noexcept try
 				openssl::get_error_string(stctx)
 			};
 		}
+	}
+
+	{
+		thread_local char buf[512];
+		const critical_assertion ca;
+		log.debug("verify[%s]: %s",
+		          common_name(opts),
+		          openssl::print(buf, cert));
 	}
 
 	return true;
@@ -2241,7 +2251,8 @@ ircd::net::_resolve(const ipport &ipport,
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const remote &t)
 {
-	char buf[256];
+	thread_local char buf[256];
+	const critical_assertion ca;
 	s << string(buf, t);
 	return s;
 }
@@ -2280,7 +2291,8 @@ ircd::net::string(const mutable_buffer &buf,
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const ipport &t)
 {
-	char buf[256];
+	thread_local char buf[256];
+	const critical_assertion ca;
 	s << string(buf, t);
 	return s;
 }
@@ -2410,7 +2422,8 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const hostport &t)
 {
-	char buf[256];
+	thread_local char buf[256];
+	const critical_assertion ca;
 	s << string(buf, t);
 	return s;
 }
