@@ -30,6 +30,7 @@
 namespace boost::system
 {
 	struct error_code;
+	struct system_error;
 	namespace errc {}
 }
 
@@ -63,6 +64,13 @@ namespace ircd
 
 	void post(std::function<void ()>);
 	void dispatch(std::function<void ()>);
+
+	// Forward utilities for boost errors
+	std::exception_ptr make_eptr(const boost::system::error_code &ec);
+	string_view string(const mutable_buffer &, const boost::system::error_code &);
+	string_view string(const mutable_buffer &, const boost::system::system_error &);
+	std::string string(const boost::system::error_code &);
+	std::string string(const boost::system::system_error &);
 }
 
 inline void
