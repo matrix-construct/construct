@@ -138,6 +138,8 @@ namespace ircd
 
 	using ctx::use_future_t;
 	using ctx::use_future;
+
+	using ctx::critical_assertion;
 }
 
 /// An instance of critical_assertion detects an attempt to context switch.
