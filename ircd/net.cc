@@ -1365,19 +1365,17 @@ catch(const std::exception &e)
 	throw;
 }
 
-bool
+void
 ircd::net::socket::cancel()
 noexcept
 {
-	static const auto good{[](const auto &ec)
-	{
-		return ec == boost::system::errc::success;
-	}};
+	boost::system::error_code ec;
 
-	boost::system::error_code ec[2];
-	sd.cancel(ec[0]);
-	timer.cancel(ec[1]);
-	return std::all_of(begin(ec), end(ec), good);
+	sd.cancel(ec);
+	assert(!ec);
+
+	timer.cancel(ec);
+	assert(!ec);
 }
 
 void

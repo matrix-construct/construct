@@ -101,7 +101,7 @@ struct ircd::net::socket
 	void wait(const wait_opts &);
 	void wait(const wait_opts &, wait_callback_ec);
 	void wait(const wait_opts &, wait_callback_eptr);
-	bool cancel() noexcept;
+	void cancel() noexcept;
 
 	// Alias to wait()
 	template<class... args> auto operator()(args&&...);
