@@ -110,6 +110,7 @@ const decltype(ircd::http::reason) ircd::http::reason
 	{ code::METHOD_NOT_ALLOWED,                  "Method Not Allowed"                              },
 	{ code::REQUEST_TIMEOUT,                     "Request Time-out"                                },
 	{ code::CONFLICT,                            "Conflict"                                        },
+	{ code::PAYLOAD_TOO_LARGE,                   "Payload Too Large"                               },
 	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },
 	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
 	{ code::IM_A_TEAPOT,                         "Negative, I Am A Meat Popsicle"                  },
