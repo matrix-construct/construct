@@ -87,13 +87,16 @@ ircd::log::init()
 
 	//add_top_conf("log", NULL, NULL, conf_log_table);
 
-	console_err[CRITICAL]    = true;
-	console_err[ERROR]       = true;
-	console_err[WARNING]     = true;
-
+	console_out[CRITICAL]    = true;
+	console_out[ERROR]       = true;
+	console_out[WARNING]     = true;
 	console_out[NOTICE]      = true;
 	console_out[INFO]        = true;
 	console_out[DEBUG]       = ircd::debugmode;
+
+	//console_err[CRITICAL]    = true;
+	//console_err[ERROR]       = true;
+	//console_err[WARNING]     = true;
 
 	file_out[CRITICAL]       = true;
 	file_out[ERROR]          = true;
