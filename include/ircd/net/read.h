@@ -40,6 +40,9 @@ namespace ircd::net
 	size_t read(socket &, const vector_view<const mutable_buffer> &);
 	size_t read(socket &, const mutable_buffer &);
 
+	// Non-blocking; discard up to len, but less may be discarded.
+	size_t discard_any(socket &, const size_t &len);
+
 	// Yields until len has been discarded
 	size_t discard_all(socket &, const size_t &len);
 }

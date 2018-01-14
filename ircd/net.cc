@@ -219,6 +219,39 @@ ircd::net::discard_all(socket &socket,
 	return len;
 }
 
+/// Non-blocking discard of up to len bytes. The amount of bytes discarded
+/// is returned. Zero is only returned if len==0 because the EAGAIN is
+/// thrown. If any bytes have been discarded any EAGAIN encountered in
+/// this function's internal loop is not thrown, but used to exit the loop.
+///
+size_t
+ircd::net::discard_any(socket &socket,
+                       const size_t &len)
+{
+	static char buffer[512] alignas(16);
+
+	size_t remain{len}; while(remain) try
+	{
+		const mutable_buffer mb
+		{
+			buffer, std::min(remain, sizeof(buffer))
+		};
+
+		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
+		remain -= read_one(socket, mb);
+	}
+	catch(const boost::system::system_error &e)
+	{
+		if(e.code() == boost::system::errc::resource_unavailable_try_again)
+			if(remain <= len)
+				break;
+
+		throw;
+	}
+
+	return len - remain;
+}
+
 /// Yields ircd::ctx until buffers are full.
 ///
 /// Use this only if the following are true:
