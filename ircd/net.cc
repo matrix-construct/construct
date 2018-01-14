@@ -213,7 +213,7 @@ ircd::net::discard_all(socket &socket,
 		};
 
 		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
-		read_all(socket, mb);
+		remain -= read_all(socket, mb);
 	}
 
 	return len;
