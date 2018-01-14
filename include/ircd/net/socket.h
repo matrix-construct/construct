@@ -90,11 +90,13 @@ struct ircd::net::socket
 	// low level write suite
 	template<class iov> size_t write_one(iov&&); // non-blocking
 	template<class iov> size_t write_any(iov&&); // non-blocking
+	template<class iov> size_t write_few(iov&&); // yielding
 	template<class iov> size_t write_all(iov&&); // yielding
 
 	// low level read suite
 	template<class iov> size_t read_one(iov&&);  // non-blocking
-	template<class iov> size_t read_any(iov&&);  // yielding
+	template<class iov> size_t read_any(iov&&);  // non-blocking
+	template<class iov> size_t read_few(iov&&);  // yielding
 	template<class iov> size_t read_all(iov&&);  // yielding
 
 	// low level wait suite
@@ -173,7 +175,7 @@ ircd::net::socket::read_all(iov&& bufs)
 /// Yields ircd::ctx until remote has sent at least some data.
 template<class iov>
 size_t
-ircd::net::socket::read_any(iov&& bufs)
+ircd::net::socket::read_few(iov&& bufs)
 {
 	const size_t ret
 	{
@@ -185,6 +187,27 @@ ircd::net::socket::read_any(iov&& bufs)
 		{
 			boost::asio::error::eof
 		};
+
+	in.bytes += ret;
+	++in.calls;
+	return ret;
+}
+
+/// Non-blocking; as much as possible without blocking
+template<class iov>
+size_t
+ircd::net::socket::read_any(iov&& bufs)
+{
+	assert(!blocking(*this));
+	static const auto completion
+	{
+		asio::transfer_all()
+	};
+
+	const size_t ret
+	{
+		asio::read(ssl, std::forward<iov>(bufs), completion)
+	};
 
 	in.bytes += ret;
 	++in.calls;
@@ -227,7 +250,22 @@ ircd::net::socket::write_all(iov&& bufs)
 	return ret;
 }
 
-/// Non-blocking; writes as much as possible by with multiple write_one()'s
+/// Yields ircd::ctx until one or more bytes are sent.
+template<class iov>
+size_t
+ircd::net::socket::write_few(iov&& bufs)
+{
+	const size_t ret
+	{
+		ssl.async_write_some(std::forward<iov>(bufs), yield_context{to_asio{}})
+	};
+
+	out.bytes += ret;
+	++out.calls;
+	return ret;
+}
+
+/// Non-blocking; writes as much as possible without blocking
 template<class iov>
 size_t
 ircd::net::socket::write_any(iov&& bufs)

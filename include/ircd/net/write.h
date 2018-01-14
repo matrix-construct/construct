@@ -34,7 +34,12 @@ namespace ircd::net
 	size_t write_any(socket &, const vector_view<const const_buffer> &);
 	size_t write_any(socket &, const const_buffer &);
 
-	// Blocking; Yields your ircd::ctx until all bytes have been written;
+	// Yields your ircd::ctx until at least some bytes have been written;
+	// advise one uses a timeout when calling.
+	size_t write_few(socket &, const vector_view<const const_buffer> &);
+	size_t write_few(socket &, const const_buffer &);
+
+	// Yields your ircd::ctx until all bytes have been written;
 	// advise one uses a timeout in conjunction to prevent DoS.
 	size_t write_all(socket &, const vector_view<const const_buffer> &);
 	size_t write_all(socket &, const const_buffer &);
@@ -76,6 +81,18 @@ ircd::net::write_all(socket &socket,
 }
 
 inline size_t
+ircd::net::write_few(socket &socket,
+                     const const_buffer &buffer)
+{
+	const const_buffer buffers[]
+	{
+		buffer
+	};
+
+	return write_few(socket, buffers);
+}
+
+inline size_t
 ircd::net::write_any(socket &socket,
                      const const_buffer &buffer)
 {
@@ -84,7 +101,7 @@ ircd::net::write_any(socket &socket,
 		buffer
 	};
 
-	return write_all(socket, buffers);
+	return write_any(socket, buffers);
 }
 
 inline size_t

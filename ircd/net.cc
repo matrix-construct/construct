@@ -156,6 +156,24 @@ ircd::net::write_all(socket &socket,
 	return socket.write_all(buffers);
 }
 
+/// Yields ircd::ctx until at least some buffers are sent.
+///
+/// This is blocking behavior; use this if the following are true:
+///
+/// * You put a timer on the socket so if the remote slows us down the data
+/// will not occupy the daemon's memory for a long time.
+///
+/// * You are willing to dedicate the ircd::ctx to sending the data to
+/// the remote. The ircd::ctx will be yielding until the kernel has at least
+/// some space to consume at least something from the supplied buffers.
+///
+size_t
+ircd::net::write_few(socket &socket,
+                     const vector_view<const const_buffer> &buffers)
+{
+	return socket.write_few(buffers);
+}
+
 /// Writes as much as possible until one of the following is true:
 ///
 /// * The kernel buffer for the socket is full.
@@ -285,6 +303,18 @@ ircd::net::read_all(socket &socket,
 /// blocking if this call is made in the blind.
 ///
 size_t
+ircd::net::read_few(socket &socket,
+                    const vector_view<const mutable_buffer> &buffers)
+{
+	return socket.read_few(buffers);
+}
+
+/// Reads as much as possible. Non-blocking behavior.
+///
+/// This is intended for lowest-level/custom control and not preferred by
+/// default for most users on an ircd::ctx.
+///
+size_t
 ircd::net::read_any(socket &socket,
                     const vector_view<const mutable_buffer> &buffers)
 {
@@ -294,7 +324,7 @@ ircd::net::read_any(socket &socket,
 /// Reads one message or less in a single syscall. Non-blocking behavior.
 ///
 /// This is intended for lowest-level/custom control and not preferred by
-/// default.
+/// default for most users on an ircd::ctx.
 ///
 size_t
 ircd::net::read_one(socket &socket,
