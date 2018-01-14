@@ -361,6 +361,7 @@ struct ircd::http::response::head
 	string_view headers;
 
 	head(parse::capstan &pc, const headers::closure &c = {});
+	head() = default;
 };
 
 /// Represents an HTTP response content. This is for receiving only.
