@@ -1,67 +1,53 @@
-/*
- *  charybdis: an advanced ircd.
- *  client.c: Controls clients.
- *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
- *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2005 ircd-ratbox development team
- *  Copyright (C) 2007 William Pitcock
- *  Copyright (C) 2016 Charybdis Development Team
- *  Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
- */
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #include <ircd/asio.h>
-#include <ircd/server.h>
 
 namespace ircd
 {
-	// Default time limit for how long a client connection can be in "async mode"
-	// (or idle mode) after which it is disconnected.
-	const auto async_timeout
-	{
-		35s
-	};
-
-	// Time limit for how long a connected client can be in "request mode." This
-	// should never be hit unless there's an error in the handling code.
-	const auto request_timeout
-	{
-		10s
-	};
-
-	// The pool of request contexts. When a client makes a request it does so by acquiring
-	// a stack from this pool. The request handling and response logic can then be written
-	// in a synchronous manner as if each connection had its own thread.
-	ctx::pool request
-	{
-		"request", 1_MiB
-	};
-
-	// Container for all active clients (connections) for iteration purposes.
-	client::list client::clients;
-
-	void async_recv_next(std::shared_ptr<client>, const milliseconds &timeout);
-	void async_recv_next(std::shared_ptr<client>);
-
-	void close_all();
-
 	template<class... args> std::shared_ptr<client> make_client(args&&...);
 }
+
+/// Linkage for the default settings
+decltype(ircd::client::settings)
+ircd::client::settings
+{};
+
+/// Linkage for the default conf
+decltype(ircd::client::default_conf)
+ircd::client::default_conf
+{};
+
+/// The pool of request contexts. When a client makes a request it does so by acquiring
+/// a stack from this pool. The request handling and response logic can then be written
+/// in a synchronous manner as if each connection had its own thread.
+ircd::ctx::pool
+ircd::client::context
+{
+	"client", settings.stack_size
+};
+
+// Linkage for the container of all active clients for iteration purposes.
+template<>
+decltype(ircd::util::instance_list<ircd::client>::list)
+ircd::util::instance_list<ircd::client>::list
+{};
 
 //
 // init
@@ -69,20 +55,20 @@ namespace ircd
 
 ircd::client::init::init()
 {
-	request.add(128);
+	context.add(settings.pool_size);
 }
 
 void
 ircd::client::init::interrupt()
 {
-	if(request.active() || !client::clients.empty())
+	if(context.active() || !client::list.empty())
 		log::warning("Interrupting %zu requests; dropping %zu requests; closing %zu clients...",
-		             request.active(),
-		             request.pending(),
-		             client::clients.size());
+		             context.active(),
+		             context.pending(),
+		             client::list.size());
 
-	request.interrupt();
-	close_all();
+	context.interrupt();
+	close_all_clients();
 }
 
 ircd::client::init::~init()
@@ -90,20 +76,20 @@ noexcept
 {
 	interrupt();
 
-	if(request.active())
+	if(context.active())
 		log::warning("Joining %zu active of %zu remaining request contexts...",
-		             request.active(),
-		             request.size());
+		             context.active(),
+		             context.size());
 	else
 		log::debug("Waiting for %zu request contexts to join...",
-		           request.size());
+		           context.size());
 
-	request.join();
+	context.join();
 
-	if(unlikely(!client::clients.empty()))
+	if(unlikely(!client::list.empty()))
 	{
-		log::error("%zu clients are unterminated...", client::clients.size());
-		assert(client::clients.empty());
+		log::error("%zu clients are unterminated...", client::list.size());
+		assert(client::list.empty());
 	}
 }
 
@@ -199,7 +185,7 @@ ircd::add_client(std::shared_ptr<socket> s)
 		make_client(std::move(s))
 	};
 
-	async_recv_next(client, async_timeout);
+	client->async();
 	return client;
 }
 
@@ -211,39 +197,21 @@ ircd::make_client(args&&... a)
 }
 
 void
-ircd::close_all()
+ircd::close_all_clients()
 {
-	auto it(begin(client::clients));
-	while(it != end(client::clients))
+	auto it(begin(client::list));
+	while(it != end(client::list))
 	{
 		auto *const client(*it);
 		++it; try
 		{
-			close(*client, net::dc::RST, net::close_ignore);
+			client->close(net::dc::RST, net::close_ignore);
 		}
 		catch(const std::exception &e)
 		{
 			log::warning("Error disconnecting client @%p: %s", client, e.what());
 		}
 	}
-}
-
-ircd::ctx::future<void>
-ircd::close(client &client,
-            const net::close_opts &opts)
-{
-	if(likely(client.sock))
-		return close(*client.sock, opts);
-	else
-		return {};
-}
-
-void
-ircd::close(client &client,
-            const net::close_opts &opts,
-            net::close_callback callback)
-{
-	close(*client.sock, opts, std::move(callback));
 }
 
 ircd::ipport
@@ -276,14 +244,8 @@ namespace ircd
 	static bool handle_ec_eof(client &);
 	static bool handle_ec(client &, const error_code &);
 
-	static void handle_client_request(std::shared_ptr<client>, milliseconds);
-	static void handle_client_ready(std::shared_ptr<client>, milliseconds, const error_code &ec);
-}
-
-void
-ircd::async_recv_next(std::shared_ptr<client> client)
-{
-	async_recv_next(std::move(client), milliseconds(-1));
+	static void handle_client_request(std::shared_ptr<client>);
+	static void handle_client_ready(std::shared_ptr<client>, const error_code &ec);
 }
 
 /// This function is the basis for the client's request loop. We still use
@@ -300,20 +262,19 @@ ircd::async_recv_next(std::shared_ptr<client> client)
 /// This call returns immediately so we no longer block the current context and
 /// its stack while waiting for activity on idle connections between requests.
 void
-ircd::async_recv_next(std::shared_ptr<client> client,
-                      const milliseconds &timeout)
+ircd::client::async()
 {
-	assert(bool(client));
-	assert(bool(client->sock));
-	auto &sock(*client->sock);
+	assert(bool(this->sock));
+	assert(bool(this->conf));
+	auto &sock(*this->sock);
 	const net::wait_opts opts
 	{
-		net::ready::READ, timeout
+		net::ready::READ, conf->async_timeout
 	};
 
 	auto handler
 	{
-		std::bind(ircd::handle_client_ready, std::move(client), timeout, ph::_1)
+		std::bind(ircd::handle_client_ready, shared_from(*this), ph::_1)
 	};
 
 	sock(opts, std::move(handler));
@@ -329,7 +290,6 @@ ircd::async_recv_next(std::shared_ptr<client> client,
 /// be queued for some time after this call returns.
 void
 ircd::handle_client_ready(std::shared_ptr<client> client,
-                          const milliseconds timeout,
                           const error_code &ec)
 {
 	if(!handle_ec(*client, ec))
@@ -337,10 +297,10 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 
 	auto handler
 	{
-		std::bind(ircd::handle_client_request, std::move(client), timeout)
+		std::bind(ircd::handle_client_request, std::move(client))
 	};
 
-	request(std::move(handler));
+	client::context(std::move(handler));
 }
 
 /// A request context has been dispatched and is now handling this client.
@@ -349,16 +309,15 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 /// client will release this ctx and its stack and fall back to async mode
 /// or die.
 void
-ircd::handle_client_request(std::shared_ptr<client> client,
-                            const milliseconds timeout)
+ircd::handle_client_request(std::shared_ptr<client> client)
 {
 	if(!client->main())
 	{
-		close(*client, net::dc::SSL_NOTIFY).wait();
+		client->close(net::dc::SSL_NOTIFY).wait();
 		return;
 	}
 
-	async_recv_next(std::move(client), timeout);
+	client->async();
 }
 
 /// This error handling switch is one of two places client errors
@@ -405,7 +364,7 @@ try
 	           string(local(client)),
 	           string(remote(client)));
 
-	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
+	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
 	return false;
 }
 catch(const std::exception &e)
@@ -429,7 +388,7 @@ try
 	             string(local(client)),
 	             string(remote(client)));
 
-	close(client, net::dc::RST, net::close_ignore);
+	client.close(net::dc::RST, net::close_ignore);
 	return false;
 }
 catch(const std::exception &e)
@@ -455,7 +414,7 @@ try
 	             string(local(client)),
 	             string(remote(client)));
 
-	close(client, net::dc::SSL_NOTIFY, net::close_ignore);
+	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
 	return false;
 }
 catch(const std::exception &e)
@@ -479,7 +438,7 @@ ircd::handle_ec_default(client &client,
 	             string(remote(client)),
 	             string(ec));
 
-	close(client, net::dc::RST, net::close_ignore);
+	client.close(net::dc::RST, net::close_ignore);
 	return false;
 }
 
@@ -492,19 +451,8 @@ ircd::client::client()
 {
 }
 
-ircd::client::client(const hostport &hostport,
-                     const seconds &timeout)
-:client
-{
-	net::open(hostport)
-}
-{
-}
-
 ircd::client::client(std::shared_ptr<socket> sock)
-:clit{clients, clients.emplace(end(clients), this)}
-,sock{std::move(sock)}
-,request_timer{ircd::timer::nostart}
+:sock{std::move(sock)}
 {
 }
 
@@ -522,43 +470,13 @@ catch(const std::exception &e)
 	return;
 }
 
-namespace ircd
-{
-	bool handle_request(client &client, parse::capstan &pc, const http::request::head &head, size_t &content_consumed);
-	bool handle_request(client &client, parse::capstan &pc);
-}
-
-/// Client main.
+/// Client main loop.
 ///
 /// Before main(), the client had been sitting in async mode waiting for
 /// socket activity. Once activity with data was detected indicating a request,
 /// the client was dispatched to the request pool where it is paired to an
 /// ircd::ctx with a stack. main() is then invoked on that ircd::ctx stack.
 /// Nothing from the socket has been read into userspace before main().
-///
-bool
-ircd::client::main()
-noexcept try
-{
-	const auto header_max{4_KiB};
-	char header_buffer[header_max];
-	parse::buffer pb{header_buffer};
-	return handle(pb);
-}
-catch(const std::exception &e)
-{
-	log::error("client[%s] [500 Internal Error]: %s",
-	           string(remote(*this)),
-	           e.what());
-
-	#ifdef RB_DEBUG
-		throw;
-	#else
-		return false;
-	#endif
-}
-
-/// Main request loop.
 ///
 /// This function parses requests off the socket in a loop until there are no
 /// more requests or there is a fatal error. The ctx will "block" to wait for
@@ -575,24 +493,21 @@ catch(const std::exception &e)
 /// errors on the main/callback stack and must be asynchronous.
 ///
 bool
-ircd::client::handle(parse::buffer &pb)
-try
+ircd::client::main()
+noexcept try
 {
+	char buffer[client::request::HEAD_MAX];
+	parse::buffer pb{mutable_buffer{buffer}};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
-		request_timer = ircd::timer{};
-		const socket::scope_timeout timeout
-		{
-			*sock, request_timeout
-		};
-
-		if(!handle_request(*this, pc))
+		if(!handle_request(pc))
 			return false;
 
-		// Should have nothing left in the userspace parse buffer after
-		// request otherwise too much was read and the pb.remove() will
-		// have to memmove() it; should never happen with good grammar.
-		assert(pb.unparsed() == 0);
+		// After the request, the head and content has been read off the socket
+		// and the capstan has advanced to the end of the content. The catch is
+		// that reading off the socket could have read too much, bleeding into
+		// the next request. This is rare, but pb.remove() will memmove() the
+		// bleed back to the beginning of the head buffer for the next loop.
 		pb.remove();
 	}
 	while(pc.unparsed());
@@ -623,11 +538,10 @@ catch(const boost::system::system_error &e)
 		case broken_pipe:
 		case connection_reset:
 		case not_connected:
-			close(*this, net::dc::RST, net::close_ignore);
+			close(net::dc::RST, net::close_ignore);
 			return false;
 
 		case operation_canceled:
-			close(*this, net::dc::SSL_NOTIFY).wait();
 			return false;
 
 		case bad_file_descriptor:
@@ -639,11 +553,11 @@ catch(const boost::system::system_error &e)
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(value))
 	{
 		case SSL_R_SHORT_READ:
-			close(*this, net::dc::RST, net::close_ignore);
+			close(net::dc::RST, net::close_ignore);
 			return false;
 
 		case SSL_R_PROTOCOL_IS_SHUTDOWN:
-			close(*this, net::dc::RST, net::close_ignore);
+			close(net::dc::RST, net::close_ignore);
 			return false;
 
 		default:
@@ -652,7 +566,6 @@ catch(const boost::system::system_error &e)
 	else if(ec.category() == get_misc_category()) switch(value)
 	{
 		case boost::asio::error::eof:
-			close(*this, net::dc::SSL_NOTIFY).wait();
 			return false;
 
 		default:
@@ -665,8 +578,49 @@ catch(const boost::system::system_error &e)
 	           value,
 	           ec.message());
 
-	close(*this, net::dc::RST, net::close_ignore);
+	close(net::dc::RST, net::close_ignore);
 	return false;
+}
+catch(const std::exception &e)
+{
+	log::error("client[%s] [500 Internal Error]: %s",
+	           string(remote(*this)),
+	           e.what());
+
+	#ifdef RB_DEBUG
+		throw;
+	#else
+		return false;
+	#endif
+}
+
+/// The constructor for request state is only made in
+/// client::handle_request(). It is defined here to be adjacent to that
+/// callsite
+///
+ircd::client::request::request(parse::capstan &pc)
+:head
+{
+	// This is the first read off the wire. The headers are entirely read and
+	// the tape is advanced.
+	pc
+}
+,content_consumed
+{
+	// The size of HTTP headers are never initially known, which means
+	// the above head parse could have read too much off the socket bleeding
+	// into the content or even the next request entirely. That's ok because
+	// the state of `pc` will reflect that back to the main() loop for the
+	// next request, but for this request we have to figure out how much of
+	// the content was accidentally read so far.
+	std::min(pc.unparsed(), head.content_length)
+}
+,content_partial
+{
+	pc.parsed, content_consumed
+}
+{
+	pc.parsed += content_consumed;
 }
 
 /// Handle a single request within the client main() loop.
@@ -681,95 +635,69 @@ catch(const boost::system::system_error &e)
 /// As of right now this timeout extends to our handling of the
 /// request too.
 bool
-ircd::handle_request(client &client,
-                     parse::capstan &pc)
+ircd::client::handle_request(parse::capstan &pc)
 try
 {
-	// This is the first read off the wire. The headers are entirely read and
-	// the tape is advanced.
-	const http::request::head head{pc};
-
-	// The size of HTTP headers are never initially known, which means
-	// the above head parse could have read too much off the socket bleeding
-	// into the content or even the next request entirely. That's ok because
-	// the state of `pc` will reflect that back to the main() loop for the
-	// next request, but for this request we have to figure out how much of
-	// the content was accidentally read so far.
-	size_t content_consumed
+	const socket::scope_timeout timeout
 	{
-		std::min(pc.unparsed(), head.content_length)
+		*sock, conf->request_timeout
 	};
+
+	struct request request{pc};
+	assert(pc.parsed <= pc.read);
+	this->request = &request;
+	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu part:%zu",
+	           sock.get(),
+	           string(local(*this)),
+	           string(remote(*this)),
+	           request.head.method,
+	           request.head.path,
+	           request.head.content_length,
+	           request.content_consumed);
 
 	bool ret
 	{
-		handle_request(client, pc, head, content_consumed)
+		resource_request(request)
 	};
 
-	if(ret && iequals(head.connection, "close"_sv))
+	if(ret && iequals(request.head.connection, "close"_sv))
 		ret = false;
 
 	return ret;
 }
 catch(const ircd::error &e)
 {
-	log::error("socket(%p) local[%s] remote[%s] in %ld$us: %s",
-	           client.sock.get(),
-	           string(local(client)),
-	           string(remote(client)),
-	           client.request_timer.at<microseconds>().count(),
+	log::error("socket(%p) local[%s] remote[%s]: %s",
+	           sock.get(),
+	           string(local(*this)),
+	           string(remote(*this)),
 	           e.what());
 
 	resource::response
 	{
-		client, e.what(), {}, http::INTERNAL_SERVER_ERROR
+		*this, e.what(), {}, http::INTERNAL_SERVER_ERROR
 	};
 
 	throw;
 }
 
 bool
-ircd::handle_request(client &client,
-                     parse::capstan &pc,
-                     const http::request::head &head,
-                     size_t &content_consumed)
+ircd::client::resource_request(struct request &request)
 try
 {
-	// The resource is responsible for reading content at its discretion, if
-	// at all. If we accidentally read some content it has to be presented.
-	const string_view content_partial
-	{
-		pc.parsed, pc.unparsed()
-	};
-
-	// Advance the tape up to the end of the partial content read. We no
-	// longer use the capstan after this point because the resource reads
-	// directly off the socket. The `pc` will be positioned properly for the
-	// next request so long as any remaining content is read off the socket.
-	pc.parsed += content_consumed;
-	assert(pc.parsed <= pc.read);
-	assert(content_partial.size() == content_consumed);
-	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu part:%zu",
-	           client.sock.get(),
-	           string(local(client)),
-	           string(remote(client)),
-	           head.method,
-	           head.path,
-	           head.content_length,
-	           content_consumed);
-
 	auto &resource
 	{
-		ircd::resource::find(head.path)
+		ircd::resource::find(request.head.path)
 	};
 
-	resource(client, head, content_partial, content_consumed);
+	resource(*this, request, request.head);
 	return true;
 }
 catch(const http::error &e)
 {
 	resource::response
 	{
-		client, e.content, "text/html; charset=utf8", e.code, e.headers
+		*this, e.content, "text/html; charset=utf8", e.code, e.headers
 	};
 
 	switch(e.code)
@@ -779,16 +707,7 @@ catch(const http::error &e)
 		// which wasn't read because of the exception has to be read now.
 		default:
 		{
-			assert(client.sock);
-			const size_t unconsumed{head.content_length - content_consumed};
-			log::debug("socket(%p) local[%s] remote[%s] discarding %zu of %zu unconsumed content...",
-			           client.sock.get(),
-			           string(local(client)),
-			           string(remote(client)),
-			           unconsumed,
-			           head.content_length);
-
-			net::discard_all(*client.sock, unconsumed);
+			discard_unconsumed(request);
 			return true;
 		}
 
@@ -797,11 +716,52 @@ catch(const http::error &e)
 		case http::BAD_REQUEST:
 		case http::PAYLOAD_TOO_LARGE:
 		case http::REQUEST_TIMEOUT:
-			close(client).wait();
+			close().wait();    // close wait because we're on a stack
 			return false;
 
 		// The client must also be disconnected at some point down the stack.
 		case http::INTERNAL_SERVER_ERROR:
 			throw;
 	}
+}
+
+void
+ircd::client::discard_unconsumed(struct request &request)
+{
+	if(unlikely(!sock))
+		return;
+
+	const size_t unconsumed
+	{
+		request.head.content_length - request.content_consumed
+	};
+
+	if(!unconsumed)
+		return;
+
+	log::debug("socket(%p) local[%s] remote[%s] discarding %zu of %zu unconsumed content...",
+	           sock.get(),
+	           string(local(*this)),
+	           string(remote(*this)),
+	           unconsumed,
+	           request.head.content_length);
+
+	request.content_consumed += net::discard_all(*sock, unconsumed);
+	assert(request.content_consumed == request.head.content_length);
+}
+
+ircd::ctx::future<void>
+ircd::client::close(const net::close_opts &opts)
+{
+	if(likely(sock))
+		return net::close(*sock, opts);
+	else
+		return {};
+}
+
+void
+ircd::client::close(const net::close_opts &opts,
+                    net::close_callback callback)
+{
+	net::close(*sock, opts, std::move(callback));
 }

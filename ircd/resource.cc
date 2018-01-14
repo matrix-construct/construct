@@ -186,7 +186,7 @@ ircd::verify_origin(client &client,
 
 	const auto verified
 	{
-		m::io::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
+		m::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
 	};
 
 	if(!verified)
@@ -198,9 +198,8 @@ ircd::verify_origin(client &client,
 
 void
 ircd::resource::operator()(client &client,
-                           const http::request::head &head,
-                           const string_view &content_partial,
-                           size_t &content_read)
+                           struct client::request &request,
+                           const http::request::head &head)
 {
 	// Find the method or METHOD_NOT_ALLOWED
 	auto &method
@@ -215,31 +214,29 @@ ircd::resource::operator()(client &client,
 			http::PAYLOAD_TOO_LARGE
 		};
 
-	assert(size(content_partial) <= head.content_length);
-	assert(size(content_partial) == content_read);
 	const size_t content_remain
 	{
-		head.content_length - content_read
+		head.content_length - request.content_consumed
 	};
 
 	unique_buffer<mutable_buffer> content_buffer;
-	string_view content{content_partial};
+	string_view content{request.content_partial};
 	if(content_remain)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;
 		content_buffer = unique_buffer<mutable_buffer>{head.content_length};
-		memcpy(data(content_buffer), data(content_partial), size(content_partial));
+		memcpy(data(content_buffer), data(request.content_partial), size(request.content_partial));
 
 		// Setup a window inside the buffer for the remaining socket read.
 		const mutable_buffer content_remain_buffer
 		{
-			data(content_buffer) + content_read, content_remain
+			data(content_buffer) + size(request.content_partial), content_remain
 		};
 
 		//TODO: more discretion from the method.
 		// Read the remaining content off the socket.
-		content_read += read_all(*client.sock, content_remain_buffer);
-		assert(content_read == head.content_length);
+		request.content_consumed += read_all(*client.sock, content_remain_buffer);
+		assert(request.content_consumed == head.content_length);
 		content = string_view
 		{
 			data(content_buffer), head.content_length
@@ -257,18 +254,18 @@ ircd::resource::operator()(client &client,
 		param, tokens(pathparm, '/', param)
 	};
 
-	resource::request request
+	resource::request resource_request
 	{
 		head, content, head.query, parv
 	};
 
 	if(method.opts.flags & method.REQUIRES_AUTH)
-		authenticate(client, method, request);
+		authenticate(client, method, resource_request);
 
 	if(method.opts.flags & method.VERIFY_ORIGIN)
-		verify_origin(client, method, request);
+		verify_origin(client, method, resource_request);
 
-	handle_request(client, method, request);
+	handle_request(client, method, resource_request);
 }
 
 void
@@ -589,9 +586,10 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &headers)
 {
+	assert(client.request);
 	const auto request_time
 	{
-		client.request_timer.at<microseconds>().count()
+		client.request->timer.at<microseconds>().count()
 	};
 
 	const fmt::bsprintf<64> rtime
@@ -648,7 +646,7 @@ ircd::resource::response::response(client &client,
 	           int(code),
 	           http::status(code),
 	           request_time,
-	           (client.request_timer.at<microseconds>().count() - request_time),
+	           (client.request->timer.at<microseconds>().count() - request_time),
 	           content_type,
 	           content.size());
 }
