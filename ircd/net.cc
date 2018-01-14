@@ -1391,6 +1391,37 @@ ircd::net::socket::wait(const wait_opts &opts,
 
 /// Asynchronous callback when the socket is ready
 ///
+/// Overload for operator() without a timeout. see: operator()
+///
+void
+ircd::net::socket::wait(const wait_opts &opts)
+{
+	const scope_timeout timeout
+	{
+		*this, opts.timeout
+	};
+
+	switch(opts.type)
+	{
+		case ready::ERROR:
+			sd.async_wait(wait_type::wait_error, yield_context{to_asio{}});
+			break;
+
+		case ready::WRITE:
+			sd.async_wait(wait_type::wait_write, yield_context{to_asio{}});
+			break;
+
+		case ready::READ:
+			sd.async_wait(wait_type::wait_read, yield_context{to_asio{}});
+			break;
+
+		default:
+			throw ircd::not_implemented{};
+	}
+}
+
+/// Asynchronous callback when the socket is ready
+///
 /// This function calls back the handler when the socket is ready
 /// for the operation of the specified type.
 ///
@@ -1421,47 +1452,30 @@ ircd::net::socket::wait(const wait_opts &opts,
 
 		case ready::READ:
 		{
+			static char buf[1] alignas(16);
+			static const ilist<mutable_buffer> bufs{buf};
+			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
+
+			// The problem here is that waiting on the sd doesn't account for bytes
+			// read into SSL that we didn't consume yet. If something is stuck in
+			// those userspace buffers, the socket won't know about it and perform
+			// the wait. ASIO should fix this by adding a ssl::stream.wait() method
+			// which will bail out immediately in this case before passing up to the
+			// real socket wait.
+			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
+			{
+				handle(error_code{});
+				break;
+			}
+
 			// The problem here is that the wait operation gives ec=success on both a
 			// socket error and when data is actually available. We then have to check
 			// using a non-blocking peek in the handler. By doing it this way here we
 			// just get the error in the handler's ec.
-			static char buf[16] alignas(16);
-			static const ilist<mutable_buffer> bufs{buf};
-			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
 			sd.async_receive(bufs, sd.message_peek, std::move(handle));
 			//sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
 		}
-
-		default:
-			throw ircd::not_implemented{};
-	}
-}
-
-/// Asynchronous callback when the socket is ready
-///
-/// Overload for operator() without a timeout. see: operator()
-///
-void
-ircd::net::socket::wait(const wait_opts &opts)
-{
-	const scope_timeout timeout
-	{
-		*this, opts.timeout
-	};
-
-	switch(opts.type)
-	{
-		case ready::ERROR:
-			sd.async_wait(wait_type::wait_error, yield_context{to_asio{}});
-			break;
-
-		case ready::WRITE:
-			sd.async_wait(wait_type::wait_write, yield_context{to_asio{}});
-			break;
-
-		case ready::READ:
-			sd.async_wait(wait_type::wait_read, yield_context{to_asio{}});
 
 		default:
 			throw ircd::not_implemented{};
