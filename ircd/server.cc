@@ -17,7 +17,7 @@
 // IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <ircd/server.h>
+#include <ircd/server/server.h>
 #include <ircd/asio.h>
 
 namespace ircd::server
@@ -221,10 +221,8 @@ ircd::server::request::tag::read_head(const const_buffer &buffer,
 	{
 		pos + size(terminator)
 	};
-	assert(addl_head_bytes <= size(buffer));
 
-	// The head bytes accounting can be updated and this will be the final
-	// value of what is legitimate head in the req.in.head buffer.
+	assert(addl_head_bytes <= size(buffer));
 	head_read += addl_head_bytes;
 
 	// Setup the capstan and mark the end of the tape
@@ -232,25 +230,19 @@ ircd::server::request::tag::read_head(const const_buffer &buffer,
 	parse::capstan pc{pb};
 	pc.read += head_read;
 
-	// The HTTP head is parsed here and saved in the user's object but they
-	// do not know about it yet and shouldn't be touching it.
 	req.head = http::response::head{pc};
 	assert(pb.completed() == head_read);
 
-	// As stated, the buffer may contain data past the head, which includes
-	// our content or the next response which doesn't even belong to us.
 	const size_t overrun_length
 	{
 		size(buffer) - addl_head_bytes
 	};
 
-	// Calculate the amount of overrun which belongs to our content.
 	const size_t &content_read
 	{
 		std::min(req.head.content_length, overrun_length)
 	};
 
-	// Where the partial content would be written to
 	const const_buffer partial_content
 	{
 		data(req.in.head) + head_read, content_read
@@ -268,8 +260,6 @@ ircd::server::request::tag::read_head(const const_buffer &buffer,
 		data(req.in.head) + head_read + content_read, overrun_length - content_read
 	};
 
-	// When lucky, the content was recieved already (or there is no content) and
-	// we can notify the user in one shot.
 	if(this->content_read == req.head.content_length)
 	{
 		p.set_value(http::status(req.head.status));
@@ -411,8 +401,7 @@ ircd::server::node::link_get()
 
 		return ret;
 	}
-	else
-		return links.back();
+	else return links.back();
 }
 
 ircd::server::link &
