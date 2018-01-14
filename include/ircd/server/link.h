@@ -36,12 +36,15 @@ struct ircd::server::link
 	bool busy() const;
 
   protected:
-	void handle_writable(const error_code &);
-	void wait_writable();
-
+	const_buffer process_read_next(const const_buffer &, struct request::tag &, bool &done);
+	bool process_read(const_buffer &);
+	void discard_read();
 	void handle_readable_success();
 	void handle_readable(const error_code &);
 	void wait_readable();
+
+	void handle_writable(const error_code &);
+	void wait_writable();
 
 	void handle_close(std::exception_ptr);
 	void handle_open(std::exception_ptr);

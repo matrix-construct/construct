@@ -33,9 +33,18 @@ struct ircd::server::node
 	void handle_resolve(std::weak_ptr<node>, std::exception_ptr, const ipport &);
 	void resolve(const hostport &);
 
+	void del(link &);
+	void handle_error(link &, const boost::system::system_error &);
+	void handle_close(link &, std::exception_ptr);
+	void handle_open(link &, std::exception_ptr);
+
   public:
+	size_t num_tags() const;
+	size_t num_links() const;
+	size_t num_links_busy() const;
+	size_t num_links_ready() const;
+
 	link &link_add(const size_t &num = 1);
-	void link_del(const size_t &num = 1);
 	link &link_get();
 
 	void cancel(request &);

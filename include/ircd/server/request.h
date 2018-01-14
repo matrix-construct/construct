@@ -29,22 +29,35 @@ namespace ircd::server
 	struct request;
 }
 
-struct ircd::server::in
-{
-	mutable_buffer head;
-	mutable_buffer content;
-};
-
+/// Request data and options related to transmitting the request. This
+/// is where buffers must be supplied to send data to the server.
+///
 struct ircd::server::out
 {
+	// supplied by user
 	const_buffer head;
 	const_buffer content;
 };
 
+/// Request data and options related to the receive side of the request.
+/// This is where buffers are supplied to receive data from the remote
+/// server.
+///
+struct ircd::server::in
+{
+	// supplied by user
+	mutable_buffer head_buffer;
+	mutable_buffer content_buffer;
+
+	// supplied by system
+	http::response::head head;
+};
+
 /// This is a handle for being a client to another server. This handle will
 /// attempt to find an existing connection pool for the remote server otherwise
-/// one will be created. Then it will multiplex your requests and demultiplex
-/// your responses.
+/// one will be created. Then it will multiplex your request and demultiplex
+/// your response with all the other requests pending in the pipelines to
+/// the remote.
 ///
 struct ircd::server::request
 :ctx::future<http::code>
@@ -52,7 +65,6 @@ struct ircd::server::request
 	struct tag;
 
 	struct tag *tag {nullptr};
-	http::response::head head;
 
   public:
 	server::out out;
@@ -79,12 +91,12 @@ struct ircd::server::request::tag
 	mutable_buffer make_content_buffer() const;
 	mutable_buffer make_head_buffer() const;
 
-	bool read_content(const const_buffer &, const_buffer &overrun);
-	bool read_head(const const_buffer &, const_buffer &overrun);
+	const_buffer read_content(const const_buffer &, bool &done);
+	const_buffer read_head(const const_buffer &, bool &done);
 
   public:
 	mutable_buffer make_read_buffer() const;
-	bool read_buffer(const const_buffer &, const_buffer &overrun);
+	const_buffer read_buffer(const const_buffer &, bool &done);
 
 	tag(server::request &);
 	tag(tag &&) noexcept;
