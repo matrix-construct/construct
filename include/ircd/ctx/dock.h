@@ -28,16 +28,13 @@ namespace ircd::ctx
 	enum class cv_status;
 }
 
-//
-// a dock is a condition variable which has no requirement for locking because
-// the context system does not require mutual exclusion for coherence, however
-// we have to create our own queue here rather than piggyback a mutex's.
-//
+/// dock is a condition variable which has no requirement for locking because
+/// the context system does not require mutual exclusion for coherence.
+///
 class ircd::ctx::dock
 {
-	std::deque<ctx *> q;
+	list q;
 
-	void remove_self();
 	void notify(ctx &) noexcept;
 
   public:
@@ -81,12 +78,11 @@ inline void
 ircd::ctx::dock::notify()
 noexcept
 {
-	if(q.empty())
+	ctx *c;
+	if(!(c = q.pop_front()))
 		return;
 
-	auto c(q.front());
-	q.pop_front();
-	q.emplace_back(c);
+	q.push_back(c);
 	notify(*c);
 }
 
@@ -95,35 +91,35 @@ inline void
 ircd::ctx::dock::notify_one()
 noexcept
 {
-	if(q.empty())
-		return;
-
-	notify(*q.front());
+	if(!q.empty())
+		notify(*q.front());
 }
 
 /// Wake up all contexts waiting on the dock.
 ///
-/// We copy the queue and post all notifications without requesting direct context
-/// switches. This ensures everyone gets notified in a single transaction without
-/// any interleaving during this process.
+/// We post all notifications without requesting direct context
+/// switches. This ensures everyone gets notified in a single
+/// transaction without any interleaving during this process.
 inline void
 ircd::ctx::dock::notify_all()
 noexcept
 {
-	const auto copy(q);
-	for(const auto &c : copy)
-		ircd::ctx::notify(*c);
+	q.for_each([](ctx &c)
+	{
+		ircd::ctx::notify(c);
+	});
 }
 
 inline void
 ircd::ctx::dock::wait()
 {
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	ircd::ctx::wait();
 }
 
@@ -134,12 +130,13 @@ ircd::ctx::dock::wait(predicate&& pred)
 	if(pred())
 		return;
 
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur()); do
+	q.push_back(current); do
 	{
 		ircd::ctx::wait();
 	}
@@ -152,12 +149,13 @@ ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
 
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	return ircd::ctx::wait<std::nothrow_t>(dur) > zero? cv_status::no_timeout:
 	                                                    cv_status::timeout;
 }
@@ -173,12 +171,13 @@ ircd::ctx::dock::wait_for(const duration &dur,
 	if(pred())
 		return true;
 
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur()); do
+	q.push_back(current); do
 	{
 		const bool expired(ircd::ctx::wait<std::nothrow_t>(dur) <= zero);
 
@@ -195,12 +194,13 @@ template<class time_point>
 ircd::ctx::cv_status
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	return ircd::ctx::wait_until<std::nothrow_t>(tp)? cv_status::timeout:
 	                                                  cv_status::no_timeout;
 }
@@ -214,12 +214,13 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 	if(pred())
 		return true;
 
-	const unwind remove
+	assert(current);
+	const unwind remove{[this]
 	{
-		std::bind(&dock::remove_self, this)
-	};
+		q.remove(current);
+	}};
 
-	q.emplace_back(&cur()); do
+	q.push_back(current); do
 	{
 		const bool expired
 		{
@@ -247,14 +248,6 @@ noexcept
 		ircd::ctx::yield(ctx);
 	else
 		ircd::ctx::notify(ctx);
-}
-
-inline void
-ircd::ctx::dock::remove_self()
-{
-	const auto it(std::find(begin(q), end(q), &cur()));
-	assert(it != end(q));
-	q.erase(it);
 }
 
 /// The number of contexts waiting in the queue.
