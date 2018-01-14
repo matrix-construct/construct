@@ -110,6 +110,7 @@ namespace ircd::ctx { inline namespace this_ctx
 
 #include "context.h"
 #include "prof.h"
+#include "list.h"
 #include "dock.h"
 #include "queue.h"
 #include "mutex.h"

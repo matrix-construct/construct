@@ -43,6 +43,8 @@ struct ircd::ctx::ctx
 	int64_t notes;                               // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ctx *adjoindre;                              // context waiting for this to join()
 	microseconds awake;                          // monotonic counter
+	ctx *next;                                   // next node in a ctx::list
+	ctx *prev;                                   // prev node in a ctx::list
 
 	bool started() const                         { return stack_base != 0;                         }
 	bool finished() const                        { return started() && yc == nullptr;              }
@@ -89,6 +91,8 @@ ircd::ctx::ctx::ctx(const char *const &name,
 ,notes{1}
 ,adjoindre{nullptr}
 ,awake{0us}
+,next{nullptr}
+,prev{nullptr}
 {
 }
 
@@ -1048,6 +1052,228 @@ ircd::ctx::ole::pop()
 	auto c(std::move(queue.front()));
 	queue.pop_front();
 	return std::move(c);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx_list.h
+//
+
+void
+ircd::ctx::list::remove(ctx *const &c)
+{
+	assert(c);
+
+	if(c == head)
+	{
+		pop_front();
+		return;
+	}
+
+	if(c == tail)
+	{
+		pop_back();
+		return;
+	}
+
+	assert(c->next && c->prev);
+	c->next->prev = c->prev;
+	c->prev->next = c->next;
+	c->next = nullptr;
+	c->prev = nullptr;
+}
+
+ircd::ctx::ctx *
+ircd::ctx::list::pop_back()
+{
+	const auto tail
+	{
+		this->tail
+	};
+
+	if(!tail)
+		return tail;
+
+	assert(!tail->next);
+	if(!tail->prev)
+	{
+		this->head = nullptr;
+		this->tail = nullptr;
+	} else {
+		assert(tail->prev->next == tail);
+		tail->prev->next = nullptr;
+		this->tail = tail->prev;
+	}
+
+	tail->prev = nullptr;
+	tail->next = nullptr;
+	return tail;
+}
+
+ircd::ctx::ctx *
+ircd::ctx::list::pop_front()
+{
+	const auto head
+	{
+		this->head
+	};
+
+	if(!head)
+		return head;
+
+	assert(!head->prev);
+	if(!head->next)
+	{
+		this->head = nullptr;
+		this->tail = nullptr;
+	} else {
+		assert(head->next->prev == head);
+		head->next->prev = nullptr;
+		this->head = head->next;
+	}
+
+	head->prev = nullptr;
+	head->next = nullptr;
+	return head;
+}
+
+void
+ircd::ctx::list::push_front(ctx *const &c)
+{
+	assert(c->next == nullptr);
+	assert(c->prev == nullptr);
+
+	if(!head)
+	{
+		head = c;
+		tail = c;
+		return;
+	}
+
+	assert(head->prev == nullptr);
+	head->prev = c;
+	c->next = head;
+	head = c;
+}
+
+void
+ircd::ctx::list::push_back(ctx *const &c)
+{
+	assert(c->next == nullptr);
+	assert(c->prev == nullptr);
+
+	if(!tail)
+	{
+		assert(!head);
+		head = c;
+		tail = c;
+		return;
+	}
+
+	assert(tail->next == nullptr);
+	tail->next = c;
+	c->prev = tail;
+	tail = c;
+}
+
+void
+ircd::ctx::list::rfor_each(const std::function<void (ctx &)> &closure)
+{
+	for(ctx *tail{this->tail}; tail; tail = prev(tail))
+		closure(*tail);
+}
+
+void
+ircd::ctx::list::rfor_each(const std::function<void (const ctx &)> &closure)
+const
+{
+	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
+		closure(*tail);
+}
+
+void
+ircd::ctx::list::for_each(const std::function<void (ctx &)> &closure)
+{
+	for(ctx *head{this->head}; head; head = next(head))
+		closure(*head);
+}
+
+void
+ircd::ctx::list::for_each(const std::function<void (const ctx &)> &closure)
+const
+{
+	for(const ctx *head{this->head}; head; head = next(head))
+		closure(*head);
+}
+
+bool
+ircd::ctx::list::runtil(const std::function<bool (ctx &)> &closure)
+{
+	for(ctx *tail{this->tail}; tail; tail = prev(tail))
+		if(!closure(*tail))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::ctx::list::runtil(const std::function<bool (const ctx &)> &closure)
+const
+{
+	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
+		if(!closure(*tail))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::ctx::list::until(const std::function<bool (ctx &)> &closure)
+{
+	for(ctx *head{this->head}; head; head = next(head))
+		if(!closure(*head))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::ctx::list::until(const std::function<bool (const ctx &)> &closure)
+const
+{
+	for(const ctx *head{this->head}; head; head = next(head))
+		if(!closure(*head))
+			return false;
+
+	return true;
+}
+
+ircd::ctx::ctx *
+ircd::ctx::list::prev(ctx *const &c)
+{
+	assert(c);
+	return c->prev;
+}
+
+ircd::ctx::ctx *
+ircd::ctx::list::next(ctx *const &c)
+{
+	assert(c);
+	return c->next;
+}
+
+const ircd::ctx::ctx *
+ircd::ctx::list::prev(const ctx *const &c)
+{
+	assert(c);
+	return c->prev;
+}
+
+const ircd::ctx::ctx *
+ircd::ctx::list::next(const ctx *const &c)
+{
+	assert(c);
+	return c->next;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
