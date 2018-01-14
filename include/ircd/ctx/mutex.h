@@ -37,7 +37,7 @@ namespace ircd::ctx
 class ircd::ctx::mutex
 {
 	bool m;
-	std::deque<ctx *> q;
+	list q;
 
   public:
 	bool try_lock();
@@ -79,7 +79,7 @@ ircd::ctx::mutex::lock()
 	if(likely(try_lock()))
 		return;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock())
 		wait();
 }
@@ -98,14 +98,12 @@ ircd::ctx::mutex::try_lock_until(const time_point &tp)
 	if(likely(try_lock()))
 		return true;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock())
 	{
 		if(unlikely(wait_until<std::nothrow_t>(tp)))
 		{
-			const auto it(std::find(begin(q), end(q), &cur()));
-			assert(it != end(q));
-			q.erase(it);
+			q.remove(current);
 			return false;
 		}
 	}

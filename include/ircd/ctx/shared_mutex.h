@@ -31,7 +31,7 @@ class ircd::ctx::shared_mutex
 {
 	bool u;
 	ssize_t s;
-	std::deque<ctx *> q;
+	list q;
 
 	void release();
 
@@ -223,7 +223,7 @@ ircd::ctx::shared_mutex::lock_upgrade()
 	if(likely(try_lock_upgrade()))
 		return;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock_upgrade())
 		wait();
 }
@@ -234,7 +234,7 @@ ircd::ctx::shared_mutex::lock_shared()
 	if(likely(try_lock_shared()))
 		return;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock_shared())
 		wait();
 }
@@ -245,7 +245,7 @@ ircd::ctx::shared_mutex::lock()
 	if(likely(try_lock()))
 		return;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock())
 		wait();
 }
@@ -294,14 +294,12 @@ ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 	if(likely(try_lock()))
 		return true;
 
-	q.emplace_back(&cur());
+	q.push_back(current);
 	while(!try_lock())
 	{
 		if(unlikely(wait_until<std::nothrow_t>(tp)))
 		{
-			const auto it(std::find(begin(q), end(q), &cur()));
-			assert(it != end(q));
-			q.erase(it);
+			q.remove(current);
 			return false;
 		}
 	}
