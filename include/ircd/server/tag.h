@@ -18,37 +18,36 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_SERVER_H
+#define HAVE_IRCD_SERVER_TAG_H
 
-/// The interface for when IRCd plays the role of client to other nodes
-///
-namespace ircd::server
+/// Internal portion of the request
+//
+struct ircd::server::request::tag
 {
-	struct init;
-	struct link;
-	struct node;
+	server::request *request;
+	ctx::promise<http::code> p;
+	size_t head_written {0};
+	size_t content_written {0};
+	size_t head_read {0};
+	size_t content_read {0};
 
-	IRCD_EXCEPTION(ircd::error, error);
+	mutable_buffer make_read_content_buffer() const;
+	mutable_buffer make_read_head_buffer() const;
 
-	extern ircd::log::log log;
-	extern std::map<string_view, std::shared_ptr<node>> nodes;
+	const_buffer read_content(const const_buffer &, bool &done);
+	const_buffer read_head(const const_buffer &, bool &done);
 
-	bool exists(const net::hostport &);
-	node &find(const net::hostport &);
-	node &get(const net::hostport &);
-}
+  public:
+	const_buffer make_write_buffer() const;
+	void wrote_buffer(const const_buffer &);
 
-#include "request.h"
-#include "tag.h"
-#include "link.h"
-#include "node.h"
+	mutable_buffer make_read_buffer() const;
+	const_buffer read_buffer(const const_buffer &, bool &done);
 
-/// Subsystem initialization / destruction from ircd::main
-///
-struct ircd::server::init
-{
-	void interrupt();
-
-	init();
-	~init() noexcept;
+	tag(server::request &);
+	tag(tag &&) noexcept;
+	tag(const tag &) = delete;
+	tag &operator=(tag &&) noexcept;
+	tag &operator=(const tag &) = delete;
+	~tag() noexcept;
 };

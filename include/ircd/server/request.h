@@ -78,35 +78,3 @@ struct ircd::server::request
 	request &operator=(const request &) = delete;
 	~request() noexcept;
 };
-
-/// Internal portion of the request
-//
-struct ircd::server::request::tag
-{
-	server::request *request;
-	ctx::promise<http::code> p;
-	size_t head_written {0};
-	size_t content_written {0};
-	size_t head_read {0};
-	size_t content_read {0};
-
-	mutable_buffer make_read_content_buffer() const;
-	mutable_buffer make_read_head_buffer() const;
-
-	const_buffer read_content(const const_buffer &, bool &done);
-	const_buffer read_head(const const_buffer &, bool &done);
-
-  public:
-	const_buffer make_write_buffer() const;
-	void wrote_buffer(const const_buffer &);
-
-	mutable_buffer make_read_buffer() const;
-	const_buffer read_buffer(const const_buffer &, bool &done);
-
-	tag(server::request &);
-	tag(tag &&) noexcept;
-	tag(const tag &) = delete;
-	tag &operator=(tag &&) noexcept;
-	tag &operator=(const tag &) = delete;
-	~tag() noexcept;
-};
