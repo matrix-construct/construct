@@ -421,6 +421,14 @@ struct ircd::buffer::stream_buffer
 		return { base.begin(), base.begin() + consumed() };
 	}
 
+	/// View the completed portion of the stream
+	mutable_buffer completed()
+	{
+		assert(base.begin() <= begin());
+		assert(base.begin() + consumed() <= base.end());
+		return { base.begin(), base.begin() + consumed() };
+	}
+
 	/// Convenience conversion to get the completed portion
 	explicit operator const_buffer() const
 	{
