@@ -23,11 +23,6 @@
 namespace ircd::fs
 {
 	struct read_opts extern const read_opts_default;
-	using read_callback = std::function<void (std::exception_ptr, const string_view &)>;
-
-	// Asynchronous callback-based read into buffer; callback views read portion.
-	void read(const string_view &path, const mutable_raw_buffer &, const read_opts &, read_callback);
-	void read(const string_view &path, const mutable_raw_buffer &, read_callback);
 
 	// Yields ircd::ctx for read into buffer; returns view of read portion.
 	string_view read(const string_view &path, const mutable_raw_buffer &, const read_opts & = read_opts_default);
@@ -53,11 +48,3 @@ inline
 ircd::fs::read_opts::read_opts(const off_t &offset)
 :offset{offset}
 {}
-
-inline void
-ircd::fs::read(const string_view &path,
-               const mutable_raw_buffer &buf,
-               read_callback callback)
-{
-	return read(path, buf, read_opts_default, std::move(callback));
-}

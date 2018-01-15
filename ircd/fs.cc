@@ -78,7 +78,6 @@ noexcept
 
 namespace ircd::fs
 {
-	void read__std(const string_view &path, const mutable_raw_buffer &, const read_opts &, read_callback);
 	string_view read__std(const string_view &path, const mutable_raw_buffer &, const read_opts &);
 	std::string read__std(const string_view &path, const read_opts &);
 }
@@ -116,20 +115,6 @@ ircd::fs::read(const string_view &path,
 	return read__std(path, buf, opts);
 }
 
-void
-ircd::fs::read(const string_view &path,
-               const mutable_raw_buffer &buf,
-               const read_opts &opts,
-               read_callback callback)
-{
-	#ifdef IRCD_USE_AIO
-	if(likely(aioctx))
-		return read__aio(path, buf, opts, std::move(callback));
-	#endif
-
-	return read__std(path, buf, opts, std::move(callback));
-}
-
 //
 // std read
 //
@@ -150,42 +135,14 @@ ircd::fs::read__std(const string_view &path,
                     const mutable_raw_buffer &buf,
                     const read_opts &opts)
 {
-	string_view ret;
-	std::exception_ptr reptr;
-	read(path, buf, opts, [&reptr, &ret]
-	(std::exception_ptr eptr, const string_view &view)
-	{
-		reptr = std::move(eptr);
-		ret = view;
-	});
-
-	if(reptr)
-		std::rethrow_exception(reptr);
-
-	return ret;
-}
-
-void
-ircd::fs::read__std(const string_view &path,
-                    const mutable_raw_buffer &buf,
-                    const read_opts &opts,
-                    read_callback callback)
-try
-{
 	std::ifstream file{std::string{path}};
 	file.exceptions(file.failbit | file.badbit);
 	file.seekg(opts.offset, file.beg);
 	file.read(reinterpret_cast<char *>(data(buf)), size(buf));
-	const string_view view
+	return
 	{
 		reinterpret_cast<const char *>(data(buf)), size_t(file.gcount())
 	};
-
-	callback(std::exception_ptr{}, view);
-}
-catch(...)
-{
-	callback(std::make_exception_ptr(std::current_exception()), string_view{});
 }
 
 

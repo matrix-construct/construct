@@ -52,16 +52,12 @@ struct ircd::fs::aio
 	};
 
 	/// Handler to the io context we submit requests to the kernel with
-	aio_context_t idp
-	{
-		0
-	};
+	aio_context_t idp{0};
 
 	// Callback stack invoked when the sigfd is notified of completed events.
 	void handle_event(const io_event &) noexcept;
 	void handle_events() noexcept;
 	void handle(const error_code &, const size_t) noexcept;
-
 	void set_handle();
 
 	aio()
@@ -87,8 +83,6 @@ struct ircd::fs::aio::request
 	ssize_t retval {0};
 	ssize_t errcode {0};
 	ctx::ctx *waiter {nullptr};
-	bool close_fd {false};
-	bool free_req {false};
 
 	/// called if close_fd is true
 	void close_fildes() noexcept;
@@ -288,18 +282,6 @@ noexcept try
 	           request->retval,
 	           request->errcode);
 */
-	const unwind cleanup{[&request]
-	{
-		// The user might want us to cleanup their fd after this event
-		if(request->close_fd)
-			request->close_fildes();
-
-		// The user might want us to free a dynamically allocated request struct
-		// to simplify their callback sequence. The noexcept guarantees h
-		if(request->free_req)
-			delete request;
-	}};
-
 	// virtual dispatch based on the request type. Alternatively, we could
 	// switch() on the iocb lio_opcode and downcast... but that's what vtable
 	// does for us right here.
@@ -335,7 +317,6 @@ catch(const std::exception &e)
 
 namespace ircd::fs
 {
-	void read__aio(const string_view &path, const mutable_raw_buffer &, const read_opts &, read_callback);
 	string_view read__aio(const string_view &path, const mutable_raw_buffer &, const read_opts &);
 	std::string read__aio(const string_view &path, const read_opts &);
 }
@@ -344,19 +325,15 @@ namespace ircd::fs
 struct ircd::fs::aio::request::read
 :request
 {
-	read_callback callback;
-
 	virtual void handle() final override;
 
-	read(const int &fd, const mutable_raw_buffer &buf, const read_opts &opts, read_callback callback);
+	read(const int &fd, const mutable_raw_buffer &buf, const read_opts &opts);
 };
 
 ircd::fs::aio::request::read::read(const int &fd,
                                    const mutable_raw_buffer &buf,
-                                   const read_opts &opts,
-                                   read_callback callback)
+                                   const read_opts &opts)
 :request{fd}
-,callback{std::move(callback)}
 {
 	aio_data = uintptr_t(this);
 	aio_reqprio = opts.priority;
@@ -370,31 +347,11 @@ ircd::fs::aio::request::read::read(const int &fd,
 void
 ircd::fs::aio::request::read::handle()
 {
-	if(waiter)
-	{
-		ircd::ctx::notify(*waiter);
-		waiter = nullptr;
-	}
+	if(!waiter)
+		return;
 
-	if(callback)
-	{
-		const size_t bytes
-		{
-			retval >= 0? size_t(retval) : 0
-		};
-
-		const string_view view
-		{
-			reinterpret_cast<const char *>(aio_buf), bytes
-		};
-
-		std::exception_ptr eptr
-		{
-			errcode != 0? make_system_error(errcode) : std::exception_ptr{}
-		};
-
-		callback(std::move(eptr), view);
-	}
+	ircd::ctx::notify(*waiter);
+	waiter = nullptr;
 }
 
 //
@@ -419,8 +376,6 @@ ircd::fs::read__aio(const string_view &path,
 		syscall(::close, fd);
 	}};
 
-	// This fstat may be defeating; to be sure, don't use this overload
-	// and progressively buffer chunks into your application.
 	struct stat stat;
 	syscall(::fstat, fd, &stat);
 	const auto &size
@@ -436,7 +391,7 @@ ircd::fs::read__aio(const string_view &path,
 
 	aio::request::read request
 	{
-		int(fd), buf, opts, nullptr
+		int(fd), buf, opts
 	};
 
 	const size_t bytes
@@ -469,7 +424,7 @@ ircd::fs::read__aio(const string_view &path,
 
 	aio::request::read request
 	{
-		int(fd), buf, opts, nullptr
+		int(fd), buf, opts
 	};
 
 	const size_t bytes
@@ -483,34 +438,4 @@ ircd::fs::read__aio(const string_view &path,
 	};
 
 	return view;
-}
-
-void
-ircd::fs::read__aio(const string_view &path,
-                    const mutable_raw_buffer &buf,
-                    const read_opts &opts,
-                    read_callback callback)
-{
-	static thread_local char pathstr[2048];
-	strlcpy(pathstr, path, sizeof(pathstr));
-
-	const auto fd
-	{
-		syscall(::open, pathstr, O_CLOEXEC, O_RDONLY)
-	};
-
-	const unwind::exceptional cfd{[&fd]
-	{
-		syscall(::close, fd);
-	}};
-
-	auto request
-	{
-		std::make_unique<aio::request::read>(int(fd), buf, opts, std::move(callback))
-	};
-
-	request->close_fd = true;
-	request->free_req = true;
-	(*request)();
-	request.release();
 }
