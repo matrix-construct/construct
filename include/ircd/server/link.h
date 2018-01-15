@@ -27,9 +27,8 @@ struct ircd::server::link
 	bool init {false};                           ///< link is connecting
 	bool fini {false};                           ///< link is disconnecting
 	std::shared_ptr<server::node> node;          ///< backreference to node
-	std::exception_ptr eptr;                     ///< error from socket
 	std::shared_ptr<net::socket> socket;         ///< link's socket
-	std::deque<struct request::tag> queue;       ///< link's work queue
+	std::deque<tag> queue;                       ///< link's work queue
 
 	bool connected() const noexcept;
 	bool ready() const;
@@ -37,12 +36,15 @@ struct ircd::server::link
 
   protected:
 	void discard_read();
-	const_buffer process_read_next(const const_buffer &, struct request::tag &, bool &done);
+	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
 	bool process_read(const_buffer &);
 	void handle_readable_success();
 	void handle_readable(const error_code &);
 	void wait_readable();
 
+	const_buffer process_write_next(const const_buffer &);
+	bool process_write(tag &);
+	void handle_writable_success();
 	void handle_writable(const error_code &);
 	void wait_writable();
 

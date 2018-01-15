@@ -20,9 +20,14 @@
 #pragma once
 #define HAVE_IRCD_SERVER_TAG_H
 
+namespace ircd::server
+{
+	struct tag;
+}
+
 /// Internal portion of the request
-//
-struct ircd::server::request::tag
+///
+struct ircd::server::tag
 {
 	server::request *request;
 	ctx::promise<http::code> p;

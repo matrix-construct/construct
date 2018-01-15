@@ -50,6 +50,9 @@ struct ircd::server::node
 	void cancel(request &);
 	void submit(request &);
 
+	void interrupt();
+	void close();
+
 	node();
 	~node() noexcept;
 };

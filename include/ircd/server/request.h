@@ -62,9 +62,7 @@ struct ircd::server::in
 struct ircd::server::request
 :ctx::future<http::code>
 {
-	struct tag;
-
-	struct tag *tag {nullptr};
+	server::tag *tag {nullptr};
 
   public:
 	server::out out;

@@ -27,6 +27,8 @@ namespace ircd::server
 	struct init;
 	struct link;
 	struct node;
+	struct request;
+	struct tag;
 
 	IRCD_EXCEPTION(ircd::error, error);
 
@@ -38,8 +40,8 @@ namespace ircd::server
 	node &get(const net::hostport &);
 }
 
-#include "request.h"
 #include "tag.h"
+#include "request.h"
 #include "link.h"
 #include "node.h"
 
