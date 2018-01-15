@@ -32,7 +32,8 @@ T &
 ircd::util::bswap(T *const &val)
 {
 	assert(val != nullptr);
-	std::reverse(data(*val), data(*val) + size(*val));
+	const auto ptr{reinterpret_cast<uint8_t *>(val)};
+	std::reverse(ptr, ptr + sizeof(T));
 	return *val;
 }
 
@@ -42,6 +43,8 @@ T
 ircd::util::bswap(const T &val)
 {
 	T ret;
-	std::reverse_copy(data(val), data(val) + size(val), data(ret));
+	const auto valptr{reinterpret_cast<const uint8_t *>(&val)};
+	const auto retptr{reinterpret_cast<uint8_t *>(&ret)};
+	std::reverse_copy(valptr, valptr + sizeof(T), retptr);
 	return ret;
 }
