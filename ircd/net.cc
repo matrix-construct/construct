@@ -21,17 +21,6 @@
 
 #include <ircd/asio.h>
 
-/// Internal pimpl wrapping an instance of boost's resolver service. This
-/// class is a singleton with the instance as a static member of
-/// ircd::net::resolve. This service requires a valid ircd::ios which is not
-/// available during static initialization; instead it is tied to net::init.
-struct ircd::net::resolver
-:std::unique_ptr<ip::tcp::resolver>
-{
-	resolver() = default;
-	~resolver() noexcept = default;
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/net.h
@@ -43,21 +32,6 @@ ircd::net::log
 {
 	"net", 'N'
 };
-
-/// Network subsystem initialization
-ircd::net::init::init()
-{
-	assert(ircd::ios);
-	resolve::resolver.reset(new ip::tcp::resolver{*ircd::ios});
-	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
-	sslv23_client.set_default_verify_paths();
-}
-
-/// Network subsystem shutdown
-ircd::net::init::~init()
-{
-	resolve::resolver.reset(nullptr);
-}
 
 ircd::const_raw_buffer
 ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
@@ -2129,23 +2103,159 @@ ircd::net::socket::scope_timeout::release()
 
 namespace ircd::net
 {
+	struct resolver extern *resolver;
+
 	// Internal resolve base (requires boost syms)
 	using resolve_callback = std::function<void (std::exception_ptr, ip::tcp::resolver::results_type)>;
 	void _resolve(const hostport &, ip::tcp::resolver::flags, resolve_callback);
 	void _resolve(const ipport &, resolve_callback);
 }
 
+/// Internal resolver service
+struct ircd::net::resolver
+{
+	ip::tcp::resolver gai;                       // Old getaddrinfo() being removed
+	ip::udp::socket ns;                          // A pollable activity object
+	std::vector<ip::udp::endpoint> server;       // The list of active servers
+	size_t server_next{0};                       // Round-robin state to hit servers
+
+	bool reply_set {false};
+	ip::udp::endpoint reply_from;
+	uint8_t reply[64_KiB];
+
+	void handle(const error_code &ec, const size_t &) noexcept;
+	void set_handle();
+
+	void send_query(const ip::udp::endpoint &, const const_buffer &);
+	void send_query(const const_buffer &);
+
+	resolver();
+	~resolver() noexcept;
+};
+
 /// Singleton instance of the public interface ircd::net::resolve
 decltype(ircd::net::resolve)
 ircd::net::resolve
-{
-};
+{};
 
 /// Singleton instance of the internal boost resolver wrapper.
-decltype(ircd::net::resolve::resolver)
-ircd::net::resolve::resolver
+decltype(ircd::net::resolver)
+ircd::net::resolver
+{};
+
+ircd::net::resolver::resolver()
+:gai{*ircd::ios}
+,ns{*ircd::ios}
 {
-};
+	ns.open(ip::udp::v4());
+	ns.non_blocking(true);
+	set_handle();
+}
+
+ircd::net::resolver::~resolver()
+noexcept
+{
+	gai.cancel();
+	ns.close();
+}
+
+void
+ircd::net::resolver::send_query(const const_buffer &buf)
+{
+	assert(!server.empty());
+
+	++server_next %= server.size();
+	const auto &ep{server.at(server_next)};
+	send_query(ep, buf);
+}
+
+void
+ircd::net::resolver::send_query(const ip::udp::endpoint &ep,
+                                const const_buffer &buf)
+{
+	assert(ns.non_blocking());
+	ns.send_to(asio::const_buffers_1(buf), ep);
+}
+
+void
+ircd::net::resolver::set_handle()
+{
+	auto handler
+	{
+		std::bind(&resolver::handle, this, ph::_1, ph::_2)
+	};
+
+	assert(!reply_set);
+	reply_set = true;
+	const asio::mutable_buffers_1 bufs{reply, sizeof(reply)};
+	ns.async_receive_from(bufs, reply_from, std::move(handler));
+}
+
+void
+ircd::net::resolver::handle(const error_code &ec,
+                            const size_t &bytes)
+noexcept try
+{
+	using namespace boost::system::errc;
+
+	reply_set = false;
+	switch(ec.value())
+	{
+		case success:
+			set_handle();
+			break;
+
+		case operation_canceled:
+			log::debug("Resolver leaving");
+			return;
+
+		default:
+			throw boost::system::system_error(ec);
+	}
+
+	if(bytes < sizeof(rfc1035::header))
+		throw rfc1035::error
+		{
+			"Got back %zu bytes < rfc1035 %zu byte header",
+			bytes,
+			sizeof(rfc1035::header)
+		};
+
+	const rfc1035::header &header
+	{
+		*reinterpret_cast<const rfc1035::header *>(reply)
+	};
+
+	if(header.qr != 1)
+		throw rfc1035::error
+		{
+			"Response header is marked as 'Query' and not 'Response'"
+		};
+
+	const const_raw_buffer body
+	{
+		reply + sizeof(header), bytes - sizeof(header)
+	};
+
+	std::cout << "answer: " << header.ancount << std::endl;
+	if(!header.ancount)
+		return;
+
+	const rfc1035::answer answer
+	{
+		const_buffer{body}
+	};
+
+	std::cout << "answer [" << answer.name << "] " << answer.rdlength << " " << answer.qtype << " " << answer.qclass << " " << answer.ttl << std::endl;
+	net::ipport ipp(ip::address_v4(*(const uint32_t *)data(answer.rdata)).to_uint(), 0);
+	std::cout << ipp << std::endl;
+
+}
+catch(const std::exception &e)
+{
+	log::critical("resolver::handle_reply(): %s", e.what());
+	throw;
+}
 
 /// Resolve a numerical address to a hostname string. This is a PTR record
 /// query or 'reverse DNS' lookup.
@@ -2279,8 +2389,8 @@ ircd::net::_resolve(const hostport &hostport,
 	// This base handler will provide exception guarantees for the entire stack.
 	// It may invoke callback twice in the case when callback throws unhandled,
 	// but the latter invocation will always have an the eptr set.
-	assert(bool(ircd::net::resolve::resolver));
-	resolve::resolver->async_resolve(host, port, flags, [callback(std::move(callback))]
+	assert(bool(ircd::net::resolver));
+	resolver->gai.async_resolve(host, port, flags, [callback(std::move(callback))]
 	(const error_code &ec, ip::tcp::resolver::results_type results)
 	noexcept
 	{
@@ -2304,8 +2414,8 @@ void
 ircd::net::_resolve(const ipport &ipport,
                     resolve_callback callback)
 {
-	assert(bool(ircd::net::resolve::resolver));
-	resolve::resolver->async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
+	assert(bool(ircd::net::resolver));
+	resolver->gai.async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
 	(const error_code &ec, ip::tcp::resolver::results_type results)
 	noexcept
 	{
@@ -2666,4 +2776,27 @@ const
 	{
 		data(*this), size(*this)
 	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// init
+//
+
+/// Network subsystem initialization
+ircd::net::init::init()
+{
+	assert(ircd::ios);
+	assert(!net::resolver);
+	net::resolver = new struct resolver();
+
+	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
+	sslv23_client.set_default_verify_paths();
+}
+
+/// Network subsystem shutdown
+ircd::net::init::~init()
+{
+	delete net::resolver;
+	net::resolver = nullptr;
 }

@@ -34,10 +34,6 @@ namespace ircd::net
 ///
 struct ircd::net::resolve
 {
-	// Internal resolver service instance
-	struct resolver static resolver;
-
-  public:
 	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
 	using callback_many = std::function<void (std::exception_ptr, std::vector<ipport>)>;
 	using callback_reverse = std::function<void (std::exception_ptr, std::string)>;
