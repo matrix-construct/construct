@@ -119,27 +119,11 @@ ircd::read_closure(client &client)
 	// Returns a function the parser can call when it wants more data
 	return [&client](char *&start, char *const &stop)
 	{
-		try
-		{
-			char *const got(start);
-			read(client, start, stop);
-			//std::cout << ">>>> " << std::distance(got, start) << std::endl;
-			//std::cout << string_view{got, start} << std::endl;
-			//std::cout << "----" << std::endl;
-		}
-		catch(const boost::system::system_error &e)
-		{
-			using namespace boost::system::errc;
-
-			switch(e.code().value())
-			{
-				case operation_canceled:
-					throw http::error(http::REQUEST_TIMEOUT);
-
-				default:
-					throw;
-			}
-		}
+		char *const got(start);
+		read(client, start, stop);
+		//std::cout << ">>>> " << std::distance(got, start) << std::endl;
+		//std::cout << string_view{got, start} << std::endl;
+		//std::cout << "----" << std::endl;
     };
 }
 
@@ -665,6 +649,18 @@ try
 
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	if(e.code().value() != boost::system::errc::operation_canceled)
+		throw;
+
+	resource::response
+	{
+		*this, {}, {}, http::REQUEST_TIMEOUT
+	};
+
+	return false;
+}
 catch(const ircd::error &e)
 {
 	log::error("socket(%p) local[%s] remote[%s]: %s",
@@ -702,26 +698,19 @@ catch(const http::error &e)
 
 	switch(e.code)
 	{
-		// These codes are "recoverable" and allow the next HTTP request in
-		// a pipeline to take place. In order for that to happen, any content
-		// which wasn't read because of the exception has to be read now.
-		default:
-		{
-			discard_unconsumed(request);
-			return true;
-		}
-
 		// These codes are "unrecoverable" errors and no more HTTP can be
 		// conducted with this tape. The client must be disconnected.
 		case http::BAD_REQUEST:
-		case http::PAYLOAD_TOO_LARGE:
 		case http::REQUEST_TIMEOUT:
-			close().wait();    // close wait because we're on a stack
+		case http::PAYLOAD_TOO_LARGE:
+		case http::INTERNAL_SERVER_ERROR:
 			return false;
 
-		// The client must also be disconnected at some point down the stack.
-		case http::INTERNAL_SERVER_ERROR:
-			throw;
+		// These codes are "recoverable" and allow the next HTTP request in
+		// a pipeline to take place.
+		default:
+			discard_unconsumed(request);
+			return true;
 	}
 }
 
@@ -739,7 +728,7 @@ ircd::client::discard_unconsumed(struct request &request)
 	if(!unconsumed)
 		return;
 
-	log::debug("socket(%p) local[%s] remote[%s] discarding %zu of %zu unconsumed content...",
+	log::debug("socket(%p) local[%s] remote[%s] discarding %zu unconsumed of %zu bytes content...",
 	           sock.get(),
 	           string(local(*this)),
 	           string(remote(*this)),
