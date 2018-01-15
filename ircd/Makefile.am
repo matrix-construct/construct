@@ -86,6 +86,7 @@ libircd_la_SOURCES =   \
 	openssl.cc         \
 	parse.cc           \
 	resource.cc        \
+	rfc1035.cc         \
 	rfc1459.cc         \
 	rfc3986.cc         \
 	server.cc          \
