@@ -36,9 +36,9 @@ struct ircd::server::link
 	bool busy() const;
 
   protected:
+	void discard_read();
 	const_buffer process_read_next(const const_buffer &, struct request::tag &, bool &done);
 	bool process_read(const_buffer &);
-	void discard_read();
 	void handle_readable_success();
 	void handle_readable(const error_code &);
 	void wait_readable();

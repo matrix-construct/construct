@@ -214,8 +214,47 @@ const
 {
 	assert(request);
 	return !request?                 mutable_buffer{}:
-	       !request->in.head.status? make_head_buffer():
-	                                 make_content_buffer();
+	       !request->in.head.status? make_read_head_buffer():
+	                                 make_read_content_buffer();
+}
+
+void
+ircd::server::request::tag::wrote_buffer(const const_buffer &buffer)
+{
+	assert(request);
+	const auto &req{*request};
+	if(head_written < size(req.out.head))
+	{
+		assert(data(buffer) == data(req.out.head));
+		head_written += size(buffer);
+	}
+	else if(content_written < size(req.out.content))
+	{
+		assert(data(buffer) == data(req.out.content));
+		content_written += size(buffer);
+	}
+}
+
+ircd::const_buffer
+ircd::server::request::tag::make_write_buffer()
+const
+{
+	assert(request);
+	const auto &req{*request};
+	if(head_written < size(req.out.head))
+	{
+		const size_t remain{size(req.out.head) - head_written};
+		const const_buffer window{data(req.out.head) + head_written, remain};
+		return window;
+	}
+	else if(content_written < size(req.out.content))
+	{
+		const size_t remain{size(req.out.content) - content_written};
+		const const_buffer window{data(req.out.content) + content_written, remain};
+		return window;
+	}
+
+	return {};
 }
 
 ircd::const_buffer
@@ -346,7 +385,7 @@ ircd::server::request::tag::read_content(const const_buffer &buffer,
 }
 
 ircd::mutable_buffer
-ircd::server::request::tag::make_head_buffer()
+ircd::server::request::tag::make_read_head_buffer()
 const
 {
 	assert(request);
@@ -372,7 +411,7 @@ const
 }
 
 ircd::mutable_buffer
-ircd::server::request::tag::make_content_buffer()
+ircd::server::request::tag::make_read_content_buffer()
 const
 {
 	assert(request);
@@ -624,8 +663,7 @@ ircd::server::link::submit(request &request)
 		queue.emplace(end(queue), request)
 	};
 
-	write(*socket, request.out.head);
-	write(*socket, request.out.content);
+	wait_writable();
 }
 
 void
@@ -707,7 +745,49 @@ ircd::server::link::wait_writable()
 void
 ircd::server::link::handle_writable(const error_code &ec)
 {
-	std::cout << this << " writable: " << string(ec) << std::endl;
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	switch(ec.value())
+	{
+		case success:
+			break;
+
+		case operation_canceled:
+			break;
+
+		default:
+			throw boost::system::system_error{ec};
+	}
+
+	for(auto &tag : queue)
+	{
+		const const_buffer buffer
+		{
+			tag.make_write_buffer()
+		};
+
+		if(empty(buffer))
+			continue;
+
+		const size_t bytes
+		{
+			write_any(*socket, buffer)
+		};
+
+		const const_buffer written
+		{
+			data(buffer), bytes
+		};
+
+		tag.wrote_buffer(written);
+
+		if(bytes < size(buffer))
+		{
+			wait_writable();
+			break;
+		}
+	}
 }
 
 void
@@ -770,32 +850,6 @@ ircd::server::link::handle_readable_success()
 			break;
 	}
 	while(!queue.empty());
-}
-
-void
-ircd::server::link::discard_read()
-{
-	const size_t discard
-	{
-		available(*socket)
-	};
-
-	const size_t discarded
-	{
-		discard_any(*socket, discard)
-	};
-
-	// Shouldn't ever be hit because the read() within discard() throws
-	// the pending error like an eof.
-	log::warning("Link discarded %zu of %zu unexpected bytes",
-	             discard,
-	             discarded);
-	assert(0);
-
-	// for non-assert builds just in case; so this doesn't get loopy with
-	// discarding zero with an empty queue...
-	if(unlikely(!discard || !discarded))
-		throw assertive("Queue is empty and nothing to discard.");
 }
 
 /// Process as many read operations for one tag as possible
@@ -871,6 +925,32 @@ ircd::server::link::process_read_next(const const_buffer &underrun,
 
 	assert(done || empty(overrun));
 	return overrun;
+}
+
+void
+ircd::server::link::discard_read()
+{
+	const size_t discard
+	{
+		available(*socket)
+	};
+
+	const size_t discarded
+	{
+		discard_any(*socket, discard)
+	};
+
+	// Shouldn't ever be hit because the read() within discard() throws
+	// the pending error like an eof.
+	log::warning("Link discarded %zu of %zu unexpected bytes",
+	             discard,
+	             discarded);
+	assert(0);
+
+	// for non-assert builds just in case; so this doesn't get loopy with
+	// discarding zero with an empty queue...
+	if(unlikely(!discard || !discarded))
+		throw assertive("Queue is empty and nothing to discard.");
 }
 
 bool

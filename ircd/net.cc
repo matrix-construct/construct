@@ -2198,16 +2198,15 @@ noexcept try
 {
 	using namespace boost::system::errc;
 
-	reply_set = false;
 	switch(ec.value())
 	{
+		case operation_canceled:
+			return;
+
 		case success:
+			reply_set = false;
 			set_handle();
 			break;
-
-		case operation_canceled:
-			log::debug("Resolver leaving");
-			return;
 
 		default:
 			throw boost::system::system_error(ec);
