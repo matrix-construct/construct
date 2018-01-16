@@ -25,7 +25,6 @@
 struct ircd::server::node
 :std::enable_shared_from_this<ircd::server::node>
 {
-	std::exception_ptr eptr;
 	net::remote remote;
 	std::list<link> links;
 
@@ -35,8 +34,10 @@ struct ircd::server::node
 	void handle_resolve(std::weak_ptr<node>, std::exception_ptr, const ipport &);
 	void resolve(const hostport &);
 
+	void disperse_uncommitted(link &);
+	void cancel_committed(link &, const std::exception &);
+	void disperse(link &);
 	void del(link &);
-	void reassign_uncommitted(link &);
 
 	void handle_link_done(link &);
 	void handle_tag_done(link &, tag &) noexcept;
@@ -73,7 +74,7 @@ struct ircd::server::node
 
 	// link control panel
 	link &link_add(const size_t &num = 1);
-	link &link_get(const request &);
+	link *link_get(const request &);
 
 	// request panel
 	void cancel(request &);

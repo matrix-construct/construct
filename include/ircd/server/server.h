@@ -32,6 +32,8 @@ namespace ircd::server
 
 	IRCD_EXCEPTION(ircd::error, error);
 	IRCD_EXCEPTION(error, buffer_overrun);
+	IRCD_EXCEPTION(error, unavailable);
+	IRCD_EXCEPTION(error, canceled);
 
 	extern ircd::log::log log;
 	extern std::map<string_view, std::shared_ptr<node>> nodes;

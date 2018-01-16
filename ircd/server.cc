@@ -257,8 +257,27 @@ ircd::server::node::interrupt()
 void
 ircd::server::node::submit(request &request)
 {
-	link &ret(link_get(request));
-	ret.submit(request);
+	link *const ret
+	{
+		link_get(request)
+	};
+
+	if(likely(ret))
+	{
+		ret->submit(request);
+		return;
+	}
+
+	if(!request.tag)
+		throw unavailable
+		{
+			"No link to node %s available", remote.hostname
+		};
+	else
+		request.tag->set_exception(std::make_exception_ptr(unavailable
+		{
+			"No link to node %s available", remote.hostname
+		}));
 }
 
 void
@@ -270,11 +289,11 @@ ircd::server::node::cancel(request &request)
 /// or creates a new link entirely. There are a number of factors: foremost
 /// if any special needs are indicated,
 //
-ircd::server::link &
+ircd::server::link *
 ircd::server::node::link_get(const request &request)
 {
 	if(links.empty())
-		return link_add(1);
+		return &link_add(1);
 
 	// Indicates that we can't add anymore links for this node and the rest
 	// of the algorithm should consider this.
@@ -284,19 +303,13 @@ ircd::server::node::link_get(const request &request)
 	};
 
 	link *best{nullptr};
-	while(!best) for(auto &cand : links)
+	for(auto &cand : links)
 	{
-		if(!best)
-		{
-			best = &cand;
-			continue;
-		}
-
 		// Don't want a link that's shutting down or marked for exclusion
 		if(cand.fini || cand.exclude)
 			continue;
 
-		if(best->fini || best->exclude)
+		if(!best)
 		{
 			best = &cand;
 			continue;
@@ -345,16 +358,16 @@ ircd::server::node::link_get(const request &request)
 	}
 
 	if(links_maxed)
-		return *best;
+		return best;
 
 	// best might not be good enough, we could try another connection. If best
 	// has a backlog or is working on a large download or slow request.
 
 	if(best->tag_uncommitted() < best->tag_commit_max())
-		return *best;
+		return best;
 
 	best = &link_add();
-	return *best;
+	return best;
 }
 
 ircd::server::link &
@@ -417,8 +430,7 @@ ircd::server::node::handle_error(link &link,
 	          &link,
 	          e.what());
 
-	link.exclude = true;
-	reassign_uncommitted(link);
+	cancel_committed(link, e);
 	link.close(net::dc::RST);
 }
 
@@ -505,7 +517,61 @@ ircd::server::node::handle_link_done(link &link)
 }
 
 void
-ircd::server::node::reassign_uncommitted(link &link)
+ircd::server::node::disperse(link &link)
+{
+	// the easy part
+	disperse_uncommitted(link);
+	cancel_committed(link, canceled
+	{
+		"Request was partially completed when fatal error occurred"
+	});
+
+	assert(link.queue.empty());
+}
+
+void
+ircd::server::node::cancel_committed(link &link,
+                                     const std::exception &e)
+{
+	auto &queue(link.queue);
+
+	// Find the first tag in the queue which hasn't revealed any data to
+	// the remote; this is uncommitted.
+	const auto it
+	{
+		std::find_if(begin(queue), end(queue), [](const auto &tag)
+		{
+			return !tag.write_completed();
+		})
+	};
+
+	std::for_each(begin(queue), it, [this, &e](auto &tag)
+	{
+		if(!tag.request)
+			return;
+
+		assert(tag.write_completed());
+		auto &request{*tag.request};
+		disassociate(request, tag);
+		tag.set_exception(std::make_exception_ptr(e));
+	});
+
+	log.debug("node(%p) link(%p) errored %zu of %zu of its tags",
+	          this,
+	          &link,
+	          std::distance(begin(queue), it),
+	          queue.size());
+
+	const auto remaining
+	{
+		std::distance(begin(queue), queue.erase(begin(queue), it))
+	};
+
+	queue.resize(remaining);
+}
+
+void
+ircd::server::node::disperse_uncommitted(link &link)
 {
 	auto &queue(link.queue);
 
@@ -528,8 +594,21 @@ ircd::server::node::reassign_uncommitted(link &link)
 		auto &request{*tag.request};
 		disassociate(request, tag);
 
-		auto &link{this->link_get(request)};
-		link.submit(request);
+		auto *const link
+		{
+			this->link_get(request)
+		};
+
+		if(likely(link))
+		{
+			link->submit(request);
+			return;
+		}
+
+		tag.set_exception(std::make_exception_ptr(unavailable
+		{
+			"No link to node %s available", remote.hostname
+		}));
 	});
 
 	log.debug("node(%p) link(%p) dispersed %zu of %zu of its tags",
@@ -594,18 +673,27 @@ try
 {
 	const life_guard<node> lg(wp);
 
-	this->eptr = std::move(eptr);
-	static_cast<net::ipport &>(this->remote) = ipport;
+	if(eptr)
+		std::rethrow_exception(std::move(eptr));
 
-	if(!this->eptr)
-		for(auto &link : links)
-			link.open(this->remote);
-	else
-		assert(0); //TODO: XXX
+	static_cast<net::ipport &>(this->remote) = ipport;
+	for(auto &link : links)
+		link.open(this->remote);
 }
 catch(const std::bad_weak_ptr &)
 {
 	return;
+}
+catch(const std::exception &e)
+{
+	if(wp.expired())
+		return;
+
+	for(auto &link : links)
+		for(auto &tag : link.queue)
+			tag.set_exception(std::make_exception_ptr(e));
+
+	nodes.erase(remote.hostname);
 }
 
 size_t
@@ -868,6 +956,12 @@ ircd::server::link::close(const net::close_opts &close_opts)
 
 	init = false;
 	fini = true;
+
+	// Tell the node to ditch everything in the queue; fini has been set so
+	// the tags won't get assigned back to this link.
+	if(tag_count() && node)
+		node->disperse(*this);
+
 	net::close(*socket, close_opts, std::move(handler));
 	return true;
 }
@@ -1332,6 +1426,7 @@ void
 ircd::server::associate(request &request,
                         tag &cur,
                         tag &&old)
+noexcept
 {
 	assert(request.tag == &old);         // ctor moved
 	assert(cur.request == &request);     // ctor moved
@@ -1346,6 +1441,7 @@ void
 ircd::server::associate(request &cur,
                         tag &tag,
                         request &&old)
+noexcept
 {
 	assert(tag.request == &old);   // ctor already moved
 	assert(cur.tag == &tag);       // ctor already moved
@@ -1724,6 +1820,28 @@ const
 	{
 		buffer, buffer_max
 	};
+}
+
+void
+ircd::server::tag::set_exception(const error_code &ec)
+{
+	boost::system::system_error error
+	{
+		ec
+	};
+
+	auto eptr
+	{
+		std::make_exception_ptr(std::move(error))
+	};
+
+	set_exception(std::move(eptr));
+}
+
+void
+ircd::server::tag::set_exception(std::exception_ptr eptr)
+{
+	p.set_exception(std::move(eptr));
 }
 
 size_t

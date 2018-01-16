@@ -25,8 +25,8 @@ namespace ircd::server
 	struct tag;
 
 	void associate(request &, tag &);
-	void associate(request &, tag &, tag &&);
-	void associate(request &, tag &, request &&);
+	void associate(request &, tag &, tag &&) noexcept;
+	void associate(request &, tag &, request &&) noexcept;
 	void disassociate(request &, tag &);
 }
 
@@ -41,6 +41,9 @@ struct ircd::server::tag
 	size_t content_read {0};
 	size_t content_over {0};
 	http::code status {(http::code)0};
+
+	void set_exception(const error_code &);
+	void set_exception(std::exception_ptr);
 
 	const_buffer make_write_content_buffer() const;
 	const_buffer make_write_head_buffer() const;
