@@ -1717,7 +1717,7 @@ catch(const std::exception &e)
 void
 ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
                                      eptr_handler callback,
-                                     const error_code &ec)
+                                     error_code ec)
 noexcept try
 {
 	assert(!timedout || ec == boost::system::errc::operation_canceled);
@@ -1730,6 +1730,11 @@ noexcept try
 	// The timer was set by socket::disconnect() and may need to be canceled.
 	if(!timedout)
 		cancel_timeout();
+
+	// This ignores EOF and turns it into a success to alleviate user concern.
+	if(ec.category() == asio::error::get_misc_category())
+		if(ec.value() == asio::error::eof)
+			ec = error_code{};
 
 	sd.close();
 	call_user(callback, ec);
