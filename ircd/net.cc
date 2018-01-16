@@ -2252,7 +2252,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical("resolver::handle_reply(): %s", e.what());
+	log.critical("resolver::handle_reply(): %s", e.what());
 	throw;
 }
 

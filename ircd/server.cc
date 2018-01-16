@@ -62,9 +62,9 @@ ircd::server::get(const net::hostport &hostport)
 	if(it == nodes.end() || it->first != host(hostport))
 	{
 		auto node{create(hostport)};
-		log::debug("node(%p) for %s created; adding...",
-		           node.get(),
-		           string(hostport));
+		log.debug("node(%p) for %s created; adding...",
+		          node.get(),
+		          string(hostport));
 
 		const string_view key{node->remote.hostname};
 		it = nodes.emplace_hint(it, key, std::move(node));
@@ -234,18 +234,6 @@ ircd::server::node::submit(request &request)
 {
 	link &ret(link_get(request));
 	ret.submit(request);
-
-	log::debug("node(%p) tt:%zu tc:%zu tu:%zu wt:%zu wc:%zu wr:%zu rt:%zu rc:%zu rr:%zu",
-	           this,
-	           tag_total(),
-	           tag_committed(),
-	           tag_uncommitted(),
-	           write_total(),
-	           write_completed(),
-	           write_remaining(),
-	           read_total(),
-	           read_completed(),
-	           read_remaining());
 }
 
 void
@@ -356,11 +344,11 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("node(%p) link(%p) [%s]: open: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
+	log.error("node(%p) link(%p) [%s]: open: %s",
+	          this,
+	          &link,
+	          string(remote),
+	          e.what());
 }
 
 void
@@ -378,11 +366,11 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("node(%p) link(%p) [%s]: close: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
+	log.error("node(%p) link(%p) [%s]: close: %s",
+	          this,
+	          &link,
+	          string(remote),
+	          e.what());
 }
 
 void
@@ -405,10 +393,10 @@ ircd::server::node::handle_error(link &link,
 void
 ircd::server::node::del(link &link)
 {
-	log::debug("node(%p) [%s]: removing link %p",
-	           this,
-	           string(remote),
-	           &link);
+	log.debug("node(%p) [%s]: removing link %p",
+	          this,
+	          string(remote),
+	          &link);
 
 	const auto it(std::find_if(begin(links), end(links), [&link]
 	(const auto &link_)
@@ -629,18 +617,6 @@ ircd::server::link::submit(request &request)
 		queue.emplace(end(queue), request)
 	};
 
-	log::debug("link(%p) tt:%zu tc:%zu tu:%zu wt:%zu wc:%zu wr:%zu rt:%zu rc:%zu rr:%zu",
-	           this,
-	           tag_total(),
-	           tag_committed(),
-	           tag_uncommitted(),
-	           write_total(),
-	           write_completed(),
-	           write_remaining(),
-	           read_total(),
-	           read_completed(),
-	           read_remaining());
-
 	if(ready())
 		wait_writable();
 }
@@ -785,11 +761,11 @@ ircd::server::link::process_write(tag &tag)
 {
 	if(tag.write_remaining() >= tag.write_total())
 	{
-		log::debug("link(%p) starting on tag %zu of %zu: wt:%zu",
-		           this,
-		           tag_committed(),
-		           tag_total(),
-		           tag.write_total());
+		log.debug("link(%p) starting on tag %zu of %zu: wt:%zu",
+		          this,
+		          tag_committed(),
+		          tag_total(),
+		          tag.write_total());
 	}
 
 	while(tag.write_remaining())
@@ -870,7 +846,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log::critical("link::handle_readable(): %s", e.what());
+	log.critical("link::handle_readable(): %s", e.what());
 	assert(0);
 	throw;
 }
@@ -985,9 +961,9 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log::warning("Link discarded %zu of %zu unexpected bytes",
-	             discard,
-	             discarded);
+	log.warning("Link discarded %zu of %zu unexpected bytes",
+	            discard,
+	            discarded);
 	assert(0);
 
 	// for non-assert builds just in case; so this doesn't get loopy with
