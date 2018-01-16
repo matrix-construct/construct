@@ -59,6 +59,8 @@ class ircd::ctx::promise
 	promise();
 	promise(promise &&o) noexcept = default;
 	promise(const promise &);
+	promise &operator=(const promise &) = delete;
+	promise &operator=(promise &&) noexcept = default;
 	~promise() noexcept;
 };
 
@@ -84,6 +86,8 @@ class ircd::ctx::promise<void>
 	promise();
 	promise(promise &&o) noexcept = default;
 	promise(const promise &);
+	promise &operator=(const promise &) = delete;
+	promise &operator=(promise &&) noexcept = default;
 	~promise() noexcept;
 };
 
