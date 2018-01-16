@@ -39,10 +39,13 @@ struct ircd::server::tag
 	size_t written {0};
 	size_t head_read {0};
 	size_t content_read {0};
+	size_t content_over {0};
+	http::code status {(http::code)0};
 
 	const_buffer make_write_content_buffer() const;
 	const_buffer make_write_head_buffer() const;
 
+	mutable_buffer make_read_discard_buffer() const;
 	mutable_buffer make_read_content_buffer() const;
 	mutable_buffer make_read_head_buffer() const;
 
@@ -87,6 +90,8 @@ noexcept
 ,written{std::move(o.written)}
 ,head_read{std::move(o.head_read)}
 ,content_read{std::move(o.content_read)}
+,content_over{std::move(o.content_over)}
+,status{std::move(o.status)}
 {
 	if(request)
 		associate(*request, *this, std::move(o));
@@ -101,6 +106,8 @@ noexcept
 	written = std::move(o.written);
 	head_read = std::move(o.head_read);
 	content_read = std::move(o.content_read);
+	content_over = std::move(o.content_over);
+	status = std::move(o.status);
 
 	if(request)
 		associate(*request, *this, std::move(o));

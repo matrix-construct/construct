@@ -39,7 +39,6 @@ namespace ircd::server
 ///
 struct ircd::server::out
 {
-	// supplied by user
 	const_buffer head;
 	const_buffer content;
 };
@@ -50,12 +49,8 @@ struct ircd::server::out
 ///
 struct ircd::server::in
 {
-	// supplied by user
-	mutable_buffer head_buffer;
-	mutable_buffer content_buffer;
-
-	// supplied by system
-	http::response::head head;
+	mutable_buffer head;
+	mutable_buffer content;
 };
 
 /// This is a handle for being a client to another server. This handle will
@@ -131,7 +126,7 @@ noexcept
 inline size_t
 ircd::server::size(const in &in)
 {
-	return size(in.head_buffer) + size(in.content_buffer);
+	return size(in.head) + size(in.content);
 }
 
 inline size_t

@@ -1301,37 +1301,33 @@ ircd::const_buffer
 ircd::server::tag::read_buffer(const const_buffer &buffer,
                                bool &done)
 {
-	return !request?                 const_buffer{}:
-	       !request->in.head.status? read_head(buffer, done):
-	                                 read_content(buffer, done);
+	return
+		!request?
+			const_buffer{}:
+
+		head_read < size(request->in.head)?
+			read_head(buffer, done):
+
+		read_content(buffer, done);
 }
 
 /// An idempotent operation that provides the location of where the socket
 /// should place the next received data. The tag figures this out based on
 /// whether it receiving HTTP head data or whether it is in content mode.
 ///
-/// In head mode, portions of the user's buffer are returned starting with
-/// the entire buffer. After a call read_buffer() supplying more data from
-/// the socket, the subsequent invocation of make_read_buffer() will return
-/// smaller windows for the remaining free space. Head mode is completed when
-/// an \r\n\r\n terminator is received.
-///
-/// In content mode, portions of the user's buffer are returned starting with
-/// one that is at most content_length. After a call to read_buffer()
-/// supplying more data, the remaining space of the remaining content_length
-/// are returned.
-///
 ircd::mutable_buffer
 ircd::server::tag::make_read_buffer()
 const
 {
-	assert(request);
 	return
 		!request?
 			mutable_buffer{}:
 
-		!request->in.head.status?
+		head_read < size(request->in.head)?
 			make_read_head_buffer():
+
+		content_read >= size(request->in.content)?
+			make_read_discard_buffer():
 
 		make_read_content_buffer();
 }
@@ -1428,9 +1424,6 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 {
 	assert(request);
 	auto &req{*request};
-	auto &head{req.in.head};
-	const auto &head_buffer{req.in.head_buffer};
-	const auto &content_buffer{req.in.content_buffer};
 
 	// informal search for head terminator
 	static const string_view terminator{"\r\n\r\n"};
@@ -1444,61 +1437,93 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// invocation of this function with more data.
 	if(pos == string_view::npos)
 	{
-		head_read += size(buffer);
+		this->head_read += size(buffer);
 		return {};
 	}
 
-	// The given buffer may go past the end of the head and we may already
-	// have part of the head from a previous invocation. This indicates
-	// how much dome was just received from this buffer only, including the
-	// terminator which is considered part of the head.
+	// This indicates how much head was just received from this buffer only,
+	// including the terminator which is considered part of the dome.
 	const size_t addl_head_bytes
 	{
 		pos + size(terminator)
 	};
 
+	// The received buffer may go past the end of the head.
 	assert(addl_head_bytes <= size(buffer));
-	head_read += addl_head_bytes;
-
-	// Setup the capstan and mark the end of the tape
-	parse::buffer pb{mutable_buffer{data(head_buffer), head_read}};
-	parse::capstan pc{pb};
-	pc.read += head_read;
-
-	head = http::response::head{pc};
-	assert(pb.completed() == head_read);
-
-	const size_t overrun_length
+	const size_t beyond_head_len
 	{
 		size(buffer) - addl_head_bytes
 	};
 
+	// The final update for the confirmed length of the head.
+	this->head_read += addl_head_bytes;
+	const size_t &head_read{this->head_read};
+	assert(head_read + beyond_head_len <= size(req.in.head));
+
+	// Window on any data in the buffer after the head.
+	const const_buffer beyond_head
+	{
+		data(req.in.head) + head_read, beyond_head_len
+	};
+
+	// Resize the user's head buffer tight to the head; this is how we convey
+	// the size of the dome back to the user.
+	req.in.head = mutable_buffer
+	{
+		data(req.in.head), head_read
+	};
+
+	// Setup the capstan and mark the end of the tape
+	parse::buffer pb{req.in.head};
+	parse::capstan pc{pb};
+	pc.read += size(req.in.head);
+
+	// Play the tape through the formal grammar.
+	const http::response::head head{pc};
+	assert(pb.completed() == head_read);
+	this->status = http::status(head.status);
+
+	// Now we know how much content was received beyond the head
 	const size_t &content_read
 	{
-		std::min(head.content_length, overrun_length)
+		std::min(head.content_length, beyond_head_len)
 	};
 
 	const const_buffer partial_content
 	{
-		data(head_buffer) + head_read, content_read
+		data(req.in.head) + head_read, content_read
 	};
+
+	// Reduce the user's content buffer to the content-length. This is sort of
+	// how we convey the content-length back to the user. The buffer size will
+	// eventually reflect how much content was actually received; the user can
+	// find the given content-length by parsing the header.
+	req.in.content = mutable_buffer
+	{
+		data(req.in.content), std::min(head.content_length, size(req.in.content))
+	};
+
+	// If the supplied content buffer is too small this must indicate how much
+	// content will have to be discarded later to not mess up the pipeline.
+	if(head.content_length > size(req.in.content))
+		content_over = head.content_length - size(req.in.content);
 
 	// Any partial content was written to the head buffer by accident,
 	// that has to be copied over to the content buffer.
-	this->content_read += copy(content_buffer, partial_content);
-	assert(this->content_read == size(partial_content));
+	this->content_read += copy(req.in.content, partial_content);
 
 	// Anything remaining is not our response and must be given back
-	assert(overrun_length >= content_read);
+	assert(beyond_head_len >= content_read);
 	const const_buffer overrun
 	{
-		data(head_buffer) + head_read + content_read, overrun_length - content_read
+		data(beyond_head) + size(partial_content), beyond_head_len - content_read
 	};
 
-	if(this->content_read == head.content_length)
+	assert(this->content_read + content_over <= head.content_length);
+	if(this->content_read + content_over == head.content_length)
 	{
 		done = true;
-		p.set_value(http::status(head.status));
+		p.set_value(status);
 	}
 
 	return overrun;
@@ -1510,14 +1535,13 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 {
 	assert(request);
 	auto &req{*request};
-	const auto &head{req.in.head};
-	const auto &content_buffer{req.in.content_buffer};
+	const auto &content{req.in.content};
 
 	// The amount of remaining content for the response sequence
-	assert(head.content_length >= content_read);
+	assert(size(content) + content_over >= content_read);
 	const size_t remaining
 	{
-		head.content_length - content_read
+		size(content) + content_over - content_read
 	};
 
 	// The amount of content read in this buffer only.
@@ -1526,27 +1550,16 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 		std::min(size(buffer), remaining)
 	};
 
-	const size_t overrun_length
-	{
-		size(buffer) - addl_content_read
-	};
-
 	content_read += addl_content_read;
-
-	// Report anything that doesn't belong to us.
-	const const_buffer overrun
-	{
-		data(content_buffer) + content_read, overrun_length
-	};
-
-	assert(content_read <= head.content_length);
-	if(content_read == head.content_length)
+	assert(size(buffer) - addl_content_read == 0);
+	assert(content_read <= size(content) + content_over);
+	if(content_read == size(content) + content_over)
 	{
 		done = true;
-		p.set_value(http::status(head.status));
+		p.set_value(status);
 	}
 
-	return overrun;
+	return {};
 }
 
 ircd::mutable_buffer
@@ -1555,21 +1568,20 @@ const
 {
 	assert(request);
 	const auto &req{*request};
-	const auto &head_buffer{req.in.head_buffer};
-	const auto &content_buffer{req.in.content_buffer};
-
-	if(head_read >= size(head_buffer))
+	const auto &head{req.in.head};
+	const auto &content{req.in.content};
+	if(head_read >= size(head))
 		return {};
 
 	const size_t remaining
 	{
-		size(head_buffer) - head_read
+		size(head) - head_read
 	};
 
-	assert(remaining <= size(head_buffer));
+	assert(remaining <= size(head));
 	const mutable_buffer buffer
 	{
-		data(head_buffer) + head_read, remaining
+		data(head) + head_read, remaining
 	};
 
 	return buffer;
@@ -1581,31 +1593,44 @@ const
 {
 	assert(request);
 	const auto &req{*request};
-	const auto &head{req.in.head};
-	const auto &content_buffer{req.in.content_buffer};
+	const auto &content{req.in.content};
 
 	// The amount of bytes we still have to read to for the response
-	assert(head.content_length >= content_read);
+	assert(size(content) >= content_read);
 	const size_t remaining
 	{
-		head.content_length - content_read
+		size(content) - content_read
 	};
 
-	// The amount of bytes available in the user's buffer.
-	assert(size(content_buffer) >= content_read);
-	const size_t available
+	return
 	{
-		size(content_buffer) - content_read
+		data(content) + content_read, remaining
 	};
+}
 
-	// For now, this has to trip right here.
-	assert(available >= remaining);
-	const mutable_buffer buffer
+ircd::mutable_buffer
+ircd::server::tag::make_read_discard_buffer()
+const
+{
+	assert(request);
+	assert(content_over > 0);
+	assert(content_over <= content_read);
+	assert(content_read >= size(request->in.content));
+	const size_t remaining
 	{
-		data(content_buffer) + content_read, std::min(available, remaining)
+		content_over - content_read
 	};
 
-	return buffer;
+	static char buffer[512];
+	const size_t buffer_max
+	{
+		std::min(remaining, sizeof(buffer))
+	};
+
+	return
+	{
+		buffer, buffer_max
+	};
 }
 
 size_t
@@ -1626,7 +1651,7 @@ size_t
 ircd::server::tag::read_total()
 const
 {
-	return request? head_read + request->in.head.content_length : 0;
+	return request? size(request->in) : 0;
 }
 
 size_t
