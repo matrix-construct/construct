@@ -80,7 +80,7 @@ struct ircd::server::link
 	void submit(request &);
 
 	// control panel
-	bool close(const net::close_opts &);
+	bool close(const net::close_opts & = net::close_opts_default);
 	bool open(const net::open_opts &);
 
 	link(server::node &);

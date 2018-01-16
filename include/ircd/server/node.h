@@ -36,6 +36,7 @@ struct ircd::server::node
 	void resolve(const hostport &);
 
 	void del(link &);
+	void handle_link_done(link &);
 	void handle_tag_done(link &, tag &) noexcept;
 	void handle_error(link &, const boost::system::system_error &);
 	void handle_close(link &, std::exception_ptr);
@@ -44,6 +45,7 @@ struct ircd::server::node
   public:
 	// config related
 	size_t link_max() const;
+	size_t link_min() const;
 
 	// stats for all links in node
 	size_t link_count() const;

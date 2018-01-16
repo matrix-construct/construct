@@ -28,10 +28,16 @@ namespace ircd::server
 		2
 	};
 
+	// Coarse minimum number of connections to a server
+	const size_t LINK_MIN_DEFAULT
+	{
+		1
+	};
+
 	// Maximum number of requests "in flight" in the pipe at at time
 	const size_t TAG_COMMIT_MAX_DEFAULT
 	{
-		2
+		1
 	};
 
 	ctx::dock dock;
@@ -457,14 +463,31 @@ catch(const std::exception &e)
 	             e.what());
 }
 
+/// This is where we're notified a link has processed its queue and has no
+/// more work. We can choose whether to close the link or keep it open and
+/// reinstate the read poll; reschedule other work to this link, etc.
+void
+ircd::server::node::handle_link_done(link &link)
+{
+	assert(link.tag_count() == 0);
+
+	if(link_ready() > link_min())
+	{
+		link.close();
+		return;
+	}
+
+	link.wait_readable();
+}
+
+/// This *cannot* be called unless a link's socket is closed and its queue
+/// is empty. It is usually only called by a disconnect handler because
+/// the proper way to remove a link is asynchronously through link.close();
 void
 ircd::server::node::del(link &link)
 {
-	log.debug("node(%p) [%s]: removing link %p",
-	          this,
-	          string(remote),
-	          &link);
-
+	assert(!link.tag_count());
+	assert(!link.connected());
 	const auto it(std::find_if(begin(links), end(links), [&link]
 	(const auto &link_)
 	{
@@ -472,6 +495,13 @@ ircd::server::node::del(link &link)
 	}));
 
 	assert(it != end(links));
+	log.debug("node(%p) removing link(%p) %zu of %zu to %s",
+	          this,
+	          &link,
+	          std::distance(it, end(links)),
+	          links.size(),
+	          string(remote));
+
 	links.erase(it);
 
 	// Right now this is what the server:: ~init sequence needs
@@ -501,8 +531,11 @@ try
 	this->eptr = std::move(eptr);
 	static_cast<net::ipport &>(this->remote) = ipport;
 
-	for(auto &link : links)
-		link.open(this->remote);
+	if(!this->eptr)
+		for(auto &link : links)
+			link.open(this->remote);
+	else
+		assert(0); //TODO: XXX
 }
 catch(const std::bad_weak_ptr &)
 {
@@ -624,6 +657,14 @@ ircd::server::node::link_count()
 const
 {
 	return links.size();
+}
+
+size_t
+ircd::server::node::link_min()
+const
+{
+	//TODO: conf
+	return LINK_MIN_DEFAULT;
 }
 
 size_t
@@ -898,7 +939,6 @@ try
 	{
 		case success:
 			handle_readable_success();
-			wait_readable();
 			return;
 
 		case operation_canceled:
@@ -934,9 +974,15 @@ ircd::server::link::handle_readable_success()
 	const_buffer overrun; do
 	{
 		if(!process_read(overrun))
-			break;
+		{
+			wait_readable();
+			return;
+		}
 	}
 	while(!queue.empty());
+
+	assert(node);
+	node->handle_link_done(*this);
 }
 
 /// Process as many read operations for one tag as possible
