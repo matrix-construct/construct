@@ -71,7 +71,7 @@ struct ircd::server::link
 	size_t read_remaining() const;     // see: tag::read_remaining() notes
 
 	// stats for tags
-	size_t tag_total() const;
+	size_t tag_count() const;
 	size_t tag_committed() const;
 	size_t tag_uncommitted() const;
 

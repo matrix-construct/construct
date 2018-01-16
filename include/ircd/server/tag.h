@@ -40,6 +40,9 @@ struct ircd::server::tag
 	size_t head_read {0};
 	size_t content_read {0};
 
+	const_buffer make_write_content_buffer() const;
+	const_buffer make_write_head_buffer() const;
+
 	mutable_buffer make_read_content_buffer() const;
 	mutable_buffer make_read_head_buffer() const;
 

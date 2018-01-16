@@ -95,22 +95,28 @@ ircd::server::exists(const net::hostport &hostport)
 }
 
 size_t
-ircd::server::tag_total()
+ircd::server::node_count()
+{
+	return nodes.size();
+}
+
+size_t
+ircd::server::link_count()
 {
 	return accumulate_nodes([]
 	(const auto &node)
 	{
-		return node.tag_total();
+		return node.link_count();
 	});
 }
 
 size_t
-ircd::server::link_total()
+ircd::server::tag_count()
 {
 	return accumulate_nodes([]
 	(const auto &node)
 	{
-		return node.link_total();
+		return node.tag_count();
 	});
 }
 
@@ -172,16 +178,29 @@ ircd::server::init::interrupt()
 void
 ircd::server::close_all()
 {
+	log.debug("Closing all %zu nodes",
+	          node_count());
+
 	for(auto &node : nodes)
 		node.second->close();
 
-	while(link_total())
+	log.debug("Waiting for %zu tags on %zu links on %zu nodes to close...",
+	          tag_count(),
+	          link_count(),
+	          node_count());
+
+	while(link_count())
 		dock.wait();
 }
 
 void
 ircd::server::interrupt_all()
 {
+	log.debug("Interrupting %zu tags on %zu links on %zu nodes",
+	          tag_count(),
+	          link_count(),
+	          node_count());
+
 	for(auto &node : nodes)
 		node.second->interrupt();
 }
@@ -303,7 +322,7 @@ ircd::server::node::link_get(const request &request)
 
 		// Coarse distribution based on who has more work; this is weak, should
 		// be replaced.
-		if(cand.tag_total() > best->tag_total())
+		if(cand.tag_count() > best->tag_count())
 			continue;
 
 		best = &cand;
@@ -377,17 +396,65 @@ void
 ircd::server::node::handle_error(link &link,
                                  const boost::system::system_error &e)
 {
-	log::error("node(%p) link(%p) [%s]: error: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+	using boost::asio::error::get_misc_category;
 
-	if(!link.busy())
+	const auto &ec{e.code()};
+	if(ec.category() == system_category()) switch(ec.value())
 	{
-		link.close(net::close_opts_default);
-		return;
+		case success:
+			assert(0);
+			break;
+
+		default:
+			break;
 	}
+	else if(ec.category() == get_misc_category()) switch(ec.value())
+	{
+		case asio::error::eof:
+			log.debug("node(%p) link(%p) [%s]: %s",
+			          this,
+			          &link,
+			          string(remote),
+			          e.what());
+
+			link.close(net::close_opts_default);
+			return;
+
+		default:
+			break;
+	}
+
+	log.error("node(%p) link(%p) [%s]: error: %s",
+	          this,
+	          &link,
+	          string(remote),
+	          e.what());
+
+	link.close(net::dc::RST);
+}
+
+/// This is where we're notified a tag has been completed either to start the
+/// next request when the link has too many requests in flight or perhaps to
+/// reschedule the queues in various links to diffuse the pending requests.
+/// This can't throw because the link still has to remove this tag from its
+/// queue.
+void
+ircd::server::node::handle_tag_done(link &link,
+                                    tag &tag)
+noexcept try
+{
+	if(link.tag_committed() >= link.tag_commit_max())
+		link.wait_writable();
+}
+catch(const std::exception &e)
+{
+	log.critical("node(%p) link(%p) tag(%p) done; error: %s",
+	             this,
+	             &link,
+	             &tag,
+	             e.what());
 }
 
 void
@@ -523,12 +590,12 @@ const
 }
 
 size_t
-ircd::server::node::tag_total()
+ircd::server::node::tag_count()
 const
 {
 	return accumulate_links([](const auto &link)
 	{
-		return link.tag_total();
+		return link.tag_count();
 	});
 }
 
@@ -553,7 +620,7 @@ const
 }
 
 size_t
-ircd::server::node::link_total()
+ircd::server::node::link_count()
 const
 {
 	return links.size();
@@ -725,18 +792,20 @@ ircd::server::link::handle_writable(const error_code &ec)
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:
 			handle_writable_success();
-			break;
+			return;
 
 		case operation_canceled:
 			return;
 
 		default:
-			throw boost::system::system_error{ec};
+			break;
 	}
+
+	throw boost::system::system_error{ec};
 }
 
 void
@@ -764,7 +833,7 @@ ircd::server::link::process_write(tag &tag)
 		log.debug("link(%p) starting on tag %zu of %zu: wt:%zu",
 		          this,
 		          tag_committed(),
-		          tag_total(),
+		          tag_count(),
 		          tag.write_total());
 	}
 
@@ -825,19 +894,21 @@ try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	switch(ec.value())
+	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:
 			handle_readable_success();
 			wait_readable();
-			break;
+			return;
 
 		case operation_canceled:
 			return;
 
 		default:
-			throw boost::system::system_error{ec};
+			break;
 	}
+
+	throw boost::system::system_error{ec};
 }
 catch(const boost::system::system_error &e)
 {
@@ -884,15 +955,15 @@ try
 	}
 	while(!done);
 
-	if(tag_committed() >= tag_commit_max())
-		wait_writable();
-
+	assert(node);
+	node->handle_tag_done(*this, queue.front());
 	queue.pop_front();
 	return true;
 }
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
+
 	switch(e.code().value())
 	{
 		case resource_unavailable_try_again:
@@ -964,19 +1035,21 @@ ircd::server::link::discard_read()
 	log.warning("Link discarded %zu of %zu unexpected bytes",
 	            discard,
 	            discarded);
-	assert(0);
 
-	// for non-assert builds just in case; so this doesn't get loopy with
-	// discarding zero with an empty queue...
+	// just in case so this doesn't get loopy with discarding zero with
+	// an empty queue...
 	if(unlikely(!discard || !discarded))
-		throw assertive("Queue is empty and nothing to discard.");
+		throw assertive
+		{
+			"Queue is empty and nothing to discard."
+		};
 }
 
 size_t
 ircd::server::link::tag_uncommitted()
 const
 {
-	return tag_total() - tag_committed();
+	return tag_count() - tag_committed();
 }
 
 size_t
@@ -990,7 +1063,7 @@ const
 }
 
 size_t
-ircd::server::link::tag_total()
+ircd::server::link::tag_count()
 const
 {
 	return queue.size();
@@ -1207,9 +1280,14 @@ ircd::server::tag::make_read_buffer()
 const
 {
 	assert(request);
-	return !request?                 mutable_buffer{}:
-	       !request->in.head.status? make_read_head_buffer():
-	                                 make_read_content_buffer();
+	return
+		!request?
+			mutable_buffer{}:
+
+		!request->in.head.status?
+			make_read_head_buffer():
+
+		make_read_content_buffer();
 }
 
 void
@@ -1223,17 +1301,16 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 	{
 		assert(data(buffer) == data(req.out.head));
 		assert(written <= size(req.out.head));
-		return;
 	}
-
-	if(written <= size(req.out.head) + size(req.out.content))
+	else if(written <= size(req.out.head) + size(req.out.content))
 	{
 		assert(data(buffer) == data(req.out.content));
 		assert(written <= write_total());
-		return;
 	}
-
-	assert(0);
+	else
+	{
+		assert(0);
+	}
 }
 
 ircd::const_buffer
@@ -1243,41 +1320,60 @@ const
 	assert(request);
 	const auto &req{*request};
 
-	if(written < size(req.out.head))
+	return
+		written < size(req.out.head)?
+			make_write_head_buffer():
+
+		written < size(req.out.head) + size(req.out.content)?
+			make_write_content_buffer():
+
+		const_buffer{};
+}
+
+ircd::const_buffer
+ircd::server::tag::make_write_head_buffer()
+const
+{
+	assert(request);
+	const auto &req{*request};
+
+	const size_t remain
 	{
-		const size_t remain
-		{
-			size(req.out.head) - written
-		};
+		size(req.out.head) - written
+	};
 
-		const const_buffer window
-		{
-			data(req.out.head) + written, remain
-		};
-
-		return window;
-	}
-	else if(written < size(req.out.head) + size(req.out.content))
+	const const_buffer window
 	{
-		assert(written >= size(req.out.head));
-		const size_t content_offset
-		{
-			written - size(req.out.head)
-		};
+		data(req.out.head) + written, remain
+	};
 
-		const size_t remain
-		{
-			size(req.out.head) + size(req.out.content) - written
-		};
+	return window;
+}
 
-		const const_buffer window
-		{
-			data(req.out.content) + content_offset, remain
-		};
+ircd::const_buffer
+ircd::server::tag::make_write_content_buffer()
+const
+{
+	assert(request);
+	const auto &req{*request};
+	assert(written >= size(req.out.head));
 
-		return window;
-	}
-	else return {};
+	const size_t content_offset
+	{
+		written - size(req.out.head)
+	};
+
+	const size_t remain
+	{
+		size(req.out.head) + size(req.out.content) - written
+	};
+
+	const const_buffer window
+	{
+		data(req.out.content) + content_offset, remain
+	};
+
+	return window;
 }
 
 ircd::const_buffer
