@@ -28,7 +28,9 @@ struct ircd::server::node
 	std::exception_ptr eptr;
 	net::remote remote;
 	std::list<link> links;
-	ctx::dock dock;
+
+	template<class F> size_t accumulate_links(F&&) const;
+	template<class F> size_t accumulate_tags(F&&) const;
 
 	void handle_resolve(std::weak_ptr<node>, std::exception_ptr, const ipport &);
 	void resolve(const hostport &);
@@ -39,17 +41,39 @@ struct ircd::server::node
 	void handle_open(link &, std::exception_ptr);
 
   public:
-	size_t num_tags() const;
-	size_t num_links() const;
-	size_t num_links_busy() const;
-	size_t num_links_ready() const;
+	// config related
+	size_t link_max() const;
 
+	// stats for all links in node
+	size_t link_total() const;
+	size_t link_busy() const;
+	size_t link_ready() const;
+
+	// stats for all tags in all links in node
+	size_t tag_total() const;
+	size_t tag_committed() const;
+	size_t tag_uncommitted() const;
+
+	// stats for all upload-side bytes in all tags in all links
+	size_t write_total() const;
+	size_t write_completed() const;
+	size_t write_remaining() const;
+
+	// stats for download-side bytes in all tags in all links (note:
+	// see notes in link.h/tag.h about inaccuracy here).
+	size_t read_total() const;
+	size_t read_completed() const;
+	size_t read_remaining() const;
+
+	// link control panel
 	link &link_add(const size_t &num = 1);
-	link &link_get();
+	link &link_get(const request &);
 
+	// request panel
 	void cancel(request &);
 	void submit(request &);
 
+	// control panel
 	void interrupt();
 	void close();
 

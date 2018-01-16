@@ -27,6 +27,11 @@ namespace ircd::server
 	struct in;
 	struct out;
 	struct request;
+
+	size_t size(const in &);
+	size_t size(const out &);
+
+	void submit(const hostport &, request &);
 }
 
 /// Request data and options related to transmitting the request. This
@@ -76,3 +81,61 @@ struct ircd::server::request
 	request &operator=(const request &) = delete;
 	~request() noexcept;
 };
+
+inline
+ircd::server::request::request(const net::hostport &hostport,
+                               server::out out,
+                               server::in in)
+:tag{nullptr}
+,out{std::move(out)}
+,in{std::move(in)}
+{
+	submit(hostport, *this);
+}
+
+inline
+ircd::server::request::request(request &&o)
+noexcept
+:ctx::future<http::code>{std::move(o)}
+,tag{std::move(o.tag)}
+,out{std::move(o.out)}
+,in{std::move(o.in)}
+{
+	if(tag)
+		associate(*this, *tag, std::move(o));
+}
+
+inline ircd::server::request &
+ircd::server::request::operator=(request &&o)
+noexcept
+{
+	ctx::future<http::code>::operator=(std::move(o));
+	out = std::move(o.out);
+	in = std::move(o.in);
+	tag = std::move(o.tag);
+
+	if(tag)
+		associate(*this, *tag, std::move(o));
+
+	return *this;
+}
+
+inline
+ircd::server::request::~request()
+noexcept
+{
+	if(tag)
+		disassociate(*this, *tag);
+}
+
+inline size_t
+ircd::server::size(const in &in)
+{
+	return size(in.head_buffer) + size(in.content_buffer);
+}
+
+inline size_t
+ircd::server::size(const out &out)
+{
+	return size(out.head) + size(out.content);
+}

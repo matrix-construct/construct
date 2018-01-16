@@ -30,11 +30,8 @@ struct ircd::server::link
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::deque<tag> queue;                       ///< link's work queue
 
-	bool connected() const noexcept;
-	bool ready() const;
-	bool busy() const;
+	template<class F> size_t accumulate_tags(F&&) const;
 
-  protected:
 	void discard_read();
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
 	bool process_read(const_buffer &);
@@ -52,11 +49,39 @@ struct ircd::server::link
 	void handle_open(std::exception_ptr);
 
   public:
+	// config related
+	size_t tag_max() const;
+	size_t tag_commit_max() const;
+
+	// indicator lights
+	bool connected() const noexcept;
+	bool ready() const;
+	bool busy() const;
+
+	// stats for upload-side bytes across all tags
+	size_t write_total() const;
+	size_t write_completed() const;
+	size_t write_remaining() const;
+
+	// stats for download-side bytes ~across all tags~; note: this is not
+	// accurate except for the one tag at the front of the queue having
+	// its response processed.
+	size_t read_total() const;         // see: tag::read_total() notes
+	size_t read_completed() const;     // see: tag::read_completed() notes
+	size_t read_remaining() const;     // see: tag::read_remaining() notes
+
+	// stats for tags
+	size_t tag_total() const;
+	size_t tag_committed() const;
+	size_t tag_uncommitted() const;
+
+	// request panel
+	tag cancel(request &);
+	void submit(request &);
+
+	// control panel
 	bool close(const net::close_opts &);
 	bool open(const net::open_opts &);
-
-	void cancel(request &);
-	void submit(request &);
 
 	link(server::node &);
 	~link() noexcept;

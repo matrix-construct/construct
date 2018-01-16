@@ -35,6 +35,9 @@ namespace ircd::server
 	extern ircd::log::log log;
 	extern std::map<string_view, std::shared_ptr<node>> nodes;
 
+	size_t link_total();
+	size_t tag_total();
+
 	bool exists(const net::hostport &);
 	node &find(const net::hostport &);
 	node &get(const net::hostport &);

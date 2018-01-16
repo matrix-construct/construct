@@ -22,8 +22,13 @@
 
 namespace ircd::server
 {
-	std::shared_ptr<node> create(const net::hostport &);
+	ctx::dock dock;
 
+	template<class F> size_t accumulate_nodes(F&&);
+	template<class F> size_t accumulate_links(F&&);
+	template<class F> size_t accumulate_tags(F&&);
+
+	std::shared_ptr<node> create(const net::hostport &);
 	void interrupt_all();
 	void close_all();
 }
@@ -45,6 +50,10 @@ ircd::server::get(const net::hostport &hostport)
 	if(it == nodes.end() || it->first != host(hostport))
 	{
 		auto node{create(hostport)};
+		log::debug("node(%p) for %s created; adding...",
+		           node.get(),
+		           string(hostport));
+
 		const string_view key{node->remote.hostname};
 		it = nodes.emplace_hint(it, key, std::move(node));
 	}
@@ -73,6 +82,60 @@ ircd::server::exists(const net::hostport &hostport)
 	return nodes.find(host(hostport)) != end(nodes);
 }
 
+size_t
+ircd::server::tag_total()
+{
+	return accumulate_nodes([]
+	(const auto &node)
+	{
+		return node.tag_total();
+	});
+}
+
+size_t
+ircd::server::link_total()
+{
+	return accumulate_nodes([]
+	(const auto &node)
+	{
+		return node.link_total();
+	});
+}
+
+template<class F>
+size_t
+ircd::server::accumulate_tags(F&& closure)
+{
+	return accumulate_links([&closure]
+	(const auto &link)
+	{
+		return link.accumulate_tags(std::forward<F>(closure));
+	});
+}
+
+template<class F>
+size_t
+ircd::server::accumulate_links(F&& closure)
+{
+	return accumulate_nodes([&closure]
+	(const auto &node)
+	{
+		return node.accumulate_links(std::forward<F>(closure));
+	});
+}
+
+template<class F>
+size_t
+ircd::server::accumulate_nodes(F&& closure)
+{
+	return std::accumulate(begin(nodes), end(nodes), size_t(0), [&closure]
+	(auto ret, const auto &pair)
+	{
+		const auto &node{*pair.second};
+		return ret += closure(node);
+	});
+}
+
 //
 // init
 //
@@ -99,6 +162,9 @@ ircd::server::close_all()
 {
 	for(auto &node : nodes)
 		node.second->close();
+
+	while(link_total())
+		dock.wait();
 }
 
 void
@@ -112,81 +178,977 @@ ircd::server::interrupt_all()
 // request
 //
 
-ircd::server::request::request(const net::hostport &hostport,
-                               server::out out,
-                               server::in in)
-:tag{nullptr}
-,out{std::move(out)}
-,in{std::move(in)}
+void
+ircd::server::submit(const hostport &hostport,
+                     request &request)
 {
+	assert(request.tag == nullptr);
 	auto &node(server::get(hostport));
-	node.submit(*this);
+	node.submit(request);
 }
 
-ircd::server::request::request(request &&o)
-noexcept
-:ctx::future<http::code>{std::move(o)}
-,tag{std::move(o.tag)}
-,out{std::move(o.out)}
-,in{std::move(o.in)}
+//
+// node
+//
+
+ircd::server::node::node()
 {
 }
 
-ircd::server::request &
-ircd::server::request::operator=(request &&o)
+ircd::server::node::~node()
 noexcept
 {
-	ctx::future<http::code>::operator=(std::move(o));
-	tag = std::move(o.tag);
-	out = std::move(o.out);
-	in = std::move(o.in);
-
-	assert(tag->request == &o);
-	tag->request = this;
-
-	return *this;
+	assert(links.empty());
 }
 
-ircd::server::request::~request()
+void
+ircd::server::node::close()
+{
+	for(auto &link : links)
+		link.close(net::close_opts_default);
+}
+
+void
+ircd::server::node::interrupt()
+{
+	//TODO: not a close
+	//TODO: interrupt = killing requests but still setting tag promises
+	for(auto &link : links)
+		link.close(net::close_opts_default);
+}
+
+void
+ircd::server::node::submit(request &request)
+{
+	link &ret(link_get(request));
+	ret.submit(request);
+
+	log::debug("node(%p) tt:%zu tc:%zu tu:%zu wt:%zu wc:%zu wr:%zu rt:%zu rc:%zu rr:%zu",
+	           this,
+	           tag_total(),
+	           tag_committed(),
+	           tag_uncommitted(),
+	           write_total(),
+	           write_completed(),
+	           write_remaining(),
+	           read_total(),
+	           read_completed(),
+	           read_remaining());
+}
+
+void
+ircd::server::node::cancel(request &request)
+{
+}
+
+/// Dispatch algorithm here; finds the best link to place this request on,
+/// or creates a new link entirely. There are a number of factors: foremost
+/// if any special needs are indicated,
+//
+ircd::server::link &
+ircd::server::node::link_get(const request &request)
+{
+	if(links.empty())
+		return link_add(1);
+
+	link *best{&links.back()};
+	for(auto &link : links)
+	{
+		// Candidate isn't in service yet. best may not be in service yet
+		// yet either, but skip for now.
+		if(!link.ready())
+			continue;
+
+		// Candidate's queue has a backlog of tags which haven't even had their
+		// request sent yet; when best has less of these, best is probably
+		// better so far.
+		if(link.tag_uncommitted() >= best->tag_uncommitted())
+			continue;
+
+		// Candidates's queue has less or same backlog of unsent requests, but
+		// now measure if candidate will take longer to process at least the
+		// write-side of those requests.
+		if(link.write_remaining() >= best->write_remaining())
+			continue;
+
+		// Candidate might be working through really large content; though
+		// this is a very sketchy measurement right now since we only *might*
+		// know about content-length for the *one* active tag occupying the
+		// socket.
+		if(link.read_remaining() >= best->read_remaining())
+			continue;
+
+		// Coarse distribution based on who has more work; this is weak, should
+		// be replaced.
+		if(link.tag_total() >= best->tag_total())
+			continue;
+
+		best = &link;
+	}
+
+	// best might not be good enough, we could try another connection. If best
+	// has a backlog or is working on a large download or slow request.
+
+	if(links.size() >= link_max())
+		return *best;
+
+	if(best->tag_uncommitted() < best->tag_commit_max())
+		return *best;
+
+	best = &link_add();
+	return *best;
+}
+
+ircd::server::link &
+ircd::server::node::link_add(const size_t &num)
+{
+	links.emplace_back(*this);
+	auto &link{links.back()};
+
+	if(remote.resolved())
+		link.open(remote);
+
+	return link;
+}
+
+void
+ircd::server::node::handle_open(link &link,
+                                std::exception_ptr eptr)
+try
+{
+	if(eptr)
+		std::rethrow_exception(eptr);
+}
+catch(const std::exception &e)
+{
+	log::error("node(%p) link(%p) [%s]: open: %s",
+	           this,
+	           &link,
+	           string(remote),
+	           e.what());
+}
+
+void
+ircd::server::node::handle_close(link &link,
+                                 std::exception_ptr eptr)
+try
+{
+	const unwind remove{[this, &link]
+	{
+		this->del(link);
+	}};
+
+	if(eptr)
+		std::rethrow_exception(eptr);
+}
+catch(const std::exception &e)
+{
+	log::error("node(%p) link(%p) [%s]: close: %s",
+	           this,
+	           &link,
+	           string(remote),
+	           e.what());
+}
+
+void
+ircd::server::node::handle_error(link &link,
+                                 const boost::system::system_error &e)
+{
+	log::error("node(%p) link(%p) [%s]: error: %s",
+	           this,
+	           &link,
+	           string(remote),
+	           e.what());
+
+	if(!link.busy())
+	{
+		link.close(net::close_opts_default);
+		return;
+	}
+}
+
+void
+ircd::server::node::del(link &link)
+{
+	log::debug("node(%p) [%s]: removing link %p",
+	           this,
+	           string(remote),
+	           &link);
+
+	const auto it(std::find_if(begin(links), end(links), [&link]
+	(const auto &link_)
+	{
+		return &link_ == &link;
+	}));
+
+	assert(it != end(links));
+	links.erase(it);
+
+	// Right now this is what the server:: ~init sequence needs
+	// to wait for all links to close on IRCd shutdown.
+	server::dock.notify_all();
+}
+
+void
+ircd::server::node::resolve(const hostport &hostport)
+{
+	auto handler
+	{
+		std::bind(&node::handle_resolve, this, weak_from(*this), ph::_1, ph::_2)
+	};
+
+	net::resolve(hostport, std::move(handler));
+}
+
+void
+ircd::server::node::handle_resolve(std::weak_ptr<node> wp,
+                                   std::exception_ptr eptr,
+                                   const ipport &ipport)
+try
+{
+	const life_guard<node> lg(wp);
+
+	this->eptr = std::move(eptr);
+	static_cast<net::ipport &>(this->remote) = ipport;
+
+	for(auto &link : links)
+		link.open(this->remote);
+}
+catch(const std::bad_weak_ptr &)
+{
+	return;
+}
+
+size_t
+ircd::server::node::read_remaining()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.read_remaining();
+	});
+}
+
+size_t
+ircd::server::node::read_completed()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.read_completed();
+	});
+}
+
+size_t
+ircd::server::node::read_total()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.read_total();
+	});
+}
+
+size_t
+ircd::server::node::write_remaining()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.write_remaining();
+	});
+}
+
+size_t
+ircd::server::node::write_completed()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.write_completed();
+	});
+}
+
+size_t
+ircd::server::node::write_total()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.write_total();
+	});
+}
+
+size_t
+ircd::server::node::tag_uncommitted()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.tag_uncommitted();
+	});
+}
+
+size_t
+ircd::server::node::tag_committed()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.tag_committed();
+	});
+}
+
+size_t
+ircd::server::node::tag_total()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.tag_total();
+	});
+}
+
+size_t
+ircd::server::node::link_ready()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.ready();
+	});
+}
+
+size_t
+ircd::server::node::link_busy()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.busy();
+	});
+}
+
+size_t
+ircd::server::node::link_total()
+const
+{
+	return links.size();
+}
+
+size_t
+ircd::server::node::link_max()
+const
+{
+	//TODO: conf
+	return 4;
+}
+
+template<class F>
+size_t
+ircd::server::node::accumulate_tags(F&& closure)
+const
+{
+	return accumulate_links([&closure](const auto &link)
+	{
+		return link.accumulate([&closure](const auto &tag)
+		{
+			return closure(tag);
+		});
+	});
+}
+
+template<class F>
+size_t
+ircd::server::node::accumulate_links(F&& closure)
+const
+{
+	return std::accumulate(begin(links), end(links), size_t(0), [&closure]
+	(auto ret, const auto &tag)
+	{
+		return ret += closure(tag);
+	});
+}
+
+//
+// link
+//
+
+ircd::server::link::link(server::node &node)
+:node{shared_from(node)}
+{
+}
+
+ircd::server::link::~link()
 noexcept
 {
+	assert(!busy());
+	assert(!connected());
+}
+
+void
+ircd::server::link::submit(request &request)
+{
+	const auto it
+	{
+		queue.emplace(end(queue), request)
+	};
+
+	log::debug("link(%p) tt:%zu tc:%zu tu:%zu wt:%zu wc:%zu wr:%zu rt:%zu rc:%zu rr:%zu",
+	           this,
+	           tag_total(),
+	           tag_committed(),
+	           tag_uncommitted(),
+	           write_total(),
+	           write_completed(),
+	           write_remaining(),
+	           read_total(),
+	           read_completed(),
+	           read_remaining());
+
+	if(ready())
+		wait_writable();
+}
+
+/// Cancel a request queued in the link. This is an expensive operation, use
+/// with care.
+ircd::server::tag
+ircd::server::link::cancel(request &request)
+{
+	const auto it
+	{
+		std::find_if(begin(queue), end(queue), [&request]
+		(const auto &tag)
+		{
+			return &tag == request.tag;
+		})
+	};
+
+	if(it == end(queue))
+		throw std::out_of_range
+		{
+			"Request has no tag queued in this link"
+		};
+
+	tag ret{std::move(*it)};
+	queue.erase(it);
+	return ret;
+}
+
+bool
+ircd::server::link::open(const net::open_opts &open_opts)
+{
+	if(init)
+		return false;
+
+	auto handler
+	{
+		std::bind(&link::handle_open, this, ph::_1)
+	};
+
+	init = true;
+	fini = false;
+	socket = net::open(open_opts, std::move(handler));
+	return true;
+}
+
+void
+ircd::server::link::handle_open(std::exception_ptr eptr)
+{
+	init = false;
+
+	if(!eptr)
+	{
+		wait_readable();
+		wait_writable();
+	}
+
+	if(node)
+		node->handle_open(*this, std::move(eptr));
+}
+
+bool
+ircd::server::link::close(const net::close_opts &close_opts)
+{
+	if(!socket)
+		return false;
+
+	if(fini)
+		return false;
+
+	auto handler
+	{
+		std::bind(&link::handle_close, this, ph::_1)
+	};
+
+	init = false;
+	fini = true;
+	net::close(*socket, close_opts, std::move(handler));
+	return true;
+}
+
+void
+ircd::server::link::handle_close(std::exception_ptr eptr)
+{
+	fini = false;
+
+	if(node)
+		node->handle_close(*this, std::move(eptr));
+}
+
+void
+ircd::server::link::wait_writable()
+{
+	auto handler
+	{
+		std::bind(&link::handle_writable, this, ph::_1)
+	};
+
+	assert(ready());
+	net::wait(*socket, net::ready::WRITE, std::move(handler));
+}
+
+void
+ircd::server::link::handle_writable(const error_code &ec)
+{
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	switch(ec.value())
+	{
+		case success:
+			handle_writable_success();
+			break;
+
+		case operation_canceled:
+			return;
+
+		default:
+			throw boost::system::system_error{ec};
+	}
+}
+
+void
+ircd::server::link::handle_writable_success()
+{
+	for(auto &tag : queue)
+	{
+		if(!process_write(tag))
+		{
+			wait_writable();
+			break;
+		}
+
+		// Limits the amount of requests in the pipe.
+		if(tag_committed() >= tag_commit_max())
+			break;
+	}
+}
+
+bool
+ircd::server::link::process_write(tag &tag)
+{
+	if(tag.write_remaining() >= tag.write_total())
+	{
+		log::debug("link(%p) starting on tag %zu of %zu: wt:%zu",
+		           this,
+		           tag_committed(),
+		           tag_total(),
+		           tag.write_total());
+	}
+
+	while(tag.write_remaining())
+	{
+		const const_buffer buffer
+		{
+			tag.make_write_buffer()
+		};
+
+		assert(!empty(buffer));
+		const const_buffer written
+		{
+			process_write_next(buffer)
+		};
+
+		tag.wrote_buffer(written);
+		assert(tag_committed() <= tag_commit_max());
+		if(size(written) < size(buffer))
+			return false;
+	}
+
+	return true;
+}
+
+ircd::const_buffer
+ircd::server::link::process_write_next(const const_buffer &buffer)
+{
+	const size_t bytes
+	{
+		write_any(*socket, buffer)
+	};
+
+	const const_buffer written
+	{
+		data(buffer), bytes
+	};
+
+	return written;
+}
+
+void
+ircd::server::link::wait_readable()
+{
+	auto handler
+	{
+		std::bind(&link::handle_readable, this, ph::_1)
+	};
+
+	assert(ready());
+	net::wait(*socket, net::ready::READ, std::move(handler));
+}
+
+void
+ircd::server::link::handle_readable(const error_code &ec)
+try
+{
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	switch(ec.value())
+	{
+		case success:
+			handle_readable_success();
+			wait_readable();
+			break;
+
+		case operation_canceled:
+			return;
+
+		default:
+			throw boost::system::system_error{ec};
+	}
+}
+catch(const boost::system::system_error &e)
+{
+	if(node)
+		node->handle_error(*this, e);
+}
+catch(const std::exception &e)
+{
+	log::critical("link::handle_readable(): %s", e.what());
+	assert(0);
+	throw;
+}
+
+/// Process as many read operations from as many tags as possible
+void
+ircd::server::link::handle_readable_success()
+{
+	if(queue.empty())
+		return discard_read();
+
+	// Data pointed to by overrun will remain intact between iterations
+	// because this loop isn't executing in any ircd::ctx.
+	const_buffer overrun; do
+	{
+		if(!process_read(overrun))
+			break;
+	}
+	while(!queue.empty());
+}
+
+/// Process as many read operations for one tag as possible
+bool
+ircd::server::link::process_read(const_buffer &overrun)
+try
+{
+	auto &tag
+	{
+		queue.front()
+	};
+
+	bool done{false}; do
+	{
+		overrun = process_read_next(overrun, tag, done);
+	}
+	while(!done);
+
+	queue.pop_front();
+	return true;
+}
+catch(const boost::system::system_error &e)
+{
+	using namespace boost::system::errc;
+	switch(e.code().value())
+	{
+		case resource_unavailable_try_again:
+			return false;
+
+		case success:
+			assert(0);
+
+		default:
+			throw;
+	}
+}
+
+/// Process one read operation for one tag
+ircd::const_buffer
+ircd::server::link::process_read_next(const const_buffer &underrun,
+                                      tag &tag,
+                                      bool &done)
+{
+	const mutable_buffer buffer
+	{
+		tag.make_read_buffer()
+	};
+
+	const size_t copied
+	{
+		copy(buffer, underrun)
+	};
+
+	const mutable_buffer remaining
+	{
+		data(buffer) + copied, size(buffer) - copied
+	};
+
+	const size_t received
+	{
+		read_one(*socket, remaining)
+	};
+
+	const const_buffer view
+	{
+		data(buffer), copied + received
+	};
+
+	const const_buffer overrun
+	{
+		tag.read_buffer(view, done)
+	};
+
+	assert(done || empty(overrun));
+	return overrun;
+}
+
+void
+ircd::server::link::discard_read()
+{
+	const size_t discard
+	{
+		available(*socket)
+	};
+
+	const size_t discarded
+	{
+		discard_any(*socket, discard)
+	};
+
+	// Shouldn't ever be hit because the read() within discard() throws
+	// the pending error like an eof.
+	log::warning("Link discarded %zu of %zu unexpected bytes",
+	             discard,
+	             discarded);
+	assert(0);
+
+	// for non-assert builds just in case; so this doesn't get loopy with
+	// discarding zero with an empty queue...
+	if(unlikely(!discard || !discarded))
+		throw assertive("Queue is empty and nothing to discard.");
+}
+
+size_t
+ircd::server::link::tag_uncommitted()
+const
+{
+	return tag_total() - tag_committed();
+}
+
+size_t
+ircd::server::link::tag_committed()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.write_completed() > 0;
+	});
+}
+
+size_t
+ircd::server::link::tag_total()
+const
+{
+	return queue.size();
+}
+
+size_t
+ircd::server::link::read_remaining()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.read_remaining();
+	});
+}
+
+size_t
+ircd::server::link::read_completed()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.read_completed();
+	});
+}
+
+size_t
+ircd::server::link::read_total()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.read_total();
+	});
+}
+
+size_t
+ircd::server::link::write_remaining()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.write_remaining();
+	});
+}
+
+size_t
+ircd::server::link::write_completed()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.write_completed();
+	});
+}
+
+size_t
+ircd::server::link::write_total()
+const
+{
+	return accumulate_tags([](const auto &tag)
+	{
+		return tag.write_total();
+	});
+}
+
+bool
+ircd::server::link::busy()
+const
+{
+	return !queue.empty();
+}
+
+bool
+ircd::server::link::ready()
+const
+{
+	return connected() && !init && !fini;
+}
+
+bool
+ircd::server::link::connected()
+const noexcept
+{
+	return bool(socket) && net::connected(*socket);
+}
+
+size_t
+ircd::server::link::tag_commit_max()
+const
+{
+	//TODO: config
+	return 1;
+}
+
+size_t
+ircd::server::link::tag_max()
+const
+{
+	//TODO: config
+	return -1;
+}
+
+template<class F>
+size_t
+ircd::server::link::accumulate_tags(F&& closure)
+const
+{
+	return std::accumulate(begin(queue), end(queue), size_t(0), [&closure]
+	(auto ret, const auto &tag)
+	{
+		return ret += closure(tag);
+	});
 }
 
 //
 // tag
 //
 
-ircd::server::tag::tag(server::request &request)
-:request{&request}
+void
+ircd::server::associate(request &request,
+                        tag &tag)
 {
-	static_cast<ctx::future<http::code> &>(request) = p;
+	assert(request.tag == nullptr);
+	assert(tag.request == nullptr);
+
+	auto &future
+	{
+		static_cast<ctx::future<http::code> &>(request)
+	};
+
+	future = tag.p;
+	request.tag = &tag;
+	tag.request = &request;
 }
 
-ircd::server::tag::tag(tag &&o)
-noexcept
-:request{std::move(o.request)}
+void
+ircd::server::associate(request &request,
+                        tag &cur,
+                        tag &&old)
 {
-	assert(o.request->tag == &o);
-	o.request = nullptr;
-	request->tag = this;
+	assert(request.tag == &old);         // ctor moved
+	assert(cur.request == &request);     // ctor moved
+	assert(old.request == &request);     // ctor didn't trash old
+
+	cur.request = &request;
+	old.request = nullptr;
+	request.tag = &cur;
 }
 
-struct ircd::server::tag &
-ircd::server::tag::operator=(tag &&o)
-noexcept
+void
+ircd::server::associate(request &cur,
+                        tag &tag,
+                        request &&old)
 {
-	request = std::move(o.request);
+	assert(tag.request == &old);   // ctor already moved
+	assert(cur.tag == &tag);       // ctor already moved
+	assert(old.tag == &tag);       // ctor didn't trash old
 
-	assert(o.request->tag == &o);
-	o.request = nullptr;
-	request->tag = this;
-
-	return *this;
+	cur.tag = &tag;
+	tag.request = &cur;
+	old.tag = nullptr;
 }
 
-ircd::server::tag::~tag()
-noexcept
+void
+ircd::server::disassociate(request &request,
+                           tag &tag)
 {
+	assert(request.tag == &tag);
+	assert(tag.request == &request);
+
+	request.tag = nullptr;
+	tag.request = nullptr;
 }
 
 /// Called by the controller of the socket with a view of the data received by
@@ -241,18 +1203,23 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 {
 	assert(request);
 	const auto &req{*request};
-	if(head_written < size(req.out.head))
+	written += size(buffer);
+
+	if(written <= size(req.out.head))
 	{
-		head_written += size(buffer);
 		assert(data(buffer) == data(req.out.head));
-		assert(head_written <= size(req.out.head));
+		assert(written <= size(req.out.head));
+		return;
 	}
-	else if(content_written < size(req.out.content))
+
+	if(written <= size(req.out.head) + size(req.out.content))
 	{
-		content_written += size(buffer);
 		assert(data(buffer) == data(req.out.content));
-		assert(content_written <= size(req.out.content));
+		assert(written <= write_total());
+		return;
 	}
+
+	assert(0);
 }
 
 ircd::const_buffer
@@ -261,21 +1228,42 @@ const
 {
 	assert(request);
 	const auto &req{*request};
-	if(head_written < size(req.out.head))
+
+	if(written < size(req.out.head))
 	{
-		const size_t remain{size(req.out.head) - head_written};
-		const const_buffer window{data(req.out.head) + head_written, remain};
+		const size_t remain
+		{
+			size(req.out.head) - written
+		};
+
+		const const_buffer window
+		{
+			data(req.out.head) + written, remain
+		};
+
 		return window;
 	}
-
-	if(content_written < size(req.out.content))
+	else if(written < size(req.out.head) + size(req.out.content))
 	{
-		const size_t remain{size(req.out.content) - content_written};
-		const const_buffer window{data(req.out.content) + content_written, remain};
+		assert(written >= size(req.out.head));
+		const size_t content_offset
+		{
+			written - size(req.out.head)
+		};
+
+		const size_t remain
+		{
+			size(req.out.head) + size(req.out.content) - written
+		};
+
+		const const_buffer window
+		{
+			data(req.out.content) + content_offset, remain
+		};
+
 		return window;
 	}
-
-	return {};
+	else return {};
 }
 
 ircd::const_buffer
@@ -464,578 +1452,44 @@ const
 	return buffer;
 }
 
-//
-// node
-//
-
-ircd::server::node::node()
+size_t
+ircd::server::tag::read_remaining()
+const
 {
-}
-
-ircd::server::node::~node()
-noexcept
-{
-	assert(links.empty());
-}
-
-void
-ircd::server::node::close()
-{
-	for(auto &link : links)
-		link.close(net::close_opts_default);
-
-	while(!links.empty())
-		dock.wait();
-}
-
-void
-ircd::server::node::interrupt()
-{
-	//TODO: not a close
-	//TODO: interrupt = killing requests but still setting tag promises
-	for(auto &link : links)
-		link.close(net::close_opts_default);
-}
-
-void
-ircd::server::node::submit(request &request)
-{
-	link &ret(link_get());
-	ret.submit(request);
-}
-
-void
-ircd::server::node::cancel(request &request)
-{
-}
-
-ircd::server::link &
-ircd::server::node::link_get()
-{
-	while(!remote.resolved())
-		dock.wait();
-
-	if(links.empty())
-	{
-		auto &ret(link_add(1));
-		while(!ret.ready())
-			dock.wait();
-
-		return ret;
-	}
-	else return links.back();
-}
-
-ircd::server::link &
-ircd::server::node::link_add(const size_t &num)
-{
-	links.emplace_back(*this);
-	auto &link{links.back()};
-	link.open(remote);
-	return link;
-}
-
-void
-ircd::server::node::handle_open(link &link,
-                                std::exception_ptr eptr)
-try
-{
-	if(eptr)
-		std::rethrow_exception(eptr);
-
-	dock.notify_all();
-}
-catch(const std::exception &e)
-{
-	log::error("node(%p) link(%p) [%s]: open: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
-}
-
-void
-ircd::server::node::handle_close(link &link,
-                                 std::exception_ptr eptr)
-try
-{
-	const unwind remove{[this, &link]
-	{
-		this->del(link);
-	}};
-
-	if(eptr)
-		std::rethrow_exception(eptr);
-}
-catch(const std::exception &e)
-{
-	log::error("node(%p) link(%p) [%s]: close: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
-}
-
-void
-ircd::server::node::handle_error(link &link,
-                                 const boost::system::system_error &e)
-{
-	log::error("node(%p) link(%p) [%s]: error: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
-
-	if(!link.busy())
-	{
-		link.close(net::close_opts_default);
-		return;
-	}
-}
-
-void
-ircd::server::node::del(link &link)
-{
-	log::debug("node(%p) [%s]: removing link %p",
-	           this,
-	           string(remote),
-	           &link);
-
-	const auto it(std::find_if(begin(links), end(links), [&link]
-	(const auto &link_)
-	{
-		return &link_ == &link;
-	}));
-
-	assert(it != end(links));
-	links.erase(it);
-	dock.notify_all();
-}
-
-void
-ircd::server::node::resolve(const hostport &hostport)
-{
-	auto handler
-	{
-		std::bind(&node::handle_resolve, this, weak_from(*this), ph::_1, ph::_2)
-	};
-
-	net::resolve(hostport, std::move(handler));
-}
-
-void
-ircd::server::node::handle_resolve(std::weak_ptr<node> wp,
-                                   std::exception_ptr eptr,
-                                   const ipport &ipport)
-try
-{
-	const life_guard<node> lg(wp);
-
-	this->eptr = std::move(eptr);
-	static_cast<net::ipport &>(this->remote) = ipport;
-	dock.notify_all();
-}
-catch(const std::bad_weak_ptr &)
-{
-	return;
+	return read_total() - read_completed();
 }
 
 size_t
-ircd::server::node::num_links_ready()
+ircd::server::tag::read_completed()
 const
 {
-	return std::accumulate(begin(links), end(links), size_t(0), []
-	(auto ret, const auto &link)
-	{
-		return ret += link.ready();
-	});
+	return head_read + content_read;
 }
 
 size_t
-ircd::server::node::num_links_busy()
+ircd::server::tag::read_total()
 const
 {
-	return std::accumulate(begin(links), end(links), size_t(0), []
-	(auto ret, const auto &link)
-	{
-		return ret += link.busy();
-	});
+	return request? head_read + request->in.head.content_length : 0;
 }
 
 size_t
-ircd::server::node::num_links()
+ircd::server::tag::write_remaining()
 const
 {
-	return links.size();
+	return write_total() - write_completed();
 }
 
 size_t
-ircd::server::node::num_tags()
+ircd::server::tag::write_completed()
 const
 {
-	return std::accumulate(begin(links), end(links), size_t(0), []
-	(auto ret, const auto &link)
-	{
-		return ret += link.queue.size();
-	});
-}
-
-//
-// link
-//
-
-ircd::server::link::link(server::node &node)
-:node{shared_from(node)}
-{
-}
-
-ircd::server::link::~link()
-noexcept
-{
-	assert(!busy());
-	assert(!connected());
-}
-
-void
-ircd::server::link::submit(request &request)
-{
-	const auto it
-	{
-		queue.emplace(end(queue), request)
-	};
-
-	wait_writable();
-}
-
-void
-ircd::server::link::cancel(request &request)
-{
-
-}
-
-bool
-ircd::server::link::open(const net::open_opts &open_opts)
-{
-	if(init)
-		return false;
-
-	auto handler
-	{
-		std::bind(&link::handle_open, this, ph::_1)
-	};
-
-	init = true;
-	fini = false;
-	socket = net::open(open_opts, std::move(handler));
-	return true;
-}
-
-void
-ircd::server::link::handle_open(std::exception_ptr eptr)
-{
-	init = false;
-
-	if(!eptr)
-		wait_readable();
-
-	if(node)
-		node->handle_open(*this, std::move(eptr));
-}
-
-bool
-ircd::server::link::close(const net::close_opts &close_opts)
-{
-	if(!socket)
-		return false;
-
-	if(fini)
-		return false;
-
-	auto handler
-	{
-		std::bind(&link::handle_close, this, ph::_1)
-	};
-
-	init = false;
-	fini = true;
-	net::close(*socket, close_opts, std::move(handler));
-	return true;
-}
-
-void
-ircd::server::link::handle_close(std::exception_ptr eptr)
-{
-	fini = false;
-
-	if(node)
-		node->handle_close(*this, std::move(eptr));
-}
-
-void
-ircd::server::link::wait_writable()
-{
-	auto handler
-	{
-		std::bind(&link::handle_writable, this, ph::_1)
-	};
-
-	assert(ready());
-	net::wait(*socket, net::ready::WRITE, std::move(handler));
-}
-
-void
-ircd::server::link::handle_writable(const error_code &ec)
-{
-	using namespace boost::system::errc;
-	using boost::system::system_category;
-
-	switch(ec.value())
-	{
-		case success:
-			handle_writable_success();
-			break;
-
-		case operation_canceled:
-			return;
-
-		default:
-			throw boost::system::system_error{ec};
-	}
-}
-
-void
-ircd::server::link::handle_writable_success()
-{
-	for(auto &tag : queue)
-	{
-		if(!process_write(tag))
-		{
-			wait_writable();
-			break;
-		}
-	}
-}
-
-bool
-ircd::server::link::process_write(tag &tag)
-{
-	while(1)
-	{
-		const const_buffer buffer
-		{
-			tag.make_write_buffer()
-		};
-
-		if(empty(buffer))
-			return true;
-
-		const const_buffer written
-		{
-			process_write_next(buffer)
-		};
-
-		tag.wrote_buffer(written);
-		if(size(written) < size(buffer))
-			return false;
-	}
-}
-
-ircd::const_buffer
-ircd::server::link::process_write_next(const const_buffer &buffer)
-{
-	const size_t bytes
-	{
-		write_any(*socket, buffer)
-	};
-
-	const const_buffer written
-	{
-		data(buffer), bytes
-	};
-
 	return written;
 }
 
-void
-ircd::server::link::wait_readable()
-{
-	auto handler
-	{
-		std::bind(&link::handle_readable, this, ph::_1)
-	};
-
-	assert(ready());
-	net::wait(*socket, net::ready::READ, std::move(handler));
-}
-
-void
-ircd::server::link::handle_readable(const error_code &ec)
-try
-{
-	using namespace boost::system::errc;
-	using boost::system::system_category;
-
-	switch(ec.value())
-	{
-		case success:
-			handle_readable_success();
-			wait_readable();
-			break;
-
-		case operation_canceled:
-			return;
-
-		default:
-			throw boost::system::system_error{ec};
-	}
-}
-catch(const boost::system::system_error &e)
-{
-	if(node)
-		node->handle_error(*this, e);
-}
-catch(const std::exception &e)
-{
-	log::critical("link::handle_readable(): %s", e.what());
-	assert(0);
-	throw;
-}
-
-/// Process as many read operations from as many tags as possible
-void
-ircd::server::link::handle_readable_success()
-{
-	if(queue.empty())
-		return discard_read();
-
-	// Data pointed to by overrun will remain intact between iterations
-	// because this loop isn't executing in any ircd::ctx.
-	const_buffer overrun; do
-	{
-		if(!process_read(overrun))
-			break;
-	}
-	while(!queue.empty());
-}
-
-/// Process as many read operations for one tag as possible
-bool
-ircd::server::link::process_read(const_buffer &overrun)
-try
-{
-	auto &tag
-	{
-		queue.front()
-	};
-
-	bool done{false}; do
-	{
-		overrun = process_read_next(overrun, tag, done);
-	}
-	while(!done);
-
-	queue.pop_front();
-	return true;
-}
-catch(const boost::system::system_error &e)
-{
-	using namespace boost::system::errc;
-	switch(e.code().value())
-	{
-		case resource_unavailable_try_again:
-			return false;
-
-		case success:
-			assert(0);
-
-		default:
-			throw;
-	}
-}
-
-/// Process one read operation for one tag
-ircd::const_buffer
-ircd::server::link::process_read_next(const const_buffer &underrun,
-                                      tag &tag,
-                                      bool &done)
-{
-	const mutable_buffer buffer
-	{
-		tag.make_read_buffer()
-	};
-
-	const size_t copied
-	{
-		copy(buffer, underrun)
-	};
-
-	const mutable_buffer remaining
-	{
-		data(buffer) + copied, size(buffer) - copied
-	};
-
-	const size_t received
-	{
-		read_one(*socket, remaining)
-	};
-
-	const const_buffer view
-	{
-		data(buffer), copied + received
-	};
-
-	const const_buffer overrun
-	{
-		tag.read_buffer(view, done)
-	};
-
-	assert(done || empty(overrun));
-	return overrun;
-}
-
-void
-ircd::server::link::discard_read()
-{
-	const size_t discard
-	{
-		available(*socket)
-	};
-
-	const size_t discarded
-	{
-		discard_any(*socket, discard)
-	};
-
-	// Shouldn't ever be hit because the read() within discard() throws
-	// the pending error like an eof.
-	log::warning("Link discarded %zu of %zu unexpected bytes",
-	             discard,
-	             discarded);
-	assert(0);
-
-	// for non-assert builds just in case; so this doesn't get loopy with
-	// discarding zero with an empty queue...
-	if(unlikely(!discard || !discarded))
-		throw assertive("Queue is empty and nothing to discard.");
-}
-
-bool
-ircd::server::link::busy()
+size_t
+ircd::server::tag::write_total()
 const
 {
-	return !queue.empty();
-}
-
-bool
-ircd::server::link::ready()
-const
-{
-	return connected() && !init && !fini;
-}
-
-bool
-ircd::server::link::connected()
-const noexcept
-{
-	return bool(socket) && net::connected(*socket);
+	return request? size(request->out) : 0;
 }
