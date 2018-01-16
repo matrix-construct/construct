@@ -26,6 +26,7 @@ struct ircd::server::link
 {
 	bool init {false};                           ///< link is connecting
 	bool fini {false};                           ///< link is disconnecting
+	bool exclude {false};                        ///< link is excluded
 	std::shared_ptr<server::node> node;          ///< backreference to node
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::deque<tag> queue;                       ///< link's work queue

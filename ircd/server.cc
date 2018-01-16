@@ -292,6 +292,16 @@ ircd::server::node::link_get(const request &request)
 			continue;
 		}
 
+		// Don't want a link that's shutting down or marked for exclusion
+		if(cand.fini || cand.exclude)
+			continue;
+
+		if(best->fini || best->exclude)
+		{
+			best = &cand;
+			continue;
+		}
+
 		// Indicates that the best candidate has its pipe saturated which can
 		// be factored into the comparisons here.
 		const bool best_maxed
@@ -400,6 +410,20 @@ catch(const std::exception &e)
 
 void
 ircd::server::node::handle_error(link &link,
+                                 const std::exception &e)
+{
+	log.error("node(%p) link(%p): %s",
+	          this,
+	          &link,
+	          e.what());
+
+	link.exclude = true;
+	reassign_uncommitted(link);
+	link.close(net::dc::RST);
+}
+
+void
+ircd::server::node::handle_error(link &link,
                                  const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -478,6 +502,48 @@ ircd::server::node::handle_link_done(link &link)
 	}
 
 	link.wait_readable();
+}
+
+void
+ircd::server::node::reassign_uncommitted(link &link)
+{
+	auto &queue(link.queue);
+
+	// Find the first tag in the queue which hasn't revealed any data to
+	// the remote; this is uncommitted.
+	const auto it
+	{
+		std::find_if(begin(queue), end(queue), [](const auto &tag)
+		{
+			return !tag.write_completed();
+		})
+	};
+
+	std::for_each(it, end(queue), [this](auto &tag)
+	{
+		if(!tag.request)
+			return;
+
+		assert(!tag.write_completed());
+		auto &request{*tag.request};
+		disassociate(request, tag);
+
+		auto &link{this->link_get(request)};
+		link.submit(request);
+	});
+
+	log.debug("node(%p) link(%p) dispersed %zu of %zu of its tags",
+	          this,
+	          &link,
+	          std::distance(it, end(queue)),
+	          queue.size());
+
+	const auto remaining
+	{
+		std::distance(begin(queue), queue.erase(it, end(queue)))
+	};
+
+	queue.resize(remaining);
 }
 
 /// This *cannot* be called unless a link's socket is closed and its queue
@@ -957,6 +1023,12 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
+	if(node)
+	{
+		node->handle_error(*this, e);
+		return;
+	}
+
 	log.critical("link::handle_readable(): %s", e.what());
 	assert(0);
 	throw;
@@ -1006,6 +1078,11 @@ try
 	queue.pop_front();
 	return true;
 }
+catch(const buffer_overrun &e)
+{
+	queue.pop_front();
+	throw;
+}
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -1028,6 +1105,7 @@ ircd::const_buffer
 ircd::server::link::process_read_next(const const_buffer &underrun,
                                       tag &tag,
                                       bool &done)
+try
 {
 	const mutable_buffer buffer
 	{
@@ -1061,6 +1139,11 @@ ircd::server::link::process_read_next(const const_buffer &underrun,
 
 	assert(done || empty(overrun));
 	return overrun;
+}
+catch(const buffer_overrun &e)
+{
+	tag.p.set_exception(std::make_exception_ptr(e));
+	throw;
 }
 
 void
@@ -1438,6 +1521,16 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	if(pos == string_view::npos)
 	{
 		this->head_read += size(buffer);
+
+		// Check that the user hasn't run out of head buffer space without
+		// seeing a terminator. If so, we have to throw out of here and then
+		// abort this user's request.
+		if(unlikely(this->head_read >= size(req.in.head)))
+			throw buffer_overrun
+			{
+				"Supplied buffer of %zu too small for HTTP head", size(req.in.head)
+			};
+
 		return {};
 	}
 

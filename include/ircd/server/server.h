@@ -31,6 +31,7 @@ namespace ircd::server
 	struct tag;
 
 	IRCD_EXCEPTION(ircd::error, error);
+	IRCD_EXCEPTION(error, buffer_overrun);
 
 	extern ircd::log::log log;
 	extern std::map<string_view, std::shared_ptr<node>> nodes;
