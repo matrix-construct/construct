@@ -466,15 +466,19 @@ catch(const std::exception &e)
 
 void
 ircd::server::node::handle_error(link &link,
-                                 const std::exception &e)
+                                 std::exception_ptr eptr)
+try
+{
+	cancel_committed(link, eptr);
+	link.close(net::dc::RST);
+	std::rethrow_exception(eptr);
+}
+catch(const std::exception &e)
 {
 	log.error("node(%p) link(%p): %s",
 	          this,
 	          &link,
 	          e.what());
-
-	cancel_committed(link, e);
-	link.close(net::dc::RST);
 }
 
 void
@@ -563,17 +567,17 @@ void
 ircd::server::node::disperse(link &link)
 {
 	disperse_uncommitted(link);
-	cancel_committed(link, canceled
+	cancel_committed(link, std::make_exception_ptr(canceled
 	{
 		"Request was partially completed when fatal error occurred"
-	});
+	}));
 
 	assert(link.queue.empty());
 }
 
 void
 ircd::server::node::cancel_committed(link &link,
-                                     const std::exception &e)
+                                     std::exception_ptr eptr)
 {
 	auto &queue(link.queue);
 
@@ -587,13 +591,13 @@ ircd::server::node::cancel_committed(link &link,
 		})
 	};
 
-	std::for_each(begin(queue), it, [this, &e](auto &tag)
+	std::for_each(begin(queue), it, [this, &eptr](auto &tag)
 	{
 		if(!tag.request)
 			return;
 
 		assert(tag.write_completed());
-		tag.set_exception(e);
+		tag.set_exception(eptr);
 		disassociate(*tag.request, tag);
 	});
 
@@ -1140,7 +1144,7 @@ catch(const std::exception &e)
 {
 	if(node)
 	{
-		node->handle_error(*this, e);
+		node->handle_error(*this, std::make_exception_ptr(std::current_exception()));
 		return;
 	}
 

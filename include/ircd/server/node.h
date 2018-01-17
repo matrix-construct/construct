@@ -35,14 +35,14 @@ struct ircd::server::node
 	void resolve(const hostport &);
 
 	void disperse_uncommitted(link &);
-	void cancel_committed(link &, const std::exception &);
+	void cancel_committed(link &, std::exception_ptr);
 	void disperse(link &);
 	void del(link &);
 
 	void handle_link_done(link &);
 	void handle_tag_done(link &, tag &) noexcept;
 	void handle_error(link &, const boost::system::system_error &);
-	void handle_error(link &, const std::exception &);
+	void handle_error(link &, std::exception_ptr);
 	void handle_close(link &, std::exception_ptr);
 	void handle_open(link &, std::exception_ptr);
 
