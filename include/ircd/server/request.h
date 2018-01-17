@@ -63,11 +63,21 @@ struct ircd::server::in
 struct ircd::server::request
 :ctx::future<http::code>
 {
+	struct opts;
+
+	static const opts opts_default;
+
 	server::tag *tag {nullptr};
 
   public:
+	/// Transmission data
 	server::out out;
+
+	/// Reception data
 	server::in in;
+
+	/// Options
+	const struct opts *opts { &opts_default };
 
 	request(const net::hostport &, server::out out, server::in in);
 	request() = default;
@@ -76,6 +86,15 @@ struct ircd::server::request
 	request &operator=(request &&) noexcept;
 	request &operator=(const request &) = delete;
 	~request() noexcept;
+};
+
+struct ircd::server::request::opts
+{
+	/// When true, HTTP responses above the 200's are thrown as exceptions
+	/// from the future::get() on this object. Otherwise, if false any code
+	/// received is returned in the value and exceptions are thrown when no
+	/// code can be returned.
+	bool http_exceptions {true};
 };
 
 inline
@@ -96,6 +115,7 @@ noexcept
 ,tag{std::move(o.tag)}
 ,out{std::move(o.out)}
 ,in{std::move(o.in)}
+,opts{std::move(o.opts)}
 {
 	if(tag)
 		associate(*this, *tag, std::move(o));
@@ -111,6 +131,7 @@ noexcept
 	out = std::move(o.out);
 	in = std::move(o.in);
 	tag = std::move(o.tag);
+	opts = std::move(o.opts);
 
 	if(tag)
 		associate(*this, *tag, std::move(o));

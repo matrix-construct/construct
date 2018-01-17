@@ -215,6 +215,10 @@ ircd::server::interrupt_all()
 // request
 //
 
+decltype(ircd::server::request::opts_default)
+ircd::server::request::opts_default
+{};
+
 /// Canceling a request is tricky. This allows a robust way to let the user's
 /// request go out of scope at virtually any time without disrupting the
 /// pipeline and other requests.
@@ -1980,8 +1984,20 @@ ircd::server::tag::set_value(args&&... a)
 	if(abandoned())
 		return;
 
+	const http::code &code
+	{
+		std::forward<args>(a)...
+	};
+
+	assert(request->opts);
+	if(request->opts->http_exceptions && code >= http::code(300))
+	{
+		set_exception(http::error{code});
+		return;
+	}
+
 	assert(p.valid());
-	p.set_value(std::forward<args>(a)...);
+	p.set_value(code);
 }
 
 template<class... args>
