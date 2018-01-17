@@ -106,6 +106,8 @@ noexcept
 {
 	if(request)
 		associate(*request, *this, std::move(o));
+
+	assert(!o.request);
 }
 
 inline ircd::server::tag &
@@ -126,6 +128,7 @@ noexcept
 	if(request)
 		associate(*request, *this, std::move(o));
 
+	assert(!o.request);
 	return *this;
 }
 
@@ -135,4 +138,6 @@ noexcept
 {
 	if(request)
 		disassociate(*request, *this);
+
+	assert(!request);
 }

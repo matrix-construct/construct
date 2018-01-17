@@ -119,6 +119,8 @@ noexcept
 {
 	if(tag)
 		associate(*this, *tag, std::move(o));
+
+	assert(!o.tag);
 }
 
 inline ircd::server::request &
@@ -136,6 +138,7 @@ noexcept
 	if(tag)
 		associate(*this, *tag, std::move(o));
 
+	assert(!o.tag);
 	return *this;
 }
 
@@ -148,6 +151,8 @@ noexcept
 
 	if(tag)
 		disassociate(*this, *tag);
+
+	assert(!tag);
 }
 
 inline size_t

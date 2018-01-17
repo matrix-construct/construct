@@ -409,6 +409,11 @@ ircd::server::node::link_get(const request &request)
 
 	// best might not be good enough, we could try another connection. If best
 	// has a backlog or is working on a large download or slow request.
+	if(!best)
+	{
+		best = &link_add();
+		return best;
+	}
 
 	if(best->tag_uncommitted() < best->tag_commit_max())
 		return best;
@@ -445,7 +450,6 @@ catch(const std::exception &e)
 	          string(remote),
 	          e.what());
 
-	disperse(link);
 	link.close(net::dc::RST);
 }
 
@@ -477,7 +481,6 @@ ircd::server::node::handle_error(link &link,
 try
 {
 	cancel_committed(link, eptr);
-	disperse(link);
 	link.close(net::dc::RST);
 	std::rethrow_exception(eptr);
 }
