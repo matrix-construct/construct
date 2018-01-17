@@ -113,16 +113,22 @@ inline
 ircd::ctx::promise<void>::promise(const promise<void> &o)
 :st{o.st}
 {
-	++st->promise_refcnt;
-	assert(st->promise_refcnt > 1);
+	if(valid())
+	{
+		++st->promise_refcnt;
+		assert(st->promise_refcnt > 1);
+	}
 }
 
 template<class T>
 ircd::ctx::promise<T>::promise(const promise<T> &o)
 :st{o.st}
 {
-	++st->promise_refcnt;
-	assert(st->promise_refcnt > 1);
+	if(valid())
+	{
+		++st->promise_refcnt;
+		assert(st->promise_refcnt > 1);
+	}
 }
 
 inline
@@ -164,6 +170,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
+	assert(valid());
 	assert(!finished());
 	st->val = std::move(val);
 	st->finished = true;
@@ -173,6 +180,7 @@ ircd::ctx::promise<T>::set_value(T&& val)
 inline void
 ircd::ctx::promise<void>::set_value()
 {
+	assert(valid());
 	assert(!finished());
 	st->finished = true;
 	st->cond.notify_all();
@@ -182,6 +190,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
+	assert(valid());
 	assert(!finished());
 	st->val = val;
 	st->finished = true;
@@ -191,6 +200,7 @@ ircd::ctx::promise<T>::set_value(const T &val)
 inline void
 ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
+	assert(valid());
 	assert(!finished());
 	st->eptr = std::move(eptr);
 	st->finished = true;
@@ -201,6 +211,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
+	assert(valid());
 	assert(!finished());
 	st->eptr = std::move(eptr);
 	st->finished = true;
