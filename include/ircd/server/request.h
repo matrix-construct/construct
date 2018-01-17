@@ -79,7 +79,7 @@ struct ircd::server::request
 	/// Options
 	const struct opts *opts { &opts_default };
 
-	request(const net::hostport &, server::out out, server::in in);
+	request(const net::hostport &, server::out, server::in);
 	request() = default;
 	request(request &&) noexcept;
 	request(const request &) = delete;

@@ -26,6 +26,7 @@ struct ircd::server::node
 :std::enable_shared_from_this<ircd::server::node>
 {
 	net::remote remote;
+	std::exception_ptr eptr;
 	std::list<link> links;
 
 	template<class F> size_t accumulate_links(F&&) const;
