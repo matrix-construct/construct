@@ -444,6 +444,9 @@ catch(const std::exception &e)
 	          &link,
 	          string(remote),
 	          e.what());
+
+	disperse(link);
+	link.close(net::dc::RST);
 }
 
 void
@@ -474,6 +477,7 @@ ircd::server::node::handle_error(link &link,
 try
 {
 	cancel_committed(link, eptr);
+	disperse(link);
 	link.close(net::dc::RST);
 	std::rethrow_exception(eptr);
 }
