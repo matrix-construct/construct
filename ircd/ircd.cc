@@ -22,9 +22,6 @@
 
 namespace ircd
 {
-	extern const uint boost_version[3];
-	struct tc_version extern const tc_version;
-
 	enum runlevel _runlevel;                     // Current libircd runlevel
 	const enum runlevel &runlevel{_runlevel};    // Observer for current RL
 	runlevel_handler runlevel_changed;           // user's callback
@@ -44,22 +41,6 @@ namespace ircd
 	void main();
 }
 
-/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
-struct ircd::tc_version
-{
-	int major{0}, minor{0};
-	char patch[64] {0};
-	std::string version {"unavailable"};
-}
-const ircd::tc_version;
-
-/*
-const char* tc_version(int* major, int* minor, const char** patch);
-ircd::tc_version::tc_version()
-:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
-{}
-*/
-
 /// Record of the ID of the thread static initialization took place on.
 const std::thread::id
 ircd::static_thread_id
@@ -71,15 +52,6 @@ ircd::static_thread_id
 std::thread::id
 ircd::thread_id
 {};
-
-/// Boost version indicator for compiled header files.
-const uint
-ircd::boost_version[3]
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
 
 void
 ircd::init(boost::asio::io_context &ios,
@@ -124,25 +96,8 @@ try
 	log::init();
 	log::mark("READY");
 
-	// This message flashes information about our dependencies which are being
-	// assumed for this execution.
-	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
-	          PACKAGE_STRING,
-	          boost_version[0],
-	          boost_version[1],
-	          boost_version[2],
-	          db::version,
-	          nacl::version(),
-	          openssl::version());
-
-	// This message flashes information about IRCd itself for this execution
-	log::info("%s %ld %s. configured: %s. compiled: %s %s",
-	          BRANDING_VERSION,
-	          __cplusplus,
-	          __VERSION__,
-	          RB_DATE_CONFIGURED,
-	          __TIMESTAMP__,
-	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
+	// This starts off the log with library information.
+	info::init();
 
 	// The configuration file is a user-converted Synapse homeserver.yaml
 	// converted into JSON. The configuration file is only truly meaningful

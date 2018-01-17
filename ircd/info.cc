@@ -1,100 +1,154 @@
-/*
- *   Copyright (C) 1990 Chelsea Ashley Dyerman
- *   Copyright (C) 2008 ircd-ratbox development team
- *   Copyright (C) 2016 Charybdis Development Team
- *   Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2, or (at your option)
- *   any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
+//
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
-using namespace ircd;
+#include <ircd/asio.h>
 
-const time_t
-info::configured_time
+void
+ircd::info::init()
+{
+	// This message flashes information about IRCd itself for this execution.
+	log::info("%s %ld %s. configured: %s; compiled: %s; executed: %s; %s",
+	          BRANDING_VERSION,
+	          __cplusplus,
+	          __VERSION__,
+	          configured,
+	          compiled,
+	          startup,
+	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
+
+	// This message flashes information about our dependencies which are being
+	// assumed for this execution.
+	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
+	          PACKAGE_STRING,
+	          boost_version[0],
+	          boost_version[1],
+	          boost_version[2],
+	          db::version,
+	          nacl::version(),
+	          openssl::version());
+}
+
+/* XXX: integrate CREDITS text again somehow */
+decltype(ircd::info::credits)
+ircd::info::credits
+{{
+
+	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
+	" ",
+	"This - is The Construct",
+	" ",
+	"Internet Relay Chat daemon: Matrix Construct",
+	" ",
+	"Copyright (C) 2016-2018 Matrix Construct Developers, Authors & Contributors",
+	"Permission to use, copy, modify, and/or distribute this software for any",
+	"purpose with or without fee is hereby granted, provided that the above",
+	"copyright notice and this permission notice is present in all copies.",
+	" ",
+}};
+
+decltype(ircd::info::configured_time)
+ircd::info::configured_time
 {
 	RB_TIME_CONFIGURED
 };
 
-const time_t
-info::compiled_time
+decltype(ircd::info::compiled_time)
+ircd::info::compiled_time
 {
 	RB_TIME_COMPILED
 };
 
-const time_t
-info::startup_time
+decltype(ircd::info::startup_time)
+ircd::info::startup_time
 {
 	std::time(nullptr)
 };
 
-const std::string
-info::configured
+decltype(ircd::info::configured)
+ircd::info::configured
 {
 	ctime(&configured_time)
 };
 
-const std::string
-info::compiled
+decltype(ircd::info::compiled)
+ircd::info::compiled
 {
-	ctime(&compiled_time)
+	//ctime(&compiled_time)
+	__TIMESTAMP__
 };
 
-const std::string
-info::startup
+decltype(ircd::info::startup)
+ircd::info::startup
 {
 	ctime(&startup_time)
 };
 
-const std::string
-info::serno
+decltype(ircd::info::serno)
+ircd::info::serno
 {
 	//TODO: XXX: compile counter?
 	// RB_SERNO
 	0
 };
 
-const std::string
-info::version
+decltype(ircd::info::version)
+ircd::info::version
 {
 	RB_VERSION
 };
 
-const char *const
-info::ircd_version
+decltype(ircd::info::ircd_version)
+ircd::info::ircd_version
 {
 	RB_VERSION
 };
 
-/* XXX: integrate CREDITS text again somehow */
-const std::vector<std::string>
-info::credits
-{{
+/// Boost version indicator for compiled header files.
+decltype(ircd::info::boost_version)
+ircd::info::boost_version
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
 
-	"Inspired by the original Internet Relay Chat daemon by Jarkko Oikarinen",
-	" ",
-	"Internet Relay Chat daemon: Matrix Construct",
-	" ",
-	"* Copyright (C) 2016-2017 Matrix Construct developers",
-	"* Permission to use, copy, modify, and/or distribute this software for any",
-	"* purpose with or without fee is hereby granted, provided that the above",
-	"* copyright notice and this permission notice is present in all copies.",
-	" ",
-}};
+/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
+struct ircd::info::tc_version
+{
+	int major{0}, minor{0};
+	char patch[64] {0};
+	std::string version {"unavailable"};
+}
+const ircd::info::tc_version;
 
-const std::vector<info::line>
-info::myinfo
+/*
+const char* tc_version(int* major, int* minor, const char** patch);
+ircd::tc_version::tc_version()
+:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
+{}
+*/
+
+decltype(ircd::info::myinfo)
+ircd::info::myinfo
 {{
 	#ifdef CPATH
 	{"CPATH", CPATH, 0, "Path to Main Configuration File"},

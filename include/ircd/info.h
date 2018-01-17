@@ -27,12 +27,14 @@
 namespace ircd::info
 {
 	struct line;
+	struct tc_version;
 
 	extern const std::vector<info::line> myinfo;
 	extern const std::vector<std::string> credits;
 	extern const std::string serno;
 	extern const std::string version;
 	extern const char *const ircd_version;             // legacy
+	extern const uint boost_version[3];
 
 	extern const time_t configured_time;
 	extern const time_t compiled_time;
@@ -40,6 +42,8 @@ namespace ircd::info
 	extern const std::string compiled;
 	extern const std::string configured;
 	extern const std::string startup;
+
+	void init();
 }
 
 struct ircd::info::line
