@@ -77,7 +77,6 @@ struct ircd::server::node
 	link *link_get(const request &);
 
 	// request panel
-	void cancel(request &);
 	void submit(request &);
 
 	// control panel

@@ -32,6 +32,7 @@ namespace ircd::server
 	size_t size(const out &);
 
 	void submit(const hostport &, request &);
+	bool cancel(request &);
 }
 
 /// Request data and options related to transmitting the request. This
@@ -104,6 +105,8 @@ inline ircd::server::request &
 ircd::server::request::operator=(request &&o)
 noexcept
 {
+	this->~request();
+
 	ctx::future<http::code>::operator=(std::move(o));
 	out = std::move(o.out);
 	in = std::move(o.in);
@@ -119,6 +122,9 @@ inline
 ircd::server::request::~request()
 noexcept
 {
+	if(tag && !tag->committed())
+		cancel(*this);
+
 	if(tag)
 		disassociate(*this, *tag);
 }

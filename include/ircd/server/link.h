@@ -29,7 +29,7 @@ struct ircd::server::link
 	bool exclude {false};                        ///< link is excluded
 	std::shared_ptr<server::node> node;          ///< backreference to node
 	std::shared_ptr<net::socket> socket;         ///< link's socket
-	std::deque<tag> queue;                       ///< link's work queue
+	std::list<tag> queue;                        ///< link's work queue
 
 	template<class F> size_t accumulate_tags(F&&) const;
 
@@ -77,7 +77,6 @@ struct ircd::server::link
 	size_t tag_uncommitted() const;
 
 	// request panel
-	tag cancel(request &);
 	void submit(request &);
 
 	// control panel
