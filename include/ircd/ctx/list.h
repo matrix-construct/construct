@@ -116,7 +116,7 @@ inline
 ircd::ctx::list::~list()
 noexcept
 {
-	assert(!head && !tail);
+	assert(empty());
 }
 
 inline ircd::ctx::ctx *
@@ -148,6 +148,7 @@ inline bool
 ircd::ctx::list::empty()
 const
 {
+	assert((!head && !tail) || (head && tail));
 	return !head;
 }
 

@@ -73,6 +73,10 @@ class ircd::ctx::shared_mutex
 	void unlock_upgrade_and_lock_shared();
 
 	shared_mutex();
+	shared_mutex(shared_mutex &&) noexcept;
+	shared_mutex(const shared_mutex &) = delete;
+	shared_mutex &operator=(shared_mutex &&) noexcept;
+	shared_mutex &operator=(const shared_mutex &) = delete;
 	~shared_mutex() noexcept;
 };
 
@@ -81,6 +85,27 @@ ircd::ctx::shared_mutex::shared_mutex()
 :u{false}
 ,s{0}
 {
+}
+
+inline
+ircd::ctx::shared_mutex::shared_mutex(shared_mutex &&o)
+noexcept
+:u{std::move(o.u)}
+,s{std::move(o.s)}
+{
+	o.u = false;
+	o.s = 0;
+}
+
+inline
+ircd::ctx::shared_mutex &
+ircd::ctx::shared_mutex::operator=(shared_mutex &&o)
+noexcept
+{
+	this->~shared_mutex();
+	std::swap(u, o.u);
+	std::swap(s, o.s);
+	return *this;
 }
 
 inline

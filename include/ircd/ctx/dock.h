@@ -53,22 +53,12 @@ class ircd::ctx::dock
 	void notify_all() noexcept;
 	void notify_one() noexcept;
 	void notify() noexcept;
-
-	dock() = default;
-	~dock() noexcept;
 };
 
 enum class ircd::ctx::cv_status
 {
 	no_timeout, timeout
 };
-
-inline
-ircd::ctx::dock::~dock()
-noexcept
-{
-	assert(q.empty());
-}
 
 /// Wake up the next context waiting on the dock
 ///

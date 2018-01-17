@@ -48,13 +48,35 @@ class ircd::ctx::mutex
 	void unlock();
 
 	mutex();
+	mutex(mutex &&) noexcept;
+	mutex(const mutex &) = delete;
+	mutex &operator=(mutex &&) noexcept;
+	mutex &operator=(const mutex &) = delete;
 	~mutex() noexcept;
 };
 
 inline
-ircd::ctx::mutex::mutex():
-m(false)
+ircd::ctx::mutex::mutex()
+:m{false}
 {
+}
+
+inline
+ircd::ctx::mutex::mutex(mutex &&o)
+noexcept
+:m{std::move(o.m)}
+{
+	o.m = false;
+}
+
+inline
+ircd::ctx::mutex &
+ircd::ctx::mutex::operator=(mutex &&o)
+noexcept
+{
+	this->~mutex();
+	std::swap(m, o.m);
+	return *this;
 }
 
 inline
@@ -62,7 +84,6 @@ ircd::ctx::mutex::~mutex()
 noexcept
 {
 	assert(!m);
-	assert(q.empty());
 }
 
 inline void
