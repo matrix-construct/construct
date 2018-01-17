@@ -45,6 +45,7 @@ class ircd::ctx::promise
 	using reference_type                         = typename shared_state<T>::reference_type;
 
 	bool valid() const                           { return bool(st);                                }
+	bool finished() const                        { return !valid() || st->finished;                }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -73,6 +74,7 @@ class ircd::ctx::promise<void>
 	using value_type                             = typename shared_state<void>::value_type;
 
 	bool valid() const                           { return bool(st);                                }
+	bool finished() const                        { return !valid() || st->finished;                }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -162,6 +164,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
+	assert(!finished());
 	st->val = std::move(val);
 	st->finished = true;
 	st->cond.notify_all();
@@ -170,6 +173,7 @@ ircd::ctx::promise<T>::set_value(T&& val)
 inline void
 ircd::ctx::promise<void>::set_value()
 {
+	assert(!finished());
 	st->finished = true;
 	st->cond.notify_all();
 }
@@ -178,6 +182,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
+	assert(!finished());
 	st->val = val;
 	st->finished = true;
 	st->cond.notify_all();
@@ -186,6 +191,7 @@ ircd::ctx::promise<T>::set_value(const T &val)
 inline void
 ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
+	assert(!finished());
 	st->eptr = std::move(eptr);
 	st->finished = true;
 	st->cond.notify_all();
@@ -195,6 +201,7 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
+	assert(!finished());
 	st->eptr = std::move(eptr);
 	st->finished = true;
 	st->cond.notify_all();
