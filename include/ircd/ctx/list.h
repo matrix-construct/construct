@@ -84,8 +84,33 @@ class ircd::ctx::list
 	void remove(ctx *const & = current);
 
 	list() = default;
+	list(list &&) noexcept;
+	list(const list &) = delete;
+	list &operator=(list &&) noexcept;
+	list &operator=(const list &) = delete;
 	~list() noexcept;
 };
+
+inline
+ircd::ctx::list::list(list &&o)
+noexcept
+:head{std::move(o.head)}
+,tail{std::move(o.tail)}
+{
+	o.head = nullptr;
+	o.tail = nullptr;
+}
+
+inline
+ircd::ctx::list &
+ircd::ctx::list::operator=(list &&o)
+noexcept
+{
+	this->~list();
+	std::swap(head, o.head);
+	std::swap(tail, o.tail);
+	return *this;
+}
 
 inline
 ircd::ctx::list::~list()
