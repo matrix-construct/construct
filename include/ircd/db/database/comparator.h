@@ -35,11 +35,11 @@ struct ircd::db::database::comparator final
 	database *d;
 	db::comparator user;
 
-	void FindShortestSeparator(std::string *start, const Slice &limit) const override;
-	void FindShortSuccessor(std::string *key) const override;
-	int Compare(const Slice &a, const Slice &b) const override;
-	bool Equal(const Slice &a, const Slice &b) const override;
-	const char *Name() const override;
+	void FindShortestSeparator(std::string *start, const Slice &limit) const noexcept override;
+	void FindShortSuccessor(std::string *key) const noexcept override;
+	int Compare(const Slice &a, const Slice &b) const noexcept override;
+	bool Equal(const Slice &a, const Slice &b) const noexcept override;
+	const char *Name() const noexcept override;
 
 	comparator(database *const &d, db::comparator user)
 	:d{d}

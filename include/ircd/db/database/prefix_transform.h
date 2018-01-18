@@ -35,10 +35,10 @@ struct ircd::db::database::prefix_transform final
 	database *d;
 	db::prefix_transform user;
 
-	const char *Name() const override;
-	bool InDomain(const Slice &key) const override;
-	bool InRange(const Slice &key) const override;
-	Slice Transform(const Slice &key) const override;
+	const char *Name() const noexcept override;
+	bool InDomain(const Slice &key) const noexcept override;
+	bool InRange(const Slice &key) const noexcept override;
+	Slice Transform(const Slice &key) const noexcept override;
 
 	prefix_transform(database *const &d, db::prefix_transform user)
 	:d{d}

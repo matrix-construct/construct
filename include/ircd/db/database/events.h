@@ -33,13 +33,13 @@ struct ircd::db::database::events final
 {
 	database *d;
 
-	void OnFlushCompleted(rocksdb::DB *, const rocksdb::FlushJobInfo &) override;
-	void OnCompactionCompleted(rocksdb::DB *, const rocksdb::CompactionJobInfo &) override;
-	void OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &) override;
-	void OnTableFileCreated(const rocksdb::TableFileCreationInfo &) override;
-	void OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &) override;
-	void OnMemTableSealed(const rocksdb::MemTableInfo &) override;
-	void OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *) override;
+	void OnFlushCompleted(rocksdb::DB *, const rocksdb::FlushJobInfo &) noexcept override;
+	void OnCompactionCompleted(rocksdb::DB *, const rocksdb::CompactionJobInfo &) noexcept override;
+	void OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &) noexcept override;
+	void OnTableFileCreated(const rocksdb::TableFileCreationInfo &) noexcept override;
+	void OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &) noexcept override;
+	void OnMemTableSealed(const rocksdb::MemTableInfo &) noexcept override;
+	void OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *) noexcept override;
 
 	events(database *const &d)
 	:d{d}

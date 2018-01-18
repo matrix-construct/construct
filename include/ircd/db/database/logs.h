@@ -34,9 +34,9 @@ struct ircd::db::database::logs final
 	database *d;
 
 	// Logger
-	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) override;
-	void Logv(const char *fmt, va_list ap) override;
-	void LogHeader(const char *fmt, va_list ap) override;
+	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) noexcept override;
+	void Logv(const char *fmt, va_list ap) noexcept override;
+	void LogHeader(const char *fmt, va_list ap) noexcept override;
 
 	logs(database *const &d)
 	:d{d}

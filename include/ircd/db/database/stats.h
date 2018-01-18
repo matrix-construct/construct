@@ -35,13 +35,13 @@ struct ircd::db::database::stats final
 	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
 	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
 
-	uint64_t getTickerCount(const uint32_t tickerType) const override;
-	void recordTick(const uint32_t tickerType, const uint64_t count) override;
-	void setTickerCount(const uint32_t tickerType, const uint64_t count) override;
-	void histogramData(const uint32_t type, rocksdb::HistogramData *) const override;
-	void measureTime(const uint32_t histogramType, const uint64_t time) override;
-	bool HistEnabledForType(const uint32_t type) const override;
-	uint64_t getAndResetTickerCount(const uint32_t tickerType) override;
+	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;
+	void recordTick(const uint32_t tickerType, const uint64_t count) noexcept override;
+	void setTickerCount(const uint32_t tickerType, const uint64_t count) noexcept override;
+	void histogramData(const uint32_t type, rocksdb::HistogramData *) const noexcept override;
+	void measureTime(const uint32_t histogramType, const uint64_t time) noexcept override;
+	bool HistEnabledForType(const uint32_t type) const noexcept override;
+	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
 
 	stats(database *const &d)
 	:d{d}

@@ -612,7 +612,7 @@ ircd::db::database::get(const column &column)
 
 const char *
 ircd::db::database::comparator::Name()
-const
+const noexcept
 {
 	assert(!user.name.empty());
 	return user.name.data();
@@ -621,7 +621,7 @@ const
 bool
 ircd::db::database::comparator::Equal(const Slice &a,
                                       const Slice &b)
-const
+const noexcept
 {
 	assert(bool(user.equal));
 	return user.equal(slice(a), slice(b));
@@ -630,7 +630,7 @@ const
 int
 ircd::db::database::comparator::Compare(const Slice &a,
                                         const Slice &b)
-const
+const noexcept
 {
 	assert(bool(user.less));
 	const auto sa{slice(a)};
@@ -644,14 +644,14 @@ const
 
 void
 ircd::db::database::comparator::FindShortSuccessor(std::string *key)
-const
+const noexcept
 {
 }
 
 void
 ircd::db::database::comparator::FindShortestSeparator(std::string *key,
                                                       const Slice &_limit)
-const
+const noexcept
 {
 	const string_view limit{_limit.data(), _limit.size()};
 }
@@ -663,7 +663,7 @@ const
 
 const char *
 ircd::db::database::prefix_transform::Name()
-const
+const noexcept
 {
 	assert(!user.name.empty());
 	return user.name.c_str();
@@ -671,7 +671,7 @@ const
 
 rocksdb::Slice
 ircd::db::database::prefix_transform::Transform(const Slice &key)
-const
+const noexcept
 {
 	assert(bool(user.get));
 	return slice(user.get(slice(key)));
@@ -679,14 +679,14 @@ const
 
 bool
 ircd::db::database::prefix_transform::InRange(const Slice &key)
-const
+const noexcept
 {
 	return InDomain(key);
 }
 
 bool
 ircd::db::database::prefix_transform::InDomain(const Slice &key)
-const
+const noexcept
 {
 	assert(bool(user.has));
 	return user.has(slice(key));
@@ -915,6 +915,7 @@ translate(const rocksdb::InfoLogLevel &level)
 void
 ircd::db::database::logs::Logv(const char *const fmt,
                                va_list ap)
+noexcept
 {
 	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
 }
@@ -922,6 +923,7 @@ ircd::db::database::logs::Logv(const char *const fmt,
 void
 ircd::db::database::logs::LogHeader(const char *const fmt,
                                     va_list ap)
+noexcept
 {
 	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
 }
@@ -932,6 +934,7 @@ void
 ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
                                const char *const fmt,
                                va_list ap)
+noexcept
 {
 	if(level < GetInfoLogLevel())
 		return;
@@ -962,7 +965,7 @@ ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
 
 const char *
 ircd::db::database::mergeop::Name()
-const
+const noexcept
 {
 	return "<unnamed>";
 }
@@ -973,7 +976,7 @@ ircd::db::database::mergeop::Merge(const rocksdb::Slice &_key,
                                    const rocksdb::Slice &_update,
                                    std::string *const newval,
                                    rocksdb::Logger *const)
-const try
+const noexcept try
 {
 	const string_view key
 	{
@@ -1025,6 +1028,7 @@ ircd::db::log_rdb_perf_context(const bool &all)
 
 uint64_t
 ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
+noexcept
 {
 	const auto ret(getTickerCount(type));
 	setTickerCount(type, 0);
@@ -1033,7 +1037,7 @@ ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
 
 bool
 ircd::db::database::stats::HistEnabledForType(const uint32_t type)
-const
+const noexcept
 {
 	return type < histogram.size();
 }
@@ -1041,13 +1045,14 @@ const
 void
 ircd::db::database::stats::measureTime(const uint32_t type,
                                        const uint64_t time)
+noexcept
 {
 }
 
 void
 ircd::db::database::stats::histogramData(const uint32_t type,
                                          rocksdb::HistogramData *const data)
-const
+const noexcept
 {
 	assert(data);
 
@@ -1061,6 +1066,7 @@ const
 void
 ircd::db::database::stats::recordTick(const uint32_t type,
                                       const uint64_t count)
+noexcept
 {
 	ticker.at(type) += count;
 }
@@ -1068,13 +1074,14 @@ ircd::db::database::stats::recordTick(const uint32_t type,
 void
 ircd::db::database::stats::setTickerCount(const uint32_t type,
                                           const uint64_t count)
+noexcept
 {
 	ticker.at(type) = count;
 }
 
 uint64_t
 ircd::db::database::stats::getTickerCount(const uint32_t type)
-const
+const noexcept
 {
 	return ticker.at(type);
 }
@@ -1087,6 +1094,7 @@ const
 void
 ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
                                              const rocksdb::FlushJobInfo &info)
+noexcept
 {
 	rog.debug("'%s' @%p: flushed: column[%s] path[%s] tid[%lu] job[%d] writes[slow:%d stop:%d]",
 	          d->name,
@@ -1102,6 +1110,7 @@ ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
 void
 ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
+noexcept
 {
 	rog.debug("'%s' @%p: compacted: column[%s] status[%d] tid[%lu] job[%d]",
 	          d->name,
@@ -1114,6 +1123,7 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
 
 void
 ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &info)
+noexcept
 {
 	rog.debug("'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
 	          d->name,
@@ -1125,6 +1135,7 @@ ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionI
 
 void
 ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationInfo &info)
+noexcept
 {
 	rog.debug("'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
 	          d->name,
@@ -1136,6 +1147,7 @@ ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationI
 
 void
 ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &info)
+noexcept
 {
 	rog.debug("'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
 	          d->name,
@@ -1147,6 +1159,7 @@ ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileC
 
 void
 ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
+noexcept
 {
 	rog.debug("'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
 	          d->name,
@@ -1157,6 +1170,7 @@ ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
 
 void
 ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *const h)
+noexcept
 {
 	rog.debug("'%s': column[%s] handle closing @ %p",
 	          d->name,
@@ -1187,6 +1201,7 @@ rocksdb::Status
 ircd::db::database::env::NewSequentialFile(const std::string& name,
                                            std::unique_ptr<SequentialFile>* r,
                                            const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': new sequential file '%s' options:%p",
 	          d.name,
@@ -1207,6 +1222,7 @@ rocksdb::Status
 ircd::db::database::env::NewRandomAccessFile(const std::string& name,
                                              std::unique_ptr<RandomAccessFile>* r,
                                              const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': new random access file '%s' options:%p",
 	          d.name,
@@ -1228,6 +1244,7 @@ rocksdb::Status
 ircd::db::database::env::NewWritableFile(const std::string& name,
                                          std::unique_ptr<WritableFile>* r,
                                          const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': new writable file '%s' options:%p",
 	          d.name,
@@ -1248,6 +1265,7 @@ rocksdb::Status
 ircd::db::database::env::NewRandomRWFile(const std::string& name,
                                          std::unique_ptr<RandomRWFile>* result,
                                          const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': new random read/write file '%s' options:%p",
 	          d.name,
@@ -1267,6 +1285,7 @@ ircd::db::database::env::NewRandomRWFile(const std::string& name,
 rocksdb::Status
 ircd::db::database::env::NewDirectory(const std::string& name,
                                       std::unique_ptr<Directory>* result)
+noexcept
 {
 	log.debug("'%s': new directory '%s'",
 	          d.name,
@@ -1286,6 +1305,7 @@ rocksdb::Status
 ircd::db::database::env::ReopenWritableFile(const std::string& name,
                                             std::unique_ptr<WritableFile>* result,
                                             const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': reopen writable file '%s' options:%p",
 	          d.name,
@@ -1300,6 +1320,7 @@ ircd::db::database::env::ReuseWritableFile(const std::string& name,
                                            const std::string& old_name,
                                            std::unique_ptr<WritableFile>* r,
                                            const EnvOptions& options)
+noexcept
 {
 	log.debug("'%s': reuse writable file '%s' old '%s' options:%p",
 	          d.name,
@@ -1312,6 +1333,7 @@ ircd::db::database::env::ReuseWritableFile(const std::string& name,
 
 rocksdb::Status
 ircd::db::database::env::FileExists(const std::string& f)
+noexcept
 {
 	log.debug("'%s': file exists '%s'",
 	          d.name,
@@ -1323,6 +1345,7 @@ ircd::db::database::env::FileExists(const std::string& f)
 rocksdb::Status
 ircd::db::database::env::GetChildren(const std::string& dir,
                                      std::vector<std::string>* r)
+noexcept
 {
 	log.debug("'%s': get children of directory '%s'",
 	          d.name,
@@ -1334,6 +1357,7 @@ ircd::db::database::env::GetChildren(const std::string& dir,
 rocksdb::Status
 ircd::db::database::env::GetChildrenFileAttributes(const std::string& dir,
                                                    std::vector<FileAttributes>* result)
+noexcept
 {
 	log.debug("'%s': get children file attributes of directory '%s'",
 	          d.name,
@@ -1344,6 +1368,7 @@ ircd::db::database::env::GetChildrenFileAttributes(const std::string& dir,
 
 rocksdb::Status
 ircd::db::database::env::DeleteFile(const std::string& name)
+noexcept
 {
 	log.debug("'%s': delete file '%s'",
 	          d.name,
@@ -1354,6 +1379,7 @@ ircd::db::database::env::DeleteFile(const std::string& name)
 
 rocksdb::Status
 ircd::db::database::env::CreateDir(const std::string& name)
+noexcept
 {
 	log.debug("'%s': create directory '%s'",
 	          d.name,
@@ -1364,6 +1390,7 @@ ircd::db::database::env::CreateDir(const std::string& name)
 
 rocksdb::Status
 ircd::db::database::env::CreateDirIfMissing(const std::string& name)
+noexcept
 {
 	log.debug("'%s': create directory if missing '%s'",
 	          d.name,
@@ -1374,6 +1401,7 @@ ircd::db::database::env::CreateDirIfMissing(const std::string& name)
 
 rocksdb::Status
 ircd::db::database::env::DeleteDir(const std::string& name)
+noexcept
 {
 	log.debug("'%s': delete directory '%s'",
 	          d.name,
@@ -1385,6 +1413,7 @@ ircd::db::database::env::DeleteDir(const std::string& name)
 rocksdb::Status
 ircd::db::database::env::GetFileSize(const std::string& name,
                                      uint64_t* s)
+noexcept
 {
 	log.debug("'%s': get file size '%s'",
 	          d.name,
@@ -1396,6 +1425,7 @@ ircd::db::database::env::GetFileSize(const std::string& name,
 rocksdb::Status
 ircd::db::database::env::GetFileModificationTime(const std::string& name,
                                                  uint64_t* file_mtime)
+noexcept
 {
 	log.debug("'%s': get file mtime '%s'",
 	          d.name,
@@ -1407,6 +1437,7 @@ ircd::db::database::env::GetFileModificationTime(const std::string& name,
 rocksdb::Status
 ircd::db::database::env::RenameFile(const std::string& s,
                                     const std::string& t)
+noexcept
 {
 	log.debug("'%s': rename file '%s' to '%s'",
 	          d.name,
@@ -1419,6 +1450,7 @@ ircd::db::database::env::RenameFile(const std::string& s,
 rocksdb::Status
 ircd::db::database::env::LinkFile(const std::string& s,
                                   const std::string& t)
+noexcept
 {
 	log.debug("'%s': link file '%s' to '%s'",
 	          d.name,
@@ -1431,6 +1463,7 @@ ircd::db::database::env::LinkFile(const std::string& s,
 rocksdb::Status
 ircd::db::database::env::LockFile(const std::string& name,
                                   FileLock** l)
+noexcept
 {
 	log.debug("'%s': lock file '%s'",
 	          d.name,
@@ -1441,6 +1474,7 @@ ircd::db::database::env::LockFile(const std::string& name,
 
 rocksdb::Status
 ircd::db::database::env::UnlockFile(FileLock* l)
+noexcept
 {
 	log.debug("'%s': unlock file lock:%p",
 	          d.name,
@@ -1455,6 +1489,7 @@ ircd::db::database::env::Schedule(void (*f)(void* arg),
                                   Priority prio,
                                   void* tag,
                                   void (*u)(void* arg))
+noexcept
 {
 	log.debug("'%s': schedule func:%p a:%p tag:%p u:%p prio:%s",
 	          d.name,
@@ -1470,6 +1505,7 @@ ircd::db::database::env::Schedule(void (*f)(void* arg),
 int
 ircd::db::database::env::UnSchedule(void* tag,
                                     Priority pri)
+noexcept
 {
 	log.debug("'%s': unschedule tag:%p prio:%s",
 	          d.name,
@@ -1482,6 +1518,7 @@ ircd::db::database::env::UnSchedule(void* tag,
 void
 ircd::db::database::env::StartThread(void (*f)(void*),
                                      void* a)
+noexcept
 {
 	log.debug("'%s': start thread func:%p a:%p",
 	          d.name,
@@ -1493,13 +1530,14 @@ ircd::db::database::env::StartThread(void (*f)(void*),
 
 void
 ircd::db::database::env::WaitForJoin()
+noexcept
 {
 	return defaults.WaitForJoin();
 }
 
 unsigned int
 ircd::db::database::env::GetThreadPoolQueueLen(Priority pri)
-const
+const noexcept
 {
 	log.debug("'%s': get thread pool queue len prio:%s",
 	          d.name,
@@ -1510,6 +1548,7 @@ const
 
 rocksdb::Status
 ircd::db::database::env::GetTestDirectory(std::string* path)
+noexcept
 {
 	return defaults.GetTestDirectory(path);
 }
@@ -1517,18 +1556,21 @@ ircd::db::database::env::GetTestDirectory(std::string* path)
 rocksdb::Status
 ircd::db::database::env::NewLogger(const std::string& name,
                                    std::shared_ptr<Logger>* result)
+noexcept
 {
 	return defaults.NewLogger(name, result);
 }
 
 uint64_t
 ircd::db::database::env::NowMicros()
+noexcept
 {
 	return defaults.NowMicros();
 }
 
 void
 ircd::db::database::env::SleepForMicroseconds(int micros)
+noexcept
 {
 	log.debug("'%s': sleep for %d microseconds",
 	          d.name,
@@ -1540,6 +1582,7 @@ ircd::db::database::env::SleepForMicroseconds(int micros)
 rocksdb::Status
 ircd::db::database::env::GetHostName(char* name,
                                      uint64_t len)
+noexcept
 {
 	log.debug("'%s': get host name name:%p len:%lu",
 	          d.name,
@@ -1551,6 +1594,7 @@ ircd::db::database::env::GetHostName(char* name,
 
 rocksdb::Status
 ircd::db::database::env::GetCurrentTime(int64_t* unix_time)
+noexcept
 {
 	return defaults.GetCurrentTime(unix_time);
 }
@@ -1558,6 +1602,7 @@ ircd::db::database::env::GetCurrentTime(int64_t* unix_time)
 rocksdb::Status
 ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
                                          std::string* output_path)
+noexcept
 {
 	log.debug("'%s': get absolute path from '%s' ret:%p",
 	          d.name,
@@ -1570,6 +1615,7 @@ ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
 void
 ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority pri)
+noexcept
 {
 	log.debug("'%s': set background threads num:%d prio:%s",
 	          d.name,
@@ -1582,6 +1628,7 @@ ircd::db::database::env::SetBackgroundThreads(int num,
 void
 ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
                                                       Priority pri)
+noexcept
 {
 	log.debug("'%s': increase background threads num:%d prio:%s",
 	          d.name,
@@ -1593,6 +1640,7 @@ ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
 
 void
 ircd::db::database::env::LowerThreadPoolIOPriority(Priority pool)
+noexcept
 {
 	log.debug("'%s': lower thread pool priority prio:%s",
 	          d.name,
@@ -1603,26 +1651,28 @@ ircd::db::database::env::LowerThreadPoolIOPriority(Priority pool)
 
 std::string
 ircd::db::database::env::TimeToString(uint64_t time)
+noexcept
 {
 	return defaults.TimeToString(time);
 }
 
 rocksdb::Status
 ircd::db::database::env::GetThreadList(std::vector<ThreadStatus>* thread_list)
+noexcept
 {
 	return defaults.GetThreadList(thread_list);
 }
 
 rocksdb::ThreadStatusUpdater*
 ircd::db::database::env::GetThreadStatusUpdater()
-const
+const noexcept
 {
 	return defaults.GetThreadStatusUpdater();
 }
 
 uint64_t
 ircd::db::database::env::GetThreadID()
-const
+const noexcept
 {
 	return defaults.GetThreadID();
 }
@@ -1647,6 +1697,7 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Append(const Slice& s)
+noexcept
 {
 /*
 	log.debug("'%s': wfile:%p append:%p bytes:%zu",
@@ -1662,6 +1713,7 @@ ircd::db::database::env::writable_file::Append(const Slice& s)
 rocksdb::Status
 ircd::db::database::env::writable_file::PositionedAppend(const Slice& s,
                                                          uint64_t offset)
+noexcept
 {
 	log.debug("'%s': wfile:%p append:%p bytes:%zu offset:%lu",
 	          d.name,
@@ -1675,6 +1727,7 @@ ircd::db::database::env::writable_file::PositionedAppend(const Slice& s,
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Truncate(uint64_t size)
+noexcept
 {
 	log.debug("'%s': wfile:%p truncate to %lu bytes",
 	          d.name,
@@ -1686,6 +1739,7 @@ ircd::db::database::env::writable_file::Truncate(uint64_t size)
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Close()
+noexcept
 {
 /*
 	log.debug("'%s': wfile:%p close",
@@ -1697,6 +1751,7 @@ ircd::db::database::env::writable_file::Close()
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Flush()
+noexcept
 {
 /*
 	log.debug("'%s': wfile:%p flush",
@@ -1708,6 +1763,7 @@ ircd::db::database::env::writable_file::Flush()
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Sync()
+noexcept
 {
 	log.debug("'%s': wfile:%p sync",
 	          d.name,
@@ -1718,6 +1774,7 @@ ircd::db::database::env::writable_file::Sync()
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Fsync()
+noexcept
 {
 	log.debug("'%s': wfile:%p fsync",
 	          d.name,
@@ -1728,13 +1785,14 @@ ircd::db::database::env::writable_file::Fsync()
 
 bool
 ircd::db::database::env::writable_file::IsSyncThreadSafe()
-const
+const noexcept
 {
 	return defaults->IsSyncThreadSafe();
 }
 
 void
 ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
+noexcept
 {
 	log.debug("'%s': wfile:%p set IO prio to %s",
 	          d.name,
@@ -1746,12 +1804,14 @@ ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
 
 rocksdb::Env::IOPriority
 ircd::db::database::env::writable_file::GetIOPriority()
+noexcept
 {
 	return defaults->GetIOPriority();
 }
 
 uint64_t
 ircd::db::database::env::writable_file::GetFileSize()
+noexcept
 {
 	return defaults->GetFileSize();
 }
@@ -1759,6 +1819,7 @@ ircd::db::database::env::writable_file::GetFileSize()
 void
 ircd::db::database::env::writable_file::GetPreallocationStatus(size_t* block_size,
                                                                size_t* last_allocated_block)
+noexcept
 {
 	log.debug("'%s': wfile:%p get preallocation block_size:%p last_block:%p",
 	          d.name,
@@ -1772,7 +1833,7 @@ ircd::db::database::env::writable_file::GetPreallocationStatus(size_t* block_siz
 size_t
 ircd::db::database::env::writable_file::GetUniqueId(char* id,
                                                     size_t max_size)
-const
+const noexcept
 {
 	log.debug("'%s': wfile:%p get unique id:%p max_size:%zu",
 	          d.name,
@@ -1786,6 +1847,7 @@ const
 rocksdb::Status
 ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
                                                         size_t length)
+noexcept
 {
 	log.debug("'%s': wfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
@@ -1798,6 +1860,7 @@ ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
 
 void
 ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
+noexcept
 {
 	log.debug("'%s': wfile:%p set preallocation block size:%zu",
 	          d.name,
@@ -1810,6 +1873,7 @@ ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
 void
 ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
                                                      size_t length)
+noexcept
 {
 /*
 	log.debug("'%s': wfile:%p prepare write offset:%zu length:%zu",
@@ -1824,6 +1888,7 @@ ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
 rocksdb::Status
 ircd::db::database::env::writable_file::Allocate(uint64_t offset,
                                                  uint64_t length)
+noexcept
 {
 	log.debug("'%s': wfile:%p allocate offset:%lu length:%lu",
 	          d.name,
@@ -1837,6 +1902,7 @@ ircd::db::database::env::writable_file::Allocate(uint64_t offset,
 rocksdb::Status
 ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
                                                   uint64_t length)
+noexcept
 {
 	log.debug("'%s': wfile:%p range sync offset:%lu length:%lu",
 	          d.name,
@@ -1869,6 +1935,7 @@ rocksdb::Status
 ircd::db::database::env::sequential_file::Read(size_t length,
                                                Slice *result,
                                                char *scratch)
+noexcept
 {
 /*
 	log.debug("'%s': seqfile:%p read:%p length:%zu scratch:%p",
@@ -1886,6 +1953,7 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
                                                          size_t length,
                                                          Slice *result,
                                                          char *scratch)
+noexcept
 {
 /*
 	log.debug("'%s': seqfile:%p read:%p length:%zu offset:%zu scratch:%p",
@@ -1901,6 +1969,7 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
 
 rocksdb::Status
 ircd::db::database::env::sequential_file::Skip(uint64_t size)
+noexcept
 {
 	log.debug("'%s': seqfile:%p skip:%zu",
 	          d.name,
@@ -1913,6 +1982,7 @@ ircd::db::database::env::sequential_file::Skip(uint64_t size)
 rocksdb::Status
 ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
                                                           size_t length)
+noexcept
 {
 	log.debug("'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
@@ -1925,14 +1995,14 @@ ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
 
 bool
 ircd::db::database::env::sequential_file::use_direct_io()
-const
+const noexcept
 {
 	return defaults->use_direct_io();
 }
 
 size_t
 ircd::db::database::env::sequential_file::GetRequiredBufferAlignment()
-const
+const noexcept
 {
 	return defaults->GetRequiredBufferAlignment();
 }
@@ -1958,6 +2028,7 @@ noexcept
 rocksdb::Status
 ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
                                                       size_t length)
+noexcept
 {
 	log.debug("'%s': rfile:%p prefetch offset:%zu length:%zu",
 	          d.name,
@@ -1973,7 +2044,7 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   size_t length,
                                                   Slice *result,
                                                   char *scratch)
-const
+const noexcept
 {
 	log.debug("'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
 	          d.name,
@@ -1989,6 +2060,7 @@ const
 rocksdb::Status
 ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
                                                              size_t length)
+noexcept
 {
 	log.debug("'%s': rfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
@@ -2002,7 +2074,7 @@ ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
 size_t
 ircd::db::database::env::random_access_file::GetUniqueId(char* id,
                                                          size_t max_size)
-const
+const noexcept
 {
 	log.debug("'%s': rfile:%p get unique id:%p max_size:%zu",
 	          d.name,
@@ -2015,6 +2087,7 @@ const
 
 void
 ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
+noexcept
 {
 	log.debug("'%s': rfile:%p hint %s",
 	          d.name,
@@ -2026,14 +2099,14 @@ ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
 
 bool
 ircd::db::database::env::random_access_file::use_direct_io()
-const
+const noexcept
 {
 	return defaults->use_direct_io();
 }
 
 size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
-const
+const noexcept
 {
 	return defaults->GetRequiredBufferAlignment();
 }
@@ -2058,6 +2131,7 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Close()
+noexcept
 {
 	log.debug("'%s': rwfile:%p closec",
 	          d.name,
@@ -2068,6 +2142,7 @@ ircd::db::database::env::random_rw_file::Close()
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Fsync()
+noexcept
 {
 	log.debug("'%s': rwfile:%p fsync",
 	          d.name,
@@ -2078,6 +2153,7 @@ ircd::db::database::env::random_rw_file::Fsync()
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Sync()
+noexcept
 {
 	log.debug("'%s': rwfile:%p sync",
 	          d.name,
@@ -2088,6 +2164,7 @@ ircd::db::database::env::random_rw_file::Sync()
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Flush()
+noexcept
 {
 	log.debug("'%s': rwfile:%p flush",
 	          d.name,
@@ -2101,7 +2178,7 @@ ircd::db::database::env::random_rw_file::Read(uint64_t offset,
                                               size_t length,
                                               Slice *result,
                                               char *scratch)
-const
+const noexcept
 {
 	log.debug("'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
 	          d.name,
@@ -2117,6 +2194,7 @@ const
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Write(uint64_t offset,
                                                const Slice &slice)
+noexcept
 {
 	log.debug("'%s': rwfile:%p write:%p offset:%zu length:%zu",
 	          d.name,
@@ -2130,14 +2208,14 @@ ircd::db::database::env::random_rw_file::Write(uint64_t offset,
 
 bool
 ircd::db::database::env::random_rw_file::use_direct_io()
-const
+const noexcept
 {
 	return defaults->use_direct_io();
 }
 
 size_t
 ircd::db::database::env::random_rw_file::GetRequiredBufferAlignment()
-const
+const noexcept
 {
 	return defaults->GetRequiredBufferAlignment();
 }
@@ -2161,6 +2239,7 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::directory::Fsync()
+noexcept
 {
 	log.debug("'%s': directory:%p fsync",
 	          d.name,

@@ -34,8 +34,8 @@ struct ircd::db::database::mergeop final
 	database *d;
 	merge_closure merger;
 
-	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const override;
-	const char *Name() const override;
+	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const noexcept override;
+	const char *Name() const noexcept override;
 
 	mergeop(database *const &d, merge_closure merger = nullptr)
 	:d{d}
