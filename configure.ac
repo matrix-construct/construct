@@ -433,6 +433,7 @@ RB_CHK_SYSHEADER(random, [RANDOM])
 RB_CHK_SYSHEADER(bitset, [BITSET])
 RB_CHK_SYSHEADER(string_view, [STRING_VIEW])
 RB_CHK_SYSHEADER(optional, [OPTIONAL])
+RB_CHK_SYSHEADER(new, [NEW])
 
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
