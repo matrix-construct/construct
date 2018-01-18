@@ -70,14 +70,7 @@ namespace ircd::db
 /// that makes this object easier to work with, pass around, and construct. It will
 /// find the real `database::column` at any time.
 ///
-/// [GET] If the data is not cached, your ircd::context will yield. Note that the
-/// request may be posted to a separate thread which incurs the time of IO. This is
-/// because RocksDB has minimalist origins and is not yet asynchronous.
-///
-/// + In the future, your ircd::context will still yield but the internals here will
-/// interleave pending contexts. If RocksDB is clever enough to expose actual file
-/// descriptors or something we can interleave on, similar to the pgsql API, we can
-/// remove the IO/offload thread as well.
+/// [GET] If the data is not cached, your ircd::context will yield.
 ///
 /// [SET] usually occur without yielding your context because the DB is oriented
 /// around write-log appends. It deals with the heavier tasks later in background.
@@ -85,7 +78,7 @@ namespace ircd::db
 /// NOTE that the column and cell structs are type-agnostic. The database is capable of
 /// storing binary data in the key or the value for a cell. The string_view will work
 /// with both a normal string and binary data, so this class is not a template and
-/// offers no conversions at this level. see: value.h/object.h
+/// offers no conversions at this interface.
 ///
 struct ircd::db::column
 {
