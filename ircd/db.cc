@@ -430,11 +430,6 @@ try
 	{
 		ptr, [this](rocksdb::DB *const d) noexcept
 		{
-			sync(*this);
-			this->columns.clear();
-			log.debug("'%s': closed columns; synchronized with hardware.",
-			          this->name);
-
 			const auto sequence
 			{
 				d->GetLatestSequenceNumber()
@@ -480,6 +475,11 @@ noexcept
 	          name,
 	          path,
 	          background_errors);
+
+	sync(*this);
+	this->columns.clear();
+	log.debug("'%s': closed columns; synchronized with hardware.",
+	          this->name);
 }
 
 void
