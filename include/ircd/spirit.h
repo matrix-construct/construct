@@ -30,6 +30,7 @@
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/phoenix.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>

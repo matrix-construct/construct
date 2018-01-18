@@ -55,6 +55,8 @@ struct ircd::json::array
 	using size_type = size_t;
 	using difference_type = ptrdiff_t;
 
+	static const uint max_recursion_depth;
+
 	const_iterator end() const;
 	const_iterator begin() const;
 

@@ -45,6 +45,7 @@ namespace ircd::json
 	using qi::eps;
 	using qi::attr;
 	using qi::repeat;
+	using qi::_r1_type;
 
 	using karma::lit;
 	using karma::char_;
@@ -161,29 +162,35 @@ struct ircd::json::input
 		,"name"
 	};
 
-	rule<> member
+	// recursion depth
+	_r1_type depth;
+	[[noreturn]] static void throws_exceeded();
+
+	const rule<unused_type(uint)> member
 	{
-		name >> name_sep >> value
+		name >> name_sep >> value(depth)
 		,"member"
 	};
 
-	rule<> object
+	const rule<unused_type(uint)> object
 	{
-		//TODO: XXX: Recursion depth check attribute
-		object_begin >> -(member % value_sep) >> object_end
+		(eps(depth < json::object::max_recursion_depth) | eps[throws_exceeded]) >>
+
+		object_begin >> -(member(depth) % value_sep) >> object_end
 		,"object"
 	};
 
-	rule<> array
+	const rule<unused_type(uint)> array
 	{
-		//TODO: XXX: Recursion depth check attribute
-		array_begin >> -(value % value_sep) >> array_end
+		(eps(depth < json::array::max_recursion_depth) | eps[throws_exceeded]) >>
+
+		array_begin >> -(value(depth) % value_sep) >> array_end
 		,"array"
 	};
 
-	rule<> value
+	const rule<unused_type(uint)> value
 	{
-		lit_false | lit_null | lit_true | object | array | number | string
+		lit_false | lit_null | lit_true | object(depth + 1) | array(depth + 1) | number | string
 		,"value"
 	};
 
@@ -199,13 +206,7 @@ struct ircd::json::input
 
 	input()
 	:input::base_type{rule<>{}}
-	{
-		//TODO: Recursion seems to require these restatements
-		//TODO: Can they be eliminated for DRY?
-		member %= name >> name_sep >> value;
-		array %= array_begin >> -(value % value_sep) >> array_end;
-		object %= object_begin >> -(member % value_sep) >> object_end;
-	}
+	{}
 };
 
 template<class it>
@@ -374,6 +375,16 @@ ircd::json::printer::list_protocol(mutable_buffer &buffer,
 			lambda(buffer, *it);
 		}
 	}
+}
+
+template<class it>
+void
+ircd::json::input<it>::throws_exceeded()
+{
+	throw recursion_limit
+	{
+		"Maximum recursion depth exceeded"
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -546,7 +557,7 @@ try
 {
 	static const qi::rule<const char *, string_view> parse_next
 	{
-		raw[parser.object] | qi::eoi
+		raw[parser.object(0)] | qi::eoi
 		,"next vector element or end"
 	};
 
@@ -566,7 +577,7 @@ const try
 {
 	static const qi::rule<const char *, string_view> parse_begin
 	{
-		raw[parser.object]
+		raw[parser.object(0)]
 		,"object vector element"
 	};
 
@@ -679,6 +690,12 @@ ircd::json::serialized(const member &member)
 // json/object.h
 //
 
+decltype(ircd::json::object::max_recursion_depth)
+const ircd::json::object::max_recursion_depth
+{
+	32
+};
+
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const object::member &member)
 {
@@ -750,7 +767,7 @@ try
 {
 	static const qi::rule<const char *, json::object::member> member
 	{
-		parser.name >> parser.name_sep >> raw[parser.value]
+		parser.name >> parser.name_sep >> raw[parser.value(0)]
 		,"next object member"
 	};
 
@@ -782,7 +799,7 @@ const try
 {
 	static const qi::rule<const char *, json::object::member> object_member
 	{
-		parser.name >> parser.name_sep >> raw[parser.value]
+		parser.name >> parser.name_sep >> raw[parser.value(0)]
 		,"object member"
 	};
 
@@ -818,6 +835,12 @@ const
 //
 // json/array.h
 //
+
+decltype(ircd::json::array::max_recursion_depth)
+ircd::json::array::max_recursion_depth
+{
+	32
+};
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
@@ -900,7 +923,7 @@ try
 {
 	static const qi::rule<const char *, string_view> value
 	{
-		raw[parser.value]
+		raw[parser.value(0)]
 		,"array element"
 	};
 
@@ -931,7 +954,7 @@ const try
 {
 	static const qi::rule<const char *, string_view> value
 	{
-		raw[parser.value]
+		raw[parser.value(0)]
 		,"array element"
 	};
 
@@ -1575,7 +1598,7 @@ ircd::json::valid(const string_view &s,
 noexcept try
 {
 	const char *start(begin(s)), *const stop(end(s));
-	return qi::parse(start, stop, parser.value >> eoi);
+	return qi::parse(start, stop, parser.value(0) >> eoi);
 }
 catch(...)
 {
@@ -1587,7 +1610,7 @@ ircd::json::valid(const string_view &s)
 try
 {
 	const char *start(begin(s)), *const stop(end(s));
-	qi::parse(start, stop, eps > (parser.value >> eoi));
+	qi::parse(start, stop, eps > (parser.value(0) >> eoi));
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
