@@ -21,16 +21,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_PREFIX_H
+#define HAVE_IRCD_DB_SNAPSHOT_H
 
-namespace ircd::db
+/// Database snapshot object. Maintaining this object will maintain a
+/// consistent state of access to the database at the sequence number
+/// from when it's acquired.
+struct ircd::db::database::snapshot
 {
-	struct prefix_transform;
-}
+	std::shared_ptr<const rocksdb::Snapshot> s;
 
-struct ircd::db::prefix_transform
-{
-	std::string name;
-	std::function<bool (const string_view &)> has;
-	std::function<string_view (const string_view &)> get;
+  public:
+	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
+
+	explicit operator bool() const               { return bool(s);                                 }
+	bool operator !() const                      { return !s;                                      }
+
+	explicit snapshot(database &);
+	snapshot() = default;
+	~snapshot() noexcept;
+
+	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
+	friend uint64_t sequence(const rocksdb::Snapshot *const &);
 };

@@ -1,55 +1,28 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+//
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #define HAVE_IRCD_DB_COLUMN_H
 
-// Columns add the ability to run multiple LevelDB's in synchrony under the same
-// database (directory). Each column is a fully distinct key/value store; they
-// are merely joined for consistency and possible performance advantages for
-// concurrent multi-column lookups of the same key.
-//
-// This class is a handle to the real column instance `database::column` because the
-// real column instance has to have a lifetime congruent to the open database. But
-// that makes this object easier to work with, pass around, and construct. It will
-// find the real `database::column` at any time.
-//
-// [GET] If the data is not cached, your ircd::context will yield. Note that the
-// request may be posted to a separate thread which incurs the time of IO. This is
-// because RocksDB has minimalist origins and is not yet asynchronous.
-//
-// + In the future, your ircd::context will still yield but the internals here will
-// interleave pending contexts. If RocksDB is clever enough to expose actual file
-// descriptors or something we can interleave on, similar to the pgsql API, we can
-// remove the IO/offload thread as well.
-//
-// [SET] usually occur without yielding your context because the DB is oriented
-// around write-log appends. It deals with the heavier tasks later in background.
-//
-// NOTE that the column and cell structs are type-agnostic. The database is capable of
-// storing binary data in the key or the value for a cell. The string_view will work
-// with both a normal string and binary data, so this class is not a template and
-// offers no conversions at this level. see: value.h/object.h
-//
 namespace ircd::db
 {
 	struct column;
@@ -87,6 +60,33 @@ namespace ircd::db
 	void flush(column &, const bool &blocking = false);
 }
 
+/// Columns add the ability to run multiple LevelDB's in synchrony under the same
+/// database (directory). Each column is a fully distinct key/value store; they
+/// are merely joined for consistency and possible performance advantages for
+/// concurrent multi-column lookups of the same key.
+///
+/// This class is a handle to the real column instance `database::column` because the
+/// real column instance has to have a lifetime congruent to the open database. But
+/// that makes this object easier to work with, pass around, and construct. It will
+/// find the real `database::column` at any time.
+///
+/// [GET] If the data is not cached, your ircd::context will yield. Note that the
+/// request may be posted to a separate thread which incurs the time of IO. This is
+/// because RocksDB has minimalist origins and is not yet asynchronous.
+///
+/// + In the future, your ircd::context will still yield but the internals here will
+/// interleave pending contexts. If RocksDB is clever enough to expose actual file
+/// descriptors or something we can interleave on, similar to the pgsql API, we can
+/// remove the IO/offload thread as well.
+///
+/// [SET] usually occur without yielding your context because the DB is oriented
+/// around write-log appends. It deals with the heavier tasks later in background.
+///
+/// NOTE that the column and cell structs are type-agnostic. The database is capable of
+/// storing binary data in the key or the value for a cell. The string_view will work
+/// with both a normal string and binary data, so this class is not a template and
+/// offers no conversions at this level. see: value.h/object.h
+///
 struct ircd::db::column
 {
 	struct delta;
@@ -149,19 +149,18 @@ struct ircd::db::column
 	column() = default;
 };
 
-//
-// Delta is an element of a transaction. Use column::delta's to atomically
-// commit to multiple keys in the same column. Refer to delta.h for the `enum op`
-// choices. Refer to cell::delta to transact with multiple cells across different
-// columns. Refer to row::delta to transact with entire rows.
-//
-// Note, for now, unlike cell::delta and row::delta, the column::delta has
-// no reference to the column in its tuple. This is why these deltas are executed
-// through the member column::operator() and not an overload of db::write().
-//
-// It is unlikely you will need to work with column deltas directly because
-// you may decohere one column from the others participating in a row.
-//
+/// Delta is an element of a transaction. Use column::delta's to atomically
+/// commit to multiple keys in the same column. Refer to delta.h for the `enum op`
+/// choices. Refer to cell::delta to transact with multiple cells across different
+/// columns. Refer to row::delta to transact with entire rows.
+///
+/// Note, for now, unlike cell::delta and row::delta, the column::delta has
+/// no reference to the column in its tuple. This is why these deltas are executed
+/// through the member column::operator() and not an overload of db::write().
+///
+/// It is unlikely you will need to work with column deltas directly because
+/// you may decohere one column from the others participating in a row.
+///
 struct ircd::db::column::delta
 :std::tuple<op, string_view, string_view>
 {
@@ -179,12 +178,11 @@ struct ircd::db::column::delta
 	{}
 };
 
-//
-// Iteration over all keys down a column. Default construction is an invalid
-// iterator, which could be compared against in the style of STL algorithms.
-// Otherwise, construct an iterator by having it returned from the appropriate
-// function in column::.
-//
+/// Iteration over all keys down a column. Default construction is an invalid
+/// iterator, which could be compared against in the style of STL algorithms.
+/// Otherwise, construct an iterator by having it returned from the appropriate
+/// function in column::.
+///
 struct ircd::db::column::const_iterator_base
 {
 	using key_type = string_view;

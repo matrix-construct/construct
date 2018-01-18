@@ -1,24 +1,24 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+//
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #define HAVE_IRCD_DB_H
@@ -34,7 +34,6 @@ namespace ircd::db
 	struct column;
 	struct index;
 	struct database;
-	enum op :uint8_t;
 	enum class pos :int8_t;
 
 	// Errors for the database subsystem. The exceptions that use _HIDENAME
@@ -61,26 +60,30 @@ namespace ircd::db
 	extern struct log::log log;
 }
 
-/// Forward declarations for rocksdb because we do not include it here.
-///
-/// These are forward declarations to objects we may carry a pointer to.
-/// Users of ircd::db should not have to deal directly with these types.
-///
-namespace rocksdb
+/// Types of iterator operations
+enum class ircd::db::pos
+:int8_t
 {
-	struct DB;
-	struct Slice;
-	struct Options;
-	struct DBOptions;
-	struct ColumnFamilyOptions;
-	struct PlainTableOptions;
-	struct BlockBasedTableOptions;
-	struct Cache;
-	struct Iterator;
-	struct ColumnFamilyHandle;
-	struct Snapshot;
-	struct WriteBatch;
-}
+	FRONT   = -2,    // .front()    | first element
+	PREV    = -1,    // std::prev() | previous element
+	END     = 0,     // break;      | exit iteration (or past the end)
+	NEXT    = 1,     // continue;   | next element
+	BACK    = 2,     // .back()     | last element
+};
+
+#include "delta.h"
+#include "comparator.h"
+#include "prefix.h"
+#include "merge.h"
+#include "database.h"
+#include "snapshot.h"
+#include "opts.h"
+#include "column.h"
+#include "cell.h"
+#include "row.h"
+#include "index.h"
+#include "json.h"
+#include "iov.h"
 
 //
 // Misc utils
@@ -109,45 +112,12 @@ namespace ircd::db
 	string_view reflect(const op &);
 }
 
-enum class ircd::db::pos
-:int8_t
-{
-	FRONT   = -2,    // .front()    | first element
-	PREV    = -1,    // std::prev() | previous element
-	END     = 0,     // break;      | exit iteration (or past the end)
-	NEXT    = 1,     // continue;   | next element
-	BACK    = 2,     // .back()     | last element
-};
-
-enum ircd::db::op
-:uint8_t
-{
-	GET,                     // no-op sentinel, do not use (debug asserts)
-	SET,                     // (batch.Put)
-	MERGE,                   // (batch.Merge)
-	DELETE,                  // (batch.Delete)
-	DELETE_RANGE,            // (batch.DeleteRange)
-	SINGLE_DELETE,           // (batch.SingleDelete)
-};
-
-#include "delta.h"
-#include "comparator.h"
-#include "prefix.h"
-#include "merge.h"
-#include "database.h"
-#include "opts.h"
-#include "column.h"
-#include "cell.h"
-#include "row.h"
-#include "index.h"
-#include "json.h"
-#include "iov.h"
-
 namespace ircd
 {
 	using db::database;
 }
 
+/// Database subsystem initialization and destruction
 struct ircd::db::init
 {
 	init();

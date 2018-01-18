@@ -1,41 +1,48 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+//
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_H
 
-//
-// Database instance
-//
-// There can be only one instance of this class for each database, so it is
-// always shared and must be make_shared(). The database is open when an
-// instance is constructed and closed when the instance destructs.
-//
-// The construction must have the same consistent descriptor set used every
-// time otherwise bad things happen.
-//
-// The instance registers and deregisters itself in a global set of open
-// databases and can be found that way if necessary.
-//
+/// Forward declarations for rocksdb because we do not include it here.
+///
+/// These are forward declarations to objects we may carry a pointer to.
+/// Users of ircd::db should not have to deal directly with these types.
+///
+namespace rocksdb
+{
+	struct DB;
+	struct Cache;
+	struct Options;
+	struct DBOptions;
+	struct ColumnFamilyOptions;
+	struct PlainTableOptions;
+	struct BlockBasedTableOptions;
+	struct Snapshot;
+	struct Iterator;
+	struct ColumnFamilyHandle;
+	struct WriteBatch;
+	struct Slice;
+}
 
 namespace ircd::db
 {
@@ -48,6 +55,18 @@ namespace ircd::db
 	void sync(database &);                           // Sync the write log (all columns)
 }
 
+/// Database instance
+///
+/// There can be only one instance of this class for each database, so it is
+/// always shared and must be make_shared(). The database is open when an
+/// instance is constructed and closed when the instance destructs.
+///
+/// The construction must have the same consistent descriptor set used every
+/// time otherwise bad things happen.
+///
+/// The instance registers and deregisters itself in a global set of open
+/// databases and can be found that way if necessary.
+///
 struct ircd::db::database
 :std::enable_shared_from_this<database>
 {
@@ -116,6 +135,9 @@ struct ircd::db::database
 	static database &get(column &);
 };
 
+/// Internal column interface panel. This is db::database::column, not
+/// db::column. The latter is a public shared-pointer front-end which
+/// points to an internally managed database::column.
 namespace ircd::db
 {
 	std::shared_ptr<const database::column> shared_from(const database::column &);
@@ -126,8 +148,8 @@ namespace ircd::db
 	void drop(database::column &);                   // Request to erase column from db
 }
 
-// Descriptor of a column when opening database. Database must be opened with
-// a consistent set of descriptors describing what will be found upon opening.
+/// Descriptor of a column when opening database. Database must be opened with
+/// a consistent set of descriptors describing what will be found upon opening.
 struct ircd::db::database::descriptor
 {
 	using typing = std::pair<std::type_index, std::type_index>;
@@ -140,7 +162,7 @@ struct ircd::db::database::descriptor
 	db::prefix_transform prefix {};
 };
 
-// options <-> string
+/// options <-> string
 struct ircd::db::database::options
 :std::string
 {
@@ -165,7 +187,7 @@ struct ircd::db::database::options
 	{}
 };
 
-// options <-> map
+/// options <-> map
 struct ircd::db::database::options::map
 :std::unordered_map<std::string, std::string>
 {
@@ -182,22 +204,4 @@ struct ircd::db::database::options::map
 	map(std::unordered_map<std::string, std::string> m)
 	:std::unordered_map<std::string, std::string>{std::move(m)}
 	{}
-};
-
-struct ircd::db::database::snapshot
-{
-	std::shared_ptr<const rocksdb::Snapshot> s;
-
-  public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
-
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
-
-	explicit snapshot(database &);
-	snapshot() = default;
-	~snapshot() noexcept;
-
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
 };

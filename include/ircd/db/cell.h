@@ -1,24 +1,24 @@
-/*
- * Copyright (C) 2016 Charybdis Development Team
- * Copyright (C) 2016 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+//
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #define HAVE_IRCD_DB_CELL_H
@@ -32,22 +32,22 @@ namespace ircd::db
 	uint64_t sequence(const cell &);
 }
 
-// A cell is a single key-value element existing within a column. This structure
-// provides the necessary facilities for working with a single cell. Many simple
-// operations can also be done through the column interface itself so check column.h
-// for satisfaction. Cells from different columns sharing the same key are composed
-// into a `row` (see: row.h).
-//
-// When composed into a `row` or `object` remember that calls to cell::key() will
-// all be the same index key -- not the name of the column the cell is representing
-// in the row. You probably want cell::col() when iterating the row to build a
-// JSON object's keys when iterating across a row.
-//
-// NOTE that this cell struct is type-agnostic. The database is capable of storing
-// binary data in the key or the value for a cell. The string_view will work with
-// both a normal string and binary data, so this class is not a template and offers
-// no conversions at this level. see: value.h/object.h
-//
+/// A cell is a single key-value element existing within a column. This structure
+/// provides the necessary facilities for working with a single cell. Many simple
+/// operations can also be done through the column interface itself so check column.h
+/// for satisfaction. Cells from different columns sharing the same key are composed
+/// into a `row` (see: row.h).
+///
+/// When composed into a `row` or `object` remember that calls to cell::key() will
+/// all be the same index key -- not the name of the column the cell is representing
+/// in the row. You probably want cell::col() when iterating the row to build a
+/// JSON object's keys when iterating across a row.
+///
+/// NOTE that this cell struct is type-agnostic. The database is capable of storing
+/// binary data in the key or the value for a cell. The string_view will work with
+/// both a normal string and binary data, so this class is not a template and offers
+/// no conversions at this level. see: value.h/object.h
+///
 struct ircd::db::cell
 {
 	struct delta;
@@ -123,11 +123,11 @@ namespace ircd::db
 	void write(const cell::delta &, const sopts & = {});
 }
 
-//
-// A delta is an element of a database transaction. You can use this to change
-// the values of cells. Use cell deltas to make an all-succeed-or-all-fail
-// transaction across many cells in various columns at once.
-//
+///
+/// A delta is an element of a database transaction. You can use this to change
+/// the values of cells. Use cell deltas to make an all-succeed-or-all-fail
+/// transaction across many cells in various columns at once.
+///
 struct ircd::db::cell::delta
 :std::tuple<op, cell *, string_view>
 {
