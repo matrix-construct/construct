@@ -89,6 +89,7 @@ struct ircd::db::database
 	std::string name;
 	std::string path;
 	std::string optstr;
+	std::shared_ptr<struct env> env;
 	std::shared_ptr<struct logs> logs;
 	std::shared_ptr<struct stats> stats;
 	std::shared_ptr<struct events> events;
