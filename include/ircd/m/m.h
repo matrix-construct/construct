@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
-#include <ircd/server.h>
-
 /// Matrix Protocol System
 namespace ircd::m
 {

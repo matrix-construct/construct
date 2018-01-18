@@ -235,6 +235,6 @@ namespace ircd
 #include "rfc3986.h"
 #include "rfc1035.h"
 #include "net/net.h"
-#include "server.h"
+#include "server/server.h"
 #include "client.h"
 #include "resource.h"
