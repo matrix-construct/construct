@@ -124,7 +124,7 @@ extern "C"
 #define AFGP(a, b)      __attribute__((format(gnu_printf, a, b)))
 
 // Experimental std::string_view
-#if __cplusplus <= 201703 //TODO: refine
+#if !defined(__cpp_lib_string_view) && defined(__cpp_lib_experimental_string_view)
 namespace std
 {
 	using experimental::string_view;
@@ -132,7 +132,7 @@ namespace std
 #endif
 
 // Experimental std::optional
-#if __cplusplus <= 20170519 //TODO: refine
+#if !defined(__cpp_lib_optional) && defined(__cpp_lib_experimental_optional)
 namespace std
 {
 	using experimental::optional;
