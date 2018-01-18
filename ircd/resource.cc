@@ -173,6 +173,7 @@ void
 ircd::verify_origin(client &client,
                     resource::method &method,
                     resource::request &request)
+try
 {
 	const auto &authorization
 	{
@@ -189,11 +190,27 @@ ircd::verify_origin(client &client,
 		m::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
 	};
 
-	if(!verified)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_INVALID_SIGNATURE", "The X-Matrix Authorization is invalid."
-		};
+	if(verified)
+		return;
+
+	throw m::error
+	{
+		http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+		"The X-Matrix Authorization is invalid."
+	};
+}
+catch(const m::error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw m::error
+	{
+		http::UNAUTHORIZED, "M_INTERNAL_ERROR",
+		"An error has prevented authorization: %s",
+		e.what()
+	};
 }
 
 void
