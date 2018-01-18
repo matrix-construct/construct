@@ -33,6 +33,11 @@ struct ircd::db::database::env final
 :rocksdb::Env
 {
 	struct writable_file;
+	struct sequential_file;
+	struct random_access_file;
+	struct random_rw_file;
+	struct directory;
+	struct file_lock;
 
 	using Status = rocksdb::Status;
 	using EnvOptions = rocksdb::EnvOptions;
@@ -127,4 +132,90 @@ struct ircd::db::database::env::writable_file final
 
 	writable_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<WritableFile> defaults);
 	~writable_file() noexcept;
+};
+
+struct ircd::db::database::env::sequential_file final
+:rocksdb::SequentialFile
+{
+	using Status = rocksdb::Status;
+	using Slice = rocksdb::Slice;
+
+	database &d;
+	std::unique_ptr<SequentialFile> defaults;
+
+	bool use_direct_io() const override;
+	size_t GetRequiredBufferAlignment() const override;
+	Status InvalidateCache(size_t offset, size_t length) override;
+	Status PositionedRead(uint64_t offset, size_t n, Slice *result, char *scratch) override;
+	Status Read(size_t n, Slice *result, char *scratch) override;
+	Status Skip(uint64_t size) override;
+
+	sequential_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<SequentialFile> defaults);
+	~sequential_file() noexcept;
+};
+
+struct ircd::db::database::env::random_access_file final
+:rocksdb::RandomAccessFile
+{
+	using Status = rocksdb::Status;
+	using Slice = rocksdb::Slice;
+
+	database &d;
+	std::unique_ptr<RandomAccessFile> defaults;
+
+	bool use_direct_io() const override;
+	size_t GetRequiredBufferAlignment() const override;
+	size_t GetUniqueId(char* id, size_t max_size) const override;
+	void Hint(AccessPattern pattern) override;
+	Status InvalidateCache(size_t offset, size_t length) override;
+	Status Read(uint64_t offset, size_t n, Slice *result, char *scratch) const override;
+	Status Prefetch(uint64_t offset, size_t n) override;
+
+	random_access_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<RandomAccessFile> defaults);
+	~random_access_file() noexcept;
+};
+
+struct ircd::db::database::env::random_rw_file final
+:rocksdb::RandomRWFile
+{
+	using Status = rocksdb::Status;
+	using Slice = rocksdb::Slice;
+
+	database &d;
+	std::unique_ptr<RandomRWFile> defaults;
+
+	bool use_direct_io() const override;
+	size_t GetRequiredBufferAlignment() const override;
+	Status Read(uint64_t offset, size_t n, Slice *result, char *scratch) const override;
+	Status Write(uint64_t offset, const Slice &data) override;
+	Status Flush() override;
+	Status Sync() override;
+	Status Fsync() override;
+	Status Close() override;
+
+	random_rw_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<RandomRWFile> defaults);
+	~random_rw_file() noexcept;
+};
+
+struct ircd::db::database::env::directory final
+:rocksdb::Directory
+{
+	using Status = rocksdb::Status;
+
+	database &d;
+	std::unique_ptr<Directory> defaults;
+
+	Status Fsync() override;
+
+	directory(database *const &d, const std::string &name, std::unique_ptr<Directory> defaults);
+	~directory() noexcept;
+};
+
+struct ircd::db::database::env::file_lock final
+:rocksdb::FileLock
+{
+	database &d;
+
+	file_lock(database *const &d);
+	~file_lock() noexcept;
 };

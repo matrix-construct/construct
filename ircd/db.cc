@@ -52,6 +52,7 @@ namespace ircd::db
 
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
+	string_view reflect(const rocksdb::RandomAccessFile::AccessPattern &p);
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
 	rocksdb::Slice slice(const string_view &);
@@ -1192,7 +1193,14 @@ ircd::db::database::env::NewSequentialFile(const std::string& name,
 	          name,
 	          &options);
 
-	return defaults.NewSequentialFile(name, r, options);
+	std::unique_ptr<SequentialFile> defaults;
+	const auto ret
+	{
+		this->defaults.NewSequentialFile(name, &defaults, options)
+	};
+
+	*r = std::make_unique<sequential_file>(&d, name, options, std::move(defaults));
+	return ret;
 }
 
 rocksdb::Status
@@ -1205,7 +1213,15 @@ ircd::db::database::env::NewRandomAccessFile(const std::string& name,
 	          name,
 	          &options);
 
-	return defaults.NewRandomAccessFile(name, r, options);
+	std::unique_ptr<RandomAccessFile> defaults;
+	const auto ret
+	{
+		this->defaults.NewRandomAccessFile(name, &defaults, options)
+	};
+
+	*r = std::make_unique<random_access_file>(&d, name, options, std::move(defaults));
+	return ret;
+
 }
 
 rocksdb::Status
@@ -1225,6 +1241,44 @@ ircd::db::database::env::NewWritableFile(const std::string& name,
 	};
 
 	*r = std::make_unique<writable_file>(&d, name, options, std::move(defaults));
+	return ret;
+}
+
+rocksdb::Status
+ircd::db::database::env::NewRandomRWFile(const std::string& name,
+                                         std::unique_ptr<RandomRWFile>* result,
+                                         const EnvOptions& options)
+{
+	log.debug("'%s': new random read/write file '%s' options:%p",
+	          d.name,
+	          name,
+	          &options);
+
+	std::unique_ptr<RandomRWFile> defaults;
+	const auto ret
+	{
+		this->defaults.NewRandomRWFile(name, &defaults, options)
+	};
+
+	*result = std::make_unique<random_rw_file>(&d, name, options, std::move(defaults));
+	return ret;
+}
+
+rocksdb::Status
+ircd::db::database::env::NewDirectory(const std::string& name,
+                                      std::unique_ptr<Directory>* result)
+{
+	log.debug("'%s': new directory '%s'",
+	          d.name,
+	          name);
+
+	std::unique_ptr<Directory> defaults;
+	const auto ret
+	{
+		this->defaults.NewDirectory(name, &defaults)
+	};
+
+	*result = std::make_unique<directory>(&d, name, std::move(defaults));
 	return ret;
 }
 
@@ -1254,30 +1308,6 @@ ircd::db::database::env::ReuseWritableFile(const std::string& name,
 	          &options);
 
 	return defaults.ReuseWritableFile(name, old_name, r, options);
-}
-
-rocksdb::Status
-ircd::db::database::env::NewRandomRWFile(const std::string& name,
-                                         std::unique_ptr<RandomRWFile>* result,
-                                         const EnvOptions& options)
-{
-	log.debug("'%s': new random read/write file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
-
-	return defaults.NewRandomRWFile(name, result, options);
-}
-
-rocksdb::Status
-ircd::db::database::env::NewDirectory(const std::string& name,
-                                      std::unique_ptr<Directory>* result)
-{
-	log.debug("'%s': new directory '%s'",
-	          d.name,
-	          name);
-
-	return defaults.NewDirectory(name, result);
 }
 
 rocksdb::Status
@@ -1781,12 +1811,13 @@ void
 ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
                                                      size_t length)
 {
+/*
 	log.debug("'%s': wfile:%p prepare write offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
-
+*/
 	defaults->PrepareWrite(offset, length);
 }
 
@@ -1816,6 +1847,341 @@ ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
 	return defaults->RangeSync(offset, length);
 }
 
+//
+// sequential_file
+//
+
+ircd::db::database::env::sequential_file::sequential_file(database *const &d,
+                                                          const std::string &name,
+                                                          const EnvOptions &opts,
+                                                          std::unique_ptr<SequentialFile> defaults)
+:d{*d}
+,defaults{std::move(defaults)}
+{
+}
+
+ircd::db::database::env::sequential_file::~sequential_file()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::env::sequential_file::Read(size_t length,
+                                               Slice *result,
+                                               char *scratch)
+{
+/*
+	log.debug("'%s': seqfile:%p read:%p length:%zu scratch:%p",
+	          d.name,
+	          this,
+	          result,
+	          length,
+	          scratch);
+*/
+	return defaults->Read(length, result, scratch);
+}
+
+rocksdb::Status
+ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
+                                                         size_t length,
+                                                         Slice *result,
+                                                         char *scratch)
+{
+/*
+	log.debug("'%s': seqfile:%p read:%p length:%zu offset:%zu scratch:%p",
+	          d.name,
+	          this,
+	          result,
+	          length,
+	          offset,
+	          scratch);
+*/
+	return defaults->PositionedRead(offset, length, result, scratch);
+}
+
+rocksdb::Status
+ircd::db::database::env::sequential_file::Skip(uint64_t size)
+{
+	log.debug("'%s': seqfile:%p skip:%zu",
+	          d.name,
+	          this,
+	          size);
+
+	return defaults->Skip(size);
+}
+
+rocksdb::Status
+ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
+                                                          size_t length)
+{
+	log.debug("'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->InvalidateCache(offset, length);
+}
+
+bool
+ircd::db::database::env::sequential_file::use_direct_io()
+const
+{
+	return defaults->use_direct_io();
+}
+
+size_t
+ircd::db::database::env::sequential_file::GetRequiredBufferAlignment()
+const
+{
+	return defaults->GetRequiredBufferAlignment();
+}
+
+//
+// random_access_file
+//
+
+ircd::db::database::env::random_access_file::random_access_file(database *const &d,
+                                                                const std::string &name,
+                                                                const EnvOptions &opts,
+                                                               std::unique_ptr<RandomAccessFile> defaults)
+:d{*d}
+,defaults{std::move(defaults)}
+{
+}
+
+ircd::db::database::env::random_access_file::~random_access_file()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
+                                                      size_t length)
+{
+	log.debug("'%s': rfile:%p prefetch offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->Prefetch(offset, length);
+}
+
+rocksdb::Status
+ircd::db::database::env::random_access_file::Read(uint64_t offset,
+                                                  size_t length,
+                                                  Slice *result,
+                                                  char *scratch)
+const
+{
+	log.debug("'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
+	          d.name,
+	          this,
+	          result,
+	          offset,
+	          length,
+	          scratch);
+
+	return defaults->Read(offset, length, result, scratch);
+}
+
+rocksdb::Status
+ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
+                                                             size_t length)
+{
+	log.debug("'%s': rfile:%p invalidate cache offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->InvalidateCache(offset, length);
+}
+
+size_t
+ircd::db::database::env::random_access_file::GetUniqueId(char* id,
+                                                         size_t max_size)
+const
+{
+	log.debug("'%s': rfile:%p get unique id:%p max_size:%zu",
+	          d.name,
+	          this,
+	          id,
+	          max_size);
+
+	return defaults->GetUniqueId(id, max_size);
+}
+
+void
+ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
+{
+	log.debug("'%s': rfile:%p hint %s",
+	          d.name,
+	          this,
+	          reflect(pattern));
+
+	return defaults->Hint(pattern);
+}
+
+bool
+ircd::db::database::env::random_access_file::use_direct_io()
+const
+{
+	return defaults->use_direct_io();
+}
+
+size_t
+ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
+const
+{
+	return defaults->GetRequiredBufferAlignment();
+}
+
+//
+// random_rw_file
+//
+
+ircd::db::database::env::random_rw_file::random_rw_file(database *const &d,
+                                                        const std::string &name,
+                                                        const EnvOptions &opts,
+                                                        std::unique_ptr<RandomRWFile> defaults)
+:d{*d}
+,defaults{std::move(defaults)}
+{
+}
+
+ircd::db::database::env::random_rw_file::~random_rw_file()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Close()
+{
+	log.debug("'%s': rwfile:%p closec",
+	          d.name,
+	          this);
+
+	return defaults->Close();
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Fsync()
+{
+	log.debug("'%s': rwfile:%p fsync",
+	          d.name,
+	          this);
+
+	return defaults->Fsync();
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Sync()
+{
+	log.debug("'%s': rwfile:%p sync",
+	          d.name,
+	          this);
+
+	return defaults->Sync();
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Flush()
+{
+	log.debug("'%s': rwfile:%p flush",
+	          d.name,
+	          this);
+
+	return defaults->Flush();
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Read(uint64_t offset,
+                                              size_t length,
+                                              Slice *result,
+                                              char *scratch)
+const
+{
+	log.debug("'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
+	          d.name,
+	          this,
+	          result,
+	          offset,
+	          length,
+	          scratch);
+
+	return defaults->Read(offset, length, result, scratch);
+}
+
+rocksdb::Status
+ircd::db::database::env::random_rw_file::Write(uint64_t offset,
+                                               const Slice &slice)
+{
+	log.debug("'%s': rwfile:%p write:%p offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          data(slice),
+	          offset,
+	          size(slice));
+
+	return defaults->Write(offset, slice);
+}
+
+bool
+ircd::db::database::env::random_rw_file::use_direct_io()
+const
+{
+	return defaults->use_direct_io();
+}
+
+size_t
+ircd::db::database::env::random_rw_file::GetRequiredBufferAlignment()
+const
+{
+	return defaults->GetRequiredBufferAlignment();
+}
+
+//
+// directory
+//
+
+ircd::db::database::env::directory::directory(database *const &d,
+                                              const std::string &name,
+                                              std::unique_ptr<Directory> defaults)
+:d{*d}
+,defaults{std::move(defaults)}
+{
+}
+
+ircd::db::database::env::directory::~directory()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::env::directory::Fsync()
+{
+	log.debug("'%s': directory:%p fsync",
+	          d.name,
+	          this);
+
+	return defaults->Fsync();
+}
+
+//
+// file_lock
+//
+
+ircd::db::database::env::file_lock::file_lock(database *const &d)
+:d{*d}
+{
+}
+
+ircd::db::database::env::file_lock::~file_lock()
+noexcept
+{
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -4627,6 +4993,21 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 	}
 
 	return "IO_????"_sv;
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::RandomAccessFile::AccessPattern &p)
+{
+	switch(p)
+	{
+		case rocksdb::RandomAccessFile::AccessPattern::NORMAL:      return "NORMAL"_sv;
+		case rocksdb::RandomAccessFile::AccessPattern::RANDOM:      return "RANDOM"_sv;
+		case rocksdb::RandomAccessFile::AccessPattern::SEQUENTIAL:  return "SEQUENTIAL"_sv;
+		case rocksdb::RandomAccessFile::AccessPattern::WILLNEED:    return "WILLNEED"_sv;
+		case rocksdb::RandomAccessFile::AccessPattern::DONTNEED:    return "DONTNEED"_sv;
+	}
+
+	return "??????"_sv;
 }
 
 bool
