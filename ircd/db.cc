@@ -1168,6 +1168,10 @@ ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnF
 // database::env
 //
 
+//
+// env
+//
+
 ircd::db::database::env::env(database *const &d)
 :d{*d}
 {
@@ -1214,7 +1218,14 @@ ircd::db::database::env::NewWritableFile(const std::string& name,
 	          name,
 	          &options);
 
-	return defaults.NewWritableFile(name, r, options);
+	std::unique_ptr<WritableFile> defaults;
+	const auto ret
+	{
+		this->defaults.NewWritableFile(name, &defaults, options)
+	};
+
+	*r = std::make_unique<writable_file>(&d, name, options, std::move(defaults));
+	return ret;
 }
 
 rocksdb::Status
@@ -1421,7 +1432,6 @@ ircd::db::database::env::Schedule(void (*f)(void* arg),
 	          a,
 	          tag,
 	          u,
-	          f,
 	          reflect(prio));
 
 	return defaults.Schedule(f, a, prio, tag, u);
@@ -1586,6 +1596,222 @@ const
 {
 	return defaults.GetThreadID();
 }
+
+//
+// writable_file
+//
+
+ircd::db::database::env::writable_file::writable_file(database *const &d,
+                                                      const std::string &name,
+                                                      const EnvOptions &opts,
+                                                      std::unique_ptr<WritableFile> defaults)
+:d{*d}
+,defaults{std::move(defaults)}
+{
+}
+
+ircd::db::database::env::writable_file::~writable_file()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Append(const Slice& s)
+{
+	log.debug("'%s': wfile:%p append:%p bytes:%zu",
+	          d.name,
+	          this,
+	          data(s),
+	          size(s));
+
+	return defaults->Append(s);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::PositionedAppend(const Slice& s,
+                                                         uint64_t offset)
+{
+	log.debug("'%s': wfile:%p append:%p bytes:%zu offset:%lu",
+	          d.name,
+	          this,
+	          data(s),
+	          size(s),
+	          offset);
+
+	return defaults->PositionedAppend(s, offset);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Truncate(uint64_t size)
+{
+	log.debug("'%s': wfile:%p truncate to %lu bytes",
+	          d.name,
+	          this,
+	          size);
+
+	return defaults->Truncate(size);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Close()
+{
+	log.debug("'%s': wfile:%p close",
+	          d.name,
+	          this);
+
+	return defaults->Close();
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Flush()
+{
+	log.debug("'%s': wfile:%p flush",
+	          d.name,
+	          this);
+
+	return defaults->Flush();
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Sync()
+{
+	log.debug("'%s': wfile:%p sync",
+	          d.name,
+	          this);
+
+	return defaults->Sync();
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Fsync()
+{
+	log.debug("'%s': wfile:%p fsync",
+	          d.name,
+	          this);
+
+	return defaults->Fsync();
+}
+
+bool
+ircd::db::database::env::writable_file::IsSyncThreadSafe()
+const
+{
+	return defaults->IsSyncThreadSafe();
+}
+
+void
+ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
+{
+	log.debug("'%s': wfile:%p set IO prio to %s",
+	          d.name,
+	          this,
+	          reflect(prio));
+
+	defaults->SetIOPriority(prio);
+}
+
+rocksdb::Env::IOPriority
+ircd::db::database::env::writable_file::GetIOPriority()
+{
+	return defaults->GetIOPriority();
+}
+
+uint64_t
+ircd::db::database::env::writable_file::GetFileSize()
+{
+	return defaults->GetFileSize();
+}
+
+void
+ircd::db::database::env::writable_file::GetPreallocationStatus(size_t* block_size,
+                                                               size_t* last_allocated_block)
+{
+	log.debug("'%s': wfile:%p get preallocation block_size:%p last_block:%p",
+	          d.name,
+	          this,
+	          block_size,
+	          last_allocated_block);
+
+	defaults->GetPreallocationStatus(block_size, last_allocated_block);
+}
+
+size_t
+ircd::db::database::env::writable_file::GetUniqueId(char* id,
+                                                    size_t max_size)
+const
+{
+	log.debug("'%s': wfile:%p get unique id:%p max_size:%zu",
+	          d.name,
+	          this,
+	          id,
+	          max_size);
+
+	return defaults->GetUniqueId(id, max_size);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
+                                                        size_t length)
+{
+	log.debug("'%s': wfile:%p invalidate cache offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->InvalidateCache(offset, length);
+}
+
+void
+ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
+{
+	log.debug("'%s': wfile:%p set preallocation block size:%zu",
+	          d.name,
+	          this,
+	          size);
+
+	defaults->SetPreallocationBlockSize(size);
+}
+
+void
+ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
+                                                     size_t length)
+{
+	log.debug("'%s': wfile:%p prepare write offset:%zu length:%zu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	defaults->PrepareWrite(offset, length);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Allocate(uint64_t offset,
+                                                 uint64_t length)
+{
+	log.debug("'%s': wfile:%p allocate offset:%lu length:%lu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->Allocate(offset, length);
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
+                                                  uint64_t length)
+{
+	log.debug("'%s': wfile:%p range sync offset:%lu length:%lu",
+	          d.name,
+	          this,
+	          offset,
+	          length);
+
+	return defaults->RangeSync(offset, length);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
