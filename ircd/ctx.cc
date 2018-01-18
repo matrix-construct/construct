@@ -752,10 +752,12 @@ try
 }
 catch(const interrupted &e)
 {
+/*
 	log::debug("pool(%p) ctx(%p): %s",
 	           this,
 	           &cur(),
 	           e.what());
+*/
 }
 
 void

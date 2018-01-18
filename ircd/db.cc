@@ -1618,11 +1618,13 @@ noexcept
 rocksdb::Status
 ircd::db::database::env::writable_file::Append(const Slice& s)
 {
+/*
 	log.debug("'%s': wfile:%p append:%p bytes:%zu",
 	          d.name,
 	          this,
 	          data(s),
 	          size(s));
+*/
 
 	return defaults->Append(s);
 }
@@ -1655,20 +1657,22 @@ ircd::db::database::env::writable_file::Truncate(uint64_t size)
 rocksdb::Status
 ircd::db::database::env::writable_file::Close()
 {
+/*
 	log.debug("'%s': wfile:%p close",
 	          d.name,
 	          this);
-
+*/
 	return defaults->Close();
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Flush()
 {
+/*
 	log.debug("'%s': wfile:%p flush",
 	          d.name,
 	          this);
-
+*/
 	return defaults->Flush();
 }
 
