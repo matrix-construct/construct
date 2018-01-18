@@ -38,7 +38,7 @@ namespace ircd::ctx
 	                     future<typename std::result_of<F (A...)>::type>>::type;
 
 	template<size_t stack_size = DEFAULT_STACK_SIZE,
-	         context::flags flags = (context::flags)0,
+	         context::flags flags = context::flags(0),
 	         class F,
 	         class... A>
 	future_value<F, A...> async(F&& f, A&&... a);

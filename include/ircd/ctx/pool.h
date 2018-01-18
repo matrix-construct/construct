@@ -90,18 +90,15 @@ ircd::ctx::pool::async(F&& f,
 		std::bind(std::forward<F>(f), std::forward<A>(a)...)
 	};
 
-	auto p
-	{
-		std::make_shared<promise<R>>()
-	};
-
-	(*this)([p, func(std::move(func))]
+	promise<R> p;
+	future<R> ret{p};
+	(*this)([p(std::move(p)), func(std::move(func))]
 	() -> void
 	{
-		p->set_value(func());
+		p.set_value(func());
 	});
 
-	return future<R>(*p);
+	return ret;
 }
 
 template<class F,
@@ -117,17 +114,14 @@ ircd::ctx::pool::async(F&& f,
 		std::bind(std::forward<F>(f), std::forward<A>(a)...)
 	};
 
-	auto p
-	{
-		std::make_shared<promise<R>>()
-	};
-
-	(*this)([p, func(std::move(func))]
+	promise<R> p;
+	future<R> ret{p};
+	(*this)([p(std::move(p)), func(std::move(func))]
 	() -> void
 	{
 		func();
-		p->set_value();
+		p.set_value();
 	});
 
-	return future<R>(*p);
+	return ret;
 }
