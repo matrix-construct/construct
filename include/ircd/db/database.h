@@ -37,7 +37,6 @@ namespace rocksdb
 	struct ColumnFamilyOptions;
 	struct PlainTableOptions;
 	struct BlockBasedTableOptions;
-	struct Snapshot;
 	struct Iterator;
 	struct ColumnFamilyHandle;
 	struct WriteBatch;
@@ -80,6 +79,7 @@ struct ircd::db::database
 	struct comparator;
 	struct prefix_transform;
 	struct column;
+	struct env;
 
 	using description = std::vector<descriptor>;
 

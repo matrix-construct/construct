@@ -21,31 +21,29 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_SNAPSHOT_H
+#define HAVE_IRCD_DB_DATABASE_STATS_H
 
-// Forward declarations for RocksDB because it is not included here.
-namespace rocksdb
+// This file is not part of the standard include stack because it requires
+// RocksDB symbols which we cannot forward declare. It is used internally
+// and does not need to be included by general users of IRCd.
+
+struct ircd::db::database::stats final
+:std::enable_shared_from_this<struct ircd::db::database::stats>
+,rocksdb::Statistics
 {
-	struct Snapshot;
-}
+	database *d;
+	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
+	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
 
-/// Database snapshot object. Maintaining this object will maintain a
-/// consistent state of access to the database at the sequence number
-/// from when it's acquired.
-struct ircd::db::database::snapshot
-{
-	std::shared_ptr<const rocksdb::Snapshot> s;
+	uint64_t getTickerCount(const uint32_t tickerType) const override;
+	void recordTick(const uint32_t tickerType, const uint64_t count) override;
+	void setTickerCount(const uint32_t tickerType, const uint64_t count) override;
+	void histogramData(const uint32_t type, rocksdb::HistogramData *) const override;
+	void measureTime(const uint32_t histogramType, const uint64_t time) override;
+	bool HistEnabledForType(const uint32_t type) const override;
+	uint64_t getAndResetTickerCount(const uint32_t tickerType) override;
 
-  public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
-
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
-
-	explicit snapshot(database &);
-	snapshot() = default;
-	~snapshot() noexcept;
-
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
+	stats(database *const &d)
+	:d{d}
+	{}
 };

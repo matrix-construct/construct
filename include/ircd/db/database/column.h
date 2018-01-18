@@ -21,31 +21,40 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_SNAPSHOT_H
+#define HAVE_IRCD_DB_DATABASE_COLUMN_H
 
-// Forward declarations for RocksDB because it is not included here.
-namespace rocksdb
-{
-	struct Snapshot;
-}
+// This file is not part of the standard include stack because it requires
+// RocksDB symbols which we cannot forward declare. It is used internally
+// and does not need to be included by general users of IRCd.
 
-/// Database snapshot object. Maintaining this object will maintain a
-/// consistent state of access to the database at the sequence number
-/// from when it's acquired.
-struct ircd::db::database::snapshot
+struct ircd::db::database::column final
+:std::enable_shared_from_this<database::column>
+,rocksdb::ColumnFamilyDescriptor
 {
-	std::shared_ptr<const rocksdb::Snapshot> s;
+	database *d;
+	std::type_index key_type;
+	std::type_index mapped_type;
+	database::descriptor descriptor;
+	comparator cmp;
+	prefix_transform prefix;
+	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
+	operator const rocksdb::ColumnFamilyOptions &();
+	operator const rocksdb::ColumnFamilyHandle *() const;
+	operator const database &() const;
 
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
+	operator rocksdb::ColumnFamilyOptions &();
+	operator rocksdb::ColumnFamilyHandle *();
+	operator database &();
 
-	explicit snapshot(database &);
-	snapshot() = default;
-	~snapshot() noexcept;
+	explicit column(database *const &d, const database::descriptor &);
+	column() = delete;
+	column(column &&) = delete;
+	column(const column &) = delete;
+	column &operator=(column &&) = delete;
+	column &operator=(const column &) = delete;
+	~column() noexcept;
 
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
+	friend void flush(column &, const bool &blocking);
 };

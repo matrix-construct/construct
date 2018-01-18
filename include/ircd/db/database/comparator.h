@@ -21,31 +21,28 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_SNAPSHOT_H
+#define HAVE_IRCD_DB_DATABASE_COMPARATOR_H
 
-// Forward declarations for RocksDB because it is not included here.
-namespace rocksdb
+// This file is not part of the standard include stack because it requires
+// RocksDB symbols which we cannot forward declare. It is used internally
+// and does not need to be included by general users of IRCd.
+
+struct ircd::db::database::comparator final
+:rocksdb::Comparator
 {
-	struct Snapshot;
-}
+	using Slice = rocksdb::Slice;
 
-/// Database snapshot object. Maintaining this object will maintain a
-/// consistent state of access to the database at the sequence number
-/// from when it's acquired.
-struct ircd::db::database::snapshot
-{
-	std::shared_ptr<const rocksdb::Snapshot> s;
+	database *d;
+	db::comparator user;
 
-  public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
+	void FindShortestSeparator(std::string *start, const Slice &limit) const override;
+	void FindShortSuccessor(std::string *key) const override;
+	int Compare(const Slice &a, const Slice &b) const override;
+	bool Equal(const Slice &a, const Slice &b) const override;
+	const char *Name() const override;
 
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
-
-	explicit snapshot(database &);
-	snapshot() = default;
-	~snapshot() noexcept;
-
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
+	comparator(database *const &d, db::comparator user)
+	:d{d}
+	,user{std::move(user)}
+	{}
 };

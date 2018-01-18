@@ -33,6 +33,15 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice_transform.h>
 
+#include <ircd/db/database/comparator.h>
+#include <ircd/db/database/prefix_transform.h>
+#include <ircd/db/database/mergeop.h>
+#include <ircd/db/database/events.h>
+#include <ircd/db/database/stats.h>
+#include <ircd/db/database/logs.h>
+#include <ircd/db/database/column.h>
+#include <ircd/db/database/env.h>
+
 namespace ircd::db
 {
 	const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
@@ -88,149 +97,6 @@ namespace ircd::db
 	std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
 	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 }
-
-struct ircd::db::database::logs final
-:std::enable_shared_from_this<struct database::logs>
-,rocksdb::Logger
-{
-	database *d;
-
-	// Logger
-	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) override;
-	void Logv(const char *fmt, va_list ap) override;
-	void LogHeader(const char *fmt, va_list ap) override;
-
-	logs(database *const &d)
-	:d{d}
-	{}
-};
-
-struct ircd::db::database::stats final
-:std::enable_shared_from_this<struct ircd::db::database::stats>
-,rocksdb::Statistics
-{
-	database *d;
-	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
-	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
-
-	uint64_t getTickerCount(const uint32_t tickerType) const override;
-	void recordTick(const uint32_t tickerType, const uint64_t count) override;
-	void setTickerCount(const uint32_t tickerType, const uint64_t count) override;
-	void histogramData(const uint32_t type, rocksdb::HistogramData *) const override;
-	void measureTime(const uint32_t histogramType, const uint64_t time) override;
-	bool HistEnabledForType(const uint32_t type) const override;
-	uint64_t getAndResetTickerCount(const uint32_t tickerType) override;
-
-	stats(database *const &d)
-	:d{d}
-	{}
-};
-
-struct ircd::db::database::events final
-:std::enable_shared_from_this<struct ircd::db::database::events>
-,rocksdb::EventListener
-{
-	database *d;
-
-	void OnFlushCompleted(rocksdb::DB *, const rocksdb::FlushJobInfo &) override;
-	void OnCompactionCompleted(rocksdb::DB *, const rocksdb::CompactionJobInfo &) override;
-	void OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &) override;
-	void OnTableFileCreated(const rocksdb::TableFileCreationInfo &) override;
-	void OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &) override;
-	void OnMemTableSealed(const rocksdb::MemTableInfo &) override;
-	void OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *) override;
-
-	events(database *const &d)
-	:d{d}
-	{}
-};
-
-struct ircd::db::database::mergeop final
-:std::enable_shared_from_this<struct ircd::db::database::mergeop>
-,rocksdb::AssociativeMergeOperator
-{
-	database *d;
-	merge_closure merger;
-
-	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const override;
-	const char *Name() const override;
-
-	mergeop(database *const &d, merge_closure merger = nullptr)
-	:d{d}
-	,merger{merger? std::move(merger) : ircd::db::merge_operator}
-	{}
-};
-
-struct ircd::db::database::comparator final
-:rocksdb::Comparator
-{
-	using Slice = rocksdb::Slice;
-
-	database *d;
-	db::comparator user;
-
-	void FindShortestSeparator(std::string *start, const Slice &limit) const override;
-	void FindShortSuccessor(std::string *key) const override;
-	int Compare(const Slice &a, const Slice &b) const override;
-	bool Equal(const Slice &a, const Slice &b) const override;
-	const char *Name() const override;
-
-	comparator(database *const &d, db::comparator user)
-	:d{d}
-	,user{std::move(user)}
-	{}
-};
-
-struct ircd::db::database::prefix_transform final
-:rocksdb::SliceTransform
-{
-	using Slice = rocksdb::Slice;
-
-	database *d;
-	db::prefix_transform user;
-
-	const char *Name() const override;
-	bool InDomain(const Slice &key) const override;
-	bool InRange(const Slice &key) const override;
-	Slice Transform(const Slice &key) const override;
-
-	prefix_transform(database *const &d, db::prefix_transform user)
-	:d{d}
-	,user{std::move(user)}
-	{}
-};
-
-struct ircd::db::database::column final
-:std::enable_shared_from_this<database::column>
-,rocksdb::ColumnFamilyDescriptor
-{
-	database *d;
-	std::type_index key_type;
-	std::type_index mapped_type;
-	database::descriptor descriptor;
-	comparator cmp;
-	prefix_transform prefix;
-	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
-
-  public:
-	operator const rocksdb::ColumnFamilyOptions &();
-	operator const rocksdb::ColumnFamilyHandle *() const;
-	operator const database &() const;
-
-	operator rocksdb::ColumnFamilyOptions &();
-	operator rocksdb::ColumnFamilyHandle *();
-	operator database &();
-
-	explicit column(database *const &d, const database::descriptor &);
-	column() = delete;
-	column(column &&) = delete;
-	column(const column &) = delete;
-	column &operator=(column &&) = delete;
-	column &operator=(const column &) = delete;
-	~column() noexcept;
-
-	friend void flush(column &, const bool &blocking);
-};
 
 struct ircd::db::throw_on_error
 {
@@ -1202,6 +1068,11 @@ const
 {
 	return ticker.at(type);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::events
+//
 
 void
 ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,

@@ -21,31 +21,24 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_SNAPSHOT_H
+#define HAVE_IRCD_DB_DATABASE_LOGS_H
 
-// Forward declarations for RocksDB because it is not included here.
-namespace rocksdb
+// This file is not part of the standard include stack because it requires
+// RocksDB symbols which we cannot forward declare. It is used internally
+// and does not need to be included by general users of IRCd.
+
+struct ircd::db::database::logs final
+:std::enable_shared_from_this<struct database::logs>
+,rocksdb::Logger
 {
-	struct Snapshot;
-}
+	database *d;
 
-/// Database snapshot object. Maintaining this object will maintain a
-/// consistent state of access to the database at the sequence number
-/// from when it's acquired.
-struct ircd::db::database::snapshot
-{
-	std::shared_ptr<const rocksdb::Snapshot> s;
+	// Logger
+	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) override;
+	void Logv(const char *fmt, va_list ap) override;
+	void LogHeader(const char *fmt, va_list ap) override;
 
-  public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
-
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
-
-	explicit snapshot(database &);
-	snapshot() = default;
-	~snapshot() noexcept;
-
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
+	logs(database *const &d)
+	:d{d}
+	{}
 };
