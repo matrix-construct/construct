@@ -82,32 +82,28 @@ struct ircd::fs::aio::request
 
 	ssize_t retval {0};
 	ssize_t errcode {0};
-	ctx::ctx *waiter {nullptr};
+	ctx::ctx *waiter {ctx::current};
 
-	/// called if close_fd is true
-	void close_fildes() noexcept;
-
-	/// Overriden by types of requests
-	virtual void handle() = 0;
+	void handle();
 
   public:
-	// Submit a request. ctx overload will properly yield
-	size_t operator()(ctx::ctx &waiter);
-	void operator()();
-
+	size_t operator()();
 	void cancel();
 
 	request(const int &fd);
-	virtual ~request() noexcept;
+	~request() noexcept;
 };
 
 ircd::fs::aio::request::request(const int &fd)
 :iocb{0}
 {
 	assert(aioctx);
+	assert(ctx::current);
+
 	aio_flags = IOCB_FLAG_RESFD;
 	aio_resfd = aioctx->resfd.native_handle();
 	aio_fildes = fd;
+	aio_data = uintptr_t(this);
 }
 
 /// vtable base
@@ -130,23 +126,26 @@ ircd::fs::aio::request::cancel()
 	aioctx->handle_event(result);
 }
 
-/// Submit a request and properly yield the ircd::ctx. The ctx argument
-/// must be the currently running ctx (or ctx::current) for now; there is
-/// no other usage. When this returns the result will be available or
-/// exception will be thrown.
+/// Submit a request and properly yield the ircd::ctx. When this returns the
+/// result will be available or an exception will be thrown.
 size_t
-ircd::fs::aio::request::operator()(ctx::ctx &waiter)
+ircd::fs::aio::request::operator()()
 try
 {
-	// Cooperation strategy is to set this->waiter to the ctx and wait for
-	// notification with this->waiter set to null to ignore spurious notes.
-	assert(&waiter == ctx::current);
-	this->waiter = &waiter;
-	operator()(); do
+	assert(aioctx);
+	assert(ctx::current);
+	assert(waiter == ctx::current);
+
+	struct iocb *const cbs[]
+	{
+		static_cast<iocb *>(this)
+	};
+
+	syscall<SYS_io_submit>(aioctx->idp, 1, &cbs); do
 	{
 		ctx::wait();
 	}
-	while(this->waiter);
+	while(!retval && !errcode);
 
 	if(retval == -1)
 		throw_system_error(errcode);
@@ -158,33 +157,21 @@ catch(const ctx::interrupted &e)
 	// When the ctx is interrupted we're obligated to cancel the request.
 	// The handler callstack is invoked directly from here by cancel() for
 	// what it's worth but we rethrow the interrupt anyway.
-	this->waiter = nullptr;
 	cancel();
 	throw;
 }
 
-/// Submit a request.
 void
-ircd::fs::aio::request::operator()()
+ircd::fs::aio::request::handle()
 {
-	struct iocb *const cbs[]
-	{
-		static_cast<iocb *>(this)
-	};
-
-	assert(aioctx);
-	syscall<SYS_io_submit>(aioctx->idp, 1, &cbs);
-/*
-	log::debug("AIO request(%p) fd:%u op:%d bytes:%lu off:%ld prio:%d ctx:%p submit",
-	           this,
-	           this->aio_fildes,
-	           this->aio_lio_opcode,
-	           this->aio_nbytes,
-	           this->aio_offset,
-	           this->aio_reqprio,
-	           this->waiter);
-*/
+	assert(this->retval || errcode);
+	if(likely(waiter && waiter != ctx::current))
+		ircd::ctx::notify(*waiter);
 }
+
+//
+// aio
+//
 
 void
 ircd::fs::aio::set_handle()
@@ -253,7 +240,7 @@ ircd::fs::aio::handle_event(const io_event &event)
 noexcept try
 {
 	// Our extended control block is passed in event.data
-	auto *const request
+	auto *const &request
 	{
 		reinterpret_cast<aio::request *>(event.data)
 	};
@@ -282,9 +269,6 @@ noexcept try
 	           request->retval,
 	           request->errcode);
 */
-	// virtual dispatch based on the request type. Alternatively, we could
-	// switch() on the iocb lio_opcode and downcast... but that's what vtable
-	// does for us right here.
 	request->handle();
 }
 catch(const std::exception &e)
@@ -293,21 +277,6 @@ catch(const std::exception &e)
 	              event.data,
 	              &event,
 	              e.what());
-}
-
-/// If requested, close the file descriptor. Errors here can be logged but
-/// must be otherwise ignored.
-void
-ircd::fs::aio::request::close_fildes()
-noexcept try
-{
-	syscall(::close, aio_fildes);
-}
-catch(const std::exception &e)
-{
-	log::error("Failed to close request(%p) fd:%d: %s",
-	           this,
-	           aio_fildes);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -325,8 +294,6 @@ namespace ircd::fs
 struct ircd::fs::aio::request::read
 :request
 {
-	virtual void handle() final override;
-
 	read(const int &fd, const mutable_raw_buffer &buf, const read_opts &opts);
 };
 
@@ -335,23 +302,12 @@ ircd::fs::aio::request::read::read(const int &fd,
                                    const read_opts &opts)
 :request{fd}
 {
-	aio_data = uintptr_t(this);
 	aio_reqprio = opts.priority;
 	aio_lio_opcode = IOCB_CMD_PREAD;
 
 	aio_buf = uintptr_t(buffer::data(buf));
 	aio_nbytes = buffer::size(buf);
 	aio_offset = opts.offset;
-}
-
-void
-ircd::fs::aio::request::read::handle()
-{
-	if(!waiter)
-		return;
-
-	ircd::ctx::notify(*waiter);
-	waiter = nullptr;
 }
 
 //
@@ -396,7 +352,7 @@ ircd::fs::read__aio(const string_view &path,
 
 	const size_t bytes
 	{
-		request(ctx::cur())
+		request()
 	};
 
 	ret.resize(bytes);
@@ -429,7 +385,7 @@ ircd::fs::read__aio(const string_view &path,
 
 	const size_t bytes
 	{
-		request(ctx::cur())
+		request()
 	};
 
 	const string_view view
