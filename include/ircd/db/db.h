@@ -95,6 +95,7 @@ namespace ircd::db
 	rocksdb::Slice slice(const string_view &);
 	string_view slice(const rocksdb::Slice &);
 	size_t size(const rocksdb::Slice &);
+	const char *data(const rocksdb::Slice &);
 
 	bool valid(const rocksdb::Iterator &);
 	string_view key(const rocksdb::Iterator &);

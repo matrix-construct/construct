@@ -4516,6 +4516,12 @@ ircd::db::val(const rocksdb::Iterator &it)
 	return slice(it.value());
 }
 
+const char *
+ircd::db::data(const rocksdb::Slice &slice)
+{
+	return slice.data();
+}
+
 size_t
 ircd::db::size(const rocksdb::Slice &slice)
 {
