@@ -4290,6 +4290,12 @@ ircd::db::val(const rocksdb::Iterator &it)
 	return slice(it.value());
 }
 
+size_t
+ircd::db::size(const rocksdb::Slice &slice)
+{
+	return slice.size();
+}
+
 rocksdb::Slice
 ircd::db::slice(const string_view &sv)
 {
