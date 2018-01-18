@@ -11,10 +11,10 @@ underpinned the major IRC networks for decades.
 
 Due to its age and stagnation since the mid-2000's, a growing number of proprietary cloud services
 are now filling the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
-real-time communication for free & open source software: a *federation of networks* known as
+real-time communication for free and open source software: a *federation of networks* known as
 *the matrix*.
 
-**IRCd has been rewritten to implement the [Matrix Federation](https://matrix.org/docs/spec/)**.
+**IRCd has been rewritten to implement the [Federation](https://matrix.org/docs/spec/)**.
 
 This is the opportunity to take back control of your communication and relegate the
 opaque cloud services to being just another provider to the federation.
@@ -22,8 +22,6 @@ Though not syntactically backwards-compatible with the legacy IRC protocol, it i
 translated as a superset. Similar to the legacy IRC protocol's origins, it wisely leverages
 technologies in vogue for its day to aid the virility of implementations. A vibrant and
 growing ecosystem [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
-
-<!-- <img align="left" src="https://i.imgur.com/mHGxDyC.png" /> -->
 
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
@@ -61,7 +59,7 @@ A dependency of RocksDB.
 **zlib**, **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 
-*Upcoming dependencies*:
+##### Planned dependencies
 
 - **libmozjs** (Optional JavaScript embedding):
 The matrix room is directly represented as a javascript object. :art:
@@ -136,35 +134,43 @@ make install
  * Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
  directory is doc/html. Browse to doc/html/index.html
 
-### Plan
+## Plan
 
-The roadmap for service is as follows:
+<img align="right" src="https://i.imgur.com/mHGxDyC.png" />
 
-- [x] Phase One: Matrix clients using HTTPS.
-- [ ] Phase Two: Legacy IRC networks using TS6 protocol (Atheme Federation).
-- [ ] Phase Three: Legacy IRC clients using RFC1459/RFC2812 legacy grammars.
+#### Roadmap for service
 
-The roadmap for innovation is as follows:
+- [x] Phase One
+- Matrix clients using HTTPS.
+
+- [ ] Phase Two
+- Legacy IRC networks using TS6 protocol.
+
+- [ ] Phase Three
+- Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
+
+
+#### Roadmap for innovation
 
 - [x] Phase Zero: **Core libircd**
-> Utils; Modules; Userspace contexts; Format strings; JSON; Database; Networking; HTTP; etc...
+- Utils; Modules; Userspace contexts; Format strings; JSON; Database; Networking; HTTP; etc...
 
 - [x] Phase One: **Matrix Protocol**
-> Core VM; Core modules; Protocol endpoints; Angular/JS client.
+- Core VM; Core modules; Protocol endpoints; Angular/JS client.
 
 - [ ] Phase Two: **Construct Clustering**
-> Kademlia sharding of events database; Maymounkov's erasure codes over shards.
+- Kademlia sharding of events database; Maymounkov's erasure codes over shards.
 
-- [ ] Phase Three: Graduation
-> Tromer/Virza's zkSNARK applied to JavaScript XDR evaluation verifying the distributed
-> execution of a matrix room using MNT pairing curves.
+- [ ] Phase Three: **Graduate Seminar**
+- Tromer/Virza's zkSNARK applied to JavaScript XDR evaluation verifying the distributed
+execution of a matrix room using MNT pairing curves.
 
-- [ ] Phase Four: Dissertation
-> Phase Three **_with RingLWE_**; GPU accelerated matrix multiplication for
-> the number theoretic transform...
+- [ ] Phase Four: **Dissertation Defense**
+- Phase Three _with RingLWE_; GPU accelerated matrix multiplication for
+the number theoretic transform...
 
-- [ ] Phase Five: Habilitation
-> Phase Four **_under fully homomorphic encryption_**.
+- [ ] Phase Five: **Habilitation**
+- Phase Four _under fully homomorphic encryption_.
 
 
 ### IRCd Library
@@ -204,7 +210,7 @@ developers must not block execution. While the `io_service` can be run safely
 on multiple threads by the embedder's application, libircd will use a single
 `io_service::strand`.
 
-This methodology ensures there is an uninterrupted execution working through
+This methodology ensures there is an _uninterrupted execution_ working through
 a single event queue providing service. If there are periods of execution
 which are computationally intense like parsing, hashing, cryptography, etc: this
 is absorbed in lieu of thread synchronization and bus contention. Scaling this
@@ -219,10 +225,11 @@ a threading model, but it is heterogeneous.
 
 ##### libircd introduces userspace threading✝
 
-IRCd presents an interface introducing stackful coroutines, a.k.a. userspace context
-switching, or green threads. The library avoids callbacks as the way to break up
-execution when waiting for events. Instead, we harken back to the simple old ways
-of synchronous programming where control flow and data are easy to follow.
+IRCd presents an interface introducing stackful coroutines, a.k.a. userspace
+context switching, a.k.a. green threads, a.k.a. fibers. The library avoids callbacks
+as the way to break up execution when waiting for events. Instead, we harken back
+to the simple old ways of synchronous programming where control flow and data are
+easy to follow.
 
 ✝ If there are certain cases where we don't want a stack to linger which may
 jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
