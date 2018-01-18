@@ -43,6 +43,11 @@ namespace ircd::info
 	extern const std::string configured;
 	extern const std::string startup;
 
+	extern const size_t max_align;
+	extern const size_t hardware_concurrency;
+	extern const size_t destructive_interference;
+	extern const size_t constructive_interference;
+
 	void init();
 }
 

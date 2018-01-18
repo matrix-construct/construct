@@ -45,6 +45,14 @@ ircd::info::init()
 	          db::version,
 	          nacl::version(),
 	          openssl::version());
+
+	// This message flashes information about our dependencies which are being
+	// assumed for this execution.
+	log::debug("max_align=%zu hardware_concurrency=%zu destructive_interference=%zu constructive_interference=%zu",
+	           max_align,
+	           hardware_concurrency,
+	           destructive_interference,
+	           constructive_interference);
 }
 
 /* XXX: integrate CREDITS text again somehow */
@@ -264,3 +272,35 @@ ircd::info::myinfo
 	{"USE_IODEBUG_HOOKS", "NO", 0, "IO Debugging support"},
 	#endif
 }};
+
+decltype(ircd::info::max_align)
+ircd::info::max_align
+{
+	alignof(std::max_align_t)
+};
+
+decltype(ircd::info::hardware_concurrency)
+ircd::info::hardware_concurrency
+{
+	std::thread::hardware_concurrency()
+};
+
+decltype(ircd::info::destructive_interference)
+ircd::info::destructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_destructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::constructive_interference)
+ircd::info::constructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_constructive_interference_size
+	#else
+		0
+	#endif
+};
