@@ -272,7 +272,7 @@ fmt::snprintf::snprintf(internal_t,
 try
 :fstart{strchr(fstr, SPECIFIER)}
 ,fstop{fstr}
-,fend{fstr + strlen(fstr)}
+,fend{fstr + strnlen(fstr, max)}
 ,obeg{out}
 ,oend{out + max}
 ,out{out}
@@ -286,12 +286,13 @@ try
 
 	if(!fstart)
 	{
-		append(fstr, fend);
+		const mutable_buffer dst{out, max};
+		const const_buffer src{fstr, fend};
+		this->out += strlcpy(dst, src);
 		return;
 	}
 
 	append(fstr, fstart);
-
 	auto it(begin(v));
 	for(size_t i(0); i < v.size(); ++it, i++)
 	{
@@ -300,10 +301,17 @@ try
 		const auto &type(get<1>(*it));
 		argument(std::make_tuple(ptr, std::type_index(*type)));
 	}
+
+	assert(this->out >= obeg);
+	assert(this->out < oend);
+	*this->out = '\0';
 }
 catch(const std::out_of_range &e)
 {
-	throw invalid_format("Format string requires more than %zu arguments.", v.size());
+	throw invalid_format
+	{
+		"Format string requires more than %zu arguments.", v.size()
+	};
 }
 
 void
@@ -317,23 +325,21 @@ fmt::snprintf::argument(const arg &val)
 		handle_specifier(out, remaining(), idx++, spec, val);
 
 	fstop = fstart;
-	if(fstart < fend)
-	{
-		fstart = strchr(fstart, SPECIFIER);
-		append(fstop, fstart?: fend);
-	}
-	else *out = '\0';
+	if(fstart >= fend)
+		return;
+
+	fstart = strchr(fstart, SPECIFIER);
+	append(fstop, fstart?: fend);
 }
 
 void
 fmt::snprintf::append(const char *const &begin,
                       const char *const &end)
 {
-	const size_t len(std::distance(begin, end));
-	const size_t &cpsz(std::min(len, size_t(remaining())));
+	const size_t &len(std::distance(begin, end));
+	const size_t &cpsz(std::min(len, remaining()));
 	memcpy(out, begin, cpsz);
 	out += cpsz;
-	*out = '\0';
 }
 
 const decltype(fmt::_specifiers) &
@@ -352,7 +358,10 @@ fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 {
 	for(const auto &name : this->names)
 		if(is_specifier(name))
-			throw error("Specifier '%s' already registered\n", name);
+			throw error
+			{
+				"Specifier '%s' already registered\n", name
+			};
 
 	for(const auto &name : this->names)
 		_specifiers.emplace(name, this);
@@ -382,24 +391,33 @@ try
 	const auto &type(get<1>(val));
 	const auto &handler(*specifiers().at(spec.name));
 	if(unlikely(!handler(out, max, spec, val)))
-		throw invalid_type("`%s' (%s) for format specifier '%s' for argument #%u",
-		                   demangle(type.name()),
-		                   type.name(),
-		                   spec.name,
-		                   idx);
+		throw invalid_type
+		{
+			"`%s' (%s) for format specifier '%s' for argument #%u",
+			demangle(type.name()),
+			type.name(),
+			spec.name,
+			idx
+		};
 }
 catch(const std::out_of_range &e)
 {
-	throw invalid_format("Unhandled specifier `%s' for argument #%u in format string",
-	                     spec.name,
-	                     idx);
+	throw invalid_format
+	{
+		"Unhandled specifier `%s' for argument #%u in format string",
+		spec.name,
+		idx
+	};
 }
 catch(const illegal &e)
 {
-	throw illegal("Specifier `%s' for argument #%u: %s",
-	              spec.name,
-	              idx,
-	              e.what());
+	throw illegal
+	{
+		"Specifier `%s' for argument #%u: %s",
+		spec.name,
+		idx,
+		e.what()
+	};
 }
 
 template<class T,

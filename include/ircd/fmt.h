@@ -112,8 +112,8 @@ class ircd::fmt::snprintf
 
   protected:
 	auto finished() const                        { return !fstart || fstop >= fend;                }
-	auto remaining() const                       { return (oend - out) - 1;                        }
-	auto consumed() const                        { return size_t(out - obeg);                      }
+	size_t remaining() const                     { return std::max(oend - out - 1, 0L);            }
+	size_t consumed() const                      { return out - obeg;                              }
 	auto &buffer() const                         { return obeg;                                    }
 
 	void append(const char *const &begin, const char *const &end);
