@@ -47,18 +47,6 @@ namespace ircd
 	// Binary <-> Hex conversion suite
 	string_view u2a(const mutable_buffer &out, const const_raw_buffer &in);
 	const_raw_buffer a2u(const mutable_raw_buffer &out, const const_buffer &in);
-
-	// Binary -> Base64 conversion suite
-	string_view b64encode(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string b64encode(const const_raw_buffer &in);
-
-	// Binary -> Base64 conversion without padding
-	string_view b64encode_unpadded(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string b64encode_unpadded(const const_raw_buffer &in);
-
-	// Base64 -> Binary conversion (padded or unpadded)
-	const_raw_buffer b64decode(const mutable_raw_buffer &out, const string_view &in);
-	std::string b64decode(const string_view &in);
 }
 
 namespace ircd
