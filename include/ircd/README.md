@@ -6,6 +6,8 @@
 * `RB_`       Preprocessor #define and macro namespace (legacy / low-level).
 * `ircd_`     C namespace and demangled bindings.
 * `ircd::`    C++ namespace scope.
+* `X-IRCd-`   HTTP header key namespace.
+* `ircd.`     Matrix event type namespace.
 
 #### What To Include
 
