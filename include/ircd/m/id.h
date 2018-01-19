@@ -82,7 +82,7 @@ struct ircd::m::id
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
 	id(const enum sigil &, const mutable_buffer &, const generate_t &, const string_view &host);
-	id(const enum sigil &, const mutable_buffer &, const string_view &name, const string_view &host);
+	id(const enum sigil &, const mutable_buffer &, const string_view &local, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &id);
 	id(const enum sigil &, const string_view &id);
 	id(const string_view &id);

@@ -414,16 +414,15 @@ ircd::m::id::id(const id::sigil &sigil,
 	validate(sigil, id);
 }
 
-ircd::m::id::id(const id::sigil &sigil,
+ircd::m::id::id(const enum sigil &sigil,
                 const mutable_buffer &buf,
-                const string_view &id)
-:string_view
-{[&sigil, &buf, &id]
+                const string_view &local,
+                const string_view &host)
+:string_view{[&sigil, &buf, &local, &host]
 {
 	const string_view src
 	{
-		buffer::data(buf),
-		buffer::data(buf) != id.data()? strlcpy(buffer::data(buf), id, buffer::size(buf)) : id.size()
+		buffer::data(buf), size_t(fmt::sprintf(buf, "%c%s:%s", char(sigil), local, host))
 	};
 
 	return parser(sigil, src);
@@ -431,57 +430,26 @@ ircd::m::id::id(const id::sigil &sigil,
 {
 }
 
-ircd::m::id::id(const enum sigil &sigil,
+ircd::m::id::id(const id::sigil &sigil,
                 const mutable_buffer &buf,
-                const string_view &name,
-                const string_view &host)
-:string_view{[&]() -> string_view
+                const string_view &id)
+:string_view{[&sigil, &buf, &id]
 {
-	//TODO: output grammar
-
-	using buffer::data;
-	using buffer::size;
-
-	const size_t &max{size(buf)};
-	if(!max)
-		return {};
-
-	size_t len(0);
-	if(!startswith(name, sigil))
-		buf[len++] = char(sigil);
-
-	const auto has_sep
+	const auto len
 	{
-		std::count(std::begin(name), std::end(name), ':')
+		buffer::data(buf) != id.data()?
+			strlcpy(buffer::data(buf), id, buffer::size(buf)):
+			id.size()
 	};
 
-	if(!has_sep && host.empty())
+	const string_view src
 	{
-		len += strlcpy(data(buf) + len, name, max - len);
-	}
-	else if(!has_sep && !host.empty())
-	{
-		len += fmt::snprintf(data(buf) + len, max - len, "%s:%s",
-		                     name,
-		                     host);
-	}
-	else if(has_sep == 1 && !host.empty() && !split(name, ':').second.empty())
-	{
-		len += strlcpy(data(buf) + len, name, max - len);
-	}
-	else if(has_sep >= 1 && !host.empty())
-	{
-		if(split(name, ':').second != host)
-			throw INVALID_MXID("MXID must be on host '%s'", host);
+		buffer::data(buf), len
+	};
 
-		len += strlcpy(data(buf) + len, name, max - len);
-	}
-	//else throw INVALID_MXID("Not a valid '%s' mxid", reflect(sigil));
-
-	return { data(buf), len };
+	return parser(sigil, src);
 }()}
 {
-	validate(sigil, *this);
 }
 
 ircd::m::id::id(const enum sigil &sigil,
