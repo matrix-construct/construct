@@ -1,4 +1,3 @@
-//
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
@@ -6,19 +5,8 @@
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice is present in all copies.
-//
-// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-// IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
+// copyright notice and this permission notice is present in all copies. The
+// full license for this software is available in the LICENSE file.
 
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_H
@@ -119,17 +107,17 @@ struct ircd::db::database
 	void operator()(const std::initializer_list<delta> &);
 	void operator()(const delta &);
 
-    database(std::string name,
-             std::string options,
-             description);
+	database(std::string name,
+	         std::string options,
+	         description);
 
-    database(std::string name,
-             std::string options = {});
+	database(std::string name,
+	         std::string options = {});
 
 	database() = default;
 	database(database &&) = delete;
 	database(const database &) = delete;
-    ~database() noexcept;
+	~database() noexcept;
 
 	// Get this instance from any column.
 	static const database &get(const column &);
@@ -148,61 +136,3 @@ namespace ircd::db
 	uint32_t id(const database::column &);
 	void drop(database::column &);                   // Request to erase column from db
 }
-
-/// Descriptor of a column when opening database. Database must be opened with
-/// a consistent set of descriptors describing what will be found upon opening.
-struct ircd::db::database::descriptor
-{
-	using typing = std::pair<std::type_index, std::type_index>;
-
-	std::string name;
-	std::string explain;
-	typing type { typeid(string_view), typeid(string_view) };
-	std::string options {};
-	db::comparator cmp {};
-	db::prefix_transform prefix {};
-};
-
-/// options <-> string
-struct ircd::db::database::options
-:std::string
-{
-	struct map;
-
-	// Output of options structures from this string
-	explicit operator rocksdb::Options() const;
-	operator rocksdb::DBOptions() const;
-	operator rocksdb::ColumnFamilyOptions() const;
-	operator rocksdb::PlainTableOptions() const;
-	operator rocksdb::BlockBasedTableOptions() const;
-
-	// Input of options structures output to this string
-	explicit options(const rocksdb::ColumnFamilyOptions &);
-	explicit options(const rocksdb::DBOptions &);
-	explicit options(const database::column &);
-	explicit options(const database &);
-
-	// Input of options string from user
-	options(std::string string)
-	:std::string{std::move(string)}
-	{}
-};
-
-/// options <-> map
-struct ircd::db::database::options::map
-:std::unordered_map<std::string, std::string>
-{
-	// Output of options structures from map
-	operator rocksdb::DBOptions() const;
-	operator rocksdb::ColumnFamilyOptions() const;
-	operator rocksdb::PlainTableOptions() const;
-	operator rocksdb::BlockBasedTableOptions() const;
-
-	// Convert option string to map
-	map(const options &);
-
-	// Input of options map from user
-	map(std::unordered_map<std::string, std::string> m)
-	:std::unordered_map<std::string, std::string>{std::move(m)}
-	{}
-};

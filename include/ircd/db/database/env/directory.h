@@ -9,24 +9,22 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_DB_DATABASE_LOGS_H
+#define HAVE_IRCD_DB_DATABASE_ENV_DIRECTORY_H
 
 // This file is not part of the standard include stack because it requires
 // RocksDB symbols which we cannot forward declare. It is used internally
 // and does not need to be included by general users of IRCd.
 
-struct ircd::db::database::logs final
-:std::enable_shared_from_this<struct database::logs>
-,rocksdb::Logger
+struct ircd::db::database::env::directory final
+:rocksdb::Directory
 {
-	database *d;
+	using Status = rocksdb::Status;
 
-	// Logger
-	void Logv(const rocksdb::InfoLogLevel level, const char *fmt, va_list ap) noexcept override;
-	void Logv(const char *fmt, va_list ap) noexcept override;
-	void LogHeader(const char *fmt, va_list ap) noexcept override;
+	database &d;
+	std::unique_ptr<Directory> defaults;
 
-	logs(database *const &d)
-	:d{d}
-	{}
+	Status Fsync() noexcept override;
+
+	directory(database *const &d, const std::string &name, std::unique_ptr<Directory> defaults);
+	~directory() noexcept;
 };

@@ -40,7 +40,13 @@
 #include <ircd/db/database/stats.h>
 #include <ircd/db/database/logs.h>
 #include <ircd/db/database/column.h>
-#include <ircd/db/database/env.h>
+#include <ircd/db/database/env/env.h>
+#include <ircd/db/database/env/writable_file.h>
+#include <ircd/db/database/env/sequential_file.h>
+#include <ircd/db/database/env/random_access_file.h>
+#include <ircd/db/database/env/random_rw_file.h>
+#include <ircd/db/database/env/directory.h>
+#include <ircd/db/database/env/file_lock.h>
 
 namespace ircd::db
 {
