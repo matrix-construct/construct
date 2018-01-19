@@ -110,12 +110,12 @@ This means when a variable, or member (a **resource**) first comes into scope,
 i.e. it is declared or accessible (**acquired**), it must be **initialized**
 to a completely consistent state at that point.
 
-* Window shade analogy:
 >
 > Imagine pulling down a window shade to hide the sun. As you pull down, the canvas
 > unrolls from its spool at the top. Your goal is to hook the shade on to the nail
-> at the bottom of the window: that is a commitment. If you slip and let go, the
-> shade will roll back up into the spool at the top: that is an exception.
+> at the bottom of the window: that is reaching the return statement. If you slip
+> and let go, the shade will roll back up into the spool at the top: that is an
+> exception.
 >
 > What you can't do is prepare work on the way down which needs _any_ further pulling
 > to be in a consistent state and not leak. You might slip and let go at any time for
@@ -123,9 +123,9 @@ to a completely consistent state at that point.
 > requiring more pulling.
 >
 > Indeed slipping and letting go is an accident -- but the point is that *accidents
-> happen*. They're not always your fault, and many times are outside of your control.
-> This is a good approach for robust and durable code over long-lived large-scale
-> projects.
+> happen*. They're not always your fault, and many times are in other parts of the
+> code which are outside of your control. This is a good approach for robust and
+> durable code over long-lived large-scale projects.
 >
 
 
@@ -226,8 +226,28 @@ the ability to assign, move, and reuse the object because references cannot be
 reseated; then the "~~big three~~" "big five" custom constructors have to be
 created and maintained, and it becomes an unnecessary mess.
 
-
 #### Comments
+
+##### Documentation will be pedantic, windy and even patronizing
+
+This is considered a huge anti-pattern in most other contexts where comments
+and documentation are minimal, read by experts, end up being misleading, tend
+to diverge from their associated code after maintenance, etc. This project is
+an exception. Consider two things:
+
+1. This is a free and open source public internet project. The goal here
+is to make it easy for many-eyeballs to understand everything. Then,
+many-eyeballs can help fix comments which become misleading.
+
+2. Most free and open source public internet projects are written in C
+because C++ is complicated with a steep learning curve. It is believed
+C++ reduces the amount of many-eyeballs. A huge number of contributions
+to these projects come from people with limited experience working on
+their "first project."
+
+Therefor, writers of documentation will consider a reader which has
+encountered IRCd as their first project*, specifically in C++. Patronizing
+explanations of common/standard C++ patterns and intricacies can be made.
 
 * `/* */` Multi-line comments are not normally used. We reserve this for
 debugging and temporary multi-line grey-outs. The goal for rarely using this
@@ -251,7 +271,7 @@ C++14 std::make_unique() and std::make_shared().
 * We allow some C-style arrays, especially on the stack, even C99 dynamic sized ones;
 there's no problem here, just be responsible.
 
-* std::array is preferred for object members; also just generally preferred.
+* `alloca()` will not be used.
 
 * C format strings are still acceptable. This is an IRC project, with heavy
 use of strings and complex formats and all the stringencies. We even have
@@ -280,6 +300,14 @@ other words, if you have a prototype like `foo(const std::string &message)` you 
 `message` because std::string is common and *what* the string is for is otherwise opaque.
 OTOH, if you have `foo(const options &options, const std::string &message)` one should skip
 the name for `options &` as it just adds redundant text to the prototype.
+
+* Consider any code inside a runtime `assert()` statement to **entirely**
+disappear in optimized builds. If some implementations of `assert()` may only
+elide the boolean check and thus preserve the inner statement and the effects
+of its execution: this is not standard; we do not rely on this. Do not use
+`assert()` to check return values of statements that need to be executed in
+optimized builds.
+
 
 ### Conventions
 
@@ -311,22 +339,3 @@ to move *back* to `strn*` style but it's not prudent at this time.
 terminated output into the buffer. These functions usually return a size_t
 which count characters printed *not including null*. They may return a
 `string_view`/`const_buffer` of that size (never viewing the null).
-
-#### assert() volatility
-
-- Consider any code inside a runtime `assert()` statement to **entirely**
-disappear in optimized builds. Some implementations of `assert()` may only
-elide the boolean check and thus preserve the inner statement and the effects
-of its execution. We do not rely on this. Do not use `assert()` to check
-return values of statements that need to be executed in optimized builds.
-
-- Furthermore, consider the **assert statement itself to be physically erased**
-from the code during optimized builds. Thus the following is a big mistake:
-
-```
-    if(foo)
-        assert(!bar);
-
-    if(baz)
-        bam();
-```
