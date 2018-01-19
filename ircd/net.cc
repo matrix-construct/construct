@@ -754,49 +754,6 @@ ircd::net::blocking(const socket &socket)
 // net/listener.h
 //
 
-struct ircd::net::listener::acceptor
-:std::enable_shared_from_this<struct ircd::net::listener::acceptor>
-{
-	using error_code = boost::system::error_code;
-
-	static log::log log;
-
-	std::string name;
-	size_t backlog;
-	asio::ssl::context ssl;
-	ip::tcp::endpoint ep;
-	ip::tcp::acceptor a;
-	size_t accepting {0};
-	size_t handshaking {0};
-	bool interrupting {false};
-	ctx::dock joining;
-
-	explicit operator std::string() const;
-	void configure(const json::object &opts);
-
-	// Handshake stack
-	void check_handshake_error(const error_code &ec, socket &);
-	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
-
-	// Acceptance stack
-	bool check_accept_error(const error_code &ec, socket &);
-	void accept(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
-
-	// Accept next
-	void next();
-
-	// Acceptor shutdown
-	bool interrupt() noexcept;
-	void join() noexcept;
-
-	acceptor(const json::object &opts);
-	~acceptor() noexcept;
-};
-
-//
-// ircd::net::listener
-//
-
 ircd::net::listener::listener(const std::string &opts)
 :listener{json::object{opts}}
 {
@@ -820,42 +777,9 @@ noexcept
 		acceptor->join();
 }
 
-void
-ircd::net::listener::acceptor::join()
-noexcept try
-{
-	interrupt();
-	joining.wait([this]
-	{
-		return !accepting && !handshaking;
-	});
-}
-catch(const std::exception &e)
-{
-	log.error("acceptor(%p) join: %s",
-	          this,
-	          e.what());
-}
-
-bool
-ircd::net::listener::acceptor::interrupt()
-noexcept try
-{
-	a.cancel();
-	interrupting = true;
-	return true;
-}
-catch(const boost::system::system_error &e)
-{
-	log.error("acceptor(%p) interrupt: %s",
-	          this,
-	          string(e));
-
-	return false;
-}
-
+///////////////////////////////////////////////////////////////////////////////
 //
-// ircd::net::listener::acceptor
+// net/acceptor.h
 //
 
 ircd::log::log
@@ -928,6 +852,40 @@ catch(const boost::system::system_error &e)
 ircd::net::listener::acceptor::~acceptor()
 noexcept
 {
+}
+
+void
+ircd::net::listener::acceptor::join()
+noexcept try
+{
+	interrupt();
+	joining.wait([this]
+	{
+		return !accepting && !handshaking;
+	});
+}
+catch(const std::exception &e)
+{
+	log.error("acceptor(%p) join: %s",
+	          this,
+	          e.what());
+}
+
+bool
+ircd::net::listener::acceptor::interrupt()
+noexcept try
+{
+	a.cancel();
+	interrupting = true;
+	return true;
+}
+catch(const boost::system::system_error &e)
+{
+	log.error("acceptor(%p) interrupt: %s",
+	          this,
+	          string(e));
+
+	return false;
 }
 
 /// Sets the next asynchronous handler to start the next accept sequence.
@@ -1228,12 +1186,16 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	}
 }
 
-ircd::net::listener::acceptor::operator std::string()
+ircd::net::listener::acceptor::operator
+std::string()
 const
 {
 	return fmt::snstringf
 	{
-		256, "'%s' @ [%s]:%u", name, string(ep.address()), ep.port()
+		256, "'%s' @ [%s]:%u",
+		name,
+		string(ep.address()),
+		ep.port()
 	};
 }
 
