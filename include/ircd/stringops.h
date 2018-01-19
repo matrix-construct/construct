@@ -105,11 +105,6 @@ namespace ircd
 
 	// Truncate view at maximum length
 	string_view trunc(const string_view &, const size_t &max);
-
-	// Legacy
-	char *strip_colour(char *string);
-	char *strip_unprintable(char *string);
-	char *reconstruct_parv(int parc, const char **parv);
 }
 
 inline ircd::string_view
