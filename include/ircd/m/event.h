@@ -57,24 +57,6 @@ namespace ircd::m
 	std::string pretty_oneline(const event &);
 }
 
-namespace ircd::m::name
-{
-	constexpr const char *const auth_events {"auth_events"};
-	constexpr const char *const content {"content"};
-	constexpr const char *const depth {"depth"};
-	constexpr const char *const event_id {"event_id"};
-	constexpr const char *const hashes {"hashes"};
-	constexpr const char *const membership {"membership"};
-	constexpr const char *const origin {"origin"};
-	constexpr const char *const origin_server_ts {"origin_server_ts"};
-	constexpr const char *const prev_events {"prev_events"};
-	constexpr const char *const prev_state {"prev_state"};
-	constexpr const char *const room_id {"room_id"};
-	constexpr const char *const sender {"sender"};
-	constexpr const char *const signatures {"signatures"};
-	constexpr const char *const state_key {"state_key"};
-	constexpr const char *const type {"type"};
-	constexpr const char *const unsigned_ {"unsigned"};
 }
 
 /// The _Main Event_. Most fundamental primitive of the Matrix protocol.

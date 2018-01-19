@@ -61,6 +61,7 @@ namespace ircd
 }
 
 #include "error.h"
+#include "name.h"
 #include "id.h"
 #include "sig.h"
 #include "event.h"
