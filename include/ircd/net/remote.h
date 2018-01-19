@@ -46,6 +46,7 @@ struct ircd::net::remote
 	std::string hostname;
 
 	explicit operator bool() const;
+	operator hostport() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 	bool resolved() const;
 
@@ -68,6 +69,13 @@ ircd::net::remote::resolved()
 const
 {
 	return bool(static_cast<const ipport &>(*this));
+}
+
+inline ircd::net::remote::operator
+hostport()
+const
+{
+	return { hostname, port(*this) };
 }
 
 inline ircd::net::remote::operator
