@@ -27,24 +27,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
-///////////////////////////////////////////////////////////////////////////////
-// Protocol notes
-//
-// 10.4
-// The total size of any event MUST NOT exceed 65 KB.
-//
-// There are additional restrictions on sizes per key:
-// sender MUST NOT exceed 255 bytes (including domain).
-// room_id MUST NOT exceed 255 bytes.
-// state_key MUST NOT exceed 255 bytes.
-// type MUST NOT exceed 255 bytes.
-// event_id MUST NOT exceed 255 bytes.
-//
-// Some event types have additional size restrictions which are specified in
-// the description of the event. Additional keys have no limit other than that
-// implied by the total 65 KB limit on events.
-//
-
 namespace ircd::m
 {
 	struct event;
@@ -53,10 +35,13 @@ namespace ircd::m
 	bool my(const event &);
 
 	size_t degree(const event &);
+
 	std::string pretty(const event &);
 	std::string pretty_oneline(const event &);
-}
 
+	id::event event_id(const event &, id::event::buf &buf, const const_raw_buffer &hash);
+	id::event event_id(const event &, id::event::buf &buf);
+	id::event event_id(const event &);
 }
 
 /// The _Main Event_. Most fundamental primitive of the Matrix protocol.
@@ -88,9 +73,6 @@ struct ircd::m::event
 	json::property<name::unsigned_, string_view>
 >
 {
-	enum lineage : int;
-	enum temporality : int;
-
 	struct fetch;
 	struct sync;
 	struct prev;
@@ -103,10 +85,10 @@ struct ircd::m::event
 	static database *events;
 
 	using super_type::tuple;
-	event(const id &, const mutable_buffer &buf);
-	event(fetch &);
-	event() = default;
 	using super_type::operator=;
+
+	event(const id &, const mutable_buffer &buf);
+	event() = default;
 };
 
 namespace ircd::m
@@ -117,12 +99,6 @@ namespace ircd::m
 
 	std::string pretty(const event::prev &);
 	std::string pretty_oneline(const event::prev &);
-
-	string_view reflect(const event::temporality &);
-	string_view reflect(const event::lineage &);
-
-	event::temporality temporality(const event &, const int64_t &rel);
-	event::lineage lineage(const event &);
 }
 
 struct ircd::m::event::prev
@@ -137,28 +113,6 @@ struct ircd::m::event::prev
 
 	using super_type::tuple;
 	using super_type::operator=;
-};
-
-enum ircd::m::event::prev::cond
-:int
-{
-	SELF_LOOP,
-};
-
-enum ircd::m::event::temporality
-:int
-{
-	FUTURE      = 1,   ///< Event has a depth 1 or more into the future.
-	PRESENT     = 0,   ///< Event has a depth equal to the current depth.
-	PAST        = -1,  ///< Event has a depth less than the current depth.
-};
-
-enum ircd::m::event::lineage
-:int
-{
-	ROOT        = 0,   ///< Event has no parents (must be m.room.create then)
-	FORWARD     = 1,   ///< Event has one parent at the previous depth
-	MERGE       = 2,   ///< Event has multiple parents at the previous depth
 };
 
 inline bool

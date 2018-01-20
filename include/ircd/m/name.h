@@ -26,15 +26,20 @@ namespace ircd::m::name
 	constexpr const char *const hashes {"hashes"};
 	constexpr const char *const membership {"membership"};
 	constexpr const char *const method {"method"};
+	constexpr const char *const old_verify_keys {"old_verify_keys"};
 	constexpr const char *const origin {"origin"};
 	constexpr const char *const origin_server_ts {"origin_server_ts"};
 	constexpr const char *const prev_events {"prev_events"};
 	constexpr const char *const prev_state {"prev_state"};
 	constexpr const char *const room_id {"room_id"};
 	constexpr const char *const sender {"sender"};
+	constexpr const char *const server_name {"server_name"};
 	constexpr const char *const signatures {"signatures"};
 	constexpr const char *const state_key {"state_key"};
+	constexpr const char *const tls_fingerprints {"tls_fingerprints"};
 	constexpr const char *const type {"type"};
 	constexpr const char *const unsigned_ {"unsigned"};
 	constexpr const char *const uri {"uri"};
+	constexpr const char *const valid_until_ts {"valid_until_ts"};
+	constexpr const char *const verify_keys {"verify_keys"};
 }

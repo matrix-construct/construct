@@ -25,86 +25,39 @@ ircd::database *
 ircd::m::event::events
 {};
 
-ircd::m::event::event(const id &id,
-                      const mutable_buffer &buf)
+ircd::m::id::event
+ircd::m::event_id(const event &event,
+                  id::event::buf &buf)
 {
-	fetch tab
+	const json::strung preimage
 	{
-		id, buf
+		event
 	};
 
-	new (this) event{tab};
-}
-
-ircd::m::event::event(fetch &tab)
-{
-	io::acquire(tab);
-
-	if(bool(tab.error))
-		std::rethrow_exception(tab.error);
-
-	new (this) super_type{tab.pdu};
-}
-
-ircd::m::event::temporality
-ircd::m::temporality(const event &event,
-                     const int64_t &rel)
-{
-	const auto &depth
+	const fixed_buffer<const_raw_buffer, sha256::digest_size> hash
 	{
-		json::get<"depth"_>(event)
+		sha256{const_buffer{preimage}}
 	};
 
-	return depth > rel?   event::temporality::FUTURE:
-	       depth == rel?  event::temporality::PRESENT:
-	                      event::temporality::PAST;
+	return event_id(event, buf, hash);
 }
 
-ircd::m::event::lineage
-ircd::m::lineage(const event &event)
+ircd::m::id::event
+ircd::m::event_id(const event &event,
+                  id::event::buf &buf,
+                  const const_raw_buffer &hash)
 {
-	const json::array prev[]
+	char readable[b58encode_size(sha256::digest_size)];
+	return id::event
 	{
-		json::get<"prev_events"_>(event),
-		json::get<"auth_events"_>(event),
-		json::get<"prev_state"_>(event),
+		buf, b58encode(readable, hash), my_host()
 	};
-
-	const auto count{std::accumulate(begin(prev), end(prev), size_t(0), []
-	(auto ret, const auto &array)
-	{
-		return ret += array.count();
-	})};
-
-	return count > 1?   event::lineage::MERGE:
-	       count == 1?  event::lineage::FORWARD:
-	                    event::lineage::ROOT;
 }
 
-ircd::string_view
-ircd::m::reflect(const event::lineage &lineage)
+ircd::m::id::event
+ircd::m::event_id(const event &event)
 {
-	switch(lineage)
-	{
-		case event::lineage::MERGE:    return "MERGE";
-		case event::lineage::FORWARD:  return "FORWARD";
-		case event::lineage::ROOT:     return "ROOT";
-	}
-
-	return "?????";
-}
-
-ircd::string_view
-ircd::m::reflect(const event::temporality &temporality)
-{
-	switch(temporality)
-	{
-		case event::temporality::FUTURE:   return "FUTURE";
-		case event::temporality::PRESENT:  return "PRESENT";
-		case event::temporality::PAST:     return "PAST";
-	}
-
-	return "?????";
+	return at<"event_id"_>(event);
 }
 
 size_t
@@ -368,4 +321,21 @@ ircd::m::pretty_oneline(const event &event)
 
 	resizebuf(s, ret);
 	return ret;
+}
+
+//
+// event
+//
+
+ircd::m::event::event(const id &id,
+                      const mutable_buffer &buf)
+{
+/*
+	fetch tab
+	{
+		id, buf
+	};
+
+	new (this) event{tab};
+*/
 }
