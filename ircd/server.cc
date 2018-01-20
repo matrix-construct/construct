@@ -473,6 +473,7 @@ try
 {
 	const unwind remove{[this, &link]
 	{
+		assert(link.fini);
 		this->del(link);
 	}};
 
@@ -545,6 +546,7 @@ ircd::server::node::handle_error(link &link,
 	          string(remote),
 	          e.what());
 
+	cancel_committed(link, std::make_exception_ptr(e));
 	link.close(net::dc::RST);
 }
 
@@ -583,8 +585,6 @@ ircd::server::node::handle_link_done(link &link)
 		link.close();
 		return;
 	}
-
-	link.wait_readable();
 }
 
 void
@@ -593,7 +593,7 @@ ircd::server::node::disperse(link &link)
 	disperse_uncommitted(link);
 	cancel_committed(link, std::make_exception_ptr(canceled
 	{
-		"Request was partially completed when fatal error occurred"
+		"Request was aborted; though it was partially completed"
 	}));
 
 	assert(link.queue.empty());
@@ -920,10 +920,7 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 	init = false;
 
 	if(!eptr)
-	{
 		wait_writable();
-		wait_readable();
-	}
 
 	if(node)
 		node->handle_open(*this, std::move(eptr));
@@ -958,8 +955,6 @@ ircd::server::link::close(const net::close_opts &close_opts)
 void
 ircd::server::link::handle_close(std::exception_ptr eptr)
 {
-	fini = false;
-
 	if(node)
 		node->handle_close(*this, std::move(eptr));
 }
@@ -1041,6 +1036,9 @@ ircd::server::link::process_write(tag &tag)
 		          tag_committed(),
 		          tag_count(),
 		          tag.write_total());
+
+	if(tag_committed() == 0)
+		wait_readable();
 
 	while(tag.write_remaining())
 	{
