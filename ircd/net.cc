@@ -1072,9 +1072,6 @@ ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
-		case operation_canceled:
-			break;
-
 		default:
 			break;
 	}
@@ -1558,7 +1555,6 @@ catch(const std::bad_weak_ptr &e)
 	            e.what());
 
 	assert(0);
-	call_user(callback, ec);
 }
 catch(const std::exception &e)
 {
@@ -1579,27 +1575,27 @@ noexcept try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
+	if(unlikely(wp.expired()))
+		return;
+
 	switch(ec.value())
 	{
 		// A 'success' for this handler means there was a timeout on the socket
-		case success: if(likely(!wp.expired()))
+		case success:
 		{
 			assert(timedout == false);
 			timedout = true;
-			ec = { timed_out, system_category() };
 			sd.cancel();
 			break;
 		}
-		else break;
 
 		// A cancelation means there was no timeout.
-		case operation_canceled: if(likely(!wp.expired()))
+		case operation_canceled:
 		{
 			assert(ec.category() == system_category());
 			assert(timedout == false);
 			break;
 		}
-		else break;
 
 		// All other errors are unexpected, logged and ignored here.
 		default:
@@ -1620,6 +1616,7 @@ catch(const std::exception &e)
 	log.critical("socket(%p) handle timeout: %s",
 	             (const void *)this,
 	             e.what());
+
 	assert(0);
 	if(callback)
 		call_user(callback, ec);
@@ -1668,15 +1665,6 @@ noexcept try
 
 	handshake(opts, std::move(callback));
 }
-catch(const std::bad_weak_ptr &e)
-{
-	log.warning("socket(%p) belated callback to handle_connect... (%s)",
-	            this,
-	            e.what());
-
-	assert(0);
-	call_user(callback, ec);
-}
 catch(const boost::system::system_error &e)
 {
 	log.error("socket(%p) after connect: %s",
@@ -1685,6 +1673,14 @@ catch(const boost::system::system_error &e)
 
 	assert(0);
 	call_user(callback, e.code());
+}
+catch(const std::bad_weak_ptr &e)
+{
+	log.warning("socket(%p) belated callback to handle_connect... (%s)",
+	            this,
+	            e.what());
+
+	assert(0);
 }
 catch(const std::exception &e)
 {
@@ -1787,14 +1783,15 @@ catch(const std::bad_weak_ptr &e)
 	log.warning("socket(%p) belated callback to handle_handshake... (%s)",
 	            this,
 	            e.what());
+
 	assert(0);
-	call_user(callback, ec);
 }
 catch(const std::exception &e)
 {
 	log.critical("socket(%p) handle_handshake: %s",
 	             this,
 	             e.what());
+
 	assert(0);
 	call_user(callback, ec);
 }
