@@ -1785,6 +1785,27 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		data(req.in.head) + head_read, beyond_head_len
 	};
 
+	// Before changing the user's head buffer, we branch for a feature that
+	// allows the user to receive head and content into a single contiguous
+	// buffer by assigning in.content = in.head.
+	const bool contiguous
+	{
+		data(req.in.content) == data(req.in.head)
+	};
+
+	if(contiguous)
+	{
+		const auto content_max
+		{
+			std::max(ssize_t(size(req.in.content) - head_read), ssize_t(0))
+		};
+
+		req.in.content = mutable_buffer
+		{
+			data(req.in.head) + head_read, size_t(content_max)
+		};
+	}
+
 	// Resize the user's head buffer tight to the head; this is how we convey
 	// the size of the dome back to the user.
 	req.in.head = mutable_buffer
@@ -1829,7 +1850,10 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	// Any partial content was written to the head buffer by accident,
 	// that has to be copied over to the content buffer.
-	this->content_read += copy(req.in.content, partial_content);
+	if(!contiguous)
+		this->content_read += copy(req.in.content, partial_content);
+	else
+		this->content_read += size(partial_content);
 
 	// Anything remaining is not our response and must be given back
 	assert(beyond_head_len >= content_read);

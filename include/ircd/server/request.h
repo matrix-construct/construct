@@ -48,10 +48,14 @@ struct ircd::server::out
 /// This is where buffers are supplied to receive data from the remote
 /// server.
 ///
+/// As a feature, when content == head, the head buffer is considered
+/// as a contiguous buffer for both head and content; the content buffer
+/// will be updated to point to any data after the head is received.
+///
 struct ircd::server::in
 {
 	mutable_buffer head;
-	mutable_buffer content;
+	mutable_buffer content {head};
 };
 
 /// This is a handle for being a client to another server. This handle will
