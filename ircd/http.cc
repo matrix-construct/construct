@@ -245,24 +245,19 @@ const ircd::http::parser;
 ircd::http::request::request(stream_buffer &out,
                              const string_view &host,
                              const string_view &method,
-                             const string_view &path,
-                             const string_view &query,
+                             const string_view &uri,
                              const size_t &content_length,
                              const string_view &content_type,
                              const vector_view<const header> &headers,
                              const bool &termination)
 {
-	writeline(out, [&method, &path, &query](const mutable_buffer &out) -> size_t
+	writeline(out, [&method, &uri](const mutable_buffer &out) -> size_t
 	{
-		assert(!path.empty());
 		assert(!method.empty());
+		assert(!uri.empty());
 		return fmt::sprintf
 		{
-			out, "%s /%s%s%s HTTP/1.1",
-			method,
-			path,
-			query.empty()? "" : "?",
-			query.empty()? "" : query
+			out, "%s %s HTTP/1.1", method, uri
 		};
 	});
 
