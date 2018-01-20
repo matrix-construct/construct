@@ -59,11 +59,7 @@ namespace ircd::m::io
 {
 	struct sync;
 	struct fetch;
-	struct session;
-	struct request;
 	struct response;
-
-	bool verify_x_matrix_authorization(const string_view &authorization, const string_view &method, const string_view &uri, const string_view &content);
 
 	// Synchronous acquire many requests
 	size_t acquire(vector_view<event::fetch>);
@@ -86,8 +82,6 @@ namespace ircd::m::io
 namespace ircd::m
 {
 	using io::get;
-	using io::session;
-	using io::request;
 	using io::response;
 }
 
@@ -227,62 +221,8 @@ struct ircd::m::room::state::fetch
 	fetch() = default;
 };
 
-struct ircd::m::io::request
-{
-	struct authorization;
-	struct keys;
-
-	string_view origin;
-	string_view destination;
-	string_view method;
-	string_view path;
-	string_view query;
-	string_view fragment;
-	std::string _content;
-	json::object content;
-
-	string_view generate_authorization(const mutable_buffer &out) const;
-	void operator()(server &, const vector_view<const http::header> & = {}) const;
-	void operator()(const vector_view<const http::header> & = {}) const;
-
-	request(const string_view &method,
-	        const string_view &path,
-	        const string_view &query = {},
-	        json::members body = {})
-	:method{method}
-	,path{path}
-	,query{query}
-	,_content{json::strung(body)}
-	,content{_content}
-	{}
-
-	request(const string_view &method,
-	        const string_view &path,
-	        const string_view &query,
-	        const json::object &content)
-	:method{method}
-	,path{path}
-	,query{query}
-	,content{content}
-	{}
-
-	request() = default;
-};
-
 struct ircd::m::io::response
 :json::object
 {
-	response(server &, parse::buffer &);
-};
-
-struct ircd::m::io::session
-{
-	ircd::server server;
-	std::string destination;
-	std::string access_token;
-
-	json::object operator()(parse::buffer &pb, request &);
-
-	session(const net::remote &);
-	session() = default;
+	response(server::request &, parse::buffer &);
 };

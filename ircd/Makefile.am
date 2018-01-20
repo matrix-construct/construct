@@ -78,6 +78,7 @@ libircd_la_SOURCES =   \
 	m/id.cc            \
 	m/io.cc            \
 	m/keys.cc          \
+	m/request.cc       \
 	m/room.cc          \
 	m/vm.cc            \
 	m/m.cc             \

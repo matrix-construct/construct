@@ -68,6 +68,8 @@ namespace ircd
 #include "query.h"
 #include "cursor.h"
 #include "room.h"
+#include "request.h"
+#include "session.h"
 #include "io.h"
 #include "vm.h"
 #include "user.h"
