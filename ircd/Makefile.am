@@ -72,6 +72,7 @@ libircd_la_SOURCES =   \
 	ircd.cc            \
 	json.cc            \
 	lexical.cc         \
+	base.cc            \
 	locale.cc          \
 	logger.cc          \
 	m/event.cc         \

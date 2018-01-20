@@ -216,6 +216,7 @@ namespace ircd
 #include "localee.h"
 #include "color.h"
 #include "lex_cast.h"
+#include "base.h"
 #include "stringops.h"
 #include "tokens.h"
 #include "params.h"

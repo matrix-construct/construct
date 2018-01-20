@@ -179,3 +179,131 @@ ircd::b64decode(const mutable_raw_buffer &out,
 	assert(size_t(len) <= size(out));
 	return { data(out), size_t(len) };
 }
+
+namespace ircd
+{
+	const auto &b58
+	{
+		"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"s
+	};
+}
+
+std::string
+ircd::b58decode(const string_view &in)
+{
+	std::string ret(b58decode_size(in), char{});
+	const mutable_raw_buffer buf
+	{
+		reinterpret_cast<unsigned char *>(const_cast<char *>(ret.data())), ret.size()
+	};
+
+	const auto decoded
+	{
+		b58decode(buf, in)
+	};
+
+	assert(size(decoded) <= ret.size());
+	ret.resize(size(decoded));
+	return ret;
+}
+
+ircd::const_raw_buffer
+ircd::b58decode(const mutable_raw_buffer &buf,
+                const string_view &in)
+{
+	auto p(begin(in));
+	size_t zeroes(0);
+	for(; p != end(in) && *p == '1'; ++p)
+		++zeroes;
+
+	const mutable_raw_buffer out
+	{
+		data(buf) + zeroes, std::min(b58decode_size(in), size(buf) - zeroes)
+	};
+
+	assert(size(out) + zeroes <= size(buf));
+	memset(data(out), 0, size(out));
+
+	size_t length(0);
+	for(size_t i(0); p != end(in); ++p, length = i, i = 0)
+	{
+		auto carry(b58.find(*p));
+		if(carry == std::string::npos)
+			throw std::out_of_range("Invalid base58 character");
+
+		for(auto it(rbegin(out)); (carry || i < length) && it != rend(out); ++it, i++)
+		{
+			carry += 58 * (*it);
+			*it = carry % 256;
+			carry /= 256;
+		}
+	}
+
+	auto it(begin(buf));
+	assert(it + zeroes + length <= end(buf));
+	for(; it != end(buf) && zeroes; *it++ = 0, --zeroes);
+	memmove(it, data(out) + (size(out) - length), length);
+	return { begin(buf), it + length };
+}
+
+std::string
+ircd::b58encode(const const_raw_buffer &in)
+{
+	std::string ret(b58encode_size(in), char{});
+	const mutable_buffer buf
+	{
+		const_cast<char *>(ret.data()), ret.size()
+	};
+
+	const auto encoded
+	{
+		b58encode(buf, in)
+	};
+
+	assert(size(encoded) <= ret.size());
+	ret.resize(size(encoded));
+	return ret;
+}
+
+ircd::string_view
+ircd::b58encode(const mutable_buffer &buf,
+                const const_raw_buffer &in)
+{
+	auto p(begin(in));
+	size_t zeroes(0);
+	for(; p != end(in) && *p == 0; ++p)
+		++zeroes;
+
+	const mutable_buffer out
+	{
+		data(buf) + zeroes, std::min(b58encode_size(in), size(buf) - zeroes)
+	};
+
+	assert(size(out) + zeroes <= size(buf));
+	memset(data(out), 0, size(out));
+
+	size_t length(0);
+	for(size_t i(0); p != end(in); ++p, length = i, i = 0)
+	{
+		size_t carry(*p);
+		for(auto it(rbegin(out)); (carry || i < length) && it != rend(out); ++it, i++)
+		{
+			carry += 256 * (*it);
+			*it = carry % 58;
+			carry /= 58;
+		}
+	}
+
+	auto it(begin(buf));
+	assert(it + zeroes + length <= end(buf));
+	for(; it != end(buf) && zeroes; *it++ = '1', --zeroes);
+	memmove(it, data(out) + (size(out) - length), length);
+	return
+	{
+		begin(buf), std::transform(it, it + length, it, []
+		(const uint8_t &in)
+		{
+			return b58.at(in);
+		})
+	};
+}
