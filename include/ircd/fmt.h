@@ -124,6 +124,7 @@ class ircd::fmt::snprintf
 
   public:
 	operator ssize_t() const                     { return consumed();                              }
+	operator string_view() const                 { return { obeg, consumed() };                    }
 
 	template<class... Args>
 	snprintf(char *const &buf,
