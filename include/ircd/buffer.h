@@ -74,8 +74,8 @@ namespace ircd::buffer
 	template<class it> const it &end(const buffer<it> &buffer);
 	template<class it> it &begin(buffer<it> &buffer);
 	template<class it> it &end(buffer<it> &buffer);
-	template<class it> it rbegin(const buffer<it> &buffer);
-	template<class it> it rend(const buffer<it> &buffer);
+	template<class it> std::reverse_iterator<it> rbegin(const buffer<it> &buffer);
+	template<class it> std::reverse_iterator<it> rend(const buffer<it> &buffer);
 
 	// Single buffer tools
 	template<class it> bool null(const buffer<it> &buffer);
@@ -723,14 +723,14 @@ ircd::buffer::null(const buffer<it> &buffer)
 }
 
 template<class it>
-it
+std::reverse_iterator<it>
 ircd::buffer::rend(const buffer<it> &buffer)
 {
 	return std::reverse_iterator<it>(get<0>(buffer));
 }
 
 template<class it>
-it
+std::reverse_iterator<it>
 ircd::buffer::rbegin(const buffer<it> &buffer)
 {
 	return std::reverse_iterator<it>(get<0>(buffer) + size(buffer));
