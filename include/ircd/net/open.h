@@ -62,7 +62,7 @@ struct ircd::net::open_opts
 	net::ipport ipport;
 
 	/// The duration allowed for the TCP connection.
-	milliseconds connect_timeout { 8000ms };
+	milliseconds connect_timeout { 5000ms };
 
 	/// Pointer to a sock_opts structure which will be applied to this socket
 	/// if given. Defaults to null; no application is made.
@@ -72,7 +72,7 @@ struct ircd::net::open_opts
 	bool handshake { true };
 
 	/// The duration allowed for the SSL handshake
-	milliseconds handshake_timeout { 8000ms };
+	milliseconds handshake_timeout { 5000ms };
 
 	/// Option to toggle whether to perform any certificate verification; if
 	/// false, everything no matter what is considered valid; you want true.

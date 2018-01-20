@@ -101,7 +101,7 @@ struct ircd::client::conf
 
 	/// Time limit for how long a connected client can be in "request mode." This
 	/// should never be hit unless there's an error in the handling code.
-	seconds request_timeout {10s};
+	seconds request_timeout {15s};
 };
 
 /// Settings apply to all clients and cannot be configured per-client
