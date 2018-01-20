@@ -175,19 +175,27 @@ ircd::verify_origin(client &client,
                     resource::request &request)
 try
 {
-	const auto &authorization
+	const fmt::bsprintf<1024> uri
+	{
+		"%s%s%s",
+		request.head.path,
+		request.query? "?" : "",
+		request.query
+	};
+
+	const m::request::x_matrix x_matrix
 	{
 		request.head.authorization
 	};
 
-	const fmt::bsprintf<1024> uri
+	const m::request object
 	{
-		"%s%s%s", request.head.path, request.query? "?" : "", request.query
+		x_matrix.origin, my_host(), method.name, uri, request.content
 	};
 
 	const auto verified
 	{
-		m::verify_x_matrix_authorization(authorization, method.name, uri, request.content)
+		object.verify(x_matrix.key, x_matrix.sig)
 	};
 
 	if(verified)
@@ -205,9 +213,13 @@ catch(const m::error &)
 }
 catch(const std::exception &e)
 {
+	log::error("X-Matrix Authorization from %s: %s",
+	           string(remote(client)),
+	           e.what());
+
 	throw m::error
 	{
-		http::UNAUTHORIZED, "M_INTERNAL_ERROR",
+		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
 		"An error has prevented authorization: %s",
 		e.what()
 	};
