@@ -5,7 +5,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.11
 
-AC_INIT([charybdis], [5-dev])
+AC_INIT([construct], [1.0-pre])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_MACRO_DIR([m4])
@@ -32,7 +32,7 @@ AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_LANG(C++)
 AC_CONFIG_HEADER(include/ircd/config.h)
-AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201411)
+AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201500)
 
 
 dnl ***************************************************************************

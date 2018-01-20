@@ -28,7 +28,7 @@ endif
 endif
 
 AM_LDFLAGS = \
-	-version-info 5:0:0 \
+	-version-info 3:1:0 \
 	-Wl,-fuse-ld=gold \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--export-dynamic \
