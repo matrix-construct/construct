@@ -44,15 +44,21 @@ namespace ircd
 	// wrapper to find(T) != npos
 	template<class T> bool has(const string_view &, const T &);
 
-	// return view without trailing c
-	string_view rstrip(const string_view &str, const char &c = ' ');
-	string_view rstrip(const string_view &str, const string_view &c);
+	// return view without any trailing characters contained in c
+	string_view rstripa(const string_view &str, const string_view &c);
 
-	// return view without leading c
+	// return view without any leading characters contained in c
+	string_view lstripa(const string_view &str, const string_view &c);
+
+	// return view without leading occurrences of c
 	string_view lstrip(const string_view &str, const char &c = ' ');
-	string_view lstrip(const string_view &str, const string_view &c);
+	string_view lstrip(string_view str, const string_view &c);
 
-	// return view without leading and trailing c
+	// return view without trailing occurrences of c
+	string_view rstrip(const string_view &str, const char &c = ' ');
+	string_view rstrip(string_view str, const string_view &c);
+
+	// return view without leading and trailing occurrences of c
 	string_view strip(const string_view &str, const char &c = ' ');
 	string_view strip(const string_view &str, const string_view &c);
 
@@ -254,8 +260,7 @@ inline bool
 ircd::startswith(const string_view &str,
                  const string_view &val)
 {
-	const auto pos(str.find(val, 0));
-	return pos == 0;
+	return !str.empty() && str.substr(0, val.size()) == val;
 }
 
 /// Count occurrences of val at end of string
@@ -293,9 +298,8 @@ inline bool
 ircd::endswith(const string_view &str,
                const string_view &val)
 {
-	const auto vlen(std::min(str.size(), val.size()));
-	const auto pos(str.find(val, vlen));
-	return pos == str.size() - vlen;
+	const ssize_t off(str.size() - val.size());
+	return !str.empty() && off >= 0 && str.substr(off) == val;
 }
 
 /// View a string between the first match of a and the first match of b
@@ -404,11 +408,13 @@ ircd::strip(const string_view &str,
 
 /// Remove trailing instances of c from the returned view
 inline ircd::string_view
-ircd::rstrip(const string_view &str,
+ircd::rstrip(string_view str,
              const string_view &c)
 {
-	const auto pos(str.find_last_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+	while(endswith(str, c))
+		str = str.substr(0, size(str) - size(c));
+
+	return str;
 }
 
 /// Remove trailing instances of c from the returned view
@@ -420,9 +426,18 @@ ircd::rstrip(const string_view &str,
 	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
 }
 
+/// Remove leading instances of c from the returned view
+inline ircd::string_view
+ircd::lstrip(string_view str,
+             const string_view &c)
+{
+	while(startswith(str, c))
+		str = str.substr(size(c));
+
+	return str;
+}
+
 /// Remove leading instances of c from the returned view.
-/// Note in case the strip results in an empty view, we return a string_view
-/// with the original pointer and size 0 so it carries through the defined().
 inline ircd::string_view
 ircd::lstrip(const string_view &str,
              const char &c)
@@ -432,16 +447,22 @@ ircd::lstrip(const string_view &str,
 	                                 string_view{str.data(), size_t{0}};
 }
 
-/// Remove leading instances of c from the returned view
-/// Note in case the strip results in an empty view, we return a string_view
-/// with the original pointer and size 0 so it carries through the defined().
+/// Remove leading instances of any character in c from the returned view
 inline ircd::string_view
-ircd::lstrip(const string_view &str,
-             const string_view &c)
+ircd::lstripa(const string_view &str,
+              const string_view &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)}:
-	                                 string_view{str.data(), size_t{0}};
+	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+}
+
+/// Remove trailing instances of any character in c from the returned view
+inline ircd::string_view
+ircd::rstripa(const string_view &str,
+              const string_view &c)
+{
+	const auto pos(str.find_last_not_of(c));
+	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
 }
 
 template<class T>
