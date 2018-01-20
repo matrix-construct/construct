@@ -1394,6 +1394,7 @@ ircd::net::socket::wait(const wait_opts &opts,
 ///
 void
 ircd::net::socket::wait(const wait_opts &opts)
+try
 {
 	const scope_timeout timeout
 	{
@@ -1417,6 +1418,19 @@ ircd::net::socket::wait(const wait_opts &opts)
 		default:
 			throw ircd::not_implemented{};
 	}
+}
+catch(const boost::system::system_error &e)
+{
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	if(e.code() == operation_canceled && timedout)
+		throw boost::system::system_error
+		{
+			timed_out, system_category()
+		};
+
+	throw;
 }
 
 /// Asynchronous callback when the socket is ready
@@ -1494,6 +1508,13 @@ noexcept try
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
+	if(timedout)
+	{
+		assert(ec == operation_canceled);
+		ec = { timed_out, system_category() };
+	}
+	else cancel_timeout();
+
 	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
 	          this,
 	          string(local_ipport(*this)),
@@ -1502,17 +1523,9 @@ noexcept try
 	          string(ec),
 	          available(*this));
 
-	if(!timedout)
-		cancel_timeout();
-
 	if(ec.category() == system_category()) switch(ec.value())
 	{
-		// We expose a timeout condition to the user, but hide
-		// other cancellations from invoking the callback.
 		case operation_canceled:
-			if(timedout)
-				break;
-
 			return;
 
 		// This is a condition which we hide from the user.
@@ -1560,10 +1573,11 @@ catch(const std::exception &e)
 void
 ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
                                   ec_handler callback,
-                                  const error_code &ec)
+                                  error_code ec)
 noexcept try
 {
 	using namespace boost::system::errc;
+	using boost::system::system_category;
 
 	switch(ec.value())
 	{
@@ -1572,6 +1586,7 @@ noexcept try
 		{
 			assert(timedout == false);
 			timedout = true;
+			ec = { timed_out, system_category() };
 			sd.cancel();
 			break;
 		}
@@ -1580,9 +1595,8 @@ noexcept try
 		// A cancelation means there was no timeout.
 		case operation_canceled: if(likely(!wp.expired()))
 		{
-			assert(ec.category() == boost::system::system_category());
+			assert(ec.category() == system_category());
 			assert(timedout == false);
-			timedout = false;
 			break;
 		}
 		else break;
@@ -1615,11 +1629,13 @@ void
 ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
                                   const open_opts opts,
                                   eptr_handler callback,
-                                  const error_code &ec)
+                                  error_code ec)
 noexcept try
 {
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
 	const life_guard<socket> s{wp};
-	assert(!timedout || ec == boost::system::errc::operation_canceled);
 	log.debug("socket(%p) local[%s] remote[%s] connect %s",
 	          this,
 	          string(local_ipport(*this)),
@@ -1627,8 +1643,12 @@ noexcept try
 	          string(ec));
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(!timedout)
-		cancel_timeout();
+	if(timedout)
+	{
+		assert(ec == operation_canceled);
+		ec = { timed_out, system_category() };
+	}
+	else cancel_timeout();
 
 	// A connect error; abort here by calling the user back with error.
 	if(ec)
@@ -1682,16 +1702,21 @@ ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
                                      error_code ec)
 noexcept try
 {
-	assert(!timedout || ec == boost::system::errc::operation_canceled);
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	if(timedout)
+	{
+		assert(ec == operation_canceled);
+		ec = { timed_out, system_category() };
+	}
+	else cancel_timeout();
+
 	log.debug("socket(%p) local[%s] remote[%s] disconnect %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
 	          string(ec));
-
-	// The timer was set by socket::disconnect() and may need to be canceled.
-	if(!timedout)
-		cancel_timeout();
 
 	// This ignores EOF and turns it into a success to alleviate user concern.
 	if(ec.category() == asio::error::get_misc_category())
@@ -1723,20 +1748,26 @@ catch(const std::exception &e)
 void
 ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
                                     eptr_handler callback,
-                                    const error_code &ec)
+                                    error_code ec)
 noexcept try
 {
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
 	const life_guard<socket> s{wp};
-	assert(!timedout || ec == boost::system::errc::operation_canceled);
+
+	if(timedout)
+	{
+		assert(ec == operation_canceled);
+		ec = { timed_out, system_category() };
+	}
+	else cancel_timeout();
+
 	log.debug("socket(%p) local[%s] remote[%s] handshake %s",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
 	          string(ec));
-
-	// The timer was set by socket::handshake() and may need to be canceled.
-	if(!timedout)
-		cancel_timeout();
 
 	// This is the end of the asynchronous call chain; the user is called
 	// back with or without error here.

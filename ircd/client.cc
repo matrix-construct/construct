@@ -321,7 +321,7 @@ ircd::handle_ec(client &client,
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:                return true;
-		case operation_canceled:     return handle_ec_timeout(client);
+		case timed_out:              return handle_ec_timeout(client);
 		default:                     return handle_ec_default(client, ec);
 	}
 	else if(ec.category() == get_misc_category()) switch(ec.value())
@@ -526,6 +526,7 @@ catch(const boost::system::system_error &e)
 			return false;
 
 		case operation_canceled:
+		case timed_out:
 			return false;
 
 		case bad_file_descriptor:
