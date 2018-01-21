@@ -440,6 +440,7 @@ RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
 RB_CHK_SYSHEADER(sys/resource.h, [SYS_RESOURCE_H])
 RB_CHK_SYSHEADER(sys/syscall.h, [SYS_SYSCALL_H])
+RB_CHK_SYSHEADER(sys/utsname.h, [SYS_UTSNAME_H])
 
 dnl linux platform
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])

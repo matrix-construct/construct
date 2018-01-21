@@ -26,33 +26,56 @@ void
 ircd::info::init()
 {
 	// This message flashes information about IRCd itself for this execution.
-	log::info("%s %ld %s. configured: %s; compiled: %s; executed: %s; %s",
-	          BRANDING_VERSION,
-	          __cplusplus,
-	          __VERSION__,
-	          configured,
-	          compiled,
-	          startup,
-	          RB_DEBUG_LEVEL? "(DEBUG MODE)" : "");
+	log::info
+	{
+		"%s %ld %s. configured: %s; compiled: %s; executed: %s; %s",
+		BRANDING_VERSION,
+		__cplusplus,
+		__VERSION__,
+		configured,
+		compiled,
+		startup,
+		RB_DEBUG_LEVEL? "(DEBUG MODE)" : ""
+	};
 
 	// This message flashes information about our dependencies which are being
 	// assumed for this execution.
-	log::info("%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
-	          PACKAGE_STRING,
-	          boost_version[0],
-	          boost_version[1],
-	          boost_version[2],
-	          db::version,
-	          nacl::version(),
-	          openssl::version());
+	log::info
+	{
+		"%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
+		PACKAGE_STRING,
+		boost_version[0],
+		boost_version[1],
+		boost_version[2],
+		db::version,
+		nacl::version(),
+		openssl::version()
+	};
 
-	// This message flashes information about our dependencies which are being
-	// assumed for this execution.
-	log::debug("max_align=%zu hardware_concurrency=%zu destructive_interference=%zu constructive_interference=%zu",
-	           max_align,
-	           hardware_concurrency,
-	           destructive_interference,
-	           constructive_interference);
+	// This message flashes posix information about the system and platform IRCd
+	// is running on when ::uname() is available
+	#ifdef HAVE_SYS_UTSNAME_H
+	log::info
+	{
+		"%s %s %s %s %s",
+		utsname.sysname,
+		utsname.nodename,
+		utsname.release,
+		utsname.version,
+		utsname.machine
+	};
+	#endif
+
+	// This message flashes standard information about the system and platform
+	// IRCd is compiled for and running on.
+	log::debug
+	{
+		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		max_align,
+		hardware_concurrency,
+		destructive_interference,
+		constructive_interference
+	};
 }
 
 /* XXX: integrate CREDITS text again somehow */
@@ -72,6 +95,10 @@ ircd::info::credits
 	"copyright notice and this permission notice is present in all copies.",
 	" ",
 }};
+
+//
+// IRCd / build information
+//
 
 decltype(ircd::info::configured_time)
 ircd::info::configured_time
@@ -130,6 +157,10 @@ ircd::info::ircd_version
 	RB_VERSION
 };
 
+//
+// Third party dependency information
+//
+
 /// Boost version indicator for compiled header files.
 decltype(ircd::info::boost_version)
 ircd::info::boost_version
@@ -154,6 +185,52 @@ ircd::tc_version::tc_version()
 :version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
 {}
 */
+
+//
+// System / platform information
+//
+
+#ifdef HAVE_SYS_UTSNAME_H
+decltype(ircd::info::utsname)
+ircd::info::utsname{[]
+{
+	struct ::utsname utsname;
+	syscall(::uname, &utsname);
+	return utsname;
+}()};
+#endif
+
+decltype(ircd::info::max_align)
+ircd::info::max_align
+{
+	alignof(std::max_align_t)
+};
+
+decltype(ircd::info::hardware_concurrency)
+ircd::info::hardware_concurrency
+{
+	std::thread::hardware_concurrency()
+};
+
+decltype(ircd::info::destructive_interference)
+ircd::info::destructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_destructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::constructive_interference)
+ircd::info::constructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_constructive_interference_size
+	#else
+		0
+	#endif
+};
 
 decltype(ircd::info::myinfo)
 ircd::info::myinfo
@@ -272,35 +349,3 @@ ircd::info::myinfo
 	{"USE_IODEBUG_HOOKS", "NO", 0, "IO Debugging support"},
 	#endif
 }};
-
-decltype(ircd::info::max_align)
-ircd::info::max_align
-{
-	alignof(std::max_align_t)
-};
-
-decltype(ircd::info::hardware_concurrency)
-ircd::info::hardware_concurrency
-{
-	std::thread::hardware_concurrency()
-};
-
-decltype(ircd::info::destructive_interference)
-ircd::info::destructive_interference
-{
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_destructive_interference_size
-	#else
-		0
-	#endif
-};
-
-decltype(ircd::info::constructive_interference)
-ircd::info::constructive_interference
-{
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_constructive_interference_size
-	#else
-		0
-	#endif
-};

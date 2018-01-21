@@ -48,6 +48,10 @@ namespace ircd::info
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
 
+	#ifdef HAVE_SYS_UTSNAME_H
+	extern const ::utsname utsname;
+	#endif
+
 	void init();
 }
 
