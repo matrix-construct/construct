@@ -58,12 +58,12 @@ namespace ircd::log
 	void mark(const facility &, const char *const &msg = nullptr);
 	void mark(const char *const &msg = nullptr);
 
-	template<class... args> void critical(const char *const &fmt, args&&...);
-	template<class... args> void error(const char *const &fmt, args&&...);
-	template<class... args> void warning(const char *const &fmt, args&&...);
-	template<class... args> void notice(const char *const &fmt, args&&...);
-	template<class... args> void info(const char *const &fmt, args&&...);
-	template<class... args> void debug(const char *const &fmt, args&&...);
+	struct critical;
+	struct error;
+	struct warning;
+	struct notice;
+	struct info;
+	struct debug;
 
 	void flush();
 	void close();
@@ -109,56 +109,62 @@ struct ircd::log::console_quiet
 	~console_quiet();
 };
 
-template<class... args>
-void
-ircd::log::debug(const char *const &fmt,
-                 args&&... a)
+struct ircd::log::debug
 {
-	// got DCE?
-	#ifdef RB_DEBUG
-	vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
-	#endif
-}
+	template<class... args>
+	debug(const char *const &fmt, args&&... a)
+	{
+		// got DCE?
+		#ifdef RB_DEBUG
+		vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+		#endif
+	}
+};
 
-template<class... args>
-void
-ircd::log::info(const char *const &fmt,
-                args&&... a)
+struct ircd::log::info
 {
-	vlog(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
-}
+	template<class... args>
+	info(const char *const &fmt, args&&... a)
+	{
+		vlog(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
 
-template<class... args>
-void
-ircd::log::notice(const char *const &fmt,
-                  args&&... a)
+struct ircd::log::notice
 {
-	vlog(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
-}
+	template<class... args>
+	notice(const char *const &fmt, args&&... a)
+	{
+		vlog(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
 
-template<class... args>
-void
-ircd::log::warning(const char *const &fmt,
-                   args&&... a)
+struct ircd::log::warning
 {
-	vlog(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
-}
+	template<class... args>
+	warning(const char *const &fmt, args&&... a)
+	{
+		vlog(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
 
-template<class... args>
-void
-ircd::log::error(const char *const &fmt,
-                 args&&... a)
+struct ircd::log::error
 {
-	vlog(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
-}
+	template<class... args>
+	error(const char *const &fmt, args&&... a)
+	{
+		vlog(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
 
-template<class... args>
-void
-ircd::log::critical(const char *const &fmt,
-                    args&&... a)
+struct ircd::log::critical
 {
-	vlog(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
-}
+	template<class... args>
+	critical(const char *const &fmt, args&&... a)
+	{
+		vlog(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
 
 template<class... args>
 void
