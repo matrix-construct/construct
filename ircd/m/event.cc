@@ -193,6 +193,15 @@ ircd::m::pretty(const event &event)
 
 	json::for_each(event, top_keys, out);
 
+	const auto &ts{json::get<"origin_server_ts"_>(event)};
+	{
+		thread_local char buf[128];
+		s << std::setw(16) << std::right << "origin_server_ts" << ": "
+		  << timef(buf, ts / 1000L, localtime)
+		  << " (" << ts << ")"
+		  << std::endl;
+	}
+
 	const auto &hashes{json::get<"hashes"_>(event)};
 	for(const auto &hash : hashes)
 	{
