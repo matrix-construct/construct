@@ -64,18 +64,6 @@ namespace ircd::log
 		std::cerr
 	};
 
-	/*
-	ConfEntry conf_log_table[] =
-	{
-		{ "file_critical",  CF_QSTRING, NULL, PATH_MAX, &fname[CRITICAL]  },
-		{ "file_error",     CF_QSTRING, NULL, PATH_MAX, &fname[ERROR]     },
-		{ "file_warning",   CF_QSTRING, NULL, PATH_MAX, &fname[WARNING]   },
-		{ "file_notice",    CF_QSTRING, NULL, PATH_MAX, &fname[NOTICE]    },
-		{ "file_info",      CF_QSTRING, NULL, PATH_MAX, &fname[INFO]      },
-		{ "file_debug",     CF_QSTRING, NULL, PATH_MAX, &fname[DEBUG]     },
-	};
-	*/
-
 	static void open(const facility &fac);
 	static void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
 }
