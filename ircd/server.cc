@@ -1827,9 +1827,22 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		std::min(head.content_length, beyond_head_len)
 	};
 
+	// Now we know how much bleed into the next message was also received
+	assert(beyond_head_len >= content_read);
+	const size_t beyond_content_len
+	{
+		beyond_head_len - content_read
+	};
+
 	const const_buffer partial_content
 	{
 		data(req.in.head) + head_read, content_read
+	};
+
+	// Anything remaining is not our response and must be given back.
+	const const_buffer overrun
+	{
+		data(beyond_head) + size(partial_content), beyond_content_len
 	};
 
 	// Reduce the user's content buffer to the content-length. This is sort of
@@ -1847,25 +1860,13 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		content_over = head.content_length - size(req.in.content);
 
 	// Any partial content was written to the head buffer by accident,
-	// that has to be copied over to the content buffer.
-	if(!contiguous)
-		this->content_read += copy(req.in.content, partial_content);
-	else
-		this->content_read += size(partial_content);
+	// that may have to be copied over to the content buffer.
+	if(!empty(partial_content) && !contiguous)
+		copy(req.in.content, partial_content);
 
-	// Anything remaining is not our response and must be given back
-	assert(beyond_head_len >= content_read);
-	const const_buffer overrun
-	{
-		data(beyond_head) + size(partial_content), beyond_head_len - content_read
-	};
-
-	assert(this->content_read + content_over <= head.content_length);
-	if(this->content_read + content_over == head.content_length)
-	{
-		done = true;
-		set_value(status);
-	}
+	// Invoke the read_content() routine which will increment this->content_read
+	read_content(partial_content, done);
+	assert(this->content_read == size(partial_content));
 
 	return overrun;
 }
