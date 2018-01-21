@@ -1895,6 +1895,12 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	content_read += addl_content_read;
 	assert(size(buffer) - addl_content_read == 0);
 	assert(content_read <= size(content) + content_over);
+
+	// Invoke the user's optional progress callback; this function
+	// should be marked noexcept for the time being.
+	if(req.in.progress)
+		req.in.progress(buffer, const_buffer{data(content), content_read});
+
 	if(content_read == size(content) + content_over)
 	{
 		done = true;

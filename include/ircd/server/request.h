@@ -56,6 +56,13 @@ struct ircd::server::in
 {
 	mutable_buffer head;
 	mutable_buffer content {head};
+
+	/// The progress closure is an optional callback invoked every time more
+	/// content is read from the socket. The first argument is a view of the
+	/// data most recently received. The second argument is a view of all data
+	/// received so far. This is only invoked for content, not for the head;
+	/// however the first time it is invoked it is safe to view the in.head
+	std::function<void (const_buffer, const_buffer) noexcept> progress;
 };
 
 /// This is a handle for being a client to another server. This handle will
