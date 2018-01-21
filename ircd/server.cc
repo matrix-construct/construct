@@ -1655,6 +1655,11 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 	{
 		assert(data(buffer) == data(req.out.content));
 		assert(written <= write_total());
+
+		// Invoke the user's optional progress callback; this function
+		// should be marked noexcept and has no reason to throw yet.
+		if(req.out.progress)
+			req.out.progress(buffer, const_buffer{data(req.out.content), written});
 	}
 	else
 	{

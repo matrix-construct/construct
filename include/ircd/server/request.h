@@ -42,6 +42,13 @@ struct ircd::server::out
 {
 	const_buffer head;
 	const_buffer content;
+
+	/// The progress closure is an optional callback invoked every time more
+	/// content is written to the socket. The first argument is a view of the
+	/// data most recently written. The second argument is a view of all data
+	/// written so far. This is only invoked for content. At the first
+	/// invocation, the head has been fully written.
+	std::function<void (const_buffer, const_buffer) noexcept> progress;
 };
 
 /// Request data and options related to the receive side of the request.
