@@ -1648,12 +1648,13 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 
 	if(written <= size(req.out.head))
 	{
-		assert(data(buffer) == data(req.out.head));
-		assert(written <= size(req.out.head));
+		assert(data(buffer) >= begin(req.out.head));
+		assert(data(buffer) < end(req.out.head));
 	}
 	else if(written <= size(req.out.head) + size(req.out.content))
 	{
-		assert(data(buffer) == data(req.out.content));
+		assert(data(buffer) >= begin(req.out.content));
+		assert(data(buffer) < end(req.out.content));
 		assert(written <= write_total());
 
 		// Invoke the user's optional progress callback; this function
