@@ -175,14 +175,6 @@ ircd::verify_origin(client &client,
                     resource::request &request)
 try
 {
-	const fmt::bsprintf<1024> uri
-	{
-		"%s%s%s",
-		request.head.path,
-		request.query? "?" : "",
-		request.query
-	};
-
 	const m::request::x_matrix x_matrix
 	{
 		request.head.authorization
@@ -190,7 +182,7 @@ try
 
 	const m::request object
 	{
-		x_matrix.origin, my_host(), method.name, uri, request.content
+		x_matrix.origin, my_host(), method.name, request.head.uri, request.content
 	};
 
 	const auto verified

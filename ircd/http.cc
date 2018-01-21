@@ -296,6 +296,12 @@ ircd::http::request::request(stream_buffer &out,
 ircd::http::request::head::head(parse::capstan &pc,
                                 const headers::closure &c)
 :line::request{pc}
+,uri
+{
+	fragment? string_view { begin(path), end(fragment) }:
+	query?    string_view { begin(path), end(query)    }:
+	          string_view { begin(path), end(path)     }
+}
 ,headers
 {
 	http::headers{pc, [this, &c](const auto &h)

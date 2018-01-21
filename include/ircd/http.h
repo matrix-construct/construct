@@ -286,7 +286,8 @@ struct ircd::http::request::head
 	string_view user_agent;
 	size_t content_length {0};
 
-	string_view headers;
+	string_view uri;       // full view of (path, query, fragmet)
+	string_view headers;   // full view of all headers
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 	head() = default;
