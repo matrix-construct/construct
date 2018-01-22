@@ -1,23 +1,12 @@
-/*
- * Copyright (C) 2017 Charybdis Development Team
- * Copyright (C) 2017 Jason Volk <jason@zemos.net>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice is present in all copies.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies. The
+// full license for this software is available in the LICENSE file.
 
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
@@ -229,29 +218,6 @@ enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
 {
 	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
-}
-
-template<class T>
-constexpr bool
-is_number()
-{
-	using type = typename std::remove_reference<T>::type;
-	return std::is_arithmetic<type>::value;
-}
-
-template<class T>
-constexpr bool
-is_floating()
-{
-	using type = typename std::remove_reference<T>::type;
-	return std::is_arithmetic<type>() && std::is_floating_point<type>();
-}
-
-template<class T>
-constexpr bool
-is_integer()
-{
-	return is_number<T>() && !is_floating<T>();
 }
 
 template<class T>
@@ -476,54 +442,6 @@ at(tuple &t)
 	//TODO: XXX
 	if(!defined(ret))
 		throw not_found("%s", key<idx>(t));
-
-	return ret;
-}
-
-template<const char *const &name,
-         class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple>(name)> &>
-at(const tuple &t)
-{
-	constexpr size_t idx
-	{
-		indexof<tuple>(name)
-	};
-
-	auto &ret
-	{
-		val<idx>(t)
-	};
-
-	using value_type = tuple_value_type<tuple, idx>;
-
-	//TODO: undefined
-	if(!defined(ret))
-		throw not_found("%s", name);
-
-	return ret;
-}
-
-template<const char *const &name,
-         class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple>(name)> &>
-at(tuple &t)
-{
-	constexpr size_t idx
-	{
-		indexof<tuple>(name)
-	};
-
-	auto &ret
-	{
-		val<idx>(t)
-	};
-
-	using value_type = tuple_value_type<tuple, idx>;
-
-	//TODO: undefined
-	if(!defined(ret))
-		throw not_found("%s", name);
 
 	return ret;
 }
