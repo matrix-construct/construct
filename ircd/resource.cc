@@ -38,7 +38,10 @@ ircd::resource::find(string_view path)
 	}
 	catch(const std::out_of_range &e)
 	{
-		throw http::error(http::code::NOT_FOUND);
+		throw http::error
+		{
+			http::code::NOT_FOUND
+		};
 	}
 
 	// Exact file or directory match
@@ -50,17 +53,26 @@ ircd::resource::find(string_view path)
 	{
 		// Walk the iterator back to find if there is a directory prefixing this path.
 		if(it == begin(resources))
-			throw http::error(http::code::NOT_FOUND);
+			throw http::error
+			{
+				http::code::NOT_FOUND
+			};
 
 		--it;
 		if(!startswith(path, rstrip(it->first, '/')))
-			throw http::error(http::code::NOT_FOUND);
+			throw http::error
+			{
+				http::code::NOT_FOUND
+			};
 	}
 
 	// Check if the resource is a directory; if not, it can only
 	// handle exact path matches.
 	if(~it->second->flags & it->second->DIRECTORY && path != rstrip(it->first, '/'))
-		throw http::error(http::code::NOT_FOUND);
+		throw http::error
+		{
+			http::code::NOT_FOUND
+		};
 
 	return *it->second;
 }
@@ -84,9 +96,16 @@ ircd::resource::resource(const string_view &path,
 ,flags{opts.flags}
 ,resources_it{[this, &path]
 {
-	const auto iit(resources.emplace(this->path, this));
+	const auto iit
+	{
+		resources.emplace(this->path, this)
+	};
+
 	if(!iit.second)
-		throw error("resource \"%s\" already registered", path);
+		throw error
+		{
+			"resource \"%s\" already registered", path
+		};
 
 	return unique_const_iterator<decltype(resources)>
 	{
@@ -94,13 +113,19 @@ ircd::resource::resource(const string_view &path,
 	};
 }()}
 {
-	log::info("Registered resource \"%s\"", path.empty()? string_view{"/"} : path);
+	log::info
+	{
+		"Registered resource \"%s\"", path.empty()? string_view{"/"} : path
+	};
 }
 
 ircd::resource::~resource()
 noexcept
 {
-	log::info("Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path);
+	log::info
+	{
+		"Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path
+	};
 }
 
 namespace ircd
@@ -205,9 +230,12 @@ catch(const m::error &)
 }
 catch(const std::exception &e)
 {
-	log::error("X-Matrix Authorization from %s: %s",
-	           string(remote(client)),
-	           e.what());
+	log::error
+	{
+		"X-Matrix Authorization from %s: %s",
+		string(remote(client)),
+		e.what()
+	};
 
 	throw m::error
 	{
@@ -379,9 +407,16 @@ ircd::resource::method::method(struct resource &resource,
 ,opts{opts}
 ,methods_it{[this, &name]
 {
-	const auto iit(this->resource->methods.emplace(this->name, this));
+	const auto iit
+	{
+		this->resource->methods.emplace(this->name, this)
+	};
+
 	if(!iit.second)
-		throw error("resource \"%s\" already registered", name);
+		throw error
+		{
+			"resource \"%s\" already registered", name
+		};
 
 	return unique_const_iterator<decltype(resource::methods)>
 	{
@@ -660,14 +695,17 @@ ircd::resource::response::response(client &client,
 
 	write_closure(client)(vector);
 
-	log::debug("socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length:%zu",
-	           client.sock.get(),
-	           string(local(client)),
-	           string(remote(client)),
-	           int(code),
-	           http::status(code),
-	           request_time,
-	           (client.request->timer.at<microseconds>().count() - request_time),
-	           content_type,
-	           content.size());
+	log::debug
+	{
+		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length:%zu",
+		client.sock.get(),
+		string(local(client)),
+		string(remote(client)),
+		int(code),
+		http::status(code),
+		request_time,
+		(client.request->timer.at<microseconds>().count() - request_time),
+		content_type,
+		content.size()
+	};
 }

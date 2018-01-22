@@ -76,8 +76,10 @@ ircd::init(boost::asio::io_context &ios,
 try
 {
 	if(runlevel != runlevel::HALT)
-		throw error("Cannot init() IRCd from runlevel %s",
-		            reflect(runlevel));
+		throw error
+		{
+			"Cannot init() IRCd from runlevel %s", reflect(runlevel)
+		};
 
 	// Samples the thread this context was executed on which should be where
 	// the user ran ios.run(). The user may have invoked ios.run() on multiple
@@ -253,7 +255,10 @@ try
 }
 catch(const ctx::interrupted &e)
 {
-	log::warning("IRCd main interrupted...");
+	log::warning
+	{
+		"IRCd main interrupted..."
+	};
 }
 #ifndef RB_DEBUG
 catch(const std::exception &e)
@@ -261,7 +266,10 @@ catch(const std::exception &e)
 	// When not in debug mode this is a clean return to not crash through
 	// the embedder's ios.run() which would terminate the rest of their
 	// program. Instead they have the right to handle the error and try again.
-	log::critical("IRCd main exited: %s", e.what());
+	log::critical
+	{
+		"IRCd main exited: %s", e.what()
+	};
 }
 #else
 catch(...)
@@ -294,10 +302,13 @@ void
 ircd::set_runlevel(const enum runlevel &new_runlevel)
 try
 {
-	log::debug("IRCd runlevel transition from '%s' to '%s'%s",
-	           reflect(ircd::runlevel),
-	           reflect(new_runlevel),
-	           ircd::runlevel_changed? " (notifying user)" : "");
+	log::debug
+	{
+		"IRCd runlevel transition from '%s' to '%s'%s",
+		reflect(ircd::runlevel),
+		reflect(new_runlevel),
+		ircd::runlevel_changed? " (notifying user)" : ""
+	};
 
 	ircd::_runlevel = new_runlevel;
 
@@ -308,19 +319,26 @@ try
 		ios->post([new_runlevel]
 		{
 			if(new_runlevel == runlevel::HALT)
-				log::notice("IRCd %s", reflect(new_runlevel));
+				log::notice
+				{
+					"IRCd %s", reflect(new_runlevel)
+				};
 
 			ircd::runlevel_changed(new_runlevel);
 		});
 
 	if(new_runlevel != runlevel::HALT)
-		log::notice("IRCd %s", reflect(new_runlevel));
+		log::notice
+		{
+			"IRCd %s", reflect(new_runlevel)
+		};
 }
 catch(const std::exception &e)
 {
-	log::critical("IRCd runlevel change to '%s': %s",
-	              reflect(new_runlevel),
-	              e.what());
+	log::critical
+	{
+		"IRCd runlevel change to '%s': %s", reflect(new_runlevel), e.what()
+	};
 
 	ircd::terminate();
 }
@@ -346,7 +364,10 @@ ircd::read_conf(std::string filename)
 try
 {
 	if(!filename.empty())
-		log::debug("User supplied a configuration file path: `%s'", filename);
+		log::debug
+		{
+			"User supplied a configuration file path: `%s'", filename
+		};
 
 	if(filename.empty())
 		filename = fs::CPATH;
@@ -371,17 +392,22 @@ try
 
 	const json::object object{read};
 	const size_t key_count{object.count()};
-	log::info("Using configuration from: `%s': JSON object with %zu members in %zu bytes",
-	          filename,
-	          key_count,
-	          read.size());
+	log::info
+	{
+		"Using configuration from: `%s': JSON object with %zu members in %zu bytes",
+		filename,
+		key_count,
+		read.size()
+	};
 
 	return read;
 }
 catch(const std::exception &e)
 {
-	log::error("Configuration @ `%s': %s",
-	           filename,
-	           e.what());
+	log::error
+	{
+		"Configuration @ `%s': %s", filename, e.what()
+	};
+
 	throw;
 }
