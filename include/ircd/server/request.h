@@ -97,7 +97,11 @@ struct ircd::server::request
 	/// Options
 	const struct opts *opts { &opts_default };
 
-	request(const net::hostport &, server::out, server::in);
+	request(const net::hostport &,
+	        server::out,
+	        server::in,
+	        const struct opts *const & = nullptr);
+
 	request() = default;
 	request(request &&) noexcept;
 	request(const request &) = delete;
@@ -118,10 +122,12 @@ struct ircd::server::request::opts
 inline
 ircd::server::request::request(const net::hostport &hostport,
                                server::out out,
-                               server::in in)
+                               server::in in,
+                               const struct opts *const &opts)
 :tag{nullptr}
 ,out{std::move(out)}
 ,in{std::move(in)}
+,opts{opts?: &opts_default}
 {
 	submit(hostport, *this);
 }
