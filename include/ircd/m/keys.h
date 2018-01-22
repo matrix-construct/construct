@@ -43,16 +43,6 @@ namespace ircd::m::self
 	extern std::string tls_cert_der_sha256_b64;
 }
 
-namespace ircd::m::name
-{
-	constexpr const char *const server_name {"server_name"};
-	constexpr const char *const verify_keys {"verify_keys"};
-	constexpr const char *const old_verify_keys {"old_verify_keys"};
-//	constexpr const char *const signatures {"signatures"};
-	constexpr const char *const tls_fingerprints {"tls_fingerprints"};
-	constexpr const char *const valid_until_ts {"valid_until_ts"};
-}
-
 /// Contains the public keys and proof of identity for a remote server.
 ///
 /// A user who wishes to verify a signature from a remote server must have
