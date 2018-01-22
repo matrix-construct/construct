@@ -26,16 +26,14 @@
 // it requires symbols we can't forward declare without boost headers. It
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this socket API.
-//
-// The public API is available in <ircd/net/sockpub.h> which is included with
-// the standard include group. It contains many features which may suit you
-// in lieu of direct access to this interface.
 
 namespace ircd::net
 {
 	extern asio::ssl::context sslv23_client;
 }
 
+/// Internal socket interface
+///
 struct ircd::net::socket
 :std::enable_shared_from_this<ircd::net::socket>
 {
