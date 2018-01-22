@@ -45,12 +45,17 @@ ircd::json::object
 ircd::m::io::get(const id::event &event_id,
                  const mutable_buffer &buf)
 {
-	event::fetch tab
+	v1::event request
 	{
 		event_id, buf
 	};
 
-	return acquire(tab);
+	request.wait();
+
+	return json::object
+	{
+		request
+	};
 }
 
 void

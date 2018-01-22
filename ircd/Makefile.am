@@ -77,6 +77,7 @@ libircd_la_SOURCES =   \
 	logger.cc          \
 	m/event.cc         \
 	m/id.cc            \
+	m/v1.cc            \
 	m/io.cc            \
 	m/keys.cc          \
 	m/request.cc       \
