@@ -61,14 +61,6 @@ struct ircd::m::id::input
 {
 	template<class R = spirit::unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
-	rule<> NUL                         { lit('\0')                                          ,"nul" };
-	rule<> SP                          { lit('\x20')                                      ,"space" };
-	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
-	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
-	rule<> CRLF                        { CR >> LF                    ,"carriage return, line feed" };
-	rule<> ws                          { SP | HT                                     ,"whitespace" };
-
 	// Sigils
 	const rule<> event_id_sigil        { lit(char(ircd::m::id::EVENT))           ,"event_id sigil" };
 	const rule<> user_id_sigil         { lit(char(ircd::m::id::USER))             ,"user_id sigil" };
