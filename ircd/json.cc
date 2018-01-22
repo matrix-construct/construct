@@ -449,11 +449,20 @@ const ircd::json::value &
 ircd::json::iov::at(const string_view &key)
 const
 {
-	const auto it(std::find_if(std::begin(*this), std::end(*this), [&key]
-	(const auto &member)
+	const auto it
 	{
-		return string_view{member.first} == key;
-	}));
+		std::find_if(std::begin(*this), std::end(*this), [&key]
+		(const auto &member)
+		{
+			return string_view{member.first} == key;
+		})
+	};
+
+	if(it == std::end(*this))
+		throw not_found
+		{
+			"key '%s' not found", key
+		};
 
 	return it->second;
 }
