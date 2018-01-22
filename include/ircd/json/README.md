@@ -19,10 +19,10 @@ JSON text* itself, and perform the allocating, indexing, copying and
 converting entirely at the time and place of our discretion -- if ever.
 
 The core of this system is a robust and efficient abstract formal grammar
-built with boost::spirit. The formal grammar provides a *proof of robust-
-ness*: security vulnerabilities are more easily spotted by vetting this
-grammar rather than laboriously tracing the program flow of an informal
-handwritten parser.
+built with boost::spirit. The formal grammar provides a *proof of
+robustness*: security vulnerabilities are more easily spotted by vetting
+this grammar rather than laboriously tracing the program flow of an
+informal handwritten parser.
 
 Next we have taught boost::spirit how to parse into std::string_view rather
 than std::string. Parsing is now a composition of pointers into the original
