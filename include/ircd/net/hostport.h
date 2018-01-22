@@ -27,10 +27,8 @@ namespace ircd::net
 	struct hostport;
 
 	uint16_t port(const hostport &);
-
-	const auto &host(const hostport &);
-	auto &host(hostport &);
-
+	const string_view &host(const hostport &);
+	string_view &host(hostport &);
 	string_view string(const mutable_buffer &out, const hostport &);
 }
 
@@ -53,6 +51,8 @@ struct ircd::net::hostport
 	string_view port {"8448"};
 	uint16_t portnum {0};
 
+	bool operator!() const;
+
 	hostport(const string_view &host, const string_view &port)
 	:host{host}
 	,port{port}
@@ -74,13 +74,21 @@ struct ircd::net::hostport
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
 };
 
-inline auto &
+inline bool
+ircd::net::hostport::operator!()
+const
+{
+	static const hostport defaults{};
+	return net::host(*this) == net::host(defaults);
+}
+
+inline ircd::string_view &
 ircd::net::host(hostport &hp)
 {
 	return hp.host;
 }
 
-inline const auto &
+inline const ircd::string_view &
 ircd::net::host(const hostport &hp)
 {
 	return hp.host;
