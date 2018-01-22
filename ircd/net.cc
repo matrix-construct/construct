@@ -1842,7 +1842,12 @@ noexcept try
 		            openssl::print_subject(buf, cert));
 	}
 
-	if(!valid) switch(openssl::get_error(stctx))
+	const auto err
+	{
+		openssl::get_error(stctx)
+	};
+
+	if(!valid) switch(err)
 	{
 		case X509_V_OK:
 			assert(0);
@@ -1867,7 +1872,13 @@ noexcept try
 			break;
 	}
 
-	if(opts.verify_common_name)
+	const bool verify_common_name
+	{
+		opts.verify_common_name &&
+		(opts.verify_self_signed_common_name && err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
+	};
+
+	if(verify_common_name)
 	{
 		if(unlikely(empty(common_name(opts))))
 			throw inauthentic

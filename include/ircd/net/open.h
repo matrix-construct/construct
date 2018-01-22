@@ -84,6 +84,12 @@ struct ircd::net::open_opts
 	/// common_name will pass muster.
 	bool verify_common_name { true };
 
+	/// Option to toggle whether to perform CN verification for self-signed
+	/// certificates. This is set to false for compatibility purposes as many
+	/// self-signed certificates have either no CN or CN=localhost and none
+	/// of that really matters anyway.
+	bool verify_self_signed_common_name { false };
+
 	/// The expected /CN of the target. This should be the remote's hostname,
 	/// If it is empty then `hostport.host` is used. If the signed /CN has
 	/// some rfc2818/rfc2459 wildcard we will properly match that for you.
