@@ -36,7 +36,7 @@ namespace ircd::server
 	// Maximum number of requests "in flight" in the pipe at at time
 	const size_t TAG_COMMIT_MAX_DEFAULT
 	{
-		1
+		2
 	};
 
 	ctx::dock dock;
