@@ -43,3 +43,21 @@ namespace ircd::m::name
 	constexpr const char *const valid_until_ts {"valid_until_ts"};
 	constexpr const char *const verify_keys {"verify_keys"};
 }
+
+namespace ircd::m::name
+{
+	constexpr const char *const m_room_aliases {"m.room.aliases"};
+	constexpr const char *const m_room_canonical_alias {"m.room.canonical_alias"};
+	constexpr const char *const m_room_create {"m.room.create"};
+	constexpr const char *const m_room_join_rules {"m.room.join_rules"};
+	constexpr const char *const m_room_member {"m.room.member"};
+	constexpr const char *const m_room_power_levels {"m.room.power_levels"};
+	constexpr const char *const m_room_message {"m.room.message"};
+	constexpr const char *const m_room_name {"m.room.name"};
+	constexpr const char *const m_room_topic {"m.room.topic"};
+	constexpr const char *const m_room_avatar {"m.room.avatar"};
+	constexpr const char *const m_room_pinned_events {"m.room.pinned_events"};
+	constexpr const char *const m_room_history_visibility {"m.room.history_visibility"};
+	constexpr const char *const m_room_third_party_invite {"m.room.third_party_invite"};
+	constexpr const char *const m_room_guest_access {"m.room.guest_access"};
+}
