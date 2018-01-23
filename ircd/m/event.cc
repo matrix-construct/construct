@@ -29,16 +29,7 @@ ircd::m::id::event
 ircd::m::event_id(const event &event,
                   id::event::buf &buf)
 {
-	const json::strung preimage
-	{
-		event
-	};
-
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> hash
-	{
-		sha256{const_buffer{preimage}}
-	};
-
+	const crh::sha256::buf hash{event};
 	return event_id(event, buf, hash);
 }
 
