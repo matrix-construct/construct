@@ -973,6 +973,7 @@ ircd::server::link::wait_writable()
 
 void
 ircd::server::link::handle_writable(const error_code &ec)
+try
 {
 	using namespace boost::system::errc;
 	using boost::system::system_category;
@@ -991,6 +992,23 @@ ircd::server::link::handle_writable(const error_code &ec)
 	}
 
 	throw boost::system::system_error{ec};
+}
+catch(const boost::system::system_error &e)
+{
+	if(node)
+		node->handle_error(*this, e);
+}
+catch(const std::exception &e)
+{
+	if(node)
+	{
+		node->handle_error(*this, std::make_exception_ptr(std::current_exception()));
+		return;
+	}
+
+	log.critical("link::handle_writable(): %s", e.what());
+	assert(0);
+	throw;
 }
 
 void
