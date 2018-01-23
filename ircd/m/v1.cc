@@ -15,6 +15,23 @@
 // v1/send.h
 //
 
+void
+ircd::m::v1::send::response::for_each_pdu(const pdus_closure &closure)
+const
+{
+	const json::object &pdus
+	{
+		this->get("pdus")
+	};
+
+	for(const auto &member : pdus)
+	{
+		const id::event &event_id{member.first};
+		const json::object &error{member.second};
+		closure(event_id, error);
+	}
+}
+
 ircd::m::v1::send::send(const string_view &txnid,
                         const const_buffer &content,
                         const mutable_buffer &buf,
@@ -43,8 +60,7 @@ ircd::m::v1::send::send(const string_view &txnid,
 			fmt::sprintf
 			{
 				urlbuf, "/_matrix/federation/v1/send/%s/",
-				//url::encode(txnid, txnidbuf),
-				txnid
+				url::encode(txnid, txnidbuf),
 			}
 		};
 	}
