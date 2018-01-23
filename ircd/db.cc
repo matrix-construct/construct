@@ -2036,12 +2036,13 @@ ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
                                                       size_t length)
 noexcept
 {
+/*
 	log.debug("'%s': rfile:%p prefetch offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
-
+*/
 	return defaults->Prefetch(offset, length);
 }
 
@@ -2052,6 +2053,7 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   char *scratch)
 const noexcept
 {
+/*
 	log.debug("'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
 	          d.name,
 	          this,
@@ -2059,7 +2061,7 @@ const noexcept
 	          offset,
 	          length,
 	          scratch);
-
+*/
 	return defaults->Read(offset, length, result, scratch);
 }
 
@@ -2095,11 +2097,12 @@ void
 ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
 noexcept
 {
+/*
 	log.debug("'%s': rfile:%p hint %s",
 	          d.name,
 	          this,
 	          reflect(pattern));
-
+*/
 	return defaults->Hint(pattern);
 }
 
@@ -4375,6 +4378,7 @@ ircd::db::_seek(database::column &c,
 	}
 
 	it.reset(nullptr);
+/*
 	log.debug("'%s' %lu:%lu SEEK %s VALID CACHE MISS in %ld$us '%s'",
 	          name(d),
 	          sequence(d),
@@ -4382,6 +4386,7 @@ ircd::db::_seek(database::column &c,
 	          blocking_it->status().ToString(),
 	          timer.at<microseconds>().count(),
 	          name(c));
+*/
 
 	return seek(c, slice(blocking_it->key()), opts, it);
 }
