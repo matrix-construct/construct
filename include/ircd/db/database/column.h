@@ -11,6 +11,19 @@
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_COLUMN_H
 
+/// Internal column interface panel. This is db::database::column, not
+/// db::column. The latter is a public shared-pointer front-end which
+/// points to an internally managed database::column.
+namespace ircd::db
+{
+	std::shared_ptr<const database::column> shared_from(const database::column &);
+	std::shared_ptr<database::column> shared_from(database::column &);
+	const database::descriptor &describe(const database::column &);
+	const std::string &name(const database::column &);
+	uint32_t id(const database::column &);
+	void drop(database::column &);                   // Request to erase column from db
+}
+
 // This file is not part of the standard include stack because it requires
 // RocksDB symbols which we cannot forward declare. It is used internally
 // and does not need to be included by general users of IRCd.

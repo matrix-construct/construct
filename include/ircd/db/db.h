@@ -75,6 +75,7 @@ enum class ircd::db::pos
 #include "comparator.h"
 #include "prefix.h"
 #include "merge.h"
+#include "database/rocksdb.h"
 #include "database/database.h"
 #include "database/descriptor.h"
 #include "database/options.h"
@@ -93,15 +94,6 @@ enum class ircd::db::pos
 namespace ircd::db
 {
 	extern const char *const version;
-
-	rocksdb::Slice slice(const string_view &);
-	string_view slice(const rocksdb::Slice &);
-	size_t size(const rocksdb::Slice &);
-	const char *data(const rocksdb::Slice &);
-
-	bool valid(const rocksdb::Iterator &);
-	string_view key(const rocksdb::Iterator &);
-	string_view val(const rocksdb::Iterator &);
 
 	std::string path(const std::string &name);
 	std::vector<std::string> available();

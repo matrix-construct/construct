@@ -11,26 +11,6 @@
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_H
 
-/// Forward declarations for rocksdb because we do not include it here.
-///
-/// These are forward declarations to objects we may carry a pointer to.
-/// Users of ircd::db should not have to deal directly with these types.
-///
-namespace rocksdb
-{
-	struct DB;
-	struct Cache;
-	struct Options;
-	struct DBOptions;
-	struct ColumnFamilyOptions;
-	struct PlainTableOptions;
-	struct BlockBasedTableOptions;
-	struct Iterator;
-	struct ColumnFamilyHandle;
-	struct WriteBatch;
-	struct Slice;
-}
-
 namespace ircd::db
 {
 	struct database;
@@ -123,16 +103,3 @@ struct ircd::db::database
 	static const database &get(const column &);
 	static database &get(column &);
 };
-
-/// Internal column interface panel. This is db::database::column, not
-/// db::column. The latter is a public shared-pointer front-end which
-/// points to an internally managed database::column.
-namespace ircd::db
-{
-	std::shared_ptr<const database::column> shared_from(const database::column &);
-	std::shared_ptr<database::column> shared_from(database::column &);
-	const database::descriptor &describe(const database::column &);
-	const std::string &name(const database::column &);
-	uint32_t id(const database::column &);
-	void drop(database::column &);                   // Request to erase column from db
-}
