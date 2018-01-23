@@ -2,8 +2,8 @@
 
 #### Project Namespaces
 
-* `IRCD_`     Preprocessor #define and macro namespace.
-* `RB_`       Preprocessor #define and macro namespace (legacy / low-level).
+* `IRCD_`     Preprocessor #define, macro, and environmental variables.
+* `RB_`       Build system related preprocessor #defines and macros (legacy).
 * `ircd_`     C namespace and demangled bindings.
 * `ircd::`    C++ namespace scope.
 * `X-IRCd-`   HTTP header key namespace.
