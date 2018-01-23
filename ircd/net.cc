@@ -1939,6 +1939,8 @@ catch(const std::exception &e)
 	log.critical("socket(%p) async handler: unhandled exception: %s",
 	             this,
 	             e.what());
+
+	close(*this, dc::RST, close_ignore);
 }
 
 void
