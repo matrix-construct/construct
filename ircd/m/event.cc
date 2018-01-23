@@ -198,8 +198,8 @@ ircd::m::pretty(const event &event)
 	{
 		s << std::setw(16) << std::right << "[hash]" << ": "
 		  << hash.first
-		  //<< " "
-		  //<< hash.second
+		  << " "
+		  << unquote(hash.second)
 		  << std::endl;
 	}
 
