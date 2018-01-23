@@ -471,12 +471,6 @@ ircd::server::node::handle_close(link &link,
                                  std::exception_ptr eptr)
 try
 {
-	const unwind remove{[this, &link]
-	{
-		assert(link.fini);
-		this->del(link);
-	}};
-
 	if(eptr)
 		std::rethrow_exception(eptr);
 }
@@ -548,6 +542,14 @@ ircd::server::node::handle_error(link &link,
 
 	cancel_committed(link, std::make_exception_ptr(e));
 	link.close(net::dc::RST);
+}
+
+void
+ircd::server::node::handle_finished(link &link)
+{
+	assert(link.fini);
+	assert(link.handles == 0);
+	this->del(link);
 }
 
 /// This is where we're notified a tag has been completed either to start the
@@ -910,6 +912,7 @@ ircd::server::link::open(const net::open_opts &open_opts)
 
 	init = true;
 	fini = false;
+	inc_handles();
 	socket = net::open(open_opts, std::move(handler));
 	return true;
 }
@@ -917,6 +920,11 @@ ircd::server::link::open(const net::open_opts &open_opts)
 void
 ircd::server::link::handle_open(std::exception_ptr eptr)
 {
+	const unwind handled{[this]
+	{
+		dec_handles();
+	}};
+
 	init = false;
 
 	if(!eptr)
@@ -948,6 +956,7 @@ ircd::server::link::close(const net::close_opts &close_opts)
 	if(tag_count() && node)
 		node->disperse(*this);
 
+	inc_handles();
 	net::close(*socket, close_opts, std::move(handler));
 	return true;
 }
@@ -955,6 +964,11 @@ ircd::server::link::close(const net::close_opts &close_opts)
 void
 ircd::server::link::handle_close(std::exception_ptr eptr)
 {
+	const unwind handled{[this]
+	{
+		dec_handles();
+	}};
+
 	if(node)
 		node->handle_close(*this, std::move(eptr));
 }
@@ -968,6 +982,7 @@ ircd::server::link::wait_writable()
 	};
 
 	assert(ready());
+	inc_handles();
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
 }
 
@@ -977,6 +992,11 @@ try
 {
 	using namespace boost::system::errc;
 	using boost::system::system_category;
+
+	const unwind handled{[this]
+	{
+		dec_handles();
+	}};
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
@@ -1105,6 +1125,7 @@ ircd::server::link::wait_readable()
 	};
 
 	assert(ready());
+	inc_handles();
 	net::wait(*socket, net::ready::READ, std::move(handler));
 }
 
@@ -1114,6 +1135,11 @@ try
 {
 	using namespace boost::system::errc;
 	using boost::system::system_category;
+
+	const unwind handled{[this]
+	{
+		dec_handles();
+	}};
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{
@@ -1414,6 +1440,28 @@ const
 {
 	//TODO: config
 	return -1;
+}
+
+void
+ircd::server::link::inc_handles()
+{
+	assert(handles >= 0);
+	assert(handles < std::numeric_limits<decltype(handles)>::max());
+	++handles;
+}
+
+void
+ircd::server::link::dec_handles()
+{
+	assert(handles > 0);
+	--handles;
+
+	if(!handles && fini && node)
+	{
+		auto node(this->node);
+		this->node = nullptr;
+		node->handle_finished(*this);
+	}
 }
 
 template<class F>

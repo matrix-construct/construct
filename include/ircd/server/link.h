@@ -27,11 +27,15 @@ struct ircd::server::link
 	bool init {false};                           ///< link is connecting
 	bool fini {false};                           ///< link is disconnecting
 	bool exclude {false};                        ///< link is excluded
+	int8_t handles {0};                          ///< async operations
 	std::shared_ptr<server::node> node;          ///< backreference to node
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
 
 	template<class F> size_t accumulate_tags(F&&) const;
+
+	void inc_handles();
+	void dec_handles();
 
 	void discard_read();
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
