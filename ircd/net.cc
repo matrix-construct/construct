@@ -1045,6 +1045,16 @@ catch(const ctx::interrupted &e)
 
 	joining.notify_all();
 }
+catch(const boost::system::system_error &e)
+{
+	using namespace boost::system::errc;
+
+	const auto &fac{e.code() == timed_out? log::DEBUG : log::ERROR};
+	log(fac, "%s: socket(%p) in handshake(): %s",
+	          std::string(*this),
+	          sock.get(),
+	          string(e));
+}
 catch(const std::exception &e)
 {
 	log.error("%s: socket(%p) in handshake(): %s",
@@ -1061,22 +1071,29 @@ void
 ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
                                                      socket &sock)
 {
+	using boost::system::system_error;
 	using boost::system::system_category;
 	using namespace boost::system::errc;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
 
-	if(likely(ec == success))
-		return;
-
-	if(ec.category() == system_category()) switch(ec.value())
+	if(likely(ec.category() == system_category())) switch(ec.value())
 	{
+		case success:
+			return;
+
+		case operation_canceled:
+			if(sock.timedout)
+				throw system_error(timed_out, system_category());
+			else
+				break;
+
 		default:
 			break;
 	}
 
-	throw boost::system::system_error(ec);
+	throw system_error(ec);
 }
 
 void

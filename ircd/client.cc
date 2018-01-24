@@ -394,10 +394,13 @@ ircd::handle_ec_timeout(client &client)
 try
 {
 	assert(bool(client.sock));
-	log::warning("socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
-	             client.sock.get(),
-	             string(local(client)),
-	             string(remote(client)));
+	log::debug
+	{
+		"socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
+		client.sock.get(),
+		string(local(client)),
+		string(remote(client))
+	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
 	return false;
