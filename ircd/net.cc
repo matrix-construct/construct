@@ -1311,6 +1311,7 @@ try
 	          in.bytes,
 	          out.bytes);
 
+	cancel();
 	if(opts.sopts)
 		set(*this, *opts.sopts);
 
@@ -1339,7 +1340,6 @@ try
 				std::bind(&socket::handle_disconnect, this, shared_from(*this), std::move(callback), ph::_1)
 			};
 
-			cancel();
 			set_timeout(opts.timeout);
 			ssl.async_shutdown(std::move(disconnect_handler));
 			return;
