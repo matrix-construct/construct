@@ -81,9 +81,11 @@ try
 			"Cannot init() IRCd from runlevel %s", reflect(runlevel)
 		};
 
-	// Samples the thread this context was executed on which should be where
-	// the user ran ios.run(). The user may have invoked ios.run() on multiple
-	// threads, but we consider this one thread a main thread for now...
+	// Sample the ID of this thread. Since this is the first transfer of
+	// control to libircd after static initialization we have nothing to
+	// consider a main thread yet. We need something set for many assetions
+	// to pass until ircd::main() is entered which will reset this to where
+	// ios.run() is really running.
 	ircd::thread_id = std::this_thread::get_id();
 
 	// Global ircd:: reference to the user's io_context and setup our main
@@ -196,6 +198,11 @@ void
 ircd::main()
 try
 {
+	// Resamples the thread this context was executed on which should be where
+	// the user ran ios.run(). The user may have invoked ios.run() on multiple
+	// threads, but we consider this one thread a main thread for now...
+	ircd::thread_id = std::this_thread::get_id();
+
 	// When this function is entered IRCd will transition to START indicating
 	// that subsystems are initializing.
 	ircd::set_runlevel(runlevel::START);
