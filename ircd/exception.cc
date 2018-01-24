@@ -102,11 +102,10 @@ void
 ircd::assertion(const std::exception &e)
 noexcept(RB_DEBUG)
 {
-	log::critical("IRCd Assertion %s", e.what());
-
 	#ifdef RB_DEBUG
 		terminate(e);
 	#else
+		log::critical("IRCd Assertion %s", e.what());
 		throw e;
 	#endif
 }
