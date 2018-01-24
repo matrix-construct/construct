@@ -35,26 +35,6 @@ namespace ircd::m
 	struct room_event_filter;
 }
 
-namespace ircd::m::name
-{
-	constexpr const char *const event_fields {"event_fields"};
-	constexpr const char *const event_format {"event_format"};
-	constexpr const char *const account_data {"account_data"};
-	constexpr const char *const presence {"presence"};
-	constexpr const char *const room {"room"};
-	constexpr const char *const timeline {"timeline"};
-	constexpr const char *const ephemeral {"ephemeral"};
-	constexpr const char *const state {"state"};
-	constexpr const char *const rooms {"rooms"};
-	constexpr const char *const not_rooms {"not_rooms"};
-	constexpr const char *const include_leave {"include_leave"};
-	constexpr const char *const types {"types"};
-	constexpr const char *const not_types {"not_types"};
-	constexpr const char *const senders {"senders"};
-	constexpr const char *const not_senders {"not_senders"};
-	constexpr const char *const limit {"limit"};
-}
-
 struct ircd::m::event_filter
 :json::tuple
 <

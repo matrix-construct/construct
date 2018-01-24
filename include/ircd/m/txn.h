@@ -32,15 +32,6 @@ namespace ircd::m
 	struct txn;
 }
 
-namespace ircd::m::name
-{
-	constexpr const char *const edus {"edus"};
-//	constexpr const char *const origin {"origin"};
-//	constexpr const char *const origin_server_ts {"origin_server_ts"};
-	constexpr const char *const pdu_failures {"pdu_failures"};
-	constexpr const char *const pdus {"pdus"};
-}
-
 struct ircd::m::txn
 :json::tuple
 <
