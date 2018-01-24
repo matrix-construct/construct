@@ -145,19 +145,9 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 
 	const auto filter_id
 	{
-		"abc123"
+		send(m::filter::filters, user_id, "ircd.filter"_sv, request.body)
 	};
 
-	json::iov event;
-	json::iov::push members[]
-	{
-		{ event, json::member { "type",      "ircd.filter"    }},
-		{ event, json::member { "state_key",  filter_id       }},
-		{ event, json::member { "sender",     user_id         }},
-		{ event, json::member { "content",    request.body    }}
-	};
-
-	m::filter::filters.send(event);
 	return resource::response
 	{
 		client, http::CREATED,
