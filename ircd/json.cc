@@ -857,8 +857,8 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	if(string_view{v}.empty())
 	{
-		consume(buf, copy(buf, value::empty_array));
-		return value::empty_array;
+		consume(buf, copy(buf, empty_array));
+		return empty_array;
 	}
 
 	consume(buf, copy(buf, string_view{v}));
@@ -1000,13 +1000,12 @@ const
 // json/value.h
 //
 
-const ircd::string_view ircd::json::value::literal_null {"null"};
-const ircd::string_view ircd::json::value::literal_true {"true"};
-const ircd::string_view ircd::json::value::literal_false {"false"};
-const ircd::string_view ircd::json::value::empty_string {"\"\""};
-const ircd::string_view ircd::json::value::empty_number {"0"};
-const ircd::string_view ircd::json::value::empty_object {"{}"};
-const ircd::string_view ircd::json::value::empty_array {"[]"};
+const ircd::string_view ircd::json::literal_null   { "null"   };
+const ircd::string_view ircd::json::literal_true   { "true"   };
+const ircd::string_view ircd::json::literal_false  { "false"  };
+const ircd::string_view ircd::json::empty_string   { "\"\""   };
+const ircd::string_view ircd::json::empty_object   { "{}"     };
+const ircd::string_view ircd::json::empty_array    { "[]"     };
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
@@ -1073,8 +1072,8 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			//consume(buf, copy(buf, v.literal_null));
-			consume(buf, copy(buf, v.empty_object));
+			//consume(buf, copy(buf, literal_null));
+			consume(buf, copy(buf, empty_object));
 			break;
 		}
 
@@ -1092,8 +1091,8 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			//consume(buf, copy(buf, v.literal_null));
-			consume(buf, copy(buf, v.empty_array));
+			//consume(buf, copy(buf, literal_null));
+			consume(buf, copy(buf, empty_array));
 			break;
 		}
 
@@ -1632,8 +1631,8 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	if(v.empty() && defined(v))
 	{
-		consume(buf, copy(buf, value::empty_string));
-		return value::empty_string;
+		consume(buf, copy(buf, empty_string));
+		return empty_string;
 	}
 
 	consume(buf, copy(buf, string_view{v}));

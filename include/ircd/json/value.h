@@ -26,10 +26,17 @@ namespace ircd::json
 {
 	struct value;
 
+	using values = std::initializer_list<value>;
+
+	extern const string_view literal_null;
+	extern const string_view literal_true;
+	extern const string_view literal_false;
+	extern const string_view empty_string;
+	extern const string_view empty_object;
+	extern const string_view empty_array;
+
 	size_t serialized(const bool &);
 	size_t serialized(const value *const &begin, const value *const &end);
-
-	using values = std::initializer_list<value>;
 	size_t serialized(const values &);
 
 	string_view stringify(mutable_buffer &, const value *const &begin, const value *const &end);
@@ -81,14 +88,6 @@ struct ircd::json::value
 	uint64_t serial  : 1;       ///< only *string is used. type indicates JSON
 	uint64_t alloc   : 1;       ///< indicates the pointer for type is owned
 	uint64_t floats  : 1;       ///< for NUMBER type, integer or floating
-
-	static const string_view literal_null;
-	static const string_view literal_true;
-	static const string_view literal_false;
-	static const string_view empty_string;
-	static const string_view empty_number;
-	static const string_view empty_object;
-	static const string_view empty_array;
 
 	using create_string_closure = std::function<void (const mutable_buffer &)>;
 	void create_string(const size_t &len, const create_string_closure &);
