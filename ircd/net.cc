@@ -1512,6 +1512,9 @@ noexcept try
 	}
 	else cancel_timeout();
 
+	if(!ec && !sd.is_open())
+		ec = { bad_file_descriptor, system_category() };
+
 	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
 	          this,
 	          string(local_ipport(*this)),
@@ -1519,20 +1522,6 @@ noexcept try
 	          reflect(type),
 	          string(ec),
 	          available(*this));
-
-	if(ec.category() == system_category()) switch(ec.value())
-	{
-		case operation_canceled:
-			return;
-
-		// This is a condition which we hide from the user.
-		case bad_file_descriptor:
-			return;
-
-		// Everything else is passed up to the user.
-		default:
-			break;
-	}
 
 	call_user(callback, ec);
 }

@@ -321,6 +321,7 @@ ircd::handle_ec(client &client,
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:                return true;
+		case operation_canceled:     return false;
 		case timed_out:              return handle_ec_timeout(client);
 		default:                     return handle_ec_default(client, ec);
 	}
