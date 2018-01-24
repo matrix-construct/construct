@@ -100,7 +100,7 @@ template<class T>
 ircd::iov<T>::node::~node()
 noexcept
 {
-	i->remove_if([this](const T &x)
+	if(i) i->remove_if([this](const T &x)
 	{
 		return &x == &static_cast<const T &>(*this);
 	});
