@@ -57,6 +57,11 @@ ircd::fs::init::init()
 	#ifdef IRCD_USE_AIO
 		assert(!aioctx);
 		aioctx = new aio{};
+	#else
+		log::warning
+		{
+			"No support for asynchronous local filesystem IO..."
+		};
 	#endif
 }
 
