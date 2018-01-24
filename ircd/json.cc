@@ -1100,7 +1100,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			if(v.serial)
 			{
-				printer(buf, printer.number, string_view{v});
+				consume(buf, copy(buf, string_view{v}));
 				break;
 			}
 
