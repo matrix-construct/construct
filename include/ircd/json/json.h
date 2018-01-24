@@ -185,7 +185,7 @@ ircd::json::print(char *const &buf,
 	};
 
 	assert(sv.size() < max);
-	assert(valid(sv, std::nothrow));
+	assert(valid(sv, std::nothrow)); //note: false alarm when T=json::member
 	buf[sv.size()] = '\0';
 	return sv.size();
 }
@@ -207,12 +207,12 @@ ircd::json::strung::strung(T&&... t)
 		print(buf, max, std::forward<T>(t)...)
 	};
 
-	#ifdef RB_DEBUG
 	if(unlikely(printed != ret.size()))
-		std::cerr << printed << " != " << ret.size() << std::endl << ret << std::endl;
-	#endif
+		throw assertive
+		{
+			"%zu != %zu: %s", printed, ret.size(), ret
+		};
 
-	assert(printed == ret.size());
 	return ret;
 }()}
 {
