@@ -357,6 +357,7 @@ struct ircd::http::response::head
 {
 	size_t content_length {0};
 	string_view transfer_encoding;
+	string_view server;
 
 	string_view headers;
 

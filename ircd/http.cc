@@ -460,6 +460,9 @@ ircd::http::response::head::head(parse::capstan &pc,
 		else if(iequals(h.first, "transfer-encoding"s))
 			this->transfer_encoding = h.second;
 
+		else if(iequals(h.first, "server"s))
+			this->server = h.second;
+
 		if(c)
 			c(h);
 	}}
