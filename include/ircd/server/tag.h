@@ -56,7 +56,7 @@ struct ircd::server::tag
 	mutable_buffer make_read_head_buffer() const;
 
 	const_buffer read_content(const const_buffer &, bool &done);
-	const_buffer read_head(const const_buffer &, bool &done);
+	const_buffer read_head(const const_buffer &, bool &done, link &);
 
   public:
 	size_t write_total() const;
@@ -75,7 +75,7 @@ struct ircd::server::tag
 	void wrote_buffer(const const_buffer &);
 
 	mutable_buffer make_read_buffer() const;
-	const_buffer read_buffer(const const_buffer &, bool &done);
+	const_buffer read_buffer(const const_buffer &, bool &done, link &);
 
 	tag() = default;
 	tag(server::request &);

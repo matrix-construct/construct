@@ -28,6 +28,7 @@ struct ircd::server::node
 	net::remote remote;
 	std::exception_ptr eptr;
 	std::list<link> links;
+	std::string server_name;
 
 	template<class F> size_t accumulate_links(F&&) const;
 	template<class F> size_t accumulate_tags(F&&) const;
@@ -40,6 +41,7 @@ struct ircd::server::node
 	void disperse(link &);
 	void del(link &);
 
+	void handle_head_recv(const link &, const tag &, const http::response::head &);
 	void handle_link_done(link &);
 	void handle_tag_done(link &, tag &) noexcept;
 	void handle_finished(link &);

@@ -589,6 +589,26 @@ ircd::server::node::handle_link_done(link &link)
 	}
 }
 
+/// This is called when a tag on a link receives an HTTP response head.
+/// We can use this to learn information from the tag's request and the
+/// response head etc.
+void
+ircd::server::node::handle_head_recv(const link &link,
+                                     const tag &tag,
+                                     const http::response::head &head)
+{
+	// Learn the software version of the remote node so we can shape
+	// requests more effectively.
+	if(!server_name && head.server)
+	{
+		server_name = std::string{head.server};
+		log.debug("node(%p) learned %s is '%s'",
+		          this,
+		          string(remote),
+		          server_name);
+	}
+}
+
 void
 ircd::server::node::disperse(link &link)
 {
@@ -1281,7 +1301,7 @@ try
 
 	const const_buffer overrun
 	{
-		tag.read_buffer(view, done)
+		tag.read_buffer(view, done, *this)
 	};
 
 	assert(done || empty(overrun));
@@ -1672,15 +1692,20 @@ ircd::server::disassociate(request &request,
 /// The tag indicates it is entirely finished with receiving its data by
 /// setting the value of `done` to true. Otherwise it is assumed false.
 ///
+/// The link argument is not to be used to control/modify the link from the
+/// tag; it's only a backreference to flash information to the link/node
+/// through specific callbacks so the node can learn information.
+///
 ircd::const_buffer
 ircd::server::tag::read_buffer(const const_buffer &buffer,
-                               bool &done)
+                               bool &done,
+                               link &link)
 {
 	assert(request);
 
 	return
 		head_read < size(request->in.head)?
-			read_head(buffer, done):
+			read_head(buffer, done, link):
 
 		read_content(buffer, done);
 }
@@ -1799,7 +1824,8 @@ const
 
 ircd::const_buffer
 ircd::server::tag::read_head(const const_buffer &buffer,
-                             bool &done)
+                             bool &done,
+                             link &link)
 {
 	assert(request);
 	auto &req{*request};
@@ -1892,6 +1918,10 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	const http::response::head head{pc};
 	assert(pb.completed() == head_read);
 	this->status = http::status(head.status);
+
+	// Proffer the HTTP head to the node so it can learn from any data
+	assert(link.node);
+	link.node->handle_head_recv(link, *this, head);
 
 	// Now we know how much content was received beyond the head
 	const size_t &content_read
