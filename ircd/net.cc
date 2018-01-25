@@ -46,7 +46,7 @@ ircd::net::ipport
 ircd::net::remote_ipport(const socket &socket)
 noexcept try
 {
-    const auto &ep(socket.remote());
+	const auto &ep(socket.remote());
 	return make_ipport(ep);
 }
 catch(...)
@@ -58,7 +58,7 @@ ircd::net::ipport
 ircd::net::local_ipport(const socket &socket)
 noexcept try
 {
-    const auto &ep(socket.local());
+	const auto &ep(socket.local());
 	return make_ipport(ep);
 }
 catch(...)
@@ -909,12 +909,10 @@ try
 }
 catch(const std::exception &e)
 {
-	log.critical("%s: %s",
-	             std::string(*this),
-	             e.what());
-
-	if(ircd::debugmode)
-		throw;
+	throw assertive
+	{
+		"%s: %s", std::string(*this), e.what()
+	};
 }
 
 /// Callback for a socket connected. This handler then invokes the
@@ -1252,11 +1250,12 @@ ircd::net::socket::~socket()
 noexcept try
 {
 	if(unlikely(RB_DEBUG_LEVEL && connected(*this)))
-		log.critical("Failed to ensure socket(%p) is disconnected from %s before dtor.",
-		             this,
-		             string(remote()));
-
-	assert(!connected(*this));
+		throw assertive
+		{
+			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
+			this,
+			string(remote())
+		};
 }
 catch(const std::exception &e)
 {
@@ -1371,11 +1370,13 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) disconnect: type: %d: %s",
-	             (const void *)this,
-	             uint(opts.type),
-	             e.what());
-	throw;
+	throw assertive
+	{
+		"socket(%p) disconnect: type: %d: %s",
+		(const void *)this,
+		uint(opts.type),
+		e.what()
+	};
 }
 
 void
@@ -1604,14 +1605,12 @@ noexcept try
 		}
 
 		// All other errors are unexpected, logged and ignored here.
-		default:
+		default: throw assertive
 		{
-			log.critical("socket(%p) handle_timeout: unexpected: %s\n",
-			             (const void *)this,
-			             string(ec));
-			assert(0);
-			break;
-		}
+			"unexpected: %s\n",
+			(const void *)this,
+			string(ec)
+		};
 	}
 
 	if(callback)
@@ -2266,8 +2265,10 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("resolver::handle_reply(): %s", e.what());
-	throw;
+	throw assertive
+	{
+		"resolver::handle_reply(): %s", e.what()
+	};
 }
 
 /// Resolve a numerical address to a hostname string. This is a PTR record

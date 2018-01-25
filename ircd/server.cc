@@ -1046,9 +1046,10 @@ catch(const std::exception &e)
 		return;
 	}
 
-	log.critical("link::handle_writable(): %s", e.what());
-	assert(0);
-	throw;
+	throw assertive
+	{
+		"link::handle_writable(): %s", e.what()
+	};
 }
 
 void
@@ -1189,9 +1190,10 @@ catch(const std::exception &e)
 		return;
 	}
 
-	log.critical("link::handle_readable(): %s", e.what());
-	assert(0);
-	throw;
+	throw assertive
+	{
+		"link::handle_readable(): %s", e.what()
+	};
 }
 
 /// Process as many read operations from as many tags as possible
@@ -1261,6 +1263,7 @@ catch(const boost::system::system_error &e)
 
 		case success:
 			assert(0);
+			return true;
 
 		default:
 			throw;
