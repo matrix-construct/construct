@@ -59,9 +59,17 @@ handle_get(client &client,
 		m::get(event_id, buffer)
 	};
 
+	const json::value pdu
+	{
+		event
+	};
+
 	return resource::response
 	{
-		client, event
+		client, json::members
+		{
+			{ "pdus", { &pdu, 1 } }
+		}
 	};
 }
 
