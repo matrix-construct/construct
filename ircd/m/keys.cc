@@ -142,14 +142,15 @@ ircd::m::keys::init::signing()
 		sha256{const_raw_buffer{self::public_key}}
 	};
 
-	const auto public_key_hash_b64
+	const auto public_key_hash_b58
 	{
-		b64encode_unpadded(hash)
+		b58encode(hash)
 	};
 
+	static const auto trunc_size{8};
 	self::public_key_id = fmt::snstringf
 	{
-		BUFSIZE, "ed25519:%s", public_key_hash_b64
+		BUFSIZE, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
 	};
 
 	log.info("Current key is '%s' and the public key is: %s",
