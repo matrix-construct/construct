@@ -49,8 +49,14 @@ namespace ircd::m
 /// This json::tuple provides at least all of the legal members of the matrix
 /// standard event. This is the fundamental building block of the matrix
 /// system. Rooms are collections of events. Messages between servers are
-/// passed as bundles of events (or directly). Due to the ubiquitous usage,
-/// and diversity of extensions, the class member interface is somewhat minimal.
+/// passed as bundles of events (or directly).
+///
+/// Due to the ubiquitous usage, and diversity of extensions, the class
+/// member interface is somewhat minimal.
+///
+/// It is better to have 100 functions operate on one data structure than
+/// to have 10 functions operate on 10 data structures.
+/// -Alan Perlis
 ///
 struct ircd::m::event
 :json::tuple

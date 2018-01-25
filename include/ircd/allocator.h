@@ -32,25 +32,6 @@
 /// templates implement the std::allocator concept and can be used with
 /// std:: containers by specifying them in the container's template parameter.
 ///
-/// The ircd::allocator::fixed is the prototypical justification for these
-/// tools. It allows you to build a memory pool with a size known at compile-
-/// time at the place of your choosing (i.e the stack) for any STL container. A
-/// simple std::vector constructed on the stack with a fixed number of elements
-/// known at construction time won't otherwise magically optimize away the
-/// allocation for the elements; worse, a non-contiguous container like
-/// std::list, std::map or std::set will conduct allocations for each modifying
-/// operation. Having the fixed pool on the stack plugged into these containers
-/// trivializes those requests and releases of memory.
-///
-/// The ircd::allocator::dynamic performs a single allocation of a contiguous
-/// memory block with a size specified at runtime. This block can then be used
-/// by a container.
-///
-/// The ircd::allocator::node is an interface for allowing one to manually deal
-/// with the elements of an STL container similar to a C style container where
-/// a "node" is constructed at the user's discretion and then inserted and
-/// removed from the container.
-///
 namespace ircd::allocator
 {
 	struct state;
