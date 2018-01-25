@@ -20,6 +20,8 @@ namespace ircd::m
 /// protocol uses a JSON authorization object to create the X-Matrix
 /// authorization header on federation requests.
 ///
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::request
 :json::tuple
 <
@@ -61,6 +63,7 @@ struct ircd::m::request
 	using super_type::tuple;
 	request() = default;
 };
+#pragma GCC diagnostic pop
 
 struct ircd::m::request::x_matrix
 {
