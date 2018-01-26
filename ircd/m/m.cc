@@ -285,60 +285,6 @@ ircd::m::leave_ircd_room()
 	leave(my_room, me.user_id);
 }
 
-//
-// dbs
-//
-
-namespace ircd::m::dbs
-{
-	std::map<std::string, ircd::module> modules;
-	std::map<std::string, import_shared<database>> databases;
-
-	void init_modules();
-	void init_databases();
-}
-
-ircd::m::dbs::init::init()
-{
-	init_modules();
-	init_databases();
-
-	ircd::m::event::events = databases.at("events").get();
-}
-
-ircd::m::dbs::init::~init()
-noexcept
-{
-	ircd::m::event::events = nullptr;
-
-	databases.clear();
-	modules.clear();
-}
-
-void
-ircd::m::dbs::init_databases()
-{
-	for(const auto &pair : modules)
-	{
-		const auto &name(pair.first);
-		const auto dbname(mods::unpostfixed(name));
-		const std::string shortname(lstrip(dbname, "db_"));
-		const std::string symname(shortname + "_database"s);
-		databases.emplace(shortname, import_shared<database>
-		{
-			dbname, symname
-		});
-	}
-}
-
-void
-ircd::m::dbs::init_modules()
-{
-	for(const auto &name : mods::available())
-		if(startswith(name, "db_"))
-			modules.emplace(name, name);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/filter.h

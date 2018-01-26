@@ -339,23 +339,6 @@ put_send(client &client,
 		request.parv[3]
 	};
 
-	json::iov event;
-
-	const json::iov::push _type
-	{
-		event, { "type", type }
-	};
-
-	const json::iov::push _sender
-	{
-		event, { "sender", request.user_id }
-	};
-
-	const json::iov::push _content
-	{
-		event, { "content", json::object{request} }
-	};
-
 	m::room room
 	{
 		room_id
@@ -363,7 +346,7 @@ put_send(client &client,
 
 	const auto event_id
 	{
-		room.send(event)
+		send(room, request.user_id, type, json::object{request})
 	};
 
 	return resource::response

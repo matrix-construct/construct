@@ -29,400 +29,8 @@ ircd::m::vm::log
 
 decltype(ircd::m::vm::fronts)
 ircd::m::vm::fronts
-{
-};
+{};
 
-decltype(ircd::m::vm::pipe)
-ircd::m::vm::pipe
-{
-};
-
-void
-ircd::m::vm::statefill(const room::id &room_id,
-                       const event::id &event_id)
-try
-{
-	const unique_buffer<mutable_buffer> buf
-	{
-		32_MiB //TODO: XXX
-	};
-
-	room::state::fetch tab
-	{
-		event_id, room_id, buf
-	};
-
-	io::acquire(tab);
-
-	const json::array &auth_chain
-	{
-		tab.auth_chain
-	};
-
-	const json::array &pdus
-	{
-		tab.pdus
-	};
-
-	std::vector<m::event> events(pdus.count());
-	std::transform(begin(pdus), end(pdus), begin(events), []
-	(const json::object &event) -> m::event
-	{
-		return event;
-	});
-
-	eval{events};
-}
-catch(const std::exception &e)
-{
-	log.error("Acquiring state for %s at %s: %s",
-	          string_view{room_id},
-	          string_view{event_id},
-	          e.what());
-	throw;
-}
-
-void
-ircd::m::vm::backfill(const room::id &room_id,
-                      const event::id &event_id,
-                      const size_t &limit)
-try
-{
-	const unique_buffer<mutable_buffer> buf
-	{
-		32_MiB //TODO: XXX
-	};
-
-	room::fetch tab
-	{
-		event_id, room_id, buf
-	};
-
-	io::acquire(tab);
-
-	const json::array &auth_chain
-	{
-		tab.auth_chain
-	};
-
-	const json::array &pdus
-	{
-		tab.pdus
-	};
-
-	std::vector<m::event> events(pdus.count());
-	std::transform(begin(pdus), end(pdus), begin(events), []
-	(const json::object &event) -> m::event
-	{
-		return event;
-	});
-
-	eval{events};
-}
-catch(const std::exception &e)
-{
-	log.error("Acquiring backfill for %s at %s: %s",
-	          string_view{room_id},
-	          string_view{event_id},
-	          e.what());
-	throw;
-}
-
-ircd::json::object
-ircd::m::vm::acquire(const id::event &event_id,
-                     const mutable_buffer &buf)
-{
-	const vector_view<const id::event> event_ids(&event_id, &event_id + 1);
-	const vector_view<const mutable_buffer> bufs(&buf, &buf + 1);
-	return acquire(event_ids, bufs)? json::object{buf} : json::object{};
-}
-
-size_t
-ircd::m::vm::acquire(const vector_view<const id::event> &event_id,
-                     const vector_view<const mutable_buffer> &buf)
-{
-	std::vector<event::fetch> tabs(event_id.size());
-	for(size_t i(0); i < event_id.size(); ++i)
-		if(!exists(event_id[i]))
-			tabs[i] = event::fetch { event_id[i], buf[i] };
-
-	size_t i(0);
-	io::acquire(vector_view<event::fetch>(tabs));
-	for(const auto &fetch : tabs)
-		if(fetch.pdu)
-		{
-			i++;
-			eval{m::event{fetch.pdu}};
-		}
-
-	return i;
-}
-
-/// Federation join user to room
-///
-ircd::m::event::id::buf
-ircd::m::vm::join(const room::id &room_id,
-                  json::iov &iov)
-{
-	const user::id user_id
-	{
-		iov.at("sender")
-	};
-
-	const auto &hostname{room_id.hostname()};
-	const auto &hostport{room_id.hostport()};
-	m::log.debug("%s make_join %s to %s from %s:%u",
-	             my_host(),
-	             string_view{user_id},
-	             string_view{room_id},
-	             hostname,
-	             hostport);
-
-	char room_id_urle_buf[768];
-	const auto room_id_urle
-	{
-		url::encode(room_id, room_id_urle_buf),
-	};
-
-	char user_id_urle_buf[768];
-	const auto user_id_urle
-	{
-		url::encode(user_id, user_id_urle_buf)
-	};
-
-	const fmt::snstringf url
-	{
-		1024, "_matrix/federation/v1/make_join/%s/%s", room_id_urle, user_id_urle
-	};
-
-	m::request request
-	{
-		"GET", url, {}, {}
-	};
-
-	struct session session
-	{
-		{ std::string(hostname), hostport }
-	};
-
-	unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
-	};
-
-	ircd::parse::buffer pb{buf};
-	const json::object response
-	{
-		session(pb, request)
-	};
-
-	const m::event proto
-	{
-		response.at("event")
-	};
-
-	//TODO: hash prototype
-	//at<"hashes"_>(proto)
-
-	//TODO: verify prototype
-	//at<"signatures"_>(proto)
-
-	m::log.debug("%s make_join %s to %s responded. depth: %ld prev: %s auth: %s",
-	             room_id.host(),
-	             string_view{user_id},
-	             string_view{room_id},
-	             json::get<"depth"_>(proto),
-	             json::get<"prev_events"_>(proto),
-	             json::get<"auth_events"_>(proto));
-
-	const json::strung content
-	{
-		json::members {{ "membership", "join" }}
-	};
-
-	json::iov event;
-	const json::iov::push push[]
-	{
-		{ event, { "type",              "m.room.member"              }},
-		{ event, { "membership",        "join"                       }},
-		{ event, { "room_id",           room_id                      }},
-		{ event, { "origin",            my_host()                    }},
-		{ event, { "sender",            user_id                      }},
-		{ event, { "state_key",         user_id                      }},
-		{ event, { "origin_server_ts",  ircd::time<milliseconds>()   }},
-		{ event, { "depth",             at<"depth"_>(proto)          }},
-		{ event, { "content",           content                      }},
-	//	{ event, { "auth_events",       at<"auth_events"_>(proto)    }},
-	//	{ event, { "prev_events",       at<"prev_events"_>(proto)    }},
-	//	{ event, { "prev_state",        at<"prev_state"_>(proto)     }},
-	};
-
-	//TODO: XXX
-	auto replaced_auth_events{replace(at<"auth_events"_>(proto), '\\', "")};
-	auto replaced_prev_events{replace(at<"prev_events"_>(proto), '\\', "")};
-	auto replaced_prev_state{replace(at<"prev_state"_>(proto), '\\', "")};
-	const json::iov::push replacements[]
-	{
-		{ event, { "auth_events", replaced_auth_events }},
-		{ event, { "prev_events", replaced_prev_events }},
-		{ event, { "prev_state",  replaced_prev_state  }},
-	};
-
-	const json::strung hash_preimage
-	{
-		event
-	};
-
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> hash
-	{
-		sha256{const_buffer{hash_preimage}}
-	};
-
-	char hashb64[uint(hash.size() * 1.34) + 2];
-	const json::strung hashes
-	{
-		json::members
-		{
-			{ "sha256", b64encode_unpadded(hashb64, hash) }
-		}
-	};
-
-	const json::strung event_id_preimage
-	{
-		event
-	};
-
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> event_id_hash
-	{
-		sha256{const_buffer{event_id_preimage}}
-	};
-
-	char event_id_hash_b64[uint(event_id_hash.size() * 1.34) + 2];
-	const event::id::buf event_id_buf
-	{
-		b64encode_unpadded(event_id_hash_b64, event_id_hash), my_host()
-	};
-
-	const json::iov::push _event_id
-	{
-		event, { "event_id", event_id_buf }
-	};
-
-	const json::strung signature_preimage
-	{
-		event
-	};
-
-	const ed25519::sig sig
-	{
-		self::secret_key.sign(const_buffer{signature_preimage})
-	};
-
-	char signature_buffer[128];
-	const json::strung signatures{json::members
-	{{
-		my_host(), json::members
-		{
-			json::member { self::public_key_id, b64encode_unpadded(signature_buffer, sig) }
-		}
-	}}};
-
-	const json::iov::push _signatures
-	{
-		event, { "signatures", signatures }
-	};
-
-	char event_id_urle_buf[768];
-	const auto event_id_urle
-	{
-		url::encode(event.at("event_id"), event_id_urle_buf)
-	};
-
-	const fmt::bsprintf<1024> send_join_url
-	{
-		"_matrix/federation/v1/send_join/%s/%s", room_id_urle, event_id_urle
-	};
-
-	const auto join_event
-	{
-		json::strung(event)
-	};
-
-	m::log.debug("%s send_join %s to %s sending: %s membership: %s %s",
-	             my_host(),
-	             string_view{user_id},
-	             string_view{room_id},
-	             string_view{event.at("type")},
-	             string_view{event.at("membership")},
-	             string_view{event.at("event_id")});
-
-	m::request send_join_request
-	{
-		"PUT", send_join_url, {}, join_event
-	};
-
-	unique_buffer<mutable_buffer> send_join_buf
-	{
-		4_MiB
-	};
-
-	ircd::parse::buffer sjpb{send_join_buf};
-	const json::array send_join_response
-	{
-		session(sjpb, send_join_request)
-	};
-
-	const auto status
-	{
-		send_join_response.at<uint>(0)
-	};
-
-	const json::object data
-	{
-		send_join_response.at(1)
-	};
-
-	const json::array state
-	{
-		data.at("state")
-	};
-
-	const json::array auth_chain
-	{
-		data.at("auth_chain")
-	};
-
-	m::log.debug("%s %u send_join %s to %s responded with %zu state and %zu auth_chain events",
-	             room_id.host(),
-	             status,
-	             string_view{user_id},
-	             string_view{room_id},
-	             state.count(),
-	             auth_chain.count());
-
-	eval{state};
-	eval{event};
-	return event_id_buf;
-}
-
-/// Insert a new event originating from this server.
-///
-/// Figure 1:
-///          in     .  <-- injection
-///    ___:::::::__//
-///    |  ||||||| //   <-- this function
-///    |   \\|// //|
-///    |    ||| // |   | acceleration
-///    |    |||//  |   |
-///    |    |||/   |   V
-///    |    |||    |
-///    |    !!!    |
-///    |     *     |   <----- nozzle
-///    | ///|||\\\ |
-///    |/|/|/|\|\|\|   <---- propagation cone
-///  _/|/|/|/|\|\|\|\_
-///         out
-///
 /// This function takes an event object vector and adds our origin and event_id
 /// and hashes and signature and attempts to inject the event into the core.
 /// The caller is expected to have done their best to check if this event will
@@ -434,151 +42,151 @@ ircd::m::vm::join(const room::id &room_id,
 /// hanging their client too much.
 ///
 ircd::m::event::id::buf
-ircd::m::vm::commit(json::iov &iov)
+ircd::m::vm::commit(json::iov &event,
+                    const json::iov &contents)
 {
-	const room::id &room_id
+	const auto &room_id
 	{
-		iov.at("room_id")
+		event.at("room_id")
 	};
 
-	std::string prev_events; try
+	// derp
+	const json::strung content
 	{
-		auto &front(fronts.get(room_id, iov));
-		if(!front.map.empty())
-		{
-			std::string prev_id
-			{
-				front.map.begin()->first
-			};
+		contents
+	};
 
-			const json::value prev[]
-			{
-				string_view{prev_id}
-			};
-
-			const json::value prev2[]
-			{
-				{ prev, 1 }
-			};
-
-			const json::value prevs
-			{
-				prev2, 1
-			};
-
-			prev_events = json::strung(prevs);
-		}
-	}
-	catch(const std::exception &e)
+	//TODO: XXX
+	const int64_t depth
 	{
+		-1
+	};
 
-	}
+	//TODO: XXX
+	const string_view auth_events {};
 
-	std::string auth_events; try
-	{
-
-
-	}
-	catch(const std::exception &e)
-	{
-
-	}
+	//TODO: XXX
+	const string_view prev_events {};
 
 	const json::iov::set set[]
 	{
-		{ iov, { "origin_server_ts",  ircd::time<milliseconds>() }},
-		{ iov, { "origin",            my_host()                  }},
-		{ iov, { "prev_events",       prev_events                }},
-		{ iov, { "auth_events",       auth_events                }},
+		{ event, { "auth_events",       auth_events                }},
+		{ event, { "depth",             depth                      }},
+		{ event, { "origin_server_ts",  ircd::time<milliseconds>() }},
+		{ event, { "origin",            my_host()                  }},
+		{ event, { "prev_events",       prev_events                }},
 	};
 
-	// Need this for now
-	const unique_buffer<mutable_buffer> scratch
+	thread_local char preimage_buf[64_KiB];
+	const_raw_buffer preimage
 	{
-		64_KiB
+		stringify(mutable_buffer{preimage_buf}, event)
 	};
 
-	// derp
-	auto preimage
+	sha256::buf hash
 	{
-		json::stringify(mutable_buffer{scratch}, iov)
+		sha256{preimage}
 	};
 
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> event_id_hash
+	event::id::buf eid_buf;
+	const json::iov::set _event_id
 	{
-		sha256{const_buffer{preimage}}
+		event, { "event_id", m::event_id(event, eid_buf, hash) }
 	};
 
-	char event_id_hash_b64[uint(event_id_hash.size() * 1.34) + 2];
-	const event::id::buf event_id_buf
+	char hashes_buf[128];
+	string_view hashes;
 	{
-		b64encode_unpadded(event_id_hash_b64, event_id_hash), my_host()
-	};
-
-	const json::iov::set event_id
-	{
-		iov, { "event_id", event_id_buf }
-	};
-
-	// derp
-	preimage =
-	{
-		json::stringify(mutable_buffer{scratch}, iov)
-	};
-
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> hash
-	{
-		sha256{const_buffer{preimage}}
-	};
-
-	fixed_buffer<mutable_buffer, uint(hash.size() * 1.34) + 1> hashb64;
-	const json::iov::set hashes
-	{
-		iov, json::member
+		const json::iov::push _content
 		{
-			"hashes", json::members
-			{
-				{ "sha256", b64encode_unpadded(hashb64, hash) }
-			}
-		}
+			event, { "content", string_view{content} }
+		};
+
+		// derp
+		preimage = stringify(mutable_buffer{preimage_buf}, event);
+		hash = sha256{preimage};
+
+		// derp
+		thread_local char hashb64[hash.size() * 2];
+		hashes = stringify(mutable_buffer{hashes_buf}, json::members
+		{
+			{ "sha256", b64encode_unpadded(hashb64, hash) }
+		});
+	}
+
+	const json::iov::push _hashes
+	{
+		event, { "hashes", hashes }
 	};
 
 	// derp
-	preimage =
+	ed25519::sig sig;
 	{
-		json::stringify(mutable_buffer{scratch}, iov)
-	};
-
-	const ed25519::sig sig
-	{
-		self::secret_key.sign(const_buffer{preimage})
-	};
-
-	char signature_buffer[128];
-	const json::iov::set signatures
-	{
-		iov, json::member
+		const json::iov::push _content
 		{
-			"signatures", json::members
-			{{
-				my_host(), json::members
-				{
-					json::member { self::public_key_id, b64encode_unpadded(signature_buffer, sig) }
-				}
-			}}
-		}
+			event, { "content", "{}" }
+		};
+
+		preimage = stringify(mutable_buffer{preimage_buf}, event);
+		sig = self::secret_key.sign(preimage);
+		assert(self::public_key.verify(preimage, sig));
+	}
+
+	char sigb64[64];
+	const json::members sigs
+	{
+		{ my_host(), json::members
+		{
+			json::member { self::public_key_id, b64encode_unpadded(sigb64, sig) }
+		}}
 	};
 
+	const json::iov::push _final[]
+	{
+		{ event, { "content",     content  }},
+		{ event, { "signatures",  sigs     }},
+	};
+
+	return commit(event);
+}
+
+/// Insert a new event originating from this server.
+///
+/// Figure 1:
+///          in     .  <-- injection
+///    ___:::::::__//
+///    |  ||||||| //   <-- this function
+///    |   \\|// //|
+///    |    ||| // |   |  acceleration
+///    |    |||//  |   |
+///    |    |||/   |   |
+///    |    |||    |   V
+///    |    !!!    |
+///    |     *     |   <----- nozzle
+///    | ///|||\\\ |
+///    |/|/|/|\|\|\|   <---- propagation cone
+///  _/|/|/|/|\|\|\|\_
+///         out
+///
+ircd::m::event::id::buf
+ircd::m::vm::commit(json::iov &iov)
+{
 	const m::event event
 	{
 		iov
 	};
 
-	if(!json::get<"type"_>(event))
-		throw BAD_JSON("Required event field: type");
+	if(unlikely(!json::get<"event_id"_>(event)))
+	{
+		assert(0);
+		throw BAD_JSON("Required event field: event_id");
+	}
 
-	if(!json::get<"sender"_>(event))
-		throw BAD_JSON("Required event field: sender");
+	if(unlikely(!json::get<"type"_>(event)))
+	{
+		assert(0);
+		throw BAD_JSON("Required event field: type");
+	}
 
 	log.debug("injecting event(mark: %ld) %s",
 	          vm::current_sequence,
@@ -593,7 +201,7 @@ ircd::m::vm::commit(json::iov &iov)
 	          vm::current_sequence,
 	          timer.at<milliseconds>().count());
 
-	return event_id_buf;
+	return unquote(at<"event_id"_>(event));
 }
 
 //
@@ -608,10 +216,8 @@ namespace ircd::m::vm
 	bool check_fault_resume(eval &);
 	void check_fault_throw(eval &);
 
-	void write(const event &, db::iov &txn);
 	void write(eval &);
 
-	bool evaluate(eval &, const vector_view<port> &, const size_t &i);
 	enum fault evaluate(eval &, const event &);
 	enum fault evaluate(eval &, const vector_view<const event> &);
 }
@@ -674,7 +280,7 @@ ircd::m::vm::eval::operator()(const vector_view<const event> &events)
 {
 	static const size_t max
 	{
-		1024
+		128
 	};
 
 	for(size_t i(0); i < events.size(); i += max)
@@ -699,149 +305,22 @@ ircd::m::vm::eval::operator()(const vector_view<const event> &events)
 	return fault::ACCEPT;
 }
 
-namespace ircd::m
-{
-	//TODO: XXX
-	void _index_special0(const event &event, db::iov &iov, const string_view &prev_event_id);
-	void _index_special1(const event &event, db::iov &iov, const string_view &prev_event_id);
-}
-
 enum ircd::m::vm::fault
 ircd::m::vm::evaluate(eval &eval,
-                      const vector_view<const event> &events)
+                      const vector_view<const event> &event)
 {
-	const std::unique_ptr<port[]> port_buf
+
+	for(size_t i(0); i < event.size(); ++i)
 	{
-		new port[events.size()]
-	};
-
-	const vector_view<port> p
-	{
-		port_buf.get(), events.size()
-	};
-
-	auto &ef{eval.ef};
-	size_t a{0}, b{0}, i{0};
-	for(size_t i(0); i < events.size(); ++i)
-		p[i].event = events.data() + i;
-
-	for(; b < events.size() && a < events.size(); ++b, ++i, i %= events.size())
-	{
-		if(p[i].h)
-			continue;
-
-		if((p[i].h = evaluate(eval, p, i)))
+		if(evaluate(eval, event[i]) == fault::ACCEPT)
 		{
-			if(p[i].w)
-			{
-				const auto &event{*p[i].event};
-				if(defined(json::get<"state_key"_>(event)))
-				{
-					event::id::buf prev_event_id;
-					const query<where::equal> q
-					{
-						{ "room_id",   at<"room_id"_>(event)   },
-						{ "type",      at<"type"_>(event)      },
-						{ "state_key", at<"state_key"_>(event) },
-					};
-
-					if(test(q, [&prev_event_id](const auto &event)
-					{
-						prev_event_id = at<"event_id"_>(event);
-						std::cout << "got prev S: " << prev_event_id << std::endl;
-						return true;
-					}))
-						_index_special0(event, eval.txn, prev_event_id);
-				}
-
-				{
-					event::id::buf prev_event_id;
-					const query<where::equal> q
-					{
-						{ "room_id",   at<"room_id"_>(event)   },
-						{ "depth",     at<"depth"_>(event) - 1 },
-					};
-
-					if(test(q, [&prev_event_id](const auto &event)
-					{
-						prev_event_id = at<"event_id"_>(event);
-						std::cout << "got prev E: " << prev_event_id << std::endl;
-						return true;
-					}))
-						_index_special1(event, eval.txn, prev_event_id);
-				}
-
-				write(*p[i].event, eval.txn);
-				++eval.cs;
-			}
-
-			b = 0;
-			++a;
+			log.info("%s", pretty_oneline(event[i]));
+			vm::inserted.notify(event[i]);
 		}
 	}
 
-	const auto cs{eval.cs};
-	if(cs)
-	{
-		write(eval);
-		for(size_t i(0); i < p.size(); ++i)
-		{
-			if(p[i].event && p[i].w)
-			{
-				log.info("%s", pretty_oneline(*p[i].event));
-				vm::inserted.notify(*p[i].event);
-				p[i] = port{};
-			}
-		}
-	}
-
-	return cs == events.size()? fault::ACCEPT:
-	                            fault::EVENT;
-}
-
-bool
-ircd::m::vm::evaluate(eval &eval,
-                      const vector_view<port> &pv,
-                      const size_t &i)
-try
-{
-	auto &ef{eval.ef};
-	auto &p{pv[i]};
-	if(!p.event)
-		return true;
-
-	auto &event{*p.event};
-	switch((p.code = evaluate(eval, event)))
-	{
-		case fault::ACCEPT:
-		{
-			p.w = true;
-			ef.erase(at<"event_id"_>(event));
-			return true;
-		}
-
-		case fault::EVENT:
-		{
-			const auto it(std::find_if(begin(pv), end(pv), [&ef]
-			(const auto &port) -> bool
-			{
-				return port.event? ef.count(at<"event_id"_>(*port.event)) : false;
-			}));
-
-			return it == end(pv);
-		}
-
-		case fault::STATE:
-			return true;
-
-		default:
-			return true;
-	}
-}
-catch(const std::exception &e)
-{
-	log.error("%s", e.what());
-	return true;
+	write(eval);
+	return fault::ACCEPT;
 }
 
 enum ircd::m::vm::fault
@@ -855,7 +334,7 @@ ircd::m::vm::evaluate(eval &eval,
 
 	const auto &depth
 	{
-		at<"depth"_>(event)
+		json::get<"depth"_>(event, 0)
 	};
 
 	const auto &room_id
@@ -875,28 +354,7 @@ ircd::m::vm::evaluate(eval &eval,
 		fault::ACCEPT
 	};
 
-	const m::event::prev prev{event};
-	m::for_each(prev, [&eval, &code](const event::id &event_id)
-	{
-		const query<where::equal> q
-		{
-			{ "event_id", event_id }
-		};
-
-		if(eval.capstan.test(q) != true)
-		{
-			//eval.ef.emplace(event_id);
-			//code = fault::EVENT;
-		}
-	});
-
-	log.debug("%s %s",
-	          reflect(code),
-	          pretty_oneline(event));
-
-	if(code == fault::ACCEPT)
-		eval.capstan.fwd(event);
-
+	dbs::write(event, eval.txn);
 	return code;
 }
 
@@ -959,106 +417,6 @@ ircd::m::vm::inserted
 uint64_t
 ircd::m::vm::current_sequence
 {};
-
-template<>
-std::list<ircd::m::vm::witness *>
-ircd::m::vm::witness::instance_list<ircd::m::vm::witness>::list
-{
-};
-
-ircd::m::vm::capstan::capstan()
-:acc(witness::list.size())
-{
-	size_t i(0);
-	const auto &list{vm::witness::list};
-	for(auto it(begin(list)); it != end(list); ++it, i++)
-	{
-		auto &witness{**it};
-		this->acc[i] = witness.init();
-	}
-}
-
-ircd::m::vm::capstan::~capstan()
-noexcept
-{
-}
-
-void
-ircd::m::vm::capstan::fwd(const event &event)
-{
-	size_t i(0);
-	const auto &list{vm::witness::list};
-	for(auto it(begin(list)); it != end(list); ++it, i++)
-	{
-		auto &witness{**it};
-		const auto &acc{this->acc[i]};
-		witness.add(acc.get(), event);
-	}
-}
-
-void
-ircd::m::vm::capstan::rev(const event &event)
-{
-	size_t i(0);
-	const auto &list{vm::witness::list};
-	for(auto it(begin(list)); it != end(list); ++it, i++)
-	{
-		auto &witness{**it};
-		const auto &acc{this->acc[i]};
-		witness.add(acc.get(), event);
-	}
-}
-
-int
-ircd::m::vm::capstan::test(const query<> &q)
-const
-{
-	size_t i(0);
-	const auto &list{vm::witness::list};
-	for(auto it(begin(list)); it != end(list); ++it, i++)
-	{
-		auto &witness{**it};
-		const auto &acc{this->acc[i]};
-		const auto res{witness.test(acc.get(), q)};
-		if(res >= 0)
-			return res;
-	}
-
-	return -1;
-}
-
-ssize_t
-ircd::m::vm::capstan::count(const query<> &q)
-const
-{
-	size_t i(0);
-	const auto &list{vm::witness::list};
-	for(auto it(begin(list)); it != end(list); ++it, i++)
-	{
-		auto &witness{**it};
-		const auto &acc{this->acc[i]};
-		const auto res{witness.count(acc.get(), q)};
-		if(res >= 0)
-			return res;
-	}
-
-	return -1;
-}
-
-ircd::m::vm::accumulator::~accumulator()
-noexcept
-{
-}
-
-ircd::m::vm::witness::witness(std::string name)
-:name{std::move(name)}
-{
-}
-
-ircd::m::vm::witness::~witness()
-noexcept
-{
-}
 
 ircd::m::vm::front &
 ircd::m::vm::fronts::get(const room::id &room_id,
@@ -1153,9 +511,6 @@ ircd::m::vm::fetch(const room::id &room_id,
 		          string_view{room_id},
 		          string_view{event_id});
 
-		if(event_id.host() == "matrix.org" && room_id.host() == "matrix.org")
-			statefill(room_id, event_id);
-
 		return front;
 	}
 
@@ -1168,107 +523,13 @@ ircd::m::vm::fetch(const room::id &room_id,
 
 	if(!my_host(room_id.host()))
 	{
-		backfill(room_id, event_id, 64);
+		assert(0);
+		//backfill(room_id, event_id, 64);
 		return front;
 	}
 
 	return front;
 }
-
-ircd::string_view
-ircd::m::vm::reflect(const enum fault &code)
-{
-	switch(code)
-	{
-		case fault::ACCEPT:       return "ACCEPT";
-		case fault::GENERAL:      return "GENERAL";
-		case fault::DEBUGSTEP:    return "DEBUGSTEP";
-		case fault::BREAKPOINT:   return "BREAKPOINT";
-		case fault::EVENT:        return "EVENT";
-	}
-
-	return "??????";
-}
-
-//
-// Write
-//
-
-namespace ircd::m
-{
-	void append_indexes(const event &, db::iov &);
-}
-
-void
-ircd::m::vm::write(const event &event,
-                   db::iov &txn)
-{
-	db::iov::append
-	{
-		txn, at<"event_id"_>(event), event
-	};
-
-	append_indexes(event, txn);
-}
-
-namespace ircd::m::vm
-{
-	int _query(eval &, const query<> &, const closure_bool &);
-	int _query_where(eval &, const query<where::equal> &where, const closure_bool &closure);
-	int _query_where(eval &, const query<where::logical_and> &where, const closure_bool &closure);
-
-	bool _query(const query<> &, const closure_bool &);
-
-	bool _query_event_id(const query<> &, const closure_bool &);
-	bool _query_in_room_id(const query<> &, const closure_bool &, const room::id &);
-	bool _query_for_type_state_key_in_room_id(const query<> &, const closure_bool &, const room::id &, const string_view &type = {}, const string_view &state_key = {});
-
-	int _query_where_event_id(const query<where::equal> &, const closure_bool &);
-	int _query_where_room_id_at_event_id(const query<where::equal> &, const closure_bool &);
-	int _query_where_room_id(const query<where::equal> &, const closure_bool &);
-	int _query_where(const query<where::equal> &where, const closure_bool &closure);
-	int _query_where(const query<where::logical_and> &where, const closure_bool &closure);
-
-	const query<> noop;
-}
-
-ircd::m::vm::query<>::~query()
-noexcept
-{
-}
-
-bool
-ircd::m::vm::exists(const event::id &event_id)
-{
-	db::column column
-	{
-		*event::events, "event_id"
-	};
-
-	return has(column, event_id);
-}
-
-int
-ircd::m::vm::test(eval &eval,
-                  const query<> &where)
-{
-	return test(eval, where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-int
-ircd::m::vm::test(eval &eval,
-                  const query<> &clause,
-                  const closure_bool &closure)
-{
-	return _query(eval, clause, [&closure](const auto &event)
-	{
-		return closure(event);
-	});
-}
-
 
 bool
 ircd::m::vm::test(const query<> &where)
@@ -1284,7 +545,7 @@ ircd::m::vm::test(const query<> &clause,
                   const closure_bool &closure)
 {
 	bool ret{false};
-	_query(clause, [&ret, &closure](const auto &event)
+	dbs::_query(clause, [&ret, &closure](const auto &event)
 	{
 		ret = closure(event);
 		return true;
@@ -1307,7 +568,7 @@ ircd::m::vm::until(const query<> &clause,
                    const closure_bool &closure)
 {
 	bool ret{true};
-	_query(clause, [&ret, &closure](const auto &event)
+	dbs::_query(clause, [&ret, &closure](const auto &event)
 	{
 		ret = closure(event);
 		return ret;
@@ -1327,7 +588,7 @@ ircd::m::vm::count(const query<> &where)
 
 size_t
 ircd::m::vm::count(const query<> &where,
-                       const closure_bool &closure)
+                   const closure_bool &closure)
 {
 	size_t i(0);
 	for_each(where, [&closure, &i](const auto &event)
@@ -1337,41 +598,6 @@ ircd::m::vm::count(const query<> &where,
 
 	return i;
 }
-
-/*
-void
-ircd::m::vm::rfor_each(const closure &closure)
-{
-	const query<where::noop> where{};
-	rfor_each(where, closure);
-}
-
-void
-ircd::m::vm::rfor_each(const query<> &where,
-                           const closure &closure)
-{
-	rquery(where, [&closure](const auto &event)
-	{
-		closure(event);
-		return false;
-	});
-}
-
-bool
-ircd::m::vm::rquery(const closure_bool &closure)
-{
-	const query<where::noop> where{};
-	return rquery(where, closure);
-}
-
-bool
-ircd::m::vm::rquery(const query<> &where,
-                        const closure_bool &closure)
-{
-	//return _rquery_(where, closure);
-	return true;
-}
-*/
 
 void
 ircd::m::vm::for_each(const closure &closure)
@@ -1384,773 +610,24 @@ void
 ircd::m::vm::for_each(const query<> &clause,
                       const closure &closure)
 {
-	_query(clause, [&closure](const auto &event)
+	dbs::_query(clause, [&closure](const auto &event)
 	{
 		closure(event);
 		return false;
 	});
 }
 
-int
-ircd::m::vm::_query(eval &eval,
-                    const query<> &clause,
-                    const closure_bool &closure)
-{
-	switch(clause.type)
-	{
-		case where::equal:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::equal> &>(clause)
-			};
-
-			return _query_where(eval, c, closure);
-		}
-
-		case where::logical_and:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::logical_and> &>(clause)
-			};
-
-			return _query_where(eval, c, closure);
-		}
-
-		default:
-			return -1;
-	}
-}
-
-int
-ircd::m::vm::_query_where(eval &eval,
-                          const query<where::equal> &where,
-                          const closure_bool &closure)
-{
-	const int ret
-	{
-		eval.capstan.test(where)
-	};
-
-	log.debug("eval(%p): Query [%s]: %s -> %d",
-	          &eval,
-	          "where equal",
-	          pretty_oneline(where.value),
-	          ret);
-
-	return ret;
-}
-
-int
-ircd::m::vm::_query_where(eval &eval,
-                          const query<where::logical_and> &where,
-                          const closure_bool &closure)
-{
-	const auto &lhs{*where.a}, &rhs{*where.b};
-	const auto reclosure{[&lhs, &rhs, &closure]
-	(const auto &event)
-	{
-		if(!rhs(event))
-			return false;
-
-		return closure(event);
-	}};
-
-	return _query(eval, lhs, reclosure);
-}
-
-bool
-ircd::m::vm::_query(const query<> &clause,
-                    const closure_bool &closure)
-{
-	switch(clause.type)
-	{
-		case where::equal:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::equal> &>(clause)
-			};
-
-			switch(_query_where(c, closure))
-			{
-				case 0:   return false;
-				case 1:   return true;
-				default:  break;
-			}
-
-			break;
-		}
-
-		case where::logical_and:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::logical_and> &>(clause)
-			};
-
-			switch(_query_where(c, closure))
-			{
-				case 0:   return false;
-				case 1:   return true;
-				default:  break;
-			}
-
-			break;
-		}
-
-		default:
-		{
-			return _query_event_id(clause, closure);
-		}
-	}
-
-	return _query_event_id(clause, closure);
-}
-
-int
-ircd::m::vm::_query_where(const query<where::equal> &where,
-                          const closure_bool &closure)
-{
-	log.debug("Query [%s]: %s",
-	          "where equal",
-	          pretty_oneline(where.value));
-
-	const auto &value{where.value};
-	const auto &room_id{json::get<"room_id"_>(value)};
-	if(room_id)
-		return _query_where_room_id(where, closure);
-
-	const auto &event_id{json::get<"event_id"_>(value)};
-	if(event_id)
-		return _query_where_event_id(where, closure);
-
-	return -1;
-}
-
-int
-ircd::m::vm::_query_where(const query<where::logical_and> &where,
-                          const closure_bool &closure)
-{
-	const auto &lhs{*where.a}, &rhs{*where.b};
-	const auto reclosure{[&lhs, &rhs, &closure]
-	(const auto &event)
-	{
-		if(!rhs(event))
-			return false;
-
-		return closure(event);
-	}};
-
-	return _query(lhs, reclosure);
-}
-
-int
-ircd::m::vm::_query_where_event_id(const query<where::equal> &where,
-                                   const closure_bool &closure)
-{
-	const event::id &event_id
-	{
-		at<"event_id"_>(where.value)
-	};
-
-	if(my(event_id))
-	{
-		std::cout << "GET LOCAL? " << event_id << std::endl;
-		if(_query_event_id(where, closure))
-			return true;
-	}
-
-	std::cout << "GET REMOTE? " << event_id << std::endl;
-	const unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
-	};
-
-	event::fetch tab
-	{
-		event_id, buf
-	};
-
-	const m::event event
-	{
-		io::acquire(tab)
-	};
-
-	return closure(event);
-}
-
-int
-ircd::m::vm::_query_where_room_id_at_event_id(const query<where::equal> &where,
-                                              const closure_bool &closure)
-{
-	const auto &value{where.value};
-	const room::id &room_id{json::get<"room_id"_>(value)};
-	const auto &event_id{json::get<"event_id"_>(value)};
-	const auto &state_key{json::get<"state_key"_>(value)};
-
-	auto &front{fronts.get(room_id, value)};
-
-	if(!defined(state_key))
-		return _query_where_event_id(where, closure);
-
-	if(my(room_id))
-	{
-		std::cout << "GET LOCAL STATE? " << event_id << std::endl;
-		return -1;
-	}
-
-	//std::cout << "GET REMOTE STATE? " << event_id << std::endl;
-	//vm::statefill(room_id, event_id);
-	//auto &front{fronts.get(room_id)};
-
-	const auto &type{json::get<"type"_>(value)};
-	if(type && state_key)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
-
-	return _query_in_room_id(where, closure, room_id);
-}
-
-int
-ircd::m::vm::_query_where_room_id(const query<where::equal> &where,
-                                  const closure_bool &closure)
-{
-	const auto &value{where.value};
-	const auto &room_id{json::get<"room_id"_>(value)};
-	const auto &event_id{json::get<"event_id"_>(value)};
-	if(event_id)
-		return _query_where_room_id_at_event_id(where, closure);
-
-	//std::cout << "where room id?" << std::endl;
-	//auto &front{fronts.get(room_id, value)};
-	//std::cout << "where room id front..." << std::endl;
-
-	const auto &type{json::get<"type"_>(value)};
-	const auto &state_key{json::get<"state_key"_>(value)};
-	const bool is_state{defined(state_key) == true};
-	if(type && is_state)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
-
-	if(is_state)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
-
-	//std::cout << "in room id?" << std::endl;
-	return _query_in_room_id(where, closure, room_id);
-}
-
-bool
-ircd::m::vm::_query_event_id(const query<> &query,
-                             const closure_bool &closure)
-{
-	cursor cursor
-	{
-		"event_id", &query
-	};
-
-	for(auto it(cursor.begin()); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::vm::_query_in_room_id(const query<> &query,
-                                   const closure_bool &closure,
-                                   const room::id &room_id)
-{
-	cursor cursor
-	{
-		"event_id in room_id", &query
-	};
-
-	for(auto it(cursor.begin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::vm::_query_for_type_state_key_in_room_id(const query<> &query,
-                                                  const closure_bool &closure,
-                                                  const room::id &room_id,
-                                                  const string_view &type,
-                                                  const string_view &state_key)
-{
-	cursor cursor
-	{
-		"event_id for type,state_key in room_id", &query
-	};
-
-	static const size_t max_type_size
-	{
-		255
-	};
-
-	static const size_t max_state_key_size
-	{
-		255
-	};
-
-	const auto key_max
-	{
-		room::id::buf::SIZE + max_type_size + max_state_key_size + 2
-	};
-
-	size_t key_len;
-	char key[key_max]; key[0] = '\0';
-	key_len = strlcat(key, room_id, sizeof(key));
-	key_len = strlcat(key, "..", sizeof(key)); //TODO: prefix protocol
-	key_len = strlcat(key, type, sizeof(key)); //TODO: prefix protocol
-	key_len = strlcat(key, state_key, sizeof(key)); //TODO: prefix protocol
-	for(auto it(cursor.begin(key)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
 ircd::string_view
-ircd::m::vm::reflect(const where &w)
+ircd::m::vm::reflect(const enum fault &code)
 {
-	switch(w)
+	switch(code)
 	{
-		case where::noop:           return "noop";
-		case where::test:           return "test";
-		case where::equal:          return "equal";
-		case where::not_equal:      return "not_equal";
-		case where::logical_or:     return "logical_or";
-		case where::logical_and:    return "logical_and";
-		case where::logical_not:    return "logical_not";
+		case fault::ACCEPT:       return "ACCEPT";
+		case fault::GENERAL:      return "GENERAL";
+		case fault::DEBUGSTEP:    return "DEBUGSTEP";
+		case fault::BREAKPOINT:   return "BREAKPOINT";
+		case fault::EVENT:        return "EVENT";
 	}
 
-	return "?????";
+	return "??????";
 }
-
-namespace ircd::m
-{
-	struct indexer;
-
-	extern std::set<std::shared_ptr<indexer>> indexers;
-}
-
-struct ircd::m::indexer
-{
-	//TODO: collapse
-	struct concat;
-	struct concat_s; //TODO: special
-	struct concat_v;
-	struct concat_2v;
-	struct concat_3vs; //TODO: special
-
-	std::string name;
-
-	virtual void operator()(const event &, db::iov &iov) const {}
-
-	indexer(std::string name)
-	:name{std::move(name)}
-	{}
-
-	virtual ~indexer() noexcept;
-};
-
-ircd::m::indexer::~indexer()
-noexcept
-{
-}
-
-void
-ircd::m::append_indexes(const event &event,
-                        db::iov &iov)
-{
-	for(const auto &ptr : indexers)
-	{
-		const m::indexer &indexer{*ptr};
-		indexer(event, iov);
-	}
-}
-
-struct ircd::m::indexer::concat
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-
-	void operator()(const event &, db::iov &) const final override;
-
-	concat(std::string col_a, std::string col_b)
-	:indexer
-	{
-		fmt::snstringf(512, "%s in %s", col_a, col_b)
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	{}
-};
-
-void
-ircd::m::indexer::concat::operator()(const event &event,
-                                     db::iov &iov)
-const
-{
-	if(!iov.has(db::op::SET, col_a) || !iov.has(db::op::SET, col_b))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto function
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_b, function);
-	at(event, col_a, function);
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,        // col
-			index,       // key
-			{},          // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_s
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-
-	void operator()(const event &, db::iov &) const final override;
-
-	concat_s(std::string col_a, std::string col_b)
-	:indexer
-	{
-		fmt::snstringf(512, "%s in %s", col_a, col_b)
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	{}
-};
-
-void
-ircd::m::indexer::concat_s::operator()(const event &event,
-                                       db::iov &iov)
-const
-{
-	if(!iov.has(db::op::SET, col_a) || !iov.has(db::op::SET, col_b))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto function
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_b, function);
-	strlcat(index, ":::", buf_max);  //TODO: special
-	at(event, col_a, function);
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,        // col
-			index,       // key
-			{},          // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_v
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-	std::string col_c;
-
-	void operator()(const event &, db::iov &) const final override;
-	void operator()(const event &, db::iov &, const string_view &) const;
-
-	concat_v(std::string col_a, std::string col_b, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s in %s", col_a, col_b, col_c)
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	,col_c{col_c}
-	{}
-};
-
-void
-ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::iov &iov)
-const
-{
-	if(!iov.has(db::op::SET, col_c) || !iov.has(db::op::SET, col_b) || !iov.has(db::op::SET, col_a))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	at(event, col_b, concat);
-
-	string_view val;
-	at(event, col_a, [&val](auto &_val)
-	{
-		val = byte_view<string_view>{_val};
-	});
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-void
-ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::iov &iov,
-                                       const string_view &val)
-const
-{
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	at(event, col_b, concat);
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_2v
-:indexer
-{
-	std::string col_a;
-	std::string col_b0;
-	std::string col_b1;
-	std::string col_c;
-
-	void operator()(const event &, db::iov &) const final override;
-
-	concat_2v(std::string col_a, std::string col_b0, std::string col_b1, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s,%s in %s", col_a, col_b0, col_b1, col_c)
-	}
-	,col_a{col_a}
-	,col_b0{col_b0}
-	,col_b1{col_b1}
-	,col_c{col_c}
-	{}
-};
-
-void
-ircd::m::indexer::concat_2v::operator()(const event &event,
-                                        db::iov &iov)
-const
-{
-	if(!iov.has(db::op::SET, col_c) || !iov.has(db::op::SET, col_b0) || !iov.has(db::op::SET, col_b1))
-		return;
-
-	static const size_t buf_max
-	{
-		2048
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	strlcat(index, "..", buf_max);  //TODO: special
-	at(event, col_b0, concat);
-	at(event, col_b1, concat);
-
-	string_view val;
-	at(event, col_a, [&val](auto &_val)
-	{
-		val = byte_view<string_view>{_val};
-	});
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_3vs
-:indexer
-{
-	std::string col_a;
-	std::string col_b0;
-	std::string col_b1;
-	std::string col_b2;
-	std::string col_c;
-
-	void operator()(const event &, db::iov &, const string_view &prev_event_id) const;
-
-	concat_3vs(std::string col_a, std::string col_b0, std::string col_b1, std::string col_b2, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s,%s,%s in %s", col_a, col_b0, col_b1, col_b2, col_c)
-	}
-	,col_a{col_a}
-	,col_b0{col_b0}
-	,col_b1{col_b1}
-	,col_b2{col_b2}
-	,col_c{col_c}
-	{}
-}
-const concat_3vs
-{
-	"prev_event_id", "type", "state_key", "event_id", "room_id"
-};
-
-// Non-participating
-void
-ircd::m::_index_special0(const event &event,
-                         db::iov &iov,
-                         const string_view &prev_event_id)
-{
-	concat_3vs(event, iov, prev_event_id);
-}
-
-// Non-participating
-void
-ircd::m::_index_special1(const event &event,
-                         db::iov &iov,
-                         const string_view &prev_event_id)
-{
-	static const ircd::m::indexer::concat_v idxr
-	{
-		"prev_event_id", "event_id", "room_id"
-	};
-
-	idxr(event, iov, prev_event_id);
-}
-
-// Non-participating
-void
-ircd::m::indexer::concat_3vs::operator()(const event &event,
-                                         db::iov &iov,
-                                         const string_view &prev_event_id)
-const
-{
-	if(!iov.has(db::op::SET, col_c) ||
-	   !iov.has(db::op::SET, col_b0) ||
-	   !iov.has(db::op::SET, col_b1) ||
-	   !iov.has(db::op::SET, col_b2))
-		return;
-
-	static const size_t buf_max
-	{
-		2048
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	strlcat(index, "..", buf_max);  //TODO: special
-	at(event, col_b0, concat);
-	at(event, col_b1, concat);
-	at(event, col_b2, concat);
-
-	db::iov::append
-	{
-		iov, db::delta
-		{
-			name,           // col
-			index,          // key
-			prev_event_id,  // val
-		}
-	};
-}
-
-std::set<std::shared_ptr<ircd::m::indexer>> ircd::m::indexers
-{{
-	std::make_shared<ircd::m::indexer::concat>("event_id", "sender"),
-	std::make_shared<ircd::m::indexer::concat>("event_id", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_s>("origin", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_v>("event_id", "room_id", "sender"),
-	std::make_shared<ircd::m::indexer::concat_2v>("event_id", "type", "state_key", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_3vs>("prev_event_id", "type", "state_key", "event_id", "room_id"),
-}};

@@ -23,7 +23,7 @@
 #pragma once
 #define HAVE_IRCD_M_VM_QUERY_H
 
-namespace ircd::m::vm
+namespace ircd::m::dbs
 {
 	/// Types of query clauses.
 	enum class where
@@ -60,9 +60,11 @@ namespace ircd::m::vm
 	query<where::logical_or> operator||(const query<> &a, const query<> &b);
 	query<where::logical_and> operator&&(const query<> &a, const query<> &b);
 	query<where::logical_not> operator!(const query<> &a);
+
+	extern const query<> noop;
 }
 
-struct ircd::m::vm::query<ircd::m::vm::where::noop>
+struct ircd::m::dbs::query<ircd::m::dbs::where::noop>
 {
 	virtual bool operator()(const event &) const
 	{
@@ -80,7 +82,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::noop>
 	virtual ~query() noexcept;
 };
 
-struct ircd::m::vm::query<ircd::m::vm::where::test>
+struct ircd::m::dbs::query<ircd::m::dbs::where::test>
 :query<>
 {
 	using function = std::function<bool (const event &)>;
@@ -98,7 +100,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::test>
 	{}
 };
 
-struct ircd::m::vm::query<ircd::m::vm::where::equal>
+struct ircd::m::dbs::query<ircd::m::dbs::where::equal>
 :query<>
 {
 	event value;
@@ -117,7 +119,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::equal>
 };
 
 inline bool
-ircd::m::vm::query<ircd::m::vm::where::equal>::operator()(const event &value)
+ircd::m::dbs::query<ircd::m::dbs::where::equal>::operator()(const event &value)
 const
 {
 	return json::until(this->value, value, []
@@ -130,7 +132,7 @@ const
 	});
 }
 
-struct ircd::m::vm::query<ircd::m::vm::where::not_equal>
+struct ircd::m::dbs::query<ircd::m::dbs::where::not_equal>
 :query<>
 {
 	event value;
@@ -149,7 +151,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::not_equal>
 };
 
 inline bool
-ircd::m::vm::query<ircd::m::vm::where::not_equal>::operator()(const event &value)
+ircd::m::dbs::query<ircd::m::dbs::where::not_equal>::operator()(const event &value)
 const
 {
 	return !json::until(this->value, value, []
@@ -162,7 +164,7 @@ const
 	});
 }
 
-struct ircd::m::vm::query<ircd::m::vm::where::logical_or>
+struct ircd::m::dbs::query<ircd::m::dbs::where::logical_or>
 :query<>
 {
 	const query<> *a, *b;
@@ -179,7 +181,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::logical_or>
 	{}
 };
 
-struct ircd::m::vm::query<ircd::m::vm::where::logical_and>
+struct ircd::m::dbs::query<ircd::m::dbs::where::logical_and>
 :query<>
 {
 	const query<> *a, *b;
@@ -196,7 +198,7 @@ struct ircd::m::vm::query<ircd::m::vm::where::logical_and>
 	{}
 };
 
-struct ircd::m::vm::query<ircd::m::vm::where::logical_not>
+struct ircd::m::dbs::query<ircd::m::dbs::where::logical_not>
 :query<>
 {
 	const query<> *a;
@@ -212,20 +214,20 @@ struct ircd::m::vm::query<ircd::m::vm::where::logical_not>
 	{}
 };
 
-inline ircd::m::vm::query<ircd::m::vm::where::logical_or>
-ircd::m::vm::operator||(const query<> &a, const query<> &b)
+inline ircd::m::dbs::query<ircd::m::dbs::where::logical_or>
+ircd::m::dbs::operator||(const query<> &a, const query<> &b)
 {
 	return { a, b };
 }
 
-inline ircd::m::vm::query<ircd::m::vm::where::logical_and>
-ircd::m::vm::operator&&(const query<> &a, const query<> &b)
+inline ircd::m::dbs::query<ircd::m::dbs::where::logical_and>
+ircd::m::dbs::operator&&(const query<> &a, const query<> &b)
 {
 	return { a, b };
 }
 
-inline ircd::m::vm::query<ircd::m::vm::where::logical_not>
-ircd::m::vm::operator!(const query<> &a)
+inline ircd::m::dbs::query<ircd::m::dbs::where::logical_not>
+ircd::m::dbs::operator!(const query<> &a)
 {
 	return { a };
 }

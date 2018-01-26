@@ -75,6 +75,7 @@ libircd_la_SOURCES =   \
 	base.cc            \
 	locale.cc          \
 	logger.cc          \
+	m/dbs.cc           \
 	m/event.cc         \
 	m/id.cc            \
 	m/v1.cc            \

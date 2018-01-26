@@ -23,18 +23,18 @@
 #pragma once
 #define HAVE_IRCD_M_VM_CURSOR_H
 
-namespace ircd::m::vm
+namespace ircd::m::dbs
 {
 	struct cursor;
 }
 
-struct ircd::m::vm::cursor
+struct ircd::m::dbs::cursor
 {
 	template<class index_iterator> struct const_iterator_base;
 	struct const_reverse_iterator;
 	struct const_iterator;
 
-	template<enum where where = where::noop> using query_type = vm::query<where>;
+	template<enum where where = where::noop> using query_type = dbs::query<where>;
 	using iterator_type = const_iterator;
 
 	db::index index;
@@ -53,7 +53,7 @@ struct ircd::m::vm::cursor
 };
 
 template<class index_iterator>
-struct ircd::m::vm::cursor::const_iterator_base
+struct ircd::m::dbs::cursor::const_iterator_base
 {
 	using value_type = const event;
 	using pointer = value_type *;
@@ -105,13 +105,13 @@ struct ircd::m::vm::cursor::const_iterator_base
 	const_iterator_base(const cursor &, index_iterator, const db::gopts & = {});
 };
 
-struct ircd::m::vm::cursor::const_iterator
+struct ircd::m::dbs::cursor::const_iterator
 :const_iterator_base<db::index::const_iterator>
 {
 	using const_iterator_base<db::index::const_iterator>::const_iterator_base;
 };
 
-struct ircd::m::vm::cursor::const_reverse_iterator
+struct ircd::m::dbs::cursor::const_reverse_iterator
 :const_iterator_base<db::index::const_reverse_iterator>
 {
 	using const_iterator_base<db::index::const_reverse_iterator>::const_iterator_base;
@@ -121,26 +121,26 @@ struct ircd::m::vm::cursor::const_reverse_iterator
 // cursor
 //
 
-inline ircd::m::vm::cursor::const_reverse_iterator
-ircd::m::vm::cursor::rbegin(const string_view &key)
+inline ircd::m::dbs::cursor::const_reverse_iterator
+ircd::m::dbs::cursor::rbegin(const string_view &key)
 {
 	return const_reverse_iterator { *this, index.rbegin(key), {} };
 }
 
-inline ircd::m::vm::cursor::const_reverse_iterator
-ircd::m::vm::cursor::rend(const string_view &key)
+inline ircd::m::dbs::cursor::const_reverse_iterator
+ircd::m::dbs::cursor::rend(const string_view &key)
 {
 	return const_reverse_iterator { *this, index.rend(key), {} };
 }
 
-inline ircd::m::vm::cursor::const_iterator
-ircd::m::vm::cursor::begin(const string_view &key)
+inline ircd::m::dbs::cursor::const_iterator
+ircd::m::dbs::cursor::begin(const string_view &key)
 {
 	return const_iterator { *this, index.begin(key), {} };
 }
 
-inline ircd::m::vm::cursor::const_iterator
-ircd::m::vm::cursor::end(const string_view &key)
+inline ircd::m::dbs::cursor::const_iterator
+ircd::m::dbs::cursor::end(const string_view &key)
 {
 	return const_iterator { *this, index.end(key), {} };
 }
@@ -150,7 +150,7 @@ ircd::m::vm::cursor::end(const string_view &key)
 //
 
 template<class index_iterator>
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
                                                                               index_iterator idx,
                                                                               const db::gopts &opts)
 :query{c.query}
@@ -186,8 +186,8 @@ ircd::m::vm::cursor::const_iterator_base<index_iterator>::const_iterator_base(co
 }
 
 template<class index_iterator>
-ircd::m::vm::cursor::const_iterator_base<index_iterator> &
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator++()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator> &
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator++()
 {
 	while(!(invalid = !bool(++idx)))
 		if(seek_row())
@@ -197,8 +197,8 @@ ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator++()
 }
 
 template<class index_iterator>
-ircd::m::vm::cursor::const_iterator_base<index_iterator> &
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator--()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator> &
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator--()
 {
 	while(!(invalid = !bool(--idx)))
 		if(seek_row())
@@ -209,7 +209,7 @@ ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator--()
 
 template<class index_iterator>
 bool
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::seek_row()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::seek_row()
 {
 	if(!db::seek(row, row_key()))
 		return false;
@@ -223,7 +223,7 @@ ircd::m::vm::cursor::const_iterator_base<index_iterator>::seek_row()
 
 template<class index_iterator>
 bool
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::row_valid()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::row_valid()
 const
 {
 	return row.valid(row_key());
@@ -231,7 +231,7 @@ const
 
 template<class index_iterator>
 ircd::string_view
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::row_key()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::row_key()
 const
 {
 	if(!idx)
@@ -246,14 +246,14 @@ const
 
 template<class index_iterator>
 bool
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator!()
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator!()
 const
 {
 	return !static_cast<bool>(*this);
 }
 
 template<class index_iterator>
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator
 bool()
 const
 {
@@ -268,7 +268,7 @@ const
 
 template<class index_iterator>
 bool
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator!=(const const_iterator_base<index_iterator> &o)
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator!=(const const_iterator_base<index_iterator> &o)
 const
 {
 	return !(*this == o);
@@ -276,7 +276,7 @@ const
 
 template<class index_iterator>
 bool
-ircd::m::vm::cursor::const_iterator_base<index_iterator>::operator==(const const_iterator_base<index_iterator> &o)
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator==(const const_iterator_base<index_iterator> &o)
 const
 {
 	if(row_key() != o.row_key())

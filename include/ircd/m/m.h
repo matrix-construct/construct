@@ -30,11 +30,6 @@ namespace ircd::m
 {
 	struct init;
 
-	namespace dbs
-	{
-		struct init;
-	}
-
 	extern struct user me;
 	extern struct room my_room;
 	extern struct room control;
@@ -60,28 +55,23 @@ namespace ircd
 	using m::my_host;
 }
 
-#include "error.h"
 #include "name.h"
+#include "error.h"
 #include "id.h"
 #include "event.h"
 #include "query.h"
 #include "cursor.h"
+#include "dbs.h"
 #include "room.h"
+#include "user.h"
 #include "request.h"
 #include "session.h"
 #include "v1/v1.h"
 #include "io.h"
 #include "vm.h"
-#include "user.h"
 #include "filter.h"
 #include "keys.h"
 #include "txn.h"
-
-struct ircd::m::dbs::init
-{
-	init();
-	~init() noexcept;
-};
 
 struct ircd::m::init
 {

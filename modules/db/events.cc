@@ -489,6 +489,35 @@ const database::descriptor origin_in_room_id
 	origin_in,
 };
 
+const database::descriptor origin_joined_in_room_id
+{
+	// name
+	"origin_joined in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id:origin"
+	the prefix transform is in effect. this column indexes origins in a
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator - sorts from highest to lowest
+	{}, //ircd::db::reverse_cmp_string_view{},
+
+	// prefix transform
+	origin_in,
+};
+
 /// prefix transform for room_id
 ///
 /// This transform expects a concatenation ending with a room_id which means
@@ -506,31 +535,6 @@ const ircd::db::prefix_transform room_id_in
 	{
 		return rsplit(key, '!').first;
 	}
-};
-
-const database::descriptor event_id_for_room_id_in_sender
-{
-	// name
-	"event_id for room_id in sender",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(string_view), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	room_id_in,
 };
 
 /// prefix transform for type,state_key in room_id
@@ -653,13 +657,69 @@ const database::descriptor prev_event_id_for_type_state_key_event_id_in_room_id
 	event_id_in_room_id_type_state_key
 };
 
+const database::descriptor state_head
+{
+	// name
+	"state_head",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id"
+	value is the key of a state_node
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+};
+
+const database::descriptor state_node
+{
+	// name
+	"state_node",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+};
+
 const database::description events_description
 {
 	{ "default" },
 
+	////////
+	//
 	// These columns directly represent event fields indexed by event_id and
 	// the value is the actual event values. Some values may be JSON, like
 	// content.
+	//
 	events_event_id_descriptor,
 	events_type_descriptor,
 	events_content_descriptor,
@@ -677,43 +737,125 @@ const database::description events_description
 	events_prev_events_descriptor,
 	events_prev_state_descriptor,
 
-	// These columns are metadata composed from the event data. Each column has
-	// a different approach specific to what the query is and value being sought.
+	////////
+	//
+	// These columns are metadata composed from the event data. Specifically,
+	// they are designed for fast sequential iterations.
+	//
 
 	// (sender, event_id) => ()
-	// All events for a sender
+	// Sequence of all events in all rooms for a sender, EVER
 	// * broad but useful in cases
 	event_id_in_sender,
 
-	// (room_id, event_id) => ()
-	// All events for a room
+	// (room_id, event_id) => (state_head)
+	// Sequence of all events for a room, EVER
 	// * broad but useful in cases
-	// * ?eliminate for prev_event?
+	// ? eliminate for prev_event?
+	// ? eliminate/combine with state tree related?
 	event_id_in_room_id,
 
 	// (room_id, origin) => ()
-	// All origins for a room
+	// Sequence of all origins for a room, EVER
+	//TODO: value should have [JOIN, LEAVE, ...) counts/data
+	//TODO: remove?
 	origin_in_room_id,
 
-	// (sender, room_id) => (event_id)
-	// The _last written_ event from a sender in a room
-	event_id_for_room_id_in_sender,
+	// (room_id, origin) => ()
+	// Sequence of all origins with joined member for a room, AT PRESENT
+	// * Intended to be a fast sequential iteration for sending out messages.
+	origin_joined_in_room_id,
 
 	// (room_id, type, state_key) => (event_id)
-	// The _last written_ event of type + state_key in a room
-	// * Proper for room state algorithm, but only works in the present based
-	// on our subjective tape order.
+	// Sequence of events of type+state_key in a room, AT PRESENT
+	// * Fast for current room state iteration, but only works for the present.
 	event_id_for_type_state_key_in_room_id,
 
+	////////
+	//
+	// These columns are metadata composed from the event data. They are
+	// linked forward lists where the value is used to lookup the next key
+	// TODO: these might be better as sequences; if not removed altogether.
+	//
+
 	// (room_id, event_id) => (prev event_id)
-	// Events in a room resolving to the previous event in a room in
-	// our subjective euclidean tape order.
+	// List of events in a room resolving to the previous event in a room
+	// in our subjective euclidean tape TOTAL order.
+	// * This is where any branches in the DAG are linearized based on how we
+	// feel the state machine should execute them one by one.
+	// * This is not a sequence; each value is the key for another lookup.
 	prev_event_id_for_event_id_in_room_id,
 
 	// (room_id, type, state_key, event_id) => (prev event_id)
 	// Events of a (type, state_key) in a room resolving to the previous event
 	// of (type, state_key) in a room in our subjective euclidean tape order.
+	// * Similar to the above but focuses only on state events for various
+	// "state chains"
 	prev_event_id_for_type_state_key_event_id_in_room_id,
+
+	////////
+	//
+	// These columns are metadata composed from the event data. They are
+	// used to create structures that can represent the state of a room
+	// at any given event.
+	//
+
+	// (room_id) => (state_head)
+	state_head,
+
+	// (state tree node id) => (state tree node)
+	//
+	// Format for node: Node is plaintext and not binary at this time. In fact,
+	// *evil chuckle*, node might as well be JSON and can easily become content
+	// of another event sent to other rooms over network *snorts*. (important:
+	// database is well compressed).
+	//
+	// {                                                ;
+	//     "k":                                         ; Key array
+	//     [                                            ;
+	//         ["m.room.member", "@ar4an"],             ; Left key
+	//         ["m.room.member", "@jzk"]                ; Right key
+	//     ],                                           ;
+	//     "v":                                         ; Value array
+	//     [                                            ;
+	//         "$14961836116kXQRA:matrix.org",          ; Left accept
+	//         "GFkS15QjKBKjxSZpz",                     ; Center child
+	//         "HLacMRucdEPdJrzBz"                      ; Right child
+	//     ]                                            ;
+	// }                                                ;
+	//
+	// (note: actual JSON used is canonical and spaceless)
+	//
+	// Elements are ordered based on type+state_key lexical sort. The type
+	// and the state_key strings are literally concatenated to this effect.
+	// They're not hashed. We can have some more control over data locality
+	// this way. There is no prefix/trie keying yet, but that should probably
+	// happen. Any number of values may be in a key array, not just type+
+	// state_key. The concatenation involves the string with its surrounding
+	// quotes as to not allow the user to mess about conflicting values.
+	// ```
+	// "m.room.member""@jzk" > "m.room.create"""
+	// ```
+	// The values are either event MXID's or some identifier of a child node.
+	// The event MXID is leaf-data, no child node will be found there. The
+	// common tree traversal rules then apply: if the query value is less
+	// than the first element key, val[0] is followed; if compares between the
+	// first and second key, then val[1] is followed; if it compares greater
+	// than the last key, the last val is followed.
+	//
+	// Unlike traditional trees of such variety, the number of elements is not
+	// really well defined and not even fixed. There just has to be one more
+	// value in the "val" list than there are keys in the "key" list. To make
+	// this structure efficient we have to figure out a good number of
+	// children per node, and that might even be a contextual decision. The
+	// more children, the less depth to the query, but at the cost of a larger
+	// node size. A larger node in this system isn't just relevant to
+	// retrieval, but consider nodes are also immutable. Changes to the tree
+	// create new nodes for each changed path so the old nodes can still
+	// represent the old state. Repacking nodes to represent slightly different
+	// states within the same node is a possible exercise left for the future.
+	//
+	state_node,
 };
 
 std::shared_ptr<database> events_database

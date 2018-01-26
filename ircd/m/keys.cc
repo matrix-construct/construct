@@ -448,31 +448,27 @@ ircd::m::keys::get_local(const string_view &server_name,
 void
 ircd::m::keys::set(const keys &keys)
 {
-	const auto &state_key
+	const auto &server_name
 	{
 		unquote(at<"server_name"_>(keys))
 	};
 
-	const m::user::id::buf sender
+	const auto &state_key
 	{
-		"ircd", unquote(at<"server_name"_>(keys))
+		server_name
 	};
 
-	const json::strung content
+	const m::user::id::buf sender
+	{
+		"ircd", server_name
+	};
+
+	const json::strung derp
 	{
 		keys
 	};
 
-	json::iov event;
-	json::iov::push members[]
-	{
-		{ event, { "type",       "ircd.key"  }},
-		{ event, { "state_key",  state_key   }},
-		{ event, { "sender",     sender      }},
-		{ event, { "content",    content     }}
-	};
-
-	keys::room.send(event);
+	send(keys::room, sender, "ircd.key", state_key, json::object{derp});
 }
 
 /// Verify this key data (with itself).

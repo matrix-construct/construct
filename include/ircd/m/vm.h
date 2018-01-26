@@ -56,25 +56,20 @@ namespace ircd::m::vm
 	IRCD_M_EXCEPTION(VM_ERROR, VM_FAULT, http::BAD_REQUEST);
 
 	enum fault :uint;
-	struct frame;
-	struct capstan;
-	struct witness;
-	struct accumulator;
 	struct front;
 	struct eval;
-	struct pipe;
-	struct port;
-	struct space;
 	struct opts;
 
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
+	using dbs::where;
+	using dbs::query;
+	using dbs::cursor;
 
 	extern struct log::log log;
+	extern struct fronts fronts;
 	extern uint64_t current_sequence;
 	extern ctx::view<const event> inserted;
-	extern struct fronts fronts;
-	extern struct pipe pipe;
 
 	bool test(const query<> &, const closure_bool &);
 	bool test(const query<> &);
@@ -84,10 +79,9 @@ namespace ircd::m::vm
 	void for_each(const closure &);
 	size_t count(const query<> &, const closure_bool &);
 	size_t count(const query<> &);
-	bool exists(const event::id &);
 
-	int test(eval &, const query<> &, const closure_bool &);
-	int test(eval &, const query<> &);
+	event::id::buf commit(json::iov &event);
+	event::id::buf commit(json::iov &event, const json::iov &content);
 }
 
 /// Evaluation Options
@@ -158,41 +152,6 @@ enum ircd::m::vm::fault
 	STATE,           ///< Required state is missing (#st)
 };
 
-struct ircd::m::vm::capstan
-{
-	int64_t dc{0};
-	std::vector<std::unique_ptr<vm::accumulator>> acc;
-
-	ssize_t count(const query<> &) const;
-	int test(const query<> &) const;
-
-	void fwd(const event &);
-	void rev(const event &);
-
-	capstan();
-	~capstan() noexcept;
-};
-
-struct ircd::m::vm::port
-{
-	const m::event *event {nullptr};
-	std::exception_ptr error;
-	fault code;
-	bool h {false};
-	bool w {false};
-};
-
-struct ircd::m::vm::space
-{
-	struct capstan capstan;
-};
-
-struct ircd::m::vm::pipe
-{
-	std::unordered_map<string_view, space> s;
-	std::deque<port> p;
-};
-
 /// Event Evaluation Device
 ///
 /// This object conducts the evaluation of an event or a tape of multiple
@@ -216,7 +175,6 @@ struct ircd::m::vm::eval
 	static const struct opts default_opts;
 
 	const struct opts *opts;
-	struct capstan capstan;
 	db::iov txn{*event::events};
 	std::set<event::id> ef;
 	uint64_t cs {0};
@@ -252,67 +210,6 @@ ircd::m::vm::eval::eval(const struct opts &opts,
 	operator()(std::forward<events>(event));
 }
 
-// state accumulators:
-//
-// - (bool) event_id: Adds all event_ids to accumulator. On eval, capstan
-// checks if event_id is not in set: accepts; Otherwise event_id duplicate in
-// set: rejects.
-//
-// - (bool) membership: Capstan has a accumulator for each membership state.
-// Adds accumulator[membership] = state_key. On eval, capstan knows about user not
-// having membership of claimed type. Negative for all accumulators indicates no
-// membership in the set.
-//
-// - (count) types: Counts all type names encountered to respond to
-// queries about that type maybe or definitely not being in the poset.
-//
-// - (count) state types: Counts all type names encountered when there is
-// a state_key defined.
-//
-// - (count) sender: Counts all sender strings. Responds to queries about
-// whether a sender may have or definitely did not take part in the poset.
-//
-// - (count) origin: Counts all origin strings.
-//
-struct ircd::m::vm::witness
-:ircd::instance_list<witness>
-{
-	std::string name;
-
-	virtual ssize_t count(const accumulator *const &, const query<> &)
-	{
-		return -1;
-	}
-
-	virtual int test(const accumulator *const &, const query<> &)
-	{
-		return -1;
-	}
-
-	virtual int add(accumulator *const &, const event &)
-	{
-		return -1;
-	}
-
-	virtual int del(accumulator *const &, const event &)
-	{
-		return -1;
-	}
-
-	virtual std::unique_ptr<accumulator> init()
-	{
-		return {};
-	}
-
-	witness(std::string name);
-	virtual ~witness() noexcept;
-};
-
-struct ircd::m::vm::accumulator
-{
-	virtual ~accumulator() noexcept;
-};
-
 /// The "event front" for a graph. This holds all of the childless events
 /// for a room. Each childless event may exist at a different depth, but
 /// we track the highest depth to increment it for issuing the next event.
@@ -324,7 +221,6 @@ struct ircd::m::vm::front
 {
 	int64_t top {0};
 	std::map<std::string, uint64_t, std::less<std::string_view>> map;
-	vm::capstan capstan;
 };
 
 /// Singleton iface to all "event fronts" - the top depth in an active graph
@@ -350,18 +246,3 @@ struct ircd::m::vm::fronts
 	front &get(const room::id &, const event &);
 	front &get(const room::id &);
 };
-
-namespace ircd::m::vm
-{
-	// Synchronous fetch and eval
-	size_t acquire(const vector_view<const id::event> &, const vector_view<const mutable_buffer> &);
-	json::object acquire(const id::event &, const mutable_buffer &);
-    void statefill(const room::id &, const event::id &);
-    void backfill(const room::id &, const event::id &v, const size_t &limit);
-
-	using tracer = std::function<bool (const event &, event::id::buf &)>;
-	void trace(const id::event &, const tracer &);
-
-	event::id::buf commit(json::iov &event);
-    event::id::buf join(const room::id &, json::iov &iov);
-}
