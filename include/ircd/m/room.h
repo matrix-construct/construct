@@ -175,19 +175,19 @@ struct ircd::m::room::members::origins
 struct ircd::m::room::state
 :json::tuple
 <
-	json::property<m::name::m_room_aliases, event>,
-	json::property<m::name::m_room_canonical_alias, event>,
-	json::property<m::name::m_room_create, event>,
-	json::property<m::name::m_room_join_rules, event>,
-	json::property<m::name::m_room_power_levels, event>,
-	json::property<m::name::m_room_message, event>,
-	json::property<m::name::m_room_name, event>,
-	json::property<m::name::m_room_topic, event>,
-	json::property<m::name::m_room_avatar, event>,
-	json::property<m::name::m_room_pinned_events, event>,
-	json::property<m::name::m_room_history_visibility, event>,
-	json::property<m::name::m_room_third_party_invite, event>,
-	json::property<m::name::m_room_guest_access, event>
+	json::property<name::m_room_aliases, event>,
+	json::property<name::m_room_canonical_alias, event>,
+	json::property<name::m_room_create, event>,
+	json::property<name::m_room_join_rules, event>,
+	json::property<name::m_room_power_levels, event>,
+	json::property<name::m_room_message, event>,
+	json::property<name::m_room_name, event>,
+	json::property<name::m_room_topic, event>,
+	json::property<name::m_room_avatar, event>,
+	json::property<name::m_room_pinned_events, event>,
+	json::property<name::m_room_history_visibility, event>,
+	json::property<name::m_room_third_party_invite, event>,
+	json::property<name::m_room_guest_access, event>
 >
 {
 	struct fetch;
