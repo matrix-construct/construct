@@ -3464,16 +3464,15 @@ ircd::db::read(column &column,
 size_t
 ircd::db::read(column &column,
                const string_view &key,
-               uint8_t *const &buf,
-               const size_t &max,
+               const mutable_raw_buffer &buf,
                const gopts &gopts)
 {
 	size_t ret(0);
-	const auto copy([&ret, &buf, &max]
+	const auto copy([&ret, &buf]
 	(const string_view &src)
 	{
-		ret = std::min(src.size(), max);
-		memcpy(buf, src.data(), ret);
+		ret = std::min(size(src), size(buf));
+		memcpy(data(buf), data(src), ret);
 	});
 
 	column(key, copy, gopts);
@@ -3483,19 +3482,18 @@ ircd::db::read(column &column,
 ircd::string_view
 ircd::db::read(column &column,
                const string_view &key,
-               char *const &buf,
-               const size_t &max,
+               const mutable_buffer &buf,
                const gopts &gopts)
 {
 	size_t ret(0);
-	const auto copy([&ret, &buf, &max]
+	const auto copy([&ret, &buf]
 	(const string_view &src)
 	{
-		ret = strlcpy(buf, src.data(), std::min(src.size(), max));
+		ret = strlcpy(buf, src);
 	});
 
 	column(key, copy, gopts);
-	return { buf, ret };
+	return { data(buf), ret };
 }
 
 template<>
@@ -3598,16 +3596,15 @@ ircd::db::del(column &column,
 void
 ircd::db::write(column &column,
                 const string_view &key,
-                const uint8_t *const &buf,
-                const size_t &size,
+                const mutable_raw_buffer &buf,
                 const sopts &sopts)
 {
 	const string_view val
 	{
-		reinterpret_cast<const char *>(buf), size
+		reinterpret_cast<const char *>(data(buf)), size(buf)
 	};
 
-	write(column, key, key, sopts);
+	write(column, key, val, sopts);
 }
 
 void
