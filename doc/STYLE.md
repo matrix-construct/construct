@@ -4,7 +4,7 @@
 In the post-C++11 world it is time to leave C99+ behind and seriously consider
 C++ as C proper. It has been a hard 30 year journey to finally earn that, but
 now it is time. This document is the effective style guide for how Charybdis
-will integrate -std=gnu++14 and how developers should approach it.
+will integrate -std=gnu++17 and how developers should approach it.
 
 
 ### C++ With Respect For C People
@@ -29,6 +29,8 @@ inheritance.
 * Creating a structure with a bunch of function pointers, then having a user
 of the structure fill in the pointers with their own functionality. -> Think
 virtual functions.
+* `if` statements that check for errors and `goto` some label at the bottom of
+a function under the normal return type. -> Think exceptions.
 
 
 #### Encapsulation will be relaxed
@@ -264,6 +266,8 @@ documentation is applied to code that follows the comment block.
 
 #### Miscellaneous
 
+* Prefer "locality" rather than "centrality." In other words, we keep things
+in as local of a scope or file as possible to where it is used.
 
 * new and delete should rarely if ever be seen. This is more true than ever with
 C++14 std::make_unique() and std::make_shared().
