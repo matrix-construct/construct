@@ -55,13 +55,10 @@ ircd::m::v1::send::send(const string_view &txnid,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[1024], txnidbuf[512];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/send/%s/",
-				url::encode(txnid, txnidbuf),
-			}
+			urlbuf, "/_matrix/federation/v1/send/%s/",
+			url::encode(txnid, txnidbuf),
 		};
 	}
 
@@ -157,15 +154,12 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
-				url::encode(room_id, ridbuf),
-				opts.limit,
-				url::encode(opts.event_id, eidbuf),
-			}
+			urlbuf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
+			url::encode(room_id, ridbuf),
+			opts.limit,
+			url::encode(opts.event_id, eidbuf),
 		};
 	}
 
@@ -261,14 +255,11 @@ ircd::m::v1::state::state(const room::id &room_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/state/%s/?event_id=%s",
-				url::encode(room_id, ridbuf),
-				url::encode(opts.event_id, eidbuf),
-			}
+			urlbuf, "/_matrix/federation/v1/state/%s/?event_id=%s",
+			url::encode(room_id, ridbuf),
+			url::encode(opts.event_id, eidbuf),
 		};
 	}
 
@@ -336,13 +327,10 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[1024], eidbuf[768];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/event/%s/",
-				url::encode(event_id, eidbuf),
-			}
+			urlbuf, "/_matrix/federation/v1/event/%s/",
+			url::encode(event_id, eidbuf),
 		};
 	}
 
@@ -402,14 +390,11 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[2048], ridbuf[768], uidbuf[768];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/send_join/%s/%s",
-				url::encode(room_id, ridbuf),
-				url::encode(user_id, uidbuf)
-			}
+			urlbuf, "/_matrix/federation/v1/send_join/%s/%s",
+			url::encode(room_id, ridbuf),
+			url::encode(user_id, uidbuf)
 		};
 	}
 
@@ -479,14 +464,11 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[2048], ridbuf[768], uidbuf[768];
-		json::get<"uri"_>(opts.request) =
+		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			fmt::sprintf
-			{
-				urlbuf, "/_matrix/federation/v1/make_join/%s/%s",
-				url::encode(room_id, ridbuf),
-				url::encode(user_id, uidbuf)
-			}
+			urlbuf, "/_matrix/federation/v1/make_join/%s/%s",
+			url::encode(room_id, ridbuf),
+			url::encode(user_id, uidbuf)
 		};
 	}
 
