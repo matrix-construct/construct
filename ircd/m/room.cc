@@ -77,26 +77,26 @@ ircd::m::create(const id::room &room_id,
 		room_id
 	};
 
-	room.send(event, content);
+	commit(room, event, content);
 	return room;
 }
 
 ircd::m::event::id::buf
-ircd::m::join(m::room room,
+ircd::m::join(const room &room,
               const m::id::user &user_id)
 {
 	return membership(room, user_id, "join");
 }
 
 ircd::m::event::id::buf
-ircd::m::leave(m::room room,
+ircd::m::leave(const room &room,
                const m::id::user &user_id)
 {
 	return membership(room, user_id, "leave");
 }
 
 ircd::m::event::id::buf
-ircd::m::membership(m::room room,
+ircd::m::membership(const room &room,
                     const m::id::user &user_id,
                     const string_view &membership)
 {
@@ -118,11 +118,11 @@ ircd::m::membership(m::room room,
 			"Member '%s' is already '%s'.", string_view{user_id}, membership
 		};
 */
-	return room.send(event, content);
+	return commit(room, event, content);
 }
 
 ircd::m::event::id::buf
-ircd::m::message(m::room room,
+ircd::m::message(const room &room,
                  const m::id::user &sender,
                  const string_view &body,
                  const string_view &msgtype)
@@ -135,7 +135,7 @@ ircd::m::message(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::message(m::room room,
+ircd::m::message(const room &room,
                  const m::id::user &sender,
                  const json::members &contents)
 {
@@ -143,7 +143,7 @@ ircd::m::message(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const string_view &state_key,
@@ -154,7 +154,7 @@ ircd::m::send(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const string_view &state_key,
@@ -165,7 +165,7 @@ ircd::m::send(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const string_view &state_key,
@@ -179,11 +179,11 @@ ircd::m::send(m::room room,
 		{ event,    { "state_key",  state_key  }},
 	};
 
-	return room.send(event, content);
+	return commit(room, event, content);
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const json::members &contents)
@@ -193,7 +193,7 @@ ircd::m::send(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const json::object &contents)
@@ -203,7 +203,7 @@ ircd::m::send(m::room room,
 }
 
 ircd::m::event::id::buf
-ircd::m::send(m::room room,
+ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
               const json::iov &content)
@@ -215,7 +215,20 @@ ircd::m::send(m::room room,
 		{ event,    { "type",    type    }},
 	};
 
-	return room.send(event, content);
+	return commit(room, event, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::commit(const room &room,
+                json::iov &event,
+                const json::iov &contents)
+{
+	const json::iov::set set[]
+	{
+		{ event, { "room_id", room.room_id }},
+	};
+
+	return m::vm::commit(event, contents);
 }
 
 bool
@@ -245,66 +258,6 @@ ircd::m::room::room(const alias &alias,
 ,event_id{event_id}
 {
 	assert(0); //TODO: translate
-}
-
-ircd::m::event::id::buf
-ircd::m::room::message(json::iov &event,
-                       const json::iov &content)
-{
-	const json::iov::set _type[]
-	{
-		{ event,  { "type", "m.room.message" }},
-	};
-
-	const json::strung c //TODO: child iov
-	{
-		content
-	};
-
-	const json::iov::set_if _content[]
-	{
-		{ event, !content.empty(), { "content", string_view{c} }},
-	};
-
-	return send(event);
-}
-
-ircd::m::event::id::buf
-ircd::m::room::send(json::iov &event,
-                    const json::iov &content)
-{
-	const json::strung c //TODO: child iov
-	{
-		content
-	};
-
-	const json::iov::set_if _content[]
-	{
-		{ event, !content.empty(), { "content", string_view{c} }},
-	};
-
-	return send(event);
-}
-
-ircd::m::event::id::buf
-ircd::m::room::send(json::iov &event)
-{
-	const json::iov::set room_id
-	{
-		event, { "room_id", this->room_id }
-	};
-
-	//std::cout << this->room_id << " at " << this->maxdepth() << std::endl;
-
-	// TODO: XXX
-	// commitment to room here @ exclusive acquisition of depth
-
-	const json::iov::defaults depth
-	{
-		event, { "depth", int64_t(this->maxdepth()) + 1 }
-	};
-
-	return m::vm::commit(event);
 }
 
 bool

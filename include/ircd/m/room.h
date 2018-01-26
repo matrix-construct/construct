@@ -38,17 +38,27 @@ namespace ircd::m
 	bool my(const room &);
 	bool exists(const id::room &);
 
-	event::id::buf send(room, const m::id::user &sender, const string_view &type, const json::iov &content);
-	event::id::buf send(room, const m::id::user &sender, const string_view &type, const json::members &content);
-	event::id::buf send(room, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
-	event::id::buf send(room, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
+	// Lowest-level
+	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
 
-	event::id::buf message(room, const m::id::user &sender, const json::members &content);
-	event::id::buf message(room, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
-	event::id::buf membership(room, const m::id::user &, const string_view &membership);
-	event::id::buf leave(room, const m::id::user &);
-	event::id::buf join(room, const m::id::user &);
+	// Send state to room
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::object &content);
 
+	// Send non-state to room
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::iov &content);
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::members &content);
+	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::object &content);
+
+	// Convenience sends
+	event::id::buf message(const room &, const m::id::user &sender, const json::members &content);
+	event::id::buf message(const room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
+	event::id::buf membership(const room &, const m::id::user &, const string_view &membership);
+	event::id::buf leave(const room &, const m::id::user &);
+	event::id::buf join(const room &, const m::id::user &);
+
+	// Create new room
 	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
 	room create(const id::room &, const id::user &creator, const string_view &type = {});
 }
@@ -104,10 +114,6 @@ struct ircd::m::room
 	uint64_t maxdepth() const;
 
 	// modify
-	event::id::buf send(json::iov &event);
-	event::id::buf send(json::iov &event, const json::iov &content);
-	event::id::buf message(json::iov &event, const json::iov &content);
-
 	room(const alias &, const event::id &event_id = {});
 	room(const id &room_id, const event::id &event_id = {})
 	:room_id{room_id}
