@@ -65,7 +65,6 @@ namespace ircd::json
 	/// eventually all lead to the stringify() friend function of the argument
 	/// you pass to the template.
 	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
-	template<class... T> size_t print(char *const &buf, const size_t &max, T&&... t);
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 	template<size_t SIZE> struct buffer;
 	struct strung;
@@ -158,33 +157,15 @@ size_t
 ircd::json::print(const mutable_buffer &buf,
                   T&&... t)
 {
-	return print(data(buf), size(buf), std::forward<T>(t)...);
-}
-
-///
-/// Convenience template using the syntax print(buf, sizeof(buf), ...)
-/// which stringifies with null termination into buffer.
-///
-template<class... T>
-size_t
-ircd::json::print(char *const &buf,
-                  const size_t &max,
-                  T&&... t)
-{
-	if(unlikely(!max))
+	if(unlikely(!size(buf)))
 		return 0;
-
-	mutable_buffer mb
-	{
-		buf, max - 1
-	};
 
 	const auto sv
 	{
-		stringify(mb, std::forward<T>(t)...)
+		stringify(mutable_buffer{buf}, std::forward<T>(t)...)
 	};
 
-	assert(sv.size() < max);
+	assert(sv.size() < size(buf));
 	assert(valid(sv, std::nothrow)); //note: false alarm when T=json::member
 	buf[sv.size()] = '\0';
 	return sv.size();
@@ -204,7 +185,7 @@ ircd::json::strung::strung(T&&... t)
 	const auto max{ret.size() + 1};
 	const auto printed
 	{
-		print(buf, max, std::forward<T>(t)...)
+		print(mutable_buffer{buf, max}, std::forward<T>(t)...)
 	};
 
 	if(unlikely(printed != ret.size()))
