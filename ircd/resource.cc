@@ -113,7 +113,7 @@ ircd::resource::resource(const string_view &path,
 	};
 }()}
 {
-	log::info
+	log::debug
 	{
 		"Registered resource \"%s\"", path.empty()? string_view{"/"} : path
 	};
@@ -122,7 +122,7 @@ ircd::resource::resource(const string_view &path,
 ircd::resource::~resource()
 noexcept
 {
-	log::info
+	log::debug
 	{
 		"Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path
 	};
