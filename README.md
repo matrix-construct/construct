@@ -51,12 +51,12 @@ Provides ed25519 required for the Matrix Federation.
 - **OpenSSL** (libssl/libcrypto):
 Provides HTTPS TLS / X.509 / etc.
 
-- **snappy** (libsnappy compression):
-A dependency of RocksDB.
+##### Additional dependencies
 
-*Additional dependencies:*
+- **zlib** or **lz4** or **snappy** (Compression library):
+Provides compression for the database, etc.
 
-**zlib**, **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
+- **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 
 ##### Planned dependencies
