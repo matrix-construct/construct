@@ -111,11 +111,13 @@ ircd::m::keys::init::certificate()
 		b64encode_unpadded(hash)
 	};
 
-	log.info("Certificate `%s' (PEM: %zu bytes; DER: %zu bytes) sha256b64: %s",
+	static char print_buf[8_KiB];
+	log.info("Certificate `%s' (PEM: %zu bytes; DER: %zu bytes) sha256b64: %s :%s",
 	         cert_file,
 	         cert_pem.size(),
 	         ircd::size(cert_der),
-	         self::tls_cert_der_sha256_b64);
+	         self::tls_cert_der_sha256_b64,
+	         openssl::print_subject(print_buf, cert_pem));
 }
 
 void
