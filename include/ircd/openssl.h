@@ -41,10 +41,7 @@ struct ec_point_st;
 struct ec_key_st;
 
 /// OpenSSL library interface. Provides things we need to expose from OpenSSL
-/// to the rest of the project. Anything that employs forward declared types
-/// here is lower level meant for definition files which may or may not include
-/// OpenSSL directly but use this interface for DRY nonetheless. Otherwise
-/// higher level wrappers should be used if available here.
+/// to the rest of the project.
 namespace ircd::openssl
 {
 	IRCD_EXCEPTION(ircd::error, error)
@@ -53,6 +50,7 @@ namespace ircd::openssl
 	struct init;
 	struct bignum;
 
+	// typedef analogues
 	using SSL = ::ssl_st;
 	using RSA = ::rsa_st;
 	using X509 = ::x509_st;

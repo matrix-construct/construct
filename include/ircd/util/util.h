@@ -57,14 +57,12 @@ namespace ircd
 namespace ircd {
 namespace util {
 
-
 /// A standard unique_ptr but accepting an std::function for T as its custom
 /// deleter. This reduces the boilerplate burden on declaring the right
 /// unique_ptr template for custom deleters every single time.
 ///
 template<class T>
 using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
-
 
 //
 // Misc size() participants.
@@ -108,7 +106,6 @@ size(const T &val)
 	return sizeof(T);
 }
 
-
 //
 // Misc data() participants
 //
@@ -141,7 +138,6 @@ data(T &val)
 	return reinterpret_cast<uint8_t *>(&val);
 }
 
-
 //
 // Misc string() participants
 //
@@ -166,7 +162,6 @@ string(const uint8_t *const &buf, const size_t &size)
 	return string(reinterpret_cast<const char *>(buf), size);
 }
 
-
 //
 // Misc bang participants
 //
@@ -182,7 +177,6 @@ operator!(const std::string_view &str)
 {
 	return str.empty();
 }
-
 
 //
 // stringstream buffer set macros
@@ -218,7 +212,6 @@ resizebuf(std::stringstream &ss,
 	return s;
 }
 
-
 //
 // Template nothrow suite
 //
@@ -245,7 +238,6 @@ template<class exception_t,
          class return_t     = void>
 using throw_overload = typename std::enable_if<!is_nothrow<exception_t>(), return_t>::type;
 
-
 /// Like std::next() but with out_of_range exception
 ///
 template<class It>
@@ -260,7 +252,6 @@ at(It &&start,
 
 	throw std::out_of_range("at(a, b, i): 'i' out of range");
 }
-
 
 //
 // Some functors for STL
@@ -283,7 +274,6 @@ struct values
 		return v.second;
 	}
 };
-
 
 //
 // To collapse pairs of iterators down to a single type
@@ -324,7 +314,6 @@ end(const iterpair<T> &i)
 	return std::get<1>(i);
 }
 
-
 //
 // To collapse pairs of iterators down to a single type
 // typed by an object with iterator typedefs.
@@ -364,7 +353,6 @@ end(const const_iterators<T> &ci)
 	return ci.second;
 }
 
-
 /// Compile-time comparison of string literals
 ///
 constexpr bool
@@ -373,7 +361,6 @@ _constexpr_equal(const char *a,
 {
 	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
 }
-
 
 /// Iterator based until() matching std::for_each except the function
 /// returns a bool to continue rather than void.
@@ -393,7 +380,6 @@ until(it_a a,
 	return true;
 }
 
-
 /// Inverse of std::lock_guard<>
 template<class lockable>
 struct unlock_guard
@@ -412,13 +398,11 @@ struct unlock_guard
 	}
 };
 
-
 constexpr bool
 is_powerof2(const long long v)
 {
 	return v && !(v & (v - 1LL));
 }
-
 
 } // namespace util
 } // namespace ircd

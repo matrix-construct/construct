@@ -24,7 +24,7 @@
 // C++14 user defined literals
 //
 // These are very useful for dealing with space. Simply write 8_MiB and it's
-// as if a macro turned that into (8 * 1024 * 1024) at compile time.
+// as if a macro turned that into (8 * 1024 * 1024) at compile time (it did).
 //
 
 /// (Internal) Defines a unit literal with an unsigned long long basis.

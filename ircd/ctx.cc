@@ -21,10 +21,7 @@
 
 #include <ircd/asio.h>
 
-///////////////////////////////////////////////////////////////////////////////
-///
-/// Internal context implementation structure
-///
+/// Internal context implementation
 ///
 struct ircd::ctx::ctx
 {

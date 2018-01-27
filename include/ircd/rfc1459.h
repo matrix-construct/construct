@@ -88,46 +88,44 @@ enum ircd::rfc1459::character::attr
 	FCHAN    = 0x00020000,    // a 'fake' channel char
 };
 
-
-namespace ircd::rfc1459 {
-
-struct less;
-
-using character::is;
-using character::toupper;
-using character::tolower;
-using character::gather;
-
-inline bool is_print(const char &c)              { return is(c, character::PRINT);                 }
-inline bool is_host(const char &c)               { return is(c, character::HOST);                  }
-inline bool is_user(const char &c)               { return is(c, character::USER);                  }
-inline bool is_chan(const char &c)               { return is(c, character::CHAN);                  }
-inline bool is_chan_prefix(const char &c)        { return is(c, character::CHANPFX);               }
-inline bool is_fake_chan(const char &c)          { return is(c, character::FCHAN);                 }
-inline bool is_kwild(const char &c)              { return is(c, character::KWILD);                 }
-inline bool is_mwild(const char &c)              { return is(c, character::MWILD);                 }
-inline bool is_nick(const char &c)               { return is(c, character::NICK);                  }
-inline bool is_letter(const char &c)             { return is(c, character::LET);                   }
-inline bool is_digit(const char &c)              { return is(c, character::DIGIT);                 }
-inline bool is_cntrl(const char &c)              { return is(c, character::CNTRL);                 }
-inline bool is_alpha(const char &c)              { return is(c, character::ALPHA);                 }
-inline bool is_space(const char &c)              { return is(c, character::SPACE);                 }
-inline bool is_noneos(const char &c)             { return is(c, character::NONEOS);                }
-inline bool is_eol(const char &c)                { return is(c, character::EOL);                   }
-inline bool is_serv(const char &c)               { return is(c, character::SERV) || is_nick(c);    }
-inline bool is_id(const char &c)                 { return is_digit(c) || is_letter(c);             }
-inline bool is_alnum(const char &c)              { return is_digit(c) || is_alpha(c);              }
-inline bool is_punct(const char &c)              { return !is_cntrl(c) && !is_alnum(c);            }
-inline bool is_lower(const char &c)              { return is_alpha(c) && uint8_t(c) > 0x5f;        }
-inline bool is_upper(const char &c)              { return is_alpha(c) && uint8_t(c) < 0x60;        }
-inline bool is_graph(const char &c)              { return is_print(c) && uint8_t(c) != 0x32;       }
-inline bool is_ascii(const char &c)              { return uint8_t(c) < 0x80;                       }
-inline bool is_xdigit(const char &c)
+namespace ircd::rfc1459
 {
-	return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
-}
+	struct less;
 
-} // namespace ircd::rfc1459
+	using character::is;
+	using character::toupper;
+	using character::tolower;
+	using character::gather;
+
+	inline bool is_print(const char &c)          { return is(c, character::PRINT);                 }
+	inline bool is_host(const char &c)           { return is(c, character::HOST);                  }
+	inline bool is_user(const char &c)           { return is(c, character::USER);                  }
+	inline bool is_chan(const char &c)           { return is(c, character::CHAN);                  }
+	inline bool is_chan_prefix(const char &c)    { return is(c, character::CHANPFX);               }
+	inline bool is_fake_chan(const char &c)      { return is(c, character::FCHAN);                 }
+	inline bool is_kwild(const char &c)          { return is(c, character::KWILD);                 }
+	inline bool is_mwild(const char &c)          { return is(c, character::MWILD);                 }
+	inline bool is_nick(const char &c)           { return is(c, character::NICK);                  }
+	inline bool is_letter(const char &c)         { return is(c, character::LET);                   }
+	inline bool is_digit(const char &c)          { return is(c, character::DIGIT);                 }
+	inline bool is_cntrl(const char &c)          { return is(c, character::CNTRL);                 }
+	inline bool is_alpha(const char &c)          { return is(c, character::ALPHA);                 }
+	inline bool is_space(const char &c)          { return is(c, character::SPACE);                 }
+	inline bool is_noneos(const char &c)         { return is(c, character::NONEOS);                }
+	inline bool is_eol(const char &c)            { return is(c, character::EOL);                   }
+	inline bool is_serv(const char &c)           { return is(c, character::SERV) || is_nick(c);    }
+	inline bool is_id(const char &c)             { return is_digit(c) || is_letter(c);             }
+	inline bool is_alnum(const char &c)          { return is_digit(c) || is_alpha(c);              }
+	inline bool is_punct(const char &c)          { return !is_cntrl(c) && !is_alnum(c);            }
+	inline bool is_lower(const char &c)          { return is_alpha(c) && uint8_t(c) > 0x5f;        }
+	inline bool is_upper(const char &c)          { return is_alpha(c) && uint8_t(c) < 0x60;        }
+	inline bool is_graph(const char &c)          { return is_print(c) && uint8_t(c) != 0x32;       }
+	inline bool is_ascii(const char &c)          { return uint8_t(c) < 0x80;                       }
+	inline bool is_xdigit(const char &c)
+	{
+		return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+	}
+}
 
 struct ircd::rfc1459::nick
 :string_view
