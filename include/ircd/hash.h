@@ -92,6 +92,7 @@ struct ircd::crh::hash
 
 /// SHA-256 hashing device.
 struct ircd::crh::sha256
+final
 :hash
 {
 	struct ctx;
@@ -107,10 +108,10 @@ struct ircd::crh::sha256
 	std::unique_ptr<ctx> ctx;
 
   public:
-	size_t length() const override final;
-	void digest(const mutable_raw_buffer &) const override final;
-	void finalize(const mutable_raw_buffer &) override final;
-	void update(const const_raw_buffer &) override final;
+	size_t length() const override;
+	void digest(const mutable_raw_buffer &) const override;
+	void finalize(const mutable_raw_buffer &) override;
+	void update(const const_raw_buffer &) override;
 
 	sha256(const mutable_raw_buffer &, const const_raw_buffer &);
 	sha256(const const_raw_buffer &);

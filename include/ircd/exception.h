@@ -80,7 +80,7 @@ struct ircd::exception
 	ssize_t generate(const char *const &fmt, const va_rtti &ap) noexcept;
 
   public:
-	const char *what() const noexcept override
+	const char *what() const noexcept final override
 	{
 		return buf;
 	}
