@@ -2233,9 +2233,10 @@ noexcept try
 			sizeof(rfc1035::header)
 		};
 
+	const uint8_t *const reply{this->reply};
 	const rfc1035::header &header
 	{
-		*reinterpret_cast<const rfc1035::header *>(reply)
+		*reinterpret_cast<const rfc1035::header *__restrict__>(reply)
 	};
 
 	if(header.qr != 1)
