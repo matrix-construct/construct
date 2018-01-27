@@ -1218,39 +1218,45 @@ ircd::json::value::value(const value &other)
 	else switch(type)
 	{
 		case OBJECT:
-			if(!serial && object)
-			{
-				const size_t count(this->len);
-				create_string(serialized(object, object + count), [this, &count]
-				(mutable_buffer buffer)
-				{
-					json::stringify(buffer, object, object + count);
-				});
-			}
+		{
+			if(serial || !object)
+				break;
 
+			const size_t count(this->len);
+			create_string(serialized(object, object + count), [this, &count]
+			(mutable_buffer buffer)
+			{
+				json::stringify(buffer, object, object + count);
+			});
 			break;
+		}
 
 		case ARRAY:
-			if(!serial && array)
+		{
+			if(serial || !array)
+				break;
+
+			const size_t count(this->len);
+			create_string(serialized(array, array + count), [this, &count]
+			(mutable_buffer buffer)
 			{
-				const size_t count(this->len);
-				create_string(serialized(array, array + count), [this, &count]
-				(mutable_buffer buffer)
-				{
-					json::stringify(buffer, array, array + count);
-				});
-			}
+				json::stringify(buffer, array, array + count);
+			});
 			break;
+		}
 
 		case STRING:
-			if(!serial && alloc && string)
+		{
+			if(serial || !alloc || !string)
+				break;
+
+			create_string(serialized(*this), [this]
+			(mutable_buffer buffer)
 			{
-				create_string(serialized(*this), [this]
-				(mutable_buffer buffer)
-				{
-					json::stringify(buffer, *this);
-				});
-			}
+				json::stringify(buffer, *this);
+			});
+			break;
+		}
 
 		case LITERAL:
 		case NUMBER:
