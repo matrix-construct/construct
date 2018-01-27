@@ -738,18 +738,20 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AC_MSG_RESULT([yes])
 	AC_MSG_NOTICE([Bootstrapping boost])
 
-	AM_COND_IF([MINGW],
+	AM_COND_IF([DEBUG],
 	[
-		BTOOLSET="mingw"
+		boost_variant="debug"
 	], [
-		dnl the CXX may have a space and then arguments so we must chop them
-		BTOOLSET=`echo $CXX | cut -d' ' -f1`
+		boost_variant="release"
 	])
 
 	AM_COND_IF([MINGW],
 	[
+		BTOOLSET="mingw"
 		boost_libdir="$PWD/boost/stage/lib"
 	], [
+		dnl the CXX may have a space and then arguments so we must chop them
+		BTOOLSET=`echo $CXX | cut -d' ' -f1`
 		boost_libdir="$PWD/boost/lib"
 	])
 
@@ -767,7 +769,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	boost_linkage="$withval"
 	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release $withval multi $boost_version
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
