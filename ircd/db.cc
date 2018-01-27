@@ -3762,6 +3762,29 @@ ircd::db::column::operator()(const string_view &key,
 	func(val(*it));
 }
 
+bool
+ircd::db::column::operator()(const string_view &key,
+                             const std::nothrow_t,
+                             const gopts &gopts,
+                             const view_closure &func)
+{
+	return operator()(key, std::nothrow, func, gopts);
+}
+
+bool
+ircd::db::column::operator()(const string_view &key,
+                             const std::nothrow_t,
+                             const view_closure &func,
+                             const gopts &gopts)
+{
+	const auto it(seek(*this, key, gopts));
+	if(!valid_eq(*it, key))
+		return false;
+
+	func(val(*it));
+	return true;
+}
+
 ircd::db::cell
 ircd::db::column::operator[](const string_view &key)
 const

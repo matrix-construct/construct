@@ -127,6 +127,8 @@ struct ircd::db::column
 
 	// [GET] Perform a get into a closure. This offers a reference to the data with zero-copy.
 	using view_closure = std::function<void (const string_view &)>;
+	bool operator()(const string_view &key, std::nothrow_t, const view_closure &func, const gopts & = {});
+	bool operator()(const string_view &key, std::nothrow_t, const gopts &, const view_closure &func);
 	void operator()(const string_view &key, const view_closure &func, const gopts & = {});
 	void operator()(const string_view &key, const gopts &, const view_closure &func);
 
