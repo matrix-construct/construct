@@ -37,9 +37,9 @@ namespace ircd
 	[[noreturn]] void terminate() noexcept;
 
 	// Terminates in debug mode; throws in release mode; always logs critical.
-	[[noreturn]] void assertion(const std::exception &) noexcept(RB_DEBUG);
-	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG);
-	[[noreturn]] void assertion() noexcept(RB_DEBUG);
+	[[noreturn]] void assertion(const std::exception &) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] void assertion() noexcept(RB_DEBUG_LEVEL);
 
 	// util
 	std::exception_ptr make_system_error(const int &code = errno);
@@ -169,14 +169,14 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const &fmt = " ", args&&... ap) noexcept(RB_DEBUG)       \
+    name(const char *const &fmt = " ", args&&... ap) noexcept(RB_DEBUG_LEVEL) \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
         ircd::assertion(*this);                                               \
     }                                                                         \
                                                                               \
-    name(generate_skip_t) noexcept(RB_DEBUG)                                  \
+    name(generate_skip_t) noexcept(RB_DEBUG_LEVEL)                            \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \

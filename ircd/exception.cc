@@ -75,7 +75,7 @@ noexcept
 
 void
 ircd::assertion()
-noexcept(RB_DEBUG)
+noexcept(RB_DEBUG_LEVEL)
 {
 	if(std::uncaught_exceptions())
 	{
@@ -89,7 +89,7 @@ noexcept(RB_DEBUG)
 
 void
 ircd::assertion(std::exception_ptr eptr)
-noexcept(RB_DEBUG) try
+noexcept(RB_DEBUG_LEVEL) try
 {
 	std::rethrow_exception(eptr);
 }
@@ -100,7 +100,7 @@ catch(const std::exception &e)
 
 void
 ircd::assertion(const std::exception &e)
-noexcept(RB_DEBUG)
+noexcept(RB_DEBUG_LEVEL)
 {
 	#ifdef RB_DEBUG
 		terminate(e);
