@@ -33,14 +33,17 @@ namespace ircd::rfc1035
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
 
+	const_buffer make_name(const mutable_buffer &out, const string_view &fqdn);
+	size_t parse_name(const mutable_buffer &out, const const_buffer &in);
+
 	mutable_buffer make_query(const mutable_buffer &, const header &, const vector_view<const question> &);
-	mutable_buffer make_query(const mutable_buffer &, const vector_view<const question> &);
-	mutable_buffer make_query(const mutable_buffer &, const question &);
+	mutable_buffer make_query(const mutable_buffer &, const uint16_t &id, const vector_view<const question> &);
+	mutable_buffer make_query(const mutable_buffer &, const uint16_t &id, const question &);
 }
 
-/// Helper class to construct a question. An object is constructed with a
-/// fully qualified domain string and the query type (qtype). At the
-/// appropriate time we will call operator() which prints a properly binary-
+/// Helper class to construct or parse a question. An object is constructed
+/// with a fully qualified domain string and the query type (qtype). At the
+/// appropriate time we will call print() which prints a properly binary-
 /// formatted question for the question section in a DNS query; generally the
 /// user does not need to do this.
 ///
@@ -52,36 +55,41 @@ namespace ircd::rfc1035
 ///
 struct ircd::rfc1035::question
 {
-	string_view fqdn;
 	uint16_t qtype;
 	uint16_t qclass {0x01};
+	size_t namelen {0};
+	char name[192];
 
 	/// Composes the question into buffer, returns used portion
-	mutable_buffer operator()(const mutable_buffer &) const;
+	mutable_buffer print(const mutable_buffer &) const;
+	const_buffer parse(const const_buffer &);
 
-	/// Trivial constructor; supply fully qualified domain name and query type
-	question(const string_view &fqdn, const uint16_t &qtype = 0x01) // "A"
-	:fqdn{fqdn}
-	,qtype{qtype}
-	{}
+	/// Supply fully qualified domain name and numerical query type
+	question(const string_view &fqdn, const uint16_t &qtype);
 
 	/// Supply fully qualified domain name and name of query type i.e "A"
 	question(const string_view &fqdn, const string_view &qtype)
-	:fqdn{fqdn}
-	,qtype{rfc1035::qtype.at(qtype)}
+	:question{fqdn, rfc1035::qtype.at(qtype)}
 	{}
+
+	question() = default;
 };
 
+/// Helper class to parse an answer.
+///
 struct ircd::rfc1035::answer
 {
 	uint16_t qtype;
 	uint16_t qclass;
 	uint32_t ttl;
 	uint16_t rdlength;
-	const_raw_buffer rdata;
-	char name[256];
+	const_buffer rdata;
+	size_t namelen;
+	char name[192];
 
-	answer(const const_raw_buffer &);
+	const_buffer parse(const const_buffer &);
+
+	answer() = default;
 };
 
 /// Direct representation of the DNS header. This is laid out for
@@ -105,6 +113,8 @@ struct ircd::rfc1035::header
 	uint16_t ancount;    ///< number of answer entries
 	uint16_t nscount;    ///< number of authority entries
 	uint16_t arcount;    ///< number of resource entries
+
+	std::string debug() const;
 }
 __attribute__((packed));
 

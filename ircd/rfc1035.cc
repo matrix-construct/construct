@@ -19,18 +19,20 @@
 
 ircd::mutable_buffer
 ircd::rfc1035::make_query(const mutable_buffer &out,
+                          const uint16_t &id,
                           const question &q)
 {
 	const ilist<const question> questions{q};
-	return make_query(out, questions);
+	return make_query(out, id, questions);
 }
 
 ircd::mutable_buffer
 ircd::rfc1035::make_query(const mutable_buffer &out,
+                          const uint16_t &id,
                           const vector_view<const question> &questions)
 {
 	header h{0};
-	h.id = rand::integer(1, 65535);
+	h.id = id;
 	h.qdcount = bswap(uint16_t(questions.size()));
 	return make_query(out, h, questions);
 }
@@ -45,9 +47,9 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
 
 	sb([&header](const mutable_buffer &buf)
 	{
-		const const_raw_buffer headbuf
+		const const_buffer headbuf
 		{
-			reinterpret_cast<const uint8_t *>(&header), sizeof(header)
+			reinterpret_cast<const char *>(&header), sizeof(header)
 		};
 
 		return copy(buf, headbuf);
@@ -56,19 +58,53 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
 	for(const auto &question : questions)
 		sb([&question](const mutable_buffer &buf)
 		{
-			return size(question(buf));
+			return size(question.print(buf));
 		});
 
 	return sb.completed();
 }
 
+ircd::rfc1035::question::question(const string_view &fqdn,
+                                  const uint16_t &qtype)
+:qtype{qtype}
+,namelen
+{
+	size(make_name(mutable_buffer{name}, fqdn))
+}
+{
+}
+
+ircd::const_buffer
+ircd::rfc1035::question::parse(const const_buffer &in)
+{
+	if(size(in) < 2 + 2 + 2)
+		throw error
+		{
+			"Answer input buffer is too small"
+		};
+
+	namelen = parse_name(name, in);
+	const char *pos(data(in) + namelen);
+	if(pos + 2 + 2 > end(in))
+		throw error
+		{
+			"Question input buffer is incomplete (%zu bytes)", size(in)
+		};
+
+	qtype = bswap(*(const uint16_t *)pos);     pos += 2;
+	qclass = bswap(*(const uint16_t *)pos);    pos += 2;
+
+	assert(size_t(pos - data(in)) <= size(in));
+	return { data(in), pos };
+}
+
 ircd::mutable_buffer
-ircd::rfc1035::question::operator()(const mutable_buffer &buf)
+ircd::rfc1035::question::print(const mutable_buffer &buf)
 const
 {
 	const size_t required
 	{
-		1 + size(fqdn) + 1 + 2 + 2
+		namelen + 1 + 2 + 2
 	};
 
 	if(unlikely(size(buf) < required))
@@ -77,18 +113,10 @@ const
 			"Not enough space in question buffer; %zu bytes required", required
 		};
 
-	char *pos{data(buf)};
-	ircd::tokens(fqdn, '.', [&pos, &buf](const string_view &label)
+	char *pos
 	{
-		if(unlikely(size(label) >= 64))
-			throw error
-			{
-				"Single part of domain cannot exceed 63 characters"
-			};
-
-		*pos++ = size(label);
-		pos += strlcpy(pos, label, std::distance(pos, end(buf)));
-	});
+		data(buf) + copy(buf, const_buffer{name, namelen})
+	};
 
 	assert(*pos == '\0');              pos += 1;
 	*(uint16_t *)pos = bswap(qtype);   pos += 2;
@@ -101,35 +129,18 @@ const
 	};
 }
 
-ircd::rfc1035::answer::answer(const const_raw_buffer &in)
+ircd::const_buffer
+ircd::rfc1035::answer::parse(const const_buffer &in)
 {
-	if(size(in) < 2 + 2 + 2 + 4 + 2)
+	if(unlikely(size(in) < 2 + 2 + 2 + 4 + 2))
 		throw error
 		{
 			"Answer input buffer is too small"
 		};
 
-	const uint8_t *pos(data(in));
-	if(*pos & uint8_t(128))
-		throw error
-		{
-			"Pointer format not implemented"
-		};
-
-	name[0] = '\0';
-	for(uint8_t len(*pos++); len && pos + len < end(in); len = *pos++)
-	{
-		const string_view label
-		{
-			reinterpret_cast<const char *>(pos), len
-		};
-
-		strlcat(name, label, sizeof(name));
-		strlcat(name, ".", sizeof(name));
-		pos += len;
-	}
-
-	if(pos + 2 + 2 + 4 + 2 > end(in))
+	namelen = parse_name(name, in);
+	const char *pos(data(in) + namelen);
+	if(unlikely(pos + 2 + 2 + 4 + 2 > end(in)))
 		throw error
 		{
 			"Answer input buffer is incomplete (%zu bytes)", size(in)
@@ -140,19 +151,102 @@ ircd::rfc1035::answer::answer(const const_raw_buffer &in)
 	ttl = bswap(*(const uint32_t *)pos);       pos += 4;
 	rdlength = bswap(*(const uint16_t *)pos);  pos += 2;
 
-	if(qclass != 1)
+	if(unlikely(qclass != 1))
 		throw error
 		{
 			"Resource record not for IN (internet); corrupt data?"
 		};
 
-	if(pos + rdlength > end(in))
+	if(unlikely(pos + rdlength > end(in)))
 		throw error
 		{
 			"Answer input buffer has incomplete data (rdlength: %u)", rdlength
 		};
 
-	rdata = const_raw_buffer{pos, rdlength};
+	rdata = const_buffer{pos, rdlength};
+	pos += rdlength;
+
+	assert(size_t(pos - data(in)) <= size(in));
+	return { data(in), pos };
+}
+
+ircd::const_buffer
+ircd::rfc1035::make_name(const mutable_buffer &out,
+                         const string_view &fqdn)
+{
+	assert(!empty(out));
+	char *pos{data(out)};
+	ircd::tokens(fqdn, '.', [&pos, &out](const string_view &label)
+	{
+		if(unlikely(size(label) >= 64))
+			throw error
+			{
+				"Single part of domain cannot exceed 63 characters"
+			};
+
+		*pos++ = size(label);
+		pos += strlcpy(pos, label, std::distance(pos, end(out)));
+	});
+
+	return { data(out), size_t(pos - begin(out)) };
+}
+
+size_t
+ircd::rfc1035::parse_name(const mutable_buffer &out,
+                          const const_buffer &in)
+{
+	assert(!empty(out));
+	if(unlikely(empty(in)))
+		throw error
+		{
+			"Name input buffer is too small"
+		};
+
+	const char *pos(data(in));
+	if(*pos & uint8_t(192))
+	{
+		//throw error{"Pointer format not implemented"};
+		out[0] = '\0';
+		pos += 2;
+		return pos - begin(in);
+	}
+
+	out[0] = '\0';
+	for(uint8_t len(*pos++); len && pos + len < end(in); len = *pos++)
+	{
+		const string_view label
+		{
+			reinterpret_cast<const char *>(pos), len
+		};
+
+		strlcat(out, label);
+		strlcat(out, ".");
+		pos += len;
+	}
+
+	return pos - begin(in);
+}
+
+std::string
+ircd::rfc1035::header::debug()
+const
+{
+	std::stringstream ss;
+	ss << "id       : " << id << '\n';
+	ss << "opcode   : " << uint(opcode) << '\n';
+	ss << "rcode    : " << uint(rcode) << ' ' << (rfc1035::rcode[rcode]) << '\n';
+	ss << "rd       : " << (rd? "recursive" : "not recursive") << '\n';
+	ss << "tc       : " << (tc? "truncated" : "not truncated") << '\n';
+	ss << "aa       : " << (aa? "authoritative" : "not authoritative") << '\n';
+	ss << "qr       : " << (qr? "query" : "response") << '\n';
+	ss << "cd       : " << (cd? "checking disabled" : "checking enabled") << '\n';
+	ss << "ad       : " << (ad? "authentic data" : "not authentic data") << '\n';
+	ss << "ra       : " << (ra? "recursion available" : "recursion unavailable") << '\n';
+	ss << "qdcount  : " << qdcount << '\n';
+	ss << "ancount  : " << ancount << '\n';
+	ss << "nscount  : " << nscount << '\n';
+	ss << "arcount  : " << arcount << '\n';
+	return ss.str();
 }
 
 decltype(ircd::rfc1035::rcode)
