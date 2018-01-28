@@ -2155,13 +2155,13 @@ ircd::net::dns::operator()(const ipport &ipport)
 	ctx::promise<std::string> p;
 	ctx::future<std::string> ret{p};
 	operator()(ipport, [p(std::move(p))]
-	(std::exception_ptr eptr, std::string ptr)
+	(std::exception_ptr eptr, const string_view &ptr)
 	mutable
 	{
 		if(eptr)
 			p.set_exception(std::move(eptr));
 		else
-			p.set_value(ptr);
+			p.set_value(std::string{ptr});
 	});
 
 	return ret;
@@ -2187,38 +2187,15 @@ ircd::net::dns::operator()(const hostport &hostport)
 	return ret;
 }
 
-/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
-/// interface.
-void
-ircd::net::dns::operator()(const ipport &ipport,
-                           callback_reverse callback)
-{
-	assert(bool(ircd::net::dns::resolver));
-	(*resolver)(ipport, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
-
-		if(results.empty())
-			return callback({}, {});
-
-		assert(results.size() <= 1);
-		const auto &result(*begin(results));
-		callback({}, result.host_name());
-	});
-}
-
 /// Lower-level A or AAAA query (with automatic SRV query) with asynchronous
 /// callback interface. This returns only one result.
 void
 ircd::net::dns::operator()(const hostport &hostport,
                            callback_one callback)
 {
-	static const ip::tcp::resolver::flags flags{};
 	assert(bool(ircd::net::dns::resolver));
-	(*resolver)(hostport, flags, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	operator()(hostport, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const vector_view<const ipport> &results)
 	{
 		if(eptr)
 			return callback(std::move(eptr), {});
@@ -2226,8 +2203,7 @@ ircd::net::dns::operator()(const hostport &hostport,
 		if(results.empty())
 			return callback(std::make_exception_ptr(nxdomain{}), {});
 
-		const auto &result(*begin(results));
-		callback(std::move(eptr), make_ipport(result));
+		callback(std::move(eptr), results.at(0));
 	});
 }
 
@@ -2237,23 +2213,20 @@ void
 ircd::net::dns::operator()(const hostport &hostport,
                            callback_many callback)
 {
-	static const ip::tcp::resolver::flags flags{};
+	static const flag flags{};
 	assert(bool(ircd::net::dns::resolver));
-	(*resolver)(hostport, flags, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
+	(*resolver)(hostport, flags, std::move(callback));
+}
 
-		std::vector<ipport> vector(results.size());
-		std::transform(begin(results), end(results), begin(vector), []
-		(const auto &entry)
-		{
-			return make_ipport(entry.endpoint());
-		});
-
-		callback(std::move(eptr), std::move(vector));
-	});
+/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
+/// interface.
+void
+ircd::net::dns::operator()(const ipport &ipport,
+                           callback_reverse callback)
+{
+	static const flag flags{};
+	assert(bool(ircd::net::dns::resolver));
+	(*resolver)(ipport, flags, std::move(callback));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2262,27 +2235,110 @@ ircd::net::dns::operator()(const hostport &hostport,
 //
 
 ircd::net::dns::resolver::resolver()
-:gai{*ircd::ios}
-,ns{*ircd::ios}
+:ns{*ircd::ios}
+,context
+{
+	"resolver", 64_KiB, std::bind(&resolver::worker, this), context.POST
+}
 {
 	ns.open(ip::udp::v4());
 	ns.non_blocking(true);
 	set_handle();
+	init_servers();
 }
 
 ircd::net::dns::resolver::~resolver()
 noexcept
 {
-	gai.cancel();
 	ns.close();
+	context.interrupt();
+	assert(tags.empty());
+}
+
+void
+ircd::net::dns::resolver::worker()
+try
+{
+	while(1)
+	{
+		dock.wait([this]
+		{
+			return !tags.empty();
+		});
+
+		ctx::sleep(3); //TODO: conf
+		check_timeouts();
+	}
+}
+catch(const ctx::interrupted &)
+{
+	return;
+}
+
+void
+ircd::net::dns::resolver::check_timeouts()
+{
+	const auto now
+	{
+		ircd::now<steady_point>()
+	};
+
+	for(auto it(begin(tags)); it != end(tags); ++it)
+	{
+		const auto &id(it->first);
+		auto &tag(it->second);
+		if(!check_timeout(id, tag, now))
+			it = tags.erase(it);
+	}
+}
+
+bool
+ircd::net::dns::resolver::check_timeout(const uint16_t &id,
+                                        tag &tag,
+                                        const steady_point &now)
+{
+	//TODO: conf
+	if(tag.last + seconds(3) > now)
+		return true;
+
+	//TODO: retry
+	log.error("DNS timeout id:%u", id);
+
+	const error_code ec
+	{
+		boost::system::errc::timed_out, boost::system::system_category()
+	};
+
+	tag.set_exception(make_eptr(ec));
+	return false;
 }
 
 /// Internal A/AAAA record resolver function
 void
 ircd::net::dns::resolver::operator()(const hostport &hostport,
-                                     ip::tcp::resolver::flags flags,
-                                     resolve_callback callback)
+                                     const flag &flags,
+                                     callback_many callback)
 {
+	uint16_t id; do
+	{
+		id = ircd::rand::integer(1, 65535);
+		assert(tags.size() < 65535);
+		const auto it{tags.lower_bound(id)};
+		if(it != end(tags) && it->first == id)
+			continue;
+
+		tags.emplace_hint(it, id, tag{hostport, flags, std::move(callback)});
+		dock.notify_one();
+		break;
+	}
+	while(1);
+
+	// Escape trunk
+	const unwind::exceptional untag{[this, &id]
+	{
+		tags.erase(id);
+	}};
+
 	// Trivial host string
 	const string_view &host
 	{
@@ -2296,64 +2352,46 @@ ircd::net::dns::resolver::operator()(const hostport &hostport,
 		hostport.portnum? lex_cast(hostport.portnum, portbuf) : hostport.port
 	};
 
-	// Determine if the port is numeric and hint to avoid name lookup if so.
-	if(hostport.portnum || ctype<std::isdigit>(hostport.port) == -1)
-		flags |= ip::tcp::resolver::numeric_service;
-
-	// This base handler will provide exception guarantees for the entire stack.
-	// It may invoke callback twice in the case when callback throws unhandled,
-	// but the latter invocation will always have an the eptr set.
-	gai.async_resolve(host, port, flags, [callback(std::move(callback))]
-	(const error_code &ec, ip::tcp::resolver::results_type results)
-	noexcept
+	// Generate the question
+	const rfc1035::question question
 	{
-		if(ec)
-		{
-			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
-		}
-		else try
-		{
-			callback({}, std::move(results));
-		}
-		catch(...)
-		{
-			callback(std::make_exception_ptr(std::current_exception()), {});
-		}
-	});
+		host, "A"
+	};
+
+	thread_local char buf[64_KiB];
+	const auto query
+	{
+		rfc1035::make_query(buf, id, question)
+	};
+
+	send_query(query);
 }
 
 /// Internal PTR record resolver function
 void
 ircd::net::dns::resolver::operator()(const ipport &ipport,
-                                     resolve_callback callback)
+                                     const flag &flags,
+                                     callback_reverse callback)
 {
-	gai.async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
-	(const error_code &ec, ip::tcp::resolver::results_type results)
-	noexcept
-	{
-		if(ec)
-		{
-			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
-		}
-		else try
-		{
-			callback({}, std::move(results));
-		}
-		catch(...)
-		{
-			callback(std::make_exception_ptr(std::current_exception()), {});
-		}
-	});
+	throw not_implemented{};
 }
 
 void
 ircd::net::dns::resolver::send_query(const const_buffer &buf)
+try
 {
 	assert(!server.empty());
 
 	++server_next %= server.size();
 	const auto &ep{server.at(server_next)};
 	send_query(ep, buf);
+}
+catch(const std::out_of_range &)
+{
+	throw error
+	{
+		"No DNS servers available for query"
+	};
 }
 
 void
@@ -2372,8 +2410,6 @@ ircd::net::dns::resolver::set_handle()
 		std::bind(&resolver::handle, this, ph::_1, ph::_2)
 	};
 
-	assert(!reply_set);
-	reply_set = true;
 	const asio::mutable_buffers_1 bufs{reply, sizeof(reply)};
 	ns.async_receive_from(bufs, reply_from, std::move(handler));
 }
@@ -2383,23 +2419,15 @@ ircd::net::dns::resolver::handle(const error_code &ec,
                                  const size_t &bytes)
 noexcept try
 {
-	using namespace boost::system::errc;
+	if(!handle_error(ec))
+		return;
 
-	switch(ec.value())
+	const unwind reset{[this]
 	{
-		case operation_canceled:
-			return;
+		set_handle();
+	}};
 
-		case success:
-			reply_set = false;
-			set_handle();
-			break;
-
-		default:
-			throw boost::system::system_error(ec);
-	}
-
-	if(bytes < sizeof(rfc1035::header))
+	if(unlikely(bytes < sizeof(rfc1035::header)))
 		throw rfc1035::error
 		{
 			"Got back %zu bytes < rfc1035 %zu byte header",
@@ -2407,33 +2435,27 @@ noexcept try
 			sizeof(rfc1035::header)
 		};
 
-	const uint8_t *const reply{this->reply};
-	const rfc1035::header &header
+	char *const reply
 	{
-		*reinterpret_cast<const rfc1035::header *__restrict__>(reply)
+		this->reply
 	};
 
-	if(header.qr != 1)
-		throw rfc1035::error
-		{
-			"Response header is marked as 'Query' and not 'Response'"
-		};
+	rfc1035::header &header
+	{
+		*reinterpret_cast<rfc1035::header *>(reply)
+	};
 
-	const const_raw_buffer body
+	bswap(&header.qdcount);
+	bswap(&header.ancount);
+	bswap(&header.nscount);
+	bswap(&header.arcount);
+
+	const const_buffer body
 	{
 		reply + sizeof(header), bytes - sizeof(header)
 	};
 
-	if(!header.ancount)
-		return;
-
-	const rfc1035::answer answer
-	{
-		const_buffer{body}
-	};
-
-	net::ipport ipp(ip::address_v4(*(const uint32_t *)data(answer.rdata)).to_uint(), 0);
-
+	handle_reply(header, body);
 }
 catch(const std::exception &e)
 {
@@ -2441,6 +2463,142 @@ catch(const std::exception &e)
 	{
 		"resolver::handle_reply(): %s", e.what()
 	};
+}
+
+void
+ircd::net::dns::resolver::handle_reply(const header &header,
+                                       const const_buffer &body)
+try
+{
+	const auto &id{header.id};
+	const auto it{tags.find(id)};
+	if(it == end(tags))
+		throw error
+		{
+			"DNS reply from %s for unrecognized tag id:%u",
+			string(reply_from),
+			id
+		};
+
+	auto &tag{it->second};
+	const unwind untag{[this, &it]
+	{
+		tags.erase(it);
+	}};
+
+	handle_reply(header, body, tag);
+}
+catch(const std::exception &e)
+{
+	log.error("%s", e.what());
+	return;
+}
+
+void
+ircd::net::dns::resolver::handle_reply(const header &header,
+                                       const const_buffer &body,
+                                       tag &tag)
+try
+{
+	if(unlikely(header.qr != 1))
+		throw rfc1035::error
+		{
+			"Response header is marked as 'Query' and not 'Response'"
+		};
+
+	if(unlikely(header.rcode))
+		throw rfc1035::error
+		{
+			"protocol error: %s", rfc1035::rcode.at(header.rcode)
+		};
+
+	if(header.qdcount > 8 || header.ancount > 8)
+		throw error
+		{
+			"Response contains too many sections..."
+		};
+
+	if(!header.ancount)
+	{
+		tag.cb_many({}, {});
+		return;
+	}
+
+	const_buffer buf{body};
+	rfc1035::question qd[header.qdcount];
+	for(size_t i(0); i < header.qdcount; ++i)
+		consume(buf, size(qd[i].parse(buf)));
+
+	rfc1035::answer an[header.ancount];
+	for(size_t i(0); i < header.ancount; ++i)
+		consume(buf, size(an[i].parse(buf)));
+
+	net::ipport ipp[header.ancount];
+	for(size_t i(0); i < header.ancount; ++i)
+	{
+		if(an[i].qtype != 0x01) // 'A'
+			continue;
+
+		const auto &ptr(data(an[i].rdata));
+		ipp[i] = { bswap(*(const uint32_t *)ptr), port(tag.hp) };
+	}
+
+	if(tag.cb_many)
+		tag.cb_many({}, vector_view<const ipport>(ipp, header.ancount));
+}
+catch(...)
+{
+	tag.set_exception(std::current_exception());
+}
+
+bool
+ircd::net::dns::resolver::handle_error(const error_code &ec)
+const
+{
+	using namespace boost::system::errc;
+
+	switch(ec.value())
+	{
+		case operation_canceled:
+			return false;
+
+		case success:
+			return true;
+
+		default:
+			throw boost::system::system_error(ec);
+	}
+}
+
+//TODO: x-platform
+void
+ircd::net::dns::resolver::init_servers()
+{
+	const auto resolve_conf
+	{
+		fs::read("/etc/resolv.conf")
+	};
+
+	tokens(resolve_conf, '\n', [this](const auto &line)
+	{
+		const auto kv(split(line, ' '));
+		if(kv.first == "nameserver")
+		{
+			const ipport server{kv.second, 53};
+			this->server.emplace_back(make_endpoint_udp(server));
+			log.debug("Found nameserver %s from resolv.conf",
+			          string(server));
+		}
+	});
+}
+
+void
+ircd::net::dns::resolver::tag::set_exception(std::exception_ptr eptr)
+{
+	if(cb_many)
+		cb_many(std::move(eptr), {});
+	else if(cb_reverse)
+		cb_reverse(std::move(eptr), {});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -28,16 +28,24 @@ struct ircd::net::dns
 	struct resolver static *resolver;
 
   public:
+	enum flag :uint;
+
 	using callback_one = std::function<void (std::exception_ptr, const ipport &)>;
-	using callback_many = std::function<void (std::exception_ptr, std::vector<ipport>)>;
-	using callback_reverse = std::function<void (std::exception_ptr, std::string)>;
+	using callback_many = std::function<void (std::exception_ptr, vector_view<const ipport>)>;
+	using callback_reverse = std::function<void (std::exception_ptr, const string_view &)>;
 
 	// Callback-based interface
-	void operator()(const hostport &, callback_one);
-	void operator()(const hostport &, callback_many);
 	void operator()(const ipport &, callback_reverse);
+	void operator()(const hostport &, callback_many);
+	void operator()(const hostport &, callback_one);
 
 	// Future-based interface
 	ctx::future<ipport> operator()(const hostport &);
 	ctx::future<std::string> operator()(const ipport &);
+};
+
+enum ircd::net::dns::flag
+:uint
+{
+
 };

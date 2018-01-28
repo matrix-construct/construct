@@ -33,6 +33,7 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
 {
 	header h{0};
 	h.id = id;
+	h.rd = true;
 	h.qdcount = bswap(uint16_t(questions.size()));
 	return make_query(out, h, questions);
 }
@@ -80,7 +81,7 @@ ircd::rfc1035::question::parse(const const_buffer &in)
 	if(size(in) < 2 + 2 + 2)
 		throw error
 		{
-			"Answer input buffer is too small"
+			"Answer input buffer underflow"
 		};
 
 	namelen = parse_name(name, in);
@@ -104,7 +105,7 @@ const
 {
 	const size_t required
 	{
-		namelen + 1 + 2 + 2
+		namelen + 2 + 2
 	};
 
 	if(unlikely(size(buf) < required))
@@ -118,7 +119,8 @@ const
 		data(buf) + copy(buf, const_buffer{name, namelen})
 	};
 
-	assert(*pos == '\0');              pos += 1;
+	assert(pos > data(buf));
+	assert(*(pos - 1) == '\0');
 	*(uint16_t *)pos = bswap(qtype);   pos += 2;
 	*(uint16_t *)pos = bswap(qclass);  pos += 2;
 
@@ -135,7 +137,7 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 	if(unlikely(size(in) < 2 + 2 + 2 + 4 + 2))
 		throw error
 		{
-			"Answer input buffer is too small"
+			"Answer input buffer underflow"
 		};
 
 	namelen = parse_name(name, in);
@@ -188,6 +190,10 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 		pos += strlcpy(pos, label, std::distance(pos, end(out)));
 	});
 
+	// The null terminator is included in the returned buffer view
+	assert(*pos == '\0');
+	++pos;
+
 	return { data(out), size_t(pos - begin(out)) };
 }
 
@@ -224,6 +230,8 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 		pos += len;
 	}
 
+	assert(size_t(pos - begin(in)) <= size(in));
+	assert(size_t(pos - begin(in)) <= size(out));
 	return pos - begin(in);
 }
 

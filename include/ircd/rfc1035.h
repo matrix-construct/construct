@@ -58,7 +58,7 @@ struct ircd::rfc1035::question
 	uint16_t qtype;
 	uint16_t qclass {0x01};
 	size_t namelen {0};
-	char name[192];
+	char name[256];
 
 	/// Composes the question into buffer, returns used portion
 	mutable_buffer print(const mutable_buffer &) const;
@@ -85,7 +85,7 @@ struct ircd::rfc1035::answer
 	uint16_t rdlength;
 	const_buffer rdata;
 	size_t namelen;
-	char name[192];
+	char name[256];
 
 	const_buffer parse(const const_buffer &);
 
