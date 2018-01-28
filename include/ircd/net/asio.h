@@ -43,7 +43,9 @@ namespace ircd::net
 	std::string string(const ip::tcp::endpoint &);
 
 	ipport make_ipport(const boost::asio::ip::tcp::endpoint &);
+	ipport make_ipport(const boost::asio::ip::udp::endpoint &);
 	ip::tcp::endpoint make_endpoint(const ipport &);
+	ip::udp::endpoint make_endpoint_udp(const ipport &);
 }
 
 #include <ircd/net/socket.h>

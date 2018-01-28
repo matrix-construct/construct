@@ -2554,11 +2554,36 @@ ircd::net::string(const mutable_buffer &buf,
 }
 
 ircd::net::ipport
+ircd::net::make_ipport(const boost::asio::ip::udp::endpoint &ep)
+{
+	return ipport
+	{
+		ep.address(), ep.port()
+	};
+}
+
+ircd::net::ipport
 ircd::net::make_ipport(const boost::asio::ip::tcp::endpoint &ep)
 {
 	return ipport
 	{
 		ep.address(), ep.port()
+	};
+}
+
+boost::asio::ip::udp::endpoint
+ircd::net::make_endpoint_udp(const ipport &ipport)
+{
+	return
+	{
+		is_v6(ipport)? ip::udp::endpoint
+		{
+			asio::ip::address_v6 { std::get<ipport.IP>(ipport) }, port(ipport)
+		}
+		: ip::udp::endpoint
+		{
+			asio::ip::address_v4 { host4(ipport) }, port(ipport)
+		},
 	};
 }
 
