@@ -44,9 +44,9 @@ echo "*** Building RocksDB... "
 
 USERDIR=$PWD            # Save current dir and return to it later
 
-run git submodule update --init rocksdb
+run git submodule update --init deps/rocksdb
 
-run cd rocksdb
+run cd deps/rocksdb
 run git checkout v5.5.3
 CFLAGS=-fPIC run make -j$JOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory

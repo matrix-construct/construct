@@ -748,15 +748,15 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AM_COND_IF([MINGW],
 	[
 		BTOOLSET="mingw"
-		boost_libdir="$PWD/boost/stage/lib"
+		boost_libdir="$PWD/deps/boost/stage/lib"
 	], [
 		dnl the CXX may have a space and then arguments so we must chop them
 		BTOOLSET=`echo $CXX | cut -d' ' -f1`
-		boost_libdir="$PWD/boost/lib"
+		boost_libdir="$PWD/deps/boost/lib"
 	])
 
 	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
-	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/boost/include"])
+	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/deps/boost/include"])
 
 	AC_MSG_CHECKING([whether to use shared boost])
 	if [[ $withval = "shared" ]]; then
@@ -770,9 +770,10 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	boost_linkage="$withval"
 	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
 	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version
-	if [[ $? != 0 ]]; then
+	AS_IF([ test $? != 0 ],
+	[
 		AC_MSG_ERROR([Failed to build included boost.])
-	fi
+	])
 
 	AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
 	AC_MSG_NOTICE([Bootstrapping boost: done])
@@ -831,25 +832,29 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
 
-	AC_SUBST(ROCKSDB_CPPFLAGS, ["-isystem $PWD/rocksdb/include"])
-	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/rocksdb/"])
+	AC_SUBST(ROCKSDB_CPPFLAGS, ["-isystem $PWD/deps/rocksdb/include"])
+	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/deps/rocksdb/"])
 
 	AC_MSG_CHECKING([whether to use shared RocksDB])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
 		rocksdb_linkage="shared_lib"
 		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
-		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/rocksdb/"
+		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb/"
 		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 	else
 		AC_MSG_RESULT([no])
 		rocksdb_linkage="static_lib"
 		AC_MSG_NOTICE([static RocksDB linkage requires multiple dependencies])
 		AC_MSG_NOTICE([| You will need: bzip2, zlib, snappy])
-		AC_SUBST(ROCKSDB_LIBS, ["$PWD/rocksdb/librocksdb.a"])
+		AC_SUBST(ROCKSDB_LIBS, ["$PWD/deps/rocksdb/librocksdb.a"])
 	fi
 
 	bash tools/buildrocks.sh $rocksdb_linkage
+	AS_IF([ test $? != 0 ],
+	[
+		AC_MSG_ERROR([Failed to build RocksDB])
+	])
 ],[
 	AC_MSG_RESULT([no])
 	with_included_rocksdb="no"
@@ -877,13 +882,13 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	with_included_js="yes"
 
 	AC_SUBST(JS_CPPFLAGS)
-	JS_CPPFLAGS+=" -isystem $PWD/gecko-dev/js/src/build_OPT.OBJ/dist/include"
-	#JS_CPPFLAGS+=" -I$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/include"
+	JS_CPPFLAGS+=" -isystem $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/include"
+	#JS_CPPFLAGS+=" -I$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/include"
 
 	AC_SUBST(JS_LDFLAGS)
-	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
-	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
-	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/js/src"
+	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
+	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/js/src"
 
 	AC_SUBST(JS_LIBS)
 	JS_LIBS+=" -lmozjs-52"
@@ -892,17 +897,17 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	dnl !!!!
 	dnl HACK BUG-WORKAROUND - Mozilla forgot to include this in their lib?
 	dnl Runtime segfault (unresolved dynamic function address) if this is not specified
-	#JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
-	#JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt1.o"
-	JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mozglue/misc/TimeStamp.o"
+	#JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
+	#JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt1.o"
+	JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mozglue/misc/TimeStamp.o"
 
 	AC_MSG_CHECKING([whether to use shared JS engine])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
 		AC_MSG_NOTICE([Shared SpiderMonkey linkage requires running charybdis with an intact build directory])
 		js_linkage="shared"
-		JS_LDFLAGS+=" -Wl,-rpath=$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
-		JS_LDFLAGS+=" -Wl,-rpath=$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+		JS_LDFLAGS+=" -Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
+		JS_LDFLAGS+=" -Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
 	else
 		AC_MSG_RESULT([no])
 		js_linkage="static"

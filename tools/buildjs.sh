@@ -44,8 +44,8 @@ echo "*** Building SpiderMonkey... "
 
 USERDIR=$PWD            # Save current dir and return to it later
 
-run git submodule update --init --remote gecko-dev
-run cd gecko-dev
+run git submodule update --init --remote deps/gecko-dev
+run cd deps/gecko-dev
 #run git fetch --depth=1 origin $BRANCH
 run git checkout $BRANCH
 

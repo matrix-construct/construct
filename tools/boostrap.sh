@@ -86,8 +86,8 @@ USERDIR=$PWD
 
 ### Populate the boost submodule directory.
 run cd $TOPDIR
-run git submodule update --init boost
-run cd boost
+run git submodule update --init deps/boost
+run cd deps/boost
 
 ### Build toolsy
 run git submodule update --init --recursive --checkout tools/build
@@ -164,6 +164,8 @@ run git submodule update --init --recursive --checkout libs/exception
 run git submodule update --init --recursive --checkout libs/algorithm
 
 run git submodule update --init --recursive --checkout libs/locale
+
+run git submodule update --init --recursive --checkout libs/gil
 
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
