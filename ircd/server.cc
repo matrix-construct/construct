@@ -695,7 +695,7 @@ ircd::server::node::resolve(const hostport &hostport)
 		std::bind(&node::handle_resolve, this, weak_from(*this), ph::_1, ph::_2)
 	};
 
-	net::resolve(hostport, std::move(handler));
+	net::dns(hostport, std::move(handler));
 }
 
 void

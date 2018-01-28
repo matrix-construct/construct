@@ -46,6 +46,10 @@ namespace ircd::net
 	ip::tcp::endpoint make_endpoint(const ipport &);
 }
 
+#include <ircd/net/socket.h>
+#include <ircd/net/acceptor.h>
+#include <ircd/net/resolver.h>
+
 namespace ircd
 {
 	using net::string;

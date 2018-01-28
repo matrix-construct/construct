@@ -371,7 +371,7 @@ try
 
 					auto future
 					{
-						net::resolve(hostport)
+						net::dns(hostport)
 					};
 
 					std::cout << future.get() << std::endl;
@@ -392,7 +392,7 @@ try
 
 					auto future
 					{
-						net::resolve(remote)
+						net::dns(remote)
 					};
 
 					std::cout << future.get() << std::endl;

@@ -23,6 +23,29 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// init
+//
+
+/// Network subsystem initialization
+ircd::net::init::init()
+{
+	assert(ircd::ios);
+	assert(!net::dns::resolver);
+	net::dns::resolver = new struct dns::resolver();
+
+	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
+	sslv23_client.set_default_verify_paths();
+}
+
+/// Network subsystem shutdown
+ircd::net::init::~init()
+{
+	delete net::dns::resolver;
+	net::dns::resolver = nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // net/net.h
 //
 
@@ -503,7 +526,7 @@ ircd::net::open(socket &socket,
 	}};
 
 	if(!opts.ipport)
-		resolve(opts.hostport, std::move(connector));
+		dns(opts.hostport, std::move(connector));
 	else
 		connector({}, opts.ipport);
 }
@@ -2111,52 +2134,134 @@ ircd::net::socket::scope_timeout::release()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// net/resolve.h
+// net/dns.h
 //
 
-namespace ircd::net
-{
-	struct resolver extern *resolver;
-
-	// Internal resolve base (requires boost syms)
-	using resolve_callback = std::function<void (std::exception_ptr, ip::tcp::resolver::results_type)>;
-	void _resolve(const hostport &, ip::tcp::resolver::flags, resolve_callback);
-	void _resolve(const ipport &, resolve_callback);
-}
-
-/// Internal resolver service
-struct ircd::net::resolver
-{
-	ip::tcp::resolver gai;                       // Old getaddrinfo() being removed
-	ip::udp::socket ns;                          // A pollable activity object
-	std::vector<ip::udp::endpoint> server;       // The list of active servers
-	size_t server_next{0};                       // Round-robin state to hit servers
-
-	bool reply_set {false};
-	ip::udp::endpoint reply_from;
-	uint8_t reply[64_KiB];
-
-	void handle(const error_code &ec, const size_t &) noexcept;
-	void set_handle();
-
-	void send_query(const ip::udp::endpoint &, const const_buffer &);
-	void send_query(const const_buffer &);
-
-	resolver();
-	~resolver() noexcept;
-};
-
 /// Singleton instance of the public interface ircd::net::resolve
-decltype(ircd::net::resolve)
-ircd::net::resolve
+decltype(ircd::net::dns)
+ircd::net::dns
 {};
 
 /// Singleton instance of the internal boost resolver wrapper.
-decltype(ircd::net::resolver)
-ircd::net::resolver
+decltype(ircd::net::dns::resolver)
+ircd::net::dns::resolver
 {};
 
-ircd::net::resolver::resolver()
+/// Resolve a numerical address to a hostname string. This is a PTR record
+/// query or 'reverse DNS' lookup.
+ircd::ctx::future<std::string>
+ircd::net::dns::operator()(const ipport &ipport)
+{
+	ctx::promise<std::string> p;
+	ctx::future<std::string> ret{p};
+	operator()(ipport, [p(std::move(p))]
+	(std::exception_ptr eptr, std::string ptr)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(ptr);
+	});
+
+	return ret;
+}
+
+/// Resolve a hostname (with service name/portnum) to a numerical address. This
+/// is an A or AAAA query (with automatic SRV query) returning a single result.
+ircd::ctx::future<ircd::net::ipport>
+ircd::net::dns::operator()(const hostport &hostport)
+{
+	ctx::promise<ipport> p;
+	ctx::future<ipport> ret{p};
+	operator()(hostport, [p(std::move(p))]
+	(std::exception_ptr eptr, const ipport &ip)
+	mutable
+	{
+		if(eptr)
+			p.set_exception(std::move(eptr));
+		else
+			p.set_value(ip);
+	});
+
+	return ret;
+}
+
+/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
+/// interface.
+void
+ircd::net::dns::operator()(const ipport &ipport,
+                           callback_reverse callback)
+{
+	assert(bool(ircd::net::dns::resolver));
+	(*resolver)(ipport, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		if(results.empty())
+			return callback({}, {});
+
+		assert(results.size() <= 1);
+		const auto &result(*begin(results));
+		callback({}, result.host_name());
+	});
+}
+
+/// Lower-level A or AAAA query (with automatic SRV query) with asynchronous
+/// callback interface. This returns only one result.
+void
+ircd::net::dns::operator()(const hostport &hostport,
+                           callback_one callback)
+{
+	static const ip::tcp::resolver::flags flags{};
+	assert(bool(ircd::net::dns::resolver));
+	(*resolver)(hostport, flags, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		if(results.empty())
+			return callback(std::make_exception_ptr(nxdomain{}), {});
+
+		const auto &result(*begin(results));
+		callback(std::move(eptr), make_ipport(result));
+	});
+}
+
+/// Lower-level A+AAAA query (with automatic SRV query). This returns a vector
+/// of all results in the callback.
+void
+ircd::net::dns::operator()(const hostport &hostport,
+                           callback_many callback)
+{
+	static const ip::tcp::resolver::flags flags{};
+	assert(bool(ircd::net::dns::resolver));
+	(*resolver)(hostport, flags, [callback(std::move(callback))]
+	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
+	{
+		if(eptr)
+			return callback(std::move(eptr), {});
+
+		std::vector<ipport> vector(results.size());
+		std::transform(begin(results), end(results), begin(vector), []
+		(const auto &entry)
+		{
+			return make_ipport(entry.endpoint());
+		});
+
+		callback(std::move(eptr), std::move(vector));
+	});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/resolver.h
+//
+
+ircd::net::dns::resolver::resolver()
 :gai{*ircd::ios}
 ,ns{*ircd::ios}
 {
@@ -2165,15 +2270,84 @@ ircd::net::resolver::resolver()
 	set_handle();
 }
 
-ircd::net::resolver::~resolver()
+ircd::net::dns::resolver::~resolver()
 noexcept
 {
 	gai.cancel();
 	ns.close();
 }
 
+/// Internal A/AAAA record resolver function
 void
-ircd::net::resolver::send_query(const const_buffer &buf)
+ircd::net::dns::resolver::operator()(const hostport &hostport,
+                                     ip::tcp::resolver::flags flags,
+                                     resolve_callback callback)
+{
+	// Trivial host string
+	const string_view &host
+	{
+		hostport.host
+	};
+
+	// Determine if the port is a string or requires a lex_cast to one.
+	char portbuf[8];
+	const string_view &port
+	{
+		hostport.portnum? lex_cast(hostport.portnum, portbuf) : hostport.port
+	};
+
+	// Determine if the port is numeric and hint to avoid name lookup if so.
+	if(hostport.portnum || ctype<std::isdigit>(hostport.port) == -1)
+		flags |= ip::tcp::resolver::numeric_service;
+
+	// This base handler will provide exception guarantees for the entire stack.
+	// It may invoke callback twice in the case when callback throws unhandled,
+	// but the latter invocation will always have an the eptr set.
+	gai.async_resolve(host, port, flags, [callback(std::move(callback))]
+	(const error_code &ec, ip::tcp::resolver::results_type results)
+	noexcept
+	{
+		if(ec)
+		{
+			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
+		}
+		else try
+		{
+			callback({}, std::move(results));
+		}
+		catch(...)
+		{
+			callback(std::make_exception_ptr(std::current_exception()), {});
+		}
+	});
+}
+
+/// Internal PTR record resolver function
+void
+ircd::net::dns::resolver::operator()(const ipport &ipport,
+                                     resolve_callback callback)
+{
+	gai.async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
+	(const error_code &ec, ip::tcp::resolver::results_type results)
+	noexcept
+	{
+		if(ec)
+		{
+			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
+		}
+		else try
+		{
+			callback({}, std::move(results));
+		}
+		catch(...)
+		{
+			callback(std::make_exception_ptr(std::current_exception()), {});
+		}
+	});
+}
+
+void
+ircd::net::dns::resolver::send_query(const const_buffer &buf)
 {
 	assert(!server.empty());
 
@@ -2183,15 +2357,15 @@ ircd::net::resolver::send_query(const const_buffer &buf)
 }
 
 void
-ircd::net::resolver::send_query(const ip::udp::endpoint &ep,
-                                const const_buffer &buf)
+ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
+                                     const const_buffer &buf)
 {
 	assert(ns.non_blocking());
 	ns.send_to(asio::const_buffers_1(buf), ep);
 }
 
 void
-ircd::net::resolver::set_handle()
+ircd::net::dns::resolver::set_handle()
 {
 	auto handler
 	{
@@ -2205,8 +2379,8 @@ ircd::net::resolver::set_handle()
 }
 
 void
-ircd::net::resolver::handle(const error_code &ec,
-                            const size_t &bytes)
+ircd::net::dns::resolver::handle(const error_code &ec,
+                                 const size_t &bytes)
 noexcept try
 {
 	using namespace boost::system::errc;
@@ -2250,7 +2424,6 @@ noexcept try
 		reply + sizeof(header), bytes - sizeof(header)
 	};
 
-	std::cout << "answer: " << header.ancount << std::endl;
 	if(!header.ancount)
 		return;
 
@@ -2259,9 +2432,7 @@ noexcept try
 		const_buffer{body}
 	};
 
-	std::cout << "answer [" << answer.name << "] " << answer.rdlength << " " << answer.qtype << " " << answer.qclass << " " << answer.ttl << std::endl;
 	net::ipport ipp(ip::address_v4(*(const uint32_t *)data(answer.rdata)).to_uint(), 0);
-	std::cout << ipp << std::endl;
 
 }
 catch(const std::exception &e)
@@ -2270,183 +2441,6 @@ catch(const std::exception &e)
 	{
 		"resolver::handle_reply(): %s", e.what()
 	};
-}
-
-/// Resolve a numerical address to a hostname string. This is a PTR record
-/// query or 'reverse DNS' lookup.
-ircd::ctx::future<std::string>
-ircd::net::resolve::operator()(const ipport &ipport)
-{
-	ctx::promise<std::string> p;
-	ctx::future<std::string> ret{p};
-	operator()(ipport, [p(std::move(p))]
-	(std::exception_ptr eptr, std::string ptr)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(ptr);
-	});
-
-	return ret;
-}
-
-/// Resolve a hostname (with service name/portnum) to a numerical address. This
-/// is an A or AAAA query (with automatic SRV query) returning a single result.
-ircd::ctx::future<ircd::net::ipport>
-ircd::net::resolve::operator()(const hostport &hostport)
-{
-	ctx::promise<ipport> p;
-	ctx::future<ipport> ret{p};
-	operator()(hostport, [p(std::move(p))]
-	(std::exception_ptr eptr, const ipport &ip)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(ip);
-	});
-
-	return ret;
-}
-
-/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
-/// interface.
-void
-ircd::net::resolve::operator()(const ipport &ipport,
-                               callback_reverse callback)
-{
-	_resolve(ipport, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
-
-		if(results.empty())
-			return callback({}, {});
-
-		assert(results.size() <= 1);
-		const auto &result(*begin(results));
-		callback({}, result.host_name());
-	});
-}
-
-/// Lower-level A or AAAA query (with automatic SRV query) with asynchronous
-/// callback interface. This returns only one result.
-void
-ircd::net::resolve::operator()(const hostport &hostport,
-                               callback_one callback)
-{
-	static const ip::tcp::resolver::flags flags{};
-	_resolve(hostport, flags, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
-
-		if(results.empty())
-			return callback(std::make_exception_ptr(nxdomain{}), {});
-
-		const auto &result(*begin(results));
-		callback(std::move(eptr), make_ipport(result));
-	});
-}
-
-/// Lower-level A+AAAA query (with automatic SRV query). This returns a vector
-/// of all results in the callback.
-void
-ircd::net::resolve::operator()(const hostport &hostport,
-                               callback_many callback)
-{
-	static const ip::tcp::resolver::flags flags{};
-	_resolve(hostport, flags, [callback(std::move(callback))]
-	(std::exception_ptr eptr, ip::tcp::resolver::results_type results)
-	{
-		if(eptr)
-			return callback(std::move(eptr), {});
-
-		std::vector<ipport> vector(results.size());
-		std::transform(begin(results), end(results), begin(vector), []
-		(const auto &entry)
-		{
-			return make_ipport(entry.endpoint());
-		});
-
-		callback(std::move(eptr), std::move(vector));
-	});
-}
-
-/// Internal A/AAAA record resolver function
-void
-ircd::net::_resolve(const hostport &hostport,
-                    ip::tcp::resolver::flags flags,
-                    resolve_callback callback)
-{
-	// Trivial host string
-	const string_view &host
-	{
-		hostport.host
-	};
-
-	// Determine if the port is a string or requires a lex_cast to one.
-	char portbuf[8];
-	const string_view &port
-	{
-		hostport.portnum? lex_cast(hostport.portnum, portbuf) : hostport.port
-	};
-
-	// Determine if the port is numeric and hint to avoid name lookup if so.
-	if(hostport.portnum || ctype<std::isdigit>(hostport.port) == -1)
-		flags |= ip::tcp::resolver::numeric_service;
-
-	// This base handler will provide exception guarantees for the entire stack.
-	// It may invoke callback twice in the case when callback throws unhandled,
-	// but the latter invocation will always have an the eptr set.
-	assert(bool(ircd::net::resolver));
-	resolver->gai.async_resolve(host, port, flags, [callback(std::move(callback))]
-	(const error_code &ec, ip::tcp::resolver::results_type results)
-	noexcept
-	{
-		if(ec)
-		{
-			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
-		}
-		else try
-		{
-			callback({}, std::move(results));
-		}
-		catch(...)
-		{
-			callback(std::make_exception_ptr(std::current_exception()), {});
-		}
-	});
-}
-
-/// Internal PTR record resolver function
-void
-ircd::net::_resolve(const ipport &ipport,
-                    resolve_callback callback)
-{
-	assert(bool(ircd::net::resolver));
-	resolver->gai.async_resolve(make_endpoint(ipport), [callback(std::move(callback))]
-	(const error_code &ec, ip::tcp::resolver::results_type results)
-	noexcept
-	{
-		if(ec)
-		{
-			callback(std::make_exception_ptr(boost::system::system_error{ec}), std::move(results));
-		}
-		else try
-		{
-			callback({}, std::move(results));
-		}
-		catch(...)
-		{
-			callback(std::make_exception_ptr(std::current_exception()), {});
-		}
-	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2791,27 +2785,4 @@ const
 	{
 		data(*this), size(*this)
 	};
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// init
-//
-
-/// Network subsystem initialization
-ircd::net::init::init()
-{
-	assert(ircd::ios);
-	assert(!net::resolver);
-	net::resolver = new struct resolver();
-
-	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
-	sslv23_client.set_default_verify_paths();
-}
-
-/// Network subsystem shutdown
-ircd::net::init::~init()
-{
-	delete net::resolver;
-	net::resolver = nullptr;
 }
