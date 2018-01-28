@@ -85,10 +85,6 @@ struct NAME                                                   \
 // Debug sizeof structure at compile time
 //
 
-/// Internal use only
-template<size_t SIZE>
-struct _TEST_SIZEOF_;
-
 /// Output the sizeof a structure at compile time.
 /// This stops the compiler with an error (good) containing the size of the target
 /// in the message.
@@ -97,6 +93,10 @@ struct _TEST_SIZEOF_;
 ///
 #define IRCD_TEST_SIZEOF(name) \
 	ircd::util::_TEST_SIZEOF_<sizeof(name)> _test_;
+
+/// Internal use only
+template<size_t SIZE>
+struct _TEST_SIZEOF_;
 
 //
 // Test if type is forward declared or complete

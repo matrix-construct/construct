@@ -181,7 +181,7 @@ struct ircd::m::id::group
 	group() = default;
 };
 
-/// Group ID (EXPERIMENTAL)
+/// Origin ID (EXPERIMENTAL)
 ///
 struct ircd::m::id::origin
 :ircd::m::id

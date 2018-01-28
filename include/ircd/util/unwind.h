@@ -39,7 +39,7 @@ struct ircd::util::unwind
 	const std::function<void ()> func;
 
 	template<class F>
-	unwind(F &&func)
+	unwind(F&& func)
 	:func{std::forward<F>(func)}
 	{}
 
@@ -61,7 +61,7 @@ struct ircd::util::unwind::nominal
 	const std::function<void ()> func;
 
 	template<class F>
-	nominal(F &&func)
+	nominal(F&& func)
 	:func{std::forward<F>(func)}
 	{}
 
@@ -86,7 +86,7 @@ struct ircd::util::unwind::exceptional
 	const std::function<void ()> func;
 
 	template<class F>
-	exceptional(F &&func)
+	exceptional(F&& func)
 	:func{std::forward<F>(func)}
 	{}
 

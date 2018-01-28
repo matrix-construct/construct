@@ -33,7 +33,7 @@ namespace ircd::server
 		1
 	};
 
-	// Maximum number of requests "in flight" in the pipe at at time
+	// Maximum number of requests "in flight" at a time in one pipe.
 	const size_t TAG_COMMIT_MAX_DEFAULT
 	{
 		2
