@@ -47,7 +47,7 @@ struct ircd::m::error
 {
 	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
-	error(const http::code &, const json::object &object = {});
+	error(const http::code &, const json::object &object);
 	error(const http::code &, const json::members &);
 	error(const http::code &, const json::iov &);
 	error(const http::code &);
@@ -76,21 +76,27 @@ struct ircd::m::error
 /// - httpcode: An HTTP code which will be used if this exception ever makes
 /// it out to a client.
 ///
-#define IRCD_M_EXCEPTION(_parent_, _name_, _httpcode_)              \
-struct _name_                                                       \
-: _parent_                                                          \
-{                                                                   \
-    template<class... args> _name_(args&&... a)                     \
-    : _parent_                                                      \
-    {                                                               \
-        child, _httpcode_, "M_"#_name_, std::forward<args>(a)...    \
-    }{}                                                             \
-                                                                    \
-    template<class... args> _name_(child_t, args&&... a)            \
-    : _parent_                                                      \
-    {                                                               \
-        child, std::forward<args>(a)...                             \
-    }{}                                                             \
+#define IRCD_M_EXCEPTION(_parent_, _name_, _httpcode_)                  \
+struct _name_                                                           \
+: _parent_                                                              \
+{                                                                       \
+    _name_()                                                            \
+    : _parent_                                                          \
+    {                                                                   \
+        child, _httpcode_, "M_"#_name_, "%s", http::status(_httpcode_)  \
+    }{}                                                                 \
+                                                                        \
+    template<class... args> _name_(args&&... a)                         \
+    : _parent_                                                          \
+    {                                                                   \
+        child, _httpcode_, "M_"#_name_, std::forward<args>(a)...        \
+    }{}                                                                 \
+                                                                        \
+    template<class... args> _name_(child_t, args&&... a)                \
+    : _parent_                                                          \
+    {                                                                   \
+        child, std::forward<args>(a)...                                 \
+    }{}                                                                 \
 };
 
 // These are some common m::error, but not all of them; other declarations
@@ -114,15 +120,15 @@ ircd::m::error::error(const http::code &status,
 {
 	status, [&]() -> json::strung
 	{
-		char estr[512]; const auto len
+		char buf[512]; const string_view str
 		{
-			fmt::sprintf{estr, fmt, std::forward<args>(a)...}
+			fmt::sprintf{buf, fmt, std::forward<args>(a)...}
 		};
 
 		return json::members
 		{
-			{ "errcode",  errcode                        },
-			{ "error",    string_view{estr, size_t(len)} }
+			{ "errcode",  errcode  },
+			{ "error",    str      },
 		};
 	}()
 }{}
@@ -134,7 +140,8 @@ ircd::m::error::error(const string_view &errcode,
 :error
 {
 	http::BAD_REQUEST, errcode, fmt, std::forward<args>(a)...
-}{}
+}
+{}
 
 inline
 ircd::m::error::error(std::string c)
