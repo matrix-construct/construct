@@ -172,6 +172,48 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 	return { data(in), pos };
 }
 
+ircd::rfc1035::answer::A::A(const const_buffer &rdata)
+{
+	if(unlikely(size(rdata) < 4))
+		throw error
+		{
+			"A record data underflow"
+		};
+
+	ip4 = bswap(*(const uint32_t *)data(rdata));
+}
+
+ircd::rfc1035::answer::AAAA::AAAA(const const_buffer &rdata)
+{
+	if(unlikely(size(rdata) < 16))
+		throw error
+		{
+			"AAAA record data underflow"
+		};
+
+	ip6 = bswap(*(const uint128_t *)data(rdata));
+}
+
+ircd::rfc1035::answer::SRV::SRV(const const_buffer &rdata)
+{
+	if(unlikely(size(rdata) < 2 + 2 + 2 + 1))
+		throw error
+		{
+			"SRV record data underflow"
+		};
+
+	const char *pos(data(rdata));
+	priority = bswap(*(const uint16_t *)pos);   pos += 2;
+	weight = bswap(*(const uint16_t *)pos);     pos += 2;
+	port = bswap(*(const uint16_t *)pos);       pos += 2;
+
+	const const_buffer tgtbuf{pos, end(rdata)};
+	tgtlen = parse_name(tgt, tgtbuf);
+	pos += tgtlen;
+
+	assert(std::distance(pos, end(rdata)) == 0);
+}
+
 ircd::const_buffer
 ircd::rfc1035::make_name(const mutable_buffer &out,
                          const string_view &fqdn)
@@ -205,7 +247,7 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	if(unlikely(empty(in)))
 		throw error
 		{
-			"Name input buffer is too small"
+			"Name input buffer underflow"
 		};
 
 	const char *pos(data(in));

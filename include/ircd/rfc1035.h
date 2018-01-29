@@ -79,6 +79,10 @@ struct ircd::rfc1035::question
 ///
 struct ircd::rfc1035::answer
 {
+	struct A;
+	struct AAAA;
+	struct SRV;
+
 	uint16_t qtype;
 	uint16_t qclass;
 	uint32_t ttl;
@@ -132,4 +136,29 @@ enum class ircd::rfc1035::op
 	STATUS   = 2,   ///< Server status request [RFC 1035]
 	NOTIFY   = 4,   ///< Notify [RFC 1996]
 	UPDATE   = 5,   ///< Update [RFC 2136]
+};
+
+struct ircd::rfc1035::answer::A
+{
+	uint32_t ip4;
+
+	A(const const_buffer &rdata);
+};
+
+struct ircd::rfc1035::answer::AAAA
+{
+	uint128_t ip6;
+
+	AAAA(const const_buffer &rdata);
+};
+
+struct ircd::rfc1035::answer::SRV
+{
+	uint16_t priority;
+	uint16_t weight;
+	uint16_t port;
+	size_t tgtlen;
+	char tgt[256];
+
+	SRV(const const_buffer &rdata);
 };
