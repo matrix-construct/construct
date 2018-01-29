@@ -169,6 +169,37 @@ string(const uint8_t *const &buf,
 	return string(reinterpret_cast<const char *>(buf), size);
 }
 
+/// Close over the common pattern to write directly into a post-C++11 standard
+/// string through the data() member requiring a const_cast. Closure returns
+/// the final size of the data written into the buffer.
+inline auto
+string(const size_t &size,
+       const std::function<size_t (const mutable_buffer &)> &closure)
+{
+	std::string ret(size, char{});
+	const mutable_buffer buf
+	{
+		const_cast<char *>(ret.data()), ret.size()
+	};
+
+	ret.resize(closure(buf));
+	return ret;
+}
+
+/// Close over the common pattern to write directly into a post-C++11 standard
+/// string through the data() member requiring a const_cast. Closure returns
+/// a view of the data actually written to the buffer.
+inline auto
+string(const size_t &size,
+       const std::function<string_view (const mutable_buffer &)> &closure)
+{
+	return string(size, [&closure]
+	(const mutable_buffer &buffer)
+	{
+		return ircd::size(closure(buffer));
+	});
+}
+
 //
 // Misc bang participants
 //
