@@ -139,9 +139,14 @@ data(T &val)
 }
 
 //
-// Misc string() participants
+// String generating patterns
 //
 
+/// This is the ubiquitous ircd::string() template serving as the "toString()"
+/// for the project. Particpating types that want to have a string(T)
+/// returning an std::string must friend an operator<<(std::ostream &, T);
+/// this is primarily for debug strings, not meant for performance or service.
+///
 template<class T>
 auto
 string(const T &s)
@@ -151,13 +156,15 @@ string(const T &s)
 }
 
 inline auto
-string(const char *const &buf, const size_t &size)
+string(const char *const &buf,
+       const size_t &size)
 {
 	return std::string{buf, size};
 }
 
 inline auto
-string(const uint8_t *const &buf, const size_t &size)
+string(const uint8_t *const &buf,
+       const size_t &size)
 {
 	return string(reinterpret_cast<const char *>(buf), size);
 }
