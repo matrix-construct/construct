@@ -8,3 +8,15 @@
 [submodule "boost"]
 	path = deps/boost
 	url = https://github.com/boostorg/boost.git
+[submodule "deps/riot-web"]
+	path = deps/riot-web
+	url = https://github.com/vector-im/riot-web.git
+	branch = develop
+[submodule "deps/matrix-js-sdk"]
+	path = deps/matrix-js-sdk
+	url = https://github.com/matrix-org/matrix-js-sdk.git
+	branch = develop
+[submodule "deps/matrix-react-sdk"]
+	path = deps/matrix-react-sdk
+	url = https://github.com/matrix-org/matrix-react-sdk.git
+	branch = develop
