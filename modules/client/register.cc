@@ -171,11 +171,11 @@ handle_post(client &client,
 		request.query["kind"]
 	};
 
-	if(kind == "user")
-		return handle_post_kind_user(client, request);
-
-	if(kind.empty() || kind == "guest")
+	if(kind == "guest")
 		return handle_post_kind_guest(client, request);
+
+	if(kind.empty() || kind == "user")
+		return handle_post_kind_user(client, request);
 
 	throw m::error
 	{
