@@ -28,13 +28,6 @@ namespace ircd::json
 
 	using values = std::initializer_list<value>;
 
-	extern const string_view literal_null;
-	extern const string_view literal_true;
-	extern const string_view literal_false;
-	extern const string_view empty_string;
-	extern const string_view empty_object;
-	extern const string_view empty_array;
-
 	size_t serialized(const bool &);
 	size_t serialized(const value *const &begin, const value *const &end);
 	size_t serialized(const values &);

@@ -61,6 +61,13 @@ namespace ircd::json
 	using path = std::initializer_list<string_view>;
 	std::ostream &operator<<(std::ostream &, const path &);
 
+	extern const string_view literal_null;
+	extern const string_view literal_true;
+	extern const string_view literal_false;
+	extern const string_view empty_string;
+	extern const string_view empty_object;
+	extern const string_view empty_array;
+
 	/// These templates are generic frontends for building a JSON string. They
 	/// eventually all lead to the stringify() friend function of the argument
 	/// you pass to the template.
