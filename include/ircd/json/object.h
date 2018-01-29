@@ -26,6 +26,7 @@ namespace ircd::json
 {
 	struct object;
 
+	bool empty(const object &);
 	template<name_hash_t key, class T = string_view> T at(const object &);
 	template<name_hash_t key, class T = string_view> T get(const object &, const T &def = {});
 }
@@ -89,6 +90,7 @@ struct ircd::json::object
 	const_iterator find(const name_hash_t &key) const;
 
 	// util
+	bool empty() const;
 	size_t count() const;
 	size_t size() const; // warns if used; use count()
 	bool has(const string_view &key) const;
@@ -344,6 +346,21 @@ ircd::json::object::count()
 const
 {
 	return std::distance(begin(), end());
+}
+
+inline bool
+ircd::json::empty(const object &object)
+{
+	return object.empty();
+}
+
+inline bool
+ircd::json::object::empty()
+const
+{
+	const string_view &sv{*this};
+	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
+	return sv.size() <= 2;
 }
 
 inline bool

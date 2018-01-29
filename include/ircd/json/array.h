@@ -26,6 +26,8 @@ namespace ircd::json
 {
 	struct array;
 
+	bool empty(const array &);
+
 	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
 	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
 
@@ -59,8 +61,9 @@ struct ircd::json::array
 
 	const_iterator end() const;
 	const_iterator begin() const;
-
 	const_iterator find(size_t i) const;
+
+	bool empty() const;
 	size_t count() const;
 	size_t size() const;
 
@@ -163,6 +166,21 @@ ircd::json::array::count()
 const
 {
 	return std::distance(begin(), end());
+}
+
+inline bool
+ircd::json::empty(const json::array &array)
+{
+	return array.empty();
+}
+
+inline bool
+ircd::json::array::empty()
+const
+{
+	const string_view &sv{*this};
+	assert(sv.size() > 2 || (sv.empty() || sv == empty_array));
+	return sv.size() <= 2;
 }
 
 inline bool
