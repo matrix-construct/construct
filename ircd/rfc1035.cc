@@ -78,7 +78,7 @@ ircd::rfc1035::question::question(const string_view &fqdn,
 ircd::const_buffer
 ircd::rfc1035::question::parse(const const_buffer &in)
 {
-	if(size(in) < 2 + 2 + 2)
+	if(unlikely(size(in) < 2 + 2 + 2))
 		throw error
 		{
 			"Answer input buffer underflow"
@@ -86,7 +86,7 @@ ircd::rfc1035::question::parse(const const_buffer &in)
 
 	namelen = parse_name(name, in);
 	const char *pos(data(in) + namelen);
-	if(pos + 2 + 2 > end(in))
+	if(unlikely(pos + 2 + 2 > end(in)))
 		throw error
 		{
 			"Question input buffer is incomplete (%zu bytes)", size(in)
@@ -174,6 +174,7 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 
 ircd::rfc1035::answer::A::A(const const_buffer &rdata)
 {
+	assert(size(rdata) == 4);
 	if(unlikely(size(rdata) < 4))
 		throw error
 		{
@@ -185,6 +186,7 @@ ircd::rfc1035::answer::A::A(const const_buffer &rdata)
 
 ircd::rfc1035::answer::AAAA::AAAA(const const_buffer &rdata)
 {
+	assert(size(rdata) == 16);
 	if(unlikely(size(rdata) < 16))
 		throw error
 		{
@@ -192,6 +194,17 @@ ircd::rfc1035::answer::AAAA::AAAA(const const_buffer &rdata)
 		};
 
 	ip6 = bswap(*(const uint128_t *)data(rdata));
+}
+
+ircd::rfc1035::answer::CNAME::CNAME(const const_buffer &rdata)
+{
+	if(unlikely(size(rdata) < 1))
+		throw error
+		{
+			"CNAME record data underflow"
+		};
+
+	namelen = parse_name(name, rdata);
 }
 
 ircd::rfc1035::answer::SRV::SRV(const const_buffer &rdata)

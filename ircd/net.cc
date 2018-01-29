@@ -2533,14 +2533,31 @@ try
 	for(size_t i(0); i < header.ancount; ++i)
 		consume(buf, size(an[i].parse(buf)));
 
+	size_t ippi(0);
 	net::ipport ipp[header.ancount];
 	for(size_t i(0); i < header.ancount; ++i)
 	{
-		if(an[i].qtype != 0x01) // 'A'
-			continue;
+		switch(an[i].qtype)
+		{
+			case 0x01:
+			{
+				const rfc1035::answer::A rr(an[i].rdata);
+				ipp[ippi++] = { rr.ip4, port(tag.hp) };
+				continue;
+			}
 
-		const auto &ptr(data(an[i].rdata));
-		ipp[i] = { bswap(*(const uint32_t *)ptr), port(tag.hp) };
+			case 0x21:
+			{
+				const rfc1035::answer::SRV rr(an[i].rdata);
+				continue;
+			}
+
+			case 0x05:
+			{
+				const rfc1035::answer::CNAME rr(an[i].rdata);
+				continue;
+			}
+		}
 	}
 
 	if(tag.cb_many)

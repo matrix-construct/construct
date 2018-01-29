@@ -81,6 +81,7 @@ struct ircd::rfc1035::answer
 {
 	struct A;
 	struct AAAA;
+	struct CNAME;
 	struct SRV;
 
 	uint16_t qtype;
@@ -150,6 +151,14 @@ struct ircd::rfc1035::answer::AAAA
 	uint128_t ip6;
 
 	AAAA(const const_buffer &rdata);
+};
+
+struct ircd::rfc1035::answer::CNAME
+{
+	size_t namelen;
+	char name[256];
+
+	CNAME(const const_buffer &rdata);
 };
 
 struct ircd::rfc1035::answer::SRV
