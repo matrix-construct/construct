@@ -55,20 +55,11 @@ ircd::_b64encode(const const_raw_buffer &in,
 		ceil(size(in) * (4.0 / 3.0)) + 4
 	};
 
-	std::string ret(max, char{});
-	const mutable_buffer buf
+	return string(max, [&in, &encoder]
+	(const mutable_buffer &buf)
 	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const string_view encoded
-	{
-		encoder(buf, in)
-	};
-
-	assert(size(encoded) <= ret.size());
-	ret.resize(size(encoded));
-	return ret;
+		return encoder(buf, in);
+	});
 }
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in
@@ -249,20 +240,11 @@ ircd::b58decode(const mutable_raw_buffer &buf,
 std::string
 ircd::b58encode(const const_raw_buffer &in)
 {
-	std::string ret(b58encode_size(in), char{});
-	const mutable_buffer buf
+	return string(b58encode_size(in), [&in]
+	(const mutable_buffer &buf)
 	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const auto encoded
-	{
-		b58encode(buf, in)
-	};
-
-	assert(size(encoded) <= ret.size());
-	ret.resize(size(encoded));
-	return ret;
+		return b58encode(buf, in);
+	});
 }
 
 ircd::string_view

@@ -644,35 +644,33 @@ ircd::replace(const string_view &s,
 		        s.size() - occurs
 	};
 
-	std::string ret(size, char{});
-	auto *p{const_cast<char *>(ret.data())};
-	std::for_each(begin(s), end(s), [&before, &after, &p]
-	(const char &c)
+	return string(size, [&s, &before, &after]
+	(const mutable_buffer &buf)
 	{
-		if(c == before)
+		char *p{begin(buf)};
+		std::for_each(begin(s), end(s), [&before, &after, &p]
+		(const char &c)
 		{
-			memcpy(p, after.data(), after.size());
-			p += after.size();
-		}
-		else *p++ = c;
-	});
+			if(c == before)
+			{
+				memcpy(p, after.data(), after.size());
+				p += after.size();
+			}
+			else *p++ = c;
+		});
 
-	//assert(ret.size() == size_t(std::distance(ret.data(), const_cast<const char *>(p))));
-	ret.resize(std::distance(ret.data(), const_cast<const char *>(p)));
-	return ret;
+		return std::distance(begin(buf), p);
+	});
 }
 
 std::string
 ircd::u2a(const const_raw_buffer &in)
 {
-	std::string ret(size(in) * 2, char{});
-	const mutable_buffer out
+	return string(size(in) * 2, [&in]
+	(const mutable_buffer &out)
 	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	ret.resize(size(u2a(out, in)));
-	return ret;
+		return u2a(out, in);
+	});
 }
 
 ircd::string_view

@@ -59,14 +59,11 @@ template<class... args>
 std::string
 ircd::timestr(args&&... a)
 {
-	std::string ret(128, char{});
-	const mutable_buffer buf
+	static const size_t max{128};
+	return string(max, [&](const mutable_buffer &buf)
 	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	ret.resize(timef(buf, std::forward<args>(a)...).size());
-	return ret;
+		return timef(buf, std::forward<args>(a)...);
+	});
 }
 
 inline ircd::string_view

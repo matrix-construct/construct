@@ -334,29 +334,16 @@ ircd::fs::read__aio(const string_view &path,
 
 	struct stat stat;
 	syscall(::fstat, fd, &stat);
-	const auto &size
+	return string(stat.st_size, [&fd, &opts]
+	(const mutable_buffer &buf)
 	{
-		stat.st_size
-	};
+		aio::request::read request
+		{
+			int(fd), buf, opts
+		};
 
-	std::string ret(size, char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	aio::request::read request
-	{
-		int(fd), buf, opts
-	};
-
-	const size_t bytes
-	{
-		request()
-	};
-
-	ret.resize(bytes);
-	return ret;
+		return request();
+	});
 }
 
 ircd::string_view
