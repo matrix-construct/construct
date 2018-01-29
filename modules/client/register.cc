@@ -50,19 +50,19 @@ handle_post_kind_user(client &client,
 try
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
-	const auto &auth
+	const json::object auth
 	{
-		at<"auth"_>(request)
+		json::get<"auth"_>(request)
 	};
 
 	// 3.3.1 Required. The login type that the client is attempting to complete.
-	const auto &type
+	const string_view type
 	{
-		unquote(auth.at("type"))
+		!empty(auth)? unquote(auth.at("type")) : string_view{}
 	};
 
 	// We only support this for now, for some reason. TODO: XXX
-	if(type != "m.login.dummy")
+	if(type && type != "m.login.dummy")
 		throw m::error
 		{
 			"M_UNSUPPORTED", "Registration '%s' not supported.", type
