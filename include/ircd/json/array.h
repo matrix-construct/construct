@@ -27,6 +27,7 @@ namespace ircd::json
 	struct array;
 
 	bool empty(const array &);
+	bool operator!(const array &);
 
 	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
 	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
@@ -169,7 +170,13 @@ const
 }
 
 inline bool
-ircd::json::empty(const json::array &array)
+ircd::json::operator!(const array &array)
+{
+	return empty(array);
+}
+
+inline bool
+ircd::json::empty(const array &array)
 {
 	return array.empty();
 }
