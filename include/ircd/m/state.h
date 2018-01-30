@@ -15,37 +15,39 @@ namespace ircd::m::state
 {
 	struct node;
 
-	size_t keys(const node &);
-	size_t vals(const node &);
-	size_t children(const node &);
-	json::array key(const node &, const size_t &);
-	string_view val(const node &, const size_t &);
-	int keycmp(const json::array &a, const json::array &b);
-	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
-	size_t find(const node &, const json::array &key);
-	size_t find(const node &, const string_view &type, const string_view &state_key);
-	json::object make_node(const mutable_buffer &out, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
-	json::object make_into(const mutable_buffer &out, const node &old, const size_t &pos, const json::array &key, const string_view &val);
-
 	using id_closure = std::function<void (const string_view &)>;
 	using node_closure = std::function<void (const json::object &)>;
+	using key_closure = std::function<void (const json::array &)>;
+
+	constexpr size_t ID_MAX_SZ    { 64               };
+	constexpr size_t KEY_MAX_SZ   { 256 + 256 + 16   };
+	constexpr size_t NODE_MAX_SZ  { 4_KiB            };
+
+	int keycmp(const json::array &a, const json::array &b);
+
+	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
+	void make_key(const string_view &type, const string_view &state_key, const key_closure &);
+
+	json::object make_node(const mutable_buffer &out, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
+	json::object make_node(const mutable_buffer &out, const node &old, const size_t &pos, const json::array &key, const string_view &val);
+	template<class... args> string_view set_node(db::txn &txn, const mutable_buffer &id, args&&...);
 
 	void get_node(db::column &, const string_view &id, const node_closure &);
 	void get_node(const string_view &id, const node_closure &);
-	string_view set_node(db::txn &txn, const mutable_buffer &hash, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
-	string_view set_into(db::txn &txn, const mutable_buffer &hash, const node &old, const size_t &pos, const json::array &key, const string_view &val);
 
-	void get_head(db::column &, const id::room &, const id_closure &);
-	void get_head(const id::room &, const id_closure &);
-	string_view get_head(const id::room &, const mutable_buffer &buf);
+	string_view get_head(db::column &, const mutable_buffer &out, const id::room &);
+	string_view get_head(const mutable_buffer &out, const id::room &);
 	void set_head(db::txn &txn, const id::room &, const string_view &head);
 
+	void get_value(db::column &, const string_view &head, const json::array &key, const id_closure &);
 	void get_value(const string_view &head, const json::array &key, const id_closure &);
 	void get_value(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
 	void get_value__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
 
 	void insert(db::txn &txn, const id::room &, const json::array &key, const id::event &);
 	void insert(db::txn &txn, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
+
+	void append_nodes(db::txn &, const event &);
 }
 
 namespace ircd::m::state::name
@@ -63,6 +65,15 @@ struct ircd::m::state::node
 	json::property<name::v, json::array>
 >
 {
+	size_t keys() const;
+	size_t vals() const;
+	size_t children() const;
+
+	json::array key(const size_t &) const;
+	string_view val(const size_t &) const;
+
+	size_t find(const json::array &key) const;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };

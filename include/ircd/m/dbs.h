@@ -21,7 +21,6 @@ namespace ircd::m::dbs
 	bool exists(const event::id &);
 
 	void append_indexes(const event &, db::txn &);
-	void append_nodes(const event &, db::txn &);
 	void write(const event &, db::txn &);
 }
 

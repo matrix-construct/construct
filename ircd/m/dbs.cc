@@ -105,38 +105,9 @@ ircd::m::dbs::write(const event &event,
 	};
 
 	if(defined(json::get<"state_key"_>(event)))
-		append_nodes(event, txn);
+		state::append_nodes(txn, event);
 
 	append_indexes(event, txn);
-}
-
-void
-ircd::m::dbs::append_nodes(const event &event,
-                           db::txn &txn)
-{
-	const auto &type{at<"type"_>(event)};
-	const auto &state_key{at<"state_key"_>(event)};
-	const auto &event_id{at<"event_id"_>(event)};
-	const auto &room_id{at<"room_id"_>(event)};
-
-	if(type == "m.room.create")
-	{
-		thread_local char key[512], head[64];
-		const json::array keys[]
-		{
-			{ state::make_key(key, type, state_key) }
-		};
-
-		const string_view vals[]
-		{
-			{ event_id }
-		};
-
-		state::set_head(txn, room_id, state::set_node(txn, head, keys, 1, vals, 1));
-		return;
-	}
-
-	state::insert(txn, room_id, type, state_key, event_id);
 }
 
 void
