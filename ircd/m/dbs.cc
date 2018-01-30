@@ -29,7 +29,7 @@ struct ircd::m::indexer
 
 	std::string name;
 
-	virtual void operator()(const event &, db::iov &iov, const db::op &op) const {}
+	virtual void operator()(const event &, db::txn &txn, const db::op &op) const {}
 
 	indexer(std::string name)
 	:name{std::move(name)}
@@ -97,9 +97,9 @@ ircd::m::dbs::init::_modules()
 
 void
 ircd::m::dbs::write(const event &event,
-                    db::iov &txn)
+                    db::txn &txn)
 {
-	db::iov::append
+	db::txn::append
 	{
 		txn, at<"event_id"_>(event), event
 	};
@@ -112,7 +112,7 @@ ircd::m::dbs::write(const event &event,
 
 void
 ircd::m::dbs::append_nodes(const event &event,
-                           db::iov &txn)
+                           db::txn &txn)
 {
 	const auto &type{at<"type"_>(event)};
 	const auto &state_key{at<"state_key"_>(event)};
@@ -141,21 +141,21 @@ ircd::m::dbs::append_nodes(const event &event,
 
 void
 ircd::m::dbs::append_indexes(const event &event,
-                             db::iov &iov)
+                             db::txn &txn)
 {
 	for(const auto &ptr : indexers)
 	{
 		const m::indexer &indexer{*ptr};
-		indexer(event, iov, db::op::SET);
+		indexer(event, txn, db::op::SET);
 	}
 
 	if(json::get<"type"_>(event) == "m.room.member")
 	{
 		const m::indexer &indexer{*indexer_origin_joined};
 		if(json::get<"membership"_>(event) == "join")
-			indexer(event, iov, db::op::SET);
+			indexer(event, txn, db::op::SET);
 		//else
-		//	indexer(event, iov, db::op::DELETE);
+		//	indexer(event, txn, db::op::DELETE);
 	}
 }
 
@@ -439,7 +439,7 @@ struct ircd::m::indexer::concat
 	std::string col_a;
 	std::string col_b;
 
-	void operator()(const event &, db::iov &, const db::op &op) const final override;
+	void operator()(const event &, db::txn &, const db::op &op) const final override;
 
 	concat(std::string col_a, std::string col_b)
 	:indexer
@@ -453,11 +453,11 @@ struct ircd::m::indexer::concat
 
 void
 ircd::m::indexer::concat::operator()(const event &event,
-                                     db::iov &iov,
+                                     db::txn &txn,
                                      const db::op &op)
 const
 {
-	if(!iov.has(op, col_a) || !iov.has(op, col_b))
+	if(!txn.has(op, col_a) || !txn.has(op, col_b))
 		return;
 
 	static const size_t buf_max
@@ -478,9 +478,9 @@ const
 	at(event, col_b, function);
 	at(event, col_a, function);
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			name,        // col
 			index,       // key
@@ -495,7 +495,7 @@ struct ircd::m::indexer::concat_s
 	std::string col_a;
 	std::string col_b;
 
-	void operator()(const event &, db::iov &, const db::op &) const final override;
+	void operator()(const event &, db::txn &, const db::op &) const final override;
 
 	concat_s(std::string col_a, std::string col_b, std::string name = {})
 	:indexer
@@ -509,11 +509,11 @@ struct ircd::m::indexer::concat_s
 
 void
 ircd::m::indexer::concat_s::operator()(const event &event,
-                                       db::iov &iov,
+                                       db::txn &txn,
                                        const db::op &op)
 const
 {
-	if(!iov.has(op, col_a) || !iov.has(op, col_b))
+	if(!txn.has(op, col_a) || !txn.has(op, col_b))
 		return;
 
 	static const size_t buf_max
@@ -535,9 +535,9 @@ const
 	strlcat(index, ":::", buf_max);  //TODO: special
 	at(event, col_a, function);
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			op,
 			name,        // col
@@ -554,8 +554,8 @@ struct ircd::m::indexer::concat_v
 	std::string col_b;
 	std::string col_c;
 
-	void operator()(const event &, db::iov &, const db::op &op) const final override;
-	void operator()(const event &, db::iov &, const db::op &op, const string_view &) const;
+	void operator()(const event &, db::txn &, const db::op &op) const final override;
+	void operator()(const event &, db::txn &, const db::op &op, const string_view &) const;
 
 	concat_v(std::string col_a, std::string col_b, std::string col_c)
 	:indexer
@@ -570,11 +570,11 @@ struct ircd::m::indexer::concat_v
 
 void
 ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::iov &iov,
+                                       db::txn &txn,
                                        const db::op &op)
 const
 {
-	if(!iov.has(op, col_c) || !iov.has(op, col_b) || !iov.has(op, col_a))
+	if(!txn.has(op, col_c) || !txn.has(op, col_b) || !txn.has(op, col_a))
 		return;
 
 	static const size_t buf_max
@@ -601,9 +601,9 @@ const
 		val = byte_view<string_view>{_val};
 	});
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			name,        // col
 			index,       // key
@@ -614,7 +614,7 @@ const
 
 void
 ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::iov &iov,
+                                       db::txn &txn,
                                        const db::op &op,
                                        const string_view &val)
 const
@@ -637,9 +637,9 @@ const
 	at(event, col_c, concat);
 	at(event, col_b, concat);
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			name,        // col
 			index,       // key
@@ -656,7 +656,7 @@ struct ircd::m::indexer::concat_2v
 	std::string col_b1;
 	std::string col_c;
 
-	void operator()(const event &, db::iov &, const db::op &op) const final override;
+	void operator()(const event &, db::txn &, const db::op &op) const final override;
 
 	concat_2v(std::string col_a, std::string col_b0, std::string col_b1, std::string col_c)
 	:indexer
@@ -672,11 +672,11 @@ struct ircd::m::indexer::concat_2v
 
 void
 ircd::m::indexer::concat_2v::operator()(const event &event,
-                                        db::iov &iov,
+                                        db::txn &txn,
                                         const db::op &op)
 const
 {
-	if(!iov.has(op, col_c) || !iov.has(op, col_b0) || !iov.has(op, col_b1))
+	if(!txn.has(op, col_c) || !txn.has(op, col_b0) || !txn.has(op, col_b1))
 		return;
 
 	static const size_t buf_max
@@ -705,9 +705,9 @@ const
 		val = byte_view<string_view>{_val};
 	});
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			name,        // col
 			index,       // key
@@ -725,7 +725,7 @@ struct ircd::m::indexer::concat_3vs
 	std::string col_b2;
 	std::string col_c;
 
-	void operator()(const event &, db::iov &, const db::op &op, const string_view &prev_event_id) const;
+	void operator()(const event &, db::txn &, const db::op &op, const string_view &prev_event_id) const;
 
 	concat_3vs(std::string col_a, std::string col_b0, std::string col_b1, std::string col_b2, std::string col_c)
 	:indexer
@@ -747,17 +747,17 @@ const concat_3vs
 // Non-participating
 void
 ircd::m::_index_special0(const event &event,
-                         db::iov &iov,
+                         db::txn &txn,
                          const db::op &op,
                          const string_view &prev_event_id)
 {
-	concat_3vs(event, iov, op, prev_event_id);
+	concat_3vs(event, txn, op, prev_event_id);
 }
 
 // Non-participating
 void
 ircd::m::_index_special1(const event &event,
-                         db::iov &iov,
+                         db::txn &txn,
                          const db::op &op,
                          const string_view &prev_event_id)
 {
@@ -766,21 +766,21 @@ ircd::m::_index_special1(const event &event,
 		"prev_event_id", "event_id", "room_id"
 	};
 
-	idxr(event, iov, op, prev_event_id);
+	idxr(event, txn, op, prev_event_id);
 }
 
 // Non-participating
 void
 ircd::m::indexer::concat_3vs::operator()(const event &event,
-                                         db::iov &iov,
+                                         db::txn &txn,
                                          const db::op &op,
                                          const string_view &prev_event_id)
 const
 {
-	if(!iov.has(op, col_c) ||
-	   !iov.has(op, col_b0) ||
-	   !iov.has(op, col_b1) ||
-	   !iov.has(op, col_b2))
+	if(!txn.has(op, col_c) ||
+	   !txn.has(op, col_b0) ||
+	   !txn.has(op, col_b1) ||
+	   !txn.has(op, col_b2))
 		return;
 
 	static const size_t buf_max
@@ -804,9 +804,9 @@ const
 	at(event, col_b1, concat);
 	at(event, col_b2, concat);
 
-	db::iov::append
+	db::txn::append
 	{
-		iov, db::delta
+		txn, db::delta
 		{
 			name,           // col
 			index,          // key

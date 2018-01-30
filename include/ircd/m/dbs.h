@@ -20,9 +20,9 @@ namespace ircd::m::dbs
 
 	bool exists(const event::id &);
 
-	void append_indexes(const event &, db::iov &iov);
-	void append_nodes(const event &, db::iov &iov);
-	void write(const event &, db::iov &txn);
+	void append_indexes(const event &, db::txn &);
+	void append_nodes(const event &, db::txn &);
+	void write(const event &, db::txn &);
 }
 
 class ircd::m::dbs::init
@@ -54,7 +54,7 @@ namespace ircd::m::dbs
 
 namespace ircd::m
 {
-	void _index_special0(const event &event, db::iov &iov, const db::op &, const string_view &prev_event_id);
-	void _index_special1(const event &event, db::iov &iov, const db::op &, const string_view &prev_event_id);
+	void _index_special0(const event &event, db::txn &txn, const db::op &, const string_view &prev_event_id);
+	void _index_special1(const event &event, db::txn &txn, const db::op &, const string_view &prev_event_id);
 }
 

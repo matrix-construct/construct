@@ -2210,10 +2210,10 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// db/iov.h
+// db/txn.h
 //
 
-struct ircd::db::iov::handler
+struct ircd::db::txn::handler
 :rocksdb::WriteBatch::Handler
 {
 	using Status = rocksdb::Status;
@@ -2246,14 +2246,14 @@ struct ircd::db::iov::handler
 };
 
 std::string
-ircd::db::debug(const iov &t)
+ircd::db::debug(const txn &t)
 {
 	const rocksdb::WriteBatch &wb(t);
 	return db::debug(wb);
 }
 
 void
-ircd::db::for_each(const iov &t,
+ircd::db::for_each(const txn &t,
                    const std::function<void (const delta &)> &closure)
 {
 	const auto re{[&closure]
@@ -2265,29 +2265,29 @@ ircd::db::for_each(const iov &t,
 
 	const database &d(t);
 	const rocksdb::WriteBatch &wb{t};
-	iov::handler h{d, re};
+	txn::handler h{d, re};
 	wb.Iterate(&h);
 }
 
-/// Iterate the iov using the "until protocol"
+/// Iterate the txn using the "until protocol"
 /// reminder: the closure remains-true-until-the-end; false to break;
 /// returns true if the end reached; false if broken early
 bool
-ircd::db::until(const iov &t,
+ircd::db::until(const txn &t,
                 const std::function<bool (const delta &)> &closure)
 {
 	const database &d(t);
 	const rocksdb::WriteBatch &wb{t};
-	iov::handler h{d, closure};
+	txn::handler h{d, closure};
 	wb.Iterate(&h);
 	return h._continue;
 }
 
-/// Iterate the iov using the "test protocol"
+/// Iterate the txn using the "test protocol"
 /// reminder: the closure returns true to break, false to continue;
 /// returns true if broken early, false if the end reached.
 bool
-ircd::db::test(const iov &t,
+ircd::db::test(const txn &t,
                const std::function<bool (const delta &)> &closure)
 {
 	return !until(t, [&closure]
@@ -2302,7 +2302,7 @@ ircd::db::test(const iov &t,
 ///
 
 rocksdb::Status
-ircd::db::iov::handler::PutCF(const uint32_t cfid,
+ircd::db::txn::handler::PutCF(const uint32_t cfid,
                               const Slice &key,
                               const Slice &val)
 noexcept
@@ -2311,7 +2311,7 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::iov::handler::DeleteCF(const uint32_t cfid,
+ircd::db::txn::handler::DeleteCF(const uint32_t cfid,
                                  const Slice &key)
 noexcept
 {
@@ -2319,7 +2319,7 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::iov::handler::DeleteRangeCF(const uint32_t cfid,
+ircd::db::txn::handler::DeleteRangeCF(const uint32_t cfid,
                                       const Slice &begin,
                                       const Slice &end)
 noexcept
@@ -2328,7 +2328,7 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::iov::handler::SingleDeleteCF(const uint32_t cfid,
+ircd::db::txn::handler::SingleDeleteCF(const uint32_t cfid,
                                        const Slice &key)
 noexcept
 {
@@ -2336,7 +2336,7 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::iov::handler::MergeCF(const uint32_t cfid,
+ircd::db::txn::handler::MergeCF(const uint32_t cfid,
                                 const Slice &key,
                                 const Slice &value)
 noexcept
@@ -2345,35 +2345,35 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::iov::handler::MarkBeginPrepare()
+ircd::db::txn::handler::MarkBeginPrepare()
 noexcept
 {
 	return Status::OK();
 }
 
 rocksdb::Status
-ircd::db::iov::handler::MarkEndPrepare(const Slice &xid)
+ircd::db::txn::handler::MarkEndPrepare(const Slice &xid)
 noexcept
 {
 	return Status::OK();
 }
 
 rocksdb::Status
-ircd::db::iov::handler::MarkCommit(const Slice &xid)
+ircd::db::txn::handler::MarkCommit(const Slice &xid)
 noexcept
 {
 	return Status::OK();
 }
 
 rocksdb::Status
-ircd::db::iov::handler::MarkRollback(const Slice &xid)
+ircd::db::txn::handler::MarkRollback(const Slice &xid)
 noexcept
 {
 	return Status::OK();
 }
 
 rocksdb::Status
-ircd::db::iov::handler::callback(const uint32_t &cfid,
+ircd::db::txn::handler::callback(const uint32_t &cfid,
                                  const op &op,
                                  const Slice &a,
                                  const Slice &b)
@@ -2393,12 +2393,12 @@ noexcept try
 catch(const std::exception &e)
 {
 	_continue = false;
-	log::critical("iov::handler: cfid[%u]: %s", cfid, e.what());
+	log::critical("txn::handler: cfid[%u]: %s", cfid, e.what());
 	ircd::terminate();
 }
 
 rocksdb::Status
-ircd::db::iov::handler::callback(const delta &delta)
+ircd::db::txn::handler::callback(const delta &delta)
 noexcept try
 {
 	_continue = cb(delta);
@@ -2411,22 +2411,22 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::db::iov::handler::Continue()
+ircd::db::txn::handler::Continue()
 noexcept
 {
 	return _continue;
 }
 
 //
-// iov
+// txn
 //
 
-ircd::db::iov::iov(database &d)
-:iov{d, {}}
+ircd::db::txn::txn(database &d)
+:txn{d, {}}
 {
 }
 
-ircd::db::iov::iov(database &d,
+ircd::db::txn::txn(database &d,
                    const opts &opts)
 :d{&d}
 ,wb
@@ -2436,20 +2436,20 @@ ircd::db::iov::iov(database &d,
 {
 }
 
-ircd::db::iov::~iov()
+ircd::db::txn::~txn()
 noexcept
 {
 }
 
 void
-ircd::db::iov::operator()(const sopts &opts)
+ircd::db::txn::operator()(const sopts &opts)
 {
 	assert(bool(d));
 	operator()(*d, opts);
 }
 
 void
-ircd::db::iov::operator()(database &d,
+ircd::db::txn::operator()(database &d,
                           const sopts &opts)
 {
 	assert(bool(wb));
@@ -2457,14 +2457,14 @@ ircd::db::iov::operator()(database &d,
 }
 
 void
-ircd::db::iov::clear()
+ircd::db::txn::clear()
 {
 	assert(bool(wb));
 	wb->Clear();
 }
 
 size_t
-ircd::db::iov::size()
+ircd::db::txn::size()
 const
 {
 	assert(bool(wb));
@@ -2472,7 +2472,7 @@ const
 }
 
 size_t
-ircd::db::iov::bytes()
+ircd::db::txn::bytes()
 const
 {
 	assert(bool(wb));
@@ -2480,7 +2480,7 @@ const
 }
 
 bool
-ircd::db::iov::has(const op &op)
+ircd::db::txn::has(const op &op)
 const
 {
 	assert(bool(wb));
@@ -2498,7 +2498,7 @@ const
 }
 
 bool
-ircd::db::iov::has(const op &op,
+ircd::db::txn::has(const op &op,
                    const string_view &col)
 const
 {
@@ -2511,7 +2511,7 @@ const
 }
 
 bool
-ircd::db::iov::has(const op &op,
+ircd::db::txn::has(const op &op,
                    const string_view &col,
                    const string_view &key)
 const
@@ -2526,20 +2526,20 @@ const
 }
 
 ircd::db::delta
-ircd::db::iov::at(const op &op,
+ircd::db::txn::at(const op &op,
                   const string_view &col)
 const
 {
 	const auto ret(get(op, col));
 	if(unlikely(!std::get<ret.KEY>(ret)))
-		throw not_found("db::iov::at(%s, %s): no matching delta in transaction",
+		throw not_found("db::txn::at(%s, %s): no matching delta in transaction",
 		                reflect(op),
 		                col);
 	return ret;
 }
 
 ircd::db::delta
-ircd::db::iov::get(const op &op,
+ircd::db::txn::get(const op &op,
                    const string_view &col)
 const
 {
@@ -2560,14 +2560,14 @@ const
 }
 
 ircd::string_view
-ircd::db::iov::at(const op &op,
+ircd::db::txn::at(const op &op,
                   const string_view &col,
                   const string_view &key)
 const
 {
 	const auto ret(get(op, col, key));
 	if(unlikely(!ret))
-		throw not_found("db::iov::at(%s, %s, %s): no matching delta in transaction",
+		throw not_found("db::txn::at(%s, %s, %s): no matching delta in transaction",
 		                reflect(op),
 		                col,
 		                key);
@@ -2575,7 +2575,7 @@ const
 }
 
 ircd::string_view
-ircd::db::iov::get(const op &op,
+ircd::db::txn::get(const op &op,
                    const string_view &col,
                    const string_view &key)
 const
@@ -2597,21 +2597,21 @@ const
 	return ret;
 }
 
-ircd::db::iov::operator
+ircd::db::txn::operator
 ircd::db::database &()
 {
 	assert(bool(d));
 	return *d;
 }
 
-ircd::db::iov::operator
+ircd::db::txn::operator
 rocksdb::WriteBatch &()
 {
 	assert(bool(wb));
 	return *wb;
 }
 
-ircd::db::iov::operator
+ircd::db::txn::operator
 const ircd::db::database &()
 const
 {
@@ -2619,7 +2619,7 @@ const
 	return *d;
 }
 
-ircd::db::iov::operator
+ircd::db::txn::operator
 const rocksdb::WriteBatch &()
 const
 {
@@ -2631,14 +2631,14 @@ const
 // Checkpoint
 //
 
-ircd::db::iov::checkpoint::checkpoint(iov &t)
+ircd::db::txn::checkpoint::checkpoint(txn &t)
 :t{t}
 {
 	assert(bool(t.wb));
 	t.wb->SetSavePoint();
 }
 
-ircd::db::iov::checkpoint::~checkpoint()
+ircd::db::txn::checkpoint::~checkpoint()
 noexcept
 {
 	if(likely(!std::uncaught_exception()))
@@ -2647,7 +2647,7 @@ noexcept
 		throw_on_error { t.wb->RollbackToSavePoint() };
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               const string_view &key,
                               const json::iov &iov)
 {
@@ -2666,33 +2666,33 @@ ircd::db::iov::append::append(iov &t,
 	});
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               const delta &delta)
 {
 	assert(bool(t.d));
 	append(t, *t.d, delta);
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               const row::delta &delta)
 {
 	assert(0);
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               const cell::delta &delta)
 {
 	db::append(*t.wb, delta);
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               column &c,
                               const column::delta &delta)
 {
 	db::append(*t.wb, c, delta);
 }
 
-ircd::db::iov::append::append(iov &t,
+ircd::db::txn::append::append(txn &t,
                               database &d,
                               const delta &delta)
 {

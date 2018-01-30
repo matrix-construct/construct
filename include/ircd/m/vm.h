@@ -175,7 +175,7 @@ struct ircd::m::vm::eval
 	static const struct opts default_opts;
 
 	const struct opts *opts;
-	db::iov txn{*event::events};
+	db::txn txn{*event::events};
 	std::set<event::id> ef;
 	uint64_t cs {0};
 

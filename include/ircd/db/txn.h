@@ -21,19 +21,19 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#define HAVE_IRCD_DB_IOV_H
+#define HAVE_IRCD_DB_TXN_H
 
 namespace ircd::db
 {
-	struct iov;
+	struct txn;
 
-	bool test(const iov &, const std::function<bool (const delta &)> &);
-	bool until(const iov &, const std::function<bool (const delta &)> &);
-	void for_each(const iov &, const std::function<void (const delta &)> &);
-	std::string debug(const iov &);
+	bool test(const txn &, const std::function<bool (const delta &)> &);
+	bool until(const txn &, const std::function<bool (const delta &)> &);
+	void for_each(const txn &, const std::function<void (const delta &)> &);
+	std::string debug(const txn &);
 }
 
-class ircd::db::iov
+class ircd::db::txn
 {
 	database *d {nullptr};
 	std::unique_ptr<rocksdb::WriteBatch> wb;
@@ -68,47 +68,47 @@ class ircd::db::iov
 	// clear
 	void clear();
 
-	iov() = default;
-	iov(database &);
-	iov(database &, const opts &);
-	~iov() noexcept;
+	txn() = default;
+	txn(database &);
+	txn(database &, const opts &);
+	~txn() noexcept;
 };
 
-struct ircd::db::iov::append
+struct ircd::db::txn::append
 {
-	append(iov &, database &, const delta &);
-	append(iov &, column &, const column::delta &);
-	append(iov &, const cell::delta &);
-	append(iov &, const row::delta &);
-	append(iov &, const delta &);
-	append(iov &, const string_view &key, const json::iov &);
-	template<class... T> append(iov &, const string_view &key, const json::tuple<T...> &);
+	append(txn &, database &, const delta &);
+	append(txn &, column &, const column::delta &);
+	append(txn &, const cell::delta &);
+	append(txn &, const row::delta &);
+	append(txn &, const delta &);
+	append(txn &, const string_view &key, const json::iov &);
+	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &);
 };
 
-struct ircd::db::iov::checkpoint
+struct ircd::db::txn::checkpoint
 {
-	iov &t;
+	txn &t;
 
-	checkpoint(iov &);
+	checkpoint(txn &);
 	~checkpoint() noexcept;
 };
 
-struct ircd::db::iov::opts
+struct ircd::db::txn::opts
 {
 	size_t reserve_bytes = 0;
 	size_t max_bytes = 0;
 };
 
 template<class... T>
-ircd::db::iov::append::append(iov &iov,
+ircd::db::txn::append::append(txn &txn,
                               const string_view &key,
                               const json::tuple<T...> &tuple)
 {
-	for_each(tuple, [&iov, &key](const auto &col, auto&& val)
+	for_each(tuple, [&txn, &key](const auto &col, auto&& val)
 	{
 		if(defined(val)) append
 		{
-			iov, delta
+			txn, delta
 			{
 				col, key, byte_view<string_view>{val}
 			}

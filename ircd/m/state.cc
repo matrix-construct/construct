@@ -11,7 +11,7 @@
 #include <ircd/m/m.h>
 
 void
-ircd::m::state::insert(db::iov &txn,
+ircd::m::state::insert(db::txn &txn,
                        const id::room &room_id,
                        const string_view &type,
                        const string_view &state_key,
@@ -22,7 +22,7 @@ ircd::m::state::insert(db::iov &txn,
 }
 
 void
-ircd::m::state::insert(db::iov &txn,
+ircd::m::state::insert(db::txn &txn,
                        const id::room &room_id,
                        const json::array &key,
                        const id::event &event_id)
@@ -116,11 +116,11 @@ ircd::m::state::get_value(const string_view &head,
 }
 
 void
-ircd::m::state::set_head(db::iov &iov,
+ircd::m::state::set_head(db::txn &iov,
                          const id::room &room_id,
                          const string_view &head_id)
 {
-	db::iov::append
+	db::txn::append
 	{
 		iov, db::delta
 		{
@@ -166,7 +166,7 @@ ircd::m::state::get_head(db::column &column,
 }
 
 ircd::string_view
-ircd::m::state::set_into(db::iov &iov,
+ircd::m::state::set_into(db::txn &iov,
                          const mutable_buffer &hashbuf,
                          const node &old,
                          const size_t &pos,
@@ -191,7 +191,7 @@ ircd::m::state::set_into(db::iov &iov,
 		b64encode_unpadded(hashbuf, hash)
 	};
 
-	db::iov::append
+	db::txn::append
 	{
 		iov, db::delta
 		{
@@ -206,7 +206,7 @@ ircd::m::state::set_into(db::iov &iov,
 }
 
 ircd::string_view
-ircd::m::state::set_node(db::iov &iov,
+ircd::m::state::set_node(db::txn &iov,
                          const mutable_buffer &hashbuf,
                          const json::array *const &keys,
                          const size_t &kn,
@@ -231,7 +231,7 @@ ircd::m::state::set_node(db::iov &iov,
 		b64encode_unpadded(hashbuf, hash)
 	};
 
-	db::iov::append
+	db::txn::append
 	{
 		iov, db::delta
 		{

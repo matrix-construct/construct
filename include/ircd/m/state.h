@@ -32,20 +32,20 @@ namespace ircd::m::state
 
 	void get_node(db::column &, const string_view &id, const node_closure &);
 	void get_node(const string_view &id, const node_closure &);
-	string_view set_node(db::iov &txn, const mutable_buffer &hash, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
-	string_view set_into(db::iov &txn, const mutable_buffer &hash, const node &old, const size_t &pos, const json::array &key, const string_view &val);
+	string_view set_node(db::txn &txn, const mutable_buffer &hash, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
+	string_view set_into(db::txn &txn, const mutable_buffer &hash, const node &old, const size_t &pos, const json::array &key, const string_view &val);
 
 	void get_head(db::column &, const id::room &, const id_closure &);
 	void get_head(const id::room &, const id_closure &);
 	string_view get_head(const id::room &, const mutable_buffer &buf);
-	void set_head(db::iov &txn, const id::room &, const string_view &head);
+	void set_head(db::txn &txn, const id::room &, const string_view &head);
 
 	void get_value(const string_view &head, const json::array &key, const id_closure &);
 	void get_value(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
 	void get_value__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
 
-	void insert(db::iov &txn, const id::room &, const json::array &key, const id::event &);
-	void insert(db::iov &txn, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
+	void insert(db::txn &txn, const id::room &, const json::array &key, const id::event &);
+	void insert(db::txn &txn, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
 }
 
 namespace ircd::m::state::name
