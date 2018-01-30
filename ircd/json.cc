@@ -110,6 +110,17 @@ struct ircd::json::input
 	rule<> escape                      { lit('\\')                                       ,"escape" };
 	rule<> quote                       { lit('"')                                         ,"quote" };
 
+	// literal
+	rule<> lit_false                   { lit("false")                             ,"literal false" };
+	rule<> lit_true                    { lit("true")                               ,"literal true" };
+	rule<> lit_null                    { lit("null")                                       ,"null" };
+	rule<> boolean                     { lit_true | lit_false                           ,"boolean" };
+	rule<> literal                     { lit_true | lit_false | lit_null                ,"literal" };
+
+	// numerical (TODO: exponent)
+	rule<> number                      { double_                                         ,"number" };
+
+	// string
 	rule<> unicode
 	{
 		lit('u') >> qi::uint_parser<char, 16, 4, 4>{}
@@ -133,7 +144,6 @@ struct ircd::json::input
 		escaper | lit('/')
 	};
 
-	// string
 	rule<string_view> chars
 	{
 		raw[*((char_ - (escape | quote)) | (escape >> escaper_nc))]
@@ -145,15 +155,6 @@ struct ircd::json::input
 		quote >> chars >> (!escape >> quote)
 		,"string"
 	};
-
-	// literal
-	rule<> lit_false                   { lit("false")                             ,"literal false" };
-	rule<> lit_true                    { lit("true")                               ,"literal true" };
-	rule<> lit_null                    { lit("null")                                       ,"null" };
-
-	rule<> boolean                     { lit_true | lit_false                           ,"boolean" };
-	rule<> literal                     { lit_true | lit_false | lit_null                ,"literal" };
-	rule<> number                      { double_                                         ,"number" };
 
 	// container
 	rule<string_view> name
