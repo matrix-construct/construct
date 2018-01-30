@@ -35,8 +35,9 @@ namespace ircd::json
 
 	struct value;
 	struct member;
-	struct array;
+	struct string;
 	struct object;
+	struct array;
 	struct vector;
 	struct iov;
 
@@ -52,65 +53,23 @@ namespace ircd::json
 	enum type type(const string_view &, std::nothrow_t);
 	string_view reflect(const enum type &);
 
-	using name_hash_t = size_t;
-	constexpr name_hash_t name_hash(const char *const name, const size_t len = 0);
-	constexpr name_hash_t name_hash(const string_view &name);
-	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
-
-	/// Higher order type beyond a string to cleanly delimit multiple keys.
-	using path = std::initializer_list<string_view>;
-	std::ostream &operator<<(std::ostream &, const path &);
-
-	extern const string_view literal_null;
-	extern const string_view literal_true;
-	extern const string_view literal_false;
-	extern const string_view empty_string;
-	extern const string_view empty_object;
-	extern const string_view empty_array;
-
-	/// These templates are generic frontends for building a JSON string. They
-	/// eventually all lead to the stringify() friend function of the argument
-	/// you pass to the template.
+	struct strung;
+	template<size_t SIZE> struct buffer;
 	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
-	template<size_t SIZE> struct buffer;
-	struct strung;
-
-	size_t serialized(const string_view &);
-	string_view stringify(mutable_buffer &, const string_view &);
-
-	struct string;
-	using members = std::initializer_list<member>;
-
-	// Validate JSON - checks if canonical value.
-	bool valid(const string_view &, std::nothrow_t) noexcept;
-	void valid(const string_view &);
-
-	// Convert to canonical JSON
-	string_view canonize(const mutable_buffer &out, const string_view &in);
-	std::string canonize(const string_view &in);
 }
 
-/// Strong type representing quoted strings in JSON (which may be unquoted
-/// automatically when this type is encountered in a tuple etc)
-struct ircd::json::string
-:string_view
-{
-	using string_view::string_view;
-};
-
-#include "array.h"
-#include "object.h"
-#include "vector.h"
-
 /// Convenience template to allocate std::string and print() arguments to it.
-///
 struct ircd::json::strung
 :std::string
 {
 	template<class... T> strung(T&&... t);
 };
 
+#include "util.h"
+#include "array.h"
+#include "object.h"
+#include "vector.h"
 #include "value.h"
 #include "member.h"
 #include "property.h"
@@ -126,6 +85,14 @@ namespace ircd
 	using json::until;
 }
 
+/// Strong type representing quoted strings in JSON (which may be unquoted
+/// automatically when this type is encountered in a tuple etc)
+struct ircd::json::string
+:string_view
+{
+	using string_view::string_view;
+};
+
 template<size_t SIZE>
 struct ircd::json::buffer
 :string_view
@@ -138,7 +105,6 @@ struct ircd::json::buffer
 	{}
 };
 
-///
 /// Convenience template for const rvalue mutable_buffers or basically
 /// allowing a bracket initialization of a mutable_buffer in the argument
 /// to stringify(). The const rvalue reference is on purpose. The stringify()
@@ -155,7 +121,6 @@ ircd::json::stringify(const mutable_buffer &&mb,
 	return stringify(mbc, std::forward<T>(t)...);
 }
 
-///
 /// Convenience template using the syntax print(mutable_buffer, ...)
 /// which stringifies with null termination into buffer.
 ///
@@ -204,38 +169,4 @@ ircd::json::strung::strung(T&&... t)
 	return ret;
 }()}
 {
-}
-
-inline std::ostream &
-ircd::json::operator<<(std::ostream &s, const path &p)
-{
-	auto it(std::begin(p));
-	if(it != std::end(p))
-	{
-		s << *it;
-		++it;
-	}
-
-	for(; it != std::end(p); ++it)
-		s << '.' << *it;
-
-	return s;
-}
-
-constexpr ircd::json::name_hash_t
-ircd::json::operator ""_(const char *const text, const size_t len)
-{
-	return name_hash(text, len);
-}
-
-constexpr ircd::json::name_hash_t
-ircd::json::name_hash(const string_view &name)
-{
-	return ircd::hash(name);
-}
-
-constexpr ircd::json::name_hash_t
-ircd::json::name_hash(const char *const name, const size_t len)
-{
-	return ircd::hash(name);
 }
