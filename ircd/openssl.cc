@@ -154,14 +154,12 @@ ircd::openssl::genX509_rsa(const mutable_buffer &out,
 {
 	const custom_ptr<RSA> priv
 	{
-		RSA_new(),
-		[](RSA *const key) { RSA_free(key); }
+		RSA_new(), RSA_free
 	};
 
 	const custom_ptr<EVP_PKEY> pk
 	{
-		EVP_PKEY_new(),
-		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+		EVP_PKEY_new(), EVP_PKEY_free
 	};
 
 	set(*pk, *priv);
@@ -176,14 +174,12 @@ ircd::openssl::genX509_ec(const mutable_buffer &out,
 {
 	const custom_ptr<EC_KEY> priv
 	{
-		EC_KEY_new(),
-		[](EC_KEY *const key) { EC_KEY_free(key); }
+		EC_KEY_new(), EC_KEY_free
 	};
 
 	const custom_ptr<EVP_PKEY> pk
 	{
-		EVP_PKEY_new(),
-		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+		EVP_PKEY_new(), EVP_PKEY_free
 	};
 
 	set(*pk, *priv);
@@ -224,8 +220,7 @@ ircd::openssl::genX509(const mutable_buffer &out,
 {
 	const custom_ptr<X509> x509
 	{
-		X509_new(),
-		[](X509 *const x509) { X509_free(x509); }
+		X509_new(), X509_free
 	};
 
 	call(::X509_set_pubkey, x509.get(), &pk);
@@ -380,8 +375,7 @@ ircd::openssl::print_subject(const mutable_buffer &buf,
 {
 	const custom_ptr<X509> x509
 	{
-		X509_new(),
-		[](X509 *const x509) { X509_free(x509); }
+		X509_new(), X509_free
 	};
 
 	return print_subject(buf, read_pem(*x509, pem), flags);
@@ -416,8 +410,7 @@ ircd::openssl::printX509(const mutable_buffer &buf,
 {
 	const custom_ptr<X509> x509
 	{
-		X509_new(),
-		[](X509 *const x509) { X509_free(x509); }
+		X509_new(), X509_free
 	};
 
 	return print(buf, read_pem(*x509, pem), flags);
@@ -446,8 +439,7 @@ ircd::openssl::cert2d(const mutable_raw_buffer &out,
 {
 	const custom_ptr<X509> x509
 	{
-		X509_new(),
-		[](X509 *const x509) { X509_free(x509); }
+		X509_new(), X509_free
 	};
 
 	return i2d(out, read_pem(*x509, pem));
@@ -560,14 +552,12 @@ ircd::openssl::genec(const string_view &skfile,
 {
 	const custom_ptr<EC_KEY> key
 	{
-		EC_KEY_new(),
-		[](EC_KEY *const key) { EC_KEY_free(key); }
+		EC_KEY_new(), EC_KEY_free
 	};
 
 	const custom_ptr<EVP_PKEY> pk
 	{
-		EVP_PKEY_new(),
-		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+		EVP_PKEY_new(), EVP_PKEY_free
 	};
 
 	const auto write_priv{[&pk](const mutable_buffer &out)
@@ -637,14 +627,12 @@ ircd::openssl::genrsa(const string_view &skfile,
 
 	const custom_ptr<RSA> rsa
 	{
-		RSA_new(),
-		[](RSA *const rsa) { RSA_free(rsa); }
+		RSA_new(), RSA_free
 	};
 
 	const custom_ptr<EVP_PKEY> pk
 	{
-		EVP_PKEY_new(),
-		[](EVP_PKEY *const pk) { EVP_PKEY_free(pk); }
+		EVP_PKEY_new(), EVP_PKEY_free
 	};
 
 	genrsa(*rsa, bits, e);
@@ -961,8 +949,8 @@ ircd::openssl::bio::read_file(const string_view &path,
 
 	const custom_ptr<void> buf
 	{
-		OPENSSL_malloc_locked(size),
-		[&size](void *const buf)
+		OPENSSL_malloc_locked(size), [&size]
+		(void *const buf)
 		{
 			OPENSSL_cleanse(buf, size);
 			OPENSSL_free_locked(buf);
@@ -984,8 +972,8 @@ ircd::openssl::bio::write_file(const string_view &path,
 {
 	const custom_ptr<void> buf
 	{
-		OPENSSL_malloc_locked(size),
-		[&size](void *const buf)
+		OPENSSL_malloc_locked(size), [&size]
+		(void *const buf)
 		{
 			OPENSSL_cleanse(buf, size);
 			OPENSSL_free_locked(buf);
@@ -1006,8 +994,7 @@ ircd::openssl::bio::read(const const_buffer &buf,
 {
 	const custom_ptr<BIO> bp
 	{
-		BIO_new_mem_buf(data(buf), size(buf)),
-		[](BIO *const bp) { BIO_free(bp); }
+		BIO_new_mem_buf(data(buf), size(buf)), BIO_free
 	};
 
 	closure(bp.get());
@@ -1019,8 +1006,7 @@ ircd::openssl::bio::write(const mutable_buffer &buf,
 {
 	const custom_ptr<BIO> bp
 	{
-		BIO_new(BIO_s_mem()),
-		[](BIO *const bp) { BIO_free(bp); }
+		BIO_new(BIO_s_mem()), BIO_free
 	};
 
 	//TODO: XXX: BAD: if the buffer is too small:
