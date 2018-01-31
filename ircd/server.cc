@@ -2117,7 +2117,7 @@ ircd::server::tag::set_exception(args&&... a)
 }
 
 void
-ircd::server::tag::set_exception(std::exception_ptr eptr)
+ircd::server::tag::set_exception(std::exception_ptr &&eptr)
 {
 	if(abandoned())
 		return;

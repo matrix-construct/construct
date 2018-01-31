@@ -64,7 +64,7 @@ struct ircd::net::dns::resolver::tag
 	steady_point last {ircd::now<steady_point>()};
 	uint8_t tries {0};
 
-	void set_exception(std::exception_ptr);
+	void set_exception(std::exception_ptr &&);
 
 	tag(const hostport &hp, const flag &flags, callback_many cb_many)
 	:hp{hp}

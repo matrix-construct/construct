@@ -2610,7 +2610,7 @@ ircd::net::dns::resolver::init_servers()
 }
 
 void
-ircd::net::dns::resolver::tag::set_exception(std::exception_ptr eptr)
+ircd::net::dns::resolver::tag::set_exception(std::exception_ptr &&eptr)
 {
 	if(cb_many)
 		cb_many(std::move(eptr), {});
