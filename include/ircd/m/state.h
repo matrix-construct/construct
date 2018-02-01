@@ -19,17 +19,18 @@ namespace ircd::m::state
 	using node_closure = std::function<void (const json::object &)>;
 	using key_closure = std::function<void (const json::array &)>;
 
-	constexpr size_t ID_MAX_SZ    { 64               };
-	constexpr size_t KEY_MAX_SZ   { 256 + 256 + 16   };
-	constexpr size_t NODE_MAX_SZ  { 4_KiB            };
+	constexpr size_t ID_MAX_SZ { 64 };
+	constexpr size_t KEY_MAX_SZ { 256 + 256 + 16 };
+	constexpr size_t VAL_MAX_SZ { 256 + 16 };
+	constexpr size_t NODE_MAX_SZ { 4_KiB };
+	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
 	int keycmp(const json::array &a, const json::array &b);
 
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
 	void make_key(const string_view &type, const string_view &state_key, const key_closure &);
 
-	json::object make_node(const mutable_buffer &out, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn);
-	json::object make_node(const mutable_buffer &out, const node &old, const size_t &pos, const json::array &key, const string_view &val);
+	json::object make_node(const mutable_buffer &out, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn, const string_view *const &child, const size_t &cn);
 	template<class... args> string_view set_node(db::txn &txn, const mutable_buffer &id, args&&...);
 
 	void get_node(db::column &, const string_view &id, const node_closure &);
@@ -54,6 +55,7 @@ namespace ircd::m::state::name
 {
 	constexpr const char *const k {"k"};
 	constexpr const char *const v {"v"};
+	constexpr const char *const c {"c"};
 }
 
 #pragma GCC diagnostic push
@@ -62,16 +64,19 @@ struct ircd::m::state::node
 :json::tuple
 <
 	json::property<name::k, json::array>,
-	json::property<name::v, json::array>
+	json::property<name::v, json::array>,
+	json::property<name::c, json::array>
 >
 {
 	size_t keys() const;
 	size_t vals() const;
-	size_t children() const;
+	size_t childs() const;
 
 	json::array key(const size_t &) const;
 	string_view val(const size_t &) const;
+	string_view child(const size_t &) const;
 
+	bool has_child(const size_t &) const;
 	size_t find(const json::array &key) const;
 
 	using super_type::tuple;

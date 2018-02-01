@@ -310,16 +310,19 @@ ircd::m::state::make_node(const mutable_buffer &out,
 /// Prints a node into the buffer `out` using the keys and vals arguments
 /// which must be pointers to arrays. Size of each array is specified in
 /// the following argument. Each array must have at least one element each.
-/// the vals array can have one more element than the keys array if desired.
+/// the chld array can have one more element than the keys array if desired.
 ircd::json::object
 ircd::m::state::make_node(const mutable_buffer &out,
                           const json::array *const &keys_,
                           const size_t &kn,
                           const string_view *const &vals_,
-                          const size_t &vn)
+                          const size_t &vn,
+                          const string_view *const &chld_,
+                          const size_t &cn)
 {
 	assert(kn > 0 && vn > 0);
-	assert(kn == vn || kn + 1 == vn);
+	assert(kn == vn);
+	assert(cn <= kn + 1);
 
 	json::value keys[kn];
 	{
@@ -333,11 +336,18 @@ ircd::m::state::make_node(const mutable_buffer &out,
 			vals[i] = vals_[i];
 	};
 
+	json::value chld[cn];
+	{
+		for(size_t i(0); i < cn; ++i)
+			chld[i] = chld_[i];
+	};
+
 	json::iov iov;
 	const json::iov::push push[]
 	{
 		{ iov, { "k"_sv, { keys, kn } } },
 		{ iov, { "v"_sv, { vals, vn } } },
+		{ iov, { "c"_sv, { chld, cn } } },
 	};
 
 	return { data(out), json::print(out, iov) };
@@ -427,12 +437,29 @@ const
 	return ret;
 }
 
+// Count values that actually lead to other nodes
+bool
+ircd::m::state::node::has_child(const size_t &pos)
+const
+{
+	return !empty(child(pos));
+}
+
+ircd::string_view
+ircd::m::state::node::child(const size_t &pos)
+const
+{
+	const json::array children{json::get<"c"_>(*this, json::empty_array)};
+	return unquote(children[pos]);
+}
+
 // Get value at position pos (throws out_of_range)
 ircd::string_view
 ircd::m::state::node::val(const size_t &pos)
 const
 {
-	return unquote(json::at<"v"_>(*this).at(pos));
+	const json::array values{json::get<"v"_>(*this, json::empty_array)};
+	return unquote(values[pos]);
 }
 
 // Get key at position pos (throws out_of_range)
@@ -440,18 +467,19 @@ ircd::json::array
 ircd::m::state::node::key(const size_t &pos)
 const
 {
-	return json::at<"k"_>(*this).at(pos);
+	const json::array keys{json::get<"k"_>(*this, json::empty_array)};
+	const json::array ret{keys[pos]};
+	return ret;
 }
 
-// Count values that actually lead to other nodes
+// Count children in node
 size_t
-ircd::m::state::node::children()
+ircd::m::state::node::childs()
 const
 {
 	size_t ret(0);
-	for(const auto &v : json::get<"v"_>(*this))
-		if(!valid(id::EVENT, v))
-			++ret;
+	for(const auto &c : json::get<"c"_>(*this))
+		ret += !empty(c);
 
 	return ret;
 }

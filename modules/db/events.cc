@@ -819,8 +819,13 @@ const database::description events_description
 	//     "v":                                         ; Value array
 	//     [                                            ;
 	//         "$14961836116kXQRA:matrix.org",          ; Left accept
-	//         "GFkS15QjKBKjxSZpz",                     ; Center child
-	//         "HLacMRucdEPdJrzBz"                      ; Right child
+	//         "$15018692261xPQDB:matrix.org",          ; Right accept
+	//     ]                                            ;
+	//     "c":                                         ; Child array
+	//     [                                            ;
+	//         "nPKN9twTF9a8k5dD7AApFcaraHTX",          ; Left child
+	//         "PcxAAACvkvyUMz19AZcCfrC3S84s",          ; Center child
+	//         "2jVYKIMKErJ6w6BLMhfVjsXearhB",          ; Right child
 	//     ]                                            ;
 	// }                                                ;
 	//
@@ -829,32 +834,22 @@ const database::description events_description
 	// Elements are ordered based on type+state_key lexical sort. The type
 	// and the state_key strings are literally concatenated to this effect.
 	// They're not hashed. We can have some more control over data locality
-	// this way. There is no prefix/trie keying yet, but that should probably
-	// happen. Any number of values may be in a key array, not just type+
+	// this way. Any number of values may be in a key array, not just type+
 	// state_key. The concatenation involves the string with its surrounding
 	// quotes as to not allow the user to mess about conflicting values.
 	// ```
 	// "m.room.member""@jzk" > "m.room.create"""
 	// ```
-	// The values are either event MXID's or some identifier of a child node.
-	// The event MXID is leaf-data, no child node will be found there. The
-	// common tree traversal rules then apply: if the query value is less
-	// than the first element key, val[0] is followed; if compares between the
-	// first and second key, then val[1] is followed; if it compares greater
-	// than the last key, the last val is followed.
-	//
 	// Unlike traditional trees of such variety, the number of elements is not
 	// really well defined and not even fixed. There just has to be one more
-	// value in the "val" list than there are keys in the "key" list. To make
+	// value in the "child" list than there are keys in the "key" list. To make
 	// this structure efficient we have to figure out a good number of
 	// children per node, and that might even be a contextual decision. The
 	// more children, the less depth to the query, but at the cost of a larger
 	// node size. A larger node in this system isn't just relevant to
 	// retrieval, but consider nodes are also immutable. Changes to the tree
 	// create new nodes for each changed path so the old nodes can still
-	// represent the old state. Repacking nodes to represent slightly different
-	// states within the same node is a possible exercise left for the future.
-	//
+	// represent the old state.
 	state_node,
 };
 
