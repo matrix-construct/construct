@@ -72,7 +72,6 @@ struct ircd::json::strung
 #include "vector.h"
 #include "value.h"
 #include "member.h"
-#include "property.h"
 #include "iov.h"
 #include "tuple/tuple.h"
 

@@ -11,6 +11,8 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_H
 
+#include "property.h"
+
 namespace ircd {
 namespace json {
 
