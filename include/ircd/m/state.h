@@ -23,15 +23,15 @@ namespace ircd::m::state
 	constexpr size_t KEY_MAX_SZ { 256 + 256 + 16 };
 	constexpr size_t VAL_MAX_SZ { 256 + 16 };
 	constexpr size_t NODE_MAX_SZ { 4_KiB };
+	constexpr size_t NODE_MAX_KEY { 2 }; // tmp for now
+	constexpr size_t NODE_MAX_VAL { NODE_MAX_KEY };
+	constexpr size_t NODE_MAX_DEG { NODE_MAX_KEY + 1 }; // tmp for now
 	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
 	int keycmp(const json::array &a, const json::array &b);
 
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
-	void make_key(const string_view &type, const string_view &state_key, const key_closure &);
-
-	json::object make_node(const mutable_buffer &out, const json::array *const &keys, const size_t &kn, const string_view *const &vals, const size_t &vn, const string_view *const &child, const size_t &cn);
-	template<class... args> string_view set_node(db::txn &txn, const mutable_buffer &id, args&&...);
+	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 
 	void get_node(db::column &, const string_view &id, const node_closure &);
 	void get_node(const string_view &id, const node_closure &);
@@ -68,6 +68,8 @@ struct ircd::m::state::node
 	json::property<name::c, json::array>
 >
 {
+	struct rep;
+
 	size_t keys() const;
 	size_t vals() const;
 	size_t childs() const;
@@ -76,10 +78,20 @@ struct ircd::m::state::node
 	string_view val(const size_t &) const;
 	string_view child(const size_t &) const;
 
-	bool has_child(const size_t &) const;
+	size_t keys(json::array *const &out, const size_t &max) const;
+	size_t vals(string_view *const &out, const size_t &max) const;
+	size_t childs(string_view *const &out, const size_t &max) const;
+
 	size_t find(const json::array &key) const;
+	bool has_key(const json::array &key) const;
+	bool has_child(const size_t &) const;
 
 	using super_type::tuple;
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
+
+static_assert
+(
+	ircd::m::state::NODE_MAX_KEY == ircd::m::state::NODE_MAX_VAL
+);
