@@ -805,51 +805,6 @@ const database::description events_description
 
 	// (state tree node id) => (state tree node)
 	//
-	// Format for node: Node is plaintext and not binary at this time. In fact,
-	// *evil chuckle*, node might as well be JSON and can easily become content
-	// of another event sent to other rooms over network *snorts*. (important:
-	// database is well compressed).
-	//
-	// {                                                ;
-	//     "k":                                         ; Key array
-	//     [                                            ;
-	//         ["m.room.member", "@ar4an"],             ; Left key
-	//         ["m.room.member", "@jzk"]                ; Right key
-	//     ],                                           ;
-	//     "v":                                         ; Value array
-	//     [                                            ;
-	//         "$14961836116kXQRA:matrix.org",          ; Left accept
-	//         "$15018692261xPQDB:matrix.org",          ; Right accept
-	//     ]                                            ;
-	//     "c":                                         ; Child array
-	//     [                                            ;
-	//         "nPKN9twTF9a8k5dD7AApFcaraHTX",          ; Left child
-	//         "PcxAAACvkvyUMz19AZcCfrC3S84s",          ; Center child
-	//         "2jVYKIMKErJ6w6BLMhfVjsXearhB",          ; Right child
-	//     ]                                            ;
-	// }                                                ;
-	//
-	// (note: actual JSON used is canonical and spaceless)
-	//
-	// Elements are ordered based on type+state_key lexical sort. The type
-	// and the state_key strings are literally concatenated to this effect.
-	// They're not hashed. We can have some more control over data locality
-	// this way. Any number of values may be in a key array, not just type+
-	// state_key. The concatenation involves the string with its surrounding
-	// quotes as to not allow the user to mess about conflicting values.
-	// ```
-	// "m.room.member""@jzk" > "m.room.create"""
-	// ```
-	// Unlike traditional trees of such variety, the number of elements is not
-	// really well defined and not even fixed. There just has to be one more
-	// value in the "child" list than there are keys in the "key" list. To make
-	// this structure efficient we have to figure out a good number of
-	// children per node, and that might even be a contextual decision. The
-	// more children, the less depth to the query, but at the cost of a larger
-	// node size. A larger node in this system isn't just relevant to
-	// retrieval, but consider nodes are also immutable. Changes to the tree
-	// create new nodes for each changed path so the old nodes can still
-	// represent the old state.
 	state_node,
 };
 

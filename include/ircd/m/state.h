@@ -60,6 +60,50 @@ namespace ircd::m::state::name
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
+
+/// Format for node: Node is plaintext and not binary at this time. In fact,
+/// *evil chuckle*, node might as well be JSON and can easily become content
+/// of another event sent to other rooms over network *snorts*. (important:
+/// database is well compressed).
+///
+/// {                                                ;
+///     "k":                                         ; Key array
+///     [                                            ;
+///         ["m.room.member", "@ar4an:matrix.org"],  ; Left key
+///         ["m.room.member", "@jzk:matrix.org"]     ; Right key
+///     ],                                           ;
+///     "v":                                         ; Value array
+///     [                                            ;
+///         "$14961836116kXQRA:matrix.org",          ; Left accept
+///         "$15018692261xPQDB:matrix.org",          ; Right accept
+///     ]                                            ;
+///     "c":                                         ; Child array
+///     [                                            ;
+///         "nPKN9twTF9a8k5dD7AApFcaraHTX",          ; Left child
+///         "PcxAAACvkvyUMz19AZcCfrC3S84s",          ; Center child
+///         "2jVYKIMKErJ6w6BLMhfVjsXearhB",          ; Right child
+///     ]                                            ;
+/// }                                                ;
+///
+/// Elements are ordered based on type+state_key lexical sort. The type
+/// and the state_key strings are literally concatenated to this effect.
+/// They're not hashed. We can have some more control over data locality
+/// this way. Any number of values may be in a key array, not just type+
+/// state_key. The concatenation involves the string with its surrounding
+/// quotes as to not allow the user to mess about conflicting values.
+/// ```
+/// "m.room.member""@jzk" > "m.room.create"""
+/// ```
+/// Unlike traditional trees of such variety, the number of elements is not
+/// really well defined and not even fixed. There just has to be one more
+/// value in the "child" list than there are keys in the "key" list. To make
+/// this structure efficient we have to figure out a good number of
+/// children per node, and that might even be a contextual decision. The
+/// more children, the less depth to the query, but at the cost of a larger
+/// node size. A larger node in this system isn't just relevant to
+/// retrieval, but consider nodes are also immutable. Changes to the tree
+/// create new nodes for each changed path so the old nodes can still
+/// represent the old state.
 struct ircd::m::state::node
 :json::tuple
 <
@@ -90,6 +134,28 @@ struct ircd::m::state::node
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
+
+struct ircd::m::state::node::rep
+{
+	std::array<json::array, NODE_MAX_KEY + 1> keys;
+	std::array<string_view, NODE_MAX_VAL + 1> vals;
+	std::array<string_view, NODE_MAX_DEG + 1> chld;
+	size_t kn {0};
+	size_t vn {0};
+	size_t cn {0};
+
+	bool full() const;
+	bool overfull() const;
+	size_t find(const json::array &key) const;
+
+	void shr(const size_t &pos);
+
+	json::object write(const mutable_buffer &out);
+	string_view write(db::txn &, const mutable_buffer &id);
+
+	rep(const node &node);
+	rep() = default;
+};
 
 static_assert
 (

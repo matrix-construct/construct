@@ -10,122 +10,6 @@
 
 #include <ircd/m/m.h>
 
-struct ircd::m::state::node::rep
-{
-	std::array<json::array, NODE_MAX_KEY + 1> keys;
-	std::array<string_view, NODE_MAX_VAL + 1> vals;
-	std::array<string_view, NODE_MAX_DEG + 1> chld;
-	size_t kn {0};
-	size_t vn {0};
-	size_t cn {0};
-
-	bool full() const;
-	bool overfull() const;
-	size_t find(const json::array &key) const;
-
-	void shr(const size_t &pos);
-
-	json::object write(const mutable_buffer &out);
-	string_view write(db::txn &, const mutable_buffer &id);
-
-	rep(const node &node);
-	rep() = default;
-};
-
-ircd::m::state::node::rep::rep(const node &node)
-:kn{node.keys(keys.data(), keys.size())}
-,vn{node.vals(vals.data(), vals.size())}
-,cn{node.childs(chld.data(), chld.size())}
-{
-}
-
-ircd::string_view
-ircd::m::state::node::rep::write(db::txn &txn,
-                                 const mutable_buffer &idbuf)
-{
-	thread_local char buf[NODE_MAX_SZ];
-	return set_node(txn, idbuf, write(buf));
-}
-
-ircd::json::object
-ircd::m::state::node::rep::write(const mutable_buffer &out)
-{
-	assert(kn == vn);
-	assert(cn <= kn + 1);
-	assert(kn > 0 && vn > 0);
-
-	assert(kn <= NODE_MAX_KEY);
-	assert(vn <= NODE_MAX_VAL);
-	assert(cn <= NODE_MAX_DEG);
-
-	json::value keys[kn];
-	{
-		for(size_t i(0); i < kn; ++i)
-			keys[i] = this->keys[i];
-	}
-
-	json::value vals[vn];
-	{
-		for(size_t i(0); i < vn; ++i)
-			vals[i] = this->vals[i];
-	};
-
-	json::value chld[cn];
-	{
-		for(size_t i(0); i < cn; ++i)
-			chld[i] = this->chld[i];
-	};
-
-	json::iov iov;
-	const json::iov::push push[]
-	{
-		{ iov, { "k"_sv, { keys, kn } } },
-		{ iov, { "v"_sv, { vals, vn } } },
-		{ iov, { "c"_sv, { chld, cn } } },
-	};
-
-	return { data(out), json::print(out, iov) };
-}
-
-/// Shift right.
-void
-ircd::m::state::node::rep::shr(const size_t &pos)
-{
-	std::copy_backward(begin(keys) + pos, begin(keys) + kn, begin(keys) + kn + 1);
-	std::copy_backward(begin(vals) + pos, begin(vals) + vn, begin(vals) + vn + 1);
-	std::copy_backward(begin(chld) + pos, begin(chld) + cn, begin(chld) + cn + 1);
-}
-
-size_t
-ircd::m::state::node::rep::find(const json::array &parts)
-const
-{
-	size_t i{0};
-	for(; i < kn; ++i)
-		if(keycmp(parts, keys[i]) <= 0)
-			return i;
-		else
-			++i;
-
-	return i;
-}
-
-bool
-ircd::m::state::node::rep::overfull()
-const
-{
-	assert(kn == vn);
-	return kn > NODE_MAX_KEY;
-}
-
-bool
-ircd::m::state::node::rep::full()
-const
-{
-	assert(kn == vn);
-	return kn >= NODE_MAX_KEY;
-}
-
 void
 ircd::m::state::append_nodes(db::txn &txn,
                              const event &event)
@@ -198,8 +82,6 @@ inserter(int8_t &height,
 
 	node::rep rep{node};
 	const auto pos{node.find(key)};
-
-	std::cout << int(height) << " " << pos << " " << node << " <---- " << key << std::endl;
 
 	if(keycmp(node.key(pos), key) == 0)
 	{
@@ -282,9 +164,6 @@ inserter(int8_t &height,
 			++rep.cn;
 			return rep.write(txn, idbuf);
 		}
-
-		std::cout << "INTEGRATE PUSH T: " << child_id << std::endl;
-		std::cout << "INTEGRATE PUSH U: " << node << std::endl;
 
 		rep.shr(pos);
 		rep.keys[pos] = key;
@@ -576,6 +455,104 @@ ircd::m::state::keycmp(const json::array &a,
 }
 
 //
+// rep
+//
+
+ircd::m::state::node::rep::rep(const node &node)
+:kn{node.keys(keys.data(), keys.size())}
+,vn{node.vals(vals.data(), vals.size())}
+,cn{node.childs(chld.data(), chld.size())}
+{
+}
+
+ircd::string_view
+ircd::m::state::node::rep::write(db::txn &txn,
+                                 const mutable_buffer &idbuf)
+{
+	thread_local char buf[NODE_MAX_SZ];
+	return set_node(txn, idbuf, write(buf));
+}
+
+ircd::json::object
+ircd::m::state::node::rep::write(const mutable_buffer &out)
+{
+	assert(kn == vn);
+	assert(cn <= kn + 1);
+	assert(kn > 0 && vn > 0);
+
+	assert(kn <= NODE_MAX_KEY);
+	assert(vn <= NODE_MAX_VAL);
+	assert(cn <= NODE_MAX_DEG);
+
+	json::value keys[kn];
+	{
+		for(size_t i(0); i < kn; ++i)
+			keys[i] = this->keys[i];
+	}
+
+	json::value vals[vn];
+	{
+		for(size_t i(0); i < vn; ++i)
+			vals[i] = this->vals[i];
+	};
+
+	json::value chld[cn];
+	{
+		for(size_t i(0); i < cn; ++i)
+			chld[i] = this->chld[i];
+	};
+
+	json::iov iov;
+	const json::iov::push push[]
+	{
+		{ iov, { "k"_sv, { keys, kn } } },
+		{ iov, { "v"_sv, { vals, vn } } },
+		{ iov, { "c"_sv, { chld, cn } } },
+	};
+
+	return { data(out), json::print(out, iov) };
+}
+
+/// Shift right.
+void
+ircd::m::state::node::rep::shr(const size_t &pos)
+{
+	std::copy_backward(begin(keys) + pos, begin(keys) + kn, begin(keys) + kn + 1);
+	std::copy_backward(begin(vals) + pos, begin(vals) + vn, begin(vals) + vn + 1);
+	std::copy_backward(begin(chld) + pos, begin(chld) + cn, begin(chld) + cn + 1);
+}
+
+size_t
+ircd::m::state::node::rep::find(const json::array &parts)
+const
+{
+	size_t i{0};
+	for(; i < kn; ++i)
+		if(keycmp(parts, keys[i]) <= 0)
+			return i;
+		else
+			++i;
+
+	return i;
+}
+
+bool
+ircd::m::state::node::rep::overfull()
+const
+{
+	assert(kn == vn);
+	return kn > NODE_MAX_KEY;
+}
+
+bool
+ircd::m::state::node::rep::full()
+const
+{
+	assert(kn == vn);
+	return kn >= NODE_MAX_KEY;
+}
+
+//
 // node
 //
 
@@ -605,8 +582,9 @@ const
 /// and argument compares less than both, 0 is returned; equal to key[0],
 /// 0 is returned; greater than key[0] and less than or equal to key[1],
 /// 1 is returned; greater than both: 2 is returned. Note that there can
-/// be one more vals() than keys() in a node (this is usually a "full node")
-/// but there might not be, and the returned pos might be out of range.
+/// be one more childs() than keys() in a node (this is usually a "full
+/// node") but there might not be, and the returned pos might be out of
+/// range.
 size_t
 ircd::m::state::node::find(const json::array &parts)
 const
