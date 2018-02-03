@@ -220,7 +220,6 @@ namespace ircd
 #include "base.h"
 #include "stringops.h"
 #include "tokens.h"
-#include "params.h"
 #include "iov.h"
 #include "parse.h"
 #include "rfc1459.h"

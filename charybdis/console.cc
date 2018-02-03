@@ -23,6 +23,7 @@
 #include <ircd/asio.h>
 #include <ircd/m/m.h>
 #include "charybdis.h"
+#include "params.h"
 
 using namespace ircd;
 
