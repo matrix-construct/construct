@@ -130,7 +130,7 @@ struct name                                                                   \
     name(const char *const &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
-        generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
+        generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
     }                                                                         \
                                                                               \
     name(generate_skip_t) noexcept                                            \
@@ -148,7 +148,7 @@ struct name                                                                   \
     name(const char *const &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
-        generate(fmt, va_rtti{std::forward<args>(ap)...});                    \
+        generate(fmt, ircd::va_rtti{std::forward<args>(ap)...});              \
     }                                                                         \
                                                                               \
     name(generate_skip_t = {}) noexcept                                       \
@@ -172,7 +172,7 @@ struct name                                                                   \
     name(const char *const &fmt = " ", args&&... ap) noexcept(RB_DEBUG_LEVEL) \
     :parent{generate_skip}                                                    \
     {                                                                         \
-        generate(#name, fmt, va_rtti{std::forward<args>(ap)...});             \
+        generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
         ircd::assertion(*this);                                               \
     }                                                                         \
                                                                               \
