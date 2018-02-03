@@ -29,6 +29,7 @@ namespace ircd::rfc1035
 	struct header;
 	struct question;
 	struct answer;
+	struct record;
 	enum class op :uint8_t;
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
@@ -79,11 +80,6 @@ struct ircd::rfc1035::question
 ///
 struct ircd::rfc1035::answer
 {
-	struct A;
-	struct AAAA;
-	struct CNAME;
-	struct SRV;
-
 	uint16_t qtype;
 	uint16_t qclass;
 	uint32_t ttl;
@@ -139,21 +135,29 @@ enum class ircd::rfc1035::op
 	UPDATE   = 5,   ///< Update [RFC 2136]
 };
 
-struct ircd::rfc1035::answer::A
+struct ircd::rfc1035::record
+{
+	struct A;
+	struct AAAA;
+	struct CNAME;
+	struct SRV;
+};
+
+struct ircd::rfc1035::record::A
 {
 	uint32_t ip4;
 
 	A(const const_buffer &rdata);
 };
 
-struct ircd::rfc1035::answer::AAAA
+struct ircd::rfc1035::record::AAAA
 {
 	uint128_t ip6;
 
 	AAAA(const const_buffer &rdata);
 };
 
-struct ircd::rfc1035::answer::CNAME
+struct ircd::rfc1035::record::CNAME
 {
 	size_t namelen;
 	char name[256];
@@ -161,7 +165,7 @@ struct ircd::rfc1035::answer::CNAME
 	CNAME(const const_buffer &rdata);
 };
 
-struct ircd::rfc1035::answer::SRV
+struct ircd::rfc1035::record::SRV
 {
 	uint16_t priority;
 	uint16_t weight;

@@ -2541,20 +2541,20 @@ try
 		{
 			case 0x01:
 			{
-				const rfc1035::answer::A rr(an[i].rdata);
+				const rfc1035::record::A rr(an[i].rdata);
 				ipp[ippi++] = { rr.ip4, port(tag.hp) };
 				continue;
 			}
 
 			case 0x21:
 			{
-				const rfc1035::answer::SRV rr(an[i].rdata);
+				const rfc1035::record::SRV rr(an[i].rdata);
 				continue;
 			}
 
 			case 0x05:
 			{
-				const rfc1035::answer::CNAME rr(an[i].rdata);
+				const rfc1035::record::CNAME rr(an[i].rdata);
 				continue;
 			}
 		}
