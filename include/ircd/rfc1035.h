@@ -146,13 +146,14 @@ struct ircd::rfc1035::record
 	struct CNAME;
 	struct SRV;
 
-	uint16_t type;
-	time_t ttl;
+	uint16_t type {0};
+	time_t ttl {0};
 	const_buffer rdata;
 
 	template<class T> const T &as() const;
 
 	record(const answer &);
+	record() = default;
 	virtual ~record() noexcept;
 };
 
@@ -172,18 +173,20 @@ const
 struct ircd::rfc1035::record::A
 :record
 {
-	uint32_t ip4;
+	uint32_t ip4 {0};
 
 	A(const answer &);
+	A() = default;
 };
 
 /// IPv6 address record
 struct ircd::rfc1035::record::AAAA
 :record
 {
-	uint128_t ip6;
+	uint128_t ip6 {0};
 
 	AAAA(const answer &);
+	AAAA() = default;
 };
 
 /// Canonical name aliasing record
@@ -194,17 +197,19 @@ struct ircd::rfc1035::record::CNAME
 	char namebuf[256];
 
 	CNAME(const answer &);
+	CNAME() = default;
 };
 
 /// Service record
 struct ircd::rfc1035::record::SRV
 :record
 {
-	uint16_t priority;
-	uint16_t weight;
-	uint16_t port;
+	uint16_t priority {0};
+	uint16_t weight {0};
+	uint16_t port {0};
 	string_view tgt;
 	char tgtbuf[256];
 
 	SRV(const answer &);
+	SRV() = default;
 };
