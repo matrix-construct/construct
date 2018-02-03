@@ -74,6 +74,8 @@ struct ircd::net::ipport
 
 	ipport(const uint32_t &ip, const uint16_t &port);
 	ipport(const uint128_t &ip, const uint16_t &port);
+	ipport(const rfc1035::record::A &, const uint16_t &port);
+	ipport(const rfc1035::record::AAAA &, const uint16_t &port);
 	ipport(const boost::asio::ip::address &, const uint16_t &port);
 	ipport(const string_view &ip, const uint16_t &port);
 	ipport(const string_view &ip, const string_view &port);

@@ -2800,6 +2800,24 @@ ircd::net::ipport::ipport(const string_view &ip,
 {
 }
 
+ircd::net::ipport::ipport(const rfc1035::record::A &rr,
+                          const uint16_t &port)
+:ipport
+{
+	rr.ip4, port
+}
+{
+}
+
+ircd::net::ipport::ipport(const rfc1035::record::AAAA &rr,
+                          const uint16_t &port)
+:ipport
+{
+	rr.ip6, port
+}
+{
+}
+
 ircd::net::ipport::ipport(const boost::asio::ip::address &address,
                           const uint16_t &port)
 {
