@@ -44,200 +44,6 @@ ircd::m::state::append_nodes(db::txn &txn,
 	state::insert(txn, room_id, type, state_key, event_id);
 }
 
-void
-ircd::m::state::insert(db::txn &txn,
-                       const id::room &room_id,
-                       const string_view &type,
-                       const string_view &state_key,
-                       const id::event &event_id)
-{
-	// The insertion process reads from the DB and will yield this ircd::ctx
-	// so the key buffer must stay on this stack.
-	char key[KEY_MAX_SZ];
-	return insert(txn, room_id, make_key(key, type, state_key), event_id);
-}
-
-namespace ircd::m::state
-{
-
-string_view
-inserter(int8_t &height,
-         db::txn &txn,
-         const json::array &key,
-         const string_view &val,
-         const node &node,
-         const mutable_buffer &idbuf,
-         node::rep &push,
-         const mutable_buffer &pushbuf)
-{
-	// Recursion metrics
-	const unwind down{[&height]{ --height; }};
-	if(unlikely(++height >= MAX_HEIGHT))
-		throw assertive{"recursion limit exceeded"};
-
-	// This function assumes that any node argument is a previously "existing"
-	// node which means it contains at least one key/value.
-	assert(node.keys() > 0);
-	assert(node.keys() == node.vals());
-
-	node::rep rep{node};
-	const auto pos{node.find(key)};
-
-	if(keycmp(node.key(pos), key) == 0)
-	{
-		rep.keys[pos] = key;
-		rep.vals[pos] = val;
-		return rep.write(txn, idbuf);
-	}
-
-	if(node.childs() == 0 && !rep.full())
-	{
-		rep.shr(pos);
-		rep.keys[pos] = key;
-		++rep.kn;
-		rep.vals[pos] = val;
-		++rep.vn;
-		rep.chld[pos] = string_view{};
-		++rep.cn;
-		return rep.write(txn, idbuf);
-	}
-
-	if(node.childs() == 0 && rep.full())
-	{
-		rep.shr(pos);
-		rep.keys[pos] = key;
-		++rep.kn;
-		rep.vals[pos] = val;
-		++rep.vn;
-
-		size_t i(0);
-		node::rep left, right;
-
-		for(; i < rep.kn / 2; ++i)
-		{
-			left.keys[left.kn++] = rep.keys[i];
-			left.vals[left.vn++] = rep.vals[i];
-			left.chld[left.cn++] = string_view{};
-		}
-
-		push.keys[push.kn++] = rep.keys[i];
-		push.vals[push.vn++] = rep.vals[i];
-
-		for(++i; i < rep.kn; ++i)
-		{
-			right.keys[right.kn++] = rep.keys[i];
-			right.vals[right.vn++] = rep.vals[i];
-			right.chld[right.cn++] = string_view{};
-		}
-
-		thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
-		push.chld[push.cn++] = left.write(txn, lc);
-		push.chld[push.cn++] = right.write(txn, rc);
-		const json::object ret{push.write(pushbuf)};
-		return ret;
-	}
-
-	if(!empty(node.child(pos)))
-	{
-		node::rep cpush;
-		string_view child_id;
-		get_node(node.child(pos), [&](const auto &node)
-		{
-			child_id = inserter(height, txn, key, val, node, idbuf, cpush, pushbuf);
-		});
-
-		if(!cpush.kn)
-		{
-			rep.chld[pos] = child_id;
-			return rep.write(txn, idbuf);
-		}
-
-		if(!rep.full())
-		{
-			rep.shr(pos);
-			rep.keys[pos] = cpush.keys[0];
-			++rep.kn;
-			rep.vals[pos] = cpush.vals[0];
-			++rep.vn;
-			rep.chld[pos] = cpush.chld[0];
-			rep.chld[pos+1] = cpush.chld[1];
-			++rep.cn;
-			return rep.write(txn, idbuf);
-		}
-
-		rep.shr(pos);
-		rep.keys[pos] = key;
-		++rep.kn;
-		rep.vals[pos] = val;
-		++rep.vn;
-
-		size_t i(0);
-		node::rep left, right;
-
-		for(; i < rep.kn / 2; ++i)
-		{
-			left.keys[left.kn++] = rep.keys[i];
-			left.vals[left.vn++] = rep.vals[i];
-			left.chld[left.cn++] = rep.chld[i];
-		}
-
-		push.keys[push.kn++] = rep.keys[i];
-		push.vals[push.vn++] = rep.vals[i];
-
-		for(++i; i < rep.kn; ++i)
-		{
-			right.keys[right.kn++] = rep.keys[i];
-			right.vals[right.vn++] = rep.vals[i];
-			right.chld[right.cn++] = rep.chld[i];
-		}
-
-		thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
-		push.chld[push.cn++] = left.write(txn, lc);
-		push.chld[push.cn++] = right.write(txn, rc);
-		const json::object ret{push.write(pushbuf)};
-		return ret;
-	}
-
-	rep.shr(pos);
-	rep.keys[pos] = key;
-	++rep.kn;
-	rep.vals[pos] = val;
-	++rep.vn;
-	rep.chld[pos] = string_view{};
-	++rep.cn;
-	return rep.write(txn, idbuf);
-}}
-
-void
-ircd::m::state::insert(db::txn &txn,
-                       const id::room &room_id,
-                       const json::array &key,
-                       const id::event &event_id)
-{
-	db::column heads{*event::events, "state_head"};
-	db::column nodes{*event::events, "state_node"};
-
-	char idbuf[ID_MAX_SZ];
-	thread_local char pushbuf[NODE_MAX_SZ];
-
-	string_view head
-	{
-		get_head(heads, idbuf, room_id)
-	};
-
-	node::rep push;
-	int8_t height{0};
-	get_node(head, [&](const node &node)
-	{
-		head = inserter(height, txn, key, event_id, node, idbuf, push, pushbuf);
-	});
-
-	if(push.kn)
-		head = push.write(txn, idbuf);
-
-	set_head(txn, room_id, head);
-}
-
 /// Convenience to get value from the current room head.
 void
 ircd::m::state::get_value__room(const id::room &room_id,
@@ -305,6 +111,246 @@ ircd::m::state::get_value(db::column &column,
 
 		nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
 	});
+}
+
+namespace ircd::m::state
+{
+	string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	json::object _insert_leaf_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
+	string_view _insert_branch_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
+	json::object _insert_branch_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
+	string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push, const mutable_buffer &pushbuf);
+}
+
+void
+ircd::m::state::insert(db::txn &txn,
+                       const id::room &room_id,
+                       const string_view &type,
+                       const string_view &state_key,
+                       const id::event &event_id)
+{
+	// The insertion process reads from the DB and will yield this ircd::ctx
+	// so the key buffer must stay on this stack.
+	char key[KEY_MAX_SZ];
+	return insert(txn, room_id, make_key(key, type, state_key), event_id);
+}
+
+void
+ircd::m::state::insert(db::txn &txn,
+                       const id::room &room_id,
+                       const json::array &key,
+                       const id::event &event_id)
+{
+	db::column heads{*event::events, "state_head"};
+	db::column nodes{*event::events, "state_node"};
+
+	char idbuf[ID_MAX_SZ];
+	thread_local char pushbuf[NODE_MAX_SZ];
+
+	string_view head
+	{
+		get_head(heads, idbuf, room_id)
+	};
+
+	node::rep push;
+	int8_t height{0};
+	get_node(head, [&](const node &node)
+	{
+		head = _insert(height, txn, key, event_id, node, idbuf, push, pushbuf);
+	});
+
+	if(push.kn)
+		head = push.write(txn, idbuf);
+
+	set_head(txn, room_id, head);
+}
+
+ircd::string_view
+ircd::m::state::_insert(int8_t &height,
+                        db::txn &txn,
+                        const json::array &key,
+                        const string_view &val,
+                        const node &node,
+                        const mutable_buffer &idbuf,
+                        node::rep &push,
+                        const mutable_buffer &pushbuf)
+{
+	// Recursion metrics
+	const unwind down{[&height]{ --height; }};
+	if(unlikely(++height >= MAX_HEIGHT))
+		throw assertive{"recursion limit exceeded"};
+
+	// This function assumes that any node argument is a previously "existing"
+	// node which means it contains at least one key/value.
+	assert(node.keys() > 0);
+	assert(node.keys() == node.vals());
+
+	node::rep rep{node};
+	const auto pos{node.find(key)};
+
+	if(keycmp(node.key(pos), key) == 0)
+		return _insert_overwrite(txn, key, val, idbuf, rep, pos);
+
+	if(node.childs() == 0 && !rep.full())
+		return _insert_leaf_nonfull(txn, key, val, idbuf, rep, pos);
+
+	if(node.childs() == 0 && rep.full())
+		return _insert_leaf_full(txn, key, val, rep, pos, push, pushbuf);
+
+	if(empty(node.child(pos)))
+		return _insert_leaf_nonfull(txn, key, val, idbuf, rep, pos);
+
+	node::rep pushed;
+	string_view child_id;
+	get_node(node.child(pos), [&](const auto &node)
+	{
+		child_id = _insert(height, txn, key, val, node, idbuf, pushed, pushbuf);
+	});
+
+	if(!pushed.kn)
+	{
+		rep.chld[pos] = child_id;
+		return rep.write(txn, idbuf);
+	}
+
+	if(!rep.full())
+		return _insert_branch_nonfull(txn, key, val, idbuf, rep, pos, pushed);
+
+	return _insert_branch_full(txn, key, val, rep, pos, push, pushbuf);
+}
+
+ircd::json::object
+ircd::m::state::_insert_branch_full(db::txn &txn,
+                                    const json::array &key,
+                                    const string_view &val,
+                                    node::rep &rep,
+                                    const size_t &pos,
+                                    node::rep &push,
+                                    const mutable_buffer &pushbuf)
+{
+	rep.shr(pos);
+	rep.keys[pos] = key;
+	++rep.kn;
+	rep.vals[pos] = val;
+	++rep.vn;
+
+	size_t i(0);
+	node::rep left, right;
+
+	for(; i < rep.kn / 2; ++i)
+	{
+		left.keys[left.kn++] = rep.keys[i];
+		left.vals[left.vn++] = rep.vals[i];
+		left.chld[left.cn++] = rep.chld[i];
+	}
+
+	push.keys[push.kn++] = rep.keys[i];
+	push.vals[push.vn++] = rep.vals[i];
+
+	for(++i; i < rep.kn; ++i)
+	{
+		right.keys[right.kn++] = rep.keys[i];
+		right.vals[right.vn++] = rep.vals[i];
+		right.chld[right.cn++] = rep.chld[i];
+	}
+
+	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
+	push.chld[push.cn++] = left.write(txn, lc);
+	push.chld[push.cn++] = right.write(txn, rc);
+	return push.write(pushbuf);
+}
+
+ircd::string_view
+ircd::m::state::_insert_branch_nonfull(db::txn &txn,
+                                       const json::array &key,
+                                       const string_view &val,
+                                       const mutable_buffer &idbuf,
+                                       node::rep &rep,
+                                       const size_t &pos,
+                                       node::rep &pushed)
+{
+	rep.shr(pos);
+	rep.keys[pos] = pushed.keys[0];
+	++rep.kn;
+	rep.vals[pos] = pushed.vals[0];
+	++rep.vn;
+	rep.chld[pos] = pushed.chld[0];
+	rep.chld[pos+1] = pushed.chld[1];
+	++rep.cn;
+	return rep.write(txn, idbuf);
+}
+
+ircd::json::object
+ircd::m::state::_insert_leaf_full(db::txn &txn,
+                                  const json::array &key,
+                                  const string_view &val,
+                                  node::rep &rep,
+                                  const size_t &pos,
+                                  node::rep &push,
+                                  const mutable_buffer &pushbuf)
+{
+	rep.shr(pos);
+	rep.keys[pos] = key;
+	++rep.kn;
+	rep.vals[pos] = val;
+	++rep.vn;
+
+	size_t i(0);
+	node::rep left, right;
+
+	for(; i < rep.kn / 2; ++i)
+	{
+		left.keys[left.kn++] = rep.keys[i];
+		left.vals[left.vn++] = rep.vals[i];
+		left.chld[left.cn++] = string_view{};
+	}
+
+	push.keys[push.kn++] = rep.keys[i];
+	push.vals[push.vn++] = rep.vals[i];
+
+	for(++i; i < rep.kn; ++i)
+	{
+		right.keys[right.kn++] = rep.keys[i];
+		right.vals[right.vn++] = rep.vals[i];
+		right.chld[right.cn++] = string_view{};
+	}
+
+	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
+	push.chld[push.cn++] = left.write(txn, lc);
+	push.chld[push.cn++] = right.write(txn, rc);
+	return push.write(pushbuf);
+}
+
+ircd::string_view
+ircd::m::state::_insert_leaf_nonfull(db::txn &txn,
+                                     const json::array &key,
+                                     const string_view &val,
+                                     const mutable_buffer &idbuf,
+                                     node::rep &rep,
+                                     const size_t &pos)
+{
+	rep.shr(pos);
+	rep.keys[pos] = key;
+	++rep.kn;
+	rep.vals[pos] = val;
+	++rep.vn;
+	rep.chld[pos] = string_view{};
+	++rep.cn;
+	return rep.write(txn, idbuf);
+}
+
+ircd::string_view
+ircd::m::state::_insert_overwrite(db::txn &txn,
+                                  const json::array &key,
+                                  const string_view &val,
+                                  const mutable_buffer &idbuf,
+                                  node::rep &rep,
+                                  const size_t &pos)
+{
+	rep.keys[pos] = key;
+	rep.vals[pos] = val;
+	return rep.write(txn, idbuf);
 }
 
 /// Set the root node ID for a room in this db transaction.

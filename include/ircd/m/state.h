@@ -85,25 +85,19 @@ namespace ircd::m::state::name
 ///     ]                                            ;
 /// }                                                ;
 ///
-/// Elements are ordered based on type+state_key lexical sort. The type
-/// and the state_key strings are literally concatenated to this effect.
-/// They're not hashed. We can have some more control over data locality
-/// this way. Any number of values may be in a key array, not just type+
-/// state_key. The concatenation involves the string with its surrounding
-/// quotes as to not allow the user to mess about conflicting values.
+/// Elements are ordered based on type+state_key lexical sort. The type and
+/// the state_key strings are literally concatenated to this effect. They're
+/// not hashed. We can have some more control over data locality this way. Any
+/// number of values may be in a key array, not just type+state_key. The
+/// concatenation involves the string with its surrounding quotes as to not
+/// allow the user to mess about conflicting values:
 /// ```
 /// "m.room.member""@jzk" > "m.room.create"""
 /// ```
 /// Unlike traditional trees of such variety, the number of elements is not
-/// really well defined and not even fixed. There just has to be one more
-/// value in the "child" list than there are keys in the "key" list. To make
-/// this structure efficient we have to figure out a good number of
-/// children per node, and that might even be a contextual decision. The
-/// more children, the less depth to the query, but at the cost of a larger
-/// node size. A larger node in this system isn't just relevant to
-/// retrieval, but consider nodes are also immutable. Changes to the tree
-/// create new nodes for each changed path so the old nodes can still
-/// represent the old state.
+/// really well defined and not even fixed. There just can be one more value
+/// in the "child" list than there are keys in the "key" list. We have an
+/// opportunity to vary the degree for different levels in different areas.
 struct ircd::m::state::node
 :json::tuple
 <
@@ -135,6 +129,13 @@ struct ircd::m::state::node
 };
 #pragma GCC diagnostic pop
 
+/// Internal representation of a node for manipulation purposes. This is
+/// because json::tuple's (like most of json::) are oriented around the
+/// dominant use-case of reading const datas. These arrays could be
+/// vectors optimized with a local allocator but the size_t members are
+/// used to count active elements instead. One more element than the node
+/// maximum is provided so that insertions and sorts can safely take place
+/// before splits.
 struct ircd::m::state::node::rep
 {
 	std::array<json::array, NODE_MAX_KEY + 1> keys;
