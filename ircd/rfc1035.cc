@@ -141,7 +141,7 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 		};
 
 	const auto namelen(parse_name(namebuf, in));
-	name = string_view{namebuf, namelen};
+	name = string_view{namebuf, namelen - 1};
 
 	const char *pos(data(in) + namelen);
 	if(unlikely(pos + 2 + 2 + 4 + 2 > end(in)))
@@ -227,7 +227,7 @@ ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
 		};
 
 	const auto len{parse_name(namebuf, rdata)};
-	name = string_view{namebuf, len};
+	name = string_view{namebuf, len - 1};
 }
 
 ircd::rfc1035::record::SRV::SRV(const answer &answer)
@@ -246,7 +246,7 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 
 	const const_buffer tgtbuf{pos, end(rdata)};
 	const auto len{parse_name(this->tgtbuf, tgtbuf)};
-	tgt = string_view{this->tgtbuf, len};
+	tgt = string_view{this->tgtbuf, len - 1};
 	pos += len;
 
 	assert(std::distance(pos, end(rdata)) == 0);
@@ -304,11 +304,7 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	out[0] = '\0';
 	for(uint8_t len(*pos++); len && pos + len < end(in); len = *pos++)
 	{
-		const string_view label
-		{
-			reinterpret_cast<const char *>(pos), len
-		};
-
+		const string_view label{pos, len};
 		strlcat(out, label);
 		strlcat(out, ".");
 		pos += len;
@@ -316,6 +312,7 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 
 	assert(size_t(pos - begin(in)) <= size(in));
 	assert(size_t(pos - begin(in)) <= size(out));
+	assert(ssize_t(pos - begin(in)) > 0);
 	return pos - begin(in);
 }
 
