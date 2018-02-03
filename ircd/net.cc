@@ -2147,86 +2147,97 @@ decltype(ircd::net::dns::resolver)
 ircd::net::dns::resolver
 {};
 
-/// Resolve a numerical address to a hostname string. This is a PTR record
-/// query or 'reverse DNS' lookup.
-ircd::ctx::future<std::string>
-ircd::net::dns::operator()(const ipport &ipport)
-{
-	ctx::promise<std::string> p;
-	ctx::future<std::string> ret{p};
-	operator()(ipport, [p(std::move(p))]
-	(std::exception_ptr eptr, const string_view &ptr)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(std::string{ptr});
-	});
+/// Linkage for default opts
+decltype(ircd::net::dns::opts_default)
+ircd::net::dns::opts_default
+{};
 
-	return ret;
-}
-
-/// Resolve a hostname (with service name/portnum) to a numerical address. This
-/// is an A or AAAA query (with automatic SRV query) returning a single result.
-ircd::ctx::future<ircd::net::ipport>
-ircd::net::dns::operator()(const hostport &hostport)
-{
-	ctx::promise<ipport> p;
-	ctx::future<ipport> ret{p};
-	operator()(hostport, [p(std::move(p))]
-	(std::exception_ptr eptr, const ipport &ip)
-	mutable
-	{
-		if(eptr)
-			p.set_exception(std::move(eptr));
-		else
-			p.set_value(ip);
-	});
-
-	return ret;
-}
-
-/// Lower-level A or AAAA query (with automatic SRV query) with asynchronous
-/// callback interface. This returns only one result.
+/// Convenience composition with a single ipport callback. This is the result of
+/// an automatic chain of queries such as SRV and A/AAAA based on the input and
+/// intermediate results.
 void
 ircd::net::dns::operator()(const hostport &hostport,
-                           callback_one callback)
+                           const opts &opts,
+                           callback_ipport_one callback)
 {
-	assert(bool(ircd::net::dns::resolver));
-	operator()(hostport, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const vector_view<const ipport> &results)
+	operator()(hostport, opts, [this, hostport(hostport), opts(opts), callback(std::move(callback))]
+	(std::exception_ptr eptr, const rfc1035::record::SRV &record)
+	mutable
 	{
 		if(eptr)
 			return callback(std::move(eptr), {});
 
-		if(results.empty())
-			return callback(std::make_exception_ptr(nxdomain{}), {});
+		if(!record.tgt.empty())
+			host(hostport) = record.tgt;
 
-		callback(std::move(eptr), results.at(0));
+		if(record.port != 0)
+			port(hostport) = record.port;
+
+		// Have to kill the service name to not run another SRV query now.
+		hostport.service = {};
+		opts.srv = {};
+		this->operator()(hostport, opts, [hostport, callback(std::move(callback))]
+		(std::exception_ptr eptr, const rfc1035::record::A &record)
+		{
+			if(eptr)
+				return callback(std::move(eptr), {});
+
+			const ipport ipport{record.ip4, port(hostport)};
+			callback(std::move(eptr), ipport);
+		});
 	});
 }
 
-/// Lower-level A+AAAA query (with automatic SRV query). This returns a vector
-/// of all results in the callback.
+/// Convenience callback with a single SRV record which was selected from
+/// the vector with stochastic respect for weighting and priority.
 void
 ircd::net::dns::operator()(const hostport &hostport,
-                           callback_many callback)
+                           const opts &opts,
+                           callback_SRV_one callback)
 {
-	static const flag flags{};
 	assert(bool(ircd::net::dns::resolver));
-	(*resolver)(hostport, flags, std::move(callback));
+	operator()(hostport, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
+	{
+		if(eptr || rrs.empty())
+			return callback(std::move(eptr), {});
+
+		//TODO: prng on weight / prio plz
+		const auto &rr{*rrs.at(0)};
+		const auto &record(rr.as<const rfc1035::record::SRV>());
+		callback(std::move(eptr), record);
+	});
 }
 
-/// Lower-level PTR query (i.e "reverse DNS") with asynchronous callback
-/// interface.
+/// Convenience callback with a single A record which was selected from
+/// the vector randomly.
 void
-ircd::net::dns::operator()(const ipport &ipport,
-                           callback_reverse callback)
+ircd::net::dns::operator()(const hostport &hostport,
+                           const opts &opts,
+                           callback_A_one callback)
 {
-	static const flag flags{};
 	assert(bool(ircd::net::dns::resolver));
-	(*resolver)(ipport, flags, std::move(callback));
+	operator()(hostport, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
+	{
+		if(eptr || rrs.empty())
+			return callback(std::move(eptr), {});
+
+		//TODO: prng plz
+		const auto &rr{*rrs.at(0)};
+		const auto &record(rr.as<const rfc1035::record::A>());
+		callback(std::move(eptr), record);
+	});
+}
+
+/// Fundamental callback with a vector of abstract resource records.
+void
+ircd::net::dns::operator()(const hostport &hostport,
+                           const opts &opts,
+                           callback cb)
+{
+	assert(bool(ircd::net::dns::resolver));
+	(*resolver)(hostport, opts, std::move(cb));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2309,71 +2320,83 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		boost::system::errc::timed_out, boost::system::system_category()
 	};
 
-	tag.set_exception(make_eptr(ec));
+	if(tag.cb)
+		tag.cb(make_eptr(ec), {});
+
 	return false;
 }
 
-/// Internal A/AAAA record resolver function
+/// Internal resolver entry interface.
 void
 ircd::net::dns::resolver::operator()(const hostport &hostport,
-                                     const flag &flags,
-                                     callback_many callback)
+                                     const opts &opts,
+                                     callback callback)
 {
-	uint16_t id; do
+	const auto &tag
 	{
-		id = ircd::rand::integer(1, 65535);
-		assert(tags.size() < 65535);
-		const auto it{tags.lower_bound(id)};
-		if(it != end(tags) && it->first == id)
-			continue;
-
-		tags.emplace_hint(it, id, tag{hostport, flags, std::move(callback)});
-		dock.notify_one();
-		break;
-	}
-	while(1);
+		set_tag(resolver::tag
+		{
+			hostport, opts, std::move(callback)
+		})
+	};
 
 	// Escape trunk
-	const unwind::exceptional untag{[this, &id]
+	const unwind::exceptional untag{[this, &tag]
 	{
-		tags.erase(id);
+		tags.erase(tag.id);
 	}};
 
-	// Trivial host string
-	const string_view &host
-	{
-		hostport.host
-	};
-
-	// Determine if the port is a string or requires a lex_cast to one.
-	char portbuf[8];
-	const string_view &port
-	{
-		hostport.portnum? lex_cast(hostport.portnum, portbuf) : hostport.port
-	};
-
-	// Generate the question
-	const rfc1035::question question
-	{
-		host, "A"
-	};
-
 	thread_local char buf[64_KiB];
-	const auto query
-	{
-		rfc1035::make_query(buf, id, question)
-	};
-
-	send_query(query);
+	send_query(make_query(buf, tag));
 }
 
-/// Internal PTR record resolver function
-void
-ircd::net::dns::resolver::operator()(const ipport &ipport,
-                                     const flag &flags,
-                                     callback_reverse callback)
+ircd::const_buffer
+ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
+                                     const tag &tag)
+const
 {
-	throw not_implemented{};
+	if(tag.hp.service || tag.opts.srv)
+	{
+		thread_local char srvbuf[512];
+		string_view srvhost;
+		if(!tag.opts.srv)
+			srvhost = fmt::sprintf
+			{
+				srvbuf, "_%s._%s.%s", service(tag.hp), tag.opts.proto, host(tag.hp)
+			};
+		else
+			srvhost = fmt::sprintf
+			{
+				srvbuf, "%s%s", tag.opts.srv, host(tag.hp)
+			};
+
+		const rfc1035::question question{srvhost, "SRV"};
+		return rfc1035::make_query(buf, tag.id, question);
+	}
+
+	const rfc1035::question question{host(tag.hp), "A"};
+	return rfc1035::make_query(buf, tag.id, question);
+}
+
+ircd::net::dns::resolver::tag &
+ircd::net::dns::resolver::set_tag(tag &&tag)
+{
+	while(tags.size() < 65535)
+	{
+		tag.id = ircd::rand::integer(1, 65535);
+		auto it{tags.lower_bound(tag.id)};
+		if(it != end(tags) && it->first == tag.id)
+			continue;
+
+		it = tags.emplace_hint(it, tag.id, std::move(tag));
+		dock.notify_one();
+		return it->second;
+	}
+
+	throw assertive
+	{
+		"Too many DNS queries"
+	};
 }
 
 void
@@ -2512,60 +2535,84 @@ try
 			"protocol error: %s", rfc1035::rcode.at(header.rcode)
 		};
 
-	if(header.qdcount > 8 || header.ancount > 8)
+	// The maximum number of records we're accepting for a section
+	static const size_t MAX_COUNT
+	{
+		64
+	};
+
+	if(header.qdcount > MAX_COUNT || header.ancount > MAX_COUNT)
 		throw error
 		{
 			"Response contains too many sections..."
 		};
 
-	if(!header.ancount)
+	const_buffer buffer
 	{
-		tag.cb_many({}, {});
-		return;
-	}
+		body
+	};
 
-	const_buffer buf{body};
-	rfc1035::question qd[header.qdcount];
+	// Questions are regurgitated back to us so they must be parsed first
+	thread_local rfc1035::question qd[MAX_COUNT];
 	for(size_t i(0); i < header.qdcount; ++i)
-		consume(buf, size(qd[i].parse(buf)));
+		consume(buffer, size(qd[i].parse(buffer)));
 
-	rfc1035::answer an[header.ancount];
+	// Answers are parsed into this buffer
+	thread_local rfc1035::answer an[MAX_COUNT];
 	for(size_t i(0); i < header.ancount; ++i)
-		consume(buf, size(an[i].parse(buf)));
+		consume(buffer, size(an[i].parse(buffer)));
 
-	size_t ippi(0);
-	net::ipport ipp[header.ancount];
-	for(size_t i(0); i < header.ancount; ++i)
+	// This will be where we place the record instances which are dynamically
+	// laid out and sized types; this is an alternative to new'ing them
+	// without placement. 512 bytes is assumed as a soft maximum for each RR.
+	thread_local uint8_t recbuf[MAX_COUNT * 512];
+	thread_local const rfc1035::record *record[MAX_COUNT];
+
+	size_t i(0);
+	uint8_t *pos{recbuf};
+	for(; i < header.ancount; ++i) switch(an[i].qtype)
 	{
-		switch(an[i].qtype)
+		case 1:
 		{
-			case 0x01:
-			{
-				const rfc1035::record::A rr(an[i].rdata);
-				ipp[ippi++] = { rr.ip4, port(tag.hp) };
-				continue;
-			}
+			record[i] = new (pos) rfc1035::record::A(an[i]);
+			pos += sizeof(rfc1035::record::A);
+			continue;
+		}
 
-			case 0x21:
-			{
-				const rfc1035::record::SRV rr(an[i].rdata);
-				continue;
-			}
+		case 5:
+		{
+			record[i] = new (pos) rfc1035::record::CNAME(an[i]);
+			pos += sizeof(rfc1035::record::CNAME);
+			continue;
+		}
 
-			case 0x05:
-			{
-				const rfc1035::record::CNAME rr(an[i].rdata);
-				continue;
-			}
+		case 33:
+		{
+			record[i] = new (pos) rfc1035::record::SRV(an[i]);
+			pos += sizeof(rfc1035::record::SRV);
+			continue;
+		}
+
+		default:
+		{
+			record[i] = new (pos) rfc1035::record(an[i]);
+			pos += sizeof(rfc1035::record);
+			continue;
 		}
 	}
 
-	if(tag.cb_many)
-		tag.cb_many({}, vector_view<const ipport>(ipp, header.ancount));
+	if(tag.cb)
+		tag.cb({}, vector_view<const rfc1035::record *>(record, i));
 }
-catch(...)
+catch(const std::exception &e)
 {
-	tag.set_exception(std::current_exception());
+	log.error("resolver tag:%u [%s]: %s",
+	          tag.id,
+	          string(tag.hp),
+	          e.what());
+
+	if(tag.cb)
+		tag.cb(std::current_exception(), {});
 }
 
 bool
@@ -2607,15 +2654,6 @@ ircd::net::dns::resolver::init_servers()
 			          string(server));
 		}
 	});
-}
-
-void
-ircd::net::dns::resolver::tag::set_exception(std::exception_ptr &&eptr)
-{
-	if(cb_many)
-		cb_many(std::move(eptr), {});
-	else if(cb_reverse)
-		cb_reverse(std::move(eptr), {});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

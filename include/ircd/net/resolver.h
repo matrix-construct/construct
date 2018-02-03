@@ -30,8 +30,8 @@ struct ircd::net::dns::resolver
 	std::map<uint16_t, tag> tags;                // The active requests
 
 	ip::udp::socket ns;                          // A pollable activity object
-	ip::udp::endpoint reply_from;
-	char reply[64_KiB] alignas(16);
+	ip::udp::endpoint reply_from;                // Remote addr of recv
+	char reply[64_KiB] alignas(16);              // Buffer for recv
 
 	bool handle_error(const error_code &ec) const;
 	void handle_reply(const header &, const const_buffer &body, tag &);
@@ -42,8 +42,9 @@ struct ircd::net::dns::resolver
 	void send_query(const ip::udp::endpoint &, const const_buffer &);
 	void send_query(const const_buffer &);
 
-	void operator()(const hostport &, const flag &, callback_many);
-	void operator()(const ipport &, const flag &, callback_reverse);
+	tag &set_tag(tag &&);
+	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
+	void operator()(const hostport &, const opts &, callback);
 
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &now);
 	void check_timeouts();
@@ -56,25 +57,21 @@ struct ircd::net::dns::resolver
 
 struct ircd::net::dns::resolver::tag
 {
+	uint16_t id {0};
 	hostport hp;
-	ipport ipp;
-	flag flags;
-	callback_many cb_many;
-	callback_reverse cb_reverse;
+	dns::opts opts;
+	callback cb;
 	steady_point last {ircd::now<steady_point>()};
 	uint8_t tries {0};
 
-	void set_exception(std::exception_ptr &&);
-
-	tag(const hostport &hp, const flag &flags, callback_many cb_many)
-	:hp{hp}
-	,flags{flags}
-	,cb_many{std::move(cb_many)}
-	{}
-
-	tag(const ipport &ipp, const flag &flags, callback_reverse cb_reverse)
-	:ipp{ipp}
-	,flags{flags}
-	,cb_reverse{std::move(cb_reverse)}
-	{}
+	tag(const hostport &, const dns::opts &, callback);
 };
+
+inline
+ircd::net::dns::resolver::tag::tag(const hostport &hp,
+                                   const dns::opts &opts,
+                                   callback cb)
+:hp{hp}
+,opts{opts}
+,cb{std::move(cb)}
+{}
