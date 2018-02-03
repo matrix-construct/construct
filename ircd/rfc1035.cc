@@ -140,7 +140,9 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 			"Answer input buffer underflow"
 		};
 
-	namelen = parse_name(name, in);
+	const auto namelen(parse_name(namebuf, in));
+	name = string_view{namebuf, namelen};
+
 	const char *pos(data(in) + namelen);
 	if(unlikely(pos + 2 + 2 + 4 + 2 > end(in)))
 		throw error
@@ -204,7 +206,8 @@ ircd::rfc1035::record::CNAME::CNAME(const const_buffer &rdata)
 			"CNAME record data underflow"
 		};
 
-	namelen = parse_name(name, rdata);
+	const auto len{parse_name(namebuf, rdata)};
+	name = string_view{namebuf, len};
 }
 
 ircd::rfc1035::record::SRV::SRV(const const_buffer &rdata)
@@ -221,8 +224,9 @@ ircd::rfc1035::record::SRV::SRV(const const_buffer &rdata)
 	port = bswap(*(const uint16_t *)pos);       pos += 2;
 
 	const const_buffer tgtbuf{pos, end(rdata)};
-	tgtlen = parse_name(tgt, tgtbuf);
-	pos += tgtlen;
+	const auto len{parse_name(this->tgtbuf, tgtbuf)};
+	tgt = string_view{this->tgtbuf, len};
+	pos += len;
 
 	assert(std::distance(pos, end(rdata)) == 0);
 }

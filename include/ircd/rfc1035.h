@@ -85,8 +85,8 @@ struct ircd::rfc1035::answer
 	uint32_t ttl;
 	uint16_t rdlength;
 	const_buffer rdata;
-	size_t namelen;
-	char name[256];
+	string_view name;
+	char namebuf[256];
 
 	const_buffer parse(const const_buffer &);
 
@@ -159,8 +159,8 @@ struct ircd::rfc1035::record::AAAA
 
 struct ircd::rfc1035::record::CNAME
 {
-	size_t namelen;
-	char name[256];
+	string_view name;
+	char namebuf[256];
 
 	CNAME(const const_buffer &rdata);
 };
@@ -170,8 +170,8 @@ struct ircd::rfc1035::record::SRV
 	uint16_t priority;
 	uint16_t weight;
 	uint16_t port;
-	size_t tgtlen;
-	char tgt[256];
+	string_view tgt;
+	char tgtbuf[256];
 
 	SRV(const const_buffer &rdata);
 };
