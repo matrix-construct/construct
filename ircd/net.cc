@@ -2850,15 +2850,22 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const hostport &hp)
 {
-	const auto len
-	{
-		fmt::sprintf
+	if(empty(service(hp)))
+		return fmt::sprintf
 		{
 			buf, "%s:%u", host(hp), port(hp)
-		}
-	};
+		};
 
-	return { data(buf), size_t(len) };
+	if(port(hp) == 0)
+		return fmt::sprintf
+		{
+			buf, "%s (%s)", host(hp), service(hp)
+		};
+
+	return fmt::sprintf
+	{
+		buf, "%s:%u (%s)", host(hp), port(hp), service(hp)
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
