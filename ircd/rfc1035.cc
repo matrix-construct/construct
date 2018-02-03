@@ -174,7 +174,25 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 	return { data(in), pos };
 }
 
-ircd::rfc1035::record::A::A(const const_buffer &rdata)
+//
+// Record
+//
+
+ircd::rfc1035::record::record(const answer &answer)
+:type{answer.qtype}
+,ttl{answer.ttl}
+,rdata{answer.rdata}
+{
+}
+
+/// vtable
+ircd::rfc1035::record::~record()
+noexcept
+{
+}
+
+ircd::rfc1035::record::A::A(const answer &answer)
+:record{answer}
 {
 	assert(size(rdata) == 4);
 	if(unlikely(size(rdata) < 4))
@@ -186,7 +204,8 @@ ircd::rfc1035::record::A::A(const const_buffer &rdata)
 	ip4 = bswap(*(const uint32_t *)data(rdata));
 }
 
-ircd::rfc1035::record::AAAA::AAAA(const const_buffer &rdata)
+ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
+:record{answer}
 {
 	assert(size(rdata) == 16);
 	if(unlikely(size(rdata) < 16))
@@ -198,7 +217,8 @@ ircd::rfc1035::record::AAAA::AAAA(const const_buffer &rdata)
 	ip6 = bswap(*(const uint128_t *)data(rdata));
 }
 
-ircd::rfc1035::record::CNAME::CNAME(const const_buffer &rdata)
+ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
+:record{answer}
 {
 	if(unlikely(size(rdata) < 1))
 		throw error
@@ -210,7 +230,8 @@ ircd::rfc1035::record::CNAME::CNAME(const const_buffer &rdata)
 	name = string_view{namebuf, len};
 }
 
-ircd::rfc1035::record::SRV::SRV(const const_buffer &rdata)
+ircd::rfc1035::record::SRV::SRV(const answer &answer)
+:record{answer}
 {
 	if(unlikely(size(rdata) < 2 + 2 + 2 + 1))
 		throw error
@@ -230,6 +251,10 @@ ircd::rfc1035::record::SRV::SRV(const const_buffer &rdata)
 
 	assert(std::distance(pos, end(rdata)) == 0);
 }
+
+//
+// Util / misc
+//
 
 ircd::const_buffer
 ircd::rfc1035::make_name(const mutable_buffer &out,

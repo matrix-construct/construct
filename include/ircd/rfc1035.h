@@ -125,6 +125,8 @@ static_assert
 	"The RFC1035 header is not the right size in this environment"
 );
 
+/// DNS operation code
+///
 enum class ircd::rfc1035::op
 :uint8_t
 {
@@ -135,37 +137,68 @@ enum class ircd::rfc1035::op
 	UPDATE   = 5,   ///< Update [RFC 2136]
 };
 
+/// Resource record abstract base
+///
 struct ircd::rfc1035::record
 {
 	struct A;
 	struct AAAA;
 	struct CNAME;
 	struct SRV;
+
+	uint16_t type;
+	time_t ttl;
+	const_buffer rdata;
+
+	template<class T> const T &as() const;
+
+	record(const answer &);
+	virtual ~record() noexcept;
 };
 
+template<class T>
+const T &
+ircd::rfc1035::record::as()
+const
+{
+	return dynamic_cast<T &>(*this);
+}
+
+//
+// Types of records
+//
+
+/// IPv4 address record
 struct ircd::rfc1035::record::A
+:record
 {
 	uint32_t ip4;
 
-	A(const const_buffer &rdata);
+	A(const answer &);
 };
 
+/// IPv6 address record
 struct ircd::rfc1035::record::AAAA
+:record
 {
 	uint128_t ip6;
 
-	AAAA(const const_buffer &rdata);
+	AAAA(const answer &);
 };
 
+/// Canonical name aliasing record
 struct ircd::rfc1035::record::CNAME
+:record
 {
 	string_view name;
 	char namebuf[256];
 
-	CNAME(const const_buffer &rdata);
+	CNAME(const answer &);
 };
 
+/// Service record
 struct ircd::rfc1035::record::SRV
+:record
 {
 	uint16_t priority;
 	uint16_t weight;
@@ -173,5 +206,5 @@ struct ircd::rfc1035::record::SRV
 	string_view tgt;
 	char tgtbuf[256];
 
-	SRV(const const_buffer &rdata);
+	SRV(const answer &);
 };
