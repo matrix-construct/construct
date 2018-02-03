@@ -433,8 +433,8 @@ ircd::openssl::print(const mutable_buffer &buf,
 	});
 }
 
-ircd::const_raw_buffer
-ircd::openssl::cert2d(const mutable_raw_buffer &out,
+ircd::const_buffer
+ircd::openssl::cert2d(const mutable_buffer &out,
                       const string_view &pem)
 {
 	const custom_ptr<X509> x509
@@ -476,8 +476,8 @@ ircd::openssl::write_pem(const mutable_buffer &out,
 	});
 }
 
-ircd::const_raw_buffer
-ircd::openssl::i2d(const mutable_raw_buffer &buf,
+ircd::const_buffer
+ircd::openssl::i2d(const mutable_buffer &buf,
                    const X509 &_cert)
 {
 	auto &cert
@@ -499,8 +499,8 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 			"DER requires a %zu byte buffer, you supplied %zu bytes", len, size(buf)
 		};
 
-	uint8_t *out(data(buf));
-	const const_raw_buffer ret
+	auto *out(reinterpret_cast<uint8_t *>(data(buf)));
+	const const_buffer ret
 	{
 		data(buf), size_t(i2d_X509(&cert, &out))
 	};
@@ -508,7 +508,7 @@ ircd::openssl::i2d(const mutable_raw_buffer &buf,
 	if(unlikely(size(ret) != size_t(len)))
 		throw error();
 
-	assert(out - data(buf) == len);
+	assert(out - reinterpret_cast<uint8_t *>(data(buf)) == len);
 	return ret;
 }
 
@@ -1032,7 +1032,7 @@ ircd::string_view
 ircd::openssl::u2a(const mutable_buffer &out,
                    const BIGNUM *const &a)
 {
-	const unique_buffer<mutable_raw_buffer> tmp
+	const unique_buffer<mutable_buffer> tmp
 	{
 		size(a)
 	};
@@ -1040,8 +1040,8 @@ ircd::openssl::u2a(const mutable_buffer &out,
 	return ircd::u2a(out, data(tmp, a));
 }
 
-ircd::mutable_raw_buffer
-ircd::openssl::data(const mutable_raw_buffer &out,
+ircd::mutable_buffer
+ircd::openssl::data(const mutable_buffer &out,
                     const BIGNUM *const &a)
 {
 	if(!a)
@@ -1055,7 +1055,7 @@ ircd::openssl::data(const mutable_raw_buffer &out,
 
 	const auto len
 	{
-		BN_bn2bin(a, data(out))
+		BN_bn2bin(a, reinterpret_cast<uint8_t *>(data(out)))
 	};
 
 	reverse(out);
@@ -1076,21 +1076,21 @@ ircd::openssl::size(const BIGNUM *const &a)
 ircd::openssl::bignum::bignum(const uint128_t &val)
 :bignum
 {
-	const_raw_buffer
+	const_buffer
 	{
-		reinterpret_cast<const uint8_t *>(&val), sizeof(val)
+		reinterpret_cast<const char *>(&val), sizeof(val)
 	}
 }
 {
 }
 
-ircd::openssl::bignum::bignum(const const_raw_buffer &bin)
+ircd::openssl::bignum::bignum(const const_buffer &bin)
 :a{[&bin]
 {
-	// Our binary buffer is little endian. We use
-	thread_local uint8_t tmp[64_KiB];
+	// Our binary buffer is little endian.
+	thread_local char tmp[64_KiB];
 	const critical_assertion ca;
-	const mutable_raw_buffer buf{tmp, size(bin)};
+	const mutable_buffer buf{tmp, size(bin)};
 	if(unlikely(size(buf) > sizeof(tmp)))
 		throw buffer_error
 		{
@@ -1098,7 +1098,7 @@ ircd::openssl::bignum::bignum(const const_raw_buffer &bin)
 		};
 
 	reverse(buf, bin);
-	return BN_bin2bn(data(buf), size(buf), nullptr);
+	return BN_bin2bn(reinterpret_cast<uint8_t *>(data(buf)), size(buf), nullptr);
 }()}
 {
 	if(unlikely(!a))
@@ -1155,9 +1155,9 @@ ircd::uint128_t()
 const
 {
 	uint128_t ret{0};
-	const mutable_raw_buffer buf
+	const mutable_buffer buf
 	{
-		reinterpret_cast<uint8_t *>(&ret), sizeof(ret)
+		reinterpret_cast<char *>(&ret), sizeof(ret)
 	};
 
 	data(buf, a);
@@ -1285,7 +1285,7 @@ ircd::openssl::init::~init()
 
 namespace ircd::crh
 {
-	static void finalize(struct sha256::ctx *const &, const mutable_raw_buffer &);
+	static void finalize(struct sha256::ctx *const &, const mutable_buffer &);
 }
 
 struct ircd::crh::sha256::ctx
@@ -1311,15 +1311,15 @@ ircd::crh::sha256::sha256()
 }
 
 /// One-shot functor. Immediately calls update(); no output
-ircd::crh::sha256::sha256(const const_raw_buffer &in)
+ircd::crh::sha256::sha256(const const_buffer &in)
 :sha256{}
 {
 	update(in);
 }
 
 /// One-shot functor. Immediately calls operator().
-ircd::crh::sha256::sha256(const mutable_raw_buffer &out,
-                          const const_raw_buffer &in)
+ircd::crh::sha256::sha256(const mutable_buffer &out,
+                          const const_buffer &in)
 :sha256{}
 {
 	operator()(out, in);
@@ -1331,13 +1331,13 @@ noexcept
 }
 
 void
-ircd::crh::sha256::update(const const_raw_buffer &buf)
+ircd::crh::sha256::update(const const_buffer &buf)
 {
 	openssl::call(::SHA256_Update, ctx.get(), data(buf), size(buf));
 }
 
 void
-ircd::crh::sha256::digest(const mutable_raw_buffer &buf)
+ircd::crh::sha256::digest(const mutable_buffer &buf)
 const
 {
 	auto copy(*ctx);
@@ -1345,7 +1345,7 @@ const
 }
 
 void
-ircd::crh::sha256::finalize(const mutable_raw_buffer &buf)
+ircd::crh::sha256::finalize(const mutable_buffer &buf)
 {
 	crh::finalize(ctx.get(), buf);
 }
@@ -1359,7 +1359,7 @@ const
 
 void
 ircd::crh::finalize(struct sha256::ctx *const &ctx,
-                    const mutable_raw_buffer &buf)
+                    const mutable_buffer &buf)
 {
 	uint8_t *const md
 	{

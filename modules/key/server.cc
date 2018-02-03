@@ -73,7 +73,7 @@ void foop()
 {
 	using namespace ircd;
 
-	uint8_t seed_buf[ed25519::SEED_SZ + 10];
+	char seed_buf[ed25519::SEED_SZ + 10];
 	const auto seed
 	{
 		b64decode(seed_buf, "YJDBA9Xnr2sVqXD9Vj7XVUnmFZcZrlw8Md7kMW+3XA1")
@@ -89,7 +89,7 @@ void foop()
 	{
 		const auto sig
 		{
-			sk.sign(const_raw_buffer{object})
+			sk.sign(const_buffer{object})
 		};
 
 		char sigb64_buf[128];
@@ -105,7 +105,7 @@ void foop()
 			b64decode(unsig, sigb64)
 		};
 
-		return pk.verify(const_raw_buffer{object}, unsig);
+		return pk.verify(const_buffer{object}, unsig);
 	}};
 
 	std::cout <<

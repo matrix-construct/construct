@@ -286,7 +286,7 @@ catch(const std::exception &e)
 
 namespace ircd::fs
 {
-	string_view read__aio(const string_view &path, const mutable_raw_buffer &, const read_opts &);
+	string_view read__aio(const string_view &path, const mutable_buffer &, const read_opts &);
 	std::string read__aio(const string_view &path, const read_opts &);
 }
 
@@ -294,11 +294,11 @@ namespace ircd::fs
 struct ircd::fs::aio::request::read
 :request
 {
-	read(const int &fd, const mutable_raw_buffer &buf, const read_opts &opts);
+	read(const int &fd, const mutable_buffer &buf, const read_opts &opts);
 };
 
 ircd::fs::aio::request::read::read(const int &fd,
-                                   const mutable_raw_buffer &buf,
+                                   const mutable_buffer &buf,
                                    const read_opts &opts)
 :request{fd}
 {
@@ -348,7 +348,7 @@ ircd::fs::read__aio(const string_view &path,
 
 ircd::string_view
 ircd::fs::read__aio(const string_view &path,
-                    const mutable_raw_buffer &buf,
+                    const mutable_buffer &buf,
                     const read_opts &opts)
 {
 	// Path to open(2) must be null terminated;

@@ -664,7 +664,7 @@ ircd::replace(const string_view &s,
 }
 
 std::string
-ircd::u2a(const const_raw_buffer &in)
+ircd::u2a(const const_buffer &in)
 {
 	return string(size(in) * 2, [&in]
 	(const mutable_buffer &out)
@@ -675,7 +675,7 @@ ircd::u2a(const const_raw_buffer &in)
 
 ircd::string_view
 ircd::u2a(const mutable_buffer &out,
-          const const_raw_buffer &in)
+          const const_buffer &in)
 {
 	char *p(data(out));
 	for(size_t i(0); i < size(in); ++i)
@@ -684,8 +684,8 @@ ircd::u2a(const mutable_buffer &out,
 	return { data(out), size_t(p - data(out)) };
 }
 
-ircd::const_raw_buffer
-ircd::a2u(const mutable_raw_buffer &out,
+ircd::const_buffer
+ircd::a2u(const mutable_buffer &out,
           const const_buffer &in)
 {
 	const size_t len{size(in) / 2};

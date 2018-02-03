@@ -44,14 +44,12 @@ namespace ircd::db
 	bool has(column &, const string_view &key, const gopts & = {});
 
 	// [GET] Convenience functions to copy data into your buffer.
-	// The signed char buffer is null terminated; the unsigned is not.
-	size_t read(column &, const string_view &key, const mutable_raw_buffer &, const gopts & = {});
 	string_view read(column &, const string_view &key, const mutable_buffer &, const gopts & = {});
 	std::string read(column &, const string_view &key, const gopts & = {});
 
 	// [SET] Write data to the db
 	void write(column &, const string_view &key, const string_view &value, const sopts & = {});
-	void write(column &, const string_view &key, const mutable_raw_buffer &, const sopts & = {});
+	void write(column &, const string_view &key, const mutable_buffer &, const sopts & = {});
 
 	// [SET] Remove data from the db. not_found is never thrown.
 	void del(column &, const string_view &key, const sopts & = {});

@@ -91,7 +91,7 @@ ircd::m::keys::init::certificate()
 		fs::read(cert_file)
 	};
 
-	const unique_buffer<mutable_raw_buffer> der_buf
+	const unique_buffer<mutable_buffer> der_buf
 	{
 		8_KiB
 	};
@@ -101,7 +101,7 @@ ircd::m::keys::init::certificate()
 		openssl::cert2d(der_buf, cert_pem)
 	};
 
-	const fixed_buffer<const_raw_buffer, crh::sha256::digest_size> hash
+	const fixed_buffer<const_buffer, crh::sha256::digest_size> hash
 	{
 		sha256{cert_der}
 	};
@@ -139,9 +139,9 @@ ircd::m::keys::init::signing()
 	};
 
 	self::public_key_b64 = b64encode_unpadded(self::public_key);
-	const fixed_buffer<const_raw_buffer, sha256::digest_size> hash
+	const fixed_buffer<const_buffer, sha256::digest_size> hash
 	{
-		sha256{const_raw_buffer{self::public_key}}
+		sha256{const_buffer{self::public_key}}
 	};
 
 	const auto public_key_hash_b58
@@ -210,7 +210,7 @@ ircd::m::keys::init::bootstrap()
 
 	const ed25519::sig sig
 	{
-		self::secret_key.sign(const_raw_buffer{presig})
+		self::secret_key.sign(const_buffer{presig})
 	};
 
 	static char signature[256];
@@ -533,7 +533,7 @@ noexcept try
 	m::keys copy{keys};
 	at<"signatures"_>(copy) = string_view{};
 	const json::strung preimage{copy};
-	return pk.verify(const_raw_buffer{preimage}, sig);
+	return pk.verify(const_buffer{preimage}, sig);
 }
 catch(const std::exception &e)
 {

@@ -1097,7 +1097,7 @@ const
 	{
 		[&preimage](auto &buf)
 		{
-			sha256{buf, const_raw_buffer{preimage}};
+			sha256{buf, const_buffer{preimage}};
 		}
 	};
 }
@@ -1117,7 +1117,7 @@ sign(const tuple &t,
 	{
 		[&sk, &preimage](auto &buf)
 		{
-			sk.sign(buf, const_raw_buffer{preimage});
+			sk.sign(buf, const_buffer{preimage});
 		}
 	};
 }
@@ -1136,7 +1136,7 @@ noexcept try
 		json::strung(t)
 	};
 
-	return pk.verify(const_raw_buffer{preimage}, sig);
+	return pk.verify(const_buffer{preimage}, sig);
 }
 catch(const std::exception &e)
 {

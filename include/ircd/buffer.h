@@ -34,13 +34,7 @@ namespace boost::asio
 /// Lightweight buffer interface compatible with boost::asio IO buffers and vectors
 ///
 /// A const_buffer is a pair of iterators like `const char *` meant for sending
-/// data; a mutable_buffer is a pair of iterators meant for receiving. In fact,
-/// those types store signed char* and our convention is to represent readable
-/// data with them. The const_raw_buffer and mutable_raw_buffer use unsigned
-/// char* pairs and our convention is to represent unreadable/binary data with
-/// them. Remember, these are conventions, not guarantees from these types. The
-/// const_buffer is analogous (but doesn't inherit from) a string_view, so they
-/// play well and convert easily between each other.
+/// data; a mutable_buffer is a pair of iterators meant for receiving.
 ///
 /// These templates offer tools for individual buffers as well as tools for
 /// iterations of buffers.  An iteration of buffers is an iovector that is
@@ -53,21 +47,14 @@ namespace ircd::buffer
 	template<class it> struct buffer;
 	struct const_buffer;
 	struct mutable_buffer;
-	struct const_raw_buffer;
-	struct mutable_raw_buffer;
+	struct stream_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer, uint align = 16> struct unique_buffer;
-	struct stream_buffer;
 
 	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
 	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
-	template<size_t SIZE> using fixed_const_raw_buffer = fixed_buffer<const_raw_buffer, SIZE>;
-	template<size_t SIZE> using fixed_mutable_raw_buffer = fixed_buffer<mutable_raw_buffer, SIZE>;
-
 	template<template<class> class I> using const_buffers = I<const_buffer>;
 	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
-	template<template<class> class I> using const_raw_buffers = I<const_raw_buffer>;
-	template<template<class> class I> using mutable_raw_buffers = I<mutable_raw_buffer>;
 
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
@@ -85,15 +72,15 @@ namespace ircd::buffer
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
-	template<class it> it copy(it &dest, const it &stop, const const_raw_buffer &);
-	size_t copy(const mutable_raw_buffer &dst, const const_raw_buffer &src);
-	size_t reverse(const mutable_raw_buffer &dst, const const_raw_buffer &src);
-	void reverse(const mutable_raw_buffer &buf);
-	void zero(const mutable_raw_buffer &buf);
+	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
+	size_t copy(const mutable_buffer &dst, const const_buffer &src);
+	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
+	void reverse(const mutable_buffer &buf);
+	void zero(const mutable_buffer &buf);
 
 	// Iterable of buffers tools
 	template<template<class> class I, class T> size_t size(const I<T> &buffers);
-	template<template<class> class I, class T> size_t copy(const mutable_raw_buffer &, const I<T> &buffer);
+	template<template<class> class I, class T> size_t copy(const mutable_buffer &, const I<T> &buffer);
 	template<template<class> class I, class T> size_t consume(I<T> &buffers, const size_t &bytes);
 
 	// Convenience copy to std stream
@@ -110,16 +97,12 @@ namespace ircd
 {
 	using buffer::const_buffer;
 	using buffer::mutable_buffer;
-	using buffer::const_raw_buffer;
-	using buffer::mutable_raw_buffer;
 	using buffer::fixed_buffer;
 	using buffer::unique_buffer;
 	using buffer::null_buffer;
 	using buffer::stream_buffer;
 	using buffer::fixed_const_buffer;
 	using buffer::fixed_mutable_buffer;
-	using buffer::fixed_const_raw_buffer;
-	using buffer::fixed_mutable_raw_buffer;
 
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
@@ -171,20 +154,17 @@ struct ircd::buffer::buffer
 	{}
 };
 
-namespace ircd::buffer
-{
-	template<class T> struct mutable_buffer_base;
-}
-
 /// Base for mutable buffers, or buffers which can be written to because they
 /// are not const.
 ///
-template<class T>
-struct ircd::buffer::mutable_buffer_base
-:buffer<T>
+struct ircd::buffer::mutable_buffer
+:buffer<char *>
 {
-	using iterator = typename buffer<T>::iterator;
-	using value_type = typename buffer<T>::value_type;
+	using iterator = typename buffer<char *>::iterator;
+	using value_type = typename buffer<char *>::value_type;
+
+	// Conversion offered for the analogous asio buffer
+	operator boost::asio::mutable_buffer() const;
 
 	// Allows boost::spirit to append to the buffer; this means the size() of
 	// this buffer becomes a consumption counter and the real size of the buffer
@@ -197,151 +177,70 @@ struct ircd::buffer::mutable_buffer_base
 		++std::get<1>(*this);
 	}
 
-	using buffer<T>::buffer;
+	using buffer<char *>::buffer;
 
-	mutable_buffer_base()
+	mutable_buffer()
 	:buffer<iterator>{}
 	{}
 
 	template<size_t SIZE>
-	mutable_buffer_base(value_type (&buf)[SIZE])
+	mutable_buffer(value_type (&buf)[SIZE])
 	:buffer<iterator>{buf, SIZE}
 	{}
 
 	template<size_t SIZE>
-	mutable_buffer_base(std::array<value_type, SIZE> &buf)
+	mutable_buffer(std::array<value_type, SIZE> &buf)
 	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
 	{}
 
 	// lvalue string reference offered to write through to a std::string as
 	// the buffer. not explicit; should be hard to bind by accident...
-	mutable_buffer_base(std::string &buf)
-	:mutable_buffer_base<iterator>{const_cast<iterator>(buf.data()), buf.size()}
+	mutable_buffer(std::string &buf)
+	:mutable_buffer{const_cast<iterator>(buf.data()), buf.size()}
 	{}
-};
-
-/// A writable buffer of signed char data. Convention is for this buffer to
-/// represent readable strings, which may or may not be null terminated. This
-/// is just a convention; not a gurantee of the type.
-///
-struct ircd::buffer::mutable_buffer
-:mutable_buffer_base<char *>
-{
-	// Conversion offered for the analogous asio buffer
-	operator boost::asio::mutable_buffer() const;
-
-	using mutable_buffer_base<char *>::mutable_buffer_base;
 
 	mutable_buffer(const std::function<void (const mutable_buffer &)> &closure)
 	{
 		closure(*this);
 	}
-
-	mutable_buffer() = default;
 };
 
-/// A writable buffer of unsigned signed char data. Convention is for this
-/// buffer to represent unreadable binary data. It may also be constructed
-/// from a mutable_buffer because a buffer of any data (this one) can also
-/// be readable data. The inverse is not true, mutable_buffer cannot be
-/// constructed from this class.
-///
-struct ircd::buffer::mutable_raw_buffer
-:mutable_buffer_base<unsigned char *>
+struct ircd::buffer::const_buffer
+:buffer<const char *>
 {
-	// Conversion offered for the analogous asio buffer
-	operator boost::asio::mutable_buffer() const;
-
-	using mutable_buffer_base<unsigned char *>::mutable_buffer_base;
-
-	mutable_raw_buffer(const mutable_buffer &b)
-	:mutable_buffer_base<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
-	{}
-
-	mutable_raw_buffer(const std::function<void (const mutable_raw_buffer &)> &closure)
-	{
-		closure(*this);
-	}
-
-	mutable_raw_buffer() = default;
-};
-
-namespace ircd::buffer
-{
-	template<class T> struct const_buffer_base;
-}
-
-template<class T>
-struct ircd::buffer::const_buffer_base
-:buffer<T>
-{
-	using iterator = typename buffer<T>::iterator;
-	using value_type = typename buffer<T>::value_type;
+	using iterator = typename buffer<const char *>::iterator;
+	using value_type = typename buffer<const char *>::value_type;
 	using mutable_value_type = typename std::remove_const<value_type>::type;
 
-	using buffer<T>::buffer;
+	operator boost::asio::const_buffer() const;
 
-	const_buffer_base()
+	using buffer<const char *>::buffer;
+
+	const_buffer()
 	:buffer<iterator>{}
 	{}
 
 	template<size_t SIZE>
-	const_buffer_base(const value_type (&buf)[SIZE])
+	const_buffer(const value_type (&buf)[SIZE])
 	:buffer<iterator>{buf, SIZE}
 	{}
 
 	template<size_t SIZE>
-	const_buffer_base(const std::array<mutable_value_type, SIZE> &buf)
+	const_buffer(const std::array<mutable_value_type, SIZE> &buf)
 	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
 	{}
 
-	const_buffer_base(const mutable_buffer &b)
+	const_buffer(const mutable_buffer &b)
 	:buffer<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
 	{}
 
-	const_buffer_base(const string_view &s)
+	const_buffer(const string_view &s)
 	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
-
-	explicit const_buffer_base(const std::string &s)
-	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
-	{}
-};
-
-struct ircd::buffer::const_buffer
-:const_buffer_base<const char *>
-{
-	operator boost::asio::const_buffer() const;
-
-	using const_buffer_base<iterator>::const_buffer_base;
 
 	explicit const_buffer(const std::string &s)
-	:const_buffer_base{s}
+	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
 	{}
-
-	const_buffer() = default;
-};
-
-struct ircd::buffer::const_raw_buffer
-:const_buffer_base<const unsigned char *>
-{
-	operator boost::asio::const_buffer() const;
-
-	using const_buffer_base<iterator>::const_buffer_base;
-
-	const_raw_buffer(const const_buffer &b)
-	:const_buffer_base{reinterpret_cast<iterator>(data(b)), size(b)}
-	{}
-
-	const_raw_buffer(const mutable_raw_buffer &b)
-	:const_buffer_base{reinterpret_cast<iterator>(data(b)), size(b)}
-	{}
-
-	explicit const_raw_buffer(const std::string &s)
-	:const_buffer_base{reinterpret_cast<iterator>(s.data()), s.size()}
-	{}
-
-	const_raw_buffer() = default;
 };
 
 /// fixed_buffer wraps an std::array with construction and conversions apropos
@@ -585,7 +484,7 @@ template<template<class>
          class buffers,
          class T>
 size_t
-ircd::buffer::copy(const mutable_raw_buffer &dest,
+ircd::buffer::copy(const mutable_buffer &dest,
                    const buffers<T> &b)
 {
 	using it = typename T::iterator;
@@ -622,14 +521,14 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 }
 
 inline void
-ircd::buffer::reverse(const mutable_raw_buffer &buf)
+ircd::buffer::reverse(const mutable_buffer &buf)
 {
 	std::reverse(data(buf), data(buf) + size(buf));
 }
 
 inline size_t
-ircd::buffer::reverse(const mutable_raw_buffer &dst,
-                      const const_raw_buffer &src)
+ircd::buffer::reverse(const mutable_buffer &dst,
+                      const const_buffer &src)
 {
 	const size_t ret{std::min(size(dst), size(src))};
 	std::reverse_copy(data(src), data(src) + ret, data(dst));
@@ -637,8 +536,8 @@ ircd::buffer::reverse(const mutable_raw_buffer &dst,
 }
 
 inline size_t
-ircd::buffer::copy(const mutable_raw_buffer &dst,
-                   const const_raw_buffer &src)
+ircd::buffer::copy(const mutable_buffer &dst,
+                   const const_buffer &src)
 {
 	auto e{begin(dst)};
 	copy(e, end(dst), src);
@@ -650,7 +549,7 @@ template<class it>
 it
 ircd::buffer::copy(it &dest,
                    const it &stop,
-                   const const_raw_buffer &src)
+                   const const_buffer &src)
 {
 	const it ret{dest};
 	const ssize_t srcsz(size(src));

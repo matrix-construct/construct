@@ -83,7 +83,7 @@ noexcept
 
 namespace ircd::fs
 {
-	string_view read__std(const string_view &path, const mutable_raw_buffer &, const read_opts &);
+	string_view read__std(const string_view &path, const mutable_buffer &, const read_opts &);
 	std::string read__std(const string_view &path, const read_opts &);
 }
 
@@ -109,7 +109,7 @@ ircd::fs::read(const string_view &path,
 
 ircd::string_view
 ircd::fs::read(const string_view &path,
-               const mutable_raw_buffer &buf,
+               const mutable_buffer &buf,
                const read_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
@@ -137,16 +137,16 @@ ircd::fs::read__std(const string_view &path,
 
 ircd::string_view
 ircd::fs::read__std(const string_view &path,
-                    const mutable_raw_buffer &buf,
+                    const mutable_buffer &buf,
                     const read_opts &opts)
 {
 	std::ifstream file{std::string{path}};
 	file.exceptions(file.failbit | file.badbit);
 	file.seekg(opts.offset, file.beg);
-	file.read(reinterpret_cast<char *>(data(buf)), size(buf));
+	file.read(data(buf), size(buf));
 	return
 	{
-		reinterpret_cast<const char *>(data(buf)), size_t(file.gcount())
+		data(buf), size_t(file.gcount())
 	};
 }
 
@@ -158,7 +158,7 @@ ircd::fs::read__std(const string_view &path,
 
 bool
 ircd::fs::write(const std::string &path,
-                const const_raw_buffer &buf)
+                const const_buffer &buf)
 {
 	if(fs::exists(path))
 		return false;
@@ -168,26 +168,26 @@ ircd::fs::write(const std::string &path,
 
 bool
 ircd::fs::overwrite(const string_view &path,
-                    const const_raw_buffer &buf)
+                    const const_buffer &buf)
 {
 	return overwrite(std::string{path}, buf);
 }
 
 bool
 ircd::fs::overwrite(const std::string &path,
-                    const const_raw_buffer &buf)
+                    const const_buffer &buf)
 {
 	std::ofstream file{path, std::ios::trunc};
-	file.write(reinterpret_cast<const char *>(data(buf)), size(buf));
+	file.write(data(buf), size(buf));
 	return true;
 }
 
 bool
 ircd::fs::append(const std::string &path,
-                 const const_raw_buffer &buf)
+                 const const_buffer &buf)
 {
 	std::ofstream file{path, std::ios::app};
-	file.write(reinterpret_cast<const char *>(data(buf)), size(buf));
+	file.write(data(buf), size(buf));
 	return true;
 }
 

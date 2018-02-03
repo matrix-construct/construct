@@ -45,9 +45,9 @@ namespace ircd
 	template<class T> string_view lex_cast(const T &t);
 
 	// Binary <-> Hex conversion suite
-	const_raw_buffer a2u(const mutable_raw_buffer &out, const const_buffer &in);
-	string_view u2a(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string u2a(const const_raw_buffer &in);
+	const_buffer a2u(const mutable_buffer &out, const const_buffer &in);
+	string_view u2a(const mutable_buffer &out, const const_buffer &in);
+	std::string u2a(const const_buffer &in);
 }
 
 namespace ircd

@@ -36,7 +36,7 @@ ircd::m::event_id(const event &event,
 ircd::m::id::event
 ircd::m::event_id(const event &event,
                   id::event::buf &buf,
-                  const const_raw_buffer &hash)
+                  const const_buffer &hash)
 {
 	char readable[b58encode_size(sha256::digest_size)];
 	return id::event

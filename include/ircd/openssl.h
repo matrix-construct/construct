@@ -98,8 +98,8 @@ namespace ircd::openssl
 	void genec(const string_view &skfile, const string_view &pkfile, const EC_GROUP *const & = secp256k1);
 
 	// X.509 suite
-	const_raw_buffer i2d(const mutable_raw_buffer &out, const X509 &);
-	const_raw_buffer cert2d(const mutable_raw_buffer &out, const string_view &pem);
+	const_buffer i2d(const mutable_buffer &out, const X509 &);
+	const_buffer cert2d(const mutable_buffer &out, const string_view &pem);
 	X509 &read_pem(X509 &out, const string_view &pem);
 	string_view write_pem(const mutable_buffer &out, const X509 &);
 	string_view print(const mutable_buffer &buf, const X509 &, ulong flags = -1);
@@ -142,7 +142,7 @@ namespace ircd::openssl::bio
 namespace ircd::openssl
 {
 	size_t size(const BIGNUM *const &); // bytes binary
-	mutable_raw_buffer data(const mutable_raw_buffer &out, const BIGNUM *const &); // le
+	mutable_buffer data(const mutable_buffer &out, const BIGNUM *const &); // le
 	string_view u2a(const mutable_buffer &out, const BIGNUM *const &);
 }
 
@@ -177,7 +177,7 @@ class ircd::openssl::bignum
 	{}
 
 	explicit bignum(const uint128_t &val);
-	bignum(const const_raw_buffer &bin); // le
+	bignum(const const_buffer &bin); // le
 	explicit bignum(const BIGNUM &a);
 	bignum(const bignum &);
 	bignum(bignum &&) noexcept;

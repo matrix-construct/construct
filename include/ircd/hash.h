@@ -64,28 +64,28 @@ namespace ircd
 /// Use this type when dealing with algorithm-agnostic hashing.
 struct ircd::crh::hash
 {
-	/// Returns the byte length of the mutable_raw_buffer for digests
+	/// Returns the byte length of the mutable_buffer for digests
 	virtual size_t length() const = 0;
 
 	/// Samples the digest at the current state (without modifying)
-	virtual void digest(const mutable_raw_buffer &) const = 0;
+	virtual void digest(const mutable_buffer &) const = 0;
 
 	/// Samples the digest and modifies the state (depending on impl)
-	virtual void finalize(const mutable_raw_buffer &b)
+	virtual void finalize(const mutable_buffer &b)
 	{
 		digest(b);
 	}
 
 	/// Appends to the message
-	virtual void update(const const_raw_buffer &) = 0;
+	virtual void update(const const_buffer &) = 0;
 
 	// conveniences for output
-	template<size_t SIZE> fixed_const_raw_buffer<SIZE> digest() const;
-	template<size_t SIZE> operator fixed_const_raw_buffer<SIZE>() const;
+	template<size_t SIZE> fixed_const_buffer<SIZE> digest() const;
+	template<size_t SIZE> operator fixed_const_buffer<SIZE>() const;
 
 	// conveniences for input
-	void operator()(const mutable_raw_buffer &out, const const_raw_buffer &in);
-	hash &operator+=(const const_raw_buffer &);
+	void operator()(const mutable_buffer &out, const const_buffer &in);
+	hash &operator+=(const const_buffer &);
 
 	virtual ~hash() noexcept;
 };
@@ -102,19 +102,19 @@ final
 		256 / 8
 	};
 
-	using buf = fixed_const_raw_buffer<digest_size>;
+	using buf = fixed_const_buffer<digest_size>;
 
   protected:
 	std::unique_ptr<ctx> ctx;
 
   public:
 	size_t length() const override;
-	void digest(const mutable_raw_buffer &) const override;
-	void finalize(const mutable_raw_buffer &) override;
-	void update(const const_raw_buffer &) override;
+	void digest(const mutable_buffer &) const override;
+	void finalize(const mutable_buffer &) override;
+	void update(const const_buffer &) override;
 
-	sha256(const mutable_raw_buffer &, const const_raw_buffer &);
-	sha256(const const_raw_buffer &);
+	sha256(const mutable_buffer &, const const_buffer &);
+	sha256(const const_buffer &);
 	sha256();
 	~sha256() noexcept;
 };
@@ -122,7 +122,7 @@ final
 /// Automatic gratification from hash::digest()
 template<size_t SIZE>
 ircd::crh::hash::operator
-fixed_const_raw_buffer<SIZE>()
+fixed_const_buffer<SIZE>()
 const
 {
 	return digest<SIZE>();
@@ -130,12 +130,12 @@ const
 
 /// Digests the hash into the buffer of the specified SIZE and returns it
 template<size_t SIZE>
-ircd::fixed_const_raw_buffer<SIZE>
+ircd::fixed_const_buffer<SIZE>
 ircd::crh::hash::digest()
 const
 {
 	assert(SIZE >= length());
-	return fixed_const_raw_buffer<SIZE>
+	return fixed_const_buffer<SIZE>
 	{
 		[this](const auto &buffer)
 		{

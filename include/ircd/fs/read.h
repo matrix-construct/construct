@@ -25,7 +25,7 @@ namespace ircd::fs
 	struct read_opts extern const read_opts_default;
 
 	// Yields ircd::ctx for read into buffer; returns view of read portion.
-	string_view read(const string_view &path, const mutable_raw_buffer &, const read_opts & = read_opts_default);
+	string_view read(const string_view &path, const mutable_buffer &, const read_opts & = read_opts_default);
 
 	// Yields ircd::ctx for read into allocated string; returns that string
 	std::string read(const string_view &path, const read_opts & = read_opts_default);

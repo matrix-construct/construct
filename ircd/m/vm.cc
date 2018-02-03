@@ -78,7 +78,7 @@ ircd::m::vm::commit(json::iov &event,
 	};
 
 	thread_local char preimage_buf[64_KiB];
-	const_raw_buffer preimage
+	const_buffer preimage
 	{
 		stringify(mutable_buffer{preimage_buf}, event)
 	};

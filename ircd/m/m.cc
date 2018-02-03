@@ -431,9 +431,8 @@ ircd::m::user::password(const string_view &password)
 try
 {
 	//TODO: ADD SALT
-	char b64[64];
-	uint8_t hash[32];
-	sha256{hash, const_buffer{password}};
+	char b64[64], hash[32];
+	sha256{hash, password};
 	const auto digest{b64encode_unpadded(b64, hash)};
 	send(accounts, me.user_id, "ircd.password", user_id,
 	{
@@ -460,9 +459,8 @@ const
 	};
 
 	//TODO: ADD SALT
-	char b64[64];
-	uint8_t hash[32];
-	sha256{hash, const_buffer{supplied_password}};
+	char b64[64], hash[32];
+	sha256{hash, supplied_password};
 	const auto supplied_hash{b64encode_unpadded(b64, hash)};
 	const vm::query<vm::where::test> correct_password{[&supplied_hash]
 	(const auto &event)

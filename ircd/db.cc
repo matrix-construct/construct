@@ -3461,39 +3461,22 @@ ircd::db::read(column &column,
 	return ret;
 }
 
-size_t
-ircd::db::read(column &column,
-               const string_view &key,
-               const mutable_raw_buffer &buf,
-               const gopts &gopts)
-{
-	size_t ret(0);
-	const auto copy([&ret, &buf]
-	(const string_view &src)
-	{
-		ret = std::min(size(src), size(buf));
-		memcpy(data(buf), data(src), ret);
-	});
-
-	column(key, copy, gopts);
-	return ret;
-}
-
 ircd::string_view
 ircd::db::read(column &column,
                const string_view &key,
                const mutable_buffer &buf,
                const gopts &gopts)
 {
-	size_t ret(0);
-	const auto copy([&ret, &buf]
+	size_t len(0);
+	const auto copy([&len, &buf]
 	(const string_view &src)
 	{
-		ret = strlcpy(buf, src);
+		len = std::min(size(src), size(buf));
+		memcpy(data(buf), data(src), len);
 	});
 
 	column(key, copy, gopts);
-	return { data(buf), ret };
+	return { data(buf), len };
 }
 
 template<>
@@ -3596,7 +3579,7 @@ ircd::db::del(column &column,
 void
 ircd::db::write(column &column,
                 const string_view &key,
-                const mutable_raw_buffer &buf,
+                const mutable_buffer &buf,
                 const sopts &sopts)
 {
 	const string_view val

@@ -39,7 +39,7 @@ namespace ircd::m
 	std::string pretty(const event &);
 	std::string pretty_oneline(const event &);
 
-	id::event event_id(const event &, id::event::buf &buf, const const_raw_buffer &hash);
+	id::event event_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event event_id(const event &, id::event::buf &buf);
 	id::event event_id(const event &);
 }

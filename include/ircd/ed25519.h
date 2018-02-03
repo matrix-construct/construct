@@ -45,31 +45,31 @@ class ircd::ed25519::sk
 	std::unique_ptr<uint8_t[], void (*)(void *)> key;
 
   public:
-	sig sign(const const_raw_buffer &msg) const;
+	sig sign(const const_buffer &msg) const;
 
 	sk(const std::string &filename, pk *const & = nullptr);
-	sk(pk *const &, const const_raw_buffer &seed);
+	sk(pk *const &, const const_buffer &seed);
 	sk(): key{nullptr, std::free} {}
 };
 
 struct ircd::ed25519::pk
-:fixed_mutable_raw_buffer<PK_SZ>
+:fixed_mutable_buffer<PK_SZ>
 {
-	bool verify(const const_raw_buffer &msg, const sig &) const;
+	bool verify(const const_buffer &msg, const sig &) const;
 
-	using fixed_mutable_raw_buffer<PK_SZ>::fixed_mutable_raw_buffer;
+	using fixed_mutable_buffer<PK_SZ>::fixed_mutable_buffer;
 
 	pk()
-	:fixed_mutable_raw_buffer<PK_SZ>{nullptr}
+	:fixed_mutable_buffer<PK_SZ>{nullptr}
 	{}
 };
 
 struct ircd::ed25519::sig
-:fixed_mutable_raw_buffer<SIG_SZ>
+:fixed_mutable_buffer<SIG_SZ>
 {
-	using fixed_mutable_raw_buffer<SIG_SZ>::fixed_mutable_raw_buffer;
+	using fixed_mutable_buffer<SIG_SZ>::fixed_mutable_buffer;
 
 	sig()
-	:fixed_mutable_raw_buffer<SIG_SZ>{nullptr}
+	:fixed_mutable_buffer<SIG_SZ>{nullptr}
 	{}
 };

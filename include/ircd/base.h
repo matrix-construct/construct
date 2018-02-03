@@ -15,26 +15,26 @@ namespace ircd
 {
 	// Binary -> Base58 encode suite
 	constexpr size_t b58encode_size(const size_t &);
-	size_t b58encode_size(const const_raw_buffer &in);
-	string_view b58encode(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string b58encode(const const_raw_buffer &in);
+	size_t b58encode_size(const const_buffer &in);
+	string_view b58encode(const mutable_buffer &out, const const_buffer &in);
+	std::string b58encode(const const_buffer &in);
 
 	// Base58 -> Binary decode suite
 	constexpr size_t b58decode_size(const size_t &);
 	size_t b58decode_size(const string_view &in);
-	const_raw_buffer b58decode(const mutable_raw_buffer &out, const string_view &in);
+	const_buffer b58decode(const mutable_buffer &out, const string_view &in);
 	std::string b58decode(const string_view &in);
 
 	// Binary -> Base64 conversion suite
-	string_view b64encode(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string b64encode(const const_raw_buffer &in);
+	string_view b64encode(const mutable_buffer &out, const const_buffer &in);
+	std::string b64encode(const const_buffer &in);
 
 	// Binary -> Base64 conversion without padding
-	string_view b64encode_unpadded(const mutable_buffer &out, const const_raw_buffer &in);
-	std::string b64encode_unpadded(const const_raw_buffer &in);
+	string_view b64encode_unpadded(const mutable_buffer &out, const const_buffer &in);
+	std::string b64encode_unpadded(const const_buffer &in);
 
 	// Base64 -> Binary conversion (padded or unpadded)
-	const_raw_buffer b64decode(const mutable_raw_buffer &out, const string_view &in);
+	const_buffer b64decode(const mutable_buffer &out, const string_view &in);
 	std::string b64decode(const string_view &in);
 }
 
@@ -51,7 +51,7 @@ ircd::b58decode_size(const size_t &in)
 }
 
 inline size_t
-ircd::b58encode_size(const const_raw_buffer &in)
+ircd::b58encode_size(const const_buffer &in)
 {
 	return b58encode_size(size(in));
 }

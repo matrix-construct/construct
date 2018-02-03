@@ -19,13 +19,13 @@ namespace ircd
 		'='
 	};
 
-	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_raw_buffer &)>;
-	static std::string _b64encode(const const_raw_buffer &in, const _b64_encoder &);
+	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_buffer &)>;
+	static std::string _b64encode(const const_buffer &in, const _b64_encoder &);
 }
 
 /// Allocate and return a string without padding from the encoding of in
 std::string
-ircd::b64encode_unpadded(const const_raw_buffer &in)
+ircd::b64encode_unpadded(const const_buffer &in)
 {
 	return _b64encode(in, [](const auto &out, const auto &in)
 	{
@@ -35,7 +35,7 @@ ircd::b64encode_unpadded(const const_raw_buffer &in)
 
 /// Allocate and return a string from the encoding of in
 std::string
-ircd::b64encode(const const_raw_buffer &in)
+ircd::b64encode(const const_buffer &in)
 {
 	return _b64encode(in, [](const auto &out, const auto &in)
 	{
@@ -45,7 +45,7 @@ ircd::b64encode(const const_raw_buffer &in)
 
 /// Internal; dedupes encoding functions that create and return a string
 static std::string
-ircd::_b64encode(const const_raw_buffer &in,
+ircd::_b64encode(const const_buffer &in,
                  const _b64_encoder &encoder)
 {
 	// Allocate a buffer 1.33 times larger than input with pessimistic
@@ -66,7 +66,7 @@ ircd::_b64encode(const const_raw_buffer &in,
 /// padding is not present in the returned view.
 ircd::string_view
 ircd::b64encode(const mutable_buffer &out,
-                const const_raw_buffer &in)
+                const const_buffer &in)
 {
 	const auto pads
 	{
@@ -92,7 +92,7 @@ ircd::b64encode(const mutable_buffer &out,
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in.
 ircd::string_view
 ircd::b64encode_unpadded(const mutable_buffer &out,
-                         const const_raw_buffer &in)
+                         const const_buffer &in)
 {
 	namespace iterators = boost::archive::iterators;
 	using transform = iterators::transform_width<unsigned char *, 6, 8>;
@@ -127,9 +127,9 @@ ircd::b64decode(const string_view &in)
 	};
 
 	std::string ret(max, char{});
-	const mutable_raw_buffer buf
+	const mutable_buffer buf
 	{
-		reinterpret_cast<unsigned char *>(const_cast<char *>(ret.data())), ret.size()
+		const_cast<char *>(ret.data()), ret.size()
 	};
 
 	const auto decoded
@@ -144,8 +144,8 @@ ircd::b64decode(const string_view &in)
 
 /// Decode base64 from in to the buffer at out; out can be 75% of the size
 /// of in.
-ircd::const_raw_buffer
-ircd::b64decode(const mutable_raw_buffer &out,
+ircd::const_buffer
+ircd::b64decode(const mutable_buffer &out,
                 const string_view &in)
 {
 	namespace iterators = boost::archive::iterators;
@@ -183,9 +183,9 @@ std::string
 ircd::b58decode(const string_view &in)
 {
 	std::string ret(b58decode_size(in), char{});
-	const mutable_raw_buffer buf
+	const mutable_buffer buf
 	{
-		reinterpret_cast<unsigned char *>(const_cast<char *>(ret.data())), ret.size()
+		const_cast<char *>(ret.data()), ret.size()
 	};
 
 	const auto decoded
@@ -198,8 +198,8 @@ ircd::b58decode(const string_view &in)
 	return ret;
 }
 
-ircd::const_raw_buffer
-ircd::b58decode(const mutable_raw_buffer &buf,
+ircd::const_buffer
+ircd::b58decode(const mutable_buffer &buf,
                 const string_view &in)
 {
 	auto p(begin(in));
@@ -207,7 +207,7 @@ ircd::b58decode(const mutable_raw_buffer &buf,
 	for(; p != end(in) && *p == '1'; ++p)
 		++zeroes;
 
-	const mutable_raw_buffer out
+	const mutable_buffer out
 	{
 		data(buf) + zeroes, std::min(b58decode_size(in), size(buf) - zeroes)
 	};
@@ -238,7 +238,7 @@ ircd::b58decode(const mutable_raw_buffer &buf,
 }
 
 std::string
-ircd::b58encode(const const_raw_buffer &in)
+ircd::b58encode(const const_buffer &in)
 {
 	return string(b58encode_size(in), [&in]
 	(const mutable_buffer &buf)
@@ -249,7 +249,7 @@ ircd::b58encode(const const_raw_buffer &in)
 
 ircd::string_view
 ircd::b58encode(const mutable_buffer &buf,
-                const const_raw_buffer &in)
+                const const_buffer &in)
 {
 	auto p(begin(in));
 	size_t zeroes(0);

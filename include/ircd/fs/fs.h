@@ -94,10 +94,10 @@ namespace ircd::fs
 	bool mkdir(const std::string &path);
 
 	// This suite of IO functions may yield your context.
-	bool write(const std::string &name, const const_raw_buffer &buf);
-	bool append(const std::string &name, const const_raw_buffer &buf);
-	bool overwrite(const std::string &name, const const_raw_buffer &buf);
-	bool overwrite(const string_view &name, const const_raw_buffer &buf);
+	bool write(const std::string &name, const const_buffer &buf);
+	bool append(const std::string &name, const const_buffer &buf);
+	bool overwrite(const std::string &name, const const_buffer &buf);
+	bool overwrite(const string_view &name, const const_buffer &buf);
 
 	extern aio *aioctx;
 }

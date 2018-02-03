@@ -65,7 +65,7 @@ namespace ircd::net
 	size_t available(const socket &) noexcept;
 	ipport local_ipport(const socket &) noexcept;
 	ipport remote_ipport(const socket &) noexcept;
-	const_raw_buffer peer_cert_der(const mutable_raw_buffer &, const socket &);
+	const_buffer peer_cert_der(const mutable_buffer &, const socket &);
 }
 
 // Exports to ircd::

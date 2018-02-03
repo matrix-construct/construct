@@ -56,8 +56,8 @@ ircd::net::log
 	"net", 'N'
 };
 
-ircd::const_raw_buffer
-ircd::net::peer_cert_der(const mutable_raw_buffer &buf,
+ircd::const_buffer
+ircd::net::peer_cert_der(const mutable_buffer &buf,
                          const socket &socket)
 {
 	const SSL &ssl(socket);
@@ -2958,26 +2958,6 @@ const
 }
 
 ircd::buffer::const_buffer::operator
-boost::asio::const_buffer()
-const
-{
-	return boost::asio::const_buffer
-	{
-		data(*this), size(*this)
-	};
-}
-
-ircd::buffer::mutable_raw_buffer::operator
-boost::asio::mutable_buffer()
-const
-{
-	return boost::asio::mutable_buffer
-	{
-		data(*this), size(*this)
-	};
-}
-
-ircd::buffer::const_raw_buffer::operator
 boost::asio::const_buffer()
 const
 {
