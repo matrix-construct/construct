@@ -10,6 +10,152 @@
 
 #include <ircd/m/m.h>
 
+/// Convenience to get value from the current room head.
+void
+ircd::m::state::get__room(const id::room &room_id,
+                          const string_view &type,
+                          const string_view &state_key,
+                          const id_closure &closure)
+{
+	char head[ID_MAX_SZ];
+	return get(get_head(head, room_id), type, state_key, closure);
+}
+
+/// Convenience to get value making a key
+void
+ircd::m::state::get(const string_view &head,
+                    const string_view &type,
+                    const string_view &state_key,
+                    const id_closure &closure)
+{
+	char key[KEY_MAX_SZ];
+	return get(head, make_key(key, type, state_key), closure);
+}
+
+/// see: get(); user does not have to supply column reference here
+void
+ircd::m::state::get(const string_view &head,
+                    const json::array &key,
+                    const id_closure &closure)
+{
+	db::column column
+	{
+		*event::events, "state_node"
+	};
+
+	get(column, head, key, closure);
+}
+
+/// Recursive query to find the leaf value for the given key, starting from
+/// the given head node ID. Value can be viewed in the closure. This throws
+/// m::NOT_FOUND if the exact key and its value does not exist in the tree;
+/// no node ID's are ever returned here.
+void
+ircd::m::state::get(db::column &column,
+                    const string_view &head,
+                    const json::array &key,
+                    const id_closure &closure)
+{
+	char nextbuf[ID_MAX_SZ];
+	string_view nextid{head};
+	while(nextid) get_node(column, nextid, [&](const node &node)
+	{
+		auto pos(node.find(key));
+		if(pos < node.keys() && node.key(pos) == key)
+		{
+			nextid = {};
+			closure(node.val(pos));
+			return;
+		}
+
+		const auto c(node.childs());
+		if(c && pos >= c)
+			pos = c - 1;
+
+		if(!node.has_child(pos))
+			throw m::NOT_FOUND{};
+
+		nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
+	});
+}
+
+bool
+ircd::m::state::dfs(const string_view &node_id,
+                    const search_closure &closure)
+{
+	db::column column
+	{
+		*event::events, "state_node"
+	};
+
+	return dfs(column, node_id, closure);
+}
+
+bool
+ircd::m::state::dfs(db::column &column,
+                    const string_view &node_id,
+                    const search_closure &closure)
+{
+	int depth(-1);
+	const std::function<bool (const node &)> recurse{[&depth, &closure, &column, &recurse]
+	(const node &node)
+	{
+		++depth;
+		const unwind down{[&depth]
+		{
+			--depth;
+		}};
+
+		const node::rep rep{node};
+		for(uint pos(0); pos < rep.kn || pos < rep.cn; ++pos)
+		{
+			const auto child{unquote(rep.chld[pos])};
+			if(!empty(child))
+			{
+				bool ret{false};
+				get_node(column, child, [&ret, &recurse]
+				(const auto &node)
+				{
+					ret = recurse(node);
+				});
+
+				if(ret)
+					return true;
+			}
+
+			if(rep.kn > pos)
+			{
+				const auto &key{rep.keys[pos]};
+				const auto &val{unquote(rep.vals[pos])};
+				if(closure(key, val, depth, pos))
+					return true;
+			}
+		}
+
+		return false;
+	}};
+
+	bool ret{false};
+	get_node(column, node_id, [&ret, &recurse]
+	(const auto &node)
+	{
+		ret = recurse(node);
+	});
+
+	return ret;
+}
+
+// Internal insertion operations
+namespace ircd::m::state
+{
+	string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	json::object _insert_leaf_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
+	string_view _insert_branch_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
+	json::object _insert_branch_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
+	string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push, const mutable_buffer &pushbuf);
+}
+
 void
 ircd::m::state::append_nodes(db::txn &txn,
                              const event &event)
@@ -42,85 +188,6 @@ ircd::m::state::append_nodes(db::txn &txn,
 	}
 
 	state::insert(txn, room_id, type, state_key, event_id);
-}
-
-/// Convenience to get value from the current room head.
-void
-ircd::m::state::get_value__room(const id::room &room_id,
-                                const string_view &type,
-                                const string_view &state_key,
-                                const id_closure &closure)
-{
-	char head[ID_MAX_SZ];
-	return get_value(get_head(head, room_id), type, state_key, closure);
-}
-
-/// Convenience to get value making a key
-void
-ircd::m::state::get_value(const string_view &head,
-                          const string_view &type,
-                          const string_view &state_key,
-                          const id_closure &closure)
-{
-	char key[KEY_MAX_SZ];
-	return get_value(head, make_key(key, type, state_key), closure);
-}
-
-/// see: get_value(); user does not have to supply column reference here
-void
-ircd::m::state::get_value(const string_view &head,
-                          const json::array &key,
-                          const id_closure &closure)
-{
-	db::column column
-	{
-		*event::events, "state_node"
-	};
-
-	get_value(column, head, key, closure);
-}
-
-/// Recursive query to find the leaf value for the given key, starting from
-/// the given head node ID. Value can be viewed in the closure. This throws
-/// m::NOT_FOUND if the exact key and its value does not exist in the tree;
-/// no node ID's are ever returned here.
-void
-ircd::m::state::get_value(db::column &column,
-                          const string_view &head,
-                          const json::array &key,
-                          const id_closure &closure)
-{
-	char nextbuf[ID_MAX_SZ];
-	string_view nextid{head};
-	while(nextid) get_node(column, nextid, [&](const node &node)
-	{
-		auto pos(node.find(key));
-		if(pos < node.keys() && node.key(pos) == key)
-		{
-			nextid = {};
-			closure(node.val(pos));
-			return;
-		}
-
-		const auto c(node.childs());
-		if(c && pos >= c)
-			pos = c - 1;
-
-		if(!node.has_child(pos))
-			throw m::NOT_FOUND{};
-
-		nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
-	});
-}
-
-namespace ircd::m::state
-{
-	string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	json::object _insert_leaf_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
-	string_view _insert_branch_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
-	json::object _insert_branch_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
-	string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push, const mutable_buffer &pushbuf);
 }
 
 void

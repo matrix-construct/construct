@@ -11,13 +11,24 @@
 #pragma once
 #define HAVE_IRCD_M_STATE_H
 
+/// Matrix state machine unit and bus.
+///
+/// This section deals specifically with the aspect of Matrix called "state"
+/// providing tools and utilities as well as local databasing. IO is done for
+/// reads, and indirect into db::txn's for writes. No network activities are
+/// conducted here.
+///
+/// These tools allow the user to query aspects of the "state" of a room at
+/// the point of any event. Composed out of these queries are a suite of more
+/// utilities to efficiently aid the Matrix virtual machine with the rest of
+/// its tasks.
+///
 namespace ircd::m::state
 {
 	struct node;
 
 	using id_closure = std::function<void (const string_view &)>;
 	using node_closure = std::function<void (const json::object &)>;
-	using key_closure = std::function<void (const json::array &)>;
 
 	constexpr size_t ID_MAX_SZ { 64 };
 	constexpr size_t KEY_MAX_SZ { 256 + 256 + 16 };
@@ -40,17 +51,21 @@ namespace ircd::m::state
 	string_view get_head(const mutable_buffer &out, const id::room &);
 	void set_head(db::txn &txn, const id::room &, const string_view &head);
 
-	void get_value(db::column &, const string_view &head, const json::array &key, const id_closure &);
-	void get_value(const string_view &head, const json::array &key, const id_closure &);
-	void get_value(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
-	void get_value__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
-
 	void insert(db::txn &txn, const id::room &, const json::array &key, const id::event &);
 	void insert(db::txn &txn, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
-
 	void append_nodes(db::txn &, const event &);
+
+	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
+	bool dfs(db::column &, const string_view &node_id, const search_closure &);
+	bool dfs(const string_view &node_id, const search_closure &);
+
+	void get(db::column &, const string_view &head, const json::array &key, const id_closure &);
+	void get(const string_view &head, const json::array &key, const id_closure &);
+	void get(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
+	void get__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
 }
 
+/// JSON property name strings specifically for use in m::state
 namespace ircd::m::state::name
 {
 	constexpr const char *const k {"k"};
