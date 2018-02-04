@@ -8,13 +8,13 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_NET_ACCEPTOR_H
+
 // This file is not included with the IRCd standard include stack because
 // it requires symbols we can't forward declare without boost headers. It
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
-
-#pragma once
-#define HAVE_IRCD_NET_ACCEPTOR_H
 
 struct ircd::net::listener::acceptor
 :std::enable_shared_from_this<struct ircd::net::listener::acceptor>
