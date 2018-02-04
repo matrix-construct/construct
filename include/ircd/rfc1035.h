@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_RFC1035_H
 
-/// RFC 1035 (Nov. 1987)
+/// RFC 1035 "Domain Names" (Nov. 1987)
 ///
 namespace ircd::rfc1035
 {
@@ -33,60 +33,10 @@ namespace ircd::rfc1035
 	mutable_buffer make_query(const mutable_buffer &, const uint16_t &id, const question &);
 }
 
-/// Helper class to construct or parse a question. An object is constructed
-/// with a fully qualified domain string and the query type (qtype). At the
-/// appropriate time we will call print() which prints a properly binary-
-/// formatted question for the question section in a DNS query; generally the
-/// user does not need to do this.
-///
-/// Note that each part of the fqdn cannot be longer than 63 characters. The
-/// supplied buffer must be large enough to hold the output, which is about
-/// the length of the fqdn + 6 bytes. The qtype can be specified as a string
-/// i.e "A" or "PTR" and it will be translated into the protocol number for
-/// you in the constructor.
-///
-struct ircd::rfc1035::question
-{
-	uint16_t qtype;
-	uint16_t qclass {0x01};
-	size_t namelen {0};
-	char name[256];
-
-	/// Composes the question into buffer, returns used portion
-	mutable_buffer print(const mutable_buffer &) const;
-	const_buffer parse(const const_buffer &);
-
-	/// Supply fully qualified domain name and numerical query type
-	question(const string_view &fqdn, const uint16_t &qtype);
-
-	/// Supply fully qualified domain name and name of query type i.e "A"
-	question(const string_view &fqdn, const string_view &qtype)
-	:question{fqdn, rfc1035::qtype.at(qtype)}
-	{}
-
-	question() = default;
-};
-
-/// Helper class to parse an answer.
-///
-struct ircd::rfc1035::answer
-{
-	uint16_t qtype;
-	uint16_t qclass;
-	uint32_t ttl;
-	uint16_t rdlength;
-	const_buffer rdata;
-	string_view name;
-	char namebuf[256];
-
-	const_buffer parse(const const_buffer &);
-
-	answer() = default;
-};
-
 /// Direct representation of the DNS header. This is laid out for
-/// little-endian platforms only. The uint16_t's are still big-endian and
-/// must be bswap()'ed.
+/// little-endian platforms only. The uint16_t's are big endian when this is
+/// punned on the wire data. The debug() function makes it into a pretty
+/// string but makes no endian adjustments.
 ///
 struct ircd::rfc1035::header
 {
@@ -128,7 +78,70 @@ enum class ircd::rfc1035::op
 	UPDATE   = 5,   ///< Update [RFC 2136]
 };
 
-/// Resource record abstract base
+/// Helper class to construct or parse a question. An object is constructed
+/// with a fully qualified domain string and the query type (qtype).
+///
+/// Note that each part of the fqdn cannot be longer than 63 characters. The
+/// supplied buffer must be large enough to hold the output, which is about
+/// the length of the fqdn + 6 bytes. The qtype can be specified as a string
+/// i.e "A" or "PTR" and it will be translated into the protocol number for
+/// you in the constructor. All integers are dealt with in host byte order.
+///
+struct ircd::rfc1035::question
+{
+	uint16_t qtype;
+	uint16_t qclass {0x01};
+	size_t namelen {0};
+	char name[256];
+
+	/// Composes the question into buffer, returns used portion
+	mutable_buffer print(const mutable_buffer &) const;
+	const_buffer parse(const const_buffer &);
+
+	/// Supply fully qualified domain name and numerical query type
+	question(const string_view &fqdn, const uint16_t &qtype);
+
+	/// Supply fully qualified domain name and name of query type i.e "A"
+	question(const string_view &fqdn, const string_view &qtype)
+	:question{fqdn, rfc1035::qtype.at(qtype)}
+	{}
+
+	question() = default;
+};
+
+/// Helper class to parse an answer. When the DNS header is received we get
+/// an answer count. For each answer in the answer section parse() is called
+/// which stocks this object and then returns a buffer tight to that specific
+/// answer section. The `rdata` is the actual record content which the user
+/// can then treat later with rfc1035::record. All integers are dealt with in
+/// host byte order.
+///
+struct ircd::rfc1035::answer
+{
+	uint16_t qtype;
+	uint16_t qclass;
+	uint32_t ttl;
+	uint16_t rdlength;
+	const_buffer rdata;
+	string_view name;
+	char namebuf[256];
+
+	const_buffer parse(const const_buffer &);
+
+	answer() = default;
+};
+
+/// Resource record abstract base. The purpose of this abstraction is to allow
+/// records of any variety to all be dealt with via a `rfc1035::record *` ptr
+/// and then be downcasted to the specific derived type elaborated below. Use
+/// the as() template to downcast.
+///
+/// Generally this object is not instantiated directly; each record type will
+/// construct this instead. Nevertheless, the full raw data and type number
+/// for the record is available in here. All constructors (for both this
+/// abstraction and for the derivations) take an already-parsed rfc1035::answer
+/// as their argument; the qtype and ttl information from the answer header is
+/// included while the legacy qclass is omitted.
 ///
 struct ircd::rfc1035::record
 {
@@ -148,6 +161,7 @@ struct ircd::rfc1035::record
 	virtual ~record() noexcept;
 };
 
+/// Downcast an abstract record reference to the specific record structure.
 template<class T>
 const T &
 ircd::rfc1035::record::as()
@@ -160,7 +174,8 @@ const
 // Types of records
 //
 
-/// IPv4 address record
+/// IPv4 address record.
+/// The integer is laid out in host byte order.
 struct ircd::rfc1035::record::A
 :record
 {
@@ -170,7 +185,8 @@ struct ircd::rfc1035::record::A
 	A() = default;
 };
 
-/// IPv6 address record
+/// IPv6 address record.
+/// The integer is laid out in host byte order.
 struct ircd::rfc1035::record::AAAA
 :record
 {
@@ -191,7 +207,8 @@ struct ircd::rfc1035::record::CNAME
 	CNAME() = default;
 };
 
-/// Service record
+/// Service record.
+/// The integers are laid out in host byte order.
 struct ircd::rfc1035::record::SRV
 :record
 {
