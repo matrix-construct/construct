@@ -2976,7 +2976,7 @@ ircd::db::cell::cell(column column,
                      gopts opts)
 :c{std::move(column)}
 ,ss{opts.snapshot}
-,it{ss && !index.empty()? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
+,it{!index.empty()? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
 {
 	if(bool(this->it))
 		if(!valid_eq(*this->it, index))
