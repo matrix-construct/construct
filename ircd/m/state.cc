@@ -87,17 +87,69 @@ ircd::m::state::get(const string_view &head,
 	});
 }
 
+size_t
+ircd::m::state::count(const string_view &head)
+{
+	return count(head, []
+	(const json::array &key, const string_view &val)
+	{
+		return true;
+	});
+}
+
+size_t
+ircd::m::state::count(const string_view &head,
+                      const iter_bool_closure &closure)
+{
+	size_t ret{0};
+	each(head, [&ret, &closure]
+	(const json::array &key, const string_view &val)
+	{
+		ret += closure(key, val);
+		return true;
+	});
+
+	return ret;
+}
+
+///TODO: optimize
+bool
+ircd::m::state::each(const string_view &head,
+                     const string_view &type,
+                     const iter_bool_closure &closure)
+{
+	return each(head, [&type, &closure]
+	(const json::array &key, const string_view &val)
+	{
+		if(unquote(key.at(0)) != type)
+			return true;
+
+		return closure(key, val);
+	});
+}
+
+bool
+ircd::m::state::each(const string_view &head,
+                     const iter_bool_closure &closure)
+{
+	return dfs(head, [&closure]
+	(const json::array &key, const string_view &val, const uint &, const uint &)
+	{
+		return closure(key, val);
+	});
+}
+
 namespace ircd::m::state
 {
 	bool _dfs_recurse(const search_closure &, const node &, int &);
 }
 
 bool
-ircd::m::state::dfs(const string_view &node_id,
+ircd::m::state::dfs(const string_view &head,
                     const search_closure &closure)
 {
-	bool ret{false};
-	get_node(node_id, [&closure, &ret]
+	bool ret{true};
+	get_node(head, [&closure, &ret]
 	(const auto &node)
 	{
 		int depth(-1);
@@ -128,27 +180,27 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 
 		if(!empty(child))
 		{
-			bool ret{false};
+			bool ret{true};
 			get_node(child, [&closure, &depth, &ret]
 			(const auto &node)
 			{
 				ret = _dfs_recurse(closure, node, depth);
 			});
 
-			if(ret)
-				return true;
+			if(!ret)
+				return ret;
 		}
 
 		if(rep.kn > pos)
 		{
 			const auto &key{rep.keys[pos]};
 			const auto &val{unquote(rep.vals[pos])};
-			if(closure(key, val, depth, pos))
-				return true;
+			if(!closure(key, val, depth, pos))
+				return false;
 		}
 	}
 
-	return false;
+	return true;
 }
 
 // Internal insertion operations

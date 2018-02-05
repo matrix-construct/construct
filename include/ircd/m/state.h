@@ -28,9 +28,6 @@ namespace ircd::m::state
 	struct init;
 	struct node;
 
-	using id_closure = std::function<void (const string_view &)>;
-	using node_closure = std::function<void (const json::object &)>;
-
 	constexpr size_t ID_MAX_SZ { 64 };
 	constexpr size_t KEY_MAX_SZ { 256 + 256 + 16 };
 	constexpr size_t VAL_MAX_SZ { 256 + 16 };
@@ -40,11 +37,16 @@ namespace ircd::m::state
 	constexpr size_t NODE_MAX_DEG { NODE_MAX_KEY + 1 }; // tmp for now
 	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
+	using id_closure = std::function<void (const string_view &)>;
+	using node_closure = std::function<void (const json::object &)>;
+	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
+	using iter_closure = std::function<void (const json::array &, const string_view &)>;
+	using iter_bool_closure = std::function<bool (const json::array &, const string_view &)>;
+
 	int keycmp(const json::array &a, const json::array &b);
-
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
-	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 
+	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
 
 	string_view get_head(const mutable_buffer &out, const id::room &);
@@ -54,8 +56,11 @@ namespace ircd::m::state
 	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
 	string_view insert(db::txn &, const mutable_buffer &head, const event &);
 
-	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
-	bool dfs(const string_view &node_id, const search_closure &);
+	bool dfs(const string_view &head, const search_closure &);
+	bool each(const string_view &head, const iter_bool_closure &);
+	bool each(const string_view &head, const string_view &type, const iter_bool_closure &);
+	size_t count(const string_view &head, const iter_bool_closure &);
+	size_t count(const string_view &head);
 
 	void get(const string_view &head, const json::array &key, const id_closure &);
 	void get(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
