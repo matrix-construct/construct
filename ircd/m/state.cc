@@ -79,6 +79,11 @@ ircd::m::state::get(db::column &column,
 	});
 }
 
+namespace ircd::m::state
+{
+	bool _dfs_recurse(db::column &, const search_closure &, const node &, int &);
+}
+
 bool
 ircd::m::state::dfs(const string_view &node_id,
                     const search_closure &closure)
@@ -96,53 +101,60 @@ ircd::m::state::dfs(db::column &column,
                     const string_view &node_id,
                     const search_closure &closure)
 {
-	int depth(-1);
-	const std::function<bool (const node &)> recurse{[&depth, &closure, &column, &recurse]
-	(const node &node)
-	{
-		++depth;
-		const unwind down{[&depth]
-		{
-			--depth;
-		}};
-
-		const node::rep rep{node};
-		for(uint pos(0); pos < rep.kn || pos < rep.cn; ++pos)
-		{
-			const auto child{unquote(rep.chld[pos])};
-			if(!empty(child))
-			{
-				bool ret{false};
-				get_node(column, child, [&ret, &recurse]
-				(const auto &node)
-				{
-					ret = recurse(node);
-				});
-
-				if(ret)
-					return true;
-			}
-
-			if(rep.kn > pos)
-			{
-				const auto &key{rep.keys[pos]};
-				const auto &val{unquote(rep.vals[pos])};
-				if(closure(key, val, depth, pos))
-					return true;
-			}
-		}
-
-		return false;
-	}};
-
 	bool ret{false};
-	get_node(column, node_id, [&ret, &recurse]
+	get_node(column, node_id, [&column, &closure, &ret]
 	(const auto &node)
 	{
-		ret = recurse(node);
+		int depth(-1);
+		ret = _dfs_recurse(column, closure, node, depth);
 	});
 
 	return ret;
+}
+
+bool
+ircd::m::state::_dfs_recurse(db::column &column,
+                             const search_closure &closure,
+                             const node &node,
+                             int &depth)
+{
+	++depth;
+	const unwind down{[&depth]
+	{
+		--depth;
+	}};
+
+	const node::rep rep{node};
+	for(uint pos(0); pos < rep.kn || pos < rep.cn; ++pos)
+	{
+		const auto child
+		{
+			unquote(rep.chld[pos])
+		};
+
+		if(!empty(child))
+		{
+			bool ret{false};
+			get_node(column, child, [&column, &closure, &depth, &ret]
+			(const auto &node)
+			{
+				ret = _dfs_recurse(column, closure, node, depth);
+			});
+
+			if(ret)
+				return true;
+		}
+
+		if(rep.kn > pos)
+		{
+			const auto &key{rep.keys[pos]};
+			const auto &val{unquote(rep.vals[pos])};
+			if(closure(key, val, depth, pos))
+				return true;
+		}
+	}
+
+	return false;
 }
 
 // Internal insertion operations
