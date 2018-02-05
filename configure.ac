@@ -452,6 +452,9 @@ RB_CHK_SYSHEADER(winsock2.h, [WINSOCK2_H])
 RB_CHK_SYSHEADER(ws2tcpip.h, [WS2TCPIP_H])
 RB_CHK_SYSHEADER(iphlpapi.h, [IPHLPAPI_H])
 
+dnl x86 platform
+RB_CHK_SYSHEADER(x86intrin.h, [X86INTRIN_H])
+
 dnl experimental
 RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])
 RB_CHK_SYSHEADER(experimental/optional, [EXPERIMENTAL_OPTIONAL])

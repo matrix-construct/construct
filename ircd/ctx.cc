@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_X86INTRIN_H
 #include <ircd/asio.h>
 
 /// Internal context implementation
@@ -798,6 +799,7 @@ ircd::ctx::debug_stats(const pool &pool)
 namespace ircd::ctx::prof
 {
 	time_point cur_slice_start;     // Time slice state
+	uint64_t cur_slice_rdtsc;       // Time slice state
 
 	void check_stack();
 	void check_slice();
@@ -860,32 +862,45 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_start()
 {
+	cur_slice_rdtsc = __rdtsc();
 	cur_slice_start = steady_clock::now();
 }
 
 void
 ircd::ctx::prof::check_slice()
 {
-	auto &c(cur());
+	const uint64_t now_rdtsc(__rdtsc());
+	const uint64_t rdtsc_usage(now_rdtsc - cur_slice_rdtsc);
 
-	const auto time_usage(steady_clock::now() - cur_slice_start);
+	const auto now_sc(steady_clock::now());
+	const auto time_usage(now_sc - cur_slice_start);
+
+	auto &c(cur());
 	c.awake += duration_cast<microseconds>(time_usage);
 
 	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
 	{
-		log::warning("context timeslice exceeded (%p) '%s' last: %06ld$us total: %06ld$us",
-		             (const void *)&c,
-		             c.name,
-		             duration_cast<microseconds>(time_usage).count(),
-		             c.awake.count());
+		log::warning
+		{
+			"context timeslice exceeded '%s' (%lu) total: %06ld$us last: %lu$ns %lu$tsc",
+			name(c),
+			id(c),
+			c.awake.count(),
+			duration_cast<nanoseconds>(time_usage).count(),
+			rdtsc_usage
+		};
 
 		assert(settings.slice_assertion == 0us || time_usage < settings.slice_assertion);
 	}
 
 	if(unlikely(settings.slice_interrupt > 0us && time_usage >= settings.slice_interrupt))
-		throw interrupted("ctx(%p): Time slice exceeded (last: %06ld microseconds)",
-		                  (const void *)&c,
-		                  duration_cast<microseconds>(time_usage).count());
+		throw interrupted
+		{
+			"Time slice exceeded '%s' (%lu) (last: %06ld microseconds)",
+			name(c),
+			id(c),
+			duration_cast<microseconds>(time_usage).count()
+		};
 }
 
 void
