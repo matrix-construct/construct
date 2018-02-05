@@ -162,6 +162,7 @@ struct ircd::m::state::node::rep
 
 	bool full() const;
 	bool overfull() const;
+	size_t childs() const;
 	size_t find(const json::array &key) const;
 
 	void shr(const size_t &pos);
