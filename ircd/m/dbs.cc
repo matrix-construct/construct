@@ -16,6 +16,7 @@ namespace ircd::m
 
 	extern std::set<std::shared_ptr<indexer>> indexers;
 	extern const std::unique_ptr<indexer> indexer_origin_joined;
+	extern const std::unique_ptr<indexer> indexer_state_head_for_event_id_in_room_id;
 }
 
 struct ircd::m::indexer
@@ -29,7 +30,8 @@ struct ircd::m::indexer
 
 	std::string name;
 
-	virtual void operator()(const event &, db::txn &txn, const db::op &op) const {}
+	virtual void operator()(const event &, db::txn &, const db::op &op) const {}
+	virtual void operator()(const event &, db::txn &, const db::op &op, const string_view &) const {}
 
 	indexer(std::string name)
 	:name{std::move(name)}
@@ -104,9 +106,6 @@ ircd::m::dbs::write(const event &event,
 		txn, at<"event_id"_>(event), event
 	};
 
-	if(defined(json::get<"state_key"_>(event)))
-		state::append_nodes(txn, event);
-
 	append_indexes(event, txn);
 }
 
@@ -118,6 +117,14 @@ ircd::m::dbs::append_indexes(const event &event,
 	{
 		const m::indexer &indexer{*ptr};
 		indexer(event, txn, db::op::SET);
+	}
+
+	if(defined(json::get<"state_key"_>(event)))
+	{
+		char headbuf[state::ID_MAX_SZ];
+		const auto head{state::insert(txn, headbuf, event)};
+		const m::indexer &indexer{*indexer_state_head_for_event_id_in_room_id};
+		indexer(event, txn, db::op::SET, head);
 	}
 
 	if(json::get<"type"_>(event) == "m.room.member")
@@ -526,7 +533,7 @@ struct ircd::m::indexer::concat_v
 	std::string col_c;
 
 	void operator()(const event &, db::txn &, const db::op &op) const final override;
-	void operator()(const event &, db::txn &, const db::op &op, const string_view &) const;
+	void operator()(const event &, db::txn &, const db::op &op, const string_view &) const final override;
 
 	concat_v(std::string col_a, std::string col_b, std::string col_c)
 	:indexer
@@ -696,7 +703,7 @@ struct ircd::m::indexer::concat_3vs
 	std::string col_b2;
 	std::string col_c;
 
-	void operator()(const event &, db::txn &, const db::op &op, const string_view &prev_event_id) const;
+	void operator()(const event &, db::txn &, const db::op &op, const string_view &prev_event_id) const final override;
 
 	concat_3vs(std::string col_a, std::string col_b0, std::string col_b1, std::string col_b2, std::string col_c)
 	:indexer
@@ -790,7 +797,6 @@ decltype(ircd::m::indexers)
 ircd::m::indexers
 {{
 	std::make_shared<ircd::m::indexer::concat>("event_id", "sender"),
-	std::make_shared<ircd::m::indexer::concat>("event_id", "room_id"),
 	std::make_shared<ircd::m::indexer::concat_s>("origin", "room_id"),
 	std::make_shared<ircd::m::indexer::concat_2v>("event_id", "type", "state_key", "room_id"),
 	std::make_shared<ircd::m::indexer::concat_3vs>("prev_event_id", "type", "state_key", "event_id", "room_id"),
@@ -800,6 +806,12 @@ decltype(ircd::m::indexer_origin_joined)
 ircd::m::indexer_origin_joined
 {
 	std::make_unique<ircd::m::indexer::concat_s>("origin", "room_id", "origin_joined in room_id")
+};
+
+decltype(ircd::m::indexer_state_head_for_event_id_in_room_id)
+ircd::m::indexer_state_head_for_event_id_in_room_id
+{
+	std::make_unique<ircd::m::indexer::concat_v>("state_head", "event_id", "room_id")
 };
 
 //

@@ -398,10 +398,10 @@ const database::descriptor event_id_in_sender
 	event_id_in,
 };
 
-const database::descriptor event_id_in_room_id
+const database::descriptor state_head_for_event_id_in_room_id
 {
 	// name
-	"event_id in room_id",
+	"state_head for event_id in room_id",
 
 	// explanation
 	R"(### developer note:
@@ -742,7 +742,7 @@ const database::description events_description
 	// * broad but useful in cases
 	// ? eliminate for prev_event?
 	// ? eliminate/combine with state tree related?
-	event_id_in_room_id,
+	state_head_for_event_id_in_room_id,
 
 	// (room_id, origin) => ()
 	// Sequence of all origins for a room, EVER
