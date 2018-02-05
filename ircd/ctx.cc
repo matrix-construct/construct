@@ -821,6 +821,7 @@ struct ircd::ctx::prof::settings ircd::ctx::prof::settings
 	0us,         // slice_assertion unused; warning sufficient for now...
 };
 
+#ifdef RB_DEBUG
 void
 ircd::ctx::prof::mark(const event &e)
 {
@@ -833,6 +834,12 @@ ircd::ctx::prof::mark(const event &e)
 		default:                                             break;
 	}
 }
+#else
+void
+ircd::ctx::prof::mark(const event &e)
+{
+}
+#endif
 
 void
 ircd::ctx::prof::handle_cur_enter()
