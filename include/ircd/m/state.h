@@ -49,11 +49,11 @@ namespace ircd::m::state
 
 	string_view get_head(db::column &, const mutable_buffer &out, const id::room &);
 	string_view get_head(const mutable_buffer &out, const id::room &);
-	void set_head(db::txn &txn, const id::room &, const string_view &head);
+	string_view set_head(db::txn &txn, const id::room &, const string_view &head);
 
-	void insert(db::txn &txn, const id::room &, const json::array &key, const id::event &);
-	void insert(db::txn &txn, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
-	void append_nodes(db::txn &, const event &);
+	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const json::array &key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &head, const event &);
 
 	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
 	bool dfs(db::column &, const string_view &node_id, const search_closure &);
