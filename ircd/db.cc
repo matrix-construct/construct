@@ -2930,18 +2930,20 @@ ircd::db::write(const cell::delta *const &begin,
 template<class pos>
 bool
 ircd::db::seek(cell &c,
-               const pos &p)
+               const pos &p,
+               gopts opts)
 {
 	column &cc(c);
 	database::column &dc(cc);
 
-	gopts opts;
-	opts.snapshot = c.ss;
+	if(!opts.snapshot)
+		opts.snapshot = c.ss;
+
 	const auto ropts(make_opts(opts));
 	return seek(dc, p, ropts, c.it);
 }
-template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &);
-template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &);
+template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &, gopts);
+template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &, gopts);
 
 // Linkage for incomplete rocksdb::Iterator
 ircd::db::cell::cell()
@@ -2992,7 +2994,7 @@ ircd::db::cell::cell(column column,
 	if(index.empty())
 		return;
 
-	seek(*this, index);
+	seek(*this, index, opts);
 	if(!valid_eq(*this->it, index))
 		this->it.reset();
 }

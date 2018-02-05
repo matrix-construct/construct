@@ -97,7 +97,7 @@ struct ircd::db::cell
 
 	friend std::ostream &operator<<(std::ostream &s, const cell &c);
 
-	template<class pos> friend bool seek(cell &c, const pos &p);
+	template<class pos> friend bool seek(cell &c, const pos &p, gopts = {});
 };
 
 namespace ircd::db
