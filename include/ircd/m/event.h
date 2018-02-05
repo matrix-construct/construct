@@ -10,8 +10,6 @@
 
 #pragma once
 #define HAVE_IRCD_M_EVENT_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 namespace ircd::m
 {
@@ -30,6 +28,8 @@ namespace ircd::m
 	id::event event_id(const event &);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// The _Main Event_. Most fundamental primitive of the Matrix protocol.
 ///
 /// This json::tuple provides at least all of the legal members of the matrix
@@ -65,6 +65,7 @@ struct ircd::m::event
 	json::property<name::unsigned_, string_view>
 >
 {
+	struct init;
 	struct fetch;
 	struct sync;
 	struct prev;
@@ -74,7 +75,9 @@ struct ircd::m::event
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
 
-	static database *events;
+	static const db::database::description description;
+	static std::shared_ptr<db::database> events;
+	static std::array<db::column, super_type::size()> column;
 
 	using super_type::tuple;
 	using super_type::operator=;
@@ -82,6 +85,7 @@ struct ircd::m::event
 	event(const id &, const mutable_buffer &buf);
 	event() = default;
 };
+#pragma GCC diagnostic pop
 
 namespace ircd::m
 {
@@ -93,6 +97,8 @@ namespace ircd::m
 	std::string pretty_oneline(const event::prev &);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::event::prev
 :json::tuple
 <
@@ -106,6 +112,13 @@ struct ircd::m::event::prev
 	using super_type::tuple;
 	using super_type::operator=;
 };
+#pragma GCC diagnostic pop
+
+struct ircd::m::event::init
+{
+	init();
+	~init() noexcept;
+};
 
 inline bool
 ircd::m::my(const event &event)
@@ -118,5 +131,3 @@ ircd::m::my(const id::event &event_id)
 {
 	return self::host(event_id.host());
 }
-
-#pragma GCC diagnostic pop

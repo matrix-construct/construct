@@ -40,63 +40,6 @@ struct ircd::m::indexer
 	virtual ~indexer() noexcept = default;
 };
 
-decltype(ircd::m::dbs::databases)
-ircd::m::dbs::databases
-{};
-
-decltype(ircd::m::dbs::modules)
-ircd::m::dbs::modules
-{};
-
-//
-// init
-//
-
-ircd::m::dbs::init::init()
-{
-	_modules();
-	_databases();
-
-	ircd::m::event::events = databases.at("events").get();
-}
-
-ircd::m::dbs::init::~init()
-noexcept
-{
-	ircd::m::event::events = nullptr;
-
-	databases.clear();
-	modules.clear();
-}
-
-void
-ircd::m::dbs::init::_databases()
-{
-	for(const auto &pair : modules)
-	{
-		const auto &name(pair.first);
-		const auto dbname(mods::unpostfixed(name));
-		const std::string shortname(lstrip(dbname, "db_"));
-		const std::string symname(shortname + "_database"s);
-		databases.emplace(shortname, import_shared<database>
-		{
-			dbname, symname
-		});
-	}
-}
-
-void
-ircd::m::dbs::init::_modules()
-{
-	for(const auto &name : mods::available())
-		if(startswith(name, "db_"))
-			modules.emplace(name, name);
-}
-
-//
-//
-//
-
 void
 ircd::m::dbs::write(const event &event,
                     db::txn &txn)

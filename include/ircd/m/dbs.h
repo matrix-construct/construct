@@ -13,26 +13,11 @@
 
 namespace ircd::m::dbs
 {
-	struct init;
-
-	extern std::map<std::string, ircd::module> modules;
-	extern std::map<std::string, import_shared<database>> databases;
-
 	bool exists(const event::id &);
 
 	void append_indexes(const event &, db::txn &);
 	void write(const event &, db::txn &);
 }
-
-class ircd::m::dbs::init
-{
-	void _modules();
-	void _databases();
-
-  public:
-	init();
-	~init() noexcept;
-};
 
 namespace ircd::m::dbs
 {
