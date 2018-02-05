@@ -69,6 +69,7 @@ struct ircd::m::init
 	void modules();
 
 	dbs::init _dbs;
+	state::init _state;
 	keys::init _keys;
 
   public:

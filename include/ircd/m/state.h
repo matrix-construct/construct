@@ -25,6 +25,7 @@
 ///
 namespace ircd::m::state
 {
+	struct init;
 	struct node;
 
 	using id_closure = std::function<void (const string_view &)>;
@@ -44,10 +45,8 @@ namespace ircd::m::state
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
 	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 
-	void get_node(db::column &, const string_view &id, const node_closure &);
 	void get_node(const string_view &id, const node_closure &);
 
-	string_view get_head(db::column &, const mutable_buffer &out, const id::room &);
 	string_view get_head(const mutable_buffer &out, const id::room &);
 	string_view set_head(db::txn &txn, const id::room &, const string_view &head);
 
@@ -56,10 +55,8 @@ namespace ircd::m::state
 	string_view insert(db::txn &, const mutable_buffer &head, const event &);
 
 	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
-	bool dfs(db::column &, const string_view &node_id, const search_closure &);
 	bool dfs(const string_view &node_id, const search_closure &);
 
-	void get(db::column &, const string_view &head, const json::array &key, const id_closure &);
 	void get(const string_view &head, const json::array &key, const id_closure &);
 	void get(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
 	void get__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
@@ -179,3 +176,12 @@ static_assert
 (
 	ircd::m::state::NODE_MAX_KEY == ircd::m::state::NODE_MAX_VAL
 );
+
+struct ircd::m::state::init
+{
+	db::column state_head;
+	db::column state_node;
+
+	init();
+	~init() noexcept;
+};

@@ -10,6 +10,29 @@
 
 #include <ircd/m/m.h>
 
+ircd::db::column *
+state_node_column
+{};
+
+ircd::db::column *
+state_head_column
+{};
+
+ircd::m::state::init::init()
+:state_head{*event::events, "state_head"}
+,state_node{*event::events, "state_node"}
+{
+	state_head_column = &state_head;
+	state_node_column = &state_node;
+}
+
+ircd::m::state::init::~init()
+noexcept
+{
+	state_head_column = nullptr;
+	state_node_column = nullptr;
+}
+
 /// Convenience to get value from the current room head.
 void
 ircd::m::state::get__room(const id::room &room_id,
@@ -32,33 +55,18 @@ ircd::m::state::get(const string_view &head,
 	return get(head, make_key(key, type, state_key), closure);
 }
 
-/// see: get(); user does not have to supply column reference here
-void
-ircd::m::state::get(const string_view &head,
-                    const json::array &key,
-                    const id_closure &closure)
-{
-	db::column column
-	{
-		*event::events, "state_node"
-	};
-
-	get(column, head, key, closure);
-}
-
 /// Recursive query to find the leaf value for the given key, starting from
 /// the given head node ID. Value can be viewed in the closure. This throws
 /// m::NOT_FOUND if the exact key and its value does not exist in the tree;
 /// no node ID's are ever returned here.
 void
-ircd::m::state::get(db::column &column,
-                    const string_view &head,
+ircd::m::state::get(const string_view &head,
                     const json::array &key,
                     const id_closure &closure)
 {
 	char nextbuf[ID_MAX_SZ];
 	string_view nextid{head};
-	while(nextid) get_node(column, nextid, [&](const node &node)
+	while(nextid) get_node(nextid, [&](const node &node)
 	{
 		auto pos(node.find(key));
 		if(pos < node.keys() && node.key(pos) == key)
@@ -81,40 +89,26 @@ ircd::m::state::get(db::column &column,
 
 namespace ircd::m::state
 {
-	bool _dfs_recurse(db::column &, const search_closure &, const node &, int &);
+	bool _dfs_recurse(const search_closure &, const node &, int &);
 }
 
 bool
 ircd::m::state::dfs(const string_view &node_id,
                     const search_closure &closure)
 {
-	db::column column
-	{
-		*event::events, "state_node"
-	};
-
-	return dfs(column, node_id, closure);
-}
-
-bool
-ircd::m::state::dfs(db::column &column,
-                    const string_view &node_id,
-                    const search_closure &closure)
-{
 	bool ret{false};
-	get_node(column, node_id, [&column, &closure, &ret]
+	get_node(node_id, [&closure, &ret]
 	(const auto &node)
 	{
 		int depth(-1);
-		ret = _dfs_recurse(column, closure, node, depth);
+		ret = _dfs_recurse(closure, node, depth);
 	});
 
 	return ret;
 }
 
 bool
-ircd::m::state::_dfs_recurse(db::column &column,
-                             const search_closure &closure,
+ircd::m::state::_dfs_recurse(const search_closure &closure,
                              const node &node,
                              int &depth)
 {
@@ -135,10 +129,10 @@ ircd::m::state::_dfs_recurse(db::column &column,
 		if(!empty(child))
 		{
 			bool ret{false};
-			get_node(column, child, [&column, &closure, &depth, &ret]
+			get_node(child, [&closure, &depth, &ret]
 			(const auto &node)
 			{
-				ret = _dfs_recurse(column, closure, node, depth);
+				ret = _dfs_recurse(closure, node, depth);
 			});
 
 			if(ret)
@@ -228,12 +222,9 @@ ircd::m::state::insert(db::txn &txn,
                        const json::array &key,
                        const id::event &event_id)
 {
-	db::column heads{*event::events, "state_head"};
-	db::column nodes{*event::events, "state_node"};
-
 	string_view head
 	{
-		get_head(heads, headbuf, room_id)
+		get_head(headbuf, room_id)
 	};
 
 	node::rep push;
@@ -511,20 +502,9 @@ ircd::string_view
 ircd::m::state::get_head(const mutable_buffer &buf,
                          const id::room &room_id)
 {
-	db::column column
-	{
-		*event::events, "state_head"
-	};
+	assert(state_head_column);
+	auto &column{*state_head_column};
 
-	return get_head(column, buf, room_id);
-}
-
-/// Copy a room's root node ID into buffer; already have column reference.
-ircd::string_view
-ircd::m::state::get_head(db::column &column,
-                         const mutable_buffer &buf,
-                         const id::room &room_id)
-{
 	string_view ret;
 	column(room_id, [&ret, &buf]
 	(const string_view &head)
@@ -535,26 +515,14 @@ ircd::m::state::get_head(db::column &column,
 	return ret;
 }
 
-/// View a node by ID.
+/// View a node by ID. This can be used when user already has a reference
+/// to the db column.
 void
 ircd::m::state::get_node(const string_view &node_id,
                          const node_closure &closure)
 {
-	db::column column
-	{
-		*event::events, "state_node"
-	};
-
-	get_node(column, node_id, closure);
-}
-
-/// View a node by ID. This can be used when user already has a reference
-/// to the db column.
-void
-ircd::m::state::get_node(db::column &column,
-                         const string_view &node_id,
-                         const node_closure &closure)
-{
+	assert(state_node_column);
+	auto &column{*state_node_column};
 	column(node_id, closure);
 }
 
