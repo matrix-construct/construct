@@ -148,12 +148,13 @@ ircd::m::state::dfs(db::column &column,
 // Internal insertion operations
 namespace ircd::m::state
 {
-	string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	json::object _insert_leaf_full(db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf);
-	string_view _insert_branch_nonfull(db::txn &txn, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
-	json::object _insert_branch_full(db::txn &txn, node::rep &rep, const size_t &pos, node::rep &push, const mutable_buffer &pushbuf, const node::rep &pushed);
-	string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push, const mutable_buffer &pushbuf);
+	static mutable_buffer _getbuffer(const uint8_t &height);
+	static string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	static string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
+	static json::object _insert_leaf_full(const int8_t &height, db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push);
+	static string_view _insert_branch_nonfull(db::txn &txn, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
+	static json::object _insert_branch_full(const int8_t &height, db::txn &txn, node::rep &rep, const size_t &pos, node::rep &push, const node::rep &pushed);
+	static string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push);
 }
 
 void
@@ -213,8 +214,6 @@ ircd::m::state::insert(db::txn &txn,
 	db::column nodes{*event::events, "state_node"};
 
 	char idbuf[ID_MAX_SZ];
-	thread_local char pushbuf[NODE_MAX_SZ];
-
 	string_view head
 	{
 		get_head(heads, idbuf, room_id)
@@ -224,7 +223,7 @@ ircd::m::state::insert(db::txn &txn,
 	int8_t height{0};
 	get_node(head, [&](const node &node)
 	{
-		head = _insert(height, txn, key, event_id, node, idbuf, push, pushbuf);
+		head = _insert(height, txn, key, event_id, node, idbuf, push);
 	});
 
 	if(push.kn)
@@ -240,8 +239,7 @@ ircd::m::state::_insert(int8_t &height,
                         const string_view &val,
                         const node &node,
                         const mutable_buffer &idbuf,
-                        node::rep &push,
-                        const mutable_buffer &pushbuf)
+                        node::rep &push)
 {
 	// Recursion metrics
 	const unwind down{[&height]{ --height; }};
@@ -260,7 +258,7 @@ ircd::m::state::_insert(int8_t &height,
 		return _insert_overwrite(txn, key, val, idbuf, rep, pos);
 
 	if(node.childs() == 0 && rep.full())
-		return _insert_leaf_full(txn, key, val, rep, pos, push, pushbuf);
+		return _insert_leaf_full(height, txn, key, val, rep, pos, push);
 
 	if(node.childs() == 0 && !rep.full())
 		return _insert_leaf_nonfull(txn, key, val, idbuf, rep, pos);
@@ -268,31 +266,35 @@ ircd::m::state::_insert(int8_t &height,
 	if(empty(node.child(pos)))
 		return _insert_leaf_nonfull(txn, key, val, idbuf, rep, pos);
 
+	// These collect data from the next level.
 	node::rep pushed;
-	string_view child_id;
+	string_view child;
+
+	// Recurse
 	get_node(node.child(pos), [&](const auto &node)
 	{
-		child_id = _insert(height, txn, key, val, node, idbuf, pushed, pushbuf);
+		child = _insert(height, txn, key, val, node, idbuf, pushed);
 	});
 
-	if(!pushed.kn)
-	{
-		rep.chld[pos] = child_id;
-		return rep.write(txn, idbuf);
-	}
-
-	if(!rep.full())
+	// Child was pushed but that will stop here.
+	if(pushed.kn && !rep.full())
 		return _insert_branch_nonfull(txn, idbuf, rep, pos, pushed);
 
-	return _insert_branch_full(txn, rep, pos, push, pushbuf, pushed);
+	// Most complex branch
+	if(pushed.kn && rep.full())
+		return _insert_branch_full(height, txn, rep, pos, push, pushed);
+
+	// Indicates no push, and the child value is just an ID of a node.
+	rep.chld[pos] = child;
+	return rep.write(txn, idbuf);
 }
 
 ircd::json::object
-ircd::m::state::_insert_branch_full(db::txn &txn,
+ircd::m::state::_insert_branch_full(const int8_t &height,
+                                    db::txn &txn,
                                     node::rep &rep,
                                     const size_t &pos,
                                     node::rep &push,
-                                    const mutable_buffer &pushbuf,
                                     const node::rep &pushed)
 {
 	rep.shr(pos);
@@ -317,10 +319,8 @@ ircd::m::state::_insert_branch_full(db::txn &txn,
 	}
 	left.chld[left.cn++] = rep.chld[i];
 
-	thread_local char lc[ID_MAX_SZ];
 	push.keys[push.kn++] = rep.keys[i];
 	push.vals[push.vn++] = rep.vals[i];
-	push.chld[push.cn++] = left.write(txn, lc);
 
 	node::rep right;
 	for(++i; i < rep.kn; ++i)
@@ -331,13 +331,69 @@ ircd::m::state::_insert_branch_full(db::txn &txn,
 	}
 	right.chld[right.cn++] = rep.chld[i];
 
-	thread_local char rc[ID_MAX_SZ];
+	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
+	push.chld[push.cn++] = left.write(txn, lc);
 	push.chld[push.cn++] = right.write(txn, rc);
 
-	//TODO: safe to eliminate this copy?
-	thread_local char tmp[NODE_MAX_SZ];
-	const auto pushing{push.write(tmp)};
-	return { data(pushbuf), pushing.copy(data(pushbuf), size(pushbuf)) };
+	const auto ret
+	{
+		push.write(_getbuffer(height))
+	};
+
+	// Courtesy reassignment of all the references in `push` after rewrite.
+	push = state::node{ret};
+	return ret;
+}
+
+ircd::json::object
+ircd::m::state::_insert_leaf_full(const int8_t &height,
+                                  db::txn &txn,
+                                  const json::array &key,
+                                  const string_view &val,
+                                  node::rep &rep,
+                                  const size_t &pos,
+                                  node::rep &push)
+{
+	rep.shr(pos);
+
+	rep.keys[pos] = key;
+	++rep.kn;
+
+	rep.vals[pos] = val;
+	++rep.vn;
+
+	size_t i(0);
+	node::rep left;
+	for(; i < rep.kn / 2; ++i)
+	{
+		left.keys[left.kn++] = rep.keys[i];
+		left.vals[left.vn++] = rep.vals[i];
+		left.chld[left.cn++] = string_view{};
+	}
+
+	push.keys[push.kn++] = rep.keys[i];
+	push.vals[push.vn++] = rep.vals[i];
+
+	node::rep right;
+	for(++i; i < rep.kn; ++i)
+	{
+		right.keys[right.kn++] = rep.keys[i];
+		right.vals[right.vn++] = rep.vals[i];
+		right.chld[right.cn++] = string_view{};
+	}
+
+	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
+	push.chld[push.cn++] = left.write(txn, lc);
+	push.chld[push.cn++] = right.write(txn, rc);
+
+	const auto ret
+	{
+		push.write(_getbuffer(height))
+	};
+
+	// Courtesy reassignment of all the references in `push` after rewrite.
+	push = state::node{ret};
+	return ret;
 }
 
 ircd::string_view
@@ -360,52 +416,6 @@ ircd::m::state::_insert_branch_nonfull(db::txn &txn,
 	++rep.cn;
 
 	return rep.write(txn, idbuf);
-}
-
-ircd::json::object
-ircd::m::state::_insert_leaf_full(db::txn &txn,
-                                  const json::array &key,
-                                  const string_view &val,
-                                  node::rep &rep,
-                                  const size_t &pos,
-                                  node::rep &push,
-                                  const mutable_buffer &pushbuf)
-{
-	rep.shr(pos);
-
-	rep.keys[pos] = key;
-	++rep.kn;
-
-	rep.vals[pos] = val;
-	++rep.vn;
-
-	size_t i(0);
-	node::rep left;
-	for(; i < rep.kn / 2; ++i)
-	{
-		left.keys[left.kn++] = rep.keys[i];
-		left.vals[left.vn++] = rep.vals[i];
-		left.chld[left.cn++] = string_view{};
-	}
-
-	push.keys[push.kn++] = rep.keys[i];
-	push.vals[push.vn++] = rep.vals[i];
-
-	thread_local char lc[ID_MAX_SZ];
-	push.chld[push.cn++] = left.write(txn, lc);
-
-	node::rep right;
-	for(++i; i < rep.kn; ++i)
-	{
-		right.keys[right.kn++] = rep.keys[i];
-		right.vals[right.vn++] = rep.vals[i];
-		right.chld[right.cn++] = string_view{};
-	}
-
-	thread_local char rc[ID_MAX_SZ];
-	push.chld[push.cn++] = right.write(txn, rc);
-
-	return push.write(pushbuf);
 }
 
 ircd::string_view
@@ -442,6 +452,22 @@ ircd::m::state::_insert_overwrite(db::txn &txn,
 	rep.vals[pos] = val;
 
 	return rep.write(txn, idbuf);
+}
+
+/// This function returns a thread_local buffer intended for writing temporary
+/// nodes which may be "pushed" down the tree during the btree insertion
+/// process. This is an alternative to allocating such space in each stack
+/// frame when only one or two are ever used at a time -- but because more than
+/// one may be used at a time during complex rebalances we have the user pass
+/// their current recursion depth which is used to partition the buffer so they
+/// don't overwrite their own data.
+ircd::mutable_buffer
+ircd::m::state::_getbuffer(const uint8_t &height)
+{
+	static const size_t buffers{2};
+	using buffer_type = std::array<char, NODE_MAX_SZ>;
+	thread_local std::array<buffer_type, buffers> buffer;
+	return buffer.at(height % buffer.size());
 }
 
 /// Set the root node ID for a room in this db transaction.
@@ -616,8 +642,9 @@ ircd::m::state::node::rep::write(const mutable_buffer &out)
 	assert(kn == vn);
 	assert(cn <= kn + 1);
 	assert(!childs() || childs() > kn);
-	assert(kn > 0 && vn > 0);
+	assert(!duplicates());
 
+	assert(kn > 0 && vn > 0);
 	assert(kn <= NODE_MAX_KEY);
 	assert(vn <= NODE_MAX_VAL);
 	assert(cn <= NODE_MAX_DEG);
@@ -682,6 +709,24 @@ const
 			++ret;
 
 	return ret;
+}
+
+bool
+ircd::m::state::node::rep::duplicates()
+const
+{
+	for(size_t i(0); i < kn; ++i)
+		for(size_t j(0); j < kn; ++j)
+			if(j != i && keys[i] == keys[j])
+				return true;
+
+	for(size_t i(0); i < cn; ++i)
+		if(!empty(unquote(chld[i])))
+			for(size_t j(0); j < cn; ++j)
+				if(j != i && chld[i] == chld[j])
+					return true;
+
+	return false;
 }
 
 bool
