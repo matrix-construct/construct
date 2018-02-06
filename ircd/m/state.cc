@@ -38,7 +38,7 @@ void
 ircd::m::state::get__room(const id::room &room_id,
                           const string_view &type,
                           const string_view &state_key,
-                          const id_closure &closure)
+                          const val_closure &closure)
 {
 	char head[ID_MAX_SZ];
 	return get(get_head(head, room_id), type, state_key, closure);
@@ -49,7 +49,7 @@ void
 ircd::m::state::get(const string_view &head,
                     const string_view &type,
                     const string_view &state_key,
-                    const id_closure &closure)
+                    const val_closure &closure)
 {
 	char key[KEY_MAX_SZ];
 	return get(head, make_key(key, type, state_key), closure);
@@ -62,7 +62,7 @@ ircd::m::state::get(const string_view &head,
 void
 ircd::m::state::get(const string_view &head,
                     const json::array &key,
-                    const id_closure &closure)
+                    const val_closure &closure)
 {
 	char nextbuf[ID_MAX_SZ];
 	string_view nextid{head};

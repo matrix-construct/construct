@@ -38,6 +38,7 @@ namespace ircd::m::state
 	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
 	using id_closure = std::function<void (const string_view &)>;
+	using val_closure = std::function<void (const string_view &)>;
 	using node_closure = std::function<void (const json::object &)>;
 	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
 	using iter_closure = std::function<void (const json::array &, const string_view &)>;
@@ -66,9 +67,9 @@ namespace ircd::m::state
 	size_t count(const string_view &head, const iter_bool_closure &);
 	size_t count(const string_view &head);
 
-	void get(const string_view &head, const json::array &key, const id_closure &);
-	void get(const string_view &head, const string_view &type, const string_view &state_key, const id_closure &);
-	void get__room(const id::room &, const string_view &type, const string_view &state_key, const id_closure &);
+	void get(const string_view &head, const json::array &key, const val_closure &);
+	void get(const string_view &head, const string_view &type, const string_view &state_key, const val_closure &);
+	void get__room(const id::room &, const string_view &type, const string_view &state_key, const val_closure &);
 }
 
 /// JSON property name strings specifically for use in m::state
