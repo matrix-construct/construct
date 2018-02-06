@@ -395,22 +395,19 @@ catch(const std::exception &e)
 ircd::db::database::~database()
 noexcept
 {
-	//rocksdb::CancelAllBackgroundWork(d, true);    // true = blocking
-	//throw_on_error(d->PauseBackgroundWork());
-	const auto background_errors
-	{
-		property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors)
-	};
-
-	log.debug("'%s': closing database @ `%s' (background errors: %lu)",
+	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
+	log.debug("'%s': closing database @ `%s'; background_errors: %lu",
 	          name,
 	          path,
-	          background_errors);
+	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
+
+	this->columns.clear();
+	log.debug("'%s': flushed columns; synchronizing...",
+	          name);
 
 	sync(*this);
-	this->columns.clear();
-	log.debug("'%s': closed columns; synchronized with hardware.",
-	          this->name);
+	log.debug("'%s': synchronized with hardware.",
+	          name);
 }
 
 void
