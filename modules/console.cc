@@ -299,6 +299,7 @@ console_cmd__key__default(const string_view &line)
 //
 
 static bool console_cmd__event__default(const string_view &line);
+static bool console_cmd__event__dump(const string_view &line);
 static bool console_cmd__event__fetch(const string_view &line);
 
 bool
@@ -314,9 +315,65 @@ console_cmd__event(const string_view &line)
 		case hash("fetch"):
 			return console_cmd__event__fetch(args);
 
+		case hash("dump"):
+			return console_cmd__event__dump(args);
+
 		default:
 			return console_cmd__event__default(line);
 	}
+}
+
+bool
+console_cmd__event__dump(const string_view &line)
+{
+	const auto filename
+	{
+		token(line, ' ', 0)
+	};
+
+	m::dbs::cursor cursor
+	{
+		"event_id"
+	};
+
+	static char buf[512_KiB];
+	char *pos{buf};
+	size_t foff{0}, ecount{0}, acount{0};
+	for(auto it(begin(cursor)); it != end(cursor); ++it, ++ecount)
+	{
+		const auto remain
+		{
+			size_t(buf + sizeof(buf) - pos)
+		};
+
+		assert(remain >= 64_KiB && remain <= sizeof(buf));
+		const mutable_buffer mb{pos, remain};
+		const m::event event{*it};
+		pos += json::print(mb, event);
+
+		if(pos + 64_KiB > buf + sizeof(buf))
+		{
+			const const_buffer cb{buf, pos};
+			foff += size(fs::append(filename, cb));
+			pos = buf;
+			++acount;
+		}
+	}
+
+	if(pos > buf)
+	{
+		const const_buffer cb{buf, pos};
+		foff += size(fs::append(filename, cb));
+		++acount;
+	}
+
+	out << "Dumped " << ecount << " events"
+	    << " using " << foff << " bytes"
+	    << " in " << acount << " writes"
+	    << " to " << filename
+	    << std::endl;
+
+	return true;
 }
 
 bool
