@@ -60,13 +60,23 @@ struct ircd::net::hostport
 	friend std::ostream &operator<<(std::ostream &, const hostport &);
 };
 
+/// Creates a host:service pair from a hostname and a service name string.
+/// When passed to net::dns() this will indicate SRV resolution. If no
+/// SRV record is found
+/// TODO: todo: the servce is translated into its proper port.
+/// TODO: now: the port 8448 is used with the hostname.
 inline
 ircd::net::hostport::hostport(const string_view &host,
                               const string_view &service)
 :host{host}
 ,service{service}
+,port{8448}
 {}
 
+/// Creates a host:port pair from a hostname and a port number. When
+/// passed to net::dns() no SRV resolution will be done because no
+/// service name has been given. (unless manually optioned when using
+/// net::dns).
 inline
 ircd::net::hostport::hostport(const string_view &host,
                               const uint16_t &port)
@@ -75,18 +85,34 @@ ircd::net::hostport::hostport(const string_view &host,
 ,port{port}
 {}
 
+/// Creates a host:service or host:port pair from the single string literally
+/// containing the colon deliminated values. If the suffix is a port number
+/// then the behavior for the port number constructor applies; if a service
+/// string then the service constructor applies; if empty (just a hostname)
+/// then service "matrix" is assumed with port 8448 fallback.
 inline
 ircd::net::hostport::hostport(const string_view &amalgam)
 :host
 {
 	rsplit(amalgam, ':').first
 }
-,service{}
-,port
 {
-	amalgam != host? lex_cast<uint16_t>(rsplit(amalgam, ':').second) : uint16_t(0)
+	const auto port
+	{
+		rsplit(amalgam, ':').second
+	};
+
+	if(amalgam == host || empty(port))
+		return;
+
+	if(try_lex_cast<uint16_t>(port))
+	{
+		this->service = {};
+		this->port = lex_cast<uint16_t>(port);
+	} else {
+		this->service = port;
+	}
 }
-{}
 
 inline bool
 ircd::net::hostport::operator!()
