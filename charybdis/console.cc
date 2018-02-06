@@ -11,8 +11,8 @@
 #include <ircd/ircd.h>
 #include <ircd/asio.h>
 #include <ircd/m/m.h>
+#include <ircd/util/params.h>
 #include "charybdis.h"
-#include "params.h"
 
 using namespace ircd;
 
