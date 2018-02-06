@@ -37,8 +37,10 @@ AM_LDFLAGS += \
 
 moduledir=@moduledir@
 root_la_SOURCES = root.cc
+console_la_SOURCES = console.cc
 module_LTLIBRARIES = \
 	root.la \
+	console.la \
 	###
 
 # This puts the source in client/ but the installed
