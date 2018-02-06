@@ -889,7 +889,7 @@ ircd::ctx::prof::check_slice()
 	{
 		log::warning
 		{
-			"context timeslice exceeded '%s' (%lu) total: %06ld$us last: %lu$ns %lu$tsc",
+			"context timeslice exceeded '%s' #%lu total: %06ld$us last: %lu$ns %lu$tsc",
 			name(c),
 			id(c),
 			c.awake.count(),
@@ -903,7 +903,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(settings.slice_interrupt > 0us && time_usage >= settings.slice_interrupt))
 		throw interrupted
 		{
-			"Time slice exceeded '%s' (%lu) (last: %06ld microseconds)",
+			"Time slice exceeded '%s' #%lu (last: %06ld microseconds)",
 			name(c),
 			id(c),
 			duration_cast<microseconds>(time_usage).count()
@@ -919,10 +919,14 @@ ircd::ctx::prof::check_stack()
 
 	if(unlikely(stack_usage > stack_max * settings.stack_usage_warning))
 	{
-		log::warning("context stack usage ctx(%p) used %zu of %zu bytes",
-		             (const void *)&c,
-		             stack_usage,
-		             c.stack_max);
+		log::warning
+		{
+			"context stack usage ctx '%s' #%lu used %zu of %zu bytes",
+			name(c),
+			id(c),
+			stack_usage,
+			c.stack_max
+		};
 
 		assert(stack_usage < c.stack_max * settings.stack_usage_assertion);
 	}
