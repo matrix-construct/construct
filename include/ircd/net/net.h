@@ -30,6 +30,7 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, broken_pipe)
 	IRCD_EXCEPTION(error, disconnected)
 	IRCD_EXCEPTION(error, inauthentic)
+	IRCD_EXCEPTION(error, not_found)
 
 	// SNOMASK 'N' "net"
 	extern struct log::log log;

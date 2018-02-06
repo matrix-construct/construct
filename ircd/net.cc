@@ -2171,6 +2171,9 @@ ircd::net::dns::operator()(const hostport &hostport,
 			if(eptr)
 				return callback(std::move(eptr), {});
 
+			if(!record.ip4)
+				return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), {});
+
 			const ipport ipport{record.ip4, port(hostport)};
 			callback(std::move(eptr), ipport);
 		});
