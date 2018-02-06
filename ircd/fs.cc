@@ -147,39 +147,52 @@ ircd::fs::read__std(const string_view &path,
 // fs/write.h
 //
 
-bool
-ircd::fs::write(const std::string &path,
-                const const_buffer &buf)
+namespace ircd::fs
 {
-	if(fs::exists(path))
-		return false;
-
-	return overwrite(path, buf);
+	string_view write__std(const string_view &path, const const_buffer &, const write_opts &);
 }
 
-bool
-ircd::fs::overwrite(const string_view &path,
-                    const const_buffer &buf)
+ircd::fs::write_opts
+const ircd::fs::write_opts_default
+{};
+
+ircd::string_view
+ircd::fs::write(const string_view &path,
+                const const_buffer &buf,
+                const write_opts &opts)
 {
-	return overwrite(std::string{path}, buf);
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		return write__aio(path, buf, opts);
+	#endif
+
+	return write__std(path, buf, opts);
 }
 
-bool
-ircd::fs::overwrite(const std::string &path,
-                    const const_buffer &buf)
+ircd::string_view
+ircd::fs::write__std(const string_view &path,
+                     const const_buffer &buf,
+                     const write_opts &opts)
 {
-	std::ofstream file{path, std::ios::trunc};
+	const auto open_mode
+	{
+		opts.append?
+			std::ios::app:
+
+		opts.overwrite?
+			std::ios::trunc:
+
+		std::ios::out
+	};
+
+	std::ofstream file
+	{
+		std::string{path}, open_mode
+	};
+
+	file.seekp(opts.offset, file.beg);
 	file.write(data(buf), size(buf));
-	return true;
-}
-
-bool
-ircd::fs::append(const std::string &path,
-                 const const_buffer &buf)
-{
-	std::ofstream file{path, std::ios::app};
-	file.write(data(buf), size(buf));
-	return true;
+	return buf;
 }
 
 void
