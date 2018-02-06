@@ -44,7 +44,9 @@ namespace ircd::m::state
 	using iter_bool_closure = std::function<bool (const json::array &, const string_view &)>;
 
 	int keycmp(const json::array &a, const json::array &b);
+	bool prefix_eq(const json::array &a, const json::array &b);
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
+	json::array make_key(const mutable_buffer &out, const string_view &type);
 
 	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
@@ -56,7 +58,9 @@ namespace ircd::m::state
 	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
 	string_view insert(db::txn &, const mutable_buffer &head, const event &);
 
+	bool dfs(const string_view &head, const json::array &key, const search_closure &);
 	bool dfs(const string_view &head, const search_closure &);
+
 	bool each(const string_view &head, const iter_bool_closure &);
 	bool each(const string_view &head, const string_view &type, const iter_bool_closure &);
 	size_t count(const string_view &head, const iter_bool_closure &);

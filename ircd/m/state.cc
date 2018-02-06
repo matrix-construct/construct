@@ -112,27 +112,25 @@ ircd::m::state::count(const string_view &head,
 	return ret;
 }
 
-///TODO: optimize
+bool
+ircd::m::state::each(const string_view &head,
+                     const iter_bool_closure &closure)
+{
+	return each(head, string_view{}, closure);
+}
+
 bool
 ircd::m::state::each(const string_view &head,
                      const string_view &type,
                      const iter_bool_closure &closure)
 {
-	return each(head, [&type, &closure]
-	(const json::array &key, const string_view &val)
+	char buf[KEY_MAX_SZ];
+	const json::array key
 	{
-		if(unquote(key.at(0)) != type)
-			return true;
+		make_key(buf, type)
+	};
 
-		return closure(key, val);
-	});
-}
-
-bool
-ircd::m::state::each(const string_view &head,
-                     const iter_bool_closure &closure)
-{
-	return dfs(head, [&closure]
+	return dfs(head, key, [&closure]
 	(const json::array &key, const string_view &val, const uint &, const uint &)
 	{
 		return closure(key, val);
@@ -141,19 +139,27 @@ ircd::m::state::each(const string_view &head,
 
 namespace ircd::m::state
 {
-	bool _dfs_recurse(const search_closure &, const node &, int &);
+	bool _dfs_recurse(const search_closure &, const node &, const json::array &key, int &);
 }
 
 bool
 ircd::m::state::dfs(const string_view &head,
                     const search_closure &closure)
 {
+	return dfs(head, json::array{}, closure);
+}
+
+bool
+ircd::m::state::dfs(const string_view &head,
+                    const json::array &key,
+                    const search_closure &closure)
+{
 	bool ret{true};
-	get_node(head, [&closure, &ret]
+	get_node(head, [&closure, &key, &ret]
 	(const auto &node)
 	{
 		int depth(-1);
-		ret = _dfs_recurse(closure, node, depth);
+		ret = _dfs_recurse(closure, node, key, depth);
 	});
 
 	return ret;
@@ -162,6 +168,7 @@ ircd::m::state::dfs(const string_view &head,
 bool
 ircd::m::state::_dfs_recurse(const search_closure &closure,
                              const node &node,
+                             const json::array &key,
                              int &depth)
 {
 	++depth;
@@ -171,33 +178,30 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 	}};
 
 	const node::rep rep{node};
-	for(uint pos(0); pos < rep.kn || pos < rep.cn; ++pos)
+	const auto kpos{rep.find(key)};
+	for(uint pos(kpos); pos < rep.kn || pos < rep.cn; ++pos)
 	{
-		const auto child
-		{
-			unquote(rep.chld[pos])
-		};
-
-		if(!empty(child))
+		if(!empty(rep.chld[pos]))
 		{
 			bool ret{true};
-			get_node(child, [&closure, &depth, &ret]
+			get_node(rep.chld[pos], [&closure, &key, &depth, &ret]
 			(const auto &node)
 			{
-				ret = _dfs_recurse(closure, node, depth);
+				ret = _dfs_recurse(closure, node, key, depth);
 			});
 
 			if(!ret)
 				return ret;
 		}
 
-		if(rep.kn > pos)
-		{
-			const auto &key{rep.keys[pos]};
-			const auto &val{unquote(rep.vals[pos])};
-			if(!closure(key, val, depth, pos))
-				return false;
-		}
+		if(rep.kn <= pos)
+			continue;
+
+		if(!empty(key) && !prefix_eq(key, rep.keys[pos]))
+			break;
+
+		if(!closure(rep.keys[pos], rep.vals[pos], depth, pos))
+			return false;
 	}
 
 	return true;
@@ -627,6 +631,46 @@ ircd::m::state::make_key(const mutable_buffer &out,
 	};
 
 	return { data(out), json::print(out, key) };
+}
+
+ircd::json::array
+ircd::m::state::make_key(const mutable_buffer &out,
+                         const string_view &type)
+{
+	const json::value key_parts[]
+	{
+		type
+	};
+
+	const json::value key
+	{
+		key_parts, 1
+	};
+
+	return { data(out), json::print(out, key) };
+}
+
+bool
+ircd::m::state::prefix_eq(const json::array &a,
+                          const json::array &b)
+{
+	ushort i(0);
+	auto ait(begin(a));
+	auto bit(begin(b));
+	for(; ait != end(a) && bit != end(b) && i < 2; ++ait, ++bit)
+	{
+		assert(surrounds(*ait, '"'));
+		assert(surrounds(*bit, '"'));
+
+		if(*ait == *bit)
+		{
+			if(i)
+				return false;
+		}
+		else ++i;
+	}
+
+	return ait != end(a) || bit != end(b)? i == 0 : i < 2;
 }
 
 /// Compares two keys. Keys are arrays of strings which become safely
