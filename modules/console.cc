@@ -24,6 +24,8 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 std::stringstream out;
 
 static bool console_cmd__state(const string_view &line);
+static bool console_cmd__event(const string_view &line);
+static bool console_cmd__key(const string_view &line);
 static bool console_cmd__net(const string_view &line);
 static bool console_cmd__mod(const string_view &line);
 
@@ -49,6 +51,12 @@ try
 
 		case hash("net"):
 			return console_cmd__net(args);
+
+		case hash("key"):
+			return console_cmd__key(args);
+
+		case hash("event"):
+			return console_cmd__event(args);
 
 		case hash("state"):
 			return console_cmd__state(args);
@@ -221,6 +229,169 @@ console_cmd__net_host__default(const string_view &line)
 	else
 		std::cout << ipport << std::endl;
 
+	return true;
+}
+
+//
+// key
+//
+
+static bool console_cmd__key__default(const string_view &line);
+static bool console_cmd__key__fetch(const string_view &line);
+static bool console_cmd__key__get(const string_view &line);
+
+bool
+console_cmd__key(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	if(!empty(args)) switch(hash(token(line, " ", 0)))
+	{
+		case hash("get"):
+			return console_cmd__key__get(args);
+
+		case hash("fetch"):
+			return console_cmd__key__fetch(args);
+	}
+
+	return console_cmd__key__default(args);
+}
+
+bool
+console_cmd__key__get(const string_view &line)
+{
+	const auto server_name
+	{
+		token(line, ' ', 0)
+	};
+
+	m::keys::get(server_name, [](const auto &keys)
+	{
+		out << keys << std::endl;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__key__fetch(const string_view &line)
+{
+
+	return true;
+}
+
+bool
+console_cmd__key__default(const string_view &line)
+{
+	out << "origin:                  " << m::my_host() << std::endl;
+	out << "public key ID:           " << m::self::public_key_id << std::endl;
+	out << "public key base64:       " << m::self::public_key_b64 << std::endl;
+	out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
+
+	return true;
+}
+
+//
+// event
+//
+
+static bool console_cmd__event__default(const string_view &line);
+static bool console_cmd__event__fetch(const string_view &line);
+
+bool
+console_cmd__event(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("fetch"):
+			return console_cmd__event__fetch(args);
+
+		default:
+			return console_cmd__event__default(line);
+	}
+}
+
+bool
+console_cmd__event__fetch(const string_view &line)
+{
+	const m::event::id event_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	const auto host
+	{
+		!empty(args)? token(args, ' ', 0) : ""_sv
+	};
+
+	m::v1::event::opts opts;
+	if(host)
+		opts.remote = host;
+
+	static char buf[96_KiB];
+	m::v1::event request
+	{
+		event_id, buf, opts
+	};
+
+	//TODO: TO
+
+	const auto code
+	{
+		request.get()
+	};
+
+	const m::event event
+	{
+		request
+	};
+
+	out << json::object{request} << std::endl;
+	out << std::endl;
+	out << pretty(event) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__event__default(const string_view &line)
+{
+	const m::event::id event_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	static char buf[64_KiB];
+	const m::event event
+	{
+		event_id, buf
+	};
+
+	if(!empty(args)) switch(hash(token(args, ' ', 0)))
+	{
+		case hash("raw"):
+			out << json::object{buf} << std::endl;
+			return true;
+	}
+
+	out << pretty(event) << std::endl;
 	return true;
 }
 
