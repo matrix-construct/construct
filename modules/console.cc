@@ -24,6 +24,7 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 std::stringstream out;
 
 static bool console_cmd__state(const string_view &line);
+static bool console_cmd__net(const string_view &line);
 static bool console_cmd__mod(const string_view &line);
 
 extern "C" int
@@ -45,6 +46,9 @@ try
 	{
 		case hash("mod"):
 			return console_cmd__mod(args);
+
+		case hash("net"):
+			return console_cmd__net(args);
 
 		case hash("state"):
 			return console_cmd__state(args);
@@ -131,6 +135,92 @@ console_cmd__mod_syms(const string_view &line)
 		out << sym << std::endl;
 
 	out << " -- " << symbols.size() << " symbols in " << path << std::endl;
+	return true;
+}
+
+//
+// net
+//
+
+static bool console_cmd__net_host(const string_view &line);
+
+bool
+console_cmd__net(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("host"):
+			return console_cmd__net_host(args);
+
+		default:
+			throw bad_command{};
+	}
+}
+
+static bool console_cmd__net_host__default(const string_view &line);
+
+bool
+console_cmd__net_host(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		default:
+			return console_cmd__net_host__default(line);
+	}
+
+	return true;
+}
+
+bool
+console_cmd__net_host__default(const string_view &line)
+{
+	const params token
+	{
+		line, " ", {"host", "service"}
+	};
+
+	const auto &host{token.at(0)};
+	const auto &service
+	{
+		token.count() > 1? token.at(1) : string_view{}
+	};
+
+	const net::hostport hostport
+	{
+		host, service
+	};
+
+	ctx::dock dock;
+	bool done{false};
+	net::ipport ipport;
+	std::exception_ptr eptr;
+	net::dns(hostport, [&done, &dock, &eptr, &ipport]
+	(std::exception_ptr eptr_, const net::ipport &ipport_)
+	{
+		eptr = std::move(eptr_);
+		ipport = ipport_;
+		done = true;
+		dock.notify_one();
+	});
+
+	while(!done)
+		dock.wait();
+
+	if(eptr)
+		std::rethrow_exception(eptr);
+	else
+		std::cout << ipport << std::endl;
+
 	return true;
 }
 
