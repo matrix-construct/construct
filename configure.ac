@@ -537,6 +537,8 @@ else
 	IRCD_DEFINE(USE_AIO, [0], [Define to 1 if you want AIO support (linux only)])
 fi
 
+AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
+
 
 dnl ***************************************************************************
 dnl Installation Layout

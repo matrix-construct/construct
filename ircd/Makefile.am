@@ -98,6 +98,12 @@ libircd_la_SOURCES =   \
 	sodium.cc          \
 	###
 
+if AIO
+libircd_la_SOURCES +=  \
+	aio.cc             \
+	###
+endif
+
 if JS
 libircd_la_SOURCES +=  \
 	js.cc              \
