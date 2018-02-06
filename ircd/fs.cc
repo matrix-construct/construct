@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <RB_INC_BOOST_FILESYSTEM_HPP
+#include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
 #ifdef IRCD_USE_AIO

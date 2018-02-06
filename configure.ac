@@ -812,16 +812,6 @@ else
 	])
 fi
 
-RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_HPP], [boost/asio.hpp>], [ boost asio. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_CONTEXT_ALL_HPP], [boost/context/all.hpp>], [ boost context. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_SPAWN_HPP], [boost/asio/spawn.hpp>], [ boost asio spawn. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_LEXICAL_CAST_HPP], [boost/lexical_cast.hpp>], [ boost lexical_cast. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_TOKENIZER_HPP], [boost/tokenizer.hpp>], [ boost tokenizer. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_FILESYSTEM_HPP], [boost/filesystem.hpp>], [ boost filesystem. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_DLL_HPP], [boost/dll.hpp>], [ boost DLL. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_QI_HPP], [boost/spirit/include/qi.hpp>], [ spirit qi parser. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_KARMA_HPP], [boost/spirit/include/karma.hpp>], [ spirit karma generator. ])
-
 
 
 dnl

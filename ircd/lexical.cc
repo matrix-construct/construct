@@ -16,8 +16,8 @@
 /// can also be replaced.
 ///
 
-#include <RB_INC_BOOST_TOKENIZER_HPP
-#include <RB_INC_BOOST_LEXICAL_CAST_HPP
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 //
