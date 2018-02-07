@@ -192,7 +192,6 @@ namespace ircd
 
 #include "string_view.h"
 #include "vector_view.h"
-#include "array_view.h"
 #include "byte_view.h"
 #include "buffer.h"
 #include "allocator.h"
