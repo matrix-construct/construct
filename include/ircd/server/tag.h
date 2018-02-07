@@ -35,7 +35,7 @@ struct ircd::server::tag
 	http::code status {(http::code)0};
 	std::unique_ptr<char[]> cancellation;
 
-	void set_exception(std::exception_ptr &&);
+	void set_exception(std::exception_ptr);
 	template<class... args> void set_exception(args&&...);
 	template<class... args> void set_value(args&&...);
 

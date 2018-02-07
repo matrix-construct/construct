@@ -1033,7 +1033,7 @@ catch(const std::exception &e)
 {
 	if(node)
 	{
-		node->handle_error(*this, std::make_exception_ptr(std::current_exception()));
+		node->handle_error(*this, std::current_exception());
 		return;
 	}
 
@@ -1177,7 +1177,7 @@ catch(const std::exception &e)
 {
 	if(node)
 	{
-		node->handle_error(*this, std::make_exception_ptr(std::current_exception()));
+		node->handle_error(*this, std::current_exception());
 		return;
 	}
 
@@ -2108,7 +2108,7 @@ ircd::server::tag::set_exception(args&&... a)
 }
 
 void
-ircd::server::tag::set_exception(std::exception_ptr &&eptr)
+ircd::server::tag::set_exception(std::exception_ptr eptr)
 {
 	if(abandoned())
 		return;
