@@ -10,39 +10,6 @@
 
 #include <ircd/m/m.h>
 
-ircd::db::column *
-state_node_column
-{};
-
-ircd::db::column *
-state_head_column
-{};
-
-ircd::m::state::init::init()
-:state_head{*event::events, "state_head"}
-,state_node{*event::events, "state_node"}
-{
-	state_head_column = &state_head;
-	state_node_column = &state_node;
-}
-
-ircd::m::state::init::~init()
-noexcept
-{
-	state_head_column = nullptr;
-	state_node_column = nullptr;
-}
-
-/// Convenience to get value from the current room head.
-void
-ircd::m::state::get__room(const id::room &room_id,
-                          const string_view &type,
-                          const string_view &state_key,
-                          const val_closure &closure)
-{
-	char head[ID_MAX_SZ];
-	return get(get_head(head, room_id), type, state_key, closure);
-}
 
 /// Convenience to get value making a key
 void
@@ -211,56 +178,72 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 namespace ircd::m::state
 {
 	static mutable_buffer _getbuffer(const uint8_t &height);
-	static string_view _insert_overwrite(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	static string_view _insert_leaf_nonfull(db::txn &txn, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos);
-	static json::object _insert_leaf_full(const int8_t &height, db::txn &txn, const json::array &key, const string_view &val, node::rep &rep, const size_t &pos, node::rep &push);
-	static string_view _insert_branch_nonfull(db::txn &txn, const mutable_buffer &idbuf, node::rep &rep, const size_t &pos, node::rep &pushed);
-	static json::object _insert_branch_full(const int8_t &height, db::txn &txn, node::rep &rep, const size_t &pos, node::rep &push, const node::rep &pushed);
-	static string_view _insert(int8_t &height, db::txn &txn, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push);
+	static string_view _insert_overwrite(db::txn &, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &, const size_t &pos);
+	static string_view _insert_leaf_nonfull(db::txn &, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &, const size_t &pos);
+	static json::object _insert_leaf_full(const int8_t &height, db::txn &, const json::array &key, const string_view &val, node::rep &, const size_t &pos, node::rep &push);
+	static string_view _insert_branch_nonfull(db::txn &, const mutable_buffer &idbuf, node::rep &, const size_t &pos, node::rep &pushed);
+	static json::object _insert_branch_full(const int8_t &height, db::txn &, node::rep &, const size_t &pos, node::rep &push, const node::rep &pushed);
+	static string_view _insert(int8_t &height, db::txn &, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push);
+	static string_view _create(db::txn &, const mutable_buffer &head, const string_view &type, const string_view &state_key, const string_view &val);
 }
 
-/// State update from an event. (NOTE: sets the room head atm)
-/// Leaves the root node ID in the head buffer; returns view.
+/// State update from an event. Leaves the root node ID in the head buffer;
+/// returns view.
+///
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &head,
+                       const mutable_buffer &headout,
+                       const string_view &headin,
                        const event &event)
 {
 	const auto &type{at<"type"_>(event)};
 	const auto &state_key{at<"state_key"_>(event)};
 	const auto &event_id{at<"event_id"_>(event)};
-	const auto &room_id{at<"room_id"_>(event)};
 
 	if(type == "m.room.create")
 	{
-		// Because this is a new tree and nothing is read from the DB, all
-		// writes here are just copies into the txn and these buffers can
-		// remain off-stack.
-		const critical_assertion ca;
-		thread_local char key[KEY_MAX_SZ];
-		thread_local char node[NODE_MAX_SZ];
-
-		node::rep rep;
-		rep.keys[0] = make_key(key, type, state_key);
-		rep.kn = 1;
-		rep.vals[0] = event_id;
-		rep.vn = 1;
-		rep.chld[0] = string_view{};
-		rep.cn = 1;
-
-		return set_head(txn, room_id, set_node(txn, head, rep.write(node)));
+		assert(empty(headin));
+		return _create(txn, headout, type, state_key, event_id);
 	}
 
-	return insert(txn, head, room_id, type, state_key, event_id);
+	assert(!empty(headin));
+	return insert(txn, headout, headin, type, state_key, event_id);
+}
+
+ircd::string_view
+ircd::m::state::_create(db::txn &txn,
+                        const mutable_buffer &head,
+                        const string_view &type,
+                        const string_view &state_key,
+                        const string_view &val)
+{
+	assert(type == "m.room.create");
+	assert(defined(state_key));
+
+	// Because this is a new tree and nothing is read from the DB, all
+	// writes here are just copies into the txn and these buffers can
+	// remain off-stack.
+	const critical_assertion ca;
+	thread_local char key[KEY_MAX_SZ];
+	thread_local char node[NODE_MAX_SZ];
+
+	node::rep rep;
+	rep.keys[0] = make_key(key, type, state_key);
+	rep.kn = 1;
+	rep.vals[0] = val;
+	rep.vn = 1;
+	rep.chld[0] = string_view{};
+	rep.cn = 1;
+
+	return set_node(txn, head, rep.write(node));
 }
 
 /// State update for room_id inserting (type,state_key) = event_id into the
 /// tree. Leaves the root node ID in the head buffer; returns view.
-/// (NOTE: sets the room head in the txn right now).
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &head,
-                       const id::room &room_id,
+                       const mutable_buffer &headout,
+                       const string_view &headin,
                        const string_view &type,
                        const string_view &state_key,
                        const id::event &event_id)
@@ -268,32 +251,28 @@ ircd::m::state::insert(db::txn &txn,
 	// The insertion process reads from the DB and will yield this ircd::ctx
 	// so the key buffer must stay on this stack.
 	char key[KEY_MAX_SZ];
-	return insert(txn, head, room_id, make_key(key, type, state_key), event_id);
+	return insert(txn, headout, headin, make_key(key, type, state_key), event_id);
 }
 
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &headbuf,
-                       const id::room &room_id,
+                       const mutable_buffer &headout,
+                       const string_view &headin,
                        const json::array &key,
                        const id::event &event_id)
 {
-	string_view head
-	{
-		get_head(headbuf, room_id)
-	};
-
 	node::rep push;
 	int8_t height{0};
+	string_view head{headin};
 	get_node(head, [&](const node &node)
 	{
-		head = _insert(height, txn, key, event_id, node, headbuf, push);
+		head = _insert(height, txn, key, event_id, node, headout, push);
 	});
 
 	if(push.kn)
-		head = push.write(txn, headbuf);
+		head = push.write(txn, headout);
 
-	return set_head(txn, room_id, head);
+	return head;
 }
 
 ircd::string_view
@@ -534,56 +513,18 @@ ircd::m::state::_getbuffer(const uint8_t &height)
 	return buffer.at(height % buffer.size());
 }
 
-/// Set the root node ID for a room in this db transaction.
-ircd::string_view
-ircd::m::state::set_head(db::txn &iov,
-                         const id::room &room_id,
-                         const string_view &head_id)
-{
-	db::txn::append
-	{
-		iov, db::delta
-		{
-			"state_head",  // col
-			room_id,       // key
-			head_id,       // val
-		}
-	};
-
-	return head_id;
-}
-
-/// Copy a room's root node ID into buffer.
-ircd::string_view
-ircd::m::state::get_head(const mutable_buffer &buf,
-                         const id::room &room_id)
-{
-	assert(state_head_column);
-	auto &column{*state_head_column};
-
-	string_view ret;
-	column(room_id, [&ret, &buf]
-	(const string_view &head)
-	{
-		ret = { data(buf), strlcpy(buf, head) };
-	});
-
-	return ret;
-}
-
-/// View a node by ID. This can be used when user already has a reference
-/// to the db column.
+/// View a node by ID. This makes a DB query and may yield ircd::ctx.
 void
 ircd::m::state::get_node(const string_view &node_id,
                          const node_closure &closure)
 {
-	assert(state_node_column);
-	auto &column{*state_node_column};
+	assert(bool(dbs::state_node));
+	auto &column{dbs::state_node};
 	column(node_id, closure);
 }
 
 /// Writes a node to the db::txn and returns the id of this node (a hash) into
-/// the buffer. The template allows for arguments to be forwarded to make_node()
+/// the buffer.
 ircd::string_view
 ircd::m::state::set_node(db::txn &iov,
                          const mutable_buffer &hashbuf,
@@ -601,10 +542,9 @@ ircd::m::state::set_node(db::txn &iov,
 
 	db::txn::append
 	{
-		iov, db::delta
+		iov, dbs::state_node,
 		{
 			db::op::SET,
-			"state_node",  // col
 			hashb64,       // key
 			node,          // val
 		}

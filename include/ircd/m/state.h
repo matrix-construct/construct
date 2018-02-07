@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_M_STATE_H
 
-/// Matrix state machine unit and bus.
+/// Matrix machine state unit and bus.
 ///
 /// This section deals specifically with the aspect of Matrix called "state"
 /// providing tools and utilities as well as local databasing. IO is done for
@@ -25,7 +25,6 @@
 ///
 namespace ircd::m::state
 {
-	struct init;
 	struct node;
 
 	constexpr size_t ID_MAX_SZ { 64 };
@@ -52,12 +51,9 @@ namespace ircd::m::state
 	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
 
-	string_view get_head(const mutable_buffer &out, const id::room &);
-	string_view set_head(db::txn &txn, const id::room &, const string_view &head);
-
-	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const json::array &key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &head, const id::room &, const string_view &type, const string_view &state_key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &head, const event &);
+	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const json::array &key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const string_view &type, const string_view &state_key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const event &);
 
 	bool dfs(const string_view &head, const json::array &key, const search_closure &);
 	bool dfs(const string_view &head, const search_closure &);
@@ -69,7 +65,6 @@ namespace ircd::m::state
 
 	void get(const string_view &head, const json::array &key, const val_closure &);
 	void get(const string_view &head, const string_view &type, const string_view &state_key, const val_closure &);
-	void get__room(const id::room &, const string_view &type, const string_view &state_key, const val_closure &);
 }
 
 /// JSON property name strings specifically for use in m::state
@@ -186,12 +181,3 @@ static_assert
 (
 	ircd::m::state::NODE_MAX_KEY == ircd::m::state::NODE_MAX_VAL
 );
-
-struct ircd::m::state::init
-{
-	db::column state_head;
-	db::column state_node;
-
-	init();
-	~init() noexcept;
-};
