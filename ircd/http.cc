@@ -888,6 +888,16 @@ ircd::http::status(const string_view &str)
 
 ircd::string_view
 ircd::http::status(const enum code &code)
+try
 {
 	return reason.at(code);
+}
+catch(const std::out_of_range &e)
+{
+	log::warning
+	{
+		"No reason string for HTTP status code %d", int(code)
+	};
+
+	return ""_sv;
 }
