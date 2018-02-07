@@ -969,7 +969,6 @@ ircd::ctx::ole::init::init()
 {
 	assert(!thread);
 	interruption = false;
-	thread = new std::thread(&worker);
 }
 
 ircd::ctx::ole::init::~init()
@@ -1028,6 +1027,9 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 void
 ircd::ctx::ole::push(closure &&func)
 {
+	if(unlikely(!thread))
+		thread = new std::thread(&worker);
+
 	const std::lock_guard<decltype(mutex)> lock(mutex);
 	queue.emplace_back(std::move(func));
 	cond.notify_one();
