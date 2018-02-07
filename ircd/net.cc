@@ -1395,12 +1395,9 @@ void
 ircd::net::socket::cancel()
 noexcept
 {
+	cancel_timeout();
 	boost::system::error_code ec;
-
 	sd.cancel(ec);
-	assert(!ec);
-
-	timer.cancel(ec);
 	assert(!ec);
 }
 
@@ -1992,15 +1989,22 @@ ircd::milliseconds
 ircd::net::socket::cancel_timeout()
 noexcept
 {
-	const auto ret
+	const auto exp
 	{
 		timer.expires_from_now()
+	};
+
+	const auto ret
+	{
+		duration_cast<milliseconds>(exp)
 	};
 
 	boost::system::error_code ec;
 	timer.cancel(ec);
 	assert(!ec);
-	return duration_cast<milliseconds>(ret);
+
+	timedout = false;
+	return ret;
 }
 
 void
@@ -2014,7 +2018,6 @@ ircd::net::socket::set_timeout(const milliseconds &t,
                                ec_handler callback)
 {
 	cancel_timeout();
-	timedout = false;
 	if(t < milliseconds(0))
 		return;
 
