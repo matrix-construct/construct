@@ -93,6 +93,8 @@ void
 ircd::log::fini()
 {
 	//remove_top_conf("log");
+	flush();
+	close();
 }
 
 void
@@ -132,6 +134,9 @@ ircd::log::flush()
 	{
 		file[fac].flush();
 	});
+
+	std::flush(out_console);
+	std::flush(err_console);
 }
 
 void

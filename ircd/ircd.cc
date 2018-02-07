@@ -322,14 +322,19 @@ try
 					"IRCd %s", reflect(new_runlevel)
 				};
 
+			ircd::log::fini();
 			ircd::runlevel_changed(new_runlevel);
 		});
 
-	if(new_runlevel != runlevel::HALT)
+	if(!ircd::runlevel_changed || new_runlevel != runlevel::HALT)
+	{
 		log::notice
 		{
 			"IRCd %s", reflect(new_runlevel)
 		};
+
+		ircd::log::flush();
+	}
 }
 catch(const std::exception &e)
 {
