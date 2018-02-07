@@ -111,6 +111,7 @@ const decltype(ircd::http::reason) ircd::http::reason
 
 	{ code::INTERNAL_SERVER_ERROR,               "Internal Server Error"                           },
 	{ code::NOT_IMPLEMENTED,                     "Not Implemented"                                 },
+	{ code::BAD_GATEWAY,                         "Bad Gateway"                                     },
 	{ code::SERVICE_UNAVAILABLE,                 "Service Unavailable"                             },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },

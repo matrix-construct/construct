@@ -77,6 +77,7 @@ enum ircd::http::code
 
 	INTERNAL_SERVER_ERROR                   = 500,
 	NOT_IMPLEMENTED                         = 501,
+	BAD_GATEWAY                             = 502,
 	SERVICE_UNAVAILABLE                     = 503,
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
 	INSUFFICIENT_STORAGE                    = 507,
