@@ -2149,12 +2149,34 @@ ircd::net::dns::operator()(const hostport &hostport,
                            const opts &opts,
                            callback_ipport_one callback)
 {
-	operator()(hostport, opts, [this, hostport(hostport), opts(opts), callback(std::move(callback))]
-	(std::exception_ptr eptr, const rfc1035::record::SRV &record)
-	mutable
+	//TODO: ip6
+	auto calluser{[callback(std::move(callback))]
+	(std::exception_ptr eptr, const uint32_t &ip, const uint16_t &port)
 	{
 		if(eptr)
 			return callback(std::move(eptr), {});
+
+		if(!ip)
+			return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), {});
+
+		const ipport ipport{ip, port};
+		callback(std::move(eptr), ipport);
+	}};
+
+	if(!hostport.service)
+		return operator()(hostport, opts, [hostport, calluser(std::move(calluser))]
+		(std::exception_ptr eptr, const rfc1035::record::A &record)
+		{
+			calluser(std::move(eptr), record.ip4, port(hostport));
+		});
+
+	operator()(hostport, opts, [this, hostport(hostport), opts(opts), calluser(std::move(calluser))]
+	(std::exception_ptr eptr, const rfc1035::record::SRV &record)
+	mutable
+	{
+		//TODO: we get NXDOMAIN and it kills the chain..
+		//if(eptr)
+		//	return callback(std::move(eptr), {});
 
 		if(!record.tgt.empty())
 			host(hostport) = record.tgt;
@@ -2165,17 +2187,10 @@ ircd::net::dns::operator()(const hostport &hostport,
 		// Have to kill the service name to not run another SRV query now.
 		hostport.service = {};
 		opts.srv = {};
-		this->operator()(hostport, opts, [hostport, callback(std::move(callback))]
+		this->operator()(hostport, opts, [hostport, calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const rfc1035::record::A &record)
 		{
-			if(eptr)
-				return callback(std::move(eptr), {});
-
-			if(!record.ip4)
-				return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), {});
-
-			const ipport ipport{record.ip4, port(hostport)};
-			callback(std::move(eptr), ipport);
+			calluser(std::move(eptr), record.ip4, port(hostport));
 		});
 	});
 }
@@ -2191,13 +2206,21 @@ ircd::net::dns::operator()(const hostport &hostport,
 	operator()(hostport, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
 	{
-		if(eptr || rrs.empty())
+		if(eptr)
 			return callback(std::move(eptr), {});
 
 		//TODO: prng on weight / prio plz
-		const auto &rr{*rrs.at(0)};
-		const auto &record(rr.as<const rfc1035::record::SRV>());
-		callback(std::move(eptr), record);
+		for(size_t i(0); i < rrs.size(); ++i)
+		{
+			const auto &rr{*rrs.at(i)};
+			if(rr.type != 33)
+				continue;
+
+			const auto &record(rr.as<const rfc1035::record::SRV>());
+			return callback(std::move(eptr), record);
+		}
+
+		return callback(std::move(eptr), {});
 	});
 }
 
@@ -2212,13 +2235,21 @@ ircd::net::dns::operator()(const hostport &hostport,
 	operator()(hostport, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
 	{
-		if(eptr || rrs.empty())
+		if(eptr)
 			return callback(std::move(eptr), {});
 
 		//TODO: prng plz
-		const auto &rr{*rrs.at(0)};
-		const auto &record(rr.as<const rfc1035::record::A>());
-		callback(std::move(eptr), record);
+		for(size_t i(0); i < rrs.size(); ++i)
+		{
+			const auto &rr{*rrs.at(i)};
+			if(rr.type != 1)
+				continue;
+
+			const auto &record(rr.as<const rfc1035::record::A>());
+			return callback(std::move(eptr), record);
+		}
+
+		return callback(std::move(eptr), {});
 	});
 }
 
