@@ -2555,7 +2555,7 @@ try
 			"Response header is marked as 'Query' and not 'Response'"
 		};
 
-	if(unlikely(header.rcode))
+	if(header.rcode)
 		throw rfc1035::error
 		{
 			"protocol error: %s", rfc1035::rcode.at(header.rcode)
@@ -2632,10 +2632,13 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("resolver tag:%u [%s]: %s",
-	          tag.id,
-	          string(tag.hp),
-	          e.what());
+	// There's no need to flash red to the log for NXDOMAIN which is
+	// common in this system when probing SRV.
+	if(unlikely(header.rcode != 3))
+		log.error("resolver tag:%u [%s]: %s",
+		          tag.id,
+		          string(tag.hp),
+		          e.what());
 
 	if(tag.cb)
 		tag.cb(std::current_exception(), {});
