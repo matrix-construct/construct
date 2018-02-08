@@ -10,770 +10,1019 @@
 
 #include <ircd/m/m.h>
 
-namespace ircd::m
-{
-	struct indexer;
+/// Residence of the events database instance pointer.
+decltype(ircd::m::dbs::events)
+ircd::m::dbs::events
+{};
 
-	extern std::set<std::shared_ptr<indexer>> indexers;
-	extern const std::unique_ptr<indexer> indexer_origin_joined;
-	extern const std::unique_ptr<indexer> indexer_state_head_for_event_id_in_room_id;
+/// Linkage for a cache of the columns of the events database which directly
+/// correspond to a property in the matrix event object. This array allows
+/// for constant time access to a column the same way one can make constant
+/// time access to a property in m::event.
+decltype(ircd::m::dbs::event_column)
+ircd::m::dbs::event_column
+{};
+
+/// Linkage for a reference to the state_node column.
+decltype(ircd::m::dbs::state_node)
+ircd::m::dbs::state_node
+{};
+
+/// Linkage for a reference to the room_events column
+decltype(ircd::m::dbs::room_events)
+ircd::m::dbs::room_events
+{};
+
+//
+// init
+//
+
+/// Initializes the m::dbs subsystem; sets up the events database. Held/called
+/// by m::init. Most of the extern variables in m::dbs are not ready until
+/// this call completes.
+ircd::m::dbs::init::init()
+{
+	// Open the events database
+	events = std::make_shared<database>("events"s, ""s, desc::events);
+
+	// Cache the columns for the event tuple in order for constant time lookup
+	assert(event_columns == event::size());
+	std::array<string_view, event::size()> keys;      //TODO: why did this happen?
+	_key_transform(event{}, begin(keys), end(keys));  //TODO: how did this happen?
+	for(size_t i(0); i < keys.size(); ++i)
+		event_column[i] = db::column
+		{
+			*events, keys[i]
+		};
+
+	// Cache the columns for the metadata
+	room_events = db::column{*events, "_room_events"};
+	state_node = db::column{*events, "_state_node"};
 }
 
-struct ircd::m::indexer
+/// Shuts down the m::dbs subsystem; closes the events database. The extern
+/// variables in m::dbs will no longer be functioning after this call.
+ircd::m::dbs::init::~init()
+noexcept
 {
-	//TODO: collapse
-	struct concat;
-	struct concat_s; //TODO: special
-	struct concat_v;
-	struct concat_2v;
-	struct concat_3vs; //TODO: special
+	// Columns should be unrefed before DB closes
+	state_node = {};
+	room_events = {};
+	for(auto &column : event_column)
+		column = {};
 
-	std::string name;
+	// Unref DB (should close)
+	events = {};
+}
 
-	virtual void operator()(const event &, db::txn &, const db::op &op) const {}
-	virtual void operator()(const event &, db::txn &, const db::op &op, const string_view &) const {}
+namespace ircd::m::dbs
+{
+	static void _index__room_events(db::txn &, const string_view &state_root, const event &);
+	static string_view _index_state(db::txn &, const mutable_buffer &root_out, const string_view &state_root, const event &);
+	static string_view _index_ephem(db::txn &, const string_view &state_root, const event &);
+}
 
-	indexer(std::string name)
-	:name{std::move(name)}
-	{}
-
-	virtual ~indexer() noexcept = default;
-};
-
-void
-ircd::m::dbs::write(const event &event,
-                    db::txn &txn)
+ircd::string_view
+ircd::m::dbs::write(db::txn &txn,
+                    const mutable_buffer &root_out,
+                    const string_view &root_in,
+                    const event &event)
 {
 	db::txn::append
 	{
 		txn, at<"event_id"_>(event), event
 	};
 
-	append_indexes(event, txn);
-}
-
-void
-ircd::m::dbs::append_indexes(const event &event,
-                             db::txn &txn)
-{
-	for(const auto &ptr : indexers)
-	{
-		const m::indexer &indexer{*ptr};
-		indexer(event, txn, db::op::SET);
-	}
-
 	if(defined(json::get<"state_key"_>(event)))
-	{
-		char headbuf[state::ID_MAX_SZ];
-		const auto head{state::insert(txn, headbuf, event)};
-		const m::indexer &indexer{*indexer_state_head_for_event_id_in_room_id};
-		indexer(event, txn, db::op::SET, head);
-	}
+		return _index_state(txn, root_out, root_in, event);
 
-	if(json::get<"type"_>(event) == "m.room.member")
-	{
-		const m::indexer &indexer{*indexer_origin_joined};
-		if(json::get<"membership"_>(event) == "join")
-			indexer(event, txn, db::op::SET);
-		//else
-		//	indexer(event, txn, db::op::DELETE);
-	}
+	return _index_ephem(txn, root_in, event);
 }
 
-//
-//
-//
-
-decltype(ircd::m::dbs::noop)
-ircd::m::dbs::noop
-{};
-
-ircd::m::dbs::query<>::~query()
-noexcept
+ircd::string_view
+ircd::m::dbs::_index_ephem(db::txn &txn,
+                           const string_view &state_root_in,
+                           const event &event)
 {
+	_index__room_events(txn, state_root_in, event);
+	return state_root_in;
 }
 
-bool
-ircd::m::dbs::_query(const query<> &clause,
-                    const closure_bool &closure)
+ircd::string_view
+ircd::m::dbs::_index_state(db::txn &txn,
+                           const mutable_buffer &state_root_out,
+                           const string_view &state_root_in,
+                           const event &event)
+try
 {
-	switch(clause.type)
+	const auto &type
 	{
-		case where::equal:
+		at<"type"_>(event)
+	};
+
+	const auto &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const string_view new_root
+	{
+		state::insert(txn, state_root_out, state_root_in, event)
+	};
+
+	_index__room_events(txn, new_root, event);
+	return new_root;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to update state: %s", e.what()
+	};
+
+	throw;
+}
+
+/// Adds the entry for the room_events column into the txn.
+/// You need find/create the right state_root before this.
+void
+ircd::m::dbs::_index__room_events(db::txn &txn,
+                                  const string_view &state_root,
+                                  const event &event)
+{
+	const ctx::critical_assertion ca;
+	thread_local char buf[768];
+	const string_view &key
+	{
+		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), at<"event_id"_>(event))
+	};
+
+	db::txn::append
+	{
+		txn, room_events,
 		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::equal> &>(clause)
-			};
-
-			switch(_query_where(c, closure))
-			{
-				case 0:   return false;
-				case 1:   return true;
-				default:  break;
-			}
-
-			break;
+			key,          // key
+			state_root    // val
 		}
-
-		case where::logical_and:
-		{
-			const auto &c
-			{
-				dynamic_cast<const query<where::logical_and> &>(clause)
-			};
-
-			switch(_query_where(c, closure))
-			{
-				case 0:   return false;
-				case 1:   return true;
-				default:  break;
-			}
-
-			break;
-		}
-
-		default:
-		{
-			return _query_event_id(clause, closure);
-		}
-	}
-
-	return _query_event_id(clause, closure);
+	};
 }
 
-int
-ircd::m::dbs::_query_where(const query<where::equal> &where,
-                          const closure_bool &closure)
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const event &event)
 {
-	log.debug("Query [%s]: %s",
-	          "where equal",
-	          pretty_oneline(where.value));
-
-	const auto &value{where.value};
-	const auto &room_id{json::get<"room_id"_>(value)};
-	if(room_id)
-		return _query_where_room_id(where, closure);
-
-	const auto &event_id{json::get<"event_id"_>(value)};
-	if(event_id)
-		return _query_where_event_id(where, closure);
-
-	return -1;
+	return state_root(out, at<"room_id"_>(event), at<"event_id"_>(event), at<"depth"_>(event));
 }
 
-int
-ircd::m::dbs::_query_where(const query<where::logical_and> &where,
-                          const closure_bool &closure)
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const id::event &event_id)
 {
-	const auto &lhs{*where.a}, &rhs{*where.b};
-	const auto reclosure{[&lhs, &rhs, &closure]
-	(const auto &event)
+	static constexpr auto idx
 	{
-		if(!rhs(event))
-			return false;
+		json::indexof<event, "room_id"_>()
+	};
 
-		return closure(event);
-	}};
+	auto &column
+	{
+		event_column.at(idx)
+	};
 
-	return _query(lhs, reclosure);
+	id::room::buf room_id;
+	column(event_id, [&room_id](const string_view &val)
+	{
+		room_id = val;
+	});
+
+	return state_root(out, room_id, event_id);
 }
 
-int
-ircd::m::dbs::_query_where_event_id(const query<where::equal> &where,
-                                   const closure_bool &closure)
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const id::room &room_id,
+                         const id::event &event_id)
 {
-	const event::id &event_id
+	static constexpr auto idx
 	{
-		at<"event_id"_>(where.value)
+		json::indexof<event, "depth"_>()
 	};
 
-	if(my(event_id))
+	auto &column
 	{
-		std::cout << "GET LOCAL? " << event_id << std::endl;
-		if(_query_event_id(where, closure))
-			return true;
-	}
-
-	std::cout << "GET REMOTE? " << event_id << std::endl;
-	const unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
+		event_column.at(idx)
 	};
 
-	event::fetch tab
+	uint64_t depth;
+	column(event_id, [&](const string_view &binary)
 	{
-		event_id, buf
-	};
+		assert(size(binary) == sizeof(depth));
+		depth = byte_view<uint64_t>(binary);
+	});
 
-	const m::event event
-	{
-		io::acquire(tab)
-	};
-
-	return closure(event);
+	return state_root(out, room_id, event_id, depth);
 }
 
-int
-ircd::m::dbs::_query_where_room_id_at_event_id(const query<where::equal> &where,
-                                              const closure_bool &closure)
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const id::room &room_id,
+                         const id::event &event_id,
+                         const uint64_t &depth)
 {
-	const auto &value{where.value};
-	const room::id &room_id{json::get<"room_id"_>(value)};
-	const auto &event_id{json::get<"event_id"_>(value)};
-	const auto &state_key{json::get<"state_key"_>(value)};
-
-	if(!defined(state_key))
-		return _query_where_event_id(where, closure);
-
-	if(my(room_id))
+	char keybuf[768]; const auto key
 	{
-		std::cout << "GET LOCAL STATE? " << event_id << std::endl;
-		return -1;
-	}
+		room_events_key(keybuf, room_id, depth, event_id)
+	};
 
-	const auto &type{json::get<"type"_>(value)};
-	if(type && state_key)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
+	string_view ret;
+	room_events(key, [&out, &ret](const string_view &val)
+	{
+		ret = { data(out), copy(out, val) };
+	});
 
-	return _query_in_room_id(where, closure, room_id);
+	return ret;
 }
-
-int
-ircd::m::dbs::_query_where_room_id(const query<where::equal> &where,
-                                  const closure_bool &closure)
-{
-	const auto &value{where.value};
-	const auto &room_id{json::get<"room_id"_>(value)};
-	const auto &event_id{json::get<"event_id"_>(value)};
-	if(event_id)
-		return _query_where_room_id_at_event_id(where, closure);
-
-	const auto &type{json::get<"type"_>(value)};
-	const auto &state_key{json::get<"state_key"_>(value)};
-	const bool is_state{defined(state_key) == true};
-	if(type && is_state)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
-
-	if(is_state)
-		return _query_for_type_state_key_in_room_id(where, closure, room_id, type, state_key);
-
-	//std::cout << "in room id?" << std::endl;
-	return _query_in_room_id(where, closure, room_id);
-}
-
-bool
-ircd::m::dbs::_query_event_id(const query<> &query,
-                             const closure_bool &closure)
-{
-	cursor cursor
-	{
-		"event_id", &query
-	};
-
-	for(auto it(cursor.begin()); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::dbs::_query_in_room_id(const query<> &query,
-                                   const closure_bool &closure,
-                                   const room::id &room_id)
-{
-	cursor cursor
-	{
-		"event_id in room_id", &query
-	};
-
-	for(auto it(cursor.begin(room_id)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::dbs::_query_for_type_state_key_in_room_id(const query<> &query,
-                                                  const closure_bool &closure,
-                                                  const room::id &room_id,
-                                                  const string_view &type,
-                                                  const string_view &state_key)
-{
-	cursor cursor
-	{
-		"event_id for type,state_key in room_id", &query
-	};
-
-	static const size_t max_type_size
-	{
-		255
-	};
-
-	static const size_t max_state_key_size
-	{
-		255
-	};
-
-	const auto key_max
-	{
-		room::id::buf::SIZE + max_type_size + max_state_key_size + 2
-	};
-
-	size_t key_len;
-	char key[key_max]; key[0] = '\0';
-	key_len = strlcat(key, room_id, sizeof(key));
-	key_len = strlcat(key, "..", sizeof(key)); //TODO: prefix protocol
-	key_len = strlcat(key, type, sizeof(key)); //TODO: prefix protocol
-	key_len = strlcat(key, state_key, sizeof(key)); //TODO: prefix protocol
-	for(auto it(cursor.begin(key)); bool(it); ++it)
-		if(closure(*it))
-			return true;
-
-	return false;
-}
-
-//
-//
-//
 
 bool
 ircd::m::dbs::exists(const event::id &event_id)
 {
-	db::column column
+	static constexpr auto idx
 	{
-		*event::events, "event_id"
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		event_column.at(idx)
 	};
 
 	return has(column, event_id);
 }
 
 //
-//
-//
-
-struct ircd::m::indexer::concat
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-
-	void operator()(const event &, db::txn &, const db::op &op) const final override;
-
-	concat(std::string col_a, std::string col_b)
-	:indexer
-	{
-		fmt::snstringf(512, "%s in %s", col_a, col_b)
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	{}
-};
-
-void
-ircd::m::indexer::concat::operator()(const event &event,
-                                     db::txn &txn,
-                                     const db::op &op)
-const
-{
-	if(!txn.has(op, col_a) || !txn.has(op, col_b))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto function
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_b, function);
-	at(event, col_a, function);
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			name,        // col
-			index,       // key
-			{},          // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_s
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-
-	void operator()(const event &, db::txn &, const db::op &) const final override;
-
-	concat_s(std::string col_a, std::string col_b, std::string name = {})
-	:indexer
-	{
-		!name? std::string{fmt::snstringf(512, "%s in %s", col_a, col_b)} : name
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	{}
-};
-
-void
-ircd::m::indexer::concat_s::operator()(const event &event,
-                                       db::txn &txn,
-                                       const db::op &op)
-const
-{
-	if(!txn.has(op, col_a) || !txn.has(op, col_b))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto function
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_b, function);
-	strlcat(index, ":::", buf_max);  //TODO: special
-	at(event, col_a, function);
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			op,
-			name,        // col
-			index,       // key
-			{},          // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_v
-:indexer
-{
-	std::string col_a;
-	std::string col_b;
-	std::string col_c;
-
-	void operator()(const event &, db::txn &, const db::op &op) const final override;
-	void operator()(const event &, db::txn &, const db::op &op, const string_view &) const final override;
-
-	concat_v(std::string col_a, std::string col_b, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s in %s", col_a, col_b, col_c)
-	}
-	,col_a{col_a}
-	,col_b{col_b}
-	,col_c{col_c}
-	{}
-};
-
-void
-ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::txn &txn,
-                                       const db::op &op)
-const
-{
-	if(!txn.has(op, col_c) || !txn.has(op, col_b) || !txn.has(op, col_a))
-		return;
-
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	at(event, col_b, concat);
-
-	string_view val;
-	at(event, col_a, [&val](auto &_val)
-	{
-		val = byte_view<string_view>{_val};
-	});
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-void
-ircd::m::indexer::concat_v::operator()(const event &event,
-                                       db::txn &txn,
-                                       const db::op &op,
-                                       const string_view &val)
-const
-{
-	static const size_t buf_max
-	{
-		1024
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	at(event, col_b, concat);
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_2v
-:indexer
-{
-	std::string col_a;
-	std::string col_b0;
-	std::string col_b1;
-	std::string col_c;
-
-	void operator()(const event &, db::txn &, const db::op &op) const final override;
-
-	concat_2v(std::string col_a, std::string col_b0, std::string col_b1, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s,%s in %s", col_a, col_b0, col_b1, col_c)
-	}
-	,col_a{col_a}
-	,col_b0{col_b0}
-	,col_b1{col_b1}
-	,col_c{col_c}
-	{}
-};
-
-void
-ircd::m::indexer::concat_2v::operator()(const event &event,
-                                        db::txn &txn,
-                                        const db::op &op)
-const
-{
-	if(!txn.has(op, col_c) || !txn.has(op, col_b0) || !txn.has(op, col_b1))
-		return;
-
-	static const size_t buf_max
-	{
-		2048
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	strlcat(index, "..", buf_max);  //TODO: special
-	at(event, col_b0, concat);
-	at(event, col_b1, concat);
-
-	string_view val;
-	at(event, col_a, [&val](auto &_val)
-	{
-		val = byte_view<string_view>{_val};
-	});
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			name,        // col
-			index,       // key
-			val,         // val
-		}
-	};
-}
-
-struct ircd::m::indexer::concat_3vs
-:indexer
-{
-	std::string col_a;
-	std::string col_b0;
-	std::string col_b1;
-	std::string col_b2;
-	std::string col_c;
-
-	void operator()(const event &, db::txn &, const db::op &op, const string_view &prev_event_id) const final override;
-
-	concat_3vs(std::string col_a, std::string col_b0, std::string col_b1, std::string col_b2, std::string col_c)
-	:indexer
-	{
-		fmt::snstringf(512, "%s for %s,%s,%s in %s", col_a, col_b0, col_b1, col_b2, col_c)
-	}
-	,col_a{col_a}
-	,col_b0{col_b0}
-	,col_b1{col_b1}
-	,col_b2{col_b2}
-	,col_c{col_c}
-	{}
-}
-const concat_3vs
-{
-	"prev_event_id", "type", "state_key", "event_id", "room_id"
-};
-
-// Non-participating
-void
-ircd::m::_index_special0(const event &event,
-                         db::txn &txn,
-                         const db::op &op,
-                         const string_view &prev_event_id)
-{
-	concat_3vs(event, txn, op, prev_event_id);
-}
-
-// Non-participating
-void
-ircd::m::_index_special1(const event &event,
-                         db::txn &txn,
-                         const db::op &op,
-                         const string_view &prev_event_id)
-{
-	static const ircd::m::indexer::concat_v idxr
-	{
-		"prev_event_id", "event_id", "room_id"
-	};
-
-	idxr(event, txn, op, prev_event_id);
-}
-
-// Non-participating
-void
-ircd::m::indexer::concat_3vs::operator()(const event &event,
-                                         db::txn &txn,
-                                         const db::op &op,
-                                         const string_view &prev_event_id)
-const
-{
-	if(!txn.has(op, col_c) ||
-	   !txn.has(op, col_b0) ||
-	   !txn.has(op, col_b1) ||
-	   !txn.has(op, col_b2))
-		return;
-
-	static const size_t buf_max
-	{
-		2048
-	};
-
-	char index[buf_max];
-	index[0] = '\0';
-	const auto concat
-	{
-		[&index](auto &val)
-		{
-			strlcat(index, byte_view<string_view>{val}, buf_max);
-		}
-	};
-
-	at(event, col_c, concat);
-	strlcat(index, "..", buf_max);  //TODO: special
-	at(event, col_b0, concat);
-	at(event, col_b1, concat);
-	at(event, col_b2, concat);
-
-	db::txn::append
-	{
-		txn, db::delta
-		{
-			name,           // col
-			index,          // key
-			prev_event_id,  // val
-		}
-	};
-}
-
-decltype(ircd::m::indexers)
-ircd::m::indexers
-{{
-	std::make_shared<ircd::m::indexer::concat>("event_id", "sender"),
-	std::make_shared<ircd::m::indexer::concat_s>("origin", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_2v>("event_id", "type", "state_key", "room_id"),
-	std::make_shared<ircd::m::indexer::concat_3vs>("prev_event_id", "type", "state_key", "event_id", "room_id"),
-}};
-
-decltype(ircd::m::indexer_origin_joined)
-ircd::m::indexer_origin_joined
-{
-	std::make_unique<ircd::m::indexer::concat_s>("origin", "room_id", "origin_joined in room_id")
-};
-
-decltype(ircd::m::indexer_state_head_for_event_id_in_room_id)
-ircd::m::indexer_state_head_for_event_id_in_room_id
-{
-	std::make_unique<ircd::m::indexer::concat_v>("state_head", "event_id", "room_id")
-};
-
-//
-//
+// Database descriptors
 //
 
+/// State nodes are pieces of the m::state:: b-tree. The key is the hash
+/// of the value, which serves as the ID of the node when referenced in
+/// the tree. see: m/state.h for details.
+///
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__state_node
+{
+	// name
+	"_state_node",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+};
+
+/// Prefix transform for the events__room_events. The prefix here is a room_id
+/// and the suffix is the depth+event_id concatenation.
+/// for efficient sequences
+///
+/// TODO: This needs The Grammar
+///
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__room_events__pfx
+{
+	"_room_events",
+
+	[](const string_view &key)
+	{
+		return key.find("...") != key.npos;
+	},
+
+	[](const string_view &key)
+	{
+		return rsplit(key, "...").first;
+	}
+};
+
+//TODO: optimize
 ircd::string_view
-ircd::m::dbs::reflect(const where &w)
+ircd::m::dbs::room_events_key(const mutable_buffer &out,
+                              const id::room &room_id,
+                              const uint64_t &depth,
+                              const id::event &event_id)
 {
-	switch(w)
-	{
-		case where::noop:           return "noop";
-		case where::test:           return "test";
-		case where::equal:          return "equal";
-		case where::not_equal:      return "not_equal";
-		case where::logical_or:     return "logical_or";
-		case where::logical_and:    return "logical_and";
-		case where::logical_not:    return "logical_not";
-	}
-
-	return "?????";
+	size_t len{0};
+	len = strlcpy(out, room_id);
+	len = strlcat(out, "...");
+	len = strlcat(out, lex_cast(depth));
+	len = strlcat(out, event_id);
+	return { data(out), len };
 }
+
+/// This column stores events in sequence in a room. Consider the following:
+///
+/// [room_id | depth + event_id => state_root]
+///
+/// The key is composed from three parts:
+///
+/// - `room_id` is the official prefix, bounding the sequence. That means we
+/// make a blind query with just a room_id and get to the beginning of the
+/// sequence, then iterate until we stop before the next room_id (upper bound).
+///
+/// - `depth` is the ordering. Within the sequence, all elements are ordered by
+/// depth from lowest to highest.
+///
+/// - `event_id` is the key suffix. This column serves to sequence all events
+/// within a room ordered by depth. There may be duplicate room_id|depth
+/// prefixing but the event_id suffix gives the key total uniqueness.
+///
+/// The value is then used to store the node ID of the state tree root at this
+/// event. Nodes of the state tree are stored in the state_node column. From
+/// that root node the state of the room at the time of this event_id can be
+/// queried.
+///
+/// There is one caveat here: we can't directly take a room_id and an event_id
+/// and make a trivial query to find the state root, since the depth number
+/// gets in the way. Rather than creating yet another column without the depth,
+/// for the time being, we pay the cost of an extra query to events_depth and
+/// find that missing piece to make the exact query with all three key parts.
+///
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__room_events
+{
+	// name
+	"_room_events",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id$event_id"
+	the prefix transform is in effect. this column indexes events by
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator - sorts from highest to lowest
+	{}, //ircd::db::reverse_cmp_ircd::string_view{},
+
+	// prefix transform
+	events__room_events__pfx,
+};
+
+//
+// Direct column descriptors
+//
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_event_id
+{
+	// name
+	"event_id",
+
+	// explanation
+	R"(### protocol note:
+
+	10.1
+	The id of event.
+
+	10.4
+	MUST NOT exceed 255 bytes.
+
+	### developer note:
+	key is event_id. This is redundant data but we have to have it for now.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_type
+{
+	// name
+	"type",
+
+	// explanation
+	R"(### protocol note:
+
+	10.1
+	The type of event. This SHOULD be namespaced similar to Java package naming conventions
+	e.g. 'com.example.subdomain.event.type'.
+
+	10.4
+	MUST NOT exceed 255 bytes.
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_content
+{
+	// name
+	"content",
+
+	// explanation
+	R"(### protocol note:
+
+	10.1
+	The fields in this object will vary depending on the type of event. When interacting
+	with the REST API, this is the HTTP body.
+
+	### developer note:
+	Since events must not exceed 65 KB the maximum size for the content is the remaining
+	space after all the other fields for the event are rendered.
+
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_room_id
+{
+	// name
+	"room_id",
+
+	// explanation
+	R"(### protocol note:
+
+	10.2 (apropos room events)
+	Required. The ID of the room associated with this event.
+
+	10.4
+	MUST NOT exceed 255 bytes.
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_sender
+{
+	// name
+	"sender",
+
+	// explanation
+	R"(### protocol note:
+
+	10.2 (apropos room events)
+	Required. Contains the fully-qualified ID of the user who sent this event.
+
+	10.4
+	MUST NOT exceed 255 bytes.
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_state_key
+{
+	// name
+	"state_key",
+
+	// explanation
+	R"(### protocol note:
+
+	10.3 (apropos room state events)
+	A unique key which defines the overwriting semantics for this piece of room state.
+	This value is often a zero-length string. The presence of this key makes this event a
+	State Event. The key MUST NOT start with '_'.
+
+	10.4
+	MUST NOT exceed 255 bytes.
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_origin
+{
+	// name
+	"origin",
+
+	// explanation
+	R"(### protocol note:
+
+	FEDERATION 4.1
+	DNS name of homeserver that created this PDU
+
+	### developer note:
+	key is event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_origin_server_ts
+{
+	// name
+	"origin_server_ts",
+
+	// explanation
+	R"(### protocol note:
+
+	FEDERATION 4.1
+	Timestamp in milliseconds on origin homeserver when this PDU was created.
+
+	### developer note:
+	key is event_id
+	value is a machine integer (binary)
+
+	TODO: consider unsigned rather than time_t because of millisecond precision
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(time_t)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_signatures
+{
+	// name
+	"signatures",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_auth_events
+{
+	// name
+	"auth_events",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_depth
+{
+	// name
+	"depth",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id value is long integer
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(int64_t)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_hashes
+{
+	// name
+	"hashes",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_membership
+{
+	// name
+	"membership",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_prev_events
+{
+	// name
+	"prev_events",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events_prev_state
+{
+	// name
+	"prev_state",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+/*
+const ircd::database::descriptor
+event_id_in_sender
+{
+	// name
+	"event_id in sender",
+
+	// explanation
+	R"(### developer note:
+
+	key is "@sender$event_id"
+	the prefix transform is in effect. this column indexes events by
+	sender offering an iterable bound of the index prefixed by sender
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in,
+};
+
+/// prefix transform for origin in
+///
+/// This transform expects a concatenation ending with an origin which means
+/// the prefix can be the same for multiple origins; therefor we can find
+/// or iterate "origin in X" where X is some repeated prefix
+///
+/// TODO: strings will have character conflicts. must address
+const ircd::db::prefix_transform
+origin_in
+{
+	"origin in",
+	[](const ircd::string_view &key)
+	{
+		return has(key, ":::");
+		//return key.find(':') != key.npos;
+	},
+	[](const ircd::string_view &key)
+	{
+		return split(key, ":::").first;
+		//return rsplit(key, ':').first;
+	}
+};
+
+const ircd::database::descriptor
+origin_in_room_id
+{
+	// name
+	"origin in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id:origin"
+	the prefix transform is in effect. this column indexes origins in a
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator - sorts from highest to lowest
+	{}, //ircd::db::reverse_cmp_string_view{},
+
+	// prefix transform
+	origin_in,
+};
+
+const ircd::database::descriptor
+origin_joined_in_room_id
+{
+	// name
+	"origin_joined in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	key is "!room_id:origin"
+	the prefix transform is in effect. this column indexes origins in a
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator - sorts from highest to lowest
+	{}, //ircd::db::reverse_cmp_string_view{},
+
+	// prefix transform
+	origin_in,
+};
+
+/// prefix transform for room_id
+///
+/// This transform expects a concatenation ending with a room_id which means
+/// the prefix can be the same for multiple room_id's; therefor we can find
+/// or iterate "room_id in X" where X is some repeated prefix
+///
+const ircd::db::prefix_transform room_id_in
+{
+	"room_id in",
+	[](const ircd::string_view &key)
+	{
+		return key.find('!') != key.npos;
+	},
+	[](const ircd::string_view &key)
+	{
+		return rsplit(key, '!').first;
+	}
+};
+
+/// prefix transform for type,state_key in room_id
+///
+/// This transform is special for concatenating room_id with type and state_key
+/// in that order with prefix being the room_id (this may change to room_id+
+/// type
+///
+/// TODO: arbitrary type strings will have character conflicts. must address
+/// TODO: with grammars.
+const ircd::db::prefix_transform type_state_key_in_room_id
+{
+	"type,state_key in room_id",
+	[](const ircd::string_view &key)
+	{
+		return key.find("..") != key.npos;
+	},
+	[](const ircd::string_view &key)
+	{
+		return split(key, "..").first;
+	}
+};
+
+const ircd::database::descriptor
+event_id_for_type_state_key_in_room_id
+{
+	// name
+	"event_id for type,state_key in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	type_state_key_in_room_id
+};
+
+const ircd::database::descriptor
+prev_event_id_for_event_id_in_room_id
+{
+	// name
+	"prev_event_id for event_id in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in
+};
+
+/// prefix transform for event_id in room_id,type,state_key
+///
+/// This transform is special for concatenating room_id with type and state_key
+/// and event_id in that order with prefix being the room_id,type,state_key. This
+/// will index multiple event_ids with the same type,state_key in a room which
+/// allows for a temporal depth to the database; event_id for type,state_key only
+/// resolves to a single latest event and overwrites itself as per the room state
+/// algorithm whereas this can map all of them and then allows for tracing.
+///
+/// TODO: arbitrary type strings will have character conflicts. must address
+/// TODO: with grammars.
+const ircd::db::prefix_transform
+event_id_in_room_id_type_state_key
+{
+	"event_id in room_id,type_state_key",
+	[](const ircd::string_view &key)
+	{
+		return has(key, '$');
+	},
+	[](const ircd::string_view &key)
+	{
+		return split(key, '$').first;
+	}
+};
+
+const ircd::database::descriptor
+prev_event_id_for_type_state_key_event_id_in_room_id
+{
+	// name
+	"prev_event_id for type,state_key,event_id in room_id",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	event_id_in_room_id_type_state_key
+};
+*/
+
+const ircd::database::description
+ircd::m::dbs::desc::events
+{
+	// Requirement of RocksDB/LevelDB
+	{ "default" },
+
+	////////
+	//
+	// These columns directly represent event fields indexed by event_id and
+	// the value is the actual event values. Some values may be JSON, like
+	// content.
+	//
+	events_auth_events,
+	events_content,
+	events_depth,
+	events_event_id,
+	events_hashes,
+	events_membership,
+	events_origin,
+	events_origin_server_ts,
+	events_prev_events,
+	events_prev_state,
+	events_room_id,
+	events_sender,
+	events_signatures,
+	events_state_key,
+	events_type,
+
+	////////
+	//
+	// These columns are metadata composed from the event data. Specifically,
+	// they are designed for fast sequential iterations.
+	//
+
+	// (state tree node id) => (state tree node)
+	events__state_node,
+
+	// (room_id, event_id) => (state_root)
+	// Sequence of all events for a room, ever.
+	events__room_events,
+};

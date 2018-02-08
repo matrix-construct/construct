@@ -30,15 +30,12 @@ namespace ircd::m
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
-/// The _Main Event_. Most fundamental primitive of the Matrix protocol.
+/// The Main Event
 ///
 /// This json::tuple provides at least all of the legal members of the matrix
 /// standard event. This is the fundamental building block of the matrix
 /// system. Rooms are collections of events. Messages between servers are
 /// passed as bundles of events (or directly).
-///
-/// Due to the ubiquitous usage, and diversity of extensions, the class
-/// member interface is somewhat minimal.
 ///
 /// It is better to have 100 functions operate on one data structure than
 /// to have 10 functions operate on 10 data structures.
@@ -61,11 +58,9 @@ struct ircd::m::event
 	json::property<name::sender, json::string>,
 	json::property<name::signatures, json::object>,
 	json::property<name::state_key, json::string>,
-	json::property<name::type, json::string>,
-	json::property<name::unsigned_, string_view>
+	json::property<name::type, json::string>
 >
 {
-	struct init;
 	struct fetch;
 	struct sync;
 	struct prev;
@@ -74,10 +69,6 @@ struct ircd::m::event
 	using id = m::id::event;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
-
-	static const db::database::description description;
-	static std::shared_ptr<db::database> events;
-	static std::array<db::column, super_type::size()> column;
 
 	using super_type::tuple;
 	using super_type::operator=;
@@ -113,12 +104,6 @@ struct ircd::m::event::prev
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
-
-struct ircd::m::event::init
-{
-	init();
-	~init() noexcept;
-};
 
 inline bool
 ircd::m::my(const event &event)

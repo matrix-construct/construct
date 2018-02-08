@@ -67,8 +67,7 @@ struct ircd::m::init
 	void listeners();
 	void modules();
 
-	event::init _event;
-	state::init _state;
+	dbs::init _dbs;
 	keys::init _keys;
 
   public:

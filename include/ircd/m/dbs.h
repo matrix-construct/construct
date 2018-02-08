@@ -13,32 +13,66 @@
 
 namespace ircd::m::dbs
 {
+	struct init;
+	struct cursor;
+
+	// Database instance
+	extern std::shared_ptr<db::database> events;
+
+	// Event property columns
+	constexpr const auto event_columns{event::size()};
+	extern std::array<db::column, event_columns> event_column;
+
+	// Event metadata columns
+	extern db::column state_node;
+	extern db::column room_events;
+
+	// Lowlevel util
+	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
+
+	// Get the state root for an event (with as much information as you have)
+	string_view state_root(const mutable_buffer &out, const id::room &, const id::event &, const uint64_t &depth);
+	string_view state_root(const mutable_buffer &out, const id::room &, const id::event &);
+	string_view state_root(const mutable_buffer &out, const id::event &);
+	string_view state_root(const mutable_buffer &out, const event &);
+
+	// [GET] Query suite
 	bool exists(const event::id &);
 
-	void append_indexes(const event &, db::txn &);
-	void write(const event &, db::txn &);
+	// [SET (txn)] Basic write suite
+	string_view write(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const event &);
 }
 
-namespace ircd::m::dbs
+namespace ircd::m::dbs::desc
 {
-	using closure = std::function<void (const event &)>;
-	using closure_bool = std::function<bool (const event &)>;
+	// Full description
+	extern const database::description events;
 
-	bool _query(const query<> &, const closure_bool &);
-	bool _query_event_id(const query<> &, const closure_bool &);
-	bool _query_in_room_id(const query<> &, const closure_bool &, const id::room &);
-	bool _query_for_type_state_key_in_room_id(const query<> &, const closure_bool &, const id::room &, const string_view &type, const string_view &state_key);
+	// Direct columns
+	extern const database::descriptor events_auth_events;
+	extern const database::descriptor events_content;
+	extern const database::descriptor events_depth;
+	extern const database::descriptor events_event_id;
+	extern const database::descriptor events_hashes;
+	extern const database::descriptor events_membership;
+	extern const database::descriptor events_origin;
+	extern const database::descriptor events_origin_server_ts;
+	extern const database::descriptor events_prev_events;
+	extern const database::descriptor events_prev_state;
+	extern const database::descriptor events_room_id;
+	extern const database::descriptor events_sender;
+	extern const database::descriptor events_signatures;
+	extern const database::descriptor events_state_key;
+	extern const database::descriptor events_type;
 
-	int _query_where_event_id(const query<where::equal> &, const closure_bool &);
-	int _query_where_room_id_at_event_id(const query<where::equal> &, const closure_bool &);
-	int _query_where_room_id(const query<where::equal> &, const closure_bool &);
-	int _query_where(const query<where::equal> &where, const closure_bool &closure);
-	int _query_where(const query<where::logical_and> &where, const closure_bool &closure);
+	// Metadata columns
+	extern const database::descriptor events__state_node;
+	extern const db::prefix_transform events__room_events__pfx;
+	extern const database::descriptor events__room_events;
 }
 
-namespace ircd::m
+struct ircd::m::dbs::init
 {
-	void _index_special0(const event &event, db::txn &txn, const db::op &, const string_view &prev_event_id);
-	void _index_special1(const event &event, db::txn &txn, const db::op &, const string_view &prev_event_id);
-}
-
+	init();
+	~init() noexcept;
+};

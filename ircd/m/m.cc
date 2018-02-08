@@ -190,8 +190,8 @@ ircd::m::init_listener(const json::object &conf,
 void
 ircd::m::init::bootstrap()
 {
-	assert(event::events);
-	assert(db::sequence(*event::events) == 0);
+	assert(dbs::events);
+	assert(db::sequence(*dbs::events) == 0);
 
 	ircd::log::notice
 	(

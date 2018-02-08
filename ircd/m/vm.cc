@@ -20,6 +20,14 @@ decltype(ircd::m::vm::fronts)
 ircd::m::vm::fronts
 {};
 
+ircd::ctx::view<const ircd::m::event>
+ircd::m::vm::inserted
+{};
+
+uint64_t
+ircd::m::vm::current_sequence
+{};
+
 /// This function takes an event object vector and adds our origin and event_id
 /// and hashes and signature and attempts to inject the event into the core.
 /// The caller is expected to have done their best to check if this event will
@@ -202,119 +210,27 @@ ircd::m::vm::commit(json::iov &iov)
 
 namespace ircd::m::vm
 {
-	bool check_fault_resume(eval &);
-	void check_fault_throw(eval &);
-
 	void write(eval &);
-
-	enum fault evaluate(eval &, const event &);
-	enum fault evaluate(eval &, const vector_view<const event> &);
 }
 
 decltype(ircd::m::vm::eval::default_opts)
 ircd::m::vm::eval::default_opts
 {};
 
-ircd::m::vm::eval::eval()
-:eval(default_opts)
-{
-}
-
 ircd::m::vm::eval::eval(const struct opts &opts)
 :opts{&opts}
 {
 }
 
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()()
+ircd::m::vm::eval::eval(const event &event,
+                        const struct opts &opts)
+:opts{&opts}
 {
-	assert(0);
-	return fault::ACCEPT;
-}
-
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const json::array &events)
-{
-	std::vector<m::event> event;
-	event.reserve(events.count());
-
-	auto it(begin(events));
-	for(; it != end(events); ++it)
-		event.emplace_back(*it);
-
-	return operator()(vector_view<const m::event>(event));
-}
-
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const json::vector &events)
-{
-	std::vector<m::event> event;
-	event.reserve(events.count());
-
-	auto it(begin(events));
-	for(; it != end(events); ++it)
-		event.emplace_back(*it);
-
-	return operator()(vector_view<const m::event>(event));
+	operator()(event);
 }
 
 enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
-{
-	return operator()(vector_view<const m::event>(&event, 1));
-}
-
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const vector_view<const event> &events)
-{
-	static const size_t max
-	{
-		128
-	};
-
-	for(size_t i(0); i < events.size(); i += max)
-	{
-		const vector_view<const event> evs
-		{
-			events.data() + i, std::min(events.size() - i, size_t(max))
-		};
-
-		enum fault code;
-		switch((code = evaluate(*this, evs)))
-		{
-			case fault::ACCEPT:
-				continue;
-
-			default:
-				//check_fault_throw(*this);
-				return code;
-		}
-	}
-
-	return fault::ACCEPT;
-}
-
-enum ircd::m::vm::fault
-ircd::m::vm::evaluate(eval &eval,
-                      const vector_view<const event> &event)
-{
-
-	for(size_t i(0); i < event.size(); ++i)
-	{
-		if(evaluate(eval, event[i]) == fault::ACCEPT)
-		{
-			log.info("%s", pretty_oneline(event[i]));
-			vm::inserted.notify(event[i]);
-		}
-	}
-
-	write(eval);
-	return fault::ACCEPT;
-}
-
-enum ircd::m::vm::fault
-ircd::m::vm::evaluate(eval &eval,
-                      const event &event)
 {
 	const auto &event_id
 	{
@@ -323,28 +239,49 @@ ircd::m::vm::evaluate(eval &eval,
 
 	const auto &depth
 	{
-		json::get<"depth"_>(event, 0)
+		at<"depth"_>(event)
 	};
 
 	const auto &room_id
 	{
-		json::get<"room_id"_>(event)
+		at<"room_id"_>(event)
 	};
 
-	auto &front
+	const auto &type
 	{
-		fronts.get(room_id, event)
+		at<"type"_>(event)
 	};
 
-	front.top = depth;
-
-	auto code
+	const event::prev prev{event};
+	const json::array prev0
 	{
-		fault::ACCEPT
+		at<"prev_events"_>(prev)[0]
 	};
 
-	dbs::write(event, eval.txn);
-	return code;
+	const string_view previd
+	{
+		unquote(prev0[0])
+	};
+
+	char old_rootbuf[64];
+	const auto old_root
+	{
+		previd? dbs::state_root(old_rootbuf, previd) : string_view{}
+	};
+
+	char new_rootbuf[64];
+	const auto new_root
+	{
+		dbs::write(txn, new_rootbuf, old_root, event)
+	};
+
+	++cs;
+	log.info("%s %s",
+	         new_root,
+	         pretty_oneline(event));
+
+	write(*this);
+	return fault::ACCEPT;
 }
 
 void
@@ -358,54 +295,6 @@ ircd::m::vm::write(eval &eval)
 	eval.txn.clear();
 	eval.cs = 0;
 }
-
-/*
-bool
-ircd::m::vm::check_fault_resume(eval &eval)
-{
-	switch(fault)
-	{
-		case fault::ACCEPT:
-			return true;
-
-		default:
-			check_fault_throw(eval);
-			return false;
-    }
-}
-
-void
-ircd::m::vm::check_fault_throw(eval &eval)
-{
-	// With nothrow there is nothing else for this function to do as the user
-	// will have to test the fault code and error ptr manually.
-	if(eval.opts->nothrow)
-		return;
-
-	switch(fault)
-	{
-		case fault::ACCEPT:
-			return;
-
-		case fault::GENERAL:
-			if(eval.error)
-				std::rethrow_exception(eval.error);
-			// [[fallthrough]]
-
-		default:
-			throw VM_FAULT("(%u): %s", uint(fault), reflect(fault));
-    }
-}
-*/
-
-
-ircd::ctx::view<const ircd::m::event>
-ircd::m::vm::inserted
-{};
-
-uint64_t
-ircd::m::vm::current_sequence
-{};
 
 ircd::m::vm::front &
 ircd::m::vm::fronts::get(const room::id &room_id,
@@ -518,92 +407,6 @@ ircd::m::vm::fetch(const room::id &room_id,
 	}
 
 	return front;
-}
-
-bool
-ircd::m::vm::test(const query<> &where)
-{
-	return test(where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-bool
-ircd::m::vm::test(const query<> &clause,
-                  const closure_bool &closure)
-{
-	bool ret{false};
-	dbs::_query(clause, [&ret, &closure](const auto &event)
-	{
-		ret = closure(event);
-		return true;
- 	});
-
-	return ret;
-}
-
-bool
-ircd::m::vm::until(const query<> &where)
-{
-	return until(where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-bool
-ircd::m::vm::until(const query<> &clause,
-                   const closure_bool &closure)
-{
-	bool ret{true};
-	dbs::_query(clause, [&ret, &closure](const auto &event)
-	{
-		ret = closure(event);
-		return ret;
-	});
-
-	return ret;
-}
-
-size_t
-ircd::m::vm::count(const query<> &where)
-{
-	return count(where, [](const auto &event)
-	{
-		return true;
-	});
-}
-
-size_t
-ircd::m::vm::count(const query<> &where,
-                   const closure_bool &closure)
-{
-	size_t i(0);
-	for_each(where, [&closure, &i](const auto &event)
-	{
-		i += closure(event);
-	});
-
-	return i;
-}
-
-void
-ircd::m::vm::for_each(const closure &closure)
-{
-	const query<where::noop> where{};
-	for_each(where, closure);
-}
-
-void
-ircd::m::vm::for_each(const query<> &clause,
-                      const closure &closure)
-{
-	dbs::_query(clause, [&closure](const auto &event)
-	{
-		closure(event);
-		return false;
-	});
 }
 
 ircd::string_view
