@@ -25,6 +25,7 @@ std::stringstream out;
 
 static bool console_cmd__state(const string_view &line);
 static bool console_cmd__event(const string_view &line);
+static bool console_cmd__exec(const string_view &line);
 static bool console_cmd__key(const string_view &line);
 static bool console_cmd__db(const string_view &line);
 static bool console_cmd__net(const string_view &line);
@@ -58,6 +59,9 @@ try
 
 		case hash("key"):
 			return console_cmd__key(args);
+
+		case hash("exec"):
+			return console_cmd__exec(args);
 
 		case hash("event"):
 			return console_cmd__event(args);
@@ -662,6 +666,124 @@ console_cmd__state_dfs(const string_view &line)
 
 		return true;
 	});
+
+	return true;
+}
+
+//
+// exec
+//
+
+static bool console_cmd__exec_file(const string_view &line);
+
+bool
+console_cmd__exec(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		default:
+			return console_cmd__exec_file(line);
+	}
+}
+
+bool
+console_cmd__exec_file(const string_view &line)
+{
+	const params token{line, " ",
+	{
+		"file path", "limit"
+	}};
+
+	const auto path
+	{
+		token.at(0)
+	};
+
+	const auto limit
+	{
+		token.at<size_t>(1)
+	};
+
+	const auto start
+	{
+		token[2]? lex_cast<size_t>(token[2]) : 0
+	};
+
+	//TODO: The file might be too large for a single read into ram for
+	// a big synapse server. We will need an iteration of the file
+	// instead.
+	//const std::string data{ircd::fs::read(std::string(path))};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		128_MiB
+	};
+
+	const string_view data
+	{
+		ircd::fs::read(path, buf, 0)
+	};
+
+	const json::vector vector
+	{
+		data
+	};
+
+	struct ircd::m::vm::opts opts;
+	ircd::m::vm::eval eval
+	{
+		opts
+	};
+
+	size_t j(0), s(0);
+	static const auto max{256};
+	for(auto it(begin(vector)); it != end(vector) && j < limit;)
+	{
+		if(s++ < start)
+		{
+			++it;
+			continue;
+		}
+
+		size_t i(0);
+		std::vector<m::event> a(max);
+		for(; i < max && it != end(vector) && j < limit; ++it)
+		{
+			const json::object obj{*it};
+			{
+				a[i] = m::event{*it};
+				++i, ++j;
+			}
+		}
+
+		a.resize(i);
+		switch(eval(vector_view<const m::event>(a)))
+		{
+			using fault = m::vm::fault;
+
+			case fault::ACCEPT:
+				continue;
+
+			case fault::EVENT:
+				out << "EVENT FAULT " << eval.ef.size() << std::endl;
+				break;
+
+			case fault::STATE:
+				out << "STATE FAULT " << std::endl;
+				break;
+
+			default:
+				out << "FAULT " << std::endl;
+				break;
+		}
+
+		ctx::yield();
+	}
 
 	return true;
 }
