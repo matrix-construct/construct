@@ -89,11 +89,6 @@ namespace ircd::db
 	void log_rdb_perf_context(const bool &all = true);
 
 	string_view reflect(const pos &);
-
-	// Indicates an op uses both a key and value for its operation. Some only use
-	// a key name so an empty value argument in a delta is okay when false.
-	bool value_required(const op &);
-	string_view reflect(const op &);
 }
 
 namespace ircd
