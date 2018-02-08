@@ -520,7 +520,7 @@ console_cmd__event__default(const string_view &line)
 // state
 //
 
-static bool console_cmd__state_head(const string_view &line);
+static bool console_cmd__state_root(const string_view &line);
 static bool console_cmd__state_count(const string_view &line);
 static bool console_cmd__state_get(const string_view &line);
 static bool console_cmd__state_each(const string_view &line);
@@ -536,8 +536,8 @@ console_cmd__state(const string_view &line)
 
 	switch(hash(token(line, " ", 0)))
 	{
-		case hash("head"):
-			return console_cmd__state_head(args);
+		case hash("root"):
+			return console_cmd__state_root(args);
 
 		case hash("get"):
 			return console_cmd__state_get(args);
@@ -557,19 +557,6 @@ console_cmd__state(const string_view &line)
 }
 
 bool
-console_cmd__state_head(const string_view &line)
-{
-	const m::room::id room_id
-	{
-		token(line, ' ', 0)
-	};
-
-	char buf[m::state::ID_MAX_SZ];
-	out << m::state::get_head(buf, room_id) << std::endl;
-	return true;
-}
-
-bool
 console_cmd__state_count(const string_view &line)
 {
 	const string_view arg
@@ -577,13 +564,12 @@ console_cmd__state_count(const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	char buf[m::state::ID_MAX_SZ];
-	const string_view head
+	const string_view root
 	{
-		startswith(arg, '!')? m::state::get_head(buf, arg) : arg
+		arg
 	};
 
-	out << m::state::count(head) << std::endl;
+	out << m::state::count(root) << std::endl;
 	return true;
 }
 
@@ -600,13 +586,12 @@ console_cmd__state_each(const string_view &line)
 		token(line, ' ', 1)
 	};
 
-	char buf[m::state::ID_MAX_SZ];
-	const string_view head
+	const string_view root
 	{
-		startswith(arg, '!')? m::state::get_head(buf, arg) : arg
+		arg
 	};
 
-	m::state::each(head, type, []
+	m::state::each(root, type, []
 	(const string_view &key, const string_view &val)
 	{
 		out << key << " => " << val << std::endl;
@@ -619,7 +604,7 @@ console_cmd__state_each(const string_view &line)
 bool
 console_cmd__state_get(const string_view &line)
 {
-	const m::room::id room_id
+	const string_view root
 	{
 		token(line, ' ', 0)
 	};
@@ -634,7 +619,7 @@ console_cmd__state_get(const string_view &line)
 		token(line, ' ', 2)
 	};
 
-	m::state::get__room(room_id, type, state_key, []
+	m::state::get(root, type, state_key, []
 	(const auto &value)
 	{
 		out << "got: " << value << std::endl;
@@ -651,13 +636,12 @@ console_cmd__state_dfs(const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	char buf[m::state::ID_MAX_SZ];
-	const string_view head
+	const string_view root
 	{
-		startswith(arg, '!')? m::state::get_head(buf, arg) : arg
+		arg
 	};
 
-	m::state::dfs(head, []
+	m::state::dfs(root, []
 	(const auto &key, const string_view &val, const uint &depth, const uint &pos)
 	{
 		out << std::setw(2) << depth << " + " << pos
@@ -667,6 +651,19 @@ console_cmd__state_dfs(const string_view &line)
 		return true;
 	});
 
+	return true;
+}
+
+bool
+console_cmd__state_root(const string_view &line)
+{
+	const m::event::id event_id
+	{
+		token(line, ' ', 0)
+	};
+
+	char buf[m::state::ID_MAX_SZ];
+	out << m::dbs::state_root(buf, event_id) << std::endl;
 	return true;
 }
 
