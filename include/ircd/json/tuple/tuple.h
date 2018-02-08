@@ -233,7 +233,9 @@ template<class T>
 typename std::enable_if<is_number<T>(), bool>::type
 defined(T&& t)
 {
-	return !is_zero{}(t);
+	// :-(
+	using type = typename std::decay<T>::type;
+	return t != std::numeric_limits<type>::max();
 }
 
 template<class dst,
