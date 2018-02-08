@@ -714,76 +714,49 @@ console_cmd__exec_file(const string_view &line)
 		token[2]? lex_cast<size_t>(token[2]) : 0
 	};
 
-	//TODO: The file might be too large for a single read into ram for
-	// a big synapse server. We will need an iteration of the file
-	// instead.
-	//const std::string data{ircd::fs::read(std::string(path))};
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		128_MiB
-	};
-
-	const string_view data
-	{
-		ircd::fs::read(path, buf, 0)
-	};
-
-	const json::vector vector
-	{
-		data
-	};
-
-	struct ircd::m::vm::opts opts;
-	ircd::m::vm::eval eval
+	struct m::vm::eval::opts opts;
+	m::vm::eval eval
 	{
 		opts
 	};
 
-	size_t j(0), s(0);
-	static const auto max{256};
-	for(auto it(begin(vector)); it != end(vector) && j < limit;)
+	size_t foff{0};
+	size_t i(0), j(0), r(0);
+	for(; i < limit; ++r)
 	{
-		if(s++ < start)
+		static char buf[512_KiB];
+		const string_view read
 		{
-			++it;
-			continue;
-		}
+			ircd::fs::read(path, buf, foff)
+		};
 
-		size_t i(0);
-		std::vector<m::event> a(max);
-		for(; i < max && it != end(vector) && j < limit; ++it)
+		size_t boff(0);
+		json::vector vector{read};
+		for(; boff < size(read) && i < limit; ) try
 		{
-			const json::object obj{*it};
-			{
-				a[i] = m::event{*it};
-				++i, ++j;
-			}
-		}
-
-		a.resize(i);
-		switch(eval(vector_view<const m::event>(a)))
-		{
-			using fault = m::vm::fault;
-
-			case fault::ACCEPT:
+			const json::object object{*begin(vector)};
+			boff += size(object);
+			vector = { data(read) + boff, size(read) - boff };
+			if(j++ < start)
 				continue;
 
-			case fault::EVENT:
-				out << "EVENT FAULT " << eval.ef.size() << std::endl;
-				break;
-
-			case fault::STATE:
-				out << "STATE FAULT " << std::endl;
-				break;
-
-			default:
-				out << "FAULT " << std::endl;
-				break;
+			const m::event event{object};
+			eval(event);
+			++i;
+		}
+		catch(const json::parse_error &e)
+		{
+			break;
 		}
 
-		ctx::yield();
+		foff += boff;
 	}
+
+	out << "Executed " << i
+	    << " of " << j << " events"
+	    << " in " << foff << " bytes"
+	    << " using " << r << " reads"
+	    << std::endl;
 
 	return true;
 }
