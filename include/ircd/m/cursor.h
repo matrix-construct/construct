@@ -9,12 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_VM_CURSOR_H
-
-namespace ircd::m::dbs
-{
-	struct cursor;
-}
+#define HAVE_IRCD_M_DBS_CURSOR_H
 
 struct ircd::m::dbs::cursor
 {
@@ -22,11 +17,9 @@ struct ircd::m::dbs::cursor
 	struct const_reverse_iterator;
 	struct const_iterator;
 
-	template<enum where where = where::noop> using query_type = dbs::query<where>;
 	using iterator_type = const_iterator;
 
 	db::index index;
-	const query_type<> *query{nullptr};
 
 	const_iterator end(const string_view &key = {});
 	const_iterator begin(const string_view &key = {});
@@ -34,9 +27,8 @@ struct ircd::m::dbs::cursor
 	const_reverse_iterator rend(const string_view &key = {});
 	const_reverse_iterator rbegin(const string_view &key = {});
 
-	cursor(const string_view &index, const query_type<> *const &query = nullptr)
-	:index{*event::events, index}
-	,query{query}
+	cursor(const string_view &index)
+	:index{*dbs::events, index}
 	{}
 };
 
@@ -48,11 +40,9 @@ struct ircd::m::dbs::cursor::const_iterator_base
 	using reference = value_type &;
 	using difference_type = size_t;
 	using iterator_category = std::bidirectional_iterator_tag;
-	template<enum where where = where::noop> using query_type = cursor::query_type<where>;
 
-	const query_type<> *query{nullptr};
 	index_iterator idx;
-	std::array<db::cell, event::size()> cell;
+	std::array<db::cell, event_columns> cell;
 	db::row row;
 	mutable event v;
 	mutable bool stale{true};
@@ -64,23 +54,10 @@ struct ircd::m::dbs::cursor::const_iterator_base
 	bool operator==(const const_iterator_base &o) const;
 	bool operator!=(const const_iterator_base &o) const;
 
-	value_type &operator*() const
-	{
-		if(!stale)
-			return v;
-
-		assign(v, row, row_key());
-		stale = false;
-		return v;
-	}
-
-	value_type *operator->() const
-	{
-		return &this->operator*();
-	}
-
-	string_view row_key() const;
 	bool row_valid() const;
+	string_view row_key() const;
+	value_type &operator*() const;
+	value_type *operator->() const;
 
   protected:
 	bool seek_row();
@@ -141,12 +118,11 @@ template<class index_iterator>
 ircd::m::dbs::cursor::const_iterator_base<index_iterator>::const_iterator_base(const cursor &c,
                                                                               index_iterator idx,
                                                                               const db::gopts &opts)
-:query{c.query}
-,idx{std::move(idx)}
+:idx{std::move(idx)}
 ,cell{}
 ,row
 {
-	*event::events,
+	*dbs::events,
 	bool(this->idx) && this->idx->second? this->idx->second:
 	bool(this->idx)?                      this->idx->first:
 	                                      string_view{},
@@ -162,16 +138,7 @@ ircd::m::dbs::cursor::const_iterator_base<index_iterator>::const_iterator_base(c
 {
 	!this->idx || !row_valid()
 }
-{
-	if(invalid)
-		return;
-
-	if(!this->query)
-		return;
-
-	if(!(*this->query)(this->operator*()))
-		this->operator++();
-}
+{}
 
 template<class index_iterator>
 ircd::m::dbs::cursor::const_iterator_base<index_iterator> &
@@ -203,10 +170,28 @@ ircd::m::dbs::cursor::const_iterator_base<index_iterator>::seek_row()
 		return false;
 
 	stale = true;
-	if(this->query && !(*this->query)(this->operator*()))
-		return false;
-
 	return true;
+}
+
+template<class index_iterator>
+typename ircd::m::dbs::cursor::const_iterator_base<index_iterator>::value_type *
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator->()
+const
+{
+	return &this->operator*();
+}
+
+template<class index_iterator>
+typename ircd::m::dbs::cursor::const_iterator_base<index_iterator>::value_type &
+ircd::m::dbs::cursor::const_iterator_base<index_iterator>::operator*()
+const
+{
+	if(!stale)
+		return v;
+
+	assign(v, row, row_key());
+	stale = false;
+	return v;
 }
 
 template<class index_iterator>
