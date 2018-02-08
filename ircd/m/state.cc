@@ -13,26 +13,26 @@
 
 /// Convenience to get value making a key
 void
-ircd::m::state::get(const string_view &head,
+ircd::m::state::get(const string_view &root,
                     const string_view &type,
                     const string_view &state_key,
                     const val_closure &closure)
 {
 	char key[KEY_MAX_SZ];
-	return get(head, make_key(key, type, state_key), closure);
+	return get(root, make_key(key, type, state_key), closure);
 }
 
 /// Recursive query to find the leaf value for the given key, starting from
-/// the given head node ID. Value can be viewed in the closure. This throws
+/// the given root node ID. Value can be viewed in the closure. This throws
 /// m::NOT_FOUND if the exact key and its value does not exist in the tree;
 /// no node ID's are ever returned here.
 void
-ircd::m::state::get(const string_view &head,
+ircd::m::state::get(const string_view &root,
                     const json::array &key,
                     const val_closure &closure)
 {
 	char nextbuf[ID_MAX_SZ];
-	string_view nextid{head};
+	string_view nextid{root};
 	while(nextid) get_node(nextid, [&](const node &node)
 	{
 		auto pos(node.find(key));
@@ -55,9 +55,9 @@ ircd::m::state::get(const string_view &head,
 }
 
 size_t
-ircd::m::state::count(const string_view &head)
+ircd::m::state::count(const string_view &root)
 {
-	return count(head, []
+	return count(root, []
 	(const json::array &key, const string_view &val)
 	{
 		return true;
@@ -65,11 +65,11 @@ ircd::m::state::count(const string_view &head)
 }
 
 size_t
-ircd::m::state::count(const string_view &head,
+ircd::m::state::count(const string_view &root,
                       const iter_bool_closure &closure)
 {
 	size_t ret{0};
-	each(head, [&ret, &closure]
+	each(root, [&ret, &closure]
 	(const json::array &key, const string_view &val)
 	{
 		ret += closure(key, val);
@@ -80,14 +80,14 @@ ircd::m::state::count(const string_view &head,
 }
 
 bool
-ircd::m::state::each(const string_view &head,
+ircd::m::state::each(const string_view &root,
                      const iter_bool_closure &closure)
 {
-	return each(head, string_view{}, closure);
+	return each(root, string_view{}, closure);
 }
 
 bool
-ircd::m::state::each(const string_view &head,
+ircd::m::state::each(const string_view &root,
                      const string_view &type,
                      const iter_bool_closure &closure)
 {
@@ -97,7 +97,7 @@ ircd::m::state::each(const string_view &head,
 		make_key(buf, type)
 	};
 
-	return dfs(head, key, [&closure]
+	return dfs(root, key, [&closure]
 	(const json::array &key, const string_view &val, const uint &, const uint &)
 	{
 		return closure(key, val);
@@ -110,19 +110,19 @@ namespace ircd::m::state
 }
 
 bool
-ircd::m::state::dfs(const string_view &head,
+ircd::m::state::dfs(const string_view &root,
                     const search_closure &closure)
 {
-	return dfs(head, json::array{}, closure);
+	return dfs(root, json::array{}, closure);
 }
 
 bool
-ircd::m::state::dfs(const string_view &head,
+ircd::m::state::dfs(const string_view &root,
                     const json::array &key,
                     const search_closure &closure)
 {
 	bool ret{true};
-	get_node(head, [&closure, &key, &ret]
+	get_node(root, [&closure, &key, &ret]
 	(const auto &node)
 	{
 		int depth(-1);
@@ -184,16 +184,16 @@ namespace ircd::m::state
 	static string_view _insert_branch_nonfull(db::txn &, const mutable_buffer &idbuf, node::rep &, const size_t &pos, node::rep &pushed);
 	static json::object _insert_branch_full(const int8_t &height, db::txn &, node::rep &, const size_t &pos, node::rep &push, const node::rep &pushed);
 	static string_view _insert(int8_t &height, db::txn &, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push);
-	static string_view _create(db::txn &, const mutable_buffer &head, const string_view &type, const string_view &state_key, const string_view &val);
+	static string_view _create(db::txn &, const mutable_buffer &root, const string_view &type, const string_view &state_key, const string_view &val);
 }
 
-/// State update from an event. Leaves the root node ID in the head buffer;
+/// State update from an event. Leaves the root node ID in the root buffer;
 /// returns view.
 ///
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &headout,
-                       const string_view &headin,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
                        const event &event)
 {
 	const auto &type{at<"type"_>(event)};
@@ -202,17 +202,17 @@ ircd::m::state::insert(db::txn &txn,
 
 	if(type == "m.room.create")
 	{
-		assert(empty(headin));
-		return _create(txn, headout, type, state_key, event_id);
+		assert(empty(rootin));
+		return _create(txn, rootout, type, state_key, event_id);
 	}
 
-	assert(!empty(headin));
-	return insert(txn, headout, headin, type, state_key, event_id);
+	assert(!empty(rootin));
+	return insert(txn, rootout, rootin, type, state_key, event_id);
 }
 
 ircd::string_view
 ircd::m::state::_create(db::txn &txn,
-                        const mutable_buffer &head,
+                        const mutable_buffer &root,
                         const string_view &type,
                         const string_view &state_key,
                         const string_view &val)
@@ -235,15 +235,15 @@ ircd::m::state::_create(db::txn &txn,
 	rep.chld[0] = string_view{};
 	rep.cn = 1;
 
-	return set_node(txn, head, rep.write(node));
+	return set_node(txn, root, rep.write(node));
 }
 
 /// State update for room_id inserting (type,state_key) = event_id into the
-/// tree. Leaves the root node ID in the head buffer; returns view.
+/// tree. Leaves the root node ID in the root buffer; returns view.
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &headout,
-                       const string_view &headin,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
                        const string_view &type,
                        const string_view &state_key,
                        const id::event &event_id)
@@ -251,28 +251,28 @@ ircd::m::state::insert(db::txn &txn,
 	// The insertion process reads from the DB and will yield this ircd::ctx
 	// so the key buffer must stay on this stack.
 	char key[KEY_MAX_SZ];
-	return insert(txn, headout, headin, make_key(key, type, state_key), event_id);
+	return insert(txn, rootout, rootin, make_key(key, type, state_key), event_id);
 }
 
 ircd::string_view
 ircd::m::state::insert(db::txn &txn,
-                       const mutable_buffer &headout,
-                       const string_view &headin,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
                        const json::array &key,
                        const id::event &event_id)
 {
 	node::rep push;
 	int8_t height{0};
-	string_view head{headin};
-	get_node(head, [&](const node &node)
+	string_view root{rootin};
+	get_node(root, [&](const node &node)
 	{
-		head = _insert(height, txn, key, event_id, node, headout, push);
+		root = _insert(height, txn, key, event_id, node, rootout, push);
 	});
 
 	if(push.kn)
-		head = push.write(txn, headout);
+		root = push.write(txn, rootout);
 
-	return head;
+	return root;
 }
 
 ircd::string_view

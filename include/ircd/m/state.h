@@ -51,20 +51,20 @@ namespace ircd::m::state
 	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
 
-	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const json::array &key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const string_view &type, const string_view &state_key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &headout, const string_view &headin, const event &);
+	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const json::array &key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const string_view &type, const string_view &state_key, const id::event &);
+	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const event &);
 
-	bool dfs(const string_view &head, const json::array &key, const search_closure &);
-	bool dfs(const string_view &head, const search_closure &);
+	bool dfs(const string_view &root, const json::array &key, const search_closure &);
+	bool dfs(const string_view &root, const search_closure &);
 
-	bool each(const string_view &head, const iter_bool_closure &);
-	bool each(const string_view &head, const string_view &type, const iter_bool_closure &);
-	size_t count(const string_view &head, const iter_bool_closure &);
-	size_t count(const string_view &head);
+	bool each(const string_view &root, const iter_bool_closure &);
+	bool each(const string_view &root, const string_view &type, const iter_bool_closure &);
+	size_t count(const string_view &root, const iter_bool_closure &);
+	size_t count(const string_view &root);
 
-	void get(const string_view &head, const json::array &key, const val_closure &);
-	void get(const string_view &head, const string_view &type, const string_view &state_key, const val_closure &);
+	void get(const string_view &root, const json::array &key, const val_closure &);
+	void get(const string_view &root, const string_view &type, const string_view &state_key, const val_closure &);
 }
 
 /// JSON property name strings specifically for use in m::state
