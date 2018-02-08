@@ -265,6 +265,33 @@ An example of this is the search-terms database which specializes in indexing
 individual words to the events where they are found so content searches can be
 efficient.
 
+#### Technique
+
+The Matrix room, as described earlier, is a state machine underwritten by
+timelines of events in a directed acyclic graph with eventual consistency.
+To operate effectively, the state machine must respond to queries about
+the state of the room at the point of any event in the past. This is similar
+to a `git reset` to some specific commit where one can browse the work tree
+as it appeared at that commit.
+
+> Was X a member of room Y when event Z happened?
+
+The naive approach is to trace the graph from the event backward collecting
+all of the state events to then satisfy the query. Sequences of specific state
+event types can be held by implementations to hasten such a trace.
+Alternatively, a complete list of all state events can be created for each
+modification to the state to avoid the reference chasing of a trace at the
+cost of space.
+
+Our approach is more efficient. We create a b-tree to represent the complete
+state to satisfy any query in logarithmic time. When the state is updated,
+only one path in the tree is modified and the root is stored with that event.
+This structure is actually immutable: the previous versions of the affected
+nodes are not discarded allowing past configurations of the tree to be
+represented. We further benefit from the fact that each node is referenced by
+the hash of its content for efficient reuse, as well as our database being
+well compressed.
+
 #### Flow
 
 This is a single-writer/multiple-reader approach. The "core" is the only writer.
@@ -288,43 +315,6 @@ This also gives us the benefit of a total serialization at this point.
        //|||\\
      //|// \\|\\
     :::::::::::::   <-- release sequence propagation cone
-
-The evaluation phase ensures the event commitment will work: that the event
-is valid, and that the event is a valid transition of the machine according
-to the rules. This process may take some time and many yields and IO, even
-network IO -- if the server lacks a warm cache. During the evaluation phase
-locks and exclusions may be acquired to maintain the validity of the
-evaluation state through writing at the expense of other contexts contending
-for that resource.
-
-> Many ircd::ctx are concurrently working their way through the core. The
-> "velocity" is low when an ircd::ctx on this path may yield a lot for various
-> IO and allow other events to be processed. The velocity increases when
-> concurrent evaluation and reordering is no longer viable to maintain
-> coherence. Any yielding of an ircd::ctx at a higher velocity risks stalling
-> the whole core.
-
-       :::::::       <-- event input              (low velocity)
-       |||||||       <-- evaluation process       (low velocity)
-         \|/         <-- serialization process    (higher velocity)
-
-The write commitment saves the event to the database. This is a relatively
-fast operation which probably won't even yield the ircd::ctx, and all
-future reads to the database will see this write.
-
-          !          <-- serial write commitment  (highest velocity)
-
-The release sequence broadcasts the event so its effects can be consumed.
-This works by yielding the ircd::ctx so all consumers can view the event
-and apply its effects for their feature module or send the event out to
-clients. This is usually faster than it sounds, as the consumers try not to
-hold up the release sequence for more than their first execution-slice,
-and copy the event if their output rate is slower.
-
-          *         <-- event revelation (higher velocity)
-       //|||\\
-     //|// \\|\\
-    :::::::::::::   <-- release sequence propagation cone (low velocity)
 
 The entire core commitment process relative to an event riding through it
 on an ircd::ctx has a duration tolerable for something like a REST interface,
@@ -352,9 +342,9 @@ them acquire any exclusivity which impede the others.
     :::::::::::::
 
 Close up of the charybdis's write head when tight to one schwarzschild-radius of
-matrix room surface which propagates only one event through at a time.
-Vertical tracks are contexts on their journey through each evaluation and exclusion
-step to the core.
+matrix room surface which propagates only one event through at a time. Vertical
+tracks are contexts on their journey through each evaluation and exclusion step
+to the core.
 
     Input Events                                            Phase
     ::::::::::::::::::::::::::::::::::::::::::::::::::::::  validation / dupcheck
@@ -363,7 +353,7 @@ step to the core.
     |||| ||||||||||||||| ||||||||||||||| |||||||||||||||||  head resolution
     --|--|----|-|---|--|--|---|---|---|---------|---|---|-  graph resolutions
     ----------|-|---|---------|-------|-----------------|-  module evaluations
-     \          |   |         |       |                  /
+     \          |   |         |       |                  /  post-commit prefetching
        ==       ==============|       |               ==    Lowest velocity locks
           \                   |       |             /
             ==                |       |          ==         Mid velocity locks
@@ -378,10 +368,7 @@ step to the core.
 
 
 Above, two contexts are illustrated as contending for the highest velocity
-lock. The highest velocity lock is not held for significant time, as the
-holder has very little work left to be done within the core, and will
-release the lock to the other context quickly. The lower velocity locks
-may have to be held longer, but are also less exclusive to all contexts.
+lock. The highest velocity lock is not held for significant time.
 
                                *                            Singularity
                              [   ]
@@ -403,15 +390,6 @@ Above, a close-up of the release sequence. The new event is being "viewed" by
 each consumer context separated by the horizontal lines representing a context
 switch from the perspective of the event travelling down. Each consumer
 performs its task for how to propagate the commissioned event.
-
-Each consumer has a shared-lock of the event which will hold up the completion
-of the commitment until all consumers release that. The ideal consumer will only
-hold their lock for a single context-slice while they play their part in applying
-the event, like non-blocking copies to sockets etc. These consumers then go on
-to do the rest of their output without the original event data which was memory
-supplied by the evaluator (like an HTTP client). Then all locks acquired on
-the entry side of the core can be released. The evaluator then gets the result
-of the successful commitment.
 
 #### Scaling
 
