@@ -314,7 +314,75 @@ ircd::m::dbs::desc::events__room_events__pfx
 	}
 };
 
+/// Comparator for the events__room_events. The goal here is to sort the
+/// events within a room by their depth from highest to lowest, so the
+/// highest depth is hit first when a room is sought from this column.
+///
+/// TODO: This needs The Grammar
+///
+const ircd::db::comparator
+ircd::m::dbs::desc::events__room_events__cmp
+{
+	"_room_events",
+
+	// less
+	[](const string_view &a, const string_view &b)
+	{
+		static const auto &pt
+		{
+			events__room_events__pfx
+		};
+
+		// Extract the prefix from the keys
+		const string_view pre[2]
+		{
+			pt.get(a),
+			pt.get(b),
+		};
+
+		if(pre[0] != pre[1])
+			return pre[0] < pre[1];
+
+		// After the prefix is the depth + event_id
+		const string_view post[2]
+		{
+			a.substr(size(pre[0])),
+			b.substr(size(pre[1])),
+		};
+
+		if(empty(post[0]))
+			return true;
+
+		if(empty(post[1]))
+			return false;
+
+		// Now want just the depth...
+		const string_view depths[2]
+		{
+			between(post[0], "...", "$"),
+			between(post[1], "...", "$"),
+		};
+
+		// ...as machine words
+		const int64_t depth[2]
+		{
+			lex_cast<int64_t>(depths[0]),
+			lex_cast<int64_t>(depths[1]),
+		};
+
+		// Highest to lowest sort so highest is first
+		return depth[1] < depth[0];
+	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
+};
+
 //TODO: optimize
+//TODO: Needs The Gramslam
 ircd::string_view
 ircd::m::dbs::room_events_key(const mutable_buffer &out,
                               const id::room &room_id,
@@ -340,7 +408,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out,
 /// sequence, then iterate until we stop before the next room_id (upper bound).
 ///
 /// - `depth` is the ordering. Within the sequence, all elements are ordered by
-/// depth from lowest to highest.
+/// depth from HIGHEST TO LOWEST. The sequence will start at the highest depth.
 ///
 /// - `event_id` is the key suffix. This column serves to sequence all events
 /// within a room ordered by depth. There may be duplicate room_id|depth
@@ -380,8 +448,8 @@ ircd::m::dbs::desc::events__room_events
 	// options
 	{},
 
-	// comparator - sorts from highest to lowest
-	{}, //ircd::db::reverse_cmp_ircd::string_view{},
+	// comparator
+	events__room_events__cmp,
 
 	// prefix transform
 	events__room_events__pfx,

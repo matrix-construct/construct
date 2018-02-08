@@ -68,6 +68,7 @@ namespace ircd::m::dbs::desc
 	// Metadata columns
 	extern const database::descriptor events__state_node;
 	extern const db::prefix_transform events__room_events__pfx;
+	extern const db::comparator events__room_events__cmp;
 	extern const database::descriptor events__room_events;
 }
 
