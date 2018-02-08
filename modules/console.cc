@@ -26,6 +26,7 @@ std::stringstream out;
 static bool console_cmd__state(const string_view &line);
 static bool console_cmd__event(const string_view &line);
 static bool console_cmd__key(const string_view &line);
+static bool console_cmd__db(const string_view &line);
 static bool console_cmd__net(const string_view &line);
 static bool console_cmd__mod(const string_view &line);
 
@@ -51,6 +52,9 @@ try
 
 		case hash("net"):
 			return console_cmd__net(args);
+
+		case hash("db"):
+			return console_cmd__db(args);
 
 		case hash("key"):
 			return console_cmd__key(args);
@@ -143,6 +147,62 @@ console_cmd__mod_syms(const string_view &line)
 		out << sym << std::endl;
 
 	out << " -- " << symbols.size() << " symbols in " << path << std::endl;
+	return true;
+}
+
+//
+// db
+//
+
+static bool console_cmd__db_list(const string_view &line);
+
+bool
+console_cmd__db(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		default:
+		case hash("list"):
+			return console_cmd__db_list(args);
+	}
+}
+
+bool
+console_cmd__db_list(const string_view &line)
+{
+	const auto available
+	{
+		db::available()
+	};
+
+	for(const auto &path : available)
+	{
+		const auto name
+		{
+			lstrip(path, db::path("/"))
+		};
+
+		const auto it
+		{
+			db::database::dbs.find(name)
+		};
+
+		const auto &light
+		{
+			it != end(db::database::dbs)? "\033[1;42m \033[0m" : " "
+		};
+
+		out << "[" << light << "]"
+		    << " " << name
+		    << " `" << path << "'"
+		    << std::endl;
+	}
+
 	return true;
 }
 
