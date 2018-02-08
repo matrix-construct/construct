@@ -36,7 +36,7 @@ namespace ircd::buffer
 	template<class it> struct buffer;
 	struct const_buffer;
 	struct mutable_buffer;
-	struct stream_buffer;
+	struct window_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer, uint align = 16> struct unique_buffer;
 
@@ -89,7 +89,7 @@ namespace ircd
 	using buffer::fixed_buffer;
 	using buffer::unique_buffer;
 	using buffer::null_buffer;
-	using buffer::stream_buffer;
+	using buffer::window_buffer;
 	using buffer::fixed_const_buffer;
 	using buffer::fixed_mutable_buffer;
 
@@ -279,7 +279,17 @@ static_assert
 	"ircd::buffer::fixed_buffer must be standard layout"
 );
 
-struct ircd::buffer::stream_buffer
+/// The window_buffer is just two mutable_buffers. One of the two buffers
+/// just spans an underlying space and the other buffer is a window of the
+/// remaining space which shrinks toward the end as the space is consumed.
+/// The window_buffer object inherits from the latter, so it always has the
+/// appearance of a mutable_buffer windowing on the the next place to write.
+///
+/// The recommended usage of this device is actually through the operator()
+/// closure, which will automatically resize the window based on the return
+/// value in the closure.
+///
+struct ircd::buffer::window_buffer
 :mutable_buffer
 {
 	mutable_buffer base;
@@ -331,14 +341,13 @@ struct ircd::buffer::stream_buffer
 		consume(*this, closure(*this));
 	}
 
-	stream_buffer(const mutable_buffer &base)
+	window_buffer(const mutable_buffer &base)
 	:mutable_buffer{base}
 	,base{base}
 	{}
 };
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
-///
 ///
 template<class buffer,
          uint alignment>

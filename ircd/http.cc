@@ -232,7 +232,7 @@ const ircd::http::parser;
 ///
 /// If termination is false, no extra CRLF is printed to the buffer allowing
 /// additional headers not specified to be appended later.
-ircd::http::request::request(stream_buffer &out,
+ircd::http::request::request(window_buffer &out,
                              const string_view &host,
                              const string_view &method,
                              const string_view &uri,
@@ -320,7 +320,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 {
 }
 
-ircd::http::response::response(stream_buffer &out,
+ircd::http::response::response(window_buffer &out,
                                const code &code,
                                const size_t &content_length,
                                const string_view &content_type,
@@ -745,7 +745,7 @@ std::string
 ircd::http::strung(const vector_view<const header> &headers)
 {
 	std::string ret(serialized(headers), char{});
-	stream_buffer out{ret};
+	window_buffer out{ret};
 	write(out, headers);
 	assert(out.consumed() <= ret.size());
 	ret.resize(out.consumed());
@@ -773,7 +773,7 @@ ircd::http::serialized(const vector_view<const header> &headers)
 }
 
 void
-ircd::http::write(stream_buffer &out,
+ircd::http::write(window_buffer &out,
                   const vector_view<const header> &headers)
 {
 	for(const auto &header : headers)
@@ -781,7 +781,7 @@ ircd::http::write(stream_buffer &out,
 }
 
 void
-ircd::http::write(stream_buffer &out,
+ircd::http::write(window_buffer &out,
                   const header &header)
 {
 	if(header.second.empty())
@@ -802,12 +802,12 @@ ircd::http::write(stream_buffer &out,
 
 /// Close over the user's closure to append a newline.
 void
-ircd::http::writeline(stream_buffer &write,
-                      const stream_buffer::closure &closure)
+ircd::http::writeline(window_buffer &write,
+                      const window_buffer::closure &closure)
 {
-	// A new stream_buffer is implicit constructed out of the mutable_buffer
+	// A new window_buffer is implicit constructed out of the mutable_buffer
 	// otherwise presented to this closure as its write window.
-	write([&closure](stream_buffer write)
+	write([&closure](window_buffer write)
 	{
 		const auto newline{[](const mutable_buffer &out)
 		{
@@ -821,7 +821,7 @@ ircd::http::writeline(stream_buffer &write,
 }
 
 void
-ircd::http::writeline(stream_buffer &write)
+ircd::http::writeline(window_buffer &write)
 {
 	writeline(write, [](const mutable_buffer &out)
 	{

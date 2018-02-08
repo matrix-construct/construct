@@ -613,7 +613,7 @@ ircd::resource::response::response(client &client,
 	// contents of this buffer get copied again when further passed to
 	// response{}; we can get this off the stack if that remains true.
 	thread_local char buffer[2_KiB];
-	stream_buffer sb{buffer};
+	window_buffer sb{buffer};
 	{
 		const critical_assertion ca;
 		http::write(sb, headers);
@@ -653,7 +653,7 @@ ircd::resource::response::response(client &client,
 	// This buffer will be passed to the socket and sent out;
 	// cannot be static/tls.
 	char head_buf[2_KiB];
-	stream_buffer head{head_buf};
+	window_buffer head{head_buf};
 	http::response
 	{
 		head,

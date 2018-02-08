@@ -35,7 +35,7 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
                           const vector_view<const question> &questions)
 {
 	assert(bswap(header.qdcount) == questions.size());
-	stream_buffer sb{out};
+	window_buffer sb{out};
 
 	sb([&header](const mutable_buffer &buf)
 	{

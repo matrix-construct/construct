@@ -212,7 +212,7 @@ ircd::log::mark(const facility &fac,
 namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
-	static void slog(const facility &fac, const string_view &name, const stream_buffer::closure &) noexcept;
+	static void slog(const facility &fac, const string_view &name, const window_buffer::closure &) noexcept;
 }
 
 /// ircd::log is not thread-safe. This internal function is called when the
@@ -277,7 +277,7 @@ namespace ircd::log
 void
 ircd::log::slog(const facility &fac,
                 const string_view &name,
-                const stream_buffer::closure &closure)
+                const window_buffer::closure &closure)
 noexcept
 {
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
@@ -326,7 +326,7 @@ noexcept
 	// Compose the user message after prefix
 	const size_t pos(s.tellp());
 	const mutable_buffer userspace{buf + pos, max - pos};
-	stream_buffer sb{userspace};
+	window_buffer sb{userspace};
 	sb(closure);
 
 	// Compose the newline after user message.

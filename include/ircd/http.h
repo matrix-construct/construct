@@ -27,11 +27,11 @@ namespace ircd::http
 	string_view status(const enum code &);
 	enum code status(const string_view &);
 
-	void writeline(stream_buffer &);
-	void writeline(stream_buffer &, const stream_buffer::closure &);
+	void writeline(window_buffer &);
+	void writeline(window_buffer &, const window_buffer::closure &);
 
-	void write(stream_buffer &out, const header &);
-	void write(stream_buffer &out, const vector_view<const header> &);
+	void write(window_buffer &out, const header &);
+	void write(window_buffer &out, const vector_view<const header> &);
 	size_t serialized(const vector_view<const header> &);
 	std::string strung(const vector_view<const header> &);
 }
@@ -249,7 +249,7 @@ struct ircd::http::request
 	using proffer = std::function<void (const head &)>;
 
 	// compose a request into buffer
-	request(stream_buffer &,
+	request(window_buffer &,
 	        const string_view &host,
 	        const string_view &method          = "GET",
 	        const string_view &uri             = "/",
@@ -306,7 +306,7 @@ struct ircd::http::response
 	using proffer = std::function<void (const head &)>;
 
 	// compose a response into buffer
-	response(stream_buffer &,
+	response(window_buffer &,
 	         const code &                       = code::OK,
 	         const size_t &content_length       = 0,
 	         const string_view &content_type    = {},

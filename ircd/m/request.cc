@@ -54,7 +54,7 @@ const
 		string_view(json::get<"content"_>(*this)).size()
 	};
 
-	stream_buffer sb{out};
+	window_buffer sb{out};
 	http::request
 	{
 		sb,
