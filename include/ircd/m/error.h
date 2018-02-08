@@ -90,11 +90,14 @@ struct _name_                                                           \
 namespace ircd::m
 {
 	IRCD_M_EXCEPTION(error, UNKNOWN, http::INTERNAL_SERVER_ERROR);
-	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
 	IRCD_M_EXCEPTION(error, BAD_REQUEST, http::BAD_REQUEST);
-	IRCD_M_EXCEPTION(BAD_REQUEST, BAD_JSON, http::BAD_REQUEST);
+	IRCD_M_EXCEPTION(error, BAD_JSON, http::BAD_REQUEST);
+	IRCD_M_EXCEPTION(error, NOT_JSON, http::BAD_REQUEST);
 	IRCD_M_EXCEPTION(error, BAD_SIGNATURE, http::UNAUTHORIZED);
 	IRCD_M_EXCEPTION(error, ACCESS_DENIED, http::UNAUTHORIZED);
+	IRCD_M_EXCEPTION(error, FORBIDDEN, http::FORBIDDEN);
+	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
+	IRCD_M_EXCEPTION(error, UNSUPPORTED, http::NOT_IMPLEMENTED);
 }
 
 template<class... args>
