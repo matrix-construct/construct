@@ -56,8 +56,8 @@ ircd::m::dbs::init::init()
 		};
 
 	// Cache the columns for the metadata
-	room_events = db::column{*events, "_room_events"};
 	state_node = db::column{*events, "_state_node"};
+	room_events = db::index{*events, "_room_events"};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern

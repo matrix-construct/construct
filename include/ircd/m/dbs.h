@@ -25,7 +25,7 @@ namespace ircd::m::dbs
 
 	// Event metadata columns
 	extern db::column state_node;
-	extern db::column room_events;
+	extern db::index room_events;
 
 	// Lowlevel util
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
