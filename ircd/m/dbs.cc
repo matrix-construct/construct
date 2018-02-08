@@ -305,12 +305,12 @@ ircd::m::dbs::desc::events__room_events__pfx
 
 	[](const string_view &key)
 	{
-		return key.find("...") != key.npos;
+		return key.find(":::") != key.npos;
 	},
 
 	[](const string_view &key)
 	{
-		return rsplit(key, "...").first;
+		return rsplit(key, ":::").first;
 	}
 };
 
@@ -359,8 +359,8 @@ ircd::m::dbs::desc::events__room_events__cmp
 		// Now want just the depth...
 		const string_view depths[2]
 		{
-			between(post[0], "...", "$"),
-			between(post[1], "...", "$"),
+			between(post[0], ":::", "$"),
+			between(post[1], ":::", "$"),
 		};
 
 		// ...as machine words
@@ -391,7 +391,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out,
 {
 	size_t len{0};
 	len = strlcpy(out, room_id);
-	len = strlcat(out, "...");
+	len = strlcat(out, ":::");
 	len = strlcat(out, lex_cast(depth));
 	len = strlcat(out, event_id);
 	return { data(out), len };
