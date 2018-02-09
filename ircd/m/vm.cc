@@ -53,25 +53,10 @@ ircd::m::vm::commit(json::iov &event,
 		contents
 	};
 
-	//TODO: XXX
-	const int64_t depth
-	{
-		-1
-	};
-
-	//TODO: XXX
-	const string_view auth_events {};
-
-	//TODO: XXX
-	const string_view prev_events {};
-
 	const json::iov::set set[]
 	{
-		{ event, { "auth_events",       auth_events                }},
-		{ event, { "depth",             depth                      }},
 		{ event, { "origin_server_ts",  ircd::time<milliseconds>() }},
 		{ event, { "origin",            my_host()                  }},
-		{ event, { "prev_events",       prev_events                }},
 	};
 
 	thread_local char preimage_buf[64_KiB];

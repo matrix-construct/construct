@@ -212,9 +212,45 @@ ircd::m::commit(const room &room,
                 json::iov &event,
                 const json::iov &contents)
 {
-	const json::iov::set set[]
+	const json::iov::push room_id
 	{
-		{ event, { "room_id", room.room_id }},
+		event, { "room_id", room.room_id }
+	};
+
+	int64_t depth;
+	const auto prev_event_id
+	{
+		head(room.room_id, depth)
+	};
+
+	//TODO: LCOCK
+	const json::iov::set_if depth_
+	{
+		event, !event.has("depth"),
+		{
+			"depth", depth + 1
+		}
+	};
+
+	const string_view auth_events{};
+	const string_view prev_state{};
+
+	json::value prev_event0[]
+	{
+		prev_event_id
+	};
+
+	json::value prev_events[]
+	{
+		{ prev_event0, 1 }
+	};
+
+	//TODO: LOLCK
+	const json::iov::push prevs[]
+	{
+		{ event, { "auth_events",  auth_events  }},
+		{ event, { "prev_state",   prev_state   }},
+		{ event, { "prev_events",  { prev_events, 1 } } },
 	};
 
 	return m::vm::commit(event, contents);
@@ -327,21 +363,39 @@ bool
 ircd::m::room::prev(const event::closure &closure)
 const
 {
-	const vm::query<vm::where::equal> query
+	auto it
 	{
-		{ "room_id", room_id },
+		dbs::room_events.begin(room_id)
 	};
 
-	vm::cursor cursor
-	{
-		"prev_event_id for event_id in room_id", &query
-	};
-
-	auto it(cursor.begin(room_id));
 	if(!it)
 		return false;
 
-	closure(*it);
+	const auto &key{it->first};
+	const auto part
+	{
+		dbs::room_events_key(key)
+	};
+
+	const string_view event_id
+	{
+		std::get<1>(part)
+	};
+
+	std::array<db::cell, dbs::event_columns> cell;
+	static const event _dummy_;
+	db::row row
+	{
+		*dbs::events, event_id, _dummy_, cell
+	};
+
+	seek(row, event_id);
+	if(!row.valid(event_id))
+		return false;
+
+	m::event event;
+	assign(event, row, event_id);
+	closure(event);
 	return true;
 }
 
@@ -349,21 +403,41 @@ bool
 ircd::m::room::get(const event::closure &closure)
 const
 {
-	const vm::query<vm::where::equal> query
+	std::array<db::cell, dbs::event_columns> cell;
+	static const event _dummy_;
+	db::row row
 	{
-		{ "room_id", room_id },
+		*dbs::events, string_view{}, _dummy_, cell
 	};
 
-	vm::cursor cursor
+	auto it
 	{
-		"event_id in room_id", &query
+		dbs::room_events.begin(room_id)
 	};
 
-	auto it(cursor.begin(room_id));
-	if(!it)
-		return false;
+	if(it) do
+	{
+		const auto &key{it->first};
+		const auto part
+		{
+			dbs::room_events_key(key)
+		};
 
-	closure(*it);
+		const string_view event_id
+		{
+			std::get<1>(part)
+		};
+
+		seek(row, event_id);
+		if(!row.valid(event_id))
+			return false;
+
+		m::event event;
+		assign(event, row, event_id);
+		closure(event);
+	}
+	while(++it); else return false;
+
 	return true;
 }
 
@@ -499,16 +573,43 @@ ircd::m::room::members::until(const string_view &membership,
                               const event::closure_bool &view)
 const
 {
-	const vm::query<vm::where::equal> query
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room.room_id      },
-		{ "type",         "m.room.member"   },
-		{ "membership",   membership        },
+		!room.event_id? head(room.room_id) : string_view{}
 	};
 
-	return m::vm::until(query, [&view]
-	(const auto &event)
+	const event::id event_id
 	{
+		room.event_id? room.event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room.room_id, event_id)
+	};
+
+	std::array<db::cell, dbs::event_columns> cell;
+	static const event _dummy_;
+	db::row row
+	{
+		*dbs::events, string_view{}, _dummy_, cell
+	};
+
+	return m::state::each(state_root, "m.room.member", [&cell, &row, &view]
+	(const json::array &key, const string_view &val)
+	{
+		const string_view event_id
+		{
+			unquote(val)
+		};
+
+		seek(row, event_id);
+		if(!row.valid(event_id))
+			return false;
+
+		m::event event;
+		assign(event, row, event_id);
 		return view(event);
 	});
 }

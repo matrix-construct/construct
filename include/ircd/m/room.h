@@ -32,24 +32,24 @@ namespace ircd::m
 	// [SET] Lowest-level
 	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
 
-	// Send state to room
+	// [SET] Send state to room
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::object &content);
 
-	// Send non-state to room
+	// [SET] Send non-state to room
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::iov &content);
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::members &content);
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::object &content);
 
-	// Convenience sends
+	// [SET] Convenience sends
 	event::id::buf message(const room &, const m::id::user &sender, const json::members &content);
 	event::id::buf message(const room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
 	event::id::buf membership(const room &, const m::id::user &, const string_view &membership);
 	event::id::buf leave(const room &, const m::id::user &);
 	event::id::buf join(const room &, const m::id::user &);
 
-	// Create new room
+	// [SET] Create new room
 	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
 	room create(const id::room &, const id::user &creator, const string_view &type = {});
 }
