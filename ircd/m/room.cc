@@ -555,24 +555,6 @@ bool
 ircd::m::room::members::until(const event::closure_bool &view)
 const
 {
-	const vm::query<vm::where::equal> query
-	{
-		{ "room_id",      room.room_id      },
-		{ "type",         "m.room.member"   },
-	};
-
-	return m::vm::until(query, [&view]
-	(const auto &event)
-	{
-		return view(event);
-	});
-}
-
-bool
-ircd::m::room::members::until(const string_view &membership,
-                              const event::closure_bool &view)
-const
-{
 	const event::id::buf event_id_buf
 	{
 		!room.event_id? head(room.room_id) : string_view{}
@@ -611,6 +593,22 @@ const
 		m::event event;
 		assign(event, row, event_id);
 		return view(event);
+	});
+}
+
+bool
+ircd::m::room::members::until(const string_view &membership,
+                              const event::closure_bool &view)
+const
+{
+	//TODO: optimize with sequential column strat
+	return until([&membership, &view](const event &event)
+	{
+		if(at<"membership"_>(event) == membership)
+			if(!view(event))
+				return false;
+
+		return true;
 	});
 }
 
