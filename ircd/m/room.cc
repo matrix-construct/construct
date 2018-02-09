@@ -330,20 +330,10 @@ ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!event_id? head(room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		this->event_id? this->event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room_id, event_id)
+		this->root(root)
 	};
 
 	bool ret{false};
@@ -443,20 +433,10 @@ ircd::m::room::get(const string_view &type,
                    const event::closure &closure)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!event_id? head(room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		this->event_id? this->event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room_id, event_id)
+		this->root(root)
 	};
 
 	return m::state::get(std::nothrow, state_root, type, state_key, [&closure]
@@ -472,20 +452,10 @@ bool
 ircd::m::room::has(const string_view &type)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!event_id? head(room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		this->event_id? this->event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room_id, event_id)
+		this->root(root)
 	};
 
 	bool ret{false};
@@ -504,20 +474,10 @@ ircd::m::room::has(const string_view &type,
                    const string_view &state_key)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!event_id? head(room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		this->event_id? this->event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room_id, event_id)
+		this->root(root)
 	};
 
 	return m::state::get(std::nothrow, state_root, type, state_key, []
@@ -526,25 +486,38 @@ const
 	});
 }
 
+bool
+ircd::m::room::test(const string_view &type,
+                    const event::closure_bool &closure)
+const
+{
+	m::state::id_buffer root;
+	const auto state_root
+	{
+		this->root(root)
+	};
+
+	event::fetch event;
+	return !m::state::each(state_root, type, [&event, &closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		if(!seek(event, unquote(event_id), std::nothrow))
+			return true;
+
+		// logical inversion for test vs. until protocol.
+		return !closure(event);
+	});
+}
+
 void
 ircd::m::room::for_each(const string_view &type,
                         const event::closure &closure)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!event_id? head(room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		this->event_id? this->event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room_id, event_id)
+		this->root(root)
 	};
 
 	event::fetch event;
@@ -560,9 +533,8 @@ const
 	});
 }
 
-bool
-ircd::m::room::test(const string_view &type,
-                    const event::closure_bool &closure)
+ircd::string_view
+ircd::m::room::root(m::state::id_buffer &buf)
 const
 {
 	const event::id::buf event_id_buf
@@ -575,22 +547,7 @@ const
 		this->event_id? this->event_id : event_id_buf
 	};
 
-	m::state::id_buffer state_root_buf;
-	const auto state_root
-	{
-		dbs::state_root(state_root_buf, room_id, event_id)
-	};
-
-	event::fetch event;
-	return !m::state::each(state_root, type, [&event, &closure]
-	(const json::array &key, const string_view &event_id)
-	{
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return true;
-
-		// logical inversion for test vs. until protocol.
-		return !closure(event);
-	});
+	return dbs::state_root(buf, room_id, event_id);
 }
 
 //
@@ -601,20 +558,10 @@ bool
 ircd::m::room::members::until(const event::closure_bool &view)
 const
 {
-	const event::id::buf event_id_buf
-	{
-		!room.event_id? head(room.room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		room.event_id? room.event_id : event_id_buf
-	};
-
-	m::state::id_buffer state_root_buf;
+	m::state::id_buffer root;
 	const auto state_root
 	{
-		dbs::state_root(state_root_buf, room.room_id, event_id)
+		room.root(root)
 	};
 
 	event::fetch event;

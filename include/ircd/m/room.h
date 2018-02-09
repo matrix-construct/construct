@@ -86,6 +86,7 @@ struct ircd::m::room
 	operator const id &() const        { return room_id;                       }
 
 	// observer
+	string_view root(m::state::id_buffer &) const;
 	void for_each(const string_view &type, const event::closure &view) const;
 	bool test(const string_view &type, const event::closure_bool &view) const;
 	bool has(const string_view &type, const string_view &state_key) const;
