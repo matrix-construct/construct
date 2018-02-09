@@ -361,7 +361,7 @@ const
 
 bool
 ircd::m::room::prev(const event::closure &closure)
-const
+const try
 {
 	auto it
 	{
@@ -377,44 +377,34 @@ const
 		dbs::room_events_key(key)
 	};
 
-	const string_view event_id
+	const auto event_id
 	{
 		std::get<1>(part)
 	};
 
-	std::array<db::cell, dbs::event_columns> cell;
-	static const event _dummy_;
-	db::row row
+	const event::fetch event
 	{
-		*dbs::events, event_id, _dummy_, cell
+		event_id
 	};
 
-	seek(row, event_id);
-	if(!row.valid(event_id))
-		return false;
-
-	m::event event;
-	assign(event, row, event_id);
 	closure(event);
 	return true;
+}
+catch(const NOT_FOUND &)
+{
+	return false;
 }
 
 bool
 ircd::m::room::get(const event::closure &closure)
 const
 {
-	std::array<db::cell, dbs::event_columns> cell;
-	static const event _dummy_;
-	db::row row
-	{
-		*dbs::events, string_view{}, _dummy_, cell
-	};
-
 	auto it
 	{
 		dbs::room_events.begin(room_id)
 	};
 
+	event::fetch event;
 	if(it) do
 	{
 		const auto &key{it->first};
@@ -423,18 +413,13 @@ const
 			dbs::room_events_key(key)
 		};
 
-		const string_view event_id
+		const auto event_id
 		{
 			std::get<1>(part)
 		};
 
-		seek(row, event_id);
-		if(!row.valid(event_id))
-			return false;
-
-		m::event event;
-		assign(event, row, event_id);
-		closure(event);
+		if(seek(event, event_id, std::nothrow))
+			closure(event);
 	}
 	while(++it); else return false;
 
@@ -475,20 +460,9 @@ const
 	m::state::get(state_root, type, state_key, [&closure, &ret]
 	(const string_view &event_id)
 	{
-		static const event _dummy_;
-		std::array<db::cell, dbs::event_columns> cell;
-		db::row row
-		{
-			*dbs::events, event_id, _dummy_, cell
-		};
-
-		if(!row.valid(event_id))
-			return;
-
-		m::event event;
-		assign(event, row, event_id);
-		ret = true;
-		closure(event);
+		event::fetch event;
+		if(seek(event, event_id, std::nothrow))
+			closure(event);
 	});
 
 	return ret;
@@ -571,14 +545,8 @@ const
 		dbs::state_root(state_root_buf, room.room_id, event_id)
 	};
 
-	std::array<db::cell, dbs::event_columns> cell;
-	static const event _dummy_;
-	db::row row
-	{
-		*dbs::events, string_view{}, _dummy_, cell
-	};
-
-	return m::state::each(state_root, "m.room.member", [&cell, &row, &view]
+	event::fetch event;
+	return m::state::each(state_root, "m.room.member", [&event, &view]
 	(const json::array &key, const string_view &val)
 	{
 		const string_view event_id
@@ -586,12 +554,9 @@ const
 			unquote(val)
 		};
 
-		seek(row, event_id);
-		if(!row.valid(event_id))
+		if(!seek(event, event_id, std::nothrow))
 			return false;
 
-		m::event event;
-		assign(event, row, event_id);
 		return view(event);
 	});
 }

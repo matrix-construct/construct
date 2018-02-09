@@ -336,3 +336,77 @@ ircd::m::event::event(const id &id,
 
 	new (this) m::event(obj);
 }
+
+//
+// event::fetch
+//
+
+void
+ircd::m::seek(event::fetch &fetch,
+              const event::id &event_id)
+{
+	if(!seek(fetch, event_id, std::nothrow))
+		throw m::NOT_FOUND
+		{
+			"%s not found in database", event_id
+		};
+}
+
+bool
+ircd::m::seek(event::fetch &fetch,
+              const event::id &event_id,
+              std::nothrow_t)
+{
+	db::seek(fetch.row, string_view{event_id});
+	if(!fetch.row.valid(event_id))
+		return false;
+
+	auto &event{static_cast<m::event &>(fetch)};
+	assign(event, fetch.row, event_id);
+	return true;
+}
+
+// db::row finds the layout of an event tuple because we pass this as a
+// reference argument to its constructor, rather than making db::row into
+// a template type.
+const ircd::m::event
+_dummy_event_;
+
+/// Seekless constructor.
+ircd::m::event::fetch::fetch()
+:row
+{
+	*dbs::events, string_view{}, _dummy_event_, cell
+}
+{
+}
+
+/// Seek to event_id and populate this event from database.
+/// Throws if event not in database.
+ircd::m::event::fetch::fetch(const event::id &event_id)
+:row
+{
+	*dbs::events, event_id, _dummy_event_, cell
+}
+{
+	if(!row.valid(event_id))
+		throw m::NOT_FOUND
+		{
+			"%s not found in database", event_id
+		};
+
+	assign(*this, row, event_id);
+}
+
+/// Seek to event_id and populate this event from database.
+/// Event is not populated if not found in database.
+ircd::m::event::fetch::fetch(const event::id &event_id,
+                             std::nothrow_t)
+:row
+{
+	*dbs::events, event_id, _dummy_event_, cell
+}
+{
+	if(row.valid(event_id))
+		assign(*this, row, event_id);
+}

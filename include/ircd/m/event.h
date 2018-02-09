@@ -61,9 +61,8 @@ struct ircd::m::event
 	json::property<name::type, json::string>
 >
 {
-	struct fetch;
-	struct sync;
 	struct prev;
+	struct fetch;
 
 	// Common convenience aliases
 	using id = m::id::event;
@@ -104,6 +103,20 @@ struct ircd::m::event::prev
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
+
+struct ircd::m::event::fetch
+:event
+{
+	std::array<db::cell, event::size()> cell;
+	db::row row;
+
+	fetch(const event::id &, std::nothrow_t);
+	fetch(const event::id &);
+	fetch();
+
+	friend bool seek(fetch &, const event::id &, std::nothrow_t);
+	friend void seek(fetch &, const event::id &);
+};
 
 inline bool
 ircd::m::my(const event &event)
