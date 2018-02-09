@@ -330,33 +330,35 @@ ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
 const
 {
-	const vm::query<vm::where::equal> member_event
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room_id           },
-		{ "type",        "m.room.member"    },
-		{ "state_key",    user_id           },
+		!event_id? head(room_id) : string_view{}
 	};
 
-	if(!membership)
-		return m::vm::test(member_event);
-
-	const vm::query<vm::where::test> membership_test{[&membership]
-	(const auto &event)
+	const event::id event_id
 	{
-		const json::object &content
-		{
-			json::at<"content"_>(event)
-		};
+		this->event_id? this->event_id : event_id_buf
+	};
 
-		const auto &existing_membership
-		{
-			unquote(content.at("membership"))
-		};
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
 
-		return membership == existing_membership;
-	}};
+	bool ret{false};
+	m::state::get(state_root, "m.room.member", user_id, [&membership, &ret]
+	(const string_view &event_id)
+	{
+		event::fetch event;
+		if(!seek(event, event_id, std::nothrow))
+			return;
 
-	return m::vm::test(member_event && membership_test);
+		assert(json::get<"type"_>(event) == "m.room.member");
+		ret = at<"membership"_>(event) == membership;
+	});
+
+	return ret;
 }
 
 bool
