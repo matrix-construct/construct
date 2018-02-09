@@ -24,7 +24,12 @@ namespace ircd::m
 	bool my(const room &);
 	bool exists(const id::room &);
 
-	// Lowest-level
+	// [GET] Current Event suite (non-locking) (one)
+	id::event::buf head(const id::room &, int64_t &);  // gives depth
+	id::event::buf head(const id::room &);
+	int64_t depth(const id::room &);
+
+	// [SET] Lowest-level
 	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
 
 	// Send state to room
@@ -96,8 +101,6 @@ struct ircd::m::room
 
 	// observer misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
-	int64_t maxdepth(event::id::buf &) const;
-	int64_t maxdepth() const;
 
 	// modify
 	room(const alias &, const event::id &event_id = {});

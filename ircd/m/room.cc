@@ -220,6 +220,46 @@ ircd::m::commit(const room &room,
 	return m::vm::commit(event, contents);
 }
 
+int64_t
+ircd::m::depth(const id::room &room_id)
+{
+	int64_t depth;
+	head(room_id, depth);
+	return depth;
+}
+
+ircd::m::id::event::buf
+ircd::m::head(const id::room &room_id)
+{
+	int64_t depth;
+	return head(room_id, depth);
+}
+
+ircd::m::id::event::buf
+ircd::m::head(const id::room &room_id,
+              int64_t &depth)
+{
+	const auto it
+	{
+		dbs::room_events.begin(room_id)
+	};
+
+	if(!it)
+	{
+		depth = -1;
+		return {};
+	}
+
+	const auto &key{it->first};
+	const auto part
+	{
+		dbs::room_events_key(key)
+	};
+
+	depth = std::get<0>(part);
+	return std::get<1>(part);
+}
+
 bool
 ircd::m::exists(const id::room &room_id)
 {
@@ -407,32 +447,6 @@ const
 	};
 
 	return m::vm::test(query, closure);
-}
-
-int64_t
-ircd::m::room::maxdepth()
-const
-{
-	event::id::buf buf;
-	return maxdepth(buf);
-}
-
-int64_t
-ircd::m::room::maxdepth(event::id::buf &buf)
-const
-{
-	const auto it
-	{
-		dbs::room_events.begin(room_id)
-	};
-
-	if(!it)
-		return -1;
-
-	const auto &key(it->first);
-	const auto parts{dbs::room_events_key(key)};
-	buf = std::get<1>(parts);
-	return std::get<0>(parts);
 }
 
 //
