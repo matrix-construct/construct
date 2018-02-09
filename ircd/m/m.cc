@@ -76,7 +76,7 @@ try
 }
 {
 	modules();
-	if(db::sequence(*event::events) == 0)
+	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 
 	listeners();

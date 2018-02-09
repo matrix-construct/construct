@@ -176,13 +176,19 @@ ircd::m::vm::commit(json::iov &iov)
 	if(unlikely(!json::get<"event_id"_>(event)))
 	{
 		assert(0);
-		throw BAD_JSON("Required event field: event_id");
+		throw m::BAD_JSON
+		{
+			"Required event field: event_id"
+		};
 	}
 
 	if(unlikely(!json::get<"type"_>(event)))
 	{
 		assert(0);
-		throw BAD_JSON("Required event field: type");
+		throw m::BAD_JSON
+		{
+			"Required event field: type"
+		};
 	}
 
 	log.debug("injecting event(mark: %ld) %s",
@@ -231,7 +237,13 @@ ircd::m::vm::eval::eval(const event &event,
 
 enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
+try
 {
+	const auto &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
 	const auto &event_id
 	{
 		at<"event_id"_>(event)
@@ -242,20 +254,32 @@ ircd::m::vm::eval::operator()(const event &event)
 		at<"depth"_>(event)
 	};
 
-	const auto &room_id
-	{
-		at<"room_id"_>(event)
-	};
-
 	const auto &type
 	{
-		at<"type"_>(event)
+		unquote(at<"type"_>(event))
 	};
 
+	if(depth < 0)
+		throw VM_INVALID
+		{
+			"Depth can never be negative"
+		};
+
+	if(depth == 0 && type != "m.room.create")
+		throw VM_INVALID
+		{
+			"Depth can only be zero for m.room.create types"
+		};
+
 	const event::prev prev{event};
+	const json::array prev_events
+	{
+		json::get<"prev_events"_>(prev)
+	};
+
 	const json::array prev0
 	{
-		at<"prev_events"_>(prev)[0]
+		prev_events[0]
 	};
 
 	const string_view previd
@@ -276,12 +300,18 @@ ircd::m::vm::eval::operator()(const event &event)
 	};
 
 	++cs;
-	log.info("%s %s",
-	         new_root,
-	         pretty_oneline(event));
+	log.info("%s", pretty_oneline(event));
 
 	write(*this);
 	return fault::ACCEPT;
+}
+catch(const error &e)
+{
+	log.error("eval %s: %s %s",
+	          json::get<"event_id"_>(event),
+	          e.what(),
+	          e.content);
+	throw;
 }
 
 void

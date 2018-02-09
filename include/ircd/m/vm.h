@@ -17,6 +17,7 @@ namespace ircd::m::vm
 {
 	IRCD_M_EXCEPTION(m::error, VM_ERROR, http::INTERNAL_SERVER_ERROR);
 	IRCD_M_EXCEPTION(VM_ERROR, VM_FAULT, http::BAD_REQUEST);
+	IRCD_M_EXCEPTION(VM_ERROR, VM_INVALID, http::BAD_REQUEST);
 
 	enum fault :uint;
 	struct front;
