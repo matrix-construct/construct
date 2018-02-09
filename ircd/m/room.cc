@@ -263,12 +263,12 @@ ircd::m::head(const id::room &room_id,
 bool
 ircd::m::exists(const id::room &room_id)
 {
-	const vm::query<vm::where::equal> query
+	const auto it
 	{
-		{ "room_id", room_id },
+		dbs::room_events.begin(room_id)
 	};
 
-	return m::vm::test(query);
+	return bool(it);
 }
 
 bool
