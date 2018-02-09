@@ -381,19 +381,43 @@ ircd::m::room::get(const string_view &type,
                    const event::closure &closure)
 const
 {
-	const vm::query<vm::where::equal> query
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room_id           },
-		{ "type",         type              },
-		{ "state_key",    state_key         },
+		!event_id? head(room_id) : string_view{}
 	};
 
-	return m::vm::test(query, [&closure]
-	(const auto &event)
+	const event::id event_id
 	{
+		this->event_id? this->event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
+
+	bool ret{false};
+	m::state::get(state_root, type, state_key, [&closure, &ret]
+	(const string_view &event_id)
+	{
+		static const event _dummy_;
+		std::array<db::cell, dbs::event_columns> cell;
+		db::row row
+		{
+			*dbs::events, event_id, _dummy_, cell
+		};
+
+		if(!row.valid(event_id))
+			return;
+
+		m::event event;
+		assign(event, row, event_id);
+		ret = true;
 		closure(event);
-		return true;
 	});
+
+	return ret;
 }
 
 bool
