@@ -64,7 +64,10 @@ namespace ircd::m::state
 	size_t count(const string_view &root, const iter_bool_closure &);
 	size_t count(const string_view &root);
 
+	bool get(std::nothrow_t, const string_view &root, const json::array &key, const val_closure &);
 	void get(const string_view &root, const json::array &key, const val_closure &);
+
+	bool get(std::nothrow_t, const string_view &root, const string_view &type, const string_view &state_key, const val_closure &);
 	void get(const string_view &root, const string_view &type, const string_view &state_key, const val_closure &);
 }
 

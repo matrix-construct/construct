@@ -11,26 +11,61 @@
 #include <ircd/m/m.h>
 
 
-/// Convenience to get value making a key
+/// Convenience to make a key and then get a value
 void
 ircd::m::state::get(const string_view &root,
                     const string_view &type,
                     const string_view &state_key,
                     const val_closure &closure)
 {
-	char key[KEY_MAX_SZ];
-	return get(root, make_key(key, type, state_key), closure);
+	if(!get(std::nothrow, root, type, state_key, closure))
+		throw m::NOT_FOUND
+		{
+			"type='%s' state_key='%s' not found in tree %s",
+			type,
+			state_key,
+			root
+		};
 }
 
-/// Recursive query to find the leaf value for the given key, starting from
-/// the given root node ID. Value can be viewed in the closure. This throws
-/// m::NOT_FOUND if the exact key and its value does not exist in the tree;
-/// no node ID's are ever returned here.
+/// Convenience to make a key and then get a value (doesn't throw NOT_FOUND)
+bool
+ircd::m::state::get(std::nothrow_t,
+                    const string_view &root,
+                    const string_view &type,
+                    const string_view &state_key,
+                    const val_closure &closure)
+{
+	char key[KEY_MAX_SZ];
+	return get(std::nothrow, root, make_key(key, type, state_key), closure);
+}
+
+/// throws m::NOT_FOUND if the exact key and its value does not exist.
 void
 ircd::m::state::get(const string_view &root,
                     const json::array &key,
                     const val_closure &closure)
 {
+	if(!get(std::nothrow, root, key, closure))
+		throw m::NOT_FOUND
+		{
+			"%s not found in tree %s",
+			string_view{key},
+			root
+		};
+}
+
+/// Recursive query to find the leaf value for the given key, starting from
+/// the given root node ID. Value can be viewed in the closure. Returns false
+/// if the exact key and its value does not exist in the tree; no node ID's
+/// are ever returned here.
+bool
+ircd::m::state::get(std::nothrow_t,
+                    const string_view &root,
+                    const json::array &key,
+                    const val_closure &closure)
+{
+	bool ret{false};
 	char nextbuf[ID_MAX_SZ];
 	string_view nextid{root};
 	while(nextid) get_node(nextid, [&](const node &node)
@@ -38,6 +73,7 @@ ircd::m::state::get(const string_view &root,
 		auto pos(node.find(key));
 		if(pos < node.keys() && node.key(pos) == key)
 		{
+			ret = true;
 			nextid = {};
 			closure(node.val(pos));
 			return;
@@ -47,11 +83,13 @@ ircd::m::state::get(const string_view &root,
 		if(c && pos >= c)
 			pos = c - 1;
 
-		if(!node.has_child(pos))
-			throw m::NOT_FOUND{};
-
-		nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
+		if(node.has_child(pos))
+			nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
+		else
+			nextid = {};
 	});
+
+	return ret;
 }
 
 size_t
