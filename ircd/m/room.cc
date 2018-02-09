@@ -352,7 +352,7 @@ const
 	(const string_view &event_id)
 	{
 		event::fetch event;
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(event, unquote(event_id), std::nothrow))
 			return;
 
 		assert(json::get<"type"_>(event) == "m.room.member");
@@ -463,7 +463,7 @@ const
 	(const string_view &event_id)
 	{
 		event::fetch event;
-		if(seek(event, event_id, std::nothrow))
+		if(seek(event, unquote(event_id), std::nothrow))
 			closure(event);
 	});
 }
@@ -472,10 +472,31 @@ bool
 ircd::m::room::has(const string_view &type)
 const
 {
-	return test(type, [](const auto &event)
+	const event::id::buf event_id_buf
 	{
-		return true;
+		!event_id? head(room_id) : string_view{}
+	};
+
+	const event::id event_id
+	{
+		this->event_id? this->event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
+
+	bool ret{false};
+	m::state::each(state_root, type, [&ret]
+	(const json::array &key, const string_view &val)
+	{
+		ret = true;
+		return false;
 	});
+
+	return ret;
 }
 
 bool
@@ -510,13 +531,33 @@ ircd::m::room::for_each(const string_view &type,
                         const event::closure &closure)
 const
 {
-	const vm::query<vm::where::equal> query
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room_id           },
-		{ "type",         type              },
+		!event_id? head(room_id) : string_view{}
 	};
 
-	return m::vm::for_each(query, closure);
+	const event::id event_id
+	{
+		this->event_id? this->event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
+
+	event::fetch event;
+	m::state::each(state_root, type, [&event, &closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		if(!seek(event, unquote(event_id), std::nothrow))
+			return true;
+
+		// logical inversion for test vs. until protocol.
+		closure(event);
+		return true;
+	});
 }
 
 bool
@@ -524,13 +565,32 @@ ircd::m::room::test(const string_view &type,
                     const event::closure_bool &closure)
 const
 {
-	const vm::query<vm::where::equal> query
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room_id           },
-		{ "type",         type              },
+		!event_id? head(room_id) : string_view{}
 	};
 
-	return m::vm::test(query, closure);
+	const event::id event_id
+	{
+		this->event_id? this->event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
+
+	event::fetch event;
+	return !m::state::each(state_root, type, [&event, &closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		if(!seek(event, unquote(event_id), std::nothrow))
+			return true;
+
+		// logical inversion for test vs. until protocol.
+		return !closure(event);
+	});
 }
 
 //
@@ -558,15 +618,11 @@ const
 	};
 
 	event::fetch event;
-	return m::state::each(state_root, "m.room.member", [&event, &view]
-	(const json::array &key, const string_view &val)
+	static const string_view type{"m.room.member"};
+	return m::state::each(state_root, type, [&event, &view]
+	(const json::array &key, const string_view &event_id)
 	{
-		const string_view event_id
-		{
-			unquote(val)
-		};
-
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(event, unquote(event_id), std::nothrow))
 			return false;
 
 		return view(event);
