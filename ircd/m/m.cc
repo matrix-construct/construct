@@ -440,19 +440,24 @@ bool
 ircd::m::user::is_password(const string_view &supplied_password)
 const
 {
-	const vm::query<vm::where::equal> member_event
-	{
-		{ "room_id",      accounts.room_id  },
-		{ "type",        "ircd.password"    },
-		{ "state_key",    user_id           },
-	};
-
 	//TODO: ADD SALT
 	char b64[64], hash[32];
 	sha256{hash, supplied_password};
-	const auto supplied_hash{b64encode_unpadded(b64, hash)};
-	const vm::query<vm::where::test> correct_password{[&supplied_hash]
-	(const auto &event)
+	const auto supplied_hash
+	{
+		b64encode_unpadded(b64, hash)
+	};
+
+	static const string_view type{"ircd.password"};
+	const string_view &state_key{user_id};
+	const room room
+	{
+		accounts.room_id
+	};
+
+	bool ret{false};
+	room.get(type, state_key, [&supplied_hash, &ret]
+	(const m::event &event)
 	{
 		const json::object &content
 		{
@@ -464,15 +469,10 @@ const
 			unquote(content.at("sha256"))
 		};
 
-		return supplied_hash == correct_hash;
-	}};
+		ret = supplied_hash == correct_hash;
+	});
 
-	const auto query
-	{
-		member_event && correct_password
-	};
-
-	return m::vm::test(member_event && correct_password);
+	return ret;
 }
 
 bool
