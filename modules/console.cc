@@ -23,6 +23,7 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 // the console to be reused easily inside the application (like a matrix room).
 std::stringstream out;
 
+static bool console_cmd__room(const string_view &line);
 static bool console_cmd__state(const string_view &line);
 static bool console_cmd__event(const string_view &line);
 static bool console_cmd__exec(const string_view &line);
@@ -68,6 +69,9 @@ try
 
 		case hash("state"):
 			return console_cmd__state(args);
+
+		case hash("room"):
+			return console_cmd__room(args);
 	}
 
 	return -1;
@@ -754,6 +758,98 @@ console_cmd__exec_file(const string_view &line)
 	    << " in " << foff << " bytes"
 	    << " using " << r << " reads"
 	    << std::endl;
+
+	return true;
+}
+
+//
+// room
+//
+
+static bool console_cmd__room__members(const string_view &line);
+static bool console_cmd__room__depth(const string_view &line);
+static bool console_cmd__room__head(const string_view &line);
+
+bool
+console_cmd__room(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("depth"):
+			return console_cmd__room__depth(args);
+
+		case hash("head"):
+			return console_cmd__room__head(args);
+
+		case hash("members"):
+			return console_cmd__room__members(args);
+	}
+
+	return true;
+}
+
+bool
+console_cmd__room__head(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	out << head(room_id) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__depth(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	out << depth(room_id) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__members(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	members.until([](const m::event &event)
+	{
+		out << pretty_oneline(event) << std::endl;
+		return true;
+	});
 
 	return true;
 }
