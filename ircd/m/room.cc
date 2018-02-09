@@ -347,7 +347,8 @@ const
 	};
 
 	bool ret{false};
-	m::state::get(state_root, "m.room.member", user_id, [&membership, &ret]
+	static const auto type{"m.room.member"};
+	m::state::get(std::nothrow, state_root, type, user_id, [&membership, &ret]
 	(const string_view &event_id)
 	{
 		event::fetch event;
@@ -458,16 +459,13 @@ const
 		dbs::state_root(state_root_buf, room_id, event_id)
 	};
 
-	bool ret{false};
-	m::state::get(state_root, type, state_key, [&closure, &ret]
+	return m::state::get(std::nothrow, state_root, type, state_key, [&closure]
 	(const string_view &event_id)
 	{
 		event::fetch event;
 		if(seek(event, event_id, std::nothrow))
 			closure(event);
 	});
-
-	return ret;
 }
 
 bool
@@ -485,14 +483,26 @@ ircd::m::room::has(const string_view &type,
                    const string_view &state_key)
 const
 {
-	const vm::query<vm::where::equal> query
+	const event::id::buf event_id_buf
 	{
-		{ "room_id",      room_id           },
-		{ "type",         type              },
-		{ "state_key",    state_key         },
+		!event_id? head(room_id) : string_view{}
 	};
 
-	return m::vm::test(query);
+	const event::id event_id
+	{
+		this->event_id? this->event_id : event_id_buf
+	};
+
+	m::state::id_buffer state_root_buf;
+	const auto state_root
+	{
+		dbs::state_root(state_root_buf, room_id, event_id)
+	};
+
+	return m::state::get(std::nothrow, state_root, type, state_key, []
+	(const string_view &event_id)
+	{
+	});
 }
 
 void
