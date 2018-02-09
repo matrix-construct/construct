@@ -397,6 +397,21 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out,
 	return { data(out), len };
 }
 
+std::tuple<uint64_t, ircd::string_view>
+ircd::m::dbs::room_events_key(const string_view &amalgam)
+{
+	const auto depth
+	{
+		between(amalgam, ":::", "$")
+	};
+
+	return
+	{
+		lex_cast<uint64_t>(depth),
+		string_view{end(depth), end(amalgam)}
+	};
+}
+
 /// This column stores events in sequence in a room. Consider the following:
 ///
 /// [room_id | depth + event_id => state_root]
