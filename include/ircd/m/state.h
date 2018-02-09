@@ -36,6 +36,7 @@ namespace ircd::m::state
 	constexpr size_t NODE_MAX_DEG { NODE_MAX_KEY + 1 }; // tmp for now
 	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
+	using id_buffer = fixed_buffer<mutable_buffer, ID_MAX_SZ>;
 	using id_closure = std::function<void (const string_view &)>;
 	using val_closure = std::function<void (const string_view &)>;
 	using node_closure = std::function<void (const json::object &)>;
