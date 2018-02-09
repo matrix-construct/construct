@@ -96,8 +96,8 @@ struct ircd::m::room
 
 	// observer misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
-	uint64_t maxdepth(event::id::buf &) const;
-	uint64_t maxdepth() const;
+	int64_t maxdepth(event::id::buf &) const;
+	int64_t maxdepth() const;
 
 	// modify
 	room(const alias &, const event::id &event_id = {});

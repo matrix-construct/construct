@@ -409,8 +409,7 @@ const
 	return m::vm::test(query, closure);
 }
 
-/// academic search
-uint64_t
+int64_t
 ircd::m::room::maxdepth()
 const
 {
@@ -418,28 +417,22 @@ const
 	return maxdepth(buf);
 }
 
-/// academic search
-uint64_t
+int64_t
 ircd::m::room::maxdepth(event::id::buf &buf)
 const
 {
-	const vm::query<vm::where::equal> query
+	const auto it
 	{
-		{ "room_id", room_id },
+		dbs::room_events.begin(room_id)
 	};
 
-	int64_t depth{0};
-	vm::for_each(query, [&buf, &depth]
-	(const auto &event)
-	{
-		if(json::get<"depth"_>(event) > depth)
-		{
-			depth = json::get<"depth"_>(event);
-			buf = json::get<"event_id"_>(event);
-		}
-	});
+	if(!it)
+		return -1;
 
-	return depth;
+	const auto &key(it->first);
+	const auto parts{dbs::room_events_key(key)};
+	buf = std::get<1>(parts);
+	return std::get<0>(parts);
 }
 
 //
