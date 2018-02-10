@@ -61,6 +61,10 @@ namespace ircd::m::state
 
 	bool test(const string_view &root, const iter_bool_closure &);
 	bool test(const string_view &root, const string_view &type, const iter_bool_closure &);
+
+	void for_each(const string_view &root, const iter_closure &);
+	void for_each(const string_view &root, const string_view &type, const iter_closure &);
+
 	size_t count(const string_view &root, const iter_bool_closure &);
 	size_t count(const string_view &root);
 

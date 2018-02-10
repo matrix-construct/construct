@@ -107,14 +107,33 @@ ircd::m::state::count(const string_view &root,
                       const iter_bool_closure &closure)
 {
 	size_t ret{0};
-	test(root, [&ret, &closure]
+	for_each(root, [&ret, &closure]
 	(const json::array &key, const string_view &val)
 	{
 		ret += closure(key, val);
-		return false;
 	});
 
 	return ret;
+}
+
+void
+ircd::m::state::for_each(const string_view &root,
+                         const iter_closure &closure)
+{
+	for_each(root, string_view{}, closure);
+}
+
+void
+ircd::m::state::for_each(const string_view &root,
+                         const string_view &type,
+                         const iter_closure &closure)
+{
+	test(root, type, [&closure]
+	(const json::array &key, const string_view &val)
+	{
+		closure(key, val);
+		return false;
+	});
 }
 
 bool
