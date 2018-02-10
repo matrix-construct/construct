@@ -632,8 +632,31 @@ const
 // room::members
 //
 
+void
+ircd::m::room::members::for_each(const event::closure &view)
+const
+{
+	test([&view](const m::event &event)
+	{
+		view(event);
+		return false;
+	});
+}
+
+void
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const event::closure &view)
+const
+{
+	test(membership, [&view](const m::event &event)
+	{
+		view(event);
+		return false;
+	});
+}
+
 bool
-ircd::m::room::members::until(const event::closure_bool &view)
+ircd::m::room::members::test(const event::closure_bool &view)
 const
 {
 	const room::state state
@@ -642,26 +665,26 @@ const
 	};
 
 	static const string_view type{"m.room.member"};
-	return !state.test(type, event::closure_bool{[&view]
+	return state.test(type, event::closure_bool{[&view]
 	(const m::event &event)
 	{
-		return !view(event);
+		return view(event);
 	}});
 }
 
 bool
-ircd::m::room::members::until(const string_view &membership,
-                              const event::closure_bool &view)
+ircd::m::room::members::test(const string_view &membership,
+                             const event::closure_bool &view)
 const
 {
 	//TODO: optimize with sequential column strat
-	return until([&membership, &view](const event &event)
+	return test([&membership, &view](const event &event)
 	{
 		if(at<"membership"_>(event) == membership)
-			if(!view(event))
-				return false;
+			if(view(event))
+				return true;
 
-		return true;
+		return false;
 	});
 }
 
@@ -669,8 +692,19 @@ const
 // room::origins
 //
 
+void
+ircd::m::room::origins::for_each(const closure &view)
+const
+{
+	test([&view](const string_view &origin)
+	{
+		view(origin);
+		return false;
+	});
+}
+
 bool
-ircd::m::room::origins::until(const closure_bool &view)
+ircd::m::room::origins::test(const closure_bool &view)
 const
 {
 	db::index index
@@ -683,11 +717,11 @@ const
 	{
 		const string_view &key(it->first);
 		const string_view &origin(split(key, ":::").second); //TODO: XXX
-		if(!view(origin))
-			return false;
+		if(view(origin))
+			return true;
 	}
 
-	return true;
+	return false;
 }
 
 //

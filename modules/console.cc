@@ -595,11 +595,10 @@ console_cmd__state_each(const string_view &line)
 		arg
 	};
 
-	m::state::each(root, type, []
+	m::state::for_each(root, type, []
 	(const string_view &key, const string_view &val)
 	{
 		out << key << " => " << val << std::endl;
-		return true;
 	});
 
 	return true;
@@ -767,6 +766,7 @@ console_cmd__exec_file(const string_view &line)
 //
 
 static bool console_cmd__room__members(const string_view &line);
+static bool console_cmd__room__state(const string_view &line);
 static bool console_cmd__room__depth(const string_view &line);
 static bool console_cmd__room__head(const string_view &line);
 
@@ -785,6 +785,9 @@ console_cmd__room(const string_view &line)
 
 		case hash("head"):
 			return console_cmd__room__head(args);
+
+		case hash("state"):
+			return console_cmd__room__state(args);
 
 		case hash("members"):
 			return console_cmd__room__members(args);
@@ -845,10 +848,35 @@ console_cmd__room__members(const string_view &line)
 		room
 	};
 
-	members.until([](const m::event &event)
+	members.for_each([](const m::event &event)
 	{
 		out << pretty_oneline(event) << std::endl;
-		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__state(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	state.for_each([](const m::event &event)
+	{
+		out << pretty_oneline(event) << std::endl;
 	});
 
 	return true;

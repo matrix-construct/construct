@@ -149,8 +149,11 @@ struct ircd::m::room::members
 {
 	m::room room;
 
-	bool until(const string_view &membership, const event::closure_bool &view) const;
-	bool until(const event::closure_bool &view) const;
+	bool test(const string_view &membership, const event::closure_bool &view) const;
+	bool test(const event::closure_bool &view) const;
+
+	void for_each(const string_view &membership, const event::closure &view) const;
+	void for_each(const event::closure &view) const;
 
 	members(m::room room)
 	:room{room}
@@ -171,7 +174,8 @@ struct ircd::m::room::origins
 
 	m::room room;
 
-	bool until(const closure_bool &view) const;
+	bool test(const closure_bool &view) const;
+	void for_each(const closure &view) const;
 
 	origins(m::room room)
 	:room{room}

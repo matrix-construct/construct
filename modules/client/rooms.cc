@@ -91,10 +91,9 @@ get_members(client &client,
 	std::vector<json::value> ret;
 	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
 
-	members.until([&ret](const m::event &event)
+	members.for_each([&ret](const m::event &event)
 	{
 		ret.emplace_back(event);
-		return true;
 	});
 
 	return resource::response
