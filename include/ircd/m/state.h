@@ -59,8 +59,8 @@ namespace ircd::m::state
 	bool dfs(const string_view &root, const json::array &key, const search_closure &);
 	bool dfs(const string_view &root, const search_closure &);
 
-	bool each(const string_view &root, const iter_bool_closure &);
-	bool each(const string_view &root, const string_view &type, const iter_bool_closure &);
+	bool test(const string_view &root, const iter_bool_closure &);
+	bool test(const string_view &root, const string_view &type, const iter_bool_closure &);
 	size_t count(const string_view &root, const iter_bool_closure &);
 	size_t count(const string_view &root);
 

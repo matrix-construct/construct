@@ -107,25 +107,25 @@ ircd::m::state::count(const string_view &root,
                       const iter_bool_closure &closure)
 {
 	size_t ret{0};
-	each(root, [&ret, &closure]
+	test(root, [&ret, &closure]
 	(const json::array &key, const string_view &val)
 	{
 		ret += closure(key, val);
-		return true;
+		return false;
 	});
 
 	return ret;
 }
 
 bool
-ircd::m::state::each(const string_view &root,
+ircd::m::state::test(const string_view &root,
                      const iter_bool_closure &closure)
 {
-	return each(root, string_view{}, closure);
+	return test(root, string_view{}, closure);
 }
 
 bool
-ircd::m::state::each(const string_view &root,
+ircd::m::state::test(const string_view &root,
                      const string_view &type,
                      const iter_bool_closure &closure)
 {
@@ -188,15 +188,15 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 	{
 		if(!empty(rep.chld[pos]))
 		{
-			bool ret{true};
+			bool ret{false};
 			get_node(rep.chld[pos], [&closure, &key, &depth, &ret]
 			(const auto &node)
 			{
 				ret = _dfs_recurse(closure, node, key, depth);
 			});
 
-			if(!ret)
-				return ret;
+			if(ret)
+				return true;
 		}
 
 		if(rep.kn <= pos)
@@ -205,11 +205,11 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 		if(!empty(key) && !prefix_eq(key, rep.keys[pos]))
 			break;
 
-		if(!closure(rep.keys[pos], rep.vals[pos], depth, pos))
-			return false;
+		if(closure(rep.keys[pos], rep.vals[pos], depth, pos))
+			return true;
 	}
 
-	return true;
+	return false;
 }
 
 // Internal insertion operations
