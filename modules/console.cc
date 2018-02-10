@@ -696,7 +696,7 @@ console_cmd__exec_file(const string_view &line)
 {
 	const params token{line, " ",
 	{
-		"file path", "limit"
+		"file path", "limit", "start", "room_id"
 	}};
 
 	const auto path
@@ -714,6 +714,11 @@ console_cmd__exec_file(const string_view &line)
 		token[2]? lex_cast<size_t>(token[2]) : 0
 	};
 
+	const string_view room_id
+	{
+		token[3]
+	};
+
 	struct m::vm::eval::opts opts;
 	m::vm::eval eval
 	{
@@ -722,7 +727,7 @@ console_cmd__exec_file(const string_view &line)
 
 	size_t foff{0};
 	size_t i(0), j(0), r(0);
-	for(; i < limit; ++r)
+	for(; !limit || i < limit; ++r)
 	{
 		static char buf[512_KiB];
 		const string_view read
@@ -737,10 +742,14 @@ console_cmd__exec_file(const string_view &line)
 			const json::object object{*begin(vector)};
 			boff += size(object);
 			vector = { data(read) + boff, size(read) - boff };
+
+			const m::event event{object};
+			if(room_id && json::get<"room_id"_>(event) != room_id)
+				continue;
+
 			if(j++ < start)
 				continue;
 
-			const m::event event{object};
 			eval(event);
 			++i;
 		}
