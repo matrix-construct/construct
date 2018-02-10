@@ -456,7 +456,7 @@ const
 	};
 
 	bool ret{false};
-	room.get(type, state_key, [&supplied_hash, &ret]
+	room::state{room}.get(type, state_key, [&supplied_hash, &ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -480,8 +480,8 @@ ircd::m::user::is_active()
 const
 {
 	bool ret{false};
-	accounts.get("ircd.user", user_id, [&ret]
-	(const auto &event)
+	room::state{accounts}.get("ircd.user", user_id, [&ret]
+	(const m::event &event)
 	{
 		const json::object &content
 		{

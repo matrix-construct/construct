@@ -75,6 +75,8 @@ struct ircd::m::room
 {
 	struct state;
 	struct members;
+	struct messages;
+	struct origins;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -84,29 +86,57 @@ struct ircd::m::room
 
 	operator const id &() const        { return room_id;                       }
 
-	// observer
-	string_view root(m::state::id_buffer &) const;
-	void for_each(const string_view &type, const event::closure &view) const;
-	bool test(const string_view &type, const event::closure_bool &view) const;
-	bool has(const string_view &type, const string_view &state_key) const;
-	bool has(const string_view &type) const;
+	// X
+	bool get(const event::closure &) const;
+	void for_each(const event::closure &) const;
 
-	bool get(const string_view &type, const string_view &state_key, const event::closure &) const;
-	bool get(const string_view &type, const event::closure &view) const;
-	bool get(const event::closure &view) const;
-
-	bool prev(const string_view &type, const string_view &state_key, const event::closure &) const;
-	bool prev(const string_view &type, const event::closure &view) const;
-	bool prev(const event::closure &view) const;
-
-	// observer misc
+	// misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 
-	// modify
 	room(const alias &, const event::id &event_id = {});
 	room(const id &room_id, const event::id &event_id = {})
 	:room_id{room_id}
 	,event_id{event_id}
+	{}
+};
+
+/// Interface to room state.
+///
+/// This interface focuses specifically on the details of room state.
+///
+struct ircd::m::room::state
+{
+	struct tuple;
+
+	m::room room;
+
+	// Get the state root node ID
+	string_view root(m::state::id_buffer &) const;
+
+	// Iterate the state; for_each protocol
+	void for_each(const string_view &type, const event::id::closure &) const;
+	void for_each(const string_view &type, const event::closure &) const;
+	void for_each(const event::id::closure &) const;
+	void for_each(const event::closure &) const;
+
+	// Iterate the state; test protocol
+	bool test(const string_view &type, const event::id::closure_bool &view) const;
+	bool test(const string_view &type, const event::closure_bool &view) const;
+	bool test(const event::id::closure_bool &view) const;
+	bool test(const event::closure_bool &view) const;
+
+	// Existential
+	bool has(const string_view &type, const string_view &state_key) const;
+	bool has(const string_view &type) const;
+
+	// Fetch a state event
+	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::id::closure &) const;
+	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
+	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
+	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
+
+	state(m::room room)
+	:room{room}
 	{}
 };
 
@@ -117,8 +147,6 @@ struct ircd::m::room
 ///
 struct ircd::m::room::members
 {
-	struct origins;
-
 	m::room room;
 
 	bool until(const string_view &membership, const event::closure_bool &view) const;
@@ -129,15 +157,14 @@ struct ircd::m::room::members
 	{}
 };
 
-/// Interface to the origins of members of a room
+/// Interface to the origins (autonomous systems) of a room
 ///
-/// This interface focuses even more specifically on the servers (origins) for
-/// the members of a room. As multiple users from the same origin may be
-/// members of a room -- all in different membership states etc -- this
-/// interface distills that fact away from what would otherwise burden users
-/// of the more general room::members interface.
+/// This interface focuses specifically on the origins (from the field in the
+/// event object) which are servers/networks/autonomous systems, or something.
+/// Messages have to be sent to them, and an efficient iteration of the
+/// origins as provided by this interface helps with that.
 ///
-struct ircd::m::room::members::origins
+struct ircd::m::room::origins
 {
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
@@ -167,7 +194,7 @@ struct ircd::m::room::members::origins
 /// A "JS null" is rarer and carried with a hack which will not be discussed
 /// here.
 ///
-struct ircd::m::room::state
+struct ircd::m::room::state::tuple
 :json::tuple
 <
 	json::property<name::m_room_aliases, event>,
@@ -187,13 +214,13 @@ struct ircd::m::room::state
 {
 	using super_type::tuple;
 
-	state(const json::array &pdus);
-	state(const room &, const mutable_buffer &);
-	state() = default;
+	tuple(const json::array &pdus);
+	tuple(const m::room &, const mutable_buffer &);
+	tuple() = default;
 	using super_type::operator=;
 
-	friend std::string pretty(const room::state &);
-	friend std::string pretty_oneline(const room::state &);
+	friend std::string pretty(const room::state::tuple &);
+	friend std::string pretty_oneline(const room::state::tuple &);
 };
 
 #pragma GCC diagnostic pop

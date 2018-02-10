@@ -112,25 +112,19 @@ get_state(client &client,
           const m::room::id &room_id,
           const string_view &event_id)
 {
-	const m::room room
+	const m::room::state state
 	{
-		room_id, event_id
+		m::room{room_id, event_id}
 	};
 
 	//TODO: Introduce the progressive json::stream with socket <-> db yield dialectic.
 	std::vector<json::value> ret;
 	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
 
-	m::event::fetch event;
-	m::state::id_buffer root;
-	m::state::each(room.root(root), [&event, &ret]
-	(const json::array &key, const string_view &event_id)
+	state.for_each([&ret]
+	(const m::event &event)
 	{
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return true;
-
 		ret.emplace_back(event);
-		return true;
 	});
 
 	return resource::response
@@ -149,15 +143,15 @@ get_state(client &client,
           const string_view &event_id,
           const string_view &type)
 {
-	const m::room room
+	const m::room::state state
 	{
-		room_id, event_id
+		m::room{room_id, event_id}
 	};
 
 	//TODO: Introduce the progressive json::stream with socket <-> db yield dialectic.
 	std::vector<json::value> ret;
 	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
-	room.for_each(type, [&ret]
+	state.for_each(type, [&ret]
 	(const m::event &event)
 	{
 		//TODO: Fix conversion derpage
@@ -181,18 +175,17 @@ get_state(client &client,
           const string_view &type,
           const string_view &state_key)
 {
-	const m::room room
+	const m::room::state state
 	{
-		room_id, event_id
+		m::room{room_id, event_id}
 	};
 
-	size_t i(0);
 	std::array<json::value, 1> ret;
-	i += room.get(type, state_key, [&ret]
+	const bool i{state.get(std::nothrow, type, state_key, [&ret]
 	(const m::event &event)
 	{
 		ret[0] = event;
-	});
+	})};
 
 	return resource::response
 	{

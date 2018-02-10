@@ -330,21 +330,11 @@ ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
 const
 {
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
 	bool ret{false};
-	static const auto type{"m.room.member"};
-	m::state::get(std::nothrow, state_root, type, user_id, [&membership, &ret]
-	(const string_view &event_id)
+	static const string_view type{"m.room.member"};
+	state{*this}.get(std::nothrow, type, user_id, [&membership, &ret]
+	(const m::event &event)
 	{
-		event::fetch event;
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return;
-
 		assert(json::get<"type"_>(event) == "m.room.member");
 		ret = at<"membership"_>(event) == membership;
 	});
@@ -352,8 +342,37 @@ const
 	return ret;
 }
 
+void
+ircd::m::room::for_each(const event::closure &closure)
+const
+{
+	auto it
+	{
+		dbs::room_events.begin(room_id)
+	};
+
+	event::fetch event;
+	if(it) do
+	{
+		const auto &key{it->first};
+		const auto part
+		{
+			dbs::room_events_key(key)
+		};
+
+		const auto event_id
+		{
+			std::get<1>(part)
+		};
+
+		if(seek(event, event_id, std::nothrow))
+			closure(event);
+	}
+	while(++it);
+}
+
 bool
-ircd::m::room::prev(const event::closure &closure)
+ircd::m::room::get(const event::closure &closure)
 const try
 {
 	auto it
@@ -388,166 +407,225 @@ catch(const NOT_FOUND &)
 	return false;
 }
 
-bool
-ircd::m::room::get(const event::closure &closure)
+//
+// room::state
+//
+
+void
+ircd::m::room::state::get(const string_view &type,
+                          const string_view &state_key,
+                          const event::closure &closure)
 const
 {
-	auto it
+	get(type, state_key, event::id::closure{[&closure]
+	(const event::id &event_id)
 	{
-		dbs::room_events.begin(room_id)
-	};
-
-	event::fetch event;
-	if(it) do
-	{
-		const auto &key{it->first};
-		const auto part
+		event::fetch event
 		{
-			dbs::room_events_key(key)
+			event_id
 		};
 
-		const auto event_id
-		{
-			std::get<1>(part)
-		};
-
-		if(seek(event, event_id, std::nothrow))
+		if(event.valid(event_id))
 			closure(event);
-	}
-	while(++it); else return false;
-
-	return true;
+	}});
 }
 
-bool
-ircd::m::room::get(const string_view &type,
-                   const event::closure &closure)
+void
+ircd::m::room::state::get(const string_view &type,
+                          const string_view &state_key,
+                          const event::id::closure &closure)
 const
 {
-	return get(type, string_view{}, closure);
-}
-
-bool
-ircd::m::room::get(const string_view &type,
-                   const string_view &state_key,
-                   const event::closure &closure)
-const
-{
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
-	return m::state::get(std::nothrow, state_root, type, state_key, [&closure]
+	m::state::id_buffer buf;
+	m::state::get(root(buf), type, state_key, [&closure]
 	(const string_view &event_id)
 	{
-		event::fetch event;
+		closure(unquote(event_id));
+	});
+}
+
+bool
+ircd::m::room::state::get(std::nothrow_t,
+                          const string_view &type,
+                          const string_view &state_key,
+                          const event::closure &closure)
+const
+{
+	return get(std::nothrow, type, state_key, event::id::closure{[&closure]
+	(const event::id &event_id)
+	{
+		event::fetch event
+		{
+			event_id, std::nothrow
+		};
+
+		if(event.valid(event_id))
+			closure(event);
+	}});
+}
+
+bool
+ircd::m::room::state::get(std::nothrow_t,
+                          const string_view &type,
+                          const string_view &state_key,
+                          const event::id::closure &closure)
+const
+{
+	m::state::id_buffer buf;
+	return m::state::get(std::nothrow, root(buf), type, state_key, [&closure]
+	(const string_view &event_id)
+	{
+		closure(unquote(event_id));
+	});
+}
+
+bool
+ircd::m::room::state::has(const string_view &type)
+const
+{
+	return test(type, event::id::closure_bool{[](const m::event::id &)
+	{
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::state::has(const string_view &type,
+                          const string_view &state_key)
+const
+{
+	m::state::id_buffer buf;
+	return m::state::get(std::nothrow, root(buf), type, state_key, []
+	(const string_view &event_id)
+	{
+	});
+}
+
+bool
+ircd::m::room::state::test(const event::closure_bool &closure)
+const
+{
+	event::fetch event;
+	return test(event::id::closure_bool{[&event, &closure]
+	(const event::id &event_id)
+	{
 		if(seek(event, unquote(event_id), std::nothrow))
-			closure(event);
-	});
-}
+			if(closure(event))
+				return true;
 
-bool
-ircd::m::room::has(const string_view &type)
-const
-{
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
-	bool ret{false};
-	m::state::each(state_root, type, [&ret]
-	(const json::array &key, const string_view &val)
-	{
-		ret = true;
 		return false;
-	});
-
-	return ret;
+	}});
 }
 
 bool
-ircd::m::room::has(const string_view &type,
-                   const string_view &state_key)
+ircd::m::room::state::test(const event::id::closure_bool &closure)
 const
 {
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
-	return m::state::get(std::nothrow, state_root, type, state_key, []
-	(const string_view &event_id)
-	{
-	});
-}
-
-bool
-ircd::m::room::test(const string_view &type,
-                    const event::closure_bool &closure)
-const
-{
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
-	event::fetch event;
-	return !m::state::each(state_root, type, [&event, &closure]
+	m::state::id_buffer buf;
+	return m::state::test(root(buf), [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return true;
+		return closure(unquote(event_id));
+	});
+}
 
-		// logical inversion for test vs. until protocol.
-		return !closure(event);
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const event::closure_bool &closure)
+const
+{
+	event::fetch event;
+	return test(type, event::id::closure_bool{[&event, &closure]
+	(const event::id &event_id)
+	{
+		if(seek(event, unquote(event_id), std::nothrow))
+			if(closure(event))
+				return true;
+
+		return false;
+	}});
+}
+
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const event::id::closure_bool &closure)
+const
+{
+	m::state::id_buffer buf;
+	return m::state::test(root(buf), type, [&closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		return closure(unquote(event_id));
 	});
 }
 
 void
-ircd::m::room::for_each(const string_view &type,
-                        const event::closure &closure)
+ircd::m::room::state::for_each(const event::closure &closure)
 const
 {
-	m::state::id_buffer root;
-	const auto state_root
-	{
-		this->root(root)
-	};
-
 	event::fetch event;
-	m::state::each(state_root, type, [&event, &closure]
+	for_each(event::id::closure{[&event, &closure]
+	(const event::id &event_id)
+	{
+		if(seek(event, unquote(event_id), std::nothrow))
+			closure(event);
+	}});
+}
+
+void
+ircd::m::room::state::for_each(const event::id::closure &closure)
+const
+{
+	m::state::id_buffer buf;
+	m::state::for_each(root(buf), [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return true;
+		closure(unquote(event_id));
+	});
+}
 
-		// logical inversion for test vs. until protocol.
-		closure(event);
-		return true;
+void
+ircd::m::room::state::for_each(const string_view &type,
+                               const event::closure &closure)
+const
+{
+	event::fetch event;
+	for_each(type, event::id::closure{[&event, &closure]
+	(const event::id &event_id)
+	{
+		if(seek(event, unquote(event_id), std::nothrow))
+			closure(event);
+	}});
+}
+
+void
+ircd::m::room::state::for_each(const string_view &type,
+                               const event::id::closure &closure)
+const
+{
+	m::state::id_buffer buf;
+	m::state::for_each(root(buf), type, [&closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		closure(unquote(event_id));
 	});
 }
 
 ircd::string_view
-ircd::m::room::root(m::state::id_buffer &buf)
+ircd::m::room::state::root(m::state::id_buffer &buf)
 const
 {
 	const event::id::buf event_id_buf
 	{
-		!event_id? head(room_id) : string_view{}
+		!room.event_id? head(room.room_id) : string_view{}
 	};
 
 	const event::id event_id
 	{
-		this->event_id? this->event_id : event_id_buf
+		room.event_id? room.event_id : event_id_buf
 	};
 
-	return dbs::state_root(buf, room_id, event_id);
+	return dbs::state_root(buf, room.room_id, event_id);
 }
 
 //
@@ -558,22 +636,17 @@ bool
 ircd::m::room::members::until(const event::closure_bool &view)
 const
 {
-	m::state::id_buffer root;
-	const auto state_root
+	const room::state state
 	{
-		room.root(root)
+		room
 	};
 
-	event::fetch event;
 	static const string_view type{"m.room.member"};
-	return m::state::each(state_root, type, [&event, &view]
-	(const json::array &key, const string_view &event_id)
+	return !state.test(type, event::closure_bool{[&view]
+	(const m::event &event)
 	{
-		if(!seek(event, unquote(event_id), std::nothrow))
-			return false;
-
-		return view(event);
-	});
+		return !view(event);
+	}});
 }
 
 bool
@@ -593,16 +666,16 @@ const
 }
 
 //
-// room::members::origins
+// room::origins
 //
 
 bool
-ircd::m::room::members::origins::until(const closure_bool &view)
+ircd::m::room::origins::until(const closure_bool &view)
 const
 {
 	db::index index
 	{
-		*event::events, "origin in room_id"
+		*dbs::events, "origin_joined in room_id"
 	};
 
 	auto it(index.begin(room.room_id));
@@ -618,15 +691,16 @@ const
 }
 
 //
-// room::state
+// room::state::tuple
 //
 
-ircd::m::room::state::state(const room &room)
+ircd::m::room::state::tuple::tuple(const m::room &room,
+                                   const mutable_buffer &buf)
 {
 
 }
 
-ircd::m::room::state::state(const json::array &pdus)
+ircd::m::room::state::tuple::tuple(const json::array &pdus)
 {
 	for(const json::object &pdu : pdus)
 	{
@@ -636,7 +710,7 @@ ircd::m::room::state::state(const json::array &pdus)
 }
 
 std::string
-ircd::m::pretty(const room::state &state)
+ircd::m::pretty(const room::state::tuple &state)
 {
 	std::string ret;
 	std::stringstream s;
@@ -662,7 +736,7 @@ ircd::m::pretty(const room::state &state)
 }
 
 std::string
-ircd::m::pretty_oneline(const room::state &state)
+ircd::m::pretty_oneline(const room::state::tuple &state)
 {
 	std::string ret;
 	std::stringstream s;
