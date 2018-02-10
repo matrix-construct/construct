@@ -178,7 +178,7 @@ ircd::m::init_listener(const json::object &conf,
 	{
 		{ "name",                      name                          },
 		{ "host",                      host                          },
-		{ "port",                      opts.get("port", 8448)        },
+		{ "port",                      opts.get("port", 8448L)       },
 		{ "ssl_certificate_file_pem",  conf["tls_certificate_path"]  },
 		{ "ssl_private_key_file_pem",  conf["tls_private_key_path"]  },
 		{ "ssl_tmp_dh_file",           conf["tls_dh_params_path"]    },

@@ -107,7 +107,7 @@ void foop()
 	std::cout <<
 	test(json::strung(json::members
 	{
-		{ "one", 1 },
+		{ "one", 1L },
 		{ "two", "Two" }
 	}))
 	<< std::endl;

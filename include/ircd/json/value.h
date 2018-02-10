@@ -85,9 +85,11 @@ struct ircd::json::value
 	explicit operator int64_t() const;
 	explicit operator std::string() const;       ///< NOTE full stringify() of value
 
-	template<class T> explicit value(const T &specialized);
 	value(const string_view &sv, const enum type &);
 	template<size_t N> value(const char (&)[N]);
+	explicit value(const int64_t &);
+	explicit value(const double &);
+	explicit value(const bool &);
 	value(const char *const &s);
 	value(const string_view &sv);
 	value(const struct member *const &, const size_t &len);
@@ -116,20 +118,6 @@ struct ircd::json::value
 	friend string_view stringify(mutable_buffer &, const value &);
 	friend std::ostream &operator<<(std::ostream &, const value &);
 };
-
-namespace ircd::json
-{
-	template<> value::value(const double &floating);
-	template<> value::value(const uint64_t &integer);
-	template<> value::value(const int64_t &integer);
-	template<> value::value(const float &floating);
-	template<> value::value(const uint32_t &integer);
-	template<> value::value(const int32_t &integer);
-	template<> value::value(const uint16_t &integer);
-	template<> value::value(const int16_t &integer);
-	template<> value::value(const bool &boolean);
-	template<> value::value(const std::string &str);
-}
 
 static_assert(sizeof(ircd::json::value) == 16, "");
 
@@ -174,23 +162,10 @@ ircd::json::value::value(const char (&str)[N])
 ,floats{false}
 {}
 
-template<> inline
-ircd::json::value::value(const std::string &str)
-:value{string_view{str}}
-{}
-
 inline
 ircd::json::value::value(const string_view &sv)
 :value{sv, json::type(sv, std::nothrow)}
 {}
-
-template<class T>
-ircd::json::value::value(const T &t)
-:value{static_cast<string_view>(t)}
-{
-	static_assert(std::is_base_of<ircd::string_view, T>() ||
-	              std::is_convertible<ircd::string_view, T>(), "");
-}
 
 inline
 ircd::json::value::value(const nullptr_t &)
@@ -199,7 +174,7 @@ ircd::json::value::value(const nullptr_t &)
 	literal_null, type::LITERAL
 }{}
 
-template<> inline
+inline
 ircd::json::value::value(const bool &boolean)
 :value
 {
@@ -255,7 +230,7 @@ ircd::json::value::value(std::unique_ptr<const struct member[]> object,
 	object.release();
 }
 
-template<> inline
+inline
 ircd::json::value::value(const int64_t &integer)
 :integer{integer}
 ,len{0}
@@ -265,7 +240,7 @@ ircd::json::value::value(const int64_t &integer)
 ,floats{false}
 {}
 
-template<> inline
+inline
 ircd::json::value::value(const double &floating)
 :floating{floating}
 ,len{0}
@@ -273,38 +248,6 @@ ircd::json::value::value(const double &floating)
 ,serial{false}
 ,alloc{false}
 ,floats{true}
-{}
-
-template<>
-__attribute__((warning("uint64_t narrows to int64_t when used in json::value")))
-inline
-ircd::json::value::value(const uint64_t &integer)
-:value{int64_t(integer)}
-{}
-
-template<> inline
-ircd::json::value::value(const float &floating)
-:value{double(floating)}
-{}
-
-template<> inline
-ircd::json::value::value(const int32_t &integer)
-:value{int64_t(integer)}
-{}
-
-template<> inline
-ircd::json::value::value(const uint32_t &integer)
-:value{int64_t(integer)}
-{}
-
-template<> inline
-ircd::json::value::value(const int16_t &integer)
-:value{int64_t(integer)}
-{}
-
-template<> inline
-ircd::json::value::value(const uint16_t &integer)
-:value{int64_t(integer)}
 {}
 
 inline

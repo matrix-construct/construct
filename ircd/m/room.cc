@@ -56,7 +56,7 @@ ircd::m::create(const id::room &room_id,
 
 	json::iov::set _set[]
 	{
-		{ event,  { "depth",       1                }},
+		{ event,  { "depth",       0L               }},
 		{ event,  { "type",        "m.room.create"  }},
 		{ event,  { "state_key",   ""               }},
 	};
