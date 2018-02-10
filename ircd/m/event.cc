@@ -338,6 +338,76 @@ ircd::m::event::event(const id &id,
 }
 
 //
+// event::prev
+//
+
+ircd::m::event::id
+ircd::m::event::prev::auth_event(const uint &idx)
+const
+{
+	return std::get<0>(auth_events(idx));
+}
+
+ircd::m::event::id
+ircd::m::event::prev::prev_state(const uint &idx)
+const
+{
+	return std::get<0>(prev_states(idx));
+}
+
+ircd::m::event::id
+ircd::m::event::prev::prev_event(const uint &idx)
+const
+{
+	return std::get<0>(prev_events(idx));
+}
+
+std::tuple<ircd::m::event::id, ircd::string_view>
+ircd::m::event::prev::auth_events(const uint &idx)
+const
+{
+	const json::array &auth_event
+	{
+		at<"auth_events"_>(*this).at(idx)
+	};
+
+	return
+	{
+		unquote(auth_event.at(0)), unquote(auth_event[1])
+	};
+}
+
+std::tuple<ircd::m::event::id, ircd::string_view>
+ircd::m::event::prev::prev_states(const uint &idx)
+const
+{
+	const json::array &state_event
+	{
+		at<"prev_state"_>(*this).at(idx)
+	};
+
+	return
+	{
+		unquote(state_event.at(0)), unquote(state_event[1])
+	};
+}
+
+std::tuple<ircd::m::event::id, ircd::string_view>
+ircd::m::event::prev::prev_events(const uint &idx)
+const
+{
+	const json::array &prev_event
+	{
+		at<"prev_events"_>(*this).at(idx)
+	};
+
+	return
+	{
+		unquote(prev_event.at(0)), unquote(prev_event[1])
+	};
+}
+
+//
 // event::fetch
 //
 
