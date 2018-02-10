@@ -110,6 +110,8 @@ struct ircd::m::event::fetch
 	std::array<db::cell, event::size()> cell;
 	db::row row;
 
+	bool valid(const event::id &) const;
+
 	fetch(const event::id &, std::nothrow_t);
 	fetch(const event::id &);
 	fetch();
@@ -117,6 +119,13 @@ struct ircd::m::event::fetch
 	friend bool seek(fetch &, const event::id &, std::nothrow_t);
 	friend void seek(fetch &, const event::id &);
 };
+
+inline bool
+ircd::m::event::fetch::valid(const event::id &event_id)
+const
+{
+	return row.valid(event_id);
+}
 
 inline bool
 ircd::m::my(const event &event)
