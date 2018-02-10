@@ -119,6 +119,9 @@ struct ircd::m::id::user
 struct ircd::m::id::event
 :ircd::m::id
 {
+	using closure = std::function<void (const id::event &)>;
+	using closure_bool = std::function<bool (const id::event &)>;
+
 	using buf = m::id::buf<event>;
 	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
 	event() = default;
@@ -137,6 +140,9 @@ struct ircd::m::id::event
 struct ircd::m::id::room
 :ircd::m::id
 {
+	using closure = std::function<void (const id::room &)>;
+	using closure_bool = std::function<bool (const id::room &)>;
+
 	using buf = m::id::buf<room>;
 	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
 	room() = default;
