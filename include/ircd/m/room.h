@@ -75,7 +75,6 @@ struct ircd::m::room
 {
 	struct state;
 	struct members;
-	struct fetch;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -186,13 +185,10 @@ struct ircd::m::room::state
 	json::property<name::m_room_guest_access, event>
 >
 {
-	struct fetch;
-
 	using super_type::tuple;
 
 	state(const json::array &pdus);
-	state(fetch &);
-	state(const room::id &, const event::id &, const mutable_buffer &);
+	state(const room &, const mutable_buffer &);
 	state() = default;
 	using super_type::operator=;
 

@@ -53,7 +53,6 @@ namespace ircd
 #include "request.h"
 #include "session.h"
 #include "v1/v1.h"
-#include "io.h"
 #include "vm.h"
 #include "filter.h"
 #include "keys.h"

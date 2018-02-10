@@ -80,7 +80,6 @@ libircd_la_SOURCES =   \
 	m/event.cc         \
 	m/id.cc            \
 	m/v1.cc            \
-	m/io.cc            \
 	m/keys.cc          \
 	m/request.cc       \
 	m/room.cc          \

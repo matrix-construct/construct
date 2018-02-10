@@ -621,26 +621,9 @@ const
 // room::state
 //
 
-ircd::m::room::state::state(const room::id &room_id,
-                            const event::id &event_id,
-                            const mutable_buffer &buf)
+ircd::m::room::state::state(const room &room)
 {
-	fetch tab
-	{
-		event_id, room_id, buf
-	};
 
-	new (this) state{tab};
-}
-
-ircd::m::room::state::state(fetch &tab)
-{
-	io::acquire(tab);
-
-	if(bool(tab.error))
-		std::rethrow_exception(tab.error);
-
-	new (this) state{tab.pdus};
 }
 
 ircd::m::room::state::state(const json::array &pdus)
