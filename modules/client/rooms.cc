@@ -77,38 +77,31 @@ get_members(client &client,
             const resource::request &request,
             const m::room::id &room_id)
 {
-
-	const m::vm::query<m::vm::where::equal> query
+	const m::room room
 	{
-		{ "room_id",    room_id         },
-		{ "type",       "m.room.member" },
+		room_id
 	};
 
-	const auto count
+	const m::room::members members
 	{
-		m::vm::count(query)
+		room
 	};
 
-	if(!count)
-		throw m::NOT_FOUND
-		{
-			"No members."
-		};
+	//TODO: Introduce the progressive json::stream with socket <-> db yield dialectic.
+	std::vector<json::value> ret;
+	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
 
-	size_t j(0);
-	std::vector<json::value> ret(count);
-	m::vm::for_each(query, [&count, &j, &ret]
-	(const auto &event)
+	members.until([&ret](const m::event &event)
 	{
-		if(j < count)
-			ret[j++] = event;
+		ret.emplace_back(event);
+		return true;
 	});
 
 	return resource::response
 	{
 		client, json::members
 		{
-			{ "chunk", json::value { ret.data(), j } }
+			{ "chunk", json::value { ret.data(), ret.size() } }
 		}
 	};
 }
@@ -116,36 +109,66 @@ get_members(client &client,
 resource::response
 get_state(client &client,
           const resource::request &request,
-          const m::vm::query<> &query)
+          const m::room::id &room_id,
+          const string_view &event_id)
 {
-	const auto count
+	const m::room room
 	{
-		m::vm::count(query)
+		room_id, event_id
 	};
 
-	if(!count)
-		throw m::NOT_FOUND
-		{
-			"No state."
-		};
+	//TODO: Introduce the progressive json::stream with socket <-> db yield dialectic.
+	std::vector<json::value> ret;
+	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
 
-	size_t j(0);
-	std::vector<json::value> ret(count);
-	m::vm::for_each(query, [&count, &j, &ret]
-	(const auto &event)
+	m::event::fetch event;
+	m::state::id_buffer root;
+	m::state::each(room.root(root), [&event, &ret]
+	(const json::array &key, const string_view &event_id)
 	{
-		if(j < count)
-		{
-			if(defined(json::get<"state_key"_>(event)))
-				ret[j++] = event;
-		}
+		if(!seek(event, unquote(event_id), std::nothrow))
+			return true;
+
+		ret.emplace_back(event);
+		return true;
 	});
 
 	return resource::response
 	{
 		client, json::value
 		{
-			ret.data(), j
+			ret.data(), ret.size()
+		}
+	};
+}
+
+resource::response
+get_state(client &client,
+          const resource::request &request,
+          const m::room::id &room_id,
+          const string_view &event_id,
+          const string_view &type)
+{
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	//TODO: Introduce the progressive json::stream with socket <-> db yield dialectic.
+	std::vector<json::value> ret;
+	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
+	room.for_each(type, [&ret]
+	(const m::event &event)
+	{
+		//TODO: Fix conversion derpage
+		ret.emplace_back(event);
+	});
+
+	return resource::response
+	{
+		client, json::value
+		{
+			ret.data(), ret.size()
 		}
 	};
 }
@@ -158,32 +181,26 @@ get_state(client &client,
           const string_view &type,
           const string_view &state_key)
 {
-	const m::vm::query<m::vm::where::equal> query
+	const m::room room
 	{
-		{ "room_id",    room_id    },
-		{ "event_id",   event_id   },
-		{ "type",       type       },
-		{ "state_key",  state_key  },
+		room_id, event_id
 	};
 
-	return get_state(client, request, query);
-}
-
-resource::response
-get_state(client &client,
-          const resource::request &request,
-          const m::room::id &room_id,
-          const string_view &event_id,
-          const string_view &type)
-{
-	const m::vm::query<m::vm::where::equal> query
+	size_t i(0);
+	std::array<json::value, 1> ret;
+	i += room.get(type, state_key, [&ret]
+	(const m::event &event)
 	{
-		{ "room_id",    room_id    },
-		{ "event_id",   event_id   },
-		{ "type",       type       },
-	};
+		ret[0] = event;
+	});
 
-	return get_state(client, request, query);
+	return resource::response
+	{
+		client, json::value
+		{
+			ret.data(), i
+		}
+	};
 }
 
 resource::response
@@ -217,13 +234,7 @@ get_state(client &client,
 	if(type)
 		return get_state(client, request, room_id, event_id, type);
 
-	const m::vm::query<m::vm::where::equal> query
-	{
-		{ "room_id",    room_id    },
-		{ "event_id",   event_id   },
-	};
-
-	return get_state(client, request, query);
+	return get_state(client, request, room_id, event_id);
 }
 
 resource::response
