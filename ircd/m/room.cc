@@ -371,40 +371,25 @@ const
 	while(++it);
 }
 
-bool
-ircd::m::room::get(const event::closure &closure)
-const try
+void
+ircd::m::room::get(const string_view &type,
+                   const string_view &state_key,
+                   const event::closure &closure)
+const
 {
-	auto it
-	{
-		dbs::room_events.begin(room_id)
-	};
-
-	if(!it)
-		return false;
-
-	const auto &key{it->first};
-	const auto part
-	{
-		dbs::room_events_key(key)
-	};
-
-	const auto event_id
-	{
-		std::get<1>(part)
-	};
-
-	const event::fetch event
-	{
-		event_id
-	};
-
-	closure(event);
-	return true;
+	const state state{*this};
+	state.get(type, state_key, closure);
 }
-catch(const NOT_FOUND &)
+
+bool
+ircd::m::room::get(std::nothrow_t,
+                   const string_view &type,
+                   const string_view &state_key,
+                   const event::closure &closure)
+const
 {
-	return false;
+	const state state{*this};
+	return state.get(std::nothrow, type, state_key, closure);
 }
 
 //
