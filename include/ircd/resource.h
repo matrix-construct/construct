@@ -87,6 +87,7 @@ struct ircd::resource::request
 	string_view content;
 	http::query::string query;
 	string_view user_id; //m::user::id::buf user_id; //TODO: bleeding
+	string_view access_token;
 	vector_view<string_view> parv;
 
 	request(const http::request::head &head,
@@ -104,6 +105,7 @@ struct ircd::resource::request::object
 	const string_view &content;
 	const http::query::string &query;
 	const decltype(r.user_id) &user_id;
+	const decltype(r.access_token) &access_token;
 	const vector_view<string_view> &parv;
 	const json::object &body;
 
@@ -114,6 +116,7 @@ struct ircd::resource::request::object
 	,content{r.content}
 	,query{r.query}
 	,user_id{r.user_id}
+	,access_token{r.access_token}
 	,parv{r.parv}
 	,body{r}
 	{}

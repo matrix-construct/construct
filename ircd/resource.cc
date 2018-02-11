@@ -129,12 +129,12 @@ ircd::authenticate(client &client,
                    resource::request &request)
 try
 {
-	string_view access_token
+	request.access_token =
 	{
 		request.query["access_token"]
 	};
 
-	if(empty(access_token))
+	if(empty(request.access_token))
 	{
 		const auto authorization
 		{
@@ -142,13 +142,13 @@ try
 		};
 
 		if(iequals(authorization.first, "bearer"_sv))
-			access_token = authorization.second;
+			request.access_token = authorization.second;
 	}
 
 	const bool result
 	{
-		access_token &&
-		m::user::sessions.get(std::nothrow, "ircd.access_token"_sv, access_token, [&]
+		request.access_token &&
+		m::user::sessions.get(std::nothrow, "ircd.access_token"_sv, request.access_token, [&]
 		(const m::event &event)
 		{
 			// The user sent this access token to the sessions room.
