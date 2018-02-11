@@ -224,7 +224,7 @@ const try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	failure(e, "mxid");
+	failure(e, reflect(sigil));
 }
 
 ircd::string_view
