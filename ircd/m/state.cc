@@ -120,7 +120,12 @@ void
 ircd::m::state::for_each(const string_view &root,
                          const iter_closure &closure)
 {
-	for_each(root, string_view{}, closure);
+	test(root, [&closure]
+	(const json::array &key, const string_view &val)
+	{
+		closure(key, val);
+		return false;
+	});
 }
 
 void
@@ -140,7 +145,11 @@ bool
 ircd::m::state::test(const string_view &root,
                      const iter_bool_closure &closure)
 {
-	return test(root, string_view{}, closure);
+	return dfs(root, [&closure]
+	(const json::array &key, const string_view &val, const uint &, const uint &)
+	{
+		return closure(key, val);
+	});
 }
 
 bool
