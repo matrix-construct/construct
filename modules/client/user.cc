@@ -20,16 +20,13 @@ resource user_resource
 };
 
 resource::response
-get_filter(client &client, const resource::request &request)
+get_filter(client &client,
+           const resource::request &request,
+           const m::user::id &user_id)
 {
-	m::user::id::buf user_id
+	m::event::id::buf filter_id
 	{
-		url::decode(request.parv[0], user_id)
-	};
-
-	const auto &filter_id
-	{
-		request.parv[2]
+		url::decode(request.parv[2], filter_id)
 	};
 
 	//TODO: ??
@@ -50,26 +47,15 @@ get_filter(client &client, const resource::request &request)
 	};
 }
 
-resource::method get_method
-{
-	user_resource, "GET", get_filter,
-	{
-		get_method.REQUIRES_AUTH
-	}
-};
-
 // (5.2) Uploads a new filter definition to the homeserver. Returns a filter ID that
 // may be used in future requests to restrict which events are returned to the client.
 resource::response
-post_filter(client &client, const resource::request::object<const m::filter> &request)
+post_filter(client &client,
+            const resource::request::object<const m::filter> &request,
+            const m::user::id &user_id)
 {
 	// (5.2) Required. The id of the user uploading the filter. The access
 	// token must be authorized to make requests for this user id.
-	m::user::id::buf user_id
-	{
-		url::decode(request.parv[0], user_id)
-	};
-
 	if(user_id != request.user_id)
 		throw m::ACCESS_DENIED
 		{
@@ -133,11 +119,124 @@ post_filter(client &client, const resource::request::object<const m::filter> &re
 	};
 }
 
+resource::response
+put_account_data(client &client,
+                 const resource::request &request,
+                 const m::user::id &user_id)
+{
+	std::cout << "put account data: " << user_id << " " << request.content << std::endl;
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+resource::response
+get_user(client &client, const resource::request &request)
+{
+	if(request.parv.size() < 2)
+		throw m::error
+		{
+			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+		};
+
+	m::user::id::buf user_id
+	{
+		url::decode(request.parv[0], user_id)
+	};
+
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
+
+	if(cmd == "filter")
+		return get_filter(client, request, user_id);
+
+	throw m::NOT_FOUND
+	{
+		"/user command not found"
+	};
+}
+
+resource::method get_method
+{
+	user_resource, "GET", get_user,
+	{
+		get_method.REQUIRES_AUTH
+	}
+};
+
+resource::response
+post_user(client &client, resource::request &request)
+{
+	if(request.parv.size() < 2)
+		throw m::error
+		{
+			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+		};
+
+	m::user::id::buf user_id
+	{
+		url::decode(request.parv[0], user_id)
+	};
+
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
+
+	if(cmd == "filter")
+		return post_filter(client, request, user_id);
+
+	throw m::NOT_FOUND
+	{
+		"/user command not found"
+	};
+}
+
 resource::method post_method
 {
-	user_resource, "POST", post_filter,
+	user_resource, "POST", post_user,
 	{
 		post_method.REQUIRES_AUTH
+	}
+};
+
+resource::response
+put_user(client &client, const resource::request &request)
+{
+	if(request.parv.size() < 2)
+		throw m::error
+		{
+			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+		};
+
+	m::user::id::buf user_id
+	{
+		url::decode(request.parv[0], user_id)
+	};
+
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
+
+	if(cmd == "account_data")
+		return put_account_data(client, request, user_id);
+
+	throw m::NOT_FOUND
+	{
+		"/user command not found"
+	};
+}
+
+resource::method put_method
+{
+	user_resource, "PUT", put_user,
+	{
+		put_method.REQUIRES_AUTH
 	}
 };
 
