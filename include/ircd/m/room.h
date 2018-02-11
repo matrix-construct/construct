@@ -87,6 +87,7 @@ struct ircd::m::room
 	operator const id &() const        { return room_id;                       }
 
 	// Convenience passthru to room::state (logarithmic query)
+	bool has(const string_view &type, const string_view &state_key) const;
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 

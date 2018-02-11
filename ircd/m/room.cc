@@ -363,6 +363,15 @@ const
 	return state.get(std::nothrow, type, state_key, closure);
 }
 
+bool
+ircd::m::room::has(const string_view &type,
+                   const string_view &state_key)
+const
+{
+	const state state{*this};
+	return state.has(type, state_key);
+}
+
 //
 // room::messages
 //
