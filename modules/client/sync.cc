@@ -117,15 +117,10 @@ sync(client &client, const resource::request &request)
 		return initial_sync(client, request, filter_id, full_state, set_presence);
 
 	// The ircd.tape.head
-	const m::vm::query<m::vm::where::equal> query
-	{
-		{ "room_id",    m::user::sessions.room_id        },
-		{ "type",       "ircd.tape.head"                 },
-		{ "state_key",  request.query.at("access_token") },
-	};
-
 	int64_t sequence{0};
-	if(!m::vm::test(query, [&sequence](const auto &event)
+	//TODO: user's room
+	if(!m::user::tokens.get(std::nothrow, "ircd.tape.head"_sv, request.access_token, [&sequence]
+	(const m::event &event)
 	{
 		const json::object &content
 		{
@@ -133,10 +128,8 @@ sync(client &client, const resource::request &request)
 		};
 
 		sequence = content.at<int64_t>("sequence");
-		return true;
 	}))
 		throw m::NOT_FOUND{"since parameter invalid"};
-
 
 	// 6.2.1 The maximum time to poll in milliseconds before returning this request.
 	const auto timeout
@@ -197,7 +190,7 @@ longpoll(client &client,
 		{
 			std::string{request.user_id},
 			std::string{request.query.at("since")},
-			std::string{request.query.at("access_token")},
+			std::string{request.access_token},       //TODO: nope.
 			weak_from(client)
 		})
 	};
@@ -376,18 +369,18 @@ update_sync_room(client &client,
 	if(defined(json::get<"state_key"_>(event)))
 		state.emplace_back(json::strung(event));
 
-	const auto state_serial
+	const json::strung state_serial
 	{
-		json::strung(state.data(), state.data() + state.size())
+		state.data(), state.data() + state.size()
 	};
 
 	std::vector<std::string> timeline;
 	if(!defined(json::get<"state_key"_>(event)))
 		timeline.emplace_back(json::strung(event));
 
-	const auto timeline_serial
+	const json::strung timeline_serial
 	{
-		json::strung(timeline.data(), timeline.data() + timeline.size())
+		timeline.data(), timeline.data() + timeline.size()
 	};
 
 	const json::members body
@@ -474,15 +467,14 @@ initial_sync_room(client &client,
 {
 	std::vector<std::string> state;
 	{
-		const m::vm::query<m::vm::where::equal> state_query
+		const m::room::state state_
 		{
-			{ "room_id",    room.room_id     },
+			room
 		};
 
-		m::vm::for_each(state_query, [&state](const auto &event)
+		state_.for_each([&state](const m::event &event)
 		{
-			if(!null(json::get<"state_key"_>(event)))
-				state.emplace_back(json::strung(event));
+			state.emplace_back(json::strung(event));
 		});
 	}
 
@@ -493,20 +485,15 @@ initial_sync_room(client &client,
 
 	std::vector<std::string> timeline;
 	{
-		const m::vm::query<m::vm::where::equal> query
+		const m::room::messages timeline_
 		{
-			{ "room_id",   room.room_id  },
+			room
 		};
 
-		m::vm::test(query, [&timeline](const auto &event)
+		timeline_.test([&timeline](const m::event &event)
 		{
-			if(timeline.size() > 10)
-				return true;
-
-			if(null(json::get<"state_key"_>(event)))
-				timeline.emplace_back(json::strung(event));
-
-			return false;
+			timeline.emplace_back(json::strung(event));
+			return timeline.size() >= 10;
 		});
 	}
 
@@ -530,25 +517,26 @@ initial_sync_rooms(client &client,
                    const string_view &filter_id,
                    const bool &full_state)
 {
-	const m::vm::query<m::vm::where::equal> query
-	{
-		{ "type",        "m.room.member"   },
-		{ "state_key",    request.user_id  },
-    };
+	m::user user{request.user_id};
+	const auto user_room_id{user.room_id()};
+	m::room::state user_state{user_room_id};
 
 	std::array<std::vector<std::string>, 3> r;
 	std::array<std::vector<json::member>, 3> m;
-	m::vm::for_each(query, [&r, &m, &client, &request, &full_state](const auto &event)
+
+	// Get the rooms the user is a joined member in by iterating the state
+	// events in the user's room.
+	user_state.for_each("join", [&r, &m, &client, &request, &full_state]
+	(const m::event &event)
 	{
-		const auto &content{json::get<"content"_>(event)};
-		const auto &membership{unquote(content["membership"])};
-		const m::room::id &room_id{json::get<"room_id"_>(event)};
+		const m::room::id &room_id{unquote(at<"state_key"_>(event))};
 		const auto i
 		{
-			membership == "join"? 0:
-			membership == "leave"? 1:
-			membership == "invite"? 2:
-			-1
+			//membership == "join"? 0:
+			//membership == "leave"? 1:
+			//membership == "invite"? 2:
+			//-1
+			0
 		};
 
 		r.at(i).emplace_back(initial_sync_room(client, request, room_id, full_state));
@@ -588,12 +576,13 @@ initial_sync(client &client,
 		m::vm::current_sequence
 	};
 
-	const auto state_key
+	const auto &state_key
 	{
-		request.query.at("access_token")
+		request.access_token
 	};
 
-	m::send(m::user::sessions, request.user_id, "ircd.tape.head", state_key,
+	//TODO: user's room
+	m::send(m::user::tokens, request.user_id, "ircd.tape.head", state_key,
 	{
 		{ "sequence",  next_batch }
 	});
