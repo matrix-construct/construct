@@ -73,9 +73,9 @@ namespace ircd::m
 ///
 struct ircd::m::room
 {
+	struct messages;
 	struct state;
 	struct members;
-	struct messages;
 	struct origins;
 
 	using id = m::id::room;
@@ -90,9 +90,6 @@ struct ircd::m::room
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 
-	// X
-	void for_each(const event::closure &) const;
-
 	// misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 
@@ -103,9 +100,35 @@ struct ircd::m::room
 	{}
 };
 
+/// Interface to room messages
+///
+/// This interface focuses on room messages (state and ephemeral) from all
+/// integrated timelines. Most queries to this interface respond in linear
+/// time.
+///
+struct ircd::m::room::messages
+{
+	m::room room;
+
+	void for_each(const event::id::closure &) const;
+	void for_each(const event::closure &) const;
+
+	bool test(const event::id::closure_bool &view) const;
+	bool test(const event::closure_bool &view) const;
+
+	messages(const m::room &room)
+	:room{room}
+	{}
+};
+
 /// Interface to room state.
 ///
-/// This interface focuses specifically on the details of room state.
+/// This interface focuses specifically on the details of room state. Most of
+/// the queries to this interface respond in logarithmic time. Note that all
+/// iterations are over the state tree. If an event with a state_key is present
+/// in room::messages but it is not present in room::state (state tree) it was
+/// accepted into the room but we will not apply it to our machine, though
+/// other parties may (this is a state-conflict).
 ///
 struct ircd::m::room::state
 {

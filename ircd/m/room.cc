@@ -343,35 +343,6 @@ const
 }
 
 void
-ircd::m::room::for_each(const event::closure &closure)
-const
-{
-	auto it
-	{
-		dbs::room_events.begin(room_id)
-	};
-
-	event::fetch event;
-	if(it) do
-	{
-		const auto &key{it->first};
-		const auto part
-		{
-			dbs::room_events_key(key)
-		};
-
-		const auto event_id
-		{
-			std::get<1>(part)
-		};
-
-		if(seek(event, event_id, std::nothrow))
-			closure(event);
-	}
-	while(++it);
-}
-
-void
 ircd::m::room::get(const string_view &type,
                    const string_view &state_key,
                    const event::closure &closure)
@@ -390,6 +361,81 @@ const
 {
 	const state state{*this};
 	return state.get(std::nothrow, type, state_key, closure);
+}
+
+//
+// room::messages
+//
+
+void
+ircd::m::room::messages::for_each(const event::closure &closure)
+const
+{
+	event::fetch event;
+	for_each(event::id::closure{[&closure, &event]
+	(const event::id &event_id)
+	{
+		if(seek(event, event_id, std::nothrow))
+			closure(event);
+	}});
+}
+
+void
+ircd::m::room::messages::for_each(const event::id::closure &closure)
+const
+{
+	test(event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		closure(event_id);
+		return false;
+	}});
+}
+
+bool
+ircd::m::room::messages::test(const event::closure_bool &closure)
+const
+{
+	event::fetch event;
+	return test(event::id::closure_bool{[&closure, &event]
+	(const m::event::id &event_id)
+	{
+		if(seek(event, event_id, std::nothrow))
+			if(closure(event))
+				return true;
+
+		return false;
+	}});
+}
+
+bool
+ircd::m::room::messages::test(const event::id::closure_bool &closure)
+const
+{
+	auto it
+	{
+		dbs::room_events.begin(room.room_id)
+	};
+
+	if(it) do
+	{
+		const auto &key{it->first};
+		const auto part
+		{
+			dbs::room_events_key(key)
+		};
+
+		const auto event_id
+		{
+			std::get<1>(part)
+		};
+
+		if(closure(event_id))
+			return true;
+	}
+	while(++it);
+
+	return false;
 }
 
 //
