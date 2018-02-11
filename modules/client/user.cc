@@ -32,35 +32,22 @@ get_filter(client &client, const resource::request &request)
 		request.parv[2]
 	};
 
-	const m::vm::query<m::vm::where::equal> query
+	//TODO: ??
+	const unique_buffer<mutable_buffer> buffer
 	{
-		{ "room_id",      m::filter::filters.room_id  },
-		{ "type",        "ircd.filter"                },
-		{ "state_key",    filter_id                   },
-		{ "sender",       user_id                     },
+		m::filter::size(filter_id)
 	};
 
-	const auto result{[&client]
-	(const m::event &event)
+	//TODO: get direct
+	const m::filter filter
 	{
-		const json::object &filter
-		{
-			json::at<"content"_>(event)
-		};
+		filter_id, buffer
+	};
 
-		resource::response
-		{
-			client, filter
-		};
-
-		return true;
-	}};
-
-	if(!m::vm::test(query, result))
-		throw m::NOT_FOUND("No matching filter with that ID");
-
-	// Response already made
-	return {};
+	return resource::response
+	{
+		client, json::object{buffer}
+	};
 }
 
 resource::method get_method

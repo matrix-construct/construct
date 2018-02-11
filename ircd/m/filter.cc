@@ -26,6 +26,7 @@ ircd::m::filter::filter(const string_view &filter_id,
                         const mutable_buffer &buf)
 {
 	size_t len{0};
+	//TODO: really has to become event in user's room
 	filters.get("ircd.filter"_sv, filter_id, [&buf, &len]
 	(const m::event &event)
 	{
