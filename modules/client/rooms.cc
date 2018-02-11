@@ -34,40 +34,54 @@ get_messages(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	const m::vm::query<m::vm::where::equal> query
+	const string_view &from
 	{
-		{ "room_id",    room_id  },
-		{ "state_key",  nullptr  },
+		request.query.at("from")
 	};
 
-	const size_t count
+	const string_view &to
 	{
-		std::min(m::vm::count(query), 128UL)
+		request.query["to"]
 	};
 
-	if(!count && !exists(room_id))
-		throw m::NOT_FOUND
-		{
-			"No messages."
-		};
-
-	size_t j(0);
-	std::vector<json::value> ret(count);
-	m::vm::for_each(query, [&count, &j, &ret]
-	(const auto &event)
+	const char &dir
 	{
-		if(j < count)
-		{
-			if(!defined(json::get<"state_key"_>(event)))
-				ret[j++] = event;
-		}
+		request.query.at("dir").at(0)
+	};
+
+	const uint16_t limit
+	{
+		request.query["limit"]? lex_cast<uint16_t>(request.query.at("limit")) : ushort(10)
+	};
+
+	const string_view &filter
+	{
+		request.query["filter"]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::messages messages
+	{
+		room
+	};
+
+	std::vector<json::value> ret;
+	ret.reserve(limit);
+	messages.test([&limit, &ret](const m::event &event)
+	{
+		ret.emplace_back(event);
+		return ret.size() >= limit;
 	});
 
 	return resource::response
 	{
 		client, json::members
 		{
-			{ "chunk", json::value { ret.data(), j } }
+			{ "chunk", json::value { ret.data(), ret.size() } }
 		}
 	};
 }
