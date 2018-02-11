@@ -417,23 +417,12 @@ bool
 ircd::m::keys::get_local(const string_view &server_name,
                          const keys_closure &closure)
 {
-	const m::vm::query<m::vm::where::equal> query
+	static const string_view type{"ircd.key"};
+	return m::keys::room.get(std::nothrow, type, server_name, [&closure]
+	(const m::event &event)
 	{
-		{ "room_id",      keys::room.room_id   },
-		{ "type",        "ircd.key"            },
-		{ "state_key",    server_name          },
-	};
-
-	const auto have
-	{
-		[&closure](const auto &event)
-		{
-			closure(json::get<"content"_>(event));
-			return true;
-		}
-	};
-
-	return m::vm::test(query, have);
+		closure(json::get<"content"_>(event));
+	});
 }
 
 void
@@ -459,7 +448,8 @@ ircd::m::keys::set(const keys &keys)
 		keys
 	};
 
-	send(keys::room, sender, "ircd.key", state_key, json::object{derp});
+	static const string_view type{"ircd.key"};
+	send(keys::room, sender, type, state_key, json::object{derp});
 }
 
 /// Verify this key data (with itself).
