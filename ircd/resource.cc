@@ -134,34 +134,14 @@ try
 		request.query.at("access_token")
 	};
 
-	// Sets up the query to find the access_token in the sessions room
-	const m::vm::query<m::vm::where::equal> query
-	{
-		{ "type",        "ircd.access_token"         },
-		{ "state_key",   access_token                },
-		{ "room_id",     m::user::sessions.room_id   },
-	};
-
 	const bool result
 	{
-		m::vm::test(query, [&request, &access_token](const m::event &event)
+		access_token &&
+		m::user::sessions.get(std::nothrow, "ircd.access_token"_sv, access_token, [&]
+		(const m::event &event)
 		{
-			// Checks if the access token has expired. Tokens are expired when
-			// an m.room.redaction event is issued for the ircd.access_token
-			// event. Instead of making another query here for the redaction
-			// we expect the original event to be updated with the following
-			// key which must be part of the redaction process.
-			const json::object &unsigned_
-			{
-				json::get<"unsigned"_>(event)
-			};
-
-			if(unsigned_.has("redacted_because"))
-				return false;
-
-			assert(at<"state_key"_>(event) == access_token);
+			// The user sent this access token to the sessions room.
 			request.user_id = m::user::id{at<"sender"_>(event)};
-			return true;
 		})
 	};
 
