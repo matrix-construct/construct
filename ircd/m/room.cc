@@ -411,6 +411,20 @@ catch(const NOT_FOUND &)
 // room::state
 //
 
+ircd::m::room::state::state(const m::room &room)
+:room_id{room.room_id}
+,event_id{room.event_id? room.event_id : head(room_id)}
+{
+	refresh();
+}
+
+const ircd::m::state::id &
+ircd::m::room::state::refresh()
+{
+	this->root_id = dbs::state_root(root_id_buf, room_id, event_id);
+	return this->root_id;
+}
+
 void
 ircd::m::room::state::get(const string_view &type,
                           const string_view &state_key,
@@ -436,8 +450,7 @@ ircd::m::room::state::get(const string_view &type,
                           const event::id::closure &closure)
 const
 {
-	m::state::id_buffer buf;
-	m::state::get(root(buf), type, state_key, [&closure]
+	m::state::get(root_id, type, state_key, [&closure]
 	(const string_view &event_id)
 	{
 		closure(unquote(event_id));
@@ -471,8 +484,7 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::id::closure &closure)
 const
 {
-	m::state::id_buffer buf;
-	return m::state::get(std::nothrow, root(buf), type, state_key, [&closure]
+	return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
 	(const string_view &event_id)
 	{
 		closure(unquote(event_id));
@@ -494,8 +506,7 @@ ircd::m::room::state::has(const string_view &type,
                           const string_view &state_key)
 const
 {
-	m::state::id_buffer buf;
-	return m::state::get(std::nothrow, root(buf), type, state_key, []
+	return m::state::get(std::nothrow, root_id, type, state_key, []
 	(const string_view &event_id)
 	{
 	});
@@ -521,8 +532,7 @@ bool
 ircd::m::room::state::test(const event::id::closure_bool &closure)
 const
 {
-	m::state::id_buffer buf;
-	return m::state::test(root(buf), [&closure]
+	return m::state::test(root_id, [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
 		return closure(unquote(event_id));
@@ -551,8 +561,7 @@ ircd::m::room::state::test(const string_view &type,
                            const event::id::closure_bool &closure)
 const
 {
-	m::state::id_buffer buf;
-	return m::state::test(root(buf), type, [&closure]
+	return m::state::test(root_id, type, [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
 		return closure(unquote(event_id));
@@ -576,8 +585,7 @@ void
 ircd::m::room::state::for_each(const event::id::closure &closure)
 const
 {
-	m::state::id_buffer buf;
-	m::state::for_each(root(buf), [&closure]
+	m::state::for_each(root_id, [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
 		closure(unquote(event_id));
@@ -603,29 +611,11 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure &closure)
 const
 {
-	m::state::id_buffer buf;
-	m::state::for_each(root(buf), type, [&closure]
+	m::state::for_each(root_id, type, [&closure]
 	(const json::array &key, const string_view &event_id)
 	{
 		closure(unquote(event_id));
 	});
-}
-
-ircd::string_view
-ircd::m::room::state::root(m::state::id_buffer &buf)
-const
-{
-	const event::id::buf event_id_buf
-	{
-		!room.event_id? head(room.room_id) : string_view{}
-	};
-
-	const event::id event_id
-	{
-		room.event_id? room.event_id : event_id_buf
-	};
-
-	return dbs::state_root(buf, room.room_id, event_id);
 }
 
 //

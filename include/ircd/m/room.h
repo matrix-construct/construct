@@ -108,10 +108,10 @@ struct ircd::m::room::state
 {
 	struct tuple;
 
-	m::room room;
-
-	// Get the state root node ID
-	string_view root(m::state::id_buffer &) const;
+	room::id room_id;
+	event::id::buf event_id;
+	m::state::id_buffer root_id_buf;
+	m::state::id root_id;
 
 	// Iterate the state; for_each protocol
 	void for_each(const string_view &type, const event::id::closure &) const;
@@ -135,9 +135,10 @@ struct ircd::m::room::state
 	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 
-	state(m::room room)
-	:room{room}
-	{}
+	// Refresh the cached root_id/root_id_buf members
+	const m::state::id &refresh();
+
+	state(const m::room &);
 };
 
 /// Interface to the members of a room.
