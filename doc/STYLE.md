@@ -228,43 +228,9 @@ the ability to assign, move, and reuse the object because references cannot be
 reseated; then the "~~big three~~" "big five" custom constructors have to be
 created and maintained, and it becomes an unnecessary mess.
 
-#### Comments
-
-##### Documentation will be pedantic, windy and even patronizing
-
-This is considered a huge anti-pattern in most other contexts where comments
-and documentation are minimal, read by experts, end up being misleading, tend
-to diverge from their associated code after maintenance, etc. This project is
-an exception. Consider two things:
-
-1. This is a free and open source public internet project. The goal here
-is to make it easy for many-eyeballs to understand everything. Then,
-many-eyeballs can help fix comments which become misleading.
-
-2. Most free and open source public internet projects are written in C
-because C++ is complicated with a steep learning curve. It is believed
-C++ reduces the amount of many-eyeballs. A huge number of contributions
-to these projects come from people with limited experience working on
-their "first project."
-
-Therefor, writers of documentation will consider a reader which has
-encountered IRCd as their first project*, specifically in C++. Patronizing
-explanations of common/standard C++ patterns and intricacies can be made.
-
-* `/* */` Multi-line comments are not normally used. We reserve this for
-debugging and temporary multi-line grey-outs. The goal for rarely using this
-is to not impede anybody attempting to refactor or grey-out a large swath of
-code.
-
-* `//` Primary developer comment; used even on multiple lines.
-
-* `///` Documentation comment; the same style as the single line comment; the
-documentation is applied to code that follows the comment block.
-
-* `///<` Documentation comment; this documents code preceding the comment.
-
 
 #### Miscellaneous
+
 
 * Prefer "locality" rather than "centrality." In other words, we keep things
 in as local of a scope or file as possible to where it is used.
@@ -311,6 +277,53 @@ elide the boolean check and thus preserve the inner statement and the effects
 of its execution: this is not standard; we do not rely on this. Do not use
 `assert()` to check return values of statements that need to be executed in
 optimized builds.
+
+
+#### Comments
+
+* `/* */` Multi-line comments are not normally used. We reserve this for
+debugging and temporary multi-line grey-outs. The goal for rarely using this
+is to not impede anybody attempting to refactor or grey-out a large swath of
+code.
+
+* `//` Primary developer comment; used even on multiple lines.
+
+* `///` Documentation comment; the same style as the single line comment; the
+documentation is applied to code that follows the comment block.
+
+* `///<` Documentation comment; this documents code preceding the comment.
+
+##### Documentation will be pedantic, windy and even patronizing
+
+This is considered a huge anti-pattern in most other contexts where comments
+and documentation are minimal, read by experts, end up being misleading, tend
+to diverge from their associated code after maintenance, etc. This project is
+an exception. Consider two things:
+
+1. This is a free and open source public internet project. The goal here
+is to make it easy for many-eyeballs to understand everything. Then,
+many-eyeballs can help fix comments which become misleading.
+
+2. Most free and open source public internet projects are written in C
+because C++ is complicated with a steep learning curve. It is believed
+C++ reduces the amount of many-eyeballs. A huge number of contributions
+to these projects come from people with limited experience working on
+their "first project."
+
+Therefor, writers of documentation will consider a reader which has
+encountered IRCd as their first project, specifically in C++. Patronizing
+explanations of common/standard C++ patterns and intricacies can be made.
+
+
+### Art & Tableaux
+
+
+* Tab style is **tabs before spaces**. Tabs set an indentation level and
+then spaces format things *at that level*. This is one of the hardest styles
+to get right and then enforce, but it looks the best for everyone. The point
+here is that the tab-width becomes a personal setting -- nobody has to argue
+whether it's worth 2 or 4 or 8 spaces... Remember, tabs are never used to
+align things that would fall out of alignment if the tab-width changed.
 
 
 ### Conventions
