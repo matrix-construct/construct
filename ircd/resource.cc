@@ -129,10 +129,21 @@ ircd::authenticate(client &client,
                    resource::request &request)
 try
 {
-	const string_view &access_token
+	string_view access_token
 	{
-		request.query.at("access_token")
+		request.query["access_token"]
 	};
+
+	if(empty(access_token))
+	{
+		const auto authorization
+		{
+			split(request.head.authorization, ' ')
+		};
+
+		if(iequals(authorization.first, "bearer"_sv))
+			access_token = authorization.second;
+	}
 
 	const bool result
 	{
