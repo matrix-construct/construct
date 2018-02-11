@@ -247,7 +247,7 @@ namespace ircd::m::state
 /// State update from an event. Leaves the root node ID in the root buffer;
 /// returns view.
 ///
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::insert(db::txn &txn,
                        const mutable_buffer &rootout,
                        const string_view &rootin,
@@ -267,7 +267,7 @@ ircd::m::state::insert(db::txn &txn,
 	return insert(txn, rootout, rootin, type, state_key, event_id);
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::_create(db::txn &txn,
                         const mutable_buffer &root,
                         const string_view &type,
@@ -297,13 +297,13 @@ ircd::m::state::_create(db::txn &txn,
 
 /// State update for room_id inserting (type,state_key) = event_id into the
 /// tree. Leaves the root node ID in the root buffer; returns view.
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::insert(db::txn &txn,
                        const mutable_buffer &rootout,
                        const string_view &rootin,
                        const string_view &type,
                        const string_view &state_key,
-                       const id::event &event_id)
+                       const m::id::event &event_id)
 {
 	// The insertion process reads from the DB and will yield this ircd::ctx
 	// so the key buffer must stay on this stack.
@@ -311,12 +311,12 @@ ircd::m::state::insert(db::txn &txn,
 	return insert(txn, rootout, rootin, make_key(key, type, state_key), event_id);
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::insert(db::txn &txn,
                        const mutable_buffer &rootout,
                        const string_view &rootin,
                        const json::array &key,
-                       const id::event &event_id)
+                       const m::id::event &event_id)
 {
 	node::rep push;
 	int8_t height{0};
@@ -332,7 +332,7 @@ ircd::m::state::insert(db::txn &txn,
 	return root;
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::_insert(int8_t &height,
                         db::txn &txn,
                         const json::array &key,
@@ -496,7 +496,7 @@ ircd::m::state::_insert_leaf_full(const int8_t &height,
 	return ret;
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::_insert_branch_nonfull(db::txn &txn,
                                        const mutable_buffer &idbuf,
                                        node::rep &rep,
@@ -518,7 +518,7 @@ ircd::m::state::_insert_branch_nonfull(db::txn &txn,
 	return rep.write(txn, idbuf);
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::_insert_leaf_nonfull(db::txn &txn,
                                      const json::array &key,
                                      const string_view &val,
@@ -540,7 +540,7 @@ ircd::m::state::_insert_leaf_nonfull(db::txn &txn,
 	return rep.write(txn, idbuf);
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::_insert_overwrite(db::txn &txn,
                                   const json::array &key,
                                   const string_view &val,
@@ -582,7 +582,7 @@ ircd::m::state::get_node(const string_view &node_id,
 
 /// Writes a node to the db::txn and returns the id of this node (a hash) into
 /// the buffer.
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::set_node(db::txn &iov,
                          const mutable_buffer &hashbuf,
                          const json::object &node)
@@ -708,7 +708,7 @@ ircd::m::state::node::rep::rep(const node &node)
 {
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::node::rep::write(db::txn &txn,
                                  const mutable_buffer &idbuf)
 {
@@ -873,7 +873,7 @@ const
 }
 
 size_t
-ircd::m::state::node::childs(string_view *const &out,
+ircd::m::state::node::childs(state::id *const &out,
                              const size_t &max)
 const
 {
@@ -911,7 +911,7 @@ const
 	return i;
 }
 
-ircd::string_view
+ircd::m::state::id
 ircd::m::state::node::child(const size_t &pos)
 const
 {

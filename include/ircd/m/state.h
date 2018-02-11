@@ -36,8 +36,9 @@ namespace ircd::m::state
 	constexpr size_t NODE_MAX_DEG { NODE_MAX_KEY + 1 }; // tmp for now
 	constexpr int8_t MAX_HEIGHT { 16 }; // good for few mil at any degree :)
 
+	using id = string_view;
 	using id_buffer = fixed_buffer<mutable_buffer, ID_MAX_SZ>;
-	using id_closure = std::function<void (const string_view &)>;
+	using id_closure = std::function<void (const id &)>;
 	using val_closure = std::function<void (const string_view &)>;
 	using node_closure = std::function<void (const json::object &)>;
 	using search_closure = std::function<bool (const json::array &, const string_view &, const uint &, const uint &)>;
@@ -49,30 +50,30 @@ namespace ircd::m::state
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
 	json::array make_key(const mutable_buffer &out, const string_view &type);
 
-	string_view set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
+	id set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
 
-	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const json::array &key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const string_view &type, const string_view &state_key, const id::event &);
-	string_view insert(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const event &);
+	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const json::array &key, const m::id::event &);
+	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const string_view &type, const string_view &state_key, const m::id::event &);
+	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const event &);
 
-	bool dfs(const string_view &root, const json::array &key, const search_closure &);
-	bool dfs(const string_view &root, const search_closure &);
+	bool dfs(const id &root, const json::array &key, const search_closure &);
+	bool dfs(const id &root, const search_closure &);
 
-	bool test(const string_view &root, const iter_bool_closure &);
-	bool test(const string_view &root, const string_view &type, const iter_bool_closure &);
+	bool test(const id &root, const iter_bool_closure &);
+	bool test(const id &root, const string_view &type, const iter_bool_closure &);
 
-	void for_each(const string_view &root, const iter_closure &);
-	void for_each(const string_view &root, const string_view &type, const iter_closure &);
+	void for_each(const id &root, const iter_closure &);
+	void for_each(const id &root, const string_view &type, const iter_closure &);
 
-	size_t count(const string_view &root, const iter_bool_closure &);
-	size_t count(const string_view &root);
+	size_t count(const id &root, const iter_bool_closure &);
+	size_t count(const id &root);
 
-	bool get(std::nothrow_t, const string_view &root, const json::array &key, const val_closure &);
-	void get(const string_view &root, const json::array &key, const val_closure &);
+	bool get(std::nothrow_t, const id &root, const json::array &key, const val_closure &);
+	void get(const id &root, const json::array &key, const val_closure &);
 
-	bool get(std::nothrow_t, const string_view &root, const string_view &type, const string_view &state_key, const val_closure &);
-	void get(const string_view &root, const string_view &type, const string_view &state_key, const val_closure &);
+	bool get(std::nothrow_t, const id &root, const string_view &type, const string_view &state_key, const val_closure &);
+	void get(const id &root, const string_view &type, const string_view &state_key, const val_closure &);
 }
 
 /// JSON property name strings specifically for use in m::state
@@ -139,11 +140,11 @@ struct ircd::m::state::node
 
 	json::array key(const size_t &) const;
 	string_view val(const size_t &) const;
-	string_view child(const size_t &) const;
+	state::id child(const size_t &) const;
 
 	size_t keys(json::array *const &out, const size_t &max) const;
 	size_t vals(string_view *const &out, const size_t &max) const;
-	size_t childs(string_view *const &out, const size_t &max) const;
+	size_t childs(state::id *const &out, const size_t &max) const;
 
 	size_t find(const json::array &key) const;
 	bool has_key(const json::array &key) const;
@@ -165,7 +166,7 @@ struct ircd::m::state::node::rep
 {
 	std::array<json::array, NODE_MAX_KEY + 1> keys;
 	std::array<string_view, NODE_MAX_VAL + 1> vals;
-	std::array<string_view, NODE_MAX_DEG + 1> chld;
+	std::array<state::id, NODE_MAX_DEG + 1> chld;
 	size_t kn {0};
 	size_t vn {0};
 	size_t cn {0};
@@ -179,7 +180,7 @@ struct ircd::m::state::node::rep
 	void shr(const size_t &pos);
 
 	json::object write(const mutable_buffer &out);
-	string_view write(db::txn &, const mutable_buffer &id);
+	state::id write(db::txn &, const mutable_buffer &id);
 
 	rep(const node &node);
 	rep() = default;
