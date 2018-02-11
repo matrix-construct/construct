@@ -82,10 +82,10 @@ post_login_password(client &client,
 		rand::string(token_dict, token_len, token_buf, sizeof(token_buf))
 	};
 
-	// Log the user in by issuing an event in the sessions room containing
+	// Log the user in by issuing an event in the tokens room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
-	m::send(m::user::sessions, user_id, "ircd.access_token", access_token,
+	m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 	{
 		{ "ip",      string(remote(client)) },
 		{ "device",  "unknown"              },

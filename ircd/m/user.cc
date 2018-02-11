@@ -11,51 +11,68 @@
 #include <ircd/m/m.h>
 
 const ircd::m::room::id::buf
-accounts_room_id
+users_room_id
 {
-	"accounts", ircd::my_host()
+	"users", ircd::my_host()
 };
 
-ircd::m::room
-ircd::m::user::accounts
-{
-	accounts_room_id
-};
-
-const ircd::m::room::id::buf
-sessions_room_id
-{
-	"sessions", ircd::my_host()
-};
-
-ircd::m::room
-ircd::m::user::sessions
-{
-	sessions_room_id
-};
-
-/// Register the user by joining them to the accounts room.
+/// The users room is the database of all users. It primarily serves as an
+/// indexing mechanism and for top-level user related keys. Accounts
+/// registered on this server will be among state events in this room.
+/// Users do not have access to this room, it is used internally.
 ///
-/// The content of the join event may store keys including the registration
-/// options. Once this call completes the join was successful and the user is
-/// registered, otherwise throws.
+ircd::m::room
+ircd::m::user::users
+{
+	users_room_id
+};
+
+/// The tokens room serves as a key-value lookup for various tokens to
+/// users, etc. It primarily serves to store access tokens for users. This
+/// is a separate room from the users room because in the future it may
+/// have an optimized configuration as well as being more easily cleared.
+///
+const ircd::m::room::id::buf
+tokens_room_id
+{
+	"tokens", ircd::my_host()
+};
+
+ircd::m::room
+ircd::m::user::tokens
+{
+	tokens_room_id
+};
+
+bool
+ircd::m::exists(const user::id &user_id)
+{
+	return user::users.has("ircd.account", user_id);
+}
+
+/// Register the user by creating a room !@user:myhost and then setting a
+/// an `ircd.account` state event in the `users` room.
+///
+/// Each of the registration options becomes a key'ed state event in the
+/// user's room.
+///
+/// Once this call completes the registration was successful; otherwise
+/// throws.
 void
 ircd::m::user::activate(const json::members &contents)
 try
 {
-	json::iov content;
-	json::iov::push push[]
+	const auto room_id{this->room_id()};
+	m::room room
 	{
-		{ content, { "membership", "join" }},
+		create(room_id, me.user_id, "user")
 	};
 
-	size_t i(0);
-	json::iov::push _content[contents.size()];
-	for(const auto &member : contents)
-		new (_content + i++) json::iov::push(content, member);
-
-	send(accounts, me.user_id, "ircd.user", user_id, content);
-	join(control, user_id);
+	send(room, user_id, "ircd.account.options", "registration", contents);
+	send(users, me.user_id, "ircd.account", user_id,
+	{
+		{ "active", true }
+	});
 }
 catch(const m::ALREADY_MEMBER &e)
 {
@@ -68,18 +85,7 @@ catch(const m::ALREADY_MEMBER &e)
 void
 ircd::m::user::deactivate(const json::members &contents)
 {
-	json::iov content;
-	json::iov::push push[]
-	{
-		{ content, { "membership", "leave" }},
-	};
-
-	size_t i(0);
-	json::iov::push _content[contents.size()];
-	for(const auto &member : contents)
-		new (_content + i++) json::iov::push(content, member);
-
-	send(accounts, me.user_id, "ircd.user", user_id, content);
+	//TODO: XXX
 }
 
 void
@@ -87,10 +93,19 @@ ircd::m::user::password(const string_view &password)
 try
 {
 	//TODO: ADD SALT
-	char b64[64], hash[32];
-	sha256{hash, password};
-	const auto digest{b64encode_unpadded(b64, hash)};
-	send(accounts, me.user_id, "ircd.password", user_id,
+	const sha256::buf hash
+	{
+		sha256{password}
+	};
+
+	char b64[64];
+	const auto digest
+	{
+		b64encode_unpadded(b64, hash)
+	};
+
+	const auto room_id{this->room_id()};
+	send(room_id, user_id, "ircd.password", user_id,
 	{
 		{ "sha256", digest }
 	});
@@ -108,22 +123,20 @@ ircd::m::user::is_password(const string_view &supplied_password)
 const
 {
 	//TODO: ADD SALT
-	char b64[64], hash[32];
-	sha256{hash, supplied_password};
+	const sha256::buf hash
+	{
+		sha256{supplied_password}
+	};
+
+	char b64[64];
 	const auto supplied_hash
 	{
 		b64encode_unpadded(b64, hash)
 	};
 
-	static const string_view type{"ircd.password"};
-	const string_view &state_key{user_id};
-	const room room
-	{
-		accounts.room_id
-	};
-
 	bool ret{false};
-	room::state{room}.get(type, state_key, [&supplied_hash, &ret]
+	const auto room_id{this->room_id()};
+	m::room{room_id}.get("ircd.password", user_id, [&supplied_hash, &ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -147,7 +160,7 @@ ircd::m::user::is_active()
 const
 {
 	bool ret{false};
-	room::state{accounts}.get("ircd.user", user_id, [&ret]
+	users.get(std::nothrow, "ircd.account", user_id, [&ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -155,8 +168,36 @@ const
 			at<"content"_>(event)
 		};
 
-		ret = unquote(content.at("membership")) == "join";
+		ret = content.at("active") == "true";
 	});
 
 	return ret;
+}
+
+/// Generates a user-room ID into buffer; see room_id() overload.
+ircd::m::id::room::buf
+ircd::m::user::room_id()
+const
+{
+	assert(!empty(user_id));
+	return
+	{
+		user_id.local(), my_host()
+	};
+}
+
+/// Generates a room MXID of the following form: `!@user:host`
+///
+/// This is the "user's room" essentially serving as a database mechanism for
+/// this specific user. This is for users on this server's host only.
+///
+ircd::m::id::room
+ircd::m::user::room_id(const mutable_buffer &buf)
+const
+{
+	assert(!empty(user_id));
+	return
+	{
+		buf, user_id.local(), my_host()
+	};
 }

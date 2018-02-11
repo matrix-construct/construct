@@ -199,29 +199,36 @@ ircd::m::init::bootstrap()
 		"database is empty. I will be bootstrapping it with initial events now..."
 	);
 
+	create(user::users, me.user_id);
+	me.activate();
+
 	create(my_room, me.user_id);
 	send(my_room, me.user_id, "m.room.name", "",
 	{
 		{ "name", "IRCd's Room" }
 	});
 
+	send(my_room, me.user_id, "m.room.topic", "",
+	{
+		{ "topic", "The daemon's den." }
+	});
+
 	create(control, me.user_id);
+	join(control, me.user_id);
 	send(control, me.user_id, "m.room.name", "",
 	{
 		{ "name", "Control Room" }
 	});
 
-	create(user::accounts, me.user_id);
-	join(user::accounts, me.user_id);
-	send(user::accounts, me.user_id, "m.room.name", "",
+	send(user::users, me.user_id, "m.room.name", "",
 	{
-		{ "name", "User Accounts" }
+		{ "name", "Users" }
 	});
 
-	create(user::sessions, me.user_id);
-	send(user::sessions, me.user_id, "m.room.name", "",
+	create(user::tokens, me.user_id);
+	send(user::tokens, me.user_id, "m.room.name", "",
 	{
-		{ "name", "User Sessions" }
+		{ "name", "User Tokens" }
 	});
 
 	create(filter::filters, me.user_id);
@@ -253,15 +260,6 @@ ircd::m::join_ircd_room()
 try
 {
 	join(my_room, me.user_id);
-	my_room.get([](const auto &event)
-	{
-		std::cout << "mr G: " << event << std::endl;
-	});
-
-	my_room.prev([](const auto &event)
-	{
-		std::cout << "mr P: " << event << std::endl;
-	});
 }
 catch(const m::ALREADY_MEMBER &e)
 {

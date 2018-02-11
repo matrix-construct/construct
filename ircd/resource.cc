@@ -148,10 +148,10 @@ try
 	const bool result
 	{
 		request.access_token &&
-		m::user::sessions.get(std::nothrow, "ircd.access_token"_sv, request.access_token, [&]
+		m::user::tokens.get(std::nothrow, "ircd.access_token"_sv, request.access_token, [&request]
 		(const m::event &event)
 		{
-			// The user sent this access token to the sessions room.
+			// The user sent this access token to the tokens room
 			request.user_id = m::user::id{at<"sender"_>(event)};
 		})
 	};

@@ -97,17 +97,18 @@ try
 		user_id
 	};
 
-	// Activate the account. Underneath this will join the user to the room
-	// !accounts:your.domain. If the user_id is already a member then this
-	// throws 409 Conflict; otherwise the user is registered after this call.
+	// Activate the account. Underneath this will create a special room
+	// for this user in the form of !@user:host and set a key in !users:host
+	// If the user_id is taken this throws 409 Conflict because those assets
+	// will already exist; otherwise the user is registered after this call.
 	user.activate(
 	{
 		{ "bind_email", bind_email },
 	});
 
 	// Set the password for the account. This issues an ircd.password state
-	// event to the accounts room for the user. If this call completes the
-	// user will be able to login with m.login.password
+	// event to the user's room. User will be able to login with
+	// m.login.password
 	user.password(password);
 
 	// Send response to user
