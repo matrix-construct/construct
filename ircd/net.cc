@@ -1884,6 +1884,13 @@ noexcept try
 
 			reject();
 			break;
+
+		case X509_V_ERR_CERT_HAS_EXPIRED:
+			if(opts.allow_expired)
+				return true;
+
+			reject();
+			break;
 	}
 
 	const bool verify_common_name

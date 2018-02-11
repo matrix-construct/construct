@@ -92,6 +92,9 @@ struct ircd::net::open_opts
 	/// Option to toggle whether to allow self-signed certificate authorities
 	/// in the chain. This is what corporate network nanny's may use to spy.
 	bool allow_self_chain { false };
+
+	/// Option to allow expired certificates.
+	bool allow_expired { false };
 };
 
 /// Constructor intended to provide implicit conversions (no-brackets required)
