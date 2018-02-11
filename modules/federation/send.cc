@@ -155,7 +155,8 @@ resource::method method_put
 {
 	send_resource, "PUT", handle_put,
 	{
-		method_put.VERIFY_ORIGIN
+		method_put.VERIFY_ORIGIN,
+		4_MiB // larger = HTTP 413  //TODO: conf
 	}
 };
 
