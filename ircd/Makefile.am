@@ -58,44 +58,51 @@ libircd_la_LIBADD = \
 	-lz \
 	###
 
+# Since this is a GNU C++ project we assume the non-standard respect for
+# the order of this sources list. Static initialization will occur in
+# the same order as this list, and destruction in the reverse order.
+#
+# Add the most dependent units at the end and the least dependent units
+# at the beginning.
+#
 libircd_la_SOURCES =   \
-	client.cc          \
-	hash.cc            \
-	rand.cc            \
-	ctx.cc             \
-	db.cc              \
 	exception.cc       \
-	fmt.cc             \
-	fs.cc              \
-	http.cc            \
-	info.cc            \
-	ircd.cc            \
-	json.cc            \
-	lexical.cc         \
-	base.cc            \
 	locale.cc          \
 	logger.cc          \
+	info.cc            \
+	sodium.cc          \
+	rand.cc            \
+	hash.cc            \
+	lexical.cc         \
+	base.cc            \
+	parse.cc           \
+	rfc1459.cc         \
+	json.cc            \
+	openssl.cc         \
+	http.cc            \
+	fmt.cc             \
+	fs.cc              \
+	ctx.cc             \
+	db.cc              \
+	mods.cc            \
+	rfc3986.cc         \
+	rfc1035.cc         \
+	net.cc             \
+	server.cc          \
+	client.cc          \
+	resource.cc        \
+	m/id.cc            \
+	m/event.cc         \
 	m/dbs.cc           \
 	m/state.cc         \
-	m/event.cc         \
-	m/id.cc            \
-	m/v1.cc            \
-	m/keys.cc          \
-	m/request.cc       \
 	m/room.cc          \
 	m/user.cc          \
+	m/request.cc       \
+	m/v1.cc            \
 	m/vm.cc            \
+	m/keys.cc          \
 	m/m.cc             \
-	mods.cc            \
-	net.cc             \
-	openssl.cc         \
-	parse.cc           \
-	resource.cc        \
-	rfc1035.cc         \
-	rfc1459.cc         \
-	rfc3986.cc         \
-	server.cc          \
-	sodium.cc          \
+	ircd.cc            \
 	###
 
 if AIO
