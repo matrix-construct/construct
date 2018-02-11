@@ -589,7 +589,7 @@ ircd::m::state::set_node(db::txn &iov,
 {
 	const sha256::buf hash
 	{
-		sha256{const_buffer{node}}
+		sha256{node}
 	};
 
 	const auto hashb64

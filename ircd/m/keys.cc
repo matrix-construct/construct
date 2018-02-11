@@ -130,7 +130,7 @@ ircd::m::keys::init::signing()
 	self::public_key_b64 = b64encode_unpadded(self::public_key);
 	const fixed_buffer<const_buffer, sha256::digest_size> hash
 	{
-		sha256{const_buffer{self::public_key}}
+		sha256{self::public_key}
 	};
 
 	const auto public_key_hash_b58
