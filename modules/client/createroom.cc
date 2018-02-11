@@ -47,20 +47,15 @@ try
 		m::id::generate, my_host()
 	};
 
-	json::iov event;
-	json::iov content;
-	const json::iov::push push[]
+	const m::room room
 	{
-		{ event,    { "sender",   sender_id  }},
-		{ content,  { "creator",  sender_id  }},
+		create(room_id, sender_id)
 	};
 
-	m::room room
+	const m::event::id::buf join_event_id
 	{
-		room_id
+		join(room, sender_id)
 	};
-
-	//room.create(event, content);
 
 	return resource::response
 	{
