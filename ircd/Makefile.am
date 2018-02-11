@@ -97,6 +97,7 @@ libircd_la_SOURCES =   \
 	m/state.cc         \
 	m/room.cc          \
 	m/user.cc          \
+	m/filter.cc        \
 	m/request.cc       \
 	m/v1.cc            \
 	m/vm.cc            \

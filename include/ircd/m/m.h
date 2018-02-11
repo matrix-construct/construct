@@ -50,11 +50,11 @@ namespace ircd
 #include "state.h"
 #include "room.h"
 #include "user.h"
+#include "filter.h"
 #include "request.h"
 #include "session.h"
 #include "v1/v1.h"
 #include "vm.h"
-#include "filter.h"
 #include "keys.h"
 #include "txn.h"
 
