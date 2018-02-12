@@ -54,6 +54,10 @@ client_client_login_la_SOURCES = client/login.cc
 client_client_logout_la_SOURCES = client/logout.cc
 client_client_sync_la_SOURCES = client/sync.cc
 client_client_rooms_la_SOURCES = client/rooms.cc
+client_client_presence_la_SOURCES = client/presence.cc
+client_client_profile_la_SOURCES = client/profile.cc
+client_client_keys_la_SOURCES = client/keys.cc
+client_client_pushers_la_SOURCES = client/pushers.cc
 client_client_publicrooms_la_SOURCES = client/publicrooms.cc
 client_client_createroom_la_SOURCES = client/createroom.cc
 client_client_pushrules_la_SOURCES = client/pushrules.cc
@@ -70,6 +74,10 @@ client_module_LTLIBRARIES = \
 	client/client_logout.la \
 	client/client_sync.la \
 	client/client_rooms.la \
+	client/client_presence.la \
+	client/client_profile.la \
+	client/client_keys.la \
+	client/client_pushers.la \
 	client/client_publicrooms.la \
 	client/client_createroom.la \
 	client/client_pushrules.la \

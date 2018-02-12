@@ -31,7 +31,17 @@ try
 {
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "global", json::members
+			{
+				{ "content",     json::array{} },
+				{ "override",    json::array{} },
+				{ "room",        json::array{} },
+				{ "sender",      json::array{} },
+				{ "underride",   json::array{} },
+			}}
+		}
 	};
 }
 catch(...)
