@@ -44,7 +44,12 @@ get_root(client &client, const resource::request &request)
 		ircd::fs::read(filename)
 	};
 
-	string_view content_type; switch(hash(rsplit(filename, '.').second))
+	const auto extension
+	{
+		rsplit(filename, '.').second
+	};
+
+	string_view content_type; switch(hash(extension))
 	{
 		case hash("css"):    content_type = "text/css; charset=utf-8";  break;
 		case hash("js"):     content_type = "application/javascript; charset=utf-8";  break;
@@ -52,12 +57,28 @@ get_root(client &client, const resource::request &request)
 		case hash("ico"):    content_type = "image/x-icon"; break;
 		case hash("svg"):    content_type = "image/svg+xml"; break;
 		case hash("png"):    content_type = "image/png"; break;
+		case hash("gif"):    content_type = "image/gif"; break;
+		case hash("jpeg"):
+		case hash("jpg"):    content_type = "image/jpeg"; break;
 		case hash("woff2"):  content_type = "application/font-woff2"; break;
 		case hash("woff"):   content_type = "application/font-woff"; break;
 		case hash("eot"):    content_type = "application/vnd.ms-fontobject"; break;
 		case hash("otf"):
 		case hash("ttf"):    content_type = "application/font-sfnt"; break;
-		default:             content_type = "text/plain; charset=utf-8"; break;
+		case hash("ogg"):    content_type = "application/ogg"; break;
+		case hash("json"):   content_type = "application/json; charset=utf-8"; break;
+		case hash("txt"):    content_type = "text/plain; charset=utf-8"; break;
+		default:
+		{
+			if(!empty(extension))
+				log::warning
+				{
+					"Unknown mime type for extension '%s'", extension
+				};
+
+			content_type = "application/octet-stream";
+			break;
+		}
 	}
 
 	return resource::response
