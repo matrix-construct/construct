@@ -227,8 +227,8 @@ catch(const std::exception &e)
 
 void
 ircd::resource::operator()(client &client,
-                           struct client::request &request,
-                           const http::request::head &head)
+                           const http::request::head &head,
+                           const string_view &content_partial)
 {
 	// Find the method or METHOD_NOT_ALLOWED
 	auto &method
@@ -245,27 +245,27 @@ ircd::resource::operator()(client &client,
 
 	const size_t content_remain
 	{
-		head.content_length - request.content_consumed
+		head.content_length - client.content_consumed
 	};
 
 	unique_buffer<mutable_buffer> content_buffer;
-	string_view content{request.content_partial};
+	string_view content{content_partial};
 	if(content_remain)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;
 		content_buffer = unique_buffer<mutable_buffer>{head.content_length};
-		memcpy(data(content_buffer), data(request.content_partial), size(request.content_partial));
+		memcpy(data(content_buffer), data(content_partial), size(content_partial));
 
 		// Setup a window inside the buffer for the remaining socket read.
 		const mutable_buffer content_remain_buffer
 		{
-			data(content_buffer) + size(request.content_partial), content_remain
+			data(content_buffer) + size(content_partial), content_remain
 		};
 
 		//TODO: more discretion from the method.
 		// Read the remaining content off the socket.
-		request.content_consumed += read_all(*client.sock, content_remain_buffer);
-		assert(request.content_consumed == head.content_length);
+		client.content_consumed += read_all(*client.sock, content_remain_buffer);
+		assert(client.content_consumed == head.content_length);
 		content = string_view
 		{
 			data(content_buffer), head.content_length
@@ -622,10 +622,9 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &headers)
 {
-	assert(client.request);
 	const auto request_time
 	{
-		client.request->timer.at<microseconds>().count()
+		client.timer.at<microseconds>().count()
 	};
 
 	const fmt::bsprintf<64> rtime
@@ -684,7 +683,7 @@ ircd::resource::response::response(client &client,
 		int(code),
 		http::status(code),
 		request_time,
-		(client.request->timer.at<microseconds>().count() - request_time),
+		(client.timer.at<microseconds>().count() - request_time),
 		content_type,
 		content.size()
 	};

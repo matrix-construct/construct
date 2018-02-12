@@ -270,6 +270,9 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 	if(!handle_ec(*client, ec))
 		return;
 
+	if(client->longpoll)
+		return;
+
 	auto handler
 	{
 		std::bind(ircd::handle_client_request, std::move(client))
@@ -431,7 +434,8 @@ ircd::client::client()
 }
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:sock{std::move(sock)}
+:headbuf{HEAD_MAX}
+,sock{std::move(sock)}
 {
 }
 
@@ -475,12 +479,14 @@ bool
 ircd::client::main()
 noexcept try
 {
-	char buffer[client::request::HEAD_MAX];
-	parse::buffer pb{mutable_buffer{buffer}};
+	parse::buffer pb{headbuf};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
 		if(!handle_request(pc))
 			return false;
+
+		if(longpoll)
+			return true;
 
 		// After the request, the head and content has been read off the socket
 		// and the capstan has advanced to the end of the content. The catch is
@@ -574,35 +580,6 @@ catch(const std::exception &e)
 	#endif
 }
 
-/// The constructor for request state is only made in
-/// client::handle_request(). It is defined here to be adjacent to that
-/// callsite
-///
-ircd::client::request::request(parse::capstan &pc)
-:head
-{
-	// This is the first read off the wire. The headers are entirely read and
-	// the tape is advanced.
-	pc
-}
-,content_consumed
-{
-	// The size of HTTP headers are never initially known, which means
-	// the above head parse could have read too much off the socket bleeding
-	// into the content or even the next request entirely. That's ok because
-	// the state of `pc` will reflect that back to the main() loop for the
-	// next request, but for this request we have to figure out how much of
-	// the content was accidentally read so far.
-	std::min(pc.unparsed(), head.content_length)
-}
-,content_partial
-{
-	pc.parsed, content_consumed
-}
-{
-	pc.parsed += content_consumed;
-}
-
 /// Handle a single request within the client main() loop.
 ///
 /// This function returns false if the main() loop should exit
@@ -623,24 +600,30 @@ try
 		*sock, conf->request_timeout
 	};
 
-	struct request request{pc};
+	// This is the first read off the wire. The headers are entirely read and
+	// the tape is advanced.
+	timer = ircd::timer{};
+	head = http::request::head{pc};
+	head_length = pc.parsed - data(headbuf);
+	content_consumed = std::min(pc.unparsed(), head.content_length);
+	pc.parsed += content_consumed;
 	assert(pc.parsed <= pc.read);
-	this->request = &request;
-	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu part:%zu",
+
+	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu have:%zu",
 	           sock.get(),
 	           string(local(*this)),
 	           string(remote(*this)),
-	           request.head.method,
-	           request.head.path,
-	           request.head.content_length,
-	           request.content_consumed);
+	           head.method,
+	           head.path,
+	           head.content_length,
+	           content_consumed);
 
 	bool ret
 	{
-		resource_request(request)
+		resource_request()
 	};
 
-	if(ret && iequals(request.head.connection, "close"_sv))
+	if(ret && iequals(head.connection, "close"_sv))
 		ret = false;
 
 	return ret;
@@ -674,15 +657,20 @@ catch(const ircd::error &e)
 }
 
 bool
-ircd::client::resource_request(struct request &request)
+ircd::client::resource_request()
 try
 {
-	auto &resource
+	const string_view content_partial
 	{
-		ircd::resource::find(request.head.path)
+		data(headbuf) + head_length, content_consumed
 	};
 
-	resource(*this, request, request.head);
+	auto &resource
+	{
+		ircd::resource::find(head.path)
+	};
+
+	resource(*this, head, content_partial);
 	return true;
 }
 catch(const http::error &e)
@@ -705,20 +693,20 @@ catch(const http::error &e)
 		// These codes are "recoverable" and allow the next HTTP request in
 		// a pipeline to take place.
 		default:
-			discard_unconsumed(request);
+			discard_unconsumed();
 			return true;
 	}
 }
 
 void
-ircd::client::discard_unconsumed(struct request &request)
+ircd::client::discard_unconsumed()
 {
 	if(unlikely(!sock))
 		return;
 
 	const size_t unconsumed
 	{
-		request.head.content_length - request.content_consumed
+		head.content_length - content_consumed
 	};
 
 	if(!unconsumed)
@@ -729,10 +717,10 @@ ircd::client::discard_unconsumed(struct request &request)
 	           string(local(*this)),
 	           string(remote(*this)),
 	           unconsumed,
-	           request.head.content_length);
+	           head.content_length);
 
-	request.content_consumed += net::discard_all(*sock, unconsumed);
-	assert(request.content_consumed == request.head.content_length);
+	content_consumed += net::discard_all(*sock, unconsumed);
+	assert(content_consumed == head.content_length);
 }
 
 ircd::ctx::future<void>

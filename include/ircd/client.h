@@ -35,19 +35,29 @@ struct ircd::client
 	struct settings;
 	struct request;
 
+	static constexpr const size_t &HEAD_MAX
+	{
+		4_KiB
+	};
+
 	static struct settings settings;
 	static struct conf default_conf;
 	static ctx::pool context;
 
-	std::shared_ptr<socket> sock;
 	struct conf *conf {&default_conf};
-	struct request *request {nullptr};
+	unique_buffer<mutable_buffer> headbuf;
+	std::shared_ptr<socket> sock;
+	ircd::timer timer;
+	http::request::head head;
+	size_t head_length {0};
+	size_t content_consumed {0};
+	bool longpoll {false};
 
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
 
-	void discard_unconsumed(struct request &);
-	bool resource_request(struct request &);
+	void discard_unconsumed();
+	bool resource_request();
 	bool handle_request(parse::capstan &pc);
 	bool main() noexcept;
 	void async();
@@ -63,24 +73,6 @@ struct ircd::client
 
 	friend ipport remote(const client &);
 	friend ipport local(const client &);
-};
-
-/// Organizes components of an individual request. A pointer to this structure
-/// is placed as a member of client when a request is being made; this allows
-/// for access to it without a separate argument wherever client goes.
-struct ircd::client::request
-{
-	static constexpr size_t HEAD_MAX
-	{
-		4_KiB
-	};
-
-	ircd::timer timer;
-	http::request::head head;
-	size_t content_consumed {0};
-	string_view content_partial;
-
-	request(parse::capstan &pc);
 };
 
 /// Confs can be attached to individual clients to change their behavior

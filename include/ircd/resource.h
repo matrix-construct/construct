@@ -40,7 +40,7 @@ struct ircd::resource
   public:
 	method &operator[](const string_view &path);
 
-	void operator()(client &, struct client::request &, const http::request::head &);
+	void operator()(client &, const http::request::head &, const string_view &content_partial);
 
 	resource(const string_view &path, const opts &);
 	resource(const string_view &path);

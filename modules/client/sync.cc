@@ -204,6 +204,8 @@ longpoll(client &client,
 
 	if(pollout.size() == 1)
 		notify(synchronizer_timeout_context);
+
+	client.longpoll = true;
 }
 
 // 
@@ -452,6 +454,8 @@ try
 		}
 	};
 
+	client->longpoll = false;
+	client->async();
 	return true;
 }
 catch(const std::bad_weak_ptr &e)
