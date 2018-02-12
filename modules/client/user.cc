@@ -24,27 +24,23 @@ get_filter(client &client,
            const resource::request &request,
            const m::user::id &user_id)
 {
-	m::event::id::buf filter_id
+	char filter_id_buf[64];
+	const auto filter_id
 	{
-		url::decode(request.parv[2], filter_id)
+		url::decode(request.parv[2], filter_id_buf)
 	};
 
-	//TODO: ??
-	const unique_buffer<mutable_buffer> buffer
+	m::filter::get(user_id, filter_id, [&client]
+	(const json::object &filter)
 	{
-		m::filter::size(filter_id)
-	};
+		resource::response
+		{
+			client, filter
+		};
+	});
 
-	//TODO: get direct
-	const m::filter filter
-	{
-		filter_id, buffer
-	};
-
-	return resource::response
-	{
-		client, json::object{buffer}
-	};
+	// Responded from closure.
+	return {};
 }
 
 // (5.2) Uploads a new filter definition to the homeserver. Returns a filter ID that
@@ -105,9 +101,10 @@ post_filter(client &client,
 		json::get<"presence"_>(request)
 	};
 
+	char filter_id_buf[64];
 	const auto filter_id
 	{
-		send(m::filter::filters, user_id, "ircd.filter"_sv, request.body)
+		m::filter::set(filter_id_buf, user_id, request.body)
 	};
 
 	return resource::response

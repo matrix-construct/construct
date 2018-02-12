@@ -231,12 +231,6 @@ ircd::m::init::bootstrap()
 		{ "name", "User Tokens" }
 	});
 
-	create(filter::filters, me.user_id);
-	send(filter::filters, me.user_id, "m.room.name", "",
-	{
-		{ "name", "User Filters Database" }
-	});
-
 	_keys.bootstrap();
 
 	message(control, me.user_id, "Welcome to the control room.");

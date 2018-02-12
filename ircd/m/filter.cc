@@ -10,46 +10,93 @@
 
 #include <ircd/m/m.h>
 
-const ircd::m::room::id::buf
-filters_room_id
-{
-	"filters", ircd::my_host()
-};
-
-ircd::m::room
-ircd::m::filter::filters
-{
-	filters_room_id
-};
-
-ircd::m::filter::filter(const string_view &filter_id,
+ircd::m::filter::filter(const user &user,
+                        const string_view &filter_id,
                         const mutable_buffer &buf)
 {
-	size_t len{0};
-	//TODO: really has to become event in user's room
-	filters.get("ircd.filter"_sv, filter_id, [&buf, &len]
-	(const m::event &event)
+	get(user, filter_id, [this, &buf]
+	(const json::object &filter)
 	{
-		len = copy(buf, json::get<"content"_>(event));
-	});
-
-	new (this) filter{json::object{buf}};
-}
-
-size_t
-ircd::m::filter::size(const string_view &filter_id)
-{
-	size_t len{0};
-	filters.get("ircd.filter"_sv, filter_id, [&len]
-	(const m::event &event)
-	{
-		const string_view filter
+		const size_t len
 		{
-			json::get<"content"_>(event)
+			copy(buf, string_view{filter})
 		};
 
-		len = size(filter);
+		new (this) m::filter
+		{
+			json::object
+			{
+				data(buf), len
+			}
+		};
 	});
+}
 
-	return len;
+ircd::string_view
+ircd::m::filter::set(const mutable_buffer &idbuf,
+                     const user &user,
+                     const json::object &filter)
+{
+	const auto user_room_id
+	{
+		user.room_id()
+	};
+
+	const m::room room
+	{
+		user_room_id
+	};
+
+	const sha256::buf hash
+	{
+		sha256{filter}
+	};
+
+	const string_view filter_id
+	{
+		b64encode_unpadded(idbuf, hash)
+	};
+
+	send(room, user.user_id, "ircd.filter", filter_id, filter);
+	return filter_id;
+}
+
+void
+ircd::m::filter::get(const user &user,
+                     const string_view &filter_id,
+                     const closure &closure)
+{
+	if(!get(std::nothrow, user, filter_id, closure))
+		throw m::NOT_FOUND
+		{
+			"Filter not found"
+		};
+}
+
+bool
+ircd::m::filter::get(std::nothrow_t,
+                     const user &user,
+                     const string_view &filter_id,
+                     const closure &closure)
+{
+	const auto user_room_id
+	{
+		user.room_id()
+	};
+
+	const m::room room
+	{
+		user_room_id
+	};
+
+	return room.get(std::nothrow, "ircd.filter", filter_id, [&closure]
+	(const m::event &event)
+	{
+		const json::object &content
+		{
+			at<"content"_>(event)
+		};
+
+		closure(content);
+	});
 }
