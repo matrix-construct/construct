@@ -41,6 +41,21 @@ namespace ircd
 	string_view timef(const mutable_buffer &out, localtime_t, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const char *const &fmt = rfc7231_fmt);
 	template<class... args> std::string timestr(args&&...);
+
+	std::ostream &operator<<(std::ostream &, const steady_point &);
+	std::ostream &operator<<(std::ostream &, const system_point &);
+}
+
+inline std::ostream &
+ircd::operator<<(std::ostream &s, const system_point &tp)
+{
+	return (s << duration_cast<seconds>(tp.time_since_epoch()).count());
+}
+
+inline std::ostream &
+ircd::operator<<(std::ostream &s, const steady_point &tp)
+{
+	return (s << duration_cast<seconds>(tp.time_since_epoch()).count());
 }
 
 template<class... args>
