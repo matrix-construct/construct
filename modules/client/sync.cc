@@ -132,19 +132,15 @@ sync(client &client, const resource::request &request)
 		throw m::NOT_FOUND{"since parameter invalid"};
 
 	// 6.2.1 The maximum time to poll in milliseconds before returning this request.
-	const auto timeout
+	const int64_t timeout_requested
 	{
-		request.query["timeout"]
-	};
-
-	const milliseconds timeout_dur
-	{
-		std::max(timeout? lex_cast<int64_t>(timeout) : 30000L, 3000L)
+		request.query["timeout"]? lex_cast<int64_t>(request.query.at("timeout")) : 0L
 	};
 
 	const auto timeout_at
 	{
-		now<steady_point>() + timeout_dur
+		now<steady_point>() +
+		milliseconds(timeout_requested? std::max(timeout_requested, 3000L) : 30000L)
 	};
 
 	longpoll(client, request, timeout_at);
