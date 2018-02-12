@@ -137,9 +137,14 @@ sync(client &client, const resource::request &request)
 		request.query["timeout"]
 	};
 
+	const milliseconds timeout_dur
+	{
+		std::max(timeout? lex_cast<int64_t>(timeout) : 30000L, 3000L)
+	};
+
 	const auto timeout_at
 	{
-		now<steady_point>() + milliseconds(std::max(timeout? lex_cast<int64_t>(timeout) : 30000L, 1000L))
+		now<steady_point>() + timeout_dur
 	};
 
 	longpoll(client, request, timeout_at);
@@ -266,6 +271,8 @@ try
 	{
 		*client, http::REQUEST_TIMEOUT
 	};
+
+	client->close(net::dc::SSL_NOTIFY, net::close_ignore);
 }
 catch(const std::exception &e)
 {
@@ -385,10 +392,34 @@ update_sync_room(client &client,
 		timeline.data(), timeline.data() + timeline.size()
 	};
 
+	std::vector<std::string> ephemeral;
+	const json::strung ephemeral_serial
+	{
+		ephemeral.data(), ephemeral.data() + ephemeral.size()
+	};
+
 	const json::members body
 	{
-		{ "state",      json::member { "events", state_serial }     },
-		{ "timeline",   json::member { "events", timeline_serial }  }
+		{ "account_data", json::members{} },
+		{ "unread_notifications",
+		{
+			{ "highlight_count", int64_t(0) },
+			{ "notification_count", int64_t(0) },
+		}},
+		{ "ephemeral",
+		{
+			{ "events", ephemeral_serial },
+		}},
+		{ "state",
+		{
+			{ "events", state_serial }
+		}},
+		{ "timeline",
+		{
+			{ "events", timeline_serial },
+			{ "prev_batch", int64_t(m::vm::current_sequence) },  //TODO: XXX
+			{ "limited", false },                       //TODO: XXX
+		}},
 	};
 
 	return json::strung(body);
@@ -439,9 +470,9 @@ try
 		"{}"
 	};
 
-	const string_view next_batch
+	const int64_t &next_batch
 	{
-		at<"event_id"_>(event)
+		m::vm::current_sequence
 	};
 
 	resource::response
@@ -450,7 +481,7 @@ try
 		{
 			{ "next_batch",  next_batch  },
 			{ "rooms",       rooms       },
-			{ "presence",    presence    }
+			{ "presence",    presence    },
 		}
 	};
 
@@ -506,10 +537,34 @@ initial_sync_room(client &client,
 		json::strung(timeline.data(), timeline.data() + timeline.size())
 	};
 
+	std::vector<std::string> ephemeral;
+	const json::strung ephemeral_serial
+	{
+		ephemeral.data(), ephemeral.data() + ephemeral.size()
+	};
+
 	const json::members body
 	{
-		{ "state",      json::member { "events", state_serial }     },
-		{ "timeline",   json::member { "events", timeline_serial }  }
+		{ "account_data", json::members{} },
+		{ "unread_notifications",
+		{
+			{ "highlight_count", int64_t(0) },
+			{ "notification_count", int64_t(0) },
+		}},
+		{ "ephemeral",
+		{
+			{ "events", ephemeral_serial },
+		}},
+		{ "state",
+		{
+			{ "events", state_serial }
+		}},
+		{ "timeline",
+		{
+			{ "events", timeline_serial },
+			{ "prev_batch", int64_t(m::vm::current_sequence) },  //TODO: XXX
+			{ "limited", false },                       //TODO: XXX
+		}},
 	};
 
 	return json::strung(body);
@@ -597,7 +652,7 @@ initial_sync(client &client,
 		{
 			{ "next_batch",  next_batch  },
 			{ "rooms",       rooms       },
-			{ "presence",    presence    }
+			{ "presence",    presence    },
 		}
 	};
 }
