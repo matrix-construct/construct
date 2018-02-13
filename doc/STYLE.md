@@ -362,22 +362,24 @@ which count characters printed *not including null*. They may return a
 #### Iteration protocols
 
 When not using STL-iterators, you may encounter some closure/callback-based
-iterator functions. Usually that's a `for_each()`. The "for_each protocol"
-as we'll call it, has no way to break the loop; this is good to avoid
-conditional branching. If we want to break out of the loop, our conventions
-are as follows:
+iterator functions. Usually that's a `for_each()`. If we want to break out
+of the loop, our conventions are as follows:
 
-- *find* protocol for `find()` functions. The closure returns true to break
+- *find protocol* for `find()` functions. The closure returns true to break
 the loop at that element, false to continue. The `find()` function itself
 then returns a pointer or reference to that element. If the end of the
 iteration is reached then a `find()` usually returns `nullptr` or throws an
 exception, etc.
 
-- *test* protocol for `test()` functions (this has nothing to do with unit-
+- *test protocol* for `test()` functions (this has nothing to do with unit-
 tests or development testing). This is the same logic as the find protocol
 except the `test()` function itself returns true if the closure broke the
 loop by returning true, or false if the end of the iteration was reached.
 
-- *until* protocol for `until()` functions. The closure "remains true 'till
+- *until protocol* for `until()` functions. The closure "remains true 'till
 the end." When the end is reached, true is returned. The closure returns false
 to break the loop, and then false is returned from until() as well.
+
+Overloads of `for_each()` may be encountered accepting closures that return
+`void` and others that return `bool`. The `bool` overloads use the
+*until protocol* as that matches the same logic in a `for(; bool;)` loop.
