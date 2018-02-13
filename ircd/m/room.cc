@@ -118,8 +118,8 @@ ircd::m::message(const room &room,
 {
 	return message(room, sender,
 	{
-		{ "body",      body     },
-		{ "msgtype",   msgtype  }
+		{ "body",     { body,    json::STRING } },
+		{ "msgtype",  { msgtype, json::STRING } },
 	});
 }
 
