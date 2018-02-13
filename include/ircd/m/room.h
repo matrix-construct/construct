@@ -106,23 +106,41 @@ struct ircd::m::room
 
 /// Interface to room messages
 ///
-/// This interface focuses on room messages (state and ephemeral) from all
-/// integrated timelines. Most queries to this interface respond in linear
-/// time.
+/// This interface has the form of an STL-style iterator over room messages
+/// which are state and non-state events from all integrated timelines.
+/// Moving the iterator is cheap, but the dereference operators fetch a
+/// full event. One can iterate just event_id's by using event_id() instead
+/// of the dereference operators.
 ///
 struct ircd::m::room::messages
 {
 	m::room room;
+	db::index::const_iterator it;
+	event::id _event_id;
+	event::fetch _event;
 
-	void for_each(const event::id::closure &) const;
-	void for_each(const event::closure &) const;
+  public:
+	operator bool() const              { return bool(it);                      }
+	bool operator!() const             { return !it;                           }
 
-	bool test(const event::id::closure_bool &view) const;
-	bool test(const event::closure_bool &view) const;
+	const event::id &event_id();
+	const m::event &fetch(std::nothrow_t);
+	const m::event &fetch();
 
-	messages(const m::room &room)
-	:room{room}
-	{}
+	bool seek(const uint64_t &depth);
+	bool seek(const event::id &);
+	bool seek();
+
+	// These are reversed on purpose
+	auto &operator++()                 { return --it;                          }
+	auto &operator--()                 { return ++it;                          }
+
+	const m::event &operator*();
+	const m::event *operator->()       { return &operator*();                  }
+
+	messages(const m::room &room, const uint64_t &depth);
+	messages(const m::room &room, const event::id &);
+	messages(const m::room &room);
 };
 
 /// Interface to room state.

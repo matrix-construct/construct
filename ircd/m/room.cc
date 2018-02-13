@@ -369,75 +369,106 @@ const
 // room::messages
 //
 
-void
-ircd::m::room::messages::for_each(const event::closure &closure)
-const
+ircd::m::room::messages::messages(const m::room &room)
+:room{room}
 {
-	event::fetch event;
-	for_each(event::id::closure{[&closure, &event]
-	(const event::id &event_id)
-	{
-		if(seek(event, event_id, std::nothrow))
-			closure(event);
-	}});
+	seek();
 }
 
-void
-ircd::m::room::messages::for_each(const event::id::closure &closure)
-const
+ircd::m::room::messages::messages(const m::room &room,
+                                  const event::id &event_id)
+:room{room}
 {
-	test(event::id::closure_bool{[&closure]
-	(const event::id &event_id)
-	{
-		closure(event_id);
-		return false;
-	}});
+	seek(event_id);
+}
+
+ircd::m::room::messages::messages(const m::room &room,
+                                  const uint64_t &depth)
+:room{room}
+{
+	seek(depth);
+}
+
+const ircd::m::event &
+ircd::m::room::messages::operator*()
+{
+	return fetch(std::nothrow);
+};
+
+bool
+ircd::m::room::messages::seek()
+{
+	this->it = dbs::room_events.begin(room.room_id);
+	return bool(*this);
 }
 
 bool
-ircd::m::room::messages::test(const event::closure_bool &closure)
-const
+ircd::m::room::messages::seek(const event::id &event_id)
 {
-	event::fetch event;
-	return test(event::id::closure_bool{[&closure, &event]
-	(const m::event::id &event_id)
+	static constexpr auto idx
 	{
-		if(seek(event, event_id, std::nothrow))
-			if(closure(event))
-				return true;
-
-		return false;
-	}});
-}
-
-bool
-ircd::m::room::messages::test(const event::id::closure_bool &closure)
-const
-{
-	auto it
-	{
-		dbs::room_events.begin(room.room_id)
+		json::indexof<event, "depth"_>()
 	};
 
-	if(it) do
+	auto &column
 	{
-		const auto &key{it->first};
-		const auto part
-		{
-			dbs::room_events_key(key)
-		};
+		dbs::event_column.at(idx)
+	};
 
-		const auto event_id
-		{
-			std::get<1>(part)
-		};
+	uint64_t depth;
+	column(event_id, [&](const string_view &binary)
+	{
+		assert(size(binary) == sizeof(depth));
+		depth = byte_view<uint64_t>(binary);
+	});
 
-		if(closure(event_id))
-			return true;
-	}
-	while(++it);
+	char buf[m::state::KEY_MAX_SZ];
+	const auto seek_key
+	{
+		dbs::room_events_key(buf, room.room_id, depth, event_id)
+	};
 
-	return false;
+	this->it = dbs::room_events.begin(seek_key);
+	return bool(*this);
+}
+
+bool
+ircd::m::room::messages::seek(const uint64_t &depth)
+{
+	char buf[m::state::KEY_MAX_SZ];
+	const auto seek_key
+	{
+		dbs::room_events_key(buf, room.room_id, depth)
+	};
+
+	this->it = dbs::room_events.begin(seek_key);
+	return bool(*this);
+}
+
+const ircd::m::event::id &
+ircd::m::room::messages::event_id()
+{
+	assert(bool(*this));
+	const auto &key{it->first};
+	const auto part{dbs::room_events_key(key)};
+	_event_id = std::get<1>(part);
+	return _event_id;
+}
+
+const ircd::m::event &
+ircd::m::room::messages::fetch()
+{
+	m::seek(_event, event_id());
+	return _event;
+}
+
+const ircd::m::event &
+ircd::m::room::messages::fetch(std::nothrow_t)
+{
+	if(!m::seek(_event, event_id(), std::nothrow))
+		_event = m::event::fetch{};
+
+	return _event;
 }
 
 //
