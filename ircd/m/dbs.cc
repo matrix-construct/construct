@@ -386,6 +386,20 @@ ircd::m::dbs::desc::events__room_events__cmp
 ircd::string_view
 ircd::m::dbs::room_events_key(const mutable_buffer &out,
                               const id::room &room_id,
+                              const uint64_t &depth)
+{
+	size_t len{0};
+	len = strlcpy(out, room_id);
+	len = strlcat(out, ":::");
+	len = strlcat(out, lex_cast(depth));
+	return { data(out), len };
+}
+
+//TODO: optimize
+//TODO: Needs The Gramslam
+ircd::string_view
+ircd::m::dbs::room_events_key(const mutable_buffer &out,
+                              const id::room &room_id,
                               const uint64_t &depth,
                               const id::event &event_id)
 {

@@ -29,6 +29,7 @@ namespace ircd::m::dbs
 
 	// Lowlevel util
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
+	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, string_view> room_events_key(const string_view &amalgam);
 
 	// Get the state root for an event (with as much information as you have)
