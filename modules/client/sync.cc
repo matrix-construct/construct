@@ -268,7 +268,8 @@ try
 		*client, http::REQUEST_TIMEOUT
 	};
 
-	client->close(net::dc::SSL_NOTIFY, net::close_ignore);
+	client->longpoll = false;
+	client->async();
 }
 catch(const std::exception &e)
 {
