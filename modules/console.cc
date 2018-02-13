@@ -774,6 +774,7 @@ console_cmd__exec_file(const string_view &line)
 // room
 //
 
+static bool console_cmd__room__messages(const string_view &line);
 static bool console_cmd__room__members(const string_view &line);
 static bool console_cmd__room__state(const string_view &line);
 static bool console_cmd__room__depth(const string_view &line);
@@ -800,6 +801,9 @@ console_cmd__room(const string_view &line)
 
 		case hash("members"):
 			return console_cmd__room__members(args);
+
+		case hash("messages"):
+			return console_cmd__room__messages(args);
 	}
 
 	return true;
@@ -887,6 +891,39 @@ console_cmd__room__state(const string_view &line)
 	{
 		out << pretty_oneline(event) << std::endl;
 	});
+
+	return true;
+}
+
+bool
+console_cmd__room__messages(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const int64_t depth
+	{
+		token_count(line, ' ') > 1? lex_cast<int64_t>(token(line, ' ', 1)) : -1
+	};
+
+	const char order
+	{
+		token_count(line, ' ') > 2? token(line, ' ', 2).at(0) : 'b'
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	m::room::messages it{room};
+	if(depth >= 0)
+		it.seek(depth);
+
+	for(; it; order == 'b'? --it : ++it)
+		out << pretty_oneline(*it) << std::endl;
 
 	return true;
 }
