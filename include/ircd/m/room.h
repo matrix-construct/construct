@@ -21,7 +21,10 @@ namespace ircd::m
 
 	struct room;
 
+	// Util
 	bool my(const room &);
+
+	// [GET] Util
 	bool exists(const id::room &);
 
 	// [GET] Current Event suite (non-locking) (one)
@@ -65,11 +68,11 @@ namespace ircd::m
 /// This object allows the programmer to represent the room either at its
 /// present state, or if an event_id is given, at the point of that event.
 ///
-/// Many convenience functions are provided outside of this class to
-/// accomplish general tasks using rooms in one statement. Additionally,
-/// several sub-classes provide functionality even more specific than this
-/// interface too. If a subclass is provided, for example: `struct members`,
-/// such an interface may employ optimized tactics for its specific task.
+/// Many convenience functions are provided outside of this class.
+/// Additionally, several sub-classes provide functionality even more specific
+/// than this interface too. If a subclass is provided, for example:
+/// `struct members`, such an interface may employ optimized tactics for its
+/// specific task.
 ///
 struct ircd::m::room
 {

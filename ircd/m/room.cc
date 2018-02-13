@@ -100,13 +100,6 @@ ircd::m::membership(const room &room,
 		{ content,  { "membership",  membership      }},
 	};
 
-/*
-	if(this->membership(user_id, membership))
-		throw m::ALREADY_MEMBER
-		{
-			"Member '%s' is already '%s'.", string_view{user_id}, membership
-		};
-*/
 	return commit(room, event, content);
 }
 
@@ -331,12 +324,12 @@ ircd::m::room::membership(const m::id::user &user_id,
 const
 {
 	bool ret{false};
-	static const string_view type{"m.room.member"};
-	state{*this}.get(std::nothrow, type, user_id, [&membership, &ret]
+	const state state{*this};
+	state.get(std::nothrow, "m.room.member"_sv, user_id, [&membership, &ret]
 	(const m::event &event)
 	{
 		assert(json::get<"type"_>(event) == "m.room.member");
-		ret = at<"membership"_>(event) == membership;
+		ret = unquote(at<"membership"_>(event)) == membership;
 	});
 
 	return ret;
@@ -616,7 +609,7 @@ const
 	for_each(event::id::closure{[&event, &closure]
 	(const event::id &event_id)
 	{
-		if(seek(event, unquote(event_id), std::nothrow))
+		if(seek(event, event_id, std::nothrow))
 			closure(event);
 	}});
 }
@@ -641,7 +634,7 @@ const
 	for_each(type, event::id::closure{[&event, &closure]
 	(const event::id &event_id)
 	{
-		if(seek(event, unquote(event_id), std::nothrow))
+		if(seek(event, event_id, std::nothrow))
 			closure(event);
 	}});
 }
