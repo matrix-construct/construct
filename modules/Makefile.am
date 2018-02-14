@@ -35,17 +35,43 @@ AM_LDFLAGS += \
 	# -export-symbols-regex * \
 	###
 
+###############################################################################
+#
+# (TBD) equipment
+#
+
+# This puts the source in vm/ but the installed
+# library is vm_X.so in the main modules dir.
+m_moduledir = @moduledir@
+console_la_SOURCES = console.cc
+m_noop_la_SOURCES = m_noop.cc
+m_module_LTLIBRARIES = \
+	console.la \
+	m_noop.la \
+	###
+
+###############################################################################
+#
+# /
+#
+
 moduledir=@moduledir@
 root_la_SOURCES = root.cc
-console_la_SOURCES = console.cc
 module_LTLIBRARIES = \
 	root.la \
-	console.la \
 	###
+
+###############################################################################
+#
+# /_matrix/client/
+#
 
 # This puts the source in client/ but the installed
 # library is client_X.so in the main modules dir.
 client_moduledir = @moduledir@
+client_module_LTLIBRARIES = \
+	###
+
 client_client_versions_la_SOURCES = client/versions.cc
 client_client_events_la_SOURCES = client/events.cc
 client_client_account_la_SOURCES = client/account.cc
@@ -53,7 +79,6 @@ client_client_register_la_SOURCES = client/register.cc
 client_client_login_la_SOURCES = client/login.cc
 client_client_logout_la_SOURCES = client/logout.cc
 client_client_sync_la_SOURCES = client/sync.cc
-client_client_rooms_la_SOURCES = client/rooms.cc
 client_client_presence_la_SOURCES = client/presence.cc
 client_client_profile_la_SOURCES = client/profile.cc
 client_client_keys_la_SOURCES = client/keys.cc
@@ -65,7 +90,7 @@ client_client_user_la_SOURCES = client/user.cc
 client_client_join_la_SOURCES = client/join.cc
 client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
 client_client_directory_room_la_SOURCES = client/directory/room.cc
-client_module_LTLIBRARIES = \
+client_module_LTLIBRARIES += \
 	client/client_versions.la \
 	client/client_events.la \
 	client/client_account.la \
@@ -73,7 +98,6 @@ client_module_LTLIBRARIES = \
 	client/client_login.la \
 	client/client_logout.la \
 	client/client_sync.la \
-	client/client_rooms.la \
 	client/client_presence.la \
 	client/client_profile.la \
 	client/client_keys.la \
@@ -87,6 +111,30 @@ client_module_LTLIBRARIES = \
 	client/client_directory_room.la \
 	###
 
+#
+# client/rooms/
+#
+
+client_client_rooms_la_SOURCES = \
+	client/rooms/messages.cc \
+	client/rooms/state.cc \
+	client/rooms/members.cc \
+	client/rooms/context.cc \
+	client/rooms/send.cc \
+	client/rooms/typing.cc \
+	client/rooms/receipt.cc \
+	client/rooms/join.cc \
+	client/rooms/read_markers.cc \
+	client/rooms/rooms.cc \
+	###
+
+client_module_LTLIBRARIES += client/client_rooms.la
+
+###############################################################################
+#
+# /_matrix/key/
+#
+
 # This puts the source in key/ but the installed
 # library is key_X.so in the main modules dir.
 key_moduledir = @moduledir@
@@ -96,6 +144,11 @@ key_module_LTLIBRARIES = \
 	key/key_server.la \
 	key/key_query.la \
 	###
+
+###############################################################################
+#
+# /_matrix/federation/
+#
 
 # This puts the source in federation/ but the installed
 # library is federation_X.so in the main modules dir.
@@ -109,6 +162,11 @@ federation_module_LTLIBRARIES = \
 	federation/federation_get_missing_events.la \
 	###
 
+###############################################################################
+#
+# /_matrix/media/
+#
+
 # This puts the source in media/ but the installed
 # library is media_X.so in the main modules dir.
 media_moduledir = @moduledir@
@@ -119,13 +177,10 @@ media_module_LTLIBRARIES = \
 	media/media_upload.la \
 	###
 
-# This puts the source in vm/ but the installed
-# library is vm_X.so in the main modules dir.
-m_moduledir = @moduledir@
-m_noop_la_SOURCES = m_noop.cc
-m_module_LTLIBRARIES = \
-	m_noop.la \
-	###
+###############################################################################
+#
+# JavaScript
+#
 
 if JS
 server_moduledir = @moduledir@
