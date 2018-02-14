@@ -74,7 +74,6 @@ client_module_LTLIBRARIES = \
 
 client_client_versions_la_SOURCES = client/versions.cc
 client_client_events_la_SOURCES = client/events.cc
-client_client_account_la_SOURCES = client/account.cc
 client_client_register_la_SOURCES = client/register.cc
 client_client_login_la_SOURCES = client/login.cc
 client_client_logout_la_SOURCES = client/logout.cc
@@ -92,7 +91,6 @@ client_client_directory_room_la_SOURCES = client/directory/room.cc
 client_module_LTLIBRARIES += \
 	client/client_versions.la \
 	client/client_events.la \
-	client/client_account.la \
 	client/client_register.la \
 	client/client_login.la \
 	client/client_logout.la \
@@ -139,6 +137,18 @@ client_client_user_la_SOURCES = \
 	###
 
 client_module_LTLIBRARIES += client/client_user.la
+
+#
+# client/account/
+#
+
+client_client_account_la_SOURCES = \
+	client/account/password.cc \
+	client/account/deactivate.cc \
+	client/account/account.cc \
+	###
+
+client_module_LTLIBRARIES += client/client_account.la
 
 ###############################################################################
 #
