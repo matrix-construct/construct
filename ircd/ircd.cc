@@ -216,9 +216,9 @@ try
 	nacl::init _nacl_;       // nacl crypto
 	openssl::init _ossl_;    // openssl crypto
 	net::init _net_;         // Networking
-	client::init _client_;   // Client related
-	server::init _server_;   // Server related
 	db::init _db_;           // RocksDB
+	server::init _server_;   // Server related
+	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
 	m::init _matrix_;        // Matrix
 
