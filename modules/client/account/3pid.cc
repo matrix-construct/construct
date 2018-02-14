@@ -1,0 +1,69 @@
+// Matrix Construct
+//
+// Copyright (C) Matrix Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies. The
+// full license for this software is available in the LICENSE file.
+
+#include "account.h"
+
+using namespace ircd;
+
+resource
+account_3pid
+{
+	"/_matrix/client/r0/account/3pid",
+	{
+		"(3.5) Adding Account Administrative Contact Information"
+	}
+};
+
+resource::response
+get__3pid(client &client,
+          const resource::request &request)
+{
+	std::vector<json::value> vec;
+	json::value threepids
+	{
+		vec.data(), vec.size()
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "threepids", threepids }
+		}
+	};
+}
+
+resource::method
+get_3pid
+{
+	account_3pid, "GET", get__3pid,
+	{
+		get_3pid.REQUIRES_AUTH
+	}
+};
+
+resource::response
+post__3pid(client &client,
+          const resource::request &request)
+{
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+resource::method
+post_3pid
+{
+	account_3pid, "POST", post__3pid,
+	{
+		post_3pid.REQUIRES_AUTH
+	}
+};
