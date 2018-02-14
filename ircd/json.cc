@@ -224,16 +224,32 @@ struct ircd::json::output
 	rule<> name_sep                    { lit(':')                                ,"name separator" };
 	rule<> value_sep                   { lit(',')                               ,"value separator" };
 	rule<> quote                       { lit('"')                                         ,"quote" };
+	rule<> escape                      { lit('\\')                                       ,"escape" };
 
 	rule<string_view> lit_true         { karma::string("true")                     ,"literal true" };
 	rule<string_view> lit_false        { karma::string("false")                   ,"literal false" };
 	rule<string_view> lit_null         { karma::string("null")                     ,"literal null" };
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
-	rule<string_view> chars            { *(~char_('"'))                              ,"characters" };
-	rule<string_view> string           { quote << chars << quote                         ,"string" };
 	rule<string_view> number           { double_                                         ,"number" };
-	rule<string_view> name             { quote << +(~char_('"')) << quote                  ,"name" };
+
+	rule<string_view> chars
+	{
+		*(karma::print) //TODO: exacting
+		,"characters"
+	};
+
+	rule<string_view> string
+	{
+		quote << chars << quote
+		,"string"
+	};
+
+	rule<string_view> name
+	{
+		string
+		,"name"
+	};
 
 	output()
 	:output::base_type{rule<>{}}
