@@ -86,7 +86,6 @@ client_client_pushers_la_SOURCES = client/pushers.cc
 client_client_publicrooms_la_SOURCES = client/publicrooms.cc
 client_client_createroom_la_SOURCES = client/createroom.cc
 client_client_pushrules_la_SOURCES = client/pushrules.cc
-client_client_user_la_SOURCES = client/user.cc
 client_client_join_la_SOURCES = client/join.cc
 client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
 client_client_directory_room_la_SOURCES = client/directory/room.cc
@@ -105,7 +104,6 @@ client_module_LTLIBRARIES += \
 	client/client_publicrooms.la \
 	client/client_createroom.la \
 	client/client_pushrules.la \
-	client/client_user.la \
 	client/client_join.la \
 	client/client_voip_turnserver.la \
 	client/client_directory_room.la \
@@ -129,6 +127,18 @@ client_client_rooms_la_SOURCES = \
 	###
 
 client_module_LTLIBRARIES += client/client_rooms.la
+
+#
+# client/user/
+#
+
+client_client_user_la_SOURCES = \
+	client/user/filter.cc \
+	client/user/account_data.cc \
+	client/user/user.cc \
+	###
+
+client_module_LTLIBRARIES += client/client_user.la
 
 ###############################################################################
 #
