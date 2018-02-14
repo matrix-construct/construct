@@ -143,6 +143,7 @@ client_module_LTLIBRARIES += client/client_user.la
 #
 
 client_client_account_la_SOURCES = \
+	client/account/whoami.cc \
 	client/account/password.cc \
 	client/account/deactivate.cc \
 	client/account/account.cc \
