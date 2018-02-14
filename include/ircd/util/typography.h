@@ -217,6 +217,25 @@ ctype(const char *begin,
 	return -1;
 }
 
+/// ctype test for a string_view. Returns the character position where the
+/// test fails. Returns -1 on success. The test is a function specified in
+/// the template simply as `ctype<std::isprint>(string_view{"hi"});`
+template<int (&test)(int)>
+ssize_t
+ctype(const string_view &s)
+{
+	return ctype<test>(begin(s), end(s));
+}
+
+/// convenience wrapper for ctype(string_view) to avoid the -1 test for
+/// success in any intuitive boolean statement.
+template<int (&test)(int)>
+bool
+valid(const string_view &s)
+{
+	return ctype<test>(s) == -1L;
+}
+
 /// Zero testing functor (work in progress)
 ///
 struct is_zero

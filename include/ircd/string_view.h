@@ -15,8 +15,6 @@ namespace ircd
 {
 	struct string_view;
 
-	template<int (&test)(int) = std::isprint> auto ctype(const string_view &s);
-
 	const char *data(const string_view &);
 	size_t size(const string_view &);
 	bool empty(const string_view &);
@@ -256,14 +254,4 @@ inline const char *
 ircd::data(const string_view &str)
 {
 	return str.data();
-}
-
-/// ctype test for a string_view. Returns the character position where the
-/// test fails. Returns -1 on success. The test is a function specified in
-/// the template simply as `ctype<std::isprint>(string_view{"hi"});`
-template<int (&test)(int)>
-auto
-ircd::ctype(const string_view &s)
-{
-    return ctype<test>(std::begin(s), std::end(s));
 }
