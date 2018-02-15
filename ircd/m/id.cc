@@ -292,6 +292,7 @@ catch(const qi::expectation_failure<const char *> &e)
 struct ircd::m::id::printer
 :output<const char *>
 {
+	static string_view random_alpha(const id::sigil &, const mutable_buffer &buf, const size_t &len);
 	static string_view random_timebased(const id::sigil &, const mutable_buffer &);
 	static string_view random_prefixed(const id::sigil &, const string_view &prefix, const mutable_buffer &);
 
@@ -376,6 +377,22 @@ ircd::m::id::printer::random_timebased(const id::sigil &sigil,
 	};
 
 	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::m::id::printer::random_alpha(const id::sigil &sigil,
+                                   const mutable_buffer &buf,
+                                   const size_t &len)
+{
+	using buffer::data;
+	using buffer::size;
+
+	const mutable_buffer out
+	{
+		data(buf), std::min(size(buf), len)
+	};
+
+	return rand::string(rand::dict::alpha, out);
 }
 
 //
