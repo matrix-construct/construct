@@ -774,6 +774,10 @@ console_cmd__exec_file(const string_view &line)
 // room
 //
 
+static bool console_cmd__room__redact(const string_view &line);
+static bool console_cmd__room__message(const string_view &line);
+static bool console_cmd__room__set(const string_view &line);
+static bool console_cmd__room__get(const string_view &line);
 static bool console_cmd__room__messages(const string_view &line);
 static bool console_cmd__room__members(const string_view &line);
 static bool console_cmd__room__state(const string_view &line);
@@ -804,6 +808,18 @@ console_cmd__room(const string_view &line)
 
 		case hash("messages"):
 			return console_cmd__room__messages(args);
+
+		case hash("get"):
+			return console_cmd__room__get(args);
+
+		case hash("set"):
+			return console_cmd__room__set(args);
+
+		case hash("message"):
+			return console_cmd__room__message(args);
+
+		case hash("redact"):
+			return console_cmd__room__redact(args);
 	}
 
 	return true;
@@ -925,5 +941,147 @@ console_cmd__room__messages(const string_view &line)
 	for(; it; order == 'b'? --it : ++it)
 		out << pretty_oneline(*it) << std::endl;
 
+	return true;
+}
+
+bool
+console_cmd__room__get(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const string_view type
+	{
+		token(line, ' ', 1)
+	};
+
+	const string_view state_key
+	{
+		token(line, ' ', 2)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	room.get(type, state_key, [](const m::event &event)
+	{
+		out << pretty(event) << std::endl;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__set(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::user::id &sender
+	{
+		token(line, ' ', 1)
+	};
+
+	const string_view type
+	{
+		token(line, ' ', 2)
+	};
+
+	const string_view state_key
+	{
+		token(line, ' ', 3)
+	};
+
+	const json::object &content
+	{
+		token(line, ' ', 4)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		send(room, sender, type, state_key, content)
+	};
+
+	out << event_id << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__message(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::user::id &sender
+	{
+		token(line, ' ', 1)
+	};
+
+	const string_view body
+	{
+		tokens_after(line, ' ', 1)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		message(room, sender, body)
+	};
+
+	out << event_id << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__redact(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::event::id &redacts
+	{
+		token(line, ' ', 1)
+	};
+
+	const m::user::id &sender
+	{
+		token(line, ' ', 2)
+	};
+
+	const string_view reason
+	{
+		tokens_after(line, ' ', 2)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		redact(room, sender, redacts, reason)
+	};
+
+	out << event_id << std::endl;
 	return true;
 }
