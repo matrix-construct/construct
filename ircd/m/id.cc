@@ -294,9 +294,9 @@ catch(const qi::expectation_failure<const char *> &e)
 struct ircd::m::id::printer
 :output<const char *>
 {
-	static string_view random_alpha(const id::sigil &, const mutable_buffer &buf, const size_t &len);
-	static string_view random_timebased(const id::sigil &, const mutable_buffer &);
-	static string_view random_prefixed(const id::sigil &, const string_view &prefix, const mutable_buffer &);
+	static string_view random_alpha(const mutable_buffer &buf, const size_t &len);
+	static string_view random_timebased(const mutable_buffer &);
+	static string_view random_prefixed(const string_view &prefix, const mutable_buffer &);
 
 	template<class generator,
 	         class attribute>
@@ -351,23 +351,21 @@ struct ircd::m::id::printer
 const ircd::m::id::printer;
 
 ircd::string_view
-ircd::m::id::printer::random_prefixed(const id::sigil &sigil,
-                                      const string_view &prefix,
+ircd::m::id::printer::random_prefixed(const string_view &prefix,
                                       const mutable_buffer &buf)
 {
 	using buffer::data;
 
 	const auto len
 	{
-		fmt::sprintf(buf, "%c%s%u", char(sigil), prefix, rand::integer())
+		fmt::sprintf(buf, "%s%u", prefix, rand::integer())
 	};
 
 	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::m::id::printer::random_timebased(const id::sigil &sigil,
-                                       const mutable_buffer &buf)
+ircd::m::id::printer::random_timebased(const mutable_buffer &buf)
 {
 	using buffer::data;
 	using buffer::size;
@@ -375,15 +373,14 @@ ircd::m::id::printer::random_timebased(const id::sigil &sigil,
 	const auto utime(microtime());
 	const auto len
 	{
-		snprintf(data(buf), size(buf), "%c%zd%06d", char(sigil), utime.first, utime.second)
+		snprintf(data(buf), size(buf), "%zd%06d", utime.first, utime.second)
 	};
 
 	return { data(buf), size_t(len) };
 }
 
 ircd::string_view
-ircd::m::id::printer::random_alpha(const id::sigil &sigil,
-                                   const mutable_buffer &buf,
+ircd::m::id::printer::random_alpha(const mutable_buffer &buf,
                                    const size_t &len)
 {
 	using buffer::data;
@@ -463,25 +460,25 @@ ircd::m::id::id(const enum sigil &sigil,
 	char name[64]; switch(sigil)
 	{
 		case sigil::USER:
-			printer::random_prefixed(sigil::USER, "guest", name);
+			printer::random_prefixed("guest", name);
 			break;
 
 		case sigil::ROOM_ALIAS:
-			printer::random_prefixed(sigil::ROOM_ALIAS, "", name);
+			printer::random_prefixed("", name);
 			break;
 
 		case sigil::DEVICE:
-			printer::random_alpha(sigil::DEVICE, name, 16);
+			printer::random_alpha(name, 16);
 			break;
 
 		default:
-			printer::random_timebased(sigil, name);
+			printer::random_timebased(name);
 			break;
 	};
 
 	const auto len
 	{
-		fmt::sprintf(buf, "%s:%s", name, host)
+		fmt::sprintf(buf, "%c%s:%s", char(sigil), name, host)
 	};
 
 	return string_view { buffer::data(buf), size_t(len) };
