@@ -44,6 +44,7 @@ struct ircd::m::id
 	struct room_alias;
 	struct group;
 	struct origin;
+	struct device;
 
 	enum sigil :char;
 	template<class T, size_t SIZE = 256> struct buf;
@@ -85,6 +86,7 @@ enum ircd::m::id::sigil
 	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
 	GROUP       = '+',     ///< Group ID (experimental)
 	ORIGIN      = ':',     ///< Origin ID (experimental)
+	DEVICE      = '%',     ///< Device ID (experimental)
 };
 
 /// (Appendix 4.2.1) User Identifiers
@@ -181,6 +183,16 @@ struct ircd::m::id::origin
 	using buf = m::id::buf<origin>;
 	template<class... args> origin(args&&... a) :m::id{ORIGIN, std::forward<args>(a)...} {}
 	origin() = default;
+};
+
+/// Device ID (EXPERIMENTAL)
+///
+struct ircd::m::id::device
+:ircd::m::id
+{
+	using buf = m::id::buf<device>;
+	template<class... args> device(args&&... a) :m::id{DEVICE, std::forward<args>(a)...} {}
+	device() = default;
 };
 
 // Utilities

@@ -57,6 +57,7 @@ struct ircd::m::id::input
 	const rule<> room_alias_sigil      { lit(char(ircd::m::id::ROOM_ALIAS))    ,"room_alias sigil" };
 	const rule<> group_id_sigil        { lit(char(ircd::m::id::GROUP))           ,"group_id sigil" };
 	const rule<> origin_sigil          { lit(char(ircd::m::id::ORIGIN))            ,"origin sigil" };
+	const rule<> device_sigil          { lit(char(ircd::m::id::DEVICE))            ,"device sigil" };
 	const rule<enum sigil> sigil
 	{
 		event_id_sigil    |
@@ -64,7 +65,8 @@ struct ircd::m::id::input
 		room_id_sigil     |
 		room_alias_sigil  |
 		group_id_sigil    |
-		origin_sigil
+		origin_sigil      |
+		device_sigil
 		,"sigil"
 	};
 
@@ -468,6 +470,10 @@ ircd::m::id::id(const enum sigil &sigil,
 			printer::random_prefixed(sigil::ROOM_ALIAS, "", name);
 			break;
 
+		case sigil::DEVICE:
+			printer::random_alpha(sigil::DEVICE, name, 16);
+			break;
+
 		default:
 			printer::random_timebased(sigil, name);
 			break;
@@ -635,6 +641,7 @@ ircd::m::reflect(const enum id::sigil &c)
 		case id::ROOM_ALIAS:   return "ROOM_ALIAS";
 		case id::GROUP:        return "GROUP";
 		case id::ORIGIN:       return "ORIGIN";
+		case id::DEVICE:       return "DEVICE";
 	}
 
 	return "?????";
