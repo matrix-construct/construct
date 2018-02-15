@@ -174,9 +174,21 @@ resource::response
 handle_post_kind_guest(client &client,
                        const resource::request::object<body> &request)
 {
+	throw m::error
+	{
+		http::FORBIDDEN, "M_GUEST_DISABLED",
+		"Guest access is disabled"
+	};
+
 	const m::id::user::buf user_id
 	{
 		m::generate, my_host()
+	};
+
+	char access_token_buf[32];
+	const string_view access_token
+	{
+		m::user::gen_access_token(access_token_buf)
 	};
 
 	return resource::response
@@ -185,7 +197,7 @@ handle_post_kind_guest(client &client,
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     my_host()      },
-//			{ "access_token",    access_token   },
+			{ "access_token",    access_token   },
 		}
 	};
 }
