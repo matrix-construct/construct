@@ -228,3 +228,18 @@ ircd::m::user::gen_password_hash(const mutable_buffer &out,
 
 	return b64encode_unpadded(out, hash);
 }
+
+//
+// user::room
+//
+
+ircd::m::user::room::room(const m::user::id &user_id)
+:room{m::user{user_id}}
+{}
+
+ircd::m::user::room::room(const m::user &user)
+:user{user}
+,room_id{user.room_id()}
+{
+	static_cast<m::room &>(*this) = room_id;
+}

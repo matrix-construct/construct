@@ -18,15 +18,19 @@ namespace ircd::m
 
 struct ircd::m::user
 {
+	struct room;
 	using id = m::id::user;
 
 	id user_id;
 
-	static room accounts;
-	static room sessions;
+	static m::room users;
+	static m::room tokens;
 
 	static string_view gen_password_hash(const mutable_buffer &out, const string_view &candidate);
 	static string_view gen_access_token(const mutable_buffer &out);
+
+	id::room room_id(const mutable_buffer &) const;
+	id::room::buf room_id() const;
 
 	bool is_active() const;
 	bool is_password(const string_view &password) const;
@@ -40,4 +44,17 @@ struct ircd::m::user
 	{}
 
 	user() = default;
+};
+
+struct ircd::m::user::room
+:m::room
+{
+	m::user user;
+	id::room::buf room_id;
+
+	room(const m::user &user);
+	room(const m::user::id &user_id);
+	room() = default;
+	room(const room &) = delete;
+	room &operator=(const room &) = delete;
 };
