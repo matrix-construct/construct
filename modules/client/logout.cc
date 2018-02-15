@@ -10,17 +10,24 @@
 
 using namespace ircd;
 
-resource logout_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 3.3.2 :Logout"
+};
+
+resource
+logout_resource
 {
 	"/_matrix/client/r0/logout",
 	{
-		"Invalidates an existing access token, so that it can no longer be used for "
-		"authorization. (3.2.3)"
+		"(3.3.2) Invalidates an existing access token, so that it can no"
+		" longer be used for authorization."
 	}
 };
 
 resource::response
-logout(client &client, const resource::request &request)
+post__logout(client &client, const resource::request &request)
 {
 	const auto &access_token
 	{
@@ -33,15 +40,11 @@ logout(client &client, const resource::request &request)
 	};
 }
 
-resource::method post_method
+resource::method
+post_method
 {
-	logout_resource, "POST", logout,
+	logout_resource, "POST", post__logout,
 	{
 		post_method.REQUIRES_AUTH
 	}
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/logout' to handle requests"
 };

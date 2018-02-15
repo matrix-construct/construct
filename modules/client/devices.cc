@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Client-Server 11.9 Device Management"
+	"Client 11.9 Device Management"
 };
 
 ircd::resource

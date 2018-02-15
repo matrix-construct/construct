@@ -10,12 +10,14 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"registers the resource 'client/keys'"
+	"Client 11.10.2 :End-to-End Encryption Keys"
 };
 
-ircd::resource keys_upload_resource
+ircd::resource
+keys_upload_resource
 {
 	"/_matrix/client/unstable/keys/upload/", resource::opts
 	{
@@ -25,8 +27,8 @@ ircd::resource keys_upload_resource
 };
 
 resource::response
-post_keys_upload(client &client,
-                 const resource::request &request)
+post__keys_upload(client &client,
+                  const resource::request &request)
 {
 	return resource::response
 	{
@@ -34,9 +36,10 @@ post_keys_upload(client &client,
 	};
 }
 
-resource::method method_post
+resource::method
+method_post
 {
-	keys_upload_resource, "POST", post_keys_upload,
+	keys_upload_resource, "POST", post__keys_upload,
 	{
 		method_post.REQUIRES_AUTH
 	}

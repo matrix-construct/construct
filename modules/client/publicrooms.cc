@@ -10,12 +10,18 @@
 
 using namespace ircd;
 
-resource publicrooms_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 7.5 :Public Rooms"
+};
+
+resource
+publicrooms_resource
 {
 	"/_matrix/client/r0/publicRooms",
 	{
-		"Lists the public rooms on the server. "
-		"This API returns paginated responses. (7.5)"
+		"(7.5) Lists the public rooms on the server. "
 	}
 };
 
@@ -31,7 +37,8 @@ m::room public_
 };
 
 resource::response
-get_publicrooms(client &client, const resource::request &request)
+get__publicrooms(client &client,
+                 const resource::request &request)
 {
 	return resource::response
 	{
@@ -39,12 +46,8 @@ get_publicrooms(client &client, const resource::request &request)
 	};
 }
 
-resource::method post
+resource::method
+get_method
 {
-	publicrooms_resource, "GET", get_publicrooms
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/publicrooms' to manage Matrix rooms"
+	publicrooms_resource, "GET", get__publicrooms
 };

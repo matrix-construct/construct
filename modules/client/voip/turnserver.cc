@@ -10,22 +10,24 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"registers the resource 'client/voip/turnserver' to handle requests."
+	"Client 11.3 :Voice over IP"
 };
 
-resource turnserver_resource
+resource
+turnserver_resource
 {
 	"/_matrix/client/r0/voip/turnServer",
 	{
-		"(11.3.3) "
-		"This API provides credentials for the client to use when initiating calls."
+		"(11.3.3) This API provides credentials for the client to use"
+		" when initiating calls."
 	}
 };
 
 resource::response
-get_turnserver(client &client, const resource::request &request)
+get__turnserver(client &client, const resource::request &request)
 {
 	return resource::response
 	{
@@ -33,9 +35,10 @@ get_turnserver(client &client, const resource::request &request)
 	};
 }
 
-resource::method turnserver_get
+resource::method
+turnserver_get
 {
-	turnserver_resource, "GET", get_turnserver,
+	turnserver_resource, "GET", get__turnserver,
 	{
 		//get_turnserver.REQUIRES_AUTH
 	}

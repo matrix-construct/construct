@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Client-Server 8.2 Profiles"
+	"Client 8.2 :Profiles"
 };
 
 ircd::resource

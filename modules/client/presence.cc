@@ -10,23 +10,25 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"registers the resource 'client/presence'"
+	"Client 11.6 :Presence"
 };
 
-ircd::resource presence_resource
+ircd::resource
+presence_resource
 {
 	"/_matrix/client/r0/presence/", resource::opts
 	{
-		"Presence",
+		"(11.6.2) Presence",
 		resource::DIRECTORY,
 	}
 };
 
 resource::response
-put_presence(client &client,
-             const resource::request &request)
+put__presence(client &client,
+              const resource::request &request)
 {
 	return resource::response
 	{
@@ -34,9 +36,10 @@ put_presence(client &client,
 	};
 }
 
-resource::method method_put
+resource::method
+method_put
 {
-	presence_resource, "PUT", put_presence,
+	presence_resource, "PUT", put__presence,
 	{
 		method_put.REQUIRES_AUTH
 	}

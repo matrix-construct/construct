@@ -10,9 +10,16 @@
 
 using namespace ircd;
 
-resource directory_room_resource
+mapi::header
+IRCD_MODULE
 {
-	"/_matrix/client/r0/directory/room",
+	"Client 7.2 :Room aliases"
+};
+
+resource
+directory_room_resource
+{
+	"/_matrix/client/r0/directory/room/",
 	{
 		"(7.2) Room aliases",
 		directory_room_resource.DIRECTORY
@@ -33,12 +40,8 @@ get_directory_room(client &client, const resource::request &request)
 	};
 }
 
-resource::method directory_room_get
+resource::method
+directory_room_get
 {
 	directory_room_resource, "GET", get_directory_room
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/directory/room' to manage the Matrix room directory"
 };

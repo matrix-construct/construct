@@ -10,7 +10,14 @@
 
 using namespace ircd;
 
-resource events_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 6.2.2 :Events"
+};
+
+resource
+events_resource
 {
 	"/_matrix/client/r0/events",
 	{
@@ -19,7 +26,7 @@ resource events_resource
 };
 
 resource::response
-get_events(client &client, const resource::request &request)
+get__events(client &client, const resource::request &request)
 {
 	const m::room::id &room_id
 	{
@@ -54,12 +61,8 @@ get_events(client &client, const resource::request &request)
 	};
 }
 
-resource::method method_get
+resource::method
+method_get
 {
-	events_resource, "GET", get_events
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/events' and hosts the events database"
+	events_resource, "GET", get__events
 };

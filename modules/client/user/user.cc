@@ -15,7 +15,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"registers the resource 'client/user' to handle requests"
+	"Client X.X :User endpoints"
 };
 
 resource

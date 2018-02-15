@@ -10,12 +10,19 @@
 
 using namespace ircd;
 
-resource login_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 3.3 :Login"
+};
+
+resource
+login_resource
 {
 	"/_matrix/client/r0/login",
 	{
-		"Authenticates the user by password, and issues an access token "
-		"they can use to authorize themself in subsequent requests. (3.2.2)"
+		"(3.3.1) Authenticates the user by password, and issues an access token "
+		"they can use to authorize themself in subsequent requests."
 	}
 };
 
@@ -149,12 +156,8 @@ get_login(client &client, const resource::request &request)
 	};
 }
 
-resource::method method_get
+resource::method
+method_get
 {
 	login_resource, "GET", get_login
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/login' to handle requests"
 };

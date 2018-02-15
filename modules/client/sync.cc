@@ -13,7 +13,7 @@ using namespace ircd;
 const auto sync_description
 {R"(
 
-6.2.
+6.2.1
 
 Synchronise the client's state with the latest state on the server. Clients
 use this API when they first log in to get an initial snapshot of the state
@@ -59,9 +59,10 @@ const auto on_unload{[]
 	synchronizer_timeout_context.join();
 }};
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"registers the resource 'client/sync' to handle requests.",
+	"Client 6.2.1 :Sync",
 	nullptr,
 	on_unload
 };
@@ -74,7 +75,8 @@ initial_sync(client &client,
              const string_view &set_presence);
 
 resource::response
-sync(client &client, const resource::request &request)
+sync(client &client,
+     const resource::request &request)
 {
 	// 6.2.1 The ID of a filter created using the filter API or a filter JSON object
 	// encoded as a string. The server will detect whether it is an ID or a JSON object

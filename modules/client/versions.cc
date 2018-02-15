@@ -10,11 +10,18 @@
 
 using namespace ircd;
 
-resource versions_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 2.1 :Versions"
+};
+
+resource
+versions_resource
 {
 	"/_matrix/client/versions", resource::opts
 	{
-		"Gets the versions of the specification supported by the server (2.1)"
+		"(2.1) Gets the versions of the specification supported by the server."
 	}
 };
 
@@ -24,7 +31,7 @@ get_versions(client &client,
 {
 	static const json::object object
 	{
-		R"({"versions":["r2.0.0"]})"
+		R"({"versions":["r0.3.0"]})"
 	};
 
 	return resource::response
@@ -33,12 +40,8 @@ get_versions(client &client,
 	};
 }
 
-resource::method getter
+resource::method
+getter
 {
 	versions_resource, "GET", get_versions
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/versions' to handle requests"
 };

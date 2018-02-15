@@ -10,23 +10,25 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"registers the resource 'client/pushers'"
+	"Client 11.12 :Pushers"
 };
 
-ircd::resource pushers_resource
+ircd::resource
+pushers_resource
 {
 	"/_matrix/client/r0/pushers/", resource::opts
 	{
-		"pushers",
+		"(11.12.1) Pushers",
 		resource::DIRECTORY,
 	}
 };
 
 resource::response
-get_pushers(client &client,
-             const resource::request &request)
+get__pushers(client &client,
+              const resource::request &request)
 {
 	return resource::response
 	{
@@ -34,9 +36,10 @@ get_pushers(client &client,
 	};
 }
 
-resource::method method_get
+resource::method
+method_get
 {
-	pushers_resource, "GET", get_pushers,
+	pushers_resource, "GET", get__pushers,
 	{
 		method_get.REQUIRES_AUTH
 	}

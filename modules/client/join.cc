@@ -10,22 +10,25 @@
 
 using namespace ircd;
 
-resource join_resource
+mapi::header
+IRCD_MODULE
+{
+	"Client 7.4.2.3 :Join"
+};
+
+resource
+join_resource
 {
 	"/_matrix/client/r0/join/", resource::opts
 	{
-		"join",
+		"(7.4.2.3) Join room_id or alias.",
 		resource::DIRECTORY,
 	}
 };
 
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/join'"
-};
-
 resource::response
-post_join(client &client, const resource::request &request)
+post__join(client &client,
+           const resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw http::error
@@ -51,7 +54,7 @@ post_join(client &client, const resource::request &request)
 
 resource::method method_post
 {
-	join_resource, "POST", post_join,
+	join_resource, "POST", post__join,
 	{
 		method_post.REQUIRES_AUTH
 	}

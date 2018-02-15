@@ -15,7 +15,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"registers the resource 'client/account' to handle requests"
+	"Client 3.4,3.5,3.6 :Account"
 };
 
 resource
@@ -23,6 +23,6 @@ account_resource
 {
 	"/_matrix/client/r0/account",
 	{
-		"Account management (3.3)"
+		"(3.4,3.5,3.6) Account management"
 	}
 };

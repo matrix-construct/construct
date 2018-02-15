@@ -10,21 +10,23 @@
 
 using namespace ircd;
 
-resource createroom
+mapi::header
+IRCD_MODULE
+{
+	"Client 7.1.1 :Create Room"
+};
+
+resource
+createroom
 {
 	"/_matrix/client/r0/createRoom",
 	{
-		"Create a new room with various configuration options. (7.1.1)"
+		"(7.1.1) Create a new room with various configuration options."
 	}
 };
 
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/createRoom' to handle requests"
-};
-
 resource::response
-room_create(client &client, const resource::request &request)
+post__createroom(client &client, const resource::request &request)
 try
 {
 	const auto name
@@ -78,9 +80,10 @@ catch(const db::not_found &e)
 	};
 }
 
-resource::method post_method
+resource::method
+post_method
 {
-	createroom, "POST", room_create,
+	createroom, "POST", post__createroom,
 	{
 		post_method.REQUIRES_AUTH
 	}

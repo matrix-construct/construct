@@ -15,7 +15,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"registers the resource 'client/rooms/'"
+	"Client 7 :Rooms"
 };
 
 resource
@@ -23,7 +23,7 @@ rooms_resource
 {
 	"/_matrix/client/r0/rooms/",
 	{
-		"Rooms (7.0)",
+		"(7.0) Rooms",
 		resource::DIRECTORY,
 	}
 };

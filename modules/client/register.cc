@@ -10,6 +10,12 @@
 
 using namespace ircd;
 
+mapi::header
+IRCD_MODULE
+{
+	"Client 3.4.1 :Register"
+};
+
 namespace { namespace name
 {
 	constexpr const auto username {"username"};
@@ -183,11 +189,6 @@ resource register_resource
 resource::method post
 {
 	register_resource, "POST", handle_post
-};
-
-mapi::header IRCD_MODULE
-{
-	"registers the resource 'client/register' to handle requests"
 };
 
 void
