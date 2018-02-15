@@ -18,7 +18,10 @@ put__typing(client &client,
             const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
-		throw m::BAD_REQUEST{"user_id parameter missing"};
+		throw m::NEED_MORE_PARAMS
+		{
+			"user_id parameter missing"
+		};
 
 	m::user::id::buf user_id
 	{

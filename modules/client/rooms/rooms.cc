@@ -32,9 +32,9 @@ resource::response
 get_rooms(client &client, const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "/rooms command required"
+			"/rooms command required"
 		};
 
 	m::room::id::buf room_id
@@ -75,7 +75,10 @@ resource::response
 put_rooms(client &client, const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::BAD_REQUEST{"/rooms command required"};
+		throw m::NEED_MORE_PARAMS
+		{
+			"/rooms command required"
+		};
 
 	m::room::id::buf room_id
 	{
@@ -110,7 +113,10 @@ post_rooms(client &client,
            const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::BAD_REQUEST{"/rooms command required"};
+		throw m::NEED_MORE_PARAMS
+		{
+			"/rooms command required"
+		};
 
 	m::room::id::buf room_id
 	{

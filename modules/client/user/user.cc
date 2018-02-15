@@ -32,9 +32,9 @@ resource::response
 get_user(client &client, const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+			"user_id required"
 		};
 
 	m::user::id::buf user_id
@@ -69,9 +69,9 @@ resource::response
 post_user(client &client, resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+			"user_id required"
 		};
 
 	m::user::id::buf user_id
@@ -106,9 +106,9 @@ resource::response
 put_user(client &client, const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_NOT_FOUND", "user id required"
+			"user_id required"
 		};
 
 	m::user::id::buf user_id

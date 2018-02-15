@@ -72,9 +72,8 @@ get__profile(client &client,
              const resource::request &request)
 {
 	if(request.parv.size() < 1)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_MISSING_PARAMS",
 			"user_id path parameter required"
 		};
 
@@ -137,16 +136,14 @@ put__profile(client &client,
               const resource::request &request)
 {
 	if(request.parv.size() < 1)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_MISSING_PARAMS",
 			"user_id path parameter required"
 		};
 
 	if(request.parv.size() < 2)
-		throw m::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "M_MISSING_PARAMS",
 			"profile property path parameter required"
 		};
 

@@ -98,6 +98,7 @@ namespace ircd::m
 	IRCD_M_EXCEPTION(error, FORBIDDEN, http::FORBIDDEN);
 	IRCD_M_EXCEPTION(error, NOT_FOUND, http::NOT_FOUND);
 	IRCD_M_EXCEPTION(error, UNSUPPORTED, http::NOT_IMPLEMENTED);
+	IRCD_M_EXCEPTION(error, NEED_MORE_PARAMS, http::MULTIPLE_CHOICES);
 }
 
 template<class... args>

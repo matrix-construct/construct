@@ -17,10 +17,16 @@ post__receipt(client &client,
               const resource::request &request,
               const m::room::id &room_id)
 {
-	if(request.parv.size() < 4)
-		throw m::BAD_REQUEST
+	if(request.parv.size() < 3)
+		throw m::NEED_MORE_PARAMS
 		{
-			"receipt type and event_id required"
+			"receipt type required"
+		};
+
+	if(request.parv.size() < 4)
+		throw m::NEED_MORE_PARAMS
+		{
+			"event_id required"
 		};
 
 	const string_view &receipt_type

@@ -18,7 +18,10 @@ put__send(client &client,
           const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
-		throw m::BAD_REQUEST{"type parameter missing"};
+		throw m::NEED_MORE_PARAMS
+		{
+			"type parameter missing"
+		};
 
 	const string_view &type
 	{
@@ -26,7 +29,10 @@ put__send(client &client,
 	};
 
 	if(request.parv.size() < 4)
-		throw m::BAD_REQUEST{"txnid parameter missing"};
+		throw m::NEED_MORE_PARAMS
+		{
+			"txnid parameter missing"
+		};
 
 	const string_view &txnid
 	{
