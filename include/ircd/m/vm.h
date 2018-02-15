@@ -20,7 +20,6 @@ namespace ircd::m::vm
 	IRCD_M_EXCEPTION(VM_ERROR, VM_INVALID, http::BAD_REQUEST);
 
 	enum fault :uint;
-	struct front;
 	struct eval;
 
 	using closure = std::function<void (const event &)>;
@@ -28,7 +27,6 @@ namespace ircd::m::vm
 	using dbs::cursor;
 
 	extern struct log::log log;
-	extern struct fronts fronts;
 	extern uint64_t current_sequence;
 	extern ctx::view<const event> inserted;
 
@@ -52,7 +50,6 @@ struct ircd::m::vm::eval
 
 	const struct opts *opts {&default_opts};
 	db::txn txn{*dbs::events};
-	uint64_t cs{0};
 
 	fault operator()(const event &);
 
@@ -87,41 +84,4 @@ enum ircd::m::vm::fault
 	GENERAL,         ///< General protection fault. (#gp)
 	EVENT,           ///< Eval requires addl events in the ef register (#ef)
 	STATE,           ///< Required state is missing (#st)
-};
-
-/// The "event front" for a graph. This holds all of the childless events
-/// for a room. Each childless event may exist at a different depth, but
-/// we track the highest depth to increment it for issuing the next event.
-/// The contents of the front will then be used as the prev references for
-/// that new event. The front is then replaced by the new event.  This is
-/// managed by the vm core.
-///
-struct ircd::m::vm::front
-{
-	int64_t top {0};
-	std::map<std::string, uint64_t, std::less<std::string_view>> map;
-};
-
-/// Singleton iface to all "event fronts" - the top depth in an active graph
-///
-/// This extern singleton is a fundamental structure which holds the highest
-/// depth events in a graph which have no children. The fronts collection
-/// itself is a map of rooms by ID, and one 'front' is held in RAM for each
-/// room. Each front is a collection of those events, which ideally, will
-/// become the prev references for the next event this server issues in the
-/// room.
-///
-/// This is managed by the vm core. The fronts interface is the root of the
-/// RAM footprint for a room known to IRCd. In other words, all room data is
-/// stored in the database except what is reachable through here.
-///
-struct ircd::m::vm::fronts
-{
-	std::map<std::string, front, std::less<std::string_view>> map;
-
-	friend front &fetch(const room::id &, front &, const event &);
-
-  public:
-	front &get(const room::id &, const event &);
-	front &get(const room::id &);
 };

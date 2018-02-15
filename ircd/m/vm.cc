@@ -16,10 +16,6 @@ ircd::m::vm::log
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::fronts)
-ircd::m::vm::fronts
-{};
-
 ircd::ctx::view<const ircd::m::event>
 ircd::m::vm::inserted
 {};

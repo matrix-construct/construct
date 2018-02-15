@@ -98,7 +98,6 @@ noexcept try
 {
 	leave_ircd_room();
 	m::listeners.clear();
-	vm::fronts.map.clear();
 	m::modules.clear();
 }
 catch(const m::error &e)
