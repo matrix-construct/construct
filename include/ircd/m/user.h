@@ -35,4 +35,6 @@ struct ircd::m::user
 	user(const id &user_id)
 	:user_id{user_id}
 	{}
+
+	user() = default;
 };

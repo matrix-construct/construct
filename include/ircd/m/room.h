@@ -102,6 +102,8 @@ struct ircd::m::room
 	:room_id{room_id}
 	,event_id{event_id}
 	{}
+
+	room() = default;
 };
 
 /// Interface to room messages
@@ -141,6 +143,9 @@ struct ircd::m::room::messages
 	messages(const m::room &room, const uint64_t &depth);
 	messages(const m::room &room, const event::id &);
 	messages(const m::room &room);
+	messages() = default;
+	messages(const messages &) = delete;
+	messages &operator=(const messages &) = delete;
 };
 
 /// Interface to room state.
@@ -187,6 +192,9 @@ struct ircd::m::room::state
 	const m::state::id &refresh();
 
 	state(const m::room &);
+	state() = default;
+	state(const state &) = delete;
+	state &operator=(const state &) = delete;
 };
 
 /// Interface to the members of a room.
@@ -204,7 +212,7 @@ struct ircd::m::room::members
 	void for_each(const string_view &membership, const event::closure &view) const;
 	void for_each(const event::closure &view) const;
 
-	members(m::room room)
+	members(const m::room &room)
 	:room{room}
 	{}
 };
@@ -226,7 +234,7 @@ struct ircd::m::room::origins
 	bool test(const closure_bool &view) const;
 	void for_each(const closure &view) const;
 
-	origins(m::room room)
+	origins(const m::room &room)
 	:room{room}
 	{}
 };
