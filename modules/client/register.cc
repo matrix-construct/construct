@@ -22,6 +22,7 @@ namespace { namespace name
 	constexpr const auto bind_email {"bind_email"};
 	constexpr const auto password {"password"};
 	constexpr const auto auth {"auth"};
+	constexpr const auto device_id {"device_id"};
 }}
 
 struct body
@@ -30,7 +31,8 @@ struct body
 	json::property<name::username, string_view>,
 	json::property<name::bind_email, bool>,
 	json::property<name::password, string_view>,
-	json::property<name::auth, json::object>
+	json::property<name::auth, json::object>,
+	json::property<name::device_id, string_view>
 >
 {
 	using super_type::tuple;
@@ -45,13 +47,13 @@ handle_post_kind_user(client &client,
 try
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
-	const json::object auth
+	const json::object &auth
 	{
 		json::get<"auth"_>(request)
 	};
 
-	// 3.3.1 Required. The login type that the client is attempting to complete.
-	const string_view type
+	// 3.3.1 The login type that the client is attempting to complete.
+	const string_view &type
 	{
 		!empty(auth)? unquote(auth.at("type")) : string_view{}
 	};
@@ -87,6 +89,21 @@ try
 		unquote(at<"password"_>(request))
 	};
 
+	// (r0.3.0) 3.4.1 ID of the client device. If this does not correspond to a
+	// known client device, a new device will be created. The server will auto-
+	// generate a device_id if this is not specified.
+	const auto requested_device_id
+	{
+		unquote(json::get<"device_id"_>(request))
+	};
+
+	const m::id::device device_id
+	{
+		requested_device_id?
+			m::id::device::buf{requested_device_id, my_host()}:
+			m::id::device::buf{m::id::generate, my_host()}
+	};
+
 	// 3.3.1 If true, the server binds the email used for authentication to the
 	// Matrix ID with the ID Server. Defaults to false.
 	const auto &bind_email
@@ -117,6 +134,21 @@ try
 	// m.login.password
 	user.password(password);
 
+	char access_token_buf[32];
+	const string_view access_token
+	{
+		m::user::gen_access_token(access_token_buf)
+	};
+
+	// Log the user in by issuing an event in the tokens room containing
+	// the generated token. When this call completes without throwing the
+	// access_token will be committed and the user will be logged in.
+	m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
+	{
+		{ "ip",      string(remote(client))  },
+		{ "device",  device_id               },
+	});
+
 	// Send response to user
 	return resource::response
 	{
@@ -124,7 +156,8 @@ try
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     my_host()      },
-//			{ "access_token",    access_token   },
+			{ "access_token",    access_token   },
+			{ "device_id",       device_id      },
 		}
 	};
 }

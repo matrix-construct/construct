@@ -14,6 +14,8 @@
 namespace ircd::m
 {
 	struct user;
+
+	bool exists(const id::user &);
 }
 
 struct ircd::m::user

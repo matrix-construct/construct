@@ -28,29 +28,56 @@ login_resource
 
 namespace { namespace name
 {
-	constexpr const auto password{"password"};
-	constexpr const auto medium{"medium"};
 	constexpr const auto type{"type"};
 	constexpr const auto user{"user"};
+	constexpr const auto medium{"medium"};
 	constexpr const auto address{"address"};
+	constexpr const auto password{"password"};
+	constexpr const auto token{"token"};
+	constexpr const auto device_id{"device_id"};
+	constexpr const auto initial_device_display_name{"initial_device_display_name"};
 }}
 
 struct body
 :json::tuple
 <
-	json::property<name::password, string_view>,
-	json::property<name::medium, time_t>,
+	/// Required. The login type being used. One of: ["m.login.password",
+	/// "m.login.token"]
 	json::property<name::type, string_view>,
+
+	/// The fully qualified user ID or just local part of the user ID, to
+	/// log in.
 	json::property<name::user, string_view>,
-	json::property<name::address, string_view>
+
+	/// When logging in using a third party identifier, the medium of the
+	/// identifier. Must be 'email'.
+	json::property<name::medium, string_view>,
+
+	/// Third party identifier for the user.
+	json::property<name::address, string_view>,
+
+	/// Required when type is m.login.password. The user's password.
+	json::property<name::password, string_view>,
+
+	/// Required when type is m.login.token. The login token.
+	json::property<name::token, string_view>,
+
+	/// ID of the client device. If this does not correspond to a known client
+	/// device, a new device will be created. The server will auto-generate a
+	/// device_id if this is not specified.
+	json::property<name::device_id, string_view>,
+
+	/// A display name to assign to the newly-created device. Ignored if
+	/// device_id corresponds to a known device.
+	json::property<name::initial_device_display_name, string_view>
 >
 {
 	using super_type::tuple;
 };
 
 resource::response
-post_login_password(client &client,
-                    const resource::request::object<body> &request)
+post__login_password(client &client,
+                     const resource::request::object<body> &request)
 {
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
@@ -80,13 +107,22 @@ post_login_password(client &client,
 			"Access denied."
 		};
 
-	// Generate the access token
-	static constexpr const auto token_len{127};
-	static const auto token_dict{rand::dict::alpha};
-	char token_buf[token_len + 1];
+	const auto requested_device_id
+	{
+		unquote(json::get<"device_id"_>(request))
+	};
+
+	const m::id::device device_id
+	{
+		requested_device_id?
+			m::id::device::buf{requested_device_id, my_host()}:
+			m::id::device::buf{m::id::generate, my_host()}
+	};
+
+	char access_token_buf[32];
 	const string_view access_token
 	{
-		rand::string(token_dict, token_len, token_buf, sizeof(token_buf))
+		m::user::gen_access_token(access_token_buf)
 	};
 
 	// Log the user in by issuing an event in the tokens room containing
@@ -95,49 +131,51 @@ post_login_password(client &client,
 	m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 	{
 		{ "ip",      string(remote(client)) },
-		{ "device",  "unknown"              },
+		{ "device",  device_id              },
 	});
 
 	// Send response to user
 	return resource::response
 	{
-		client,
+		client, json::members
 		{
 			{ "user_id",        user_id        },
 			{ "home_server",    my_host()      },
 			{ "access_token",   access_token   },
+			{ "device_id",      device_id      },
 		}
 	};
 }
 
 resource::response
-post_login(client &client, const resource::request::object<body> &request)
+post_login(client &client,
+           const resource::request::object<body> &request)
 {
-	// x.x.x Required. The login type being used.
-	// Currently only "m.login.password" is supported.
-	const auto type
+	const auto &type
 	{
 		unquote(at<"type"_>(request))
 	};
 
 	if(type == "m.login.password")
-		return post_login_password(client, request);
-	else
-		throw m::error
-		{
-			"M_UNSUPPORTED", "Login type is not supported."
-		};
+		return post__login_password(client, request);
+
+	throw m::UNSUPPORTED
+	{
+		"Login type is not supported."
+	};
 }
 
-resource::method method_post
+resource::method
+method_post
 {
 	login_resource, "POST", post_login
 };
 
 resource::response
-get_login(client &client, const resource::request &request)
+get_login(client &client,
+          const resource::request &request)
 {
-	json::member login_password
+	const json::member login_password
 	{
 		"type", "m.login.password"
 	};

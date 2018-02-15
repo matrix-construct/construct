@@ -10,6 +10,8 @@
 
 #include <ircd/m/m.h>
 
+/// ID of the room which indexes all users (an instance of the room is
+/// provided below).
 const ircd::m::room::id::buf
 users_room_id
 {
@@ -27,17 +29,19 @@ ircd::m::user::users
 	users_room_id
 };
 
-/// The tokens room serves as a key-value lookup for various tokens to
-/// users, etc. It primarily serves to store access tokens for users. This
-/// is a separate room from the users room because in the future it may
-/// have an optimized configuration as well as being more easily cleared.
-///
+/// ID of the room which stores ephemeral tokens (an instance of the room is
+/// provided below).
 const ircd::m::room::id::buf
 tokens_room_id
 {
 	"tokens", ircd::my_host()
 };
 
+/// The tokens room serves as a key-value lookup for various tokens to
+/// users, etc. It primarily serves to store access tokens for users. This
+/// is a separate room from the users room because in the future it may
+/// have an optimized configuration as well as being more easily cleared.
+///
 ircd::m::room
 ircd::m::user::tokens
 {
@@ -92,22 +96,16 @@ void
 ircd::m::user::password(const string_view &password)
 try
 {
-	//TODO: ADD SALT
-	const sha256::buf hash
+	char buf[64];
+	const auto supplied
 	{
-		sha256{password}
+		gen_password_hash(buf, password)
 	};
 
-	char b64[64];
-	const auto digest
+	const user::room user_room{*this};
+	send(user_room, user_id, "ircd.password", user_id,
 	{
-		b64encode_unpadded(b64, hash)
-	};
-
-	const auto room_id{this->room_id()};
-	send(room_id, user_id, "ircd.password", user_id,
-	{
-		{ "sha256", digest }
+		{ "sha256", supplied }
 	});
 }
 catch(const m::ALREADY_MEMBER &e)
@@ -119,24 +117,18 @@ catch(const m::ALREADY_MEMBER &e)
 }
 
 bool
-ircd::m::user::is_password(const string_view &supplied_password)
+ircd::m::user::is_password(const string_view &password)
 const
 {
-	//TODO: ADD SALT
-	const sha256::buf hash
+	char buf[64];
+	const auto supplied
 	{
-		sha256{supplied_password}
-	};
-
-	char b64[64];
-	const auto supplied_hash
-	{
-		b64encode_unpadded(b64, hash)
+		gen_password_hash(buf, password)
 	};
 
 	bool ret{false};
-	const auto room_id{this->room_id()};
-	m::room{room_id}.get("ircd.password", user_id, [&supplied_hash, &ret]
+	const user::room user_room{*this};
+	user_room.get("ircd.password", user_id, [&supplied, &ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -144,12 +136,12 @@ const
 			json::at<"content"_>(event)
 		};
 
-		const auto &correct_hash
+		const auto &correct
 		{
 			unquote(content.at("sha256"))
 		};
 
-		ret = supplied_hash == correct_hash;
+		ret = supplied == correct;
 	});
 
 	return ret;
