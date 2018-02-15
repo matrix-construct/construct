@@ -227,13 +227,21 @@ ctype(const string_view &s)
 	return ctype<test>(begin(s), end(s));
 }
 
-/// convenience wrapper for ctype(string_view) to avoid the -1 test for
-/// success in any intuitive boolean statement.
+/// Boolean alternative for ctype to avoid the -1/pos test
+template<int (&test)(int) = std::isprint>
+ssize_t
+all_of(const char *begin,
+       const char *const &end)
+{
+	return std::all_of(begin, end, test);
+}
+
+/// Boolean alternative for ctype(string_view)
 template<int (&test)(int)>
 bool
-valid(const string_view &s)
+all_of(const string_view &s)
 {
-	return ctype<test>(s) == -1L;
+	return std::all_of(begin(s), end(s), test);
 }
 
 /// Zero testing functor (work in progress)
