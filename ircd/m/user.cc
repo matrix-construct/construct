@@ -201,3 +201,30 @@ const
 		buf, user_id.local(), my_host()
 	};
 }
+
+ircd::string_view
+ircd::m::user::gen_access_token(const mutable_buffer &buf)
+{
+	static const size_t token_max{32};
+	static const auto &token_dict{rand::dict::alpha};
+
+	const mutable_buffer out
+	{
+		data(buf), std::min(token_max, size(buf))
+	};
+
+	return rand::string(token_dict, out);
+}
+
+ircd::string_view
+ircd::m::user::gen_password_hash(const mutable_buffer &out,
+                                 const string_view &supplied_password)
+{
+	//TODO: ADD SALT
+	const sha256::buf hash
+	{
+		sha256{supplied_password}
+	};
+
+	return b64encode_unpadded(out, hash);
+}

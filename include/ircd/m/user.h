@@ -25,6 +25,9 @@ struct ircd::m::user
 	static room accounts;
 	static room sessions;
 
+	static string_view gen_password_hash(const mutable_buffer &out, const string_view &candidate);
+	static string_view gen_access_token(const mutable_buffer &out);
+
 	bool is_active() const;
 	bool is_password(const string_view &password) const;
 
