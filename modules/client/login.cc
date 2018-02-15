@@ -62,15 +62,15 @@ post_login_password(client &client,
 	};
 
 	if(!user.is_password(supplied_password))
-		throw m::error
+		throw m::FORBIDDEN
 		{
-			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
+			"Access denied."
 		};
 
 	if(!user.is_active())
-		throw m::error
+		throw m::FORBIDDEN
 		{
-			http::FORBIDDEN, "M_FORBIDDEN", "Access denied."
+			"Access denied."
 		};
 
 	// Generate the access token

@@ -52,9 +52,9 @@ try
 
 	// We only support this for now, for some reason. TODO: XXX
 	if(type && type != "m.login.dummy")
-		throw m::error
+		throw m::UNSUPPORTED
 		{
-			"M_UNSUPPORTED", "Registration '%s' not supported.", type
+			"Registration '%s' not supported.", type
 		};
 
 	// 3.3.1 The local part of the desired Matrix ID. If omitted, the homeserver MUST
@@ -126,8 +126,7 @@ catch(const m::INVALID_MXID &e)
 {
 	throw m::error
 	{
-		http::BAD_REQUEST,
-		"M_INVALID_USERNAME",
+		http::BAD_REQUEST, "M_INVALID_USERNAME",
 		"Not a valid username. Please try again."
 	};
 };
@@ -167,10 +166,8 @@ handle_post(client &client,
 	if(kind.empty() || kind == "user")
 		return handle_post_kind_user(client, request);
 
-	throw m::error
+	throw m::UNSUPPORTED
 	{
-		http::BAD_REQUEST,
-		"M_UNKNOWN",
 		"Unknown 'kind' of registration specified in query."
 	};
 }

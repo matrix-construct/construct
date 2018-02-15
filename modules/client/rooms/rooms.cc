@@ -96,7 +96,10 @@ put_rooms(client &client, const resource::request &request)
 	if(cmd == "typing")
 		return put__typing(client, request, room_id);
 
-	throw m::NOT_FOUND{"/rooms command not found"};
+	throw m::NOT_FOUND
+	{
+		"/rooms command not found"
+	};
 }
 
 resource::method
@@ -137,9 +140,9 @@ post_rooms(client &client,
 	if(cmd == "join")
 		return post__join(client, request, room_id);
 
-	throw m::error
+	throw m::NOT_FOUND
 	{
-		http::MULTIPLE_CHOICES, "M_NOT_FOUND", "/rooms command required"
+		"/rooms command not found"
 	};
 }
 

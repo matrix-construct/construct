@@ -46,7 +46,7 @@ post__filter(client &client,
 	// (5.2) Required. The id of the user uploading the filter. The access
 	// token must be authorized to make requests for this user id.
 	if(user_id != request.user_id)
-		throw m::ACCESS_DENIED
+		throw m::FORBIDDEN
 		{
 			"Trying to post a filter for `%s' but you are `%s'",
 			user_id,
