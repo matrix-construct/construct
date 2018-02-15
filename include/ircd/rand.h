@@ -33,20 +33,9 @@ namespace ircd::rand
 	// Random character from dictionary
 	char character(const std::string &dict = dict::alnum);
 
-	// Random string of len from dictionary; char buffers null terminated, uchar not.
-	template<size_t size> string_view string(const std::string &dict, const size_t &len, char (&buf)[size]);
-	string_view string(const std::string &dict, const size_t &len, char *const &buf, const size_t &max);
-	string_view string(const std::string &dict, const size_t &len, uint8_t *const &buf);
+	// Random string from dictionary
+	string_view string(const std::string &dict, const mutable_buffer &out);
 	std::string string(const std::string &dict, const size_t &len);
-}
-
-template<size_t size>
-ircd::string_view
-ircd::rand::string(const std::string &dict,
-                   const size_t &len,
-                   char (&buf)[size])
-{
-	return string(dict, len, buf, size);
 }
 
 // Random character from dictionary

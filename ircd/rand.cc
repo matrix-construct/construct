@@ -48,47 +48,27 @@ std::string
 ircd::rand::string(const std::string &dict,
                    const size_t &len)
 {
-	std::string ret(len, char());
-	string(dict, len, reinterpret_cast<uint8_t *>(&ret.front()));
-	return ret;
-}
-
-ircd::string_view
-ircd::rand::string(const std::string &dict,
-                   const size_t &len,
-                   char *const &buf,
-                   const size_t &max)
-{
-	if(unlikely(!max))
-		return { buf, max };
-
-	const auto size
+	return ircd::util::string(len, [&dict]
+	(const mutable_buffer &buf)
 	{
-		std::min(len, max - 1)
-	};
-
-	buf[size] = '\0';
-	return string(dict, size, reinterpret_cast<uint8_t *>(buf));
+		return string(dict, buf);
+	});
 }
 
 ircd::string_view
 ircd::rand::string(const std::string &dict,
-                   const size_t &len,
-                   uint8_t *const &buf)
+                   const mutable_buffer &out)
 {
 	std::uniform_int_distribution<size_t> dist
 	{
 		0, dict.size() - 1
 	};
 
-	std::generate(buf, buf + len, [&dict, &dist]
-	() -> uint8_t
+	std::generate(data(out), data(out) + size(out), [&dict, &dist]
+	() -> char
 	{
 		return dict.at(dist(mt));
 	});
 
-	return string_view
-	{
-		reinterpret_cast<const char *>(buf), len
-	};
+	return out;
 }
