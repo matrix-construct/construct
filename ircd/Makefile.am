@@ -65,29 +65,32 @@ libircd_la_LIBADD = \
 # Add the most dependent units at the end and the least dependent units
 # at the beginning.
 #
+# Note: Some exceptions to the order have been made for now to diffuse
+# the units that compile spirit grammars otherwise they thrash weaker
+# systems.
 libircd_la_SOURCES =   \
+	http.cc            \
 	exception.cc       \
 	locale.cc          \
 	logger.cc          \
 	info.cc            \
 	sodium.cc          \
+	rfc1459.cc         \
 	rand.cc            \
 	hash.cc            \
 	lexical.cc         \
 	base.cc            \
 	parse.cc           \
-	rfc1459.cc         \
-	json.cc            \
 	openssl.cc         \
-	http.cc            \
-	fmt.cc             \
 	fs.cc              \
 	ctx.cc             \
-	db.cc              \
-	mods.cc            \
 	rfc3986.cc         \
 	rfc1035.cc         \
+	mods.cc            \
+	fmt.cc             \
+	db.cc              \
 	net.cc             \
+	json.cc            \
 	server.cc          \
 	client.cc          \
 	resource.cc        \
