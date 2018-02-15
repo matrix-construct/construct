@@ -38,6 +38,7 @@ origin
 origin_server_ts
 prev_events
 prev_state
+redacts
 room_id
 sender
 signatures

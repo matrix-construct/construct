@@ -566,6 +566,26 @@ ircd::m::dbs::desc::events_content
 };
 
 const ircd::database::descriptor
+ircd::m::dbs::desc::events_redacts
+{
+	// name
+	"redacts",
+
+	// explanation
+	R"(### protocol note:
+
+	### developer note:
+	key is event_id
+	value is targeted event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	}
+};
+
+const ircd::database::descriptor
 ircd::m::dbs::desc::events_room_id
 {
 	// name
@@ -1104,6 +1124,7 @@ ircd::m::dbs::desc::events
 	events_origin_server_ts,
 	events_prev_events,
 	events_prev_state,
+	events_redacts,
 	events_room_id,
 	events_sender,
 	events_signatures,

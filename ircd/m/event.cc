@@ -165,6 +165,7 @@ ircd::m::pretty(const event &event)
 		"depth",
 		"state_key",
 		"membership",
+		"redacts",
 	};
 
 	json::for_each(event, top_keys, out);
@@ -295,6 +296,7 @@ ircd::m::pretty_oneline(const event &event)
 		s << "*" << " ";
 
 	out("membership", json::get<"membership"_>(event));
+	out("redacts", json::get<"redacts"_>(event));
 
 	const json::object &contents{json::get<"content"_>(event)};
 	if(!contents.empty())

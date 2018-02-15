@@ -35,6 +35,7 @@ namespace ircd::m::name
 	constexpr const char *const origin_server_ts {"origin_server_ts"};
 	constexpr const char *const prev_events {"prev_events"};
 	constexpr const char *const prev_state {"prev_state"};
+	constexpr const char *const redacts {"redacts"};
 	constexpr const char *const room_id {"room_id"};
 	constexpr const char *const sender {"sender"};
 	constexpr const char *const signatures {"signatures"};

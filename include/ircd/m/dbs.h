@@ -61,6 +61,7 @@ namespace ircd::m::dbs::desc
 	extern const database::descriptor events_origin_server_ts;
 	extern const database::descriptor events_prev_events;
 	extern const database::descriptor events_prev_state;
+	extern const database::descriptor events_redacts;
 	extern const database::descriptor events_room_id;
 	extern const database::descriptor events_sender;
 	extern const database::descriptor events_signatures;

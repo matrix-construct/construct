@@ -46,6 +46,7 @@ namespace ircd::m
 	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::object &content);
 
 	// [SET] Convenience sends
+	event::id::buf redact(const room &, const m::id::user &sender, const m::id::event &, const string_view &reason);
 	event::id::buf message(const room &, const m::id::user &sender, const json::members &content);
 	event::id::buf message(const room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
 	event::id::buf membership(const room &, const m::id::user &, const string_view &membership);

@@ -54,6 +54,7 @@ struct ircd::m::event
 	json::property<name::origin_server_ts, time_t>,
 	json::property<name::prev_events, json::array>,
 	json::property<name::prev_state, json::array>,
+	json::property<name::redacts, json::string>,
 	json::property<name::room_id, json::string>,
 	json::property<name::sender, json::string>,
 	json::property<name::signatures, json::object>,
