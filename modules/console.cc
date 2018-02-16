@@ -399,15 +399,16 @@ console_cmd__event__dump(const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	m::dbs::cursor cursor
+	db::column column
 	{
-		"event_id"
+		*m::dbs::events, "event_id"
 	};
 
 	static char buf[512_KiB];
 	char *pos{buf};
-	size_t foff{0}, ecount{0}, acount{0};
-	for(auto it(begin(cursor)); it != end(cursor); ++it, ++ecount)
+	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	m::event::fetch event;
+	for(auto it(begin(column)); it != end(column); ++it, ++ecount)
 	{
 		const auto remain
 		{
@@ -416,9 +417,15 @@ console_cmd__event__dump(const string_view &line)
 
 		assert(remain >= 64_KiB && remain <= sizeof(buf));
 		const mutable_buffer mb{pos, remain};
-		const m::event event{*it};
-		pos += json::print(mb, event);
+		const string_view event_id{it->second};
+		seek(event, event_id, std::nothrow);
+		if(unlikely(!event.valid(event_id)))
+		{
+			++errcount;
+			continue;
+		}
 
+		pos += json::print(mb, event);
 		if(pos + 64_KiB > buf + sizeof(buf))
 		{
 			const const_buffer cb{buf, pos};
@@ -439,6 +446,7 @@ console_cmd__event__dump(const string_view &line)
 	    << " using " << foff << " bytes"
 	    << " in " << acount << " writes"
 	    << " to " << filename
+	    << " with " << errcount << " errors"
 	    << std::endl;
 
 	return true;

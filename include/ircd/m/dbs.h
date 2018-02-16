@@ -14,7 +14,6 @@
 namespace ircd::m::dbs
 {
 	struct init;
-	struct cursor;
 
 	// Database instance
 	extern std::shared_ptr<db::database> events;

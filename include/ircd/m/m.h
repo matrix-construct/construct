@@ -46,7 +46,6 @@ namespace ircd
 #include "id.h"
 #include "event.h"
 #include "dbs.h"
-#include "cursor.h"
 #include "state.h"
 #include "room.h"
 #include "user.h"

@@ -24,7 +24,6 @@ namespace ircd::m::vm
 
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
-	using dbs::cursor;
 
 	extern struct log::log log;
 	extern uint64_t current_sequence;
