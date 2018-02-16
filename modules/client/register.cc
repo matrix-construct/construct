@@ -97,7 +97,7 @@ try
 		unquote(json::get<"device_id"_>(request))
 	};
 
-	const m::id::device device_id
+	const auto device_id
 	{
 		requested_device_id?
 			m::id::device::buf{requested_device_id, my_host()}:
