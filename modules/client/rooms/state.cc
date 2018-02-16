@@ -133,3 +133,39 @@ get__state(client &client,
 
 	return get__state(client, request, room_id, event_id);
 }
+
+resource::response
+put__state(client &client,
+           const resource::request &request,
+           const m::room::id &room_id)
+{
+	char type_buf[uint(256 * 1.34 + 1)];
+	const string_view &type
+	{
+		url::decode(request.parv[2], type_buf)
+	};
+
+	char skey_buf[uint(256 * 1.34 + 1)];
+	const string_view &state_key
+	{
+		url::decode(request.parv[3], skey_buf)
+	};
+
+	const json::object &content
+	{
+		request.content
+	};
+
+	const auto event_id
+	{
+		m::send(room_id, request.user_id, type, state_key, content)
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "event_id", event_id }
+		}
+	};
+}

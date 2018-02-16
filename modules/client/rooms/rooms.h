@@ -30,6 +30,11 @@ get__state(ircd::client &client,
            const ircd::resource::request &request,
            const ircd::m::room::id &room_id);
 
+ircd::resource::response
+put__state(ircd::client &client,
+           const ircd::resource::request &request,
+           const ircd::m::room::id &room_id);
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // members.cc

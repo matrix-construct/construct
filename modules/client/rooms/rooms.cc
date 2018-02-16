@@ -96,6 +96,9 @@ put_rooms(client &client, const resource::request &request)
 	if(cmd == "send")
 		return put__send(client, request, room_id);
 
+	if(cmd == "state")
+		return put__state(client, request, room_id);
+
 	if(cmd == "typing")
 		return put__typing(client, request, room_id);
 
