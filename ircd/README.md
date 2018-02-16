@@ -7,9 +7,6 @@ handles requests from end-users. The library hosts a set of pluggable modules
 which may introduce the actual application features (or the "business logic")
 of the server. These additional modules are found in the `modules/` directory;
 
-This library can be embedded by developers creating their own server or those
-who simply want to use the library of routines it provides.
-
 ##### libircd can be embedded in your application with very minimal overhead.
 
 Linking to libircd from your executable allows you to customize and extend the
@@ -28,7 +25,7 @@ decision for making IRCd an accessible open source internet project.
 ##### libircd is single-threaded✝
 
 This methodology ensures there is an _uninterrupted_, _uncontended_,
-_predictable_, execution. If there are periods of execution which are
+_predictable_ execution. If there are periods of execution which are
 computationally intense like parsing, hashing, cryptography, etc: this is
 absorbed in lieu of thread synchronization and bus contention. Scaling this
 system is done through running multiple independent instances which
