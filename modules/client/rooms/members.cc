@@ -28,7 +28,7 @@ get__members(client &client,
 	};
 
 	std::vector<json::value> ret;
-	ret.reserve(2048); // 2048 * 16 bytes... good enuf atm
+	ret.reserve(32);
 
 	members.for_each([&ret](const m::event &event)
 	{
