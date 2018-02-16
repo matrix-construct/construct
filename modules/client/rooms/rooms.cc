@@ -143,6 +143,9 @@ post_rooms(client &client,
 	if(cmd == "join")
 		return post__join(client, request, room_id);
 
+	if(cmd == "redact")
+		return post__redact(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"

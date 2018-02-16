@@ -80,6 +80,11 @@ put__redact(ircd::client &client,
             const ircd::resource::request &request,
             const ircd::m::room::id &room_id);
 
+ircd::resource::response
+post__redact(ircd::client &client,
+             const ircd::resource::request &request,
+             const ircd::m::room::id &room_id);
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // receipt.cc

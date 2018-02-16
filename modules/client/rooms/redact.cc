@@ -62,3 +62,43 @@ put__redact(client &client,
 		}
 	};
 }
+
+resource::response
+post__redact(client &client,
+             const resource::request &request,
+             const m::room::id &room_id)
+{
+	if(request.parv.size() < 3)
+		throw m::NEED_MORE_PARAMS
+		{
+			"event_id parameter missing"
+		};
+
+	m::event::id::buf redacts
+	{
+		url::decode(request.parv[2], redacts)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto &reason
+	{
+		unquote(request["reason"])
+	};
+
+	const auto event_id
+	{
+		redact(room, request.user_id, redacts, reason)
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "event_id", event_id }
+		}
+	};
+}
