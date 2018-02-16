@@ -40,6 +40,11 @@ get__members(ircd::client &client,
              const ircd::resource::request &request,
              const ircd::m::room::id &room_id);
 
+ircd::resource::response
+get__joined_members(ircd::client &client,
+                    const ircd::resource::request &request,
+                    const ircd::m::room::id &room_id);
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // context.cc

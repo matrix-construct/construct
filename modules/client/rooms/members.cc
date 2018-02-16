@@ -17,14 +17,9 @@ get__members(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	const m::room room
-	{
-		room_id
-	};
-
 	const m::room::members members
 	{
-		room
+		room_id
 	};
 
 	std::vector<json::value> ret;
@@ -40,6 +35,41 @@ get__members(client &client,
 		client, json::members
 		{
 			{ "chunk", json::value { ret.data(), ret.size() } }
+		}
+	};
+}
+
+resource::response
+get__joined_members(client &client,
+                    const resource::request &request,
+                    const m::room::id &room_id)
+{
+	const m::room::members members
+	{
+		room_id
+	};
+
+	std::vector<json::member> ret;
+	ret.reserve(32);
+
+	members.for_each("join", [&ret](const m::event &event)
+	{
+		ret.emplace_back(json::member
+		{
+			at<"sender"_>(event), at<"content"_>(event)
+		});
+	});
+
+	const json::strung joined
+	{
+		ret.data(), ret.data() + ret.size()
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "joined", joined }
 		}
 	};
 }

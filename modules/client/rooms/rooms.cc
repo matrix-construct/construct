@@ -56,6 +56,9 @@ get_rooms(client &client, const resource::request &request)
 	if(cmd == "members")
 		return get__members(client, request, room_id);
 
+	if(cmd == "joined_members")
+		return get__joined_members(client, request, room_id);
+
 	if(cmd == "context")
 		return get__context(client, request, room_id);
 
