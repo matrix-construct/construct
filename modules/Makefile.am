@@ -120,6 +120,7 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/context.cc \
 	client/rooms/send.cc \
 	client/rooms/typing.cc \
+	client/rooms/redact.cc \
 	client/rooms/receipt.cc \
 	client/rooms/join.cc \
 	client/rooms/read_markers.cc \

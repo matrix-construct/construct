@@ -72,6 +72,16 @@ put__typing(ircd::client &client,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// redact.cc
+//
+
+ircd::resource::response
+put__redact(ircd::client &client,
+            const ircd::resource::request &request,
+            const ircd::m::room::id &room_id);
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // receipt.cc
 //
 

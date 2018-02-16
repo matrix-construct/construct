@@ -96,6 +96,9 @@ put_rooms(client &client, const resource::request &request)
 	if(cmd == "typing")
 		return put__typing(client, request, room_id);
 
+	if(cmd == "redact")
+		return put__redact(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
