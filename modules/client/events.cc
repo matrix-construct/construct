@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Client 6.2.2 :Events"
+	"Client 11.16 :Room Previews"
 };
 
 resource
@@ -21,42 +21,45 @@ events_resource
 {
 	"/_matrix/client/r0/events",
 	{
-		"Events (6.2.3) (10.x)"
+		"(11.16) Room Previews"
 	}
 };
 
 resource::response
-get__events(client &client, const resource::request &request)
+get__events(client &client,
+            const resource::request &request)
 {
+	if(!request.has("room_id"))
+		throw m::UNSUPPORTED
+		{
+			"Specify a room_id or use /sync"
+		};
+
 	const m::room::id &room_id
 	{
-		unquote(request["room_id"])
+		unquote(request.at("room_id"))
 	};
 
-	const m::vm::query<m::vm::where::equal> query
+	const m::room room
 	{
-		{ "room_id", room_id }
+		room_id
 	};
 
-	size_t i(0);
-	m::vm::for_each(query, [&i](const auto &event)
+	const string_view start{};
+	const string_view end{};
+	std::vector<json::value> events;
+	json::value chunk
 	{
-		++i;
-	});
-
-	size_t j(0);
-	json::value ret[i];
-	m::vm::for_each(query, [&i, &j, &ret](const m::event &event)
-	{
-		if(j < i)
-			ret[j++] = event;
-	});
+		events.data(), events.size()
+	};
 
 	return resource::response
 	{
 		client, json::members
 		{
-			{ "chunk", { ret, j } }
+			{ "start",  start },
+			{ "chunk",  chunk },
+			{ "end",    end   },
 		}
 	};
 }
