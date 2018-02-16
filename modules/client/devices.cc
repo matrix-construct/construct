@@ -66,27 +66,17 @@ resource::response
 get__devices(client &client,
              const resource::request &request)
 {
-	const m::user user
+	const m::user::room user_room
 	{
 		request.user_id
-	};
-
-	const m::room::id::buf user_room_id
-	{
-		user.room_id()
-	};
-
-	const m::room user_room
-	{
-		user_room_id
 	};
 
 	if(request.parv.size() < 1)
 		return get__devices_all(client, request, user_room);
 
-	const string_view &device_id
+	m::id::device::buf device_id
 	{
-		request.parv[1]
+		url::decode(request.parv[1], device_id)
 	};
 
 	user_room.get("ircd.device", device_id, [&]
@@ -120,24 +110,14 @@ put__devices(client &client,
 			"device_id required"
 		};
 
-	const m::user user
+	const m::user::room user_room
 	{
 		request.user_id
 	};
 
-	const m::room::id::buf user_room_id
+	m::id::device::buf device_id
 	{
-		user.room_id()
-	};
-
-	const m::room user_room
-	{
-		user_room_id
-	};
-
-	const string_view &device_id
-	{
-		request.parv[1]
+		url::decode(request.parv[1], device_id)
 	};
 
 	user_room.get("ircd.device", device_id, [&]
@@ -179,24 +159,14 @@ delete__devices(client &client,
 			"device_id required"
 		};
 
-	const m::user user
+	const m::user::room user_room
 	{
 		request.user_id
 	};
 
-	const m::room::id::buf user_room_id
+	m::id::device::buf device_id
 	{
-		user.room_id()
-	};
-
-	const m::room user_room
-	{
-		user_room_id
-	};
-
-	const string_view &device_id
-	{
-		request.parv[1]
+		url::decode(request.parv[1], device_id)
 	};
 
 	if(!user_room.has("ircd.device", device_id))
