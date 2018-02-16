@@ -400,13 +400,16 @@ const
 
 	bool ret{false};
 	messages it{*this};
-	for(; bool(it) && !ret; --it)
+	for(; it; --it)
 	{
 		const auto &event_id{it.event_id()};
 		column(event_id, [&ret, &type](const string_view &value)
 		{
 			ret = value == type;
 		});
+
+		if(ret)
+			break;
 	}
 
 	if(ret && closure)
