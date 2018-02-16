@@ -64,9 +64,10 @@ put__presence_status(client &client,
 	};
 
 	json::iov content;
-	const json::iov::push _presence
+	const json::iov::push _presence[]
 	{
-		content, { "presence", presence }
+		{ content, { "presence", presence } },
+		{ content, { "user_id",  user_id  } },
 	};
 
 	const json::iov::set_if _status_msg
