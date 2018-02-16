@@ -361,6 +361,60 @@ const
 	return ret;
 }
 
+bool
+ircd::m::room::has(const string_view &type)
+const
+{
+	return get(std::nothrow, type, nullptr);
+}
+
+void
+ircd::m::room::get(const string_view &type,
+                   const event::closure &closure)
+const
+{
+	if(!get(std::nothrow, type, closure))
+		throw m::NOT_FOUND
+		{
+			"No events of type '%s' found in '%s'",
+			type,
+			room_id
+		};
+}
+
+bool
+ircd::m::room::get(std::nothrow_t,
+                   const string_view &type,
+                   const event::closure &closure)
+const
+{
+	static constexpr auto idx
+	{
+		json::indexof<event, "type"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(idx)
+	};
+
+	bool ret{false};
+	messages it{*this};
+	for(; bool(it) && !ret; --it)
+	{
+		const auto &event_id{it.event_id()};
+		column(event_id, [&ret, &type](const string_view &value)
+		{
+			ret = value == type;
+		});
+	}
+
+	if(ret && closure)
+		closure(*it);
+
+	return ret;
+}
+
 void
 ircd::m::room::get(const string_view &type,
                    const string_view &state_key,

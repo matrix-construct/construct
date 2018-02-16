@@ -95,6 +95,11 @@ struct ircd::m::room
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 
+	// Convenience passthru to room::messages (linear query)
+	bool get(std::nothrow_t, const string_view &type, const event::closure &) const;
+	void get(const string_view &type, const event::closure &) const;
+	bool has(const string_view &type) const;
+
 	// misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 
