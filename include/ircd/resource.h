@@ -144,9 +144,10 @@ struct ircd::resource::method
 
 	enum flag
 	{
-		REQUIRES_AUTH  = 0x01,
-		RATE_LIMITED   = 0x02,
-		VERIFY_ORIGIN  = 0x04,
+		REQUIRES_AUTH         = 0x01,
+		RATE_LIMITED          = 0x02,
+		VERIFY_ORIGIN         = 0x04,
+		CONTENT_DISCRETION    = 0x08,
 	};
 
 	struct opts

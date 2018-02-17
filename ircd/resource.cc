@@ -263,7 +263,7 @@ ircd::resource::operator()(client &client,
 		content_partial
 	};
 
-	if(content_remain)
+	if(content_remain && ~method.opts.flags & method.CONTENT_DISCRETION)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;
 		client.content_buffer = unique_buffer<mutable_buffer>{head.content_length};
@@ -275,7 +275,6 @@ ircd::resource::operator()(client &client,
 			data(client.content_buffer) + size(content_partial), content_remain
 		};
 
-		//TODO: more discretion from the method.
 		// Read the remaining content off the socket.
 		client.content_consumed += read_all(*client.sock, content_remain_buffer);
 		assert(client.content_consumed == head.content_length);

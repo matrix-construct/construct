@@ -671,6 +671,7 @@ try
 	};
 
 	resource(*this, head, content_partial);
+	discard_unconsumed();
 	return true;
 }
 catch(const http::error &e)
