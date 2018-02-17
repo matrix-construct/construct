@@ -19,8 +19,11 @@ namespace ircd::m
 	struct room_filter;
 	struct event_filter;
 	struct room_event_filter;
+
+	bool match(const event_filter &, const event &);
 }
 
+/// 5.1 "Filter" we use event_filter here
 struct ircd::m::event_filter
 :json::tuple
 <
@@ -35,6 +38,7 @@ struct ircd::m::event_filter
 	using super_type::operator=;
 };
 
+/// 5.1 "RoomEventFilter"
 struct ircd::m::room_event_filter
 :json::tuple
 <
@@ -51,6 +55,7 @@ struct ircd::m::room_event_filter
 	using super_type::operator=;
 };
 
+/// 5.1 "RoomFilter"
 struct ircd::m::room_filter
 :json::tuple
 <

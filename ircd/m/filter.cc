@@ -10,6 +10,43 @@
 
 #include <ircd/m/m.h>
 
+//TODO: globular expression
+bool
+ircd::m::match(const event_filter &filter,
+               const event &event)
+{
+	for(const auto &type : json::get<"not_types"_>(filter))
+		if(at<"type"_>(event) == unquote(type))
+			return false;
+
+	for(const auto &sender : json::get<"not_senders"_>(filter))
+		if(at<"sender"_>(event) == unquote(sender))
+			return false;
+
+	if(empty(json::get<"senders"_>(filter)) && empty(json::get<"types"_>(filter)))
+		return true;
+
+	if(empty(json::get<"senders"_>(filter)))
+	{
+		for(const auto &type : json::get<"types"_>(filter))
+			if(at<"type"_>(event) == unquote(type))
+				return true;
+
+		return false;
+	}
+
+	if(empty(json::get<"types"_>(filter)))
+	{
+		for(const auto &sender : json::get<"senders"_>(filter))
+			if(at<"sender"_>(event) == unquote(sender))
+				return true;
+
+		return false;
+	}
+
+	return true;
+}
+
 ircd::m::filter::filter(const user &user,
                         const string_view &filter_id,
                         const mutable_buffer &buf)
