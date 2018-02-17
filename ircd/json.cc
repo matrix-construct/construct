@@ -235,7 +235,7 @@ struct ircd::json::output
 
 	rule<string_view> chars
 	{
-		*(karma::print) //TODO: exacting
+		*char_ //TODO: exacting
 		,"characters"
 	};
 
