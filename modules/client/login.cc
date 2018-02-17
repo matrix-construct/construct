@@ -148,8 +148,8 @@ post__login_password(client &client,
 }
 
 resource::response
-post_login(client &client,
-           const resource::request::object<body> &request)
+post__login(client &client,
+            const resource::request::object<body> &request)
 {
 	const auto &type
 	{
@@ -168,12 +168,12 @@ post_login(client &client,
 resource::method
 method_post
 {
-	login_resource, "POST", post_login
+	login_resource, "POST", post__login
 };
 
 resource::response
-get_login(client &client,
-          const resource::request &request)
+get__login(client &client,
+           const resource::request &request)
 {
 	const json::member login_password
 	{
@@ -197,5 +197,5 @@ get_login(client &client,
 resource::method
 method_get
 {
-	login_resource, "GET", get_login
+	login_resource, "GET", get__login
 };

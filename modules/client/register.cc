@@ -42,8 +42,8 @@ static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
 
 resource::response
-handle_post_kind_user(client &client,
-                      const resource::request::object<body> &request)
+post__register_user(client &client,
+                    const resource::request::object<body> &request)
 try
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
@@ -171,8 +171,8 @@ catch(const m::INVALID_MXID &e)
 };
 
 resource::response
-handle_post_kind_guest(client &client,
-                       const resource::request::object<body> &request)
+post__register_guest(client &client,
+                     const resource::request::object<body> &request)
 {
 	throw m::error
 	{
@@ -203,8 +203,8 @@ handle_post_kind_guest(client &client,
 }
 
 resource::response
-handle_post(client &client,
-            const resource::request::object<body> &request)
+post__register(client &client,
+               const resource::request::object<body> &request)
 {
 	const auto kind
 	{
@@ -212,10 +212,10 @@ handle_post(client &client,
 	};
 
 	if(kind == "guest")
-		return handle_post_kind_guest(client, request);
+		return post__register_guest(client, request);
 
 	if(kind.empty() || kind == "user")
-		return handle_post_kind_user(client, request);
+		return post__register_user(client, request);
 
 	throw m::UNSUPPORTED
 	{
@@ -223,17 +223,19 @@ handle_post(client &client,
 	};
 }
 
-resource register_resource
+resource
+register_resource
 {
 	"/_matrix/client/r0/register",
 	{
-		"Register for an account on this homeserver. (3.3.1)"
+		"(3.3.1) Register for an account on this homeserver."
 	}
 };
 
-resource::method post
+resource::method
+method_post
 {
-	register_resource, "POST", handle_post
+	register_resource, "POST", post__register
 };
 
 void
