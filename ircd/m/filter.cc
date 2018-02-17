@@ -12,6 +12,25 @@
 
 //TODO: globular expression
 bool
+ircd::m::match(const room_event_filter &filter,
+               const event &event)
+{
+	for(const auto &room_id : json::get<"not_rooms"_>(filter))
+		if(at<"room_id"_>(event) == unquote(room_id))
+			return false;
+
+	if(empty(json::get<"rooms"_>(filter)))
+		return match(event_filter{filter}, event);
+
+	for(const auto &room_id : json::get<"rooms"_>(filter))
+		if(at<"room_id"_>(event) == unquote(room_id))
+			return match(event_filter{filter}, event);
+
+	return false;
+}
+
+//TODO: globular expression
+bool
 ircd::m::match(const event_filter &filter,
                const event &event)
 {
