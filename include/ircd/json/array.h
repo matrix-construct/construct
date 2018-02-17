@@ -17,6 +17,7 @@ namespace ircd::json
 
 	bool empty(const array &);
 	bool operator!(const array &);
+	size_t size(const array &);
 
 	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
 	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
@@ -143,7 +144,12 @@ const
 	return it;
 }
 
-__attribute__((warning("Taking string_view::size() not the count() of array elements")))
+inline size_t
+ircd::json::size(const array &array)
+{
+	return array.size();
+}
+
 inline size_t
 ircd::json::array::size()
 const

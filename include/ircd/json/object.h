@@ -17,6 +17,7 @@ namespace ircd::json
 
 	bool empty(const object &);
 	bool operator!(const object &);
+	size_t size(const object &);
 	template<name_hash_t key, class T = string_view> T at(const object &);
 	template<name_hash_t key, class T = string_view> T get(const object &, const T &def = {});
 }
@@ -323,12 +324,17 @@ catch(const bad_lex_cast &e)
 	return def;
 }
 
-__attribute__((warning("Taking string_view::size() not the count() of members in the object")))
+inline size_t
+ircd::json::size(const object &object)
+{
+	return object.size();
+}
+
 inline size_t
 ircd::json::object::size()
 const
 {
-	return string_view::size();
+	return count();
 }
 
 inline size_t
