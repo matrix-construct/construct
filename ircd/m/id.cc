@@ -586,10 +586,10 @@ ircd::m::valid_local(const id::sigil &sigil,
 }
 
 bool
-ircd::m::valid_sigil(const string_view &s)
+ircd::m::has_sigil(const string_view &s)
 try
 {
-	return valid_sigil(s.at(0));
+	return is_sigil(s.at(0));
 }
 catch(const std::out_of_range &e)
 {
@@ -597,7 +597,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-ircd::m::valid_sigil(const char &c)
+ircd::m::is_sigil(const char &c)
 {
 	const char *start{&c};
 	const char *const stop{start + 1};
@@ -627,21 +627,21 @@ ircd::m::sigil(const char &c)
 	return ret;
 }
 
-const char *
+ircd::string_view
 ircd::m::reflect(const enum id::sigil &c)
 {
 	switch(c)
 	{
-		case id::EVENT:        return "EVENT";
-		case id::USER:         return "USER";
-		case id::ROOM:         return "ROOM";
-		case id::ROOM_ALIAS:   return "ROOM_ALIAS";
-		case id::GROUP:        return "GROUP";
-		case id::ORIGIN:       return "ORIGIN";
-		case id::DEVICE:       return "DEVICE";
+		case id::EVENT:        return "EVENT"_sv;
+		case id::USER:         return "USER"_sv;
+		case id::ROOM:         return "ROOM"_sv;
+		case id::ROOM_ALIAS:   return "ROOM_ALIAS"_sv;
+		case id::GROUP:        return "GROUP"_sv;
+		case id::ORIGIN:       return "ORIGIN"_sv;
+		case id::DEVICE:       return "DEVICE"_sv;
 	}
 
-	return "?????";
+	return "?????"_sv;
 }
 
 void
