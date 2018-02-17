@@ -133,28 +133,24 @@ ircd::json::print(const mutable_buffer &buf,
 
 template<class... T>
 ircd::json::strung::strung(T&&... t)
-:std::string{[&]() -> std::string
+:std::string
 {
-	const auto size
+	util::string(serialized(std::forward<T>(t)...), [&t...]
+	(const mutable_buffer &out)
 	{
-		serialized(std::forward<T>(t)...)
-	};
-
-	std::string ret(size, char{});
-	const auto buf{const_cast<char *>(ret.data())};
-	const auto max{ret.size() + 1};
-	const auto printed
-	{
-		print(mutable_buffer{buf, max}, std::forward<T>(t)...)
-	};
-
-	if(unlikely(printed != ret.size()))
-		throw assertive
+		const auto sv
 		{
-			"%zu != %zu: %s", printed, ret.size(), ret
+			stringify(mutable_buffer{out}, std::forward<T>(t)...)
 		};
 
-	return ret;
-}()}
-{
-}
+		using ircd::size;
+		assert(valid(sv, std::nothrow)); //note: false alarm when T=json::member
+		if(unlikely(size(sv) != size(out)))
+			throw assertive
+			{
+				"%zu != %zu: %s", size(sv), size(out), sv
+			};
+
+		return sv;
+	})
+}{}
