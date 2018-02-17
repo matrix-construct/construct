@@ -46,19 +46,19 @@ struct ircd::client
 
 	struct conf *conf {&default_conf};
 	unique_buffer<mutable_buffer> head_buffer;
+	unique_buffer<mutable_buffer> content_buffer;
 	std::shared_ptr<socket> sock;
 	ircd::timer timer;
-	http::request::head head;
 	size_t head_length {0};
-	unique_buffer<mutable_buffer> content_buffer;
 	size_t content_consumed {0};
+	resource::request request;
 	bool longpoll {false};
 
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
 
-	void discard_unconsumed();
-	bool resource_request();
+	void discard_unconsumed(const http::request::head &);
+	bool resource_request(const http::request::head &);
 	bool handle_request(parse::capstan &pc);
 	bool main() noexcept;
 	void async();

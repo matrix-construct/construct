@@ -284,29 +284,28 @@ ircd::resource::operator()(client &client,
 		};
 	}
 
+	client.request = resource::request
+	{
+		head, content
+	};
+
 	const auto pathparm
 	{
 		lstrip(head.path, this->path)
 	};
 
-	string_view param[8];
-	const vector_view<string_view> parv
+	client.request.parv =
 	{
-		param, tokens(pathparm, '/', param)
-	};
-
-	resource::request resource_request
-	{
-		head, content, head.query, parv
+		client.request.param, tokens(pathparm, '/', client.request.param)
 	};
 
 	if(method.opts.flags & method.REQUIRES_AUTH)
-		authenticate(client, method, resource_request);
+		authenticate(client, method, client.request);
 
 	if(method.opts.flags & method.VERIFY_ORIGIN)
-		verify_origin(client, method, resource_request);
+		verify_origin(client, method, client.request);
 
-	handle_request(client, method, resource_request);
+	handle_request(client, method, client.request);
 }
 
 void
@@ -437,18 +436,6 @@ catch(const std::bad_function_call &e)
 	{
 		http::SERVICE_UNAVAILABLE
 	};
-}
-
-ircd::resource::request::request(const http::request::head &head,
-                                 const string_view &content,
-                                 http::query::string query,
-                                 const vector_view<string_view> &parv)
-:json::object{content}
-,head{head}
-,content{content}
-,query{std::move(query)}
-,parv{parv}
-{
 }
 
 ircd::resource::response::response(client &client,

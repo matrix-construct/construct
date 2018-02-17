@@ -603,7 +603,7 @@ try
 	// This is the first read off the wire. The headers are entirely read and
 	// the tape is advanced.
 	timer = ircd::timer{};
-	head = http::request::head{pc};
+	const http::request::head head{pc};
 	head_length = pc.parsed - data(head_buffer);
 	content_consumed = std::min(pc.unparsed(), head.content_length);
 	pc.parsed += content_consumed;
@@ -620,7 +620,7 @@ try
 
 	bool ret
 	{
-		resource_request()
+		resource_request(head)
 	};
 
 	if(ret && iequals(head.connection, "close"_sv))
@@ -657,7 +657,7 @@ catch(const ircd::error &e)
 }
 
 bool
-ircd::client::resource_request()
+ircd::client::resource_request(const http::request::head &head)
 try
 {
 	const string_view content_partial
@@ -671,7 +671,7 @@ try
 	};
 
 	resource(*this, head, content_partial);
-	discard_unconsumed();
+	discard_unconsumed(head);
 	return true;
 }
 catch(const http::error &e)
@@ -694,15 +694,18 @@ catch(const http::error &e)
 		// These codes are "recoverable" and allow the next HTTP request in
 		// a pipeline to take place.
 		default:
-			discard_unconsumed();
+			discard_unconsumed(head);
 			return true;
 	}
 }
 
 void
-ircd::client::discard_unconsumed()
+ircd::client::discard_unconsumed(const http::request::head &head)
 {
 	if(unlikely(!sock))
+		return;
+
+	if(longpoll)
 		return;
 
 	const size_t unconsumed
