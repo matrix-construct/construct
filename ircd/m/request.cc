@@ -14,6 +14,58 @@
 // request
 //
 
+ircd::m::request::request(const string_view &method,
+                          const string_view &uri,
+                          const mutable_buffer &body_buf,
+                          const json::members &body)
+:request
+{
+	my_host(),
+	string_view{},
+	method,
+	uri,
+	json::stringify(mutable_buffer{body_buf}, body)
+}
+{}
+
+ircd::m::request::request(const string_view &method,
+                          const string_view &uri)
+:request
+{
+	my_host(),
+	string_view{},
+	method,
+	uri,
+	json::object{}
+}
+{}
+
+ircd::m::request::request(const string_view &method,
+                          const string_view &uri,
+                          const json::object &content)
+:request
+{
+	my_host(),
+	string_view{},
+	method,
+	uri,
+	content
+}
+{}
+
+ircd::m::request::request(const string_view &origin,
+                          const string_view &destination,
+                          const string_view &method,
+                          const string_view &uri,
+                          const json::object &content)
+{
+	json::get<"origin"_>(*this) = origin;
+	json::get<"destination"_>(*this) = destination;
+	json::get<"method"_>(*this) = method;
+	json::get<"uri"_>(*this) = uri;
+	json::get<"content"_>(*this) = content;
+}
+
 ircd::string_view
 ircd::m::request::operator()(const mutable_buffer &out,
                              const vector_view<const http::header> &addl_headers)
