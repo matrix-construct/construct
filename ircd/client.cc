@@ -434,7 +434,7 @@ ircd::client::client()
 }
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:headbuf{HEAD_MAX}
+:head_buffer{HEAD_MAX}
 ,sock{std::move(sock)}
 {
 }
@@ -479,7 +479,7 @@ bool
 ircd::client::main()
 noexcept try
 {
-	parse::buffer pb{headbuf};
+	parse::buffer pb{head_buffer};
 	parse::capstan pc{pb, read_closure(*this)}; do
 	{
 		if(!handle_request(pc))
@@ -604,7 +604,7 @@ try
 	// the tape is advanced.
 	timer = ircd::timer{};
 	head = http::request::head{pc};
-	head_length = pc.parsed - data(headbuf);
+	head_length = pc.parsed - data(head_buffer);
 	content_consumed = std::min(pc.unparsed(), head.content_length);
 	pc.parsed += content_consumed;
 	assert(pc.parsed <= pc.read);
@@ -662,7 +662,7 @@ try
 {
 	const string_view content_partial
 	{
-		data(headbuf) + head_length, content_consumed
+		data(head_buffer) + head_length, content_consumed
 	};
 
 	auto &resource

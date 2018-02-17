@@ -45,11 +45,12 @@ struct ircd::client
 	static ctx::pool context;
 
 	struct conf *conf {&default_conf};
-	unique_buffer<mutable_buffer> headbuf;
+	unique_buffer<mutable_buffer> head_buffer;
 	std::shared_ptr<socket> sock;
 	ircd::timer timer;
 	http::request::head head;
 	size_t head_length {0};
+	unique_buffer<mutable_buffer> content_buffer;
 	size_t content_consumed {0};
 	bool longpoll {false};
 

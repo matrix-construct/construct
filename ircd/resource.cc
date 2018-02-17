@@ -243,23 +243,36 @@ ircd::resource::operator()(client &client,
 			http::PAYLOAD_TOO_LARGE
 		};
 
+	// Content that hasn't yet arrived is remaining
 	const size_t content_remain
 	{
 		head.content_length - client.content_consumed
 	};
 
-	unique_buffer<mutable_buffer> content_buffer;
-	string_view content{content_partial};
+	// View of the content that will be passed to the resource handler. Starts
+	// with the content received so far which is actually in the head's buffer.
+	// One of three things can happen now:
+	//
+	// - There is no more content so we pass this as-is right to the resource.
+	// - There is more content, so we allocate a content buffer, copy what we
+	// have to it, read the rest off the socket, and then reassign this view.
+	// - There is more content, but the resource wants to read it off the
+	// socket on its own terms, so we pass this as-is.
+	string_view content
+	{
+		content_partial
+	};
+
 	if(content_remain)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;
-		content_buffer = unique_buffer<mutable_buffer>{head.content_length};
-		memcpy(data(content_buffer), data(content_partial), size(content_partial));
+		client.content_buffer = unique_buffer<mutable_buffer>{head.content_length};
+		memcpy(data(client.content_buffer), data(content_partial), size(content_partial));
 
 		// Setup a window inside the buffer for the remaining socket read.
 		const mutable_buffer content_remain_buffer
 		{
-			data(content_buffer) + size(content_partial), content_remain
+			data(client.content_buffer) + size(content_partial), content_remain
 		};
 
 		//TODO: more discretion from the method.
@@ -268,7 +281,7 @@ ircd::resource::operator()(client &client,
 		assert(client.content_consumed == head.content_length);
 		content = string_view
 		{
-			data(content_buffer), head.content_length
+			data(client.content_buffer), head.content_length
 		};
 	}
 
