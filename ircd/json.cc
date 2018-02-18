@@ -421,7 +421,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		return *a < *b;
 	});
 
-	const auto print_member
+	static const auto print_member
 	{
 		[](mutable_buffer &buf, const member *const &m)
 		{
@@ -658,7 +658,7 @@ ircd::json::stringify(mutable_buffer &buf,
                       const member *const &b,
                       const member *const &e)
 {
-	const auto print_member
+	static const auto print_member
 	{
 		[](mutable_buffer &buf, const member &m)
 		{
