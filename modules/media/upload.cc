@@ -8,70 +8,148 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <boost/gil/image.hpp>
+#include <boost/gil/typedefs.hpp>
+#include <boost/gil/extension/io/jpeg_io.hpp>
+// #include <boost/gil/extension/numeric/sampler.hpp>
+// #include <boost/gil/extension/numeric/resample.hpp>
+
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"media upload"
+	"11.7 :Content repository (upload)"
 };
 
-struct upload_resource
-:resource
+resource
+upload_resource__legacy
 {
-	using resource::resource;
-}
+	"/_matrix/media/v1/upload/",
+	{
+		"(11.7.1.1) upload (legacy compat)",
+	}
+};
+
+resource
 upload_resource
 {
-	"/_matrix/media/r0/upload/", resource::opts
+	"/_matrix/media/r0/upload/",
 	{
-		"media upload",
-		resource::DIRECTORY
+		"(11.7.1.1) upload",
 	}
 };
 
 resource::response
-handle_post(client &client,
-            const resource::request &request)
+post__upload(client &client,
+             const resource::request &request)
 {
-	auto filename
+	const auto &content_type
+	{
+		request.head.content_type
+	};
+
+	const auto filename
 	{
 		request.query["filename"]
 	};
 
+	char pathbuf[32];
+	const auto path
+	{
+		rand::string(rand::dict::alpha, pathbuf)
+	};
+
+	sha256 hash;
+	size_t offset{0};
+	while(offset < size(request.content))
+	{
+		const string_view pending
+		{
+			data(request.content) + offset, size(request.content) - offset
+		};
+
+		const auto appended
+		{
+			fs::append(path, pending, offset)
+		};
+
+		hash.update(appended);
+		offset += size(appended);
+	}
+	assert(offset == client.content_consumed);
+
+	char buffer[4_KiB];
+	while(client.content_consumed < request.head.content_length)
+	{
+		const size_t remain
+		{
+			request.head.content_length - client.content_consumed
+		};
+
+		const mutable_buffer buf
+		{
+			buffer, std::min(remain, sizeof(buf))
+		};
+
+		const string_view read
+		{
+			data(buf), read_few(*client.sock, buf)
+		};
+
+		client.content_consumed += size(read); do
+		{
+			const auto appended
+			{
+				fs::append(path, read, offset)
+			};
+
+			hash.update(appended);
+			offset += size(appended);
+		}
+		while(offset < client.content_consumed);
+		assert(offset == client.content_consumed);
+	}
+	assert(offset == request.head.content_length);
+
+	char hashbuf[32];
+	hash.digest(hashbuf);
+
+	char uribuf[256], b58buf[64];
+	const string_view content_uri
+	{
+		fmt::sprintf
+		{
+			uribuf, "mxc://%s/%s", my_host(), b58encode(b58buf, hashbuf)
+		}
+	};
+
 	return resource::response
 	{
-		client, http::OK
+		client, http::CREATED, json::members
+		{
+			{ "content_uri", content_uri }
+		}
 	};
 }
 
-resource::method method_post
+struct resource::method::opts
+const method_post_opts
 {
-	upload_resource, "POST", handle_post,
-	{
-		method_post.REQUIRES_AUTH
-	}
+	resource::method::REQUIRES_AUTH |
+	resource::method::CONTENT_DISCRETION,
+
+	8_MiB //TODO: conf; (this is the payload max option)
 };
 
-resource::response
-handle_put(client &client,
-           const resource::request &request)
+resource::method
+method_post
 {
-	auto filename
-	{
-		request.parv[0]
-	};
-
-	return resource::response
-	{
-		client, http::OK
-	};
-}
-/*
-resource::method method_put
-{
-	upload_resource, "PUT", handle_put,
-	{
-		method_put.REQUIRES_AUTH
-	}
+	upload_resource, "POST", post__upload, method_post_opts
 };
-*/
+
+resource::method
+method_post__legacy
+{
+	upload_resource__legacy, "POST", post__upload, method_post_opts
+};
