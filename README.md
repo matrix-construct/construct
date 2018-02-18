@@ -56,6 +56,9 @@ Provides HTTPS TLS / X.509 / etc.
 - **zlib** or **lz4** or **snappy** (Compression library):
 Provides compression for the database, etc.
 
+- **libmagic** (Optional)
+Content MIME type recognition.
+
 - **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 

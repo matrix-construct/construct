@@ -1201,6 +1201,26 @@ AM_CONDITIONAL([PCRE], [test "x$have_pcre" = "xyes"])
 
 
 dnl
+dnl libmagic support
+dnl
+
+RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
+AC_CHECK_LIB(magic, magic_version,
+[
+	have_magic="yes"
+	AC_SUBST(MAGIC_CPPFLAGS, [])
+	AC_SUBST(MAGIC_LDFLAGS, [])
+	AC_SUBST(MAGIC_LIBS, ["-lmagic"])
+	AC_DEFINE(HAVE_MAGIC, 1, [Define to 1 if libmagic (-lmagic) is available.])
+], [
+	have_magic="no"
+])
+
+AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
+
+
+
+dnl
 dnl Additional linkages
 dnl
 
@@ -1389,6 +1409,7 @@ echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support........................ $SSL_TYPE"
+echo "Magic support...................... $have_magic"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"

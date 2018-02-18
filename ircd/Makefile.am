@@ -14,6 +14,7 @@ AM_CPPFLAGS = \
 	-DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1 \
 	@BOOST_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
+	@MAGIC_CPPFLAGS@ \
 	-include ircd/ircd.h \
 	###
 
@@ -46,6 +47,7 @@ libircd_la_LDFLAGS = \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
+	@MAGIC_LDFLAGS@ \
 	###
 
 libircd_la_LIBADD = \
@@ -53,6 +55,7 @@ libircd_la_LIBADD = \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
 	@SODIUM_LIBS@ \
+	@MAGIC_LIBS@ \
 	-lcrypto \
 	-lssl \
 	-lz \
