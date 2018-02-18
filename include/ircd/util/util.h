@@ -143,7 +143,8 @@ auto
 string(const T &s)
 {
 	std::stringstream ss;
-	return static_cast<std::stringstream &>(ss << s).str();
+	ss << s;
+	return ss.str();
 }
 
 inline auto
