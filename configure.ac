@@ -434,6 +434,7 @@ RB_CHK_SYSHEADER(bitset, [BITSET])
 RB_CHK_SYSHEADER(string_view, [STRING_VIEW])
 RB_CHK_SYSHEADER(optional, [OPTIONAL])
 RB_CHK_SYSHEADER(new, [NEW])
+RB_CHK_SYSHEADER(regex, [REGEX])
 
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
@@ -1188,15 +1189,6 @@ AC_CHECK_HEADER(zlib.h, [
 ], zlib=no)
 
 fi
-
-
-
-dnl
-dnl PCRE2 support
-dnl
-
-PKG_CHECK_MODULES(PCRE, [libpcre2-8], [have_pcre="yes"], [have_pcre="no"])
-AM_CONDITIONAL([PCRE], [test "x$have_pcre" = "xyes"])
 
 
 
