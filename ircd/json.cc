@@ -405,7 +405,7 @@ ircd::json::operator<<(std::ostream &s, const iov &iov)
 }
 
 ircd::string_view
-ircd::json::stringify(mutable_buffer &head,
+ircd::json::stringify(mutable_buffer &buf,
                       const iov &iov)
 {
 	const member *m[iov.size()];
@@ -421,7 +421,20 @@ ircd::json::stringify(mutable_buffer &head,
 		return *a < *b;
 	});
 
-	return stringify(head, m, m + iov.size());
+	const auto print_member
+	{
+		[](mutable_buffer &buf, const member *const &m)
+		{
+			printer(buf, printer.name << printer.name_sep, m->first);
+			stringify(buf, m->second);
+		}
+	};
+
+	char *const start{begin(buf)};
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, m, m + iov.size(), print_member);
+	printer(buf, printer.object_end);
+	return { start, begin(buf) };
 }
 
 size_t
@@ -642,27 +655,13 @@ ircd::json::stringify(mutable_buffer &buf,
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const member *const &begin,
-                      const member *const &end)
-{
-	const auto num(std::distance(begin, end));
-	const member *vec[num];
-	for(auto i(0); i < num; ++i)
-		vec[i] = begin + i;
-
-	return stringify(buf, vec, vec + num);
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const member *const *const &b,
-                      const member *const *const &e)
+                      const member *const &b,
+                      const member *const &e)
 {
 	const auto print_member
 	{
-		[](mutable_buffer &buf, const auto &it)
+		[](mutable_buffer &buf, const member &m)
 		{
-			const auto &m(*it);
 			printer(buf, printer.name << printer.name_sep, m.first);
 			stringify(buf, m.second);
 		}
