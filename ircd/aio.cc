@@ -193,7 +193,7 @@ try
 	{
 		ctx::wait();
 	}
-	while(!retval && !errcode);
+	while(retval == -2);
 
 	if(retval == -1)
 		throw_system_error(errcode);
@@ -212,7 +212,6 @@ catch(const ctx::interrupted &e)
 void
 ircd::fs::aio::request::handle()
 {
-	assert(this->retval || errcode);
 	if(likely(waiter && waiter != ctx::current))
 		ircd::ctx::notify(*waiter);
 }

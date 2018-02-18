@@ -54,7 +54,7 @@ struct ircd::fs::aio::request
 	struct read;
 	struct write;
 
-	ssize_t retval {0};
+	ssize_t retval {-2};
 	ssize_t errcode {0};
 	ctx::ctx *waiter {ctx::current};
 
