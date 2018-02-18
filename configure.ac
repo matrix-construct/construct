@@ -24,12 +24,11 @@ AC_PATH_PROG(TOUCH, touch)
 LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
 
-AC_PROG_LIBTOOL
-AC_PROG_MAKE_SET
-AC_PROG_CC
-AC_PROG_CC_C_O
+CXXFLAGS=""
 AC_PROG_CXX
 AC_PROG_CXX_C_O
+AC_PROG_LIBTOOL
+AC_PROG_MAKE_SET
 AC_LANG(C++)
 AC_CONFIG_HEADER(include/ircd/config.h)
 AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201500)
@@ -60,7 +59,6 @@ dnl
 
 AC_SUBST(CC)
 AC_SUBST(CXX)
-AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
@@ -197,6 +195,29 @@ AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
 
 
 dnl
+dnl Optimization
+dnl
+
+AM_COND_IF([DEBUG],
+[
+	CXXFLAGS+=" -O0"
+	CXXFLAGS+=" -ggdb"
+], [
+	CXXFLAGS+=" -O3"
+	CXXFLAGS+=" -ggdb"
+	CXXFLAGS+=" -fweb"
+	CXXFLAGS+=" -fdata-sections"
+	CXXFLAGS+=" -ffunction-sections"
+	CXXFLAGS+=" -ftree-vectorize"
+	CXXFLAGS+=" -fgcse-sm"
+	CXXFLAGS+=" -fgcse-las"
+	CXXFLAGS+=" -fgcse-after-reload"
+	CXXFLAGS+=" -fsched-stalled-insns=0"
+	CXXFLAGS+=" -frename-registers"
+])
+
+
+dnl
 dnl Compiler intrumentation
 dnl
 
@@ -204,6 +225,15 @@ dnl CXXFLAGS+=" -mmpx"
 dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 CXXFLAGS+=" -fchkp-instrument-marked-only"
 CXXFLAGS+=" -fstack-protector-explicit"
+
+
+dnl  -ffriend-injection allows us to deduplicate declarations of friend
+dnl  functions in both the friend class and the enclosing namespace
+CXXFLAGS+=" -ffriend-injection"
+
+dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
+dnl  functions won't be the same between translation units
+CXXFLAGS+=" -fvisibility-inlines-hidden"
 
 
 dnl
@@ -300,36 +330,6 @@ AM_COND_IF([CLANG],
 ])
 
 CPPFLAGS+="$CWARNS"
-
-
-dnl
-dnl Misc
-dnl
-
-AM_COND_IF([DEBUG],
-[
-	CXXFLAGS+=" -O0 -ggdb"
-], [
-	CXXFLAGS+=" -O3"
-	CXXFLAGS+=" -fweb"
-	CXXFLAGS+=" -fdata-sections"
-	CXXFLAGS+=" -ffunction-sections"
-	CXXFLAGS+=" -ftree-vectorize"
-	CXXFLAGS+=" -fgcse-sm"
-	CXXFLAGS+=" -fgcse-las"
-	CXXFLAGS+=" -fgcse-after-reload"
-	CXXFLAGS+=" -fsched-stalled-insns=0"
-	CXXFLAGS+=" -frename-registers"
-])
-
-dnl  -ffriend-injection allows us to deduplicate declarations of friend
-dnl  functions in both the friend class and the enclosing namespace
-CXXFLAGS+=" -ffriend-injection"
-
-dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
-dnl  functions won't be the same between translation units
-CXXFLAGS+=" -fvisibility-inlines-hidden"
-
 
 
 dnl ***************************************************************************
@@ -1366,7 +1366,6 @@ AC_SUBST(MODULES_LIBS)
 AC_SUBST(MOD_TARGET)
 AC_SUBST(PICFLAGS)
 AC_SUBST(SEDOBJ)
-AC_SUBST(CFLAGS)
 
 
 AC_CONFIG_COMMANDS([tools/genssl_chmod], [chmod 755 tools/genssl])
