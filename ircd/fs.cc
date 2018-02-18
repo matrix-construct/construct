@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_MAGIC_H
 #include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
@@ -22,6 +23,12 @@ namespace ircd::fs
 	enum { NAME, PATH };
 	using ent = std::pair<std::string, std::string>;
 	extern const std::array<ent, num_of<index>()> paths;
+}
+
+namespace ircd::fs::magic
+{
+	static void init();
+	static void fini();
 }
 
 /// Non-null when aio is available for use
@@ -45,6 +52,8 @@ ircd::fs::paths
 
 ircd::fs::init::init()
 {
+	magic::init();
+
 	#ifdef IRCD_USE_AIO
 		assert(!aioctx);
 		aioctx = new aio{};
@@ -65,6 +74,7 @@ noexcept
 	#endif
 
 	assert(!aioctx);
+	magic::fini();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,7 +150,6 @@ ircd::fs::read__std(const string_view &path,
 		data(buf), size_t(file.gcount())
 	};
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -345,4 +354,173 @@ noexcept try
 catch(const std::out_of_range &e)
 {
 	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/magic.h
+//
+
+namespace ircd::fs::magic
+{
+	magic_t cookie;
+
+	// magic_getflags() may not be available; this will supplement for our
+	// tracking of their flags state.
+	int flags{MAGIC_NONE};
+
+	static void throw_on_error(const magic_t &);
+	static void set_flags(const magic_t &, const int &flags);
+	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const std::function<const char *()> &);
+	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const const_buffer &);
+}
+
+void
+ircd::fs::magic::init()
+{
+	if(unlikely(!(cookie = ::magic_open(flags))))
+		throw error{"magic_open() failed"};
+
+	//TODO: conf; TODO: windows
+	static const char *const paths[]
+	{
+		"/usr/local/share/misc/magic.mgc",
+		"/usr/share/misc/magic.mgc",
+		nullptr
+	};
+
+	for(const char *const *path{paths}; *path; ++path)
+		if(magic_check(cookie, *path) == 0)
+			if(magic_load(cookie, *path) == 0)
+				return;
+
+	throw error
+	{
+		"Failed to open any magic database"
+	};
+}
+
+void
+ircd::fs::magic::fini()
+{
+	::magic_close(cookie);
+}
+
+ircd::string_view
+ircd::fs::magic::description(const mutable_buffer &out,
+                             const const_buffer &buffer)
+{
+	return call(cookie, MAGIC_NONE, out, buffer);
+}
+
+ircd::string_view
+ircd::fs::magic::extensions(const mutable_buffer &out,
+                            const const_buffer &buffer)
+{
+	return call(cookie, MAGIC_EXTENSION, out, buffer);
+}
+
+ircd::string_view
+ircd::fs::magic::mime_encoding(const mutable_buffer &out,
+                               const const_buffer &buffer)
+{
+	return call(cookie, MAGIC_MIME_ENCODING, out, buffer);
+}
+
+ircd::string_view
+ircd::fs::magic::mime_type(const mutable_buffer &out,
+                           const const_buffer &buffer)
+{
+	return call(cookie, MAGIC_MIME_TYPE, out, buffer);
+}
+
+ircd::string_view
+ircd::fs::magic::mime(const mutable_buffer &out,
+                      const const_buffer &buffer)
+{
+	return call(cookie, MAGIC_MIME, out, buffer);
+}
+
+ircd::string_view
+ircd::fs::magic::call(const magic_t &cookie,
+                      const int &flags,
+                      const mutable_buffer &out,
+                      const const_buffer &buffer)
+{
+	return call(cookie, flags, out, [&cookie, &buffer]
+	{
+		return magic_buffer(cookie, data(buffer), size(buffer));
+	});
+}
+
+ircd::string_view
+ircd::fs::magic::call(const magic_t &cookie,
+                      const int &ours,
+                      const mutable_buffer &out,
+                      const std::function<const char *()> &closure)
+{
+	const auto &theirs{magic::flags};
+	const unwind reset{[&theirs, &cookie]
+	{
+		set_flags(cookie, theirs);
+	}};
+
+	set_flags(cookie, ours);
+	string_view str
+	{
+		closure()
+	};
+
+	if(!str)
+	{
+		throw_on_error(cookie);
+		str = "application/octet-stream"_sv;
+	}
+
+	return { data(out), copy(out, str) };
+}
+
+void
+ircd::fs::magic::set_flags(const magic_t &cookie,
+                           const int &flags)
+{
+	if(magic_setflags(cookie, flags) == -1)
+		throw_on_error(cookie);
+}
+
+void
+ircd::fs::magic::throw_on_error(const magic_t &cookie)
+{
+	const char *const errstr
+	{
+		::magic_error(cookie)
+	};
+
+	if(errstr)
+		throw error
+		{
+			"%s", errstr
+		};
+
+	assert(magic_errno(cookie) == 0);
+}
+
+int
+ircd::fs::magic::version()
+{
+	return ::magic_version();
+}
+
+__attribute__((constructor))
+static void
+ircd_fs_magic_version_check()
+{
+	if(unlikely(MAGIC_VERSION != ircd::fs::magic::version()))
+	{
+		fprintf(stderr, "FATAL: linked libmagic version %d != compiled magic.h version %d.\n",
+		        ircd::fs::magic::version(),
+		        MAGIC_VERSION);
+
+		std::terminate();
+	}
 }

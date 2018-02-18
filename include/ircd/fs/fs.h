@@ -87,6 +87,7 @@ namespace ircd::fs
 	extern aio *aioctx;
 }
 
+#include "magic.h"
 #include "read.h"
 #include "write.h"
 

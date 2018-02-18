@@ -30,14 +30,15 @@ ircd::info::init()
 	// assumed for this execution.
 	log::info
 	{
-		"%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s.",
+		"%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s. libmagic %d.",
 		PACKAGE_STRING,
 		boost_version[0],
 		boost_version[1],
 		boost_version[2],
 		db::version,
 		nacl::version(),
-		openssl::version()
+		openssl::version(),
+		fs::magic::version()
 	};
 
 	// This message flashes posix information about the system and platform IRCd
