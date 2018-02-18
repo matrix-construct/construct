@@ -457,31 +457,30 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 	//TODO: output grammar
 
-	char name[64]; switch(sigil)
+	char namebuf[64];
+	string_view name; switch(sigil)
 	{
 		case sigil::USER:
-			printer::random_prefixed("guest", name);
+			name = printer::random_prefixed("guest", namebuf);
 			break;
 
 		case sigil::ROOM_ALIAS:
-			printer::random_prefixed("", name);
+			name = printer::random_prefixed("", namebuf);
 			break;
 
 		case sigil::DEVICE:
-			printer::random_alpha(name, 16);
+			name = printer::random_alpha(namebuf, 16);
 			break;
 
 		default:
-			printer::random_timebased(name);
+			name = printer::random_timebased(namebuf);
 			break;
 	};
 
-	const auto len
+	return fmt::sprintf
 	{
-		fmt::sprintf(buf, "%c%s:%s", char(sigil), name, host)
+		buf, "%c%s:%s", char(sigil), name, host
 	};
-
-	return string_view { buffer::data(buf), size_t(len) };
 }()}
 {
 }
