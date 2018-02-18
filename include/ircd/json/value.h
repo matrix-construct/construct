@@ -71,7 +71,7 @@ struct ircd::json::value
 	uint64_t alloc   : 1;       ///< indicates the pointer for type is owned
 	uint64_t floats  : 1;       ///< for NUMBER type, integer or floating
 
-	using create_string_closure = std::function<void (const mutable_buffer &)>;
+	using create_string_closure = std::function<void (mutable_buffer &)>;
 	void create_string(const size_t &len, const create_string_closure &);
 
   public:

@@ -1198,7 +1198,7 @@ ircd::json::value::value(const json::members &members)
 ,floats{false}
 {
 	create_string(len, [&members]
-	(mutable_buffer buffer)
+	(mutable_buffer &buffer)
 	{
 		json::stringify(buffer, members);
 	});
@@ -1214,9 +1214,10 @@ ircd::json::value::value(const value &other)
 {
 	if(alloc && serial)
 	{
-		create_string(len, [this](mutable_buffer buffer)
+		create_string(len, [this]
+		(mutable_buffer &buffer)
 		{
-			copy(buffer, string_view{*this});
+			consume(buffer, copy(buffer, string_view{*this}));
 		});
 	}
 	else switch(type)
@@ -1228,7 +1229,7 @@ ircd::json::value::value(const value &other)
 
 			const size_t count(this->len);
 			create_string(serialized(object, object + count), [this, &count]
-			(mutable_buffer buffer)
+			(mutable_buffer &buffer)
 			{
 				json::stringify(buffer, object, object + count);
 			});
@@ -1242,7 +1243,7 @@ ircd::json::value::value(const value &other)
 
 			const size_t count(this->len);
 			create_string(serialized(array, array + count), [this, &count]
-			(mutable_buffer buffer)
+			(mutable_buffer &buffer)
 			{
 				json::stringify(buffer, array, array + count);
 			});
@@ -1255,7 +1256,7 @@ ircd::json::value::value(const value &other)
 				break;
 
 			create_string(serialized(*this), [this]
-			(mutable_buffer buffer)
+			(mutable_buffer &buffer)
 			{
 				json::stringify(buffer, *this);
 			});
@@ -1516,7 +1517,7 @@ ircd::json::value::create_string(const size_t &len,
 		new char[max]
 	};
 
-	const mutable_buffer buffer
+	mutable_buffer buffer
 	{
 		string.get(), len
 	};
