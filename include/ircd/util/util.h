@@ -174,7 +174,14 @@ string(const size_t &size,
 		const_cast<char *>(ret.data()), ret.size()
 	};
 
-	ret.resize(closure(buf));
+	const size_t consumed
+	{
+		closure(buf)
+	};
+
+	assert(consumed <= buffer::size(buf));
+	data(buf)[consumed] = '\0';
+	ret.resize(consumed);
 	return ret;
 }
 
