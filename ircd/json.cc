@@ -39,7 +39,6 @@ namespace ircd::json
 	using karma::long_;
 	using karma::double_;
 	using karma::bool_;
-	using karma::maxwidth;
 	using karma::eps;
 	using karma::attr_cast;
 
@@ -282,18 +281,12 @@ const ircd::json::parser;
 struct ircd::json::printer
 :output<char *>
 {
-	template<class generator,
-	         class attribute>
-	bool operator()(char *&out, char *const &stop, generator&& gen, attribute&& a) const;
+	template<class gen,
+	         class... attr>
+	bool operator()(mutable_buffer &out, gen&&, attr&&...) const;
 
-	template<class generator>
-	bool operator()(char *&out, char *const &stop, generator&& gen) const;
-
-	template<class... args>
-	bool operator()(mutable_buffer &out, args&&... a) const
-	{
-		return operator()(begin(out), end(out), std::forward<args>(a)...);
-	}
+	template<class gen>
+	bool operator()(mutable_buffer &out, gen&&) const;
 
 	template<class it_a,
 	         class it_b,
@@ -309,56 +302,64 @@ struct ircd::json::ostreamer
 const ircd::json::ostreamer;
 
 template<class gen,
-         class attr>
+         class... attr>
 bool
-ircd::json::printer::operator()(char *&out,
-                                char *const &stop,
+ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
-                                attr&& a)
+                                attr&&... a)
 const
 {
-	const auto throws{[&out, &stop]
+	const auto maxwidth
 	{
-		throw print_error
-		{
-			"Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
-			demangle<decltype(a)>(),
-			demangle<decltype(g)>(),
-			size_t(stop - out)
-		};
-	}};
+		karma::maxwidth(size(out))
+	};
 
 	const auto gg
 	{
-		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[throws]
+		maxwidth[std::forward<gen>(g)]
 	};
 
-	return karma::generate(out, gg, std::forward<attr>(a));
+	const auto throws{[&out]
+	{
+		throw print_error
+		{
+			"Failed to print attributes '%s' generator '%s' (%zd bytes in buffer)",
+			demangle<decltype(a)...>(),
+			demangle<decltype(g)>(),
+			size(out)
+		};
+	}};
+
+	return karma::generate(begin(out), gg | eps[throws], std::forward<attr>(a)...);
 }
 
 template<class gen>
 bool
-ircd::json::printer::operator()(char *&out,
-                                char *const &stop,
+ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
 const
 {
-	const auto throws{[&out, &stop]
+	const auto maxwidth
+	{
+		karma::maxwidth(size(out))
+	};
+
+	const auto gg
+	{
+		maxwidth[std::forward<gen>(g)]
+	};
+
+	const auto throws{[&out]
 	{
 		throw print_error
 		{
 			"Failed to print generator '%s' (%zd bytes in buffer)",
 			demangle<decltype(g)>(),
-			size_t(stop - out)
+			size(out)
 		};
 	}};
 
-	const auto gg
-	{
-		maxwidth(size_t(stop - out))[std::forward<gen>(g)] | eps[throws]
-	};
-
-	return karma::generate(out, gg);
+	return karma::generate(begin(out), gg | eps[throws]);
 }
 
 template<class it_a,
