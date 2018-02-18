@@ -49,6 +49,7 @@ get_root(client &client, const resource::request &request)
 		rsplit(filename, '.').second
 	};
 
+	char content_type_buf[64];
 	string_view content_type; switch(hash(extension))
 	{
 		case hash("css"):    content_type = "text/css; charset=utf-8";  break;
@@ -70,13 +71,7 @@ get_root(client &client, const resource::request &request)
 		case hash("txt"):    content_type = "text/plain; charset=utf-8"; break;
 		default:
 		{
-			if(!empty(extension))
-				log::warning
-				{
-					"Unknown mime type for extension '%s'", extension
-				};
-
-			content_type = "application/octet-stream";
+			content_type = fs::magic::mime(content_type_buf, string_view{content});
 			break;
 		}
 	}
