@@ -43,8 +43,10 @@ AM_LDFLAGS += \
 # This puts the source in vm/ but the installed
 # library is vm_X.so in the main modules dir.
 m_moduledir = @moduledir@
+
 console_la_SOURCES = console.cc
 m_noop_la_SOURCES = m_noop.cc
+
 m_module_LTLIBRARIES = \
 	console.la \
 	m_noop.la \
@@ -55,8 +57,10 @@ m_module_LTLIBRARIES = \
 # /
 #
 
-moduledir=@moduledir@
+moduledir = @moduledir@
+
 root_la_SOURCES = root.cc
+
 module_LTLIBRARIES = \
 	root.la \
 	###
@@ -69,8 +73,6 @@ module_LTLIBRARIES = \
 # This puts the source in client/ but the installed
 # library is client_X.so in the main modules dir.
 client_moduledir = @moduledir@
-client_module_LTLIBRARIES = \
-	###
 
 client_client_versions_la_SOURCES = client/versions.cc
 client_client_events_la_SOURCES = client/events.cc
@@ -89,7 +91,8 @@ client_client_pushrules_la_SOURCES = client/pushrules.cc
 client_client_join_la_SOURCES = client/join.cc
 client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
 client_client_directory_room_la_SOURCES = client/directory/room.cc
-client_module_LTLIBRARIES += \
+
+client_module_LTLIBRARIES = \
 	client/client_versions.la \
 	client/client_events.la \
 	client/client_register.la \
@@ -160,11 +163,11 @@ client_module_LTLIBRARIES += client/client_account.la
 # /_matrix/key/
 #
 
-# This puts the source in key/ but the installed
-# library is key_X.so in the main modules dir.
 key_moduledir = @moduledir@
+
 key_key_server_la_SOURCES = key/server.cc
 key_key_query_la_SOURCES = key/query.cc
+
 key_module_LTLIBRARIES = \
 	key/key_server.la \
 	key/key_query.la \
@@ -175,12 +178,12 @@ key_module_LTLIBRARIES = \
 # /_matrix/federation/
 #
 
-# This puts the source in federation/ but the installed
-# library is federation_X.so in the main modules dir.
 federation_moduledir = @moduledir@
+
 federation_federation_send_la_SOURCES = federation/send.cc
 federation_federation_event_la_SOURCES = federation/event.cc
 federation_federation_get_missing_events_la_SOURCES = federation/get_missing_events.cc
+
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
 	federation/federation_event.la \
@@ -192,11 +195,11 @@ federation_module_LTLIBRARIES = \
 # /_matrix/media/
 #
 
-# This puts the source in media/ but the installed
-# library is media_X.so in the main modules dir.
 media_moduledir = @moduledir@
+
 media_media_download_la_SOURCES = media/download.cc
 media_media_upload_la_SOURCES = media/upload.cc
+
 media_module_LTLIBRARIES = \
 	media/media_download.la \
 	media/media_upload.la \
@@ -208,17 +211,19 @@ media_module_LTLIBRARIES = \
 #
 
 if JS
+
 server_moduledir = @moduledir@
+
 server_server_console_la_SOURCES = server/console.cc
 server_server_listener_la_SOURCES = server/listener.cc
-server_module_LTLIBRARIES = \
-        server/server_console.la \
-        server/server_listener.la \
-        ###
-endif
 
-if JS
+server_module_LTLIBRARIES = \
+	server/server_console.la \
+	server/server_listener.la \
+	###
+
 module_LTLIBRARIES += \
 	kernel.la \
 	###
+
 endif
