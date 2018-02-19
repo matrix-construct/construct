@@ -149,16 +149,13 @@ struct ircd::buffer::buffer
 struct ircd::buffer::mutable_buffer
 :buffer<char *>
 {
-	using iterator = typename buffer<char *>::iterator;
-	using value_type = typename buffer<char *>::value_type;
-
 	// Conversion offered for the analogous asio buffer
 	operator boost::asio::mutable_buffer() const;
 
 	// Allows boost::spirit to append to the buffer; this means the size() of
 	// this buffer becomes a consumption counter and the real size of the buffer
 	// must be kept separately. This is the lowlevel basis for a stream buffer.
-	void insert(const iterator &it, const value_type &v)
+	void insert(char *const &it, const value_type &v)
 	{
 		assert(it >= this->begin() && it <= this->end());
 		memmove(it + 1, it, std::distance(it, this->end()));
@@ -169,23 +166,27 @@ struct ircd::buffer::mutable_buffer
 	using buffer<char *>::buffer;
 
 	mutable_buffer()
-	:buffer<iterator>{}
+	:buffer<char *>{}
+	{}
+
+	mutable_buffer(const buffer<char *> &b)
+	:buffer<char *>{b}
 	{}
 
 	template<size_t SIZE>
-	mutable_buffer(value_type (&buf)[SIZE])
-	:buffer<iterator>{buf, SIZE}
+	mutable_buffer(char (&buf)[SIZE])
+	:buffer<char *>{buf, SIZE}
 	{}
 
 	template<size_t SIZE>
-	mutable_buffer(std::array<value_type, SIZE> &buf)
-	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
+	mutable_buffer(std::array<char, SIZE> &buf)
+	:buffer<char *>{buf.data(), SIZE}
 	{}
 
 	// lvalue string reference offered to write through to a std::string as
 	// the buffer. not explicit; should be hard to bind by accident...
 	mutable_buffer(std::string &buf)
-	:mutable_buffer{const_cast<iterator>(buf.data()), buf.size()}
+	:mutable_buffer{const_cast<char *>(buf.data()), buf.size()}
 	{}
 
 	mutable_buffer(const std::function<void (const mutable_buffer &)> &closure)
@@ -197,38 +198,38 @@ struct ircd::buffer::mutable_buffer
 struct ircd::buffer::const_buffer
 :buffer<const char *>
 {
-	using iterator = typename buffer<const char *>::iterator;
-	using value_type = typename buffer<const char *>::value_type;
-	using mutable_value_type = typename std::remove_const<value_type>::type;
-
 	operator boost::asio::const_buffer() const;
 
 	using buffer<const char *>::buffer;
 
 	const_buffer()
-	:buffer<iterator>{}
+	:buffer<const char *>{}
+	{}
+
+	const_buffer(const buffer<const char *> &b)
+	:buffer<const char *>{b}
+	{}
+
+	const_buffer(const buffer<char *> &b)
+	:buffer<const char *>{data(b), size(b)}
 	{}
 
 	template<size_t SIZE>
-	const_buffer(const value_type (&buf)[SIZE])
-	:buffer<iterator>{buf, SIZE}
+	const_buffer(const char (&buf)[SIZE])
+	:buffer<const char *>{buf, SIZE}
 	{}
 
 	template<size_t SIZE>
-	const_buffer(const std::array<mutable_value_type, SIZE> &buf)
-	:buffer<iterator>{reinterpret_cast<iterator>(buf.data()), SIZE}
+	const_buffer(const std::array<char, SIZE> &buf)
+	:buffer<const char *>{reinterpret_cast<const char *>(buf.data()), SIZE}
 	{}
 
 	const_buffer(const mutable_buffer &b)
-	:buffer<iterator>{reinterpret_cast<iterator>(data(b)), size(b)}
+	:buffer<const char *>{data(b), size(b)}
 	{}
 
 	const_buffer(const string_view &s)
-	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
-	{}
-
-	explicit const_buffer(const std::string &s)
-	:buffer<iterator>{reinterpret_cast<iterator>(s.data()), s.size()}
+	:buffer<const char *>{data(s), size(s)}
 	{}
 };
 
