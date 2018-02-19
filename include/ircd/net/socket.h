@@ -69,7 +69,6 @@ struct ircd::net::socket
 	endpoint local() const;                      // getsockname(); throws if not conn/bound
 
 	// Timer for this socket
-	bool has_timeout() const noexcept;
 	void set_timeout(const milliseconds &, ec_handler);
 	void set_timeout(const milliseconds &);
 	milliseconds cancel_timeout() noexcept;

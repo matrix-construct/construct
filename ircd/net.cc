@@ -2037,13 +2037,6 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	timer.async_wait(std::move(handler));
 }
 
-bool
-ircd::net::socket::has_timeout()
-const noexcept
-{
-	return !timedout && timer.expires_from_now() != milliseconds{0};
-}
-
 ircd::net::socket::operator
 SSL &()
 {
