@@ -48,7 +48,7 @@ ircd::mods::mod::mod(const filesystem::path &path,
 try
 :path{path}
 ,mode{mode}
-,mangles{mods::mangles(path)}
+//,mangles{mods::mangles(path)}
 ,handle{[this, &path, &mode]
 {
 	const auto theirs
