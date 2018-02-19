@@ -23,6 +23,7 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 // the console to be reused easily inside the application (like a matrix room).
 std::stringstream out;
 
+static bool console_cmd__fed(const string_view &line);
 static bool console_cmd__room(const string_view &line);
 static bool console_cmd__state(const string_view &line);
 static bool console_cmd__event(const string_view &line);
@@ -72,6 +73,9 @@ try
 
 		case hash("room"):
 			return console_cmd__room(args);
+
+		case hash("fed"):
+			return console_cmd__fed(args);
 	}
 
 	return -1;
@@ -1113,5 +1117,63 @@ console_cmd__room__redact(const string_view &line)
 	};
 
 	out << event_id << std::endl;
+	return true;
+}
+
+//
+// fed
+//
+
+static bool console_cmd__fed__version(const string_view &line);
+
+bool
+console_cmd__fed(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("version"):
+			return console_cmd__fed__version(args);
+
+		default:
+			throw bad_command{};
+	}
+
+	return true;
+}
+
+bool
+console_cmd__fed__version(const string_view &line)
+{
+	const net::hostport remote
+	{
+		token(line, ' ', 0)
+	};
+
+	m::v1::version::opts opts;
+	opts.remote = remote;
+
+	thread_local char buf[8_KiB];
+	m::v1::version request
+	{
+		buf, opts
+	};
+
+	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << response << std::endl;
 	return true;
 }
