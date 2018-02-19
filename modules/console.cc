@@ -88,6 +88,7 @@ catch(const bad_command &e)
 static bool console_cmd__mod_path(const string_view &line);
 static bool console_cmd__mod_list(const string_view &line);
 static bool console_cmd__mod_syms(const string_view &line);
+static bool console_cmd__mod_reload(const string_view &line);
 
 bool
 console_cmd__mod(const string_view &line)
@@ -107,6 +108,9 @@ console_cmd__mod(const string_view &line)
 
 		case hash("syms"):
 			return console_cmd__mod_syms(args);
+
+		case hash("reload"):
+			return console_cmd__mod_reload(args);
 
 		default:
 			throw bad_command{};
@@ -155,6 +159,24 @@ console_cmd__mod_syms(const string_view &line)
 		out << sym << std::endl;
 
 	out << " -- " << symbols.size() << " symbols in " << path << std::endl;
+	return true;
+}
+
+bool
+console_cmd__mod_reload(const string_view &line)
+{
+	const std::string name
+	{
+		token(line, ' ', 0)
+	};
+
+	if(!m::modules.erase(name))
+	{
+		out << name << " is not loaded." << std::endl;
+		return true;
+	}
+
+	m::modules.emplace(name, name);
 	return true;
 }
 
