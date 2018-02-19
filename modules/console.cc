@@ -133,7 +133,13 @@ console_cmd__mod_path(const string_view &line)
 bool
 console_cmd__mod_list(const string_view &line)
 {
-	for(const auto &mod : mods::available())
+	auto avflist(mods::available());
+	const auto b(std::make_move_iterator(begin(avflist)));
+	const auto e(std::make_move_iterator(end(avflist)));
+	std::vector<std::string> available(b, e);
+	std::sort(begin(available), end(available));
+
+	for(const auto &mod : available)
 	{
 		const auto loadstr
 		{
