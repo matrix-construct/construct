@@ -494,3 +494,46 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 }()}
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// v1/version.h
+//
+
+ircd::m::v1::version::version(const mutable_buffer &buf,
+                              opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/version";
+
+	json::get<"method"_>(opts.request) = "GET";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		const auto in_max
+		{
+			std::max(ssize_t(size(buf) - size(opts.out.head)), ssize_t(0))
+		};
+
+		assert(in_max >= ssize_t(size(buf) / 2));
+		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
+		opts.in.content = opts.in.head;
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}

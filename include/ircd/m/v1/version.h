@@ -9,12 +9,31 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_H
+#define HAVE_IRCD_M_V1_VERSION_H
 
-#include "version.h"
-#include "make_join.h"
-#include "send_join.h"
-#include "event.h"
-#include "state.h"
-#include "backfill.h"
-#include "send.h"
+namespace ircd::m::v1
+{
+	struct version;
+};
+
+struct ircd::m::v1::version
+:server::request
+{
+	struct opts;
+
+	operator json::object() const
+	{
+		return json::object{in.content};
+	}
+
+	version(const mutable_buffer &, opts);
+};
+
+struct ircd::m::v1::version::opts
+{
+	net::hostport remote;
+	m::request request;
+	server::out out;
+	server::in in;
+	const struct server::request::opts *sopts {nullptr};
+};
