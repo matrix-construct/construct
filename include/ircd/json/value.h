@@ -95,9 +95,9 @@ struct ircd::json::value
 	value(const string_view &sv);
 	value(const char *const &s);
 	value(const struct member *const &, const size_t &len);
-	value(std::unique_ptr<const struct member[]>, const size_t &len); // alloc = true
+	value(std::unique_ptr<const struct member[]> &&, const size_t &len); // alloc = true
 	value(const struct value *const &, const size_t &len);
-	value(std::unique_ptr<const struct value[]>, const size_t &len); // alloc = true
+	value(std::unique_ptr<const struct value[]> &&, const size_t &len); // alloc = true
 	value(const members &); // alloc = true
 	value(const nullptr_t &);
 	value();
@@ -198,7 +198,7 @@ ircd::json::value::value(const struct value *const &array,
 }
 
 inline
-ircd::json::value::value(std::unique_ptr<const struct value[]> array,
+ircd::json::value::value(std::unique_ptr<const struct value[]> &&array,
                          const size_t &len)
 :array{array.get()}
 ,len{len}
@@ -222,7 +222,7 @@ ircd::json::value::value(const struct member *const &object,
 {}
 
 inline
-ircd::json::value::value(std::unique_ptr<const struct member[]> object,
+ircd::json::value::value(std::unique_ptr<const struct member[]> &&object,
                          const size_t &len)
 :object{object.get()}
 ,len{len}
