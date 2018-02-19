@@ -9,11 +9,13 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_FS_MAGIC_H
+#define HAVE_IRCD_MAGIC_H
 
-namespace ircd::fs::magic
+namespace ircd::magic
 {
-	IRCD_EXCEPTION(fs::error, error)
+	struct init;
+
+	IRCD_EXCEPTION(ircd::error, error)
 
 	int version();
 
@@ -23,3 +25,9 @@ namespace ircd::fs::magic
 	string_view extensions(const mutable_buffer &out, const const_buffer &);
 	string_view description(const mutable_buffer &out, const const_buffer &);
 }
+
+struct ircd::magic::init
+{
+	init();
+	~init() noexcept;
+};

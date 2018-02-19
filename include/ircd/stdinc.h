@@ -217,6 +217,7 @@ namespace ircd
 #include "openssl.h"
 #include "http.h"
 #include "fmt.h"
+#include "magics.h"
 #include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"

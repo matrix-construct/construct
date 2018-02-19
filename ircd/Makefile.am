@@ -85,6 +85,7 @@ libircd_la_SOURCES =   \
 	base.cc            \
 	parse.cc           \
 	openssl.cc         \
+	magic.cc           \
 	fs.cc              \
 	ctx.cc             \
 	rfc3986.cc         \

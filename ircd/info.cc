@@ -38,7 +38,7 @@ ircd::info::init()
 		db::version,
 		nacl::version(),
 		openssl::version(),
-		fs::magic::version()
+		magic::version()
 	};
 
 	// This message flashes posix information about the system and platform IRCd

@@ -71,7 +71,7 @@ get_root(client &client, const resource::request &request)
 		case hash("txt"):    content_type = "text/plain; charset=utf-8"; break;
 		default:
 		{
-			content_type = fs::magic::mime(content_type_buf, string_view{content});
+			content_type = magic::mime(content_type_buf, string_view{content});
 			break;
 		}
 	}

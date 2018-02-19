@@ -211,6 +211,7 @@ try
 	// also occur in ircd::init() or static initialization itself if either are
 	// more appropriate.
 
+	magic::init _magic_;     // libmagic
 	fs::init _fs_;           // Local filesystem
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	nacl::init _nacl_;       // nacl crypto
