@@ -64,8 +64,11 @@ struct ircd::json::iov
 struct ircd::json::iov::push
 :protected ircd::json::iov::node
 {
-	push(iov &iov, json::member m)
-	:node{iov, std::move(m)}
+	operator const member &() const;
+	operator member &();
+
+	push(iov &iov, member m)
+	:node(iov, std::move(m))
 	{}
 
 	push() = default;
@@ -119,17 +122,33 @@ struct ircd::json::iov::defaults_if
 	defaults_if() = default;
 };
 
+inline ircd::json::iov::push::operator
+ircd::json::member &()
+{
+	auto &node(static_cast<iov::node &>(*this));
+	return static_cast<member &>(node);
+}
+
+inline ircd::json::iov::push::operator
+const ircd::json::member &()
+const
+{
+	const auto &node(static_cast<const iov::node &>(*this));
+	return static_cast<const member &>(node);
+}
+
 /// Conversion/Generator template. This reduces boilerplate when converting
 /// some iterable collection of members to an iov. You have to pre-place the
 /// nodes for the iov ahead of this function and they will be filled in.
 template<class node,
          size_t size,
          class T>
-ircd::json::iov
-ircd::json::make_iov(node (&nodes)[size],
+ircd::json::iov &
+ircd::json::make_iov(iov &ret,
+                     node (&nodes)[size],
                      T&& members)
 {
-	return make_iov(nodes, size, std::forward<T>(members));
+	return make_iov<node, T>(ret, nodes, size, std::forward<T>(members));
 }
 
 /// Conversion/Generator template. This reduces boilerplate when converting
@@ -138,12 +157,12 @@ ircd::json::make_iov(node (&nodes)[size],
 /// sized array, you have to pass the size.
 template<class node,
          class T>
-ircd::json::iov
-ircd::json::make_iov(node *const nodes,
+ircd::json::iov &
+ircd::json::make_iov(iov &ret,
+                     node *const nodes,
                      const size_t &size,
                      T&& members)
 {
-	iov ret;
 	size_t i{0};
 	for(auto&& member : members)
 		if(likely(i < size))
