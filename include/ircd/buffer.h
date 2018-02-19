@@ -61,6 +61,7 @@ namespace ircd::buffer
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
+	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
 	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
 	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
@@ -562,6 +563,22 @@ ircd::buffer::copy(it &dest,
 	dest += cpsz;
 	assert(dest <= stop);
 	return ret;
+}
+
+template<class it>
+ircd::buffer::buffer<it>
+ircd::buffer::operator+(const buffer<it> &buffer,
+                        const size_t &bytes)
+{
+	const size_t advance
+	{
+		std::min(bytes, size(buffer))
+	};
+
+	return
+	{
+		begin(buffer) + advance, size(buffer) - advance
+	};
 }
 
 template<class it>
