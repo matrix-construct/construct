@@ -68,15 +68,39 @@ ircd::info::init()
 }
 
 extern "C" const char *const
+ircd_name
+{
+	PACKAGE_NAME
+};
+
+extern "C" const char *const
 ircd_version
 {
 	RB_VERSION
+};
+
+decltype(ircd::info::name)
+ircd::info::name
+{
+	PACKAGE_NAME
 };
 
 decltype(ircd::info::version)
 ircd::info::version
 {
 	RB_VERSION
+};
+
+decltype(ircd::info::user_agent)
+ircd::info::user_agent
+{
+	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
+};
+
+decltype(ircd::info::server_agent)
+ircd::info::server_agent
+{
+	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
 };
 
 //

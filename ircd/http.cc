@@ -339,7 +339,10 @@ ircd::http::response::response(window_buffer &out,
 	if(code >= 200 && code < 300)
 		writeline(out, [&code](const mutable_buffer &out) -> size_t
 		{
-			return copy(out, "Server: " BRANDING_NAME " (IRCd " BRANDING_VERSION ")"_sv);
+			size_t ret{0};
+			ret += copy(out, "Server: "_sv);
+			ret += copy(out + ret, ircd::info::server_agent);
+			return ret;
 		});
 
 	if(code < 400)

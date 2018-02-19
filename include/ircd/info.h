@@ -13,6 +13,7 @@
 #define HAVE_IRCD_INFO_H
 
 // legacy
+extern "C" const char *const ircd_name;
 extern "C" const char *const ircd_version;
 
 /// Information & metadata about the library.
@@ -22,7 +23,10 @@ namespace ircd::info
 	struct tc_version;
 
 	// Primary information
+	extern const string_view name;
 	extern const string_view version;
+	extern const string_view user_agent;
+	extern const string_view server_agent;
 
 	// Build information
 	extern const time_t configured_time;

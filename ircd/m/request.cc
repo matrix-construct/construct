@@ -79,7 +79,7 @@ const
 	size_t headers{1};
 	http::header header[headers + addl_headers_size]
 	{
-		{ "User-Agent", BRANDING_NAME " (IRCd " BRANDING_VERSION ")" },
+		{ "User-Agent", info::user_agent }
 	};
 
 	for(size_t i(0); i < addl_headers_size; ++i)
