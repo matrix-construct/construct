@@ -85,13 +85,15 @@ struct ircd::json::value
 	explicit operator int64_t() const;
 	explicit operator std::string() const;       ///< NOTE full stringify() of value
 
+	template<size_t N> value(const char (&)[N], const enum type &);
 	value(const string_view &sv, const enum type &);
-	template<size_t N> value(const char (&)[N]);
+	value(const char *const &, const enum type &);
 	explicit value(const int64_t &);
 	explicit value(const double &);
 	explicit value(const bool &);
-	value(const char *const &s);
+	template<size_t N> value(const char (&)[N]);
 	value(const string_view &sv);
+	value(const char *const &s);
 	value(const struct member *const &, const size_t &len);
 	value(std::unique_ptr<const struct member[]>, const size_t &len); // alloc = true
 	value(const struct value *const &, const size_t &len);
@@ -143,28 +145,30 @@ ircd::json::value::value(const string_view &sv,
 {}
 
 inline
-ircd::json::value::value(const char *const &s)
-:string{s}
-,len{strlen(s)}
-,type{json::type(s, std::nothrow)}
-,serial{type == STRING? surrounds(s, '"') : true}
-,alloc{false}
-,floats{false}
+ircd::json::value::value(const char *const &str,
+                         const enum type &type)
+:value{string_view{str}, type}
 {}
 
-template<size_t N>
-ircd::json::value::value(const char (&str)[N])
-:string{str}
-,len{strnlen(str, N)}
-,type{json::type(str, std::nothrow)}
-,serial{type == STRING? surrounds(str, '"') : true}
-,alloc{false}
-,floats{false}
+inline
+ircd::json::value::value(const char *const &str)
+:value{string_view{str}}
 {}
 
 inline
 ircd::json::value::value(const string_view &sv)
 :value{sv, json::type(sv, std::nothrow)}
+{}
+
+template<size_t N>
+ircd::json::value::value(const char (&str)[N])
+:value{string_view{str, strnlen(str, N)}}
+{}
+
+template<size_t N>
+ircd::json::value::value(const char (&str)[N],
+                         const enum type &type)
+:value{string_view{str, strnlen(str, N)}, type}
 {}
 
 inline

@@ -166,7 +166,7 @@ ircd::json::make_iov(iov &ret,
 	size_t i{0};
 	for(auto&& member : members)
 		if(likely(i < size))
-			new (nodes + i++) node(ret, std::move(member));
+			new (nodes + i++) node(ret, json::member(member));
 
 	return ret;
 }

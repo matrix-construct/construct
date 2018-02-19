@@ -24,16 +24,12 @@ namespace ircd::json
 /// This is slightly heavier than object::member as that only deals with
 /// a pair of strings while the value here holds more diverse native state.
 ///
-/// The key value (member.first) should always be a STRING type. We don't use
-/// string_view directly in member.first because json::value can take ownership
-/// of a string or use a literal depending on the circumstance and it's more
-/// consistent this way.
-///
 struct ircd::json::member
 :std::pair<value, value>
 {
-	using std::pair<value, value>::pair;
-	template<class K, class V> member(const K &k, V&& v);
+	member(const string_view &key, value &&);
+	template<class V> member(const string_view &key, V&&);
+	template<class V, size_t N> member(const char (&)[N], V&&);
 	explicit member(const string_view &k);
 	explicit member(const object::member &m);
 	member() = default;
@@ -60,13 +56,31 @@ namespace ircd::json
 	string_view stringify(mutable_buffer &, const members &);
 }
 
-template<class K,
-         class V>
-ircd::json::member::member(const K &k,
+inline
+ircd::json::member::member(const string_view &key,
+                           value &&v)
+:std::pair<value, value>
+{
+	{ key, json::STRING }, std::move(v)
+}
+{}
+
+template<class V,
+         size_t N>
+ircd::json::member::member(const char (&key)[N],
                            V&& v)
 :std::pair<value, value>
 {
-	value { k }, value { std::forward<V>(v) }
+	{ key, json::STRING }, std::forward<V>(v)
+}
+{}
+
+template<class V>
+ircd::json::member::member(const string_view &key,
+                           V&& v)
+:std::pair<value, value>
+{
+	{ key, json::STRING }, std::forward<V>(v)
 }
 {}
 
