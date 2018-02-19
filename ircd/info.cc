@@ -67,23 +67,17 @@ ircd::info::init()
 	};
 }
 
-/* XXX: integrate CREDITS text again somehow */
-decltype(ircd::info::credits)
-ircd::info::credits
-{{
+extern "C" const char *const
+ircd_version
+{
+	RB_VERSION
+};
 
-	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
-	" ",
-	"This - is The Construct",
-	" ",
-	"Internet Relay Chat daemon: Matrix Construct",
-	" ",
-	"Copyright (C) 2016-2018 Matrix Construct Developers, Authors & Contributors",
-	"Permission to use, copy, modify, and/or distribute this software for any",
-	"purpose with or without fee is hereby granted, provided that the above",
-	"copyright notice and this permission notice is present in all copies.",
-	" ",
-}};
+decltype(ircd::info::version)
+ircd::info::version
+{
+	RB_VERSION
+};
 
 //
 // IRCd / build information
@@ -125,55 +119,6 @@ ircd::info::startup
 {
 	ctime(&startup_time)
 };
-
-decltype(ircd::info::serno)
-ircd::info::serno
-{
-	//TODO: XXX: compile counter?
-	// RB_SERNO
-	0
-};
-
-decltype(ircd::info::version)
-ircd::info::version
-{
-	RB_VERSION
-};
-
-decltype(ircd::info::ircd_version)
-ircd::info::ircd_version
-{
-	RB_VERSION
-};
-
-//
-// Third party dependency information
-//
-
-/// Boost version indicator for compiled header files.
-decltype(ircd::info::boost_version)
-ircd::info::boost_version
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
-
-/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
-struct ircd::info::tc_version
-{
-	int major{0}, minor{0};
-	char patch[64] {0};
-	std::string version {"unavailable"};
-}
-const ircd::info::tc_version;
-
-/*
-const char* tc_version(int* major, int* minor, const char** patch);
-ircd::tc_version::tc_version()
-:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
-{}
-*/
 
 //
 // System / platform information
@@ -220,6 +165,57 @@ ircd::info::constructive_interference
 		0
 	#endif
 };
+
+//
+// Third party dependency information
+//
+
+/// Boost version indicator for compiled header files.
+decltype(ircd::info::boost_version)
+ircd::info::boost_version
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
+
+/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
+struct ircd::info::tc_version
+{
+	int major{0}, minor{0};
+	char patch[64] {0};
+	std::string version {"unavailable"};
+}
+const ircd::info::tc_version;
+
+/*
+const char* tc_version(int* major, int* minor, const char** patch);
+ircd::tc_version::tc_version()
+:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
+{}
+*/
+
+//
+// Extended information
+//
+
+//TODO: XXX: integrate CREDITS text again somehow
+decltype(ircd::info::credits)
+ircd::info::credits
+{{
+
+	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
+	" ",
+	"This - is The Construct",
+	" ",
+	"Internet Relay Chat daemon: Matrix Construct",
+	" ",
+	"Copyright (C) 2016-2018 Matrix Construct Developers, Authors & Contributors",
+	"Permission to use, copy, modify, and/or distribute this software for any",
+	"purpose with or without fee is hereby granted, provided that the above",
+	"copyright notice and this permission notice is present in all copies.",
+	" ",
+}};
 
 decltype(ircd::info::myinfo)
 ircd::info::myinfo
