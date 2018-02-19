@@ -20,6 +20,8 @@ namespace ircd::m
 	extern struct room my_room;
 	extern struct room control;
 	extern struct log::log log;
+	extern std::map<std::string, ircd::module> modules;
+	extern std::list<ircd::net::listener> listeners;
 
 	IRCD_OVERLOAD(generate)
 }
