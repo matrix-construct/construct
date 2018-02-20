@@ -107,9 +107,22 @@ ircd::parse::capstan::capstan(const char *&parsed,
 
 inline void
 ircd::parse::capstan::operator()(const parse_closure &pc)
+try
 {
 	while(!pc(parsed, const_cast<const char *>(read)))
 		reader(read, stop);
+}
+catch(const std::bad_function_call &e)
+{
+	throw assertive
+	{
+		"Invalid parse (parsed:%p read:%p stop:%p unparsed:%zu remaining: %zu)",
+		parsed,
+		read,
+		stop,
+		unparsed(),
+		remaining()
+	};
 }
 
 inline void
