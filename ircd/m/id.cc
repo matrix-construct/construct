@@ -51,14 +51,14 @@ struct ircd::m::id::input
 	template<class R = spirit::unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	// Sigils
-	const rule<> event_id_sigil        { lit(char(ircd::m::id::EVENT))           ,"event_id sigil" };
-	const rule<> user_id_sigil         { lit(char(ircd::m::id::USER))             ,"user_id sigil" };
-	const rule<> room_id_sigil         { lit(char(ircd::m::id::ROOM))             ,"room_id sigil" };
-	const rule<> room_alias_sigil      { lit(char(ircd::m::id::ROOM_ALIAS))    ,"room_alias sigil" };
-	const rule<> group_id_sigil        { lit(char(ircd::m::id::GROUP))           ,"group_id sigil" };
-	const rule<> origin_sigil          { lit(char(ircd::m::id::ORIGIN))            ,"origin sigil" };
-	const rule<> device_sigil          { lit(char(ircd::m::id::DEVICE))            ,"device sigil" };
-	const rule<enum sigil> sigil
+	const rule<m::id::sigil> event_id_sigil      { lit(char(m::id::EVENT))           ,"event_id sigil" };
+	const rule<m::id::sigil> user_id_sigil       { lit(char(m::id::USER))             ,"user_id sigil" };
+	const rule<m::id::sigil> room_id_sigil       { lit(char(m::id::ROOM))             ,"room_id sigil" };
+	const rule<m::id::sigil> room_alias_sigil    { lit(char(m::id::ROOM_ALIAS))    ,"room_alias sigil" };
+	const rule<m::id::sigil> group_id_sigil      { lit(char(m::id::GROUP))           ,"group_id sigil" };
+	const rule<m::id::sigil> origin_sigil        { lit(char(m::id::ORIGIN))            ,"origin sigil" };
+	const rule<m::id::sigil> device_sigil        { lit(char(m::id::DEVICE))            ,"device sigil" };
+	const rule<m::id::sigil> sigil
 	{
 		event_id_sigil    |
 		user_id_sigil     |
@@ -619,15 +619,16 @@ ircd::m::sigil(const char &c)
 {
 	id::sigil ret;
 	const char *start{&c};
-	const char *const stop{start + 1};
+	const char *const stop{&c + 1};
 	if(!qi::parse(start, stop, id::parser.sigil, ret))
 		throw BAD_SIGIL("'%c' is not a valid sigil", c);
 
+	assert(start == stop);
 	return ret;
 }
 
 ircd::string_view
-ircd::m::reflect(const enum id::sigil &c)
+ircd::m::reflect(const id::sigil &c)
 {
 	switch(c)
 	{
