@@ -34,3 +34,13 @@ ircd::resource::response
 put__account_data(ircd::client &client,
                   const ircd::resource::request &request,
                   const ircd::m::user::id &user_id);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// openid.cc
+//
+
+ircd::resource::response
+post__openid(ircd::client &client,
+             const ircd::resource::request &request,
+             const ircd::m::user::id &user_id);

@@ -87,6 +87,9 @@ post_user(client &client, resource::request &request)
 	if(cmd == "filter")
 		return post__filter(client, request, user_id);
 
+	if(cmd == "openid")
+		return post__openid(client, request, user_id);
+
 	throw m::NOT_FOUND
 	{
 		"/user command not found"
