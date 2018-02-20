@@ -787,10 +787,11 @@ console_cmd__exec_file(const string_view &line)
 		};
 
 		size_t boff(0);
+		json::object object;
 		json::vector vector{read};
 		for(; boff < size(read) && i < limit; ) try
 		{
-			const json::object object{*begin(vector)};
+			object = *begin(vector);
 			boff += size(string_view{object});
 			vector = { data(read) + boff, size(read) - boff };
 			const m::event event
@@ -816,6 +817,18 @@ console_cmd__exec_file(const string_view &line)
 		catch(const json::parse_error &e)
 		{
 			break;
+		}
+		catch(const std::exception &e)
+		{
+			out << fmt::snstringf
+			{
+				128, "Error at i=%zu j=%zu r=%zu foff=%zu boff=%zu\n",
+				i, j, r, foff, boff
+			};
+
+			out << string_view{object} << std::endl;
+			out << e.what() << std::endl;
+			return true;
 		}
 
 		foff += boff;
