@@ -736,7 +736,7 @@ console_cmd__exec_file(const string_view &line)
 {
 	const params token{line, " ",
 	{
-		"file path", "limit", "start", "room_id"
+		"file path", "limit", "start", "room_id/event_id/sender"
 	}};
 
 	const auto path
@@ -754,9 +754,20 @@ console_cmd__exec_file(const string_view &line)
 		token[2]? lex_cast<size_t>(token[2]) : 0
 	};
 
+	const string_view id{token[3]};
 	const string_view room_id
 	{
-		token[3]
+		id && m::sigil(id) == m::id::ROOM? id : string_view{}
+	};
+
+	const string_view event_id
+	{
+		id && m::sigil(id) == m::id::EVENT? id : string_view{}
+	};
+
+	const string_view sender
+	{
+		id && m::sigil(id) == m::id::USER? id : string_view{}
 	};
 
 	struct m::vm::eval::opts opts;
@@ -788,6 +799,12 @@ console_cmd__exec_file(const string_view &line)
 			};
 
 			if(room_id && json::get<"room_id"_>(event) != room_id)
+				continue;
+
+			if(event_id && json::get<"event_id"_>(event) != event_id)
+				continue;
+
+			if(sender && json::get<"sender"_>(event) != sender)
 				continue;
 
 			if(j++ < start)
