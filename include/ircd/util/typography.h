@@ -206,42 +206,48 @@ is_input_iterator()
 /// Convenience loop to test std::is* on a character sequence
 template<int (&test)(int) = std::isprint>
 ssize_t
-ctype(const char *begin,
+ctype(const char *const &begin,
       const char *const &end)
 {
-	size_t i(0);
-	for(; begin != end; ++begin, ++i)
-		if(!test(static_cast<unsigned char>(*begin)))
-			return i;
+	for(const char *it(begin); it != end; ++it)
+		if(test(static_cast<unsigned char>(*it)) != 0)
+			return std::distance(begin, it);
 
 	return -1;
 }
 
-/// ctype test for a string_view. Returns the character position where the
+/// ctype test for a const_buffer. Returns the character position where the
 /// test fails. Returns -1 on success. The test is a function specified in
-/// the template simply as `ctype<std::isprint>(string_view{"hi"});`
+/// the template simply as `ctype<std::isprint>(const_buffer{"hi"});` which
+/// should fail because const_buffer's over a string literal see the trailing
+/// null character.
 template<int (&test)(int)>
 ssize_t
-ctype(const string_view &s)
+ctype(const const_buffer &s)
 {
 	return ctype<test>(begin(s), end(s));
 }
 
-/// Boolean alternative for ctype to avoid the -1/pos test
-template<int (&test)(int) = std::isprint>
-ssize_t
-all_of(const char *begin,
-       const char *const &end)
-{
-	return std::all_of(begin, end, test);
-}
-
-/// Boolean alternative for ctype(string_view)
+/// Boolean alternative for ctype(const_buffer)
 template<int (&test)(int)>
 bool
-all_of(const string_view &s)
+all_of(const const_buffer &s)
 {
-	return std::all_of(begin(s), end(s), test);
+	return std::all_of(begin(s), end(s), [](const char &c)
+	{
+		return test(c) != 0;
+	});
+}
+
+/// Boolean alternative for ctype(const_buffer)
+template<int (&test)(int)>
+bool
+none_of(const const_buffer &s)
+{
+	return std::all_of(begin(s), end(s), [](const char &c)
+	{
+		return test(c) == 0;
+	});
 }
 
 /// Zero testing functor (work in progress)
