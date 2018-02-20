@@ -63,6 +63,7 @@ namespace ircd::buffer
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
 	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
+	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&buf)[SIZE]);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
 	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
 	void reverse(const mutable_buffer &buf);
@@ -533,6 +534,19 @@ ircd::buffer::reverse(const mutable_buffer &dst,
 	const size_t ret{std::min(size(dst), size(src))};
 	std::reverse_copy(data(src), data(src) + ret, data(dst));
 	return ret;
+}
+
+template<size_t SIZE>
+__attribute__((error
+(
+	"Copy source is an array. Is this a string literal? Do you want to copy the \\0?"
+	" Disambiguate this by typing the source string_view or const_buffer."
+)))
+inline size_t
+ircd::buffer::copy(const mutable_buffer &dst,
+                   const char (&buf)[SIZE])
+{
+	return copy(dst, const_buffer{buf});
 }
 
 inline size_t
