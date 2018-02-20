@@ -118,7 +118,7 @@ catch(const m::ALREADY_MEMBER &e)
 
 bool
 ircd::m::user::is_password(const string_view &password)
-const
+const noexcept try
 {
 	char buf[64];
 	const auto supplied
@@ -145,6 +145,19 @@ const
 	});
 
 	return ret;
+}
+catch(const m::NOT_FOUND &e)
+{
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"user::is_password(): %s %s", string_view{user_id}, e.what()
+	};
+
+	return false;
 }
 
 bool
