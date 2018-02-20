@@ -320,7 +320,7 @@ ircd::m::head(const id::room &room_id,
 		head(std::nothrow, room_id, reinterpret_cast<int64_t &>(depth))
 	};
 
-	if(depth == -1)
+	if(depth == uint64_t(-1))
 		throw m::NOT_FOUND{};
 
 	return ret;
