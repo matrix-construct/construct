@@ -780,10 +780,13 @@ console_cmd__exec_file(const string_view &line)
 		for(; boff < size(read) && i < limit; ) try
 		{
 			const json::object object{*begin(vector)};
-			boff += size(object);
+			boff += size(string_view{object});
 			vector = { data(read) + boff, size(read) - boff };
+			const m::event event
+			{
+				object
+			};
 
-			const m::event event{object};
 			if(room_id && json::get<"room_id"_>(event) != room_id)
 				continue;
 
@@ -860,6 +863,9 @@ console_cmd__room(const string_view &line)
 
 		case hash("redact"):
 			return console_cmd__room__redact(args);
+
+		default:
+			throw bad_command{};
 	}
 
 	return true;
