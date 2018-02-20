@@ -241,9 +241,9 @@ ircd::m::commit(const room &room,
 	};
 
 	int64_t depth;
-	const auto prev_event_id
+	const m::event::id::buf prev_event_id
 	{
-		head(room.room_id, depth)
+		head(std::nothrow, room.room_id, depth)
 	};
 
 	//TODO: LCOCK
@@ -279,23 +279,56 @@ ircd::m::commit(const room &room,
 	return m::vm::commit(event, contents);
 }
 
-int64_t
+uint64_t
 ircd::m::depth(const id::room &room_id)
 {
-	int64_t depth;
+	uint64_t depth;
 	head(room_id, depth);
+	return depth;
+}
+
+int64_t
+ircd::m::depth(std::nothrow_t,
+               const id::room &room_id)
+{
+	int64_t depth;
+	head(std::nothrow, room_id, depth);
 	return depth;
 }
 
 ircd::m::id::event::buf
 ircd::m::head(const id::room &room_id)
 {
-	int64_t depth;
+	uint64_t depth;
 	return head(room_id, depth);
 }
 
 ircd::m::id::event::buf
+ircd::m::head(std::nothrow_t,
+              const id::room &room_id)
+{
+	int64_t depth;
+	return head(std::nothrow, room_id, depth);
+}
+
+ircd::m::id::event::buf
 ircd::m::head(const id::room &room_id,
+              uint64_t &depth)
+{
+	const auto ret
+	{
+		head(std::nothrow, room_id, reinterpret_cast<int64_t &>(depth))
+	};
+
+	if(depth == -1)
+		throw m::NOT_FOUND{};
+
+	return ret;
+}
+
+ircd::m::id::event::buf
+ircd::m::head(std::nothrow_t,
+              const id::room &room_id,
               int64_t &depth)
 {
 	const auto it

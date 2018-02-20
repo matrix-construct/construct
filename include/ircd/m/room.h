@@ -28,9 +28,12 @@ namespace ircd::m
 	bool exists(const id::room &);
 
 	// [GET] Current Event suite (non-locking) (one)
-	id::event::buf head(const id::room &, int64_t &);  // gives depth
+	id::event::buf head(std::nothrow_t, const id::room &, int64_t &);
+	id::event::buf head(const id::room &, uint64_t &);
+	id::event::buf head(std::nothrow_t, const id::room &);
 	id::event::buf head(const id::room &);
-	int64_t depth(const id::room &);
+	int64_t depth(std::nothrow_t, const id::room &);
+	uint64_t depth(const id::room &);
 
 	// [SET] Lowest-level
 	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
