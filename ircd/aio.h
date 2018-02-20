@@ -58,8 +58,6 @@ struct ircd::fs::aio::request
 	ssize_t errcode {0};
 	ctx::ctx *waiter {ctx::current};
 
-	void handle();
-
   public:
 	size_t operator()();
 	void cancel();

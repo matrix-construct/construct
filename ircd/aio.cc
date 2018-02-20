@@ -90,9 +90,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("AIO(%p) handle_events: %s",
-	           this,
-	           e.what());
+	log::error
+	{
+		"AIO(%p) handle_events: %s",
+		this,
+		e.what()
+	};
 }
 
 void
@@ -100,14 +103,14 @@ ircd::fs::aio::handle_event(const io_event &event)
 noexcept try
 {
 	// Our extended control block is passed in event.data
-	auto *const &request
+	auto &request
 	{
-		reinterpret_cast<aio::request *>(event.data)
+		*reinterpret_cast<aio::request *>(event.data)
 	};
 
 	// The relevant iocb is repeated back to us in the result; we assert
 	// some basic sanity here about the layout of the request conglomerate.
-	assert(reinterpret_cast<iocb *>(event.obj) == static_cast<iocb *>(request));
+	assert(reinterpret_cast<iocb *>(event.obj) == static_cast<iocb *>(&request));
 
 	// error conventions are like so
 	assert(event.res >= -1);  // unix syscall return value semantic
@@ -115,8 +118,11 @@ noexcept try
 	assert(event.res == -1 || event.res2 == 0);
 
 	// Set result indicators
-	request->retval = event.res;
-	request->errcode = event.res2;
+	request.retval = event.res;
+	request.errcode = event.res2;
+
+	if(likely(request.waiter && request.waiter != ctx::current))
+		ctx::notify(*request.waiter);
 /*
 	log::debug("AIO request(%p) fd:%d op:%d bytes:%lu off:%ld prio:%d ctx:%p result: bytes:%ld errno:%ld",
 	           request,
@@ -129,14 +135,16 @@ noexcept try
 	           request->retval,
 	           request->errcode);
 */
-	request->handle();
 }
 catch(const std::exception &e)
 {
-	log::critical("Unhandled request(%lu) event(%p) error: %s",
-	              event.data,
-	              &event,
-	              e.what());
+	log::critical
+	{
+		"Unhandled request(%lu) event(%p) error: %s",
+		event.data,
+		&event,
+		e.what()
+	};
 }
 
 //
@@ -207,13 +215,6 @@ catch(const ctx::interrupted &e)
 	// what it's worth but we rethrow the interrupt anyway.
 	cancel();
 	throw;
-}
-
-void
-ircd::fs::aio::request::handle()
-{
-	if(likely(waiter && waiter != ctx::current))
-		ircd::ctx::notify(*waiter);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
