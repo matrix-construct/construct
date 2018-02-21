@@ -46,8 +46,24 @@ get__publicrooms(client &client,
 	};
 }
 
+resource::response
+post__publicrooms(client &client,
+                  const resource::request &request)
+{
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
 resource::method
 get_method
 {
 	publicrooms_resource, "GET", get__publicrooms
+};
+
+resource::method
+post_method
+{
+	publicrooms_resource, "POST", post__publicrooms
 };
