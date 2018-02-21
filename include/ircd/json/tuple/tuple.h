@@ -352,7 +352,12 @@ get(const tuple &t)
 		indexof<tuple, hash>()
 	};
 
-	return val<idx>(t);
+	const auto &ret
+	{
+		val<idx>(t)
+	};
+
+	return ret;
 }
 
 template<size_t hash,
@@ -387,7 +392,12 @@ get(tuple &t)
 		indexof<tuple, hash>()
 	};
 
-	return val<idx>(t);
+	auto &ret
+	{
+		val<idx>(t)
+	};
+
+	return ret;
 }
 
 template<size_t hash,
@@ -412,7 +422,7 @@ at(const tuple &t)
 		indexof<tuple, hash>()
 	};
 
-	auto &ret
+	const auto &ret
 	{
 		val<idx>(t)
 	};

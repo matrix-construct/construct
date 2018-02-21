@@ -71,6 +71,7 @@ namespace ircd
 	using json::defined;
 	using json::for_each;
 	using json::until;
+	using json::get;
 }
 
 /// Strong type representing quoted strings in JSON (which may be unquoted
