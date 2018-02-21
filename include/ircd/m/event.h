@@ -148,6 +148,7 @@ struct ircd::m::event::conforms
 
 	conforms() = default;
 	conforms(const event &);
+	conforms(const event &, const uint64_t &skip);
 
 	friend string_view reflect(const code &);
 	friend std::ostream &operator<<(std::ostream &, const conforms &);
@@ -156,13 +157,23 @@ struct ircd::m::event::conforms
 enum ircd::m::event::conforms::code
 :uint
 {
-	INVALID_EVENT_ID,
-	INVALID_ROOM_ID,
-	INVALID_SENDER_ID,
-	INVALID_REDACTS_ID,
-	INVALID_TYPE,
-	DEPTH_NEGATIVE,
-	DEPTH_ZERO_NON_CREATE,
+	INVALID_OR_MISSING_EVENT_ID,       ///< event_id empty or failed mxid grammar check
+	INVALID_OR_MISSING_ROOM_ID,        ///< room_id empty or failed mxid grammar check
+	INVALID_OR_MISSING_SENDER_ID,      ///< sender empty or failed mxid grammar check
+	MISSING_TYPE,                      ///< type empty
+	MISSING_ORIGIN,                    ///< origin empty
+	INVALID_ORIGIN,                    ///< origin not a proper domain
+	INVALID_OR_MISSING_REDACTS_ID,     ///< for m.room.redaction
+	USELESS_REDACTS_ID,                ///< redacts present in non-m.room.redaction
+	MISSING_MEMBERSHIP,                ///< for m.room.member, membership empty
+	INVALID_MEMBERSHIP,                ///< for m.room.member (does not check actual states)
+	USELESS_MEMBERSHIP,                ///< membership present in non-m.room.member
+	MISSING_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
+	INVALID_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
+	MISSING_PREV_EVENTS,               ///< for non-m.room.create, empty prev_events
+	MISSING_PREV_STATE,                ///< for state_key'ed, empty prev_state
+	DEPTH_NEGATIVE,                    ///< depth < 0
+	DEPTH_ZERO,                        ///< for non-m.room.create, depth=0
 
 	_NUM_
 };

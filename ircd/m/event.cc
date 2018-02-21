@@ -515,12 +515,23 @@ namespace ircd::m
 decltype(ircd::m::event_conforms_reflects)
 ircd::m::event_conforms_reflects
 {
-	"INVALID_EVENT_ID",
-	"INVALID_ROOM_ID",
-	"INVALID_SENDER_ID",
-	"INVALID_REDACTS_ID",
+	"INVALID_OR_MISSING_EVENT_ID",
+	"INVALID_OR_MISSING_ROOM_ID",
+	"INVALID_OR_MISSING_SENDER_ID",
+	"MISSING_TYPE",
+	"MISSING_ORIGIN",
+	"INVALID_ORIGIN",
+	"INVALID_OR_MISSING_REDACTS_ID",
+	"USELESS_REDACTS_ID",
+	"MISSING_MEMBERSHIP",
+	"INVALID_MEMBERSHIP",
+	"USELESS_MEMBERSHIP",
+	"MISSING_CONTENT_MEMBERSHIP",
+	"INVALID_CONTENT_MEMBERSHIP",
+	"MISSING_PREV_EVENTS",
+	"MISSING_PREV_STATE",
 	"DEPTH_NEGATIVE",
-	"DEPTH_ZERO_NON_CREATE",
+	"DEPTH_ZERO",
 };
 
 std::ostream &
@@ -542,32 +553,78 @@ catch(const std::out_of_range &e)
 	return "??????"_sv;
 }
 
+ircd::m::event::conforms::conforms(const event &e,
+                                   const uint64_t &skip)
+:conforms{e}
+{
+	report &= ~skip;
+}
+
 ircd::m::event::conforms::conforms(const event &e)
 :report{0}
 {
 	if(!valid(m::id::EVENT, json::get<"event_id"_>(e)))
-		set(INVALID_EVENT_ID);
+		set(INVALID_OR_MISSING_EVENT_ID);
 
 	if(!valid(m::id::ROOM, json::get<"room_id"_>(e)))
-		set(INVALID_ROOM_ID);
+		set(INVALID_OR_MISSING_ROOM_ID);
 
 	if(!valid(m::id::USER, json::get<"sender"_>(e)))
-		set(INVALID_SENDER_ID);
+		set(INVALID_OR_MISSING_SENDER_ID);
+
+	if(empty(json::get<"type"_>(e)))
+		set(MISSING_TYPE);
+
+	if(empty(json::get<"origin"_>(e)))
+		set(MISSING_ORIGIN);
+
+	//TODO: XXX
+	if(false)
+		set(INVALID_ORIGIN);
 
 	if(json::get<"type"_>(e) == "m.room.redaction")
 		if(!valid(m::id::EVENT, json::get<"redacts"_>(e)))
-			set(INVALID_REDACTS_ID);
+			set(INVALID_OR_MISSING_REDACTS_ID);
 
-	//TODO: XXX
-	if(empty(json::get<"type"_>(e)))
-		set(INVALID_TYPE);
+	if(json::get<"type"_>(e) != "m.room.redaction")
+		if(!empty(json::get<"redacts"_>(e)))
+			set(USELESS_REDACTS_ID);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(empty(json::get<"membership"_>(e)))
+			set(MISSING_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(!all_of<std::islower>(json::get<"membership"_>(e)))
+			set(INVALID_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) != "m.room.member")
+		if(!empty(json::get<"membership"_>(e)))
+			set(USELESS_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(empty(unquote(json::get<"content"_>(e).get("membership"))))
+			set(MISSING_CONTENT_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(!all_of<std::islower>(unquote(json::get<"content"_>(e).get("membership"))))
+			set(INVALID_CONTENT_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) != "m.room.create")
+		if(empty(json::get<"prev_events"_>(e)))
+			set(MISSING_PREV_EVENTS);
+
+	if(json::get<"type"_>(e) != "m.room.create")
+		if(!empty(json::get<"state_key"_>(e)))
+			if(empty(json::get<"prev_state"_>(e)))
+				set(MISSING_PREV_STATE);
 
 	if(json::get<"depth"_>(e) < 0)
 		set(DEPTH_NEGATIVE);
 
 	if(json::get<"type"_>(e) != "m.room.create")
 		if(json::get<"depth"_>(e) == 0)
-			set(DEPTH_ZERO_NON_CREATE);
+			set(DEPTH_ZERO);
 }
 
 void
