@@ -64,6 +64,7 @@ struct ircd::m::event
 {
 	struct prev;
 	struct fetch;
+	struct errors;
 
 	// Common convenience aliases
 	using id = m::id::event;
@@ -127,4 +128,41 @@ struct ircd::m::event::fetch
 
 	friend bool seek(fetch &, const event::id &, std::nothrow_t);
 	friend void seek(fetch &, const event::id &);
+};
+
+struct ircd::m::event::errors
+{
+	enum code :uint;
+
+	uint64_t report {0};
+
+	bool clean() const;
+	operator bool() const;
+	bool operator!() const;
+	bool has(const uint &code) const;
+	bool has(const code &code) const;
+	string_view string(const mutable_buffer &out) const;
+
+	void set(const code &code);
+	void del(const code &code);
+
+	errors() = default;
+	errors(const event &);
+
+	friend string_view reflect(const code &);
+	friend std::ostream &operator<<(std::ostream &, const errors &);
+};
+
+enum ircd::m::event::errors::code
+:uint
+{
+	INVALID_EVENT_ID,
+	INVALID_ROOM_ID,
+	INVALID_SENDER_ID,
+	INVALID_REDACTS_ID,
+	INVALID_TYPE,
+	DEPTH_NEGATIVE,
+	DEPTH_ZERO_NON_CREATE,
+
+	_NUM_
 };
