@@ -553,6 +553,23 @@ catch(const std::out_of_range &e)
 	return "??????"_sv;
 }
 
+ircd::m::event::conforms::code
+ircd::m::event::conforms::reflect(const string_view &name)
+{
+	const auto it
+	{
+		std::find(begin(event_conforms_reflects), end(event_conforms_reflects), name)
+	};
+
+	if(it == end(event_conforms_reflects))
+		throw std::out_of_range
+		{
+			"There is no event::conforms code by that name."
+		};
+
+	return code(std::distance(begin(event_conforms_reflects), it));
+}
+
 ircd::m::event::conforms::conforms(const event &e,
                                    const uint64_t &skip)
 :conforms{e}
@@ -652,7 +669,7 @@ const
 		if(begin(buf) != begin(out))
 			consume(buf, copy(buf, " "_sv));
 
-		consume(buf, copy(buf, reflect(code(i))));
+		consume(buf, copy(buf, m::reflect(code(i))));
 	}
 
 	return { data(out), begin(buf) };

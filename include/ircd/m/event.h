@@ -150,6 +150,7 @@ struct ircd::m::event::conforms
 	conforms(const event &);
 	conforms(const event &, const uint64_t &skip);
 
+	static code reflect(const string_view &);
 	friend string_view reflect(const code &);
 	friend std::ostream &operator<<(std::ostream &, const conforms &);
 };
