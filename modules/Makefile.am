@@ -128,6 +128,12 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/redact.cc \
 	client/rooms/receipt.cc \
 	client/rooms/join.cc \
+	client/rooms/invite.cc \
+	client/rooms/leave.cc \
+	client/rooms/forget.cc \
+	client/rooms/kick.cc \
+	client/rooms/ban.cc \
+	client/rooms/unban.cc \
 	client/rooms/read_markers.cc \
 	client/rooms/rooms.cc \
 	###

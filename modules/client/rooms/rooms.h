@@ -117,6 +117,66 @@ post__join(ircd::client &,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// invite.cc
+//
+
+ircd::resource::response
+post__invite(ircd::client &,
+             const ircd::resource::request &,
+             const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// leave.cc
+//
+
+ircd::resource::response
+post__leave(ircd::client &,
+            const ircd::resource::request &,
+            const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// forget.cc
+//
+
+ircd::resource::response
+post__forget(ircd::client &,
+             const ircd::resource::request &,
+             const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// kick.cc
+//
+
+ircd::resource::response
+post__kick(ircd::client &,
+           const ircd::resource::request &,
+           const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ban.cc
+//
+
+ircd::resource::response
+post__ban(ircd::client &,
+          const ircd::resource::request &,
+          const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// unban.cc
+//
+
+ircd::resource::response
+post__unban(ircd::client &,
+            const ircd::resource::request &,
+            const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // read_markers.cc
 //
 

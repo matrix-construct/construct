@@ -149,6 +149,24 @@ post_rooms(client &client,
 	if(cmd == "join")
 		return post__join(client, request, room_id);
 
+	if(cmd == "invite")
+		return post__invite(client, request, room_id);
+
+	if(cmd == "leave")
+		return post__leave(client, request, room_id);
+
+	if(cmd == "forget")
+		return post__forget(client, request, room_id);
+
+	if(cmd == "kick")
+		return post__kick(client, request, room_id);
+
+	if(cmd == "ban")
+		return post__ban(client, request, room_id);
+
+	if(cmd == "unban")
+		return post__unban(client, request, room_id);
+
 	if(cmd == "redact")
 		return post__redact(client, request, room_id);
 
