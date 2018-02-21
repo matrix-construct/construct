@@ -40,9 +40,20 @@ resource::response
 get__publicrooms(client &client,
                  const resource::request &request)
 {
+	std::vector<json::value> chunk;
+	const string_view next_batch;
+	const string_view prev_batch;
+	const int64_t total_room_count_estimate{0};
+
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "chunk",                      { chunk.data(), chunk.size() } },
+			{ "next_batch",                 next_batch                     },
+			{ "prev_batch",                 prev_batch                     },
+			{ "total_room_count_estimate",  total_room_count_estimate      },
+		}
 	};
 }
 
@@ -50,9 +61,20 @@ resource::response
 post__publicrooms(client &client,
                   const resource::request &request)
 {
+	std::vector<json::value> chunk;
+	const string_view next_batch;
+	const string_view prev_batch;
+	const int64_t total_room_count_estimate{0};
+
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "chunk",                      { chunk.data(), chunk.size() } },
+			{ "next_batch",                 next_batch                     },
+			{ "prev_batch",                 prev_batch                     },
+			{ "total_room_count_estimate",  total_room_count_estimate      },
+		}
 	};
 }
 
