@@ -167,6 +167,18 @@ client_client_account_la_SOURCES = \
 
 client_module_LTLIBRARIES += client/client_account.la
 
+#
+# client/thirdparty/
+#
+
+client_client_thirdparty_protocols_la_SOURCES = \
+	client/thirdparty/protocols.cc \
+	###
+
+client_module_LTLIBRARIES += \
+	client/client_thirdparty_protocols.la \
+	###
+
 ###############################################################################
 #
 # /_matrix/key/
