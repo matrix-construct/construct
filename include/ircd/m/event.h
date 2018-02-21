@@ -128,22 +128,3 @@ struct ircd::m::event::fetch
 	friend bool seek(fetch &, const event::id &, std::nothrow_t);
 	friend void seek(fetch &, const event::id &);
 };
-
-inline bool
-ircd::m::event::fetch::valid(const event::id &event_id)
-const
-{
-	return row.valid(event_id);
-}
-
-inline bool
-ircd::m::my(const event &event)
-{
-	return my(event::id(at<"event_id"_>(event)));
-}
-
-inline bool
-ircd::m::my(const id::event &event_id)
-{
-	return self::host(event_id.host());
-}

@@ -310,6 +310,18 @@ ircd::m::pretty_oneline(const event &event)
 	return ret;
 }
 
+bool
+ircd::m::my(const event &event)
+{
+	return my(event::id(at<"event_id"_>(event)));
+}
+
+bool
+ircd::m::my(const id::event &event_id)
+{
+	return self::host(event_id.host());
+}
+
 //
 // event
 //
@@ -481,4 +493,11 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 {
 	if(row.valid(event_id))
 		assign(*this, row, event_id);
+}
+
+bool
+ircd::m::event::fetch::valid(const event::id &event_id)
+const
+{
+	return row.valid(event_id);
 }
