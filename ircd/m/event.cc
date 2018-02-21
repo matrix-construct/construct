@@ -503,17 +503,17 @@ const
 }
 
 //
-// event::errors
+// event::conforms
 //
 
 namespace ircd::m
 {
-	const size_t event_errors_num{num_of<event::errors::code>()};
-	extern const std::array<string_view, event_errors_num> event_errors_reflects;
+	const size_t event_conforms_num{num_of<event::conforms::code>()};
+	extern const std::array<string_view, event_conforms_num> event_conforms_reflects;
 }
 
-decltype(ircd::m::event_errors_reflects)
-ircd::m::event_errors_reflects
+decltype(ircd::m::event_conforms_reflects)
+ircd::m::event_conforms_reflects
 {
 	"INVALID_EVENT_ID",
 	"INVALID_ROOM_ID",
@@ -524,25 +524,25 @@ ircd::m::event_errors_reflects
 };
 
 std::ostream &
-ircd::m::operator<<(std::ostream &s, const event::errors &errors)
+ircd::m::operator<<(std::ostream &s, const event::conforms &conforms)
 {
 	thread_local char buf[1024];
-	s << errors.string(buf);
+	s << conforms.string(buf);
 	return s;
 }
 
 ircd::string_view
-ircd::m::reflect(const event::errors::code &code)
+ircd::m::reflect(const event::conforms::code &code)
 try
 {
-	return event_errors_reflects.at(code);
+	return event_conforms_reflects.at(code);
 }
 catch(const std::out_of_range &e)
 {
 	return "??????"_sv;
 }
 
-ircd::m::event::errors::errors(const event &e)
+ircd::m::event::conforms::conforms(const event &e)
 :report{0}
 {
 	if(!valid(m::id::EVENT, json::get<"event_id"_>(e)))
@@ -571,19 +571,19 @@ ircd::m::event::errors::errors(const event &e)
 }
 
 void
-ircd::m::event::errors::del(const code &code)
+ircd::m::event::conforms::del(const code &code)
 {
 	report &= ~(1UL << code);
 }
 
 void
-ircd::m::event::errors::set(const code &code)
+ircd::m::event::conforms::set(const code &code)
 {
 	report |= (1UL << code);
 }
 
 ircd::string_view
-ircd::m::event::errors::string(const mutable_buffer &out)
+ircd::m::event::conforms::string(const mutable_buffer &out)
 const
 {
 	mutable_buffer buf{out};
@@ -602,34 +602,34 @@ const
 }
 
 bool
-ircd::m::event::errors::has(const code &code)
+ircd::m::event::conforms::has(const code &code)
 const
 {
 	return report & (1UL << code);
 }
 
 bool
-ircd::m::event::errors::has(const uint &code)
+ircd::m::event::conforms::has(const uint &code)
 const
 {
 	return (report & (1UL << code)) == code;
 }
 
 bool
-ircd::m::event::errors::operator!()
+ircd::m::event::conforms::operator!()
 const
 {
 	return clean();
 }
 
-ircd::m::event::errors::operator bool()
+ircd::m::event::conforms::operator bool()
 const
 {
 	return !clean();
 }
 
 bool
-ircd::m::event::errors::clean()
+ircd::m::event::conforms::clean()
 const
 {
 	return report == 0;

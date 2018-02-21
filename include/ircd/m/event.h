@@ -64,7 +64,7 @@ struct ircd::m::event
 {
 	struct prev;
 	struct fetch;
-	struct errors;
+	struct conforms;
 
 	// Common convenience aliases
 	using id = m::id::event;
@@ -130,7 +130,7 @@ struct ircd::m::event::fetch
 	friend void seek(fetch &, const event::id &);
 };
 
-struct ircd::m::event::errors
+struct ircd::m::event::conforms
 {
 	enum code :uint;
 
@@ -146,14 +146,14 @@ struct ircd::m::event::errors
 	void set(const code &code);
 	void del(const code &code);
 
-	errors() = default;
-	errors(const event &);
+	conforms() = default;
+	conforms(const event &);
 
 	friend string_view reflect(const code &);
-	friend std::ostream &operator<<(std::ostream &, const errors &);
+	friend std::ostream &operator<<(std::ostream &, const conforms &);
 };
 
-enum ircd::m::event::errors::code
+enum ircd::m::event::conforms::code
 :uint
 {
 	INVALID_EVENT_ID,
