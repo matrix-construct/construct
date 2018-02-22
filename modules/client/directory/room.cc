@@ -27,7 +27,8 @@ directory_room_resource
 };
 
 resource::response
-get_directory_room(client &client, const resource::request &request)
+get__directory_room(client &client,
+                    const resource::request &request)
 {
 	m::room::alias::buf room_alias
 	{
@@ -43,5 +44,39 @@ get_directory_room(client &client, const resource::request &request)
 resource::method
 directory_room_get
 {
-	directory_room_resource, "GET", get_directory_room
+	directory_room_resource, "GET", get__directory_room
+};
+
+resource::response
+put__directory_room(client &client,
+                    const resource::request &request)
+{
+	m::room::alias::buf room_alias
+	{
+		url::decode(request.parv[0], room_alias)
+	};
+
+	const m::room::id &room_id
+	{
+		unquote(request.at("room_id"))
+	};
+
+	if(false)
+		throw m::error
+		{
+			http::CONFLICT, "M_EXISTS",
+			"Room alias %s already exists",
+			room_alias
+		};
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+resource::method
+directory_room_put
+{
+	directory_room_resource, "PUT", put__directory_room
 };
