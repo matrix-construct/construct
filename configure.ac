@@ -42,7 +42,7 @@ dnl
 AC_CONFIG_FILES(\
 	Makefile                \
 	include/ircd/Makefile   \
-	charybdis/Makefile      \
+	construct/Makefile      \
 	ircd/Makefile           \
 	doc/Makefile            \
 	modules/Makefile        \

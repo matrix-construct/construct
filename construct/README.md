@@ -1,6 +1,6 @@
-# Charybdis Server
+# Construct Server
 
-Charybdis is the executable running `libircd`. This application provides an
+Construct is the executable running `libircd`. This application provides an
 interface for the server administrator to start, stop, configure and locally
 communicate with the daemon. It sets up an `asio::io_service` which is passed
 to `libircd`, then it sets up signal handling, and then it runs the ios event
@@ -8,13 +8,13 @@ loop until commanded to exit.
 
 This program executes in the foreground. It does not "daemonize" anymore with a
 `fork()` etc. You are free to use your shell to execute or move the program
-to the background, or simply use a `tmux` or `screen`. Charybdis will output
+to the background, or simply use a `tmux` or `screen`. Construct will output
 the libircd log to stdout and stderr by default.
 
 ### Signals
 
-Charybdis handles certain POSIX signals and their behavior is documented
-below. Signals are only handled here in the Charybdis executable; libircd
+Construct handles certain POSIX signals and their behavior is documented
+below. Signals are only handled here in the Construct executable; libircd
 itself does not use any signal logic (that we know about).
 
 * Signal handling is accomplished through `boost::asio`'s mechanism which
@@ -25,26 +25,26 @@ this way they can be compatible with windows environments.
 
 ##### SIGINT
 
-A `ctrl-c` to Charybdis will bring up the command line console interface. It
+A `ctrl-c` to Construct will bring up the command line console interface. It
 will not halt the daemon. Log messages will be suppressed while the console
 is waiting for input, but service is still continuing in the background.
 
 ##### SIGTSTP
 
-A `ctrl-z` or "Terminal SToP" to Charybdis will bring up the command line
+A `ctrl-z` or "Terminal SToP" to Construct will bring up the command line
 console like with `SIGINT` except that the entire daemon will pause while
 waiting for console input. When paused, a second `SIGTSTP` will exhibit default
 behavior so your shell can offer its functionality here.
 
 ##### SIGHUP
 
-A "HangUP" to Charybdis is only relevant to the command line console, and
+A "HangUP" to Construct is only relevant to the command line console, and
 signals it to close like an `EOF`. The legacy functionality for reloading
 server configuration et al is moved to `SIGUSR1`.
 
 ##### SIGQUIT
 
-A `ctrl-\` to Charybdis will cleanly shut down the server. It will not generate
+A `ctrl-\` to Construct will cleanly shut down the server. It will not generate
 a coredump.
 
 ##### SIGUSR1

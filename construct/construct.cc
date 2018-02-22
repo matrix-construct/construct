@@ -12,7 +12,7 @@
 #include <ircd/asio.h>
 #include <RB_INC_SYS_RESOURCE_H
 #include "lgetopt.h"
-#include "charybdis.h"
+#include "construct.h"
 
 namespace fs = ircd::fs;
 
@@ -176,16 +176,13 @@ catch(const std::exception &e)
 void print_version()
 {
 	printf("VERSION :%s\n",
-	       ircd::info::version.c_str());
+	       RB_VERSION);
 
 	#ifdef CUSTOM_BRANDING
 	printf("VERSION :based on %s-%s\n",
 	       PACKAGE_NAME,
 	       PACKAGE_VERSION);
 	#endif
-
-	printf("VERSION :boost %d\n", BOOST_VERSION);
-	printf("VERSION :RocksDB %s\n", ircd::db::version);
 }
 
 bool startup_checks()

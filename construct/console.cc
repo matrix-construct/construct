@@ -12,7 +12,7 @@
 #include <ircd/asio.h>
 #include <ircd/m/m.h>
 #include <ircd/util/params.h>
-#include "charybdis.h"
+#include "construct.h"
 
 using namespace ircd;
 

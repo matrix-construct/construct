@@ -23,9 +23,9 @@ AM_LDFLAGS = \
 	$(PLATFORM_LDFLAGS) \
 	###
 
-bin_PROGRAMS = charybdis
+bin_PROGRAMS = construct
 
-charybdis_LDFLAGS = \
+construct_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
@@ -33,7 +33,7 @@ charybdis_LDFLAGS = \
 	@SODIUM_LDFLAGS@ \
 	###
 
-charybdis_LDADD = \
+construct_LDADD = \
 	-lircd \
 	@ROCKSDB_LIBS@ \
 	@JS_LIBS@ \
@@ -44,8 +44,8 @@ charybdis_LDADD = \
 	-lz \
 	###
 
-charybdis_SOURCES = \
-	charybdis.cc    \
+construct_SOURCES = \
+	construct.cc    \
 	console.cc      \
 	lgetopt.cc      \
 	###
