@@ -294,10 +294,6 @@ catch(const qi::expectation_failure<const char *> &e)
 struct ircd::m::id::printer
 :output<const char *>
 {
-	static string_view random_alpha(const mutable_buffer &buf, const size_t &len);
-	static string_view random_timebased(const mutable_buffer &);
-	static string_view random_prefixed(const string_view &prefix, const mutable_buffer &);
-
 	template<class generator,
 	         class attribute>
 	bool operator()(char *&out, char *const &stop, generator&& g, attribute&& a) const
@@ -350,50 +346,6 @@ struct ircd::m::id::printer
 }
 const ircd::m::id::printer;
 
-ircd::string_view
-ircd::m::id::printer::random_prefixed(const string_view &prefix,
-                                      const mutable_buffer &buf)
-{
-	using buffer::data;
-
-	const auto len
-	{
-		fmt::sprintf(buf, "%s%u", prefix, rand::integer())
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::m::id::printer::random_timebased(const mutable_buffer &buf)
-{
-	using buffer::data;
-	using buffer::size;
-
-	const auto utime(microtime());
-	const auto len
-	{
-		snprintf(data(buf), size(buf), "%zd%06d", utime.first, utime.second)
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::m::id::printer::random_alpha(const mutable_buffer &buf,
-                                   const size_t &len)
-{
-	using buffer::data;
-	using buffer::size;
-
-	const mutable_buffer out
-	{
-		data(buf), std::min(size(buf), len)
-	};
-
-	return rand::string(rand::dict::alpha, out);
-}
-
 //
 // id
 //
@@ -419,7 +371,10 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 	const string_view src
 	{
-		buffer::data(buf), size_t(fmt::sprintf(buf, "%c%s:%s", char(sigil), local, host))
+		fmt::sprintf
+		{
+			buf, "%c%s:%s", char(sigil), local, host
+		}
 	};
 
 	return parser(sigil, src);
@@ -461,19 +416,40 @@ ircd::m::id::id(const enum sigil &sigil,
 	string_view name; switch(sigil)
 	{
 		case sigil::USER:
-			name = printer::random_prefixed("guest", namebuf);
+			name = fmt::sprintf
+			{
+				namebuf, "guest%lu", rand::integer()
+			};
 			break;
 
 		case sigil::ROOM_ALIAS:
-			name = printer::random_prefixed("", namebuf);
+			name = fmt::sprintf
+			{
+				namebuf, "%lu", rand::integer()
+			};
 			break;
+
+		case sigil::ROOM:
+		{
+			mutable_buffer buf{namebuf, 16};
+			consume(buf, buffer::copy(buf, "AAAA"_sv)); //TODO: cluster euid
+			rand::string(rand::dict::alnum, buf);
+			name = {namebuf, 16};
+			break;
+		}
 
 		case sigil::DEVICE:
-			name = printer::random_alpha(namebuf, 16);
+		{
+			static const auto &dict{rand::dict::alpha};
+			name = rand::string(dict, mutable_buffer{namebuf, 16});
 			break;
+		}
 
 		default:
-			name = printer::random_timebased(namebuf);
+			name = fmt::sprintf
+			{
+				namebuf, "%c%lu", rand::character(), rand::integer()
+			};
 			break;
 	};
 
