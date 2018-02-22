@@ -157,6 +157,24 @@ catch(const std::exception &e)
 	throw;
 }
 
+void
+ircd::log::console_enable(const facility &fac)
+{
+	console_out[fac] = true;
+}
+
+void
+ircd::log::console_disable(const facility &fac)
+{
+	console_out[fac] = false;
+}
+
+bool
+ircd::log::console_enabled(const facility &fac)
+{
+	return console_out[fac];
+}
+
 ircd::log::console_quiet::console_quiet(const bool &showmsg)
 {
 	if(showmsg)

@@ -42,6 +42,10 @@ namespace ircd::log
 	struct info;
 	struct debug;
 
+	bool console_enabled(const facility &);
+	void console_disable(const facility &);
+	void console_enable(const facility &);
+
 	void flush();
 	void close();
 	void open();
