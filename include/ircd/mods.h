@@ -141,11 +141,11 @@ const
 class ircd::mods::sym_ptr
 :std::weak_ptr<mod>
 {
-	void *ptr;
+	void *ptr {nullptr};
 
   public:
-	operator bool() const                        { return !expired();                              }
-	bool operator!() const                       { return expired();                               }
+	bool operator!() const;
+	operator bool() const;
 
 	template<class T> const T *get() const;
 	template<class T> const T *operator->() const;
@@ -156,6 +156,7 @@ class ircd::mods::sym_ptr
 	template<class T> T *operator->();
 	template<class T> T &operator*();
 
+	sym_ptr() = default;
 	sym_ptr(module, const std::string &symname);
 	sym_ptr(const std::string &modname, const std::string &symname);
 	~sym_ptr() noexcept;
@@ -221,6 +222,20 @@ const
 	return reinterpret_cast<const T *>(ptr);
 }
 
+inline ircd::mods::sym_ptr::operator
+bool()
+const
+{
+	return !bool(*this);
+}
+
+inline bool
+ircd::mods::sym_ptr::operator!()
+const
+{
+	return !ptr || expired();
+}
+
 /// Representation of a symbol in a loaded shared library
 ///
 template<class T>
@@ -259,6 +274,7 @@ struct ircd::mods::import_shared
 	operator const T &() const                   { return std::shared_ptr<T>::operator*();         }
 	operator T &()                               { return std::shared_ptr<T>::operator*();         }
 
+	import_shared() = default;
 	import_shared(module, const std::string &symname);
 	import_shared(const std::string &modname, const std::string &symname);
 };
