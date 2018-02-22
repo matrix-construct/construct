@@ -32,6 +32,12 @@ static bool console_cmd__key(const string_view &line);
 static bool console_cmd__db(const string_view &line);
 static bool console_cmd__net(const string_view &line);
 static bool console_cmd__mod(const string_view &line);
+static bool console_cmd__debuglog(const string_view &line);
+static bool console_cmd__test(const string_view &line);
+
+static bool console_id__user(const m::user::id &id, const string_view &args);
+static bool console_id__room(const m::room::id &id, const string_view &args);
+static bool console_id__event(const m::event::id &id, const string_view &args);
 
 extern "C" int
 console_command(const string_view &line, std::string &output)
@@ -50,6 +56,12 @@ try
 
 	switch(hash(token(line, " ", 0)))
 	{
+		case hash("test"):
+			return console_cmd__test(args);
+
+		case hash("debuglog"):
+			return console_cmd__debuglog(args);
+
 		case hash("mod"):
 			return console_cmd__mod(args);
 
@@ -76,6 +88,26 @@ try
 
 		case hash("fed"):
 			return console_cmd__fed(args);
+
+		default:
+		{
+			const string_view id{token(line, ' ', 0)};
+			if(m::has_sigil(id)) switch(m::sigil(id))
+			{
+				case m::id::EVENT:
+					return console_id__event(id, args);
+
+				case m::id::ROOM:
+					return console_id__room(id, args);
+
+				case m::id::USER:
+					return console_id__user(id, args);
+
+				default:
+					break;
+			}
+			else break;
+		}
 	}
 
 	return -1;
@@ -83,6 +115,62 @@ try
 catch(const bad_command &e)
 {
 	return -2;
+}
+
+//
+// Test trigger stub
+//
+
+bool
+console_cmd__test(const string_view &line)
+{
+	return true;
+}
+
+bool
+console_cmd__debuglog(const string_view &line)
+{
+	if(!RB_DEBUG_LEVEL)
+	{
+		out << "Debugging is not compiled in." << std::endl;
+		return true;
+	}
+
+	if(log::console_enabled(log::DEBUG))
+	{
+		out << "Turning off debuglog..." << std::endl;
+		log::console_disable(log::DEBUG);
+		return true;
+	} else {
+		out << "Turning on debuglog..." << std::endl;
+		log::console_enable(log::DEBUG);
+		return true;
+	}
+}
+
+//
+// Command by ID
+//
+
+bool
+console_id__event(const m::event::id &id,
+                   const string_view &args)
+{
+	return true;
+}
+
+bool
+console_id__room(const m::room::id &id,
+                 const string_view &args)
+{
+	return true;
+}
+
+bool
+console_id__user(const m::user::id &id,
+                 const string_view &args)
+{
+	return true;
 }
 
 //
