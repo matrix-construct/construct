@@ -10,66 +10,6 @@
 
 #include <ircd/m/m.h>
 
-const ircd::m::room::id::buf
-init_room_id
-{
-	"init", ircd::my_host()
-};
-
-ircd::m::room
-ircd::m::create(const id::room &room_id,
-                const id::user &creator,
-                const string_view &type)
-{
-	return create(room_id, creator, init_room_id, type);
-}
-
-ircd::m::room
-ircd::m::create(const id::room &room_id,
-                const id::user &creator,
-                const id::room &parent,
-                const string_view &type)
-{
-	json::iov event;
-	json::iov content;
-	const json::iov::push push[]
-	{
-		{ event,     { "sender",   creator  }},
-		{ content,   { "creator",  creator  }},
-	};
-
-	const json::iov::add_if _parent
-	{
-		content, !parent.empty() && parent.local() != "init",
-		{
-			"parent", parent
-		}
-	};
-
-	const json::iov::add_if _type
-	{
-		content, !type.empty() && type != "room",
-		{
-			"type", type
-		}
-	};
-
-	json::iov::set _set[]
-	{
-		{ event,  { "depth",       0L               }},
-		{ event,  { "type",        "m.room.create"  }},
-		{ event,  { "state_key",   ""               }},
-	};
-
-	room room
-	{
-		room_id
-	};
-
-	commit(room, event, content);
-	return room;
-}
-
 ircd::m::event::id::buf
 ircd::m::join(const room &room,
               const m::id::user &user_id)

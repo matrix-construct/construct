@@ -264,3 +264,55 @@ ircd::m::leave_ircd_room()
 {
 	leave(my_room, me.user_id);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/room.h
+//
+
+ircd::m::room
+ircd::m::create(const id::room &room_id,
+                const id::user &creator,
+                const string_view &type)
+{
+	static const auto modname
+	{
+		"client_createroom.so"
+	};
+
+	static const auto symname
+	{
+		"createroom__type"
+	};
+
+	using prototype = room (const id::room &, const id::user &, const string_view &);
+	static mods::import<prototype> function;
+	if(unlikely(!function))
+		function = { modules.at(modname), symname };
+
+	return function(room_id, creator, type);
+}
+
+ircd::m::room
+ircd::m::create(const id::room &room_id,
+                const id::user &creator,
+                const id::room &parent,
+                const string_view &type)
+{
+	static const auto modname
+	{
+		"client_createroom.so"
+	};
+
+	static const auto symname
+	{
+		"createroom__parent_type"
+	};
+
+	using prototype = room (const id::room &, const id::user &, const id::room &, const string_view &);
+	static mods::import<prototype> function;
+	if(unlikely(!function))
+		function = { modules.at(modname), symname };
+
+	return function(room_id, creator, parent, type);
+}

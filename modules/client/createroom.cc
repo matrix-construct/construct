@@ -8,7 +8,29 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+using namespace ircd::m;
 using namespace ircd;
+
+const room::id::buf
+init_room_id
+{
+	"init", ircd::my_host()
+};
+
+extern "C" room
+createroom__parent_type(const id::room &room_id,
+                        const id::user &creator,
+                        const id::room &parent,
+                        const string_view &type);
+
+extern "C" room
+createroom__type(const id::room &room_id,
+                 const id::user &creator,
+                 const string_view &type);
+
+extern "C" room
+createroom(const id::room &room_id,
+           const id::user &creator);
 
 mapi::header
 IRCD_MODULE
@@ -17,7 +39,7 @@ IRCD_MODULE
 };
 
 resource
-createroom
+createroom_resource
 {
 	"/_matrix/client/r0/createRoom",
 	{
@@ -39,22 +61,22 @@ try
 		unquote(request["visibility"])
 	};
 
-	const m::id::user sender_id
+	const id::user sender_id
 	{
 		request.user_id
 	};
 
-	const m::id::room::buf room_id
+	const id::room::buf room_id
 	{
-		m::id::generate, my_host()
+		id::generate, my_host()
 	};
 
-	const m::room room
+	const room room
 	{
-		create(room_id, sender_id)
+		createroom(room_id, sender_id)
 	};
 
-	const m::event::id::buf join_event_id
+	const event::id::buf join_event_id
 	{
 		join(room, sender_id)
 	};
@@ -83,8 +105,69 @@ catch(const db::not_found &e)
 resource::method
 post_method
 {
-	createroom, "POST", post__createroom,
+	createroom_resource, "POST", post__createroom,
 	{
 		post_method.REQUIRES_AUTH
 	}
 };
+
+room
+createroom(const id::room &room_id,
+           const id::user &creator)
+{
+	return createroom__type(room_id, creator, string_view{});
+}
+
+room
+createroom__type(const id::room &room_id,
+                 const id::user &creator,
+                 const string_view &type)
+{
+	return createroom__parent_type(room_id, creator, init_room_id, type);
+}
+
+room
+createroom__parent_type(const id::room &room_id,
+                        const id::user &creator,
+                        const id::room &parent,
+                        const string_view &type)
+{
+	json::iov event;
+	json::iov content;
+	const json::iov::push push[]
+	{
+		{ event,     { "sender",   creator  }},
+		{ content,   { "creator",  creator  }},
+	};
+
+	const json::iov::add_if _parent
+	{
+		content, !parent.empty() && parent.local() != "init",
+		{
+			"parent", parent
+		}
+	};
+
+	const json::iov::add_if _type
+	{
+		content, !type.empty() && type != "room",
+		{
+			"type", type
+		}
+	};
+
+	const json::iov::push _push[]
+	{
+		{ event,  { "depth",       0L               }},
+		{ event,  { "type",        "m.room.create"  }},
+		{ event,  { "state_key",   ""               }},
+	};
+
+	room room
+	{
+		room_id
+	};
+
+	commit(room, event, content);
+	return room;
+}
