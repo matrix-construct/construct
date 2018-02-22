@@ -148,6 +148,7 @@ client_client_user_la_SOURCES = \
 	client/user/openid.cc \
 	client/user/filter.cc \
 	client/user/account_data.cc \
+	client/user/rooms.cc \
 	client/user/user.cc \
 	###
 

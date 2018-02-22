@@ -108,7 +108,7 @@ post_method
 resource::response
 put_user(client &client, const resource::request &request)
 {
-	if(request.parv.size() < 2)
+	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
 		{
 			"user_id required"
@@ -119,6 +119,12 @@ put_user(client &client, const resource::request &request)
 		url::decode(request.parv[0], user_id)
 	};
 
+	if(request.parv.size() < 2)
+		throw m::NEED_MORE_PARAMS
+		{
+			"user command required"
+		};
+
 	const string_view &cmd
 	{
 		request.parv[1]
@@ -126,6 +132,9 @@ put_user(client &client, const resource::request &request)
 
 	if(cmd == "account_data")
 		return put__account_data(client, request, user_id);
+
+	if(cmd == "rooms")
+		return put__rooms(client, request, user_id);
 
 	throw m::NOT_FOUND
 	{
