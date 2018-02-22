@@ -572,7 +572,7 @@ ircd::resource::response::response(client &client,
                                    const json::object &object,
                                    const http::code &code)
 {
-	static const auto content_type
+	static const string_view content_type
 	{
 		"application/json; charset=utf-8"
 	};
@@ -585,7 +585,7 @@ ircd::resource::response::response(client &client,
                                    const json::array &array,
                                    const http::code &code)
 {
-	static const auto content_type
+	static const string_view content_type
 	{
 		"application/json; charset=utf-8"
 	};

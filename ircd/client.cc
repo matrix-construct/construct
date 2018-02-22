@@ -242,9 +242,14 @@ ircd::client::async()
 	assert(bool(this->sock));
 	assert(bool(this->conf));
 	auto &sock(*this->sock);
+	const auto timeout
+	{
+		longpoll? seconds(-1) : conf->async_timeout
+	};
+
 	const net::wait_opts opts
 	{
-		net::ready::READ, conf->async_timeout
+		net::ready::READ, timeout
 	};
 
 	auto handler

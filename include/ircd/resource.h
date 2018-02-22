@@ -89,15 +89,15 @@ struct ircd::resource::request
 	http::query::string query;
 	string_view user_id; //m::user::id::buf user_id; //TODO: bleeding
 	string_view access_token;
-	string_view param[8];
 	vector_view<string_view> parv;
+	string_view param[8];
 
 	request(const http::request::head &head,
 	        const string_view &content)
 	:json::object{content}
 	,head{head}
 	,content{content}
-	,query{head.query}
+	,query{this->head.query}
 	{}
 
 	request() = default;
