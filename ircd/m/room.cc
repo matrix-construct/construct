@@ -11,13 +11,6 @@
 #include <ircd/m/m.h>
 
 ircd::m::event::id::buf
-ircd::m::join(const room &room,
-              const m::id::user &user_id)
-{
-	return membership(room, user_id, "join");
-}
-
-ircd::m::event::id::buf
 ircd::m::leave(const room &room,
                const m::id::user &user_id)
 {

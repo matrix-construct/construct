@@ -316,3 +316,25 @@ ircd::m::create(const id::room &room_id,
 
 	return function(room_id, creator, parent, type);
 }
+
+ircd::m::event::id::buf
+ircd::m::join(const room &room,
+              const id::user &user_id)
+{
+	static const auto modname
+	{
+		"client_rooms_join.so"
+	};
+
+	static const auto symname
+	{
+		"join__room_user"
+	};
+
+	using prototype = event::id::buf (const m::room &, const id::user &);
+	static mods::import<prototype> function;
+	if(unlikely(!function))
+		function = { modules.at(modname), symname };
+
+	return function(room, user_id);
+}

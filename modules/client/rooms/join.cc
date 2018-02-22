@@ -10,19 +10,24 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
+
+extern "C" event::id::buf
+join__room_user(const room &room,
+                const id::user &user_id);
 
 resource::response
 post__join(client &client,
            const resource::request &request,
-           const m::room::id &room_id)
+           const room::id &room_id)
 {
 	const string_view &third_party_signed
 	{
 		unquote(request["third_party_signed"])
 	};
 
-	m::join(room_id, request.user_id);
+	join__room_user(room_id, request.user_id);
 
 	return resource::response
 	{
@@ -31,4 +36,22 @@ post__join(client &client,
 			{ "room_id", room_id }
 		}
 	};
+}
+
+event::id::buf
+join__room_user(const room &room,
+                const id::user &user_id)
+{
+	json::iov event;
+	json::iov content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",        "m.room.member"  }},
+		{ event,    { "sender",      user_id          }},
+		{ event,    { "state_key",   user_id          }},
+		{ event,    { "membership",  "join"           }},
+		{ content,  { "membership",  "join"           }},
+	};
+
+	return commit(room, event, content);
 }
