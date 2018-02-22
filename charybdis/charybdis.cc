@@ -119,7 +119,7 @@ try
 
 	// Because we registered signal handlers with the io_context, ios->run()
 	// is now shared between those handlers and libircd. This means the run()
-	// won't return even if we call ircd::stop(). We use the callback to then
+	// won't return even if we call ircd::quit(). We use the callback to then
 	// cancel the handlers so run() can return and the program can exit.
 	ircd::runlevel_changed = [](const enum ircd::runlevel &mode)
 	{
@@ -144,7 +144,7 @@ try
 		console_execute({execute});
 
 	// Execution.
-	// Blocks until a clean exit from a stop() or an exception comes out of it.
+	// Blocks until a clean exit from a quit() or an exception comes out of it.
 	ios->run();
 }
 catch(const ircd::user_error &e)

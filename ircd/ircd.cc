@@ -171,7 +171,7 @@ noexcept
 	return true;
 }
 
-/// Main context; Main program loop. Do not call this function directly.
+/// Main context; Main program. Do not call this function directly.
 ///
 /// This function manages the lifetime for all resources and subsystems
 /// that don't/can't have their own static initialization. When this
