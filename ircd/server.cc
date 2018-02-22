@@ -713,11 +713,14 @@ catch(const std::exception &e)
 	if(wp.expired())
 		return;
 
-	for(auto &link : links)
-		for(auto &tag : link.queue)
-			tag.set_exception(e);
+	close();
+	log.error("Removing node(%p): during name resolution: %s",
+	          this,
+	          e.what());
 
-	nodes.erase(remote.hostname);
+	const auto it(nodes.find(remote.hostname));
+	assert(it != end(nodes));
+	nodes.erase(it);
 }
 
 size_t
