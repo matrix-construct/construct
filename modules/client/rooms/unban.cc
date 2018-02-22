@@ -17,6 +17,11 @@ post__unban(client &client,
             const resource::request &request,
             const m::room::id &room_id)
 {
+	const m::user::id &user_id
+	{
+		unquote(request.at("user_id"))
+	};
+
 	return resource::response
 	{
 		client, http::OK

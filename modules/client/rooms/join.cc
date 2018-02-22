@@ -17,6 +17,11 @@ post__join(client &client,
            const resource::request &request,
            const m::room::id &room_id)
 {
+	const string_view &third_party_signed
+	{
+		unquote(request["third_party_signed"])
+	};
+
 	m::join(room_id, request.user_id);
 
 	return resource::response
