@@ -156,6 +156,7 @@ class ircd::mods::sym_ptr
 	template<class T> T *operator->();
 	template<class T> T &operator*();
 
+	sym_ptr(module, const std::string &symname);
 	sym_ptr(const std::string &modname, const std::string &symname);
 	~sym_ptr() noexcept;
 };
@@ -258,15 +259,25 @@ struct ircd::mods::import_shared
 	operator const T &() const                   { return std::shared_ptr<T>::operator*();         }
 	operator T &()                               { return std::shared_ptr<T>::operator*();         }
 
+	import_shared(module, const std::string &symname);
 	import_shared(const std::string &modname, const std::string &symname);
 };
 
 template<class T>
 ircd::mods::import_shared<T>::import_shared(const std::string &modname,
                                             const std::string &symname)
+:import_shared
+{
+	module(modname), symname
+}
+{}
+
+template<class T>
+ircd::mods::import_shared<T>::import_shared(module module,
+                                            const std::string &symname)
 :import<std::shared_ptr<T>>
 {
-	modname, symname
+	module, symname
 }
 ,std::shared_ptr<T>
 {

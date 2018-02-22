@@ -386,11 +386,20 @@ const
 
 ircd::mods::sym_ptr::sym_ptr(const std::string &modname,
                              const std::string &symname)
+:sym_ptr
+{
+	module(modname), symname
+}
+{
+}
+
+ircd::mods::sym_ptr::sym_ptr(module module,
+                             const std::string &symname)
 :std::weak_ptr<mod>
 {
-	module(modname)
+	module
 }
-,ptr{[this, &modname, &symname]
+,ptr{[this, &symname]
 {
 	const life_guard<mods::mod> mod{*this};
 	const auto &mangled(mod->mangle(symname));
