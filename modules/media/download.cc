@@ -49,23 +49,20 @@ handle_get(client &client,
 		request.parv[1]
 	};
 
-	const fmt::snstringf path
+	const std::string data
 	{
-		1024,
-		"/home/jason/.synapse/media_store/local_content/%s/%s/%s",
-		file.substr(0, 2),
-		file.substr(2, 2),
-		file.substr(4, file.size() - 4)
+		//fs::read(file)
 	};
 
-	const auto data
+	char mime_type_buf[64];
+	const string_view content_type
 	{
-		fs::read(path)
+		magic::mime(mime_type_buf, string_view{data})
 	};
 
 	return resource::response
 	{
-		client, string_view{data}, "image/jpg"
+		client, string_view{data}, content_type
 	};
 }
 
