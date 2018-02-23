@@ -11,6 +11,7 @@
 #pragma once
 #define HAVE_IRCD_MAGIC_H
 
+/// Content MIME typing interface.
 namespace ircd::magic
 {
 	struct init;
