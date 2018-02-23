@@ -328,3 +328,19 @@ ircd::m::leave(const room &room,
 
 	return function(room, user_id);
 }
+
+ircd::m::event::id::buf
+ircd::m::redact(const room &room,
+                const id::user &sender,
+                const id::event &event_id,
+                const string_view &reason)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const id::event &, const string_view &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "redact__"
+	};
+
+	return function(room, sender, event_id, reason);
+}

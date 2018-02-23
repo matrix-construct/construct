@@ -10,26 +10,33 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
+
+extern "C" event::id::buf
+redact__(const room &room,
+         const id::user &sender,
+         const id::event &event_id,
+         const string_view &reason);
 
 resource::response
 put__redact(client &client,
             const resource::request &request,
-            const m::room::id &room_id)
+            const room::id &room_id)
 {
 	if(request.parv.size() < 3)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"event_id parameter missing"
 		};
 
-	m::event::id::buf redacts
+	event::id::buf redacts
 	{
 		url::decode(request.parv[2], redacts)
 	};
 
 	if(request.parv.size() < 4)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"txnid parameter missing"
 		};
@@ -39,7 +46,47 @@ put__redact(client &client,
 		request.parv[3]
 	};
 
-	const m::room room
+	const room room
+	{
+		room_id
+	};
+
+	const auto &reason
+	{
+		unquote(request["reason"])
+	};
+
+	const auto event_id
+	{
+		redact__(room, request.user_id, redacts, reason)
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "event_id", event_id }
+		}
+	};
+}
+
+resource::response
+post__redact(client &client,
+             const resource::request &request,
+             const room::id &room_id)
+{
+	if(request.parv.size() < 3)
+		throw NEED_MORE_PARAMS
+		{
+			"event_id parameter missing"
+		};
+
+	event::id::buf redacts
+	{
+		url::decode(request.parv[2], redacts)
+	};
+
+	const room room
 	{
 		room_id
 	};
@@ -63,42 +110,28 @@ put__redact(client &client,
 	};
 }
 
-resource::response
-post__redact(client &client,
-             const resource::request &request,
-             const m::room::id &room_id)
+event::id::buf
+redact__(const room &room,
+         const id::user &sender,
+         const id::event &event_id,
+         const string_view &reason)
 {
-	if(request.parv.size() < 3)
-		throw m::NEED_MORE_PARAMS
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",       "m.room.redaction"  }},
+		{ event,    { "sender",      sender             }},
+		{ event,    { "redacts",     event_id           }},
+	};
+
+	json::iov content;
+	const json::iov::set_if _reason
+	{
+		content, !empty(reason),
 		{
-			"event_id parameter missing"
-		};
-
-	m::event::id::buf redacts
-	{
-		url::decode(request.parv[2], redacts)
-	};
-
-	const m::room room
-	{
-		room_id
-	};
-
-	const auto &reason
-	{
-		unquote(request["reason"])
-	};
-
-	const auto event_id
-	{
-		redact(room, request.user_id, redacts, reason)
-	};
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "event_id", event_id }
+			"reason", reason
 		}
 	};
+
+	return commit(room, event, content);
 }

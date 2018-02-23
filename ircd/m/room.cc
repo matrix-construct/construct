@@ -51,32 +51,6 @@ ircd::m::message(const room &room,
 }
 
 ircd::m::event::id::buf
-ircd::m::redact(const room &room,
-                const m::id::user &sender,
-                const m::id::event &event_id,
-                const string_view &reason)
-{
-	json::iov event;
-	json::iov::push push[]
-	{
-		{ event,    { "type",       "m.room.redaction"  }},
-		{ event,    { "sender",      sender             }},
-		{ event,    { "redacts",     event_id           }},
-	};
-
-	json::iov content;
-	json::iov::set_if _reason
-	{
-		content, !empty(reason),
-		{
-			"reason", reason
-		}
-	};
-
-	return commit(room, event, content);
-}
-
-ircd::m::event::id::buf
 ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
