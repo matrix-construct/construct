@@ -118,7 +118,7 @@ ircd::m::init::modules()
 		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
 			m::modules.emplace(name, name);
 
-	m::modules.emplace("root.so"s, "root.so"s);
+	m::modules.emplace("root"s, "root"s);
 }
 
 namespace ircd::m
@@ -275,20 +275,12 @@ ircd::m::create(const id::room &room_id,
                 const id::user &creator,
                 const string_view &type)
 {
-	static const auto modname
-	{
-		"client_createroom.so"
-	};
-
-	static const auto symname
-	{
-		"createroom__type"
-	};
-
 	using prototype = room (const id::room &, const id::user &, const string_view &);
-	static mods::import<prototype> function;
-	if(unlikely(!function))
-		function = { modules.at(modname), symname };
+
+	static import<prototype> function
+	{
+		"client_createroom", "createroom__type"
+	};
 
 	return function(room_id, creator, type);
 }
@@ -299,20 +291,12 @@ ircd::m::create(const id::room &room_id,
                 const id::room &parent,
                 const string_view &type)
 {
-	static const auto modname
-	{
-		"client_createroom.so"
-	};
-
-	static const auto symname
-	{
-		"createroom__parent_type"
-	};
-
 	using prototype = room (const id::room &, const id::user &, const id::room &, const string_view &);
-	static mods::import<prototype> function;
-	if(unlikely(!function))
-		function = { modules.at(modname), symname };
+
+	static import<prototype> function
+	{
+		"client_createroom", "createroom__parent_type"
+	};
 
 	return function(room_id, creator, parent, type);
 }
@@ -321,20 +305,12 @@ ircd::m::event::id::buf
 ircd::m::join(const room &room,
               const id::user &user_id)
 {
-	static const auto modname
-	{
-		"client_rooms_join.so"
-	};
-
-	static const auto symname
-	{
-		"join__room_user"
-	};
-
 	using prototype = event::id::buf (const m::room &, const id::user &);
-	static mods::import<prototype> function;
-	if(unlikely(!function))
-		function = { modules.at(modname), symname };
+
+	static import<prototype> function
+	{
+		"client_rooms", "join__room_user"
+	};
 
 	return function(room, user_id);
 }
