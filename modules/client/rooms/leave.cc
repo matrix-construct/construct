@@ -10,15 +10,40 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
+
+extern "C" event::id::buf
+leave__room_user(const room &room,
+                 const id::user &user_id);
 
 resource::response
 post__leave(client &client,
             const resource::request &request,
-            const m::room::id &room_id)
+            const room::id &room_id)
 {
+	leave__room_user(room_id, request.user_id);
+
 	return resource::response
 	{
 		client, http::OK
 	};
+}
+
+event::id::buf
+leave__room_user(const room &room,
+                 const id::user &user_id)
+{
+	json::iov event;
+	json::iov content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",        "m.room.member"  }},
+		{ event,    { "sender",      user_id          }},
+		{ event,    { "state_key",   user_id          }},
+		{ event,    { "membership",  "leave"          }},
+		{ content,  { "membership",  "leave"          }},
+	};
+
+	return commit(room, event, content);
 }

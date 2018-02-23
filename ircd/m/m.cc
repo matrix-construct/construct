@@ -314,3 +314,17 @@ ircd::m::join(const room &room,
 
 	return function(room, user_id);
 }
+
+ircd::m::event::id::buf
+ircd::m::leave(const room &room,
+               const id::user &user_id)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "leave__room_user"
+	};
+
+	return function(room, user_id);
+}
