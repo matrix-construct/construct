@@ -10,15 +10,16 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
 
 resource::response
 put__send(client &client,
           const resource::request &request,
-          const m::room::id &room_id)
+          const room::id &room_id)
 {
 	if(request.parv.size() < 3)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"type parameter missing"
 		};
@@ -29,7 +30,7 @@ put__send(client &client,
 	};
 
 	if(request.parv.size() < 4)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"txnid parameter missing"
 		};
@@ -39,7 +40,7 @@ put__send(client &client,
 		request.parv[3]
 	};
 
-	m::room room
+	room room
 	{
 		room_id
 	};
@@ -61,4 +62,20 @@ put__send(client &client,
 			{ "event_id", event_id }
 		}
 	};
+}
+
+extern "C" event::id::buf
+send__iov(const room &room,
+          const id::user &sender,
+          const string_view &type,
+          const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",  sender  }},
+		{ event,    { "type",    type    }},
+	};
+
+	return commit(room, event, content);
 }

@@ -10,100 +10,41 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
 
-static resource::response
-get__state(client &client,
-           const resource::request &request,
-           const m::room::id &room_id,
-           const string_view &event_id)
-{
-	const m::room::state state
-	{
-		m::room{room_id, event_id}
-	};
-
-	std::vector<json::value> ret;
-	ret.reserve(32);
-
-	state.for_each([&ret]
-	(const m::event &event)
-	{
-		ret.emplace_back(event);
-	});
-
-	return resource::response
-	{
-		client, json::value
-		{
-			ret.data(), ret.size()
-		}
-	};
-}
+extern "C" event::id::buf
+state__iov(const room &room,
+           const id::user &sender,
+           const string_view &type,
+           const string_view &state_key,
+           const json::iov &content);
 
 static resource::response
 get__state(client &client,
            const resource::request &request,
-           const m::room::id &room_id,
+           const room::id &room_id,
+           const string_view &event_id);
+
+static resource::response
+get__state(client &client,
+           const resource::request &request,
+           const room::id &room_id,
            const string_view &event_id,
-           const string_view &type)
-{
-	const m::room::state state
-	{
-		m::room{room_id, event_id}
-	};
-
-	std::vector<json::value> ret;
-	ret.reserve(32);
-	state.for_each(type, [&ret]
-	(const m::event &event)
-	{
-		//TODO: Fix conversion derpage
-		ret.emplace_back(event);
-	});
-
-	return resource::response
-	{
-		client, json::value
-		{
-			ret.data(), ret.size()
-		}
-	};
-}
+           const string_view &type);
 
 static resource::response
 get__state(client &client,
            const resource::request &request,
-           const m::room::id &room_id,
+           const room::id &room_id,
            const string_view &event_id,
            const string_view &type,
-           const string_view &state_key)
-{
-	const m::room::state state
-	{
-		m::room{room_id, event_id}
-	};
-
-	std::array<json::value, 1> ret;
-	const bool i{state.get(std::nothrow, type, state_key, [&ret]
-	(const m::event &event)
-	{
-		ret[0] = event;
-	})};
-
-	return resource::response
-	{
-		client, json::value
-		{
-			ret.data(), i
-		}
-	};
-}
+           const string_view &state_key);
 
 resource::response
 get__state(client &client,
            const resource::request &request,
-           const m::room::id &room_id)
+           const room::id &room_id)
 {
 	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
@@ -137,7 +78,7 @@ get__state(client &client,
 resource::response
 put__state(client &client,
            const resource::request &request,
-           const m::room::id &room_id)
+           const room::id &room_id)
 {
 	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
@@ -158,7 +99,7 @@ put__state(client &client,
 
 	const auto event_id
 	{
-		m::send(room_id, request.user_id, type, state_key, content)
+		send(room_id, request.user_id, type, state_key, content)
 	};
 
 	return resource::response
@@ -168,4 +109,109 @@ put__state(client &client,
 			{ "event_id", event_id }
 		}
 	};
+}
+
+resource::response
+get__state(client &client,
+           const resource::request &request,
+           const room::id &room_id,
+           const string_view &event_id)
+{
+	const room::state state
+	{
+		room{room_id, event_id}
+	};
+
+	std::vector<json::value> ret;
+	ret.reserve(32);
+
+	state.for_each([&ret]
+	(const event &event)
+	{
+		ret.emplace_back(event);
+	});
+
+	return resource::response
+	{
+		client, json::value
+		{
+			ret.data(), ret.size()
+		}
+	};
+}
+
+resource::response
+get__state(client &client,
+           const resource::request &request,
+           const room::id &room_id,
+           const string_view &event_id,
+           const string_view &type)
+{
+	const room::state state
+	{
+		room{room_id, event_id}
+	};
+
+	std::vector<json::value> ret;
+	ret.reserve(32);
+	state.for_each(type, [&ret]
+	(const event &event)
+	{
+		ret.emplace_back(event);
+	});
+
+	return resource::response
+	{
+		client, json::value
+		{
+			ret.data(), ret.size()
+		}
+	};
+}
+
+resource::response
+get__state(client &client,
+           const resource::request &request,
+           const room::id &room_id,
+           const string_view &event_id,
+           const string_view &type,
+           const string_view &state_key)
+{
+	const room::state state
+	{
+		room{room_id, event_id}
+	};
+
+	std::array<json::value, 1> ret;
+	const bool i{state.get(std::nothrow, type, state_key, [&ret]
+	(const event &event)
+	{
+		ret[0] = event;
+	})};
+
+	return resource::response
+	{
+		client, json::value
+		{
+			ret.data(), i
+		}
+	};
+}
+
+event::id::buf
+state__iov(const room &room,
+           const id::user &sender,
+           const string_view &type,
+           const string_view &state_key,
+           const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",     sender     }},
+		{ event,    { "type",       type       }},
+		{ event,    { "state_key",  state_key  }},
+	};
+
+	return commit(room, event, content);
 }

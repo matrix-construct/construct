@@ -344,3 +344,103 @@ ircd::m::redact(const room &room,
 
 	return function(room, sender, event_id, reason);
 }
+
+ircd::m::event::id::buf
+ircd::m::message(const room &room,
+                 const m::id::user &sender,
+                 const string_view &body,
+                 const string_view &msgtype)
+{
+	return message(room, sender,
+	{
+		{ "body",     { body,    json::STRING } },
+		{ "msgtype",  { msgtype, json::STRING } },
+	});
+}
+
+ircd::m::event::id::buf
+ircd::m::message(const room &room,
+                 const m::id::user &sender,
+                 const json::members &contents)
+{
+	return send(room, sender, "m.room.message", contents);
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::members &contents)
+{
+	json::iov _content;
+	json::iov::push content[contents.size()];
+	return send(room, sender, type, state_key, make_iov(_content, content, contents.size(), contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::object &contents)
+{
+	json::iov _content;
+	json::iov::push content[contents.size()];
+	return send(room, sender, type, state_key, make_iov(_content, content, contents.size(), contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const string_view &, const json::iov &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "state__iov"
+	};
+
+	return function(room, sender, type, state_key, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::members &contents)
+{
+	json::iov _content;
+	json::iov::push content[contents.size()];
+	return send(room, sender, type, make_iov(_content, content, contents.size(), contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::object &contents)
+{
+	json::iov _content;
+	json::iov::push content[contents.count()];
+	return send(room, sender, type, make_iov(_content, content, contents.count(), contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const json::iov &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "send__iov"
+	};
+
+	return function(room, sender, type, content);
+}
