@@ -10,6 +10,7 @@
 
 #include "rooms.h"
 
+using namespace ircd::m;
 using namespace ircd;
 
 mapi::header
@@ -29,15 +30,16 @@ rooms_resource
 };
 
 resource::response
-get_rooms(client &client, const resource::request &request)
+get_rooms(client &client,
+          const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
 
-	m::room::id::buf room_id
+	room::id::buf room_id
 	{
 		url::decode(request.parv[0], room_id)
 	};
@@ -62,7 +64,7 @@ get_rooms(client &client, const resource::request &request)
 	if(cmd == "context")
 		return get__context(client, request, room_id);
 
-	throw m::NOT_FOUND
+	throw NOT_FOUND
 	{
 		"/rooms command not found"
 	};
@@ -75,15 +77,16 @@ method_get
 };
 
 resource::response
-put_rooms(client &client, const resource::request &request)
+put_rooms(client &client,
+          const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
 
-	m::room::id::buf room_id
+	room::id::buf room_id
 	{
 		url::decode(request.parv[0], room_id)
 	};
@@ -105,7 +108,7 @@ put_rooms(client &client, const resource::request &request)
 	if(cmd == "redact")
 		return put__redact(client, request, room_id);
 
-	throw m::NOT_FOUND
+	throw NOT_FOUND
 	{
 		"/rooms command not found"
 	};
@@ -125,12 +128,12 @@ post_rooms(client &client,
            const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
+		throw NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
 
-	m::room::id::buf room_id
+	room::id::buf room_id
 	{
 		url::decode(request.parv[0], room_id)
 	};
@@ -170,7 +173,7 @@ post_rooms(client &client,
 	if(cmd == "redact")
 		return post__redact(client, request, room_id);
 
-	throw m::NOT_FOUND
+	throw NOT_FOUND
 	{
 		"/rooms command not found"
 	};
@@ -184,3 +187,63 @@ method_post
 		method_post.REQUIRES_AUTH
 	}
 };
+
+extern "C" event::id::buf
+commit__iov_iov(const room &room,
+                json::iov &event,
+                const json::iov &contents)
+{
+	const json::iov::push room_id
+	{
+		event, { "room_id", room.room_id }
+	};
+
+	int64_t depth;
+	const event::id::buf prev_event_id
+	{
+		head(std::nothrow, room.room_id, depth)
+	};
+
+	//TODO: X
+	const json::iov::set_if depth_
+	{
+		event, !event.has("depth"),
+		{
+			"depth", depth + 1
+		}
+	};
+
+	//TODO: X
+	const string_view auth_events{};
+
+	//TODO: X
+	const string_view prev_state{};
+
+	//TODO: X
+	json::value prev_event0
+	{
+		prev_event_id, json::STRING
+	};
+
+	//TODO: X
+	json::value prev_event
+	{
+		&prev_event0, !empty(prev_event_id)
+	};
+
+	//TODO: X
+	json::value prev_events
+	{
+		&prev_event, !empty(prev_event_id)
+	};
+
+	//TODO: X
+	const json::iov::push prevs[]
+	{
+		{ event, { "auth_events",  auth_events  } },
+		{ event, { "prev_state",   prev_state   } },
+		{ event, { "prev_events",  prev_events  } },
+	};
+
+	return m::vm::commit(event, contents);
+}

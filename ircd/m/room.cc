@@ -10,55 +10,6 @@
 
 #include <ircd/m/m.h>
 
-ircd::m::event::id::buf
-ircd::m::commit(const room &room,
-                json::iov &event,
-                const json::iov &contents)
-{
-	const json::iov::push room_id
-	{
-		event, { "room_id", room.room_id }
-	};
-
-	int64_t depth;
-	const m::event::id::buf prev_event_id
-	{
-		head(std::nothrow, room.room_id, depth)
-	};
-
-	//TODO: LCOCK
-	const json::iov::set_if depth_
-	{
-		event, !event.has("depth"),
-		{
-			"depth", depth + 1
-		}
-	};
-
-	const string_view auth_events{};
-	const string_view prev_state{};
-
-	json::value prev_event0[]
-	{
-		prev_event_id
-	};
-
-	json::value prev_events[]
-	{
-		{ prev_event0, 1 }
-	};
-
-	//TODO: LOLCK
-	const json::iov::push prevs[]
-	{
-		{ event, { "auth_events",  auth_events  }},
-		{ event, { "prev_state",   prev_state   }},
-		{ event, { "prev_events",  { prev_events, 1 } } },
-	};
-
-	return m::vm::commit(event, contents);
-}
-
 uint64_t
 ircd::m::depth(const id::room &room_id)
 {

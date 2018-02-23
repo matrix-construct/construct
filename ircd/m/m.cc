@@ -444,3 +444,18 @@ ircd::m::send(const room &room,
 
 	return function(room, sender, type, content);
 }
+
+ircd::m::event::id::buf
+ircd::m::commit(const room &room,
+                json::iov &event,
+                const json::iov &contents)
+{
+	using prototype = event::id::buf (const m::room &, json::iov &, const json::iov &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "commit__iov_iov"
+	};
+
+	return function(room, event, contents);
+}
