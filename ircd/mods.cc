@@ -83,7 +83,7 @@ try
 }()}
 ,_name
 {
-	handle.location().filename().string()
+	unpostfixed(handle.location().filename().string())
 }
 ,_location
 {
@@ -276,11 +276,8 @@ ircd::mods::module::module(const std::string &name)
 try
 :std::shared_ptr<mod>{[&name]
 {
-	const auto path(fullpath(name));
-	const auto filename(postfixed(name));
-
 	// Search for loaded module and increment the reference counter for this handle if loaded.
-	auto it(mod::loaded.find(filename));
+	auto it(mod::loaded.find(name));
 	if(it != end(mod::loaded))
 	{
 		auto &mod(*it->second);
@@ -293,7 +290,8 @@ try
 		load_mode::rtld_now
 	};
 
-	log.debug("Attempting to load '%s' @ `%s'", filename, path.string());
+	const auto path(fullpath(name));
+	log.debug("Attempting to load '%s' @ `%s'", name, path.string());
 	return std::make_shared<mod>(path, flags);
 }()}
 {
@@ -436,7 +434,7 @@ namespace mods {
 bool
 ircd::mods::loaded(const std::string &name)
 {
-	return mod::loaded.count(postfixed(name));
+	return mod::loaded.count(name);
 }
 
 bool
@@ -473,11 +471,11 @@ bool
 ircd::mods::has_symbol(const std::string &name,
                        const std::string &symbol)
 {
-	const auto fullpath(search(name));
-	if(fullpath.empty())
+	const auto path(fullpath(name));
+	if(path.empty())
 		return false;
 
-	const auto syms(symbols(fullpath));
+	const auto syms(symbols(path));
 	return std::find(begin(syms), end(syms), symbol) != end(syms);
 }
 
@@ -530,7 +528,7 @@ ircd::mods::available()
 	{
 		for(directory_iterator it(dir); it != directory_iterator(); ++it)
 			if(is_module(it->path(), std::nothrow))
-				ret.emplace_front(relative(it->path(), dir).string());
+				ret.emplace_front(unpostfixed(relative(it->path(), dir).string()));
 	}
 	catch(const filesystem::filesystem_error &e)
 	{
