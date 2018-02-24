@@ -681,6 +681,18 @@ try
 }
 catch(const http::error &e)
 {
+	if(ircd::debugmode) log::error
+	{
+		"socket(%p) local[%s] remote[%s] HTTP %d %s `%s' :%s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		int(e.code),
+		http::status(e.code),
+		head.uri,
+		e.content
+	};
+
 	resource::response
 	{
 		*this, e.content, "text/html; charset=utf8", e.code, e.headers
