@@ -51,7 +51,7 @@ ircd::m::user::tokens
 bool
 ircd::m::exists(const user::id &user_id)
 {
-	return user::users.has("ircd.account", user_id);
+	return user::users.has("ircd.user", user_id);
 }
 
 /// Register the user by creating a room !@user:myhost and then setting a
@@ -73,7 +73,7 @@ try
 	};
 
 	send(room, user_id, "ircd.account.options", "registration", contents);
-	send(users, me.user_id, "ircd.account", user_id,
+	send(users, me.user_id, "ircd.user", user_id,
 	{
 		{ "active", true }
 	});
@@ -165,7 +165,7 @@ ircd::m::user::is_active()
 const
 {
 	bool ret{false};
-	users.get(std::nothrow, "ircd.account", user_id, [&ret]
+	users.get(std::nothrow, "ircd.user", user_id, [&ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -173,7 +173,7 @@ const
 			at<"content"_>(event)
 		};
 
-		ret = content.at("active") == "true";
+		ret = content.get("active") == "true";
 	});
 
 	return ret;
