@@ -12,29 +12,24 @@
 
 using namespace ircd;
 
+struct pagination_tokens
+{
+	uint8_t limit;
+	char dir;
+	m::event::id::buf from;
+	m::event::id::buf to;
+
+	pagination_tokens(const resource::request &);
+};
+
 resource::response
 get__messages(client &client,
               const resource::request &request,
               const m::room::id &room_id)
 {
-	const string_view &from
+	const pagination_tokens page
 	{
-		request.query.at("from")
-	};
-
-	const string_view &to
-	{
-		request.query["to"]
-	};
-
-	const char &dir
-	{
-		request.query.at("dir").at(0)
-	};
-
-	const uint16_t limit
-	{
-		request.query["limit"]? lex_cast<uint16_t>(request.query.at("limit")) : ushort(10)
+		request
 	};
 
 	const string_view &filter
@@ -47,24 +42,45 @@ get__messages(client &client,
 		room_id
 	};
 
+	m::event::id::buf start, end;
 	std::vector<json::value> ret;
-	ret.reserve(limit);
+	ret.reserve(page.limit);
 
-	m::room::messages it{room};
-	for(; it && ret.size() < limit; dir == 'b'? --it : ++it)
-		ret.emplace_back(*it);
-
-	const string_view start
+	m::room::messages it
 	{
-		dir == 'b'? from : ":1234"
+		room, page.from
 	};
 
-	const string_view end
-	{
-		dir == 'b'? ":4321" : string_view{}
-	};
+	// Spec sez the 'from' token is exclusive
+	if(it && page.dir == 'b')
+		--it;
+	else if(it)
+		++it;
 
-	json::value chunk
+	for(; it; page.dir == 'b'? --it : ++it)
+	{
+		const m::event &event{*it};
+		if(page.to && at<"event_id"_>(event) == page.to)
+		{
+			if(page.dir != 'b')
+				start = at<"event_id"_>(event);
+
+			break;
+		}
+
+		ret.emplace_back(event);
+		if(ret.size() >= page.limit)
+		{
+			if(page.dir == 'b')
+				end = at<"event_id"_>(event);
+			else
+				start = at<"event_id"_>(event);
+
+			break;
+		}
+	}
+
+	const json::value chunk
 	{
 		ret.data(), ret.size()
 	};
@@ -77,5 +93,57 @@ get__messages(client &client,
 			{ "end",    end   },
 			{ "chunk",  chunk },
 		}
+	};
+}
+
+// Client-Server 6.3.6 query parameters
+pagination_tokens::pagination_tokens(const resource::request &request)
+try
+:limit
+{
+	// The maximum number of events to return. Default: 10.
+	// > we limit this to 255 via narrowing cast
+	request.query["limit"]?
+		uint8_t(lex_cast<ushort>(request.query.at("limit"))):
+		uint8_t(10)
+}
+,dir
+{
+	// Required. The direction to return events from. One of: ["b", "f"]
+	request.query.at("dir").at(0)
+}
+,from
+{
+	// Required. The token to start returning events from. This token can be
+	// obtained from a prev_batch token returned for each room by the sync
+	// API, or from a start or end token returned by a previous request to
+	// this endpoint.
+	url::decode(request.query.at("from"), from)
+}
+{
+	// The token to stop returning events at. This token can be obtained from
+	// a prev_batch token returned for each room by the sync endpoint, or from
+	// a start or end token returned by a previous request to this endpoint.
+	if(!empty(request.query["to"]))
+		url::decode(request.query.at("to"), to);
+
+	if(dir != 'b' && dir != 'f')
+		throw m::BAD_PAGINATION
+		{
+			"query parameter 'dir' must be 'b' or 'f'"
+		};
+}
+catch(const bad_lex_cast &)
+{
+	throw m::BAD_PAGINATION
+	{
+		"query parameter 'limit' is invalid"
+	};
+}
+catch(const m::INVALID_MXID &)
+{
+	throw m::BAD_PAGINATION
+	{
+		"query parameter 'from' or 'to' is not a valid token"
 	};
 }
