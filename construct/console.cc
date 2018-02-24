@@ -34,11 +34,12 @@ const size_t stack_sz
 bool console_active;
 bool console_inwork;
 ircd::ctx::ctx *console_ctx;
-boost::asio::posix::stream_descriptor *console_in;
 ircd::module *console_module;
+boost::asio::posix::stream_descriptor *console_in;
 
 static void check_console_active();
 static void console_fini();
+static void console_init();
 static bool handle_line(const string_view &line);
 static void execute(const std::vector<std::string> lines);
 static void console();
@@ -69,6 +70,24 @@ console_execute(const std::vector<std::string> &lines)
 	};
 }
 
+void
+console_init()
+{
+	console_cancel();
+	console_active = true;
+	console_ctx = &ctx::cur();
+	console_module = new ircd::module{"console"};
+}
+
+void
+console_fini()
+{
+	console_active = false;
+	console_ctx = nullptr;
+	delete console_module; console_module = nullptr;
+	std::cin.clear();
+}
+
 const char *const console_message
 {R"(
 ***
@@ -85,29 +104,21 @@ try
 
 	const unwind atexit([]
 	{
-		std::cout << std::endl;
+		delete console_in; console_in = nullptr;
 		console_fini();
 	});
 
-	console_active = true;
-	console_ctx = &ctx::cur();
-
+	console_init();
 	console_in = new boost::asio::posix::stream_descriptor
 	{
 		*::ios, dup(STDIN_FILENO)
 	};
 
-	console_module = new ircd::module
-	{
-		"console.so"
-	};
-
-	std::cout << console_message << generic_message;
-
 	boost::asio::streambuf buf{BUFSIZE};
 	std::istream is{&buf};
 	std::string line;
 
+	std::cout << console_message << generic_message;
 	while(1)
 	{
 		std::cout << "\n> " << std::flush;
@@ -127,9 +138,12 @@ try
 		if(!handle_line(line))
 			break;
 	}
+
+	std::cout << std::endl;
 }
 catch(const std::exception &e)
 {
+	std::cout << std::endl;
 	std::cout << "***" << std::endl;
 	std::cout << "*** The console session has ended: " << e.what() << std::endl;
 	std::cout << "***" << std::endl;
@@ -148,8 +162,12 @@ void
 console_termstop()
 try
 {
-	console_cancel();
+	const unwind atexit([]
+	{
+		console_fini();
+	});
 
+	console_init();
 	std::cout << termstop_message << generic_message;
 
 	std::string line;
@@ -178,12 +196,10 @@ try
 
 	const unwind atexit([]
 	{
-		console_active = false;
+		console_fini();
 	});
 
-	console_active = true;
-	console_ctx = &ctx::cur();
-
+	console_init();
 	for(const auto &line : lines)
 	{
 		if(line.empty())
@@ -234,7 +250,7 @@ try
 	{
 		const ircd::mods::import<int (const string_view &, std::string &)> command
 		{
-			"console.so", "console_command"
+			*console_module, "console_command"
 		};
 
 		int ret;
@@ -344,13 +360,4 @@ try
 catch(const std::exception &e)
 {
 	ircd::log::error("Interrupting console: %s", e.what());
-}
-
-void
-console_fini()
-{
-	console_active = false;
-	delete console_in; console_in = nullptr;
-	delete console_module; console_module = nullptr;
-	std::cin.clear();
 }
