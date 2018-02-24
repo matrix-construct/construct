@@ -34,13 +34,39 @@ post__search(client &client,
 		unquote(request.at("search_term"))
 	};
 
-	const auto &limit
+	const ushort &limit
 	{
 		request.get<ushort>("limit", 10)
 	};
 
-	const bool limited{false};
+	m::room::state users
+	{
+		m::user::users
+	};
+
+	// Search term in this endpoint comes in as-is from Riot. Our query
+	// is a lower_bound of a user_id, so we have to prefix the '@'.
+	char qbuf[256] {'@'};
+	const string_view &query
+	{
+		!startswith(search_term, '@')?
+			string_view{qbuf, strlcpy(qbuf+1, search_term, sizeof(qbuf))}:
+			search_term
+	};
+
+	bool limited{true};
 	std::vector<json::value> results;
+	users.test("ircd.user", query, [&results, &limit, &limited]
+	(const m::event &event)
+	{
+		results.emplace_back(json::members
+		{
+			{ "user_id", at<"state_key"_>(event) },
+		});
+
+		limited = results.size() >= limit;
+		return limited; // return true to break
+	});
 
 	return resource::response
 	{
