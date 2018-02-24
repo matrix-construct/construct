@@ -92,6 +92,7 @@ client_client_join_la_SOURCES = client/join.cc
 client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
 client_client_directory_room_la_SOURCES = client/directory/room.cc
 client_client_directory_user_la_SOURCES = client/directory/user.cc
+client_client_publicised_groups_la_SOURCES = client/publicised_groups.cc
 
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -112,6 +113,7 @@ client_module_LTLIBRARIES = \
 	client/client_voip_turnserver.la \
 	client/client_directory_room.la \
 	client/client_directory_user.la \
+	client/client_publicised_groups.la \
 	###
 
 #
