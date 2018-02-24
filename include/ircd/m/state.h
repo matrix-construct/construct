@@ -62,6 +62,7 @@ namespace ircd::m::state
 
 	bool test(const id &root, const iter_bool_closure &);
 	bool test(const id &root, const string_view &type, const iter_bool_closure &);
+	bool test(const id &root, const string_view &type, const string_view &state_key_lb, const iter_bool_closure &);
 
 	void for_each(const id &root, const iter_closure &);
 	void for_each(const id &root, const string_view &type, const iter_closure &);

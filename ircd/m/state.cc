@@ -170,6 +170,25 @@ ircd::m::state::test(const string_view &root,
 	});
 }
 
+bool
+ircd::m::state::test(const string_view &root,
+                     const string_view &type,
+                     const string_view &state_key_lb,
+                     const iter_bool_closure &closure)
+{
+	char buf[KEY_MAX_SZ];
+	const json::array key
+	{
+		make_key(buf, type, state_key_lb)
+	};
+
+	return dfs(root, key, [&closure]
+	(const json::array &key, const string_view &val, const uint &, const uint &)
+	{
+		return closure(key, val);
+	});
+}
+
 namespace ircd::m::state
 {
 	bool _dfs_recurse(const search_closure &, const node &, const json::array &key, int &);

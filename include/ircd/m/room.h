@@ -181,6 +181,8 @@ struct ircd::m::room::state
 	void for_each(const event::closure &) const;
 
 	// Iterate the state; test protocol
+	bool test(const string_view &type, const string_view &lower_bound, const event::id::closure_bool &view) const;
+	bool test(const string_view &type, const string_view &lower_bound, const event::closure_bool &view) const;
 	bool test(const string_view &type, const event::id::closure_bool &view) const;
 	bool test(const string_view &type, const event::closure_bool &view) const;
 	bool test(const event::id::closure_bool &view) const;

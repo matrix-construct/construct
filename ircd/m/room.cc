@@ -483,6 +483,37 @@ const
 	});
 }
 
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const string_view &state_key_lb,
+                           const event::closure_bool &closure)
+const
+{
+	event::fetch event;
+	return test(type, state_key_lb, event::id::closure_bool{[&event, &closure]
+	(const event::id &event_id)
+	{
+		if(seek(event, unquote(event_id), std::nothrow))
+			if(closure(event))
+				return true;
+
+		return false;
+	}});
+}
+
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const string_view &state_key_lb,
+                           const event::id::closure_bool &closure)
+const
+{
+	return m::state::test(root_id, type, state_key_lb, [&closure]
+	(const json::array &key, const string_view &event_id)
+	{
+		return closure(unquote(event_id));
+	});
+}
+
 void
 ircd::m::room::state::for_each(const event::closure &closure)
 const
