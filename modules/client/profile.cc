@@ -29,43 +29,12 @@ profile_resource
 static resource::response
 get__profile_full(client &client,
                   const resource::request &request,
-                  const m::room user_room)
-{
-	const m::room::state state
-	{
-		user_room
-	};
+                  const m::room &user_room);
 
-	std::vector<json::member> members;
-	state.for_each("ircd.profile", [&members]
-	(const m::event &event)
-	{
-		const auto &key
-		{
-			at<"state_key"_>(event)
-		};
-
-		const auto &value
-		{
-			at<"content"_>(event).at("text")
-		};
-
-		members.emplace_back(key, value);
-	});
-
-	const json::strung response
-	{
-		data(members), data(members) + size(members)
-	};
-
-	return resource::response
-	{
-		client, json::object
-		{
-			response
-		}
-	};
-}
+static resource::response
+get__profile_remote(client &client,
+                    const resource::request &request,
+                    const m::user &user);
 
 resource::response
 get__profile(client &client,
@@ -91,6 +60,9 @@ get__profile(client &client,
 	{
 		user.room_id()
 	};
+
+	if(!my(user) && !exists(user_room_id))
+		return get__profile_remote(client, request, user);
 
 	const m::room user_room
 	{
@@ -130,6 +102,99 @@ method_get
 {
 	profile_resource, "GET", get__profile
 };
+
+resource::response
+get__profile_full(client &client,
+                  const resource::request &request,
+                  const m::room &user_room)
+{
+	const m::room::state state
+	{
+		user_room
+	};
+
+	std::vector<json::member> members;
+	state.for_each("ircd.profile", [&members]
+	(const m::event &event)
+	{
+		const auto &key
+		{
+			at<"state_key"_>(event)
+		};
+
+		const auto &value
+		{
+			at<"content"_>(event).at("text")
+		};
+
+		members.emplace_back(key, value);
+	});
+
+	const json::strung response
+	{
+		data(members), data(members) + size(members)
+	};
+
+	return resource::response
+	{
+		client, json::object
+		{
+			response
+		}
+	};
+}
+
+resource::response
+get__profile_remote(client &client,
+                    const resource::request &request,
+                    const m::user &user)
+{
+	//TODO: XXX cache strat user's room
+
+	const string_view &field
+	{
+		request.parv[1]
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		64_KiB
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = user.user_id.host();
+	m::v1::query::profile federation_request
+	{
+		user.user_id, field, buf, opts
+	};
+
+	//TODO: conf
+	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
+	{
+		cancel(federation_request);
+		return resource::response
+		{
+			client, http::REQUEST_TIMEOUT
+		};
+	}
+
+	const http::code &code
+	{
+		federation_request.get()
+	};
+
+	const json::object &response
+	{
+		federation_request
+	};
+
+	//TODO: cache into a room with ttl
+
+	return resource::response
+	{
+		client, response
+	};
+}
 
 resource::response
 put__profile(client &client,
