@@ -54,6 +54,12 @@ ircd::m::exists(const user::id &user_id)
 	return user::users.has("ircd.user", user_id);
 }
 
+bool
+ircd::m::my(const user &user)
+{
+	return my(user.user_id);
+}
+
 /// Register the user by creating a room !@user:myhost and then setting a
 /// an `ircd.account` state event in the `users` room.
 ///
