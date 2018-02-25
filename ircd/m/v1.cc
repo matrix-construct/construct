@@ -537,6 +537,26 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 {
 }
 
+ircd::m::v1::query::profile::profile(const id::user &user_id,
+                                     const string_view &field,
+                                     const mutable_buffer &buf,
+                                     opts opts)
+:query
+{
+	"profile",
+	fmt::sprintf
+	{
+		query_arg_buf, "user_id=%s%s%s",
+		string_view{user_id},
+		!empty(field)? "&field=" : "",
+		field
+	},
+	buf,
+	opts
+}
+{
+}
+
 ircd::m::v1::query::query(const string_view &type,
                           const string_view &args,
                           const mutable_buffer &buf,

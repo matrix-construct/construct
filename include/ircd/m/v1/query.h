@@ -51,6 +51,7 @@ struct ircd::m::v1::query::profile
 :query
 {
 	profile(const id::user &user_id, const mutable_buffer &, opts);
+	profile(const id::user &user_id, const string_view &field, const mutable_buffer &, opts);
 };
 
 struct ircd::m::v1::query::directory
