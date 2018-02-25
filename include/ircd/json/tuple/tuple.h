@@ -158,6 +158,24 @@ indexof()
 }
 
 template<class tuple,
+         const char *const &name,
+         size_t i>
+constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
+indexof()
+{
+	return size<tuple>();
+}
+
+template<class tuple,
+         const char *const &name,
+         size_t i = 0>
+constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+indexof()
+{
+	return indexof<tuple, name_hash(name)>();
+}
+
+template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof(const char *const &name)
@@ -412,6 +430,40 @@ get(tuple &t,
 	return defined(ret)? ret : def;
 }
 
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
+get(const tuple &t)
+{
+	return get<name_hash(name), tuple>(t);
+}
+
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+get(const tuple &t,
+    const tuple_value_type<tuple, indexof<tuple, name>()> &def)
+{
+	return get<name_hash(name), tuple>(t, def);
+}
+
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+get(tuple &t)
+{
+	return get<name_hash(name), tuple>(t);
+}
+
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+get(tuple &t,
+    tuple_value_type<tuple, indexof<tuple, hash>()> &def)
+{
+	return get<name_hash(name), tuple>(t, def);
+}
+
 template<size_t hash,
          class tuple>
 enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
@@ -458,6 +510,22 @@ at(tuple &t)
 		throw not_found("%s", key<idx>(t));
 
 	return ret;
+}
+
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
+at(const tuple &t)
+{
+	return at<name_hash(name), tuple>(t);
+}
+
+template<const char *const &name,
+         class tuple>
+enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()> &>
+at(tuple &t)
+{
+	return at<name_hash(name), tuple>(t);
 }
 
 template<class tuple,
