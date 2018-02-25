@@ -35,9 +35,51 @@ get__directory_room(client &client,
 		url::decode(request.parv[0], room_alias)
 	};
 
+	//TODO: XXX cache strat
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = room_alias.host();
+	m::v1::query::directory federation_request
+	{
+		room_alias, buf, opts
+	};
+
+	//TODO: conf
+	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
+	{
+		cancel(federation_request);
+		return resource::response
+		{
+			client, http::REQUEST_TIMEOUT
+		};
+	}
+
+	const http::code &code
+	{
+		federation_request.get()
+	};
+
+	const json::object &response
+	{
+		federation_request
+	};
+
+	if(empty(response["room_id"]))
+		throw m::NOT_FOUND{};
+
+	if(empty(response["servers"]))
+		throw m::NOT_FOUND{};
+
+	//TODO: XXX cache strat
+
 	return resource::response
 	{
-		client, http::NOT_FOUND
+		client, response
 	};
 }
 
