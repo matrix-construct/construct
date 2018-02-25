@@ -12,6 +12,7 @@
 #define HAVE_IRCD_M_V1_H
 
 #include "version.h"
+#include "query.h"
 #include "make_join.h"
 #include "send_join.h"
 #include "event.h"

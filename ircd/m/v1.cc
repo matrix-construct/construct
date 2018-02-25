@@ -497,6 +497,96 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/query.h
+//
+
+namespace ircd::m::v1
+{
+	thread_local char query_arg_buf[1024];
+}
+
+ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
+                                         const mutable_buffer &buf,
+                                         opts opts)
+:query
+{
+	"directory",
+	fmt::sprintf
+	{
+		query_arg_buf, "room_alias=%s", string_view{room_alias}
+	},
+	buf,
+	opts
+}
+{
+}
+
+ircd::m::v1::query::profile::profile(const id::user &user_id,
+                                     const mutable_buffer &buf,
+                                     opts opts)
+:query
+{
+	"profile",
+	fmt::sprintf
+	{
+		query_arg_buf, "user_id=%s", string_view{user_id}
+	},
+	buf,
+	opts
+}
+{
+}
+
+ircd::m::v1::query::query(const string_view &type,
+                          const string_view &args,
+                          const mutable_buffer &buf,
+                          opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+	{
+		thread_local char urlbuf[2048];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			urlbuf, "/_matrix/federation/v1/query/%s?%s",
+			type,
+			args
+		};
+	}
+
+	json::get<"method"_>(opts.request) = "GET";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		const auto in_max
+		{
+			std::max(ssize_t(size(buf) - size(opts.out.head)), ssize_t(0))
+		};
+
+		assert(in_max >= ssize_t(size(buf) / 2));
+		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
+		opts.in.content = opts.in.head;
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/version.h
 //
 
