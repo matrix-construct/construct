@@ -60,6 +60,9 @@ namespace ircd::m::state
 	bool dfs(const id &root, const json::array &key, const search_closure &);
 	bool dfs(const id &root, const search_closure &);
 
+	size_t count(const id &root, const string_view &type);
+	size_t count(const id &root);
+
 	bool test(const id &root, const iter_bool_closure &);
 	bool test(const id &root, const string_view &type, const iter_bool_closure &);
 	bool test(const id &root, const string_view &type, const string_view &state_key_lb, const iter_bool_closure &);
@@ -67,8 +70,7 @@ namespace ircd::m::state
 	void for_each(const id &root, const iter_closure &);
 	void for_each(const id &root, const string_view &type, const iter_closure &);
 
-	size_t count(const id &root, const iter_bool_closure &);
-	size_t count(const id &root);
+	size_t accumulate(const id &root, const iter_bool_closure &);
 
 	bool get(std::nothrow_t, const id &root, const json::array &key, const val_closure &);
 	void get(const id &root, const json::array &key, const val_closure &);
@@ -83,6 +85,7 @@ namespace ircd::m::state::name
 	constexpr const char *const k {"k"};
 	constexpr const char *const v {"v"};
 	constexpr const char *const c {"c"};
+	constexpr const char *const n {"n"};
 }
 
 #pragma GCC diagnostic push
@@ -110,6 +113,12 @@ namespace ircd::m::state::name
 ///         "PcxAAACvkvyUMz19AZcCfrC3S84s",          ; Center child
 ///         "2jVYKIMKErJ6w6BLMhfVjsXearhB",          ; Right child
 ///     ]                                            ;
+///     "n":                                         ; Counting array
+///     [                                            ;
+///         15,                                      ; Left child value count
+///         12,                                      ; Center child value count
+///         19,                                      ; Right child value count
+///     ]                                            ;
 /// }                                                ;
 ///
 /// Elements are ordered based on type+state_key lexical sort. The type and
@@ -130,7 +139,8 @@ struct ircd::m::state::node
 <
 	json::property<name::k, json::array>,
 	json::property<name::v, json::array>,
-	json::property<name::c, json::array>
+	json::property<name::c, json::array>,
+	json::property<name::n, json::array>
 >
 {
 	struct rep;
@@ -138,14 +148,18 @@ struct ircd::m::state::node
 	size_t keys() const;
 	size_t vals() const;
 	size_t childs() const;
+	size_t counts() const;
+	size_t totals() const;
 
 	json::array key(const size_t &) const;
 	string_view val(const size_t &) const;
 	state::id child(const size_t &) const;
+	size_t count(const size_t &) const;
 
 	size_t keys(json::array *const &out, const size_t &max) const;
 	size_t vals(string_view *const &out, const size_t &max) const;
 	size_t childs(state::id *const &out, const size_t &max) const;
+	size_t counts(size_t *const &out, const size_t &max) const;
 
 	size_t find(const json::array &key) const;
 	bool has_key(const json::array &key) const;
@@ -168,16 +182,21 @@ struct ircd::m::state::node::rep
 	std::array<json::array, NODE_MAX_KEY + 1> keys;
 	std::array<string_view, NODE_MAX_VAL + 1> vals;
 	std::array<state::id, NODE_MAX_DEG + 1> chld;
+	std::array<size_t, NODE_MAX_DEG + 1> cnts;
 	size_t kn {0};
 	size_t vn {0};
 	size_t cn {0};
+	size_t nn {0};
 
 	bool full() const;
 	bool overfull() const;
 	bool duplicates() const;
 	size_t childs() const;
+	size_t counts() const;
+	size_t totals() const;
 	size_t find(const json::array &key) const;
 
+	void shl(const size_t &pos);
 	void shr(const size_t &pos);
 
 	json::object write(const mutable_buffer &out);

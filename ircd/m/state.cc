@@ -93,18 +93,8 @@ ircd::m::state::get(std::nothrow_t,
 }
 
 size_t
-ircd::m::state::count(const string_view &root)
-{
-	return count(root, []
-	(const json::array &key, const string_view &val)
-	{
-		return true;
-	});
-}
-
-size_t
-ircd::m::state::count(const string_view &root,
-                      const iter_bool_closure &closure)
+ircd::m::state::accumulate(const string_view &root,
+                           const iter_bool_closure &closure)
 {
 	size_t ret{0};
 	for_each(root, [&ret, &closure]
@@ -187,6 +177,83 @@ ircd::m::state::test(const string_view &root,
 	{
 		return closure(key, val);
 	});
+}
+
+namespace ircd::m::state
+{
+	size_t _count_recurse(const node &, const json::array &key, const json::array &dom);
+	size_t _count(const string_view &root, const json::array &key);
+}
+
+size_t
+ircd::m::state::count(const string_view &root)
+{
+	return 0;
+}
+
+size_t
+ircd::m::state::count(const string_view &root,
+                      const string_view &type)
+{
+	char buf[KEY_MAX_SZ];
+	const json::array key
+	{
+		make_key(buf, type)
+	};
+
+	return _count(root, key);
+}
+
+size_t
+ircd::m::state::_count(const string_view &root,
+                       const json::array &key)
+{
+	size_t ret{0};
+	get_node(root, [&key, &ret]
+	(const auto &node)
+	{
+		ret += _count_recurse(node, key, json::array{});
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::state::_count_recurse(const node &node,
+                               const json::array &key,
+                               const json::array &dom)
+{
+	const node::rep rep{node};
+
+	bool under{!empty(dom)};
+	for(uint pos(0); under && pos < rep.kn; ++pos)
+		if(!prefix_eq(dom, rep.keys[pos]))
+			under = false;
+
+	if(under)
+		return rep.totals();
+
+	size_t ret{0};
+	const auto kpos{rep.find(key)};
+	for(uint pos(kpos); pos < rep.kn || pos < rep.cn; ++pos)
+	{
+		if(!empty(rep.chld[pos]))
+			get_node(rep.chld[pos], [&key, &ret, &rep, &pos]
+			(const auto &node)
+			{
+				ret += _count_recurse(node, key, rep.keys[pos]);
+			});
+
+		if(pos < rep.kn)
+		{
+			if(prefix_eq(key, rep.keys[pos]))
+				++ret;
+			else
+				break;
+		}
+	}
+
+	return ret;
 }
 
 namespace ircd::m::state
@@ -319,6 +386,8 @@ ircd::m::state::_create(db::txn &txn,
 	rep.vn = 1;
 	rep.chld[0] = string_view{};
 	rep.cn = 1;
+	rep.cnts[0] = 0;
+	rep.nn = 1;
 
 	return set_node(txn, root, rep.write(node));
 }
@@ -414,6 +483,7 @@ ircd::m::state::_insert(int8_t &height,
 
 	// Indicates no push, and the child value is just an ID of a node.
 	rep.chld[pos] = child;
+	rep.cnts[pos]++;
 	return rep.write(txn, idbuf);
 }
 
@@ -437,6 +507,10 @@ ircd::m::state::_insert_branch_full(const int8_t &height,
 	rep.chld[pos + 1] = pushed.chld[1];
 	++rep.cn;
 
+	rep.cnts[pos] = pushed.cnts[0];
+	rep.cnts[pos + 1] = pushed.cnts[1];
+	++rep.nn;
+
 	size_t i(0);
 	node::rep left;
 	for(; i < rep.kn / 2; ++i)
@@ -444,8 +518,10 @@ ircd::m::state::_insert_branch_full(const int8_t &height,
 		left.keys[left.kn++] = rep.keys[i];
 		left.vals[left.vn++] = rep.vals[i];
 		left.chld[left.cn++] = rep.chld[i];
+		left.cnts[left.nn++] = rep.cnts[i];
 	}
 	left.chld[left.cn++] = rep.chld[i];
+	left.cnts[left.nn++] = rep.cnts[i];
 
 	push.keys[push.kn++] = rep.keys[i];
 	push.vals[push.vn++] = rep.vals[i];
@@ -456,12 +532,16 @@ ircd::m::state::_insert_branch_full(const int8_t &height,
 		right.keys[right.kn++] = rep.keys[i];
 		right.vals[right.vn++] = rep.vals[i];
 		right.chld[right.cn++] = rep.chld[i];
+		right.cnts[right.nn++] = rep.cnts[i];
 	}
 	right.chld[right.cn++] = rep.chld[i];
+	right.cnts[right.nn++] = rep.cnts[i];
 
 	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
 	push.chld[push.cn++] = left.write(txn, lc);
 	push.chld[push.cn++] = right.write(txn, rc);
+	push.cnts[push.nn++] = left.totals();
+	push.cnts[push.nn++] = right.totals();
 
 	const auto ret
 	{
@@ -497,6 +577,7 @@ ircd::m::state::_insert_leaf_full(const int8_t &height,
 		left.keys[left.kn++] = rep.keys[i];
 		left.vals[left.vn++] = rep.vals[i];
 		left.chld[left.cn++] = string_view{};
+		left.cnts[left.nn++] = 0;
 	}
 
 	push.keys[push.kn++] = rep.keys[i];
@@ -508,11 +589,14 @@ ircd::m::state::_insert_leaf_full(const int8_t &height,
 		right.keys[right.kn++] = rep.keys[i];
 		right.vals[right.vn++] = rep.vals[i];
 		right.chld[right.cn++] = string_view{};
+		right.cnts[right.nn++] = 0;
 	}
 
 	thread_local char lc[ID_MAX_SZ], rc[ID_MAX_SZ];
 	push.chld[push.cn++] = left.write(txn, lc);
 	push.chld[push.cn++] = right.write(txn, rc);
+	push.cnts[push.nn++] = left.totals();
+	push.cnts[push.nn++] = right.totals();
 
 	const auto ret
 	{
@@ -543,6 +627,10 @@ ircd::m::state::_insert_branch_nonfull(db::txn &txn,
 	rep.chld[pos + 1] = pushed.chld[1];
 	++rep.cn;
 
+	rep.cnts[pos] = pushed.cnts[0];
+	rep.cnts[pos + 1] = pushed.cnts[1];
+	++rep.nn;
+
 	return rep.write(txn, idbuf);
 }
 
@@ -564,6 +652,9 @@ ircd::m::state::_insert_leaf_nonfull(db::txn &txn,
 
 	rep.chld[pos] = string_view{};
 	++rep.cn;
+
+	rep.cnts[pos] = 0;
+	++rep.nn;
 
 	return rep.write(txn, idbuf);
 }
@@ -733,7 +824,9 @@ ircd::m::state::node::rep::rep(const node &node)
 :kn{node.keys(keys.data(), keys.size())}
 ,vn{node.vals(vals.data(), vals.size())}
 ,cn{node.childs(chld.data(), chld.size())}
+,nn{node.counts(cnts.data(), cnts.size())}
 {
+	assert(cn == nn);
 }
 
 ircd::m::state::id
@@ -748,6 +841,7 @@ ircd::json::object
 ircd::m::state::node::rep::write(const mutable_buffer &out)
 {
 	assert(kn == vn);
+	assert(cn == nn);
 	assert(cn <= kn + 1);
 	assert(!childs() || childs() > kn);
 	assert(!duplicates());
@@ -775,12 +869,19 @@ ircd::m::state::node::rep::write(const mutable_buffer &out)
 			chld[i] = this->chld[i];
 	};
 
+	json::value cnts[nn];
+	{
+		for(size_t i(0); i < nn; ++i)
+			cnts[i] = json::value{long(this->cnts[i])};
+	};
+
 	json::iov iov;
 	const json::iov::push push[]
 	{
 		{ iov, { "k"_sv, { keys, kn } } },
 		{ iov, { "v"_sv, { vals, vn } } },
 		{ iov, { "c"_sv, { chld, cn } } },
+		{ iov, { "n"_sv, { cnts, nn } } },
 	};
 
 	return { data(out), json::print(out, iov) };
@@ -793,6 +894,17 @@ ircd::m::state::node::rep::shr(const size_t &pos)
 	std::copy_backward(begin(keys) + pos, begin(keys) + kn, begin(keys) + kn + 1);
 	std::copy_backward(begin(vals) + pos, begin(vals) + vn, begin(vals) + vn + 1);
 	std::copy_backward(begin(chld) + pos, begin(chld) + cn, begin(chld) + cn + 1);
+	std::copy_backward(begin(cnts) + pos, begin(cnts) + nn, begin(cnts) + nn + 1);
+}
+
+/// Shift left.
+void
+ircd::m::state::node::rep::shl(const size_t &pos)
+{
+	std::copy(begin(keys) + pos + 1, begin(keys) + kn, begin(keys) + std::max(ssize_t(kn) - 1, 0L));
+	std::copy(begin(vals) + pos + 1, begin(vals) + vn, begin(vals) + std::max(ssize_t(vn) - 1, 0L));
+	std::copy(begin(chld) + pos + 1, begin(chld) + cn, begin(chld) + std::max(ssize_t(cn) - 1, 0L));
+	std::copy(begin(cnts) + pos + 1, begin(cnts) + nn, begin(cnts) + std::max(ssize_t(nn) - 1, 0L));
 }
 
 size_t
@@ -805,6 +917,24 @@ const
 			return i;
 
 	return i;
+}
+
+size_t
+ircd::m::state::node::rep::totals()
+const
+{
+	return kn + counts();
+}
+
+size_t
+ircd::m::state::node::rep::counts()
+const
+{
+	size_t ret(0);
+	for(size_t i(0); i < nn; ++i)
+		ret += cnts[i];
+
+	return ret;
 }
 
 size_t
@@ -901,6 +1031,19 @@ const
 }
 
 size_t
+ircd::m::state::node::counts(size_t *const &out,
+                             const size_t &max)
+const
+{
+	size_t i(0);
+	for(const string_view &c : json::get<"n"_>(*this))
+		if(likely(i < max))
+			out[i++] = lex_cast<size_t>(c);
+
+	return i;
+}
+
+size_t
 ircd::m::state::node::childs(state::id *const &out,
                              const size_t &max)
 const
@@ -939,6 +1082,18 @@ const
 	return i;
 }
 
+size_t
+ircd::m::state::node::count(const size_t &pos)
+const
+{
+	const json::array &counts
+	{
+		json::get<"n"_>(*this, json::empty_array)
+	};
+
+	return counts.at<size_t>(pos);
+}
+
 ircd::m::state::id
 ircd::m::state::node::child(const size_t &pos)
 const
@@ -975,6 +1130,26 @@ const
 	};
 
 	return keys[pos];
+}
+
+// Count counts in node
+size_t
+ircd::m::state::node::totals()
+const
+{
+	return keys() + counts();
+}
+
+// Count counts in node
+size_t
+ircd::m::state::node::counts()
+const
+{
+	size_t ret(0);
+	for(const auto &c : json::get<"n"_>(*this))
+		ret += lex_cast<size_t>(c);
+
+	return ret;
 }
 
 // Count children in node
