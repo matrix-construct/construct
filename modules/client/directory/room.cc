@@ -42,11 +42,9 @@ get__directory_room(client &client,
 		16_KiB
 	};
 
-	m::v1::query::opts opts;
-	opts.remote = room_alias.host();
 	m::v1::query::directory federation_request
 	{
-		room_alias, buf, opts
+		room_alias, buf
 	};
 
 	//TODO: conf

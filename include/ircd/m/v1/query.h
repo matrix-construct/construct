@@ -50,12 +50,15 @@ struct ircd::m::v1::query::opts
 struct ircd::m::v1::query::profile
 :query
 {
-	profile(const id::user &user_id, const mutable_buffer &, opts);
 	profile(const id::user &user_id, const string_view &field, const mutable_buffer &, opts);
+	profile(const id::user &user_id, const string_view &field, const mutable_buffer &);
+	profile(const id::user &user_id, const mutable_buffer &, opts);
+	profile(const id::user &user_id, const mutable_buffer &);
 };
 
 struct ircd::m::v1::query::directory
 :query
 {
 	directory(const id::room_alias &room_alias, const mutable_buffer &, opts);
+	directory(const id::room_alias &room_alias, const mutable_buffer &);
 };

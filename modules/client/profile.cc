@@ -161,11 +161,9 @@ get__profile_remote(client &client,
 		64_KiB
 	};
 
-	m::v1::query::opts opts;
-	opts.remote = user.user_id.host();
 	m::v1::query::profile federation_request
 	{
-		user.user_id, field, buf, opts
+		user.user_id, field, buf
 	};
 
 	//TODO: conf

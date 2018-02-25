@@ -506,6 +506,15 @@ namespace ircd::m::v1
 }
 
 ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
+                                         const mutable_buffer &buf)
+:directory
+{
+	room_alias, buf, opts{room_alias.host()}
+}
+{
+}
+
+ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
                                          const mutable_buffer &buf,
                                          opts opts)
 :query
@@ -522,6 +531,15 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 }
 
 ircd::m::v1::query::profile::profile(const id::user &user_id,
+                                     const mutable_buffer &buf)
+:profile
+{
+	user_id, buf, opts{user_id.host()}
+}
+{
+}
+
+ircd::m::v1::query::profile::profile(const id::user &user_id,
                                      const mutable_buffer &buf,
                                      opts opts)
 :query
@@ -533,6 +551,16 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	},
 	buf,
 	opts
+}
+{
+}
+
+ircd::m::v1::query::profile::profile(const id::user &user_id,
+                                     const string_view &field,
+                                     const mutable_buffer &buf)
+:profile
+{
+	user_id, field, buf, opts{user_id.host()}
 }
 {
 }
