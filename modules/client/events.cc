@@ -29,21 +29,41 @@ resource::response
 get__events(client &client,
             const resource::request &request)
 {
-	if(!request.has("room_id"))
+	if(!request.query["room_id"])
 		throw m::UNSUPPORTED
 		{
 			"Specify a room_id or use /sync"
 		};
 
-	const m::room::id &room_id
+	m::room::id::buf room_id
 	{
-		unquote(request.at("room_id"))
+		url::decode(request.query["room_id"], room_id)
+	};
+
+	const auto &from
+	{
+		request.query["from"]
+	};
+
+	const auto &requested_timeout
+	{
+		//TODO: conf
+		request.query["timeout"]? lex_cast<uint>(request.query["timeout"]) : 30000U
+	};
+
+	const milliseconds timeout
+	{
+		//TODO: conf
+		std::min(requested_timeout, 60000U)
 	};
 
 	const m::room room
 	{
 		room_id
 	};
+
+	//TODO: X
+	ctx::sleep(timeout);
 
 	const string_view start{};
 	const string_view end{};
