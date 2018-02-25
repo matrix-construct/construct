@@ -188,6 +188,10 @@ struct ircd::m::room::state
 	bool test(const event::id::closure_bool &view) const;
 	bool test(const event::closure_bool &view) const;
 
+	// Counting / Statistics
+	size_t count(const string_view &type) const;
+	size_t count() const;
+
 	// Existential
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool has(const string_view &type) const;

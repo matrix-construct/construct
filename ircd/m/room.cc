@@ -427,6 +427,20 @@ const
 	});
 }
 
+size_t
+ircd::m::room::state::count()
+const
+{
+	return m::state::count(root_id);
+}
+
+size_t
+ircd::m::room::state::count(const string_view &type)
+const
+{
+	return m::state::count(root_id, type);
+}
+
 bool
 ircd::m::room::state::test(const event::closure_bool &closure)
 const
