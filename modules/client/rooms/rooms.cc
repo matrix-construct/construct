@@ -64,6 +64,9 @@ get_rooms(client &client,
 	if(cmd == "context")
 		return get__context(client, request, room_id);
 
+	if(cmd == "initialSync")
+		return get__initialsync(client, request, room_id);
+
 	throw NOT_FOUND
 	{
 		"/rooms command not found"

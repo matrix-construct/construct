@@ -184,3 +184,13 @@ ircd::resource::response
 post__read_markers(ircd::client &,
                    const ircd::resource::request &,
                    const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// initialsync.cc
+//
+
+ircd::resource::response
+get__initialsync(ircd::client &,
+                 const ircd::resource::request &,
+                 const ircd::m::room::id &);

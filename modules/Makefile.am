@@ -137,6 +137,7 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/ban.cc \
 	client/rooms/unban.cc \
 	client/rooms/read_markers.cc \
+	client/rooms/initialsync.cc \
 	client/rooms/rooms.cc \
 	###
 
