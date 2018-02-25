@@ -82,10 +82,10 @@ namespace ircd::m::state
 /// JSON property name strings specifically for use in m::state
 namespace ircd::m::state::name
 {
-	constexpr const char *const k {"k"};
-	constexpr const char *const v {"v"};
-	constexpr const char *const c {"c"};
-	constexpr const char *const n {"n"};
+	constexpr const char *const key {"k"};
+	constexpr const char *const val {"v"};
+	constexpr const char *const child {"c"};
+	constexpr const char *const count {"n"};
 }
 
 #pragma GCC diagnostic push
@@ -137,10 +137,10 @@ namespace ircd::m::state::name
 struct ircd::m::state::node
 :json::tuple
 <
-	json::property<name::k, json::array>,
-	json::property<name::v, json::array>,
-	json::property<name::c, json::array>,
-	json::property<name::n, json::array>
+	json::property<name::key, json::array>,
+	json::property<name::val, json::array>,
+	json::property<name::child, json::array>,
+	json::property<name::count, json::array>
 >
 {
 	struct rep;

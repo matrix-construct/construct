@@ -878,10 +878,10 @@ ircd::m::state::node::rep::write(const mutable_buffer &out)
 	json::iov iov;
 	const json::iov::push push[]
 	{
-		{ iov, { "k"_sv, { keys, kn } } },
-		{ iov, { "v"_sv, { vals, vn } } },
-		{ iov, { "c"_sv, { chld, cn } } },
-		{ iov, { "n"_sv, { cnts, nn } } },
+		{ iov, { name::key,   { keys, kn } } },
+		{ iov, { name::val,   { vals, vn } } },
+		{ iov, { name::child, { chld, cn } } },
+		{ iov, { name::count, { cnts, nn } } },
 	};
 
 	return { data(out), json::print(out, iov) };
@@ -1021,7 +1021,7 @@ ircd::m::state::node::find(const json::array &parts)
 const
 {
 	size_t ret{0};
-	for(const json::array key : json::get<"k"_>(*this))
+	for(const json::array key : json::get<name::key>(*this))
 		if(keycmp(parts, key) <= 0)
 			return ret;
 		else
@@ -1036,7 +1036,7 @@ ircd::m::state::node::counts(size_t *const &out,
 const
 {
 	size_t i(0);
-	for(const string_view &c : json::get<"n"_>(*this))
+	for(const string_view &c : json::get<name::count>(*this))
 		if(likely(i < max))
 			out[i++] = lex_cast<size_t>(c);
 
@@ -1049,7 +1049,7 @@ ircd::m::state::node::childs(state::id *const &out,
 const
 {
 	size_t i(0);
-	for(const string_view &c : json::get<"c"_>(*this))
+	for(const string_view &c : json::get<name::child>(*this))
 		if(likely(i < max))
 			out[i++] = unquote(c);
 
@@ -1062,7 +1062,7 @@ ircd::m::state::node::vals(string_view *const &out,
 const
 {
 	size_t i(0);
-	for(const string_view &v : json::get<"v"_>(*this))
+	for(const string_view &v : json::get<name::val>(*this))
 		if(likely(i < max))
 			out[i++] = unquote(v);
 
@@ -1075,7 +1075,7 @@ ircd::m::state::node::keys(json::array *const &out,
 const
 {
 	size_t i(0);
-	for(const json::array &k : json::get<"k"_>(*this))
+	for(const json::array &k : json::get<name::key>(*this))
 		if(likely(i < max))
 			out[i++] = k;
 
@@ -1088,7 +1088,7 @@ const
 {
 	const json::array &counts
 	{
-		json::get<"n"_>(*this, json::empty_array)
+		json::get<name::count>(*this, json::empty_array)
 	};
 
 	return counts.at<size_t>(pos);
@@ -1100,7 +1100,7 @@ const
 {
 	const json::array &children
 	{
-		json::get<"c"_>(*this, json::empty_array)
+		json::get<name::child>(*this, json::empty_array)
 	};
 
 	return unquote(children[pos]);
@@ -1113,7 +1113,7 @@ const
 {
 	const json::array &values
 	{
-		json::get<"v"_>(*this, json::empty_array)
+		json::get<name::val>(*this, json::empty_array)
 	};
 
 	return unquote(values[pos]);
@@ -1126,7 +1126,7 @@ const
 {
 	const json::array &keys
 	{
-		json::get<"k"_>(*this, json::empty_array)
+		json::get<name::key>(*this, json::empty_array)
 	};
 
 	return keys[pos];
@@ -1146,7 +1146,7 @@ ircd::m::state::node::counts()
 const
 {
 	size_t ret(0);
-	for(const auto &c : json::get<"n"_>(*this))
+	for(const auto &c : json::get<name::count>(*this))
 		ret += lex_cast<size_t>(c);
 
 	return ret;
@@ -1158,7 +1158,7 @@ ircd::m::state::node::childs()
 const
 {
 	size_t ret(0);
-	for(const auto &c : json::get<"c"_>(*this))
+	for(const auto &c : json::get<name::child>(*this))
 		ret += !empty(c) && c != json::empty_string;
 
 	return ret;
@@ -1169,7 +1169,7 @@ size_t
 ircd::m::state::node::vals()
 const
 {
-	return json::get<"v"_>(*this).count();
+	return json::get<name::val>(*this).count();
 }
 
 /// Count keys in node
@@ -1177,5 +1177,5 @@ size_t
 ircd::m::state::node::keys()
 const
 {
-	return json::get<"k"_>(*this).count();
+	return json::get<name::key>(*this).count();
 }
