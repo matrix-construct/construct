@@ -1255,6 +1255,9 @@ console_cmd__room__redact(const string_view &line)
 //
 
 static bool console_cmd__fed__version(const string_view &line);
+static bool console_cmd__fed__query(const string_view &line);
+static bool console_cmd__fed__event(const string_view &line);
+static bool console_cmd__fed__state(const string_view &line);
 
 bool
 console_cmd__fed(const string_view &line)
@@ -1269,10 +1272,201 @@ console_cmd__fed(const string_view &line)
 		case hash("version"):
 			return console_cmd__fed__version(args);
 
+		case hash("query"):
+			return console_cmd__fed__query(args);
+
+		case hash("event"):
+			return console_cmd__fed__event(args);
+
+		case hash("state"):
+			return console_cmd__fed__state(args);
+
 		default:
 			throw bad_command{};
 	}
 
+	return true;
+}
+
+bool
+console_cmd__fed__state(const string_view &line)
+{
+	const m::room::id &room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token(line, ' ', 1)
+	};
+
+	const string_view &event_id
+	{
+		token_count(line, ' ') >= 3? token(line, ' ', 2) : string_view{}
+	};
+
+	unique_buffer<mutable_buffer> buf
+	{
+		64_MiB
+	};
+
+	m::v1::state::opts opts;
+	opts.remote = remote;
+	m::v1::state request
+	{
+		room_id, buf, opts
+	};
+
+	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__event(const string_view &line)
+{
+	const m::event::id &event_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token_count(line, ' ') > 1? token(line, ' ', 0) : event_id.host()
+	};
+
+	m::v1::event::opts opts;
+	opts.remote = remote;
+
+	thread_local char buf[8_KiB];
+	m::v1::event request
+	{
+		event_id, buf, opts
+	};
+
+	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << pretty(m::event{response}) << std::endl;
+	return true;
+}
+
+static bool console_cmd__fed__query__directory(const string_view &line);
+static bool console_cmd__fed__query__profile(const string_view &line);
+
+bool
+console_cmd__fed__query(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("profile"):
+			return console_cmd__fed__query__profile(args);
+
+		case hash("directory"):
+			return console_cmd__fed__query__directory(args);
+
+		default:
+			throw bad_command{};
+	}
+
+	return true;
+}
+
+bool
+console_cmd__fed__query__profile(const string_view &line)
+{
+	const m::user::id &user_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token_count(line, ' ') > 1? token(line, ' ', 1) : user_id.host()
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = remote;
+
+	thread_local char buf[8_KiB];
+	m::v1::query::profile request
+	{
+		user_id, buf, opts
+	};
+
+	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__query__directory(const string_view &line)
+{
+	const m::id::room_alias &room_alias
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token_count(line, ' ') > 1? token(line, ' ', 1) : room_alias.host()
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = remote;
+
+	thread_local char buf[8_KiB];
+	m::v1::query::directory request
+	{
+		room_alias, buf, opts
+	};
+
+	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << string_view{response} << std::endl;
 	return true;
 }
 
@@ -1304,6 +1498,6 @@ console_cmd__fed__version(const string_view &line)
 		request
 	};
 
-	out << response << std::endl;
+	out << string_view{response} << std::endl;
 	return true;
 }
