@@ -57,6 +57,7 @@ namespace ircd
 #include "vm.h"
 #include "keys.h"
 #include "txn.h"
+#include "hook.h"
 
 struct ircd::m::init
 {

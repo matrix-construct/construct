@@ -459,3 +459,260 @@ ircd::m::commit(const room &room,
 
 	return function(room, event, contents);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/hook.h
+//
+
+ircd::m::hook::hook(const json::members &members,
+                    decltype(function) function)
+try
+:_feature
+{
+	members
+}
+,feature
+{
+	_feature
+}
+,function
+{
+	std::move(function)
+}
+,registered
+{
+	list.add(*this)
+}
+{
+}
+catch(...)
+{
+	if(registered)
+		list.del(*this);
+}
+
+ircd::m::hook::~hook()
+noexcept
+{
+	if(registered)
+		list.del(*this);
+}
+
+ircd::string_view
+ircd::m::hook::site_name()
+const try
+{
+	return unquote(feature.at("_site"));
+}
+catch(const std::out_of_range &e)
+{
+	throw assertive
+	{
+		"Hook %p must name a '_site' to register with.", this
+	};
+}
+
+//
+// hook::site
+//
+
+ircd::m::hook::site::site(const json::members &members)
+try
+:_feature
+{
+	members
+}
+,feature
+{
+	_feature
+}
+,registered
+{
+	list.add(*this)
+}
+{
+}
+catch(...)
+{
+	if(registered)
+		list.del(*this);
+}
+
+ircd::m::hook::site::~site()
+noexcept
+{
+	if(registered)
+		list.del(*this);
+}
+
+void
+ircd::m::hook::site::operator()(const event &event)
+{
+	std::set<hook *> matching;          //TODO: allocator
+	const auto match{[&matching]
+	(auto &map, const string_view &key)
+	{
+		auto pit{map.equal_range(key)};
+		for(; pit.first != pit.second; ++pit.first)
+			matching.emplace(pit.first->second);
+	}};
+
+	match(origin, at<"origin"_>(event));
+	match(room_id, at<"room_id"_>(event));
+	match(sender, at<"sender"_>(event));
+	match(type, at<"type"_>(event));
+
+	if(json::get<"state_key"_>(event))
+		match(state_key, at<"state_key"_>(event));
+
+	for(const auto &hook : matching)
+		hook->function(event);
+}
+
+bool
+ircd::m::hook::site::add(hook &hook)
+{
+	// Note that m::event property names are first class members of
+	// the hook feature which is why our property names use _underscore.
+	const m::event feature
+	{
+		hook.feature
+	};
+
+	if(json::get<"origin"_>(feature))
+		origin.emplace(at<"origin"_>(feature), &hook);
+
+	if(json::get<"room_id"_>(feature))
+		room_id.emplace(at<"room_id"_>(feature), &hook);
+
+	if(json::get<"sender"_>(feature))
+		sender.emplace(at<"sender"_>(feature), &hook);
+
+	if(json::get<"state_key"_>(feature))
+		state_key.emplace(at<"state_key"_>(feature), &hook);
+
+	if(json::get<"type"_>(feature))
+		type.emplace(at<"type"_>(feature), &hook);
+
+	return true;
+}
+
+bool
+ircd::m::hook::site::del(hook &hook)
+{
+	const m::event feature
+	{
+		hook.feature
+	};
+
+	const auto unmap{[&hook]
+	(auto &map, const string_view &key)
+	{
+		auto pit{map.equal_range(key)};
+		for(; pit.first != pit.second; ++pit.first)
+			if(pit.first->second == &hook)
+				return map.erase(pit.first);
+
+		assert(0);
+	}};
+
+	if(json::get<"origin"_>(feature))
+		unmap(origin, at<"origin"_>(feature));
+
+	if(json::get<"room_id"_>(feature))
+		unmap(room_id, at<"room_id"_>(feature));
+
+	if(json::get<"sender"_>(feature))
+		unmap(sender, at<"sender"_>(feature));
+
+	if(json::get<"state_key"_>(feature))
+		unmap(state_key, at<"state_key"_>(feature));
+
+	if(json::get<"type"_>(feature))
+		unmap(type, at<"type"_>(feature));
+
+	return true;
+}
+
+ircd::string_view
+ircd::m::hook::site::name()
+const try
+{
+	return unquote(feature.at("name"));
+}
+catch(const std::out_of_range &e)
+{
+	throw assertive
+	{
+		"Hook site %p requires a name", this
+	};
+}
+
+//
+// hook::list
+//
+
+decltype(ircd::m::hook::list)
+ircd::m::hook::list
+{};
+
+bool
+ircd::m::hook::list::del(hook &hook)
+try
+{
+	const auto site(at(hook.site_name()));
+	assert(site != nullptr);
+	return site->add(hook);
+}
+catch(const std::out_of_range &e)
+{
+	log::critical
+	{
+		"Tried to unregister hook(%p) from missing hook::site '%s'",
+		&hook,
+		hook.site_name()
+	};
+
+	assert(0);
+	return false;
+}
+
+bool
+ircd::m::hook::list::add(hook &hook)
+try
+{
+	const auto site(at(hook.site_name()));
+	assert(site != nullptr);
+	return site->add(hook);
+}
+catch(const std::out_of_range &e)
+{
+	throw error
+	{
+		"No hook::site named '%s' is registered...", hook.site_name()
+	};
+}
+
+bool
+ircd::m::hook::list::del(site &site)
+{
+	return erase(site.name());
+}
+
+bool
+ircd::m::hook::list::add(site &site)
+{
+	const auto iit
+	{
+		emplace(site.name(), &site)
+	};
+
+	if(unlikely(!iit.second))
+		throw error
+		{
+			"Hook site name '%s' already in use", site.name()
+		};
+
+	return true;
+}
