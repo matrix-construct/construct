@@ -226,10 +226,12 @@ media_moduledir = @moduledir@
 
 media_media_download_la_SOURCES = media/download.cc
 media_media_upload_la_SOURCES = media/upload.cc
+media_media_thumbnail_la_SOURCES = media/thumbnail.cc
 
 media_module_LTLIBRARIES = \
 	media/media_download.la \
 	media/media_upload.la \
+	media/media_thumbnail.la \
 	###
 
 ###############################################################################
