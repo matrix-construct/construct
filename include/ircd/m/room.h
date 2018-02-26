@@ -27,6 +27,9 @@ namespace ircd::m
 	// [GET] Util
 	bool exists(const id::room &);
 
+	id::room room_id(const mutable_buffer &, const id::room_alias &);
+	id::room::buf room_id(const id::room_alias &);
+
 	// [GET] Current Event suite (non-locking) (one)
 	id::event::buf head(std::nothrow_t, const id::room &, int64_t &);
 	id::event::buf head(const id::room &, uint64_t &);
@@ -105,7 +108,6 @@ struct ircd::m::room
 	// misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 
-	room(const alias &, const event::id &event_id = {});
 	room(const id &room_id, const event::id &event_id = {})
 	:room_id{room_id}
 	,event_id{event_id}

@@ -81,11 +81,9 @@ _post__join(client &client,
             const resource::request &request,
             const m::room::alias &room_alias)
 {
-	throw m::NOT_FOUND{}; //TODO: X
-
-	const m::room::id room_id
+	const m::room::id::buf room_id
 	{
-
+		m::room_id(room_alias)
 	};
 
 	return resource::response

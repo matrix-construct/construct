@@ -460,6 +460,28 @@ ircd::m::commit(const room &room,
 	return function(room, event, contents);
 }
 
+ircd::m::id::room::buf
+ircd::m::room_id(const id::room_alias &room_alias)
+{
+	id::room::buf buf;
+	room_id(buf, room_alias);
+	return buf;
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const id::room_alias &room_alias)
+{
+	using prototype = id::room (const mutable_buffer &, const id::room_alias &);
+
+	static import<prototype> function
+	{
+		"client_directory_room", "room_id__room_alias"
+	};
+
+	return function(out, room_alias);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/hook.h

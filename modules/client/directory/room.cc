@@ -26,6 +26,10 @@ directory_room_resource
 	}
 };
 
+extern "C" m::id::room
+room_id__room_alias(const mutable_buffer &out,
+                    const m::id::room_alias &);
+
 resource::response
 get__directory_room(client &client,
                     const resource::request &request)
@@ -35,49 +39,18 @@ get__directory_room(client &client,
 		url::decode(request.parv[0], room_alias)
 	};
 
-	//TODO: XXX cache strat
-
-	const unique_buffer<mutable_buffer> buf
+	char buf[256];
+	const auto room_id
 	{
-		16_KiB
+		m::room_id(buf, room_alias)
 	};
-
-	m::v1::query::directory federation_request
-	{
-		room_alias, buf
-	};
-
-	//TODO: conf
-	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
-	{
-		cancel(federation_request);
-		return resource::response
-		{
-			client, http::REQUEST_TIMEOUT
-		};
-	}
-
-	const http::code &code
-	{
-		federation_request.get()
-	};
-
-	const json::object &response
-	{
-		federation_request
-	};
-
-	if(empty(response["room_id"]))
-		throw m::NOT_FOUND{};
-
-	if(empty(response["servers"]))
-		throw m::NOT_FOUND{};
-
-	//TODO: XXX cache strat
 
 	return resource::response
 	{
-		client, response
+		client, json::members
+		{
+			{ "room_id", room_id }
+		}
 	};
 }
 
@@ -120,3 +93,58 @@ directory_room_put
 {
 	directory_room_resource, "PUT", put__directory_room
 };
+
+m::id::room
+room_id__room_alias(const mutable_buffer &out,
+                    const m::id::room_alias &alias)
+{
+	//TODO: XXX cache strat
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB //TODO: XXX
+	};
+
+	m::v1::query::directory federation_request
+	{
+		alias, buf
+	};
+
+	//TODO: conf
+	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
+		throw http::error
+		{
+			http::REQUEST_TIMEOUT
+		};
+
+	const http::code &code
+	{
+		federation_request.get()
+	};
+
+	const json::object &response
+	{
+		federation_request
+	};
+
+	if(empty(response["room_id"]))
+		throw m::NOT_FOUND{};
+
+	if(empty(response["servers"]))
+		throw m::NOT_FOUND{};
+
+	const auto &room_id
+	{
+		unquote(response.at("room_id"))
+	};
+
+	//TODO: XXX cache strat
+
+	return m::room::id
+	{
+		string_view
+		{
+			data(out), copy(out, room_id)
+		}
+	};
+}

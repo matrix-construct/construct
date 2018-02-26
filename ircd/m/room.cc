@@ -104,14 +104,6 @@ ircd::m::my(const room &room)
 // room
 //
 
-ircd::m::room::room(const alias &alias,
-                    const event::id &event_id)
-:room_id{}
-,event_id{event_id}
-{
-	assert(0); //TODO: translate
-}
-
 bool
 ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
