@@ -343,6 +343,7 @@ struct ircd::http::response::head
 :line::response
 {
 	size_t content_length {0};
+	string_view content_type;
 	string_view transfer_encoding;
 	string_view server;
 

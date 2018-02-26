@@ -450,6 +450,9 @@ ircd::http::response::head::head(parse::capstan &pc,
 		if(iequals(h.first, "content-length"s))
 			this->content_length = parser.content_length(h.second);
 
+		else if(iequals(h.first, "content-type"s))
+			this->content_type = h.second;
+
 		else if(iequals(h.first, "transfer-encoding"s))
 			this->transfer_encoding = h.second;
 
