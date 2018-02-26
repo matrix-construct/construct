@@ -476,6 +476,10 @@ try
 {
 	_feature
 }
+,matching
+{
+	feature
+}
 ,function
 {
 	std::move(function)
@@ -549,8 +553,8 @@ noexcept
 void
 ircd::m::hook::site::operator()(const event &event)
 {
-	std::set<hook *> matching;          //TODO: allocator
-	const auto match{[&matching]
+	std::set<hook *> matching;     //TODO: allocator
+	const auto site_match{[&matching]
 	(auto &map, const string_view &key)
 	{
 		auto pit{map.equal_range(key)};
@@ -558,13 +562,47 @@ ircd::m::hook::site::operator()(const event &event)
 			matching.emplace(pit.first->second);
 	}};
 
-	match(origin, at<"origin"_>(event));
-	match(room_id, at<"room_id"_>(event));
-	match(sender, at<"sender"_>(event));
-	match(type, at<"type"_>(event));
-
+	site_match(origin, at<"origin"_>(event));
+	site_match(room_id, at<"room_id"_>(event));
+	site_match(sender, at<"sender"_>(event));
+	site_match(type, at<"type"_>(event));
 	if(json::get<"state_key"_>(event))
-		match(state_key, at<"state_key"_>(event));
+		site_match(state_key, at<"state_key"_>(event));
+
+	const auto event_match{[&event](const hook &hook)
+	{
+		if(json::get<"origin"_>(hook.matching))
+			if(at<"origin"_>(hook.matching) != at<"origin"_>(event))
+				return false;
+
+		if(json::get<"room_id"_>(hook.matching))
+			if(at<"room_id"_>(hook.matching) != at<"room_id"_>(event))
+				return false;
+
+		if(json::get<"sender"_>(hook.matching))
+			if(at<"sender"_>(hook.matching) != at<"sender"_>(event))
+				return false;
+
+		if(json::get<"type"_>(hook.matching))
+			if(at<"type"_>(hook.matching) != at<"type"_>(event))
+				return false;
+
+		if(json::get<"state_key"_>(hook.matching))
+			if(at<"state_key"_>(hook.matching) != json::get<"state_key"_>(event))
+				return false;
+
+		return true;
+	}};
+
+	auto it(begin(matching));
+	while(it != end(matching))
+	{
+		const auto *const &hook(*it);
+		if(!event_match(*hook))
+			it = matching.erase(it);
+		else
+			++it;
+	}
 
 	for(const auto &hook : matching)
 		hook->function(event);
@@ -573,39 +611,28 @@ ircd::m::hook::site::operator()(const event &event)
 bool
 ircd::m::hook::site::add(hook &hook)
 {
-	// Note that m::event property names are first class members of
-	// the hook feature which is why our property names use _underscore.
-	const m::event feature
-	{
-		hook.feature
-	};
+	if(json::get<"origin"_>(hook.matching))
+		origin.emplace(at<"origin"_>(hook.matching), &hook);
 
-	if(json::get<"origin"_>(feature))
-		origin.emplace(at<"origin"_>(feature), &hook);
+	if(json::get<"room_id"_>(hook.matching))
+		room_id.emplace(at<"room_id"_>(hook.matching), &hook);
 
-	if(json::get<"room_id"_>(feature))
-		room_id.emplace(at<"room_id"_>(feature), &hook);
+	if(json::get<"sender"_>(hook.matching))
+		sender.emplace(at<"sender"_>(hook.matching), &hook);
 
-	if(json::get<"sender"_>(feature))
-		sender.emplace(at<"sender"_>(feature), &hook);
+	if(json::get<"state_key"_>(hook.matching))
+		state_key.emplace(at<"state_key"_>(hook.matching), &hook);
 
-	if(json::get<"state_key"_>(feature))
-		state_key.emplace(at<"state_key"_>(feature), &hook);
+	if(json::get<"type"_>(hook.matching))
+		type.emplace(at<"type"_>(hook.matching), &hook);
 
-	if(json::get<"type"_>(feature))
-		type.emplace(at<"type"_>(feature), &hook);
-
+	++count;
 	return true;
 }
 
 bool
 ircd::m::hook::site::del(hook &hook)
 {
-	const m::event feature
-	{
-		hook.feature
-	};
-
 	const auto unmap{[&hook]
 	(auto &map, const string_view &key)
 	{
@@ -617,21 +644,22 @@ ircd::m::hook::site::del(hook &hook)
 		assert(0);
 	}};
 
-	if(json::get<"origin"_>(feature))
-		unmap(origin, at<"origin"_>(feature));
+	if(json::get<"origin"_>(hook.matching))
+		unmap(origin, at<"origin"_>(hook.matching));
 
-	if(json::get<"room_id"_>(feature))
-		unmap(room_id, at<"room_id"_>(feature));
+	if(json::get<"room_id"_>(hook.matching))
+		unmap(room_id, at<"room_id"_>(hook.matching));
 
-	if(json::get<"sender"_>(feature))
-		unmap(sender, at<"sender"_>(feature));
+	if(json::get<"sender"_>(hook.matching))
+		unmap(sender, at<"sender"_>(hook.matching));
 
-	if(json::get<"state_key"_>(feature))
-		unmap(state_key, at<"state_key"_>(feature));
+	if(json::get<"state_key"_>(hook.matching))
+		unmap(state_key, at<"state_key"_>(hook.matching));
 
-	if(json::get<"type"_>(feature))
-		unmap(type, at<"type"_>(feature));
+	if(json::get<"type"_>(hook.matching))
+		unmap(type, at<"type"_>(hook.matching));
 
+	--count;
 	return true;
 }
 

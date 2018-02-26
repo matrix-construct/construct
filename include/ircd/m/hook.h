@@ -27,6 +27,7 @@ struct ircd::m::hook
 
 	json::strung _feature;
 	json::object feature;
+	m::event matching;
 	std::function<void (const m::event &)> function;
 	bool registered;
 
@@ -48,6 +49,7 @@ struct ircd::m::hook::site
 	json::strung _feature;
 	json::object feature;
 	bool registered;
+	size_t count {0};
 
 	string_view name() const;
 
