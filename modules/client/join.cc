@@ -26,6 +26,16 @@ join_resource
 	}
 };
 
+static resource::response
+_post__join(client &client,
+            const resource::request &request,
+            const m::room::id &room_id);
+
+static resource::response
+_post__join(client &client,
+            const resource::request &request,
+            const m::room::alias &room_alias);
+
 resource::response
 post__join(client &client,
            const resource::request &request)
@@ -33,15 +43,50 @@ post__join(client &client,
 	if(request.parv.size() < 1)
 		throw http::error
 		{
-			http::MULTIPLE_CHOICES, "/join room_id required"
+			http::MULTIPLE_CHOICES, "/join room_id or room_alias required"
 		};
 
-	m::room::id::buf room_id
+	char idbuf[256];
+	const auto &id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(request.parv[0], idbuf)
 	};
 
-	m::join(room_id, request.user_id);
+	switch(m::sigil(id))
+	{
+		case m::id::ROOM:
+			return _post__join(client, request, m::room::id{id});
+
+		case m::id::ROOM_ALIAS:
+			return _post__join(client, request, m::room::alias{id});
+
+		default: throw m::UNSUPPORTED
+		{
+			"Cannot join a room using a '%s' MXID", reflect(m::sigil(id))
+		};
+	}
+}
+
+resource::method
+method_post
+{
+	join_resource, "POST", post__join,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
+
+static resource::response
+_post__join(client &client,
+            const resource::request &request,
+            const m::room::alias &room_alias)
+{
+	throw m::NOT_FOUND{}; //TODO: X
+
+	const m::room::id room_id
+	{
+
+	};
 
 	return resource::response
 	{
@@ -52,10 +97,18 @@ post__join(client &client,
 	};
 }
 
-resource::method method_post
+static resource::response
+_post__join(client &client,
+            const resource::request &request,
+            const m::room::id &room_id)
 {
-	join_resource, "POST", post__join,
+	m::join(room_id, request.user_id);
+
+	return resource::response
 	{
-		method_post.REQUIRES_AUTH
-	}
-};
+		client, json::members
+		{
+			{ "room_id", room_id }
+		}
+	};
+}
