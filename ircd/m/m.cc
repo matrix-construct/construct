@@ -591,6 +591,10 @@ ircd::m::hook::site::operator()(const event &event)
 			if(at<"state_key"_>(hook.matching) != json::get<"state_key"_>(event))
 				return false;
 
+		if(json::get<"membership"_>(hook.matching))
+			if(at<"membership"_>(hook.matching) != json::get<"membership"_>(event))
+				return false;
+
 		return true;
 	}};
 
