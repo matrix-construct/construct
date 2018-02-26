@@ -517,6 +517,38 @@ catch(const std::out_of_range &e)
 	};
 }
 
+bool
+ircd::m::hook::match(const m::event &event)
+const
+{
+	if(json::get<"origin"_>(matching))
+		if(at<"origin"_>(matching) != at<"origin"_>(event))
+			return false;
+
+	if(json::get<"room_id"_>(matching))
+		if(at<"room_id"_>(matching) != at<"room_id"_>(event))
+			return false;
+
+	if(json::get<"sender"_>(matching))
+		if(at<"sender"_>(matching) != at<"sender"_>(event))
+			return false;
+
+	if(json::get<"type"_>(matching))
+		if(at<"type"_>(matching) != at<"type"_>(event))
+			return false;
+
+	if(json::get<"state_key"_>(matching))
+		if(at<"state_key"_>(matching) != json::get<"state_key"_>(event))
+			return false;
+
+	if(json::get<"membership"_>(matching))
+		if(at<"membership"_>(matching) != json::get<"membership"_>(event))
+			return false;
+
+	return true;
+}
+
+
 //
 // hook::site
 //
@@ -569,40 +601,11 @@ ircd::m::hook::site::operator()(const event &event)
 	if(json::get<"state_key"_>(event))
 		site_match(state_key, at<"state_key"_>(event));
 
-	const auto event_match{[&event](const hook &hook)
-	{
-		if(json::get<"origin"_>(hook.matching))
-			if(at<"origin"_>(hook.matching) != at<"origin"_>(event))
-				return false;
-
-		if(json::get<"room_id"_>(hook.matching))
-			if(at<"room_id"_>(hook.matching) != at<"room_id"_>(event))
-				return false;
-
-		if(json::get<"sender"_>(hook.matching))
-			if(at<"sender"_>(hook.matching) != at<"sender"_>(event))
-				return false;
-
-		if(json::get<"type"_>(hook.matching))
-			if(at<"type"_>(hook.matching) != at<"type"_>(event))
-				return false;
-
-		if(json::get<"state_key"_>(hook.matching))
-			if(at<"state_key"_>(hook.matching) != json::get<"state_key"_>(event))
-				return false;
-
-		if(json::get<"membership"_>(hook.matching))
-			if(at<"membership"_>(hook.matching) != json::get<"membership"_>(event))
-				return false;
-
-		return true;
-	}};
-
 	auto it(begin(matching));
 	while(it != end(matching))
 	{
-		const auto *const &hook(*it);
-		if(!event_match(*hook))
+		const hook &hook(**it);
+		if(!hook.match(event))
 			it = matching.erase(it);
 		else
 			++it;

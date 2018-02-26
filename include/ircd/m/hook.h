@@ -32,6 +32,7 @@ struct ircd::m::hook
 	bool registered;
 
 	string_view site_name() const;
+	bool match(const m::event &) const;
 
  public:
 	hook(const json::members &, decltype(function));
