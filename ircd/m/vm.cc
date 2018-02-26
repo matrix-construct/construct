@@ -197,6 +197,11 @@ ircd::m::vm::commit(json::iov &iov)
 
 namespace ircd::m::vm
 {
+	hook::site notify_hook
+	{
+		{ "name", "vm notify" }
+	};
+
 	void write(eval &);
 }
 

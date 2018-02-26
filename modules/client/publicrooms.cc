@@ -84,8 +84,26 @@ get_method
 	publicrooms_resource, "GET", get__publicrooms
 };
 
-resource::method
-post_method
+static void
+_create_public_room(const m::event &)
 {
-	publicrooms_resource, "POST", post__publicrooms
+	if(!exists(public_room_id))
+		m::create(public_room_id, m::me.user_id);
+}
+
+/// Create the public rooms room at the appropriate time on startup.
+/// The startup event chosen here is when @ircd joins the !ircd room,
+/// which is a fundamental notification toward the end of init.
+const m::hook
+_create_public_hook
+{
+	{
+		{ "_site",       "vm notify"       },
+		{ "room_id",     "!ircd:zemos.net" },
+		{ "sender",      "@ircd:zemos.net" },
+		{ "type",        "m.room.member"   },
+		{ "membership",  "join"            },
+	},
+
+	_create_public_room
 };
