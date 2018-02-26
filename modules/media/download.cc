@@ -10,28 +10,35 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"media download"
+	"11.7 :Content repository (download)"
 };
 
-struct send
-:resource
-{
-	using resource::resource;
-}
+resource
 download_resource
 {
-	"/_matrix/media/r0/download/", resource::opts
+	"/_matrix/media/r0/download/",
 	{
-		"media download",
+		"(11.7.1.2) download",
+		resource::DIRECTORY,
+	}
+};
+
+resource
+download_resource__legacy
+{
+	"/_matrix/media/v1/download/",
+	{
+		"(11.7.1.2) download (legacy)",
 		resource::DIRECTORY,
 	}
 };
 
 resource::response
-handle_get(client &client,
-           const resource::request &request)
+get__download(client &client,
+              const resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw http::error
@@ -66,9 +73,14 @@ handle_get(client &client,
 	};
 }
 
-resource::method method_put
+resource::method
+method_get
 {
-	download_resource, "GET", handle_get,
-	{
-	}
+	download_resource, "GET", get__download
+};
+
+resource::method
+method_get__legacy
+{
+	download_resource__legacy, "GET", get__download
 };
