@@ -47,7 +47,7 @@ namespace ircd::net
 
 namespace ircd::net
 {
-	bool connected(const socket &) noexcept;
+	bool opened(const socket &) noexcept;
 	size_t readable(const socket &);
 	size_t available(const socket &) noexcept;
 	ipport local_ipport(const socket &) noexcept;

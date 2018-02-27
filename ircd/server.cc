@@ -656,7 +656,7 @@ void
 ircd::server::node::del(link &link)
 {
 	assert(!link.tag_count());
-	assert(!link.connected());
+	assert(!link.opened());
 	const auto it(std::find_if(begin(links), end(links), [&link]
 	(const auto &link_)
 	{
@@ -895,7 +895,7 @@ ircd::server::link::~link()
 noexcept
 {
 	assert(!busy());
-	assert(!connected());
+	assert(!opened());
 }
 
 void
@@ -1433,14 +1433,14 @@ bool
 ircd::server::link::ready()
 const
 {
-	return connected() && !init && !fini;
+	return opened() && !init && !fini;
 }
 
 bool
-ircd::server::link::connected()
+ircd::server::link::opened()
 const noexcept
 {
-	return bool(socket) && net::connected(*socket);
+	return bool(socket) && net::opened(*socket);
 }
 
 size_t

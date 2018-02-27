@@ -50,7 +50,7 @@ struct ircd::server::link
 	size_t tag_commit_max() const;
 
 	// indicator lights
-	bool connected() const noexcept;
+	bool opened() const noexcept;
 	bool ready() const;
 	bool busy() const;
 

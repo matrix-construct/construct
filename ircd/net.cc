@@ -97,7 +97,7 @@ ircd::net::readable(const socket &socket)
 }
 
 bool
-ircd::net::connected(const socket &socket)
+ircd::net::opened(const socket &socket)
 noexcept try
 {
 	const ip::tcp::socket &sd(socket);
@@ -1261,7 +1261,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
-	if(unlikely(RB_DEBUG_LEVEL && connected(*this)))
+	if(unlikely(RB_DEBUG_LEVEL && opened(*this)))
 		throw assertive
 		{
 			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
@@ -1978,20 +1978,6 @@ catch(const std::exception &e)
 	             e.what());
 }
 
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::local()
-const
-{
-	return sd.local_endpoint();
-}
-
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::remote()
-const
-{
-	return sd.remote_endpoint();
-}
-
 ircd::milliseconds
 ircd::net::socket::cancel_timeout()
 noexcept
@@ -2035,6 +2021,20 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(handler));
+}
+
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::local()
+const
+{
+	return sd.local_endpoint();
+}
+
+boost::asio::ip::tcp::endpoint
+ircd::net::socket::remote()
+const
+{
+	return sd.remote_endpoint();
 }
 
 ircd::net::socket::operator
