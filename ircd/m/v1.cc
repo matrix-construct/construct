@@ -171,7 +171,7 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 
 		assert(in_max >= ssize_t(size(buf) / 2));
 		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
-		opts.in.content = opts.in.head;
+		opts.in.content = mutable_buffer{};
 	}
 
 	return server::request
@@ -267,7 +267,7 @@ ircd::m::v1::state::state(const room::id &room_id,
 
 		assert(in_max >= ssize_t(size(buf) / 2));
 		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
-		opts.in.content = opts.in.head;
+		opts.in.content = mutable_buffer{};
 	}
 
 	return server::request
@@ -394,7 +394,7 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 
 		assert(in_max >= ssize_t(size(buf) / 2));
 		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
-		opts.in.content = opts.in.head;
+		opts.in.content = mutable_buffer{};
 	}
 
 	return server::request

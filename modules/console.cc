@@ -597,7 +597,7 @@ console_cmd__event__fetch(const string_view &line)
 	static char buf[96_KiB];
 	m::v1::event request
 	{
-		event_id, buf, opts
+		event_id, buf, std::move(opts)
 	};
 
 	//TODO: TO
@@ -1306,16 +1306,13 @@ console_cmd__fed__state(const string_view &line)
 		token_count(line, ' ') >= 3? token(line, ' ', 2) : string_view{}
 	};
 
-	unique_buffer<mutable_buffer> buf
-	{
-		64_MiB
-	};
-
+	// Used for out.head, out.content, in.head, but in.content is dynamic
+	thread_local char buf[8_KiB];
 	m::v1::state::opts opts;
 	opts.remote = remote;
 	m::v1::state request
 	{
-		room_id, buf, opts
+		room_id, buf, std::move(opts)
 	};
 
 	//TODO: TO
@@ -1352,7 +1349,7 @@ console_cmd__fed__event(const string_view &line)
 	thread_local char buf[8_KiB];
 	m::v1::event request
 	{
-		event_id, buf, opts
+		event_id, buf, std::move(opts)
 	};
 
 	//TODO: TO
@@ -1415,7 +1412,7 @@ console_cmd__fed__query__profile(const string_view &line)
 	thread_local char buf[8_KiB];
 	m::v1::query::profile request
 	{
-		user_id, buf, opts
+		user_id, buf, std::move(opts)
 	};
 
 	//TODO: TO
@@ -1452,7 +1449,7 @@ console_cmd__fed__query__directory(const string_view &line)
 	thread_local char buf[8_KiB];
 	m::v1::query::directory request
 	{
-		room_alias, buf, opts
+		room_alias, buf, std::move(opts)
 	};
 
 	//TODO: TO
@@ -1484,7 +1481,7 @@ console_cmd__fed__version(const string_view &line)
 	thread_local char buf[8_KiB];
 	m::v1::version request
 	{
-		buf, opts
+		buf, std::move(opts)
 	};
 
 	//TODO: TO
