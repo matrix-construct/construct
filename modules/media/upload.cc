@@ -115,12 +115,20 @@ post__upload(client &client,
 	char hashbuf[32];
 	hash.digest(hashbuf);
 
-	char uribuf[256], b58buf[64];
+	char b58buf[64];
+	const auto new_path
+	{
+		b58encode(b58buf, hashbuf)
+	};
+
+	fs::rename(path, new_path);
+
+	char uribuf[256];
 	const string_view content_uri
 	{
 		fmt::sprintf
 		{
-			uribuf, "mxc://%s/%s", my_host(), b58encode(b58buf, hashbuf)
+			uribuf, "mxc://%s/%s", my_host(), new_path
 		}
 	};
 
