@@ -78,6 +78,12 @@ namespace ircd::fs
 	std::vector<std::string> ls(const string_view &path);
 	std::vector<std::string> ls_recursive(const string_view &path);
 
+	bool rename(std::nothrow_t, const string_view &old, const string_view &new_);
+	void rename(const string_view &old, const string_view &new_);
+
+	bool remove(std::nothrow_t, const string_view &path);
+	bool remove(const string_view &path);
+
 	std::string cwd();
 	void chdir(const string_view &path);
 	bool mkdir(const string_view &path);

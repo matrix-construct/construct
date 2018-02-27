@@ -239,12 +239,52 @@ catch(const filesystem::filesystem_error &e)
 		"%s", e.what()
 	};
 }
+
+bool
+ircd::fs::remove(const string_view &path)
+try
+{
+	return filesystem::remove(fs::path(path));
+}
 catch(const filesystem::filesystem_error &e)
 {
 	throw filesystem_error
 	{
 		"%s", e.what()
 	};
+}
+
+bool
+ircd::fs::remove(std::nothrow_t,
+                 const string_view &path)
+{
+	error_code ec;
+	return filesystem::remove(fs::path(path), ec);
+}
+
+void
+ircd::fs::rename(const string_view &old,
+                 const string_view &new_)
+try
+{
+	filesystem::rename(path(old), path(new_));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+
+bool
+ircd::fs::rename(std::nothrow_t,
+                 const string_view &old,
+                 const string_view &new_)
+{
+	error_code ec;
+	filesystem::rename(path(old), path(new_), ec);
+	return !ec;
 }
 
 std::vector<std::string>
