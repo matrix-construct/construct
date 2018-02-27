@@ -18,7 +18,9 @@ struct ircd::server::link
 	bool init {false};                           ///< link is connecting
 	bool fini {false};                           ///< link is disconnecting
 	bool exclude {false};                        ///< link is excluded
-	int8_t handles {0};                          ///< async operations
+	bool waiting_write {false};                  ///< async operation state
+	bool waiting_read {false};                   ///< async operation state
+	int8_t handles {0};                          ///< async operation state
 	std::shared_ptr<server::node> node;          ///< backreference to node
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue

@@ -578,6 +578,8 @@ ircd::server::node::handle_link_done(link &link)
 		link.close();
 		return;
 	}
+
+	link.wait_readable();
 }
 
 /// This is called when a tag on a link receives an HTTP response head.
@@ -990,6 +992,9 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 void
 ircd::server::link::wait_writable()
 {
+	if(waiting_write)
+		return;
+
 	auto handler
 	{
 		std::bind(&link::handle_writable, this, ph::_1)
@@ -997,6 +1002,7 @@ ircd::server::link::wait_writable()
 
 	assert(ready());
 	inc_handles();
+	waiting_write = true;
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
 }
 
@@ -1007,6 +1013,7 @@ try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
+	waiting_write = false;
 	const unwind handled{[this]
 	{
 		dec_handles();
@@ -1066,6 +1073,9 @@ ircd::server::link::handle_writable_success()
 			continue;
 		}
 
+		if(tag_committed() == 0)
+			wait_readable();
+
 		if(!process_write(tag))
 		{
 			wait_writable();
@@ -1089,9 +1099,6 @@ ircd::server::link::process_write(tag &tag)
 		          tag_committed(),
 		          tag_count(),
 		          tag.write_total());
-
-	if(tag_committed() == 0)
-		wait_readable();
 
 	while(tag.write_remaining())
 	{
@@ -1134,6 +1141,9 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 void
 ircd::server::link::wait_readable()
 {
+	if(waiting_read)
+		return;
+
 	auto handler
 	{
 		std::bind(&link::handle_readable, this, ph::_1)
@@ -1141,6 +1151,7 @@ ircd::server::link::wait_readable()
 
 	assert(ready());
 	inc_handles();
+	waiting_read = true;
 	net::wait(*socket, net::ready::READ, std::move(handler));
 }
 
@@ -1151,6 +1162,7 @@ try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
+	waiting_read = false;
 	const unwind handled{[this]
 	{
 		dec_handles();
