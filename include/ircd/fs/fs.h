@@ -68,21 +68,19 @@ namespace ircd::fs
 	const char *get(index) noexcept;
 	const char *name(index) noexcept;
 
-	std::string make_path(const std::initializer_list<std::string> &);
+	std::string make_path(const std::initializer_list<string_view> &);
 
-	bool exists(const std::string &path);
-	bool is_dir(const std::string &path);
-	bool is_reg(const std::string &path);
-
-	size_t size(const std::string &path);
+	bool exists(const string_view &path);
+	bool is_dir(const string_view &path);
+	bool is_reg(const string_view &path);
 	size_t size(const string_view &path);
 
-	std::vector<std::string> ls(const std::string &path);
-	std::vector<std::string> ls_recursive(const std::string &path);
+	std::vector<std::string> ls(const string_view &path);
+	std::vector<std::string> ls_recursive(const string_view &path);
 
 	std::string cwd();
-	void chdir(const std::string &path);
-	bool mkdir(const std::string &path);
+	void chdir(const string_view &path);
+	bool mkdir(const string_view &path);
 
 	extern aio *aioctx;
 }

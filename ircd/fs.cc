@@ -15,13 +15,17 @@
 	#include "aio.h"
 #endif
 
+namespace filesystem = boost::filesystem;
+
 namespace ircd::fs
 {
-	using namespace boost::filesystem;
-
 	enum { NAME, PATH };
 	using ent = std::pair<std::string, std::string>;
 	extern const std::array<ent, num_of<index>()> paths;
+
+	filesystem::path path(std::string);
+	filesystem::path path(const string_view &);
+	filesystem::path path(const std::initializer_list<string_view> &);
 }
 
 /// Non-null when aio is available for use
@@ -195,44 +199,63 @@ ircd::fs::write__std(const string_view &path,
 }
 
 void
-ircd::fs::chdir(const std::string &path)
+ircd::fs::chdir(const string_view &path)
 try
 {
-	fs::current_path(path);
+	filesystem::current_path(fs::path(path));
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 bool
-ircd::fs::mkdir(const std::string &path)
+ircd::fs::mkdir(const string_view &path)
 try
 {
-	return fs::create_directory(path);
+	return filesystem::create_directory(fs::path(path));
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 std::string
 ircd::fs::cwd()
 try
 {
-	return fs::current_path().string();
+	return filesystem::current_path().string();
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 std::vector<std::string>
-ircd::fs::ls_recursive(const std::string &path)
+ircd::fs::ls_recursive(const string_view &path)
 try
 {
-	const fs::recursive_directory_iterator end;
-	fs::recursive_directory_iterator it(path);
+	const filesystem::recursive_directory_iterator end;
+	filesystem::recursive_directory_iterator it
+	{
+		fs::path(path)
+	};
 
 	std::vector<std::string> ret;
 	std::transform(it, end, std::back_inserter(ret), []
@@ -243,17 +266,23 @@ try
 
 	return ret;
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 std::vector<std::string>
-ircd::fs::ls(const std::string &path)
+ircd::fs::ls(const string_view &path)
 try
 {
-	static const fs::directory_iterator end;
-	fs::directory_iterator it(path);
+	static const filesystem::directory_iterator end;
+	filesystem::directory_iterator it
+	{
+		fs::path(path)
+	};
 
 	std::vector<std::string> ret;
 	std::transform(it, end, std::back_inserter(ret), []
@@ -264,64 +293,92 @@ try
 
 	return ret;
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 size_t
 ircd::fs::size(const string_view &path)
 {
-	return ircd::fs::size(std::string{path});
-}
-
-size_t
-ircd::fs::size(const std::string &path)
-{
-	return fs::file_size(path);
+	return filesystem::file_size(fs::path(path));
 }
 
 bool
-ircd::fs::is_reg(const std::string &path)
+ircd::fs::is_reg(const string_view &path)
 try
 {
-	return fs::is_regular_file(path);
+	return filesystem::is_regular_file(fs::path(path));
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 bool
-ircd::fs::is_dir(const std::string &path)
+ircd::fs::is_dir(const string_view &path)
 try
 {
-	return fs::is_directory(path);
+	return filesystem::is_directory(fs::path(path));
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 bool
-ircd::fs::exists(const std::string &path)
+ircd::fs::exists(const string_view &path)
 try
 {
-	return boost::filesystem::exists(path);
+	return filesystem::exists(fs::path(path));
 }
-catch(const fs::filesystem_error &e)
+catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error("%s", e.what());
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 std::string
-ircd::fs::make_path(const std::initializer_list<std::string> &list)
+ircd::fs::make_path(const std::initializer_list<string_view> &list)
 {
-	fs::path ret;
+	filesystem::path ret;
 	for(const auto &s : list)
-		ret /= fs::path(s);
+		ret /= path(s);
 
 	return ret.string();
+}
+
+filesystem::path
+ircd::fs::path(const std::initializer_list<string_view> &list)
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= path(s);
+
+	return ret.string();
+}
+
+filesystem::path
+ircd::fs::path(const string_view &s)
+{
+	return path(std::string{s});
+}
+
+filesystem::path
+ircd::fs::path(std::string s)
+{
+	return filesystem::path(std::move(s));
 }
 
 const char *
