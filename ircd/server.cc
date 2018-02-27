@@ -2126,7 +2126,12 @@ ircd::server::tag::set_value(args&&... a)
 	assert(request->opts);
 	if(request->opts->http_exceptions && code >= http::code(300))
 	{
-		set_exception(http::error{code});
+		const string_view content
+		{
+			data(request->in.content), size(request->in.content)
+		};
+
+		set_exception(http::error{code, std::string{content}});
 		return;
 	}
 
