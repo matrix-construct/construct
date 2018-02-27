@@ -168,13 +168,10 @@ get__profile_remote(client &client,
 
 	//TODO: conf
 	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
-	{
-		cancel(federation_request);
-		return resource::response
+		throw http::error
 		{
-			client, http::REQUEST_TIMEOUT
+			http::REQUEST_TIMEOUT
 		};
-	}
 
 	const http::code &code
 	{
