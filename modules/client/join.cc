@@ -86,15 +86,12 @@ _post__join(client &client,
 		m::room_id(room_alias)
 	};
 
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "room_id", room_id }
-		}
-	};
+	return _post__join(client, request, room_id);
 }
 
+/// This function forwards the join request to the /rooms/{room_id}/join
+/// module so they can reuse the same code. That's done with the m::join()
+/// convenience linkage.
 static resource::response
 _post__join(client &client,
             const resource::request &request,
