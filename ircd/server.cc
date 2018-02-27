@@ -1944,6 +1944,25 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		data(beyond_head) + size(partial_content), beyond_content_len
 	};
 
+	// We branch for a feature that allows dynamic allocation of the content
+	// buffer if the user did not specify any buffer.
+	const bool dynamic
+	{
+		null(req.in.content)
+	};
+
+	if(dynamic)
+	{
+		assert(req.opts);
+		const size_t alloc_size
+		{
+			std::min(head.content_length, req.opts->content_length_maxalloc)
+		};
+
+		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
+		req.in.content = req.in.dynamic;
+	}
+
 	// Reduce the user's content buffer to the content-length. This is sort of
 	// how we convey the content-length back to the user. The buffer size will
 	// eventually reflect how much content was actually received; the user can

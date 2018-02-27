@@ -61,6 +61,12 @@ struct ircd::server::in
 	/// received so far. This is only invoked for content, not for the head;
 	/// however the first time it is invoked it is safe to view the in.head
 	std::function<void (const_buffer, const_buffer) noexcept> progress;
+
+	/// The dynamic buffer is a convenience that allows for the content buffer
+	/// to be allocated on demand once the head is received and the length is
+	/// known. To use dynamic, set the content buffer to nothing (i.e default
+	/// constructed mutable_buffer).
+	unique_buffer<mutable_buffer> dynamic;
 };
 
 /// This is a handle for being a client to another server. This handle will
@@ -108,6 +114,12 @@ struct ircd::server::request::opts
 	/// received is returned in the value and exceptions are thrown when no
 	/// code can be returned.
 	bool http_exceptions {true};
+
+	/// Only applies when using the dynamic content allocation feature; this
+	/// limits the size of that allocation in case the remote sends a larger
+	/// content-length value. If the remote sends more content, the behavior
+	/// is the same as if specifying an in.content buffer of this size.
+	size_t content_length_maxalloc {256_MiB};
 };
 
 inline
