@@ -93,6 +93,7 @@ const ircd::fs::read_opts_default
 std::string
 ircd::fs::read(const string_view &path,
                const read_opts &opts)
+try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aioctx))
@@ -101,11 +102,19 @@ ircd::fs::read(const string_view &path,
 
 	return read__std(path, opts);
 }
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
 
 ircd::string_view
 ircd::fs::read(const string_view &path,
                const mutable_buffer &buf,
                const read_opts &opts)
+try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aioctx))
@@ -113,6 +122,13 @@ ircd::fs::read(const string_view &path,
 	#endif
 
 	return read__std(path, buf, opts);
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 //
@@ -163,6 +179,7 @@ ircd::string_view
 ircd::fs::write(const string_view &path,
                 const const_buffer &buf,
                 const write_opts &opts)
+try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aioctx))
@@ -170,6 +187,13 @@ ircd::fs::write(const string_view &path,
 	#endif
 
 	return write__std(path, buf, opts);
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
 }
 
 ircd::string_view
