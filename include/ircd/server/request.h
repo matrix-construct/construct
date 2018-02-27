@@ -173,7 +173,7 @@ inline
 ircd::server::request::~request()
 noexcept
 {
-	if(tag && !tag->committed())
+	if(tag)
 		cancel(*this);
 
 	if(tag)
