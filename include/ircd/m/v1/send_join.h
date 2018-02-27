@@ -21,8 +21,6 @@ struct ircd::m::v1::send_join
 {
 	struct opts;
 
-	static const opts default_opts;
-
 	operator json::array() const
 	{
 		return json::array{in.content};

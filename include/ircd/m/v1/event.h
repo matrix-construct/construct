@@ -21,8 +21,6 @@ struct ircd::m::v1::event
 {
 	struct opts;
 
-	static const opts default_opts;
-
 	explicit operator json::object() const
 	{
 		const json::object object{in.content};

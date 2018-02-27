@@ -90,15 +90,11 @@ ircd::m::v1::send::send(const string_view &txnid,
 // v1/backfill.h
 //
 
-decltype(ircd::m::v1::backfill::default_opts)
-ircd::m::v1::backfill::default_opts
-{};
-
 ircd::m::v1::backfill::backfill(const room::id &room_id,
                                 const mutable_buffer &buf)
 :backfill
 {
-	room_id, buf, default_opts
+	room_id, buf, opts{}
 }
 {
 }
@@ -191,15 +187,11 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 // v1/state.h
 //
 
-decltype(ircd::m::v1::state::default_opts)
-ircd::m::v1::state::default_opts
-{};
-
 ircd::m::v1::state::state(const room::id &room_id,
                           const mutable_buffer &buf)
 :state
 {
-	room_id, buf, default_opts
+	room_id, buf, opts{}
 }
 {
 }
@@ -291,15 +283,11 @@ ircd::m::v1::state::state(const room::id &room_id,
 // v1/event.h
 //
 
-decltype(ircd::m::v1::event::default_opts)
-ircd::m::v1::event::default_opts
-{};
-
 ircd::m::v1::event::event(const m::event::id &event_id,
                           const mutable_buffer &buf)
 :event
 {
-	event_id, buf, default_opts
+	event_id, buf, opts{}
 }
 {
 }
@@ -362,10 +350,6 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 // v1/send_join.h
 //
 
-decltype(ircd::m::v1::send_join::default_opts)
-ircd::m::v1::send_join::default_opts
-{};
-
 ircd::m::v1::send_join::send_join(const room::id &room_id,
                                   const user::id &user_id,
                                   const const_buffer &content,
@@ -426,16 +410,12 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 // v1/make_join.h
 //
 
-decltype(ircd::m::v1::make_join::default_opts)
-ircd::m::v1::make_join::default_opts
-{};
-
 ircd::m::v1::make_join::make_join(const room::id &room_id,
                                   const user::id &user_id,
                                   const mutable_buffer &buf)
 :make_join
 {
-	room_id, user_id, buf, default_opts
+	room_id, user_id, buf, opts{}
 }
 {
 }
@@ -525,7 +505,7 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 		query_arg_buf, "room_alias=%s", string_view{room_alias}
 	},
 	buf,
-	opts
+	std::move(opts)
 }
 {
 }
@@ -550,7 +530,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 		query_arg_buf, "user_id=%s", string_view{user_id}
 	},
 	buf,
-	opts
+	std::move(opts)
 }
 {
 }
@@ -580,7 +560,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 		field
 	},
 	buf,
-	opts
+	std::move(opts)
 }
 {
 }

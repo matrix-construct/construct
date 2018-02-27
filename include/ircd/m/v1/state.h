@@ -21,8 +21,6 @@ struct ircd::m::v1::state
 {
 	struct opts;
 
-	static const opts default_opts;
-
 	explicit operator json::object() const
 	{
 		return json::object{in.content};

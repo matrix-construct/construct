@@ -21,8 +21,6 @@ struct ircd::m::v1::make_join
 {
 	struct opts;
 
-	static const opts default_opts;
-
 	operator json::object() const
 	{
 		return json::object{in.content};
