@@ -115,28 +115,35 @@ get__thumbnail_remote(client &client,
 		hostname
 	};
 
-	const unique_buffer<mutable_buffer> in
-	{
-		512_KiB //TODO: XXX
-	};
-
-	char outbuf[3_KiB];
+	char buf[6_KiB];
+	window_buffer wb{buf};
 	thread_local char uri[2_KiB];
-	window_buffer wb{outbuf};
 	http::request
 	{
 		wb, hostname, "GET", fmt::sprintf
 		{
-			uri, "/_matrix/media/v1/thumbnail/%s/%s", hostname, mediaid
+			uri, "/_matrix/media/r0/download/%s/%s", hostname, mediaid
 		}
 	};
 
-	struct server::request::opts opts;
-	opts.http_exceptions = false;
+	const const_buffer out_head
+	{
+		wb.completed()
+	};
 
+	// Remaining space in buffer is used for received head
+	const mutable_buffer in_head
+	{
+		buf + size(out_head), sizeof(buf) - size(out_head)
+	};
+
+	// Null content buffer will cause dynamic allocation internally.
+	const mutable_buffer in_content{};
+
+	struct server::request::opts opts;
 	server::request remote_request
 	{
-		remote, { wb.completed() }, { in }, &opts
+		remote, { out_head }, { in_head, in_content }, &opts
 	};
 
 	if(remote_request.wait(seconds(5)) == ctx::future_status::timeout) //TODO: conf
@@ -149,12 +156,6 @@ get__thumbnail_remote(client &client,
 	{
 		remote_request.get()
 	};
-
-	if(code != http::OK)
-		return resource::response
-		{
-			client, code
-		};
 
 	//TODO: cache add
 
@@ -180,6 +181,6 @@ get__thumbnail_remote(client &client,
 
 	return resource::response
 	{
-		client, remote_request.in.content, head.content_type
+		client, remote_request.in.content, content_type
 	};
 }
