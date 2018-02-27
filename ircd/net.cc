@@ -1532,12 +1532,10 @@ noexcept try
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-	if(timedout)
-	{
-		assert(ec == operation_canceled);
+	if(!timedout)
+		cancel_timeout();
+	else
 		ec = { timed_out, system_category() };
-	}
-	else cancel_timeout();
 
 	if(!ec && !sd.is_open())
 		ec = { bad_file_descriptor, system_category() };
