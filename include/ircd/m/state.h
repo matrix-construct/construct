@@ -53,6 +53,10 @@ namespace ircd::m::state
 	id set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	void get_node(const string_view &id, const node_closure &);
 
+	id remove(db::txn &, const mutable_buffer &rootout, const id &rootin, const json::array &key);
+	id remove(db::txn &, const mutable_buffer &rootout, const id &rootin, const string_view &type, const string_view &state_key);
+	id remove(db::txn &, const mutable_buffer &rootout, const id &rootin, const event &);
+
 	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const json::array &key, const m::id::event &);
 	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const string_view &type, const string_view &state_key, const m::id::event &);
 	id insert(db::txn &, const mutable_buffer &rootout, const id &rootin, const event &);

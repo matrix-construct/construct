@@ -326,16 +326,20 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 	return false;
 }
 
-// Internal insertion operations
+// Internal operations
 namespace ircd::m::state
 {
 	static mutable_buffer _getbuffer(const uint8_t &height);
+
+	static string_view _remove(int8_t &height, db::txn &, const json::array &key, const node &node, const mutable_buffer &idbuf, node::rep &push);
+
 	static string_view _insert_overwrite(db::txn &, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &, const size_t &pos);
 	static string_view _insert_leaf_nonfull(db::txn &, const json::array &key, const string_view &val, const mutable_buffer &idbuf, node::rep &, const size_t &pos);
 	static json::object _insert_leaf_full(const int8_t &height, db::txn &, const json::array &key, const string_view &val, node::rep &, const size_t &pos, node::rep &push);
 	static string_view _insert_branch_nonfull(db::txn &, const mutable_buffer &idbuf, node::rep &, const size_t &pos, node::rep &pushed);
 	static json::object _insert_branch_full(const int8_t &height, db::txn &, node::rep &, const size_t &pos, node::rep &push, const node::rep &pushed);
 	static string_view _insert(int8_t &height, db::txn &, const json::array &key, const string_view &val, const node &node, const mutable_buffer &idbuf, node::rep &push);
+
 	static string_view _create(db::txn &, const mutable_buffer &root, const string_view &type, const string_view &state_key, const string_view &val);
 }
 
@@ -671,6 +675,88 @@ ircd::m::state::_insert_overwrite(db::txn &txn,
 	rep.vals[pos] = val;
 
 	return rep.write(txn, idbuf);
+}
+
+ircd::m::state::id
+ircd::m::state::remove(db::txn &txn,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
+                       const event &event)
+{
+	const auto &type{at<"type"_>(event)};
+	const auto &state_key{at<"state_key"_>(event)};
+
+	assert(!empty(rootin));
+	return remove(txn, rootout, rootin, type, state_key);
+}
+
+/// State update for room_id inserting (type,state_key) = event_id into the
+/// tree. Leaves the root node ID in the root buffer; returns view.
+ircd::m::state::id
+ircd::m::state::remove(db::txn &txn,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
+                       const string_view &type,
+                       const string_view &state_key)
+{
+	// The removal process reads from the DB and will yield this ircd::ctx
+	// so the key buffer must stay on this stack.
+	char key[KEY_MAX_SZ];
+	return remove(txn, rootout, rootin, make_key(key, type, state_key));
+}
+
+ircd::m::state::id
+ircd::m::state::remove(db::txn &txn,
+                       const mutable_buffer &rootout,
+                       const string_view &rootin,
+                       const json::array &key)
+{
+	node::rep push;
+	int8_t height{0};
+	string_view root{rootin};
+	get_node(root, [&](const node &node)
+	{
+		root = _remove(height, txn, key, node, rootout, push);
+	});
+
+	if(push.kn)
+		root = push.write(txn, rootout);
+
+	return root;
+}
+
+ircd::m::state::id
+ircd::m::state::_remove(int8_t &height,
+                        db::txn &txn,
+                        const json::array &key,
+                        const node &node,
+                        const mutable_buffer &idbuf,
+                        node::rep &push)
+{
+	const unwind down{[&height]{ --height; }};
+	if(unlikely(++height >= MAX_HEIGHT))
+		throw assertive{"recursion limit exceeded"};
+
+	node::rep rep{node};
+	const auto pos{node.find(key)};
+
+	if(keycmp(node.key(pos), key) == 0)
+	{
+
+		return {};
+	}
+
+	// These collect data from the next level.
+	node::rep pushed;
+	string_view child;
+
+	// Recurse
+	get_node(node.child(pos), [&](const auto &node)
+	{
+
+		child = _remove(height, txn, key, node, idbuf, pushed);
+	});
+
 }
 
 /// This function returns a thread_local buffer intended for writing temporary

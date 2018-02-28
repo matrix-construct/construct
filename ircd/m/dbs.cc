@@ -79,6 +79,7 @@ namespace ircd::m::dbs
 {
 	static void _index__room_events(db::txn &, const string_view &state_root, const event &);
 	static string_view _index_state(db::txn &, const mutable_buffer &root_out, const string_view &state_root, const event &);
+	static string_view _index_redact(db::txn &, const mutable_buffer &root_out, const string_view &state_root, const event &);
 	static string_view _index_ephem(db::txn &, const string_view &state_root, const event &);
 }
 
@@ -96,6 +97,9 @@ ircd::m::dbs::write(db::txn &txn,
 	if(defined(json::get<"state_key"_>(event)))
 		return _index_state(txn, root_out, root_in, event);
 
+	if(at<"type"_>(event) == "m.room.redaction")
+		return _index_redact(txn, root_out, root_in, event);
+
 	return _index_ephem(txn, root_in, event);
 }
 
@@ -106,6 +110,55 @@ ircd::m::dbs::_index_ephem(db::txn &txn,
 {
 	_index__room_events(txn, state_root_in, event);
 	return state_root_in;
+}
+
+ircd::string_view
+ircd::m::dbs::_index_redact(db::txn &txn,
+                            const mutable_buffer &state_root_out,
+                            const string_view &state_root_in,
+                            const event &event)
+try
+{
+	const auto &target_id
+	{
+		at<"redacts"_>(event)
+	};
+
+	event::fetch target
+	{
+		target_id, std::nothrow
+	};
+
+	if(unlikely(!target.valid(target_id)))
+		log::error
+		{
+			"Redaction from '%s' missing redaction target '%s'",
+			at<"event_id"_>(event),
+			target_id
+		};
+
+	if(!defined(json::get<"state_key"_>(target)))
+	{
+		_index__room_events(txn, state_root_in, event);
+		return state_root_in;
+	}
+
+	const string_view new_root
+	{
+		state_root_in //state::remove(txn, state_root_out, state_root_in, target)
+	};
+
+	_index__room_events(txn, new_root, event);
+	return new_root;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to update state from redaction: %s", e.what()
+	};
+
+	throw;
 }
 
 ircd::string_view
