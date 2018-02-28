@@ -2312,12 +2312,15 @@ ircd::net::dns::resolver::check_timeouts()
 		ircd::now<steady_point>()
 	};
 
-	for(auto it(begin(tags)); it != end(tags); ++it)
+	auto it(begin(tags));
+	while(it != end(tags))
 	{
 		const auto &id(it->first);
 		auto &tag(it->second);
 		if(!check_timeout(id, tag, now))
 			it = tags.erase(it);
+		else
+			++it;
 	}
 }
 
