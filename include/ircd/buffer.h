@@ -114,7 +114,7 @@ struct ircd::buffer::buffer
 	using value_type = typename std::remove_pointer<iterator>::type;
 
 	operator string_view() const;
-	operator std::string_view() const;
+	explicit operator std::string_view() const;
 	explicit operator std::string() const;
 
 	auto &begin() const                { return std::get<0>(*this);            }
