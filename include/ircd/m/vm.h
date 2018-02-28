@@ -15,19 +15,19 @@
 ///
 namespace ircd::m::vm
 {
-	IRCD_M_EXCEPTION(m::error, VM_ERROR, http::INTERNAL_SERVER_ERROR);
-	IRCD_M_EXCEPTION(VM_ERROR, VM_FAULT, http::BAD_REQUEST);
-	IRCD_M_EXCEPTION(VM_ERROR, VM_INVALID, http::BAD_REQUEST);
-
 	enum fault :uint;
+	struct error; // custom exception
+	struct opts;
 	struct eval;
 
+	using fault_t = std::underlying_type<fault>::type;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
 
 	extern struct log::log log;
 	extern uint64_t current_sequence;
 	extern ctx::view<const event> inserted;
+	extern const opts default_opts;
 
 	event::id::buf commit(json::iov &event);
 	event::id::buf commit(json::iov &event, const json::iov &content);
@@ -43,44 +43,121 @@ namespace ircd::m::vm
 ///
 struct ircd::m::vm::eval
 {
-	struct opts;
-
-	struct opts static const default_opts;
-
-	const struct opts *opts {&default_opts};
+	const vm::opts *opts {&default_opts};
 	db::txn txn{*dbs::events};
 
 	fault operator()(const event &);
 
-	eval(const event &, const struct opts & = default_opts);
-	eval(const struct opts &);
+	eval(const event &, const vm::opts & = default_opts);
+	eval(const vm::opts &);
 	eval() = default;
 
 	friend string_view reflect(const fault &);
 };
 
-/// Evaluation Options
-struct ircd::m::vm::eval::opts
-{
-
-};
-
-/// Individual evaluation state
-///
 /// Evaluation faults. These are reasons which evaluation has halted but may
 /// continue after the user defaults the fault. They are basically types of
-/// interrupts and traps, which are recoverable. Only the GENERAL protection
-/// fault (#gp) is an abort and is not recoverable. An exception_ptr will be
-/// set; aborts are otherwise just thrown as exceptions from eval. If any
-/// fault isn't handled properly that is an abort.
+/// interrupts and traps, which are supposed to be recoverable. Only the
+/// GENERAL protection fault (#gp) is an abort and is not supposed to be
+/// recoverable. The fault codes have the form of bitflags so they can be
+/// used in masks; outside of that case only one fault is dealt with at
+/// a time so they can be switched as they appear in the enum.
 ///
 enum ircd::m::vm::fault
 :uint
 {
-	ACCEPT,          ///< No fault.
-	DEBUGSTEP,       ///< Debug step. (#db)
-	BREAKPOINT,      ///< Debug breakpoint. (#bp)
-	GENERAL,         ///< General protection fault. (#gp)
-	EVENT,           ///< Eval requires addl events in the ef register (#ef)
-	STATE,           ///< Required state is missing (#st)
+	ACCEPT        = 0x00,  ///< No fault.
+	EXISTS        = 0x01,  ///< Replaying existing event. (#ex)
+	INVALID       = 0x02,  ///< Non-conforming event format. (#ud)
+	DEBUGSTEP     = 0x04,  ///< Debug step. (#db)
+	BREAKPOINT    = 0x08,  ///< Debug breakpoint. (#bp)
+	GENERAL       = 0x10,  ///< General protection fault. (#gp)
+	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
+	STATE         = 0x40,  ///< Required state is missing (#st)
 };
+
+/// Evaluation Options
+struct ircd::m::vm::opts
+{
+	/// Make writes to database
+	bool write {true};
+
+	/// Apply effects of the eval
+	bool effects {true};
+
+	/// Broadcast to clients/servers
+	bool notify {true};
+
+	/// Mask of conformity failures to allow without error
+	event::conforms non_conform;
+
+	/// Bypass check for event having already been evaluated so it can be
+	/// replayed through the system (not recommended).
+	bool replays {false};
+
+	/// TODO: Y
+	bool prev_check_exists {true};
+
+	/// Mask of faults that are not thrown as exceptions out of eval(). If
+	/// masked, the fault is returned from eval(). By default, the EXISTS
+	/// fault is masked which means existing events won't kill eval loops
+	/// as well as the debug related.
+	fault_t nothrows
+	{
+		EXISTS | DEBUGSTEP | BREAKPOINT
+	};
+
+	/// Mask of faults that are logged to the error facility in vm::log.
+	fault_t errorlog
+	{
+		~(EXISTS | DEBUGSTEP | BREAKPOINT)
+	};
+
+	/// Mask of faults that are logged to the warning facility in vm::log
+	fault_t warnlog
+	{
+		EXISTS
+	};
+
+	/// Whether to log a debug message on successful eval.
+	bool debuglog_accept {false};
+
+	/// Whether to log an info message on successful eval.
+	bool infolog_accept {false};
+};
+
+struct ircd::m::vm::error
+:m::error
+{
+	vm::fault code;
+
+	template<class... args> error(const fault &code, const char *const &fmt, args&&... a);
+	template<class... args> error(const char *const &fmt, args&&... a);
+};
+
+template<class... args>
+ircd::m::vm::error::error(const fault &code,
+                          const char *const &fmt,
+                          args&&... a)
+:m::error
+{
+	http::NOT_MODIFIED, "M_VM_FAULT", fmt, std::forward<args>(a)...
+}
+,code
+{
+	code
+}
+{}
+
+template<class... args>
+ircd::m::vm::error::error(const char *const &fmt,
+                          args&&... a)
+:m::error
+{
+	http::INTERNAL_SERVER_ERROR, "M_VM_FAULT", fmt, std::forward<args>(a)...
+}
+,code
+{
+	fault::GENERAL
+}
+{}

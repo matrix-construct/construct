@@ -16,12 +16,16 @@ ircd::m::vm::log
 	"vm", 'v'
 };
 
-ircd::ctx::view<const ircd::m::event>
+decltype(ircd::m::vm::inserted)
 ircd::m::vm::inserted
 {};
 
-uint64_t
+decltype(ircd::m::vm::current_sequence)
 ircd::m::vm::current_sequence
+{};
+
+decltype(ircd::m::vm::default_opts)
+ircd::m::vm::default_opts
 {};
 
 /// This function takes an event object vector and adds our origin and event_id
@@ -128,6 +132,17 @@ ircd::m::vm::commit(json::iov &event,
 	return commit(event);
 }
 
+namespace ircd::m::vm
+{
+	extern hook::site commit_hook;
+}
+
+decltype(ircd::m::vm::commit_hook)
+ircd::m::vm::commit_hook
+{
+	{ "name", "vm commit" }
+};
+
 /// Insert a new event originating from this server.
 ///
 /// Figure 1:
@@ -176,9 +191,15 @@ ircd::m::vm::commit(json::iov &iov)
 	          vm::current_sequence,
 	          pretty_oneline(event));
 
+	//TODO: X
+	vm::opts opts;
+	opts.non_conform |= event::conforms::MISSING_PREV_STATE;
+
+	vm::eval eval{opts};
 	ircd::timer timer;
 
-	eval{event};
+	commit_hook(event);
+	eval(event);
 
 	log.debug("committed event %s (mark: %ld time: %ld$ms)",
 	          at<"event_id"_>(event),
@@ -197,25 +218,25 @@ ircd::m::vm::commit(json::iov &iov)
 
 namespace ircd::m::vm
 {
-	hook::site notify_hook
-	{
-		{ "name", "vm notify" }
-	};
+	extern hook::site notify_hook;
 
+	void _tmp_effects(const m::event &event); //TODO: X
 	void write(eval &);
 }
 
-decltype(ircd::m::vm::eval::default_opts)
-ircd::m::vm::eval::default_opts
-{};
+decltype(ircd::m::vm::notify_hook)
+ircd::m::vm::notify_hook
+{
+	{ "name", "vm notify" }
+};
 
-ircd::m::vm::eval::eval(const struct opts &opts)
+ircd::m::vm::eval::eval(const vm::opts &opts)
 :opts{&opts}
 {
 }
 
 ircd::m::vm::eval::eval(const event &event,
-                        const struct opts &opts)
+                        const vm::opts &opts)
 :opts{&opts}
 {
 	operator()(event);
@@ -225,19 +246,37 @@ enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
 try
 {
-	const auto &room_id
+	const event::conforms report
 	{
-		at<"room_id"_>(event)
+		event, opts->non_conform.report
 	};
 
-	const auto &event_id
+	if(!report.clean())
+		throw error
+		{
+			fault::INVALID, "Non-conforming event: %s", string(report)
+		};
+
+	const m::event::id &event_id
 	{
 		at<"event_id"_>(event)
 	};
 
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	if(!opts->replays && exists(event_id))  //TODO: exclusivity
+		throw error
+		{
+			fault::EXISTS, "Event has already been evaluated."
+		};
+
+
 	const auto &depth
 	{
-		at<"depth"_>(event)
+		json::get<"depth"_>(event)
 	};
 
 	const auto &type
@@ -245,184 +284,122 @@ try
 		unquote(at<"type"_>(event))
 	};
 
-	if(depth < 0)
-		throw VM_INVALID
+	const event::prev prev
+	{
+		event
+	};
+
+	const size_t prev_count
+	{
+		size(json::get<"prev_events"_>(prev))
+	};
+
+	//TODO: ex
+	if(opts->write && prev_count)
+	{
+		for(size_t i(0); i < prev_count; ++i)
 		{
-			"Depth can never be negative"
+			const auto prev_id{prev.prev_event(i)};
+			if(opts->prev_check_exists && !dbs::exists(prev_id))
+				throw error
+				{
+					fault::EVENT, "Missing prev event %s", string_view{prev_id}
+				};
+		}
+
+		uint64_t top;
+		const id::event::buf head
+		{
+			m::head(room_id, top)
 		};
 
-	if(depth == 0 && type != "m.room.create")
-		throw VM_INVALID
+		m::room room{room_id, head};
+		m::room::state state{room};
+		m::state::id_buffer new_root_buf;
+		const auto new_root
 		{
-			"Depth can only be zero for m.room.create types"
+			dbs::write(txn, new_root_buf, state.root_id, event)
 		};
-
-	const event::prev prev{event};
-	const json::array prev_events
+	}
+	else if(opts->write)
 	{
-		json::get<"prev_events"_>(prev)
-	};
+		m::state::id_buffer new_root_buf;
+		const auto new_root
+		{
+			dbs::write(txn, new_root_buf, string_view{}, event)
+		};
+	}
 
-	const json::array prev0
+	if(opts->write)
+		write(*this);
+
+	if(opts->notify)
 	{
-		prev_events[0]
-	};
+		notify_hook(event);
+		vm::inserted.notify(event);
+	}
 
-	const string_view previd
-	{
-		unquote(prev0[0])
-	};
+	if(opts->effects)
+		_tmp_effects(event);
 
-	char old_rootbuf[64];
-	const auto old_root
-	{
-		previd? dbs::state_root(old_rootbuf, previd) : string_view{}
-	};
+	if(opts->debuglog_accept)
+		log.debug("%s", pretty_oneline(event));
 
-	char new_rootbuf[64];
-	const auto new_root
-	{
-		dbs::write(txn, new_rootbuf, old_root, event)
-	};
+	if(opts->infolog_accept)
+		log.info("%s", pretty_oneline(event));
 
-	++cs;
-	log.info("%s", pretty_oneline(event));
-
-	write(*this);
 	return fault::ACCEPT;
 }
 catch(const error &e)
 {
-	log.error("eval %s: %s %s",
-	          json::get<"event_id"_>(event),
-	          e.what(),
-	          e.content);
+	if(opts->errorlog & e.code)
+		log.error("eval %s: %s %s",
+		          json::get<"event_id"_>(event),
+		          e.what(),
+		          e.content);
+
+	if(opts->warnlog & e.code)
+		log.warning("eval %s: %s %s",
+		            json::get<"event_id"_>(event),
+		            e.what(),
+		            e.content);
+
+	if(opts->nothrows & e.code)
+		return e.code;
+
 	throw;
+}
+catch(const std::exception &e)
+{
+	if(opts->errorlog & fault::GENERAL)
+		log.error("eval %s: #GP: %s",
+		          json::get<"event_id"_>(event),
+		          e.what());
+
+	if(opts->warnlog & fault::GENERAL)
+		log.warning("eval %s: #GP: %s",
+		            json::get<"event_id"_>(event),
+		            e.what());
+
+	if(opts->nothrows & fault::GENERAL)
+		return fault::GENERAL;
+
+	throw error
+	{
+		fault::GENERAL, "%s", e.what()
+	};
 }
 
 void
 ircd::m::vm::write(eval &eval)
 {
-	log.debug("Committing %zu events to database...",
-	          eval.cs);
+	log.debug("Committing %zu cells in %zu bytes to events database...",
+	          eval.txn.size(),
+	          eval.txn.bytes());
 
 	eval.txn();
-	vm::current_sequence += eval.cs;
+	vm::current_sequence++;
 	eval.txn.clear();
-	eval.cs = 0;
-}
-
-ircd::m::vm::front &
-ircd::m::vm::fronts::get(const room::id &room_id,
-                         const event &event)
-try
-{
-	front &ret
-	{
-		map[std::string(room_id)]
-	};
-
-	if(ret.map.empty())
-		fetch(room_id, ret, event);
-
-	return ret;
-}
-catch(const std::exception &e)
-{
-	map.erase(std::string(room_id));
-	throw;
-}
-
-ircd::m::vm::front &
-ircd::m::vm::fronts::get(const room::id &room_id)
-{
-	const auto it
-	{
-		map.find(std::string(room_id))
-	};
-
-	if(it == end(map))
-		throw m::NOT_FOUND
-		{
-			"No fronts for unknown room %s", room_id
-		};
-
-	front &ret{it->second};
-	if(unlikely(ret.map.empty()))
-		throw m::NOT_FOUND
-		{
-			"No fronts for room %s", room_id
-		};
-
-	return ret;
-}
-
-ircd::m::vm::front &
-ircd::m::vm::fetch(const room::id &room_id,
-                   front &front,
-                   const event &event)
-{
-	const query<where::equal> query
-	{
-		{ "room_id", room_id },
-	};
-
-	for_each(query, [&front]
-	(const auto &event)
-	{
-		for_each(m::event::prev{event}, [&front, &event]
-		(const auto &key, const auto &prev_events)
-		{
-			for(const json::array &prev_event : prev_events)
-			{
-				const event::id &prev_event_id{unquote(prev_event[0])};
-				front.map.erase(std::string{prev_event_id});
-			}
-
-			const auto &depth
-			{
-				json::get<"depth"_>(event)
-			};
-
-			if(depth > front.top)
-				front.top = depth;
-
-			front.map.emplace(at<"event_id"_>(event), depth);
-		});
-	});
-
-	if(!front.map.empty())
-		return front;
-
-	const event::id &event_id
-	{
-		at<"event_id"_>(event)
-	};
-
-	if(!my_host(room_id.host()))
-	{
-		log.debug("No fronts available for %s; acquiring state eigenvalue at %s...",
-		          string_view{room_id},
-		          string_view{event_id});
-
-		return front;
-	}
-
-	log.debug("No fronts available for %s using %s",
-	          string_view{room_id},
-	          string_view{event_id});
-
-	front.map.emplace(at<"event_id"_>(event), json::get<"depth"_>(event));
-	front.top = json::get<"depth"_>(event);
-
-	if(!my_host(room_id.host()))
-	{
-		assert(0);
-		//backfill(room_id, event_id, 64);
-		return front;
-	}
-
-	return front;
 }
 
 ircd::string_view
@@ -431,11 +408,51 @@ ircd::m::vm::reflect(const enum fault &code)
 	switch(code)
 	{
 		case fault::ACCEPT:       return "ACCEPT";
-		case fault::GENERAL:      return "GENERAL";
+		case fault::EXISTS:       return "EXISTS";
+		case fault::INVALID:      return "INVALID";
 		case fault::DEBUGSTEP:    return "DEBUGSTEP";
 		case fault::BREAKPOINT:   return "BREAKPOINT";
+		case fault::GENERAL:      return "GENERAL";
 		case fault::EVENT:        return "EVENT";
+		case fault::STATE:        return "STATE";
 	}
 
 	return "??????";
+}
+
+//TODO: X
+void
+ircd::m::vm::_tmp_effects(const m::event &event)
+{
+	const m::room::id room_id{at<"room_id"_>(event)};
+	const m::user::id sender{at<"sender"_>(event)};
+	const auto &type{at<"type"_>(event)};
+
+	//TODO: X
+	/*
+	if(type == "m.room.create" && my_host(user::id{at<"sender"_>(event)}.host()))
+	{
+		const m::room room{room::id{room_id}};
+		send(room, at<"sender"_>(event), "m.room.power_levels", {}, json::members
+		{
+			{ "users", json::members
+			{
+				{ at<"sender"_>(event), 100L }
+			}}
+		});
+	}
+	*/
+
+	//TODO: X
+	if(type == "m.room.member" && my_host(sender.host()))
+	{
+		m::user::room user_room{sender};
+		send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
+	}
+
+	//TODO: X
+	if(type == "m.room.join_rules" && my_host(sender.host()))
+	{
+		send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
+	}
 }
