@@ -463,9 +463,8 @@ ircd::m::commit(const room &room,
 ircd::m::id::room::buf
 ircd::m::room_id(const id::room_alias &room_alias)
 {
-	id::room::buf buf;
-	room_id(buf, room_alias);
-	return buf;
+	char buf[256];
+	return room_id(buf, room_alias);
 }
 
 ircd::m::id::room
