@@ -1130,6 +1130,19 @@ serialized(const tuple<T...> &t)
 }
 
 template<class... T>
+size_t
+serialized(const tuple<T...> *const &b,
+           const tuple<T...> *const &e)
+{
+	size_t ret(1 + (b == e));
+	return std::accumulate(b, e, ret, []
+	(size_t ret, const tuple<T...> &t)
+	{
+		return ret += serialized(t) + 1;
+	});
+}
+
+template<class... T>
 string_view
 stringify(mutable_buffer &buf,
           const tuple<T...> &tuple)
@@ -1152,6 +1165,27 @@ stringify(mutable_buffer &buf,
 	})};
 
 	return stringify(buf, begin(members), e);
+}
+
+template<class... T>
+string_view
+stringify(mutable_buffer &buf,
+          const tuple<T...> *b,
+          const tuple<T...> *e)
+{
+	const auto start(begin(buf));
+	consume(buf, copy(buf, "["_sv));
+	if(b != e)
+	{
+		stringify(buf, *b);
+		for(++b; b != e; ++b)
+		{
+			consume(buf, copy(buf, ","_sv));
+			stringify(buf, *b);
+		}
+	}
+	consume(buf, copy(buf, "]"_sv));
+	return { start, begin(buf) };
 }
 
 template<class... T>
