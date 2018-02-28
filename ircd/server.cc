@@ -1960,7 +1960,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// buffer if the user did not specify any buffer.
 	const bool dynamic
 	{
-		null(req.in.content)
+		!contiguous && empty(req.in.content)
 	};
 
 	if(dynamic)
