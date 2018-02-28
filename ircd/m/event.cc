@@ -522,10 +522,8 @@ ircd::m::event_conforms_reflects
 	"MISSING_ORIGIN",
 	"INVALID_ORIGIN",
 	"INVALID_OR_MISSING_REDACTS_ID",
-	"USELESS_REDACTS_ID",
 	"MISSING_MEMBERSHIP",
 	"INVALID_MEMBERSHIP",
-	"USELESS_MEMBERSHIP",
 	"MISSING_CONTENT_MEMBERSHIP",
 	"INVALID_CONTENT_MEMBERSHIP",
 	"MISSING_PREV_EVENTS",
@@ -603,10 +601,6 @@ ircd::m::event::conforms::conforms(const event &e)
 		if(!valid(m::id::EVENT, json::get<"redacts"_>(e)))
 			set(INVALID_OR_MISSING_REDACTS_ID);
 
-	if(json::get<"type"_>(e) != "m.room.redaction")
-		if(!empty(json::get<"redacts"_>(e)))
-			set(USELESS_REDACTS_ID);
-
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(empty(json::get<"membership"_>(e)))
 			set(MISSING_MEMBERSHIP);
@@ -614,10 +608,6 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(!all_of<std::islower>(json::get<"membership"_>(e)))
 			set(INVALID_MEMBERSHIP);
-
-	if(json::get<"type"_>(e) != "m.room.member")
-		if(!empty(json::get<"membership"_>(e)))
-			set(USELESS_MEMBERSHIP);
 
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(empty(unquote(json::get<"content"_>(e).get("membership"))))
