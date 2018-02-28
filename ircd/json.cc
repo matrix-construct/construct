@@ -1431,8 +1431,8 @@ const
 
 		case ARRAY:
 			return serial? !len || string_view{*this} == empty_array:
-			       array?  false:
-			               true;            //TODO: XXX arr
+			       array?  !len:
+			               true;
 
 		case LITERAL:
 			return serial? !len:
@@ -1462,7 +1462,7 @@ const
 
 		case ARRAY:
 			return serial? string == nullptr:
-			       array?  array == nullptr:
+			       array?  false:
 			               true;
 
 		case LITERAL:
