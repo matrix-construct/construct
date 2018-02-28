@@ -95,6 +95,7 @@ namespace ircd
 	std::string unquote(std::string &&);
 
 	std::string replace(std::string, const char &before, const char &after);
+	std::string replace(std::string, const string_view &before, const string_view &after);
 	std::string replace(const string_view &, const char &before, const string_view &after);
 
 	// Truncate view at maximum length
@@ -106,6 +107,18 @@ ircd::trunc(const string_view &s,
             const size_t &max)
 {
 	return { s.data(), std::min(s.size(), max) };
+}
+
+inline std::string
+ircd::replace(std::string s,
+              const string_view &before,
+              const string_view &after)
+{
+	size_t p(s.find(data(before), 0, size(before)));
+	for(; p != s.npos; p = s.find(data(before), p + size(after), size(before)))
+		s.replace(p, size(before), data(after), size(after));
+
+	return s;
 }
 
 inline std::string
