@@ -55,6 +55,22 @@ ircd::m::degree(const event::prev &prev)
 	return ret;
 }
 
+bool
+ircd::m::exists(const id::event &event_id)
+{
+	static constexpr auto idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(idx)
+	};
+
+	return has(column, event_id);
+}
+
 size_t
 ircd::m::count(const event::prev &prev)
 {

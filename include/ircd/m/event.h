@@ -26,6 +26,9 @@ namespace ircd::m
 	id::event event_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event event_id(const event &, id::event::buf &buf);
 	id::event event_id(const event &);
+
+	// [GET]
+	bool exists(const id::event &);
 }
 
 #pragma GCC diagnostic push
