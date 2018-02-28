@@ -651,6 +651,13 @@ ircd::m::event::conforms::conforms(const event &e)
 }
 
 void
+ircd::m::event::conforms::operator|=(const code &code)
+&
+{
+	set(code);
+}
+
+void
 ircd::m::event::conforms::del(const code &code)
 {
 	report &= ~(1UL << code);

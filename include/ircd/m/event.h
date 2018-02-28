@@ -148,6 +148,7 @@ struct ircd::m::event::conforms
 
 	void set(const code &code);
 	void del(const code &code);
+	void operator|=(const code &) &;
 
 	conforms() = default;
 	conforms(const event &);
