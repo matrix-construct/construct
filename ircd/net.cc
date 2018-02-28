@@ -1534,10 +1534,10 @@ noexcept try
 
 	if(!timedout)
 		cancel_timeout();
-	else
+	else if(ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
-	if(!ec && !sd.is_open())
+	if(unlikely(!ec && !sd.is_open()))
 		ec = { bad_file_descriptor, system_category() };
 
 	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
@@ -1652,12 +1652,10 @@ noexcept try
 	          string(ec));
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(timedout)
-	{
-		assert(ec == operation_canceled);
+	if(!timedout)
+		cancel_timeout();
+	else if(ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
-	}
-	else cancel_timeout();
 
 	// A connect error; abort here by calling the user back with error.
 	if(ec)
@@ -1713,12 +1711,10 @@ noexcept try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	if(timedout)
-	{
-		assert(ec == operation_canceled);
+	if(!timedout)
+		cancel_timeout();
+	else if(ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
-	}
-	else cancel_timeout();
 
 	log.debug("socket(%p) local[%s] remote[%s] disconnect %s",
 	          this,
@@ -1764,12 +1760,10 @@ noexcept try
 
 	const life_guard<socket> s{wp};
 
-	if(timedout)
-	{
-		assert(ec == operation_canceled);
+	if(!timedout)
+		cancel_timeout();
+	else if(ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
-	}
-	else cancel_timeout();
 
 	log.debug("socket(%p) local[%s] remote[%s] handshake %s",
 	          this,
