@@ -109,13 +109,22 @@ ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
 const
 {
-	bool ret{false};
+	char buf[64];
+	return this->membership(buf, user_id) == membership;
+}
+
+ircd::string_view
+ircd::m::room::membership(const mutable_buffer &out,
+                          const m::id::user &user_id)
+const
+{
+	string_view ret;
 	const state state{*this};
-	state.get(std::nothrow, "m.room.member"_sv, user_id, [&membership, &ret]
+	state.get(std::nothrow, "m.room.member"_sv, user_id, [&out, &ret]
 	(const m::event &event)
 	{
 		assert(json::get<"type"_>(event) == "m.room.member");
-		ret = unquote(at<"membership"_>(event)) == membership;
+		ret = { data(out), copy(out, unquote(at<"membership"_>(event))) };
 	});
 
 	return ret;
