@@ -16,6 +16,12 @@ IRCD_MODULE
 	"Client 7.2 :Room aliases"
 };
 
+const ircd::m::room::id::buf
+alias_room_id
+{
+    "alias", ircd::my_host()
+};
+
 resource
 directory_room_resource
 {
@@ -94,20 +100,78 @@ directory_room_put
 	directory_room_resource, "PUT", put__directory_room
 };
 
+
+static json::object
+room_alias_fetch(const mutable_buffer &out,
+                 const m::id::room_alias &alias);
+
+/// Translate a room alias into a room_id. This function first checks the
+/// local cache. A cache miss will then cause in a query to the remote, the
+/// result of which will be added to cache.
 m::id::room
 room_id__room_alias(const mutable_buffer &out,
                     const m::id::room_alias &alias)
 {
-	//TODO: XXX cache strat
+	m::id::room ret;
+	const auto cache_closure{[&out, &ret]
+	(const m::event &event)
+	{
+		const string_view &room_id
+		{
+			unquote(at<"content"_>(event).get("room_id"))
+		};
 
+		if(room_id)
+		{
+			copy(out, room_id);
+			ret = out;
+		}
+	}};
+
+	const m::room alias_room{alias_room_id};
+	alias_room.get(std::nothrow, "ircd.alias", alias, cache_closure);
+	if(ret)
+		return ret;
+
+	// Buf has to hold our output headers, their received headers, and
+	// the received aliasing content.
 	const unique_buffer<mutable_buffer> buf
 	{
-		8_KiB //TODO: XXX
+		32_KiB
 	};
 
+	const json::object &response
+	{
+		room_alias_fetch(buf, alias)
+	};
+
+	// Cache the result
+	send(alias_room, m::me.user_id, "ircd.alias", alias, response);
+
+	const m::id::room &room_id
+	{
+		unquote(response.at("room_id"))
+	};
+
+	return m::room::id
+	{
+		string_view
+		{
+			data(out), copy(out, room_id)
+		}
+	};
+}
+
+/// This function makes a room alias request to a remote. The alias
+/// room cache is not checked or updated from here, this is only the
+/// query operation.
+json::object
+room_alias_fetch(const mutable_buffer &out,
+                 const m::id::room_alias &alias)
+{
 	m::v1::query::directory federation_request
 	{
-		alias, buf
+		alias, out
 	};
 
 	//TODO: conf
@@ -127,24 +191,20 @@ room_id__room_alias(const mutable_buffer &out,
 		federation_request
 	};
 
-	if(empty(response["room_id"]))
-		throw m::NOT_FOUND{};
-
-	if(empty(response["servers"]))
-		throw m::NOT_FOUND{};
-
-	const auto &room_id
-	{
-		unquote(response.at("room_id"))
-	};
-
-	//TODO: XXX cache strat
-
-	return m::room::id
-	{
-		string_view
-		{
-			data(out), copy(out, room_id)
-		}
-	};
+	return response;
 }
+
+const m::hook
+_create_alias_room
+{
+	{
+		{ "_site",       "vm notify"       },
+		{ "room_id",     "!ircd:zemos.net" },
+		{ "type",        "m.room.create"   },
+	},
+
+	[](const m::event &)
+	{
+		m::create(alias_room_id, m::me.user_id);
+	}
+};
