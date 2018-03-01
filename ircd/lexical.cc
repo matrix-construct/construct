@@ -666,10 +666,10 @@ ircd::u2a(const mutable_buffer &out,
           const const_buffer &in)
 {
 	char *p(data(out));
-	for(size_t i(0); i < size(in); ++i)
-		p += snprintf(p, size(out) - (p - data(out)), "%02x", in[i]);
+	for(size_t i(0); i < size(in); ++i, p += 2)
+		snprintf(p, end(out) - p, "%02x", in[i]);
 
-	return { data(out), size_t(p - data(out)) };
+	return { data(out), p };
 }
 
 ircd::const_buffer
