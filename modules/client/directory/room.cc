@@ -132,8 +132,7 @@ room_id__room_alias(const mutable_buffer &out,
 		if(age > hours(72))
 			return;
 
-		copy(out, room_id);
-		ret = out;
+		ret = string_view { data(out), copy(out, room_id) };
 	}};
 
 	const m::room alias_room{alias_room_id};
