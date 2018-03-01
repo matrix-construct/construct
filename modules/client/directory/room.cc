@@ -100,7 +100,6 @@ directory_room_put
 	directory_room_resource, "PUT", put__directory_room
 };
 
-
 static json::object
 room_alias_fetch(const mutable_buffer &out,
                  const m::id::room_alias &alias);
@@ -121,11 +120,20 @@ room_id__room_alias(const mutable_buffer &out,
 			unquote(at<"content"_>(event).get("room_id"))
 		};
 
-		if(room_id)
+		if(!room_id)
+			return;
+
+		const auto age
 		{
-			copy(out, room_id);
-			ret = out;
-		}
+			ircd::now() - milliseconds(at<"origin_server_ts"_>(event))
+		};
+
+		//TODO: Conf; cache TTL.
+		if(age > hours(72))
+			return;
+
+		copy(out, room_id);
+		ret = out;
 	}};
 
 	const m::room alias_room{alias_room_id};
