@@ -98,6 +98,7 @@ ircd::ed25519::sk::sk(pk *const &pk_arg,
 
 ircd::ed25519::sk::sk(const std::string &filename,
                       pk *const &pk_arg)
+try
 :key
 {
 	reinterpret_cast<uint8_t *>(::sodium_malloc(crypto_sign_ed25519_SECRETKEYBYTES)),
@@ -119,16 +120,8 @@ ircd::ed25519::sk::sk(const std::string &filename,
 		reinterpret_cast<char *>(key.get()), SK_SZ
 	};
 
-	const auto existing
+	if(!fs::exists(filename))
 	{
-		fs::read(filename, key_data)
-	};
-
-	if(!existing)
-	{
-		if(fs::exists(filename))
-			throw error("Failed to read existing ed25519 secret key in: %s", filename);
-
 		throw_on_error
 		{
 			::crypto_sign_ed25519_keypair(pk_data, key.get())
@@ -136,10 +129,20 @@ ircd::ed25519::sk::sk(const std::string &filename,
 
 		fs::write(filename, key_data);
 	}
+	else fs::read(filename, key_data);
 
 	throw_on_error
 	{
 		::crypto_sign_ed25519_sk_to_pk(pk_data, key.get())
+	};
+}
+catch(const fs::error &e)
+{
+	throw error
+	{
+		"Failed to read existing ed25519 secret key in: %s :%s",
+		filename,
+		e.what()
 	};
 }
 
