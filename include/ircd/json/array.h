@@ -84,8 +84,8 @@ struct ircd::json::array::const_iterator
   protected:
 	friend class array;
 
-	const char *start;
-	const char *stop;
+	const char *start {nullptr};
+	const char *stop {nullptr};
 	string_view state;
 
 	const_iterator(const char *const &start, const char *const &stop)
@@ -98,6 +98,8 @@ struct ircd::json::array::const_iterator
 	value_type &operator*() const                { return *operator->();                           }
 
 	const_iterator &operator++();
+
+	const_iterator() = default;
 
 	friend bool operator==(const const_iterator &, const const_iterator &);
 	friend bool operator!=(const const_iterator &, const const_iterator &);

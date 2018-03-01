@@ -149,8 +149,8 @@ struct ircd::json::object::const_iterator
   protected:
 	friend class object;
 
-	const char *start;
-	const char *stop;
+	const char *start {nullptr};
+	const char *stop {nullptr};
 	member state;
 
 	const_iterator(const char *const &start, const char *const &stop)
@@ -163,6 +163,8 @@ struct ircd::json::object::const_iterator
 	value_type &operator*() const                { return *operator->();                           }
 
 	const_iterator &operator++();
+
+	const_iterator() = default;
 
 	friend bool operator==(const const_iterator &, const const_iterator &);
 	friend bool operator!=(const const_iterator &, const const_iterator &);
