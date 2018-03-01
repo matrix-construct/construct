@@ -114,19 +114,19 @@ ircd::m::vm::commit(json::iov &event,
 		assert(self::public_key.verify(preimage, sig));
 	}
 
-	char sigb64[64];
+	char sigb64[size_t(size(sig) * 1.34) + 1];
 	const json::members sigs
 	{
 		{ my_host(), json::members
 		{
-			json::member { self::public_key_id, b64encode_unpadded(sigb64, sig) }
+			{ self::public_key_id, b64encode_unpadded(sigb64, sig) }
 		}}
 	};
 
 	const json::iov::push _final[]
 	{
-		{ event, { "content",     content  }},
 		{ event, { "signatures",  sigs     }},
+		{ event, { "content",     content  }},
 	};
 
 	return commit(event);
