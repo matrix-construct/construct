@@ -183,7 +183,7 @@ namespace ircd
 
 	constexpr size_t BUFSIZE { 512 };
 	extern const enum runlevel &runlevel;
-	extern const std::string &conf;
+	extern const std::string &config;
 	extern bool debugmode; ///< Toggle; available only ifdef RB_DEBUG
 
 	std::string demangle(const std::string &symbol);
@@ -218,6 +218,7 @@ namespace ircd
 #include "http.h"
 #include "fmt.h"
 #include "magics.h"
+#include "conf.h"
 #include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"

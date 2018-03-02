@@ -52,8 +52,8 @@ ircd::m::self::tls_cert_der_sha256_b64
 // init
 //
 
-ircd::m::keys::init::init(const json::object &conf)
-:conf{conf}
+ircd::m::keys::init::init(const json::object &config)
+:config{config}
 {
 	certificate();
 	signing();
@@ -114,7 +114,7 @@ ircd::m::keys::init::signing()
 {
 	const std::string sk_file
 	{
-		unquote(conf.get("signing_key_path", "construct.sk"))
+		unquote(config.get("signing_key_path", "construct.sk"))
 	};
 
 	if(fs::exists(sk_file))

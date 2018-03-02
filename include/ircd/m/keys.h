@@ -82,7 +82,7 @@ struct ircd::m::keys
 
 struct ircd::m::keys::init
 {
-	json::object conf;
+	json::object config;
 
 	void certificate();
 	void signing();
@@ -90,7 +90,7 @@ struct ircd::m::keys::init
   public:
 	void bootstrap();
 
-	init(const json::object &conf);
+	init(const json::object &config);
 	~init() noexcept;
 };
 

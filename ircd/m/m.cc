@@ -66,13 +66,13 @@ ircd::m::control
 
 ircd::m::init::init()
 try
-:conf
+:config
 {
-	ircd::conf
+	ircd::conf::config //TODO: X
 }
 ,_keys
 {
-	conf
+	this->config
 }
 {
 	modules();
@@ -123,8 +123,8 @@ ircd::m::init::modules()
 
 namespace ircd::m
 {
-	static void init_listener(const json::object &conf, const json::object &opts, const string_view &bindaddr);
-	static void init_listener(const json::object &conf, const json::object &opts);
+	static void init_listener(const json::object &config, const json::object &opts, const string_view &bindaddr);
+	static void init_listener(const json::object &config, const json::object &opts);
 }
 
 void
@@ -132,18 +132,18 @@ ircd::m::init::listeners()
 {
 	const json::array listeners
 	{
-		conf["listeners"]
+		config["listeners"]
 	};
 
 	if(m::listeners.empty())
-		init_listener(conf, {});
+		init_listener(config, {});
 	else
 		for(const json::object opts : listeners)
-			init_listener(conf, opts);
+			init_listener(config, opts);
 }
 
 static void
-ircd::m::init_listener(const json::object &conf,
+ircd::m::init_listener(const json::object &config,
                        const json::object &opts)
 {
 	const json::array binds
@@ -152,14 +152,14 @@ ircd::m::init_listener(const json::object &conf,
 	};
 
 	if(binds.empty())
-		init_listener(conf, opts, "0.0.0.0");
+		init_listener(config, opts, "0.0.0.0");
 	else
 		for(const auto &bindaddr : binds)
-			init_listener(conf, opts, unquote(bindaddr));
+			init_listener(config, opts, unquote(bindaddr));
 }
 
 static void
-ircd::m::init_listener(const json::object &conf,
+ircd::m::init_listener(const json::object &config,
                        const json::object &opts,
                        const string_view &host)
 {
@@ -175,12 +175,12 @@ ircd::m::init_listener(const json::object &conf,
 	// Translate synapse options to our options (which reflect asio::ssl)
 	const json::strung options{json::members
 	{
-		{ "name",                      name                          },
-		{ "host",                      host                          },
-		{ "port",                      opts.get("port", 8448L)       },
-		{ "ssl_certificate_file_pem",  conf["tls_certificate_path"]  },
-		{ "ssl_private_key_file_pem",  conf["tls_private_key_path"]  },
-		{ "ssl_tmp_dh_file",           conf["tls_dh_params_path"]    },
+		{ "name",                      name                            },
+		{ "host",                      host                            },
+		{ "port",                      opts.get("port", 8448L)         },
+		{ "ssl_certificate_file_pem",  config["tls_certificate_path"]  },
+		{ "ssl_private_key_file_pem",  config["tls_private_key_path"]  },
+		{ "ssl_tmp_dh_file",           config["tls_dh_params_path"]    },
 	}};
 
 	m::listeners.emplace_back(options);

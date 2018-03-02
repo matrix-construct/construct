@@ -78,6 +78,7 @@ libircd_la_SOURCES =   \
 	logger.cc          \
 	info.cc            \
 	sodium.cc          \
+	conf.cc            \
 	rfc1459.cc         \
 	rand.cc            \
 	hash.cc            \

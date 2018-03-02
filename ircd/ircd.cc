@@ -20,13 +20,9 @@ namespace ircd
 	boost::asio::io_context *ios;                // user's io service
 	struct strand *strand;                       // libircd event serializer
 
-	std::string _conf;                           // JSON read from configfile
-	const std::string &conf{_conf};              // Observer for conf data
-
 	ctx::ctx *main_context;                      // Main program loop
 	bool debugmode;                              // meaningful ifdef RB_DEBUG
 
-	std::string read_conf(std::string file);
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;
 	void main();
@@ -87,29 +83,15 @@ try
 	// Saves the user's runlevel_changed callback which we invoke.
 	ircd::runlevel_changed = std::move(runlevel_changed);
 
-	// The log is available, but it is console-only until conf opens files.
+	// The log is available. but it is console-only until conf opens files.
 	log::init();
 	log::mark("READY");
 
+	// The conf supplied by the user is read in; see: ircd::conf.
+	conf::init(configfile);
+
 	// This starts off the log with library information.
 	info::init();
-
-	// The configuration file is a user-converted Synapse homeserver.yaml
-	// converted into JSON. The configuration file is only truly meaningful
-	// the first time IRCd is ever run. Subsequently, only the database must
-	// be found. Real configuration is stored in the !config channel.
-	//
-	// This subroutine reads a file either at the user-supplied path or the
-	// default path specified in ircd::fs, vets for basic syntax issues, and
-	// then returns a string of JSON (the file's contents). The validity of
-	// the actual configuration is not known until specific subsystems are
-	// init'ed later.
-	//
-	// *NOTE* This expects *canonical JSON* right now. That means converting
-	// your homeserver.yaml may be a two step process: 1. YAML to JSON, 2.
-	// whitespace-stripping the JSON. Tools to do both of these things are
-	// first hits in a google search.
-	ircd::_conf = read_conf(configfile);
 
 	// Setup the main context, which is a new stack executing the function
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned
@@ -361,57 +343,4 @@ ircd::reflect(const enum runlevel &level)
 	}
 
 	return "??????";
-}
-
-std::string
-ircd::read_conf(std::string filename)
-try
-{
-	if(!filename.empty())
-		log::debug
-		{
-			"User supplied a configuration file path: `%s'", filename
-		};
-
-	if(filename.empty())
-		filename = fs::CPATH;
-
-	if(!fs::exists(filename))
-		return {};
-
-	std::string read
-	{
-		fs::read(filename)
-	};
-
-	// ensure any trailing cruft is removed to not set off the validator
-	if(endswith(read, '\n'))
-		read.pop_back();
-
-	if(endswith(read, '\r'))
-		read.pop_back();
-
-	// grammar check; throws on error
-	json::valid(read);
-
-	const json::object object{read};
-	const size_t key_count{object.count()};
-	log::info
-	{
-		"Using configuration from: `%s': JSON object with %zu members in %zu bytes",
-		filename,
-		key_count,
-		read.size()
-	};
-
-	return read;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"Configuration @ `%s': %s", filename, e.what()
-	};
-
-	throw;
 }
