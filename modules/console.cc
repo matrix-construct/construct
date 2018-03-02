@@ -358,6 +358,7 @@ console_cmd__net(const string_view &line)
 	}
 }
 
+static bool console_cmd__net_host_cache(const string_view &line);
 static bool console_cmd__net_host__default(const string_view &line);
 
 bool
@@ -370,11 +371,64 @@ console_cmd__net_host(const string_view &line)
 
 	switch(hash(token(line, " ", 0)))
 	{
+		case hash("cache"):
+			return console_cmd__net_host_cache(args);
+
 		default:
 			return console_cmd__net_host__default(line);
 	}
 
 	return true;
+}
+
+bool
+console_cmd__net_host_cache(const string_view &line)
+{
+	switch(hash(token(line, " ", 0)))
+	{
+		case hash("A"):
+		{
+			for(const auto &pair : net::dns::cache.A)
+			{
+				const auto &host{pair.first};
+				const auto &record{pair.second};
+				const net::ipport ipp{record.ip4, 0};
+				out << std::setw(32) << host
+				    << " => " << ipp
+				    <<  " expires " << timestr(record.ttl, ircd::localtime)
+				    << " (" << record.ttl << ")"
+				    << std::endl;
+			}
+
+			return true;
+		}
+
+		case hash("SRV"):
+		{
+			for(const auto &pair : net::dns::cache.SRV)
+			{
+				const auto &key{pair.first};
+				const auto &record{pair.second};
+				const net::hostport hostport
+				{
+					record.tgt, record.port
+				};
+
+				out << std::setw(32) << key
+				    << " => " << hostport
+				    <<  " expires " << timestr(record.ttl, ircd::localtime)
+				    << " (" << record.ttl << ")"
+				    << std::endl;
+			}
+
+			return true;
+		}
+
+		default: throw bad_command
+		{
+			"Which cache?"
+		};
+	}
 }
 
 bool
