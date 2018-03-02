@@ -516,7 +516,6 @@ ircd::m::dbs::desc::events__room_events
 	// explanation
 	R"(### developer note:
 
-	key is "!room_id$event_id"
 	the prefix transform is in effect. this column indexes events by
 	room_id offering an iterable bound of the index prefixed by room_id
 
@@ -606,7 +605,7 @@ ircd::m::dbs::desc::events_content
 	with the REST API, this is the HTTP body.
 
 	### developer note:
-	Since events must not exceed 65 KB the maximum size for the content is the remaining
+	Since events must not exceed 64 KiB the maximum size for the content is the remaining
 	space after all the other fields for the event are rendered.
 
 	key is event_id
