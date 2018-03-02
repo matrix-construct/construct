@@ -43,14 +43,14 @@ handle_get(client &client,
 		64_KiB
 	};
 
-	const json::object event
+	const m::event::fetch event
 	{
-		m::get(event_id, buffer)
+		event_id
 	};
 
 	const json::value pdu
 	{
-		event
+		static_cast<const m::event &>(event)
 	};
 
 	return resource::response
