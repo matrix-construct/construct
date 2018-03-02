@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/gil/image.hpp>
-#include <boost/gil/typedefs.hpp>
-#include <boost/gil/extension/io/jpeg_io.hpp>
-// #include <boost/gil/extension/numeric/sampler.hpp>
-// #include <boost/gil/extension/numeric/resample.hpp>
-
 using namespace ircd;
 
 mapi::header

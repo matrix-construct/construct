@@ -17,7 +17,7 @@ real-time communication for free and open source software: a *federation of netw
 **IRCd has been rewritten to implement the [Federation](https://matrix.org/docs/spec/)**.
 
 This is the opportunity to take back control of your communication and relegate the
-opaque cloud siloes to being just another provider to the federation.
+opaque siloes to being just another provider to the federation.
 Though not syntactically backwards-compatible with the legacy IRC protocol, it is easily
 translated as a superset. Similar to the legacy IRC protocol's origins, it wisely leverages
 technologies in vogue for its day to aid the virility of implementations. A vibrant and
@@ -63,6 +63,9 @@ Content MIME type recognition.
 **autoconf-archive**, **libtool**, **shtool**
 
 ##### Planned dependencies
+
+- **Adobe GIL** (Optional)
+Image resizing & manipulation for the media system.
 
 - **libmozjs** (Optional JavaScript embedding):
 The matrix room is directly represented as a javascript object. :art:
