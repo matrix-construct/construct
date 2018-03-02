@@ -16,6 +16,7 @@ namespace ircd::conf
 	template<class T = void> struct item;  // doesn't exist
 	template<class T> struct value;        // abstraction for carrying item value
 	template<> struct item<void>;          // base class of all conf items
+	template<> struct item<std::string>;
 	template<> struct item<seconds>;
 
 	IRCD_EXCEPTION(ircd::error, error)
@@ -68,6 +69,33 @@ struct ircd::conf::value
 	template<class... A>
 	value(A&&... a)
 	:_value{std::forward<A>(a)...}
+	{}
+};
+
+template<>
+struct ircd::conf::item<std::string>
+:conf::item<>
+,conf::value<std::string>
+{
+	operator string_view() const
+	{
+		return _value;
+	}
+
+	string_view get(const mutable_buffer &out) const override
+	{
+		return { data(out), _value.copy(data(out), size(out)) };
+	}
+
+	bool set(const string_view &s) override
+	{
+		_value = std::string{s};
+		return true;
+	}
+
+	item(const json::members &memb)
+	:conf::item<>{memb}
+	,value{unquote(feature.get("default"))}
 	{}
 };
 
