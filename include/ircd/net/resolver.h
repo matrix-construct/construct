@@ -49,8 +49,8 @@ struct ircd::net::dns::resolver
 	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
 	void operator()(const hostport &, const opts &, callback);
 
-	bool check_timeout(const uint16_t &id, tag &, const steady_point &now);
-	void check_timeouts();
+	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
+	void check_timeouts(const seconds &timeout);
 	void worker();
 	ctx::context context;
 

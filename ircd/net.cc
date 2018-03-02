@@ -2417,6 +2417,12 @@ void
 ircd::net::dns::resolver::worker()
 try
 {
+	static conf::item<seconds> timeout
+	{
+		{ "name",     "net.dns.resolver.timeout" },
+		{ "default",   5L                        },
+	};
+
 	while(1)
 	{
 		dock.wait([this]
@@ -2424,8 +2430,8 @@ try
 			return !tags.empty();
 		});
 
-		ctx::sleep(3); //TODO: conf
-		check_timeouts();
+		ctx::sleep(seconds(timeout));
+		check_timeouts(seconds(timeout));
 	}
 }
 catch(const ctx::interrupted &)
@@ -2434,11 +2440,11 @@ catch(const ctx::interrupted &)
 }
 
 void
-ircd::net::dns::resolver::check_timeouts()
+ircd::net::dns::resolver::check_timeouts(const seconds &timeout)
 {
-	const auto now
+	const auto cutoff
 	{
-		ircd::now<steady_point>()
+		now<steady_point>() - timeout
 	};
 
 	auto it(begin(tags));
@@ -2446,7 +2452,7 @@ ircd::net::dns::resolver::check_timeouts()
 	{
 		const auto &id(it->first);
 		auto &tag(it->second);
-		if(!check_timeout(id, tag, now))
+		if(!check_timeout(id, tag, cutoff))
 			it = tags.erase(it);
 		else
 			++it;
@@ -2456,10 +2462,9 @@ ircd::net::dns::resolver::check_timeouts()
 bool
 ircd::net::dns::resolver::check_timeout(const uint16_t &id,
                                         tag &tag,
-                                        const steady_point &now)
+                                        const steady_point &cutoff)
 {
-	//TODO: conf
-	if(tag.last + seconds(3) > now)
+	if(tag.last < cutoff)
 		return true;
 
 	//TODO: retry
