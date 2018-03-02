@@ -191,7 +191,7 @@ get__initialsync(client &client,
 	char membership_buffer[64];
 	const string_view membership
 	{
-		room.membership(membership_buffer, m::user::id{request.user_id})
+		request.user_id? room.membership(membership_buffer, m::user::id{request.user_id}) : string_view{}
 	};
 
 	//TODO: XXX
