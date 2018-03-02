@@ -19,8 +19,15 @@ namespace ircd::conf
 	template<> struct item<seconds>;
 
 	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, not_found)
+	IRCD_EXCEPTION(error, bad_value)
 
-	extern const std::string &config;  //TODO: X
+	extern const std::string &config; //TODO: X
+	extern std::map<string_view, item<> *> items;
+
+	string_view get(const string_view &key, const mutable_buffer &out);
+	bool set(const string_view &key, const string_view &value);
+	bool set(std::nothrow_t, const string_view &key, const string_view &value);
 
 	void init(const string_view &configfile);
 }
@@ -29,15 +36,17 @@ namespace ircd::conf
 /// derived templates instead.
 template<>
 struct ircd::conf::item<void>
-:instance_list<ircd::conf::item<>>
 {
 	json::strung feature_;
 	json::object feature;
 	string_view name;
 
-	virtual bool refresh();
+	virtual string_view get(const mutable_buffer &) const;
+	virtual bool set(const string_view &);
 
 	item(const json::members &);
+	item(item &&) = delete;
+	item(const item &) = delete;
 	virtual ~item() noexcept;
 };
 
@@ -46,39 +55,40 @@ struct ircd::conf::item<void>
 /// conf items which contain similar classes of values.
 template<class T>
 struct ircd::conf::value
-:conf::item<>
 {
 	using value_type = T;
 
 	T _value;
-	std::function<bool (T &)> refresher;
 
 	operator const T &() const
 	{
 		return _value;
 	}
 
-	bool refresh() override
-	{
-		return refresher? refresher(_value) : false;
-	}
-
-	template<class U>
-	value(const json::members &memb, U&& t)
-	:conf::item<>{memb}
-	,_value{std::forward<U>(t)}
-	{}
-
-	value(const json::members &memb = {})
-	:conf::item<>{memb}
-	,_value{feature.get<T>("default", T{})}
+	template<class... A>
+	value(A&&... a)
+	:_value{std::forward<A>(a)...}
 	{}
 };
 
 template<>
 struct ircd::conf::item<ircd::seconds>
-:conf::value<seconds>
+:conf::item<>
+,conf::value<seconds>
 {
-	using value_type = seconds;
-	using value::value;
+	string_view get(const mutable_buffer &out) const override
+	{
+		return lex_cast(_value, out);
+	}
+
+	bool set(const string_view &s) override
+	{
+		_value = lex_cast<seconds>(s);
+		return true;
+	}
+
+	item(const json::members &memb)
+	:conf::item<>{memb}
+	,value{feature.get("default", 0L)}
+	{}
 };

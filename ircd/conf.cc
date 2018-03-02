@@ -40,13 +40,69 @@ ircd::conf::init(const string_view &filename)
 	_config = read_json_file(filename);
 }
 
+ircd::string_view
+ircd::conf::get(const string_view &key,
+                const mutable_buffer &out)
+try
+{
+	const auto &item(*items.at(key));
+	return item.get(out);
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
+bool
+ircd::conf::set(std::nothrow_t,
+                const string_view &key,
+                const string_view &value)
+try
+{
+	return set(key, value);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"%s", e.what()
+	};
+
+	return false;
+}
+
+bool
+ircd::conf::set(const string_view &key,
+                const string_view &value)
+try
+{
+	auto &item(*items.at(key));
+	return item.set(value);
+}
+catch(const bad_lex_cast &e)
+{
+	throw bad_value
+	{
+		"Conf item '%s' rejected value '%s'", key, value
+	};
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
 //
 // item
 //
 
-template<>
-decltype(ircd::instance_list<ircd::conf::item<>>::list)
-ircd::instance_list<ircd::conf::item<>>::list
+decltype(ircd::conf::items)
+ircd::conf::items
 {};
 
 /// Conf item abstract constructor.
@@ -61,20 +117,38 @@ ircd::conf::item<void>::item(const json::members &opts)
 }
 ,name
 {
-	feature.has("name")? unquote(feature["name"]) : "<unnamed>"_sv
+	unquote(feature.at("name"))
 }
 {
+	if(!items.emplace(name, this).second)
+		throw error
+		{
+			"Conf item named '%s' already exists", name
+		};
 }
 
 ircd::conf::item<void>::~item()
 noexcept
 {
+	if(name)
+	{
+		const auto it{items.find(name)};
+		assert(data(it->first) == data(name));
+		items.erase(it);
+	}
 }
 
 bool
-ircd::conf::item<void>::refresh()
+ircd::conf::item<void>::set(const string_view &)
 {
 	return false;
+}
+
+ircd::string_view
+ircd::conf::item<void>::get(const mutable_buffer &)
+const
+{
+	return {};
 }
 
 //
