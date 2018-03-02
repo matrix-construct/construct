@@ -87,8 +87,7 @@ get_method
 static void
 _create_public_room(const m::event &)
 {
-	if(!exists(public_room_id))
-		m::create(public_room_id, m::me.user_id);
+	m::create(public_room_id, m::me.user_id);
 }
 
 /// Create the public rooms room at the appropriate time on startup.
@@ -100,9 +99,7 @@ _create_public_hook
 	{
 		{ "_site",       "vm notify"       },
 		{ "room_id",     "!ircd:zemos.net" },
-		{ "sender",      "@ircd:zemos.net" },
-		{ "type",        "m.room.member"   },
-		{ "membership",  "join"            },
+		{ "type",        "m.room.create"   },
 	},
 
 	_create_public_room
