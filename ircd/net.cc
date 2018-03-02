@@ -2267,12 +2267,20 @@ ircd::net::dns::operator()(const hostport &hostport,
 	(*resolver)(hostport, opts, std::move(cb));
 }
 
+/// This function has an opportunity to respond from the DNS cache. If it
+/// returns true, that indicates it responded by calling back the user and
+/// nothing further should be done for them. If it returns false, that
+/// indicates it did not respond and to proceed normally. The response can
+/// be of a cached successful result, or a cached error. Both will return
+/// true.
+///
 bool
 ircd::net::dns::query_cache(const hostport &hp,
                             const opts &opts,
                             const callback &cb)
 {
 	thread_local const rfc1035::record *record[resolver::MAX_COUNT];
+	std::exception_ptr eptr;
 	size_t count{0};
 
 	//TODO: Better deduction
@@ -2292,21 +2300,30 @@ ircd::net::dns::query_cache(const hostport &hp,
 		const auto &now{ircd::time()};
 		for(auto it(pit.first); it != pit.second; )
 		{
-			const auto &rr{pit.first->second};
+			const auto &rr{it->second};
+
+			// Cached entry is too old, ignore and erase
 			if(rr.ttl < now)
 			{
 				it = map.erase(it);
 				continue;
 			}
 
+			// Cached entry is a cached error, we set the eptr, but also
+			// include the record and increment the count like normal.
+			assert(!eptr);
+			if(!rr.tgt)
+			{
+				const auto rcode{3}; //NXDomain
+				eptr = std::make_exception_ptr(rfc1035::error
+				{
+					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
+				});
+			}
+
 			record[count++] = &rr;
 			++it;
 		}
-
-		if(count)
-			cb({}, vector_view<const rfc1035::record *>(record, count));
-
-		return count;
 	}
 	else // Deduced A query (for now)
 	{
@@ -2318,22 +2335,39 @@ ircd::net::dns::query_cache(const hostport &hp,
 		const auto &now{ircd::time()};
 		for(auto it(pit.first); it != pit.second; )
 		{
-			const auto &rr{pit.first->second};
+			const auto &rr{it->second};
+
+			// Cached entry is too old, ignore and erase
 			if(rr.ttl < now)
 			{
 				it = map.erase(it);
 				continue;
 			}
 
+			// Cached entry is a cached error, we set the eptr, but also
+			// include the record and increment the count like normal.
+			assert(!eptr);
+			if(!rr.ip4)
+			{
+				const auto rcode{3}; //NXDomain
+				eptr = std::make_exception_ptr(rfc1035::error
+				{
+					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
+				});
+			}
+
 			record[count++] = &rr;
 			++it;
 		}
-
-		if(count)
-			cb({}, vector_view<const rfc1035::record *>(record, count));
-
-		return count;
 	}
+
+	assert(count || !eptr);        // no error if no cache response
+	assert(!eptr || count == 1);   // if error, should only be one entry.
+
+	if(count)
+		cb(std::move(eptr), vector_view<const rfc1035::record *>(record, count));
+
+	return count;
 }
 
 ircd::string_view
@@ -2639,12 +2673,6 @@ try
 			"Response header is marked as 'Query' and not 'Response'"
 		};
 
-	if(header.rcode)
-		throw rfc1035::error
-		{
-			"protocol error: %s", rfc1035::rcode.at(header.rcode)
-		};
-
 	if(header.qdcount > MAX_COUNT || header.ancount > MAX_COUNT)
 		throw error
 		{
@@ -2660,6 +2688,12 @@ try
 	thread_local std::array<rfc1035::question, MAX_COUNT> qd;
 	for(size_t i(0); i < header.qdcount; ++i)
 		consume(buffer, size(qd.at(i).parse(buffer)));
+
+	if(!handle_error(header, qd.at(0), tag.opts))
+		throw rfc1035::error
+		{
+			"protocol error #%u :%s", header.rcode, rfc1035::rcode.at(header.rcode)
+		};
 
 	// Answers are parsed into this buffer
 	thread_local std::array<rfc1035::answer, MAX_COUNT> an;
@@ -2751,6 +2785,47 @@ catch(const std::exception &e)
 
 	if(tag.cb)
 		tag.cb(std::current_exception(), {});
+}
+
+bool
+ircd::net::dns::resolver::handle_error(const header &header,
+                                       const rfc1035::question &q,
+                                       const dns::opts &opts)
+{
+	switch(header.rcode)
+	{
+		case 0: // NoError; continue
+			return true;
+
+		case 3: // NXDomain; exception
+		{
+			if(opts.cache_result) switch(q.qtype)
+			{
+				case 1: // A
+				{
+					const auto &host{rstrip(q.name, '.')};
+					rfc1035::record::A record;
+					record.ttl = ircd::time() + hours(24).count(); //TODO: conf
+					cache.A.emplace(host, record);
+					break;
+				}
+
+				case 33:
+				{
+					const auto &host{rstrip(q.name, '.')};
+					rfc1035::record::SRV record;
+					record.ttl = ircd::time() + hours(24).count(); //TODO: conf
+					cache.SRV.emplace(host, record);
+					break;
+				}
+			}
+
+			return false;
+		}
+
+		default: // Unhandled error; exception
+			return false;
+	}
 }
 
 bool

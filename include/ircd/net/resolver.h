@@ -36,6 +36,7 @@ struct ircd::net::dns::resolver
 	char reply[64_KiB] alignas(16);              // Buffer for recv
 
 	bool handle_error(const error_code &ec) const;
+	bool handle_error(const header &, const rfc1035::question &, const dns::opts &);
 	void handle_reply(const header &, const const_buffer &body, tag &);
 	void handle_reply(const header &, const const_buffer &body);
 	void handle(const error_code &ec, const size_t &) noexcept;
