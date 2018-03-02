@@ -59,9 +59,15 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
 ircd::rfc1035::question::question(const string_view &fqdn,
                                   const uint16_t &qtype)
 :qtype{qtype}
-,namelen
+,name
 {
-	size(make_name(mutable_buffer{name}, fqdn))
+	// The name string_view is reduced to not view the null terminator
+	// making it easier for external users. We'll account for this
+	// internally. If this->name was a const_buffer it would have the
+	// null, but doing it this way with the string_view covention prevents
+	// the null from leaking into the rest of the system when users want
+	// to know the question.
+	namebuf, size(make_name(namebuf, fqdn)) - 1
 }
 {
 }
@@ -75,7 +81,8 @@ ircd::rfc1035::question::parse(const const_buffer &in)
 			"Answer input buffer underflow"
 		};
 
-	namelen = parse_name(name, in);
+	const auto namelen(parse_name(namebuf, in));
+	name = string_view{namebuf, namelen - 1};
 	const char *pos(data(in) + namelen);
 	if(unlikely(pos + 2 + 2 > end(in)))
 		throw error
@@ -96,7 +103,7 @@ const
 {
 	const size_t required
 	{
-		namelen + 2 + 2
+		size(name) + 1 + 2 + 2
 	};
 
 	if(unlikely(size(buf) < required))
@@ -107,7 +114,9 @@ const
 
 	char *pos
 	{
-		data(buf) + copy(buf, const_buffer{name, namelen})
+		// const_buffer must cover the null terminator which the name
+		// string_view does not cover ... but it's there.
+		data(buf) + copy(buf, const_buffer{namebuf, size(name) + 1})
 	};
 
 	assert(pos > data(buf));
@@ -269,7 +278,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 	assert(*pos == '\0');
 	++pos;
 
-	return { data(out), size_t(pos - begin(out)) };
+	return { data(out), pos };
 }
 
 size_t
