@@ -253,6 +253,13 @@ void
 ircd::m::join_ircd_room()
 try
 {
+	static conf::item<std::string> online_status_msg
+	{
+		{ "name",     "m.ircd.online.status_msg"          },
+		{ "default",  "Wanna chat? IRCd at your service!" }
+	};
+
+	me.presence("online", online_status_msg);
 	join(my_room, me.user_id);
 }
 catch(const m::ALREADY_MEMBER &e)
@@ -263,7 +270,14 @@ catch(const m::ALREADY_MEMBER &e)
 void
 ircd::m::leave_ircd_room()
 {
+	static conf::item<std::string> offline_status_msg
+	{
+		{ "name",     "m.ircd.offline.status_msg"     },
+		{ "default",  "Catch ya on the flip side..."  }
+	};
+
 	leave(my_room, me.user_id);
+	me.presence("offline", offline_status_msg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
