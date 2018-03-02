@@ -55,6 +55,8 @@ namespace ircd::m
 	event::id::buf redact(const room &, const m::id::user &sender, const m::id::event &, const string_view &reason);
 	event::id::buf message(const room &, const m::id::user &sender, const json::members &content);
 	event::id::buf message(const room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
+	event::id::buf notice(const room &, const m::id::user &sender, const string_view &body);
+	event::id::buf notice(const room &, const string_view &body); // sender is @ircd
 	event::id::buf leave(const room &, const m::id::user &);
 	event::id::buf join(const room &, const m::id::user &);
 

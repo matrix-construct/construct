@@ -232,8 +232,8 @@ ircd::m::init::bootstrap()
 
 	_keys.bootstrap();
 
-	message(control, me.user_id, "Welcome to the control room.");
-	message(control, me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
+	notice(control, me.user_id, "Welcome to the control room.");
+	notice(control, me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
 }
 
 bool
@@ -343,6 +343,21 @@ ircd::m::redact(const room &room,
 	};
 
 	return function(room, sender, event_id, reason);
+}
+
+ircd::m::event::id::buf
+ircd::m::notice(const room &room,
+                const string_view &body)
+{
+	return message(room, me.user_id, body, "m.notice");
+}
+
+ircd::m::event::id::buf
+ircd::m::notice(const room &room,
+                const m::id::user &sender,
+                const string_view &body)
+{
+	return message(room, sender, body, "m.notice");
 }
 
 ircd::m::event::id::buf
