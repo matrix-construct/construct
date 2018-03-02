@@ -178,6 +178,11 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 // Record
 //
 
+ircd::rfc1035::record::record(const uint16_t &type)
+:type{type}
+{
+}
+
 ircd::rfc1035::record::record(const answer &answer)
 :type{answer.qtype}
 ,ttl{answer.ttl}
@@ -188,6 +193,15 @@ ircd::rfc1035::record::record(const answer &answer)
 /// vtable
 ircd::rfc1035::record::~record()
 noexcept
+{
+}
+
+//
+// A
+//
+
+ircd::rfc1035::record::A::A()
+:record{1}
 {
 }
 
@@ -204,6 +218,15 @@ ircd::rfc1035::record::A::A(const answer &answer)
 	ip4 = bswap(*(const uint32_t *)data(rdata));
 }
 
+//
+// AAAA
+//
+
+ircd::rfc1035::record::AAAA::AAAA()
+:record{28}
+{
+}
+
 ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 :record{answer}
 {
@@ -217,6 +240,11 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 	ip6 = bswap(*(const uint128_t *)data(rdata));
 }
 
+ircd::rfc1035::record::CNAME::CNAME()
+:record{5}
+{
+}
+
 ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
 :record{answer}
 {
@@ -228,6 +256,11 @@ ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
 
 	const auto len{parse_name(namebuf, rdata)};
 	name = string_view{namebuf, len - 1};
+}
+
+ircd::rfc1035::record::SRV::SRV()
+:record{33}
+{
 }
 
 ircd::rfc1035::record::SRV::SRV(const answer &answer)

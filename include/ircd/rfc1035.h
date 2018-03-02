@@ -157,6 +157,7 @@ struct ircd::rfc1035::record
 	template<class T> const T &as() const;
 
 	record(const answer &);
+	record(const uint16_t &type);
 	record() = default;
 	virtual ~record() noexcept;
 };
@@ -182,7 +183,7 @@ struct ircd::rfc1035::record::A
 	uint32_t ip4 {0};
 
 	A(const answer &);
-	A() = default;
+	A();
 };
 
 /// IPv6 address record.
@@ -193,7 +194,7 @@ struct ircd::rfc1035::record::AAAA
 	uint128_t ip6 {0};
 
 	AAAA(const answer &);
-	AAAA() = default;
+	AAAA();
 };
 
 /// Canonical name aliasing record
@@ -204,7 +205,7 @@ struct ircd::rfc1035::record::CNAME
 	char namebuf[256];
 
 	CNAME(const answer &);
-	CNAME() = default;
+	CNAME();
 };
 
 /// Service record.
@@ -219,5 +220,5 @@ struct ircd::rfc1035::record::SRV
 	char tgtbuf[256];
 
 	SRV(const answer &);
-	SRV() = default;
+	SRV();
 };
