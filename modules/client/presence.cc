@@ -26,6 +26,10 @@ presence_resource
 	}
 };
 
+//
+// put
+//
+
 const string_view
 valid_states[]
 {
@@ -33,63 +37,30 @@ valid_states[]
 };
 
 static bool
-valid_state(const string_view &state)
-{
-	return std::any_of(begin(valid_states), end(valid_states), [&state]
-	(const string_view &valid)
-	{
-		return state == valid;
-	});
-}
+valid_state(const string_view &state);
+
+extern "C" m::event::id::buf
+set__user_presence_status(const m::user::id &user_id,
+                          const string_view &presence,
+                          const string_view &status_msg);
 
 static resource::response
 put__presence_status(client &client,
                      const resource::request &request,
-                     const m::user::id &user_id)
+                     const m::user::id &user_id);
+
+static resource::response
+put__presence(client &client,
+              const resource::request &request);
+
+resource::method
+method_put
 {
-	const string_view &presence
+	presence_resource, "PUT", put__presence,
 	{
-		unquote(request.at("presence"))
-	};
-
-	if(!valid_state(presence))
-		throw m::UNSUPPORTED
-		{
-			"That presence state is not supported"
-		};
-
-	const string_view &status_msg
-	{
-		trunc(unquote(request["status_msg"]), 390)
-	};
-
-	json::iov content;
-	const json::iov::push _presence[]
-	{
-		{ content, { "presence", presence } },
-		{ content, { "user_id",  user_id  } },
-	};
-
-	const json::iov::set_if _status_msg
-	{
-		content, !empty(status_msg),
-		{
-			"status_msg", status_msg
-		}
-	};
-
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	send(user_room, user_id, "m.presence", content);
-
-	return resource::response
-	{
-		client, http::OK
-	};
-}
+		method_put.REQUIRES_AUTH
+	}
+};
 
 resource::response
 put__presence(client &client,
@@ -134,14 +105,76 @@ put__presence(client &client,
 	};
 }
 
-resource::method
-method_put
+resource::response
+put__presence_status(client &client,
+                     const resource::request &request,
+                     const m::user::id &user_id)
 {
-	presence_resource, "PUT", put__presence,
+	const string_view &presence
 	{
-		method_put.REQUIRES_AUTH
-	}
-};
+		unquote(request.at("presence"))
+	};
+
+	const string_view &status_msg
+	{
+		trunc(unquote(request["status_msg"]), 390)
+	};
+
+	set__user_presence_status(request.user_id, presence, status_msg);
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+m::event::id::buf
+set__user_presence_status(const m::user::id &user_id,
+                          const string_view &presence,
+                          const string_view &status_msg)
+{
+	if(!valid_state(presence))
+		throw m::UNSUPPORTED
+		{
+			"That presence state is not supported"
+		};
+
+	json::iov content;
+	const json::iov::push _presence[]
+	{
+		{ content, { "presence", presence } },
+		{ content, { "user_id",  user_id  } },
+	};
+
+	const json::iov::set_if _status_msg
+	{
+		content, !empty(status_msg),
+		{
+			"status_msg", status_msg
+		}
+	};
+
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	return send(user_room, user_id, "m.presence", content);
+}
+
+bool
+valid_state(const string_view &state)
+{
+	return std::any_of(begin(valid_states), end(valid_states), [&state]
+	(const string_view &valid)
+	{
+		return state == valid;
+	});
+}
+
+//
+// get
+//
 
 static resource::response
 get__presence_status(client &client,

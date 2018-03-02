@@ -268,6 +268,25 @@ ircd::m::leave_ircd_room()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/user.h
+//
+
+ircd::m::event::id::buf
+ircd::m::user::presence(const string_view &presence,
+                        const string_view &status_msg)
+{
+	using prototype = event::id::buf (const id &, const string_view &, const string_view &);
+
+	static import<prototype> function
+	{
+		"client_presence", "set__user_presence_status"
+	};
+
+	return function(user_id, presence, status_msg);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/room.h
 //
 
