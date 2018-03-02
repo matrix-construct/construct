@@ -2126,6 +2126,11 @@ decltype(ircd::net::dns)
 ircd::net::dns
 {};
 
+/// Singleton instance of the DNS cache
+decltype(ircd::net::dns::cache)
+ircd::net::dns::cache
+{};
+
 /// Singleton instance of the internal boost resolver wrapper.
 decltype(ircd::net::dns::resolver)
 ircd::net::dns::resolver
@@ -2254,8 +2259,98 @@ ircd::net::dns::operator()(const hostport &hostport,
                            const opts &opts,
                            callback cb)
 {
+	if(opts.cache_check)
+		if(query_cache(hostport, opts, cb))
+			return;
+
 	assert(bool(ircd::net::dns::resolver));
 	(*resolver)(hostport, opts, std::move(cb));
+}
+
+bool
+ircd::net::dns::query_cache(const hostport &hp,
+                            const opts &opts,
+                            const callback &cb)
+{
+	thread_local const rfc1035::record *record[resolver::MAX_COUNT];
+	size_t count{0};
+
+	//TODO: Better deduction
+	if(hp.service || opts.srv) // deduced SRV query
+	{
+		thread_local char srvbuf[512];
+		const string_view srvhost
+		{
+			make_SRV_key(srvbuf, hp, opts)
+		};
+
+		auto &map{cache.SRV};
+		const auto pit{map.equal_range(std::string{srvhost})}; //TODO: XXX
+		if(pit.first == pit.second)
+			return false;
+
+		const auto &now{ircd::time()};
+		for(auto it(pit.first); it != pit.second; )
+		{
+			const auto &rr{pit.first->second};
+			if(rr.ttl < now)
+			{
+				it = map.erase(it);
+				continue;
+			}
+
+			record[count++] = &rr;
+			++it;
+		}
+
+		if(count)
+			cb({}, vector_view<const rfc1035::record *>(record, count));
+
+		return count;
+	}
+	else // Deduced A query (for now)
+	{
+		auto &map{cache.A};
+		const auto pit{map.equal_range(std::string{host(hp)})}; //TODO: XXX
+		if(pit.first == pit.second)
+			return false;
+
+		const auto &now{ircd::time()};
+		for(auto it(pit.first); it != pit.second; )
+		{
+			const auto &rr{pit.first->second};
+			if(rr.ttl < now)
+			{
+				it = map.erase(it);
+				continue;
+			}
+
+			record[count++] = &rr;
+			++it;
+		}
+
+		if(count)
+			cb({}, vector_view<const rfc1035::record *>(record, count));
+
+		return count;
+	}
+}
+
+ircd::string_view
+ircd::net::dns::make_SRV_key(const mutable_buffer &out,
+                             const hostport &hp,
+                             const opts &opts)
+{
+	if(!opts.srv)
+		return fmt::sprintf
+		{
+			out, "_%s._%s.%s", service(hp), opts.proto, host(hp)
+		};
+	else
+		return fmt::sprintf
+		{
+			out, "%s%s", opts.srv, host(hp)
+		};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2376,20 +2471,14 @@ ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
                                      const tag &tag)
 const
 {
+	//TODO: Better deduction
 	if(tag.hp.service || tag.opts.srv)
 	{
 		thread_local char srvbuf[512];
-		string_view srvhost;
-		if(!tag.opts.srv)
-			srvhost = fmt::sprintf
-			{
-				srvbuf, "_%s._%s.%s", service(tag.hp), tag.opts.proto, host(tag.hp)
-			};
-		else
-			srvhost = fmt::sprintf
-			{
-				srvbuf, "%s%s", tag.opts.srv, host(tag.hp)
-			};
+		const string_view srvhost
+		{
+			make_SRV_key(srvbuf, tag.hp, tag.opts)
+		};
 
 		const rfc1035::question question{srvhost, "SRV"};
 		return rfc1035::make_query(buf, tag.id, question);
@@ -2556,12 +2645,6 @@ try
 			"protocol error: %s", rfc1035::rcode.at(header.rcode)
 		};
 
-	// The maximum number of records we're accepting for a section
-	static const size_t MAX_COUNT
-	{
-		64
-	};
-
 	if(header.qdcount > MAX_COUNT || header.ancount > MAX_COUNT)
 		throw error
 		{
@@ -2574,29 +2657,51 @@ try
 	};
 
 	// Questions are regurgitated back to us so they must be parsed first
-	thread_local rfc1035::question qd[MAX_COUNT];
+	thread_local std::array<rfc1035::question, MAX_COUNT> qd;
 	for(size_t i(0); i < header.qdcount; ++i)
-		consume(buffer, size(qd[i].parse(buffer)));
+		consume(buffer, size(qd.at(i).parse(buffer)));
 
 	// Answers are parsed into this buffer
-	thread_local rfc1035::answer an[MAX_COUNT];
+	thread_local std::array<rfc1035::answer, MAX_COUNT> an;
 	for(size_t i(0); i < header.ancount; ++i)
 		consume(buffer, size(an[i].parse(buffer)));
 
-	// This will be where we place the record instances which are dynamically
-	// laid out and sized types; this is an alternative to new'ing them
-	// without placement. 512 bytes is assumed as a soft maximum for each RR.
-	thread_local uint8_t recbuf[MAX_COUNT * 512];
+	if(tag.opts.cache_result)
+	{
+		// We convert all TTL values in the answers to absolute epoch time
+		// indicating when they expire. This makes more sense for our caches.
+		const auto &now{ircd::time()};
+		for(size_t i(0); i < header.ancount; ++i)
+			an[i].ttl = now + an[i].ttl;
+	}
+
+	// The callback to the user will be passed a vector_view of pointers
+	// to this array. The actual record instances will either be located
+	// in the cache map or placement-newed to the buffer below.
 	thread_local const rfc1035::record *record[MAX_COUNT];
+
+	// This will be where we place the record instances which are dynamically
+	// laid out and sized types. 512 bytes is assumed as a soft maximum for
+	// each RR instance.
+	thread_local uint8_t recbuf[MAX_COUNT * 512];
 
 	size_t i(0);
 	uint8_t *pos{recbuf};
 	for(; i < header.ancount; ++i) switch(an[i].qtype)
 	{
-		case 1:
+		case 1: // A records are inserted into cache
 		{
-			record[i] = new (pos) rfc1035::record::A(an[i]);
-			pos += sizeof(rfc1035::record::A);
+			if(!tag.opts.cache_result)
+			{
+				record[i] = new (pos) rfc1035::record::A(an[i]);
+				pos += sizeof(rfc1035::record::A);
+				continue;
+			}
+
+			const auto &name{qd.at(0).name};
+			const auto &host{rstrip(name, '.')};
+			const auto &it{cache.A.emplace(host, an[i])};
+			record[i] = &it->second;
 			continue;
 		}
 
@@ -2609,8 +2714,17 @@ try
 
 		case 33:
 		{
-			record[i] = new (pos) rfc1035::record::SRV(an[i]);
-			pos += sizeof(rfc1035::record::SRV);
+			if(!tag.opts.cache_result)
+			{
+				record[i] = new (pos) rfc1035::record::SRV(an[i]);
+				pos += sizeof(rfc1035::record::SRV);
+				continue;
+			}
+
+			const auto &name{qd.at(0).name};
+			const auto &host{rstrip(name, '.')};
+			const auto it{cache.SRV.emplace(host, an[i])};
+			record[i] = &it->second;
 			continue;
 		}
 

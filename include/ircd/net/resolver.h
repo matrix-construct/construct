@@ -22,6 +22,8 @@ struct ircd::net::dns::resolver
 	struct tag;
 	using header = rfc1035::header;
 
+	static constexpr const size_t &MAX_COUNT{64};
+
 	std::vector<ip::udp::endpoint> server;       // The list of active servers
 	size_t server_next{0};                       // Round-robin state to hit servers
 	void init_servers();
@@ -58,8 +60,8 @@ struct ircd::net::dns::resolver
 struct ircd::net::dns::resolver::tag
 {
 	uint16_t id {0};
-	hostport hp;
-	dns::opts opts;
+	hostport hp;          // note: invalid after query sent
+	dns::opts opts;       // note: invalid after query sent
 	callback cb;
 	steady_point last {ircd::now<steady_point>()};
 	uint8_t tries {0};

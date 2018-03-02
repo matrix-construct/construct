@@ -21,20 +21,30 @@ namespace ircd::net
 /// This is a singleton class; public usage is to make calls on the singleton
 /// object like `ircd::net::dns()` etc.
 ///
+/// Note that in returned rfc1035::records that TTL values are modified from their
+/// original value to an absolute epoch time in seconds which we use for caching.
+/// This modification only occurs if the dns query allows result caching (default).
+///
 struct ircd::net::dns
 {
 	struct opts;
 	struct resolver;
+	struct cache;
 
+	struct cache static cache;
 	struct resolver static *resolver;
 	struct opts static const opts_default;
 
-  public:
 	using callback = std::function<void (std::exception_ptr, vector_view<const rfc1035::record *>)>;
 	using callback_A_one = std::function<void (std::exception_ptr, const rfc1035::record::A &)>;
 	using callback_SRV_one = std::function<void (std::exception_ptr, const rfc1035::record::SRV &)>;
 	using callback_ipport_one = std::function<void (std::exception_ptr, const ipport &)>;
 
+	// (internal) generate strings for rfc1035 questions or dns::cache keys.
+	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
+	bool query_cache(const hostport &, const opts &, const callback &);
+
+  public:
 	// Callback-based interface
 	void operator()(const hostport &, const opts &, callback);
 	void operator()(const hostport &, const opts &, callback_A_one);
@@ -61,6 +71,25 @@ struct ircd::net::dns::opts
 	/// if `srv` is set or if no service is specified (thus no SRV query is
 	/// made in the first place).
 	string_view proto{"tcp"};
+
+	/// Whether the dns::cache is checked and may respond to the query.
+	bool cache_check {true};
+
+	/// Whether the result of this lookup from the nameserver should be
+	/// added to the cache. If true, the TTL value in result records will be
+	/// modified to an absolute expiration time. If false, no modification
+	/// occurs from the original value.
+	bool cache_result {true};
+};
+
+/// (internal) DNS cache
+struct ircd::net::dns::cache
+{
+	using hash = std::hash<string_view>;
+	using equal_to = std::equal_to<string_view>;
+
+	std::unordered_multimap<std::string, rfc1035::record::A, hash, equal_to> A;
+	std::unordered_multimap<std::string, rfc1035::record::SRV, hash, equal_to> SRV;
 };
 
 template<class Callback>
