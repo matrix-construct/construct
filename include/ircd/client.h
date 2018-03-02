@@ -15,9 +15,9 @@ namespace ircd
 {
 	struct client;
 
+	//TODO: want to upgrade
 	const char *write(client &, const char *&start, const char *const &stop);
 	char *read(client &, char *&start, char *const &stop);
-
 	http::response::write_closure write_closure(client &);
 	parse::read_closure read_closure(client &);
 

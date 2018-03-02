@@ -79,8 +79,8 @@ try
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 
-	listeners();
 	join_ircd_room();
+	listeners();
 }
 catch(const m::error &e)
 {

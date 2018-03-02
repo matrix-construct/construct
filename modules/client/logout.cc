@@ -31,7 +31,7 @@ post__logout(client &client, const resource::request &request)
 {
 	const auto &access_token
 	{
-		request.query.at("access_token")
+		request.access_token
 	};
 
 	return resource::response

@@ -469,7 +469,7 @@ console_cmd__net_host__default(const string_view &line)
 	if(eptr)
 		std::rethrow_exception(eptr);
 	else
-		std::cout << ipport << std::endl;
+		out << ipport << std::endl;
 
 	return true;
 }
