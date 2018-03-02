@@ -114,6 +114,7 @@ ircd::m::init::modules()
 		"m_", "client_", "key_", "federation_", "media_"
 	};
 
+	m::modules.emplace("conf"s, "conf"s);
 	for(const auto &name : mods::available())
 		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
 			m::modules.emplace(name, name);

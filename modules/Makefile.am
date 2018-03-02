@@ -45,10 +45,12 @@ AM_LDFLAGS += \
 m_moduledir = @moduledir@
 
 console_la_SOURCES = console.cc
+conf_la_SOURCES = conf.cc
 m_noop_la_SOURCES = m_noop.cc
 
 m_module_LTLIBRARIES = \
 	console.la \
+	conf.la \
 	m_noop.la \
 	###
 
