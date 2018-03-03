@@ -338,6 +338,7 @@ console_cmd__db_list(const string_view &line)
 // net
 //
 
+static bool console_cmd__net_node(const string_view &line);
 static bool console_cmd__net_host(const string_view &line);
 
 bool
@@ -353,9 +354,72 @@ console_cmd__net(const string_view &line)
 		case hash("host"):
 			return console_cmd__net_host(args);
 
+		case hash("node"):
+			return console_cmd__net_node(args);
+
 		default:
 			throw bad_command{};
 	}
+}
+
+static bool console_cmd__net_node__default();
+
+bool
+console_cmd__net_node(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	if(empty(line))
+		return console_cmd__net_node__default();
+
+	switch(hash(token(line, ' ', 0)))
+	{
+		default:
+			throw bad_command{};
+	}
+
+	return true;
+}
+
+bool
+console_cmd__net_node__default()
+{
+	for(const auto &p : server::nodes)
+	{
+		using std::setw;
+		using std::left;
+		using std::right;
+
+		const auto &host{p.first};
+		const auto &node{*p.second};
+		const net::ipport &ipp{node.remote};
+
+		out << setw(40) << right << host;
+
+		if(ipp)
+		    out << ' ' << setw(22) << left << ipp;
+		else
+		    out << ' ' << setw(22) << left << " ";
+
+		out << " "
+		    << " " << setw(2) << right << node.link_count()   << " L"
+		    << " " << setw(2) << right << node.tag_count()    << " T"
+		    << " " << setw(9) << right << node.write_total()  << " UP"
+		    << " " << setw(9) << right << node.read_total()   << " DN"
+		    ;
+
+		if(node.err_has() && node.err_msg())
+			out << "  :" << node.err_msg();
+		else if(node.err_has())
+			out << "  <unknown error>"_sv;
+
+		out << std::endl;
+	}
+
+	return true;
 }
 
 static bool console_cmd__net_host_cache(const string_view &line);
