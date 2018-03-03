@@ -169,23 +169,7 @@ ircd::m::vm::commit(json::iov &iov)
 		iov
 	};
 
-	if(unlikely(!json::get<"event_id"_>(event)))
-	{
-		assert(0);
-		throw m::BAD_JSON
-		{
-			"Required event field: event_id"
-		};
-	}
-
-	if(unlikely(!json::get<"type"_>(event)))
-	{
-		assert(0);
-		throw m::BAD_JSON
-		{
-			"Required event field: type"
-		};
-	}
+	check_size(event);
 
 	log.debug("injecting event(mark: %ld) %s",
 	          vm::current_sequence,

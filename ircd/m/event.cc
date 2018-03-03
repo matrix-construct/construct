@@ -36,6 +36,44 @@ ircd::m::event_id(const event &event)
 	return at<"event_id"_>(event);
 }
 
+namespace ircd::m
+{
+	conf::item<size_t> event_max_size
+	{
+		{ "name",     "m.event.max_size" },
+		{ "default",   65507L            },
+	};
+}
+
+void
+ircd::m::check_size(const event &event)
+{
+	const size_t &event_size
+	{
+		serialized(event)
+	};
+
+	if(event_size > size_t(event_max_size))
+		throw m::BAD_JSON
+		{
+			"Event is %zu bytes which is larger than the maximum %zu bytes",
+			event_size,
+			size_t(event_max_size)
+		};
+}
+
+bool
+ircd::m::check_size(std::nothrow_t,
+                    const event &event)
+{
+	const size_t &event_size
+	{
+		serialized(event)
+	};
+
+	return event_size <= size_t(event_max_size);
+}
+
 size_t
 ircd::m::degree(const event &event)
 {

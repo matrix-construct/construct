@@ -20,6 +20,9 @@ namespace ircd::m
 
 	size_t degree(const event &);
 
+	bool check_size(std::nothrow_t, const event &);
+	void check_size(const event &);
+
 	std::string pretty(const event &);
 	std::string pretty_oneline(const event &);
 
