@@ -372,7 +372,11 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 	const string_view src
 	{
-		fmt::sprintf
+		startswith(local, sigil)? fmt::sprintf
+		{
+			buf, "%s:%s", local, host
+		}
+		: fmt::sprintf
 		{
 			buf, "%c%s:%s", char(sigil), local, host
 		}
