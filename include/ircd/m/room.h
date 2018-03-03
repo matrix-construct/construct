@@ -226,6 +226,9 @@ struct ircd::m::room::members
 {
 	m::room room;
 
+	size_t count() const;
+	size_t count(const string_view &membership) const;
+
 	bool test(const string_view &membership, const event::closure_bool &view) const;
 	bool test(const event::closure_bool &view) const;
 

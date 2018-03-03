@@ -639,6 +639,54 @@ const
 	});
 }
 
+size_t
+ircd::m::room::members::count(const string_view &membership)
+const
+{
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(!room.event_id && membership == "join")
+	{
+		size_t ret{0};
+		const room::origins origins{room};
+		origins._test_([&ret](const string_view &)
+		{
+			++ret;
+			return false;
+		});
+
+		return ret;
+	}
+
+	const room::state state
+	{
+		room
+	};
+
+	size_t ret{0};
+	static const string_view type{"m.room.member"};
+	state.for_each(type, event::closure{[&ret, &membership]
+	(const m::event &event)
+	{
+		ret += m::membership(event) == membership;
+	}});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::members::count()
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	static const string_view type{"m.room.member"};
+	return state.count(type);
+}
+
 //
 // room::origins
 //
