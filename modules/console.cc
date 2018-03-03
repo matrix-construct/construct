@@ -993,6 +993,7 @@ static bool console_cmd__room__redact(const string_view &line);
 static bool console_cmd__room__message(const string_view &line);
 static bool console_cmd__room__set(const string_view &line);
 static bool console_cmd__room__get(const string_view &line);
+static bool console_cmd__room__origins(const string_view &line);
 static bool console_cmd__room__messages(const string_view &line);
 static bool console_cmd__room__members(const string_view &line);
 static bool console_cmd__room__count(const string_view &line);
@@ -1021,6 +1022,9 @@ console_cmd__room(const string_view &line)
 
 		case hash("count"):
 			return console_cmd__room__count(args);
+
+		case hash("origins"):
+			return console_cmd__room__origins(args);
 
 		case hash("members"):
 			return console_cmd__room__members(args);
@@ -1102,6 +1106,33 @@ console_cmd__room__members(const string_view &line)
 	members.for_each([](const m::event &event)
 	{
 		out << pretty_oneline(event) << std::endl;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__origins(const string_view &line)
+{
+	const m::room::id room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::origins origins
+	{
+		room
+	};
+
+	origins.test([](const string_view &origin)
+	{
+		out << origin << std::endl;
+		return false;
 	});
 
 	return true;
