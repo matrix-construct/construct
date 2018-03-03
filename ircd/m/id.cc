@@ -30,6 +30,7 @@ namespace ircd::m
 	using qi::raw;
 	using qi::attr;
 	using qi::eps;
+	using qi::eoi;
 	using qi::attr_cast;
 
 	using karma::lit;
@@ -547,6 +548,24 @@ catch(...)
 }
 
 bool
+ircd::m::valid_local_only(const id::sigil &sigil,
+                          const string_view &id)
+noexcept try
+{
+	static const auto test
+	{
+		&lit(char(sigil)) > &m::id::parser.prefix > &eoi
+	};
+
+	const char *start{begin(id)};
+	return qi::parse(start, end(id), test);
+}
+catch(...)
+{
+	return false;
+}
+
+bool
 ircd::m::valid_local(const id::sigil &sigil,
                      const string_view &id)
 {
@@ -556,8 +575,7 @@ ircd::m::valid_local(const id::sigil &sigil,
 	};
 
 	const char *start{id.data()};
-	const char *const stop{id.data() + id.size()};
-	return qi::parse(start, stop, test);
+	return qi::parse(start, end(id), test);
 }
 
 bool

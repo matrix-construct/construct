@@ -207,6 +207,7 @@ namespace ircd::m
 	// Checks
 	bool valid(const id::sigil &, const string_view &) noexcept;
 	bool valid_local(const id::sigil &, const string_view &);  // Local part is valid
+	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
 	void validate(const id::sigil &, const string_view &);    // valid() | throws
 }
 
