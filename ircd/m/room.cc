@@ -615,8 +615,7 @@ const
 		room
 	};
 
-	static const string_view type{"m.room.member"};
-	return state.test(type, event::closure_bool{[&view]
+	return state.test("m.room.member", event::closure_bool{[&view]
 	(const m::event &event)
 	{
 		return view(event);
@@ -643,8 +642,7 @@ const
 			};
 
 			bool ret{false};
-			static const string_view type{"m.room.member"};
-			state.get(type, member, [&view, &ret]
+			state.get("m.room.member", member, [&view, &ret]
 			(const m::event &event)
 			{
 				ret = view(event);
@@ -689,8 +687,7 @@ const
 	};
 
 	size_t ret{0};
-	static const string_view type{"m.room.member"};
-	state.for_each(type, event::closure{[&ret, &membership]
+	state.for_each("m.room.member", event::closure{[&ret, &membership]
 	(const m::event &event)
 	{
 		ret += m::membership(event) == membership;
@@ -708,8 +705,7 @@ const
 		room
 	};
 
-	static const string_view type{"m.room.member"};
-	return state.count(type);
+	return state.count("m.room.member");
 }
 
 //
