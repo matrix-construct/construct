@@ -395,6 +395,22 @@ ircd::m::notice(const room &room,
 }
 
 ircd::m::event::id::buf
+ircd::m::msghtml(const room &room,
+                 const m::id::user &sender,
+                 const string_view &html,
+                 const string_view &alt,
+                 const string_view &msgtype)
+{
+	return message(room, sender,
+	{
+		{ "msgtype",         msgtype                       },
+		{ "format",          "org.matrix.custom.html"      },
+		{ "body",            { alt?: html, json::STRING }  },
+		{ "formatted_body",  { html, json::STRING }        },
+	});
+}
+
+ircd::m::event::id::buf
 ircd::m::message(const room &room,
                  const m::id::user &sender,
                  const string_view &body,
