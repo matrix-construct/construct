@@ -29,7 +29,7 @@ namespace ircd::m::dbs
 	extern db::index room_origins;
 
 	// Lowlevel util
-	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin);
+	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, string_view> room_events_key(const string_view &amalgam);

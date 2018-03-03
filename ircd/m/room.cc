@@ -663,13 +663,33 @@ const
 		dbs::room_origins
 	};
 
-	auto it(index.begin(room.room_id));
+	auto it
+	{
+		index.begin(room.room_id)
+	};
+
+	string_view last;
+	char lastbuf[256];
 	for(; bool(it); ++it)
 	{
-		const string_view &key(it->first);
-		const string_view &origin(split(key, ":::").second); //TODO: XXX
+		const string_view &key{it->first};
+		const string_view &origin_member //TODO: XXX
+		{
+			split(key, ":::").second
+		};
+
+		const string_view &origin //TODO: XXX
+		{
+			split(origin_member, "@").first
+		};
+
+		if(origin == last)
+			continue;
+
 		if(view(origin))
 			return true;
+
+		last = { lastbuf, copy(lastbuf, origin) };
 	}
 
 	return false;

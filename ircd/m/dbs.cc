@@ -244,7 +244,7 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 	thread_local char buf[512];
 	const string_view &key
 	{
-		room_origins_key(buf, at<"room_id"_>(event), at<"origin"_>(event))
+		room_origins_key(buf, at<"room_id"_>(event), at<"origin"_>(event), at<"state_key"_>(event))
 	};
 
 	const string_view &membership
@@ -622,12 +622,14 @@ ircd::m::dbs::desc::events__room_origins__pfx
 ircd::string_view
 ircd::m::dbs::room_origins_key(const mutable_buffer &out,
                                const id::room &room_id,
-                               const string_view &origin)
+                               const string_view &origin,
+                               const id::user &member)
 {
 	size_t len{0};
 	len = strlcpy(out, room_id);
 	len = strlcat(out, ":::");
 	len = strlcat(out, origin);
+	len = strlcat(out, member);
 	return { data(out), len };
 }
 
