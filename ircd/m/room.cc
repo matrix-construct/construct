@@ -671,6 +671,31 @@ bool
 ircd::m::room::origins::test(const closure_bool &view)
 const
 {
+	string_view last;
+	char lastbuf[256];
+	return _test_([&last, &lastbuf, &view]
+	(const string_view &key)
+	{
+		const string_view &origin //TODO: XXX
+		{
+			split(key, "@").first
+		};
+
+		if(origin == last)
+			return false;
+
+		if(view(origin))
+			return true;
+
+		last = { lastbuf, copy(lastbuf, origin) };
+		return false;
+	});
+}
+
+bool
+ircd::m::room::origins::_test_(const closure_bool &view)
+const
+{
 	db::index &index
 	{
 		dbs::room_origins
@@ -681,28 +706,15 @@ const
 		index.begin(room.room_id)
 	};
 
-	string_view last;
-	char lastbuf[256];
 	for(; bool(it); ++it)
 	{
-		const string_view &key{it->first};
-		const string_view &origin_member //TODO: XXX
+		const string_view &key //TODO: XXX
 		{
-			split(key, ":::").second
+			lstrip(it->first, ":::")
 		};
 
-		const string_view &origin //TODO: XXX
-		{
-			split(origin_member, "@").first
-		};
-
-		if(origin == last)
-			continue;
-
-		if(view(origin))
+		if(view(key))
 			return true;
-
-		last = { lastbuf, copy(lastbuf, origin) };
 	}
 
 	return false;

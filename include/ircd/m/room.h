@@ -251,6 +251,7 @@ struct ircd::m::room::origins
 
 	m::room room;
 
+	bool _test_(const closure_bool &view) const;
 	bool test(const closure_bool &view) const;
 	void for_each(const closure &view) const;
 	size_t count() const;
