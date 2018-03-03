@@ -42,8 +42,8 @@ struct ircd::m::user
 	event::id::buf presence(const string_view &, const string_view &status = {});
 
 	void password(const string_view &password);
-	void activate(const json::members &contents = {});
 	void deactivate(const json::members &contents = {});
+	event::id::buf activate(const json::members &contents = {});
 
 	user(const id &user_id)
 	:user_id{user_id}

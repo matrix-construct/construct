@@ -60,38 +60,6 @@ ircd::m::my(const user &user)
 	return my(user.user_id);
 }
 
-/// Register the user by creating a room !@user:myhost and then setting a
-/// an `ircd.account` state event in the `users` room.
-///
-/// Each of the registration options becomes a key'ed state event in the
-/// user's room.
-///
-/// Once this call completes the registration was successful; otherwise
-/// throws.
-void
-ircd::m::user::activate(const json::members &contents)
-try
-{
-	const auto room_id{this->room_id()};
-	m::room room
-	{
-		create(room_id, me.user_id, "user")
-	};
-
-	send(room, user_id, "ircd.account.options", "registration", contents);
-	send(users, me.user_id, "ircd.user", user_id,
-	{
-		{ "active", true }
-	});
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
-	};
-}
-
 void
 ircd::m::user::deactivate(const json::members &contents)
 {

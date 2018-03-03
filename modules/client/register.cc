@@ -38,6 +38,7 @@ struct body
 	using super_type::tuple;
 };
 
+extern "C" m::event::id::buf register__user(const m::user &user, const json::members &contents);
 static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
 
@@ -261,4 +262,41 @@ validate_password(const string_view &password)
 			"M_INVALID_PASSWORD",
 			"The desired password is too long"
 		};
+}
+
+/// Register the user by creating a room !@user:myhost and then setting a
+/// an `ircd.account` state event in the `users` room.
+///
+/// Each of the registration options becomes a key'ed state event in the
+/// user's room.
+///
+/// Once this call completes the registration was successful; otherwise
+/// throws.
+m::event::id::buf
+register__user(const m::user &user,
+               const json::members &contents)
+try
+{
+	const m::room::id user_room_id
+	{
+		user.room_id()
+	};
+
+	m::room user_room
+	{
+		create(user_room_id, m::me.user_id, "user")
+	};
+
+	send(user_room, user.user_id, "ircd.account.options", "registration", contents);
+	return send(user.users, m::me.user_id, "ircd.user", user.user_id,
+	{
+		{ "active", true }
+	});
+}
+catch(const m::ALREADY_MEMBER &e)
+{
+	throw m::error
+	{
+		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
+	};
 }

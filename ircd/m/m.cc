@@ -286,6 +286,19 @@ ircd::m::leave_ircd_room()
 //
 
 ircd::m::event::id::buf
+ircd::m::user::activate(const json::members &contents)
+{
+	using prototype = event::id::buf (const m::user &, const json::members &);
+
+	static import<prototype> function
+	{
+		"client_register", "register__user"
+	};
+
+	return function(*this, contents);
+}
+
+ircd::m::event::id::buf
 ircd::m::user::presence(const string_view &presence,
                         const string_view &status_msg)
 {
