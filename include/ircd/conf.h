@@ -17,6 +17,8 @@ namespace ircd::conf
 	template<class T> struct value;        // abstraction for carrying item value
 	template<> struct item<void>;          // base class of all conf items
 	template<> struct item<std::string>;
+	template<> struct item<uint64_t>;
+	template<> struct item<int64_t>;
 	template<> struct item<seconds>;
 
 	IRCD_EXCEPTION(ircd::error, error)
@@ -96,6 +98,50 @@ struct ircd::conf::item<std::string>
 	item(const json::members &memb)
 	:conf::item<>{memb}
 	,value{unquote(feature.get("default"))}
+	{}
+};
+
+template<>
+struct ircd::conf::item<uint64_t>
+:conf::item<>
+,conf::value<uint64_t>
+{
+	string_view get(const mutable_buffer &out) const override
+	{
+		return lex_cast(_value, out);
+	}
+
+	bool set(const string_view &s) override
+	{
+		_value = lex_cast<uint64_t>(s);
+		return true;
+	}
+
+	item(const json::members &memb)
+	:conf::item<>{memb}
+	,value{feature.get("default", 0UL)}
+	{}
+};
+
+template<>
+struct ircd::conf::item<int64_t>
+:conf::item<>
+,conf::value<int64_t>
+{
+	string_view get(const mutable_buffer &out) const override
+	{
+		return lex_cast(_value, out);
+	}
+
+	bool set(const string_view &s) override
+	{
+		_value = lex_cast<int64_t>(s);
+		return true;
+	}
+
+	item(const json::members &memb)
+	:conf::item<>{memb}
+	,value{feature.get("default", 0L)}
 	{}
 };
 
