@@ -628,7 +628,32 @@ ircd::m::room::members::test(const string_view &membership,
                              const event::closure_bool &view)
 const
 {
-	//TODO: optimize with sequential column strat
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(!room.event_id && membership == "join")
+	{
+		const room::state state{room};
+		const room::origins origins{room};
+		return origins._test_([&view, &state]
+		(const string_view &key)
+		{
+			const string_view &member
+			{
+				end(split(key, "@").first), end(key)
+			};
+
+			bool ret{false};
+			static const string_view type{"m.room.member"};
+			state.get(type, member, [&view, &ret]
+			(const m::event &event)
+			{
+				ret = view(event);
+			});
+
+			return ret;
+		});
+	}
+
 	return test([&membership, &view](const event &event)
 	{
 		if(at<"membership"_>(event) == membership)
