@@ -33,6 +33,7 @@ namespace ircd::server
 	size_t link_count();
 	size_t node_count();
 
+	string_view errmsg(const net::hostport &);
 	bool exists(const net::hostport &);
 	node &find(const net::hostport &);
 	node &get(const net::hostport &);

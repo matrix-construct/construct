@@ -90,6 +90,20 @@ ircd::server::exists(const net::hostport &hostport)
 	return nodes.find(host(hostport)) != end(nodes);
 }
 
+ircd::string_view
+ircd::server::errmsg(const net::hostport &hostport)
+{
+	const auto it
+	{
+		nodes.find(host(hostport))
+	};
+
+	if(it == end(nodes))
+		return {};
+
+	return it->second->err_msg();
+}
+
 size_t
 ircd::server::node_count()
 {
@@ -294,6 +308,28 @@ ircd::server::node::interrupt()
 	//TODO: interrupt = killing requests but still setting tag promises
 	for(auto &link : links)
 		link.close(net::close_opts_default);
+}
+
+void
+ircd::server::node::err_clear()
+{
+	eptr = std::exception_ptr{};
+	emsg = string_view{};
+	etime = steady_point{};
+}
+
+ircd::string_view
+ircd::server::node::err_msg()
+const
+{
+	return err_has()? emsg : string_view{};
+}
+
+bool
+ircd::server::node::err_has()
+const
+{
+	return bool(eptr);
 }
 
 void
@@ -700,7 +736,10 @@ try
 	const life_guard<node> lg(wp);
 
 	if(eptr)
-		std::rethrow_exception(std::move(eptr));
+	{
+		this->eptr = eptr;
+		std::rethrow_exception(this->eptr);
+	}
 
 	static_cast<net::ipport &>(this->remote) = ipport;
 	for(auto &link : links)
@@ -715,14 +754,13 @@ catch(const std::exception &e)
 	if(wp.expired())
 		return;
 
-	close();
-	log.error("Removing node(%p): during name resolution: %s",
+	this->emsg = e.what();
+	this->etime = now<steady_point>();
+	log.error("node(%p): during name resolution: %s",
 	          this,
 	          e.what());
 
-	const auto it(nodes.find(remote.hostname));
-	assert(it != end(nodes));
-	nodes.erase(it);
+	close();
 }
 
 size_t

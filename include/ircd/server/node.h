@@ -17,8 +17,10 @@ struct ircd::server::node
 :std::enable_shared_from_this<ircd::server::node>
 {
 	net::remote remote;
-	std::exception_ptr eptr;
 	std::list<link> links;
+	std::exception_ptr eptr;
+	string_view emsg; // points to eptr->what()
+	steady_point etime; // time of error
 	std::string server_name;
 
 	template<class F> size_t accumulate_links(F&&) const;
@@ -73,6 +75,11 @@ struct ircd::server::node
 
 	// request panel
 	void submit(request &);
+
+	// Error related
+	bool err_has() const;
+	string_view err_msg() const;
+	void err_clear();
 
 	// control panel
 	void interrupt();
