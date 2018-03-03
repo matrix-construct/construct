@@ -627,6 +627,12 @@ const
 		if(at<"membership"_>(matching) != json::get<"membership"_>(event))
 			return false;
 
+	if(json::get<"content"_>(matching))
+		if(at<"type"_>(event) == "m.room.message")
+			if(at<"content"_>(matching).has("msgtype"))
+				if(at<"content"_>(matching).get("msgtype") != at<"content"_>(event).get("msgtype"))
+					return false;
+
 	return true;
 }
 
