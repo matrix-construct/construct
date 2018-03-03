@@ -658,9 +658,9 @@ bool
 ircd::m::room::origins::test(const closure_bool &view)
 const
 {
-	db::index index
+	db::index &index
 	{
-		*dbs::events, "origin_joined in room_id"
+		dbs::room_origins
 	};
 
 	auto it(index.begin(room.room_id));

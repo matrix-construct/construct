@@ -33,6 +33,11 @@ decltype(ircd::m::dbs::room_events)
 ircd::m::dbs::room_events
 {};
 
+/// Linkage for a reference to the room_origins column
+decltype(ircd::m::dbs::room_origins)
+ircd::m::dbs::room_origins
+{};
+
 //
 // init
 //
@@ -58,6 +63,7 @@ ircd::m::dbs::init::init()
 	// Cache the columns for the metadata
 	state_node = db::column{*events, "_state_node"};
 	room_events = db::index{*events, "_room_events"};
+	room_origins = db::index{*events, "_room_origins"};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern
@@ -68,6 +74,7 @@ noexcept
 	// Columns should be unrefed before DB closes
 	state_node = {};
 	room_events = {};
+	room_origins = {};
 	for(auto &column : event_column)
 		column = {};
 
@@ -77,17 +84,17 @@ noexcept
 
 namespace ircd::m::dbs
 {
-	static void _index__room_events(db::txn &, const string_view &state_root, const event &);
-	static string_view _index_state(db::txn &, const mutable_buffer &root_out, const string_view &state_root, const event &);
-	static string_view _index_redact(db::txn &, const mutable_buffer &root_out, const string_view &state_root, const event &);
-	static string_view _index_ephem(db::txn &, const string_view &state_root, const event &);
+	static void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
+	static void _index__room_origins(db::txn &, const event &, const write_opts &);
+	static string_view _index_state(db::txn &, const event &, const write_opts &);
+	static string_view _index_redact(db::txn &, const event &, const write_opts &);
+	static string_view _index_ephem(db::txn &, const event &, const write_opts &);
 }
 
 ircd::string_view
 ircd::m::dbs::write(db::txn &txn,
-                    const mutable_buffer &root_out,
-                    const string_view &root_in,
-                    const event &event)
+                    const event &event,
+                    const write_opts &opts)
 {
 	db::txn::append
 	{
@@ -95,28 +102,27 @@ ircd::m::dbs::write(db::txn &txn,
 	};
 
 	if(defined(json::get<"state_key"_>(event)))
-		return _index_state(txn, root_out, root_in, event);
+		return _index_state(txn, event, opts);
 
 	if(at<"type"_>(event) == "m.room.redaction")
-		return _index_redact(txn, root_out, root_in, event);
+		return _index_redact(txn, event, opts);
 
-	return _index_ephem(txn, root_in, event);
+	return _index_ephem(txn, event, opts);
 }
 
 ircd::string_view
 ircd::m::dbs::_index_ephem(db::txn &txn,
-                           const string_view &state_root_in,
-                           const event &event)
+                           const event &event,
+                           const write_opts &opts)
 {
-	_index__room_events(txn, state_root_in, event);
-	return state_root_in;
+	_index__room_events(txn, event, opts, opts.root_in);
+	return opts.root_in;
 }
 
 ircd::string_view
 ircd::m::dbs::_index_redact(db::txn &txn,
-                            const mutable_buffer &state_root_out,
-                            const string_view &state_root_in,
-                            const event &event)
+                            const event &event,
+                            const write_opts &opts)
 try
 {
 	const auto &target_id
@@ -139,16 +145,16 @@ try
 
 	if(!defined(json::get<"state_key"_>(target)))
 	{
-		_index__room_events(txn, state_root_in, event);
-		return state_root_in;
+		_index__room_events(txn, event, opts, opts.root_in);
+		return opts.root_in;
 	}
 
 	const string_view new_root
 	{
-		state_root_in //state::remove(txn, state_root_out, state_root_in, target)
+		opts.root_in //state::remove(txn, state_root_out, state_root_in, target)
 	};
 
-	_index__room_events(txn, new_root, event);
+	_index__room_events(txn, event, opts, new_root);
 	return new_root;
 }
 catch(const std::exception &e)
@@ -163,9 +169,8 @@ catch(const std::exception &e)
 
 ircd::string_view
 ircd::m::dbs::_index_state(db::txn &txn,
-                           const mutable_buffer &state_root_out,
-                           const string_view &state_root_in,
-                           const event &event)
+                           const event &event,
+                           const write_opts &opts)
 try
 {
 	const auto &type
@@ -178,13 +183,14 @@ try
 		at<"room_id"_>(event)
 	};
 
-	const string_view new_root
+	const auto &new_root
 	{
-		state::insert(txn, state_root_out, state_root_in, event)
+		state::insert(txn, opts.root_out, opts.root_in, event)
 	};
 
-	_index__room_events(txn, new_root, event);
-	return new_root;
+	_index__room_events(txn, event, opts, new_root);
+	_index__room_origins(txn, event, opts);
+	return opts.root_in;
 }
 catch(const std::exception &e)
 {
@@ -200,8 +206,9 @@ catch(const std::exception &e)
 /// You need find/create the right state_root before this.
 void
 ircd::m::dbs::_index__room_events(db::txn &txn,
-                                  const string_view &state_root,
-                                  const event &event)
+                                  const event &event,
+                                  const write_opts &opts,
+                                  const string_view &new_root)
 {
 	const ctx::critical_assertion ca;
 	thread_local char buf[768];
@@ -214,8 +221,62 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
 	{
 		txn, room_events,
 		{
-			key,          // key
-			state_root    // val
+			key,       // key
+			new_root   // val
+		}
+	};
+}
+
+/// Adds the entry for the room_origins column into the txn.
+/// This only is affected if opts.present=true
+void
+ircd::m::dbs::_index__room_origins(db::txn &txn,
+                                   const event &event,
+                                   const write_opts &opts)
+{
+	if(!opts.present)
+		return;
+
+	if(at<"type"_>(event) != "m.room.member")
+		return;
+
+	const ctx::critical_assertion ca;
+	thread_local char buf[512];
+	const string_view &key
+	{
+		room_origins_key(buf, at<"room_id"_>(event), at<"origin"_>(event))
+	};
+
+	const string_view &membership
+	{
+		json::get<"membership"_>(event)?
+			string_view{json::get<"membership"_>(event)}:
+			unquote(at<"content"_>(event).get("membership"))
+	};
+
+	assert(!empty(membership));
+
+	db::op op; switch(hash(membership))
+	{
+		case hash("join"):
+			op = db::op::SET;
+			break;
+
+		case hash("ban"):
+		case hash("leave"):
+			op = db::op::DELETE;
+			break;
+
+		default:
+			return;
+	};
+
+	db::txn::append
+	{
+		txn, room_origins,
+		{
+			op,
+			key,
 		}
 	};
 }
@@ -534,6 +595,69 @@ ircd::m::dbs::desc::events__room_events
 
 	// prefix transform
 	events__room_events__pfx,
+};
+
+/// Prefix transform for the events__room_origins
+///
+/// TODO: This needs The Grammar
+///
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__room_origins__pfx
+{
+	"_room_origins",
+
+	[](const string_view &key)
+	{
+		return key.find(":::") != key.npos;
+	},
+
+	[](const string_view &key)
+	{
+		return rsplit(key, ":::").first;
+	}
+};
+
+//TODO: optimize
+//TODO: Needs The Gramslam
+ircd::string_view
+ircd::m::dbs::room_origins_key(const mutable_buffer &out,
+                               const id::room &room_id,
+                               const string_view &origin)
+{
+	size_t len{0};
+	len = strlcpy(out, room_id);
+	len = strlcat(out, ":::");
+	len = strlcat(out, origin);
+	return { data(out), len };
+}
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__room_origins
+{
+	// name
+	"_room_origins",
+
+	// explanation
+	R"(### developer note:
+
+	the prefix transform is in effect. this column indexes events by
+	room_id offering an iterable bound of the index prefixed by room_id
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	events__room_origins__pfx,
 };
 
 //
@@ -1195,4 +1319,8 @@ ircd::m::dbs::desc::events
 	// (room_id, event_id) => (state_root)
 	// Sequence of all events for a room, ever.
 	events__room_events,
+
+	// (room_id, origin) => ()
+	// Sequence of all PRESENTLY JOINED origins for a room.
+	events__room_origins,
 };

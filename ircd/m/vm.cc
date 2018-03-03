@@ -316,17 +316,24 @@ try
 		m::room room{room_id, head};
 		m::room::state state{room};
 		m::state::id_buffer new_root_buf;
+		m::dbs::write_opts wopts;
+		wopts.root_in = state.root_id;
+		wopts.root_out = new_root_buf;
+		wopts.present = true;
 		const auto new_root
 		{
-			dbs::write(txn, new_root_buf, state.root_id, event)
+			dbs::write(txn, event, wopts)
 		};
 	}
 	else if(opts->write)
 	{
 		m::state::id_buffer new_root_buf;
+		m::dbs::write_opts wopts;
+		wopts.root_out = new_root_buf;
+		wopts.present = true;
 		const auto new_root
 		{
-			dbs::write(txn, new_root_buf, string_view{}, event)
+			dbs::write(txn, event, wopts)
 		};
 	}
 

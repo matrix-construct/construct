@@ -14,6 +14,7 @@
 namespace ircd::m::dbs
 {
 	struct init;
+	struct write_opts;
 
 	// Database instance
 	extern std::shared_ptr<db::database> events;
@@ -25,8 +26,10 @@ namespace ircd::m::dbs
 	// Event metadata columns
 	extern db::column state_node;
 	extern db::index room_events;
+	extern db::index room_origins;
 
 	// Lowlevel util
+	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, string_view> room_events_key(const string_view &amalgam);
@@ -41,8 +44,15 @@ namespace ircd::m::dbs
 	bool exists(const event::id &);
 
 	// [SET (txn)] Basic write suite
-	string_view write(db::txn &, const mutable_buffer &rootout, const string_view &rootin, const event &);
+	string_view write(db::txn &, const event &, const write_opts &);
 }
+
+struct ircd::m::dbs::write_opts
+{
+	string_view root_in;
+	mutable_buffer root_out;
+	bool present {true};
+};
 
 namespace ircd::m::dbs::desc
 {
@@ -72,6 +82,8 @@ namespace ircd::m::dbs::desc
 	extern const db::prefix_transform events__room_events__pfx;
 	extern const db::comparator events__room_events__cmp;
 	extern const database::descriptor events__room_events;
+	extern const db::prefix_transform events__room_origins__pfx;
+	extern const database::descriptor events__room_origins;
 }
 
 struct ircd::m::dbs::init
