@@ -36,6 +36,7 @@ struct ircd::m::hook
 
  public:
 	hook(const json::members &, decltype(function));
+	hook(decltype(function), const json::members &);
 	hook(hook &&) = delete;
 	hook(const hook &) = delete;
 	virtual ~hook() noexcept;

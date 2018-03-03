@@ -535,6 +535,18 @@ ircd::m::room_id(const mutable_buffer &out,
 // m/hook.h
 //
 
+/// Alternative hook ctor simply allowing the the function argument
+/// first and description after.
+ircd::m::hook::hook(decltype(function) function,
+                    const json::members &members)
+:hook
+{
+	members, std::move(function)
+}
+{
+}
+
+/// Primary hook ctor
 ircd::m::hook::hook(const json::members &members,
                     decltype(function) function)
 try
