@@ -83,12 +83,14 @@ try
 {
 	char val[512];
 	std::stringstream ss;
+	ss << "<pre>";
 	for(const auto &p : conf::items)
 		ss << std::setw(32) << std::right << p.first
 		   << " = " << p.second->get(val)
-		   << "\n";
+		   << "<br />";
+	ss << "</pre>";
 
-	notice(m::control, ss.str());
+	msghtml(m::control, m::me.user_id, ss.str());
 }
 catch(const std::exception &e)
 {
@@ -103,9 +105,6 @@ noexcept
 	{
 		at<"content"_>(event)
 	};
-
-	if(unquote(content.get("msgtype")) == "m.notice")
-		return;
 
 	const string_view &body
 	{
@@ -135,20 +134,17 @@ noexcept
 const m::hook
 _update_conf_hook
 {
+	_update_conf,
 	{
 		{ "_site",       "vm notify"           },
 		{ "room_id",     "!control:zemos.net"  },
 		{ "type",        "m.room.message"      },
-	},
-
-	_update_conf
+		{ "content",
+		{
+			{ "msgtype", "m.text" }
+		}}
+	}
 };
-
-static void
-_create_conf_room(const m::event &)
-{
-	m::create(conf_room_id, m::me.user_id);
-}
 
 const m::hook
 _create_conf_hook
@@ -158,6 +154,8 @@ _create_conf_hook
 		{ "room_id",     "!ircd:zemos.net" },
 		{ "type",        "m.room.create"   },
 	},
-
-	_create_conf_room
+	[](const m::event &)
+	{
+		m::create(conf_room_id, m::me.user_id);
+	}
 };
