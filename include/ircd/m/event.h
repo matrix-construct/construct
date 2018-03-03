@@ -19,6 +19,7 @@ namespace ircd::m
 	bool my(const event &);
 
 	size_t degree(const event &);
+	string_view membership(const event &);
 
 	bool check_size(std::nothrow_t, const event &);
 	void check_size(const event &);

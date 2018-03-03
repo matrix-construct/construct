@@ -74,6 +74,14 @@ ircd::m::check_size(std::nothrow_t,
 	return event_size <= size_t(event_max_size);
 }
 
+ircd::string_view
+ircd::m::membership(const m::event &event)
+{
+	return json::get<"membership"_>(event)?
+		string_view{json::get<"membership"_>(event)}:
+		unquote(json::get<"content"_>(event).get("membership"));
+}
+
 size_t
 ircd::m::degree(const event &event)
 {
