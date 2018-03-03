@@ -253,6 +253,7 @@ struct ircd::m::room::origins
 
 	bool test(const closure_bool &view) const;
 	void for_each(const closure &view) const;
+	size_t count() const;
 
 	origins(const m::room &room)
 	:room{room}

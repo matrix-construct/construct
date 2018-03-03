@@ -643,6 +643,19 @@ const
 // room::origins
 //
 
+size_t
+ircd::m::room::origins::count()
+const
+{
+	size_t ret{0};
+	for_each([&ret](const string_view &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
 void
 ircd::m::room::origins::for_each(const closure &view)
 const
