@@ -300,3 +300,53 @@ catch(const m::ALREADY_MEMBER &e)
 		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
 	};
 }
+
+static void _first_user_registered(const m::event &event);
+
+const m::hook
+_first_user_hook
+{
+	_first_user_registered,
+	{
+		{ "_site",    "vm notify"         },
+		{ "room_id",  "!users:zemos.net"  },
+		{ "type",     "ircd.user"         },
+	},
+};
+
+void
+_first_user_registered(const m::event &event)
+{
+	static bool already;
+	if(already)
+		return;
+
+	const m::room::state state
+	{
+		m::room{at<"room_id"_>(event)}
+	};
+
+	const auto &count
+	{
+		state.count("ircd.user")
+	};
+
+	//TODO: This will rot as soon as more auto-users are created
+	//TODO: along with @ircd. Need a way to know when the first HUMAN
+	//TODO: has registered.
+	if(count != 2) // @ircd + first user
+	{
+		if(count > 2)
+			already = true;
+
+		return;
+	}
+
+	const m::user::id user
+	{
+		at<"state_key"_>(event)
+	};
+
+	join(m::control, user);
+	already = true;
+}
