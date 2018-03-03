@@ -19,8 +19,8 @@ namespace ircd::m
 	IRCD_M_EXCEPTION(INVALID_MXID, BAD_SIGIL, http::BAD_REQUEST)
 
 	bool my(const id &);
-	bool is_sigil(const char &c);
-	bool has_sigil(const string_view &);
+	bool is_sigil(const char &c) noexcept;
+	bool has_sigil(const string_view &) noexcept;
 }
 
 /// (Appendix 4.2) Common Identifier Format
@@ -206,7 +206,7 @@ namespace ircd::m
 
 	// Checks
 	bool valid(const id::sigil &, const string_view &) noexcept;
-	bool valid_local(const id::sigil &, const string_view &);  // Local part is valid
+	bool valid_local(const id::sigil &, const string_view &) noexcept;  // Local part is valid
 	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
 	void validate(const id::sigil &, const string_view &);    // valid() | throws
 }

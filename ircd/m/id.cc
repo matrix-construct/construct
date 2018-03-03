@@ -558,11 +558,12 @@ noexcept try
 {
 	static const auto test
 	{
-		&lit(char(sigil)) > &m::id::parser.prefix > &eoi
+		m::id::parser.prefix
 	};
 
 	const char *start{begin(id)};
-	return qi::parse(start, end(id), test);
+	const char *const stop{end(id)};
+	return id.at(0) == sigil && qi::parse(start, stop, test) && start == stop;
 }
 catch(...)
 {
@@ -572,29 +573,36 @@ catch(...)
 bool
 ircd::m::valid_local(const id::sigil &sigil,
                      const string_view &id)
+noexcept try
 {
 	static const auto test
 	{
-		&lit(char(sigil)) > m::id::parser.prefix
+		m::id::parser.prefix
 	};
 
-	const char *start{id.data()};
-	return qi::parse(start, end(id), test);
+	const char *start{begin(id)};
+	const char *const stop{end(id)};
+	return id.at(0) == sigil && qi::parse(start, stop, test);
+}
+catch(...)
+{
+	return false;
 }
 
 bool
 ircd::m::has_sigil(const string_view &s)
-try
+noexcept try
 {
 	return is_sigil(s.at(0));
 }
-catch(const std::out_of_range &e)
+catch(...)
 {
 	return false;
 }
 
 bool
 ircd::m::is_sigil(const char &c)
+noexcept
 {
 	const char *start{&c};
 	const char *const stop{start + 1};
