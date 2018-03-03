@@ -308,9 +308,9 @@ _first_user_hook
 {
 	_first_user_registered,
 	{
-		{ "_site",    "vm notify"         },
-		{ "room_id",  "!users:zemos.net"  },
-		{ "type",     "ircd.user"         },
+		{ "_site",    "vm notify"   },
+		{ "room_id",  "!users"      },
+		{ "type",     "ircd.user"   },
 	},
 };
 

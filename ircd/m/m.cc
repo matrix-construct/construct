@@ -579,10 +579,47 @@ ircd::m::hook::hook(decltype(function) function,
 ircd::m::hook::hook(const json::members &members,
                     decltype(function) function)
 try
-:_feature
+:_feature{[&members]() -> json::strung
 {
-	members
-}
+	const ctx::critical_assertion ca;
+	std::vector<json::member> copy
+	{
+		begin(members), end(members)
+	};
+
+	for(auto &member : copy) switch(hash(member.first))
+	{
+		case hash("room_id"):
+		{
+			// Rewrite the room_id if the supplied input has no hostname
+			if(valid_local_only(id::ROOM, member.second))
+			{
+				assert(my_host());
+				thread_local char buf[256];
+				member.second = id::room { buf, member.second, my_host() };
+			}
+
+			validate(id::ROOM, member.second);
+			continue;
+		}
+
+		case hash("sender"):
+		{
+			// Rewrite the sender if the supplied input has no hostname
+			if(valid_local_only(id::USER, member.second))
+			{
+				assert(my_host());
+				thread_local char buf[256];
+				member.second = id::user { buf, member.second, my_host() };
+			}
+
+			validate(id::USER, member.second);
+			continue;
+		}
+	}
+
+	return { copy.data(), copy.data() + copy.size() };
+}()}
 ,feature
 {
 	_feature

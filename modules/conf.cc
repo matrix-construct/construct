@@ -136,9 +136,9 @@ _update_conf_hook
 {
 	_update_conf,
 	{
-		{ "_site",       "vm notify"           },
-		{ "room_id",     "!control:zemos.net"  },
-		{ "type",        "m.room.message"      },
+		{ "_site",       "vm notify"       },
+		{ "room_id",     "!control"        },
+		{ "type",        "m.room.message"  },
 		{ "content",
 		{
 			{ "msgtype", "m.text" }
@@ -150,9 +150,9 @@ const m::hook
 _create_conf_hook
 {
 	{
-		{ "_site",       "vm notify"       },
-		{ "room_id",     "!ircd:zemos.net" },
-		{ "type",        "m.room.create"   },
+		{ "_site",       "vm notify"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
 	},
 	[](const m::event &)
 	{

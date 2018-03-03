@@ -96,11 +96,10 @@ _create_public_room(const m::event &)
 const m::hook
 _create_public_hook
 {
+	_create_public_room,
 	{
-		{ "_site",       "vm notify"       },
-		{ "room_id",     "!ircd:zemos.net" },
-		{ "type",        "m.room.create"   },
-	},
-
-	_create_public_room
+		{ "_site",       "vm notify"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	}
 };

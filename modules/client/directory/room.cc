@@ -205,11 +205,10 @@ const m::hook
 _create_alias_room
 {
 	{
-		{ "_site",       "vm notify"       },
-		{ "room_id",     "!ircd:zemos.net" },
-		{ "type",        "m.room.create"   },
+		{ "_site",       "vm notify"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
 	},
-
 	[](const m::event &)
 	{
 		m::create(alias_room_id, m::me.user_id);
