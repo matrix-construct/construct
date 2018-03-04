@@ -15,6 +15,9 @@
 ///
 struct ircd::server::link
 {
+	static conf::item<size_t> tag_max_default;
+	static conf::item<size_t> tag_commit_max_default;
+
 	bool init {false};                           ///< link is connecting
 	bool fini {false};                           ///< link is disconnecting
 	bool exclude {false};                        ///< link is excluded

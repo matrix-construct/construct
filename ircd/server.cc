@@ -12,24 +12,6 @@
 
 namespace ircd::server
 {
-	// Coarse maximum number of connections to a server
-	const size_t LINK_MAX_DEFAULT
-	{
-		2
-	};
-
-	// Coarse minimum number of connections to a server
-	const size_t LINK_MIN_DEFAULT
-	{
-		1
-	};
-
-	// Maximum number of requests "in flight" at a time in one pipe.
-	const size_t TAG_COMMIT_MAX_DEFAULT
-	{
-		2
-	};
-
 	ctx::dock dock;
 
 	template<class F> size_t accumulate_nodes(F&&);
@@ -282,6 +264,24 @@ ircd::server::submit(const hostport &hostport,
 
 //
 // node
+//
+
+decltype(ircd::server::node::link_min_default)
+ircd::server::node::link_min_default
+{
+	{ "name",     "ircd.server.node.link_min" },
+	{ "default",  1L                          }
+};
+
+decltype(ircd::server::node::link_max_default)
+ircd::server::node::link_max_default
+{
+	{ "name",     "ircd.server.node.link_max" },
+	{ "default",  2L                          }
+};
+
+//
+// node::node
 //
 
 ircd::server::node::node()
@@ -884,16 +884,14 @@ size_t
 ircd::server::node::link_min()
 const
 {
-	//TODO: conf
-	return LINK_MIN_DEFAULT;
+	return link_min_default;
 }
 
 size_t
 ircd::server::node::link_max()
 const
 {
-	//TODO: conf
-	return LINK_MAX_DEFAULT;
+	return link_max_default;
 }
 
 template<class F>
@@ -924,6 +922,24 @@ const
 
 //
 // link
+//
+
+decltype(ircd::server::link::tag_max_default)
+ircd::server::link::tag_max_default
+{
+	{ "name",     "ircd.server.link.tag_max" },
+	{ "default",  -1L                        }
+};
+
+decltype(ircd::server::link::tag_commit_max_default)
+ircd::server::link::tag_commit_max_default
+{
+	{ "name",     "ircd.server.link.tag_commit_max" },
+	{ "default",  3L                                }
+};
+
+//
+// link::link
 //
 
 ircd::server::link::link(server::node &node)
@@ -1497,16 +1513,14 @@ size_t
 ircd::server::link::tag_commit_max()
 const
 {
-	//TODO: config
-	return TAG_COMMIT_MAX_DEFAULT;
+	return tag_commit_max_default;
 }
 
 size_t
 ircd::server::link::tag_max()
 const
 {
-	//TODO: config
-	return -1;
+	return tag_max_default;
 }
 
 void

@@ -16,6 +16,9 @@
 struct ircd::server::node
 :std::enable_shared_from_this<ircd::server::node>
 {
+	static conf::item<size_t> link_min_default;
+	static conf::item<size_t> link_max_default;
+
 	net::remote remote;
 	std::list<link> links;
 	std::exception_ptr eptr;
@@ -45,8 +48,8 @@ struct ircd::server::node
 
   public:
 	// config related
-	size_t link_max() const;
 	size_t link_min() const;
+	size_t link_max() const;
 
 	// stats for all links in node
 	size_t link_count() const;
