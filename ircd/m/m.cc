@@ -954,3 +954,12 @@ ircd::m::hook::list::add(site &site)
 
 	return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/error.h
+//
+
+thread_local char
+ircd::m::error::fmtbuf[768]
+{};

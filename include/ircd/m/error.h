@@ -28,9 +28,12 @@ namespace ircd::m
 /// The IRCD_M_EXCEPTION macro is provided and should be used to declare the
 /// error type first rather than throwing an m::error directly if possible.
 ///
-struct ircd::m::error
-:http::error
+class ircd::m::error
+:public http::error
 {
+	static thread_local char fmtbuf[768];
+
+  public:
 	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
 	error(const http::code &, const json::object &object);
@@ -110,11 +113,11 @@ ircd::m::error::error(const http::code &status,
                       args&&... a)
 :http::error
 {
-	status, [&]() -> json::strung
+	status, [&errcode, &fmt, &a...]() -> json::strung
 	{
-		char buf[512]; const string_view str
+		const string_view str
 		{
-			fmt::sprintf{buf, fmt, std::forward<args>(a)...}
+			fmt::sprintf{fmtbuf, fmt, std::forward<args>(a)...}
 		};
 
 		return json::members
