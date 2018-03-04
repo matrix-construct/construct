@@ -112,9 +112,13 @@ struct ircd::m::room
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 	string_view membership(const mutable_buffer &out, const m::id::user &) const;
 
-	room(const id &room_id, const event::id &event_id = {})
+	room(const id &room_id, const string_view &event_id)
 	:room_id{room_id}
-	,event_id{event_id}
+	,event_id{event_id? event::id{event_id} : event::id{}}
+	{}
+
+	room(const id &room_id)
+	:room_id{room_id}
 	{}
 
 	room() = default;
