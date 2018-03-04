@@ -88,4 +88,16 @@ namespace ircd::m::name
 	constexpr const char *const senders {"senders"};
 	constexpr const char *const not_senders {"not_senders"};
 	constexpr const char *const limit {"limit"};
+
+	constexpr const char *const edu_type {"edu_type"};
+
+	constexpr const char *const user_id {"user_id"};
+	constexpr const char *const last_active_ago {"last_active_ago"};
+	constexpr const char *const currently_active {"currently_active"};
+	constexpr const char *const status_msg {"status_msg"};
+
+	constexpr const char *const ts {"ts"};
+	constexpr const char *const event_ids {"event_ids"};
+
+	constexpr const char *const typing {"typing"};
 }

@@ -56,6 +56,10 @@ namespace ircd
 #include "v1/v1.h"
 #include "vm.h"
 #include "keys.h"
+#include "edu.h"
+#include "presence.h"
+#include "typing.h"
+#include "receipt.h"
 #include "txn.h"
 #include "hook.h"
 

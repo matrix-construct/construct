@@ -9,27 +9,27 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_TXN_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
+#define HAVE_IRCD_M_EDU_H
 
 namespace ircd::m
 {
-	struct txn;
+	struct edu;
 }
 
-struct ircd::m::txn
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
+struct ircd::m::edu
 :json::tuple
 <
-	json::property<name::edus, json::array>,
-	json::property<name::origin, json::string>,
-	json::property<name::origin_server_ts, time_t>,
-	json::property<name::pdu_failures, json::array>,
-	json::property<name::pdus, json::array>
+	json::property<name::edu_type, json::string>,
+	json::property<name::content, json::object>
 >
 {
+	struct m_presence;
+	struct m_typing;
+	struct m_receipt;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
-
 #pragma GCC diagnostic pop
