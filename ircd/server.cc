@@ -1043,6 +1043,12 @@ ircd::server::link::open(const net::open_opts &open_opts)
 	init = true;
 	fini = false;
 	inc_handles();
+	const unwind::exceptional unhandled{[this]
+	{
+		dec_handles();
+		init = false;
+	}};
+
 	socket = net::open(open_opts, std::move(handler));
 	return true;
 }
@@ -1055,9 +1061,10 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 		dec_handles();
 	}};
 
+	assert(init);
 	init = false;
 
-	if(!eptr)
+	if(!eptr && !fini)
 		wait_writable();
 
 	if(node)
@@ -1087,6 +1094,12 @@ ircd::server::link::close(const net::close_opts &close_opts)
 		node->disperse(*this);
 
 	inc_handles();
+	const unwind::exceptional unhandled{[this]
+	{
+		dec_handles();
+		// link may be destroyed here
+	}};
+
 	net::close(*socket, close_opts, std::move(handler));
 	return true;
 }
@@ -1098,6 +1111,8 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 	{
 		dec_handles();
 	}};
+
+	assert(fini);
 
 	if(node)
 		node->handle_close(*this, std::move(eptr));
@@ -1117,6 +1132,12 @@ ircd::server::link::wait_writable()
 	assert(ready());
 	inc_handles();
 	waiting_write = true;
+	const unwind::exceptional unhandled{[this]
+	{
+		waiting_write = false;
+		dec_handles();
+	}};
+
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
 }
 
@@ -1266,6 +1287,12 @@ ircd::server::link::wait_readable()
 	assert(ready());
 	inc_handles();
 	waiting_read = true;
+	const unwind::exceptional unhandled{[this]
+	{
+		waiting_read = false;
+		dec_handles();
+	}};
+
 	net::wait(*socket, net::ready::READ, std::move(handler));
 }
 
