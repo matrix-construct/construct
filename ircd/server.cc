@@ -307,7 +307,7 @@ noexcept
 }
 
 void
-ircd::server::node::close()
+ircd::server::node::close(const net::close_opts &opts)
 {
 	for(auto &link : this->links)
 		link.exclude = true;
@@ -315,15 +315,12 @@ ircd::server::node::close()
 	std::vector<link *> links(this->links.size());
 	pointers(this->links, links);
 	for(const auto &link : links)
-		link->close(net::close_opts_default);
+		link->close(opts);
 }
 
 void
 ircd::server::node::interrupt()
 {
-	for(auto &link : links)
-		link.exclude = true;
-
 	for(auto &link : this->links)
 		link.cancel_all(std::make_exception_ptr(canceled
 		{
@@ -764,16 +761,14 @@ catch(const std::bad_weak_ptr &)
 }
 catch(const std::exception &e)
 {
-	if(wp.expired())
-		return;
-
+	assert(!wp.expired());
 	this->emsg = e.what();
 	this->etime = now<steady_point>();
+	close();
+
 	log.error("node(%p): during name resolution: %s",
 	          this,
 	          e.what());
-
-	close();
 }
 
 size_t
@@ -1074,16 +1069,8 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 bool
 ircd::server::link::close(const net::close_opts &close_opts)
 {
-	if(!socket)
-		return false;
-
 	if(fini)
 		return false;
-
-	auto handler
-	{
-		std::bind(&link::handle_close, this, ph::_1)
-	};
 
 	init = false;
 	fini = true;
@@ -1099,6 +1086,17 @@ ircd::server::link::close(const net::close_opts &close_opts)
 		dec_handles();
 		// link may be destroyed here
 	}};
+
+	auto handler
+	{
+		std::bind(&link::handle_close, this, ph::_1)
+	};
+
+	if(!socket)
+	{
+		handler(std::exception_ptr{});
+		return true;
+	}
 
 	net::close(*socket, close_opts, std::move(handler));
 	return true;

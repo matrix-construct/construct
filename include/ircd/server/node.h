@@ -85,7 +85,7 @@ struct ircd::server::node
 
 	// control panel
 	void interrupt();
-	void close();
+	void close(const net::close_opts & = net::close_opts_default);
 
 	node();
 	~node() noexcept;
