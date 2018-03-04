@@ -441,5 +441,36 @@ is_powerof2(const long long v)
 	return v && !(v & (v - 1LL));
 }
 
+//
+// Transform to pointer utils
+//
+
+/// Transform input sequence values to pointers in the output sequence
+/// using two input iterators [begin, end] and one output iterator [begin]
+template<class input_begin,
+         class input_end,
+         class output_begin>
+auto
+pointers(input_begin&& ib,
+         const input_end &ie,
+         output_begin&& ob)
+{
+	return std::transform(ib, ie, ob, []
+	(auto&& value)
+	{
+		return std::addressof(value);
+	});
+}
+
+template<class input_container,
+         class output_container>
+auto
+pointers(input_container&& ic,
+         output_container &oc)
+{
+	return pointers(begin(ic), end(ic), begin(oc));
+}
+
+
 } // namespace util
 } // namespace ircd
