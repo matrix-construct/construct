@@ -277,7 +277,7 @@ register__user(const m::user &user,
                const json::members &contents)
 try
 {
-	const m::room::id user_room_id
+	const m::room::id::buf user_room_id
 	{
 		user.room_id()
 	};
