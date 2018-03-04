@@ -896,9 +896,9 @@ const
 
 	for(; bool(it); ++it)
 	{
-		const string_view &key //TODO: XXX
+		const string_view &key
 		{
-			lstrip(it->first, ":::")
+			lstrip(it->first, "\0"_sv)
 		};
 
 		if(view(key))

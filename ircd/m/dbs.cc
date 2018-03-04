@@ -461,8 +461,6 @@ ircd::m::dbs::desc::events__state_node
 /// and the suffix is the depth+event_id concatenation.
 /// for efficient sequences
 ///
-/// TODO: This needs The Grammar
-///
 const ircd::db::prefix_transform
 ircd::m::dbs::desc::events__room_events__pfx
 {
@@ -470,20 +468,18 @@ ircd::m::dbs::desc::events__room_events__pfx
 
 	[](const string_view &key)
 	{
-		return key.find(":::") != key.npos;
+		return key.find("\0"_sv) != key.npos;
 	},
 
 	[](const string_view &key)
 	{
-		return rsplit(key, ":::").first;
+		return rsplit(key, "\0"_sv).first;
 	}
 };
 
 /// Comparator for the events__room_events. The goal here is to sort the
 /// events within a room by their depth from highest to lowest, so the
 /// highest depth is hit first when a room is sought from this column.
-///
-/// TODO: This needs The Grammar
 ///
 const ircd::db::comparator
 ircd::m::dbs::desc::events__room_events__cmp
@@ -524,8 +520,8 @@ ircd::m::dbs::desc::events__room_events__cmp
 		// Now want just the depth...
 		const string_view depths[2]
 		{
-			between(post[0], ":::", "$"),
-			between(post[1], ":::", "$"),
+			between(post[0], "\0"_sv, "$"_sv),
+			between(post[1], "\0"_sv, "$"_sv),
 		};
 
 		// ...as machine words
@@ -546,48 +542,49 @@ ircd::m::dbs::desc::events__room_events__cmp
 	}
 };
 
-//TODO: optimize
-//TODO: Needs The Gramslam
 ircd::string_view
-ircd::m::dbs::room_events_key(const mutable_buffer &out,
+ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const id::room &room_id,
                               const uint64_t &depth)
 {
-	size_t len{0};
-	len = strlcpy(out, room_id);
-	len = strlcat(out, ":::");
-	len = strlcat(out, lex_cast(depth));
-	return { data(out), len };
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, lex_cast(depth)));
+	return { data(out_), data(out) };
 }
 
-//TODO: optimize
-//TODO: Needs The Gramslam
 ircd::string_view
-ircd::m::dbs::room_events_key(const mutable_buffer &out,
+ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const id::room &room_id,
                               const uint64_t &depth,
                               const id::event &event_id)
 {
-	size_t len{0};
-	len = strlcpy(out, room_id);
-	len = strlcat(out, ":::");
-	len = strlcat(out, lex_cast(depth));
-	len = strlcat(out, event_id);
-	return { data(out), len };
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, lex_cast(depth)));
+	consume(out, copy(out, event_id));
+	return { data(out_), data(out) };
 }
 
 std::tuple<uint64_t, ircd::string_view>
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
-	const auto depth
+	const auto &key
 	{
-		between(amalgam, ":::", "$")
+		lstrip(amalgam, "\0"_sv)
+	};
+
+	const auto &s
+	{
+		split(key, "$"_sv)
 	};
 
 	return
 	{
-		lex_cast<uint64_t>(depth),
-		string_view{end(depth), end(amalgam)}
+		lex_cast<uint64_t>(s.first),
+		{ end(s.first), end(s.second) }
 	};
 }
 
@@ -654,8 +651,6 @@ ircd::m::dbs::desc::events__room_events
 
 /// Prefix transform for the events__room_origins
 ///
-/// TODO: This needs The Grammar
-///
 const ircd::db::prefix_transform
 ircd::m::dbs::desc::events__room_origins__pfx
 {
@@ -663,29 +658,27 @@ ircd::m::dbs::desc::events__room_origins__pfx
 
 	[](const string_view &key)
 	{
-		return key.find(":::") != key.npos;
+		return key.find("\0"_sv) != key.npos;
 	},
 
 	[](const string_view &key)
 	{
-		return rsplit(key, ":::").first;
+		return rsplit(key, "\0"_sv).first;
 	}
 };
 
-//TODO: optimize
-//TODO: Needs The Gramslam
 ircd::string_view
-ircd::m::dbs::room_origins_key(const mutable_buffer &out,
+ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
                                const id::room &room_id,
                                const string_view &origin,
                                const id::user &member)
 {
-	size_t len{0};
-	len = strlcpy(out, room_id);
-	len = strlcat(out, ":::");
-	len = strlcat(out, origin);
-	len = strlcat(out, member);
-	return { data(out), len };
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, origin));
+	consume(out, copy(out, member));
+	return { data(out_), data(out) };
 }
 
 std::tuple<ircd::string_view, ircd::string_view>
@@ -693,18 +686,18 @@ ircd::m::dbs::room_origins_key(const string_view &amalgam)
 {
 	const auto &key
 	{
-		lstrip(amalgam, ":::")
+		lstrip(amalgam, "\0"_sv)
 	};
 
 	const auto &s
 	{
-		split(key, "@")
+		split(key, "@"_sv)
 	};
 
 	return
 	{
 		{ s.first },
-		{ end(s.first), end(key) }
+		{ end(s.first), end(s.second) }
 	};
 }
 
