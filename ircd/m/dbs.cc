@@ -648,6 +648,10 @@ ircd::m::dbs::desc::events__room_events
 	events__room_events__pfx,
 };
 
+//
+// origins sequential
+//
+
 /// Prefix transform for the events__room_origins
 ///
 /// TODO: This needs The Grammar
@@ -682,6 +686,26 @@ ircd::m::dbs::room_origins_key(const mutable_buffer &out,
 	len = strlcat(out, origin);
 	len = strlcat(out, member);
 	return { data(out), len };
+}
+
+std::tuple<ircd::string_view, ircd::string_view>
+ircd::m::dbs::room_origins_key(const string_view &amalgam)
+{
+	const auto &key
+	{
+		lstrip(amalgam, ":::")
+	};
+
+	const auto &s
+	{
+		split(key, "@")
+	};
+
+	return
+	{
+		{ s.first },
+		{ end(s.first), end(key) }
+	};
 }
 
 const ircd::database::descriptor

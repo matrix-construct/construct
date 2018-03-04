@@ -35,6 +35,8 @@ namespace ircd::m::dbs
 	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
 
 	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
+	std::tuple<string_view, string_view> room_origins_key(const string_view &amalgam);
+
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, string_view> room_events_key(const string_view &amalgam);
@@ -85,9 +87,11 @@ namespace ircd::m::dbs::desc
 
 	// Metadata columns
 	extern const database::descriptor events__state_node;
+
 	extern const db::prefix_transform events__room_events__pfx;
 	extern const db::comparator events__room_events__cmp;
 	extern const database::descriptor events__room_events;
+
 	extern const db::prefix_transform events__room_origins__pfx;
 	extern const database::descriptor events__room_origins;
 

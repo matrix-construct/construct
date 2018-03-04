@@ -638,7 +638,7 @@ const
 		{
 			const string_view &member
 			{
-				end(split(key, "@").first), end(key)
+				std::get<1>(dbs::room_origins_key(key))
 			};
 
 			bool ret{false};
@@ -745,9 +745,9 @@ const
 	return _test_([&last, &lastbuf, &view]
 	(const string_view &key)
 	{
-		const string_view &origin //TODO: XXX
+		const string_view &origin
 		{
-			split(key, "@").first
+			std::get<0>(dbs::room_origins_key(key))
 		};
 
 		if(origin == last)
