@@ -328,17 +328,34 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 //
 
 ircd::m::room::state::state(const m::room &room)
-:room_id{room.room_id}
-,event_id{room.event_id? room.event_id : head(room_id)}
+:state
 {
-	refresh();
+	room, opts{}
+}
+{
 }
 
-const ircd::m::state::id &
-ircd::m::room::state::refresh()
+ircd::m::room::state::state(const m::room &room,
+                            const opts &opts)
+:room_id
 {
-	this->root_id = dbs::state_root(root_id_buf, room_id, event_id);
-	return this->root_id;
+	room.room_id
+}
+,event_id
+{
+	room.event_id?
+		event::id::buf{room.event_id}:
+	opts.snapshot?
+		head(room_id):
+	event::id::buf{}
+}
+,root_id
+{
+	event_id?
+		dbs::state_root(root_id_buf, room_id, event_id):
+		m::state::id{}
+}
+{
 }
 
 void
@@ -366,11 +383,16 @@ ircd::m::room::state::get(const string_view &type,
                           const event::id::closure &closure)
 const
 {
-	m::state::get(root_id, type, state_key, [&closure]
-	(const string_view &event_id)
-	{
-		closure(unquote(event_id));
-	});
+	if(root_id)
+		return m::state::get(root_id, type, state_key, [&closure]
+		(const string_view &event_id)
+		{
+			closure(unquote(event_id));
+		});
+
+	char key[768];
+	auto &column{dbs::room_state};
+	return column(dbs::room_state_key(key, room_id, type, state_key), closure);
 }
 
 bool
@@ -400,11 +422,16 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::id::closure &closure)
 const
 {
-	return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
-	(const string_view &event_id)
-	{
-		closure(unquote(event_id));
-	});
+	if(root_id)
+		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
+		(const string_view &event_id)
+		{
+			closure(unquote(event_id));
+		});
+
+	char key[768];
+	auto &column{dbs::room_state};
+	return column(dbs::room_state_key(key, room_id, type, state_key), std::nothrow, closure);
 }
 
 bool
@@ -422,24 +449,53 @@ ircd::m::room::state::has(const string_view &type,
                           const string_view &state_key)
 const
 {
-	return m::state::get(std::nothrow, root_id, type, state_key, []
-	(const string_view &event_id)
-	{
-	});
+	if(root_id)
+		return m::state::get(std::nothrow, root_id, type, state_key, []
+		(const string_view &event_id)
+		{});
+
+	char key[768];
+	auto &column{dbs::room_state};
+	return db::has(column, dbs::room_state_key(key, room_id, type, state_key));
 }
 
 size_t
 ircd::m::room::state::count()
 const
 {
-	return m::state::count(root_id);
+	if(root_id)
+		return m::state::count(root_id);
+
+	size_t ret{0};
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(room_id)}; bool(it); ++it)
+		++ret;
+
+	return ret;
 }
 
 size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
-	return m::state::count(root_id, type);
+	if(root_id)
+		return m::state::count(root_id, type);
+
+	char keybuf[768];
+	const auto &key
+	{
+		dbs::room_state_key(keybuf, room_id, type)
+	};
+
+	size_t ret{0};
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+		if(std::get<0>(dbs::room_state_key(it->first)) == type)
+			++ret;
+		else
+			break;
+
+	return ret;
 }
 
 bool
@@ -462,11 +518,19 @@ bool
 ircd::m::room::state::test(const event::id::closure_bool &closure)
 const
 {
-	return m::state::test(root_id, [&closure]
-	(const json::array &key, const string_view &event_id)
-	{
-		return closure(unquote(event_id));
-	});
+	if(root_id)
+		return m::state::test(root_id, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(unquote(event_id));
+		});
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(room_id)}; bool(it); ++it)
+		if(closure(it->second))
+			return true;
+
+	return false;
 }
 
 bool
@@ -491,11 +555,29 @@ ircd::m::room::state::test(const string_view &type,
                            const event::id::closure_bool &closure)
 const
 {
-	return m::state::test(root_id, type, [&closure]
-	(const json::array &key, const string_view &event_id)
+	if(root_id)
+		return m::state::test(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(unquote(event_id));
+		});
+
+	char keybuf[768];
+	const auto &key
 	{
-		return closure(unquote(event_id));
-	});
+		dbs::room_state_key(keybuf, room_id, type)
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+		if(std::get<0>(dbs::room_state_key(it->first)) == type)
+		{
+			if(closure(it->second))
+				return true;
+		}
+		else break;
+
+	return false;
 }
 
 bool
@@ -522,11 +604,29 @@ ircd::m::room::state::test(const string_view &type,
                            const event::id::closure_bool &closure)
 const
 {
-	return m::state::test(root_id, type, state_key_lb, [&closure]
-	(const json::array &key, const string_view &event_id)
+	if(root_id)
+		return m::state::test(root_id, type, state_key_lb, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(unquote(event_id));
+		});
+
+	char keybuf[768];
+	const auto &key
 	{
-		return closure(unquote(event_id));
-	});
+		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+		if(std::get<0>(dbs::room_state_key(it->first)) == type)
+		{
+			if(closure(it->second))
+				return true;
+		}
+		else break;
+
+	return false;
 }
 
 void
@@ -546,11 +646,16 @@ void
 ircd::m::room::state::for_each(const event::id::closure &closure)
 const
 {
-	m::state::for_each(root_id, [&closure]
-	(const json::array &key, const string_view &event_id)
-	{
-		closure(unquote(event_id));
-	});
+	if(root_id)
+		return m::state::for_each(root_id, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			closure(unquote(event_id));
+		});
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(room_id)}; bool(it); ++it)
+		closure(it->second);
 }
 
 void
@@ -572,11 +677,25 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure &closure)
 const
 {
-	m::state::for_each(root_id, type, [&closure]
-	(const json::array &key, const string_view &event_id)
+	if(root_id)
+		return m::state::for_each(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			closure(unquote(event_id));
+		});
+
+	char keybuf[768];
+	const auto &key
 	{
-		closure(unquote(event_id));
-	});
+		dbs::room_state_key(keybuf, room_id, type)
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+		if(std::get<0>(dbs::room_state_key(it->first)) == type)
+			closure(it->second);
+		else
+			break;
 }
 
 //

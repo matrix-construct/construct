@@ -178,6 +178,7 @@ struct ircd::m::room::messages
 struct ircd::m::room::state
 {
 	struct tuple;
+	struct opts;
 
 	room::id room_id;
 	event::id::buf event_id;
@@ -212,13 +213,22 @@ struct ircd::m::room::state
 	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 
-	// Refresh the cached root_id/root_id_buf members
-	const m::state::id &refresh();
-
+	state(const m::room &, const opts &);
 	state(const m::room &);
 	state() = default;
 	state(const state &) = delete;
 	state &operator=(const state &) = delete;
+};
+
+struct ircd::m::room::state::opts
+{
+	/// If true, the state btree at the present state becomes the source of the
+	/// data for this interface. This is only significant if no event_id was
+	/// specified in the room object, otherwise snapshot is implied at that
+	/// event. If false (and no event_id was given) the faster sequential
+	/// present state table is used; note that the present state may change
+	/// while you use this object.
+	bool snapshot {false};
 };
 
 /// Interface to the members of a room.
