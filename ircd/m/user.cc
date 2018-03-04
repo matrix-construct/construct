@@ -158,26 +158,39 @@ ircd::m::id::room::buf
 ircd::m::user::room_id()
 const
 {
-	assert(!empty(user_id));
-	return
-	{
-		user_id.local(), my_host()
-	};
+	char buf[256];
+	return room_id(buf);
 }
 
-/// Generates a room MXID of the following form: `!@user:host`
+/// Generates a room MXID of the following form: `!@user:host` If the user
+/// is on my_host(), then the room localpart is literally "!@user" but if
+/// the user is not on my_host, the full user_id is hashed and the room_id
+/// is the b58 hash on my_host.
 ///
 /// This is the "user's room" essentially serving as a database mechanism for
-/// this specific user. This is for users on this server's host only.
+/// this specific user.
 ///
 ircd::m::id::room
 ircd::m::user::room_id(const mutable_buffer &buf)
 const
 {
 	assert(!empty(user_id));
+
+	if(my(user_id))
+		return
+		{
+			buf, user_id.local(), my_host()
+		};
+
+	const sha256::buf hash
+	{
+		sha256{user_id}
+	};
+
+	char b58[size(hash) * 2];
 	return
 	{
-		buf, user_id.local(), my_host()
+		buf, b58encode(b58, hash), my_host()
 	};
 }
 
