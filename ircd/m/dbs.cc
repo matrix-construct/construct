@@ -38,6 +38,11 @@ decltype(ircd::m::dbs::room_origins)
 ircd::m::dbs::room_origins
 {};
 
+/// Linkage for a reference to the room_state column
+decltype(ircd::m::dbs::room_state)
+ircd::m::dbs::room_state
+{};
+
 //
 // init
 //
@@ -64,6 +69,7 @@ ircd::m::dbs::init::init()
 	state_node = db::column{*events, "_state_node"};
 	room_events = db::index{*events, "_room_events"};
 	room_origins = db::index{*events, "_room_origins"};
+	room_state = db::index{*events, "_room_state"};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern
@@ -75,6 +81,7 @@ noexcept
 	state_node = {};
 	room_events = {};
 	room_origins = {};
+	room_state = {};
 	for(auto &column : event_column)
 		column = {};
 
@@ -84,6 +91,7 @@ noexcept
 
 namespace ircd::m::dbs
 {
+	static void _index__room_state(db::txn &,  const event &, const write_opts &);
 	static void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
 	static void _index__room_origins(db::txn &, const event &, const write_opts &);
 	static string_view _index_state(db::txn &, const event &, const write_opts &);
@@ -183,14 +191,17 @@ try
 		at<"room_id"_>(event)
 	};
 
-	const auto &new_root
+	const string_view &new_root
 	{
-		state::insert(txn, opts.root_out, opts.root_in, event)
+		opts.history?
+			state::insert(txn, opts.root_out, opts.root_in, event):
+			opts.root_in
 	};
 
 	_index__room_events(txn, event, opts, new_root);
 	_index__room_origins(txn, event, opts);
-	return opts.root_in;
+	_index__room_state(txn, event, opts);
+	return new_root;
 }
 catch(const std::exception &e)
 {
@@ -277,6 +288,46 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 		{
 			op,
 			key,
+		}
+	};
+}
+
+/// Adds the entry for the room_origins column into the txn.
+/// This only is affected if opts.present=true
+void
+ircd::m::dbs::_index__room_state(db::txn &txn,
+                                 const event &event,
+                                 const write_opts &opts)
+{
+	if(!opts.present)
+		return;
+
+	const ctx::critical_assertion ca;
+	thread_local char buf[768];
+	const string_view &key
+	{
+		room_state_key(buf, at<"room_id"_>(event), at<"type"_>(event), at<"state_key"_>(event))
+	};
+
+	const string_view &val
+	{
+		at<"event_id"_>(event)
+	};
+
+	const db::op op
+	{
+		at<"type"_>(event) != "m.room.redaction"?
+			db::op::SET:
+			db::op::DELETE
+	};
+
+	db::txn::append
+	{
+		txn, room_state,
+		{
+			op,
+			key,
+			val,  // should be ignored on DELETE
 		}
 	};
 }
@@ -660,6 +711,102 @@ ircd::m::dbs::desc::events__room_origins
 
 	// prefix transform
 	events__room_origins__pfx,
+};
+
+//
+// state sequential
+//
+
+/// prefix transform for type,state_key in room_id
+///
+/// This transform is special for concatenating room_id with type and state_key
+/// in that order with prefix being the room_id (this may change to room_id+
+/// type
+///
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__room_state__pfx
+{
+	"_room_state",
+	[](const string_view &key)
+	{
+		return key.find("\0"_sv) != key.npos;
+	},
+	[](const string_view &key)
+	{
+		return split(key, "\0"_sv).first;
+	}
+};
+
+ircd::string_view
+ircd::m::dbs::room_state_key(const mutable_buffer &out_,
+                             const id::room &room_id,
+                             const string_view &type,
+                             const string_view &state_key)
+{
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, type));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, state_key));
+	return { data(out_), data(out) };
+}
+
+ircd::string_view
+ircd::m::dbs::room_state_key(const mutable_buffer &out_,
+                             const id::room &room_id,
+                             const string_view &type)
+{
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, type));
+	return { data(out_), data(out) };
+}
+
+std::tuple<ircd::string_view, ircd::string_view>
+ircd::m::dbs::room_state_key(const string_view &amalgam)
+{
+	const auto &key
+	{
+		lstrip(amalgam, "\0"_sv)
+	};
+
+	const auto &s
+	{
+		split(key, "\0"_sv)
+	};
+
+	return
+	{
+		s.first, s.second
+	};
+}
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__room_state
+{
+	// name
+	"_room_state",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	events__room_state__pfx,
 };
 
 //
@@ -1155,53 +1302,6 @@ const ircd::db::prefix_transform room_id_in
 	}
 };
 
-/// prefix transform for type,state_key in room_id
-///
-/// This transform is special for concatenating room_id with type and state_key
-/// in that order with prefix being the room_id (this may change to room_id+
-/// type
-///
-/// TODO: arbitrary type strings will have character conflicts. must address
-/// TODO: with grammars.
-const ircd::db::prefix_transform type_state_key_in_room_id
-{
-	"type,state_key in room_id",
-	[](const ircd::string_view &key)
-	{
-		return key.find("..") != key.npos;
-	},
-	[](const ircd::string_view &key)
-	{
-		return split(key, "..").first;
-	}
-};
-
-const ircd::database::descriptor
-event_id_for_type_state_key_in_room_id
-{
-	// name
-	"event_id for type,state_key in room_id",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	type_state_key_in_room_id
-};
-
 const ircd::database::descriptor
 prev_event_id_for_event_id_in_room_id
 {
@@ -1325,4 +1425,8 @@ ircd::m::dbs::desc::events
 	// (room_id, origin) => ()
 	// Sequence of all PRESENTLY JOINED origins for a room.
 	events__room_origins,
+
+	// (room_id, type, state_key) => (event_id)
+	// Sequence of the PRESENT STATE of the room.
+	events__room_state,
 };

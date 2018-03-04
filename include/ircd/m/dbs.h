@@ -27,8 +27,13 @@ namespace ircd::m::dbs
 	extern db::column state_node;
 	extern db::index room_events;
 	extern db::index room_origins;
+	extern db::index room_state;
 
 	// Lowlevel util
+	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
+	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
+	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
+
 	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
@@ -52,6 +57,7 @@ struct ircd::m::dbs::write_opts
 	string_view root_in;
 	mutable_buffer root_out;
 	bool present {true};
+	bool history {true};
 };
 
 namespace ircd::m::dbs::desc
@@ -84,6 +90,9 @@ namespace ircd::m::dbs::desc
 	extern const database::descriptor events__room_events;
 	extern const db::prefix_transform events__room_origins__pfx;
 	extern const database::descriptor events__room_origins;
+
+	extern const db::prefix_transform events__room_state__pfx;
+	extern const database::descriptor events__room_state;
 }
 
 struct ircd::m::dbs::init
