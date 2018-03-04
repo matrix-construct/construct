@@ -101,6 +101,30 @@ ircd::token_last(const string_view &str,
 ircd::string_view
 ircd::token(const string_view &str,
             const char &sep,
+            const size_t &i,
+            const string_view &def)
+{
+	const char ssep[2] { sep, '\0' };
+	return token(str, ssep, i, def);
+}
+
+ircd::string_view
+ircd::token(const string_view &str,
+            const char *const &sep,
+            const size_t &i,
+            const string_view &def)
+try
+{
+	return token(str, sep, i);
+}
+catch(const std::out_of_range &)
+{
+	return def;
+}
+
+ircd::string_view
+ircd::token(const string_view &str,
+            const char &sep,
             const size_t &i)
 {
 	const char ssep[2] { sep, '\0' };

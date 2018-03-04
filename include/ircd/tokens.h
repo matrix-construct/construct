@@ -75,6 +75,8 @@ namespace ircd
 	size_t token_count(const string_view &str, const char *const &sep);
 	string_view token(const string_view &str, const char &sep, const size_t &at);
 	string_view token(const string_view &str, const char *const &sep, const size_t &at);
+	string_view token(const string_view &str, const char &sep, const size_t &at, const string_view &def);
+	string_view token(const string_view &str, const char *const &sep, const size_t &at, const string_view &def);
 	string_view token_last(const string_view &str, const char &sep);
 	string_view token_last(const string_view &str, const char *const &sep);
 	string_view token_first(const string_view &str, const char &sep);
