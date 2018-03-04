@@ -77,6 +77,9 @@ struct ircd::server::link
 	size_t tag_uncommitted() const;
 
 	// request panel
+	void cancel_uncommitted(std::exception_ptr);
+	void cancel_committed(std::exception_ptr);
+	void cancel_all(std::exception_ptr);
 	void submit(request &);
 
 	// control panel

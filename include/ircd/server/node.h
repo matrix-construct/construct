@@ -33,7 +33,6 @@ struct ircd::server::node
 	void resolve(const hostport &);
 
 	void disperse_uncommitted(link &);
-	void cancel_committed(link &, std::exception_ptr);
 	void disperse(link &);
 	void del(link &);
 
