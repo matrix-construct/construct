@@ -13,7 +13,7 @@
 
 namespace ircd::m
 {
-
+	struct presence;
 }
 
 #pragma GCC diagnostic push
@@ -23,6 +23,7 @@ struct ircd::m::edu::m_presence
 <
 	json::property<name::user_id, json::string>,
 	json::property<name::presence, json::string>,
+	json::property<name::status_msg, json::string>,
 	json::property<name::last_active_ago, time_t>,
 	json::property<name::currently_active, bool>
 >
@@ -31,3 +32,16 @@ struct ircd::m::edu::m_presence
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
+
+struct ircd::m::presence
+:edu::m_presence
+{
+	static bool valid_state(const string_view &state);
+	static json::object get(const user &, const mutable_buffer &);
+	static event::id::buf set(const presence &);
+	static event::id::buf set(const user &, const string_view &, const string_view &status = {});
+
+	presence(const user &, const mutable_buffer &);
+
+	using edu::m_presence::m_presence;
+};

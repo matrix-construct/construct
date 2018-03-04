@@ -259,7 +259,7 @@ try
 		{ "default",  "Wanna chat? IRCd at your service!" }
 	};
 
-	me.presence("online", online_status_msg);
+	presence::set(me, "online", online_status_msg);
 	join(my_room, me.user_id);
 }
 catch(const m::ALREADY_MEMBER &e)
@@ -277,25 +277,74 @@ ircd::m::leave_ircd_room()
 	};
 
 	leave(my_room, me.user_id);
-	me.presence("offline", offline_status_msg);
+	presence::set(me, "offline", offline_status_msg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// m/user.h
+// m/presence.h
 //
 
-ircd::m::event::id::buf
-ircd::m::user::activate(const json::members &contents)
+ircd::m::presence::presence(const user &user,
+                            const mutable_buffer &buf)
+:presence
 {
-	using prototype = event::id::buf (const m::user &, const json::members &);
+	get(user, buf)
+}
+{
+}
+
+ircd::m::event::id::buf
+ircd::m::presence::set(const user &user,
+                       const string_view &presence,
+                       const string_view &status_msg)
+{
+	return set(m::presence
+	{
+		{ "user_id",     user.user_id  },
+		{ "presence",    presence      },
+		{ "status_msg",  status_msg    },
+	});
+}
+
+ircd::m::event::id::buf
+ircd::m::presence::set(const presence &object)
+{
+	using prototype = event::id::buf (const presence &);
 
 	static import<prototype> function
 	{
-		"client_register", "register__user"
+		"m_presence", "presence_set"
 	};
 
-	return function(*this, contents);
+	return function(object);
+}
+
+ircd::json::object
+ircd::m::presence::get(const user &user,
+                       const mutable_buffer &buffer)
+{
+	using prototype = json::object (const m::user &, const mutable_buffer &);
+
+	static import<prototype> function
+	{
+		"m_presence", "presence_get"
+	};
+
+	return function(user, buffer);
+}
+
+bool
+ircd::m::presence::valid_state(const string_view &state)
+{
+	using prototype = bool (const string_view &);
+
+	static import<prototype> function
+	{
+		"m_presence", "presence_valid_state"
+	};
+
+	return function(state);
 }
 
 ircd::m::event::id::buf

@@ -39,8 +39,6 @@ struct ircd::m::user
 	bool is_active() const;
 	bool is_password(const string_view &password) const noexcept;
 
-	event::id::buf presence(const string_view &, const string_view &status = {});
-
 	void password(const string_view &password);
 	void deactivate(const json::members &contents = {});
 	event::id::buf activate(const json::members &contents = {});
