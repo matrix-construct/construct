@@ -237,6 +237,16 @@ struct ircd::m::id::buf
 		return b;
 	}
 
+	/// Due to the normal semantics of this object in relation to its parent,
+	/// if you write directly to this as a mutable_buffer you can call
+	/// assigned() to update this.
+	buf &assigned(const T &t)
+	{
+		assert(string_view{t}.data() == b.data());
+		static_cast<string_view &>(*this) = t;
+		return *this;
+	}
+
 	template<class... args>
 	buf(args&&... a)
 	:T{b, std::forward<args>(a)...}
