@@ -36,11 +36,11 @@ struct ircd::m::user
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
 
-	bool is_active() const;
 	bool is_password(const string_view &password) const noexcept;
-
 	void password(const string_view &password);
-	void deactivate(const json::members &contents = {});
+
+	bool is_active() const;
+	event::id::buf deactivate(const json::members &contents = {});
 	event::id::buf activate(const json::members &contents = {});
 
 	user(const id &user_id)

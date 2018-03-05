@@ -59,3 +59,11 @@ post_deactivate
 		post_deactivate.REQUIRES_AUTH
 	}
 };
+
+extern "C" m::event::id::buf
+deactivate__user(const m::user &user,
+                 const json::members &)
+{
+	//TODO: XXX
+	return {};
+}

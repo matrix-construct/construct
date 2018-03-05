@@ -338,18 +338,35 @@ ircd::m::presence::valid_state(const string_view &state)
 	return function(state);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/user.h
+//
+
 ircd::m::event::id::buf
-ircd::m::user::presence(const string_view &presence,
-                        const string_view &status_msg)
+ircd::m::user::activate(const json::members &contents)
 {
-	using prototype = event::id::buf (const id &, const string_view &, const string_view &);
+	using prototype = event::id::buf (const m::user &, const json::members &);
 
 	static import<prototype> function
 	{
-		"client_presence", "set__user_presence_status"
+		"client_register", "register__user"
 	};
 
-	return function(user_id, presence, status_msg);
+	return function(*this, contents);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::deactivate(const json::members &contents)
+{
+	using prototype = event::id::buf (const m::user &, const json::members &);
+
+	static import<prototype> function
+	{
+		"client_account", "deactivate__user"
+	};
+
+	return function(*this, contents);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

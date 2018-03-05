@@ -61,12 +61,6 @@ ircd::m::my(const user &user)
 }
 
 void
-ircd::m::user::deactivate(const json::members &contents)
-{
-	//TODO: XXX
-}
-
-void
 ircd::m::user::password(const string_view &password)
 try
 {
