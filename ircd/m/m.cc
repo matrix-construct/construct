@@ -901,7 +901,7 @@ try
 {
 	const auto site(at(hook.site_name()));
 	assert(site != nullptr);
-	return site->add(hook);
+	return site->del(hook);
 }
 catch(const std::out_of_range &e)
 {
