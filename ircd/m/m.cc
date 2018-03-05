@@ -238,17 +238,18 @@ ircd::m::self::host()
 	return "zemos.net"; //me.user_id.host();
 }
 
+ircd::conf::item<std::string>
+me_online_status_msg
+{
+	{ "name",     "ircd.me.online.status_msg"          },
+	{ "default",  "Wanna chat? IRCd at your service!"  }
+};
+
 void
 ircd::m::join_ircd_room()
 try
 {
-	static conf::item<std::string> online_status_msg
-	{
-		{ "name",     "m.ircd.online.status_msg"          },
-		{ "default",  "Wanna chat? IRCd at your service!" }
-	};
-
-	presence::set(me, "online", online_status_msg);
+	presence::set(me, "online", me_online_status_msg);
 	join(my_room, me.user_id);
 }
 catch(const m::ALREADY_MEMBER &e)
@@ -256,17 +257,18 @@ catch(const m::ALREADY_MEMBER &e)
 	log.warning("IRCd did not shut down correctly...");
 }
 
+ircd::conf::item<std::string>
+me_offline_status_msg
+{
+	{ "name",     "ircd.me.offline.status_msg"     },
+	{ "default",  "Catch ya on the flip side..."   }
+};
+
 void
 ircd::m::leave_ircd_room()
 {
-	static conf::item<std::string> offline_status_msg
-	{
-		{ "name",     "m.ircd.offline.status_msg"     },
-		{ "default",  "Catch ya on the flip side..."  }
-	};
-
 	leave(my_room, me.user_id);
-	presence::set(me, "offline", offline_status_msg);
+	presence::set(me, "offline", me_offline_status_msg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
