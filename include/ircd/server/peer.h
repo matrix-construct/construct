@@ -9,12 +9,12 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SERVER_NODE_H
+#define HAVE_IRCD_SERVER_PEER_H
 
 /// Remote entity.
 ///
-struct ircd::server::node
-:std::enable_shared_from_this<ircd::server::node>
+struct ircd::server::peer
+:std::enable_shared_from_this<ircd::server::peer>
 {
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
@@ -29,7 +29,7 @@ struct ircd::server::node
 	template<class F> size_t accumulate_links(F&&) const;
 	template<class F> size_t accumulate_tags(F&&) const;
 
-	void handle_resolve(std::weak_ptr<node>, std::exception_ptr, const ipport &);
+	void handle_resolve(std::weak_ptr<peer>, std::exception_ptr, const ipport &);
 	void resolve(const hostport &);
 
 	void disperse_uncommitted(link &);
@@ -50,12 +50,12 @@ struct ircd::server::node
 	size_t link_min() const;
 	size_t link_max() const;
 
-	// stats for all links in node
+	// stats for all links in peer
 	size_t link_count() const;
 	size_t link_busy() const;
 	size_t link_ready() const;
 
-	// stats for all tags in all links in node
+	// stats for all tags in all links in peer
 	size_t tag_count() const;
 	size_t tag_committed() const;
 	size_t tag_uncommitted() const;
@@ -87,6 +87,6 @@ struct ircd::server::node
 	void interrupt();
 	void close(const net::close_opts & = net::close_opts_default);
 
-	node();
-	~node() noexcept;
+	peer();
+	~peer() noexcept;
 };

@@ -358,7 +358,7 @@ console_cmd__db_list(const string_view &line)
 // net
 //
 
-static bool console_cmd__net_node(const string_view &line);
+static bool console_cmd__net_peer(const string_view &line);
 static bool console_cmd__net_host(const string_view &line);
 
 bool
@@ -374,18 +374,18 @@ console_cmd__net(const string_view &line)
 		case hash("host"):
 			return console_cmd__net_host(args);
 
-		case hash("node"):
-			return console_cmd__net_node(args);
+		case hash("peer"):
+			return console_cmd__net_peer(args);
 
 		default:
 			throw bad_command{};
 	}
 }
 
-static bool console_cmd__net_node__default();
+static bool console_cmd__net_peer__default();
 
 bool
-console_cmd__net_node(const string_view &line)
+console_cmd__net_peer(const string_view &line)
 {
 	const auto args
 	{
@@ -393,7 +393,7 @@ console_cmd__net_node(const string_view &line)
 	};
 
 	if(empty(line))
-		return console_cmd__net_node__default();
+		return console_cmd__net_peer__default();
 
 	switch(hash(token(line, ' ', 0)))
 	{
@@ -405,17 +405,17 @@ console_cmd__net_node(const string_view &line)
 }
 
 bool
-console_cmd__net_node__default()
+console_cmd__net_peer__default()
 {
-	for(const auto &p : server::nodes)
+	for(const auto &p : server::peers)
 	{
 		using std::setw;
 		using std::left;
 		using std::right;
 
 		const auto &host{p.first};
-		const auto &node{*p.second};
-		const net::ipport &ipp{node.remote};
+		const auto &peer{*p.second};
+		const net::ipport &ipp{peer.remote};
 
 		out << setw(40) << right << host;
 
@@ -425,15 +425,15 @@ console_cmd__net_node__default()
 		    out << ' ' << setw(22) << left << " ";
 
 		out << " "
-		    << " " << setw(2) << right << node.link_count()   << " L"
-		    << " " << setw(2) << right << node.tag_count()    << " T"
-		    << " " << setw(9) << right << node.write_total()  << " UP"
-		    << " " << setw(9) << right << node.read_total()   << " DN"
+		    << " " << setw(2) << right << peer.link_count()   << " L"
+		    << " " << setw(2) << right << peer.tag_count()    << " T"
+		    << " " << setw(9) << right << peer.write_total()  << " UP"
+		    << " " << setw(9) << right << peer.read_total()   << " DN"
 		    ;
 
-		if(node.err_has() && node.err_msg())
-			out << "  :" << node.err_msg();
-		else if(node.err_has())
+		if(peer.err_has() && peer.err_msg())
+			out << "  :" << peer.err_msg();
+		else if(peer.err_has())
 			out << "  <unknown error>"_sv;
 
 		out << std::endl;

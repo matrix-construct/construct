@@ -11,13 +11,13 @@
 #pragma once
 #define HAVE_IRCD_SERVER_H
 
-/// The interface for when IRCd plays the role of client to other nodes
+/// The interface for when IRCd plays the role of client to other peers
 ///
 namespace ircd::server
 {
 	struct init;
 	struct link;
-	struct node;
+	struct peer;
 	struct request;
 	struct tag;
 
@@ -27,22 +27,22 @@ namespace ircd::server
 	IRCD_EXCEPTION(error, canceled);
 
 	extern ircd::log::log log;
-	extern std::map<string_view, std::shared_ptr<node>> nodes;
+	extern std::map<string_view, std::shared_ptr<peer>> peers;
 
 	size_t tag_count();
 	size_t link_count();
-	size_t node_count();
+	size_t peer_count();
 
 	string_view errmsg(const net::hostport &);
 	bool exists(const net::hostport &);
-	node &find(const net::hostport &);
-	node &get(const net::hostport &);
+	peer &find(const net::hostport &);
+	peer &get(const net::hostport &);
 }
 
 #include "tag.h"
 #include "request.h"
 #include "link.h"
-#include "node.h"
+#include "peer.h"
 
 /// Subsystem initialization / destruction from ircd::main
 ///

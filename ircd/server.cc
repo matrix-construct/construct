@@ -17,12 +17,12 @@ namespace ircd::server
 	ctx::dock dock;     // internal semaphore
 
 	// Internal util
-	template<class F> size_t accumulate_nodes(F&&);
+	template<class F> size_t accumulate_peers(F&&);
 	template<class F> size_t accumulate_links(F&&);
 	template<class F> size_t accumulate_tags(F&&);
 
 	// Internal control
-	std::shared_ptr<node> create(const net::hostport &);
+	std::shared_ptr<peer> create(const net::hostport &);
 	void interrupt_all();
 	void close_all();
 }
@@ -33,47 +33,47 @@ ircd::server::log
 	"server", 'S'
 };
 
-decltype(ircd::server::nodes)
-ircd::server::nodes
+decltype(ircd::server::peers)
+ircd::server::peers
 {};
 
-ircd::server::node &
+ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
-	auto it(nodes.lower_bound(host(hostport)));
-	if(it == nodes.end() || it->first != host(hostport))
+	auto it(peers.lower_bound(host(hostport)));
+	if(it == peers.end() || it->first != host(hostport))
 	{
-		auto node{create(hostport)};
-		log.debug("node(%p) for %s created; adding...",
-		          node.get(),
+		auto peer{create(hostport)};
+		log.debug("peer(%p) for %s created; adding...",
+		          peer.get(),
 		          string(hostport));
 
-		const string_view key{node->remote.hostname};
-		it = nodes.emplace_hint(it, key, std::move(node));
+		const string_view key{peer->remote.hostname};
+		it = peers.emplace_hint(it, key, std::move(peer));
 	}
 
 	return *it->second;
 }
 
-std::shared_ptr<ircd::server::node>
+std::shared_ptr<ircd::server::peer>
 ircd::server::create(const net::hostport &hostport)
 {
-	auto node(std::make_shared<node>());
-	node->remote.hostname = std::string{host(hostport)};
-	node->resolve(hostport);
-	return node;
+	auto peer(std::make_shared<peer>());
+	peer->remote.hostname = std::string{host(hostport)};
+	peer->resolve(hostport);
+	return peer;
 }
 
-ircd::server::node &
+ircd::server::peer &
 ircd::server::find(const net::hostport &hostport)
 {
-	return *nodes.at(host(hostport));
+	return *peers.at(host(hostport));
 }
 
 bool
 ircd::server::exists(const net::hostport &hostport)
 {
-	return nodes.find(host(hostport)) != end(nodes);
+	return peers.find(host(hostport)) != end(peers);
 }
 
 ircd::string_view
@@ -81,38 +81,38 @@ ircd::server::errmsg(const net::hostport &hostport)
 {
 	const auto it
 	{
-		nodes.find(host(hostport))
+		peers.find(host(hostport))
 	};
 
-	if(it == end(nodes))
+	if(it == end(peers))
 		return {};
 
 	return it->second->err_msg();
 }
 
 size_t
-ircd::server::node_count()
+ircd::server::peer_count()
 {
-	return nodes.size();
+	return peers.size();
 }
 
 size_t
 ircd::server::link_count()
 {
-	return accumulate_nodes([]
-	(const auto &node)
+	return accumulate_peers([]
+	(const auto &peer)
 	{
-		return node.link_count();
+		return peer.link_count();
 	});
 }
 
 size_t
 ircd::server::tag_count()
 {
-	return accumulate_nodes([]
-	(const auto &node)
+	return accumulate_peers([]
+	(const auto &peer)
 	{
-		return node.tag_count();
+		return peer.tag_count();
 	});
 }
 
@@ -131,38 +131,38 @@ template<class F>
 size_t
 ircd::server::accumulate_links(F&& closure)
 {
-	return accumulate_nodes([&closure]
-	(const auto &node)
+	return accumulate_peers([&closure]
+	(const auto &peer)
 	{
-		return node.accumulate_links(std::forward<F>(closure));
+		return peer.accumulate_links(std::forward<F>(closure));
 	});
 }
 
 template<class F>
 size_t
-ircd::server::accumulate_nodes(F&& closure)
+ircd::server::accumulate_peers(F&& closure)
 {
-	return std::accumulate(begin(nodes), end(nodes), size_t(0), [&closure]
+	return std::accumulate(begin(peers), end(peers), size_t(0), [&closure]
 	(auto ret, const auto &pair)
 	{
-		const auto &node{*pair.second};
-		return ret += closure(node);
+		const auto &peer{*pair.second};
+		return ret += closure(peer);
 	});
 }
 
 void
 ircd::server::close_all()
 {
-	log.debug("Closing all %zu nodes",
-	          node_count());
+	log.debug("Closing all %zu peers",
+	          peer_count());
 
-	for(auto &node : nodes)
-		node.second->close();
+	for(auto &peer : peers)
+		peer.second->close();
 
-	log.debug("Waiting for %zu tags on %zu links on %zu nodes to close...",
+	log.debug("Waiting for %zu tags on %zu links on %zu peers to close...",
 	          tag_count(),
 	          link_count(),
-	          node_count());
+	          peer_count());
 
 	while(link_count())
 		dock.wait();
@@ -171,13 +171,13 @@ ircd::server::close_all()
 void
 ircd::server::interrupt_all()
 {
-	log.debug("Interrupting %zu tags on %zu links on %zu nodes",
+	log.debug("Interrupting %zu tags on %zu links on %zu peers",
 	          tag_count(),
 	          link_count(),
-	          node_count());
+	          peer_count());
 
-	for(auto &node : nodes)
-		node.second->interrupt();
+	for(auto &peer : peers)
+		peer.second->interrupt();
 }
 
 //
@@ -194,7 +194,7 @@ noexcept
 {
 	ready = false;
 	close_all();
-	nodes.clear();
+	peers.clear();
 }
 
 void
@@ -270,44 +270,44 @@ ircd::server::submit(const hostport &hostport,
 		};
 
 	assert(request.tag == nullptr);
-	auto &node(server::get(hostport));
-	node.submit(request);
+	auto &peer(server::get(hostport));
+	peer.submit(request);
 }
 
 //
-// node
+// peer
 //
 
-decltype(ircd::server::node::link_min_default)
-ircd::server::node::link_min_default
+decltype(ircd::server::peer::link_min_default)
+ircd::server::peer::link_min_default
 {
-	{ "name",     "ircd.server.node.link_min" },
+	{ "name",     "ircd.server.peer.link_min" },
 	{ "default",  1L                          }
 };
 
-decltype(ircd::server::node::link_max_default)
-ircd::server::node::link_max_default
+decltype(ircd::server::peer::link_max_default)
+ircd::server::peer::link_max_default
 {
-	{ "name",     "ircd.server.node.link_max" },
+	{ "name",     "ircd.server.peer.link_max" },
 	{ "default",  2L                          }
 };
 
 //
-// node::node
+// peer::peer
 //
 
-ircd::server::node::node()
+ircd::server::peer::peer()
 {
 }
 
-ircd::server::node::~node()
+ircd::server::peer::~peer()
 noexcept
 {
 	assert(links.empty());
 }
 
 void
-ircd::server::node::close(const net::close_opts &opts)
+ircd::server::peer::close(const net::close_opts &opts)
 {
 	for(auto &link : this->links)
 		link.exclude = true;
@@ -319,7 +319,7 @@ ircd::server::node::close(const net::close_opts &opts)
 }
 
 void
-ircd::server::node::interrupt()
+ircd::server::peer::interrupt()
 {
 	for(auto &link : this->links)
 		link.cancel_all(std::make_exception_ptr(canceled
@@ -329,7 +329,7 @@ ircd::server::node::interrupt()
 }
 
 void
-ircd::server::node::err_clear()
+ircd::server::peer::err_clear()
 {
 	eptr = std::exception_ptr{};
 	emsg = string_view{};
@@ -337,21 +337,21 @@ ircd::server::node::err_clear()
 }
 
 ircd::string_view
-ircd::server::node::err_msg()
+ircd::server::peer::err_msg()
 const
 {
 	return err_has()? emsg : string_view{};
 }
 
 bool
-ircd::server::node::err_has()
+ircd::server::peer::err_has()
 const
 {
 	return bool(eptr);
 }
 
 void
-ircd::server::node::submit(request &request)
+ircd::server::peer::submit(request &request)
 try
 {
 	link *const ret
@@ -368,12 +368,12 @@ try
 	if(!request.tag)
 		throw unavailable
 		{
-			"No link to node %s available", remote.hostname
+			"No link to peer %s available", remote.hostname
 		};
 	else
 		request.tag->set_exception(unavailable
 		{
-			"No link to node %s available", remote.hostname
+			"No link to peer %s available", remote.hostname
 		});
 }
 catch(const std::exception &e)
@@ -389,12 +389,12 @@ catch(const std::exception &e)
 /// if any special needs are indicated,
 //
 ircd::server::link *
-ircd::server::node::link_get(const request &request)
+ircd::server::peer::link_get(const request &request)
 {
 	if(links.empty())
 		return &link_add(1);
 
-	// Indicates that we can't add anymore links for this node and the rest
+	// Indicates that we can't add anymore links for this peer and the rest
 	// of the algorithm should consider this.
 	const bool links_maxed
 	{
@@ -475,7 +475,7 @@ ircd::server::node::link_get(const request &request)
 }
 
 ircd::server::link &
-ircd::server::node::link_add(const size_t &num)
+ircd::server::peer::link_add(const size_t &num)
 {
 	if(eptr)
 		std::rethrow_exception(eptr);
@@ -490,7 +490,7 @@ ircd::server::node::link_add(const size_t &num)
 }
 
 void
-ircd::server::node::handle_open(link &link,
+ircd::server::peer::handle_open(link &link,
                                 std::exception_ptr eptr)
 try
 {
@@ -502,7 +502,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("node(%p) link(%p) [%s]: open: %s",
+	log.error("peer(%p) link(%p) [%s]: open: %s",
 	          this,
 	          &link,
 	          string(remote),
@@ -512,7 +512,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::server::node::handle_close(link &link,
+ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
 try
 {
@@ -521,7 +521,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("node(%p) link(%p) [%s]: close: %s",
+	log.error("peer(%p) link(%p) [%s]: close: %s",
 	          this,
 	          &link,
 	          string(remote),
@@ -529,7 +529,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::server::node::handle_error(link &link,
+ircd::server::peer::handle_error(link &link,
                                  std::exception_ptr eptr)
 try
 {
@@ -539,14 +539,14 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("node(%p) link(%p): %s",
+	log.error("peer(%p) link(%p): %s",
 	          this,
 	          &link,
 	          e.what());
 }
 
 void
-ircd::server::node::handle_error(link &link,
+ircd::server::peer::handle_error(link &link,
                                  const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -566,7 +566,7 @@ ircd::server::node::handle_error(link &link,
 	else if(ec.category() == get_misc_category()) switch(ec.value())
 	{
 		case asio::error::eof:
-			log.debug("node(%p) link(%p) [%s]: %s",
+			log.debug("peer(%p) link(%p) [%s]: %s",
 			          this,
 			          &link,
 			          string(remote),
@@ -579,7 +579,7 @@ ircd::server::node::handle_error(link &link,
 			break;
 	}
 
-	log.error("node(%p) link(%p) [%s]: error: %s",
+	log.error("peer(%p) link(%p) [%s]: error: %s",
 	          this,
 	          &link,
 	          string(remote),
@@ -590,7 +590,7 @@ ircd::server::node::handle_error(link &link,
 }
 
 void
-ircd::server::node::handle_finished(link &link)
+ircd::server::peer::handle_finished(link &link)
 {
 	assert(link.fini);
 	assert(link.handles == 0);
@@ -603,7 +603,7 @@ ircd::server::node::handle_finished(link &link)
 /// This can't throw because the link still has to remove this tag from its
 /// queue.
 void
-ircd::server::node::handle_tag_done(link &link,
+ircd::server::peer::handle_tag_done(link &link,
                                     tag &tag)
 noexcept try
 {
@@ -612,7 +612,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("node(%p) link(%p) tag(%p) done; error: %s",
+	log.critical("peer(%p) link(%p) tag(%p) done; error: %s",
 	             this,
 	             &link,
 	             &tag,
@@ -623,7 +623,7 @@ catch(const std::exception &e)
 /// more work. We can choose whether to close the link or keep it open and
 /// reinstate the read poll; reschedule other work to this link, etc.
 void
-ircd::server::node::handle_link_done(link &link)
+ircd::server::peer::handle_link_done(link &link)
 {
 	assert(link.tag_count() == 0);
 
@@ -640,16 +640,16 @@ ircd::server::node::handle_link_done(link &link)
 /// We can use this to learn information from the tag's request and the
 /// response head etc.
 void
-ircd::server::node::handle_head_recv(const link &link,
+ircd::server::peer::handle_head_recv(const link &link,
                                      const tag &tag,
                                      const http::response::head &head)
 {
-	// Learn the software version of the remote node so we can shape
+	// Learn the software version of the remote peer so we can shape
 	// requests more effectively.
 	if(!server_name && head.server)
 	{
 		server_name = std::string{head.server};
-		log.debug("node(%p) learned %s is '%s'",
+		log.debug("peer(%p) learned %s is '%s'",
 		          this,
 		          string(remote),
 		          server_name);
@@ -657,7 +657,7 @@ ircd::server::node::handle_head_recv(const link &link,
 }
 
 void
-ircd::server::node::disperse(link &link)
+ircd::server::peer::disperse(link &link)
 {
 	disperse_uncommitted(link);
 	link.cancel_committed(std::make_exception_ptr(canceled
@@ -669,7 +669,7 @@ ircd::server::node::disperse(link &link)
 }
 
 void
-ircd::server::node::disperse_uncommitted(link &link)
+ircd::server::peer::disperse_uncommitted(link &link)
 {
 	auto &queue(link.queue);
 	auto it(begin(queue));
@@ -688,7 +688,7 @@ ircd::server::node::disperse_uncommitted(link &link)
 	catch(const std::exception &e)
 	{
 		const auto &tag{*it};
-		log.warning("node(%p) failed to resubmit tag(%p): %s",
+		log.warning("peer(%p) failed to resubmit tag(%p): %s",
 		            this,
 		            &tag,
 		            e.what());
@@ -701,7 +701,7 @@ ircd::server::node::disperse_uncommitted(link &link)
 /// is empty. It is usually only called by a disconnect handler because
 /// the proper way to remove a link is asynchronously through link.close();
 void
-ircd::server::node::del(link &link)
+ircd::server::peer::del(link &link)
 {
 	assert(!link.tag_count());
 	assert(!link.opened());
@@ -712,7 +712,7 @@ ircd::server::node::del(link &link)
 	}));
 
 	assert(it != end(links));
-	log.debug("node(%p) removing link(%p) %zu of %zu to %s",
+	log.debug("peer(%p) removing link(%p) %zu of %zu to %s",
 	          this,
 	          &link,
 	          std::distance(begin(links), it),
@@ -727,23 +727,23 @@ ircd::server::node::del(link &link)
 }
 
 void
-ircd::server::node::resolve(const hostport &hostport)
+ircd::server::peer::resolve(const hostport &hostport)
 {
 	auto handler
 	{
-		std::bind(&node::handle_resolve, this, weak_from(*this), ph::_1, ph::_2)
+		std::bind(&peer::handle_resolve, this, weak_from(*this), ph::_1, ph::_2)
 	};
 
 	net::dns(hostport, std::move(handler));
 }
 
 void
-ircd::server::node::handle_resolve(std::weak_ptr<node> wp,
+ircd::server::peer::handle_resolve(std::weak_ptr<peer> wp,
                                    std::exception_ptr eptr,
                                    const ipport &ipport)
 try
 {
-	const life_guard<node> lg(wp);
+	const life_guard<peer> lg(wp);
 
 	if(eptr)
 	{
@@ -766,13 +766,13 @@ catch(const std::exception &e)
 	this->etime = now<steady_point>();
 	close();
 
-	log.error("node(%p): during name resolution: %s",
+	log.error("peer(%p): during name resolution: %s",
 	          this,
 	          e.what());
 }
 
 size_t
-ircd::server::node::read_remaining()
+ircd::server::peer::read_remaining()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -782,7 +782,7 @@ const
 }
 
 size_t
-ircd::server::node::read_completed()
+ircd::server::peer::read_completed()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -792,7 +792,7 @@ const
 }
 
 size_t
-ircd::server::node::read_total()
+ircd::server::peer::read_total()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -802,7 +802,7 @@ const
 }
 
 size_t
-ircd::server::node::write_remaining()
+ircd::server::peer::write_remaining()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -812,7 +812,7 @@ const
 }
 
 size_t
-ircd::server::node::write_completed()
+ircd::server::peer::write_completed()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -822,7 +822,7 @@ const
 }
 
 size_t
-ircd::server::node::write_total()
+ircd::server::peer::write_total()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -832,7 +832,7 @@ const
 }
 
 size_t
-ircd::server::node::tag_uncommitted()
+ircd::server::peer::tag_uncommitted()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -842,7 +842,7 @@ const
 }
 
 size_t
-ircd::server::node::tag_committed()
+ircd::server::peer::tag_committed()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -852,7 +852,7 @@ const
 }
 
 size_t
-ircd::server::node::tag_count()
+ircd::server::peer::tag_count()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -862,7 +862,7 @@ const
 }
 
 size_t
-ircd::server::node::link_ready()
+ircd::server::peer::link_ready()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -872,7 +872,7 @@ const
 }
 
 size_t
-ircd::server::node::link_busy()
+ircd::server::peer::link_busy()
 const
 {
 	return accumulate_links([](const auto &link)
@@ -882,21 +882,21 @@ const
 }
 
 size_t
-ircd::server::node::link_count()
+ircd::server::peer::link_count()
 const
 {
 	return links.size();
 }
 
 size_t
-ircd::server::node::link_min()
+ircd::server::peer::link_min()
 const
 {
 	return link_min_default;
 }
 
 size_t
-ircd::server::node::link_max()
+ircd::server::peer::link_max()
 const
 {
 	return link_max_default;
@@ -904,7 +904,7 @@ const
 
 template<class F>
 size_t
-ircd::server::node::accumulate_tags(F&& closure)
+ircd::server::peer::accumulate_tags(F&& closure)
 const
 {
 	return accumulate_links([&closure](const auto &link)
@@ -918,7 +918,7 @@ const
 
 template<class F>
 size_t
-ircd::server::node::accumulate_links(F&& closure)
+ircd::server::peer::accumulate_links(F&& closure)
 const
 {
 	return std::accumulate(begin(links), end(links), size_t(0), [&closure]
@@ -950,8 +950,8 @@ ircd::server::link::tag_commit_max_default
 // link::link
 //
 
-ircd::server::link::link(server::node &node)
-:node{shared_from(node)}
+ircd::server::link::link(server::peer &peer)
+:peer{shared_from(peer)}
 {
 }
 
@@ -1062,8 +1062,8 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 	if(!eptr && !fini)
 		wait_writable();
 
-	if(node)
-		node->handle_open(*this, std::move(eptr));
+	if(peer)
+		peer->handle_open(*this, std::move(eptr));
 }
 
 bool
@@ -1075,10 +1075,10 @@ ircd::server::link::close(const net::close_opts &close_opts)
 	init = false;
 	fini = true;
 
-	// Tell the node to ditch everything in the queue; fini has been set so
+	// Tell the peer to ditch everything in the queue; fini has been set so
 	// the tags won't get assigned back to this link.
-	if(tag_count() && node)
-		node->disperse(*this);
+	if(tag_count() && peer)
+		peer->disperse(*this);
 
 	inc_handles();
 	const unwind::exceptional unhandled{[this]
@@ -1112,8 +1112,8 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 
 	assert(fini);
 
-	if(node)
-		node->handle_close(*this, std::move(eptr));
+	if(peer)
+		peer->handle_close(*this, std::move(eptr));
 }
 
 void
@@ -1169,14 +1169,14 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	if(node)
-		node->handle_error(*this, e);
+	if(peer)
+		peer->handle_error(*this, e);
 }
 catch(const std::exception &e)
 {
-	if(node)
+	if(peer)
 	{
-		node->handle_error(*this, std::current_exception());
+		peer->handle_error(*this, std::current_exception());
 		return;
 	}
 
@@ -1324,14 +1324,14 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	if(node)
-		node->handle_error(*this, e);
+	if(peer)
+		peer->handle_error(*this, e);
 }
 catch(const std::exception &e)
 {
-	if(node)
+	if(peer)
 	{
-		node->handle_error(*this, std::current_exception());
+		peer->handle_error(*this, std::current_exception());
 		return;
 	}
 
@@ -1360,8 +1360,8 @@ ircd::server::link::handle_readable_success()
 	}
 	while(!queue.empty());
 
-	assert(node);
-	node->handle_link_done(*this);
+	assert(peer);
+	peer->handle_link_done(*this);
 }
 
 /// Process as many read operations for one tag as possible
@@ -1387,8 +1387,8 @@ try
 	}
 	while(!done);
 
-	assert(node);
-	node->handle_tag_done(*this, queue.front());
+	assert(peer);
+	peer->handle_tag_done(*this, queue.front());
 	queue.pop_front();
 	return true;
 }
@@ -1622,11 +1622,11 @@ ircd::server::link::dec_handles()
 	assert(handles > 0);
 	--handles;
 
-	if(!handles && fini && node)
+	if(!handles && fini && peer)
 	{
-		auto node(this->node);
-		this->node = nullptr;
-		node->handle_finished(*this);
+		auto peer(this->peer);
+		this->peer = nullptr;
+		peer->handle_finished(*this);
 	}
 }
 
@@ -1839,8 +1839,8 @@ ircd::server::disassociate(request &request,
 /// setting the value of `done` to true. Otherwise it is assumed false.
 ///
 /// The link argument is not to be used to control/modify the link from the
-/// tag; it's only a backreference to flash information to the link/node
-/// through specific callbacks so the node can learn information.
+/// tag; it's only a backreference to flash information to the link/peer
+/// through specific callbacks so the peer can learn information.
 ///
 ircd::const_buffer
 ircd::server::tag::read_buffer(const const_buffer &buffer,
@@ -2065,9 +2065,9 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	assert(pb.completed() == head_read);
 	this->status = http::status(head.status);
 
-	// Proffer the HTTP head to the node so it can learn from any data
-	assert(link.node);
-	link.node->handle_head_recv(link, *this, head);
+	// Proffer the HTTP head to the peer so it can learn from any data
+	assert(link.peer);
+	link.peer->handle_head_recv(link, *this, head);
 
 	// Now we know how much content was received beyond the head
 	const size_t &content_read

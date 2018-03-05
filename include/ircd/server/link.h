@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SERVER_LINK_H
 
-/// A single connection to a remote node.
+/// A single connection to a remote peer.
 ///
 struct ircd::server::link
 {
@@ -24,7 +24,7 @@ struct ircd::server::link
 	bool waiting_write {false};                  ///< async operation state
 	bool waiting_read {false};                   ///< async operation state
 	int8_t handles {0};                          ///< async operation state
-	std::shared_ptr<server::node> node;          ///< backreference to node
+	std::shared_ptr<server::peer> peer;          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
 
@@ -86,6 +86,6 @@ struct ircd::server::link
 	bool close(const net::close_opts & = net::close_opts_default);
 	bool open(const net::open_opts &);
 
-	link(server::node &);
+	link(server::peer &);
 	~link() noexcept;
 };
