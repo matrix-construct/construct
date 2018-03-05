@@ -10,19 +10,16 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"federation 2.2.1.1: Publishing Keys"
+	"Federation 2.2.1.1 :Publishing Keys"
 };
 
-struct server
-:resource
-{
-	using resource::resource;
-}
+resource
 server_resource
 {
-	"/_matrix/key/v2/server/", resource::opts
+	"/_matrix/key/v2/server/",
 	{
 		"federation 2.2.1.1: Publishing Keys",
 		resource::DIRECTORY,
@@ -39,26 +36,28 @@ handle_get(client &client,
 		url::decode(request.parv[0], key_id_buf)
 	};
 
-	std::string my_key;
-	m::keys::get(my_host(), key_id, [&my_key](const auto &key)
+	std::string my_keys;
+	m::keys::get(my_host(), key_id, [&my_keys](const m::keys &keys)
 	{
-		my_key = json::strung(key);
+		my_keys = json::strung(keys);
 	});
 
 	return resource::response
 	{
-		client, json::object{my_key}
+		client, http::OK, json::object{my_keys}
 	};
 }
 
-resource::method method_get
+resource::method
+method_get
 {
 	server_resource, "GET", handle_get
 };
 
-// __attribute__((constructor))
-static
-void foop()
+ __attribute__((constructor))
+static void
+_test_ed25519_()
+noexcept
 {
 	using namespace ircd;
 
@@ -74,7 +73,8 @@ void foop()
 	const auto SERVER_NAME {"domain"};
 	const auto KEY_ID {"ed25519:1"};
 
-	const auto test{[&](const std::string &object)
+	const auto test{[&]
+	(const std::string &object) -> bool
 	{
 		const auto sig
 		{
@@ -87,8 +87,6 @@ void foop()
 			b64encode_unpadded(sigb64_buf, sig)
 		};
 
-		std::cout << "sig: " << sigb64 << std::endl;
-
 		ed25519::sig unsig; const auto unsigb64
 		{
 			b64decode(unsig, sigb64)
@@ -97,18 +95,23 @@ void foop()
 		return pk.verify(const_buffer{object}, unsig);
 	}};
 
-	std::cout <<
-	test(std::string{json::object
+	const bool tests[]
 	{
-		"{}"
-	}})
-	<< std::endl;
+		test(std::string{json::object
+		{
+			"{}"
+		}}),
 
-	std::cout <<
-	test(json::strung(json::members
-	{
-		{ "one", 1L },
-		{ "two", "Two" }
-	}))
-	<< std::endl;
+		test(json::strung(json::members
+		{
+			{ "one", 1L },
+			{ "two", "Two" }
+		})),
+	};
+
+	if(!std::all_of(begin(tests), end(tests), [](const bool &b) { return b; }))
+		throw ircd::assertive
+		{
+			"Seeded ed25519 test failed"
+		};
 }
