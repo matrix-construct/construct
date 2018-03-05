@@ -45,7 +45,7 @@ struct ircd::m::id
 	struct room;
 	struct room_alias;
 	struct group;
-	struct origin;
+	struct node;
 	struct device;
 
 	enum sigil :char;
@@ -87,7 +87,7 @@ enum ircd::m::id::sigil
 	ROOM        = '!',     ///< Room ID (4.2.2)
 	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
 	GROUP       = '+',     ///< Group ID (experimental)
-	ORIGIN      = ':',     ///< Origin ID (experimental)
+	NODE        = ':',     ///< Node ID (experimental)
 	DEVICE      = '%',     ///< Device ID (experimental)
 };
 
@@ -177,14 +177,14 @@ struct ircd::m::id::group
 	group() = default;
 };
 
-/// Origin ID (EXPERIMENTAL)
+/// Node ID (EXPERIMENTAL)
 ///
-struct ircd::m::id::origin
+struct ircd::m::id::node
 :ircd::m::id
 {
-	using buf = m::id::buf<origin>;
-	template<class... args> origin(args&&... a) :m::id{ORIGIN, std::forward<args>(a)...} {}
-	origin() = default;
+	using buf = m::id::buf<node>;
+	template<class... args> node(args&&... a) :m::id{NODE, std::forward<args>(a)...} {}
+	node() = default;
 };
 
 /// Device ID (EXPERIMENTAL)

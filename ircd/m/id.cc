@@ -57,7 +57,7 @@ struct ircd::m::id::input
 	const rule<m::id::sigil> room_id_sigil       { lit(char(m::id::ROOM))             ,"room_id sigil" };
 	const rule<m::id::sigil> room_alias_sigil    { lit(char(m::id::ROOM_ALIAS))    ,"room_alias sigil" };
 	const rule<m::id::sigil> group_id_sigil      { lit(char(m::id::GROUP))           ,"group_id sigil" };
-	const rule<m::id::sigil> origin_sigil        { lit(char(m::id::ORIGIN))            ,"origin sigil" };
+	const rule<m::id::sigil> node_sigil          { lit(char(m::id::NODE))                ,"node sigil" };
 	const rule<m::id::sigil> device_sigil        { lit(char(m::id::DEVICE))            ,"device sigil" };
 	const rule<m::id::sigil> sigil
 	{
@@ -66,7 +66,7 @@ struct ircd::m::id::input
 		room_id_sigil     |
 		room_alias_sigil  |
 		group_id_sigil    |
-		origin_sigil      |
+		node_sigil      |
 		device_sigil
 		,"sigil"
 	};
@@ -643,7 +643,7 @@ ircd::m::reflect(const id::sigil &c)
 		case id::ROOM:         return "ROOM"_sv;
 		case id::ROOM_ALIAS:   return "ROOM_ALIAS"_sv;
 		case id::GROUP:        return "GROUP"_sv;
-		case id::ORIGIN:       return "ORIGIN"_sv;
+		case id::NODE:         return "NODE"_sv;
 		case id::DEVICE:       return "DEVICE"_sv;
 	}
 
