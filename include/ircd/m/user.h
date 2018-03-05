@@ -30,14 +30,13 @@ struct ircd::m::user
 	static m::room users;
 	static m::room tokens;
 
-	static string_view gen_password_hash(const mutable_buffer &out, const string_view &candidate);
 	static string_view gen_access_token(const mutable_buffer &out);
 
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
 
 	bool is_password(const string_view &password) const noexcept;
-	void password(const string_view &password);
+	event::id::buf password(const string_view &password);
 
 	bool is_active() const;
 	event::id::buf deactivate(const json::members &contents = {});

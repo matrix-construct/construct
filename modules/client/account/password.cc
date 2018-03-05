@@ -74,3 +74,84 @@ post_password
 		post_password.REQUIRES_AUTH
 	}
 };
+
+static string_view
+gen_password_hash(const mutable_buffer &out,
+                  const string_view &supplied_password);
+
+extern "C" m::event::id::buf
+set_password(const m::user::id &user_id,
+             const string_view &password)
+{
+	char buf[64];
+	const auto supplied
+	{
+		gen_password_hash(buf, password)
+	};
+
+	const m::user::room user_room{user_id};
+	return send(user_room, user_id, "ircd.password", user_id,
+	{
+		{ "sha256", supplied }
+	});
+}
+
+extern "C" bool
+is_password(const m::user::id &user_id,
+            const string_view &password)
+noexcept try
+{
+	char buf[64];
+	const auto supplied
+	{
+		gen_password_hash(buf, password)
+	};
+
+	bool ret{false};
+	const m::user::room user_room{user_id};
+	user_room.get("ircd.password", user_id, [&supplied, &ret]
+	(const m::event &event)
+	{
+		const json::object &content
+		{
+			json::at<"content"_>(event)
+		};
+
+		const auto &correct
+		{
+			unquote(content.at("sha256"))
+		};
+
+		ret = supplied == correct;
+	});
+
+	return ret;
+}
+catch(const m::NOT_FOUND &e)
+{
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"is_password__user(): %s %s",
+		string_view{user_id},
+		e.what()
+	};
+
+	return false;
+}
+
+string_view
+gen_password_hash(const mutable_buffer &out,
+                  const string_view &supplied_password)
+{
+	//TODO: ADD SALT
+	const sha256::buf hash
+	{
+		sha256{supplied_password}
+	};
+
+	return b64encode_unpadded(out, hash);
+}

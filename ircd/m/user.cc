@@ -60,74 +60,6 @@ ircd::m::my(const user &user)
 	return my(user.user_id);
 }
 
-void
-ircd::m::user::password(const string_view &password)
-try
-{
-	char buf[64];
-	const auto supplied
-	{
-		gen_password_hash(buf, password)
-	};
-
-	const user::room user_room{*this};
-	send(user_room, user_id, "ircd.password", user_id,
-	{
-		{ "sha256", supplied }
-	});
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
-	};
-}
-
-bool
-ircd::m::user::is_password(const string_view &password)
-const noexcept try
-{
-	char buf[64];
-	const auto supplied
-	{
-		gen_password_hash(buf, password)
-	};
-
-	bool ret{false};
-	const user::room user_room{*this};
-	user_room.get("ircd.password", user_id, [&supplied, &ret]
-	(const m::event &event)
-	{
-		const json::object &content
-		{
-			json::at<"content"_>(event)
-		};
-
-		const auto &correct
-		{
-			unquote(content.at("sha256"))
-		};
-
-		ret = supplied == correct;
-	});
-
-	return ret;
-}
-catch(const m::NOT_FOUND &e)
-{
-	return false;
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		"user::is_password(): %s %s", string_view{user_id}, e.what()
-	};
-
-	return false;
-}
-
 /// Generates a user-room ID into buffer; see room_id() overload.
 ircd::m::id::room::buf
 ircd::m::user::room_id()
@@ -170,19 +102,6 @@ ircd::m::user::gen_access_token(const mutable_buffer &buf)
 	};
 
 	return rand::string(token_dict, out);
-}
-
-ircd::string_view
-ircd::m::user::gen_password_hash(const mutable_buffer &out,
-                                 const string_view &supplied_password)
-{
-	//TODO: ADD SALT
-	const sha256::buf hash
-	{
-		sha256{supplied_password}
-	};
-
-	return b64encode_unpadded(out, hash);
 }
 
 //
