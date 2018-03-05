@@ -100,4 +100,30 @@ namespace ircd::m::name
 	constexpr const char *const event_ids {"event_ids"};
 
 	constexpr const char *const typing {"typing"};
+
+	constexpr const auto user{"user"};
+	constexpr const auto medium{"medium"};
+	constexpr const auto address{"address"};
+	constexpr const auto password{"password"};
+	constexpr const auto token{"token"};
+	constexpr const auto device_id{"device_id"};
+	constexpr const auto initial_device_display_name{"initial_device_display_name"};
+
+	constexpr const auto username {"username"};
+	constexpr const auto bind_email {"bind_email"};
+	constexpr const auto auth {"auth"};
+
+	constexpr const auto visibility {"visibility"};
+	constexpr const auto room_alias_name {"room_alias_name"};
+	constexpr const auto name {"name"};
+	constexpr const auto topic {"topic"};
+	constexpr const auto invite {"invite"};
+	constexpr const auto invite_3pid {"invite_3pid"};
+	constexpr const auto creation_content {"creation_content"};
+	constexpr const auto initial_state {"initial_state"};
+	constexpr const auto preset {"preset"};
+	constexpr const auto is_direct {"is_direct"};
+	constexpr const auto guest_can_join {"guest_can_join"};
+
+	constexpr const auto id_server {"id_server"};
 }

@@ -26,58 +26,9 @@ login_resource
 	}
 };
 
-namespace { namespace name
-{
-	constexpr const auto type{"type"};
-	constexpr const auto user{"user"};
-	constexpr const auto medium{"medium"};
-	constexpr const auto address{"address"};
-	constexpr const auto password{"password"};
-	constexpr const auto token{"token"};
-	constexpr const auto device_id{"device_id"};
-	constexpr const auto initial_device_display_name{"initial_device_display_name"};
-}}
-
-struct body
-:json::tuple
-<
-	/// Required. The login type being used. One of: ["m.login.password",
-	/// "m.login.token"]
-	json::property<name::type, string_view>,
-
-	/// The fully qualified user ID or just local part of the user ID, to
-	/// log in.
-	json::property<name::user, string_view>,
-
-	/// When logging in using a third party identifier, the medium of the
-	/// identifier. Must be 'email'.
-	json::property<name::medium, string_view>,
-
-	/// Third party identifier for the user.
-	json::property<name::address, string_view>,
-
-	/// Required when type is m.login.password. The user's password.
-	json::property<name::password, string_view>,
-
-	/// Required when type is m.login.token. The login token.
-	json::property<name::token, string_view>,
-
-	/// ID of the client device. If this does not correspond to a known client
-	/// device, a new device will be created. The server will auto-generate a
-	/// device_id if this is not specified.
-	json::property<name::device_id, string_view>,
-
-	/// A display name to assign to the newly-created device. Ignored if
-	/// device_id corresponds to a known device.
-	json::property<name::initial_device_display_name, string_view>
->
-{
-	using super_type::tuple;
-};
-
 resource::response
 post__login_password(client &client,
-                     const resource::request::object<body> &request)
+                     const resource::request::object<m::login> &request)
 {
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
@@ -149,7 +100,7 @@ post__login_password(client &client,
 
 resource::response
 post__login(client &client,
-            const resource::request::object<body> &request)
+            const resource::request::object<m::login> &request)
 {
 	const auto &type
 	{

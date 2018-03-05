@@ -16,35 +16,13 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
-namespace { namespace name
-{
-	constexpr const auto username {"username"};
-	constexpr const auto bind_email {"bind_email"};
-	constexpr const auto password {"password"};
-	constexpr const auto auth {"auth"};
-	constexpr const auto device_id {"device_id"};
-}}
-
-struct body
-:json::tuple
-<
-	json::property<name::username, string_view>,
-	json::property<name::bind_email, bool>,
-	json::property<name::password, string_view>,
-	json::property<name::auth, json::object>,
-	json::property<name::device_id, string_view>
->
-{
-	using super_type::tuple;
-};
-
 extern "C" m::event::id::buf register__user(const m::user &user, const json::members &contents);
 static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
 
 resource::response
 post__register_user(client &client,
-                    const resource::request::object<body> &request)
+                    const resource::request::object<m::registar> &request)
 try
 {
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
@@ -173,7 +151,7 @@ catch(const m::INVALID_MXID &e)
 
 resource::response
 post__register_guest(client &client,
-                     const resource::request::object<body> &request)
+                     const resource::request::object<m::registar> &request)
 {
 	throw m::error
 	{
@@ -205,7 +183,7 @@ post__register_guest(client &client,
 
 resource::response
 post__register(client &client,
-               const resource::request::object<body> &request)
+               const resource::request::object<m::registar> &request)
 {
 	const auto kind
 	{
