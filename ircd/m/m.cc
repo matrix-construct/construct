@@ -369,6 +369,20 @@ ircd::m::user::deactivate(const json::members &contents)
 	return function(*this, contents);
 }
 
+bool
+ircd::m::user::is_active()
+const
+{
+	using prototype = bool (const m::user &);
+
+	static import<prototype> function
+	{
+		"client_account", "is_active__user"
+	};
+
+	return function(*this);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/room.h

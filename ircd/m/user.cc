@@ -128,25 +128,6 @@ catch(const std::exception &e)
 	return false;
 }
 
-bool
-ircd::m::user::is_active()
-const
-{
-	bool ret{false};
-	users.get(std::nothrow, "ircd.user", user_id, [&ret]
-	(const m::event &event)
-	{
-		const json::object &content
-		{
-			at<"content"_>(event)
-		};
-
-		ret = content.get("active") == "true";
-	});
-
-	return ret;
-}
-
 /// Generates a user-room ID into buffer; see room_id() overload.
 ircd::m::id::room::buf
 ircd::m::user::room_id()

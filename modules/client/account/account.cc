@@ -26,3 +26,22 @@ account_resource
 		"(3.4,3.5,3.6) Account management"
 	}
 };
+
+extern "C" bool
+is_active__user(const m::user &user)
+{
+	bool ret{false};
+	const m::room &users{m::user::users};
+	users.get(std::nothrow, "ircd.user", user.user_id, [&ret]
+	(const m::event &event)
+	{
+		const json::object &content
+		{
+			at<"content"_>(event)
+		};
+
+		ret = content.get("active") == "true";
+	});
+
+	return ret;
+}
