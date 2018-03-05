@@ -24,6 +24,10 @@ namespace ircd::m
 	static void join_ircd_room();
 }
 
+//
+// my user
+//
+
 const ircd::m::user::id::buf
 ircd_user_id
 {
@@ -36,6 +40,10 @@ ircd::m::me
 	ircd_user_id
 };
 
+//
+// my room
+//
+
 const ircd::m::room::id::buf
 ircd_room_id
 {
@@ -47,6 +55,26 @@ ircd::m::my_room
 {
 	ircd_room_id
 };
+
+//
+// my node
+//
+
+const ircd::m::node::id::buf
+ircd_node_id
+{
+	"", ircd::my_host()  //TODO: hostname
+};
+
+ircd::m::node
+ircd::m::my_node
+{
+	ircd_node_id
+};
+
+//
+// misc
+//
 
 const ircd::m::room::id::buf
 control_room_id
@@ -336,6 +364,111 @@ ircd::m::presence::valid_state(const string_view &state)
 	};
 
 	return function(state);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/node.h
+//
+
+/// ID of the room which indexes all nodes (an instance of the room is
+/// provided below).
+const ircd::m::room::id::buf
+nodes_room_id
+{
+	"nodes", ircd::my_host()
+};
+
+/// The nodes room is the database of all nodes. It primarily serves as an
+/// indexing mechanism and for top-level node related keys.
+///
+const ircd::m::room
+ircd::m::nodes
+{
+	nodes_room_id
+};
+
+ircd::m::node
+ircd::m::create(const id::node &node_id,
+                const json::members &args)
+{
+	using prototype = node (const id::node &, const json::members &);
+
+	static import<prototype> function
+	{
+		"s_node", "create_node"
+	};
+
+	assert(node_id);
+	return function(node_id, args);
+}
+
+bool
+ircd::m::exists(const node::id &node_id)
+{
+	using prototype = bool (const node::id &);
+
+	static import<prototype> function
+	{
+		"s_node", "exists__nodeid"
+	};
+
+	return function(node_id);
+}
+
+bool
+ircd::m::my(const node &node)
+{
+	return my(node.node_id);
+}
+
+//
+// node
+//
+
+/// Generates a node-room ID into buffer; see room_id() overload.
+ircd::m::id::room::buf
+ircd::m::node::room_id()
+const
+{
+	ircd::m::id::room::buf buf;
+	return buf.assigned(room_id(buf));
+}
+
+/// This generates a room mxid for the "node's room" essentially serving as
+/// a database mechanism for this specific node. This room_id is a hash of
+/// the node's full mxid.
+///
+ircd::m::id::room
+ircd::m::node::room_id(const mutable_buffer &buf)
+const
+{
+	assert(!empty(node_id));
+	const sha256::buf hash
+	{
+		sha256{node_id}
+	};
+
+	char b58[size(hash) * 2];
+	return
+	{
+		buf, b58encode(b58, hash), my_host()
+	};
+}
+
+//
+// node::room
+//
+
+ircd::m::node::room::room(const m::node::id &node_id)
+:room{m::node{node_id}}
+{}
+
+ircd::m::node::room::room(const m::node &node)
+:node{node}
+,room_id{node.room_id()}
+{
+	static_cast<m::room &>(*this) = room_id;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

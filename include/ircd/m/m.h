@@ -18,6 +18,7 @@ namespace ircd::m
 
 	extern struct user me;
 	extern struct room my_room;
+	extern struct node my_node;
 	extern struct room control;
 	extern struct log::log log;
 	extern std::list<ircd::net::listener> listeners;
@@ -51,6 +52,7 @@ namespace ircd
 #include "state.h"
 #include "room.h"
 #include "user.h"
+#include "node.h"
 #include "login.h"
 #include "register.h"
 #include "invite_3pid.h"

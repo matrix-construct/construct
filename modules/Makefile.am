@@ -45,11 +45,13 @@ s_moduledir = @moduledir@
 s_console_la_SOURCES = s_console.cc
 s_conf_la_SOURCES = s_conf.cc
 s_control_la_SOURCES = s_control.cc
+s_node_la_SOURCES = s_node.cc
 
 s_module_LTLIBRARIES = \
 	s_console.la \
 	s_conf.la \
 	s_control.la \
+	s_node.la \
 	###
 
 ###############################################################################
