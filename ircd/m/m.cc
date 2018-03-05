@@ -665,6 +665,28 @@ try
 			validate(id::USER, member.second);
 			continue;
 		}
+
+		case hash("state_key"):
+		{
+			const bool is_member_event
+			{
+				end(members) != std::find_if(begin(members), end(members), [](const auto &member)
+				{
+					return member.first == "type" && member.second == "m.room.member";
+				})
+			};
+
+			// Rewrite the sender if the supplied input has no hostname
+			if(valid_local_only(id::USER, member.second))
+			{
+				assert(my_host());
+				thread_local char buf[256];
+				member.second = id::user { buf, member.second, my_host() };
+			}
+
+			validate(id::USER, member.second);
+			continue;
+		}
 	}
 
 	return { copy.data(), copy.data() + copy.size() };
