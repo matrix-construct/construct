@@ -350,7 +350,7 @@ ircd::m::user::activate(const json::members &contents)
 
 	static import<prototype> function
 	{
-		"client_register", "register__user"
+		"client_account", "activate__user"
 	};
 
 	return function(*this, contents);

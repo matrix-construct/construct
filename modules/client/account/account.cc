@@ -12,6 +12,9 @@
 
 using namespace ircd;
 
+extern "C" bool is_active__user(const m::user &user);
+extern "C" m::event::id::buf activate__user(const m::user &user, const json::members &contents);
+
 mapi::header
 IRCD_MODULE
 {
@@ -27,7 +30,34 @@ account_resource
 	}
 };
 
-extern "C" bool
+m::event::id::buf
+activate__user(const m::user &user,
+               const json::members &contents)
+{
+	//TODO: ABA
+	if(is_active__user(user))
+		throw m::error
+		{
+			http::CONFLICT, "M_USER_IN_USE",
+			"The desired user ID is already in use."
+		};
+
+	const m::room::id::buf user_room_id
+	{
+		user.room_id()
+	};
+
+	//TODO: ABA
+	m::room user_room
+	{
+		create(user_room_id, m::me.user_id, "user")
+	};
+
+	//TODO: ABA
+	return send(user.users, m::me.user_id, "ircd.user", user.user_id, contents);
+}
+
+bool
 is_active__user(const m::user &user)
 {
 	bool ret{false};

@@ -16,7 +16,6 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
-extern "C" m::event::id::buf register__user(const m::user &user, const json::members &contents);
 static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
 
@@ -103,15 +102,19 @@ try
 	// for this user in the form of !@user:host and set a key in !users:host
 	// If the user_id is taken this throws 409 Conflict because those assets
 	// will already exist; otherwise the user is registered after this call.
-	user.activate(
-	{
-		{ "bind_email", bind_email },
-	});
+	user.activate();
 
 	// Set the password for the account. This issues an ircd.password state
 	// event to the user's room. User will be able to login with
 	// m.login.password
 	user.password(password);
+
+	// Store the options from registration.
+	m::user::room user_room{user};
+	send(user_room, user.user_id, "ircd.account.options", "registration",
+	{
+		{ "bind_email", bind_email },
+	});
 
 	char access_token_buf[32];
 	const string_view access_token
@@ -240,43 +243,6 @@ validate_password(const string_view &password)
 			"M_INVALID_PASSWORD",
 			"The desired password is too long"
 		};
-}
-
-/// Register the user by creating a room !@user:myhost and then setting a
-/// an `ircd.account` state event in the `users` room.
-///
-/// Each of the registration options becomes a key'ed state event in the
-/// user's room.
-///
-/// Once this call completes the registration was successful; otherwise
-/// throws.
-m::event::id::buf
-register__user(const m::user &user,
-               const json::members &contents)
-try
-{
-	const m::room::id::buf user_room_id
-	{
-		user.room_id()
-	};
-
-	m::room user_room
-	{
-		create(user_room_id, m::me.user_id, "user")
-	};
-
-	send(user_room, user.user_id, "ircd.account.options", "registration", contents);
-	return send(user.users, m::me.user_id, "ircd.user", user.user_id,
-	{
-		{ "active", true }
-	});
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	throw m::error
-	{
-		http::CONFLICT, "M_USER_IN_USE", "The desired user ID is already in use."
-	};
 }
 
 static void _first_user_registered(const m::event &event);
