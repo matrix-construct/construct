@@ -283,6 +283,7 @@ console_cmd__mod_reload(const string_view &line)
 //
 
 static bool console_cmd__db_list(const string_view &line);
+static bool console_cmd__db_prop(const string_view &line);
 
 bool
 console_cmd__db(const string_view &line)
@@ -294,10 +295,29 @@ console_cmd__db(const string_view &line)
 
 	switch(hash(token(line, " ", 0)))
 	{
+		case hash("prop"):
+			return console_cmd__db_prop(args);
+
 		default:
 		case hash("list"):
 			return console_cmd__db_list(args);
 	}
+}
+
+bool
+console_cmd__db_prop(const string_view &line)
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto property
+	{
+		token(line, ' ', 1)
+	};
+
+	return true;
 }
 
 bool
@@ -976,7 +996,11 @@ console_cmd__exec_file(const string_view &line)
 		id && m::sigil(id) == m::id::USER? id : string_view{}
 	};
 
-	struct m::vm::eval::opts opts;
+	m::vm::opts opts;
+	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	opts.prev_check_exists = false;
+	opts.notify = false;
 	m::vm::eval eval
 	{
 		opts
@@ -1157,6 +1181,11 @@ console_cmd__room__members(const string_view &line)
 		token(line, ' ', 0)
 	};
 
+	const string_view membership
+	{
+		token_count(line, ' ') > 1? token(line, ' ', 1) : string_view{}
+	};
+
 	const m::room room
 	{
 		room_id
@@ -1167,10 +1196,15 @@ console_cmd__room__members(const string_view &line)
 		room
 	};
 
-	members.for_each([](const m::event &event)
+	const auto closure{[](const m::event &event)
 	{
 		out << pretty_oneline(event) << std::endl;
-	});
+	}};
+
+	if(membership)
+		members.for_each(membership, closure);
+	else
+		members.for_each(closure);
 
 	return true;
 }
@@ -1210,9 +1244,14 @@ console_cmd__room__state(const string_view &line)
 		token(line, ' ', 0)
 	};
 
+	const auto &event_id
+	{
+		token(line, ' ', 1, {})
+	};
+
 	const m::room room
 	{
-		room_id
+		room_id, event_id
 	};
 
 	const m::room::state state

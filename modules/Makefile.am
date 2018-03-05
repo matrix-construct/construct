@@ -37,21 +37,34 @@ AM_LDFLAGS += \
 
 ###############################################################################
 #
-# (TBD) equipment
+# Server modules
 #
 
-# This puts the source in vm/ but the installed
-# library is vm_X.so in the main modules dir.
+s_moduledir = @moduledir@
+
+s_console_la_SOURCES = s_console.cc
+s_conf_la_SOURCES = s_conf.cc
+s_control_la_SOURCES = s_control.cc
+
+s_module_LTLIBRARIES = \
+	s_console.la \
+	s_conf.la \
+	s_control.la \
+	###
+
+###############################################################################
+#
+# Messages / protocol
+#
+
 m_moduledir = @moduledir@
 
-console_la_SOURCES = console.cc
-conf_la_SOURCES = conf.cc
 m_noop_la_SOURCES = m_noop.cc
+m_presence_la_SOURCES = m_presence.cc
 
 m_module_LTLIBRARIES = \
-	console.la \
-	conf.la \
 	m_noop.la \
+	m_presence.la \
 	###
 
 ###############################################################################

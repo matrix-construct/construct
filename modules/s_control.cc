@@ -17,15 +17,21 @@ IRCD_MODULE
 };
 
 const ircd::m::room::id::buf
-conf_room_id
+control_room_id
 {
-    "conf", ircd::my_host()
+	"!control", ircd::my_host()
 };
 
-m::room
-conf_room
+const m::room
+control_room
 {
-	conf_room_id
+	control_room_id
+};
+
+const ircd::m::room::id::buf
+conf_room_id
+{
+	"!conf", ircd::my_host()
 };
 
 static void
@@ -34,25 +40,23 @@ _conf_set(const m::event &event,
           const string_view &val)
 try
 {
-	conf::set(key, val);
-
 	const auto event_id
 	{
-		send(conf_room, at<"sender"_>(event), key,
+		send(conf_room_id, at<"sender"_>(event), "ircd.conf.item", key,
 		{
 			{ "value", val }
 		})
 	};
 
 	char kvbuf[768];
-	notice(m::control, fmt::sprintf
+	notice(control_room, fmt::sprintf
 	{
 		kvbuf, "[%s] %s = %s", string_view{event_id}, key, val
 	});
 }
 catch(const std::exception &e)
 {
-	notice(m::control, e.what());
+	notice(control_room, e.what());
 }
 
 static void
@@ -60,21 +64,25 @@ _conf_get(const m::event &event,
           const string_view &key)
 try
 {
-	char vbuf[256];
-	const auto value
+	const m::room conf_room{conf_room_id};
+	conf_room.get("ircd.conf.item", key, [&key]
+	(const m::event &event)
 	{
-		conf::get(key, vbuf)
-	};
+		const auto &value
+		{
+			unquote(at<"content"_>(event).at("value"))
+		};
 
-	char kvbuf[512];
-	notice(m::control, fmt::sprintf
-	{
-		kvbuf, "%s = %s", key, value
+		char kvbuf[256];
+		notice(control_room, fmt::sprintf
+		{
+			kvbuf, "%s = %s", key, value
+		});
 	});
 }
 catch(const std::exception &e)
 {
-	notice(m::control, e.what());
+	notice(control_room, e.what());
 }
 
 static void
@@ -90,31 +98,21 @@ try
 		   << "<br />";
 	ss << "</pre>";
 
-	msghtml(m::control, m::me.user_id, ss.str());
+	msghtml(control_room, m::me.user_id, ss.str());
 }
 catch(const std::exception &e)
 {
-	notice(m::control, e.what());
+	notice(control_room, e.what());
 }
 
 static void
-_update_conf(const m::event &event)
-noexcept
+_cmd__conf(const m::event &event,
+           const string_view &line)
 {
-	const auto &content
-	{
-		at<"content"_>(event)
-	};
-
-	const string_view &body
-	{
-		unquote(content.at("body"))
-	};
-
 	string_view tokens[4];
 	const size_t count
 	{
-		ircd::tokens(body, ' ', tokens)
+		ircd::tokens(line, ' ', tokens)
 	};
 
 	const auto &cmd{tokens[0]};
@@ -127,14 +125,55 @@ noexcept
 	if(cmd == "get" && count >= 2)
 		return _conf_get(event, key);
 
-	if(cmd == "conf")
+	if(cmd == "list")
 		return _conf_list(event);
 }
 
-const m::hook
-_update_conf_hook
+static void
+_cmd__die(const m::event &event,
+          const string_view &line)
 {
-	_update_conf,
+	ircd::post([]
+	{
+		ircd::quit();
+	});
+
+	ctx::yield();
+}
+
+static void
+command_control(const m::event &event)
+noexcept
+{
+	const auto &content
+	{
+		at<"content"_>(event)
+	};
+
+	const string_view &body
+	{
+		unquote(content.at("body"))
+	};
+
+	const string_view &cmd
+	{
+		token(body, ' ', 0, {})
+	};
+
+	switch(hash(cmd))
+	{
+		case hash("conf"):
+			return _cmd__conf(event, tokens_after(body, ' ', 0));
+
+		case hash("die"):
+			return _cmd__die(event, tokens_after(body, ' ', 0));
+	}
+}
+
+const m::hook
+command_control_hook
+{
+	command_control,
 	{
 		{ "_site",       "vm notify"       },
 		{ "room_id",     "!control"        },
@@ -146,16 +185,27 @@ _update_conf_hook
 	}
 };
 
-const m::hook
-_create_conf_hook
+static void
+create_control_room(const m::event &)
 {
+	create(control_room_id, m::me.user_id);
+	join(control_room, m::me.user_id);
+	send(control_room, m::me.user_id, "m.room.name", "",
+	{
+		{ "name", "Control Room" }
+	});
+
+	notice(control_room, m::me.user_id, "Welcome to the control room.");
+	notice(control_room, m::me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
+}
+
+const m::hook
+create_control_hook
+{
+	create_control_room,
 	{
 		{ "_site",       "vm notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
-	},
-	[](const m::event &)
-	{
-		m::create(conf_room_id, m::me.user_id);
 	}
 };

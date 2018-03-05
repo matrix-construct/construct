@@ -111,10 +111,9 @@ ircd::m::init::modules()
 {
 	const string_view prefixes[]
 	{
-		"m_", "client_", "key_", "federation_", "media_"
+		"s_", "m_", "client_", "key_", "federation_", "media_"
 	};
 
-	m::modules.emplace("conf"s, "conf"s);
 	for(const auto &name : mods::available())
 		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
 			m::modules.emplace(name, name);
@@ -213,13 +212,6 @@ ircd::m::init::bootstrap()
 		{ "topic", "The daemon's den." }
 	});
 
-	create(control, me.user_id);
-	join(control, me.user_id);
-	send(control, me.user_id, "m.room.name", "",
-	{
-		{ "name", "Control Room" }
-	});
-
 	send(user::users, me.user_id, "m.room.name", "",
 	{
 		{ "name", "Users" }
@@ -232,9 +224,6 @@ ircd::m::init::bootstrap()
 	});
 
 	_keys.bootstrap();
-
-	notice(control, me.user_id, "Welcome to the control room.");
-	notice(control, me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
 }
 
 bool
