@@ -767,8 +767,7 @@ ircd::http::serialized(const vector_view<const header> &headers)
 {
 	// Because the write(header) functions use fmt::sprintf we have to
 	// indicate an extra space for a null string terminator to not overlof
-	static const size_t initial{1};
-
+	const size_t initial{!headers.empty()};
 	return std::accumulate(std::begin(headers), std::end(headers), initial, []
 	(auto &ret, const auto &pair)
 	{
