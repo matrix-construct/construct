@@ -195,14 +195,12 @@ try
 		object.verify(x_matrix.key, x_matrix.sig)
 	};
 
-	if(verified)
-		return;
-
-	throw m::error
-	{
-		http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
-		"The X-Matrix Authorization is invalid."
-	};
+	if(!verified)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+			"The X-Matrix Authorization is invalid."
+		};
 }
 catch(const m::error &)
 {
@@ -602,16 +600,16 @@ ircd::resource::response::response(client &client,
 {
 	// contents of this buffer get copied again when further passed to
 	// response{}; we can get this off the stack if that remains true.
-	thread_local char buffer[2_KiB];
+	thread_local char buffer[4_KiB];
 	window_buffer sb{buffer};
 	{
 		const critical_assertion ca;
 		http::write(sb, headers);
 	}
 
-	response
+	new (this) response
 	{
-		client, content, content_type, code, sb.completed()
+		client, content, content_type, code, string_view{sb.completed()}
 	};
 }
 
@@ -634,14 +632,14 @@ ircd::resource::response::response(client &client,
 	const string_view cache_control
 	{
 		(code >= 200 && code < 300) ||
-		(code >= 403 && code <= 405) ||
+		(code >= 403 && code < 405) ||
 		(code >= 300 && code < 400)? "no-cache":
 		""
 	};
 
 	// This buffer will be passed to the socket and sent out;
 	// cannot be static/tls.
-	char head_buf[2_KiB];
+	char head_buf[4_KiB];
 	window_buffer head{head_buf};
 	http::response
 	{
