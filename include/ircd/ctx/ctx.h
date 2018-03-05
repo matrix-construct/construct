@@ -103,7 +103,6 @@ namespace ircd::ctx { inline namespace this_ctx
 #include "shared_mutex.h"
 #include "peek.h"
 #include "view.h"
-#include "shared_view.h"
 #include "shared_state.h"
 #include "promise.h"
 #include "future.h"

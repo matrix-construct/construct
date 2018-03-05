@@ -13,7 +13,8 @@
 
 namespace ircd::ctx
 {
-	template<class T> class view;
+	template<class T, class mutex = mutex> class view;
+	template<class T> using shared_view = view<T, shared_mutex>;
 }
 
 /// Device for a context to share data on its stack with others while yielding
@@ -30,7 +31,8 @@ namespace ircd::ctx
 /// wait() returns with a view of the object under unique_lock. Once the
 /// consumer releases the unique_lock the viewed object is not safe for them.
 ///
-template<class T>
+template<class T,
+         class mutex>
 class ircd::ctx::view
 :public mutex
 {
@@ -42,9 +44,9 @@ class ircd::ctx::view
 
   public:
 	// Consumer interface;
-	template<class time_point> T &wait_until(std::unique_lock<view> &, time_point&&);
-	template<class duration> T &wait_for(std::unique_lock<view> &, const duration &);
-	T &wait(std::unique_lock<view> &);
+	template<class lock, class time_point> T &wait_until(lock &, time_point&&);
+	template<class lock, class duration> T &wait_for(lock &, const duration &);
+	template<class lock> T &wait(lock &);
 
 	// Producer interface;
 	void notify(T &);
@@ -53,16 +55,18 @@ class ircd::ctx::view
 	~view() noexcept;
 };
 
-template<class T>
-ircd::ctx::view<T>::~view()
+template<class T,
+         class mutex>
+ircd::ctx::view<T, mutex>::~view()
 noexcept
 {
 	assert(!waiting);
 }
 
-template<class T>
+template<class T,
+         class mutex>
 void
-ircd::ctx::view<T>::notify(T &t)
+ircd::ctx::view<T, mutex>::notify(T &t)
 {
 	if(!waiting)
 		return;
@@ -76,13 +80,15 @@ ircd::ctx::view<T>::notify(T &t)
 	q.notify_all();
 }
 
-template<class T>
+template<class T,
+         class mutex>
+template<class lock>
 T &
-ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
+ircd::ctx::view<T, mutex>::wait(lock &l)
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	for(assert(l.owns_lock()); ready(); l.lock())
 	{
-		lock.unlock();
+		l.unlock();
 		q.wait();
 	}
 
@@ -92,9 +98,9 @@ ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
 		q.notify_all();
 	}};
 
-	for(++waiting; !ready(); lock.lock())
+	for(++waiting; !ready(); l.lock())
 	{
-		lock.unlock();
+		l.unlock();
 		q.wait();
 	}
 
@@ -102,24 +108,28 @@ ircd::ctx::view<T>::wait(std::unique_lock<view> &lock)
 	return *t;
 }
 
-template<class T>
-template<class duration>
+template<class T,
+         class mutex>
+template<class lock,
+         class duration>
 T &
-ircd::ctx::view<T>::wait_for(std::unique_lock<view> &lock,
-                             const duration &dur)
+ircd::ctx::view<T, mutex>::wait_for(lock &l,
+                                    const duration &dur)
 {
-	return wait_until(now<steady_point>() + dur);
+	return wait_until(l, now<steady_point>() + dur);
 }
 
-template<class T>
-template<class time_point>
+template<class T,
+         class mutex>
+template<class lock,
+         class time_point>
 T &
-ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
-                               time_point&& tp)
+ircd::ctx::view<T, mutex>::wait_until(lock &l,
+                                      time_point&& tp)
 {
-	for(assert(lock.owns_lock()); ready(); lock.lock())
+	for(assert(l.owns_lock()); ready(); l.lock())
 	{
-		lock.unlock();
+		l.unlock();
 		q.wait_until(tp);
 	}
 
@@ -129,9 +139,9 @@ ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
 		q.notify_all();
 	}};
 
-	for(++waiting; !ready(); lock.lock())
+	for(++waiting; !ready(); l.lock())
 	{
-		lock.unlock();
+		l.unlock();
 		q.wait_until(tp);
 	}
 
@@ -139,9 +149,10 @@ ircd::ctx::view<T>::wait_until(std::unique_lock<view> &lock,
 	return *t;
 }
 
-template<class T>
+template<class T,
+         class mutex>
 bool
-ircd::ctx::view<T>::ready()
+ircd::ctx::view<T, mutex>::ready()
 const
 {
 	return t != nullptr;
