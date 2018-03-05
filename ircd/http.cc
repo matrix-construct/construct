@@ -750,13 +750,12 @@ ircd::http::parser::content_length(const string_view &str)
 std::string
 ircd::http::strung(const vector_view<const header> &headers)
 {
-	std::string ret(serialized(headers), char{});
-	window_buffer out{ret};
-	write(out, headers);
-	assert(out.consumed() <= ret.size());
-	ret.resize(out.consumed());
-	assert(out.consumed() == ret.size());
-	return ret;
+	return ircd::string(serialized(headers), [&]
+	(window_buffer out)
+	{
+		write(out, headers);
+		return out.consumed();
+	});
 }
 
 /// Indicates the buffer size required to write these headers. This size
