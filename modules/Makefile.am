@@ -256,18 +256,16 @@ media_module_LTLIBRARIES = \
 
 if JS
 
-server_moduledir = @moduledir@
+js_moduledir = @moduledir@
 
-server_server_console_la_SOURCES = server/console.cc
-server_server_listener_la_SOURCES = server/listener.cc
+js_js_console_la_SOURCES = js/console.cc
+js_js_listener_la_SOURCES = js/listener.cc
+js_js_kernel_la_SOURCES = js/kernel.cc
 
-server_module_LTLIBRARIES = \
-	server/server_console.la \
-	server/server_listener.la \
-	###
-
-module_LTLIBRARIES += \
-	kernel.la \
+js_module_LTLIBRARIES = \
+	js/js_console.la \
+	js/js_listener.la \
+	js/js_kernel.la \
 	###
 
 endif
