@@ -24,8 +24,8 @@ namespace ircd::http
 	struct request;
 	struct response;
 
-	string_view status(const enum code &);
-	enum code status(const string_view &);
+	string_view status(const code &);
+	code status(const string_view &);
 
 	void writeline(window_buffer &);
 	void writeline(window_buffer &, const window_buffer::closure &);
@@ -87,12 +87,12 @@ enum ircd::http::code
 struct ircd::http::error
 :ircd::error
 {
-	enum code code;
 	std::string content;
 	std::string headers;
+	http::code code;
 
-	error(const enum code &, std::string content = {}, std::string headers = {});
-	error(const enum code &, std::string content, const vector_view<const header> &);
+	error(const http::code &, std::string content = {}, std::string headers = {});
+	error(const http::code &, std::string content, const vector_view<const header> &);
 };
 
 /// Represents a single \r\n delimited line used in HTTP.

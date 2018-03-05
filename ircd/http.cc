@@ -853,23 +853,23 @@ ircd::http::throw_error(const qi::expectation_failure<const char *> &e)
 	};
 }
 
-ircd::http::error::error(const enum code &code,
+ircd::http::error::error(const http::code &code,
                          std::string content,
                          const vector_view<const header> &headers)
-:error
+:http::error
 {
 	code, std::move(content), strung(headers)
 }
 {
 }
 
-ircd::http::error::error(const enum code &code,
+ircd::http::error::error(const http::code &code,
                          std::string content,
                          std::string headers)
 :ircd::error{generate_skip}
-,code{code}
 ,content{std::move(content)}
 ,headers{std::move(headers)}
+,code{code}
 {
 	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).c_str());
 }
