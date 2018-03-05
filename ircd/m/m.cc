@@ -964,12 +964,16 @@ thread_local char
 ircd::m::error::fmtbuf[768]
 {};
 
+ircd::m::error::error()
+:http::error{http::INTERNAL_SERVER_ERROR}
+{}
+
 ircd::m::error::error(std::string c)
 :http::error{http::INTERNAL_SERVER_ERROR, std::move(c)}
 {}
 
 ircd::m::error::error(const http::code &c)
-:http::error{c}
+:http::error{c, std::string{}}
 {}
 
 ircd::m::error::error(const http::code &c,

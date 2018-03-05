@@ -40,7 +40,8 @@ class ircd::m::error
 	error(const http::code &, const json::members &);
 	error(const http::code &, const json::iov &);
 	error(const http::code &);
-	error(std::string = {});
+	error(std::string);
+	error();
 
 	IRCD_OVERLOAD(child)
 	template<class... args> error(child_t, args&&... a)
@@ -75,10 +76,10 @@ struct _name_                                                           \
         child, _httpcode_, "M_"#_name_, "%s", http::status(_httpcode_)  \
     }{}                                                                 \
                                                                         \
-    template<class... args> _name_(args&&... a)                         \
+    template<class... args> _name_(const char *const &fmt, args&&... a) \
     : _parent_                                                          \
     {                                                                   \
-        child, _httpcode_, "M_"#_name_, std::forward<args>(a)...        \
+        child, _httpcode_, "M_"#_name_, fmt, std::forward<args>(a)...   \
     }{}                                                                 \
                                                                         \
     template<class... args> _name_(child_t, args&&... a)                \
@@ -134,6 +135,6 @@ ircd::m::error::error(const string_view &errcode,
                       args&&... a)
 :error
 {
-	http::BAD_REQUEST, errcode, fmt, std::forward<args>(a)...
+	http::INTERNAL_SERVER_ERROR, errcode, fmt, std::forward<args>(a)...
 }
 {}
