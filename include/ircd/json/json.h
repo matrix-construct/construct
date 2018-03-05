@@ -53,6 +53,8 @@ struct ircd::json::strung
 :std::string
 {
 	template<class... T> strung(T&&... t);
+	strung(strung &&s) noexcept: std::string{std::move(s)} {}
+	strung(const strung &s): std::string{s} {}
 };
 
 #include "util.h"
