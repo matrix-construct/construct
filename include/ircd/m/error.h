@@ -137,31 +137,3 @@ ircd::m::error::error(const string_view &errcode,
 	http::BAD_REQUEST, errcode, fmt, std::forward<args>(a)...
 }
 {}
-
-inline
-ircd::m::error::error(std::string c)
-:http::error{http::INTERNAL_SERVER_ERROR, std::move(c)}
-{}
-
-inline
-ircd::m::error::error(const http::code &c)
-:http::error{c}
-{}
-
-inline
-ircd::m::error::error(const http::code &c,
-                      const json::members &members)
-:http::error{c, json::strung(members)}
-{}
-
-inline
-ircd::m::error::error(const http::code &c,
-                      const json::iov &iov)
-:http::error{c, json::strung(iov)}
-{}
-
-inline
-ircd::m::error::error(const http::code &c,
-                      const json::object &object)
-:http::error{c, std::string{object}}
-{}

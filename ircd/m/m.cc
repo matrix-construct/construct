@@ -963,3 +963,26 @@ ircd::m::hook::list::add(site &site)
 thread_local char
 ircd::m::error::fmtbuf[768]
 {};
+
+ircd::m::error::error(std::string c)
+:http::error{http::INTERNAL_SERVER_ERROR, std::move(c)}
+{}
+
+ircd::m::error::error(const http::code &c)
+:http::error{c}
+{}
+
+ircd::m::error::error(const http::code &c,
+                      const json::members &members)
+:http::error{c, json::strung{members}}
+{}
+
+ircd::m::error::error(const http::code &c,
+                      const json::iov &iov)
+:http::error{c, json::strung{iov}}
+{}
+
+ircd::m::error::error(const http::code &c,
+                      const json::object &object)
+:http::error{c, std::string{object}}
+{}
