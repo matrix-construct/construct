@@ -1505,6 +1505,7 @@ static bool console_cmd__fed__version(const string_view &line);
 static bool console_cmd__fed__query(const string_view &line);
 static bool console_cmd__fed__event(const string_view &line);
 static bool console_cmd__fed__state(const string_view &line);
+static bool console_cmd__fed__head(const string_view &line);
 
 bool
 console_cmd__fed(const string_view &line)
@@ -1528,8 +1529,53 @@ console_cmd__fed(const string_view &line)
 		case hash("state"):
 			return console_cmd__fed__state(args);
 
+		case hash("head"):
+			return console_cmd__fed__head(args);
+
 		default:
 			throw bad_command{};
+	}
+
+	return true;
+}
+
+bool
+console_cmd__fed__head(const string_view &line)
+{
+	const m::room::id &room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token(line, ' ', 1)
+	};
+
+	thread_local char buf[16_KiB];
+	m::v1::make_join request
+	{
+		room_id, m::me.user_id, buf
+	};
+
+	if(request.wait(seconds(5)) == ctx::future_status::timeout)
+		throw http::error{http::REQUEST_TIMEOUT};
+
+	request.get();
+	const json::object proto
+	{
+		request.in.content
+	};
+
+	const json::array prev_events
+	{
+		proto.at({"event", "prev_events"})
+	};
+
+	for(const json::array &prev_event : prev_events)
+	{
+		const string_view &id{prev_event.at(0)};
+		out << id << " :" << string_view{prev_event.at(1)} << std::endl;
 	}
 
 	return true;
