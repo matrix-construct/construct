@@ -217,34 +217,11 @@ struct ircd::http::headers
 	headers(parse::capstan &, const closure & = {});
 };
 
-/// Represents the content of an HTTP request after the head.
-///
-/// Use the request::content / response::content wrappers. They ensure the
-/// proper amount of content is read and the tape is in the right position
-/// for the next request with exception safety. In other words, this object
-/// ensures the capstan is in the proper place for the next request no matter
-/// what happens; whether an exception happened, or whether the user simply
-/// didn't care to read the content. The capstan MUST advance Content-Length
-/// bytes in any case.
-///
-struct ircd::http::content
-:string_view
-{
-	IRCD_OVERLOAD(discard)
-	IRCD_OVERLOAD(chunked)
-
-	content(parse::capstan &, const size_t &length, discard_t);
-	content(parse::capstan &, const size_t &length);
-	content(parse::capstan &, chunked_t);
-	content() = default;
-};
-
 /// HTTP request suite. Functionality to send and receive requests.
 ///
 struct ircd::http::request
 {
 	struct head;
-	struct content;
 
 	using proffer = std::function<void (const head &)>;
 
@@ -280,26 +257,11 @@ struct ircd::http::request::head
 	head() = default;
 };
 
-/// Represents an HTTP request content. This is only for receiving content.
-///
-struct ircd::http::request::content
-:http::content
-{
-	content(parse::capstan &pc, const head &h, discard_t)
-	:http::content{pc, h.content_length, discard}
-	{}
-
-	content(parse::capstan &pc, const head &h)
-	:http::content{pc, h.content_length}
-	{}
-};
-
 /// HTTP response suite. Functionality to send and receive responses.
 ///
 struct ircd::http::response
 {
 	struct head;
-	struct content;
 	struct chunked;
 
 	using write_closure = std::function<void (const ilist<const const_buffer> &)>;
@@ -351,24 +313,4 @@ struct ircd::http::response::head
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 	head() = default;
-};
-
-/// Represents an HTTP response content. This is for receiving only.
-///
-struct ircd::http::response::content
-:http::content
-{
-	content(parse::capstan &pc, const head &h, discard_t)
-	:http::content{pc, h.content_length, discard}
-	{}
-
-	content(parse::capstan &pc, const head &h, chunked_t)
-	:http::content{pc, chunked}
-	{}
-
-	content(parse::capstan &pc, const head &h)
-	:http::content{pc, h.content_length}
-	{}
-
-	content() = default;
 };
