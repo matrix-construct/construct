@@ -180,7 +180,7 @@ struct ircd::string_view
 	/// Our default constructor sets the elements to 0 for best behavior by
 	/// defined() and null() et al.
 	constexpr string_view()
-	:std::string_view{nullptr, 0}
+	:std::string_view{}
 	{}
 
 	using std::string_view::string_view;
