@@ -207,10 +207,12 @@ client_module_LTLIBRARIES += \
 
 key_moduledir = @moduledir@
 
+key_key_keys_la_SOURCES = key/keys.cc
 key_key_server_la_SOURCES = key/server.cc
 key_key_query_la_SOURCES = key/query.cc
 
 key_module_LTLIBRARIES = \
+	key/key_keys.la \
 	key/key_server.la \
 	key/key_query.la \
 	###

@@ -250,8 +250,6 @@ ircd::m::init::bootstrap()
 	{
 		{ "name", "User Tokens" }
 	});
-
-	_keys.bootstrap();
 }
 
 bool
@@ -297,6 +295,233 @@ ircd::m::leave_ircd_room()
 {
 	leave(my_room, me.user_id);
 	presence::set(me, "offline", me_offline_status_msg);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/keys.h
+//
+
+ircd::ed25519::sk
+ircd::m::self::secret_key
+{};
+
+ircd::ed25519::pk
+ircd::m::self::public_key
+{};
+
+std::string
+ircd::m::self::public_key_b64
+{};
+
+std::string
+ircd::m::self::public_key_id
+{};
+
+std::string
+ircd::m::self::tls_cert_der
+{};
+
+std::string
+ircd::m::self::tls_cert_der_sha256_b64
+{};
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
+                   const key_closure &closure)
+try
+{
+	get(server_name, [&key_id, &closure](const keys &keys)
+	{
+		const json::object vks
+		{
+			at<"verify_keys"_>(keys)
+		};
+
+		const json::object vkk
+		{
+			vks.at(key_id)
+		};
+
+		const string_view &key
+		{
+			vkk.at("key")
+		};
+
+		closure(key);
+	});
+}
+catch(const json::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"Failed to find key '%s' for '%s': %s",
+		key_id,
+		server_name,
+		e.what()
+	};
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
+                   const closure &closure)
+{
+	get(server_name, [&key_id, &closure](const keys &keys)
+	{
+		closure(keys);
+	});
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const closure &closure_)
+{
+	using prototype = void (const string_view &, const closure &);
+
+	static import<prototype> function
+	{
+		"key_keys", "get__keys"
+	};
+
+	return function(server_name, closure_);
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
+                   const string_view &query_server,
+                   const closure &closure_)
+{
+	using prototype = void (const string_view &, const string_view &, const string_view &, const closure &);
+
+	static import<prototype> function
+	{
+		"key_keys", "query__keys"
+	};
+
+	return function(server_name, key_id, query_server, closure_);
+}
+
+//
+// init
+//
+
+ircd::m::keys::init::init(const json::object &config)
+:config{config}
+{
+	certificate();
+	signing();
+}
+
+ircd::m::keys::init::~init()
+noexcept
+{
+}
+
+void
+ircd::m::keys::init::certificate()
+{
+	const std::string private_key_file
+	{
+		unquote(config.at("tls_private_key_path"))
+	};
+
+	const std::string public_key_file
+	{
+		unquote(config.get("tls_public_key_path", private_key_file + ".pub"))
+	};
+
+	if(!fs::exists(private_key_file))
+	{
+		log::warning("Failed to find certificate private key @ `%s'; creating...", private_key_file);
+		openssl::genrsa(private_key_file, public_key_file);
+	}
+
+	const std::string cert_file
+	{
+		unquote(config.at("tls_certificate_path"))
+	};
+
+	if(!fs::exists(cert_file))
+		throw fs::error("Failed to find SSL certificate @ `%s'", cert_file);
+
+	const auto cert_pem
+	{
+		fs::read(cert_file)
+	};
+
+	const unique_buffer<mutable_buffer> der_buf
+	{
+		8_KiB
+	};
+
+	const auto cert_der
+	{
+		openssl::cert2d(der_buf, cert_pem)
+	};
+
+	const fixed_buffer<const_buffer, crh::sha256::digest_size> hash
+	{
+		sha256{cert_der}
+	};
+
+	self::tls_cert_der_sha256_b64 =
+	{
+		b64encode_unpadded(hash)
+	};
+
+	log.info("Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
+	         cert_file,
+	         cert_pem.size(),
+	         ircd::size(cert_der),
+	         self::tls_cert_der_sha256_b64);
+
+	thread_local char print_buf[8_KiB];
+	log.info("Certificate `%s' :%s",
+	         cert_file,
+	         openssl::print_subject(print_buf, cert_pem));
+}
+
+void
+ircd::m::keys::init::signing()
+{
+	const std::string sk_file
+	{
+		unquote(config.get("signing_key_path", "construct.sk"))
+	};
+
+	if(fs::exists(sk_file))
+		log.info("Using ed25519 secret key @ `%s'", sk_file);
+	else
+		log.notice("Creating new ed25519 secret key @ `%s'", sk_file);
+
+	self::secret_key = ed25519::sk
+	{
+		sk_file, &self::public_key
+	};
+
+	self::public_key_b64 = b64encode_unpadded(self::public_key);
+	const fixed_buffer<const_buffer, sha256::digest_size> hash
+	{
+		sha256{self::public_key}
+	};
+
+	const auto public_key_hash_b58
+	{
+		b58encode(hash)
+	};
+
+	static const auto trunc_size{8};
+	self::public_key_id = fmt::snstringf
+	{
+		BUFSIZE, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
+	};
+
+	log.info("Current key is '%s' and the public key is: %s",
+	         self::public_key_id,
+	         self::public_key_b64);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -10,8 +10,6 @@
 
 #pragma once
 #define HAVE_IRCD_M_KEYS_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 namespace ircd::m
 {
@@ -29,6 +27,8 @@ namespace ircd::m::self
 	extern std::string tls_cert_der_sha256_b64;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// Contains the public keys and proof of identity for a remote server.
 ///
 /// A user who wishes to verify a signature from a remote server must have
@@ -62,23 +62,20 @@ struct ircd::m::keys
 {
 	struct init;
 
-	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
-	using keys_closure = std::function<void (const keys &)>;
-
-	static m::room room;
-
-	static bool get_local(const string_view &server_name, const keys_closure &);
-	static bool verify(const keys &) noexcept;
-	static void set(const keys &);
-
   public:
-	static void get(const string_view &server_name, const string_view &key_id, const string_view &query_server, const keys_closure &);
+	using closure = std::function<void (const keys &)>;
+	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
+
+	static void get(const string_view &server_name, const string_view &key_id, const string_view &query_server, const closure &);
+
+	static void get(const string_view &server_name, const closure &);
+	static void get(const string_view &server_name, const string_view &key_id, const closure &);
 	static void get(const string_view &server_name, const string_view &key_id, const key_closure &);
-	static void get(const string_view &server_name, const keys_closure &);
 
 	using super_type::tuple;
 	using super_type::operator=;
 };
+#pragma GCC diagnostic pop
 
 struct ircd::m::keys::init
 {
@@ -88,10 +85,6 @@ struct ircd::m::keys::init
 	void signing();
 
   public:
-	void bootstrap();
-
 	init(const json::object &config);
 	~init() noexcept;
 };
-
-#pragma GCC diagnostic pop
