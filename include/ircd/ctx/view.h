@@ -49,7 +49,7 @@ class ircd::ctx::view
 	template<class lock> T &wait(lock &);
 
 	// Producer interface;
-	void notify(T &);
+	void expose(T &);
 
 	view() = default;
 	~view() noexcept;
@@ -66,7 +66,7 @@ noexcept
 template<class T,
          class mutex>
 void
-ircd::ctx::view<T, mutex>::notify(T &t)
+ircd::ctx::view<T, mutex>::expose(T &t)
 {
 	if(!waiting)
 		return;
