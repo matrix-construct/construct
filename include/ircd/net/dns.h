@@ -85,11 +85,8 @@ struct ircd::net::dns::opts
 /// (internal) DNS cache
 struct ircd::net::dns::cache
 {
-	using hash = std::hash<string_view>;
-	using equal_to = std::equal_to<string_view>;
-
-	std::unordered_multimap<std::string, rfc1035::record::A, hash, equal_to> A;
-	std::unordered_multimap<std::string, rfc1035::record::SRV, hash, equal_to> SRV;
+	std::multimap<std::string, rfc1035::record::A, std::less<>> A;
+	std::multimap<std::string, rfc1035::record::SRV, std::less<>> SRV;
 };
 
 template<class Callback>

@@ -2293,7 +2293,7 @@ ircd::net::dns::query_cache(const hostport &hp,
 		};
 
 		auto &map{cache.SRV};
-		const auto pit{map.equal_range(std::string{srvhost})}; //TODO: XXX
+		const auto pit{map.equal_range(srvhost)};
 		if(pit.first == pit.second)
 			return false;
 
