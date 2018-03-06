@@ -47,6 +47,11 @@ noexcept
 		unquote(content.at("value"))
 	};
 
+	log::debug
+	{
+		"Updating conf [%s] => %s", key, value
+	};
+
 	ircd::conf::set(key, value);
 }
 
@@ -64,7 +69,16 @@ update_conf_hook
 static void
 init_conf_items(const m::event &)
 {
+	const m::room::state state
+	{
+		conf_room
+	};
 
+	state.for_each("ircd.conf.item", []
+	(const m::event &event)
+	{
+		update_conf(event);
+	});
 }
 
 const m::hook
