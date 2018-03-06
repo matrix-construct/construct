@@ -27,6 +27,8 @@ struct ircd::m::user
 
 	id user_id;
 
+	operator const id &() const;
+
 	static m::room users;
 	static m::room tokens;
 
@@ -61,3 +63,10 @@ struct ircd::m::user::room
 	room(const room &) = delete;
 	room &operator=(const room &) = delete;
 };
+
+inline ircd::m::user::operator
+const ircd::m::user::id &()
+const
+{
+	return user_id;
+}

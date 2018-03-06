@@ -96,7 +96,7 @@ struct ircd::m::room
 	id room_id;
 	event::id event_id;
 
-	operator const id &() const        { return room_id;                       }
+	operator const id &() const;
 
 	// Convenience passthru to room::state (logarithmic query)
 	bool has(const string_view &type, const string_view &state_key) const;
@@ -324,3 +324,10 @@ struct ircd::m::room::state::tuple
 };
 
 #pragma GCC diagnostic pop
+
+inline ircd::m::room::operator
+const ircd::m::room::id &()
+const
+{
+	return room_id;
+}

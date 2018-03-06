@@ -41,6 +41,8 @@ struct ircd::m::node
 
 	id node_id;
 
+	operator const id &() const;
+
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
 
@@ -66,3 +68,10 @@ struct ircd::m::node::room
 	room(const room &) = delete;
 	room &operator=(const room &) = delete;
 };
+
+inline ircd::m::node::operator
+const ircd::m::node::id &()
+const
+{
+	return node_id;
+}
