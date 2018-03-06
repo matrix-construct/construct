@@ -309,9 +309,7 @@ noexcept
 void
 ircd::server::peer::close(const net::close_opts &opts)
 {
-	for(auto &link : this->links)
-		link.exclude = true;
-
+	ready = false;
 	std::vector<link *> links(this->links.size());
 	pointers(this->links, links);
 	for(const auto &link : links)
@@ -354,6 +352,12 @@ void
 ircd::server::peer::submit(request &request)
 try
 {
+	if(unlikely(!ready || !server::ready))
+		throw unavailable
+		{
+			"Peer is unable to take any requests."
+		};
+
 	link *const ret
 	{
 		link_get(request)

@@ -25,6 +25,7 @@ struct ircd::server::peer
 	string_view emsg; // points to eptr->what()
 	steady_point etime; // time of error
 	std::string server_name;
+	bool ready {true};
 
 	template<class F> size_t accumulate_links(F&&) const;
 	template<class F> size_t accumulate_tags(F&&) const;
