@@ -150,14 +150,24 @@ ircd::server::accumulate_peers(F&& closure)
 	});
 }
 
+ircd::conf::item<ircd::seconds>
+close_all_timeout
+{
+	{ "name",     "ircd.server.close_all_timeout" },
+	{ "default",  2L                              },
+};
+
 void
 ircd::server::close_all()
 {
 	log.debug("Closing all %zu peers",
 	          peer_count());
 
+	net::close_opts opts;
+	opts.timeout = seconds(close_all_timeout);
+
 	for(auto &peer : peers)
-		peer.second->close();
+		peer.second->close(opts);
 
 	log.debug("Waiting for %zu tags on %zu links on %zu peers to close...",
 	          tag_count(),
