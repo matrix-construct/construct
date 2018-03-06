@@ -1077,6 +1077,7 @@ console_cmd__exec_file(const string_view &line)
 // room
 //
 
+static bool console_cmd__room__id(const string_view &line);
 static bool console_cmd__room__redact(const string_view &line);
 static bool console_cmd__room__message(const string_view &line);
 static bool console_cmd__room__set(const string_view &line);
@@ -1131,6 +1132,9 @@ console_cmd__room(const string_view &line)
 
 		case hash("redact"):
 			return console_cmd__room__redact(args);
+
+		case hash("id"):
+			return console_cmd__room__id(args);
 
 		default:
 			throw bad_command{};
@@ -1470,6 +1474,26 @@ console_cmd__room__redact(const string_view &line)
 	};
 
 	out << event_id << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__id(const string_view &id)
+{
+	if(m::has_sigil(id)) switch(m::sigil(id))
+	{
+		case m::id::USER:
+			out << m::user{id}.room_id() << std::endl;
+			break;
+
+		case m::id::NODE:
+			out << m::node{id}.room_id() << std::endl;
+			break;
+
+		default:
+			break;
+	}
+
 	return true;
 }
 
