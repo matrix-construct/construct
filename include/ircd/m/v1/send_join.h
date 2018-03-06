@@ -27,6 +27,7 @@ struct ircd::m::v1::send_join
 	}
 
 	send_join(const room::id &, const user::id &, const const_buffer &, const mutable_buffer &, opts);
+	send_join() = default;
 };
 
 struct ircd::m::v1::send_join::opts

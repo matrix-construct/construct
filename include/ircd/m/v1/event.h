@@ -35,6 +35,7 @@ struct ircd::m::v1::event
 
 	event(const m::event::id &, const mutable_buffer &, opts);
 	event(const m::event::id &, const mutable_buffer &);
+	event() = default;
 };
 
 struct ircd::m::v1::event::opts

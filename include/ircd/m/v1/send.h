@@ -35,6 +35,8 @@ struct ircd::m::v1::send
 	     const const_buffer &content,     // full transaction (HTTP content out)
 	     const mutable_buffer &head,      // buffer for HTTP head in and out
 	     opts);                           // options structure
+
+	send() = default;
 };
 
 /// Options for a federation send request.

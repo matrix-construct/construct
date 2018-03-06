@@ -28,6 +28,7 @@ struct ircd::m::v1::make_join
 
 	make_join(const room::id &, const user::id &, const mutable_buffer &, opts);
 	make_join(const room::id &, const user::id &, const mutable_buffer &);
+	make_join() = default;
 };
 
 struct ircd::m::v1::make_join::opts

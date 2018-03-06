@@ -27,6 +27,7 @@ struct ircd::m::v1::version
 	}
 
 	version(const mutable_buffer &, opts);
+	version() = default;
 };
 
 struct ircd::m::v1::version::opts

@@ -30,6 +30,7 @@ struct ircd::m::v1::query
 	}
 
 	query(const string_view &type, const string_view &args, const mutable_buffer &, opts);
+	query() = default;
 };
 
 struct ircd::m::v1::query::opts
