@@ -25,6 +25,8 @@ class ircd::ctx::shared_mutex
 	void release();
 
   public:
+	size_t waiting() const;
+
 	bool try_lock();
 	bool try_lock_shared();
 	bool try_lock_upgrade();
@@ -349,6 +351,13 @@ ircd::ctx::shared_mutex::try_lock()
 
 	s = std::numeric_limits<decltype(s)>::min();
 	return true;
+}
+
+inline size_t
+ircd::ctx::shared_mutex::waiting()
+const
+{
+	return q.size();
 }
 
 inline void

@@ -29,6 +29,8 @@ class ircd::ctx::mutex
 	list q;
 
   public:
+	size_t waiting() const;
+
 	bool try_lock();
 	template<class time_point> bool try_lock_until(const time_point &);
 	template<class duration> bool try_lock_for(const duration &);
@@ -129,6 +131,13 @@ ircd::ctx::mutex::try_lock()
 
 	m = true;
 	return true;
+}
+
+inline size_t
+ircd::ctx::mutex::waiting()
+const
+{
+	return q.size();
 }
 
 template<class queue>
