@@ -76,7 +76,7 @@ console_init()
 	console_cancel();
 	console_active = true;
 	console_ctx = &ctx::cur();
-	console_module = new ircd::module{"s_console"};
+	console_module = new ircd::module{"console"};
 }
 
 void
