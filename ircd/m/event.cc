@@ -413,6 +413,119 @@ ircd::m::event::event(const id &id,
 	new (this) m::event(obj);
 }
 
+ircd::string_view
+ircd::m::event::hashes(const mutable_buffer &out,
+                       json::iov &event,
+                       const string_view &content)
+{
+	const sha256::buf hash_
+	{
+		hash(event, content)
+	};
+
+	static const size_t hashb64sz
+	{
+		size_t(sizeof(hash_) * 1.34) + 1
+	};
+
+	thread_local char hashb64buf[hashb64sz];
+	const json::members hashes
+	{
+		{ "sha256", b64encode_unpadded(hashb64buf, hash_) }
+	};
+
+	return json::stringify(mutable_buffer{out}, hashes);
+}
+
+ircd::sha256::buf
+ircd::m::event::hash(json::iov &event,
+                     const string_view &content)
+{
+	const json::iov::push _content
+	{
+		event, { "content", content }
+	};
+
+	return hash(event);
+}
+
+ircd::sha256::buf
+ircd::m::event::hash(const m::event &event)
+{
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	const sha256::buf hash
+	{
+		sha256{preimage}
+	};
+
+	return hash;
+}
+
+ircd::string_view
+ircd::m::event::signatures(const mutable_buffer &out,
+                           json::iov &event,
+                           const json::iov &content)
+{
+	const ed25519::sig sig
+	{
+		sign(event, content)
+	};
+
+	static const size_t sigb64sz
+	{
+		size_t(sizeof(sig) * 1.34) + 1
+	};
+
+	thread_local char sigb64buf[sigb64sz];
+	const json::members sigb64
+	{
+		{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
+	};
+
+	const json::members sigs
+	{
+		{ my_host(), sigb64 }
+    };
+
+	return json::stringify(mutable_buffer{out}, sigs);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(json::iov &event,
+                     const json::iov &content)
+{
+	//TODO: essential keys
+	const json::iov::push _content
+	{
+		event, { "content", "{}" }
+	};
+
+	return sign(event);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const m::event &event)
+{
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	const ed25519::sig sig
+	{
+		self::secret_key.sign(preimage)
+	};
+
+	assert(self::public_key.verify(preimage, sig));
+	return sig;
+}
+
 //
 // event::prev
 //

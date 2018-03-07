@@ -78,6 +78,14 @@ struct ircd::m::event
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
 
+	static ed25519::sig sign(const m::event &);
+	static ed25519::sig sign(json::iov &event, const json::iov &content);
+	static string_view signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
+
+	static sha256::buf hash(const m::event &);
+	static sha256::buf hash(json::iov &event, const string_view &content);
+	static string_view hashes(const mutable_buffer &, json::iov &event, const string_view &content);
+
 	using super_type::tuple;
 	using super_type::operator=;
 

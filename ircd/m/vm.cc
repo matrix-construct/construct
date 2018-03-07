@@ -42,85 +42,55 @@ ircd::m::event::id::buf
 ircd::m::vm::commit(json::iov &event,
                     const json::iov &contents)
 {
-	const auto &room_id
-	{
-		event.at("room_id")
-	};
-
-	// derp
-	const json::strung content
-	{
-		contents
-	};
-
 	const json::iov::set set[]
 	{
 		{ event, { "origin_server_ts",  ircd::time<milliseconds>() }},
 		{ event, { "origin",            my_host()                  }},
 	};
 
-	thread_local char preimage_buf[64_KiB];
-	const_buffer preimage
+	const json::strung content
 	{
-		stringify(mutable_buffer{preimage_buf}, event)
+		contents
 	};
 
-	sha256::buf hash
+	// event_id
+
+	sha256::buf event_id_hash;
 	{
-		sha256{preimage}
-	};
+		thread_local char preimage_buf[64_KiB];
+		event_id_hash = sha256{stringify(mutable_buffer{preimage_buf}, event)};
+	}
 
 	event::id::buf eid_buf;
-	const json::iov::set _event_id
+	const auto event_id
 	{
-		event, { "event_id", m::event_id(event, eid_buf, hash) }
+		m::event_id(event, eid_buf, event_id_hash)
 	};
 
-	char hashes_buf[128];
-	string_view hashes;
+	const json::iov::set _event_id
 	{
-		const json::iov::push _content
-		{
-			event, { "content", string_view{content} }
-		};
+		event, { "event_id", event_id }
+	};
 
-		// derp
-		preimage = stringify(mutable_buffer{preimage_buf}, event);
-		hash = sha256{preimage};
+	// hashes
 
-		// derp
-		thread_local char hashb64[hash.size() * 2];
-		hashes = stringify(mutable_buffer{hashes_buf}, json::members
-		{
-			{ "sha256", b64encode_unpadded(hashb64, hash) }
-		});
-	}
+	char hashes_buf[128];
+	const string_view hashes
+	{
+		m::event::hashes(hashes_buf, event, content)
+	};
 
 	const json::iov::push _hashes
 	{
 		event, { "hashes", hashes }
 	};
 
-	// derp
-	ed25519::sig sig;
-	{
-		const json::iov::push _content
-		{
-			event, { "content", "{}" }
-		};
+	// sigs
 
-		preimage = stringify(mutable_buffer{preimage_buf}, event);
-		sig = self::secret_key.sign(preimage);
-		assert(self::public_key.verify(preimage, sig));
-	}
-
-	char sigb64[size_t(size(sig) * 1.34) + 1];
-	const json::members sigs
+	char sigs_buf[384];
+	const string_view sigs
 	{
-		{ my_host(), json::members
-		{
-			{ self::public_key_id, b64encode_unpadded(sigb64, sig) }
-		}}
+		m::event::signatures(sigs_buf, event, contents)
 	};
 
 	const json::iov::push _final[]
@@ -162,13 +132,8 @@ ircd::m::vm::commit_hook
 ///         out
 ///
 ircd::m::event::id::buf
-ircd::m::vm::commit(json::iov &iov)
+ircd::m::vm::commit(const event &event)
 {
-	const m::event event
-	{
-		iov
-	};
-
 	check_size(event);
 
 	log.debug("injecting event(mark: %ld) %s",
