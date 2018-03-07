@@ -71,3 +71,80 @@ presence_get(const m::user &user,
 
 	return ret;
 }
+
+static void handle_edu_m_presence_(const m::event &, const m::edu::m_presence &edu);
+static void handle_edu_m_presence(const m::event &);
+
+const m::hook
+_m_presence_eval
+{
+	handle_edu_m_presence,
+	{
+		{ "_site",   "vm.eval"     },
+		{ "type",    "m.presence"  },
+	}
+};
+
+void
+handle_edu_m_presence(const m::event &event)
+{
+	const json::object &content
+	{
+		at<"content"_>(event)
+	};
+
+	const json::array &push
+	{
+		content.get("push")
+	};
+
+	for(const json::object &presence : push)
+		handle_edu_m_presence_(event, presence);
+}
+
+void
+handle_edu_m_presence_(const m::event &event,
+                       const m::edu::m_presence &object)
+{
+	const m::user::id &user_id
+	{
+		at<"user_id"_>(object)
+	};
+
+	if(user_id.host() != at<"origin"_>(event))
+	{
+		log::warning
+		{
+			"Ignoring %s from %s for user %s",
+			at<"type"_>(event),
+			at<"origin"_>(event),
+			string_view{user_id}
+		};
+
+		return;
+	}
+
+	const auto &presence
+	{
+		at<"presence"_>(object)
+	};
+
+	if(!exists(user_id))
+		m::user{user_id}.activate();
+
+	const auto evid
+	{
+		m::presence::set(object)
+	};
+
+	log::debug
+	{
+		"%s | %s %s [%s] %zd seconds ago => %s",
+		at<"origin"_>(event),
+		string_view{user_id},
+		presence,
+		json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
+		json::get<"last_active_ago"_>(object) / 1000L,
+		string_view{evid}
+	};
+}
