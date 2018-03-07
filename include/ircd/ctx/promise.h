@@ -44,7 +44,6 @@ class ircd::ctx::promise
 	void set_exception(std::exception_ptr eptr);
 	void set_value(const T &val);
 	void set_value(T&& val);
-	void reset();
 
 	promise();
 	promise(promise &&o) noexcept = default;
@@ -72,7 +71,6 @@ class ircd::ctx::promise<void>
 
 	void set_exception(std::exception_ptr eptr);
 	void set_value();
-	void reset();
 
 	promise();
 	promise(promise &&o) noexcept = default;
@@ -138,21 +136,6 @@ noexcept
 		if(!--st->promise_refcnt)
 			if(!st->finished && !st.unique())
 				set_exception(std::make_exception_ptr(broken_promise()));
-}
-
-inline void
-ircd::ctx::promise<void>::reset()
-{
-	if(valid())
-		st->reset();
-}
-
-template<class T>
-void
-ircd::ctx::promise<T>::reset()
-{
-	if(valid())
-		st->reset();
 }
 
 template<class T>

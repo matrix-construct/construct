@@ -24,8 +24,6 @@ struct ircd::ctx::shared_state_base
 	std::exception_ptr eptr;
 	uint promise_refcnt {0};
 	bool finished {false};
-
-	void reset();
 };
 
 template<class T>
@@ -80,11 +78,4 @@ ircd::ctx::shared_state<T>::share()
 const
 {
 	return this->shared_from_this();
-}
-
-inline void
-ircd::ctx::shared_state_base::reset()
-{
-	eptr = nullptr;
-	finished = false;
 }
