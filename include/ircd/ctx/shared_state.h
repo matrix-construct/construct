@@ -36,6 +36,7 @@ struct ircd::ctx::shared_state
 	using reference_type  = T &;
 
 	T val;
+	std::function<void (std::exception_ptr, T) noexcept> callback;
 
 	std::shared_ptr<const shared_state<T>> share() const;
 	std::shared_ptr<shared_state<T>> share();
@@ -47,6 +48,8 @@ struct ircd::ctx::shared_state<void>
 ,std::enable_shared_from_this<shared_state<void>>
 {
 	using value_type      = void;
+
+	std::function<void (std::exception_ptr) noexcept> callback;
 
 	std::shared_ptr<const shared_state<void>> share() const;
 	std::shared_ptr<shared_state<void>> share();

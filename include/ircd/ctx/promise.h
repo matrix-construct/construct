@@ -147,6 +147,10 @@ ircd::ctx::promise<T>::set_value(T&& val)
 	st->val = std::move(val);
 	st->finished = true;
 	st->cond.notify_all();
+	if(st->callback) ircd::post([st(st)]
+	{
+		st->callback(st->eptr, st->val);
+	});
 }
 
 inline void
@@ -156,6 +160,10 @@ ircd::ctx::promise<void>::set_value()
 	assert(!finished());
 	st->finished = true;
 	st->cond.notify_all();
+	if(st->callback) ircd::post([st(st)]
+	{
+		st->callback(st->eptr);
+	});
 }
 
 template<class T>
@@ -167,6 +175,10 @@ ircd::ctx::promise<T>::set_value(const T &val)
 	st->val = val;
 	st->finished = true;
 	st->cond.notify_all();
+	if(st->callback) ircd::post([st(st)]
+	{
+		st->callback(st->eptr, st->val);
+	});
 }
 
 inline void
@@ -177,6 +189,10 @@ ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 	st->eptr = std::move(eptr);
 	st->finished = true;
 	st->cond.notify_all();
+	if(st->callback) ircd::post([st(st)]
+	{
+		st->callback(st->eptr);
+	});
 }
 
 template<class T>
@@ -188,4 +204,8 @@ ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 	st->eptr = std::move(eptr);
 	st->finished = true;
 	st->cond.notify_all();
+	if(st->callback) ircd::post([st(st)]
+	{
+		st->callback(st->eptr, st->val);
+	});
 }
