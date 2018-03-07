@@ -1272,19 +1272,19 @@ ircd::m::hook::match(const m::event &event)
 const
 {
 	if(json::get<"origin"_>(matching))
-		if(at<"origin"_>(matching) != at<"origin"_>(event))
+		if(at<"origin"_>(matching) != json::get<"origin"_>(event))
 			return false;
 
 	if(json::get<"room_id"_>(matching))
-		if(at<"room_id"_>(matching) != at<"room_id"_>(event))
+		if(at<"room_id"_>(matching) != json::get<"room_id"_>(event))
 			return false;
 
 	if(json::get<"sender"_>(matching))
-		if(at<"sender"_>(matching) != at<"sender"_>(event))
+		if(at<"sender"_>(matching) != json::get<"sender"_>(event))
 			return false;
 
 	if(json::get<"type"_>(matching))
-		if(at<"type"_>(matching) != at<"type"_>(event))
+		if(at<"type"_>(matching) != json::get<"type"_>(event))
 			return false;
 
 	if(json::get<"state_key"_>(matching))
@@ -1296,9 +1296,9 @@ const
 			return false;
 
 	if(json::get<"content"_>(matching))
-		if(at<"type"_>(event) == "m.room.message")
+		if(json::get<"type"_>(event) == "m.room.message")
 			if(at<"content"_>(matching).has("msgtype"))
-				if(at<"content"_>(matching).get("msgtype") != at<"content"_>(event).get("msgtype"))
+				if(at<"content"_>(matching).get("msgtype") != json::get<"content"_>(event).get("msgtype"))
 					return false;
 
 	return true;
@@ -1350,10 +1350,18 @@ ircd::m::hook::site::operator()(const event &event)
 			matching.emplace(pit.first->second);
 	}};
 
-	site_match(origin, at<"origin"_>(event));
-	site_match(room_id, at<"room_id"_>(event));
-	site_match(sender, at<"sender"_>(event));
-	site_match(type, at<"type"_>(event));
+	if(json::get<"origin"_>(event))
+		site_match(origin, at<"origin"_>(event));
+
+	if(json::get<"room_id"_>(event))
+		site_match(room_id, at<"room_id"_>(event));
+
+	if(json::get<"sender"_>(event))
+		site_match(sender, at<"sender"_>(event));
+
+	if(json::get<"type"_>(event))
+		site_match(type, at<"type"_>(event));
+
 	if(json::get<"state_key"_>(event))
 		site_match(state_key, at<"state_key"_>(event));
 
