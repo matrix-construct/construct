@@ -16,8 +16,8 @@ ircd::m::vm::log
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::inserted)
-ircd::m::vm::inserted
+decltype(ircd::m::vm::accept)
+ircd::m::vm::accept
 {};
 
 decltype(ircd::m::vm::current_sequence)
@@ -202,11 +202,20 @@ ircd::m::vm::commit(json::iov &iov)
 
 namespace ircd::m::vm
 {
+	extern hook::site eval_hook;
 	extern hook::site notify_hook;
 
 	void _tmp_effects(const m::event &event); //TODO: X
 	void write(eval &);
+	fault _eval_edu(eval &, const event &);
+	fault _eval_pdu(eval &, const event &);
 }
+
+decltype(ircd::m::vm::eval_hook)
+ircd::m::vm::eval_hook
+{
+	{ "name", "vm.eval" }
+};
 
 decltype(ircd::m::vm::notify_hook)
 ircd::m::vm::notify_hook
@@ -241,6 +250,70 @@ try
 			fault::INVALID, "Non-conforming event: %s", string(report)
 		};
 
+	// A conforming (with lots of masks) event without an event_id is an EDU.
+	if(!json::get<"event_id"_>(event))
+		return _eval_edu(*this, event);
+
+	return _eval_pdu(*this, event);
+}
+catch(const error &e)
+{
+	if(opts->errorlog & e.code)
+		log.error("eval %s: %s %s",
+		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		          e.what(),
+		          e.content);
+
+	if(opts->warnlog & e.code)
+		log.warning("eval %s: %s %s",
+		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		            e.what(),
+		            e.content);
+
+	if(opts->nothrows & e.code)
+		return e.code;
+
+	throw;
+}
+catch(const std::exception &e)
+{
+	if(opts->errorlog & fault::GENERAL)
+		log.error("eval %s: #GP: %s",
+		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		          e.what());
+
+	if(opts->warnlog & fault::GENERAL)
+		log.warning("eval %s: #GP: %s",
+		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		            e.what());
+
+	if(opts->nothrows & fault::GENERAL)
+		return fault::GENERAL;
+
+	throw error
+	{
+		fault::GENERAL, "%s", e.what()
+	};
+}
+
+enum ircd::m::vm::fault
+ircd::m::vm::_eval_edu(eval &eval,
+                       const event &event)
+{
+	eval_hook(event);
+	return fault::ACCEPT;
+}
+
+enum ircd::m::vm::fault
+ircd::m::vm::_eval_pdu(eval &eval,
+                       const event &event)
+{
+	assert(eval.opts);
+	const auto &opts
+	{
+		*eval.opts
+	};
+
 	const m::event::id &event_id
 	{
 		at<"event_id"_>(event)
@@ -251,12 +324,13 @@ try
 		at<"room_id"_>(event)
 	};
 
-	if(!opts->replays && exists(event_id))  //TODO: exclusivity
+	if(!opts.replays && exists(event_id))  //TODO: exclusivity
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
 		};
 
+	eval_hook(event);
 
 	const auto &depth
 	{
@@ -279,12 +353,12 @@ try
 	};
 
 	//TODO: ex
-	if(opts->write && prev_count)
+	if(opts.write && prev_count)
 	{
 		for(size_t i(0); i < prev_count; ++i)
 		{
 			const auto prev_id{prev.prev_event(i)};
-			if(opts->prev_check_exists && !dbs::exists(prev_id))
+			if(opts.prev_check_exists && !dbs::exists(prev_id))
 				throw error
 				{
 					fault::EVENT, "Missing prev event %s", string_view{prev_id}
@@ -306,10 +380,10 @@ try
 		wopts.present = true;
 		const auto new_root
 		{
-			dbs::write(txn, event, wopts)
+			dbs::write(eval.txn, event, wopts)
 		};
 	}
-	else if(opts->write)
+	else if(opts.write)
 	{
 		m::state::id_buffer new_root_buf;
 		m::dbs::write_opts wopts;
@@ -317,68 +391,29 @@ try
 		wopts.present = true;
 		const auto new_root
 		{
-			dbs::write(txn, event, wopts)
+			dbs::write(eval.txn, event, wopts)
 		};
 	}
 
-	if(opts->write)
-		write(*this);
+	if(opts.write)
+		write(eval);
 
-	if(opts->notify)
+	if(opts.notify)
 	{
 		notify_hook(event);
-		vm::inserted.notify(event);
+		vm::accept.expose(event);
 	}
 
-	if(opts->effects)
+	if(opts.effects)
 		_tmp_effects(event);
 
-	if(opts->debuglog_accept)
+	if(opts.debuglog_accept)
 		log.debug("%s", pretty_oneline(event));
 
-	if(opts->infolog_accept)
+	if(opts.infolog_accept)
 		log.info("%s", pretty_oneline(event));
 
 	return fault::ACCEPT;
-}
-catch(const error &e)
-{
-	if(opts->errorlog & e.code)
-		log.error("eval %s: %s %s",
-		          json::get<"event_id"_>(event),
-		          e.what(),
-		          e.content);
-
-	if(opts->warnlog & e.code)
-		log.warning("eval %s: %s %s",
-		            json::get<"event_id"_>(event),
-		            e.what(),
-		            e.content);
-
-	if(opts->nothrows & e.code)
-		return e.code;
-
-	throw;
-}
-catch(const std::exception &e)
-{
-	if(opts->errorlog & fault::GENERAL)
-		log.error("eval %s: #GP: %s",
-		          json::get<"event_id"_>(event),
-		          e.what());
-
-	if(opts->warnlog & fault::GENERAL)
-		log.warning("eval %s: #GP: %s",
-		            json::get<"event_id"_>(event),
-		            e.what());
-
-	if(opts->nothrows & fault::GENERAL)
-		return fault::GENERAL;
-
-	throw error
-	{
-		fault::GENERAL, "%s", e.what()
-	};
 }
 
 void

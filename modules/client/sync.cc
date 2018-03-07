@@ -291,15 +291,15 @@ synchronizer_worker()
 {
 	while(1) try
 	{
-		std::unique_lock<decltype(m::vm::inserted)> lock
+		std::unique_lock<decltype(m::vm::accept)> lock
 		{
-			m::vm::inserted
+			m::vm::accept
 		};
 
 		// reference to the event on the inserter's stack
 		const auto &event
 		{
-			m::vm::inserted.wait(lock)
+			m::vm::accept.wait(lock)
 		};
 
 		if(!syncpoll::polling.empty())

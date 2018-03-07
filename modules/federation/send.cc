@@ -50,14 +50,25 @@ void
 handle_edu(client &client,
            const resource::request::object<m::txn> &request,
            const string_view &txn_id,
-           const json::object &edu)
+           const m::edu &edu)
 {
-	//std::cout << edu << std::endl;
-	log::debug("%s :%s | %s | %s",
-	           txn_id,
-	           at<"origin"_>(request),
-	           edu.at("edu_type"),
-	           edu.get("sender", string_view{"*"}));
+	m::event event;
+	json::get<"origin"_>(event) = at<"origin"_>(request);
+	json::get<"origin_server_ts"_>(event) = at<"origin_server_ts"_>(request);
+	json::get<"content"_>(event) = at<"content"_>(edu);
+	json::get<"type"_>(event) = at<"edu_type"_>(edu);
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
+	m::vm::eval eval
+	{
+		event, vmopts
+	};
 }
 
 void
@@ -67,12 +78,15 @@ handle_pdu(client &client,
            const m::event &event)
 try
 {
-	//std::cout << event << std::endl;
-	log::debug("%s %s",
-	           txn_id,
-	           pretty_oneline(event));
-
-	m::vm::eval{event};
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.nothrows = -1U;
+	m::vm::eval eval
+	{
+		event, vmopts
+	};
 }
 catch(const ed25519::bad_sig &e)
 {
@@ -92,11 +106,14 @@ handle_pdu_failure(client &client,
                    const string_view &txn_id,
                    const json::object &pdu_failure)
 {
-	log::debug("%s :%s | (pdu_failure) %s",
-	           txn_id,
-	           at<"origin"_>(request),
-	           pdu_failure.get("sender", string_view{"*"}),
-	           string_view{pdu_failure});
+	log::error
+	{
+		"%s :%s | (pdu_failure) %s",
+		txn_id,
+		at<"origin"_>(request),
+		pdu_failure.get("sender", string_view{"*"}),
+		string_view{pdu_failure}
+	};
 }
 
 resource::response
@@ -128,22 +145,25 @@ handle_put(client &client,
 		json::get<"pdu_failures"_>(request)
 	};
 
+	log::debug
+	{
+		"%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
+		txn_id,
+		origin,
+		string(remote(client)),
+		edus.count(),
+		pdus.count(),
+		pdu_failures.count()
+	};
+
 	for(const auto &pdu_failure : pdu_failures)
 		handle_pdu_failure(client, request, txn_id, pdu_failure);
 
-	for(const auto &edu : edus)
+	for(const json::object &edu : edus)
 		handle_edu(client, request, txn_id, edu);
 
-	for(const auto &pdu : pdus)
-		handle_pdu(client, request, txn_id, m::event{pdu});
-
-	log::debug("%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
-	           txn_id,
-	           origin,
-	           string(remote(client)),
-	           edus.count(),
-	           pdus.count(),
-	           pdu_failures.count());
+	for(const json::object &pdu : pdus)
+		handle_pdu(client, request, txn_id, pdu);
 
 	return resource::response
 	{

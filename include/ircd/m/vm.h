@@ -26,7 +26,7 @@ namespace ircd::m::vm
 
 	extern struct log::log log;
 	extern uint64_t current_sequence;
-	extern ctx::view<const event> inserted;
+	extern ctx::shared_view<const event> accept;
 	extern const opts default_opts;
 
 	event::id::buf commit(json::iov &event);
