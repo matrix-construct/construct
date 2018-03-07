@@ -47,8 +47,11 @@ class ircd::ctx::future
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
+	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &, std::nothrow_t);
 	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &);
+	template<class time_point> future_status wait_until(const time_point &, std::nothrow_t) const;
 	template<class time_point> future_status wait_until(const time_point &) const;
+	template<class duration> future_status wait(const duration &d, std::nothrow_t) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
 
@@ -71,8 +74,11 @@ class ircd::ctx::future<void>
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
+	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &, std::nothrow_t);
 	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &);
+	template<class time_point> future_status wait_until(const time_point &, std::nothrow_t) const;
 	template<class time_point> future_status wait_until(const time_point &) const;
+	template<class duration> future_status wait(const duration &d, std::nothrow_t) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
 
@@ -165,6 +171,15 @@ const
 	return this->wait_until(steady_clock::now() + d);
 }
 
+template<class duration>
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait(const duration &d,
+                              std::nothrow_t)
+const
+{
+	return this->wait_until(steady_clock::now() + d, std::nothrow);
+}
+
 template<class T>
 template<class duration>
 ircd::ctx::future_status
@@ -172,6 +187,16 @@ ircd::ctx::future<T>::wait(const duration &d)
 const
 {
 	return this->wait_until(steady_clock::now() + d);
+}
+
+template<class T>
+template<class duration>
+ircd::ctx::future_status
+ircd::ctx::future<T>::wait(const duration &d,
+                           std::nothrow_t)
+const
+{
+	return this->wait_until(steady_clock::now() + d, std::nothrow);
 }
 
 template<class T>
@@ -183,6 +208,16 @@ const
 	return ircd::ctx::wait_until(*this, tp);
 }
 
+template<class T>
+template<class time_point>
+ircd::ctx::future_status
+ircd::ctx::future<T>::wait_until(const time_point &tp,
+                                 std::nothrow_t)
+const
+{
+	return ircd::ctx::wait_until(*this, tp, std::nothrow);
+}
+
 template<class time_point>
 ircd::ctx::future_status
 ircd::ctx::future<void>::wait_until(const time_point &tp)
@@ -191,11 +226,38 @@ const
 	return ircd::ctx::wait_until(*this, tp);
 }
 
+template<class time_point>
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait_until(const time_point &tp,
+                                    std::nothrow_t)
+const
+{
+	return ircd::ctx::wait_until(*this, tp, std::nothrow);
+}
+
 template<class T,
          class time_point>
 ircd::ctx::future_status
 ircd::ctx::wait_until(const future<T> &f,
                       const time_point &tp)
+{
+	const auto ret
+	{
+		wait_until(f, tp, std::nothrow)
+	};
+
+	if(ret == future_status::timeout)
+		throw timeout{};
+
+	return ret;
+}
+
+template<class T,
+         class time_point>
+ircd::ctx::future_status
+ircd::ctx::wait_until(const future<T> &f,
+                      const time_point &tp,
+                      std::nothrow_t)
 {
 	const auto wfun([&f]() -> bool
 	{
