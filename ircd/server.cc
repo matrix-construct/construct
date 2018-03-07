@@ -2116,10 +2116,10 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	if(dynamic)
 	{
-		assert(req.opts);
+		assert(req.opt);
 		const size_t alloc_size
 		{
-			std::min(head.content_length, req.opts->content_length_maxalloc)
+			std::min(head.content_length, req.opt->content_length_maxalloc)
 		};
 
 		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
@@ -2274,8 +2274,8 @@ ircd::server::tag::set_value(args&&... a)
 		std::forward<args>(a)...
 	};
 
-	assert(request->opts);
-	if(request->opts->http_exceptions && code >= http::code(300))
+	assert(request->opt);
+	if(request->opt->http_exceptions && code >= http::code(300))
 	{
 		const string_view content
 		{

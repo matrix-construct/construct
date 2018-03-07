@@ -92,12 +92,12 @@ struct ircd::server::request
 	server::in in;
 
 	/// Options
-	const struct opts *opts { &opts_default };
+	const opts *opt { &opts_default };
 
 	request(const net::hostport &,
 	        server::out,
 	        server::in,
-	        const struct opts *const & = nullptr);
+	        const opts *const & = nullptr);
 
 	request() = default;
 	request(request &&) noexcept;
@@ -126,11 +126,11 @@ inline
 ircd::server::request::request(const net::hostport &hostport,
                                server::out out,
                                server::in in,
-                               const struct opts *const &opts)
+                               const opts *const &opt)
 :tag{nullptr}
 ,out{std::move(out)}
 ,in{std::move(in)}
-,opts{opts?: &opts_default}
+,opt{opt?: &opts_default}
 {
 	submit(hostport, *this);
 }
@@ -142,7 +142,7 @@ noexcept
 ,tag{std::move(o.tag)}
 ,out{std::move(o.out)}
 ,in{std::move(o.in)}
-,opts{std::move(o.opts)}
+,opt{std::move(o.opt)}
 {
 	if(tag)
 		associate(*this, *tag, std::move(o));
@@ -160,7 +160,7 @@ noexcept
 	out = std::move(o.out);
 	in = std::move(o.in);
 	tag = std::move(o.tag);
-	opts = std::move(o.opts);
+	opt = std::move(o.opt);
 
 	if(tag)
 		associate(*this, *tag, std::move(o));
