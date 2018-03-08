@@ -71,12 +71,14 @@ ircd::m::vm::commit(json::iov &event,
 	char hashes_buf[128];
 	const string_view hashes
 	{
-		m::event::hashes(hashes_buf, event, content)
+		opts.hash?
+			m::event::hashes(hashes_buf, event, content):
+			string_view{}
 	};
 
-	const json::iov::push _hashes
+	const json::iov::add_if _hashes
 	{
-		event, { "hashes", hashes }
+		event, opts.hash, { "hashes", hashes }
 	};
 
 	// sigs
@@ -84,13 +86,19 @@ ircd::m::vm::commit(json::iov &event,
 	char sigs_buf[384];
 	const string_view sigs
 	{
-		m::event::signatures(sigs_buf, event, contents)
+		opts.sign?
+			m::event::signatures(sigs_buf, event, contents):
+			string_view{}
 	};
 
-	const json::iov::push _final[]
+	const json::iov::add_if _sigs
 	{
-		{ event, { "signatures",  sigs     }},
-		{ event, { "content",     content  }},
+		event, opts.sign, { "signatures",  sigs }
+	};
+
+	const json::iov::push _content
+	{
+		event, { "content", content },
 	};
 
 	return commit(event, opts);
@@ -126,28 +134,22 @@ ircd::m::vm::commit_hook
 ///         out
 ///
 ircd::m::event::id::buf
-ircd::m::vm::commit(const event &event)
+ircd::m::vm::commit(const event &event,
+                    const opts &opts)
 {
-	check_size(event);
-
-	log.debug("injecting event(mark: %ld) %s",
-	          vm::current_sequence,
-	          pretty_oneline(event));
+	if(opts.debuglog_precommit)
+		log.debug("injecting event(mark: %ld) %s",
+		          vm::current_sequence,
+		          pretty_oneline(event));
 
 	//TODO: X
-	vm::opts opts;
-	opts.non_conform |= event::conforms::MISSING_PREV_STATE;
+	vm::opts opts_{opts};
+	opts_.non_conform |= event::conforms::MISSING_PREV_STATE;
+	vm::eval eval{opts_};
 
-	vm::eval eval{opts};
-	ircd::timer timer;
-
+	check_size(event);
 	commit_hook(event);
 	eval(event);
-
-	log.debug("committed event %s (mark: %ld time: %ld$ms)",
-	          at<"event_id"_>(event),
-	          vm::current_sequence,
-	          timer.at<milliseconds>().count());
 
 	return unquote(at<"event_id"_>(event));
 }

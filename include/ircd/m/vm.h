@@ -79,6 +79,12 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
+	// Hash and include hashes object.
+	bool hash {true};
+
+	// Sign and include signatures object
+	bool sign {true};
+
 	/// Make writes to database
 	bool write {true};
 
@@ -118,6 +124,9 @@ struct ircd::m::vm::opts
 	{
 		EXISTS
 	};
+
+	/// Whether to log a debug message before commit
+	bool debuglog_precommit {false};
 
 	/// Whether to log a debug message on successful eval.
 	bool debuglog_accept {false};
