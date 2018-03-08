@@ -310,20 +310,19 @@ ircd::m::pretty_oneline(const event &event)
 		"event_id",
 		"room_id",
 		"sender",
-		"depth",
 	};
 
-	s << ':';
+	s << json::get<"depth"_>(event) << " :";
 	json::for_each(event, top_keys, out);
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
-	s << "pa:" << auth_events.count() << " ";
+	s << "A:" << auth_events.count() << " ";
 
 	const auto &prev_states{json::get<"prev_state"_>(event)};
-	s << "ps:" << prev_states.count() << " ";
+	s << "S:" << prev_states.count() << " ";
 
 	const auto &prev_events{json::get<"prev_events"_>(event)};
-	s << "pe:" << prev_events.count() << " ";
+	s << "E:" << prev_events.count() << " ";
 
 	const auto &hashes{json::get<"hashes"_>(event)};
 	s << "[ ";
