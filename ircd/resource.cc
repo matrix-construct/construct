@@ -619,6 +619,27 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &headers)
 {
+	// Head gets sent
+	response
+	{
+		client, content.size(), content_type, code, headers
+	};
+
+	// All content gets sent
+	const ilist<const const_buffer> vector
+	{
+		content
+	};
+
+	write_closure(client)(vector);
+}
+
+ircd::resource::response::response(client &client,
+                                   const size_t &content_length,
+                                   const string_view &content_type,
+                                   const http::code &code,
+                                   const string_view &headers)
+{
 	const auto request_time
 	{
 		client.timer.at<microseconds>().count()
@@ -629,14 +650,6 @@ ircd::resource::response::response(client &client,
 		"%zd$us", request_time
 	};
 
-	const string_view cache_control
-	{
-		(code >= 200 && code < 300) ||
-		(code >= 403 && code < 405) ||
-		(code >= 300 && code < 400)? "no-cache":
-		""
-	};
-
 	// This buffer will be passed to the socket and sent out;
 	// cannot be static/tls.
 	char head_buf[4_KiB];
@@ -645,17 +658,16 @@ ircd::resource::response::response(client &client,
 	{
 		head,
 		code,
-		content.size(),
+		content_length,
 		content_type,
 		headers,
 		{
 			{ "Access-Control-Allow-Origin",   "*"                  }, //TODO: XXX
-			{ "Cache-Control",                 cache_control        },
 			{ "X-IRCd-Request-Timer",          rtime,               },
 		},
 	};
 
-	// Maximum size is 2_KiB which is realistically ok but ideally a small
+	// Maximum size is is realistically ok but ideally a small
 	// maximum; this exception should hit the developer in testing.
 	if(unlikely(!head.remaining()))
 		throw assertive
@@ -665,23 +677,21 @@ ircd::resource::response::response(client &client,
 
 	const ilist<const const_buffer> vector
 	{
-		head.completed(),
-		content
+		head.completed()
 	};
 
 	write_closure(client)(vector);
 
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; response in %ld$us (%s) content-length:%zu",
+		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %zu content",
 		client.sock.get(),
 		string(local(client)),
 		string(remote(client)),
 		int(code),
 		http::status(code),
 		request_time,
-		(client.timer.at<microseconds>().count() - request_time),
 		content_type,
-		content.size()
+		content_length,
 	};
 }
