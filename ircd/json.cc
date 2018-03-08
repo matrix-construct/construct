@@ -42,8 +42,6 @@ namespace ircd::json
 	using karma::eps;
 	using karma::attr_cast;
 
-	struct expectation_failure;
-
 	template<class it> struct input;
 	template<class it> struct output;
 

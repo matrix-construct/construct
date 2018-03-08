@@ -572,18 +572,19 @@ catch(const boost::system::system_error &e)
 	close(net::dc::RST, net::close_ignore);
 	return false;
 }
+#ifndef RB_DEBUG
 catch(const std::exception &e)
 {
-	log::error("client[%s] [500 Internal Error]: %s",
-	           string(remote(*this)),
-	           e.what());
+	log::error
+	{
+		"client[%s] [500 Internal Error]: %s"
+		string(remote(*this)),
+		e.what())
+	};
 
-	#ifdef RB_DEBUG
-		throw;
-	#else
-		return false;
-	#endif
+	return false;
 }
+#endif
 
 /// Handle a single request within the client main() loop.
 ///

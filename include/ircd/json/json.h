@@ -21,6 +21,7 @@ namespace ircd::json
 	IRCD_EXCEPTION(error, type_error);
 	IRCD_EXCEPTION(error, not_found);
 	IRCD_EXCEPTION(parse_error, recursion_limit);
+	struct expectation_failure;
 
 	struct value;
 	struct member;
