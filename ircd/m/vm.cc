@@ -30,17 +30,11 @@ ircd::m::vm::default_opts
 
 /// This function takes an event object vector and adds our origin and event_id
 /// and hashes and signature and attempts to inject the event into the core.
-/// The caller is expected to have done their best to check if this event will
-/// succeed once it hits the core because failures blow all this effort. The
-/// caller's ircd::ctx will obviously yield for evaluation, which may involve
-/// requests over the internet in the worst case. Nevertheless, the evaluation,
-/// write and release sequence of the core commitment is designed to allow the
-/// caller to service a usual HTTP request conveying success or error without
-/// hanging their client too much.
 ///
 ircd::m::event::id::buf
 ircd::m::vm::commit(json::iov &event,
-                    const json::iov &contents)
+                    const json::iov &contents,
+                    const opts &opts)
 {
 	const json::iov::set set[]
 	{
@@ -99,7 +93,7 @@ ircd::m::vm::commit(json::iov &event,
 		{ event, { "content",     content  }},
 	};
 
-	return commit(event);
+	return commit(event, opts);
 }
 
 namespace ircd::m::vm
@@ -117,7 +111,7 @@ ircd::m::vm::commit_hook
 ///
 /// Figure 1:
 ///          in     .  <-- injection
-///    ___:::::::__//
+///    ===:::::::==//
 ///    |  ||||||| //   <-- this function
 ///    |   \\|// //|
 ///    |    ||| // |   |  acceleration

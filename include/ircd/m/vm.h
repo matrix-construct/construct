@@ -29,8 +29,8 @@ namespace ircd::m::vm
 	extern ctx::shared_view<const event> accept;
 	extern const opts default_opts;
 
-	event::id::buf commit(const m::event &);
-	event::id::buf commit(json::iov &event, const json::iov &content);
+	event::id::buf commit(const m::event &, const opts & = default_opts);
+	event::id::buf commit(json::iov &event, const json::iov &content, const opts & = default_opts);
 }
 
 /// Event Evaluation Device
