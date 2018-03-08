@@ -36,7 +36,7 @@ ircd::m::vm::commit(json::iov &event,
                     const json::iov &contents,
                     const opts &opts)
 {
-	const json::iov::set set[]
+	const json::iov::push set[]
 	{
 		{ event, { "origin_server_ts",  ircd::time<milliseconds>() }},
 		{ event, { "origin",            my_host()                  }},
@@ -61,7 +61,7 @@ ircd::m::vm::commit(json::iov &event,
 		m::event_id(event, eid_buf, event_id_hash)
 	};
 
-	const json::iov::set _event_id
+	const json::iov::push _event_id
 	{
 		event, { "event_id", event_id }
 	};
@@ -326,11 +326,17 @@ ircd::m::vm::_eval_pdu(eval &eval,
 				};
 		}
 
-		uint64_t top;
+		int64_t top;
 		const id::event::buf head
 		{
-			m::head(room_id, top)
+			m::head(std::nothrow, room_id, top)
 		};
+
+		if(top < 0 && (opts.head_must_exist || opts.history))
+			throw error
+			{
+				fault::STATE, "Found nothing for room %s", string_view{room_id}
+			};
 
 		m::room room{room_id, head};
 		m::room::state state{room};
@@ -338,7 +344,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		m::dbs::write_opts wopts;
 		wopts.root_in = state.root_id;
 		wopts.root_out = new_root_buf;
-		wopts.present = true;
+		wopts.present = opts.present;
+		wopts.history = opts.history;
 		const auto new_root
 		{
 			dbs::write(eval.txn, event, wopts)
@@ -349,7 +356,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		m::state::id_buffer new_root_buf;
 		m::dbs::write_opts wopts;
 		wopts.root_out = new_root_buf;
-		wopts.present = true;
+		wopts.present = opts.present;
+		wopts.history = opts.history;
 		const auto new_root
 		{
 			dbs::write(eval.txn, event, wopts)

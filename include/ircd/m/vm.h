@@ -97,12 +97,23 @@ struct ircd::m::vm::opts
 	/// Mask of conformity failures to allow without error
 	event::conforms non_conform;
 
+	/// Toggles whether event may be considered a "present event" and may
+	/// update the optimized present state table of the room if it is proper.
+	bool present {true};
+
+	/// Toggles whether the state btree is updated; this should be consistently
+	/// true or false for all events in a room.
+	bool history {true};
+
 	/// Bypass check for event having already been evaluated so it can be
 	/// replayed through the system (not recommended).
 	bool replays {false};
 
 	/// TODO: Y
 	bool prev_check_exists {true};
+
+	/// TODO: Y
+	bool head_must_exist {false};
 
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
