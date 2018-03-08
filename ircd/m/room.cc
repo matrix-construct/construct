@@ -95,6 +95,12 @@ ircd::m::exists(const id::room &room_id)
 }
 
 bool
+ircd::m::exists(const room &room)
+{
+	return exists(room.room_id);
+}
+
+bool
 ircd::m::my(const room &room)
 {
 	return my(room.room_id);
