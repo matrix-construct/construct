@@ -35,13 +35,22 @@ namespace ircd
 	[[noreturn]] void assertion() noexcept(RB_DEBUG_LEVEL);
 
 	// util
-	std::exception_ptr make_system_error(const int &code = errno);
-	[[noreturn]] void throw_system_error(const int &code = errno);
+	std::error_code make_error_code(const int &code = errno);
+	std::error_code make_error_code(const std::error_code &);
+	std::error_code make_error_code(const boost::system::error_code &);
+	std::error_code make_error_code(const boost::system::system_error &);
+	std::system_error make_system_error(const int &code = errno);
+	std::system_error make_system_error(const boost::system::error_code &);
+	std::system_error make_system_error(const boost::system::system_error &);
+	template<class... args> std::exception_ptr make_system_eptr(args&&...);
+	template<class... args> [[noreturn]] void throw_system_error(args&&...);
 
-	// Forward utilities for boost errors
-	std::exception_ptr make_eptr(const boost::system::error_code &);
+	string_view string(const mutable_buffer &, const std::error_code &);
+	string_view string(const mutable_buffer &, const std::system_error &);
 	string_view string(const mutable_buffer &, const boost::system::error_code &);
 	string_view string(const mutable_buffer &, const boost::system::system_error &);
+	std::string string(const std::error_code &);
+	std::string string(const std::system_error &);
 	std::string string(const boost::system::error_code &);
 	std::string string(const boost::system::system_error &);
 
@@ -196,4 +205,21 @@ namespace ircd
 	// Assertion errors; see IRCD_ASSERTION docs.
 	IRCD_ASSERTION(exception, assertive)
 	IRCD_ASSERTION(assertive, not_implemented)
+}
+
+template<class... args>
+void
+ircd::throw_system_error(args&&... a)
+{
+	throw std::system_error
+	{
+		make_error_code(std::forward<args>(a)...)
+	};
+}
+
+template<class... args>
+std::exception_ptr
+ircd::make_system_eptr(args&&... a)
+{
+	return std::make_exception_ptr(make_system_error(std::forward<args>(a)...));
 }

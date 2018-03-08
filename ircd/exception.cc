@@ -40,6 +40,22 @@ ircd::string(const boost::system::error_code &ec)
 	});
 }
 
+std::string
+ircd::string(const std::system_error &e)
+{
+	return string(e.code());
+}
+
+std::string
+ircd::string(const std::error_code &ec)
+{
+	return ircd::string(128, [&ec]
+	(const mutable_buffer &buf)
+	{
+		return string(buf, ec);
+	});
+}
+
 ircd::string_view
 ircd::string(const mutable_buffer &buf,
              const boost::system::system_error &e)
@@ -51,35 +67,87 @@ ircd::string_view
 ircd::string(const mutable_buffer &buf,
              const boost::system::error_code &ec)
 {
-	const auto len
+	return fmt::sprintf
 	{
-		fmt::sprintf
-		{
-			buf, "%s: %s", ec.category().name(), ec.message()
-		}
+		buf, "%s: %s", ec.category().name(), ec.message()
 	};
-
-	return { data(buf), size_t(len) };
 }
 
-std::exception_ptr
-ircd::make_eptr(const boost::system::error_code &ec)
+ircd::string_view
+ircd::string(const mutable_buffer &buf,
+             const std::system_error &e)
 {
-	return bool(ec)?
-		std::make_exception_ptr(boost::system::system_error(ec)):
-		std::exception_ptr{};
+	return string(buf, e.code());
 }
 
-void
-ircd::throw_system_error(const int &code)
+ircd::string_view
+ircd::string(const mutable_buffer &buf,
+             const std::error_code &ec)
 {
-	throw std::system_error(code, std::system_category());
+	return fmt::sprintf
+	{
+		buf, "%s: %s", ec.category().name(), ec.message()
+	};
 }
 
-std::exception_ptr
+std::system_error
+ircd::make_system_error(const boost::system::system_error &e)
+{
+	return std::system_error
+	{
+		make_error_code(e.code()), e.what()
+	};
+}
+
+std::system_error
+ircd::make_system_error(const boost::system::error_code &ec)
+{
+	return std::system_error
+	{
+		make_error_code(ec)
+	};
+}
+
+std::system_error
 ircd::make_system_error(const int &code)
 {
-	return std::make_exception_ptr(std::system_error(code, std::system_category()));
+	return std::system_error
+	{
+		make_error_code(code)
+	};
+}
+
+std::error_code
+ircd::make_error_code(const boost::system::system_error &e)
+{
+	return std::error_code
+	{
+		e.code().value(), e.code().category()
+	};
+}
+
+std::error_code
+ircd::make_error_code(const boost::system::error_code &ec)
+{
+	return std::error_code
+	{
+		ec.value(), ec.category()
+	};
+}
+
+std::error_code
+ircd::make_error_code(const int &code)
+{
+	return std::error_code
+	{
+		code, std::system_category()
+	};
+}
+
+std::error_code
+ircd::make_error_code(const std::error_code &ec)
+{
+	return ec;
 }
 
 ssize_t
