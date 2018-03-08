@@ -16,14 +16,14 @@
 struct ircd::server::peer
 :std::enable_shared_from_this<ircd::server::peer>
 {
+	struct err;
+
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
 
 	net::remote remote;
 	std::list<link> links;
-	std::exception_ptr eptr;
-	string_view emsg; // points to eptr->what()
-	steady_point etime; // time of error
+	std::unique_ptr<err> e;
 	std::string server_name;
 	bool ready {true};
 
@@ -82,6 +82,7 @@ struct ircd::server::peer
 	// Error related
 	bool err_has() const;
 	string_view err_msg() const;
+	template<class... A> void err_set(A&&...);
 	void err_clear();
 
 	// control panel
@@ -90,4 +91,17 @@ struct ircd::server::peer
 
 	peer();
 	~peer() noexcept;
+};
+
+struct ircd::server::peer::err
+{
+	std::exception_ptr eptr;
+	steady_point etime
+	{
+		now<steady_point>()
+	};
+
+	err(std::exception_ptr eptr)
+	:eptr{std::move(eptr)}
+	{}
 };

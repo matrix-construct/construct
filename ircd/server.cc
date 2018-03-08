@@ -339,23 +339,28 @@ ircd::server::peer::interrupt()
 void
 ircd::server::peer::err_clear()
 {
-	eptr = std::exception_ptr{};
-	emsg = string_view{};
-	etime = steady_point{};
+	e.reset(nullptr);
+}
+
+template<class... A>
+void
+ircd::server::peer::err_set(A&&... args)
+{
+	this->e = std::make_unique<err>(std::forward<A>(args)...);
 }
 
 ircd::string_view
 ircd::server::peer::err_msg()
 const
 {
-	return err_has()? emsg : string_view{};
+	return bool(e)? what(e->eptr) : string_view{};
 }
 
 bool
 ircd::server::peer::err_has()
 const
 {
-	return bool(eptr);
+	return bool(e);
 }
 
 void
@@ -491,8 +496,8 @@ ircd::server::peer::link_get(const request &request)
 ircd::server::link &
 ircd::server::peer::link_add(const size_t &num)
 {
-	if(eptr)
-		std::rethrow_exception(eptr);
+	if(e)
+		std::rethrow_exception(e->eptr);
 
 	links.emplace_back(*this);
 	auto &link{links.back()};
@@ -509,7 +514,7 @@ ircd::server::peer::handle_open(link &link,
 try
 {
 	if(eptr && links.size() == 1)
-		this->eptr = eptr;
+		err_set(eptr);
 
 	if(eptr)
 		std::rethrow_exception(eptr);
@@ -761,8 +766,8 @@ try
 
 	if(eptr)
 	{
-		this->eptr = eptr;
-		std::rethrow_exception(this->eptr);
+		err_set(eptr);
+		std::rethrow_exception(eptr);
 	}
 
 	static_cast<net::ipport &>(this->remote) = ipport;
@@ -776,13 +781,11 @@ catch(const std::bad_weak_ptr &)
 catch(const std::exception &e)
 {
 	assert(!wp.expired());
-	this->emsg = e.what();
-	this->etime = now<steady_point>();
-	close();
-
 	log.error("peer(%p): during name resolution: %s",
 	          this,
 	          e.what());
+
+	close();
 }
 
 size_t
