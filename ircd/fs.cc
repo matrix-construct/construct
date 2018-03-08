@@ -222,6 +222,11 @@ ircd::fs::write__std(const string_view &path,
 	return buf;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs.h / misc
+//
+
 void
 ircd::fs::chdir(const string_view &path)
 try
@@ -282,7 +287,7 @@ bool
 ircd::fs::remove(std::nothrow_t,
                  const string_view &path)
 {
-	error_code ec;
+	boost::system::error_code ec;
 	return filesystem::remove(fs::path(path), ec);
 }
 
@@ -306,7 +311,7 @@ ircd::fs::rename(std::nothrow_t,
                  const string_view &old,
                  const string_view &new_)
 {
-	error_code ec;
+	boost::system::error_code ec;
 	filesystem::rename(path(old), path(new_), ec);
 	return !ec;
 }

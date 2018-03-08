@@ -213,6 +213,8 @@ ircd::remote(const client &client)
 
 namespace ircd
 {
+	using error_code = boost::system::error_code;
+
 	static bool handle_ec_default(client &, const error_code &);
 	static bool handle_ec_timeout(client &);
 	static bool handle_ec_short_read(client &);

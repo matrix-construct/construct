@@ -25,8 +25,6 @@ namespace ircd
 {
 	/// Alias so that asio:: can be used
 	namespace asio = boost::asio;
-	namespace errc = boost::system::errc;
-	using boost::system::error_code;
 
 	/// A record of the thread ID when static initialization took place (for ircd.cc)
 	extern const std::thread::id static_thread_id;

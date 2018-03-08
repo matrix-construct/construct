@@ -29,6 +29,8 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, inauthentic)
 	IRCD_EXCEPTION(error, not_found)
 
+	using error_code = boost::system::error_code;
+
 	// SNOMASK 'N' "net"
 	extern struct log::log log;
 }

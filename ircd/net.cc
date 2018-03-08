@@ -351,7 +351,7 @@ ircd::net::wait(use_future_t,
 }
 
 /// Wait for socket to become "ready"; yields ircd::ctx returning code.
-ircd::error_code
+ircd::net::error_code
 ircd::net::wait(nothrow_t,
                 socket &socket,
                 const wait_opts &wait_opts)
@@ -1408,7 +1408,11 @@ ircd::net::socket::wait(const wait_opts &opts,
 	wait(opts, [callback(std::move(callback))]
 	(const error_code &ec)
 	{
-		callback(make_eptr(ec));
+		if(likely(!ec))
+			return callback(std::exception_ptr{});
+
+		using boost::system::system_error;
+		callback(std::make_exception_ptr(system_error{ec}));
 	});
 }
 
@@ -1961,7 +1965,11 @@ ircd::net::socket::call_user(const eptr_handler &callback,
                              const error_code &ec)
 noexcept try
 {
-	callback(make_eptr(ec));
+	if(likely(!ec))
+		return callback(std::exception_ptr{});
+
+	using boost::system::system_error;
+	callback(std::make_exception_ptr(system_error{ec}));
 }
 catch(const std::exception &e)
 {
@@ -2476,7 +2484,10 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 	};
 
 	if(tag.cb)
-		tag.cb(make_eptr(ec), {});
+	{
+		using boost::system::system_error;
+		tag.cb(std::make_exception_ptr(system_error{ec}), {});
+	}
 
 	return false;
 }

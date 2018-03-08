@@ -40,7 +40,7 @@ struct ircd::fs::aio
 	// Callback stack invoked when the sigfd is notified of completed events.
 	void handle_event(const io_event &) noexcept;
 	void handle_events() noexcept;
-	void handle(const error_code &, const size_t) noexcept;
+	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
 	aio();

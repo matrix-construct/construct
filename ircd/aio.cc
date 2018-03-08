@@ -44,7 +44,7 @@ ircd::fs::aio::set_handle()
 
 /// Handle notifications that requests are complete.
 void
-ircd::fs::aio::handle(const error_code &ec,
+ircd::fs::aio::handle(const boost::system::error_code &ec,
                       const size_t bytes)
 noexcept
 {
