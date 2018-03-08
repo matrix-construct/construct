@@ -11,6 +11,14 @@
 #pragma once
 #define HAVE_IRCD_EXCEPTION_H
 
+/// Forward declarations for boost::system because it is not included here.
+namespace boost::system
+{
+	struct error_code;
+	struct system_error;
+	namespace errc {}
+}
+
 namespace ircd
 {
 	// Root exception
@@ -29,6 +37,13 @@ namespace ircd
 	// util
 	std::exception_ptr make_system_error(const int &code = errno);
 	[[noreturn]] void throw_system_error(const int &code = errno);
+
+	// Forward utilities for boost errors
+	std::exception_ptr make_eptr(const boost::system::error_code &);
+	string_view string(const mutable_buffer &, const boost::system::error_code &);
+	string_view string(const mutable_buffer &, const boost::system::system_error &);
+	std::string string(const boost::system::error_code &);
+	std::string string(const boost::system::system_error &);
 
 	// Can be used to clobber the std::terminate_handler
 	void aborting() noexcept;

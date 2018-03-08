@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <boost/system/system_error.hpp>
+
 [[noreturn]] static void
 ircd_terminate_handler()
 noexcept
@@ -20,6 +22,52 @@ ircd::aborting()
 noexcept
 {
 	std::set_terminate(&ircd_terminate_handler);
+}
+
+std::string
+ircd::string(const boost::system::system_error &e)
+{
+	return string(e.code());
+}
+
+std::string
+ircd::string(const boost::system::error_code &ec)
+{
+	return ircd::string(128, [&ec]
+	(const mutable_buffer &buf)
+	{
+		return string(buf, ec);
+	});
+}
+
+ircd::string_view
+ircd::string(const mutable_buffer &buf,
+             const boost::system::system_error &e)
+{
+	return string(buf, e.code());
+}
+
+ircd::string_view
+ircd::string(const mutable_buffer &buf,
+             const boost::system::error_code &ec)
+{
+	const auto len
+	{
+		fmt::sprintf
+		{
+			buf, "%s: %s", ec.category().name(), ec.message()
+		}
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+std::exception_ptr
+ircd::make_eptr(const boost::system::error_code &ec)
+{
+	return bool(ec)?
+		std::make_exception_ptr(boost::system::system_error(ec)):
+		std::exception_ptr{};
 }
 
 void

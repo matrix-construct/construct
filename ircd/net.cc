@@ -3165,54 +3165,6 @@ ircd::net::port(const ip::tcp::endpoint &ep)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// asio.h
-//
-
-std::exception_ptr
-ircd::make_eptr(const boost::system::error_code &ec)
-{
-	return bool(ec)? std::make_exception_ptr(boost::system::system_error(ec)):
-	                 std::exception_ptr{};
-}
-
-std::string
-ircd::string(const boost::system::system_error &e)
-{
-	return string(e.code());
-}
-
-std::string
-ircd::string(const boost::system::error_code &ec)
-{
-	std::string ret(128, char{});
-	ret.resize(string(mutable_buffer{ret}, ec).size());
-	return ret;
-}
-
-ircd::string_view
-ircd::string(const mutable_buffer &buf,
-             const boost::system::system_error &e)
-{
-	return string(buf, e.code());
-}
-
-ircd::string_view
-ircd::string(const mutable_buffer &buf,
-             const boost::system::error_code &ec)
-{
-	const auto len
-	{
-		fmt::sprintf
-		{
-			buf, "%s: %s", ec.category().name(), ec.message()
-		}
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // buffer.h - provide definition for the null buffers and asio conversion
 //
 

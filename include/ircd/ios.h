@@ -15,14 +15,6 @@
 // definition file. Other libircd headers may extend this namespace with more
 // forward declarations.
 
-/// Forward declarations for boost::system because it is not included here.
-namespace boost::system
-{
-	struct error_code;
-	struct system_error;
-	namespace errc {}
-}
-
 /// Forward declarations for boost::asio because it is not included here.
 namespace boost::asio
 {
@@ -53,13 +45,6 @@ namespace ircd
 
 	void post(std::function<void ()>);
 	void dispatch(std::function<void ()>);
-
-	// Forward utilities for boost errors
-	std::exception_ptr make_eptr(const boost::system::error_code &ec);
-	string_view string(const mutable_buffer &, const boost::system::error_code &);
-	string_view string(const mutable_buffer &, const boost::system::system_error &);
-	std::string string(const boost::system::error_code &);
-	std::string string(const boost::system::system_error &);
 }
 
 inline void
