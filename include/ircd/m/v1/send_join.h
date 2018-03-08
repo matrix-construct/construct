@@ -26,7 +26,7 @@ struct ircd::m::v1::send_join
 		return json::array{in.content};
 	}
 
-	send_join(const room::id &, const user::id &, const const_buffer &, const mutable_buffer &, opts);
+	send_join(const room::id &, const id::event &, const const_buffer &, const mutable_buffer &, opts);
 	send_join() = default;
 };
 

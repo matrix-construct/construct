@@ -351,7 +351,7 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 //
 
 ircd::m::v1::send_join::send_join(const room::id &room_id,
-                                  const user::id &user_id,
+                                  const id::event &event_id,
                                   const const_buffer &content,
                                   const mutable_buffer &buf,
                                   opts opts)
@@ -378,7 +378,7 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 		{
 			urlbuf, "/_matrix/federation/v1/send_join/%s/%s",
 			url::encode(room_id, ridbuf),
-			url::encode(user_id, uidbuf)
+			url::encode(event_id, uidbuf)
 		};
 	}
 
