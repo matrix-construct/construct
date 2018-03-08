@@ -27,6 +27,7 @@ namespace ircd::m
 	// [GET] Util
 	bool exists(const room &);
 	bool exists(const id::room &);
+	bool exists(const id::room_alias &, const bool &remote = false);
 
 	id::room room_id(const mutable_buffer &, const id::room_alias &);
 	id::room::buf room_id(const id::room_alias &);

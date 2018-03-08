@@ -36,6 +36,10 @@ extern "C" m::id::room
 room_id__room_alias(const mutable_buffer &out,
                     const m::id::room_alias &);
 
+extern "C" bool
+room_alias_exists(const m::id::room_alias &,
+                  const bool &remote_query);
+
 resource::response
 get__directory_room(client &client,
                     const resource::request &request)
@@ -104,12 +108,34 @@ static json::object
 room_alias_fetch(const mutable_buffer &out,
                  const m::id::room_alias &alias);
 
+bool
+room_alias_exists(const m::id::room_alias &alias,
+                  const bool &remote_query)
+try
+{
+	const m::room alias_room{alias_room_id};
+	if(alias_room.has("ircd.alias", alias))
+		return true;
+
+	if(!remote_query)
+		return false;
+
+	char buf[256];
+	room_id__room_alias(buf, alias);
+	return true;
+}
+catch(const m::NOT_FOUND &)
+{
+	return false;
+}
+
 /// Translate a room alias into a room_id. This function first checks the
 /// local cache. A cache miss will then cause in a query to the remote, the
 /// result of which will be added to cache.
 m::id::room
 room_id__room_alias(const mutable_buffer &out,
                     const m::id::room_alias &alias)
+try
 {
 	m::id::room ret;
 	const auto cache_closure{[&out, &ret]
@@ -167,6 +193,13 @@ room_id__room_alias(const mutable_buffer &out,
 			data(out), copy(out, room_id)
 		}
 	};
+}
+catch(const http::error &e)
+{
+	if(e.code == http::NOT_FOUND)
+		throw m::NOT_FOUND{};
+
+	throw;
 }
 
 /// This function makes a room alias request to a remote. The alias

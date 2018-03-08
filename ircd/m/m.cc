@@ -1139,6 +1139,20 @@ ircd::m::room_id(const mutable_buffer &out,
 	return function(out, room_alias);
 }
 
+bool
+ircd::m::exists(const id::room_alias &room_alias,
+                const bool &remote_query)
+{
+	using prototype = bool (const id::room_alias, const bool &);
+
+	static import<prototype> function
+	{
+		"client_directory_room", "room_alias_exists"
+	};
+
+	return function(room_alias, remote_query);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/hook.h
