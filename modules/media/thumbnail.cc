@@ -14,7 +14,7 @@
 // #include <boost/gil/extension/numeric/sampler.hpp>
 // #include <boost/gil/extension/numeric/resample.hpp>
 
-using namespace ircd;
+#include "media.h"
 
 mapi::header
 IRCD_MODULE
@@ -46,7 +46,15 @@ static resource::response
 get__thumbnail_remote(client &client,
                       const resource::request &request,
                       const string_view &server,
-                      const string_view &file);
+                      const string_view &file,
+                      const m::room &room);
+
+static resource::response
+get__thumbnail_local(client &client,
+                     const resource::request &request,
+                     const string_view &server,
+                     const string_view &file,
+                     const m::room &room);
 
 resource::response
 get__thumbnail(client &client,
@@ -74,27 +82,25 @@ get__thumbnail(client &client,
 		request.parv[1]
 	};
 
-	//TODO: cache check
+	const m::room::id::buf room_id
+	{
+		file_room_id(server, file)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	if(m::exists(room))
+		return get__thumbnail_local(client, request, server, file, room);
 
 	if(!my_host(server))
-		return get__thumbnail_remote(client, request, server, file);
+		return get__thumbnail_remote(client, request, server, file, room);
 
-	throw m::NOT_FOUND{}; //TODO: X
-
-	const string_view data
+	throw m::NOT_FOUND
 	{
-
-	};
-
-	char mime_type_buf[64];
-	const string_view content_type
-	{
-		magic::mime(mime_type_buf, data)
-	};
-
-	return resource::response
-	{
-		client, string_view{data}, content_type
+		"Media not found"
 	};
 }
 
@@ -114,7 +120,8 @@ static resource::response
 get__thumbnail_remote(client &client,
                       const resource::request &request,
                       const string_view &hostname,
-                      const string_view &mediaid)
+                      const string_view &mediaid,
+                      const m::room &room)
 {
 	const net::hostport remote
 	{
@@ -143,6 +150,8 @@ get__thumbnail_remote(client &client,
 		buf + size(out_head), sizeof(buf) - size(out_head)
 	};
 
+	//TODO: --- This should use the progress callback to build blocks
+
 	// Null content buffer will cause dynamic allocation internally.
 	const mutable_buffer in_content{};
 
@@ -152,23 +161,28 @@ get__thumbnail_remote(client &client,
 		remote, { out_head }, { in_head, in_content }, &opts
 	};
 
-	if(remote_request.wait(seconds(5)) == ctx::future_status::timeout) //TODO: conf
+	if(remote_request.wait(seconds(10)) == ctx::future_status::timeout)
 		throw http::error
 		{
 			http::REQUEST_TIMEOUT
 		};
+
+	//TODO: ---
 
 	const auto &code
 	{
 		remote_request.get()
 	};
 
-	//TODO: cache add
-
 	char mime_type_buf[64];
 	const string_view content_type
 	{
 		magic::mime(mime_type_buf, remote_request.in.content)
+	};
+
+	const size_t file_size
+	{
+		size(remote_request.in.content)
 	};
 
 	parse::buffer pb{remote_request.in.head};
@@ -185,8 +199,172 @@ get__thumbnail_remote(client &client,
 			content_type
 		};
 
-	return resource::response
+	// Send it off to user first
+	resource::response
 	{
 		client, remote_request.in.content, content_type
 	};
+
+	//TODO: TXN
+	create(room, m::me.user_id, "file");
+
+	//TODO: TXN
+	send(room, m::me.user_id, "ircd.file.stat", "size",
+	{
+		{ "value", long(file_size) }
+	});
+
+	//TODO: TXN
+	send(room, m::me.user_id, "ircd.file.stat", "type",
+	{
+		{ "value", content_type }
+	});
+
+	const auto lpath{fs::make_path({fs::DPATH, "media"})};
+	thread_local char pathbuf[1024];
+	size_t pathlen{0};
+	pathlen = strlcpy(pathbuf, lpath);
+	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
+	const mutable_buffer pathpart
+	{
+		pathbuf + pathlen, sizeof(pathbuf) - pathlen
+	};
+
+	size_t off{0}, wrote{0};
+	while(off < file_size)
+	{
+		const size_t blksz
+		{
+			std::min(file_size - off, size_t(32_KiB))
+		};
+
+		const const_buffer &block
+		{
+			data(remote_request.in.content) + off, blksz
+		};
+
+		const sha256::buf hash_
+		{
+			sha256{block}
+		};
+
+		char b58buf[hash_.size() * 2];
+		const string_view hash
+		{
+			b58encode(b58buf, hash_)
+		};
+
+		send(room, m::me.user_id, "ircd.file.block",
+		{
+			{ "size",  long(blksz) },
+			{ "hash",  hash        }
+		});
+
+		const string_view path
+		{
+			pathbuf, pathlen + copy(pathpart, hash)
+		};
+
+		if(!fs::exists(path))
+			wrote += size(fs::write(path, block));
+
+		off += blksz;
+	}
+
+	assert(off == file_size);
+	assert(wrote <= off);
+	return {};
+}
+
+static resource::response
+get__thumbnail_local(client &client,
+                     const resource::request &request,
+                     const string_view &hostname,
+                     const string_view &mediaid,
+                     const m::room &room)
+{
+	// Get the file's total size
+	size_t file_size{0};
+	room.get("ircd.file.stat", "size", [&file_size]
+	(const m::event &event)
+	{
+		file_size = at<"content"_>(event).get<size_t>("value");
+	});
+
+	// Get the MIME type
+	char type_buf[64];
+	string_view content_type;
+	room.get("ircd.file.stat", "type", [&type_buf, &content_type]
+	(const m::event &event)
+	{
+		const auto &value
+		{
+			unquote(at<"content"_>(event).at("value"))
+		};
+
+		content_type =
+		{
+			type_buf, copy(type_buf, value)
+		};
+	});
+
+	// Send HTTP head to client
+	resource::response
+	{
+		client, file_size, content_type, http::OK
+	};
+
+	const auto lpath{fs::make_path({fs::DPATH, "media"})};
+	thread_local char pathbuf[1024];
+	size_t pathlen{0};
+	pathlen = strlcpy(pathbuf, lpath);
+	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
+	const mutable_buffer pathpart
+	{
+		pathbuf + pathlen, sizeof(pathbuf) - pathlen
+	};
+
+	// Block buffer
+	const unique_buffer<mutable_buffer> buf
+	{
+		64_KiB
+	};
+
+	// Spool content to client
+	size_t sent{0}, read{0};
+	m::room::messages it{room, 1};
+	for(; bool(it); ++it)
+	{
+		const m::event &event{*it};
+		if(at<"type"_>(event) != "ircd.file.block")
+			continue;
+
+		const auto &hash
+		{
+			unquote(at<"content"_>(event).at("hash"))
+		};
+
+		const auto &blksz
+		{
+			at<"content"_>(event).get<size_t>("size")
+		};
+
+		const string_view path
+		{
+			pathbuf, pathlen + copy(pathpart, hash)
+		};
+
+		const string_view &block
+		{
+			fs::read(path, buf)
+		};
+
+		assert(size(block) == blksz);
+		read += size(block);
+		sent += write_all(*client.sock, block);
+	}
+
+	assert(read == file_size);
+	assert(sent == read);
+	return {};
 }
