@@ -20,6 +20,7 @@ struct ircd::server::peer
 
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
+	static conf::item<seconds> error_clear_default;
 
 	net::remote remote;
 	std::list<link> links;
@@ -84,6 +85,7 @@ struct ircd::server::peer
 	string_view err_msg() const;
 	template<class... A> void err_set(A&&...);
 	void err_clear();
+	bool err_check();
 
 	// control panel
 	void interrupt();

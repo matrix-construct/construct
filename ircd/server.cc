@@ -363,14 +363,40 @@ const
 	return bool(e);
 }
 
+decltype(ircd::server::peer::error_clear_default)
+ircd::server::peer::error_clear_default
+{
+	{ "name",     "ircd.server.peer.error.clear_default" },
+	{ "default",  305L                                   }
+};
+
+bool
+ircd::server::peer::err_check()
+{
+	if(!ready)
+		return false;
+
+	if(!e)
+		return true;
+
+	//TODO: The specific error type should be switched and finer
+	//TODO: timeouts should be used depending on the error: i.e
+	//TODO: NXDOMAIN vs. temporary conn timeout, etc.
+	if(e->etime + seconds(error_clear_default) > now<steady_point>())
+		return false;
+
+	err_clear();
+	return true;
+}
+
 void
 ircd::server::peer::submit(request &request)
 try
 {
-	if(unlikely(!ready || !server::ready))
+	if(!err_check() || unlikely(!server::ready))
 		throw unavailable
 		{
-			"Peer is unable to take any requests."
+			"Peer is unable to take any requests: %s", err_msg()
 		};
 
 	link *const ret
