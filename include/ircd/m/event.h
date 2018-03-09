@@ -147,6 +147,15 @@ struct ircd::m::event::fetch
 	friend void seek(fetch &, const event::id &);
 };
 
+/// Device to evaluate the conformity of an event object. This is an 'in vitro'
+/// or 'pure' evaluation: it determines if the event is reasonably sane enough
+/// to be evaluated further using only the information in the event itself. It
+/// requires nothing external and conducts no IO etc..
+///
+/// This evaluation does not throw or stop when a check fails: instead it
+/// collects the failures allowing the user to further determine how to proceed
+/// at their own discretion.
+///
 struct ircd::m::event::conforms
 {
 	enum code :uint;
@@ -173,6 +182,10 @@ struct ircd::m::event::conforms
 	friend std::ostream &operator<<(std::ostream &, const conforms &);
 };
 
+/// Report codes corresponding to the checks conducted by event::conforms.
+/// Developers: If you add a code here you must also add a string reflection
+/// in the definition file.
+///
 enum ircd::m::event::conforms::code
 :uint
 {
@@ -191,6 +204,10 @@ enum ircd::m::event::conforms::code
 	MISSING_PREV_STATE,                ///< for state_key'ed, empty prev_state
 	DEPTH_NEGATIVE,                    ///< depth < 0
 	DEPTH_ZERO,                        ///< for non-m.room.create, depth=0
+	MISSING_SIGNATURES,                ///< no signatures
+	MISSING_ORIGIN_SIGNATURE,          ///< no signature for origin
+	MISMATCH_ORIGIN_SENDER,            ///< sender mxid host not from origin
+	MISMATCH_ORIGIN_EVENT_ID,          ///< event_id mxid host not from origin
 
 	_NUM_
 };

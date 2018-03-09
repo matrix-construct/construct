@@ -788,6 +788,10 @@ ircd::m::event_conforms_reflects
 	"MISSING_PREV_STATE",
 	"DEPTH_NEGATIVE",
 	"DEPTH_ZERO",
+	"MISSING_SIGNATURES",
+	"MISSING_ORIGIN_SIGNATURE",
+	"MISMATCH_ORIGIN_SENDER",
+	"MISMATCH_ORIGIN_EVENT_ID",
 };
 
 std::ostream &
@@ -854,6 +858,20 @@ ircd::m::event::conforms::conforms(const event &e)
 	//TODO: XXX
 	if(false)
 		set(INVALID_ORIGIN);
+
+	if(empty(json::get<"signatures"_>(e)))
+		set(MISSING_SIGNATURES);
+
+	if(empty(json::object{json::get<"signatures"_>(e).get(json::get<"origin"_>(e))}))
+		set(MISSING_ORIGIN_SIGNATURE);
+
+	if(!has(INVALID_OR_MISSING_SENDER_ID))
+		if(json::get<"origin"_>(e) != m::id::user{json::get<"sender"_>(e)}.host())
+			set(MISMATCH_ORIGIN_SENDER);
+
+	if(!has(INVALID_OR_MISSING_EVENT_ID))
+		if(json::get<"origin"_>(e) != m::id::event{json::get<"event_id"_>(e)}.host())
+			set(MISMATCH_ORIGIN_EVENT_ID);
 
 	if(json::get<"type"_>(e) == "m.room.redaction")
 		if(!valid(m::id::EVENT, json::get<"redacts"_>(e)))
