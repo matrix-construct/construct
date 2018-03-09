@@ -572,7 +572,7 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 	"directory",
 	fmt::sprintf
 	{
-		query_arg_buf, "room_alias=%s", string_view{room_alias}
+		query_arg_buf, "room_alias=%s", url::encode(room_alias, query_url_buf)
 	},
 	buf,
 	std::move(opts)
@@ -597,7 +597,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	"profile",
 	fmt::sprintf
 	{
-		query_arg_buf, "user_id=%s", string_view{user_id}
+		query_arg_buf, "user_id=%s", url::encode(user_id, query_url_buf)
 	},
 	buf,
 	std::move(opts)
@@ -625,7 +625,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	fmt::sprintf
 	{
 		query_arg_buf, "user_id=%s%s%s",
-		string_view{user_id},
+		url::encode(string_view{user_id}, query_url_buf),
 		!empty(field)? "&field=" : "",
 		field
 	},
