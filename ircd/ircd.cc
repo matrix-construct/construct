@@ -210,6 +210,7 @@ try
 	{
 		_server_.interrupt();
 		_client_.interrupt();
+		_server_.close();
 	}};
 
 	// When the call to wait() below completes, IRCd exits from the RUN state

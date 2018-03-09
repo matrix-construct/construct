@@ -168,14 +168,6 @@ ircd::server::close_all()
 
 	for(auto &peer : peers)
 		peer.second->close(opts);
-
-	log.debug("Waiting for %zu tags on %zu links on %zu peers to close...",
-	          tag_count(),
-	          link_count(),
-	          peer_count());
-
-	while(link_count())
-		dock.wait();
 }
 
 void
@@ -202,9 +194,32 @@ ircd::server::init::init()
 ircd::server::init::~init()
 noexcept
 {
+	close_all();
+	wait();
+	peers.clear();
+}
+
+void
+ircd::server::init::wait()
+{
+	while(link_count())
+	{
+		if(dock.wait_for(seconds(2)) == ctx::cv_status::no_timeout)
+			continue;
+
+		log.warning("Waiting for %zu tags on %zu links on %zu peers to close...",
+		            tag_count(),
+		            link_count(),
+		            peer_count());
+
+	}
+}
+
+void
+ircd::server::init::close()
+{
 	ready = false;
 	close_all();
-	peers.clear();
 }
 
 void
@@ -525,6 +540,7 @@ ircd::server::peer::link_add(const size_t &num)
 	if(e)
 		std::rethrow_exception(e->eptr);
 
+	assert(ready);
 	links.emplace_back(*this);
 	auto &link{links.back()};
 
@@ -793,6 +809,10 @@ try
 	}
 
 	static_cast<net::ipport &>(this->remote) = ipport;
+
+	if(!ready)
+		return;
+
 	for(auto &link : links)
 		link.open(this->remote);
 }
@@ -1066,6 +1086,8 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 bool
 ircd::server::link::open(const net::open_opts &open_opts)
 {
+	assert(server::ready);
+
 	if(op_init)
 		return false;
 

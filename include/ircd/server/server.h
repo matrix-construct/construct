@@ -51,6 +51,8 @@ namespace ircd::server
 struct ircd::server::init
 {
 	void interrupt();
+	void close();
+	void wait();
 
 	init();
 	~init() noexcept;
