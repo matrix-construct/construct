@@ -483,6 +483,32 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 namespace ircd::m::v1
 {
 	thread_local char query_arg_buf[1024];
+	thread_local char query_url_buf[1024];
+}
+
+ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
+                                               const mutable_buffer &buf)
+:user_devices
+{
+	user_id, buf, opts{user_id.host()}
+}
+{
+}
+
+ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
+                                               const mutable_buffer &buf,
+                                               opts opts)
+:query
+{
+	"user_devices",
+	fmt::sprintf
+	{
+		query_arg_buf, "user_id=%s", url::encode(user_id, query_url_buf)
+	},
+	buf,
+	std::move(opts)
+}
+{
 }
 
 ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,

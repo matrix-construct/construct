@@ -1748,6 +1748,7 @@ console_cmd__fed__event(const string_view &line)
 	return true;
 }
 
+static bool console_cmd__fed__query__user_devices(const string_view &line);
 static bool console_cmd__fed__query__directory(const string_view &line);
 static bool console_cmd__fed__query__profile(const string_view &line);
 
@@ -1766,6 +1767,9 @@ console_cmd__fed__query(const string_view &line)
 
 		case hash("directory"):
 			return console_cmd__fed__query__directory(args);
+
+		case hash("user_devices"):
+			return console_cmd__fed__query__user_devices(args);
 
 		default:
 			throw bad_command{};
@@ -1834,6 +1838,47 @@ console_cmd__fed__query__directory(const string_view &line)
 	};
 
 	//TODO: TO
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__query__user_devices(const string_view &line)
+{
+	const m::id::user &user_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token(line, ' ', 1, user_id.host())
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = remote;
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		32_KiB
+	};
+
+	m::v1::query::user_devices request
+	{
+		user_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
