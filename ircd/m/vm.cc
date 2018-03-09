@@ -142,14 +142,23 @@ ircd::m::vm::commit(const event &event,
 		          vm::current_sequence,
 		          pretty_oneline(event));
 
-	//TODO: X
-	vm::opts opts_{opts};
-	opts_.non_conform |= event::conforms::MISSING_PREV_STATE;
-	vm::eval eval{opts_};
-
 	check_size(event);
 	commit_hook(event);
-	eval(event);
+
+	vm::opts opts_{opts};
+
+	// Some functionality on this server may create an event on behalf
+	// of remote users. It's safe for us to mask this here, but eval'ing
+	// this event in any replay later will require special casing.
+	opts_.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
+
+	//TODO: X
+	opts_.non_conform |= event::conforms::MISSING_PREV_STATE;
+
+	eval
+	{
+		event, opts_
+	};
 
 	return unquote(at<"event_id"_>(event));
 }
