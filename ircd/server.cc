@@ -1502,7 +1502,8 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log.warning("Link discarded %zu of %zu unexpected bytes",
+	log.warning("Link to %s discarded %zu of %zu unexpected bytes",
+	            peer? string(peer->remote) : string(remote_ipport(*socket)),
 	            discard,
 	            discarded);
 
@@ -1511,7 +1512,9 @@ ircd::server::link::discard_read()
 	if(unlikely(!discard || !discarded))
 		throw assertive
 		{
-			"Queue is empty and nothing to discard."
+			"peer(%p) link(%p) queue is empty and nothing to discard.",
+			peer.get(),
+			this
 		};
 }
 
