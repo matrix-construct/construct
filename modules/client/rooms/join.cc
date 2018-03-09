@@ -42,6 +42,13 @@ event::id::buf
 join__room_user(const room &room,
                 const id::user &user_id)
 {
+	if(!exists(room))
+		throw m::NOT_FOUND
+		{
+			"Not aware of room %s",
+			string_view{room.room_id}
+		};
+
 	json::iov event;
 	json::iov content;
 	const json::iov::push push[]
