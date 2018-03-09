@@ -23,6 +23,7 @@ struct ircd::net::dns::resolver
 	using header = rfc1035::header;
 
 	static constexpr const size_t &MAX_COUNT{64};
+	static conf::item<milliseconds> timeout;
 
 	std::vector<ip::udp::endpoint> server;       // The list of active servers
 	size_t server_next{0};                       // Round-robin state to hit servers
@@ -50,7 +51,7 @@ struct ircd::net::dns::resolver
 	void operator()(const hostport &, const opts &, callback);
 
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
-	void check_timeouts(const seconds &timeout);
+	void check_timeouts(const milliseconds &timeout);
 	void worker();
 	ctx::context context;
 

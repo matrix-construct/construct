@@ -22,6 +22,7 @@ struct ircd::net::listener::acceptor
 	using error_code = boost::system::error_code;
 
 	static log::log log;
+	static conf::item<milliseconds> timeout;
 
 	std::string name;
 	size_t backlog;

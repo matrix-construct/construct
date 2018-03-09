@@ -800,6 +800,13 @@ ircd::net::listener::acceptor::log
 	"listener"
 };
 
+decltype(ircd::net::listener::acceptor::timeout)
+ircd::net::listener::acceptor::timeout
+{
+	{ "name",     "ircd.net.acceptor.timeout" },
+	{ "default",  5000L                       },
+};
+
 ircd::net::listener::acceptor::acceptor(const json::object &opts)
 try
 :name
@@ -965,7 +972,7 @@ noexcept try
 	};
 
 	++handshaking;
-	sock->set_timeout(5000ms); //TODO: config
+	sock->set_timeout(milliseconds(timeout));
 	sock->ssl.async_handshake(handshake_type, std::move(handshake));
 }
 catch(const ctx::interrupted &e)
@@ -2149,6 +2156,13 @@ decltype(ircd::net::dns::opts_default)
 ircd::net::dns::opts_default
 {};
 
+decltype(ircd::net::dns::cache::clear_nxdomain)
+ircd::net::dns::cache::clear_nxdomain
+{
+	{ "name",     "net.dns.cache.clear_nxdomain" },
+	{ "default",   43200L                        },
+};
+
 /// Convenience composition with a single ipport callback. This is the result of
 /// an automatic chain of queries such as SRV and A/AAAA based on the input and
 /// intermediate results.
@@ -2400,6 +2414,13 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 // net/resolver.h
 //
 
+decltype(ircd::net::dns::resolver::timeout)
+ircd::net::dns::resolver::timeout
+{
+	{ "name",     "net.dns.resolver.timeout" },
+	{ "default",   10000L                    },
+};
+
 ircd::net::dns::resolver::resolver()
 :ns{*ircd::ios}
 ,context
@@ -2425,12 +2446,6 @@ void
 ircd::net::dns::resolver::worker()
 try
 {
-	static conf::item<seconds> timeout
-	{
-		{ "name",     "net.dns.resolver.timeout" },
-		{ "default",   5L                        },
-	};
-
 	while(1)
 	{
 		dock.wait([this]
@@ -2438,8 +2453,8 @@ try
 			return !tags.empty();
 		});
 
-		ctx::sleep(seconds(timeout));
-		check_timeouts(seconds(timeout));
+		ctx::sleep(milliseconds(timeout));
+		check_timeouts(milliseconds(timeout));
 	}
 }
 catch(const ctx::interrupted &)
@@ -2448,7 +2463,7 @@ catch(const ctx::interrupted &)
 }
 
 void
-ircd::net::dns::resolver::check_timeouts(const seconds &timeout)
+ircd::net::dns::resolver::check_timeouts(const milliseconds &timeout)
 {
 	const auto cutoff
 	{
@@ -2821,7 +2836,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 				{
 					const auto &host{rstrip(q.name, '.')};
 					rfc1035::record::A record;
-					record.ttl = ircd::time() + hours(24).count(); //TODO: conf
+					record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count();
 					cache.A.emplace(host, record);
 					break;
 				}
@@ -2830,7 +2845,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 				{
 					const auto &host{rstrip(q.name, '.')};
 					rfc1035::record::SRV record;
-					record.ttl = ircd::time() + hours(24).count(); //TODO: conf
+					record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count();
 					cache.SRV.emplace(host, record);
 					break;
 				}
