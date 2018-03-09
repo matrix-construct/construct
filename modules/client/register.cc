@@ -102,7 +102,10 @@ try
 	// for this user in the form of !@user:host and set a key in !users:host
 	// If the user_id is taken this throws 409 Conflict because those assets
 	// will already exist; otherwise the user is registered after this call.
-	user.activate();
+	user.activate(
+	{
+		{ "active", true }
+	});
 
 	// Set the password for the account. This issues an ircd.password state
 	// event to the user's room. User will be able to login with
@@ -290,6 +293,14 @@ _first_user_registered(const m::event &event)
 	{
 		at<"state_key"_>(event)
 	};
+
+	const auto &content
+	{
+		at<"content"_>(event)
+	};
+
+	if(!content.get<bool>("active"))
+		return;
 
 	join(m::control, user);
 	already = true;

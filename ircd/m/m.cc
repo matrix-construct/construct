@@ -227,7 +227,10 @@ ircd::m::init::bootstrap()
 	);
 
 	create(user::users, me.user_id);
-	me.activate();
+	me.activate(
+	{
+		{ "active", true }
+	});
 
 	create(my_room, me.user_id);
 	send(my_room, me.user_id, "m.room.name", "",

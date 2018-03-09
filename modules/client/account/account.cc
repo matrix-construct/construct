@@ -70,7 +70,7 @@ is_active__user(const m::user &user)
 			at<"content"_>(event)
 		};
 
-		ret = content.get("active") == "true";
+		ret = content.get<bool>("active") == true;
 	});
 
 	return ret;
