@@ -486,6 +486,50 @@ namespace ircd::m::v1
 	thread_local char query_url_buf[1024];
 }
 
+ircd::m::v1::query::client_keys::client_keys(const id::user &user_id,
+                                             const string_view &device_id,
+                                             const mutable_buffer &buf)
+:client_keys
+{
+	user_id, device_id, buf, opts{user_id.host()}
+}
+{
+}
+
+ircd::m::v1::query::client_keys::client_keys(const id::user &user_id,
+                                             const string_view &device_id,
+                                             const mutable_buffer &buf,
+                                             opts opts)
+:query{[&]() -> query
+{
+	const json::value device_ids[]
+	{
+		{ device_id }
+	};
+
+	const json::members body
+	{
+		{ "device_keys", json::members
+		{
+			{ string_view{user_id}, { device_ids, 1 } }
+		}}
+	};
+
+	mutable_buffer out{buf};
+	const string_view content
+	{
+		stringify(out, body)
+	};
+
+	json::get<"content"_>(opts.request) = content;
+	return
+	{
+		"client_keys", string_view{}, out, std::move(opts)
+	};
+}()}
+{
+}
+
 ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
                                                const mutable_buffer &buf)
 :user_devices
@@ -610,13 +654,19 @@ ircd::m::v1::query::query(const string_view &type,
 		thread_local char urlbuf[2048];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/query/%s?%s",
+			urlbuf, "/_matrix/federation/v1/query/%s%s%s",
 			type,
+			args? "?"_sv : ""_sv,
 			args
 		};
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!defined(json::get<"method"_>(opts.request)))
+		json::get<"method"_>(opts.request) = "GET";
+
 	opts.out.head = opts.request(buf);
 
 	if(!size(opts.in))

@@ -23,6 +23,7 @@ struct ircd::m::v1::query
 	struct profile;
 	struct directory;
 	struct user_devices;
+	struct client_keys;
 
 	explicit operator json::object() const
 	{
@@ -70,4 +71,11 @@ struct ircd::m::v1::query::user_devices
 {
 	user_devices(const id::user &, const mutable_buffer &, opts);
 	user_devices(const id::user &, const mutable_buffer &);
+};
+
+struct ircd::m::v1::query::client_keys
+:query
+{
+	client_keys(const id::user &, const string_view &device_id, const mutable_buffer &, opts);
+	client_keys(const id::user &, const string_view &device_id, const mutable_buffer &);
 };
