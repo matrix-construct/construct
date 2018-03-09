@@ -1505,6 +1505,7 @@ static bool console_cmd__fed__version(const string_view &line);
 static bool console_cmd__fed__query(const string_view &line);
 static bool console_cmd__fed__event(const string_view &line);
 static bool console_cmd__fed__state(const string_view &line);
+static bool console_cmd__fed__backfill(const string_view &line);
 static bool console_cmd__fed__head(const string_view &line);
 
 bool
@@ -1528,6 +1529,9 @@ console_cmd__fed(const string_view &line)
 
 		case hash("state"):
 			return console_cmd__fed__state(args);
+
+		case hash("backfill"):
+			return console_cmd__fed__backfill(args);
 
 		case hash("head"):
 			return console_cmd__fed__head(args);
@@ -1620,6 +1624,90 @@ console_cmd__fed__state(const string_view &line)
 	};
 
 	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__backfill(const string_view &line)
+{
+	const m::room::id &room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token(line, ' ', 1)
+	};
+
+	const string_view &count
+	{
+		token(line, ' ', 2, "32")
+	};
+
+	string_view event_id
+	{
+		token(line, ' ', 3, {})
+	};
+
+	string_view op
+	{
+		token(line, ' ', 4, {})
+	};
+
+	if(!op && event_id == "eval")
+		std::swap(op, event_id);
+
+	// Used for out.head, out.content, in.head, but in.content is dynamic
+	thread_local char buf[16_KiB];
+	m::v1::backfill::opts opts;
+	opts.remote = remote;
+	opts.limit = lex_cast<size_t>(count);
+	if(event_id)
+		opts.event_id = event_id;
+
+	m::v1::backfill request
+	{
+		room_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(10));
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	const json::array &pdus
+	{
+		response["pdus"]
+	};
+
+	if(op != "eval")
+	{
+		for(const json::object &event : pdus)
+			out << pretty_oneline(m::event{event}) << std::endl;
+
+		return true;
+	}
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.notify = false;
+	m::vm::eval eval
+	{
+		vmopts
+	};
+
+	for(const json::object &event : pdus)
+		eval(event);
+
 	return true;
 }
 
