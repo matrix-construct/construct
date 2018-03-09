@@ -574,19 +574,17 @@ catch(const boost::system::system_error &e)
 	close(net::dc::RST, net::close_ignore);
 	return false;
 }
-#ifndef RB_DEBUG
 catch(const std::exception &e)
 {
 	log::error
 	{
-		"client[%s] [500 Internal Error]: %s"
+		"client[%s] [500 Internal Error]: %s",
 		string(remote(*this)),
-		e.what())
+		e.what()
 	};
 
 	return false;
 }
-#endif
 
 /// Handle a single request within the client main() loop.
 ///
@@ -643,22 +641,25 @@ catch(const boost::system::system_error &e)
 
 	resource::response
 	{
-		*this, {}, {}, http::REQUEST_TIMEOUT
+		*this, 0L, {}, http::REQUEST_TIMEOUT
 	};
 
 	return false;
 }
 catch(const ircd::error &e)
 {
-	log::error("socket(%p) local[%s] remote[%s]: %s",
-	           sock.get(),
-	           string(local(*this)),
-	           string(remote(*this)),
-	           e.what());
+	log::error
+	{
+		"socket(%p) local[%s] remote[%s]: %s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		e.what()
+	};
 
 	resource::response
 	{
-		*this, e.what(), {}, http::INTERNAL_SERVER_ERROR
+		*this, e.what(), "text/html; charset=utf8", http::INTERNAL_SERVER_ERROR
 	};
 
 	throw;

@@ -605,6 +605,8 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const vector_view<const http::header> &headers)
 {
+	assert(empty(content) || !empty(content_type));
+
 	// contents of this buffer get copied again when further passed to
 	// response{}; we can get this off the stack if that remains true.
 	thread_local char buffer[4_KiB];
@@ -626,6 +628,8 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &headers)
 {
+	assert(empty(content) || !empty(content_type));
+
 	// Head gets sent
 	response
 	{
@@ -647,6 +651,8 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &headers)
 {
+	assert(!content_length || !empty(content_type));
+
 	const auto request_time
 	{
 		client.timer.at<microseconds>().count()
