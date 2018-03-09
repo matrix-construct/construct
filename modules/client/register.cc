@@ -92,20 +92,27 @@ try
 	// Check if the password is acceptable for this server or throws
 	validate_password(password);
 
+	//TODO: ABA
+	if(exists(user_id))
+		throw m::error
+		{
+			http::CONFLICT, "M_USER_IN_USE",
+			"The desired user ID is already in use."
+		};
+
+	//TODO: ABA / TXN
 	// Represent the user
 	m::user user
 	{
-		user_id
+		m::create(user_id)
 	};
 
 	// Activate the account. Underneath this will create a special room
 	// for this user in the form of !@user:host and set a key in !users:host
 	// If the user_id is taken this throws 409 Conflict because those assets
 	// will already exist; otherwise the user is registered after this call.
-	user.activate(
-	{
-		{ "active", true }
-	});
+	//TODO: ABA / TXN
+	user.activate();
 
 	// Set the password for the account. This issues an ircd.password state
 	// event to the user's room. User will be able to login with

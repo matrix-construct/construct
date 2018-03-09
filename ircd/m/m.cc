@@ -227,10 +227,8 @@ ircd::m::init::bootstrap()
 	);
 
 	create(user::users, me.user_id);
-	me.activate(
-	{
-		{ "active", true }
-	});
+	create(me.user_id);
+	me.activate();
 
 	create(my_room, me.user_id);
 	send(my_room, me.user_id, "m.room.name", "",
@@ -742,10 +740,43 @@ ircd::m::user::tokens
 	tokens_room_id
 };
 
+ircd::m::user
+ircd::m::create(const id::user &user_id,
+                const json::members &contents)
+{
+	const m::user user
+	{
+		user_id
+	};
+
+	const m::room::id::buf user_room_id
+	{
+		user.room_id()
+	};
+
+	//TODO: ABA
+	//TODO: TXN
+	m::room user_room
+	{
+		create(user_room_id, m::me.user_id, "user")
+	};
+
+	//TODO: ABA
+	//TODO: TXN
+	send(user.users, m::me.user_id, "ircd.user", user.user_id, contents);
+	return user;
+}
+
 bool
 ircd::m::exists(const user::id &user_id)
 {
 	return user::users.has("ircd.user", user_id);
+}
+
+bool
+ircd::m::exists(const user &user)
+{
+	return exists(user.user_id);
 }
 
 bool
@@ -803,29 +834,29 @@ ircd::m::user::gen_access_token(const mutable_buffer &buf)
 }
 
 ircd::m::event::id::buf
-ircd::m::user::activate(const json::members &contents)
+ircd::m::user::activate()
 {
-	using prototype = event::id::buf (const m::user &, const json::members &);
+	using prototype = event::id::buf (const m::user &);
 
 	static import<prototype> function
 	{
 		"client_account", "activate__user"
 	};
 
-	return function(*this, contents);
+	return function(*this);
 }
 
 ircd::m::event::id::buf
-ircd::m::user::deactivate(const json::members &contents)
+ircd::m::user::deactivate()
 {
-	using prototype = event::id::buf (const m::user &, const json::members &);
+	using prototype = event::id::buf (const m::user &);
 
 	static import<prototype> function
 	{
 		"client_account", "deactivate__user"
 	};
 
-	return function(*this, contents);
+	return function(*this);
 }
 
 bool

@@ -64,6 +64,13 @@ extern "C" m::event::id::buf
 deactivate__user(const m::user &user,
                  const json::members &)
 {
-	//TODO: XXX
-	return {};
+	const m::user::room user_room
+	{
+		user
+	};
+
+	return send(user_room, m::me.user_id, "ircd.account", "active",
+	{
+		{ "value", false }
+	});
 }

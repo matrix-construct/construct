@@ -13,7 +13,8 @@
 using namespace ircd;
 
 extern "C" bool is_active__user(const m::user &user);
-extern "C" m::event::id::buf activate__user(const m::user &user, const json::members &contents);
+extern "C" m::event::id::buf activate__user(const m::user &user);
+extern "C" m::event::id::buf deactivate__user(const m::user &user);
 
 mapi::header
 IRCD_MODULE
@@ -31,38 +32,29 @@ account_resource
 };
 
 m::event::id::buf
-activate__user(const m::user &user,
-               const json::members &contents)
+activate__user(const m::user &user)
 {
-	//TODO: ABA
-	if(is_active__user(user))
-		throw m::error
-		{
-			http::CONFLICT, "M_USER_IN_USE",
-			"The desired user ID is already in use."
-		};
-
-	const m::room::id::buf user_room_id
+	const m::user::room user_room
 	{
-		user.room_id()
+		user
 	};
 
-	//TODO: ABA
-	m::room user_room
+	return send(user_room, m::me.user_id, "ircd.account", "active",
 	{
-		create(user_room_id, m::me.user_id, "user")
-	};
-
-	//TODO: ABA
-	return send(user.users, m::me.user_id, "ircd.user", user.user_id, contents);
+		{ "value", true }
+	});
 }
 
 bool
 is_active__user(const m::user &user)
 {
+	const m::user::room user_room
+	{
+		user
+	};
+
 	bool ret{false};
-	const m::room &users{m::user::users};
-	users.get(std::nothrow, "ircd.user", user.user_id, [&ret]
+	user_room.get(std::nothrow, "ircd.account", "active", [&ret]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -70,7 +62,7 @@ is_active__user(const m::user &user)
 			at<"content"_>(event)
 		};
 
-		ret = content.get<bool>("active") == true;
+		ret = content.get<bool>("value") == true;
 	});
 
 	return ret;

@@ -40,11 +40,16 @@ presence_set(const m::presence &content)
 		at<"user_id"_>(content)
 	};
 
+	//TODO: ABA
+	if(!exists(user))
+		create(user.user_id);
+
 	const m::user::room user_room
 	{
 		user
 	};
 
+	//TODO: ABA
 	return send(user_room, user.user_id, "m.presence", json::strung{content});
 }
 
@@ -128,9 +133,6 @@ handle_edu_m_presence_(const m::event &event,
 	{
 		at<"presence"_>(object)
 	};
-
-	if(!exists(user_id))
-		m::user{user_id}.activate();
 
 	const auto evid
 	{
