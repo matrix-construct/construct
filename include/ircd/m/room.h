@@ -146,6 +146,8 @@ struct ircd::m::room::messages
 	bool operator!() const             { return !it;                           }
 
 	const event::id &event_id();
+	operator const event::id &();
+
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
 

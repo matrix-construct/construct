@@ -303,6 +303,12 @@ ircd::m::room::messages::seek(const uint64_t &depth)
 	return bool(*this);
 }
 
+ircd::m::room::messages::operator
+const m::event::id &()
+{
+	return event_id();
+}
+
 const ircd::m::event::id &
 ircd::m::room::messages::event_id()
 {
