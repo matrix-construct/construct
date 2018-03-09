@@ -1999,11 +1999,11 @@ noexcept
 		duration_cast<milliseconds>(exp)
 	};
 
+	timedout = false;
 	boost::system::error_code ec;
 	timer.cancel(ec);
 	assert(!ec);
-
-	timedout = false;
+	assert(timedout == false);
 	return ret;
 }
 
