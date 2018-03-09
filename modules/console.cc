@@ -738,8 +738,7 @@ console_cmd__event__fetch(const string_view &line)
 		event_id, buf, std::move(opts)
 	};
 
-	//TODO: TO
-
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
@@ -1612,7 +1611,7 @@ console_cmd__fed__state(const string_view &line)
 		room_id, buf, std::move(opts)
 	};
 
-	//TODO: TO
+	request.wait(seconds(30));
 	const auto code
 	{
 		request.get()
@@ -1733,7 +1732,7 @@ console_cmd__fed__event(const string_view &line)
 		event_id, buf, std::move(opts)
 	};
 
-	//TODO: TO
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
@@ -1804,7 +1803,7 @@ console_cmd__fed__query__profile(const string_view &line)
 		user_id, buf, std::move(opts)
 	};
 
-	//TODO: TO
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
@@ -1841,7 +1840,7 @@ console_cmd__fed__query__directory(const string_view &line)
 		room_alias, buf, std::move(opts)
 	};
 
-	//TODO: TO
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
@@ -1960,7 +1959,7 @@ console_cmd__fed__version(const string_view &line)
 		buf, std::move(opts)
 	};
 
-	//TODO: TO
+	request.wait(seconds(10));
 	const auto code
 	{
 		request.get()
