@@ -311,7 +311,7 @@ get__thumbnail_local(client &client,
 	// Send HTTP head to client
 	resource::response
 	{
-		client, file_size, content_type, http::OK
+		client, http::OK, content_type, file_size
 	};
 
 	const auto lpath{fs::make_path({fs::DPATH, "media"})};

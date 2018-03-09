@@ -616,7 +616,7 @@ ircd::resource::response::response(client &client,
 		http::write(sb, headers);
 	}
 
-	new (this) response
+	response
 	{
 		client, content, content_type, code, string_view{sb.completed()}
 	};
@@ -633,7 +633,7 @@ ircd::resource::response::response(client &client,
 	// Head gets sent
 	response
 	{
-		client, content.size(), content_type, code, headers
+		client, code, content_type, size(content), headers
 	};
 
 	// All content gets sent
@@ -646,9 +646,9 @@ ircd::resource::response::response(client &client,
 }
 
 ircd::resource::response::response(client &client,
-                                   const size_t &content_length,
-                                   const string_view &content_type,
                                    const http::code &code,
+                                   const string_view &content_type,
+                                   const size_t &content_length,
                                    const string_view &headers)
 {
 	assert(!content_length || !empty(content_type));

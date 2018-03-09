@@ -641,7 +641,7 @@ catch(const boost::system::system_error &e)
 
 	resource::response
 	{
-		*this, 0L, {}, http::REQUEST_TIMEOUT
+		*this, http::REQUEST_TIMEOUT, {}, 0L, {}
 	};
 
 	return false;
