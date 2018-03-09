@@ -17,8 +17,6 @@ namespace ircd::http
 	namespace karma = spirit::karma;
 	namespace ascii = qi::ascii;
 
-	using spirit::unused_type;
-
 	using qi::lit;
 	using qi::string;
 	using qi::char_;
@@ -31,8 +29,8 @@ namespace ircd::http
 	using qi::attr;
 	using qi::eps;
 	using qi::attr_cast;
-
 	using karma::maxwidth;
+	using spirit::unused_type;
 
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;

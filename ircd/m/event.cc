@@ -10,6 +10,13 @@
 
 #include <ircd/m/m.h>
 
+ircd::conf::item<size_t>
+ircd::m::event_max_size
+{
+	{ "name",     "m.event.max_size" },
+	{ "default",   65507L            },
+};
+
 ircd::m::id::event
 ircd::m::event_id(const event &event,
                   id::event::buf &buf)
@@ -34,15 +41,6 @@ ircd::m::id::event
 ircd::m::event_id(const event &event)
 {
 	return at<"event_id"_>(event);
-}
-
-namespace ircd::m
-{
-	conf::item<size_t> event_max_size
-	{
-		{ "name",     "m.event.max_size" },
-		{ "default",   65507L            },
-	};
 }
 
 void

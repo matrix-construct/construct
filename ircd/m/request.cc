@@ -165,15 +165,15 @@ const
 		}
 	};
 
-	const auto &origin
-	{
-		unquote(at<"origin"_>(*this))
-	};
-
 	const ed25519::pk pk
 	{
-		[&origin, &key](auto &buf)
+		[this, &key](auto &buf)
 		{
+			const auto &origin
+			{
+				unquote(at<"origin"_>(*this))
+			};
+
 			m::keys::get(origin, key, [&buf]
 			(const string_view &key)
 			{

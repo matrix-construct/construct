@@ -15,6 +15,8 @@ namespace ircd::m
 {
 	struct event;
 
+	extern conf::item<size_t> event_max_size;
+
 	bool my(const id::event &);
 	bool my(const event &);
 
