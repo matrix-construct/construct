@@ -49,6 +49,7 @@ struct ircd::net::socket
 	steady_timer timer;
 	stat in, out;
 	bool timedout {false};
+	bool fini {false};
 
 	void call_user(const eptr_handler &, const error_code &) noexcept;
 	void call_user(const ec_handler &, const error_code &) noexcept;

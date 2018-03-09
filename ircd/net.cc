@@ -1346,7 +1346,10 @@ try
 	          in.bytes,
 	          out.bytes);
 
+	assert(!fini);
+	fini = true;
 	cancel();
+
 	if(opts.sopts)
 		set(*this, *opts.sopts);
 
