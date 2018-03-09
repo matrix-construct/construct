@@ -1152,6 +1152,12 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 {
 	assert(op_fini);
 
+	if(op_init)
+	{
+		assert(bool(eptr));
+		op_init = false;
+	}
+
 	if(peer)
 		peer->handle_close(*this, std::move(eptr));
 }
