@@ -424,7 +424,7 @@ ircd::server::peer::link_get(const request &request)
 	for(auto &cand : links)
 	{
 		// Don't want a link that's shutting down or marked for exclusion
-		if(cand.fini || cand.exclude)
+		if(cand.op_fini || cand.exclude)
 			continue;
 
 		if(!best)
@@ -533,35 +533,29 @@ catch(const std::exception &e)
 void
 ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
-try
 {
 	if(eptr)
-		std::rethrow_exception(eptr);
-}
-catch(const std::exception &e)
-{
-	log.error("peer(%p) link(%p) [%s]: close: %s",
-	          this,
-	          &link,
-	          string(remote),
-	          e.what());
+		log.error("peer(%p) link(%p) [%s]: close: %s",
+		          this,
+		          &link,
+		          string(remote),
+		          what(eptr));
+
+	handle_finished(link);
 }
 
 void
 ircd::server::peer::handle_error(link &link,
                                  std::exception_ptr eptr)
-try
 {
+	assert(bool(eptr));
 	link.cancel_committed(eptr);
-	link.close(net::dc::RST);
-	std::rethrow_exception(eptr);
-}
-catch(const std::exception &e)
-{
 	log.error("peer(%p) link(%p): %s",
 	          this,
 	          &link,
-	          e.what());
+	          what(eptr));
+
+	link.close(net::dc::RST);
 }
 
 void
@@ -611,8 +605,10 @@ ircd::server::peer::handle_error(link &link,
 void
 ircd::server::peer::handle_finished(link &link)
 {
-	assert(link.fini);
-	assert(link.handles == 0);
+	assert(link.op_fini);
+	assert(!link.op_init);
+	assert(!link.op_read);
+	assert(!link.op_write);
 	this->del(link);
 }
 
@@ -1044,7 +1040,7 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 bool
 ircd::server::link::open(const net::open_opts &open_opts)
 {
-	if(init)
+	if(op_init)
 		return false;
 
 	auto handler
@@ -1052,13 +1048,10 @@ ircd::server::link::open(const net::open_opts &open_opts)
 		std::bind(&link::handle_open, this, ph::_1)
 	};
 
-	init = true;
-	fini = false;
-	inc_handles();
+	op_init = true;
 	const unwind::exceptional unhandled{[this]
 	{
-		dec_handles();
-		init = false;
+		op_init = false;
 	}};
 
 	socket = net::open(open_opts, std::move(handler));
@@ -1068,15 +1061,10 @@ ircd::server::link::open(const net::open_opts &open_opts)
 void
 ircd::server::link::handle_open(std::exception_ptr eptr)
 {
-	const unwind handled{[this]
-	{
-		dec_handles();
-	}};
+	assert(op_init);
+	op_init = false;
 
-	assert(init);
-	init = false;
-
-	if(!eptr && !fini)
+	if(!eptr && !op_fini)
 		wait_writable();
 
 	if(peer)
@@ -1086,23 +1074,15 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 bool
 ircd::server::link::close(const net::close_opts &close_opts)
 {
-	if(fini)
+	if(op_fini)
 		return false;
 
-	init = false;
-	fini = true;
+	op_fini = true;
 
-	// Tell the peer to ditch everything in the queue; fini has been set so
+	// Tell the peer to ditch everything in the queue; op_fini has been set so
 	// the tags won't get assigned back to this link.
 	if(tag_count() && peer)
 		peer->disperse(*this);
-
-	inc_handles();
-	const unwind::exceptional unhandled{[this]
-	{
-		dec_handles();
-		// link may be destroyed here
-	}};
 
 	auto handler
 	{
@@ -1122,12 +1102,7 @@ ircd::server::link::close(const net::close_opts &close_opts)
 void
 ircd::server::link::handle_close(std::exception_ptr eptr)
 {
-	const unwind handled{[this]
-	{
-		dec_handles();
-	}};
-
-	assert(fini);
+	assert(op_fini);
 
 	if(peer)
 		peer->handle_close(*this, std::move(eptr));
@@ -1136,7 +1111,7 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 void
 ircd::server::link::wait_writable()
 {
-	if(waiting_write)
+	if(op_write)
 		return;
 
 	auto handler
@@ -1145,12 +1120,10 @@ ircd::server::link::wait_writable()
 	};
 
 	assert(ready());
-	inc_handles();
-	waiting_write = true;
+	op_write = true;
 	const unwind::exceptional unhandled{[this]
 	{
-		waiting_write = false;
-		dec_handles();
+		op_write = false;
 	}};
 
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
@@ -1163,12 +1136,7 @@ try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	waiting_write = false;
-	const unwind handled{[this]
-	{
-		dec_handles();
-	}};
-
+	op_write = false;
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:
@@ -1291,7 +1259,7 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 void
 ircd::server::link::wait_readable()
 {
-	if(waiting_read)
+	if(op_read)
 		return;
 
 	auto handler
@@ -1300,12 +1268,10 @@ ircd::server::link::wait_readable()
 	};
 
 	assert(ready());
-	inc_handles();
-	waiting_read = true;
+	op_read = true;
 	const unwind::exceptional unhandled{[this]
 	{
-		waiting_read = false;
-		dec_handles();
+		op_read = false;
 	}};
 
 	net::wait(*socket, net::ready::READ, std::move(handler));
@@ -1318,12 +1284,7 @@ try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	waiting_read = false;
-	const unwind handled{[this]
-	{
-		dec_handles();
-	}};
-
+	op_read = false;
 	if(ec.category() == system_category()) switch(ec.value())
 	{
 		case success:
@@ -1601,7 +1562,7 @@ bool
 ircd::server::link::ready()
 const
 {
-	return opened() && !init && !fini;
+	return opened() && !op_init && !op_fini;
 }
 
 bool
@@ -1623,28 +1584,6 @@ ircd::server::link::tag_max()
 const
 {
 	return tag_max_default;
-}
-
-void
-ircd::server::link::inc_handles()
-{
-	assert(handles >= 0);
-	assert(handles < std::numeric_limits<decltype(handles)>::max());
-	++handles;
-}
-
-void
-ircd::server::link::dec_handles()
-{
-	assert(handles > 0);
-	--handles;
-
-	if(!handles && fini && peer)
-	{
-		auto peer(this->peer);
-		this->peer = nullptr;
-		peer->handle_finished(*this);
-	}
 }
 
 template<class F>

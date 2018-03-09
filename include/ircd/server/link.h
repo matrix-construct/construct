@@ -18,20 +18,16 @@ struct ircd::server::link
 	static conf::item<size_t> tag_max_default;
 	static conf::item<size_t> tag_commit_max_default;
 
-	bool init {false};                           ///< link is connecting
-	bool fini {false};                           ///< link is disconnecting
-	bool exclude {false};                        ///< link is excluded
-	bool waiting_write {false};                  ///< async operation state
-	bool waiting_read {false};                   ///< async operation state
-	int8_t handles {0};                          ///< async operation state
 	std::shared_ptr<server::peer> peer;          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
+	bool op_init {false};                        ///< link is connecting
+	bool op_fini {false};                        ///< link is disconnecting
+	bool op_write {false};                       ///< async operation state
+	bool op_read {false};                        ///< async operation state
+	bool exclude {false};                        ///< link is excluded
 
 	template<class F> size_t accumulate_tags(F&&) const;
-
-	void inc_handles();
-	void dec_handles();
 
 	void discard_read();
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
