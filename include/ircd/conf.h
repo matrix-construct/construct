@@ -14,12 +14,17 @@
 namespace ircd::conf
 {
 	template<class T = void> struct item;  // doesn't exist
-	template<class T> struct value;        // abstraction for carrying item value
 	template<> struct item<void>;          // base class of all conf items
 	template<> struct item<std::string>;
 	template<> struct item<uint64_t>;
 	template<> struct item<int64_t>;
+	template<> struct item<hours>;
 	template<> struct item<seconds>;
+	template<> struct item<milliseconds>;
+	template<> struct item<microseconds>;
+
+	template<class T> struct value;        // abstraction for carrying item value
+	template<class T> struct lex_castable; // abstraction for lex_cast compatible
 
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, not_found)
@@ -70,7 +75,29 @@ struct ircd::conf::value
 
 	template<class... A>
 	value(A&&... a)
-	:_value{std::forward<A>(a)...}
+	:_value(std::forward<A>(a)...)
+	{}
+};
+
+template<class T>
+struct ircd::conf::lex_castable
+:conf::item<>
+,conf::value<T>
+{
+	string_view get(const mutable_buffer &out) const override
+	{
+		return lex_cast(this->_value, out);
+	}
+
+	bool set(const string_view &s) override
+	{
+		this->_value = lex_cast<T>(s);
+		return true;
+	}
+
+	lex_castable(const json::members &members)
+	:conf::item<>{members}
+	,conf::value<T>(feature.get("default", long(0)))
 	{}
 };
 
@@ -95,74 +122,50 @@ struct ircd::conf::item<std::string>
 		return true;
 	}
 
-	item(const json::members &memb)
-	:conf::item<>{memb}
+	item(const json::members &members)
+	:conf::item<>{members}
 	,value{unquote(feature.get("default"))}
 	{}
 };
 
 template<>
 struct ircd::conf::item<uint64_t>
-:conf::item<>
-,conf::value<uint64_t>
+:lex_castable<uint64_t>
 {
-	string_view get(const mutable_buffer &out) const override
-	{
-		return lex_cast(_value, out);
-	}
-
-	bool set(const string_view &s) override
-	{
-		_value = lex_cast<uint64_t>(s);
-		return true;
-	}
-
-	item(const json::members &memb)
-	:conf::item<>{memb}
-	,value{feature.get("default", 0UL)}
-	{}
+	using lex_castable::lex_castable;
 };
 
 template<>
 struct ircd::conf::item<int64_t>
-:conf::item<>
-,conf::value<int64_t>
+:lex_castable<int64_t>
 {
-	string_view get(const mutable_buffer &out) const override
-	{
-		return lex_cast(_value, out);
-	}
+	using lex_castable::lex_castable;
+};
 
-	bool set(const string_view &s) override
-	{
-		_value = lex_cast<int64_t>(s);
-		return true;
-	}
-
-	item(const json::members &memb)
-	:conf::item<>{memb}
-	,value{feature.get("default", 0L)}
-	{}
+template<>
+struct ircd::conf::item<ircd::hours>
+:lex_castable<ircd::hours>
+{
+	using lex_castable::lex_castable;
 };
 
 template<>
 struct ircd::conf::item<ircd::seconds>
-:conf::item<>
-,conf::value<seconds>
+:lex_castable<ircd::seconds>
 {
-	string_view get(const mutable_buffer &out) const override
-	{
-		return lex_cast(_value, out);
-	}
+	using lex_castable::lex_castable;
+};
 
-	bool set(const string_view &s) override
-	{
-		_value = lex_cast<seconds>(s);
-		return true;
-	}
+template<>
+struct ircd::conf::item<ircd::milliseconds>
+:lex_castable<ircd::milliseconds>
+{
+	using lex_castable::lex_castable;
+};
 
-	item(const json::members &memb)
-	:conf::item<>{memb}
-	,value{feature.get("default", 0L)}
-	{}
+template<>
+struct ircd::conf::item<ircd::microseconds>
+:lex_castable<ircd::microseconds>
+{
+	using lex_castable::lex_castable;
 };

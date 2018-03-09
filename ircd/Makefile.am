@@ -72,8 +72,9 @@ libircd_la_LIBADD = \
 # the units that compile spirit grammars otherwise they thrash weaker
 # systems.
 libircd_la_SOURCES =   \
-	http.cc            \
 	exception.cc       \
+	lexical.cc         \
+	json.cc            \
 	locale.cc          \
 	logger.cc          \
 	info.cc            \
@@ -82,7 +83,6 @@ libircd_la_SOURCES =   \
 	rfc1459.cc         \
 	rand.cc            \
 	hash.cc            \
-	lexical.cc         \
 	base.cc            \
 	parse.cc           \
 	openssl.cc         \
@@ -95,7 +95,7 @@ libircd_la_SOURCES =   \
 	fmt.cc             \
 	db.cc              \
 	net.cc             \
-	json.cc            \
+	http.cc            \
 	server.cc          \
 	client.cc          \
 	resource.cc        \
