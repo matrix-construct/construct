@@ -345,6 +345,13 @@ catch(const std::out_of_range &e)
 		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
 	};
 }
+catch(const ctx::timeout &e)
+{
+	throw m::error
+	{
+		http::BAD_GATEWAY, "M_REQUEST_TIMEOUT", "%s", e.what()
+	};
+}
 
 ircd::resource::method &
 ircd::resource::operator[](const string_view &name)
