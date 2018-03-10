@@ -328,7 +328,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		for(size_t i(0); i < prev_count; ++i)
 		{
 			const auto prev_id{prev.prev_event(i)};
-			if(opts.prev_check_exists && !dbs::exists(prev_id))
+			if(opts.prev_check_exists && !exists(prev_id))
 				throw error
 				{
 					fault::EVENT, "Missing prev event %s", string_view{prev_id}

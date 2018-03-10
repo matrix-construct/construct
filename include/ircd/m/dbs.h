@@ -47,9 +47,6 @@ namespace ircd::m::dbs
 	string_view state_root(const mutable_buffer &out, const id::event &);
 	string_view state_root(const mutable_buffer &out, const event &);
 
-	// [GET] Query suite
-	bool exists(const event::id &);
-
 	// [SET (txn)] Basic write suite
 	string_view write(db::txn &, const event &, const write_opts &);
 }

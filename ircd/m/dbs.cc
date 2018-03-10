@@ -407,22 +407,6 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 	return ret;
 }
 
-bool
-ircd::m::dbs::exists(const event::id &event_id)
-{
-	static constexpr auto idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
-	auto &column
-	{
-		event_column.at(idx)
-	};
-
-	return has(column, event_id);
-}
-
 //
 // Database descriptors
 //
