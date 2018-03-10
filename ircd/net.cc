@@ -498,7 +498,7 @@ ircd::net::open(socket &socket,
 	auto complete{[s(shared_from(socket)), handler(std::move(handler))]
 	(std::exception_ptr eptr)
 	{
-		if(eptr)
+		if(eptr && !s->fini)
 			close(*s, dc::RST);
 
 		handler(std::move(eptr));
@@ -1546,7 +1546,7 @@ noexcept try
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-	if(!timedout && ec != operation_canceled)
+	if(!timedout && ec != operation_canceled && !fini)
 		cancel_timeout();
 
 	if(timedout && ec == operation_canceled && ec.category() == system_category())
@@ -1667,7 +1667,7 @@ noexcept try
 	          string(ec));
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(!timedout && ec != operation_canceled)
+	if(!timedout && ec != operation_canceled && !fini)
 		cancel_timeout();
 
 	if(timedout && ec == operation_canceled && ec.category() == system_category())
@@ -1727,6 +1727,7 @@ noexcept try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
+	assert(fini);
 	if(!timedout && ec != operation_canceled)
 		cancel_timeout();
 
@@ -1777,7 +1778,7 @@ noexcept try
 
 	const life_guard<socket> s{wp};
 
-	if(!timedout && ec != operation_canceled)
+	if(!timedout && ec != operation_canceled && !fini)
 		cancel_timeout();
 
 	if(timedout && ec == operation_canceled && ec.category() == system_category())
