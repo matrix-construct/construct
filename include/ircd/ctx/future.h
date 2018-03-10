@@ -18,7 +18,6 @@ namespace ircd::ctx
 	template<class T = void> class future;
 	template<> class future<void>;
 	template<class... T> struct scoped_future;
-
 	enum class future_status;
 
 	template<class T,
@@ -34,16 +33,16 @@ enum class ircd::ctx::future_status
 };
 
 template<class T>
-class ircd::ctx::future
+struct ircd::ctx::future
 {
-	std::shared_ptr<shared_state<T>> st;
+	shared_state<T> st;
 
   public:
 	using value_type                             = typename shared_state<T>::value_type;
 	using pointer_type                           = typename shared_state<T>::pointer_type;
 	using reference_type                         = typename shared_state<T>::reference_type;
 
-	bool valid() const                           { return bool(st);                                }
+	bool valid() const                           { return !invalid(st);                            }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -58,19 +57,24 @@ class ircd::ctx::future
 	T get();
 	operator T()                                 { return get();                                   }
 
-	future();
+	future() = default;
 	future(promise<T> &promise);
+	future(future &&) noexcept;
+	future(const future &) = delete;
+	future &operator=(future &&) noexcept;
+	future &operator=(const future &) = delete;
+	~future() noexcept;
 };
 
 template<>
-class ircd::ctx::future<void>
+struct ircd::ctx::future<void>
 {
-	std::shared_ptr<shared_state<void>> st;
+	shared_state<void> st;
 
   public:
 	using value_type                             = typename shared_state<void>::value_type;
 
-	bool valid() const                           { return bool(st);                                }
+	bool valid() const                           { return !invalid(st);                            }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -82,8 +86,13 @@ class ircd::ctx::future<void>
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
 
-	future();
+	future() = default;
 	future(promise<void> &promise);
+	future(future &&) noexcept;
+	future(const future &) = delete;
+	future &operator=(future &&) noexcept;
+	future &operator=(const future &) = delete;
+	~future() noexcept;
 };
 
 template<class... T>
@@ -112,28 +121,77 @@ noexcept
 		this->wait();
 }
 
-inline
-ircd::ctx::future<void>::future()
-:st{nullptr}
-{
-}
-
 template<class T>
-ircd::ctx::future<T>::future()
-:st{nullptr}
+ircd::ctx::future<T>::future(promise<T> &promise)
 {
+	assert(!promise.st);
+	st.p = &promise;
+	update(st);
+	assert(promise.st);
 }
 
 inline
 ircd::ctx::future<void>::future(promise<void> &promise)
-:st{promise.get_state().share()}
 {
+	assert(!promise.st);
+	st.p = &promise;
+	update(st);
+	assert(promise.st);
 }
 
 template<class T>
-ircd::ctx::future<T>::future(promise<T> &promise)
-:st{promise.get_state().share()}
+ircd::ctx::future<T>::future(future<T> &&o)
+noexcept
+:st{std::move(o.st)}
 {
+	update(st);
+	o.st.p = nullptr;
+}
+
+inline
+ircd::ctx::future<void>::future(future<void> &&o)
+noexcept
+:st{std::move(o.st)}
+{
+	update(st);
+	o.st.p = nullptr;
+}
+
+template<class T>
+ircd::ctx::future<T> &
+ircd::ctx::future<T>::operator=(future<T> &&o)
+noexcept
+{
+	this->~future();
+	st = std::move(o.st);
+	update(st);
+	o.st.p = nullptr;
+	return *this;
+}
+
+inline ircd::ctx::future<void> &
+ircd::ctx::future<void>::operator=(future<void> &&o)
+noexcept
+{
+	this->~future();
+	st = std::move(o.st);
+	update(st);
+	o.st.p = nullptr;
+	return *this;
+}
+
+template<class T>
+ircd::ctx::future<T>::~future()
+noexcept
+{
+	invalidate(st);
+}
+
+inline
+ircd::ctx::future<void>::~future()
+noexcept
+{
+	invalidate(st);
 }
 
 template<class T>
@@ -142,17 +200,10 @@ ircd::ctx::future<T>::get()
 {
 	wait();
 
-	if(unlikely(bool(st->eptr)))
-		std::rethrow_exception(st->eptr);
+	if(unlikely(bool(st.eptr)))
+		std::rethrow_exception(st.eptr);
 
-	return st->val;
-}
-
-inline void
-ircd::ctx::future<void>::wait()
-const
-{
-	this->wait_until(steady_clock::time_point::max());
+	return st.val;
 }
 
 template<class T>
@@ -163,9 +214,17 @@ const
 	this->wait_until(steady_clock::time_point::max());
 }
 
+inline void
+ircd::ctx::future<void>::wait()
+const
+{
+	this->wait_until(steady_clock::time_point::max());
+}
+
+template<class T>
 template<class duration>
 ircd::ctx::future_status
-ircd::ctx::future<void>::wait(const duration &d)
+ircd::ctx::future<T>::wait(const duration &d)
 const
 {
 	return this->wait_until(steady_clock::now() + d);
@@ -173,17 +232,7 @@ const
 
 template<class duration>
 ircd::ctx::future_status
-ircd::ctx::future<void>::wait(const duration &d,
-                              std::nothrow_t)
-const
-{
-	return this->wait_until(steady_clock::now() + d, std::nothrow);
-}
-
-template<class T>
-template<class duration>
-ircd::ctx::future_status
-ircd::ctx::future<T>::wait(const duration &d)
+ircd::ctx::future<void>::wait(const duration &d)
 const
 {
 	return this->wait_until(steady_clock::now() + d);
@@ -199,10 +248,27 @@ const
 	return this->wait_until(steady_clock::now() + d, std::nothrow);
 }
 
+template<class duration>
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait(const duration &d,
+                              std::nothrow_t)
+const
+{
+	return this->wait_until(steady_clock::now() + d, std::nothrow);
+}
+
 template<class T>
 template<class time_point>
 ircd::ctx::future_status
 ircd::ctx::future<T>::wait_until(const time_point &tp)
+const
+{
+	return ircd::ctx::wait_until(*this, tp);
+}
+
+template<class time_point>
+ircd::ctx::future_status
+ircd::ctx::future<void>::wait_until(const time_point &tp)
 const
 {
 	return ircd::ctx::wait_until(*this, tp);
@@ -216,14 +282,6 @@ ircd::ctx::future<T>::wait_until(const time_point &tp,
 const
 {
 	return ircd::ctx::wait_until(*this, tp, std::nothrow);
-}
-
-template<class time_point>
-ircd::ctx::future_status
-ircd::ctx::future<void>::wait_until(const time_point &tp)
-const
-{
-	return ircd::ctx::wait_until(*this, tp);
 }
 
 template<class time_point>
@@ -261,15 +319,16 @@ ircd::ctx::wait_until(const future<T> &f,
 {
 	const auto wfun([&f]() -> bool
 	{
-		return f.st->finished;
+		return !pending(f.st);
 	});
 
-	if(unlikely(!f.valid()))
-		throw no_state();
+	if(unlikely(invalid(f.st)))
+		throw no_state{};
 
-	if(unlikely(!f.st->cond.wait_until(tp, wfun)))
+	if(unlikely(!f.st.cond.wait_until(tp, wfun)))
 		return future_status::timeout;
 
-	return likely(wfun())? future_status::ready:
-	                       future_status::deferred;
+	return likely(wfun())?
+		future_status::ready:
+		future_status::deferred;
 }

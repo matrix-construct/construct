@@ -2331,6 +2331,9 @@ template<class... args>
 void
 ircd::server::tag::set_exception(args&&... a)
 {
+	if(abandoned())
+		return;
+
 	set_exception(std::make_exception_ptr(std::forward<args>(a)...));
 }
 
@@ -2348,7 +2351,7 @@ bool
 ircd::server::tag::abandoned()
 const
 {
-	return p.finished();
+	return !p.valid();
 }
 
 bool

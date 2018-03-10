@@ -16,66 +16,67 @@ namespace ircd::ctx
 	struct shared_state_base;
 	template<class T = void> struct shared_state;
 	template<> struct shared_state<void>;
+
+	template<class T> struct promise;
+	template<> struct promise<void>;
+
+	template<class T> bool invalid(const shared_state<T> &);
+	template<class T> bool pending(const shared_state<T> &);
+	template<class T> bool ready(const shared_state<T> &);
+	template<class T> void set_ready(shared_state<T> &);
 }
 
 struct ircd::ctx::shared_state_base
 {
-	dock cond;
+	mutable dock cond;
 	std::exception_ptr eptr;
-	uint promise_refcnt {0};
-	bool finished {false};
 };
 
 template<class T>
 struct ircd::ctx::shared_state
 :shared_state_base
-,std::enable_shared_from_this<shared_state<T>>
 {
 	using value_type      = T;
 	using pointer_type    = T *;
 	using reference_type  = T &;
 
+	promise<T> *p {nullptr};
 	T val;
-
-	std::shared_ptr<const shared_state<T>> share() const;
-	std::shared_ptr<shared_state<T>> share();
 };
 
 template<>
 struct ircd::ctx::shared_state<void>
 :shared_state_base
-,std::enable_shared_from_this<shared_state<void>>
 {
 	using value_type      = void;
 
-	std::shared_ptr<const shared_state<void>> share() const;
-	std::shared_ptr<shared_state<void>> share();
+	promise<void> *p {nullptr};
 };
 
-inline std::shared_ptr<ircd::ctx::shared_state<void>>
-ircd::ctx::shared_state<void>::share()
+template<class T>
+void
+ircd::ctx::set_ready(shared_state<T> &st)
 {
-	return this->shared_from_this();
+	st.p = reinterpret_cast<promise<T> *>(uintptr_t(0x42));
 }
 
 template<class T>
-std::shared_ptr<ircd::ctx::shared_state<T>>
-ircd::ctx::shared_state<T>::share()
+bool
+ircd::ctx::ready(const shared_state<T> &st)
 {
-	return this->shared_from_this();
-}
-
-inline std::shared_ptr<const ircd::ctx::shared_state<void>>
-ircd::ctx::shared_state<void>::share()
-const
-{
-	return this->shared_from_this();
+	return st.p == reinterpret_cast<const promise<T> *>(uintptr_t(0x42));
 }
 
 template<class T>
-std::shared_ptr<const ircd::ctx::shared_state<T>>
-ircd::ctx::shared_state<T>::share()
-const
+bool
+ircd::ctx::pending(const shared_state<T> &st)
 {
-	return this->shared_from_this();
+	return st.p > reinterpret_cast<const promise<T> *>(uintptr_t(0x42));
+}
+
+template<class T>
+bool
+ircd::ctx::invalid(const shared_state<T> &st)
+{
+	return st.p == nullptr;
 }
