@@ -1189,6 +1189,70 @@ ircd::m::exists(const id::room_alias &room_alias,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/txn.h
+//
+
+std::string
+ircd::m::txn::create(const array &pdu,
+                     const array &edu,
+                     const array &pdu_failure)
+{
+	json::iov iov;
+	const json::iov::push push[]
+	{
+		{ iov, { "origin",            my_host()                   }},
+		{ iov, { "origin_server_ts",  ircd::time<milliseconds>()  }},
+	};
+
+	const json::iov::add_if _pdus
+	{
+		iov, pdu.second,
+		{
+			"pdus", { pdu.first, pdu.second }
+		}
+	};
+
+	const json::iov::add_if _edus
+	{
+		iov, edu.second,
+		{
+			"edus", { edu.first, edu.second }
+		}
+	};
+
+	const json::iov::add_if _pdu_failures
+	{
+		iov, pdu_failure.second,
+		{
+			"pdu_failures", { pdu_failure.first, pdu_failure.second }
+		}
+	};
+
+	return json::strung
+	{
+		iov
+	};
+}
+
+ircd::string_view
+ircd::m::txn::create_id(const mutable_buffer &out,
+                        const string_view &txn)
+{
+	const sha256::buf hash
+	{
+		sha256{txn}
+	};
+
+	const string_view txnid
+	{
+		b58encode(out, hash)
+	};
+
+	return txnid;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/hook.h
 //
 
