@@ -1546,9 +1546,10 @@ noexcept try
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-	if(!timedout)
+	if(!timedout && ec != operation_canceled)
 		cancel_timeout();
-	else if(ec == operation_canceled && ec.category() == system_category())
+
+	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
 	if(unlikely(!ec && !sd.is_open()))
@@ -1666,9 +1667,10 @@ noexcept try
 	          string(ec));
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(!timedout)
+	if(!timedout && ec != operation_canceled)
 		cancel_timeout();
-	else if(ec == operation_canceled && ec.category() == system_category())
+
+	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
 	// A connect error; abort here by calling the user back with error.
@@ -1725,9 +1727,10 @@ noexcept try
 	using namespace boost::system::errc;
 	using boost::system::system_category;
 
-	if(!timedout)
+	if(!timedout && ec != operation_canceled)
 		cancel_timeout();
-	else if(ec == operation_canceled && ec.category() == system_category())
+
+	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
 	log.debug("socket(%p) local[%s] remote[%s] disconnect %s",
@@ -1774,9 +1777,10 @@ noexcept try
 
 	const life_guard<socket> s{wp};
 
-	if(!timedout)
+	if(!timedout && ec != operation_canceled)
 		cancel_timeout();
-	else if(ec == operation_canceled && ec.category() == system_category())
+
+	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
 	log.debug("socket(%p) local[%s] remote[%s] handshake %s",
