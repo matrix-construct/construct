@@ -18,7 +18,7 @@ struct ircd::server::link
 	static conf::item<size_t> tag_max_default;
 	static conf::item<size_t> tag_commit_max_default;
 
-	std::shared_ptr<server::peer> peer;          ///< backreference to peer
+	server::peer *peer;                          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
 	bool op_init {false};                        ///< link is connecting
@@ -51,6 +51,7 @@ struct ircd::server::link
 	size_t tag_commit_max() const;
 
 	// indicator lights
+	bool finished() const;
 	bool opened() const noexcept;
 	bool ready() const;
 	bool busy() const;

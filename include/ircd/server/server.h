@@ -29,11 +29,12 @@ namespace ircd::server
 	using error_code = boost::system::error_code;
 
 	extern ircd::log::log log;
-	extern std::map<string_view, std::shared_ptr<peer>> peers;
+	extern std::map<string_view, std::unique_ptr<peer>> peers;
 
 	size_t tag_count();
 	size_t link_count();
 	size_t peer_count();
+	size_t peer_unfinished();
 
 	string_view errmsg(const net::hostport &);
 	bool exists(const net::hostport &);

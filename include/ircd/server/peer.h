@@ -14,7 +14,6 @@
 /// Remote entity.
 ///
 struct ircd::server::peer
-:std::enable_shared_from_this<ircd::server::peer>
 {
 	struct err;
 
@@ -26,12 +25,14 @@ struct ircd::server::peer
 	std::list<link> links;
 	std::unique_ptr<err> e;
 	std::string server_name;
-	bool ready {true};
+	bool op_resolve {false};
+	bool op_fini {false};
 
 	template<class F> size_t accumulate_links(F&&) const;
 	template<class F> size_t accumulate_tags(F&&) const;
 
-	void handle_resolve(std::weak_ptr<peer>, std::exception_ptr, const ipport &);
+	void handle_finished();
+	void handle_resolve(std::exception_ptr, const ipport &);
 	void resolve(const hostport &);
 
 	void disperse_uncommitted(link &);
@@ -48,6 +49,9 @@ struct ircd::server::peer
 	void handle_open(link &, std::exception_ptr);
 
   public:
+	// indicator lights
+	bool finished() const;
+
 	// config related
 	size_t link_min() const;
 	size_t link_max() const;
