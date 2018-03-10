@@ -196,11 +196,11 @@ ircd::ctx::promise<T>::set_value(T&& val)
 {
 	assert(valid());
 	assert(pending(*st));
+	st->val = std::move(val);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
-	st->val = std::move(val);
-	st->cond.notify_all();
+	notify(*st);
 }
 
 template<class T>
@@ -209,11 +209,11 @@ ircd::ctx::promise<T>::set_value(const T &val)
 {
 	assert(valid());
 	assert(pending(*st));
+	st->val = val;
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
-	st->val = val;
-	st->cond.notify_all();
+	notify(*st);
 }
 
 inline void
@@ -224,7 +224,7 @@ ircd::ctx::promise<void>::set_value()
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
-	st->cond.notify_all();
+	notify(*st);
 }
 
 template<class T>
@@ -233,11 +233,11 @@ ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
 	assert(pending(*st));
+	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
-	st->eptr = std::move(eptr);
-	st->cond.notify_all();
+	notify(*st);
 }
 
 inline void
@@ -245,11 +245,11 @@ ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
 	assert(pending(*st));
+	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
-	st->eptr = std::move(eptr);
-	st->cond.notify_all();
+	notify(*st);
 }
 
 template<class T>

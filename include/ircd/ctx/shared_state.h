@@ -24,12 +24,14 @@ namespace ircd::ctx
 	template<class T> bool pending(const shared_state<T> &);
 	template<class T> bool ready(const shared_state<T> &);
 	template<class T> void set_ready(shared_state<T> &);
+	template<class T> void notify(shared_state<T> &);
 }
 
 struct ircd::ctx::shared_state_base
 {
 	mutable dock cond;
 	std::exception_ptr eptr;
+	std::function<void (shared_state_base &)> then;
 };
 
 template<class T>
@@ -52,6 +54,24 @@ struct ircd::ctx::shared_state<void>
 
 	promise<void> *p {nullptr};
 };
+
+template<class T>
+void
+ircd::ctx::notify(shared_state<T> &st)
+{
+	st.cond.notify_all();
+
+	if(!st.then)
+		return;
+
+	if(!current)
+		return st.then(st);
+
+	ircd::post([&st]
+	{
+		st.then(st);
+	});
+}
 
 template<class T>
 void
