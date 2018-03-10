@@ -94,7 +94,7 @@ struct ircd::db::column
 	explicit operator database &();
 	explicit operator database::column &();
 
-	operator bool() const                        { return bool(c);                                 }
+	explicit operator bool() const               { return bool(c);                                 }
 	bool operator!() const                       { return !c;                                      }
 
 	// [GET] Iterations
