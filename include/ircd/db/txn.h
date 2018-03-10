@@ -71,6 +71,7 @@ struct ircd::db::txn::append
 	append(txn &, const delta &);
 	append(txn &, const string_view &key, const json::iov &);
 	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &);
+	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &, std::array<column, sizeof...(T)> &);
 };
 
 struct ircd::db::txn::checkpoint
@@ -101,5 +102,26 @@ ircd::db::txn::append::append(txn &txn,
 				col, key, byte_view<string_view>{val}
 			}
 		};
+	});
+}
+
+template<class... T>
+ircd::db::txn::append::append(txn &txn,
+                              const string_view &key,
+                              const json::tuple<T...> &tuple,
+                              std::array<column, sizeof...(T)> &col)
+{
+	size_t i{0};
+	for_each(tuple, [&txn, &key, &col, &i](const auto &, auto&& val)
+	{
+		if(defined(val)) append
+		{
+			txn, col.at(i), column::delta
+			{
+				key, byte_view<string_view>{val}
+			}
+		};
+
+		++i;
 	});
 }

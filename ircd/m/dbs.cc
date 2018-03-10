@@ -106,7 +106,7 @@ ircd::m::dbs::write(db::txn &txn,
 {
 	db::txn::append
 	{
-		txn, at<"event_id"_>(event), event
+		txn, at<"event_id"_>(event), event, event_column
 	};
 
 	if(defined(json::get<"state_key"_>(event)))
