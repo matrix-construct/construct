@@ -58,8 +58,6 @@ class ircd::ctx::future
 	T get();
 	operator T()                                 { return get();                                   }
 
-	void then(decltype(shared_state<T>::callback));
-
 	future();
 	future(promise<T> &promise);
 };
@@ -83,8 +81,6 @@ class ircd::ctx::future<void>
 	template<class duration> future_status wait(const duration &d, std::nothrow_t) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
-
-	void then(decltype(shared_state<void>::callback));
 
 	future();
 	future(promise<void> &promise);
@@ -138,21 +134,6 @@ template<class T>
 ircd::ctx::future<T>::future(promise<T> &promise)
 :st{promise.get_state().share()}
 {
-}
-
-template<class T>
-void
-ircd::ctx::future<T>::then(decltype(shared_state<T>::callback) cb)
-{
-	assert(valid());
-	st->callback = std::move(cb);
-}
-
-inline void
-ircd::ctx::future<void>::then(decltype(shared_state<void>::callback) cb)
-{
-	assert(valid());
-	st->callback = std::move(cb);
 }
 
 template<class T>
