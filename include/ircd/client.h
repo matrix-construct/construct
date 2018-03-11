@@ -16,9 +16,7 @@ namespace ircd
 	struct client;
 
 	//TODO: want to upgrade
-	const char *write(client &, const char *&start, const char *const &stop);
 	char *read(client &, char *&start, char *const &stop);
-	http::response::write_closure write_closure(client &);
 	parse::read_closure read_closure(client &);
 
 	void close_all_clients();
@@ -54,6 +52,7 @@ struct ircd::client
 	resource::request request;
 	bool longpoll {false};
 
+	size_t write_all(const const_buffer &);
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
 

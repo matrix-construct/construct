@@ -645,12 +645,12 @@ ircd::resource::response::response(client &client,
 	};
 
 	// All content gets sent
-	const ilist<const const_buffer> vector
+	const size_t written
 	{
-		content
+		client.write_all(content)
 	};
 
-	write_closure(client)(vector);
+	assert(written == size(content));
 }
 
 ircd::resource::response::response(client &client,
@@ -696,12 +696,10 @@ ircd::resource::response::response(client &client,
 			"HTTP headers too large for buffer of %zu", sizeof(head_buf)
 		};
 
-	const ilist<const const_buffer> vector
+	const size_t written
 	{
-		head.completed()
+		client.write_all(head.completed())
 	};
-
-	write_closure(client)(vector);
 
 	log::debug
 	{
@@ -715,4 +713,6 @@ ircd::resource::response::response(client &client,
 		content_type,
 		content_length,
 	};
+
+	assert(written == size(head.completed()));
 }

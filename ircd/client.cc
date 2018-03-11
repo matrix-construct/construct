@@ -88,22 +88,6 @@ noexcept
 // util
 //
 
-ircd::http::response::write_closure
-ircd::write_closure(client &client)
-{
-	// returns a function that can be called to send an iovector of data to a client
-	return [&client](const ilist<const const_buffer> &iov)
-	{
-		//std::cout << "<<<< " << size(iov) << std::endl;
-		//std::cout << iov << std::endl;
-		//std::cout << "---- " << std::endl;
-		const auto written
-		{
-			write(*client.sock, iov)
-		};
-	};
-}
-
 ircd::parse::read_closure
 ircd::read_closure(client &client)
 {
@@ -132,23 +116,6 @@ ircd::read(client &client,
 
 	char *const base(start);
 	start += net::read(sock, buf);
-	return base;
-}
-
-const char *
-ircd::write(client &client,
-            const char *&start,
-            const char *const &stop)
-{
-	assert(client.sock);
-	auto &sock(*client.sock);
-	const const_buffer buf
-	{
-		start, stop
-	};
-
-	const char *const base(start);
-	start += net::write(sock, buf);
 	return base;
 }
 
@@ -762,4 +729,16 @@ ircd::client::close(const net::close_opts &opts,
                     net::close_callback callback)
 {
 	net::close(*sock, opts, std::move(callback));
+}
+
+size_t
+ircd::client::write_all(const const_buffer &buf)
+{
+	if(unlikely(!sock))
+		throw error
+		{
+			"No socket to client."
+		};
+
+	return net::write_all(*sock, buf);
 }
