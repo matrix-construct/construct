@@ -85,8 +85,11 @@ struct ircd::ctx::future<void>
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
 
-	future() = default;
+	IRCD_OVERLOAD(already)
+
 	future(promise<void> &promise);
+	future(already_t);                           // construct in ready state
+	future() = default;
 	future(future &&) noexcept;
 	future(const future &) = delete;
 	future &operator=(future &&) noexcept;
@@ -143,6 +146,12 @@ ircd::ctx::future<void>::future(promise<void> &promise)
 	st.p = &promise;
 	update(st);
 	assert(promise.st);
+}
+
+inline
+ircd::ctx::future<void>::future(already_t)
+{
+	set_ready(st);
 }
 
 template<class T>
