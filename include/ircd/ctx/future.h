@@ -20,9 +20,6 @@ namespace ircd::ctx
 	template<class... T> struct scoped_future;
 	enum class future_status;
 
-	template<class T,
-	         class time_point>
-	future_status wait_until(const future<T> &, const time_point &);
 }
 
 enum class ircd::ctx::future_status
@@ -35,7 +32,7 @@ enum class ircd::ctx::future_status
 template<class T>
 struct ircd::ctx::future
 {
-	shared_state<T> st;
+	mutable shared_state<T> st;
 
   public:
 	using value_type                             = typename shared_state<T>::value_type;
@@ -69,7 +66,7 @@ struct ircd::ctx::future
 template<>
 struct ircd::ctx::future<void>
 {
-	shared_state<void> st;
+	mutable shared_state<void> st;
 
   public:
 	using value_type                             = typename shared_state<void>::value_type;
@@ -94,6 +91,13 @@ struct ircd::ctx::future<void>
 	future &operator=(const future &) = delete;
 	~future() noexcept;
 };
+
+namespace ircd::ctx
+{
+	template<class T,
+	         class time_point>
+	future_status wait_until(const future<T> &, const time_point &, std::nothrow_t);
+}
 
 template<class... T>
 struct ircd::ctx::scoped_future
@@ -199,8 +203,11 @@ T
 ircd::ctx::future<T>::get()
 {
 	wait();
+	if(unlikely(retrieved(st)))
+		throw future_already_retrieved{};
 
-	if(unlikely(bool(st.eptr)))
+	set_retrieved(st);
+	if(bool(st.eptr))
 		std::rethrow_exception(st.eptr);
 
 	return st.val;
@@ -271,7 +278,15 @@ ircd::ctx::future_status
 ircd::ctx::future<void>::wait_until(const time_point &tp)
 const
 {
-	return ircd::ctx::wait_until(*this, tp);
+	const auto status
+	{
+		this->wait_until(tp, std::nothrow)
+	};
+
+	if(status == future_status::timeout)
+		throw timeout{};
+
+	return status;
 }
 
 template<class T>
@@ -290,7 +305,19 @@ ircd::ctx::future<void>::wait_until(const time_point &tp,
                                     std::nothrow_t)
 const
 {
-	return ircd::ctx::wait_until(*this, tp, std::nothrow);
+	const auto status
+	{
+		ircd::ctx::wait_until(*this, tp, std::nothrow)
+	};
+
+	if(status == future_status::ready)
+	{
+		set_retrieved(st);
+		if(bool(st.eptr))
+			std::rethrow_exception(st.eptr);
+	}
+
+	return status;
 }
 
 template<class T,

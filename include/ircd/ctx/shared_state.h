@@ -22,9 +22,13 @@ namespace ircd::ctx
 
 	template<class T> bool invalid(const shared_state<T> &);
 	template<class T> bool pending(const shared_state<T> &);
+	template<class T> bool retrieved(const shared_state<T> &);
 	template<class T> bool ready(const shared_state<T> &);
-	template<class T> void set_ready(shared_state<T> &);
 	template<class T> void notify(shared_state<T> &);
+	template<class T> void set_retrieved(shared_state<T> &);
+	template<class T> void set_ready(shared_state<T> &);
+	template<class T> void set_observed(shared_state<T> &);
+	template<> void set_observed(shared_state<void> &);
 }
 
 struct ircd::ctx::shared_state_base
@@ -75,9 +79,30 @@ ircd::ctx::notify(shared_state<T> &st)
 
 template<class T>
 void
+ircd::ctx::set_observed(shared_state<T> &st)
+{
+	set_ready(st);
+}
+
+template<>
+inline void
+ircd::ctx::set_observed(shared_state<void> &st)
+{
+	set_retrieved(st);
+}
+
+template<class T>
+void
 ircd::ctx::set_ready(shared_state<T> &st)
 {
 	st.p = reinterpret_cast<promise<T> *>(uintptr_t(0x42));
+}
+
+template<class T>
+void
+ircd::ctx::set_retrieved(shared_state<T> &st)
+{
+	st.p = reinterpret_cast<promise<T> *>(uintptr_t(0x84));
 }
 
 template<class T>
@@ -89,9 +114,16 @@ ircd::ctx::ready(const shared_state<T> &st)
 
 template<class T>
 bool
+ircd::ctx::retrieved(const shared_state<T> &st)
+{
+	return st.p == reinterpret_cast<const promise<T> *>(uintptr_t(0x84));
+}
+
+template<class T>
+bool
 ircd::ctx::pending(const shared_state<T> &st)
 {
-	return st.p > reinterpret_cast<const promise<T> *>(uintptr_t(0x42));
+	return st.p > reinterpret_cast<const promise<T> *>(uintptr_t(0x1000));
 }
 
 template<class T>

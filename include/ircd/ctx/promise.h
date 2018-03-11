@@ -24,13 +24,6 @@ namespace ircd::ctx
 	IRCD_EXCEPTION(future_error, broken_promise)
 	IRCD_EXCEPTION(future_error, future_already_retrieved)
 	IRCD_EXCEPTION(future_error, promise_already_satisfied)
-
-	template<class T> size_t refcount(const shared_state<T> &);
-	template<class T> void update(shared_state<T> &s);
-	template<class T> void invalidate(shared_state<T> &);
-	template<class T> void remove(shared_state<T> &, promise<T> &);
-	template<class T> void update(promise<T> &new_, promise<T> &old);
-	template<class T> void append(promise<T> &new_, promise<T> &old);
 }
 
 template<class T>
@@ -89,6 +82,16 @@ struct ircd::ctx::promise<void>
 	promise &operator=(promise &&) noexcept;
 	~promise() noexcept;
 };
+
+namespace ircd::ctx
+{
+	template<class T> size_t refcount(const shared_state<T> &);
+	template<class T> void update(shared_state<T> &s);
+	template<class T> void invalidate(shared_state<T> &);
+	template<class T> void remove(shared_state<T> &, promise<T> &);
+	template<class T> void update(promise<T> &new_, promise<T> &old);
+	template<class T> void append(promise<T> &new_, promise<T> &old);
+}
 
 template<class T>
 ircd::ctx::promise<T>::promise(promise<T> &&o)
@@ -195,12 +198,15 @@ void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
 	assert(valid());
-	assert(pending(*st));
+	if(unlikely(ready(*st)))
+		throw promise_already_satisfied{};
+
 	st->val = std::move(val);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
 	notify(*st);
+	assert(!valid());
 }
 
 template<class T>
@@ -208,23 +214,29 @@ void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
 	assert(valid());
-	assert(pending(*st));
+	if(unlikely(!pending(*st)))
+		throw promise_already_satisfied{};
+
 	st->val = val;
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
 	notify(*st);
+	assert(!valid());
 }
 
 inline void
 ircd::ctx::promise<void>::set_value()
 {
 	assert(valid());
-	assert(pending(*st));
+	if(unlikely(!pending(*st)))
+		throw promise_already_satisfied{};
+
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
 	notify(*st);
+	assert(!valid());
 }
 
 template<class T>
@@ -232,24 +244,30 @@ void
 ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	assert(pending(*st));
+	if(unlikely(!pending(*st)))
+		throw promise_already_satisfied{};
+
 	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
 	notify(*st);
+	assert(!valid());
 }
 
 inline void
 ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	assert(pending(*st));
+	if(unlikely(!pending(*st)))
+		throw promise_already_satisfied{};
+
 	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
 	set_ready(*st);
 	notify(*st);
+	assert(!valid());
 }
 
 template<class T>
