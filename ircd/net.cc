@@ -1657,6 +1657,30 @@ noexcept try
 	if(callback)
 		call_user(callback, ec);
 }
+catch(const boost::system::system_error &e)
+{
+	using namespace boost::system::errc;
+	using boost::system::system_category;
+
+	const error_code &_ec{e.code()};
+	switch(_ec.value())
+	{
+		case bad_file_descriptor:
+			assert(ec.category() == system_category());
+			if(fini)
+				break;
+
+		default:
+			assert(0);
+			log.critical("socket(%p) handle timeout: %s",
+			             (const void *)this,
+			             string(e));
+			break;
+	}
+
+	if(callback)
+		call_user(callback, _ec);
+}
 catch(const std::exception &e)
 {
 	log.critical("socket(%p) handle timeout: %s",
