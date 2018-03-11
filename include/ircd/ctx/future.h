@@ -20,6 +20,8 @@ namespace ircd::ctx
 	template<class... T> struct scoped_future;
 	enum class future_status;
 
+	template<class it> future<it> when_any(it first, const it &last);
+	template<class it> future<void> when_all(it first, const it &last);
 }
 
 enum class ircd::ctx::future_status
@@ -358,4 +360,62 @@ ircd::ctx::wait_until(const future<T> &f,
 	return likely(wfun())?
 		future_status::ready:
 		future_status::deferred;
+}
+
+template<class it>
+ircd::ctx::future<void>
+ircd::ctx::when_all(it first,
+                    const it &last)
+{
+	promise<void> p;
+	future<void> ret(p);
+	for(; first != last; ++first)
+		if(pending(first->st))
+			first->st.then = [p](shared_state_base &) mutable
+			{
+				if(!p.valid())
+					return;
+
+				if(refcount(*p.st) < 2)
+					return p.set_value();
+
+				return remove(*p.st, p);
+			};
+
+	if(refcount(*p.st) <= 1)
+		p.set_value();
+
+	return ret;
+}
+
+template<class it>
+ircd::ctx::future<it>
+ircd::ctx::when_any(it first,
+                    const it &last)
+{
+	promise<it> p;
+	future<it> ret(p);
+	for(auto first_(first); first_ != last; ++first_)
+		if(ready(first_->st))
+		{
+			set_observed(first_->st);
+			p.set_value(first_);
+			return ret;
+		}
+
+	for(; first != last; ++first)
+		if(pending(first->st))
+			first->st.then = [p, first](shared_state_base &) mutable
+			{
+				if(!p.valid())
+					return;
+
+				set_observed(first->st);
+				p.set_value(first);
+			};
+
+	if(refcount(*p.st) <= 1)
+		p.set_value(first);
+
+	return ret;
 }
