@@ -744,27 +744,14 @@ ircd::m::user
 ircd::m::create(const id::user &user_id,
                 const json::members &contents)
 {
-	const m::user user
+	using prototype = user (const id::user &, const json::members &);
+
+	static import<prototype> function
 	{
-		user_id
+		"client_user", "user_create"
 	};
 
-	const m::room::id::buf user_room_id
-	{
-		user.room_id()
-	};
-
-	//TODO: ABA
-	//TODO: TXN
-	m::room user_room
-	{
-		create(user_room_id, m::me.user_id, "user")
-	};
-
-	//TODO: ABA
-	//TODO: TXN
-	send(user.users, m::me.user_id, "ircd.user", user.user_id, contents);
-	return user;
+	return function(user_id, contents);
 }
 
 bool
