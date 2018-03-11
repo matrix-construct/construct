@@ -14,7 +14,7 @@
 /// HyperText TransPort: formal grammars & tools
 namespace ircd::http
 {
-	enum code :int;
+	enum code :ushort;
 	struct error;
 	struct line;
 	struct query;
@@ -40,7 +40,7 @@ namespace ircd::http
 // Add more as you go...
 //
 enum ircd::http::code
-:int
+:ushort
 {
 	CONTINUE                                = 100,
 	SWITCHING_PROTOCOLS                     = 101,

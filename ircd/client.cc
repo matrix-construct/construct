@@ -687,11 +687,11 @@ catch(const http::error &e)
 {
 	if(ircd::debugmode) log::error
 	{
-		"socket(%p) local[%s] remote[%s] HTTP %d %s `%s' :%s",
+		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
 		sock.get(),
 		string(local(*this)),
 		string(remote(*this)),
-		int(e.code),
+		uint(e.code),
 		http::status(e.code),
 		head.uri,
 		e.content

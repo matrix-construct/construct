@@ -72,7 +72,8 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::http::line::request::version),   version  )
 )
 
-const decltype(ircd::http::reason) ircd::http::reason
+decltype(ircd::http::reason)
+ircd::http::reason
 {
 	{ code::CONTINUE,                            "Continue"                                        },
 	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"                             },
@@ -765,7 +766,7 @@ ircd::http::error::error(const http::code &code,
 ,headers{std::move(headers)}
 ,code{code}
 {
-	snprintf(buf, sizeof(buf), "%d %s", int(code), status(code).c_str());
+	snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
 }
 
 ircd::http::code
@@ -786,7 +787,7 @@ ircd::http::status(const string_view &str)
 }
 
 ircd::string_view
-ircd::http::status(const enum code &code)
+ircd::http::status(const http::code &code)
 try
 {
 	return reason.at(code);
@@ -795,7 +796,7 @@ catch(const std::out_of_range &e)
 {
 	log::warning
 	{
-		"No reason string for HTTP status code %d", int(code)
+		"No reason string for HTTP status code %u", uint(code)
 	};
 
 	return ""_sv;
