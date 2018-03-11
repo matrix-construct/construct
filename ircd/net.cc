@@ -1480,11 +1480,6 @@ void
 ircd::net::socket::wait(const wait_opts &opts,
                         wait_callback_ec callback)
 {
-	auto handle
-	{
-		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1)
-	};
-
 	set_timeout(opts.timeout);
 	const unwind::exceptional unset{[this]
 	{
@@ -1494,18 +1489,37 @@ ircd::net::socket::wait(const wait_opts &opts,
 	switch(opts.type)
 	{
 		case ready::ERROR:
+		{
+			auto handle
+			{
+				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
+			};
+
 			sd.async_wait(wait_type::wait_error, std::move(handle));
 			break;
+		}
 
 		case ready::WRITE:
+		{
+			auto handle
+			{
+				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
+			};
+
 			sd.async_wait(wait_type::wait_write, std::move(handle));
 			break;
+		}
 
 		case ready::READ:
 		{
 			static char buf[1] alignas(16);
 			static const ilist<mutable_buffer> bufs{buf};
 			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
+
+			auto handle
+			{
+				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, ph::_2)
+			};
 
 			// The problem here is that waiting on the sd doesn't account for bytes
 			// read into SSL that we didn't consume yet. If something is stuck in
@@ -1515,7 +1529,7 @@ ircd::net::socket::wait(const wait_opts &opts,
 			// real socket wait.
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 			{
-				handle(error_code{});
+				handle(error_code{}, 1UL);
 				break;
 			}
 
@@ -1537,7 +1551,8 @@ void
 ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
                                 const net::ready type,
                                 const ec_handler callback,
-                                error_code ec)
+                                error_code ec,
+                                const size_t bytes)
 noexcept try
 {
 	using namespace boost::system::errc;
@@ -1555,13 +1570,17 @@ noexcept try
 	if(unlikely(!ec && !sd.is_open()))
 		ec = { bad_file_descriptor, system_category() };
 
-	log.debug("socket(%p) local[%s] remote[%s] ready %s %s available:%zu",
+	if(type == ready::READ && !ec && bytes == 0)
+		ec = { asio::error::eof, asio::error::get_misc_category() };
+
+	log.debug("socket(%p) local[%s] remote[%s] ready %s %s avail:%zu:%zu",
 	          this,
 	          string(local_ipport(*this)),
 	          string(remote_ipport(*this)),
 	          reflect(type),
 	          string(ec),
-	          available(*this));
+	          type == ready::READ? bytes : 0UL,
+	          type == ready::READ? available(*this) : 0UL);
 
 	call_user(callback, ec);
 }
