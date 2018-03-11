@@ -312,10 +312,7 @@ ircd::resource::handle_request(client &client,
                                resource::request &request)
 try
 {
-	const auto response
-	{
-		method(client, request)
-	};
+	method(client, request);
 }
 catch(const json::not_found &e)
 {
@@ -361,8 +358,25 @@ try
 }
 catch(const std::out_of_range &e)
 {
+	char buf[128];
+	const http::header headers[]
+	{
+		{ "Allow", allow_methods_list(buf) }
+	};
+
+	throw http::error
+	{
+		http::METHOD_NOT_ALLOWED, {}, headers
+	};
+}
+
+ircd::string_view
+ircd::resource::allow_methods_list(const mutable_buffer &buf)
+{
 	size_t len(0);
-	char buf[128]; buf[0] = '\0';
+	if(likely(size(buf)))
+		buf[len] = '\0';
+
 	auto it(begin(methods));
 	if(it != end(methods))
 	{
@@ -374,13 +388,7 @@ catch(const std::out_of_range &e)
 		}
 	}
 
-	throw http::error
-	{
-		http::METHOD_NOT_ALLOWED, {},
-		{
-			{ "Allow", string_view{buf, len} }
-		}
-	};
+	return { data(buf), len };
 }
 
 ircd::resource::method::method(struct resource &resource,

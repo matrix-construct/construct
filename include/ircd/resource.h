@@ -35,6 +35,8 @@ struct ircd::resource
 	std::map<string_view, method *> methods;
 	unique_const_iterator<decltype(resources)> resources_it;
 
+	string_view allow_methods_list(const mutable_buffer &buf);
+
   private:
 	virtual void handle_request(client &, method &, resource::request &);
 
