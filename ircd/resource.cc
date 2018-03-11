@@ -119,15 +119,14 @@ noexcept
 
 namespace ircd
 {
-	static void verify_origin(client &client, resource::method &method, resource::request &request);
-	static void authenticate(client &client, resource::method &method, resource::request &request);
+	static bool verify_origin(client &client, resource::method &method, resource::request &request);
+	static bool authenticate(client &client, resource::method &method, resource::request &request);
 }
 
-void
+bool
 ircd::authenticate(client &client,
                    resource::method &method,
                    resource::request &request)
-try
 {
 	request.access_token =
 	{
@@ -145,36 +144,25 @@ try
 			request.access_token = authorization.second;
 	}
 
-	const bool result
-	{
-		request.access_token &&
-		m::user::tokens.get(std::nothrow, "ircd.access_token"_sv, request.access_token, [&request]
-		(const m::event &event)
-		{
-			// The user sent this access token to the tokens room
-			request.user_id = m::user::id{at<"sender"_>(event)};
-		})
-	};
-
-	if(!result)
+	if(!request.access_token)
 		throw m::error
 		{
-			// When credentials are required but missing or invalid, the HTTP call will return with
-			// a status of 401 and the error code, M_MISSING_TOKEN or M_UNKNOWN_TOKEN respectively.
-			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN", "Credentials for this method are required but invalid."
+			http::UNAUTHORIZED, "M_MISSING_TOKEN",
+			"Credentials for this method are required but missing."
 		};
-}
-catch(const std::out_of_range &e)
-{
-	throw m::error
+
+	return m::user::tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
+	(const m::event &event)
 	{
-		// When credentials are required but missing or invalid, the HTTP call will return with
-		// a status of 401 and the error code, M_MISSING_TOKEN or M_UNKNOWN_TOKEN respectively.
-		http::UNAUTHORIZED, "M_MISSING_TOKEN", "Credentials for this method are required but missing."
-	};
+		// The user sent this access token to the tokens room
+		request.user_id = m::user::id
+		{
+			at<"sender"_>(event)
+		};
+	});
 }
 
-void
+bool
 ircd::verify_origin(client &client,
                     resource::method &method,
                     resource::request &request)
@@ -195,16 +183,7 @@ try
 		object.verify(x_matrix.key, x_matrix.sig)
 	};
 
-	if(!verified)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
-			"The X-Matrix Authorization is invalid."
-		};
-}
-catch(const m::error &)
-{
-	throw;
+	return verified;
 }
 catch(const std::exception &e)
 {
@@ -298,10 +277,20 @@ ircd::resource::operator()(client &client,
 	};
 
 	if(method.opts.flags & method.REQUIRES_AUTH)
-		authenticate(client, method, client.request);
+		if(!authenticate(client, method, client.request))
+			throw m::error
+			{
+				http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
+				"Credentials for this method are required but invalid."
+			};
 
 	if(method.opts.flags & method.VERIFY_ORIGIN)
-		verify_origin(client, method, client.request);
+		if(!verify_origin(client, method, client.request))
+			throw m::error
+			{
+				http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+				"The X-Matrix Authorization is invalid."
+			};
 
 	handle_request(client, method, client.request);
 }
