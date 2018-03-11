@@ -650,26 +650,33 @@ try
 	discard_unconsumed(head);
 	return true;
 }
-catch(const http::error &e)
+catch(http::error &e)
 {
+	//TODO: Fix bug: resource::response context switch frees
+	//TODO: http::error& somehow which invalidates access to
+	//TODO: these after.
+	const http::code code{e.code};
+	const std::string content{std::move(e.content)};
+	const std::string headers{std::move(e.headers)};
+
 	if(ircd::debugmode) log::error
 	{
 		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
 		sock.get(),
 		string(local(*this)),
 		string(remote(*this)),
-		uint(e.code),
-		http::status(e.code),
+		uint(code),
+		http::status(code),
 		head.uri,
-		e.content
+		content
 	};
 
 	resource::response
 	{
-		*this, e.content, "text/html; charset=utf8", e.code, e.headers
+		*this, content, "text/html; charset=utf8", code, headers
 	};
 
-	switch(e.code)
+	switch(code)
 	{
 		// These codes are "unrecoverable" errors and no more HTTP can be
 		// conducted with this tape. The client must be disconnected.
