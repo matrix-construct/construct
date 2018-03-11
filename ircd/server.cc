@@ -557,6 +557,8 @@ ircd::server::peer::link_get(const request &request)
 ircd::server::link &
 ircd::server::peer::link_add(const size_t &num)
 {
+	assert(!finished());
+
 	if(e)
 		std::rethrow_exception(e->eptr);
 
@@ -1662,7 +1664,7 @@ ircd::server::link::finished()
 const
 {
 	if(!bool(socket))
-		return false;
+		return true;
 
 	return !opened() && op_fini && !op_init && !op_write && !op_read;
 }
