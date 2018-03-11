@@ -725,16 +725,22 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 ircd::ctx::future<void>
 ircd::client::close(const net::close_opts &opts)
 {
-	if(likely(sock))
+	if(likely(sock) && !sock->fini)
 		return net::close(*sock, opts);
 	else
-		return {};
+		return ctx::future<void>::already;
 }
 
 void
 ircd::client::close(const net::close_opts &opts,
                     net::close_callback callback)
 {
+	if(!sock)
+		return;
+
+	if(sock->fini)
+		return callback({});
+
 	net::close(*sock, opts, std::move(callback));
 }
 
