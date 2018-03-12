@@ -88,7 +88,7 @@ struct ircd::server::peer
 	bool err_has() const;
 	string_view err_msg() const;
 	template<class... A> void err_set(A&&...);
-	void err_clear();
+	bool err_clear();
 	bool err_check();
 
 	// control panel

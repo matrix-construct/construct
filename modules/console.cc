@@ -382,6 +382,7 @@ console_cmd__net(const string_view &line)
 	}
 }
 
+static bool console_cmd__net_peer__clear(const string_view &line);
 static bool console_cmd__net_peer__default();
 
 bool
@@ -397,10 +398,30 @@ console_cmd__net_peer(const string_view &line)
 
 	switch(hash(token(line, ' ', 0)))
 	{
+		case hash("clear"):
+			return console_cmd__net_peer__clear(args);
+
 		default:
 			throw bad_command{};
 	}
 
+	return true;
+}
+
+bool
+console_cmd__net_peer__clear(const string_view &line)
+{
+	const net::hostport hp
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto cleared
+	{
+		server::errclear(hp)
+	};
+
+	out << std::boolalpha << cleared << std::endl;
 	return true;
 }
 

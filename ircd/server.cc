@@ -124,6 +124,21 @@ ircd::server::exists(const net::hostport &hostport)
 	return peers.find(host(hostport)) != end(peers);
 }
 
+bool
+ircd::server::errclear(const net::hostport &hostport)
+{
+	const auto it
+	{
+		peers.find(host(hostport))
+	};
+
+	if(it == end(peers))
+		return false;
+
+	auto &peer(*it->second);
+	return peer.err_clear();
+}
+
 ircd::string_view
 ircd::server::errmsg(const net::hostport &hostport)
 {
@@ -368,10 +383,12 @@ ircd::server::peer::interrupt()
 		}));
 }
 
-void
+bool
 ircd::server::peer::err_clear()
 {
+	const auto ret{bool(e)};
 	e.reset(nullptr);
+	return ret;
 }
 
 template<class... A>

@@ -37,6 +37,7 @@ namespace ircd::server
 	size_t peer_unfinished();
 
 	string_view errmsg(const net::hostport &);
+	bool errclear(const net::hostport &);
 	bool exists(const net::hostport &);
 	peer &find(const net::hostport &);
 	peer &get(const net::hostport &);
