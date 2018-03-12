@@ -98,6 +98,7 @@ namespace ircd::openssl
 	string_view subject_common_name(const mutable_buffer &out, const X509 &);
 	time_t not_before(const X509 &);
 	time_t not_after(const X509 &);
+	std::string stringify(const X509 &);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);
 

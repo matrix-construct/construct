@@ -223,6 +223,40 @@ ircd::openssl::genX509(const mutable_buffer &out,
 	return write_pem(out, *x509);
 }
 
+std::string
+ircd::openssl::stringify(const X509 &cert_)
+{
+	auto &cert{const_cast<X509 &>(cert_)};
+
+	// issuer
+	std::vector<json::member> issuer_json;
+	X509_NAME *const issuer{X509_get_issuer_name(&cert)};
+	until(*issuer, [&](const string_view &key, const string_view &val)
+	{
+		const json::member member{key, val};
+		issuer_json.emplace_back(member);
+		return true;
+	});
+
+	// subject
+	std::vector<json::member> subject_json;
+	X509_NAME *const subject{X509_get_subject_name(&cert)};
+	until(*subject, [&](const string_view &key, const string_view &val)
+	{
+		const json::member member{key, val};
+		subject_json.emplace_back(member);
+		return true;
+	});
+
+	return json::strung{json::members
+	{
+		{ "issuer",     { issuer_json.data(), issuer_json.size()    } },
+		{ "subject",    { subject_json.data(), subject_json.size()  } },
+		{ "notBefore",  not_before(cert)                              },
+		{ "notAfter",   not_after(cert)                               },
+	}};
+}
+
 void
 ircd::openssl::append_entries(X509 &cert,
                               const json::object &opts)
