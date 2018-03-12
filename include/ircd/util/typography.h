@@ -203,6 +203,22 @@ is_input_iterator()
 	return std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<It>::iterator_category>::value;
 }
 
+//
+// Completing std::remove_pointer<>
+//
+
+template<class T>
+struct remove_all_pointers
+{
+	using type = T;
+};
+
+template<class T>
+struct remove_all_pointers<T *>
+{
+	using type = typename remove_all_pointers<T>::type;
+};
+
 /// Convenience loop to test std::is* on a character sequence
 template<int (&test)(int) = std::isprint>
 ssize_t
