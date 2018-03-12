@@ -12,6 +12,8 @@
 
 namespace ircd
 {
+	ctx::dock dock;
+
 	template<class... args> std::shared_ptr<client> make_client(args&&...);
 }
 
@@ -49,44 +51,109 @@ ircd::client::init::init()
 	context.add(settings.pool_size);
 }
 
-void
-ircd::client::init::interrupt()
-{
-	if(context.active() || !client::list.empty())
-		log::warning("Interrupting %zu requests; dropping %zu requests; closing %zu clients...",
-		             context.active(),
-		             context.pending(),
-		             client::list.size());
-
-	context.interrupt();
-	close_all_clients();
-}
-
 ircd::client::init::~init()
 noexcept
 {
 	interrupt();
+	close();
+	wait();
+	assert(client::list.empty());
+}
 
-	if(context.active())
-		log::warning("Joining %zu active of %zu remaining request contexts...",
-		             context.active(),
-		             context.size());
-	else
-		log::debug("Waiting for %zu request contexts to join...",
-		           context.size());
+void
+ircd::client::init::interrupt()
+{
+	interrupt_all();
+}
 
-	context.join();
+void
+ircd::client::init::close()
+{
+	close_all();
+}
 
-	if(unlikely(!client::list.empty()))
-	{
-		log::error("%zu clients are unterminated...", client::list.size());
-		assert(client::list.empty());
-	}
+void
+ircd::client::init::wait()
+{
+	wait_all();
 }
 
 //
 // util
 //
+
+void
+ircd::client::interrupt_all()
+{
+	if(context.active())
+		log::warning
+		{
+			"Interrupting %zu requests; dropping %zu requests...",
+			context.active(),
+			context.pending()
+		};
+
+	context.interrupt();
+}
+
+void
+ircd::client::close_all()
+{
+	if(!client::list.empty())
+		log::debug
+		{
+			"Closing %zu clients", client::list.size()
+		};
+
+	auto it(begin(client::list));
+	while(it != end(client::list))
+	{
+		auto c(shared_from(**it)); ++it; try
+		{
+			c->close(net::dc::RST, [c](const auto &e)
+			{
+				dock.notify_one();
+			});
+		}
+		catch(const std::exception &e)
+		{
+			log::warning
+			{
+				"Error disconnecting client @%p: %s", c.get(), e.what()
+			};
+		}
+	}
+}
+
+void
+ircd::client::wait_all()
+{
+	if(context.active())
+		log::warning
+		{
+			"Joining %zu active of %zu remaining request contexts...",
+			context.active(),
+			context.size()
+		};
+	else
+		log::debug
+		{
+			"Waiting for %zu request contexts to join...",
+			context.size()
+		};
+
+	context.join();
+	while(!client::list.empty())
+	{
+		if(dock.wait_for(seconds(2)) == ctx::cv_status::no_timeout)
+			continue;
+
+		log::warning
+		{
+			"Waiting for %zu clients to close...", client::list.size()
+		};
+	}
+}
 
 ircd::parse::read_closure
 ircd::read_closure(client &client)
@@ -122,6 +189,17 @@ ircd::read(client &client,
 std::shared_ptr<ircd::client>
 ircd::add_client(std::shared_ptr<socket> s)
 {
+	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	{
+		log::warning
+		{
+			"Refusing to add new client in runlevel %s", reflect(ircd::runlevel)
+		};
+
+		net::close(*s, net::dc::RST, net::close_ignore);
+		return {};
+	}
+
 	const auto client
 	{
 		make_client(std::move(s))
@@ -136,24 +214,6 @@ std::shared_ptr<ircd::client>
 ircd::make_client(args&&... a)
 {
 	return std::make_shared<client>(std::forward<args>(a)...);
-}
-
-void
-ircd::close_all_clients()
-{
-	auto it(begin(client::list));
-	while(it != end(client::list))
-	{
-		auto *const client(*it);
-		++it; try
-		{
-			client->close(net::dc::RST, net::close_ignore);
-		}
-		catch(const std::exception &e)
-		{
-			log::warning("Error disconnecting client @%p: %s", client, e.what());
-		}
-	}
 }
 
 ircd::ipport

@@ -19,8 +19,6 @@ namespace ircd
 	char *read(client &, char *&start, char *const &stop);
 	parse::read_closure read_closure(client &);
 
-	void close_all_clients();
-
 	std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 }
 
@@ -41,6 +39,10 @@ struct ircd::client
 	static struct settings settings;
 	static struct conf default_conf;
 	static ctx::pool context;
+
+	static void interrupt_all();
+	static void close_all();
+	static void wait_all();
 
 	struct conf *conf {&default_conf};
 	unique_buffer<mutable_buffer> head_buffer;
@@ -106,6 +108,8 @@ struct ircd::client::settings
 struct ircd::client::init
 {
 	void interrupt();
+	void close();
+	void wait();
 
 	init();
 	~init() noexcept;

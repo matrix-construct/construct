@@ -13,7 +13,6 @@
 namespace ircd::server
 {
 	// Internal state
-	bool ready;         // like an /etc/nologin to prevent actions when false.
 	ctx::dock dock;     // internal semaphore
 
 	// Internal util
@@ -215,7 +214,6 @@ ircd::server::accumulate_peers(F&& closure)
 
 ircd::server::init::init()
 {
-	ready = true;
 }
 
 ircd::server::init::~init()
@@ -235,7 +233,6 @@ ircd::server::init::wait()
 void
 ircd::server::init::close()
 {
-	ready = false;
 	close_all();
 }
 
@@ -305,7 +302,7 @@ void
 ircd::server::submit(const hostport &hostport,
                      request &request)
 {
-	if(unlikely(!server::ready))
+	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
 		throw unavailable
 		{
 			"Unable to fulfill requests at this time."
@@ -428,7 +425,7 @@ void
 ircd::server::peer::submit(request &request)
 try
 {
-	if(!err_check() || unlikely(!server::ready))
+	if(!err_check() || unlikely(ircd::runlevel != ircd::runlevel::RUN))
 		throw unavailable
 		{
 			"Peer is unable to take any requests: %s", err_msg()
@@ -1118,7 +1115,7 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 bool
 ircd::server::link::open(const net::open_opts &open_opts)
 {
-	assert(server::ready);
+	assert(ircd::runlevel == ircd::runlevel::RUN);
 
 	if(op_init)
 		return false;
