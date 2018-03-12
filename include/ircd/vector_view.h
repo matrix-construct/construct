@@ -14,6 +14,10 @@
 namespace ircd
 {
 	template<class T> struct vector_view;
+
+	template<class T> bool empty(const vector_view<T> &);
+	template<class T> size_t size(const vector_view<T> &);
+	template<class T> T *data(const vector_view<T> &);
 }
 
 template<class T>
@@ -97,3 +101,24 @@ struct ircd::vector_view
 
 	vector_view() = default;
 };
+
+template<class T>
+T *
+ircd::data(const vector_view<T> &v)
+{
+	return v.data();
+}
+
+template<class T>
+size_t
+ircd::size(const vector_view<T> &v)
+{
+	return v.size();
+}
+
+template<class T>
+bool
+ircd::empty(const vector_view<T> &v)
+{
+	return v.empty();
+}
