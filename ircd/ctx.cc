@@ -569,9 +569,10 @@ ircd::ctx::context::context(const char *const &name,
 	}
 
 	// The current context must be reasserted if spawn returns here
-	const unwind recurrent([current(ircd::ctx::current)]
+	auto *const theirs(ircd::ctx::current);
+	const unwind recurrent([&theirs]
 	{
-		ircd::ctx::current = current;
+		ircd::ctx::current = theirs;
 	});
 
 	if(flags & DISPATCH)
