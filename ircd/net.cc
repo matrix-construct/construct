@@ -947,6 +947,15 @@ noexcept try
 		return;
 
 	--accepting;
+	const unwind::exceptional drop{[&sock]
+	{
+		if(!bool(sock))
+			return;
+
+		error_code ec;
+		sock->sd.close(ec);
+	}};
+
 	assert(bool(sock));
 	log.debug("%s: socket(%p) accepted(%zu) %s %s",
 	          std::string(*this),
