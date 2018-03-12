@@ -1210,19 +1210,19 @@ ircd::json::value::value(const value &other)
 ,alloc{other.alloc}
 ,floats{other.floats}
 {
-	if(alloc && serial)
+	if(serial)
 	{
-		create_string(len, [this]
+		create_string(len, [&other]
 		(mutable_buffer &buffer)
 		{
-			consume(buffer, copy(buffer, string_view{*this}));
+			consume(buffer, copy(buffer, string_view{other}));
 		});
 	}
 	else switch(type)
 	{
 		case OBJECT:
 		{
-			if(serial || !object)
+			if(!object)
 				break;
 
 			const size_t count(this->len);
@@ -1236,7 +1236,7 @@ ircd::json::value::value(const value &other)
 
 		case ARRAY:
 		{
-			if(serial || !array)
+			if(!array)
 				break;
 
 			const size_t count(this->len);
@@ -1250,13 +1250,13 @@ ircd::json::value::value(const value &other)
 
 		case STRING:
 		{
-			if(serial || !alloc || !string)
+			if(!string)
 				break;
 
-			create_string(serialized(*this), [this]
+			create_string(len, [&other]
 			(mutable_buffer &buffer)
 			{
-				json::stringify(buffer, *this);
+				copy(buffer, const_buffer{other.string, other.len});
 			});
 			break;
 		}
