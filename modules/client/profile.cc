@@ -240,10 +240,9 @@ put__profile(client &client,
 		request.parv[1]
 	};
 
-	const json::object &body{request.content};
 	const string_view &value
 	{
-		body.at(param)
+		unquote(request.at(param))
 	};
 
 	send(user_room, request.user_id, "ircd.profile", param,
