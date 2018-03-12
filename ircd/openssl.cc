@@ -42,6 +42,8 @@ namespace ircd::openssl
 
 namespace ircd::openssl
 {
+	using x509_name_entry_closure = std::function<bool (const string_view &, const string_view &)>;
+	bool until(const X509_NAME &name, const x509_name_entry_closure &);
 	void append(X509_NAME &name, const string_view &key, const string_view &val);
 	void append(X509_NAME &name, const json::object &entries);
 	void append_entries(X509 &cert, const json::object &opts);
@@ -329,6 +331,36 @@ catch(const error &e)
 		val.size(),
 		e.what()
 	};
+}
+
+bool
+ircd::openssl::until(const X509_NAME &name_,
+                     const x509_name_entry_closure &closure)
+{
+	const auto name(const_cast<X509_NAME *>(&name_));
+	const auto cnt(X509_NAME_entry_count(name));
+	for(auto i(0); i < cnt; ++i)
+	{
+		const auto entry(X509_NAME_get_entry(name, i));
+		const auto obj(X509_NAME_ENTRY_get_object(entry));
+
+		thread_local char keybuf[128];
+		const ssize_t keylen(OBJ_obj2txt(keybuf, sizeof(keybuf), obj, 0));
+		if(unlikely(keylen < 0))
+			continue;
+
+		thread_local char valbuf[1024];
+		const ssize_t vallen(X509_NAME_get_text_by_OBJ(name, obj, valbuf, sizeof(valbuf)));
+		if(unlikely(vallen < 0))
+			continue;
+
+		const string_view key{keybuf, size_t(keylen)};
+		const string_view val{valbuf, size_t(vallen)};
+		if(!closure(key, val))
+			return false;
+	}
+
+	return true;
 }
 
 ircd::string_view
