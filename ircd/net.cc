@@ -2472,11 +2472,22 @@ ircd::net::dns::resolver::timeout
 	{ "default",   10000L                    },
 };
 
+decltype(ircd::net::dns::resolver::send_rate)
+ircd::net::dns::resolver::send_rate
+{
+	{ "name",     "net.dns.resolver.send_rate" },
+	{ "default",   20L                         },
+};
+
 ircd::net::dns::resolver::resolver()
 :ns{*ircd::ios}
-,context
+,timeout_context
 {
-	"resolver", 64_KiB, std::bind(&resolver::worker, this), context.POST
+	"dnsres T", 64_KiB, std::bind(&resolver::timeout_worker, this), context::POST
+}
+,sendq_context
+{
+	"dnsres S", 64_KiB, std::bind(&resolver::sendq_worker, this), context::POST
 }
 {
 	ns.open(ip::udp::v4());
@@ -2489,12 +2500,63 @@ ircd::net::dns::resolver::~resolver()
 noexcept
 {
 	ns.close();
-	context.interrupt();
+	sendq_context.interrupt();
+	timeout_context.interrupt();
 	assert(tags.empty());
 }
 
 void
-ircd::net::dns::resolver::worker()
+ircd::net::dns::resolver::sendq_worker()
+try
+{
+	while(1)
+	{
+		assert(sendq.empty() || !tags.empty());
+		dock.wait([this]
+		{
+			return !sendq.empty();
+		});
+
+		assert(sendq.size() < 65535);
+		assert(sendq.size() <= tags.size());
+		ctx::sleep(milliseconds(send_rate));
+		assert(!sendq.empty());
+		const auto &next(sendq.front());
+		const unwind pop{[this]
+		{
+			sendq.pop_front();
+		}};
+
+		flush(next);
+	}
+}
+catch(const ctx::interrupted &)
+{
+	return;
+}
+
+void
+ircd::net::dns::resolver::flush(const queued &next)
+try
+{
+	auto &tag{tags.at(next.first)};
+	const const_buffer buf
+	{
+		data(next.second), size(next.second)
+	};
+
+	send_query(buf, tag);
+}
+catch(const std::out_of_range &e)
+{
+	log::error
+	{
+		"Queued tag id[%u] is no longer mapped", next.first
+	};
+}
+
+void
+ircd::net::dns::resolver::timeout_worker()
 try
 {
 	while(1)
@@ -2538,6 +2600,9 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
                                         tag &tag,
                                         const steady_point &cutoff)
 {
+	if(tag.last == steady_point{})
+		return true;
+
 	if(tag.last < cutoff)
 		return true;
 
@@ -2564,7 +2629,7 @@ ircd::net::dns::resolver::operator()(const hostport &hostport,
                                      const opts &opts,
                                      callback callback)
 {
-	const auto &tag
+	auto &tag
 	{
 		set_tag(resolver::tag
 		{
@@ -2579,7 +2644,7 @@ ircd::net::dns::resolver::operator()(const hostport &hostport,
 	}};
 
 	thread_local char buf[64_KiB];
-	send_query(make_query(buf, tag));
+	submit(make_query(buf, tag), tag);
 }
 
 ircd::const_buffer
@@ -2626,14 +2691,34 @@ ircd::net::dns::resolver::set_tag(tag &&tag)
 }
 
 void
-ircd::net::dns::resolver::send_query(const const_buffer &buf)
+ircd::net::dns::resolver::submit(const const_buffer &buf,
+                                 tag &tag)
+{
+	const auto rate(milliseconds(send_rate) / server.size());
+	const auto elapsed(now<steady_point>() - send_last);
+	if(elapsed >= rate)
+		send_query(buf, tag);
+	else
+		queue_query(buf, tag);
+}
+
+void
+ircd::net::dns::resolver::queue_query(const const_buffer &buf,
+                                      tag &tag)
+{
+	sendq.emplace_back(tag.id, std::string(data(buf), size(buf)));
+	dock.notify_one();
+}
+
+void
+ircd::net::dns::resolver::send_query(const const_buffer &buf,
+                                     tag &tag)
 try
 {
 	assert(!server.empty());
-
 	++server_next %= server.size();
 	const auto &ep{server.at(server_next)};
-	send_query(ep, buf);
+	send_query(ep, buf, tag);
 }
 catch(const std::out_of_range &)
 {
@@ -2645,10 +2730,13 @@ catch(const std::out_of_range &)
 
 void
 ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
-                                     const const_buffer &buf)
+                                     const const_buffer &buf,
+                                     tag &tag)
 {
 	assert(ns.non_blocking());
 	ns.send_to(asio::const_buffers_1(buf), ep);
+	send_last = now<steady_point>();
+	tag.last = send_last;
 }
 
 void

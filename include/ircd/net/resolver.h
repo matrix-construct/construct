@@ -24,6 +24,7 @@ struct ircd::net::dns::resolver
 
 	static constexpr const size_t &MAX_COUNT{64};
 	static conf::item<milliseconds> timeout;
+	static conf::item<milliseconds> send_rate;
 
 	std::vector<ip::udp::endpoint> server;       // The list of active servers
 	size_t server_next{0};                       // Round-robin state to hit servers
@@ -31,6 +32,9 @@ struct ircd::net::dns::resolver
 
 	ctx::dock dock;
 	std::map<uint16_t, tag> tags;                // The active requests
+	steady_point send_last;                      // Time of last send
+	using queued = std::pair<uint16_t, std::string>;
+	std::deque<queued> sendq;                    // Queue of frames for rate-limiting
 
 	ip::udp::socket ns;                          // A pollable activity object
 	ip::udp::endpoint reply_from;                // Remote addr of recv
@@ -43,8 +47,10 @@ struct ircd::net::dns::resolver
 	void handle(const error_code &ec, const size_t &) noexcept;
 	void set_handle();
 
-	void send_query(const ip::udp::endpoint &, const const_buffer &);
-	void send_query(const const_buffer &);
+	void queue_query(const const_buffer &, tag &);
+	void send_query(const ip::udp::endpoint &, const const_buffer &, tag &);
+	void send_query(const const_buffer &, tag &);
+	void submit(const const_buffer &, tag &);
 
 	tag &set_tag(tag &&);
 	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
@@ -52,8 +58,12 @@ struct ircd::net::dns::resolver
 
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
 	void check_timeouts(const milliseconds &timeout);
-	void worker();
-	ctx::context context;
+	void timeout_worker();
+	ctx::context timeout_context;
+
+	void flush(const queued &);
+	void sendq_worker();
+	ctx::context sendq_context;
 
 	resolver();
 	~resolver() noexcept;
@@ -65,7 +75,7 @@ struct ircd::net::dns::resolver::tag
 	hostport hp;          // note: invalid after query sent
 	dns::opts opts;       // note: invalid after query sent
 	callback cb;
-	steady_point last {ircd::now<steady_point>()};
+	steady_point last;
 	uint8_t tries {0};
 
 	tag(const hostport &, const dns::opts &, callback);
