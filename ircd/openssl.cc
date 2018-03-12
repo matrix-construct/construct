@@ -42,6 +42,7 @@ namespace ircd::openssl
 
 namespace ircd::openssl
 {
+	time_t get_time(const ASN1_TIME &);
 	using x509_name_entry_closure = std::function<bool (const string_view &, const string_view &)>;
 	bool until(const X509_NAME &name, const x509_name_entry_closure &);
 	void append(X509_NAME &name, const string_view &key, const string_view &val);
@@ -363,6 +364,22 @@ ircd::openssl::until(const X509_NAME &name_,
 	return true;
 }
 
+time_t
+ircd::openssl::not_before(const X509 &cert_)
+{
+	auto &cert{const_cast<X509 &>(cert_)};
+	ASN1_TIME *const notBefore{X509_get_notBefore(&cert)};
+	return get_time(*notBefore);
+}
+
+time_t
+ircd::openssl::not_after(const X509 &cert_)
+{
+	auto &cert{const_cast<X509 &>(cert_)};
+	ASN1_TIME *const notAfter{X509_get_notAfter(&cert)};
+	return get_time(*notAfter);
+}
+
 ircd::string_view
 ircd::openssl::subject_common_name(const mutable_buffer &out,
                                    const X509 &cert)
@@ -531,6 +548,19 @@ ircd::openssl::i2d(const mutable_buffer &buf,
 
 	assert(out - reinterpret_cast<uint8_t *>(data(buf)) == len);
 	return ret;
+}
+
+time_t
+ircd::openssl::get_time(const ASN1_TIME &t)
+{
+	int pday, psec;
+	ASN1_TIME_diff(&pday, &psec, nullptr, &t);
+	const time_t sec
+	{
+		pday * 60L * 60L * 24L + psec
+	};
+
+	return ircd::time() + sec;
 }
 
 //
