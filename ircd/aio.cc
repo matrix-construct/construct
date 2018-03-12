@@ -29,8 +29,42 @@ ircd::fs::aio::aio()
 ircd::fs::aio::~aio()
 noexcept
 {
-	resfd.cancel();
+	interrupt();
+	wait_interrupt();
+
+	boost::system::error_code ec;
+	resfd.close(ec);
+
 	syscall<SYS_io_destroy>(idp);
+}
+
+bool
+ircd::fs::aio::interrupt()
+{
+	if(!resfd.is_open())
+		return false;
+
+	resfd.cancel();
+	return true;
+}
+
+bool
+ircd::fs::aio::wait_interrupt()
+{
+	if(!resfd.is_open())
+		return false;
+
+	log::debug
+	{
+		"Waiting for AIO context %p", this
+	};
+
+	dock.wait([this]
+	{
+		return semval == uint64_t(-1);
+	});
+
+	return true;
 }
 
 void
@@ -46,7 +80,7 @@ ircd::fs::aio::set_handle()
 void
 ircd::fs::aio::handle(const boost::system::error_code &ec,
                       const size_t bytes)
-noexcept
+noexcept try
 {
 	assert((bytes == 8 && !ec && semval >= 1) || (bytes == 0 && ec));
 	assert(!ec || ec.category() == asio::error::get_system_category());
@@ -58,13 +92,23 @@ noexcept
 			break;
 
 		case boost::system::errc::operation_canceled:
-			return;
+			throw ctx::interrupted();
 
 		default:
 			throw boost::system::system_error(ec);
 	}
 
 	set_handle();
+}
+catch(const ctx::interrupted &)
+{
+	log::debug
+	{
+		"AIO context %p interrupted", this
+	};
+
+	semval = -1;
+	dock.notify_all();
 }
 
 void

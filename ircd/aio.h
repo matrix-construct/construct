@@ -23,6 +23,9 @@ struct ircd::fs::aio
 	/// Maximum number of events we can submit to kernel
 	static constexpr const size_t &MAX_EVENTS {64};
 
+	/// Internal semaphore for synchronization of this object
+	ctx::dock dock;
+
 	/// The semaphore value for the eventfd which we keep here.
 	uint64_t semval {0};
 
@@ -42,6 +45,9 @@ struct ircd::fs::aio
 	void handle_events() noexcept;
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
+
+	bool wait_interrupt();
+	bool interrupt();
 
 	aio();
 	~aio() noexcept;
