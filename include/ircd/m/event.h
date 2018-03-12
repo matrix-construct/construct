@@ -208,6 +208,11 @@ enum ircd::m::event::conforms::code
 	MISSING_ORIGIN_SIGNATURE,          ///< no signature for origin
 	MISMATCH_ORIGIN_SENDER,            ///< sender mxid host not from origin
 	MISMATCH_ORIGIN_EVENT_ID,          ///< event_id mxid host not from origin
+	SELF_REDACTS,                      ///< event redacts itself
+	SELF_PREV_EVENT,                   ///< event_id self-referenced in prev_events
+	SELF_PREV_STATE,                   ///< event_id self-referenced in prev_state
+	DUP_PREV_EVENT,                    ///< duplicate references in prev_events
+	DUP_PREV_STATE,                    ///< duplicate references in prev_state
 
 	_NUM_
 };

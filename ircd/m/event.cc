@@ -792,6 +792,11 @@ ircd::m::event_conforms_reflects
 	"MISSING_ORIGIN_SIGNATURE",
 	"MISMATCH_ORIGIN_SENDER",
 	"MISMATCH_ORIGIN_EVENT_ID",
+	"SELF_REDACTS",
+	"SELF_PREV_EVENT",
+	"SELF_PREV_STATE",
+	"DUP_PREV_EVENT",
+	"DUP_PREV_STATE",
 };
 
 std::ostream &
@@ -877,6 +882,10 @@ ircd::m::event::conforms::conforms(const event &e)
 		if(!valid(m::id::EVENT, json::get<"redacts"_>(e)))
 			set(INVALID_OR_MISSING_REDACTS_ID);
 
+	if(json::get<"redacts"_>(e))
+		if(json::get<"redacts"_>(e) == json::get<"event_id"_>(e))
+			set(SELF_REDACTS);
+
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(empty(json::get<"membership"_>(e)))
 			set(MISSING_MEMBERSHIP);
@@ -908,6 +917,37 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(json::get<"type"_>(e) != "m.room.create")
 		if(json::get<"depth"_>(e) == 0)
 			set(DEPTH_ZERO);
+
+	const prev p{e};
+	size_t i{0}, j{0};
+	for(const json::array &pe : json::get<"prev_events"_>(p))
+	{
+		if(unquote(pe.at(0)) == json::get<"event_id"_>(e))
+			set(SELF_PREV_EVENT);
+
+		j = 0;
+		for(const json::array &pe_ : json::get<"prev_events"_>(p))
+			if(i != j++)
+				if(pe_.at(0) == pe.at(0))
+					set(DUP_PREV_EVENT);
+
+		++i;
+	}
+
+	i = 0;
+	for(const json::array &ps : json::get<"prev_state"_>(p))
+	{
+		if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
+			set(SELF_PREV_STATE);
+
+		j = 0;
+		for(const json::array &ps_ : json::get<"prev_state"_>(p))
+			if(i != j++)
+				if(ps_.at(0) == ps.at(0))
+					set(DUP_PREV_STATE);
+
+		++i;
+	}
 }
 
 void
