@@ -120,6 +120,8 @@ struct ircd::m::id::input
 		,"prefix"
 	};
 
+	//TODO: ---- share grammar with rfc3986.cc
+
 	const rule<> port
 	{
 		ushort_
@@ -212,6 +214,8 @@ struct ircd::m::id::input
 		ip6_literal | ip4_literal | hostname
 		,"DNS name"
 	};
+
+	//TODO: /---- share grammar with rfc3986.cc
 
 	/// (Appendix 4.1) Server Name
 	/// A homeserver is uniquely identified by its server name. This value

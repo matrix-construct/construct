@@ -42,32 +42,74 @@ struct ircd::rfc3986::grammar
 {
 	template<class R = spirit::unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
-	rule<> NUL                         { lit('\0')                                          ,"nul" };
-	rule<> SP                          { lit('\x20')                                      ,"space" };
-	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
-	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
-	rule<> CRLF                        { CR >> LF                    ,"carriage return, line feed" };
-	rule<> ws                          { SP | HT                                     ,"whitespace" };
-
-/*
-	rule<string_view> authority
-	{
-		//TODO: https://tools.ietf.org/html/rfc3986#section-3.2
-		-('/' >> '/') >> raw[*(char_ - '/')] >> '/'
-	};
-*/
 	const rule<> port
 	{
 		ushort_
-		,"port"
+		,"port number"
+	};
+
+	const rule<> ip4_octet
+	{
+		repeat(1,3)[char_("0-9")]
+		,"IPv4 octet"
+	};
+
+	const rule<> ip4_literal
+	{
+		repeat(3)[ip4_octet >> '.'] >> ip4_octet
+		,"IPv4 literal"
+	};
+
+	const rule<> ip6_char
+	{
+		char_("0-9a-fA-F")
+		,"IPv6 character"
+	};
+
+	const rule<> ip6_h16
+	{
+		repeat(1,4)[ip6_char]
+		,"IPv6 hexdigit"
+	};
+
+	const rule<> ip6_piece
+	{
+		ip6_h16 >> ':'
+		,"IPv6 address piece"
+	};
+
+	// This is reversed from the BNF in the RFC otherwise it requires
+	// backtracking during the repeat[]; grammars are adjusted accordingly.
+	const rule<> ip6_ipiece
+	{
+		':' >> ip6_h16
+		,"IPv6 address piece"
+	};
+
+	const rule<> ip6_ls32
+	{
+		(ip6_h16 >> ':' >> ip6_h16) | ip4_literal
+	};
+
+	/// https://tools.ietf.org/html/rfc3986 Appendix A
+	const rule<> ip6_addr[10]
+	{
+		{                                                     repeat(6)[ip6_piece] >> ip6_ls32     },
+		{                                        lit("::") >> repeat(5)[ip6_piece] >> ip6_ls32     },
+		{                             ip6_h16 >> lit("::") >> repeat(4)[ip6_piece] >> ip6_ls32     },
+		{  ip6_h16 >> repeat(0,1)[ip6_ipiece] >> lit("::") >> repeat(3)[ip6_piece] >> ip6_ls32     },
+		{  ip6_h16 >> repeat(0,2)[ip6_ipiece] >> lit("::") >> repeat(2)[ip6_piece] >> ip6_ls32     },
+		{  ip6_h16 >> repeat(0,3)[ip6_ipiece] >> lit("::") >> ip6_piece >> ip6_ls32                },
+		{  ip6_h16 >> repeat(0,4)[ip6_ipiece] >> lit("::") >> ip6_ls32                             },
+		{  ip6_h16 >> repeat(0,5)[ip6_ipiece] >> lit("::") >> -ip6_h16                             },
+		{                                        lit("::") >> -ip6_h16                             },
 	};
 
 	const rule<> ip6_address
 	{
-		//TODO: XXX
-		*char_("0-9a-fA-F:")
-		,"ip6 address"
+		ip6_addr[0] | ip6_addr[1] | ip6_addr[2] | ip6_addr[3] | ip6_addr[4] | ip6_addr[5] |
+		ip6_addr[6] | ip6_addr[7] | ip6_addr[8] | ip6_addr[9]
+		,"IPv6 address"
 	};
 
 	const rule<> ip6_literal
@@ -76,10 +118,27 @@ struct ircd::rfc3986::grammar
 		,"ip6 literal"
 	};
 
-	const rule<> dns_name
+	const rule<> hostlabel
 	{
-		ip6_literal | *(char_ - ':')
-		,"dns name"
+		char_("A-Za-z0-9") >> *(char_("A-Za-z0-9\x2D")) // x2D is '-'
+	};
+
+	const rule<> hostname
+	{
+		hostlabel % '.',
+		"hostname"
+	};
+
+	const rule<> host
+	{
+		ip6_literal | ip4_literal | hostname
+		,"DNS name"
+	};
+
+	const rule<> remote
+	{
+		host >> -(':' > port)
+		,"server name"
 	};
 
 	grammar()
