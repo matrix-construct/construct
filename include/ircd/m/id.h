@@ -62,11 +62,11 @@ struct ircd::m::id
 
   public:
 	// Extract elements
-	string_view local() const;
-	string_view host() const;
-	string_view name() const;
-	string_view hostname() const;
-	uint16_t hostport() const;
+	string_view local() const;        // The full localpart including sigil
+	string_view host() const;         // The full server part including port
+	string_view localname() const;    // The localpart not including sigil
+	string_view hostname() const;     // The server part not including port
+	uint16_t port() const;            // Just the port number or 8448 if none
 
 	IRCD_USING_OVERLOAD(generate, m::generate);
 

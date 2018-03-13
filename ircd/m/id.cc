@@ -122,7 +122,7 @@ struct ircd::m::id::input
 
 	//TODO: ---- share grammar with rfc3986.cc
 
-	const rule<> port
+	const rule<uint16_t> port
 	{
 		ushort_
 		,"port number"
@@ -526,52 +526,106 @@ ircd::m::id::id(const enum sigil &sigil,
 }
 
 uint16_t
-ircd::m::id::hostport()
-const try
+ircd::m::id::port()
+const
 {
-	//TODO: grammar
-	const auto port
+	static const parser::rule<uint16_t> rule
 	{
-		split(host(), ':').second
+		omit[parser.prefix >> ':' >> parser.dns_name >> ':'] >> parser.port
 	};
 
-	return port? lex_cast<uint16_t>(port) : 8448;
-}
-catch(const std::exception &e)
-{
-	return 8448;
+	uint16_t ret{8448};
+	auto *start{data()};
+	const auto res
+	{
+		qi::parse(start, data() + size(), rule, ret)
+	};
+
+	assert(res || ret == 8448);
+	return ret;
 }
 
 ircd::string_view
 ircd::m::id::hostname()
 const
 {
-	//TODO: grammar
-	return rsplit(host(), ':').first;
+	static const parser::rule<string_view> dns_name
+	{
+		parser.dns_name
+	};
+
+	static const parser::rule<string_view> rule
+	{
+		omit[parser.prefix >> ':'] >> raw[dns_name]
+	};
+
+	string_view ret;
+	auto *start{data()};
+	const auto res
+	{
+		qi::parse(start, data() + size(), rule, ret)
+	};
+
+	assert(res == true);
+	assert(!ret.empty());
+	return ret;
 }
 
 ircd::string_view
-ircd::m::id::name()
+ircd::m::id::localname()
 const
 {
-	//TODO: grammar
-	return lstrip(local(), at(0));
+	auto ret{local()};
+	assert(!ret.empty());
+	ret.pop_front();
+	return ret;
 }
 
 ircd::string_view
 ircd::m::id::host()
 const
 {
-	//TODO: grammar
-	return split(*this, ':').second;
+	static const parser::rule<string_view> server_name
+	{
+		parser.server_name
+	};
+
+	static const parser::rule<string_view> rule
+	{
+		omit[parser.prefix >> ':'] >> raw[server_name]
+	};
+
+	string_view ret;
+	auto *start{data()};
+	const auto res
+	{
+		qi::parse(start, data() + size(), rule, ret)
+	};
+
+	assert(res == true);
+	assert(!ret.empty());
+	return ret;
 }
 
 ircd::string_view
 ircd::m::id::local()
 const
 {
-	//TODO: grammar
-	return split(*this, ':').first;
+	static const parser::rule<string_view> prefix
+	{
+		parser.prefix
+	};
+
+	static const parser::rule<string_view> rule
+	{
+		eps > raw[prefix]
+	};
+
+	string_view ret;
+	auto *start{data()};
+	qi::parse(start, data() + size(), rule, ret);
+	assert(!ret.empty());
+	return ret;
 }
 
 bool
