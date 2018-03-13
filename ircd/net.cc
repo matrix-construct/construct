@@ -3306,6 +3306,39 @@ ircd::net::operator<<(std::ostream &s, const hostport &t)
 	return s;
 }
 
+std::string
+ircd::net::canonize(const hostport &hp,
+                    const uint16_t &port)
+{
+	const size_t len
+	{
+		size(host(hp) + 6) // optimistic ':' + portnum
+	};
+
+	return ircd::string(len, [&hp, &port]
+	(const mutable_buffer &buf)
+	{
+		return canonize(buf, hp, port);
+	});
+}
+
+ircd::string_view
+ircd::net::canonize(const mutable_buffer &buf,
+                    const hostport &hp,
+                    const uint16_t &port)
+{
+	if(net::port(hp) == 0 || net::port(hp) == port)
+		return fmt::sprintf
+		{
+			buf, "%s", host(hp)
+		};
+
+	return fmt::sprintf
+	{
+		buf, "%s:%u", host(hp), net::port(hp)
+	};
+}
+
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const hostport &hp)

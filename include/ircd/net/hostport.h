@@ -23,6 +23,8 @@ namespace ircd::net
 	string_view &host(hostport &);
 
 	string_view string(const mutable_buffer &out, const hostport &);
+	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = 8448);
+	std::string canonize(const hostport &, const uint16_t &port = 8448);
 }
 
 namespace ircd
@@ -94,6 +96,7 @@ inline
 ircd::net::hostport::hostport(const string_view &amalgam)
 :host
 {
+	//TODO: grammar
 	rsplit(amalgam, ':').first
 }
 {
