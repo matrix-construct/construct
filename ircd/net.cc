@@ -3080,46 +3080,6 @@ ircd::net::dns::resolver::init_servers()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// net/remote.h
-//
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const remote &t)
-{
-	thread_local char buf[256];
-	const critical_assertion ca;
-	s << string(buf, t);
-	return s;
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const remote &remote)
-{
-	const auto &ipp
-	{
-		static_cast<const ipport &>(remote)
-	};
-
-	if(!ipp && !remote.hostname)
-	{
-		const auto len{strlcpy(data(buf), "0.0.0.0", size(buf))};
-		return { data(buf), size_t(len) };
-	}
-	else if(!ipp)
-	{
-		const auto len{strlcpy(data(buf), remote.hostname, size(buf))};
-		return { data(buf), size_t(len) };
-	}
-	else
-	{
-		const auto len{fmt::sprintf(buf, "%s => %s", remote.hostname, string(ipp))};
-		return { data(buf), size_t(len) };
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // net/ipport.h
 //
 
@@ -3312,7 +3272,7 @@ ircd::net::canonize(const hostport &hp,
 {
 	const size_t len
 	{
-		size(host(hp) + 6) // optimistic ':' + portnum
+		size(host(hp)) + 6 // optimistic ':' + portnum
 	};
 
 	return ircd::string(len, [&hp, &port]

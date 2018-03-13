@@ -37,7 +37,6 @@ namespace ircd::net
 
 #include "hostport.h"
 #include "ipport.h"
-#include "remote.h"
 #include "dns.h"
 #include "listener.h"
 #include "sock_opts.h"
