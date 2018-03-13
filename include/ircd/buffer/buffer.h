@@ -39,6 +39,7 @@ namespace ircd::buffer
 	struct window_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer, uint align = 16> struct unique_buffer;
+	template<class buffer> struct shared_buffer;
 
 	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
 	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
@@ -89,6 +90,7 @@ namespace ircd::buffer
 #include "fixed_buffer.h"
 #include "window_buffer.h"
 #include "unique_buffer.h"
+#include "shared_buffer.h"
 
 // Export these important aliases down to main ircd namespace
 namespace ircd
@@ -97,6 +99,7 @@ namespace ircd
 	using buffer::mutable_buffer;
 	using buffer::fixed_buffer;
 	using buffer::unique_buffer;
+	using buffer::shared_buffer;
 	using buffer::null_buffer;
 	using buffer::window_buffer;
 	using buffer::fixed_const_buffer;
