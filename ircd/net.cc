@@ -10,6 +10,22 @@
 
 #include <ircd/asio.h>
 
+namespace ircd::net
+{
+	ctx::dock dock;
+
+	void wait_close_sockets();
+}
+
+void
+ircd::net::wait_close_sockets()
+{
+    while(socket::instances)
+		if(dock.wait_for(seconds(2)) != ctx::cv_status::no_timeout)
+			log.warning("Waiting for %zu sockets to destruct",
+			            socket::instances);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -29,6 +45,7 @@ ircd::net::init::init()
 /// Network subsystem shutdown
 ircd::net::init::~init()
 {
+	wait_close_sockets();
 	delete net::dns::resolver;
 	net::dns::resolver = nullptr;
 }
@@ -1250,6 +1267,14 @@ ircd::net::sslv23_client
 	boost::asio::ssl::context::method::sslv23_client
 };
 
+decltype(ircd::net::socket::count)
+ircd::net::socket::count
+{};
+
+decltype(ircd::net::socket::instances)
+ircd::net::socket::instances
+{};
+
 //
 // socket
 //
@@ -1269,6 +1294,8 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 	*ios
 }
 {
+	++count;
+	++instances;
 }
 
 /// The dtor asserts that the socket is not open/connected requiring a
@@ -1277,6 +1304,9 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
+	if(unlikely(--instances == 0))
+		net::dock.notify_all();
+
 	if(unlikely(RB_DEBUG_LEVEL && opened(*this)))
 		throw assertive
 		{

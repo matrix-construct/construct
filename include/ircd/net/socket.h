@@ -44,6 +44,9 @@ struct ircd::net::socket
 		size_t calls {0};
 	};
 
+	static uint64_t count;                       // monotonic
+	static uint64_t instances;                   // current socket count
+
 	ip::tcp::socket sd;
 	asio::ssl::stream<ip::tcp::socket &> ssl;
 	steady_timer timer;
