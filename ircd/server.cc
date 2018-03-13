@@ -601,6 +601,13 @@ ircd::server::peer::handle_open(link &link,
 		          string(remote),
 		          what(eptr));
 
+		if(op_fini)
+		{
+			assert(link.finished());
+			handle_finished(link);
+			return;
+		}
+
 		link.close(net::dc::RST);
 		return;
 	}
@@ -1201,7 +1208,6 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 	if(op_init)
 	{
 		assert(bool(eptr));
-		op_init = false;
 	}
 
 	if(peer)
