@@ -221,10 +221,37 @@ try
 		};
 
 	// A conforming (with lots of masks) event without an event_id is an EDU.
-	if(!json::get<"event_id"_>(event))
-		return _eval_edu(*this, event);
+	const fault ret
+	{
+		json::get<"event_id"_>(event)?
+			_eval_pdu(*this, event):
+			_eval_edu(*this, event)
+	};
 
-	return _eval_pdu(*this, event);
+	if(ret != fault::ACCEPT)
+		return ret;
+
+	vm::accepted accepted
+	{
+		event, opts, &report
+	};
+
+	if(opts->notify)
+	{
+		notify_hook(event);
+		vm::accept.expose(accepted);
+	}
+
+	if(opts->effects)
+		_tmp_effects(event);
+
+	if(opts->debuglog_accept)
+		log.debug("%s", pretty_oneline(event));
+
+	if(opts->infolog_accept)
+		log.info("%s", pretty_oneline(event));
+
+	return ret;
 }
 catch(const error &e)
 {
@@ -376,30 +403,16 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	if(opts.write)
 		write(eval);
 
-	if(opts.notify)
-	{
-		notify_hook(event);
-		vm::accept.expose(event);
-	}
-
-	if(opts.effects)
-		_tmp_effects(event);
-
-	if(opts.debuglog_accept)
-		log.debug("%s", pretty_oneline(event));
-
-	if(opts.infolog_accept)
-		log.info("%s", pretty_oneline(event));
-
 	return fault::ACCEPT;
 }
 
 void
 ircd::m::vm::write(eval &eval)
 {
-	log.debug("Committing %zu cells in %zu bytes to events database...",
-	          eval.txn.size(),
-	          eval.txn.bytes());
+	if(eval.opts->debuglog_accept)
+		log.debug("Committing %zu cells in %zu bytes to events database...",
+		          eval.txn.size(),
+		          eval.txn.bytes());
 
 	eval.txn();
 	vm::current_sequence++;
@@ -428,8 +441,6 @@ ircd::m::vm::reflect(const enum fault &code)
 void
 ircd::m::vm::_tmp_effects(const m::event &event)
 {
-	const m::room::id room_id{at<"room_id"_>(event)};
-	const m::user::id sender{at<"sender"_>(event)};
 	const auto &type{at<"type"_>(event)};
 
 	//TODO: X
@@ -448,15 +459,40 @@ ircd::m::vm::_tmp_effects(const m::event &event)
 	*/
 
 	//TODO: X
-	if(type == "m.room.member" && my_host(sender.host()))
+	if(type == "m.room.member")
 	{
+		const m::room::id room_id{at<"room_id"_>(event)};
+		const m::user::id sender{at<"sender"_>(event)};
+
+		//TODO: ABA / TXN
+		if(!exists(sender))
+			create(sender);
+
+		//TODO: ABA / TXN
 		m::user::room user_room{sender};
 		send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
 	}
 
 	//TODO: X
-	if(type == "m.room.join_rules" && my_host(sender.host()))
+	if(type == "m.room.join_rules")
 	{
-		send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
+		const m::room::id room_id{at<"room_id"_>(event)};
+		const m::user::id sender{at<"sender"_>(event)};
+		if(my_host(sender.host()))
+			send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
 	}
+}
+
+//
+// accepted
+//
+
+ircd::m::vm::accepted::accepted(const m::event &event,
+                                const vm::opts *const &opts,
+                                const event::conforms *const &report)
+:m::event{event}
+,context{ctx::current}
+,opts{opts}
+,report{report}
+{
 }

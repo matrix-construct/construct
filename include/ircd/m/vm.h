@@ -19,6 +19,7 @@ namespace ircd::m::vm
 	struct error; // custom exception
 	struct opts;
 	struct eval;
+	struct accepted;
 
 	using fault_t = std::underlying_type<fault>::type;
 	using closure = std::function<void (const event &)>;
@@ -26,7 +27,7 @@ namespace ircd::m::vm
 
 	extern struct log::log log;
 	extern uint64_t current_sequence;
-	extern ctx::shared_view<const event> accept;
+	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
 
 	event::id::buf commit(const m::event &, const opts & = default_opts);
@@ -144,6 +145,19 @@ struct ircd::m::vm::opts
 
 	/// Whether to log an info message on successful eval.
 	bool infolog_accept {false};
+};
+
+struct ircd::m::vm::accepted
+:m::event
+{
+	ctx::ctx *context;
+	const vm::opts *opts;
+	const event::conforms *report;
+	std::string strung;
+
+	accepted(const m::event &event,
+	         const vm::opts *const &opts,
+	         const event::conforms *const &report);
 };
 
 struct ircd::m::vm::error
