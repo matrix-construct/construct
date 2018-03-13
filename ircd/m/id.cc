@@ -277,7 +277,6 @@ const try
 	const rule<string_view> view_mxid
 	{
 		raw[&lit(char(sigil)) > mxid]
-		,"mxid"
 	};
 
 	string_view out;
@@ -340,7 +339,6 @@ const try
 	const rule<string_view> valid_mxid
 	{
 		&lit(char(sigil)) > mxid
-		,"mxid"
 	};
 
 	const char *start{id.data()};
@@ -585,18 +583,8 @@ ircd::m::my(const id &id)
 void
 ircd::m::validate(const id::sigil &sigil,
                   const string_view &id)
-try
 {
 	id::validator(sigil, id);
-}
-catch(const std::exception &e)
-{
-	throw INVALID_MXID
-	{
-		"Not a valid '%s' mxid: %s",
-		reflect(sigil),
-		e.what()
-	};
 }
 
 bool
@@ -604,7 +592,7 @@ ircd::m::valid(const id::sigil &sigil,
                const string_view &id)
 noexcept try
 {
-	id::validator(sigil, id);
+	validate(sigil, id);
 	return true;
 }
 catch(...)
@@ -715,7 +703,7 @@ void
 ircd::m::failure(const qi::expectation_failure<const char *> &e,
                  const string_view &goal)
 {
-	auto rule
+	const auto rule
 	{
 		ircd::string(e.what_)
 	};
