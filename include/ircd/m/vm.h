@@ -95,8 +95,20 @@ struct ircd::m::vm::opts
 	/// Broadcast to clients/servers
 	bool notify {true};
 
-	/// Mask of conformity failures to allow without error
+	/// False to allow a dirty conforms report (not recommended).
+	bool conforming {true};
+
+	/// Mask of conformity failures to allow without considering dirty.
 	event::conforms non_conform;
+
+	/// If the event was already checked before the eval, set this to true
+	/// and include the report (see below).
+	bool conformed {false};
+
+	/// When conformed=true, this report will be included instead of generating
+	/// one during the eval. This is useful if a conformity check was already
+	/// done before eval.
+	event::conforms report;
 
 	/// Toggles whether event may be considered a "present event" and may
 	/// update the optimized present state table of the room if it is proper.

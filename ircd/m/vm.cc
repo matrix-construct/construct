@@ -209,12 +209,15 @@ enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
 try
 {
-	const event::conforms report
+	assert(opts);
+	const event::conforms &report
 	{
-		event, opts->non_conform.report
+		opts->conforming && !opts->conformed?
+			event::conforms{event, opts->non_conform.report}:
+			opts->report
 	};
 
-	if(!report.clean())
+	if(opts->conforming && !report.clean())
 		throw error
 		{
 			fault::INVALID, "Non-conforming event: %s", string(report)
