@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_SERVER_PEER_H
 
+namespace ircd::server
+{
+	extern std::map<string_view, std::unique_ptr<peer>> peers;
+}
+
 /// Remote entity.
 ///
 struct ircd::server::peer
@@ -21,7 +26,9 @@ struct ircd::server::peer
 	static conf::item<size_t> link_max_default;
 	static conf::item<seconds> error_clear_default;
 
-	net::remote remote;
+	net::ipport remote;
+	std::string hostname;
+	net::open_opts open_opts;
 	std::list<link> links;
 	std::unique_ptr<err> e;
 	std::string server_name;

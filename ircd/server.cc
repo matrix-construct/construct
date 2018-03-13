@@ -33,10 +33,6 @@ ircd::server::log
 	"server", 'S'
 };
 
-decltype(ircd::server::peers)
-ircd::server::peers
-{};
-
 ircd::conf::item<ircd::seconds>
 close_all_timeout
 {
@@ -96,7 +92,7 @@ ircd::server::get(const net::hostport &hostport)
 		          peer.get(),
 		          string(hostport));
 
-		const string_view key{peer->remote.hostname};
+		const string_view key{peer->hostname};
 		it = peers.emplace_hint(it, key, std::move(peer));
 	}
 
@@ -107,8 +103,13 @@ std::unique_ptr<ircd::server::peer>
 ircd::server::create(const net::hostport &hostport)
 {
 	auto peer(std::make_unique<peer>());
-	peer->remote.hostname = std::string{host(hostport)};
+	peer->hostname = net::canonize(hostport);
 	peer->resolve(hostport);
+	peer->open_opts = net::open_opts
+	{
+		peer->remote, net::hostport{peer->hostname}
+	};
+
 	return peer;
 }
 
@@ -332,6 +333,10 @@ ircd::server::submit(const hostport &hostport,
 // peer
 //
 
+decltype(ircd::server::peers)
+ircd::server::peers
+{};
+
 decltype(ircd::server::peer::link_min_default)
 ircd::server::peer::link_min_default
 {
@@ -462,12 +467,12 @@ try
 	if(!request.tag)
 		throw unavailable
 		{
-			"No link to peer %s available", remote.hostname
+			"No link to peer %s available", hostname
 		};
 	else
 		request.tag->set_exception(unavailable
 		{
-			"No link to peer %s available", remote.hostname
+			"No link to peer %s available", hostname
 		});
 }
 catch(const std::exception &e)
@@ -580,8 +585,8 @@ ircd::server::peer::link_add(const size_t &num)
 	links.emplace_back(*this);
 	auto &link{links.back()};
 
-	if(remote.resolved())
-		link.open(remote);
+	if(remote)
+		link.open(open_opts);
 
 	return link;
 }
@@ -849,14 +854,15 @@ try
 		std::rethrow_exception(eptr);
 	}
 
-	static_cast<net::ipport &>(this->remote) = ipport;
+	this->remote = ipport;
+	open_opts.ipport = this->remote;
 
 	if(unlikely(finished()))
 		return handle_finished();
 
 	if(!op_fini)
 		for(auto &link : links)
-			link.open(this->remote);
+			link.open(this->open_opts);
 }
 catch(const std::exception &e)
 {

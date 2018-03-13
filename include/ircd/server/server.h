@@ -29,7 +29,6 @@ namespace ircd::server
 	using error_code = boost::system::error_code;
 
 	extern ircd::log::log log;
-	extern std::map<string_view, std::unique_ptr<peer>> peers;
 
 	size_t tag_count();
 	size_t link_count();
