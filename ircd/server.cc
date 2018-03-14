@@ -608,8 +608,9 @@ ircd::server::peer::handle_open(link &link,
 
 		if(op_fini)
 		{
-			assert(link.finished());
-			handle_finished(link);
+			if(link.finished())
+				handle_finished(link);
+
 			return;
 		}
 
