@@ -43,10 +43,33 @@ put__typing(client &client,
 		request.at<bool>("typing")
 	};
 
-	log::debug("%s typing: %d timeout: %ld",
-	           user_id,
-	           typing,
-	           timeout.count());
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.typing"       } },
+		{ event,    { "room_id",  room_id          } },
+		{ content,  { "user_id",  request.user_id  } },
+		{ content,  { "room_id",  room_id          } },
+		{ content,  { "typing",   typing           } },
+	};
+
+	m::vm::opts opts;
+	opts.hash = false;
+	opts.sign = false;
+	opts.event_id = false;
+	opts.origin = true;
+	opts.origin_server_ts = false;
+	opts.conforming = false;
+
+	m::vm::commit(event, content, opts);
+
+	log::debug
+	{
+		"%s typing[%b] timeout: %ld",
+		request.user_id,
+		typing,
+		timeout.count()
+	};
 
 	return resource::response
 	{
