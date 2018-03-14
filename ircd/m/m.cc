@@ -527,6 +527,25 @@ ircd::m::keys::init::signing()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/typing.h
+//
+
+ircd::m::event::id::buf
+ircd::m::typing::set(const m::typing &object)
+{
+	using prototype = event::id::buf (const m::typing &);
+
+	static import<prototype> function
+	{
+		"m_typing", "typing_set"
+	};
+
+	return function(object);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/presence.h
 //
 

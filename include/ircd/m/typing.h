@@ -13,7 +13,7 @@
 
 namespace ircd::m
 {
-
+	struct typing;
 }
 
 #pragma GCC diagnostic push
@@ -30,3 +30,11 @@ struct ircd::m::edu::m_typing
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
+
+struct ircd::m::typing
+:m::edu::m_typing
+{
+	static event::id::buf set(const typing &);
+
+	using edu::m_typing::m_typing;
+};

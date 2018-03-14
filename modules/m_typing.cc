@@ -18,6 +18,31 @@ IRCD_MODULE
 
 static void _handle_edu_m_typing(const m::event &, const m::edu::m_typing &edu);
 static void handle_edu_m_typing(const m::event &);
+extern "C" m::event::id::buf typing_set(const m::typing &);
+
+m::event::id::buf
+typing_set(const m::typing &edu)
+{
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.typing"                  } },
+		{ event,    { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "user_id",  at<"user_id"_>(edu)         } },
+		{ content,  { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
+	};
+
+	m::vm::opts opts;
+	opts.hash = false;
+	opts.sign = false;
+	opts.event_id = false;
+	opts.origin = true;
+	opts.origin_server_ts = false;
+	opts.conforming = false;
+
+	return m::vm::commit(event, content, opts);
+}
 
 const m::hook
 _m_typing_eval

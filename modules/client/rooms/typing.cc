@@ -43,25 +43,14 @@ put__typing(client &client,
 		request.at<bool>("typing")
 	};
 
-	json::iov event, content;
-	const json::iov::push push[]
+	const m::edu::m_typing event
 	{
-		{ event,    { "type",     "m.typing"       } },
-		{ event,    { "room_id",  room_id          } },
-		{ content,  { "user_id",  request.user_id  } },
-		{ content,  { "room_id",  room_id          } },
-		{ content,  { "typing",   typing           } },
+		{ "user_id",  request.user_id  },
+		{ "room_id",  room_id          },
+		{ "typing",   typing           },
 	};
 
-	m::vm::opts opts;
-	opts.hash = false;
-	opts.sign = false;
-	opts.event_id = false;
-	opts.origin = true;
-	opts.origin_server_ts = false;
-	opts.conforming = false;
-
-	m::vm::commit(event, content, opts);
+	m::typing::set(event);
 
 	log::debug
 	{
