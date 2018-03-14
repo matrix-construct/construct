@@ -280,9 +280,8 @@ const try
 	};
 
 	string_view out;
-	const char *start{id.data()};
-	const char *const stop{id.data() + id.size()};
-	qi::parse(start, stop, eps > view_mxid, out);
+	const char *start{id.begin()};
+	qi::parse(start, id.end(), eps > view_mxid, out);
 	return out;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -300,9 +299,8 @@ const try
 	};
 
 	string_view out;
-	const char *start{id.data()};
-	const char *const stop{id.data() + id.size()};
-	qi::parse(start, stop, eps > view_mxid, out);
+	const char *start{id.begin()};
+	qi::parse(start, id.end(), eps > view_mxid, out);
 	return out;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -322,9 +320,8 @@ void
 ircd::m::id::validator::operator()(const string_view &id)
 const try
 {
-	const char *start{id.data()};
-	const char *const stop{id.data() + id.size()};
-	qi::parse(start, stop, eps > mxid);
+	const char *start{id.begin()};
+	qi::parse(start, id.end(), eps > mxid);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -341,9 +338,8 @@ const try
 		&lit(char(sigil)) > mxid
 	};
 
-	const char *start{id.data()};
-	const char *const stop{id.data() + id.size()};
-	qi::parse(start, stop, eps > valid_mxid);
+	const char *start{id.begin()};
+	qi::parse(start, id.end(), eps > valid_mxid);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -535,10 +531,10 @@ const
 	};
 
 	uint16_t ret{8448};
-	auto *start{data()};
+	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, data() + size(), rule, ret)
+		qi::parse(start, end(), rule, ret)
 	};
 
 	assert(res || ret == 8448);
@@ -560,10 +556,10 @@ const
 	};
 
 	string_view ret;
-	auto *start{data()};
+	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, data() + size(), rule, ret)
+		qi::parse(start, end(), rule, ret)
 	};
 
 	assert(res == true);
@@ -596,10 +592,10 @@ const
 	};
 
 	string_view ret;
-	auto *start{data()};
+	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, data() + size(), rule, ret)
+		qi::parse(start, end(), rule, ret)
 	};
 
 	assert(res == true);
@@ -622,8 +618,8 @@ const
 	};
 
 	string_view ret;
-	auto *start{data()};
-	qi::parse(start, data() + size(), rule, ret);
+	auto *start{begin()};
+	qi::parse(start, end(), rule, ret);
 	assert(!ret.empty());
 	return ret;
 }
@@ -665,7 +661,7 @@ noexcept try
 	};
 
 	const char *start{begin(id)};
-	const char *const stop{end(id)};
+	const char *const &stop{end(id)};
 	return id.at(0) == sigil && qi::parse(start, stop, test) && start == stop;
 }
 catch(...)
@@ -684,8 +680,7 @@ noexcept try
 	};
 
 	const char *start{begin(id)};
-	const char *const stop{end(id)};
-	return id.at(0) == sigil && qi::parse(start, stop, test);
+	return id.at(0) == sigil && qi::parse(start, end(id), test);
 }
 catch(...)
 {
