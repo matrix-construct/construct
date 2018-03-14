@@ -36,10 +36,20 @@ ircd::m::vm::commit(json::iov &event,
                     const json::iov &contents,
                     const opts &opts)
 {
-	const json::iov::push set[]
+	const json::iov::add_if _origin
 	{
-		{ event, { "origin_server_ts",  ircd::time<milliseconds>() }},
-		{ event, { "origin",            my_host()                  }},
+		event, opts.origin,
+		{
+			"origin", my_host()
+		}
+	};
+
+	const json::iov::add_if _origin_server_ts
+	{
+		event, opts.origin_server_ts,
+		{
+			"origin_server_ts", ircd::time<milliseconds>()
+		}
 	};
 
 	const json::strung content
@@ -50,20 +60,26 @@ ircd::m::vm::commit(json::iov &event,
 	// event_id
 
 	sha256::buf event_id_hash;
+	if(opts.event_id)
 	{
 		thread_local char preimage_buf[64_KiB];
-		event_id_hash = sha256{stringify(mutable_buffer{preimage_buf}, event)};
+		event_id_hash = sha256
+		{
+			stringify(mutable_buffer{preimage_buf}, event)
+		};
 	}
 
 	event::id::buf eid_buf;
-	const auto event_id
+	const string_view event_id
 	{
-		m::event_id(event, eid_buf, event_id_hash)
+		opts.event_id?
+			m::event_id(event, eid_buf, event_id_hash):
+			string_view{}
 	};
 
-	const json::iov::push _event_id
+	const json::iov::add_if _event_id
 	{
-		event, { "event_id", event_id }
+		event, opts.event_id, { "event_id", event_id }
 	};
 
 	// hashes

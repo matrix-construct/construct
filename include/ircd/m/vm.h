@@ -86,6 +86,15 @@ struct ircd::m::vm::opts
 	// Sign and include signatures object
 	bool sign {true};
 
+	// Generate and include event_id
+	bool event_id {true};
+
+	// Include our origin
+	bool origin {true};
+
+	// Include origin_server_ts
+	bool origin_server_ts {true};
+
 	/// Make writes to database
 	bool write {true};
 
