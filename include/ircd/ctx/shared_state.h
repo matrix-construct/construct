@@ -35,7 +35,6 @@ struct ircd::ctx::shared_state_base
 {
 	mutable dock cond;
 	std::exception_ptr eptr;
-	std::function<void (shared_state_base &)> then;
 };
 
 template<class T>
@@ -46,6 +45,7 @@ struct ircd::ctx::shared_state
 	using pointer_type    = T *;
 	using reference_type  = T &;
 
+	std::function<void (shared_state<T> &)> then;
 	promise<T> *p {nullptr};
 	T val;
 };
@@ -56,6 +56,7 @@ struct ircd::ctx::shared_state<void>
 {
 	using value_type      = void;
 
+	std::function<void (shared_state<void> &)> then;
 	promise<void> *p {nullptr};
 };
 

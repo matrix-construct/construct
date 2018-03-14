@@ -106,6 +106,7 @@ namespace ircd::ctx { inline namespace this_ctx
 #include "shared_state.h"
 #include "promise.h"
 #include "future.h"
+#include "when.h"
 #include "async.h"
 #include "pool.h"
 #include "ole.h"
