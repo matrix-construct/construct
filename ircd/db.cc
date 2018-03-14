@@ -3620,10 +3620,17 @@ ircd::db::has(column &column,
 	// Perform queries which are stymied from any sysentry
 	opts.read_tier = NON_BLOCKING;
 
+	#ifdef RB_DEBUG
+	ircd::timer timer;
+	#endif
+
 	// Perform a co-RP query to the filtration
-	bool value{false};
 	static thread_local std::string discard;
-	const bool may_exist{d.d->KeyMayExist(opts, c, k, &discard, &value)};
+	bool value{false};
+	const bool may_exist
+	{
+		d.d->KeyMayExist(opts, c, k, &discard, &value)
+	};
 
 	if(!may_exist)
 		return false;
@@ -3640,14 +3647,17 @@ ircd::db::has(column &column,
 		});
 	}
 
-	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s%s",
+	#ifdef RB_DEBUG
+	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s%s in %ld$us",
 	          name(d),
 	          sequence(d),
 	          sequence(opts.snapshot),
 	          name(c),
 	          key.size(),
 	          status.ok()? "YES"s : "NO"s,
-	          opts.read_tier == BLOCKING? " CACHE MISS"s : ""s);
+	          opts.read_tier == BLOCKING? " CACHE MISS"s : ""s,
+	          timer.at<microseconds>().count());
+	#endif
 
 	// Finally the result
 	switch(status.code())
@@ -4130,15 +4140,22 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
-	log.debug("'%s' %lu COMMIT %s",
-	          d.name,
-	          sequence(d),
-	          debug(batch));
+	#ifdef RB_DEBUG
+	ircd::timer timer;
+	#endif
 
 	throw_on_error
 	{
 		d.d->Write(opts, &batch)
 	};
+
+	#ifdef RB_DEBUG
+	log.debug("'%s' %lu COMMIT %s in %ld$us",
+	          d.name,
+	          sequence(d),
+	          debug(batch),
+	          timer.at<microseconds>().count());
+	#endif
 }
 
 std::string
