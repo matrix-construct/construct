@@ -372,7 +372,14 @@ ircd::m::pretty_oneline(const event &event)
 bool
 ircd::m::my(const event &event)
 {
-	return my(event::id(at<"event_id"_>(event)));
+	const auto &origin(json::get<"origin"_>(event));
+	const auto &eid(json::get<"event_id"_>(event));
+	return
+		origin?
+			my_host(origin):
+		eid?
+			my(event::id(eid)):
+		false;
 }
 
 bool
