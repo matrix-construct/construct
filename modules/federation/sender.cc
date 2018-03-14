@@ -125,13 +125,20 @@ send(const m::event &event,
 
 		auto it{nodes.lower_bound(origin)};
 		if(it == end(nodes) || it->first != origin)
+		{
+			if(server::errmsg(origin))
+				return;
+
 			it = nodes.emplace_hint(it, origin, origin);
+		}
 
 		auto &node{it->second};
 		if(!unit)
 			unit = std::make_shared<struct unit>(event);
 
 		node.push(unit);
+		if(!node.flush())
+			nodes.erase(it);
 	});
 }
 
@@ -139,7 +146,6 @@ void
 node::push(std::shared_ptr<unit> su)
 {
 	q.emplace_back(std::move(su));
-	flush();
 }
 
 bool
