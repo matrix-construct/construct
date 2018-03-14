@@ -1193,25 +1193,25 @@ ircd::m::txn::create(const array &pdu,
 
 	const json::iov::add_if _pdus
 	{
-		iov, pdu.second,
+		iov, !empty(pdu),
 		{
-			"pdus", { pdu.first, pdu.second }
+			"pdus", { data(pdu), size(pdu) }
 		}
 	};
 
 	const json::iov::add_if _edus
 	{
-		iov, edu.second,
+		iov, !empty(edu),
 		{
-			"edus", { edu.first, edu.second }
+			"edus", { data(edu), size(edu) }
 		}
 	};
 
 	const json::iov::add_if _pdu_failures
 	{
-		iov, pdu_failure.second,
+		iov, !empty(pdu_failure),
 		{
-			"pdu_failures", { pdu_failure.first, pdu_failure.second }
+			"pdu_failures", { data(pdu_failure), size(pdu_failure) }
 		}
 	};
 
@@ -1402,7 +1402,6 @@ const
 
 	return true;
 }
-
 
 //
 // hook::site
