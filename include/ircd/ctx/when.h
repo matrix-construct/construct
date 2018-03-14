@@ -32,10 +32,10 @@ ircd::ctx::when_all(it first,
 			if(!p.valid())
 				return;
 
-			if(refcount(*p.st) < 2)
+			if(refcount(p.state()) < 2)
 				return p.set_value();
 
-			return remove(*p.st, p);
+			return remove(p.state(), p);
 		}
 	};
 
@@ -54,10 +54,10 @@ ircd::ctx::when_all(it first,
 
 	future<void> ret(p);
 	for(; first != last; ++first)
-		if(pending(first->st))
+		if(pending(first->state()))
 			set_then(*first);
 
-	if(refcount(*p.st) <= 1)
+	if(refcount(p.state()) <= 1)
 		p.set_value();
 
 	return ret;
@@ -85,7 +85,7 @@ ircd::ctx::when_any(it first,
 			if(!p.valid())
 				return;
 
-			set_observed(f->st);
+			set_observed(f->state());
 			p.set_value(f);
 		}
 	};
@@ -95,7 +95,7 @@ ircd::ctx::when_any(it first,
 	{
 		[&p](it &f)
 		{
-			f->st.then = [p, f]                  // alloc
+			f->state().then = [p, f]             // alloc
 			(shared_state_base &) mutable
 			{
 				then(p, f);
@@ -105,18 +105,18 @@ ircd::ctx::when_any(it first,
 
 	future<it> ret(p);
 	for(auto f(first); f != last; ++f)
-		if(ready(f->st))
+		if(ready(f->state()))
 		{
-			set_observed(f->st);
+			set_observed(f->state());
 			p.set_value(f);
 			return ret;
 		}
 
 	for(; first != last; ++first)
-		if(pending(first->st))
+		if(pending(first->state()))
 			set_then(first);
 
-	if(refcount(*p.st) <= 1)
+	if(refcount(p.state()) <= 1)
 		p.set_value(first);
 
 	return ret;

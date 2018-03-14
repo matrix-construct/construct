@@ -30,15 +30,16 @@ enum class ircd::ctx::future_status
 
 template<class T>
 struct ircd::ctx::future
+:private shared_state<T>
 {
-	mutable shared_state<T> st;
-
-  public:
 	using value_type                             = typename shared_state<T>::value_type;
 	using pointer_type                           = typename shared_state<T>::pointer_type;
 	using reference_type                         = typename shared_state<T>::reference_type;
 
-	bool valid() const                           { return !invalid(st);                            }
+	const shared_state<T> &state() const         { return *this;                                   }
+	shared_state<T> &state()                     { return *this;                                   }
+
+	bool valid() const                           { return !invalid(state());                       }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -64,13 +65,14 @@ struct ircd::ctx::future
 
 template<>
 struct ircd::ctx::future<void>
+:private shared_state<void>
 {
-	mutable shared_state<void> st;
-
-  public:
 	using value_type                             = typename shared_state<void>::value_type;
 
-	bool valid() const                           { return !invalid(st);                            }
+	const shared_state<void> &state() const      { return *this;                                   }
+	shared_state<void> &state()                  { return *this;                                   }
+
+	bool valid() const                           { return !invalid(state());                       }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -129,44 +131,44 @@ noexcept
 
 template<class T>
 ircd::ctx::future<T>::future(promise<T> &promise)
+:shared_state<T>{promise}
 {
-	assert(!promise.st);
-	st.p = &promise;
-	update(st);
-	assert(promise.st);
+	assert(!promise.valid());
+	update(state());
+	assert(promise.valid());
 }
 
 inline
 ircd::ctx::future<void>::future(promise<void> &promise)
+:shared_state<void>{promise}
 {
-	assert(!promise.st);
-	st.p = &promise;
-	update(st);
-	assert(promise.st);
+	assert(!promise.valid());
+	update(state());
+	assert(promise.valid());
 }
 
 inline
 ircd::ctx::future<void>::future(already_t)
 {
-	set_ready(st);
+	set_ready(state());
 }
 
 template<class T>
 ircd::ctx::future<T>::future(future<T> &&o)
 noexcept
-:st{std::move(o.st)}
+:shared_state<T>{std::move(o)}
 {
-	update(st);
-	o.st.p = nullptr;
+	update(state());
+	o.state().p = nullptr;
 }
 
 inline
 ircd::ctx::future<void>::future(future<void> &&o)
 noexcept
-:st{std::move(o.st)}
+:shared_state<void>{std::move(o)}
 {
-	update(st);
-	o.st.p = nullptr;
+	update(state());
+	o.state().p = nullptr;
 }
 
 template<class T>
@@ -175,9 +177,9 @@ ircd::ctx::future<T>::operator=(future<T> &&o)
 noexcept
 {
 	this->~future();
-	st = std::move(o.st);
-	update(st);
-	o.st.p = nullptr;
+	static_cast<shared_state<T> &>(*this) = std::move(o);
+	update(state());
+	o.state().p = nullptr;
 	return *this;
 }
 
@@ -186,9 +188,9 @@ ircd::ctx::future<void>::operator=(future<void> &&o)
 noexcept
 {
 	this->~future();
-	st = std::move(o.st);
-	update(st);
-	o.st.p = nullptr;
+	static_cast<shared_state<void> &>(*this) = std::move(o);
+	update(state());
+	o.state().p = nullptr;
 	return *this;
 }
 
@@ -196,14 +198,14 @@ template<class T>
 ircd::ctx::future<T>::~future()
 noexcept
 {
-	invalidate(st);
+	invalidate(state());
 }
 
 inline
 ircd::ctx::future<void>::~future()
 noexcept
 {
-	invalidate(st);
+	invalidate(state());
 }
 
 template<class T>
@@ -211,14 +213,14 @@ T
 ircd::ctx::future<T>::get()
 {
 	wait();
-	if(unlikely(retrieved(st)))
+	if(unlikely(retrieved(state())))
 		throw future_already_retrieved{};
 
-	set_retrieved(st);
-	if(bool(st.eptr))
-		std::rethrow_exception(st.eptr);
+	set_retrieved(state());
+	if(bool(state().eptr))
+		std::rethrow_exception(state().eptr);
 
-	return st.val;
+	return state().val;
 }
 
 template<class T>
@@ -320,9 +322,14 @@ const
 
 	if(status == future_status::ready)
 	{
-		set_retrieved(st);
-		if(bool(st.eptr))
-			std::rethrow_exception(st.eptr);
+		auto &state
+		{
+			const_cast<future<void> *>(this)->state()
+		};
+
+		set_retrieved(state);
+		if(bool(state.eptr))
+			std::rethrow_exception(state.eptr);
 	}
 
 	return status;
@@ -352,15 +359,20 @@ ircd::ctx::wait_until(const future<T> &f,
                       const time_point &tp,
                       std::nothrow_t)
 {
-	const auto wfun([&f]() -> bool
+	auto &state
 	{
-		return !pending(f.st);
+		const_cast<future<T> &>(f).state()
+	};
+
+	const auto wfun([&state]() -> bool
+	{
+		return !pending(state);
 	});
 
-	if(unlikely(invalid(f.st)))
+	if(unlikely(invalid(state)))
 		throw no_state{};
 
-	if(unlikely(!f.st.cond.wait_until(tp, wfun)))
+	if(unlikely(!state.cond.wait_until(tp, wfun)))
 		return future_status::timeout;
 
 	return likely(wfun())?

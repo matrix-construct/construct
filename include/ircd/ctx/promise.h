@@ -37,12 +37,12 @@ struct ircd::ctx::promise
 	using pointer_type                           = typename shared_state<T>::pointer_type;
 	using reference_type                         = typename shared_state<T>::reference_type;
 
+	const shared_state<T> &state() const         { assert(valid()); return *st;                    }
+	shared_state<T> &state()                     { assert(valid()); return *st;                    }
+
 	bool valid() const                           { return bool(st);                                }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
-
-	const shared_state<T> &get_state() const     { assert(valid()); return *st;                    }
-	shared_state<T> &get_state()                 { assert(valid()); return *st;                    }
 
 	void set_exception(std::exception_ptr eptr);
 	void set_value(const T &val);
@@ -65,12 +65,12 @@ struct ircd::ctx::promise<void>
   public:
 	using value_type                             = typename shared_state<void>::value_type;
 
+	const shared_state<void> &state() const      { assert(valid()); return *st;                    }
+	shared_state<void> &state()                  { assert(valid()); return *st;                    }
+
 	bool valid() const                           { return bool(st);                                }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
-
-	const shared_state<void> &get_state() const  { assert(valid()); return *st;                    }
-	shared_state<void> &get_state()              { assert(valid()); return *st;                    }
 
 	void set_exception(std::exception_ptr eptr);
 	void set_value();
@@ -174,10 +174,10 @@ noexcept
 	if(!valid())
 		return;
 
-	if(refcount(*st) == 1)
+	if(refcount(state()) == 1)
 		set_exception(std::make_exception_ptr(broken_promise()));
 	else
-		remove(*st, *this);
+		remove(state(), *this);
 }
 
 inline
@@ -187,10 +187,10 @@ noexcept
 	if(!valid())
 		return;
 
-	if(refcount(*st) == 1)
+	if(refcount(state()) == 1)
 		set_exception(std::make_exception_ptr(broken_promise()));
 	else
-		remove(*st, *this);
+		remove(state(), *this);
 }
 
 template<class T>
@@ -198,7 +198,7 @@ void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
 	assert(valid());
-	if(unlikely(ready(*st)))
+	if(unlikely(ready(state())))
 		throw promise_already_satisfied{};
 
 	st->val = std::move(val);
@@ -214,7 +214,7 @@ void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
 	assert(valid());
-	if(unlikely(!pending(*st)))
+	if(unlikely(!pending(state())))
 		throw promise_already_satisfied{};
 
 	st->val = val;
@@ -229,7 +229,7 @@ inline void
 ircd::ctx::promise<void>::set_value()
 {
 	assert(valid());
-	if(unlikely(!pending(*st)))
+	if(unlikely(!pending(state())))
 		throw promise_already_satisfied{};
 
 	auto *const st{this->st};
@@ -244,7 +244,7 @@ void
 ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	if(unlikely(!pending(*st)))
+	if(unlikely(!pending(state())))
 		throw promise_already_satisfied{};
 
 	st->eptr = std::move(eptr);
@@ -259,7 +259,7 @@ inline void
 ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	if(unlikely(!pending(*st)))
+	if(unlikely(!pending(state())))
 		throw promise_already_satisfied{};
 
 	st->eptr = std::move(eptr);
