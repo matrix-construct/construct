@@ -193,7 +193,9 @@ ircd::add_client(std::shared_ptr<socket> s)
 	{
 		log::warning
 		{
-			"Refusing to add new client in runlevel %s", reflect(ircd::runlevel)
+			"Refusing to add new client from %s in runlevel %s",
+			string(remote_ipport(*s)),
+			reflect(ircd::runlevel)
 		};
 
 		net::close(*s, net::dc::RST, net::close_ignore);
