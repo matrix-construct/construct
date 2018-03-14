@@ -23,18 +23,41 @@ struct unit
 {
 	enum type { PDU, EDU, FAILURE };
 
-	std::string s;
 	enum type type;
+	std::string s;
 
-	unit(std::string s, const enum type &type)
-	:s{std::move(s)}
-	,type{type}
-	{}
-
-	unit(const m::event &event)
-	:unit{json::strung{event}, PDU}
-	{}
+	unit(std::string s, const enum type &type);
+	unit(const m::event &event);
 };
+
+unit::unit(std::string s, const enum type &type)
+:type{type}
+,s{std::move(s)}
+{
+}
+
+unit::unit(const m::event &event)
+:type{json::get<"event_id"_>(event)? PDU : EDU}
+,s{[this, &event]() -> std::string
+{
+	switch(this->type)
+	{
+		case PDU:
+			return json::strung{event};
+
+		case EDU:
+			return json::strung{json::members
+			{
+				{ "content",   json::get<"content"_>(event)  },
+				{ "edu_type",  json::get<"type"_>(event)     },
+			}};
+
+		default:
+			return {};
+	}
+}()}
+{
+}
 
 struct txndata
 {

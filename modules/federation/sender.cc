@@ -105,7 +105,7 @@ send(const m::event &event)
 	};
 
 	if(room_id)
-		send(event, room_id);
+		return send(event, room_id);
 }
 
 void
@@ -153,32 +153,45 @@ node::flush()
 try
 {
 	if(q.empty())
-		return false;
+		return true;
 
 	if(curtxn)
-		return false;
+		return true;
 
-	const auto pdus
+	size_t pdus{0}, edus{0};
+	for(const auto &unit : q) switch(unit->type)
 	{
-		std::count_if(begin(q), end(q), [](const auto &p)
-		{
-			return p->type == unit::PDU;
-		})
-	};
+		case unit::PDU:   ++pdus;  break;
+		case unit::EDU:   ++edus;  break;
+		default:                   break;
+	}
 
-	std::vector<json::value> pdu(pdus);
-	for(ssize_t i(0); i < pdus; ++i)
-		pdu.at(i) = string_view{q.at(i)->s};
-
-	std::string content
+	size_t pc(0), ec(0);
+	std::vector<json::value> units(pdus + edus);
+	for(const auto &unit : q) switch(unit->type)
 	{
-		m::txn::create({pdu.data(), pdu.size()}, {})
-	};
+		case unit::PDU:
+			units.at(pc++) = string_view{unit->s};
+			break;
+
+		case unit::EDU:
+			units.at(pdus + ec++) = string_view{unit->s};
+			break;
+
+		default:
+			break;
+	}
 
 	m::v1::send::opts opts;
 	opts.remote = id.host();
 	opts.sopts = &sopts;
+	std::string content
+	{
+		m::txn::create({ units.data(), pc }, { units.data() + pdus, ec })
+	};
+
 	txns.emplace_back(*this, std::move(content), std::move(opts));
+
 	q.clear();
 	recv_action.notify_one();
 	return true;
