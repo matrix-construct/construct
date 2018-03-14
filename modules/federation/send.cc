@@ -10,33 +10,13 @@
 
 using namespace ircd;
 
-void sender_worker();
-ircd::context sender_context
+mapi::header
+IRCD_MODULE
 {
-	"sender",
-	256_KiB,
-	&sender_worker,
-	ircd::context::POST,
+	"federation send"
 };
 
-const auto on_unload{[]
-{
-	sender_context.interrupt();
-	sender_context.join();
-}};
-
-mapi::header IRCD_MODULE
-{
-	"federation send",
-	nullptr,
-	on_unload
-};
-
-struct send
-:resource
-{
-	using resource::resource;
-}
+resource
 send_resource
 {
 	"/_matrix/federation/v1/send/",
@@ -62,6 +42,8 @@ handle_edu(client &client,
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
+	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
@@ -171,7 +153,8 @@ handle_put(client &client,
 	};
 }
 
-resource::method method_put
+resource::method
+method_put
 {
 	send_resource, "PUT", handle_put,
 	{
@@ -179,89 +162,3 @@ resource::method method_put
 		4_MiB // larger = HTTP 413  //TODO: conf
 	}
 };
-
-//
-// Main worker stack
-//
-
-void sender_handle(const m::event &, const m::room::id &room_id);
-void sender_handle(const m::event &);
-
-void
-sender_worker()
-{
-	while(1) try
-	{
-		std::unique_lock<decltype(m::vm::inserted)> lock
-		{
-			m::vm::inserted
-		};
-
-		// reference to the event on the inserter's stack
-		const auto &event
-		{
-			m::vm::inserted.wait(lock)
-		};
-
-		sender_handle(event);
-	}
-	catch(const ircd::ctx::interrupted &e)
-	{
-		ircd::log::debug("sender worker interrupted");
-		return;
-	}
-	catch(const timeout &e)
-	{
-		ircd::log::debug("sender worker: %s", e.what());
-	}
-	catch(const std::exception &e)
-	{
-		ircd::log::error("sender worker: %s", e.what());
-	}
-}
-
-void
-sender_handle(const m::event &event)
-{
-	const auto &room_id
-	{
-		json::get<"room_id"_>(event)
-	};
-
-	if(room_id)
-	{
-		sender_handle(event, room_id);
-		return;
-	}
-
-	assert(0);
-}
-
-ssize_t txn_ctr
-{
-	8
-};
-
-void
-sender_handle(const m::event &event,
-              const m::room::id &room_id)
-try
-{
-	const m::room room
-	{
-		room_id
-	};
-
-	const m::event::id &event_id
-	{
-		json::get<"event_id"_>(event)
-	};
-}
-catch(const http::error &e)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	throw;
-}

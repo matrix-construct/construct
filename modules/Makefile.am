@@ -231,12 +231,14 @@ federation_federation_send_la_SOURCES = federation/send.cc
 federation_federation_event_la_SOURCES = federation/event.cc
 federation_federation_get_missing_events_la_SOURCES = federation/get_missing_events.cc
 federation_federation_version_la_SOURCES = federation/version.cc
+federation_federation_sender_la_SOURCES = federation/sender.cc
 
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
 	federation/federation_event.la \
 	federation/federation_get_missing_events.la \
 	federation/federation_version.la \
+	federation/federation_sender.la \
 	###
 
 ###############################################################################
