@@ -37,7 +37,9 @@ namespace ircd::log
 
 	struct critical;
 	struct error;
+	struct derror;
 	struct warning;
+	struct dwarning;
 	struct notice;
 	struct info;
 	struct debug;
@@ -57,12 +59,14 @@ namespace ircd::log
 enum ircd::log::facility
 :int
 {
-	CRITICAL = 0,
-	ERROR    = 1,
-	WARNING  = 2,
-	NOTICE   = 3,
-	INFO     = 4,
-	DEBUG    = 5,
+	CRITICAL  = 0,  ///< Catastrophic/unrecoverable; program is in a compromised state.
+	ERROR     = 1,  ///< Things that shouldn't happen; user impacted and should know.
+	DERROR    = 2,  ///< An error but only worthy of developers in debug mode.
+	WARNING   = 3,  ///< Non-impacting undesirable behavior user should know about.
+	DWARNING  = 4,  ///< A warning but only for developers in debug mode.
+	NOTICE    = 5,  ///< An infrequent important message with neutral or positive news.
+	INFO      = 6,  ///< A more frequent message with good news.
+	DEBUG     = 7,  ///< Maximum verbosity for developers.
 	_NUM_
 };
 
@@ -75,7 +79,9 @@ class ircd::log::log
 
 	template<class... args> void critical(const char *const &fmt, args&&...);
 	template<class... args> void error(const char *const &fmt, args&&...);
+	template<class... args> void derror(const char *const &fmt, args&&...);
 	template<class... args> void warning(const char *const &fmt, args&&...);
+	template<class... args> void dwarning(const char *const &fmt, args&&...);
 	template<class... args> void notice(const char *const &fmt, args&&...);
 	template<class... args> void info(const char *const &fmt, args&&...);
 	template<class... args> void debug(const char *const &fmt, args&&...);
@@ -120,12 +126,36 @@ struct ircd::log::notice
 	}
 };
 
+struct ircd::log::dwarning
+{
+	template<class... args>
+	dwarning(const char *const &fmt, args&&... a)
+	{
+		// got DCE?
+		#ifdef RB_DEBUG
+		vlog(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+		#endif
+	}
+};
+
 struct ircd::log::warning
 {
 	template<class... args>
 	warning(const char *const &fmt, args&&... a)
 	{
 		vlog(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
+
+struct ircd::log::derror
+{
+	template<class... args>
+	derror(const char *const &fmt, args&&... a)
+	{
+		// got DCE?
+		#ifdef RB_DEBUG
+		vlog(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+		#endif
 	}
 };
 
@@ -175,10 +205,30 @@ ircd::log::log::notice(const char *const &fmt,
 
 template<class... args>
 void
+ircd::log::log::dwarning(const char *const &fmt,
+                         args&&... a)
+{
+	#ifdef RB_DEBUG
+	operator()(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+	#endif
+}
+
+template<class... args>
+void
 ircd::log::log::warning(const char *const &fmt,
                         args&&... a)
 {
 	operator()(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+}
+
+template<class... args>
+void
+ircd::log::log::derror(const char *const &fmt,
+                       args&&... a)
+{
+	#ifdef RB_DEBUG
+	operator()(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+	#endif
 }
 
 template<class... args>

@@ -51,7 +51,9 @@ ircd::log::init()
 
 	console_out[CRITICAL]    = true;
 	console_out[ERROR]       = true;
+	console_out[DERROR]      = true;
 	console_out[WARNING]     = true;
+	console_out[DWARNING]    = true;
 	console_out[NOTICE]      = true;
 	console_out[INFO]        = true;
 	console_out[DEBUG]       = ircd::debugmode;
@@ -62,28 +64,36 @@ ircd::log::init()
 
 	file_out[CRITICAL]       = true;
 	file_out[ERROR]          = true;
+	file_out[DERROR]         = true;
 	file_out[WARNING]        = true;
+	file_out[DWARNING]       = true;
 	file_out[NOTICE]         = true;
 	file_out[INFO]           = true;
 	file_out[DEBUG]          = ircd::debugmode;
 
 	file_flush[CRITICAL]     = true;
 	file_flush[ERROR]        = true;
+	file_flush[DERROR]       = true;
 	file_flush[WARNING]      = true;
+	file_flush[DWARNING]     = true;
 	file_flush[NOTICE]       = false;
 	file_flush[INFO]         = false;
 	file_flush[DEBUG]        = false;
 
 	console_flush[CRITICAL]  = true;
 	console_flush[ERROR]     = true;
+	console_flush[DERROR]    = true;
 	console_flush[WARNING]   = true;
-	console_flush[NOTICE]    = false;
-	console_flush[INFO]      = false;
+	console_flush[DWARNING]  = true;
+	console_flush[NOTICE]    = true;
+	console_flush[INFO]      = true;
 	console_flush[DEBUG]     = true;
 
 	console_ansi[CRITICAL]  = "\033[1;5;37;45m";
 	console_ansi[ERROR]     = "\033[1;37;41m";
+	console_ansi[DERROR]    = "\033[0;31;47m";
 	console_ansi[WARNING]   = "\033[0;30;43m";
+	console_ansi[DWARNING]  = "\033[0;30;47m";
 	console_ansi[NOTICE]    = "\033[1;37;46m";
 	console_ansi[INFO]      = "\033[1;37;42m";
 	console_ansi[DEBUG]     = "\033[1;30;47m";
@@ -423,12 +433,14 @@ ircd::log::reflect(const facility &f)
 {
 	switch(f)
 	{
-		case facility::DEBUG:      return "DEBUG";
+		case facility::CRITICAL:   return "CRITICAL";
+		case facility::ERROR:      return "ERROR";
+		case facility::DERROR:     return "ERROR";
+		case facility::WARNING:    return "WARNING";
+		case facility::DWARNING:   return "WARNING";
 		case facility::INFO:       return "INFO";
 		case facility::NOTICE:     return "NOTICE";
-		case facility::WARNING:    return "WARNING";
-		case facility::ERROR:      return "ERROR";
-		case facility::CRITICAL:   return "CRITICAL";
+		case facility::DEBUG:      return "DEBUG";
 		case facility::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
 	};
 
