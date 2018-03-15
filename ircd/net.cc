@@ -1296,6 +1296,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 {
 	++count;
 	++instances;
+	SSL_set_read_ahead(this->ssl.native_handle(), false);
 }
 
 /// The dtor asserts that the socket is not open/connected requiring a
@@ -1566,9 +1567,10 @@ ircd::net::socket::wait(const wait_opts &opts,
 			// the wait. ASIO should fix this by adding a ssl::stream.wait() method
 			// which will bail out immediately in this case before passing up to the
 			// real socket wait.
+			assert(SSL_get_read_ahead(ssl.native_handle()) == 0);
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 			{
-				handle(error_code{}, 1UL);
+				handle(error_code{}, 1UL);  //TODO: stack growth here
 				break;
 			}
 
