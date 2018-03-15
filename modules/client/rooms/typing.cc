@@ -12,6 +12,52 @@
 
 using namespace ircd;
 
+struct typist
+{
+	using is_transparent = void;
+
+	steady_point timesout;
+	m::user::id::buf user_id;
+	m::room::id::buf room_id;
+
+	bool operator()(const typist &a, const string_view &b) const;
+	bool operator()(const string_view &a, const typist &b) const;
+	bool operator()(const typist &a, const typist &b) const;
+};
+
+ctx::dock timeout_dock;
+std::set<typist, typist> typists;
+static void timeout_timeout(const typist &);
+static void timeout_check();
+static void timeout_worker();
+context timeout_context
+{
+	"typing", 128_KiB, context::POST, timeout_worker
+};
+
+conf::item<milliseconds>
+timeout_max
+{
+	{ "name",     "ircd.typing.timeout.max" },
+	{ "default",  120 * 1000L               },
+};
+
+conf::item<milliseconds>
+timeout_min
+{
+	{ "name",     "ircd.typing.timeout.min" },
+	{ "default",  15 * 1000L                },
+};
+
+conf::item<milliseconds>
+timeout_default
+{
+	{ "name",     "ircd.typing.timeout.default" },
+	{ "default",  30 * 1000L                    },
+};
+
+static ircd::steady_point calc_timesout(const resource::request &request);
+
 resource::response
 put__typing(client &client,
             const resource::request &request,
@@ -28,40 +74,168 @@ put__typing(client &client,
 		url::decode(request.parv[2], user_id)
 	};
 
-	static const milliseconds timeout_default
-	{
-		30 * 1000
-	};
+	if(request.user_id != user_id)
+		throw m::UNSUPPORTED
+		{
+			"Typing as someone else not yet supported"
+		};
 
-	const auto timeout
+	const bool typing
 	{
-		request.get("timeout", timeout_default)
-	};
-
-	const auto typing
-	{
-		request.at<bool>("typing")
+		request.get("typing", false)
 	};
 
 	const m::edu::m_typing event
 	{
-		{ "user_id",  request.user_id  },
-		{ "room_id",  room_id          },
-		{ "typing",   typing           },
+		{ "room_id",  room_id   },
+		{ "typing",   typing    },
+		{ "user_id",  user_id   },
 	};
 
-	m::typing::set(event);
+	auto it
+	{
+		typists.lower_bound(user_id)
+	};
+
+	const bool was_typing
+	{
+		it != end(typists) && it->user_id == user_id
+	};
+
+	if(typing && !was_typing)
+	{
+		typists.emplace_hint(it, typist
+		{
+			calc_timesout(request), user_id, room_id
+		});
+
+		timeout_dock.notify_one();
+	}
+	else if(typing && was_typing)
+	{
+		auto &t(const_cast<typist &>(*it));
+		t.timesout = calc_timesout(request);
+	}
+	else if(!typing && was_typing)
+	{
+		typists.erase(it);
+	}
+
+	const bool transmit
+	{
+		(typing && !was_typing) || (!typing && was_typing)
+	};
 
 	log::debug
 	{
-		"%s typing[%b] timeout: %ld",
-		request.user_id,
-		typing,
-		timeout.count()
+		"Typing %s in %s now[%b] was[%b] xmit[%b]",
+		at<"user_id"_>(event),
+		at<"room_id"_>(event),
+		json::get<"typing"_>(event),
+		was_typing,
+		transmit
 	};
+
+	if(transmit)
+		m::typing::set(event);
 
 	return resource::response
 	{
 		client, http::OK
 	};
+}
+
+ircd::steady_point
+calc_timesout(const resource::request &request)
+{
+	auto timeout
+	{
+		request.get("timeout", milliseconds(timeout_default))
+	};
+
+	timeout = std::max(timeout, milliseconds(timeout_min));
+	timeout = std::min(timeout, milliseconds(timeout_max));
+	return now<steady_point>() + timeout;
+}
+
+void
+timeout_worker()
+try
+{
+	while(1)
+	{
+		timeout_dock.wait([]
+		{
+			return !typists.empty();
+		});
+
+		timeout_check();
+		ctx::sleep(seconds(5));
+	}
+}
+catch(const ctx::interrupted &)
+{
+	log::debug
+	{
+		"Typing timeout worker interrupted"
+	};
+}
+
+void
+timeout_check()
+{
+	const auto now
+	{
+		ircd::now<steady_point>()
+	};
+
+	auto it(begin(typists));
+	while(it != end(typists))
+		if(it->timesout < now)
+		{
+			timeout_timeout(*it);
+			it = typists.erase(it);
+		}
+		else ++it;
+}
+
+void
+timeout_timeout(const typist &t)
+{
+	const m::edu::m_typing event
+	{
+		{ "user_id",  t.user_id   },
+		{ "room_id",  t.room_id   },
+		{ "typing",   false       },
+	};
+
+	log::debug
+	{
+		"Typing timeout for %s in %s",
+		string_view{t.user_id},
+		string_view{t.room_id}
+	};
+
+	m::typing::set(event);
+}
+
+bool
+typist::operator()(const typist &a, const string_view &b)
+const
+{
+	return a.user_id < b;
+}
+
+bool
+typist::operator()(const string_view &a, const typist &b)
+const
+{
+	return a < b.user_id;
+}
+
+bool
+typist::operator()(const typist &a, const typist &b)
+const
+{
+	return a.user_id < b.user_id;
 }
