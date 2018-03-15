@@ -631,7 +631,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"socket(%p) local[%s] remote[%s]: %s",
+		"socket(%p) local[%s] remote[%s] %s",
 		sock.get(),
 		string(local(*this)),
 		string(remote(*this)),
@@ -706,12 +706,21 @@ catch(const boost::system::system_error &e)
 }
 catch(const ircd::error &e)
 {
+	log::error
+	{
+		"socket(%p) local[%s] remote[%s] [500 Internal Error]: %s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		e.what()
+	};
+
 	resource::response
 	{
 		*this, e.what(), "text/html; charset=utf8", http::INTERNAL_SERVER_ERROR
 	};
 
-	throw;
+	return false;
 }
 
 bool
@@ -732,33 +741,26 @@ try
 	discard_unconsumed(head);
 	return true;
 }
-catch(http::error &e)
+catch(const http::error &e)
 {
-	//TODO: Fix bug: resource::response context switch frees
-	//TODO: http::error& somehow which invalidates access to
-	//TODO: these after.
-	const http::code code{e.code};
-	const std::string content{std::move(e.content)};
-	const std::string headers{std::move(e.headers)};
-
 	log::derror
 	{
 		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
 		sock.get(),
 		string(local(*this)),
 		string(remote(*this)),
-		uint(code),
-		http::status(code),
+		uint(e.code),
+		http::status(e.code),
 		head.uri,
-		content
+		e.content
 	};
 
 	resource::response
 	{
-		*this, content, "text/html; charset=utf8", code, headers
+		*this, e.content, "text/html; charset=utf8", e.code, e.headers
 	};
 
-	switch(code)
+	switch(e.code)
 	{
 		// These codes are "unrecoverable" errors and no more HTTP can be
 		// conducted with this tape. The client must be disconnected.
