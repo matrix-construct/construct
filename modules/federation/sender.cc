@@ -14,7 +14,8 @@
 std::list<txn> txns;
 std::map<std::string, node, std::less<>> nodes;
 
-static void recv_timeout(txn &);
+void remove_node(const node &);
+static void recv_timeout(txn &, node &);
 static void recv_timeouts();
 static bool recv_handle(txn &, node &);
 static void recv();
@@ -133,12 +134,14 @@ send(const m::event &event,
 		}
 
 		auto &node{it->second};
+		if(node.err)
+			return;
+
 		if(!unit)
 			unit = std::make_shared<struct unit>(event);
 
 		node.push(unit);
-		if(!node.flush())
-			nodes.erase(it);
+		node.flush();
 	});
 }
 
@@ -191,7 +194,7 @@ try
 	};
 
 	txns.emplace_back(*this, std::move(content), std::move(opts));
-
+	const unwind::nominal::assertion na;
 	q.clear();
 	recv_action.notify_one();
 	return true;
@@ -203,6 +206,7 @@ catch(const std::exception &e)
 		"flush error to %s :%s", string_view{id}, e.what()
 	};
 
+	err = true;
 	return false;
 }
 
@@ -267,8 +271,13 @@ try
 	node.curtxn = nullptr;
 	txns.erase(it);
 
-	if(ret)
-		node.flush();
+	if(node.err)
+		return remove_node(node);
+
+	if(!ret)
+		return;
+
+	node.flush();
 }
 catch(const ctx::interrupted &e)
 {
@@ -339,6 +348,7 @@ catch(const http::error &e)
 		e.what()
 	};
 
+	node.err = true;
 	return false;
 }
 catch(const std::exception &e)
@@ -351,6 +361,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	node.err = true;
 	return false;
 }
 
@@ -366,17 +377,19 @@ recv_timeouts()
 	for(; it != end(txns); ++it)
 	{
 		auto &txn(*it);
+		assert(txn.node);
+		if(txn.node->err)
+			continue;
+
 		if(txn.timeout + seconds(15) < now) //TODO: conf
-			recv_timeout(txn);
+			recv_timeout(txn, *txn.node);
 	}
 }
 
 void
-recv_timeout(txn &txn)
+recv_timeout(txn &txn,
+             node &node)
 {
-	assert(txn.node);
-	auto &node(*txn.node);
-
 	log::dwarning
 	{
 		"Timeout to %s for txn %s",
@@ -385,4 +398,14 @@ recv_timeout(txn &txn)
 	};
 
 	cancel(txn);
+	node.err = true;
+}
+
+void
+remove_node(const node &node)
+{
+	const string_view &id{node.id};
+	const auto it{nodes.find(id)};
+	assert(it != end(nodes));
+	nodes.erase(it);
 }

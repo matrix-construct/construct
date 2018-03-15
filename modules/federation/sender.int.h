@@ -78,6 +78,7 @@ struct node
 	m::node::room room;
 	server::request::opts sopts;
 	txn *curtxn {nullptr};
+	bool err {false};
 
 	bool flush();
 	void push(std::shared_ptr<unit>);
@@ -100,7 +101,7 @@ struct txn
 	    std::string content,
 	    m::v1::send::opts opts)
 	:txndata{std::move(content)}
-	,send{txnid, string_view{this->content}, headers, std::move(opts)}
+	,send{this->txnid, string_view{this->content}, this->headers, std::move(opts)}
 	,node{&node}
 	,timeout{now<steady_point>()} //TODO: conf
 	{}
