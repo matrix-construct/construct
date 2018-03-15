@@ -49,6 +49,8 @@ struct ircd::util::unwind
 ///
 struct ircd::util::unwind::nominal
 {
+	struct assertion;
+
 	const std::function<void ()> func;
 
 	template<class F>
@@ -74,6 +76,8 @@ struct ircd::util::unwind::nominal
 ///
 struct ircd::util::unwind::exceptional
 {
+	struct assertion;
+
 	const std::function<void ()> func;
 
 	template<class F>
@@ -88,4 +92,29 @@ struct ircd::util::unwind::exceptional
 	}
 
 	exceptional(const exceptional &) = delete;
+};
+
+/// Asserts that unwind is occurring without any exception. This allows some
+/// section of code, for example, the latter half of a function, to assert that
+/// it is not throwing and disrupting the other half. This is useful when no
+/// exception is expected thus placing other guarantees should not be required
+/// if this guarantee is met.
+///
+struct ircd::util::unwind::nominal::assertion
+{
+	~assertion() noexcept
+	{
+		assert(likely(!std::uncaught_exception()));
+	}
+};
+
+/// Complements exceptional::assertion. This triggers an assertion when
+/// unwinding WITHOUT an exception.
+///
+struct ircd::util::unwind::exceptional::assertion
+{
+	~assertion() noexcept
+	{
+		assert(likely(std::uncaught_exception()));
+	}
 };
