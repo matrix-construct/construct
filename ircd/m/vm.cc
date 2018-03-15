@@ -62,6 +62,11 @@ ircd::m::vm::commit(json::iov &event,
 	sha256::buf event_id_hash;
 	if(opts.event_id)
 	{
+		const json::iov::push _content
+		{
+			event, { "content", content },
+		};
+
 		thread_local char preimage_buf[64_KiB];
 		event_id_hash = sha256
 		{
