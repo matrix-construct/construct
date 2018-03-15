@@ -300,7 +300,7 @@ try
 		obj
 	};
 
-	log::debug
+	if(code != http::OK) log::warning
 	{
 		"%u %s from %s for %s",
 		ushort(code),
@@ -363,15 +363,11 @@ recv_timeouts()
 	};
 
 	auto it(begin(txns));
-	while(it != end(txns))
+	for(; it != end(txns); ++it)
 	{
 		auto &txn(*it);
 		if(txn.timeout + seconds(15) < now) //TODO: conf
-		{
 			recv_timeout(txn);
-			it = txns.erase(it);
-		}
-		else ++it;
 	}
 }
 
@@ -388,5 +384,5 @@ recv_timeout(txn &txn)
 		txn.txnid
 	};
 
-	node.curtxn = nullptr;
+	cancel(txn);
 }
