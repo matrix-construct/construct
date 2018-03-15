@@ -90,16 +90,22 @@ template<class T>
 void
 ircd::ctx::notify(shared_state<T> &st)
 {
-	st.cond.notify_all();
-
 	if(!st.then)
+	{
+		st.cond.notify_all();
 		return;
+	}
 
 	if(!current)
-		return st.then(st);
+	{
+		st.cond.notify_all();
+		st.then(st);
+		return;
+	}
 
 	ircd::post([&st]
 	{
+		st.cond.notify_all();
 		st.then(st);
 	});
 }
