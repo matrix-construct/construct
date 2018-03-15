@@ -16,12 +16,17 @@ namespace ircd::m
 
 }
 
+struct ircd::m::edu::m_receipt
+{
+	struct m_read;
+};
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
-struct ircd::m::edu::m_receipt
+struct ircd::m::edu::m_receipt::m_read
 :json::tuple
 <
-	json::property<name::ts, time_t>,
+	json::property<name::data, json::object>,
 	json::property<name::event_ids, json::array>
 >
 {
