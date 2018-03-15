@@ -113,7 +113,7 @@ handle_m_receipt(const m::room::id &room_id,
 			continue;
 		}
 
-		log::warning
+		log::dwarning
 		{
 			"Unhandled m.receipt type '%s' to room '%s'",
 			type,

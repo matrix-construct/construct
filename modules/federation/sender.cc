@@ -60,7 +60,7 @@ try
 }
 catch(const ircd::ctx::interrupted &e)
 {
-	ircd::log::debug
+	log::debug
 	{
 		"Sender worker interrupted..."
 	};
@@ -90,7 +90,7 @@ catch(const ircd::ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	ircd::log::error
+	log::error
 	{
 		"sender worker: %s", e.what()
 	};
@@ -300,7 +300,7 @@ try
 		obj
 	};
 
-	if(code != http::OK) log::warning
+	if(code != http::OK) log::dwarning
 	{
 		"%u %s from %s for %s",
 		ushort(code),
@@ -315,7 +315,7 @@ try
 		if(empty(error))
 			return;
 
-		log::error
+		log::derror
 		{
 			"Error from %s in %s for %s :%s",
 			string_view{node.id},
@@ -329,7 +329,7 @@ try
 }
 catch(const http::error &e)
 {
-	log::error
+	log::derror
 	{
 		"%u %s from %s for %s :%s",
 		ushort(e.code),
@@ -343,7 +343,7 @@ catch(const http::error &e)
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		"Error from %s for %s :%s",
 		string_view{node.id},
@@ -377,7 +377,7 @@ recv_timeout(txn &txn)
 	assert(txn.node);
 	auto &node(*txn.node);
 
-	log::warning
+	log::dwarning
 	{
 		"Timeout to %s for txn %s",
 		string_view{node.id},

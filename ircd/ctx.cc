@@ -888,7 +888,7 @@ ircd::ctx::prof::check_slice()
 
 	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
 	{
-		log::warning
+		log::dwarning
 		{
 			"context timeslice exceeded '%s' #%lu total: %06ld$us last: %lu$ns %lu$tsc",
 			name(c),
@@ -920,7 +920,7 @@ ircd::ctx::prof::check_stack()
 
 	if(unlikely(stack_usage > stack_max * settings.stack_usage_warning))
 	{
-		log::warning
+		log::dwarning
 		{
 			"context stack usage ctx '%s' #%lu used %zu of %zu bytes",
 			name(c),

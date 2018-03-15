@@ -187,7 +187,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		"X-Matrix Authorization from %s: %s",
 		string(remote(client)),

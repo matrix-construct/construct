@@ -81,7 +81,7 @@ _handle_edu_m_typing(const m::event &event,
 
 	if(user_id.host() != at<"origin"_>(event))
 	{
-		log::warning
+		log::dwarning
 		{
 			"Ignoring %s from %s for user %s",
 			at<"type"_>(event),

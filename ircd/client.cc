@@ -129,7 +129,7 @@ void
 ircd::client::wait_all()
 {
 	if(context.active())
-		log::warning
+		log::dwarning
 		{
 			"Joining %zu active of %zu remaining request contexts...",
 			context.active(),
@@ -191,7 +191,7 @@ ircd::add_client(std::shared_ptr<socket> s)
 {
 	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
 	{
-		log::warning
+		log::dwarning
 		{
 			"Refusing to add new client from %s in runlevel %s",
 			string(remote_ipport(*s)),
@@ -374,10 +374,13 @@ bool
 ircd::handle_ec_eof(client &client)
 try
 {
-	log::debug("socket(%p) local[%s] remote[%s] end of file",
-	           client.sock.get(),
-	           string(local(client)),
-	           string(remote(client)));
+	log::debug
+	{
+		"socket(%p) local[%s] remote[%s] end of file",
+		client.sock.get(),
+		string(local(client)),
+		string(remote(client))
+	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
 	return false;
@@ -398,10 +401,13 @@ bool
 ircd::handle_ec_short_read(client &client)
 try
 {
-	log::warning("socket(%p) local[%s] remote[%s] short_read",
-	             client.sock.get(),
-	             string(local(client)),
-	             string(remote(client)));
+	log::dwarning
+	{
+		"socket(%p) local[%s] remote[%s] short_read",
+		client.sock.get(),
+		string(local(client)),
+		string(remote(client))
+	};
 
 	client.close(net::dc::RST, net::close_ignore);
 	return false;
@@ -424,7 +430,7 @@ ircd::handle_ec_timeout(client &client)
 try
 {
 	assert(bool(client.sock));
-	log::debug
+	log::dwarning
 	{
 		"socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
 		client.sock.get(),
@@ -437,9 +443,12 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p) timeout: %s",
-	           client.sock.get(),
-	           e.what());
+	log::derror
+	{
+		"socket(%p) timeout: %s",
+		client.sock.get(),
+		e.what()
+	};
 
 	return false;
 }
@@ -450,11 +459,14 @@ bool
 ircd::handle_ec_default(client &client,
                         const error_code &ec)
 {
-	log::warning("socket(%p) local[%s] remote[%s] %s",
-	             client.sock.get(),
-	             string(local(client)),
-	             string(remote(client)),
-	             string(ec));
+	log::dwarning
+	{
+		"socket(%p) local[%s] remote[%s] %s",
+		client.sock.get(),
+		string(local(client)),
+		string(remote(client)),
+		string(ec)
+	};
 
 	client.close(net::dc::RST, net::close_ignore);
 	return false;
@@ -482,10 +494,14 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical("socket(%p) ~client(%p): %s",
-	              sock.get(),
-	              this,
-	              e.what());
+	log::critical
+	{
+		"socket(%p) ~client(%p): %s",
+		sock.get(),
+		this,
+		e.what()
+	};
+
 	return;
 }
 
@@ -542,11 +558,14 @@ catch(const boost::system::system_error &e)
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	log::debug("socket(%p) local[%s] remote[%s] error during request: %s",
-	           sock.get(),
-	           string(local(*this)),
-	           string(remote(*this)),
-	           string(e.code()));
+	log::derror
+	{
+		"socket(%p) local[%s] remote[%s] error during request: %s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		string(e.code())
+	};
 
 	const error_code &ec{e.code()};
 	const int &value{ec.value()};
@@ -594,20 +613,25 @@ catch(const boost::system::system_error &e)
 			break;
 	}
 
-	log::error("socket(%p) (unexpected) %s: (%d) %s",
-	           sock.get(),
-	           ec.category().name(),
-	           value,
-	           ec.message());
+	log::error
+	{
+		"socket(%p) (unexpected) %s: (%d) %s",
+		sock.get(),
+		ec.category().name(),
+		value,
+		ec.message()
+	};
 
 	close(net::dc::RST, net::close_ignore);
 	return false;
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::critical
 	{
-		"client[%s] [500 Internal Error]: %s",
+		"socket(%p) local[%s] remote[%s]: %s",
+		sock.get(),
+		string(local(*this)),
 		string(remote(*this)),
 		e.what()
 	};
@@ -644,14 +668,17 @@ try
 	pc.parsed += content_consumed;
 	assert(pc.parsed <= pc.read);
 
-	log::debug("socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu have:%zu",
-	           sock.get(),
-	           string(local(*this)),
-	           string(remote(*this)),
-	           head.method,
-	           head.path,
-	           head.content_length,
-	           content_consumed);
+	log::debug
+	{
+		"socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu have:%zu",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		head.method,
+		head.path,
+		head.content_length,
+		content_consumed
+	};
 
 	bool ret
 	{
@@ -677,15 +704,6 @@ catch(const boost::system::system_error &e)
 }
 catch(const ircd::error &e)
 {
-	log::error
-	{
-		"socket(%p) local[%s] remote[%s]: %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
-		e.what()
-	};
-
 	resource::response
 	{
 		*this, e.what(), "text/html; charset=utf8", http::INTERNAL_SERVER_ERROR
@@ -721,7 +739,7 @@ catch(http::error &e)
 	const std::string content{std::move(e.content)};
 	const std::string headers{std::move(e.headers)};
 
-	if(ircd::debugmode) log::error
+	log::derror
 	{
 		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
 		sock.get(),
@@ -773,12 +791,15 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 	if(!unconsumed)
 		return;
 
-	log::debug("socket(%p) local[%s] remote[%s] discarding %zu unconsumed of %zu bytes content...",
-	           sock.get(),
-	           string(local(*this)),
-	           string(remote(*this)),
-	           unconsumed,
-	           head.content_length);
+	log::debug
+	{
+		"socket(%p) local[%s] remote[%s] discarding %zu unconsumed of %zu bytes content...",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		unconsumed,
+		head.content_length
+	};
 
 	content_consumed += net::discard_all(*sock, unconsumed);
 	assert(content_consumed == head.content_length);
@@ -810,10 +831,7 @@ size_t
 ircd::client::write_all(const const_buffer &buf)
 {
 	if(unlikely(!sock))
-		throw error
-		{
-			"No socket to client."
-		};
+		throw error{"No socket to client."};
 
 	return net::write_all(*sock, buf);
 }

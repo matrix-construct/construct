@@ -600,11 +600,11 @@ ircd::server::peer::handle_open(link &link,
 		if(links.size() == 1)
 			err_set(eptr);
 
-		log.error("peer(%p) link(%p) [%s]: open: %s",
-		          this,
-		          &link,
-		          string(remote),
-		          what(eptr));
+		log.derror("peer(%p) link(%p) [%s]: open: %s",
+		           this,
+		           &link,
+		           string(remote),
+		           what(eptr));
 
 		if(op_fini)
 		{
@@ -624,11 +624,11 @@ ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
 {
 	if(eptr)
-		log.error("peer(%p) link(%p) [%s]: close: %s",
-		          this,
-		          &link,
-		          string(remote),
-		          what(eptr));
+		log.derror("peer(%p) link(%p) [%s]: close: %s",
+		           this,
+		           &link,
+		           string(remote),
+		           what(eptr));
 
 	if(link.finished())
 		handle_finished(link);
@@ -640,10 +640,10 @@ ircd::server::peer::handle_error(link &link,
 {
 	assert(bool(eptr));
 	link.cancel_committed(eptr);
-	log.error("peer(%p) link(%p): %s",
-	          this,
-	          &link,
-	          what(eptr));
+	log.derror("peer(%p) link(%p): %s",
+	           this,
+	           &link,
+	           what(eptr));
 
 	link.close(net::dc::RST);
 }
@@ -682,11 +682,11 @@ ircd::server::peer::handle_error(link &link,
 			break;
 	}
 
-	log.error("peer(%p) link(%p) [%s]: error: %s",
-	          this,
-	          &link,
-	          string(remote),
-	          e.what());
+	log.derror("peer(%p) link(%p) [%s]: error: %s",
+	           this,
+	           &link,
+	           string(remote),
+	           e.what());
 
 	link.cancel_committed(std::make_exception_ptr(e));
 	link.close(net::dc::RST);
@@ -867,9 +867,9 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("peer(%p): error: %s",
-	          this,
-	          e.what());
+	log.derror("peer(%p): error: %s",
+	           this,
+	           e.what());
 	close();
 }
 
