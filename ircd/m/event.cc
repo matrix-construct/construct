@@ -287,7 +287,8 @@ ircd::m::pretty(const event &event)
 }
 
 std::string
-ircd::m::pretty_oneline(const event &event)
+ircd::m::pretty_oneline(const event &event,
+                        const bool &content_keys)
 {
 	std::string ret;
 	std::stringstream s;
@@ -357,7 +358,13 @@ ircd::m::pretty_oneline(const event &event)
 	out("membership", json::get<"membership"_>(event));
 	out("redacts", json::get<"redacts"_>(event));
 
-	const json::object &contents{json::get<"content"_>(event)};
+	const json::object &contents
+	{
+		content_keys?
+			json::get<"content"_>(event):
+			json::object{}
+	};
+
 	if(!contents.empty())
 	{
 		s << "+" << string_view{contents}.size() << " bytes :";
