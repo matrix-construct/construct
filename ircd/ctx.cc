@@ -727,7 +727,7 @@ ircd::ctx::pool::interrupt()
 
 void
 ircd::ctx::pool::main()
-try
+noexcept try
 {
 	++running;
 	const unwind avail([this]
@@ -741,10 +741,13 @@ try
 catch(const interrupted &e)
 {
 /*
-	log::debug("pool(%p) ctx(%p): %s",
-	           this,
-	           &cur(),
-	           e.what());
+	log::debug
+	{
+		"pool(%p) ctx(%p): %s",
+		this,
+		&cur(),
+		e.what()
+	};
 */
 }
 
@@ -773,10 +776,13 @@ catch(const interrupted &e)
 }
 catch(const std::exception &e)
 {
-	log::critical("pool(%p) ctx(%p): unhandled: %s",
-	              this,
-	              &cur(),
-	              e.what());
+	log::critical
+	{
+		"pool(%p) ctx(%p): unhandled: %s",
+		this,
+		&cur(),
+		e.what()
+	};
 }
 
 void

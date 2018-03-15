@@ -267,9 +267,10 @@ namespace ircd
 ///
 /// This call returns immediately so we no longer block the current context and
 /// its stack while waiting for activity on idle connections between requests.
-void
+bool
 ircd::client::async()
 {
+	const unwind::nominal::assertion na;
 	assert(bool(this->sock));
 	assert(bool(this->conf));
 	auto &sock(*this->sock);
@@ -289,6 +290,7 @@ ircd::client::async()
 	};
 
 	sock(opts, std::move(handler));
+	return true;
 }
 
 /// The client's socket is ready for reading. This intermediate handler

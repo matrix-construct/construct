@@ -30,7 +30,7 @@ struct ircd::ctx::pool
 	std::vector<context> ctxs;
 
 	void next();
-	void main();
+	void main() noexcept;
 
   public:
 	// indicators

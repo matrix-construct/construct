@@ -62,7 +62,7 @@ struct ircd::client
 	bool resource_request(const http::request::head &);
 	bool handle_request(parse::capstan &pc);
 	bool main() noexcept;
-	void async();
+	bool async();
 
   public:
 	client(std::shared_ptr<socket>);
