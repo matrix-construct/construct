@@ -39,7 +39,7 @@ struct ircd::ctx::future
 	const shared_state<T> &state() const         { return *this;                                   }
 	shared_state<T> &state()                     { return *this;                                   }
 
-	bool valid() const                           { return !invalid(state());                       }
+	bool valid() const                           { return !is(state(), future_state::INVALID);     }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -72,7 +72,7 @@ struct ircd::ctx::future<void>
 	const shared_state<void> &state() const      { return *this;                                   }
 	shared_state<void> &state()                  { return *this;                                   }
 
-	bool valid() const                           { return !invalid(state());                       }
+	bool valid() const                           { return !is(state(), future_state::INVALID);     }
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
@@ -150,7 +150,7 @@ ircd::ctx::future<void>::future(promise<void> &promise)
 inline
 ircd::ctx::future<void>::future(already_t)
 {
-	set_ready(state());
+	set(state(), future_state::READY);
 }
 
 template<class T>
@@ -213,10 +213,10 @@ T
 ircd::ctx::future<T>::get()
 {
 	wait();
-	if(unlikely(retrieved(state())))
+	if(unlikely(is(state(), future_state::RETRIEVED)))
 		throw future_already_retrieved{};
 
-	set_retrieved(state());
+	set(state(), future_state::RETRIEVED);
 	if(bool(state().eptr))
 		std::rethrow_exception(state().eptr);
 
@@ -327,7 +327,7 @@ const
 			const_cast<future<void> *>(this)->state()
 		};
 
-		set_retrieved(state);
+		set(state, future_state::RETRIEVED);
 		if(bool(state.eptr))
 			std::rethrow_exception(state.eptr);
 	}
@@ -366,10 +366,10 @@ ircd::ctx::wait_until(const future<T> &f,
 
 	const auto wfun([&state]() -> bool
 	{
-		return !pending(state);
+		return !is(state, future_state::PENDING);
 	});
 
-	if(unlikely(invalid(state)))
+	if(unlikely(is(state, future_state::INVALID)))
 		throw no_state{};
 
 	if(unlikely(!state.cond.wait_until(tp, wfun)))

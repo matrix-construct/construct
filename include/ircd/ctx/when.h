@@ -54,7 +54,7 @@ ircd::ctx::when_all(it first,
 
 	future<void> ret(p);
 	for(; first != last; ++first)
-		if(pending(first->state()))
+		if(is(first->state(), future_state::PENDING))
 			set_then(*first);
 
 	if(refcount(p.state()) <= 1)
@@ -85,7 +85,7 @@ ircd::ctx::when_any(it first,
 			if(!p.valid())
 				return;
 
-			set_observed(f->state());
+			set(f->state(), future_state::OBSERVED);
 			p.set_value(f);
 		}
 	};
@@ -105,15 +105,15 @@ ircd::ctx::when_any(it first,
 
 	future<it> ret(p);
 	for(auto f(first); f != last; ++f)
-		if(ready(f->state()))
+		if(is(f->state(), future_state::READY))
 		{
-			set_observed(f->state());
+			set(f->state(), future_state::OBSERVED);
 			p.set_value(f);
 			return ret;
 		}
 
 	for(; first != last; ++first)
-		if(pending(first->state()))
+		if(is(first->state(), future_state::PENDING))
 			set_then(first);
 
 	if(refcount(p.state()) <= 1)

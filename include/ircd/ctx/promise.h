@@ -198,13 +198,13 @@ void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
 	assert(valid());
-	if(unlikely(ready(state())))
+	if(unlikely(!is(state(), future_state::PENDING)))
 		throw promise_already_satisfied{};
 
 	st->val = std::move(val);
 	auto *const st{this->st};
 	invalidate(*st);
-	set_ready(*st);
+	set(*st, future_state::READY);
 	notify(*st);
 	assert(!valid());
 }
@@ -214,13 +214,13 @@ void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
 	assert(valid());
-	if(unlikely(!pending(state())))
+	if(unlikely(!is(state(), future_state::PENDING)))
 		throw promise_already_satisfied{};
 
 	st->val = val;
 	auto *const st{this->st};
 	invalidate(*st);
-	set_ready(*st);
+	set(*st, future_state::READY);
 	notify(*st);
 	assert(!valid());
 }
@@ -229,12 +229,12 @@ inline void
 ircd::ctx::promise<void>::set_value()
 {
 	assert(valid());
-	if(unlikely(!pending(state())))
+	if(unlikely(!is(state(), future_state::PENDING)))
 		throw promise_already_satisfied{};
 
 	auto *const st{this->st};
 	invalidate(*st);
-	set_ready(*st);
+	set(*st, future_state::READY);
 	notify(*st);
 	assert(!valid());
 }
@@ -244,13 +244,13 @@ void
 ircd::ctx::promise<T>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	if(unlikely(!pending(state())))
+	if(unlikely(!is(state(), future_state::PENDING)))
 		throw promise_already_satisfied{};
 
 	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
-	set_ready(*st);
+	set(*st, future_state::READY);
 	notify(*st);
 	assert(!valid());
 }
@@ -259,13 +259,13 @@ inline void
 ircd::ctx::promise<void>::set_exception(std::exception_ptr eptr)
 {
 	assert(valid());
-	if(unlikely(!pending(state())))
+	if(unlikely(!is(state(), future_state::PENDING)))
 		throw promise_already_satisfied{};
 
 	st->eptr = std::move(eptr);
 	auto *const st{this->st};
 	invalidate(*st);
-	set_ready(*st);
+	set(*st, future_state::READY);
 	notify(*st);
 	assert(!valid());
 }
@@ -293,7 +293,7 @@ ircd::ctx::update(promise<T> &new_,
 {
 	assert(old.st);
 	auto &st{*old.st};
-	if(!pending(st))
+	if(!is(st, future_state::PENDING))
 		return;
 
 	if(st.p == &old)
@@ -316,7 +316,7 @@ void
 ircd::ctx::remove(shared_state<T> &st,
                   promise<T> &p)
 {
-	if(!pending(st))
+	if(!is(st, future_state::PENDING))
 		return;
 
 	if(st.p == &p)
@@ -338,7 +338,7 @@ template<class T>
 void
 ircd::ctx::invalidate(shared_state<T> &st)
 {
-	if(pending(st))
+	if(is(st, future_state::PENDING))
 		for(promise<T> *p{st.p}; p; p = p->next)
 			p->st = nullptr;
 }
@@ -347,7 +347,7 @@ template<class T>
 void
 ircd::ctx::update(shared_state<T> &st)
 {
-	if(pending(st))
+	if(is(st, future_state::PENDING))
 		for(promise<T> *p{st.p}; p; p = p->next)
 			p->st = &st;
 }
@@ -357,7 +357,7 @@ size_t
 ircd::ctx::refcount(const shared_state<T> &st)
 {
 	size_t ret{0};
-	if(pending(st))
+	if(is(st, future_state::PENDING))
 		for(const promise<T> *p{st.p}; p; p = p->next)
 			++ret;
 
