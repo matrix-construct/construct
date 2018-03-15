@@ -17,6 +17,18 @@ post__read_markers(client &client,
                    const resource::request &request,
                    const m::room::id &room_id)
 {
+	const string_view m_fully_read
+	{
+		unquote(request["m.fully_read"])
+	};
+
+	const string_view m_read
+	{
+		unquote(request["m.read"])
+	};
+
+	m::receipt::read(room_id, request.user_id, m_read?: m_fully_read);
+
 	return resource::response
 	{
 		client, http::OK

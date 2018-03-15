@@ -527,6 +527,35 @@ ircd::m::keys::init::signing()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/receipt.h
+//
+
+ircd::m::event::id::buf
+ircd::m::receipt::read(const id::room &room_id,
+                       const id::user &user_id,
+                       const id::event &event_id)
+{
+	return read(room_id, user_id, event_id, ircd::time<milliseconds>());
+}
+
+ircd::m::event::id::buf
+ircd::m::receipt::read(const id::room &room_id,
+                       const id::user &user_id,
+                       const id::event &event_id,
+                       const time_t &ms)
+{
+	using prototype = event::id::buf (const id::room &, const id::user &, const id::event &, const time_t &);
+
+	static import<prototype> function
+	{
+		"m_receipt", "receipt_m_read"
+	};
+
+	return function(room_id, user_id, event_id, ms);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/typing.h
 //
 
@@ -542,7 +571,6 @@ ircd::m::typing::set(const m::typing &object)
 
 	return function(object);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_M_RECEIPT_H
 
-namespace ircd::m
+namespace ircd::m::receipt
 {
-
-}
+	id::event::buf read(const id::room &, const id::user &, const id::event &, const time_t &);
+	id::event::buf read(const id::room &, const id::user &, const id::event &); // now
+};
 
 struct ircd::m::edu::m_receipt
 {
