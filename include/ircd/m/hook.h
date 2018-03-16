@@ -65,6 +65,8 @@ struct ircd::m::hook::site
 	bool add(hook &);
 	bool del(hook &);
 
+	void call(hook &, const event &);
+
   public:
 	void operator()(const event &);
 

@@ -1521,7 +1521,29 @@ ircd::m::hook::site::operator()(const event &event)
 	}
 
 	for(const auto &hook : matching)
-		hook->function(event);
+		call(*hook, event);
+}
+
+void
+ircd::m::hook::site::call(hook &hook,
+                          const event &event)
+try
+{
+	hook.function(event);
+}
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Unhandled hookfn(%p) %s error :%s",
+		&hook,
+		string_view{hook.feature},
+		e.what()
+	};
 }
 
 bool
