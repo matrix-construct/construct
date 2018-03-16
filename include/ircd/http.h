@@ -182,6 +182,8 @@ struct ircd::http::query::string
 
 	string_view at(const string_view &key) const;
 	string_view operator[](const string_view &key) const;
+	template<class T> T at(const string_view &key) const;
+	template<class T = string_view> T get(const string_view &key, const T &def = {}) const;
 
 	using string_view::string_view;
 };
@@ -314,3 +316,25 @@ struct ircd::http::response::head
 	head(parse::capstan &pc, const headers::closure &c = {});
 	head() = default;
 };
+
+template<class T>
+T
+ircd::http::query::string::get(const string_view &key,
+                               const T &def)
+const try
+{
+	const auto val(operator[](key));
+	return val? lex_cast<T>(val) : def;
+}
+catch(const bad_lex_cast &)
+{
+	return def;
+}
+
+template<class T>
+T
+ircd::http::query::string::at(const string_view &key)
+const
+{
+	return lex_cast<T>(at(key));
+}
