@@ -214,7 +214,7 @@ namespace ircd::m
 /// ID object backed by an internal buffer of default worst-case size.
 ///
 template<class T,
-         size_t MAX = 256>
+         size_t MAX>
 struct ircd::m::id::buf
 :T
 {
@@ -254,29 +254,43 @@ struct ircd::m::id::buf
 
 	buf() = default;
 
-	buf(buf &&other) noexcept
-	:T{b, std::move(other)}
-	{}
-
 	buf(const buf &other)
-	:T{b, other}
-	{}
+	:T{}
+	{
+		static_cast<string_view &>(*this) =
+		{
+			b.data(), buffer::copy(b, string_view{other})
+		};
+	}
+
+	buf(buf &&other) noexcept
+	:T{}
+	{
+		static_cast<string_view &>(*this) =
+		{
+			b.data(), buffer::copy(b, string_view{other})
+		};
+	}
 
 	buf &operator=(const buf &other)
 	{
-		static_cast<T &>(*this) = T{b, other};
+		this->~buf();
+		static_cast<string_view &>(*this) =
+		{
+			b.data(), buffer::copy(b, string_view{other})
+		};
+
 		return *this;
 	}
 
 	buf &operator=(buf &&other) noexcept
 	{
-		static_cast<T &>(*this) = T{b, std::move(other)};
-		return *this;
-	}
+		this->~buf();
+		static_cast<string_view &>(*this) =
+		{
+			b.data(), buffer::copy(b, string_view{other})
+		};
 
-	buf &operator=(const string_view &s)
-	{
-		static_cast<T &>(*this) = T{b, s};
 		return *this;
 	}
 };
