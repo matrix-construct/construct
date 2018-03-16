@@ -25,7 +25,7 @@ namespace ircd
 
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;
-	void main();
+	void main() noexcept;
 }
 
 /// Record of the ID of the thread static initialization took place on.
@@ -169,7 +169,7 @@ noexcept
 ///
 void
 ircd::main()
-try
+noexcept try
 {
 	// Resamples the thread this context was executed on which should be where
 	// the user ran ios.run(). The user may have invoked ios.run() on multiple
@@ -245,24 +245,13 @@ catch(const ctx::interrupted &e)
 		"IRCd main interrupted..."
 	};
 }
-#ifndef RB_DEBUG
 catch(const std::exception &e)
 {
-	// When not in debug mode this is a clean return to not crash through
-	// the embedder's ios.run() which would terminate the rest of their
-	// program. Instead they have the right to handle the error and try again.
 	log::critical
 	{
 		"IRCd main exited: %s", e.what()
 	};
 }
-#else
-catch(...)
-{
-	// In debug mode we terminate with a message and a coredump
-	ircd::terminate();
-}
-#endif // RB_DEBUG
 
 void
 ircd::at_main_exit()
