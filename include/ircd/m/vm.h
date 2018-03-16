@@ -161,6 +161,9 @@ struct ircd::m::vm::opts
 	/// Whether to log a debug message before commit
 	bool debuglog_precommit {false};
 
+	/// Whether to log an info message after commit accepted
+	bool infolog_postcommit {false};
+
 	/// Whether to log a debug message on successful eval.
 	bool debuglog_accept {false};
 

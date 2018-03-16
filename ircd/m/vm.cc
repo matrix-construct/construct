@@ -181,6 +181,11 @@ ircd::m::vm::commit(const event &event,
 		event, opts_
 	};
 
+	if(opts.infolog_postcommit)
+		log.info("@%lu %s",
+		         vm::current_sequence,
+		         pretty_oneline(event, false));
+
 	return unquote(at<"event_id"_>(event));
 }
 
