@@ -66,7 +66,7 @@ struct ircd::m::id::input
 		room_id_sigil     |
 		room_alias_sigil  |
 		group_id_sigil    |
-		node_sigil      |
+		node_sigil        |
 		device_sigil
 		,"sigil"
 	};
@@ -81,7 +81,7 @@ struct ircd::m::id::input
 	// a localpart is zero or more localpart characters
 	const rule<> localpart
 	{
-		*(localpart_char)
+		*localpart_char
 		,"localpart"
 	};
 
@@ -274,14 +274,21 @@ ircd::m::id::parser::operator()(const id::sigil &sigil,
                                 const string_view &id)
 const try
 {
+	const rule<> sigil_type
+	{
+		&lit(char(sigil))
+		,"sigil type"
+	};
+
 	const rule<string_view> view_mxid
 	{
-		raw[&lit(char(sigil)) > mxid]
+		raw[eps > (sigil_type > mxid)]
 	};
 
 	string_view out;
 	const char *start{id.begin()};
-	qi::parse(start, id.end(), eps > view_mxid, out);
+	const bool res(qi::parse(start, id.end(), view_mxid, out));
+	assert(res == true);
 	return out;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -295,12 +302,13 @@ const try
 {
 	static const rule<string_view> view_mxid
 	{
-		raw[mxid]
+		raw[eps > mxid]
 	};
 
 	string_view out;
 	const char *start{id.begin()};
-	qi::parse(start, id.end(), eps > view_mxid, out);
+	const bool res(qi::parse(start, id.end(), view_mxid, out));
+	assert(res == true);
 	return out;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -321,7 +329,8 @@ ircd::m::id::validator::operator()(const string_view &id)
 const try
 {
 	const char *start{id.begin()};
-	qi::parse(start, id.end(), eps > mxid);
+	const bool ret(qi::parse(start, id.end(), eps > mxid));
+	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -333,13 +342,20 @@ ircd::m::id::validator::operator()(const id::sigil &sigil,
                                    const string_view &id)
 const try
 {
-	const rule<string_view> valid_mxid
+	const rule<> sigil_type
 	{
-		&lit(char(sigil)) > mxid
+		&lit(char(sigil))
+		,"sigil type"
+	};
+
+	const rule<> valid_mxid
+	{
+		eps > (sigil_type > mxid)
 	};
 
 	const char *start{id.begin()};
-	qi::parse(start, id.end(), eps > valid_mxid);
+	const bool ret(qi::parse(start, id.end(), valid_mxid));
+	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
