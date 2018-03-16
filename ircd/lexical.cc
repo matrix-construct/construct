@@ -273,6 +273,7 @@ namespace ircd
 	thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
 	thread_local uint lex_cast_cur;
 
+	[[noreturn]] static void throw_bad_lex_cast(const boost::bad_lexical_cast &, const std::type_info &);
 	template<size_t N, class T> static string_view _lex_cast(const T &i, mutable_buffer buf);
 	template<class T> static T _lex_cast(const string_view &s);
 }
@@ -301,7 +302,7 @@ try
 }
 catch(const boost::bad_lexical_cast &e)
 {
-	throw ircd::bad_lex_cast("%s", e.what());
+	throw_bad_lex_cast(e, typeid(T));
 }
 
 /// Internal template providing conversions from a string to a number;
@@ -315,7 +316,17 @@ try
 }
 catch(const boost::bad_lexical_cast &e)
 {
-	throw ircd::bad_lex_cast("%s", e.what());
+	throw_bad_lex_cast(e, typeid(T));
+}
+
+void
+ircd::throw_bad_lex_cast(const boost::bad_lexical_cast &e,
+                         const std::type_info &t)
+{
+	throw ircd::bad_lex_cast
+	{
+		"%s: %s", e.what(), demangle(t.name())
+	};
 }
 
 template<> ircd::string_view
