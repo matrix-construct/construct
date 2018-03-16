@@ -182,7 +182,7 @@ noexcept(RB_DEBUG_LEVEL)
 	{
 		assertion(std::current_exception());
 	} else {
-		log::critical("IRCd Assertion without active exception.");
+		log::critical("IRCd Assertion without exception.");
 		assert(0);
 		throw assertive{};
 	}
