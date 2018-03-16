@@ -60,7 +60,7 @@ update_conf_hook
 {
 	update_conf,
 	{
-		{ "_site",       "vm notify"       },
+		{ "_site",       "vm.notify"       },
 		{ "room_id",     "!conf"           },
 		{ "type",        "ircd.conf.item"  },
 	}
@@ -86,7 +86,7 @@ init_conf_items_hook
 {
 	init_conf_items,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.member"  },
 		{ "membership",  "join"           },
@@ -128,7 +128,7 @@ create_conf_room_hook
 {
 	create_conf_room,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}

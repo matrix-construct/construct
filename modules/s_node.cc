@@ -59,7 +59,7 @@ create_my_node_hook
 {
 	create_my_node_room,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!nodes"         },
 		{ "type",        "m.room.create"  },
 	}
@@ -76,7 +76,7 @@ create_nodes_hook
 {
 	create_nodes_room,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}

@@ -134,7 +134,7 @@ namespace ircd::m::vm
 decltype(ircd::m::vm::commit_hook)
 ircd::m::vm::commit_hook
 {
-	{ "name", "vm commit" }
+	{ "name", "vm.commit" }
 };
 
 /// Insert a new event originating from this server.
@@ -218,7 +218,7 @@ ircd::m::vm::eval_hook
 decltype(ircd::m::vm::notify_hook)
 ircd::m::vm::notify_hook
 {
-	{ "name", "vm notify" }
+	{ "name", "vm.notify" }
 };
 
 ircd::m::vm::eval::eval(const vm::opts &opts)

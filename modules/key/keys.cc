@@ -440,7 +440,7 @@ create_my_key_hook
 {
 	create_my_key,
 	{
-		{ "_site",     "vm notify"           },
+		{ "_site",     "vm.notify"           },
 		{ "room_id",   m::my_node.room_id()  },
 		{ "type",      "m.room.create"       },
 	}

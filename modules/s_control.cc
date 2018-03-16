@@ -175,7 +175,7 @@ command_control_hook
 {
 	command_control,
 	{
-		{ "_site",       "vm notify"       },
+		{ "_site",       "vm.notify"       },
 		{ "room_id",     "!control"        },
 		{ "type",        "m.room.message"  },
 		{ "content",
@@ -204,7 +204,7 @@ create_control_hook
 {
 	create_control_room,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}

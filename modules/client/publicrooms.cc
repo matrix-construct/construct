@@ -98,7 +98,7 @@ _create_public_hook
 {
 	_create_public_room,
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}

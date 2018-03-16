@@ -238,7 +238,7 @@ const m::hook
 _create_alias_room
 {
 	{
-		{ "_site",       "vm notify"      },
+		{ "_site",       "vm.notify"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
