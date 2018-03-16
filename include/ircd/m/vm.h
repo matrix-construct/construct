@@ -30,7 +30,7 @@ namespace ircd::m::vm
 	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
 
-	event::id::buf commit(const m::event &, const opts & = default_opts);
+	fault commit(const m::event &, const opts & = default_opts);
 	event::id::buf commit(json::iov &event, const json::iov &content, const opts & = default_opts);
 }
 

@@ -122,7 +122,8 @@ ircd::m::vm::commit(json::iov &event,
 		event, { "content", content },
 	};
 
-	return commit(event, opts);
+	commit(event, opts);
+	return eid_buf;
 }
 
 namespace ircd::m::vm
@@ -154,7 +155,7 @@ ircd::m::vm::commit_hook
 ///  _/|/|/|/|\|\|\|\_
 ///         out
 ///
-ircd::m::event::id::buf
+ircd::m::vm::fault
 ircd::m::vm::commit(const event &event,
                     const opts &opts)
 {
@@ -176,9 +177,10 @@ ircd::m::vm::commit(const event &event,
 	//TODO: X
 	opts_.non_conform |= event::conforms::MISSING_PREV_STATE;
 
-	eval
+	vm::eval eval{opts_};
+	const fault ret
 	{
-		event, opts_
+		eval(event)
 	};
 
 	if(opts.infolog_postcommit)
@@ -186,7 +188,7 @@ ircd::m::vm::commit(const event &event,
 		         vm::current_sequence,
 		         pretty_oneline(event, false));
 
-	return unquote(at<"event_id"_>(event));
+	return ret;
 }
 
 //
