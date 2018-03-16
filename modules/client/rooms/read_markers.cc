@@ -27,7 +27,13 @@ post__read_markers(client &client,
 		unquote(request["m.read"])
 	};
 
-	m::receipt::read(room_id, request.user_id, m_read?: m_fully_read);
+	const auto &marker
+	{
+		m_read?: m_fully_read
+	};
+
+	if(marker)
+		m::receipt::read(room_id, request.user_id, marker);
 
 	return resource::response
 	{
