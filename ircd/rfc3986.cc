@@ -10,37 +10,18 @@
 
 #include <ircd/spirit.h>
 
-namespace spirit = boost::spirit;
-namespace qi = spirit::qi;
-namespace karma = spirit::karma;
-namespace ascii = qi::ascii;
-
-using qi::lit;
-using qi::string;
-using qi::char_;
-using qi::short_;
-using qi::ushort_;
-using qi::int_;
-using qi::long_;
-using qi::repeat;
-using qi::omit;
-using qi::raw;
-using qi::attr;
-using qi::eps;
-using qi::attr_cast;
-
-using karma::maxwidth;
-
 namespace ircd::rfc3986
 {
+	using namespace ircd::spirit;
+
 	template<class it> struct grammar;
 }
 
 template<class it>
 struct ircd::rfc3986::grammar
-:qi::grammar<it, spirit::unused_type>
+:qi::grammar<it, unused_type>
 {
-	template<class R = spirit::unused_type, class... S> using rule = qi::rule<it, R, S...>;
+	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	const rule<> port
 	{
@@ -206,7 +187,7 @@ ircd::rfc3986::encode(const string_view &url,
 struct ircd::rfc3986::decoder
 :qi::grammar<const char *, mutable_buffer>
 {
-	template<class R = spirit::unused_type, class... S> using rule = qi::rule<const char *, R, S...>;
+	template<class R = unused_type, class... S> using rule = qi::rule<const char *, R, S...>;
 
 	rule<> url_illegal
 	{

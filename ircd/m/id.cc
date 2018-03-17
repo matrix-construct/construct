@@ -13,43 +13,16 @@
 
 namespace ircd::m
 {
-	namespace spirit = boost::spirit;
-	namespace qi = spirit::qi;
-	namespace karma = spirit::karma;
-	namespace ascii = qi::ascii;
-
-	using qi::lit;
-	using qi::string;
-	using qi::char_;
-	using qi::short_;
-	using qi::ushort_;
-	using qi::int_;
-	using qi::long_;
-	using qi::repeat;
-	using qi::omit;
-	using qi::raw;
-	using qi::attr;
-	using qi::eps;
-	using qi::eoi;
-	using qi::attr_cast;
-
-	using karma::lit;
-	using karma::char_;
-	using karma::long_;
-	using karma::double_;
-	using karma::bool_;
-	using karma::maxwidth;
-	using karma::eps;
-	using karma::attr_cast;
+	using namespace ircd::spirit;
 
 	[[noreturn]] void failure(const qi::expectation_failure<const char *> &, const string_view &);
 }
 
 template<class it>
 struct ircd::m::id::input
-:qi::grammar<it, spirit::unused_type>
+:qi::grammar<it, unused_type>
 {
-	template<class R = spirit::unused_type, class... S> using rule = qi::rule<it, R, S...>;
+	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	// Sigils
 	const rule<m::id::sigil> event_id_sigil      { lit(char(m::id::EVENT))           ,"event_id sigil" };
@@ -252,9 +225,9 @@ struct ircd::m::id::input
 
 template<class it>
 struct ircd::m::id::output
-:karma::grammar<it, spirit::unused_type>
+:karma::grammar<it, unused_type>
 {
-	template<class T = spirit::unused_type> using rule = karma::rule<it, T>;
+	template<class T = unused_type> using rule = karma::rule<it, T>;
 
 	output()
 	:output::base_type{rule<>{}}

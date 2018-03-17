@@ -12,25 +12,7 @@
 
 namespace ircd::http
 {
-	namespace spirit = boost::spirit;
-	namespace qi = spirit::qi;
-	namespace karma = spirit::karma;
-	namespace ascii = qi::ascii;
-
-	using qi::lit;
-	using qi::string;
-	using qi::char_;
-	using qi::short_;
-	using qi::int_;
-	using qi::long_;
-	using qi::repeat;
-	using qi::omit;
-	using qi::raw;
-	using qi::attr;
-	using qi::eps;
-	using qi::attr_cast;
-	using karma::maxwidth;
-	using spirit::unused_type;
+	using namespace ircd::spirit;
 
 	template<class it, class top = unused_type> struct grammar;
 	struct parser extern const parser;

@@ -12,21 +12,11 @@
 
 namespace ircd::rfc1459
 {
-	namespace spirit = boost::spirit;
-	namespace karma = spirit::karma;
-	namespace qi = spirit::qi;
+	using namespace ircd::spirit;
 }
 
 namespace ircd::rfc1459::parse
 {
-	using qi::lit;
-	using qi::char_;
-	using qi::repeat;
-	using qi::attr;
-	using qi::eps;
-	using qi::raw;
-	using qi::omit;
-
 	template<class it, class top> struct grammar;
 	struct capstan extern const capstan;
 	struct head extern const head;
@@ -34,11 +24,7 @@ namespace ircd::rfc1459::parse
 
 namespace ircd::rfc1459::gen
 {
-	using karma::lit;
-	using karma::int_;
-	using karma::char_;
-	using karma::buffer;
-	using karma::repeat;
+	using ircd::spirit::buffer;
 
 	template<class it, class top> struct grammar;
 }
@@ -438,11 +424,14 @@ try
 
 	qi::parse(start, stop, grammar, *this);
 }
-catch(const boost::spirit::qi::expectation_failure<const char *> &e)
+catch(const qi::expectation_failure<const char *> &e)
 {
-	throw syntax_error("@%d expecting :%s",
-	                   int(e.last - e.first),
-	                   string(e.what_).c_str());
+	throw syntax_error
+	{
+		"@%d expecting :%s",
+		int(e.last - e.first),
+		ircd::string(e.what_).c_str()
+	};
 }
 
 bool

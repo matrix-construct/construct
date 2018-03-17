@@ -21,18 +21,7 @@ BOOST_FUSION_ADAPT_STRUCT
 namespace ircd {
 namespace fmt  {
 
-namespace qi = boost::spirit::qi;
-namespace karma = boost::spirit::karma;
-
-using qi::lit;
-using qi::char_;
-using qi::ushort_;
-using qi::int_;
-using qi::eps;
-using qi::raw;
-using qi::repeat;
-using qi::omit;
-using qi::unused_type;
+using namespace ircd::spirit;
 
 std::map<string_view, specifier *, std::less<>> _specifiers;
 

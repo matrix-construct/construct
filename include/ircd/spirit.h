@@ -21,3 +21,41 @@
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>
+
+namespace ircd::spirit
+{
+	namespace spirit = boost::spirit;
+	namespace ascii = spirit::ascii;
+	namespace karma = spirit::karma;
+	namespace qi = spirit::qi;
+
+	using spirit::unused_type;
+
+	using qi::lit;
+	using qi::char_;
+	using qi::string;
+	using qi::short_;
+	using qi::int_;
+	using qi::long_;
+	using qi::double_;
+	using qi::raw;
+	using qi::omit;
+	using qi::matches;
+	using qi::hold;
+	using qi::eoi;
+	using qi::eps;
+	using qi::attr;
+	using qi::attr_cast;
+	using qi::repeat;
+	using qi::_r1_type;
+
+	using karma::lit;
+	using karma::char_;
+	using karma::long_;
+	using karma::double_;
+	using karma::bool_;
+	using karma::eps;
+	using karma::attr_cast;
+	using karma::maxwidth;
+	using karma::buffer;
+}
