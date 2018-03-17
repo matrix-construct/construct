@@ -90,7 +90,7 @@ ircd::ctx::ctx::ctx(const char *const &name,
 void
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
                            const std::function<void ()> func)
-noexcept
+noexcept try
 {
 	this->yc = &yc;
 	notes = 1;
@@ -118,6 +118,24 @@ noexcept
 
 	if(likely(bool(func)))
 		func();
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"ctx(%p '%s' #%u): unhandled: %s",
+		current,
+		name,
+		id,
+		e.what()
+	};
+
+	// Preserving the stacktrace from the throw point here is hopeless.
+	// We can terminate for developer nuisance but we will never know
+	// where this exception came from and where it is going. Bottom line
+	// is that #ifdef'ing away this handler or rethrowing isn't as useful as
+	// handling the exception here with a log message and calling it a day.
+	return;
 }
 
 /// Direct context switch to this context.
@@ -743,10 +761,7 @@ catch(const interrupted &e)
 /*
 	log::debug
 	{
-		"pool(%p) ctx(%p): %s",
-		this,
-		&cur(),
-		e.what()
+		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
 	};
 */
 }
@@ -778,9 +793,11 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"pool(%p) ctx(%p): unhandled: %s",
+		"pool(%p) ctx(%p '%s' #%u): unhandled: %s",
 		this,
-		&cur(),
+		current,
+		ircd::ctx::name(cur()),
+		ircd::ctx::id(cur()),
 		e.what()
 	};
 }
@@ -788,14 +805,17 @@ catch(const std::exception &e)
 void
 ircd::ctx::debug_stats(const pool &pool)
 {
-	log::debug("pool '%s' (stack size: %zu) total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
-	           pool.name,
-	           pool.stack_size,
-	           pool.size(),
-	           pool.avail(),
-	           pool.queued(),
-	           pool.active(),
-	           pool.pending());
+	log::debug
+	{
+		"pool '%s' (stack size: %zu) total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
+		pool.name,
+		pool.stack_size,
+		pool.size(),
+		pool.avail(),
+		pool.queued(),
+		pool.active(),
+		pool.pending()
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
