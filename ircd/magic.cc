@@ -38,9 +38,10 @@ ircd::magic::init::init()
 	};
 
 	for(const char *const *path{paths}; *path; ++path)
-		if(magic_check(cookie, *path) == 0)
-			if(magic_load(cookie, *path) == 0)
-				return;
+		if(fs::exists(*path))
+			if(magic_check(cookie, *path) == 0)
+				if(magic_load(cookie, *path) == 0)
+					return;
 
 	throw error
 	{
