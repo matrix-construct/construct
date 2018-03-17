@@ -66,6 +66,7 @@ struct ircd::json::strung
 #include "member.h"
 #include "iov.h"
 #include "tuple/tuple.h"
+#include "stack.h"
 
 namespace ircd
 {

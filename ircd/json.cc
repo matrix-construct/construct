@@ -365,6 +365,345 @@ ircd::json::input<it>::throws_exceeded()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// stack.h
+//
+
+ircd::json::stack::stack(const mutable_buffer &buf,
+                         flush_callback flusher)
+:buf{buf}
+,flusher{std::move(flusher)}
+{
+}
+
+ircd::json::stack::~stack()
+noexcept
+{
+	assert(clean() || done());
+}
+
+bool
+ircd::json::stack::append(const string_view &s)
+{
+	return append([&s](const mutable_buffer &buf)
+	{
+		return copy(buf, s);
+	});
+}
+
+bool
+ircd::json::stack::append(const window_buffer::closure &closure)
+{
+	buf([&closure](const mutable_buffer &buf)
+	{
+		return closure(buf);
+	});
+
+	return true; //XXX
+}
+
+template<class gen,
+         class... attr>
+bool
+ircd::json::stack::printer(gen&& g,
+                           attr&&... a)
+{
+	return json::printer(buf, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+
+template<class gen>
+bool
+ircd::json::stack::printer(gen&& g)
+{
+	return json::printer(buf, std::forward<gen>(g));
+}
+
+void
+ircd::json::stack::clear()
+{
+	buf.rewind(buf.consumed());
+}
+
+ircd::const_buffer
+ircd::json::stack::completed()
+const
+{
+	return buf.completed();
+}
+
+size_t
+ircd::json::stack::remaining()
+const
+{
+	return buf.remaining();
+}
+
+bool
+ircd::json::stack::done()
+const
+{
+	return closed() && buf.consumed();
+}
+
+bool
+ircd::json::stack::clean()
+const
+{
+	return closed() && !buf.consumed();
+}
+
+bool
+ircd::json::stack::closed()
+const
+{
+	return !opened();
+}
+
+bool
+ircd::json::stack::opened()
+const
+{
+	return co || ca;
+}
+
+//
+// object
+//
+
+ircd::json::stack::object::object(stack &s)
+:s{&s}
+{
+	assert(s.clean());
+	s.co = this;
+	s.printer(json::printer.object_begin);
+}
+
+ircd::json::stack::object::object(member &pm)
+:s{pm.s}
+,pm{&pm}
+{
+	assert(s->opened());
+	assert(pm.co == nullptr);
+	assert(pm.ca == nullptr);
+	pm.co = this;
+	s->printer(json::printer.object_begin);
+}
+
+ircd::json::stack::object::object(array &pa)
+:s{pa.s}
+,pa{&pa}
+{
+	assert(s->opened());
+	assert(pa.co == nullptr);
+	assert(pa.ca == nullptr);
+	pa.co = this;
+
+	if(pa.vc)
+		s->printer(json::printer.value_sep);
+
+	s->printer(json::printer.object_begin);
+}
+
+ircd::json::stack::object::~object()
+noexcept
+{
+	assert(s);
+	assert(cm == nullptr);
+	s->printer(json::printer.object_end);
+
+	if(pm)
+	{
+		assert(pa == nullptr);
+		assert(pm->ca == nullptr);
+		assert(pm->co == this);
+		pm->ca = nullptr;
+		return;
+	}
+
+	if(pa)
+	{
+		assert(pm == nullptr);
+		assert(pa->co == nullptr);
+		assert(pa->co == this);
+		pa->vc++;
+		pa->ca = nullptr;
+		return;
+	}
+
+	assert(s->co == this);
+	assert(s->ca == nullptr);
+	assert(pm == nullptr && pa == nullptr);
+	s->co = nullptr;
+	assert(s->done());
+}
+
+//
+// array
+//
+
+ircd::json::stack::array::array(stack &s)
+:s{&s}
+{
+	assert(s.clean());
+	s.ca = this;
+	s.printer(json::printer.array_begin);
+}
+
+ircd::json::stack::array::array(member &pm)
+:s{pm.s}
+,pm{&pm}
+{
+	assert(s->opened());
+	assert(pm.co == nullptr);
+	assert(pm.ca == nullptr);
+	pm.ca = this;
+	s->printer(json::printer.array_begin);
+}
+
+ircd::json::stack::array::array(array &pa)
+:s{pa.s}
+,pa{&pa}
+{
+	assert(s->opened());
+	assert(pa.co == nullptr);
+	assert(pa.ca == nullptr);
+	pa.ca = this;
+
+	if(pa.vc)
+		s->printer(json::printer.value_sep);
+
+	s->printer(json::printer.array_begin);
+}
+
+ircd::json::stack::array::~array()
+noexcept
+{
+	assert(s);
+	assert(co == nullptr);
+	assert(ca == nullptr);
+	s->printer(json::printer.array_end);
+
+	if(pm)
+	{
+		assert(pa == nullptr);
+		assert(pm->ca == this);
+		assert(pm->co == nullptr);
+		pm->ca = nullptr;
+		return;
+	}
+
+	if(pa)
+	{
+		assert(pm == nullptr);
+		assert(pa->ca == this);
+		assert(pa->co == nullptr);
+		pa->vc++;
+		pa->ca = nullptr;
+		return;
+	}
+
+	assert(s->ca == this);
+	assert(s->co == nullptr);
+	assert(pm == nullptr && pa == nullptr);
+	s->ca = nullptr;
+	assert(s->done());
+}
+
+void
+ircd::json::stack::array::append(const json::value &value)
+{
+	assert(s);
+	_pre_append();
+	const unwind post{[this]
+	{
+		_post_append();
+	}};
+
+	s->append([&value](mutable_buffer buf)
+	{
+		return size(stringify(buf, value));
+	});
+}
+
+void
+ircd::json::stack::array::_pre_append()
+{
+	if(vc)
+		s->printer(json::printer.value_sep);
+}
+
+void
+ircd::json::stack::array::_post_append()
+{
+	++vc;
+}
+
+//
+// member
+//
+
+ircd::json::stack::member::member(object &po,
+                                  const string_view &name)
+:s{po.s}
+,po{&po}
+,name{name}
+{
+	assert(po.cm == nullptr);
+	po.cm = this;
+
+	if(po.mc)
+		s->printer(json::printer.value_sep);
+
+	s->printer(json::printer.name << json::printer.name_sep, name);
+}
+
+ircd::json::stack::member::member(object &po,
+                                  const string_view &name,
+                                  const json::value &value)
+:member{po, name}
+{
+	append(value);
+}
+
+ircd::json::stack::member::~member()
+noexcept
+{
+	assert(s);
+	assert(co == nullptr);
+	assert(ca == nullptr);
+	assert(po);
+	assert(po->cm == this);
+	po->mc++;
+	po->cm = nullptr;
+}
+
+void
+ircd::json::stack::member::append(const json::value &value)
+{
+	assert(s);
+	_pre_append();
+	const unwind post{[this]
+	{
+		_post_append();
+	}};
+
+	s->append([&value](mutable_buffer buf)
+	{
+		return size(stringify(buf, value));
+	});
+}
+
+void
+ircd::json::stack::member::_pre_append()
+{
+}
+
+void
+ircd::json::stack::member::_post_append()
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // iov.h
 //
 
