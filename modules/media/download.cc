@@ -13,7 +13,7 @@
 mapi::header
 IRCD_MODULE
 {
-	"11.7 :Content repository (download)"
+	"Client 11.7 :Content repository (download)"
 };
 
 resource

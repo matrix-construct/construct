@@ -18,7 +18,7 @@ static event::id::buf set_keys(const m::keys &);
 mapi::header
 IRCD_MODULE
 {
-	"2.3 Retrieving Server Keys"
+	"Federation 2.3 :Retrieving Server Keys"
 };
 
 extern "C" void

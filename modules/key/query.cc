@@ -10,7 +10,8 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
-	"Hosts the key server resource"
+	"Federation 2.3.1.2 :Querying Keys Through Another Server"
 };

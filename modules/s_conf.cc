@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Configuration module"
+	"Server Configuration"
 };
 
 const ircd::m::room::id::buf

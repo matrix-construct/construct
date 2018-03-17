@@ -19,7 +19,7 @@
 mapi::header
 IRCD_MODULE
 {
-	"Client-Sever 11.7.1.4 :Media thumbnails"
+	"Client 11.7.1.4 :Media thumbnails"
 };
 
 resource

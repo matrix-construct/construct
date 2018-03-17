@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Server nodes"
+	"Server Nodes"
 };
 
 m::room
