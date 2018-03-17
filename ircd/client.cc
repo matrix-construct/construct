@@ -250,7 +250,7 @@ namespace ircd
 	static bool handle_ec_eof(client &);
 	static bool handle_ec(client &, const error_code &);
 
-	static void handle_client_request(std::shared_ptr<client>);
+	static void handle_client_request(std::shared_ptr<client>) noexcept;
 	static void handle_client_ready(std::shared_ptr<client>, const error_code &ec);
 }
 
@@ -326,14 +326,22 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 /// or die.
 void
 ircd::handle_client_request(std::shared_ptr<client> client)
+noexcept try
 {
-	if(!client->main())
-	{
+	if(client->main())
+		client->async();
+	else
 		client->close(net::dc::SSL_NOTIFY).wait();
-		return;
-	}
-
-	client->async();
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		"socket(%p) client(%p) (below main): %s",
+		client->sock.get(),
+		client.get(),
+		e.what()
+	};
 }
 
 /// This error handling switch is one of two places client errors
