@@ -53,6 +53,7 @@ lgetopt opts[] =
 	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
 	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
+	{ "noautomod",  &ircd::noautomod, lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 

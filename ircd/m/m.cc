@@ -137,6 +137,17 @@ catch(const m::error &e)
 void
 ircd::m::init::modules()
 {
+	if(ircd::noautomod)
+	{
+		log::warning
+		{
+			"Not loading modules because noautomod flag is set. "
+			"You may still load modules manually."
+		};
+
+		return;
+	}
+
 	const string_view prefixes[]
 	{
 		"s_", "m_", "client_", "key_", "federation_", "media_"

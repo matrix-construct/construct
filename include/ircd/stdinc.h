@@ -186,6 +186,7 @@ namespace ircd
 	extern const std::string &config;
 	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
 	extern bool nolisten;              ///< Init option to not bind listener socks.
+	extern bool noautomod;             ///< Option to not load modules on init.
 
 	std::string demangle(const std::string &symbol);
 	template<class T> std::string demangle();
