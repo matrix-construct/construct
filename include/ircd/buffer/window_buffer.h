@@ -36,6 +36,7 @@ struct ircd::buffer::window_buffer
 	mutable_buffer completed();
 
 	const_buffer operator()(const closure &closure);
+	const_buffer rewind(const size_t &n = 1);
 
 	window_buffer(const mutable_buffer &base);
 };
@@ -45,6 +46,16 @@ ircd::buffer::window_buffer::window_buffer(const mutable_buffer &base)
 :mutable_buffer{base}
 ,base{base}
 {}
+
+inline ircd::buffer::const_buffer
+ircd::buffer::window_buffer::rewind(const size_t &n)
+{
+	const size_t nmax{std::min(n, consumed())};
+	static_cast<mutable_buffer &>(*this).begin() -= nmax;
+	assert(base.begin() <= begin());
+	assert(begin() <= base.end());
+	return completed();
+}
 
 inline ircd::buffer::const_buffer
 ircd::buffer::window_buffer::operator()(const closure &closure)
