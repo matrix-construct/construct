@@ -158,6 +158,16 @@ namespace ircd::m
 void
 ircd::m::init::listeners()
 {
+	if(ircd::nolisten)
+	{
+		log::warning
+		{
+			"Not listening on any addresses because nolisten flag is set."
+		};
+
+		return;
+	}
+
 	const json::array listeners
 	{
 		config["listeners"]

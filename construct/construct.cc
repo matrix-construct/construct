@@ -52,6 +52,7 @@ lgetopt opts[] =
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
 	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
+	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 

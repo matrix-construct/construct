@@ -22,6 +22,7 @@ namespace ircd
 
 	ctx::ctx *main_context;                      // Main program loop
 	bool debugmode;                              // meaningful ifdef RB_DEBUG
+	bool nolisten;                               // indicates no listener binding
 
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;

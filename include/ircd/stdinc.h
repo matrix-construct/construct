@@ -184,7 +184,8 @@ namespace ircd
 	constexpr size_t BUFSIZE { 512 };
 	extern const enum runlevel &runlevel;
 	extern const std::string &config;
-	extern bool debugmode; ///< Toggle; available only ifdef RB_DEBUG
+	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
+	extern bool nolisten;              ///< Init option to not bind listener socks.
 
 	std::string demangle(const std::string &symbol);
 	template<class T> std::string demangle();
