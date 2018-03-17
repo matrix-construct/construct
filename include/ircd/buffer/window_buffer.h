@@ -35,7 +35,7 @@ struct ircd::buffer::window_buffer
 	explicit operator const_buffer() const;
 	mutable_buffer completed();
 
-	void operator()(const closure &closure);
+	const_buffer operator()(const closure &closure);
 
 	window_buffer(const mutable_buffer &base);
 };
@@ -46,10 +46,11 @@ ircd::buffer::window_buffer::window_buffer(const mutable_buffer &base)
 ,base{base}
 {}
 
-inline void
+inline ircd::buffer::const_buffer
 ircd::buffer::window_buffer::operator()(const closure &closure)
 {
 	consume(*this, closure(*this));
+	return completed();
 }
 
 /// View the completed portion of the stream
