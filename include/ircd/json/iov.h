@@ -38,9 +38,6 @@ namespace ircd::json
 struct ircd::json::iov
 :ircd::iov<ircd::json::member>
 {
-	IRCD_EXCEPTION(json::error, error);
-	IRCD_EXCEPTION(error, exists);
-
 	struct push;
 	struct add;
 	struct add_if;
@@ -48,6 +45,12 @@ struct ircd::json::iov
 	struct set_if;
 	struct defaults;
 	struct defaults_if;
+
+	IRCD_EXCEPTION(json::error, error);
+	IRCD_EXCEPTION(error, exists);
+	IRCD_EXCEPTION(error, oversize);
+
+	static const size_t MAX_SIZE;
 
   public:
 	bool has(const string_view &key) const;

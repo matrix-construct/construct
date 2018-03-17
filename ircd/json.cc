@@ -368,6 +368,12 @@ ircd::json::input<it>::throws_exceeded()
 // iov.h
 //
 
+decltype(ircd::json::iov::MAX_SIZE)
+ircd::json::iov::MAX_SIZE
+{
+	1024
+};
+
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const iov &iov)
 {
@@ -379,7 +385,14 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const iov &iov)
 {
-	const member *m[iov.size()];
+	const ctx::critical_assertion ca;
+	thread_local const member *m[iov.MAX_SIZE];
+	if(unlikely(size_t(iov.size()) > iov.MAX_SIZE))
+		throw iov::oversize
+		{
+			"IOV has %zd members but maximum is %zu", iov.size(), iov.MAX_SIZE
+		};
+
 	std::transform(std::begin(iov), std::end(iov), m, []
 	(const member &m)
 	{
