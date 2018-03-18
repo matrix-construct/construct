@@ -72,6 +72,7 @@ namespace ircd
 struct ircd::m::init
 {
 	json::object config;
+	bool joined {false};
 
 	void bootstrap();
 	void listeners();

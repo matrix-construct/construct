@@ -108,15 +108,18 @@ try
 		bootstrap();
 
 	join_ircd_room();
+	joined = true;
 	listeners();
 }
 catch(const m::error &e)
 {
+	this->~init();
 	log.error("%s %s", e.what(), e.content);
 	throw;
 }
 catch(const std::exception &e)
 {
+	this->~init();
 	log.error("%s", e.what());
 	throw;
 }
@@ -124,7 +127,9 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
-	leave_ircd_room();
+	if(joined)
+		leave_ircd_room();
+
 	m::listeners.clear();
 	m::modules.clear();
 }
