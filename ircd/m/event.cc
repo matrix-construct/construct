@@ -10,13 +10,6 @@
 
 #include <ircd/m/m.h>
 
-ircd::conf::item<size_t>
-ircd::m::event_max_size
-{
-	{ "name",     "m.event.max_size" },
-	{ "default",   65507L            },
-};
-
 ircd::m::id::event
 ircd::m::event_id(const event &event,
                   id::event::buf &buf)
@@ -51,12 +44,12 @@ ircd::m::check_size(const event &event)
 		serialized(event)
 	};
 
-	if(event_size > size_t(event_max_size))
+	if(event_size > size_t(event::max_size))
 		throw m::BAD_JSON
 		{
 			"Event is %zu bytes which is larger than the maximum %zu bytes",
 			event_size,
-			size_t(event_max_size)
+			size_t(event::max_size)
 		};
 }
 
@@ -69,7 +62,7 @@ ircd::m::check_size(std::nothrow_t,
 		serialized(event)
 	};
 
-	return event_size <= size_t(event_max_size);
+	return event_size <= size_t(event::max_size);
 }
 
 ircd::string_view
@@ -397,6 +390,20 @@ ircd::m::my(const id::event &event_id)
 
 //
 // event
+//
+
+/// The maximum size of an event we will create. This may also be used in
+/// some contexts for what we will accept, but the protocol limit and hard
+/// worst-case buffer size is still event::MAX_SIZE.
+ircd::conf::item<size_t>
+ircd::m::event::max_size
+{
+	{ "name",     "m.event.max_size" },
+	{ "default",   65507L            },
+};
+
+//
+// event::event
 //
 
 ircd::m::event::event(const id &id,

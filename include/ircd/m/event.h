@@ -15,8 +15,6 @@ namespace ircd::m
 {
 	struct event;
 
-	extern conf::item<size_t> event_max_size;
-
 	bool my(const id::event &);
 	bool my(const event &);
 
@@ -79,6 +77,9 @@ struct ircd::m::event
 	using id = m::id::event;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
+
+	static constexpr size_t MAX_SIZE = 64_KiB;
+	static conf::item<size_t> max_size;
 
 	static ed25519::sig sign(const m::event &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
