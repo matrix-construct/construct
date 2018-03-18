@@ -1435,7 +1435,11 @@ void
 ircd::server::link::handle_readable_success()
 {
 	if(queue.empty())
-		return discard_read();
+	{
+		discard_read();
+		wait_readable();
+		return;
+	}
 
 	// Data pointed to by overrun will remain intact between iterations
 	// because this loop isn't executing in any ircd::ctx.
@@ -1567,8 +1571,8 @@ ircd::server::link::discard_read()
 	// the pending error like an eof.
 	log.warning("Link to %s discarded %zu of %zu unexpected bytes",
 	            likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
-	            discard,
-	            discarded);
+	            discarded,
+	            discard);
 
 	// just in case so this doesn't get loopy with discarding zero with
 	// an empty queue...
