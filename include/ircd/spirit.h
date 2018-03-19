@@ -35,8 +35,11 @@ namespace ircd::spirit
 	using qi::char_;
 	using qi::string;
 	using qi::short_;
+	using qi::ushort_;
 	using qi::int_;
+	using qi::uint_;
 	using qi::long_;
+	using qi::ulong_;
 	using qi::double_;
 	using qi::raw;
 	using qi::omit;
