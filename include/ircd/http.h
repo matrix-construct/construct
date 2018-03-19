@@ -32,6 +32,8 @@ namespace ircd::http
 	void write(window_buffer &, const vector_view<const header> &);
 	size_t serialized(const vector_view<const header> &);
 	std::string strung(const vector_view<const header> &);
+	void writechunk(window_buffer &, const size_t &size);
+	const_buffer writechunk(const mutable_buffer &, const size_t &size);
 }
 
 //

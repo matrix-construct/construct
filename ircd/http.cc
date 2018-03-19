@@ -570,6 +570,25 @@ ircd::http::parser::content_length(const string_view &str)
 	return ret;
 }
 
+ircd::const_buffer
+ircd::http::writechunk(const mutable_buffer &buf,
+                       const size_t &chunk_size)
+{
+	window_buffer wb{buf};
+	writechunk(wb, chunk_size);
+	return wb.completed();
+}
+
+void
+ircd::http::writechunk(window_buffer &buf,
+                       const size_t &chunk_size)
+{
+	writeline(buf, [&chunk_size](const mutable_buffer &out) -> size_t
+	{
+		return ::snprintf(data(out), size(out), "%lx", chunk_size);
+	});
+}
+
 std::string
 ircd::http::strung(const vector_view<const header> &headers)
 {
