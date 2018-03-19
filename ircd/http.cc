@@ -149,8 +149,14 @@ struct ircd::http::grammar
 
 	rule<size_t> chunk_size
 	{
-		qi::uint_parser<size_t, 16, 1, 8>{} >> CRLF
+		qi::uint_parser<size_t, 16, 1, 8>{}
 		,"chunk size"
+	};
+
+	rule<string_view> chunk_extensions
+	{
+		';' >> raw[string]             //TODO: extensions
+		,"chunk extensions"
 	};
 
 	rule<http::query> query
@@ -391,6 +397,25 @@ ircd::http::response::head::head(parse::capstan &pc,
 	}}
 }
 {
+}
+
+ircd::http::response::chunk::chunk(parse::capstan &pc)
+try
+:line{pc}
+{
+	static const parser::rule<size_t> grammar
+	{
+		parser.chunk_size >> -parser.chunk_extensions
+		,"chunk head"
+	};
+
+	const char *start(line::begin());
+	const auto res(qi::parse(start, line::end(), eps > grammar, this->size));
+	assert(res == true);
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw_error(e, true);
 }
 
 ircd::http::headers::headers(parse::capstan &pc,
