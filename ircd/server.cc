@@ -1909,57 +1909,6 @@ ircd::server::disassociate(request &request,
 		delete &request;
 }
 
-/// Called by the controller of the socket with a view of the data received by
-/// the socket. The location and size of `buffer` is the same or smaller than
-/// the buffer previously supplied by make_read_buffer().
-///
-/// Sometimes make_read_buffer() supplies a buffer that is too large, and some
-/// data read off the socket does not belong to this tag. In that case, This
-/// function returns a const_buffer viewing the portion of `buffer` which is
-/// considered the "overrun," and the socket controller will copy that over to
-/// the next tag.
-///
-/// The tag indicates it is entirely finished with receiving its data by
-/// setting the value of `done` to true. Otherwise it is assumed false.
-///
-/// The link argument is not to be used to control/modify the link from the
-/// tag; it's only a backreference to flash information to the link/peer
-/// through specific callbacks so the peer can learn information.
-///
-ircd::const_buffer
-ircd::server::tag::read_buffer(const const_buffer &buffer,
-                               bool &done,
-                               link &link)
-{
-	assert(request);
-
-	return
-		head_read < size(request->in.head)?
-			read_head(buffer, done, link):
-
-		read_content(buffer, done);
-}
-
-/// An idempotent operation that provides the location of where the socket
-/// should place the next received data. The tag figures this out based on
-/// whether it receiving HTTP head data or whether it is in content mode.
-///
-ircd::mutable_buffer
-ircd::server::tag::make_read_buffer()
-const
-{
-	assert(request);
-
-	return
-		head_read < size(request->in.head)?
-			make_read_head_buffer():
-
-		content_read >= size(request->in.content)?
-			make_read_discard_buffer():
-
-		make_read_content_buffer();
-}
-
 void
 ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 {
@@ -2052,6 +2001,37 @@ const
 	return window;
 }
 
+/// Called by the controller of the socket with a view of the data received by
+/// the socket. The location and size of `buffer` is the same or smaller than
+/// the buffer previously supplied by make_read_buffer().
+///
+/// Sometimes make_read_buffer() supplies a buffer that is too large, and some
+/// data read off the socket does not belong to this tag. In that case, This
+/// function returns a const_buffer viewing the portion of `buffer` which is
+/// considered the "overrun," and the socket controller will copy that over to
+/// the next tag.
+///
+/// The tag indicates it is entirely finished with receiving its data by
+/// setting the value of `done` to true. Otherwise it is assumed false.
+///
+/// The link argument is not to be used to control/modify the link from the
+/// tag; it's only a backreference to flash information to the link/peer
+/// through specific callbacks so the peer can learn information.
+///
+ircd::const_buffer
+ircd::server::tag::read_buffer(const const_buffer &buffer,
+                               bool &done,
+                               link &link)
+{
+	assert(request);
+
+	return
+		head_read < size(request->in.head)?
+			read_head(buffer, done, link):
+
+		read_content(buffer, done);
+}
+
 ircd::const_buffer
 ircd::server::tag::read_head(const const_buffer &buffer,
                              bool &done,
@@ -2064,7 +2044,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	static const string_view terminator{"\r\n\r\n"};
 	const auto pos
 	{
-		string_view{data(buffer), size(buffer)}.find(terminator)
+		string_view{buffer}.find(terminator)
 	};
 
 	// No terminator found; account for what was received in this buffer
@@ -2149,11 +2129,20 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	assert(pb.completed() == head_read);
 	this->status = http::status(head.status);
 
-	// Proffer the HTTP head to the peer so it can learn from any data
+	// Proffer the HTTP head to the peer instance which owns the link working
+	// this tag so it can learn from any header data.
 	assert(link.peer);
 	link.peer->handle_head_recv(link, *this, head);
 
-	// Now we know how much content was received beyond the head
+	// If no branch taken the rest of this function expects a content length
+	// to be known from the received head.
+	if(head.transfer_encoding)
+		throw error
+		{
+			"Unsupported transfer-encoding '%s'", head.transfer_encoding
+		};
+
+	// Now we check how much content was received beyond the head
 	const size_t &content_read
 	{
 		std::min(head.content_length, beyond_head_len)
@@ -2259,6 +2248,26 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	}
 
 	return {};
+}
+
+/// An idempotent operation that provides the location of where the socket
+/// should place the next received data. The tag figures this out based on
+/// whether it receiving HTTP head data or whether it is in content mode.
+///
+ircd::mutable_buffer
+ircd::server::tag::make_read_buffer()
+const
+{
+	assert(request);
+
+	return
+		head_read < size(request->in.head)?
+			make_read_head_buffer():
+
+		content_read >= size(request->in.content)?
+			make_read_discard_buffer():
+
+		make_read_content_buffer();
 }
 
 ircd::mutable_buffer
