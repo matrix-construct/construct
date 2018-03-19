@@ -19,7 +19,7 @@ namespace ircd::http
 
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
 
-	[[noreturn]] void throw_error(const qi::expectation_failure<const char *> &);
+	[[noreturn]] void throw_error(const qi::expectation_failure<const char *> &, const bool &internal = false);
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -675,19 +675,41 @@ ircd::http::writeline(window_buffer &write)
 	});
 }
 
+/// Called to translate a grammar exception into an http::error within our
+/// system. This will then usually propagate back to our client.
+///
+/// If we are a client to another server, set internal=true. Even though this
+/// still generates an HTTP error, the code is 500 so if it propagates back to
+/// a client it does not indicate to *that* client that *they* made a bad
+/// request from a 400 back to them.
 void
-ircd::http::throw_error(const qi::expectation_failure<const char *> &e)
+ircd::http::throw_error(const qi::expectation_failure<const char *> &e,
+                        const bool &internal)
 {
-	const auto rule
+	const auto &code_
+	{
+		internal?
+			code::INTERNAL_SERVER_ERROR:
+			code::BAD_REQUEST
+	};
+
+	const char *const &fmtstr
+	{
+		internal?
+			"I expected a valid HTTP %s. Server sent %zu invalid characters starting with `%s'.":
+			"I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'."
+	};
+
+	const auto &rule
 	{
 		ircd::string(e.what_)
 	};
 
 	throw error
 	{
-		code::BAD_REQUEST, fmt::snstringf
+		code_, fmt::snstringf
 		{
-			512, "I require a valid HTTP %s. You sent %zu invalid characters starting with `%s'.",
+			512, fmtstr,
 			between(rule, "<", ">"),
 			size_t(e.last - e.first),
 			string_view{e.first, e.last}

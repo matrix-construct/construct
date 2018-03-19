@@ -262,6 +262,7 @@ struct ircd::http::request::head
 struct ircd::http::response
 {
 	struct head;
+	struct chunk;
 
 	// compose a response into buffer
 	response(window_buffer &,
@@ -289,6 +290,15 @@ struct ircd::http::response::head
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 	head() = default;
+};
+
+struct ircd::http::response::chunk
+:line
+{
+	size_t size {0};
+
+	chunk(parse::capstan &pc);
+	chunk() = default;
 };
 
 template<class T>
