@@ -20,7 +20,6 @@ namespace ircd::http
 	struct query;
 	struct header;
 	struct headers;
-	struct content;
 	struct request;
 	struct response;
 
@@ -29,9 +28,8 @@ namespace ircd::http
 
 	void writeline(window_buffer &);
 	void writeline(window_buffer &, const window_buffer::closure &);
-
-	void write(window_buffer &out, const header &);
-	void write(window_buffer &out, const vector_view<const header> &);
+	void write(window_buffer &, const header &);
+	void write(window_buffer &, const vector_view<const header> &);
 	size_t serialized(const vector_view<const header> &);
 	std::string strung(const vector_view<const header> &);
 }
@@ -225,8 +223,6 @@ struct ircd::http::request
 {
 	struct head;
 
-	using proffer = std::function<void (const head &)>;
-
 	// compose a request into buffer
 	request(window_buffer &,
 	        const string_view &host,
@@ -264,10 +260,6 @@ struct ircd::http::request::head
 struct ircd::http::response
 {
 	struct head;
-	struct chunked;
-
-	using write_closure = std::function<void (const ilist<const const_buffer> &)>;
-	using proffer = std::function<void (const head &)>;
 
 	// compose a response into buffer
 	response(window_buffer &,
@@ -279,26 +271,6 @@ struct ircd::http::response
 	         const bool &termination            = true);
 
 	response() = default;
-};
-
-struct ircd::http::response::chunked
-:response
-{
-	struct chunk;
-
-	write_closure closure;
-
-	chunked(const code &,
-	        const write_closure &,
-	        const vector_view<const header> &headers);
-
-	chunked(const chunked &) = delete;
-	~chunked() noexcept;
-};
-
-struct ircd::http::response::chunked::chunk
-{
-	chunk(chunked &, const const_buffer &);
 };
 
 /// Represents an HTTP response head. This is for receiving responses only.

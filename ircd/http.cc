@@ -367,60 +367,6 @@ ircd::http::response::response(window_buffer &out,
 		writeline(out);
 }
 
-ircd::http::response::chunked::chunked(const code &code,
-                                       const write_closure &closure,
-                                       const vector_view<const header> &user_headers)
-:closure{closure}
-{
-	const auto num_headers
-	{
-		user_headers.size() + 1
-	};
-
-	header headers[num_headers]
-	{
-		{ "Transfer-Encoding", "chunked" }
-	};
-
-	std::copy(begin(user_headers), end(user_headers), headers + 1);
-
-	//TODO: bitrot
-	assert(0);
-/*
-	response
-	{
-		code, {}, closure, { headers, headers + num_headers }
-	};
-*/
-}
-
-ircd::http::response::chunked::~chunked()
-noexcept
-{
-	chunk(*this, null_buffer);
-}
-
-ircd::http::response::chunked::chunk::chunk(chunked &chunked,
-                                            const const_buffer &buffer)
-{
-	char size_buf[16];
-	const auto size_size
-	{
-		snprintf(size_buf, sizeof(size_buf), "%lx", size(buffer))
-	};
-
-	const ilist<const const_buffer> iov
-	{
-		{ size_buf,     size_t(size_size) },
-		{ "\r\n",       2                 },
-		{ buffer                          },
-		{ "\r\n",       2                 },
-	};
-
-	assert(bool(chunked.closure));
-	chunked.closure(iov);
-}
-
 ircd::http::response::head::head(parse::capstan &pc,
                                  const headers::closure &c)
 :line::response{pc}
