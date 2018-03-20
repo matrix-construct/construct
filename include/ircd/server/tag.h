@@ -31,7 +31,6 @@ struct ircd::server::tag
 	size_t written {0};
 	size_t head_read {0};
 	size_t content_read {0};
-	size_t content_over {0};
 	size_t content_length {0};
 	http::code status {(http::code)0};
 	std::unique_ptr<char[]> cancellation;
@@ -43,6 +42,7 @@ struct ircd::server::tag
 	const_buffer make_write_content_buffer() const;
 	const_buffer make_write_head_buffer() const;
 
+	size_t content_overflow() const;
 	size_t content_remaining() const;
 	mutable_buffer make_read_discard_buffer() const;
 	mutable_buffer make_read_content_buffer() const;
@@ -93,7 +93,6 @@ noexcept
 ,written{std::move(o.written)}
 ,head_read{std::move(o.head_read)}
 ,content_read{std::move(o.content_read)}
-,content_over{std::move(o.content_over)}
 ,content_length{std::move(o.content_length)}
 ,status{std::move(o.status)}
 ,cancellation{std::move(o.cancellation)}
@@ -115,7 +114,6 @@ noexcept
 	written = std::move(o.written);
 	head_read = std::move(o.head_read);
 	content_read = std::move(o.content_read);
-	content_over = std::move(o.content_over);
 	content_length = std::move(o.content_length);
 	status = std::move(o.status);
 	cancellation = std::move(o.cancellation);

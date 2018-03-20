@@ -2185,11 +2185,6 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		req.in.content = req.in.dynamic;
 	}
 
-	// If the supplied content buffer is too small this must indicate how much
-	// content will have to be discarded later to not mess up the pipeline.
-	if(content_length > size(req.in.content))
-		content_over = content_length - size(req.in.content);
-
 	// Reduce the user's content buffer to the content-length. This is sort of
 	// how we convey the content-length back to the user. The buffer size will
 	// eventually reflect how much content was actually received; the user can
@@ -2221,11 +2216,11 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	const auto &content{req.in.content};
 
 	// The amount of remaining content for the response sequence
-	assert(size(content) + content_over >= content_read);
-	assert(size(content) + content_over == content_length);
+	assert(size(content) + content_overflow() >= content_read);
+	assert(size(content) + content_overflow() == content_length);
 	const size_t remaining
 	{
-		size(content) + content_over - content_read
+		size(content) + content_overflow() - content_read
 	};
 
 	// The amount of content read in this buffer only.
@@ -2236,7 +2231,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 
 	content_read += addl_content_read;
 	assert(size(buffer) - addl_content_read == 0);
-	assert(content_read <= size(content) + content_over);
+	assert(content_read <= size(content) + content_overflow());
 	assert(content_read <= content_length);
 
 	// Invoke the user's optional progress callback; this function
@@ -2244,7 +2239,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	if(req.in.progress)
 		req.in.progress(buffer, const_buffer{data(content), content_read});
 
-	if(content_read == size(content) + content_over)
+	if(content_read == size(content) + content_overflow())
 	{
 		done = true;
 		assert(content_read == content_length);
@@ -2326,12 +2321,12 @@ ircd::server::tag::make_read_discard_buffer()
 const
 {
 	assert(request);
-	assert(content_over > 0);
-	assert(content_over <= content_read);
+	assert(content_overflow() > 0);
+	assert(content_overflow() <= content_read);
 	assert(content_read >= size(request->in.content));
 	const size_t remaining
 	{
-		content_over - content_read
+		content_overflow() - content_read
 	};
 
 	static char buffer[512];
@@ -2352,6 +2347,16 @@ const
 {
 	assert(content_length >= content_read);
 	return content_length - content_read;
+}
+
+size_t
+ircd::server::tag::content_overflow()
+const
+{
+	assert(request);
+	const auto &req{*request};
+	const ssize_t diff{content_length - size(req.in.content)};
+	return std::max(diff, ssize_t(0));
 }
 
 template<class... args>
