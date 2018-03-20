@@ -201,7 +201,12 @@ struct ircd::json::output
 	rule<string_view> lit_null         { karma::string("null")                     ,"literal null" };
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
-	rule<string_view> number           { double_                                         ,"number" };
+
+	rule<string_view> number
+	{
+		double_
+		,"number"
+	};
 
 	rule<string_view> chars
 	{
@@ -219,6 +224,35 @@ struct ircd::json::output
 	{
 		string
 		,"name"
+	};
+
+	const rule<string_view> value
+	{
+		  (&object << object)
+		| (&array << array)
+		| (&literal << literal)
+		| (&quote << chars << &quote)
+		| (&number << number)
+		| (&string << string)
+		,"value"
+	};
+
+	const rule<json::object::member> member
+	{
+		name << name_sep << value
+		,"member"
+	};
+
+	const rule<ircd::json::object> object
+	{
+		object_begin << -(member % value_sep) << object_end
+		,"object"
+	};
+
+	const rule<ircd::json::array> array
+	{
+		array_begin << -(value % value_sep) << array_end
+		,"array"
 	};
 
 	output()
