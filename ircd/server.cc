@@ -1530,14 +1530,9 @@ try
 		data(buffer) + copied, size(buffer) - copied
 	};
 
-	const size_t received
-	{
-		read_one(*socket, remaining)
-	};
-
 	const const_buffer view
 	{
-		data(buffer), copied + received
+		read(remaining)
 	};
 
 	const const_buffer overrun
@@ -1552,6 +1547,21 @@ catch(const buffer_overrun &e)
 {
 	tag.set_exception(e);
 	throw;
+}
+
+/// Read directly off the link's socket into buf
+ircd::const_buffer
+ircd::server::link::read(const mutable_buffer &buf)
+{
+	const size_t received
+	{
+		read_one(*socket, buf)
+	};
+
+	return const_buffer
+	{
+		data(buf), received
+	};
 }
 
 void

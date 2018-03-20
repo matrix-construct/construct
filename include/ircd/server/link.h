@@ -30,6 +30,7 @@ struct ircd::server::link
 	template<class F> size_t accumulate_tags(F&&) const;
 
 	void discard_read();
+	const_buffer read(const mutable_buffer &buf);
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
 	bool process_read(const_buffer &);
 	void handle_readable_success();
