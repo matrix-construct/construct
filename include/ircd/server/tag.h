@@ -26,13 +26,17 @@ namespace ircd::server
 ///
 struct ircd::server::tag
 {
+	struct state
+	{
+		size_t written {0};
+		size_t head_read {0};
+		size_t content_read {0};
+		size_t content_length {0};
+		http::code status {(http::code)0};
+	}
+	state;
 	ctx::promise<http::code> p;
 	server::request *request {nullptr};
-	size_t written {0};
-	size_t head_read {0};
-	size_t content_read {0};
-	size_t content_length {0};
-	http::code status {(http::code)0};
 	std::unique_ptr<char[]> cancellation;
 
 	void set_exception(std::exception_ptr);
@@ -88,13 +92,9 @@ ircd::server::tag::tag(server::request &request)
 inline
 ircd::server::tag::tag(tag &&o)
 noexcept
-:p{std::move(o.p)}
+:state{std::move(o.state)}
+,p{std::move(o.p)}
 ,request{std::move(o.request)}
-,written{std::move(o.written)}
-,head_read{std::move(o.head_read)}
-,content_read{std::move(o.content_read)}
-,content_length{std::move(o.content_length)}
-,status{std::move(o.status)}
 ,cancellation{std::move(o.cancellation)}
 {
 	if(request)
@@ -109,13 +109,9 @@ noexcept
 {
 	this->~tag();
 
+	state = std::move(o.state);
 	p = std::move(o.p);
 	request = std::move(o.request);
-	written = std::move(o.written);
-	head_read = std::move(o.head_read);
-	content_read = std::move(o.content_read);
-	content_length = std::move(o.content_length);
-	status = std::move(o.status);
 	cancellation = std::move(o.cancellation);
 
 	if(request)
