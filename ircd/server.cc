@@ -1807,7 +1807,7 @@ noexcept
 
 		const mutable_buffer dst
 		{
-			data(out_head) + tag.state.written, size(src)
+			out_head + tag.state.written
 		};
 
 		copy(dst, src);
@@ -1829,7 +1829,7 @@ noexcept
 
 		const mutable_buffer dst
 		{
-			data(out_content) + content_written, size(src)
+			out_content + content_written
 		};
 
 		copy(dst, src);
@@ -1846,7 +1846,7 @@ noexcept
 
 		const mutable_buffer dst
 		{
-			data(in_head), size(src)
+			data(in_head), size(in_head)
 		};
 
 		copy(dst, src);
