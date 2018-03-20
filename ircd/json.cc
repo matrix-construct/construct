@@ -1044,9 +1044,8 @@ ircd::json::stringify(mutable_buffer &buf,
                       const object::member &member)
 {
 	char *const start(begin(buf));
-	printer(buf, printer.name, member.first);
-	printer(buf, printer.name_sep);
-	consume(buf, copy(buf, member.second));
+	printer(buf, printer.name << printer.name_sep, member.first);
+	stringify(buf, member.second);
 	return string_view { start, begin(buf) };
 }
 
@@ -1198,8 +1197,16 @@ ircd::json::stringify(mutable_buffer &buf,
 		return empty_array;
 	}
 
-	consume(buf, copy(buf, string_view{v}));
-	return string_view{v};
+	return array::stringify(buf, begin(v), end(v));
+}
+
+size_t
+ircd::json::serialized(const array &v)
+{
+	if(string_view{v}.empty())
+		return size(empty_array);
+
+	return array::serialized(begin(v), end(v));
 }
 
 ircd::string_view
@@ -1214,24 +1221,22 @@ size_t
 ircd::json::serialized(const std::string *const &b,
                        const std::string *const &e)
 {
-	const size_t ret(1 + !std::distance(b, e));
-	return std::accumulate(b, e, ret, []
-	(auto ret, const auto &value)
-	{
-		return ret += serialized(string_view{value}) + 1;
-	});
+	return array::serialized(b, e);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const string_view *const &b,
+                      const string_view *const &e)
+{
+	return array::stringify(buf, b, e);
 }
 
 size_t
 ircd::json::serialized(const string_view *const &b,
                        const string_view *const &e)
 {
-	const size_t ret(1 + !std::distance(b, e));
-	return std::accumulate(b, e, ret, []
-	(auto ret, const auto &value)
-	{
-		return ret += serialized(value) + 1;
-	});
+	return array::serialized(b, e);
 }
 
 template<class it>
@@ -1244,11 +1249,7 @@ ircd::json::array::stringify(mutable_buffer &buf,
 	{
 		[](mutable_buffer &buf, const string_view &element)
 		{
-			if(!consume(buf, ircd::buffer::copy(buf, element)))
-				throw print_error
-				{
-					"The JSON generator ran out of space in supplied buffer"
-				};
+			json::stringify(buf, element);
 		}
 	};
 
@@ -1257,6 +1258,19 @@ ircd::json::array::stringify(mutable_buffer &buf,
 	printer::list_protocol(buf, b, e, print_element);
 	printer(buf, printer.array_end);
 	return { start, std::begin(buf) };
+}
+
+template<class it>
+size_t
+ircd::json::array::serialized(const it &b,
+                              const it &e)
+{
+	const size_t ret(1 + !std::distance(b, e));
+	return std::accumulate(b, e, ret, []
+	(auto ret, const string_view &value)
+	{
+		return ret += json::serialized(value) + 1;
+	});
 }
 
 std::ostream &
@@ -1404,7 +1418,7 @@ ircd::json::stringify(mutable_buffer &buf,
 
 		case LITERAL:
 		{
-			consume(buf, copy(buf, string_view{v}));
+			printer(buf, printer.literal, string_view{v});
 			break;
 		}
 
@@ -1412,7 +1426,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			if(v.serial)
 			{
-				consume(buf, copy(buf, string_view{v}));
+				stringify(buf, json::object{string_view{v}});
 				break;
 			}
 
@@ -1422,7 +1436,6 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			//consume(buf, copy(buf, literal_null));
 			consume(buf, copy(buf, empty_object));
 			break;
 		}
@@ -1431,7 +1444,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			if(v.serial)
 			{
-				consume(buf, copy(buf, string_view{v}));
+				stringify(buf, json::array{string_view{v}});
 				break;
 			}
 
@@ -1441,7 +1454,6 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			//consume(buf, copy(buf, literal_null));
 			consume(buf, copy(buf, empty_array));
 			break;
 		}
@@ -1449,15 +1461,11 @@ ircd::json::stringify(mutable_buffer &buf,
 		case NUMBER:
 		{
 			if(v.serial)
-			{
-				consume(buf, copy(buf, string_view{v}));
-				break;
-			}
-
-			if(v.floats)
-				printer(buf, double_, v.floating);
+				printer(buf, printer.number, string_view{v});
+			else if(v.floats)
+				consume(buf, copy(buf, lex_cast(v.floating)));
 			else
-				printer(buf, long_, v.integer);
+				consume(buf, copy(buf, lex_cast(v.integer)));
 
 			break;
 		}
@@ -1491,28 +1499,27 @@ ircd::json::serialized(const value &v)
 	switch(v.type)
 	{
 		case OBJECT:
-			return v.serial? v.len : serialized(v.object, v.object + v.len);
+			return v.serial? serialized(json::object{v}) : serialized(v.object, v.object + v.len);
 
 		case ARRAY:
-			return v.serial? v.len : serialized(v.array, v.array + v.len);
+			return v.serial? serialized(json::array{v}) : serialized(v.array, v.array + v.len);
 
 		case LITERAL:
-		{
 			return v.serial? v.len : serialized(bool(v.integer));
-		}
 
 		case NUMBER:
 		{
+			thread_local char test_buffer[256];
+			mutable_buffer buf{test_buffer};
+
 			if(v.serial)
-				return v.len;
+				printer(buf, printer.number, string_view{v});
+			else if(v.floats)
+				return size(lex_cast(v.floating));
+			else
+				return size(lex_cast(v.integer));
 
-			static thread_local char test_buffer[4096];
-			const auto test
-			{
-				stringify(mutable_buffer{test_buffer}, v)
-			};
-
-			return test.size();
+			return begin(buf) - test_buffer;
 		}
 
 		case STRING:
@@ -1563,7 +1570,7 @@ ircd::json::value::value(const value &other)
 		create_string(len, [&other]
 		(mutable_buffer &buffer)
 		{
-			consume(buffer, copy(buffer, string_view{other}));
+			json::stringify(buffer, string_view{other});
 		});
 	}
 	else switch(type)
@@ -1601,10 +1608,10 @@ ircd::json::value::value(const value &other)
 			if(!string)
 				break;
 
-			create_string(len, [&other]
+			create_string(serialized(other), [&other]
 			(mutable_buffer &buffer)
 			{
-				copy(buffer, const_buffer{other.string, other.len});
+				json::stringify(buffer, other);
 			});
 			break;
 		}
@@ -1992,33 +1999,18 @@ ircd::json::stringify(mutable_buffer &buf,
 		return empty_string;
 	}
 
-	consume(buf, copy(buf, string_view{v}));
-	return string_view{v};
+	const json::value value{v};
+	return stringify(buf, value);
 }
 
 size_t
-ircd::json::serialized(const string_view &s)
+ircd::json::serialized(const string_view &v)
 {
-	size_t ret
-	{
-		s.size()
-	};
+	if(v.empty() && defined(v))
+		return 2;
 
-	switch(type(s, std::nothrow))
-	{
-		case NUMBER:
-		case OBJECT:
-		case ARRAY:
-		case LITERAL:
-			break;
-
-		case STRING:
-			ret += !startswith(s, '"');
-			ret += !endswith(s, '"');
-			break;
-	}
-
-	return ret;
+	const json::value value{v};
+	return serialized(value);
 }
 
 enum ircd::json::type
