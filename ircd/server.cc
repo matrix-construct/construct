@@ -1759,7 +1759,6 @@ noexcept
 	assert(tag.committed());
 	assert(request.tag == &tag);
 	assert(tag.request == &request);
-	assert(tag.state.chunk_length == 0);
 
 	// Disassociate the user's request and add our dummy request in its place.
 
@@ -1852,7 +1851,25 @@ noexcept
 		copy(dst, src);
 	}
 
-	// No received content is copied.
+	// Normally we have no reason to copy content, but there is one exception:
+	// If the content is chunked encoding and the tag is in the phase of
+	// receiving the chunk head we have to copy what's been received of that
+	// head so far so the grammar can parse a coherent head to continue.
+	if(tag.state.chunk_length == -1)
+	{
+		const const_buffer src
+		{
+			data(request.in.content) + tag.state.content_length,
+			tag.state.content_read - tag.state.content_length
+		};
+
+		const mutable_buffer dst
+		{
+			in_content + tag.state.content_length
+		};
+
+		copy(dst, src);
+	}
 }
 
 void
