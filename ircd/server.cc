@@ -2025,7 +2025,7 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 {
 	assert(request);
 
-	if(!state.content_length && state.head_read < size(request->in.head))
+	if(state.status == (http::code)0)
 		return read_head(buffer, done, link);
 
 	return read_content(buffer, done);
@@ -2251,7 +2251,7 @@ const
 	assert(state.head_read <= size(request->in.head));
 	assert(state.content_read <= state.content_length);
 
-	if(state.head_read < size(request->in.head))
+	if(state.status == (http::code)0)
 		return make_read_head_buffer();
 
 	if(state.content_read >= size(request->in.content))
