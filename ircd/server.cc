@@ -2025,11 +2025,10 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 {
 	assert(request);
 
-	return
-		head_read < size(request->in.head)?
-			read_head(buffer, done, link):
+	if(!content_length && head_read < size(request->in.head))
+		return read_head(buffer, done, link);
 
-		read_content(buffer, done);
+	return read_content(buffer, done);
 }
 
 ircd::const_buffer
@@ -2127,7 +2126,8 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// Play the tape through the formal grammar.
 	const http::response::head head{pc};
 	assert(pb.completed() == head_read);
-	this->status = http::status(head.status);
+	status = http::status(head.status);
+	content_length = head.content_length;
 
 	// Proffer the HTTP head to the peer instance which owns the link working
 	// this tag so it can learn from any header data.
@@ -2145,7 +2145,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// Now we check how much content was received beyond the head
 	const size_t &content_read
 	{
-		std::min(head.content_length, beyond_head_len)
+		std::min(content_length, beyond_head_len)
 	};
 
 	// Now we know how much bleed into the next message was also received
@@ -2178,12 +2178,17 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		assert(req.opt);
 		const size_t alloc_size
 		{
-			std::min(head.content_length, req.opt->content_length_maxalloc)
+			std::min(content_length, req.opt->content_length_maxalloc)
 		};
 
 		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
 		req.in.content = req.in.dynamic;
 	}
+
+	// If the supplied content buffer is too small this must indicate how much
+	// content will have to be discarded later to not mess up the pipeline.
+	if(content_length > size(req.in.content))
+		content_over = content_length - size(req.in.content);
 
 	// Reduce the user's content buffer to the content-length. This is sort of
 	// how we convey the content-length back to the user. The buffer size will
@@ -2191,13 +2196,8 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// find the given content-length by parsing the header.
 	req.in.content = mutable_buffer
 	{
-		data(req.in.content), std::min(head.content_length, size(req.in.content))
+		data(req.in.content), std::min(content_length, size(req.in.content))
 	};
-
-	// If the supplied content buffer is too small this must indicate how much
-	// content will have to be discarded later to not mess up the pipeline.
-	if(head.content_length > size(req.in.content))
-		content_over = head.content_length - size(req.in.content);
 
 	// Any partial content was written to the head buffer by accident,
 	// that may have to be copied over to the content buffer.
@@ -2207,6 +2207,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// Invoke the read_content() routine which will increment this->content_read
 	read_content(partial_content, done);
 	assert(this->content_read == size(partial_content));
+	assert(content_read == content_length || !done);
 
 	return overrun;
 }
@@ -2221,6 +2222,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 
 	// The amount of remaining content for the response sequence
 	assert(size(content) + content_over >= content_read);
+	assert(size(content) + content_over == content_length);
 	const size_t remaining
 	{
 		size(content) + content_over - content_read
@@ -2235,6 +2237,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	content_read += addl_content_read;
 	assert(size(buffer) - addl_content_read == 0);
 	assert(content_read <= size(content) + content_over);
+	assert(content_read <= content_length);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
@@ -2244,6 +2247,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	if(content_read == size(content) + content_over)
 	{
 		done = true;
+		assert(content_read == content_length);
 		set_value(status);
 	}
 
@@ -2259,15 +2263,16 @@ ircd::server::tag::make_read_buffer()
 const
 {
 	assert(request);
+	assert(head_read <= size(request->in.head));
+	assert(content_read <= content_length);
 
-	return
-		head_read < size(request->in.head)?
-			make_read_head_buffer():
+	if(head_read < size(request->in.head))
+		return make_read_head_buffer();
 
-		content_read >= size(request->in.content)?
-			make_read_discard_buffer():
+	if(content_read >= size(request->in.content))
+		return make_read_discard_buffer();
 
-		make_read_content_buffer();
+	return make_read_content_buffer();
 }
 
 ircd::mutable_buffer
@@ -2339,6 +2344,14 @@ const
 	{
 		buffer, buffer_max
 	};
+}
+
+size_t
+ircd::server::tag::content_remaining()
+const
+{
+	assert(content_length >= content_read);
+	return content_length - content_read;
 }
 
 template<class... args>
@@ -2428,7 +2441,7 @@ size_t
 ircd::server::tag::read_total()
 const
 {
-	return request? size(request->in) : 0;
+	return content_length;
 }
 
 size_t
