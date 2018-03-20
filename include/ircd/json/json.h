@@ -16,8 +16,8 @@
 namespace ircd::json
 {
 	IRCD_EXCEPTION(ircd::error, error);
+	IRCD_ASSERTION(error, print_error);
 	IRCD_EXCEPTION(error, parse_error);
-	IRCD_EXCEPTION(error, print_error);
 	IRCD_EXCEPTION(error, type_error);
 	IRCD_EXCEPTION(error, not_found);
 	IRCD_EXCEPTION(parse_error, recursion_limit);
@@ -135,8 +135,12 @@ ircd::json::print(const mutable_buffer &buf,
 		stringify(out, std::forward<T>(t)...)
 	};
 
-	assert(sv.size() < size(buf));
-	assert(valid(sv, std::nothrow)); //note: false alarm when T=json::member
+	if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
+		throw print_error
+		{
+			"print (%zu): %s", sv.size(), sv
+		};
+
 	buf[sv.size()] = '\0';
 	return sv.size();
 }
@@ -154,11 +158,16 @@ ircd::json::strung::strung(T&&... t)
 		};
 
 		using ircd::size;
-		assert(valid(sv, std::nothrow)); //note: false alarm when T=json::member
 		if(unlikely(size(sv) != size(out)))
-			throw assertive
+			throw print_error
 			{
-				"%zu != %zu: %s", size(sv), size(out), sv
+				"stringified:%zu != serialized:%zu: %s", size(sv), size(out), sv
+			};
+
+		if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
+			throw print_error
+			{
+				"strung (%zu): %s", size(sv), sv
 			};
 
 		return sv;

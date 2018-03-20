@@ -1245,7 +1245,10 @@ ircd::json::array::stringify(mutable_buffer &buf,
 		[](mutable_buffer &buf, const string_view &element)
 		{
 			if(!consume(buf, ircd::buffer::copy(buf, element)))
-				throw print_error("The JSON generator ran out of space in supplied buffer");
+				throw print_error
+				{
+					"The JSON generator ran out of space in supplied buffer"
+				};
 		}
 	};
 
