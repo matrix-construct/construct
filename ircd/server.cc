@@ -2052,16 +2052,6 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	if(pos == string_view::npos)
 	{
 		state.head_read += size(buffer);
-
-		// Check that the user hasn't run out of head buffer space without
-		// seeing a terminator. If so, we have to throw out of here and then
-		// abort this user's request.
-		if(unlikely(state.head_read >= size(req.in.head)))
-			throw buffer_overrun
-			{
-				"Supplied buffer of %zu too small for HTTP head", size(req.in.head)
-			};
-
 		return {};
 	}
 
@@ -2277,9 +2267,11 @@ const
 	assert(request);
 	const auto &req{*request};
 	const auto &head{req.in.head};
-	const auto &content{req.in.content};
-	if(state.head_read >= size(head))
-		return {};
+	if(unlikely(state.head_read >= size(req.in.head)))
+		throw buffer_overrun
+		{
+			"Supplied buffer of %zu too small for HTTP head", size(req.in.head)
+		};
 
 	const size_t remaining
 	{
@@ -2302,9 +2294,15 @@ const
 	assert(request);
 	const auto &req{*request};
 	const auto &content{req.in.content};
+	if(unlikely(size(content) <= state.content_read))
+		throw buffer_overrun
+		{
+			"Content buffer of %zu bytes too small to read %zu bytes of content",
+			size(content),
+			state.content_length
+		};
 
 	// The amount of bytes we still have to read to for the response
-	assert(size(content) >= state.content_read);
 	const size_t remaining
 	{
 		size(content) - state.content_read
