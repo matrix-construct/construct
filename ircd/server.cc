@@ -2088,18 +2088,12 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		data(req.in.content) == data(req.in.head)
 	};
 
-	if(contiguous)
+	// Alternatively branch for a feature that allows dynamic allocation of
+	// the content buffer if the user did not specify any buffer.
+	const bool dynamic
 	{
-		const auto content_max
-		{
-			std::max(ssize_t(size(req.in.content) - head_read), ssize_t(0))
-		};
-
-		req.in.content = mutable_buffer
-		{
-			data(req.in.head) + head_read, size_t(content_max)
-		};
-	}
+		!contiguous && empty(req.in.content)
+	};
 
 	// Resize the user's head buffer tight to the head; this is how we convey
 	// the size of the dome back to the user.
@@ -2124,6 +2118,19 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	assert(link.peer);
 	link.peer->handle_head_recv(link, *this, head);
 
+	if(contiguous)
+	{
+		const auto content_max
+		{
+			std::max(ssize_t(size(req.in.content) - head_read), ssize_t(0))
+		};
+
+		req.in.content = mutable_buffer
+		{
+			data(req.in.head) + head_read, size_t(content_max)
+		};
+	}
+
 	// If no branch taken the rest of this function expects a content length
 	// to be known from the received head.
 	if(head.transfer_encoding)
@@ -2131,6 +2138,18 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		{
 			"Unsupported transfer-encoding '%s'", head.transfer_encoding
 		};
+
+	if(dynamic)
+	{
+		assert(req.opt);
+		const size_t alloc_size
+		{
+			std::min(state.content_length, req.opt->content_length_maxalloc)
+		};
+
+		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
+		req.in.content = req.in.dynamic;
+	}
 
 	// Now we check how much content was received beyond the head
 	const size_t &content_read
@@ -2155,25 +2174,6 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	{
 		data(beyond_head) + size(partial_content), beyond_content_len
 	};
-
-	// We branch for a feature that allows dynamic allocation of the content
-	// buffer if the user did not specify any buffer.
-	const bool dynamic
-	{
-		!contiguous && empty(req.in.content)
-	};
-
-	if(dynamic)
-	{
-		assert(req.opt);
-		const size_t alloc_size
-		{
-			std::min(state.content_length, req.opt->content_length_maxalloc)
-		};
-
-		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
-		req.in.content = req.in.dynamic;
-	}
 
 	// Reduce the user's content buffer to the content-length. This is sort of
 	// how we convey the content-length back to the user. The buffer size will
