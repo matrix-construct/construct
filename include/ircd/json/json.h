@@ -125,9 +125,14 @@ ircd::json::print(const mutable_buffer &buf,
 	if(unlikely(!size(buf)))
 		return 0;
 
+	mutable_buffer out
+	{
+		data(buf), size(buf) - 1
+	};
+
 	const auto sv
 	{
-		stringify(mutable_buffer{buf}, std::forward<T>(t)...)
+		stringify(out, std::forward<T>(t)...)
 	};
 
 	assert(sv.size() < size(buf));
