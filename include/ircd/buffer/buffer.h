@@ -68,8 +68,11 @@ namespace ircd::buffer
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
 	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
+	template<class it> it move(it &dest, const it &stop, const const_buffer &);
 	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&buf)[SIZE]);
+	template<size_t SIZE> size_t move(const mutable_buffer &dst, const char (&buf)[SIZE]);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
+	size_t move(const mutable_buffer &dst, const const_buffer &src);
 	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
 	void reverse(const mutable_buffer &buf);
 	void zero(const mutable_buffer &buf);
@@ -213,6 +216,19 @@ ircd::buffer::reverse(const mutable_buffer &dst,
 template<size_t SIZE>
 __attribute__((error
 (
+	"Move source is an array. Is this a string literal? Do you want to move the \\0?"
+	" Disambiguate this by typing the source string_view or const_buffer."
+)))
+inline size_t
+ircd::buffer::move(const mutable_buffer &dst,
+                   const char (&buf)[SIZE])
+{
+	return move(dst, const_buffer{buf});
+}
+
+template<size_t SIZE>
+__attribute__((error
+(
 	"Copy source is an array. Is this a string literal? Do you want to copy the \\0?"
 	" Disambiguate this by typing the source string_view or const_buffer."
 )))
@@ -224,6 +240,16 @@ ircd::buffer::copy(const mutable_buffer &dst,
 }
 
 inline size_t
+ircd::buffer::move(const mutable_buffer &dst,
+                   const const_buffer &src)
+{
+	auto e{begin(dst)};
+	move(e, end(dst), src);
+	assert(std::distance(begin(dst), e) >= 0);
+	return std::distance(begin(dst), e);
+}
+
+inline size_t
 ircd::buffer::copy(const mutable_buffer &dst,
                    const const_buffer &src)
 {
@@ -231,6 +257,26 @@ ircd::buffer::copy(const mutable_buffer &dst,
 	copy(e, end(dst), src);
 	assert(std::distance(begin(dst), e) >= 0);
 	return std::distance(begin(dst), e);
+}
+
+template<class it>
+it
+ircd::buffer::move(it &dest,
+                   const it &stop,
+                   const const_buffer &src)
+{
+	const it ret{dest};
+	const ssize_t srcsz(size(src));
+	assert(ret <= stop);
+	const ssize_t remain{std::distance(ret, stop)};
+	const ssize_t mvsz{std::min(srcsz, remain)};
+	assert(mvsz <= srcsz);
+	assert(mvsz <= remain);
+	assert(remain >= 0);
+	memmove(ret, data(src), mvsz);
+	dest += mvsz;
+	assert(dest <= stop);
+	return ret;
 }
 
 template<class it>
