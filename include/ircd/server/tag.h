@@ -29,9 +29,10 @@ struct ircd::server::tag
 	struct state
 	{
 		size_t written {0};
-		size_t head_read {0};
+		size_t head_read {0};          // includes head terminator
 		size_t content_read {0};
-		size_t content_length {0};
+		size_t content_length {0};     // fixed; or grows monotonic for chunked enc
+		size_t chunk_length {0};       // -1 for chunk header mode
 		http::code status {(http::code)0};
 	}
 	state;
@@ -49,9 +50,13 @@ struct ircd::server::tag
 	size_t content_overflow() const;
 	size_t content_remaining() const;
 	mutable_buffer make_read_discard_buffer() const;
+	mutable_buffer make_read_chunk_content_buffer() const;
+	mutable_buffer make_read_chunk_head_buffer() const;
 	mutable_buffer make_read_content_buffer() const;
 	mutable_buffer make_read_head_buffer() const;
 
+	const_buffer read_chunk_content(const const_buffer &, bool &done);
+	const_buffer read_chunk_head(const const_buffer &, bool &done);
 	const_buffer read_content(const const_buffer &, bool &done);
 	const_buffer read_head(const const_buffer &, bool &done, link &);
 

@@ -1749,6 +1749,7 @@ noexcept
 	assert(tag.committed());
 	assert(request.tag == &tag);
 	assert(tag.request == &request);
+	assert(tag.state.chunk_length == 0);
 
 	// Disassociate the user's request and add our dummy request in its place.
 
@@ -2028,6 +2029,12 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 	if(state.status == (http::code)0)
 		return read_head(buffer, done, link);
 
+	if(state.chunk_length == size_t(-1))
+		return read_chunk_head(buffer, done);
+
+	if(state.chunk_length)
+		return read_chunk_content(buffer, done);
+
 	return read_content(buffer, done);
 }
 
@@ -2129,6 +2136,30 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		{
 			data(req.in.head) + head_read, size_t(content_max)
 		};
+	}
+
+	// Branch for starting chunked encoding. We feed it whatever we have from
+	// beyond the head as whole or part (or none) of the first chunk. Similar
+	// to the non-chunked routine below, beyond_head may include all of the
+	// chunk content and then part of the next message too: read_chunk_head
+	// will return anything beyond this message as overrun and indicate done.
+	if(head.transfer_encoding == "chunked")
+	{
+		assert(!dynamic);
+
+		const const_buffer chunk
+		{
+			data(req.in.content), move(req.in.content, beyond_head)
+		};
+
+		state.chunk_length = -1;
+		const const_buffer overrun
+		{
+			read_chunk_head(chunk, done)
+		};
+
+		assert(empty(overrun) || done == true);
+		return overrun;
 	}
 
 	// If no branch taken the rest of this function expects a content length
@@ -2239,6 +2270,163 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	return {};
 }
 
+ircd::const_buffer
+ircd::server::tag::read_chunk_head(const const_buffer &buffer,
+                                   bool &done)
+{
+	assert(request);
+	auto &req{*request};
+	const auto &content{req.in.content};
+
+	// informal search for head terminator
+	static const string_view terminator{"\r\n"};
+	const auto pos
+	{
+		string_view{buffer}.find(terminator)
+	};
+
+	if(pos == string_view::npos)
+	{
+		state.content_read += size(buffer);
+		return {};
+	}
+
+	// This indicates how much head was just received from this buffer only.
+	const size_t addl_head_bytes
+	{
+		pos + size(terminator)
+	};
+
+	// The received buffer may go past the end of the head.
+	assert(addl_head_bytes <= size(buffer));
+	const size_t beyond_head_length
+	{
+		size(buffer) - addl_head_bytes
+	};
+
+	// The total head length is found from the end of the last chunk content
+	state.content_read += addl_head_bytes;
+	assert(state.content_read > state.content_length);
+	const size_t head_length
+	{
+		state.content_read - state.content_length
+	};
+
+	// Window on any data in the buffer after the head.
+	const const_buffer beyond_head
+	{
+		data(content) + state.content_length + head_length, beyond_head_length
+	};
+
+	// Setup the capstan and mark the end of the tape
+	parse::buffer pb
+	{
+		mutable_buffer
+		{
+			data(content) + state.content_length, head_length
+		}
+	};
+	parse::capstan pc{pb};
+	pc.read += head_length;
+
+	// Play the tape through the formal grammar.
+	const http::response::chunk chunk{pc};
+	state.chunk_length = chunk.size + size(terminator);
+
+	// Now we check how much chunk was received beyond the head
+	const size_t &chunk_read
+	{
+		std::min(state.chunk_length, beyond_head_length)
+	};
+
+	// Now we know how much bleed into the next message was also received
+	assert(beyond_head_length >= chunk_read);
+	const size_t beyond_chunk_length
+	{
+		beyond_head_length - chunk_read
+	};
+
+	// Finally we erase the chunk head by replacing it with everything received
+	// after it.
+	const mutable_buffer target
+	{
+		data(content) + state.content_length, beyond_head_length
+	};
+
+	move(target, beyond_head);
+
+	// Increment the content_length to now include this chunk
+	state.content_length += state.chunk_length;
+
+	// Adjust the content_read to erase the chunk head.
+	state.content_read -= head_length;
+
+	const const_buffer partial_chunk
+	{
+		data(target), chunk_read
+	};
+
+	const const_buffer overrun
+	{
+		data(target) + chunk_read, beyond_chunk_length
+	};
+
+	assert(state.chunk_length >= 2);
+	read_chunk_content(partial_chunk, done);
+
+	if(done)
+		return overrun;
+
+	return read_chunk_head(overrun, done);        // gobble gobbles
+}
+
+ircd::const_buffer
+ircd::server::tag::read_chunk_content(const const_buffer &buffer,
+                                      bool &done)
+{
+	assert(request);
+	auto &req{*request};
+	const auto &content{req.in.content};
+
+	// The amount of remaining content for the response sequence
+	const size_t remaining
+	{
+		content_remaining()
+	};
+
+	// The amount of content read in this buffer only.
+	const size_t addl_content_read
+	{
+		std::min(size(buffer), remaining)
+	};
+
+	state.content_read += addl_content_read;
+	if(state.content_read == state.content_length)
+	{
+		static const string_view terminator{"\r\n"};
+		assert(state.content_length >= size(terminator));
+		state.content_length -= size(terminator);
+		state.content_read -= size(terminator);
+
+		if(state.chunk_length == 2)
+		{
+			done = true;
+			req.in.content = mutable_buffer{data(req.in.content), state.content_length};
+			set_value(state.status);
+		}
+	}
+
+	// Invoke the user's optional progress callback; this function
+	// should be marked noexcept for the time being.
+	if(req.in.progress && !done)
+		req.in.progress(buffer, const_buffer{data(content), state.content_read});
+
+	if(state.content_read == state.content_length)
+		state.chunk_length = size_t(-1);
+
+	return {};
+}
+
 /// An idempotent operation that provides the location of where the socket
 /// should place the next received data. The tag figures this out based on
 /// whether it receiving HTTP head data or whether it is in content mode.
@@ -2254,8 +2442,14 @@ const
 	if(state.status == (http::code)0)
 		return make_read_head_buffer();
 
+	if(state.chunk_length == size_t(-1))
+		return make_read_chunk_head_buffer();
+
 	if(state.content_read >= size(request->in.content))
 		return make_read_discard_buffer();
+
+	if(state.chunk_length)
+		return make_read_chunk_content_buffer();
 
 	return make_read_content_buffer();
 }
@@ -2267,7 +2461,7 @@ const
 	assert(request);
 	const auto &req{*request};
 	const auto &head{req.in.head};
-	if(unlikely(state.head_read >= size(req.in.head)))
+	if(unlikely(size(req.in.head) <= state.head_read))
 		throw buffer_overrun
 		{
 			"Supplied buffer of %zu too small for HTTP head", size(req.in.head)
@@ -2314,10 +2508,85 @@ const
 	};
 }
 
-	return
+/// The chunk head buffer starts after the last chunk ended and has a size of
+/// the rest of the available content buffer (hopefully much less will be
+/// needed). If only part of the chunk head was received previously this
+/// function accounts for that by returning a buffer which starts at the
+/// content_read offset (which is at the end of that previous read).
+///
+ircd::mutable_buffer
+ircd::server::tag::make_read_chunk_head_buffer()
+const
+{
+	assert(request);
+	assert(state.chunk_length == size_t(-1));
+	assert(state.content_read >= state.content_length);
+
+	const auto &req{*request};
+	const auto &content{req.in.content};
+	if(unlikely(size(content) <= state.content_read))
+		throw buffer_overrun
+		{
+			"Content buffer of %zu bytes too small to read next chunk header",
+			size(content)
+		};
+
+	const size_t remaining
 	{
-		data(content) + content_read, remaining
+		size(content) - state.content_read
 	};
+
+	const mutable_buffer buffer
+	{
+		data(content) + state.content_read, remaining
+	};
+
+	return buffer;
+}
+
+ircd::mutable_buffer
+ircd::server::tag::make_read_chunk_content_buffer()
+const
+{
+	assert(request);
+	assert(state.chunk_length > 0);
+	assert(state.content_read <= state.content_length);
+
+	const auto &req{*request};
+	const auto &content{req.in.content};
+
+	assert(size(content) >= state.content_read);
+	const size_t buffer_remaining
+	{
+		size(content) - state.content_read
+	};
+
+	const size_t chunk_remaining
+	{
+		content_remaining()
+	};
+
+	if(unlikely(buffer_remaining <= chunk_remaining))
+		throw buffer_overrun
+		{
+			"Content buffer of %zu bytes too small to read remaining %zu of chunk",
+			size(content),
+			chunk_remaining
+		};
+
+	assert(chunk_remaining <= state.chunk_length);
+	assert(chunk_remaining == state.content_length - state.content_read);
+	const size_t buffer_size
+	{
+		std::min(buffer_remaining, chunk_remaining)
+	};
+
+	const mutable_buffer buffer
+	{
+		data(content) + state.content_read, buffer_size
+	};
+
+	return buffer;
 }
 
 ircd::mutable_buffer
@@ -2359,7 +2628,7 @@ const
 {
 	assert(request);
 	const auto &req{*request};
-	const ssize_t diff{state.content_length - size(req.in.content)};
+	const ssize_t diff(state.content_length - size(req.in.content));
 	return std::max(diff, ssize_t(0));
 }
 
