@@ -226,33 +226,32 @@ struct ircd::json::output
 		,"name"
 	};
 
-	const rule<string_view> value
-	{
-		  (&object << object)
-		| (&array << array)
-		| (&literal << literal)
-		| (&quote << chars << &quote)
-		| (&number << number)
-		| (&string << string)
-		,"value"
-	};
-
-	const rule<json::object::member> member
-	{
-		name << name_sep << value
-		,"member"
-	};
-
-	const rule<ircd::json::object> object
+	rule<json::object> object
 	{
 		object_begin << -(member % value_sep) << object_end
 		,"object"
 	};
 
-	const rule<ircd::json::array> array
+	rule<json::array> array
 	{
 		array_begin << -(value % value_sep) << array_end
 		,"array"
+	};
+
+	rule<json::object::member> member
+	{
+		name << name_sep << value
+		,"member"
+	};
+
+	rule<string_view> value
+	{
+		  (&object << object)
+		| (&array << array)
+		| (&literal << literal)
+		| (&number << number)
+		| (&string << string)
+		,"value"
 	};
 
 	output()
