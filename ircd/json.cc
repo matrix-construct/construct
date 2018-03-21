@@ -993,81 +993,6 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// json/member.h
-//
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const members &list)
-{
-	return stringify(buf, std::begin(list), std::end(list));
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const member &m)
-{
-	return stringify(buf, &m, &m + 1);
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const member *const &b,
-                      const member *const &e)
-{
-	static const auto print_member
-	{
-		[](mutable_buffer &buf, const member &m)
-		{
-			printer(buf, printer.name << printer.name_sep, m.first);
-			stringify(buf, m.second);
-		}
-	};
-
-	char *const start{begin(buf)};
-	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, b, e, print_member);
-	printer(buf, printer.object_end);
-	return { start, begin(buf) };
-}
-
-size_t
-ircd::json::serialized(const members &m)
-{
-	return serialized(std::begin(m), std::end(m));
-}
-
-size_t
-ircd::json::serialized(const member *const &begin,
-                       const member *const &end)
-{
-	const size_t ret(1 + !std::distance(begin, end));
-	return std::accumulate(begin, end, ret, []
-	(auto ret, const auto &member)
-	{
-		return ret += serialized(member) + 1;
-	});
-}
-
-size_t
-ircd::json::serialized(const member &member)
-{
-	return serialized(member.first) + 1 + serialized(member.second);
-}
-
-bool
-ircd::json::sorted(const member *const &begin,
-                   const member *const &end)
-{
-	return std::is_sorted(begin, end, []
-	(const member &a, const member &b)
-	{
-		return a < b;
-	});
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // json/object.h
 //
 
@@ -1480,6 +1405,81 @@ ircd::json::array::end()
 const
 {
 	return { string_view::end(), string_view::end() };
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/member.h
+//
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const members &list)
+{
+	return stringify(buf, std::begin(list), std::end(list));
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member &m)
+{
+	return stringify(buf, &m, &m + 1);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member *const &b,
+                      const member *const &e)
+{
+	static const auto print_member
+	{
+		[](mutable_buffer &buf, const member &m)
+		{
+			printer(buf, printer.name << printer.name_sep, m.first);
+			stringify(buf, m.second);
+		}
+	};
+
+	char *const start{begin(buf)};
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, b, e, print_member);
+	printer(buf, printer.object_end);
+	return { start, begin(buf) };
+}
+
+size_t
+ircd::json::serialized(const members &m)
+{
+	return serialized(std::begin(m), std::end(m));
+}
+
+size_t
+ircd::json::serialized(const member *const &begin,
+                       const member *const &end)
+{
+	const size_t ret(1 + !std::distance(begin, end));
+	return std::accumulate(begin, end, ret, []
+	(auto ret, const auto &member)
+	{
+		return ret += serialized(member) + 1;
+	});
+}
+
+size_t
+ircd::json::serialized(const member &member)
+{
+	return serialized(member.first) + 1 + serialized(member.second);
+}
+
+bool
+ircd::json::sorted(const member *const &begin,
+                   const member *const &end)
+{
+	return std::is_sorted(begin, end, []
+	(const member &a, const member &b)
+	{
+		return a < b;
+	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
