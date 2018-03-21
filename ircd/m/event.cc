@@ -471,7 +471,21 @@ ircd::sha256::buf
 ircd::m::event::hash(const m::event &event)
 {
 	thread_local char buf[64_KiB];
-	const string_view preimage
+	string_view preimage;
+
+	//TODO: tuple::keys::selection
+	if(defined(json::get<"signatures"_>(event)) ||
+	   defined(json::get<"hashes"_>(event)))
+	{
+		m::event event_{event};
+		json::get<"signatures"_>(event_) = {};
+		json::get<"hashes"_>(event_) = {};
+		preimage =
+		{
+			stringify(buf, event_)
+		};
+	}
+	else preimage =
 	{
 		stringify(buf, event)
 	};
