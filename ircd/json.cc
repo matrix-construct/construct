@@ -2008,28 +2008,6 @@ ircd::json::operator==(const value &a, const value &b)
 // json.h
 //
 
-std::string
-ircd::json::canonize(const string_view &in)
-{
-	std::string ret(size(in), char{});
-	ret.resize(size(canonize(mutable_buffer{ret}, in)));
-	return ret;
-}
-
-ircd::string_view
-ircd::json::canonize(const mutable_buffer &out,
-                     const string_view &in)
-try
-{
-	//TODO: XXX
-	assert(0);
-	return in;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure(begin(in), e);
-}
-
 bool
 ircd::json::valid(const string_view &s,
                   std::nothrow_t)

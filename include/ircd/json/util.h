@@ -34,13 +34,9 @@ namespace ircd::json
 
 	using members = std::initializer_list<member>;
 
-	// Validate JSON - checks if canonical value.
+	// Validate JSON - checks if valid JSON (not canonical).
 	bool valid(const string_view &, std::nothrow_t) noexcept;
 	void valid(const string_view &);
-
-	// Convert to canonical JSON
-	string_view canonize(const mutable_buffer &out, const string_view &in);
-	std::string canonize(const string_view &in);
 }
 
 inline std::ostream &
