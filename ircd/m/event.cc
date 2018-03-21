@@ -525,99 +525,14 @@ ircd::m::event::sign(json::iov &event,
                      const json::iov &contents,
                      const ed25519::sk &sk)
 {
-	const auto &type
+	ed25519::sig sig;
+	essential(event, contents, [&sk, &sig]
+	(json::iov &event)
 	{
-		event.at("type")
-	};
+		sig = sign(event, sk);
+	});
 
-	if(type == "m.room.aliases")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "aliases", contents.at("aliases") }
-			}
-		}};
-
-		return sign(event);
-	}
-	else if(type == "m.room.create")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "creator", contents.at("creator") }
-			}
-		}};
-
-		return sign(event);
-	}
-	else if(type == "m.room.history_visibility")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "history_visibility", contents.at("history_visibility") }
-			}
-		}};
-
-		return sign(event);
-	}
-	else if(type == "m.room.join_rules")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "join_rule", contents.at("join_rule") }
-			}
-		}};
-
-		return sign(event);
-	}
-	else if(type == "m.room.member")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "membership", contents.at("membership") }
-			}
-		}};
-
-		return sign(event);
-	}
-	else if(type == "m.room.power_levels")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "ban", contents.at("ban")                        },
-				{ "events", contents.at("events")                  },
-				{ "events_default", contents.at("events_default")  },
-				{ "kick", contents.at("kick")                      },
-				{ "redact", contents.at("redact")                  },
-				{ "state_default", contents.at("state_default")    },
-				{ "users", contents.at("users")                    },
-				{ "users_default", contents.at("users_default")    },
-			}
-		}};
-
-		return sign(event);
-	}
-	else
-	{
-		const json::iov::push _content
-		{
-			event, { "content", "{}" }
-		};
-
-		return sign(event, sk);
-	}
+	return sig;
 }
 
 ircd::ed25519::sig
@@ -769,10 +684,150 @@ ircd::m::event::verify(const m::event &event_,
                        const ed25519::pk &pk,
                        const ed25519::sig &sig)
 {
-	//TODO: tuple::keys::selection
-	m::event event{event_};
+	thread_local char content[64_KiB];
+	m::event event
+	{
+		essential(event_, content)
+	};
+
 	json::get<"signatures"_>(event) = {};
 
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	return verify(preimage, pk, sig);
+}
+
+bool
+ircd::m::event::verify(const json::object &event,
+                       const ed25519::pk &pk,
+                       const ed25519::sig &sig)
+{
+	//TODO: skip rewrite
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	return verify(preimage, pk, sig);
+}
+
+bool
+ircd::m::event::verify(const string_view &event,
+                       const ed25519::pk &pk,
+                       const ed25519::sig &sig)
+{
+	return pk.verify(event, sig);
+}
+
+void
+ircd::m::event::essential(json::iov &event,
+                          const json::iov &contents,
+                          const closure_iov_mutable &closure)
+{
+	const auto &type
+	{
+		event.at("type")
+	};
+
+	if(type == "m.room.aliases")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "aliases", contents.at("aliases") }
+			}
+		}};
+
+		closure(event);
+	}
+	else if(type == "m.room.create")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "creator", contents.at("creator") }
+			}
+		}};
+
+		closure(event);
+	}
+	else if(type == "m.room.history_visibility")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "history_visibility", contents.at("history_visibility") }
+			}
+		}};
+
+		closure(event);
+	}
+	else if(type == "m.room.join_rules")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "join_rule", contents.at("join_rule") }
+			}
+		}};
+
+		closure(event);
+	}
+	else if(type == "m.room.member")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "membership", contents.at("membership") }
+			}
+		}};
+
+		closure(event);
+	}
+	else if(type == "m.room.power_levels")
+	{
+		const json::iov::push _content{event,
+		{
+			"content", json::members
+			{
+				{ "ban", contents.at("ban")                        },
+				{ "events", contents.at("events")                  },
+				{ "events_default", contents.at("events_default")  },
+				{ "kick", contents.at("kick")                      },
+				{ "redact", contents.at("redact")                  },
+				{ "state_default", contents.at("state_default")    },
+				{ "users", contents.at("users")                    },
+				{ "users_default", contents.at("users_default")    },
+			}
+		}};
+
+		closure(event);
+	}
+	else
+	{
+		const json::iov::push _content
+		{
+			event, { "content", "{}" }
+		};
+
+		closure(event);
+	}
+}
+
+ircd::m::event
+ircd::m::event::essential(m::event event,
+                          const mutable_buffer &contentbuf)
+{
 	const auto &type
 	{
 		json::at<"type"_>(event)
@@ -783,8 +838,10 @@ ircd::m::event::verify(const m::event &event_,
 		json::get<"content"_>(event)
 	};
 
-	thread_local char contentbuf[64_KiB];
-	mutable_buffer essential{contentbuf};
+	mutable_buffer essential
+	{
+		contentbuf
+	};
 
 	if(type == "m.room.aliases")
 	{
@@ -840,36 +897,7 @@ ircd::m::event::verify(const m::event &event_,
 		content = "{}"_sv;
 	}
 
-	thread_local char buf[64_KiB];
-	const string_view preimage
-	{
-		stringify(buf, event)
-	};
-
-	return verify(preimage, pk, sig);
-}
-
-bool
-ircd::m::event::verify(const json::object &event,
-                       const ed25519::pk &pk,
-                       const ed25519::sig &sig)
-{
-	//TODO: skip rewrite
-	thread_local char buf[64_KiB];
-	const string_view preimage
-	{
-		stringify(buf, event)
-	};
-
-	return verify(preimage, pk, sig);
-}
-
-bool
-ircd::m::event::verify(const string_view &event,
-                       const ed25519::pk &pk,
-                       const ed25519::sig &sig)
-{
-	return pk.verify(event, sig);
+	return event;
 }
 
 //

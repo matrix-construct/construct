@@ -77,9 +77,13 @@ struct ircd::m::event
 	using id = m::id::event;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
+	using closure_iov_mutable = std::function<void (json::iov &)>;
 
 	static constexpr size_t MAX_SIZE = 64_KiB;
 	static conf::item<size_t> max_size;
+
+	static m::event essential(m::event, const mutable_buffer &content);
+	static void essential(json::iov &event, const json::iov &content, const closure_iov_mutable &);
 
 	static bool verify(const string_view &, const ed25519::pk &, const ed25519::sig &sig);
 	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
