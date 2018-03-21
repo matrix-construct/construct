@@ -110,7 +110,9 @@ struct ircd::json::object
 
 	// rewrite onto streams or buffers etc
 	friend size_t serialized(const object &);
+	friend size_t serialized(const member *const &, const member *const &);
 	friend string_view stringify(mutable_buffer &, const object &);
+	friend string_view stringify(mutable_buffer &, const member *const &, const member *const &);
 	friend std::ostream &operator<<(std::ostream &, const object &);
 };
 

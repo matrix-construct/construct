@@ -1117,11 +1117,43 @@ ircd::json::stringify(mutable_buffer &buf,
 	return { start, begin(buf) };
 }
 
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object::member *const &b,
+                      const object::member *const &e)
+{
+	char *const start(begin(buf));
+	static const auto stringify_member
+	{
+		[](mutable_buffer &buf, const object::member &member)
+		{
+			stringify(buf, member);
+		}
+	};
+
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, b, e, stringify_member);
+	printer(buf, printer.object_end);
+	return { start, begin(buf) };
+}
+
 size_t
 ircd::json::serialized(const object &object)
 {
 	const auto begin(std::begin(object));
 	const auto end(std::end(object));
+	const size_t ret(1 + (begin == end));
+	return std::accumulate(begin, end, ret, []
+	(auto ret, const object::member &member)
+	{
+		return ret += serialized(member) + 1;
+	});
+}
+
+size_t
+ircd::json::serialized(const object::member *const &begin,
+                       const object::member *const &end)
+{
 	const size_t ret(1 + (begin == end));
 	return std::accumulate(begin, end, ret, []
 	(auto ret, const object::member &member)
