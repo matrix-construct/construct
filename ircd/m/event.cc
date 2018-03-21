@@ -677,6 +677,141 @@ ircd::m::event::sign(const string_view &event,
 	return sig;
 }
 
+bool
+ircd::m::event::verify(const m::event &event,
+                       const ed25519::pk &pk,
+                       const string_view &origin,
+                       const string_view &keyid)
+{
+	const json::object &signatures
+	{
+		at<"signatures"_>(event)
+	};
+
+	const json::object &origin_sigs
+	{
+		signatures.at(origin)
+	};
+
+	const ed25519::sig sig
+	{
+		[&origin_sigs, &keyid](auto &buf)
+		{
+			b64decode(buf, unquote(origin_sigs.at(keyid)));
+		}
+	};
+
+	return verify(event, pk, sig);
+}
+
+bool
+ircd::m::event::verify(const m::event &event_,
+                       const ed25519::pk &pk,
+                       const ed25519::sig &sig)
+{
+	//TODO: tuple::keys::selection
+	m::event event{event_};
+	json::get<"signatures"_>(event) = {};
+
+	const auto &type
+	{
+		json::at<"type"_>(event)
+	};
+
+	json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	thread_local char contentbuf[64_KiB];
+	mutable_buffer essential{contentbuf};
+
+	if(type == "m.room.aliases")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "aliases", unquote(content.at("aliases")) }
+		});
+	}
+	else if(type == "m.room.create")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "creator", unquote(content.at("creator")) }
+		});
+	}
+	else if(type == "m.room.history_visibility")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "history_visibility", unquote(content.at("history_visibility")) }
+		});
+	}
+	else if(type == "m.room.join_rules")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "join_rule", unquote(content.at("join_rule")) }
+		});
+	}
+	else if(type == "m.room.member")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "membership", unquote(content.at("membership")) }
+		});
+	}
+	else if(type == "m.room.power_levels")
+	{
+		content = json::stringify(essential, json::members
+		{
+			{ "ban", unquote(content.at("ban"))                       },
+			{ "events", unquote(content.at("events"))                 },
+			{ "events_default", unquote(content.at("events_default")) },
+			{ "kick", unquote(content.at("kick"))                     },
+			{ "redact", unquote(content.at("redact"))                 },
+			{ "state_default", unquote(content.at("state_default"))   },
+			{ "users", unquote(content.at("users"))                   },
+			{ "users_default", unquote(content.at("users_default"))   },
+		});
+	}
+	else
+	{
+		content = "{}"_sv;
+	}
+
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	return verify(preimage, pk, sig);
+}
+
+bool
+ircd::m::event::verify(const json::object &event,
+                       const ed25519::pk &pk,
+                       const ed25519::sig &sig)
+{
+	//TODO: skip rewrite
+	thread_local char buf[64_KiB];
+	const string_view preimage
+	{
+		stringify(buf, event)
+	};
+
+	return verify(preimage, pk, sig);
+}
+
+bool
+ircd::m::event::verify(const string_view &event,
+                       const ed25519::pk &pk,
+                       const ed25519::sig &sig)
+{
+	return pk.verify(event, sig);
+}
+
 //
 // event::prev
 //
