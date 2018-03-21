@@ -1099,22 +1099,42 @@ ircd::json::operator<<(std::ostream &s, const object &object)
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const object &object)
+try
 {
-	const auto b(std::begin(object));
-	const auto e(std::end(object));
-	char *const start(begin(buf));
-	static const auto stringify_member
-	{
-		[](mutable_buffer &buf, const object::member &member)
-		{
-			stringify(buf, member);
-		}
-	};
+	using member_array = std::array<object::member, iov::MAX_SIZE>;
+	using member_arrays = std::array<member_array, object::max_recursion_depth>;
+	static_assert(sizeof(member_arrays) == 1_MiB); // yay reentrance .. joy :/
 
-	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, b, e, stringify_member);
-	printer(buf, printer.object_end);
-	return { start, begin(buf) };
+	thread_local member_arrays ma;
+	thread_local size_t mctr;
+	const size_t mc{mctr++};
+	assert(mc < ma.size());
+	const unwind uw{[&mc]
+	{
+		--mctr;
+		assert(mctr == mc);
+	}};
+
+	size_t i(0);
+	auto &m{ma.at(mc)};
+	for(auto it(begin(object)); it != end(object); ++it, ++i)
+		m.at(i) = *it;
+
+	std::sort(begin(m), begin(m) + i, []
+	(const object::member &a, const object::member &b)
+	{
+		return a.first < b.first;
+	});
+
+	return stringify(buf, m.data(), m.data() + i);
+}
+catch(const std::out_of_range &e)
+{
+	throw print_error
+	{
+		"Too many members (%zu) for stringifying JSON object",
+		size(object)
+	};
 }
 
 ircd::string_view
