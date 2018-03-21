@@ -27,10 +27,9 @@ namespace ircd::net
 }
 
 /// Connection options structure. This is provided when making a client
-/// connection with a socket. Unless otherwise noted it usually has to
-/// remain in scope as a const reference for the duration of that process.
-/// Some of its members are also thin and will have to remain in scope along
-/// with it.
+/// connection with a socket. The structure itself is copied when passed
+/// to open() but for any members that are string_views or pointers they
+/// will have to remain valid for the duration of the open().
 struct ircd::net::open_opts
 {
 	// Get the proper target CN from the options structure
