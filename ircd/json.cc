@@ -938,7 +938,7 @@ ircd::json::vector::const_iterator &
 ircd::json::vector::const_iterator::operator++()
 try
 {
-	static const qi::rule<const char *, string_view> parse_next
+	static const parser::rule<string_view> parse_next
 	{
 		raw[parser.object(0)] | qi::eoi
 		,"next vector element or end"
@@ -958,7 +958,7 @@ ircd::json::vector::const_iterator
 ircd::json::vector::begin()
 const try
 {
-	static const qi::rule<const char *, string_view> parse_begin
+	static const parser::rule<string_view> parse_begin
 	{
 		raw[parser.object(0)]
 		,"object vector element"
@@ -1152,13 +1152,13 @@ try
 		parser.ws
 	};
 
-	static const qi::rule<const char *, json::object::member> member
+	static const parser::rule<json::object::member> member
 	{
 		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
 		,"next object member"
 	};
 
-	static const qi::rule<const char *, json::object::member> parse_next
+	static const parser::rule<json::object::member> parse_next
 	{
 		(parser.object_end | (parser.value_sep >> -ws >> member)) >> -ws
 		,"next object member or end"
@@ -1189,13 +1189,13 @@ const try
 		parser.ws
 	};
 
-	static const qi::rule<const char *, json::object::member> object_member
+	static const parser::rule<json::object::member> object_member
 	{
 		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
 		,"object member"
 	};
 
-	static const qi::rule<const char *, json::object::member> parse_begin
+	static const parser::rule<json::object::member> parse_begin
 	{
 		-ws >> parser.object_begin >> -ws >> (parser.object_end | object_member) >> -ws
 		,"object begin and member or end"
@@ -1336,13 +1336,13 @@ try
 		parser.ws
 	};
 
-	static const qi::rule<const char *, string_view> value
+	static const parser::rule<string_view> value
 	{
 		raw[parser.value(0)]
 		,"array element"
 	};
 
-	static const qi::rule<const char *, string_view> parse_next
+	static const parser::rule<string_view> parse_next
 	{
 		(parser.array_end | (parser.value_sep >> -ws >> value)) >> -ws
 		,"next array element or end"
@@ -1372,13 +1372,13 @@ const try
 		parser.ws
 	};
 
-	static const qi::rule<const char *, string_view> value
+	static const parser::rule<string_view> value
 	{
 		raw[parser.value(0)]
 		,"array element"
 	};
 
-	static const qi::rule<const char *, string_view> parse_begin
+	static const parser::rule<string_view> parse_begin
 	{
 		-ws >> parser.array_begin >> -ws >> (parser.array_end | value) >> -ws
 		,"array begin and element or end"
