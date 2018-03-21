@@ -1055,6 +1055,17 @@ ircd::json::serialized(const member &member)
 	return serialized(member.first) + 1 + serialized(member.second);
 }
 
+bool
+ircd::json::sorted(const member *const &begin,
+                   const member *const &end)
+{
+	return std::is_sorted(begin, end, []
+	(const member &a, const member &b)
+	{
+		return a < b;
+	});
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/object.h
@@ -1180,6 +1191,32 @@ ircd::json::serialized(const object::member *const &begin,
 	{
 		return ret += serialized(member) + 1;
 	});
+}
+
+bool
+ircd::json::sorted(const object::member *const &begin,
+                   const object::member *const &end)
+{
+	return std::is_sorted(begin, end, []
+	(const object::member &a, const object::member &b)
+	{
+		return a.first < b.first;
+	});
+}
+
+bool
+ircd::json::sorted(const object &object)
+{
+	auto it(begin(object));
+	if(it == end(object))
+		return true;
+
+	string_view last{it->first};
+	for(++it; it != end(object); last = it->first, ++it)
+		if(it->first < last)
+			return false;
+
+	return true;
 }
 
 ircd::json::object::const_iterator &

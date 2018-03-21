@@ -109,6 +109,8 @@ struct ircd::json::object
 	explicit operator std::string() const;
 
 	// rewrite onto streams or buffers etc
+	friend bool sorted(const object &);
+	friend bool sorted(const member *const &, const member *const &);
 	friend size_t serialized(const object &);
 	friend size_t serialized(const member *const &, const member *const &);
 	friend string_view stringify(mutable_buffer &, const object &);

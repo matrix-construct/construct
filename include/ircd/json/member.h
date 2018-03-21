@@ -15,6 +15,7 @@ namespace ircd::json
 {
 	struct member;
 
+	bool sorted(const member *const &begin, const member *const &end);
 	size_t serialized(const member *const &begin, const member *const &end);
 	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
 }
