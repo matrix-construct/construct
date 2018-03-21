@@ -80,7 +80,7 @@ struct ircd::json::input
 	// string
 	rule<> unicode
 	{
-		lit('u') >> qi::uint_parser<char, 16, 4, 4>{}
+		lit('u') >> qi::uint_parser<uint64_t, 16, 1, 12>{}
 		,"escaped unicode"
 	};
 
