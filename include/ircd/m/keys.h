@@ -65,12 +65,14 @@ struct ircd::m::keys
   public:
 	using closure = std::function<void (const keys &)>;
 	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
+	using ed25519_closure = std::function<void (const ed25519::pk &)>;
 
 	static void get(const string_view &server_name, const string_view &key_id, const string_view &query_server, const closure &);
 
 	static void get(const string_view &server_name, const closure &);
 	static void get(const string_view &server_name, const string_view &key_id, const closure &);
 	static void get(const string_view &server_name, const string_view &key_id, const key_closure &);
+	static void get(const string_view &server_name, const string_view &key_id, const ed25519_closure &);
 
 	using super_type::tuple;
 	using super_type::operator=;

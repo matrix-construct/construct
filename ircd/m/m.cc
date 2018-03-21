@@ -356,6 +356,26 @@ ircd::m::self::tls_cert_der_sha256_b64
 void
 ircd::m::keys::get(const string_view &server_name,
                    const string_view &key_id,
+                   const ed25519_closure &closure)
+{
+	get(server_name, key_id, key_closure{[&closure]
+	(const string_view &keyb64)
+	{
+		const ed25519::pk pk
+		{
+			[&keyb64](auto &buf)
+			{
+				b64decode(buf, unquote(keyb64));
+			}
+		};
+
+		closure(pk);
+	}});
+}
+
+void
+ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
                    const key_closure &closure)
 try
 {

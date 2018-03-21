@@ -154,35 +154,30 @@ const
 
 bool
 ircd::m::request::verify(const string_view &key,
-                         const string_view &sig)
+                         const string_view &sig_)
 const
 {
-	const ed25519::sig _sig
+	const ed25519::sig sig
 	{
-		[&sig](auto &buf)
+		[&sig_](auto &buf)
 		{
-			b64decode(buf, sig);
+			b64decode(buf, sig_);
 		}
 	};
 
-	const ed25519::pk pk
+	const auto &origin
 	{
-		[this, &key](auto &buf)
-		{
-			const auto &origin
-			{
-				unquote(at<"origin"_>(*this))
-			};
-
-			m::keys::get(origin, key, [&buf]
-			(const string_view &key)
-			{
-				b64decode(buf, unquote(key));
-			});
-		}
+		unquote(at<"origin"_>(*this))
 	};
 
-	return verify(pk, _sig);
+	bool verified{false};
+	m::keys::get(origin, key, [this, &verified, &sig]
+	(const ed25519::pk &pk)
+	{
+		verified = verify(pk, sig);
+	});
+
+	return verified;
 }
 
 bool
