@@ -81,7 +81,13 @@ struct ircd::m::event
 	static constexpr size_t MAX_SIZE = 64_KiB;
 	static conf::item<size_t> max_size;
 
+	static ed25519::sig sign(const string_view &, const ed25519::sk &);
+	static ed25519::sig sign(const string_view &);
+	static ed25519::sig sign(const json::object &, const ed25519::sk &);
+	static ed25519::sig sign(const json::object &);
+	static ed25519::sig sign(const m::event &, const ed25519::sk &);
 	static ed25519::sig sign(const m::event &);
+	static ed25519::sig sign(json::iov &event, const json::iov &content, const ed25519::sk &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
 	static string_view signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
 

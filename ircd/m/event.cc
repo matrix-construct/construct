@@ -517,6 +517,14 @@ ircd::ed25519::sig
 ircd::m::event::sign(json::iov &event,
                      const json::iov &contents)
 {
+	return sign(event, contents, self::secret_key);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(json::iov &event,
+                     const json::iov &contents,
+                     const ed25519::sk &sk)
+{
 	const auto &type
 	{
 		event.at("type")
@@ -608,12 +616,19 @@ ircd::m::event::sign(json::iov &event,
 			event, { "content", "{}" }
 		};
 
-		return sign(event);
+		return sign(event, sk);
 	}
 }
 
 ircd::ed25519::sig
 ircd::m::event::sign(const m::event &event)
+{
+	return sign(event, self::secret_key);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const m::event &event,
+                     const ed25519::sk &sk)
 {
 	thread_local char buf[64_KiB];
 	const string_view preimage
@@ -621,12 +636,44 @@ ircd::m::event::sign(const m::event &event)
 		stringify(buf, event)
 	};
 
-	const ed25519::sig sig
+	return sign(preimage, sk);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const json::object &event)
+{
+	return sign(event, self::secret_key);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const json::object &event,
+                     const ed25519::sk &sk)
+{
+	//TODO: skip rewrite
+	thread_local char buf[64_KiB];
+	const string_view preimage
 	{
-		self::secret_key.sign(preimage)
+		stringify(buf, event)
 	};
 
-	assert(self::public_key.verify(preimage, sig));
+	return sign(preimage, sk);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const string_view &event)
+{
+	return sign(event, self::secret_key);
+}
+
+ircd::ed25519::sig
+ircd::m::event::sign(const string_view &event,
+                     const ed25519::sk &sk)
+{
+	const ed25519::sig sig
+	{
+		sk.sign(event)
+	};
+
 	return sig;
 }
 
