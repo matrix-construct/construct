@@ -1430,21 +1430,54 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const member *const &b,
                       const member *const &e)
+try
 {
+	using member_array = std::array<const member *, iov::MAX_SIZE>;
+	using member_arrays = std::array<member_array, object::max_recursion_depth>;
+	static_assert(sizeof(member_arrays) == 256_KiB);
+
+	thread_local member_arrays ma;
+	thread_local size_t mctr;
+	const size_t mc{mctr++};
+	assert(mc < ma.size());
+	const unwind uw{[&mc]
+	{
+		--mctr;
+		assert(mctr == mc);
+	}};
+
+	size_t i(0);
+	auto &m{ma.at(mc)};
+	for(auto it(b); it != e; ++it)
+		m.at(i++) = it;
+
+	std::sort(begin(m), begin(m) + i, []
+	(const member *const &a, const member *const &b)
+	{
+		return *a < *b;
+	});
+
 	static const auto print_member
 	{
-		[](mutable_buffer &buf, const member &m)
+		[](mutable_buffer &buf, const member *const &m)
 		{
-			printer(buf, printer.name << printer.name_sep, m.first);
-			stringify(buf, m.second);
+			printer(buf, printer.name << printer.name_sep, m->first);
+			stringify(buf, m->second);
 		}
 	};
 
 	char *const start{begin(buf)};
 	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, b, e, print_member);
+	printer::list_protocol(buf, m.data(), m.data() + i, print_member);
 	printer(buf, printer.object_end);
 	return { start, begin(buf) };
+}
+catch(const std::out_of_range &)
+{
+	throw print_error
+	{
+		"Too many members (%zd) for stringifying", std::distance(b, e)
+	};
 }
 
 size_t
