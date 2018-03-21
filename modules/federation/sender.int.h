@@ -80,6 +80,11 @@ struct node
 	txn *curtxn {nullptr};
 	bool err {false};
 
+	string_view origin() const
+	{
+		return id.host();
+	};
+
 	bool flush();
 	void push(std::shared_ptr<unit>);
 

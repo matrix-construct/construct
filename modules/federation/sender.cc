@@ -195,6 +195,7 @@ try
 
 	txns.emplace_back(*this, std::move(content), std::move(opts));
 	const unwind::nominal::assertion na;
+	curtxn = &txns.back();
 	q.clear();
 	recv_action.notify_one();
 	return true;
@@ -404,8 +405,11 @@ recv_timeout(txn &txn,
 void
 remove_node(const node &node)
 {
-	const string_view &id{node.id};
-	const auto it{nodes.find(id)};
+	const auto it
+	{
+		nodes.find(node.origin())
+	};
+
 	assert(it != end(nodes));
 	nodes.erase(it);
 }
