@@ -1573,7 +1573,13 @@ ircd::json::stringify(mutable_buffer &buf,
 
 		case LITERAL:
 		{
-			printer(buf, printer.literal, string_view{v});
+			if(v.serial)
+				printer(buf, printer.literal, string_view{v});
+			else if(v.integer)
+				consume(buf, copy(buf, "true"_sv));
+			else
+				consume(buf, copy(buf, "false"_sv));
+
 			break;
 		}
 
@@ -1660,7 +1666,14 @@ ircd::json::serialized(const value &v)
 			return v.serial? serialized(json::array{v}) : serialized(v.array, v.array + v.len);
 
 		case LITERAL:
-			return v.serial? v.len : serialized(bool(v.integer));
+		{
+			if(v.serial)
+				return v.len;
+			else if(v.integer)
+				return size("true"_sv);
+			else
+				return size("false"_sv);
+		}
 
 		case NUMBER:
 		{
