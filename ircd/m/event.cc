@@ -676,6 +676,66 @@ ircd::m::event::sign(const string_view &event,
 
 	return sig;
 }
+bool
+ircd::m::event::verify(const m::event &event)
+{
+	const string_view &origin
+	{
+		at<"origin"_>(event)
+	};
+
+	return verify(event, origin);
+}
+
+bool
+ircd::m::event::verify(const m::event &event,
+                       const string_view &origin)
+{
+	const json::object &signatures
+	{
+		at<"signatures"_>(event)
+	};
+
+	const json::object &origin_sigs
+	{
+		signatures.at(origin)
+	};
+
+	for(const auto &p : origin_sigs)
+		if(verify(event, origin, unquote(p.first)))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::event::verify(const m::event &event,
+                       const string_view &origin,
+                       const string_view &keyid)
+try
+{
+	bool ret{false};
+	m::keys::get(origin, keyid, [&ret, &event, &origin, &keyid]
+	(const ed25519::pk &pk)
+	{
+		ret = verify(event, pk, origin, keyid);
+	});
+
+	return ret;
+}
+catch(const m::NOT_FOUND &e)
+{
+	log::derror
+	{
+		"Failed to verify %s because key %s for %s :%s",
+		string_view{json::get<"event_id"_>(event)},
+		keyid,
+		origin,
+		e.what()
+	};
+
+	return false;
+}
 
 bool
 ircd::m::event::verify(const m::event &event,

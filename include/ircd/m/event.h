@@ -85,6 +85,9 @@ struct ircd::m::event
 	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
 	static bool verify(const m::event &, const ed25519::pk &, const ed25519::sig &sig);
 	static bool verify(const m::event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
+	static bool verify(const m::event &, const string_view &origin, const string_view &pkid); // io/yield
+	static bool verify(const m::event &, const string_view &origin); // io/yield
+	static bool verify(const m::event &); // io/yield
 
 	static ed25519::sig sign(const string_view &, const ed25519::sk &);
 	static ed25519::sig sign(const string_view &);
