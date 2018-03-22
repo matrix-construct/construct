@@ -2254,8 +2254,8 @@ ircd::net::dns::opts_default
 decltype(ircd::net::dns::cache::clear_nxdomain)
 ircd::net::dns::cache::clear_nxdomain
 {
-	{ "name",     "net.dns.cache.clear_nxdomain" },
-	{ "default",   43200L                        },
+	{ "name",     "ircd.net.dns.cache.clear_nxdomain" },
+	{ "default",   43200L                             },
 };
 
 /// Convenience composition with a single ipport callback. This is the result of
@@ -2512,15 +2512,15 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 decltype(ircd::net::dns::resolver::timeout)
 ircd::net::dns::resolver::timeout
 {
-	{ "name",     "net.dns.resolver.timeout" },
-	{ "default",   10000L                    },
+	{ "name",     "ircd.net.dns.resolver.timeout" },
+	{ "default",   10000L                         },
 };
 
 decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
-	{ "name",     "net.dns.resolver.send_rate" },
-	{ "default",   20L                         },
+	{ "name",     "ircd.net.dns.resolver.send_rate" },
+	{ "default",   20L                              },
 };
 
 ircd::net::dns::resolver::resolver()
