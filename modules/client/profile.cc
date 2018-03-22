@@ -38,14 +38,14 @@ profile_set(const m::user &user,
             const string_view &value);
 
 static resource::response
-get__profile_full(client &client,
-                  const resource::request &request,
-                  const m::room &user_room);
+get__profile_full(client &,
+                  const resource::request &,
+                  const m::user &);
 
 static resource::response
-get__profile_remote(client &client,
-                    const resource::request &request,
-                    const m::user &user);
+get__profile_remote(client &,
+                    const resource::request &,
+                    const m::user &);
 
 resource::response
 get__profile(client &client,
@@ -67,35 +67,21 @@ get__profile(client &client,
 		user_id
 	};
 
-	const m::room::id::buf user_room_id
-	{
-		user.room_id()
-	};
-
-	if(!my(user) && !exists(user_room_id))
+	if(!my(user) && !exists(user))
 		return get__profile_remote(client, request, user);
 
-	const m::room user_room
-	{
-		user_room_id
-	};
-
 	if(request.parv.size() < 2)
-		return get__profile_full(client, request, user_room);
+		return get__profile_full(client, request, user);
 
+	char parambuf[128];
 	const string_view &param
 	{
-		request.parv[1]
+		url::decode(request.parv[1], parambuf)
 	};
 
-	user_room.get("ircd.profile", param, [&client, &param]
-	(const m::event &event)
+	profile_get(user, param, [&param, &client]
+	(const string_view &value)
 	{
-		const string_view &value
-		{
-			at<"content"_>(event).at("text")
-		};
-
 		resource::response
 		{
 			client, json::members
@@ -117,12 +103,10 @@ method_get
 resource::response
 get__profile_full(client &client,
                   const resource::request &request,
-                  const m::room &user_room)
+                  const m::user &user)
 {
-	const m::room::state state
-	{
-		user_room
-	};
+	const m::user::room user_room{user};
+	const m::room::state state{user_room};
 
 	std::vector<json::member> members;
 	state.for_each("ircd.profile", [&members]
@@ -162,9 +146,10 @@ get__profile_remote(client &client,
 {
 	//TODO: XXX cache strat user's room
 
-	const string_view &field
+	char parambuf[128];
+	const string_view &param
 	{
-		request.parv[1]
+		url::decode(request.parv[1], parambuf)
 	};
 
 	const unique_buffer<mutable_buffer> buf
@@ -174,7 +159,7 @@ get__profile_remote(client &client,
 
 	m::v1::query::profile federation_request
 	{
-		user.user_id, field, buf
+		user.user_id, param, buf
 	};
 
 	//TODO: conf
@@ -236,19 +221,10 @@ put__profile(client &client,
 		user_id
 	};
 
-	const m::room::id::buf user_room_id
-	{
-		user.room_id()
-	};
-
-	const m::room user_room
-	{
-		user_room_id
-	};
-
+	char parambuf[128];
 	const string_view &param
 	{
-		request.parv[1]
+		url::decode(request.parv[1], parambuf)
 	};
 
 	const string_view &value
@@ -256,10 +232,15 @@ put__profile(client &client,
 		unquote(request.at(param))
 	};
 
-	send(user_room, request.user_id, "ircd.profile", param,
+	const m::user::id &sender
 	{
-		{ "text", value }
-	});
+		request.user_id
+	};
+
+	const auto eid
+	{
+		profile_set(user, sender, param, value)
+	};
 
 	return resource::response
 	{
