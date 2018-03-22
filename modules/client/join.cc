@@ -173,6 +173,29 @@ bootstrap(const m::room::alias &room_alias,
 		{ event,    { "room_id",       room_id                   }},
 	};
 
+	const m::user user
+	{
+		user_id
+	};
+
+	char displayname_buf[256];
+	const string_view displayname
+	{
+		user.profile(displayname_buf, "displayname")
+	};
+
+	char avatar_url_buf[256];
+	const string_view avatar_url
+	{
+		user.profile(avatar_url_buf, "avatar_url")
+	};
+
+	const json::iov::add_if add_if[]
+	{
+		{ content,  !empty(displayname),  { "displayname",  displayname  }},
+		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
+	};
+
 	m::vm::opts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);

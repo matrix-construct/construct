@@ -60,5 +60,28 @@ join__room_user(const room &room,
 		{ content,  { "membership",  "join"           }},
 	};
 
+	const m::user user
+	{
+		user_id
+	};
+
+	char displayname_buf[256];
+	const string_view displayname
+	{
+		user.profile(displayname_buf, "displayname")
+	};
+
+	char avatar_url_buf[256];
+	const string_view avatar_url
+	{
+		user.profile(avatar_url_buf, "avatar_url")
+	};
+
+	const json::iov::add_if add_if[]
+	{
+		{ content,  !empty(displayname),  { "displayname",  displayname  }},
+		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
+	};
+
 	return commit(room, event, content);
 }
