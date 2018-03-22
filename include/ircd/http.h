@@ -67,6 +67,7 @@ enum ircd::http::code
 	METHOD_NOT_ALLOWED                      = 405,
 	REQUEST_TIMEOUT                         = 408,
 	CONFLICT                                = 409,
+	LENGTH_REQUIRED                         = 411,
 	PAYLOAD_TOO_LARGE                       = 413,
 	REQUEST_URI_TOO_LONG                    = 414,
 	EXPECTATION_FAILED                      = 417,

@@ -82,6 +82,7 @@ ircd::http::reason
 	{ code::METHOD_NOT_ALLOWED,                  "Method Not Allowed"                              },
 	{ code::REQUEST_TIMEOUT,                     "Request Time-out"                                },
 	{ code::CONFLICT,                            "Conflict"                                        },
+	{ code::LENGTH_REQUIRED,                     "Length Required"                                 },
 	{ code::PAYLOAD_TOO_LARGE,                   "Payload Too Large"                               },
 	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },
 	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
