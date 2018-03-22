@@ -86,13 +86,13 @@ struct ircd::json::input
 
 	rule<> escaped
 	{
-		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t')
+		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t') | lit('\0')
 		,"escaped"
 	};
 
 	rule<> escaper
 	{
-		lit('"') | lit('\\') | lit('b') | lit('f') | lit('n') | lit('r') | lit('t') | unicode
+		lit('"') | lit('\\') | lit('b') | lit('f') | lit('n') | lit('r') | lit('t') | lit('0') | unicode
 		,"escaped"
 	};
 
@@ -103,7 +103,7 @@ struct ircd::json::input
 
 	rule<string_view> chars
 	{
-		raw[*((char_ - (escape | quote)) | (escape >> escaper_nc))]
+		raw[*((char_ - escaped) | (escape >> escaper_nc))]
 		,"characters"
 	};
 
