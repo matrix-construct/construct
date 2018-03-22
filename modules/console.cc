@@ -32,6 +32,7 @@ static bool console_cmd__key(const string_view &line);
 static bool console_cmd__db(const string_view &line);
 static bool console_cmd__net(const string_view &line);
 static bool console_cmd__mod(const string_view &line);
+static bool console_cmd__conf(const string_view &line);
 static bool console_cmd__debuglog(const string_view &line);
 static bool console_cmd__test(const string_view &line);
 
@@ -61,6 +62,9 @@ try
 
 		case hash("debuglog"):
 			return console_cmd__debuglog(args);
+
+		case hash("conf"):
+			return console_cmd__conf(args);
 
 		case hash("mod"):
 			return console_cmd__mod(args);
@@ -170,6 +174,43 @@ bool
 console_id__user(const m::user::id &id,
                  const string_view &args)
 {
+	return true;
+}
+
+//
+// conf
+//
+
+static bool console_cmd__conf_list(const string_view &line);
+
+bool
+console_cmd__conf(const string_view &line)
+{
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	switch(hash(token(line, ' ', 0, {})))
+	{
+		case hash("list"):
+			return console_cmd__conf_list(args);
+
+		default:
+			return console_cmd__conf_list(line);
+	}
+}
+
+bool
+console_cmd__conf_list(const string_view &line)
+{
+	thread_local char val[4_KiB];
+	for(const auto &item : conf::items)
+		out
+		<< std::setw(48) << std::right << item.first
+		<< " = " << item.second->get(val)
+		<< std::endl;
+
 	return true;
 }
 
