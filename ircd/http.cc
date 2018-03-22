@@ -352,13 +352,19 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && content_length != std::numeric_limits<size_t>::max())
+	if(code != NO_CONTENT && content_length != size_t(-1))
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
 			{
 				out, "Content-Length: %zu", content_length
 			};
+		});
+
+	if(content_length == size_t(-1))
+		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
+		{
+			return copy(out, "Transfer-Encoding: chunked"_sv);
 		});
 
 	if(!headers_string.empty())
