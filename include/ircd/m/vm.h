@@ -131,6 +131,9 @@ struct ircd::m::vm::opts
 	/// replayed through the system (not recommended).
 	bool replays {false};
 
+	// Verify the origin signature
+	bool verify {true};
+
 	/// TODO: Y
 	bool prev_check_exists {true};
 

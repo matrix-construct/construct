@@ -168,6 +168,7 @@ ircd::m::vm::commit(const event &event,
 	commit_hook(event);
 
 	vm::opts opts_{opts};
+	opts_.verify = false;
 
 	// Some functionality on this server may create an event on behalf
 	// of remote users. It's safe for us to mask this here, but eval'ing
@@ -357,6 +358,13 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		{
 			fault::EXISTS, "Event has already been evaluated."
 		};
+
+	if(opts.verify)
+		if(!m::event::verify(event))
+			throw m::BAD_SIGNATURE
+			{
+				"Signature verification failed"
+			};
 
 	eval_hook(event);
 
