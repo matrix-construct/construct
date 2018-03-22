@@ -59,6 +59,11 @@ struct ircd::util::va_rtti
 	}
 	{
 		assert(argc <= max_size());
+		static_assert
+		(
+			sizeof...(args) <= max_size(),
+			"Too many arguments to va_rtti"
+		);
 	}
 };
 
