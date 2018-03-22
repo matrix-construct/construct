@@ -26,6 +26,17 @@ profile_resource
 	}
 };
 
+extern "C" void
+profile_get(const m::user &user,
+            const string_view &key,
+            const m::user::profile_closure &closure);
+
+extern "C" m::event::id::buf
+profile_set(const m::user &user,
+            const m::user &sender,
+            const string_view &key,
+            const string_view &value);
+
 static resource::response
 get__profile_full(client &client,
                   const resource::request &request,
@@ -264,3 +275,42 @@ method_put
 		method_put.REQUIRES_AUTH
 	}
 };
+
+void
+profile_get(const m::user &user,
+            const string_view &key,
+            const m::user::profile_closure &closure)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	user_room.get("ircd.profile", key, [&closure]
+	(const m::event &event)
+	{
+		const string_view &value
+		{
+			unquote(at<"content"_>(event).at("text"))
+		};
+
+		closure(value);
+	});
+}
+
+m::event::id::buf
+profile_set(const m::user &user,
+            const m::user &sender,
+            const string_view &key,
+            const string_view &value)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	return send(user_room, sender, "ircd.profile", key,
+	{
+		{ "text", value }
+	});
+}

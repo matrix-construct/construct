@@ -41,6 +41,12 @@ struct ircd::m::user
 	bool is_password(const string_view &password) const noexcept;
 	event::id::buf password(const string_view &password);
 
+	using profile_closure = std::function<void (const string_view &)>;
+	void profile(const string_view &key, const profile_closure &) const;
+	bool profile(std::nothrow_t, const string_view &key, const profile_closure &) const;
+	string_view profile(const mutable_buffer &out, const string_view &key) const; //nothrow
+	event::id::buf profile(const m::user &sender, const string_view &key, const string_view &value);
+
 	bool is_active() const;
 	event::id::buf deactivate();
 	event::id::buf activate();

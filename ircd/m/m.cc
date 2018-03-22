@@ -954,6 +954,65 @@ const
 }
 
 ircd::m::event::id::buf
+ircd::m::user::profile(const m::user &sender,
+                       const string_view &key,
+                       const string_view &val)
+{
+	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const string_view &);
+
+	static import<prototype> function
+	{
+		"client_profile", "profile_set"
+	};
+
+	return function(*this, sender, key, val);
+}
+
+ircd::string_view
+ircd::m::user::profile(const mutable_buffer &out,
+                       const string_view &key)
+const
+{
+	string_view ret;
+	profile(std::nothrow, key, [&out, &ret]
+	(const string_view &val)
+	{
+		ret = { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::user::profile(std::nothrow_t,
+                       const string_view &key,
+                       const profile_closure &closure)
+const try
+{
+	profile(key, closure);
+	return true;
+}
+catch(const std::exception &e)
+{
+	return false;
+}
+
+void
+ircd::m::user::profile(const string_view &key,
+                       const profile_closure &closure)
+const
+{
+	using prototype = void (const m::user &, const string_view &, const profile_closure &);
+
+	static import<prototype> function
+	{
+		"client_profile", "profile_get"
+	};
+
+	return function(*this, key, closure);
+}
+
+ircd::m::event::id::buf
 ircd::m::user::password(const string_view &password)
 {
 	using prototype = event::id::buf (const m::user::id &, const string_view &) noexcept;
