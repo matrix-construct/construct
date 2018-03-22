@@ -105,12 +105,12 @@ try
 {
 	char val[512];
 	std::stringstream ss;
-	ss << "<pre>";
+	ss << "<table>";
 	for(const auto &p : conf::items)
-		ss << std::setw(32) << std::right << p.first
-		   << " = " << p.second->get(val)
-		   << "<br />";
-	ss << "</pre>";
+		ss << "<tr><td>" << std::setw(32) << std::right << p.first
+		   << "</td><td>" << p.second->get(val)
+		   << "</td></tr>";
+	ss << "</table>";
 
 	msghtml(control_room, m::me.user_id, ss.str());
 }
