@@ -598,7 +598,7 @@ ircd::http::parser::content_length(const string_view &str)
 
 ircd::const_buffer
 ircd::http::writechunk(const mutable_buffer &buf,
-                       const size_t &chunk_size)
+                       const uint32_t &chunk_size)
 {
 	window_buffer wb{buf};
 	writechunk(wb, chunk_size);
@@ -607,11 +607,11 @@ ircd::http::writechunk(const mutable_buffer &buf,
 
 void
 ircd::http::writechunk(window_buffer &buf,
-                       const size_t &chunk_size)
+                       const uint32_t &chunk_size)
 {
 	writeline(buf, [&chunk_size](const mutable_buffer &out) -> size_t
 	{
-		return ::snprintf(data(out), size(out), "%lx", chunk_size);
+		return ::snprintf(data(out), size(out), "%08x", chunk_size);
 	});
 }
 
