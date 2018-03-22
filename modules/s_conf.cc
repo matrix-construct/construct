@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Server Configuration"
 };
 
-const ircd::m::room::id::buf
+const m::room::id::buf
 conf_room_id
 {
 	"conf", ircd::my_host()
@@ -27,6 +27,33 @@ conf_room
 {
 	conf_room_id
 };
+
+extern "C" m::event::id::buf
+set_conf_item(const m::user::id &sender,
+              const string_view &key,
+              const string_view &val)
+{
+	return send(conf_room, sender, "ircd.conf.item", key,
+	{
+		{ "value", val }
+	});
+}
+
+extern "C" void
+get_conf_item(const string_view &key,
+              const std::function<void (const string_view &)> &closure)
+{
+	conf_room.get("ircd.conf.item", key, [&closure]
+	(const m::event &event)
+	{
+		const auto &value
+		{
+			unquote(at<"content"_>(event).at("value"))
+		};
+
+		closure(value);
+	});
+}
 
 static void
 update_conf(const m::event &event)

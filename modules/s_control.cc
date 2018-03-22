@@ -40,12 +40,23 @@ _conf_set(const m::event &event,
           const string_view &val)
 try
 {
+	const auto &sender
+	{
+		at<"sender"_>(event)
+	};
+
+	using prototype = m::event::id::buf (const m::user::id &,
+	                                     const string_view &key,
+	                                     const string_view &val);
+
+	static import<prototype> set_conf_item
+	{
+		"s_conf", "set_conf_item"
+	};
+
 	const auto event_id
 	{
-		send(conf_room_id, at<"sender"_>(event), "ircd.conf.item", key,
-		{
-			{ "value", val }
-		})
+		set_conf_item(sender, key, val)
 	};
 
 	char kvbuf[768];
@@ -64,15 +75,18 @@ _conf_get(const m::event &event,
           const string_view &key)
 try
 {
-	const m::room conf_room{conf_room_id};
-	conf_room.get("ircd.conf.item", key, [&key]
-	(const m::event &event)
-	{
-		const auto &value
-		{
-			unquote(at<"content"_>(event).at("value"))
-		};
+	using closure = std::function<void (const string_view &val)>;
+	using prototype = void (const string_view &key,
+	                        const closure &);
 
+	static import<prototype> get_conf_item
+	{
+		"s_conf", "get_conf_item"
+	};
+
+	get_conf_item(key, [&key]
+	(const string_view &value)
+	{
 		char kvbuf[256];
 		notice(control_room, fmt::sprintf
 		{
