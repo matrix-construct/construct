@@ -35,7 +35,6 @@ bool console_active;
 bool console_inwork;
 ircd::ctx::ctx *console_ctx;
 ircd::module *console_module;
-boost::asio::posix::stream_descriptor *console_in;
 
 static void check_console_active();
 static void console_fini();
@@ -110,34 +109,24 @@ try
 
 	const unwind atexit([]
 	{
-		delete console_in; console_in = nullptr;
 		console_fini();
 	});
 
 	console_init();
-	console_in = new boost::asio::posix::stream_descriptor
-	{
-		*::ios, dup(STDIN_FILENO)
-	};
-
-	boost::asio::streambuf buf{BUFSIZE};
-	std::istream is{&buf};
-	std::string line;
-
 	std::cout << console_message << generic_message;
 	while(1)
 	{
 		std::cout << "\n> " << std::flush;
 
+		char buf[1024];
+		string_view line;
 		// Suppression scope ends after the command is entered
 		// so the output of the command (if log messages) can be seen.
 		{
 			const log::console_quiet quiet(false);
-			boost::asio::async_read_until(*console_in, buf, '\n', yield_context{to_asio{}});
+			line = fs::stdin::readline(buf);
 		}
 
-		std::getline(is, line);
-		std::cin.clear();
 		if(line.empty())
 			continue;
 
@@ -357,17 +346,8 @@ try
 	if(!console_active)
 		return;
 
-	if(console_inwork && console_ctx)
-	{
+	if(console_ctx)
 		interrupt(*console_ctx);
-		return;
-	}
-
-	if(console_in)
-	{
-		console_in->cancel();
-		console_in->close();
-	}
 }
 catch(const std::exception &e)
 {
