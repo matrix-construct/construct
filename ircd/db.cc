@@ -122,6 +122,16 @@ ircd::db::sync(database &d)
 	};
 }
 
+/// Flushes all columns. Note that if blocking=true, blocking may occur for
+/// each column individually.
+void
+ircd::db::flush(database &d,
+                const bool &blocking)
+{
+	for(const auto &column : d.columns)
+		flush(*column, blocking);
+}
+
 uint64_t
 ircd::db::sequence(const database &cd)
 {

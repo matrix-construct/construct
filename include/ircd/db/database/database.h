@@ -20,6 +20,7 @@ namespace ircd::db
 	const std::string &name(const database &);
 	uint64_t sequence(const database &); // Latest sequence number
 
+	void flush(database &, const bool &blocking = true);
 	void sync(database &);
 }
 
