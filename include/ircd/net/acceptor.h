@@ -52,6 +52,6 @@ struct ircd::net::listener::acceptor
 	bool interrupt() noexcept;
 	void join() noexcept;
 
-	acceptor(const json::object &opts);
+	acceptor(const string_view &name, const json::object &opts);
 	~acceptor() noexcept;
 };

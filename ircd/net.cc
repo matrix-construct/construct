@@ -783,13 +783,21 @@ ircd::net::blocking(const socket &socket)
 // net/listener.h
 //
 
-ircd::net::listener::listener(const std::string &opts)
-:listener{json::object{opts}}
+ircd::net::listener::listener(const string_view &name,
+                              const std::string &opts)
+:listener
+{
+	name, json::object{opts}
+}
 {
 }
 
-ircd::net::listener::listener(const json::object &opts)
-:acceptor{std::make_shared<struct acceptor>(opts)}
+ircd::net::listener::listener(const string_view &name,
+                              const json::object &opts)
+:acceptor
+{
+	std::make_shared<struct acceptor>(name, opts)
+}
 {
 	// Starts the first asynchronous accept. This has to be done out here after
 	// the acceptor's shared object is constructed.
@@ -824,16 +832,18 @@ ircd::net::listener::acceptor::timeout
 	{ "default",  5000L                       },
 };
 
-ircd::net::listener::acceptor::acceptor(const json::object &opts)
+ircd::net::listener::acceptor::acceptor(const string_view &name,
+                                        const json::object &opts)
 try
 :name
 {
-	unquote(opts.get("name", "IRCd (ssl)"s))
+	name
 }
 ,backlog
 {
+	//TODO: XXX
 	//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
-	opts.get<size_t>("backlog", SOMAXCONN) //TODO: XXX
+	std::min(opts.get<uint>("backlog", SOMAXCONN), uint(SOMAXCONN))
 }
 ,ssl
 {
@@ -842,7 +852,7 @@ try
 ,ep
 {
 	ip::address::from_string(unquote(opts.get("host", "127.0.0.1"s))),
-	opts.at<uint16_t>("port")
+	opts.get<uint16_t>("port", 8448L)
 }
 ,a
 {
@@ -851,8 +861,9 @@ try
 {
 	static const auto &max_connections
 	{
+		//TODO: XXX
 		//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
-		SOMAXCONN //TODO: XXX
+		std::min(opts.get<uint>("max_connections", SOMAXCONN), uint(SOMAXCONN))
 	};
 
 	static const ip::tcp::acceptor::reuse_address reuse_address
@@ -882,7 +893,10 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	throw error("listener: %s", e.what());
+	throw error
+	{
+		"listener: %s", e.what()
+	};
 }
 
 ircd::net::listener::acceptor::~acceptor()

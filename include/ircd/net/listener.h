@@ -26,7 +26,7 @@ struct ircd::net::listener
 	std::shared_ptr<struct acceptor> acceptor;
 
   public:
-	explicit listener(const std::string &options);
-	listener(const json::object &options);
+	explicit listener(const string_view &name, const std::string &options);
+	listener(const string_view &name, const json::object &options);
 	~listener() noexcept;
 };

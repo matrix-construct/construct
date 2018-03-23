@@ -167,8 +167,7 @@ ircd::m::init::modules()
 
 namespace ircd::m
 {
-	static void init_listener(const json::object &config, const json::object &opts, const string_view &bindaddr);
-	static void init_listener(const json::object &config, const json::object &opts);
+	static void init_listener(const json::object &config, const string_view &name, const json::object &conf);
 }
 
 void
@@ -186,58 +185,33 @@ ircd::m::init::listeners()
 
 	const json::array listeners
 	{
-		config["listeners"]
+		config[{"ircd", "listen"}]
 	};
 
-	if(m::listeners.empty())
-		init_listener(config, {});
-	else
-		for(const json::object opts : listeners)
-			init_listener(config, opts);
+	for(const auto &name : listeners) try
+	{
+		const json::object &opts
+		{
+			config.at({"listen", unquote(name)})
+		};
+
+		init_listener(config, name, opts);
+	}
+	catch(const json::not_found &e)
+	{
+		throw ircd::user_error
+		{
+			"Failed to find configuration block for listener %s", name
+		};
+	}
 }
 
 static void
 ircd::m::init_listener(const json::object &config,
+                       const string_view &name,
                        const json::object &opts)
 {
-	const json::array binds
-	{
-		opts["bind_addresses"]
-	};
-
-	if(binds.empty())
-		init_listener(config, opts, "0.0.0.0");
-	else
-		for(const auto &bindaddr : binds)
-			init_listener(config, opts, unquote(bindaddr));
-}
-
-static void
-ircd::m::init_listener(const json::object &config,
-                       const json::object &opts,
-                       const string_view &host)
-{
-	const json::array resources
-	{
-		opts["resources"]
-	};
-
-	// resources has multiple names with different configs which are being
-	// ignored :-/
-	const std::string name{"Matrix"s};
-
-	// Translate synapse options to our options (which reflect asio::ssl)
-	const json::strung options{json::members
-	{
-		{ "name",                      name                            },
-		{ "host",                      host                            },
-		{ "port",                      opts.get("port", 8448L)         },
-		{ "ssl_certificate_file_pem",  config["tls_certificate_path"]  },
-		{ "ssl_private_key_file_pem",  config["tls_private_key_path"]  },
-		{ "ssl_tmp_dh_file",           config["tls_dh_params_path"]    },
-	}};
-
-	m::listeners.emplace_back(options);
+	m::listeners.emplace_back(name, opts);
 }
 
 void
@@ -470,14 +444,24 @@ noexcept
 void
 ircd::m::keys::init::certificate()
 {
+	const string_view origin
+	{
+		unquote(this->config.at({"ircd", "origin"}))
+	};
+
+	const json::object config
+	{
+		this->config.at({"origin", unquote(origin)})
+	};
+
 	const std::string private_key_file
 	{
-		unquote(config.at("tls_private_key_path"))
+		unquote(config.at("ssl_private_key_file_pem"))
 	};
 
 	const std::string public_key_file
 	{
-		unquote(config.get("tls_public_key_path", private_key_file + ".pub"))
+		unquote(config.get("ssl_public_key_file_pem", private_key_file + ".pub"))
 	};
 
 	if(!fs::exists(private_key_file))
@@ -488,7 +472,7 @@ ircd::m::keys::init::certificate()
 
 	const std::string cert_file
 	{
-		unquote(config.at("tls_certificate_path"))
+		unquote(config.at("ssl_certificate_file_pem"))
 	};
 
 	if(!fs::exists(cert_file))
