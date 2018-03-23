@@ -27,9 +27,9 @@ namespace ircd::ctx
 /// queue mechanism using only context switching.
 ///
 /// The producer is blocked until all consumers are finished with their view.
-/// The consumers acquire the unique_lock before passing it to the call to wait().
-/// wait() returns with a view of the object under unique_lock. Once the
-/// consumer releases the unique_lock the viewed object is not safe for them.
+/// The consumers lock the mutex before passing it to the call to wait().
+/// wait() returns with a view of the object under lock. Once the consumer
+/// releases their lock the viewed object is not safe for them.
 ///
 template<class T,
          class mutex>
