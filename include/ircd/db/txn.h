@@ -19,6 +19,11 @@ namespace ircd::db
 	bool until(const txn &, const std::function<bool (const delta &)> &);
 	void for_each(const txn &, const std::function<void (const delta &)> &);
 	std::string debug(const txn &);
+
+	using seq_closure_bool = std::function<bool (txn &, uint64_t)>;
+	using seq_closure = std::function<void (txn &, uint64_t)>;
+	bool for_each(database &d, const uint64_t &seq, const seq_closure_bool &);
+	void for_each(database &d, const uint64_t &seq, const seq_closure &);
 }
 
 struct ircd::db::txn

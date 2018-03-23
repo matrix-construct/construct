@@ -2248,6 +2248,56 @@ noexcept
 // db/txn.h
 //
 
+void
+ircd::db::for_each(database &d,
+                   const uint64_t &seq,
+                   const seq_closure &closure)
+{
+	for_each(d, seq, seq_closure_bool{[&closure]
+	(txn &txn, const uint64_t &seq)
+	{
+		closure(txn, seq);
+		return true;
+	}});
+}
+
+bool
+ircd::db::for_each(database &d,
+                   const uint64_t &seq,
+                   const seq_closure_bool &closure)
+{
+	std::unique_ptr<rocksdb::TransactionLogIterator> tit;
+	throw_on_error
+	{
+		d.d->GetUpdatesSince(seq, &tit)
+	};
+
+	assert(bool(tit));
+	for(; tit->Valid(); tit->Next())
+	{
+		auto batchres
+		{
+			tit->GetBatch()
+		};
+
+		throw_on_error
+		{
+			tit->status()
+		};
+
+		db::txn txn
+		{
+			d, std::move(batchres.writeBatchPtr)
+		};
+
+		assert(bool(txn.wb));
+		if(!closure(txn, batchres.sequence))
+			return false;
+	}
+
+	return true;
+}
+
 std::string
 ircd::db::debug(const txn &t)
 {
