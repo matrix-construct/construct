@@ -21,7 +21,7 @@ namespace ircd::db
 	std::string debug(const txn &);
 }
 
-class ircd::db::txn
+struct ircd::db::txn
 {
 	database *d {nullptr};
 	std::unique_ptr<rocksdb::WriteBatch> wb;
@@ -59,6 +59,7 @@ class ircd::db::txn
 	txn() = default;
 	txn(database &);
 	txn(database &, const opts &);
+	txn(database &, std::unique_ptr<rocksdb::WriteBatch> &&);
 	~txn() noexcept;
 };
 

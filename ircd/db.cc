@@ -2425,7 +2425,7 @@ noexcept
 //
 
 ircd::db::txn::txn(database &d)
-:txn{d, {}}
+:txn{d, opts{}}
 {
 }
 
@@ -2436,6 +2436,13 @@ ircd::db::txn::txn(database &d,
 {
 	std::make_unique<rocksdb::WriteBatch>(opts.reserve_bytes, opts.max_bytes)
 }
+{
+}
+
+ircd::db::txn::txn(database &d,
+                   std::unique_ptr<rocksdb::WriteBatch> &&wb)
+:d{&d}
+,wb{std::move(wb)}
 {
 }
 
