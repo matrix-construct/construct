@@ -1746,13 +1746,21 @@ console_cmd__fed__state(const string_view &line)
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1)
+		token(line, ' ', 1, room_id.host())
 	};
 
-	const string_view &event_id
+	string_view event_id
 	{
-		token_count(line, ' ') >= 3? token(line, ' ', 2) : string_view{}
+		token(line, ' ', 2, {})
 	};
+
+	string_view op
+	{
+		token(line, ' ', 3, {})
+	};
+
+	if(!op && event_id == "eval")
+		std::swap(op, event_id);
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
 	thread_local char buf[8_KiB];
@@ -1774,7 +1782,43 @@ console_cmd__fed__state(const string_view &line)
 		request
 	};
 
-	out << string_view{response} << std::endl;
+	const json::array &auth_chain
+	{
+		response["auth_chain"]
+	};
+
+	const json::array &pdus
+	{
+		response["pdus"]
+	};
+
+	if(op != "eval")
+	{
+		for(const json::object &event : auth_chain)
+			out << pretty_oneline(m::event{event}) << std::endl;
+
+		for(const json::object &event : pdus)
+			out << pretty_oneline(m::event{event}) << std::endl;
+
+		return true;
+	}
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.notify = false;
+	m::vm::eval eval
+	{
+		vmopts
+	};
+
+	for(const json::object &event : auth_chain)
+		eval(event);
+
+	for(const json::object &event : pdus)
+		eval(event);
+
 	return true;
 }
 
