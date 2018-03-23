@@ -50,8 +50,10 @@ struct ircd::ctx::continuation
 	operator const boost::asio::yield_context &() const;
 	operator boost::asio::yield_context &();
 
+	virtual void interrupted(ctx *const &) noexcept;
+
 	continuation(ctx *const &self = ircd::ctx::current);
-	~continuation() noexcept;
+	virtual ~continuation() noexcept;
 };
 
 /// This type of continuation should be used when yielding a context to a
@@ -66,5 +68,17 @@ struct ircd::ctx::continuation
 struct ircd::ctx::to_asio
 :ircd::ctx::continuation
 {
-	using continuation::continuation;
+	using function = std::function<void (ctx *const &) noexcept>;
+
+	function handler;
+
+	void interrupted(ctx *const &) noexcept final override;
+
+	to_asio(const function &handler = {});
 };
+
+inline
+ircd::ctx::to_asio::to_asio(const function &handler)
+:continuation{ircd::ctx::current}
+,handler{handler}
+{}
