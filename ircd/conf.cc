@@ -21,19 +21,6 @@ ircd::conf::config
 	_config
 };
 
-// The configuration file is a user-converted Synapse homeserver.yaml
-// converted into JSON. The configuration file is only truly necessary
-// the first time IRCd is ever run. It does not have to be passed again
-// to subsequent executions of IRCd if the database can be found. If
-// the database is found, data passed in the configfile will be used
-// to override the databased values. In this case, the complete config
-// is not required to be specified in the file; only what is present
-// will be used to override.
-//
-// *NOTE* This expects *canonical JSON* right now. That means converting
-// your homeserver.yaml may be a two step process: 1. YAML to JSON, 2.
-// whitespace-stripping the JSON. Tools to do both of these things are
-// first hits in a google search.
 void
 ircd::conf::init(const string_view &filename)
 {
@@ -171,9 +158,16 @@ try
 	if(!fs::exists(filename))
 		return {};
 
+	// To reduce a level of silly, we consider the conf file to be an
+	// implicit object, this way it can just be a list of members.
+	std::stringstream ss;
+	ss << '{'
+	   << fs::read(filename)
+	   << '}';
+
 	std::string read
 	{
-		fs::read(filename)
+		ss.str()
 	};
 
 	// ensure any trailing cruft is removed to not set off the validator
