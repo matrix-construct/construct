@@ -1939,7 +1939,27 @@ console_cmd__fed__event(const string_view &line)
 		request
 	};
 
-	out << pretty(m::event{response}) << std::endl;
+	const m::event event
+	{
+		response
+	};
+
+	out << pretty(event) << std::endl;
+
+	if(!verify(event))
+		out << "- SIGNATURE FAILED" << std::endl;
+
+	if(!verify_hash(event))
+		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
+
+	const m::event::conforms conforms
+	{
+		event
+	};
+
+	if(!conforms.clean())
+		out << "- " << conforms << std::endl;
+
 	return true;
 }
 
