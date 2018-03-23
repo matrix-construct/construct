@@ -187,9 +187,6 @@ namespace ircd
 	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.
-
-	std::string demangle(const std::string &symbol);
-	template<class T> std::string demangle();
 }
 
 #include "string_view.h"
@@ -199,6 +196,7 @@ namespace ircd
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
+#include "demangle.h"
 #include "localee.h"
 #include "date.h"
 #include "logger.h"

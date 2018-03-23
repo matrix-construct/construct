@@ -19,8 +19,6 @@ namespace ircd::mods
 	IRCD_EXCEPTION(error, invalid_export)
 	IRCD_EXCEPTION(error, expired_symbol)
 	IRCD_EXCEPTION(error, undefined_symbol)
-	IRCD_EXCEPTION(error, demangle_error)
-	IRCD_EXCEPTION(demangle_error, not_mangled)
 
 	struct mod;
 	struct module;

@@ -91,6 +91,7 @@ libircd_la_SOURCES =   \
 	ctx.cc             \
 	rfc3986.cc         \
 	rfc1035.cc         \
+	demangle.cc        \
 	mods.cc            \
 	fmt.cc             \
 	db.cc              \

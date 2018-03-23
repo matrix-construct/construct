@@ -59,10 +59,3 @@ enum class ircd::runlevel
 	QUIT     = 4,    ///< [trans] Clean shutdown in progress
 	FAULT    = -1,   ///< [trans] QUIT with exception (dirty shutdown)
 };
-
-template<class T>
-std::string
-ircd::demangle()
-{
-	return demangle(typeid(T).name());
-}

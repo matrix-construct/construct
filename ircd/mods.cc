@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <cxxabi.h>
 #include <boost/filesystem.hpp>
 #include <boost/dll.hpp>
 
@@ -809,39 +808,4 @@ filesystem::path
 ircd::mods::prefix_if_relative(const filesystem::path &path)
 {
 	return path.is_relative()? (modroot / path) : path;
-}
-
-std::string
-ircd::demangle(const std::string &symbol)
-{
-	size_t len(0);
-	int status(0);
-	const custom_ptr<char> buf
-	{
-		abi::__cxa_demangle(symbol.c_str(), nullptr, &len, &status),
-		std::free
-	};
-
-	switch(status)
-	{
-		case 0:
-			break;
-
-		case -1:
-			throw mods::demangle_error("Demangle failed -1: memory allocation failure");
-
-		case -2:
-			throw mods::not_mangled("Demangle failed -2: mangled name '%s' is not valid", symbol);
-
-		case -3:
-			throw mods::demangle_error("Demangle failed -3: invalid argument");
-
-		default:
-			throw mods::demangle_error("Demangle failed %d: unknown error", status);
-	}
-
-	if(unlikely(!len))
-		return {};
-
-	return std::string { buf.get(), strnlen(buf.get(), len) };
 }
