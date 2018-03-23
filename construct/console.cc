@@ -52,7 +52,7 @@ console_spawn()
 	{
 		"console",
 		stack_sz,
-		std::bind(&console),
+		console,
 		ircd::context::DETACH | ircd::context::POST
 	};
 }
@@ -99,7 +99,13 @@ void
 console()
 try
 {
-	if(ircd::runlevel != ircd::runlevel::RUN)
+	ircd::runlevel_changed::dock.wait([]
+	{
+		return ircd::runlevel == ircd::runlevel::RUN ||
+		       ircd::runlevel == ircd::runlevel::HALT;
+	});
+
+	if(ircd::runlevel == ircd::runlevel::HALT)
 		return;
 
 	const unwind atexit([]
@@ -191,7 +197,13 @@ void
 execute(const std::vector<std::string> lines)
 try
 {
-	if(ircd::runlevel != ircd::runlevel::RUN)
+	ircd::runlevel_changed::dock.wait([]
+	{
+		return ircd::runlevel == ircd::runlevel::RUN ||
+		       ircd::runlevel == ircd::runlevel::HALT;
+	});
+
+	if(ircd::runlevel == ircd::runlevel::HALT)
 		return;
 
 	const unwind atexit([]
