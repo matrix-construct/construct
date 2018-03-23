@@ -36,6 +36,52 @@ ircd::m::event_id(const event &event)
 	return at<"event_id"_>(event);
 }
 
+bool
+ircd::m::verify_hash(const event &event)
+{
+	const sha256::buf hash
+	{
+		event.hash(event)
+	};
+
+	return verify_hash(event, hash);
+}
+
+bool
+ircd::m::verify_hash(const event &event,
+                     const sha256::buf &hash)
+{
+	static const size_t hashb64sz
+	{
+		size_t(hash.size() * 1.34) + 1
+	};
+
+	thread_local char b64buf[hashb64sz];
+	return verify_sha256b64(event, b64encode_unpadded(b64buf, hash));
+}
+
+bool
+ircd::m::verify_sha256b64(const event &event,
+                          const string_view &b64)
+try
+{
+	const json::object &object
+	{
+		at<"hashes"_>(event)
+	};
+
+	const string_view &hash
+	{
+		unquote(object.at("sha256"))
+	};
+
+	return hash == b64;
+}
+catch(const json::not_found &)
+{
+	return false;
+}
+
 void
 ircd::m::check_size(const event &event)
 {

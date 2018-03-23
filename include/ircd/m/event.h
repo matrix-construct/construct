@@ -26,6 +26,9 @@ namespace ircd::m
 
 	std::string pretty(const event &);
 	std::string pretty_oneline(const event &, const bool &content_keys = true);
+	bool verify_sha256b64(const event &, const string_view &);
+	bool verify_hash(const event &, const sha256::buf &);
+	bool verify_hash(const event &);
 
 	id::event event_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event event_id(const event &, id::event::buf &buf);
