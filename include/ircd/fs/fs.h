@@ -93,6 +93,7 @@ namespace ircd::fs
 
 #include "read.h"
 #include "write.h"
+#include "stdin.h"
 
 struct ircd::fs::init
 {

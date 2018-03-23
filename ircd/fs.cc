@@ -73,6 +73,44 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/stdin.h
+//
+
+ircd::string_view
+ircd::fs::stdin::readline(const mutable_buffer &buf)
+{
+	assert(ircd::ios);
+	boost::asio::posix::stream_descriptor fd
+	{
+		*ircd::ios, dup(STDIN_FILENO)
+	};
+
+	boost::asio::streambuf sb
+	{
+		size(buf)
+	};
+
+	const auto interruption{[&fd]
+	(ctx::ctx *const &interruptor) noexcept
+	{
+		fd.cancel();
+	}};
+
+	const size_t len
+	{
+		boost::asio::async_read_until(fd, sb, '\n', yield_context{to_asio{interruption}})
+	};
+
+	std::istream is{&sb};
+	is.get(data(buf), size(buf), '\n');
+	return string_view
+	{
+		data(buf), size_t(is.gcount())
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/read.h
 //
 
