@@ -170,13 +170,6 @@ try
 		ss.str()
 	};
 
-	// ensure any trailing cruft is removed to not set off the validator
-	if(endswith(read, '\n'))
-		read.pop_back();
-
-	if(endswith(read, '\r'))
-		read.pop_back();
-
 	// grammar check; throws on error
 	json::valid(read);
 
