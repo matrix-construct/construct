@@ -360,7 +360,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		};
 
 	if(opts.verify)
-		if(!m::event::verify(event))
+		if(!verify(event))
 			throw m::BAD_SIGNATURE
 			{
 				"Signature verification failed"

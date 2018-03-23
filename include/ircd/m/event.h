@@ -24,15 +24,12 @@ namespace ircd::m
 	bool check_size(std::nothrow_t, const event &);
 	void check_size(const event &);
 
-	std::string pretty(const event &);
-	std::string pretty_oneline(const event &, const bool &content_keys = true);
-	bool verify_sha256b64(const event &, const string_view &);
-	bool verify_hash(const event &, const sha256::buf &);
-	bool verify_hash(const event &);
-
 	id::event event_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event event_id(const event &, id::event::buf &buf);
 	id::event event_id(const event &);
+
+	std::string pretty(const event &);
+	std::string pretty_oneline(const event &, const bool &content_keys = true);
 
 	// [GET]
 	bool exists(const id::event &);
@@ -85,28 +82,32 @@ struct ircd::m::event
 	static constexpr size_t MAX_SIZE = 64_KiB;
 	static conf::item<size_t> max_size;
 
-	static m::event essential(m::event, const mutable_buffer &content);
+	friend event essential(event, const mutable_buffer &content);
 	static void essential(json::iov &event, const json::iov &content, const closure_iov_mutable &);
 
 	static bool verify(const string_view &, const ed25519::pk &, const ed25519::sig &sig);
 	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
-	static bool verify(const m::event &, const ed25519::pk &, const ed25519::sig &sig);
-	static bool verify(const m::event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
-	static bool verify(const m::event &, const string_view &origin, const string_view &pkid); // io/yield
-	static bool verify(const m::event &, const string_view &origin); // io/yield
-	static bool verify(const m::event &); // io/yield
+	friend bool verify(const event &, const ed25519::pk &, const ed25519::sig &sig);
+	friend bool verify(const event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
+	friend bool verify(const event &, const string_view &origin, const string_view &pkid); // io/yield
+	friend bool verify(const event &, const string_view &origin); // io/yield
+	friend bool verify(const event &); // io/yield
 
 	static ed25519::sig sign(const string_view &, const ed25519::sk &);
 	static ed25519::sig sign(const string_view &);
 	static ed25519::sig sign(const json::object &, const ed25519::sk &);
 	static ed25519::sig sign(const json::object &);
-	static ed25519::sig sign(const m::event &, const ed25519::sk &);
-	static ed25519::sig sign(const m::event &);
+	friend ed25519::sig sign(const event &, const ed25519::sk &);
+	friend ed25519::sig sign(const event &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content, const ed25519::sk &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
 	static string_view signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
 
-	static sha256::buf hash(const m::event &);
+	friend bool verify_sha256b64(const event &, const string_view &);
+	friend bool verify_hash(const event &, const sha256::buf &);
+	friend bool verify_hash(const event &);
+
+	friend sha256::buf hash(const event &);
 	static sha256::buf hash(json::iov &event, const string_view &content);
 	static string_view hashes(const mutable_buffer &, json::iov &event, const string_view &content);
 

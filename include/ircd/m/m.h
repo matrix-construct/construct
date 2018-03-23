@@ -14,6 +14,8 @@
 /// Matrix Protocol System
 namespace ircd::m
 {
+	using ircd::hash;
+
 	struct init;
 
 	extern struct user me;

@@ -36,52 +36,6 @@ ircd::m::event_id(const event &event)
 	return at<"event_id"_>(event);
 }
 
-bool
-ircd::m::verify_hash(const event &event)
-{
-	const sha256::buf hash
-	{
-		event.hash(event)
-	};
-
-	return verify_hash(event, hash);
-}
-
-bool
-ircd::m::verify_hash(const event &event,
-                     const sha256::buf &hash)
-{
-	static const size_t hashb64sz
-	{
-		size_t(hash.size() * 1.34) + 1
-	};
-
-	thread_local char b64buf[hashb64sz];
-	return verify_sha256b64(event, b64encode_unpadded(b64buf, hash));
-}
-
-bool
-ircd::m::verify_sha256b64(const event &event,
-                          const string_view &b64)
-try
-{
-	const json::object &object
-	{
-		at<"hashes"_>(event)
-	};
-
-	const string_view &hash
-	{
-		unquote(object.at("sha256"))
-	};
-
-	return hash == b64;
-}
-catch(const json::not_found &)
-{
-	return false;
-}
-
 void
 ircd::m::check_size(const event &event)
 {
@@ -112,7 +66,7 @@ ircd::m::check_size(std::nothrow_t,
 }
 
 ircd::string_view
-ircd::m::membership(const m::event &event)
+ircd::m::membership(const event &event)
 {
 	return json::get<"membership"_>(event)?
 		string_view{json::get<"membership"_>(event)}:
@@ -510,11 +464,11 @@ ircd::m::event::hash(json::iov &event,
 		event, { "content", content }
 	};
 
-	return hash(event);
+	return m::hash(event);
 }
 
 ircd::sha256::buf
-ircd::m::event::hash(const m::event &event)
+ircd::m::hash(const event &event)
 {
 	thread_local char buf[64_KiB];
 	string_view preimage;
@@ -542,6 +496,52 @@ ircd::m::event::hash(const m::event &event)
 	};
 
 	return hash;
+}
+
+bool
+ircd::m::verify_hash(const event &event)
+{
+	const sha256::buf hash
+	{
+		m::hash(event)
+	};
+
+	return verify_hash(event, hash);
+}
+
+bool
+ircd::m::verify_hash(const event &event,
+                     const sha256::buf &hash)
+{
+	static const size_t hashb64sz
+	{
+		size_t(hash.size() * 1.34) + 1
+	};
+
+	thread_local char b64buf[hashb64sz];
+	return verify_sha256b64(event, b64encode_unpadded(b64buf, hash));
+}
+
+bool
+ircd::m::verify_sha256b64(const event &event,
+                          const string_view &b64)
+try
+{
+	const json::object &object
+	{
+		at<"hashes"_>(event)
+	};
+
+	const string_view &hash
+	{
+		unquote(object.at("sha256"))
+	};
+
+	return hash == b64;
+}
+catch(const json::not_found &)
+{
+	return false;
 }
 
 ircd::string_view
@@ -589,21 +589,21 @@ ircd::m::event::sign(json::iov &event,
 	essential(event, contents, [&sk, &sig]
 	(json::iov &event)
 	{
-		sig = sign(event, sk);
+		sig = m::sign(event, sk);
 	});
 
 	return sig;
 }
 
 ircd::ed25519::sig
-ircd::m::event::sign(const m::event &event)
+ircd::m::sign(const event &event)
 {
 	return sign(event, self::secret_key);
 }
 
 ircd::ed25519::sig
-ircd::m::event::sign(const m::event &event,
-                     const ed25519::sk &sk)
+ircd::m::sign(const event &event,
+              const ed25519::sk &sk)
 {
 	thread_local char buf[64_KiB];
 	const string_view preimage
@@ -611,7 +611,7 @@ ircd::m::event::sign(const m::event &event,
 		stringify(buf, event)
 	};
 
-	return sign(preimage, sk);
+	return event::sign(preimage, sk);
 }
 
 ircd::ed25519::sig
@@ -652,7 +652,7 @@ ircd::m::event::sign(const string_view &event,
 	return sig;
 }
 bool
-ircd::m::event::verify(const m::event &event)
+ircd::m::verify(const event &event)
 {
 	const string_view &origin
 	{
@@ -663,8 +663,8 @@ ircd::m::event::verify(const m::event &event)
 }
 
 bool
-ircd::m::event::verify(const m::event &event,
-                       const string_view &origin)
+ircd::m::verify(const event &event,
+                const string_view &origin)
 {
 	const json::object &signatures
 	{
@@ -684,9 +684,9 @@ ircd::m::event::verify(const m::event &event,
 }
 
 bool
-ircd::m::event::verify(const m::event &event,
-                       const string_view &origin,
-                       const string_view &keyid)
+ircd::m::verify(const event &event,
+                const string_view &origin,
+                const string_view &keyid)
 try
 {
 	bool ret{false};
@@ -713,10 +713,10 @@ catch(const m::NOT_FOUND &e)
 }
 
 bool
-ircd::m::event::verify(const m::event &event,
-                       const ed25519::pk &pk,
-                       const string_view &origin,
-                       const string_view &keyid)
+ircd::m::verify(const event &event,
+                const ed25519::pk &pk,
+                const string_view &origin,
+                const string_view &keyid)
 {
 	const json::object &signatures
 	{
@@ -740,9 +740,9 @@ ircd::m::event::verify(const m::event &event,
 }
 
 bool
-ircd::m::event::verify(const m::event &event_,
-                       const ed25519::pk &pk,
-                       const ed25519::sig &sig)
+ircd::m::verify(const event &event_,
+                const ed25519::pk &pk,
+                const ed25519::sig &sig)
 {
 	thread_local char content[64_KiB];
 	m::event event
@@ -758,7 +758,7 @@ ircd::m::event::verify(const m::event &event_,
 		stringify(buf, event)
 	};
 
-	return verify(preimage, pk, sig);
+	return event::verify(preimage, pk, sig);
 }
 
 bool
@@ -885,8 +885,8 @@ ircd::m::event::essential(json::iov &event,
 }
 
 ircd::m::event
-ircd::m::event::essential(m::event event,
-                          const mutable_buffer &contentbuf)
+ircd::m::essential(m::event event,
+                   const mutable_buffer &contentbuf)
 {
 	const auto &type
 	{
