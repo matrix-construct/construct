@@ -123,17 +123,19 @@ ircd::db::sync(database &d)
 }
 
 uint64_t
-ircd::db::sequence(const database &d)
+ircd::db::sequence(const database &cd)
 {
+	database &d(const_cast<database &>(cd));
 	return d.d->GetLatestSequenceNumber();
 }
 
 template<>
 uint64_t
-ircd::db::property(database &d,
+ircd::db::property(const database &cd,
                    const string_view &name)
 {
 	uint64_t ret;
+	database &d(const_cast<database &>(cd));
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
 		ret = 0;
 
@@ -3468,24 +3470,24 @@ ircd::db::read(column &column,
 
 template<>
 std::string
-ircd::db::property(column &column,
+ircd::db::property(const column &column,
                    const string_view &name)
 {
 	std::string ret;
-	database &d(column);
-	database::column &c(column);
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
 	d.d->GetProperty(c, slice(name), &ret);
 	return ret;
 }
 
 template<>
 uint64_t
-ircd::db::property(column &column,
+ircd::db::property(const column &column,
                    const string_view &name)
 {
 	uint64_t ret;
-	database &d(column);
-	database::column &c(column);
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
 	if(!d.d->GetIntProperty(c, slice(name), &ret))
 		ret = 0;
 
@@ -3493,22 +3495,22 @@ ircd::db::property(column &column,
 }
 
 size_t
-ircd::db::bytes(column &column)
+ircd::db::bytes(const column &column)
 {
 	rocksdb::ColumnFamilyMetaData cfm;
-	database::column &c(column);
-	database &d(c);
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.size;
 }
 
 size_t
-ircd::db::file_count(column &column)
+ircd::db::file_count(const column &column)
 {
 	rocksdb::ColumnFamilyMetaData cfm;
-	database::column &c(column);
-	database &d(c);
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.file_count;

@@ -15,11 +15,12 @@ namespace ircd::db
 {
 	struct database;
 
-	template<class R = uint64_t> R property(database &, const string_view &name);
-	template<> uint64_t property(database &, const string_view &name);
+	template<class R = uint64_t> R property(const database &, const string_view &name);
+	template<> uint64_t property(const database &, const string_view &name);
 	const std::string &name(const database &);
-	uint64_t sequence(const database &);             // Latest sequence number
-	void sync(database &);                           // Sync the write log (all columns)
+	uint64_t sequence(const database &); // Latest sequence number
+
+	void sync(database &);
 }
 
 /// Database instance

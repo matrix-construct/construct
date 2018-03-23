@@ -15,18 +15,18 @@ namespace ircd::db
 {
 	struct column;
 
+	// Information about a column
+	uint32_t id(const column &);
+	const std::string &name(const column &);
+	const database::descriptor &describe(const column &);
+	size_t file_count(const column &);
+	size_t bytes(const column &);
+
 	// Get property data of a db column. R can optionally be uint64_t for some
 	// values. Refer to RocksDB documentation for more info.
-	template<class R = std::string> R property(column &, const string_view &name);
-	template<> std::string property(column &, const string_view &name);
-	template<> uint64_t property(column &, const string_view &name);
-
-	// Information about a column
-	const database::descriptor &describe(const column &);
-	const std::string &name(const column &);
-	uint32_t id(const column &);
-	size_t file_count(column &);
-	size_t bytes(column &);
+	template<class R = std::string> R property(const column &, const string_view &name);
+	template<> std::string property(const column &, const string_view &name);
+	template<> uint64_t property(const column &, const string_view &name);
 
 	// [GET] Tests if key exists
 	bool has(column &, const string_view &key, const gopts & = {});
