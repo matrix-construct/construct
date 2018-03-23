@@ -23,14 +23,34 @@
 namespace ircd
 {
 	struct init;
-
-	extern runlevel_handler runlevel_changed;
+	struct runlevel_changed;
 
 	string_view reflect(const enum runlevel &);
-	void init(boost::asio::io_context &ios, const std::string &conf, runlevel_handler = {});
-	void init(boost::asio::io_context &ios, runlevel_handler = {});
+	void init(boost::asio::io_context &ios, const std::string &conf);
+	void init(boost::asio::io_context &ios);
 	bool quit() noexcept;
 }
+
+/// An instance of this class registers itself to be called back when
+/// the ircd::runlevel has changed.
+///
+/// Note: Its destructor will access a list in libircd; after a callback
+/// for a HALT do not unload libircd.so until destructing this object.
+///
+/// A static ctx::dock is also available for contexts to wait for a runlevel
+/// change notification.
+///
+struct ircd::runlevel_changed
+:instance_list<ircd::runlevel_changed>
+,std::function<void (const enum runlevel &)>
+{
+	using handler = std::function<void (const enum runlevel &)>;
+
+	static ctx::dock dock;
+
+	runlevel_changed(handler function);
+	~runlevel_changed() noexcept;
+};
 
 /// The runlevel allows all observers to know the coarse state of IRCd and to
 /// react accordingly. This can be used by the embedder of libircd to know

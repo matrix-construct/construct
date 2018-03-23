@@ -179,7 +179,6 @@ namespace ircd
 namespace ircd
 {
 	enum class runlevel :int;
-	using runlevel_handler = std::function<void (const enum runlevel &)>;
 
 	constexpr size_t BUFSIZE { 512 };
 	extern const enum runlevel &runlevel;

@@ -13,9 +13,8 @@
 
 namespace ircd
 {
-	enum runlevel _runlevel;                     // Current libircd runlevel
+	enum runlevel _runlevel {runlevel::HALT};    // Current libircd runlevel
 	const enum runlevel &runlevel{_runlevel};    // Observer for current RL
-	runlevel_handler runlevel_changed;           // user's callback
 
 	boost::asio::io_context *ios;                // user's io service
 	struct strand *strand;                       // libircd event serializer
@@ -43,10 +42,9 @@ ircd::thread_id
 {};
 
 void
-ircd::init(boost::asio::io_context &ios,
-           runlevel_handler function)
+ircd::init(boost::asio::io_context &ios)
 {
-	init(ios, std::string{}, std::move(function));
+	init(ios, std::string{});
 }
 
 /// Sets up the IRCd and its main context, then returns without blocking.
@@ -60,8 +58,7 @@ ircd::init(boost::asio::io_context &ios,
 /// init() can only be called from a runlevel::HALT state
 void
 ircd::init(boost::asio::io_context &ios,
-           const std::string &configfile,
-           runlevel_handler runlevel_changed)
+           const std::string &configfile)
 try
 {
 	if(runlevel != runlevel::HALT)
@@ -81,9 +78,6 @@ try
 	// strand on that service.
 	ircd::ios = &ios;
 	ircd::strand = new struct strand(ios);
-
-	// Saves the user's runlevel_changed callback which we invoke.
-	ircd::runlevel_changed = std::move(runlevel_changed);
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();
@@ -266,6 +260,23 @@ noexcept
 	});
 }
 
+template<>
+decltype(ircd::runlevel_changed::list)
+ircd::util::instance_list<ircd::runlevel_changed>::list
+{};
+
+decltype(ircd::runlevel_changed::dock)
+ircd::runlevel_changed::dock
+{};
+
+ircd::runlevel_changed::runlevel_changed(handler function)
+:handler{std::move(function)}
+{}
+
+ircd::runlevel_changed::~runlevel_changed()
+noexcept
+{}
+
 /// Sets the runlevel of IRCd and notifies users. This should never be called
 /// manually/directly, as it doesn't trigger a runlevel change itself, it just
 /// notifies of one.
@@ -280,18 +291,20 @@ try
 {
 	log::debug
 	{
-		"IRCd runlevel transition from '%s' to '%s'%s",
+		"IRCd runlevel transition from '%s' to '%s' (notifying %zu)",
 		reflect(ircd::runlevel),
 		reflect(new_runlevel),
-		ircd::runlevel_changed? " (notifying user)" : ""
+		runlevel_changed::list.size()
 	};
 
 	ircd::_runlevel = new_runlevel;
+	ircd::runlevel_changed::dock.notify_all();
 
 	// This function will notify the user of the change to IRCd. The
 	// notification is posted to the io_context ensuring THERE IS NO
 	// CONTINUATION ON THIS STACK by the user.
-	if(ircd::runlevel_changed)
+	if(!ircd::runlevel_changed::list.empty())
+	{
 		ios->post([new_runlevel]
 		{
 			if(new_runlevel == runlevel::HALT)
@@ -301,18 +314,18 @@ try
 				};
 
 			ircd::log::fini();
-			ircd::runlevel_changed(new_runlevel);
+			for(const auto &handler : ircd::runlevel_changed::list)
+				(*handler)(new_runlevel);
 		});
+	}
 
-	if(!ircd::runlevel_changed || new_runlevel != runlevel::HALT)
-	{
+	if(new_runlevel != runlevel::HALT)
 		log::notice
 		{
 			"IRCd %s", reflect(new_runlevel)
 		};
 
-		ircd::log::flush();
-	}
+	ircd::log::flush();
 }
 catch(const std::exception &e)
 {

@@ -123,9 +123,10 @@ try
 	// is now shared between those handlers and libircd. This means the run()
 	// won't return even if we call ircd::quit(). We use the callback to then
 	// cancel the handlers so run() can return and the program can exit.
-	ircd::runlevel_changed = [](const enum ircd::runlevel &mode)
+	const ircd::runlevel_changed handler{[]
+	(const auto &runlevel)
 	{
-		switch(mode)
+		switch(runlevel)
 		{
 			case ircd::runlevel::HALT:
 			case ircd::runlevel::FAULT:
@@ -135,7 +136,7 @@ try
 			default:
 				break;
 		}
-	};
+	}};
 
 	// If the user wants to immediately drop to a command line without having to
 	// send a ctrl-c for it, that is provided here.
