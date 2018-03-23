@@ -324,6 +324,7 @@ console_cmd__mod_reload(const string_view &line)
 //
 
 static bool console_cmd__db_list(const string_view &line);
+static bool console_cmd__db_txns(const string_view &line);
 static bool console_cmd__db_checkpoint(const string_view &line);
 static bool console_cmd__db_prop(const string_view &line);
 
@@ -342,6 +343,9 @@ console_cmd__db(const string_view &line)
 
 		case hash("checkpoint"):
 			return console_cmd__db_checkpoint(args);
+
+		case hash("txns"):
+			return console_cmd__db_txns(args);
 
 		default:
 		case hash("list"):
@@ -362,6 +366,55 @@ console_cmd__db_prop(const string_view &line)
 		token(line, ' ', 1)
 	};
 
+	return true;
+}
+
+bool
+console_cmd__db_txns(const string_view &line)
+try
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	if(dbname != "events")
+		throw error
+		{
+			"Sorry, this command is specific to the events db for now."
+		};
+
+	const auto seqnum
+	{
+		lex_cast<uint64_t>(token(line, ' ', 1, "0"))
+	};
+
+	auto limit
+	{
+		lex_cast<size_t>(token(line, ' ', 2, "32"))
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	for_each(database, seqnum, db::seq_closure_bool{[&limit]
+	(db::txn &txn, const uint64_t &seqnum) -> bool
+	{
+		if(txn.has(db::op::SET, "event_id"))
+			out << std::setw(12) << std::right << seqnum << " : "
+			    << std::get<db::delta::KEY>(txn.get(db::op::SET, "event_id"))
+			    << std::endl;
+
+		return --limit;
+	}});
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
 	return true;
 }
 
