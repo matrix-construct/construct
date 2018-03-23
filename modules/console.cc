@@ -1916,7 +1916,7 @@ console_cmd__fed__event(const string_view &line)
 
 	const net::hostport remote
 	{
-		token_count(line, ' ') > 1? token(line, ' ', 0) : event_id.host()
+		token(line, ' ', 1, event_id.host())
 	};
 
 	m::v1::event::opts opts;
