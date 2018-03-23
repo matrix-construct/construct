@@ -324,6 +324,7 @@ console_cmd__mod_reload(const string_view &line)
 //
 
 static bool console_cmd__db_list(const string_view &line);
+static bool console_cmd__db_checkpoint(const string_view &line);
 static bool console_cmd__db_prop(const string_view &line);
 
 bool
@@ -338,6 +339,9 @@ console_cmd__db(const string_view &line)
 	{
 		case hash("prop"):
 			return console_cmd__db_prop(args);
+
+		case hash("checkpoint"):
+			return console_cmd__db_checkpoint(args);
 
 		default:
 		case hash("list"):
@@ -358,6 +362,39 @@ console_cmd__db_prop(const string_view &line)
 		token(line, ' ', 1)
 	};
 
+	return true;
+}
+
+bool
+console_cmd__db_checkpoint(const string_view &line)
+try
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto directory
+	{
+		token(line, ' ', 1)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	checkpoint(database, directory);
+
+	out << "Checkpoint " << name(database)
+	    << " to " << directory << " complete."
+	    << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
 	return true;
 }
 

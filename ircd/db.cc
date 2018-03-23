@@ -20,6 +20,7 @@
 #include <rocksdb/convenience.h>
 #include <rocksdb/env.h>
 #include <rocksdb/slice_transform.h>
+#include <rocksdb/utilities/checkpoint.h>
 
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
@@ -130,6 +131,32 @@ ircd::db::flush(database &d,
 {
 	for(const auto &column : d.columns)
 		flush(*column, blocking);
+}
+
+/// Writes a snapshot of this database to the directory specified. The
+/// snapshot consists of hardlinks to the bulk data files of this db, but
+/// copies the other stuff that usually gets corrupted. The directory can
+/// then be opened as its own database either read-only or read-write.
+/// Incremental backups and rollbacks can begin from this interface. Note
+/// this may be an expensive blocking operation.
+void
+ircd::db::checkpoint(database &d,
+                     const string_view &dir)
+{
+	if(!d.checkpoint)
+		throw error
+		{
+			"Checkpointing is not available for db(%p) '%s", &d, name(d)
+		};
+
+	throw_on_error
+	{
+		d.checkpoint->CreateCheckpoint(std::string{dir}, 0)
+	};
+
+	log.debug("'%s': Checkpoint to `%s' complete",
+	          name(d),
+	          dir);
 }
 
 uint64_t
@@ -385,6 +412,16 @@ try
 			         sequence);
 		}
 	};
+}()}
+,checkpoint{[this]
+{
+	rocksdb::Checkpoint *checkpointer{nullptr};
+	throw_on_error
+	{
+		rocksdb::Checkpoint::Create(this->d.get(), &checkpointer)
+	};
+
+	return checkpointer;
 }()}
 ,dbs_it
 {

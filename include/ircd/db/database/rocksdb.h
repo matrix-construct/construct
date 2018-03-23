@@ -29,6 +29,7 @@ namespace rocksdb
 	struct ColumnFamilyHandle;
 	struct WriteBatch;
 	struct Slice;
+	struct Checkpoint;
 }
 
 //

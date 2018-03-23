@@ -20,6 +20,7 @@ namespace ircd::db
 	const std::string &name(const database &);
 	uint64_t sequence(const database &); // Latest sequence number
 
+	void checkpoint(database &, const string_view &dir);
 	void flush(database &, const bool &blocking = true);
 	void sync(database &);
 }
@@ -70,6 +71,7 @@ struct ircd::db::database
 	std::unordered_map<string_view, size_t> column_index;
 	std::vector<std::shared_ptr<column>> columns;
 	custom_ptr<rocksdb::DB> d;
+	std::unique_ptr<rocksdb::Checkpoint> checkpoint;
 	unique_const_iterator<decltype(dbs)> dbs_it;
 
 	operator std::shared_ptr<database>()         { return shared_from_this();                      }
