@@ -29,6 +29,7 @@
 #include <ircd/db/database/stats.h>
 #include <ircd/db/database/logs.h>
 #include <ircd/db/database/column.h>
+#include <ircd/db/database/txn.h>
 #include <ircd/db/database/env/env.h>
 #include <ircd/db/database/env/writable_file.h>
 #include <ircd/db/database/env/sequential_file.h>
@@ -2247,38 +2248,6 @@ noexcept
 // db/txn.h
 //
 
-struct ircd::db::txn::handler
-:rocksdb::WriteBatch::Handler
-{
-	using Status = rocksdb::Status;
-	using Slice = rocksdb::Slice;
-
-	const database &d;
-	const std::function<bool (const delta &)> &cb;
-	bool _continue {true};
-
-	Status callback(const delta &) noexcept;
-	Status callback(const uint32_t &, const op &, const Slice &a, const Slice &b) noexcept;
-
-	bool Continue() noexcept override;
-	Status MarkRollback(const Slice &xid) noexcept override;
-	Status MarkCommit(const Slice &xid) noexcept override;
-	Status MarkEndPrepare(const Slice &xid) noexcept override;
-	Status MarkBeginPrepare() noexcept override;
-
-	Status MergeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
-	Status SingleDeleteCF(const uint32_t cfid, const Slice &) noexcept override;
-	Status DeleteRangeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
-	Status DeleteCF(const uint32_t cfid, const Slice &) noexcept override;
-	Status PutCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
-
-	handler(const database &d,
-	        const std::function<bool (const delta &)> &cb)
-	:d{d}
-	,cb{cb}
-	{}
-};
-
 std::string
 ircd::db::debug(const txn &t)
 {
@@ -2332,7 +2301,7 @@ ircd::db::test(const txn &t,
 }
 
 ///
-/// handler
+/// handler (db/database/txn.h)
 ///
 
 rocksdb::Status
