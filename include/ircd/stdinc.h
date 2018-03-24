@@ -223,7 +223,7 @@ namespace ircd
 #include "ctx/ctx.h"
 #include "db/db.h"
 #include "js.h"
-#include "mods.h"
+#include "mods/mods.h"
 #include "rfc3986.h"
 #include "rfc1035.h"
 #include "net/net.h"

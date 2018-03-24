@@ -18,8 +18,6 @@ namespace ircd::mods
 	filesystem::path prefix_if_relative(const filesystem::path &path);
 	filesystem::path postfixed(const filesystem::path &path);
 	filesystem::path unpostfixed(const filesystem::path &path);
-	std::string postfixed(const std::string &name);
-	std::string unpostfixed(const std::string &name);
 
 	template<class R, class F> R info(const filesystem::path &, F&& closure);
 	std::vector<std::string> sections(const filesystem::path &path);
@@ -36,9 +34,6 @@ namespace ircd::mods
 	bool is_module(const filesystem::path &);
 	bool is_module(const filesystem::path &, std::string &why);
 	bool is_module(const filesystem::path &, std::nothrow_t);
-	bool is_module(const std::string &fullpath, std::string &why);
-	bool is_module(const std::string &fullpath, std::nothrow_t);
-	bool is_module(const std::string &fullpath);
 }
 
 /// Internal module representation
