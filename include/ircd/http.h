@@ -90,8 +90,12 @@ struct ircd::http::error
 {
 	std::string content;
 	std::string headers;
-	http::code code;
+	http::code code {http::code(0)};
 
+	explicit operator bool() const     { return code != http::code(0);         }
+	bool operator!() const             { return !bool(*this);                  }
+
+	error() = default;
 	error(const http::code &, std::string content = {}, std::string headers = {});
 	error(const http::code &, std::string content, const vector_view<const header> &);
 };
