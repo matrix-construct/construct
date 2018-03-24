@@ -1361,7 +1361,7 @@ noexcept
 {
 	log.debug("'%s': create directory '%s'",
 	          d.name,
-	          d);
+	          name);
 
 	return defaults.CreateDir(name);
 }
