@@ -518,6 +518,14 @@ ircd::ctx::continuation::continuation(ctx *const &self)
 	assert(!critical_asserted);
 	assert(self != nullptr);
 	assert(self->notes <= 1);
+
+	// GNU cxxabi uses a singly-linked forward list (aka the 'exception
+	// stack') for pending exception activities. Due to this limitation we
+	// cannot interleave _cxa_begin_catch() and __cxa_end_catch() by yielding
+	// the ircd::ctx in an exception handler.
+	assert(!std::uncaught_exceptions());
+	assert(!std::current_exception());
+
 	self->cont = this;
 	ircd::ctx::current = nullptr;
 }
