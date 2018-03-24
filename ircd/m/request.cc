@@ -71,21 +71,17 @@ ircd::m::request::operator()(const mutable_buffer &out,
                              const vector_view<const http::header> &addl_headers)
 const
 {
-	const size_t addl_headers_size
+	const ctx::critical_assertion ca;
+	static const size_t headers_max{32};
+	thread_local http::header header[headers_max];
+	size_t headers{0};
+
+	header[headers++] =
 	{
-		std::min(addl_headers.size(), size_t(64UL))
+		"User-Agent", info::user_agent
 	};
 
-	size_t headers{1};
-	http::header header[headers + addl_headers_size]
-	{
-		{ "User-Agent", info::user_agent }
-	};
-
-	for(size_t i(0); i < addl_headers_size; ++i)
-		header[headers++] = addl_headers.at(i);
-
-	thread_local char x_matrix[1_KiB];
+	thread_local char x_matrix[2_KiB];
 	if(startswith(at<"uri"_>(*this), "/_matrix/federation"))
 	{
 		const auto &sk{self::secret_key};
@@ -95,6 +91,11 @@ const
 			"Authorization", generate(x_matrix, sk, pkid)
 		};
 	}
+
+	assert(headers <= headers_max);
+	assert(headers + addl_headers.size() <= headers_max);
+	for(size_t i(0); i < addl_headers.size() && headers < headers_max; ++i)
+		header[headers++] = addl_headers.at(i);
 
 	static const string_view content_type
 	{
@@ -127,14 +128,22 @@ ircd::m::request::generate(const mutable_buffer &out,
                            const string_view &pkid)
 const
 {
-	const json::strung object
+	static const size_t request_content_max
 	{
-		*this,
+		1_MiB
+	};
+
+	const ctx::critical_assertion ca;
+	thread_local char buf[request_content_max];
+	assert(json::serialized(*this) < sizeof(buf));
+	const json::object object
+	{
+		stringify(mutable_buffer{buf}, *this)
 	};
 
 	const ed25519::sig sig
 	{
-		self::secret_key.sign(const_buffer{object})
+		self::secret_key.sign(object)
 	};
 
 	const auto &origin
