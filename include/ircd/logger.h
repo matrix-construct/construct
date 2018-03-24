@@ -79,12 +79,19 @@ class ircd::log::log
 
 	template<class... args> void critical(const char *const &fmt, args&&...);
 	template<class... args> void error(const char *const &fmt, args&&...);
-	template<class... args> void derror(const char *const &fmt, args&&...);
 	template<class... args> void warning(const char *const &fmt, args&&...);
-	template<class... args> void dwarning(const char *const &fmt, args&&...);
 	template<class... args> void notice(const char *const &fmt, args&&...);
 	template<class... args> void info(const char *const &fmt, args&&...);
+
+	#ifdef RB_DEBUG
+	template<class... args> void derror(const char *const &fmt, args&&...);
+	template<class... args> void dwarning(const char *const &fmt, args&&...);
 	template<class... args> void debug(const char *const &fmt, args&&...);
+	#else // Required for DCE in gcc 6.3.0 20170519
+	void derror(const char *const &fmt, ...);
+	void dwarning(const char *const &fmt, ...);
+	void debug(const char *const &fmt, ...);
+	#endif
 
 	log(const std::string &name, const char &snote);
 	log(const std::string &name);
@@ -98,14 +105,18 @@ struct ircd::log::console_quiet
 
 struct ircd::log::debug
 {
+	#ifdef RB_DEBUG
 	template<class... args>
 	debug(const char *const &fmt, args&&... a)
 	{
-		// got DCE?
-		#ifdef RB_DEBUG
 		vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
-		#endif
 	}
+	#else
+	debug(const char *const &, ...)
+	{
+		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+	}
+	#endif
 };
 
 struct ircd::log::info
@@ -128,14 +139,18 @@ struct ircd::log::notice
 
 struct ircd::log::dwarning
 {
+	#ifdef RB_DEBUG
 	template<class... args>
 	dwarning(const char *const &fmt, args&&... a)
 	{
-		// got DCE?
-		#ifdef RB_DEBUG
 		vlog(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
-		#endif
 	}
+	#else
+	dwarning(const char *const &, ...)
+	{
+		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+	}
+	#endif
 };
 
 struct ircd::log::warning
@@ -149,14 +164,18 @@ struct ircd::log::warning
 
 struct ircd::log::derror
 {
+	#ifdef RB_DEBUG
 	template<class... args>
 	derror(const char *const &fmt, args&&... a)
 	{
-		// got DCE?
-		#ifdef RB_DEBUG
 		vlog(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
-		#endif
 	}
+	#else
+	derror(const char *const &, ...)
+	{
+		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+	}
+	#endif
 };
 
 struct ircd::log::error
@@ -177,15 +196,22 @@ struct ircd::log::critical
 	}
 };
 
+#ifdef RB_DEBUG
 template<class... args>
 void
 ircd::log::log::debug(const char *const &fmt,
                       args&&... a)
 {
-	#ifdef RB_DEBUG
 	operator()(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
-	#endif
 }
+#else
+inline void
+ircd::log::log::debug(const char *const &fmt,
+                      ...)
+{
+	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+}
+#endif
 
 template<class... args>
 void
@@ -203,15 +229,22 @@ ircd::log::log::notice(const char *const &fmt,
 	operator()(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 }
 
+#ifdef RB_DEBUG
 template<class... args>
 void
 ircd::log::log::dwarning(const char *const &fmt,
                          args&&... a)
 {
-	#ifdef RB_DEBUG
 	operator()(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
-	#endif
 }
+#else
+inline void
+ircd::log::log::dwarning(const char *const &fmt,
+                         ...)
+{
+	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+}
+#endif
 
 template<class... args>
 void
@@ -221,15 +254,22 @@ ircd::log::log::warning(const char *const &fmt,
 	operator()(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 }
 
+#ifdef RB_DEBUG
 template<class... args>
 void
 ircd::log::log::derror(const char *const &fmt,
                        args&&... a)
 {
-	#ifdef RB_DEBUG
 	operator()(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
-	#endif
 }
+#else
+inline void
+ircd::log::log::derror(const char *const &fmt,
+                       ...)
+{
+	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
+}
+#endif
 
 template<class... args>
 void
