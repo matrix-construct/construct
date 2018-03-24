@@ -34,6 +34,8 @@ AM_LDFLAGS = \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
+	-Wl,--gc-sections \
+	-Wl,--icf=all \
 	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS) \
 	# -Wl,--no-undefined \

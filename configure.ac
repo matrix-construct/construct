@@ -24,7 +24,7 @@ AC_PATH_PROG(TOUCH, touch)
 LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
 
-CXXFLAGS=""
+CXXFLAGS="-pipe"
 AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_PROG_LIBTOOL
@@ -204,7 +204,6 @@ AM_COND_IF([DEBUG],
 	CXXFLAGS+=" -ggdb"
 ], [
 	CXXFLAGS+=" -O3"
-	CXXFLAGS+=" -ggdb"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
@@ -214,6 +213,18 @@ AM_COND_IF([DEBUG],
 	CXXFLAGS+=" -fgcse-after-reload"
 	CXXFLAGS+=" -fsched-stalled-insns=0"
 	CXXFLAGS+=" -frename-registers"
+	CXXFLAGS+=" -fira-hoist-pressure"
+	CXXFLAGS+=" -fbranch-target-load-optimize"
+	CXXFLAGS+=" -frerun-loop-opt"
+
+	dnl TODO: lto cannot be enabled until subobject linkage for json::tuple
+	dnl is resolved
+	dnl
+	dnl CXXFLAGS+=" -flto"
+	dnl CXXFLAGS+=" -fdevirtualize-at-ltrans"
+
+	dnl remember to axe this when lto is enabled
+	CXXFLAGS+=" -ggdb"
 ])
 
 

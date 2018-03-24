@@ -29,6 +29,8 @@ AM_LDFLAGS += \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-allow-shlib-undefined \
+	-Wl,--gc-sections \
+	-Wl,--icf=all \
 	$(PLATFORM_LDFLAGS) \
 	# -Wl,--no-undefined \
 	# -export-symbols-regex IRCD_MODULE* \

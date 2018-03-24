@@ -17,6 +17,8 @@ AM_LDFLAGS = \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--no-undefined \
+	-Wl,--gc-sections \
+	-Wl,--icf=all \
 	-Wl,-z -Wl,now \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
