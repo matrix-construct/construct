@@ -1855,7 +1855,7 @@ noexcept
 	// If the content is chunked encoding and the tag is in the phase of
 	// receiving the chunk head we have to copy what's been received of that
 	// head so far so the grammar can parse a coherent head to continue.
-	if(tag.state.chunk_length == -1)
+	if(tag.state.chunk_length == size_t(-1))
 	{
 		const const_buffer src
 		{

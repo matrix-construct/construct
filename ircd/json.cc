@@ -1312,7 +1312,7 @@ size_t
 ircd::json::array::serialized(const it &b,
                               const it &e)
 {
-	const size_t ret(1 + !std::distance(b, e));
+	const size_t ret(1 + (b == e));
 	return std::accumulate(b, e, ret, []
 	(auto ret, const string_view &value)
 	{
@@ -1489,7 +1489,7 @@ size_t
 ircd::json::serialized(const member *const &begin,
                        const member *const &end)
 {
-	const size_t ret(1 + !std::distance(begin, end));
+	const size_t ret(1 + (begin == end));
 	return std::accumulate(begin, end, ret, []
 	(auto ret, const auto &member)
 	{
@@ -1646,7 +1646,7 @@ ircd::json::serialized(const value *const &begin,
                        const value *const &end)
 {
 	// One opening '[' and either one ']' or comma count.
-	const size_t ret(1 + !std::distance(begin, end));
+	const size_t ret(1 + (begin == end));
 	return std::accumulate(begin, end, size_t(ret), []
 	(auto ret, const value &v)
 	{
