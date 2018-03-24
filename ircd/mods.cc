@@ -38,8 +38,30 @@ std::map<std::string, ircd::mods::mod *>
 ircd::mods::mod::loaded
 {};
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// mod (internal)
+// mods/mods.h
+//
+
+ircd::string_view
+ircd::mods::name(const mod &mod)
+{
+	return mod.name();
+}
+
+ircd::string_view
+ircd::mods::path(const mod &mod)
+{
+	return mod.location();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// (internal) mods.h
+//
+
+//
+// mod::mod
 //
 
 ircd::mods::mod::mod(const filesystem::path &path,

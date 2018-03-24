@@ -53,6 +53,9 @@ namespace ircd::mods
 	std::forward_list<std::string> available();
 	bool available(const std::string &name);
 	bool loaded(const std::string &name);
+
+	string_view name(const mod &);
+	string_view path(const mod &);
 }
 
 // Bring struct module into main ircd::
