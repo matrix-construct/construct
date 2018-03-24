@@ -116,6 +116,8 @@ void
 ircd::ctx::set(shared_state<T> &st,
                const future_state &state)
 {
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 	switch(state)
 	{
 		case future_state::INVALID:  assert(0);  return;
@@ -129,6 +131,7 @@ ircd::ctx::set(shared_state<T> &st,
 			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x123);
 			return;
 	}
+	#pragma GCC diagnostic pop
 }
 
 /// Internal use
@@ -137,6 +140,8 @@ inline void
 ircd::ctx::set(shared_state<void> &st,
                const future_state &state)
 {
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 	switch(state)
 	{
 		case future_state::INVALID:  assert(0);  return;
@@ -150,6 +155,7 @@ ircd::ctx::set(shared_state<void> &st,
 			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x123);
 			return;
 	}
+	#pragma GCC diagnostic pop
 }
 
 /// Internal; check if the current state is something; safe but unnecessary
