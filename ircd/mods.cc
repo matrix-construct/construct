@@ -106,6 +106,9 @@ try
 		            header->magic,
 		            mapi::MAGIC);
 
+	// Tell the module where to find us.
+	header->self = this;
+
 	// Set some basic metadata
 	auto &meta(header->meta);
 	meta["name"] = name();

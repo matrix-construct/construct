@@ -44,10 +44,15 @@ struct ircd::mapi::header
 	init_function init;                          // Executed after dlopen()
 	fini_function fini;                          // Executed before dlclose()
 	metadata meta;                               // Various key-value metadata
+	mods::mod *self;                             // Module instance once loaded
 
 	// get and set metadata
 	auto &operator[](const std::string &s) const;
 	auto &operator[](const std::string &s);
+
+	// become self
+	operator const mods::mod &() const;
+	operator mods::mod &();
 
 	header(const char *const &desc = "<no description>",
 	       init_function = {},
@@ -69,6 +74,7 @@ ircd::mapi::header::header(const char *const &desc,
 {
 	{ "description", desc }
 }
+,self{nullptr}
 {
 }
 
@@ -77,6 +83,21 @@ ircd::mapi::header::~header()
 noexcept
 {
 	static_destruction = true;
+}
+
+inline ircd::mapi::header::operator
+mods::mod &()
+{
+	assert(self);
+	return *self;
+}
+
+inline ircd::mapi::header::operator
+const mods::mod &()
+const
+{
+	assert(self);
+	return *self;
 }
 
 inline auto &
