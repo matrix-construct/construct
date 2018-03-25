@@ -260,9 +260,7 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 
 	const string_view &membership
 	{
-		json::get<"membership"_>(event)?
-			string_view{json::get<"membership"_>(event)}:
-			unquote(at<"content"_>(event).get("membership"))
+		m::membership(event)
 	};
 
 	assert(!empty(membership));
