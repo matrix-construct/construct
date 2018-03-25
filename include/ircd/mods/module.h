@@ -35,7 +35,6 @@ struct ircd::mods::module
 
 	module(std::shared_ptr<mod> ptr = {});
 	module(const string_view &name);
-	~module() noexcept;
 };
 
 inline

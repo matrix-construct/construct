@@ -263,7 +263,23 @@ try
 	          name,
 	          path.string());
 
-	return std::make_shared<mod>(path, flags);
+	const auto ret
+	{
+		std::make_shared<mod>(path, flags)
+	};
+
+	// Call the user-supplied init function well after fully loading and
+	// construction of the module. This way the init function sees the module
+	// as loaded and can make shared_ptr references, etc.
+	if(ret->header->init)
+		ret->header->init();
+
+	log.info("Loaded module %s v%u \"%s\"",
+	         ret->name(),
+	         ret->header->version,
+	         !ret->description().empty()? ret->description() : "<no description>"s);
+
+	return ret;
 }()}
 {
 }
@@ -273,11 +289,6 @@ catch(const std::exception &e)
 	          name,
 	          e.what());
 	throw;
-}
-
-ircd::mods::module::~module()
-noexcept
-{
 }
 
 ircd::string_view
@@ -722,15 +733,6 @@ try
 		          name(),
 		          m->path.filename().string());
 	}
-
-	// If init throws an exception from here the loading process will back out.
-	if(header->init)
-		header->init();
-
-	log.info("Loaded module %s v%u \"%s\"",
-	         name(),
-	         header->version,
-	         description().size()? description() : "<no description>"s);
 
 	// Without init exception, the module is now considered loaded.
 	assert(!loaded.count(name()));
