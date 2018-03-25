@@ -76,8 +76,8 @@ struct ircd::db::txn::append
 	append(txn &, const row::delta &);
 	append(txn &, const delta &);
 	append(txn &, const string_view &key, const json::iov &);
-	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &);
-	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &, std::array<column, sizeof...(T)> &);
+	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &, const op & = op::SET);
+	template<class... T> append(txn &, const string_view &key, const json::tuple<T...> &, std::array<column, sizeof...(T)> &, const op & = op::SET);
 };
 
 struct ircd::db::txn::checkpoint
@@ -97,15 +97,22 @@ struct ircd::db::txn::opts
 template<class... T>
 ircd::db::txn::append::append(txn &txn,
                               const string_view &key,
-                              const json::tuple<T...> &tuple)
+                              const json::tuple<T...> &tuple,
+                              const op &op)
 {
-	for_each(tuple, [&txn, &key](const auto &col, auto&& val)
+	for_each(tuple, [&txn, &key, &op]
+	(const auto &col, auto&& val)
 	{
-		if(defined(val)) append
+		if(!value_required(op) || defined(val)) append
 		{
 			txn, delta
 			{
-				col, key, byte_view<string_view>{val}
+				op,
+				col,
+				key,
+				value_required(op)?
+					byte_view<string_view>{val}:
+					byte_view<string_view>{}
 			}
 		};
 	});
@@ -115,16 +122,22 @@ template<class... T>
 ircd::db::txn::append::append(txn &txn,
                               const string_view &key,
                               const json::tuple<T...> &tuple,
-                              std::array<column, sizeof...(T)> &col)
+                              std::array<column, sizeof...(T)> &col,
+                              const op &op)
 {
 	size_t i{0};
-	for_each(tuple, [&txn, &key, &col, &i](const auto &, auto&& val)
+	for_each(tuple, [&txn, &key, &col, &op, &i]
+	(const auto &, auto&& val)
 	{
-		if(defined(val)) append
+		if(!value_required(op) || defined(val)) append
 		{
 			txn, col.at(i), column::delta
 			{
-				key, byte_view<string_view>{val}
+				op,
+				key,
+				value_required(op)?
+					byte_view<string_view>{val}:
+					byte_view<string_view>{}
 			}
 		};
 
