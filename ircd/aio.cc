@@ -115,7 +115,8 @@ void
 ircd::fs::aio::handle_events()
 noexcept try
 {
-	std::array<io_event, MAX_EVENTS> event;
+	assert(!ctx::current);
+	thread_local std::array<io_event, MAX_EVENTS> event;
 
 	// The number of completed requests available in events[]. This syscall
 	// is restarted on EINTR. After restart, it may or may not find any ready
