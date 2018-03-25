@@ -812,6 +812,7 @@ console_cmd__key__default(const string_view &line)
 static bool console_cmd__event__default(const string_view &line);
 static bool console_cmd__event__dump(const string_view &line);
 static bool console_cmd__event__fetch(const string_view &line);
+static bool console_cmd__event__erase(const string_view &line);
 
 bool
 console_cmd__event(const string_view &line)
@@ -829,9 +830,41 @@ console_cmd__event(const string_view &line)
 		case hash("dump"):
 			return console_cmd__event__dump(args);
 
+		case hash("erase"):
+			return console_cmd__event__erase(args);
+
 		default:
 			return console_cmd__event__default(line);
 	}
+}
+
+bool
+console_cmd__event__erase(const string_view &line)
+{
+	const m::event::id event_id
+	{
+		token(line, ' ', 0)
+	};
+
+	m::event::fetch event
+	{
+		event_id
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	m::dbs::write_opts opts;
+	opts.op = db::op::DELETE;
+	m::dbs::write(txn, event, opts);
+	txn();
+
+	out << "erased " << txn.size() << " cells"
+	    << " for " << event_id << std::endl;
+
+	return true;
 }
 
 bool
