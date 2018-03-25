@@ -36,9 +36,10 @@ class ircd::mods::sym_ptr
 	template<class T> T *operator->();
 	template<class T> T &operator*();
 
-	sym_ptr() = default;
+	explicit sym_ptr(mod &, const string_view &symname);
 	sym_ptr(module, const string_view &symname);
 	sym_ptr(const string_view &modname, const string_view &symname);
+	sym_ptr() = default;
 };
 
 template<class T>

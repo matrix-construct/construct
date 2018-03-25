@@ -19,8 +19,8 @@ namespace ircd::mods
 struct ircd::mods::module
 :std::shared_ptr<mod>
 {
-	operator const mod &() const;
-	operator mod &();
+	explicit operator const mod &() const;
+	explicit operator mod &();
 
 	string_view name() const;
 	string_view path() const;
@@ -47,7 +47,8 @@ template<class T>
 T &
 ircd::mods::module::get(const string_view &sym)
 {
-	return mods::get<T>(*this, sym);
+	mod &mod{*this};
+	return mods::get<T>(mod, sym);
 }
 
 template<class T>
@@ -55,14 +56,16 @@ const T &
 ircd::mods::module::get(const string_view &sym)
 const
 {
-	return mods::get<T>(*this, sym);
+	const mod &mod{*this};
+	return mods::get<T>(mod, sym);
 }
 
 template<class T>
 T *
 ircd::mods::module::ptr(const string_view &sym)
 {
-	return mods::ptr<T>(*this, sym);
+	mod &mod{*this};
+	return mods::ptr<T>(mod, sym);
 }
 
 template<class T>
@@ -70,7 +73,8 @@ const T *
 ircd::mods::module::ptr(const string_view &sym)
 const
 {
-	return mods::ptr<T>(*this, sym);
+	const mod &mod{*this};
+	return mods::ptr<T>(mod, sym);
 }
 
 inline ircd::mods::module::operator

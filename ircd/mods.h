@@ -66,5 +66,9 @@ struct ircd::mods::mod
 	mod(const filesystem::path &,
 	    const load_mode::type & = load_mode::rtld_local | load_mode::rtld_now);
 
+	mod(mod &&) = delete;
+	mod(const mod &) = delete;
+	mod &operator=(mod &&) = delete;
+	mod &operator=(const mod &) = delete;
 	~mod() noexcept;
 };

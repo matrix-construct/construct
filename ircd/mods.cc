@@ -204,6 +204,15 @@ ircd::mods::sym_ptr::sym_ptr(const string_view &modname,
 {
 }
 
+ircd::mods::sym_ptr::sym_ptr(mod &mod,
+                             const string_view &symname)
+:sym_ptr
+{
+	module(shared_from(mod)), symname
+}
+{
+}
+
 ircd::mods::sym_ptr::sym_ptr(module module,
                              const string_view &symname)
 :std::weak_ptr<mod>
@@ -275,21 +284,24 @@ ircd::string_view
 ircd::mods::module::path()
 const
 {
-	return mods::path(*this);
+	const mod &mod(*this);
+	return mods::path(mod);
 }
 
 ircd::string_view
 ircd::mods::module::name()
 const
 {
-	return mods::name(*this);
+	const mod &mod(*this);
+	return mods::name(mod);
 }
 
 bool
 ircd::mods::module::has(const string_view &name)
 const
 {
-	return mods::has(*this, name);
+	const mod &mod(*this);
+	return mods::has(mod, name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
