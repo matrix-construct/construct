@@ -32,13 +32,13 @@ struct ircd::mods::import_shared
 	operator T &()                               { return std::shared_ptr<T>::operator*();         }
 
 	import_shared() = default;
-	import_shared(module, const std::string &symname);
-	import_shared(const std::string &modname, const std::string &symname);
+	import_shared(module, const string_view &symname);
+	import_shared(const string_view &modname, const string_view &symname);
 };
 
 template<class T>
-ircd::mods::import_shared<T>::import_shared(const std::string &modname,
-                                            const std::string &symname)
+ircd::mods::import_shared<T>::import_shared(const string_view &modname,
+                                            const string_view &symname)
 :import_shared
 {
 	module(modname), symname
@@ -47,7 +47,7 @@ ircd::mods::import_shared<T>::import_shared(const std::string &modname,
 
 template<class T>
 ircd::mods::import_shared<T>::import_shared(module module,
-                                            const std::string &symname)
+                                            const string_view &symname)
 :import<std::shared_ptr<T>>
 {
 	module, symname

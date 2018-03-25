@@ -16,18 +16,20 @@ namespace ircd::mods
 	struct paths extern paths;
 
 	// Platform (.so|.dll) postfixing
-	std::string postfixed(const std::string &name);
-	std::string unpostfixed(const std::string &name);
+	std::string postfixed(std::string name);
+	std::string postfixed(const string_view &);
+	std::string unpostfixed(std::string name);
+	std::string unpostfixed(const string_view &);
 }
 
 struct ircd::mods::paths
 :std::vector<std::string>
 {
-	bool added(const std::string &dir) const;
+	bool added(const string_view &dir) const;
 
-	bool del(const std::string &dir);
-	bool add(const std::string &dir, std::nothrow_t);
-	bool add(const std::string &dir);
+	bool del(const string_view &dir);
+	bool add(const string_view &dir, std::nothrow_t);
+	bool add(const string_view &dir);
 
 	paths();
 };

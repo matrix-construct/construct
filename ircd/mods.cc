@@ -30,14 +30,6 @@ ircd::mods::suffix
 	boost::dll::shared_library::suffix()
 };
 
-std::stack<ircd::mods::mod *>
-ircd::mods::mod::loading
-{};
-
-std::map<std::string, ircd::mods::mod *>
-ircd::mods::mod::loaded
-{};
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // mods/mods.h (misc util)
@@ -58,7 +50,9 @@ ircd::mods::available()
 	}
 	catch(const filesystem::filesystem_error &e)
 	{
-		log.warning("Module path [%s]: %s", dir, e.what());
+		log.warning("Module path [%s]: %s",
+		            dir,
+		            e.what());
 		continue;
 	}
 
@@ -66,14 +60,16 @@ ircd::mods::available()
 }
 
 filesystem::path
-ircd::mods::fullpath(const std::string &name)
+ircd::mods::fullpath(const string_view &name)
 {
 	std::vector<std::string> why;
 	const filesystem::path path(search(name, why));
 	if(path.empty())
 	{
 		for(const auto &str : why)
-			log.error("candidate for module '%s' failed: %s", name, str);
+			log.error("candidate for module '%s' failed: %s",
+			          name,
+			          str);
 
 		throw error
 		{
@@ -85,23 +81,29 @@ ircd::mods::fullpath(const std::string &name)
 }
 
 std::string
-ircd::mods::search(const std::string &name)
+ircd::mods::search(const string_view &name)
 {
 	std::vector<std::string> why;
 	return search(name, why);
 }
 
 std::string
-ircd::mods::search(const std::string &name,
+ircd::mods::search(const string_view &name,
                    std::vector<std::string> &why)
 {
 	using filesystem::path;
 
-	const path path(postfixed(name));
+	const path path
+	{
+		postfixed(name)
+	};
+
 	if(!path.is_relative())
 	{
 		why.resize(why.size() + 1);
-		return is_module(path, why.back())? name : std::string{};
+		return is_module(path, why.back())?
+			std::string{name}:
+			std::string{};
 	}
 	else for(const auto &dir : paths)
 	{
@@ -114,23 +116,23 @@ ircd::mods::search(const std::string &name,
 }
 
 bool
-ircd::mods::is_module(const std::string &fullpath)
+ircd::mods::is_module(const string_view &fullpath)
 {
-	return is_module(filesystem::path(fullpath));
+	return is_module(filesystem::path(std::string{fullpath}));
 }
 
 bool
-ircd::mods::is_module(const std::string &fullpath,
+ircd::mods::is_module(const string_view &fullpath,
                       std::nothrow_t)
 {
-	return is_module(filesystem::path(fullpath), std::nothrow);
+	return is_module(filesystem::path(std::string{fullpath}), std::nothrow);
 }
 
 bool
-ircd::mods::is_module(const std::string &fullpath,
+ircd::mods::is_module(const string_view &fullpath,
                       std::string &why)
 {
-	return is_module(filesystem::path(fullpath), why);
+	return is_module(filesystem::path(std::string{fullpath}), why);
 }
 
 bool
@@ -174,7 +176,7 @@ ircd::mods::is_module(const filesystem::path &path)
 }
 
 bool
-ircd::mods::available(const std::string &name)
+ircd::mods::available(const string_view &name)
 {
 	using filesystem::path;
 
@@ -183,7 +185,7 @@ ircd::mods::available(const std::string &name)
 }
 
 bool
-ircd::mods::loaded(const std::string &name)
+ircd::mods::loaded(const string_view &name)
 {
 	return mod::loaded.count(name);
 }
@@ -193,8 +195,8 @@ ircd::mods::loaded(const std::string &name)
 // mods/sym_ptr.h
 //
 
-ircd::mods::sym_ptr::sym_ptr(const std::string &modname,
-                             const std::string &symname)
+ircd::mods::sym_ptr::sym_ptr(const string_view &modname,
+                             const string_view &symname)
 :sym_ptr
 {
 	module(modname), symname
@@ -203,31 +205,24 @@ ircd::mods::sym_ptr::sym_ptr(const std::string &modname,
 }
 
 ircd::mods::sym_ptr::sym_ptr(module module,
-                             const std::string &symname)
+                             const string_view &symname)
 :std::weak_ptr<mod>
 {
 	module
 }
-,ptr{[this, &symname]
+,ptr{[this, &module, &symname]
 {
-	const life_guard<mods::mod> mod{*this};
-	const auto &mangled(mod->mangle(symname));
-	if(unlikely(!mod->has(mangled)))
+	if(unlikely(!module.has(symname)))
 		throw undefined_symbol
 		{
 			"Could not find symbol '%s' (%s) in module '%s'",
+			demangle(symname),
 			symname,
-			mangled,
-			mod->name()
+			module.name()
 		};
 
-	return mod->ptr(mangled);
+	return module.ptr(symname);
 }()}
-{
-}
-
-ircd::mods::sym_ptr::~sym_ptr()
-noexcept
 {
 }
 
@@ -236,7 +231,7 @@ noexcept
 // mods/module.h
 //
 
-ircd::mods::module::module(const std::string &name)
+ircd::mods::module::module(const string_view &name)
 try
 :std::shared_ptr<mod>{[&name]
 {
@@ -255,14 +250,19 @@ try
 	};
 
 	const auto path(fullpath(name));
-	log.debug("Attempting to load '%s' @ `%s'", name, path.string());
+	log.debug("Attempting to load '%s' @ `%s'",
+	          name,
+	          path.string());
+
 	return std::make_shared<mod>(path, flags);
 }()}
 {
 }
 catch(const std::exception &e)
 {
-	log.error("Failed to load '%s': %s", name, e.what());
+	log.error("Failed to load '%s': %s",
+	          name,
+	          e.what());
 	throw;
 }
 
@@ -271,73 +271,25 @@ noexcept
 {
 }
 
-const std::string &
+ircd::string_view
 ircd::mods::module::path()
 const
 {
-	if(unlikely(!*this))
-	{
-		static const std::string empty;
-		return empty;
-	}
-
-	auto &mod(**this);
-	return mod.location();
+	return mods::path(*this);
 }
 
-const std::string &
+ircd::string_view
 ircd::mods::module::name()
 const
 {
-	if(unlikely(!*this))
-	{
-		static const std::string empty;
-		return empty;
-	}
-
-	auto &mod(**this);
-	return mod.name();
-}
-
-template<> uint8_t *
-ircd::mods::module::ptr<uint8_t>(const std::string &name)
-{
-	auto &mod(**this);
-	return mod.ptr<uint8_t>(mangle(name));
-}
-
-template<>
-const uint8_t *
-ircd::mods::module::ptr<const uint8_t>(const std::string &name)
-const
-{
-	const auto &mod(**this);
-	return mod.ptr<const uint8_t>(mangle(name));
+	return mods::name(*this);
 }
 
 bool
-ircd::mods::module::has(const std::string &name)
+ircd::mods::module::has(const string_view &name)
 const
 {
-	if(unlikely(!*this))
-		return false;
-
-	const auto &mod(**this);
-	return mod.has(mangle(name));
-}
-
-const std::string &
-ircd::mods::module::mangle(const std::string &name)
-const
-{
-	if(unlikely(!*this))
-	{
-		static const std::string empty;
-		return empty;
-	}
-
-	const auto &mod(**this);
-	return mod.mangle(name);
+	return mods::has(*this, name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -346,7 +298,7 @@ const
 //
 
 std::vector<std::string>
-ircd::mods::find_symbol(const std::string &symbol)
+ircd::mods::find_symbol(const string_view &symbol)
 {
 	std::vector<std::string> ret;
 	const auto av(available());
@@ -360,8 +312,8 @@ ircd::mods::find_symbol(const std::string &symbol)
 }
 
 bool
-ircd::mods::has_symbol(const std::string &name,
-                       const std::string &symbol)
+ircd::mods::has_symbol(const string_view &name,
+                       const string_view &symbol)
 {
 	const auto path(fullpath(name));
 	if(path.empty())
@@ -372,16 +324,16 @@ ircd::mods::has_symbol(const std::string &name,
 }
 
 std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const std::string &fullpath)
+ircd::mods::mangles(const string_view &fullpath)
 {
-	return mangles(filesystem::path(fullpath));
+	return mangles(filesystem::path(std::string{fullpath}));
 }
 
 std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const std::string &fullpath,
-                    const std::string &section)
+ircd::mods::mangles(const string_view &fullpath,
+                    const string_view &section)
 {
-	return mangles(filesystem::path(fullpath), section);
+	return mangles(filesystem::path(std::string{fullpath}), section);
 }
 
 std::unordered_map<std::string, std::string>
@@ -392,7 +344,7 @@ ircd::mods::mangles(const filesystem::path &path)
 
 std::unordered_map<std::string, std::string>
 ircd::mods::mangles(const filesystem::path &path,
-                    const std::string &section)
+                    const string_view &section)
 {
 	return mangles(mods::symbols(path, section));
 }
@@ -414,16 +366,16 @@ ircd::mods::mangles(const std::vector<std::string> &symbols)
 }
 
 std::vector<std::string>
-ircd::mods::symbols(const std::string &fullpath)
+ircd::mods::symbols(const string_view &fullpath)
 {
-	return symbols(filesystem::path(fullpath));
+	return symbols(filesystem::path(std::string{fullpath}));
 }
 
 std::vector<std::string>
-ircd::mods::symbols(const std::string &fullpath,
-                    const std::string &section)
+ircd::mods::symbols(const string_view &fullpath,
+                    const string_view &section)
 {
-	return symbols(filesystem::path(fullpath), section);
+	return symbols(filesystem::path(std::string{fullpath}), std::string{section});
 }
 
 std::vector<std::string>
@@ -438,19 +390,19 @@ ircd::mods::symbols(const filesystem::path &path)
 
 std::vector<std::string>
 ircd::mods::symbols(const filesystem::path &path,
-                    const std::string &section)
+                    const string_view &section)
 {
 	return info<std::vector<std::string>>(path, [&section]
 	(boost::dll::library_info &info)
 	{
-		return info.symbols(section);
+		return info.symbols(std::string{section});
 	});
 }
 
 std::vector<std::string>
-ircd::mods::sections(const std::string &fullpath)
+ircd::mods::sections(const string_view &fullpath)
 {
-	return sections(filesystem::path(fullpath));
+	return sections(filesystem::path(std::string{fullpath}));
 }
 
 std::vector<std::string>
@@ -470,10 +422,16 @@ ircd::mods::info(const filesystem::path &path,
                  F&& closure)
 {
 	if(!exists(path))
-		throw filesystem_error("`%s' does not exist", path.string());
+		throw filesystem_error
+		{
+			"`%s' does not exist", path.string()
+		};
 
 	if(!is_regular_file(path))
-		throw filesystem_error("`%s' is not a file", path.string());
+		throw filesystem_error
+		{
+			"`%s' is not a file", path.string()
+		};
 
 	boost::dll::library_info info(path);
 	return closure(info);
@@ -500,15 +458,27 @@ ircd::mods::paths
 {};
 
 std::string
-ircd::mods::unpostfixed(const std::string &name)
+ircd::mods::unpostfixed(const string_view &name)
 {
-	return unpostfixed(filesystem::path(name)).string();
+	return unpostfixed(std::string{name});
 }
 
 std::string
-ircd::mods::postfixed(const std::string &name)
+ircd::mods::unpostfixed(std::string name)
 {
-	return postfixed(filesystem::path(name)).string();
+	return unpostfixed(filesystem::path(std::move(name))).string();
+}
+
+std::string
+ircd::mods::postfixed(const string_view &name)
+{
+	return postfixed(std::string{name});
+}
+
+std::string
+ircd::mods::postfixed(std::string name)
+{
+	return postfixed(filesystem::path(std::move(name))).string();
 }
 
 filesystem::path
@@ -549,11 +519,14 @@ ircd::mods::paths::paths()
 }
 
 bool
-ircd::mods::paths::add(const std::string &dir)
+ircd::mods::paths::add(const string_view &dir)
 {
 	using filesystem::path;
 
-	const path path(prefix_if_relative(dir));
+	const path path
+	{
+		prefix_if_relative(std::string{dir})
+	};
 
 	if(!exists(path))
 		throw filesystem_error
@@ -575,7 +548,7 @@ ircd::mods::paths::add(const std::string &dir)
 }
 
 bool
-ircd::mods::paths::add(const std::string &dir,
+ircd::mods::paths::add(const string_view &dir,
                        std::nothrow_t)
 try
 {
@@ -588,14 +561,14 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::mods::paths::del(const std::string &dir)
+ircd::mods::paths::del(const string_view &dir)
 {
-	std::remove(begin(), end(), prefix_if_relative(dir).string());
+	std::remove(begin(), end(), prefix_if_relative(std::string{dir}).string());
 	return true;
 }
 
 bool
-ircd::mods::paths::added(const std::string &dir)
+ircd::mods::paths::added(const string_view &dir)
 const
 {
 	return std::find(begin(), end(), dir) != end();
@@ -605,6 +578,28 @@ const
 //
 // mods/mods.h
 //
+
+template<> uint8_t *
+ircd::mods::ptr<uint8_t>(mod &mod,
+                         const string_view &sym)
+{
+	return &mod.handle.get<uint8_t>(std::string{sym});
+}
+
+template<>
+const uint8_t *
+ircd::mods::ptr<const uint8_t>(const mod &mod,
+                               const string_view &sym)
+{
+	return &mod.handle.get<const uint8_t>(std::string{sym});
+}
+
+bool
+ircd::mods::has(const mod &mod,
+                const string_view &name)
+{
+	return mod.handle.has(std::string{name});
+}
 
 ircd::string_view
 ircd::mods::name(const mod &mod)
@@ -622,6 +617,14 @@ ircd::mods::path(const mod &mod)
 //
 // (internal) mods.h
 //
+
+decltype(ircd::mods::mod::loading)
+ircd::mods::mod::loading
+{};
+
+decltype(ircd::mods::mod::loaded)
+ircd::mods::mod::loaded
+{};
 
 ircd::mods::mod::mod(const filesystem::path &path,
                      const load_mode::type &mode)
@@ -718,6 +721,7 @@ try
 	         description().size()? description() : "<no description>"s);
 
 	// Without init exception, the module is now considered loaded.
+	assert(!loaded.count(name()));
 	loaded.emplace(name(), this);
 }
 catch(const boost::system::system_error &e)
@@ -758,11 +762,20 @@ bool ircd::mapi::static_destruction;
 ircd::mods::mod::~mod()
 noexcept try
 {
+	log.debug("Attempting unload module '%s' @ `%s'",
+	          name(),
+	          location());
+
 	unload();
+
+	const size_t erased(loaded.erase(name()));
+	assert(erased == 1);
 }
 catch(const std::exception &e)
 {
-	log::critical("Module @%p unload: %s", (const void *)this, e.what());
+	log.critical("Module @%p unload: %s",
+	             (const void *)this,
+	             e.what());
 
 	if(!ircd::debugmode)
 		return;
@@ -773,11 +786,6 @@ ircd::mods::mod::unload()
 {
 	if(!handle.is_loaded())
 		return false;
-
-	const auto name(this->name());
-	log.debug("Attempting unload module '%s' @ `%s'", name, location());
-	const size_t erased(loaded.erase(name));
-	assert(erased == 1);
 
 	if(header->fini)
 		header->fini();
@@ -794,66 +802,21 @@ ircd::mods::mod::unload()
 			ptr->unload();
 	});
 
-	log.debug("Attempting static unload for '%s' @ `%s'", name, location());
+	log.debug("Attempting static unload for '%s' @ `%s'",
+	          name(),
+	          location());
+
 	mapi::static_destruction = false;
 	handle.unload();
 	assert(!handle.is_loaded());
+
 	if(!mapi::static_destruction)
 	{
-		log.error("Module \"%s\" is stuck and failing to unload.", name);
-		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name);
+		log.critical("Module \"%s\" is stuck and failing to unload.", name());
+		log.critical("Module \"%s\" may result in undefined behavior if not fixed.", name());
 	} else {
-		log.info("Unloaded '%s'", name);
+		log.info("Unloaded '%s'", name());
 	}
 
 	return true;
-}
-
-const std::string &
-ircd::mods::mod::mangle(const std::string &name)
-const
-{
-	const auto it(mangles.find(name));
-	if(it == end(mangles))
-		return name;
-
-	const auto &mangled(it->second);
-	return mangled;
-}
-
-template<class T>
-T *
-ircd::mods::mod::ptr(const std::string &name)
-{
-	return &handle.get<T>(name);
-}
-
-template<class T>
-const T *
-ircd::mods::mod::ptr(const std::string &name)
-const
-{
-	return &handle.get<T>(name);
-}
-
-template<class T>
-T &
-ircd::mods::mod::get(const std::string &name)
-{
-	handle.get<T>(name);
-}
-
-template<class T>
-const T &
-ircd::mods::mod::get(const std::string &name)
-const
-{
-	handle.get<T>(name);
-}
-
-bool
-ircd::mods::mod::has(const std::string &name)
-const
-{
-	return handle.has(name);
 }

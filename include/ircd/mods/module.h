@@ -19,58 +19,71 @@ namespace ircd::mods
 struct ircd::mods::module
 :std::shared_ptr<mod>
 {
-	const std::string &name() const;
-	const std::string &path() const;
-	const std::string &mangle(const std::string &) const;
+	operator const mod &() const;
+	operator mod &();
 
-	bool has(const std::string &name) const;
+	string_view name() const;
+	string_view path() const;
 
-	template<class T = uint8_t> const T *ptr(const std::string &name) const;
-	template<class T = uint8_t> T *ptr(const std::string &name);
+	bool has(const string_view &sym) const;
 
-	template<class T> const T &get(const std::string &name) const;
-	template<class T> T &get(const std::string &name);
+	template<class T = uint8_t> const T *ptr(const string_view &sym) const;
+	template<class T = uint8_t> T *ptr(const string_view &sym);
 
-	module(std::shared_ptr<mod> ptr = {})
-	:std::shared_ptr<mod>{std::move(ptr)}
-	{}
+	template<class T> const T &get(const string_view &sym) const;
+	template<class T> T &get(const string_view &sym);
 
-	module(const std::string &name);
+	module(std::shared_ptr<mod> ptr = {});
+	module(const string_view &name);
 	~module() noexcept;
 };
 
-namespace ircd::mods
-{
-	template<> const uint8_t *module::ptr<const uint8_t>(const std::string &name) const;
-	template<> uint8_t *module::ptr<uint8_t>(const std::string &name);
-}
+inline
+ircd::mods::module::module(std::shared_ptr<mod> ptr)
+:std::shared_ptr<mod>{std::move(ptr)}
+{}
 
 template<class T>
 T &
-ircd::mods::module::get(const std::string &name)
+ircd::mods::module::get(const string_view &sym)
 {
-	return *ptr<T>(name);
+	return mods::get<T>(*this, sym);
 }
 
 template<class T>
 const T &
-ircd::mods::module::get(const std::string &name)
+ircd::mods::module::get(const string_view &sym)
 const
 {
-	return *ptr<T>(name);
+	return mods::get<T>(*this, sym);
 }
 
 template<class T>
 T *
-ircd::mods::module::ptr(const std::string &name)
+ircd::mods::module::ptr(const string_view &sym)
 {
-	return reinterpret_cast<T *>(ptr<uint8_t>(name));
+	return mods::ptr<T>(*this, sym);
 }
 
 template<class T>
 const T *
-ircd::mods::module::ptr(const std::string &name)
+ircd::mods::module::ptr(const string_view &sym)
 const
 {
-	return reinterpret_cast<const T *>(ptr<const uint8_t>(name));
+	return mods::ptr<T>(*this, sym);
+}
+
+inline ircd::mods::module::operator
+mod &()
+{
+	assert(bool(*this));
+	return std::shared_ptr<mod>::operator*();
+}
+
+inline ircd::mods::module::operator
+const mod &()
+const
+{
+	assert(bool(*this));
+	return std::shared_ptr<mod>::operator*();
 }

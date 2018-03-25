@@ -22,13 +22,13 @@ namespace ircd::mods
 	template<class R, class F> R info(const filesystem::path &, F&& closure);
 	std::vector<std::string> sections(const filesystem::path &path);
 	std::vector<std::string> symbols(const filesystem::path &path);
-	std::vector<std::string> symbols(const filesystem::path &path, const std::string &section);
+	std::vector<std::string> symbols(const filesystem::path &path, const string_view &section);
 	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
 	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path);
-	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path, const std::string &section);
+	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path, const string_view &section);
 
 	// Get the full path of a [valid] available module by name
-	filesystem::path fullpath(const std::string &name);
+	filesystem::path fullpath(const string_view &name);
 
 	// Checks if loadable module containing a mapi header (does not verify the magic)
 	bool is_module(const filesystem::path &);
@@ -40,8 +40,8 @@ namespace ircd::mods
 struct ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
-	static std::stack<mod *> loading;            // State of current dlopen() recursion.
-	static std::map<std::string, mod *> loaded;
+	static std::stack<mod *> loading; // State of current dlopen() recursion.
+	static std::map<string_view, mod *, std::less<>> loaded;
 
 	filesystem::path path;
 	load_mode::type mode;
@@ -60,14 +60,6 @@ struct ircd::mods::mod
 	auto &location() const                       { return _location;                               }
 	auto &version() const                        { return header->version;                         }
 	auto &description() const                    { return (*this)["description"];                  }
-
-	const std::string &mangle(const std::string &name) const;
-
-	bool has(const std::string &name) const;
-	template<class T> const T &get(const std::string &name) const;
-	template<class T> T &get(const std::string &name);
-	template<class T = uint8_t> const T *ptr(const std::string &name) const;
-	template<class T = uint8_t> T *ptr(const std::string &name);
 
 	bool unload();
 

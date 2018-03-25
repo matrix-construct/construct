@@ -14,16 +14,16 @@
 namespace ircd::mods
 {
 	// Section & Symbol utilites
-	std::vector<std::string> sections(const std::string &fullpath);
+	std::vector<std::string> sections(const string_view &fullpath);
 
-	std::vector<std::string> symbols(const std::string &fullpath, const std::string &section);
-	std::vector<std::string> symbols(const std::string &fullpath);
+	std::vector<std::string> symbols(const string_view &fullpath, const string_view &section);
+	std::vector<std::string> symbols(const string_view &fullpath);
 
 	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
-	std::unordered_map<std::string, std::string> mangles(const std::string &fullpath, const std::string &section);
-	std::unordered_map<std::string, std::string> mangles(const std::string &fullpath);
+	std::unordered_map<std::string, std::string> mangles(const string_view &fullpath, const string_view &section);
+	std::unordered_map<std::string, std::string> mangles(const string_view &fullpath);
 
 	// Find module names where symbol resides
-	bool has_symbol(const std::string &name, const std::string &symbol);
-	std::vector<std::string> find_symbol(const std::string &symbol);
+	bool has_symbol(const string_view &name, const string_view &symbol);
+	std::vector<std::string> find_symbol(const string_view &symbol);
 }
