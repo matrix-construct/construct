@@ -63,6 +63,7 @@ namespace ircd::ctx { inline namespace this_ctx
 /// Interface to the currently running context
 {
 	struct critical_assertion;                   // Assert no yielding for a section
+	struct exception_handler;                    // Must be present to yield in a handler
 
 	/// Points to the currently running context or null for main stack (do not modify)
 	extern __thread struct ctx *current;
@@ -145,6 +146,27 @@ class ircd::ctx::this_ctx::critical_assertion
   public:
 	critical_assertion();
 	~critical_assertion() noexcept;
+};
+
+/// An instance of exception_handler must be present to allow a context
+/// switch inside a catch block. This is due to ABI limitations that stack
+/// exceptions with thread-local assumptions and don't expect catch blocks
+/// on the same thread to interleave when we switch the stack.
+///
+/// We first increment the refcount for the caught exception so it remains
+/// intuitively accessible for the rest of the catch block. Then the presence
+/// of this object makes the ABI believe the catch block has ended.
+///
+/// The exception cannot then be rethrown. DO NOT RETHROW THE EXCEPTION.
+///
+struct ircd::ctx::this_ctx::exception_handler
+:std::exception_ptr
+{
+	exception_handler() noexcept;
+	exception_handler(exception_handler &&) = delete;
+	exception_handler(const exception_handler &) = delete;
+	exception_handler &operator=(exception_handler &&) = delete;
+	exception_handler &operator=(const exception_handler &) = delete;
 };
 
 /// This overload matches ::sleep() and acts as a drop-in for ircd contexts.

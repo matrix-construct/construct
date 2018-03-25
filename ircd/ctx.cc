@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_X86INTRIN_H
+#include <cxxabi.h>
 #include <ircd/asio.h>
 
 /// Internal context implementation
@@ -480,6 +481,20 @@ ircd::ctx::id(const ctx &ctx)
 	return ctx.id;
 }
 
+//
+// exception_handler
+//
+
+ircd::ctx::this_ctx::exception_handler::exception_handler()
+noexcept
+:std::exception_ptr{std::current_exception()}
+{
+	assert(bool(*this));
+	assert(!std::uncaught_exceptions());
+	__cxa_end_catch();
+	assert(!std::current_exception());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ctx/continuation.h
@@ -519,6 +534,9 @@ ircd::ctx::continuation::continuation(ctx *const &self)
 	assert(self != nullptr);
 	assert(self->notes <= 1);
 
+	// Note: Construct an instance of ctx::exception_handler to enable yielding
+	// in your catch block.
+	//
 	// GNU cxxabi uses a singly-linked forward list (aka the 'exception
 	// stack') for pending exception activities. Due to this limitation we
 	// cannot interleave _cxa_begin_catch() and __cxa_end_catch() by yielding
