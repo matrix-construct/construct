@@ -55,6 +55,7 @@ struct ircd::m::dbs::write_opts
 {
 	string_view root_in;
 	mutable_buffer root_out;
+	db::op op {db::op::SET};
 	bool present {true};
 	bool history {true};
 };

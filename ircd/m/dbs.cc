@@ -106,7 +106,7 @@ ircd::m::dbs::write(db::txn &txn,
 {
 	db::txn::append
 	{
-		txn, at<"event_id"_>(event), event, event_column
+		txn, at<"event_id"_>(event), event, event_column, opts.op
 	};
 
 	if(defined(json::get<"state_key"_>(event)))
@@ -193,7 +193,7 @@ try
 
 	const string_view &new_root
 	{
-		opts.history?
+		opts.op == db::op::SET && opts.history?
 			state::insert(txn, opts.root_out, opts.root_in, event):
 			opts.root_in
 	};
@@ -232,6 +232,7 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
 	{
 		txn, room_events,
 		{
+			opts.op,   // db::op
 			key,       // key
 			new_root   // val
 		}
@@ -265,7 +266,8 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 
 	assert(!empty(membership));
 
-	db::op op; switch(hash(membership))
+	db::op op;
+	if(opts.op == db::op::SET) switch(hash(membership))
 	{
 		case hash("join"):
 			op = db::op::SET;
@@ -278,7 +280,11 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 
 		default:
 			return;
-	};
+	}
+	else if(opts.op == db::op::DELETE)
+		op = opts.op;
+	else
+		return;
 
 	db::txn::append
 	{
@@ -314,7 +320,7 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 
 	const db::op op
 	{
-		at<"type"_>(event) != "m.room.redaction"?
+		opts.op == db::op::SET && at<"type"_>(event) != "m.room.redaction"?
 			db::op::SET:
 			db::op::DELETE
 	};
@@ -325,7 +331,7 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 		{
 			op,
 			key,
-			val,  // should be ignored on DELETE
+			value_required(op)? val : string_view{},
 		}
 	};
 }
