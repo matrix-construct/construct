@@ -705,6 +705,7 @@ catch(const boost::system::system_error &e)
 	if(e.code().value() != boost::system::errc::operation_canceled)
 		throw;
 
+	const ctx::exception_handler eh;
 	resource::response
 	{
 		*this, http::REQUEST_TIMEOUT, {}, 0L, {}
@@ -714,6 +715,8 @@ catch(const boost::system::system_error &e)
 }
 catch(const ircd::error &e)
 {
+	const ctx::exception_handler eh;
+
 	log::error
 	{
 		"socket(%p) local[%s] remote[%s] [500 Internal Error]: %s",
@@ -751,6 +754,8 @@ try
 }
 catch(const http::error &e)
 {
+	const ctx::exception_handler eh;
+
 	log::derror
 	{
 		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
