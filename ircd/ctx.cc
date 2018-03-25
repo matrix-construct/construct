@@ -262,115 +262,6 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 // ctx/ctx.h
 //
 
-__thread ircd::ctx::ctx *ircd::ctx::current;
-
-/// Yield the currently running context until `time_point` ignoring notes
-void
-ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
-{
-	while(!wait_until(tp, std::nothrow));
-}
-
-/// Yield the currently running context until notified or `time_point`.
-///
-/// Returns true if this function returned because `time_point` was hit or
-/// false because this context was notified.
-bool
-ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
-                                const std::nothrow_t &)
-{
-	auto &c(cur());
-	c.alarm.expires_at(tp);
-	c.wait(); // now you're yielding with portals
-
-	return std::chrono::steady_clock::now() >= tp;
-}
-
-/// Yield the currently running context for `duration` or until notified.
-///
-/// Returns the duration remaining if notified, or <= 0 if suspended for
-/// the full duration, or unchanged if no suspend ever took place.
-std::chrono::microseconds
-ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
-                          const std::nothrow_t &)
-{
-	auto &c(cur());
-	c.alarm.expires_from_now(duration);
-	c.wait(); // now you're yielding with portals
-	const auto ret(c.alarm.expires_from_now());
-
-	// return remaining duration.
-	// this is > 0 if notified
-	// this is unchanged if a note prevented any wait at all
-	return std::chrono::duration_cast<std::chrono::microseconds>(ret);
-}
-
-/// Yield the currently running context until notified.
-void
-ircd::ctx::this_ctx::wait()
-{
-	auto &c(cur());
-	c.alarm.expires_at(std::chrono::steady_clock::time_point::max());
-	c.wait(); // now you're yielding with portals
-}
-
-/// Post the currently running context to the event queue and then suspend to
-/// allow other contexts in the queue to run.
-///
-/// Until we have our own queue the ios queue makes no guarantees if the queue
-/// is FIFO or LIFO etc :-/ It is generally bad practice to use this function,
-/// as one should make the effort to devise a specific cooperative strategy for
-/// how context switching occurs rather than this coarse/brute technique.
-void
-ircd::ctx::this_ctx::yield()
-{
-	bool done(false);
-	const auto restore([&done, &me(cur())]
-	{
-		done = true;
-		notify(me);
-	});
-
-	// All spurious notifications are ignored until `done`
-	ios->post(restore); do
-	{
-		wait();
-	}
-	while(!done);
-}
-
-/// Throws interrupted if the currently running context was interrupted
-/// and clears the interrupt flag.
-void
-ircd::ctx::this_ctx::interruption_point()
-{
-	return cur().interruption_point();
-}
-
-/// Returns true if the currently running context was interrupted and clears
-/// the interrupt flag.
-bool
-ircd::ctx::this_ctx::interruption_requested()
-{
-	return interruption(cur());
-}
-
-/// Returns unique ID of currently running context
-const uint64_t &
-ircd::ctx::this_ctx::id()
-{
-	static const uint64_t zero{0};
-	return current? id(cur()) : zero;
-}
-
-/// Returns optional developer-given name for currently running context
-ircd::string_view
-ircd::ctx::this_ctx::name()
-{
-	static const string_view nada{"*"};
-	return current? name(cur()) : nada;
-}
-
 /// Yield to context `ctx`.
 ///
 ///
@@ -481,6 +372,121 @@ ircd::ctx::id(const ctx &ctx)
 	return ctx.id;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx/this_ctx.h
+//
+
+__thread ircd::ctx::ctx *
+ircd::ctx::this_ctx::current;
+
+/// Yield the currently running context until `time_point` ignoring notes
+void
+ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
+{
+	while(!wait_until(tp, std::nothrow));
+}
+
+/// Yield the currently running context until notified or `time_point`.
+///
+/// Returns true if this function returned because `time_point` was hit or
+/// false because this context was notified.
+bool
+ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
+                                const std::nothrow_t &)
+{
+	auto &c(cur());
+	c.alarm.expires_at(tp);
+	c.wait(); // now you're yielding with portals
+
+	return std::chrono::steady_clock::now() >= tp;
+}
+
+/// Yield the currently running context for `duration` or until notified.
+///
+/// Returns the duration remaining if notified, or <= 0 if suspended for
+/// the full duration, or unchanged if no suspend ever took place.
+std::chrono::microseconds
+ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
+                          const std::nothrow_t &)
+{
+	auto &c(cur());
+	c.alarm.expires_from_now(duration);
+	c.wait(); // now you're yielding with portals
+	const auto ret(c.alarm.expires_from_now());
+
+	// return remaining duration.
+	// this is > 0 if notified
+	// this is unchanged if a note prevented any wait at all
+	return std::chrono::duration_cast<std::chrono::microseconds>(ret);
+}
+
+/// Yield the currently running context until notified.
+void
+ircd::ctx::this_ctx::wait()
+{
+	auto &c(cur());
+	c.alarm.expires_at(std::chrono::steady_clock::time_point::max());
+	c.wait(); // now you're yielding with portals
+}
+
+/// Post the currently running context to the event queue and then suspend to
+/// allow other contexts in the queue to run.
+///
+/// Until we have our own queue the ios queue makes no guarantees if the queue
+/// is FIFO or LIFO etc :-/ It is generally bad practice to use this function,
+/// as one should make the effort to devise a specific cooperative strategy for
+/// how context switching occurs rather than this coarse/brute technique.
+void
+ircd::ctx::this_ctx::yield()
+{
+	bool done(false);
+	const auto restore([&done, &me(cur())]
+	{
+		done = true;
+		notify(me);
+	});
+
+	// All spurious notifications are ignored until `done`
+	ios->post(restore); do
+	{
+		wait();
+	}
+	while(!done);
+}
+
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
+void
+ircd::ctx::this_ctx::interruption_point()
+{
+	return cur().interruption_point();
+}
+
+/// Returns true if the currently running context was interrupted and clears
+/// the interrupt flag.
+bool
+ircd::ctx::this_ctx::interruption_requested()
+{
+	return interruption(cur());
+}
+
+/// Returns unique ID of currently running context
+const uint64_t &
+ircd::ctx::this_ctx::id()
+{
+	static const uint64_t zero{0};
+	return current? id(cur()) : zero;
+}
+
+/// Returns optional developer-given name for currently running context
+ircd::string_view
+ircd::ctx::this_ctx::name()
+{
+	static const string_view nada{"*"};
+	return current? name(cur()) : nada;
+}
+
 //
 // exception_handler
 //
@@ -495,13 +501,8 @@ noexcept
 	assert(!std::current_exception());
 }
 
-///////////////////////////////////////////////////////////////////////////////
 //
-// ctx/continuation.h
-//
-
-//
-// Support for critical_assertion (ctx.h)
+// critical_assertion
 //
 
 namespace ircd::ctx
@@ -521,6 +522,11 @@ noexcept
 	assert(critical_asserted);
 	critical_asserted = theirs;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx/continuation.h
+//
 
 //
 // continuation
