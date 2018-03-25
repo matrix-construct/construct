@@ -513,6 +513,7 @@ console_cmd__net(const string_view &line)
 	}
 }
 
+static bool console_cmd__net__peer__version(const string_view &line);
 static bool console_cmd__net_peer__clear(const string_view &line);
 static bool console_cmd__net_peer__default();
 
@@ -531,6 +532,9 @@ console_cmd__net_peer(const string_view &line)
 	{
 		case hash("clear"):
 			return console_cmd__net_peer__clear(args);
+
+		case hash("version"):
+			return console_cmd__net__peer__version(args);
 
 		default:
 			throw bad_command{};
@@ -553,6 +557,35 @@ console_cmd__net_peer__clear(const string_view &line)
 	};
 
 	out << std::boolalpha << cleared << std::endl;
+	return true;
+}
+
+bool
+console_cmd__net__peer__version(const string_view &line)
+{
+	for(const auto &p : server::peers)
+	{
+		using std::setw;
+		using std::left;
+		using std::right;
+
+		const auto &host{p.first};
+		const auto &peer{*p.second};
+		const net::ipport &ipp{peer.remote};
+
+		out << setw(40) << right << host;
+
+		if(ipp)
+		    out << ' ' << setw(22) << left << ipp;
+		else
+		    out << ' ' << setw(22) << left << " ";
+
+		if(!empty(peer.server_name))
+			out << " :" << peer.server_name;
+
+		out << std::endl;
+	}
+
 	return true;
 }
 
