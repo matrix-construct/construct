@@ -60,7 +60,7 @@ struct ircd::byte_view<ircd::string_view>
 	{}
 
 	/// string_view -> string_view (completeness)
-	byte_view(const string_view &t)
+	byte_view(const string_view &t = {})
 	:string_view{t}
 	{}
 };
