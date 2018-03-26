@@ -38,7 +38,6 @@ static void
 _conf_set(const m::event &event,
           const string_view &key,
           const string_view &val)
-try
 {
 	const auto &sender
 	{
@@ -65,15 +64,10 @@ try
 		kvbuf, "[%s] %s = %s", string_view{event_id}, key, val
 	});
 }
-catch(const std::exception &e)
-{
-	notice(control_room, e.what());
-}
 
 static void
 _conf_get(const m::event &event,
           const string_view &key)
-try
 {
 	using closure = std::function<void (const string_view &val)>;
 	using prototype = void (const string_view &key,
@@ -94,14 +88,9 @@ try
 		});
 	});
 }
-catch(const std::exception &e)
-{
-	notice(control_room, e.what());
-}
 
 static void
 _conf_list(const m::event &event)
-try
 {
 	char val[512];
 	std::stringstream ss;
@@ -113,10 +102,6 @@ try
 	ss << "</table>";
 
 	msghtml(control_room, m::me.user_id, ss.str());
-}
-catch(const std::exception &e)
-{
-	notice(control_room, e.what());
 }
 
 static void
@@ -157,7 +142,7 @@ _cmd__die(const m::event &event,
 
 static void
 command_control(const m::event &event)
-noexcept
+noexcept try
 {
 	const auto &content
 	{
@@ -182,6 +167,30 @@ noexcept
 		case hash("die"):
 			return _cmd__die(event, tokens_after(body, ' ', 0));
 	}
+
+	const ircd::module console_module
+	{
+		"console"
+	};
+
+	const mods::import<int (const string_view &, std::string &)> command
+	{
+		*console_module, "console_command"
+	};
+
+	std::string out;
+	command(body, out);
+	out = replace(std::move(out), '\n', "<br />"); //TODO: X
+	std::stringstream ss;
+	ss << "<pre>"
+	   << out
+	   << "</pre>";
+
+	msghtml(control_room, m::me.user_id, ss.str());
+}
+catch(const std::exception &e)
+{
+	notice(control_room, e.what());
 }
 
 const m::hook
