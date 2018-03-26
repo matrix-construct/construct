@@ -24,7 +24,6 @@ ctx::dock recv_action;
 
 static void send(const m::event &, const m::room::id &room_id);
 static void send(const m::event &);
-static void send();
 static void send_worker();
 
 context
@@ -56,44 +55,42 @@ void
 send_worker()
 try
 {
-	while(1)
-		send();
+	// In order to synchronize with the vm core, this context has to
+	// maintain this shared_lock at all times. If this is unlocked we
+	// can miss an event being broadcast.
+	std::unique_lock<decltype(m::vm::accept)> lock
+	{
+		m::vm::accept
+	};
+
+	while(1) try
+	{
+		// reference to the event on the inserter's stack
+		const auto &event
+		{
+			m::vm::accept.wait(lock)
+		};
+
+		if(my(event))
+			send(event);
+	}
+	catch(const ircd::ctx::interrupted &e)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			"sender worker: %s", e.what()
+		};
+	}
 }
 catch(const ircd::ctx::interrupted &e)
 {
 	log::debug
 	{
 		"Sender worker interrupted..."
-	};
-}
-
-void
-send()
-try
-{
-	std::unique_lock<decltype(m::vm::accept)> lock
-	{
-		m::vm::accept
-	};
-
-	// reference to the event on the inserter's stack
-	const auto &event
-	{
-		m::vm::accept.wait(lock)
-	};
-
-	if(my(event))
-		send(event);
-}
-catch(const ircd::ctx::interrupted &e)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"sender worker: %s", e.what()
 	};
 }
 
@@ -186,7 +183,7 @@ try
 	}
 
 	m::v1::send::opts opts;
-	opts.remote = id.host();
+	opts.remote = origin();
 	opts.sopts = &sopts;
 	std::string content
 	{
