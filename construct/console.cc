@@ -282,7 +282,7 @@ catch(const std::exception &e)
 int
 handle_line_bymodule(const string_view &line)
 {
-	using prototype = int (std::ostream &, const string_view &);
+	using prototype = int (std::ostream &, const string_view &, const string_view &);
 	const ircd::mods::import<prototype> command
 	{
 		*console_module, "console_command"
@@ -292,7 +292,7 @@ handle_line_bymodule(const string_view &line)
 	std::ostringstream ss;
 	pubsetbuf(ss, buf);
 	int ret;
-	switch((ret = command(ss, line)))
+	switch((ret = command(ss, line, {})))
 	{
 		case 0:
 		case 1:

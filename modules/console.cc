@@ -158,7 +158,9 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 int console_command_derived(opt &, const string_view &line);
 
 extern "C" int
-console_command(std::ostream &out, const string_view &line)
+console_command(std::ostream &out,
+                const string_view &line,
+                const string_view &opts)
 try
 {
 	opt opt{out};

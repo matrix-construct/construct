@@ -173,7 +173,7 @@ noexcept try
 		"console"
 	};
 
-	using prototype = int (std::ostream &, const string_view &);
+	using prototype = int (std::ostream &, const string_view &, const string_view &);
 	const mods::import<prototype> command
 	{
 		*console_module, "console_command"
@@ -184,7 +184,7 @@ noexcept try
 	pubsetbuf(out, buf);
 
 	out << "<pre>";
-	command(out, body);
+	command(out, body, {});
 	out << "</pre>";
 
 	const auto str //TODO: X
