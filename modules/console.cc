@@ -11,7 +11,6 @@
 #include <ircd/util/params.h>
 
 using namespace ircd;
-using std::ostream;
 
 static void init_cmds();
 
@@ -133,21 +132,43 @@ find_cmd(const string_view &line)
 // Main command dispatch
 //
 
+struct opt
+{
+	std::ostream &out;
+
+	operator std::ostream &()
+	{
+		return out;
+	}
+
+	template<class T> auto &operator<<(T&& t)
+	{
+		out << std::forward<T>(t);
+		return out;
+	}
+
+	auto &operator<<(std::ostream &(*manip)(std::ostream &))
+	{
+		return manip(out);
+	}
+};
+
 IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 
-int console_command_derived(ostream &, const string_view &line);
+int console_command_derived(opt &, const string_view &line);
 
 extern "C" int
-console_command(ostream &out, const string_view &line)
+console_command(std::ostream &out, const string_view &line)
 try
 {
+	opt opt{out};
 	const cmd *const cmd
 	{
 		find_cmd(line)
 	};
 
 	if(!cmd)
-		return console_command_derived(out, line);
+		return console_command_derived(opt, line);
 
 	const auto args
 	{
@@ -155,8 +176,8 @@ try
 	};
 
 	const auto &ptr{cmd->ptr};
-	using prototype = bool (ostream &, const string_view &);
-	return ptr.operator()<prototype>(out, args);
+	using prototype = bool (struct opt &, const string_view &);
+	return ptr.operator()<prototype>(opt, args);
 }
 catch(const bad_command &e)
 {
@@ -168,7 +189,7 @@ catch(const bad_command &e)
 //
 
 bool
-console_cmd__help(ostream &out, const string_view &line)
+console_cmd__help(opt &out, const string_view &line)
 {
 	const auto cmd
 	{
@@ -239,7 +260,7 @@ console_cmd__help(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__test(ostream &out, const string_view &line)
+console_cmd__test(opt &out, const string_view &line)
 {
 	return true;
 }
@@ -254,7 +275,7 @@ bool console_id__event(const m::event::id &id, const string_view &args);
 bool console_json(const json::object &);
 
 int
-console_command_derived(ostream &out, const string_view &line)
+console_command_derived(opt &out, const string_view &line)
 {
 	const string_view id{token(line, ' ', 0)};
 	const string_view args{tokens_after(line, ' ', 0)};
@@ -322,7 +343,7 @@ console_id__user(const m::user::id &id,
 
 
 bool
-console_cmd__debug(ostream &out, const string_view &line)
+console_cmd__debug(opt &out, const string_view &line)
 {
 	if(!RB_DEBUG_LEVEL)
 	{
@@ -347,7 +368,7 @@ console_cmd__debug(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__conf__list(ostream &out, const string_view &line)
+console_cmd__conf__list(opt &out, const string_view &line)
 {
 	thread_local char val[4_KiB];
 	for(const auto &item : conf::items)
@@ -364,7 +385,7 @@ console_cmd__conf__list(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__mod__path(ostream &out, const string_view &line)
+console_cmd__mod__path(opt &out, const string_view &line)
 {
 	for(const auto &path : ircd::mods::paths)
 		out << path << std::endl;
@@ -373,7 +394,7 @@ console_cmd__mod__path(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__mod__list(ostream &out, const string_view &line)
+console_cmd__mod__list(opt &out, const string_view &line)
 {
 	auto avflist(mods::available());
 	const auto b(std::make_move_iterator(begin(avflist)));
@@ -395,7 +416,7 @@ console_cmd__mod__list(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__mod__syms(ostream &out, const string_view &line)
+console_cmd__mod__syms(opt &out, const string_view &line)
 {
 	const std::string path
 	{
@@ -415,7 +436,7 @@ console_cmd__mod__syms(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__mod__reload(ostream &out, const string_view &line)
+console_cmd__mod__reload(opt &out, const string_view &line)
 {
 	const std::string name
 	{
@@ -437,7 +458,7 @@ console_cmd__mod__reload(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__db__prop(ostream &out, const string_view &line)
+console_cmd__db__prop(opt &out, const string_view &line)
 {
 	const auto dbname
 	{
@@ -453,7 +474,7 @@ console_cmd__db__prop(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__db__txns(ostream &out, const string_view &line)
+console_cmd__db__txns(opt &out, const string_view &line)
 try
 {
 	const auto dbname
@@ -502,7 +523,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-console_cmd__db__checkpoint(ostream &out, const string_view &line)
+console_cmd__db__checkpoint(opt &out, const string_view &line)
 try
 {
 	const auto dbname
@@ -535,7 +556,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-console_cmd__db__list(ostream &out, const string_view &line)
+console_cmd__db__list(opt &out, const string_view &line)
 {
 	const auto available
 	{
@@ -573,7 +594,7 @@ console_cmd__db__list(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__net__peer(ostream &out, const string_view &line)
+console_cmd__net__peer(opt &out, const string_view &line)
 {
 	for(const auto &p : server::peers)
 	{
@@ -610,7 +631,7 @@ console_cmd__net__peer(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__clear(ostream &out, const string_view &line)
+console_cmd__net__peer__clear(opt &out, const string_view &line)
 {
 	const net::hostport hp
 	{
@@ -627,7 +648,7 @@ console_cmd__net__peer__clear(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__version(ostream &out, const string_view &line)
+console_cmd__net__peer__version(opt &out, const string_view &line)
 {
 	for(const auto &p : server::peers)
 	{
@@ -656,7 +677,7 @@ console_cmd__net__peer__version(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host(ostream &out, const string_view &line)
+console_cmd__net__host(opt &out, const string_view &line)
 {
 	const params token
 	{
@@ -699,7 +720,7 @@ console_cmd__net__host(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host__cache(ostream &out, const string_view &line)
+console_cmd__net__host__cache(opt &out, const string_view &line)
 {
 	switch(hash(token(line, " ", 0)))
 	{
@@ -753,7 +774,7 @@ console_cmd__net__host__cache(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__key(ostream &out, const string_view &line)
+console_cmd__key(opt &out, const string_view &line)
 {
 	out << "origin:                  " << m::my_host() << std::endl;
 	out << "public key ID:           " << m::self::public_key_id << std::endl;
@@ -764,7 +785,7 @@ console_cmd__key(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__key__get(ostream &out, const string_view &line)
+console_cmd__key__get(opt &out, const string_view &line)
 {
 	const auto server_name
 	{
@@ -781,7 +802,7 @@ console_cmd__key__get(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__key__fetch(ostream &out, const string_view &line)
+console_cmd__key__fetch(opt &out, const string_view &line)
 {
 
 	return true;
@@ -792,7 +813,7 @@ console_cmd__key__fetch(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__event(ostream &out, const string_view &line)
+console_cmd__event(opt &out, const string_view &line)
 {
 	const m::event::id event_id
 	{
@@ -822,7 +843,7 @@ console_cmd__event(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__event__erase(ostream &out, const string_view &line)
+console_cmd__event__erase(opt &out, const string_view &line)
 {
 	const m::event::id event_id
 	{
@@ -851,7 +872,7 @@ console_cmd__event__erase(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__event__dump(ostream &out, const string_view &line)
+console_cmd__event__dump(opt &out, const string_view &line)
 {
 	const auto filename
 	{
@@ -912,7 +933,7 @@ console_cmd__event__dump(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__event__fetch(ostream &out, const string_view &line)
+console_cmd__event__fetch(opt &out, const string_view &line)
 {
 	const m::event::id event_id
 	{
@@ -961,7 +982,7 @@ console_cmd__event__fetch(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__state__count(ostream &out, const string_view &line)
+console_cmd__state__count(opt &out, const string_view &line)
 {
 	const string_view arg
 	{
@@ -978,7 +999,7 @@ console_cmd__state__count(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__state__each(ostream &out, const string_view &line)
+console_cmd__state__each(opt &out, const string_view &line)
 {
 	const string_view arg
 	{
@@ -1005,7 +1026,7 @@ console_cmd__state__each(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__state__get(ostream &out, const string_view &line)
+console_cmd__state__get(opt &out, const string_view &line)
 {
 	const string_view root
 	{
@@ -1032,7 +1053,7 @@ console_cmd__state__get(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__state__dfs(ostream &out, const string_view &line)
+console_cmd__state__dfs(opt &out, const string_view &line)
 {
 	const string_view arg
 	{
@@ -1058,7 +1079,7 @@ console_cmd__state__dfs(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__state__root(ostream &out, const string_view &line)
+console_cmd__state__root(opt &out, const string_view &line)
 {
 	const m::event::id event_id
 	{
@@ -1075,7 +1096,7 @@ console_cmd__state__root(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__commit(ostream &out, const string_view &line)
+console_cmd__commit(opt &out, const string_view &line)
 {
 	m::event event
 	{
@@ -1104,7 +1125,7 @@ console_cmd__exec__event(const json::object &event)
 }
 
 bool
-console_cmd__exec__file(ostream &out, const string_view &line)
+console_cmd__exec__file(opt &out, const string_view &line)
 {
 	const params token{line, " ",
 	{
@@ -1225,7 +1246,7 @@ console_cmd__exec__file(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__room__head(ostream &out, const string_view &line)
+console_cmd__room__head(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1242,7 +1263,7 @@ console_cmd__room__head(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__depth(ostream &out, const string_view &line)
+console_cmd__room__depth(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1259,7 +1280,7 @@ console_cmd__room__depth(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__members(ostream &out, const string_view &line)
+console_cmd__room__members(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1295,7 +1316,7 @@ console_cmd__room__members(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__origins(ostream &out, const string_view &line)
+console_cmd__room__origins(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1322,7 +1343,7 @@ console_cmd__room__origins(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__state(ostream &out, const string_view &line)
+console_cmd__room__state(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1353,7 +1374,7 @@ console_cmd__room__state(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__count(ostream &out, const string_view &line)
+console_cmd__room__count(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1384,7 +1405,7 @@ console_cmd__room__count(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__messages(ostream &out, const string_view &line)
+console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1417,7 +1438,7 @@ console_cmd__room__messages(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__get(ostream &out, const string_view &line)
+console_cmd__room__get(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1448,7 +1469,7 @@ console_cmd__room__get(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__set(ostream &out, const string_view &line)
+console_cmd__room__set(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1490,7 +1511,7 @@ console_cmd__room__set(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__message(ostream &out, const string_view &line)
+console_cmd__room__message(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1522,7 +1543,7 @@ console_cmd__room__message(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__redact(ostream &out, const string_view &line)
+console_cmd__room__redact(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1559,7 +1580,7 @@ console_cmd__room__redact(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__room__id(ostream &out, const string_view &id)
+console_cmd__room__id(opt &out, const string_view &id)
 {
 	if(m::has_sigil(id)) switch(m::sigil(id))
 	{
@@ -1583,7 +1604,7 @@ console_cmd__room__id(ostream &out, const string_view &id)
 }
 
 bool
-console_cmd__room__purge(ostream &out, const string_view &line)
+console_cmd__room__purge(opt &out, const string_view &line)
 {
 	const m::room::id room_id
 	{
@@ -1598,7 +1619,7 @@ console_cmd__room__purge(ostream &out, const string_view &line)
 //
 
 bool
-console_cmd__fed__head(ostream &out, const string_view &line)
+console_cmd__fed__head(opt &out, const string_view &line)
 {
 	const m::room::id &room_id
 	{
@@ -1640,7 +1661,7 @@ console_cmd__fed__head(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__state(ostream &out, const string_view &line)
+console_cmd__fed__state(opt &out, const string_view &line)
 {
 	const m::room::id &room_id
 	{
@@ -1726,7 +1747,7 @@ console_cmd__fed__state(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__backfill(ostream &out, const string_view &line)
+console_cmd__fed__backfill(opt &out, const string_view &line)
 {
 	const m::room::id &room_id
 	{
@@ -1810,7 +1831,7 @@ console_cmd__fed__backfill(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__event(ostream &out, const string_view &line)
+console_cmd__fed__event(opt &out, const string_view &line)
 {
 	const m::event::id &event_id
 	{
@@ -1867,7 +1888,7 @@ console_cmd__fed__event(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__profile(ostream &out, const string_view &line)
+console_cmd__fed__query__profile(opt &out, const string_view &line)
 {
 	const m::user::id &user_id
 	{
@@ -1904,7 +1925,7 @@ console_cmd__fed__query__profile(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__directory(ostream &out, const string_view &line)
+console_cmd__fed__query__directory(opt &out, const string_view &line)
 {
 	const m::id::room_alias &room_alias
 	{
@@ -1941,7 +1962,7 @@ console_cmd__fed__query__directory(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__user_devices(ostream &out, const string_view &line)
+console_cmd__fed__query__user_devices(opt &out, const string_view &line)
 {
 	const m::id::user &user_id
 	{
@@ -1982,7 +2003,7 @@ console_cmd__fed__query__user_devices(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__client_keys(ostream &out, const string_view &line)
+console_cmd__fed__query__client_keys(opt &out, const string_view &line)
 {
 	const m::id::user &user_id
 	{
@@ -2028,7 +2049,7 @@ console_cmd__fed__query__client_keys(ostream &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__version(ostream &out, const string_view &line)
+console_cmd__fed__version(opt &out, const string_view &line)
 {
 	const net::hostport remote
 	{
