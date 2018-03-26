@@ -46,7 +46,7 @@ template<class T>
 T &
 ircd::mods::module::get(const string_view &sym)
 {
-	mod &mod{*this};
+	mod &mod(*this);
 	return mods::get<T>(mod, sym);
 }
 
@@ -55,7 +55,7 @@ const T &
 ircd::mods::module::get(const string_view &sym)
 const
 {
-	const mod &mod{*this};
+	const mod &mod(*this);
 	return mods::get<T>(mod, sym);
 }
 
@@ -63,7 +63,7 @@ template<class T>
 T *
 ircd::mods::module::ptr(const string_view &sym)
 {
-	mod &mod{*this};
+	mod &mod(*this);
 	return mods::ptr<T>(mod, sym);
 }
 
@@ -72,7 +72,7 @@ const T *
 ircd::mods::module::ptr(const string_view &sym)
 const
 {
-	const mod &mod{*this};
+	const mod &mod(*this);
 	return mods::ptr<T>(mod, sym);
 }
 
