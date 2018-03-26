@@ -18,8 +18,6 @@ inline namespace this_ctx
 	struct critical_assertion;                   // Assert no yielding for a section
 	struct exception_handler;                    // Must be present to yield in a handler
 
-	/// Points to the currently running context or null for main stack (do not modify)
-	extern __thread struct ctx *current;
 	struct ctx &cur();                           ///< Assumptional reference to *current
 
 	const uint64_t &id();                        // Unique ID for cur ctx
@@ -46,6 +44,12 @@ inline namespace this_ctx
 	template<class duration> void sleep(const duration &);
 	void sleep(const int &secs);
 }}
+
+namespace ircd::ctx
+{
+	/// Points to the currently running context or null for main stack (do not modify)
+	extern __thread ctx *current;
+}
 
 /// An instance of critical_assertion detects an attempt to context switch.
 ///

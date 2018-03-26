@@ -377,8 +377,9 @@ ircd::ctx::id(const ctx &ctx)
 // ctx/this_ctx.h
 //
 
+// set by the continuation object and the base frame.
 __thread ircd::ctx::ctx *
-ircd::ctx::this_ctx::current;
+ircd::ctx::current;
 
 /// Yield the currently running context until `time_point` ignoring notes
 void
