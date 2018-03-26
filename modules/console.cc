@@ -1575,6 +1575,10 @@ console_cmd__room__id(const string_view &id)
 			out << m::node{id}.room_id() << std::endl;
 			break;
 
+		case m::id::ROOM_ALIAS:
+			out << m::room_id(m::room::alias(id)) << std::endl;
+			break;
+
 		default:
 			break;
 	}
