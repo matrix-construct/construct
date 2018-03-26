@@ -130,7 +130,8 @@ ircd::ctx::view<T, mutex>::wait_until(lock &l,
 	for(assert(l.owns_lock()); ready(); l.lock())
 	{
 		l.unlock();
-		q.wait_until(tp);
+		if(!q.wait_until(tp))
+			throw timeout{};
 	}
 
 	const unwind ul{[this]
@@ -142,7 +143,8 @@ ircd::ctx::view<T, mutex>::wait_until(lock &l,
 	for(++waiting; !ready(); l.lock())
 	{
 		l.unlock();
-		q.wait_until(tp);
+		if(!q.wait_until(tp))
+			throw timeout{};
 	}
 
 	assert(t != nullptr);
