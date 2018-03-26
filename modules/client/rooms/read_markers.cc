@@ -32,8 +32,22 @@ post__read_markers(client &client,
 		m_read?: m_fully_read
 	};
 
-	if(marker)
-		m::receipt::read(room_id, request.user_id, marker);
+	if(marker) switch(m::sigil(marker))
+	{
+		case m::id::EVENT:
+			m::receipt::read(room_id, request.user_id, marker);
+			break;
+
+		case m::id::ROOM:
+			m::receipt::read(room_id, request.user_id, m::head(m::room::id(marker)));
+			break;
+
+		default: log::dwarning
+		{
+			"Unhandled read marker '%s' sigil type",
+			string_view{marker}
+		};
+	}
 
 	return resource::response
 	{
