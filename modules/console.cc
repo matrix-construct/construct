@@ -12,34 +12,129 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+static void on_load();
+
+mapi::header
+IRCD_MODULE
 {
-	"IRCd terminal console: runtime-reloadable library supporting the console."
+	"IRCd terminal console: runtime-reloadable self-reflecting command library.",
+	on_load
 };
+
+struct cmd
+{
+	using is_transparent = void;
+
+	static constexpr const size_t &PATH_MAX
+	{
+		8
+	};
+
+	std::string name;
+	std::string symbol;
+	mods::sym_ptr ptr;
+
+	bool operator()(const cmd &a, const cmd &b) const
+	{
+		return a.name < b.name;
+	}
+
+	bool operator()(const string_view &a, const cmd &b) const
+	{
+		return a < b.name;
+	}
+
+	bool operator()(const cmd &a, const string_view &b) const
+	{
+		return a.name < b;
+	}
+
+	cmd(std::string name, std::string symbol)
+	:name{std::move(name)}
+	,symbol{std::move(symbol)}
+	,ptr{IRCD_MODULE, this->symbol}
+	{}
+
+	cmd() = default;
+	cmd(cmd &&) = delete;
+	cmd(const cmd &) = delete;
+};
+
+std::set<cmd, cmd>
+cmds;
+
+void
+on_load()
+{
+	auto symbols
+	{
+		mods::symbols(mods::path(IRCD_MODULE))
+	};
+
+	for(std::string &symbol : symbols)
+	{
+		// elide lots of grief by informally finding this first
+		if(!has(symbol, "console_cmd"))
+			continue;
+
+		thread_local char buf[1024];
+		const string_view demangled
+		{
+			demangle(buf, symbol)
+		};
+
+		std::string command
+		{
+			replace(between(demangled, "__", "("), "__", " ")
+		};
+
+		const auto iit
+		{
+			cmds.emplace(std::move(command), std::move(symbol))
+		};
+
+		if(!iit.second)
+			throw error
+			{
+				"Command '%s' already exists", command
+			};
+	}
+}
+
+const cmd *
+find_cmd(const string_view &line)
+{
+	const size_t elems
+	{
+		std::min(token_count(line, ' '), cmd::PATH_MAX)
+	};
+
+	for(size_t e(elems+1); e > 0; --e)
+	{
+		const auto name
+		{
+			tokens_before(line, ' ', e)
+		};
+
+		const auto it{cmds.lower_bound(name)};
+		if(it == end(cmds) || it->name != name)
+			continue;
+
+		return &(*it);
+	}
+
+	return nullptr;
+}
+
+//
+// Main command dispatch
+//
 
 IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 
-// Buffer all output into this rather than writing to std::cout. This allows
-// the console to be reused easily inside the application (like a matrix room).
 std::stringstream out;
 
-static bool console_cmd__fed(const string_view &line);
-static bool console_cmd__room(const string_view &line);
-static bool console_cmd__state(const string_view &line);
-static bool console_cmd__event(const string_view &line);
-static bool console_cmd__exec(const string_view &line);
-static bool console_cmd__key(const string_view &line);
-static bool console_cmd__db(const string_view &line);
-static bool console_cmd__net(const string_view &line);
-static bool console_cmd__mod(const string_view &line);
-static bool console_cmd__conf(const string_view &line);
-static bool console_cmd__debuglog(const string_view &line);
-static bool console_cmd__test(const string_view &line);
-
-static bool console_id__user(const m::user::id &id, const string_view &args);
-static bool console_id__room(const m::room::id &id, const string_view &args);
-static bool console_id__event(const m::event::id &id, const string_view &args);
-
+int console_command_derived(const string_view &line);
 extern "C" int
 console_command(const string_view &line, std::string &output)
 try
@@ -50,75 +145,98 @@ try
 		out.str(std::string{});
 	}};
 
-	const auto args
+	const cmd *const cmd
 	{
-		tokens_after(line, ' ', 0)
+		find_cmd(line)
 	};
 
-	switch(hash(token(line, " ", 0)))
+	if(!cmd)
+		return console_command_derived(line);
+
+	const auto args
 	{
-		case hash("test"):
-			return console_cmd__test(args);
+		lstrip(split(line, cmd->name).second, ' ')
+	};
 
-		case hash("debuglog"):
-			return console_cmd__debuglog(args);
-
-		case hash("conf"):
-			return console_cmd__conf(args);
-
-		case hash("mod"):
-			return console_cmd__mod(args);
-
-		case hash("net"):
-			return console_cmd__net(args);
-
-		case hash("db"):
-			return console_cmd__db(args);
-
-		case hash("key"):
-			return console_cmd__key(args);
-
-		case hash("exec"):
-			return console_cmd__exec(args);
-
-		case hash("event"):
-			return console_cmd__event(args);
-
-		case hash("state"):
-			return console_cmd__state(args);
-
-		case hash("room"):
-			return console_cmd__room(args);
-
-		case hash("fed"):
-			return console_cmd__fed(args);
-
-		default:
-		{
-			const string_view id{token(line, ' ', 0)};
-			if(m::has_sigil(id)) switch(m::sigil(id))
-			{
-				case m::id::EVENT:
-					return console_id__event(id, args);
-
-				case m::id::ROOM:
-					return console_id__room(id, args);
-
-				case m::id::USER:
-					return console_id__user(id, args);
-
-				default:
-					break;
-			}
-			else break;
-		}
-	}
-
-	return -1;
+	const auto &ptr{cmd->ptr};
+	using prototype = bool (const string_view &);
+	return ptr.operator()<prototype>(args);
 }
 catch(const bad_command &e)
 {
 	return -2;
+}
+
+//
+// Help
+//
+
+bool
+console_cmd__help(const string_view &line)
+{
+	const auto cmd
+	{
+		find_cmd(line)
+	};
+
+	if(cmd)
+	{
+		out << "No help available for '" << cmd->name << "'."
+		    << std::endl;
+
+		//return true;
+	}
+
+	out << "Commands available: \n"
+	    << std::endl;
+
+	const size_t elems
+	{
+		std::min(token_count(line, ' '), cmd::PATH_MAX)
+	};
+
+	for(size_t e(elems+1); e > 0; --e)
+	{
+		const auto name
+		{
+			tokens_before(line, ' ', e)
+		};
+
+		string_view last;
+		auto it{cmds.lower_bound(name)};
+		if(it == end(cmds))
+			continue;
+
+		for(; it != end(cmds); ++it)
+		{
+			if(!startswith(it->name, name))
+				break;
+
+			const auto prefix
+			{
+				tokens_before(it->name, ' ', e)
+			};
+
+			if(last == prefix)
+				continue;
+
+			last = prefix;
+			const auto suffix
+			{
+				e > 1? tokens_after(prefix, ' ', e - 2) : prefix
+			};
+
+			if(empty(suffix))
+				continue;
+
+			out << suffix
+			    << std::endl;
+		}
+
+		break;
+	}
+
+	return true;
 }
 
 //
@@ -131,8 +249,85 @@ console_cmd__test(const string_view &line)
 	return true;
 }
 
+//
+// Derived commands
+//
+
+bool console_id__user(const m::user::id &id, const string_view &args);
+bool console_id__room(const m::room::id &id, const string_view &args);
+bool console_id__event(const m::event::id &id, const string_view &args);
+bool console_json(const json::object &);
+
+int
+console_command_derived(const string_view &line)
+{
+	const string_view id{token(line, ' ', 0)};
+	const string_view args{tokens_after(line, ' ', 0)};
+	if(m::has_sigil(id)) switch(m::sigil(id))
+	{
+		case m::id::EVENT:
+			return console_id__event(id, args);
+
+		case m::id::ROOM:
+			return console_id__room(id, args);
+
+		case m::id::USER:
+			return console_id__user(id, args);
+
+		default:
+			break;
+	}
+
+	return -1;
+}
+
+//
+// Command by JSON
+//
+
+bool console_cmd__exec__event(const json::object &);
+
 bool
-console_cmd__debuglog(const string_view &line)
+console_json(const json::object &object)
+{
+	if(!object.has("type"))
+		return true;
+
+	return console_cmd__exec__event(object);
+}
+
+//
+// Command by ID
+//
+
+bool
+console_id__event(const m::event::id &id,
+                  const string_view &args)
+{
+	return true;
+}
+
+bool
+console_id__room(const m::room::id &id,
+                 const string_view &args)
+{
+	return true;
+}
+
+bool
+console_id__user(const m::user::id &id,
+                 const string_view &args)
+{
+	return true;
+}
+
+//
+// misc
+//
+
+
+bool
+console_cmd__debug(const string_view &line)
 {
 	if(!RB_DEBUG_LEVEL)
 	{
@@ -153,56 +348,11 @@ console_cmd__debuglog(const string_view &line)
 }
 
 //
-// Command by ID
-//
-
-bool
-console_id__event(const m::event::id &id,
-                   const string_view &args)
-{
-	return true;
-}
-
-bool
-console_id__room(const m::room::id &id,
-                 const string_view &args)
-{
-	return true;
-}
-
-bool
-console_id__user(const m::user::id &id,
-                 const string_view &args)
-{
-	return true;
-}
-
-//
 // conf
 //
 
-static bool console_cmd__conf_list(const string_view &line);
-
 bool
-console_cmd__conf(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, ' ', 0, {})))
-	{
-		case hash("list"):
-			return console_cmd__conf_list(args);
-
-		default:
-			return console_cmd__conf_list(line);
-	}
-}
-
-bool
-console_cmd__conf_list(const string_view &line)
+console_cmd__conf__list(const string_view &line)
 {
 	thread_local char val[4_KiB];
 	for(const auto &item : conf::items)
@@ -218,40 +368,8 @@ console_cmd__conf_list(const string_view &line)
 // mod
 //
 
-static bool console_cmd__mod_path(const string_view &line);
-static bool console_cmd__mod_list(const string_view &line);
-static bool console_cmd__mod_syms(const string_view &line);
-static bool console_cmd__mod_reload(const string_view &line);
-
 bool
-console_cmd__mod(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("path"):
-			return console_cmd__mod_path(args);
-
-		case hash("list"):
-			return console_cmd__mod_list(args);
-
-		case hash("syms"):
-			return console_cmd__mod_syms(args);
-
-		case hash("reload"):
-			return console_cmd__mod_reload(args);
-
-		default:
-			throw bad_command{};
-	}
-}
-
-bool
-console_cmd__mod_path(const string_view &line)
+console_cmd__mod__path(const string_view &line)
 {
 	for(const auto &path : ircd::mods::paths)
 		out << path << std::endl;
@@ -260,7 +378,7 @@ console_cmd__mod_path(const string_view &line)
 }
 
 bool
-console_cmd__mod_list(const string_view &line)
+console_cmd__mod__list(const string_view &line)
 {
 	auto avflist(mods::available());
 	const auto b(std::make_move_iterator(begin(avflist)));
@@ -282,7 +400,7 @@ console_cmd__mod_list(const string_view &line)
 }
 
 bool
-console_cmd__mod_syms(const string_view &line)
+console_cmd__mod__syms(const string_view &line)
 {
 	const std::string path
 	{
@@ -302,7 +420,7 @@ console_cmd__mod_syms(const string_view &line)
 }
 
 bool
-console_cmd__mod_reload(const string_view &line)
+console_cmd__mod__reload(const string_view &line)
 {
 	const std::string name
 	{
@@ -323,38 +441,8 @@ console_cmd__mod_reload(const string_view &line)
 // db
 //
 
-static bool console_cmd__db_list(const string_view &line);
-static bool console_cmd__db_txns(const string_view &line);
-static bool console_cmd__db_checkpoint(const string_view &line);
-static bool console_cmd__db_prop(const string_view &line);
-
 bool
-console_cmd__db(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("prop"):
-			return console_cmd__db_prop(args);
-
-		case hash("checkpoint"):
-			return console_cmd__db_checkpoint(args);
-
-		case hash("txns"):
-			return console_cmd__db_txns(args);
-
-		default:
-		case hash("list"):
-			return console_cmd__db_list(args);
-	}
-}
-
-bool
-console_cmd__db_prop(const string_view &line)
+console_cmd__db__prop(const string_view &line)
 {
 	const auto dbname
 	{
@@ -370,7 +458,7 @@ console_cmd__db_prop(const string_view &line)
 }
 
 bool
-console_cmd__db_txns(const string_view &line)
+console_cmd__db__txns(const string_view &line)
 try
 {
 	const auto dbname
@@ -419,7 +507,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-console_cmd__db_checkpoint(const string_view &line)
+console_cmd__db__checkpoint(const string_view &line)
 try
 {
 	const auto dbname
@@ -452,7 +540,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-console_cmd__db_list(const string_view &line)
+console_cmd__db__list(const string_view &line)
 {
 	const auto available
 	{
@@ -489,62 +577,45 @@ console_cmd__db_list(const string_view &line)
 // net
 //
 
-static bool console_cmd__net_peer(const string_view &line);
-static bool console_cmd__net_host(const string_view &line);
-
 bool
-console_cmd__net(const string_view &line)
+console_cmd__net__peer(const string_view &line)
 {
-	const auto args
+	for(const auto &p : server::peers)
 	{
-		tokens_after(line, ' ', 0)
-	};
+		using std::setw;
+		using std::left;
+		using std::right;
 
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("host"):
-			return console_cmd__net_host(args);
+		const auto &host{p.first};
+		const auto &peer{*p.second};
+		const net::ipport &ipp{peer.remote};
 
-		case hash("peer"):
-			return console_cmd__net_peer(args);
+		out << setw(40) << right << host;
 
-		default:
-			throw bad_command{};
-	}
-}
+		if(ipp)
+		    out << ' ' << setw(22) << left << ipp;
+		else
+		    out << ' ' << setw(22) << left << " ";
 
-static bool console_cmd__net__peer__version(const string_view &line);
-static bool console_cmd__net_peer__clear(const string_view &line);
-static bool console_cmd__net_peer__default();
+		out << " " << setw(2) << right << peer.link_count()   << " L"
+		    << " " << setw(2) << right << peer.tag_count()    << " T"
+		    << " " << setw(9) << right << peer.write_total()  << " UP"
+		    << " " << setw(9) << right << peer.read_total()   << " DN"
+		    ;
 
-bool
-console_cmd__net_peer(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
+		if(peer.err_has() && peer.err_msg())
+			out << "  :" << peer.err_msg();
+		else if(peer.err_has())
+			out << "  <unknown error>"_sv;
 
-	if(empty(line))
-		return console_cmd__net_peer__default();
-
-	switch(hash(token(line, ' ', 0)))
-	{
-		case hash("clear"):
-			return console_cmd__net_peer__clear(args);
-
-		case hash("version"):
-			return console_cmd__net__peer__version(args);
-
-		default:
-			throw bad_command{};
+		out << std::endl;
 	}
 
 	return true;
 }
 
 bool
-console_cmd__net_peer__clear(const string_view &line)
+console_cmd__net__peer__clear(const string_view &line)
 {
 	const net::hostport hp
 	{
@@ -590,68 +661,50 @@ console_cmd__net__peer__version(const string_view &line)
 }
 
 bool
-console_cmd__net_peer__default()
+console_cmd__net__host(const string_view &line)
 {
-	for(const auto &p : server::peers)
+	const params token
 	{
-		using std::setw;
-		using std::left;
-		using std::right;
-
-		const auto &host{p.first};
-		const auto &peer{*p.second};
-		const net::ipport &ipp{peer.remote};
-
-		out << setw(40) << right << host;
-
-		if(ipp)
-		    out << ' ' << setw(22) << left << ipp;
-		else
-		    out << ' ' << setw(22) << left << " ";
-
-		out << " "
-		    << " " << setw(2) << right << peer.link_count()   << " L"
-		    << " " << setw(2) << right << peer.tag_count()    << " T"
-		    << " " << setw(9) << right << peer.write_total()  << " UP"
-		    << " " << setw(9) << right << peer.read_total()   << " DN"
-		    ;
-
-		if(peer.err_has() && peer.err_msg())
-			out << "  :" << peer.err_msg();
-		else if(peer.err_has())
-			out << "  <unknown error>"_sv;
-
-		out << std::endl;
-	}
-
-	return true;
-}
-
-static bool console_cmd__net_host_cache(const string_view &line);
-static bool console_cmd__net_host__default(const string_view &line);
-
-bool
-console_cmd__net_host(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
+		line, " ", {"host", "service"}
 	};
 
-	switch(hash(token(line, " ", 0)))
+	const auto &host{token.at(0)};
+	const auto &service
 	{
-		case hash("cache"):
-			return console_cmd__net_host_cache(args);
+		token.count() > 1? token.at(1) : string_view{}
+	};
 
-		default:
-			return console_cmd__net_host__default(line);
-	}
+	const net::hostport hostport
+	{
+		host, service
+	};
+
+	ctx::dock dock;
+	bool done{false};
+	net::ipport ipport;
+	std::exception_ptr eptr;
+	net::dns(hostport, [&done, &dock, &eptr, &ipport]
+	(std::exception_ptr eptr_, const net::ipport &ipport_)
+	{
+		eptr = std::move(eptr_);
+		ipport = ipport_;
+		done = true;
+		dock.notify_one();
+	});
+
+	while(!done)
+		dock.wait();
+
+	if(eptr)
+		std::rethrow_exception(eptr);
+	else
+		out << ipport << std::endl;
 
 	return true;
 }
 
 bool
-console_cmd__net_host_cache(const string_view &line)
+console_cmd__net__host__cache(const string_view &line)
 {
 	switch(hash(token(line, " ", 0)))
 	{
@@ -700,75 +753,19 @@ console_cmd__net_host_cache(const string_view &line)
 	}
 }
 
-bool
-console_cmd__net_host__default(const string_view &line)
-{
-	const params token
-	{
-		line, " ", {"host", "service"}
-	};
-
-	const auto &host{token.at(0)};
-	const auto &service
-	{
-		token.count() > 1? token.at(1) : string_view{}
-	};
-
-	const net::hostport hostport
-	{
-		host, service
-	};
-
-	ctx::dock dock;
-	bool done{false};
-	net::ipport ipport;
-	std::exception_ptr eptr;
-	net::dns(hostport, [&done, &dock, &eptr, &ipport]
-	(std::exception_ptr eptr_, const net::ipport &ipport_)
-	{
-		eptr = std::move(eptr_);
-		ipport = ipport_;
-		done = true;
-		dock.notify_one();
-	});
-
-	while(!done)
-		dock.wait();
-
-	if(eptr)
-		std::rethrow_exception(eptr);
-	else
-		out << ipport << std::endl;
-
-	return true;
-}
-
 //
 // key
 //
 
-static bool console_cmd__key__default(const string_view &line);
-static bool console_cmd__key__fetch(const string_view &line);
-static bool console_cmd__key__get(const string_view &line);
-
 bool
 console_cmd__key(const string_view &line)
 {
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
+	out << "origin:                  " << m::my_host() << std::endl;
+	out << "public key ID:           " << m::self::public_key_id << std::endl;
+	out << "public key base64:       " << m::self::public_key_b64 << std::endl;
+	out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
 
-	if(!empty(args)) switch(hash(token(line, " ", 0)))
-	{
-		case hash("get"):
-			return console_cmd__key__get(args);
-
-		case hash("fetch"):
-			return console_cmd__key__fetch(args);
-	}
-
-	return console_cmd__key__default(args);
+	return true;
 }
 
 bool
@@ -794,48 +791,38 @@ console_cmd__key__fetch(const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__key__default(const string_view &line)
-{
-	out << "origin:                  " << m::my_host() << std::endl;
-	out << "public key ID:           " << m::self::public_key_id << std::endl;
-	out << "public key base64:       " << m::self::public_key_b64 << std::endl;
-	out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
-
-	return true;
-}
-
 //
 // event
 //
 
-static bool console_cmd__event__default(const string_view &line);
-static bool console_cmd__event__dump(const string_view &line);
-static bool console_cmd__event__fetch(const string_view &line);
-static bool console_cmd__event__erase(const string_view &line);
-
 bool
 console_cmd__event(const string_view &line)
 {
+	const m::event::id event_id
+	{
+		token(line, ' ', 0)
+	};
+
 	const auto args
 	{
 		tokens_after(line, ' ', 0)
 	};
 
-	switch(hash(token(line, " ", 0)))
+	static char buf[64_KiB];
+	const m::event event
 	{
-		case hash("fetch"):
-			return console_cmd__event__fetch(args);
+		event_id, buf
+	};
 
-		case hash("dump"):
-			return console_cmd__event__dump(args);
-
-		case hash("erase"):
-			return console_cmd__event__erase(args);
-
-		default:
-			return console_cmd__event__default(line);
+	if(!empty(args)) switch(hash(token(args, ' ', 0)))
+	{
+		case hash("raw"):
+			out << json::object{buf} << std::endl;
+			return true;
 	}
+
+	out << pretty(event) << std::endl;
+	return true;
 }
 
 bool
@@ -973,78 +960,12 @@ console_cmd__event__fetch(const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__event__default(const string_view &line)
-{
-	const m::event::id event_id
-	{
-		token(line, ' ', 0)
-	};
-
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	static char buf[64_KiB];
-	const m::event event
-	{
-		event_id, buf
-	};
-
-	if(!empty(args)) switch(hash(token(args, ' ', 0)))
-	{
-		case hash("raw"):
-			out << json::object{buf} << std::endl;
-			return true;
-	}
-
-	out << pretty(event) << std::endl;
-	return true;
-}
-
 //
 // state
 //
 
-static bool console_cmd__state_root(const string_view &line);
-static bool console_cmd__state_count(const string_view &line);
-static bool console_cmd__state_get(const string_view &line);
-static bool console_cmd__state_each(const string_view &line);
-static bool console_cmd__state_dfs(const string_view &line);
-
 bool
-console_cmd__state(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("root"):
-			return console_cmd__state_root(args);
-
-		case hash("get"):
-			return console_cmd__state_get(args);
-
-		case hash("count"):
-			return console_cmd__state_count(args);
-
-		case hash("each"):
-			return console_cmd__state_each(args);
-
-		case hash("dfs"):
-			return console_cmd__state_dfs(args);
-
-		default:
-			throw bad_command{};
-	}
-}
-
-bool
-console_cmd__state_count(const string_view &line)
+console_cmd__state__count(const string_view &line)
 {
 	const string_view arg
 	{
@@ -1061,7 +982,7 @@ console_cmd__state_count(const string_view &line)
 }
 
 bool
-console_cmd__state_each(const string_view &line)
+console_cmd__state__each(const string_view &line)
 {
 	const string_view arg
 	{
@@ -1088,7 +1009,7 @@ console_cmd__state_each(const string_view &line)
 }
 
 bool
-console_cmd__state_get(const string_view &line)
+console_cmd__state__get(const string_view &line)
 {
 	const string_view root
 	{
@@ -1115,7 +1036,7 @@ console_cmd__state_get(const string_view &line)
 }
 
 bool
-console_cmd__state_dfs(const string_view &line)
+console_cmd__state__dfs(const string_view &line)
 {
 	const string_view arg
 	{
@@ -1141,7 +1062,7 @@ console_cmd__state_dfs(const string_view &line)
 }
 
 bool
-console_cmd__state_root(const string_view &line)
+console_cmd__state__root(const string_view &line)
 {
 	const m::event::id event_id
 	{
@@ -1154,28 +1075,40 @@ console_cmd__state_root(const string_view &line)
 }
 
 //
+// commit
+//
+
+bool
+console_cmd__commit(const string_view &line)
+{
+	m::event event
+	{
+		json::object{line}
+	};
+
+	return true;
+}
+
+//
 // exec
 //
 
-static bool console_cmd__exec_file(const string_view &line);
-
 bool
-console_cmd__exec(const string_view &line)
+console_cmd__exec__event(const json::object &event)
 {
-	const auto args
+	m::vm::opts opts;
+	opts.verify = false;
+	m::vm::eval eval
 	{
-		tokens_after(line, ' ', 0)
+		opts
 	};
 
-	switch(hash(token(line, " ", 0)))
-	{
-		default:
-			return console_cmd__exec_file(line);
-	}
+	eval(event);
+	return true;
 }
 
 bool
-console_cmd__exec_file(const string_view &line)
+console_cmd__exec__file(const string_view &line)
 {
 	const params token{line, " ",
 	{
@@ -1218,6 +1151,7 @@ console_cmd__exec_file(const string_view &line)
 	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.prev_check_exists = false;
 	opts.notify = false;
+	opts.verify = false;
 	m::vm::eval eval
 	{
 		opts
@@ -1293,72 +1227,6 @@ console_cmd__exec_file(const string_view &line)
 //
 // room
 //
-
-static bool console_cmd__room__id(const string_view &line);
-static bool console_cmd__room__redact(const string_view &line);
-static bool console_cmd__room__message(const string_view &line);
-static bool console_cmd__room__set(const string_view &line);
-static bool console_cmd__room__get(const string_view &line);
-static bool console_cmd__room__origins(const string_view &line);
-static bool console_cmd__room__messages(const string_view &line);
-static bool console_cmd__room__members(const string_view &line);
-static bool console_cmd__room__count(const string_view &line);
-static bool console_cmd__room__state(const string_view &line);
-static bool console_cmd__room__depth(const string_view &line);
-static bool console_cmd__room__head(const string_view &line);
-
-bool
-console_cmd__room(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("depth"):
-			return console_cmd__room__depth(args);
-
-		case hash("head"):
-			return console_cmd__room__head(args);
-
-		case hash("state"):
-			return console_cmd__room__state(args);
-
-		case hash("count"):
-			return console_cmd__room__count(args);
-
-		case hash("origins"):
-			return console_cmd__room__origins(args);
-
-		case hash("members"):
-			return console_cmd__room__members(args);
-
-		case hash("messages"):
-			return console_cmd__room__messages(args);
-
-		case hash("get"):
-			return console_cmd__room__get(args);
-
-		case hash("set"):
-			return console_cmd__room__set(args);
-
-		case hash("message"):
-			return console_cmd__room__message(args);
-
-		case hash("redact"):
-			return console_cmd__room__redact(args);
-
-		case hash("id"):
-			return console_cmd__room__id(args);
-
-		default:
-			throw bad_command{};
-	}
-
-	return true;
-}
 
 bool
 console_cmd__room__head(const string_view &line)
@@ -1714,51 +1582,20 @@ console_cmd__room__id(const string_view &id)
 	return true;
 }
 
-//
-// fed
-//
-
-static bool console_cmd__fed__version(const string_view &line);
-static bool console_cmd__fed__query(const string_view &line);
-static bool console_cmd__fed__event(const string_view &line);
-static bool console_cmd__fed__state(const string_view &line);
-static bool console_cmd__fed__backfill(const string_view &line);
-static bool console_cmd__fed__head(const string_view &line);
-
 bool
-console_cmd__fed(const string_view &line)
+console_cmd__room__purge(const string_view &line)
 {
-	const auto args
+	const m::room::id room_id
 	{
-		tokens_after(line, ' ', 0)
+		token(line, ' ', 0)
 	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("version"):
-			return console_cmd__fed__version(args);
-
-		case hash("query"):
-			return console_cmd__fed__query(args);
-
-		case hash("event"):
-			return console_cmd__fed__event(args);
-
-		case hash("state"):
-			return console_cmd__fed__state(args);
-
-		case hash("backfill"):
-			return console_cmd__fed__backfill(args);
-
-		case hash("head"):
-			return console_cmd__fed__head(args);
-
-		default:
-			throw bad_command{};
-	}
 
 	return true;
 }
+
+//
+// fed
+//
 
 bool
 console_cmd__fed__head(const string_view &line)
@@ -2025,40 +1862,6 @@ console_cmd__fed__event(const string_view &line)
 
 	if(!conforms.clean())
 		out << "- " << conforms << std::endl;
-
-	return true;
-}
-
-static bool console_cmd__fed__query__client_keys(const string_view &line);
-static bool console_cmd__fed__query__user_devices(const string_view &line);
-static bool console_cmd__fed__query__directory(const string_view &line);
-static bool console_cmd__fed__query__profile(const string_view &line);
-
-bool
-console_cmd__fed__query(const string_view &line)
-{
-	const auto args
-	{
-		tokens_after(line, ' ', 0)
-	};
-
-	switch(hash(token(line, " ", 0)))
-	{
-		case hash("profile"):
-			return console_cmd__fed__query__profile(args);
-
-		case hash("directory"):
-			return console_cmd__fed__query__directory(args);
-
-		case hash("user_devices"):
-			return console_cmd__fed__query__user_devices(args);
-
-		case hash("client_keys"):
-			return console_cmd__fed__query__client_keys(args);
-
-		default:
-			throw bad_command{};
-	}
 
 	return true;
 }
