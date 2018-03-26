@@ -1567,19 +1567,22 @@ ircd::server::link::read(const mutable_buffer &buf)
 void
 ircd::server::link::discard_read()
 {
-	const size_t discard
+	ssize_t discard
 	{
-		available(*socket)
+		SSL_pending(socket->ssl.native_handle())
 	};
+
+	if(discard <= 0)
+		discard = available(*socket);
 
 	const size_t discarded
 	{
-		discard_any(*socket, discard)
+		discard_any(*socket, size_t(discard))
 	};
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log.warning("Link to %s discarded %zu of %zu unexpected bytes",
+	log.warning("Link to %s discarded %zu of %zd unexpected bytes",
 	            likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
 	            discarded,
 	            discard);
@@ -2469,11 +2472,11 @@ const
 	if(state.status == (http::code)0)
 		return make_read_head_buffer();
 
-	if(state.chunk_length == size_t(-1))
-		return make_read_chunk_head_buffer();
-
 	if(state.content_read >= size(request->in.content))
 		return make_read_discard_buffer();
+
+	if(state.chunk_length == size_t(-1))
+		return make_read_chunk_head_buffer();
 
 	if(state.chunk_length)
 		return make_read_chunk_content_buffer();
