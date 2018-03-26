@@ -39,6 +39,7 @@ ircd::module *console_module;
 static void check_console_active();
 static void console_fini();
 static void console_init();
+static int handle_line_bymodule(const string_view &line);
 static bool handle_line(const string_view &line);
 static void execute(const std::vector<std::string> lines);
 static void console();
@@ -247,41 +248,12 @@ try
 		return false;
 	}
 
-	if(console_module)
+	int ret{-1};
+	if(console_module) switch((ret = handle_line_bymodule(line)))
 	{
-		const ircd::mods::import<int (const string_view &, std::string &)> command
-		{
-			*console_module, "console_command"
-		};
-
-		int ret;
-		std::string output;
-		switch((ret = command(line, output)))
-		{
-			case 0:
-			case 1:
-				std::cout << output;
-				if(endswith(output, '\n'))
-					std::flush(std::cout);
-				else
-					std::cout << std::endl;
-
-				return ret;
-
-			// The command was handled but the arguments were bad_command.
-			// The module has its own class for a bad_command exception which
-			// is a local and separate symbol from the bad_command here so
-			// we use this code to translate it.
-			case -2:
-				throw bad_command
-				{
-					"%s", output
-				};
-
-			// Command isn't handled by the module; continue handling here
-			default:
-				break;
-		}
+		default:  break;
+		case 0:   return false;
+		case 1:   return true;
 	}
 
 	throw bad_command{};
@@ -305,6 +277,55 @@ catch(const std::exception &e)
 {
 	ircd::log::error("%s", e.what());
 	return true;
+}
+
+int
+handle_line_bymodule(const string_view &line)
+{
+	using prototype = int (std::ostream &, const string_view &);
+	const ircd::mods::import<prototype> command
+	{
+		*console_module, "console_command"
+	};
+
+	thread_local char buf[32_KiB];
+	std::ostringstream ss;
+	pubsetbuf(ss, buf);
+	int ret;
+	switch((ret = command(ss, line)))
+	{
+		case 0:
+		case 1:
+		{
+			const string_view out
+			{
+				view(ss, buf)
+			};
+
+			std::cout << out;
+			if(endswith(out, '\n'))
+				std::flush(std::cout);
+			else
+				std::cout << std::endl;
+
+			return ret;
+		}
+
+		// The command was handled but the arguments were bad_command.
+		// The module has its own class for a bad_command exception which
+		// is a local and separate symbol from the bad_command here so
+		// we use this code to translate it.
+		case -2: throw bad_command
+		{
+			"%s", view(ss, buf)
+		};
+
+		// Command isn't handled by the module; continue handling here
+		default:
+			break;
+	}
+
+	return ret;
 }
 
 void

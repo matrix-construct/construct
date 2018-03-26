@@ -173,20 +173,31 @@ noexcept try
 		"console"
 	};
 
-	const mods::import<int (const string_view &, std::string &)> command
+	using prototype = int (std::ostream &, const string_view &);
+	const mods::import<prototype> command
 	{
 		*console_module, "console_command"
 	};
 
-	std::string out;
-	command(body, out);
-	out = replace(std::move(out), '\n', "<br />"); //TODO: X
-	std::stringstream ss;
-	ss << "<pre>"
-	   << out
-	   << "</pre>";
+	const unique_buffer<mutable_buffer> buf{32_KiB};
+	std::ostringstream out;
+	pubsetbuf(out, buf);
 
-	msghtml(control_room, m::me.user_id, ss.str());
+	out << "<pre>";
+	command(out, body);
+	out << "</pre>";
+
+	const auto str //TODO: X
+	{
+		replace(view(out, buf), '\n', "<br />")
+	};
+
+	const string_view alt //TODO: X
+	{
+		"no alt text"
+	};
+
+	msghtml(control_room, m::me.user_id, str, alt);
 }
 catch(const std::exception &e)
 {
