@@ -77,9 +77,12 @@ try
 	char headbuf[64];
 	const unwind::exceptional terminate{[&headbuf, &client]
 	{
-		client.write_all("\r\n"_sv);
-		client.write_all(http::writechunk(headbuf, 0));
-		client.write_all("\r\n"_sv);
+		//TODO: find out if it's not a client problem so we don't have to eject
+		//TODO: them. And write_all() blowing up inside here is bad.
+		client.close(net::dc::RST, net::close_ignore);
+		//client.write_all("\r\n"_sv);
+		//client.write_all(http::writechunk(headbuf, 0));
+		//client.write_all("\r\n"_sv);
 	}};
 
 	client.write_all(http::writechunk(headbuf, size(first_chunk)));
