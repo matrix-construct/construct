@@ -14,7 +14,6 @@
 namespace ircd::ctx
 {
 	struct dock;
-	enum class cv_status;
 }
 
 /// dock is a condition variable which has no requirement for locking because
@@ -31,10 +30,10 @@ class ircd::ctx::dock
 	size_t size() const;
 
 	template<class time_point, class predicate> bool wait_until(time_point&& tp, predicate&& pred);
-	template<class time_point> cv_status wait_until(time_point&& tp);
+	template<class time_point> bool wait_until(time_point&& tp);
 
 	template<class duration, class predicate> bool wait_for(const duration &dur, predicate&& pred);
-	template<class duration> cv_status wait_for(const duration &dur);
+	template<class duration> bool wait_for(const duration &dur);
 
 	template<class predicate> void wait(predicate&& pred);
 	void wait();
@@ -42,11 +41,6 @@ class ircd::ctx::dock
 	void notify_all() noexcept;
 	void notify_one() noexcept;
 	void notify() noexcept;
-};
-
-enum class ircd::ctx::cv_status
-{
-	no_timeout, timeout
 };
 
 /// Wake up the next context waiting on the dock
@@ -122,8 +116,9 @@ ircd::ctx::dock::wait(predicate&& pred)
 	while(!pred());
 }
 
+/// Returns true if notified; false if timed out
 template<class duration>
-ircd::ctx::cv_status
+bool
 ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
@@ -135,10 +130,10 @@ ircd::ctx::dock::wait_for(const duration &dur)
 	}};
 
 	q.push_back(current);
-	return ircd::ctx::wait<std::nothrow_t>(dur) > zero? cv_status::no_timeout:
-	                                                    cv_status::timeout;
+	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
 }
 
+/// Returns true if predicate passed; false if timed out
 template<class duration,
          class predicate>
 bool
@@ -169,8 +164,9 @@ ircd::ctx::dock::wait_for(const duration &dur,
 	while(1);
 }
 
+/// Returns true if notified; false if timed out
 template<class time_point>
-ircd::ctx::cv_status
+bool
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
 	assert(current);
@@ -180,10 +176,10 @@ ircd::ctx::dock::wait_until(time_point&& tp)
 	}};
 
 	q.push_back(current);
-	return ircd::ctx::wait_until<std::nothrow_t>(tp)? cv_status::timeout:
-	                                                  cv_status::no_timeout;
+	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
 }
 
+/// Returns true if predicate passed; false if timed out
 template<class time_point,
          class predicate>
 bool

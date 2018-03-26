@@ -145,7 +145,7 @@ ircd::client::wait_all()
 	context.join();
 	while(!client::list.empty())
 	{
-		if(dock.wait_for(seconds(2)) == ctx::cv_status::no_timeout)
+		if(dock.wait_for(seconds(2)))
 			continue;
 
 		log::warning

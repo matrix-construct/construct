@@ -96,13 +96,16 @@ template<class duration>
 T
 ircd::ctx::queue<T>::pop_for(const duration &dur)
 {
-	const auto status(dock.wait_for(dur, [this]
+	const bool ready
 	{
-		return !q.empty();
-	}));
+		dock.wait_for(dur, [this]
+		{
+			return !q.empty();
+		})
+	};
 
-	if(status == cv_status::timeout)
-		throw timeout();
+	if(!ready)
+		throw timeout{};
 
 	const unwind pop([this]
 	{
@@ -118,13 +121,16 @@ template<class time_point>
 T
 ircd::ctx::queue<T>::pop_until(time_point&& tp)
 {
-	const auto status(dock.wait_until(tp, [this]
+	const bool ready
 	{
-		return !q.empty();
-	}));
+		dock.wait_until(tp, [this]
+		{
+			return !q.empty();
+		})
+	};
 
-	if(status == cv_status::timeout)
-		throw timeout();
+	if(!ready)
+		throw timeout{};
 
 	const unwind pop([this]
 	{

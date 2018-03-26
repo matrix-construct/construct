@@ -45,7 +45,7 @@ ircd::server::wait_all()
 {
 	while(peer_unfinished())
 	{
-		if(dock.wait_for(seconds(2)) == ctx::cv_status::no_timeout)
+		if(dock.wait_for(seconds(2)))
 			continue;
 
 		log.warning("Waiting for %zu tags on %zu links on %zu of %zu peers to close...",
