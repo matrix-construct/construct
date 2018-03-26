@@ -184,7 +184,8 @@ noexcept try
 	pubsetbuf(out, buf);
 
 	out << "<pre>";
-	command(out, body, {});
+	static const string_view opts{"html"};
+	command(out, body, opts);
 	out << "</pre>";
 
 	const auto str //TODO: X

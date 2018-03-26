@@ -135,6 +135,7 @@ find_cmd(const string_view &line)
 struct opt
 {
 	std::ostream &out;
+	bool html {false};
 
 	operator std::ostream &()
 	{
@@ -163,7 +164,12 @@ console_command(std::ostream &out,
                 const string_view &opts)
 try
 {
-	opt opt{out};
+	opt opt
+	{
+		out,
+		has(opts, "html")
+	};
+
 	const cmd *const cmd
 	{
 		find_cmd(line)
@@ -595,9 +601,61 @@ console_cmd__db__list(opt &out, const string_view &line)
 // net
 //
 
+static bool
+html__net__peer(opt &out, const string_view &line)
+{
+	out << "<table>";
+
+	out << "<tr>";
+	out << "<td> HOST </td>";
+	out << "<td> ADDR </td>";
+	out << "<td> LINKS </td>";
+	out << "<td> REQS </td>";
+	out << "<td> ▲ BYTES </td>";
+	out << "<td> ▼ BYTES </td>";
+	out << "<td> ERROR </td>";
+	out << "</tr>";
+
+	for(const auto &p : server::peers)
+	{
+		using std::setw;
+		using std::left;
+		using std::right;
+
+		const auto &host{p.first};
+		const auto &peer{*p.second};
+		const net::ipport &ipp{peer.remote};
+
+		out << "<tr>";
+
+		out << "<td>" << host << "</td>";
+		out << "<td>" << ipp << "</td>";
+
+		out << "<td>" << peer.link_count() << "</td>";
+		out << "<td>" << peer.tag_count() << "</td>";
+		out << "<td>" << peer.write_total() << "</td>";
+		out << "<td>" << peer.read_total() << "</td>";
+
+		out << "<td>";
+		if(peer.err_has() && peer.err_msg())
+			out << peer.err_msg();
+		else if(peer.err_has())
+			out << "<unknown error>"_sv;
+		out << "</td>";
+
+		out << "</tr>";
+	}
+
+	out << "</table>";
+	return true;
+}
+
 bool
 console_cmd__net__peer(opt &out, const string_view &line)
 {
+	if(out.html)
+		return html__net__peer(out, line);
+
 	for(const auto &p : server::peers)
 	{
 		using std::setw;
