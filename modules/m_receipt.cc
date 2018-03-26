@@ -16,6 +16,7 @@ IRCD_MODULE
 	"Matrix Receipts"
 };
 
+static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::room::id &, const json::object &);
@@ -161,4 +162,15 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 	{
 		data.get<time_t>("ts")
 	};
+
+	for(const string_view &event_id : event_ids)
+		handle_m_receipt_m_read(room_id, user_id, unquote(event_id), ts);
+}
+
+void
+handle_m_receipt_m_read(const m::room::id &room_id,
+                        const m::user::id &user_id,
+                        const m::event::id &event_id,
+                        const time_t &ts)
+{
 }
