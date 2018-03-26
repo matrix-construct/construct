@@ -219,8 +219,18 @@ operator!(const std::string_view &str)
 // stringstream buffer set macros
 //
 
-inline std::string &
-pubsetbuf(std::stringstream &ss,
+template<class stringstream>
+stringstream &
+pubsetbuf(stringstream &ss,
+          const mutable_buffer &buf)
+{
+	ss.rdbuf()->pubsetbuf(data(buf), size(buf));
+	return ss;
+}
+
+template<class stringstream>
+stringstream &
+pubsetbuf(stringstream &ss,
           std::string &s)
 {
 	auto *const &data
@@ -229,11 +239,12 @@ pubsetbuf(std::stringstream &ss,
 	};
 
 	ss.rdbuf()->pubsetbuf(data, s.size());
-	return s;
+	return ss;
 }
 
-inline std::string &
-pubsetbuf(std::stringstream &ss,
+template<class stringstream>
+stringstream &
+pubsetbuf(stringstream &ss,
           std::string &s,
           const size_t &size)
 {
@@ -241,12 +252,28 @@ pubsetbuf(std::stringstream &ss,
 	return pubsetbuf(ss, s);
 }
 
-inline std::string &
-resizebuf(std::stringstream &ss,
+template<class stringstream>
+stringstream &
+resizebuf(stringstream &ss,
           std::string &s)
 {
 	s.resize(ss.tellp());
-	return s;
+	return ss;
+}
+
+/// buf has to match the rdbuf you gave the stringstream
+template<class stringstream>
+string_view
+view(stringstream &ss,
+     const const_buffer &buf)
+{
+	assert(size_t(ss.tellp()) <= size(buf));
+	ss.flush();
+	ss.rdbuf()->pubsync();
+	return
+	{
+		data(buf), size_t(ss.tellp())
+	};
 }
 
 //
