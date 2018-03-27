@@ -69,6 +69,10 @@ struct ircd::server::link
 	size_t read_completed() const;     // see: tag::read_completed() notes
 	size_t read_remaining() const;     // see: tag::read_remaining() notes
 
+	// stats accumulated
+	size_t write_total() const;
+	size_t read_total() const;
+
 	// stats for tags
 	size_t tag_count() const;
 	size_t tag_committed() const;

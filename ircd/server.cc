@@ -884,6 +884,20 @@ ircd::server::peer::handle_finished()
 }
 
 size_t
+ircd::server::peer::read_total()
+const
+{
+	return read_bytes;
+}
+
+size_t
+ircd::server::peer::write_total()
+const
+{
+	return write_bytes;
+}
+
+size_t
 ircd::server::peer::read_remaining()
 const
 {
@@ -1365,6 +1379,8 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 		data(buffer), bytes
 	};
 
+	assert(peer);
+	peer->write_bytes += bytes;
 	return written;
 }
 
@@ -1558,6 +1574,9 @@ ircd::server::link::read(const mutable_buffer &buf)
 		read_one(*socket, buf)
 	};
 
+	assert(peer);
+	peer->read_bytes += received;
+
 	return const_buffer
 	{
 		data(buf), received
@@ -1579,6 +1598,9 @@ ircd::server::link::discard_read()
 	{
 		discard_any(*socket, size_t(discard))
 	};
+
+	assert(peer);
+	peer->read_bytes += discarded;
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
@@ -1620,6 +1642,20 @@ ircd::server::link::tag_count()
 const
 {
 	return queue.size();
+}
+
+size_t
+ircd::server::link::read_total()
+const
+{
+	return socket? socket->in.bytes : 0;
+}
+
+size_t
+ircd::server::link::write_total()
+const
+{
+	return socket? socket->out.bytes : 0;
 }
 
 size_t

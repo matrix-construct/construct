@@ -613,6 +613,8 @@ html__net__peer(opt &out, const string_view &line)
 	out << "<td> REQS </td>";
 	out << "<td> ▲ BYTES Q</td>";
 	out << "<td> ▼ BYTES Q</td>";
+	out << "<td> ▲ BYTES</td>";
+	out << "<td> ▼ BYTES</td>";
 	out << "<td> ERROR </td>";
 	out << "</tr>";
 
@@ -635,6 +637,8 @@ html__net__peer(opt &out, const string_view &line)
 		out << "<td>" << peer.tag_count() << "</td>";
 		out << "<td>" << peer.write_size() << "</td>";
 		out << "<td>" << peer.read_size() << "</td>";
+		out << "<td>" << peer.write_total() << "</td>";
+		out << "<td>" << peer.read_total() << "</td>";
 
 		out << "<td>";
 		if(peer.err_has() && peer.err_msg())
@@ -675,8 +679,10 @@ console_cmd__net__peer(opt &out, const string_view &line)
 
 		out << " " << setw(2) << right << peer.link_count()   << " L"
 		    << " " << setw(2) << right << peer.tag_count()    << " T"
-		    << " " << setw(9) << right << peer.write_size()  << " UP Q"
-		    << " " << setw(9) << right << peer.read_size()   << " DN Q"
+		    << " " << setw(9) << right << peer.write_size()   << " UP Q"
+		    << " " << setw(9) << right << peer.read_size()    << " DN Q"
+		    << " " << setw(9) << right << peer.write_total()  << " UP"
+		    << " " << setw(9) << right << peer.read_total()   << " DN"
 		    ;
 
 		if(peer.err_has() && peer.err_msg())

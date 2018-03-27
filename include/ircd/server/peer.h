@@ -32,6 +32,8 @@ struct ircd::server::peer
 	std::list<link> links;
 	std::unique_ptr<err> e;
 	std::string server_name;
+	size_t write_bytes {0};
+	size_t read_bytes {0};
 	bool op_resolve {false};
 	bool op_fini {false};
 
@@ -83,6 +85,10 @@ struct ircd::server::peer
 	size_t read_size() const;
 	size_t read_completed() const;
 	size_t read_remaining() const;
+
+	// stats accumulated over time
+	size_t write_total() const;
+	size_t read_total() const;
 
 	// link control panel
 	link &link_add(const size_t &num = 1);
