@@ -271,7 +271,7 @@ try
 	if(opts->notify)
 	{
 		notify_hook(event);
-		vm::accept.expose(accepted);
+		vm::accept(accepted);
 	}
 
 	if(opts->effects)
