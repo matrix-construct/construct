@@ -804,7 +804,13 @@ ircd::json::stringify(mutable_buffer &buf,
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, m, m + iov.size(), print_member);
 	printer(buf, printer.object_end);
-	return { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(iov) == size(ret));
+	return ret;
 }
 
 size_t
@@ -1029,7 +1035,13 @@ ircd::json::stringify(mutable_buffer &buf,
 	char *const start(begin(buf));
 	printer(buf, printer.name << printer.name_sep, member.first);
 	stringify(buf, member.second);
-	return string_view { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(member) == size(ret));
+	return ret;
 }
 
 size_t
@@ -1103,7 +1115,13 @@ ircd::json::stringify(mutable_buffer &buf,
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, b, e, stringify_member);
 	printer(buf, printer.object_end);
-	return { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(b, e) == size(ret));
+	return ret;
 }
 
 size_t
@@ -1313,11 +1331,19 @@ ircd::json::array::stringify(mutable_buffer &buf,
 		}
 	};
 
-	char *const start(std::begin(buf));
+	using ircd::buffer::begin;
+	char *const start(begin(buf));
 	printer(buf, printer.array_begin);
 	printer::list_protocol(buf, b, e, print_element);
 	printer(buf, printer.array_end);
-	return { start, std::begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	using ircd::buffer::size;
+	assert(serialized(b, e) == size(ret));
+	return ret;
 }
 
 template<class it>
@@ -1482,7 +1508,13 @@ try
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, m.data(), m.data() + i, print_member);
 	printer(buf, printer.object_end);
-	return { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(b, e) == size(ret));
+	return ret;
 }
 catch(const std::out_of_range &)
 {
@@ -1563,7 +1595,13 @@ ircd::json::stringify(mutable_buffer &buf,
 	printer(buf, printer.array_begin);
 	printer::list_protocol(buf, b, e, print_value);
 	printer(buf, printer.array_end);
-	return { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(b, e) == size(ret));
+	return ret;
 }
 
 ircd::string_view
@@ -1649,7 +1687,13 @@ ircd::json::stringify(mutable_buffer &buf,
 		}
 	}
 
-	return { start, begin(buf) };
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(v) == size(ret));
+	return ret;
 }
 
 size_t
