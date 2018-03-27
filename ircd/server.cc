@@ -904,12 +904,12 @@ const
 }
 
 size_t
-ircd::server::peer::read_total()
+ircd::server::peer::read_size()
 const
 {
 	return accumulate_links([](const auto &link)
 	{
-		return link.read_total();
+		return link.read_size();
 	});
 }
 
@@ -934,12 +934,12 @@ const
 }
 
 size_t
-ircd::server::peer::write_total()
+ircd::server::peer::write_size()
 const
 {
 	return accumulate_links([](const auto &link)
 	{
-		return link.write_total();
+		return link.write_size();
 	});
 }
 
@@ -1328,7 +1328,7 @@ ircd::server::link::process_write(tag &tag)
 		          this,
 		          tag_committed(),
 		          tag_count(),
-		          tag.write_total());
+		          tag.write_size());
 
 	while(tag.write_remaining())
 	{
@@ -1643,12 +1643,12 @@ const
 }
 
 size_t
-ircd::server::link::read_total()
+ircd::server::link::read_size()
 const
 {
 	return accumulate_tags([](const auto &tag)
 	{
-		return tag.read_total();
+		return tag.read_size();
 	});
 }
 
@@ -1673,12 +1673,12 @@ const
 }
 
 size_t
-ircd::server::link::write_total()
+ircd::server::link::write_size()
 const
 {
 	return accumulate_tags([](const auto &tag)
 	{
-		return tag.write_total();
+		return tag.write_size();
 	});
 }
 
@@ -1956,7 +1956,7 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 	{
 		assert(data(buffer) >= begin(req.out.content));
 		assert(data(buffer) < end(req.out.content));
-		assert(state.written <= write_total());
+		assert(state.written <= write_size());
 
 		// Invoke the user's optional progress callback; this function
 		// should be marked noexcept and has no reason to throw yet.
@@ -2735,7 +2735,7 @@ size_t
 ircd::server::tag::read_remaining()
 const
 {
-	return read_total() - read_completed();
+	return read_size() - read_completed();
 }
 
 size_t
@@ -2746,7 +2746,7 @@ const
 }
 
 size_t
-ircd::server::tag::read_total()
+ircd::server::tag::read_size()
 const
 {
 	return state.content_length;
@@ -2756,7 +2756,7 @@ size_t
 ircd::server::tag::write_remaining()
 const
 {
-	return write_total() - write_completed();
+	return write_size() - write_completed();
 }
 
 size_t
@@ -2767,7 +2767,7 @@ const
 }
 
 size_t
-ircd::server::tag::write_total()
+ircd::server::tag::write_size()
 const
 {
 	return request? size(request->out) : 0;

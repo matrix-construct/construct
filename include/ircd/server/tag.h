@@ -61,11 +61,11 @@ struct ircd::server::tag
 	const_buffer read_head(const const_buffer &, bool &done, link &);
 
   public:
-	size_t write_total() const;
+	size_t write_size() const;
 	size_t write_completed() const;
 	size_t write_remaining() const;
 
-	size_t read_total() const;               // not accurate until content-length
+	size_t read_size() const;                // not accurate until content-length
 	size_t read_completed() const;           // reports all received so far
 	size_t read_remaining() const;           // not accurate until content-length
 

@@ -74,13 +74,13 @@ struct ircd::server::peer
 	size_t tag_uncommitted() const;
 
 	// stats for all upload-side bytes in all tags in all links
-	size_t write_total() const;
+	size_t write_size() const;
 	size_t write_completed() const;
 	size_t write_remaining() const;
 
 	// stats for download-side bytes in all tags in all links (note:
 	// see notes in link.h/tag.h about inaccuracy here).
-	size_t read_total() const;
+	size_t read_size() const;
 	size_t read_completed() const;
 	size_t read_remaining() const;
 

@@ -58,14 +58,14 @@ struct ircd::server::link
 	bool busy() const;
 
 	// stats for upload-side bytes across all tags
-	size_t write_total() const;
+	size_t write_size() const;
 	size_t write_completed() const;
 	size_t write_remaining() const;
 
 	// stats for download-side bytes ~across all tags~; note: this is not
 	// accurate except for the one tag at the front of the queue having
 	// its response processed.
-	size_t read_total() const;         // see: tag::read_total() notes
+	size_t read_size() const;          // see: tag::read_total() notes
 	size_t read_completed() const;     // see: tag::read_completed() notes
 	size_t read_remaining() const;     // see: tag::read_remaining() notes
 
