@@ -1273,8 +1273,11 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	if(string_view{v}.empty())
 	{
+		const char *const start{begin(buf)};
 		consume(buf, copy(buf, empty_array));
-		return empty_array;
+		const string_view ret{start, begin(buf)};
+		assert(serialized(v) == size(ret));
+		return ret;
 	}
 
 	return array::stringify(buf, begin(v), end(v));
@@ -2203,8 +2206,11 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	if(v.empty() && defined(v))
 	{
+		const char *const start{begin(buf)};
 		consume(buf, copy(buf, empty_string));
-		return empty_string;
+		const string_view ret{start, begin(buf)};
+		assert(serialized(v) == size(ret));
+		return ret;
 	}
 
 	const json::value value{v};
@@ -2215,7 +2221,7 @@ size_t
 ircd::json::serialized(const string_view &v)
 {
 	if(v.empty() && defined(v))
-		return 2;
+		return size(empty_string);
 
 	const json::value value{v};
 	return serialized(value);
