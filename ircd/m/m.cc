@@ -1086,6 +1086,20 @@ ircd::m::create(const id::room &room_id,
 }
 
 ircd::m::event::id::buf
+ircd::m::join(const id::room_alias &room_alias,
+              const id::user &user_id)
+{
+	using prototype = event::id::buf (const id::room_alias &, const id::user &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "join__alias_user"
+	};
+
+	return function(room_alias, user_id);
+}
+
+ircd::m::event::id::buf
 ircd::m::join(const room &room,
               const id::user &user_id)
 {

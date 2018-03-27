@@ -62,6 +62,7 @@ namespace ircd::m
 	event::id::buf notice(const room &, const string_view &body); // sender is @ircd
 	event::id::buf leave(const room &, const m::id::user &);
 	event::id::buf join(const room &, const m::id::user &);
+	event::id::buf join(const id::room_alias &, const m::id::user &);
 
 	// [SET] Create new room
 	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
