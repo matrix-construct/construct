@@ -24,6 +24,7 @@ namespace ircd::db
 	using seq_closure = std::function<void (txn &, const uint64_t &)>;
 	bool for_each(database &d, const uint64_t &seq, const seq_closure_bool &);
 	void for_each(database &d, const uint64_t &seq, const seq_closure &);
+	void get(database &d, const uint64_t &seq, const seq_closure &);
 }
 
 struct ircd::db::txn

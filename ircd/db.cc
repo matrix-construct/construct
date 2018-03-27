@@ -2249,6 +2249,19 @@ noexcept
 //
 
 void
+ircd::db::get(database &d,
+              const uint64_t &seq,
+              const seq_closure &closure)
+{
+	for_each(d, seq, seq_closure_bool{[&closure]
+	(txn &txn, const uint64_t &seq)
+	{
+		closure(txn, seq);
+		return false;
+	}});
+}
+
+void
 ircd::db::for_each(database &d,
                    const uint64_t &seq,
                    const seq_closure &closure)
