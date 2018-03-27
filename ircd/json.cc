@@ -1109,10 +1109,11 @@ ircd::json::stringify(mutable_buffer &buf,
 size_t
 ircd::json::serialized(const object &object)
 {
-	const auto begin(std::begin(object));
-	const auto end(std::end(object));
-	const size_t ret(1 + (begin == end));
-	return std::accumulate(begin, end, ret, []
+	const auto b(begin(object));
+	const auto e(end(object));
+	assert(!empty(object) || b == e);
+	const size_t ret(1 + (b == e));
+	return std::accumulate(b, e, ret, []
 	(auto ret, const object::member &member)
 	{
 		return ret += serialized(member) + 1;
@@ -1264,9 +1265,7 @@ ircd::json::stringify(mutable_buffer &buf,
 size_t
 ircd::json::serialized(const array &v)
 {
-	if(string_view{v}.empty())
-		return size(empty_array);
-
+	assert(!empty(v) || (begin(v) == end(v)));
 	return array::serialized(begin(v), end(v));
 }
 
