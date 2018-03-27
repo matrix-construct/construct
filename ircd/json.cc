@@ -75,7 +75,11 @@ struct ircd::json::input
 	rule<> literal                     { lit_true | lit_false | lit_null                ,"literal" };
 
 	// numerical (TODO: exponent)
-	rule<> number                      { double_                                         ,"number" };
+	rule<> number
+	{
+		long_ | double_
+		,"number"
+	};
 
 	// string
 	rule<> unicode
@@ -210,13 +214,23 @@ struct ircd::json::output
 
 	rule<string_view> chars
 	{
-		*char_ //TODO: exacting
+		*(char_)
 		,"characters"
+	};
+
+	rule<string_view> quoted
+	{
+		char_('"') << *char_ << char_('"')
+	};
+
+	rule<string_view> unquoted
+	{
+		quote << *char_ << quote
 	};
 
 	rule<string_view> string
 	{
-		quote << chars << quote
+		quoted | unquoted
 		,"string"
 	};
 
@@ -250,7 +264,7 @@ struct ircd::json::output
 		| (&array << array)
 		| (&literal << literal)
 		| (&number << number)
-		| (&string << string)
+		| string
 		,"value"
 	};
 
@@ -1568,6 +1582,9 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			const string_view sv{v};
 			printer(buf, printer.string, sv);
+			//TODO: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			const string_view ret{start, begin(buf)};
+			if(endswith(ret, "\\\"")) printer(buf, printer.quote);
 			break;
 		}
 
@@ -1622,7 +1639,8 @@ ircd::json::stringify(mutable_buffer &buf,
 		case NUMBER:
 		{
 			if(v.serial)
-				printer(buf, printer.number, string_view{v});
+				//printer(buf, printer.number, string_view{v});
+				consume(buf, copy(buf, strip(string_view{v}, ' ')));
 			else if(v.floats)
 				consume(buf, copy(buf, lex_cast(v.floating)));
 			else
@@ -1681,7 +1699,8 @@ ircd::json::serialized(const value &v)
 			mutable_buffer buf{test_buffer};
 
 			if(v.serial)
-				printer(buf, printer.number, string_view{v});
+				//printer(buf, printer.number, string_view{v});
+				return size(strip(string_view{v}, ' '));
 			else if(v.floats)
 				return size(lex_cast(v.floating));
 			else
