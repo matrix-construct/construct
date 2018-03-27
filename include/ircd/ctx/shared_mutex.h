@@ -25,6 +25,7 @@ class ircd::ctx::shared_mutex
 	void release();
 
   public:
+	size_t shares() const;
 	size_t waiting() const;
 
 	bool try_lock();
@@ -358,6 +359,13 @@ ircd::ctx::shared_mutex::waiting()
 const
 {
 	return q.size();
+}
+
+inline size_t
+ircd::ctx::shared_mutex::shares()
+const
+{
+	return std::max(s, ssize_t(0));
 }
 
 inline void
