@@ -531,6 +531,53 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__txn(opt &out, const string_view &line)
+try
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	if(dbname != "events")
+		throw error
+		{
+			"Sorry, this command is specific to the events db for now."
+		};
+
+	const auto seqnum
+	{
+		lex_cast<uint64_t>(token(line, ' ', 1, "0"))
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	get(database, seqnum, db::seq_closure{[&out]
+	(db::txn &txn, const uint64_t &seqnum)
+	{
+		for_each(txn, [&out, &seqnum]
+		(const db::delta &delta)
+		{
+			out << std::setw(12)  << std::right  << seqnum << " : "
+			    << std::setw(8)   << std::left   << reflect(std::get<delta.OP>(delta)) << " "
+			    << std::setw(18)  << std::right  << std::get<delta.COL>(delta) << " "
+			    << std::get<delta.KEY>(delta)
+			    << std::endl;
+		});
+	}});
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__checkpoint(opt &out, const string_view &line)
 try
 {
