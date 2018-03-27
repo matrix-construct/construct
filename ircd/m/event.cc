@@ -24,10 +24,13 @@ ircd::m::event_id(const event &event,
                   const const_buffer &hash)
 {
 	char readable[b58encode_size(sha256::digest_size)];
-	return id::event
+	const id::event ret
 	{
 		buf, b58encode(readable, hash), my_host()
 	};
+
+	buf.assigned(ret);
+	return ret;
 }
 
 ircd::m::id::event
