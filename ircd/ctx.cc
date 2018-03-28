@@ -497,7 +497,7 @@ noexcept
 :std::exception_ptr{std::current_exception()}
 {
 	assert(bool(*this));
-	assert(!std::uncaught_exceptions());
+	//assert(!std::uncaught_exceptions());
 	__cxa_end_catch();
 	assert(!std::current_exception());
 }
@@ -548,8 +548,8 @@ ircd::ctx::continuation::continuation(ctx *const &self)
 	// stack') for pending exception activities. Due to this limitation we
 	// cannot interleave _cxa_begin_catch() and __cxa_end_catch() by yielding
 	// the ircd::ctx in an exception handler.
-	assert(!std::uncaught_exceptions());
 	assert(!std::current_exception());
+	//assert(!std::uncaught_exceptions());
 
 	self->cont = this;
 	ircd::ctx::current = nullptr;
