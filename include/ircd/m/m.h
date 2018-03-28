@@ -14,17 +14,12 @@
 /// Matrix Protocol System
 namespace ircd::m
 {
-	using ircd::hash;
-
 	struct init;
 
-	extern struct user me;
-	extern struct room my_room;
-	extern struct node my_node;
-	extern struct room control;
 	extern struct log::log log;
 	extern std::list<ircd::net::listener> listeners;
 
+	using ircd::hash;
 	IRCD_OVERLOAD(generate)
 }
 
@@ -36,6 +31,11 @@ namespace ircd::m::self
 
 namespace ircd::m
 {
+	extern struct user me;
+	extern struct room my_room;
+	extern struct node my_node;
+	extern struct room control;
+
 	inline string_view my_host()                 { return self::host();        }
 	inline bool my_host(const string_view &h)    { return self::host(h);       }
 }

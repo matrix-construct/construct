@@ -12,17 +12,19 @@
 
 namespace ircd::m
 {
-	struct log::log log
-	{
-		"matrix", 'm'
-	};
-
-	std::map<std::string, ircd::module> modules;
-	std::list<ircd::net::listener> listeners;
-
 	static void leave_ircd_room();
 	static void join_ircd_room();
 }
+
+decltype(ircd::m::log)
+ircd::m::log
+{
+	"matrix", 'm'
+};
+
+decltype(ircd::m::listeners)
+ircd::m::listeners
+{};
 
 //
 // my user
@@ -1419,6 +1421,8 @@ ircd::m::txn::create(const array &pdu,
                      const array &edu,
                      const array &pdu_failure)
 {
+	using ircd::size;
+
 	json::iov iov;
 	const json::iov::push push[]
 	{
@@ -1870,6 +1874,15 @@ ircd::m::hook::list::add(site &site)
 
 	return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/import.h
+//
+
+decltype(ircd::m::modules)
+ircd::m::modules
+{};
 
 ///////////////////////////////////////////////////////////////////////////////
 //
