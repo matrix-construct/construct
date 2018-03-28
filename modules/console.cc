@@ -461,6 +461,24 @@ console_cmd__mod__reload(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__mod__load(opt &out, const string_view &line)
+{
+	const std::string name
+	{
+		token(line, ' ', 0)
+	};
+
+	if(m::modules.find(name) != end(m::modules))
+	{
+		out << name << " is already loaded." << std::endl;
+		return true;
+	}
+
+	m::modules.emplace(name, name);
+	return true;
+}
+
 //
 // db
 //
