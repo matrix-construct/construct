@@ -1148,12 +1148,6 @@ stringify(mutable_buffer &buf,
           const tuple<T...> &tuple)
 {
 	std::array<member, tuple.size()> members;
-	std::sort(begin(members), end(members), []
-	(const auto &a, const auto &b)
-	{
-		return a.first < b.first;
-	});
-
 	const auto e{_member_transform_if(tuple, begin(members), end(members), []
 	(auto &ret, const string_view &key, auto&& val)
 	{
