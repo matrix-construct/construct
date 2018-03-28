@@ -96,7 +96,7 @@ ircd::m::init::init()
 try
 :config
 {
-	ircd::conf::config //TODO: X
+	ircd::conf::config
 }
 ,_keys
 {
@@ -195,7 +195,15 @@ ircd::m::init::listeners()
 			config.at({"listen", unquote(name)})
 		};
 
-		init_listener(config, name, opts);
+		if(!opts.has("tmp_dh_path"))
+			throw user_error
+			{
+				"Listener %s requires a 'tmp_dh_path' in the config. We do not"
+				" create this yet. Try `openssl dhparam -outform PEM -out dh512.pem 512`",
+				name
+			};
+
+		init_listener(config, unquote(name), opts);
 	}
 	catch(const json::not_found &e)
 	{
@@ -451,32 +459,90 @@ ircd::m::keys::init::certificate()
 
 	const json::object config
 	{
-		this->config.at({"origin", unquote(origin)})
+		this->config.at({"origin", origin})
 	};
 
 	const std::string private_key_file
 	{
-		unquote(config.at("ssl_private_key_file_pem"))
+		unquote(config.get("ssl_private_key_pem_path"))
 	};
 
 	const std::string public_key_file
 	{
-		unquote(config.get("ssl_public_key_file_pem", private_key_file + ".pub"))
+		unquote(config.get("ssl_public_key_pem_path", private_key_file + ".pub"))
 	};
+
+	if(!private_key_file)
+		throw user_error
+		{
+			"You must specify an SSL private key file at"
+			" origin.[%s].ssl_private_pem_path even if you do not have one;"
+			" it will be created there.",
+			origin
+		};
 
 	if(!fs::exists(private_key_file))
 	{
-		log::warning("Failed to find certificate private key @ `%s'; creating...", private_key_file);
+		log::warning
+		{
+			"Failed to find certificate private key @ `%s'; creating...",
+			private_key_file
+		};
+
 		openssl::genrsa(private_key_file, public_key_file);
 	}
 
 	const std::string cert_file
 	{
-		unquote(config.at("ssl_certificate_file_pem"))
+		unquote(config.get("ssl_certificate_pem_path"))
 	};
 
+	if(!cert_file)
+		throw user_error
+		{
+			"You must specify an SSL certificate file path in the config at"
+			" origin.[%s].ssl_certificate_pem_path even if you do not have one;"
+			" it will be created there.",
+			origin
+		};
+
 	if(!fs::exists(cert_file))
-		throw fs::error("Failed to find SSL certificate @ `%s'", cert_file);
+	{
+		if(!this->config.has({"certificate", origin, "subject"}))
+			throw user_error
+			{
+				"Failed to find SSL certificate @ `%s'. Additionally, no"
+				" certificate.[%s].subject was found in the conf to generate one.",
+				cert_file,
+				origin
+			};
+
+		log::warning
+		{
+			"Failed to find SSL certificate @ `%s'; creating for '%s'...",
+			cert_file,
+			origin
+		};
+
+		const unique_buffer<mutable_buffer> buf
+		{
+			1_MiB
+		};
+
+		const json::strung opts{json::members
+		{
+			{ "private_key_pem_path",  private_key_file  },
+			{ "public_key_pem_path",   public_key_file   },
+			{ "subject", this->config.get({"certificate", origin, "subject"}) }
+		}};
+
+		const auto cert
+		{
+			openssl::genX509_rsa(buf, opts)
+		};
+
+		fs::overwrite(cert_file, cert);
+	}
 
 	const auto cert_pem
 	{
@@ -518,15 +584,34 @@ ircd::m::keys::init::certificate()
 void
 ircd::m::keys::init::signing()
 {
+	const string_view origin
+	{
+		unquote(this->config.at({"ircd", "origin"}))
+	};
+
+	const json::object config
+	{
+		this->config.at({"origin", unquote(origin)})
+	};
+
 	const std::string sk_file
 	{
-		unquote(config.get("signing_key_path", "construct.sk"))
+		unquote(config.get("ed25519_private_key_path"))
 	};
+
+	if(!sk_file)
+		throw user_error
+		{
+			"Failed to find ed25519 secret key path at"
+			" origin.[%s].ed25519_private_key_path in config. If you do not"
+			" have a private key, specify a path for one to be created.",
+			origin
+		};
 
 	if(fs::exists(sk_file))
 		log.info("Using ed25519 secret key @ `%s'", sk_file);
 	else
-		log.notice("Creating new ed25519 secret key @ `%s'", sk_file);
+		log.notice("Creating ed25519 secret key @ `%s'", sk_file);
 
 	self::secret_key = ed25519::sk
 	{

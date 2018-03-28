@@ -1184,17 +1184,20 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		return "foobar";
 	});
 
-	if(opts.has("ssl_certificate_chain_file"))
+	if(opts.has("certificate_chain_path"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl_certificate_chain_file"])
+			unquote(opts["certificate_chain_path"])
 		};
 
 		if(!fs::exists(filename))
-			throw error("%s: SSL certificate chain file @ `%s' not found",
-			            std::string(*this),
-			            filename);
+			throw error
+			{
+				"%s: SSL certificate chain file @ `%s' not found",
+				std::string(*this),
+				filename
+			};
 
 		ssl.use_certificate_chain_file(filename);
 		log.info("%s using certificate chain file '%s'",
@@ -1202,17 +1205,20 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		         filename);
 	}
 
-	if(opts.has("ssl_certificate_file_pem"))
+	if(opts.has("certificate_pem_path"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl_certificate_file_pem"])
+			unquote(opts["certificate_pem_path"])
 		};
 
 		if(!fs::exists(filename))
-			throw error("%s: SSL certificate pem file @ `%s' not found",
-			            std::string(*this),
-			            filename);
+			throw error
+			{
+				"%s: SSL certificate pem file @ `%s' not found",
+				std::string(*this),
+				filename
+			};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
 		log.info("%s using certificate file '%s'",
@@ -1220,17 +1226,20 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		         filename);
 	}
 
-	if(opts.has("ssl_private_key_file_pem"))
+	if(opts.has("private_key_pem_path"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl_private_key_file_pem"])
+			unquote(opts["private_key_pem_path"])
 		};
 
 		if(!fs::exists(filename))
-			throw error("%s: SSL private key file @ `%s' not found",
-			            std::string(*this),
-			            filename);
+			throw error
+			{
+				"%s: SSL private key file @ `%s' not found",
+				std::string(*this),
+				filename
+			};
 
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
 		log.info("%s using private key file '%s'",
@@ -1238,17 +1247,20 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		         filename);
 	}
 
-	if(opts.has("ssl_tmp_dh_file"))
+	if(opts.has("tmp_dh_path"))
 	{
 		const std::string filename
 		{
-			unquote(opts["ssl_tmp_dh_file"])
+			unquote(opts["tmp_dh_path"])
 		};
 
 		if(!fs::exists(filename))
-			throw error("%s: SSL tmp dh file @ `%s' not found",
-			            std::string(*this),
-			            filename);
+			throw error
+			{
+				"%s: SSL tmp dh file @ `%s' not found",
+				std::string(*this),
+				filename
+			};
 
 		ssl.use_tmp_dh_file(filename);
 		log.info("%s using tmp dh file '%s'",

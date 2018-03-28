@@ -184,14 +184,14 @@ void
 ircd::openssl::genx509_readkeys(EVP_PKEY &pk,
                                 const json::object &opts)
 {
-	const auto private_key_path
+	const std::string private_key_path
 	{
-		unquote(opts.at("tls_private_key_path"))
+		unquote(opts.at("private_key_pem_path"))
 	};
 
-	const auto public_key_path
+	const std::string public_key_path
 	{
-		unquote(opts.at("tls_public_key_path"))
+		unquote(opts.get("public_key_pem_path", private_key_path + ".pub"))
 	};
 
 	bio::read_file(private_key_path, [&pk](const string_view &pem)
