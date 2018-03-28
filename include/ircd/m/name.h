@@ -97,6 +97,7 @@ namespace ircd::m::name
 	constexpr const char *const status_msg {"status_msg"};
 
 	constexpr const char *const ts {"ts"};
+	constexpr const char *const data {"data"};
 	constexpr const char *const event_ids {"event_ids"};
 
 	constexpr const char *const typing {"typing"};
