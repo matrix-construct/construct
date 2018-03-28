@@ -73,15 +73,16 @@ namespace ircd
 
 struct ircd::m::init
 {
+	struct modules;
+	struct listeners;
+
 	json::object config;
-	bool joined {false};
-
-	void bootstrap();
-	void listeners();
-	void modules();
-
-	dbs::init _dbs;
 	keys::init _keys;
+	dbs::init _dbs;
+	std::unique_ptr<modules> modules;
+	std::unique_ptr<listeners> listeners;
+
+	static void bootstrap();
 
   public:
 	init();

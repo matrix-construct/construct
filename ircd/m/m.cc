@@ -94,6 +94,22 @@ ircd::m::control
 // init
 //
 
+struct ircd::m::init::modules
+{
+	modules(const json::object &);
+	~modules() noexcept;
+};
+
+struct ircd::m::init::listeners
+{
+	listeners(const json::object &);
+	~listeners() noexcept;
+};
+
+//
+// init::init
+//
+
 ircd::m::init::init()
 try
 :config
@@ -104,36 +120,34 @@ try
 {
 	this->config
 }
+,modules{[this]
 {
-	modules();
+	auto ret{std::make_unique<struct modules>(config)};
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 
+	return ret;
+}()}
+,listeners
+{
+	std::make_unique<struct listeners>(config)
+}
+{
 	join_ircd_room();
-	joined = true;
-	listeners();
 }
 catch(const m::error &e)
 {
-	this->~init();
 	log.error("%s %s", e.what(), e.content);
-	throw;
 }
 catch(const std::exception &e)
 {
-	this->~init();
 	log.error("%s", e.what());
-	throw;
 }
 
 ircd::m::init::~init()
 noexcept try
 {
-	if(joined)
-		leave_ircd_room();
-
-	m::listeners.clear();
-	m::modules.clear();
+	leave_ircd_room();
 }
 catch(const m::error &e)
 {
@@ -141,8 +155,8 @@ catch(const m::error &e)
 	ircd::terminate();
 }
 
-void
-ircd::m::init::modules()
+ircd::m::init::modules::modules(const json::object &config)
+try
 {
 	if(ircd::noautomod)
 	{
@@ -166,14 +180,24 @@ ircd::m::init::modules()
 
 	m::modules.emplace("root"s, "root"s);
 }
+catch(...)
+{
+	this->~modules();
+}
+
+ircd::m::init::modules::~modules()
+noexcept
+{
+	m::modules.clear();
+}
 
 namespace ircd::m
 {
 	static void init_listener(const json::object &config, const string_view &name, const json::object &conf);
 }
 
-void
-ircd::m::init::listeners()
+ircd::m::init::listeners::listeners(const json::object &config)
+try
 {
 	if(ircd::nolisten)
 	{
@@ -214,6 +238,16 @@ ircd::m::init::listeners()
 			"Failed to find configuration block for listener %s", name
 		};
 	}
+}
+catch(...)
+{
+	this->~listeners();
+}
+
+ircd::m::init::listeners::~listeners()
+noexcept
+{
+	m::listeners.clear();
 }
 
 static void
