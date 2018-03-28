@@ -58,7 +58,6 @@ handle_pdu(client &client,
            const resource::request::object<m::txn> &request,
            const string_view &txn_id,
            const m::event &event)
-try
 {
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
@@ -68,17 +67,6 @@ try
 	m::vm::eval eval
 	{
 		event, vmopts
-	};
-}
-catch(const ed25519::bad_sig &e)
-{
-	throw m::BAD_SIGNATURE
-	{
-		":%s %s %s %s",
-		at<"origin"_>(request),
-		at<"room_id"_>(event),
-		at<"event_id"_>(event),
-		e.what()
 	};
 }
 
