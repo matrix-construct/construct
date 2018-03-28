@@ -458,6 +458,7 @@ console_cmd__mod__reload(opt &out, const string_view &line)
 	}
 
 	m::modules.emplace(name, name);
+	out << "reload " << name << std::endl;
 	return true;
 }
 
@@ -476,6 +477,24 @@ console_cmd__mod__load(opt &out, const string_view &line)
 	}
 
 	m::modules.emplace(name, name);
+	return true;
+}
+
+bool
+console_cmd__mod__unload(opt &out, const string_view &line)
+{
+	const std::string name
+	{
+		token(line, ' ', 0)
+	};
+
+	if(!m::modules.erase(name))
+	{
+		out << name << " is not loaded." << std::endl;
+		return true;
+	}
+
+	out << "unloaded " << name << std::endl;
 	return true;
 }
 
