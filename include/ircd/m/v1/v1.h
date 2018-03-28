@@ -19,3 +19,4 @@
 #include "state.h"
 #include "backfill.h"
 #include "send.h"
+#include "groups.h"

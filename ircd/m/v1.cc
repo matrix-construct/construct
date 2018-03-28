@@ -12,6 +12,67 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/groups.h
+//
+
+ircd::m::v1::groups::publicised::publicised(const id::node &node,
+                                            const vector_view<const user::id> &user_ids,
+                                            const mutable_buffer &buf_,
+                                            opts opts)
+:server::request{[&]
+{
+	if(!opts.remote)
+		opts.remote = node.host();
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = node.host();
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/get_groups_publicised";
+
+	json::get<"method"_>(opts.request) = "POST";
+
+	mutable_buffer buf{buf_};
+	const string_view user_ids_
+	{
+		json::stringify(buf, user_ids.data(), user_ids.data() + user_ids.size())
+	};
+
+	assert(!defined(json::get<"content"_>(opts.request)));
+	json::get<"content"_>(opts.request) = stringify(buf, json::members
+	{
+		{ "user_ids", user_ids_ }
+	});
+
+	// (front of buf was advanced by stringify)
+	opts.out.head = opts.request(buf);
+	opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!size(opts.in))
+	{
+		const auto in_max
+		{
+			std::max(ssize_t(size(buf) - size(opts.out.head)), ssize_t(0))
+		};
+
+		assert(in_max >= ssize_t(size(buf) / 2));
+		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
+		opts.in.content = opts.in.head;
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/send.h
 //
 
