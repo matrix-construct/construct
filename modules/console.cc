@@ -1811,6 +1811,48 @@ console_cmd__room__purge(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__fed__groups(opt &out, const string_view &line)
+{
+	const m::id::node &node
+	{
+		token(line, ' ', 0)
+	};
+
+	const auto args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	m::user::id ids[8];
+	string_view tok[8];
+	const auto count{std::min(tokens(args, ' ', tok), size_t(8))};
+	std::copy(begin(tok), begin(tok) + count, begin(ids));
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		32_KiB
+	};
+
+	m::v1::groups::publicised::opts opts;
+	m::v1::groups::publicised request
+	{
+		node, vector_view<const m::user::id>(ids, count), buf, std::move(opts)
+	};
+
+	if(request.wait(seconds(10)) == ctx::future_status::timeout)
+		throw http::error{http::REQUEST_TIMEOUT};
+
+	request.get();
+	const json::object response
+	{
+		request.in.content
+	};
+
+	std::cout << string_view{response} << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__head(opt &out, const string_view &line)
 {
 	const m::room::id &room_id
