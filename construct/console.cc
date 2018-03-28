@@ -292,7 +292,8 @@ handle_line_bymodule(const string_view &line)
 	std::ostringstream ss;
 	pubsetbuf(ss, buf);
 	int ret;
-	switch((ret = command(ss, line, {})))
+	static const string_view opts;
+	switch((ret = command(ss, line, opts)))
 	{
 		case 0:
 		case 1:
