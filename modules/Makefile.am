@@ -66,6 +66,7 @@ m_typing_la_SOURCES = m_typing.cc
 m_receipt_la_SOURCES = m_receipt.cc
 m_presence_la_SOURCES = m_presence.cc
 m_room_create_la_SOURCES = m_room_create.cc
+m_room_member_la_SOURCES = m_room_member.cc
 
 m_module_LTLIBRARIES = \
 	m_noop.la \
@@ -73,6 +74,7 @@ m_module_LTLIBRARIES = \
 	m_receipt.la \
 	m_presence.la \
 	m_room_create.la \
+	m_room_member.la \
 	###
 
 ###############################################################################
