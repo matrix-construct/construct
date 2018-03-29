@@ -717,7 +717,7 @@ ircd::m::typing::set(const m::typing &object)
 
 	static import<prototype> function
 	{
-		"m_typing", "typing_set"
+		"client_rooms", "commit__m_typing"
 	};
 
 	return function(object);

@@ -57,6 +57,7 @@ timeout_default
 };
 
 static ircd::steady_point calc_timesout(const resource::request &request);
+extern "C" m::event::id::buf commit__m_typing(const m::typing &);
 
 resource::response
 put__typing(client &client,
@@ -137,12 +138,36 @@ put__typing(client &client,
 	};
 
 	if(transmit)
-		m::typing::set(event);
+		commit__m_typing(event);
 
 	return resource::response
 	{
 		client, http::OK
 	};
+}
+
+m::event::id::buf
+commit__m_typing(const m::typing &edu)
+{
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.typing"                  } },
+		{ event,    { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "user_id",  at<"user_id"_>(edu)         } },
+		{ content,  { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
+	};
+
+	m::vm::opts opts;
+	opts.hash = false;
+	opts.sign = false;
+	opts.event_id = false;
+	opts.origin = true;
+	opts.origin_server_ts = false;
+	opts.conforming = false;
+
+	return m::vm::commit(event, content, opts);
 }
 
 ircd::steady_point
