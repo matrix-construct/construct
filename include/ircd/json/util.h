@@ -37,6 +37,7 @@ namespace ircd::json
 	// Validate JSON - checks if valid JSON (not canonical).
 	bool valid(const string_view &, std::nothrow_t) noexcept;
 	void valid(const string_view &);
+	std::string why(const string_view &);
 }
 
 inline std::ostream &

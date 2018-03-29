@@ -2175,6 +2175,18 @@ ircd::json::operator==(const value &a, const value &b)
 // json.h
 //
 
+std::string
+ircd::json::why(const string_view &s)
+try
+{
+	valid(s);
+	return {};
+}
+catch(const expectation_failure &e)
+{
+	return e.what();
+}
+
 bool
 ircd::json::valid(const string_view &s,
                   std::nothrow_t)

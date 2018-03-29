@@ -138,7 +138,10 @@ ircd::json::print(const mutable_buffer &buf,
 	if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
 		throw print_error
 		{
-			"print (%zu): %s", sv.size(), sv
+			"print %zu bytes: %s: %s",
+			 sv.size(),
+			 why(sv),
+			 sv
 		};
 
 	buf[sv.size()] = '\0';
@@ -161,13 +164,19 @@ ircd::json::strung::strung(T&&... t)
 		if(unlikely(size(sv) != size(out)))
 			throw print_error
 			{
-				"stringified:%zu != serialized:%zu: %s", size(sv), size(out), sv
+				"stringified:%zu != serialized:%zu: %s",
+				size(sv),
+				size(out),
+				sv
 			};
 
 		if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
 			throw print_error
 			{
-				"strung (%zu): %s", size(sv), sv
+				"strung %zu bytes: %s: %s",
+				size(sv),
+				why(sv),
+				sv
 			};
 
 		return sv;
