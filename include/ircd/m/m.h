@@ -29,6 +29,11 @@ namespace ircd::m::self
 	bool host(const string_view &);
 }
 
+namespace ircd::m::vm
+{
+	struct opts;
+}
+
 namespace ircd::m
 {
 	extern struct user me;

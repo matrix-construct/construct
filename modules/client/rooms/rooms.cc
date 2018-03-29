@@ -248,5 +248,10 @@ commit__iov_iov(const room &room,
 		{ event, { "prev_events",  prev_events  } },
 	};
 
-	return m::vm::commit(event, contents);
+	const vm::opts &vmopts
+	{
+		room.opts? *room.opts : vm::default_opts
+	};
+
+	return m::vm::commit(event, contents, vmopts);
 }
