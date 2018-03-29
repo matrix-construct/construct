@@ -444,24 +444,6 @@ until(it_a a,
 	return true;
 }
 
-/// Inverse of std::lock_guard<>
-template<class lockable>
-struct unlock_guard
-{
-	lockable &l;
-
-	unlock_guard(lockable &l)
-	:l{l}
-	{
-		l.unlock();
-	}
-
-	~unlock_guard() noexcept
-	{
-		l.lock();
-	}
-};
-
 constexpr bool
 is_powerof2(const long long v)
 {
@@ -498,7 +480,6 @@ pointers(input_container&& ic,
 	return pointers(begin(ic), end(ic), begin(oc));
 }
 
-
 /// Get what() from exception_ptr
 ///
 inline ircd::string_view
@@ -518,7 +499,6 @@ catch(...)
 {
 	return {};
 }
-
 
 } // namespace util
 } // namespace ircd

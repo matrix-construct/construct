@@ -67,6 +67,7 @@ namespace ircd::ctx
 #include "queue.h"
 #include "mutex.h"
 #include "shared_mutex.h"
+#include "unlock_guard.h"
 #include "peek.h"
 #include "view.h"
 #include "shared_state.h"
