@@ -1758,7 +1758,7 @@ ircd::json::serialized(const value &v)
 		case STRING:
 		{
 			if(!v.string)
-				return 2;
+				return size(empty_string);
 
 			size_t ret(v.len);
 			const string_view sv{v.string, v.len};
@@ -2192,8 +2192,13 @@ ircd::json::valid(const string_view &s,
                   std::nothrow_t)
 noexcept try
 {
+	static const parser::rule<> validator
+	{
+		parser.value(0) >> eoi
+	};
+
 	const char *start(begin(s)), *const stop(end(s));
-	return qi::parse(start, stop, parser.value(0) >> eoi);
+	return qi::parse(start, stop, validator);
 }
 catch(...)
 {
@@ -2204,8 +2209,13 @@ void
 ircd::json::valid(const string_view &s)
 try
 {
+	static const parser::rule<> validator
+	{
+		eps > parser.value(0) > eoi
+	};
+
 	const char *start(begin(s)), *const stop(end(s));
-	qi::parse(start, stop, eps > (parser.value(0) >> eoi));
+	qi::parse(start, stop, validator);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
