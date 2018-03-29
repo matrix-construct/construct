@@ -32,51 +32,6 @@ presence_valid_state(const string_view &state)
 	});
 }
 
-extern "C" m::event::id::buf
-presence_set(const m::presence &content)
-{
-	const m::user user
-	{
-		at<"user_id"_>(content)
-	};
-
-	//TODO: ABA
-	if(!exists(user))
-		create(user.user_id);
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	//TODO: ABA
-	return send(user_room, user.user_id, "m.presence", json::strung{content});
-}
-
-extern "C" json::object
-presence_get(const m::user &user,
-             const mutable_buffer &buffer)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	json::object ret;
-	user_room.get(std::nothrow, "m.presence", [&ret, &buffer]
-	(const m::event &event)
-	{
-		const string_view &content
-		{
-			at<"content"_>(event)
-		};
-
-		ret = { data(buffer), copy(buffer, content) };
-	});
-
-	return ret;
-}
-
 static void handle_edu_m_presence_(const m::event &, const m::edu::m_presence &edu);
 static void handle_edu_m_presence(const m::event &);
 
