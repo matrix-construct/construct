@@ -38,6 +38,9 @@ namespace ircd::json
 	bool valid(const string_view &, std::nothrow_t) noexcept;
 	void valid(const string_view &);
 	std::string why(const string_view &);
+
+	// (Internal) validates output
+	void valid_output(const string_view &, const size_t &expected);
 }
 
 inline std::ostream &

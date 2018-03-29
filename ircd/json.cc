@@ -2212,6 +2212,29 @@ catch(const qi::expectation_failure<const char *> &e)
 	throw expectation_failure(begin(s), e);
 }
 
+void
+ircd::json::valid_output(const string_view &sv,
+                         const size_t &expected)
+{
+	if(unlikely(size(sv) != expected))
+		throw print_error
+		{
+			"stringified:%zu != serialized:%zu: %s",
+			size(sv),
+			expected,
+			sv
+		};
+
+	if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
+		throw print_error
+		{
+			"strung %zu bytes: %s: %s",
+			size(sv),
+			why(sv),
+			sv
+		};
+}
+
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const string_view &v)
