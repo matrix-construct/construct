@@ -12,6 +12,12 @@
 
 using namespace ircd;
 
+extern "C" m::event::id::buf
+commit__m_receipt_m_read(const m::room::id &,
+                         const m::user::id &,
+                         const m::event::id &,
+                         const time_t &);
+
 resource::response
 post__receipt(client &client,
               const resource::request &request,
@@ -43,4 +49,49 @@ post__receipt(client &client,
 	{
 		client, http::OK
 	};
+}
+
+m::event::id::buf
+commit__m_receipt_m_read(const m::room::id &room_id,
+                         const m::user::id &user_id,
+                         const m::event::id &event_id,
+                         const time_t &ms)
+{
+	const json::value event_ids[]
+	{
+		{ event_id }
+	};
+
+	const json::members m_read
+	{
+		{ "data",
+		{
+			{ "ts", ms }
+		}},
+		{ "event_ids", { event_ids, 1 } },
+	};
+
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.receipt" } },
+		{ event,    { "room_id",   room_id    } },
+		{ content,  { room_id,
+		{
+			{ "m.read",
+			{
+				{ user_id, m_read }
+			}}
+		}}}
+	};
+
+	m::vm::opts opts;
+	opts.hash = false;
+	opts.sign = false;
+	opts.event_id = false;
+	opts.origin = true;
+	opts.origin_server_ts = false;
+	opts.conforming = false;
+
+	return m::vm::commit(event, content, opts);
 }

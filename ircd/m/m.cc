@@ -699,7 +699,7 @@ ircd::m::receipt::read(const id::room &room_id,
 
 	static import<prototype> function
 	{
-		"m_receipt", "receipt_m_read"
+		"client_rooms", "commit__m_receipt_m_read"
 	};
 
 	return function(room_id, user_id, event_id, ms);
