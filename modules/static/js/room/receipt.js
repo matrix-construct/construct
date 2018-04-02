@@ -30,6 +30,8 @@ room.receipt.__proto__ = function(room)
 
 room.receipt.send = async function(event_id, type = "m.read", opts = {})
 {
+	return false;
+
 	if(this.control.receipt_in_progress)
 		return false;
 
