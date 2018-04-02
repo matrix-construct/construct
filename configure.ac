@@ -5,7 +5,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.11
 
-AC_INIT([construct], [1.0-pre])
+AC_INIT([construct], [1.0])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_MACRO_DIR([m4])
@@ -1317,6 +1317,21 @@ AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 dnl ***************************************************************************
 dnl Branding defined in the compilation
 dnl
+
+VERSION_COMMIT_CMD="git rev-parse --short HEAD"
+RB_VERSION_COMMIT=`$VERSION_COMMIT_CMD`
+RB_DEFINE_UNQUOTED([VERSION_COMMIT], ["$RB_VERSION_COMMIT"], [Git commit at configuration time.])
+#CPPDEFINE([RB_VERSION_COMMIT], [`$VERSION_COMMIT_CMD`])
+
+VERSION_BRANCH_CMD="git rev-parse --abbrev-ref HEAD"
+RB_VERSION_BRANCH=`$VERSION_BRANCH_CMD`
+RB_DEFINE_UNQUOTED([VERSION_BRANCH], ["$RB_VERSION_BRANCH"], [Git branch at configuration time.])
+#CPPDEFINE([RB_VERSION_BRANCH], [`$VERSION_BRANCH_CMD`])
+
+VERSION_TAG_CMD="git describe --tags --abbrev=0 --dirty"
+RB_VERSION_TAG=`$VERSION_TAG_CMD`
+RB_DEFINE_UNQUOTED([VERSION_TAG], ["$RB_VERSION_TAG"], [Git tag at configuration time.])
+#CPPDEFINE([RB_VERSION_TAG], [`$VERSION_TAG_CMD`])
 
 VERSION_CMD="git describe --tags"
 RB_VERSION=`$VERSION_CMD`

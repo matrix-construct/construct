@@ -107,6 +107,24 @@ ircd::info::server_agent
 // IRCd / build information
 //
 
+decltype(ircd::info::tag)
+ircd::info::tag
+{
+	RB_VERSION_TAG
+};
+
+decltype(ircd::info::branch)
+ircd::info::branch
+{
+	RB_VERSION_BRANCH
+};
+
+decltype(ircd::info::commit)
+ircd::info::commit
+{
+	RB_VERSION_COMMIT
+};
+
 decltype(ircd::info::configured_time)
 ircd::info::configured_time
 {

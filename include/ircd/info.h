@@ -29,6 +29,9 @@ namespace ircd::info
 	extern const string_view server_agent;
 
 	// Build information
+	extern const string_view tag;
+	extern const string_view branch;
+	extern const string_view commit;
 	extern const time_t configured_time;
 	extern const time_t compiled_time;
 	extern const time_t startup_time;
