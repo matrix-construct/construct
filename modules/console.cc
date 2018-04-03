@@ -519,6 +519,40 @@ console_cmd__db__prop(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__db__files(opt &out, const string_view &line)
+try
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	uint64_t msz;
+	const auto files
+	{
+		db::files(database, msz)
+	};
+
+	for(const auto &file : files)
+		out << file << std::endl;
+
+	out << "-- " << files.size() << " files; "
+	    << "manifest is " << msz << " bytes.";
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__txns(opt &out, const string_view &line)
 try
 {
