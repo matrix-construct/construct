@@ -379,6 +379,11 @@ try
 		         columns.size());
 	}
 
+	// If the directory does not exist, though rocksdb will create it, we can
+	// avoid scaring the user with an error log message if we just do that..
+	if(opts.create_if_missing && !fs::is_dir(path))
+		fs::mkdir(path);
+
 	// Announce attempt before usual point where exceptions are thrown
 	log.debug("Opening database \"%s\" @ `%s' columns[%zu]",
 	          this->name,
