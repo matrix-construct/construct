@@ -16,6 +16,7 @@
 #include "user.h"
 #include "make_join.h"
 #include "send_join.h"
+#include "invite.h"
 #include "event.h"
 #include "state.h"
 #include "backfill.h"

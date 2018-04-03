@@ -409,6 +409,66 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/invite.h
+//
+
+ircd::m::v1::invite::invite(const room::id &room_id,
+                            const id::event &event_id,
+                            const json::object &content,
+                            const mutable_buffer &buf,
+                            opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	assert(!size(opts.out.content));
+	opts.out.content = content;
+
+	assert(!defined(json::get<"content"_>(opts.request)));
+	json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+	{
+		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			urlbuf, "/_matrix/federation/v1/invite/%s/%s",
+			url::encode(room_id, ridbuf),
+			url::encode(event_id, eidbuf)
+		};
+	}
+
+	json::get<"method"_>(opts.request) = "PUT";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		const auto in_max
+		{
+			std::max(ssize_t(size(buf) - size(opts.out.head)), ssize_t(0))
+		};
+
+		assert(in_max >= ssize_t(size(buf) / 2));
+		opts.in.head = { data(buf) + size(opts.out.head), size_t(in_max) };
+		opts.in.content = mutable_buffer{};
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/send_join.h
 //
 
