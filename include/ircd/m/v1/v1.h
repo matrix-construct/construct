@@ -13,6 +13,7 @@
 
 #include "version.h"
 #include "query.h"
+#include "user.h"
 #include "make_join.h"
 #include "send_join.h"
 #include "event.h"

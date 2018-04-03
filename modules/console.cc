@@ -2275,7 +2275,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__user_devices(opt &out, const string_view &line)
+console_cmd__fed__user__devices(opt &out, const string_view &line)
 {
 	const m::id::user &user_id
 	{
@@ -2287,7 +2287,7 @@ console_cmd__fed__query__user_devices(opt &out, const string_view &line)
 		token(line, ' ', 1, user_id.host())
 	};
 
-	m::v1::query::opts opts;
+	m::v1::user::devices::opts opts;
 	opts.remote = remote;
 
 	const unique_buffer<mutable_buffer> buf
@@ -2295,12 +2295,12 @@ console_cmd__fed__query__user_devices(opt &out, const string_view &line)
 		32_KiB
 	};
 
-	m::v1::query::user_devices request
+	m::v1::user::devices request
 	{
 		user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(seconds(15));
 	const auto code
 	{
 		request.get()
@@ -2311,7 +2311,20 @@ console_cmd__fed__query__user_devices(opt &out, const string_view &line)
 		request
 	};
 
-	out << string_view{response} << std::endl;
+	const string_view stream_id
+	{
+		unquote(response["stream_id"])
+	};
+
+	const json::array &devices
+	{
+		response["devices"]
+	};
+
+	for(const json::object &device : devices)
+		out << string_view{device} << std::endl;
+
+	out << "-- " << size(devices) << " devices." << std::endl;
 	return true;
 }
 
