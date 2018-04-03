@@ -242,6 +242,7 @@ federation_federation_get_groups_publicised_la_SOURCES = federation/get_groups_p
 federation_federation_version_la_SOURCES = federation/version.cc
 federation_federation_sender_la_SOURCES = federation/sender.cc
 federation_federation_query_la_SOURCES = federation/query.cc
+federation_federation_invite_la_SOURCES = federation/invite.cc
 
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
@@ -251,6 +252,7 @@ federation_module_LTLIBRARIES = \
 	federation/federation_version.la \
 	federation/federation_sender.la \
 	federation/federation_query.la \
+	federation/federation_invite.la \
 	###
 
 ###############################################################################
