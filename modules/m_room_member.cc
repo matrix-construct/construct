@@ -10,6 +10,12 @@
 
 using namespace ircd;
 
+mapi::header
+IRCD_MODULE
+{
+	"Matrix m.room.member"
+};
+
 static void
 _can_join_room(const m::event &event)
 {
