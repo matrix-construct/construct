@@ -393,7 +393,7 @@ void
 ircd::m::room::state::get(const string_view &type,
                           const string_view &state_key,
                           const event::id::closure &closure)
-const
+const try
 {
 	if(root_id)
 		return m::state::get(root_id, type, state_key, [&closure]
@@ -405,6 +405,13 @@ const
 	char key[768];
 	auto &column{dbs::room_state};
 	return column(dbs::room_state_key(key, room_id, type, state_key), closure);
+}
+catch(const db::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"(%s,%s) in %s :%s", type, state_key, room_id, e.what()
+	};
 }
 
 bool
