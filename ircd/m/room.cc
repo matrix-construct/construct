@@ -410,7 +410,11 @@ catch(const db::not_found &e)
 {
 	throw m::NOT_FOUND
 	{
-		"(%s,%s) in %s :%s", type, state_key, room_id, e.what()
+		"(%s,%s) in %s :%s",
+		type,
+		state_key,
+		string_view{room_id},
+		e.what()
 	};
 }
 

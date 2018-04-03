@@ -1420,9 +1420,6 @@ ircd::m::dbs::desc::events
 	// they are designed for fast sequential iterations.
 	//
 
-	// (state tree node id) => (state tree node)
-	events__state_node,
-
 	// (room_id, event_id) => (state_root)
 	// Sequence of all events for a room, ever.
 	events__room_events,
@@ -1434,4 +1431,12 @@ ircd::m::dbs::desc::events
 	// (room_id, type, state_key) => (event_id)
 	// Sequence of the PRESENT STATE of the room.
 	events__room_state,
+
+	////////
+	//
+	// Other columns
+	//
+
+	// (state tree node id) => (state tree node)
+	events__state_node,
 };
