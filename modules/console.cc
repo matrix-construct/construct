@@ -2000,6 +2000,65 @@ console_cmd__fed__state(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__state_ids(opt &out, const string_view &line)
+{
+	const m::room::id &room_id
+	{
+		token(line, ' ', 0)
+	};
+
+	const net::hostport remote
+	{
+		token(line, ' ', 1, room_id.host())
+	};
+
+	string_view event_id
+	{
+		token(line, ' ', 2, {})
+	};
+
+	// Used for out.head, out.content, in.head, but in.content is dynamic
+	thread_local char buf[8_KiB];
+	m::v1::state::opts opts;
+	opts.remote = remote;
+	opts.event_id = event_id;
+	opts.ids_only = true;
+	m::v1::state request
+	{
+		room_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(30));
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	const json::array &auth_chain
+	{
+		response["auth_chain_ids"]
+	};
+
+	const json::array &pdus
+	{
+		response["pdu_ids"]
+	};
+
+	for(const string_view &event_id : auth_chain)
+		out << unquote(event_id) << std::endl;
+
+	for(const string_view &event_id : pdus)
+		out << unquote(event_id) << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__fed__backfill(opt &out, const string_view &line)
 {
 	const m::room::id &room_id
