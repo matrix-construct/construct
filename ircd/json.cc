@@ -569,10 +569,10 @@ noexcept
 	if(pa)
 	{
 		assert(pm == nullptr);
-		assert(pa->co == nullptr);
+		assert(pa->ca == nullptr);
 		assert(pa->co == this);
 		pa->vc++;
-		pa->ca = nullptr;
+		pa->co = nullptr;
 		return;
 	}
 
