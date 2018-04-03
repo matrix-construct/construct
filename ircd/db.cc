@@ -183,6 +183,35 @@ ircd::db::fdeletions(database &d,
 	};
 }
 
+/// Get the live file list for db; see overlord documentation.
+std::vector<std::string>
+ircd::db::files(const database &d)
+{
+	uint64_t ignored;
+	return files(d, ignored);
+}
+
+/// Get the live file list for database relative to the database's directory.
+/// One of the files is a manifest file which is over-allocated and its used
+/// size is returned in the integer passed to the `msz` argument.
+///
+/// This list may not be completely up to date. The reliable way to get the
+/// most current list is to flush all columns first and ensure no database
+/// activity took place between the flushing and this query.
+std::vector<std::string>
+ircd::db::files(const database &cd,
+                uint64_t &msz)
+{
+	std::vector<std::string> ret;
+	auto &d(const_cast<database &>(cd));
+	throw_on_error
+	{
+		d.d->GetLiveFiles(ret, &msz, false)
+	};
+
+	return ret;
+}
+
 uint64_t
 ircd::db::sequence(const database &cd)
 {
