@@ -16,7 +16,7 @@
 //
 
 ircd::m::v1::groups::publicised::publicised(const id::node &node,
-                                            const vector_view<const user::id> &user_ids,
+                                            const vector_view<const id::user> &user_ids,
                                             const mutable_buffer &buf_,
                                             opts opts)
 :server::request{[&]
@@ -473,7 +473,7 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 //
 
 ircd::m::v1::make_join::make_join(const room::id &room_id,
-                                  const user::id &user_id,
+                                  const id::user &user_id,
                                   const mutable_buffer &buf)
 :make_join
 {
@@ -483,7 +483,7 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 }
 
 ircd::m::v1::make_join::make_join(const room::id &room_id,
-                                  const user::id &user_id,
+                                  const id::user &user_id,
                                   const mutable_buffer &buf,
                                   opts opts)
 :server::request{[&]
