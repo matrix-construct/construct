@@ -867,6 +867,42 @@ const
 	return ret;
 }
 
+bool
+ircd::m::room::origins::has(const string_view &origin)
+const
+{
+	db::index &index
+	{
+		dbs::room_origins
+	};
+
+	char querybuf[512];
+	const auto query
+	{
+		dbs::room_origins_key(querybuf, room.room_id, origin)
+	};
+
+	auto it
+	{
+		index.begin(query)
+	};
+
+	if(!it)
+		return false;
+
+	const string_view &key
+	{
+		lstrip(it->first, "\0"_sv)
+	};
+
+	const string_view &key_origin
+	{
+		std::get<0>(dbs::room_origins_key(key))
+	};
+
+	return key_origin == origin;
+}
+
 void
 ircd::m::room::origins::for_each(const closure &view)
 const
