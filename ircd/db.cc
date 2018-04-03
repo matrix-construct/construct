@@ -87,7 +87,11 @@ static void
 ircd::db::init_directory()
 try
 {
-	const auto dbdir(fs::get(fs::DB));
+	const auto dbdir
+	{
+		fs::get(fs::DB)
+	};
+
 	if(fs::mkdir(dbdir))
 		log.notice("Created new database directory at `%s'", dbdir);
 	else
@@ -260,9 +264,20 @@ try
 {
 	// Existing columns at path. If any are left the descriptor set did not
 	// describe all of the columns found in the database at path.
-	const auto opts{make_dbopts(std::string(this->optstr))};
-	const auto required{db::column_names(path, opts)};
-	std::set<string_view> existing{begin(required), end(required)};
+	const auto opts
+	{
+		make_dbopts(std::string(this->optstr))
+	};
+
+	const auto required
+	{
+		db::column_names(path, opts)
+	};
+
+	std::set<string_view> existing
+	{
+		begin(required), end(required)
+	};
 
 	// The names of the columns extracted from the descriptor set
 	std::vector<string_view> ret(descriptors.size());
@@ -274,9 +289,13 @@ try
 	});
 
 	for(const auto &remain : existing)
-		throw error("Failed to describe existing column '%s' (and %zd others...)",
-		            remain,
-		            existing.size() - 1);
+		throw error
+		{
+			"Failed to describe existing column '%s' (and %zd others...)",
+			remain,
+			existing.size() - 1
+		};
+
 	return ret;
 }()}
 ,column_index{[this]
@@ -291,7 +310,10 @@ try
 {
 	bool fsck{false};
 	bool read_only{false};
-	auto opts(make_dbopts(this->optstr, &read_only, &fsck));
+	auto opts
+	{
+		make_dbopts(this->optstr, &read_only, &fsck)
+	};
 
 	// Setup sundry
 	opts.create_if_missing = true;
@@ -386,10 +408,13 @@ try
 
 		for(size_t i(0); i < this->columns.size(); ++i)
 			if(db::id(*this->columns[i]) != i)
-				throw error("Columns misaligned: expecting id[%zd] got id[%u] '%s'",
-				            i,
-				            db::id(*this->columns[i]),
-				            db::name(*this->columns[i]));
+				throw error
+				{
+					"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
+					i,
+					db::id(*this->columns[i]),
+					db::name(*this->columns[i])
+				};
 	}
 	catch(const std::exception &e)
 	{
@@ -437,9 +462,12 @@ try
 }
 catch(const std::exception &e)
 {
-	throw error("Failed to open db '%s': %s",
-	            this->name,
-	            e.what());
+	throw error
+	{
+		"Failed to open db '%s': %s",
+		this->name,
+		e.what()
+	};
 }
 
 ircd::db::database::~database()
