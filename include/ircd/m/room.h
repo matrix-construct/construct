@@ -60,6 +60,7 @@ namespace ircd::m
 	event::id::buf msghtml(const room &, const m::id::user &sender, const string_view &html, const string_view &alt = {}, const string_view &msgtype = "m.notice");
 	event::id::buf notice(const room &, const m::id::user &sender, const string_view &body);
 	event::id::buf notice(const room &, const string_view &body); // sender is @ircd
+	event::id::buf invite(const room &, const m::id::user &target, const m::id::user &sender);
 	event::id::buf leave(const room &, const m::id::user &);
 	event::id::buf join(const room &, const m::id::user &);
 	event::id::buf join(const id::room_alias &, const m::id::user &);

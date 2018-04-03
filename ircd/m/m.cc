@@ -1249,6 +1249,21 @@ ircd::m::leave(const room &room,
 }
 
 ircd::m::event::id::buf
+ircd::m::invite(const room &room,
+                const id::user &target,
+                const id::user &sender)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &);
+
+	static import<prototype> function
+	{
+		"client_rooms", "invite__room_user"
+	};
+
+	return function(room, target, sender);
+}
+
+ircd::m::event::id::buf
 ircd::m::redact(const room &room,
                 const id::user &sender,
                 const id::event &event_id,
