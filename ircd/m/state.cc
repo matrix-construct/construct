@@ -10,7 +10,6 @@
 
 #include <ircd/m/m.h>
 
-
 /// Convenience to make a key and then get a value
 void
 ircd::m::state::get(const string_view &root,
@@ -64,6 +63,7 @@ ircd::m::state::get(std::nothrow_t,
                     const string_view &root,
                     const json::array &key,
                     const val_closure &closure)
+try
 {
 	bool ret{false};
 	char nextbuf[ID_MAX_SZ];
@@ -90,6 +90,10 @@ ircd::m::state::get(std::nothrow_t,
 	});
 
 	return ret;
+}
+catch(const db::not_found &e)
+{
+	return false;
 }
 
 size_t
