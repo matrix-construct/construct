@@ -183,6 +183,7 @@ try
 		object.verify(x_matrix.key, x_matrix.sig)
 	};
 
+	request.origin = x_matrix.origin;
 	return verified;
 }
 catch(const std::exception &e)
