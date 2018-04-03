@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_SYS_RESOURCE_H
 #include <ircd/asio.h>
 
 void
@@ -175,6 +176,40 @@ ircd::info::utsname{[]
 	return utsname;
 }()};
 #endif
+
+#ifdef HAVE_SYS_RESOURCE_H
+static uint64_t
+_get_rlimit(const int &resource)
+{
+	rlimit rlim;
+	ircd::syscall(getrlimit, RLIMIT_AS, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+static uint64_t
+_get_rlimit(const int &resource)
+{
+	return 0;
+}
+#endif
+
+decltype(ircd::info::rlimit_as)
+ircd::info::rlimit_as
+{
+	_get_rlimit(RLIMIT_AS)
+};
+
+decltype(ircd::info::rlimit_data)
+ircd::info::rlimit_data
+{
+	_get_rlimit(RLIMIT_DATA)
+};
+
+decltype(ircd::info::rlimit_rss)
+ircd::info::rlimit_rss
+{
+	_get_rlimit(RLIMIT_RSS)
+};
 
 decltype(ircd::info::max_align)
 ircd::info::max_align

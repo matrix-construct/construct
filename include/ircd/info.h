@@ -44,6 +44,9 @@ namespace ircd::info
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
+	extern const uint64_t rlimit_as;
+	extern const uint64_t rlimit_data;
+	extern const uint64_t rlimit_rss;
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
