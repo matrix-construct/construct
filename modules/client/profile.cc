@@ -261,6 +261,7 @@ void
 profile_get(const m::user &user,
             const string_view &key,
             const m::user::profile_closure &closure)
+try
 {
 	const m::user::room user_room
 	{
@@ -277,6 +278,15 @@ profile_get(const m::user &user,
 
 		closure(value);
 	});
+}
+catch(const m::NOT_FOUND &e)
+{
+	throw m::NOT_FOUND
+	{
+		"Nothing about '%s' and/or profile for '%s'",
+		key,
+		string_view{user.user_id}
+	};
 }
 
 m::event::id::buf
