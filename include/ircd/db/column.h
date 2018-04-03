@@ -29,6 +29,7 @@ namespace ircd::db
 	template<class R = prop_str> R property(const column &, const string_view &name);
 	template<> prop_str property(const column &, const string_view &name);
 	template<> prop_int property(const column &, const string_view &name);
+	template<> prop_map property(const column &, const string_view &name);
 
 	// [GET] Tests if key exists
 	bool has(column &, const string_view &key, const gopts & = {});

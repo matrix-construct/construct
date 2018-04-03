@@ -3613,6 +3613,18 @@ ircd::db::property(const column &column,
 	return ret;
 }
 
+template<>
+ircd::db::prop_map
+ircd::db::property(const column &column,
+                   const string_view &name)
+{
+	std::map<std::string, double> ret;
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
+	d.d->GetMapProperty(c, slice(name), &ret);
+	return ret;
+}
+
 size_t
 ircd::db::bytes(const column &column)
 {
