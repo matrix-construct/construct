@@ -11,8 +11,6 @@
 #pragma once
 #define HAVE_IRCD_SERVER_REQUEST_H
 
-/// The interface for when IRCd plays the role of client to other servers
-///
 namespace ircd::server
 {
 	struct in;
@@ -65,7 +63,8 @@ struct ircd::server::in
 	/// The dynamic buffer is a convenience that allows for the content buffer
 	/// to be allocated on demand once the head is received and the length is
 	/// known. To use dynamic, set the content buffer to nothing (i.e default
-	/// constructed mutable_buffer).
+	/// constructed mutable_buffer). The allocated buffer will eventually be
+	/// placed here; any existing buffer will be discarded.
 	unique_buffer<mutable_buffer> dynamic;
 };
 

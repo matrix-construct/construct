@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SERVER_H
 
-/// The interface for when IRCd plays the role of client to other peers
+/// The interface for when IRCd plays the role of client to other servers
 ///
 namespace ircd::server
 {
@@ -29,7 +29,15 @@ namespace ircd::server
 	using error_code = boost::system::error_code;
 
 	extern ircd::log::log log;
+}
 
+#include "tag.h"
+#include "request.h"
+#include "link.h"
+#include "peer.h"
+
+namespace ircd::server
+{
 	size_t tag_count();
 	size_t link_count();
 	size_t peer_count();
@@ -41,11 +49,6 @@ namespace ircd::server
 	peer &find(const net::hostport &);
 	peer &get(const net::hostport &);
 }
-
-#include "tag.h"
-#include "request.h"
-#include "link.h"
-#include "peer.h"
 
 /// Subsystem initialization / destruction from ircd::main
 ///
