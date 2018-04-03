@@ -69,6 +69,20 @@ put__invite(client &client,
 		request
 	};
 
+	if(at<"event_id"_>(event) != event_id)
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_MISMATCH_EVENT_ID",
+			"ID of event in request body does not match the path parameter."
+		};
+
+	if(at<"room_id"_>(event) != room_id)
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_MISMATCH_ROOM_ID",
+			"ID of room in request body does not match the path parameter."
+		};
+
 	check_event(request, event);
 
 	//TODO: eval()
