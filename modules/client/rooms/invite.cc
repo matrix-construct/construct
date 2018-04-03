@@ -17,6 +17,9 @@ invite__room_user(const m::room &,
                   const m::user::id &target,
                   const m::user::id &sender);
 
+extern "C" m::event::id::buf
+invite__foreign(const m::event &);
+
 resource::response
 post__invite(client &client,
              const resource::request &request,
@@ -67,4 +70,93 @@ invite__room_user(const m::room &room,
 	};
 
 	return commit(room, event, content);
+}
+
+m::event::id::buf
+invite__foreign(const m::event &event)
+{
+	const auto &event_id
+	{
+		at<"event_id"_>(event)
+	};
+
+	const auto &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::user::id &target
+	{
+		at<"state_key"_>(event)
+	};
+
+	const unique_buffer<mutable_buffer> bufs
+	{
+		148_KiB
+	};
+
+	mutable_buffer buf{bufs};
+	const auto proto
+	{
+		json::stringify(buf, event)
+	};
+
+	m::v1::invite::opts opts;
+	opts.remote = target.host();
+	m::v1::invite request
+	{
+		room_id, event_id, proto, buf, std::move(opts)
+	};
+
+	request.wait(seconds(10)); //TODO: conf
+	request.get();
+
+	const json::array &response
+	{
+		request.in.content
+	};
+
+	const http::code &rcode
+	{
+		http::code(lex_cast<ushort>(response.at(0)))
+	};
+
+	if(rcode != http::OK)
+		throw http::error
+		{
+			rcode
+		};
+
+	const json::object &robject
+	{
+		response.at(1)
+	};
+
+	const m::event &revent
+	{
+		robject.at("event")
+	};
+
+	if(!verify(revent, target.host()))
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_INVITE_UNSIGNED",
+			"Invitee's host '%s' did not sign the invite.",
+			target.host()
+		};
+
+	if(!verify(revent, my_host()))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVITE_MODIFIED",
+			"Invite event no longer verified by our signature.",
+			target.host()
+		};
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.infolog_accept = true;
+
+	m::vm::eval(revent, vmopts);
+	return at<"event_id"_>(revent);
 }
