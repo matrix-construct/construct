@@ -164,6 +164,25 @@ ircd::db::checkpoint(database &d,
 	          dir);
 }
 
+/// This wraps RocksDB's "File Deletions" which means after RocksDB
+/// compresses some file it then destroys the uncompressed version;
+/// setting this to false will disable that and retain both versions.
+/// This is useful when a direct reference is being manually held by
+/// us into the uncompressed version which must remain valid.
+void
+ircd::db::fdeletions(database &d,
+                     const bool &enable)
+{
+	if(enable) throw_on_error
+	{
+		d.d->EnableFileDeletions(true)
+	};
+	else throw_on_error
+	{
+		d.d->DisableFileDeletions()
+	};
+}
+
 uint64_t
 ircd::db::sequence(const database &cd)
 {

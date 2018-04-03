@@ -27,6 +27,7 @@ namespace ircd::db
 	template<> prop_int property(const database &, const string_view &name);
 
 	// Control panel
+	void fdeletions(database &, const bool &enable);
 	void checkpoint(database &, const string_view &dir);
 	void flush(database &, const bool &blocking = true);
 	void sync(database &);
