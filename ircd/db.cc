@@ -172,7 +172,7 @@ ircd::db::sequence(const database &cd)
 }
 
 template<>
-uint64_t
+ircd::db::prop_int
 ircd::db::property(const database &cd,
                    const string_view &name)
 {
@@ -3588,7 +3588,7 @@ ircd::db::read(column &column,
 }
 
 template<>
-std::string
+ircd::db::prop_str
 ircd::db::property(const column &column,
                    const string_view &name)
 {
@@ -3600,7 +3600,7 @@ ircd::db::property(const column &column,
 }
 
 template<>
-uint64_t
+ircd::db::prop_int
 ircd::db::property(const column &column,
                    const string_view &name)
 {

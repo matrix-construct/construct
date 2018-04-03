@@ -23,10 +23,12 @@ namespace ircd::db
 	size_t bytes(const column &);
 
 	// Get property data of a db column. R can optionally be uint64_t for some
-	// values. Refer to RocksDB documentation for more info.
-	template<class R = std::string> R property(const column &, const string_view &name);
-	template<> std::string property(const column &, const string_view &name);
-	template<> uint64_t property(const column &, const string_view &name);
+	// values; we typedef that as prop_int for templating purposes. R can also
+	// be an std::string which we typedef as prop_str. Refer to RocksDB
+	// documentation for more info.
+	template<class R = prop_str> R property(const column &, const string_view &name);
+	template<> prop_str property(const column &, const string_view &name);
+	template<> prop_int property(const column &, const string_view &name);
 
 	// [GET] Tests if key exists
 	bool has(column &, const string_view &key, const gopts & = {});
