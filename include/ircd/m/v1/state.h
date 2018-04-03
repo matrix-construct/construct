@@ -35,6 +35,7 @@ struct ircd::m::v1::state::opts
 {
 	net::hostport remote;
 	string_view event_id;
+	bool ids_only {false};
 	m::request request;
 	server::out out;
 	server::in in;

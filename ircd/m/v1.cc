@@ -310,7 +310,8 @@ ircd::m::v1::state::state(const room::id &room_id,
 		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/state/%s/?event_id=%s",
+			urlbuf, "/_matrix/federation/v1/%s/%s/?event_id=%s",
+			opts.ids_only? "state_ids" : "state",
 			url::encode(room_id, ridbuf),
 			url::encode(opts.event_id, eidbuf),
 		};
