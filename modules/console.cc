@@ -1943,6 +1943,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	thread_local char buf[8_KiB];
 	m::v1::state::opts opts;
 	opts.remote = remote;
+	opts.event_id = event_id;
 	m::v1::state request
 	{
 		room_id, buf, std::move(opts)
