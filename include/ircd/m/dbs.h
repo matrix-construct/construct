@@ -35,6 +35,7 @@ namespace ircd::m::dbs
 	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
 
 	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
+	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	std::tuple<string_view, string_view> room_origins_key(const string_view &amalgam);
 
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);

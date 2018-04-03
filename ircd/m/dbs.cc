@@ -658,6 +658,18 @@ ircd::m::dbs::desc::events__room_origins__pfx
 ircd::string_view
 ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
                                const id::room &room_id,
+                               const string_view &origin)
+{
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, origin));
+	return { data(out_), data(out) };
+}
+
+ircd::string_view
+ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
+                               const id::room &room_id,
                                const string_view &origin,
                                const id::user &member)
 {
