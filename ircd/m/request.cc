@@ -194,9 +194,30 @@ ircd::m::request::verify(const ed25519::pk &pk,
                          const ed25519::sig &sig)
 const
 {
-	const json::strung object
+	static const size_t request_max
 	{
-		*this
+		1_MiB
+	};
+
+	const size_t request_size
+	{
+		json::serialized(*this)
+	};
+
+	const ctx::critical_assertion ca;
+	thread_local char buf[request_max];
+	if(unlikely(request_size > sizeof(buf)))
+		throw m::error
+		{
+			http::PAYLOAD_TOO_LARGE, "M_REQUEST_TOO_LARGE",
+			"The request size %zu bytes exceeds maximum of %zu bytes",
+			request_size,
+			request_max
+		};
+
+	const json::object object
+	{
+		stringify(mutable_buffer{buf}, *this)
 	};
 
 	return verify(pk, sig, object);
