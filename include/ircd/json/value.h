@@ -56,7 +56,7 @@ namespace ircd::json
 ///
 struct ircd::json::value
 {
-	union // xxx std::variant
+	union
 	{
 		int64_t integer;
 		double floating;
@@ -85,19 +85,23 @@ struct ircd::json::value
 	explicit operator int64_t() const;
 	explicit operator std::string() const;       ///< NOTE full stringify() of value
 
-	template<size_t N> value(const char (&)[N], const enum type &);
-	value(const string_view &sv, const enum type &);
-	value(const char *const &, const enum type &);
-	explicit value(const int64_t &);
-	explicit value(const double &);
-	explicit value(const bool &);
-	template<size_t N> value(const char (&)[N]);
-	value(const string_view &sv);
-	value(const char *const &s);
 	value(const struct member *const &, const size_t &len);
 	value(std::unique_ptr<const struct member[]> &&, const size_t &len); // alloc = true
 	value(const struct value *const &, const size_t &len);
 	value(std::unique_ptr<const struct value[]> &&, const size_t &len); // alloc = true
+	template<size_t N> value(const char (&)[N], const enum type &);
+	template<size_t N> value(const char (&)[N]);
+	explicit value(const std::string &, const enum type &);
+	explicit value(const std::string &);
+	value(const string_view &sv, const enum type &);
+	value(const string_view &sv);
+	value(const json::object &);
+	value(const json::array &);
+	value(const char *const &, const enum type &);
+	value(const char *const &s);
+	explicit value(const int64_t &);
+	explicit value(const double &);
+	explicit value(const bool &);
 	value(const members &); // alloc = true
 	value(const nullptr_t &);
 	value();
@@ -145,6 +149,22 @@ ircd::json::value::value(const string_view &sv,
 {}
 
 inline
+ircd::json::value::value(const std::string &s,
+                         const enum type &type)
+:string{nullptr}
+,len{0}
+,type{type}
+,serial{type == STRING? surrounds(s, '"') : true}
+,alloc{true}
+,floats{false}
+{
+	create_string(s.size(), [&s](const mutable_buffer &buf)
+	{
+		copy(buf, string_view{s});
+	});
+}
+
+inline
 ircd::json::value::value(const char *const &str,
                          const enum type &type)
 :value{string_view{str}, type}
@@ -158,6 +178,21 @@ ircd::json::value::value(const char *const &str)
 inline
 ircd::json::value::value(const string_view &sv)
 :value{sv, json::type(sv, std::nothrow)}
+{}
+
+inline
+ircd::json::value::value(const std::string &s)
+:value{s, json::type(s, std::nothrow)}
+{}
+
+inline
+ircd::json::value::value(const json::object &sv)
+:value{sv, OBJECT}
+{}
+
+inline
+ircd::json::value::value(const json::array &sv)
+:value{sv, ARRAY}
 {}
 
 template<size_t N>
