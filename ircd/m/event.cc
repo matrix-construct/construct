@@ -154,15 +154,42 @@ ircd::m::pretty(const event::prev &prev)
 
 	const auto &auth_events{json::get<"auth_events"_>(prev)};
 	for(const json::array auth_event : auth_events)
-		out("auth_event", unquote(auth_event[0]));
+	{
+		s << std::setw(16) << std::right << "[auth event]"
+		  << " :" << unquote(auth_event[0]);
+
+		for(const auto &hash : json::object{auth_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
 
 	const auto &prev_states{json::get<"prev_state"_>(prev)};
 	for(const json::array prev_state : prev_states)
-		out("prev_state", unquote(prev_state[0]));
+	{
+		s << std::setw(16) << std::right << "[prev state]"
+		  << " :" << unquote(prev_state[0]);
+
+		for(const auto &hash : json::object{prev_state[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
 
 	const auto &prev_events{json::get<"prev_events"_>(prev)};
 	for(const json::array prev_event : prev_events)
-		out("prev_event", unquote(prev_event[0]));
+	{
+		s << std::setw(16) << std::right << "[prev_event]"
+		  << " :" << unquote(prev_event[0]);
+
+		for(const auto &hash : json::object{prev_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
 
 	resizebuf(s, ret);
 	return ret;
@@ -269,15 +296,40 @@ ircd::m::pretty(const event &event)
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
 	for(const json::array auth_event : auth_events)
-		out("[auth_event]", unquote(auth_event[0]));
+	{
+		s << std::setw(16) << std::right << "[auth event]"
+		  << " :" << unquote(auth_event[0]);
+
+		for(const auto &hash : json::object{auth_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
 
 	const auto &prev_states{json::get<"prev_state"_>(event)};
 	for(const json::array prev_state : prev_states)
-		out("[prev_state]", unquote(prev_state[0]));
+	{
+		s << std::setw(16) << std::right << "[prev state]"
+		  << " :" << unquote(prev_state[0]);
+
+		for(const auto &hash : json::object{prev_state[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+	}
 
 	const auto &prev_events{json::get<"prev_events"_>(event)};
 	for(const json::array prev_event : prev_events)
-		out("[prev_event]", unquote(prev_event[0]));
+	{
+		s << std::setw(16) << std::right << "[prev_event]"
+		  << " :" << unquote(prev_event[0]);
+
+		for(const auto &hash : json::object{prev_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
 
 	resizebuf(s, ret);
 	return ret;
