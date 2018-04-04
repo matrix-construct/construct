@@ -149,7 +149,7 @@ ircd::m::pretty(const event::prev &prev)
 	(const string_view &key, auto&& val)
 	{
 		if(json::defined(val))
-			s << key << ": " << val << std::endl;
+			s << key << " :" << val << std::endl;
 	}};
 
 	const auto &auth_events{json::get<"auth_events"_>(prev)};
@@ -208,7 +208,7 @@ ircd::m::pretty(const event &event)
 	(const string_view &key, auto&& val)
 	{
 		if(json::defined(val))
-			s << std::setw(16) << std::right << key << ": " << val << std::endl;
+			s << std::setw(16) << std::right << key << " :" << val << std::endl;
 	}};
 
 	const string_view top_keys[]
@@ -229,7 +229,7 @@ ircd::m::pretty(const event &event)
 	const auto &ts{json::get<"origin_server_ts"_>(event)};
 	{
 		thread_local char buf[128];
-		s << std::setw(16) << std::right << "origin_server_ts" << ": "
+		s << std::setw(16) << std::right << "origin_server_ts" << " :"
 		  << timef(buf, ts / 1000L, localtime)
 		  << " (" << ts << ")"
 		  << std::endl;
@@ -248,7 +248,7 @@ ircd::m::pretty(const event &event)
 	const auto &signatures{json::get<"signatures"_>(event)};
 	for(const auto &signature : signatures)
 	{
-		s << std::setw(16) << std::right << "[signature]" << ": "
+		s << std::setw(16) << std::right << "[signature]" << " :"
 		  << signature.first << " ";
 
 		for(const auto &key : json::object{signature.second})
@@ -260,9 +260,10 @@ ircd::m::pretty(const event &event)
 	const json::object &contents{json::get<"content"_>(event)};
 	if(!contents.empty())
 	{
-		s << std::setw(16) << std::right << "[content]" << ": ";
+		s << std::setw(16) << std::right << "[content]" << " :";
 		for(const auto &content : contents)
 			s << content.first << ", ";
+
 		s << std::endl;
 	}
 
