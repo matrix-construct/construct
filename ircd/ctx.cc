@@ -784,7 +784,7 @@ void
 ircd::ctx::pool::operator()(closure closure)
 {
 	queue.push_back(std::move(closure));
-	dock.notify_one();
+	dock.notify();
 }
 
 void
