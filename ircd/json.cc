@@ -1723,21 +1723,22 @@ ircd::json::serialized(const value &v)
 {
 	switch(v.type)
 	{
-		case OBJECT:
-			return v.serial? serialized(json::object{v}) : serialized(v.object, v.object + v.len);
+		case OBJECT: return
+			v.serial?
+				serialized(json::object{v}):
+				serialized(v.object, v.object + v.len);
 
-		case ARRAY:
-			return v.serial? serialized(json::array{v}) : serialized(v.array, v.array + v.len);
+		case ARRAY: return
+			v.serial?
+				serialized(json::array{v}):
+				serialized(v.array, v.array + v.len);
 
-		case LITERAL:
-		{
-			if(v.serial)
-				return v.len;
-			else if(v.integer)
-				return size("true"_sv);
-			else
-				return size("false"_sv);
-		}
+		case LITERAL: return
+			v.serial?
+				v.len:
+			v.integer?
+				size(literal_true):
+				size(literal_false);
 
 		case NUMBER:
 		{
