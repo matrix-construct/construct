@@ -30,7 +30,6 @@ struct ircd::json::member
 {
 	member(const string_view &key, value &&);
 	template<class V> member(const string_view &key, V&&);
-	template<class V, size_t N> member(const char (&)[N], V&&);
 	explicit member(const string_view &k);
 	explicit member(const object::member &m);
 	member() = default;
@@ -63,16 +62,6 @@ ircd::json::member::member(const string_view &key,
 :std::pair<value, value>
 {
 	{ key, json::STRING }, std::move(v)
-}
-{}
-
-template<class V,
-         size_t N>
-ircd::json::member::member(const char (&key)[N],
-                           V&& v)
-:std::pair<value, value>
-{
-	{ key, json::STRING }, std::forward<V>(v)
 }
 {}
 
