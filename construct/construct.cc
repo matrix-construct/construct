@@ -231,10 +231,11 @@ enable_coredumps()
 }
 #endif
 
-static void handle_quit();
-static void handle_interruption();
-static void handle_termstop();
-static void handle_hangup();
+static bool handle_quit();
+static bool handle_interruption();
+static bool handle_termstop();
+static bool handle_hangup();
+static bool handle(const int &signum);
 
 void
 sigfd_handler(const boost::system::error_code &ec,
@@ -257,61 +258,92 @@ noexcept
 			throw std::runtime_error(ec.message());
 	}
 
-	switch(signum)
-	{
-		case SIGINT:   handle_interruption();   break;
-		case SIGTSTP:  handle_termstop();       break;
-		case SIGHUP:   handle_hangup();         break;
-		case SIGQUIT:  handle_quit();           return;
-		case SIGTERM:  handle_quit();           return;
-		default:                                break;
-	}
+	if(!handle(signum))
+		return;
 
 	sigs.async_wait(sigfd_handler);
 }
 
-void
+bool
+handle(const int &signum)
+{
+	switch(signum)
+	{
+		case SIGINT:   return handle_interruption();
+		case SIGTSTP:  return handle_termstop();
+		case SIGHUP:   return handle_hangup();
+		case SIGQUIT:  return handle_quit();
+		case SIGTERM:  return handle_quit();
+		default:       return true;
+	}
+}
+
+bool
 handle_quit()
 try
 {
 	console_cancel();
 	ircd::quit();
+	return false;
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("SIGQUIT handler: %s", e.what());
+	ircd::log::error
+	{
+		"SIGQUIT handler: %s", e.what()
+	};
+
+	return true;
 }
 
-void
+bool
 handle_hangup()
 try
 {
 	console_hangup();
+	return true;
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("SIGHUP handler: %s", e.what());
+	ircd::log::error
+	{
+		"SIGHUP handler: %s", e.what()
+	};
+
+	return true;
 }
 
-void
+bool
 handle_termstop()
 try
 {
 	console_termstop();
+	return true;
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("SIGTSTP handler: %s", e.what());
+	ircd::log::error
+	{
+		"SIGTSTP handler: %s", e.what()
+	};
+
+	return true;
 }
 
-void
+bool
 handle_interruption()
 try
 {
 	console_cancel();
 	console_spawn();
+	return true;
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("SIGINT handler: %s", e.what());
+	ircd::log::error
+	{
+		"SIGINT handler: %s", e.what()
+	};
+
+	return true;
 }
