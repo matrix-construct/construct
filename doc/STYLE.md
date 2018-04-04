@@ -383,3 +383,14 @@ to break the loop, and then false is returned from until() as well.
 Overloads of `for_each()` may be encountered accepting closures that return
 `void` and others that return `bool`. The `bool` overloads use the
 *until protocol* as that matches the same logic in a `for(; bool;)` loop.
+
+
+#### nothrow is not noexcept
+
+Often a function is overloaded with an std::nothrow_t argument or our
+util::nothrow overload template. This means the function **will not throw
+a specific exception expected from the overload alternative** (or set of
+exceptions, etc). Any exception may still come out of that nothrow overload;
+technically including the specific exception if it came from somewhere else!
+
+When no exceptions whatsoever are expected, the `noexcept` keyword is used.
