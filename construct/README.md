@@ -23,6 +23,11 @@ event loop for execution at the next event slice. This is how signal safety
 is achieved. Furthermore, according to boost docs, when signals are used
 this way they can be compatible with windows environments.
 
+##### SIGQUIT
+
+A `ctrl-\` to Construct will cleanly shut down the server. It will not generate
+a coredump.
+
 ##### SIGINT
 
 A `ctrl-c` to Construct will bring up the command line console interface. It
@@ -41,11 +46,6 @@ behavior so your shell can offer its functionality here.
 A "HangUP" to Construct is only relevant to the command line console, and
 signals it to close like an `EOF`. The legacy functionality for reloading
 server configuration et al is moved to `SIGUSR1`.
-
-##### SIGQUIT
-
-A `ctrl-\` to Construct will cleanly shut down the server. It will not generate
-a coredump.
 
 ##### SIGUSR1
 
