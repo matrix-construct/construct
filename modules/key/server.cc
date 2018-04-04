@@ -54,7 +54,9 @@ method_get
 	server_resource, "GET", handle_get
 };
 
- __attribute__((constructor))
+#ifdef RB_DEBUG
+__attribute__((constructor))
+#endif
 static void
 _test_ed25519_()
 noexcept
