@@ -109,6 +109,13 @@ put__send_leave(client &client,
 			"Event content.membership state must be 'leave'."
 		};
 
+	if(json::get<"origin"_>(event) != request.origin)
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_MISMATCH_ORIGIN",
+			"Event origin must be you."
+		};
+
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval
