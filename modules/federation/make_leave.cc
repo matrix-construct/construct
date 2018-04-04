@@ -62,19 +62,31 @@ get__make_leave(client &client,
 	};
 
 	uint64_t depth;
-	const m::event::id::buf prev_id
+	const m::event::id::buf prev_event_id
 	{
 		m::head(room_id, depth)
 	};
 
-	const json::value prev
+	const m::event::fetch evf
 	{
-		prev_id
+		prev_event_id, std::nothrow
+	};
+
+	const auto &auth_events
+	{
+		json::get<"auth_events"_>(evf)?
+			json::get<"auth_events"_>(evf) : json::array{"[]"}
+	};
+
+	const json::value prev[]
+	{
+		{ string_view{prev_event_id}  },
+		{ json::get<"hashes"_>(evf) }
 	};
 
 	const json::value prevs[]
 	{
-		{ &prev, 1 }
+		{ prev, 2 }
 	};
 
 	thread_local char bufs[96_KiB];
@@ -83,15 +95,20 @@ get__make_leave(client &client,
 	json::iov content, event, wrapper;
 	const json::iov::push push[]
 	{
-		{ event,    { "room_id",       room_id                   }},
-		{ event,    { "type",          "m.room.member"           }},
-		{ event,    { "state_key",     user_id                   }},
-		{ event,    { "depth",         int64_t(depth) + 1        }},
-		{ event,    { "membership",    "leave"                   }},
-		{ content,  { "membership",    "leave"                   }},
-		{ event,    { "prev_events",   { prevs, 1 }              }},
-		{ event,    { "content",       stringify(buf, content)   }},
-		{ wrapper,  { "event",         stringify(buf, event)     }},
+		{ event,    { "origin",            request.origin            }},
+		{ event,    { "origin_server_ts",  time<milliseconds>()      }},
+		{ event,    { "room_id",           room_id                   }},
+		{ event,    { "type",              "m.room.member"           }},
+		{ event,    { "sender",            user_id                   }},
+		{ event,    { "state_key",         user_id                   }},
+		{ event,    { "depth",             int64_t(depth) + 1        }},
+		{ event,    { "membership",        "leave"                   }},
+		{ content,  { "membership",        "leave"                   }},
+		{ event,    { "auth_events",       auth_events               }},
+		{ event,    { "prev_state",        "[]"                      }},
+		{ event,    { "prev_events",       { prevs, 1 }              }},
+		{ event,    { "content",           stringify(buf, content)   }},
+		{ wrapper,  { "event",             stringify(buf, event)     }},
 	};
 
 	return resource::response
