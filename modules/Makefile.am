@@ -246,6 +246,7 @@ federation_federation_invite_la_SOURCES = federation/invite.cc
 federation_federation_make_join_la_SOURCES = federation/make_join.cc
 federation_federation_send_join_la_SOURCES = federation/send_join.cc
 federation_federation_state_ids_la_SOURCES = federation/state_ids.cc
+federation_federation_state_la_SOURCES = federation/state.cc
 
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
@@ -259,6 +260,7 @@ federation_module_LTLIBRARIES = \
 	federation/federation_make_join.la \
 	federation/federation_send_join.la \
 	federation/federation_state_ids.la \
+	federation/federation_state.la \
 	###
 
 ###############################################################################
