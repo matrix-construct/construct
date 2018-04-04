@@ -199,9 +199,18 @@ const
 		1_MiB
 	};
 
+	// Matrix spec sez that an empty content object {} is excluded entirely
+	// from the verification. Our JSON only excludes members if they evaluate
+	// to undefined i.e json::object{}/string_view{} but not json::object{"{}"}
+	// or even json::object{""}; rather than burdening the caller with ensuring
+	// their assignment conforms perfectly, we ensure correctness manually.
+	auto _this(*this);
+	if(empty(json::get<"content"_>(*this)))
+		json::get<"content"_>(_this) = json::object{};
+
 	const size_t request_size
 	{
-		json::serialized(*this)
+		json::serialized(_this)
 	};
 
 	const ctx::critical_assertion ca;
@@ -217,7 +226,7 @@ const
 
 	const json::object object
 	{
-		stringify(mutable_buffer{buf}, *this)
+		stringify(mutable_buffer{buf}, _this)
 	};
 
 	return verify(pk, sig, object);
