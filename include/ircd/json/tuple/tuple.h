@@ -1090,11 +1090,10 @@ _member_transform(const tuple<T...> &tuple,
                   it_a it,
                   const it_b end)
 {
-	return _member_transform_if(tuple, it, end, []
-	(auto&& ret, const auto &key, const auto &val)
+	return _member_transform(tuple, it, end, []
+	(auto&& ret, const auto &key, const auto &val) -> member
 	{
-		ret = member { key, val };
-		return true;
+		return { key, val };
 	});
 }
 
