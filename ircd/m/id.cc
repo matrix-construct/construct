@@ -519,14 +519,14 @@ const
 		omit[parser.prefix >> ':' >> parser.dns_name >> ':'] >> parser.port
 	};
 
-	uint16_t ret{8448};
+	uint16_t ret{0};
 	auto *start{begin()};
 	const auto res
 	{
 		qi::parse(start, end(), rule, ret)
 	};
 
-	assert(res || ret == 8448);
+	assert(res || ret == 0);
 	return ret;
 }
 
