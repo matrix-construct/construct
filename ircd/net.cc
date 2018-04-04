@@ -2546,7 +2546,7 @@ decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
 	{ "name",     "ircd.net.dns.resolver.send_rate" },
-	{ "default",   20L                              },
+	{ "default",   100L                             },
 };
 
 ircd::net::dns::resolver::resolver()
