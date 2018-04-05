@@ -123,16 +123,9 @@ put__send_join(client &client,
 		event, vmopts
 	};
 
-	// Riotapse wants the state before this join event. This means we have
-	// to iterate the state btree which is slower than the sequential
-	// present-state table :/
-	const m::event::prev prevs{event};
 	const m::room::state state
 	{
-		m::room
-		{
-			room_id, prevs.prev_event(0)
-		}
+		room_id
 	};
 
 	//TODO: direct to socket
@@ -159,6 +152,17 @@ put__send_join(client &client,
 			{
 				auth_chain_m
 			};
+
+			const auto appender{[&auth_chain_a]
+			(const m::event &event)
+			{
+				auth_chain_a.append(event);
+			}};
+
+			state.get(std::nothrow, "m.room.create", "", appender);
+			state.get(std::nothrow, "m.room.power_levels", "", appender);
+			state.get(std::nothrow, "m.room.join_rules", "", appender);
+			state.get(std::nothrow, "m.room.member", at<"state_key"_>(event), appender);
 		}
 
 		{
@@ -177,17 +181,16 @@ put__send_join(client &client,
 			{
 				state_a.append(event);
 			});
+
 		}
 	}
 
-	const json::array response
-	{
-		out.completed()
-	};
-
 	return resource::response
 	{
-		client, response
+		client, json::array
+		{
+			out.completed()
+		}
 	};
 }
 
