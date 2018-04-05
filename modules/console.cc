@@ -1868,6 +1868,40 @@ console_cmd__room__purge(opt &out, const string_view &line)
 }
 
 //
+// user
+//
+
+bool
+console_cmd__user__password(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"user_id", "password"
+		}
+	};
+
+	m::user user
+	{
+		param.at(0)
+	};
+
+	const string_view &password
+	{
+		param.at(1)
+	};
+
+	const auto eid
+	{
+		user.password(password)
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
+//
 // fed
 //
 
