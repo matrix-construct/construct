@@ -1655,29 +1655,37 @@ console_cmd__room__get(opt &out, const string_view &line)
 bool
 console_cmd__room__set(opt &out, const string_view &line)
 {
+	const params param
+	{
+		line, " ",
+		{
+			"room_id", "sender", "type", "state_key", "content"
+		}
+	};
+
 	const m::room::id room_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
 	const m::user::id &sender
 	{
-		token(line, ' ', 1)
+		param.at(1)
 	};
 
 	const string_view type
 	{
-		token(line, ' ', 2)
+		param.at(2)
 	};
 
 	const string_view state_key
 	{
-		token(line, ' ', 3)
+		param.at(3)
 	};
 
 	const json::object &content
 	{
-		token(line, ' ', 4)
+		param.at(4)
 	};
 
 	const m::room room
