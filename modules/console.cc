@@ -1901,6 +1901,91 @@ console_cmd__user__password(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__active(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"user_id"
+		}
+	};
+
+	const m::user user
+	{
+		param.at(0)
+	};
+
+	out << user.user_id << " is "
+	    << (user.is_active()? "active" : "inactive")
+	    << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__user__activate(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"user_id"
+		}
+	};
+
+	m::user user
+	{
+		param.at(0)
+	};
+
+	if(user.is_active())
+	{
+		out << user.user_id << " is already active" << std::endl;
+		return true;
+	}
+
+	const auto eid
+	{
+		user.activate()
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
+bool
+console_cmd__user__deactivate(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"user_id"
+		}
+	};
+
+	m::user user
+	{
+		param.at(0)
+	};
+
+	if(!user.is_active())
+	{
+		out << user.user_id << " is already inactive" << std::endl;
+		return true;
+	}
+
+	const auto eid
+	{
+		user.deactivate()
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
 //
 // fed
 //
