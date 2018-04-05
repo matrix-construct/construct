@@ -222,6 +222,10 @@ struct ircd::m::room::state
 	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 
+	// Fetch and return state event id
+	event::id::buf get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
+	event::id::buf get(const string_view &type, const string_view &state_key = "") const;
+
 	state(const m::room &, const opts &);
 	state(const m::room &);
 	state() = default;

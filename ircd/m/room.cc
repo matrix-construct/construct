@@ -370,6 +370,37 @@ ircd::m::room::state::state(const m::room &room,
 {
 }
 
+ircd::m::event::id::buf
+ircd::m::room::state::get(const string_view &type,
+                          const string_view &state_key)
+const
+{
+	event::id::buf ret;
+	get(type, state_key, event::id::closure{[&ret]
+	(const event::id &event_id)
+	{
+		ret = event_id;
+	}});
+
+	return ret;
+}
+
+ircd::m::event::id::buf
+ircd::m::room::state::get(std::nothrow_t,
+                          const string_view &type,
+                          const string_view &state_key)
+const
+{
+	event::id::buf ret;
+	get(std::nothrow, type, state_key, event::id::closure{[&ret]
+	(const event::id &event_id)
+	{
+		ret = event_id;
+	}});
+
+	return ret;
+}
+
 void
 ircd::m::room::state::get(const string_view &type,
                           const string_view &state_key,
