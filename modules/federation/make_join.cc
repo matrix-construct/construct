@@ -72,12 +72,6 @@ get__make_join(client &client,
 		prev_event_id, std::nothrow
 	};
 
-	const auto &auth_events
-	{
-		json::get<"auth_events"_>(evf)?
-			json::get<"auth_events"_>(evf) : json::array{"[]"}
-	};
-
 	const json::value prev[]
 	{
 		{ string_view{prev_event_id}  },
@@ -87,6 +81,35 @@ get__make_join(client &client,
 	const json::value prevs[]
 	{
 		{ prev, 2 }
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	auto auth_event_id
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	if(!auth_event_id)
+		auth_event_id = state.get("m.room.create");
+
+	const m::event::fetch aevf
+	{
+		auth_event_id, std::nothrow
+	};
+
+	const json::value auth[]
+	{
+		{ string_view{auth_event_id}  },
+		{ json::get<"hashes"_>(aevf) }
+	};
+
+	const json::value auths[]
+	{
+		{ auth, 2 }
 	};
 
 	thread_local char bufs[96_KiB];
@@ -104,7 +127,7 @@ get__make_join(client &client,
 		{ event,    { "depth",             int64_t(depth) + 1        }},
 		{ event,    { "membership",        "join"                    }},
 		{ content,  { "membership",        "join"                    }},
-		{ event,    { "auth_events",       auth_events               }},
+		{ event,    { "auth_events",       { auths, 1 }              }},
 		{ event,    { "prev_state",        "[]"                      }},
 		{ event,    { "prev_events",       { prevs, 1 }              }},
 		{ event,    { "content",           stringify(buf, content)   }},
