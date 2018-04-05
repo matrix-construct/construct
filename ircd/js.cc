@@ -11,7 +11,6 @@
 #include <ircd/js/js.h>
 #include <js/Initialization.h>                   // JS_Init() / JS_ShutDown()
 #include <mozilla/ThreadLocal.h>                 // For GetThreadType() linkage hack (see: down)
-#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
 
 // Must be defined until we address issues with SpiderMonkey fixed inside any
 // IRCD_JS_FIX blocks.
