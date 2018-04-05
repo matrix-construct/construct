@@ -149,8 +149,7 @@ invite__foreign(const m::event &event)
 		throw m::error
 		{
 			http::FORBIDDEN, "M_INVITE_MODIFIED",
-			"Invite event no longer verified by our signature.",
-			target.host()
+			"Invite event no longer verified by our signature."
 		};
 
 	m::vm::opts vmopts;
