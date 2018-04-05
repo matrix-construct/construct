@@ -42,56 +42,72 @@ get__messages(client &client,
 		room_id
 	};
 
-	m::event::id::buf start, end;
-	std::vector<json::value> ret;
-	ret.reserve(page.limit);
-
 	m::room::messages it
 	{
 		room, page.from
 	};
 
-	// Spec sez the 'from' token is exclusive
-	if(it && page.dir == 'b')
-		--it;
-	else if(it)
-		++it;
-
-	for(; it; page.dir == 'b'? --it : ++it)
+	//TODO: chunk directly to socket
+	const unique_buffer<mutable_buffer> buf
 	{
-		const m::event &event{*it};
-		if(page.to && at<"event_id"_>(event) == page.to)
-		{
-			if(page.dir != 'b')
-				start = at<"event_id"_>(event);
-
-			break;
-		}
-
-		ret.emplace_back(event);
-		if(ret.size() >= page.limit)
-		{
-			if(page.dir == 'b')
-				end = at<"event_id"_>(event);
-			else
-				start = at<"event_id"_>(event);
-
-			break;
-		}
-	}
-
-	const json::value chunk
-	{
-		ret.data(), ret.size()
+		(1 + page.limit) * m::event::MAX_SIZE //TODO: XXX
 	};
+
+	json::stack out{buf};
+	{
+		json::stack::object ret{out};
+
+		// Spec sez the 'from' token is exclusive
+		if(it && page.dir == 'b')
+			--it;
+		else if(it)
+			++it;
+
+		size_t count{0};
+		m::event::id::buf start, end;
+		{
+			json::stack::member chunk{ret, "chunk"};
+			json::stack::array messages{chunk};
+			for(; it; page.dir == 'b'? --it : ++it)
+			{
+				const m::event &event{*it};
+				if(page.to && at<"event_id"_>(event) == page.to)
+				{
+					if(page.dir != 'b')
+						start = at<"event_id"_>(event);
+
+					break;
+				}
+
+				messages.append(event);
+				if(++count >= page.limit)
+				{
+					if(page.dir == 'b')
+						end = at<"event_id"_>(event);
+					else
+						start = at<"event_id"_>(event);
+
+					break;
+				}
+			}
+		}
+
+		json::stack::member
+		{
+			ret, "start", json::value{start}
+		};
+
+		json::stack::member
+		{
+			ret, "end", json::value{end}
+		};
+	}
 
 	return resource::response
 	{
-		client, json::members
+		client, json::object
 		{
-			{ "start",  start },
-			{ "end",    end   },
-			{ "chunk",  chunk },
+			out.completed()
 		}
 	};
 }
