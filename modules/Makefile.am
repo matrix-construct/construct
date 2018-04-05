@@ -249,6 +249,7 @@ federation_federation_state_ids_la_SOURCES = federation/state_ids.cc
 federation_federation_state_la_SOURCES = federation/state.cc
 federation_federation_make_leave_la_SOURCES = federation/make_leave.cc
 federation_federation_send_leave_la_SOURCES = federation/send_leave.cc
+federation_federation_backfill_la_SOURCES = federation/backfill.cc
 
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
@@ -265,6 +266,7 @@ federation_module_LTLIBRARIES = \
 	federation/federation_state.la \
 	federation/federation_make_leave.la \
 	federation/federation_send_leave.la \
+	federation/federation_backfill.la \
 	###
 
 ###############################################################################
