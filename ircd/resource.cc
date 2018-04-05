@@ -443,7 +443,7 @@ catch(const std::bad_function_call &e)
 
 ircd::resource::response::response(client &client,
                                    const http::code &code)
-:response{client, json::object{"{}"}, code}
+:response{client, json::object{json::empty_object}, code}
 {
 }
 
@@ -693,7 +693,7 @@ ircd::resource::response::response(client &client,
 
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %zu content",
+		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %zd content",
 		client.sock.get(),
 		string(local(client)),
 		string(remote(client)),
@@ -701,7 +701,7 @@ ircd::resource::response::response(client &client,
 		http::status(code),
 		request_time,
 		content_type,
-		content_length,
+		ssize_t(content_length),
 	};
 
 	assert(written == size(head.completed()));
