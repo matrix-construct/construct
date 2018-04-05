@@ -50,7 +50,7 @@ get__directory_room(client &client,
 	};
 
 	char buf[256];
-	const auto room_id
+	const m::room::id room_id
 	{
 		m::room_id(buf, room_alias)
 	};
@@ -178,13 +178,13 @@ try
 		room_alias_fetch(buf, alias)
 	};
 
-	// Cache the result
-	send(alias_room, m::me.user_id, "ircd.alias", alias, response);
-
 	const m::id::room &room_id
 	{
 		unquote(response.at("room_id"))
 	};
+
+	// Cache the result
+	send(alias_room, m::me.user_id, "ircd.alias", alias, response);
 
 	return m::room::id
 	{
@@ -200,6 +200,13 @@ catch(const http::error &e)
 		throw m::NOT_FOUND{};
 
 	throw;
+}
+catch(const json::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"Remote sent malformed response: %s", e.what()
+	};
 }
 
 /// This function makes a room alias request to a remote. The alias
