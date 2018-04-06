@@ -2102,6 +2102,132 @@ console_cmd__fed__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__sync(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote", "limit", "event_id", "timeout"
+	}};
+
+	const m::room::id &room_id
+	{
+		param.at(0)
+	};
+
+	const net::hostport remote
+	{
+		param.at(1, room_id.host())
+	};
+
+	const auto &limit
+	{
+		param.at(2, size_t(128))
+	};
+
+	const string_view &event_id
+	{
+		param[3]
+	};
+
+	const auto timeout
+	{
+		param.at(4, seconds(30))
+	};
+
+	// Used for out.head, out.content, in.head, but in.content is dynamic
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::state::opts stopts;
+	stopts.remote = remote;
+	stopts.event_id = event_id;
+	const mutable_buffer stbuf
+	{
+		data(buf), size(buf) / 2
+	};
+
+	m::v1::state strequest
+	{
+		room_id, stbuf, std::move(stopts)
+	};
+
+	m::v1::backfill::opts bfopts;
+	bfopts.remote = remote;
+	bfopts.event_id = event_id;
+	bfopts.limit = limit;
+	const mutable_buffer bfbuf
+	{
+		buf + size(stbuf)
+	};
+
+	m::v1::backfill bfrequest
+	{
+		room_id, bfbuf, std::move(bfopts)
+	};
+
+	const auto when
+	{
+		now<steady_point>() + timeout
+	};
+
+	bfrequest.wait_until(when);
+	strequest.wait_until(when);
+
+	bfrequest.get();
+	strequest.get();
+
+	const json::array &auth_chain
+	{
+		json::object{strequest}.get("auth_chain")
+	};
+
+	const json::array &pdus
+	{
+		json::object{strequest}.get("pdus")
+	};
+
+	const json::array &messages
+	{
+		json::object{bfrequest}.get("pdus")
+	};
+
+	std::vector<m::event> events;
+	events.reserve(auth_chain.size() + pdus.size() + messages.size());
+
+	for(const json::object &event : auth_chain)
+		events.emplace_back(event);
+
+	for(const json::object &event : pdus)
+		events.emplace_back(event);
+
+	for(const json::object &event : messages)
+		events.emplace_back(event);
+
+	std::sort(begin(events), end(events));
+	events.erase(std::unique(begin(events), end(events)), end(events));
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.head_must_exist = false;
+	vmopts.history = false;
+	vmopts.notify = false;
+	vmopts.debuglog_accept = true;
+	m::vm::eval eval
+	{
+		vmopts
+	};
+
+	for(const auto &event : events)
+		eval(event);
+
+	return true;
+}
+
+bool
 console_cmd__fed__state(opt &out, const string_view &line)
 {
 	const params param{line, " ",
