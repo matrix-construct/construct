@@ -256,7 +256,10 @@ try
 		case 1:   return true;
 	}
 
-	throw bad_command{};
+	throw bad_command
+	{
+		"%s", line
+	};
 }
 catch(const std::out_of_range &e)
 {
