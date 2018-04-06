@@ -1487,6 +1487,7 @@ try
 	{
 		// Tag hasn't sent its data yet, we shouldn't have anything for it
 		assert(empty(overrun));
+		discard_read(); // Should stumble on a socket error.
 		return false;
 	}
 
