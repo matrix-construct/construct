@@ -2538,12 +2538,13 @@ const
 		size(head) - state.head_read
 	};
 
-	assert(remaining <= size(head));
 	const mutable_buffer buffer
 	{
 		data(head) + state.head_read, remaining
 	};
 
+	assert(size(buffer) <= size(head));
+	assert(size(buffer) > 0);
 	return buffer;
 }
 
@@ -2568,6 +2569,7 @@ const
 		size(content) - state.content_read
 	};
 
+	assert(remaining > 0);
 	return
 	{
 		data(content) + state.content_read, remaining
@@ -2607,6 +2609,7 @@ const
 		data(content) + state.content_read, remaining
 	};
 
+	assert(size(buffer) > 0);
 	return buffer;
 }
 
@@ -2632,14 +2635,6 @@ const
 		content_remaining()
 	};
 
-	if(unlikely(buffer_remaining <= chunk_remaining))
-		throw buffer_overrun
-		{
-			"Content buffer of %zu bytes too small to read remaining %zu of chunk",
-			size(content),
-			chunk_remaining
-		};
-
 	assert(chunk_remaining <= state.chunk_length);
 	assert(chunk_remaining == state.content_length - state.content_read);
 	const size_t buffer_size
@@ -2647,11 +2642,20 @@ const
 		std::min(buffer_remaining, chunk_remaining)
 	};
 
+	if(unlikely(buffer_size < chunk_remaining))
+		throw buffer_overrun
+		{
+			"Content buffer of %zu bytes too small to read remaining %zu of chunk",
+			size(content),
+			chunk_remaining
+		};
+
 	const mutable_buffer buffer
 	{
 		data(content) + state.content_read, buffer_size
 	};
 
+	assert(size(buffer) > 0);
 	return buffer;
 }
 
