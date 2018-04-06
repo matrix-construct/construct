@@ -64,6 +64,7 @@ struct ircd::m::v1::send::opts
 	/// The lower-level server::request::opts configuration to attach to
 	/// this request.
 	const struct server::request::opts *sopts {nullptr};
+	bool dynamic {false};
 };
 
 /// Helper for dealing with response content from a /send/.

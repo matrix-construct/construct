@@ -39,6 +39,7 @@ struct ircd::m::v1::user::opts
 	server::out out;
 	server::in in;
 	const struct server::request::opts *sopts {nullptr};
+	bool dynamic {false};
 
 	opts(const net::hostport &remote)
 	:remote{remote}

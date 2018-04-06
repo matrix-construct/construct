@@ -45,4 +45,5 @@ struct ircd::m::v1::event::opts
 	server::out out;
 	server::in in;
 	const struct server::request::opts *sopts {nullptr};
+	bool dynamic {false};
 };

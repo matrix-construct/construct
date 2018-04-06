@@ -38,4 +38,5 @@ struct ircd::m::v1::make_join::opts
 	server::out out;
 	server::in in;
 	const struct server::request::opts *sopts {nullptr};
+	bool dynamic {false};
 };

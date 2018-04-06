@@ -55,7 +55,9 @@ ircd::m::v1::groups::publicised::publicised(const id::node &node,
 	{
 		consume(buf, size(opts.out.head));
 		opts.in.head = buf;
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -124,7 +126,9 @@ ircd::m::v1::send::send(const string_view &txnid,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -197,7 +201,9 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -270,7 +276,9 @@ ircd::m::v1::state::state(const room::id &room_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -331,7 +339,9 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -385,7 +395,9 @@ ircd::m::v1::invite::invite(const room::id &room_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -439,7 +451,9 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -503,7 +517,9 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -554,7 +570,9 @@ ircd::m::v1::user::devices::devices(const id::user &user_id,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -762,7 +780,9 @@ ircd::m::v1::query::query(const string_view &type,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
@@ -799,7 +819,9 @@ ircd::m::v1::version::version(const mutable_buffer &buf,
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.in.head; // server::request will auto partition
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
 	}
 
 	return server::request
