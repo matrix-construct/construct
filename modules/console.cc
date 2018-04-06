@@ -2052,26 +2052,37 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 bool
 console_cmd__fed__head(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "remote", "user_id"
+	}};
+
 	const m::room::id &room_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1)
+		param.at(1, room_id.host())
+	};
+
+	const m::user::id &user_id
+	{
+		param.at(2, m::me.user_id)
 	};
 
 	thread_local char buf[16_KiB];
+	m::v1::make_join::opts opts;
+	opts.remote = remote;
 	m::v1::make_join request
 	{
-		room_id, m::me.user_id, buf
+		room_id, m::me.user_id, buf, std::move(opts)
 	};
 
-	if(request.wait(seconds(5)) == ctx::future_status::timeout)
-		throw http::error{http::REQUEST_TIMEOUT};
-
+	request.wait(seconds(5));
 	request.get();
+
 	const json::object proto
 	{
 		request.in.content
@@ -2094,24 +2105,29 @@ console_cmd__fed__head(opt &out, const string_view &line)
 bool
 console_cmd__fed__state(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "remote", "event_id|op", "op"
+	}};
+
 	const m::room::id &room_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1, room_id.host())
+		param.at(1, room_id.host())
 	};
 
 	string_view event_id
 	{
-		token(line, ' ', 2, {})
+		param[2]
 	};
 
 	string_view op
 	{
-		token(line, ' ', 3, {})
+		param[3]
 	};
 
 	if(!op && event_id == "eval")
@@ -2128,10 +2144,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	};
 
 	request.wait(seconds(30));
-	const auto code
-	{
-		request.get()
-	};
+	request.get();
 
 	const json::object &response
 	{
@@ -2183,19 +2196,24 @@ console_cmd__fed__state(opt &out, const string_view &line)
 bool
 console_cmd__fed__state_ids(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "remote", "event_id"
+	}};
+
 	const m::room::id &room_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1, room_id.host())
+		param.at(1, room_id.host())
 	};
 
 	string_view event_id
 	{
-		token(line, ' ', 2, {})
+		param[2]
 	};
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
@@ -2210,10 +2228,7 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 	};
 
 	request.wait(seconds(30));
-	const auto code
-	{
-		request.get()
-	};
+	request.get();
 
 	const json::object &response
 	{
@@ -2284,10 +2299,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	};
 
 	request.wait(seconds(10));
-	const auto code
-	{
-		request.get()
-	};
+	request.get();
 
 	const json::object &response
 	{
@@ -2348,10 +2360,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	};
 
 	request.wait(seconds(10));
-	const auto code
-	{
-		request.get()
-	};
+	request.get();
 
 	const json::object &response
 	{
