@@ -2036,10 +2036,9 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 		node, vector_view<const m::user::id>(ids, count), buf, std::move(opts)
 	};
 
-	if(request.wait(seconds(10)) == ctx::future_status::timeout)
-		throw http::error{http::REQUEST_TIMEOUT};
-
+	request.wait(seconds(10));
 	request.get();
+
 	const json::object response
 	{
 		request.in.content

@@ -161,7 +161,7 @@ get__thumbnail_remote(client &client,
 		remote, { out_head }, { in_head, in_content }, &opts
 	};
 
-	if(remote_request.wait(seconds(10)) == ctx::future_status::timeout)
+	if(!remote_request.wait(seconds(10), std::nothrow))
 		throw http::error
 		{
 			http::REQUEST_TIMEOUT

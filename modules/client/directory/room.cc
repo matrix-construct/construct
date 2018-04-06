@@ -222,7 +222,7 @@ room_alias_fetch(const mutable_buffer &out,
 	};
 
 	//TODO: conf
-	if(federation_request.wait(seconds(8)) == ctx::future_status::timeout)
+	if(!federation_request.wait(seconds(8), std::nothrow))
 		throw http::error
 		{
 			http::REQUEST_TIMEOUT

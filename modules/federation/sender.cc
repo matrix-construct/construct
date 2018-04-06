@@ -240,7 +240,7 @@ try
 		ctx::when_any(begin(txns), end(txns))
 	};
 
-	if(next.wait(seconds(2), std::nothrow) == ctx::future_status::timeout)   //TODO: conf
+	if(!next.wait(seconds(2), std::nothrow))   //TODO: conf
 		return;
 
 	const auto it

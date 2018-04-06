@@ -77,7 +77,7 @@ get__keys(const string_view &server_name,
 	};
 
 	//TODO: conf
-	if(tag.wait(seconds(20)) == ctx::future_status::timeout)
+	if(!tag.wait(seconds(20), std::nothrow))
 	{
 		cancel(tag);
 		throw m::error
@@ -170,7 +170,7 @@ try
 		server_name, { head }, { in }
 	};
 
-	if(tag.wait(seconds(30)) == ctx::future_status::timeout)
+	if(!tag.wait(seconds(30), std::nothrow))
 		throw m::error
 		{
 			http::REQUEST_TIMEOUT, "M_TIMEOUT",
