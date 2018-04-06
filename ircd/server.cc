@@ -712,6 +712,17 @@ ircd::server::peer::handle_tag_done(link &link,
                                     tag &tag)
 noexcept try
 {
+	log.debug("peer(%p) link(%p) tag(%p) done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+	          this,
+	          &link,
+	          &tag,
+	          tag.write_size(),
+	          tag.read_size(),
+	          tag.state.head_read,
+	          tag.state.content_read,
+	          tag.state.content_length,
+	          link.tag_count() - 1);
+
 	if(link.tag_committed() >= link.tag_commit_max())
 		link.wait_writable();
 }
@@ -1105,7 +1116,12 @@ ircd::server::link::submit(request &request)
 		request.tag? queue.emplace(end(queue), std::move(*request.tag)):
 		             queue.emplace(end(queue), request)
 	};
-
+/*
+	log.debug("tag(%p) submitted to link(%p) queue: %zu",
+	          &(*it),
+	          this,
+	          tag_count());
+*/
 	if(ready())
 		wait_writable();
 }
@@ -1338,8 +1354,10 @@ bool
 ircd::server::link::process_write(tag &tag)
 {
 	if(!tag.committed())
-		log.debug("link(%p) starting on tag %zu of %zu: wt:%zu",
+		log.debug("peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu",
+		          peer,
 		          this,
+		          &tag,
 		          tag_committed(),
 		          tag_count(),
 		          tag.write_size());
@@ -1605,7 +1623,9 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log.warning("Link to %s discarded %zu of %zd unexpected bytes",
+	log.warning("link(%p) socket(%p) to %s discarded %zu of %zd unexpected bytes",
+	            this,
+	            socket.get(),
 	            likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
 	            discarded,
 	            discard);
@@ -1615,9 +1635,10 @@ ircd::server::link::discard_read()
 	if(unlikely(!discard || !discarded))
 		throw assertive
 		{
-			"peer(%p) link(%p) queue is empty and nothing to discard.",
+			"peer(%p) link(%p) socket(%p) queue is empty and nothing to discard.",
 			peer,
-			this
+			this,
+			socket.get()
 		};
 }
 
