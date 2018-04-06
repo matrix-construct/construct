@@ -1610,8 +1610,11 @@ ircd::server::link::discard_read()
 		SSL_pending(socket->ssl.native_handle())
 	};
 
-	if(discard <= 0)
+	if(discard <= 0 && queue.empty())
 		discard = available(*socket);
+
+	if(discard <= 0 && !queue.empty())
+		discard = 1;
 
 	const size_t discarded
 	{
@@ -1632,7 +1635,7 @@ ircd::server::link::discard_read()
 
 	// just in case so this doesn't get loopy with discarding zero with
 	// an empty queue...
-	if(unlikely(!discard || !discarded))
+	if(unlikely(!discard && !discarded))
 		throw assertive
 		{
 			"peer(%p) link(%p) socket(%p) queue is empty and nothing to discard.",
