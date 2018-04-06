@@ -12,6 +12,8 @@
 
 using namespace ircd;
 
+IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
+
 static void init_cmds();
 
 mapi::header
@@ -23,6 +25,35 @@ IRCD_MODULE
 	}
 };
 
+/// The first parameter for all commands. This aggregates general options
+/// passed to commands as well as providing the output facility with an
+/// ostream interface. Commands should only send output to this object. The
+/// command's input line is not included here; it's the second param to a cmd.
+struct opt
+{
+	std::ostream &out;
+	bool html {false};
+
+	operator std::ostream &()
+	{
+		return out;
+	}
+
+	template<class T> auto &operator<<(T&& t)
+	{
+		out << std::forward<T>(t);
+		return out;
+	}
+
+	auto &operator<<(std::ostream &(*manip)(std::ostream &))
+	{
+		return manip(out);
+	}
+};
+
+/// Instances of this object are generated when this module reads its
+/// symbols to find commands. These instances are then stored in the
+/// cmds set for lookup and iteration.
 struct cmd
 {
 	using is_transparent = void;
@@ -132,32 +163,13 @@ find_cmd(const string_view &line)
 // Main command dispatch
 //
 
-struct opt
-{
-	std::ostream &out;
-	bool html {false};
-
-	operator std::ostream &()
-	{
-		return out;
-	}
-
-	template<class T> auto &operator<<(T&& t)
-	{
-		out << std::forward<T>(t);
-		return out;
-	}
-
-	auto &operator<<(std::ostream &(*manip)(std::ostream &))
-	{
-		return manip(out);
-	}
-};
-
-IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
-
 int console_command_derived(opt &, const string_view &line);
 
+/// This function may be linked and called by those wishing to execute a
+/// command. Output from the command will be appended to the provided ostream.
+/// The input to the command is passed in `line`. Since `struct opt` is not
+/// accessible outside of this module, all public options are passed via a
+/// plaintext string which is parsed here.
 extern "C" int
 console_command(std::ostream &out,
                 const string_view &line,
