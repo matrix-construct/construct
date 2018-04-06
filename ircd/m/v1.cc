@@ -161,14 +161,11 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 	if(!opts.remote)
 		opts.remote = room_id.host();
 
+	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
-		thread_local m::event::id::buf event_id
-		{
-			fetch_head(room_id, opts.remote)
-		};
-
-		opts.event_id = event_id;
+		event_id_buf = fetch_head(room_id, opts.remote);
+		opts.event_id = event_id_buf;
 	}
 
 	if(!defined(json::get<"origin"_>(opts.request)))
@@ -236,14 +233,11 @@ ircd::m::v1::state::state(const room::id &room_id,
 	if(!opts.remote)
 		opts.remote = room_id.host();
 
+	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
-		thread_local m::event::id::buf event_id
-		{
-			fetch_head(room_id, opts.remote)
-		};
-
-		opts.event_id = event_id;
+		event_id_buf = fetch_head(room_id, opts.remote);
+		opts.event_id = event_id_buf;
 	}
 
 	if(!defined(json::get<"origin"_>(opts.request)))
