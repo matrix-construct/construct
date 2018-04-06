@@ -199,6 +199,11 @@ try
 	using prototype = bool (struct opt &, const string_view &);
 	return ptr.operator()<prototype>(opt, args);
 }
+catch(const params::error &e)
+{
+	out << e.what() << std::endl;
+	return true;
+}
 catch(const bad_command &e)
 {
 	return -2;
