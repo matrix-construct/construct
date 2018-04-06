@@ -2814,7 +2814,7 @@ size_t
 ircd::server::tag::read_size()
 const
 {
-	return state.content_length;
+	return state.head_read + state.content_length;
 }
 
 size_t
