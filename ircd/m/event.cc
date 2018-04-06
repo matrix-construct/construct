@@ -10,6 +10,41 @@
 
 #include <ircd/m/m.h>
 
+bool
+ircd::m::operator==(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"event_id"_>(a) == at<"event_id"_>(b);
+}
+
+bool
+ircd::m::operator>=(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) >= at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator<=(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) <= at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator>(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) > at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator<(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) < at<"depth"_>(b);
+}
+
 ircd::m::id::event
 ircd::m::event_id(const event &event,
                   id::event::buf &buf)

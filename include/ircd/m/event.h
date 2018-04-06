@@ -33,6 +33,15 @@ namespace ircd::m
 
 	// [GET]
 	bool exists(const id::event &);
+
+	// Depth comparison; expect unstable sorting.
+	bool operator<(const event &, const event &);
+	bool operator>(const event &, const event &);
+	bool operator<=(const event &, const event &);
+	bool operator>=(const event &, const event &);
+
+	// Equality tests the event_id only! know this.
+	bool operator==(const event &a, const event &b);
 }
 
 #pragma GCC diagnostic push
