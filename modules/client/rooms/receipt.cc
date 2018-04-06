@@ -85,7 +85,7 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 		}}}
 	};
 
-	m::vm::opts opts;
+	m::vm::opts::commit opts;
 	opts.hash = false;
 	opts.sign = false;
 	opts.event_id = false;

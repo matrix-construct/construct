@@ -28,13 +28,17 @@ decltype(ircd::m::vm::default_opts)
 ircd::m::vm::default_opts
 {};
 
+decltype(ircd::m::vm::default_commit_opts)
+ircd::m::vm::default_commit_opts
+{};
+
 /// This function takes an event object vector and adds our origin and event_id
 /// and hashes and signature and attempts to inject the event into the core.
 ///
 ircd::m::event::id::buf
 ircd::m::vm::commit(json::iov &event,
                     const json::iov &contents,
-                    const opts &opts)
+                    const opts::commit &opts)
 {
 	const json::iov::add_if _origin
 	{
@@ -157,7 +161,7 @@ ircd::m::vm::commit_hook
 ///
 ircd::m::vm::fault
 ircd::m::vm::commit(const event &event,
-                    const opts &opts)
+                    const opts::commit &opts)
 {
 	if(opts.debuglog_precommit)
 		log.debug("injecting event(mark: %ld) %s",
@@ -167,7 +171,7 @@ ircd::m::vm::commit(const event &event,
 	check_size(event);
 	commit_hook(event);
 
-	vm::opts opts_{opts};
+	auto opts_{opts};
 	opts_.verify = false;
 
 	// Some functionality on this server may create an event on behalf

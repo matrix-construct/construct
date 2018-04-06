@@ -190,7 +190,7 @@ bootstrap(const m::room::alias &room_alias,
 		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
 	};
 
-	m::vm::opts opts;
+	m::vm::opts::commit opts;
 	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.prev_check_exists = false;

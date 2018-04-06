@@ -87,6 +87,7 @@ get__thumbnail(client &client,
 		file_room_id(server, file)
 	};
 
+	m::vm::opts::commit vmopts;
 	const m::room room
 	{
 		room_id

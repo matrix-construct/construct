@@ -159,7 +159,7 @@ commit__m_typing(const m::typing &edu)
 		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
 	};
 
-	m::vm::opts opts;
+	m::vm::opts::commit opts;
 	opts.hash = false;
 	opts.sign = false;
 	opts.event_id = false;

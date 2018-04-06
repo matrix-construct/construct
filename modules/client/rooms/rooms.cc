@@ -246,9 +246,9 @@ commit__iov_iov(const room &room,
 		{ event, { "prev_events",  prev_events  } },
 	};
 
-	const vm::opts &vmopts
+	const auto &vmopts
 	{
-		room.opts? *room.opts : vm::default_opts
+		room.opts? *room.opts : vm::default_commit_opts
 	};
 
 	return m::vm::commit(event, contents, vmopts);

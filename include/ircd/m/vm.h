@@ -29,9 +29,6 @@ namespace ircd::m::vm
 	extern uint64_t current_sequence;
 	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
-
-	fault commit(const m::event &, const opts & = default_opts);
-	event::id::buf commit(json::iov &event, const json::iov &content, const opts & = default_opts);
 }
 
 /// Event Evaluation Device
@@ -80,20 +77,8 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
-	// Hash and include hashes object.
-	bool hash {true};
-
-	// Sign and include signatures object
-	bool sign {true};
-
-	// Generate and include event_id
-	bool event_id {true};
-
-	// Include our origin
-	bool origin {true};
-
-	// Include origin_server_ts
-	bool origin_server_ts {true};
+	// Extended opts specific to creating events originating from this server.
+	struct commit;
 
 	/// Make writes to database
 	bool write {true};
@@ -161,17 +146,47 @@ struct ircd::m::vm::opts
 		EXISTS
 	};
 
-	/// Whether to log a debug message before commit
-	bool debuglog_precommit {false};
-
-	/// Whether to log an info message after commit accepted
-	bool infolog_postcommit {false};
-
 	/// Whether to log a debug message on successful eval.
 	bool debuglog_accept {false};
 
 	/// Whether to log an info message on successful eval.
 	bool infolog_accept {false};
+};
+
+namespace ircd::m::vm
+{
+	extern const opts::commit default_commit_opts;
+
+	fault commit(const m::event &, const opts::commit & = default_commit_opts);
+	event::id::buf commit(json::iov &event, const json::iov &content, const opts::commit & = default_commit_opts);
+}
+
+/// Extension structure to vm::opts which includes additional options for
+/// commissioning events originating from this server which are then passed
+/// through eval (this process is committing).
+struct ircd::m::vm::opts::commit
+:opts
+{
+	// Hash and include hashes object.
+	bool hash {true};
+
+	// Sign and include signatures object
+	bool sign {true};
+
+	// Generate and include event_id
+	bool event_id {true};
+
+	// Include our origin
+	bool origin {true};
+
+	// Include origin_server_ts
+	bool origin_server_ts {true};
+
+	/// Whether to log a debug message before commit
+	bool debuglog_precommit {false};
+
+	/// Whether to log an info message after commit accepted
+	bool infolog_postcommit {false};
 };
 
 struct ircd::m::vm::accepted
