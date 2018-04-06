@@ -165,36 +165,18 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
                                 opts opts)
 :server::request{[&]
 {
-	if(!opts.event_id)
-	{
-		thread_local m::event::id::buf event_id;
-		v1::make_join request
-		{
-			room_id, m::me.user_id, buf
-		};
-
-		request.get();
-		const json::object proto
-		{
-			request.in.content
-		};
-
-		const json::array prev_events
-		{
-			proto.at({"event", "prev_events"})
-		};
-
-		const json::array prev_event
-		{
-			prev_events.at(0)
-		};
-
-		event_id = unquote(prev_event.at(0));
-		opts.event_id = event_id;
-	}
-
 	if(!opts.remote)
 		opts.remote = room_id.host();
+
+	if(!opts.event_id)
+	{
+		thread_local m::event::id::buf event_id
+		{
+			fetch_head(room_id, opts.remote)
+		};
+
+		opts.event_id = event_id;
+	}
 
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
@@ -262,36 +244,18 @@ ircd::m::v1::state::state(const room::id &room_id,
                           opts opts)
 :server::request{[&]
 {
-	if(!opts.event_id)
-	{
-		thread_local m::event::id::buf event_id;
-		v1::make_join request
-		{
-			room_id, m::me.user_id, buf
-		};
-
-		request.get();
-		const json::object proto
-		{
-			request.in.content
-		};
-
-		const json::array prev_events
-		{
-			proto.at({"event", "prev_events"})
-		};
-
-		const json::array prev_event
-		{
-			prev_events.at(0)
-		};
-
-		event_id = unquote(prev_event.at(0));
-		opts.event_id = event_id;
-	}
-
 	if(!opts.remote)
 		opts.remote = room_id.host();
+
+	if(!opts.event_id)
+	{
+		thread_local m::event::id::buf event_id
+		{
+			fetch_head(room_id, opts.remote)
+		};
+
+		opts.event_id = event_id;
+	}
 
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
@@ -909,4 +873,59 @@ ircd::m::v1::version::version(const mutable_buffer &buf,
 	};
 }()}
 {
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// v1/v1.h
+//
+
+ircd::m::event::id::buf
+ircd::m::v1::fetch_head(const id::room &room_id,
+                        const net::hostport &remote)
+{
+	return fetch_head(room_id, remote, m::me.user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::v1::fetch_head(const id::room &room_id,
+                        const net::hostport &remote,
+                        const id::user &user_id)
+{
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	make_join::opts opts;
+	opts.remote = remote;
+	make_join request
+	{
+		room_id, user_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(10)); //TODO: conf
+	request.get();
+
+	const json::object proto
+	{
+		request.in.content
+	};
+
+	const json::array prev_events
+	{
+		proto.at({"event", "prev_events"})
+	};
+
+	const json::array prev_event
+	{
+		prev_events.at(0)
+	};
+
+	const auto &prev_event_id
+	{
+		prev_event.at(0)
+	};
+
+	return unquote(prev_event_id);
 }

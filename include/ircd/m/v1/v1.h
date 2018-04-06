@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_V1_H
 
+namespace ircd::m::v1
+{
+	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote, const id::user &);
+	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote);
+}
+
 #include "version.h"
 #include "query.h"
 #include "user.h"
