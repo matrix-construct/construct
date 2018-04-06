@@ -10,57 +10,49 @@
 
 #include <ircd/m/m.h>
 
-uint64_t
+int64_t
 ircd::m::depth(const id::room &room_id)
 {
-	uint64_t depth;
-	head(room_id, depth);
-	return depth;
+	return std::get<0>(top(room_id));
 }
 
 int64_t
 ircd::m::depth(std::nothrow_t,
                const id::room &room_id)
 {
-	int64_t depth;
-	head(std::nothrow, room_id, depth);
-	return depth;
+	return std::get<0>(top(std::nothrow, room_id));
 }
 
 ircd::m::id::event::buf
 ircd::m::head(const id::room &room_id)
 {
-	uint64_t depth;
-	return head(room_id, depth);
+	return std::get<1>(top(room_id));
 }
 
 ircd::m::id::event::buf
 ircd::m::head(std::nothrow_t,
               const id::room &room_id)
 {
-	int64_t depth;
-	return head(std::nothrow, room_id, depth);
+	return std::get<1>(top(std::nothrow, room_id));
 }
 
-ircd::m::id::event::buf
-ircd::m::head(const id::room &room_id,
-              uint64_t &depth)
+std::tuple<int64_t, ircd::m::id::event::buf>
+ircd::m::top(const id::room &room_id)
 {
 	const auto ret
 	{
-		head(std::nothrow, room_id, reinterpret_cast<int64_t &>(depth))
+		top(std::nothrow, room_id)
 	};
 
-	if(depth == uint64_t(-1))
+	if(std::get<0>(ret) == -1)
 		throw m::NOT_FOUND{};
 
 	return ret;
 }
 
-ircd::m::id::event::buf
-ircd::m::head(std::nothrow_t,
-              const id::room &room_id,
-              int64_t &depth)
+std::tuple<int64_t, ircd::m::id::event::buf>
+ircd::m::top(std::nothrow_t,
+             const id::room &room_id)
 {
 	const auto it
 	{
@@ -68,10 +60,10 @@ ircd::m::head(std::nothrow_t,
 	};
 
 	if(!it)
-	{
-		depth = -1;
-		return {};
-	}
+		return
+		{
+			-1, id::event::buf{}
+		};
 
 	const auto &key{it->first};
 	const auto part
@@ -79,8 +71,12 @@ ircd::m::head(std::nothrow_t,
 		dbs::room_events_key(key)
 	};
 
-	depth = std::get<0>(part);
-	return std::get<1>(part);
+	const auto &depth{std::get<0>(part)};
+	const auto &event_id{std::get<1>(part)};
+	return
+	{
+		depth, event_id
+	};
 }
 
 bool

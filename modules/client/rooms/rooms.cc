@@ -202,10 +202,8 @@ commit__iov_iov(const room &room,
 	};
 
 	int64_t depth;
-	const event::id::buf prev_event_id
-	{
-		head(std::nothrow, room.room_id, depth)
-	};
+	event::id::buf prev_event_id;
+	std::tie(depth, prev_event_id) = m::top(std::nothrow, room.room_id);
 
 	//TODO: X
 	const json::iov::set_if depth_

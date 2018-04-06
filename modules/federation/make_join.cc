@@ -61,11 +61,9 @@ get__make_join(client &client,
 		url::decode(request.parv[1], user_id)
 	};
 
-	uint64_t depth;
-	const m::event::id::buf prev_event_id
-	{
-		m::head(room_id, depth)
-	};
+	int64_t depth;
+	m::id::event::buf prev_event_id;
+	std::tie(depth, prev_event_id) = m::top(room_id);
 
 	const m::event::fetch evf
 	{
@@ -124,7 +122,7 @@ get__make_join(client &client,
 		{ event,    { "type",              "m.room.member"           }},
 		{ event,    { "state_key",         user_id                   }},
 		{ event,    { "sender",            user_id                   }},
-		{ event,    { "depth",             int64_t(depth) + 1        }},
+		{ event,    { "depth",             depth + 1                 }},
 		{ event,    { "membership",        "join"                    }},
 		{ content,  { "membership",        "join"                    }},
 		{ event,    { "auth_events",       { auths, 1 }              }},

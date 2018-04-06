@@ -29,16 +29,21 @@ namespace ircd::m
 	bool exists(const id::room &);
 	bool exists(const id::room_alias &, const bool &remote = false);
 
+	// [GET]
 	id::room room_id(const mutable_buffer &, const id::room_alias &);
 	id::room::buf room_id(const id::room_alias &);
 
-	// [GET] Current Event suite (non-locking) (one)
-	id::event::buf head(std::nothrow_t, const id::room &, int64_t &);
-	id::event::buf head(const id::room &, uint64_t &);
+	// [GET] Current Event ID and depth suite (non-locking) (one only)
+	std::tuple<int64_t, id::event::buf> top(std::nothrow_t, const id::room &);
+	std::tuple<int64_t, id::event::buf> top(const id::room &);
+
+	// [GET] Current Event ID (non-locking) (one only)
 	id::event::buf head(std::nothrow_t, const id::room &);
 	id::event::buf head(const id::room &);
+
+	// [GET] Current Event depth (non-locking) (one only)
 	int64_t depth(std::nothrow_t, const id::room &);
-	uint64_t depth(const id::room &);
+	int64_t depth(const id::room &);
 
 	// [SET] Lowest-level
 	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
