@@ -270,10 +270,13 @@ view(stringstream &ss,
 	assert(size_t(ss.tellp()) <= size(buf));
 	ss.flush();
 	ss.rdbuf()->pubsync();
-	return
+	const string_view ret
 	{
 		data(buf), size_t(ss.tellp())
 	};
+
+	assert(size(ret) <= size(buf));
+	return ret;
 }
 
 //
