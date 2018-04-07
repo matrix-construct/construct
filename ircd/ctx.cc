@@ -499,7 +499,11 @@ noexcept
 	assert(bool(*this));
 	//assert(!std::uncaught_exceptions());
 	__cxa_end_catch();
-	assert(!std::current_exception());
+
+	// We don't yet support more levels of exceptions; after ending this
+	// catch we can't still be in another one. This doesn't apply if we're
+	// not on any ctx currently.
+	assert(!current || !std::current_exception());
 }
 
 //
