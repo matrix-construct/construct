@@ -2102,6 +2102,93 @@ console_cmd__fed__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__send(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote", "event_id",
+	}};
+
+	const net::hostport remote
+	{
+		param.at(0)
+	};
+
+	const m::event::id &event_id
+	{
+		param.at(2)
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	thread_local char pdubuf[64_KiB];
+	const json::value pdu
+	{
+		json::stringify(mutable_buffer{pdubuf}, event)
+	};
+
+	const vector_view<const json::value> pdus
+	{
+		&pdu, &pdu + 1
+	};
+
+	const auto txn
+	{
+		m::txn::create(pdus)
+	};
+
+	thread_local char idbuf[128];
+	const auto txnid
+	{
+		m::txn::create_id(idbuf, txn)
+	};
+
+	const unique_buffer<mutable_buffer> bufs
+	{
+		16_KiB
+	};
+
+	m::v1::send::opts opts;
+	opts.remote = remote;
+	m::v1::send request
+	{
+		txnid, const_buffer{txn}, bufs, std::move(opts)
+	};
+
+	request.wait(seconds(30));
+
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object response
+	{
+		request
+	};
+
+	const m::v1::send::response resp
+	{
+		response
+	};
+
+	resp.for_each_pdu([&]
+	(const m::event::id &event_id, const json::object &error)
+	{
+		out << remote << " ->" << txnid << " " << event_id << " ";
+		if(empty(error))
+			out << http::status(code) << std::endl;
+		else
+			out << string_view{error} << std::endl;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__fed__sync(opt &out, const string_view &line)
 {
 	const params param{line, " ",
