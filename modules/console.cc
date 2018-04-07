@@ -1449,9 +1449,9 @@ console_cmd__exec__file(opt &out, const string_view &line)
 bool
 console_cmd__room__head(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const m::room room
@@ -1466,9 +1466,9 @@ console_cmd__room__head(opt &out, const string_view &line)
 bool
 console_cmd__room__depth(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const m::room room
@@ -1483,9 +1483,9 @@ console_cmd__room__depth(opt &out, const string_view &line)
 bool
 console_cmd__room__members(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const string_view membership
@@ -1519,9 +1519,9 @@ console_cmd__room__members(opt &out, const string_view &line)
 bool
 console_cmd__room__origins(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const m::room room
@@ -1546,9 +1546,9 @@ console_cmd__room__origins(opt &out, const string_view &line)
 bool
 console_cmd__room__state(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const auto &event_id
@@ -1577,9 +1577,9 @@ console_cmd__room__state(opt &out, const string_view &line)
 bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const string_view &type
@@ -1608,9 +1608,9 @@ console_cmd__room__count(opt &out, const string_view &line)
 bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const int64_t depth
@@ -1641,9 +1641,9 @@ console_cmd__room__messages(opt &out, const string_view &line)
 bool
 console_cmd__room__get(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const string_view type
@@ -1680,7 +1680,7 @@ console_cmd__room__set(opt &out, const string_view &line)
 		}
 	};
 
-	const m::room::id room_id
+	const auto &room_id
 	{
 		param.at(0)
 	};
@@ -1722,9 +1722,9 @@ console_cmd__room__set(opt &out, const string_view &line)
 bool
 console_cmd__room__message(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const m::user::id &sender
@@ -1754,9 +1754,9 @@ console_cmd__room__message(opt &out, const string_view &line)
 bool
 console_cmd__room__redact(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const m::event::id &redacts
@@ -1876,9 +1876,9 @@ console_cmd__room__id(opt &out, const string_view &id)
 bool
 console_cmd__room__purge(opt &out, const string_view &line)
 {
-	const m::room::id room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	return true;
