@@ -48,6 +48,9 @@ _m_presence_eval
 void
 handle_edu_m_presence(const m::event &event)
 {
+	if(m::my_host(at<"origin"_>(event)))
+		return;
+
 	const json::object &content
 	{
 		at<"content"_>(event)
