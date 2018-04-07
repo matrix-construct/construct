@@ -1825,8 +1825,9 @@ noexcept
 	assert(tag.request == &request);
 
 	// Disassociate the user's request and add our dummy request in its place.
+	disassociate(request, tag);
 
-	request.tag = nullptr;
+	assert(tag.request == nullptr);
 	tag.request = new server::request{};
 	tag.request->tag = &tag;
 
@@ -1989,6 +1990,7 @@ ircd::server::disassociate(request &request,
 {
 	assert(request.tag == &tag);
 	assert(tag.request == &request);
+	assert(tag.abandoned());
 
 	request.tag = nullptr;
 	tag.request = nullptr;
@@ -2353,8 +2355,9 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 
 	if(state.content_read == size(content) + content_overflow())
 	{
-		done = true;
 		assert(state.content_read == state.content_length);
+		assert(!done);
+		done = true;
 		set_value(state.status);
 	}
 
@@ -2501,6 +2504,7 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 
 		if(state.chunk_length == 2)
 		{
+			assert(!done);
 			done = true;
 			req.in.content = mutable_buffer{data(req.in.content), state.content_length};
 			set_value(state.status);
@@ -2751,7 +2755,6 @@ ircd::server::tag::set_value(args&&... a)
 		return;
 	}
 
-	assert(p.valid());
 	p.set_value(code);
 }
 
@@ -2771,7 +2774,6 @@ ircd::server::tag::set_exception(std::exception_ptr eptr)
 	if(abandoned())
 		return;
 
-	assert(p.valid());
 	p.set_exception(std::move(eptr));
 }
 
