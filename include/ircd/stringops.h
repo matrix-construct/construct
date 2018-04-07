@@ -264,7 +264,7 @@ inline bool
 ircd::startswith(const string_view &str,
                  const char &val)
 {
-	return !str.empty() && str[0] == val;
+	return !str.empty() && str.front() == val;
 }
 
 /// Test if a string starts with a string
@@ -302,7 +302,7 @@ inline bool
 ircd::endswith(const string_view &str,
                const char &val)
 {
-	return !str.empty() && str[str.size()-1] == val;
+	return !str.empty() && str.back() == val;
 }
 
 /// Test if a string ends with a string
