@@ -126,5 +126,58 @@ handle_m_receipt_m_read(const m::room::id &room_id,
                         const m::user::id &user_id,
                         const m::event::id &event_id,
                         const time_t &ts)
+try
 {
+	const m::user user
+	{
+		user_id
+	};
+
+	if(!exists(user))
+	{
+		log::dwarning
+		{
+			"ignoring m.receipt m.read for unknown %s in %s for %s",
+			string_view{user_id},
+			string_view{room_id},
+			string_view{event_id}
+		};
+
+		return;
+	}
+
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const auto evid
+	{
+		send(user_room, user_id, "m.read", room_id,
+		{
+			{ "event_id", event_id },
+			{ "ts",       ts       }
+		})
+	};
+
+	log::info
+	{
+		"%s read by %s in %s @ %zd => %s",
+		string_view{event_id},
+		string_view{user_id},
+		string_view{room_id},
+		ts,
+		string_view{evid}
+	};
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		"failed to save m.receipt m.read for %s in %s for %s :%s",
+		string_view{user_id},
+		string_view{room_id},
+		string_view{event_id},
+		e.what()
+	};
 }
