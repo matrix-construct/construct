@@ -2563,6 +2563,11 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		token(line, ' ', 1, event_id.host())
 	};
 
+	const string_view op
+	{
+		token(line, ' ', 2, {})
+	};
+
 	m::v1::event::opts opts;
 	opts.remote = remote;
 	const unique_buffer<mutable_buffer> buf
@@ -2604,6 +2609,25 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	if(!conforms.clean())
 		out << "- " << conforms << std::endl;
 
+	if(has(op, "raw"))
+		out << string_view{response} << std::endl;
+
+	if(!has(op, "eval"))
+		return true;
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.head_must_exist = false;
+	vmopts.history = false;
+	vmopts.notify = false;
+	m::vm::eval eval
+	{
+		vmopts
+	};
+
+	eval(event);
 	return true;
 }
 
