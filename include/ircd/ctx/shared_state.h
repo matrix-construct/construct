@@ -98,6 +98,7 @@ ircd::ctx::notify(shared_state<T> &st)
 
 	if(!current)
 	{
+		assert(bool(st.then));
 		st.cond.notify_all();
 		st.then(st);
 		return;
@@ -105,6 +106,7 @@ ircd::ctx::notify(shared_state<T> &st)
 
 	ircd::post([&st]
 	{
+		assert(bool(st.then));
 		st.cond.notify_all();
 		st.then(st);
 	});
@@ -179,6 +181,8 @@ ircd::ctx::state(const shared_state<T> &st)
 		case 0x00:       return future_state::INVALID;
 		case 0x42:       return future_state::READY;
 		case 0x123:      return future_state::RETRIEVED;
-		default:         return future_state::PENDING;
+		default:
+			assert(uintptr_t(st.p) >= 0x1000);
+			return future_state::PENDING;
 	}
 }
