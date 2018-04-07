@@ -367,6 +367,7 @@ void
 ircd::server::peer::close(const net::close_opts &opts)
 {
 	op_fini = true;
+	assert(!op_resolve);
 	std::vector<link *> links(this->links.size());
 	pointers(this->links, links);
 	for(const auto &link : links)
@@ -577,7 +578,10 @@ ircd::server::peer::link_add(const size_t &num)
 	assert(!finished());
 
 	if(e)
+	{
 		std::rethrow_exception(e->eptr);
+		__builtin_unreachable();
+	}
 
 	assert(!op_fini);
 	links.emplace_back(*this);
@@ -856,12 +860,14 @@ ircd::server::peer::handle_resolve(std::exception_ptr eptr,
                                    const ipport &ipport)
 try
 {
+	assert(op_resolve);
 	op_resolve = false;
 
 	if(eptr)
 	{
 		err_set(eptr);
 		std::rethrow_exception(eptr);
+		__builtin_unreachable();
 	}
 
 	this->remote = ipport;
