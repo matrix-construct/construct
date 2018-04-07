@@ -296,18 +296,16 @@ ircd::server::cancel(request &request)
 	          tag.state.content_read);
 */
 
+	tag.set_exception(canceled
+	{
+		"Request canceled"
+	});
+
 	// We got off easy... The link's write loop won't start an abandoned
 	// request. All that has to be done is indicate a full cancellation
 	// immediately and the user will know nothing was revealed to the remote.
 	if(!tag.committed())
-	{
-		tag.set_exception(canceled
-		{
-			"Request canceled"
-		});
-
 		return true;
-	}
 
 	// Now things aren't so easy. More complicated logic happens inside...
 	cancel(request, tag);
