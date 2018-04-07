@@ -33,6 +33,7 @@ struct opt
 {
 	std::ostream &out;
 	bool html {false};
+	seconds timeout {30};
 
 	operator std::ostream &()
 	{
@@ -1161,7 +1162,7 @@ console_cmd__event__fetch(opt &out, const string_view &line)
 		event_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
@@ -2036,7 +2037,7 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 		node, vector_view<const m::user::id>(ids, count), buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object response
@@ -2079,7 +2080,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		room_id, m::me.user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(5));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object proto
@@ -2158,7 +2159,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		txnid, const_buffer{txn}, bufs, std::move(opts)
 	};
 
-	request.wait(seconds(30));
+	request.wait(out.timeout);
 
 	const auto code
 	{
@@ -2218,7 +2219,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 
 	const auto timeout
 	{
-		param.at(4, seconds(30))
+		param.at(4, out.timeout)
 	};
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
@@ -2356,7 +2357,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		room_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(30));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object &response
@@ -2440,7 +2441,7 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 		room_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(30));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object &response
@@ -2511,7 +2512,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		room_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object &response
@@ -2580,7 +2581,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		event_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	request.get();
 
 	const json::object &response
@@ -2653,7 +2654,7 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 		user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
@@ -2690,7 +2691,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 		room_alias, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
@@ -2731,7 +2732,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(15));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
@@ -2790,7 +2791,7 @@ console_cmd__fed__query__client_keys(opt &out, const string_view &line)
 		user_id, device_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
@@ -2822,7 +2823,7 @@ console_cmd__fed__version(opt &out, const string_view &line)
 		buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
+	request.wait(out.timeout);
 	const auto code
 	{
 		request.get()
