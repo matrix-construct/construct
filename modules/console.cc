@@ -2056,9 +2056,9 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		"room_id", "remote", "user_id"
 	}};
 
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		param.at(0)
+		m::room_id(param.at(0))
 	};
 
 	const net::hostport remote
@@ -2196,9 +2196,9 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 		"room_id", "remote", "limit", "event_id", "timeout"
 	}};
 
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		param.at(0)
+		m::room_id(param.at(0))
 	};
 
 	const net::hostport remote
@@ -2322,9 +2322,9 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		"room_id", "remote", "event_id|op", "op"
 	}};
 
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		param.at(0)
+		m::room_id(param.at(0))
 	};
 
 	const net::hostport remote
@@ -2413,9 +2413,9 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 		"room_id", "remote", "event_id"
 	}};
 
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		param.at(0)
+		m::room_id(param.at(0))
 	};
 
 	const net::hostport remote
@@ -2469,9 +2469,9 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 bool
 console_cmd__fed__backfill(opt &out, const string_view &line)
 {
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		token(line, ' ', 0)
+		m::room_id(token(line, ' ', 0))
 	};
 
 	const net::hostport remote
