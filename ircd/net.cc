@@ -2679,16 +2679,17 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 	//TODO: retry
 	log.error("DNS timeout id:%u", id);
 
-	const error_code ec
-	{
-		boost::system::errc::timed_out, boost::system::system_category()
-	};
-
-	if(tag.cb)
+	// Callback gets a fresh stack off this timeout worker ctx's stack.
+	if(tag.cb) ircd::post([cb(std::move(tag.cb))]
 	{
 		using boost::system::system_error;
-		tag.cb(std::make_exception_ptr(system_error{ec}), {});
-	}
+		const error_code ec
+		{
+			boost::system::errc::timed_out, boost::system::system_category()
+		};
+
+		cb(std::make_exception_ptr(system_error{ec}), {});
+	});
 
 	return false;
 }
