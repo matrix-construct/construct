@@ -301,6 +301,11 @@ handle_line_bymodule(const string_view &line)
 		case 0:
 		case 1:
 		{
+			// For this scope we have to suppress again because there's some
+			// yielding business going on below where log messages can break
+			// into the command output.
+			const log::console_quiet quiet{false};
+
 			const auto str
 			{
 				out.str()
