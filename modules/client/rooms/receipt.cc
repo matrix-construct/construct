@@ -18,6 +18,11 @@ commit__m_receipt_m_read(const m::room::id &,
                          const m::event::id &,
                          const time_t &);
 
+extern "C" bool
+exists__m_receipt_m_read(const m::room::id &,
+                         const m::user::id &,
+                         const m::event::id &);
+
 resource::response
 post__receipt(client &client,
               const resource::request &request,
@@ -57,6 +62,9 @@ commit__m_receipt_m_read(const m::room::id &room_id,
                          const m::event::id &event_id,
                          const time_t &ms)
 {
+	if(exists__m_receipt_m_read(room_id, user_id, event_id))
+		return {};
+
 	const json::value event_ids[]
 	{
 		{ event_id }
@@ -94,4 +102,29 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 	opts.conforming = false;
 
 	return m::vm::commit(event, content, opts);
+}
+
+bool
+exists__m_receipt_m_read(const m::room::id &room_id,
+                         const m::user::id &user_id,
+                         const m::event::id &event_id)
+{
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	bool ret{false};
+	user_room.get(std::nothrow, "m.read", room_id, [&ret, &event_id]
+	(const m::event &event)
+	{
+		const auto &content
+		{
+			at<"content"_>(event)
+		};
+
+		ret = unquote(content.get("event_id")) == event_id;
+	});
+
+	return ret;
 }
