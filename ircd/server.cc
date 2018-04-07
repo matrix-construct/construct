@@ -104,12 +104,12 @@ ircd::server::create(const net::hostport &hostport)
 {
 	auto peer(std::make_unique<peer>());
 	peer->hostname = net::canonize(hostport);
-	peer->resolve(hostport);
 	peer->open_opts = net::open_opts
 	{
 		peer->remote, net::hostport{peer->hostname}
 	};
 
+	peer->resolve(hostport);
 	return peer;
 }
 
@@ -872,13 +872,18 @@ try
 
 	this->remote = ipport;
 	open_opts.ipport = this->remote;
+	host(open_opts.hostport) = this->hostname;
+	port(open_opts.hostport) = port(ipport);
+	open_opts.common_name = this->hostname;
 
 	if(unlikely(finished()))
 		return handle_finished();
 
-	if(!op_fini)
-		for(auto &link : links)
-			link.open(this->open_opts);
+	if(op_fini)
+		return;
+
+	for(auto &link : links)
+		link.open(open_opts);
 }
 catch(const std::exception &e)
 {
