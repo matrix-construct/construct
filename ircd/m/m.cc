@@ -1486,8 +1486,71 @@ ircd::m::exists(const id::room_alias &room_alias,
 // m/txn.h
 //
 
+/// Returns the serial size of the JSON this txn would consume. Note: this
+/// creates a json::iov involving a timestamp to figure out the total size
+/// of the txn. When the user creates the actual txn a different timestamp
+/// is created which may be a different size. Consider using the lower-level
+/// create(closure) or add some pad to be sure.
+///
+size_t
+ircd::m::txn::serialized(const array &pdu,
+                         const array &edu,
+                         const array &pdu_failure)
+{
+	size_t ret;
+	const auto closure{[&ret]
+	(const json::iov &iov)
+	{
+		ret = json::serialized(iov);
+	}};
+
+	create(closure, pdu, edu, pdu_failure);
+	return ret;
+}
+
+/// Stringifies a txn from the inputs into the returned std::string
+///
 std::string
 ircd::m::txn::create(const array &pdu,
+                     const array &edu,
+                     const array &pdu_failure)
+{
+	std::string ret;
+	const auto closure{[&ret]
+	(const json::iov &iov)
+	{
+		ret = json::strung(iov);
+	}};
+
+	create(closure, pdu, edu, pdu_failure);
+	return ret;
+}
+
+/// Stringifies a txn from the inputs into the buffer
+///
+ircd::string_view
+ircd::m::txn::create(const mutable_buffer &buf,
+                     const array &pdu,
+                     const array &edu,
+                     const array &pdu_failure)
+{
+	string_view ret;
+	const auto closure{[&buf, &ret]
+	(const json::iov &iov)
+	{
+		ret = json::stringify(mutable_buffer{buf}, iov);
+	}};
+
+	create(closure, pdu, edu, pdu_failure);
+	return ret;
+}
+
+/// Forms a txn from the inputs into a json::iov and presents that iov
+/// to the user's closure.
+///
+void
+ircd::m::txn::create(const closure &closure,
+                     const array &pdu,
                      const array &edu,
                      const array &pdu_failure)
 {
@@ -1524,10 +1587,7 @@ ircd::m::txn::create(const array &pdu,
 		}
 	};
 
-	return json::strung
-	{
-		iov
-	};
+	closure(iov);
 }
 
 ircd::string_view

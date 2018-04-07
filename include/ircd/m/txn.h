@@ -29,8 +29,14 @@ struct ircd::m::txn
 >
 {
 	using array = vector_view<const json::value>;
+	using closure = std::function<void (json::iov &)>;
+
 	static string_view create_id(const mutable_buffer &out, const string_view &txn);
-	static std::string create(const array &pdu, const array &edu, const array &pdu_failure = {});
+
+	static void create(const closure &, const array &pdu, const array &edu = {}, const array &pdu_failure = {});
+	static string_view create(const mutable_buffer &, const array &pdu, const array &edu = {}, const array &pdu_failure = {});
+	static std::string create(const array &pdu, const array &edu = {}, const array &pdu_failure = {});
+	static size_t serialized(const array &pdu, const array &edu = {}, const array &pdu_failure = {});
 
 	using super_type::tuple;
 	using super_type::operator=;
