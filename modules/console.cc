@@ -2116,7 +2116,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 
 	const m::event::id &event_id
 	{
-		param.at(2)
+		param.at(1)
 	};
 
 	const m::event::fetch event
@@ -2303,6 +2303,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	vmopts.history = false;
 	vmopts.notify = false;
 	vmopts.debuglog_accept = true;
+	vmopts.nothrows = -1;
 	m::vm::eval eval
 	{
 		vmopts
@@ -2564,8 +2565,11 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::v1::event::opts opts;
 	opts.remote = remote;
+	const unique_buffer<mutable_buffer> buf
+	{
+		96_KiB
+	};
 
-	thread_local char buf[8_KiB];
 	m::v1::event request
 	{
 		event_id, buf, std::move(opts)
