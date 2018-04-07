@@ -1902,6 +1902,7 @@ ircd::m::hook::site::del(hook &hook)
 				return map.erase(pit.first);
 
 		assert(0);
+		return end(map);
 	}};
 
 	if(json::get<"origin"_>(hook.matching))
