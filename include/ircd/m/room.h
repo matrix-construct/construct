@@ -31,7 +31,9 @@ namespace ircd::m
 
 	// [GET]
 	id::room room_id(const mutable_buffer &, const id::room_alias &);
+	id::room room_id(const mutable_buffer &, const string_view &id_or_alias);
 	id::room::buf room_id(const id::room_alias &);
+	id::room::buf room_id(const string_view &id_or_alias);
 
 	// [GET] Current Event ID and depth suite (non-locking) (one only)
 	std::tuple<int64_t, id::event::buf> top(std::nothrow_t, const id::room &);

@@ -1432,6 +1432,27 @@ ircd::m::room_id(const id::room_alias &room_alias)
 	return room_id(buf, room_alias);
 }
 
+ircd::m::id::room::buf
+ircd::m::room_id(const string_view &room_id_or_alias)
+{
+	char buf[256];
+	return room_id(buf, room_id_or_alias);
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const string_view &room_id_or_alias)
+{
+	switch(m::sigil(room_id_or_alias))
+	{
+		case id::ROOM:
+			return id::room{out, room_id_or_alias};
+
+		default:
+			return room_id(out, id::room_alias{room_id_or_alias});
+	}
+}
+
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const id::room_alias &room_alias)
