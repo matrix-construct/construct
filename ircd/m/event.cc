@@ -351,6 +351,8 @@ ircd::m::pretty(const event &event)
 		for(const auto &hash : json::object{prev_state[1]})
 			s << " " << unquote(hash.first)
 			  << ": " << unquote(hash.second);
+
+		s << std::endl;
 	}
 
 	const auto &prev_events{json::get<"prev_events"_>(event)};
@@ -391,10 +393,10 @@ ircd::m::pretty_oneline(const event &event,
 	{
 		"origin",
 		"event_id",
-		"room_id",
 		"sender",
 	};
 
+	s << json::get<"room_id"_>(event) << " ";
 	s << json::get<"depth"_>(event) << " :";
 	json::for_each(event, top_keys, out);
 
