@@ -291,25 +291,34 @@ handle_line_bymodule(const string_view &line)
 		*console_module, "console_command"
 	};
 
-	thread_local char buf[32_KiB];
-	std::ostringstream ss;
-	pubsetbuf(ss, buf);
+	std::ostringstream out;
+	out.exceptions(out.badbit | out.failbit | out.eofbit);
+
 	int ret;
 	static const string_view opts;
-	switch((ret = command(ss, line, opts)))
+	switch((ret = command(out, line, opts)))
 	{
 		case 0:
 		case 1:
 		{
-			const string_view out
+			const auto str
 			{
-				view(ss, buf)
+				out.str()
 			};
 
-			std::cout << out;
-			if(endswith(out, '\n'))
-				std::flush(std::cout);
-			else
+			static const size_t mlen(2048);
+			for(size_t off(0); off < str.size(); off += mlen)
+			{
+				const string_view substr
+				{
+					str.data() + off, std::min(str.size() - off, mlen)
+				};
+
+				std::cout << substr << std::flush;
+				ctx::sleep(milliseconds(25));
+			}
+
+			if(!endswith(str, '\n'))
 				std::cout << std::endl;
 
 			return ret;
@@ -321,7 +330,7 @@ handle_line_bymodule(const string_view &line)
 		// we use this code to translate it.
 		case -2: throw bad_command
 		{
-			"%s", view(ss, buf)
+			"%s", out.str()
 		};
 
 		// Command isn't handled by the module; continue handling here

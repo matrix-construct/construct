@@ -179,18 +179,17 @@ noexcept try
 		*console_module, "console_command"
 	};
 
-	const unique_buffer<mutable_buffer> buf{32_KiB};
 	std::ostringstream out;
-	pubsetbuf(out, buf);
+	out.exceptions(out.badbit | out.failbit | out.eofbit);
 
 	out << "<pre>";
 	static const string_view opts{"html"};
 	command(out, body, opts);
 	out << "</pre>";
 
-	const auto str //TODO: X
+	const auto str
 	{
-		replace(view(out, buf), '\n', "<br />")
+		replace(out.str().substr(0, 48_KiB), '\n', "<br />")
 	};
 
 	const string_view alt //TODO: X
