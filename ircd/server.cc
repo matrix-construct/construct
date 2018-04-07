@@ -476,10 +476,12 @@ try
 }
 catch(const std::exception &e)
 {
-	if(request.tag)
-		request.tag->set_exception(std::current_exception());
-	else
+	if(!request.tag)
 		throw;
+
+	const auto eptr(std::current_exception());
+	const ctx::exception_handler eh;
+	request.tag->set_exception(eptr);
 }
 
 /// Dispatch algorithm here; finds the best link to place this request on,
