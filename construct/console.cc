@@ -345,7 +345,10 @@ void
 check_console_active()
 {
 	if(console_active)
-		throw ircd::error("Console is already active and cannot be reentered");
+		throw ircd::error
+		{
+			"Console is already active and cannot be reentered"
+		};
 }
 
 void

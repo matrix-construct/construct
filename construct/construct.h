@@ -18,6 +18,7 @@ extern std::unique_ptr<boost::asio::io_service> ios;
 // console.cc
 //
 
+extern bool console_active;
 void console_spawn();
 void console_execute(const std::vector<std::string> &lines);
 void console_cancel();

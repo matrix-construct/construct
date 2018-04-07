@@ -334,8 +334,11 @@ bool
 handle_interruption()
 try
 {
-	console_cancel();
-	console_spawn();
+	if(console_active)
+		console_cancel();
+	else
+		console_spawn();
+
 	return true;
 }
 catch(const std::exception &e)
