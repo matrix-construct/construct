@@ -1423,6 +1423,7 @@ noexcept
 void
 ircd::crh::sha256::update(const const_buffer &buf)
 {
+	assert(bool(ctx));
 	openssl::call(::SHA256_Update, ctx.get(), data(buf), size(buf));
 }
 
@@ -1430,6 +1431,7 @@ void
 ircd::crh::sha256::digest(const mutable_buffer &buf)
 const
 {
+	assert(bool(ctx));
 	auto copy(*ctx);
 	crh::finalize(&copy, buf);
 }
@@ -1437,6 +1439,7 @@ const
 void
 ircd::crh::sha256::finalize(const mutable_buffer &buf)
 {
+	assert(bool(ctx));
 	crh::finalize(ctx.get(), buf);
 }
 
@@ -1451,6 +1454,7 @@ void
 ircd::crh::finalize(struct sha256::ctx *const &ctx,
                     const mutable_buffer &buf)
 {
+	assert(size(buf) >= sha256::digest_size);
 	uint8_t *const md
 	{
 		reinterpret_cast<uint8_t *>(data(buf))
@@ -1513,6 +1517,7 @@ noexcept
 void
 ircd::crh::ripemd160::update(const const_buffer &buf)
 {
+	assert(bool(ctx));
 	openssl::call(::RIPEMD160_Update, ctx.get(), data(buf), size(buf));
 }
 
@@ -1528,6 +1533,7 @@ const
 void
 ircd::crh::ripemd160::finalize(const mutable_buffer &buf)
 {
+	assert(bool(ctx));
 	crh::finalize(ctx.get(), buf);
 }
 
@@ -1542,6 +1548,7 @@ void
 ircd::crh::finalize(struct ripemd160::ctx *const &ctx,
                     const mutable_buffer &buf)
 {
+	assert(size(buf) >= ripemd160::digest_size);
 	uint8_t *const md
 	{
 		reinterpret_cast<uint8_t *>(data(buf))
