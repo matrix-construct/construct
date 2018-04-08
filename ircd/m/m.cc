@@ -992,9 +992,9 @@ ircd::m::user::room_id(const mutable_buffer &buf)
 const
 {
 	assert(!empty(user_id));
-	const sha256::buf hash
+	const ripemd160::buf hash
 	{
-		sha256{user_id}
+		ripemd160{user_id}
 	};
 
 	char b58[size(hash) * 2];
