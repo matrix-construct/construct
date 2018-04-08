@@ -27,3 +27,9 @@ ircd::crh::hash::operator()(const mutable_buffer &out,
 	update(in);
 	finalize(out);
 }
+
+void
+ircd::crh::hash::finalize(const mutable_buffer &b)
+{
+	digest(b);
+}

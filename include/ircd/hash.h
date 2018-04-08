@@ -59,10 +59,7 @@ struct ircd::crh::hash
 	virtual void digest(const mutable_buffer &) const = 0;
 
 	/// Samples the digest and modifies the state (depending on impl)
-	virtual void finalize(const mutable_buffer &b)
-	{
-		digest(b);
-	}
+	virtual void finalize(const mutable_buffer &b);
 
 	/// Appends to the message
 	virtual void update(const const_buffer &) = 0;
