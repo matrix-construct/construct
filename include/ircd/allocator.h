@@ -407,7 +407,10 @@ ircd::allocator::state::deallocate(const uint &pos,
                                    const size_type &n)
 {
 	for(size_t i(0); i < n; ++i)
+	{
+		assert(test(pos + i));
 		btc(pos + i);
+	}
 
 	last = pos;
 }
@@ -421,7 +424,10 @@ ircd::allocator::state::allocate(const size_type &n,
 		throw std::bad_alloc();
 
 	for(size_t i(0); i < n; ++i)
+	{
+		assert(!test(next + i));
 		bts(next + i);
+	}
 
 	last = next + n;
 	return next;
