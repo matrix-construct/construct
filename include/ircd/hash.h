@@ -98,8 +98,8 @@ final
 	void finalize(const mutable_buffer &) override;
 	void update(const const_buffer &) override;
 
-	sha256(const mutable_buffer &, const const_buffer &);
-	sha256(const const_buffer &);
+	sha256(const mutable_buffer &, const const_buffer &); // note: finalizes
+	sha256(const const_buffer &); // note: finalizes
 	sha256();
 	~sha256() noexcept;
 };
@@ -127,8 +127,8 @@ final
 	void finalize(const mutable_buffer &) override;
 	void update(const const_buffer &) override;
 
-	ripemd160(const mutable_buffer &, const const_buffer &);
-	ripemd160(const const_buffer &);
+	ripemd160(const mutable_buffer &, const const_buffer &); // note: finalizes
+	ripemd160(const const_buffer &); // note: finalizes
 	ripemd160();
 	~ripemd160() noexcept;
 };

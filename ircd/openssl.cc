@@ -1407,11 +1407,19 @@ ircd::crh::sha256::sha256(const const_buffer &in)
 	update(in);
 }
 
-/// One-shot functor. Immediately calls operator().
+/// One-shot functor. Immediately calls operator(). NOTE: This hashing context
+/// cannot be used again after this ctor. Dynamic allocation of the hashing
+/// context is also avoided.
 ircd::crh::sha256::sha256(const mutable_buffer &out,
                           const const_buffer &in)
-:sha256{}
 {
+	struct ctx ctx;
+	this->ctx.reset(&ctx);
+	const unwind release{[this]
+	{
+		this->ctx.release();
+	}};
+
 	operator()(out, in);
 }
 
@@ -1501,11 +1509,19 @@ ircd::crh::ripemd160::ripemd160(const const_buffer &in)
 	update(in);
 }
 
-/// One-shot functor. Immediately calls operator().
+/// One-shot functor. Immediately calls operator(). NOTE: This hashing context
+/// cannot be used again after this ctor. Dynamic allocation of the hashing
+/// context is also avoided.
 ircd::crh::ripemd160::ripemd160(const mutable_buffer &out,
                                 const const_buffer &in)
-:ripemd160{}
 {
+	struct ctx ctx;
+	this->ctx.reset(&ctx);
+	const unwind release{[this]
+	{
+		this->ctx.release();
+	}};
+
 	operator()(out, in);
 }
 
