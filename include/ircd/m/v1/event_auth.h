@@ -21,9 +21,10 @@ struct ircd::m::v1::event_auth
 {
 	struct opts;
 
-	explicit operator json::object() const
+	explicit operator json::array() const
 	{
-		return json::object{in.content};
+		const json::object object{in.content};
+		return object.at("auth_chain");
 	}
 
 	event_auth(const m::room::id &, const m::event::id &, const mutable_buffer &, opts);

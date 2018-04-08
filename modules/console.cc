@@ -2686,12 +2686,14 @@ console_cmd__fed__event_auth(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::array &auth_chain
 	{
 		request
 	};
 
-	out << string_view{response} << std::endl;
+	for(const json::object &event : auth_chain)
+		out << pretty_oneline(m::event{event}) << std::endl;
+
 	return true;
 }
 
