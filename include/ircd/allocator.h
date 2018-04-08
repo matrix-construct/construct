@@ -51,8 +51,9 @@ struct ircd::allocator::state
 	bool test(const uint &pos) const             { return avail[byte(pos)] & mask(pos);            }
 	void bts(const uint &pos)                    { avail[byte(pos)] |= mask(pos);                  }
 	void btc(const uint &pos)                    { avail[byte(pos)] &= ~mask(pos);                 }
-
 	uint next(const size_t &n) const;
+
+  public:
 	void deallocate(const uint &p, const size_t &n);
 	uint allocate(const size_t &n, const uint &hint = -1);
 
@@ -407,6 +408,8 @@ ircd::allocator::state::deallocate(const uint &pos,
 {
 	for(size_t i(0); i < n; ++i)
 		btc(pos + i);
+
+	last = pos;
 }
 
 inline uint
