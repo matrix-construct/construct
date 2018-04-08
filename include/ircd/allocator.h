@@ -128,7 +128,7 @@ struct ircd::allocator::fixed<T, size>::allocator
 	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const uint hintpos(hint? hint - s->buf.data() : -1);
-		return s->buf.data() + s->state::allocate(n, hint);
+		return s->buf.data() + s->state::allocate(n, hintpos);
 	}
 
 	void deallocate(const pointer &p, const size_type &n)
