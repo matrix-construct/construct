@@ -141,6 +141,82 @@ ircd::m::v1::send::send(const string_view &txnid,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/public_rooms.h
+//
+
+ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
+                                        const mutable_buffer &buf)
+:public_rooms
+{
+	remote, buf, opts{}
+}
+{
+}
+
+ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
+                                        const mutable_buffer &buf,
+                                        opts opts)
+:server::request{[&]
+{
+	if(!opts.remote)
+		opts.remote = remote;
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+	{
+		thread_local char urlbuf[3072], query[2048], since[1024], tpid[1024];
+		std::stringstream qss;
+		pubsetbuf(qss, query);
+
+		if(opts.since)
+			qss << "&since="
+			    << url::encode(opts.since, since);
+
+		if(opts.third_party_instance_id)
+			qss << "&third_party_instance_id="
+			    << url::encode(opts.third_party_instance_id, tpid);
+
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			urlbuf, "/_matrix/federation/v1/publicRooms?limit=%zu%s%s",
+			opts.limit,
+			opts.include_all_networks? "&include_all_networks=true" : "",
+			view(qss, query)
+		};
+	}
+
+	json::get<"method"_>(opts.request) = "GET";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/backfill.h
 //
 

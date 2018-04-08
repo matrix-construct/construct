@@ -27,5 +27,6 @@ namespace ircd::m::v1
 #include "event_auth.h"
 #include "state.h"
 #include "backfill.h"
+#include "public_rooms.h"
 #include "send.h"
 #include "groups.h"
