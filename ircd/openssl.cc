@@ -1381,9 +1381,42 @@ namespace ircd::crh
 struct ircd::crh::sha256::ctx
 :SHA256_CTX
 {
+	static constexpr const size_t &MAX_CTXS {64};
+	static thread_local allocator::fixed<ctx, MAX_CTXS> ctxs;
+
+	static void *operator new(const size_t count);
+	static void operator delete(void *const ptr, const size_t count);
+
 	ctx();
 	~ctx() noexcept;
 };
+
+decltype(ircd::crh::sha256::ctx::ctxs)
+thread_local ircd::crh::sha256::ctx::ctxs
+{};
+
+void *
+ircd::crh::sha256::ctx::operator new(const size_t bytes)
+{
+	assert(bytes > 0);
+	assert(bytes % sizeof(ctx) == 0);
+	return ctxs().allocate(bytes / sizeof(ctx));
+}
+
+void
+ircd::crh::sha256::ctx::operator delete(void *const ptr,
+                                        const size_t bytes)
+{
+	if(!ptr)
+		return;
+
+	assert(bytes % sizeof(ctx) == 0);
+	ctxs().deallocate(reinterpret_cast<ctx *>(ptr), bytes / sizeof(ctx));
+}
+
+//
+// sha256::ctx::ctx
+//
 
 ircd::crh::sha256::ctx::ctx()
 {
@@ -1394,6 +1427,10 @@ ircd::crh::sha256::ctx::~ctx()
 noexcept
 {
 }
+
+//
+// sha256::sha256
+//
 
 ircd::crh::sha256::sha256()
 :ctx{std::make_unique<struct ctx>()}
@@ -1408,18 +1445,11 @@ ircd::crh::sha256::sha256(const const_buffer &in)
 }
 
 /// One-shot functor. Immediately calls operator(). NOTE: This hashing context
-/// cannot be used again after this ctor. Dynamic allocation of the hashing
-/// context is also avoided.
+/// cannot be used again after this ctor.
 ircd::crh::sha256::sha256(const mutable_buffer &out,
                           const const_buffer &in)
+:sha256{}
 {
-	struct ctx ctx;
-	this->ctx.reset(&ctx);
-	const unwind release{[this]
-	{
-		this->ctx.release();
-	}};
-
 	operator()(out, in);
 }
 
@@ -1483,9 +1513,42 @@ namespace ircd::crh
 struct ircd::crh::ripemd160::ctx
 :RIPEMD160_CTX
 {
+	static constexpr const size_t &MAX_CTXS {64};
+	static thread_local allocator::fixed<ctx, MAX_CTXS> ctxs;
+
+	static void *operator new(const size_t count);
+	static void operator delete(void *const ptr, const size_t count);
+
 	ctx();
 	~ctx() noexcept;
 };
+
+decltype(ircd::crh::ripemd160::ctx::ctxs)
+thread_local ircd::crh::ripemd160::ctx::ctxs
+{};
+
+void *
+ircd::crh::ripemd160::ctx::operator new(const size_t bytes)
+{
+	assert(bytes > 0);
+	assert(bytes % sizeof(ctx) == 0);
+	return ctxs().allocate(bytes / sizeof(ctx));
+}
+
+void
+ircd::crh::ripemd160::ctx::operator delete(void *const ptr,
+                                           const size_t bytes)
+{
+	if(!ptr)
+		return;
+
+	assert(bytes % sizeof(ctx) == 0);
+	ctxs().deallocate(reinterpret_cast<ctx *>(ptr), bytes / sizeof(ctx));
+}
+
+//
+// ripemd160::ctx::ctx
+//
 
 ircd::crh::ripemd160::ctx::ctx()
 {
@@ -1496,6 +1559,10 @@ ircd::crh::ripemd160::ctx::~ctx()
 noexcept
 {
 }
+
+//
+// ripemd160::ripemd160
+//
 
 ircd::crh::ripemd160::ripemd160()
 :ctx{std::make_unique<struct ctx>()}
@@ -1510,18 +1577,11 @@ ircd::crh::ripemd160::ripemd160(const const_buffer &in)
 }
 
 /// One-shot functor. Immediately calls operator(). NOTE: This hashing context
-/// cannot be used again after this ctor. Dynamic allocation of the hashing
-/// context is also avoided.
+/// cannot be used again after this ctor.
 ircd::crh::ripemd160::ripemd160(const mutable_buffer &out,
                                 const const_buffer &in)
+:ripemd160{}
 {
-	struct ctx ctx;
-	this->ctx.reset(&ctx);
-	const unwind release{[this]
-	{
-		this->ctx.release();
-	}};
-
 	operator()(out, in);
 }
 
