@@ -2691,8 +2691,16 @@ console_cmd__fed__event_auth(opt &out, const string_view &line)
 		request
 	};
 
-	for(const json::object &event : auth_chain)
-		out << pretty_oneline(m::event{event}) << std::endl;
+	std::vector<m::event> events(size(auth_chain));
+	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
+	(const json::object &event) -> m::event
+	{
+		return event;
+	});
+
+	std::sort(begin(events), end(events));
+	for(const auto &event : events)
+		out << pretty_oneline(event) << std::endl;
 
 	return true;
 }
