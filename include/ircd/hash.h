@@ -36,6 +36,7 @@ namespace ircd::crh
 
 	struct hash;
 	struct sha256;
+	struct ripemd160;
 }
 
 // Export aliases down to ircd::
@@ -43,6 +44,7 @@ namespace ircd
 {
 	using crh::hash;
 	using crh::sha256;
+	using crh::ripemd160;
 }
 
 /// Abstract interface to a hashing context for any algorithm in ircd::crh
@@ -103,6 +105,35 @@ final
 	sha256(const const_buffer &);
 	sha256();
 	~sha256() noexcept;
+};
+
+/// RIPEMD160 hashing device.
+struct ircd::crh::ripemd160
+final
+:hash
+{
+	struct ctx;
+
+	static constexpr const size_t digest_size
+	{
+		160 / 8
+	};
+
+	using buf = fixed_const_buffer<digest_size>;
+
+  protected:
+	std::unique_ptr<ctx> ctx;
+
+  public:
+	size_t length() const override;
+	void digest(const mutable_buffer &) const override;
+	void finalize(const mutable_buffer &) override;
+	void update(const const_buffer &) override;
+
+	ripemd160(const mutable_buffer &, const const_buffer &);
+	ripemd160(const const_buffer &);
+	ripemd160();
+	~ripemd160() noexcept;
 };
 
 /// Automatic gratification from hash::digest()

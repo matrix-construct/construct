@@ -15,6 +15,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
+#include <openssl/ripemd.h>
 
 namespace ircd::openssl
 {
@@ -1368,6 +1369,10 @@ ircd::openssl::init::~init()
 // hash.h
 //
 
+//
+// sha256
+//
+
 namespace ircd::crh
 {
 	static void finalize(struct sha256::ctx *const &, const mutable_buffer &);
@@ -1452,6 +1457,97 @@ ircd::crh::finalize(struct sha256::ctx *const &ctx,
 	};
 
 	openssl::call(::SHA256_Final, md, ctx);
+}
+
+//
+// ripemd160
+//
+
+namespace ircd::crh
+{
+	static void finalize(struct ripemd160::ctx *const &, const mutable_buffer &);
+}
+
+struct ircd::crh::ripemd160::ctx
+:RIPEMD160_CTX
+{
+	ctx();
+	~ctx() noexcept;
+};
+
+ircd::crh::ripemd160::ctx::ctx()
+{
+	openssl::call(::RIPEMD160_Init, this);
+}
+
+ircd::crh::ripemd160::ctx::~ctx()
+noexcept
+{
+}
+
+ircd::crh::ripemd160::ripemd160()
+:ctx{std::make_unique<struct ctx>()}
+{
+}
+
+/// One-shot functor. Immediately calls update(); no output
+ircd::crh::ripemd160::ripemd160(const const_buffer &in)
+:ripemd160{}
+{
+	update(in);
+}
+
+/// One-shot functor. Immediately calls operator().
+ircd::crh::ripemd160::ripemd160(const mutable_buffer &out,
+                                const const_buffer &in)
+:ripemd160{}
+{
+	operator()(out, in);
+}
+
+ircd::crh::ripemd160::~ripemd160()
+noexcept
+{
+}
+
+void
+ircd::crh::ripemd160::update(const const_buffer &buf)
+{
+	openssl::call(::RIPEMD160_Update, ctx.get(), data(buf), size(buf));
+}
+
+void
+ircd::crh::ripemd160::digest(const mutable_buffer &buf)
+const
+{
+	assert(bool(ctx));
+	auto copy(*ctx);
+	crh::finalize(&copy, buf);
+}
+
+void
+ircd::crh::ripemd160::finalize(const mutable_buffer &buf)
+{
+	crh::finalize(ctx.get(), buf);
+}
+
+size_t
+ircd::crh::ripemd160::length()
+const
+{
+	return digest_size;
+}
+
+void
+ircd::crh::finalize(struct ripemd160::ctx *const &ctx,
+                    const mutable_buffer &buf)
+{
+	uint8_t *const md
+	{
+		reinterpret_cast<uint8_t *>(data(buf))
+	};
+
+	openssl::call(::RIPEMD160_Final, md, ctx);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
