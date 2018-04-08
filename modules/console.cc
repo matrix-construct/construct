@@ -1642,29 +1642,45 @@ console_cmd__room__messages(opt &out, const string_view &line)
 bool
 console_cmd__room__get(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "type", "state_key", "args"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
 	const string_view type
 	{
-		token(line, ' ', 1)
+		param.at(1)
 	};
 
 	const string_view state_key
 	{
-		token(line, ' ', 2)
+		param.at(2)
 	};
 
-	const m::room room
+	const string_view arg
+	{
+		param[3]
+	};
+
+	const m::room::state room
 	{
 		room_id
 	};
 
-	room.get(type, state_key, [&out](const m::event &event)
+	room.get(type, state_key, [&out, &arg]
+	(const m::event &event)
 	{
-		out << pretty(event) << std::endl;
+		if(has(arg, "raw"))
+			out << event << std::endl;
+		else if(has(arg, "content"))
+			out << json::get<"content"_>(event) << std::endl;
+		else
+			out << pretty(event) << std::endl;
 	});
 
 	return true;
