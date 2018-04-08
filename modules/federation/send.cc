@@ -37,6 +37,7 @@ handle_edu(client &client,
 	json::get<"origin_server_ts"_>(event) = at<"origin_server_ts"_>(request);
 	json::get<"content"_>(event) = at<"content"_>(edu);
 	json::get<"type"_>(event) = at<"edu_type"_>(edu);
+	json::get<"depth"_>(event) = std::numeric_limits<int64_t>::max(); // custom undefined
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
