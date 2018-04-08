@@ -320,7 +320,7 @@ handle_line_bymodule(const string_view &line)
 				};
 
 				std::cout << substr << std::flush;
-				ctx::sleep(milliseconds(25));
+				ctx::sleep(milliseconds(50));
 			}
 
 			if(!endswith(str, '\n'))
