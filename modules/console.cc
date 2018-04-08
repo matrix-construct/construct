@@ -2061,7 +2061,7 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 		request.in.content
 	};
 
-	std::cout << string_view{response} << std::endl;
+	out << string_view{response} << std::endl;
 	return true;
 }
 
@@ -2691,7 +2691,7 @@ console_cmd__fed__event_auth(opt &out, const string_view &line)
 		request
 	};
 
-	std::cout << string_view{response} << std::endl;
+	out << string_view{response} << std::endl;
 	return true;
 }
 
