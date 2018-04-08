@@ -285,6 +285,72 @@ ircd::m::v1::state::state(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/event_auth.h
+//
+
+ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
+                                    const m::event::id &event_id,
+                                    const mutable_buffer &buf)
+:event_auth
+{
+	room_id, event_id, buf, opts{}
+}
+{
+}
+
+ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
+                                    const m::event::id &event_id,
+                                    const mutable_buffer &buf,
+                                    opts opts)
+:server::request{[&]
+{
+	if(!opts.remote)
+		opts.remote = event_id.host();
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+	{
+		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			urlbuf, "/_matrix/federation/v1/event_auth/%s/%s",
+			url::encode(room_id, ridbuf),
+			url::encode(event_id, eidbuf),
+		};
+	}
+
+	json::get<"method"_>(opts.request) = "GET";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/event.h
 //
 

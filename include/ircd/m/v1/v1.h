@@ -24,6 +24,7 @@ namespace ircd::m::v1
 #include "send_join.h"
 #include "invite.h"
 #include "event.h"
+#include "event_auth.h"
 #include "state.h"
 #include "backfill.h"
 #include "send.h"
