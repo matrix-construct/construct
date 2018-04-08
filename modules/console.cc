@@ -2649,6 +2649,84 @@ console_cmd__fed__event(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__public_rooms(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote", "limit", "all_networks", "3pid"
+	}};
+
+	const net::hostport remote
+	{
+		param.at(0)
+	};
+
+	const auto limit
+	{
+		param.at(1, 32)
+	};
+
+	const auto all_nets
+	{
+		param.at(2, false)
+	};
+
+	const auto tpid
+	{
+		param[3]
+	};
+
+	m::v1::public_rooms::opts opts;
+	opts.limit = limit;
+	opts.third_party_instance_id = tpid;
+	opts.include_all_networks = all_nets;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::public_rooms request
+	{
+		remote, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::object &response
+	{
+		request
+	};
+
+	const auto total_estimate
+	{
+		response.get<size_t>("total_room_count_estimate")
+	};
+
+	const auto next_batch
+	{
+		unquote(response.get("next_batch"))
+	};
+
+	const json::array &rooms
+	{
+		response.get("chunk")
+	};
+
+	for(const json::object &summary : rooms)
+	{
+		for(const auto &member : summary)
+			out << std::setw(24) << member.first << " => " << member.second << std::endl;
+
+		out << std::endl;
+	}
+
+	out << "total: " << total_estimate << std::endl;
+	out << "next: " << next_batch << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__event_auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
