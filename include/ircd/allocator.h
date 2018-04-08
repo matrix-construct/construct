@@ -80,9 +80,10 @@ struct ircd::allocator::fixed
 :state
 {
 	struct allocator;
+	using value = std::aligned_storage<sizeof(T), alignof(T)>;
 
-	std::array<word_t, max / 8> avail            {{ 0                                             }};
-	std::array<T, max> buf alignas(16);
+	std::array<word_t, max / 8> avail {{0}};
+	std::array<typename value::type, max> buf;
 
   public:
 	allocator operator()();
@@ -127,14 +128,15 @@ struct ircd::allocator::fixed<T, size>::allocator
 
 	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
-		const uint hintpos(hint? hint - s->buf.data() : -1);
-		return s->buf.data() + s->state::allocate(n, hintpos);
+		const auto base(reinterpret_cast<pointer>(s->buf.data()));
+		const uint hintpos(hint? hint - base : -1);
+		return base + s->state::allocate(n, hintpos);
 	}
 
 	void deallocate(const pointer &p, const size_type &n)
 	{
-		const uint pos(p - s->buf.data());
-		s->state::deallocate(pos, n);
+		const auto base(reinterpret_cast<pointer>(s->buf.data()));
+		s->state::deallocate(p - base, n);
 	}
 
 	template<class U, size_t S>
