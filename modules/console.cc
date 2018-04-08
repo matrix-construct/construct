@@ -2633,6 +2633,53 @@ console_cmd__fed__event(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__event_auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id", "remote"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id &event_id
+	{
+		param.at(1)
+	};
+
+	const net::hostport remote
+	{
+		param.at(2, event_id.host())
+	};
+
+	m::v1::event_auth::opts opts;
+	opts.remote = remote;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::event_auth request
+	{
+		room_id, event_id, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::object &response
+	{
+		request
+	};
+
+	std::cout << string_view{response} << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__query__profile(opt &out, const string_view &line)
 {
 	const m::user::id &user_id
