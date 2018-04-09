@@ -5,7 +5,12 @@ if [ -z $LINKAGE ]; then
 	LINKAGE="shared_lib"
 fi
 
-JOBS=$2
+BRANCH=$2
+if [ -z $BRANCH ]; then
+	BRANCH="master"
+fi
+
+JOBS=$3
 if [ -z $JOBS ]; then
 	JOBS=4
 fi
@@ -47,6 +52,6 @@ USERDIR=$PWD            # Save current dir and return to it later
 run git submodule update --init deps/rocksdb
 
 run cd deps/rocksdb
-run git checkout v5.5.3
+run git checkout $BRANCH
 CFLAGS=-fPIC run make -j$JOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
