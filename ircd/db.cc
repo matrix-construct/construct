@@ -367,6 +367,9 @@ try
 	opts.create_if_missing = true;
 	opts.create_missing_column_families = true;
 	opts.max_file_opening_threads = 0;
+	//opts.allow_concurrent_memtable_write = true;
+	//opts.enable_write_thread_adaptive_yield = false;
+	//opts.max_background_jobs = 1;
 	//opts.use_fsync = true;
 
 	// Setup env
@@ -388,6 +391,7 @@ try
 	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
 	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
 	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
 
 	// Setup cache
 	opts.row_cache = this->cache;
@@ -411,6 +415,7 @@ try
 		return static_cast<const rocksdb::ColumnFamilyDescriptor &>(*column);
 	});
 
+	// NOTE: rocksdb sez RepairDB is broken; can't use now
 	if(fsck && fs::is_dir(path))
 	{
 		log.notice("Checking database @ `%s' columns[%zu]",
