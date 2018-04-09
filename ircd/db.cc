@@ -3819,55 +3819,24 @@ ircd::db::has(column &column,
 	// Perform queries which are stymied from any sysentry
 	opts.read_tier = NON_BLOCKING;
 
-	#ifdef RB_DEBUG
-	ircd::timer timer;
-	#endif
-
 	// Perform a co-RP query to the filtration
 	thread_local std::string discard;
-	const bool may_exist
+	bool ret
 	{
 		d.d->KeyMayExist(opts, c, k, &discard, nullptr)
 	};
 
-	if(!may_exist)
-		return false;
-
-	// Perform a query to the cache
-	auto status(d.d->Get(opts, c, k, &discard));
-	if(status.IsIncomplete())
+	if(ret)
 	{
-		// DB cache miss; next query requires I/O, offload it
-		opts.read_tier = BLOCKING;
-		ctx::offload([&d, &c, &k, &opts, &status]
+		const auto it
 		{
-			status = d.d->Get(opts, c, k, &discard);
-		});
+			seek(column, key, gopts)
+		};
+
+		ret = valid_eq(*it, key);
 	}
 
-	#ifdef RB_DEBUG
-	log.debug("'%s' %lu:%lu '%s' HAS key(%zu B) %s%s in %ld$us",
-	          name(d),
-	          sequence(d),
-	          sequence(opts.snapshot),
-	          name(c),
-	          key.size(),
-	          status.ok()? "YES"s : "NO"s,
-	          opts.read_tier == BLOCKING? " CACHE MISS"s : ""s,
-	          timer.at<microseconds>().count());
-	#endif
-
-	// Finally the result
-	switch(status.code())
-	{
-		using rocksdb::Status;
-
-		case Status::kOk:          return true;
-		case Status::kNotFound:    return false;
-		default:
-			throw_on_error(status);
-			__builtin_unreachable();
-	}
+	return ret;
 }
 
 //
