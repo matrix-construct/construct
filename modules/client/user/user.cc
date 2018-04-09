@@ -42,6 +42,12 @@ get_user(client &client, const resource::request &request)
 		url::decode(request.parv[0], user_id)
 	};
 
+	if(request.user_id != user_id)
+		throw m::UNSUPPORTED
+		{
+			"Getting user data as someone else is not yet supported"
+		};
+
 	const string_view &cmd
 	{
 		request.parv[1]
@@ -82,6 +88,12 @@ post_user(client &client, resource::request &request)
 		url::decode(request.parv[0], user_id)
 	};
 
+	if(request.user_id != user_id)
+		throw m::UNSUPPORTED
+		{
+			"Posting user data as someone else is not yet supported"
+		};
+
 	const string_view &cmd
 	{
 		request.parv[1]
@@ -121,6 +133,12 @@ put_user(client &client, const resource::request &request)
 	{
 		url::decode(request.parv[0], user_id)
 	};
+
+	if(request.user_id != user_id)
+		throw m::UNSUPPORTED
+		{
+			"Putting user data as someone else is not yet supported"
+		};
 
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
