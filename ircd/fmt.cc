@@ -274,7 +274,8 @@ try
 	auto it(begin(v));
 	for(size_t i(0); i < v.size(); ++it, i++)
 	{
-		assert(!finished());
+		assert(!finished()); // You passed too many arguments for your format string
+
 		const auto &ptr(get<0>(*it));
 		const auto &type(get<1>(*it));
 		argument(std::make_tuple(ptr, std::type_index(*type)));
