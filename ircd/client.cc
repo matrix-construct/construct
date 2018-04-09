@@ -440,7 +440,7 @@ ircd::handle_ec_timeout(client &client)
 try
 {
 	assert(bool(client.sock));
-	log::dwarning
+	log::debug
 	{
 		"socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
 		client.sock.get(),
