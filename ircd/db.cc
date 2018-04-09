@@ -413,9 +413,9 @@ try
 
 	if(fsck && fs::is_dir(path))
 	{
-		log.info("Checking database @ `%s' columns[%zu]",
-		         path,
-		         columns.size());
+		log.notice("Checking database @ `%s' columns[%zu]",
+		           path,
+		           columns.size());
 
 		throw_on_error
 		{
@@ -423,8 +423,7 @@ try
 		};
 
 		log.info("Database @ `%s' check complete",
-		         path,
-		         columns.size());
+		         path);
 	}
 
 	// If the directory does not exist, though rocksdb will create it, we can
