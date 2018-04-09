@@ -84,6 +84,7 @@ struct ircd::db::database::env final
 	Status GetThreadList(std::vector<ThreadStatus>* thread_list) noexcept override;
 	ThreadStatusUpdater* GetThreadStatusUpdater() const noexcept override;
 	uint64_t GetThreadID() const noexcept override;
+	int GetBackgroundThreads(Priority pri) noexcept override;
 
 	env(database *const &d);
 	~env() noexcept;

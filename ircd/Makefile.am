@@ -38,7 +38,7 @@ AM_LDFLAGS = \
 	-Wl,--icf=all \
 	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS) \
-	# -Wl,--no-undefined \
+	-Wl,--no-undefined \
 	###
 
 libircd_LTLIBRARIES = libircd.la

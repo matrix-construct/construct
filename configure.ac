@@ -847,7 +847,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 		AC_MSG_RESULT([yes])
 		rocksdb_linkage="shared_lib"
 		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
-		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb/"
+		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
 		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 	else
 		AC_MSG_RESULT([no])
@@ -857,7 +857,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 		AC_SUBST(ROCKSDB_LIBS, ["$PWD/deps/rocksdb/librocksdb.a"])
 	fi
 
-	bash tools/buildrocks.sh $rocksdb_linkage
+	bash tools/buildrocks.sh $rocksdb_linkage "v5.12.2"
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build RocksDB])

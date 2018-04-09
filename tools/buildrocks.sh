@@ -10,11 +10,6 @@ if [ -z $BRANCH ]; then
 	BRANCH="master"
 fi
 
-JOBS=$3
-if [ -z $JOBS ]; then
-	JOBS=4
-fi
-
 run ()
 {
 	COMMAND=$1
@@ -53,5 +48,5 @@ run git submodule update --init deps/rocksdb
 
 run cd deps/rocksdb
 run git checkout $BRANCH
-CFLAGS=-fPIC run make -j$JOBS $LINKAGE
+CFLAGS="-fPIC -frtti -DROCKSDB_USE_RTTI" run make -j4 $LINKAGE
 run cd $USERDIR         # Return to user's original directory

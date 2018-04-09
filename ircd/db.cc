@@ -1085,8 +1085,14 @@ catch(const std::exception &e)
 void
 ircd::db::log_rdb_perf_context(const bool &all)
 {
+	const auto pc
+	{
+		rocksdb::get_perf_context()
+	};
+
+	assert(pc);
 	const bool exclude_zeros(!all);
-	log.debug("%s", rocksdb::perf_context.ToString(exclude_zeros));
+	log.debug("%s", pc->ToString(exclude_zeros));
 }
 
 uint64_t
@@ -1738,6 +1744,13 @@ ircd::db::database::env::GetThreadID()
 const noexcept
 {
 	return defaults.GetThreadID();
+}
+
+int
+ircd::db::database::env::GetBackgroundThreads(Priority pri)
+noexcept
+{
+	return defaults.GetBackgroundThreads(pri);
 }
 
 //
@@ -3670,7 +3683,7 @@ ircd::db::prop_map
 ircd::db::property(const column &column,
                    const string_view &name)
 {
-	std::map<std::string, double> ret;
+	std::map<std::string, std::string> ret;
 	database::column &c(const_cast<db::column &>(column));
 	database &d(const_cast<db::column &>(column));
 	d.d->GetMapProperty(c, slice(name), &ret);
@@ -5191,6 +5204,7 @@ ircd::db::reflect(const rocksdb::Env::Priority &p)
 {
 	switch(p)
 	{
+		case rocksdb::Env::Priority::BOTTOM:  return "BOTTOM"_sv;
 		case rocksdb::Env::Priority::LOW:     return "LOW"_sv;
 		case rocksdb::Env::Priority::HIGH:    return "HIGH"_sv;
 		case rocksdb::Env::Priority::TOTAL:   return "TOTAL"_sv;

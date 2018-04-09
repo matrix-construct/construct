@@ -24,7 +24,7 @@ namespace ircd::db
 	// Property information interface
 	using prop_int = uint64_t;
 	using prop_str = std::string;
-	using prop_map = std::map<std::string, double>;
+	using prop_map = std::map<std::string, std::string>;
 	template<class R = prop_int> R property(const database &, const string_view &name);
 	template<> prop_int property(const database &, const string_view &name);
 
