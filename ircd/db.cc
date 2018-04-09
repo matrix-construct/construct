@@ -686,8 +686,9 @@ ircd::db::database::comparator::Equal(const Slice &a,
                                       const Slice &b)
 const noexcept
 {
-	assert(bool(user.equal));
-	return user.equal(slice(a), slice(b));
+	return user.equal?
+		user.equal(slice(a), slice(b)):
+		Compare(a, b) == 0;
 }
 
 int
