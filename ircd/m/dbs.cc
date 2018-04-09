@@ -50,10 +50,11 @@ ircd::m::dbs::room_state
 /// Initializes the m::dbs subsystem; sets up the events database. Held/called
 /// by m::init. Most of the extern variables in m::dbs are not ready until
 /// this call completes.
-ircd::m::dbs::init::init()
+ircd::m::dbs::init::init(std::string dbopts)
 {
 	// Open the events database
-	events = std::make_shared<database>("events"s, ""s, desc::events);
+	static const auto dbname{"events"};
+	events = std::make_shared<database>(dbname, std::move(dbopts), desc::events);
 
 	// Cache the columns for the event tuple in order for constant time lookup
 	assert(event_columns == event::size());

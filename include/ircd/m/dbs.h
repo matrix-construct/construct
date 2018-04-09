@@ -100,6 +100,6 @@ namespace ircd::m::dbs::desc
 
 struct ircd::m::dbs::init
 {
-	init();
+	init(std::string dbopts = {});
 	~init() noexcept;
 };
