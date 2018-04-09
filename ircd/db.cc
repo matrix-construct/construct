@@ -3806,11 +3806,10 @@ ircd::db::has(column &column,
 	#endif
 
 	// Perform a co-RP query to the filtration
-	static thread_local std::string discard;
-	bool value{false};
+	thread_local std::string discard;
 	const bool may_exist
 	{
-		d.d->KeyMayExist(opts, c, k, &discard, &value)
+		d.d->KeyMayExist(opts, c, k, &discard, nullptr)
 	};
 
 	if(!may_exist)
