@@ -33,7 +33,12 @@ post__filter(ircd::client &,
 ircd::resource::response
 put__account_data(ircd::client &client,
                   const ircd::resource::request &request,
-                  const ircd::m::user::id &user_id);
+                  const ircd::m::user &user);
+
+ircd::resource::response
+get__account_data(ircd::client &client,
+                  const ircd::resource::request &request,
+                  const ircd::m::user &user);
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -1059,6 +1059,65 @@ const
 }
 
 ircd::m::event::id::buf
+ircd::m::user::account_data(const m::user &sender,
+                            const string_view &type,
+                            const json::object &val)
+{
+	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const json::object &);
+
+	static import<prototype> function
+	{
+		"client_user", "account_data_set"
+	};
+
+	return function(*this, sender, type, val);
+}
+
+ircd::json::object
+ircd::m::user::account_data(const mutable_buffer &out,
+                            const string_view &type)
+const
+{
+	json::object ret;
+	account_data(std::nothrow, type, [&out, &ret]
+	(const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::user::account_data(std::nothrow_t,
+                            const string_view &type,
+                            const account_data_closure &closure)
+const try
+{
+	account_data(type, closure);
+	return true;
+}
+catch(const std::exception &e)
+{
+	return false;
+}
+
+void
+ircd::m::user::account_data(const string_view &type,
+                            const account_data_closure &closure)
+const
+{
+	using prototype = void (const m::user &, const string_view &, const account_data_closure &);
+
+	static import<prototype> function
+	{
+		"client_user", "account_data_get"
+	};
+
+	return function(*this, type, closure);
+}
+
+ircd::m::event::id::buf
 ircd::m::user::profile(const m::user &sender,
                        const string_view &key,
                        const string_view &val)
