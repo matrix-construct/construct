@@ -457,12 +457,12 @@ ircd::m::dbs::desc::events__room_events__pfx
 
 	[](const string_view &key)
 	{
-		return key.find("\0"_sv) != key.npos;
+		return has(key, "\0"_sv);
 	},
 
 	[](const string_view &key)
 	{
-		return rsplit(key, "\0"_sv).first;
+		return split(key, "\0"_sv).first;
 	}
 };
 
@@ -489,6 +489,15 @@ ircd::m::dbs::desc::events__room_events__cmp
 			pt.get(a),
 			pt.get(b),
 		};
+
+		const size_t sizes[2]
+		{
+			size(pre[0]),
+			size(pre[1])
+		};
+
+		if(sizes[0] != sizes[1])
+			return sizes[0] < sizes[1];
 
 		if(pre[0] != pre[1])
 			return pre[0] < pre[1];
@@ -523,12 +532,6 @@ ircd::m::dbs::desc::events__room_events__cmp
 		// Highest to lowest sort so highest is first
 		return depth[1] < depth[0];
 	},
-
-	// equal
-	[](const string_view &a, const string_view &b)
-	{
-		return a == b;
-	}
 };
 
 ircd::string_view
@@ -647,12 +650,12 @@ ircd::m::dbs::desc::events__room_origins__pfx
 
 	[](const string_view &key)
 	{
-		return key.find("\0"_sv) != key.npos;
+		return has(key, "\0"_sv);
 	},
 
 	[](const string_view &key)
 	{
-		return rsplit(key, "\0"_sv).first;
+		return split(key, "\0"_sv).first;
 	}
 };
 
@@ -747,8 +750,9 @@ ircd::m::dbs::desc::events__room_state__pfx
 	"_room_state",
 	[](const string_view &key)
 	{
-		return key.find("\0"_sv) != key.npos;
+		return has(key, "\0"_sv);
 	},
+
 	[](const string_view &key)
 	{
 		return split(key, "\0"_sv).first;
