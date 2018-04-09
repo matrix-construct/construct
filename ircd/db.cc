@@ -314,7 +314,7 @@ try
 	// describe all of the columns found in the database at path.
 	const auto opts
 	{
-		make_dbopts(std::string(this->optstr))
+		make_dbopts(this->optstr)
 	};
 
 	const auto required
@@ -360,7 +360,7 @@ try
 	bool read_only{false};
 	auto opts
 	{
-		make_dbopts(this->optstr, &read_only, &fsck)
+		make_dbopts(this->optstr, &this->optstr, &read_only, &fsck)
 	};
 
 	// Setup sundry
@@ -4862,17 +4862,9 @@ const
 // Misc
 //
 
-template<class... args>
 rocksdb::DBOptions
-ircd::db::make_dbopts(const std::string &optstr,
-                      args&&... a)
-{
-	std::string _optstr(optstr);
-	return make_dbopts(_optstr, std::forward<args>(a)...);
-}
-
-rocksdb::DBOptions
-ircd::db::make_dbopts(std::string &optstr,
+ircd::db::make_dbopts(std::string optstr,
+                      std::string *const &out,
                       bool *const read_only,
                       bool *const fsck)
 {
@@ -4880,17 +4872,24 @@ ircd::db::make_dbopts(std::string &optstr,
 	// to open the database as read_only and then remove that from the string.
 	if(read_only)
 		*read_only = optstr_find_and_remove(optstr, "read_only=true;"s);
+	else
+		optstr_find_and_remove(optstr, "read_only=true;"s);
 
 	// We also allow the user to specify fsck=true to run a repair operation on
 	// the db. This may be expensive to do by default every startup.
 	if(fsck)
 		*fsck = optstr_find_and_remove(optstr, "fsck=true;"s);
+	else
+		optstr_find_and_remove(optstr, "fsck=true;"s);
 
 	// Generate RocksDB options from string
 	rocksdb::DBOptions opts
 	{
 		database::options(optstr)
 	};
+
+	if(out)
+		*out = std::move(optstr);
 
 	return opts;
 }
