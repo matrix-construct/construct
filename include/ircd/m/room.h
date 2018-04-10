@@ -103,6 +103,8 @@ struct ircd::m::room
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
+	using closure = std::function<void (const room &)>;
+	using closure_bool = std::function<bool (const room &)>;
 
 	id room_id;
 	event::id event_id;
