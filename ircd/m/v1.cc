@@ -973,6 +973,13 @@ ircd::m::v1::version::version(const mutable_buffer &buf,
 // v1/v1.h
 //
 
+ircd::conf::item<ircd::milliseconds>
+fetch_head_timeout
+{
+	{ "name",     "ircd.m.v1.fetch_head.timeout" },
+	{ "default",  30 * 1000L                     },
+};
+
 ircd::m::event::id::buf
 ircd::m::v1::fetch_head(const id::room &room_id,
                         const net::hostport &remote)
@@ -997,7 +1004,7 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 		room_id, user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10)); //TODO: conf
+	request.wait(milliseconds(fetch_head_timeout));
 	request.get();
 
 	const json::object proto
