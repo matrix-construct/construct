@@ -53,9 +53,7 @@ struct ircd::json::stack
 	object *co {nullptr};              ///< The root object instance.
 	array *ca {nullptr};               ///< Could be union with top_object but
 
-	template<class gen, class... attr> bool printer(gen&&, attr&&...);
-	template<class gen> bool printer(gen&&);
-	bool append(const window_buffer::closure &);
+	bool append(const size_t &expect, const window_buffer::closure &);
 	bool append(const string_view &);
 
   public:
@@ -189,7 +187,7 @@ ircd::json::stack::member::append(const json::tuple<T...> &t)
 		_post_append();
 	}};
 
-	s->append([this, &t](mutable_buffer buf)
+	s->append(serialized(t), [this, &t](mutable_buffer buf)
 	{
 		return size(stringify(buf, t));
 	});
@@ -205,7 +203,7 @@ ircd::json::stack::array::append(const json::tuple<T...> &t)
 		_post_append();
 	}};
 
-	s->append([&t](mutable_buffer buf)
+	s->append(serialized(t), [&t](mutable_buffer buf)
 	{
 		return size(stringify(buf, t));
 	});

@@ -442,14 +442,15 @@ noexcept
 bool
 ircd::json::stack::append(const string_view &s)
 {
-	return append([&s](const mutable_buffer &buf)
+	return append(size(s), [&s](const mutable_buffer &buf)
 	{
 		return copy(buf, s);
 	});
 }
 
 bool
-ircd::json::stack::append(const window_buffer::closure &closure)
+ircd::json::stack::append(const size_t &expect,
+                          const window_buffer::closure &closure)
 {
 	buf([&closure](const mutable_buffer &buf)
 	{
@@ -457,22 +458,6 @@ ircd::json::stack::append(const window_buffer::closure &closure)
 	});
 
 	return true; //XXX
-}
-
-template<class gen,
-         class... attr>
-bool
-ircd::json::stack::printer(gen&& g,
-                           attr&&... a)
-{
-	return json::printer(buf, std::forward<gen>(g), std::forward<attr>(a)...);
-}
-
-template<class gen>
-bool
-ircd::json::stack::printer(gen&& g)
-{
-	return json::printer(buf, std::forward<gen>(g));
 }
 
 void
@@ -543,7 +528,7 @@ ircd::json::stack::object::object(stack &s)
 {
 	assert(s.clean());
 	s.co = this;
-	s.printer(json::printer.object_begin);
+	s.append("{"_sv);
 }
 
 ircd::json::stack::object::object(member &pm)
@@ -554,7 +539,7 @@ ircd::json::stack::object::object(member &pm)
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.co = this;
-	s->printer(json::printer.object_begin);
+	s->append("{"_sv);
 }
 
 ircd::json::stack::object::object(array &pa)
@@ -567,9 +552,9 @@ ircd::json::stack::object::object(array &pa)
 	pa.co = this;
 
 	if(pa.vc)
-		s->printer(json::printer.value_sep);
+		s->append(","_sv);
 
-	s->printer(json::printer.object_begin);
+	s->append("{"_sv);
 }
 
 ircd::json::stack::object::~object()
@@ -585,7 +570,7 @@ noexcept
 	}};
 
 	assert(cm == nullptr);
-	s->printer(json::printer.object_end);
+	s->append("}"_sv);
 
 	if(pm)
 	{
@@ -634,7 +619,7 @@ ircd::json::stack::array::array(stack &s)
 {
 	assert(s.clean());
 	s.ca = this;
-	s.printer(json::printer.array_begin);
+	s.append("["_sv);
 }
 
 ircd::json::stack::array::array(member &pm)
@@ -645,7 +630,7 @@ ircd::json::stack::array::array(member &pm)
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.ca = this;
-	s->printer(json::printer.array_begin);
+	s->append("["_sv);
 }
 
 ircd::json::stack::array::array(array &pa)
@@ -658,9 +643,9 @@ ircd::json::stack::array::array(array &pa)
 	pa.ca = this;
 
 	if(pa.vc)
-		s->printer(json::printer.value_sep);
+		s->append(","_sv);
 
-	s->printer(json::printer.array_begin);
+	s->append("["_sv);
 }
 
 ircd::json::stack::array::~array()
@@ -677,7 +662,7 @@ noexcept
 
 	assert(co == nullptr);
 	assert(ca == nullptr);
-	s->printer(json::printer.array_end);
+	s->append("]"_sv);
 
 	if(pm)
 	{
@@ -715,7 +700,8 @@ ircd::json::stack::array::append(const json::value &value)
 		_post_append();
 	}};
 
-	s->append([&value](mutable_buffer buf)
+	s->append(serialized(value), [&value]
+	(mutable_buffer buf)
 	{
 		return size(stringify(buf, value));
 	});
@@ -725,7 +711,7 @@ void
 ircd::json::stack::array::_pre_append()
 {
 	if(vc)
-		s->printer(json::printer.value_sep);
+		s->append(","_sv);
 }
 
 void
@@ -759,9 +745,18 @@ ircd::json::stack::member::member(object &po,
 	po.cm = this;
 
 	if(po.mc)
-		s->printer(json::printer.value_sep);
+		s->append(","_sv);
 
-	s->printer(json::printer.name << json::printer.name_sep, name);
+	thread_local char tmp[2048];
+	mutable_buffer buf{tmp};
+	if(!printer(buf, json::printer.name << json::printer.name_sep, name))
+		throw error
+		{
+			"member name overflow: max size is under %zu", sizeof(tmp)
+		};
+
+	assert(data(buf) >= tmp);
+	s->append(string_view{tmp, size_t(data(buf) - tmp)});
 }
 
 ircd::json::stack::member::member(object &po,
@@ -802,7 +797,8 @@ ircd::json::stack::member::append(const json::value &value)
 		_post_append();
 	}};
 
-	s->append([&value](mutable_buffer buf)
+	s->append(serialized(value), [&value]
+	(mutable_buffer buf)
 	{
 		return size(stringify(buf, value));
 	});
