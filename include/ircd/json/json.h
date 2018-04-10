@@ -53,6 +53,9 @@ namespace ircd::json
 struct ircd::json::strung
 :std::string
 {
+	explicit operator json::object() const;
+	explicit operator json::array() const;
+
 	template<class... T> strung(T&&... t);
 	strung(strung &&s) noexcept: std::string{std::move(s)} {}
 	strung(const strung &s): std::string{s} {}
@@ -156,3 +159,17 @@ ircd::json::strung::strung(T&&... t)
 		return sv;
 	})
 }{}
+
+inline ircd::json::strung::operator
+json::array()
+const
+{
+	return string_view{*this};
+}
+
+inline ircd::json::strung::operator
+json::object()
+const
+{
+	return string_view{*this};
+}
