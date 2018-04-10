@@ -1444,6 +1444,22 @@ console_cmd__exec__file(opt &out, const string_view &line)
 }
 
 //
+// rooms
+//
+
+bool
+console_cmd__rooms(opt &out, const string_view &line)
+{
+	m::rooms::for_each(m::room::id::closure{[&out]
+	(const m::room::id &room_id)
+	{
+		out << room_id << std::endl;
+	}});
+
+	return true;
+}
+
+//
 // room
 //
 
