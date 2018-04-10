@@ -69,6 +69,8 @@ struct ircd::json::stack
 	void clear();
 
 	stack(const mutable_buffer &, flush_callback = {});
+	stack(stack &&) noexcept;
+	stack(const stack &) = delete;
 	~stack() noexcept;
 };
 
@@ -98,10 +100,11 @@ struct ircd::json::stack::object
 	size_t mc {0};                     ///< members witnessed (monotonic)
 
   public:
-	object() = default;
 	object(stack &s);                  ///< Object is top
 	object(array &pa);                 ///< Object is value in the array
 	object(member &pm);                ///< Object is value of named member
+	object(object &&) noexcept;
+	object(const object &) = delete;
 	~object() noexcept;
 };
 
@@ -128,10 +131,11 @@ struct ircd::json::stack::array
 	template<class... T> void append(const json::tuple<T...> &);
 	void append(const json::value &);
 
-	array() = default;
 	array(stack &s);                   ///< Array is top
 	array(array &pa);                  ///< Array is value in the array
 	array(member &pm);                 ///< Array is value of the named member
+	array(const array &) = delete;
+	array(array &&) noexcept;
 	~array() noexcept;
 };
 
@@ -158,10 +162,11 @@ struct ircd::json::stack::member
 	template<class... T> void append(const json::tuple<T...> &);
 	void append(const json::value &);
 
-	member() = default;
 	member(object &po, const string_view &name);
 	member(object &po, const string_view &name, const json::value &v);
 	template<class... T> member(object &po, const string_view &name, const json::tuple<T...> &t);
+	member(const member &) = delete;
+	member(member &&) noexcept;
 	~member() noexcept;
 };
 

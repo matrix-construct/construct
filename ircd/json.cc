@@ -422,6 +422,17 @@ ircd::json::stack::stack(const mutable_buffer &buf,
 {
 }
 
+ircd::json::stack::stack(stack &&other)
+noexcept
+:buf{std::move(other.buf)}
+,flusher{std::move(other.flusher)}
+,co{std::move(other.co)}
+,ca{std::move(other.ca)}
+{
+	other.co = nullptr;
+	other.ca = nullptr;
+}
+
 ircd::json::stack::~stack()
 noexcept
 {
@@ -516,6 +527,17 @@ const
 // object
 //
 
+ircd::json::stack::object::object(object &&other)
+noexcept
+:s{std::move(other.s)}
+,pm{std::move(other.pm)}
+,pa{std::move(other.pa)}
+,cm{std::move(other.cm)}
+,mc{std::move(other.mc)}
+{
+	other.s = nullptr;
+}
+
 ircd::json::stack::object::object(stack &s)
 :s{&s}
 {
@@ -553,7 +575,9 @@ ircd::json::stack::object::object(array &pa)
 ircd::json::stack::object::~object()
 noexcept
 {
-	assert(s);
+	if(!s)
+		return; // std::move()'ed away
+
 	assert(cm == nullptr);
 	s->printer(json::printer.object_end);
 
@@ -586,6 +610,18 @@ noexcept
 //
 // array
 //
+
+ircd::json::stack::array::array(array &&other)
+noexcept
+:s{std::move(other.s)}
+,pm{std::move(other.pm)}
+,pa{std::move(other.pa)}
+,co{std::move(other.co)}
+,ca{std::move(other.ca)}
+,vc{std::move(other.vc)}
+{
+	other.s = nullptr;
+}
 
 ircd::json::stack::array::array(stack &s)
 :s{&s}
@@ -624,7 +660,9 @@ ircd::json::stack::array::array(array &pa)
 ircd::json::stack::array::~array()
 noexcept
 {
-	assert(s);
+	if(!s)
+		return; // std::move()'ed away
+
 	assert(co == nullptr);
 	assert(ca == nullptr);
 	s->printer(json::printer.array_end);
@@ -688,6 +726,17 @@ ircd::json::stack::array::_post_append()
 // member
 //
 
+ircd::json::stack::member::member(member &&other)
+noexcept
+:s{std::move(other.s)}
+,po{std::move(other.po)}
+,name{std::move(other.name)}
+,co{std::move(other.co)}
+,ca{std::move(other.ca)}
+{
+	other.s = nullptr;
+}
+
 ircd::json::stack::member::member(object &po,
                                   const string_view &name)
 :s{po.s}
@@ -714,7 +763,9 @@ ircd::json::stack::member::member(object &po,
 ircd::json::stack::member::~member()
 noexcept
 {
-	assert(s);
+	if(!s)
+		return; // std::move()'ed away
+
 	assert(co == nullptr);
 	assert(ca == nullptr);
 	assert(po);
