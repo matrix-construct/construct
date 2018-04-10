@@ -521,6 +521,69 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__db__sync(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	sync(database);
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__flush(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "[blocking]"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto blocking
+	{
+		param.at(1, false)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	flush(database, blocking);
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__prop(opt &out, const string_view &line)
 {
 	const auto dbname
