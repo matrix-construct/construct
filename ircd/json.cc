@@ -578,6 +578,12 @@ noexcept
 	if(!s)
 		return; // std::move()'ed away
 
+	const unwind _{[this]
+	{
+		// Allows ~dtor to be called to close the JSON manually
+		s = nullptr;
+	}};
+
 	assert(cm == nullptr);
 	s->printer(json::printer.object_end);
 
@@ -662,6 +668,12 @@ noexcept
 {
 	if(!s)
 		return; // std::move()'ed away
+
+	const unwind _{[this]
+	{
+		// Allows ~dtor to be called to close the JSON manually
+		s = nullptr;
+	}};
 
 	assert(co == nullptr);
 	assert(ca == nullptr);
@@ -765,6 +777,12 @@ noexcept
 {
 	if(!s)
 		return; // std::move()'ed away
+
+	const unwind _{[this]
+	{
+		// Allows ~dtor to be called to close the JSON manually
+		s = nullptr;
+	}};
 
 	assert(co == nullptr);
 	assert(ca == nullptr);
