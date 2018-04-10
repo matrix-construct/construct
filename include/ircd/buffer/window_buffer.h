@@ -39,6 +39,7 @@ struct ircd::buffer::window_buffer
 	const_buffer rewind(const size_t &n = 1);
 
 	window_buffer(const mutable_buffer &base);
+	window_buffer() = default;
 };
 
 inline
