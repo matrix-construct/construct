@@ -632,6 +632,44 @@ const
 
 bool
 ircd::m::room::state::test(const string_view &type,
+                           const keys_bool &closure)
+const
+{
+	if(root_id)
+		return m::state::test(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			assert(size(key) >= 2);
+			return closure(unquote(key.at(1)));
+		});
+
+	char keybuf[768];
+	const auto &key
+	{
+		dbs::room_state_key(keybuf, room_id, type)
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+	{
+		const auto part
+		{
+			dbs::room_state_key(it->first)
+		};
+
+		if(std::get<0>(part) == type)
+		{
+			if(closure(std::get<1>(part)))
+				return true;
+		}
+		else break;
+	}
+
+	return false;
+}
+
+bool
+ircd::m::room::state::test(const string_view &type,
                            const string_view &state_key_lb,
                            const event::closure_bool &closure)
 const
@@ -746,6 +784,40 @@ const
 			closure(it->second);
 		else
 			break;
+}
+
+void
+ircd::m::room::state::for_each(const string_view &type,
+                               const keys &closure)
+const
+{
+	if(root_id)
+		return m::state::for_each(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			assert(size(key) >= 2);
+			closure(unquote(key.at(1)));
+		});
+
+	char keybuf[768];
+	const auto &key
+	{
+		dbs::room_state_key(keybuf, room_id, type)
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key)}; bool(it); ++it)
+	{
+		const auto part
+		{
+			dbs::room_state_key(it->first)
+		};
+
+		if(std::get<0>(part) == type)
+			closure(std::get<1>(part));
+		else
+			break;
+	}
 }
 
 //

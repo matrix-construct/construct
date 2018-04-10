@@ -198,12 +198,16 @@ struct ircd::m::room::state
 	struct tuple;
 	struct opts;
 
+	using keys = std::function<void (const string_view &)>;
+	using keys_bool = std::function<bool (const string_view &)>;
+
 	room::id room_id;
 	event::id::buf event_id;
 	m::state::id_buffer root_id_buf;
 	m::state::id root_id;
 
 	// Iterate the state; for_each protocol
+	void for_each(const string_view &type, const keys &) const;
 	void for_each(const string_view &type, const event::id::closure &) const;
 	void for_each(const string_view &type, const event::closure &) const;
 	void for_each(const event::id::closure &) const;
@@ -212,6 +216,7 @@ struct ircd::m::room::state
 	// Iterate the state; test protocol
 	bool test(const string_view &type, const string_view &lower_bound, const event::id::closure_bool &view) const;
 	bool test(const string_view &type, const string_view &lower_bound, const event::closure_bool &view) const;
+	bool test(const string_view &type, const keys_bool &view) const;
 	bool test(const string_view &type, const event::id::closure_bool &view) const;
 	bool test(const string_view &type, const event::closure_bool &view) const;
 	bool test(const event::id::closure_bool &view) const;
