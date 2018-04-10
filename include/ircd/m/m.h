@@ -59,6 +59,7 @@ namespace ircd
 #include "state.h"
 #include "vm.h"
 #include "room.h"
+#include "rooms.h"
 #include "user.h"
 #include "node.h"
 #include "login.h"
