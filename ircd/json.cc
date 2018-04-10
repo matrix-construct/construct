@@ -592,7 +592,7 @@ noexcept
 		assert(pa == nullptr);
 		assert(pm->ca == nullptr);
 		assert(pm->co == this);
-		pm->ca = nullptr;
+		pm->co = nullptr;
 		return;
 	}
 
