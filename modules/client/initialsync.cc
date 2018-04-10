@@ -52,11 +52,6 @@ extern "C" resource::response
 initialsync(client &client,
             const resource::request &request);
 
-std::string
-initialsync_rooms(client &client,
-                  const resource::request &request,
-                  const string_view &filter_id);
-
 resource::method
 get_initialsync
 {
@@ -80,6 +75,11 @@ initialsync_limit_max
 	{ "default",  64L                                     },
 };
 
+static void
+_initialsync(client &client,
+             const resource::request &request,
+             json::stack::object &out);
+
 resource::response
 initialsync(client &client,
             const resource::request &request)
@@ -101,219 +101,438 @@ initialsync(client &client,
 		return ret;
 	}()};
 
-	const std::string rooms
+	//TODO: XXXX direct chunk to socket
+	const unique_buffer<mutable_buffer> buf
 	{
-		initialsync_rooms(client, request, filter_id)
+		48_MiB //TODO: XXX chunk buffer
 	};
 
-	const m::user::room ur
+	json::stack out{buf};
 	{
-		m::user::id{request.user_id}
-	};
-
-	std::vector<json::value> presents;
-	ur.get(std::nothrow, "m.presence", [&]
-	(const m::event &event)
-	{
-		presents.emplace_back(event);
-	});
-
-	const json::members presence
-	{
-		{ "events", json::value { presents.data(), presents.size() } },
-	};
-
-	const auto &state_key
-	{
-		request.access_token
-	};
-
-	//TODO: XXX
-	const fmt::bsprintf<32> next_batch
-	{
-		"%zu", m::vm::current_sequence
-	};
-
-	const m::user::room user_room
-	{
-		request.user_id
-	};
-
-	m::send(user_room, request.user_id, "ircd.tape.head", state_key,
-	{
-		{ "sequence",  next_batch }
-	});
+		json::stack::object object{out};
+		_initialsync(client, request, object);
+	}
 
 	return resource::response
 	{
-		client, json::members
-		{
-			{ "next_batch",  next_batch  },
-			{ "rooms",       rooms       },
-			{ "presence",    presence    },
-		}
+		client, json::object{out.completed()}
 	};
 }
 
-std::string
-initialsync_room(client &client,
-                 const resource::request &request,
-                 const m::room &room);
-
-std::string
+static void
 initialsync_rooms(client &client,
                   const resource::request &request,
-                  const string_view &filter_id)
+                  json::stack::object &out);
+
+static void
+initialsync_presence(client &client,
+                     const resource::request &request,
+                     json::stack::object &out);
+
+static void
+initialsync_account_data(client &client,
+                         const resource::request &request,
+                         json::stack::object &out);
+
+void
+_initialsync(client &client,
+             const resource::request &request,
+             json::stack::object &out)
 {
-	m::user user{request.user_id};
-	m::user::room user_room{user};
-	m::room::state user_state{user_room};
+	// rooms
+	{
+		json::stack::member member{out, "rooms"};
+		json::stack::object object{member};
+		initialsync_rooms(client, request, object);
+	}
 
-	std::array<std::vector<std::string>, 3> r;
-	std::array<std::vector<json::member>, 3> m;
+	// presence
+	{
+		json::stack::member member{out, "presence"};
+		json::stack::object object{member};
+		initialsync_presence(client, request, object);
+	}
 
-	// Get the rooms the user is a joined member in by iterating the state
-	// events in the user's room.
-	user_state.for_each("ircd.member", [&r, &m, &client, &request]
+	// account_data
+	{
+		json::stack::member member{out, "account_data"};
+		json::stack::object object{member};
+		initialsync_account_data(client, request, object);
+	}
+
+	// next_batch
+	{
+		//TODO: XXX
+		const auto next_batch
+		{
+			int64_t(m::vm::current_sequence)
+		};
+
+		json::stack::member member
+		{
+			out, "next_batch", json::value{next_batch}
+		};
+
+		const m::user::room user_room
+		{
+			request.user_id
+		};
+
+		m::send(user_room, request.user_id, "ircd.tape.head", request.access_token,
+		{
+			{ "sequence", next_batch }
+		});
+	}
+}
+
+void
+initialsync_presence(client &client,
+                     const resource::request &request,
+                     json::stack::object &out)
+{
+
+}
+
+void
+initialsync_account_data(client &client,
+                         const resource::request &request,
+                         json::stack::object &out)
+{
+
+}
+
+static void
+initialsync_rooms_join(client &client,
+                       const resource::request &request,
+                       json::stack::object &out,
+                       const m::user::room &user_room);
+
+static void
+initialsync_rooms_leave(client &client,
+                        const resource::request &request,
+                        json::stack::object &out,
+                        const m::user::room &user_room);
+
+static void
+initialsync_rooms_invite(client &client,
+                         const resource::request &request,
+                         json::stack::object &out,
+                         const m::user::room &user_room);
+
+void
+initialsync_rooms(client &client,
+                  const resource::request &request,
+                  json::stack::object &out)
+{
+	const m::user user{request.user_id};
+	const m::user::room user_room{user};
+
+	// join
+	{
+		json::stack::member member{out, "join"};
+		json::stack::object object{member};
+		initialsync_rooms_join(client, request, object, user_room);
+	}
+
+	// leave
+	{
+		json::stack::member member{out, "leave"};
+		json::stack::object object{member};
+		initialsync_rooms_leave(client, request, object, user_room);
+	}
+
+	// invite
+	{
+		json::stack::member member{out, "invite"};
+		json::stack::object object{member};
+		initialsync_rooms_invite(client, request, object, user_room);
+	}
+}
+
+void
+initialsync_rooms__membership(client &client,
+                              const resource::request &request,
+                              json::stack::object &out,
+                              const m::user::room &user_room,
+                              const string_view &membership);
+void
+initialsync_rooms_join(client &client,
+                       const resource::request &request,
+                       json::stack::object &out,
+                       const m::user::room &user_room)
+{
+	initialsync_rooms__membership(client, request, out, user_room, "join");
+}
+
+void
+initialsync_rooms_leave(client &client,
+                        const resource::request &request,
+                        json::stack::object &out,
+                        const m::user::room &user_room)
+{
+	initialsync_rooms__membership(client, request, out, user_room, "leave");
+}
+
+void
+initialsync_rooms_invite(client &client,
+                         const resource::request &request,
+                         json::stack::object &out,
+                         const m::user::room &user_room)
+{
+	initialsync_rooms__membership(client, request, out, user_room, "invite");
+}
+
+static void
+initialsync_room(client &client,
+                 const resource::request &request,
+                 json::stack::object &out,
+                 const m::user::room &user_room,
+                 const m::room &room);
+
+void
+initialsync_rooms__membership(client &client,
+                              const resource::request &request,
+                              json::stack::object &out,
+                              const m::user::room &user_room,
+                              const string_view &membership)
+{
+	const m::room::state user_state{user_room};
+	user_state.for_each("ircd.member", [&]
 	(const m::event &event)
 	{
+		const auto &membership_
+		{
+			unquote(at<"content"_>(event).at("membership"))
+		};
+
+		if(membership_ != membership)
+			return;
+
 		const m::room::id &room_id
 		{
 			unquote(at<"state_key"_>(event))
 		};
 
-		const auto &membership
-		{
-			unquote(at<"content"_>(event).at("membership"))
-		};
-
-		const auto i
-		{
-			membership == "join"? 0:
-			membership == "leave"? 1:
-			membership == "invite"? 2:
-			0
-		};
-
-		r.at(i).emplace_back(initialsync_room(client, request, room_id));
-		m.at(i).emplace_back(room_id, r.at(i).back());
-	});
-
-	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
-	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
-	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
-	return json::strung(json::members
-	{
-		{ "join",     join    },
-		{ "leave",    leave   },
-		{ "invite",   invite  },
+		json::stack::member member{out, string_view{room_id}};
+		json::stack::object object{member};
+		initialsync_room(client, request, object, user_room, room_id);
 	});
 }
 
-std::string
+static void
+initialsync_room_state(client &client,
+                       const resource::request &request,
+                       json::stack::object &out,
+                       const m::user::room &user_room,
+                       const m::room &room);
+
+static void
+initialsync_room_timeline(client &client,
+                          const resource::request &request,
+                          json::stack::object &out,
+                          const m::user::room &user_room,
+                          const m::room &room);
+
+static void
+initialsync_room_ephemeral(client &client,
+                           const resource::request &request,
+                           json::stack::object &out,
+                           const m::user::room &user_room,
+                           const m::room &room);
+
+static void
+initialsync_room_account_data(client &client,
+                              const resource::request &request,
+                              json::stack::object &out,
+                              const m::user::room &user_room,
+                              const m::room &room);
+
+static void
+initialsync_room_unread_notifications(client &client,
+                                      const resource::request &request,
+                                      json::stack::object &out,
+                                      const m::user::room &user_room,
+                                      const m::room &room);
+
+void
 initialsync_room(client &client,
                  const resource::request &request,
+                 json::stack::object &out,
+                 const m::user::room &user_room,
                  const m::room &room)
 {
-	const unique_buffer<mutable_buffer> buf{40_MiB}; //TODO: XXXXXXXXXXXXXXXXXX
-	json::stack out{buf};
+	// state
 	{
-		json::stack::object _state_object
-		{
-			out
-		};
-
-		json::stack::member _state_events
-		{
-			_state_object, "events"
-		};
-
-		json::stack::array _state_events_a
-		{
-			_state_events
-		};
-
-		const m::room::state state_
-		{
-			room
-		};
-
-		state_.for_each([&_state_events_a](const m::event &event)
-		{
-			_state_events_a.append(event);
-		});
+		json::stack::member member{out, "state"};
+		json::stack::object object{member};
+		initialsync_room_state(client, request, object, user_room, room);
 	}
 
-	const std::string state_serial
+	// timeline
 	{
-		out.buf.completed()
-	};
-
-	out.clear();
-	{
-		json::stack::array _timeline_events_a
-		{
-			out
-		};
-
-		// messages seeks to the newest event, but the client wants the oldest
-		// event first so we seek down first and then iterate back up. Due to
-		// an issue with rocksdb's prefix-iteration this iterator becomes
-		// toxic as soon as it becomes invalid. As a result we have to copy the
-		// event_id on the way down in case of renewing the iterator for the
-		// way back. This is not a big deal but rocksdb should fix their shit.
-		ssize_t i(0);
-		m::event::id::buf event_id;
-		m::room::messages it{room};
-		for(; it && i < 10; --it, ++i)
-			event_id = it.event_id();
-
-		if(i > 0 && !it)
-			it.seek(event_id);
-
-		if(i > 0)
-			for(; it && i > -1; ++it, --i)
-				_timeline_events_a.append(*it);
+		json::stack::member member{out, "timeline"};
+		json::stack::object object{member};
+		initialsync_room_timeline(client, request, object, user_room, room);
 	}
 
-	const std::string timeline_serial
+	// ephemeral
 	{
-		out.buf.completed()
+		json::stack::member member{out, "ephemeral"};
+		json::stack::object object{member};
+		initialsync_room_ephemeral(client, request, object, user_room, room);
+	}
+
+	// account_data
+	{
+		json::stack::member member{out, "account_data"};
+		json::stack::object object{member};
+		initialsync_room_ephemeral(client, request, object, user_room, room);
+	}
+
+	// unread_notifications
+	{
+		json::stack::member member{out, "unread_notifications"};
+		json::stack::object object{member};
+		initialsync_room_unread_notifications(client, request, object, user_room, room);
+	}
+}
+
+void
+initialsync_room_state(client &client,
+                       const resource::request &request,
+                       json::stack::object &out,
+                       const m::user::room &user_room,
+                       const m::room &room)
+{
+	json::stack::member member
+	{
+		out, "events"
 	};
 
-	std::vector<std::string> ephemeral;
-	const json::strung ephemeral_serial
+	json::stack::array array
 	{
-		ephemeral.data(), ephemeral.data() + ephemeral.size()
+		member
 	};
 
-	const auto &prev_batch
+	const m::room::state state
 	{
-		!json::array{timeline_serial}.empty()?
-			unquote(json::object{json::array{timeline_serial}.at(0)}.get("event_id")):
-			string_view{}
+		room
 	};
 
-	const json::members body
+	state.for_each([&array](const m::event &event)
 	{
-		{ "account_data", json::members{} },
-		{ "unread_notifications",
+		array.append(event);
+	});
+}
+
+static m::event::id::buf
+initialsync_room_timeline_events(client &client,
+                                 const resource::request &request,
+                                 json::stack::array &out,
+                                 const m::user::room &user_room,
+                                 const m::room &room);
+
+void
+initialsync_room_timeline(client &client,
+                          const resource::request &request,
+                          json::stack::object &out,
+                          const m::user::room &user_room,
+                          const m::room &room)
+{
+	// events
+	m::event::id::buf prev;
+	{
+		json::stack::member member{out, "events"};
+		json::stack::array array{member};
+		prev = initialsync_room_timeline_events(client, request, array, user_room, room);
+	}
+
+	// prev_batch
+	{
+		json::stack::member member
 		{
-			{ "highlight_count", int64_t(0) },
-			{ "notification_count", int64_t(0) },
-		}},
-		{ "ephemeral",
-		{
-			{ "events", ephemeral_serial },
-		}},
-		{ "state", state_serial },
-		{ "timeline",
-		{
-			{ "events", timeline_serial },
-			{ "prev_batch", prev_batch },
-			{ "limited", false },                       //TODO: XXX
-		}},
-	};
+			out, "prev_batch", string_view{prev}
+		};
+	}
 
-	return json::strung(body);
+	// limited
+	{
+		json::stack::member member
+		{
+			out, "limited", json::value{false}
+		};
+	}
+}
+
+m::event::id::buf
+initialsync_room_timeline_events(client &client,
+                                 const resource::request &request,
+                                 json::stack::array &out,
+                                 const m::user::room &user_room,
+                                 const m::room &room)
+{
+	// messages seeks to the newest event, but the client wants the oldest
+	// event first so we seek down first and then iterate back up. Due to
+	// an issue with rocksdb's prefix-iteration this iterator becomes
+	// toxic as soon as it becomes invalid. As a result we have to copy the
+	// event_id on the way down in case of renewing the iterator for the
+	// way back. This is not a big deal but rocksdb should fix their shit.
+	ssize_t i(0);
+	m::event::id::buf event_id;
+	m::room::messages it{room};
+	for(; it && i < 10; --it, ++i)
+		event_id = it.event_id();
+
+	if(i > 0 && !it)
+		it.seek(event_id);
+
+	if(i > 0)
+		for(; it && i > -1; ++it, --i)
+			out.append(*it);
+
+	return event_id;
+}
+
+void
+initialsync_room_ephemeral(client &client,
+                           const resource::request &request,
+                           json::stack::object &out,
+                           const m::user::room &user_room,
+                           const m::room &room)
+{
+
+}
+
+void
+initialsync_room_account_data(client &client,
+                              const resource::request &request,
+                              json::stack::object &out,
+                              const m::user::room &user_room,
+                              const m::room &room)
+{
+
+}
+
+void
+initialsync_room_unread_notifications(client &client,
+                                      const resource::request &request,
+                                      json::stack::object &out,
+                                      const m::user::room &user_room,
+                                      const m::room &room)
+{
+	// highlight_count
+	{
+		json::stack::member member
+		{
+			out, "highlight_count", json::value{0L}
+		};
+	}
+
+	// notification_count
+	{
+		json::stack::member member
+		{
+			out, "notification_count", json::value{0L}
+		};
+	}
 }
