@@ -1404,6 +1404,9 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
+	if(empty(membership))
+		return for_each(closure);
+
 	const m::room::state state{user_room};
 	state.test("ircd.member", [&membership, &closure]
 	(const m::event &event)
