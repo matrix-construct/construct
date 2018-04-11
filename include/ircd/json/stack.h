@@ -53,8 +53,8 @@ struct ircd::json::stack
 	object *co {nullptr};              ///< The root object instance.
 	array *ca {nullptr};               ///< Could be union with top_object but
 
-	bool append(const size_t &expect, const window_buffer::closure &);
-	bool append(const string_view &);
+	void append(const size_t &expect, const window_buffer::closure &);
+	void append(const string_view &);
 
   public:
 	bool opened() const;               ///< Current stacking in progress.
@@ -64,6 +64,7 @@ struct ircd::json::stack
 
 	size_t remaining() const;
 	const_buffer completed() const;
+	bool flush();
 	void clear();
 
 	stack(const mutable_buffer &, flush_callback = {});

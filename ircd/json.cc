@@ -439,25 +439,63 @@ noexcept
 	assert(clean() || done());
 }
 
-bool
+void
 ircd::json::stack::append(const string_view &s)
 {
-	return append(size(s), [&s](const mutable_buffer &buf)
+	append(size(s), [&s](const mutable_buffer &buf)
 	{
 		return copy(buf, s);
 	});
 }
 
-bool
+void
 ircd::json::stack::append(const size_t &expect,
                           const window_buffer::closure &closure)
 {
+	if(expect > buf.remaining())
+	{
+		if(unlikely(!flusher)) throw print_error
+		{
+			"Insufficient buffer. I need %zu more bytes; you only have %zu left (of %zu).",
+			expect,
+			buf.remaining(),
+			size(buf.base)
+		};
+
+		flush();
+		if(unlikely(expect > buf.remaining())) throw print_error
+		{
+			"Insufficient flush. I still need %zu more bytes to buffer.",
+			expect - buf.remaining()
+		};
+	}
+
 	buf([&closure](const mutable_buffer &buf)
 	{
 		return closure(buf);
 	});
 
-	return true; //XXX
+	if(!buf.remaining())
+		flush();
+}
+
+bool
+ircd::json::stack::flush()
+{
+	if(!flusher)
+		return false;
+
+	// The user returns the portion of the buffer they were able to flush
+	// rather than forcing them to wait on their sink to flush the whole
+	// thing, they can continue with us for a little while more.
+	const const_buffer flushed
+	{
+		flusher(buf.completed())
+	};
+
+	assert(data(flushed) == data(buf.completed())); // Can only flush front sry
+	buf.shift(size(flushed));
+	return true;
 }
 
 void
@@ -596,6 +634,7 @@ noexcept
 	assert(pm == nullptr && pa == nullptr);
 	s->co = nullptr;
 	assert(s->done());
+	s->flush();
 }
 
 //
@@ -688,6 +727,7 @@ noexcept
 	assert(pm == nullptr && pa == nullptr);
 	s->ca = nullptr;
 	assert(s->done());
+	s->flush();
 }
 
 void
