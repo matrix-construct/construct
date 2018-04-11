@@ -1241,7 +1241,11 @@ console_cmd__event__fetch(opt &out, const string_view &line)
 	if(host)
 		opts.remote = host;
 
-	static char buf[96_KiB];
+	const unique_buffer<mutable_buffer> buf
+	{
+		96_KiB
+	};
+
 	m::v1::event request
 	{
 		event_id, buf, std::move(opts)
@@ -1800,7 +1804,7 @@ console_cmd__room__set(opt &out, const string_view &line)
 
 	const auto &room_id
 	{
-		param.at(0)
+		m::room_id(param.at(0))
 	};
 
 	const m::user::id &sender
@@ -1820,7 +1824,7 @@ console_cmd__room__set(opt &out, const string_view &line)
 
 	const json::object &content
 	{
-		param.at(4)
+		param.at(4, json::object{})
 	};
 
 	const m::room room
