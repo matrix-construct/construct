@@ -101,22 +101,39 @@ initialsync(client &client,
 		return ret;
 	}()};
 
-	//TODO: XXXX direct chunk to socket
+	size_t total{0};
+	char headbuf[64];
+	const auto flusher{[&client, &headbuf, &total]
+	(const const_buffer &buf)
+	{
+		total += client.write_all(http::writechunk(headbuf, size(buf)));
+		total += client.write_all(buf);
+		total += client.write_all("\r\n"_sv);
+		return buf;
+	}};
+
+	// Due to the way json::stack works the chunk buffer must be at least
+	// the size of an appended input (for ex. a json::tuple). In our case this
+	// buffer must hold a 64_KiB worst-case event and then a little extra.
 	const unique_buffer<mutable_buffer> buf
 	{
-		48_MiB //TODO: XXX chunk buffer
+		96_KiB
 	};
 
-	json::stack out{buf};
+	resource::response response
+	{
+		client, http::OK, "application/json; charset=utf-8", size_t(-1)
+	};
+
+	json::stack out{buf, flusher};
 	{
 		json::stack::object object{out};
 		_initialsync(client, request, object);
 	}
 
-	return resource::response
-	{
-		client, json::object{out.completed()}
-	};
+	total += client.write_all(http::writechunk(headbuf, 0));
+	total += client.write_all("\r\n"_sv);
+	return response;
 }
 
 static void
