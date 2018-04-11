@@ -148,9 +148,10 @@ commit__m_presence(const m::presence &content)
 // get
 //
 
-extern "C" json::object
-m_presence_get(const m::user &user,
-              const mutable_buffer &buffer);
+extern "C" bool
+m_presence_get(const std::nothrow_t,
+               const m::user &,
+               const m::presence::closure &);
 
 static resource::response
 get__presence_status(client &client,
@@ -290,28 +291,26 @@ method_get
 	presence_resource, "GET", get__presence
 };
 
-json::object
-m_presence_get(const m::user &user,
-              const mutable_buffer &buffer)
+bool
+m_presence_get(const std::nothrow_t,
+               const m::user &user,
+               const m::presence::closure &closure)
 {
 	const m::user::room user_room
 	{
 		user
 	};
 
-	json::object ret;
-	user_room.get(std::nothrow, "m.presence", [&ret, &buffer]
+	return user_room.get(std::nothrow, "m.presence", [&closure]
 	(const m::event &event)
 	{
-		const string_view &content
+		const auto &content
 		{
 			at<"content"_>(event)
 		};
 
-		ret = { data(buffer), copy(buffer, content) };
+		closure(content);
 	});
-
-	return ret;
 }
 
 //

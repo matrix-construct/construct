@@ -767,14 +767,40 @@ ircd::json::object
 ircd::m::presence::get(const user &user,
                        const mutable_buffer &buffer)
 {
-	using prototype = json::object (const m::user &, const mutable_buffer &);
+	json::object ret;
+	get(std::nothrow, user, [&ret, &buffer]
+	(const json::object &object)
+	{
+		ret = { data(buffer), copy(buffer, object) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::presence::get(const user &user,
+                       const closure &closure)
+{
+	if(!get(std::nothrow, user, closure))
+		throw m::NOT_FOUND
+		{
+			"No presence found for %s", user.user_id
+		};
+}
+
+bool
+ircd::m::presence::get(std::nothrow_t,
+                       const user &user,
+                       const closure &lambda)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const closure &);
 
 	static import<prototype> function
 	{
 		"client_presence", "m_presence_get"
 	};
 
-	return function(user, buffer);
+	return function(std::nothrow, user, lambda);
 }
 
 bool

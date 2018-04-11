@@ -36,7 +36,11 @@ struct ircd::m::edu::m_presence
 struct ircd::m::presence
 :edu::m_presence
 {
+	using closure = std::function<void (const json::object &)>;
+
 	static bool valid_state(const string_view &state);
+	static void get(const user &, const closure &);
+	static bool get(std::nothrow_t, const user &, const closure &);
 	static json::object get(const user &, const mutable_buffer &);
 	static event::id::buf set(const presence &);
 	static event::id::buf set(const user &, const string_view &, const string_view &status = {});
