@@ -897,6 +897,88 @@ ircd::m::node::room::room(const m::node &node)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/rooms.h
+//
+
+void
+ircd::m::rooms::for_each(const user &user,
+                         const user::member_closure &closure)
+{
+	user.for_each(closure);
+}
+
+void
+ircd::m::rooms::for_each(const user &user,
+                         const user::member_closure_bool &closure)
+{
+	user.for_each(closure);
+}
+
+void
+ircd::m::rooms::for_each(const user &user,
+                         const string_view &membership,
+                         const user::member_closure &closure)
+{
+	user.for_each(membership, closure);
+}
+
+void
+ircd::m::rooms::for_each(const user &user,
+                         const string_view &membership,
+                         const user::member_closure_bool &closure)
+{
+	user.for_each(membership, closure);
+}
+
+void
+ircd::m::rooms::for_each(const room::closure &closure)
+{
+	for_each(room::closure_bool{[&closure]
+	(const room &room)
+	{
+		closure(room);
+		return true;
+	}});
+}
+
+void
+ircd::m::rooms::for_each(const room::closure_bool &closure)
+{
+	for_each(room::id::closure_bool{[&closure]
+	(const room::id &room_id)
+	{
+		return closure(room_id);
+	}});
+}
+
+void
+ircd::m::rooms::for_each(const room::id::closure &closure)
+{
+	for_each(room::id::closure_bool{[&closure]
+	(const room::id &room_id)
+	{
+		closure(room_id);
+		return true;
+	}});
+}
+
+void
+ircd::m::rooms::for_each(const room::id::closure_bool &closure)
+{
+	const room::state state
+	{
+		my_room
+	};
+
+	state.test("ircd.room", room::state::keys_bool{[&closure]
+	(const string_view &key)
+	{
+		return !closure(key);
+	}});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/user.h
 //
 
@@ -1302,58 +1384,6 @@ ircd::m::user::room::room(const m::user &user)
 ,room_id{user.room_id()}
 {
 	static_cast<m::room &>(*this) = room_id;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/rooms.h
-//
-
-void
-ircd::m::rooms::for_each(const room::closure &closure)
-{
-	for_each(room::closure_bool{[&closure]
-	(const room &room)
-	{
-		closure(room);
-		return true;
-	}});
-}
-
-void
-ircd::m::rooms::for_each(const room::closure_bool &closure)
-{
-	for_each(room::id::closure_bool{[&closure]
-	(const room::id &room_id)
-	{
-		return closure(room_id);
-	}});
-}
-
-void
-ircd::m::rooms::for_each(const room::id::closure &closure)
-{
-	for_each(room::id::closure_bool{[&closure]
-	(const room::id &room_id)
-	{
-		closure(room_id);
-		return true;
-	}});
-}
-
-void
-ircd::m::rooms::for_each(const room::id::closure_bool &closure)
-{
-	const room::state state
-	{
-		my_room
-	};
-
-	state.test("ircd.room", room::state::keys_bool{[&closure]
-	(const string_view &key)
-	{
-		return !closure(key);
-	}});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
