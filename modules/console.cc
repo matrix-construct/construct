@@ -2126,6 +2126,83 @@ console_cmd__user__deactivate(opt &out, const string_view &line)
 }
 
 //
+// feds
+//
+
+bool
+console_cmd__feds__event(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id"
+	}};
+
+	const auto room
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id event_id
+	{
+		param.at(1)
+	};
+
+	struct req
+	:m::v1::event
+	{
+		char origin[256];
+		char buf[96_KiB];
+
+		req(const m::event::id &event_id, m::v1::event::opts opts)
+		:m::v1::event{event_id, buf, std::move(opts)}
+		{}
+	};
+
+	std::list<req> reqs;
+	const m::room::origins origins{room};
+	origins.for_each([&out, &event_id, &reqs]
+	(const string_view &origin)
+	{
+		m::v1::event::opts opts;
+		opts.remote = origin;
+		opts.dynamic = false; try
+		{
+			reqs.emplace_back(event_id, std::move(opts));
+		}
+		catch(const std::exception &e)
+		{
+			out << "! " << origin << " " << e.what() << std::endl;
+			return;
+		}
+
+		strlcpy(reqs.back().origin, origin);
+	});
+
+	auto all
+	{
+		ctx::when_all(begin(reqs), end(reqs))
+	};
+
+	all.wait(out.timeout, std::nothrow);
+
+	for(auto &req : reqs) try
+	{
+		if(req.wait(0ms, std::nothrow))
+		{
+			const auto code{req.get()};
+			out << "+ " << req.origin << " " << http::status(code) << std::endl;
+		}
+		else cancel(req);
+	}
+	catch(const std::exception &e)
+	{
+		out << "- " << req.origin << " " << e.what() << std::endl;
+	}
+
+	return true;
+}
+
+//
 // fed
 //
 
