@@ -139,7 +139,8 @@ initialsync(client &client,
 static void
 initialsync_rooms(client &client,
                   const resource::request &request,
-                  json::stack::object &out);
+                  json::stack::object &out,
+                  const m::user::room &);
 
 static void
 initialsync_presence(client &client,
@@ -149,18 +150,22 @@ initialsync_presence(client &client,
 static void
 initialsync_account_data(client &client,
                          const resource::request &request,
-                         json::stack::object &out);
+                         json::stack::object &out,
+                         const m::user::room &);
 
 void
 _initialsync(client &client,
              const resource::request &request,
              json::stack::object &out)
 {
+	const m::user user{request.user_id};
+	const m::user::room user_room{user};
+
 	// rooms
 	{
 		json::stack::member member{out, "rooms"};
 		json::stack::object object{member};
-		initialsync_rooms(client, request, object);
+		initialsync_rooms(client, request, object, user_room);
 	}
 
 	// presence
@@ -174,7 +179,7 @@ _initialsync(client &client,
 	{
 		json::stack::member member{out, "account_data"};
 		json::stack::object object{member};
-		initialsync_account_data(client, request, object);
+		initialsync_account_data(client, request, object, user_room);
 	}
 
 	// next_batch
@@ -213,9 +218,34 @@ initialsync_presence(client &client,
 void
 initialsync_account_data(client &client,
                          const resource::request &request,
-                         json::stack::object &out)
+                         json::stack::object &out,
+                         const m::user::room &user_room)
 {
+	json::stack::member member{out, "events"};
+	json::stack::array array{member};
 
+	const m::room::state state{user_room};
+	state.for_each("ircd.account_data", [&array]
+	(const m::event &event)
+	{
+		json::stack::object object{array};
+
+		// type
+		{
+			json::stack::member member
+			{
+				object, "type", unquote(at<"state_key"_>(event))
+			};
+		}
+
+		// content
+		{
+			json::stack::member member
+			{
+				object, "content", unquote(at<"content"_>(event))
+			};
+		}
+	});
 }
 
 static void
@@ -239,11 +269,9 @@ initialsync_rooms_invite(client &client,
 void
 initialsync_rooms(client &client,
                   const resource::request &request,
-                  json::stack::object &out)
+                  json::stack::object &out,
+                  const m::user::room &user_room)
 {
-	const m::user user{request.user_id};
-	const m::user::room user_room{user};
-
 	// join
 	{
 		json::stack::member member{out, "join"};
