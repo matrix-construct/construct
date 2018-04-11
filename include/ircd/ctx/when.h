@@ -42,9 +42,9 @@ ircd::ctx::when_all(it first,
 	promise<void> p;
 	const auto set_then
 	{
-		[&p](auto &f)
+		[&p](it &f)
 		{
-			f.st.then = [p]
+			f->state().then = [p]
 			(shared_state_base &) mutable
 			{
 				then(p);
@@ -55,7 +55,7 @@ ircd::ctx::when_all(it first,
 	future<void> ret(p);
 	for(; first != last; ++first)
 		if(is(first->state(), future_state::PENDING))
-			set_then(*first);
+			set_then(first);
 
 	if(refcount(p.state()) <= 1)
 		p.set_value();
