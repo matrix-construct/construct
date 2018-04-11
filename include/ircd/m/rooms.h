@@ -22,8 +22,8 @@ namespace ircd::m::rooms
 	void for_each(const room::closure &);
 
 	// All rooms for a user (alias to interface in user::)
-	void for_each(const user &, const string_view &membership, const user::member_closure_bool &);
-	void for_each(const user &, const string_view &membership, const user::member_closure &);
-	void for_each(const user &, const user::member_closure_bool &);
-	void for_each(const user &, const user::member_closure &);
+	void for_each(const user &, const string_view &membership, const user::rooms::closure_bool &);
+	void for_each(const user &, const string_view &membership, const user::rooms::closure &);
+	void for_each(const user &, const user::rooms::closure_bool &);
+	void for_each(const user &, const user::rooms::closure &);
 }

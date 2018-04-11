@@ -24,6 +24,7 @@ namespace ircd::m
 struct ircd::m::user
 {
 	struct room;
+	struct rooms;
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
@@ -55,13 +56,6 @@ struct ircd::m::user
 	json::object account_data(const mutable_buffer &out, const string_view &type) const; //nothrow
 	event::id::buf account_data(const m::user &sender, const string_view &type, const json::object &value);
 
-	using member_closure = std::function<void (const m::room &, const string_view &)>;
-	using member_closure_bool = std::function<bool (const m::room &, const string_view &)>;
-	void for_each(const string_view &membership, const member_closure_bool &) const;
-	void for_each(const string_view &membership, const member_closure &) const;
-	void for_each(const member_closure_bool &) const;
-	void for_each(const member_closure &) const;
-
 	bool is_active() const;
 	event::id::buf deactivate();
 	event::id::buf activate();
@@ -84,6 +78,26 @@ struct ircd::m::user::room
 	room() = default;
 	room(const room &) = delete;
 	room &operator=(const room &) = delete;
+};
+
+/// Interface to the rooms for a user.
+struct ircd::m::user::rooms
+{
+	using closure = std::function<void (const m::room &, const string_view &)>;
+	using closure_bool = std::function<bool (const m::room &, const string_view &)>;
+
+	m::user::room user_room;
+
+  public:
+	// All rooms with specific membership
+	void for_each(const string_view &membership, const closure_bool &) const;
+	void for_each(const string_view &membership, const closure &) const;
+
+	// All rooms with any membership
+	void for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
+
+	rooms(const m::user &user);
 };
 
 inline ircd::m::user::operator

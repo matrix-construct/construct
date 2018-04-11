@@ -902,32 +902,36 @@ ircd::m::node::room::room(const m::node &node)
 
 void
 ircd::m::rooms::for_each(const user &user,
-                         const user::member_closure &closure)
+                         const user::rooms::closure &closure)
 {
-	user.for_each(closure);
+	const m::user::rooms rooms{user};
+	rooms.for_each(closure);
 }
 
 void
 ircd::m::rooms::for_each(const user &user,
-                         const user::member_closure_bool &closure)
+                         const user::rooms::closure_bool &closure)
 {
-	user.for_each(closure);
-}
-
-void
-ircd::m::rooms::for_each(const user &user,
-                         const string_view &membership,
-                         const user::member_closure &closure)
-{
-	user.for_each(membership, closure);
+	const m::user::rooms rooms{user};
+	rooms.for_each(closure);
 }
 
 void
 ircd::m::rooms::for_each(const user &user,
                          const string_view &membership,
-                         const user::member_closure_bool &closure)
+                         const user::rooms::closure &closure)
 {
-	user.for_each(membership, closure);
+	const m::user::rooms rooms{user};
+	rooms.for_each(membership, closure);
+}
+
+void
+ircd::m::rooms::for_each(const user &user,
+                         const string_view &membership,
+                         const user::rooms::closure_bool &closure)
+{
+	const m::user::rooms rooms{user};
+	rooms.for_each(membership, closure);
 }
 
 void
@@ -1140,81 +1144,6 @@ const
 	return function(*this);
 }
 
-void
-ircd::m::user::for_each(const member_closure &closure)
-const
-{
-	for_each(member_closure_bool{[&closure]
-	(const m::room &room, const string_view &membership)
-	{
-		closure(room, membership);
-		return true;
-	}});
-}
-
-void
-ircd::m::user::for_each(const member_closure_bool &closure)
-const
-{
-	const m::user::room user_room{*this};
-	const m::room::state state{user_room};
-	state.test("ircd.member", [&closure]
-	(const m::event &event)
-	{
-		const m::room::id &room_id
-		{
-			at<"state_key"_>(event)
-		};
-
-		const string_view &membership
-		{
-			unquote(at<"content"_>(event).at("membership"))
-		};
-
-		return !closure(room_id, membership);
-	});
-}
-
-void
-ircd::m::user::for_each(const string_view &membership,
-                        const member_closure &closure)
-const
-{
-	for_each(membership, member_closure_bool{[&closure]
-	(const m::room &room, const string_view &membership)
-	{
-		closure(room, membership);
-		return true;
-	}});
-}
-
-void
-ircd::m::user::for_each(const string_view &membership,
-                        const member_closure_bool &closure)
-const
-{
-	const m::user::room user_room{*this};
-	const m::room::state state{user_room};
-	state.test("ircd.member", [&membership, &closure]
-	(const m::event &event)
-	{
-		const string_view &membership_
-		{
-			unquote(at<"content"_>(event).at("membership"))
-		};
-
-		if(membership_ != membership)
-			return false;
-
-		const m::room::id &room_id
-		{
-			at<"state_key"_>(event)
-		};
-
-		return !closure(room_id, membership);
-	});
-}
-
 ircd::m::event::id::buf
 ircd::m::user::account_data(const m::user &sender,
                             const string_view &type,
@@ -1384,6 +1313,88 @@ ircd::m::user::room::room(const m::user &user)
 ,room_id{user.room_id()}
 {
 	static_cast<m::room &>(*this) = room_id;
+}
+
+//
+// user::rooms
+//
+
+ircd::m::user::rooms::rooms(const m::user &user)
+:user_room{user}
+{
+}
+
+void
+ircd::m::user::rooms::for_each(const closure &closure)
+const
+{
+	for_each(closure_bool{[&closure]
+	(const m::room &room, const string_view &membership)
+	{
+		closure(room, membership);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::rooms::for_each(const closure_bool &closure)
+const
+{
+	const m::room::state state{user_room};
+	state.test("ircd.member", [&closure]
+	(const m::event &event)
+	{
+		const m::room::id &room_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		const string_view &membership
+		{
+			unquote(at<"content"_>(event).at("membership"))
+		};
+
+		return !closure(room_id, membership);
+	});
+}
+
+void
+ircd::m::user::rooms::for_each(const string_view &membership,
+                               const closure &closure)
+const
+{
+	for_each(membership, closure_bool{[&closure]
+	(const m::room &room, const string_view &membership)
+	{
+		closure(room, membership);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::rooms::for_each(const string_view &membership,
+                               const closure_bool &closure)
+const
+{
+	const m::room::state state{user_room};
+	state.test("ircd.member", [&membership, &closure]
+	(const m::event &event)
+	{
+		const string_view &membership_
+		{
+			unquote(at<"content"_>(event).at("membership"))
+		};
+
+		if(membership_ != membership)
+			return false;
+
+		const m::room::id &room_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		return !closure(room_id, membership);
+	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

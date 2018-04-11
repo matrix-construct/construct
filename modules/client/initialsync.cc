@@ -341,8 +341,12 @@ initialsync_rooms__membership(client &client,
                               const m::user::room &user_room,
                               const string_view &membership)
 {
-	const m::user &user{user_room.user};
-	user.for_each(membership, [&client, &request, &out, &user_room]
+	const m::user::rooms rooms
+	{
+		user_room.user
+	};
+
+	rooms.for_each(membership, [&client, &request, &out, &user_room]
 	(const m::room &room, const string_view &membership)
 	{
 		const m::room::id &room_id{room.room_id};
