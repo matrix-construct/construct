@@ -25,6 +25,8 @@ struct ircd::m::user
 {
 	struct room;
 	using id = m::id::user;
+	using closure = std::function<void (const user &)>;
+	using closure_bool = std::function<bool (const user &)>;
 
 	id user_id;
 
