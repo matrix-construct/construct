@@ -392,6 +392,7 @@ ircd::server::peer::err_clear()
 {
 	const auto ret{bool(e)};
 	e.reset(nullptr);
+	op_fini = false;
 	return ret;
 }
 
@@ -429,7 +430,7 @@ ircd::server::peer::err_check()
 	if(op_fini)
 		return false;
 
-	if(!e)
+	if(!err_has())
 		return true;
 
 	//TODO: The specific error type should be switched and finer
