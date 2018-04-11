@@ -341,24 +341,12 @@ initialsync_rooms__membership(client &client,
                               const m::user::room &user_room,
                               const string_view &membership)
 {
-	const m::room::state user_state{user_room};
-	user_state.for_each("ircd.member", [&]
-	(const m::event &event)
+	const m::user &user{user_room.user};
+	user.for_each(membership, [&client, &request, &out, &user_room]
+	(const m::room &room, const string_view &membership)
 	{
-		const auto &membership_
-		{
-			unquote(at<"content"_>(event).at("membership"))
-		};
-
-		if(membership_ != membership)
-			return;
-
-		const m::room::id &room_id
-		{
-			unquote(at<"state_key"_>(event))
-		};
-
-		json::stack::member member{out, string_view{room_id}};
+		const m::room::id &room_id{room.room_id};
+		json::stack::member member{out, room_id};
 		json::stack::object object{member};
 		initialsync_room(client, request, object, user_room, room_id);
 	});

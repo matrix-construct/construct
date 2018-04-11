@@ -1058,6 +1058,81 @@ const
 	return function(*this);
 }
 
+void
+ircd::m::user::for_each(const member_closure &closure)
+const
+{
+	for_each(member_closure_bool{[&closure]
+	(const m::room &room, const string_view &membership)
+	{
+		closure(room, membership);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::for_each(const member_closure_bool &closure)
+const
+{
+	const m::user::room user_room{*this};
+	const m::room::state state{user_room};
+	state.test("ircd.member", [&closure]
+	(const m::event &event)
+	{
+		const m::room::id &room_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		const string_view &membership
+		{
+			unquote(at<"content"_>(event).at("membership"))
+		};
+
+		return !closure(room_id, membership);
+	});
+}
+
+void
+ircd::m::user::for_each(const string_view &membership,
+                        const member_closure &closure)
+const
+{
+	for_each(membership, member_closure_bool{[&closure]
+	(const m::room &room, const string_view &membership)
+	{
+		closure(room, membership);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::for_each(const string_view &membership,
+                        const member_closure_bool &closure)
+const
+{
+	const m::user::room user_room{*this};
+	const m::room::state state{user_room};
+	state.test("ircd.member", [&membership, &closure]
+	(const m::event &event)
+	{
+		const string_view &membership_
+		{
+			unquote(at<"content"_>(event).at("membership"))
+		};
+
+		if(membership_ != membership)
+			return false;
+
+		const m::room::id &room_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		return !closure(room_id, membership);
+	});
+}
+
 ircd::m::event::id::buf
 ircd::m::user::account_data(const m::user &sender,
                             const string_view &type,
