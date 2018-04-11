@@ -1428,6 +1428,150 @@ const
 	});
 }
 
+//
+// user::mitsein
+//
+
+ircd::m::user::mitsein::mitsein(const m::user &user)
+:user{user}
+{
+}
+
+void
+ircd::m::user::mitsein::for_each(const closure &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+void
+ircd::m::user::mitsein::for_each(const closure_bool &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+void
+ircd::m::user::mitsein::for_each(const string_view &membership,
+                                 const closure &closure)
+const
+{
+	for_each(membership, closure_bool{[&closure]
+	(const m::user &user)
+	{
+		closure(user);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::mitsein::for_each(const string_view &membership,
+                                 const closure_bool &closure)
+const
+{
+	const m::user::rooms rooms
+	{
+		user
+	};
+
+	// here we gooooooo :/
+	///TODO: ideal: db schema
+	///TODO: minimally: custom alloc?
+	std::set<std::string, std::less<>> seen
+	{
+		// start with the user so they don't reflect in the iteration.
+		std::string{user.user_id}
+	};
+
+	rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
+	(const m::room &room, const string_view &)
+	{
+		const m::room::members members{room};
+		return !members.test(membership, [&seen, &closure]
+		(const m::event &event)
+		{
+			const auto &other
+			{
+				at<"state_key"_>(event)
+			};
+
+			const auto it
+			{
+				seen.lower_bound(other)
+			};
+
+			if(it != end(seen) && *it == other)
+				return false;
+
+			seen.emplace_hint(it, std::string{other});
+			return !closure(m::user{other});
+		});
+	}});
+}
+
+void
+ircd::m::user::mitsein::for_each(const m::user &user,
+                                 const rooms::closure &closure)
+const
+{
+	for_each(user, string_view{}, closure);
+}
+
+void
+ircd::m::user::mitsein::for_each(const m::user &user,
+                                 const rooms::closure_bool &closure)
+const
+{
+	for_each(user, string_view{}, closure);
+}
+
+void
+ircd::m::user::mitsein::for_each(const m::user &user,
+                                 const string_view &membership,
+                                 const rooms::closure &closure)
+const
+{
+	for_each(user, membership, rooms::closure_bool{[&membership, &closure]
+	(const m::room &room, const string_view &)
+	{
+		closure(room, membership);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::mitsein::for_each(const m::user &user,
+                                 const string_view &membership,
+                                 const rooms::closure_bool &closure)
+const
+{
+	const m::user::rooms our_rooms{this->user};
+	const m::user::rooms their_rooms{user};
+	const bool use_our
+	{
+		our_rooms.count() <= their_rooms.count()
+	};
+
+	const m::user::rooms &rooms
+	{
+		use_our? our_rooms : their_rooms
+	};
+
+	const string_view &test_key
+	{
+		use_our? user.user_id : this->user.user_id
+	};
+
+	rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &test_key]
+	(const m::room &room, const string_view &)
+	{
+		if(!room.has("m.room.member", test_key))
+			return true;
+
+		return closure(room, membership);
+	}});
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/room.h

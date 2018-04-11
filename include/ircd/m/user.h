@@ -25,6 +25,7 @@ struct ircd::m::user
 {
 	struct room;
 	struct rooms;
+	struct mitsein;
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
@@ -101,6 +102,27 @@ struct ircd::m::user::rooms
 	size_t count() const;
 
 	rooms(const m::user &user);
+};
+
+/// Interface to the other users visible to a user from common rooms.
+struct ircd::m::user::mitsein
+{
+	m::user user;
+
+  public:
+	// All common rooms with user
+	void for_each(const m::user &, const string_view &membership, const rooms::closure_bool &) const;
+	void for_each(const m::user &, const string_view &membership, const rooms::closure &) const;
+	void for_each(const m::user &, const rooms::closure_bool &) const;
+	void for_each(const m::user &, const rooms::closure &) const;
+
+	// All common users in all rooms
+	void for_each(const string_view &membership, const closure_bool &) const;
+	void for_each(const string_view &membership, const closure &) const;
+	void for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
+
+	mitsein(const m::user &user);
 };
 
 inline ircd::m::user::operator
