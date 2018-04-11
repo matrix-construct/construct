@@ -145,7 +145,8 @@ initialsync_rooms(client &client,
 static void
 initialsync_presence(client &client,
                      const resource::request &request,
-                     json::stack::object &out);
+                     json::stack::object &out,
+                     const m::user &user);
 
 static void
 initialsync_account_data(client &client,
@@ -172,7 +173,7 @@ _initialsync(client &client,
 	{
 		json::stack::member member{out, "presence"};
 		json::stack::object object{member};
-		initialsync_presence(client, request, object);
+		initialsync_presence(client, request, object, user);
 	}
 
 	// account_data
@@ -210,9 +211,46 @@ _initialsync(client &client,
 void
 initialsync_presence(client &client,
                      const resource::request &request,
-                     json::stack::object &out)
+                     json::stack::object &out,
+                     const m::user &user)
 {
+	json::stack::member member{out, "events"};
+	json::stack::array array{member};
 
+	const m::user::mitsein mitsein{user};
+	mitsein.for_each("join", [&array]
+	(const m::user &user)
+	{
+		m::presence::get(std::nothrow, user, [&array]
+		(const json::object &event)
+		{
+			json::stack::object object{array};
+
+			// sender
+			{
+				json::stack::member member
+				{
+					object, "sender", unquote(event.get("user_id"))
+				};
+			}
+
+			// type
+			{
+				json::stack::member member
+				{
+					object, "type", json::value{"m.presence"}
+				};
+			}
+
+			// content
+			{
+				json::stack::member member
+				{
+					object, "content", event
+				};
+			}
+		});
+	});
 }
 
 void
