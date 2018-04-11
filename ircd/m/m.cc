@@ -1324,6 +1324,34 @@ ircd::m::user::rooms::rooms(const m::user &user)
 {
 }
 
+size_t
+ircd::m::user::rooms::count()
+const
+{
+	size_t ret{0};
+	for_each([&ret]
+	(const m::room &, const string_view &membership)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::user::rooms::count(const string_view &membership)
+const
+{
+	size_t ret{0};
+	for_each(membership, [&ret]
+	(const m::room &, const string_view &membership)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
 void
 ircd::m::user::rooms::for_each(const closure &closure)
 const

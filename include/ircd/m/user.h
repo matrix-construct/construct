@@ -97,6 +97,9 @@ struct ircd::m::user::rooms
 	void for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
+	size_t count(const string_view &membership) const;
+	size_t count() const;
+
 	rooms(const m::user &user);
 };
 
