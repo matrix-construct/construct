@@ -896,8 +896,30 @@ console_cmd__net__peer(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__clear(opt &out, const string_view &line)
+console_cmd__net__peer__error__clear__all(opt &out, const string_view &line)
 {
+	size_t cleared(0);
+	for(auto &pair : ircd::server::peers)
+	{
+		const auto &name{pair.first};
+		assert(bool(pair.second));
+		auto &peer{*pair.second};
+		cleared += peer.err_clear();
+	}
+
+	out << "cleared " << cleared
+	    << " of " << ircd::server::peers.size()
+	    << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__net__peer__error__clear(opt &out, const string_view &line)
+{
+	if(empty(line))
+		return console_cmd__net__peer__error__clear__all(out, line);
+
 	const net::hostport hp
 	{
 		token(line, ' ', 0)
