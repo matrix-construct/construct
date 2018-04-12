@@ -296,7 +296,8 @@ struct is_zero
 	template<class T>
 	typename std::enable_if
 	<
-		is_floating<T>(),
+		is_floating<T>() &&
+		!is_bool<T>(),
 	bool>::type
 	test(const double &value)
 	const
