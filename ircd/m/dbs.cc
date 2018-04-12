@@ -701,7 +701,9 @@ ircd::m::dbs::room_origins_key(const string_view &amalgam)
 	return
 	{
 		{ s.first },
-		{ end(s.first), end(s.second) }
+		!empty(s.second)?
+			string_view{begin(s.second) - 1, end(s.second)}:
+			string_view{}
 	};
 }
 
