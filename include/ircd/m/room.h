@@ -112,6 +112,16 @@ struct ircd::m::room
 
 	operator const id &() const;
 
+	// Convenience passthru to room::messages (linear query; newest first)
+	void for_each(const string_view &type, const event::id::closure_bool &) const;
+	void for_each(const string_view &type, const event::id::closure &) const;
+	void for_each(const string_view &type, const event::closure_bool &) const;
+	void for_each(const string_view &type, const event::closure &) const;
+	void for_each(const event::id::closure_bool &) const;
+	void for_each(const event::id::closure &) const;
+	void for_each(const event::closure_bool &) const;
+	void for_each(const event::closure &) const;
+
 	// Convenience passthru to room::state (logarithmic query)
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;

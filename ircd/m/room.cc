@@ -159,32 +159,16 @@ ircd::m::room::get(std::nothrow_t,
                    const event::closure &closure)
 const
 {
-	static constexpr auto idx
-	{
-		json::indexof<event, "type"_>()
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(idx)
-	};
-
 	bool ret{false};
-	messages it{*this};
-	for(; it; --it)
+	for_each(type, event::closure_bool{[&ret, &closure]
+	(const event &event)
 	{
-		const auto &event_id{it.event_id()};
-		column(event_id, [&ret, &type](const string_view &value)
-		{
-			ret = value == type;
-		});
+		if(closure)
+			closure(event);
 
-		if(ret)
-			break;
-	}
-
-	if(ret && closure)
-		closure(*it);
+		ret = true;
+		return false;
+	}});
 
 	return ret;
 }
@@ -217,6 +201,151 @@ const
 {
 	const state state{*this};
 	return state.has(type, state_key);
+}
+
+void
+ircd::m::room::for_each(const event::closure &closure)
+const
+{
+	for_each(event::closure_bool{[&closure]
+	(const event &event)
+	{
+		closure(event);
+		return true;
+	}});
+}
+
+void
+ircd::m::room::for_each(const event::closure_bool &closure)
+const
+{
+	for_each(event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		const event::fetch event
+		{
+			event_id, std::nothrow
+		};
+
+		if(!event.valid(event_id))
+			return true;
+
+		return closure(event);
+	}});
+}
+
+void
+ircd::m::room::for_each(const event::id::closure &closure)
+const
+{
+	for_each(event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		closure(event_id);
+		return true;
+	}});
+}
+
+void
+ircd::m::room::for_each(const event::id::closure_bool &closure)
+const
+{
+	static constexpr auto idx
+	{
+		json::indexof<event, "type"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(idx)
+	};
+
+	messages it{*this};
+	for(; it; --it)
+		if(!closure(it.event_id()))
+			break;
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::closure &closure)
+const
+{
+	for_each(type, event::closure_bool{[&closure]
+	(const event &event)
+	{
+		closure(event);
+		return true;
+	}});
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::closure_bool &closure)
+const
+{
+	for_each(type, event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		const event::fetch event
+		{
+			event_id, std::nothrow
+		};
+
+		if(!event.valid(event_id))
+			return true;
+
+		return closure(event);
+	}});
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::id::closure &closure)
+const
+{
+	for_each(type, event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		closure(event_id);
+		return true;
+	}});
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::id::closure_bool &closure)
+const
+{
+	static constexpr auto idx
+	{
+		json::indexof<event, "type"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(idx)
+	};
+
+	messages it{*this};
+	for(; it; --it)
+	{
+		const auto &event_id
+		{
+			it.event_id()
+		};
+
+		bool match{false};
+		column(event_id, [&match, &type]
+		(const string_view &value)
+		{
+			match = value == type;
+		});
+
+		if(match)
+			if(!closure(event_id))
+				break;
+	}
 }
 
 //
