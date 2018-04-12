@@ -269,7 +269,7 @@ ircd::m::pretty(const event &event)
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
 	{
-		if(json::defined(val))
+		if(defined(json::value(val)))
 			s << std::setw(16) << std::right << key << " :" << val << std::endl;
 	}};
 
@@ -383,7 +383,7 @@ ircd::m::pretty_oneline(const event &event,
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
 	{
-		if(defined(val))
+		if(defined(json::value(val)))
 			s << val << " ";
 		else
 			s << "* ";

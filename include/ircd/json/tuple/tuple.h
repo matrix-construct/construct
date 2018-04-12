@@ -240,29 +240,6 @@ val(const tuple &t)
 	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
 }
 
-template<class T>
-typename std::enable_if<is_number<T>() && !is_bool<T>(), size_t>::type
-serialized(T&& t)
-{
-	return lex_cast(t).size();
-}
-
-template<class T>
-typename std::enable_if<is_number<T>() && !is_bool<T>(), bool>::type
-defined(T&& t)
-{
-	// :-(
-	using type = typename std::decay<T>::type;
-	return t != std::numeric_limits<type>::max();
-}
-
-template<class T>
-typename std::enable_if<is_bool<T>(), bool>::type
-defined(T&& t)
-{
-	return true;
-}
-
 template<class dst,
          class src>
 typename std::enable_if
@@ -402,9 +379,7 @@ get(const tuple &t,
 	};
 
 	using value_type = tuple_value_type<tuple, idx>;
-
-	//TODO: undefined
-	return defined(ret)? ret : def;
+	return defined(json::value(ret))? ret : def;
 }
 
 template<size_t hash,
@@ -431,10 +406,13 @@ enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(tuple &t,
     tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 {
-	//TODO: undefined
-	auto &ret{get<hash, tuple>(t)};
+	auto &ret
+	{
+		get<hash, tuple>(t)
+	};
+
 	using value_type = decltype(ret);
-	return defined(ret)? ret : def;
+	return defined(json::value(ret))? ret : def;
 }
 
 template<const char *const &name,
@@ -487,10 +465,11 @@ at(const tuple &t)
 	};
 
 	using value_type = tuple_value_type<tuple, idx>;
-
-	//TODO: XXX
-	if(!defined(ret))
-		throw not_found("%s", key<idx>(t));
+	if(!defined(json::value(ret)))
+		throw not_found
+		{
+			"%s", key<idx>(t)
+		};
 
 	return ret;
 }
@@ -511,10 +490,11 @@ at(tuple &t)
 	};
 
 	using value_type = tuple_value_type<tuple, idx>;
-
-	//TODO: XXX
-	if(!defined(ret))
-		throw not_found("%s", key<idx>(t));
+	if(!defined(json::value(ret)))
+		throw not_found
+		{
+			"%s", key<idx>(t)
+		};
 
 	return ret;
 }
@@ -1057,7 +1037,7 @@ _member_transform_if(const tuple<T...> &tuple,
                      closure&& lambda)
 {
 	until(tuple, [&it, &end, &lambda]
-	(const auto &key, const auto &val)
+	(const auto &key, auto&& val)
 	{
 		if(it == end)
 			return false;
@@ -1082,7 +1062,7 @@ _member_transform(const tuple<T...> &tuple,
                   closure&& lambda)
 {
 	return _member_transform_if(tuple, it, end, [&lambda]
-	(auto&& ret, const auto &key, const auto &val)
+	(auto&& ret, const auto &key, auto&& val)
 	{
 		ret = lambda(key, val);
 		return true;
@@ -1098,7 +1078,7 @@ _member_transform(const tuple<T...> &tuple,
                   const it_b end)
 {
 	return _member_transform(tuple, it, end, []
-	(auto&& ret, const auto &key, const auto &val) -> member
+	(auto&& ret, const auto &key, auto&& val) -> member
 	{
 		return { key, val };
 	});
@@ -1117,11 +1097,11 @@ serialized(const tuple<T...> &t)
 	const auto e{_member_transform_if(t, begin(sizes), end(sizes), []
 	(auto &ret, const string_view &key, auto&& val)
 	{
-		if(!defined(val))
+		const json::value value(val);
+		if(!defined(value))
 			return false;
 
-		//    "                "   :                     ,
-		ret = 1 + key.size() + 1 + 1 + serialized(val) + 1;
+		ret = 1 + key.size() + 1 + 1 + serialized(value) + 1;
 		return true;
 	})};
 
@@ -1157,10 +1137,11 @@ stringify(mutable_buffer &buf,
 	const auto e{_member_transform_if(tuple, begin(members), end(members), []
 	(auto &ret, const string_view &key, auto&& val)
 	{
-		if(!defined(val))
+		json::value value(val);
+		if(!defined(value))
 			return false;
 
-		ret = member { key, val };
+		ret = member { key, std::move(value) };
 		return true;
 	})};
 

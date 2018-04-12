@@ -104,7 +104,7 @@ ircd::db::txn::append::append(txn &txn,
 	for_each(tuple, [&txn, &key, &op]
 	(const auto &col, auto&& val)
 	{
-		if(!value_required(op) || defined(val)) append
+		if(!value_required(op) || defined(json::value(val))) append
 		{
 			txn, delta
 			{
@@ -130,7 +130,7 @@ ircd::db::txn::append::append(txn &txn,
 	for_each(tuple, [&txn, &key, &col, &op, &i]
 	(const auto &, auto&& val)
 	{
-		if(!value_required(op) || defined(val)) append
+		if(!value_required(op) || defined(json::value(val))) append
 		{
 			txn, col.at(i), column::delta
 			{

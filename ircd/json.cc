@@ -2278,7 +2278,8 @@ const
 				return string == nullptr ||
 				       string_view{*this} == literal_false ||
 				       string_view{*this} == literal_null;
-			break;
+			else
+				return !bool(integer);
 	};
 
 	throw type_error("deciding if a type[%u] is falsy is undefined", int(type));
@@ -2310,7 +2311,7 @@ const
 
 		case LITERAL:
 			return serial? !len:
-			               true;
+			               false;
 	};
 
 	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
@@ -2327,7 +2328,8 @@ const
 			                !bool(integer);
 
 		case STRING:
-			return string == nullptr;
+			return string == nullptr ||
+			       string_view{string, len}.null();
 
 		case OBJECT:
 			return serial? string == nullptr:
@@ -2341,7 +2343,8 @@ const
 
 		case LITERAL:
 			return serial? string == nullptr:
-			               true;
+			       string? literal_null == string:
+			               false;
 	};
 
 	throw type_error("deciding if a type[%u] is null is undefined", int(type));
@@ -2354,10 +2357,10 @@ const
 	switch(type)
 	{
 		case NUMBER:
-			return false;
+			return integer == std::numeric_limits<decltype(integer)>::max();
 
 		case STRING:
-			return string == nullptr;
+			return string_view{string, len}.undefined();
 
 		case OBJECT:
 			return serial? string == nullptr:
