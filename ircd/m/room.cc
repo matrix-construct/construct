@@ -406,7 +406,7 @@ const
 	get(type, state_key, event::id::closure{[&closure]
 	(const event::id &event_id)
 	{
-		event::fetch event
+		const event::fetch event
 		{
 			event_id
 		};
@@ -455,7 +455,7 @@ const
 	return get(std::nothrow, type, state_key, event::id::closure{[&closure]
 	(const event::id &event_id)
 	{
-		event::fetch event
+		const event::fetch event
 		{
 			event_id, std::nothrow
 		};
