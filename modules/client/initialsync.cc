@@ -581,6 +581,12 @@ initialsync_room_timeline_events(client &client,
 	return event_id;
 }
 
+static void
+initialsync_room_ephemeral_events(client &client,
+                                  const resource::request &request,
+                                  json::stack::array &out,
+                                  const m::room &room);
+
 void
 initialsync_room_ephemeral(client &client,
                            const resource::request &request,
@@ -588,7 +594,72 @@ initialsync_room_ephemeral(client &client,
                            const m::user::room &user_room,
                            const m::room &room)
 {
+	{
+		json::stack::member member{out, "events"};
+		json::stack::array array{member};
+		initialsync_room_ephemeral_events(client, request, array, room);
+	}
+}
 
+void
+initialsync_room_ephemeral_events(client &client,
+                                  const resource::request &request,
+                                  json::stack::array &events,
+                                  const m::room &room)
+{
+	const m::room::members members{room};
+	//TODO: We're skipping receipts from members who left so we enjoy the
+	//TODO: joined members optimizations. Need to figure out if anyone
+	//TODO: left in the synced timeline and include them manually.
+	members.for_each("join", m::room::members::closure{[&events, &room]
+	(const m::user &user)
+	{
+		const m::user::room user_room{user};
+		user_room.get(std::nothrow, "m.read", room.room_id, [&events, &room, &user]
+		(const m::event &event)
+		{
+			//TODO: skip if receipt is not for event we're actually syncing
+			//TODO: in the related messages timeline array.
+
+			json::stack::object object{events};
+
+			// type
+			{
+				json::stack::member member
+				{
+					object, "type", "m.receipt"
+				};
+			}
+
+			// content
+			{
+				const json::object data
+				{
+					at<"content"_>(event)
+				};
+
+				thread_local char buf[1024];
+				const json::members reformat
+				{
+					{ unquote(data.at("event_id")),
+					{
+						{ "m.read",
+						{
+							{ at<"sender"_>(event),
+							{
+								{ "ts", data.at("ts") }
+							}}
+						}}
+					}}
+				};
+
+				json::stack::member member
+				{
+					object, "content", json::stringify(mutable_buffer{buf}, reformat)
+				};
+			}
+		});
+	}});
 }
 
 void
