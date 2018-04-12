@@ -141,7 +141,7 @@ commit__m_presence(const m::presence &content)
 	};
 
 	//TODO: ABA
-	return send(user_room, user.user_id, "m.presence", json::strung{content});
+	return send(user_room, user.user_id, "m.presence", "", json::strung{content});
 }
 
 //
@@ -163,7 +163,7 @@ get__presence_status(client &client,
 		user_id
 	};
 
-	user_room.get("m.presence", [&client]
+	user_room.get("m.presence", "", [&client]
 	(const m::event &event)
 	{
 		const auto &content
@@ -301,7 +301,7 @@ m_presence_get(const std::nothrow_t,
 		user
 	};
 
-	return user_room.get(std::nothrow, "m.presence", [&closure]
+	return user_room.get(std::nothrow, "m.presence", "", [&closure]
 	(const m::event &event)
 	{
 		const auto &content
