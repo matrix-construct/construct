@@ -883,7 +883,7 @@ const
 			};
 
 			bool ret{false};
-			state.get("m.room.member", member, [&view, &ret]
+			state.get(std::nothrow, "m.room.member", member, [&view, &ret]
 			(const m::event &event)
 			{
 				ret = view(event);
