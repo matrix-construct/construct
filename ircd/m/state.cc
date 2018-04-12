@@ -63,12 +63,12 @@ ircd::m::state::get(std::nothrow_t,
                     const string_view &root,
                     const json::array &key,
                     const val_closure &closure)
-try
 {
 	bool ret{false};
 	char nextbuf[ID_MAX_SZ];
 	string_view nextid{root};
-	while(nextid) get_node(nextid, [&](const node &node)
+	const auto node_closure{[&ret, &nextbuf, &nextid, &key, &closure]
+	(const node &node)
 	{
 		auto pos(node.find(key));
 		if(pos < node.keys() && node.key(pos) == key)
@@ -87,13 +87,13 @@ try
 			nextid = { nextbuf, strlcpy(nextbuf, node.child(pos)) };
 		else
 			nextid = {};
-	});
+	}};
+
+	while(nextid)
+		if(!get_node(std::nothrow, nextid, node_closure))
+			return false;
 
 	return ret;
-}
-catch(const db::not_found &e)
-{
-	return false;
 }
 
 size_t
