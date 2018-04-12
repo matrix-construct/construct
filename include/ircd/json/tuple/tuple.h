@@ -241,19 +241,26 @@ val(const tuple &t)
 }
 
 template<class T>
-typename std::enable_if<is_number<T>(), size_t>::type
+typename std::enable_if<is_number<T>() && !is_bool<T>(), size_t>::type
 serialized(T&& t)
 {
 	return lex_cast(t).size();
 }
 
 template<class T>
-typename std::enable_if<is_number<T>(), bool>::type
+typename std::enable_if<is_number<T>() && !is_bool<T>(), bool>::type
 defined(T&& t)
 {
 	// :-(
 	using type = typename std::decay<T>::type;
 	return t != std::numeric_limits<type>::max();
+}
+
+template<class T>
+typename std::enable_if<is_bool<T>(), bool>::type
+defined(T&& t)
+{
+	return true;
 }
 
 template<class dst,
@@ -297,7 +304,7 @@ _assign(dst &d,
         src&& s)
 {
 	static const is_zero test{};
-	d = test(std::forward<src>(s));
+	d = !test(std::forward<src>(s));
 }
 
 template<class dst,

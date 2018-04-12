@@ -2371,7 +2371,7 @@ const
 
 		case LITERAL:
 			return serial? string == nullptr:
-			               true;
+			               false;
 	};
 
 	throw type_error("deciding if a type[%u] is undefined is undefined", int(type));
