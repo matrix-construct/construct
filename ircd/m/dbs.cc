@@ -560,7 +560,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::tuple<uint64_t, ircd::string_view>
+std::pair<uint64_t, ircd::string_view>
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
 	const auto &key
@@ -685,7 +685,7 @@ ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::tuple<ircd::string_view, ircd::string_view>
+std::pair<ircd::string_view, ircd::string_view>
 ircd::m::dbs::room_origins_key(const string_view &amalgam)
 {
 	const auto &key
@@ -788,7 +788,7 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::tuple<ircd::string_view, ircd::string_view>
+std::pair<ircd::string_view, ircd::string_view>
 ircd::m::dbs::room_state_key(const string_view &amalgam)
 {
 	const auto &key

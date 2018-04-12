@@ -32,15 +32,15 @@ namespace ircd::m::dbs
 	// Lowlevel util
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
-	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
+	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
 
 	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin);
-	std::tuple<string_view, string_view> room_origins_key(const string_view &amalgam);
+	std::pair<string_view, string_view> room_origins_key(const string_view &amalgam);
 
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
-	std::tuple<uint64_t, string_view> room_events_key(const string_view &amalgam);
+	std::pair<uint64_t, string_view> room_events_key(const string_view &amalgam);
 
 	// Get the state root for an event (with as much information as you have)
 	string_view state_root(const mutable_buffer &out, const id::room &, const id::event &, const uint64_t &depth);
