@@ -954,56 +954,95 @@ const
 //
 
 void
-ircd::m::room::members::for_each(const event::closure &view)
+ircd::m::room::members::for_each(const closure &closure)
 const
 {
-	test([&view](const m::event &event)
+	for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const closure_bool &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+void
+ircd::m::room::members::for_each(const event::closure &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::test(const event::closure_bool &closure)
+const
+{
+	const room::state state{room};
+	return state.test("m.room.member", event::closure_bool{[&closure]
+	(const m::event &event)
 	{
-		view(event);
-		return false;
-	});
+		return closure(event);
+	}});
 }
 
 void
 ircd::m::room::members::for_each(const string_view &membership,
-                                 const event::closure &view)
+                                 const closure &closure)
 const
 {
-	test(membership, [&view](const m::event &event)
+	for_each(membership, closure_bool{[&closure]
+	(const user::id &user_id)
 	{
-		view(event);
+		closure(user_id);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure_bool &closure)
+const
+{
+	return !test(membership, event::closure_bool{[&closure]
+	(const event &event)
+	{
+		const user::id &user_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		return !closure(user_id);
+	}});
+}
+
+void
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const event::closure &closure)
+const
+{
+	test(membership, [&closure]
+	(const event &event)
+	{
+		closure(event);
 		return false;
 	});
 }
 
 bool
-ircd::m::room::members::test(const event::closure_bool &view)
-const
-{
-	const room::state state
-	{
-		room
-	};
-
-	return state.test("m.room.member", event::closure_bool{[&view]
-	(const m::event &event)
-	{
-		return view(event);
-	}});
-}
-
-bool
 ircd::m::room::members::test(const string_view &membership,
-                             const event::closure_bool &view)
+                             const event::closure_bool &closure)
 const
 {
+	if(empty(membership))
+		return test(closure);
+
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(!room.event_id && membership == "join")
 	{
-		const room::state state{room};
 		const room::origins origins{room};
-		return origins._test_([&view, &state]
+		return origins._test_([&closure, this]
 		(const string_view &key)
 		{
 			const string_view &member
@@ -1012,24 +1051,25 @@ const
 			};
 
 			bool ret{false};
-			state.get(std::nothrow, "m.room.member", member, [&view, &ret]
-			(const m::event &event)
+			room.get(std::nothrow, "m.room.member", member, event::closure{[&closure, &ret]
+			(const event &event)
 			{
-				ret = view(event);
-			});
+				ret = closure(event);
+			}});
 
 			return ret;
 		});
 	}
 
-	return test([&membership, &view](const event &event)
+	return test(event::closure_bool{[&membership, &closure]
+	(const event &event)
 	{
 		if(at<"membership"_>(event) == membership)
-			if(view(event))
+			if(closure(event))
 				return true;
 
 		return false;
-	});
+	}});
 }
 
 size_t

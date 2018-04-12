@@ -275,6 +275,9 @@ struct ircd::m::room::state::opts
 ///
 struct ircd::m::room::members
 {
+	using closure = std::function<void (const id::user &)>;
+	using closure_bool = std::function<bool (const id::user &)>;
+
 	m::room room;
 
 	size_t count() const;
@@ -283,8 +286,12 @@ struct ircd::m::room::members
 	bool test(const string_view &membership, const event::closure_bool &view) const;
 	bool test(const event::closure_bool &view) const;
 
-	void for_each(const string_view &membership, const event::closure &view) const;
-	void for_each(const event::closure &view) const;
+	void for_each(const string_view &membership, const event::closure &) const;
+	bool for_each(const string_view &membership, const closure_bool &) const;
+	void for_each(const string_view &membership, const closure &) const;
+	void for_each(const event::closure &) const;
+	bool for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
 
 	members(const m::room &room)
 	:room{room}
