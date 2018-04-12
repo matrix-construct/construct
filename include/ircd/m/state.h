@@ -13,6 +13,10 @@
 
 /// Matrix machine state unit and bus.
 ///
+/// !!! note: This is actually a really low-level interface. If you don't
+/// know that you are almost certainly looking for the room::state interface
+/// and not this.
+///
 /// This section deals specifically with the aspect of Matrix called "state"
 /// providing tools and utilities as well as local databasing. IO is done for
 /// reads, and indirect into db::txn's for writes. No network activities are
