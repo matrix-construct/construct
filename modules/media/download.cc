@@ -10,12 +10,6 @@
 
 #include "media.h"
 
-mapi::header
-IRCD_MODULE
-{
-	"Client 11.7 :Content repository (download)"
-};
-
 resource
 download_resource
 {
@@ -73,13 +67,13 @@ get__download(client &client,
 	};
 }
 
-resource::method
+static resource::method
 method_get
 {
 	download_resource, "GET", get__download
 };
 
-resource::method
+static resource::method
 method_get__legacy
 {
 	download_resource__legacy, "GET", get__download

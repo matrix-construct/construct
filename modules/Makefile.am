@@ -280,14 +280,15 @@ federation_module_LTLIBRARIES = \
 
 media_moduledir = @moduledir@
 
-media_media_download_la_SOURCES = media/download.cc
-media_media_upload_la_SOURCES = media/upload.cc
-media_media_thumbnail_la_SOURCES = media/thumbnail.cc
+media_media_media_la_SOURCES = \
+	media/download.cc \
+	media/upload.cc \
+	media/thumbnail.cc \
+	media/media.cc \
+	###
 
 media_module_LTLIBRARIES = \
-	media/media_download.la \
-	media/media_upload.la \
-	media/media_thumbnail.la \
+	media/media_media.la \
 	###
 
 ###############################################################################

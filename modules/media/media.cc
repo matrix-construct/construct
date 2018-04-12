@@ -8,6 +8,30 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+#include "media.h"
 
-m::room::id::buf file_room_id(const string_view &server, const string_view &file);
+mapi::header
+IRCD_MODULE
+{
+	"11.7 :Content respository"
+};
+
+m::room::id::buf
+file_room_id(const string_view &server,
+             const string_view &file)
+{
+	size_t len;
+	thread_local char buf[512];
+	len = strlcpy(buf, server);
+	len = strlcat(buf, "/"_sv);
+	len = strlcat(buf, file);
+	const sha256::buf hash
+	{
+		sha256{string_view{buf, len}}
+	};
+
+	return m::room::id::buf
+	{
+		b58encode(buf, hash), my_host()
+	};
+}

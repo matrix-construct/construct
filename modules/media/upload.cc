@@ -10,12 +10,6 @@
 
 #include "media.h"
 
-mapi::header
-IRCD_MODULE
-{
-	"Client 11.7 :Content repository (upload)"
-};
-
 resource
 upload_resource__legacy
 {
@@ -135,8 +129,8 @@ post__upload(client &client,
 	};
 }
 
-struct resource::method::opts
-const method_post_opts
+static const struct resource::method::opts
+method_post_opts
 {
 	resource::method::REQUIRES_AUTH |
 	resource::method::CONTENT_DISCRETION,
@@ -144,13 +138,13 @@ const method_post_opts
 	8_MiB //TODO: conf; (this is the payload max option)
 };
 
-resource::method
+static resource::method
 method_post
 {
 	upload_resource, "POST", post__upload, method_post_opts
 };
 
-resource::method
+static resource::method
 method_post__legacy
 {
 	upload_resource__legacy, "POST", post__upload, method_post_opts
