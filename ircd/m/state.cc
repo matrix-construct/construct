@@ -784,9 +784,23 @@ void
 ircd::m::state::get_node(const string_view &node_id,
                          const node_closure &closure)
 {
+	if(!get_node(std::nothrow, node_id, closure))
+		throw m::NOT_FOUND
+		{
+			"node_id %s not found",
+			string_view{node_id}
+		};
+}
+
+/// View a node by ID. This makes a DB query and may yield ircd::ctx.
+bool
+ircd::m::state::get_node(const std::nothrow_t,
+                         const string_view &node_id,
+                         const node_closure &closure)
+{
 	assert(bool(dbs::state_node));
 	auto &column{dbs::state_node};
-	column(node_id, closure);
+	return column(node_id, std::nothrow, closure);
 }
 
 /// Writes a node to the db::txn and returns the id of this node (a hash) into

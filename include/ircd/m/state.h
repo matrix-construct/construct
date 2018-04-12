@@ -55,6 +55,7 @@ namespace ircd::m::state
 	json::array make_key(const mutable_buffer &out, const string_view &type);
 
 	id set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
+	bool get_node(const std::nothrow_t, const string_view &id, const node_closure &);
 	void get_node(const string_view &id, const node_closure &);
 
 	id remove(db::txn &, const mutable_buffer &rootout, const id &rootin, const json::array &key);
