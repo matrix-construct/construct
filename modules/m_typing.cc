@@ -67,9 +67,9 @@ _handle_edu_m_typing(const m::event &event,
 		return;
 	}
 
-	log::debug
+	log::info
 	{
-		"%s | %s %s typing in %s",
+		"%s %s %s typing in %s",
 		at<"origin"_>(event),
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
