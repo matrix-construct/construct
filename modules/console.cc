@@ -2125,6 +2125,39 @@ console_cmd__user__deactivate(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__presence(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "limit"
+	}};
+
+	const m::user user
+	{
+		param.at(0)
+	};
+
+	auto limit
+	{
+		param.at(1, size_t(16))
+	};
+
+	const m::user::room user_room{user};
+	user_room.for_each("m.presence", m::event::closure_bool{[&out, &limit]
+	(const m::event &event)
+	{
+		out << timestr(at<"origin_server_ts"_>(event) / 1000)
+		    << " " << at<"content"_>(event)
+		    << " " << at<"event_id"_>(event)
+		    << std::endl;
+
+		return --limit > 0;
+	}});
+
+	return true;
+}
+
 //
 // feds
 //
