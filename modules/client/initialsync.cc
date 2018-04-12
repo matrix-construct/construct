@@ -83,6 +83,7 @@ _initialsync(client &client,
 resource::response
 initialsync(client &client,
             const resource::request &request)
+try
 {
 	const auto &filter_id
 	{
@@ -134,6 +135,18 @@ initialsync(client &client,
 	total += client.write_all(http::writechunk(headbuf, 0));
 	total += client.write_all("\r\n"_sv);
 	return response;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Initial sync for %s from %s failed because :%s",
+		request.user_id,
+		string(remote(client)),
+		e.what()
+	};
+
+	throw;
 }
 
 static void
