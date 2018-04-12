@@ -2158,6 +2158,34 @@ console_cmd__user__presence(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__read(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id",
+	}};
+
+	const m::user user
+	{
+		param.at(0)
+	};
+
+	const m::user::room user_room{user};
+	const m::room::state state{user_room};
+	state.for_each("m.read", m::event::closure{[&out]
+	(const m::event &event)
+	{
+		out << timestr(at<"origin_server_ts"_>(event) / 1000)
+		    << " " << at<"state_key"_>(event)
+		    << " " << at<"content"_>(event)
+		    << " " << at<"event_id"_>(event)
+		    << std::endl;
+	}});
+
+	return true;
+}
+
 //
 // feds
 //
