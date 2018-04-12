@@ -955,25 +955,25 @@ ircd::m::state::node::rep::write(const mutable_buffer &out)
 	assert(vn <= NODE_MAX_VAL);
 	assert(cn <= NODE_MAX_DEG);
 
-	json::value keys[kn];
+	std::array<json::value, NODE_MAX_KEY> keys;
 	{
 		for(size_t i(0); i < kn; ++i)
 			keys[i] = this->keys[i];
 	}
 
-	json::value vals[vn];
+	std::array<json::value, NODE_MAX_VAL> vals;
 	{
 		for(size_t i(0); i < vn; ++i)
 			vals[i] = this->vals[i];
 	};
 
-	json::value chld[cn];
+	std::array<json::value, NODE_MAX_DEG> chld;
 	{
 		for(size_t i(0); i < cn; ++i)
 			chld[i] = this->chld[i];
 	};
 
-	json::value cnts[nn];
+	std::array<json::value, NODE_MAX_DEG> cnts;
 	{
 		for(size_t i(0); i < nn; ++i)
 			cnts[i] = json::value{long(this->cnts[i])};
@@ -982,10 +982,10 @@ ircd::m::state::node::rep::write(const mutable_buffer &out)
 	json::iov iov;
 	const json::iov::push push[]
 	{
-		{ iov, { name::key,   { keys, kn } } },
-		{ iov, { name::val,   { vals, vn } } },
-		{ iov, { name::child, { chld, cn } } },
-		{ iov, { name::count, { cnts, nn } } },
+		{ iov, { name::key,   { keys.data(), kn } } },
+		{ iov, { name::val,   { vals.data(), vn } } },
+		{ iov, { name::child, { chld.data(), cn } } },
+		{ iov, { name::count, { cnts.data(), nn } } },
 	};
 
 	return { data(out), json::print(out, iov) };
