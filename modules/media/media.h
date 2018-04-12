@@ -11,3 +11,6 @@
 using namespace ircd;
 
 m::room::id::buf file_room_id(const string_view &server, const string_view &file);
+
+size_t read_each_block(const m::room &, const std::function<void (const string_view &)> &);
+size_t write_file(const m::room &room, const string_view &content, const string_view &content_type);

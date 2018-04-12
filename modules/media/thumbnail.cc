@@ -82,16 +82,22 @@ get__thumbnail(client &client,
 	};
 
 	m::vm::opts::commit vmopts;
+	vmopts.history = false;
 	const m::room room
 	{
-		room_id
+		room_id, &vmopts
 	};
 
+	//TODO: ABA
 	if(m::exists(room))
 		return get__thumbnail_local(client, request, server, file, room);
 
 	if(!my_host(server))
+	{
+		//TODO: ABA TXN
+		create(room, m::me.user_id, "file");
 		return get__thumbnail_remote(client, request, server, file, room);
+	}
 
 	throw m::NOT_FOUND
 	{
@@ -117,6 +123,7 @@ get__thumbnail_remote(client &client,
                       const string_view &hostname,
                       const string_view &mediaid,
                       const m::room &room)
+try
 {
 	const net::hostport remote
 	{
@@ -200,75 +207,19 @@ get__thumbnail_remote(client &client,
 		client, remote_request.in.content, content_type
 	};
 
-	//TODO: TXN
-	create(room, m::me.user_id, "file");
-
-	//TODO: TXN
-	send(room, m::me.user_id, "ircd.file.stat", "size",
+	const size_t written
 	{
-		{ "value", long(file_size) }
-	});
-
-	//TODO: TXN
-	send(room, m::me.user_id, "ircd.file.stat", "type",
-	{
-		{ "value", content_type }
-	});
-
-	const auto lpath{fs::make_path({fs::DPATH, "media"})};
-	thread_local char pathbuf[1024];
-	size_t pathlen{0};
-	pathlen = strlcpy(pathbuf, lpath);
-	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
-	const mutable_buffer pathpart
-	{
-		pathbuf + pathlen, sizeof(pathbuf) - pathlen
+		write_file(room, remote_request.in.content, content_type)
 	};
 
-	size_t off{0}, wrote{0};
-	while(off < file_size)
-	{
-		const size_t blksz
-		{
-			std::min(file_size - off, size_t(32_KiB))
-		};
-
-		const const_buffer &block
-		{
-			data(remote_request.in.content) + off, blksz
-		};
-
-		const sha256::buf hash_
-		{
-			sha256{block}
-		};
-
-		char b58buf[hash_.size() * 2];
-		const string_view hash
-		{
-			b58encode(b58buf, hash_)
-		};
-
-		send(room, m::me.user_id, "ircd.file.block",
-		{
-			{ "size",  long(blksz) },
-			{ "hash",  hash        }
-		});
-
-		const string_view path
-		{
-			pathbuf, pathlen + copy(pathpart, hash)
-		};
-
-		if(!fs::exists(path))
-			wrote += size(fs::write(path, block));
-
-		off += blksz;
-	}
-
-	assert(off == file_size);
-	assert(wrote <= off);
 	return {};
+}
+catch(const ircd::server::unavailable &e)
+{
+	throw http::error
+	{
+		http::BAD_GATEWAY, e.what()
+	};
 }
 
 static resource::response
@@ -288,7 +239,11 @@ get__thumbnail_local(client &client,
 
 	// Get the MIME type
 	char type_buf[64];
-	string_view content_type;
+	string_view content_type
+	{
+		"application/octet-stream"
+	};
+
 	room.get("ircd.file.stat", "type", [&type_buf, &content_type]
 	(const m::event &event)
 	{
@@ -309,57 +264,13 @@ get__thumbnail_local(client &client,
 		client, http::OK, content_type, file_size
 	};
 
-	const auto lpath{fs::make_path({fs::DPATH, "media"})};
-	thread_local char pathbuf[1024];
-	size_t pathlen{0};
-	pathlen = strlcpy(pathbuf, lpath);
-	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
-	const mutable_buffer pathpart
+	size_t sent{0}, read;
+	read = read_each_block(room, [&client, &sent]
+	(const string_view &block)
 	{
-		pathbuf + pathlen, sizeof(pathbuf) - pathlen
-	};
-
-	// Block buffer
-	const unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
-	};
-
-	// Spool content to client
-	size_t sent{0}, read{0};
-	m::room::messages it{room, 1};
-	for(; bool(it); ++it)
-	{
-		const m::event &event{*it};
-		if(at<"type"_>(event) != "ircd.file.block")
-			continue;
-
-		const auto &hash
-		{
-			unquote(at<"content"_>(event).at("hash"))
-		};
-
-		const auto &blksz
-		{
-			at<"content"_>(event).get<size_t>("size")
-		};
-
-		const string_view path
-		{
-			pathbuf, pathlen + copy(pathpart, hash)
-		};
-
-		const string_view &block
-		{
-			fs::read(path, buf)
-		};
-
-		assert(size(block) == blksz);
-		read += size(block);
 		sent += write_all(*client.sock, block);
-	}
+	});
 
-	assert(read == file_size);
-	assert(sent == read);
+	//assert(sent == file_size);
 	return {};
 }
