@@ -540,8 +540,7 @@ const
 			event_id
 		};
 
-		if(event.valid(event_id))
-			closure(event);
+		closure(event);
 	}});
 }
 
@@ -586,11 +585,10 @@ const
 	{
 		const event::fetch event
 		{
-			event_id, std::nothrow
+			event_id
 		};
 
-		if(event.valid(event_id))
-			closure(event);
+		closure(event);
 	}});
 }
 
