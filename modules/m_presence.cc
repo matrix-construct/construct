@@ -97,14 +97,13 @@ handle_edu_m_presence_(const m::event &event,
 		m::presence::set(object)
 	};
 
-	log::debug
+	log::info
 	{
-		"%s | %s %s [%s] %zd seconds ago => %s",
+		"%s %s is %s and %s %zd seconds ago",
 		at<"origin"_>(event),
 		string_view{user_id},
-		presence,
 		json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
-		json::get<"last_active_ago"_>(object) / 1000L,
-		string_view{evid}
+		presence,
+		json::get<"last_active_ago"_>(object) / 1000L
 	};
 }
