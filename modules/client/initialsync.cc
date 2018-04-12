@@ -285,7 +285,7 @@ initialsync_account_data(client &client,
 		{
 			json::stack::member member
 			{
-				object, "type", unquote(at<"state_key"_>(event))
+				object, "type", at<"state_key"_>(event)
 			};
 		}
 
@@ -293,7 +293,7 @@ initialsync_account_data(client &client,
 		{
 			json::stack::member member
 			{
-				object, "content", unquote(at<"content"_>(event))
+				object, "content", at<"content"_>(event)
 			};
 		}
 	});
