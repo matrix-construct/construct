@@ -108,6 +108,8 @@ struct ircd::net::socket
 	// Socket cannot be copied or moved; must be constructed as shared ptr
 	socket(socket &&) = delete;
 	socket(const socket &) = delete;
+	socket &operator=(socket &&) = delete;
+	socket &operator=(const socket &) = delete;
 	~socket() noexcept;
 };
 

@@ -1330,6 +1330,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 ircd::net::socket::~socket()
 noexcept try
 {
+	assert(instances > 0);
 	if(unlikely(--instances == 0))
 		net::dock.notify_all();
 
