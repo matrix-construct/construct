@@ -442,10 +442,10 @@ try
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
-	log.debug("Opening database \"%s\" @ `%s' columns[%zu]",
-	          this->name,
-	          path,
-	          columns.size());
+	log.info("Opening database \"%s\" @ `%s' with %zu columns...",
+	         this->name,
+	         path,
+	         columns.size());
 
 	// Open DB into ptr
 	rocksdb::DB *ptr;
@@ -535,15 +535,15 @@ catch(const std::exception &e)
 ircd::db::database::~database()
 noexcept
 {
-	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
-	log.debug("'%s': closing database @ `%s'; background_errors: %lu",
-	          name,
-	          path,
-	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
+	log.info("'%s': closing database @ `%s'...",
+	         name,
+	         path);
 
+	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
 	this->columns.clear();
-	log.debug("'%s': flushed columns; synchronizing...",
-	          name);
+	log.debug("'%s': flushed columns; background_errors: %lu; synchronizing...",
+	          name,
+	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
 
 	sync(*this);
 	log.debug("'%s': synchronized with hardware.",
