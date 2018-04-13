@@ -72,6 +72,7 @@ enum ircd::m::vm::fault
 	GENERAL       = 0x10,  ///< General protection fault. (#gp)
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
 	STATE         = 0x40,  ///< Required state is missing (#st)
+	INTERRUPT     = 0x80,  ///< ctx::interrupted (#nmi)
 };
 
 /// Evaluation Options

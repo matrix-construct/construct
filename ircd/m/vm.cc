@@ -308,6 +308,19 @@ catch(const error &e)
 
 	throw;
 }
+catch(const ctx::interrupted &e)
+{
+	if(opts->errorlog & fault::INTERRUPT)
+		log.error("eval %s: #NMI: %s",
+		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		          e.what());
+
+	if(opts->warnlog & fault::INTERRUPT)
+		log.warning("eval %s: #NMI: %s",
+		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		            e.what());
+	throw;
+}
 catch(const std::exception &e)
 {
 	if(opts->errorlog & fault::GENERAL)
