@@ -49,10 +49,12 @@ struct ircd::json::stack
 
 	window_buffer buf;
 	flush_callback flusher;
+	std::exception_ptr eptr;
 
 	object *co {nullptr};              ///< The root object instance.
 	array *ca {nullptr};               ///< Could be union with top_object but
 
+	void rethrow_exception();
 	void append(const size_t &expect, const window_buffer::closure &);
 	void append(const string_view &);
 

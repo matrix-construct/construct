@@ -426,6 +426,7 @@ ircd::json::stack::stack(stack &&other)
 noexcept
 :buf{std::move(other.buf)}
 ,flusher{std::move(other.flusher)}
+,eptr{std::move(other.eptr)}
 ,co{std::move(other.co)}
 ,ca{std::move(other.ca)}
 {
@@ -451,7 +452,11 @@ ircd::json::stack::append(const string_view &s)
 void
 ircd::json::stack::append(const size_t &expect,
                           const window_buffer::closure &closure)
+try
 {
+	if(unlikely(eptr))
+		return;
+
 	if(expect > buf.remaining())
 	{
 		if(unlikely(!flusher)) throw print_error
@@ -462,7 +467,9 @@ ircd::json::stack::append(const size_t &expect,
 			size(buf.base)
 		};
 
-		flush();
+		if(!flush())
+			return;
+
 		if(unlikely(expect > buf.remaining())) throw print_error
 		{
 			"Insufficient flush. I still need %zu more bytes to buffer.",
@@ -478,11 +485,27 @@ ircd::json::stack::append(const size_t &expect,
 	if(!buf.remaining())
 		flush();
 }
+catch(...)
+{
+	assert(!this->eptr);
+	this->eptr = std::current_exception();
+}
+
+void
+ircd::json::stack::rethrow_exception()
+{
+	if(unlikely(eptr))
+		std::rethrow_exception(eptr);
+}
 
 bool
 ircd::json::stack::flush()
+try
 {
 	if(!flusher)
+		return false;
+
+	if(unlikely(eptr))
 		return false;
 
 	// The user returns the portion of the buffer they were able to flush
@@ -497,11 +520,18 @@ ircd::json::stack::flush()
 	buf.shift(size(flushed));
 	return true;
 }
+catch(...)
+{
+	assert(!this->eptr);
+	this->eptr = std::current_exception();
+	return false;
+}
 
 void
 ircd::json::stack::clear()
 {
 	buf.rewind(buf.consumed());
+	this->eptr = std::exception_ptr{};
 }
 
 ircd::const_buffer
@@ -574,6 +604,8 @@ ircd::json::stack::object::object(member &pm)
 ,pm{&pm}
 {
 	assert(s->opened());
+	s->rethrow_exception();
+
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.co = this;
@@ -585,6 +617,8 @@ ircd::json::stack::object::object(array &pa)
 ,pa{&pa}
 {
 	assert(s->opened());
+	s->rethrow_exception();
+
 	assert(pa.co == nullptr);
 	assert(pa.ca == nullptr);
 	pa.co = this;
@@ -666,6 +700,8 @@ ircd::json::stack::array::array(member &pm)
 ,pm{&pm}
 {
 	assert(s->opened());
+	s->rethrow_exception();
+
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.ca = this;
@@ -677,6 +713,8 @@ ircd::json::stack::array::array(array &pa)
 ,pa{&pa}
 {
 	assert(s->opened());
+	s->rethrow_exception();
+
 	assert(pa.co == nullptr);
 	assert(pa.ca == nullptr);
 	pa.ca = this;
@@ -781,6 +819,9 @@ ircd::json::stack::member::member(object &po,
 ,po{&po}
 ,name{name}
 {
+	assert(s->opened());
+	s->rethrow_exception();
+
 	assert(po.cm == nullptr);
 	po.cm = this;
 
