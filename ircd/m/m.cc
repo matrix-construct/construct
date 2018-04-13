@@ -1503,12 +1503,7 @@ const
 	// here we gooooooo :/
 	///TODO: ideal: db schema
 	///TODO: minimally: custom alloc?
-	std::set<std::string, std::less<>> seen
-	{
-		// start with the user so they don't reflect in the iteration.
-		std::string{user.user_id}
-	};
-
+	std::set<std::string, std::less<>> seen;
 	rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
 	(const m::room &room, const string_view &)
 	{
