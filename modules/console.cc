@@ -327,15 +327,14 @@ console_command_derived(opt &out, const string_view &line)
 // Command by JSON
 //
 
-bool console_cmd__exec__event(const json::object &);
-
 bool
 console_json(const json::object &object)
 {
 	if(!object.has("type"))
 		return true;
 
-	return console_cmd__exec__event(object);
+	//return console_cmd__exec__event(object);
+	return true;
 }
 
 //
@@ -1443,25 +1442,66 @@ console_cmd__commit(opt &out, const string_view &line)
 }
 
 //
-// exec
+// eval
 //
 
 bool
-console_cmd__exec__event(const json::object &event)
+console_cmd__eval(opt &out, const string_view &line)
 {
-	m::vm::opts opts;
-	opts.verify = false;
-	m::vm::eval eval
+	const params param{line, " ",
 	{
-		opts
+		"event_id", "opts",
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at(0)
 	};
 
+	const auto &args
+	{
+		param[1]
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		64_KiB
+	};
+
+	const m::event event
+	{
+		event_id, buf
+	};
+
+	m::vm::opts opts;
+	opts.errorlog = 0;
+	opts.warnlog = 0;
+	opts.nothrows = 0;
+	opts.non_conform |= m::event::conforms::MISSING_PREV_STATE;
+
+	tokens(args, ' ', [&opts](const auto &arg)
+	{
+		switch(hash(arg))
+		{
+			case "replay"_:
+				opts.replays = true;
+				break;
+
+			case "noverify"_:
+				opts.verify = false;
+				break;
+		}
+	});
+
+	m::vm::eval eval{opts};
+	out << pretty(event) << std::endl;
 	eval(event);
+	out << "done" << std::endl;
 	return true;
 }
 
 bool
-console_cmd__exec__file(opt &out, const string_view &line)
+console_cmd__eval__file(opt &out, const string_view &line)
 {
 	const params token{line, " ",
 	{
