@@ -561,6 +561,20 @@ noexcept try
 
 	return true;
 }
+catch(const ctx::interrupted &e)
+{
+	log::warning
+	{
+		"socket(%p) local[%s] remote[%s] Request interrupted: %s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		e.what()
+	};
+
+	close(net::dc::RST, net::close_ignore);
+	return false;
+}
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -700,10 +714,17 @@ try
 
 	return ret;
 }
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
 catch(const boost::system::system_error &e)
 {
 	if(e.code().value() != boost::system::errc::operation_canceled)
 		throw;
+
+	if(!sock || sock->fini)
+		return false;
 
 	const ctx::exception_handler eh;
 	resource::response
@@ -713,19 +734,21 @@ catch(const boost::system::system_error &e)
 
 	return false;
 }
-catch(const ircd::error &e)
+catch(const std::exception &e)
 {
-	const ctx::exception_handler eh;
+	if(!sock || sock->fini)
+		return false;
 
 	log::error
 	{
-		"socket(%p) local[%s] remote[%s] [500 Internal Error]: %s",
+		"socket(%p) local[%s] remote[%s] HTTP 500 Internal Error: %s",
 		sock.get(),
 		string(local(*this)),
 		string(remote(*this)),
 		e.what()
 	};
 
+	const ctx::exception_handler eh;
 	resource::response
 	{
 		*this, e.what(), "text/html; charset=utf8", http::INTERNAL_SERVER_ERROR
