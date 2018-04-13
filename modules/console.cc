@@ -585,17 +585,62 @@ catch(const std::out_of_range &e)
 
 bool
 console_cmd__db__prop(opt &out, const string_view &line)
+try
 {
+	const params param{line, " ",
+	{
+		"dbname", "column", "property"
+	}};
+
 	const auto dbname
 	{
-		token(line, ' ', 0)
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param.at(1, "*"_sv)
 	};
 
 	const auto property
 	{
-		token(line, ' ', 1)
+		param.at(2)
 	};
 
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	if(colname == "*")
+	{
+		const uint64_t value
+		{
+			db::property(database, property)
+		};
+
+		out << value << std::endl;
+		return true;
+	}
+
+	const db::column column
+	{
+		database, colname
+	};
+
+	const auto value
+	{
+		db::property<db::prop_map>(column, property)
+	};
+
+	for(const auto &p : value)
+		out << p.first << " => " << p.second << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
 	return true;
 }
 
