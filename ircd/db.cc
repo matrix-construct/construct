@@ -227,7 +227,12 @@ ircd::db::property(const database &cd,
 	uint64_t ret;
 	database &d(const_cast<database &>(cd));
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
-		ret = 0;
+		throw not_found
+		{
+			"property '%s' for all columns in '%s' not found or not an integer.",
+			name,
+			db::name(d)
+		};
 
 	return ret;
 }
@@ -3661,7 +3666,15 @@ ircd::db::property(const column &column,
 	std::string ret;
 	database::column &c(const_cast<db::column &>(column));
 	database &d(const_cast<db::column &>(column));
-	d.d->GetProperty(c, slice(name), &ret);
+	if(!d.d->GetProperty(c, slice(name), &ret))
+		throw not_found
+		{
+			"'property '%s' for column '%s' in '%s' not found.",
+			name,
+			db::name(column),
+			db::name(d)
+		};
+
 	return ret;
 }
 
@@ -3674,7 +3687,13 @@ ircd::db::property(const column &column,
 	database::column &c(const_cast<db::column &>(column));
 	database &d(const_cast<db::column &>(column));
 	if(!d.d->GetIntProperty(c, slice(name), &ret))
-		ret = 0;
+		throw not_found
+		{
+			"property '%s' for column '%s' in '%s' not found or not an integer.",
+			name,
+			db::name(column),
+			db::name(d)
+		};
 
 	return ret;
 }
@@ -3687,7 +3706,9 @@ ircd::db::property(const column &column,
 	std::map<std::string, std::string> ret;
 	database::column &c(const_cast<db::column &>(column));
 	database &d(const_cast<db::column &>(column));
-	d.d->GetMapProperty(c, slice(name), &ret);
+	if(!d.d->GetMapProperty(c, slice(name), &ret))
+		ret.emplace(std::string{name}, property<std::string>(column, name));
+
 	return ret;
 }
 
