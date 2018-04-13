@@ -372,10 +372,16 @@ try
 	opts.create_if_missing = true;
 	opts.create_missing_column_families = true;
 	opts.max_file_opening_threads = 0;
+	opts.stats_dump_period_sec = 0;
+	opts.enable_thread_tracking = true;
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
 	//opts.max_background_jobs = 1;
 	//opts.use_fsync = true;
+
+	#ifdef RB_DEBUG
+	opts.dump_malloc_stats = true;
+	#endif
 
 	// Setup env
 	opts.env = env.get();
