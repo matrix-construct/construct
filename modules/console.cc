@@ -2204,6 +2204,40 @@ console_cmd__user__presence(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__rooms(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "[membership]"
+	}};
+
+	const m::user &user
+	{
+		param.at(0)
+	};
+
+	const string_view &membership
+	{
+		param[1]
+	};
+
+	const m::user::rooms rooms
+	{
+		user
+	};
+
+	rooms.for_each(membership, m::user::rooms::closure{[&out]
+	(const m::room &room, const string_view &membership)
+	{
+		out << room.room_id
+		    << " " << membership
+		    << std::endl;
+	}});
+
+	return true;
+}
+
+bool
 console_cmd__user__read(opt &out, const string_view &line)
 {
 	const params param{line, " ",
