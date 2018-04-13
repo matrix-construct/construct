@@ -1024,13 +1024,19 @@ catch(const ctx::interrupted &e)
 
 	joining.notify_all();
 }
+catch(const boost::system::system_error &e)
+{
+	log.derror("%s: socket(%p) in accept(): %s",
+	           std::string(*this),
+	           sock.get(),
+	           string(e));
+}
 catch(const std::exception &e)
 {
 	log.error("%s: socket(%p) in accept(): %s",
 	          std::string(*this),
 	          sock.get(),
 	          e.what());
-	throw;
 }
 
 /// Error handler for the accept socket callback. This handler determines
@@ -1104,13 +1110,10 @@ catch(const ctx::interrupted &e)
 }
 catch(const boost::system::system_error &e)
 {
-	using namespace boost::system::errc;
-
-	const auto &fac{e.code() == timed_out? log::DEBUG : log::ERROR};
-	log(fac, "%s: socket(%p) in handshake(): %s",
-	          std::string(*this),
-	          sock.get(),
-	          string(e));
+	log.derror("%s: socket(%p) in handshake(): %s",
+	           std::string(*this),
+	           sock.get(),
+	           string(e));
 }
 catch(const std::exception &e)
 {
