@@ -841,11 +841,11 @@ console_cmd__db__list(opt &out, const string_view &line)
 }
 
 //
-// net
+// peer
 //
 
 static bool
-html__net__peer(opt &out, const string_view &line)
+html__peer(opt &out, const string_view &line)
 {
 	out << "<table>";
 
@@ -898,10 +898,10 @@ html__net__peer(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer(opt &out, const string_view &line)
+console_cmd__peer(opt &out, const string_view &line)
 {
 	if(out.html)
-		return html__net__peer(out, line);
+		return html__peer(out, line);
 
 	for(const auto &p : server::peers)
 	{
@@ -940,7 +940,7 @@ console_cmd__net__peer(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__error__clear__all(opt &out, const string_view &line)
+console_cmd__peer__error__clear__all(opt &out, const string_view &line)
 {
 	size_t cleared(0);
 	for(auto &pair : ircd::server::peers)
@@ -959,10 +959,10 @@ console_cmd__net__peer__error__clear__all(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__error__clear(opt &out, const string_view &line)
+console_cmd__peer__error__clear(opt &out, const string_view &line)
 {
 	if(empty(line))
-		return console_cmd__net__peer__error__clear__all(out, line);
+		return console_cmd__peer__error__clear__all(out, line);
 
 	const net::hostport hp
 	{
@@ -979,7 +979,7 @@ console_cmd__net__peer__error__clear(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__peer__version(opt &out, const string_view &line)
+console_cmd__peer__version(opt &out, const string_view &line)
 {
 	for(const auto &p : server::peers)
 	{
@@ -1006,6 +1006,10 @@ console_cmd__net__peer__version(opt &out, const string_view &line)
 
 	return true;
 }
+
+//
+// net
+//
 
 bool
 console_cmd__net__host(opt &out, const string_view &line)
@@ -1062,7 +1066,7 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 				const auto &host{pair.first};
 				const auto &record{pair.second};
 				const net::ipport ipp{record.ip4, 0};
-				out << std::setw(32) << host
+				out << std::setw(48) << host
 				    << " => " << ipp
 				    <<  " expires " << timestr(record.ttl, ircd::localtime)
 				    << " (" << record.ttl << ")"
@@ -1083,7 +1087,7 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 					record.tgt, record.port
 				};
 
-				out << std::setw(32) << key
+				out << std::setw(48) << key
 				    << " => " << hostport
 				    <<  " expires " << timestr(record.ttl, ircd::localtime)
 				    << " (" << record.ttl << ")"
