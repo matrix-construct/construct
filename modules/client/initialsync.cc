@@ -383,7 +383,8 @@ initialsync_room(client &client,
                  const resource::request &request,
                  json::stack::object &out,
                  const m::user::room &user_room,
-                 const m::room &room);
+                 const m::room &room,
+                 const string_view &membership);
 
 void
 initialsync_rooms__membership(client &client,
@@ -397,13 +398,13 @@ initialsync_rooms__membership(client &client,
 		user_room.user
 	};
 
-	rooms.for_each(membership, [&client, &request, &out, &user_room]
-	(const m::room &room, const string_view &membership)
+	rooms.for_each(membership, [&client, &request, &out, &user_room, &membership]
+	(const m::room &room, const string_view &)
 	{
 		const m::room::id &room_id{room.room_id};
 		json::stack::member member{out, room_id};
 		json::stack::object object{member};
-		initialsync_room(client, request, object, user_room, room_id);
+		initialsync_room(client, request, object, user_room, room_id, membership);
 	});
 }
 
@@ -447,11 +448,18 @@ initialsync_room(client &client,
                  const resource::request &request,
                  json::stack::object &out,
                  const m::user::room &user_room,
-                 const m::room &room)
+                 const m::room &room,
+                 const string_view &membership)
 {
 	// state
 	{
-		json::stack::member member{out, "state"};
+		json::stack::member member
+		{
+			out, membership != "invite"?
+				"state":
+				"invite_state"
+		};
+
 		json::stack::object object{member};
 		initialsync_room_state(client, request, object, user_room, room);
 	}
