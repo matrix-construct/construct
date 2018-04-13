@@ -4628,11 +4628,12 @@ ircd::db::_seek_offload(database::column &c,
 		d.d->NewIterator(blocking_opts, cf)
 	};
 
-	ctx::offload([&closure, &blocking_it]
+	const auto function{[&closure, &blocking_it]
 	{
 		closure(*blocking_it);
-	});
+	}};
 
+	ctx::offload(function);
 	return blocking_it;
 }
 
