@@ -11,6 +11,8 @@
 #pragma once
 #define HAVE_IRCD_M_DBS_H
 
+/// Database Schema
+///
 namespace ircd::m::dbs
 {
 	struct init;
@@ -61,12 +63,17 @@ struct ircd::m::dbs::write_opts
 	bool history {true};
 };
 
+/// Database Schema Descriptors
+///
 namespace ircd::m::dbs::desc
 {
 	// Full description
 	extern const database::description events;
 
+	//
 	// Direct columns
+	//
+
 	extern const database::descriptor events_auth_events;
 	extern const database::descriptor events_content;
 	extern const database::descriptor events_depth;
@@ -84,18 +91,25 @@ namespace ircd::m::dbs::desc
 	extern const database::descriptor events_state_key;
 	extern const database::descriptor events_type;
 
+	//
 	// Metadata columns
-	extern const database::descriptor events__state_node;
+	//
 
+	// room events sequence
 	extern const db::prefix_transform events__room_events__pfx;
 	extern const db::comparator events__room_events__cmp;
 	extern const database::descriptor events__room_events;
 
+	// room present state mapping sequence
+	extern const db::prefix_transform events__room_state__pfx;
+	extern const database::descriptor events__room_state;
+
+	// room present joined members sequence
 	extern const db::prefix_transform events__room_origins__pfx;
 	extern const database::descriptor events__room_origins;
 
-	extern const db::prefix_transform events__room_state__pfx;
-	extern const database::descriptor events__room_state;
+	// state btree node key-value store
+	extern const database::descriptor events__state_node;
 }
 
 struct ircd::m::dbs::init

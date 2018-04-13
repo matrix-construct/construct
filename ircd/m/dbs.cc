@@ -1193,229 +1193,18 @@ ircd::m::dbs::desc::events_prev_state
 	}
 };
 
-/*
-const ircd::database::descriptor
-event_id_in_sender
-{
-	// name
-	"event_id in sender",
-
-	// explanation
-	R"(### developer note:
-
-	key is "@sender$event_id"
-	the prefix transform is in effect. this column indexes events by
-	sender offering an iterable bound of the index prefixed by sender
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	event_id_in,
-};
-
-/// prefix transform for origin in
-///
-/// This transform expects a concatenation ending with an origin which means
-/// the prefix can be the same for multiple origins; therefor we can find
-/// or iterate "origin in X" where X is some repeated prefix
-///
-/// TODO: strings will have character conflicts. must address
-const ircd::db::prefix_transform
-origin_in
-{
-	"origin in",
-	[](const ircd::string_view &key)
-	{
-		return has(key, ":::");
-		//return key.find(':') != key.npos;
-	},
-	[](const ircd::string_view &key)
-	{
-		return split(key, ":::").first;
-		//return rsplit(key, ':').first;
-	}
-};
-
-const ircd::database::descriptor
-origin_in_room_id
-{
-	// name
-	"origin in room_id",
-
-	// explanation
-	R"(### developer note:
-
-	key is "!room_id:origin"
-	the prefix transform is in effect. this column indexes origins in a
-	room_id offering an iterable bound of the index prefixed by room_id
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator - sorts from highest to lowest
-	{}, //ircd::db::reverse_cmp_string_view{},
-
-	// prefix transform
-	origin_in,
-};
-
-const ircd::database::descriptor
-origin_joined_in_room_id
-{
-	// name
-	"origin_joined in room_id",
-
-	// explanation
-	R"(### developer note:
-
-	key is "!room_id:origin"
-	the prefix transform is in effect. this column indexes origins in a
-	room_id offering an iterable bound of the index prefixed by room_id
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator - sorts from highest to lowest
-	{}, //ircd::db::reverse_cmp_string_view{},
-
-	// prefix transform
-	origin_in,
-};
-
-/// prefix transform for room_id
-///
-/// This transform expects a concatenation ending with a room_id which means
-/// the prefix can be the same for multiple room_id's; therefor we can find
-/// or iterate "room_id in X" where X is some repeated prefix
-///
-const ircd::db::prefix_transform room_id_in
-{
-	"room_id in",
-	[](const ircd::string_view &key)
-	{
-		return key.find('!') != key.npos;
-	},
-	[](const ircd::string_view &key)
-	{
-		return rsplit(key, '!').first;
-	}
-};
-
-const ircd::database::descriptor
-prev_event_id_for_event_id_in_room_id
-{
-	// name
-	"prev_event_id for event_id in room_id",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	event_id_in
-};
-
-/// prefix transform for event_id in room_id,type,state_key
-///
-/// This transform is special for concatenating room_id with type and state_key
-/// and event_id in that order with prefix being the room_id,type,state_key. This
-/// will index multiple event_ids with the same type,state_key in a room which
-/// allows for a temporal depth to the database; event_id for type,state_key only
-/// resolves to a single latest event and overwrites itself as per the room state
-/// algorithm whereas this can map all of them and then allows for tracing.
-///
-/// TODO: arbitrary type strings will have character conflicts. must address
-/// TODO: with grammars.
-const ircd::db::prefix_transform
-event_id_in_room_id_type_state_key
-{
-	"event_id in room_id,type_state_key",
-	[](const ircd::string_view &key)
-	{
-		return has(key, '$');
-	},
-	[](const ircd::string_view &key)
-	{
-		return split(key, '$').first;
-	}
-};
-
-const ircd::database::descriptor
-prev_event_id_for_type_state_key_event_id_in_room_id
-{
-	// name
-	"prev_event_id for type,state_key,event_id in room_id",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	event_id_in_room_id_type_state_key
-};
-*/
-
 const ircd::database::description
 ircd::m::dbs::desc::events
 {
 	// Requirement of RocksDB/LevelDB
 	{ "default" },
 
-	////////
 	//
 	// These columns directly represent event fields indexed by event_id and
 	// the value is the actual event values. Some values may be JSON, like
 	// content.
 	//
+
 	events_auth_events,
 	events_content,
 	events_depth,
@@ -1433,25 +1222,23 @@ ircd::m::dbs::desc::events
 	events_state_key,
 	events_type,
 
-	////////
 	//
 	// These columns are metadata composed from the event data. Specifically,
 	// they are designed for fast sequential iterations.
 	//
 
-	// (room_id, event_id) => (state_root)
+	// (room_id, (depth, event_id)) => (state_root)
 	// Sequence of all events for a room, ever.
 	events__room_events,
 
-	// (room_id, origin) => ()
+	// (room_id, (origin, user_id)) => ()
 	// Sequence of all PRESENTLY JOINED origins for a room.
 	events__room_origins,
 
-	// (room_id, type, state_key) => (event_id)
+	// (room_id, (type, state_key)) => (event_id)
 	// Sequence of the PRESENT STATE of the room.
 	events__room_state,
 
-	////////
 	//
 	// Other columns
 	//
