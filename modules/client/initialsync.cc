@@ -146,6 +146,10 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	// Terminate client on exception here because the response will be
+	// incomplete if it's our fault; or they will probably already be
+	// dc'ed if its their fault.
+	client.close(net::dc::RST, net::close_ignore);
 	throw;
 }
 
