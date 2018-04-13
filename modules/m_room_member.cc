@@ -17,6 +17,43 @@ IRCD_MODULE
 };
 
 static void
+affect_user_room(const m::event &event)
+{
+	const auto &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const auto &sender
+	{
+		at<"sender"_>(event)
+	};
+
+	const m::user::id &subject
+	{
+		at<"state_key"_>(event)
+	};
+
+	//TODO: ABA / TXN
+	if(!exists(subject))
+		create(subject);
+
+	//TODO: ABA / TXN
+	m::user::room user_room{subject};
+	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
+}
+
+const m::hook
+affect_user_room_hookfn
+{
+	{
+		{ "_site",          "vm.notify"     },
+		{ "type",           "m.room.member" },
+	},
+	affect_user_room
+};
+
+static void
 _can_join_room(const m::event &event)
 {
 

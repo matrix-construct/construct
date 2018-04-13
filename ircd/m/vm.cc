@@ -497,42 +497,20 @@ ircd::m::vm::_tmp_effects(const m::event &event)
 	const auto &type{at<"type"_>(event)};
 
 	//TODO: X
-	/*
-	if(type == "m.room.create" && my_host(user::id{at<"sender"_>(event)}.host()))
-	{
-		const m::room room{room::id{room_id}};
-		send(room, at<"sender"_>(event), "m.room.power_levels", {}, json::members
-		{
-			{ "users", json::members
-			{
-				{ at<"sender"_>(event), 100L }
-			}}
-		});
-	}
-	*/
-
-	//TODO: X
-	if(type == "m.room.member")
-	{
-		const m::room::id room_id{at<"room_id"_>(event)};
-		const m::user::id sender{at<"sender"_>(event)};
-
-		//TODO: ABA / TXN
-		if(!exists(sender))
-			create(sender);
-
-		//TODO: ABA / TXN
-		m::user::room user_room{sender};
-		send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
-	}
-
-	//TODO: X
 	if(type == "m.room.join_rules")
 	{
 		const m::room::id room_id{at<"room_id"_>(event)};
 		const m::user::id sender{at<"sender"_>(event)};
 		if(my_host(sender.host()))
 			send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
+	}
+
+	//TODO: X
+	if(type == "m.room.create")
+	{
+		const string_view local{m::room::id{at<"room_id"_>(event)}.localname()};
+		if(local != "users") //TODO: circ dep
+			send(my_room, at<"sender"_>(event), "ircd.room", at<"room_id"_>(event), json::object{});
 	}
 }
 
