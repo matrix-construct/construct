@@ -436,7 +436,7 @@ ircd::server::peer::err_check()
 	//TODO: The specific error type should be switched and finer
 	//TODO: timeouts should be used depending on the error: i.e
 	//TODO: NXDOMAIN vs. temporary conn timeout, etc.
-	if(e->etime + seconds(error_clear_default) > now<steady_point>())
+	if(e->etime + seconds(error_clear_default) > now<system_point>())
 		return false;
 
 	err_clear();

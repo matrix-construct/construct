@@ -115,12 +115,10 @@ struct ircd::server::peer
 struct ircd::server::peer::err
 {
 	std::exception_ptr eptr;
-	steady_point etime
-	{
-		now<steady_point>()
-	};
+	system_point etime;
 
 	err(std::exception_ptr eptr)
 	:eptr{std::move(eptr)}
+	,etime{now<system_point>()}
 	{}
 };
