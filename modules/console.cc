@@ -2409,6 +2409,79 @@ console_cmd__user__read(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__feds__version(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto room
+	{
+		m::room_id(param.at(0))
+	};
+
+	struct req
+	:m::v1::version
+	{
+		char origin[256];
+		char buf[16_KiB];
+
+		req(m::v1::version::opts &&opts)
+		:m::v1::version{buf, std::move(opts)}
+		{}
+	};
+
+	std::list<req> reqs;
+	const m::room::origins origins{room};
+	origins.for_each([&out, &reqs]
+	(const string_view &origin)
+	{
+		m::v1::version::opts opts;
+		opts.remote = origin;
+		opts.dynamic = false; try
+		{
+			reqs.emplace_back(std::move(opts));
+		}
+		catch(const std::exception &e)
+		{
+			out << "! " << origin << " " << e.what() << std::endl;
+			return;
+		}
+
+		strlcpy(reqs.back().origin, origin);
+	});
+
+	auto all
+	{
+		ctx::when_all(begin(reqs), end(reqs))
+	};
+
+	all.wait(out.timeout, std::nothrow);
+
+	for(auto &req : reqs) try
+	{
+		if(req.wait(0ms, std::nothrow))
+		{
+			const auto code{req.get()};
+			const json::object &response{req};
+			out << "+ " << std::setw(40) << std::left << req.origin
+			    << " " << string_view{response}
+			    << std::endl;
+		}
+		else cancel(req);
+	}
+	catch(const std::exception &e)
+	{
+		out << "- " << std::setw(40) << std::left << req.origin
+		    << " " << e.what()
+		    << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__feds__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
