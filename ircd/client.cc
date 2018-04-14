@@ -36,6 +36,10 @@ ircd::client::context
 	"client", settings.stack_size
 };
 
+decltype(ircd::client::ctr)
+ircd::client::ctr
+{};
+
 // Linkage for the container of all active clients for iteration purposes.
 template<>
 decltype(ircd::util::instance_list<ircd::client>::list)

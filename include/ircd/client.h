@@ -39,6 +39,7 @@ struct ircd::client
 	static struct settings settings;
 	static struct conf default_conf;
 	static ctx::pool context;
+	static uint64_t ctr;              // monotonic
 
 	static void interrupt_all();
 	static void close_all();
@@ -48,6 +49,7 @@ struct ircd::client
 	unique_buffer<mutable_buffer> head_buffer;
 	unique_buffer<mutable_buffer> content_buffer;
 	std::shared_ptr<socket> sock;
+	uint64_t id {++ctr};
 	ctx::ctx *reqctx {nullptr};
 	ircd::timer timer;
 	size_t head_length {0};
