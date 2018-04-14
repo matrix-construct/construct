@@ -940,6 +940,42 @@ console_cmd__peer(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__peer__error(opt &out, const string_view &line)
+{
+	for(const auto &pair : ircd::server::peers)
+	{
+		using std::setw;
+		using std::left;
+		using std::right;
+
+		const auto &host{pair.first};
+		assert(bool(pair.second));
+		const auto &peer{*pair.second};
+		if(!peer.err_has())
+			continue;
+
+		const net::ipport &ipp{peer.remote};
+		out << setw(40) << right << host;
+
+		if(ipp)
+		    out << ' ' << setw(22) << left << ipp;
+		else
+		    out << ' ' << setw(22) << left << " ";
+
+		out << peer.e->etime;
+
+		if(peer.err_msg())
+			out << "  :" << peer.err_msg();
+		else
+			out << "  <unknown error>"_sv;
+
+		out << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__peer__error__clear__all(opt &out, const string_view &line)
 {
 	size_t cleared(0);
