@@ -1155,12 +1155,16 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 bool
 console_cmd__client(opt &out, const string_view &line)
 {
+	using std::setw;
+	using std::left;
+	using std::right;
+
 	for(const auto *const &client : ircd::client::list)
 	{
-		out << "client(" << (const void *)client << ")"
-		    << " socket(" << client->sock.get() << ")"
-		    << " " << local(*client)
-		    << " " << remote(*client);
+		out << setw(8) << left << client->id
+		    << "  " << right << setw(22) << local(*client)
+		    << "  " << left << setw(22) << remote(*client)
+		    ;
 
 		if(bool(client->sock))
 		{
@@ -1169,15 +1173,16 @@ console_cmd__client(opt &out, const string_view &line)
 				net::bytes(*client->sock)
 			};
 
-			out << " OUT: " << stat.second
-			    << " IN: " << stat.first;
+			out << " | UP " << setw(8) << right << stat.second
+			    << " | DN " << setw(8) << right << stat.first
+			    << " |";
 		}
 
-		if(client->longpoll)
-			out << " LONGPOLL";
-
 		if(client->reqctx)
-			out << " CTX " << id(*client->reqctx);
+			out << " CTX " << setw(4) << id(*client->reqctx);
+
+		if(client->longpoll)
+			out << " POLL";
 
 		if(client->request.user_id)
 			out << " USER " << client->request.user_id;
