@@ -102,17 +102,6 @@ try
 		return ret;
 	}()};
 
-	size_t total{0};
-	char headbuf[64];
-	const auto flusher{[&client, &headbuf, &total]
-	(const const_buffer &buf)
-	{
-		total += client.write_all(http::writechunk(headbuf, size(buf)));
-		total += client.write_all(buf);
-		total += client.write_all("\r\n"_sv);
-		return buf;
-	}};
-
 	// Due to the way json::stack works the chunk buffer must be at least
 	// the size of an appended input (for ex. a json::tuple). In our case this
 	// buffer must hold a 64_KiB worst-case event and then a little extra.
@@ -121,20 +110,23 @@ try
 		96_KiB
 	};
 
-	resource::response response
+	resource::response::chunked response
 	{
-		client, http::OK, "application/json; charset=utf-8", size_t(-1)
+		client, http::OK, "application/json; charset=utf-8"
 	};
 
-	json::stack out{buf, flusher};
+	json::stack out
 	{
-		json::stack::object object{out};
-		_initialsync(client, request, object);
-	}
+		buf, [&response](const const_buffer &buf)
+		{
+			response.write(buf);
+			return buf;
+		}
+	};
 
-	total += client.write_all(http::writechunk(headbuf, 0));
-	total += client.write_all("\r\n"_sv);
-	return response;
+	json::stack::object object{out};
+	_initialsync(client, request, object);
+	return {};
 }
 catch(const std::exception &e)
 {
@@ -146,10 +138,6 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	// Terminate client on exception here because the response will be
-	// incomplete if it's our fault; or they will probably already be
-	// dc'ed if its their fault.
-	client.close(net::dc::RST, net::close_ignore);
 	throw;
 }
 
