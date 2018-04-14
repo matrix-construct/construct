@@ -2448,11 +2448,99 @@ ircd::net::dns::operator()(const hostport &hostport,
                            callback cb)
 {
 	if(opts.cache_check)
-		if(query_cache(hostport, opts, cb))
+		if(cache.get(hostport, opts, cb))
 			return;
 
 	assert(bool(ircd::net::dns::resolver));
 	(*resolver)(hostport, opts, std::move(cb));
+}
+
+ircd::string_view
+ircd::net::dns::make_SRV_key(const mutable_buffer &out,
+                             const hostport &hp,
+                             const opts &opts)
+{
+	if(!opts.srv)
+		return fmt::sprintf
+		{
+			out, "_%s._%s.%s", service(hp), opts.proto, host(hp)
+		};
+	else
+		return fmt::sprintf
+		{
+			out, "%s%s", opts.srv, host(hp)
+		};
+}
+
+//
+// cache
+//
+
+bool
+ircd::net::dns::cache::put_error(const rfc1035::question &question,
+                                 const uint &code)
+{
+	const auto &host
+	{
+		rstrip(question.name, '.')
+	};
+
+	switch(question.qtype)
+	{
+		case 1: // A
+		{
+			rfc1035::record::A record;
+			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
+			A.emplace(host, record);
+			return true;
+		}
+
+		case 33: // SRV
+		{
+			rfc1035::record::SRV record;
+			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
+			SRV.emplace(host, record);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+ircd::rfc1035::record *
+ircd::net::dns::cache::put(const rfc1035::question &question,
+                           const rfc1035::answer &answer)
+{
+	const auto &host
+	{
+		rstrip(question.name, '.')
+	};
+
+	switch(answer.qtype)
+	{
+		case 1: // A
+		{
+			const auto &it
+			{
+				A.emplace(host, answer)
+			};
+
+			return &it->second;
+		}
+
+		case 33: // SRV
+		{
+			const auto &it
+			{
+				SRV.emplace(host, answer)
+			};
+
+			return &it->second;
+		}
+
+		default:
+			return nullptr;
+	}
 }
 
 /// This function has an opportunity to respond from the DNS cache. If it
@@ -2461,11 +2549,10 @@ ircd::net::dns::operator()(const hostport &hostport,
 /// indicates it did not respond and to proceed normally. The response can
 /// be of a cached successful result, or a cached error. Both will return
 /// true.
-///
 bool
-ircd::net::dns::query_cache(const hostport &hp,
-                            const opts &opts,
-                            const callback &cb)
+ircd::net::dns::cache::get(const hostport &hp,
+                           const opts &opts,
+                           const callback &cb)
 {
 	// It's no use putting the result record array on the stack in case this
 	// function is either called from an ircd::ctx or calls back an ircd::ctx.
@@ -2486,7 +2573,7 @@ ircd::net::dns::query_cache(const hostport &hp,
 			make_SRV_key(srvbuf, hp, opts)
 		};
 
-		auto &map{cache.SRV};
+		auto &map{SRV};
 		const auto pit{map.equal_range(srvhost)};
 		if(pit.first == pit.second)
 			return false;
@@ -2523,7 +2610,7 @@ ircd::net::dns::query_cache(const hostport &hp,
 	}
 	else // Deduced A query (for now)
 	{
-		auto &map{cache.A};
+		auto &map{A};
 		const auto pit{map.equal_range(host(hp))};
 		if(pit.first == pit.second)
 			return false;
@@ -2566,23 +2653,6 @@ ircd::net::dns::query_cache(const hostport &hp,
 		cb(std::move(eptr), vector_view<const rfc1035::record *>(record.data(), count));
 
 	return count;
-}
-
-ircd::string_view
-ircd::net::dns::make_SRV_key(const mutable_buffer &out,
-                             const hostport &hp,
-                             const opts &opts)
-{
-	if(!opts.srv)
-		return fmt::sprintf
-		{
-			out, "_%s._%s.%s", service(hp), opts.proto, host(hp)
-		};
-	else
-		return fmt::sprintf
-		{
-			out, "%s%s", opts.srv, host(hp)
-		};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3028,10 +3098,7 @@ try
 				continue;
 			}
 
-			const auto &name{qd.at(0).name};
-			const auto &host{rstrip(name, '.')};
-			const auto &it{cache.A.emplace(host, an[i])};
-			record[i] = &it->second;
+			record[i] = cache.put(qd.at(0), an[i]);
 			continue;
 		}
 
@@ -3051,10 +3118,7 @@ try
 				continue;
 			}
 
-			const auto &name{qd.at(0).name};
-			const auto &host{rstrip(name, '.')};
-			const auto it{cache.SRV.emplace(host, an[i])};
-			record[i] = &it->second;
+			record[i] = cache.put(qd.at(0), an[i]);
 			continue;
 		}
 
@@ -3085,7 +3149,7 @@ catch(const std::exception &e)
 
 bool
 ircd::net::dns::resolver::handle_error(const header &header,
-                                       const rfc1035::question &q,
+                                       const rfc1035::question &question,
                                        const dns::opts &opts)
 {
 	switch(header.rcode)
@@ -3094,30 +3158,10 @@ ircd::net::dns::resolver::handle_error(const header &header,
 			return true;
 
 		case 3: // NXDomain; exception
-		{
-			if(opts.cache_result) switch(q.qtype)
-			{
-				case 1: // A
-				{
-					const auto &host{rstrip(q.name, '.')};
-					rfc1035::record::A record;
-					record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count();
-					cache.A.emplace(host, record);
-					break;
-				}
-
-				case 33:
-				{
-					const auto &host{rstrip(q.name, '.')};
-					rfc1035::record::SRV record;
-					record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count();
-					cache.SRV.emplace(host, record);
-					break;
-				}
-			}
+			if(opts.cache_result)
+				cache.put_error(question, header.rcode);
 
 			return false;
-		}
 
 		default: // Unhandled error; exception
 			return false;

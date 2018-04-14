@@ -42,7 +42,6 @@ struct ircd::net::dns
 
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
-	bool query_cache(const hostport &, const opts &, const callback &);
 
   public:
 	// Cache warming
@@ -94,6 +93,11 @@ struct ircd::net::dns::cache
 
 	std::multimap<std::string, rfc1035::record::A, std::less<>> A;
 	std::multimap<std::string, rfc1035::record::SRV, std::less<>> SRV;
+
+  public:
+	bool get(const hostport &, const opts &, const callback &);
+	rfc1035::record *put(const rfc1035::question &, const rfc1035::answer &);
+	bool put_error(const rfc1035::question &, const uint &code);
 };
 
 template<class Callback>
