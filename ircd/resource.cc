@@ -451,6 +451,122 @@ catch(const std::bad_function_call &e)
 	};
 }
 
+//
+// resource::response::chunked
+//
+
+ircd::resource::response::chunked::chunked(chunked &&other)
+noexcept
+:c{std::move(other.c)}
+{
+	other.c = nullptr;
+}
+
+ircd::resource::response::chunked::chunked(client &client,
+                                           const http::code &code)
+:chunked
+{
+	client, code, "application/json; charset=utf-8"_sv, string_view{}
+}
+{
+}
+
+ircd::resource::response::chunked::chunked(client &client,
+                                           const http::code &code,
+                                           const vector_view<const http::header> &headers)
+:chunked
+{
+	client, code, "application/json; charset=utf-8"_sv, headers
+}
+{
+}
+
+ircd::resource::response::chunked::chunked(client &client,
+                                           const http::code &code,
+                                           const string_view &content_type,
+                                           const vector_view<const http::header> &headers)
+:c{&client}
+{
+	assert(!empty(content_type));
+
+	thread_local char buffer[4_KiB];
+	window_buffer sb{buffer};
+	{
+		const critical_assertion ca;
+		http::write(sb, headers);
+	}
+
+	response
+	{
+		client, code, content_type, size_t(-1), string_view{sb.completed()}
+	};
+}
+
+ircd::resource::response::chunked::chunked(client &client,
+                                           const http::code &code,
+                                           const string_view &content_type,
+                                           const string_view &headers)
+:c{&client}
+{
+	response
+	{
+		client, code, content_type, size_t(-1), headers
+	};
+}
+
+ircd::resource::response::chunked::~chunked()
+noexcept try
+{
+	if(!c)
+		return;
+
+	if(!std::uncaught_exceptions())
+		finish();
+	else
+		c->close(net::dc::RST, net::close_ignore);
+}
+catch(...)
+{
+	return;
+}
+
+bool
+ircd::resource::response::chunked::finish()
+{
+	if(!c)
+		return false;
+
+	write(const_buffer{});
+	c = nullptr;
+	return true;
+}
+
+size_t
+ircd::resource::response::chunked::write(const const_buffer &chunk)
+try
+{
+	size_t ret{0};
+
+	if(!c)
+		return ret;
+
+	//TODO: bring iov from net::socket -> net::write_() -> client::write_()
+	char headbuf[32];
+	ret += c->write_all(http::writechunk(headbuf, size(chunk)));
+	ret += size(chunk)? c->write_all(chunk) : 0UL;
+	ret += c->write_all("\r\n"_sv);
+	return ret;
+}
+catch(...)
+{
+	this->c = nullptr;
+	throw;
+}
+
+//
+// resource::response
+//
+
 ircd::resource::response::response(client &client,
                                    const http::code &code)
 :response{client, json::object{json::empty_object}, code}

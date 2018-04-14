@@ -136,6 +136,8 @@ struct ircd::resource::request::object
 
 struct ircd::resource::response
 {
+	struct chunked;
+
 	response(client &, const http::code &, const string_view &content_type, const size_t &content_length, const string_view &headers = {});
 	response(client &, const string_view &str, const string_view &content_type, const http::code &, const vector_view<const http::header> &);
 	response(client &, const string_view &str, const string_view &content_type, const http::code & = http::OK, const string_view &headers = {});
@@ -149,6 +151,24 @@ struct ircd::resource::response
 	response(client &, const http::code &, const json::iov &);
 	response(client &, const http::code &);
 	response() = default;
+};
+
+struct ircd::resource::response::chunked
+:resource::response
+{
+	client *c {nullptr};
+
+	size_t write(const const_buffer &chunk);
+	bool finish();
+
+	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {});
+	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &);
+	chunked(client &, const http::code &, const vector_view<const http::header> &);
+	chunked(client &, const http::code &);
+	chunked(const chunked &) = delete;
+	chunked(chunked &&) noexcept;
+	chunked() = default;
+	~chunked() noexcept;
 };
 
 struct ircd::resource::method
