@@ -903,6 +903,11 @@ console_cmd__peer(opt &out, const string_view &line)
 	if(out.html)
 		return html__peer(out, line);
 
+	const bool all
+	{
+		has(line, "all")
+	};
+
 	for(const auto &p : server::peers)
 	{
 		using std::setw;
@@ -912,6 +917,9 @@ console_cmd__peer(opt &out, const string_view &line)
 		const auto &host{p.first};
 		const auto &peer{*p.second};
 		const net::ipport &ipp{peer.remote};
+
+		if(peer.err_has() && !all)
+			continue;
 
 		out << setw(40) << right << host;
 
