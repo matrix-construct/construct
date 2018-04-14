@@ -51,12 +51,15 @@ try
 	if(it == end(files))
 		throw http::error{http::NOT_FOUND};
 
-	const auto &filename{it->second};
+	const unique_buffer<mutable_buffer> chunk_buffer
+	{
+		48_KiB
+	};
 
-	char content_buffer[24_KiB];
+	const auto &filename{it->second};
 	const string_view first_chunk
 	{
-		fs::read(filename, content_buffer)
+		fs::read(filename, chunk_buffer)
 	};
 
 	char content_type_buf[64];
@@ -65,10 +68,10 @@ try
 		client,
 		http::OK,
 		content_type(content_type_buf, filename, first_chunk),
-		size(first_chunk) < sizeof(content_buffer)? size(first_chunk) : -1
+		size(first_chunk) < size(chunk_buffer)? size(first_chunk) : -1
 	};
 
-	if(size(first_chunk) < sizeof(content_buffer))
+	if(size(first_chunk) < size(chunk_buffer))
 	{
 		client.write_all(first_chunk);
 		return {};
@@ -78,22 +81,12 @@ try
 	const unwind::exceptional terminate{[&headbuf, &client]
 	{
 		//TODO: find out if it's not a client problem so we don't have to eject
-		//TODO: them. And write_all() blowing up inside here is bad.
 		client.close(net::dc::RST, net::close_ignore);
-		//client.write_all("\r\n"_sv);
-		//client.write_all(http::writechunk(headbuf, 0));
-		//client.write_all("\r\n"_sv);
 	}};
 
 	client.write_all(http::writechunk(headbuf, size(first_chunk)));
 	client.write_all(first_chunk);
 	client.write_all("\r\n"_sv);
-
-	static const size_t max_chunk_length{48_KiB};
-	const unique_buffer<mutable_buffer> chunk_buffer
-	{
-		max_chunk_length
-	};
 
 	for(size_t offset(size(first_chunk));;)
 	{
@@ -114,13 +107,12 @@ try
 		client.write_all(chunk);
 		client.write_all("\r\n"_sv);
 		offset += size(chunk);
-		if(size(chunk) < max_chunk_length)
+		if(size(chunk) < size(chunk_buffer))
 			break;
 	}
 
 	client.write_all(http::writechunk(headbuf, 0));
 	client.write_all("\r\n"_sv);
-
 	return {};
 }
 catch(const fs::filesystem_error &e)
