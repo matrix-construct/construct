@@ -20,8 +20,8 @@ IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 
 const char *const generic_message
 {R"(
-*** - To end the console session: type ctrl-d             -> EOF
-*** - To exit cleanly: type exit, die, or ctrl-\          -> SIGQUIT
+*** - To end the console session: type exit, or ctrl-d    -> EOF
+*** - To shutdown cleanly: type die, or ctrl-\            -> SIGQUIT
 *** - To generate a coredump for developers, type ABORT   -> abort()
 ***
 )"};
@@ -91,8 +91,8 @@ console_fini()
 const char *const console_message
 {R"(
 ***
-*** The server is still running in the background. A command line is now available below.
-*** This is a client and your commands will originate from the server itself.
+*** The server is still running in the background. This is the
+*** terminal console also available in your !control room.
 ***)"};
 
 void
@@ -144,7 +144,10 @@ catch(const std::exception &e)
 	std::cout << "*** The console session has ended: " << e.what() << std::endl;
 	std::cout << "***" << std::endl;
 
-	ircd::log::debug("The console session has ended: %s", e.what());
+	ircd::log::debug
+	{
+		"The console session has ended: %s", e.what()
+	};
 }
 
 const char *const termstop_message
@@ -180,7 +183,10 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("console_termstop(): %s", e.what());
+	ircd::log::error
+	{
+		"console_termstop(): %s", e.what()
+	};
 }
 
 void
@@ -220,8 +226,10 @@ catch(const std::exception &e)
 
 	std::cout << std::flush;
 	std::cout.clear();
-
-	ircd::log::debug("The execution aborted: %s", e.what());
+	ircd::log::debug
+	{
+		"The execution aborted: %s", e.what()
+	};
 }
 
 bool
@@ -242,7 +250,10 @@ try
 	if(line == "EXIT")
 		exit(0);
 
-	if(line == "exit" || line == "die")
+	if(line == "exit")
+		return false;
+
+	if(line == "die")
 	{
 		ircd::quit();
 		return false;
@@ -273,12 +284,20 @@ catch(const bad_command &e)
 }
 catch(const ircd::http::error &e)
 {
-	ircd::log::error("%s %s", e.what(), e.content);
+	ircd::log::error
+	{
+		"%s %s", e.what(), e.content
+	};
+
 	return true;
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("%s", e.what());
+	ircd::log::error
+	{
+		"%s", e.what()
+	};
+
 	return true;
 }
 
@@ -378,7 +397,10 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("console_hangup(): %s", e.what());
+	ircd::log::error
+	{
+		"console_hangup(): %s", e.what()
+	};
 }
 
 void
@@ -393,5 +415,8 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::log::error("Interrupting console: %s", e.what());
+	ircd::log::error
+	{
+		"Interrupting console: %s", e.what()
+	};
 }
