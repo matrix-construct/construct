@@ -26,6 +26,9 @@ namespace ircd
 	struct runlevel_changed;
 
 	string_view reflect(const enum runlevel &);
+
+	seconds uptime();
+
 	void init(boost::asio::io_context &ios, const std::string &conf);
 	void init(boost::asio::io_context &ios);
 	bool quit() noexcept;

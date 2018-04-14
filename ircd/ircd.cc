@@ -260,6 +260,13 @@ noexcept
 	});
 }
 
+/// IRCd uptime in seconds
+ircd::seconds
+ircd::uptime()
+{
+	return seconds(ircd::time() - info::startup_time);
+}
+
 template<>
 decltype(ircd::runlevel_changed::list)
 ircd::util::instance_list<ircd::runlevel_changed>::list
