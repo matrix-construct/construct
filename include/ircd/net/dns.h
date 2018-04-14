@@ -45,6 +45,11 @@ struct ircd::net::dns
 	bool query_cache(const hostport &, const opts &, const callback &);
 
   public:
+	// Cache warming
+	static const callback_A_one prefetch_A;
+	static const callback_SRV_one prefetch_SRV;
+	static const callback_ipport_one prefetch_ipport;
+
 	// Callback-based interface
 	void operator()(const hostport &, const opts &, callback);
 	void operator()(const hostport &, const opts &, callback_A_one);

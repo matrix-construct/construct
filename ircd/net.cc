@@ -2308,6 +2308,27 @@ ircd::net::dns::cache::clear_nxdomain
 	{ "default",   43200L                             },
 };
 
+decltype(ircd::net::dns::prefetch_ipport)
+ircd::net::dns::prefetch_ipport{[]
+(std::exception_ptr, const auto &record)
+{
+	// Do nothing; cache already updated if necessary
+}};
+
+decltype(ircd::net::dns::prefetch_SRV)
+ircd::net::dns::prefetch_SRV{[]
+(std::exception_ptr, const auto &record)
+{
+	// Do nothing; cache already updated if necessary
+}};
+
+decltype(ircd::net::dns::prefetch_A)
+ircd::net::dns::prefetch_A{[]
+(std::exception_ptr, const auto &record)
+{
+	// Do nothing; cache already updated if necessary
+}};
+
 /// Convenience composition with a single ipport callback. This is the result of
 /// an automatic chain of queries such as SRV and A/AAAA based on the input and
 /// intermediate results.
