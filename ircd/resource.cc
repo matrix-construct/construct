@@ -119,6 +119,7 @@ noexcept
 
 namespace ircd
 {
+	static void cache_warm_origin(const string_view &origin);
 	static bool verify_origin(client &client, resource::method &method, resource::request &request);
 	static bool authenticate(client &client, resource::method &method, resource::request &request);
 }
@@ -200,6 +201,40 @@ catch(const std::exception &e)
 		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
 		"An error has prevented authorization: %s",
 		e.what()
+	};
+}
+
+ircd::conf::item<ircd::seconds>
+cache_warmup_time
+{
+	{ "name",     "ircd.cache_warmup_time" },
+	{ "default",  3600L                    },
+};
+
+/// We can smoothly warmup some memory caches after daemon startup as the
+/// requests trickle in from remote servers. This function is invoked after
+/// a remote contacts and reveals its identity with the X-Matrix verification.
+///
+/// This process helps us avoid cold caches for the first requests coming from
+/// our server. Such requests are often parallel requests, for ex. to hundreds
+/// of servers in a Matrix room at the same time.
+///
+/// This function does nothing after the cache warmup period has ended.
+void
+ircd::cache_warm_origin(const string_view &origin)
+try
+{
+	if(ircd::uptime() > seconds(cache_warmup_time))
+		return;
+
+	// Make a query through SRV and A records.
+	net::dns(origin, net::dns::prefetch_ipport);
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		"Cache warming for '%s' :%s", origin, e.what()
 	};
 }
 
@@ -296,12 +331,18 @@ ircd::resource::operator()(client &client,
 			};
 
 	if(method.opts.flags & method.VERIFY_ORIGIN)
+	{
 		if(!verify_origin(client, method, client.request))
 			throw m::error
 			{
 				http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
 				"The X-Matrix Authorization is invalid."
 			};
+
+
+		// The origin was verified so we can invoke the cache warming now.
+		cache_warm_origin(client.request.origin);
+	}
 
 	handle_request(client, method, client.request);
 }
