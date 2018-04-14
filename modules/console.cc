@@ -410,16 +410,7 @@ console_cmd__conf__list(opt &out, const string_view &line)
 //
 
 bool
-console_cmd__mod__path(opt &out, const string_view &line)
-{
-	for(const auto &path : ircd::mods::paths)
-		out << path << std::endl;
-
-	return true;
-}
-
-bool
-console_cmd__mod__list(opt &out, const string_view &line)
+console_cmd__mod(opt &out, const string_view &line)
 {
 	auto avflist(mods::available());
 	const auto b(std::make_move_iterator(begin(avflist)));
@@ -431,11 +422,20 @@ console_cmd__mod__list(opt &out, const string_view &line)
 	{
 		const auto loadstr
 		{
-			mods::loaded(mod)? "\033[1;42m \033[0m" : " "
+			mods::loaded(mod)? "\033[1;32;42m+\033[0m" : " "
 		};
 
 		out << "[" << loadstr << "] " << mod << std::endl;
 	}
+
+	return true;
+}
+
+bool
+console_cmd__mod__path(opt &out, const string_view &line)
+{
+	for(const auto &path : ircd::mods::paths)
+		out << path << std::endl;
 
 	return true;
 }
