@@ -71,6 +71,26 @@ ircd::net::peer_cert_der(const mutable_buffer &buf,
 	return openssl::i2d(buf, cert);
 }
 
+std::pair<size_t, size_t>
+ircd::net::calls(const socket &socket)
+noexcept
+{
+	return
+	{
+		socket.in.calls, socket.out.calls
+	};
+}
+
+std::pair<size_t, size_t>
+ircd::net::bytes(const socket &socket)
+noexcept
+{
+	return
+	{
+		socket.in.bytes, socket.out.bytes
+	};
+}
+
 ircd::net::ipport
 ircd::net::remote_ipport(const socket &socket)
 noexcept try

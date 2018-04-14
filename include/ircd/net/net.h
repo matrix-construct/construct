@@ -53,6 +53,8 @@ namespace ircd::net
 	size_t available(const socket &) noexcept;
 	ipport local_ipport(const socket &) noexcept;
 	ipport remote_ipport(const socket &) noexcept;
+	std::pair<size_t, size_t> bytes(const socket &) noexcept; // <in, out>
+	std::pair<size_t, size_t> calls(const socket &) noexcept; // <in, out>
 	const_buffer peer_cert_der(const mutable_buffer &, const socket &);
 }
 
