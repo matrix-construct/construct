@@ -328,6 +328,15 @@ void
 ircd::handle_client_request(std::shared_ptr<client> client)
 noexcept try
 {
+	// The ircd::ctx now handling this request is referenced and accessible
+	// in client for the duration of this handling.
+	client->reqctx = ctx::current;
+	const unwind reset{[&client]
+	{
+		assert(bool(client));
+		client->reqctx = nullptr;
+	}};
+
 	if(client->main())
 		client->async();
 	else

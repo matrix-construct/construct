@@ -48,6 +48,7 @@ struct ircd::client
 	unique_buffer<mutable_buffer> head_buffer;
 	unique_buffer<mutable_buffer> content_buffer;
 	std::shared_ptr<socket> sock;
+	ctx::ctx *reqctx {nullptr};
 	ircd::timer timer;
 	size_t head_length {0};
 	size_t content_consumed {0};
