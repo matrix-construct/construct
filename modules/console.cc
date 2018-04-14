@@ -1886,19 +1886,31 @@ console_cmd__room__count(opt &out, const string_view &line)
 bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "depth|-limit", "order", "limit"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
 	const int64_t depth
 	{
-		token_count(line, ' ') > 1? lex_cast<int64_t>(token(line, ' ', 1)) : -1
+		param.at<int64_t>(1, std::numeric_limits<int64_t>::max())
 	};
 
 	const char order
 	{
-		token_count(line, ' ') > 2? token(line, ' ', 2).at(0) : 'b'
+		param.at(2, "b"_sv).at(0)
+	};
+
+	ssize_t limit
+	{
+		depth < 0?
+			std::abs(depth):
+			param.at(3, ssize_t(32))
 	};
 
 	const m::room room
@@ -1907,10 +1919,10 @@ console_cmd__room__messages(opt &out, const string_view &line)
 	};
 
 	m::room::messages it{room};
-	if(depth >= 0)
+	if(depth >= 0 && depth < std::numeric_limits<int64_t>::max())
 		it.seek(depth);
 
-	for(; it; order == 'b'? --it : ++it)
+	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
 		out << pretty_oneline(*it) << std::endl;
 
 	return true;
