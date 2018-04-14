@@ -1105,6 +1105,53 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 }
 
 //
+// client
+//
+
+bool
+console_cmd__client(opt &out, const string_view &line)
+{
+	for(const auto *const &client : ircd::client::list)
+	{
+		out << "client(" << (const void *)client << ")"
+		    << " socket(" << client->sock.get() << ")"
+		    << " " << local(*client)
+		    << " " << remote(*client);
+
+		if(bool(client->sock))
+		{
+			const auto stat
+			{
+				net::bytes(*client->sock)
+			};
+
+			out << " OUT: " << stat.second
+			    << " IN: " << stat.first;
+		}
+
+		if(client->longpoll)
+			out << " LONGPOLL";
+
+		if(client->reqctx)
+			out << " CTX " << id(*client->reqctx);
+
+		if(client->request.user_id)
+			out << " USER " << client->request.user_id;
+
+		if(client->request.origin)
+			out << " PEER " << client->request.origin;
+
+		if(client->request.head.method)
+			out << " " << client->request.head.method << ""
+			    << " " << client->request.head.path;
+
+		out << std::endl;
+	}
+
+	return true;
+}
+
+//
 // key
 //
 
