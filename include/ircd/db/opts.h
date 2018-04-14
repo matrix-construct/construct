@@ -73,8 +73,10 @@ struct ircd::db::gopts
 :opts<get>
 {
 	database::snapshot snapshot;
-	size_t readahead { 4_KiB };
-	const rocksdb::Slice *upper_bound {nullptr};
+	const rocksdb::Slice *lower_bound { nullptr };
+	const rocksdb::Slice *upper_bound { nullptr };
+	size_t readahead { 0 };
+	uint64_t seqnum { 0 };
 
 	using opts<get>::opts;
 };

@@ -4927,11 +4927,11 @@ ircd::db::make_opts(const gopts &opts)
 	rocksdb::ReadOptions ret;
 	assert(ret.fill_cache);
 	ret.read_tier = NON_BLOCKING;
-	ret.iterate_upper_bound = opts.upper_bound;
 
 	// slice* for exclusive upper bound. when prefixes are used this value must
 	// have the same prefix because ordering is not guaranteed between prefixes
-	//ret.iterate_upper_bound = nullptr;
+	ret.iterate_lower_bound = opts.lower_bound;
+	ret.iterate_upper_bound = opts.upper_bound;
 
 	ret += opts;
 	return ret;
@@ -4941,6 +4941,9 @@ rocksdb::ReadOptions &
 ircd::db::operator+=(rocksdb::ReadOptions &ret,
                      const gopts &opts)
 {
+	ret.iter_start_seqnum = opts.seqnum;
+	ret.readahead_size = opts.readahead;
+
 	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
 		ret.snapshot = opts.snapshot;
 
