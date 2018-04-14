@@ -38,24 +38,20 @@ namespace ircd
 	string_view timef(const mutable_buffer &out, const struct tm &tm, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const time_t &epoch, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const time_t &epoch, localtime_t, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, const system_point &epoch, const char *const &fmt = rfc7231_fmt);
+	string_view timef(const mutable_buffer &out, const system_point &epoch, localtime_t, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, localtime_t, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const char *const &fmt = rfc7231_fmt);
 	template<class... args> std::string timestr(args&&...);
 
-	std::ostream &operator<<(std::ostream &, const steady_point &);
 	std::ostream &operator<<(std::ostream &, const system_point &);
 }
 
 inline std::ostream &
 ircd::operator<<(std::ostream &s, const system_point &tp)
 {
-	return (s << duration_cast<seconds>(tp.time_since_epoch()).count());
-}
-
-inline std::ostream &
-ircd::operator<<(std::ostream &s, const steady_point &tp)
-{
-	return (s << duration_cast<seconds>(tp.time_since_epoch()).count());
+	char buf[96];
+	return (s << timef(buf, tp));
 }
 
 template<class... args>
@@ -84,6 +80,33 @@ ircd::timef(const mutable_buffer &out,
 {
 	const auto epoch{time()};
 	return timef(out, epoch, localtime, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const system_point &epoch,
+            localtime_t,
+            const char *const &fmt)
+{
+	const time_t t
+	{
+		duration_cast<seconds>(epoch.time_since_epoch()).count()
+	};
+
+	return timef(out, t, localtime, fmt);
+}
+
+inline ircd::string_view
+ircd::timef(const mutable_buffer &out,
+            const system_point &epoch,
+            const char *const &fmt)
+{
+	const time_t t
+	{
+		duration_cast<seconds>(epoch.time_since_epoch()).count()
+	};
+
+	return timef(out, t, fmt);
 }
 
 inline ircd::string_view
