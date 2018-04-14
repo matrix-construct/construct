@@ -2446,7 +2446,13 @@ ircd::net::dns::query_cache(const hostport &hp,
                             const opts &opts,
                             const callback &cb)
 {
-	thread_local const rfc1035::record *record[resolver::MAX_COUNT];
+	// It's no use putting the result record array on the stack in case this
+	// function is either called from an ircd::ctx or calls back an ircd::ctx.
+	// If the ctx yields the records can still be evicted from the cache.
+	// It's better to just force the user to conform here rather than adding
+	// ref counting and other pornographic complications to this cache.
+	const ctx::critical_assertion ca;
+	thread_local std::array<const rfc1035::record *, resolver::MAX_COUNT> record;
 	std::exception_ptr eptr;
 	size_t count{0};
 
@@ -2481,21 +2487,23 @@ ircd::net::dns::query_cache(const hostport &hp,
 			assert(!eptr);
 			if(!rr.tgt)
 			{
-				const auto rcode{3}; //NXDomain
+				//TODO: we don't cache what the error was, assuming it's
+				//TODO: NXDomain can be incorrect and in bad ways downstream...
+				static const auto rcode{3}; //NXDomain
 				eptr = std::make_exception_ptr(rfc1035::error
 				{
 					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
 				});
 			}
 
-			record[count++] = &rr;
+			record.at(count++) = &rr;
 			++it;
 		}
 	}
 	else // Deduced A query (for now)
 	{
 		auto &map{cache.A};
-		const auto pit{map.equal_range(std::string{host(hp)})}; //TODO: XXX
+		const auto pit{map.equal_range(host(hp))};
 		if(pit.first == pit.second)
 			return false;
 
@@ -2516,14 +2524,16 @@ ircd::net::dns::query_cache(const hostport &hp,
 			assert(!eptr);
 			if(!rr.ip4)
 			{
-				const auto rcode{3}; //NXDomain
+				//TODO: we don't cache what the error was, assuming it's
+				//TODO: NXDomain can be incorrect and in bad ways downstream...
+				static const auto rcode{3}; //NXDomain
 				eptr = std::make_exception_ptr(rfc1035::error
 				{
 					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
 				});
 			}
 
-			record[count++] = &rr;
+			record.at(count++) = &rr;
 			++it;
 		}
 	}
@@ -2532,7 +2542,7 @@ ircd::net::dns::query_cache(const hostport &hp,
 	assert(!eptr || count == 1);   // if error, should only be one entry.
 
 	if(count)
-		cb(std::move(eptr), vector_view<const rfc1035::record *>(record, count));
+		cb(std::move(eptr), vector_view<const rfc1035::record *>(record.data(), count));
 
 	return count;
 }
@@ -2570,7 +2580,7 @@ decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
 	{ "name",     "ircd.net.dns.resolver.send_rate" },
-	{ "default",   100L                             },
+	{ "default",   60L                              },
 };
 
 ircd::net::dns::resolver::resolver()
