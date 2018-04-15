@@ -256,6 +256,33 @@ ircd::resource::operator()(client &client,
 			http::PAYLOAD_TOO_LARGE
 		};
 
+	// This timer will keep the request from hanging forever for whatever
+	// reason. The resource method may want to do its own timing and can
+	// disable this in its options structure.
+	const net::scope_timeout timeout
+	{
+		*client.sock, method.opts.timeout, [&client, &head]
+		(const bool &timed_out)
+		{
+			if(!timed_out)
+				return;
+
+			log::derror
+			{
+				"socket(%p) local[%s] remote[%s] Timed out in %s `%s'",
+				client.sock.get(),
+				string(local(client)),
+				string(remote(client)),
+				head.method,
+				head.path
+			};
+
+			//TODO: If we know that no response has been sent yet
+			//TODO: we can respond with http::REQUEST_TIMEOUT instead.
+			client.close(net::dc::RST, net::close_ignore);
+		}
+	};
+
 	// Content that hasn't yet arrived is remaining
 	const size_t content_remain
 	{

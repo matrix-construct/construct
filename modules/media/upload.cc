@@ -135,6 +135,8 @@ method_post_opts
 	resource::method::REQUIRES_AUTH |
 	resource::method::CONTENT_DISCRETION,
 
+	-1s, // TODO: no coarse timer
+
 	8_MiB //TODO: conf; (this is the payload max option)
 };
 

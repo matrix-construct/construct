@@ -187,9 +187,13 @@ struct ircd::resource::method
 	{
 		flag flags {(flag)0};
 
+		/// Timeout specific to this resource.
+		seconds timeout {30s};
+
 		/// The maximum size of the Content-Length for this method. Anything
 		/// larger will be summarily rejected with a 413.
 		size_t payload_max {128_KiB};
+
 	};
 
 	string_view name;

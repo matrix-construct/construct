@@ -60,7 +60,8 @@ get_sync
 {
 	sync_resource, "GET", sync,
 	{
-		get_sync.REQUIRES_AUTH
+		get_sync.REQUIRES_AUTH,
+		-1s, // TODO: this is only -1 b/c initialsyncs
 	}
 };
 

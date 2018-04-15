@@ -87,8 +87,10 @@ struct ircd::client::conf
 	/// (or idle mode) after which it is disconnected.
 	seconds async_timeout {35s};
 
-	/// Time limit for how long a connected client can be in "request mode." This
-	/// should never be hit unless there's an error in the handling code.
+	/// Time limit for how long a connected client can be sending its request.
+	/// This is meaningful before the resource being sought is known (while
+	/// receiving headers), after which its own specific timeout specified by
+	/// its options takes over.
 	seconds request_timeout {15s};
 };
 

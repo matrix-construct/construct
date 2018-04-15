@@ -691,7 +691,7 @@ bool
 ircd::client::handle_request(parse::capstan &pc)
 try
 {
-	const socket::scope_timeout timeout
+	net::scope_timeout timeout
 	{
 		*sock, conf->request_timeout
 	};
@@ -704,6 +704,11 @@ try
 	content_consumed = std::min(pc.unparsed(), head.content_length);
 	pc.parsed += content_consumed;
 	assert(pc.parsed <= pc.read);
+
+	// The resource being sought will have its own specific timeout, or none
+	// at all. This timeout is now canceled to not conflict. Note that the
+	// time spent so far is still being accumulated by client.timer.
+	timeout.cancel();
 
 	log::debug
 	{

@@ -57,7 +57,8 @@ get_initialsync
 {
 	initialsync_resource, "GET", initialsync,
 	{
-		get_initialsync.REQUIRES_AUTH
+		get_initialsync.REQUIRES_AUTH,
+		-1s // No timer for this method.
 	}
 };
 
