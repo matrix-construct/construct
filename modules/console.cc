@@ -1110,9 +1110,9 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 				const auto &host{pair.first};
 				const auto &record{pair.second};
 				const net::ipport ipp{record.ip4, 0};
-				out << std::setw(48) << host
-				    << " => " << ipp
-				    <<  " expires " << timestr(record.ttl, ircd::localtime)
+				out << std::setw(48) << std::right << host
+				    << "  =>  " << std::setw(21) << std::left << ipp
+				    << "  expires " << timestr(record.ttl, ircd::localtime)
 				    << " (" << record.ttl << ")"
 				    << std::endl;
 			}
@@ -1131,8 +1131,8 @@ console_cmd__net__host__cache(opt &out, const string_view &line)
 					record.tgt, record.port
 				};
 
-				out << std::setw(48) << key
-				    << " => " << hostport
+				out << std::setw(48) << std::right << key
+				    << "  =>  " << std::setw(48) << std::left << hostport
 				    <<  " expires " << timestr(record.ttl, ircd::localtime)
 				    << " (" << record.ttl << ")"
 				    << std::endl;
