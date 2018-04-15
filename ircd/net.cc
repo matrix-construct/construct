@@ -2489,17 +2489,43 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 	{
 		case 1: // A
 		{
+			auto &map{A};
+			auto pit
+			{
+				map.equal_range(host)
+			};
+
+			auto it
+			{
+				pit.first != pit.second?
+					map.erase(pit.first, pit.second):
+					pit.first
+			};
+
 			rfc1035::record::A record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			A.emplace(host, record);
+			map.emplace_hint(it, host, record);
 			return true;
 		}
 
 		case 33: // SRV
 		{
+			auto &map{SRV};
+			auto pit
+			{
+				map.equal_range(host)
+			};
+
+			auto it
+			{
+				pit.first != pit.second?
+					map.erase(pit.first, pit.second):
+					pit.first
+			};
+
 			rfc1035::record::SRV record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			SRV.emplace(host, record);
+			map.emplace_hint(it, host, record);
 			return true;
 		}
 	}
@@ -2520,22 +2546,54 @@ ircd::net::dns::cache::put(const rfc1035::question &question,
 	{
 		case 1: // A
 		{
-			const auto &it
+			auto &map{A};
+			auto pit
 			{
-				A.emplace(host, answer)
+				map.equal_range(host)
 			};
 
-			return &it->second;
+			auto it(pit.first);
+			while(it != pit.second)
+			{
+				const auto &rr{it->second};
+				if(rr == answer)
+					it = map.erase(it);
+				else
+					++it;
+			}
+
+			const auto &iit
+			{
+				map.emplace_hint(it, host, answer)
+			};
+
+			return &iit->second;
 		}
 
 		case 33: // SRV
 		{
-			const auto &it
+			auto &map{SRV};
+			auto pit
 			{
-				SRV.emplace(host, answer)
+				map.equal_range(host)
 			};
 
-			return &it->second;
+			auto it(pit.first);
+			while(it != pit.second)
+			{
+				const auto &rr{it->second};
+				if(rr == answer)
+					it = map.erase(it);
+				else
+					++it;
+			}
+
+			const auto &iit
+			{
+				map.emplace_hint(it, host, answer)
+			};
+
+			return &iit->second;
 		}
 
 		default:
@@ -2604,14 +2662,17 @@ ircd::net::dns::cache::get(const hostport &hp,
 				});
 			}
 
-			record.at(count++) = &rr;
+			if(count < record.size())
+				record.at(count++) = &rr;
+
 			++it;
 		}
 	}
 	else // Deduced A query (for now)
 	{
 		auto &map{A};
-		const auto pit{map.equal_range(host(hp))};
+		const auto &key{rstrip(host(hp), '.')};
+		const auto pit{map.equal_range(key)};
 		if(pit.first == pit.second)
 			return false;
 
@@ -2641,7 +2702,9 @@ ircd::net::dns::cache::get(const hostport &hp,
 				});
 			}
 
-			record.at(count++) = &rr;
+			if(count < record.size())
+				record.at(count++) = &rr;
+
 			++it;
 		}
 	}
