@@ -2492,6 +2492,7 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 		rstrip(question.name, '.')
 	};
 
+	assert(!empty(host));
 	switch(question.qtype)
 	{
 		case 1: // A
@@ -2549,6 +2550,7 @@ ircd::net::dns::cache::put(const rfc1035::question &question,
 		rstrip(question.name, '.')
 	};
 
+	assert(!empty(host));
 	switch(answer.qtype)
 	{
 		case 1: // A
@@ -2632,6 +2634,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 	//TODO: Better deduction
 	if(hp.service || opts.srv) // deduced SRV query
 	{
+		assert(!empty(host(hp)));
 		thread_local char srvbuf[512];
 		const string_view srvhost
 		{
@@ -2679,6 +2682,9 @@ ircd::net::dns::cache::get(const hostport &hp,
 	{
 		auto &map{A};
 		const auto &key{rstrip(host(hp), '.')};
+		if(unlikely(empty(key)))
+			return false;
+
 		const auto pit{map.equal_range(key)};
 		if(pit.first == pit.second)
 			return false;
