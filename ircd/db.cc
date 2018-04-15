@@ -192,6 +192,20 @@ ircd::db::compact(database &d)
 		compact(*column, string_view{}, string_view{});
 }
 
+uint64_t
+ircd::db::ticker(const database &d,
+                 const string_view &key)
+{
+	return ticker(d, ticker_id(key));
+}
+
+uint64_t
+ircd::db::ticker(const database &d,
+                 const uint32_t &id)
+{
+	return d.stats->getTickerCount(id);
+}
+
 /// Get the live file list for db; see overlord documentation.
 std::vector<std::string>
 ircd::db::files(const database &d)
@@ -1170,6 +1184,64 @@ ircd::db::log_rdb_perf_context(const bool &all)
 	const bool exclude_zeros(!all);
 	log.debug("%s", pc->ToString(exclude_zeros));
 }
+
+uint32_t
+ircd::db::ticker_id(const string_view &key)
+{
+	for(const auto &pair : rocksdb::TickersNameMap)
+		if(key == pair.second)
+			return pair.first;
+
+	throw std::out_of_range
+	{
+		"No ticker with that key"
+	};
+}
+
+ircd::string_view
+ircd::db::ticker_id(const uint32_t &id)
+{
+	for(const auto &pair : rocksdb::TickersNameMap)
+		if(id == pair.first)
+			return pair.second;
+
+	return {};
+}
+
+decltype(ircd::db::ticker_max)
+ircd::db::ticker_max
+{
+	rocksdb::TICKER_ENUM_MAX
+};
+
+uint32_t
+ircd::db::histogram_id(const string_view &key)
+{
+	for(const auto &pair : rocksdb::HistogramsNameMap)
+		if(key == pair.second)
+			return pair.first;
+
+	throw std::out_of_range
+	{
+		"No histogram with that key"
+	};
+}
+
+ircd::string_view
+ircd::db::histogram_id(const uint32_t &id)
+{
+	for(const auto &pair : rocksdb::HistogramsNameMap)
+		if(id == pair.first)
+			return pair.second;
+
+	return {};
+}
+
+decltype(ircd::db::histogram_max)
+ircd::db::histogram_max
+{
+	rocksdb::HISTOGRAM_ENUM_MAX
+};
 
 uint64_t
 ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)

@@ -28,6 +28,18 @@ namespace ircd::db
 	template<class R = prop_int> R property(const database &, const string_view &name);
 	template<> prop_int property(const database &, const string_view &name);
 
+	// Ticker
+	extern const uint32_t ticker_max;
+	string_view ticker_id(const uint32_t &id);
+	uint32_t ticker_id(const string_view &key);
+	uint64_t ticker(const database &, const uint32_t &id);
+	uint64_t ticker(const database &, const string_view &key);
+
+	// Histogram
+	extern const uint32_t histogram_max;
+	string_view histogram_id(const uint32_t &id);
+	uint32_t histogram_id(const string_view &key);
+
 	// Control panel
 	void compact(database &);
 	void fdeletions(database &, const bool &enable);

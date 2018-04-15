@@ -639,6 +639,60 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__ticker(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "[ticker]"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto ticker
+	{
+		param[1]
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	// Special branch for integer properties that RocksDB aggregates.
+	if(!empty(ticker))
+	{
+		out << ticker << ": " << db::ticker(database, ticker) << std::endl;
+		return true;
+	}
+
+	for(uint32_t i(0); i < db::ticker_max; ++i)
+	{
+		const string_view &name
+		{
+			db::ticker_id(i)
+		};
+
+		if(!name)
+			continue;
+
+		out << std::setw(48) << std::right << name
+		    << "  " << db::ticker(database, i)
+		    << std::endl;
+	}
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__prop(opt &out, const string_view &line)
 try
 {
