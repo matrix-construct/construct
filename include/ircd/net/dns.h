@@ -89,6 +89,7 @@ struct ircd::net::dns::opts
 /// (internal) DNS cache
 struct ircd::net::dns::cache
 {
+	static conf::item<seconds> min_ttl;
 	static conf::item<seconds> clear_nxdomain;
 
 	std::multimap<std::string, rfc1035::record::A, std::less<>> A;

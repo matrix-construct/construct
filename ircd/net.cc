@@ -2308,6 +2308,13 @@ ircd::net::dns::cache::clear_nxdomain
 	{ "default",   43200L                             },
 };
 
+decltype(ircd::net::dns::cache::min_ttl)
+ircd::net::dns::cache::min_ttl
+{
+	{ "name",     "ircd.net.dns.cache.min_ttl" },
+	{ "default",   900L                        },
+};
+
 decltype(ircd::net::dns::prefetch_ipport)
 ircd::net::dns::prefetch_ipport{[]
 (std::exception_ptr, const auto &record)
@@ -3135,7 +3142,10 @@ try
 		// indicating when they expire. This makes more sense for our caches.
 		const auto &now{ircd::time()};
 		for(size_t i(0); i < header.ancount; ++i)
-			an[i].ttl = now + an[i].ttl;
+		{
+			const uint &min_ttl(seconds(cache.min_ttl).count());
+			an[i].ttl = now + std::max(an[i].ttl, min_ttl);
+		}
 	}
 
 	// The callback to the user will be passed a vector_view of pointers
