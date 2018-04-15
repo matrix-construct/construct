@@ -28,7 +28,7 @@ namespace ircd::m::dbs
 	// Event metadata columns
 	extern db::column state_node;
 	extern db::index room_events;
-	extern db::index room_origins;
+	extern db::index room_joined;
 	extern db::index room_state;
 
 	// Lowlevel util
@@ -36,9 +36,9 @@ namespace ircd::m::dbs
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
 	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
 
-	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
-	string_view room_origins_key(const mutable_buffer &out, const id::room &, const string_view &origin);
-	std::pair<string_view, string_view> room_origins_key(const string_view &amalgam);
+	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
+	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
+	std::pair<string_view, string_view> room_joined_key(const string_view &amalgam);
 
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
@@ -105,8 +105,8 @@ namespace ircd::m::dbs::desc
 	extern const database::descriptor events__room_state;
 
 	// room present joined members sequence
-	extern const db::prefix_transform events__room_origins__pfx;
-	extern const database::descriptor events__room_origins;
+	extern const db::prefix_transform events__room_joined__pfx;
+	extern const database::descriptor events__room_joined;
 
 	// state btree node key-value store
 	extern const database::descriptor events__state_node;

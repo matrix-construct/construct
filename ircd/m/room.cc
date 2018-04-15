@@ -1045,7 +1045,7 @@ const
 		{
 			const string_view &member
 			{
-				std::get<1>(dbs::room_origins_key(key))
+				std::get<1>(dbs::room_joined_key(key))
 			};
 
 			bool ret{false};
@@ -1139,13 +1139,13 @@ const
 {
 	db::index &index
 	{
-		dbs::room_origins
+		dbs::room_joined
 	};
 
 	char querybuf[512];
 	const auto query
 	{
-		dbs::room_origins_key(querybuf, room.room_id, origin)
+		dbs::room_joined_key(querybuf, room.room_id, origin)
 	};
 
 	auto it
@@ -1163,7 +1163,7 @@ const
 
 	const string_view &key_origin
 	{
-		std::get<0>(dbs::room_origins_key(key))
+		std::get<0>(dbs::room_joined_key(key))
 	};
 
 	return key_origin == origin;
@@ -1191,7 +1191,7 @@ const
 	{
 		const string_view &origin
 		{
-			std::get<0>(dbs::room_origins_key(key))
+			std::get<0>(dbs::room_joined_key(key))
 		};
 
 		if(origin == last)
@@ -1211,7 +1211,7 @@ const
 {
 	db::index &index
 	{
-		dbs::room_origins
+		dbs::room_joined
 	};
 
 	auto it

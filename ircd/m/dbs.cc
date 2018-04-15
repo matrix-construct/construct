@@ -33,9 +33,9 @@ decltype(ircd::m::dbs::room_events)
 ircd::m::dbs::room_events
 {};
 
-/// Linkage for a reference to the room_origins column
-decltype(ircd::m::dbs::room_origins)
-ircd::m::dbs::room_origins
+/// Linkage for a reference to the room_joined column
+decltype(ircd::m::dbs::room_joined)
+ircd::m::dbs::room_joined
 {};
 
 /// Linkage for a reference to the room_state column
@@ -67,10 +67,10 @@ ircd::m::dbs::init::init(std::string dbopts)
 		};
 
 	// Cache the columns for the metadata
-	state_node = db::column{*events, "_state_node"};
-	room_events = db::index{*events, "_room_events"};
-	room_origins = db::index{*events, "_room_origins"};
-	room_state = db::index{*events, "_room_state"};
+	state_node = db::column{*events, desc::events__state_node.name};
+	room_events = db::index{*events, desc::events__room_events.name};
+	room_joined = db::index{*events, desc::events__room_joined.name};
+	room_state = db::index{*events, desc::events__room_state.name};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern
@@ -81,7 +81,7 @@ noexcept
 	// Columns should be unrefed before DB closes
 	state_node = {};
 	room_events = {};
-	room_origins = {};
+	room_joined = {};
 	room_state = {};
 	for(auto &column : event_column)
 		column = {};
@@ -94,7 +94,7 @@ namespace ircd::m::dbs
 {
 	static void _index__room_state(db::txn &,  const event &, const write_opts &);
 	static void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
-	static void _index__room_origins(db::txn &, const event &, const write_opts &);
+	static void _index__room_joined(db::txn &, const event &, const write_opts &);
 	static string_view _index_state(db::txn &, const event &, const write_opts &);
 	static string_view _index_redact(db::txn &, const event &, const write_opts &);
 	static string_view _index_ephem(db::txn &, const event &, const write_opts &);
@@ -200,7 +200,7 @@ try
 	};
 
 	_index__room_events(txn, event, opts, new_root);
-	_index__room_origins(txn, event, opts);
+	_index__room_joined(txn, event, opts);
 	_index__room_state(txn, event, opts);
 	return new_root;
 }
@@ -240,10 +240,10 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
 	};
 }
 
-/// Adds the entry for the room_origins column into the txn.
+/// Adds the entry for the room_joined column into the txn.
 /// This only is affected if opts.present=true
 void
-ircd::m::dbs::_index__room_origins(db::txn &txn,
+ircd::m::dbs::_index__room_joined(db::txn &txn,
                                    const event &event,
                                    const write_opts &opts)
 {
@@ -257,7 +257,7 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 	thread_local char buf[512];
 	const string_view &key
 	{
-		room_origins_key(buf, at<"room_id"_>(event), at<"origin"_>(event), at<"state_key"_>(event))
+		room_joined_key(buf, at<"room_id"_>(event), at<"origin"_>(event), at<"state_key"_>(event))
 	};
 
 	const string_view &membership
@@ -289,7 +289,7 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 
 	db::txn::append
 	{
-		txn, room_origins,
+		txn, room_joined,
 		{
 			op,
 			key,
@@ -297,7 +297,7 @@ ircd::m::dbs::_index__room_origins(db::txn &txn,
 	};
 }
 
-/// Adds the entry for the room_origins column into the txn.
+/// Adds the entry for the room_joined column into the txn.
 /// This only is affected if opts.present=true
 void
 ircd::m::dbs::_index__room_state(db::txn &txn,
@@ -653,15 +653,15 @@ ircd::m::dbs::desc::events__room_events
 };
 
 //
-// origins sequential
+// joined sequential
 //
 
-/// Prefix transform for the events__room_origins
+/// Prefix transform for the events__room_joined
 ///
 const ircd::db::prefix_transform
-ircd::m::dbs::desc::events__room_origins__pfx
+ircd::m::dbs::desc::events__room_joined__pfx
 {
-	"_room_origins",
+	"_room_joined",
 
 	[](const string_view &key)
 	{
@@ -675,9 +675,9 @@ ircd::m::dbs::desc::events__room_origins__pfx
 };
 
 ircd::string_view
-ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
-                               const id::room &room_id,
-                               const string_view &origin)
+ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
+                              const id::room &room_id,
+                              const string_view &origin)
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
@@ -687,10 +687,10 @@ ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
 }
 
 ircd::string_view
-ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
-                               const id::room &room_id,
-                               const string_view &origin,
-                               const id::user &member)
+ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
+                              const id::room &room_id,
+                              const string_view &origin,
+                              const id::user &member)
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
@@ -701,7 +701,7 @@ ircd::m::dbs::room_origins_key(const mutable_buffer &out_,
 }
 
 std::pair<ircd::string_view, ircd::string_view>
-ircd::m::dbs::room_origins_key(const string_view &amalgam)
+ircd::m::dbs::room_joined_key(const string_view &amalgam)
 {
 	const auto &key
 	{
@@ -723,10 +723,10 @@ ircd::m::dbs::room_origins_key(const string_view &amalgam)
 }
 
 const ircd::database::descriptor
-ircd::m::dbs::desc::events__room_origins
+ircd::m::dbs::desc::events__room_joined
 {
 	// name
-	"_room_origins",
+	"_room_joined",
 
 	// explanation
 	R"(### developer note:
@@ -748,7 +748,7 @@ ircd::m::dbs::desc::events__room_origins
 	{},
 
 	// prefix transform
-	events__room_origins__pfx,
+	events__room_joined__pfx,
 
 	// cache size
 	64_MiB, //TODO: conf
@@ -1259,8 +1259,8 @@ ircd::m::dbs::desc::events
 	events__room_events,
 
 	// (room_id, (origin, user_id)) => ()
-	// Sequence of all PRESENTLY JOINED origins for a room.
-	events__room_origins,
+	// Sequence of all PRESENTLY JOINED joined for a room.
+	events__room_joined,
 
 	// (room_id, (type, state_key)) => (event_id)
 	// Sequence of the PRESENT STATE of the room.
