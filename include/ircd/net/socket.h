@@ -131,9 +131,18 @@ ircd::net::socket::read_all(iov&& bufs)
 		asio::transfer_all()
 	};
 
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->cancel();
+	}};
+
 	const size_t ret
 	{
-		asio::async_read(ssl, std::forward<iov>(bufs), completion, yield_context{to_asio{}})
+		asio::async_read(ssl, std::forward<iov>(bufs), completion, yield_context
+		{
+			to_asio{interruption}
+		})
 	};
 
 	if(!ret)
@@ -152,9 +161,18 @@ template<class iov>
 size_t
 ircd::net::socket::read_few(iov&& bufs)
 {
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->cancel();
+	}};
+
 	const size_t ret
 	{
-		ssl.async_read_some(std::forward<iov>(bufs), yield_context{to_asio{}})
+		ssl.async_read_some(std::forward<iov>(bufs), yield_context
+		{
+			to_asio{interruption}
+		})
 	};
 
 	if(!ret)
@@ -215,9 +233,18 @@ ircd::net::socket::write_all(iov&& bufs)
 		asio::transfer_all()
 	};
 
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->cancel();
+	}};
+
 	const size_t ret
 	{
-		asio::async_write(ssl, std::forward<iov>(bufs), completion, yield_context{to_asio{}})
+		asio::async_write(ssl, std::forward<iov>(bufs), completion, yield_context
+		{
+			to_asio{interruption}
+		})
 	};
 
 	out.bytes += ret;
@@ -230,9 +257,18 @@ template<class iov>
 size_t
 ircd::net::socket::write_few(iov&& bufs)
 {
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->cancel();
+	}};
+
 	const size_t ret
 	{
-		ssl.async_write_some(std::forward<iov>(bufs), yield_context{to_asio{}})
+		ssl.async_write_some(std::forward<iov>(bufs), yield_context
+		{
+			to_asio{interruption}
+		})
 	};
 
 	out.bytes += ret;

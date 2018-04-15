@@ -1611,6 +1611,12 @@ void
 ircd::net::socket::wait(const wait_opts &opts)
 try
 {
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->cancel();
+	}};
+
 	const scope_timeout timeout
 	{
 		*this, opts.timeout
@@ -1619,15 +1625,15 @@ try
 	switch(opts.type)
 	{
 		case ready::ERROR:
-			sd.async_wait(wait_type::wait_error, yield_context{to_asio{}});
+			sd.async_wait(wait_type::wait_error, yield_context{to_asio{interruption}});
 			break;
 
 		case ready::WRITE:
-			sd.async_wait(wait_type::wait_write, yield_context{to_asio{}});
+			sd.async_wait(wait_type::wait_write, yield_context{to_asio{interruption}});
 			break;
 
 		case ready::READ:
-			sd.async_wait(wait_type::wait_read, yield_context{to_asio{}});
+			sd.async_wait(wait_type::wait_read, yield_context{to_asio{interruption}});
 			break;
 
 		default:
