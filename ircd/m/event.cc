@@ -300,7 +300,7 @@ ircd::m::pretty(const event &event)
 	const auto &hashes{json::get<"hashes"_>(event)};
 	for(const auto &hash : hashes)
 	{
-		s << std::setw(16) << std::right << "[hash]" << ": "
+		s << std::setw(16) << std::right << "[hash]" << " :"
 		  << hash.first
 		  << " "
 		  << unquote(hash.second)
