@@ -611,6 +611,7 @@ try
 		*db::database::dbs.at(dbname)
 	};
 
+	// Special branch for integer properties that RocksDB aggregates.
 	if(colname == "*")
 	{
 		const uint64_t value
@@ -622,18 +623,36 @@ try
 		return true;
 	}
 
-	const db::column column
+	const auto query{[&out, &database, &property]
+	(const string_view &colname)
 	{
-		database, colname
-	};
+		const db::column column
+		{
+			database, colname
+		};
 
-	const auto value
+		const auto value
+		{
+			db::property<db::prop_map>(column, property)
+		};
+
+		for(const auto &p : value)
+			out << p.first << " : " << p.second << std::endl;
+	}};
+
+	// Branch for querying the property for a single column
+	if(colname != "**")
 	{
-		db::property<db::prop_map>(column, property)
-	};
+		query(colname);
+		return true;
+	}
 
-	for(const auto &p : value)
-		out << p.first << " => " << p.second << std::endl;
+	// Querying the property for all columns in a loop
+	for(const auto &column_name : database.column_names)
+	{
+		out << std::setw(16) << std::right << column_name << " : ";
+		query(column_name);
+	}
 
 	return true;
 }
