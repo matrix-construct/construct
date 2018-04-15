@@ -23,4 +23,7 @@ struct ircd::db::database::descriptor
 	std::string options {};
 	db::comparator cmp {};
 	db::prefix_transform prefix {};
+	size_t cache_size { 16_MiB };
+	size_t cache_size_comp { 8_MiB };
+	size_t bloom_bits { 10 };
 };

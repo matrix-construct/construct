@@ -38,6 +38,7 @@ struct ircd::db::database::column final
 	database::descriptor descriptor;
 	comparator cmp;
 	prefix_transform prefix;
+	rocksdb::BlockBasedTableOptions table_opts;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:

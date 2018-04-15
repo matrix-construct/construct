@@ -444,6 +444,12 @@ ircd::m::dbs::desc::events__state_node
 
 	// prefix transform
 	{},
+
+	// cache size
+	96_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	24_MiB, //TODO: conf
 };
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
@@ -635,6 +641,15 @@ ircd::m::dbs::desc::events__room_events
 
 	// prefix transform
 	events__room_events__pfx,
+
+	// cache size
+	64_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	24_MiB, //TODO: conf
+
+	// bloom filter bits
+	0, // no bloom filter because of possible comparator issues
 };
 
 //
@@ -734,6 +749,12 @@ ircd::m::dbs::desc::events__room_origins
 
 	// prefix transform
 	events__room_origins__pfx,
+
+	// cache size
+	64_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	16_MiB, //TODO: conf
 };
 
 //
@@ -831,6 +852,12 @@ ircd::m::dbs::desc::events__room_state
 
 	// prefix transform
 	events__room_state__pfx,
+
+	// cache size
+	128_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	32_MiB, //TODO: conf
 };
 
 //

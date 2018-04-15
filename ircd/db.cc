@@ -21,6 +21,8 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice_transform.h>
 #include <rocksdb/utilities/checkpoint.h>
+#include <rocksdb/filter_policy.h>
+#include <rocksdb/table.h>
 
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
@@ -305,8 +307,8 @@ try
 ,cache{[this]
 () -> std::shared_ptr<rocksdb::Cache>
 {
-	//TODO: XXX
-	const auto lru_cache_size{512_MiB};
+	//TODO: conf
+	const auto lru_cache_size{256_MiB};
 	return rocksdb::NewLRUCache(lru_cache_size);
 }()}
 ,descriptors
@@ -873,15 +875,33 @@ ircd::db::database::column::column(database *const &d,
 	//if(d->mergeop->merger)
 	//	this->options.merge_operator = d->mergeop;
 
+	const auto &cache_size(this->descriptor.cache_size);
+	table_opts.block_cache = rocksdb::NewLRUCache(cache_size);
+
+	const auto &cache_size_comp(this->descriptor.cache_size_comp);
+	table_opts.block_cache_compressed = rocksdb::NewLRUCache(cache_size_comp);
+
+	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
+	//table_opts.read_amp_bytes_per_bit = 8;
+
+	const auto &bloom_bits(this->descriptor.bloom_bits);
+	if(bloom_bits)
+		table_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits, false));
+
+	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
+
 	//log.debug("'%s': Creating new column '%s'", d->name, this->name);
 	//throw_on_error(d->d->CreateColumnFamily(this->options, this->name, &this->handle));
 
-	log.debug("schema '%s' declares column [%s => %s] cmp[%s] prefix[%s]: %s",
+	log.debug("schema '%s' declares column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
 	          db::name(*d),
 	          demangle(key_type.name()),
 	          demangle(mapped_type.name()),
 	          this->cmp.Name(),
 	          this->options.prefix_extractor? this->prefix.Name() : "none",
+	          cache_size,
+	          cache_size_comp,
+	          bloom_bits,
 	          this->descriptor.name);
 }
 
