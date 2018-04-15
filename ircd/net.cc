@@ -1337,7 +1337,7 @@ ircd::net::scope_timeout::scope_timeout(socket &socket,
 	socket.set_timeout(timeout, [callback(std::move(callback))]
 	(const error_code &ec)
 	{
-		const bool &timed_out{!ec};
+		const bool &timed_out{!ec}; // success = timeout
 		callback(timed_out);
 	});
 }
@@ -1808,7 +1808,13 @@ noexcept try
 	if(unlikely(wp.expired()))
 		return;
 
-	switch(ec.value())
+	// We increment our end of the timer semaphore. If the count is still
+	// behind the other end of the semaphore, this callback was sitting in
+	// the ios queue while the timer was given a new task; any effects here
+	// will be erroneously bleeding into the next timeout. However the callback
+	// is still invoked to satisfy the user's expectation for receiving it.
+	assert(timer_sem[0] < timer_sem[1]);
+	if(++timer_sem[0] == timer_sem[1] && timer_set) switch(ec.value())
 	{
 		// A 'success' for this handler means there was a timeout on the socket
 		case success:
@@ -1835,6 +1841,7 @@ noexcept try
 			string(ec)
 		};
 	}
+	else ec = { operation_canceled, system_category() };
 
 	if(callback)
 		call_user(callback, ec);
@@ -2232,11 +2239,11 @@ noexcept
 		duration_cast<milliseconds>(exp)
 	};
 
+	timer_set = false;
 	timedout = false;
 	boost::system::error_code ec;
 	timer.cancel(ec);
 	assert(!ec);
-	assert(timedout == false);
 	return ret;
 }
 
@@ -2259,6 +2266,14 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 		std::bind(&socket::handle_timeout, this, weak_from(*this), std::move(callback), ph::_1)
 	};
 
+	// The sending-side of the semaphore is incremented here to invalidate any
+	// pending/queued callbacks to handle_timeout as to not conflict now. The
+	// required companion boolean timer_set is also lit here.
+	assert(timer_sem[0] <= timer_sem[1]);
+	assert(timer_set == false);
+	assert(timedout == false);
+	++timer_sem[1];
+	timer_set = true;
 	timer.expires_from_now(t);
 	timer.async_wait(std::move(handler));
 }
