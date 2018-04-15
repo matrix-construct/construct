@@ -45,6 +45,7 @@ namespace ircd::net
 #include "wait.h"
 #include "read.h"
 #include "write.h"
+#include "scope_timeout.h"
 
 namespace ircd::net
 {

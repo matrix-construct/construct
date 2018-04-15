@@ -29,7 +29,6 @@ struct ircd::net::socket
 	struct io;
 	struct stat;
 	struct xfer;
-	struct scope_timeout;
 
 	using endpoint = ip::tcp::endpoint;
 	using wait_type = ip::tcp::socket::wait_type;
@@ -111,24 +110,6 @@ struct ircd::net::socket
 	socket &operator=(socket &&) = delete;
 	socket &operator=(const socket &) = delete;
 	~socket() noexcept;
-};
-
-class ircd::net::socket::scope_timeout
-{
-	socket *s {nullptr};
-
-  public:
-	bool cancel() noexcept;   // invoke timer.cancel() before dtor
-	bool release();           // cancels the cancel;
-
-	scope_timeout(socket &, const milliseconds &timeout, socket::ec_handler handler);
-	scope_timeout(socket &, const milliseconds &timeout);
-	scope_timeout() = default;
-	scope_timeout(scope_timeout &&) noexcept;
-	scope_timeout(const scope_timeout &) = delete;
-	scope_timeout &operator=(scope_timeout &&) noexcept;
-	scope_timeout &operator=(const scope_timeout &) = delete;
-	~scope_timeout() noexcept;
 };
 
 template<class... args>

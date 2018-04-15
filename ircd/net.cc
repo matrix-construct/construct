@@ -1307,6 +1307,94 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// net/scope_timeout.h
+//
+
+ircd::net::scope_timeout::scope_timeout(socket &socket,
+                                        const milliseconds &timeout)
+:s
+{
+	timeout < 0ms? nullptr : &socket
+}
+{
+	if(timeout < 0ms)
+		return;
+
+	socket.set_timeout(timeout);
+}
+
+ircd::net::scope_timeout::scope_timeout(socket &socket,
+                                        const milliseconds &timeout,
+                                        handler callback)
+:s
+{
+	timeout < 0ms? nullptr : &socket
+}
+{
+	if(timeout < 0ms)
+		return;
+
+	socket.set_timeout(timeout, [callback(std::move(callback))]
+	(const error_code &ec)
+	{
+		const bool &timed_out{!ec};
+		callback(timed_out);
+	});
+}
+
+ircd::net::scope_timeout::scope_timeout(scope_timeout &&other)
+noexcept
+:s{std::move(other.s)}
+{
+	other.s = nullptr;
+}
+
+ircd::net::scope_timeout &
+ircd::net::scope_timeout::operator=(scope_timeout &&other)
+noexcept
+{
+	this->~scope_timeout();
+	s = std::move(other.s);
+	return *this;
+}
+
+ircd::net::scope_timeout::~scope_timeout()
+noexcept
+{
+	cancel();
+}
+
+bool
+ircd::net::scope_timeout::cancel()
+noexcept try
+{
+	if(!this->s)
+		return false;
+
+	auto *const s{this->s};
+	this->s = nullptr;
+	s->cancel_timeout();
+	return true;
+}
+catch(const std::exception &e)
+{
+	log.error("socket(%p) scope_timeout::cancel: %s",
+	          (const void *)s,
+	          e.what());
+
+	return false;
+}
+
+bool
+ircd::net::scope_timeout::release()
+{
+	const auto s{this->s};
+	this->s = nullptr;
+	return s != nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // net/socket.h
 //
 
@@ -2204,76 +2292,6 @@ const
 	auto &ssl(const_cast<type &>(this->ssl));
 	assert(ssl.native_handle());
 	return *ssl.native_handle();
-}
-
-//
-// socket::scope_timeout
-//
-
-ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
-                                                const milliseconds &timeout)
-:s{&socket}
-{
-	socket.set_timeout(timeout);
-}
-
-ircd::net::socket::scope_timeout::scope_timeout(socket &socket,
-                                                const milliseconds &timeout,
-                                                socket::ec_handler handler)
-:s{&socket}
-{
-	socket.set_timeout(timeout, std::move(handler));
-}
-
-ircd::net::socket::scope_timeout::scope_timeout(scope_timeout &&other)
-noexcept
-:s{std::move(other.s)}
-{
-	other.s = nullptr;
-}
-
-ircd::net::socket::scope_timeout &
-ircd::net::socket::scope_timeout::operator=(scope_timeout &&other)
-noexcept
-{
-	this->~scope_timeout();
-	s = std::move(other.s);
-	return *this;
-}
-
-ircd::net::socket::scope_timeout::~scope_timeout()
-noexcept
-{
-	cancel();
-}
-
-bool
-ircd::net::socket::scope_timeout::cancel()
-noexcept try
-{
-	if(!this->s)
-		return false;
-
-	auto *const s{this->s};
-	this->s = nullptr;
-	s->cancel_timeout();
-	return true;
-}
-catch(const std::exception &e)
-{
-	log.error("socket(%p) scope_timeout::cancel: %s",
-	          (const void *)s,
-	          e.what());
-
-	return false;
-}
-
-bool
-ircd::net::socket::scope_timeout::release()
-{
-	const auto s{this->s};
-	this->s = nullptr;
-	return s != nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
