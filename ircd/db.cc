@@ -185,6 +185,13 @@ ircd::db::fdeletions(database &d,
 	};
 }
 
+void
+ircd::db::compact(database &d)
+{
+	for(const auto &column : d.columns)
+		compact(*column, string_view{}, string_view{});
+}
+
 /// Get the live file list for db; see overlord documentation.
 std::vector<std::string>
 ircd::db::files(const database &d)
@@ -793,6 +800,39 @@ ircd::db::flush(database::column &c,
 	throw_on_error
 	{
 		d.d->Flush(opts, c)
+	};
+}
+
+void
+ircd::db::compact(database::column &c,
+                  const string_view &begin_,
+                  const string_view &end_)
+{
+	database &d(*c.d);
+
+	const auto begin(slice(begin_));
+	const rocksdb::Slice *const b
+	{
+		empty(begin_)? nullptr : &begin
+	};
+
+	const auto end(slice(end_));
+	const rocksdb::Slice *const e
+	{
+		empty(end_)? nullptr : &end
+	};
+
+	log.debug("'%s':'%s' @%lu COMPACT [%s, %s]",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          begin_,
+	          end_);
+
+	rocksdb::CompactRangeOptions opts;
+	throw_on_error
+	{
+		d.d->CompactRange(opts, c, b, e)
 	};
 }
 
@@ -3791,6 +3831,15 @@ ircd::db::flush(column &column,
 {
 	database::column &c(column);
 	flush(c, blocking);
+}
+
+void
+ircd::db::compact(column &column,
+                  const string_view &begin,
+                  const string_view &end)
+{
+	database::column &c(column);
+	compact(c, begin, end);
 }
 
 void

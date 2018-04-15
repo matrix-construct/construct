@@ -583,6 +583,62 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__compact(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "[colname]", "[begin]", "[end]"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param[1]
+	};
+
+	const auto begin
+	{
+		param[2]
+	};
+
+	const auto end
+	{
+		param[3]
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	if(!colname)
+	{
+		compact(database);
+		out << "done" << std::endl;
+		return true;
+	}
+
+	db::column column
+	{
+		database, colname
+	};
+
+	compact(column, begin, end);
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__prop(opt &out, const string_view &line)
 try
 {

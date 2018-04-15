@@ -45,7 +45,8 @@ namespace ircd::db
 	// [SET] Remove data from the db. not_found is never thrown.
 	void del(column &, const string_view &key, const sopts & = {});
 
-	// [SET] Flush memory tables to disk (this column only).
+	// [SET] Other operations
+	void compact(column &, const string_view &begin = {}, const string_view &end = {});
 	void flush(column &, const bool &blocking = false);
 }
 

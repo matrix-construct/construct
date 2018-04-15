@@ -58,5 +58,6 @@ struct ircd::db::database::column final
 	column &operator=(const column &) = delete;
 	~column() noexcept;
 
+	friend void compact(column &, const string_view &begin, const string_view &end);
 	friend void flush(column &, const bool &blocking);
 };
