@@ -395,7 +395,11 @@ try
 
 	// Setup event and statistics callbacks
 	opts.listeners.emplace_back(this->events);
-	//opts.statistics = this->stats;              // broken?
+
+	// Setup histogram collecting
+	//this->stats->stats_level_ = rocksdb::kAll;
+	this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
+	opts.statistics = this->stats;
 
 	// Setup performance metric options
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
