@@ -218,6 +218,18 @@ ircd::rfc1035::record::A::A(const answer &answer)
 	ip4 = bswap(*(const uint32_t *)data(rdata));
 }
 
+bool
+ircd::rfc1035::operator!=(const record::A &a, const record::A &b)
+{
+	return !(a == b);
+}
+
+bool
+ircd::rfc1035::operator==(const record::A &a, const record::A &b)
+{
+	return a.ip4 == b.ip4;
+}
+
 //
 // AAAA
 //
@@ -240,6 +252,22 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 	ip6 = bswap(*(const uint128_t *)data(rdata));
 }
 
+bool
+ircd::rfc1035::operator!=(const record::AAAA &a, const record::AAAA &b)
+{
+	return !(a == b);
+}
+
+bool
+ircd::rfc1035::operator==(const record::AAAA &a, const record::AAAA &b)
+{
+	return a.ip6 == b.ip6;
+}
+
+//
+// CNAME
+//
+
 ircd::rfc1035::record::CNAME::CNAME()
 :record{5}
 {
@@ -257,6 +285,22 @@ ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
 	const auto len{parse_name(namebuf, rdata)};
 	name = string_view{namebuf, len - 1};
 }
+
+bool
+ircd::rfc1035::operator!=(const record::CNAME &a, const record::CNAME &b)
+{
+	return !(a == b);
+}
+
+bool
+ircd::rfc1035::operator==(const record::CNAME &a, const record::CNAME &b)
+{
+	return a.name == b.name;
+}
+
+//
+// SRV
+//
 
 ircd::rfc1035::record::SRV::SRV()
 :record{33}
@@ -283,6 +327,21 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 	pos += len;
 
 	assert(std::distance(pos, end(rdata)) == 0);
+}
+
+bool
+ircd::rfc1035::operator!=(const record::SRV &a, const record::SRV &b)
+{
+	return !(a == b);
+}
+
+bool
+ircd::rfc1035::operator==(const record::SRV &a, const record::SRV &b)
+{
+	return a.tgt == b.tgt &&
+	       a.port == b.port &&
+	       a.weight == b.weight &&
+	       a.priority == b.priority;
 }
 
 //

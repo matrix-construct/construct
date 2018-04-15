@@ -184,6 +184,9 @@ struct ircd::rfc1035::record::A
 
 	A(const answer &);
 	A();
+
+	friend bool operator==(const A &, const A &);
+	friend bool operator!=(const A &, const A &);
 };
 
 /// IPv6 address record.
@@ -195,6 +198,9 @@ struct ircd::rfc1035::record::AAAA
 
 	AAAA(const answer &);
 	AAAA();
+
+	friend bool operator==(const AAAA &, const AAAA &);
+	friend bool operator!=(const AAAA &, const AAAA &);
 };
 
 /// Canonical name aliasing record
@@ -206,6 +212,9 @@ struct ircd::rfc1035::record::CNAME
 
 	CNAME(const answer &);
 	CNAME();
+
+	friend bool operator==(const CNAME &, const CNAME &);
+	friend bool operator!=(const CNAME &, const CNAME &);
 };
 
 /// Service record.
@@ -221,4 +230,7 @@ struct ircd::rfc1035::record::SRV
 
 	SRV(const answer &);
 	SRV();
+
+	friend bool operator==(const SRV &, const SRV &);
+	friend bool operator!=(const SRV &, const SRV &);
 };
