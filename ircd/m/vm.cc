@@ -173,6 +173,7 @@ ircd::m::vm::commit(const event &event,
 
 	auto opts_{opts};
 	opts_.verify = false;
+	opts_.reserve_bytes = serialized(event);
 
 	// Some functionality on this server may create an event on behalf
 	// of remote users. It's safe for us to mask this here, but eval'ing
@@ -227,13 +228,24 @@ ircd::m::vm::notify_hook
 };
 
 ircd::m::vm::eval::eval(const vm::opts &opts)
-:opts{&opts}
+:opts
+{
+	&opts
+}
+,txn
+{
+	*dbs::events, db::txn::opts
+	{
+		opts.reserve_bytes + opts.reserve_index,   // reserve_bytes
+		0,                                         // max_bytes (no max)
+	}
+}
 {
 }
 
 ircd::m::vm::eval::eval(const event &event,
                         const vm::opts &opts)
-:opts{&opts}
+:eval{opts}
 {
 	operator()(event);
 }

@@ -41,14 +41,15 @@ namespace ircd::m::vm
 ///
 struct ircd::m::vm::eval
 {
-	const vm::opts *opts {&default_opts};
-	db::txn txn{*dbs::events};
+	const vm::opts *opts;
+	db::txn txn;
 
 	fault operator()(const event &);
 
 	eval(const event &, const vm::opts & = default_opts);
-	eval(const vm::opts &);
-	eval() = default;
+	eval(const vm::opts & = default_opts);
+	eval(eval &&) = delete;
+	eval(const eval &) = delete;
 
 	friend string_view reflect(const fault &);
 };
@@ -125,6 +126,17 @@ struct ircd::m::vm::opts
 
 	/// TODO: Y
 	bool head_must_exist {false};
+
+	/// Evaluators can set this value to optimize the creation of the database
+	/// transaction where the event will be stored. This value should be set
+	/// to the amount of space the event consumes; the JSON-serialized size is
+	/// a good value here.
+	size_t reserve_bytes {1024};
+
+	/// This value is added to reserve_bytes to account for indexing overhead
+	/// in the database transaction allocation. Most evaluators have little
+	/// reason to ever adjust this.
+	size_t reserve_index {1536};
 
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
