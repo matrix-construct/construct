@@ -47,6 +47,7 @@ _m_presence_eval
 
 void
 handle_edu_m_presence(const m::event &event)
+try
 {
 	if(m::my_host(at<"origin"_>(event)))
 		return;
@@ -64,10 +65,24 @@ handle_edu_m_presence(const m::event &event)
 	for(const json::object &presence : push)
 		handle_edu_m_presence_(event, presence);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Presence from %s :%s",
+		json::get<"origin"_>(event),
+		e.what(),
+	};
+}
 
 void
 handle_edu_m_presence_(const m::event &event,
                        const m::edu::m_presence &object)
+try
 {
 	const m::user::id &user_id
 	{
@@ -105,5 +120,15 @@ handle_edu_m_presence_(const m::event &event,
 		json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
 		presence,
 		json::get<"last_active_ago"_>(object) / 1000L
+	};
+}
+catch(const m::error &e)
+{
+	log::error
+	{
+		"Presence from %s :%s :%s",
+		json::get<"origin"_>(event),
+		e.what(),
+		e.content
 	};
 }
