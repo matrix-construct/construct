@@ -1378,6 +1378,38 @@ console_cmd__key__fetch(opt &out, const string_view &line)
 }
 
 //
+// vm
+//
+
+bool
+console_cmd__vm__events(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"start", "[limit]"
+	}};
+
+	const uint64_t start
+	{
+		param.at<uint64_t>(0, uint64_t(-1))
+	};
+
+	size_t limit
+	{
+		param.at<size_t>(1, 32)
+	};
+
+	m::vm::events::rfor_each(start, [&out, &limit]
+	(const uint64_t &seq, const m::event &event)
+	{
+		out << seq << " " << pretty_oneline(event) << std::endl;;
+		return --limit;
+	});
+
+	return true;
+}
+
+//
 // event
 //
 
