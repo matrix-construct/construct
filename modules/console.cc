@@ -839,10 +839,19 @@ try
 	for_each(database, seqnum, db::seq_closure_bool{[&out, &limit]
 	(db::txn &txn, const uint64_t &seqnum) -> bool
 	{
-		if(txn.has(db::op::SET, "event_id"))
-			out << std::setw(12) << std::right << seqnum << " : "
-			    << std::get<db::delta::KEY>(txn.get(db::op::SET, "event_id"))
-			    << std::endl;
+		m::event::id::buf event_id;
+		txn.get(db::op::SET, "event_id", [&event_id]
+		(const db::delta &delta)
+		{
+			event_id = std::get<delta.KEY>(delta);
+		});
+
+		if(event_id)
+			return true;
+
+		out << std::setw(12) << std::right << seqnum << " : "
+		    << string_view{event_id}
+		    << std::endl;
 
 		return --limit;
 	}});

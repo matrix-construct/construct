@@ -15,8 +15,7 @@ namespace ircd::db
 {
 	struct txn;
 
-	bool test(const txn &, const std::function<bool (const delta &)> &);
-	bool until(const txn &, const std::function<bool (const delta &)> &);
+	bool for_each(const txn &, const std::function<bool (const delta &)> &);
 	void for_each(const txn &, const std::function<void (const delta &)> &);
 	std::string debug(const txn &);
 
@@ -38,17 +37,21 @@ struct ircd::db::txn
 	struct append;
 	struct handler;
 
+	using delta_closure = std::function<void (const delta &)>;
+	using delta_closure_bool = std::function<bool (const delta &)>;
+	using value_closure = std::function<void (const string_view &)>;
+
 	explicit operator const rocksdb::WriteBatch &() const;
 	explicit operator const database &() const;
 	explicit operator rocksdb::WriteBatch &();
 	explicit operator database &();
 
-	string_view get(const op &, const string_view &col, const string_view &key) const;
-	string_view at(const op &, const string_view &col, const string_view &key) const;
+	bool get(const op &, const string_view &col, const string_view &key, const value_closure &) const;
+	void at(const op &, const string_view &col, const string_view &key, const value_closure &) const;
 	bool has(const op &, const string_view &col, const string_view &key) const;
 
-	delta get(const op &, const string_view &col) const;
-	delta at(const op &, const string_view &col) const;
+	bool get(const op &, const string_view &col, const delta_closure &) const;
+	void at(const op &, const string_view &col, const delta_closure &) const;
 	bool has(const op &, const string_view &col) const;
 	bool has(const op &) const;
 

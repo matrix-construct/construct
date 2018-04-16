@@ -2581,32 +2581,15 @@ ircd::db::for_each(const txn &t,
 	wb.Iterate(&h);
 }
 
-/// Iterate the txn using the "until protocol"
-/// reminder: the closure remains-true-until-the-end; false to break;
-/// returns true if the end reached; false if broken early
 bool
-ircd::db::until(const txn &t,
-                const std::function<bool (const delta &)> &closure)
+ircd::db::for_each(const txn &t,
+                   const std::function<bool (const delta &)> &closure)
 {
 	const database &d(t);
 	const rocksdb::WriteBatch &wb{t};
 	txn::handler h{d, closure};
 	wb.Iterate(&h);
 	return h._continue;
-}
-
-/// Iterate the txn using the "test protocol"
-/// reminder: the closure returns true to break, false to continue;
-/// returns true if broken early, false if the end reached.
-bool
-ircd::db::test(const txn &t,
-               const std::function<bool (const delta &)> &closure)
-{
-	return !until(t, [&closure]
-	(const delta &delta)
-	{
-		return !closure(delta);
-	});
 }
 
 ///
@@ -2821,12 +2804,46 @@ ircd::db::txn::has(const op &op,
                    const string_view &col)
 const
 {
-	return test(*this, [&op, &col]
+	return !for_each(*this, delta_closure_bool{[&op, &col]
 	(const auto &delta)
 	{
 		return std::get<delta.OP>(delta) == op &&
 		       std::get<delta.COL>(delta) == col;
-	});
+	}});
+}
+
+void
+ircd::db::txn::at(const op &op,
+                  const string_view &col,
+                  const delta_closure &closure)
+const
+{
+	if(!get(op, col, closure))
+		throw not_found
+		{
+			"db::txn::at(%s, %s): no matching delta in transaction",
+			reflect(op),
+			col
+		};
+}
+
+bool
+ircd::db::txn::get(const op &op,
+                   const string_view &col,
+                   const delta_closure &closure)
+const
+{
+	return !for_each(*this, delta_closure_bool{[&op, &col, &closure]
+	(const delta &delta)
+	{
+		if(std::get<delta.OP>(delta) == op &&
+		   std::get<delta.COL>(delta) == col)
+		{
+			closure(delta);
+			return false;
+		}
+		else return true;
+	}});
 }
 
 bool
@@ -2835,85 +2852,51 @@ ircd::db::txn::has(const op &op,
                    const string_view &key)
 const
 {
-	return test(*this, [&op, &col, &key]
+	return !for_each(*this, delta_closure_bool{[&op, &col, &key]
 	(const auto &delta)
 	{
 		return std::get<delta.OP>(delta) == op &&
 		       std::get<delta.COL>(delta) == col &&
 		       std::get<delta.KEY>(delta) == key;
-	});
+	}});
 }
 
-ircd::db::delta
-ircd::db::txn::at(const op &op,
-                  const string_view &col)
-const
-{
-	const auto ret(get(op, col));
-	if(unlikely(!std::get<ret.KEY>(ret)))
-		throw not_found("db::txn::at(%s, %s): no matching delta in transaction",
-		                reflect(op),
-		                col);
-	return ret;
-}
-
-ircd::db::delta
-ircd::db::txn::get(const op &op,
-                   const string_view &col)
-const
-{
-	delta ret;
-	test(*this, [&ret, &op, &col]
-	(const delta &delta)
-	{
-		if(std::get<delta.OP>(delta) == op &&
-		   std::get<delta.COL>(delta) == col)
-		{
-			ret = delta;
-			return true;
-		}
-		else return false;
-	});
-
-	return ret;
-}
-
-ircd::string_view
+void
 ircd::db::txn::at(const op &op,
                   const string_view &col,
-                  const string_view &key)
+                  const string_view &key,
+                  const value_closure &closure)
 const
 {
-	const auto ret(get(op, col, key));
-	if(unlikely(!ret))
-		throw not_found("db::txn::at(%s, %s, %s): no matching delta in transaction",
-		                reflect(op),
-		                col,
-		                key);
-	return ret;
+	if(!get(op, col, key, closure))
+		throw not_found
+		{
+			"db::txn::at(%s, %s, %s): no matching delta in transaction",
+			reflect(op),
+			col,
+			key
+		};
 }
 
-ircd::string_view
+bool
 ircd::db::txn::get(const op &op,
                    const string_view &col,
-                   const string_view &key)
+                   const string_view &key,
+                   const value_closure &closure)
 const
 {
-	string_view ret;
-	test(*this, [&ret, &op, &col, &key]
+	return !for_each(*this, delta_closure_bool{[&op, &col, &key, &closure]
 	(const delta &delta)
 	{
 		if(std::get<delta.OP>(delta) == op &&
 		   std::get<delta.COL>(delta) == col &&
 		   std::get<delta.KEY>(delta) == key)
 		{
-			ret = std::get<delta.VAL>(delta);
-			return true;
+			closure(std::get<delta.VAL>(delta));
+			return false;
 		}
-		else return false;
-	});
-
-	return ret;
+		else return true;
+	}});
 }
 
 ircd::db::txn::operator
