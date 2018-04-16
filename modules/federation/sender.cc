@@ -185,9 +185,20 @@ try
 	m::v1::send::opts opts;
 	opts.remote = origin();
 	opts.sopts = &sopts;
+
+	const vector_view<const json::value> pduv
+	{
+		units.data(), units.data() + pc
+	};
+
+	const vector_view<const json::value> eduv
+	{
+		units.data() + pdus, units.data() + pdus + ec
+	};
+
 	std::string content
 	{
-		m::txn::create({ units.data(), pc }, { units.data() + pdus, ec })
+		m::txn::create(pduv, eduv)
 	};
 
 	txns.emplace_back(*this, std::move(content), std::move(opts));
@@ -334,6 +345,10 @@ try
 
 	return true;
 }
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
 catch(const http::error &e)
 {
 	log::derror
@@ -379,7 +394,7 @@ recv_timeouts()
 		if(txn.node->err)
 			continue;
 
-		if(txn.timeout + seconds(15) < now) //TODO: conf
+		if(txn.timeout + seconds(45) < now) //TODO: conf
 			recv_timeout(txn, *txn.node);
 	}
 }
