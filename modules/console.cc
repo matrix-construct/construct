@@ -1444,40 +1444,86 @@ console_cmd__event__dump(opt &out, const string_view &line)
 		*m::dbs::events, "event_id"
 	};
 
-	static char buf[512_KiB];
-	char *pos{buf};
+	db::gopts gopts
+	{
+		db::get::NO_CACHE
+	};
+
+	gopts.snapshot = db::database::snapshot
+	{
+		*m::dbs::events
+	};
+
+	const auto etotal
+	{
+		db::property<uint64_t>(column, "rocksdb.estimate-num-keys")
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		512_KiB
+	};
+
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
 	m::event::fetch event;
-	for(auto it(begin(column)); it != end(column); ++it, ++ecount)
+	char *pos{data(buf)};
+	for(auto it(column.begin(gopts)); bool(it); ++it, ++ecount)
 	{
 		const auto remain
 		{
-			size_t(buf + sizeof(buf) - pos)
+			size_t(data(buf) + size(buf) - pos)
 		};
 
-		assert(remain >= 64_KiB && remain <= sizeof(buf));
+		assert(remain >= 64_KiB && remain <= size(buf));
 		const mutable_buffer mb{pos, remain};
 		const string_view event_id{it->second};
 		seek(event, event_id, std::nothrow);
 		if(unlikely(!event.valid(event_id)))
 		{
+			log::error
+			{
+				"dump[%s] @ %zu of %zu (est): Failed to fetch %s from database",
+				filename,
+				ecount,
+				etotal,
+				event_id
+			};
+
 			++errcount;
 			continue;
 		}
 
 		pos += json::print(mb, event);
-		if(pos + 64_KiB > buf + sizeof(buf))
+		if(pos + 64_KiB > data(buf) + size(buf))
 		{
-			const const_buffer cb{buf, pos};
+			const const_buffer cb{data(buf), pos};
 			foff += size(fs::append(filename, cb));
-			pos = buf;
+			pos = data(buf);
 			++acount;
+
+			const float pct
+			{
+				(ecount / float(etotal)) * 100.0f
+			};
+
+			log::info
+			{
+				"dump[%s] %lf$%c @ %zu of %zu (est) events; %zu bytes; %zu writes; %zu errors",
+				filename,
+				pct,
+				'%', //TODO: fix gram
+				ecount,
+				etotal,
+				foff,
+				acount,
+				errcount
+			};
 		}
 	}
 
-	if(pos > buf)
+	if(pos > data(buf))
 	{
-		const const_buffer cb{buf, pos};
+		const const_buffer cb{data(buf), pos};
 		foff += size(fs::append(filename, cb));
 		++acount;
 	}
