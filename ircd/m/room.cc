@@ -219,15 +219,11 @@ void
 ircd::m::room::for_each(const event::closure_bool &closure)
 const
 {
-	for_each(event::id::closure_bool{[&closure]
+	event::fetch event;
+	for_each(event::id::closure_bool{[&closure, &event]
 	(const event::id &event_id)
 	{
-		const event::fetch event
-		{
-			event_id, std::nothrow
-		};
-
-		if(!event.valid(event_id))
+		if(!seek(event, event_id, std::nothrow))
 			return true;
 
 		return closure(event);
@@ -284,15 +280,11 @@ ircd::m::room::for_each(const string_view &type,
                         const event::closure_bool &closure)
 const
 {
-	for_each(type, event::id::closure_bool{[&closure]
+	event::fetch event;
+	for_each(type, event::id::closure_bool{[&closure, &event]
 	(const event::id &event_id)
 	{
-		const event::fetch event
-		{
-			event_id, std::nothrow
-		};
-
-		if(!event.valid(event_id))
+		if(!seek(event, event_id, std::nothrow))
 			return true;
 
 		return closure(event);
