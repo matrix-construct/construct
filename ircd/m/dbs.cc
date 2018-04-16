@@ -23,6 +23,11 @@ decltype(ircd::m::dbs::event_column)
 ircd::m::dbs::event_column
 {};
 
+/// Linkage for a reference to the event_seq column.
+decltype(ircd::m::dbs::event_seq)
+ircd::m::dbs::event_seq
+{};
+
 /// Linkage for a reference to the state_node column.
 decltype(ircd::m::dbs::state_node)
 ircd::m::dbs::state_node
@@ -67,6 +72,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 		};
 
 	// Cache the columns for the metadata
+	event_seq = db::column{*events, desc::events__event_seq.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -79,6 +85,7 @@ ircd::m::dbs::init::~init()
 noexcept
 {
 	// Columns should be unrefed before DB closes
+	event_seq = {};
 	state_node = {};
 	room_events = {};
 	room_joined = {};
@@ -450,6 +457,62 @@ ircd::m::dbs::desc::events__state_node
 
 	// cache size for compressed assets
 	24_MiB, //TODO: conf
+};
+
+const ircd::db::comparator
+ircd::m::dbs::desc::events__event_seq__cmp
+{
+	"_event_seq",
+
+	// less
+	[](const string_view &sa, const string_view &sb)
+	{
+		const byte_view<uint64_t> a{sa}, b{sb};
+		return a < b;
+	},
+
+	// equal
+	[](const string_view &sa, const string_view &sb)
+	{
+		const byte_view<uint64_t> a{sa}, b{sb};
+		return a == b;
+	},
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__event_seq
+{
+	// name
+	"_event_seq",
+
+	// explanation
+	R"(### developer note:
+
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	events__event_seq__cmp,
+
+	// prefix transform
+	{},
+
+	// cache size
+	64_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	16_MiB, //TODO: conf
+
+	// bloom filter bits
+	0, // no bloom filter because of possible comparator issues
 };
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
@@ -1253,6 +1316,10 @@ ircd::m::dbs::desc::events
 	// These columns are metadata composed from the event data. Specifically,
 	// they are designed for fast sequential iterations.
 	//
+
+	// uint64_t => event_id
+	// Sequence of all events counted by the m::vm.
+	events__event_seq,
 
 	// (room_id, (depth, event_id)) => (state_root)
 	// Sequence of all events for a room, ever.

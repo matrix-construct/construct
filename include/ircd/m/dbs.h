@@ -26,6 +26,7 @@ namespace ircd::m::dbs
 	extern std::array<db::column, event_columns> event_column;
 
 	// Event metadata columns
+	extern db::column event_seq;
 	extern db::column state_node;
 	extern db::index room_events;
 	extern db::index room_joined;
@@ -95,18 +96,22 @@ namespace ircd::m::dbs::desc
 	// Metadata columns
 	//
 
+	// events sequence
+	extern const db::comparator events__event_seq__cmp;
+	extern const database::descriptor events__event_seq;
+
 	// room events sequence
 	extern const db::prefix_transform events__room_events__pfx;
 	extern const db::comparator events__room_events__cmp;
 	extern const database::descriptor events__room_events;
 
-	// room present state mapping sequence
-	extern const db::prefix_transform events__room_state__pfx;
-	extern const database::descriptor events__room_state;
-
 	// room present joined members sequence
 	extern const db::prefix_transform events__room_joined__pfx;
 	extern const database::descriptor events__room_joined;
+
+	// room present state mapping sequence
+	extern const db::prefix_transform events__room_state__pfx;
+	extern const database::descriptor events__room_state;
 
 	// state btree node key-value store
 	extern const database::descriptor events__state_node;
