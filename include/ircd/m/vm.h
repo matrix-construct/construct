@@ -15,11 +15,12 @@
 ///
 namespace ircd::m::vm
 {
-	enum fault :uint;
+	struct init;
 	struct error; // custom exception
 	struct opts;
 	struct eval;
 	struct accepted;
+	enum fault :uint;
 
 	using fault_t = std::underlying_type<fault>::type;
 	using closure = std::function<void (const event &)>;
@@ -29,7 +30,15 @@ namespace ircd::m::vm
 	extern uint64_t current_sequence;
 	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
+
+	uint64_t sequence(const eval &);
 }
+
+struct ircd::m::vm::init
+{
+	init();
+	~init() noexcept;
+};
 
 /// Event Evaluation Device
 ///

@@ -85,6 +85,7 @@ struct ircd::m::init
 	json::object config;
 	keys::init _keys;
 	dbs::init _dbs;
+	vm::init _vm;
 	std::unique_ptr<modules> modules;
 	std::unique_ptr<listeners> listeners;
 
