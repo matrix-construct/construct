@@ -147,6 +147,7 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
+	listeners.reset(nullptr);
 	leave_ircd_room();
 }
 catch(const m::error &e)
@@ -271,10 +272,10 @@ ircd::m::init::bootstrap()
 	);
 
 	create(user::users, me.user_id);
+	create(my_room, me.user_id);
 	create(me.user_id);
 	me.activate();
 
-	create(my_room, me.user_id);
 	send(my_room, me.user_id, "m.room.name", "",
 	{
 		{ "name", "IRCd's Room" }
