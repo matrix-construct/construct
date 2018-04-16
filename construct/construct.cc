@@ -73,7 +73,6 @@ boost::asio::signal_set sigs
 // are loaded otherwise the module will not be unloadable.
 boost::asio::ip::tcp::acceptor _dummy_acceptor_ { *ios };
 boost::asio::ip::tcp::socket _dummy_sock_ { *ios };
-boost::asio::ip::tcp::resolver _dummy_resolver_ { *ios };
 
 int main(int argc, char *const *argv)
 try
