@@ -536,6 +536,87 @@ ircd::m::vm::write(eval &eval)
 	eval.txn();
 }
 
+bool
+ircd::m::vm::events::rfor_each(const uint64_t &start,
+                               const closure_bool &closure)
+{
+	event::fetch event;
+	return rfor_each(start, id_closure_bool{[&event, &closure]
+	(const uint64_t &seq, const event::id &event_id)
+	{
+		if(!seek(event, event_id, std::nothrow))
+			return true;
+
+		return closure(seq, event);
+	}});
+}
+
+bool
+ircd::m::vm::events::rfor_each(const uint64_t &start,
+                               const id_closure_bool &closure)
+{
+	auto &column
+	{
+		dbs::event_seq
+	};
+
+	if(start == uint64_t(-1))
+	{
+		for(auto it(column.rbegin()); it; ++it)
+			if(!closure(byte_view<uint64_t>(it->first), it->second))
+				return false;
+
+		return true;
+	}
+
+	auto it
+	{
+		column.lower_bound(byte_view<string_view>(start))
+	};
+
+	for(; it; ++it)
+		if(!closure(byte_view<uint64_t>(it->first), it->second))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::m::vm::events::for_each(const uint64_t &start,
+                              const closure_bool &closure)
+{
+	event::fetch event;
+	return for_each(start, id_closure_bool{[&event, &closure]
+	(const uint64_t &seq, const event::id &event_id)
+	{
+		if(!seek(event, event_id, std::nothrow))
+			return true;
+
+		return closure(seq, event);
+	}});
+}
+
+bool
+ircd::m::vm::events::for_each(const uint64_t &start,
+                              const id_closure_bool &closure)
+{
+	auto &column
+	{
+		dbs::event_seq
+	};
+
+	auto it
+	{
+		column.lower_bound(byte_view<string_view>(start))
+	};
+
+	for(; it; ++it)
+		if(!closure(byte_view<uint64_t>(it->first), it->second))
+			return false;
+
+	return true;
+}
+
 uint64_t
 ircd::m::vm::sequence(const eval &eval)
 {

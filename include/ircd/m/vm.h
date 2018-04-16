@@ -21,10 +21,7 @@ namespace ircd::m::vm
 	struct eval;
 	struct accepted;
 	enum fault :uint;
-
 	using fault_t = std::underlying_type<fault>::type;
-	using closure = std::function<void (const event &)>;
-	using closure_bool = std::function<bool (const event &)>;
 
 	extern struct log::log log;
 	extern uint64_t current_sequence;
@@ -32,6 +29,20 @@ namespace ircd::m::vm
 	extern const opts default_opts;
 
 	uint64_t sequence(const eval &);
+}
+
+namespace ircd::m::vm::events
+{
+	using id_closure_bool = std::function<bool (const uint64_t &, const event::id &)>;
+	using closure_bool = std::function<bool (const uint64_t &, const event &)>;
+
+	// counts up from start
+	bool for_each(const uint64_t &start, const id_closure_bool &);
+	bool for_each(const uint64_t &start, const closure_bool &);
+
+	// -1 starts at newest event; counts down
+	bool rfor_each(const uint64_t &start, const id_closure_bool &);
+	bool rfor_each(const uint64_t &start, const closure_bool &);
 }
 
 struct ircd::m::vm::init
