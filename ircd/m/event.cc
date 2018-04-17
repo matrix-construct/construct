@@ -322,7 +322,9 @@ ircd::m::pretty(const event &event)
 	const json::object &contents{json::get<"content"_>(event)};
 	if(!contents.empty())
 	{
-		s << std::setw(16) << std::right << "[content]" << " :";
+		s << std::setw(16) << std::right << "[content]" << " :"
+		  << "+ " << size(contents) << " bytes :";
+
 		for(const auto &content : contents)
 			s << content.first << ", ";
 
