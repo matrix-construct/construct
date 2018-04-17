@@ -619,7 +619,9 @@ ircd::m::vm::events::for_each(const uint64_t &start,
 
 	auto it
 	{
-		column.lower_bound(byte_view<string_view>(start))
+		start > 0?
+			column.lower_bound(byte_view<string_view>(start)):
+			column.begin()
 	};
 
 	for(; it; ++it)
