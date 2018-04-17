@@ -206,6 +206,28 @@ ircd::db::ticker(const database &d,
 	return d.stats->getTickerCount(id);
 }
 
+size_t
+ircd::db::bytes(const database &d)
+{
+	return std::accumulate(begin(d.columns), end(d.columns), size_t(0), []
+	(auto ret, const auto &colptr)
+	{
+		db::column c{*colptr};
+		return ret += db::bytes(c);
+	});
+}
+
+size_t
+ircd::db::file_count(const database &d)
+{
+	return std::accumulate(begin(d.columns), end(d.columns), size_t(0), []
+	(auto ret, const auto &colptr)
+	{
+		db::column c{*colptr};
+		return ret += db::file_count(c);
+	});
+}
+
 /// Get the live file list for db; see overlord documentation.
 std::vector<std::string>
 ircd::db::files(const database &d)

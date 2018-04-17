@@ -20,6 +20,8 @@ namespace ircd::db
 	uint64_t sequence(const database &); // Latest sequence number
 	std::vector<std::string> files(const database &, uint64_t &msz);
 	std::vector<std::string> files(const database &);
+	size_t file_count(const database &);
+	size_t bytes(const database &);
 
 	// Property information interface
 	using prop_int = uint64_t;
