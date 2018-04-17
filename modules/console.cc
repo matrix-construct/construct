@@ -1475,29 +1475,14 @@ console_cmd__event__erase(opt &out, const string_view &line)
 bool
 console_cmd__event__dump(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"filename"
+	}};
+
 	const auto filename
 	{
-		token(line, ' ', 0)
-	};
-
-	db::column column
-	{
-		*m::dbs::events, "event_id"
-	};
-
-	db::gopts gopts
-	{
-		db::get::NO_CACHE
-	};
-
-	gopts.snapshot = db::database::snapshot
-	{
-		*m::dbs::events
-	};
-
-	const auto etotal
-	{
-		db::property<uint64_t>(column, "rocksdb.estimate-num-keys")
+		param.at(0)
 	};
 
 	const unique_buffer<mutable_buffer> buf
@@ -1505,10 +1490,9 @@ console_cmd__event__dump(opt &out, const string_view &line)
 		512_KiB
 	};
 
-	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	m::event::fetch event;
 	char *pos{data(buf)};
-	for(auto it(column.begin(gopts)); bool(it); ++it, ++ecount)
+	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	m::vm::events::for_each(0, [&](const uint64_t &seq, const m::event &event)
 	{
 		const auto remain
 		{
@@ -1517,24 +1501,9 @@ console_cmd__event__dump(opt &out, const string_view &line)
 
 		assert(remain >= 64_KiB && remain <= size(buf));
 		const mutable_buffer mb{pos, remain};
-		const string_view event_id{it->second};
-		seek(event, event_id, std::nothrow);
-		if(unlikely(!event.valid(event_id)))
-		{
-			log::error
-			{
-				"dump[%s] @ %zu of %zu (est): Failed to fetch %s from database",
-				filename,
-				ecount,
-				etotal,
-				event_id
-			};
-
-			++errcount;
-			continue;
-		}
-
 		pos += json::print(mb, event);
+		++ecount;
+
 		if(pos + 64_KiB > data(buf) + size(buf))
 		{
 			const const_buffer cb{data(buf), pos};
@@ -1542,25 +1511,28 @@ console_cmd__event__dump(opt &out, const string_view &line)
 			pos = data(buf);
 			++acount;
 
-			const float pct
+			const double pct
 			{
-				(ecount / float(etotal)) * 100.0f
+				(seq / double(m::vm::current_sequence)) * 100.0
 			};
 
 			log::info
 			{
-				"dump[%s] %lf$%c @ %zu of %zu (est) events; %zu bytes; %zu writes; %zu errors",
+				"dump[%s] %lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
 				filename,
 				pct,
 				'%', //TODO: fix gram
+				seq,
+				m::vm::current_sequence,
 				ecount,
-				etotal,
 				foff,
 				acount,
 				errcount
 			};
 		}
-	}
+
+		return true;
+	});
 
 	if(pos > data(buf))
 	{
