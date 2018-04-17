@@ -17,13 +17,40 @@ struct ircd::db::database::descriptor
 {
 	using typing = std::pair<std::type_index, std::type_index>;
 
+	/// User given name for this column. Must be consistent.
 	std::string name;
+
+	/// User given description of this column; not used by RocksDB
 	std::string explain;
+
+	/// Indicate key and value type.
 	typing type { typeid(string_view), typeid(string_view) };
+
+	/// RocksDB ColumnFamilyOptions string; can be used for items not
+	/// otherwise specified here.
 	std::string options {};
+
+	/// User given comparator. We can automatically set this value for
+	/// some types given for the type.first typeid; otherwise it must be
+	/// set for exotic/unsupported keys.
 	db::comparator cmp {};
+
+	/// User given prefix extractor.
 	db::prefix_transform prefix {};
+
+	/// Size of the LRU cache for uncompressed blocks
 	size_t cache_size { 16_MiB };
+
+	/// Size of the LRU cache for compressed blocks
 	size_t cache_size_comp { 8_MiB };
+
+	/// Bloom filter bits. Filter is still useful even if queries are expected
+	/// to always hit on this column; see `expect_queries_hit` option.
 	size_t bloom_bits { 10 };
+
+	/// Set this option to true if queries to this column are expected to
+	/// find keys that exist. This is useful for columns with keys that
+	/// were first found from values in another column, where if the first
+	/// column missed there'd be no reason to query this column.
+	bool expect_queries_hit { false };
 };

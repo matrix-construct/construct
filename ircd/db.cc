@@ -930,16 +930,22 @@ ircd::db::database::column::column(database *const &d,
 	}
 }
 {
+	// If possible, deduce comparator based on type given in descriptor
 	if(!this->descriptor.cmp.less)
 	{
 		if(key_type == typeid(string_view))
 			this->cmp.user = cmp_string_view{};
 		else if(key_type == typeid(int64_t))
 			this->cmp.user = cmp_int64_t{};
+		else if(key_type == typeid(uint64_t))
+			this->cmp.user = cmp_uint64_t{};
 		else
-			throw error("column '%s' key type[%s] requires user supplied comparator",
-			            this->name,
-			            key_type.name());
+			throw error
+			{
+				"column '%s' key type[%s] requires user supplied comparator",
+				this->name,
+				key_type.name()
+			};
 	}
 
 	// Set the key comparator
@@ -952,26 +958,46 @@ ircd::db::database::column::column(database *const &d,
 			&this->prefix, [](const rocksdb::SliceTransform *) {}
 		};
 
-	//if(d->mergeop->merger)
-	//	this->options.merge_operator = d->mergeop;
+	//
+	// Table options
+	//
 
+	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
-	table_opts.block_cache = rocksdb::NewLRUCache(cache_size);
+	if(cache_size)
+		table_opts.block_cache = rocksdb::NewLRUCache(cache_size);
 
+	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor.cache_size_comp);
-	table_opts.block_cache_compressed = rocksdb::NewLRUCache(cache_size_comp);
+	if(cache_size_comp)
+		table_opts.block_cache_compressed = rocksdb::NewLRUCache(cache_size_comp);
 
-	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
-	//table_opts.read_amp_bytes_per_bit = 8;
-
+	// Setup the bloom filter.
 	const auto &bloom_bits(this->descriptor.bloom_bits);
 	if(bloom_bits)
 		table_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits, false));
 
+	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
+	//table_opts.read_amp_bytes_per_bit = 8;
+
 	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
 
-	//log.debug("'%s': Creating new column '%s'", d->name, this->name);
-	//throw_on_error(d->d->CreateColumnFamily(this->options, this->name, &this->handle));
+	//
+	// Misc options
+	//
+
+	// Set the compaction style; we don't override this in the descriptor yet.
+	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
+
+	// Set the compaction priority; this should probably be in the descriptor
+	// but this is currently selected for the general matrix workload.
+	this->options.compaction_pri = rocksdb::CompactionPri::kOldestLargestSeqFirst;
+
+	// Set filter reductions for this column. This means we expect a key to exist.
+	this->options.optimize_filters_for_hits = this->descriptor.expect_queries_hit;
+
+	// Compression
+	this->options.compression = rocksdb::kSnappyCompression;
 
 	log.debug("schema '%s' declares column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
 	          db::name(*d),
