@@ -31,7 +31,10 @@ get__publicised_groups(client &client,
 {
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "users", json::empty_array }
+		}
 	};
 }
 
@@ -52,7 +55,10 @@ post__publicised_groups(client &client,
 
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "users", user_ids }
+		}
 	};
 }
 

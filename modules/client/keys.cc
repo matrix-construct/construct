@@ -39,9 +39,70 @@ resource::response
 post__keys_upload(client &client,
                   const resource::request &request)
 {
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const json::object &device_keys
+	{
+		request["device_keys"]
+	};
+
+	const json::object &one_time_keys
+	{
+		request["one_time_keys"]
+	};
+
+	if(!empty(device_keys))
+	{
+		const m::user::id &user_id
+		{
+			unquote(device_keys.at("user_id"))
+		};
+
+		if(user_id != request.user_id)
+			throw m::FORBIDDEN
+			{
+				"client 11.10.2.1: device_keys.user_id: "
+				"Must match the device ID used when logging in."
+			};
+
+		const m::id::device &device_id
+		{
+			unquote(device_keys.at("device_id"))
+		};
+
+		const json::array &algorithms
+		{
+			device_keys.at("algorithms")
+		};
+
+		const json::object &keys
+		{
+			device_keys.at("keys")
+		};
+
+		const json::object &signatures
+		{
+			device_keys.at("signatures")
+		};
+	}
+
+	const int64_t curve25519_count{0};
+	const int64_t signed_curve25519_count{size(one_time_keys)};
+	const json::members one_time_key_counts
+	{
+		{ "curve25519",         curve25519_count        },
+		{ "signed_curve25519",  signed_curve25519_count },
+	};
+
 	return resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "one_time_key_counts", one_time_key_counts },
+		}
 	};
 }
 
