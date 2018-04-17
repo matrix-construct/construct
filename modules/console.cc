@@ -773,6 +773,22 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__stats(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
+	return console_cmd__db__prop(out, fmt::snstringf
+	{
+		1024, "%s %s rocksdb.stats",
+		param.at(0),
+		param.at(1)
+	});
+}
+
+bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {
