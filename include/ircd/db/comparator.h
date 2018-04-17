@@ -15,8 +15,14 @@ namespace ircd::db
 {
 	struct comparator;
 
+	template<class T> struct cmp_integer;
+	template<class T> struct reverse_cmp_integer;
+
 	struct cmp_int64_t;
 	struct reverse_cmp_int64_t;
+
+	struct cmp_uint64_t;
+	struct reverse_cmp_uint64_t;
 
 	struct cmp_string_view;
 	struct reverse_cmp_string_view;
@@ -74,42 +80,66 @@ struct ircd::db::reverse_cmp_string_view
 	{}
 };
 
-struct ircd::db::cmp_int64_t
+template<class T>
+struct ircd::db::cmp_integer
 :db::comparator
 {
 	static bool less(const string_view &sa, const string_view &sb)
 	{
-		assert(sa.size() == sizeof(int64_t) && sb.size() == sizeof(int64_t));
-		const byte_view<int64_t> a{sa}, b{sb};
+		const byte_view<T> a{sa}, b{sb};
 		return a < b;
 	}
 
 	static bool equal(const string_view &sa, const string_view &sb)
 	{
-		assert(sa.size() == sizeof(int64_t) && sb.size() == sizeof(int64_t));
-		const byte_view<int64_t> a{sa}, b{sb};
+		const byte_view<T> a{sa}, b{sb};
 		return a == b;
 	}
 
-	cmp_int64_t()
-	:db::comparator{"int64_t", &less, &equal}
+	cmp_integer()
+	:db::comparator{"integer", &less, &equal}
 	{}
 };
 
-struct ircd::db::reverse_cmp_int64_t
+template<class T>
+struct ircd::db::reverse_cmp_integer
 :db::comparator
 {
 	static bool less(const string_view &a, const string_view &b)
 	{
-		return !cmp_int64_t::less(a, b);
+		return !cmp_integer<T>::less(a, b);
 	}
 
 	static bool equal(const string_view &a, const string_view &b)
 	{
-		return cmp_int64_t::equal(a, b);
+		return cmp_integer<T>::equal(a, b);
 	}
 
-	reverse_cmp_int64_t()
-	:db::comparator{"reverse_int64_t", &less, &equal}
+	reverse_cmp_integer()
+	:db::comparator{"reverse_integer", &less, &equal}
 	{}
+};
+
+struct ircd::db::cmp_int64_t
+:cmp_integer<int64_t>
+{
+	using cmp_integer<int64_t>::cmp_integer;
+};
+
+struct ircd::db::reverse_cmp_int64_t
+:reverse_cmp_integer<int64_t>
+{
+	using reverse_cmp_integer<int64_t>::reverse_cmp_integer;
+};
+
+struct ircd::db::cmp_uint64_t
+:cmp_integer<uint64_t>
+{
+	using cmp_integer<uint64_t>::cmp_integer;
+};
+
+struct ircd::db::reverse_cmp_uint64_t
+:reverse_cmp_integer<uint64_t>
+{
+	using reverse_cmp_integer<uint64_t>::reverse_cmp_integer;
 };
