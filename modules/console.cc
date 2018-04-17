@@ -823,6 +823,66 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__bytes(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
+	auto &database
+	{
+		*db::database::dbs.at(param.at(0))
+	};
+
+	if(!param[1] || param[1] == "*")
+	{
+		const auto bytes
+		{
+			db::bytes(database)
+		};
+
+		out << bytes << std::endl;
+		return true;
+	}
+
+	const auto query{[&out, &database]
+	(const string_view &colname)
+	{
+		const db::column column
+		{
+			database, colname
+		};
+
+		const auto value
+		{
+			db::bytes(column)
+		};
+
+		out << std::setw(16) << std::right << colname
+		    << " : " << value
+		    << std::endl;
+	}};
+
+	if(param[1] != "**")
+	{
+		query(param.at(1));
+		return true;
+	}
+
+	for(const auto &colname : database.column_names)
+		query(colname);
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__txns(opt &out, const string_view &line)
 try
 {
