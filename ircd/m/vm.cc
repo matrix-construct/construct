@@ -210,7 +210,6 @@ ircd::m::vm::commit(const event &event,
 
 	auto opts_{opts};
 	opts_.verify = false;
-	opts_.reserve_bytes = serialized(event);
 
 	// Some functionality on this server may create an event on behalf
 	// of remote users. It's safe for us to mask this here, but eval'ing
@@ -266,18 +265,8 @@ ircd::m::vm::notify_hook
 };
 
 ircd::m::vm::eval::eval(const vm::opts &opts)
-:opts
-{
-	&opts
-}
-,txn
-{
-	*dbs::events, db::txn::opts
-	{
-		opts.reserve_bytes + opts.reserve_index,   // reserve_bytes
-		0,                                         // max_bytes (no max)
-	}
-}
+:opts{&opts}
+,txn{nullptr}
 {
 }
 
@@ -322,11 +311,11 @@ try
 		event, opts, &report
 	};
 
-	if(opts->notify)
-	{
+	if(opts->effects)
 		notify_hook(event);
+
+	if(opts->notify)
 		vm::accept(accepted);
-	}
 
 	if(opts->effects)
 		_tmp_effects(event);
@@ -433,6 +422,28 @@ ircd::m::vm::_eval_pdu(eval &eval,
 				"Signature verification failed"
 			};
 
+	const size_t reserve_bytes
+	{
+		opts.reserve_bytes == size_t(-1)?
+			json::serialized(event):
+			opts.reserve_bytes
+	};
+
+	db::txn txn
+	{
+		*dbs::events, db::txn::opts
+		{
+			reserve_bytes + opts.reserve_index,   // reserve_bytes
+			0,                                    // max_bytes (no max)
+		}
+	};
+
+	eval.txn = &txn;
+	const unwind cleartxn{[&eval]
+	{
+		eval.txn = nullptr;
+	}};
+
 	// Obtain sequence number here
 	const uint64_t sequence_number
 	{
@@ -441,7 +452,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	db::txn::append
 	{
-		eval.txn, dbs::event_seq,
+		*eval.txn, dbs::event_seq,
 		{
 			db::op::SET,
 			byte_view<string_view>(sequence_number),
@@ -503,7 +514,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		wopts.history = opts.history;
 		const auto new_root
 		{
-			dbs::write(eval.txn, event, wopts)
+			dbs::write(*eval.txn, event, wopts)
 		};
 	}
 	else if(opts.write)
@@ -515,7 +526,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		wopts.history = opts.history;
 		const auto new_root
 		{
-			dbs::write(eval.txn, event, wopts)
+			dbs::write(*eval.txn, event, wopts)
 		};
 	}
 
@@ -528,12 +539,13 @@ ircd::m::vm::_eval_pdu(eval &eval,
 void
 ircd::m::vm::write(eval &eval)
 {
+	auto &txn(*eval.txn);
 	if(eval.opts->debuglog_accept)
 		log.debug("Committing %zu cells in %zu bytes to events database...",
-		          eval.txn.size(),
-		          eval.txn.bytes());
+		          txn.size(),
+		          txn.bytes());
 
-	eval.txn();
+	txn();
 }
 
 bool
@@ -621,7 +633,7 @@ uint64_t
 ircd::m::vm::sequence(const eval &eval)
 {
 	uint64_t ret;
-	eval.txn.at(db::op::SET, "_event_seq", [&ret]
+	eval.txn->at(db::op::SET, "_event_seq", [&ret]
 	(const auto &delta)
 	{
 		const byte_view<uint64_t> seqnum

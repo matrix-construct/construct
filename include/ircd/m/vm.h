@@ -62,7 +62,7 @@ struct ircd::m::vm::init
 struct ircd::m::vm::eval
 {
 	const vm::opts *opts;
-	db::txn txn;
+	db::txn *txn;
 
 	fault operator()(const event &);
 
@@ -150,8 +150,8 @@ struct ircd::m::vm::opts
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set
 	/// to the amount of space the event consumes; the JSON-serialized size is
-	/// a good value here.
-	size_t reserve_bytes {1024};
+	/// a good value here. Default of -1 will automatically use serialized().
+	size_t reserve_bytes = -1;
 
 	/// This value is added to reserve_bytes to account for indexing overhead
 	/// in the database transaction allocation. Most evaluators have little
