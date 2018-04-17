@@ -25,6 +25,7 @@ struct ircd::byte_view
 
 	operator const T &() const
 	{
+		assert(sizeof(T) == size(s));
 		if(unlikely(sizeof(T) > s.size()))
 			throw std::bad_cast();
 
@@ -33,10 +34,7 @@ struct ircd::byte_view
 
 	byte_view(const string_view &s = {})
 	:s{s}
-	{
-		if(unlikely(sizeof(T) > s.size()))
-			throw std::bad_cast();
-	}
+	{}
 
 	// bytes -> bytes (completeness)
 	byte_view(const T &t)
