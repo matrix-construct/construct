@@ -57,8 +57,7 @@ static void worker();
 extern ircd::context synchronizer;
 
 static resource::response longpoll_sync(client &, const resource::request &, const syncargs &);
-static resource::response shortpoll_sync(client &, const resource::request &, const syncargs &);
-static int64_t get_sequence(const resource::request &, const syncargs &, const m::room &user_room);
+static bool shortpoll_sync(client &, const resource::request &, const syncargs &);
 static resource::response since_sync(client &, const resource::request &, const syncargs &);
 static resource::response initial_sync(client &, const resource::request &, const syncargs &);
 static resource::response sync(client &, const resource::request &);
