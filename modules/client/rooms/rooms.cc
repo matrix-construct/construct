@@ -203,7 +203,7 @@ commit__iov_iov(const room &room,
 
 	int64_t depth;
 	event::id::buf prev_event_id;
-	std::tie(prev_event_id, depth) = m::top(std::nothrow, room.room_id);
+	std::tie(prev_event_id, depth, std::ignore) = m::top(std::nothrow, room.room_id);
 
 	//TODO: X
 	const json::iov::set_if depth_

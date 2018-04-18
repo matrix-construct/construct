@@ -63,7 +63,7 @@ get__make_join(client &client,
 
 	int64_t depth;
 	m::id::event::buf prev_event_id;
-	std::tie(prev_event_id, depth) = m::top(room_id);
+	std::tie(prev_event_id, depth, std::ignore) = m::top(room_id);
 
 	const m::event::fetch evf
 	{

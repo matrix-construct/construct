@@ -23,20 +23,20 @@ ircd::m::depth(std::nothrow_t,
 	return std::get<int64_t>(top(std::nothrow, room_id));
 }
 
-ircd::m::id::event::buf
+ircd::m::event::id::buf
 ircd::m::head(const id::room &room_id)
 {
 	return std::get<event::id::buf>(top(room_id));
 }
 
-ircd::m::id::event::buf
+ircd::m::event::id::buf
 ircd::m::head(std::nothrow_t,
               const id::room &room_id)
 {
 	return std::get<event::id::buf>(top(std::nothrow, room_id));
 }
 
-std::tuple<ircd::m::id::event::buf, int64_t>
+std::tuple<ircd::m::event::id::buf, int64_t, ircd::m::event::idx>
 ircd::m::top(const id::room &room_id)
 {
 	const auto ret
@@ -53,7 +53,7 @@ ircd::m::top(const id::room &room_id)
 	return ret;
 }
 
-std::tuple<ircd::m::id::event::buf, int64_t>
+std::tuple<ircd::m::event::id::buf, int64_t, ircd::m::event::idx>
 ircd::m::top(std::nothrow_t,
              const id::room &room_id)
 {
@@ -65,7 +65,7 @@ ircd::m::top(std::nothrow_t,
 	if(!it)
 		return
 		{
-			id::event::buf{}, -1
+			event::id::buf{}, -1, 0
 		};
 
 	const auto part
@@ -73,15 +73,19 @@ ircd::m::top(std::nothrow_t,
 		dbs::room_events_key(it->first)
 	};
 
-	const int64_t &depth(std::get<0>(part));
-	std::tuple<id::event::buf, int64_t> ret
+	const int64_t &depth
 	{
-		id::event::buf{}, depth
+		int64_t(std::get<0>(part))
 	};
 
 	const event::idx &event_idx
 	{
 		std::get<1>(part)
+	};
+
+	std::tuple<event::id::buf, int64_t, event::idx> ret
+	{
+		event::id::buf{}, depth, event_idx
 	};
 
 	event::fetch::event_id(event_idx, std::nothrow, [&ret]

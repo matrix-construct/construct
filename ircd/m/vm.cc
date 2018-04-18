@@ -483,7 +483,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 		int64_t top;
 		id::event::buf head;
-		std::tie(top, head) = m::top(std::nothrow, room_id);
+		std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
 		if(top < 0 && (opts.head_must_exist || opts.history))
 			throw error
 			{
