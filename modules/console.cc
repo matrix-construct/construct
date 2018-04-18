@@ -2025,6 +2025,30 @@ console_cmd__rooms(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__room__top(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const auto top
+	{
+		m::top(std::nothrow, room_id)
+	};
+
+	out << "idx:    " << std::get<m::event::idx>(top) << std::endl;
+	out << "depth:  " << std::get<int64_t>(top) << std::endl;
+	out << "event:  " << std::get<m::event::id::buf>(top) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__head(opt &out, const string_view &line)
 {
 	const auto &room_id
