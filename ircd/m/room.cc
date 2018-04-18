@@ -23,6 +23,19 @@ ircd::m::depth(std::nothrow_t,
 	return std::get<int64_t>(top(std::nothrow, room_id));
 }
 
+ircd::m::event::idx
+ircd::m::head_idx(const id::room &room_id)
+{
+	return std::get<event::idx>(top(room_id));
+}
+
+ircd::m::event::idx
+ircd::m::head_idx(std::nothrow_t,
+                  const id::room &room_id)
+{
+	return std::get<event::idx>(top(std::nothrow, room_id));
+}
+
 ircd::m::event::id::buf
 ircd::m::head(const id::room &room_id)
 {

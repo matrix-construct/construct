@@ -43,6 +43,10 @@ namespace ircd::m
 	id::event::buf head(std::nothrow_t, const id::room &);
 	id::event::buf head(const id::room &);
 
+	// [GET] Current Event idx (non-locking) (one only)
+	event::idx head_idx(std::nothrow_t, const id::room &);
+	event::idx head_idx(const id::room &);
+
 	// [GET] Current Event depth (non-locking) (one only)
 	int64_t depth(std::nothrow_t, const id::room &);
 	int64_t depth(const id::room &);
