@@ -504,6 +504,9 @@ ircd::m::dbs::desc::events__event_seq
 
 	// bloom filter bits
 	0, // no bloom filter because of possible comparator issues
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::descriptor
@@ -541,7 +544,10 @@ ircd::m::dbs::desc::events__event_idx
 	16_MiB, //TODO: conf
 
 	// bloom filter bits
-	12,
+	16,
+
+	// expect queries hit
+	false,
 };
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
@@ -755,6 +761,9 @@ ircd::m::dbs::desc::events__room_events
 
 	// bloom filter bits
 	0, // no bloom filter because of possible comparator issues
+
+	// expect queries hit
+	true,
 };
 
 //
@@ -860,6 +869,12 @@ ircd::m::dbs::desc::events__room_joined
 
 	// cache size for compressed assets
 	16_MiB, //TODO: conf
+
+	// bloom filter bits
+	10,
+
+	// expect queries hit
+	false,
 };
 
 //
@@ -963,6 +978,12 @@ ircd::m::dbs::desc::events__room_state
 
 	// cache size for compressed assets
 	32_MiB, //TODO: conf
+
+	// bloom filter bits
+	16,
+
+	// expect queries hit
+	false,
 };
 
 /// State nodes are pieces of the m::state:: b-tree. The key is the hash
@@ -999,6 +1020,12 @@ ircd::m::dbs::desc::events__state_node
 
 	// cache size for compressed assets
 	24_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 //
@@ -1027,7 +1054,28 @@ ircd::m::dbs::desc::events_event_id
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1053,7 +1101,28 @@ ircd::m::dbs::desc::events_type
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1079,7 +1148,28 @@ ircd::m::dbs::desc::events_content
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1099,7 +1189,28 @@ ircd::m::dbs::desc::events_redacts
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::descriptor
@@ -1124,7 +1235,28 @@ ircd::m::dbs::desc::events_room_id
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1149,7 +1281,28 @@ ircd::m::dbs::desc::events_sender
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1176,7 +1329,28 @@ ircd::m::dbs::desc::events_state_key
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::descriptor
@@ -1198,7 +1372,28 @@ ircd::m::dbs::desc::events_origin
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1224,7 +1419,28 @@ ircd::m::dbs::desc::events_origin_server_ts
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(time_t)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1244,7 +1460,28 @@ ircd::m::dbs::desc::events_signatures
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1263,7 +1500,28 @@ ircd::m::dbs::desc::events_auth_events
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::descriptor
@@ -1282,7 +1540,28 @@ ircd::m::dbs::desc::events_depth
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(int64_t)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1301,7 +1580,28 @@ ircd::m::dbs::desc::events_hashes
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1320,7 +1620,28 @@ ircd::m::dbs::desc::events_membership
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::descriptor
@@ -1339,7 +1660,28 @@ ircd::m::dbs::desc::events_prev_events
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	true,
 };
 
 const ircd::database::descriptor
@@ -1358,7 +1700,28 @@ ircd::m::dbs::desc::events_prev_state
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(ircd::string_view)
-	}
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	8_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
+
+	// expect queries hit
+	false,
 };
 
 const ircd::database::description
