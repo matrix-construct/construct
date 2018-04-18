@@ -105,14 +105,15 @@ template<class T>
 struct ircd::db::reverse_cmp_integer
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b)
+	static bool less(const string_view &sa, const string_view &sb)
 	{
-		return !cmp_integer<T>::less(a, b);
+		const byte_view<T> a{sa}, b{sb};
+		return a > b;
 	}
 
-	static bool equal(const string_view &a, const string_view &b)
+	static bool equal(const string_view &sa, const string_view &sb)
 	{
-		return cmp_integer<T>::equal(a, b);
+		return cmp_integer<T>::equal(sa, sb);
 	}
 
 	reverse_cmp_integer()
