@@ -63,7 +63,7 @@ get__make_leave(client &client,
 
 	int64_t depth;
 	m::id::event::buf prev_event_id;
-	std::tie(depth, prev_event_id) = m::top(room_id);
+	std::tie(prev_event_id, depth) = m::top(room_id);
 
 	const m::event::fetch evf
 	{

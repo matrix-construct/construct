@@ -13,30 +13,30 @@
 int64_t
 ircd::m::depth(const id::room &room_id)
 {
-	return std::get<0>(top(room_id));
+	return std::get<int64_t>(top(room_id));
 }
 
 int64_t
 ircd::m::depth(std::nothrow_t,
                const id::room &room_id)
 {
-	return std::get<0>(top(std::nothrow, room_id));
+	return std::get<int64_t>(top(std::nothrow, room_id));
 }
 
 ircd::m::id::event::buf
 ircd::m::head(const id::room &room_id)
 {
-	return std::get<1>(top(room_id));
+	return std::get<event::id::buf>(top(room_id));
 }
 
 ircd::m::id::event::buf
 ircd::m::head(std::nothrow_t,
               const id::room &room_id)
 {
-	return std::get<1>(top(std::nothrow, room_id));
+	return std::get<event::id::buf>(top(std::nothrow, room_id));
 }
 
-std::tuple<int64_t, ircd::m::id::event::buf>
+std::tuple<ircd::m::id::event::buf, int64_t>
 ircd::m::top(const id::room &room_id)
 {
 	const auto ret
@@ -44,7 +44,7 @@ ircd::m::top(const id::room &room_id)
 		top(std::nothrow, room_id)
 	};
 
-	if(std::get<0>(ret) == -1)
+	if(std::get<int64_t>(ret) == -1)
 		throw m::NOT_FOUND
 		{
 			"No head for room %s", string_view{room_id}
@@ -53,7 +53,7 @@ ircd::m::top(const id::room &room_id)
 	return ret;
 }
 
-std::tuple<int64_t, ircd::m::id::event::buf>
+std::tuple<ircd::m::id::event::buf, int64_t>
 ircd::m::top(std::nothrow_t,
              const id::room &room_id)
 {
@@ -65,26 +65,29 @@ ircd::m::top(std::nothrow_t,
 	if(!it)
 		return
 		{
-			-1, id::event::buf{}
+			id::event::buf{}, -1
 		};
 
-	const auto &key{it->first};
 	const auto part
 	{
-		dbs::room_events_key(key)
+		dbs::room_events_key(it->first)
 	};
 
 	const int64_t &depth(std::get<0>(part));
-	std::tuple<int64_t, ircd::m::id::event::buf> ret
+	std::tuple<id::event::buf, int64_t> ret
 	{
-		depth, {}
+		id::event::buf{}, depth
 	};
 
-	const event::idx &event_idx{std::get<1>(part)};
+	const event::idx &event_idx
+	{
+		std::get<1>(part)
+	};
+
 	event::fetch::event_id(event_idx, std::nothrow, [&ret]
 	(const event::id &event_id)
 	{
-		std::get<1>(ret) = event_id;
+		std::get<event::id::buf>(ret) = event_id;
 	});
 
 	return ret;
