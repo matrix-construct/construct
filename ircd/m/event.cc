@@ -46,17 +46,17 @@ ircd::m::operator<(const event &a, const event &b)
 }
 
 ircd::m::id::event
-ircd::m::event_id(const event &event,
-                  id::event::buf &buf)
+ircd::m::make_id(const event &event,
+                 id::event::buf &buf)
 {
 	const crh::sha256::buf hash{event};
-	return event_id(event, buf, hash);
+	return make_id(event, buf, hash);
 }
 
 ircd::m::id::event
-ircd::m::event_id(const event &event,
-                  id::event::buf &buf,
-                  const const_buffer &hash)
+ircd::m::make_id(const event &event,
+                 id::event::buf &buf,
+                 const const_buffer &hash)
 {
 	char readable[b58encode_size(sha256::digest_size)];
 	const id::event ret
@@ -66,12 +66,6 @@ ircd::m::event_id(const event &event,
 
 	buf.assigned(ret);
 	return ret;
-}
-
-ircd::m::id::event
-ircd::m::event_id(const event &event)
-{
-	return at<"event_id"_>(event);
 }
 
 void

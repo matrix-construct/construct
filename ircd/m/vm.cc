@@ -113,7 +113,7 @@ ircd::m::vm::commit(json::iov &event,
 	const string_view event_id
 	{
 		opts.event_id?
-			m::event_id(event, eid_buf, event_id_hash):
+			make_id(event, eid_buf, event_id_hash):
 			string_view{}
 	};
 

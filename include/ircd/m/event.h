@@ -24,9 +24,8 @@ namespace ircd::m
 	bool check_size(std::nothrow_t, const event &);
 	void check_size(const event &);
 
-	id::event event_id(const event &, id::event::buf &buf, const const_buffer &hash);
-	id::event event_id(const event &, id::event::buf &buf);
-	id::event event_id(const event &);
+	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, id::event::buf &buf);
 
 	std::string pretty(const event &);
 	std::string pretty_oneline(const event &, const bool &content_keys = true);
