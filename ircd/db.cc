@@ -5156,10 +5156,11 @@ void
 ircd::db::valid_eq_or_throw(const rocksdb::Iterator &it,
                             const string_view &sv)
 {
+	assert(!empty(sv));
 	if(!valid_eq(it, sv))
 	{
 		throw_on_error(it.status());
-		throw not_found();
+		throw not_found{};
 	}
 }
 
@@ -5169,7 +5170,7 @@ ircd::db::valid_or_throw(const rocksdb::Iterator &it)
 	if(!valid(it))
 	{
 		throw_on_error(it.status());
-		throw not_found();
+		throw not_found{};
 		//assert(0); // status == ok + !Valid() == ???
 	}
 }
