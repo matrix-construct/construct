@@ -1054,6 +1054,29 @@ console_cmd__db__list(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__db(opt &out, const string_view &line)
+try
+{
+	if(empty(line))
+		return console_cmd__db__list(out, line);
+
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
+	auto &database
+	{
+		*db::database::dbs.at(param.at(0))
+	};
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
 //
 // peer
 //
