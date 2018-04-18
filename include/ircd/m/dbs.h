@@ -26,7 +26,6 @@ namespace ircd::m::dbs
 	extern std::array<db::column, event_columns> event_column;
 
 	// Event metadata columns
-	extern db::column event_seq;
 	extern db::column event_idx;
 	extern db::index room_events;
 	extern db::index room_joined;
@@ -100,9 +99,6 @@ namespace ircd::m::dbs::desc
 	//
 	// Metadata columns
 	//
-
-	// events sequence
-	extern const database::descriptor events__event_seq;
 
 	// events index
 	extern const database::descriptor events__event_idx;

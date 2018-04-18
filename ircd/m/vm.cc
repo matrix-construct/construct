@@ -10,12 +10,6 @@
 
 #include <ircd/m/m.h>
 
-namespace ircd::m::vm
-{
-	uint64_t last_sequence(id::event::buf &);
-	uint64_t last_sequence();
-}
-
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
@@ -45,7 +39,7 @@ ircd::m::vm::default_commit_opts
 ircd::m::vm::init::init()
 {
 	id::event::buf event_id;
-	current_sequence = last_sequence(event_id);
+	current_sequence = retired_sequence(event_id);
 
 	log.info("Initializing from vm sequence %lu [%s]",
 	         current_sequence,
@@ -57,7 +51,7 @@ ircd::m::vm::init::~init()
 	id::event::buf event_id;
 	const auto current_sequence
 	{
-		last_sequence(event_id)
+		retired_sequence(event_id)
 	};
 
 	log.info("Shutting down @ %lu [%s]",
@@ -445,25 +439,12 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	}};
 
 	// Obtain sequence number here
-	const uint64_t sequence_number
-	{
-		++vm::current_sequence
-	};
+	eval.sequence = ++vm::current_sequence;
 
 	m::dbs::write_opts wopts;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
-	wopts.idx = sequence_number;
-
-	db::txn::append
-	{
-		*eval.txn, dbs::event_seq,
-		{
-			db::op::SET,
-			byte_view<string_view>(sequence_number),
-			byte_view<string_view>(sequence_number),
-		}
-	};
+	wopts.idx = eval.sequence;
 
 	eval_hook(event);
 
@@ -552,29 +533,34 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
                                const closure_bool &closure)
 {
 	event::fetch event;
-	return rfor_each(start, idx_closure_bool{[&event, &closure]
-	(const uint64_t &seq, const event::idx &event_idx)
+	return rfor_each(start, id_closure_bool{[&event, &closure]
+	(const event::idx &event_idx, const event::id &event_id)
 	{
 		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
-		return closure(seq, event);
+		return closure(event_idx, event);
 	}});
 }
 
 bool
 ircd::m::vm::events::rfor_each(const uint64_t &start,
-                               const idx_closure_bool &closure)
+                               const id_closure_bool &closure)
 {
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
 	auto &column
 	{
-		dbs::event_seq
+		dbs::event_column.at(column_idx)
 	};
 
 	if(start == uint64_t(-1))
 	{
 		for(auto it(column.rbegin()); it; ++it)
-			if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
+			if(!closure(byte_view<event::idx>(it->first), it->second))
 				return false;
 
 		return true;
@@ -586,7 +572,7 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
 	};
 
 	for(; it; ++it)
-		if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
+		if(!closure(byte_view<event::idx>(it->first), it->second))
 			return false;
 
 	return true;
@@ -597,23 +583,28 @@ ircd::m::vm::events::for_each(const uint64_t &start,
                               const closure_bool &closure)
 {
 	event::fetch event;
-	return for_each(start, idx_closure_bool{[&event, &closure]
-	(const uint64_t &seq, const event::idx &event_idx)
+	return for_each(start, id_closure_bool{[&event, &closure]
+	(const event::idx &event_idx, const event::id &event_id)
 	{
 		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
-		return closure(seq, event);
+		return closure(event_idx, event);
 	}});
 }
 
 bool
 ircd::m::vm::events::for_each(const uint64_t &start,
-                              const idx_closure_bool &closure)
+                              const id_closure_bool &closure)
 {
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
 	auto &column
 	{
-		dbs::event_seq
+		dbs::event_column.at(column_idx)
 	};
 
 	auto it
@@ -624,53 +615,36 @@ ircd::m::vm::events::for_each(const uint64_t &start,
 	};
 
 	for(; it; ++it)
-		if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
+		if(!closure(byte_view<event::idx>(it->first), it->second))
 			return false;
 
 	return true;
 }
 
-uint64_t
+const uint64_t &
 ircd::m::vm::sequence(const eval &eval)
 {
-	uint64_t ret;
-	eval.txn->at(db::op::SET, "_event_seq", [&ret]
-	(const auto &delta)
-	{
-		const byte_view<uint64_t> seqnum
-		{
-			std::get<delta.KEY>(delta)
-		};
-
-		ret = seqnum;
-	});
-
-	return ret;
+	return eval.sequence;
 }
 
 uint64_t
-ircd::m::vm::last_sequence(id::event::buf &event_id)
+ircd::m::vm::retired_sequence()
 {
-	const auto &ret
+	event::id::buf event_id;
+	return retired_sequence(event_id);
+}
+
+uint64_t
+ircd::m::vm::retired_sequence(event::id::buf &event_id)
+{
+	static constexpr auto column_idx
 	{
-		last_sequence()
+		json::indexof<event, "event_id"_>()
 	};
 
-	event::fetch::event_id(ret, std::nothrow, [&event_id]
-	(const event::id &event_id_)
-	{
-		event_id = event_id_;
-	});
-
-	return ret;
-}
-
-uint64_t
-ircd::m::vm::last_sequence()
-{
 	auto &column
 	{
-		dbs::event_seq
+		dbs::event_column.at(column_idx)
 	};
 
 	const auto it
@@ -691,6 +665,7 @@ ircd::m::vm::last_sequence()
 		byte_view<uint64_t>(it->first)
 	};
 
+	event_id = it->second;
 	return ret;
 }
 

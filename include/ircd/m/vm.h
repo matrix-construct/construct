@@ -28,20 +28,22 @@ namespace ircd::m::vm
 	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
 
-	uint64_t sequence(const eval &);
+	const uint64_t &sequence(const eval &);
+	uint64_t retired_sequence(id::event::buf &);
+	uint64_t retired_sequence();
 }
 
 namespace ircd::m::vm::events
 {
-	using idx_closure_bool = std::function<bool (const uint64_t &, const event::idx &)>;
-	using closure_bool = std::function<bool (const uint64_t &, const event &)>;
+	using id_closure_bool = std::function<bool (const event::idx &, const event::id &)>;
+	using closure_bool = std::function<bool (const event::idx &, const event &)>;
 
 	// counts up from start
-	bool for_each(const uint64_t &start, const idx_closure_bool &);
+	bool for_each(const uint64_t &start, const id_closure_bool &);
 	bool for_each(const uint64_t &start, const closure_bool &);
 
 	// -1 starts at newest event; counts down
-	bool rfor_each(const uint64_t &start, const idx_closure_bool &);
+	bool rfor_each(const uint64_t &start, const id_closure_bool &);
 	bool rfor_each(const uint64_t &start, const closure_bool &);
 }
 
@@ -63,6 +65,7 @@ struct ircd::m::vm::eval
 {
 	const vm::opts *opts;
 	db::txn *txn;
+	uint64_t sequence {0};
 
 	fault operator()(const event &);
 

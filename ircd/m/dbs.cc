@@ -24,11 +24,6 @@ ircd::m::dbs::event_column
 {};
 
 /// Linkage for a reference to the event_seq column.
-decltype(ircd::m::dbs::event_seq)
-ircd::m::dbs::event_seq
-{};
-
-/// Linkage for a reference to the event_seq column.
 decltype(ircd::m::dbs::event_idx)
 ircd::m::dbs::event_idx
 {};
@@ -77,7 +72,6 @@ ircd::m::dbs::init::init(std::string dbopts)
 		};
 
 	// Cache the columns for the metadata
-	event_seq = db::column{*events, desc::events__event_seq.name};
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 	room_events = db::index{*events, desc::events__room_events.name};
@@ -91,7 +85,6 @@ ircd::m::dbs::init::~init()
 noexcept
 {
 	// Columns should be unrefed before DB closes
-	event_seq = {};
 	state_node = {};
 	room_events = {};
 	room_joined = {};
@@ -465,49 +458,6 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 //
 // Database descriptors
 //
-
-const ircd::database::descriptor
-ircd::m::dbs::desc::events__event_seq
-{
-	// name
-	"_event_seq",
-
-	// explanation
-	R"(### developer note:
-
-	Sequence counter.
-	The key is an integer given by the m::vm. The value is the index number to
-	be used as the key to all the event data columns. At the time of this
-	comment these are actually the same thing.
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(uint64_t)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// cache size
-	64_MiB, //TODO: conf
-
-	// cache size for compressed assets
-	16_MiB, //TODO: conf
-
-	// bloom filter bits
-	0, // no bloom filter because of possible comparator issues
-
-	// expect queries hit
-	false,
-};
 
 const ircd::database::descriptor
 ircd::m::dbs::desc::events__event_idx
@@ -1756,10 +1706,6 @@ ircd::m::dbs::desc::events
 	//
 	// These columns are metadata oriented around the event data.
 	//
-
-	// uint64_t => uint64_t
-	// Sequence number to event_idx number counted by the m::vm.
-	events__event_seq,
 
 	// event_id => uint64_t
 	// Mapping of event_id to index number.
