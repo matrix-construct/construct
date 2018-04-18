@@ -20,7 +20,20 @@ int64_t
 ircd::m::depth(std::nothrow_t,
                const id::room &room_id)
 {
-	return std::get<int64_t>(top(std::nothrow, room_id));
+	const auto it
+	{
+		dbs::room_events.begin(room_id)
+	};
+
+	if(!it)
+		return -1;
+
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<0>(part);
 }
 
 ircd::m::event::idx
@@ -33,7 +46,20 @@ ircd::m::event::idx
 ircd::m::head_idx(std::nothrow_t,
                   const id::room &room_id)
 {
-	return std::get<event::idx>(top(std::nothrow, room_id));
+	const auto it
+	{
+		dbs::room_events.begin(room_id)
+	};
+
+	if(!it)
+		return 0;
+
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<1>(part);
 }
 
 ircd::m::event::id::buf
