@@ -33,15 +33,15 @@ namespace ircd::m::vm
 
 namespace ircd::m::vm::events
 {
-	using id_closure_bool = std::function<bool (const uint64_t &, const event::id &)>;
+	using idx_closure_bool = std::function<bool (const uint64_t &, const event::idx &)>;
 	using closure_bool = std::function<bool (const uint64_t &, const event &)>;
 
 	// counts up from start
-	bool for_each(const uint64_t &start, const id_closure_bool &);
+	bool for_each(const uint64_t &start, const idx_closure_bool &);
 	bool for_each(const uint64_t &start, const closure_bool &);
 
 	// -1 starts at newest event; counts down
-	bool rfor_each(const uint64_t &start, const id_closure_bool &);
+	bool rfor_each(const uint64_t &start, const idx_closure_bool &);
 	bool rfor_each(const uint64_t &start, const closure_bool &);
 }
 

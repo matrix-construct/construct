@@ -113,13 +113,17 @@ struct ircd::m::room
 	operator const id &() const;
 
 	// Convenience passthru to room::messages (linear query; newest first)
-	void for_each(const string_view &type, const event::id::closure_bool &) const;
+	bool for_each(const string_view &type, const event::closure_idx_bool &) const;
+	void for_each(const string_view &type, const event::closure_idx &) const;
+	bool for_each(const string_view &type, const event::id::closure_bool &) const;
 	void for_each(const string_view &type, const event::id::closure &) const;
-	void for_each(const string_view &type, const event::closure_bool &) const;
+	bool for_each(const string_view &type, const event::closure_bool &) const;
 	void for_each(const string_view &type, const event::closure &) const;
-	void for_each(const event::id::closure_bool &) const;
+	bool for_each(const event::closure_idx_bool &) const;
+	void for_each(const event::closure_idx &) const;
+	bool for_each(const event::id::closure_bool &) const;
 	void for_each(const event::id::closure &) const;
-	void for_each(const event::closure_bool &) const;
+	bool for_each(const event::closure_bool &) const;
 	void for_each(const event::closure &) const;
 
 	// Convenience passthru to room::state (logarithmic query)
@@ -155,22 +159,22 @@ struct ircd::m::room
 /// This interface has the form of an STL-style iterator over room messages
 /// which are state and non-state events from all integrated timelines.
 /// Moving the iterator is cheap, but the dereference operators fetch a
-/// full event. One can iterate just event_id's by using event_id() instead
+/// full event. One can iterate just event_idx's by using event_idx() instead
 /// of the dereference operators.
 ///
 struct ircd::m::room::messages
 {
 	m::room room;
 	db::index::const_iterator it;
-	event::id _event_id;
+	event::idx _event_idx;
 	event::fetch _event;
 
   public:
 	operator bool() const              { return bool(it);                      }
 	bool operator!() const             { return !it;                           }
 
-	const event::id &event_id();
-	operator const event::id &();
+	event::id::buf event_id();         // deprecated; will remove
+	const event::idx &event_idx();
 
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
@@ -218,17 +222,22 @@ struct ircd::m::room::state
 
 	// Iterate the state; for_each protocol
 	void for_each(const string_view &type, const keys &) const;
+	void for_each(const string_view &type, const event::closure_idx &) const;
 	void for_each(const string_view &type, const event::id::closure &) const;
 	void for_each(const string_view &type, const event::closure &) const;
+	void for_each(const event::closure_idx &) const;
 	void for_each(const event::id::closure &) const;
 	void for_each(const event::closure &) const;
 
 	// Iterate the state; test protocol
+	bool test(const string_view &type, const string_view &lower_bound, const event::closure_idx_bool &view) const;
 	bool test(const string_view &type, const string_view &lower_bound, const event::id::closure_bool &view) const;
 	bool test(const string_view &type, const string_view &lower_bound, const event::closure_bool &view) const;
 	bool test(const string_view &type, const keys_bool &view) const;
+	bool test(const string_view &type, const event::closure_idx_bool &view) const;
 	bool test(const string_view &type, const event::id::closure_bool &view) const;
 	bool test(const string_view &type, const event::closure_bool &view) const;
+	bool test(const event::closure_idx_bool &view) const;
 	bool test(const event::id::closure_bool &view) const;
 	bool test(const event::closure_bool &view) const;
 
@@ -241,8 +250,10 @@ struct ircd::m::room::state
 	bool has(const string_view &type) const;
 
 	// Fetch a state event
+	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure_idx &) const;
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
+	void get(const string_view &type, const string_view &state_key, const event::closure_idx &) const;
 	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
 

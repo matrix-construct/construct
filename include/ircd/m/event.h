@@ -84,8 +84,11 @@ struct ircd::m::event
 
 	// Common convenience aliases
 	using id = m::id::event;
+	using idx = uint64_t;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
+	using closure_idx = std::function<void (const idx &)>;
+	using closure_idx_bool = std::function<bool (const idx &)>;
 	using closure_iov_mutable = std::function<void (json::iov &)>;
 
 	static constexpr size_t MAX_SIZE = 64_KiB;
@@ -123,6 +126,7 @@ struct ircd::m::event
 	using super_type::tuple;
 	using super_type::operator=;
 
+	event(const idx &, const mutable_buffer &buf);
 	event(const id &, const mutable_buffer &buf);
 	event() = default;
 };
@@ -168,15 +172,27 @@ struct ircd::m::event::fetch
 {
 	std::array<db::cell, event::size()> cell;
 	db::row row;
+	bool valid;
 
-	bool valid(const event::id &) const;
-
-	fetch(const event::id &, std::nothrow_t);
-	fetch(const event::id &);
+  public:
+	fetch(const idx &, std::nothrow_t);
+	fetch(const idx &);
+	fetch(const id &, std::nothrow_t);
+	fetch(const id &);
 	fetch();
 
-	friend bool seek(fetch &, const event::id &, std::nothrow_t);
-	friend void seek(fetch &, const event::id &);
+	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
+	static void event_id(const idx &, const id::closure &);
+
+	static idx index(const id &, std::nothrow_t);
+	static idx index(const id &);
+	static idx index(const event &, std::nothrow_t);
+	static idx index(const event &);
+
+	friend bool seek(fetch &, const idx &, std::nothrow_t);
+	friend void seek(fetch &, const idx &);
+	friend bool seek(fetch &, const id &, std::nothrow_t);
+	friend void seek(fetch &, const id &);
 };
 
 /// Device to evaluate the conformity of an event object. This is an 'in vitro'

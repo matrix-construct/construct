@@ -27,10 +27,11 @@ namespace ircd::m::dbs
 
 	// Event metadata columns
 	extern db::column event_seq;
-	extern db::column state_node;
+	extern db::column event_idx;
 	extern db::index room_events;
 	extern db::index room_joined;
 	extern db::index room_state;
+	extern db::column state_node;
 
 	// Lowlevel util
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
@@ -41,14 +42,17 @@ namespace ircd::m::dbs
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	std::pair<string_view, string_view> room_joined_key(const string_view &amalgam);
 
-	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const id::event &);
+	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const event::idx &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
-	std::pair<uint64_t, string_view> room_events_key(const string_view &amalgam);
+	std::pair<uint64_t, event::idx> room_events_key(const string_view &amalgam);
 
-	// Get the state root for an event (with as much information as you have)
-	string_view state_root(const mutable_buffer &out, const id::room &, const id::event &, const uint64_t &depth);
-	string_view state_root(const mutable_buffer &out, const id::room &, const id::event &);
-	string_view state_root(const mutable_buffer &out, const id::event &);
+	// [GET] the state root for an event (with as much information as you have)
+	string_view state_root(const mutable_buffer &out, const id::room &, const event::idx &, const uint64_t &depth);
+	string_view state_root(const mutable_buffer &out, const id::room &, const event::id &, const uint64_t &depth);
+	string_view state_root(const mutable_buffer &out, const id::room &, const event::idx &);
+	string_view state_root(const mutable_buffer &out, const id::room &, const event::id &);
+	string_view state_root(const mutable_buffer &out, const event::idx &);
+	string_view state_root(const mutable_buffer &out, const event::id &);
 	string_view state_root(const mutable_buffer &out, const event &);
 
 	// [SET (txn)] Basic write suite
@@ -57,6 +61,7 @@ namespace ircd::m::dbs
 
 struct ircd::m::dbs::write_opts
 {
+	uint64_t idx {0};
 	string_view root_in;
 	mutable_buffer root_out;
 	db::op op {db::op::SET};
@@ -97,8 +102,10 @@ namespace ircd::m::dbs::desc
 	//
 
 	// events sequence
-	extern const db::comparator events__event_seq__cmp;
 	extern const database::descriptor events__event_seq;
+
+	// events index
+	extern const database::descriptor events__event_idx;
 
 	// room events sequence
 	extern const db::prefix_transform events__room_events__pfx;

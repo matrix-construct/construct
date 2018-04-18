@@ -45,7 +45,10 @@ ircd::m::top(const id::room &room_id)
 	};
 
 	if(std::get<0>(ret) == -1)
-		throw m::NOT_FOUND{};
+		throw m::NOT_FOUND
+		{
+			"No head for room %s", string_view{room_id}
+		};
 
 	return ret;
 }
@@ -71,12 +74,20 @@ ircd::m::top(std::nothrow_t,
 		dbs::room_events_key(key)
 	};
 
-	const auto &depth{std::get<0>(part)};
-	const auto &event_id{std::get<1>(part)};
-	return
+	const int64_t &depth(std::get<0>(part));
+	std::tuple<int64_t, ircd::m::id::event::buf> ret
 	{
-		depth, event_id
+		depth, {}
 	};
+
+	const event::idx &event_idx{std::get<1>(part)};
+	event::fetch::event_id(event_idx, std::nothrow, [&ret]
+	(const event::id &event_id)
+	{
+		std::get<1>(ret) = event_id;
+	});
+
+	return ret;
 }
 
 bool
@@ -207,59 +218,42 @@ void
 ircd::m::room::for_each(const event::closure &closure)
 const
 {
-	for_each(event::closure_bool{[&closure]
-	(const event &event)
-	{
-		closure(event);
-		return true;
-	}});
+	for_each(string_view{}, closure);
 }
 
-void
+bool
 ircd::m::room::for_each(const event::closure_bool &closure)
 const
 {
-	event::fetch event;
-	for_each(event::id::closure_bool{[&closure, &event]
-	(const event::id &event_id)
-	{
-		if(!seek(event, event_id, std::nothrow))
-			return true;
-
-		return closure(event);
-	}});
+	return for_each(string_view{}, closure);
 }
 
 void
 ircd::m::room::for_each(const event::id::closure &closure)
 const
 {
-	for_each(event::id::closure_bool{[&closure]
-	(const event::id &event_id)
-	{
-		closure(event_id);
-		return true;
-	}});
+	for_each(string_view{}, closure);
 }
 
-void
+bool
 ircd::m::room::for_each(const event::id::closure_bool &closure)
 const
 {
-	static constexpr auto idx
-	{
-		json::indexof<event, "type"_>()
-	};
+	return for_each(string_view{}, closure);
+}
 
-	auto &column
-	{
-		dbs::event_column.at(idx)
-	};
+void
+ircd::m::room::for_each(const event::closure_idx &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
 
-	messages it{*this};
-	for(; it; --it)
-		if(!closure(it.event_id()))
-			break;
+bool
+ircd::m::room::for_each(const event::closure_idx_bool &closure)
+const
+{
+	return for_each(string_view{}, closure);
 }
 
 void
@@ -275,16 +269,16 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::room::for_each(const string_view &type,
                         const event::closure_bool &closure)
 const
 {
 	event::fetch event;
-	for_each(type, event::id::closure_bool{[&closure, &event]
-	(const event::id &event_id)
+	return for_each(type, event::closure_idx_bool{[&closure, &event]
+	(const event::idx &event_idx)
 	{
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
 		return closure(event);
@@ -304,9 +298,41 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::room::for_each(const string_view &type,
                         const event::id::closure_bool &closure)
+const
+{
+	return for_each(type, event::closure_idx_bool{[&closure]
+	(const event::idx &idx)
+	{
+		bool ret{true};
+		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		(const event::id &event_id)
+		{
+			ret = closure(event_id);
+		});
+
+		return ret;
+	}});
+}
+
+void
+ircd::m::room::for_each(const string_view &type,
+                        const event::closure_idx &closure)
+const
+{
+	for_each(type, event::closure_idx_bool{[&closure]
+	(const event::idx &idx)
+	{
+		closure(idx);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::for_each(const string_view &type,
+                        const event::closure_idx_bool &closure)
 const
 {
 	static constexpr auto idx
@@ -322,22 +348,29 @@ const
 	messages it{*this};
 	for(; it; --it)
 	{
-		const auto &event_id
+		const auto &event_idx
 		{
-			it.event_id()
+			it.event_idx()
 		};
 
-		bool match{false};
-		column(event_id, [&match, &type]
-		(const string_view &value)
+		bool match
 		{
-			match = value == type;
-		});
+			empty(type) // allow empty type to always match and bypass query
+		};
+
+		if(!match)
+			column(byte_view<string_view>(event_idx), std::nothrow, [&match, &type]
+			(const string_view &value)
+			{
+				match = value == type;
+			});
 
 		if(match)
-			if(!closure(event_id))
-				break;
+			if(!closure(event_idx))
+				return false;
 	}
+
+	return true;
 }
 
 //
@@ -380,27 +413,27 @@ ircd::m::room::messages::seek()
 bool
 ircd::m::room::messages::seek(const event::id &event_id)
 {
-	static constexpr auto idx
-	{
-		json::indexof<event, "depth"_>()
-	};
-
 	auto &column
 	{
-		dbs::event_column.at(idx)
+		dbs::event_column.at(json::indexof<event, "depth"_>())
+	};
+
+	const event::idx event_idx
+	{
+		event::fetch::index(event_id)
 	};
 
 	uint64_t depth;
-	column(event_id, [&](const string_view &binary)
+	column(byte_view<string_view>(event_idx), [&depth]
+	(const string_view &value)
 	{
-		assert(size(binary) == sizeof(depth));
-		depth = byte_view<uint64_t>(binary);
+		depth = byte_view<uint64_t>(value);
 	});
 
 	char buf[m::state::KEY_MAX_SZ];
 	const auto seek_key
 	{
-		dbs::room_events_key(buf, room.room_id, depth, event_id)
+		dbs::room_events_key(buf, room.room_id, depth, event_idx)
 	};
 
 	this->it = dbs::room_events.begin(seek_key);
@@ -420,33 +453,40 @@ ircd::m::room::messages::seek(const uint64_t &depth)
 	return bool(*this);
 }
 
-ircd::m::room::messages::operator
-const m::event::id &()
+ircd::m::event::id::buf
+ircd::m::room::messages::event_id()
 {
-	return event_id();
+	event::id::buf ret;
+	event::fetch::event_id(this->event_idx(), [&ret]
+	(const event::id &event_id)
+	{
+		ret = event_id;
+	});
+
+	return ret;
 }
 
-const ircd::m::event::id &
-ircd::m::room::messages::event_id()
+const ircd::m::event::idx &
+ircd::m::room::messages::event_idx()
 {
 	assert(bool(*this));
 	const auto &key{it->first};
 	const auto part{dbs::room_events_key(key)};
-	_event_id = std::get<1>(part);
-	return _event_id;
+	_event_idx = std::get<1>(part);
+	return _event_idx;
 }
 
 const ircd::m::event &
 ircd::m::room::messages::fetch()
 {
-	m::seek(_event, event_id());
+	m::seek(_event, event_idx());
 	return _event;
 }
 
 const ircd::m::event &
 ircd::m::room::messages::fetch(std::nothrow_t)
 {
-	if(!m::seek(_event, event_id(), std::nothrow))
+	if(!m::seek(_event, event_idx(), std::nothrow))
 		_event = m::event::fetch{};
 
 	return _event;
@@ -524,12 +564,12 @@ ircd::m::room::state::get(const string_view &type,
                           const event::closure &closure)
 const
 {
-	get(type, state_key, event::id::closure{[&closure]
-	(const event::id &event_id)
+	get(type, state_key, event::closure_idx{[&closure]
+	(const event::idx &event_idx)
 	{
 		const event::fetch event
 		{
-			event_id
+			event_idx
 		};
 
 		closure(event);
@@ -549,9 +589,44 @@ const try
 			closure(unquote(event_id));
 		});
 
+	get(type, state_key, event::closure_idx{[&closure]
+	(const event::idx &idx)
+	{
+		event::fetch::event_id(idx, closure);
+	}});
+}
+catch(const db::not_found &e)
+{
+	throw m::NOT_FOUND
+	{
+		"(%s,%s) in %s :%s",
+		type,
+		state_key,
+		string_view{room_id},
+		e.what()
+	};
+}
+
+void
+ircd::m::room::state::get(const string_view &type,
+                          const string_view &state_key,
+                          const event::closure_idx &closure)
+const try
+{
+	if(root_id)
+		m::state::get(root_id, type, state_key, [&closure]
+		(const string_view &event_id)
+		{
+			closure(event::fetch::index(unquote(event_id)));
+		});
+
 	char key[768];
 	auto &column{dbs::room_state};
-	return column(dbs::room_state_key(key, room_id, type, state_key), closure);
+	column(dbs::room_state_key(key, room_id, type, state_key), [&closure]
+	(const string_view &value)
+	{
+		closure(byte_view<event::idx>(value));
+	});
 }
 catch(const db::not_found &e)
 {
@@ -572,12 +647,12 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::closure &closure)
 const
 {
-	return get(std::nothrow, type, state_key, event::id::closure{[&closure]
-	(const event::id &event_id)
+	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
+	(const event::idx &event_idx)
 	{
 		const event::fetch event
 		{
-			event_id
+			event_idx, std::nothrow
 		};
 
 		closure(event);
@@ -598,9 +673,34 @@ const
 			closure(unquote(event_id));
 		});
 
+	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
+	(const event::idx &idx)
+	{
+		event::fetch::event_id(idx, std::nothrow, closure);
+	}});
+}
+
+bool
+ircd::m::room::state::get(std::nothrow_t,
+                          const string_view &type,
+                          const string_view &state_key,
+                          const event::closure_idx &closure)
+const
+{
+	if(root_id)
+		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
+		(const string_view &event_id)
+		{
+			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	char key[768];
 	auto &column{dbs::room_state};
-	return column(dbs::room_state_key(key, room_id, type, state_key), std::nothrow, closure);
+	return column(dbs::room_state_key(key, room_id, type, state_key), std::nothrow, [&closure]
+	(const string_view &value)
+	{
+		closure(byte_view<event::idx>(value));
+	});
 }
 
 bool
@@ -672,10 +772,10 @@ ircd::m::room::state::test(const event::closure_bool &closure)
 const
 {
 	event::fetch event;
-	return test(event::id::closure_bool{[&event, &closure]
-	(const event::id &event_id)
+	return test(event::closure_idx_bool{[&event, &closure]
+	(const event::idx &event_idx)
 	{
-		if(seek(event, unquote(event_id), std::nothrow))
+		if(seek(event, event_idx, std::nothrow))
 			if(closure(event))
 				return true;
 
@@ -694,9 +794,34 @@ const
 			return closure(unquote(event_id));
 		});
 
+	return test(event::closure_idx_bool{[&closure]
+	(const event::idx &idx)
+	{
+		bool ret{false};
+		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		(const event::id &id)
+		{
+			ret = closure(id);
+		});
+
+		return ret;
+	}});
+}
+
+bool
+ircd::m::room::state::test(const event::closure_idx_bool &closure)
+const
+{
+	if(root_id)
+		return m::state::test(root_id, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(room_id)}; bool(it); ++it)
-		if(closure(it->second))
+		if(closure(byte_view<event::idx>(it->second)))
 			return true;
 
 	return false;
@@ -708,10 +833,10 @@ ircd::m::room::state::test(const string_view &type,
 const
 {
 	event::fetch event;
-	return test(type, event::id::closure_bool{[&event, &closure]
-	(const event::id &event_id)
+	return test(type, event::closure_idx_bool{[&event, &closure]
+	(const event::idx &event_idx)
 	{
-		if(seek(event, unquote(event_id), std::nothrow))
+		if(seek(event, event_idx, std::nothrow))
 			if(closure(event))
 				return true;
 
@@ -731,6 +856,32 @@ const
 			return closure(unquote(event_id));
 		});
 
+	return test(type, event::closure_idx_bool{[&closure]
+	(const event::idx &idx)
+	{
+		bool ret{false};
+		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		(const event::id &id)
+		{
+			ret = closure(id);
+		});
+
+		return ret;
+	}});
+}
+
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const event::closure_idx_bool &closure)
+const
+{
+	if(root_id)
+		return m::state::test(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	char keybuf[768];
 	const auto &key
 	{
@@ -741,7 +892,7 @@ const
 	for(auto it{column.begin(key)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 		{
-			if(closure(it->second))
+			if(closure(byte_view<event::idx>(it->second)))
 				return true;
 		}
 		else break;
@@ -794,10 +945,10 @@ ircd::m::room::state::test(const string_view &type,
 const
 {
 	event::fetch event;
-	return test(type, state_key_lb, event::id::closure_bool{[&event, &closure]
-	(const event::id &event_id)
+	return test(type, state_key_lb, event::closure_idx_bool{[&event, &closure]
+	(const event::idx &event_idx)
 	{
-		if(seek(event, unquote(event_id), std::nothrow))
+		if(seek(event, event_idx, std::nothrow))
 			if(closure(event))
 				return true;
 
@@ -818,6 +969,33 @@ const
 			return closure(unquote(event_id));
 		});
 
+	return test(type, state_key_lb, event::closure_idx_bool{[&closure]
+	(const event::idx &idx)
+	{
+		bool ret{false};
+		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		(const event::id &id)
+		{
+			ret = closure(id);
+		});
+
+		return ret;
+	}});
+}
+
+bool
+ircd::m::room::state::test(const string_view &type,
+                           const string_view &state_key_lb,
+                           const event::closure_idx_bool &closure)
+const
+{
+	if(root_id)
+		return m::state::test(root_id, type, state_key_lb, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	char keybuf[768];
 	const auto &key
 	{
@@ -828,7 +1006,7 @@ const
 	for(auto it{column.begin(key)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 		{
-			if(closure(it->second))
+			if(closure(byte_view<event::idx>(it->second)))
 				return true;
 		}
 		else break;
@@ -841,10 +1019,10 @@ ircd::m::room::state::for_each(const event::closure &closure)
 const
 {
 	event::fetch event;
-	for_each(event::id::closure{[&event, &closure]
-	(const event::id &event_id)
+	for_each(event::closure_idx{[&event, &closure]
+	(const event::idx &event_idx)
 	{
-		if(seek(event, event_id, std::nothrow))
+		if(seek(event, event_idx, std::nothrow))
 			closure(event);
 	}});
 }
@@ -860,9 +1038,27 @@ const
 			closure(unquote(event_id));
 		});
 
+	for_each(event::closure_idx{[&closure]
+	(const event::idx &idx)
+	{
+		event::fetch::event_id(idx, std::nothrow, closure);
+	}});
+}
+
+void
+ircd::m::room::state::for_each(const event::closure_idx &closure)
+const
+{
+	if(root_id)
+		return m::state::for_each(root_id, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(room_id)}; bool(it); ++it)
-		closure(it->second);
+		closure(byte_view<event::idx>(it->second));
 }
 
 void
@@ -871,10 +1067,10 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	event::fetch event;
-	for_each(type, event::id::closure{[&event, &closure]
-	(const event::id &event_id)
+	for_each(type, event::closure_idx{[&event, &closure]
+	(const event::idx &event_idx)
 	{
-		if(seek(event, event_id, std::nothrow))
+		if(seek(event, event_idx, std::nothrow))
 			closure(event);
 	}});
 }
@@ -891,6 +1087,25 @@ const
 			closure(unquote(event_id));
 		});
 
+	for_each(type, event::closure_idx{[&closure]
+	(const event::idx &idx)
+	{
+		event::fetch::event_id(idx, std::nothrow, closure);
+	}});
+}
+
+void
+ircd::m::room::state::for_each(const string_view &type,
+                               const event::closure_idx &closure)
+const
+{
+	if(root_id)
+		return m::state::for_each(root_id, type, [&closure]
+		(const json::array &key, const string_view &event_id)
+		{
+			closure(event::fetch::index(unquote(event_id), std::nothrow));
+		});
+
 	char keybuf[768];
 	const auto &key
 	{
@@ -900,7 +1115,7 @@ const
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(key)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
-			closure(it->second);
+			closure(byte_view<event::idx>(it->second));
 		else
 			break;
 }
@@ -912,7 +1127,7 @@ const
 {
 	if(root_id)
 		return m::state::for_each(root_id, type, [&closure]
-		(const json::array &key, const string_view &event_id)
+		(const json::array &key, const string_view &)
 		{
 			assert(size(key) >= 2);
 			closure(unquote(key.at(1)));

@@ -28,6 +28,11 @@ decltype(ircd::m::dbs::event_seq)
 ircd::m::dbs::event_seq
 {};
 
+/// Linkage for a reference to the event_seq column.
+decltype(ircd::m::dbs::event_idx)
+ircd::m::dbs::event_idx
+{};
+
 /// Linkage for a reference to the state_node column.
 decltype(ircd::m::dbs::state_node)
 ircd::m::dbs::state_node
@@ -73,6 +78,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 
 	// Cache the columns for the metadata
 	event_seq = db::column{*events, desc::events__event_seq.name};
+	event_idx = db::column{*events, desc::events__event_idx.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -112,9 +118,21 @@ ircd::m::dbs::write(db::txn &txn,
                     const event &event,
                     const write_opts &opts)
 {
+	assert(opts.idx != 0);
+
 	db::txn::append
 	{
-		txn, at<"event_id"_>(event), event, event_column, opts.op
+		txn, dbs::event_idx,
+		{
+			db::op::SET,
+			at<"event_id"_>(event),
+			byte_view<string_view>(opts.idx)
+		}
+	};
+
+	db::txn::append
+	{
+		txn, byte_view<string_view>(opts.idx), event, event_column, opts.op
 	};
 
 	if(defined(json::get<"state_key"_>(event)))
@@ -151,7 +169,7 @@ try
 		target_id, std::nothrow
 	};
 
-	if(unlikely(!target.valid(target_id)))
+	if(unlikely(!target.valid))
 		log::error
 		{
 			"Redaction from '%s' missing redaction target '%s'",
@@ -230,10 +248,10 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
                                   const string_view &new_root)
 {
 	const ctx::critical_assertion ca;
-	thread_local char buf[768];
+	thread_local char buf[256 + 1 + 8 + 8];
 	const string_view &key
 	{
-		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), at<"event_id"_>(event))
+		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), opts.idx)
 	};
 
 	db::txn::append
@@ -321,9 +339,9 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 		room_state_key(buf, at<"room_id"_>(event), at<"type"_>(event), at<"state_key"_>(event))
 	};
 
-	const string_view &val
+	const string_view val
 	{
-		at<"event_id"_>(event)
+		byte_view<string_view>(opts.idx)
 	};
 
 	const db::op op
@@ -355,6 +373,13 @@ ircd::string_view
 ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::event &event_id)
 {
+	return state_root(out, event::fetch::index(event_id));
+}
+
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const event::idx &event_idx)
+{
 	static constexpr auto idx
 	{
 		json::indexof<event, "room_id"_>()
@@ -366,18 +391,27 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 	};
 
 	id::room::buf room_id;
-	column(event_id, [&room_id](const string_view &val)
+	column(byte_view<string_view>(event_idx), [&room_id]
+	(const string_view &val)
 	{
 		room_id = val;
 	});
 
-	return state_root(out, room_id, event_id);
+	return state_root(out, room_id, event_idx);
 }
 
 ircd::string_view
 ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::room &room_id,
                          const id::event &event_id)
+{
+	return state_root(out, room_id, event::fetch::index(event_id));
+}
+
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const id::room &room_id,
+                         const event::idx &event_idx)
 {
 	static constexpr auto idx
 	{
@@ -390,13 +424,13 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 	};
 
 	uint64_t depth;
-	column(event_id, [&](const string_view &binary)
+	column(byte_view<string_view>(event_idx), [&depth]
+	(const string_view &binary)
 	{
-		assert(size(binary) == sizeof(depth));
 		depth = byte_view<uint64_t>(binary);
 	});
 
-	return state_root(out, room_id, event_id, depth);
+	return state_root(out, room_id, event_idx, depth);
 }
 
 ircd::string_view
@@ -405,9 +439,18 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::event &event_id,
                          const uint64_t &depth)
 {
-	char keybuf[768]; const auto key
+	return state_root(out, room_id, event::fetch::index(event_id), depth);
+}
+
+ircd::string_view
+ircd::m::dbs::state_root(const mutable_buffer &out,
+                         const id::room &room_id,
+                         const event::idx &event_idx,
+                         const uint64_t &depth)
+{
+	char keybuf[256 + 1 + 8 + 8]; const auto key
 	{
-		room_events_key(keybuf, room_id, depth, event_id)
+		room_events_key(keybuf, room_id, depth, event_idx)
 	};
 
 	string_view ret;
@@ -423,62 +466,6 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 // Database descriptors
 //
 
-/// State nodes are pieces of the m::state:: b-tree. The key is the hash
-/// of the value, which serves as the ID of the node when referenced in
-/// the tree. see: m/state.h for details.
-///
-const ircd::database::descriptor
-ircd::m::dbs::desc::events__state_node
-{
-	// name
-	"_state_node",
-
-	// explanation
-	R"(### developer note:
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// cache size
-	96_MiB, //TODO: conf
-
-	// cache size for compressed assets
-	24_MiB, //TODO: conf
-};
-
-const ircd::db::comparator
-ircd::m::dbs::desc::events__event_seq__cmp
-{
-	"_event_seq",
-
-	// less
-	[](const string_view &sa, const string_view &sb)
-	{
-		const byte_view<uint64_t> a{sa}, b{sb};
-		return a < b;
-	},
-
-	// equal
-	[](const string_view &sa, const string_view &sb)
-	{
-		const byte_view<uint64_t> a{sa}, b{sb};
-		return a == b;
-	},
-};
-
 const ircd::database::descriptor
 ircd::m::dbs::desc::events__event_seq
 {
@@ -488,19 +475,23 @@ ircd::m::dbs::desc::events__event_seq
 	// explanation
 	R"(### developer note:
 
+	Sequence counter.
+	The key is an integer given by the m::vm. The value is the index number to
+	be used as the key to all the event data columns. At the time of this
+	comment these are actually the same thing.
 
 	)",
 
 	// typing (key, value)
 	{
-		typeid(uint64_t), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(uint64_t)
 	},
 
 	// options
 	{},
 
 	// comparator
-	events__event_seq__cmp,
+	{},
 
 	// prefix transform
 	{},
@@ -513,6 +504,44 @@ ircd::m::dbs::desc::events__event_seq
 
 	// bloom filter bits
 	0, // no bloom filter because of possible comparator issues
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__event_idx
+{
+	// name
+	"_event_idx",
+
+	// explanation
+	R"(### developer note:
+
+	The key is an event_id and the value is the index number to be used as the
+	key to all the event data columns.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	64_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	16_MiB, //TODO: conf
+
+	// bloom filter bits
+	12,
 };
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
@@ -571,11 +600,11 @@ ircd::m::dbs::desc::events__room_events__cmp
 		if(pre[0] != pre[1])
 			return pre[0] < pre[1];
 
-		// After the prefix is the depth + event_id
+		// After the prefix is the depth + event_idx
 		const string_view post[2]
 		{
-			a.substr(size(pre[0])),
-			b.substr(size(pre[1])),
+			a.substr(sizes[0]),
+			b.substr(sizes[1]),
 		};
 
 		if(empty(post[0]))
@@ -585,17 +614,10 @@ ircd::m::dbs::desc::events__room_events__cmp
 			return false;
 
 		// Now want just the depth...
-		const string_view depths[2]
+		const uint64_t depth[2]
 		{
-			between(post[0], "\0"_sv, "$"_sv),
-			between(post[1], "\0"_sv, "$"_sv),
-		};
-
-		// ...as machine words
-		const int64_t depth[2]
-		{
-			lex_cast<int64_t>(depths[0]),
-			lex_cast<int64_t>(depths[1]),
+			room_events_key(post[0]).first,
+			room_events_key(post[1]).first,
 		};
 
 		// Highest to lowest sort so highest is first
@@ -608,10 +630,15 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const id::room &room_id,
                               const uint64_t &depth)
 {
+	const const_buffer depth_cb
+	{
+		reinterpret_cast<const char *>(&depth), sizeof(depth)
+	};
+
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, lex_cast(depth)));
+	consume(out, copy(out, depth_cb));
 	return { data(out_), data(out) };
 }
 
@@ -619,39 +646,52 @@ ircd::string_view
 ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const id::room &room_id,
                               const uint64_t &depth,
-                              const id::event &event_id)
+                              const event::idx &event_idx)
 {
+	const const_buffer depth_cb
+	{
+		reinterpret_cast<const char *>(&depth), sizeof(depth)
+	};
+
+	const const_buffer event_idx_cb
+	{
+		reinterpret_cast<const char *>(&event_idx), sizeof(event_idx)
+	};
+
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, lex_cast(depth)));
-	consume(out, copy(out, event_id));
+	consume(out, copy(out, depth_cb));
+	consume(out, copy(out, event_idx_cb));
 	return { data(out_), data(out) };
 }
 
-std::pair<uint64_t, ircd::string_view>
+std::pair<uint64_t, ircd::m::event::idx>
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
-	const auto &key
+	assert(size(amalgam) == 1 + 8 + 8 || size(amalgam) == 1 + 8);
+	assert(amalgam.front() == '\0');
+
+	const uint64_t &depth
 	{
-		lstrip(amalgam, "\0"_sv)
+		*reinterpret_cast<const uint64_t *>(data(amalgam) + 1)
 	};
 
-	const auto &s
+	const event::idx &event_idx
 	{
-		split(key, "$"_sv)
+		size(amalgam) >= 1 + 8 + 8?
+			*reinterpret_cast<const uint64_t *>(data(amalgam) + 1 + 8):
+			0UL
 	};
 
-	return
-	{
-		lex_cast<uint64_t>(s.first),
-		{ end(s.first), end(s.second) }
-	};
+	// Make sure these are copied rather than ever returning references in
+	// a tuple because the chance the integers will be aligned is low.
+	return { depth, event_idx };
 }
 
 /// This column stores events in sequence in a room. Consider the following:
 ///
-/// [room_id | depth + event_id => state_root]
+/// [room_id | depth + event_idx => state_root]
 ///
 /// The key is composed from three parts:
 ///
@@ -661,17 +701,19 @@ ircd::m::dbs::room_events_key(const string_view &amalgam)
 ///
 /// - `depth` is the ordering. Within the sequence, all elements are ordered by
 /// depth from HIGHEST TO LOWEST. The sequence will start at the highest depth.
+/// NOTE: Depth is a fixed 8 byte binary integer.
 ///
-/// - `event_id` is the key suffix. This column serves to sequence all events
+/// - `event_idx` is the key suffix. This column serves to sequence all events
 /// within a room ordered by depth. There may be duplicate room_id|depth
-/// prefixing but the event_id suffix gives the key total uniqueness.
+/// prefixing but the event_idx suffix gives the key total uniqueness.
+/// NOTE: event_idx is a fixed 8 byte binary integer.
 ///
 /// The value is then used to store the node ID of the state tree root at this
 /// event. Nodes of the state tree are stored in the state_node column. From
 /// that root node the state of the room at the time of this event_id can be
 /// queried.
 ///
-/// There is one caveat here: we can't directly take a room_id and an event_id
+/// There is one caveat here: we can't directly take a room_id and an event_idx
 /// and make a trivial query to find the state root, since the depth number
 /// gets in the way. Rather than creating yet another column without the depth,
 /// for the time being, we pay the cost of an extra query to events_depth and
@@ -693,7 +735,7 @@ ircd::m::dbs::desc::events__room_events
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(string_view), typeid(string_view)
 	},
 
 	// options
@@ -801,7 +843,7 @@ ircd::m::dbs::desc::events__room_joined
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(string_view), typeid(uint64_t)
 	},
 
 	// options
@@ -904,7 +946,7 @@ ircd::m::dbs::desc::events__room_state
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(string_view), typeid(uint64_t)
 	},
 
 	// options
@@ -921,6 +963,42 @@ ircd::m::dbs::desc::events__room_state
 
 	// cache size for compressed assets
 	32_MiB, //TODO: conf
+};
+
+/// State nodes are pieces of the m::state:: b-tree. The key is the hash
+/// of the value, which serves as the ID of the node when referenced in
+/// the tree. see: m/state.h for details.
+///
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__state_node
+{
+	// name
+	"_state_node",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	96_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	24_MiB, //TODO: conf
 };
 
 //
@@ -943,12 +1021,12 @@ ircd::m::dbs::desc::events_event_id
 	MUST NOT exceed 255 bytes.
 
 	### developer note:
-	key is event_id. This is redundant data but we have to have it for now.
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -969,12 +1047,12 @@ ircd::m::dbs::desc::events_type
 	MUST NOT exceed 255 bytes.
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -995,12 +1073,12 @@ ircd::m::dbs::desc::events_content
 	Since events must not exceed 64 KiB the maximum size for the content is the remaining
 	space after all the other fields for the event are rendered.
 
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1014,13 +1092,13 @@ ircd::m::dbs::desc::events_redacts
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	value is targeted event_id
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1040,12 +1118,12 @@ ircd::m::dbs::desc::events_room_id
 	MUST NOT exceed 255 bytes.
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1065,12 +1143,12 @@ ircd::m::dbs::desc::events_sender
 	MUST NOT exceed 255 bytes.
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1092,12 +1170,12 @@ ircd::m::dbs::desc::events_state_key
 	MUST NOT exceed 255 bytes.
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1114,12 +1192,12 @@ ircd::m::dbs::desc::events_origin
 	DNS name of homeserver that created this PDU
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1136,7 +1214,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 	Timestamp in milliseconds on origin homeserver when this PDU was created.
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 	value is a machine integer (binary)
 
 	TODO: consider unsigned rather than time_t because of millisecond precision
@@ -1145,7 +1223,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(time_t)
+		typeid(uint64_t), typeid(time_t)
 	}
 };
 
@@ -1159,13 +1237,13 @@ ircd::m::dbs::desc::events_signatures
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id
+	key is event_idx number.
 
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1179,12 +1257,12 @@ ircd::m::dbs::desc::events_auth_events
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id.
+	key is event_idx number..
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1198,12 +1276,12 @@ ircd::m::dbs::desc::events_depth
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id value is long integer
+	key is event_idx number. value is long integer
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(int64_t)
+		typeid(uint64_t), typeid(int64_t)
 	}
 };
 
@@ -1217,12 +1295,12 @@ ircd::m::dbs::desc::events_hashes
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id.
+	key is event_idx number..
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1236,12 +1314,12 @@ ircd::m::dbs::desc::events_membership
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id.
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1255,12 +1333,12 @@ ircd::m::dbs::desc::events_prev_events
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id.
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(string_view)
 	}
 };
 
@@ -1274,12 +1352,12 @@ ircd::m::dbs::desc::events_prev_state
 	R"(### protocol note:
 
 	### developer note:
-	key is event_id.
+	key is event_idx number.
 	)",
 
 	// typing (key, value)
 	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
+		typeid(uint64_t), typeid(ircd::string_view)
 	}
 };
 
@@ -1290,9 +1368,9 @@ ircd::m::dbs::desc::events
 	{ "default" },
 
 	//
-	// These columns directly represent event fields indexed by event_id and
-	// the value is the actual event values. Some values may be JSON, like
-	// content.
+	// These columns directly represent event fields indexed by event_idx
+	// number and the value is the actual event values. Some values may be
+	// JSON, like content.
 	//
 
 	events_auth_events,
@@ -1313,15 +1391,18 @@ ircd::m::dbs::desc::events
 	events_type,
 
 	//
-	// These columns are metadata composed from the event data. Specifically,
-	// they are designed for fast sequential iterations.
+	// These columns are metadata oriented around the event data.
 	//
 
-	// uint64_t => event_id
-	// Sequence of all events counted by the m::vm.
+	// uint64_t => uint64_t
+	// Sequence number to event_idx number counted by the m::vm.
 	events__event_seq,
 
-	// (room_id, (depth, event_id)) => (state_root)
+	// event_id => uint64_t
+	// Mapping of event_id to index number.
+	events__event_idx,
+
+	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.
 	events__room_events,
 
@@ -1333,10 +1414,7 @@ ircd::m::dbs::desc::events
 	// Sequence of the PRESENT STATE of the room.
 	events__room_state,
 
-	//
-	// Other columns
-	//
-
 	// (state tree node id) => (state tree node)
+	// Mapping of state tree node id to node data.
 	events__state_node,
 };

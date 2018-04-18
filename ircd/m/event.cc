@@ -133,14 +133,9 @@ ircd::m::degree(const event::prev &prev)
 bool
 ircd::m::exists(const id::event &event_id)
 {
-	static constexpr auto idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
 	auto &column
 	{
-		dbs::event_column.at(idx)
+		dbs::event_idx
 	};
 
 	return has(column, event_id);
@@ -503,24 +498,35 @@ ircd::m::event::max_size
 
 ircd::m::event::event(const id &id,
                       const mutable_buffer &buf)
+:event
+{
+	fetch::index(id), buf
+}
+{
+}
+
+ircd::m::event::event(const idx &idx,
+                      const mutable_buffer &buf)
 {
 	assert(bool(dbs::events));
 
 	db::gopts opts;
-	opts.snapshot = database::snapshot{*dbs::events};
 	for(size_t i(0); i < dbs::event_column.size(); ++i)
 	{
 		const db::cell cell
 		{
-			dbs::event_column[i], id, opts
+			dbs::event_column[i], byte_view<string_view>{idx}, opts
 		};
 
-		db::assign(*this, cell, id);
+		db::assign(*this, cell, byte_view<string_view>{idx});
 	}
 
 	const json::object obj
 	{
-		string_view{data(buf), json::print(buf, *this)}
+		string_view
+		{
+			data(buf), json::print(buf, *this)
+		}
 	};
 
 	new (this) m::event(obj);
@@ -1145,13 +1151,126 @@ ircd::m::seek(event::fetch &fetch,
               const event::id &event_id,
               std::nothrow_t)
 {
-	db::seek(fetch.row, string_view{event_id});
-	if(!fetch.row.valid(event_id))
+	const event::idx &event_idx
+	{
+		event::fetch::index(event_id, std::nothrow)
+	};
+
+	return seek(fetch, event_idx, std::nothrow);
+}
+
+void
+ircd::m::seek(event::fetch &fetch,
+              const event::idx &event_idx)
+{
+	if(!seek(fetch, event_idx, std::nothrow))
+		throw m::NOT_FOUND
+		{
+			"%lu not found in database", event_idx
+		};
+}
+
+bool
+ircd::m::seek(event::fetch &fetch,
+              const event::idx &event_idx,
+              std::nothrow_t)
+{
+	const string_view &key
+	{
+		byte_view<string_view>(event_idx)
+	};
+
+	db::seek(fetch.row, key);
+	fetch.valid = fetch.row.valid(key);
+	if(!fetch.valid)
 		return false;
 
 	auto &event{static_cast<m::event &>(fetch)};
-	assign(event, fetch.row, event_id);
+	assign(event, fetch.row, key);
 	return true;
+}
+
+ircd::m::event::idx
+ircd::m::event::fetch::index(const event &event)
+{
+	return index(at<"event_id"_>(event));
+}
+
+ircd::m::event::idx
+ircd::m::event::fetch::index(const event &event,
+                             std::nothrow_t)
+{
+	return index(at<"event_id"_>(event), std::nothrow);
+}
+
+ircd::m::event::idx
+ircd::m::event::fetch::index(const id &event_id)
+{
+	auto &column
+	{
+		dbs::event_idx
+	};
+
+	event::idx ret;
+	column(event_id, [&ret]
+	(const string_view &value)
+	{
+		ret = byte_view<event::idx>(value);
+	});
+
+	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::event::fetch::index(const id &event_id,
+                             std::nothrow_t)
+{
+	auto &column
+	{
+		dbs::event_idx
+	};
+
+	event::idx ret{0};
+	column(event_id, std::nothrow, [&ret]
+	(const string_view &value)
+	{
+		ret = byte_view<event::idx>(value);
+	});
+
+	return ret;
+}
+
+void
+ircd::m::event::fetch::event_id(const idx &idx,
+                                const id::closure &closure)
+{
+	if(!event_id(idx, std::nothrow, closure))
+		throw m::NOT_FOUND
+		{
+			"%lu not found in database", idx
+		};
+}
+
+bool
+ircd::m::event::fetch::event_id(const idx &idx,
+                                std::nothrow_t,
+                                const id::closure &closure)
+{
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	return column(byte_view<string_view>{idx}, std::nothrow, [&closure]
+	(const string_view &value)
+	{
+		closure(value);
+	});
 }
 
 // db::row finds the layout of an event tuple because we pass this as a
@@ -1166,44 +1285,64 @@ ircd::m::event::fetch::fetch()
 {
 	*dbs::events, string_view{}, _dummy_event_, cell
 }
+,valid
+{
+	false
+}
 {
 }
 
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::id &event_id)
-:row
+:fetch
 {
-	*dbs::events, event_id, _dummy_event_, cell
+	index(event_id)
 }
 {
-	if(!row.valid(event_id))
-		throw m::NOT_FOUND
-		{
-			"%s not found in database", event_id
-		};
-
-	assign(*this, row, event_id);
 }
 
 /// Seek to event_id and populate this event from database.
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
                              std::nothrow_t)
-:row
+:fetch
 {
-	*dbs::events, event_id, _dummy_event_, cell
+	index(event_id, std::nothrow), std::nothrow
 }
 {
-	if(row.valid(event_id))
-		assign(*this, row, event_id);
 }
 
-bool
-ircd::m::event::fetch::valid(const event::id &event_id)
-const
+/// Seek to event_idx and populate this event from database.
+/// Throws if event not in database.
+ircd::m::event::fetch::fetch(const event::idx &event_idx)
+:fetch
 {
-	return row.valid(event_id);
+	event_idx, std::nothrow
+}
+{
+	if(!valid)
+		throw m::NOT_FOUND
+		{
+			"idx %zu not found in database", event_idx
+		};
+}
+
+/// Seek to event_idx and populate this event from database.
+/// Event is not populated if not found in database.
+ircd::m::event::fetch::fetch(const event::idx &event_idx,
+                             std::nothrow_t)
+:row
+{
+	*dbs::events, byte_view<string_view>{event_idx}, _dummy_event_, cell
+}
+,valid
+{
+	row.valid(byte_view<string_view>{event_idx})
+}
+{
+	if(valid)
+		assign(*this, row, byte_view<string_view>{event_idx});
 }
 
 //

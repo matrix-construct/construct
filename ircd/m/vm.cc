@@ -450,13 +450,18 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		++vm::current_sequence
 	};
 
+	m::dbs::write_opts wopts;
+	wopts.present = opts.present;
+	wopts.history = opts.history;
+	wopts.idx = sequence_number;
+
 	db::txn::append
 	{
 		*eval.txn, dbs::event_seq,
 		{
 			db::op::SET,
 			byte_view<string_view>(sequence_number),
-			event_id
+			byte_view<string_view>(sequence_number),
 		}
 	};
 
@@ -507,11 +512,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		m::room room{room_id, head};
 		m::room::state state{room};
 		m::state::id_buffer new_root_buf;
-		m::dbs::write_opts wopts;
 		wopts.root_in = state.root_id;
 		wopts.root_out = new_root_buf;
-		wopts.present = opts.present;
-		wopts.history = opts.history;
 		const auto new_root
 		{
 			dbs::write(*eval.txn, event, wopts)
@@ -520,10 +522,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	else if(opts.write)
 	{
 		m::state::id_buffer new_root_buf;
-		m::dbs::write_opts wopts;
 		wopts.root_out = new_root_buf;
-		wopts.present = opts.present;
-		wopts.history = opts.history;
 		const auto new_root
 		{
 			dbs::write(*eval.txn, event, wopts)
@@ -553,10 +552,10 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
                                const closure_bool &closure)
 {
 	event::fetch event;
-	return rfor_each(start, id_closure_bool{[&event, &closure]
-	(const uint64_t &seq, const event::id &event_id)
+	return rfor_each(start, idx_closure_bool{[&event, &closure]
+	(const uint64_t &seq, const event::idx &event_idx)
 	{
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
 		return closure(seq, event);
@@ -565,7 +564,7 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
 
 bool
 ircd::m::vm::events::rfor_each(const uint64_t &start,
-                               const id_closure_bool &closure)
+                               const idx_closure_bool &closure)
 {
 	auto &column
 	{
@@ -575,7 +574,7 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
 	if(start == uint64_t(-1))
 	{
 		for(auto it(column.rbegin()); it; ++it)
-			if(!closure(byte_view<uint64_t>(it->first), it->second))
+			if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
 				return false;
 
 		return true;
@@ -587,7 +586,7 @@ ircd::m::vm::events::rfor_each(const uint64_t &start,
 	};
 
 	for(; it; ++it)
-		if(!closure(byte_view<uint64_t>(it->first), it->second))
+		if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
 			return false;
 
 	return true;
@@ -598,10 +597,10 @@ ircd::m::vm::events::for_each(const uint64_t &start,
                               const closure_bool &closure)
 {
 	event::fetch event;
-	return for_each(start, id_closure_bool{[&event, &closure]
-	(const uint64_t &seq, const event::id &event_id)
+	return for_each(start, idx_closure_bool{[&event, &closure]
+	(const uint64_t &seq, const event::idx &event_idx)
 	{
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
 		return closure(seq, event);
@@ -610,7 +609,7 @@ ircd::m::vm::events::for_each(const uint64_t &start,
 
 bool
 ircd::m::vm::events::for_each(const uint64_t &start,
-                              const id_closure_bool &closure)
+                              const idx_closure_bool &closure)
 {
 	auto &column
 	{
@@ -625,7 +624,7 @@ ircd::m::vm::events::for_each(const uint64_t &start,
 	};
 
 	for(; it; ++it)
-		if(!closure(byte_view<uint64_t>(it->first), it->second))
+		if(!closure(byte_view<uint64_t>(it->first), byte_view<event::idx>(it->second)))
 			return false;
 
 	return true;
@@ -650,14 +649,24 @@ ircd::m::vm::sequence(const eval &eval)
 }
 
 uint64_t
-ircd::m::vm::last_sequence()
+ircd::m::vm::last_sequence(id::event::buf &event_id)
 {
-	id::event::buf event_id;
-	return last_sequence(event_id);
+	const auto &ret
+	{
+		last_sequence()
+	};
+
+	event::fetch::event_id(ret, std::nothrow, [&event_id]
+	(const event::id &event_id_)
+	{
+		event_id = event_id_;
+	});
+
+	return ret;
 }
 
 uint64_t
-ircd::m::vm::last_sequence(id::event::buf &event_id)
+ircd::m::vm::last_sequence()
 {
 	auto &column
 	{
@@ -677,8 +686,12 @@ ircd::m::vm::last_sequence(id::event::buf &event_id)
 		return 0;
 	}
 
-	event_id = it->second;
-	return byte_view<uint64_t>(it->first);
+	const auto &ret
+	{
+		byte_view<uint64_t>(it->first)
+	};
+
+	return ret;
 }
 
 ircd::string_view
