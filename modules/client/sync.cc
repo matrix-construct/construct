@@ -187,7 +187,8 @@ try
 
 	std::map<std::string, std::vector<std::string>, std::less<>> r;
 
-	m::vm::events::for_each(since, [&]
+	bool limited{false};
+	m::events::for_each(since, [&]
 	(const uint64_t &sequence, const m::event &event)
 	{
 		if(!r.empty() && (since - _since > 128))

@@ -1454,11 +1454,11 @@ console_cmd__key__fetch(opt &out, const string_view &line)
 }
 
 //
-// vm
+// events
 //
 
 bool
-console_cmd__vm__events(opt &out, const string_view &line)
+console_cmd__events(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -1475,7 +1475,7 @@ console_cmd__vm__events(opt &out, const string_view &line)
 		param.at<size_t>(1, 32)
 	};
 
-	m::vm::events::rfor_each(start, [&out, &limit]
+	m::events::rfor_each(start, [&out, &limit]
 	(const uint64_t &seq, const m::event &event)
 	{
 		out << seq << " " << pretty_oneline(event) << std::endl;;
@@ -1568,7 +1568,7 @@ console_cmd__event__dump(opt &out, const string_view &line)
 
 	char *pos{data(buf)};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	m::vm::events::for_each(0, [&](const uint64_t &seq, const m::event &event)
+	m::events::for_each(0, [&](const uint64_t &seq, const m::event &event)
 	{
 		const auto remain
 		{
