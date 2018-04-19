@@ -49,6 +49,7 @@ namespace ircd::ctx
 
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
+	const size_t &stack_max(const ctx &);        // Returns stack size allocated for ctx
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
 	bool interruption(const ctx &);              // Context was marked for interruption
 	bool finished(const ctx &);                  // Context function returned (or exception).

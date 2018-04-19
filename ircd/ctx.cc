@@ -383,6 +383,13 @@ ircd::ctx::notes(const ctx &ctx)
 	return ctx.notes;
 }
 
+/// Returns the notification count for `ctx
+const size_t &
+ircd::ctx::stack_max(const ctx &ctx)
+{
+	return ctx.stack_max;
+}
+
 /// Returns the developer's optional name literal for `ctx`
 ircd::string_view
 ircd::ctx::name(const ctx &ctx)
