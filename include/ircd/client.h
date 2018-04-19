@@ -31,11 +31,6 @@ struct ircd::client
 	struct settings;
 	struct request;
 
-	static constexpr const size_t &HEAD_MAX
-	{
-		4_KiB
-	};
-
 	static struct settings settings;
 	static struct conf default_conf;
 	static ctx::pool context;
@@ -83,31 +78,29 @@ struct ircd::client
 /// Confs can be attached to individual clients to change their behavior
 struct ircd::client::conf
 {
+	static ircd::conf::item<seconds> async_timeout_default;
+	static ircd::conf::item<seconds> request_timeout_default;
+	static ircd::conf::item<size_t> header_max_size_default;
+
 	/// Default time limit for how long a client connection can be in "async mode"
 	/// (or idle mode) after which it is disconnected.
-	seconds async_timeout {35s};
+	seconds async_timeout {async_timeout_default};
 
 	/// Time limit for how long a connected client can be sending its request.
 	/// This is meaningful before the resource being sought is known (while
 	/// receiving headers), after which its own specific timeout specified by
 	/// its options takes over.
-	seconds request_timeout {15s};
+	seconds request_timeout {request_timeout_default};
+
+	/// Number of bytes allocated to receive HTTP request headers for client.
+	size_t header_max_size {header_max_size_default};
 };
 
 /// Settings apply to all clients and cannot be configured per-client
 struct ircd::client::settings
 {
-	/// TODO
-	size_t stack_size
-	{
-		1_MiB
-	};
-
-	/// TODO
-	size_t pool_size
-	{
-		128
-	};
+	static ircd::conf::item<size_t> stack_size;
+	static ircd::conf::item<size_t> pool_size;
 };
 
 struct ircd::client::init

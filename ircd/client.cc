@@ -17,15 +17,62 @@ namespace ircd
 	template<class... args> std::shared_ptr<client> make_client(args&&...);
 }
 
+//
+// client::settings conf::item's
+//
+
+ircd::conf::item<size_t>
+ircd::client::settings::stack_size
+{
+	{ "name",     "ircd.client.stack_size"  },
+	{ "default",  ssize_t(1_MiB)            },
+};
+
+ircd::conf::item<size_t>
+ircd::client::settings::pool_size
+{
+	{ "name",     "ircd.client.pool_size " },
+	{ "default",  64L                      },
+};
+
 /// Linkage for the default settings
 decltype(ircd::client::settings)
 ircd::client::settings
 {};
 
+//
+// client::conf conf::item's
+//
+
+ircd::conf::item<ircd::seconds>
+ircd::client::conf::async_timeout_default
+{
+	{ "name",     "ircd.client.conf.async_timeout" },
+	{ "default",  35L                              },
+};
+
+ircd::conf::item<ircd::seconds>
+ircd::client::conf::request_timeout_default
+{
+	{ "name",     "ircd.client.conf.request_timeout" },
+	{ "default",  15L                                },
+};
+
+ircd::conf::item<size_t>
+ircd::client::conf::header_max_size_default
+{
+	{ "name",     "ircd.client.conf.header_max_size" },
+	{ "default",  ssize_t(8_KiB)                     },
+};
+
 /// Linkage for the default conf
 decltype(ircd::client::default_conf)
 ircd::client::default_conf
 {};
+
+//
+// linkages
+//
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring
 /// a stack from this pool. The request handling and response logic can then be written
@@ -33,7 +80,7 @@ ircd::client::default_conf
 ircd::ctx::pool
 ircd::client::context
 {
-	"client", settings.stack_size
+	"client", size_t(settings.stack_size)
 };
 
 decltype(ircd::client::ctr)
@@ -52,7 +99,7 @@ ircd::util::instance_list<ircd::client>::list
 
 ircd::client::init::init()
 {
-	context.add(settings.pool_size);
+	context.add(size_t(settings.pool_size));
 }
 
 ircd::client::init::~init()
@@ -512,9 +559,10 @@ ircd::client::client()
 }
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:head_buffer{HEAD_MAX}
+:head_buffer{conf->header_max_size}
 ,sock{std::move(sock)}
 {
+	assert(size(head_buffer) >= 8_KiB);
 }
 
 ircd::client::~client()
