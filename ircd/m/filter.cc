@@ -156,3 +156,12 @@ ircd::m::filter::get(std::nothrow_t,
 		closure(content);
 	});
 }
+
+ircd::m::event_filter::event_filter(const mutable_buffer &buf,
+                                    const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}

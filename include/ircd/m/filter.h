@@ -36,6 +36,8 @@ struct ircd::m::event_filter
 >
 {
 	using super_type::tuple;
+	event_filter(const mutable_buffer &, const json::members &);
+	event_filter() = default;
 	using super_type::operator=;
 };
 
