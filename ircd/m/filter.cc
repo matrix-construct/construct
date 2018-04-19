@@ -66,6 +66,10 @@ ircd::m::match(const event_filter &filter,
 	return true;
 }
 
+//
+// filter
+//
+
 ircd::m::filter::filter(const user &user,
                         const string_view &filter_id,
                         const mutable_buffer &buf)
@@ -156,6 +160,36 @@ ircd::m::filter::get(std::nothrow_t,
 		closure(content);
 	});
 }
+
+//
+// room_filter
+//
+
+ircd::m::room_filter::room_filter(const mutable_buffer &buf,
+                                  const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+//
+// room_event_filter
+//
+
+ircd::m::room_event_filter::room_event_filter(const mutable_buffer &buf,
+                                              const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+//
+// event_filter
+//
 
 ircd::m::event_filter::event_filter(const mutable_buffer &buf,
                                     const json::members &members)

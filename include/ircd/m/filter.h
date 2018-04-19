@@ -55,6 +55,8 @@ struct ircd::m::room_event_filter
 >
 {
 	using super_type::tuple;
+	room_event_filter(const mutable_buffer &, const json::members &);
+	room_event_filter() = default;
 	using super_type::operator=;
 };
 
@@ -72,6 +74,8 @@ struct ircd::m::room_filter
 >
 {
 	using super_type::tuple;
+	room_filter(const mutable_buffer &, const json::members &);
+	room_filter() = default;
 	using super_type::operator=;
 };
 
