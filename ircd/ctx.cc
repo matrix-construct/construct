@@ -32,8 +32,7 @@ struct ircd::ctx::ctx
 	continuation *cont;                          // valid when asleep; invalid when awake
 	ctx *adjoindre;                              // context waiting for this to join()
 	microseconds awake;                          // monotonic counter
-	ctx *next;                                   // next node in a ctx::list
-	ctx *prev;                                   // prev node in a ctx::list
+	list::node node;                             // node for ctx::list
 
 	bool started() const                         { return stack_base != 0;                         }
 	bool finished() const                        { return started() && yc == nullptr;              }
@@ -81,8 +80,6 @@ ircd::ctx::ctx::ctx(const char *const &name,
 ,cont{nullptr}
 ,adjoindre{nullptr}
 ,awake{0us}
-,next{nullptr}
-,prev{nullptr}
 {
 }
 
@@ -1196,11 +1193,11 @@ ircd::ctx::list::remove(ctx *const &c)
 		return;
 	}
 
-	assert(c->next && c->prev);
-	c->next->prev = c->prev;
-	c->prev->next = c->next;
-	c->next = nullptr;
-	c->prev = nullptr;
+	assert(next(c) && prev(c));
+	prev(next(c)) = prev(c);
+	next(prev(c)) = next(c);
+	next(c) = nullptr;
+	prev(c) = nullptr;
 }
 
 ircd::ctx::ctx *
@@ -1214,19 +1211,19 @@ ircd::ctx::list::pop_back()
 	if(!tail)
 		return tail;
 
-	assert(!tail->next);
-	if(!tail->prev)
+	assert(!next(tail));
+	if(!prev(tail))
 	{
 		this->head = nullptr;
 		this->tail = nullptr;
 	} else {
-		assert(tail->prev->next == tail);
-		tail->prev->next = nullptr;
-		this->tail = tail->prev;
+		assert(next(prev(tail)) == tail);
+		next(prev(tail)) = nullptr;
+		this->tail = prev(tail);
 	}
 
-	tail->prev = nullptr;
-	tail->next = nullptr;
+	prev(tail) = nullptr;
+	next(tail) = nullptr;
 	return tail;
 }
 
@@ -1241,27 +1238,27 @@ ircd::ctx::list::pop_front()
 	if(!head)
 		return head;
 
-	assert(!head->prev);
-	if(!head->next)
+	assert(!prev(head));
+	if(!next(head))
 	{
 		this->head = nullptr;
 		this->tail = nullptr;
 	} else {
-		assert(head->next->prev == head);
-		head->next->prev = nullptr;
-		this->head = head->next;
+		assert(prev(next(head)) == head);
+		prev(next(head)) = nullptr;
+		this->head = next(head);
 	}
 
-	head->prev = nullptr;
-	head->next = nullptr;
+	prev(head) = nullptr;
+	next(head) = nullptr;
 	return head;
 }
 
 void
 ircd::ctx::list::push_front(ctx *const &c)
 {
-	assert(c->next == nullptr);
-	assert(c->prev == nullptr);
+	assert(next(c) == nullptr);
+	assert(prev(c) == nullptr);
 
 	if(!head)
 	{
@@ -1270,17 +1267,17 @@ ircd::ctx::list::push_front(ctx *const &c)
 		return;
 	}
 
-	assert(head->prev == nullptr);
-	head->prev = c;
-	c->next = head;
+	assert(prev(head) == nullptr);
+	prev(head) = c;
+	next(c) = head;
 	head = c;
 }
 
 void
 ircd::ctx::list::push_back(ctx *const &c)
 {
-	assert(c->next == nullptr);
-	assert(c->prev == nullptr);
+	assert(next(c) == nullptr);
+	assert(prev(c) == nullptr);
 
 	if(!tail)
 	{
@@ -1290,9 +1287,9 @@ ircd::ctx::list::push_back(ctx *const &c)
 		return;
 	}
 
-	assert(tail->next == nullptr);
-	tail->next = c;
-	c->prev = tail;
+	assert(next(tail) == nullptr);
+	next(tail) = c;
+	prev(c) = tail;
 	tail = c;
 }
 
@@ -1368,32 +1365,36 @@ const
 	return true;
 }
 
-ircd::ctx::ctx *
+ircd::ctx::ctx *&
 ircd::ctx::list::prev(ctx *const &c)
 {
 	assert(c);
-	return c->prev;
+	return c->node.prev;
 }
 
-ircd::ctx::ctx *
+ircd::ctx::ctx *&
 ircd::ctx::list::next(ctx *const &c)
 {
 	assert(c);
-	return c->next;
+	return c->node.next;
 }
 
-const ircd::ctx::ctx *
+const ircd::ctx::ctx *const &
 ircd::ctx::list::prev(const ctx *const &c)
 {
 	assert(c);
-	return c->prev;
+	const auto &node(c->node);
+	const ctx *const &ptr(node.prev);
+	return ptr;
 }
 
-const ircd::ctx::ctx *
+const ircd::ctx::ctx *const &
 ircd::ctx::list::next(const ctx *const &c)
 {
 	assert(c);
-	return c->next;
+	const auto &node(c->node);
+	const ctx *const &ptr(node.next);
+	return ptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

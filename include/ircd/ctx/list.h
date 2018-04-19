@@ -28,16 +28,19 @@ namespace ircd::ctx
 /// ircd::allocator::node strategy. Custom operations are implemented for
 /// maximum space efficiency in both the object instance and the ctx::ctx.
 ///
-class ircd::ctx::list
+struct ircd::ctx::list
 {
+	struct node;
+
+  private:
 	ctx *head {nullptr};
 	ctx *tail {nullptr};
 
 	// Get next or prev entry in ctx
-	static const ctx *next(const ctx *const &);
-	static const ctx *prev(const ctx *const &);
-	static ctx *next(ctx *const &);
-	static ctx *prev(ctx *const &);
+	static const ctx *const &next(const ctx *const &);
+	static const ctx *const &prev(const ctx *const &);
+	static ctx *&next(ctx *const &);
+	static ctx *&prev(ctx *const &);
 
   public:
 	const ctx *front() const;
@@ -76,6 +79,12 @@ class ircd::ctx::list
 	list &operator=(list &&) noexcept;
 	list &operator=(const list &) = delete;
 	~list() noexcept;
+};
+
+struct ircd::ctx::list::node
+{
+	ctx *prev {nullptr};
+	ctx *next {nullptr};
 };
 
 inline
