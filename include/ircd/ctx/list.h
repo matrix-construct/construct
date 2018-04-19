@@ -45,19 +45,15 @@ class ircd::ctx::list
 	ctx *front();
 	ctx *back();
 
-	// until convention
-	bool until(const std::function<bool (const ctx &)> &) const;
-	bool until(const std::function<bool (ctx &)> &);
-
-	// reverse until convention
-	bool runtil(const std::function<bool (const ctx &)> &) const;
-	bool runtil(const std::function<bool (ctx &)> &);
-
 	// iteration
+	bool for_each(const std::function<bool (const ctx &)> &) const;
+	bool for_each(const std::function<bool (ctx &)> &);
 	void for_each(const std::function<void (const ctx &)> &) const;
 	void for_each(const std::function<void (ctx &)> &);
 
 	// reverse iteration
+	bool rfor_each(const std::function<bool (const ctx &)> &) const;
+	bool rfor_each(const std::function<bool (ctx &)> &);
 	void rfor_each(const std::function<void (const ctx &)> &) const;
 	void rfor_each(const std::function<void (ctx &)> &);
 

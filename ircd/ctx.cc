@@ -1311,6 +1311,27 @@ const
 		closure(*tail);
 }
 
+bool
+ircd::ctx::list::rfor_each(const std::function<bool (ctx &)> &closure)
+{
+	for(ctx *tail{this->tail}; tail; tail = prev(tail))
+		if(!closure(*tail))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::ctx::list::rfor_each(const std::function<bool (const ctx &)> &closure)
+const
+{
+	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
+		if(!closure(*tail))
+			return false;
+
+	return true;
+}
+
 void
 ircd::ctx::list::for_each(const std::function<void (ctx &)> &closure)
 {
@@ -1327,28 +1348,7 @@ const
 }
 
 bool
-ircd::ctx::list::runtil(const std::function<bool (ctx &)> &closure)
-{
-	for(ctx *tail{this->tail}; tail; tail = prev(tail))
-		if(!closure(*tail))
-			return false;
-
-	return true;
-}
-
-bool
-ircd::ctx::list::runtil(const std::function<bool (const ctx &)> &closure)
-const
-{
-	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
-		if(!closure(*tail))
-			return false;
-
-	return true;
-}
-
-bool
-ircd::ctx::list::until(const std::function<bool (ctx &)> &closure)
+ircd::ctx::list::for_each(const std::function<bool (ctx &)> &closure)
 {
 	for(ctx *head{this->head}; head; head = next(head))
 		if(!closure(*head))
@@ -1358,7 +1358,7 @@ ircd::ctx::list::until(const std::function<bool (ctx &)> &closure)
 }
 
 bool
-ircd::ctx::list::until(const std::function<bool (const ctx &)> &closure)
+ircd::ctx::list::for_each(const std::function<bool (const ctx &)> &closure)
 const
 {
 	for(const ctx *head{this->head}; head; head = next(head))
