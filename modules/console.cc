@@ -516,6 +516,42 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 }
 
 //
+// ctx
+//
+
+bool
+console_cmd__ctx__list(opt &out, const string_view &line)
+{
+	for(const auto *const &ctxp : ctx::ctxs)
+	{
+		const auto &ctx{*ctxp};
+		out << std::setw(5) << std::right << id(ctx);
+		out << " "
+		    << (started(ctx)? 'S' : '-')
+		    << (running(ctx)? 'R' : '-')
+		    << (waiting(ctx)? 'W' : '-')
+		    << (finished(ctx)? 'F' : '-')
+		    << (interruption(ctx)? 'I' : '-')
+		    ;
+
+		out << " " << std::setw(7) << std::right << stack_max(ctx) << " SS";
+		out << " :" << name(ctx);
+		out << std::endl;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__ctx(opt &out, const string_view &line)
+{
+	if(empty(line))
+		return console_cmd__ctx__list(out, line);
+
+	return true;
+}
+
+//
 // db
 //
 
