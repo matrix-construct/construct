@@ -320,6 +320,13 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 		std::bind(ircd::handle_client_request, std::move(client))
 	};
 
+	if(unlikely(client::context.avail() == 0))
+		log::dwarning
+		{
+			"Client context pool exhausted. %zu requests queued.",
+			client::context.queued()
+		};
+
 	client::context(std::move(handler));
 }
 
