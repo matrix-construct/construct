@@ -45,6 +45,8 @@ namespace ircd::ctx
 
 	IRCD_OVERLOAD(threadsafe)
 
+	extern const std::list<ctx *> &ctxs;         // List of all ctx instances
+
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count

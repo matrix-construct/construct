@@ -15,6 +15,7 @@
 /// Internal context implementation
 ///
 struct ircd::ctx::ctx
+:instance_list<ctx>
 {
 	using error_code = boost::system::error_code;
 
@@ -54,6 +55,19 @@ struct ircd::ctx::ctx
 
 	ctx(ctx &&) noexcept = delete;
 	ctx(const ctx &) = delete;
+};
+
+/// Instance list linkage for the list of all ctx instances.
+template<>
+decltype(ircd::util::instance_list<ircd::ctx::ctx>::list)
+ircd::util::instance_list<ircd::ctx::ctx>::list
+{};
+
+/// Public interface linkage for the list of all ctx instances
+decltype(ircd::ctx::ctxs)
+ircd::ctx::ctxs
+{
+	ctx::ctx::list
 };
 
 /// Monotonic ctx id counter state. This counter is incremented for each
