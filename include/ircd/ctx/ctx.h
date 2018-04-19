@@ -53,6 +53,8 @@ namespace ircd::ctx
 	bool interruption(const ctx &);              // Context was marked for interruption
 	bool finished(const ctx &);                  // Context function returned (or exception).
 	bool started(const ctx &);                   // Context was ever entered.
+	bool running(const ctx &);                   // Context is the currently running ctx.
+	bool waiting(const ctx &);                   // started() && !finished() && !running()
 
 	void interrupt(ctx &);                       // Interrupt the context for termination.
 	void signal(ctx &, std::function<void ()>);  // Post function to context strand

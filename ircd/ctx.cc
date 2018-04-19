@@ -341,6 +341,20 @@ ircd::ctx::interrupt(ctx &ctx)
 		ctx.cont->interrupted(current);
 }
 
+/// started() && !finished() && !running
+bool
+ircd::ctx::waiting(const ctx &ctx)
+{
+	return started(ctx) && !finished(ctx) && !running(ctx);
+}
+
+/// Indicates if `ctx` is the current ctx
+bool
+ircd::ctx::running(const ctx &ctx)
+{
+	return &ctx == current;
+}
+
 /// Indicates if `ctx` was ever jumped to
 bool
 ircd::ctx::started(const ctx &ctx)
