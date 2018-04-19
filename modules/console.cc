@@ -1508,6 +1508,34 @@ console_cmd__events(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__filter(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"start", "event_filter_json"
+	}};
+
+	const uint64_t start
+	{
+		param.at<uint64_t>(0, uint64_t(-1))
+	};
+
+	const m::event_filter filter
+	{
+		param.at(1)
+	};
+
+	m::events::rfor_each(start, filter, [&out]
+	(const uint64_t &seq, const m::event &event)
+	{
+		out << seq << " " << pretty_oneline(event) << std::endl;;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // event
 //
