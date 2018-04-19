@@ -19,8 +19,10 @@ namespace ircd::m::events
 	// counts up from start
 	bool for_each(const uint64_t &start, const id_closure_bool &);
 	bool for_each(const uint64_t &start, const closure_bool &);
+	bool for_each(const uint64_t &start, const event_filter &, const closure_bool &);
 
 	// -1 starts at newest event; counts down
 	bool rfor_each(const uint64_t &start, const id_closure_bool &);
 	bool rfor_each(const uint64_t &start, const closure_bool &);
+	bool rfor_each(const uint64_t &start, const event_filter &, const closure_bool &);
 }

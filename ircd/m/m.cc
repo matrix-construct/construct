@@ -929,6 +929,30 @@ ircd::m::node::room::room(const m::node &node)
 
 bool
 ircd::m::events::rfor_each(const uint64_t &start,
+                           const event_filter &filter,
+                           const closure_bool &closure)
+{
+	uint limit
+	{
+		json::get<"limit"_>(filter)?: 32U
+	};
+
+	return rfor_each(start, [&filter, &closure, &limit]
+	(const event::idx &event_idx, const m::event &event)
+	-> bool
+	{
+		if(!match(filter, event))
+			return true;
+
+		if(!closure(event_idx, event))
+			return false;
+
+		return --limit;
+	});
+}
+
+bool
+ircd::m::events::rfor_each(const uint64_t &start,
                            const closure_bool &closure)
 {
 	event::fetch event;
@@ -975,6 +999,30 @@ ircd::m::events::rfor_each(const uint64_t &start,
 			return false;
 
 	return true;
+}
+
+bool
+ircd::m::events::for_each(const uint64_t &start,
+                          const event_filter &filter,
+                          const closure_bool &closure)
+{
+	uint limit
+	{
+		json::get<"limit"_>(filter)?: 32U
+	};
+
+	return for_each(start, [&filter, &closure, &limit]
+	(const event::idx &event_idx, const m::event &event)
+	-> bool
+	{
+		if(!match(filter, event))
+			return true;
+
+		if(!closure(event_idx, event))
+			return false;
+
+		return --limit;
+	});
 }
 
 bool
