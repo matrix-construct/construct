@@ -53,8 +53,10 @@ struct ircd::ctx::ctx
 	    const context::flags &flags              = (context::flags)0,
 	    boost::asio::io_service *const &ios      = ircd::ios);
 
-	ctx(ctx &&) noexcept = delete;
+	ctx(ctx &&) = delete;
 	ctx(const ctx &) = delete;
+	ctx &operator=(ctx &&) = delete;
+	ctx &operator=(const ctx &) = delete;
 };
 
 /// Instance list linkage for the list of all ctx instances.
