@@ -3988,6 +3988,34 @@ ircd::db::compact(column &column,
 	{
 		d.d->CompactRange(opts, c, b, e)
 	};
+
+	rocksdb::ColumnFamilyMetaData cfmd;
+	d.d->GetColumnFamilyMetaData(c, &cfmd);
+	for(const auto &level : cfmd.levels)
+	{
+		if(level.files.empty())
+			continue;
+
+		std::vector<std::string> files(level.files.size());
+		std::transform(level.files.begin(), level.files.end(), files.begin(), []
+		(auto &metadata)
+		{
+			return std::move(metadata.name);
+		});
+
+		log.debug("'%s':'%s' COMPACT level:%d files:%zu size:%zu",
+		          name(d),
+		          name(c),
+		          level.level,
+		          level.files.size(),
+		          level.size);
+
+		rocksdb::CompactionOptions opts;
+		throw_on_error
+		{
+			d.d->CompactFiles(opts, c, files, level.level)
+		};
+	}
 }
 
 void
