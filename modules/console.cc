@@ -520,6 +520,29 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__ctx__interrupt(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id",
+	}};
+
+	const uint64_t ctxid
+	{
+		param.at<uint64_t>(0)
+	};
+
+	for(auto *const &ctx : ctx::ctxs)
+		if(id(*ctx) == ctxid)
+		{
+			interrupt(*ctx);
+			break;
+		}
+
+	return true;
+}
+
+bool
 console_cmd__ctx__list(opt &out, const string_view &line)
 {
 	for(const auto *const &ctxp : ctx::ctxs)
