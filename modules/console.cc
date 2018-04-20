@@ -366,7 +366,6 @@ console_id__user(const m::user::id &id,
 // misc
 //
 
-
 bool
 console_cmd__debug(opt &out, const string_view &line)
 {
@@ -386,6 +385,18 @@ console_cmd__debug(opt &out, const string_view &line)
 		log::console_enable(log::DEBUG);
 		return true;
 	}
+}
+
+bool
+console_cmd__mark(opt &out, const string_view &line)
+{
+	log::mark(line);
+
+	out << "The log files were marked with '" << line
+	    << "'"
+	    << std::endl;
+
+	return true;
 }
 
 //
