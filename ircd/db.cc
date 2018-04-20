@@ -575,22 +575,7 @@ try
 		throw;
 	}
 
-	return custom_ptr<rocksdb::DB>
-	{
-		ptr, [this](rocksdb::DB *const d) noexcept
-		{
-			const auto sequence
-			{
-				d->GetLatestSequenceNumber()
-			};
-
-			delete d;
-			log.info("'%s': closed database @ `%s' at sequence number %lu.",
-			         this->name,
-			         this->path,
-			         sequence);
-		}
-	};
+	return std::unique_ptr<rocksdb::DB>(ptr);
 }()}
 ,checkpoint{[this]
 {
@@ -624,13 +609,14 @@ catch(const std::exception &e)
 }
 
 ircd::db::database::~database()
-noexcept
+noexcept try
 {
 	log.info("'%s': closing database @ `%s'...",
 	         name,
 	         path);
 
 	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
+	this->checkpoint.reset(nullptr);
 	this->columns.clear();
 	log.debug("'%s': flushed columns; background_errors: %lu; synchronizing...",
 	          name,
@@ -639,6 +625,33 @@ noexcept
 	sync(*this);
 	log.debug("'%s': synchronized with hardware.",
 	          name);
+
+	const auto sequence
+	{
+		d->GetLatestSequenceNumber()
+	};
+
+	throw_on_error
+	{
+		d->Close()
+	};
+
+	log.info("'%s': closed database @ `%s' at sequence number %lu.",
+	         name,
+	         path,
+	         sequence);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"'%s': Error closing database @ '%s' :%s",
+		name,
+		path,
+		e.what()
+	};
+
+	return;
 }
 
 void

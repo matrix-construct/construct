@@ -97,7 +97,7 @@ struct ircd::db::database
 	std::vector<string_view> column_names;
 	std::unordered_map<string_view, size_t> column_index;
 	std::vector<std::shared_ptr<column>> columns;
-	custom_ptr<rocksdb::DB> d;
+	std::unique_ptr<rocksdb::DB> d;
 	std::unique_ptr<rocksdb::Checkpoint> checkpoint;
 	unique_const_iterator<decltype(dbs)> dbs_it;
 
