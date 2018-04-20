@@ -874,6 +874,79 @@ console_cmd__db__stats(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__db__set(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column", "option", "value"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param.at(1, "*"_sv)
+	};
+
+	const auto option
+	{
+		param.at(2)
+	};
+
+	const auto value
+	{
+		param.at(3)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	// Special branch for DBOptions
+	if(colname == "*")
+	{
+		db::setopt(database, option, value);
+		out << "done" << std::endl;
+		return true;
+	}
+
+	const auto setopt{[&out, &database, &option, &value]
+	(const string_view &colname)
+	{
+		db::column column
+		{
+			database, colname
+		};
+
+		db::setopt(column, option, value);
+		out << colname << " :done" << std::endl;
+	}};
+
+	// Branch for querying the property for a single column
+	if(colname != "**")
+	{
+		setopt(colname);
+		return true;
+	}
+
+	// Querying the property for all columns in a loop
+	for(const auto &colname : database.column_names)
+		setopt(colname);
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {
