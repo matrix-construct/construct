@@ -10,7 +10,8 @@
 
 #include <cxxabi.h>
 
-thread_local char outbuf[8192];
+thread_local char
+outbuf[8192];
 
 std::string
 ircd::util::demangle(const char *const &symbol)

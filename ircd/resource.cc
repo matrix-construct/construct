@@ -324,6 +324,11 @@ ircd::resource::operator()(client &client,
 		};
 	}
 
+	client.request = resource::request
+	{
+		head, content
+	};
+
 	// We take the extra step here to clear the assignment to client.request
 	// when this request stack has finished for two reasons:
 	// - It allows other ctxs to peep at the client::list to see what this
@@ -333,11 +338,6 @@ ircd::resource::operator()(client &client,
 	{
 		client.request = {};
 	}};
-
-	client.request = resource::request
-	{
-		head, content
-	};
 
 	const auto pathparm
 	{

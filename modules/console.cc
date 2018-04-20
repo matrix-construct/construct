@@ -1129,6 +1129,8 @@ try
 	{
 		*db::database::dbs.at(param.at(0))
 	};
+
+	return true;
 }
 catch(const std::out_of_range &e)
 {
@@ -1476,6 +1478,8 @@ console_cmd__client(opt &out, const string_view &line)
 
 		if(client->reqctx)
 			out << " CTX " << setw(4) << id(*client->reqctx);
+		else
+			out << " ASYNC";
 
 		if(client->longpoll)
 			out << " POLL";

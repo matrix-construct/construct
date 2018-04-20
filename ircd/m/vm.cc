@@ -41,7 +41,7 @@ ircd::m::vm::init::init()
 	id::event::buf event_id;
 	current_sequence = retired_sequence(event_id);
 
-	log.info("Initializing from vm sequence %lu [%s]",
+	log.info("BOOT %lu [%s]",
 	         current_sequence,
 	         current_sequence? string_view{event_id} : "NO EVENTS"_sv);
 }
@@ -54,7 +54,7 @@ ircd::m::vm::init::~init()
 		retired_sequence(event_id)
 	};
 
-	log.info("Shutting down @ %lu [%s]",
+	log.info("HLT @ %lu [%s]",
 	         current_sequence,
 	         current_sequence? string_view{event_id} : "NO EVENTS"_sv);
 }
