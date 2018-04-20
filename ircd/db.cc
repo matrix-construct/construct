@@ -136,8 +136,11 @@ void
 ircd::db::flush(database &d,
                 const bool &blocking)
 {
-	for(const auto &column : d.columns)
-		flush(*column, blocking);
+	for(const auto &c : d.columns)
+	{
+		db::column column{*c};
+		db::flush(column, blocking);
+	}
 }
 
 /// Writes a snapshot of this database to the directory specified. The
@@ -189,8 +192,11 @@ ircd::db::fdeletions(database &d,
 void
 ircd::db::compact(database &d)
 {
-	for(const auto &column : d.columns)
-		compact(*column, string_view{}, string_view{});
+	for(const auto &c : d.columns)
+	{
+		db::column column{*c};
+		compact(column, string_view{}, string_view{});
+	}
 }
 
 void
@@ -842,57 +848,6 @@ const noexcept
 //
 
 void
-ircd::db::flush(database::column &c,
-                const bool &blocking)
-{
-	database &d(*c.d);
-	rocksdb::FlushOptions opts;
-	opts.wait = blocking;
-	log.debug("'%s':'%s' @%lu FLUSH",
-	          name(d),
-	          name(c),
-	          sequence(d));
-
-	throw_on_error
-	{
-		d.d->Flush(opts, c)
-	};
-}
-
-void
-ircd::db::compact(database::column &c,
-                  const string_view &begin_,
-                  const string_view &end_)
-{
-	database &d(*c.d);
-
-	const auto begin(slice(begin_));
-	const rocksdb::Slice *const b
-	{
-		empty(begin_)? nullptr : &begin
-	};
-
-	const auto end(slice(end_));
-	const rocksdb::Slice *const e
-	{
-		empty(end_)? nullptr : &end
-	};
-
-	log.debug("'%s':'%s' @%lu COMPACT [%s, %s]",
-	          name(d),
-	          name(c),
-	          sequence(d),
-	          begin_,
-	          end_);
-
-	rocksdb::CompactRangeOptions opts;
-	throw_on_error
-	{
-		d.d->CompactRange(opts, c, b, e)
-	};
-}
-
-void
 ircd::db::drop(database::column &c)
 {
 	if(!c.handle)
@@ -1042,7 +997,10 @@ ircd::db::database::column::~column()
 noexcept
 {
 	if(handle)
-		flush(*this, false);
+	{
+		db::column c{*this};
+		flush(c, false);
+	}
 }
 
 ircd::db::database::column::operator
@@ -3960,16 +3918,52 @@ ircd::db::flush(column &column,
                 const bool &blocking)
 {
 	database::column &c(column);
-	flush(c, blocking);
+	database &d(*c.d);
+	rocksdb::FlushOptions opts;
+	opts.wait = blocking;
+	log.debug("'%s':'%s' @%lu FLUSH",
+	          name(d),
+	          name(c),
+	          sequence(d));
+
+	throw_on_error
+	{
+		d.d->Flush(opts, c)
+	};
 }
 
 void
 ircd::db::compact(column &column,
-                  const string_view &begin,
-                  const string_view &end)
+                  const string_view &begin_,
+                  const string_view &end_)
 {
 	database::column &c(column);
-	compact(c, begin, end);
+	database &d(*c.d);
+
+	const auto begin(slice(begin_));
+	const rocksdb::Slice *const b
+	{
+		empty(begin_)? nullptr : &begin
+	};
+
+	const auto end(slice(end_));
+	const rocksdb::Slice *const e
+	{
+		empty(end_)? nullptr : &end
+	};
+
+	log.debug("'%s':'%s' @%lu COMPACT [%s, %s]",
+	          name(d),
+	          name(c),
+	          sequence(d),
+	          begin_,
+	          end_);
+
+	rocksdb::CompactRangeOptions opts;
+	throw_on_error
+	{
+		d.d->CompactRange(opts, c, b, e)
+	};
 }
 
 void
