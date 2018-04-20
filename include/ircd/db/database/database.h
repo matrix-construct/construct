@@ -91,6 +91,7 @@ struct ircd::db::database
 	std::shared_ptr<struct stats> stats;
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
+	std::shared_ptr<rocksdb::SstFileManager> ssts;
 	std::shared_ptr<rocksdb::Cache> cache;
 	std::vector<descriptor> descriptors;
 	std::vector<string_view> column_names;

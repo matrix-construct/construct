@@ -23,6 +23,7 @@
 #include <rocksdb/utilities/checkpoint.h>
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/table.h>
+#include <rocksdb/sst_file_manager.h>
 
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
@@ -370,6 +371,10 @@ try
 {
 	std::make_shared<struct mergeop>(this)
 }
+,ssts
+{
+	rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
+}
 ,cache{[this]
 () -> std::shared_ptr<rocksdb::Cache>
 {
@@ -456,6 +461,9 @@ try
 
 	// Setup env
 	opts.env = env.get();
+
+	// Setup SST file mgmt
+	opts.sst_file_manager = this->ssts;
 
 	// Setup logging
 	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);

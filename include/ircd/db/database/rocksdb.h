@@ -30,6 +30,7 @@ namespace rocksdb
 	struct WriteBatch;
 	struct Slice;
 	struct Checkpoint;
+	struct SstFileManager;
 }
 
 //
