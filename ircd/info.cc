@@ -66,6 +66,16 @@ ircd::info::init()
 		destructive_interference,
 		constructive_interference
 	};
+
+	// This message flashes posix information about the resource limits
+	log::debug
+	{
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%zu",
+		rlimit_as,
+		rlimit_data,
+		rlimit_rss,
+		rlimit_nofile
+	};
 }
 
 extern "C" const char *const
@@ -182,7 +192,7 @@ static uint64_t
 _get_rlimit(const int &resource)
 {
 	rlimit rlim;
-	ircd::syscall(getrlimit, RLIMIT_AS, &rlim);
+	ircd::syscall(getrlimit, resource, &rlim);
 	return rlim.rlim_cur;
 }
 #else
@@ -209,6 +219,12 @@ decltype(ircd::info::rlimit_rss)
 ircd::info::rlimit_rss
 {
 	_get_rlimit(RLIMIT_RSS)
+};
+
+decltype(ircd::info::rlimit_nofile)
+ircd::info::rlimit_nofile
+{
+	_get_rlimit(RLIMIT_NOFILE)
 };
 
 decltype(ircd::info::max_align)
