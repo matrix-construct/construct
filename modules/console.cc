@@ -389,6 +389,21 @@ console_cmd__debug(opt &out, const string_view &line)
 }
 
 //
+// info
+//
+
+bool
+console_cmd__info(opt &out, const string_view &line)
+{
+	info::dump();
+
+	out << "Daemon information was written to the log."
+	    << std::endl;
+
+	return true;
+}
+
+//
 // conf
 //
 
