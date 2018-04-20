@@ -46,6 +46,7 @@ namespace ircd::db
 	void del(column &, const string_view &key, const sopts & = {});
 
 	// [SET] Other operations
+	void setopt(column &, const string_view &key, const string_view &val);
 	void compact(column &, const string_view &begin = {}, const string_view &end = {});
 	void flush(column &, const bool &blocking = false);
 }

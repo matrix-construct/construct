@@ -193,6 +193,22 @@ ircd::db::compact(database &d)
 		compact(*column, string_view{}, string_view{});
 }
 
+void
+ircd::db::setopt(database &d,
+                 const string_view &key,
+                 const string_view &val)
+{
+	const std::unordered_map<std::string, std::string> options
+	{
+		{ std::string{key}, std::string{val} }
+	};
+
+	throw_on_error
+	{
+		d.d->SetDBOptions(options)
+	};
+}
+
 uint64_t
 ircd::db::ticker(const database &d,
                  const string_view &key)
@@ -3954,6 +3970,24 @@ ircd::db::compact(column &column,
 {
 	database::column &c(column);
 	compact(c, begin, end);
+}
+
+void
+ircd::db::setopt(column &column,
+                 const string_view &key,
+                 const string_view &val)
+{
+	const std::unordered_map<std::string, std::string> options
+	{
+		{ std::string{key}, std::string{val} }
+	};
+
+	database::column &c(column);
+	database &d(c);
+	throw_on_error
+	{
+		d.d->SetOptions(c, options)
+	};
 }
 
 void

@@ -43,6 +43,7 @@ namespace ircd::db
 	uint32_t histogram_id(const string_view &key);
 
 	// Control panel
+	void setopt(database &, const string_view &key, const string_view &val);
 	void compact(database &);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	void checkpoint(database &, const string_view &dir);
