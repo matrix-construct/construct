@@ -447,10 +447,12 @@ try
 	opts.max_file_opening_threads = 0;
 	opts.stats_dump_period_sec = 0;
 	opts.enable_thread_tracking = true;
-	opts.max_background_jobs = 0;
-	opts.max_background_flushes = 0;
-	opts.max_background_compactions = 0;
-	opts.max_subcompactions = 0;
+	opts.delete_obsolete_files_period_micros = 0;
+	opts.max_background_jobs = 2;
+	opts.max_background_flushes = 1;
+	opts.max_background_compactions = 1;
+	opts.max_subcompactions = 1;
+	opts.max_open_files = -1; //ircd::info::rlimit_nofile / 4;
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
 	//opts.use_fsync = true;
@@ -974,7 +976,7 @@ ircd::db::database::column::column(database *const &d,
 
 	// Set the compaction priority; this should probably be in the descriptor
 	// but this is currently selected for the general matrix workload.
-	this->options.compaction_pri = rocksdb::CompactionPri::kOldestLargestSeqFirst;
+	this->options.compaction_pri = rocksdb::CompactionPri::kOldestSmallestSeqFirst;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor.expect_queries_hit;
@@ -985,7 +987,7 @@ ircd::db::database::column::column(database *const &d,
 
 	//TODO: descriptor / conf
 	this->options.num_levels = 8;
-	this->options.target_file_size_base = 128_MiB;
+	this->options.target_file_size_base = 64_MiB;
 	this->options.target_file_size_multiplier = 4;        // size at level
 	this->options.level0_file_num_compaction_trigger = 2;
 
@@ -3968,6 +3970,7 @@ ircd::db::compact(column &column,
 	          end_);
 
 	rocksdb::CompactRangeOptions opts;
+	opts.change_level = true;
 	throw_on_error
 	{
 		d.d->CompactRange(opts, c, b, e)
