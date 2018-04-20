@@ -14,6 +14,12 @@
 void
 ircd::info::init()
 {
+
+}
+
+void
+ircd::info::dump()
+{
 	// This message flashes information about IRCd itself for this execution.
 	log::info
 	{

@@ -88,6 +88,7 @@ try
 
 	// This starts off the log with library information.
 	info::init();
+	info::dump();
 
 	// Setup the main context, which is a new stack executing the function
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned

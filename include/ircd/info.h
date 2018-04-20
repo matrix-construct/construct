@@ -59,6 +59,7 @@ namespace ircd::info
 	extern const std::vector<info::line> myinfo;
 	extern const std::vector<string_view> credits;
 
+	void dump();
 	void init();
 }
 
