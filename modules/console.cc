@@ -1600,6 +1600,10 @@ console_cmd__event(opt &out, const string_view &line)
 		case hash("raw"):
 			out << json::object{buf} << std::endl;
 			return true;
+
+		case hash("idx"):
+			out << m::event::fetch::index(event) << std::endl;
+			return true;
 	}
 
 	out << pretty(event) << std::endl;
