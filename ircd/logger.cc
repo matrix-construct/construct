@@ -214,13 +214,13 @@ ircd::log::log::log(const std::string &name)
 }
 
 ircd::log::log::log(const std::string &name,
-              const char &snote)
+                    const char &snote)
 :log{name}
 {
 }
 
 void
-ircd::log::mark(const char *const &msg)
+ircd::log::mark(const string_view &msg)
 {
 	for_each<facility>([&msg]
 	(const auto &fac)
@@ -231,7 +231,7 @@ ircd::log::mark(const char *const &msg)
 
 void
 ircd::log::mark(const facility &fac,
-                const char *const &msg)
+                const string_view &msg)
 {
 	static const auto name{"*"s};
 	vlog(fac, name, "%s", msg);

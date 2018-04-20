@@ -32,8 +32,8 @@ namespace ircd::log
 
 	void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
 	void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
-	void mark(const facility &, const char *const &msg = nullptr);
-	void mark(const char *const &msg = nullptr);
+	void mark(const facility &, const string_view &msg = {});
+	void mark(const string_view &msg = {});
 
 	struct critical;
 	struct error;
