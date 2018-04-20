@@ -173,11 +173,12 @@ ircd::db::checkpoint(database &d,
 /// us into the uncompressed version which must remain valid.
 void
 ircd::db::fdeletions(database &d,
-                     const bool &enable)
+                     const bool &enable,
+                     const bool &force)
 {
 	if(enable) throw_on_error
 	{
-		d.d->EnableFileDeletions(true)
+		d.d->EnableFileDeletions(force)
 	};
 	else throw_on_error
 	{
@@ -419,9 +420,12 @@ try
 	opts.max_file_opening_threads = 0;
 	opts.stats_dump_period_sec = 0;
 	opts.enable_thread_tracking = true;
+	opts.max_background_jobs = 0;
+	opts.max_background_flushes = 0;
+	opts.max_background_compactions = 0;
+	opts.max_subcompactions = 0;
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
-	//opts.max_background_jobs = 1;
 	//opts.use_fsync = true;
 
 	#ifdef RB_DEBUG
@@ -997,9 +1001,16 @@ ircd::db::database::column::column(database *const &d,
 	this->options.optimize_filters_for_hits = this->descriptor.expect_queries_hit;
 
 	// Compression
-	this->options.compression = rocksdb::kSnappyCompression;
+	//TODO: descriptor / conf / detect etc...
+	//this->options.compression = rocksdb::kSnappyCompression;
 
-	log.debug("schema '%s' declares column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
+	//TODO: descriptor / conf
+	this->options.num_levels = 8;
+	this->options.target_file_size_base = 128_MiB;
+	this->options.target_file_size_multiplier = 4;        // size at level
+	this->options.level0_file_num_compaction_trigger = 2;
+
+	log.debug("schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
 	          db::name(*d),
 	          demangle(key_type.name()),
 	          demangle(mapped_type.name()),

@@ -44,7 +44,7 @@ namespace ircd::db
 
 	// Control panel
 	void compact(database &);
-	void fdeletions(database &, const bool &enable);
+	void fdeletions(database &, const bool &enable, const bool &force = false);
 	void checkpoint(database &, const string_view &dir);
 	void flush(database &, const bool &blocking = true);
 	void sync(database &);
