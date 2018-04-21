@@ -2310,6 +2310,51 @@ console_cmd__room__members(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__members__origin(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "origin", "[membership]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const auto &origin
+	{
+		param.at(1)
+	};
+
+	const string_view membership
+	{
+		param[2]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	members.for_each(membership, [&out, &origin]
+	(const m::event &event)
+	{
+		if(json::get<"origin"_>(event) != origin)
+			return;
+
+		out << pretty_oneline(event) << std::endl;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__room__origins(opt &out, const string_view &line)
 {
 	const auto &room_id
