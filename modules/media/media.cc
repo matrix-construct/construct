@@ -20,6 +20,12 @@ m::room::id::buf
 file_room_id(const string_view &server,
              const string_view &file)
 {
+	if(empty(server) || empty(file))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: empty server or file parameters..."
+		};
+
 	size_t len;
 	thread_local char buf[512];
 	len = strlcpy(buf, server);
