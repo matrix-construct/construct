@@ -14,14 +14,15 @@ are now filling the vacuum of innovation. In 2014 a new approach was proposed to
 real-time communication for free and open source software: a *federation of networks* known as
 *the matrix*.
 
-**IRCd has been rewritten to implement the [Federation](https://matrix.org/docs/spec/)**.
+<h3 align="left">
+	IRCd has been rewritten for the global federation of networks <br />
+</h3>
 
-This is the opportunity to take back control of your communication and relegate the
-opaque siloes to being just another provider to the federation.
-Though not syntactically backwards-compatible with the legacy IRC protocol, it is easily
-translated as a superset. Similar to the legacy IRC protocol's origins, it wisely leverages
-technologies in vogue for its day to aid the virility of implementations. A vibrant and
-growing ecosystem [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
+<img align="right" src="https://i.imgur.com/z8ENNrA.png" />
+
+Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
+for its day to aid the virility of implementations. A vibrant and growing ecosystem
+[already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
@@ -51,20 +52,20 @@ Provides ed25519 required for the Matrix Federation.
 - **OpenSSL** (libssl/libcrypto):
 Provides HTTPS TLS / X.509 / etc.
 
-##### Additional dependencies
-
-- **zlib** or **lz4** or **snappy** (Compression library):
-Provides compression for the database, etc.
-
-- **libmagic** (Optional)
-Content MIME type recognition.
-
 - **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
 **autoconf-archive**, **libtool**, **shtool**
 
+##### Additional dependencies
+
+- **libmagic** (~Optional~):
+Content MIME type recognition.
+
+- **zlib** or **lz4** or **snappy** (Optional):
+Provides compression for the database, etc.
+
 ##### Planned dependencies
 
-- **Adobe GIL** (Optional)
+- **Adobe GIL** (Optional):
 Image resizing & manipulation for the media system.
 
 - **libmozjs** (Optional JavaScript embedding):
@@ -142,30 +143,28 @@ make install
 
 ## Plan
 
-<img align="right" src="https://i.imgur.com/mHGxDyC.png" />
-
 #### Roadmap for service
 
-- [x] Phase One
-- Matrix clients using HTTPS.
+- [x] **Phase One**: Matrix clients using HTTPS.
+- [ ] **Phase Two**: Legacy IRC networks using TS6 protocol.
+- [ ] **Phase Three**: Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
 
-- [ ] Phase Two
-- Legacy IRC networks using TS6 protocol.
+#### Roadmap for deployments
 
-- [ ] Phase Three
-- Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
+The deployment mode is a macro of configuration variables which tune the daemon
+for how it is being used. Modes mostly affect aspects of local clients.
 
+- [x] **Personal**: One or few users. Few default restrictions; higher log output.
+- [ ] **Company**: Hundreds of users. Moderate default restrictions.
+- [ ] **Public**: Thousands of users. Untrusting configuration defaults.
 
 #### Roadmap for innovation
 
-- [x] Phase Zero: **Core libircd**
-- Utils; Modules; Userspace contexts; Format strings; JSON; Database; Networking; HTTP; etc...
+- [x] Phase Zero: **Core libircd**: Utils; Modules; Contexts; JSON; Database; HTTP; etc...
+- [x] Phase One: **Matrix Protocol**: Core VM; Core modules; Protocol endpoints; etc...
+- [ ] Phase Two: **Construct Cluster**: Kademlia sharding of events; Maymounkov's erasure codes.
 
-- [x] Phase One: **Matrix Protocol**
-- Core VM; Core modules; Protocol endpoints; Angular/JS client.
-
-- [ ] Phase Two: **Construct Clustering**
-- Kademlia sharding of events database; Maymounkov's erasure codes over shards.
+##### Experimental section
 
 - [ ] Phase Three: **Graduate Seminar**
 - Tromer/Virza's zkSNARK applied to JavaScript XDR evaluation verifying the distributed
