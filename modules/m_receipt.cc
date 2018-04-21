@@ -35,6 +35,9 @@ _m_receipt_eval
 void
 handle_edu_m_receipt(const m::event &event)
 {
+	if(json::get<"room_id"_>(event))
+		return;
+
 	const json::object &content
 	{
 		at<"content"_>(event)
@@ -153,11 +156,46 @@ try
 
 	const auto evid
 	{
-		send(user_room, user_id, "m.read", room_id,
+		send(user_room, user_id, "ircd.read", room_id,
 		{
 			{ "event_id", event_id },
 			{ "ts",       ts       }
 		})
+	};
+
+	m::event receipt;
+	json::get<"depth"_>(receipt) = std::numeric_limits<int64_t>::max();
+	json::get<"type"_>(receipt) = "m.receipt";
+	json::get<"room_id"_>(receipt) = room_id;
+	json::get<"sender"_>(receipt) = user_id;
+	json::get<"origin"_>(receipt) = user_id.host();
+
+	char buf[768];
+	json::get<"content"_>(receipt) = json::stringify(mutable_buffer{buf}, json::members
+	{
+		{ event_id,
+		{
+			{ "m.read",
+			{
+				{ user_id,
+				{
+					{ "ts", ts }
+				}}
+			}}
+		}}
+	});
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
+	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::DEPTH_NEGATIVE);
+	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
+	m::vm::eval eval
+	{
+		receipt, vmopts
 	};
 
 	log::info

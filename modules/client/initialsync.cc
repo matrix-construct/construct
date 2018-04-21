@@ -616,7 +616,7 @@ initialsync_room_ephemeral_events(client &client,
 	(const m::user &user)
 	{
 		const m::user::room user_room{user};
-		user_room.get(std::nothrow, "m.read", room.room_id, [&events, &room, &user]
+		user_room.get(std::nothrow, "ircd.read", room.room_id, [&events, &room, &user]
 		(const m::event &event)
 		{
 			//TODO: skip if receipt is not for event we're actually syncing

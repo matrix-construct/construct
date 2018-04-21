@@ -23,6 +23,11 @@ exists__m_receipt_m_read(const m::room::id &,
                          const m::user::id &,
                          const m::event::id &);
 
+extern "C" bool
+fresher__m_receipt_m_read(const m::room::id &,
+                          const m::user::id &,
+                          const m::event::id &);
+
 resource::response
 post__receipt(client &client,
               const resource::request &request,
@@ -62,7 +67,7 @@ commit__m_receipt_m_read(const m::room::id &room_id,
                          const m::event::id &event_id,
                          const time_t &ms)
 {
-	if(exists__m_receipt_m_read(room_id, user_id, event_id))
+	if(!fresher__m_receipt_m_read(room_id, user_id, event_id))
 		return {};
 
 	const json::value event_ids[]
@@ -83,7 +88,6 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 	const json::iov::push push[]
 	{
 		{ event,    { "type",     "m.receipt" } },
-		{ event,    { "room_id",   room_id    } },
 		{ content,  { room_id,
 		{
 			{ "m.read",
@@ -105,6 +109,52 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 }
 
 bool
+fresher__m_receipt_m_read(const m::room::id &room_id,
+                          const m::user::id &user_id,
+                          const m::event::id &event_id)
+{
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	bool ret{true};
+	user_room.get(std::nothrow, "ircd.read", room_id, [&ret, &event_id]
+	(const m::event &event)
+	{
+		const auto &content
+		{
+			at<"content"_>(event)
+		};
+
+		const m::event::id &previous_id
+		{
+			unquote(content.get("event_id"))
+		};
+
+		if(event_id == previous_id)
+		{
+			ret = false;
+			return;
+		}
+
+		const m::event::idx &previous_idx
+		{
+			m::event::fetch::index(previous_id)
+		};
+
+		const m::event::idx &event_idx
+		{
+			m::event::fetch::index(event_id)
+		};
+
+		ret = event_idx > previous_idx;
+	});
+
+	return ret;
+}
+
+bool
 exists__m_receipt_m_read(const m::room::id &room_id,
                          const m::user::id &user_id,
                          const m::event::id &event_id)
@@ -115,7 +165,7 @@ exists__m_receipt_m_read(const m::room::id &room_id,
 	};
 
 	bool ret{false};
-	user_room.get(std::nothrow, "m.read", room_id, [&ret, &event_id]
+	user_room.get(std::nothrow, "ircd.read", room_id, [&ret, &event_id]
 	(const m::event &event)
 	{
 		const auto &content

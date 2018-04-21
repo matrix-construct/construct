@@ -2955,7 +2955,7 @@ console_cmd__user__read(opt &out, const string_view &line)
 
 	const m::user::room user_room{user};
 	const m::room::state state{user_room};
-	state.for_each("m.read", m::event::closure{[&out]
+	state.for_each("ircd.read", m::event::closure{[&out]
 	(const m::event &event)
 	{
 		out << timestr(at<"origin_server_ts"_>(event) / 1000)
