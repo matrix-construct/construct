@@ -37,87 +37,67 @@ post__upload(client &client,
 		request.head.content_type
 	};
 
-	const auto filename
+	const auto &server
+	{
+		my_host()
+	};
+
+	const auto &filename
 	{
 		request.query["filename"]
 	};
 
-	char pathbuf[32];
-	const auto path
+	char randbuf[32];
+	const auto randstr
 	{
-		rand::string(rand::dict::alpha, pathbuf)
+		rand::string(rand::dict::alpha, randbuf)
 	};
 
-	sha256 hash;
-	size_t offset{0};
-	while(offset < size(request.content))
+	const m::room::id::buf room_id
 	{
-		const string_view pending
-		{
-			data(request.content) + offset, size(request.content) - offset
-		};
-
-		const auto appended
-		{
-			fs::append(path, pending, offset)
-		};
-
-		hash.update(appended);
-		offset += size(appended);
-	}
-	assert(offset == client.content_consumed);
-
-	char buffer[4_KiB];
-	while(client.content_consumed < request.head.content_length)
-	{
-		const size_t remain
-		{
-			request.head.content_length - client.content_consumed
-		};
-
-		const mutable_buffer buf
-		{
-			buffer, std::min(remain, sizeof(buf))
-		};
-
-		const string_view read
-		{
-			data(buf), read_few(*client.sock, buf)
-		};
-
-		client.content_consumed += size(read); do
-		{
-			const auto appended
-			{
-				fs::append(path, read, offset)
-			};
-
-			hash.update(appended);
-			offset += size(appended);
-		}
-		while(offset < client.content_consumed);
-		assert(offset == client.content_consumed);
-	}
-	assert(offset == request.head.content_length);
-
-	char hashbuf[32];
-	hash.digest(hashbuf);
-
-	char b58buf[64];
-	const auto new_path
-	{
-		b58encode(b58buf, hashbuf)
+		file_room_id(server, randstr)
 	};
 
-	fs::rename(path, new_path);
+	m::vm::opts::commit vmopts;
+	vmopts.history = false;
+	const m::room room
+	{
+		room_id, &vmopts
+	};
+
+	create(room, request.user_id, "file");
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		request.head.content_length
+	};
+
+	copy(buf, request.content);
+	client.content_consumed += read_all(*client.sock, buf);
+	assert(client.content_consumed == request.head.content_length);
+
+	const size_t written
+	{
+		write_file(room, buf, content_type)
+	};
 
 	char uribuf[256];
 	const string_view content_uri
 	{
 		fmt::sprintf
 		{
-			uribuf, "mxc://%s/%s", my_host(), new_path
+			uribuf, "mxc://%s/%s", server, randstr
 		}
+	};
+
+	log::debug
+	{
+		"%s uploaded %zu bytes uri: `%s' file_room: %s :%s",
+		request.user_id,
+		request.head.content_length,
+		content_uri,
+		string_view{room.room_id},
+		filename
 	};
 
 	return resource::response
