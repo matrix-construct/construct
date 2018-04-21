@@ -295,26 +295,25 @@ console_cmd__test(opt &out, const string_view &line)
 // Derived commands
 //
 
-bool console_id__user(const m::user::id &id, const string_view &args);
-bool console_id__room(const m::room::id &id, const string_view &args);
-bool console_id__event(const m::event::id &id, const string_view &args);
+bool console_id__user(opt &, const m::user::id &id, const string_view &line);
+bool console_id__room(opt &, const m::room::id &id, const string_view &line);
+bool console_id__event(opt &, const m::event::id &id, const string_view &line);
 bool console_json(const json::object &);
 
 int
 console_command_derived(opt &out, const string_view &line)
 {
 	const string_view id{token(line, ' ', 0)};
-	const string_view args{tokens_after(line, ' ', 0)};
 	if(m::has_sigil(id)) switch(m::sigil(id))
 	{
 		case m::id::EVENT:
-			return console_id__event(id, args);
+			return console_id__event(out, id, line);
 
 		case m::id::ROOM:
-			return console_id__room(id, args);
+			return console_id__room(out, id, line);
 
 		case m::id::USER:
-			return console_id__user(id, args);
+			return console_id__user(out, id, line);
 
 		default:
 			break;
@@ -340,27 +339,6 @@ console_json(const json::object &object)
 //
 // Command by ID
 //
-
-bool
-console_id__event(const m::event::id &id,
-                  const string_view &args)
-{
-	return true;
-}
-
-bool
-console_id__room(const m::room::id &id,
-                 const string_view &args)
-{
-	return true;
-}
-
-bool
-console_id__user(const m::user::id &id,
-                 const string_view &args)
-{
-	return true;
-}
 
 //
 // misc
@@ -1734,6 +1712,14 @@ console_cmd__event(opt &out, const string_view &line)
 }
 
 bool
+console_id__event(opt &out,
+                  const m::event::id &id,
+                  const string_view &line)
+{
+	return console_cmd__event(out, line);
+}
+
+bool
 console_cmd__event__erase(opt &out, const string_view &line)
 {
 	const m::event::id event_id
@@ -2237,6 +2223,15 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "depth:  " << std::get<int64_t>(top) << std::endl;
 	out << "event:  " << std::get<m::event::id::buf>(top) << std::endl;
 	return true;
+}
+
+bool
+console_id__room(opt &out,
+                 const m::room::id &id,
+                 const string_view &line)
+{
+	//TODO: XXX more detailed summary
+	return console_cmd__room__top(out, line);
 }
 
 bool
@@ -2753,6 +2748,15 @@ console_cmd__room__purge(opt &out, const string_view &line)
 //
 // user
 //
+
+//TODO: XXX
+bool
+console_id__user(opt &out,
+                 const m::user::id &id,
+                 const string_view &args)
+{
+	return true;
+}
 
 bool
 console_cmd__user__password(opt &out, const string_view &line)
