@@ -30,6 +30,13 @@ download_resource__legacy
 	}
 };
 
+static resource::response
+get__download_local(client &client,
+                    const resource::request &request,
+                    const string_view &server,
+                    const string_view &file,
+                    const m::room &room);
+
 resource::response
 get__download(client &client,
               const resource::request &request)
@@ -40,7 +47,7 @@ get__download(client &client,
 			http::MULTIPLE_CHOICES, "/ download / domain / file"
 		};
 
-	const auto &domain
+	const auto &server
 	{
 		request.parv[0]
 	};
@@ -50,21 +57,78 @@ get__download(client &client,
 		request.parv[1]
 	};
 
-	const std::string data
+	const m::room::id::buf room_id
 	{
-		//fs::read(file)
+		file_room_id(server, file)
 	};
 
-	char mime_type_buf[64];
-	const string_view content_type
+	m::vm::opts::commit vmopts;
+	vmopts.history = false;
+	const m::room room
 	{
-		magic::mime(mime_type_buf, string_view{data})
+		room_id, &vmopts
 	};
 
-	return resource::response
+	if(m::exists(room))
+		return get__download_local(client, request, server, file, room);
+
+	throw m::NOT_FOUND
 	{
-		client, string_view{data}, content_type
+		"Media not found"
 	};
+}
+
+resource::response
+get__download_local(client &client,
+                    const resource::request &request,
+                    const string_view &server,
+                    const string_view &file,
+                    const m::room &room)
+{
+	// Get the file's total size
+	size_t file_size{0};
+	room.get("ircd.file.stat", "size", [&file_size]
+	(const m::event &event)
+	{
+		file_size = at<"content"_>(event).get<size_t>("value");
+	});
+
+	// Get the MIME type
+	char type_buf[64];
+	string_view content_type
+	{
+		"application/octet-stream"
+	};
+
+	room.get("ircd.file.stat", "type", [&type_buf, &content_type]
+	(const m::event &event)
+	{
+		const auto &value
+		{
+			unquote(at<"content"_>(event).at("value"))
+		};
+
+		content_type =
+		{
+			type_buf, copy(type_buf, value)
+		};
+	});
+
+	// Send HTTP head to client
+	resource::response
+	{
+		client, http::OK, content_type, file_size
+	};
+
+	size_t sent{0}, read;
+	read = read_each_block(room, [&client, &sent]
+	(const string_view &block)
+	{
+		sent += write_all(*client.sock, block);
+	});
+
+	//assert(sent == file_size);
+	return {};
 }
 
 static resource::method
