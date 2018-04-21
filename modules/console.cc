@@ -1580,9 +1580,6 @@ console_cmd__client(opt &out, const string_view &line)
 		else
 			out << " ASYNC";
 
-		if(client->longpoll)
-			out << " POLL";
-
 		if(client->request.user_id)
 			out << " USER " << client->request.user_id;
 

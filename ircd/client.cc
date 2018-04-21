@@ -325,9 +325,9 @@ ircd::client::async()
 	assert(bool(this->sock));
 	assert(bool(this->conf));
 	auto &sock(*this->sock);
-	const auto timeout
+	const auto &timeout
 	{
-		longpoll? seconds(-1) : conf->async_timeout
+		conf->async_timeout
 	};
 
 	const net::wait_opts opts
@@ -357,9 +357,6 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
                           const error_code &ec)
 {
 	if(!handle_ec(*client, ec))
-		return;
-
-	if(client->longpoll)
 		return;
 
 	auto handler
@@ -617,9 +614,6 @@ noexcept try
 	{
 		if(!handle_request(pc))
 			return false;
-
-		if(longpoll)
-			return true;
 
 		// After the request, the head and content has been read off the socket
 		// and the capstan has advanced to the end of the content. The catch is
@@ -894,9 +888,6 @@ void
 ircd::client::discard_unconsumed(const http::request::head &head)
 {
 	if(unlikely(!sock))
-		return;
-
-	if(longpoll)
 		return;
 
 	const size_t unconsumed
