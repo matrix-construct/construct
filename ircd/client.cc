@@ -388,10 +388,13 @@ noexcept try
 {
 	// The ircd::ctx now handling this request is referenced and accessible
 	// in client for the duration of this handling.
+	assert(ctx::current);
+	assert(!client->reqctx);
 	client->reqctx = ctx::current;
 	const unwind reset{[&client]
 	{
 		assert(bool(client));
+		assert(client->reqctx);
 		client->reqctx = nullptr;
 	}};
 
