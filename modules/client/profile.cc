@@ -305,3 +305,86 @@ profile_set(const m::user &user,
 		{ "text", value }
 	});
 }
+
+static void
+_rejoin_room(const m::room &room,
+             const m::user &user)
+try
+{
+	m::join(room, user);
+}
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to rejoin '%s' to room '%s' to update profile",
+		string_view{user.user_id},
+		string_view{room.room_id}
+	};
+}
+
+static void
+_rejoin_rooms(const m::user::id &user_id)
+{
+	assert(my(user_id));
+	const m::user::rooms &rooms
+	{
+		user_id
+	};
+
+	rooms.for_each("join", [&user_id]
+	(const m::room &room, const string_view &)
+	{
+		_rejoin_room(room, user_id);
+	});
+}
+
+static void
+handle_my_profile_changed__displayname(const m::event &event)
+{
+	_rejoin_rooms(at<"sender"_>(event));
+}
+
+static void
+handle_my_profile_changed__avatar_url(const m::event &event)
+{
+	_rejoin_rooms(at<"sender"_>(event));
+}
+
+static void
+handle_my_profile_changed(const m::event &event)
+{
+	if(!my(event))
+		return;
+
+	const m::user::id &user_id
+	{
+		json::get<"sender"_>(event)
+	};
+
+	// The event has to be an ircd.profile in the user's room, not just a
+	// random ircd.profile typed event in some other room...
+	const m::user::room user_room{user_id};
+	if(json::get<"room_id"_>(event) != user_room.room_id)
+		return;
+
+	if(json::get<"state_key"_>(event) == "displayname")
+		return handle_my_profile_changed__displayname(event);
+
+	if(json::get<"state_key"_>(event) == "avatar_url")
+		return handle_my_profile_changed__avatar_url(event);
+}
+
+const m::hook
+my_profile_changed
+{
+	handle_my_profile_changed,
+	{
+		{ "_site",  "vm.notify"     },
+		{ "type",   "ircd.profile"  },
+	}
+};
