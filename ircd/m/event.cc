@@ -312,7 +312,7 @@ ircd::m::pretty(const event &event)
 	if(!contents.empty())
 	{
 		s << std::setw(16) << std::right << "[content]" << " :"
-		  << "+ " << size(contents) << " bytes :";
+		  << "+ " << size(string_view{contents}) << " bytes :";
 
 		for(const auto &content : contents)
 			s << content.first << ", ";
