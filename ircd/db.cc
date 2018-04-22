@@ -618,7 +618,7 @@ noexcept try
 	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
 	this->checkpoint.reset(nullptr);
 	this->columns.clear();
-	log.debug("'%s': flushed columns; background_errors: %lu; synchronizing...",
+	log.debug("'%s': closed columns; background_errors: %lu; synchronizing...",
 	          name,
 	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
 
@@ -1019,11 +1019,6 @@ ircd::db::database::column::column(database *const &d,
 ircd::db::database::column::~column()
 noexcept
 {
-	if(handle)
-	{
-		db::column c{*this};
-		flush(c, false);
-	}
 }
 
 ircd::db::database::column::operator
