@@ -48,14 +48,14 @@ ircd::conf::item<ircd::seconds>
 ircd::client::conf::async_timeout_default
 {
 	{ "name",     "ircd.client.conf.async_timeout" },
-	{ "default",  35L                              },
+	{ "default",  60L                              },
 };
 
 ircd::conf::item<ircd::seconds>
 ircd::client::conf::request_timeout_default
 {
 	{ "name",     "ircd.client.conf.request_timeout" },
-	{ "default",  15L                                },
+	{ "default",  20L                                },
 };
 
 ircd::conf::item<size_t>
@@ -364,7 +364,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 		std::bind(ircd::handle_client_request, std::move(client))
 	};
 
-	if(unlikely(client::context.avail() == 0))
+	if(client::context.avail() == 0)
 		log::dwarning
 		{
 			"Client context pool exhausted. %zu requests queued.",
@@ -392,6 +392,7 @@ noexcept try
 	{
 		assert(bool(client));
 		assert(client->reqctx);
+		assert(client->reqctx == ctx::current);
 		client->reqctx = nullptr;
 	}};
 
