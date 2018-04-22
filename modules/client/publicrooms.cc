@@ -16,15 +16,6 @@ IRCD_MODULE
 	"Client 7.5 :Public Rooms"
 };
 
-resource
-publicrooms_resource
-{
-	"/_matrix/client/r0/publicRooms",
-	{
-		"(7.5) Lists the public rooms on the server. "
-	}
-};
-
 const ircd::m::room::id::buf
 public_room_id
 {
@@ -36,10 +27,48 @@ m::room public_
 	public_room_id
 };
 
+resource
+publicrooms_resource
+{
+	"/_matrix/client/r0/publicRooms",
+	{
+		"(7.5) Lists the public rooms on the server. "
+	}
+};
+
+static resource::response
+post__publicrooms_since(client &client,
+                        const resource::request &request,
+                        const string_view &since);
+
+static resource::response
+post__publicrooms_remote(client &client,
+                         const resource::request &request,
+                         const string_view &server,
+                         const string_view &search,
+                         const size_t &limit);
+
 resource::response
 get__publicrooms(client &client,
                  const resource::request &request)
 {
+	const auto &server
+	{
+		request.query["server"]
+	};
+
+	const auto &since
+	{
+		request.query["since"]
+	};
+
+	const uint8_t limit
+	{
+		request.query["limit"]?
+			uint8_t(lex_cast<ushort>(request.query["limit"])):
+			uint8_t(16U)
+	};
+
 	std::vector<json::value> chunk;
 	const string_view next_batch;
 	const string_view prev_batch;
@@ -57,10 +86,52 @@ get__publicrooms(client &client,
 	};
 }
 
+resource::method
+get_method
+{
+	publicrooms_resource, "GET", get__publicrooms
+};
+
 resource::response
 post__publicrooms(client &client,
                   const resource::request &request)
 {
+	const string_view &since
+	{
+		unquote(request["since"])
+	};
+
+	if(!empty(since))
+		return post__publicrooms_since(client, request, since);
+
+	const auto &server
+	{
+		request.query["server"]
+	};
+
+	const json::object &filter
+	{
+		request["filter"]
+	};
+
+	const string_view &search_term
+	{
+		unquote(filter["generic_search_term"])
+	};
+
+	const uint8_t limit
+	{
+		uint8_t(request.get<ushort>("limit", 16U))
+	};
+
+	const bool include_all_networks
+	{
+		request.get<bool>("include_all_networks", false)
+	};
+
+	if(server && server != my_host())
+		return post__publicrooms_remote(client, request, server, search_term, limit);
+
 	std::vector<json::value> chunk;
 	const string_view next_batch;
 	const string_view prev_batch;
