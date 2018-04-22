@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/m/m.h>
-
 bool
 ircd::m::operator==(const event &a, const event &b)
 {

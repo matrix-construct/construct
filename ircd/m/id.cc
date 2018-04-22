@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <ircd/spirit.h>
-#include <ircd/m/m.h>
 
 namespace ircd::m
 {
