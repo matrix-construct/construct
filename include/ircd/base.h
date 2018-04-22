@@ -42,6 +42,11 @@ namespace ircd
 	size_t b64decode_size(const string_view &in);
 	const_buffer b64decode(const mutable_buffer &out, const string_view &in);
 	std::string b64decode(const string_view &in);
+
+	// Base64 <-> Base58 convenience conversions
+	string_view b64tob58(const mutable_buffer &out, const string_view &in);
+	string_view b58tob64(const mutable_buffer &out, const string_view &in);
+	string_view b58tob64_unpadded(const mutable_buffer &out, const string_view &in);
 }
 
 inline size_t

@@ -12,6 +12,48 @@
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
+ircd::string_view
+ircd::b58tob64_unpadded(const mutable_buffer &out,
+                        const string_view &in)
+{
+	thread_local char tmp[64_KiB];
+	if(unlikely(b58decode_size(in) > size(tmp)))
+		throw error
+		{
+			"String too large for conversion at this time."
+		};
+
+	return b64encode_unpadded(out, b58decode(tmp, in));
+}
+
+ircd::string_view
+ircd::b58tob64(const mutable_buffer &out,
+               const string_view &in)
+{
+	thread_local char tmp[64_KiB];
+	if(unlikely(b58decode_size(in) > size(tmp)))
+		throw error
+		{
+			"String too large for conversion at this time."
+		};
+
+	return b64encode(out, b58decode(tmp, in));
+}
+
+ircd::string_view
+ircd::b64tob58(const mutable_buffer &out,
+               const string_view &in)
+{
+	thread_local char tmp[64_KiB];
+	if(unlikely(b64decode_size(in) > size(tmp)))
+		throw error
+		{
+			"String too large for conversion at this time."
+		};
+
+	return b58encode(out, b64decode(tmp, in));
+}
+
 namespace ircd
 {
 	const char _b64_pad_
