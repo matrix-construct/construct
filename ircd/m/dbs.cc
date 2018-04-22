@@ -563,21 +563,28 @@ ircd::m::dbs::desc::events__room_events__cmp
 			b.substr(sizes[1]),
 		};
 
+		// These conditions are matched on some queries when the user only
+		// supplies a room id.
+
 		if(empty(post[0]))
 			return true;
 
 		if(empty(post[1]))
 			return false;
 
-		// Now want just the depth...
-		const uint64_t depth[2]
+		// Distill out the depth and event_idx integers
+		const std::pair<uint64_t, event::idx> pair[2]
 		{
-			room_events_key(post[0]).first,
-			room_events_key(post[1]).first,
+			room_events_key(post[0]),
+			room_events_key(post[1])
 		};
 
-		// Highest to lowest sort so highest is first
-		return depth[1] < depth[0];
+		// When two events are at the same depth sort by index (the sequence
+		// number given as they were admitted into the system) otherwise
+		// sort by depth. Note this is a reverse order comparison.
+		return std::get<0>(pair[1]) != std::get<0>(pair[0])?
+			std::get<0>(pair[1]) < std::get<0>(pair[0]):
+			std::get<1>(pair[1]) < std::get<1>(pair[0]);
 	},
 };
 
