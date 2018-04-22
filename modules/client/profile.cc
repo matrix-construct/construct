@@ -237,6 +237,17 @@ put__profile(client &client,
 		request.user_id
 	};
 
+	profile_get(user, param, [&value]
+	(const string_view &existing)
+	{
+		if(existing == value)
+			throw m::error
+			{
+				http::NOT_MODIFIED, "M_NOT_MODIFIED",
+				"Profile key '%s' already that value"
+			};
+	});
+
 	const auto eid
 	{
 		profile_set(user, sender, param, value)
@@ -253,7 +264,8 @@ method_put
 {
 	profile_resource, "PUT", put__profile,
 	{
-		method_put.REQUIRES_AUTH
+		method_put.REQUIRES_AUTH,
+		60s
 	}
 };
 
