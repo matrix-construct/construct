@@ -44,10 +44,13 @@ void
 _handle_edu_m_typing(const m::event &event,
                      const m::edu::m_typing &edu)
 {
-	const m::room::id &room_id
+	const auto &room_id
 	{
-		at<"room_id"_>(edu)
+		json::get<"room_id"_>(edu)
 	};
+
+	if(!room_id)
+		return;
 
 	const m::user::id &user_id
 	{
@@ -74,5 +77,34 @@ _handle_edu_m_typing(const m::event &event,
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
 		string_view{room_id}
+	};
+
+	m::event typing{event};
+	json::get<"room_id"_>(typing) = room_id;
+	json::get<"type"_>(typing) = "m.typing";
+
+	char buf[512];
+	const json::value user_ids[]
+	{
+		{ user_id }
+	};
+
+	json::get<"content"_>(typing) = json::stringify(mutable_buffer{buf}, json::members
+	{
+		{ "user_ids", { user_ids, size_t(bool(json::get<"typing"_>(edu))) } }
+	});
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
+	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
+	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
+	m::vm::eval eval
+	{
+		typing, vmopts
 	};
 }
