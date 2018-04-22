@@ -57,7 +57,7 @@ get_conf_item(const string_view &key,
 
 static void
 update_conf(const m::event &event)
-noexcept
+noexcept try
 {
 	const auto &content
 	{
@@ -80,6 +80,15 @@ noexcept
 	};
 
 	ircd::conf::set(key, value);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to set conf item '%s' :%s",
+		json::get<"state_key"_>(event),
+		e.what()
+	};
 }
 
 const m::hook
