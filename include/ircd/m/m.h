@@ -25,6 +25,8 @@ namespace ircd::m
 
 namespace ircd::m::self
 {
+	struct init;
+
 	string_view host();
 	bool host(const string_view &);
 }
@@ -39,7 +41,6 @@ namespace ircd::m
 	extern struct user me;
 	extern struct room my_room;
 	extern struct node my_node;
-	extern struct room control;
 
 	inline string_view my_host()                 { return self::host();        }
 	inline bool my_host(const string_view &h)    { return self::host(h);       }
@@ -78,12 +79,19 @@ namespace ircd
 #include "txn.h"
 #include "hook.h"
 
+struct ircd::m::self::init
+{
+	init(const json::object &config);
+	~init() noexcept;
+};
+
 struct ircd::m::init
 {
 	struct modules;
 	struct listeners;
 
 	json::object config;
+	self::init _self;
 	keys::init _keys;
 	dbs::init _dbs;
 	vm::init _vm;

@@ -309,6 +309,11 @@ _first_user_registered(const m::event &event)
 	if(!content.get<bool>("active"))
 		return;
 
-	join(m::control, user);
+	const m::room::id::buf control_room_id
+	{
+		"!control", m::self::host()
+	};
+
+	join(m::room{control_room_id}, user);
 	already = true;
 }

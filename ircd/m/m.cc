@@ -27,70 +27,6 @@ ircd::m::listeners
 {};
 
 //
-// my user
-//
-
-const ircd::m::user::id::buf
-ircd_user_id
-{
-	"ircd", ircd::my_host()  //TODO: hostname
-};
-
-ircd::m::user
-ircd::m::me
-{
-	ircd_user_id
-};
-
-//
-// my room
-//
-
-const ircd::m::room::id::buf
-ircd_room_id
-{
-	"ircd", ircd::my_host()
-};
-
-ircd::m::room
-ircd::m::my_room
-{
-	ircd_room_id
-};
-
-//
-// my node
-//
-
-const ircd::m::node::id::buf
-ircd_node_id
-{
-	"", ircd::my_host()  //TODO: hostname
-};
-
-ircd::m::node
-ircd::m::my_node
-{
-	ircd_node_id
-};
-
-//
-// misc
-//
-
-const ircd::m::room::id::buf
-control_room_id
-{
-	"control", ircd::my_host()
-};
-
-ircd::m::room
-ircd::m::control
-{
-	control_room_id
-};
-
-//
 // init
 //
 
@@ -115,6 +51,10 @@ try
 :config
 {
 	ircd::conf::config
+}
+,_self
+{
+	this->config
 }
 ,_keys
 {
@@ -271,6 +211,14 @@ ircd::m::init::bootstrap()
 		"database is empty. I will be bootstrapping it with initial events now..."
 	);
 
+	if(me.user_id.hostname() == "localhost")
+		log::warning
+		{
+			"The ircd.origin is configured to localhost. This is probably not"
+			" what you want. To fix this now, you will have to remove the "
+			" database and start over."
+		};
+
 	create(user::users, me.user_id);
 	create(my_room, me.user_id);
 	create(me.user_id);
@@ -296,18 +244,6 @@ ircd::m::init::bootstrap()
 	{
 		{ "name", "User Tokens" }
 	});
-}
-
-bool
-ircd::m::self::host(const string_view &s)
-{
-	return s == host();
-}
-
-ircd::string_view
-ircd::m::self::host()
-{
-	return "zemos.net"; //me.user_id.host();
 }
 
 ircd::conf::item<std::string>
@@ -341,6 +277,103 @@ ircd::m::leave_ircd_room()
 {
 	leave(my_room, me.user_id);
 	presence::set(me, "offline", me_offline_status_msg);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/self.h
+//
+
+//
+// my user
+//
+
+ircd::m::user::id::buf
+ircd_user_id
+{
+	"ircd", "localhost"  // gets replaced after conf init
+};
+
+ircd::m::user
+ircd::m::me
+{
+	ircd_user_id
+};
+
+//
+// my room
+//
+
+ircd::m::room::id::buf
+ircd_room_id
+{
+	"ircd", "localhost" // replaced after conf init
+};
+
+ircd::m::room
+ircd::m::my_room
+{
+	ircd_room_id
+};
+
+//
+// my node
+//
+
+ircd::m::node::id::buf
+ircd_node_id
+{
+	"", "localhost" // replaced after conf init
+};
+
+ircd::m::node
+ircd::m::my_node
+{
+	ircd_node_id
+};
+
+bool
+ircd::m::self::host(const string_view &s)
+{
+	return s == host();
+}
+
+ircd::string_view
+ircd::m::self::host()
+{
+	return me.user_id.host();
+}
+
+//
+// init
+//
+
+ircd::m::self::init::init(const json::object &config)
+{
+	const string_view &origin_name
+	{
+		unquote(config.get({"ircd", "origin"}, "localhost"))
+	};
+
+	ircd_user_id = {"ircd", origin_name};
+	m::me = {ircd_user_id};
+
+	ircd_room_id = {"ircd", origin_name};
+	m::my_room = {ircd_room_id};
+
+	ircd_node_id = {"ircd", origin_name};
+	m::my_node = {ircd_node_id};
+
+	if(origin_name == "localhost")
+		log::warning
+		{
+			"The ircd.origin is configured or has defaulted to 'localhost'"
+		};
+}
+
+ircd::m::self::init::~init()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
