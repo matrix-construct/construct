@@ -26,16 +26,58 @@ namespace ircd
 	std::string b58decode(const string_view &in);
 
 	// Binary -> Base64 conversion suite
+	constexpr size_t b64encode_size(const size_t &);
+	size_t b64encode_size(const const_buffer &in);
 	string_view b64encode(const mutable_buffer &out, const const_buffer &in);
 	std::string b64encode(const const_buffer &in);
 
 	// Binary -> Base64 conversion without padding
+	constexpr size_t b64encode_unpadded_size(const size_t &);
+	size_t b64encode_unpadded_size(const const_buffer &in);
 	string_view b64encode_unpadded(const mutable_buffer &out, const const_buffer &in);
 	std::string b64encode_unpadded(const const_buffer &in);
 
 	// Base64 -> Binary conversion (padded or unpadded)
+	constexpr size_t b64decode_size(const size_t &);
+	size_t b64decode_size(const string_view &in);
 	const_buffer b64decode(const mutable_buffer &out, const string_view &in);
 	std::string b64decode(const string_view &in);
+}
+
+inline size_t
+ircd::b64decode_size(const string_view &in)
+{
+	return b64decode_size(size(in));
+}
+
+constexpr size_t
+ircd::b64decode_size(const size_t &in)
+{
+	return ceil(in * 0.75);
+}
+
+inline size_t
+ircd::b64encode_unpadded_size(const const_buffer &in)
+{
+	return b64encode_unpadded_size(size(in));
+}
+
+constexpr size_t
+ircd::b64encode_unpadded_size(const size_t &in)
+{
+	return ceil(in * (4.0 / 3.0));
+}
+
+inline size_t
+ircd::b64encode_size(const const_buffer &in)
+{
+	return b64encode_size(size(in));
+}
+
+constexpr size_t
+ircd::b64encode_size(const size_t &in)
+{
+	return ceil(in * (4.0 / 3.0)) + (3 - in % 3) % 3;
 }
 
 inline size_t
