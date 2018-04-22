@@ -286,6 +286,13 @@ ircd::m::pretty(const event &event)
 		  << std::endl;
 	}
 
+	const json::object &contents{json::get<"content"_>(event)};
+	if(!contents.empty())
+		s << std::setw(16) << std::right << "content" << " :"
+		  << size(contents) << " keys; "
+		  << size(string_view{contents}) << " bytes."
+		  << std::endl;
+
 	const auto &hashes{json::get<"hashes"_>(event)};
 	for(const auto &hash : hashes)
 	{
@@ -304,18 +311,6 @@ ircd::m::pretty(const event &event)
 
 		for(const auto &key : json::object{signature.second})
 			s << key.first << " ";
-
-		s << std::endl;
-	}
-
-	const json::object &contents{json::get<"content"_>(event)};
-	if(!contents.empty())
-	{
-		s << std::setw(16) << std::right << "[content]" << " :"
-		  << "+ " << size(string_view{contents}) << " bytes :";
-
-		for(const auto &content : contents)
-			s << content.first << ", ";
 
 		s << std::endl;
 	}
@@ -358,6 +353,14 @@ ircd::m::pretty(const event &event)
 
 		s << std::endl;
 	}
+
+	if(!contents.empty())
+		for(const json::object::member &content : contents)
+			s << std::setw(16) << std::right << "[content]" << " :"
+			  << std::setw(7) << std::left << reflect(json::type(content.second)) << " "
+			  << std::setw(5) << std::right << size(string_view{content.second}) << " bytes "
+			  << ':' << content.first
+			  << std::endl;
 
 	resizebuf(s, ret);
 	return ret;
