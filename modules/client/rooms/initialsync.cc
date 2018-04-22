@@ -10,6 +10,13 @@
 
 using namespace ircd;
 
+conf::item<size_t>
+initial_backfill
+{
+	{ "name",      "ircd.rooms.initialsync.backfill" },
+	{ "default",   64L                               }
+};
+
 static resource::response
 get__initialsync_remote(client &client,
                         const resource::request &request,
@@ -33,7 +40,7 @@ get__initialsync_remote(client &client,
 	};
 
 	m::v1::backfill::opts bf_opts;
-	bf_opts.limit = 1024;
+	bf_opts.limit = size_t(initial_backfill);
 	m::v1::backfill backfill_request
 	{
 		room_id, backfill_buffer, std::move(bf_opts)
