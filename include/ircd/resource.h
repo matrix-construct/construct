@@ -90,10 +90,10 @@ struct ircd::resource::request
 	string_view content;
 	http::query::string query;
 	string_view origin;
-	string_view user_id; //m::user::id::buf user_id; //TODO: bleeding
 	string_view access_token;
 	vector_view<string_view> parv;
 	string_view param[8];
+	m::user::id::buf user_id;
 
 	request(const http::request::head &head,
 	        const string_view &content)
