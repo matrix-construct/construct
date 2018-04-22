@@ -14,7 +14,7 @@ using namespace ircd;
 struct syncargs
 {
 	string_view filter_id;
-	string_view since;
+	uint64_t since;
 	steady_point timesout;
 	bool full_state;
 	bool set_presence;
@@ -22,41 +22,84 @@ struct syncargs
 	syncargs(const resource::request &);
 };
 
-/// State for a client conducting a longpoll /sync. This is used after a
-/// session has caught up with initial-sync and shortpoll and is waiting
-/// for the next event.
-struct longpoll
-{
-	std::weak_ptr<ircd::client> client;
-	steady_point timesout;
-	std::string user_id;
-	std::string since;
-	std::string access_token;
-
-	longpoll(ircd::client &, const resource::request &, const syncargs &);
-};
-
 struct shortpoll
 {
+	ircd::client &client;
+	const resource::request &request;
+	const syncargs &args;
 
+	const uint64_t &since
+	{
+		args.since
+	};
+
+	const uint64_t current
+	{
+		m::vm::current_sequence
+	};
+
+	const uint64_t delta
+	{
+		current - since
+	};
+
+	const m::user user
+	{
+		request.user_id
+	};
+
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const m::user::rooms rooms
+	{
+		user
+	};
+
+	uint64_t state_at
+	{
+		0
+	};
+
+	bool committed
+	{
+		false
+	};
+
+	unique_buffer<mutable_buffer> buf {96_KiB};
+	std::unique_ptr<resource::response::chunked> response;
+	json::stack out
+	{
+		buf, [this](const const_buffer &buf)
+		{
+			if(!committed)
+				return buf;
+
+			if(!response)
+				response = std::make_unique<resource::response::chunked>
+				(
+					client, http::OK, "application/json; charset=utf-8"
+				);
+
+			response->write(buf);
+			return buf;
+		}
+	};
+
+	shortpoll(ircd::client &client,
+	          const resource::request &request,
+	          const syncargs &args)
+	:client{client}
+	,request{request}
+	,args{args}
+	{}
 };
 
-static bool update_sync(const longpoll &data, const m::event &event, const m::room &);
-static void synchronize(const m::event &, const m::room::id &);
-static void synchronize(const m::event &);
-static void synchronize();
-
-std::list<longpoll> polling;
-ctx::dock synchronizer_dock;
-static void del(longpoll &);
-static void add(longpoll &);
-static bool timedout(const std::weak_ptr<client> &);
-static void timeout_check();
-static void errored_check();
-static void worker();
-extern ircd::context synchronizer;
-
-static resource::response longpoll_sync(client &, const resource::request &, const syncargs &);
+static void longpoll_sync(client &, const resource::request &, const syncargs &);
+static bool polylog_sync(client &, const resource::request &, shortpoll &, json::stack::object &);
+static bool linear_sync(client &, const resource::request &, shortpoll &, json::stack::object &);
 static bool shortpoll_sync(client &, const resource::request &, const syncargs &);
 static resource::response since_sync(client &, const resource::request &, const syncargs &);
 static resource::response initial_sync(client &, const resource::request &, const syncargs &);

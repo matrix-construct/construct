@@ -28,11 +28,6 @@ of messages per room to return.
 This endpoint was deprecated in r0 of this specification. Clients should instead
 call the /sync API with no since parameter.
 
-*** developer note:
-We reuse the routines of this module for the initial sync portion of the /sync
-API, and branch for their spec differences when applicable. This way the /sync
-module focuses specifically on the increment aspect.
-
 )"};
 
 //
@@ -48,7 +43,7 @@ initialsync_resource
 	}
 };
 
-extern "C" resource::response
+resource::response
 initialsync(client &client,
             const resource::request &request);
 
@@ -168,6 +163,11 @@ _initialsync(client &client,
 	const m::user user{request.user_id};
 	const m::user::room user_room{user};
 
+	const auto next_batch
+	{
+		int64_t(m::vm::current_sequence)
+	};
+
 	// rooms
 	{
 		json::stack::member member{out, "rooms"};
@@ -191,26 +191,10 @@ _initialsync(client &client,
 
 	// next_batch
 	{
-		//TODO: XXX
-		const auto next_batch
-		{
-			int64_t(m::vm::current_sequence)
-		};
-
 		json::stack::member member
 		{
 			out, "next_batch", json::value{next_batch}
 		};
-
-		const m::user::room user_room
-		{
-			request.user_id
-		};
-
-		m::send(user_room, request.user_id, "ircd.tape.head", request.access_token,
-		{
-			{ "sequence", next_batch }
-		});
 	}
 }
 
