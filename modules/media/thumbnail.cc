@@ -130,9 +130,13 @@ try
 		hostname
 	};
 
-	char buf[6_KiB];
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
 	window_buffer wb{buf};
-	thread_local char uri[2_KiB];
+	thread_local char uri[4_KiB];
 	http::request
 	{
 		wb, hostname, "GET", fmt::sprintf
@@ -149,7 +153,7 @@ try
 	// Remaining space in buffer is used for received head
 	const mutable_buffer in_head
 	{
-		buf + size(out_head), sizeof(buf) - size(out_head)
+		data(buf) + size(out_head), size(buf) - size(out_head)
 	};
 
 	//TODO: --- This should use the progress callback to build blocks
@@ -202,7 +206,7 @@ try
 		};
 
 	// Send it off to user first
-	resource::response
+	const resource::response response
 	{
 		client, remote_request.in.content, content_type
 	};
@@ -212,7 +216,7 @@ try
 		write_file(room, remote_request.in.content, content_type)
 	};
 
-	return {};
+	return response;
 }
 catch(const ircd::server::unavailable &e)
 {
@@ -259,18 +263,24 @@ get__thumbnail_local(client &client,
 	});
 
 	// Send HTTP head to client
-	resource::response
+	const resource::response response
 	{
 		client, http::OK, content_type, file_size
 	};
 
-	size_t sent{0}, read;
-	read = read_each_block(room, [&client, &sent]
+	size_t sent{0};
+	const auto sink{[&client, &sent]
 	(const string_view &block)
 	{
-		sent += write_all(*client.sock, block);
-	});
+		sent += client.write_all(block);
+	}};
 
-	//assert(sent == file_size);
-	return {};
+	const size_t read
+	{
+		read_each_block(room, sink)
+	};
+
+	assert(read == file_size);
+	assert(read == sent);
+	return response;
 }

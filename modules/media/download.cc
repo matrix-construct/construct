@@ -37,7 +37,7 @@ get__download_local(client &client,
                     const string_view &file,
                     const m::room &room);
 
-resource::response
+static resource::response
 get__download(client &client,
               const resource::request &request)
 {
@@ -78,7 +78,7 @@ get__download(client &client,
 	};
 }
 
-resource::response
+static resource::response
 get__download_local(client &client,
                     const resource::request &request,
                     const string_view &server,
@@ -127,7 +127,7 @@ get__download_local(client &client,
 		sent += write_all(*client.sock, block);
 	});
 
-	//assert(sent == file_size);
+	assert(sent == file_size);
 	return {};
 }
 
