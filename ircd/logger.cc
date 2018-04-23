@@ -184,6 +184,10 @@ ircd::log::console_enabled(const facility &fac)
 	return console_out[fac];
 }
 
+//
+// console quiet
+//
+
 ircd::log::console_quiet::console_quiet(const bool &showmsg)
 {
 	if(showmsg)
@@ -207,6 +211,30 @@ ircd::log::console_quiet::~console_quiet()
 	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
 }
 
+//
+// mark
+//
+
+ircd::log::mark::mark(const string_view &msg)
+{
+	for_each<facility>([&msg]
+	(const auto &fac)
+	{
+		mark(fac, msg);
+	});
+}
+
+ircd::log::mark::mark(const facility &fac,
+                      const string_view &msg)
+{
+	static const auto name{"*"s};
+	vlog(fac, name, "%s", msg);
+}
+
+//
+// log
+//
+
 ircd::log::log::log(const string_view &name)
 :log{name, '\0'}
 {
@@ -219,23 +247,9 @@ ircd::log::log::log(const string_view &name,
 {
 }
 
-void
-ircd::log::mark(const string_view &msg)
-{
-	for_each<facility>([&msg]
-	(const auto &fac)
-	{
-		mark(fac, msg);
-	});
-}
-
-void
-ircd::log::mark(const facility &fac,
-                const string_view &msg)
-{
-	static const auto name{"*"s};
-	vlog(fac, name, "%s", msg);
-}
+//
+// vlog
+//
 
 namespace ircd::log
 {
@@ -270,20 +284,18 @@ ircd::log::vlog_threadsafe(const facility &fac,
 	});
 }
 
-void
-ircd::log::vlog(const facility &fac,
-                const char *const &fmt,
-                const va_rtti &ap)
+ircd::log::vlog::vlog(const facility &fac,
+                      const char *const &fmt,
+                      const va_rtti &ap)
 {
 	static const auto name{"ircd"s};
 	vlog(fac, name, fmt, ap);
 }
 
-void
-ircd::log::vlog(const facility &fac,
-                const string_view &name,
-                const char *const &fmt,
-                const va_rtti &ap)
+ircd::log::vlog::vlog(const facility &fac,
+                      const string_view &name,
+                      const char *const &fmt,
+                      const va_rtti &ap)
 {
 	if(!is_main_thread())
 	{

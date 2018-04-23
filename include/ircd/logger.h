@@ -28,12 +28,9 @@ namespace ircd::log
 	const char *reflect(const facility &);
 
 	struct log;
+	struct vlog;
+	struct mark;
 	struct console_quiet;
-
-	void vlog(const facility &, const string_view &name, const char *const &fmt, const va_rtti &ap);
-	void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
-	void mark(const facility &, const string_view &msg = {});
-	void mark(const string_view &msg = {});
 
 	struct critical;
 	struct error;
@@ -96,6 +93,18 @@ class ircd::log::log
 
 	log(const string_view &name, const char &snote);
 	log(const string_view &name);
+};
+
+struct ircd::log::vlog
+{
+	vlog(const facility &, const string_view &name, const char *const &fmt, const va_rtti &ap);
+	vlog(const facility &, const char *const &fmt, const va_rtti &ap);
+};
+
+struct ircd::log::mark
+{
+	mark(const facility &, const string_view &msg = {});
+	mark(const string_view &msg = {});
 };
 
 struct ircd::log::console_quiet
