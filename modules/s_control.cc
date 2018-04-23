@@ -35,100 +35,6 @@ conf_room_id
 };
 
 static void
-_conf_set(const m::event &event,
-          const string_view &key,
-          const string_view &val)
-{
-	const auto &sender
-	{
-		at<"sender"_>(event)
-	};
-
-	using prototype = m::event::id::buf (const m::user::id &,
-	                                     const string_view &key,
-	                                     const string_view &val);
-
-	static import<prototype> set_conf_item
-	{
-		"s_conf", "set_conf_item"
-	};
-
-	const auto event_id
-	{
-		set_conf_item(sender, key, val)
-	};
-
-	char kvbuf[768];
-	notice(control_room, fmt::sprintf
-	{
-		kvbuf, "[%s] %s = %s", string_view{event_id}, key, val
-	});
-}
-
-static void
-_conf_get(const m::event &event,
-          const string_view &key)
-{
-	using closure = std::function<void (const string_view &val)>;
-	using prototype = void (const string_view &key,
-	                        const closure &);
-
-	static import<prototype> get_conf_item
-	{
-		"s_conf", "get_conf_item"
-	};
-
-	get_conf_item(key, [&key]
-	(const string_view &value)
-	{
-		char kvbuf[256];
-		notice(control_room, fmt::sprintf
-		{
-			kvbuf, "%s = %s", key, value
-		});
-	});
-}
-
-static void
-_conf_list(const m::event &event)
-{
-	char val[512];
-	std::stringstream ss;
-	ss << "<table>";
-	for(const auto &p : conf::items)
-		ss << "<tr><td>" << std::setw(32) << std::right << p.first
-		   << "</td><td>" << p.second->get(val)
-		   << "</td></tr>";
-	ss << "</table>";
-
-	msghtml(control_room, m::me.user_id, ss.str());
-}
-
-static void
-_cmd__conf(const m::event &event,
-           const string_view &line)
-{
-	string_view tokens[4];
-	const size_t count
-	{
-		ircd::tokens(line, ' ', tokens)
-	};
-
-	const auto &cmd{tokens[0]};
-	const auto &key{tokens[1]};
-	const auto &val{tokens[3]};
-
-	if(cmd == "set" && count >= 4)
-		return _conf_set(event, key, val);
-
-	if(cmd == "get" && count >= 2)
-		return _conf_get(event, key);
-
-	if(cmd == "list")
-		return _conf_list(event);
-}
-
-static void
 _cmd__die(const m::event &event,
           const string_view &line)
 {
@@ -161,10 +67,7 @@ noexcept try
 
 	switch(hash(cmd))
 	{
-		case hash("conf"):
-			return _cmd__conf(event, tokens_after(body, ' ', 0));
-
-		case hash("die"):
+		case "die"_:
 			return _cmd__die(event, tokens_after(body, ' ', 0));
 	}
 

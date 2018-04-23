@@ -495,6 +495,80 @@ console_cmd__conf__list(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__conf(opt &out, const string_view &line)
+{
+	return console_cmd__conf__list(out, line);
+}
+
+bool
+console_cmd__conf__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"key", "value"
+	}};
+
+	const auto &key
+	{
+		param.at(0)
+	};
+
+	const auto &val
+	{
+		param.at(1)
+	};
+
+	using prototype = m::event::id::buf (const m::user::id &,
+	                                     const string_view &key,
+	                                     const string_view &val);
+
+	static m::import<prototype> set_conf_item
+	{
+		"s_conf", "set_conf_item"
+	};
+
+	const auto event_id
+	{
+		set_conf_item(m::me, key, val)
+	};
+
+	out << event_id << " <- " << key << " = " << val << std::endl;
+	return true;
+}
+
+bool
+console_cmd__conf__get(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"key"
+	}};
+
+	const auto &key
+	{
+		param.at(0)
+	};
+
+	thread_local char val[4_KiB];
+	for(const auto &item : conf::items)
+	{
+		if(item.first != key)
+			continue;
+
+		out << std::setw(48) << std::right << item.first
+		    << " = " << item.second->get(val)
+		    << std::endl;
+
+		return true;
+	}
+
+	throw m::NOT_FOUND
+	{
+		"Conf item '%s' not found", key
+	};
+}
+
 //
 // mod
 //
