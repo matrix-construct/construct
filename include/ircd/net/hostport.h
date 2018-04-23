@@ -54,7 +54,7 @@ struct ircd::net::hostport
 
 	bool operator!() const;
 
-	hostport(const string_view &host, const string_view &service);
+	hostport(const string_view &host, const string_view &service, const uint16_t &port = 8448);
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport() = default;
@@ -69,10 +69,11 @@ struct ircd::net::hostport
 /// TODO: now: the port 8448 is used with the hostname.
 inline
 ircd::net::hostport::hostport(const string_view &host,
-                              const string_view &service)
+                              const string_view &service,
+                              const uint16_t &port)
 :host{host}
 ,service{service}
-,port{8448}
+,port{port}
 {}
 
 /// Creates a host:port pair from a hostname and a port number. When
