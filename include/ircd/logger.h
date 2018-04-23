@@ -30,7 +30,7 @@ namespace ircd::log
 	struct log;
 	struct console_quiet;
 
-	void vlog(const facility &, const std::string &name, const char *const &fmt, const va_rtti &ap);
+	void vlog(const facility &, const string_view &name, const char *const &fmt, const va_rtti &ap);
 	void vlog(const facility &, const char *const &fmt, const va_rtti &ap);
 	void mark(const facility &, const string_view &msg = {});
 	void mark(const string_view &msg = {});
@@ -72,7 +72,8 @@ enum ircd::log::facility
 
 class ircd::log::log
 {
-	std::string name;
+	string_view name;
+	char snote;
 
   public:
 	template<class... args> void operator()(const facility &, const char *const &fmt, args&&...);
@@ -93,8 +94,8 @@ class ircd::log::log
 	void debug(const char *const &fmt, ...);
 	#endif
 
-	log(const std::string &name, const char &snote);
-	log(const std::string &name);
+	log(const string_view &name, const char &snote);
+	log(const string_view &name);
 };
 
 struct ircd::log::console_quiet

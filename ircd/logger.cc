@@ -39,7 +39,6 @@ namespace ircd::log
 	};
 
 	static void open(const facility &fac);
-	static void vlog_threadsafe(const facility &fac, const std::string &name, const char *const &fmt, const va_rtti &ap);
 }
 
 void
@@ -208,14 +207,15 @@ ircd::log::console_quiet::~console_quiet()
 	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
 }
 
-ircd::log::log::log(const std::string &name)
-:name{name}
+ircd::log::log::log(const string_view &name)
+:log{name, '\0'}
 {
 }
 
-ircd::log::log::log(const std::string &name,
+ircd::log::log::log(const string_view &name,
                     const char &snote)
-:log{name}
+:name{name}
+,snote{snote}
 {
 }
 
@@ -241,6 +241,7 @@ namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
 	static void slog(const facility &fac, const string_view &name, const window_buffer::closure &) noexcept;
+	static void vlog_threadsafe(const facility &fac, std::string name, const char *const &fmt, const va_rtti &ap);
 }
 
 /// ircd::log is not thread-safe. This internal function is called when the
@@ -249,7 +250,7 @@ namespace ircd::log
 /// main IRCd event loop which is running on the main thread.
 void
 ircd::log::vlog_threadsafe(const facility &fac,
-                           const std::string &name,
+                           std::string name,
                            const char *const &fmt,
                            const va_rtti &ap)
 {
@@ -280,13 +281,13 @@ ircd::log::vlog(const facility &fac,
 
 void
 ircd::log::vlog(const facility &fac,
-                const std::string &name,
+                const string_view &name,
                 const char *const &fmt,
                 const va_rtti &ap)
 {
 	if(!is_main_thread())
 	{
-		vlog_threadsafe(fac, name, fmt, ap);
+		vlog_threadsafe(fac, std::string{name}, fmt, ap);
 		return;
 	}
 
