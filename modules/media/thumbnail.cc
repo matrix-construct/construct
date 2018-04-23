@@ -39,6 +39,7 @@ thumbnail_resource
 static resource::response
 get__thumbnail_remote(client &client,
                       const resource::request &request,
+                      const string_view &remote,
                       const string_view &server,
                       const string_view &file,
                       const m::room &room);
@@ -66,7 +67,7 @@ get__thumbnail(client &client,
 			http::MULTIPLE_CHOICES, "Media ID parameter required"
 		};
 
-	const auto &server
+	auto &server
 	{
 		request.parv[0]
 	};
@@ -92,11 +93,25 @@ get__thumbnail(client &client,
 	if(m::exists(room))
 		return get__thumbnail_local(client, request, server, file, room);
 
-	if(!my_host(server))
+	//TODO: XXX conf
+	//TODO: XXX vector
+	static const string_view secondary
+	{
+		"matrix.org"
+	};
+
+	const string_view &remote
+	{
+		my_host(server)?
+			secondary:
+			server
+	};
+
+	if(!my_host(remote))
 	{
 		//TODO: ABA TXN
 		create(room, m::me.user_id, "file");
-		return get__thumbnail_remote(client, request, server, file, room);
+		return get__thumbnail_remote(client, request, remote, server, file, room);
 	}
 
 	throw m::NOT_FOUND
@@ -121,6 +136,7 @@ static resource::response
 get__thumbnail_remote(client &client,
                       const resource::request &request,
                       const string_view &hostname,
+                      const string_view &server,
                       const string_view &mediaid,
                       const m::room &room)
 try
@@ -141,7 +157,7 @@ try
 	{
 		wb, hostname, "GET", fmt::sprintf
 		{
-			uri, "/_matrix/media/r0/download/%s/%s", hostname, mediaid
+			uri, "/_matrix/media/r0/download/%s/%s", server, mediaid
 		}
 	};
 
