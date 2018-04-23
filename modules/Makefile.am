@@ -283,6 +283,7 @@ media_media_media_la_SOURCES = \
 	media/download.cc \
 	media/upload.cc \
 	media/thumbnail.cc \
+	media/preview_url.cc \
 	media/media.cc \
 	###
 
