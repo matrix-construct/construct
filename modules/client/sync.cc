@@ -322,6 +322,7 @@ void
 longpoll_sync(client &client,
               const resource::request &request,
               const syncargs &args)
+try
 {
 	std::unique_lock<decltype(m::vm::accept)> lock
 	{
@@ -332,14 +333,32 @@ longpoll_sync(client &client,
 	{
 		auto &accepted
 		{
-			//m::vm::accept.wait_for(lock, milliseconds(sync_timeout_min))
-			m::vm::accept.wait(lock)
+			m::vm::accept.wait_until(lock, args.timesout)
 		};
 
 		const unlock_guard<decltype(lock)> ul(lock);
 		if(synchronize(client, request, args, accepted))
 			return;
 	}
+}
+catch(const ctx::timeout &e)
+{
+	const ctx::exception_handler eh;
+
+	const int64_t &since
+	{
+		int64_t(m::vm::current_sequence)
+	};
+
+	resource::response
+	{
+		client, json::members
+		{
+			{ "next_batch",  int64_t(since)  },
+			{ "rooms",       json::object{}  },
+			{ "presence",    json::object{}  },
+		}
+	};
 }
 
 static bool
