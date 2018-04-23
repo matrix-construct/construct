@@ -67,7 +67,13 @@ enum ircd::log::facility
 	_NUM_
 };
 
+/// A named logger. Create an instance of this to help categorize log messages.
+/// All messages sent to this logger will be prefixed with the given name.
+/// Admins will use this to create masks to filter log messages. Instances
+/// of this class are registered with instance_list for de-confliction and
+/// iteration, so the recommended duration of this class is static.
 struct ircd::log::log
+:instance_list<log>
 {
 	string_view name;
 	char snote;
@@ -91,8 +97,7 @@ struct ircd::log::log
 	void debug(const char *const &fmt, ...);
 	#endif
 
-	log(const string_view &name, const char &snote);
-	log(const string_view &name);
+	log(const string_view &name, const char &snote = '\0');
 };
 
 struct ircd::log::vlog

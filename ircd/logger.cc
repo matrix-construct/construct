@@ -235,16 +235,39 @@ ircd::log::mark::mark(const facility &fac,
 // log
 //
 
-ircd::log::log::log(const string_view &name)
-:log{name, '\0'}
-{
-}
+/// Linkage for list of named loggers.
+template<>
+decltype(ircd::instance_list<ircd::log::log>::list)
+ircd::instance_list<ircd::log::log>::list
+{};
 
 ircd::log::log::log(const string_view &name,
                     const char &snote)
 :name{name}
 ,snote{snote}
 {
+	for(const auto *const &other : list)
+	{
+		if(other == this)
+			continue;
+
+		if(other->name == name)
+			throw ircd::error
+			{
+				"Logger with name '%s' already exists at %p",
+				name,
+				other
+			};
+
+		if(snote != '\0' && other->snote == snote)
+			throw ircd::error
+			{
+				"Logger with snote '%c' is '%s' and already exists at %p",
+				snote,
+				name,
+				other
+			};
+	}
 }
 
 //
