@@ -237,7 +237,7 @@ put__profile(client &client,
 		request.user_id
 	};
 
-	profile_get(user, param, [&value]
+	user.profile(std::nothrow, param, [&value]
 	(const string_view &existing)
 	{
 		if(existing == value)
