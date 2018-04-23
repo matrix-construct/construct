@@ -1560,53 +1560,43 @@ console_cmd__net__host(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host__cache(opt &out, const string_view &line)
+console_cmd__net__host__cache__A(opt &out, const string_view &line)
 {
-	switch(hash(token(line, " ", 0)))
+	for(const auto &pair : net::dns::cache.A)
 	{
-		case hash("A"):
-		{
-			for(const auto &pair : net::dns::cache.A)
-			{
-				const auto &host{pair.first};
-				const auto &record{pair.second};
-				const net::ipport ipp{record.ip4, 0};
-				out << std::setw(48) << std::right << host
-				    << "  =>  " << std::setw(21) << std::left << ipp
-				    << "  expires " << timestr(record.ttl, ircd::localtime)
-				    << " (" << record.ttl << ")"
-				    << std::endl;
-			}
-
-			return true;
-		}
-
-		case hash("SRV"):
-		{
-			for(const auto &pair : net::dns::cache.SRV)
-			{
-				const auto &key{pair.first};
-				const auto &record{pair.second};
-				const net::hostport hostport
-				{
-					record.tgt, record.port
-				};
-
-				out << std::setw(48) << std::right << key
-				    << "  =>  " << std::setw(48) << std::left << hostport
-				    <<  " expires " << timestr(record.ttl, ircd::localtime)
-				    << " (" << record.ttl << ")"
-				    << std::endl;
-			}
-
-			return true;
-		}
-
-		default: throw bad_command
-		{
-			"Which cache?"
-		};
+		const auto &host{pair.first};
+		const auto &record{pair.second};
+		const net::ipport ipp{record.ip4, 0};
+		out << std::setw(48) << std::right << host
+		    << "  =>  " << std::setw(21) << std::left << ipp
+		    << "  expires " << timestr(record.ttl, ircd::localtime)
+		    << " (" << record.ttl << ")"
+		    << std::endl;
 	}
+
+	return true;
+}
+
+bool
+console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
+{
+	for(const auto &pair : net::dns::cache.SRV)
+	{
+		const auto &key{pair.first};
+		const auto &record{pair.second};
+		const net::hostport hostport
+		{
+			record.tgt, record.port
+		};
+
+		out << std::setw(48) << std::right << key
+		    << "  =>  " << std::setw(48) << std::left << hostport
+		    <<  " expires " << timestr(record.ttl, ircd::localtime)
+		    << " (" << record.ttl << ")"
+		    << std::endl;
+	}
+
+	return true;
 }
 
 //
