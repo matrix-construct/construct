@@ -370,6 +370,32 @@ console_cmd__debug(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__log__level(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"level",
+	}};
+
+	const int level
+	{
+		param.at<int>(0)
+	};
+
+	for(int i(0); i < num_of<log::facility>(); ++i)
+		if(i <= level)
+		{
+			console_enable(log::facility(i));
+			out << "[\033[1;42m+\033[0m]: " << reflect(log::facility(i)) << std::endl;
+		} else {
+			console_disable(log::facility(i));
+			out << "[\033[1;41m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+		}
+
+	return true;
+}
+
+bool
 console_cmd__log__mask(opt &out, const string_view &line)
 {
 	thread_local string_view list[64];
