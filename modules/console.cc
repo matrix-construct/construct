@@ -365,16 +365,62 @@ console_cmd__debug(opt &out, const string_view &line)
 	}
 }
 
-bool
-console_cmd__mark(opt &out, const string_view &line)
-{
-	log::mark(line);
+//
+// log
+//
 
-	out << "The log files were marked with '" << line
+bool
+console_cmd__log__mask(opt &out, const string_view &line)
+{
+	thread_local string_view list[64];
+	const auto &count
+	{
+		tokens(line, ' ', list)
+	};
+
+	log::console_mask({list, count});
+	return true;
+}
+
+bool
+console_cmd__log__unmask(opt &out, const string_view &line)
+{
+	thread_local string_view list[64];
+	const auto &count
+	{
+		tokens(line, ' ', list)
+	};
+
+	log::console_unmask({list, count});
+	return true;
+}
+
+bool
+console_cmd__log__mark(opt &out, const string_view &line)
+{
+	const string_view &msg
+	{
+		empty(line)?
+			"marked by console":
+			line
+	};
+
+	log::mark
+	{
+		msg
+	};
+
+	out << "The log files were marked with '" << msg
 	    << "'"
 	    << std::endl;
 
 	return true;
+}
+
+bool
+console_cmd__mark(opt &out, const string_view &line)
+{
+	return console_cmd__log__mark(out, line);
 }
 
 //
