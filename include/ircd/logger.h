@@ -113,21 +113,24 @@ struct ircd::log::console_quiet
 	~console_quiet();
 };
 
+#ifdef RB_DEBUG
 struct ircd::log::debug
 {
-	#ifdef RB_DEBUG
 	template<class... args>
 	debug(const char *const &fmt, args&&... a)
 	{
 		vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
-	#else
+};
+#else
+struct ircd::log::debug
+{
 	debug(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
-	#endif
 };
+#endif
 
 struct ircd::log::info
 {
@@ -147,21 +150,24 @@ struct ircd::log::notice
 	}
 };
 
+#ifdef RB_DEBUG
 struct ircd::log::dwarning
 {
-	#ifdef RB_DEBUG
 	template<class... args>
 	dwarning(const char *const &fmt, args&&... a)
 	{
 		vlog(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
-	#else
+};
+#else
+struct ircd::log::dwarning
+{
 	dwarning(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
-	#endif
 };
+#endif
 
 struct ircd::log::warning
 {
@@ -172,21 +178,24 @@ struct ircd::log::warning
 	}
 };
 
+#ifdef RB_DEBUG
 struct ircd::log::derror
 {
-	#ifdef RB_DEBUG
 	template<class... args>
 	derror(const char *const &fmt, args&&... a)
 	{
 		vlog(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
-	#else
+};
+#else
+struct ircd::log::derror
+{
 	derror(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
-	#endif
 };
+#endif
 
 struct ircd::log::error
 {
