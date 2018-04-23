@@ -370,6 +370,20 @@ console_cmd__debug(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__log(opt &out, const string_view &line)
+{
+	for(const auto *const &log : log::log::list)
+		out << (log->snote? log->snote : '-')
+		    << " " << std::setw(8) << std::left << log->name
+		    << " "
+		    << (log->fmasked? " FILE" : "")
+		    << (log->cmasked? " CONSOLE" : "")
+		    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__log__level(opt &out, const string_view &line)
 {
 	const params param{line, " ",
