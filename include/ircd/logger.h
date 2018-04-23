@@ -41,6 +41,17 @@ namespace ircd::log
 	struct info;
 	struct debug;
 
+	extern log star;     // "*", '*'
+	extern log general;  // "ircd", 'G'
+
+	// The mask is the list of named loggers to allow; an empty mask disallows
+	// all loggers. An empty unmask allows all loggers. An unmask of a logger
+	// that wasn't masked has no effect. Provided string_views don't have to
+	// remain valid after call.
+	void console_unmask(const vector_view<string_view> & = {});
+	void console_mask(const vector_view<string_view> & = {});
+
+	// This suite adjusts the output for an entire level.
 	bool console_enabled(const facility &);
 	void console_disable(const facility &);
 	void console_enable(const facility &);
@@ -75,8 +86,10 @@ enum ircd::log::facility
 struct ircd::log::log
 :instance_list<log>
 {
-	string_view name;
-	char snote;
+	string_view name;                  // name of this logger
+	char snote;                        // snomask character
+	bool cmasked {true};               // currently in the console mask (enabled)
+	bool fmasked {true};               // currently in the file mask (enabled)
 
   public:
 	template<class... args> void operator()(const facility &, const char *const &fmt, args&&...);
@@ -98,12 +111,15 @@ struct ircd::log::log
 	#endif
 
 	log(const string_view &name, const char &snote = '\0');
+
+	static bool exists(const log *const &ptr);
+	static log *find(const string_view &name);
+	static log *find(const char &snote);
 };
 
 struct ircd::log::vlog
 {
-	vlog(const facility &, const string_view &name, const char *const &fmt, const va_rtti &ap);
-	vlog(const facility &, const char *const &fmt, const va_rtti &ap);
+	vlog(const log &log, const facility &, const char *const &fmt, const va_rtti &ap);
 };
 
 struct ircd::log::mark
@@ -122,26 +138,26 @@ struct ircd::log::console_quiet
 struct ircd::log::debug
 {
 	template<class... args>
-	debug(const char *const &fmt, args&&... a)
+	debug(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	debug(const log &log, const char *const &fmt, args&&... a)
+	debug(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DEBUG, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
 struct ircd::log::debug
 {
-	debug(const char *const &, ...)
+	debug(const log &, const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	debug(const log &, const char *const &, ...)
+	debug(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -151,30 +167,30 @@ struct ircd::log::debug
 struct ircd::log::info
 {
 	template<class... args>
-	info(const char *const &fmt, args&&... a)
+	info(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	info(const log &log, const char *const &fmt, args&&... a)
+	info(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::INFO, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
 struct ircd::log::notice
 {
 	template<class... args>
-	notice(const char *const &fmt, args&&... a)
+	notice(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	notice(const log &log, const char *const &fmt, args&&... a)
+	notice(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::NOTICE, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
@@ -182,26 +198,26 @@ struct ircd::log::notice
 struct ircd::log::dwarning
 {
 	template<class... args>
-	dwarning(const char *const &fmt, args&&... a)
+	dwarning(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	dwarning(const log &log, const char *const &fmt, args&&... a)
+	dwarning(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DWARNING, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
 struct ircd::log::dwarning
 {
-	dwarning(const char *const &, ...)
+	dwarning(const log &, const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	dwarning(const log &, const char *const &, ...)
+	dwarning(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -211,15 +227,15 @@ struct ircd::log::dwarning
 struct ircd::log::warning
 {
 	template<class... args>
-	warning(const char *const &fmt, args&&... a)
+	warning(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	warning(const log &log, const char *const &fmt, args&&... a)
+	warning(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::WARNING, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
@@ -227,26 +243,26 @@ struct ircd::log::warning
 struct ircd::log::derror
 {
 	template<class... args>
-	derror(const char *const &fmt, args&&... a)
+	derror(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	derror(const log &log, const char *const &fmt, args&&... a)
+	derror(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::DERROR, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
 struct ircd::log::derror
 {
-	derror(const char *const &, ...)
+	derror(const log &, const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	derror(const log &, const char *const &, ...)
+	derror(const char *const &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -256,30 +272,30 @@ struct ircd::log::derror
 struct ircd::log::error
 {
 	template<class... args>
-	error(const char *const &fmt, args&&... a)
+	error(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	error(const log &log, const char *const &fmt, args&&... a)
+	error(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::ERROR, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
 struct ircd::log::critical
 {
 	template<class... args>
-	critical(const char *const &fmt, args&&... a)
+	critical(const log &log, const char *const &fmt, args&&... a)
 	{
-		vlog(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	critical(const log &log, const char *const &fmt, args&&... a)
+	critical(const char *const &fmt, args&&... a)
 	{
-		vlog(facility::CRITICAL, log.name, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
@@ -380,5 +396,5 @@ ircd::log::log::operator()(const facility &f,
                            const char *const &fmt,
                            args&&... a)
 {
-	vlog(f, name, fmt, va_rtti{std::forward<args>(a)...});
+	vlog(*this, f, fmt, va_rtti{std::forward<args>(a)...});
 }

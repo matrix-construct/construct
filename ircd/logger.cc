@@ -184,6 +184,20 @@ ircd::log::console_enabled(const facility &fac)
 	return console_out[fac];
 }
 
+void
+ircd::log::console_mask(const vector_view<string_view> &list)
+{
+	for(auto *const &log : log::list)
+		log->cmasked = std::find(begin(list), end(list), log->name) != end(list);
+}
+
+void
+ircd::log::console_unmask(const vector_view<string_view> &list)
+{
+	for(auto *const &log : log::list)
+		log->cmasked = std::find(begin(list), end(list), log->name) == end(list);
+}
+
 //
 // console quiet
 //
@@ -227,8 +241,7 @@ ircd::log::mark::mark(const string_view &msg)
 ircd::log::mark::mark(const facility &fac,
                       const string_view &msg)
 {
-	static const auto name{"*"s};
-	vlog(fac, name, "%s", msg);
+	vlog(star, fac, "%s", msg);
 }
 
 //
@@ -240,6 +253,58 @@ template<>
 decltype(ircd::instance_list<ircd::log::log>::list)
 ircd::instance_list<ircd::log::log>::list
 {};
+
+ircd::log::log *
+ircd::log::log::find(const string_view &name)
+{
+	const auto it
+	{
+		std::find_if(begin(list), end(list), [&name]
+		(const auto *const &log)
+		{
+			return log->name == name;
+		})
+	};
+
+	return *it;
+}
+
+ircd::log::log *
+ircd::log::log::find(const char &snote)
+{
+	const auto it
+	{
+		std::find_if(begin(list), end(list), [&snote]
+		(const auto *const &log)
+		{
+			return log->snote == snote;
+		})
+	};
+
+	return *it;
+}
+
+/// This function is related to cross-thread logging; its purpose
+/// is to check if a given named logger still exists after the pointer
+/// is conveyed to the main thread from some other thread.
+bool
+ircd::log::log::exists(const log *const &ptr)
+{
+	const auto it
+	{
+		std::find_if(begin(list), end(list), [&ptr]
+		(const auto *const &log)
+		{
+			return log == ptr;
+		})
+	};
+
+	return it != end(list);
+}
+
+//
+// log::log
+//
 
 ircd::log::log::log(const string_view &name,
                     const char &snote)
@@ -277,17 +342,29 @@ ircd::log::log::log(const string_view &name,
 namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
-	static void slog(const facility &fac, const string_view &name, const window_buffer::closure &) noexcept;
-	static void vlog_threadsafe(const facility &fac, std::string name, const char *const &fmt, const va_rtti &ap);
+	static void slog(const log &, const facility &, const window_buffer::closure &) noexcept;
+	static void vlog_threadsafe(const log &, const facility &, const char *const &fmt, const va_rtti &ap);
 }
+
+decltype(ircd::log::star)
+ircd::log::star
+{
+	"*", '*'
+};
+
+decltype(ircd::log::general)
+ircd::log::general
+{
+	"ircd", 'G'
+};
 
 /// ircd::log is not thread-safe. This internal function is called when the
 /// normal vlog() detects it's not on the main IRCd thread. It then generates
 /// the formatted log message on this thread, and posts the message to the
 /// main IRCd event loop which is running on the main thread.
 void
-ircd::log::vlog_threadsafe(const facility &fac,
-                           std::string name,
+ircd::log::vlog_threadsafe(const log &log,
+                           const facility &fac,
                            const char *const &fmt,
                            const va_rtti &ap)
 {
@@ -297,36 +374,34 @@ ircd::log::vlog_threadsafe(const facility &fac,
 		fmt::vsnstringf(1024, fmt, ap)
 	};
 
-	// The reference to name has to be safely maintained
-	ircd::post([fac, str(std::move(str)), name(std::move(name))]
+	// The pointer to the logger is copied to the main thread.
+	auto *const logp{&log};
+	ircd::post([fac, str(std::move(str)), logp]
 	{
-		slog(fac, name, [&str](const mutable_buffer &out) -> size_t
+		// If that named logger was destroyed while this closure was
+		// travelling to the main thread then we just discard this message.
+		if(!log::exists(logp))
+			return;
+
+		slog(*logp, fac, [&str](const mutable_buffer &out) -> size_t
 		{
 			return copy(out, string_view{str});
 		});
 	});
 }
 
-ircd::log::vlog::vlog(const facility &fac,
-                      const char *const &fmt,
-                      const va_rtti &ap)
-{
-	static const auto name{"ircd"s};
-	vlog(fac, name, fmt, ap);
-}
-
-ircd::log::vlog::vlog(const facility &fac,
-                      const string_view &name,
+ircd::log::vlog::vlog(const log &log,
+                      const facility &fac,
                       const char *const &fmt,
                       const va_rtti &ap)
 {
 	if(!is_main_thread())
 	{
-		vlog_threadsafe(fac, std::string{name}, fmt, ap);
+		vlog_threadsafe(log, fac, fmt, ap);
 		return;
 	}
 
-	slog(fac, name, [&fmt, &ap](const mutable_buffer &out) -> size_t
+	slog(log, fac, [&fmt, &ap](const mutable_buffer &out) -> size_t
 	{
 		return fmt::vsprintf(out, fmt, ap);
 	});
@@ -339,12 +414,18 @@ namespace ircd::log
 }
 
 void
-ircd::log::slog(const facility &fac,
-                const string_view &name,
+ircd::log::slog(const log &log,
+                const facility &fac,
                 const window_buffer::closure &closure)
 noexcept
 {
+	// When all of these conditions are true there is no possible log output
+	// so we can bail real quick.
 	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
+		return;
+
+	// Same for this set of conditions...
+	if((!file[fac].is_open() || !log.fmasked) && !log.cmasked)
 		return;
 
 	// Have to be on the main thread to call slog().
@@ -375,9 +456,10 @@ noexcept
 	  << std::right
 	  << reflect(fac)
 	  << (console_ansi[fac]? "\033[0m " : " ")
+//	  << (log.snote? log.snote : '-')
 	  << std::setw(9)
 	  << std::right
-	  << name
+	  << log.name
 	  << ' '
 	  << std::setw(8)
 	  << trunc(ctx::name(), 8)
@@ -409,14 +491,14 @@ noexcept
 	}};
 
 	// copy to std::cerr
-	if(console_err[fac])
+	if(log.cmasked && console_err[fac])
 	{
 		err_console.clear();
 		write(err_console);
 	}
 
 	// copy to std::cout
-	if(console_out[fac])
+	if(log.cmasked && console_out[fac])
 	{
 		out_console.clear();
 		write(out_console);
@@ -425,7 +507,7 @@ noexcept
 	}
 
 	// copy to file
-	if(file[fac].is_open())
+	if(log.fmasked && file[fac].is_open())
 	{
 		file[fac].clear();
 		write(file[fac]);
