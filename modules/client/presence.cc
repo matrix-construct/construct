@@ -314,8 +314,38 @@ put__presence_status(client &client,
 		trunc(unquote(request["status_msg"]), 390)
 	};
 
-	const m::user user{request.user_id};
-	m::presence::set(user, presence, status_msg);
+	const m::user user
+	{
+		request.user_id
+	};
+
+	// note: Riot hits this endpoint with redundant updates every single time
+	// the user waves their mouse over the browser window. Right now we throw
+	// NOT_MODIFIED and do nothing because each presence update writes a msg
+	// to the user's room. In the future we can put a conf/hook here to do
+	// more w/ this data though.
+
+	m::presence::get(std::nothrow, user, [&presence, &status_msg]
+	(const json::object &object)
+	{
+		if(unquote(object.get("presence")) != presence)
+			return;
+
+		if(unquote(object.get("status_msg")) != status_msg)
+			return;
+
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_NOT_MODIFIED",
+			"Presence state or status has not changed"
+		};
+	});
+
+	const auto eid
+	{
+		m::presence::set(user, presence, status_msg)
+	};
+
 	return resource::response
 	{
 		client, http::OK
