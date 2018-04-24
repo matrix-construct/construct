@@ -29,6 +29,7 @@ namespace ircd::log
 
 	struct log;
 	struct vlog;
+	struct logf;
 	struct mark;
 	struct console_quiet;
 
@@ -120,6 +121,15 @@ struct ircd::log::log
 struct ircd::log::vlog
 {
 	vlog(const log &log, const facility &, const char *const &fmt, const va_rtti &ap);
+};
+
+struct ircd::log::logf
+{
+	template<class... args>
+	logf(const log &log, const facility &facility, const char *const &fmt, args&&... a)
+	{
+		vlog(log, facility, fmt, va_rtti{std::forward<args>(a)...});
+	}
 };
 
 struct ircd::log::mark
