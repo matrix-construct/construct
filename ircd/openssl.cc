@@ -45,7 +45,7 @@ namespace ircd::openssl
 {
 	time_t get_time(const ASN1_TIME &);
 	using x509_name_entry_closure = std::function<bool (const string_view &, const string_view &)>;
-	bool until(const X509_NAME &name, const x509_name_entry_closure &);
+	bool for_each(const X509_NAME &name, const x509_name_entry_closure &);
 	void append(X509_NAME &name, const string_view &key, const string_view &val);
 	void append(X509_NAME &name, const json::object &entries);
 	void append_entries(X509 &cert, const json::object &opts);
@@ -232,7 +232,7 @@ ircd::openssl::stringify(const X509 &cert_)
 	// issuer
 	std::vector<json::member> issuer_json;
 	X509_NAME *const issuer{X509_get_issuer_name(&cert)};
-	until(*issuer, [&](const string_view &key, const string_view &val)
+	for_each(*issuer, [&](const string_view &key, const string_view &val)
 	{
 		const json::member member{key, val};
 		issuer_json.emplace_back(member);
@@ -242,7 +242,7 @@ ircd::openssl::stringify(const X509 &cert_)
 	// subject
 	std::vector<json::member> subject_json;
 	X509_NAME *const subject{X509_get_subject_name(&cert)};
-	until(*subject, [&](const string_view &key, const string_view &val)
+	for_each(*subject, [&](const string_view &key, const string_view &val)
 	{
 		const json::member member{key, val};
 		subject_json.emplace_back(member);
@@ -370,8 +370,8 @@ catch(const error &e)
 }
 
 bool
-ircd::openssl::until(const X509_NAME &name_,
-                     const x509_name_entry_closure &closure)
+ircd::openssl::for_each(const X509_NAME &name_,
+                        const x509_name_entry_closure &closure)
 {
 	const auto name(const_cast<X509_NAME *>(&name_));
 	const auto cnt(X509_NAME_entry_count(name));
