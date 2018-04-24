@@ -43,6 +43,11 @@ namespace ircd
 #include "tuple.h"
 #include "timer.h"
 #include "life_guard.h"
+#include "string.h"
+#include "pubsetbuf.h"
+#include "pointers.h"
+#include "iterator.h"
+#include "nothrow.h"
 
 // Unsorted section
 namespace ircd {
@@ -130,76 +135,6 @@ data(T &val)
 }
 
 //
-// String generating patterns
-//
-
-/// This is the ubiquitous ircd::string() template serving as the "toString()"
-/// for the project. Particpating types that want to have a string(T)
-/// returning an std::string must friend an operator<<(std::ostream &, T);
-/// this is primarily for debug strings, not meant for performance or service.
-///
-template<class T>
-auto
-string(const T &s)
-{
-	std::stringstream ss;
-	ss << s;
-	return ss.str();
-}
-
-inline auto
-string(const char *const &buf,
-       const size_t &size)
-{
-	return std::string{buf, size};
-}
-
-inline auto
-string(const uint8_t *const &buf,
-       const size_t &size)
-{
-	return string(reinterpret_cast<const char *>(buf), size);
-}
-
-/// Close over the common pattern to write directly into a post-C++11 standard
-/// string through the data() member requiring a const_cast. Closure returns
-/// the final size of the data written into the buffer.
-inline auto
-string(const size_t &size,
-       const std::function<size_t (const mutable_buffer &)> &closure)
-{
-	std::string ret(size, char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const size_t consumed
-	{
-		closure(buf)
-	};
-
-	assert(consumed <= buffer::size(buf));
-	data(buf)[consumed] = '\0';
-	ret.resize(consumed);
-	return ret;
-}
-
-/// Close over the common pattern to write directly into a post-C++11 standard
-/// string through the data() member requiring a const_cast. Closure returns
-/// a view of the data actually written to the buffer.
-inline auto
-string(const size_t &size,
-       const std::function<string_view (const mutable_buffer &)> &closure)
-{
-	return string(size, [&closure]
-	(const mutable_buffer &buffer)
-	{
-		return ircd::size(closure(buffer));
-	});
-}
-
-//
 // Misc bang participants
 //
 
@@ -214,96 +149,6 @@ operator!(const std::string_view &str)
 {
 	return str.empty();
 }
-
-//
-// stringstream buffer set macros
-//
-
-template<class stringstream>
-stringstream &
-pubsetbuf(stringstream &ss,
-          const mutable_buffer &buf)
-{
-	ss.rdbuf()->pubsetbuf(data(buf), size(buf));
-	return ss;
-}
-
-template<class stringstream>
-stringstream &
-pubsetbuf(stringstream &ss,
-          std::string &s)
-{
-	auto *const &data
-	{
-		const_cast<char *>(s.data())
-	};
-
-	ss.rdbuf()->pubsetbuf(data, s.size());
-	return ss;
-}
-
-template<class stringstream>
-stringstream &
-pubsetbuf(stringstream &ss,
-          std::string &s,
-          const size_t &size)
-{
-	s.resize(size, char{});
-	return pubsetbuf(ss, s);
-}
-
-template<class stringstream>
-stringstream &
-resizebuf(stringstream &ss,
-          std::string &s)
-{
-	s.resize(ss.tellp());
-	return ss;
-}
-
-/// buf has to match the rdbuf you gave the stringstream
-template<class stringstream>
-string_view
-view(stringstream &ss,
-     const const_buffer &buf)
-{
-	assert(size_t(ss.tellp()) <= size(buf));
-	ss.flush();
-	ss.rdbuf()->pubsync();
-	const string_view ret
-	{
-		data(buf), size_t(ss.tellp())
-	};
-
-	assert(size(ret) <= size(buf));
-	return ret;
-}
-
-//
-// Template nothrow suite
-//
-
-/// Test for template geworfenheit
-///
-template<class exception_t>
-constexpr bool
-is_nothrow()
-{
-	return std::is_same<exception_t, std::nothrow_t>::value;
-}
-
-/// This is a template alternative to nothrow overloads, which
-/// allows keeping the function arguments sanitized of the thrownness.
-///
-template<class exception_t  = std::nothrow_t,
-         class return_t     = bool>
-using nothrow_overload = typename std::enable_if<is_nothrow<exception_t>(), return_t>::type;
-
-/// Inverse of the nothrow_overload template
-///
-template<class exception_t,
-         class return_t     = void>
-using throw_overload = typename std::enable_if<!is_nothrow<exception_t>(), return_t>::type;
 
 /// Like std::next() but with out_of_range exception
 ///
@@ -342,84 +187,6 @@ struct values
 	}
 };
 
-//
-// To collapse pairs of iterators down to a single type
-//
-
-template<class T>
-struct iterpair
-:std::pair<T, T>
-{
-	using std::pair<T, T>::pair;
-};
-
-template<class T>
-T &
-begin(iterpair<T> &i)
-{
-	return std::get<0>(i);
-}
-
-template<class T>
-T &
-end(iterpair<T> &i)
-{
-	return std::get<1>(i);
-}
-
-template<class T>
-const T &
-begin(const iterpair<T> &i)
-{
-	return std::get<0>(i);
-}
-
-template<class T>
-const T &
-end(const iterpair<T> &i)
-{
-	return std::get<1>(i);
-}
-
-//
-// To collapse pairs of iterators down to a single type
-// typed by an object with iterator typedefs.
-//
-
-template<class T>
-using iterators = std::pair<typename T::iterator, typename T::iterator>;
-
-template<class T>
-using const_iterators = std::pair<typename T::const_iterator, typename T::const_iterator>;
-
-template<class T>
-typename T::iterator
-begin(const iterators<T> &i)
-{
-	return i.first;
-}
-
-template<class T>
-typename T::iterator
-end(const iterators<T> &i)
-{
-	return i.second;
-}
-
-template<class T>
-typename T::const_iterator
-begin(const const_iterators<T> &ci)
-{
-	return ci.first;
-}
-
-template<class T>
-typename T::const_iterator
-end(const const_iterators<T> &ci)
-{
-	return ci.second;
-}
-
 /// Compile-time comparison of string literals
 ///
 constexpr bool
@@ -451,36 +218,6 @@ constexpr bool
 is_powerof2(const long long v)
 {
 	return v && !(v & (v - 1LL));
-}
-
-//
-// Transform to pointer utils
-//
-
-/// Transform input sequence values to pointers in the output sequence
-/// using two input iterators [begin, end] and one output iterator [begin]
-template<class input_begin,
-         class input_end,
-         class output_begin>
-auto
-pointers(input_begin&& ib,
-         const input_end &ie,
-         output_begin&& ob)
-{
-	return std::transform(ib, ie, ob, []
-	(auto&& value)
-	{
-		return std::addressof(value);
-	});
-}
-
-template<class input_container,
-         class output_container>
-auto
-pointers(input_container&& ic,
-         output_container &oc)
-{
-	return pointers(begin(ic), end(ic), begin(oc));
 }
 
 /// Get what() from exception_ptr
