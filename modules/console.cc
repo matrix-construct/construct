@@ -3092,6 +3092,38 @@ console_cmd__user__rooms(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__rooms__origins(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "[membership]"
+	}};
+
+	const m::user &user
+	{
+		param.at(0)
+	};
+
+	const string_view &membership
+	{
+		param[1]
+	};
+
+	const m::user::rooms::origins origins
+	{
+		user
+	};
+
+	origins.for_each(membership, m::user::rooms::origins::closure{[&out]
+	(const string_view &origin)
+	{
+		out << origin << std::endl;
+	}});
+
+	return true;
+}
+
+bool
 console_cmd__user__read(opt &out, const string_view &line)
 {
 	const params param{line, " ",
