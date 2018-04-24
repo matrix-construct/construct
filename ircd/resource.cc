@@ -883,8 +883,22 @@ ircd::resource::response::response(client &client,
 		client.write_all(head.completed())
 	};
 
-	log::debug
+	#ifdef RB_DEBUG
+	const log::facility facility
 	{
+		ushort(code) >= 200 && ushort(code) < 300?
+			log::facility::DEBUG:
+		ushort(code) >= 300 && ushort(code) < 400?
+			log::facility::DWARNING:
+		ushort(code) >= 400 && ushort(code) < 500?
+			log::facility::DERROR:
+
+		log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log::general, facility,
 		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %zd content",
 		client.sock.get(),
 		string(local(client)),
@@ -895,6 +909,7 @@ ircd::resource::response::response(client &client,
 		content_type,
 		ssize_t(content_length),
 	};
+	#endif
 
 	assert(written == size(head.completed()));
 }
