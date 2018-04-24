@@ -50,7 +50,7 @@ struct ircd::resource
 	resource() = default;
 	virtual ~resource() noexcept;
 
-	static resource &find(string_view path);
+	static resource &find(const string_view &path);
 };
 
 enum ircd::resource::flag
