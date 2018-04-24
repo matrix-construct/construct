@@ -109,7 +109,11 @@ ircd::m::dbs::write(db::txn &txn,
                     const event &event,
                     const write_opts &opts)
 {
-	assert(opts.idx != 0);
+	if(unlikely(opts.idx == 0))
+		throw ircd::error
+		{
+			"Cannot write to database: no index specified for event."
+		};
 
 	db::txn::append
 	{
