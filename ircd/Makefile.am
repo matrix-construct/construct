@@ -76,6 +76,7 @@ libircd_la_LIBADD = \
 libircd_la_SOURCES =   \
 	exception.cc       \
 	lexical.cc         \
+	tokens.cc          \
 	json.cc            \
 	locale.cc          \
 	logger.cc          \
