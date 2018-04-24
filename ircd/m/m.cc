@@ -1633,6 +1633,74 @@ const
 }
 
 //
+// user::rooms::origins
+//
+
+ircd::m::user::rooms::origins::origins(const m::user &user)
+:user{user}
+{
+}
+
+void
+ircd::m::user::rooms::origins::for_each(const closure &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+void
+ircd::m::user::rooms::origins::for_each(const closure_bool &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+void
+ircd::m::user::rooms::origins::for_each(const string_view &membership,
+                                        const closure &closure)
+const
+{
+	for_each(membership, closure_bool{[&closure]
+	(const m::user &user)
+	{
+		closure(user);
+		return true;
+	}});
+}
+
+void
+ircd::m::user::rooms::origins::for_each(const string_view &membership,
+                                        const closure_bool &closure)
+const
+{
+	const m::user::rooms rooms
+	{
+		user
+	};
+
+	std::set<std::string, std::less<>> seen;
+	rooms.for_each(membership, rooms::closure_bool{[&closure, &seen]
+	(const m::room &room, const string_view &membership)
+	{
+		const m::room::origins origins{room};
+		return !origins.test([&closure, &seen]
+		(const string_view &origin)
+		{
+			const auto it
+			{
+				seen.lower_bound(origin)
+			};
+
+			if(it != end(seen) && *it == origin)
+				return false;
+
+			seen.emplace_hint(it, std::string{origin});
+			return !closure(origin);
+		});
+	}});
+}
+
+//
 // user::mitsein
 //
 

@@ -84,6 +84,8 @@ struct ircd::m::user::room
 /// Interface to the rooms for a user.
 struct ircd::m::user::rooms
 {
+	struct origins;
+
 	using closure = std::function<void (const m::room &, const string_view &)>;
 	using closure_bool = std::function<bool (const m::room &, const string_view &)>;
 
@@ -102,6 +104,23 @@ struct ircd::m::user::rooms
 	size_t count() const;
 
 	rooms(const m::user &user);
+};
+
+/// Interface to the other servers visible to a user from all their rooms
+struct ircd::m::user::rooms::origins
+{
+	using closure = m::room::origins::closure;
+	using closure_bool = m::room::origins::closure_bool;
+
+	m::user user;
+
+  public:
+	void for_each(const string_view &membership, const closure_bool &) const;
+	void for_each(const string_view &membership, const closure &) const;
+	void for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
+
+	origins(const m::user &user);
 };
 
 /// Interface to the other users visible to a user from common rooms.
