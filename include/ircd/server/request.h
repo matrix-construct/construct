@@ -19,6 +19,7 @@ namespace ircd::server
 
 	size_t size(const in &);
 	size_t size(const out &);
+	size_t size_chunks(const in &);
 
 	void submit(const hostport &, request &);
 	bool cancel(request &);
@@ -66,6 +67,14 @@ struct ircd::server::in
 	/// constructed mutable_buffer). The allocated buffer will eventually be
 	/// placed here; any existing buffer will be discarded.
 	unique_buffer<mutable_buffer> dynamic;
+
+	/// Dynamic can also be used when receiving a chunked encoded message where
+	/// the length is not initially known. In that case, we create a buffer for
+	/// each chunk and append it to this vector. When the message is finished,
+	/// a final contiguous buffer is created in dynamic and the message is
+	/// copied there; this vector is cleared and content points there instead.
+	/// An option can be set in request::opts to skip the last step.
+	std::vector<unique_buffer<mutable_buffer>> chunks;
 };
 
 /// This is a handle for being a client to another server. This handle will
@@ -119,6 +128,19 @@ struct ircd::server::request::opts
 	/// content-length value. If the remote sends more content, the behavior
 	/// is the same as if specifying an in.content buffer of this size.
 	size_t content_length_maxalloc {256_MiB};
+
+	/// Only applies when using dynamic content allocation when the message is
+	/// received with chunked encoding. By default, chunks are saved in
+	/// individual buffers and copied to a final contiguous buffer. To skip the
+	/// contiguous allocation + copy and maintain the individual buffers,
+	/// set this option to false.
+	bool contiguous_content {true};
+
+	/// Only applies when using dynamic content allocation with a chunked
+	/// encoded response. This will hint the chunk vector. Ideally it can be
+	/// set to the number of chunks expected in a response to avoid growth of
+	/// that vector ... if you somehow know what that is going to be.
+	uint16_t chunks_reserve {4};
 };
 
 inline
@@ -179,6 +201,16 @@ noexcept
 		disassociate(*this, *tag);
 
 	assert(!tag);
+}
+
+inline size_t
+ircd::server::size_chunks(const in &in)
+{
+	return std::accumulate(begin(in.chunks), end(in.chunks), size_t(0), []
+	(auto ret, const auto &buffer)
+	{
+		return ret += size(buffer);
+	});
 }
 
 inline size_t

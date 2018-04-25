@@ -2250,7 +2250,25 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// will return anything beyond this message as overrun and indicate done.
 	if(head.transfer_encoding == "chunked")
 	{
-		assert(!dynamic);
+		if(dynamic)
+		{
+			assert(req.opt);
+			req.in.chunks.reserve(req.opt->chunks_reserve);
+		}
+
+
+	///TODO: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	if(dynamic)
+	{
+		assert(req.opt);
+		const size_t alloc_size
+		{
+			40_MiB
+		};
+
+		req.in.dynamic = unique_buffer<mutable_buffer>{alloc_size};
+		req.in.content = req.in.dynamic;
+	}
 
 		const const_buffer chunk
 		{
@@ -2440,7 +2458,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	state.chunk_length = chunk.size + size(terminator);
 
 	// Now we check how much chunk was received beyond the head
-	const size_t &chunk_read
+	const auto &chunk_read
 	{
 		std::min(state.chunk_length, beyond_head_length)
 	};
@@ -2506,16 +2524,29 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 		std::min(size(buffer), remaining)
 	};
 
+	// Increment the read counters for this chunk and all chunks.
+	state.chunk_read += addl_content_read;
 	state.content_read += addl_content_read;
+	assert(state.chunk_read <= state.content_read);
+
 	if(state.content_read == state.content_length)
 	{
+		// This branch is taken at the completion of a chunk. The size
+		// all the buffers is rolled back to hide the terminator so it's
+		// either ignored or overwritten so it doesn't leak to the user.
 		static const string_view terminator{"\r\n"};
 		assert(state.content_length >= size(terminator));
 		state.content_length -= size(terminator);
 		state.content_read -= size(terminator);
 
-		if(state.chunk_length == 2)
+		assert(state.chunk_length >= 2);
+		assert(state.chunk_read == state.chunk_length);
+		state.chunk_length -= size(terminator);
+		state.chunk_read -= size(terminator);
+
+		if(state.chunk_length == 0)
 		{
+			assert(state.chunk_read == 0);
 			assert(!done);
 			done = true;
 			req.in.content = mutable_buffer{data(req.in.content), state.content_length};
@@ -2529,7 +2560,12 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 		req.in.progress(buffer, const_buffer{data(content), state.content_read});
 
 	if(state.content_read == state.content_length)
+	{
+		assert(state.chunk_read == state.chunk_length);
+		assert(state.chunk_read <= state.content_read);
 		state.chunk_length = size_t(-1);
+		state.chunk_read = 0;
+	}
 
 	return {};
 }

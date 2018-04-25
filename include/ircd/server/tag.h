@@ -30,8 +30,9 @@ struct ircd::server::tag
 	{
 		size_t written {0};
 		size_t head_read {0};          // includes head terminator
-		size_t content_read {0};
+		size_t content_read {0};       // total content read after head
 		size_t content_length {0};     // fixed; or grows monotonic for chunked enc
+		size_t chunk_read {0};         // content read after last chunk head
 		size_t chunk_length {0};       // -1 for chunk header mode
 		http::code status {(http::code)0};
 	}
