@@ -221,18 +221,15 @@ try
 			content_type
 		};
 
-	// Send it off to user first
-	const resource::response response
-	{
-		client, remote_request.in.content, content_type
-	};
-
 	const size_t written
 	{
 		write_file(room, remote_request.in.content, content_type)
 	};
 
-	return response;
+	return resource::response
+	{
+		client, remote_request.in.content, content_type
+	};
 }
 catch(const ircd::server::unavailable &e)
 {
@@ -286,7 +283,7 @@ get__thumbnail_local(client &client,
 
 	size_t sent{0};
 	const auto sink{[&client, &sent]
-	(const string_view &block)
+	(const const_buffer &block)
 	{
 		sent += client.write_all(block);
 	}};
@@ -296,7 +293,20 @@ get__thumbnail_local(client &client,
 		read_each_block(room, sink)
 	};
 
-	assert(read == file_size);
+	if(unlikely(read != file_size)) log::error
+	{
+		media_log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
+		hostname,
+		mediaid,
+		string_view{room.room_id},
+		file_size,
+		read
+	};
+
+	// Have to kill client here after failing content length expectation.
+	if(unlikely(read != file_size))
+		client.close(net::dc::RST, net::close_ignore);
+
 	assert(read == sent);
 	return response;
 }

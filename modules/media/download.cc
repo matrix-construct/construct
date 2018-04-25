@@ -127,7 +127,20 @@ get__download_local(client &client,
 		sent += write_all(*client.sock, block);
 	});
 
-	assert(sent == file_size);
+	if(unlikely(read != file_size)) log::error
+	{
+		media_log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
+		server,
+		file,
+		string_view{room.room_id},
+		file_size,
+		read
+	};
+
+	// Have to kill client here after failing content length expectation.
+	if(unlikely(read != file_size))
+		client.close(net::dc::RST, net::close_ignore);
+
 	return {};
 }
 

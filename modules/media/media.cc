@@ -16,9 +16,15 @@ IRCD_MODULE
 	"11.7 :Content respository"
 };
 
+decltype(media_log)
+media_log
+{
+	"media"
+};
+
 size_t
 write_file(const m::room &room,
-           const string_view &content,
+           const const_buffer &content,
            const string_view &content_type)
 {
 	//TODO: TXN
@@ -95,7 +101,7 @@ write_file(const m::room &room,
 
 size_t
 read_each_block(const m::room &room,
-                const std::function<void (const string_view &)> &closure)
+                const std::function<void (const const_buffer &)> &closure)
 {
 	const auto lpath
 	{
@@ -118,7 +124,7 @@ read_each_block(const m::room &room,
 	};
 
 	size_t ret{0};
-	m::room::messages it{room, 0};
+	m::room::messages it{room, 1};
 	for(; bool(it); ++it)
 	{
 		const m::event &event{*it};
@@ -140,7 +146,7 @@ read_each_block(const m::room &room,
 			pathbuf, pathlen + copy(pathpart, hash)
 		};
 
-		const string_view &block
+		const const_buffer &block
 		{
 			fs::read(path, buf)
 		};
