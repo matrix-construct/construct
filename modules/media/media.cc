@@ -16,32 +16,6 @@ IRCD_MODULE
 	"11.7 :Content respository"
 };
 
-m::room::id::buf
-file_room_id(const string_view &server,
-             const string_view &file)
-{
-	if(empty(server) || empty(file))
-		throw m::BAD_REQUEST
-		{
-			"Invalid MXC: empty server or file parameters..."
-		};
-
-	size_t len;
-	thread_local char buf[512];
-	len = strlcpy(buf, server);
-	len = strlcat(buf, "/"_sv);
-	len = strlcat(buf, file);
-	const sha256::buf hash
-	{
-		sha256{string_view{buf, len}}
-	};
-
-	return m::room::id::buf
-	{
-		b58encode(buf, hash), my_host()
-	};
-}
-
 size_t
 write_file(const m::room &room,
            const string_view &content,
@@ -177,4 +151,42 @@ read_each_block(const m::room &room,
 	}
 
 	return ret;
+}
+
+m::room::id::buf
+file_room_id(const string_view &server,
+             const string_view &file)
+{
+	m::room::id::buf ret;
+	file_room_id(ret, server, file);
+	return ret;
+}
+
+m::room::id
+file_room_id(m::room::id::buf &out,
+             const string_view &server,
+             const string_view &file)
+{
+	if(empty(server) || empty(file))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: empty server or file parameters..."
+		};
+
+	size_t len;
+	thread_local char buf[512];
+	len = strlcpy(buf, server);
+	len = strlcat(buf, "/"_sv);
+	len = strlcat(buf, file);
+	const sha256::buf hash
+	{
+		sha256{string_view{buf, len}}
+	};
+
+	out =
+	{
+		b58encode(buf, hash), my_host()
+	};
+
+	return out;
 }
