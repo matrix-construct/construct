@@ -3312,6 +3312,30 @@ console_cmd__feds__event(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__feds__resend(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id",
+	}};
+
+	const m::event::id event_id
+	{
+		param.at(0)
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	const m::vm::opts opts;
+	m::vm::accepted a{event, &opts, &opts.report};
+	m::vm::accept(a);
+	return true;
+}
+
 //
 // fed
 //
