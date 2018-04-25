@@ -138,8 +138,7 @@ C<T, Comp, A>
 ircd::tokens(const string_view &str,
              const delim &sep)
 {
-	A allocator;
-	return tokens<C, T, Comp, A>(allocator, str, sep);
+	return tokens<C, T, Comp, A>(A{}, str, sep);
 }
 
 template<template<class, class, class>
@@ -172,8 +171,7 @@ C<T, A>
 ircd::tokens(const string_view &str,
              const delim &sep)
 {
-	A allocator;
-	return tokens<C, T, A>(allocator, str, sep);
+	return tokens<C, T, A>(A{}, str, sep);
 }
 
 template<template<class, class>
