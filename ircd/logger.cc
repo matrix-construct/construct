@@ -329,7 +329,7 @@ ircd::log::log::log(const string_view &name,
 			{
 				"Logger with snote '%c' is '%s' and already exists at %p",
 				snote,
-				name,
+				other->name,
 				other
 			};
 	}
