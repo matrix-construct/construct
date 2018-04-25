@@ -627,55 +627,66 @@ console_cmd__mod__syms(opt &out, const string_view &line)
 bool
 console_cmd__mod__reload(opt &out, const string_view &line)
 {
-	const std::string name
+	const auto names
 	{
-		token(line, ' ', 0)
+		tokens<std::vector>(line, ' ')
 	};
 
-	if(!m::modules.erase(name))
+	for(auto it(names.begin()); it != names.end(); ++it)
 	{
-		out << name << " is not loaded." << std::endl;
-		return true;
+		const auto &name{*it};
+		if(m::modules.erase(std::string{name}))
+			out << name << " unloaded." << std::endl;
+		else
+			out << name << " is not loaded." << std::endl;
 	}
 
-	m::modules.emplace(name, name);
-	out << "reload " << name << std::endl;
+	for(auto it(names.rbegin()); it != names.rend(); ++it)
+	{
+		const auto &name{*it};
+		if(m::modules.emplace(std::string{name}, name).second)
+			out << name << " loaded." << std::endl;
+		else
+			out << name << " is already loaded." << std::endl;
+	}
+
 	return true;
 }
 
 bool
 console_cmd__mod__load(opt &out, const string_view &line)
 {
-	const std::string name
+	tokens(line, ' ', [&out]
+	(const string_view &name)
 	{
-		token(line, ' ', 0)
-	};
+		if(m::modules.find(name) != end(m::modules))
+		{
+			out << name << " is already loaded." << std::endl;
+			return;
+		}
 
-	if(m::modules.find(name) != end(m::modules))
-	{
-		out << name << " is already loaded." << std::endl;
-		return true;
-	}
+		m::modules.emplace(std::string{name}, name);
+		out << name << " loaded." << std::endl;
+	});
 
-	m::modules.emplace(name, name);
 	return true;
 }
 
 bool
 console_cmd__mod__unload(opt &out, const string_view &line)
 {
-	const std::string name
+	tokens(line, ' ', [&out]
+	(const string_view &name)
 	{
-		token(line, ' ', 0)
-	};
+		if(!m::modules.erase(std::string{name}))
+		{
+			out << name << " is not loaded." << std::endl;
+			return;
+		}
 
-	if(!m::modules.erase(name))
-	{
-		out << name << " is not loaded." << std::endl;
-		return true;
-	}
+		out << "unloaded " << name << std::endl;
+	});
 
-	out << "unloaded " << name << std::endl;
 	return true;
 }
 
