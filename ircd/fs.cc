@@ -116,7 +116,7 @@ ircd::fs::stdin::readline(const mutable_buffer &buf)
 
 namespace ircd::fs
 {
-	string_view read__std(const string_view &path, const mutable_buffer &, const read_opts &);
+	const_buffer read__std(const string_view &path, const mutable_buffer &, const read_opts &);
 	std::string read__std(const string_view &path, const read_opts &);
 }
 
@@ -148,7 +148,7 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::read(const string_view &path,
                const mutable_buffer &buf,
                const read_opts &opts)
@@ -184,7 +184,7 @@ ircd::fs::read__std(const string_view &path,
 	return std::string{b, e};
 }
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::read__std(const string_view &path,
                     const mutable_buffer &buf,
                     const read_opts &opts)
@@ -206,14 +206,14 @@ ircd::fs::read__std(const string_view &path,
 
 namespace ircd::fs
 {
-	string_view write__std(const string_view &path, const const_buffer &, const write_opts &);
+	const_buffer write__std(const string_view &path, const const_buffer &, const write_opts &);
 }
 
 ircd::fs::write_opts
 const ircd::fs::write_opts_default
 {};
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::write(const string_view &path,
                 const const_buffer &buf,
                 const write_opts &opts)
@@ -234,7 +234,7 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::write__std(const string_view &path,
                      const const_buffer &buf,
                      const write_opts &opts)

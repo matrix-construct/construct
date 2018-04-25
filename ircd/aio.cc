@@ -324,7 +324,7 @@ ircd::fs::read__aio(const string_view &path,
 	});
 }
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::read__aio(const string_view &path,
                     const mutable_buffer &buf,
                     const read_opts &opts)
@@ -357,7 +357,7 @@ ircd::fs::read__aio(const string_view &path,
 		request()
 	};
 
-	const string_view view
+	const const_buffer view
 	{
 		reinterpret_cast<const char *>(data(buf)), bytes
 	};
@@ -391,7 +391,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 // ircd::fs interface
 //
 
-ircd::string_view
+ircd::const_buffer
 ircd::fs::write__aio(const string_view &path,
                      const const_buffer &buf,
                      const write_opts &opts)
@@ -432,7 +432,7 @@ ircd::fs::write__aio(const string_view &path,
 		request()
 	};
 
-	const string_view view
+	const const_buffer view
 	{
 		data(buf), bytes
 	};

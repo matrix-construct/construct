@@ -16,13 +16,13 @@ namespace ircd::fs
 	struct write_opts extern const write_opts_default;
 
 	// Yields ircd::ctx for write from buffer; returns view of written portion
-	string_view write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
+	const_buffer write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
 	// Yields ircd::ctx to overwrite (trunc) file from buffer; returns view of written portion
-	string_view overwrite(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
+	const_buffer overwrite(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
 	// Yields ircd::ctx to append to file from buffer; returns view of written portion
-	string_view append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
+	const_buffer append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 }
 
 /// Options for a write operation
@@ -52,7 +52,7 @@ ircd::fs::write_opts::write_opts(const off_t &offset)
 :offset{offset}
 {}
 
-inline ircd::string_view
+inline ircd::const_buffer
 ircd::fs::overwrite(const string_view &path,
                     const const_buffer &buf,
                     const write_opts &opts_)
@@ -62,7 +62,7 @@ ircd::fs::overwrite(const string_view &path,
 	return write(path, buf, opts);
 }
 
-inline ircd::string_view
+inline ircd::const_buffer
 ircd::fs::append(const string_view &path,
                  const const_buffer &buf,
                  const write_opts &opts_)
