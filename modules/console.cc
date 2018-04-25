@@ -4304,3 +4304,46 @@ console_cmd__fed__version(opt &out, const string_view &line)
 	out << string_view{response} << std::endl;
 	return true;
 }
+
+//
+// file
+//
+
+bool
+console_cmd__file__room(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server|amalgam", "file"
+	}};
+
+	auto server
+	{
+		param.at(0)
+	};
+
+	auto file
+	{
+		param[1]
+	};
+
+	if(empty(file))
+	{
+		const auto s(split(server, '/'));
+		server = s.first;
+		file = s.second;
+	}
+
+	using prototype = m::room::id (m::room::id::buf &,
+	                               const string_view &server,
+	                               const string_view &file);
+
+	static m::import<prototype> file_room_id
+	{
+		"media_media", "file_room_id"
+	};
+
+	m::room::id::buf buf;
+	out << file_room_id(buf, server, file) << std::endl;
+	return true;
+}
