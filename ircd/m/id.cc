@@ -259,7 +259,12 @@ const try
 
 	string_view out;
 	const char *start{id.begin()};
-	const bool res(qi::parse(start, id.end(), view_mxid, out));
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	const bool res{qi::parse(start, stop, view_mxid, out)};
 	assert(res == true);
 	return out;
 }
@@ -279,7 +284,12 @@ const try
 
 	string_view out;
 	const char *start{id.begin()};
-	const bool res(qi::parse(start, id.end(), view_mxid, out));
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	const bool res(qi::parse(start, stop, view_mxid, out));
 	assert(res == true);
 	return out;
 }
@@ -301,7 +311,12 @@ ircd::m::id::validator::operator()(const string_view &id)
 const try
 {
 	const char *start{id.begin()};
-	const bool ret(qi::parse(start, id.end(), eps > mxid));
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	const bool ret(qi::parse(start, stop, eps > mxid));
 	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -326,7 +341,12 @@ const try
 	};
 
 	const char *start{id.begin()};
-	const bool ret(qi::parse(start, id.end(), valid_mxid));
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	const bool ret(qi::parse(start, stop, valid_mxid));
 	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -649,7 +669,11 @@ noexcept try
 	};
 
 	const char *start{begin(id)};
-	const char *const &stop{end(id)};
+	const char *const &stop
+	{
+		std::min(end(id), start + id::MAX_SIZE)
+	};
+
 	return id.at(0) == sigil && qi::parse(start, stop, test) && start == stop;
 }
 catch(...)
@@ -668,7 +692,12 @@ noexcept try
 	};
 
 	const char *start{begin(id)};
-	return id.at(0) == sigil && qi::parse(start, end(id), test);
+	const char *const &stop
+	{
+		std::min(end(id), start + id::MAX_SIZE)
+	};
+
+	return id.at(0) == sigil && qi::parse(start, stop, test);
 }
 catch(...)
 {

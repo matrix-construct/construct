@@ -49,7 +49,7 @@ struct ircd::m::id
 	struct device;
 
 	enum sigil :char;
-	template<class T, size_t SIZE = 256> struct buf;
+	template<class T> struct buf;
 	template<class it> struct input;
 	template<class it> struct output;
 	struct parser;
@@ -59,6 +59,11 @@ struct ircd::m::id
 	struct parser static const parser;
 	struct printer static const printer;
 	struct validator static const validator;
+
+	static constexpr const size_t MAX_SIZE
+	{
+		255
+	};
 
   public:
 	// Extract elements
@@ -213,21 +218,20 @@ namespace ircd::m
 
 /// ID object backed by an internal buffer of default worst-case size.
 ///
-template<class T,
-         size_t MAX>
+template<class T>
 struct ircd::m::id::buf
 :T
 {
 	static constexpr const size_t SIZE
 	{
-		MAX
+		m::id::MAX_SIZE
 	};
 
   private:
-	fixed_buffer<mutable_buffer, SIZE> b;
+	fixed_buffer<mutable_buffer, SIZE + 1> b;
 
   public:
-	operator const fixed_buffer<mutable_buffer, SIZE> &() const
+	operator const fixed_buffer<mutable_buffer, SIZE + 1> &() const
 	{
 		return b;
 	}
