@@ -243,7 +243,7 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
                                   const string_view &new_root)
 {
 	const ctx::critical_assertion ca;
-	thread_local char buf[256 + 1 + 8 + 8];
+	thread_local char buf[ROOM_EVENTS_KEY_MAX_SIZE];
 	const string_view &key
 	{
 		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), opts.idx)
@@ -274,7 +274,7 @@ ircd::m::dbs::_index__room_joined(db::txn &txn,
 		return;
 
 	const ctx::critical_assertion ca;
-	thread_local char buf[512];
+	thread_local char buf[ROOM_JOINED_KEY_MAX_SIZE];
 	const string_view &key
 	{
 		room_joined_key(buf, at<"room_id"_>(event), at<"origin"_>(event), at<"state_key"_>(event))
@@ -328,7 +328,7 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 		return;
 
 	const ctx::critical_assertion ca;
-	thread_local char buf[768];
+	thread_local char buf[ROOM_STATE_KEY_MAX_SIZE];
 	const string_view &key
 	{
 		room_state_key(buf, at<"room_id"_>(event), at<"type"_>(event), at<"state_key"_>(event))
@@ -443,7 +443,7 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
                          const event::idx &event_idx,
                          const uint64_t &depth)
 {
-	char keybuf[256 + 1 + 8 + 8]; const auto key
+	char keybuf[ROOM_EVENTS_KEY_MAX_SIZE]; const auto key
 	{
 		room_events_key(keybuf, room_id, depth, event_idx)
 	};

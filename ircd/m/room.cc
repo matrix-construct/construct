@@ -474,7 +474,7 @@ ircd::m::room::messages::seek(const event::id &event_id)
 		depth = byte_view<uint64_t>(value);
 	});
 
-	char buf[m::state::KEY_MAX_SZ];
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 	const auto seek_key
 	{
 		dbs::room_events_key(buf, room.room_id, depth, event_idx)
@@ -487,7 +487,7 @@ ircd::m::room::messages::seek(const event::id &event_id)
 bool
 ircd::m::room::messages::seek(const uint64_t &depth)
 {
-	char buf[m::state::KEY_MAX_SZ];
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 	const auto seek_key
 	{
 		dbs::room_events_key(buf, room.room_id, depth)
@@ -664,8 +664,8 @@ const try
 			closure(event::fetch::index(unquote(event_id)));
 		});
 
-	char key[768];
 	auto &column{dbs::room_state};
+	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	column(dbs::room_state_key(key, room_id, type, state_key), [&closure]
 	(const string_view &value)
 	{
@@ -738,8 +738,8 @@ const
 			return closure(event::fetch::index(unquote(event_id), std::nothrow));
 		});
 
-	char key[768];
 	auto &column{dbs::room_state};
+	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	return column(dbs::room_state_key(key, room_id, type, state_key), std::nothrow, [&closure]
 	(const string_view &value)
 	{
@@ -767,8 +767,8 @@ const
 		(const string_view &event_id)
 		{});
 
-	char key[768];
 	auto &column{dbs::room_state};
+	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	return db::has(column, dbs::room_state_key(key, room_id, type, state_key));
 }
 
@@ -794,7 +794,7 @@ const
 	if(root_id)
 		return m::state::count(root_id, type);
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type)
@@ -926,7 +926,7 @@ const
 			return closure(event::fetch::index(unquote(event_id), std::nothrow));
 		});
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type)
@@ -957,7 +957,7 @@ const
 			return closure(unquote(key.at(1)));
 		});
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type)
@@ -1040,7 +1040,7 @@ const
 			return closure(event::fetch::index(unquote(event_id), std::nothrow));
 		});
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
@@ -1150,7 +1150,7 @@ const
 			closure(event::fetch::index(unquote(event_id), std::nothrow));
 		});
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type)
@@ -1177,7 +1177,7 @@ const
 			closure(unquote(key.at(1)));
 		});
 
-	char keybuf[768];
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
 		dbs::room_state_key(keybuf, room_id, type)
@@ -1393,7 +1393,7 @@ const
 		dbs::room_joined
 	};
 
-	char querybuf[512];
+	char querybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
 	const auto query
 	{
 		dbs::room_joined_key(querybuf, room.room_id, origin)
