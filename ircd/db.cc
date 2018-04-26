@@ -597,6 +597,13 @@ try
 	dbs, dbs.emplace(string_view{this->name}, this).first
 }
 {
+	throw_on_error
+	{
+		#ifdef RB_DEBUG
+		d->VerifyChecksum() //TODO: worth doing this for real here?
+		#endif
+	};
+
 	log.info("'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
 	         this->name,
 	         path,
