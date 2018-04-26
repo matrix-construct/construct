@@ -559,31 +559,28 @@ try
 			rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
 		};
 
-	try // Assign the column index numbers given by db
+	std::unique_ptr<rocksdb::DB> ret
 	{
-		for(const auto &handle : handles)
-		{
-			this->columns.at(handle->GetID())->handle.reset(handle);
-			this->column_index.at(handle->GetName()) = handle->GetID();
-		}
+		ptr
+	};
 
-		for(size_t i(0); i < this->columns.size(); ++i)
-			if(db::id(*this->columns[i]) != i)
-				throw error
-				{
-					"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
-					i,
-					db::id(*this->columns[i]),
-					db::name(*this->columns[i])
-				};
-	}
-	catch(const std::exception &e)
+	for(const auto &handle : handles)
 	{
-		delete ptr;
-		throw;
+		this->columns.at(handle->GetID())->handle.reset(handle);
+		this->column_index.at(handle->GetName()) = handle->GetID();
 	}
 
-	return std::unique_ptr<rocksdb::DB>(ptr);
+	for(size_t i(0); i < this->columns.size(); ++i)
+		if(db::id(*this->columns[i]) != i)
+			throw error
+			{
+				"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
+				i,
+				db::id(*this->columns[i]),
+				db::name(*this->columns[i])
+			};
+
+	return ret;
 }()}
 ,checkpoint{[this]
 {
