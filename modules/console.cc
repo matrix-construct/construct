@@ -570,6 +570,39 @@ console_cmd__conf__get(opt &out, const string_view &line)
 }
 
 //
+// hook
+//
+
+bool
+console_cmd__hook__list(opt &out, const string_view &line)
+{
+	for(const auto &p : m::hook::list)
+	{
+		const auto &site(*p.second);
+		out << std::setw(24) << std::left << p.first
+		    << std::endl;
+
+		out << string_view{site.feature}
+		    << std::endl;
+
+		for(const auto &hookp : site.hooks)
+			out << (hookp->registered? '+' : '-')
+			    << " " << string_view{hookp->feature}
+			    << std::endl;
+
+		out << std::endl;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__hook(opt &out, const string_view &line)
+{
+	return console_cmd__hook__list(out, line);
+}
+
+//
 // mod
 //
 
