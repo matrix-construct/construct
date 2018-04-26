@@ -2404,7 +2404,8 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 
 ircd::const_buffer
 ircd::server::tag::read_chunk_head(const const_buffer &buffer,
-                                   bool &done)
+                                   bool &done,
+                                   const uint8_t recursion_level)
 {
 	assert(request);
 	auto &req{*request};
@@ -2509,7 +2510,14 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	if(done)
 		return overrun;
 
-	return read_chunk_head(overrun, done);        // gobble gobbles
+	// Prevent stack overflow from lots of tiny chunks nagled together.
+	if(unlikely(recursion_level >= 32))
+		throw error
+		{
+			"Chunking recursion limit exceeded"
+		};
+
+	return read_chunk_head(overrun, done, recursion_level + 1);
 }
 
 ircd::const_buffer
@@ -2580,7 +2588,8 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 
 ircd::const_buffer
 ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
-                                           bool &done)
+                                           bool &done,
+                                           const uint8_t recursion_level)
 {
 	assert(request);
 	auto &req{*request};
@@ -2681,7 +2690,14 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	if(done)
 		return overrun;
 
-	return read_chunk_dynamic_head(overrun, done);        // gobble gobbles
+	// Prevent stack overflow from lots of tiny chunks nagled together.
+	if(unlikely(recursion_level >= 32))
+		throw error
+		{
+			"Chunking recursion limit exceeded"
+		};
+
+	return read_chunk_dynamic_head(overrun, done, recursion_level + 1);
 }
 
 ircd::const_buffer

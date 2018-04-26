@@ -61,9 +61,9 @@ struct ircd::server::tag
 	mutable_buffer make_read_head_buffer() const;
 
 	const_buffer read_chunk_dynamic_content(const const_buffer &, bool &done);
-	const_buffer read_chunk_dynamic_head(const const_buffer &, bool &done);
+	const_buffer read_chunk_dynamic_head(const const_buffer &, bool &done, const uint8_t = 0);
 	const_buffer read_chunk_content(const const_buffer &, bool &done);
-	const_buffer read_chunk_head(const const_buffer &, bool &done);
+	const_buffer read_chunk_head(const const_buffer &, bool &done, const uint8_t = 0);
 	const_buffer read_content(const const_buffer &, bool &done);
 	const_buffer read_head(const const_buffer &, bool &done, link &);
 
