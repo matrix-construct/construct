@@ -281,32 +281,32 @@ get__thumbnail_local(client &client,
 		client, http::OK, content_type, file_size
 	};
 
-	size_t sent{0};
-	const auto sink{[&client, &sent]
+	size_t sent_size{0};
+	const auto sink{[&client, &sent_size]
 	(const const_buffer &block)
 	{
-		sent += client.write_all(block);
+		sent_size += client.write_all(block);
 	}};
 
-	const size_t read
+	const size_t read_size
 	{
 		read_each_block(room, sink)
 	};
 
-	if(unlikely(read != file_size)) log::error
+	if(unlikely(read_size != file_size)) log::error
 	{
 		media_log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
 		hostname,
 		mediaid,
 		string_view{room.room_id},
 		file_size,
-		read
+		read_size
 	};
 
 	// Have to kill client here after failing content length expectation.
-	if(unlikely(read != file_size))
+	if(unlikely(read_size != file_size))
 		client.close(net::dc::RST, net::close_ignore);
 
-	assert(read == sent);
+	assert(read_size == sent_size);
 	return response;
 }

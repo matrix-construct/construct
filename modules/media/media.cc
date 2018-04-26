@@ -88,14 +88,12 @@ write_file(const m::room &room,
 			pathbuf, pathlen + copy(pathpart, hash)
 		};
 
-		if(!fs::exists(path))
-			wrote += size(fs::write(path, block));
-
+		wrote += size(fs::overwrite(path, block));
 		off += blksz;
 	}
 
 	assert(off == size(content));
-	assert(wrote <= off);
+	assert(wrote == off);
 	return wrote;
 }
 
@@ -149,6 +147,16 @@ read_each_block(const m::room &room,
 		const const_buffer &block
 		{
 			fs::read(path, buf)
+		};
+
+		if(unlikely(size(block) != blksz)) throw error
+		{
+			"File [%s] block [%s] (%s) blksz %zu != %zu",
+			string_view{room.room_id},
+			string_view{at<"event_id"_>(event)},
+			path,
+			blksz,
+			size(block)
 		};
 
 		assert(size(block) == blksz);
