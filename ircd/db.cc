@@ -323,8 +323,16 @@ ircd::db::shared_from(const database::column &column)
 //
 namespace ircd::db
 {
-	database::description default_description;
+	extern const database::description default_description;
 }
+
+decltype(ircd::db::default_description)
+ircd::db::default_description
+{
+	/// Requirement of RocksDB going back to LevelDB. This column must
+	/// always exist in all descriptions and probably should be at idx[0].
+	{ "default" }
+};
 
 ircd::db::database::database(std::string name,
                              std::string optstr)
