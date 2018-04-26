@@ -2540,6 +2540,16 @@ catch(const std::exception &e)
 bool
 ircd::m::hook::site::add(hook &hook)
 {
+	if(!hooks.emplace(&hook).second)
+	{
+		log::warning
+		{
+			"Hook %p already registered to site %s", &hook, name()
+		};
+
+		return false;
+	}
+
 	if(json::get<"origin"_>(hook.matching))
 		origin.emplace(at<"origin"_>(hook.matching), &hook);
 
@@ -2589,6 +2599,12 @@ ircd::m::hook::site::del(hook &hook)
 	if(json::get<"type"_>(hook.matching))
 		unmap(type, at<"type"_>(hook.matching));
 
+	const auto erased
+	{
+		hooks.erase(&hook)
+	};
+
+	assert(erased);
 	--count;
 	return true;
 }

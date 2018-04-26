@@ -60,6 +60,7 @@ struct ircd::m::hook::site
 	std::multimap<string_view, hook *> sender;
 	std::multimap<string_view, hook *> state_key;
 	std::multimap<string_view, hook *> type;
+	std::set<hook *> hooks;
 
 	friend class hook;
 	bool add(hook &);
