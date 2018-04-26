@@ -237,16 +237,18 @@ put__profile(client &client,
 		request.user_id
 	};
 
-	user.profile(std::nothrow, param, [&value]
+	bool modified{true};
+	user.profile(std::nothrow, param, [&value, &modified]
 	(const string_view &existing)
 	{
-		if(existing == value)
-			throw m::error
-			{
-				http::NOT_MODIFIED, "M_NOT_MODIFIED",
-				"Profile key '%s' already that value"
-			};
+		modified = existing != value;
 	});
+
+	if(!modified)
+		return resource::response
+		{
+			client, http::OK
+		};
 
 	const auto eid
 	{
