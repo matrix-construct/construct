@@ -2873,6 +2873,48 @@ console_cmd__room__join(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__create(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"room_id", "[creator]", "[type]", "[parent]"
+		}
+	};
+
+	const m::room::id room_id
+	{
+		param.at(0)
+	};
+
+	const m::user::id creator
+	{
+		param.at(1, m::me.user_id)
+	};
+
+	const string_view type
+	{
+		param[2]
+	};
+
+	const string_view &parent
+	{
+		param[3]
+	};
+
+	const m::room room
+	{
+		parent?
+			m::create(room_id, creator, parent, type):
+			m::create(room_id, creator, type)
+	};
+
+	out << room.room_id << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__id(opt &out, const string_view &id)
 {
 	if(m::has_sigil(id)) switch(m::sigil(id))
