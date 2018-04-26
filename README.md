@@ -14,15 +14,11 @@ are now filling the vacuum of innovation. In 2014 a new approach was proposed to
 real-time communication for free and open source software: a *federation of networks* known as
 *the matrix*.
 
-<h3 align="left">
-	IRCd has been rewritten for the global federation of networks <br />
-</h3>
+<h4 align="right">
+	IRCd has been rewritten for the global federation of networks &nbsp;&nbsp&nbsp;
+</h4>
 
 <img align="right" src="https://i.imgur.com/z8ENNrA.png" />
-
-Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
-for its day to aid the virility of implementations. A vibrant and growing ecosystem
-[already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
@@ -30,6 +26,10 @@ the internet. This mission strives to make the software easy to understand, modi
 and extend. It remains true to its roots with its modular design and having minimal
 requirements. Even though all of the old code has been rewritten, the same spirit and
 _philosophy of its predecessors_ is still obvious throughout.
+
+Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
+for its day to aid the virility of implementations. A vibrant and growing ecosystem
+[already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
 ## Installation
 
@@ -40,7 +40,7 @@ cluster operating in synchrony over a network.
 
 #### Dependencies
 
-- **Boost** (1.61 or later)
+- **Boost** (1.66 or later)
 Replacing libratbox with the rich and actively developed libraries.
 
 - **RocksDB** (based on LevelDB):
