@@ -3244,17 +3244,25 @@ console_cmd__feds__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id"
+		"event_id", "[room_id]"
 	}};
-
-	const auto room
-	{
-		m::room_id(param.at(0))
-	};
 
 	const m::event::id event_id
 	{
-		param.at(1)
+		param.at(0)
+	};
+
+	const m::room::id::buf room_id
+	{
+		param[1]? m::room_id(param.at(1)) : [&event_id]
+		{
+			const m::event::fetch event
+			{
+				event_id
+			};
+
+			return m::room::id::buf{at<"room_id"_>(event)};
+		}()
 	};
 
 	struct req
@@ -3269,7 +3277,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 	};
 
 	std::list<req> reqs;
-	const m::room::origins origins{room};
+	const m::room::origins origins{room_id};
 	origins.for_each([&out, &event_id, &reqs]
 	(const string_view &origin)
 	{
@@ -3886,19 +3894,24 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 bool
 console_cmd__fed__event(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"event_id", "remote", "[op]"
+	}};
+
 	const m::event::id &event_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
-	const net::hostport remote
+	const net::hostport &remote
 	{
-		token(line, ' ', 1, event_id.host())
+		param.at(1, event_id.host())
 	};
 
 	const string_view op
 	{
-		token(line, ' ', 2, {})
+		param[2]
 	};
 
 	m::v1::event::opts opts;
