@@ -359,7 +359,7 @@ ircd::m::self::init::init(const json::object &config)
 	ircd_room_id = {"ircd", origin_name};
 	m::my_room = {ircd_room_id};
 
-	ircd_node_id = {"ircd", origin_name};
+	ircd_node_id = {"", origin_name};
 	m::my_node = {ircd_node_id};
 
 	if(origin_name == "localhost")
