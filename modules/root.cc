@@ -51,15 +51,20 @@ try
 	if(it == end(files))
 		throw http::error{http::NOT_FOUND};
 
-	const unique_buffer<mutable_buffer> chunk_buffer
+	const unique_buffer<mutable_buffer> buffer
 	{
-		48_KiB
+		24_KiB
 	};
 
-	const auto &filename{it->second};
-	const string_view first_chunk
+	const auto &file_name{it->second};
+	const size_t file_size
 	{
-		fs::read(filename, chunk_buffer)
+		fs::size(file_name)
+	};
+
+	string_view chunk
+	{
+		fs::read(file_name, buffer)
 	};
 
 	char content_type_buf[64];
@@ -67,52 +72,36 @@ try
 	{
 		client,
 		http::OK,
-		content_type(content_type_buf, filename, first_chunk),
-		size(first_chunk) < size(chunk_buffer)? size(first_chunk) : -1
+		content_type(content_type_buf, file_name, chunk),
+		file_size
 	};
 
-	if(size(first_chunk) < size(chunk_buffer))
+	const unwind::exceptional terminate{[&client]
 	{
-		client.write_all(first_chunk);
-		return {};
-	}
-
-	char headbuf[64];
-	const unwind::exceptional terminate{[&headbuf, &client]
-	{
-		//TODO: find out if it's not a client problem so we don't have to eject
 		client.close(net::dc::RST, net::close_ignore);
 	}};
 
-	client.write_all(http::writechunk(headbuf, size(first_chunk)));
-	client.write_all(first_chunk);
-	client.write_all("\r\n"_sv);
-
-	for(size_t offset(size(first_chunk));;)
+	size_t written
 	{
-		const string_view chunk
-		{
-			fs::read(filename, chunk_buffer, offset)
-		};
+		client.write_all(chunk)
+	};
 
-		if(empty(chunk))
-			break;
+	size_t offset
+	{
+		size(chunk)
+	};
 
-		const string_view head
-		{
-			http::writechunk(headbuf, size(chunk))
-		};
-
-		client.write_all(head);
-		client.write_all(chunk);
-		client.write_all("\r\n"_sv);
+	while(offset < file_size)
+	{
+		chunk = fs::read(file_name, buffer, offset);
+		assert(!empty(chunk));
+		written += client.write_all(chunk);
 		offset += size(chunk);
-		if(size(chunk) < size(chunk_buffer))
-			break;
+		assert(written == offset);
 	}
 
-	client.write_all(http::writechunk(headbuf, 0));
-	client.write_all("\r\n"_sv);
+	assert(offset == file_size);
+	assert(written == offset);
 	return {};
 }
 catch(const fs::filesystem_error &e)
