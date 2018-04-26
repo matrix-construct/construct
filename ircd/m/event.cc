@@ -165,7 +165,7 @@ ircd::m::pretty(const event::prev &prev)
 {
 	std::string ret;
 	std::stringstream s;
-	pubsetbuf(s, ret, 2048);
+	pubsetbuf(s, ret, 4096);
 
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
@@ -251,7 +251,7 @@ ircd::m::pretty(const event &event)
 {
 	std::string ret;
 	std::stringstream s;
-	pubsetbuf(s, ret, 2048);
+	pubsetbuf(s, ret, 4096);
 
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
