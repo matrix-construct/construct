@@ -22,5 +22,29 @@ m::room::id::buf
 file_room_id(const string_view &server,
              const string_view &file);
 
-size_t read_each_block(const m::room &, const std::function<void (const const_buffer &)> &);
-size_t write_file(const m::room &room, const const_buffer &content, const string_view &content_type);
+extern "C" size_t
+read_each_block(const m::room &,
+                const std::function<void (const const_buffer &)> &);
+
+extern "C" size_t
+write_file(const m::room &room,
+           const const_buffer &content,
+           const string_view &content_type);
+
+std::pair<http::response::head, unique_buffer<mutable_buffer>>
+download(const mutable_buffer &head_buf,
+         const string_view &server,
+         const string_view &mediaid,
+         net::hostport remote = {},
+         server::request::opts *const opts = nullptr);
+
+m::room
+download(const string_view &server,
+         const string_view &mediaid,
+         const net::hostport &remote,
+         const m::room::id &room_id);
+
+extern "C" m::room::id::buf
+download(const string_view &server,
+         const string_view &mediaid,
+         const net::hostport &remote = {});

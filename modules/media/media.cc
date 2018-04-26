@@ -22,6 +22,179 @@ media_log
 	"media"
 };
 
+std::set<m::room::id>
+downloading;
+
+ctx::dock
+downloading_dock;
+
+m::room::id::buf
+download(const string_view &server,
+         const string_view &mediaid,
+         const net::hostport &remote)
+{
+	const m::room::id::buf room_id
+	{
+		file_room_id(server, mediaid)
+	};
+
+	download(server, mediaid, remote, room_id);
+	return room_id;
+}
+
+m::room
+download(const string_view &server,
+         const string_view &mediaid,
+         const net::hostport &remote,
+         const m::room::id &room_id)
+try
+{
+	auto iit
+	{
+		downloading.emplace(room_id)
+	};
+
+	if(!iit.second)
+	{
+		do
+		{
+			downloading_dock.wait();
+		}
+		while(downloading.count(room_id));
+		return room_id;
+	}
+
+	const unwind uw{[&iit]
+	{
+		downloading.erase(iit.first);
+		downloading_dock.notify_all();
+	}};
+
+	if(exists(m::room{room_id}))
+		return room_id;
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	const auto pair
+	{
+		download(buf, server, mediaid, remote)
+	};
+
+	const auto &head
+	{
+		pair.first
+	};
+
+	const const_buffer &content
+	{
+		pair.second
+	};
+
+	char mime_type_buf[64];
+	const auto &content_type
+	{
+		magic::mime(mime_type_buf, content)
+	};
+
+	if(content_type != head.content_type) log::warning
+	{
+		media_log, "Server %s claims thumbnail %s is '%s' but we think it is '%s'",
+		string(remote),
+		mediaid,
+		head.content_type,
+		content_type
+	};
+
+	m::vm::opts::commit vmopts;
+	vmopts.history = false;
+	const m::room room
+	{
+		room_id, &vmopts
+	};
+
+	create(room, m::me.user_id, "file");
+
+	const size_t written
+	{
+		write_file(room, content, content_type)
+	};
+
+	return room;
+}
+catch(const ircd::server::unavailable &e)
+{
+	throw http::error
+	{
+		http::BAD_GATEWAY, e.what()
+	};
+}
+
+std::pair<http::response::head, unique_buffer<mutable_buffer>>
+download(const mutable_buffer &head_buf,
+         const string_view &server,
+         const string_view &mediaid,
+         net::hostport remote,
+         server::request::opts *const opts)
+{
+	if(!remote)
+		remote = server;
+
+	window_buffer wb{head_buf};
+	thread_local char uri[4_KiB];
+	http::request
+	{
+		wb, host(remote), "GET", fmt::sprintf
+		{
+			uri, "/_matrix/media/r0/download/%s/%s", server, mediaid
+		}
+	};
+
+	const const_buffer out_head
+	{
+		wb.completed()
+	};
+
+	// Remaining space in buffer is used for received head
+	const mutable_buffer in_head
+	{
+		data(head_buf) + size(out_head), size(head_buf) - size(out_head)
+	};
+
+	//TODO: --- This should use the progress callback to build blocks
+	// Null content buffer will cause dynamic allocation internally.
+	const mutable_buffer in_content{};
+	server::request remote_request
+	{
+		remote, { out_head }, { in_head, in_content }, opts
+	};
+
+	//TODO: conf
+	if(!remote_request.wait(seconds(10), std::nothrow))
+		throw http::error
+		{
+			http::REQUEST_TIMEOUT
+		};
+
+	const auto &code
+	{
+		remote_request.get()
+	};
+
+	if(code != http::OK)
+		return {};
+
+	parse::buffer pb{remote_request.in.head};
+	parse::capstan pc{pb};
+	pc.read += size(remote_request.in.head);
+	return
+	{
+		http::response::head{pc}, std::move(remote_request.in.dynamic)
+	};
+}
+
 size_t
 write_file(const m::room &room,
            const const_buffer &content,

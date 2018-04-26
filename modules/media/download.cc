@@ -59,23 +59,10 @@ get__download(client &client,
 
 	const m::room::id::buf room_id
 	{
-		file_room_id(server, file)
+		download(server, file)
 	};
 
-	m::vm::opts::commit vmopts;
-	vmopts.history = false;
-	const m::room room
-	{
-		room_id, &vmopts
-	};
-
-	if(m::exists(room))
-		return get__download_local(client, request, server, file, room);
-
-	throw m::NOT_FOUND
-	{
-		"Media not found"
-	};
+	return get__download_local(client, request, server, file, room_id);
 }
 
 static resource::response
