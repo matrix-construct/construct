@@ -114,7 +114,12 @@ try
 	});
 
 	console_init();
-	std::cout << console_message << generic_message;
+	static std::once_flag seen_message;
+	std::call_once(seen_message, []
+	{
+		std::cout << console_message << generic_message;
+	});
+
 	while(1)
 	{
 		std::cout << "\n> " << std::flush;
