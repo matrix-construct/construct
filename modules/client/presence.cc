@@ -364,3 +364,35 @@ commit__m_presence(const m::presence &content)
 	//TODO: ABA
 	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
 }
+
+static void
+handle_my_presence_changed(const m::event &event)
+{
+	if(!my(event))
+		return;
+
+	const m::user::id &user_id
+	{
+		json::get<"sender"_>(event)
+	};
+
+	if(!my(user_id))
+		return;
+
+	// The event has to be an ircd.presence in the user's room, not just a
+	// random ircd.presence typed event in some other room...
+	const m::user::room user_room{user_id};
+	if(json::get<"room_id"_>(event) != user_room.room_id)
+		return;
+
+}
+
+const m::hook
+my_presence_changed
+{
+	handle_my_presence_changed,
+	{
+		{ "_site",  "vm.notify"      },
+		{ "type",   "ircd.presence"  },
+	}
+};
