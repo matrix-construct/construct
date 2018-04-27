@@ -813,6 +813,17 @@ void
 ircd::m::presence::get(const user &user,
                        const closure &closure)
 {
+	get(user, [&closure]
+	(const m::event &event, const json::object &content)
+	{
+		closure(content);
+	});
+}
+
+void
+ircd::m::presence::get(const user &user,
+                       const event_closure &closure)
+{
 	if(!get(std::nothrow, user, closure))
 		throw m::NOT_FOUND
 		{
@@ -823,16 +834,28 @@ ircd::m::presence::get(const user &user,
 bool
 ircd::m::presence::get(std::nothrow_t,
                        const user &user,
-                       const closure &lambda)
+                       const closure &closure)
 {
-	using prototype = bool (std::nothrow_t, const m::user &, const closure &);
+	return get(std::nothrow, user, [&closure]
+	(const m::event &event, const json::object &content)
+	{
+		closure(content);
+	});
+}
+
+bool
+ircd::m::presence::get(std::nothrow_t,
+                       const user &user,
+                       const event_closure &closure)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const event_closure &);
 
 	static import<prototype> function
 	{
 		"client_presence", "m_presence_get"
 	};
 
-	return function(std::nothrow, user, lambda);
+	return function(std::nothrow, user, closure);
 }
 
 bool

@@ -143,22 +143,17 @@ get__presence_list(client &client,
 extern "C" bool
 m_presence_get(const std::nothrow_t,
                const m::user &user,
-               const m::presence::closure &closure)
+               const m::presence::event_closure &closure)
 {
 	const m::user::room user_room
 	{
 		user
 	};
 
-	return user_room.get(std::nothrow, "m.presence", "", [&closure]
+	return user_room.get(std::nothrow, "ircd.presence", "", [&closure]
 	(const m::event &event)
 	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
-
-		closure(content);
+		closure(event, json::get<"content"_>(event));
 	});
 }
 
@@ -367,5 +362,5 @@ commit__m_presence(const m::presence &content)
 	};
 
 	//TODO: ABA
-	return send(user_room, user.user_id, "m.presence", "", json::strung{content});
+	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
 }
