@@ -510,6 +510,14 @@ ircd::m::room::messages::event_id()
 	return ret;
 }
 
+ircd::string_view
+ircd::m::room::messages::state_root()
+const
+{
+	assert(bool(*this));
+	return it->second;
+}
+
 const ircd::m::event::idx &
 ircd::m::room::messages::event_idx()
 {

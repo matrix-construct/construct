@@ -179,6 +179,7 @@ struct ircd::m::room::messages
 
 	event::id::buf event_id();         // deprecated; will remove
 	const event::idx &event_idx();
+	string_view state_root() const;
 
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
