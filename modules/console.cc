@@ -2648,14 +2648,19 @@ console_cmd__room__state(opt &out, const string_view &line)
 bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "{event_filter_json}"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
-	const string_view &type
+	const m::event_filter filter
 	{
-		token_count(line, ' ') > 1? token(line, ' ', 1) : string_view{}
+		param[1]
 	};
 
 	const m::room room
@@ -2663,16 +2668,20 @@ console_cmd__room__count(opt &out, const string_view &line)
 		room_id
 	};
 
-	const m::room::state state
+	auto limit
 	{
-		room
+		json::get<"limit"_>(filter)?: -1
 	};
 
-	if(type)
-		out << state.count(type) << std::endl;
-	else
-		out << state.count() << std::endl;
+	size_t count{0};
+	m::room::messages it{room};
+	for(; it && limit; --it, --limit)
+	{
+		const m::event &event{*it};
+		count += match(filter, event);
+	}
 
+	out << count << std::endl;
 	return true;
 }
 
