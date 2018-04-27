@@ -2182,28 +2182,36 @@ console_cmd__state__get(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__state__dfs(opt &out, const string_view &line)
+console_cmd__state__find(opt &out, const string_view &line)
 {
-	const string_view arg
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"root", "[type]" "[state_key]"
+	}};
+
+	const string_view &root
+	{
+		param.at(0)
 	};
 
-	const string_view root
+	const string_view &type
 	{
-		arg
+		param[1]
 	};
 
-	m::state::dfs(root, [&out]
-	(const auto &key, const string_view &val, const uint &depth, const uint &pos)
+	const string_view &state_key
 	{
-		out << std::setw(2) << depth << " + " << pos
-		    << " : " << key << " => " << val
-		    << std::endl;
+		param[2]
+	};
 
-		return true;
-	});
+	const auto closure{[&out]
+	(const auto &key, const string_view &val)
+	{
+		out << key << " => " << val << std::endl;
+		return false;
+	}};
 
+	m::state::test(root, type, state_key, closure);
 	return true;
 }
 
