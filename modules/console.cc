@@ -4507,3 +4507,54 @@ console_cmd__file__room(opt &out, const string_view &line)
 	out << file_room_id(buf, server, file) << std::endl;
 	return true;
 }
+
+bool
+console_cmd__file__download(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server|amalgam", "file"
+	}};
+
+	auto server
+	{
+		param.at(0)
+	};
+
+	auto file
+	{
+		param[1]
+	};
+
+	auto remote
+	{
+		has(server, '/')? param[1] : param[2]
+	};
+
+	if(has(server, '/'))
+	{
+		const auto s(split(server, '/'));
+		server = s.first;
+		file = s.second;
+	}
+
+	if(!remote)
+		remote = server;
+
+	using prototype = m::room::id::buf (const string_view &server,
+	                                    const string_view &file,
+	                                    const net::hostport &remote);
+
+	static m::import<prototype> download
+	{
+		"media_media", "download"
+	};
+
+	const m::room::id::buf room_id
+	{
+		download(server, file, remote)
+	};
+
+	out << room_id << std::endl;
+	return true;
+}
