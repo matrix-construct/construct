@@ -28,7 +28,7 @@ namespace ircd::m
 struct ircd::m::event_filter
 :json::tuple
 <
-	json::property<name::limit, uint>,
+	json::property<name::limit, long>,
 	json::property<name::types, json::array>,
 	json::property<name::senders, json::array>,
 	json::property<name::not_types, json::array>,
@@ -45,7 +45,7 @@ struct ircd::m::event_filter
 struct ircd::m::room_event_filter
 :json::tuple
 <
-	json::property<name::limit, uint>,
+	json::property<name::limit, long>,
 	json::property<name::types, json::array>,
 	json::property<name::rooms, json::array>,
 	json::property<name::senders, json::array>,
