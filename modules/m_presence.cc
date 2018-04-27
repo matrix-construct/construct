@@ -102,10 +102,37 @@ try
 		return;
 	}
 
-	const auto &presence
+	bool useful{true};
+	m::presence::get(user_id, [&event, &object, &useful]
+	(const m::event &existing_event, const json::object &existing_object)
 	{
-		at<"presence"_>(object)
-	};
+		assert(json::get<"user_id"_>(object) == unquote(existing_object.get("user_id")));
+
+		const auto &prev_active_ago
+		{
+			existing_object.get<time_t>("last_active_ago")
+		};
+
+		const time_t &now_active_ago
+		{
+			json::get<"last_active_ago"_>(object)
+		};
+
+		const time_t &prev_active_absolute
+		{
+			json::get<"origin_server_ts"_>(existing_event) - prev_active_ago
+		};
+
+		const time_t &now_active_absolute
+		{
+			json::get<"origin_server_ts"_>(event) - now_active_ago
+		};
+
+		useful = now_active_absolute > prev_active_absolute;
+	});
+
+	if(!useful)
+		return;
 
 	const auto evid
 	{
@@ -118,7 +145,7 @@ try
 		at<"origin"_>(event),
 		string_view{user_id},
 		json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
-		presence,
+		json::get<"presence"_>(object),
 		json::get<"last_active_ago"_>(object) / 1000L
 	};
 }
