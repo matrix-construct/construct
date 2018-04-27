@@ -48,7 +48,7 @@ namespace ircd::db
 	// [SET] Other operations
 	void setopt(column &, const string_view &key, const string_view &val);
 	void compact(column &, const string_view &begin = {}, const string_view &end = {});
-	void flush(column &, const bool &blocking = false);
+	void sort(column &, const bool &blocking = false);
 }
 
 /// Columns add the ability to run multiple LevelDB's in synchrony under the same

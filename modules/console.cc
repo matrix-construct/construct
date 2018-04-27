@@ -821,6 +821,40 @@ try
 {
 	const params param{line, " ",
 	{
+		"dbname", "[sync]"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto sync
+	{
+		param.at(1, false)
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	flush(database, sync);
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__sort(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
 		"dbname", "[blocking]"
 	}};
 
@@ -839,7 +873,7 @@ try
 		*db::database::dbs.at(dbname)
 	};
 
-	flush(database, blocking);
+	sort(database, blocking);
 	out << "done" << std::endl;
 	return true;
 }

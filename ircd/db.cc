@@ -135,12 +135,36 @@ ircd::db::sync(database &d)
 /// each column individually.
 void
 ircd::db::flush(database &d,
-                const bool &blocking)
+                const bool &sync)
+{
+	throw_on_error
+	{
+		d.d->FlushWAL(sync)
+	};
+}
+
+/// Moves memory structures to SST files for all columns. This doesn't
+/// necessarily sort anything that wasn't previously sorted, but it may create
+/// new SST files and shouldn't be confused with a typical fflush().
+/// Note that if blocking=true, blocking may occur for each column individually.
+void
+ircd::db::sort(database &d,
+               const bool &blocking)
 {
 	for(const auto &c : d.columns)
 	{
 		db::column column{*c};
-		db::flush(column, blocking);
+		db::sort(column, blocking);
+	}
+}
+
+void
+ircd::db::compact(database &d)
+{
+	for(const auto &c : d.columns)
+	{
+		db::column column{*c};
+		compact(column, string_view{}, string_view{});
 	}
 }
 
@@ -188,16 +212,6 @@ ircd::db::fdeletions(database &d,
 	{
 		d.d->DisableFileDeletions()
 	};
-}
-
-void
-ircd::db::compact(database &d)
-{
-	for(const auto &c : d.columns)
-	{
-		db::column column{*c};
-		compact(column, string_view{}, string_view{});
-	}
 }
 
 void
@@ -628,11 +642,15 @@ noexcept try
 	         path);
 
 	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
-	this->checkpoint.reset(nullptr);
-	this->columns.clear();
-	log.debug("'%s': closed columns; background_errors: %lu; synchronizing...",
+	log.debug("'%s': background_errors: %lu; flushing...",
 	          name,
 	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
+
+	flush(*this);
+	this->checkpoint.reset(nullptr);
+	this->columns.clear();
+	log.debug("'%s': closed columns; synchronizing...",
+	          name);
 
 	sync(*this);
 	log.debug("'%s': synchronized with hardware.",
@@ -3944,14 +3962,14 @@ ircd::db::describe(const column &column)
 }
 
 void
-ircd::db::flush(column &column,
-                const bool &blocking)
+ircd::db::sort(column &column,
+               const bool &blocking)
 {
 	database::column &c(column);
 	database &d(*c.d);
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
-	log.debug("'%s':'%s' @%lu FLUSH",
+	log.debug("'%s':'%s' @%lu FLUSH (sort)",
 	          name(d),
 	          name(c),
 	          sequence(d));

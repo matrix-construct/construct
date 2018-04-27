@@ -44,10 +44,11 @@ namespace ircd::db
 
 	// Control panel
 	void setopt(database &, const string_view &key, const string_view &val);
-	void compact(database &);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	void checkpoint(database &, const string_view &dir);
-	void flush(database &, const bool &blocking = true);
+	void compact(database &);
+	void sort(database &, const bool &blocking = true);
+	void flush(database &, const bool &sync = false);
 	void sync(database &);
 }
 
