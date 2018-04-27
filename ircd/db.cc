@@ -4735,9 +4735,9 @@ ircd::db::seek(database::column &c,
 template<class pos>
 bool
 ircd::db::seek(database::column &c,
-                const pos &p,
-                const rocksdb::ReadOptions &opts,
-                std::unique_ptr<rocksdb::Iterator> &it)
+               const pos &p,
+               const rocksdb::ReadOptions &opts,
+               std::unique_ptr<rocksdb::Iterator> &it)
 {
 	assert(opts.read_tier == NON_BLOCKING);
 
@@ -4796,20 +4796,19 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s' %lu:%lu SEEK %s INVALID CACHE MISS in %ld$us '%s'",
+/*		log.debug("'%s' %lu:%lu SEEK %s INVALID CACHE MISS in %ld$us '%s'",
 		          name(d),
 		          sequence(d),
 		          sequence(opts.snapshot),
 		          it->status().ToString(),
 		          timer.at<microseconds>().count(),
 		          name(c));
-
+*/
 		return false;
 	}
 
 	it.reset(nullptr);
-/*
-	log.debug("'%s' %lu:%lu SEEK %s VALID CACHE MISS in %ld$us '%s'",
+/*	log.debug("'%s' %lu:%lu SEEK %s VALID CACHE MISS in %ld$us '%s'",
 	          name(d),
 	          sequence(d),
 	          sequence(opts.snapshot),
@@ -4817,7 +4816,6 @@ ircd::db::_seek(database::column &c,
 	          timer.at<microseconds>().count(),
 	          name(c));
 */
-
 	return seek(c, slice(blocking_it->key()), opts, it);
 }
 
@@ -4846,8 +4844,7 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-/*
-		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s in %ld$us '%s'",
+/*		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s in %ld$us '%s'",
 		          name(d),
 		          sequence(d),
 		          sequence(opts.snapshot),
@@ -4882,7 +4879,7 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s|INVALID CACHE MISS in %ld$us '%s'",
+/*		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s|INVALID CACHE MISS in %ld$us '%s'",
 		          name(d),
 		          sequence(d),
 		          sequence(opts.snapshot),
@@ -4892,12 +4889,12 @@ ircd::db::_seek(database::column &c,
 		          valid(*it)? "VALID" : "INVALID",
 		          timer.at<microseconds>().count(),
 		          name(c));
-
+*/
 		return false;
 	}
 
 	it.reset(nullptr);
-	log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> VALID CACHE MISS in %ld$us '%s'",
+/*	log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> VALID CACHE MISS in %ld$us '%s'",
 	          name(d),
 	          sequence(d),
 	          sequence(opts.snapshot),
@@ -4906,7 +4903,7 @@ ircd::db::_seek(database::column &c,
 	          valid_it? "VALID" : "INVALID",
 	          timer.at<microseconds>().count(),
 	          name(c));
-
+*/
 	return seek(c, slice(blocking_it->key()), opts, it);
 }
 
