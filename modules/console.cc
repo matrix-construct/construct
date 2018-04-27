@@ -34,6 +34,7 @@ struct opt
 	std::ostream &out;
 	bool html {false};
 	seconds timeout {30};
+	string_view special;
 
 	operator std::ostream &()
 	{
@@ -2668,7 +2669,7 @@ console_cmd__room__count(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__messages(opt &out, const string_view &line)
+console_cmd__room__events(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2697,6 +2698,11 @@ console_cmd__room__messages(opt &out, const string_view &line)
 			param.at(3, ssize_t(32))
 	};
 
+	const bool roots
+	{
+		has(out.special, "roots")
+	};
+
 	const m::room room
 	{
 		room_id
@@ -2707,9 +2713,24 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		it.seek(depth);
 
 	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
-		out << pretty_oneline(*it) << std::endl;
+		if(roots)
+			out << std::setw(40) << std::left << it.state_root()
+			    << " " << std::setw(8) << std::left << it.event_idx()
+			    << " " << it.event_id()
+			    << std::endl;
+		else
+			out << pretty_oneline(*it)
+			    << std::endl;
 
 	return true;
+}
+
+bool
+console_cmd__room__roots(opt &out, const string_view &line)
+{
+	assert(!out.special);
+	out.special = "roots";
+	return console_cmd__room__events(out, line);
 }
 
 bool
