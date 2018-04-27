@@ -3564,7 +3564,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 	opts.remote = remote;
 	m::v1::make_join request
 	{
-		room_id, m::me.user_id, buf, std::move(opts)
+		room_id, user_id, buf, std::move(opts)
 	};
 
 	request.wait(out.timeout);
