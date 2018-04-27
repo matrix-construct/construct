@@ -1867,8 +1867,14 @@ noexcept
 	ptr += size(in_head);
 
 	const mutable_buffer in_content{ptr, size(request.in.content)};
-	tag.request->in.content = in_content;
-	ptr += size(in_content);
+	// The nullity (btw that's a real word) of in.content has to be preserved
+	// between the user's tag and the cancellation tag. This is important for
+	// a dynamic chunked encoded response which has null in.content until done.
+	if(!null(request.in.content))
+	{
+		tag.request->in.content = in_content;
+		ptr += size(in_content);
+	}
 
 	assert(size_t(std::distance(tag.cancellation.get(), ptr)) == cancellation_size);
 
