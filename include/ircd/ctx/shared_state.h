@@ -98,28 +98,16 @@ ircd::ctx::notify(shared_state<T> &st)
 
 	if(!current)
 	{
-		assert(bool(st.then));
 		st.cond.notify_all();
+		assert(bool(st.then));
 		st.then(st);
 		return;
 	}
 
-	// Need a fresh stack to execute then(), not this ctx's.
-	ircd::post([&st]() noexcept
-	{
-		assert(bool(st.then));
-		st.then(st);
-		st.then = {};
-		st.cond.notify_all();
-	});
-
-	// If we don't hold the ctx here then it's too easy to destroy the future
-	// between now and when then() posts. This is completely effective if the
-	// future is on this ctx as long as then() itself doesn't hose it.
-	st.cond.wait([&st]
-	{
-		return !bool(st.then);
-	});
+	const stack_usage_assertion sua;
+	st.cond.notify_all();
+	assert(bool(st.then));
+	st.then(st);
 }
 
 /// Internal use
