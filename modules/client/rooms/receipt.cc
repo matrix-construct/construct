@@ -70,6 +70,20 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 	if(!fresher__m_receipt_m_read(room_id, user_id, event_id))
 		return {};
 
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	const auto evid
+	{
+		send(user_room, user_id, "ircd.read", room_id,
+		{
+			{ "event_id", event_id },
+			{ "ts",       ms       }
+		})
+	};
+
 	const json::value event_ids[]
 	{
 		{ event_id }
@@ -88,6 +102,7 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 	const json::iov::push push[]
 	{
 		{ event,    { "type",     "m.receipt" } },
+		{ event,    { "room_id",  room_id     } },
 		{ content,  { room_id,
 		{
 			{ "m.read",

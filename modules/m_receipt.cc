@@ -186,13 +186,7 @@ try
 	});
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
-	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::DEPTH_NEGATIVE);
-	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
+	vmopts.conforming = false;
 	m::vm::eval eval
 	{
 		receipt, vmopts
