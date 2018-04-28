@@ -2402,34 +2402,38 @@ ircd::net::dns::operator()(const hostport &hp,
 		callback(std::move(eptr), ipport);
 	}};
 
-	if(!hostport.service)
-		return operator()(hostport, opts, [hostport, calluser(std::move(calluser))]
+	if(!hp.service)
+		return operator()(hp, opts, [hp, calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const rfc1035::record::A &record)
 		{
-			calluser(std::move(eptr), record.ip4, port(hostport));
+			calluser(std::move(eptr), record.ip4, port(hp));
 		});
 
-	operator()(hostport, opts, [this, hostport(hostport), opts(opts), calluser(std::move(calluser))]
+	auto srv_opts{opts};
+	srv_opts.nxdomain_exceptions = false;
+	operator()(hp, srv_opts, [this, hp(hp), opts(opts), calluser(std::move(calluser))]
 	(std::exception_ptr eptr, const rfc1035::record::SRV &record)
 	mutable
 	{
-		//TODO: we get NXDOMAIN and it kills the chain..
-		//if(eptr)
-		//	return callback(std::move(eptr), {});
-
-		if(!record.tgt.empty())
-			host(hostport) = record.tgt;
+		if(eptr)
+			return calluser(std::move(eptr), 0, 0);
 
 		if(record.port != 0)
-			port(hostport) = record.port;
+			port(hp) = record.port;
 
-		// Have to kill the service name to not run another SRV query now.
-		hostport.service = {};
+		// The host reference in hp has become invalid by the time of this cb.
+		assert(!record.tgt.empty());
+		host(hp) = record.tgt;
+
+		// Have to kill the service name to not run another SRV query now, and
+		// these are also invalid references too.
+		hp.service = {};
 		opts.srv = {};
-		this->operator()(hostport, opts, [hostport, calluser(std::move(calluser))]
+
+		this->operator()(hp, opts, [hp, calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const rfc1035::record::A &record)
 		{
-			calluser(std::move(eptr), record.ip4, port(hostport));
+			calluser(std::move(eptr), record.ip4, port(hp));
 		});
 	});
 }
