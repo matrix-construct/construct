@@ -84,6 +84,15 @@ struct ircd::net::dns::opts
 	/// modified to an absolute expiration time. If false, no modification
 	/// occurs from the original value.
 	bool cache_result {true};
+
+	/// When false, nxdomain errors are not treated as exceptions and the
+	/// eptr of a callback will not be set. Instead, the returned record
+	/// will contain some nulled / empty data and the user is obliged to
+	/// know that this is not a real DNS answer but the error's result.
+	/// Note: Requires that cache_result is set to true. If not, this value
+	/// is ignored and always considered to be set to true; this is because
+	/// the returned record is a reference to the cached error.
+	bool nxdomain_exceptions {true};
 };
 
 /// (internal) DNS cache

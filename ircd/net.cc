@@ -2384,7 +2384,7 @@ ircd::net::dns::prefetch_A{[]
 /// an automatic chain of queries such as SRV and A/AAAA based on the input and
 /// intermediate results.
 void
-ircd::net::dns::operator()(const hostport &hostport,
+ircd::net::dns::operator()(const hostport &hp,
                            const opts &opts,
                            callback_ipport_one callback)
 {
@@ -2706,7 +2706,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 			// Cached entry is a cached error, we set the eptr, but also
 			// include the record and increment the count like normal.
 			assert(!eptr);
-			if(!rr.tgt || !rr.port)
+			if((!rr.tgt || !rr.port) && opts.nxdomain_exceptions)
 			{
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
@@ -3176,7 +3176,7 @@ try
 	for(size_t i(0); i < header.qdcount; ++i)
 		consume(buffer, size(qd.at(i).parse(buffer)));
 
-	if(!handle_error(header, qd.at(0), tag.opts))
+	if(!handle_error(header, qd.at(0), tag))
 		throw rfc1035::error
 		{
 			"protocol error #%u :%s", header.rcode, rfc1035::rcode.at(header.rcode)
@@ -3268,13 +3268,16 @@ catch(const std::exception &e)
 		          e.what());
 
 	if(tag.cb)
+	{
+		assert(tag.opts.nxdomain_exceptions);
 		tag.cb(std::current_exception(), {});
+	}
 }
 
 bool
 ircd::net::dns::resolver::handle_error(const header &header,
                                        const rfc1035::question &question,
-                                       const dns::opts &opts)
+                                       tag &tag)
 {
 	switch(header.rcode)
 	{
@@ -3282,10 +3285,28 @@ ircd::net::dns::resolver::handle_error(const header &header,
 			return true;
 
 		case 3: // NXDomain; exception
-			if(opts.cache_result)
-				cache.put_error(question, header.rcode);
+		{
+			if(!tag.opts.cache_result)
+				return false;
+
+			const auto *record
+			{
+				cache.put_error(question, header.rcode)
+			};
+
+			// When the user doesn't want an eptr for nxdomain we just make
+			// their callback here and then null the cb pointer so it's not
+			// called again. It is done here because we have a reference to
+			// the cached error record readily accessible.
+			if(!tag.opts.nxdomain_exceptions && tag.cb)
+			{
+				assert(record);
+				tag.cb({}, vector_view<const rfc1035::record *>(&record, 1));
+				tag.cb = {};
+			}
 
 			return false;
+		}
 
 		default: // Unhandled error; exception
 			return false;
