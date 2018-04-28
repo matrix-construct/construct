@@ -28,12 +28,6 @@ control_room
 	control_room_id
 };
 
-const ircd::m::room::id::buf
-conf_room_id
-{
-	"!conf", ircd::my_host()
-};
-
 static void
 _cmd__die(const m::event &event,
           const string_view &line)
