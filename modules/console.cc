@@ -2800,13 +2800,10 @@ console_cmd__room__get(opt &out, const string_view &line)
 bool
 console_cmd__room__set(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"room_id", "sender", "type", "state_key", "content"
-		}
-	};
+		"room_id", "sender", "type", "state_key", "content", "[prev_event_id]"
+	}};
 
 	const auto &room_id
 	{
@@ -2833,9 +2830,14 @@ console_cmd__room__set(opt &out, const string_view &line)
 		param.at(4, json::object{})
 	};
 
+	const string_view prev_event_id
+	{
+		param[5]
+	};
+
 	const m::room room
 	{
-		room_id
+		room_id, prev_event_id
 	};
 
 	const auto event_id
@@ -2854,7 +2856,7 @@ console_cmd__room__send(opt &out, const string_view &line)
 	{
 		line, " ",
 		{
-			"room_id", "sender", "type", "content"
+			"room_id", "sender", "type", "content", "[prev_event_id]"
 		}
 	};
 
@@ -2878,9 +2880,14 @@ console_cmd__room__send(opt &out, const string_view &line)
 		param.at(3, json::object{})
 	};
 
+	const string_view prev_event_id
+	{
+		param[4]
+	};
+
 	const m::room room
 	{
-		room_id
+		room_id, prev_event_id
 	};
 
 	const auto event_id
