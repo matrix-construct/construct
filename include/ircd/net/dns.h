@@ -98,7 +98,7 @@ struct ircd::net::dns::cache
   public:
 	bool get(const hostport &, const opts &, const callback &);
 	rfc1035::record *put(const rfc1035::question &, const rfc1035::answer &);
-	bool put_error(const rfc1035::question &, const uint &code);
+	rfc1035::record *put_error(const rfc1035::question &, const uint &code);
 };
 
 template<class Callback>

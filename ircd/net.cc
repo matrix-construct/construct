@@ -2527,7 +2527,7 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 // cache
 //
 
-bool
+ircd::rfc1035::record *
 ircd::net::dns::cache::put_error(const rfc1035::question &question,
                                  const uint &code)
 {
@@ -2556,8 +2556,8 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 
 			rfc1035::record::A record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			map.emplace_hint(it, host, record);
-			return true;
+			it = map.emplace_hint(it, host, record);
+			return &it->second;
 		}
 
 		case 33: // SRV
@@ -2577,12 +2577,13 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 
 			rfc1035::record::SRV record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			map.emplace_hint(it, host, record);
-			return true;
+			it = map.emplace_hint(it, host, record);
+			it->second.tgt = it->first;
+			return &it->second;
 		}
 	}
 
-	return false;
+	return nullptr;
 }
 
 ircd::rfc1035::record *
@@ -2705,7 +2706,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 			// Cached entry is a cached error, we set the eptr, but also
 			// include the record and increment the count like normal.
 			assert(!eptr);
-			if(!rr.tgt)
+			if(!rr.tgt || !rr.port)
 			{
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
