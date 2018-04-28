@@ -33,10 +33,14 @@ ircd::net::wait_close_sockets()
 
 /// Network subsystem initialization
 ircd::net::init::init()
+:resolver
+{
+	std::make_unique<struct dns::resolver>()
+}
 {
 	assert(ircd::ios);
 	assert(!net::dns::resolver);
-	net::dns::resolver = new struct dns::resolver();
+	dns::resolver = resolver.get();
 
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
@@ -44,9 +48,10 @@ ircd::net::init::init()
 
 /// Network subsystem shutdown
 ircd::net::init::~init()
+noexcept
 {
 	wait_close_sockets();
-	delete net::dns::resolver;
+	assert(net::dns::resolver == resolver.get());
 	net::dns::resolver = nullptr;
 }
 
