@@ -986,9 +986,9 @@ ircd::m::events::rfor_each(const uint64_t &start,
                            const event_filter &filter,
                            const closure_bool &closure)
 {
-	uint limit
+	auto limit
 	{
-		json::get<"limit"_>(filter)?: 32U
+		json::get<"limit"_>(filter)?: 32L
 	};
 
 	return rfor_each(start, [&filter, &closure, &limit]
@@ -1060,9 +1060,9 @@ ircd::m::events::for_each(const uint64_t &start,
                           const event_filter &filter,
                           const closure_bool &closure)
 {
-	uint limit
+	auto limit
 	{
-		json::get<"limit"_>(filter)?: 32U
+		json::get<"limit"_>(filter)?: 32L
 	};
 
 	return for_each(start, [&filter, &closure, &limit]
