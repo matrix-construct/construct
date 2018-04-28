@@ -3321,68 +3321,20 @@ console_cmd__feds__version(opt &out, const string_view &line)
 		"room_id",
 	}};
 
-	const auto room
+	const auto room_id
 	{
 		m::room_id(param.at(0))
 	};
 
-	struct req
-	:m::v1::version
-	{
-		char origin[256];
-		char buf[16_KiB];
+	using prototype = void (const m::room::id &,
+	                        std::ostream &);
 
-		req(m::v1::version::opts &&opts)
-		:m::v1::version{buf, std::move(opts)}
-		{}
+	static m::import<prototype> feds__version
+	{
+		"federation_federation", "feds__version"
 	};
 
-	std::list<req> reqs;
-	const m::room::origins origins{room};
-	origins.for_each([&out, &reqs]
-	(const string_view &origin)
-	{
-		m::v1::version::opts opts;
-		opts.remote = origin;
-		opts.dynamic = false; try
-		{
-			reqs.emplace_back(std::move(opts));
-		}
-		catch(const std::exception &e)
-		{
-			out << "! " << origin << " " << e.what() << std::endl;
-			return;
-		}
-
-		strlcpy(reqs.back().origin, origin);
-	});
-
-	auto all
-	{
-		ctx::when_all(begin(reqs), end(reqs))
-	};
-
-	all.wait(out.timeout, std::nothrow);
-
-	for(auto &req : reqs) try
-	{
-		if(req.wait(0ms, std::nothrow))
-		{
-			const auto code{req.get()};
-			const json::object &response{req};
-			out << "+ " << std::setw(40) << std::left << req.origin
-			    << " " << string_view{response}
-			    << std::endl;
-		}
-		else cancel(req);
-	}
-	catch(const std::exception &e)
-	{
-		out << "- " << std::setw(40) << std::left << req.origin
-		    << " " << e.what()
-		    << std::endl;
-	}
-
+	feds__version(room_id, out);
 	return true;
 }
 
@@ -3391,7 +3343,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id", "[room_id]"
+		"event_id"
 	}};
 
 	const m::event::id event_id
@@ -3399,71 +3351,15 @@ console_cmd__feds__event(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	const m::room::id::buf room_id
-	{
-		param[1]? m::room_id(param.at(1)) : [&event_id]
-		{
-			const m::event::fetch event
-			{
-				event_id
-			};
+	using prototype = void (const m::event::id &,
+	                        std::ostream &);
 
-			return m::room::id::buf{at<"room_id"_>(event)};
-		}()
+	static m::import<prototype> feds__event
+	{
+		"federation_federation", "feds__event"
 	};
 
-	struct req
-	:m::v1::event
-	{
-		char origin[256];
-		char buf[96_KiB];
-
-		req(const m::event::id &event_id, m::v1::event::opts opts)
-		:m::v1::event{event_id, buf, std::move(opts)}
-		{}
-	};
-
-	std::list<req> reqs;
-	const m::room::origins origins{room_id};
-	origins.for_each([&out, &event_id, &reqs]
-	(const string_view &origin)
-	{
-		m::v1::event::opts opts;
-		opts.remote = origin;
-		opts.dynamic = false; try
-		{
-			reqs.emplace_back(event_id, std::move(opts));
-		}
-		catch(const std::exception &e)
-		{
-			out << "! " << origin << " " << e.what() << std::endl;
-			return;
-		}
-
-		strlcpy(reqs.back().origin, origin);
-	});
-
-	auto all
-	{
-		ctx::when_all(begin(reqs), end(reqs))
-	};
-
-	all.wait(out.timeout, std::nothrow);
-
-	for(auto &req : reqs) try
-	{
-		if(req.wait(0ms, std::nothrow))
-		{
-			const auto code{req.get()};
-			out << "+ " << req.origin << " " << http::status(code) << std::endl;
-		}
-		else cancel(req);
-	}
-	catch(const std::exception &e)
-	{
-		out << "- " << req.origin << " " << e.what() << std::endl;
-	}
-
+	feds__event(event_id, out);
 	return true;
 }
 
