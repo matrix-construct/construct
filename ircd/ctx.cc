@@ -490,6 +490,13 @@ ircd::ctx::this_ctx::yield()
 	while(!done);
 }
 
+size_t
+ircd::ctx::this_ctx::stack_usage_here()
+{
+	assert(current);
+	return stack_usage_here(cur());
+}
+
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
 void
@@ -560,6 +567,27 @@ noexcept
 {
 	assert(critical_asserted);
 	critical_asserted = theirs;
+}
+
+//
+// stack_usage_assertion
+//
+
+ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
+{
+	#ifndef NDEBUG
+	const auto stack_usage(stack_usage_here());
+	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
+	#endif
+}
+
+ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
+noexcept
+{
+	#ifdef RB_DEBUG
+	const auto stack_usage(stack_usage_here());
+	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
+	#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1068,13 +1096,6 @@ ircd::ctx::prof::check_stack()
 
 		assert(stack_usage < c.stack_max * settings.stack_usage_assertion);
 	}
-}
-
-size_t
-ircd::ctx::stack_usage_here()
-{
-	assert(current);
-	return stack_usage_here(*current);
 }
 
 size_t

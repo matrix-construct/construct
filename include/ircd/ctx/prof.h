@@ -14,7 +14,6 @@
 namespace ircd::ctx
 {
     size_t stack_usage_here(const ctx &) __attribute__((noinline));
-    size_t stack_usage_here();
 }
 
 /// Profiling for the context system.

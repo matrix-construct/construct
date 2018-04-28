@@ -29,6 +29,9 @@ inline namespace this_ctx
 	void interruption_point();                   // throws interrupted if interruption_requested()
 	bool interruption_requested();               // interruption(cur())
 
+	struct stack_usage_assertion;                // Assert safety factor (see ctx/prof.h)
+	size_t stack_usage_here();                   // calculates stack usage at call.
+
 	// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
 	microseconds wait(const microseconds &, const std::nothrow_t &);
 	template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
@@ -50,6 +53,20 @@ namespace ircd::ctx
 	/// Points to the currently running context or null for main stack (do not modify)
 	extern __thread ctx *current;
 }
+
+/// An instance of stack_usage_assertion is placed on a ctx stack where one
+/// wants to test the stack usage at both construction and destruction points
+/// to ensure it is less than the value set in ctx::prof::settings which is
+/// generally some engineering safety factor of 2-3 etc. This should not be
+/// entirely relied upon except during debug builds, however we may try to
+/// provide an optimized build mode enabling these to account for any possible
+/// differences in the stack between the environments.
+///
+struct ircd::ctx::this_ctx::stack_usage_assertion
+{
+	stack_usage_assertion();
+	~stack_usage_assertion() noexcept;
+};
 
 /// An instance of critical_assertion detects an attempt to context switch.
 ///
