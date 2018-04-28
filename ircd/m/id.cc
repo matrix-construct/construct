@@ -663,15 +663,15 @@ ircd::m::valid_local_only(const id::sigil &sigil,
                           const string_view &id)
 noexcept try
 {
-	static const auto test
+	static const auto &test
 	{
 		m::id::parser.prefix
 	};
 
-	const char *start{begin(id)};
+	const char *start{data(id)};
 	const char *const &stop
 	{
-		std::min(end(id), start + id::MAX_SIZE)
+		start + std::min(size(id), id::MAX_SIZE)
 	};
 
 	return id.at(0) == sigil && qi::parse(start, stop, test) && start == stop;
@@ -686,15 +686,15 @@ ircd::m::valid_local(const id::sigil &sigil,
                      const string_view &id)
 noexcept try
 {
-	static const auto test
+	static const auto &test
 	{
 		m::id::parser.prefix
 	};
 
-	const char *start{begin(id)};
+	const char *start{data(id)};
 	const char *const &stop
 	{
-		std::min(end(id), start + id::MAX_SIZE)
+		start + std::min(size(id), id::MAX_SIZE)
 	};
 
 	return id.at(0) == sigil && qi::parse(start, stop, test);
