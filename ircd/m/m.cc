@@ -1684,9 +1684,9 @@ ircd::m::user::rooms::origins::for_each(const string_view &membership,
 const
 {
 	for_each(membership, closure_bool{[&closure]
-	(const m::user &user)
+	(const string_view &origin)
 	{
-		closure(user);
+		closure(origin);
 		return true;
 	}});
 }
