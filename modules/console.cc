@@ -2848,6 +2848,51 @@ console_cmd__room__set(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__send(opt &out, const string_view &line)
+{
+	const params param
+	{
+		line, " ",
+		{
+			"room_id", "sender", "type", "content"
+		}
+	};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::user::id &sender
+	{
+		param.at(1)
+	};
+
+	const string_view type
+	{
+		param.at(2)
+	};
+
+	const json::object &content
+	{
+		param.at(3, json::object{})
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		send(room, sender, type, content)
+	};
+
+	out << event_id << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__message(opt &out, const string_view &line)
 {
 	const auto &room_id
