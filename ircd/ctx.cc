@@ -1439,22 +1439,18 @@ ircd::ctx::list::next(ctx *const &c)
 	return c->node.next;
 }
 
-const ircd::ctx::ctx *const &
+const ircd::ctx::ctx *
 ircd::ctx::list::prev(const ctx *const &c)
 {
 	assert(c);
-	const auto &node(c->node);
-	const ctx *const &ptr(node.prev);
-	return ptr;
+	return c->node.prev;
 }
 
-const ircd::ctx::ctx *const &
+const ircd::ctx::ctx *
 ircd::ctx::list::next(const ctx *const &c)
 {
 	assert(c);
-	const auto &node(c->node);
-	const ctx *const &ptr(node.next);
-	return ptr;
+	return c->node.next;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

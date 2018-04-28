@@ -37,8 +37,8 @@ struct ircd::ctx::list
 	ctx *tail {nullptr};
 
 	// Get next or prev entry in ctx
-	static const ctx *const &next(const ctx *const &);
-	static const ctx *const &prev(const ctx *const &);
+	static const ctx *next(const ctx *const &);
+	static const ctx *prev(const ctx *const &);
 	static ctx *&next(ctx *const &);
 	static ctx *&prev(ctx *const &);
 
