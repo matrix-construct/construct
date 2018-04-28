@@ -71,7 +71,7 @@ catch(const ctx::interrupted &)
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		"Presence from %s :%s",
 		json::get<"origin"_>(event),
