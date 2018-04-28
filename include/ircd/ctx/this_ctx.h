@@ -64,8 +64,10 @@ namespace ircd::ctx
 ///
 struct ircd::ctx::this_ctx::stack_usage_assertion
 {
+	#ifndef NDEBUG
 	stack_usage_assertion();
 	~stack_usage_assertion() noexcept;
+	#endif
 };
 
 /// An instance of critical_assertion detects an attempt to context switch.
@@ -79,11 +81,13 @@ struct ircd::ctx::this_ctx::stack_usage_assertion
 ///
 class ircd::ctx::this_ctx::critical_assertion
 {
+	#ifndef NDEBUG
 	bool theirs;
 
   public:
 	critical_assertion();
 	~critical_assertion() noexcept;
+	#endif
 };
 
 /// An instance of exception_handler must be present to allow a context

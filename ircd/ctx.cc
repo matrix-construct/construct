@@ -550,6 +550,7 @@ noexcept
 //
 // critical_assertion
 //
+#ifndef NDEBUG
 
 namespace ircd::ctx
 {
@@ -569,26 +570,27 @@ noexcept
 	critical_asserted = theirs;
 }
 
+#endif // NDEBUG
+
 //
 // stack_usage_assertion
 //
+#ifndef NDEBUG
 
 ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
 {
-	#ifndef NDEBUG
 	const auto stack_usage(stack_usage_here());
 	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
-	#endif
 }
 
 ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
 noexcept
 {
-	#ifdef RB_DEBUG
 	const auto stack_usage(stack_usage_here());
 	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
-	#endif
 }
+
+#endif // NDEBUG
 
 ///////////////////////////////////////////////////////////////////////////////
 //
