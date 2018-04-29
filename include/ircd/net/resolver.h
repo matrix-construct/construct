@@ -38,7 +38,7 @@ struct ircd::net::dns::resolver
 
 	ip::udp::socket ns;                          // A pollable activity object
 	ip::udp::endpoint reply_from;                // Remote addr of recv
-	char reply[64_KiB] alignas(16);              // Buffer for recv
+	unique_buffer<mutable_buffer> reply;         // Buffer for recv
 
 	bool handle_error(const error_code &ec) const;
 	bool handle_error(const header &, const rfc1035::question &, tag &);

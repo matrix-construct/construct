@@ -2801,6 +2801,10 @@ ircd::net::dns::resolver::send_rate
 
 ircd::net::dns::resolver::resolver()
 :ns{*ircd::ios}
+,reply
+{
+	64_KiB // worst-case UDP datagram size
+}
 ,timeout_context
 {
 	"dnsres T", 64_KiB, std::bind(&resolver::timeout_worker, this), context::POST
@@ -3074,7 +3078,7 @@ ircd::net::dns::resolver::set_handle()
 		std::bind(&resolver::handle, this, ph::_1, ph::_2)
 	};
 
-	const asio::mutable_buffers_1 bufs{reply, sizeof(reply)};
+	const asio::mutable_buffers_1 bufs{reply};
 	ns.async_receive_from(bufs, reply_from, std::move(handler));
 }
 
@@ -3101,7 +3105,7 @@ noexcept try
 
 	char *const reply
 	{
-		this->reply
+		data(this->reply)
 	};
 
 	rfc1035::header &header
