@@ -115,11 +115,11 @@ ircd::m::dbs::write(db::txn &txn,
 			"Cannot write to database: no index specified for event."
 		};
 
-	db::txn::append
+	if(opts.indexer) db::txn::append
 	{
 		txn, dbs::event_idx,
 		{
-			db::op::SET,
+			opts.op,
 			at<"event_id"_>(event),
 			byte_view<string_view>(opts.idx)
 		}
