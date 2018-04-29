@@ -2588,6 +2588,73 @@ console_cmd__room__members__origin(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__members__read(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[membership]", "[event_id]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view membership
+	{
+		param[1]
+	};
+
+	const string_view event_id
+	{
+		param[2]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	const m::event::closure event_closure{[&out, &event_id]
+	(const m::event &event)
+	{
+		if(event_id)
+			if(unquote(at<"content"_>(event).get("event_id")) != event_id)
+				return;
+
+		out << timestr(at<"origin_server_ts"_>(event) / 1000)
+		    << " " << at<"sender"_>(event)
+		    << " " << at<"content"_>(event)
+		    << " " << at<"event_id"_>(event)
+		    << std::endl;
+	}};
+
+	const auto member_closure{[&room_id, event_closure]
+	(const m::event &event)
+	{
+		const m::user user
+		{
+			at<"state_key"_>(event)
+		};
+
+		const m::user::room user_room{user};
+		user_room.get(std::nothrow, "ircd.read", room_id, event_closure);
+	}};
+
+	if(membership)
+		members.for_each(membership, member_closure);
+	else
+		members.for_each(member_closure);
+
+	return true;
+}
+
+bool
 console_cmd__room__origins(opt &out, const string_view &line)
 {
 	const auto &room_id
