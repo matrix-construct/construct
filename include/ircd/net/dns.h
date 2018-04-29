@@ -42,6 +42,7 @@ struct ircd::net::dns
 
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
+	static string_view unmake_SRV_key(const string_view &);
 
   public:
 	// Cache warming

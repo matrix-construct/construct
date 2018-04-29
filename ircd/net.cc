@@ -2419,16 +2419,17 @@ ircd::net::dns::operator()(const hostport &hp,
 			return calluser(std::move(eptr), 0, 0);
 
 		if(record.port != 0)
-			port(hp) = record.port;
+			hp.port = record.port;
 
 		// The host reference in hp has become invalid by the time of this cb.
 		assert(!record.tgt.empty());
-		host(hp) = record.tgt;
+		hp.host = record.tgt;
 
 		// Have to kill the service name to not run another SRV query now, and
 		// these are also invalid references too.
 		hp.service = {};
 		opts.srv = {};
+		opts.proto = {};
 
 		this->operator()(hp, opts, [hp, calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const rfc1035::record::A &record)
@@ -2510,6 +2511,25 @@ ircd::net::dns::operator()(const hostport &hostport,
 	(*resolver)(hostport, opts, std::move(cb));
 }
 
+/// Really assumptional and hacky right now. We're just assuming the SRV
+/// key is the first two elements of a dot-delimited string which start
+/// with underscores. If that isn't good enough in the future this will rot
+/// and become a regression hazard.
+ircd::string_view
+ircd::net::dns::unmake_SRV_key(const string_view &key)
+{
+	if(token_count(key, '.') < 3)
+		return key;
+
+	if(!startswith(token(key, '.', 0), '_'))
+		return key;
+
+	if(!startswith(token(key, '.', 1), '_'))
+		return key;
+
+	return tokens_after(key, '.', 1);
+}
+
 ircd::string_view
 ircd::net::dns::make_SRV_key(const mutable_buffer &out,
                              const hostport &hp,
@@ -2582,7 +2602,7 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 			rfc1035::record::SRV record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
 			it = map.emplace_hint(it, host, record);
-			it->second.tgt = it->first;
+			it->second.tgt = unmake_SRV_key(it->first);
 			return &it->second;
 		}
 	}
