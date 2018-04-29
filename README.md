@@ -18,7 +18,7 @@ real-time communication for free and open source software: a *federation of netw
 	IRCd has been rewritten for the global federation of networks &nbsp;&nbsp&nbsp;
 </h4>
 
-<img align="right" src="https://i.imgur.com/z8ENNrA.png" />
+<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
 
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
