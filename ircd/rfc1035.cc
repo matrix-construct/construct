@@ -353,6 +353,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 {
 	assert(!empty(out));
 	char *pos{data(out)};
+	*pos = '\0';
 	ircd::tokens(fqdn, '.', [&pos, &out](const string_view &label)
 	{
 		if(unlikely(size(label) >= 64))
@@ -362,6 +363,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 			};
 
 		*pos++ = size(label);
+		*pos = '\0';
 		pos += strlcpy(pos, label, std::distance(pos, end(out)));
 	});
 
