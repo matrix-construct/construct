@@ -89,7 +89,7 @@ enum class ircd::rfc1035::op
 ///
 struct ircd::rfc1035::question
 {
-	uint16_t qtype;
+	uint16_t qtype {0};
 	uint16_t qclass {0x01};
 	string_view name;
 	char namebuf[256];
@@ -118,10 +118,10 @@ struct ircd::rfc1035::question
 ///
 struct ircd::rfc1035::answer
 {
-	uint16_t qtype;
-	uint16_t qclass;
-	uint32_t ttl;
-	uint16_t rdlength;
+	uint16_t qtype {0};
+	uint16_t qclass {0};
+	uint32_t ttl {0};
+	uint16_t rdlength {0};
 	const_buffer rdata;
 	string_view name;
 	char namebuf[256];
