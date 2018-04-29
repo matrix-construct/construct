@@ -13,8 +13,7 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
                           const uint16_t &id,
                           const question &q)
 {
-	const ilist<const question> questions{q};
-	return make_query(out, id, questions);
+	return make_query(out, id, {&q, 1});
 }
 
 ircd::mutable_buffer
