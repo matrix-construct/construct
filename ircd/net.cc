@@ -2840,14 +2840,11 @@ try
 		assert(sendq.size() < 65535);
 		assert(sendq.size() <= tags.size());
 		ctx::sleep(milliseconds(send_rate));
-		assert(!sendq.empty());
-		const auto &next(sendq.front());
-		const unwind pop{[this]
-		{
-			sendq.pop_front();
-		}};
 
-		flush(next);
+		const unwind::nominal::assertion na;
+		assert(!sendq.empty());
+		flush(sendq.front());
+		sendq.pop_front();
 	}
 }
 catch(const ctx::interrupted &)
@@ -2859,7 +2856,11 @@ void
 ircd::net::dns::resolver::flush(const queued &next)
 try
 {
-	auto &tag{tags.at(next.first)};
+	auto &tag
+	{
+		tags.at(next.first)
+	};
+
 	const const_buffer buf
 	{
 		data(next.second), size(next.second)
@@ -3038,7 +3039,11 @@ try
 {
 	assert(!server.empty());
 	++server_next %= server.size();
-	const auto &ep{server.at(server_next)};
+	const auto &ep
+	{
+		server.at(server_next)
+	};
+
 	send_query(ep, buf, tag);
 }
 catch(const std::out_of_range &)
@@ -3054,6 +3059,7 @@ ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
                                      const const_buffer &buf,
                                      tag &tag)
 {
+	assert(!empty(buf));
 	assert(ns.non_blocking());
 	ns.send_to(asio::const_buffers_1(buf), ep);
 	send_last = now<steady_point>();
@@ -3266,9 +3272,8 @@ catch(const std::exception &e)
 	// There's no need to flash red to the log for NXDOMAIN which is
 	// common in this system when probing SRV.
 	if(unlikely(header.rcode != 3))
-		log.error("resolver tag:%u [%s]: %s",
+		log.error("resolver tag:%u: %s",
 		          tag.id,
-		          string(tag.hp),
 		          e.what());
 
 	if(tag.cb)
