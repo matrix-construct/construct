@@ -827,7 +827,8 @@ ircd::m::presence::get(const user &user,
 	if(!get(std::nothrow, user, closure))
 		throw m::NOT_FOUND
 		{
-			"No presence found for %s", user.user_id
+			"No presence found for %s",
+			string_view{user.user_id}
 		};
 }
 
