@@ -243,9 +243,22 @@ feds__head(const m::room::id &room_id,
 		{
 			const auto code{req.get()};
 			const json::object &response{req};
-			out << "+ " << std::setw(40) << std::left << req.origin
-			    << " " << string_view{response}
-			    << std::endl;
+			const json::array prev_events
+			{
+				response.at({"event", "prev_events"})
+			};
+
+			out << "+ " << std::setw(40) << std::left << req.origin;
+			for(const json::array prev_event : prev_events)
+			{
+				const auto &prev_event_id
+				{
+					unquote(prev_event.at(0))
+				};
+
+				out << " " << string_view{prev_event_id};
+			};
+			out << std::endl;
 		}
 		else cancel(req);
 	}
