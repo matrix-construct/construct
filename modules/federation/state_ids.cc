@@ -35,49 +35,56 @@ get__state_ids(client &client,
 		url::decode(request.parv[0], room_id)
 	};
 
+	//TODO: =
 	m::event::id::buf event_id;
-	if(request.query["event_id"])
-		url::decode(request.query.at("event_id"), event_id);
+//	if(request.query["event_id"])
+//		event_id = url::decode(request.query.at("event_id"), event_id);
 
-	 //TODO: direct to socket
-	const unique_buffer<mutable_buffer> buf{1_MiB}; //TODO: XXX
-	json::stack out{buf};
+	const m::room room
 	{
-		json::stack::object top{out};
-		json::stack::member pdus_m
-		{
-			top, "pdu_ids"
-		};
-
-		json::stack::array pdus
-		{
-			pdus_m
-		};
-
-		const m::room::state state
-		{
-			m::room
-			{
-				room_id, event_id
-			}
-		};
-
-		state.for_each([&pdus]
-		(const m::event &event)
-		{
-			const auto event_id
-			{
-				at<"event_id"_>(event)
-			};
-
-			pdus.append(event_id);
-		});
-	}
-
-	return resource::response
-	{
-		client, json::object{out.completed()}
+		room_id, event_id
 	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out{buf, [&response]
+	(const const_buffer &buf)
+	{
+		response.write(buf);
+		return buf;
+	}};
+
+	json::stack::object top{out};
+	json::stack::member pdus_m
+	{
+		top, "pdu_ids"
+	};
+
+	json::stack::array pdus
+	{
+		pdus_m
+	};
+
+	state.for_each(m::event::id::closure{[&pdus]
+	(const m::event::id &event_id)
+	{
+		pdus.append(event_id);
+	}});
+
+	return {};
 }
 
 resource::method
