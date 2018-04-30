@@ -4589,6 +4589,7 @@ console_cmd__file__download(opt &out, const string_view &line)
 
 	using prototype = m::room::id::buf (const string_view &server,
 	                                    const string_view &file,
+	                                    const m::user::id &,
 	                                    const net::hostport &remote);
 
 	static m::import<prototype> download
@@ -4598,7 +4599,7 @@ console_cmd__file__download(opt &out, const string_view &line)
 
 	const m::room::id::buf room_id
 	{
-		download(server, file, remote)
+		download(server, file, m::me.user_id, remote)
 	};
 
 	out << room_id << std::endl;

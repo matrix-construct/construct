@@ -31,6 +31,7 @@ downloading_dock;
 m::room::id::buf
 download(const string_view &server,
          const string_view &mediaid,
+         const m::user::id &user_id,
          const net::hostport &remote)
 {
 	const m::room::id::buf room_id
@@ -38,13 +39,14 @@ download(const string_view &server,
 		file_room_id(server, mediaid)
 	};
 
-	download(server, mediaid, remote, room_id);
+	download(server, mediaid, user_id, remote, room_id);
 	return room_id;
 }
 
 m::room
 download(const string_view &server,
          const string_view &mediaid,
+         const m::user::id &user_id,
          const net::hostport &remote,
          const m::room::id &room_id)
 try
@@ -115,11 +117,11 @@ try
 		room_id, &vmopts
 	};
 
-	create(room, m::me.user_id, "file");
+	create(room, user_id, "file");
 
 	const size_t written
 	{
-		write_file(room, content, content_type)
+		write_file(room, user_id, content, content_type)
 	};
 
 	return room;
@@ -197,17 +199,18 @@ download(const mutable_buffer &head_buf,
 
 size_t
 write_file(const m::room &room,
+           const m::user::id &user_id,
            const const_buffer &content,
            const string_view &content_type)
 {
 	//TODO: TXN
-	send(room, m::me.user_id, "ircd.file.stat", "size",
+	send(room, user_id, "ircd.file.stat", "size",
 	{
 		{ "value", long(size(content)) }
 	});
 
 	//TODO: TXN
-	send(room, m::me.user_id, "ircd.file.stat", "type",
+	send(room, user_id, "ircd.file.stat", "type",
 	{
 		{ "value", content_type }
 	});

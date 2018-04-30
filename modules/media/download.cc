@@ -57,9 +57,18 @@ get__download(client &client,
 		request.parv[1]
 	};
 
+	// Download doesn't require auth so if there is no user_id detected
+	// then we download on behalf of @ircd.
+	const m::user::id &user_id
+	{
+		request.user_id?
+			m::user::id{request.user_id}:
+			m::me.user_id
+	};
+
 	const m::room::id::buf room_id
 	{
-		download(server, file)
+		download(server, file, user_id)
 	};
 
 	return get__download_local(client, request, server, file, room_id);

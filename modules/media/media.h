@@ -27,7 +27,8 @@ read_each_block(const m::room &,
                 const std::function<void (const const_buffer &)> &);
 
 extern "C" size_t
-write_file(const m::room &room,
+write_file(const m::room &,
+           const m::user::id &,
            const const_buffer &content,
            const string_view &content_type);
 
@@ -41,10 +42,12 @@ download(const mutable_buffer &head_buf,
 m::room
 download(const string_view &server,
          const string_view &mediaid,
+         const m::user::id &user_id,
          const net::hostport &remote,
          const m::room::id &room_id);
 
 extern "C" m::room::id::buf
 download(const string_view &server,
          const string_view &mediaid,
+         const m::user::id &user_id,
          const net::hostport &remote = {});

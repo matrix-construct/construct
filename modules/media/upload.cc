@@ -78,7 +78,7 @@ post__upload(client &client,
 
 	const size_t written
 	{
-		write_file(room, buf, content_type)
+		write_file(room, request.user_id, buf, content_type)
 	};
 
 	char uribuf[256];
