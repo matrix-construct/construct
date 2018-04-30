@@ -25,8 +25,14 @@ feds__version(const m::room::id &room_id, std::ostream &out)
 		char origin[256];
 		char buf[16_KiB];
 
-		req(m::v1::version::opts &&opts)
-		:m::v1::version{buf, std::move(opts)}
+		req(const string_view &origin)
+		:m::v1::version{[&]
+		{
+			m::v1::version::opts opts;
+			opts.dynamic = false;
+			opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
+			return m::v1::version{mutable_buffer{buf}, std::move(opts)};
+		}()}
 		{}
 	};
 
@@ -35,19 +41,26 @@ feds__version(const m::room::id &room_id, std::ostream &out)
 	origins.for_each([&out, &reqs]
 	(const string_view &origin)
 	{
-		m::v1::version::opts opts;
-		opts.remote = origin;
-		opts.dynamic = false; try
+		const auto emsg
 		{
-			reqs.emplace_back(std::move(opts));
+			ircd::server::errmsg(origin)
+		};
+
+		if(emsg)
+		{
+			out << "! " << origin << " " << emsg << std::endl;
+			return;
+		}
+
+		try
+		{
+			reqs.emplace_back(origin);
 		}
 		catch(const std::exception &e)
 		{
 			out << "! " << origin << " " << e.what() << std::endl;
 			return;
 		}
-
-		strlcpy(reqs.back().origin, origin);
 	});
 
 	auto all
@@ -96,8 +109,14 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 		char origin[256];
 		char buf[96_KiB];
 
-		req(const m::event::id &event_id, m::v1::event::opts opts)
-		:m::v1::event{event_id, buf, std::move(opts)}
+		req(const m::event::id &event_id, const string_view &origin)
+		:m::v1::event{[&]
+		{
+			m::v1::event::opts opts;
+			opts.dynamic = false;
+			opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
+			return m::v1::event{event_id, mutable_buffer{buf}, std::move(opts)};
+		}()}
 		{}
 	};
 
@@ -106,19 +125,26 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 	origins.for_each([&out, &event_id, &reqs]
 	(const string_view &origin)
 	{
-		m::v1::event::opts opts;
-		opts.remote = origin;
-		opts.dynamic = false; try
+		const auto emsg
 		{
-			reqs.emplace_back(event_id, std::move(opts));
+			ircd::server::errmsg(origin)
+		};
+
+		if(emsg)
+		{
+			out << "! " << origin << " " << emsg << std::endl;
+			return;
+		}
+
+		try
+		{
+			reqs.emplace_back(event_id, origin);
 		}
 		catch(const std::exception &e)
 		{
 			out << "! " << origin << " " << e.what() << std::endl;
 			return;
 		}
-
-		strlcpy(reqs.back().origin, origin);
 	});
 
 	auto all
