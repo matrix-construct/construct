@@ -3483,6 +3483,37 @@ console_cmd__feds__event(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__feds__head(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[user_id]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::user::id &user_id
+	{
+		param.at(1, m::me.user_id)
+	};
+
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        std::ostream &);
+
+	static m::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
+	};
+
+	feds__head(room_id, user_id, out);
+	return true;
+}
+
+bool
 console_cmd__feds__resend(opt &out, const string_view &line)
 {
 	const params param{line, " ",

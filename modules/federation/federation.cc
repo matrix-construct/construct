@@ -170,3 +170,78 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 
 	return;
 }
+
+extern "C" void
+feds__head(const m::room::id &room_id,
+           const m::user::id &user_id,
+           std::ostream &out)
+{
+	struct req
+	:m::v1::make_join
+	{
+		char origin[256];
+		char buf[16_KiB];
+
+		req(const m::room::id &room_id, const m::user::id &user_id, const string_view &origin)
+		:m::v1::make_join{[this, &room_id, &user_id, &origin]
+		{
+			m::v1::make_join::opts opts;
+			opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
+			return m::v1::make_join{room_id, user_id, mutable_buffer{buf}, std::move(opts)};
+		}()}
+		{}
+	};
+
+	std::list<req> reqs;
+	const m::room::origins origins{room_id};
+	origins.for_each([&out, &room_id, &user_id, &reqs]
+	(const string_view &origin)
+	{
+		const auto emsg
+		{
+			ircd::server::errmsg(origin)
+		};
+
+		if(emsg)
+		{
+			out << "! " << origin << " " << emsg << std::endl;
+			return;
+		}
+
+		try
+		{
+			reqs.emplace_back(room_id, user_id, origin);
+		}
+		catch(const std::exception &e)
+		{
+			out << "! " << origin << " " << e.what() << std::endl;
+			return;
+		}
+	});
+
+	auto all
+	{
+		ctx::when_all(begin(reqs), end(reqs))
+	};
+
+	all.wait(30s, std::nothrow);
+
+	for(auto &req : reqs) try
+	{
+		if(req.wait(1ms, std::nothrow))
+		{
+			const auto code{req.get()};
+			const json::object &response{req};
+			out << "+ " << std::setw(40) << std::left << req.origin
+			    << " " << string_view{response}
+			    << std::endl;
+		}
+		else cancel(req);
+	}
+	catch(const std::exception &e)
+	{
+		out << "- " << req.origin << " " << e.what() << std::endl;
+	}
+
+	return;
+}
