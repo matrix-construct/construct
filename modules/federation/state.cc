@@ -35,10 +35,9 @@ get__state(client &client,
 		url::decode(request.parv[0], room_id)
 	};
 
-	//TODO: =
 	m::event::id::buf event_id;
 	if(request.query["event_id"])
-		url::decode(request.query.at("event_id"), event_id);
+		event_id = url::decode(request.query.at("event_id"), event_id);
 
 	const m::room room
 	{
