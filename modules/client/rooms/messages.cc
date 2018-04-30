@@ -47,69 +47,74 @@ get__messages(client &client,
 		room, page.from
 	};
 
-	//TODO: chunk directly to socket
 	const unique_buffer<mutable_buffer> buf
 	{
-		(1 + page.limit) * m::event::MAX_SIZE //TODO: XXX
+		96_KiB
 	};
 
-	json::stack out{buf};
+	resource::response::chunked response
 	{
-		json::stack::object ret{out};
+		client, http::OK
+	};
 
-		// Spec sez the 'from' token is exclusive
-		if(it && page.dir == 'b')
-			--it;
-		else if(it)
-			++it;
+	json::stack out{buf, [&response]
+	(const const_buffer &buf)
+	{
+		response.write(buf);
+		return buf;
+	}};
 
-		size_t count{0};
-		m::event::id::buf start, end;
+	json::stack::object ret
+	{
+		out
+	};
+
+	// Spec sez the 'from' token is exclusive
+	if(it && page.dir == 'b')
+		--it;
+	else if(it)
+		++it;
+
+	size_t count{0};
+	m::event::id::buf start, end;
+	{
+		json::stack::member chunk{ret, "chunk"};
+		json::stack::array messages{chunk};
+		for(; it; page.dir == 'b'? --it : ++it)
 		{
-			json::stack::member chunk{ret, "chunk"};
-			json::stack::array messages{chunk};
-			for(; it; page.dir == 'b'? --it : ++it)
+			const m::event &event{*it};
+			if(page.to && at<"event_id"_>(event) == page.to)
 			{
-				const m::event &event{*it};
-				if(page.to && at<"event_id"_>(event) == page.to)
-				{
-					if(page.dir != 'b')
-						start = at<"event_id"_>(event);
+				if(page.dir != 'b')
+					start = at<"event_id"_>(event);
 
-					break;
-				}
+				break;
+			}
 
-				messages.append(event);
-				if(++count >= page.limit)
-				{
-					if(page.dir == 'b')
-						end = at<"event_id"_>(event);
-					else
-						start = at<"event_id"_>(event);
+			messages.append(event);
+			if(++count >= page.limit)
+			{
+				if(page.dir == 'b')
+					end = at<"event_id"_>(event);
+				else
+					start = at<"event_id"_>(event);
 
-					break;
-				}
+				break;
 			}
 		}
-
-		json::stack::member
-		{
-			ret, "start", json::value{start}
-		};
-
-		json::stack::member
-		{
-			ret, "end", json::value{end}
-		};
 	}
 
-	return resource::response
+	json::stack::member
 	{
-		client, json::object
-		{
-			out.completed()
-		}
+		ret, "start", json::value{start}
 	};
+
+	json::stack::member
+	{
+		ret, "end", json::value{end}
+	};
+
+	return {};
 }
 
 // Client-Server 6.3.6 query parameters
