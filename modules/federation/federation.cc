@@ -178,8 +178,6 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 	{
 		out << "- " << req.origin << " " << e.what() << std::endl;
 	}
-
-	return;
 }
 
 extern "C" void
@@ -226,7 +224,6 @@ feds__head(const m::room::id &room_id,
 		catch(const std::exception &e)
 		{
 			out << "! " << origin << " " << e.what() << std::endl;
-			return;
 		}
 	});
 
@@ -243,12 +240,14 @@ feds__head(const m::room::id &room_id,
 		{
 			const auto code{req.get()};
 			const json::object &response{req};
+			const json::object &event{response.at("event")};
 			const json::array prev_events
 			{
-				response.at({"event", "prev_events"})
+				event.at("prev_events")
 			};
 
 			out << "+ " << std::setw(40) << std::left << req.origin;
+			out << " " << event.at("depth");
 			for(const json::array prev_event : prev_events)
 			{
 				const auto &prev_event_id
@@ -266,8 +265,6 @@ feds__head(const m::room::id &room_id,
 	{
 		out << "- " << req.origin << " " << e.what() << std::endl;
 	}
-
-	return;
 }
 
 extern "C" void
