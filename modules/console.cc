@@ -3514,6 +3514,43 @@ console_cmd__feds__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__feds__backfill(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id", "[limit]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id &event_id
+	{
+		param.at(1)
+	};
+
+	const size_t limit
+	{
+		param.at(2, size_t(4))
+	};
+
+	using prototype = void (const m::room::id &,
+	                        const m::event::id &,
+	                        const size_t &,
+	                        std::ostream &);
+
+	static m::import<prototype> feds__backfill
+	{
+		"federation_federation", "feds__backfill"
+	};
+
+	feds__backfill(room_id, event_id, limit, out);
+	return true;
+}
+
+bool
 console_cmd__feds__resend(opt &out, const string_view &line)
 {
 	const params param{line, " ",
