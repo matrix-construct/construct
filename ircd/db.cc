@@ -4084,21 +4084,7 @@ ircd::db::del(column &column,
 void
 ircd::db::write(column &column,
                 const string_view &key,
-                const mutable_buffer &buf,
-                const sopts &sopts)
-{
-	const string_view val
-	{
-		reinterpret_cast<const char *>(data(buf)), size(buf)
-	};
-
-	write(column, key, val, sopts);
-}
-
-void
-ircd::db::write(column &column,
-                const string_view &key,
-                const string_view &val,
+                const const_buffer &val,
                 const sopts &sopts)
 {
 	database &d(column);
@@ -4107,8 +4093,8 @@ ircd::db::write(column &column,
 	          name(d),
 	          sequence(d),
 	          name(c),
-	          key.size(),
-	          val.size());
+	          size(key),
+	          size(val));
 
 	auto opts(make_opts(sopts));
 	throw_on_error

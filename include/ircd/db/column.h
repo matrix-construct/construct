@@ -39,8 +39,7 @@ namespace ircd::db
 	std::string read(column &, const string_view &key, const gopts & = {});
 
 	// [SET] Write data to the db
-	void write(column &, const string_view &key, const string_view &value, const sopts & = {});
-	void write(column &, const string_view &key, const mutable_buffer &, const sopts & = {});
+	void write(column &, const string_view &key, const const_buffer &value, const sopts & = {});
 
 	// [SET] Remove data from the db. not_found is never thrown.
 	void del(column &, const string_view &key, const sopts & = {});
