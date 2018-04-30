@@ -85,37 +85,39 @@ get__backfill_ids(client &client,
 		room_id, event_id
 	};
 
-	 //TODO: chunk direct to socket
 	const unique_buffer<mutable_buffer> buf
 	{
-		512 * limit //TODO: XXX
+		4_KiB
 	};
 
-	json::stack out{buf};
+	resource::response::chunked response
 	{
-		json::stack::object top{out};
-		json::stack::member pdus_m
-		{
-			top, "pdu_ids"
-		};
-
-		json::stack::array pdus
-		{
-			pdus_m
-		};
-
-		size_t count{0};
-		for(; it && count < limit; ++count, --it)
-			pdus.append(it.event_id());
-	}
-
-	return resource::response
-	{
-		client, json::object
-		{
-			out.completed()
-		}
+		client, http::OK
 	};
+
+	json::stack out{buf, [&response]
+	(const const_buffer &buf)
+	{
+		response.write(buf);
+		return buf;
+	}};
+
+	json::stack::object top{out};
+	json::stack::member pdus_m
+	{
+		top, "pdu_ids"
+	};
+
+	json::stack::array pdus
+	{
+		pdus_m
+	};
+
+	size_t count{0};
+	for(; it && count < limit; ++count, --it)
+		pdus.append(it.event_id());
+
+	return {};
 }
 
 resource::method
