@@ -10,10 +10,46 @@
 
 #include "media.h"
 
+// Blocks column
+const db::database::descriptor
+media_blocks_descriptor
+{
+	// name
+	"blocks",
+
+	// explain
+	R"(
+	Key-value store of blocks belonging to files. The key is a hash of
+	the block. The key is plaintext sha256-b58 and the block is binary
+	up to 32768 bytes.
+	)",
+
+	// typing
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{}
+};
+
+const db::database::description
+media_description
+{
+	{ "default" }, // requirement of RocksDB
+
+	media_blocks_descriptor,
+};
+
 mapi::header
 IRCD_MODULE
 {
-	"11.7 :Content respository"
+	"11.7 :Content respository", []
+	{
+		static const std::string dbopts;
+		media = std::make_shared<database>("media", dbopts, media_description);
+		blocks = db::column{*media, "blocks"};
+	}
 };
 
 decltype(media_log)
@@ -21,6 +57,12 @@ media_log
 {
 	"media"
 };
+
+decltype(media)
+media;
+
+decltype(blocks)
+blocks;
 
 std::set<m::room::id>
 downloading;
@@ -215,20 +257,6 @@ write_file(const m::room &room,
 		{ "value", content_type }
 	});
 
-	const auto lpath
-	{
-		fs::make_path({fs::DPATH, "media"})
-	};
-
-	char pathbuf[768];
-	size_t pathlen{0};
-	pathlen = strlcpy(pathbuf, lpath);
-	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
-	const mutable_buffer pathpart
-	{
-		pathbuf + pathlen, sizeof(pathbuf) - pathlen
-	};
-
 	size_t off{0}, wrote{0};
 	while(off < size(content))
 	{
@@ -242,29 +270,8 @@ write_file(const m::room &room,
 			data(content) + off, blksz
 		};
 
-		const sha256::buf hash_
-		{
-			sha256{block}
-		};
-
-		char b58buf[hash_.size() * 2];
-		const string_view hash
-		{
-			b58encode(b58buf, hash_)
-		};
-
-		send(room, m::me.user_id, "ircd.file.block",
-		{
-			{ "size",  long(blksz) },
-			{ "hash",  hash        }
-		});
-
-		const string_view path
-		{
-			pathbuf, pathlen + copy(pathpart, hash)
-		};
-
-		wrote += size(fs::overwrite(path, block));
+		block_set(room, user_id, block);
+		wrote += size(block);
 		off += blksz;
 	}
 
@@ -277,20 +284,6 @@ size_t
 read_each_block(const m::room &room,
                 const std::function<void (const const_buffer &)> &closure)
 {
-	const auto lpath
-	{
-		fs::make_path({fs::DPATH, "media"})
-	};
-
-	char pathbuf[768];
-	size_t pathlen{0};
-	pathlen = strlcpy(pathbuf, lpath);
-	pathlen = strlcat(pathbuf, "/"_sv); //TODO: fs utils
-	const mutable_buffer pathpart
-	{
-		pathbuf + pathlen, sizeof(pathbuf) - pathlen
-	};
-
 	// Block buffer
 	const unique_buffer<mutable_buffer> buf
 	{
@@ -315,14 +308,9 @@ read_each_block(const m::room &room,
 			at<"content"_>(event).get<size_t>("size")
 		};
 
-		const string_view path
-		{
-			pathbuf, pathlen + copy(pathpart, hash)
-		};
-
 		const const_buffer &block
 		{
-			fs::read(path, buf)
+			block_get(buf, hash)
 		};
 
 		if(unlikely(size(block) != blksz)) throw error
@@ -330,7 +318,7 @@ read_each_block(const m::room &room,
 			"File [%s] block [%s] (%s) blksz %zu != %zu",
 			string_view{room.room_id},
 			string_view{at<"event_id"_>(event)},
-			path,
+			hash,
 			blksz,
 			size(block)
 		};
@@ -341,6 +329,61 @@ read_each_block(const m::room &room,
 	}
 
 	return ret;
+}
+
+const_buffer
+block_get(const mutable_buffer &out,
+          const string_view &b58hash)
+{
+	return read(blocks, b58hash, out);
+}
+
+m::event::id::buf
+block_set(const m::room &room,
+          const m::user::id &user_id,
+          const const_buffer &block)
+{
+	static const auto bufsz
+	{
+		b58encode_size(sha256::digest_size)
+	};
+
+	char b58buf[bufsz];
+	const auto hash
+	{
+		block_set(mutable_buffer{b58buf}, block)
+	};
+
+	return send(room, user_id, "ircd.file.block",
+	{
+		{ "size",  long(size(block))  },
+		{ "hash",  hash               }
+	});
+}
+
+string_view
+block_set(const mutable_buffer &b58buf,
+          const const_buffer &block)
+{
+	const sha256::buf hash
+	{
+		sha256{block}
+	};
+
+	const string_view b58hash
+	{
+		b58encode(b58buf, hash)
+	};
+
+	block_set(b58hash, block);
+	return b58hash;
+}
+
+void
+block_set(const string_view &b58hash,
+          const const_buffer &block)
+{
+	write(blocks, b58hash, block);
 }
 
 m::room::id::buf
