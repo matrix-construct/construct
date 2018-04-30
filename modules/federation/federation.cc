@@ -16,29 +16,36 @@ IRCD_MODULE
 	"Federation :General Library and Utils"
 };
 
-extern "C" void
-feds__version(const m::room::id &room_id, std::ostream &out)
+namespace ircd::m::feds
 {
-	struct req
-	:m::v1::version
+	struct version;
+}
+
+struct ircd::m::feds::version
+:m::v1::version
+{
+	char origin[256];
+	char buf[16_KiB];
+
+	version(const string_view &origin)
+	:m::v1::version{[&]
 	{
-		char origin[256];
-		char buf[16_KiB];
+		m::v1::version::opts opts;
+		opts.dynamic = false;
+		opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
+		return m::v1::version{mutable_buffer{buf}, std::move(opts)};
+	}()}
+	{}
 
-		req(const string_view &origin)
-		:m::v1::version{[&]
-		{
-			m::v1::version::opts opts;
-			opts.dynamic = false;
-			opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
-			return m::v1::version{mutable_buffer{buf}, std::move(opts)};
-		}()}
-		{}
-	};
+	version(const version &) = delete;
+	version &operator=(const version &) = delete;
+};
 
-	std::list<req> reqs;
-	const m::room::origins origins{room_id};
-	origins.for_each([&out, &reqs]
+std::list<m::feds::version>
+feds__version(const m::room::id &room_id)
+{
+	std::list<m::feds::version> reqs;
+	m::room::origins{room_id}.for_each([&reqs]
 	(const string_view &origin)
 	{
 		const auto emsg
@@ -46,22 +53,26 @@ feds__version(const m::room::id &room_id, std::ostream &out)
 			ircd::server::errmsg(origin)
 		};
 
-		if(emsg)
-		{
-			out << "! " << origin << " " << emsg << std::endl;
-			return;
-		}
-
-		try
+		if(!emsg) try
 		{
 			reqs.emplace_back(origin);
 		}
-		catch(const std::exception &e)
+		catch(const std::exception &)
 		{
-			out << "! " << origin << " " << e.what() << std::endl;
 			return;
 		}
 	});
+
+	return std::move(reqs);
+}
+
+extern "C" void
+feds__version(const m::room::id &room_id, std::ostream &out)
+{
+	auto reqs
+	{
+		feds__version(room_id)
+	};
 
 	auto all
 	{
