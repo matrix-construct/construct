@@ -3515,7 +3515,7 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "[limit]"
+		"room_id", "[event_id]", "[limit]"
 	}};
 
 	const auto &room_id
@@ -3523,9 +3523,9 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const m::event::id &event_id
+	const m::event::id::buf &event_id
 	{
-		param.at(1)
+		param.count() > 1? param.at(1) : head(room_id)
 	};
 
 	const size_t limit
