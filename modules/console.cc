@@ -1713,6 +1713,12 @@ console_cmd__net__host(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__host(opt &out, const string_view &line)
+{
+	return console_cmd__net__host(out, line);
+}
+
+bool
 console_cmd__net__host__cache__A(opt &out, const string_view &line)
 {
 	for(const auto &pair : net::dns::cache.A)
