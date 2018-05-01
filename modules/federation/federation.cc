@@ -354,7 +354,7 @@ feds__backfill(const m::room::id &room_id,
 		out << i++ << " " << p.first << std::endl;
 
 	for(size_t j(0); j < i; ++j)
-		out << "| " << j << " ";
+		out << "| " << std::left << std::setw(2) << j;
 	out << "|" << std::endl;
 
 	for(const auto &req : reqs)
