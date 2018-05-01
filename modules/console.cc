@@ -2509,14 +2509,19 @@ console_cmd__room__depth(opt &out, const string_view &line)
 bool
 console_cmd__room__members(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "[membership]"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
 	const string_view membership
 	{
-		token_count(line, ' ') > 1? token(line, ' ', 1) : string_view{}
+		param[1]
 	};
 
 	const m::room room
@@ -2534,11 +2539,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 		out << pretty_oneline(event) << std::endl;
 	}};
 
-	if(membership)
-		members.for_each(membership, closure);
-	else
-		members.for_each(closure);
-
+	members.for_each(membership, closure);
 	return true;
 }
 
@@ -2646,11 +2647,7 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 		user_room.get(std::nothrow, "ircd.read", room_id, event_closure);
 	}};
 
-	if(membership)
-		members.for_each(membership, member_closure);
-	else
-		members.for_each(member_closure);
-
+	members.for_each(membership, member_closure);
 	return true;
 }
 
