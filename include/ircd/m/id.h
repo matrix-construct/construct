@@ -60,7 +60,7 @@ struct ircd::m::id
 	struct printer static const printer;
 	struct validator static const validator;
 
-	static constexpr const size_t MAX_SIZE
+	static constexpr const size_t &MAX_SIZE
 	{
 		255
 	};

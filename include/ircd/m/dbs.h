@@ -33,17 +33,17 @@ namespace ircd::m::dbs
 	extern db::column state_node;
 
 	// Lowlevel util
-	static const size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + 256 + 256};
+	constexpr size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + 256 + 256};
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
 	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
 
-	static const size_t ROOM_JOINED_KEY_MAX_SIZE {id::MAX_SIZE + 256 + id::MAX_SIZE};
+	constexpr size_t ROOM_JOINED_KEY_MAX_SIZE {id::MAX_SIZE + 256 + id::MAX_SIZE};
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	std::pair<string_view, string_view> room_joined_key(const string_view &amalgam);
 
-	static const size_t ROOM_EVENTS_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8 + 8};
+	constexpr size_t ROOM_EVENTS_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8 + 8};
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const event::idx &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::pair<uint64_t, event::idx> room_events_key(const string_view &amalgam);
