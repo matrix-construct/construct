@@ -26,11 +26,27 @@ backfill_resource
 	}
 };
 
+static size_t
+calc_limit(const resource::request &request);
+
+resource::response
+get__backfill(client &client,
+              const resource::request &request);
+
+resource::method
+method_get
+{
+	backfill_resource, "GET", get__backfill,
+	{
+		method_get.VERIFY_ORIGIN
+	}
+};
+
 conf::item<size_t>
 backfill_limit_max
 {
 	{ "name",     "ircd.federation.backfill.limit.max" },
-	{ "default",  512L /* TODO: hiiigherrrr */         },
+	{ "default",  16384L                               },
 };
 
 conf::item<size_t>
@@ -40,28 +56,9 @@ backfill_limit_default
 	{ "default",  64L                                      },
 };
 
-static size_t
-calc_limit(const resource::request &request)
-{
-	const auto &limit
-	{
-		request.query["limit"]
-	};
-
-	if(!limit)
-		return size_t(backfill_limit_default);
-
-	size_t ret
-	{
-		lex_cast<size_t>(limit)
-	};
-
-	return std::min(ret, size_t(backfill_limit_max));
-}
-
 resource::response
 get__backfill(client &client,
-           const resource::request &request)
+              const resource::request &request)
 {
 	m::room::id::buf room_id
 	{
@@ -120,11 +117,21 @@ get__backfill(client &client,
 	return {};
 }
 
-resource::method
-method_get
+static size_t
+calc_limit(const resource::request &request)
 {
-	backfill_resource, "GET", get__backfill,
+	const auto &limit
 	{
-		method_get.VERIFY_ORIGIN
-	}
-};
+		request.query["limit"]
+	};
+
+	if(!limit)
+		return size_t(backfill_limit_default);
+
+	size_t ret
+	{
+		lex_cast<size_t>(limit)
+	};
+
+	return std::min(ret, size_t(backfill_limit_max));
+}
