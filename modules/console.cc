@@ -1758,6 +1758,42 @@ console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__net__host__prefetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::origins origins
+	{
+		room
+	};
+
+	size_t count{0};
+	origins.for_each([&count](const string_view &origin)
+	{
+		net::dns(origin, net::dns::prefetch_ipport);
+		++count;
+	});
+
+	out << "Prefetch resolving " << count << " origins."
+	    << std::endl;
+
+	return true;
+}
+
 //
 // client
 //
