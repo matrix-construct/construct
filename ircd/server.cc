@@ -94,6 +94,7 @@ ircd::server::get(const net::hostport &hostport)
 
 		const string_view key{peer->hostname};
 		it = peers.emplace_hint(it, key, std::move(peer));
+		assert(it->second->hostname.data() == key.data());
 	}
 
 	return *it->second;
@@ -109,6 +110,8 @@ ircd::server::create(const net::hostport &hostport)
 		peer->remote, net::hostport{peer->hostname}
 	};
 
+	// Async DNS resolve. The links for the new peer will be connected
+	// once the resolver calls back into peer::handle_resolve().
 	peer->resolve(hostport);
 	return peer;
 }
@@ -860,7 +863,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 
 void
 ircd::server::peer::handle_resolve(std::exception_ptr eptr,
-                                   const hostport &hp,
+                                   const hostport &,
                                    const ipport &ipport)
 try
 {
@@ -874,11 +877,13 @@ try
 		__builtin_unreachable();
 	}
 
+	// Save the results of the query to this object instance.
 	this->remote = ipport;
 	open_opts.ipport = this->remote;
-	host(open_opts.hostport) = this->hostname;
 	port(open_opts.hostport) = port(ipport);
-	open_opts.common_name = {};
+
+	// The hostname in open_opts should still reference this object's string.
+	assert(host(open_opts.hostport).data() == this->hostname.data());
 
 	if(unlikely(finished()))
 		return handle_finished();
@@ -1601,6 +1606,7 @@ catch(const buffer_overrun &e)
 ircd::const_buffer
 ircd::server::link::read(const mutable_buffer &buf)
 {
+	assert(!empty(buf));
 	const size_t received
 	{
 		read_one(*socket, buf)
@@ -1609,6 +1615,7 @@ ircd::server::link::read(const mutable_buffer &buf)
 	assert(peer);
 	peer->read_bytes += received;
 
+	assert(received);
 	return const_buffer
 	{
 		data(buf), received
