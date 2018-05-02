@@ -547,7 +547,7 @@ ircd::net::open(socket &socket,
 	}};
 
 	auto connector{[&socket, opts, complete(std::move(complete))]
-	(std::exception_ptr eptr, const ipport &ipport)
+	(std::exception_ptr eptr, const hostport &hp, const ipport &ipport)
 	{
 		if(eptr)
 			return complete(std::move(eptr));
@@ -559,7 +559,7 @@ ircd::net::open(socket &socket,
 	if(!opts.ipport)
 		dns(opts.hostport, std::move(connector));
 	else
-		connector({}, opts.ipport);
+		connector({}, opts.hostport, opts.ipport);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2361,21 +2361,21 @@ ircd::net::dns::cache::min_ttl
 
 decltype(ircd::net::dns::prefetch_ipport)
 ircd::net::dns::prefetch_ipport{[]
-(std::exception_ptr, const auto &record)
+(std::exception_ptr, const auto &hostport, const auto &record)
 {
 	// Do nothing; cache already updated if necessary
 }};
 
 decltype(ircd::net::dns::prefetch_SRV)
 ircd::net::dns::prefetch_SRV{[]
-(std::exception_ptr, const auto &record)
+(std::exception_ptr, const auto &hostport, const auto &record)
 {
 	// Do nothing; cache already updated if necessary
 }};
 
 decltype(ircd::net::dns::prefetch_A)
 ircd::net::dns::prefetch_A{[]
-(std::exception_ptr, const auto &record)
+(std::exception_ptr, const auto &hostport, const auto &record)
 {
 	// Do nothing; cache already updated if necessary
 }};
@@ -2390,51 +2390,48 @@ ircd::net::dns::operator()(const hostport &hp,
 {
 	//TODO: ip6
 	auto calluser{[callback(std::move(callback))]
-	(std::exception_ptr eptr, const uint32_t &ip, const uint16_t &port)
+	(std::exception_ptr eptr, const hostport &hp, const uint32_t &ip)
 	{
 		if(eptr)
-			return callback(std::move(eptr), {});
+			return callback(std::move(eptr), hp, {});
 
 		if(!ip)
-			return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), {});
+			return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), hp, {});
 
-		const ipport ipport{ip, port};
-		callback(std::move(eptr), ipport);
+		const ipport ipport{ip, port(hp)};
+		callback(std::move(eptr), hp, ipport);
 	}};
 
 	if(!hp.service)
-		return operator()(hp, opts, [hp, calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const rfc1035::record::A &record)
+		return operator()(hp, opts, [calluser(std::move(calluser))]
+		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
-			calluser(std::move(eptr), record.ip4, port(hp));
+			calluser(std::move(eptr), hp, record.ip4);
 		});
 
 	auto srv_opts{opts};
 	srv_opts.nxdomain_exceptions = false;
-	operator()(hp, srv_opts, [this, hp(hp), opts(opts), calluser(std::move(calluser))]
-	(std::exception_ptr eptr, const rfc1035::record::SRV &record)
+	operator()(hp, srv_opts, [this, opts(opts), calluser(std::move(calluser))]
+	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
 	mutable
 	{
 		if(eptr)
-			return calluser(std::move(eptr), 0, 0);
+			return calluser(std::move(eptr), hp, 0);
 
 		if(record.port != 0)
 			hp.port = record.port;
 
-		// The host reference in hp has become invalid by the time of this cb.
-		assert(!record.tgt.empty());
-		hp.host = record.tgt;
+		hp.host = record.tgt?: unmake_SRV_key(hp.host);
 
-		// Have to kill the service name to not run another SRV query now, and
-		// these are also invalid references too.
+		// Have to kill the service name to not run another SRV query now.
 		hp.service = {};
 		opts.srv = {};
 		opts.proto = {};
 
-		this->operator()(hp, opts, [hp, calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const rfc1035::record::A &record)
+		this->operator()(hp, opts, [calluser(std::move(calluser))]
+		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
-			calluser(std::move(eptr), record.ip4, port(hp));
+			calluser(std::move(eptr), hp, record.ip4);
 		});
 	});
 }
@@ -2442,16 +2439,16 @@ ircd::net::dns::operator()(const hostport &hp,
 /// Convenience callback with a single SRV record which was selected from
 /// the vector with stochastic respect for weighting and priority.
 void
-ircd::net::dns::operator()(const hostport &hostport,
+ircd::net::dns::operator()(const hostport &hp,
                            const opts &opts,
                            callback_SRV_one callback)
 {
 	assert(bool(ircd::net::dns::resolver));
-	operator()(hostport, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
+	operator()(hp, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
 		if(eptr)
-			return callback(std::move(eptr), {});
+			return callback(std::move(eptr), hp, {});
 
 		//TODO: prng on weight / prio plz
 		for(size_t i(0); i < rrs.size(); ++i)
@@ -2461,26 +2458,26 @@ ircd::net::dns::operator()(const hostport &hostport,
 				continue;
 
 			const auto &record(rr.as<const rfc1035::record::SRV>());
-			return callback(std::move(eptr), record);
+			return callback(std::move(eptr), hp, record);
 		}
 
-		return callback(std::move(eptr), {});
+		return callback(std::move(eptr), hp, {});
 	});
 }
 
 /// Convenience callback with a single A record which was selected from
 /// the vector randomly.
 void
-ircd::net::dns::operator()(const hostport &hostport,
+ircd::net::dns::operator()(const hostport &hp,
                            const opts &opts,
                            callback_A_one callback)
 {
 	assert(bool(ircd::net::dns::resolver));
-	operator()(hostport, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const vector_view<const rfc1035::record *> rrs)
+	operator()(hp, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
 		if(eptr)
-			return callback(std::move(eptr), {});
+			return callback(std::move(eptr), hp, {});
 
 		//TODO: prng plz
 		for(size_t i(0); i < rrs.size(); ++i)
@@ -2490,10 +2487,10 @@ ircd::net::dns::operator()(const hostport &hostport,
 				continue;
 
 			const auto &record(rr.as<const rfc1035::record::A>());
-			return callback(std::move(eptr), record);
+			return callback(std::move(eptr), hp, record);
 		}
 
-		return callback(std::move(eptr), {});
+		return callback(std::move(eptr), hp, {});
 	});
 }
 
@@ -2602,7 +2599,6 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 			rfc1035::record::SRV record;
 			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
 			it = map.emplace_hint(it, host, record);
-			it->second.tgt = unmake_SRV_key(it->first);
 			return &it->second;
 		}
 	}
@@ -2795,7 +2791,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 	assert(!eptr || count == 1);   // if error, should only be one entry.
 
 	if(count)
-		cb(std::move(eptr), vector_view<const rfc1035::record *>(record.data(), count));
+		cb(std::move(eptr), hp, vector_view<const rfc1035::record *>(record.data(), count));
 
 	return count;
 }
@@ -2955,7 +2951,8 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 	log.error("DNS timeout id:%u", id);
 
 	// Callback gets a fresh stack off this timeout worker ctx's stack.
-	if(tag.cb) ircd::post([cb(std::move(tag.cb))]
+	std::string host{tag.hp.host};
+	if(tag.cb) ircd::post([cb(std::move(tag.cb)), host(std::move(host)), port(tag.hp.port)]
 	{
 		using boost::system::system_error;
 		const error_code ec
@@ -2963,7 +2960,8 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 			boost::system::errc::timed_out, boost::system::system_category()
 		};
 
-		cb(std::make_exception_ptr(system_error{ec}), {});
+		const hostport hp{host, port};
+		cb(std::make_exception_ptr(system_error{ec}), hp, {});
 	});
 
 	return false;
@@ -2971,16 +2969,13 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 
 /// Internal resolver entry interface.
 void
-ircd::net::dns::resolver::operator()(const hostport &hostport,
+ircd::net::dns::resolver::operator()(const hostport &hp,
                                      const opts &opts,
                                      callback callback)
 {
 	auto &tag
 	{
-		set_tag(resolver::tag
-		{
-			hostport, opts, std::move(callback)
-		})
+		set_tag(hp, opts, std::move(callback))
 	};
 
 	// Escape trunk
@@ -3004,7 +2999,7 @@ const
 		thread_local char srvbuf[512];
 		const string_view srvhost
 		{
-			make_SRV_key(srvbuf, tag.hp, tag.opts)
+			make_SRV_key(srvbuf, host(tag.hp), tag.opts)
 		};
 
 		const rfc1035::question question{srvhost, "SRV"};
@@ -3015,17 +3010,22 @@ const
 	return rfc1035::make_query(buf, tag.id, question);
 }
 
+template<class... A>
 ircd::net::dns::resolver::tag &
-ircd::net::dns::resolver::set_tag(tag &&tag)
+ircd::net::dns::resolver::set_tag(A&&... args)
 {
 	while(tags.size() < 65535)
 	{
-		tag.id = ircd::rand::integer(1, 65535);
-		auto it{tags.lower_bound(tag.id)};
-		if(it != end(tags) && it->first == tag.id)
+		auto id(ircd::rand::integer(1, 65535));
+		auto it{tags.lower_bound(id)};
+		if(it != end(tags) && it->first == id)
 			continue;
 
-		it = tags.emplace_hint(it, tag.id, std::move(tag));
+		it = tags.emplace_hint(it,
+		                       std::piecewise_construct,
+		                       std::forward_as_tuple(id),
+		                       std::forward_as_tuple(std::forward<A>(args)...));
+		it->second.id = id;
 		dock.notify_one();
 		return it->second;
 	}
@@ -3288,8 +3288,12 @@ try
 		}
 	}
 
+	// Cache no answers here.
+	if(!header.ancount && tag.opts.cache_result)
+		cache.put_error(qd.at(0), header.rcode);
+
 	if(tag.cb)
-		tag.cb({}, vector_view<const rfc1035::record *>(record, i));
+		tag.cb({}, tag.hp, vector_view<const rfc1035::record *>(record, i));
 }
 catch(const std::exception &e)
 {
@@ -3302,8 +3306,8 @@ catch(const std::exception &e)
 
 	if(tag.cb)
 	{
-		assert(tag.opts.nxdomain_exceptions);
-		tag.cb(std::current_exception(), {});
+		assert(header.rcode != 3 || tag.opts.nxdomain_exceptions);
+		tag.cb(std::current_exception(), tag.hp, {});
 	}
 }
 
@@ -3334,7 +3338,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 			if(!tag.opts.nxdomain_exceptions && tag.cb)
 			{
 				assert(record);
-				tag.cb({}, vector_view<const rfc1035::record *>(&record, 1));
+				tag.cb({}, tag.hp, vector_view<const rfc1035::record *>(&record, 1));
 				tag.cb = {};
 			}
 

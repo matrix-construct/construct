@@ -52,7 +52,7 @@ struct ircd::net::dns::resolver
 	void send_query(const const_buffer &, tag &);
 	void submit(const const_buffer &, tag &);
 
-	tag &set_tag(tag &&);
+	template<class... A> tag &set_tag(A&&...);
 	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
 	void operator()(const hostport &, const opts &, callback);
 
@@ -72,20 +72,23 @@ struct ircd::net::dns::resolver
 struct ircd::net::dns::resolver::tag
 {
 	uint16_t id {0};
-	hostport hp;          // note: invalid after query sent
+	hostport hp;
 	dns::opts opts;       // note: invalid after query sent
 	callback cb;
 	steady_point last;
 	uint8_t tries {0};
+	char hostbuf[256];
 
-	tag(const hostport &, const dns::opts &, callback);
+	tag(const hostport &, const dns::opts &, callback &&);
 };
 
 inline
 ircd::net::dns::resolver::tag::tag(const hostport &hp,
                                    const dns::opts &opts,
-                                   callback cb)
+                                   callback &&cb)
 :hp{hp}
 ,opts{opts}
 ,cb{std::move(cb)}
-{}
+{
+	this->hp.host = { hostbuf, copy(hostbuf, hp.host) };
+}

@@ -1693,7 +1693,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 	net::ipport ipport;
 	std::exception_ptr eptr;
 	net::dns(hostport, [&done, &dock, &eptr, &ipport]
-	(std::exception_ptr eptr_, const net::ipport &ipport_)
+	(std::exception_ptr eptr_, const net::hostport &, const net::ipport &ipport_)
 	{
 		eptr = std::move(eptr_);
 		ipport = ipport_;

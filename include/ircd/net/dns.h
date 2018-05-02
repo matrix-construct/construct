@@ -35,10 +35,10 @@ struct ircd::net::dns
 	struct resolver static *resolver;
 	struct opts static const opts_default;
 
-	using callback = std::function<void (std::exception_ptr, vector_view<const rfc1035::record *>)>;
-	using callback_A_one = std::function<void (std::exception_ptr, const rfc1035::record::A &)>;
-	using callback_SRV_one = std::function<void (std::exception_ptr, const rfc1035::record::SRV &)>;
-	using callback_ipport_one = std::function<void (std::exception_ptr, const ipport &)>;
+	using callback = std::function<void (std::exception_ptr, const hostport &, vector_view<const rfc1035::record *>)>;
+	using callback_A_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::A &)>;
+	using callback_SRV_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::SRV &)>;
+	using callback_ipport_one = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
 
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);

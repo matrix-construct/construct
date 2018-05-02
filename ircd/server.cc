@@ -851,7 +851,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 
 	auto handler
 	{
-		std::bind(&peer::handle_resolve, this, ph::_1, ph::_2)
+		std::bind(&peer::handle_resolve, this, ph::_1, ph::_2, ph::_3)
 	};
 
 	op_resolve = true;
@@ -860,6 +860,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 
 void
 ircd::server::peer::handle_resolve(std::exception_ptr eptr,
+                                   const hostport &hp,
                                    const ipport &ipport)
 try
 {
@@ -877,7 +878,7 @@ try
 	open_opts.ipport = this->remote;
 	host(open_opts.hostport) = this->hostname;
 	port(open_opts.hostport) = port(ipport);
-	open_opts.common_name = this->hostname;
+	open_opts.common_name = {};
 
 	if(unlikely(finished()))
 		return handle_finished();

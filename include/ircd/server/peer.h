@@ -41,7 +41,7 @@ struct ircd::server::peer
 	template<class F> size_t accumulate_tags(F&&) const;
 
 	void handle_finished();
-	void handle_resolve(std::exception_ptr, const ipport &);
+	void handle_resolve(std::exception_ptr, const hostport &, const ipport &);
 	void resolve(const hostport &);
 
 	void disperse_uncommitted(link &);
