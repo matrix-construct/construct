@@ -370,7 +370,6 @@ void
 ircd::server::peer::close(const net::close_opts &opts)
 {
 	op_fini = true;
-	assert(!op_resolve);
 	std::vector<link *> links(this->links.size());
 	pointers(this->links, links);
 	for(const auto &link : links)
