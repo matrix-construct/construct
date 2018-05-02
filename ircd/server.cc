@@ -1351,6 +1351,17 @@ ircd::server::link::handle_writable_success()
 			continue;
 		}
 
+		if(tag.canceled() && tag.committed() && tag_committed() <= 1)
+		{
+			log.debug("link(%p) closing to interrupt canceled committed tag(%p) of %zu",
+			          this,
+			          &tag,
+			          tag_count());
+
+			close();
+			break;
+		}
+
 		if(tag_committed() == 0)
 			wait_readable();
 
@@ -1423,7 +1434,7 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 void
 ircd::server::link::wait_readable()
 {
-	if(op_read || unlikely(op_fini))
+	if(op_read || op_fini)
 		return;
 
 	auto handler
@@ -1524,6 +1535,17 @@ try
 		// Tag hasn't sent its data yet, we shouldn't have anything for it
 		assert(empty(overrun));
 		discard_read(); // Should stumble on a socket error.
+		return false;
+	}
+
+	if(tag.canceled() && tag_committed() <= 1)
+	{
+		log.debug("link(%p) closing to interrupt canceled committed tag(%p) of %zu",
+		          this,
+		          &tag,
+		          tag_count());
+
+		close();
 		return false;
 	}
 
