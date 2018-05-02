@@ -55,7 +55,7 @@ ircd::conf::item<ircd::seconds>
 ircd::client::conf::request_timeout_default
 {
 	{ "name",     "ircd.client.conf.request_timeout" },
-	{ "default",  20L                                },
+	{ "default",  30L                                },
 };
 
 ircd::conf::item<size_t>
