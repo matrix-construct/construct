@@ -109,6 +109,8 @@ struct ircd::server::peer
 	void close(const net::close_opts & = net::close_opts_default);
 
 	peer();
+	peer(peer &&) = delete;
+	peer(const peer &) = delete;
 	~peer() noexcept;
 };
 

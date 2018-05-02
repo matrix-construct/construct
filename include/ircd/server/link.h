@@ -89,5 +89,7 @@ struct ircd::server::link
 	bool open(const net::open_opts &);
 
 	link(server::peer &);
+	link(link &&) = delete;
+	link(const link &) = delete;
 	~link() noexcept;
 };
