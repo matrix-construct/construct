@@ -2447,8 +2447,10 @@ ircd::net::dns::operator()(const hostport &hp,
 	operator()(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
+		static const rfc1035::record::SRV empty;
+
 		if(eptr)
-			return callback(std::move(eptr), hp, {});
+			return callback(std::move(eptr), hp, empty);
 
 		//TODO: prng on weight / prio plz
 		for(size_t i(0); i < rrs.size(); ++i)
@@ -2461,7 +2463,7 @@ ircd::net::dns::operator()(const hostport &hp,
 			return callback(std::move(eptr), hp, record);
 		}
 
-		return callback(std::move(eptr), hp, {});
+		return callback(std::move(eptr), hp, empty);
 	});
 }
 
@@ -2476,8 +2478,10 @@ ircd::net::dns::operator()(const hostport &hp,
 	operator()(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
+		static const rfc1035::record::A empty;
+
 		if(eptr)
-			return callback(std::move(eptr), hp, {});
+			return callback(std::move(eptr), hp, empty);
 
 		//TODO: prng plz
 		for(size_t i(0); i < rrs.size(); ++i)
@@ -2490,7 +2494,7 @@ ircd::net::dns::operator()(const hostport &hp,
 			return callback(std::move(eptr), hp, record);
 		}
 
-		return callback(std::move(eptr), hp, {});
+		return callback(std::move(eptr), hp, empty);
 	});
 }
 
