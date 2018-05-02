@@ -1883,6 +1883,7 @@ noexcept
 		tag.request->in.content = in_content;
 		ptr += size(in_content);
 	}
+	else tag.request->in.content = request.in.content;
 
 	assert(size_t(std::distance(tag.cancellation.get(), ptr)) == cancellation_size);
 
