@@ -31,6 +31,8 @@ Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologi
 for its day to aid the virility of implementations. A vibrant and growing ecosystem
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
+<br />
+
 ## Installation
 
 Getting up and running with Construct is easy. A deployment can scale from as little as
