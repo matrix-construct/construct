@@ -168,7 +168,7 @@ ircd::client::close_all()
 		}
 		catch(const std::exception &e)
 		{
-			log::warning
+			log::derror
 			{
 				"Error disconnecting client @%p: %s", c.get(), e.what()
 			};
@@ -196,13 +196,11 @@ ircd::client::wait_all()
 	context.join();
 	while(!client::list.empty())
 	{
-		if(dock.wait_for(seconds(2)))
-			continue;
-
-		log::warning
-		{
-			"Waiting for %zu clients to close...", client::list.size()
-		};
+		if(!dock.wait_for(seconds(2)))
+			log::warning
+			{
+				"Waiting for %zu clients to close...", client::list.size()
+			};
 	}
 }
 
