@@ -3405,7 +3405,7 @@ ircd::net::operator<<(std::ostream &s, const ipport &t)
 {
 	thread_local char buf[256];
 	const critical_assertion ca;
-	s << string(buf, t);
+	s << net::string(buf, t);
 	return s;
 }
 
@@ -3449,16 +3449,18 @@ ircd::net::string(const mutable_buffer &buf,
 {
 	const auto len
 	{
-		is_v4(ipp)?
-		fmt::sprintf(buf, "%s:%u",
-		             ip::address_v4{host4(ipp)}.to_string(),
-		             port(ipp)):
-
-		is_v6(ipp)?
-		fmt::sprintf(buf, "%s:%u",
-		             ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
-		             port(ipp)):
-
+		is_v4(ipp)? fmt::sprintf
+		{
+			buf, "%s:%u",
+			ip::address_v4{host4(ipp)}.to_string(),
+			port(ipp)
+		}:
+		is_v6(ipp)? fmt::sprintf
+		{
+			buf, "%s:%u",
+			ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
+			port(ipp)
+		}:
 		0
 	};
 
