@@ -84,10 +84,14 @@ noexcept try
 	command(out, body, opts);
 	out << "</pre>";
 
-	const auto str
+	std::string str
 	{
-		replace(out.str().substr(0, 48_KiB), '\n', "<br />")
+		out.str().substr(0, 32_KiB)
 	};
+
+	//TODO: XXXX
+	str = replace(std::move(str), '\n', "<br />");
+	str = replace(std::move(str), '"', "\\\"");
 
 	const string_view alt //TODO: X
 	{
