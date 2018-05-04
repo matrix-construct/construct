@@ -8,251 +8,21 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-bool
-ircd::m::operator==(const event &a, const event &b)
-{
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"event_id"_>(a) == at<"event_id"_>(b);
-}
-
-bool
-ircd::m::operator>=(const event &a, const event &b)
-{
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) >= at<"depth"_>(b);
-}
-
-bool
-ircd::m::operator<=(const event &a, const event &b)
-{
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) <= at<"depth"_>(b);
-}
-
-bool
-ircd::m::operator>(const event &a, const event &b)
-{
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) > at<"depth"_>(b);
-}
-
-bool
-ircd::m::operator<(const event &a, const event &b)
-{
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) < at<"depth"_>(b);
-}
-
-ircd::m::id::event
-ircd::m::make_id(const event &event,
-                 id::event::buf &buf)
-{
-	const crh::sha256::buf hash{event};
-	return make_id(event, buf, hash);
-}
-
-ircd::m::id::event
-ircd::m::make_id(const event &event,
-                 id::event::buf &buf,
-                 const const_buffer &hash)
-{
-	char readable[b58encode_size(sha256::digest_size)];
-	const id::event ret
-	{
-		buf, b58encode(readable, hash), my_host()
-	};
-
-	buf.assigned(ret);
-	return ret;
-}
-
-void
-ircd::m::check_size(const event &event)
-{
-	const size_t &event_size
-	{
-		serialized(event)
-	};
-
-	if(event_size > size_t(event::max_size))
-		throw m::BAD_JSON
-		{
-			"Event is %zu bytes which is larger than the maximum %zu bytes",
-			event_size,
-			size_t(event::max_size)
-		};
-}
-
-bool
-ircd::m::check_size(std::nothrow_t,
-                    const event &event)
-{
-	const size_t &event_size
-	{
-		serialized(event)
-	};
-
-	return event_size <= size_t(event::max_size);
-}
-
-ircd::string_view
-ircd::m::membership(const event &event)
-{
-	return json::get<"membership"_>(event)?
-		string_view{json::get<"membership"_>(event)}:
-		unquote(json::get<"content"_>(event).get("membership"));
-}
-
-size_t
-ircd::m::degree(const event &event)
-{
-	return degree(event::prev{event});
-}
-
-size_t
-ircd::m::degree(const event::prev &prev)
-{
-	size_t ret{0};
-	json::for_each(prev, [&ret]
-	(const auto &, const json::array &prevs)
-	{
-		ret += prevs.count();
-	});
-
-	return ret;
-}
-
-bool
-ircd::m::exists(const id::event &event_id)
-{
-	auto &column
-	{
-		dbs::event_idx
-	};
-
-	return has(column, event_id);
-}
-
-size_t
-ircd::m::count(const event::prev &prev)
-{
-	size_t ret{0};
-	m::for_each(prev, [&ret](const event::id &event_id)
-	{
-		++ret;
-	});
-
-	return ret;
-}
-
-void
-ircd::m::for_each(const event::prev &prev,
-                  const std::function<void (const event::id &)> &closure)
-{
-	json::for_each(prev, [&closure]
-	(const auto &key, const json::array &prevs)
-	{
-		for(const json::array &prev : prevs)
-		{
-			const event::id &id{unquote(prev[0])};
-			closure(id);
-		}
-	});
-}
-
-std::string
-ircd::m::pretty(const event::prev &prev)
-{
-	std::string ret;
-	std::stringstream s;
-	pubsetbuf(s, ret, 4096);
-
-	const auto out{[&s]
-	(const string_view &key, auto&& val)
-	{
-		if(json::defined(val))
-			s << key << " :" << val << std::endl;
-	}};
-
-	const auto &auth_events{json::get<"auth_events"_>(prev)};
-	for(const json::array auth_event : auth_events)
-	{
-		s << std::setw(16) << std::right << "[auth event]"
-		  << " :" << unquote(auth_event[0]);
-
-		for(const auto &hash : json::object{auth_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_states{json::get<"prev_state"_>(prev)};
-	for(const json::array prev_state : prev_states)
-	{
-		s << std::setw(16) << std::right << "[prev state]"
-		  << " :" << unquote(prev_state[0]);
-
-		for(const auto &hash : json::object{prev_state[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_events{json::get<"prev_events"_>(prev)};
-	for(const json::array prev_event : prev_events)
-	{
-		s << std::setw(16) << std::right << "[prev_event]"
-		  << " :" << unquote(prev_event[0]);
-
-		for(const auto &hash : json::object{prev_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	resizebuf(s, ret);
-	return ret;
-}
-
-std::string
-ircd::m::pretty_oneline(const event::prev &prev)
-{
-	std::string ret;
-	std::stringstream s;
-	pubsetbuf(s, ret, 1024);
-
-	const auto &auth_events{json::get<"auth_events"_>(prev)};
-	s << "A[ ";
-	for(const json::array auth_event : auth_events)
-		s << unquote(auth_event[0]) << " ";
-	s << "] ";
-
-	const auto &prev_states{json::get<"prev_state"_>(prev)};
-	s << "S[ ";
-	for(const json::array prev_state : prev_states)
-		s << unquote(prev_state[0]) << " ";
-	s << "] ";
-
-	const auto &prev_events{json::get<"prev_events"_>(prev)};
-	s << "E[ ";
-	for(const json::array prev_event : prev_events)
-		s << unquote(prev_event[0]) << " ";
-	s << "] ";
-
-	resizebuf(s, ret);
-	return ret;
-}
-
 std::string
 ircd::m::pretty(const event &event)
 {
 	std::string ret;
 	std::stringstream s;
 	pubsetbuf(s, ret, 4096);
+	pretty(s, event);
+	resizebuf(s, ret);
+	return ret;
+}
 
+std::ostream &
+ircd::m::pretty(std::ostream &s,
+                const event &event)
+{
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
 	{
@@ -360,8 +130,7 @@ ircd::m::pretty(const event &event)
 			  << ':' << content.first
 			  << std::endl;
 
-	resizebuf(s, ret);
-	return ret;
+	return s;
 }
 
 std::string
@@ -370,8 +139,17 @@ ircd::m::pretty_oneline(const event &event,
 {
 	std::string ret;
 	std::stringstream s;
-	pubsetbuf(s, ret, 1024);
+	pubsetbuf(s, ret, 4096);
+	pretty_oneline(s, event, content_keys);
+	resizebuf(s, ret);
+	return ret;
+}
 
+std::ostream &
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event &event,
+                        const bool &content_keys)
+{
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
 	{
@@ -450,8 +228,259 @@ ircd::m::pretty_oneline(const event &event,
 			s << content.first << " ";
 	}
 
+	return s;
+}
+
+ircd::m::id::event
+ircd::m::make_id(const event &event,
+                 id::event::buf &buf)
+{
+	const crh::sha256::buf hash{event};
+	return make_id(event, buf, hash);
+}
+
+ircd::m::id::event
+ircd::m::make_id(const event &event,
+                 id::event::buf &buf,
+                 const const_buffer &hash)
+{
+	char readable[b58encode_size(sha256::digest_size)];
+	const id::event ret
+	{
+		buf, b58encode(readable, hash), my_host()
+	};
+
+	buf.assigned(ret);
+	return ret;
+}
+
+bool
+ircd::m::operator==(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"event_id"_>(a) == at<"event_id"_>(b);
+}
+
+bool
+ircd::m::operator>=(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) >= at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator<=(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) <= at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator>(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) > at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator<(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"depth"_>(a) < at<"depth"_>(b);
+}
+
+bool
+ircd::m::exists(const id::event &event_id)
+{
+	auto &column
+	{
+		dbs::event_idx
+	};
+
+	return has(column, event_id);
+}
+
+void
+ircd::m::check_size(const event &event)
+{
+	const size_t &event_size
+	{
+		serialized(event)
+	};
+
+	if(event_size > size_t(event::max_size))
+		throw m::BAD_JSON
+		{
+			"Event is %zu bytes which is larger than the maximum %zu bytes",
+			event_size,
+			size_t(event::max_size)
+		};
+}
+
+bool
+ircd::m::check_size(std::nothrow_t,
+                    const event &event)
+{
+	const size_t &event_size
+	{
+		serialized(event)
+	};
+
+	return event_size <= size_t(event::max_size);
+}
+
+ircd::string_view
+ircd::m::membership(const event &event)
+{
+	return json::get<"membership"_>(event)?
+		string_view{json::get<"membership"_>(event)}:
+		unquote(json::get<"content"_>(event).get("membership"));
+}
+
+size_t
+ircd::m::degree(const event &event)
+{
+	return degree(event::prev{event});
+}
+
+size_t
+ircd::m::degree(const event::prev &prev)
+{
+	size_t ret{0};
+	json::for_each(prev, [&ret]
+	(const auto &, const json::array &prevs)
+	{
+		ret += prevs.count();
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::count(const event::prev &prev)
+{
+	size_t ret{0};
+	m::for_each(prev, [&ret](const event::id &event_id)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::for_each(const event::prev &prev,
+                  const std::function<void (const event::id &)> &closure)
+{
+	json::for_each(prev, [&closure]
+	(const auto &key, const json::array &prevs)
+	{
+		for(const json::array &prev : prevs)
+		{
+			const event::id &id{unquote(prev[0])};
+			closure(id);
+		}
+	});
+}
+
+std::string
+ircd::m::pretty(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty(s, prev);
 	resizebuf(s, ret);
 	return ret;
+}
+
+std::ostream &
+ircd::m::pretty(std::ostream &s,
+                const event::prev &prev)
+{
+	const auto out{[&s]
+	(const string_view &key, auto&& val)
+	{
+		if(json::defined(val))
+			s << key << " :" << val << std::endl;
+	}};
+
+	const auto &auth_events{json::get<"auth_events"_>(prev)};
+	for(const json::array auth_event : auth_events)
+	{
+		s << std::setw(16) << std::right << "[auth event]"
+		  << " :" << unquote(auth_event[0]);
+
+		for(const auto &hash : json::object{auth_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
+
+	const auto &prev_states{json::get<"prev_state"_>(prev)};
+	for(const json::array prev_state : prev_states)
+	{
+		s << std::setw(16) << std::right << "[prev state]"
+		  << " :" << unquote(prev_state[0]);
+
+		for(const auto &hash : json::object{prev_state[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
+
+	const auto &prev_events{json::get<"prev_events"_>(prev)};
+	for(const json::array prev_event : prev_events)
+	{
+		s << std::setw(16) << std::right << "[prev_event]"
+		  << " :" << unquote(prev_event[0]);
+
+		for(const auto &hash : json::object{prev_event[1]})
+			s << " " << unquote(hash.first)
+			  << ": " << unquote(hash.second);
+
+		s << std::endl;
+	}
+
+	return s;
+}
+
+std::string
+ircd::m::pretty_oneline(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty_oneline(s, prev);
+	resizebuf(s, ret);
+	return ret;
+}
+
+std::ostream &
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event::prev &prev)
+{
+	const auto &auth_events{json::get<"auth_events"_>(prev)};
+	s << "A[ ";
+	for(const json::array auth_event : auth_events)
+		s << unquote(auth_event[0]) << " ";
+	s << "] ";
+
+	const auto &prev_states{json::get<"prev_state"_>(prev)};
+	s << "S[ ";
+	for(const json::array prev_state : prev_states)
+		s << unquote(prev_state[0]) << " ";
+	s << "] ";
+
+	const auto &prev_events{json::get<"prev_events"_>(prev)};
+	s << "E[ ";
+	for(const json::array prev_event : prev_events)
+		s << unquote(prev_event[0]) << " ";
+	s << "] ";
+
+	return s;
 }
 
 bool

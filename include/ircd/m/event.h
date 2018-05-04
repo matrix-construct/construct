@@ -15,20 +15,13 @@ namespace ircd::m
 {
 	struct event;
 
+	// General util
 	bool my(const id::event &);
 	bool my(const event &);
-
 	size_t degree(const event &);
 	string_view membership(const event &);
-
 	bool check_size(std::nothrow_t, const event &);
 	void check_size(const event &);
-
-	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
-	id::event make_id(const event &, id::event::buf &buf);
-
-	std::string pretty(const event &);
-	std::string pretty_oneline(const event &, const bool &content_keys = true);
 
 	// [GET]
 	bool exists(const id::event &);
@@ -41,6 +34,17 @@ namespace ircd::m
 
 	// Equality tests the event_id only! know this.
 	bool operator==(const event &a, const event &b);
+
+	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, id::event::buf &buf);
+
+	// Informational pretty string condensed to single line.
+	std::ostream &pretty_oneline(std::ostream &, const event &, const bool &content_keys = true);
+	std::string pretty_oneline(const event &, const bool &content_keys = true);
+
+	// Informational pretty string on multiple lines.
+	std::ostream &pretty(std::ostream &, const event &);
+	std::string pretty(const event &);
 }
 
 #pragma GCC diagnostic push
@@ -137,7 +141,10 @@ namespace ircd::m
 	size_t degree(const event::prev &);
 	size_t count(const event::prev &);
 
+	std::ostream &pretty(std::ostream &, const event::prev &);
 	std::string pretty(const event::prev &);
+
+	std::ostream &pretty_oneline(std::ostream &, const event::prev &);
 	std::string pretty_oneline(const event::prev &);
 }
 
