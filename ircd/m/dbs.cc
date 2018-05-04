@@ -102,6 +102,24 @@ namespace ircd::m::dbs
 	static string_view _index_ephem(db::txn &, const event &, const write_opts &);
 }
 
+void
+ircd::m::dbs::blacklist(db::txn &txn,
+                        const event::id &event_id,
+                        const write_opts &opts)
+{
+	db::txn::append
+	{
+		txn, event_bad,
+		{
+			opts.op,
+			string_view{event_id},
+			opts.idx != uint64_t(-1) && opts.op == db::op::SET?
+				byte_view<string_view>(opts.idx):
+				string_view{}
+		}
+	};
+}
+
 ircd::string_view
 ircd::m::dbs::write(db::txn &txn,
                     const event &event,

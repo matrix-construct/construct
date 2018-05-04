@@ -60,6 +60,7 @@ namespace ircd::m::dbs
 
 	// [SET (txn)] Basic write suite
 	string_view write(db::txn &, const event &, const write_opts &);
+	void blacklist(db::txn &, const event::id &, const write_opts &);
 }
 
 struct ircd::m::dbs::write_opts
