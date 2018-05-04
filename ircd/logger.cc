@@ -448,7 +448,7 @@ noexcept
 
 	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
-	s.rdbuf()->pubsetbuf(buf, max);
+	pubsetbuf(s, buf);
 	s << microtime(date)
 	  << ' '
 	  << (console_ansi[fac]? console_ansi[fac] : "")
