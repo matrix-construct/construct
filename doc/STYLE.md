@@ -30,7 +30,7 @@ inheritance.
 of the structure fill in the pointers with their own functionality. -> Think
 virtual functions.
 * `if` statements that check for errors and `goto` some label at the bottom of
-a function under the normal return type. -> Think exceptions.
+a function under the nominal return statement. -> Think exceptions.
 
 
 #### Encapsulation will be relaxed
