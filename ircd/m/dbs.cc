@@ -26,6 +26,11 @@ decltype(ircd::m::dbs::event_idx)
 ircd::m::dbs::event_idx
 {};
 
+/// Linkage for a reference to the event_bad column.
+decltype(ircd::m::dbs::event_bad)
+ircd::m::dbs::event_bad
+{};
+
 /// Linkage for a reference to the state_node column.
 decltype(ircd::m::dbs::state_node)
 ircd::m::dbs::state_node
@@ -71,6 +76,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 
 	// Cache the columns for the metadata
 	event_idx = db::column{*events, desc::events__event_idx.name};
+	event_bad = db::column{*events, desc::events__event_bad.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -486,6 +492,57 @@ ircd::m::dbs::desc::events__event_idx
 
 	// cache size for compressed assets
 	16_MiB, //TODO: conf
+
+	// bloom filter bits
+	16,
+
+	// expect queries hit
+	false,
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__event_bad
+{
+	// name
+	"_event_bad",
+
+	// explanation
+	R"(### developer note:
+
+	The key is an event_id. The mere existence of the key indicates we do not
+	have this event; it will not be a key found in the event_idx and will not
+	have its own idx number and we know nothing else about this event.
+	
+	However the value is an optional index number of *another* event which is
+	recommended to be used when this missing event was essential. For example,
+	if other servers accept the bad event and then continue a room DAG it is
+	essential we know the last good prev reference to have an unbroken trace.
+	Such a prev reference will be recorded in this value for said use.
+
+	If this column has no value or a zero value it is being used to blacklist
+	an event_id for some other reason.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	16_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	8_MiB, //TODO: conf
 
 	// bloom filter bits
 	16,
@@ -1711,6 +1768,10 @@ ircd::m::dbs::desc::events
 	// event_id => uint64_t
 	// Mapping of event_id to index number.
 	events__event_idx,
+
+	// event_id => uint64_t
+	// Mapping of faulty event_id to possible alternative event_idx.
+	events__event_bad,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.

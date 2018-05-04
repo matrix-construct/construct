@@ -27,6 +27,7 @@ namespace ircd::m::dbs
 
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
+	extern db::column event_bad;       // event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => state_root
 	extern db::index room_joined;      // room_id | origin, member => event_idx
 	extern db::index room_state;       // room_id | type, state_key => event_idx
@@ -106,6 +107,9 @@ namespace ircd::m::dbs::desc
 
 	// events index
 	extern const database::descriptor events__event_idx;
+
+	// events blacklist
+	extern const database::descriptor events__event_bad;
 
 	// room events sequence
 	extern const db::prefix_transform events__room_events__pfx;
