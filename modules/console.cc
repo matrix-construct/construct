@@ -1991,6 +1991,39 @@ console_id__event(opt &out,
 }
 
 bool
+console_cmd__event__bad(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id",
+	}};
+
+	const m::event::id event_id
+	{
+		param.at(0)
+	};
+
+	m::event::idx workaround;
+	const bool b
+	{
+		bad(event_id, workaround)
+	};
+
+	out << event_id << "is"
+	    << (b? " " : " NOT ") << "BAD";
+
+	if(b && workaround != m::event::idx(-1))
+		m::event::fetch::event_id(workaround, std::nothrow, [&out]
+		(const m::event::id &event_id)
+		{
+			out << " and a workaround is " << event_id;
+		});
+
+	out << std::endl;
+	return true;
+}
+
+bool
 console_cmd__event__erase(opt &out, const string_view &line)
 {
 	const m::event::id event_id
