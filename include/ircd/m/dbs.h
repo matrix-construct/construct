@@ -26,11 +26,11 @@ namespace ircd::m::dbs
 	extern std::array<db::column, event_columns> event_column;
 
 	// Event metadata columns
-	extern db::column event_idx;
-	extern db::index room_events;
-	extern db::index room_joined;
-	extern db::index room_state;
-	extern db::column state_node;
+	extern db::column event_idx;       // event_id => event_idx
+	extern db::index room_events;      // room_id | depth, event_idx => state_root
+	extern db::index room_joined;      // room_id | origin, member => event_idx
+	extern db::index room_state;       // room_id | type, state_key => event_idx
+	extern db::column state_node;      // node_id => state::node
 
 	// Lowlevel util
 	constexpr size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + 256 + 256};
