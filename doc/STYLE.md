@@ -401,3 +401,15 @@ exceptions, etc). Any exception may still come out of that nothrow overload;
 technically including the specific exception if it came from somewhere else!
 
 When no exceptions whatsoever are expected, the `noexcept` keyword is used.
+
+
+#### Indications of yielding and IO's
+
+There is a section on how yielding and IO can occur far up the stack from a
+benign-looking callsite in ctx/README. We try to make comments to indicate
+these things directly in the definitions and certainly in documentation.
+
+Some of those indications may say nothing more than `[GET]` and `[SET]` without
+any other comment. That is the minimum acceptable marking for something which
+will likely do read or write IO respectively to disk or even the network. In
+any such case the ircd::ctx will definitely yield if that happens.
