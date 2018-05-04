@@ -103,7 +103,7 @@ try
 	}
 
 	bool useful{true};
-	m::presence::get(user_id, [&event, &object, &useful]
+	m::presence::get(std::nothrow, user_id, [&event, &object, &useful]
 	(const m::event &existing_event, const json::object &existing_object)
 	{
 		assert(json::get<"user_id"_>(object) == unquote(existing_object.get("user_id")));
