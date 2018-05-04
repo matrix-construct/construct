@@ -14,7 +14,7 @@
 namespace ircd
 {
 	enum runlevel _runlevel {runlevel::HALT};    // Current libircd runlevel
-	const enum runlevel &runlevel{_runlevel};    // Observer for current RL
+	const enum runlevel &runlevel {_runlevel};   // Observer for current RL
 
 	boost::asio::io_context *ios;                // user's io service
 	struct strand *strand;                       // libircd event serializer
@@ -69,7 +69,7 @@ try
 
 	// Sample the ID of this thread. Since this is the first transfer of
 	// control to libircd after static initialization we have nothing to
-	// consider a main thread yet. We need something set for many assetions
+	// consider a main thread yet. We need something set for many assertions
 	// to pass until ircd::main() is entered which will reset this to where
 	// ios.run() is really running.
 	ircd::thread_id = std::this_thread::get_id();

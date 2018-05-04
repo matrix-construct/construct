@@ -11,7 +11,6 @@
 #include <ircd/js/js.h>
 #include <js/Initialization.h>
 #include <mozilla/ThreadLocal.h>
-#include "/home/jason/charybdis/charybdis/gecko-dev/js/src/vm/Opcodes.h"
 
 namespace ircd {
 namespace js   {
