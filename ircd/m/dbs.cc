@@ -82,14 +82,6 @@ ircd::m::dbs::init::init(std::string dbopts)
 ircd::m::dbs::init::~init()
 noexcept
 {
-	// Columns should be unrefed before DB closes
-	state_node = {};
-	room_events = {};
-	room_joined = {};
-	room_state = {};
-	for(auto &column : event_column)
-		column = {};
-
 	// Unref DB (should close)
 	events = {};
 }
