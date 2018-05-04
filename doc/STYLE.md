@@ -325,6 +325,13 @@ here is that the tab-width becomes a personal setting -- nobody has to argue
 whether it's worth 2 or 4 or 8 spaces... Remember, tabs are never used to
 align things that would fall out of alignment if the tab-width changed.
 
+* Only one blank line at a time. While an entire section could be devoted to
+*where* to create whitespace, for now, just know to only use a single blank
+line to do so. There are ways to cheat. I am a huge fan of whitespace and I
+will share some of these ways. For example, a comment block may end in a
+line starting with `//` with no text after it. Combined with the allowed
+completely blank line after that you now have more whitespace.
+
 
 ### Conventions
 
