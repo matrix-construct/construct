@@ -3836,13 +3836,13 @@ ircd::db::read(column &column,
                const gopts &gopts)
 {
 	std::string ret;
-	const auto copy([&ret]
+	const auto closure([&ret]
 	(const string_view &src)
 	{
 		ret.assign(begin(src), end(src));
 	});
 
-	column(key, copy, gopts);
+	column(key, closure, gopts);
 	return ret;
 }
 
@@ -3852,16 +3852,15 @@ ircd::db::read(column &column,
                const mutable_buffer &buf,
                const gopts &gopts)
 {
-	size_t len(0);
-	const auto copy([&len, &buf]
+	string_view ret;
+	const auto closure([&ret, &buf]
 	(const string_view &src)
 	{
-		len = std::min(size(src), size(buf));
-		memcpy(data(buf), data(src), len);
+		ret = { data(buf), copy(buf, src) };
 	});
 
-	column(key, copy, gopts);
-	return { data(buf), len };
+	column(key, closure, gopts);
+	return ret;
 }
 
 template<>
