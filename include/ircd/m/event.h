@@ -25,6 +25,8 @@ namespace ircd::m
 
 	// [GET]
 	bool exists(const id::event &);
+	bool bad(const id::event &, uint64_t &);
+	bool bad(const id::event &);
 
 	// Depth comparison; expect unstable sorting.
 	bool operator<(const event &, const event &);

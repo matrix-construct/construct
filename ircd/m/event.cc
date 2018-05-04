@@ -290,6 +290,41 @@ ircd::m::operator<(const event &a, const event &b)
 }
 
 bool
+ircd::m::bad(const id::event &event_id)
+{
+	auto &column
+	{
+		dbs::event_bad
+	};
+
+	return has(column, event_id);
+}
+
+bool
+ircd::m::bad(const id::event &event_id,
+             uint64_t &idx)
+{
+	auto &column
+	{
+		dbs::event_bad
+	};
+
+	bool ret;
+	const string_view value
+	{
+		read(column, event_id, ret, mutable_buffer
+		{
+			reinterpret_cast<char *>(&idx), sizeof(idx)
+		})
+	};
+
+	if(!value)
+		idx = uint64_t(-1);
+
+	return ret;
+}
+
+bool
 ircd::m::exists(const id::event &event_id)
 {
 	auto &column
