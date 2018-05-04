@@ -38,6 +38,11 @@ namespace ircd::db
 	string_view read(column &, const string_view &key, const mutable_buffer &, const gopts & = {});
 	std::string read(column &, const string_view &key, const gopts & = {});
 
+	// [GET] Nothrow convenience functions to copy data into your buffer; since
+	// a key can exist with an empty value we must overload on this bool here.
+	string_view read(column &, const string_view &key, bool &found, const mutable_buffer &, const gopts & = {});
+	std::string read(column &, const string_view &key, bool &found, const gopts & = {});
+
 	// [SET] Write data to the db
 	void write(column &, const string_view &key, const const_buffer &value, const sopts & = {});
 

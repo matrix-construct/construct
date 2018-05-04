@@ -3863,6 +3863,41 @@ ircd::db::read(column &column,
 	return ret;
 }
 
+std::string
+ircd::db::read(column &column,
+               const string_view &key,
+               bool &found,
+               const gopts &gopts)
+{
+	std::string ret;
+	const auto closure([&ret]
+	(const string_view &src)
+	{
+		ret.assign(begin(src), end(src));
+	});
+
+	found = column(key, std::nothrow, closure, gopts);
+	return ret;
+}
+
+ircd::string_view
+ircd::db::read(column &column,
+               const string_view &key,
+               bool &found,
+               const mutable_buffer &buf,
+               const gopts &gopts)
+{
+	string_view ret;
+	const auto closure([&buf, &ret]
+	(const string_view &src)
+	{
+		ret = { data(buf), copy(buf, src) };
+	});
+
+	found = column(key, std::nothrow, closure, gopts);
+	return ret;
+}
+
 template<>
 ircd::db::prop_str
 ircd::db::property(const column &column,
