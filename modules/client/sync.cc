@@ -591,7 +591,13 @@ polylog_sync(client &client,
 {
 	const unwind::exceptional uw{[&sp]
 	{
-		std::cout << "polylog sync ERROR: " << sp.since << " to " << sp.current << " (though: " << m::vm::current_sequence << ") " << std::endl;
+		log::error
+		{
+			"polylog sync ERROR %lu to %lu (vm @ %zu)"
+			,sp.since
+			,sp.current
+			,m::vm::current_sequence
+		};
 	}};
 
 	{
