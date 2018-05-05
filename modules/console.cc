@@ -2560,7 +2560,22 @@ console_cmd__room__head(opt &out, const string_view &line)
 		room_id
 	};
 
-	out << head(room_id) << std::endl;
+	const m::room::head head
+	{
+		room
+	};
+
+	head.for_each([&out]
+	(const m::event::idx &event_idx, const m::event::id &event_id)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		out << pretty_oneline(event) << std::endl;
+	});
+
 	return true;
 }
 
