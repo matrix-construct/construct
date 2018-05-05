@@ -567,7 +567,7 @@ ircd::m::room::state::state(const m::room &room,
 	room.event_id?
 		event::id::buf{room.event_id}:
 	opts.snapshot?
-		head(room_id):
+		m::head(room_id):
 	event::id::buf{}
 }
 ,root_id
@@ -1490,6 +1490,69 @@ const
 	}
 
 	return false;
+}
+
+//
+// room::head
+//
+
+size_t
+ircd::m::room::head::count()
+const
+{
+	size_t ret(0);
+	for_each([&ret]
+	(const event::idx &event_idx, const event::id &event_id)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::room::head::for_each(const closure &closure)
+const
+{
+	for_each(closure_bool{[&closure]
+	(const event::idx &event_idx, const event::id &event_id)
+	{
+		closure(event_idx, event_id);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::head::for_each(const closure_bool &closure)
+const
+{
+	auto &index
+	{
+		dbs::room_head
+	};
+
+	auto it
+	{
+		index.begin(room.room_id)
+	};
+
+	for(; it; ++it)
+	{
+		const event::id &event_id
+		{
+			dbs::room_head_key(it->first)
+		};
+
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>{it->second}
+		};
+
+		if(!closure(event_idx, event_id))
+			return false;
+	}
+
+	return true;
 }
 
 //

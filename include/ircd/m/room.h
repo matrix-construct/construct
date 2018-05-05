@@ -104,6 +104,7 @@ struct ircd::m::room
 	struct state;
 	struct members;
 	struct origins;
+	struct head;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -338,6 +339,30 @@ struct ircd::m::room::origins
 	size_t count() const;
 
 	origins(const m::room &room)
+	:room{room}
+	{}
+};
+
+/// Interface to the room head
+///
+/// This interface helps compute and represent aspects of the room graph,
+/// specifically concerning the "head" or the "front" or the "top" of this
+/// graph where events are either furthest from the m.room.create genesis,
+/// or are yet unreferenced by another event. Usage of this interface is
+/// fundamental when composing the references of a new event on the graph.
+///
+struct ircd::m::room::head
+{
+	using closure = std::function<void (const event::idx &, const event::id &)>;
+	using closure_bool = std::function<bool (const event::idx &, const event::id &)>;
+
+	m::room room;
+
+	bool for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
+	size_t count() const;
+
+	head(const m::room &room)
 	:room{room}
 	{}
 };
