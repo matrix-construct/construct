@@ -22,12 +22,8 @@ namespace ircd
 	struct iequals;
 
 	// Vintage
-	size_t strlcpy(const mutable_buffer &dst, const string_view &src);
-	size_t strlcat(const mutable_buffer &dst, const string_view &src);
-	size_t strlcpy(char *const &dest, const char *const &src, const size_t &bufmax);
-	size_t strlcat(char *const &dest, const char *const &src, const size_t &bufmax);
-	size_t strlcpy(char *const &dest, const string_view &src, const size_t &bufmax);
-	size_t strlcat(char *const &dest, const string_view &src, const size_t &bufmax);
+	struct strlcpy;
+	struct strlcat;
 
 	// wrapper to find(T) != npos
 	template<class T> bool has(const string_view &, const T &);
@@ -104,6 +100,75 @@ namespace ircd
 	// Truncate view at maximum length
 	string_view trunc(const string_view &, const size_t &max);
 }
+
+/// This is a function. It works the same as the standard strlcpy() but it has
+/// some useful modernizations and may be informally referred to as strlcpy++.
+///
+/// - It optionally works with string_view inputs and ircd::buffer outputs.
+/// This allows for implicit size parameters and increases its safety while
+/// simplifying its usage (no more sizeof(buf) where buf coderots into char*).
+///
+/// - Its objectification allows for a configurable return type. The old
+/// strlcpy() returned a size integer type. When using string_view's and
+/// buffers this would generally lead to the pattern { dst, strlcpy(dst, src) }
+/// and this is no longer necessary.
+///
+struct ircd::strlcpy
+{
+	mutable_buffer ret;
+
+  public:
+	operator string_view() const       { return ret;                           }
+	operator size_t() const            { return size(ret);                     }
+
+	strlcpy(char *const &dst, const string_view &src, const size_t &max)
+	:ret{[&]() -> mutable_buffer
+	{
+		if(!max)
+			return {};
+
+		const auto len{std::min(src.size(), max - 1)};
+		memcpy(dst, src.data(), len);
+		dst[len] = '\0';
+		return { dst, len };
+	}()}
+	{}
+
+	strlcpy(char *const &dst, const char *const &src, const size_t &max)
+	:strlcpy{dst, string_view{src, strnlen(src, max)}, max}
+	{}
+
+	strlcpy(const mutable_buffer &dst, const string_view &src)
+	:strlcpy(data(dst), src, size(dst))
+	{}
+};
+
+struct ircd::strlcat
+{
+	mutable_buffer ret;
+
+  public:
+	operator string_view() const       { return ret;                           }
+	operator size_t() const            { return size(ret);                     }
+
+	strlcat(char *const &dst, const string_view &src, const size_t &max)
+	:ret{[&]() -> mutable_buffer
+	{
+		const auto pos{strnlen(dst, max)};
+		const auto remain{max - pos};
+		strlcpy(dst + pos, src, remain);
+		return { dst, pos + src.size() };
+	}()}
+	{}
+
+	strlcat(char *const &dst, const char *const &src, const size_t &max)
+	:strlcat(dst, string_view{src, ::strnlen(src, max)}, max)
+	{}
+
+	strlcat(const mutable_buffer &dst, const string_view &src)
+	:strlcat(data(dst), src, size(dst))
+	{}
+};
 
 inline ircd::string_view
 ircd::trunc(const string_view &s,
@@ -508,88 +573,6 @@ ircd::has(const string_view &s,
 {
 	return s.find(t) != s.npos;
 }
-
-inline size_t
-ircd::strlcpy(const mutable_buffer &dst,
-              const string_view &src)
-{
-	return strlcpy(data(dst), src, size(dst));
-}
-
-/// Copy a string to dst will guaranteed null terminated output
-inline size_t
-ircd::strlcpy(char *const &dst,
-              const string_view &src,
-              const size_t &max)
-{
-	if(!max)
-		return 0;
-
-	const size_t len
-	{
-		std::min(src.size(), max - 1)
-	};
-
-	memcpy(dst, src.data(), len);
-	dst[len] = '\0';
-	return len;
-}
-
-inline size_t
-#ifndef HAVE_STRLCPY
-ircd::strlcpy(char *const &dst,
-              const char *const &src,
-              const size_t &max)
-{
-	const auto len{strnlen(src, max)};
-	return strlcpy(dst, {src, len}, max);
-}
-#else
-ircd::strlcpy(char *const &dst,
-              const char *const &src,
-              const size_t &max)
-{
-	return ::strlcpy(dst, src, max);
-}
-#endif
-
-inline size_t
-ircd::strlcat(const mutable_buffer &dst,
-              const string_view &src)
-{
-	return strlcat(data(dst), src, size(dst));
-}
-
-/// Append a string to dst will guaranteed null terminated output; Expects
-/// dst to have null termination before calling this function.
-inline size_t
-ircd::strlcat(char *const &dst,
-              const string_view &src,
-              const size_t &max)
-{
-	const auto pos{strnlen(dst, max)};
-	const auto remain{max - pos};
-	strlcpy(dst + pos, src, remain);
-	return pos + src.size();
-}
-
-inline size_t
-#ifndef HAVE_STRLCAT
-ircd::strlcat(char *const &dst,
-              const char *const &src,
-              const size_t &max)
-{
-	const auto len{strnlen(src, max)};
-	return strlcat(dst, {src, len}, max);
-}
-#else
-ircd::strlcat(char *const &dst,
-              const char *const &src,
-              const size_t &max)
-{
-	return ::strlcat(dst, src, max);
-}
-#endif
 
 /// Case insensitive string comparison deciding which string compares 'less'
 /// than the other.
