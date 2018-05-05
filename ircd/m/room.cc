@@ -634,7 +634,7 @@ ircd::m::room::state::get(const string_view &type,
                           const event::id::closure &closure)
 const try
 {
-	if(root_id)
+	if(!present())
 		return m::state::get(root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
@@ -665,7 +665,7 @@ ircd::m::room::state::get(const string_view &type,
                           const event::closure_idx &closure)
 const try
 {
-	if(root_id)
+	if(!present())
 		m::state::get(root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
@@ -718,7 +718,7 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::id::closure &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
@@ -739,7 +739,7 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::closure_idx &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
@@ -770,7 +770,7 @@ ircd::m::room::state::has(const string_view &type,
                           const string_view &state_key)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::get(std::nothrow, root_id, type, state_key, []
 		(const string_view &event_id)
 		{});
@@ -784,7 +784,7 @@ size_t
 ircd::m::room::state::count()
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::count(root_id);
 
 	size_t ret{0};
@@ -799,7 +799,7 @@ size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::count(root_id, type);
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -839,7 +839,7 @@ bool
 ircd::m::room::state::test(const event::id::closure_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -864,7 +864,7 @@ bool
 ircd::m::room::state::test(const event::closure_idx_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -901,7 +901,7 @@ ircd::m::room::state::test(const string_view &type,
                            const event::id::closure_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -927,7 +927,7 @@ ircd::m::room::state::test(const string_view &type,
                            const event::closure_idx_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -957,7 +957,7 @@ ircd::m::room::state::test(const string_view &type,
                            const keys_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1014,7 +1014,7 @@ ircd::m::room::state::test(const string_view &type,
                            const event::id::closure_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1041,7 +1041,7 @@ ircd::m::room::state::test(const string_view &type,
                            const event::closure_idx_bool &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::test(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1083,7 +1083,7 @@ void
 ircd::m::room::state::for_each(const event::id::closure &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::for_each(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1101,7 +1101,7 @@ void
 ircd::m::room::state::for_each(const event::closure_idx &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::for_each(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1132,7 +1132,7 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::for_each(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1151,7 +1151,7 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::closure_idx &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::for_each(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
@@ -1177,7 +1177,7 @@ ircd::m::room::state::for_each(const string_view &type,
                                const keys &closure)
 const
 {
-	if(root_id)
+	if(!present())
 		return m::state::for_each(root_id, type, [&closure]
 		(const json::array &key, const string_view &)
 		{
@@ -1204,6 +1204,13 @@ const
 		else
 			break;
 	}
+}
+
+bool
+ircd::m::room::state::present()
+const
+{
+	return !event_id || !root_id || std::get<0>(top(room_id)) == event_id;
 }
 
 //

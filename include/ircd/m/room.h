@@ -226,6 +226,8 @@ struct ircd::m::room::state
 	m::state::id_buffer root_id_buf;
 	m::state::id root_id;
 
+	bool present() const;
+
 	// Iterate the state; for_each protocol
 	void for_each(const string_view &type, const keys &) const;
 	void for_each(const string_view &type, const event::closure_idx &) const;
