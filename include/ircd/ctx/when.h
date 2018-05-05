@@ -44,7 +44,7 @@ ircd::ctx::when_all(it first,
 	{
 		[&p](it &f)
 		{
-			f->state().then = [p]
+			state(*f).then = [p]
 			(shared_state_base &) mutable
 			{
 				then(p);
@@ -54,7 +54,7 @@ ircd::ctx::when_all(it first,
 
 	future<void> ret(p);
 	for(; first != last; ++first)
-		if(is(first->state(), future_state::PENDING))
+		if(is(state(*first), future_state::PENDING))
 			set_then(first);
 
 	if(refcount(p.state()) <= 1)
@@ -85,7 +85,7 @@ ircd::ctx::when_any(it first,
 			if(!p.valid())
 				return;
 
-			set(f->state(), future_state::OBSERVED);
+			set(state(*f), future_state::OBSERVED);
 			p.set_value(f);
 		}
 	};
@@ -95,7 +95,7 @@ ircd::ctx::when_any(it first,
 	{
 		[&p](it &f)
 		{
-			f->state().then = [p, f]             // alloc
+			state(*f).then = [p, f]             // alloc
 			(shared_state_base &) mutable
 			{
 				then(p, f);
@@ -105,15 +105,15 @@ ircd::ctx::when_any(it first,
 
 	future<it> ret(p);
 	for(auto f(first); f != last; ++f)
-		if(is(f->state(), future_state::READY))
+		if(is(state(*f), future_state::READY))
 		{
-			set(f->state(), future_state::OBSERVED);
+			set(state(*f), future_state::OBSERVED);
 			p.set_value(f);
 			return ret;
 		}
 
 	for(; first != last; ++first)
-		if(is(first->state(), future_state::PENDING))
+		if(is(state(*first), future_state::PENDING))
 			set_then(first);
 
 	if(refcount(p.state()) <= 1)

@@ -90,6 +90,9 @@ struct ircd::ctx::future<void>
 
 namespace ircd::ctx
 {
+	template<class T> const shared_state<T> &state(const future<T> &);
+	template<class T> shared_state<T> &state(future<T> &);
+
 	template<class T,
 	         class time_point>
 	bool wait_until(const future<T> &, const time_point &, std::nothrow_t);
@@ -350,4 +353,18 @@ ircd::ctx::wait_until(const future<T> &f,
 		return false;
 
 	return wfun();
+}
+
+template<class T>
+ircd::ctx::shared_state<T> &
+ircd::ctx::state(future<T> &future)
+{
+	return future.state();
+}
+
+template<class T>
+const ircd::ctx::shared_state<T> &
+ircd::ctx::state(const future<T> &future)
+{
+	return future.state();
 }
