@@ -2729,8 +2729,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 
 			// Cached entry is a cached error, we set the eptr, but also
 			// include the record and increment the count like normal.
-			assert(!eptr);
-			if((!rr.tgt || !rr.port) && opts.nxdomain_exceptions)
+			if((!rr.tgt || !rr.port) && opts.nxdomain_exceptions && !eptr)
 			{
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
@@ -2772,8 +2771,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 
 			// Cached entry is a cached error, we set the eptr, but also
 			// include the record and increment the count like normal.
-			assert(!eptr);
-			if(!rr.ip4)
+			if(!rr.ip4 && !eptr)
 			{
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
