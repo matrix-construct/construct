@@ -3597,19 +3597,14 @@ console_cmd__feds__state(opt &out, const string_view &line)
 		"federation_federation", "feds__state"
 	};
 
-	feds__state(room_id, event_id, out.timeout, [&out]
+	std::forward_list<std::string> origins;
+	std::map<std::string, std::forward_list<string_view>, std::less<>> grid;
+
+	feds__state(room_id, event_id, out.timeout, [&out, &grid, &origins]
 	(const string_view &origin, std::exception_ptr eptr, const json::object &response)
 	{
-		out << (eptr? '-' : '+')
-		    << " "
-		    << std::setw(40) << std::left << origin
-		    << " ";
-
 		if(eptr)
-		{
-			out << what(eptr) << std::endl;
 			return true;
-		}
 
 		const json::array &auth_chain
 		{
@@ -3621,13 +3616,34 @@ console_cmd__feds__state(opt &out, const string_view &line)
 			response["pdu_ids"]
 		};
 
-		out << size(pdus)
-		    << " "
-		    << size(auth_chain)
-		    << std::endl;
+		for(const auto &pdu_id : pdus)
+		{
+			const auto &event_id{unquote(pdu_id)};
+			auto it
+			{
+				grid.lower_bound(event_id)
+			};
+
+			if(it == end(grid) || it->first != event_id)
+				it = grid.emplace_hint(it, event_id, std::forward_list<string_view>{});
+
+			origins.emplace_front(origin);
+			it->second.emplace_front(origins.front());
+		}
 
 		return true;
 	});
+
+	for(auto &p : grid)
+	{
+		p.second.sort();
+
+		out << std::setw(64) << std::left << p.first << " : ";
+		for(const auto &origin : p.second)
+			out << " " << origin;
+
+		out << std::endl;
+	}
 
 	return true;
 }
