@@ -3297,7 +3297,10 @@ try
 		cache.put_error(qd.at(0), header.rcode);
 
 	if(tag.cb)
-		tag.cb({}, tag.hp, vector_view<const rfc1035::record *>(record, i));
+	{
+		const vector_view<const rfc1035::record *> records(record, i);
+		tag.cb(std::exception_ptr{}, tag.hp, records);
+	}
 }
 catch(const std::exception &e)
 {
