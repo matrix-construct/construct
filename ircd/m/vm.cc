@@ -444,6 +444,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	m::dbs::write_opts wopts;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
+	wopts.head = opts.head;
+	wopts.refs = opts.refs;
 	wopts.idx = eval.sequence;
 
 	eval_hook(event);
