@@ -28,12 +28,17 @@ namespace ircd::m::dbs
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::column event_bad;       // event_id => event_idx
+	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => state_root
 	extern db::index room_joined;      // room_id | origin, member => event_idx
 	extern db::index room_state;       // room_id | type, state_key => event_idx
 	extern db::column state_node;      // node_id => state::node
 
 	// Lowlevel util
+	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
+	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);
+	string_view room_head_key(const string_view &amalgam);
+
 	constexpr size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + 256 + 256};
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
@@ -111,6 +116,10 @@ namespace ircd::m::dbs::desc
 
 	// events blacklist
 	extern const database::descriptor events__event_bad;
+
+	// room head mapping sequence
+	extern const db::prefix_transform events__room_head__pfx;
+	extern const database::descriptor events__room_head;
 
 	// room events sequence
 	extern const db::prefix_transform events__room_events__pfx;

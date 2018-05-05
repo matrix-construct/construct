@@ -31,9 +31,9 @@ decltype(ircd::m::dbs::event_bad)
 ircd::m::dbs::event_bad
 {};
 
-/// Linkage for a reference to the state_node column.
-decltype(ircd::m::dbs::state_node)
-ircd::m::dbs::state_node
+/// Linkage for a reference to the room_head column
+decltype(ircd::m::dbs::room_head)
+ircd::m::dbs::room_head
 {};
 
 /// Linkage for a reference to the room_events column
@@ -49,6 +49,11 @@ ircd::m::dbs::room_joined
 /// Linkage for a reference to the room_state column
 decltype(ircd::m::dbs::room_state)
 ircd::m::dbs::room_state
+{};
+
+/// Linkage for a reference to the state_node column.
+decltype(ircd::m::dbs::state_node)
+ircd::m::dbs::state_node
 {};
 
 //
@@ -77,10 +82,11 @@ ircd::m::dbs::init::init(std::string dbopts)
 	// Cache the columns for the metadata
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_bad = db::column{*events, desc::events__event_bad.name};
-	state_node = db::column{*events, desc::events__state_node.name};
+	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
 	room_state = db::index{*events, desc::events__room_state.name};
+	state_node = db::column{*events, desc::events__state_node.name};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern
@@ -568,6 +574,111 @@ ircd::m::dbs::desc::events__event_bad
 	// expect queries hit
 	false,
 };
+
+//
+// room_head
+//
+
+/// prefix transform for room_id,event_id in room_id
+///
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__room_head__pfx
+{
+	"_room_head",
+	[](const string_view &key)
+	{
+		return has(key, "\0"_sv);
+	},
+
+	[](const string_view &key)
+	{
+		return split(key, "\0"_sv).first;
+	}
+};
+
+ircd::string_view
+ircd::m::dbs::room_head_key(const mutable_buffer &out_,
+                            const id::room &room_id,
+                            const id::event &event_id)
+{
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, event_id));
+	return { data(out_), data(out) };
+}
+
+ircd::string_view
+ircd::m::dbs::room_head_key(const string_view &amalgam)
+{
+	const auto &key
+	{
+		lstrip(amalgam, "\0"_sv)
+	};
+
+	return
+	{
+		key
+	};
+}
+
+/// This column stores unreferenced (head) events for a room.
+///
+/// [room_id | event_id => event_idx]
+///
+/// The key is composed of two parts: the room_id which forms a domain for
+/// iteration, and the event_id of the unreferenced event.
+///
+/// The value is a gratuitious event_idx of the event_id in the key. This
+/// allows foregoing the query for event_id=>event_idx when one wants to fetch
+/// more data for the event.
+///
+/// The way this column works is simple: when the m::vm writes any event (that
+/// means full valid acceptance) it will SET an entry into this column for it.
+/// At that time the prev_events of that event will be iterated and DELETE
+/// ops will be appended in the transaction.
+///
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__room_head
+{
+	// name
+	"_room_head",
+
+	// explanation
+	R"(### developer note:
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	events__room_head__pfx,
+
+	// cache size
+	32_MiB, //TODO: conf
+
+	// cache size for compressed assets
+	0, //TODO: conf
+
+	// bloom filter bits
+	0,
+
+	// expect queries hit
+	false,
+};
+
+//
+// room_events
+//
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
 /// and the suffix is the depth+event_id concatenation.
@@ -1790,6 +1901,10 @@ ircd::m::dbs::desc::events
 	// event_id => uint64_t
 	// Mapping of faulty event_id to possible alternative event_idx.
 	events__event_bad,
+
+	// (room_id, event_id) => (event_idx)
+	// Mapping of all current head events for a room.
+	events__room_head,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.
