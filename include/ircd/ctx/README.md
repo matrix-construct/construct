@@ -53,3 +53,25 @@ computation is analogous to a function posted to the `io_service` in the
 asynchronous pattern. Context `A` can enqueue context `B` if it knows about `B`
 and then choose whether to yield or not to yield. In any case the `io_service`
 queue will simply continue to the next task which isn't guaranteed to be `B`.
+
+### When does Context Switching (yielding) occur?
+
+Bottom line is that this is simply not javascript. There are no
+stack-clairvoyant keywords like `await` which explicitly indicate to everyone
+everywhere that the overall state of the program before and after any totally
+benign-looking function call will be different. This is indeed multi-threaded
+programming but in a very PG-13 rated way. You have to assume that if you
+aren't sure some function has a "deep yield" somewhere way up the stack that
+there is a potential for yielding in that function. Unlike real concurrent
+threading everything beyond this is much easier.
+
+* Anything directly on your stack is safe (same with real MT anyway).
+
+* `static` and global assets are safe if you can assert no yielding. Such
+an assertion can be made with an instance of `ircd::ctx::critical_assertion`.
+Note that we try to use `thread_local` rather than `static` to still respect
+any real multi-threading that may occur now or in the future.
+
+* Calls which may yield and do IO may be marked with `[GET]` and `[SET]`
+conventional labels but they may not be. Some reasoning about obvious yields
+and a zen-like awareness is always recommended.
