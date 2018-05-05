@@ -3532,15 +3532,36 @@ console_cmd__feds__version(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
 	using prototype = void (const m::room::id &,
-	                        std::ostream &);
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
 
 	static m::import<prototype> feds__version
 	{
 		"federation_federation", "feds__version"
 	};
 
-	feds__version(room_id, out);
+	feds__version(room_id, out.timeout, [&out]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &response)
+	{
+		out << (eptr? '-' : '+')
+		    << " "
+		    << std::setw(40) << std::left << origin
+		    << " ";
+
+		if(eptr)
+			out << what(eptr);
+		else
+			out << string_view{response};
+
+		out << std::endl;
+		return true;
+	});
+
 	return true;
 }
 

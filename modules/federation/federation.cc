@@ -24,6 +24,8 @@ namespace ircd::m::feds
 struct ircd::m::feds::version
 :m::v1::version
 {
+	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
+
 	char origin[256];
 	char buf[16_KiB];
 
@@ -37,8 +39,8 @@ struct ircd::m::feds::version
 	}()}
 	{}
 
+	version(version &&) = delete;
 	version(const version &) = delete;
-	version &operator=(const version &) = delete;
 };
 
 std::list<m::feds::version>
@@ -67,31 +69,49 @@ feds__version(const m::room::id &room_id)
 }
 
 extern "C" void
-feds__version(const m::room::id &room_id, std::ostream &out)
+feds__version(const m::room::id &room_id,
+              const milliseconds &timeout,
+              const m::feds::version::closure &closure)
 {
 	auto reqs
 	{
 		feds__version(room_id)
 	};
 
-	auto all
+	auto when
 	{
-		ctx::when_all(begin(reqs), end(reqs))
+		now<steady_point>() + timeout
 	};
 
-	all.wait(30s, std::nothrow);
-
-	for(auto &req : reqs) try
+	while(!reqs.empty())
 	{
-		if(req.wait(1ms, std::nothrow))
+		auto next
+		{
+			ctx::when_any(begin(reqs), end(reqs))
+		};
+
+		if(!next.wait_until(when, std::nothrow))
+			break;
+
+		const auto it
+		{
+			next.get()
+		};
+
+		auto &req{*it}; try
 		{
 			const auto code{req.get()};
 			const json::object &response{req};
-			out << "+ " << std::setw(40) << std::left << req.origin
-			    << " " << string_view{response}
-			    << std::endl;
+			if(!closure(req.origin, {}, response))
+				break;
 		}
-		else cancel(req);
+		catch(const std::exception &)
+		{
+			if(!closure(req.origin, std::current_exception(), {}))
+				break;
+		}
+
+		reqs.erase(it);
 	}
 	catch(const std::exception &e)
 	{
