@@ -3566,6 +3566,73 @@ console_cmd__feds__version(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__feds__state(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id::buf &event_id
+	{
+		param.count() > 1? param.at(1) : m::head(room_id)
+	};
+
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::event::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__state
+	{
+		"federation_federation", "feds__state"
+	};
+
+	feds__state(room_id, event_id, out.timeout, [&out]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &response)
+	{
+		out << (eptr? '-' : '+')
+		    << " "
+		    << std::setw(40) << std::left << origin
+		    << " ";
+
+		if(eptr)
+		{
+			out << what(eptr) << std::endl;
+			return true;
+		}
+
+		const json::array &auth_chain
+		{
+			response["auth_chain_ids"]
+		};
+
+		const json::array &pdus
+		{
+			response["pdu_ids"]
+		};
+
+		out << size(pdus)
+		    << " "
+		    << size(auth_chain)
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__feds__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
