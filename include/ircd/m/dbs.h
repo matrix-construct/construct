@@ -77,6 +77,8 @@ struct ircd::m::dbs::write_opts
 	bool present {true};
 	bool history {true};
 	bool indexer {true};
+	bool head {true};
+	bool refs {true};
 };
 
 /// Database Schema Descriptors

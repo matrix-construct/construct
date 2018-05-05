@@ -103,6 +103,7 @@ namespace ircd::m::dbs
 	static void _index__room_state(db::txn &,  const event &, const write_opts &);
 	static void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
 	static void _index__room_joined(db::txn &, const event &, const write_opts &);
+	static void _index__room_head(db::txn &, const event &, const write_opts &);
 	static string_view _index_state(db::txn &, const event &, const write_opts &);
 	static string_view _index_redact(db::txn &, const event &, const write_opts &);
 	static string_view _index_ephem(db::txn &, const event &, const write_opts &);
@@ -151,6 +152,9 @@ ircd::m::dbs::write(db::txn &txn,
 	{
 		txn, byte_view<string_view>(opts.idx), event, event_column, opts.op
 	};
+
+	if(opts.head || opts.refs)
+		_index__room_head(txn, event, opts);
 
 	if(defined(json::get<"state_key"_>(event)))
 		return _index_state(txn, event, opts);
@@ -254,6 +258,63 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+void
+ircd::m::dbs::_index__room_head(db::txn &txn,
+                                const event &event,
+                                const write_opts &opts)
+{
+	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
+	const ctx::critical_assertion ca;
+
+	if(opts.head)
+	{
+		const string_view &key
+		{
+			room_head_key(buf, at<"room_id"_>(event), at<"event_id"_>(event))
+		};
+
+		db::txn::append
+		{
+			txn, room_head,
+			{
+				opts.op,
+				key,
+				byte_view<string_view>{opts.idx}
+			}
+		};
+	}
+
+	//TODO: If op is DELETE and we are deleting this event and thereby
+	//TODO: potentially creating a gap in the reference graph (just for us
+	//TODO: though) can we *re-add* the prev_events to the head?
+
+	if(opts.refs && opts.op == db::op::SET)
+	{
+		const m::event::prev &prev{event};
+		for(const json::array &p : json::get<"prev_events"_>(prev))
+		{
+			const auto &event_id
+			{
+				unquote(p.at(0))
+			};
+
+			const string_view &key
+			{
+				room_head_key(buf, at<"room_id"_>(event), event_id)
+			};
+
+			db::txn::append
+			{
+				txn, room_head,
+				{
+					db::op::DELETE,
+					key,
+				}
+			};
+		}
+	}
 }
 
 /// Adds the entry for the room_events column into the txn.
