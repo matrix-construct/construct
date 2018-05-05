@@ -47,7 +47,7 @@ namespace ircd::m
 	event::idx head_idx(std::nothrow_t, const id::room &);
 	event::idx head_idx(const id::room &);
 
-	// [GET] Current Event depth (non-locking) (one only)
+	// [GET] Current Event depth (non-locking)
 	int64_t depth(std::nothrow_t, const id::room &);
 	int64_t depth(const id::room &);
 
@@ -206,11 +206,11 @@ struct ircd::m::room::messages
 /// Interface to room state.
 ///
 /// This interface focuses specifically on the details of room state. Most of
-/// the queries to this interface respond in logarithmic time. Note that all
-/// iterations are over the state tree. If an event with a state_key is present
-/// in room::messages but it is not present in room::state (state tree) it was
-/// accepted into the room but we will not apply it to our machine, though
-/// other parties may (this is a state-conflict).
+/// the queries to this interface respond in logarithmic time. If an event with
+/// a state_key is present in room::messages but it is not present in
+/// room::state (state tree) it was accepted into the room but we will not
+/// apply it to our machine, though other parties may (this is a
+/// state-conflict).
 ///
 struct ircd::m::room::state
 {
@@ -275,12 +275,15 @@ struct ircd::m::room::state
 
 struct ircd::m::room::state::opts
 {
-	/// If true, the state btree at the present state becomes the source of the
-	/// data for this interface. This is only significant if no event_id was
-	/// specified in the room object, otherwise snapshot is implied at that
-	/// event. If false (and no event_id was given) the faster sequential
-	/// present state table is used; note that the present state may change
-	/// while you use this object.
+	/// If true, the state btree at the present state may become the source of
+	/// the data for this interface. This is only significant if no event_id
+	/// was specified in the room object, otherwise snapshot is implied at that
+	/// event. If false the faster sequential present state table is used; note
+	/// that the present state may change while you use this object.
+	///
+	/// Also note that passing an event_id (implied snapshot) may still take
+	/// advantage of a rocksdb snapshot of the present state table and not the
+	/// btree as an optimization if possible.
 	bool snapshot {false};
 };
 
