@@ -19,6 +19,7 @@ IRCD_MODULE
 namespace ircd::m::feds
 {
 	struct version;
+	struct state;
 }
 
 struct ircd::m::feds::version
@@ -113,11 +114,103 @@ feds__version(const m::room::id &room_id,
 
 		reqs.erase(it);
 	}
-	catch(const std::exception &e)
+}
+
+struct ircd::m::feds::state
+:m::v1::state
+{
+	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
+
+	char origin[256];
+	char buf[16_KiB];
+
+	state(const m::room::id &room_id, const m::event::id &event_id, const string_view &origin)
+	:m::v1::state{[&]
 	{
-		out << "- " << std::setw(40) << std::left << req.origin
-		    << " " << e.what()
-		    << std::endl;
+		m::v1::state::opts opts;
+		opts.dynamic = true;
+		opts.ids_only = true;
+		opts.event_id = event_id;
+		opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
+		return m::v1::state{room_id, mutable_buffer{buf}, std::move(opts)};
+	}()}
+	{}
+
+	state(state &&) = delete;
+	state(const state &) = delete;
+};
+
+std::list<m::feds::state>
+feds__state(const m::room::id &room_id,
+            const m::event::id &event_id)
+{
+	std::list<m::feds::state> reqs;
+	m::room::origins{room_id}.for_each([&room_id, &event_id, &reqs]
+	(const string_view &origin)
+	{
+		const auto emsg
+		{
+			ircd::server::errmsg(origin)
+		};
+
+		if(!emsg) try
+		{
+			reqs.emplace_back(room_id, event_id, origin);
+		}
+		catch(const std::exception &)
+		{
+			return;
+		}
+	});
+
+	return std::move(reqs);
+}
+
+extern "C" void
+feds__state(const m::room::id &room_id,
+            const m::event::id &event_id,
+            const milliseconds &timeout,
+            const m::feds::state::closure &closure)
+{
+	auto reqs
+	{
+		feds__state(room_id, event_id)
+	};
+
+	auto when
+	{
+		now<steady_point>() + timeout
+	};
+
+	while(!reqs.empty())
+	{
+		auto next
+		{
+			ctx::when_any(begin(reqs), end(reqs))
+		};
+
+		if(!next.wait_until(when, std::nothrow))
+			break;
+
+		const auto it
+		{
+			next.get()
+		};
+
+		auto &req{*it}; try
+		{
+			const auto code{req.get()};
+			const json::object &response{req};
+			if(!closure(req.origin, {}, response))
+				break;
+		}
+		catch(const std::exception &)
+		{
+			if(!closure(req.origin, std::current_exception(), {}))
+				break;
+		}
+
+		reqs.erase(it);
 	}
 }
 
