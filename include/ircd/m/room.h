@@ -360,6 +360,7 @@ struct ircd::m::room::head
 
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
+	bool has(const event::id &) const;
 	size_t count() const;
 
 	head(const m::room &room)

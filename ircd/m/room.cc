@@ -1510,6 +1510,21 @@ const
 	return ret;
 }
 
+bool
+ircd::m::room::head::has(const event::id &event_id)
+const
+{
+	bool ret{false};
+	for_each(closure_bool{[&ret, &event_id]
+	(const event::idx &event_idx, const event::id &event_id_)
+	{
+		ret = event_id_ == event_id;
+		return !ret; // for_each protocol: false to break
+	}});
+
+	return ret;
+}
+
 void
 ircd::m::room::head::for_each(const closure &closure)
 const
