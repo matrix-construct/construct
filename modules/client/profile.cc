@@ -327,10 +327,6 @@ try
 {
 	m::join(room, user);
 }
-catch(const ctx::interrupted &e)
-{
-	throw;
-}
 catch(const std::exception &e)
 {
 	log::error

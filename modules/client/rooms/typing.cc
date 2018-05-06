@@ -185,7 +185,6 @@ calc_timesout(const resource::request &request)
 
 void
 timeout_worker()
-try
 {
 	while(1)
 	{
@@ -197,13 +196,6 @@ try
 		timeout_check();
 		ctx::sleep(seconds(5));
 	}
-}
-catch(const ctx::interrupted &)
-{
-	log::debug
-	{
-		"Typing timeout worker interrupted"
-	};
 }
 
 void

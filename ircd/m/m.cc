@@ -2546,10 +2546,6 @@ try
 {
 	hook.function(event);
 }
-catch(const ctx::interrupted &e)
-{
-	throw;
-}
 catch(const std::exception &e)
 {
 	log::critical

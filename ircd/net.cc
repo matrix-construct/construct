@@ -2849,7 +2849,6 @@ noexcept
 
 void
 ircd::net::dns::resolver::sendq_worker()
-try
 {
 	while(1)
 	{
@@ -2868,10 +2867,6 @@ try
 		flush(sendq.front());
 		sendq.pop_front();
 	}
-}
-catch(const ctx::interrupted &)
-{
-	return;
 }
 
 void
@@ -2900,7 +2895,6 @@ catch(const std::out_of_range &e)
 
 void
 ircd::net::dns::resolver::timeout_worker()
-try
 {
 	while(1)
 	{
@@ -2912,10 +2906,6 @@ try
 		ctx::sleep(milliseconds(timeout));
 		check_timeouts(milliseconds(timeout));
 	}
-}
-catch(const ctx::interrupted &)
-{
-	return;
 }
 
 void

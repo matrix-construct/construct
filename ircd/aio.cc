@@ -261,6 +261,11 @@ catch(const ctx::interrupted &e)
 	cancel();
 	throw;
 }
+catch(const ctx::terminated &)
+{
+	cancel();
+	throw;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

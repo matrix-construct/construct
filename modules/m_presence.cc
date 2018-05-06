@@ -65,10 +65,6 @@ try
 	for(const json::object &presence : push)
 		handle_edu_m_presence_(event, presence);
 }
-catch(const ctx::interrupted &)
-{
-	throw;
-}
 catch(const std::exception &e)
 {
 	log::derror

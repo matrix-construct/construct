@@ -783,10 +783,6 @@ try
 
 	return ret;
 }
-catch(const ctx::interrupted &e)
-{
-	throw;
-}
 catch(const boost::system::system_error &e)
 {
 	if(e.code().value() != boost::system::errc::operation_canceled)

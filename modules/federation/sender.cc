@@ -44,8 +44,8 @@ IRCD_MODULE
 	"federation sender",
 	nullptr, []
 	{
-		sender.interrupt();
-		receiver.interrupt();
+		sender.terminate();
+		receiver.terminate();
 		sender.join();
 		receiver.join();
 	}
@@ -53,7 +53,6 @@ IRCD_MODULE
 
 void
 send_worker()
-try
 {
 	// In order to synchronize with the vm core, this context has to
 	// maintain this shared_lock at all times. If this is unlocked we
@@ -74,10 +73,6 @@ try
 		if(my(event))
 			send(event);
 	}
-	catch(const ircd::ctx::interrupted &e)
-	{
-		throw;
-	}
 	catch(const std::exception &e)
 	{
 		log::error
@@ -85,13 +80,6 @@ try
 			"sender worker: %s", e.what()
 		};
 	}
-}
-catch(const ircd::ctx::interrupted &e)
-{
-	log::debug
-	{
-		"Sender worker interrupted..."
-	};
 }
 
 void
@@ -221,7 +209,6 @@ catch(const std::exception &e)
 
 void
 recv_worker()
-try
 {
 	while(1)
 	{
@@ -233,13 +220,6 @@ try
 		recv();
 		recv_timeouts();
 	}
-}
-catch(const ircd::ctx::interrupted &e)
-{
-	log::debug
-	{
-		"Receive worker interrupted..."
-	};
 }
 
 void
@@ -287,10 +267,6 @@ try
 		return;
 
 	node.flush();
-}
-catch(const ctx::interrupted &e)
-{
-	throw;
 }
 catch(const std::exception &e)
 {
@@ -344,10 +320,6 @@ try
 	});
 
 	return true;
-}
-catch(const ctx::interrupted &e)
-{
-	throw;
 }
 catch(const http::error &e)
 {

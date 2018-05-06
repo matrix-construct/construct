@@ -70,12 +70,19 @@ noexcept try
 	if(likely(bool(func)))
 		func();
 }
+catch(const ircd::ctx::interrupted &)
+{
+	return;
+}
+catch(const ircd::ctx::terminated &)
+{
+	return;
+}
 catch(const std::exception &e)
 {
 	log::critical
 	{
-		"ctx(%p '%s' #%u): unhandled: %s",
-		current,
+		"ctx('%s' #%u): unhandled: %s",
 		name,
 		id,
 		e.what()
@@ -86,10 +93,6 @@ catch(const std::exception &e)
 	// where this exception came from and where it is going. Bottom line
 	// is that #ifdef'ing away this handler or rethrowing isn't as useful as
 	// handling the exception here with a log message and calling it a day.
-	return;
-}
-catch(const terminated &)
-{
 	return;
 }
 
@@ -913,12 +916,17 @@ noexcept try
 }
 catch(const interrupted &e)
 {
-/*
-	log::debug
-	{
-		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
-	};
-*/
+//	log::debug
+//	{
+//		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
+//	};
+}
+catch(const terminated &e)
+{
+//	log::debug
+//	{
+//		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
+//	};
 }
 
 void
