@@ -1977,6 +1977,14 @@ console_cmd__event(opt &out, const string_view &line)
 		case hash("idx"):
 			out << m::event::fetch::index(event) << std::endl;
 			return true;
+
+		case hash("content"):
+		{
+			for(const auto &m : json::get<"content"_>(event))
+				out << m.first << ": " << m.second << std::endl;
+
+			return true;
+		}
 	}
 
 	out << pretty(event) << std::endl;
