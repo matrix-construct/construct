@@ -4147,11 +4147,13 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	if(op != "eval")
 	{
-		for(const json::object &event : auth_chain)
-			out << pretty_oneline(m::event{event}) << std::endl;
+		if(op != "state")
+			for(const json::object &event : auth_chain)
+				out << pretty_oneline(m::event{event}) << std::endl;
 
-		for(const json::object &event : pdus)
-			out << pretty_oneline(m::event{event}) << std::endl;
+		if(op != "auth")
+			for(const json::object &event : pdus)
+				out << pretty_oneline(m::event{event}) << std::endl;
 
 		return true;
 	}
