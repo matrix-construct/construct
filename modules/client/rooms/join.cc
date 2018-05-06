@@ -190,15 +190,18 @@ bootstrap(const m::room::alias &room_alias,
 		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
 	};
 
-	m::vm::opts::commit opts;
+	m::vm::copts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.prev_check_exists = false;
 	opts.history = false;
 	opts.infolog_accept = true;
-	const auto event_id
+	const m::event::id::buf event_id
 	{
-		m::vm::commit(event, content, opts)
+		m::vm::eval
+		{
+			event, content, opts
+		}
 	};
 
 	const unique_buffer<mutable_buffer> ebuf

@@ -26,8 +26,8 @@ decltype(ircd::m::vm::default_opts)
 ircd::m::vm::default_opts
 {};
 
-decltype(ircd::m::vm::default_commit_opts)
-ircd::m::vm::default_commit_opts
+decltype(ircd::m::vm::default_copts)
+ircd::m::vm::default_copts
 {};
 
 //
@@ -59,18 +59,319 @@ ircd::m::vm::init::~init()
 	         current_sequence? string_view{event_id} : "NO EVENTS"_sv);
 }
 
-//
-// commit
-//
-
-/// This function takes an event object vector and adds our origin and event_id
-/// and hashes and signature and attempts to inject the event into the core.
-///
-ircd::m::event::id::buf
-ircd::m::vm::commit(json::iov &event,
-                    const json::iov &contents,
-                    const opts::commit &opts)
+namespace ircd::m::vm
 {
+	extern hook::site commit_hook;
+}
+
+decltype(ircd::m::vm::commit_hook)
+ircd::m::vm::commit_hook
+{
+	{ "name", "vm.commit" }
+};
+
+//
+// Eval
+//
+// Processes any event from any place from any time and does whatever is
+// necessary to validate, reject, learn from new information, ignore old
+// information and advance the state of IRCd as best as possible.
+
+namespace ircd::m::vm
+{
+	extern hook::site eval_hook;
+	extern hook::site notify_hook;
+
+	void _tmp_effects(const m::event &event); //TODO: X
+	void write(eval &);
+	fault _eval_edu(eval &, const event &);
+	fault _eval_pdu(eval &, const event &);
+}
+
+decltype(ircd::m::vm::eval_hook)
+ircd::m::vm::eval_hook
+{
+	{ "name", "vm.eval" }
+};
+
+decltype(ircd::m::vm::notify_hook)
+ircd::m::vm::notify_hook
+{
+	{ "name", "vm.notify" }
+};
+
+ircd::m::vm::eval::eval(const room &room,
+                        json::iov &event,
+                        const json::iov &content)
+:eval{}
+{
+	operator()(room, event, content);
+}
+
+ircd::m::vm::eval::eval(json::iov &event,
+                        const json::iov &content,
+                        const vm::copts &opts)
+:eval{opts}
+{
+	operator()(event, content);
+}
+
+ircd::m::vm::eval::eval(const event &event,
+                        const vm::opts &opts)
+:eval{opts}
+{
+	operator()(event);
+}
+
+ircd::m::vm::eval::eval(const vm::copts &opts)
+:opts{&opts}
+,copts{&opts}
+{
+}
+
+ircd::m::vm::eval::eval(const vm::opts &opts)
+:opts{&opts}
+{
+}
+
+ircd::m::vm::eval::operator
+const event::id::buf &()
+const
+{
+	return event_id;
+}
+
+/// Inject a new event in a room originating from this server.
+///
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(const room &room,
+                              json::iov &event,
+                              const json::iov &contents)
+{
+	// This eval entry point is only used for commits. We try to find the
+	// commit opts the user supplied directly to this eval or with the room.
+	if(!copts)
+		copts = room.opts;
+
+	if(!copts)
+		copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	this->opts = copts;
+	const auto &opts(this->copts);
+
+	const json::iov::push room_id
+	{
+		event, { "room_id", room.room_id }
+	};
+
+	int64_t depth{-1};
+	event::id::buf prev_event_id
+	{
+	};
+
+	if(room.event_id)
+		prev_event_id = room.event_id;
+	else
+		std::tie(prev_event_id, depth, std::ignore) = m::top(std::nothrow, room.room_id);
+
+	//TODO: X
+	const event::fetch evf
+	{
+		prev_event_id, std::nothrow
+	};
+
+	if(room.event_id)
+		depth = at<"depth"_>(evf);
+
+	//TODO: X
+	const json::iov::set_if depth_
+	{
+		event, !event.has("depth"),
+		{
+			"depth", depth + 1
+		}
+	};
+
+	char ae_buf[512];
+	json::array auth_events
+	{
+		json::get<"auth_events"_>(evf)?
+			json::get<"auth_events"_>(evf):
+			json::array{"[]"}
+	};
+
+	if(depth != -1)
+	{
+		std::vector<json::value> ae;
+
+		room.get(std::nothrow, "m.room.create", "", [&ae]
+		(const m::event &event)
+		{
+			const json::value ae0[]
+			{
+				{ json::get<"event_id"_>(event) },
+				{ json::get<"hashes"_>(event)   }
+			};
+
+			const json::value ae_
+			{
+				ae0, 2
+			};
+
+			ae.emplace_back(ae_);
+		});
+
+		room.get(std::nothrow, "m.room.join_rules", "", [&ae]
+		(const m::event &event)
+		{
+			const json::value ae0[]
+			{
+				{ json::get<"event_id"_>(event) },
+				{ json::get<"hashes"_>(event)   }
+			};
+
+			const json::value ae_
+			{
+				ae0, 2
+			};
+
+			ae.emplace_back(ae_);
+		});
+
+		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
+		{
+			ae.data(), ae.size()
+		});
+
+		room.get(std::nothrow, "m.room.power_levels", "", [&ae]
+		(const m::event &event)
+		{
+			const json::value ae0[]
+			{
+				{ json::get<"event_id"_>(event) },
+				{ json::get<"hashes"_>(event)   }
+			};
+
+			const json::value ae_
+			{
+				ae0, 2
+			};
+
+			ae.emplace_back(ae_);
+		});
+
+		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
+		{
+			ae.data(), ae.size()
+		});
+
+		if(event.at("type") != "m.room.member")
+		room.get(std::nothrow, "m.room.member", event.at("sender"), [&ae]
+		(const m::event &event)
+		{
+			const json::value ae0[]
+			{
+				{ json::get<"event_id"_>(event) },
+				{ json::get<"hashes"_>(event)   }
+			};
+
+			const json::value ae_
+			{
+				ae0, 2
+			};
+
+			ae.emplace_back(ae_);
+		});
+
+		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
+		{
+			ae.data(), ae.size()
+		});
+	}
+
+	//TODO: X
+	const auto &prev_state
+	{
+		json::get<"prev_state"_>(evf)?
+			json::get<"prev_state"_>(evf):
+			json::array{"[]"}
+	};
+/*
+	const event::fetch pvf
+	{
+		prev_event_id, std::nothrow
+	};
+*/
+	//TODO: X
+	json::value prev_event0[]
+	{
+		{ string_view{prev_event_id}  },
+		{ json::get<"hashes"_>(evf) }
+	};
+
+	//TODO: X
+	json::value prev_event
+	{
+		prev_event0, empty(prev_event_id)? 0UL: 2UL
+	};
+
+	//TODO: X
+	json::value prev_events_
+	{
+		&prev_event, !empty(prev_event_id)
+	};
+
+	std::string prev_events
+	{
+		json::strung(prev_events_)
+	};
+
+	//TODO: X
+	const json::iov::push prevs[]
+	{
+		{ event, { "auth_events",  auth_events  } },
+		{ event, { "prev_events",  prev_events  } },
+		{ event, { "prev_state",   prev_state   } },
+	};
+
+	return operator()(event, contents);
+}
+
+/// Inject a new event originating from this server.
+///
+/// Figure 1:
+///          in     .  <-- injection
+///    ===:::::::==//
+///    |  ||||||| //   <-- this function
+///    |   \\|// //|
+///    |    ||| // |   |  acceleration
+///    |    |||//  |   |
+///    |    |||/   |   |
+///    |    |||    |   V
+///    |    !!!    |
+///    |     *     |   <----- nozzle
+///    | ///|||\\\ |
+///    |/|/|/|\|\|\|   <---- propagation cone
+///  _/|/|/|/|\|\|\|\_
+///         out
+///
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(json::iov &event,
+                              const json::iov &contents)
+{
+	// This eval entry point is only used for commits. If the user did not
+	// supply commit opts we supply the default ones here.
+	if(!copts)
+		copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	assert(copts);
+	this->opts = copts;
+	const auto &opts(*this->copts);
+
 	const json::iov::add_if _origin
 	{
 		event, opts.origin,
@@ -109,11 +410,10 @@ ircd::m::vm::commit(json::iov &event,
 		};
 	}
 
-	event::id::buf eid_buf;
 	const string_view event_id
 	{
 		opts.event_id?
-			make_id(event, eid_buf, event_id_hash):
+			make_id(event, this->event_id, event_id_hash):
 			string_view{}
 	};
 
@@ -157,124 +457,30 @@ ircd::m::vm::commit(json::iov &event,
 		event, { "content", content },
 	};
 
-	commit(event, opts);
-	return eid_buf;
-}
-
-namespace ircd::m::vm
-{
-	extern hook::site commit_hook;
-}
-
-decltype(ircd::m::vm::commit_hook)
-ircd::m::vm::commit_hook
-{
-	{ "name", "vm.commit" }
-};
-
-/// Insert a new event originating from this server.
-///
-/// Figure 1:
-///          in     .  <-- injection
-///    ===:::::::==//
-///    |  ||||||| //   <-- this function
-///    |   \\|// //|
-///    |    ||| // |   |  acceleration
-///    |    |||//  |   |
-///    |    |||/   |   |
-///    |    |||    |   V
-///    |    !!!    |
-///    |     *     |   <----- nozzle
-///    | ///|||\\\ |
-///    |/|/|/|\|\|\|   <---- propagation cone
-///  _/|/|/|/|\|\|\|\_
-///         out
-///
-ircd::m::vm::fault
-ircd::m::vm::commit(const event &event,
-                    const opts::commit &opts)
-{
-	if(opts.debuglog_precommit)
-		log.debug("injecting event(mark +%ld) %s",
-		          vm::current_sequence,
-		          pretty_oneline(event));
-
-	check_size(event);
-	commit_hook(event);
-
-	auto opts_{opts};
-	opts_.verify = false;
-
-	// Some functionality on this server may create an event on behalf
-	// of remote users. It's safe for us to mask this here, but eval'ing
-	// this event in any replay later will require special casing.
-	opts_.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
-
-	//TODO: X
-	opts_.non_conform |= event::conforms::MISSING_PREV_STATE;
-
-	vm::eval eval{opts_};
-	const fault ret
-	{
-		eval(event)
-	};
-
-	if(opts_.infolog_postcommit)
-		log.info("%s @%lu %s",
-		         reflect(ret),
-		         sequence(eval),
-		         pretty_oneline(event, false));
-
-	return ret;
-}
-
-//
-// Eval
-//
-// Processes any event from any place from any time and does whatever is
-// necessary to validate, reject, learn from new information, ignore old
-// information and advance the state of IRCd as best as possible.
-
-namespace ircd::m::vm
-{
-	extern hook::site eval_hook;
-	extern hook::site notify_hook;
-
-	void _tmp_effects(const m::event &event); //TODO: X
-	void write(eval &);
-	fault _eval_edu(eval &, const event &);
-	fault _eval_pdu(eval &, const event &);
-}
-
-decltype(ircd::m::vm::eval_hook)
-ircd::m::vm::eval_hook
-{
-	{ "name", "vm.eval" }
-};
-
-decltype(ircd::m::vm::notify_hook)
-ircd::m::vm::notify_hook
-{
-	{ "name", "vm.notify" }
-};
-
-ircd::m::vm::eval::eval(const vm::opts &opts)
-:opts{&opts}
-,txn{nullptr}
-{
-}
-
-ircd::m::vm::eval::eval(const event &event,
-                        const vm::opts &opts)
-:eval{opts}
-{
-	operator()(event);
+	return operator()(event);
 }
 
 enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
 try
 {
+	if(copts)
+	{
+		if(unlikely(!my_host(at<"origin"_>(event))))
+			throw error
+			{
+				fault::GENERAL, "Committing event for origin: %s", at<"origin"_>(event)
+			};
+
+		if(copts->debuglog_precommit)
+			log.debug("injecting event(mark +%ld) %s",
+			          vm::current_sequence,
+			          pretty_oneline(event));
+
+		check_size(event);
+		commit_hook(event);
+	}
+
 	assert(opts);
 	const event::conforms &report
 	{

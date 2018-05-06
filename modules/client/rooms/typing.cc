@@ -159,15 +159,17 @@ commit__m_typing(const m::typing &edu)
 		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
 	};
 
-	m::vm::opts::commit opts;
+	m::vm::copts opts;
 	opts.hash = false;
 	opts.sign = false;
 	opts.event_id = false;
 	opts.origin = true;
 	opts.origin_server_ts = false;
 	opts.conforming = false;
-
-	return m::vm::commit(event, content, opts);
+	return m::vm::eval
+	{
+		event, content, opts
+	};
 }
 
 ircd::steady_point

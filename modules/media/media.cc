@@ -152,7 +152,7 @@ try
 		content_type
 	};
 
-	m::vm::opts::commit vmopts;
+	m::vm::copts vmopts;
 	vmopts.history = false;
 	const m::room room
 	{

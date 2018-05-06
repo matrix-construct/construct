@@ -18,6 +18,7 @@ namespace ircd::m::vm
 	struct init;
 	struct error; // custom exception
 	struct opts;
+	struct copts;
 	struct eval;
 	struct accepted;
 	enum fault :uint;
@@ -27,6 +28,7 @@ namespace ircd::m::vm
 	extern uint64_t current_sequence;
 	extern ctx::shared_view<accepted> accept;
 	extern const opts default_opts;
+	extern const copts default_copts;
 
 	const uint64_t &sequence(const eval &);
 	uint64_t retired_sequence(id::event::buf &);
@@ -49,14 +51,24 @@ struct ircd::m::vm::init
 ///
 struct ircd::m::vm::eval
 {
-	const vm::opts *opts;
-	db::txn *txn;
+	const vm::opts *opts {&default_opts};
+	const vm::copts *copts {nullptr};
+	db::txn *txn {nullptr};
 	uint64_t sequence {0};
+	event::id::buf event_id;
+
+	operator const event::id::buf &() const;
 
 	fault operator()(const event &);
+	fault operator()(json::iov &event, const json::iov &content);
+	fault operator()(const room &, json::iov &event, const json::iov &content);
 
+	eval(const vm::opts &);
+	eval(const vm::copts &);
 	eval(const event &, const vm::opts & = default_opts);
-	eval(const vm::opts & = default_opts);
+	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
+	eval(const room &, json::iov &event, const json::iov &content);
+	eval() = default;
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
 
@@ -88,9 +100,6 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
-	// Extended opts specific to creating events originating from this server.
-	struct commit;
-
 	/// Make writes to database
 	bool write {true};
 
@@ -186,18 +195,10 @@ struct ircd::m::vm::opts
 	bool infolog_accept {false};
 };
 
-namespace ircd::m::vm
-{
-	extern const opts::commit default_commit_opts;
-
-	fault commit(const m::event &, const opts::commit & = default_commit_opts);
-	event::id::buf commit(json::iov &event, const json::iov &content, const opts::commit & = default_commit_opts);
-}
-
 /// Extension structure to vm::opts which includes additional options for
 /// commissioning events originating from this server which are then passed
 /// through eval (this process is committing).
-struct ircd::m::vm::opts::commit
+struct ircd::m::vm::copts
 :opts
 {
 	// Hash and include hashes object.

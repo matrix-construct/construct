@@ -58,7 +58,7 @@ post__upload(client &client,
 		file_room_id(server, randstr)
 	};
 
-	m::vm::opts::commit vmopts;
+	m::vm::copts vmopts;
 	vmopts.history = false;
 	const m::room room
 	{

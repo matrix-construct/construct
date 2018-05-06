@@ -112,15 +112,17 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 		}}}
 	};
 
-	m::vm::opts::commit opts;
+	m::vm::copts opts;
 	opts.hash = false;
 	opts.sign = false;
 	opts.event_id = false;
 	opts.origin = true;
 	opts.origin_server_ts = false;
 	opts.conforming = false;
-
-	return m::vm::commit(event, content, opts);
+	return m::vm::eval
+	{
+		event, content, opts
+	};
 }
 
 bool

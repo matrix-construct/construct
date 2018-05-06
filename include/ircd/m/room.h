@@ -113,7 +113,7 @@ struct ircd::m::room
 
 	id room_id;
 	event::id event_id;
-	const vm::opts::commit *opts {nullptr};
+	const vm::copts *opts {nullptr};
 
 	operator const id &() const;
 
@@ -145,13 +145,13 @@ struct ircd::m::room
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 	string_view membership(const mutable_buffer &out, const m::id::user &) const;
 
-	room(const id &room_id, const string_view &event_id, const vm::opts::commit *const &opts = nullptr)
+	room(const id &room_id, const string_view &event_id, const vm::copts *const &opts = nullptr)
 	:room_id{room_id}
 	,event_id{event_id? event::id{event_id} : event::id{}}
 	,opts{opts}
 	{}
 
-	room(const id &room_id, const vm::opts::commit *const &opts = nullptr)
+	room(const id &room_id, const vm::copts *const &opts = nullptr)
 	:room_id{room_id}
 	,opts{opts}
 	{}

@@ -2108,14 +2108,29 @@ ircd::m::commit(const room &room,
                 json::iov &event,
                 const json::iov &contents)
 {
-	using prototype = event::id::buf (const m::room &, json::iov &, const json::iov &);
-
-	static import<prototype> function
+	vm::copts opts
 	{
-		"client_rooms", "commit__iov_iov"
+		room.opts? *room.opts : vm::default_copts
 	};
 
-	return function(room, event, contents);
+	// Some functionality on this server may create an event on behalf
+	// of remote users. It's safe for us to mask this here, but eval'ing
+	// this event in any replay later will require special casing.
+	opts.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
+
+	 // Stupid protocol workaround
+	opts.non_conform |= event::conforms::MISSING_PREV_STATE;
+
+	// Don't need this here
+	opts.verify = false;
+
+	vm::eval eval
+	{
+		opts
+	};
+
+	eval(room, event, contents);
+	return eval.event_id;
 }
 
 ircd::m::id::room::buf
