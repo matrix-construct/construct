@@ -2083,8 +2083,8 @@ ircd::m::send(const room &room,
               const json::object &contents)
 {
 	json::iov _content;
-	json::iov::push content[contents.count()];
-	return send(room, sender, type, make_iov(_content, content, contents.count(), contents));
+	json::iov::push content[contents.size()];
+	return send(room, sender, type, make_iov(_content, content, contents.size(), contents));
 }
 
 ircd::m::event::id::buf
