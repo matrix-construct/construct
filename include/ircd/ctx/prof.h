@@ -38,6 +38,7 @@ namespace ircd::ctx::prof
 	enum class event;
 	struct settings extern settings;
 
+	const ulong &total_slice_cycles();
 	const ulong &cur_slice_start();
 	ulong cur_slice_cycles();
 

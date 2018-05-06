@@ -766,9 +766,25 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (interruption(ctx)? 'I' : '-')
 		    ;
 
-		out << "  " << std::setw(7) << std::right << stack_max(ctx) << " SS";
-		out << "  " << std::setw(15) << std::right << cycles(ctx) << " TSC";
-		out << "  :" << name(ctx);
+		const auto pct
+		{
+			cycles(ctx) / (long double)ctx::prof::total_slice_cycles()
+		};
+		out << "  "
+		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (pct * 100)
+		    << "%";
+
+		out << "  "
+		    << std::setw(15) << std::right << cycles(ctx)
+		    << " TSC";
+
+		out << "  "
+		    << std::setw(7) << std::right << stack_max(ctx)
+		    << " SS";
+
+		out << "  :"
+		    << name(ctx);
+
 		out << std::endl;
 	}
 

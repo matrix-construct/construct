@@ -909,6 +909,7 @@ ircd::ctx::debug_stats(const pool &pool)
 namespace ircd::ctx::prof
 {
 	ulong _slice_start;      // Time slice state
+	ulong _slice_total;      // Monotonic accumulator
 
 	void check_stack();
 	void check_slice();
@@ -963,6 +964,12 @@ ircd::ctx::prof::cur_slice_start()
 	return _slice_start;
 }
 
+const ulong &
+ircd::ctx::prof::total_slice_cycles()
+{
+	return _slice_total;
+}
+
 void
 ircd::ctx::prof::handle_cur_enter()
 {
@@ -978,8 +985,8 @@ ircd::ctx::prof::handle_cur_leave()
 void
 ircd::ctx::prof::handle_cur_yield()
 {
-	check_stack();
 	check_slice();
+	check_stack();
 }
 
 void
@@ -1004,6 +1011,7 @@ ircd::ctx::prof::check_slice()
 
 	auto &c(cur());
 	c.cycles += last_cycles;
+	_slice_total += last_cycles;
 
 	if(unlikely(settings.slice_warning > 0 && last_cycles >= settings.slice_warning))
 		log::dwarning
