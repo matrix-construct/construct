@@ -140,6 +140,18 @@ namespace ircd::m::dbs::desc
 	extern const database::descriptor events__state_node;
 }
 
+// Internal interface; not for public.
+namespace ircd::m::dbs
+{
+	void _index__room_state(db::txn &,  const event &, const write_opts &);
+	void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
+	void _index__room_joined(db::txn &, const event &, const write_opts &);
+	void _index__room_head(db::txn &, const event &, const write_opts &);
+	string_view _index_state(db::txn &, const event &, const write_opts &);
+	string_view _index_redact(db::txn &, const event &, const write_opts &);
+	string_view _index_ephem(db::txn &, const event &, const write_opts &);
+}
+
 struct ircd::m::dbs::init
 {
 	init(std::string dbopts = {});

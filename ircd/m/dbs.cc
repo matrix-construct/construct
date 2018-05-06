@@ -98,16 +98,9 @@ noexcept
 	events = {};
 }
 
-namespace ircd::m::dbs
-{
-	static void _index__room_state(db::txn &,  const event &, const write_opts &);
-	static void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
-	static void _index__room_joined(db::txn &, const event &, const write_opts &);
-	static void _index__room_head(db::txn &, const event &, const write_opts &);
-	static string_view _index_state(db::txn &, const event &, const write_opts &);
-	static string_view _index_redact(db::txn &, const event &, const write_opts &);
-	static string_view _index_ephem(db::txn &, const event &, const write_opts &);
-}
+//
+// Basic write suite
+//
 
 void
 ircd::m::dbs::blacklist(db::txn &txn,
@@ -164,6 +157,10 @@ ircd::m::dbs::write(db::txn &txn,
 
 	return _index_ephem(txn, event, opts);
 }
+
+//
+// Internal interface
+//
 
 ircd::string_view
 ircd::m::dbs::_index_ephem(db::txn &txn,
