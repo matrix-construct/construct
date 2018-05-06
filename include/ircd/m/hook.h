@@ -46,6 +46,10 @@ struct ircd::m::hook
 /// and registers itself with the master extern hook::list. Each hook
 /// then registers itself with a hook::site. The site contains internal
 /// state to manage the efficient calling of the participating hooks.
+///
+/// A hook::site can be created or destroyed at any time (for example if it's
+/// in a module which is reloaded) while being agnostic to the hooks it
+/// cooperates with.
 struct ircd::m::hook::site
 {
 	json::strung _feature;
@@ -81,8 +85,10 @@ struct ircd::m::hook::site
 /// class with an extern instance. Each hook::site will register itself here
 /// by human readable name.
 struct ircd::m::hook::list
-:std::map<string_view, hook::site *>
 {
+	std::map<string_view, hook::site *> sites;
+	std::set<hook *> hooks;
+
 	friend class site;
 	bool add(site &);
 	bool del(site &);

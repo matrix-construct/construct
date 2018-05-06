@@ -2484,6 +2484,11 @@ try
 	list.add(*this)
 }
 {
+	// Find and register all of the orphan hooks which were constructed before
+	// this site was constructed.
+	for(auto *const &hook : list.hooks)
+		if(hook->site_name() == name())
+			add(*hook);
 }
 catch(...)
 {
@@ -2653,45 +2658,59 @@ ircd::m::hook::list
 
 bool
 ircd::m::hook::list::del(hook &hook)
-try
 {
-	const auto site(at(hook.site_name()));
-	assert(site != nullptr);
-	return site->del(hook);
-}
-catch(const std::out_of_range &e)
-{
-	log::critical
+	const auto erased
 	{
-		"Tried to unregister hook(%p) from missing hook::site '%s'",
-		&hook,
-		hook.site_name()
+		hooks.erase(&hook)
+	};
+	assert(erased);
+
+	const auto it
+	{
+		sites.find(hook.site_name())
 	};
 
-	assert(0);
-	return false;
+	if(it == end(sites))
+		return false;
+
+	auto *const &site(it->second);
+	assert(site != nullptr);
+	return site->del(hook);
 }
 
 bool
 ircd::m::hook::list::add(hook &hook)
-try
 {
-	const auto site(at(hook.site_name()));
+	if(!hooks.emplace(&hook).second)
+		log::warning
+		{
+			"Hook %p already registered", &hook
+		};
+
+	const auto it
+	{
+		sites.find(hook.site_name())
+	};
+
+	if(it == end(sites))
+	{
+		log::dwarning
+		{
+			"Hook %p found no site for '%s'", &hook, hook.site_name()
+		};
+
+		return false;
+	}
+
+	auto *const &site(it->second);
 	assert(site != nullptr);
 	return site->add(hook);
-}
-catch(const std::out_of_range &e)
-{
-	throw error
-	{
-		"No hook::site named '%s' is registered...", hook.site_name()
-	};
 }
 
 bool
 ircd::m::hook::list::del(site &site)
 {
-	return erase(site.name());
+	return sites.erase(site.name());
 }
 
 bool
@@ -2699,7 +2718,7 @@ ircd::m::hook::list::add(site &site)
 {
 	const auto iit
 	{
-		emplace(site.name(), &site)
+		sites.emplace(site.name(), &site)
 	};
 
 	if(unlikely(!iit.second))

@@ -577,7 +577,7 @@ console_cmd__conf__get(opt &out, const string_view &line)
 bool
 console_cmd__hook__list(opt &out, const string_view &line)
 {
-	for(const auto &p : m::hook::list)
+	for(const auto &p : m::hook::list.sites)
 	{
 		const auto &site(*p.second);
 		out << std::setw(24) << std::left << p.first
