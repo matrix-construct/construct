@@ -50,6 +50,7 @@ namespace ircd::ctx
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
 	const size_t &stack_max(const ctx &);        // Returns stack size allocated for ctx
+	const size_t &stack_at(const ctx &);         // Stack at last sleep (also see this_ctx.h)
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
 	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
 	bool interruption(const ctx &);              // Context was marked for interruption

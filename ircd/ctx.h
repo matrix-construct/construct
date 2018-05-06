@@ -25,6 +25,7 @@ struct ircd::ctx::ctx
 	boost::asio::yield_context *yc {nullptr};    // boost interface
 	uintptr_t stack_base {0};                    // assigned when spawned
 	size_t stack_max {0};                        // User given stack size
+	size_t stack_at {0};                         // Updated for profiling at sleep
 	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ulong cycles {0};                            // monotonic counter (rdtsc)
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake

@@ -30,7 +30,8 @@ inline namespace this_ctx
 	bool interruption_requested();               // interruption(cur())
 
 	struct stack_usage_assertion;                // Assert safety factor (see ctx/prof.h)
-	size_t stack_usage_here();                   // calculates stack usage at call.
+	size_t stack_at_here() __attribute__((noinline));
+	ulong cycles_here();
 
 	// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
 	microseconds wait(const microseconds &, const std::nothrow_t &);

@@ -329,6 +329,13 @@ ircd::ctx::notes(const ctx &ctx)
 
 /// Returns the notification count for `ctx`
 const size_t &
+ircd::ctx::stack_at(const ctx &ctx)
+{
+	return ctx.stack_at;
+}
+
+/// Returns the notification count for `ctx`
+const size_t &
 ircd::ctx::stack_max(const ctx &ctx)
 {
 	return ctx.stack_max;
@@ -432,11 +439,18 @@ ircd::ctx::this_ctx::yield()
 	while(!done);
 }
 
-size_t
-ircd::ctx::this_ctx::stack_usage_here()
+ulong
+ircd::ctx::this_ctx::cycles_here()
 {
 	assert(current);
-	return stack_usage_here(cur());
+	return cycles(cur()) + prof::cur_slice_cycles();
+}
+
+size_t
+ircd::ctx::this_ctx::stack_at_here()
+{
+	assert(current);
+	return cur().stack_base - uintptr_t(__builtin_frame_address(0));
 }
 
 /// Throws interrupted if the currently running context was interrupted
@@ -521,14 +535,14 @@ noexcept
 
 ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
 {
-	const auto stack_usage(stack_usage_here());
+	const auto stack_usage(stack_at_here());
 	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
 }
 
 ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
 noexcept
 {
-	const auto stack_usage(stack_usage_here());
+	const auto stack_usage(stack_at_here());
 	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
 }
 
@@ -1041,33 +1055,22 @@ ircd::ctx::prof::check_stack()
 {
 	auto &c(cur());
 	const double &stack_max(c.stack_max);
-	const auto stack_usage(stack_usage_here(c));
+	const auto &stack_at(stack_at_here());
+	c.stack_at = stack_at;
 
-	if(unlikely(stack_usage > stack_max * settings.stack_usage_warning))
+	if(unlikely(stack_at > stack_max * settings.stack_usage_warning))
 	{
 		log::dwarning
 		{
 			"context stack usage ctx '%s' #%lu used %zu of %zu bytes",
 			name(c),
 			id(c),
-			stack_usage,
+			stack_at,
 			c.stack_max
 		};
 
-		assert(stack_usage < c.stack_max * settings.stack_usage_assertion);
+		assert(stack_at < c.stack_max * settings.stack_usage_assertion);
 	}
-}
-
-ulong
-ircd::ctx::cycles_here(const ctx &ctx)
-{
-	return cycles(ctx) + (running(ctx)? prof::cur_slice_cycles() : 0UL);
-}
-
-size_t
-ircd::ctx::stack_usage_here(const ctx &ctx)
-{
-	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_CTX_PROF_H
 
-namespace ircd::ctx
-{
-	size_t stack_usage_here(const ctx &) __attribute__((noinline));
-	ulong cycles_here(const ctx &);
-}
-
 /// Profiling for the context system.
 ///
 /// These facilities provide tools and statistics. The primary purpose here is
