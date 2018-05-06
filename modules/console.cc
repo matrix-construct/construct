@@ -758,7 +758,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	{
 		const auto &ctx{*ctxp};
 		out << std::setw(5) << std::right << id(ctx);
-		out << " "
+		out << "  "
 		    << (started(ctx)? 'S' : '-')
 		    << (running(ctx)? 'R' : '-')
 		    << (waiting(ctx)? 'W' : '-')
@@ -766,8 +766,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (interruption(ctx)? 'I' : '-')
 		    ;
 
-		out << " " << std::setw(7) << std::right << stack_max(ctx) << " SS";
-		out << " :" << name(ctx);
+		out << "  " << std::setw(7) << std::right << stack_max(ctx) << " SS";
+		out << "  " << std::setw(15) << std::right << cycles(ctx) << " TSC";
+		out << "  :" << name(ctx);
 		out << std::endl;
 	}
 

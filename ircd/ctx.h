@@ -26,9 +26,9 @@ struct ircd::ctx::ctx
 	uintptr_t stack_base {0};                    // assigned when spawned
 	size_t stack_max {0};                        // User given stack size
 	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
+	ulong cycles {0};                            // monotonic counter (rdtsc)
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
 	ctx *adjoindre {nullptr};                    // context waiting for this to join()
-	microseconds awake {0};                      // monotonic counter
 	list::node node;                             // node for ctx::list
 
 	bool started() const                         { return stack_base != 0;                         }

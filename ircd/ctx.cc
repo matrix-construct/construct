@@ -314,13 +314,20 @@ ircd::ctx::interruption(const ctx &c)
 }
 
 /// Returns the notification count for `ctx
+const ulong &
+ircd::ctx::cycles(const ctx &ctx)
+{
+	return ctx.cycles;
+}
+
+/// Returns the notification count for `ctx`
 const int64_t &
 ircd::ctx::notes(const ctx &ctx)
 {
 	return ctx.notes;
 }
 
-/// Returns the notification count for `ctx
+/// Returns the notification count for `ctx`
 const size_t &
 ircd::ctx::stack_max(const ctx &ctx)
 {
@@ -901,8 +908,7 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	time_point cur_slice_start;     // Time slice state
-	uint64_t cur_slice_rdtsc;       // Time slice state
+	ulong _slice_start;      // Time slice state
 
 	void check_stack();
 	void check_slice();
@@ -914,14 +920,15 @@ namespace ircd::ctx::prof
 	void handle_cur_enter();
 }
 
-struct ircd::ctx::prof::settings ircd::ctx::prof::settings
+struct ircd::ctx::prof::settings
+ircd::ctx::prof::settings
 {
 	0.33,        // stack_usage_warning at 1/3 engineering tolerance
 	0.50,        // stack_usage_assertion at 1/2 engineering tolerance
 
-	50ms,        // slice_warning at 1/20 slices per second
-	0us,         // slice_interrupt unused until project more mature...
-	0us,         // slice_assertion unused; warning sufficient for now...
+	280 * 1000000UL,   // slice_warning after this number of tsc ticks...
+	0UL,               // slice_interrupt unused until project more mature...
+	0UL,               // slice_assertion unused; warning sufficient for now...
 };
 
 #ifdef RB_DEBUG
@@ -943,6 +950,18 @@ ircd::ctx::prof::mark(const event &e)
 {
 }
 #endif
+
+ulong
+ircd::ctx::prof::cur_slice_cycles()
+{
+	return __rdtsc() - cur_slice_start();
+}
+
+const ulong &
+ircd::ctx::prof::cur_slice_start()
+{
+	return _slice_start;
+}
 
 void
 ircd::ctx::prof::handle_cur_enter()
@@ -972,44 +991,40 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_start()
 {
-	cur_slice_rdtsc = __rdtsc();
-	cur_slice_start = steady_clock::now();
+	_slice_start = __rdtsc();
 }
 
 void
 ircd::ctx::prof::check_slice()
 {
-	const uint64_t now_rdtsc(__rdtsc());
-	const uint64_t rdtsc_usage(now_rdtsc - cur_slice_rdtsc);
-
-	const auto now_sc(steady_clock::now());
-	const auto time_usage(now_sc - cur_slice_start);
+	const auto &last_cycles
+	{
+		cur_slice_cycles()
+	};
 
 	auto &c(cur());
-	c.awake += duration_cast<microseconds>(time_usage);
+	c.cycles += last_cycles;
 
-	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
-	{
+	if(unlikely(settings.slice_warning > 0 && last_cycles >= settings.slice_warning))
 		log::dwarning
 		{
-			"context timeslice exceeded '%s' #%lu total: %06ld$us last: %lu$ns %lu$tsc",
+			"context timeslice exceeded '%s' #%lu total: %lu last: %lu",
 			name(c),
 			id(c),
-			c.awake.count(),
-			duration_cast<nanoseconds>(time_usage).count(),
-			rdtsc_usage
+			cycles(c),
+			last_cycles
 		};
 
-		assert(settings.slice_assertion == 0us || time_usage < settings.slice_assertion);
-	}
+	assert(settings.slice_assertion == 0 || last_cycles < settings.slice_assertion);
 
-	if(unlikely(settings.slice_interrupt > 0us && time_usage >= settings.slice_interrupt))
+	if(unlikely(settings.slice_interrupt > 0 && last_cycles >= settings.slice_interrupt))
 		throw interrupted
 		{
-			"Time slice exceeded '%s' #%lu (last: %06ld microseconds)",
+			"context '%s' #%lu watchdog interrupt (total: %lu last: %lu)",
 			name(c),
 			id(c),
-			duration_cast<microseconds>(time_usage).count()
+			cycles(c),
+			last_cycles
 		};
 }
 
@@ -1033,6 +1048,12 @@ ircd::ctx::prof::check_stack()
 
 		assert(stack_usage < c.stack_max * settings.stack_usage_assertion);
 	}
+}
+
+ulong
+ircd::ctx::cycles_here(const ctx &ctx)
+{
+	return cycles(ctx) + (running(ctx)? prof::cur_slice_cycles() : 0UL);
 }
 
 size_t

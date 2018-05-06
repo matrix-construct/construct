@@ -13,7 +13,8 @@
 
 namespace ircd::ctx
 {
-    size_t stack_usage_here(const ctx &) __attribute__((noinline));
+	size_t stack_usage_here(const ctx &) __attribute__((noinline));
+	ulong cycles_here(const ctx &);
 }
 
 /// Profiling for the context system.
@@ -37,6 +38,9 @@ namespace ircd::ctx::prof
 	enum class event;
 	struct settings extern settings;
 
+	const ulong &cur_slice_start();
+	ulong cur_slice_cycles();
+
 	void mark(const event &);
 }
 
@@ -57,7 +61,7 @@ struct ircd::ctx::prof::settings
 	double stack_usage_warning;       // percentage
 	double stack_usage_assertion;     // percentage
 
-	microseconds slice_warning;       // Warn when the yield-to-yield time exceeds
-	microseconds slice_interrupt;     // Interrupt exception when exceeded (not a signal)
-	microseconds slice_assertion;     // abort() when exceeded (not a signal, must yield)
+	ulong slice_warning;       // Warn when the yield-to-yield cycles exceeds
+	ulong slice_interrupt;     // Interrupt exception when exceeded (not a signal)
+	ulong slice_assertion;     // abort() when exceeded (not a signal, must yield)
 };
