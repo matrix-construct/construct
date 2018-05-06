@@ -49,6 +49,7 @@ enum class ircd::ctx::prof::event
 	CUR_YIELD,         // Current context yielding
 	CUR_CONTINUE,      // Current context continuing
 	CUR_INTERRUPT,     // Current context detects interruption
+	CUR_TERMINATE,     // Current context detects termination
 };
 
 struct ircd::ctx::prof::settings

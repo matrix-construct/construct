@@ -36,7 +36,8 @@ struct ircd::ctx::ctx
 	bool finished() const                        { return started() && yc == nullptr;              }
 
 	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
-	void interruption_point();                   // throws interrupted
+	bool termination_point(std::nothrow_t);      // Check for terminate
+	void interruption_point();                   // throws interrupted or terminated
 
 	bool wait();                                 // yield context to ios queue (returns on this resume)
 	void jump();                                 // jump to context directly (returns on your resume)

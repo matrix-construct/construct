@@ -764,6 +764,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (waiting(ctx)? 'W' : '-')
 		    << (finished(ctx)? 'F' : '-')
 		    << (interruption(ctx)? 'I' : '-')
+		    << (termination(ctx)? 'T' : '-')
 		    ;
 
 		out << " "

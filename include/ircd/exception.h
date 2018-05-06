@@ -64,18 +64,18 @@ namespace ircd
 /// To catch any exception from a project developer's code:
 ///   catch(const ircd::exception &) {}
 ///
-/// Remember: not all exceptions are from project developer's code,
-/// such as std::out_of_range. In most contexts if you have to deal with this
-/// someone else was lazy, which is bad. To be sure and catch any exception:
+/// Remember: not all exceptions are from project developer's code, such as
+/// std::out_of_range. In most contexts if you have to deal with this someone
+/// else was lazy, which is bad. To be sure and catch any exception:
 ///   catch(const std::exception &) {}
 ///
-/// Remember: not all exceptions have to inherit from std::exception, but
-/// those are rogue exceptions. We do not allow this. To be sure nothing
-/// can possibly get through, add to the bottom:
+/// Remember: not all exceptions have to inherit from std::exception. We have
+/// only one example of this: ctx::terminated. To be sure nothing can possibly
+/// get through, add to the bottom, with care:
 ///   catch(...) {}
 ///
 /// Note: Prefer 'noexcept' instead of catch(...), noexcept is like an 'assert'
-/// for exceptions, and the rogue can be found-out in testing.
+/// for exceptions, and a rogue can be found-out in testing.
 ///
 struct ircd::exception
 :std::exception

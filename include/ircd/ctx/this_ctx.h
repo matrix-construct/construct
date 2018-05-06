@@ -26,7 +26,7 @@ inline namespace this_ctx
 	void wait();                                 // Returns when context is woken up.
 	void yield();                                // Allow other contexts to run before returning.
 
-	void interruption_point();                   // throws interrupted if interruption_requested()
+	void interruption_point();                   // throws if interruption_requested()
 	bool interruption_requested();               // interruption(cur())
 
 	struct stack_usage_assertion;                // Assert safety factor (see ctx/prof.h)

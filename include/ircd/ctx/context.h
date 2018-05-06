@@ -59,6 +59,7 @@ struct ircd::ctx::context
 	operator bool() const                        { return bool(c);                                 }
 	bool joined() const                          { return !c || ircd::ctx::finished(*c);           }
 
+	void terminate()                             { ircd::ctx::terminate(*c);                       }
 	void interrupt()                             { ircd::ctx::interrupt(*c);                       }
 	void join();                                 // Blocks the current context until this one finishes
 	ctx *detach();                               // other calls undefined after this call
@@ -103,6 +104,7 @@ enum ircd::ctx::context::flags
 	DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
 
 	INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
+	TERMINATED      = 0x20,   ///< (INDICATOR)
 };
 
 inline void

@@ -64,7 +64,7 @@ noexcept try
 	});
 
 	// Check for a precocious interrupt
-	if(unlikely(flags & context::INTERRUPTED))
+	if(unlikely(flags & (context::INTERRUPTED | context::TERMINATED)))
 		return;
 
 	if(likely(bool(func)))
@@ -86,6 +86,10 @@ catch(const std::exception &e)
 	// where this exception came from and where it is going. Bottom line
 	// is that #ifdef'ing away this handler or rethrowing isn't as useful as
 	// handling the exception here with a log message and calling it a day.
+	return;
+}
+catch(const terminated &)
+{
 	return;
 }
 
@@ -185,8 +189,35 @@ catch(const boost::system::system_error &e)
 void
 ircd::ctx::ctx::interruption_point()
 {
+	static const auto &flags
+	{
+		context::TERMINATED | context::INTERRUPTED
+	};
+
+	if(likely((this->flags & flags) == 0))
+		return;
+
+	if(unlikely(termination_point(std::nothrow)))
+		throw terminated{};
+
 	if(unlikely(interruption_point(std::nothrow)))
-		throw interrupted("ctx(%p) '%s'", (const void *)this, name);
+		throw interrupted
+		{
+			"ctx(%p) '%s'", (const void *)this, name
+		};
+}
+
+/// Returns true if this context has been flagged for termination.
+/// Does not clear the flag.
+bool
+ircd::ctx::ctx::termination_point(std::nothrow_t)
+{
+	if(unlikely(flags & context::TERMINATED))
+	{
+		mark(prof::event::CUR_TERMINATE);
+		return true;
+	}
+	else return false;
 }
 
 /// Returns true if this context has been flagged for interruption and
@@ -261,6 +292,23 @@ ircd::ctx::signal(ctx &ctx,
 	ctx.strand.post(std::move(func));
 }
 
+/// Marks `ctx` for termination. Terminate is similar to interrupt() but the
+/// exception thrown is ctx::terminate which does not participate in the
+/// std::exception hierarchy. Project code is unlikely to catch this.
+void
+ircd::ctx::terminate(ctx &ctx)
+{
+	if(finished(ctx))
+		return;
+
+	if(termination(ctx))
+		return;
+
+	ctx.flags |= context::TERMINATED;
+	if(likely(&ctx != current && ctx.cont != nullptr))
+		ctx.cont->interrupted(current);
+}
+
 /// Marks `ctx` for interruption and enqueues it for resumption to receive the
 /// interrupt which will be an exception coming out of the point where the
 /// `ctx` was yielding.
@@ -269,6 +317,9 @@ ircd::ctx::interrupt(ctx &ctx)
 {
 	if(finished(ctx))
 		return;
+
+	if(unlikely(ircd::runlevel == runlevel::QUIT))
+		return terminate(ctx);
 
 	if(interruption(ctx))
 		return;
@@ -304,6 +355,13 @@ bool
 ircd::ctx::finished(const ctx &ctx)
 {
 	return ctx.finished();
+}
+
+/// Indicates if `ctx` was terminated; does not clear the flag
+bool
+ircd::ctx::termination(const ctx &c)
+{
+	return c.flags & context::TERMINATED;
 }
 
 /// Indicates if `ctx` was interrupted; does not clear the flag
@@ -466,7 +524,7 @@ ircd::ctx::this_ctx::interruption_point()
 bool
 ircd::ctx::this_ctx::interruption_requested()
 {
-	return interruption(cur());
+	return interruption(cur()) || termination(cur());
 }
 
 /// Returns unique ID of currently running context

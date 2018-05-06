@@ -42,6 +42,7 @@ namespace ircd::ctx
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, interrupted)
 	IRCD_EXCEPTION(error, timeout)
+	struct terminated {};                        // Special exception
 
 	IRCD_OVERLOAD(threadsafe)
 
@@ -54,12 +55,14 @@ namespace ircd::ctx
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
 	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
 	bool interruption(const ctx &);              // Context was marked for interruption
+	bool termination(const ctx &);               // Context was marked for termination
 	bool finished(const ctx &);                  // Context function returned (or exception).
 	bool started(const ctx &);                   // Context was ever entered.
 	bool running(const ctx &);                   // Context is the currently running ctx.
 	bool waiting(const ctx &);                   // started() && !finished() && !running()
 
-	void interrupt(ctx &);                       // Interrupt the context for termination.
+	void interrupt(ctx &);                       // Interrupt the context.
+	void terminate(ctx &);                       // Interrupt for termination.
 	void signal(ctx &, std::function<void ()>);  // Post function to context strand
 	void notify(ctx &, threadsafe_t);            // Notify context with threadsafety.
 	bool notify(ctx &);                          // Queue a context switch to arg
