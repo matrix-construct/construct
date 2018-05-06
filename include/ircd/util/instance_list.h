@@ -38,31 +38,23 @@ struct ircd::util::instance_list
   protected:
 	typename decltype(list)::iterator it;
 
-	instance_list(typename decltype(list)::iterator it)
-	:it{std::move(it)}
-	{}
-
-	instance_list()
-	:it{list.emplace(end(list), static_cast<T *>(this))}
-	{}
-
+	instance_list();
+	instance_list(instance_list &&) = delete;
 	instance_list(const instance_list &) = delete;
-	instance_list(instance_list &&o) noexcept
-	:it{std::move(o.it)}
-	{
-		o.it = end(list);
-	}
-
+	instance_list &operator=(instance_list &&) = delete;
 	instance_list &operator=(const instance_list &) = delete;
-	instance_list &operator=(instance_list &&o) noexcept
-	{
-		std::swap(it, o.it);
-		return *this;
-	}
-
-	~instance_list() noexcept
-	{
-		if(it != end(list))
-			list.erase(it);
-	}
+	~instance_list() noexcept;
 };
+
+template<class T>
+ircd::util::instance_list<T>::instance_list()
+:it{list.emplace(end(list), static_cast<T *>(this))}
+{}
+
+template<class T>
+ircd::util::instance_list<T>::~instance_list()
+noexcept
+{
+	assert(it != end(list));
+	list.erase(it);
+}
