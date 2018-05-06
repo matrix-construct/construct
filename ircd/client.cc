@@ -399,14 +399,14 @@ noexcept try
 	else
 		client->close(net::dc::SSL_NOTIFY).wait();
 }
-catch(const std::exception &e)
+catch(...)
 {
 	log::derror
 	{
-		"socket(%p) client(%p) (below main): %s",
+		"socket(%p) client(%p) (below main) :%s",
 		client->sock.get(),
 		client.get(),
-		e.what()
+		what(std::current_exception())
 	};
 }
 
@@ -625,20 +625,6 @@ noexcept try
 
 	return true;
 }
-catch(const ctx::interrupted &e)
-{
-	log::warning
-	{
-		"socket(%p) local[%s] remote[%s] Request interrupted: %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
-		e.what()
-	};
-
-	close(net::dc::RST, net::close_ignore);
-	return false;
-}
 catch(const boost::system::system_error &e)
 {
 	using namespace boost::system::errc;
@@ -713,6 +699,20 @@ catch(const boost::system::system_error &e)
 	close(net::dc::RST, net::close_ignore);
 	return false;
 }
+catch(const ctx::interrupted &e)
+{
+	log::warning
+	{
+		"socket(%p) local[%s] remote[%s] Request interrupted: %s",
+		sock.get(),
+		string(local(*this)),
+		string(remote(*this)),
+		e.what()
+	};
+
+	close(net::dc::SSL_NOTIFY, net::close_ignore);
+	return false;
+}
 catch(const std::exception &e)
 {
 	log::critical
@@ -724,6 +724,11 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	return false;
+}
+catch(const ctx::terminated &)
+{
+	close(net::dc::RST, net::close_ignore);
 	return false;
 }
 
