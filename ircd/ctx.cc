@@ -11,53 +11,7 @@
 #include <RB_INC_X86INTRIN_H
 #include <cxxabi.h>
 #include <ircd/asio.h>
-
-/// Internal context implementation
-///
-struct ircd::ctx::ctx
-:instance_list<ctx>
-{
-	using error_code = boost::system::error_code;
-
-	static uint64_t id_ctr;                      // monotonic
-
-	uint64_t id;                                 // Unique runtime ID
-	const char *name;                            // User given name (optional)
-	context::flags flags;                        // User given flags
-	boost::asio::io_service::strand strand;      // mutex/serializer
-	boost::asio::steady_timer alarm;             // acting semaphore (64B)
-	boost::asio::yield_context *yc;              // boost interface
-	uintptr_t stack_base;                        // assigned when spawned
-	size_t stack_max;                            // User given stack size
-	int64_t notes;                               // norm: 0 = asleep; 1 = awake; inc by others; dec by self
-	continuation *cont;                          // valid when asleep; invalid when awake
-	ctx *adjoindre;                              // context waiting for this to join()
-	microseconds awake;                          // monotonic counter
-	list::node node;                             // node for ctx::list
-
-	bool started() const                         { return stack_base != 0;                         }
-	bool finished() const                        { return started() && yc == nullptr;              }
-
-	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
-	void interruption_point();                   // throws interrupted
-
-	bool wait();                                 // yield context to ios queue (returns on this resume)
-	void jump();                                 // jump to context directly (returns on your resume)
-	void wake();                                 // jump to context by queueing with ios (use note())
-	bool note();                                 // properly request wake()
-
-	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
-
-	ctx(const char *const &name                  = "<noname>",
-	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
-	    const context::flags &flags              = (context::flags)0,
-	    boost::asio::io_service *const &ios      = ircd::ios);
-
-	ctx(ctx &&) = delete;
-	ctx(const ctx &) = delete;
-	ctx &operator=(ctx &&) = delete;
-	ctx &operator=(const ctx &) = delete;
-};
+#include "ctx.h"
 
 /// Instance list linkage for the list of all ctx instances.
 template<>
@@ -79,25 +33,6 @@ ircd::ctx::ctx::id_ctr
 {
 	0
 };
-
-ircd::ctx::ctx::ctx(const char *const &name,
-                    const size_t &stack_max,
-                    const context::flags &flags,
-                    boost::asio::io_service *const &ios)
-:id{++id_ctr}
-,name{name}
-,flags{flags}
-,strand{*ios}
-,alarm{*ios}
-,yc{nullptr}
-,stack_base{0}
-,stack_max{stack_max}
-,notes{1}
-,cont{nullptr}
-,adjoindre{nullptr}
-,awake{0us}
-{
-}
 
 /// Base frame for a context.
 ///
