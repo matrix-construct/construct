@@ -121,6 +121,12 @@ ircd::openssl::peer_cert(SSL &ssl)
 	};
 
 	assert(ret);
+	if(unlikely(!ret))
+		throw error
+		{
+			"No X509 certificate for peer"
+		};
+
 	return *ret;
 }
 
@@ -133,6 +139,12 @@ ircd::openssl::peer_cert(const SSL &ssl)
 	};
 
 	assert(ret);
+	if(unlikely(!ret))
+		throw error
+		{
+			"No X509 certificate for peer"
+		};
+
 	return *ret;
 }
 
