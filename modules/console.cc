@@ -577,16 +577,15 @@ console_cmd__conf__get(opt &out, const string_view &line)
 bool
 console_cmd__hook__list(opt &out, const string_view &line)
 {
-	for(const auto &p : m::hook::list.sites)
+	for(const auto &site : m::hook::site::list)
 	{
-		const auto &site(*p.second);
-		out << std::setw(24) << std::left << p.first
+		out << std::setw(24) << std::left << site->name()
 		    << std::endl;
 
-		out << string_view{site.feature}
+		out << string_view{site->feature}
 		    << std::endl;
 
-		for(const auto &hookp : site.hooks)
+		for(const auto &hookp : site->hooks)
 			out << (hookp->registered? '+' : '-')
 			    << " " << string_view{hookp->feature}
 			    << std::endl;

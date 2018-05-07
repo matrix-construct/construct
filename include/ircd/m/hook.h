@@ -17,21 +17,21 @@ namespace ircd::m
 }
 
 struct ircd::m::hook
+:instance_list<hook>
 {
 	struct site;
-	struct list;
 
 	IRCD_EXCEPTION(ircd::error, error)
-
-	struct list static list;
 
 	json::strung _feature;
 	json::object feature;
 	m::event matching;
 	std::function<void (const m::event &)> function;
-	bool registered;
+	bool registered {false};
 
 	string_view site_name() const;
+	site *find_site() const;
+
 	bool match(const m::event &) const;
 
  public:
@@ -43,7 +43,7 @@ struct ircd::m::hook
 };
 
 /// The hook::site is the call-site for a hook. Each hook site is named
-/// and registers itself with the master extern hook::list. Each hook
+/// and registers itself with the master extern hook::site::list. Each hook
 /// then registers itself with a hook::site. The site contains internal
 /// state to manage the efficient calling of the participating hooks.
 ///
@@ -51,10 +51,10 @@ struct ircd::m::hook
 /// in a module which is reloaded) while being agnostic to the hooks it
 /// cooperates with.
 struct ircd::m::hook::site
+:instance_list<site>
 {
 	json::strung _feature;
 	json::object feature;
-	bool registered;
 	size_t count {0};
 
 	string_view name() const;
@@ -79,26 +79,4 @@ struct ircd::m::hook::site
 	site(site &&) = delete;
 	site(const site &) = delete;
 	~site() noexcept;
-};
-
-/// The hook list is the registry of all of the hook sites. This is a singleton
-/// class with an extern instance. Each hook::site will register itself here
-/// by human readable name.
-struct ircd::m::hook::list
-{
-	std::map<string_view, hook::site *> sites;
-	std::set<hook *> hooks;
-
-	friend class site;
-	bool add(site &);
-	bool del(site &);
-
-	friend class hook;
-	bool add(hook &);
-	bool del(hook &);
-
-  public:
-	list() = default;
-	list(list &&) = delete;
-	list(const list &) = delete;
 };

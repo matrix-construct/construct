@@ -2609,6 +2609,12 @@ ircd::m::txn::create_id(const mutable_buffer &out,
 // m/hook.h
 //
 
+/// Instance list linkage for all hooks
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook>::list)
+ircd::util::instance_list<ircd::m::hook>::list
+{};
+
 /// Alternative hook ctor simply allowing the the function argument
 /// first and description after.
 ircd::m::hook::hook(decltype(function) function,
@@ -2699,23 +2705,49 @@ try
 {
 	std::move(function)
 }
-,registered
 {
-	list.add(*this)
-}
-{
+	site *site;
+	if((site = find_site()))
+		site->add(*this);
 }
 catch(...)
 {
 	if(registered)
-		list.del(*this);
+	{
+		auto *const site(find_site());
+		assert(site != nullptr);
+		site->del(*this);
+	}
 }
 
 ircd::m::hook::~hook()
 noexcept
 {
 	if(registered)
-		list.del(*this);
+	{
+		auto *const site(find_site());
+		assert(site != nullptr);
+		site->del(*this);
+	}
+}
+
+ircd::m::hook::site *
+ircd::m::hook::find_site()
+const
+{
+	const auto &site_name
+	{
+		this->site_name()
+	};
+
+	if(!site_name)
+		return nullptr;
+
+	for(auto *const &site : m::hook::site::list)
+		if(site->name() == site_name)
+			return site;
+
+	return nullptr;
 }
 
 ircd::string_view
@@ -2773,8 +2805,13 @@ const
 // hook::site
 //
 
+/// Instance list linkage for all hook sites
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook::site>::list)
+ircd::util::instance_list<ircd::m::hook::site>::list
+{};
+
 ircd::m::hook::site::site(const json::members &members)
-try
 :_feature
 {
 	members
@@ -2783,28 +2820,28 @@ try
 {
 	_feature
 }
-,registered
 {
-	list.add(*this)
-}
-{
+	for(const auto &site : list)
+		if(site->name() == name() && site != this)
+			throw error
+			{
+				"Hook site '%s' already registered at %p",
+				name(),
+				site
+			};
+
 	// Find and register all of the orphan hooks which were constructed before
 	// this site was constructed.
-	for(auto *const &hook : list.hooks)
+	for(auto *const &hook : m::hook::list)
 		if(hook->site_name() == name())
 			add(*hook);
-}
-catch(...)
-{
-	if(registered)
-		list.del(*this);
 }
 
 ircd::m::hook::site::~site()
 noexcept
 {
-	if(registered)
-		list.del(*this);
+	for(auto *const hook : hooks)
+		del(*hook);
 }
 
 void
@@ -2869,6 +2906,9 @@ catch(const std::exception &e)
 bool
 ircd::m::hook::site::add(hook &hook)
 {
+	assert(!hook.registered);
+	assert(hook.site_name() == name());
+
 	if(!hooks.emplace(&hook).second)
 	{
 		log::warning
@@ -2895,12 +2935,16 @@ ircd::m::hook::site::add(hook &hook)
 		type.emplace(at<"type"_>(hook.matching), &hook);
 
 	++count;
+	hook.registered = true;
 	return true;
 }
 
 bool
 ircd::m::hook::site::del(hook &hook)
 {
+	assert(hook.registered);
+	assert(hook.site_name() == name());
+
 	const auto unmap{[&hook]
 	(auto &map, const string_view &key)
 	{
@@ -2935,6 +2979,7 @@ ircd::m::hook::site::del(hook &hook)
 
 	assert(erased);
 	--count;
+	hook.registered = false;
 	return true;
 }
 
@@ -2950,88 +2995,6 @@ catch(const std::out_of_range &e)
 	{
 		"Hook site %p requires a name", this
 	};
-}
-
-//
-// hook::list
-//
-
-decltype(ircd::m::hook::list)
-ircd::m::hook::list
-{};
-
-bool
-ircd::m::hook::list::del(hook &hook)
-{
-	const auto erased
-	{
-		hooks.erase(&hook)
-	};
-	assert(erased);
-
-	const auto it
-	{
-		sites.find(hook.site_name())
-	};
-
-	if(it == end(sites))
-		return false;
-
-	auto *const &site(it->second);
-	assert(site != nullptr);
-	return site->del(hook);
-}
-
-bool
-ircd::m::hook::list::add(hook &hook)
-{
-	if(!hooks.emplace(&hook).second)
-		log::warning
-		{
-			"Hook %p already registered", &hook
-		};
-
-	const auto it
-	{
-		sites.find(hook.site_name())
-	};
-
-	if(it == end(sites))
-	{
-		log::dwarning
-		{
-			"Hook %p found no site for '%s'", &hook, hook.site_name()
-		};
-
-		return false;
-	}
-
-	auto *const &site(it->second);
-	assert(site != nullptr);
-	return site->add(hook);
-}
-
-bool
-ircd::m::hook::list::del(site &site)
-{
-	return sites.erase(site.name());
-}
-
-bool
-ircd::m::hook::list::add(site &site)
-{
-	const auto iit
-	{
-		sites.emplace(site.name(), &site)
-	};
-
-	if(unlikely(!iit.second))
-		throw error
-		{
-			"Hook site name '%s' already in use", site.name()
-		};
-
-	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
