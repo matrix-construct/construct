@@ -381,6 +381,13 @@ ircd::ctx::cycles(const ctx &ctx)
 	return ctx.cycles;
 }
 
+/// Returns the yield count for `ctx`
+const uint64_t &
+ircd::ctx::yields(const ctx &ctx)
+{
+	return ctx.yields;
+}
+
 /// Returns the notification count for `ctx`
 const int64_t &
 ircd::ctx::notes(const ctx &ctx)
@@ -636,6 +643,7 @@ ircd::ctx::continuation::continuation(ctx *const &self)
 	assert(!std::current_exception());
 	//assert(!std::uncaught_exceptions());
 
+	self->yields++;
 	self->cont = this;
 	ircd::ctx::current = nullptr;
 }

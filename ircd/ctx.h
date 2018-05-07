@@ -28,6 +28,7 @@ struct ircd::ctx::ctx
 	size_t stack_at {0};                         // Updated for profiling at sleep
 	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ulong cycles {0};                            // monotonic counter (rdtsc)
+	uint64_t yields {0};                         // monotonic counter
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
 	ctx *adjoindre {nullptr};                    // context waiting for this to join()
 	list::node node;                             // node for ctx::list
