@@ -753,6 +753,26 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 bool
 console_cmd__ctx__list(opt &out, const string_view &line)
 {
+	out << "   "
+	    << "ID"
+	    << "   "
+	    << "STATE"
+	    << "   "
+	    << "YIELDS"
+	    << "      "
+	    << "CYCLE COUNT"
+	    << "     "
+	    << "PCT"
+	    << "     "
+	    << "STACK "
+	    << "   "
+	    << "LIMIT"
+	    << "     "
+	    << "PCT"
+	    << "   "
+	    << ":NAME"
+	    << std::endl;
+
 	for(const auto *const &ctxp : ctx::ctxs)
 	{
 		const auto &ctx{*ctxp};
@@ -767,6 +787,10 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    ;
 
 		out << " "
+		    << std::setw(8) << std::right << yields(ctx)
+		    << " ";
+
+		out << " "
 		    << std::setw(15) << std::right << cycles(ctx)
 		    << " ";
 
@@ -778,7 +802,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 
 		out << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (tsc_pct * 100)
-		    << "% TSC";
+		    << "% ";
 
 		out << "  "
 		    << std::setw(7) << std::right << stack_at(ctx)
@@ -795,7 +819,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 
 		out << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (stack_pct * 100)
-		    << "% ST";
+		    << "% ";
 
 		out << "  :"
 		    << name(ctx);
