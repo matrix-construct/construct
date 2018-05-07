@@ -18,6 +18,7 @@ namespace ircd::m::v1
 }
 
 #include "version.h"
+#include "key.h"
 #include "query.h"
 #include "user.h"
 #include "make_join.h"
