@@ -932,6 +932,49 @@ ircd::m::v1::query::query(const string_view &type,
 // v1/key.h
 //
 
+ircd::m::v1::key::keys::keys(const string_view &server_name,
+                             const mutable_buffer &buf,
+                             opts opts)
+:server::request{[&]
+{
+	if(!opts.remote)
+		opts.remote = net::hostport{server_name};
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+		json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server/";
+
+	json::get<"method"_>(opts.request) = "GET";
+
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
 namespace ircd::m::v1
 {
 	static const_buffer
@@ -939,9 +982,9 @@ namespace ircd::m::v1
 	                  const mutable_buffer &);
 }
 
-ircd::m::v1::key::key(const vector_view<const server_key> &keys,
-                      const mutable_buffer &buf_,
-                      opts opts)
+ircd::m::v1::key::query::query(const vector_view<const server_key> &keys,
+                               const mutable_buffer &buf_,
+                               opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -1001,21 +1044,17 @@ ircd::m::v1::_make_server_keys(const vector_view<const key::server_key> &keys,
 	{
 		json::stack::object top{out};
 		json::stack::member server_keys{top, "server_keys"};
+		json::stack::object keys_object{server_keys};
 		for(const auto &sk : keys)
 		{
-			json::stack::object object{server_keys};
-			json::stack::member server_name{object, sk.first};
+			json::stack::member server_name{keys_object, sk.first};
+			json::stack::object server_object{server_name};
+			json::stack::member key_name{server_object, sk.second};
+			json::stack::object key_object{key_name};
+			json::stack::member mvut
 			{
-				json::stack::object object{server_name};
-				json::stack::member key_name{object, sk.second};
-				{
-					json::stack::object object{key_name};
-					json::stack::member mvut
-					{
-						object, "minimum_valid_until_ts", json::value{0L}
-					};
-				}
-			}
+				key_object, "minimum_valid_until_ts", json::value{0L}
+			};
 		}
 	}
 

@@ -11,15 +11,33 @@
 #pragma once
 #define HAVE_IRCD_M_V1_KEY_H
 
-namespace ircd::m::v1
-{
-	struct key;
-};
-
-struct ircd::m::v1::key
-:server::request
+namespace ircd::m::v1::key
 {
 	struct opts;
+	struct keys;
+	struct query;
+	using server_key = std::pair<string_view, string_view>; // server_name, key_id
+};
+
+struct ircd::m::v1::key::keys
+:server::request
+{
+	using opts = key::opts;
+
+	explicit operator json::object() const
+	{
+		const json::object object{in.content};
+		return object;
+	}
+
+	keys(const string_view &server_name, const mutable_buffer &, opts);
+	keys() = default;
+};
+
+struct ircd::m::v1::key::query
+:server::request
+{
+	using opts = key::opts;
 
 	explicit operator json::array() const
 	{
@@ -28,10 +46,8 @@ struct ircd::m::v1::key
 		return server_keys;
 	}
 
-	using server_key = std::pair<string_view, string_view>; // server_name, key_id
-
-	key(const vector_view<const server_key> &, const mutable_buffer &, opts);
-	key() = default;
+	query(const vector_view<const server_key> &, const mutable_buffer &, opts);
+	query() = default;
 };
 
 struct ircd::m::v1::key::opts
