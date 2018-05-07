@@ -112,7 +112,6 @@ libircd_la_SOURCES =   \
 	m/request.cc       \
 	m/v1.cc            \
 	m/m.cc             \
-	m/vm.cc            \
 	ircd.cc            \
 	###
 

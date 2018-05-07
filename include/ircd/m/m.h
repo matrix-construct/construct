@@ -94,7 +94,6 @@ struct ircd::m::init
 	self::init _self;
 	keys::init _keys;
 	dbs::init _dbs;
-	vm::init _vm;
 	std::unique_ptr<modules> modules;
 	std::unique_ptr<listeners> listeners;
 

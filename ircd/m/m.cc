@@ -108,10 +108,12 @@ try
 		return;
 	}
 
-	const string_view prefixes[]
+	static const string_view prefixes[]
 	{
 		"s_", "m_", "client_", "key_", "federation_", "media_"
 	};
+
+	m::modules.emplace("vm"s, "vm"s);
 
 	for(const auto &name : mods::available())
 		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
@@ -371,6 +373,293 @@ ircd::m::self::init::init(const json::object &config)
 
 ircd::m::self::init::~init()
 noexcept
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/vm.h
+//
+
+decltype(ircd::m::vm::accept)
+ircd::m::vm::accept
+{};
+
+decltype(ircd::m::vm::current_sequence)
+ircd::m::vm::current_sequence
+{};
+
+decltype(ircd::m::vm::default_opts)
+ircd::m::vm::default_opts
+{};
+
+decltype(ircd::m::vm::default_copts)
+ircd::m::vm::default_copts
+{};
+
+/// Instance list linkage for all of the evaluations.
+template<>
+decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
+ircd::util::instance_list<ircd::m::vm::eval>::list
+{};
+
+decltype(ircd::m::vm::eval::id_ctr)
+ircd::m::vm::eval::id_ctr
+{};
+
+//
+// Eval
+//
+// Processes any event from any place from any time and does whatever is
+// necessary to validate, reject, learn from new information, ignore old
+// information and advance the state of IRCd as best as possible.
+
+//
+// eval::eval
+//
+
+ircd::m::vm::eval::eval(const room &room,
+                        json::iov &event,
+                        const json::iov &content)
+:eval{}
+{
+	operator()(room, event, content);
+}
+
+ircd::m::vm::eval::eval(json::iov &event,
+                        const json::iov &content,
+                        const vm::copts &opts)
+:eval{opts}
+{
+	operator()(event, content);
+}
+
+ircd::m::vm::eval::eval(const event &event,
+                        const vm::opts &opts)
+:eval{opts}
+{
+	operator()(event);
+}
+
+ircd::m::vm::eval::eval(const vm::copts &opts)
+:opts{&opts}
+,copts{&opts}
+{
+}
+
+ircd::m::vm::eval::eval(const vm::opts &opts)
+:opts{&opts}
+{
+}
+
+ircd::m::vm::eval::~eval()
+noexcept
+{
+}
+
+ircd::m::vm::eval::operator
+const event::id::buf &()
+const
+{
+	return event_id;
+}
+
+///
+/// Figure 1:
+///          in     .  <-- injection
+///    ===:::::::==//
+///    |  ||||||| //   <-- these functions
+///    |   \\|// //|
+///    |    ||| // |   |  acceleration
+///    |    |||//  |   |
+///    |    |||/   |   |
+///    |    |||    |   V
+///    |    !!!    |
+///    |     *     |   <----- nozzle
+///    | ///|||\\\ |
+///    |/|/|/|\|\|\|   <---- propagation cone
+///  _/|/|/|/|\|\|\|\_
+///         out
+///
+
+/// Inject a new event in a room originating from this server.
+///
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(const room &room,
+                              json::iov &event,
+                              const json::iov &contents)
+{
+	using prototype = fault (eval &, const m::room &, json::iov &, const json::iov &);
+
+	static import<prototype> function
+	{
+		"vm", "eval__commit_room"
+	};
+
+	// This eval entry point is only used for commits. We try to find the
+	// commit opts the user supplied directly to this eval or with the room.
+	if(!copts)
+		copts = room.opts;
+
+	if(!copts)
+		copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	this->opts = copts;
+
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is attempting to do.
+	issue = &event;
+	room_id = room.room_id;
+	const unwind deissue{[this]
+	{
+		room_id = {};
+		issue = nullptr;
+	}};
+
+	return function(*this, room, event, contents);
+}
+
+/// Inject a new event originating from this server.
+///
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(json::iov &event,
+                              const json::iov &contents)
+{
+	using prototype = fault (eval &, json::iov &, const json::iov &);
+
+	static import<prototype> function
+	{
+		"vm", "eval__commit"
+	};
+
+	// This eval entry point is only used for commits. If the user did not
+	// supply commit opts we supply the default ones here.
+	if(!copts)
+		copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	this->opts = copts;
+
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is attempting to do.
+	assert(!room_id || issue == &event);
+	issue = &event;
+	const unwind deissue{[this]
+	{
+		// issue is untouched when room_id is set; that indicates it was set
+		// and will be unset by another eval function (i.e above).
+		if(!room_id)
+			issue = nullptr;
+	}};
+
+	return function(*this, event, contents);
+}
+
+enum ircd::m::vm::fault
+ircd::m::vm::eval::operator()(const event &event)
+{
+	using prototype = fault (eval &, const m::event &);
+
+	static import<prototype> function
+	{
+		"vm", "eval__event"
+	};
+
+	// Set a member pointer to the event currently being evaluated. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is working on. The pointer must be nulled on the way out.
+	this->event_= &event;
+	const unwind null_event{[this]
+	{
+		this->event_ = nullptr;
+	}};
+
+	return function(*this, event);
+}
+
+const uint64_t &
+ircd::m::vm::sequence(const eval &eval)
+{
+	return eval.sequence;
+}
+
+uint64_t
+ircd::m::vm::retired_sequence()
+{
+	event::id::buf event_id;
+	return retired_sequence(event_id);
+}
+
+uint64_t
+ircd::m::vm::retired_sequence(event::id::buf &event_id)
+{
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	const auto it
+	{
+		column.rbegin()
+	};
+
+	if(!it)
+	{
+		// If this iterator is invalid the events db should
+		// be completely fresh.
+		assert(db::sequence(*dbs::events) == 0);
+		return 0;
+	}
+
+	const auto &ret
+	{
+		byte_view<uint64_t>(it->first)
+	};
+
+	event_id = it->second;
+	return ret;
+}
+
+ircd::string_view
+ircd::m::vm::reflect(const enum fault &code)
+{
+	switch(code)
+	{
+		case fault::ACCEPT:       return "ACCEPT";
+		case fault::EXISTS:       return "EXISTS";
+		case fault::INVALID:      return "INVALID";
+		case fault::DEBUGSTEP:    return "DEBUGSTEP";
+		case fault::BREAKPOINT:   return "BREAKPOINT";
+		case fault::GENERAL:      return "GENERAL";
+		case fault::EVENT:        return "EVENT";
+		case fault::STATE:        return "STATE";
+		case fault::INTERRUPT:    return "INTERRUPT";
+	}
+
+	return "??????";
+}
+
+//
+// accepted
+//
+
+ircd::m::vm::accepted::accepted(const m::event &event,
+                                const vm::opts *const &opts,
+                                const event::conforms *const &report)
+:m::event{event}
+,context{ctx::current}
+,opts{opts}
+,report{report}
 {
 }
 

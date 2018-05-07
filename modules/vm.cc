@@ -8,85 +8,44 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::vm
+{
+	extern log::log log;
+	extern hook::site commit_hook;
+	extern hook::site eval_hook;
+	extern hook::site notify_hook;
+
+	static void _tmp_effects(const m::event &event); //TODO: X
+	static void write(eval &);
+	static fault _eval_edu(eval &, const event &);
+	static fault _eval_pdu(eval &, const event &);
+
+	extern "C" fault eval__event(eval &, const event &);
+	extern "C" fault eval__commit(eval &, json::iov &, const json::iov &);
+	extern "C" fault eval__commit_room(eval &, const room &, json::iov &, const json::iov &);
+
+	static void init();
+	static void fini();
+}
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Matrix Virtual Machine",
+	ircd::m::vm::init, ircd::m::vm::fini
+};
+
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::accept)
-ircd::m::vm::accept
-{};
-
-decltype(ircd::m::vm::current_sequence)
-ircd::m::vm::current_sequence
-{};
-
-decltype(ircd::m::vm::default_opts)
-ircd::m::vm::default_opts
-{};
-
-decltype(ircd::m::vm::default_copts)
-ircd::m::vm::default_copts
-{};
-
-//
-// init
-//
-
-ircd::m::vm::init::init()
-{
-	id::event::buf event_id;
-	current_sequence = retired_sequence(event_id);
-
-	log.info("BOOT %s @%lu [%s]",
-	         string_view{m::my_node.node_id},
-	         current_sequence,
-	         current_sequence? string_view{event_id} : "NO EVENTS"_sv);
-}
-
-ircd::m::vm::init::~init()
-{
-	id::event::buf event_id;
-	const auto current_sequence
-	{
-		retired_sequence(event_id)
-	};
-
-	log.info("HLT '%s' @%lu [%s]",
-	         string_view{m::my_node.node_id},
-	         current_sequence,
-	         current_sequence? string_view{event_id} : "NO EVENTS"_sv);
-}
-
-namespace ircd::m::vm
-{
-	extern hook::site commit_hook;
-}
-
 decltype(ircd::m::vm::commit_hook)
 ircd::m::vm::commit_hook
 {
 	{ "name", "vm.commit" }
 };
-
-//
-// Eval
-//
-// Processes any event from any place from any time and does whatever is
-// necessary to validate, reject, learn from new information, ignore old
-// information and advance the state of IRCd as best as possible.
-
-namespace ircd::m::vm
-{
-	extern hook::site eval_hook;
-	extern hook::site notify_hook;
-
-	void _tmp_effects(const m::event &event); //TODO: X
-	void write(eval &);
-	fault _eval_edu(eval &, const event &);
-	fault _eval_pdu(eval &, const event &);
-}
 
 decltype(ircd::m::vm::eval_hook)
 ircd::m::vm::eval_hook
@@ -100,98 +59,64 @@ ircd::m::vm::notify_hook
 	{ "name", "vm.notify" }
 };
 
-/// Instance list linkage for all of the evaluations.
-template<>
-decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
-ircd::util::instance_list<ircd::m::vm::eval>::list
-{};
-
-decltype(ircd::m::vm::eval::id_ctr)
-ircd::m::vm::eval::id_ctr
-{};
-
 //
-// eval::eval
+// init
 //
 
-ircd::m::vm::eval::eval(const room &room,
-                        json::iov &event,
-                        const json::iov &content)
-:eval{}
+void
+ircd::m::vm::init()
 {
-	operator()(room, event, content);
-}
+	id::event::buf event_id;
+	current_sequence = retired_sequence(event_id);
 
-ircd::m::vm::eval::eval(json::iov &event,
-                        const json::iov &content,
-                        const vm::copts &opts)
-:eval{opts}
-{
-	operator()(event, content);
-}
-
-ircd::m::vm::eval::eval(const event &event,
-                        const vm::opts &opts)
-:eval{opts}
-{
-	operator()(event);
-}
-
-ircd::m::vm::eval::eval(const vm::copts &opts)
-:opts{&opts}
-,copts{&opts}
-{
-}
-
-ircd::m::vm::eval::eval(const vm::opts &opts)
-:opts{&opts}
-{
-}
-
-ircd::m::vm::eval::~eval()
-noexcept
-{
-}
-
-ircd::m::vm::eval::operator
-const event::id::buf &()
-const
-{
-	return event_id;
-}
-
-/// Inject a new event in a room originating from this server.
-///
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const room &room,
-                              json::iov &event,
-                              const json::iov &contents)
-{
-	// This eval entry point is only used for commits. We try to find the
-	// commit opts the user supplied directly to this eval or with the room.
-	if(!copts)
-		copts = room.opts;
-
-	if(!copts)
-		copts = &vm::default_copts;
-
-	// Note that the regular opts is unconditionally overridden because the
-	// user should have provided copts instead.
-	this->opts = copts;
-	const auto &opts(*this->copts);
-
-	// Set a member pointer to the json::iov currently being composed. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is attempting to do.
-	this->issue = &event;
-	this->room_id = room.room_id;
-	const unwind ueiov{[this]
+	log::info
 	{
-		this->room_id = {};
-		this->issue = nullptr;
-	}};
+		log, "BOOT %s @%lu [%s]",
+		string_view{m::my_node.node_id},
+		current_sequence,
+		current_sequence? string_view{event_id} : "NO EVENTS"_sv
+	};
+}
 
+void
+ircd::m::vm::fini()
+{
+	id::event::buf event_id;
+	const auto current_sequence
+	{
+		retired_sequence(event_id)
+	};
+
+	log::info
+	{
+		log, "HLT '%s' @%lu [%s]",
+		string_view{m::my_node.node_id},
+		current_sequence,
+		current_sequence? string_view{event_id} : "NO EVENTS"_sv
+	};
+}
+
+//
+// eval
+//
+
+enum ircd::m::vm::fault
+ircd::m::vm::eval__commit_room(eval &eval,
+                               const room &room,
+                               json::iov &event,
+                               const json::iov &contents)
+{
+	assert(eval.issue);
+	assert(eval.room_id);
+	assert(eval.copts);
+	assert(eval.opts);
 	assert(room.room_id);
+
+	const auto &opts
+	{
+		*eval.copts
+	};
+
 	const json::iov::push room_id
 	{
 		event, { "room_id", room.room_id }
@@ -367,55 +292,23 @@ ircd::m::vm::eval::operator()(const room &room,
 		{ event, { "prev_state",   prev_state   } },
 	};
 
-	return operator()(event, contents);
+	return eval(event, contents);
 }
 
-/// Inject a new event originating from this server.
-///
-/// Figure 1:
-///          in     .  <-- injection
-///    ===:::::::==//
-///    |  ||||||| //   <-- this function
-///    |   \\|// //|
-///    |    ||| // |   |  acceleration
-///    |    |||//  |   |
-///    |    |||/   |   |
-///    |    |||    |   V
-///    |    !!!    |
-///    |     *     |   <----- nozzle
-///    | ///|||\\\ |
-///    |/|/|/|\|\|\|   <---- propagation cone
-///  _/|/|/|/|\|\|\|\_
-///         out
-///
 enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(json::iov &event,
-                              const json::iov &contents)
+ircd::m::vm::eval__commit(eval &eval,
+                          json::iov &event,
+                          const json::iov &contents)
 {
-	// This eval entry point is only used for commits. If the user did not
-	// supply commit opts we supply the default ones here.
-	if(!copts)
-		copts = &vm::default_copts;
+	assert(eval.issue);
+	assert(eval.copts);
+	assert(eval.opts);
+	assert(eval.copts);
 
-	// Note that the regular opts is unconditionally overridden because the
-	// user should have provided copts instead.
-	assert(copts);
-	this->opts = copts;
-	const auto &opts(*copts);
-
-	// Set a member pointer to the json::iov currently being composed. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is up to. This function may have been called from another function
-	// which already set the pointer, so we are careful to not null it for them
-	// on the way out.
-	const bool issue{this->issue};
-	assert(!issue || this->issue == &event);
-	this->issue = &event;
-	const unwind null_issue{[this, &issue]
+	const auto &opts
 	{
-		if(!issue)
-			this->issue = nullptr;
-	}};
+		*eval.copts
+	};
 
 	const json::iov::add_if _origin
 	{
@@ -458,7 +351,7 @@ ircd::m::vm::eval::operator()(json::iov &event,
 	const string_view event_id
 	{
 		opts.event_id?
-			make_id(event, this->event_id, event_id_hash):
+			make_id(event, eval.event_id, event_id_hash):
 			string_view{}
 	};
 
@@ -502,23 +395,25 @@ ircd::m::vm::eval::operator()(json::iov &event,
 		event, { "content", content },
 	};
 
-	return operator()(event);
+	return eval(event);
 }
 
 enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const event &event)
+ircd::m::vm::eval__event(eval &eval,
+                         const event &event)
 try
 {
-	// Set a member pointer to the event currently being evaluated. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is working on. The pointer must be nulled on the way out.
-	this->event_= &event;
-	const unwind null_event{[this]
-	{
-		this->event_ = nullptr;
-	}};
+	assert(eval.opts);
+	assert(eval.event_);
+	assert(eval.id);
+	assert(eval.ctx);
 
-	if(copts)
+	const auto &opts
+	{
+		*eval.opts
+	};
+
+	if(eval.copts)
 	{
 		if(unlikely(!my_host(at<"origin"_>(event))))
 			throw error
@@ -526,7 +421,7 @@ try
 				fault::GENERAL, "Committing event for origin: %s", at<"origin"_>(event)
 			};
 
-		if(copts->debuglog_precommit)
+		if(eval.copts->debuglog_precommit)
 			log.debug("injecting event(mark +%ld) %s",
 			          vm::current_sequence,
 			          pretty_oneline(event));
@@ -535,15 +430,14 @@ try
 		commit_hook(event);
 	}
 
-	assert(opts);
 	const event::conforms &report
 	{
-		opts->conforming && !opts->conformed?
-			event::conforms{event, opts->non_conform.report}:
-			opts->report
+		opts.conforming && !opts.conformed?
+			event::conforms{event, opts.non_conform.report}:
+			opts.report
 	};
 
-	if(opts->conforming && !report.clean())
+	if(opts.conforming && !report.clean())
 		throw error
 		{
 			fault::INVALID, "Non-conforming event: %s", string(report)
@@ -553,8 +447,8 @@ try
 	const fault ret
 	{
 		json::get<"event_id"_>(event)?
-			_eval_pdu(*this, event):
-			_eval_edu(*this, event)
+			_eval_pdu(eval, event):
+			_eval_edu(eval, event)
 	};
 
 	if(ret != fault::ACCEPT)
@@ -562,71 +456,90 @@ try
 
 	vm::accepted accepted
 	{
-		event, opts, &report
+		event, &opts, &report
 	};
 
-	if(opts->effects)
+	if(opts.effects)
 		notify_hook(event);
 
-	if(opts->notify)
+	if(opts.notify)
 		vm::accept(accepted);
 
-	if(opts->effects)
+	if(opts.effects)
 		_tmp_effects(event);
 
-	if(opts->debuglog_accept)
+	if(opts.debuglog_accept)
 		log.debug("%s", pretty_oneline(event));
 
-	if(opts->infolog_accept)
+	if(opts.infolog_accept)
 		log.info("%s", pretty_oneline(event));
 
 	return ret;
 }
 catch(const error &e)
 {
-	if(opts->errorlog & e.code)
-		log.error("eval %s: %s %s",
-		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		          e.what(),
-		          e.content);
+	if(eval.opts->errorlog & e.code)
+		log::error
+		{
+			log, "eval %s: %s %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what(),
+			e.content
+		};
 
-	if(opts->warnlog & e.code)
-		log.warning("eval %s: %s %s",
-		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		            e.what(),
-		            e.content);
+	if(eval.opts->warnlog & e.code)
+		log::warning
+		{
+			log, "eval %s: %s %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what(),
+			e.content
+		};
 
-	if(opts->nothrows & e.code)
+	if(eval.opts->nothrows & e.code)
 		return e.code;
 
 	throw;
 }
 catch(const ctx::interrupted &e)
 {
-	if(opts->errorlog & fault::INTERRUPT)
-		log.error("eval %s: #NMI: %s",
-		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		          e.what());
+	if(eval.opts->errorlog & fault::INTERRUPT)
+		log::error
+		{
+			log, "eval %s: #NMI: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
 
-	if(opts->warnlog & fault::INTERRUPT)
-		log.warning("eval %s: #NMI: %s",
-		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		            e.what());
+	if(eval.opts->warnlog & fault::INTERRUPT)
+		log::warning
+		{
+			log, "eval %s: #NMI: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
+
 	throw;
 }
 catch(const std::exception &e)
 {
-	if(opts->errorlog & fault::GENERAL)
-		log.error("eval %s: #GP: %s",
-		          json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		          e.what());
+	if(eval.opts->errorlog & fault::GENERAL)
+		log::error
+		{
+			log, "eval %s: #GP: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
 
-	if(opts->warnlog & fault::GENERAL)
-		log.warning("eval %s: #GP: %s",
-		            json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		            e.what());
+	if(eval.opts->warnlog & fault::GENERAL)
+		log::warning
+		{
+			log, "eval %s: #GP: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
 
-	if(opts->nothrows & fault::GENERAL)
+	if(eval.opts->nothrows & fault::GENERAL)
 		return fault::GENERAL;
 
 	throw error
@@ -783,17 +696,14 @@ ircd::m::vm::write(eval &eval)
 {
 	auto &txn(*eval.txn);
 	if(eval.opts->debuglog_accept)
-		log.debug("Committing %zu cells in %zu bytes to events database...",
-		          txn.size(),
-		          txn.bytes());
+		log::debug
+		{
+			log, "Committing %zu cells in %zu bytes to events database...",
+			txn.size(),
+			txn.bytes()
+		};
 
 	txn();
-}
-
-const uint64_t &
-ircd::m::vm::sequence(const eval &eval)
-{
-	return eval.sequence;
 }
 
 uint64_t
@@ -838,25 +748,6 @@ ircd::m::vm::retired_sequence(event::id::buf &event_id)
 	return ret;
 }
 
-ircd::string_view
-ircd::m::vm::reflect(const enum fault &code)
-{
-	switch(code)
-	{
-		case fault::ACCEPT:       return "ACCEPT";
-		case fault::EXISTS:       return "EXISTS";
-		case fault::INVALID:      return "INVALID";
-		case fault::DEBUGSTEP:    return "DEBUGSTEP";
-		case fault::BREAKPOINT:   return "BREAKPOINT";
-		case fault::GENERAL:      return "GENERAL";
-		case fault::EVENT:        return "EVENT";
-		case fault::STATE:        return "STATE";
-		case fault::INTERRUPT:    return "INTERRUPT";
-	}
-
-	return "??????";
-}
-
 //TODO: X
 void
 ircd::m::vm::_tmp_effects(const m::event &event)
@@ -879,18 +770,4 @@ ircd::m::vm::_tmp_effects(const m::event &event)
 		if(local != "users") //TODO: circ dep
 			send(my_room, at<"sender"_>(event), "ircd.room", at<"room_id"_>(event), json::object{});
 	}
-}
-
-//
-// accepted
-//
-
-ircd::m::vm::accepted::accepted(const m::event &event,
-                                const vm::opts *const &opts,
-                                const event::conforms *const &report)
-:m::event{event}
-,context{ctx::current}
-,opts{opts}
-,report{report}
-{
 }

@@ -38,6 +38,23 @@ AM_LDFLAGS += \
 
 ###############################################################################
 #
+# /
+#
+
+moduledir = @moduledir@
+
+root_la_SOURCES = root.cc
+console_la_SOURCES = console.cc
+vm_la_SOURCES = vm.cc
+
+module_LTLIBRARIES = \
+	root.la \
+	console.la \
+	vm.la \
+	###
+
+###############################################################################
+#
 # Server modules
 #
 
@@ -74,21 +91,6 @@ m_module_LTLIBRARIES = \
 	m_presence.la \
 	m_room_create.la \
 	m_room_member.la \
-	###
-
-###############################################################################
-#
-# /
-#
-
-moduledir = @moduledir@
-
-root_la_SOURCES = root.cc
-console_la_SOURCES = console.cc
-
-module_LTLIBRARIES = \
-	root.la \
-	console.la \
 	###
 
 ###############################################################################

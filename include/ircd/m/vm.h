@@ -15,7 +15,6 @@
 ///
 namespace ircd::m::vm
 {
-	struct init;
 	struct error; // custom exception
 	struct opts;
 	struct copts;
@@ -24,9 +23,8 @@ namespace ircd::m::vm
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
-	extern struct log::log log;
-	extern uint64_t current_sequence;
 	extern ctx::shared_view<accepted> accept;
+	extern uint64_t current_sequence;
 	extern const opts default_opts;
 	extern const copts default_copts;
 
@@ -34,12 +32,6 @@ namespace ircd::m::vm
 	uint64_t retired_sequence(id::event::buf &);
 	uint64_t retired_sequence();
 }
-
-struct ircd::m::vm::init
-{
-	init();
-	~init() noexcept;
-};
 
 /// Event Evaluation Device
 ///
@@ -238,7 +230,7 @@ struct ircd::m::vm::accepted
 	ctx::ctx *context;
 	const vm::opts *opts;
 	const event::conforms *report;
-	std::string strung;
+	shared_buffer<mutable_buffer> strung;
 
 	accepted(const m::event &event,
 	         const vm::opts *const &opts,
