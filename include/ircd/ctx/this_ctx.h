@@ -15,6 +15,7 @@ namespace ircd::ctx {
 /// Interface to the currently running context
 inline namespace this_ctx
 {
+	struct critical_indicator;                   // Indicates if yielding happened for a section
 	struct critical_assertion;                   // Assert no yielding for a section
 	struct exception_handler;                    // Must be present to yield in a handler
 
@@ -89,6 +90,27 @@ class ircd::ctx::this_ctx::critical_assertion
 	critical_assertion();
 	~critical_assertion() noexcept;
 	#endif
+};
+
+/// An instance of critical_indicator reports if context switching happened.
+///
+/// A critical_indicator remains true after construction until a context switch
+/// has occurred. It then becomes false. This is not an assertion and is
+/// available in optimized builds for real use. For example, a context may
+/// want to recompute some value after a context switch and opportunistically
+/// skip this effort when this indicator shows no switch occurred.
+///
+class ircd::ctx::this_ctx::critical_indicator
+{
+	uint64_t state;
+
+  public:
+	uint64_t count() const             { return yields(cur()) - state;         }
+	operator bool() const              { return yields(cur()) == state;        }
+
+	critical_indicator()
+	:state{yields(cur())}
+	{}
 };
 
 /// An instance of exception_handler must be present to allow a context

@@ -105,4 +105,5 @@ namespace ircd
 	using ctx::use_future;
 
 	using ctx::critical_assertion;
+	using ctx::critical_indicator;
 }
