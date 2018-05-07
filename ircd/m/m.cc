@@ -513,8 +513,10 @@ ircd::m::vm::eval::operator()(const room &room,
 	// eval is attempting to do.
 	issue = &event;
 	room_id = room.room_id;
+	phase = phase::ENTER;
 	const unwind deissue{[this]
 	{
+		phase = phase::ACCEPT;
 		room_id = {};
 		issue = nullptr;
 	}};
@@ -548,13 +550,21 @@ ircd::m::vm::eval::operator()(json::iov &event,
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is attempting to do.
 	assert(!room_id || issue == &event);
-	issue = &event;
+	if(!room_id)
+	{
+		issue = &event;
+		phase = phase::ENTER;
+	}
+
 	const unwind deissue{[this]
 	{
 		// issue is untouched when room_id is set; that indicates it was set
 		// and will be unset by another eval function (i.e above).
 		if(!room_id)
+		{
+			phase = phase::ACCEPT;
 			issue = nullptr;
+		}
 	}};
 
 	return function(*this, event, contents);
@@ -574,8 +584,14 @@ ircd::m::vm::eval::operator()(const event &event)
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is working on. The pointer must be nulled on the way out.
 	this->event_= &event;
+	if(!issue)
+		phase = phase::ENTER;
+
 	const unwind null_event{[this]
 	{
+		if(!issue)
+			phase = phase::ACCEPT;
+
 		this->event_ = nullptr;
 	}};
 
@@ -644,6 +660,18 @@ ircd::m::vm::reflect(const enum fault &code)
 		case fault::EVENT:        return "EVENT";
 		case fault::STATE:        return "STATE";
 		case fault::INTERRUPT:    return "INTERRUPT";
+	}
+
+	return "??????";
+}
+
+ircd::string_view
+ircd::m::vm::reflect(const enum eval::phase &phase)
+{
+	switch(phase)
+	{
+		case eval::phase::ACCEPT:      return "ACCEPT";
+		case eval::phase::ENTER:       return "ENTER";
 	}
 
 	return "??????";

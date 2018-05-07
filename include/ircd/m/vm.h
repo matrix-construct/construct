@@ -28,6 +28,7 @@ namespace ircd::m::vm
 	extern const opts default_opts;
 	extern const copts default_copts;
 
+	string_view reflect(const fault &);
 	const uint64_t &sequence(const eval &);
 	uint64_t retired_sequence(id::event::buf &);
 	uint64_t retired_sequence();
@@ -44,19 +45,23 @@ namespace ircd::m::vm
 struct ircd::m::vm::eval
 :instance_list<eval>
 {
+	enum phase :uint8_t;
+
 	static uint64_t id_ctr; // monotonic
 
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
 	ctx::ctx *ctx {ctx::current};
 	uint64_t id {++id_ctr};
-	uint64_t sequence {0};
-	db::txn *txn {nullptr};
+	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	string_view room_id;
+	enum phase phase {(enum phase)0};
+	uint64_t sequence {0};
+	db::txn *txn {nullptr};
 	event::id::buf event_id;
 
+  public:
 	operator const event::id::buf &() const;
 
 	fault operator()(const event &);
@@ -73,7 +78,15 @@ struct ircd::m::vm::eval
 	eval(const eval &) = delete;
 	~eval() noexcept;
 
-	friend string_view reflect(const fault &);
+	friend string_view reflect(const enum phase &);
+};
+
+/// Evaluation phases
+enum ircd::m::vm::eval::phase
+:uint8_t
+{
+	ACCEPT        = 0x00,
+	ENTER         = 0x01,
 };
 
 /// Evaluation faults. These are reasons which evaluation has halted but may
