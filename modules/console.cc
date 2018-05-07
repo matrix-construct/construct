@@ -4808,24 +4808,32 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"server_name", "key_id", "remote"
+		"remote", "[server_name,key_id]...",
 	}};
 
-	const unique_buffer<mutable_buffer> buf{24_KiB};
-	const std::pair<string_view, string_view> requesting[]
+	const auto requests
 	{
-		{ param.at(0), param.at(1) }
+		tokens_after(line, ' ', 0)
 	};
+
+	std::vector<std::pair<string_view, string_view>> r;
+	tokens(requests, ' ', [&r]
+	(const string_view &req)
+	{
+		r.emplace_back(split(req, ','));
+	});
 
 	m::v1::key::opts opts;
+	opts.dynamic = true;
 	opts.remote = net::hostport
 	{
-		param.at(2, param.at(0))
+		param.at(0)
 	};
 
+	const unique_buffer<mutable_buffer> buf{24_KiB};
 	m::v1::key::query request
 	{
-		requesting, buf, std::move(opts)
+		r, buf, std::move(opts)
 	};
 
 	request.wait(out.timeout);
