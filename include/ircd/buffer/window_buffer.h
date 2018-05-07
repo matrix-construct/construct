@@ -25,6 +25,7 @@ struct ircd::buffer::window_buffer
 :mutable_buffer
 {
 	using closure = std::function<size_t (const mutable_buffer &)>;
+	using closure_cbuf = std::function<const_buffer (const mutable_buffer &)>;
 
 	mutable_buffer base;
 
@@ -35,7 +36,8 @@ struct ircd::buffer::window_buffer
 	explicit operator const_buffer() const;
 	mutable_buffer completed();
 
-	const_buffer operator()(const closure &closure);
+	const_buffer operator()(const closure &);
+	const_buffer operator()(const closure_cbuf &);
 	const_buffer rewind(const size_t &n = 1);
 	const_buffer shift(const size_t &n);
 
@@ -82,6 +84,16 @@ ircd::buffer::window_buffer::rewind(const size_t &n)
 	assert(base.begin() <= begin());
 	assert(begin() <= base.end());
 	return completed();
+}
+
+inline ircd::buffer::const_buffer
+ircd::buffer::window_buffer::operator()(const closure_cbuf &closure)
+{
+	return operator()([&closure]
+	(const mutable_buffer &buf)
+	{
+		return size(closure(buf));
+	});
 }
 
 inline ircd::buffer::const_buffer
