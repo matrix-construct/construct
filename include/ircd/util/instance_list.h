@@ -39,10 +39,10 @@ struct ircd::util::instance_list
 	typename decltype(list)::iterator it;
 
 	instance_list();
-	instance_list(instance_list &&) = delete;
-	instance_list(const instance_list &) = delete;
-	instance_list &operator=(instance_list &&) = delete;
-	instance_list &operator=(const instance_list &) = delete;
+	instance_list(instance_list &&);
+	instance_list(const instance_list &);
+	instance_list &operator=(instance_list &&);
+	instance_list &operator=(const instance_list &);
 	~instance_list() noexcept;
 };
 
@@ -50,6 +50,32 @@ template<class T>
 ircd::util::instance_list<T>::instance_list()
 :it{list.emplace(end(list), static_cast<T *>(this))}
 {}
+
+template<class T>
+ircd::util::instance_list<T>::instance_list(instance_list &&other)
+:it{list.emplace(end(list), static_cast<T *>(this))}
+{}
+
+template<class T>
+ircd::util::instance_list<T>::instance_list(const instance_list &other)
+:it{list.emplace(end(list), static_cast<T *>(this))}
+{}
+
+template<class T>
+ircd::util::instance_list<T> &
+ircd::util::instance_list<T>::operator=(instance_list &&other)
+{
+	assert(it != end(list));
+	return *this;
+}
+
+template<class T>
+ircd::util::instance_list<T> &
+ircd::util::instance_list<T>::operator=(const instance_list &other)
+{
+	assert(it != end(list));
+	return *this;
+}
 
 template<class T>
 ircd::util::instance_list<T>::~instance_list()
