@@ -52,10 +52,14 @@ struct ircd::m::vm::init
 struct ircd::m::vm::eval
 :instance_list<eval>
 {
+	static uint64_t id_ctr; // monotonic
+
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
-	db::txn *txn {nullptr};
+	ctx::ctx *ctx {ctx::current};
+	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
+	db::txn *txn {nullptr};
 	event::id::buf event_id;
 
 	operator const event::id::buf &() const;
@@ -72,6 +76,7 @@ struct ircd::m::vm::eval
 	eval() = default;
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
+	~eval() noexcept;
 
 	friend string_view reflect(const fault &);
 };

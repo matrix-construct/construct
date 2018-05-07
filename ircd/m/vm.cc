@@ -106,6 +106,10 @@ decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
 ircd::util::instance_list<ircd::m::vm::eval>::list
 {};
 
+decltype(ircd::m::vm::eval::id_ctr)
+ircd::m::vm::eval::id_ctr
+{};
+
 //
 // eval::eval
 //
@@ -141,6 +145,11 @@ ircd::m::vm::eval::eval(const vm::copts &opts)
 
 ircd::m::vm::eval::eval(const vm::opts &opts)
 :opts{&opts}
+{
+}
+
+ircd::m::vm::eval::~eval()
+noexcept
 {
 }
 
