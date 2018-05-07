@@ -4219,10 +4219,18 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		vmopts
 	};
 
+	std::vector<m::event> events;
+	events.reserve(size(pdus) + size(auth_chain));
+
 	for(const json::object &event : auth_chain)
-		eval(event);
+		events.emplace_back(event);
 
 	for(const json::object &event : pdus)
+		events.emplace_back(event);
+
+	std::sort(begin(events), end(events));
+	events.erase(std::unique(begin(events), end(events)), end(events));
+	for(const auto &event : events)
 		eval(event);
 
 	return true;
@@ -4366,7 +4374,14 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		vmopts
 	};
 
+	std::vector<m::event> events;
+	events.reserve(lex_cast<size_t>(count));
 	for(const json::object &event : pdus)
+		events.emplace_back(event);
+
+	std::sort(begin(events), end(events));
+	events.erase(std::unique(begin(events), end(events)), end(events));
+	for(const auto &event : events)
 		eval(event);
 
 	return true;
