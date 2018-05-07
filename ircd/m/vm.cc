@@ -178,8 +178,20 @@ ircd::m::vm::eval::operator()(const room &room,
 	// Note that the regular opts is unconditionally overridden because the
 	// user should have provided copts instead.
 	this->opts = copts;
-	const auto &opts(this->copts);
+	const auto &opts(*this->copts);
 
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is attempting to do.
+	this->issue = &event;
+	this->room_id = room.room_id;
+	const unwind ueiov{[this]
+	{
+		this->room_id = {};
+		this->issue = nullptr;
+	}};
+
+	assert(room.room_id);
 	const json::iov::push room_id
 	{
 		event, { "room_id", room.room_id }
@@ -389,7 +401,21 @@ ircd::m::vm::eval::operator()(json::iov &event,
 	// user should have provided copts instead.
 	assert(copts);
 	this->opts = copts;
-	const auto &opts(*this->copts);
+	const auto &opts(*copts);
+
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is up to. This function may have been called from another function
+	// which already set the pointer, so we are careful to not null it for them
+	// on the way out.
+	const bool issue{this->issue};
+	assert(!issue || this->issue == &event);
+	this->issue = &event;
+	const unwind null_issue{[this, &issue]
+	{
+		if(!issue)
+			this->issue = nullptr;
+	}};
 
 	const json::iov::add_if _origin
 	{
@@ -483,6 +509,15 @@ enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
 try
 {
+	// Set a member pointer to the event currently being evaluated. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is working on. The pointer must be nulled on the way out.
+	this->event_= &event;
+	const unwind null_event{[this]
+	{
+		this->event_ = nullptr;
+	}};
+
 	if(copts)
 	{
 		if(unlikely(!my_host(at<"origin"_>(event))))

@@ -60,6 +60,9 @@ struct ircd::m::vm::eval
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
 	db::txn *txn {nullptr};
+	const json::iov *issue {nullptr};
+	const event *event_ {nullptr};
+	string_view room_id;
 	event::id::buf event_id;
 
 	operator const event::id::buf &() const;
