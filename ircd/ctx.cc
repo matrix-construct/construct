@@ -374,7 +374,7 @@ ircd::ctx::interruption(const ctx &c)
 	return c.flags & context::INTERRUPTED;
 }
 
-/// Returns the notification count for `ctx
+/// Returns the cycle count for `ctx`
 const ulong &
 ircd::ctx::cycles(const ctx &ctx)
 {
