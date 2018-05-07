@@ -94,7 +94,7 @@ ircd::server::get(const net::hostport &hostport)
 
 		const string_view key{peer->hostname};
 		it = peers.emplace_hint(it, key, std::move(peer));
-		assert(it->second->hostname.data() == key.data());
+		assert(it->second->hostname.data() == it->first.data());
 	}
 
 	return *it->second;
