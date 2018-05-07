@@ -100,6 +100,16 @@ ircd::m::vm::notify_hook
 	{ "name", "vm.notify" }
 };
 
+/// Instance list linkage for all of the evaluations.
+template<>
+decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
+ircd::util::instance_list<ircd::m::vm::eval>::list
+{};
+
+//
+// eval::eval
+//
+
 ircd::m::vm::eval::eval(const room &room,
                         json::iov &event,
                         const json::iov &content)

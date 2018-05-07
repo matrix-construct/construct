@@ -50,6 +50,7 @@ struct ircd::m::vm::init
 /// transitions or actions of the machine etc.
 ///
 struct ircd::m::vm::eval
+:instance_list<eval>
 {
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
