@@ -81,7 +81,7 @@ try
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();
-	log::mark("READY");
+	log::mark("DEADSTART"); // 6600
 
 	// The conf supplied by the user is read in; see: ircd::conf.
 	conf::init(configfile);
