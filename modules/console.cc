@@ -1933,13 +1933,6 @@ console_cmd__key__get(opt &out, const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__key__fetch(opt &out, const string_view &line)
-{
-
-	return true;
-}
-
 //
 // events
 //
@@ -4771,6 +4764,87 @@ console_cmd__fed__query__client_keys(opt &out, const string_view &line)
 	};
 
 	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__key(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote",
+	}};
+
+	const auto &server_name
+	{
+		param.at(0)
+	};
+
+	const unique_buffer<mutable_buffer> buf{16_KiB};
+	m::v1::key::opts opts;
+	m::v1::key::keys request
+	{
+		server_name, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	const m::keys &key{response};
+	out << key << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fed__key__query(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server_name", "key_id", "remote"
+	}};
+
+	const unique_buffer<mutable_buffer> buf{24_KiB};
+	const std::pair<string_view, string_view> requesting[]
+	{
+		{ param.at(0), param.at(1) }
+	};
+
+	m::v1::key::opts opts;
+	opts.remote = net::hostport
+	{
+		param.at(2, param.at(0))
+	};
+
+	m::v1::key::query request
+	{
+		requesting, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::array keys
+	{
+		request
+	};
+
+	for(const json::object &key : keys)
+	{
+		const m::keys &k{key};
+		out << k << std::endl;
+	}
+
 	return true;
 }
 
