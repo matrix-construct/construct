@@ -24,6 +24,7 @@ IRCD_MODULE
 extern "C" void
 get__keys(const string_view &server_name,
           const m::keys::closure &closure)
+try
 {
 	assert(!server_name.empty());
 
@@ -36,66 +37,32 @@ get__keys(const string_view &server_name,
 			"keys for '%s' (that's myself) not found", server_name
 		};
 
-	m::log.debug("Keys for %s not cached; querying network...",
-	             server_name);
-
-	//TODO: XXX
-	const unique_buffer<mutable_buffer> buffer
+	log::debug
 	{
-		32_KiB
+		m::log, "Keys for %s not cached; querying network...", server_name
 	};
 
-	const mutable_buffer out_head
+	m::v1::key::opts opts;
+	const unique_buffer<mutable_buffer> buf
 	{
-		data(buffer), 8_KiB
+		16_KiB
 	};
 
-	using buffer::size;
-	const mutable_buffer in
+	m::v1::key::keys request
 	{
-		data(out_head) + size(out_head), size(buffer) - size(out_head)
-	};
-
-	m::request request
-	{
-		my_host(), server_name, "GET", "/_matrix/key/v2/server/", {}
-	};
-
-	const auto request_head
-	{
-		request(out_head)
-	};
-
-	const net::hostport host
-	{
-		server_name
-	};
-
-	server::request tag
-	{
-		host, { request_head }, { in }
+		server_name, buf, std::move(opts)
 	};
 
 	//TODO: conf
-	if(!tag.wait(seconds(20), std::nothrow))
+	request.wait(seconds(20));
+	const auto status
 	{
-		cancel(tag);
-		throw m::error
-		{
-			http::REQUEST_TIMEOUT, "M_TIMEOUT",
-			"Failed to fetch keys for '%s' in time",
-			server_name
-		};
-	}
-
-	const http::code status
-	{
-		tag.get()
+		request.get()
 	};
 
 	const json::object response
 	{
-		tag.in.content
+		request
 	};
 
 	const m::keys &keys
@@ -103,155 +70,100 @@ get__keys(const string_view &server_name,
 		response
 	};
 
-	if(!verify(keys))
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
-			"Failed to verify keys for '%s'",
-			server_name
-		};
+	if(!verify(keys)) throw m::error
+	{
+		http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
+		"Failed to verify keys for '%s'",
+		server_name
+	};
 
-	m::log.debug("Verified keys from '%s'",
-	             server_name);
+	log::debug
+	{
+		m::log, "Verified keys from '%s'", server_name
+	};
 
 	set_keys(keys);
 	closure(keys);
 }
+catch(const ctx::timeout &e)
+{
+	throw m::error
+	{
+		http::REQUEST_TIMEOUT, "M_TIMEOUT",
+		"Failed to fetch keys for '%s' in time",
+		server_name
+	};
+}
 
-extern "C" void
-query__keys(const string_view &server_name,
-            const string_view &key_id,
-            const string_view &query_server,
-            const m::keys::closure &closure)
+extern "C" bool
+query__keys(const string_view &query_server,
+            const m::keys::queries &queries,
+            const m::keys::closure_bool &closure)
 try
 {
-	assert(!server_name.empty());
 	assert(!query_server.empty());
 
-	thread_local char url_buf[2_KiB];
-	thread_local char key_id_buf[1_KiB];
-	thread_local char server_name_buf[1_KiB];
-	const string_view url{fmt::sprintf
+	m::v1::key::opts opts;
+	opts.remote = net::hostport{query_server};
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
 	{
-		url_buf, "/_matrix/key/v2/query/%s/%s/",
-		url::encode(server_name, server_name_buf),
-		url::encode(key_id, key_id_buf)
-	}};
-
-	// This buffer will hold the HTTP request and response
-	//TODO: XXX
-	const unique_buffer<mutable_buffer> buffer
-	{
-		32_KiB
+		16_KiB
 	};
 
-	m::request request
+	m::v1::key::query request
 	{
-		my_host(), server_name, "GET", url, {}
+		queries, buf, std::move(opts)
 	};
 
-	// Generates the HTTP request head into the front of buffer
-	const string_view head
-	{
-		request(buffer)
-	};
-
-	// Partition the remainder of buffer for the response data
-	using buffer::size;
-	assert(size(head) < size(buffer) / 2);
-	const mutable_buffer in
-	{
-		data(buffer) + size(head), size(buffer) - size(head)
-	};
-
-	// The request to the remote is transmitted
-	server::request tag
-	{
-		server_name, { head }, { in }
-	};
-
-	if(!tag.wait(seconds(30), std::nothrow))
-		throw m::error
-		{
-			http::REQUEST_TIMEOUT, "M_TIMEOUT",
-			"Failed to fetch keys for '%s' from '%s' in time",
-			server_name,
-			query_server
-		};
-
-	// The response from the remote is received
+	//TODO: conf
+	request.wait(seconds(20));
 	const auto code
 	{
-		tag.get()
+		request.get()
 	};
 
-	// The content received is here
-	const json::object response
+	const json::array response
 	{
-		tag.in.content
+		request
 	};
 
-	// This parses the content for our key.
-	const json::array &keys
+	for(const json::object &k : response)
 	{
-		response.at("server_keys")
-	};
-
-	m::log.debug("Fetched %zu candidate keys seeking '%s' for '%s' from '%s'",
-	             keys.count(),
-	             empty(key_id)? "*" : key_id,
-	             server_name,
-	             query_server);
-
-	bool ret{false};
-	for(auto it(begin(keys)); it != end(keys); ++it)
-	{
-		const m::keys &keys{*it};
-		const auto &_server_name
+		const m::keys &key{k};
+		if(!verify(key))
 		{
-			at<"server_name"_>(keys)
-		};
-
-		if(!verify(keys))
-			throw m::error
+			log::derror
 			{
-				http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
 				"Failed to verify keys for '%s' from '%s'",
-				_server_name,
+				at<"server_name"_>(key),
 				query_server
 			};
 
-		m::log.debug("Verified keys for '%s' from '%s'",
-		             _server_name,
-		             query_server);
-
-		set_keys(keys);
-		const json::object vks{json::get<"verify_keys"_>(keys)};
-		if(_server_name == server_name)
-		{
-			closure(keys);
-			ret = true;
+			continue;
 		}
+
+		log::debug
+		{
+			m::log, "Verified keys for '%s' from '%s'",
+			at<"server_name"_>(key),
+			query_server
+		};
+
+		set_keys(key);
+		if(!closure(key))
+			return false;
 	}
 
-	if(!ret)
-		throw m::NOT_FOUND
-		{
-			"Failed to get any keys for '%s' from '%s' (got %zu total keys otherwise)",
-			server_name,
-			query_server,
-			keys.count()
-		};
+	return true;
 }
-catch(const json::not_found &e)
+catch(const ctx::timeout &e)
 {
-	throw m::NOT_FOUND
+	throw m::error
 	{
-		"Failed to find key '%s' for '%s' when querying '%s': %s",
-		key_id,
-		server_name,
-		query_server,
-		e.what()
+		http::REQUEST_TIMEOUT, "M_TIMEOUT",
+		"Failed to query keys from '%s' in time",
+		query_server
 	};
 }
 
@@ -315,7 +227,10 @@ noexcept try
 	};
 
 	if(valid_until_ts < ircd::time<milliseconds>())
-		throw ircd::error("Key was valid until %s", timestr(valid_until_ts));
+		throw ircd::error
+		{
+			"Key was valid until %s", timestr(valid_until_ts)
+		};
 
 	const json::object &verify_keys
 	{
@@ -360,17 +275,25 @@ noexcept try
 		b64decode(sig, unquote(server_signatures.at(key_id)));
 	}};
 
-	///TODO: XXX
 	m::keys copy{keys};
 	at<"signatures"_>(copy) = string_view{};
-	const json::strung preimage{copy};
-	return pk.verify(const_buffer{preimage}, sig);
+
+	thread_local char buf[4096];
+	const const_buffer preimage
+	{
+		json::stringify(mutable_buffer{buf}, copy)
+	};
+
+	return pk.verify(preimage, sig);
 }
 catch(const std::exception &e)
 {
-	m::log.error("key verification for '%s' failed: %s",
-	             json::get<"server_name"_>(keys, "<no server name>"_sv),
-	             e.what());
+	log::error
+	{
+		m::log, "key verification for '%s' failed: %s",
+		json::get<"server_name"_>(keys, "<no server name>"_sv),
+		e.what()
+	};
 
 	return false;
 }
@@ -378,22 +301,13 @@ catch(const std::exception &e)
 static void
 create_my_key(const m::event &)
 {
-	const json::strung verify_keys
+	const json::strung verify_keys{json::members
 	{
-		json::members
-		{{
-			string_view{self::public_key_id},
-			{
-				{ "key", self::public_key_b64 }
-			}
+		{ string_view{self::public_key_id},
+		{
+			{ "key", self::public_key_b64 }
 		}}
-	};
-
-	m::keys my_key;
-	json::get<"verify_keys"_>(my_key) = verify_keys;
-	json::get<"server_name"_>(my_key) = my_host();
-	json::get<"old_verify_keys"_>(my_key) = "{}";
-	json::get<"valid_until_ts"_>(my_key) = ircd::time<milliseconds>() + duration_cast<milliseconds>(hours(2160)).count();
+	}};
 
 	const json::members tlsfps
 	{
@@ -410,11 +324,16 @@ create_my_key(const m::event &)
 		tlsfp, 1
 	}};
 
+	m::keys my_key;
+	json::get<"server_name"_>(my_key) = my_host();
+	json::get<"old_verify_keys"_>(my_key) = "{}";
+	json::get<"valid_until_ts"_>(my_key) = ircd::time<milliseconds>() + duration_cast<milliseconds>(hours(2160)).count();
+	json::get<"verify_keys"_>(my_key) = verify_keys;
 	json::get<"tls_fingerprints"_>(my_key) = tls_fingerprints;
 
-	const auto presig
+	const json::strung presig
 	{
-		json::strung(my_key)
+		my_key
 	};
 
 	const ed25519::sig sig
@@ -422,10 +341,10 @@ create_my_key(const m::event &)
 		self::secret_key.sign(const_buffer{presig})
 	};
 
-	static char signature[256];
+	char signature[256];
 	const json::strung signatures{json::members
 	{
-		{ my_host(), json::members
+		{ my_host(),
 		{
 			{ string_view{self::public_key_id}, b64encode_unpadded(signature, sig) }
 		}}

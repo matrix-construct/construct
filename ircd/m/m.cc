@@ -774,20 +774,19 @@ ircd::m::keys::get(const string_view &server_name,
 	return function(server_name, closure_);
 }
 
-void
-ircd::m::keys::get(const string_view &server_name,
-                   const string_view &key_id,
-                   const string_view &query_server,
-                   const closure &closure_)
+bool
+ircd::m::keys::query(const string_view &query_server,
+                     const queries &queries_,
+                     const closure_bool &closure)
 {
-	using prototype = void (const string_view &, const string_view &, const string_view &, const closure &);
+	using prototype = bool (const string_view &, const queries &, const closure_bool &);
 
 	static import<prototype> function
 	{
 		"key_keys", "query__keys"
 	};
 
-	return function(server_name, key_id, query_server, closure_);
+	return function(query_server, queries_, closure);
 }
 
 //
