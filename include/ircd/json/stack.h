@@ -50,6 +50,8 @@ struct ircd::json::stack
 	window_buffer buf;
 	flush_callback flusher;
 	std::exception_ptr eptr;
+	size_t hiwat;                      ///< autoflush watermark
+	size_t lowat;                      ///< flush(false) call min watermark
 
 	object *co {nullptr};              ///< The root object instance.
 	array *ca {nullptr};               ///< Could be union with top_object but
@@ -63,13 +65,17 @@ struct ircd::json::stack
 	bool closed() const;               ///< No stacking in progress.
 	bool clean() const;                ///< Never opened.
 	bool done() const;                 ///< Opened and closed.
-
 	size_t remaining() const;
 	const_buffer completed() const;
-	bool flush();
+
+	bool flush(const bool &force = false);
 	void clear();
 
-	stack(const mutable_buffer &, flush_callback = {});
+	stack(const mutable_buffer &,
+	      flush_callback           = {},
+	      const size_t &hiwat      = -1,
+	      const size_t &lowat      = 0);
+
 	stack(stack &&) noexcept;
 	stack(const stack &) = delete;
 	~stack() noexcept;

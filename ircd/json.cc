@@ -416,9 +416,13 @@ ircd::json::input<it>::throws_exceeded()
 //
 
 ircd::json::stack::stack(const mutable_buffer &buf,
-                         flush_callback flusher)
+                         flush_callback flusher,
+                         const size_t &hiwat,
+                         const size_t &lowat)
 :buf{buf}
 ,flusher{std::move(flusher)}
+,hiwat{hiwat}
+,lowat{lowat}
 {
 }
 
@@ -427,6 +431,8 @@ noexcept
 :buf{std::move(other.buf)}
 ,flusher{std::move(other.flusher)}
 ,eptr{std::move(other.eptr)}
+,hiwat{std::move(other.hiwat)}
+,lowat{std::move(other.lowat)}
 ,co{std::move(other.co)}
 ,ca{std::move(other.ca)}
 {
@@ -467,7 +473,7 @@ try
 			size(buf.base)
 		};
 
-		if(!flush())
+		if(!flush(true))
 			return;
 
 		if(unlikely(expect > buf.remaining())) throw print_error
@@ -483,6 +489,8 @@ try
 	});
 
 	if(!buf.remaining())
+		flush(true);
+	else if(buf.consumed() >= hiwat)
 		flush();
 }
 catch(...)
@@ -499,13 +507,16 @@ ircd::json::stack::rethrow_exception()
 }
 
 bool
-ircd::json::stack::flush()
+ircd::json::stack::flush(const bool &force)
 try
 {
 	if(!flusher)
 		return false;
 
 	if(unlikely(eptr))
+		return false;
+
+	if(!force && buf.consumed() < lowat)
 		return false;
 
 	// The user returns the portion of the buffer they were able to flush
@@ -644,7 +655,7 @@ noexcept
 	assert(cm == nullptr);
 	s->append("}"_sv);
 
-	if(pm)
+	if(pm) // branch taken if member of object
 	{
 		assert(pa == nullptr);
 		assert(pm->ca == nullptr);
@@ -653,7 +664,7 @@ noexcept
 		return;
 	}
 
-	if(pa)
+	if(pa) // branch taken if value in array
 	{
 		assert(pm == nullptr);
 		assert(pa->ca == nullptr);
@@ -663,12 +674,13 @@ noexcept
 		return;
 	}
 
+	// branch taken if top of stack:: (w/ final flush)
 	assert(s->co == this);
 	assert(s->ca == nullptr);
 	assert(pm == nullptr && pa == nullptr);
 	s->co = nullptr;
 	assert(s->done());
-	s->flush();
+	s->flush(true);
 }
 
 //
@@ -741,7 +753,7 @@ noexcept
 	assert(ca == nullptr);
 	s->append("]"_sv);
 
-	if(pm)
+	if(pm) // branch taken if member of object
 	{
 		assert(pa == nullptr);
 		assert(pm->ca == this);
@@ -750,7 +762,7 @@ noexcept
 		return;
 	}
 
-	if(pa)
+	if(pa) // branch taken if value in array
 	{
 		assert(pm == nullptr);
 		assert(pa->ca == this);
@@ -760,12 +772,13 @@ noexcept
 		return;
 	}
 
+	// branch taken if top of stack:: (w/ final flush)
 	assert(s->ca == this);
 	assert(s->co == nullptr);
 	assert(pm == nullptr && pa == nullptr);
 	s->ca = nullptr;
 	assert(s->done());
-	s->flush();
+	s->flush(true);
 }
 
 void
