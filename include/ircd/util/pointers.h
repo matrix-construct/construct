@@ -35,13 +35,31 @@ pointers(input_begin&& ib,
 	});
 }
 
+/// Transform input sequence values to pointers in the output sequence
+/// using two input iterators [begin, end] and one output iterator [begin]
+template<class input_begin,
+         class input_end,
+         class output_begin,
+         class output_end>
+auto
+pointers(input_begin&& ib,
+         const input_end &ie,
+         output_begin&& ob,
+         const output_end &oe)
+{
+	for(; ib != ie && ob != oe; ++ib, ++ob)
+		*ob = std::addressof(*ib);
+
+	return ob;
+}
+
 template<class input_container,
          class output_container>
 auto
 pointers(input_container&& ic,
          output_container &oc)
 {
-	return pointers(begin(ic), end(ic), begin(oc));
+	return pointers(begin(ic), end(ic), begin(oc), end(oc));
 }
 
 } // namespace util
