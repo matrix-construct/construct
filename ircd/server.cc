@@ -370,10 +370,11 @@ void
 ircd::server::peer::close(const net::close_opts &opts)
 {
 	op_fini = true;
-	std::vector<link *> links(this->links.size());
+	assert(!ctx::current);
+	thread_local link *links[LINK_MAX];
 	pointers(this->links, links);
-	for(const auto &link : links)
-		link->close(opts);
+	for(size_t i(0); i < this->links.size(); ++i)
+		links[i]->close(opts);
 
 	if(finished())
 		return handle_finished();
@@ -890,10 +891,11 @@ try
 	if(op_fini)
 		return;
 
-	std::vector<link *> links(this->links.size());
+	assert(!ctx::current);
+	thread_local link *links[LINK_MAX];
 	pointers(this->links, links);
-	for(const auto &link : links)
-		link->open(open_opts);
+	for(size_t i(0); i < this->links.size(); ++i)
+		links[i]->open(open_opts);
 }
 catch(const std::exception &e)
 {
