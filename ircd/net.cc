@@ -2476,7 +2476,7 @@ ircd::net::dns::operator()(const hostport &hp,
 {
 	assert(bool(ircd::net::dns::resolver));
 	operator()(hp, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
+	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
 	{
 		static const rfc1035::record::A empty;
 
@@ -2963,7 +2963,7 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 void
 ircd::net::dns::resolver::operator()(const hostport &hp,
                                      const opts &opts,
-                                     callback callback)
+                                     callback &&callback)
 {
 	auto &tag
 	{

@@ -54,7 +54,7 @@ struct ircd::net::dns::resolver
 
 	template<class... A> tag &set_tag(A&&...);
 	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
-	void operator()(const hostport &, const opts &, callback);
+	void operator()(const hostport &, const opts &, callback &&);
 
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
 	void check_timeouts(const milliseconds &timeout);
