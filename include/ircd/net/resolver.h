@@ -25,6 +25,7 @@ struct ircd::net::dns::resolver
 	static constexpr const size_t &MAX_COUNT{64};
 	static conf::item<milliseconds> timeout;
 	static conf::item<milliseconds> send_rate;
+	static conf::item<size_t> send_burst;
 
 	std::vector<ip::udp::endpoint> server;       // The list of active servers
 	size_t server_next{0};                       // Round-robin state to hit servers
@@ -33,8 +34,7 @@ struct ircd::net::dns::resolver
 	ctx::dock dock;
 	std::map<uint16_t, tag> tags;                // The active requests
 	steady_point send_last;                      // Time of last send
-	using queued = std::pair<uint16_t, std::string>;
-	std::deque<queued> sendq;                    // Queue of frames for rate-limiting
+	std::deque<uint16_t> sendq;                  // Queue of frames for rate-limiting
 
 	ip::udp::socket ns;                          // A pollable activity object
 	ip::udp::endpoint reply_from;                // Remote addr of recv
@@ -47,10 +47,10 @@ struct ircd::net::dns::resolver
 	void handle(const error_code &ec, const size_t &) noexcept;
 	void set_handle();
 
-	void queue_query(const const_buffer &, tag &);
-	void send_query(const ip::udp::endpoint &, const const_buffer &, tag &);
-	void send_query(const const_buffer &, tag &);
-	void submit(const const_buffer &, tag &);
+	void send_query(const ip::udp::endpoint &, tag &);
+	void queue_query(tag &);
+	void send_query(tag &);
+	void submit(tag &);
 
 	template<class... A> tag &set_tag(A&&...);
 	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
@@ -61,7 +61,7 @@ struct ircd::net::dns::resolver
 	void timeout_worker();
 	ctx::context timeout_context;
 
-	void flush(const queued &);
+	void flush(const uint16_t &);
 	void sendq_worker();
 	ctx::context sendq_context;
 
@@ -74,10 +74,12 @@ struct ircd::net::dns::resolver::tag
 	uint16_t id {0};
 	hostport hp;
 	dns::opts opts;       // note: invalid after query sent
+	const_buffer question;
 	callback cb;
 	steady_point last;
 	uint8_t tries {0};
 	char hostbuf[256];
+	char qbuf[384];
 
 	tag(const hostport &, const dns::opts &, callback &&);
 };
