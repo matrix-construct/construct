@@ -2824,6 +2824,13 @@ ircd::net::dns::resolver::send_burst
 	{ "default",   8L                                },
 };
 
+decltype(ircd::net::dns::resolver::retry_max)
+ircd::net::dns::resolver::retry_max
+{
+	{ "name",     "ircd.net.dns.resolver.retry_max" },
+	{ "default",   4L                               },
+};
+
 ircd::net::dns::resolver::resolver()
 :ns{*ircd::ios}
 ,reply
@@ -2868,12 +2875,14 @@ ircd::net::dns::resolver::sendq_worker()
 
 		assert(sendq.size() < 65535);
 		assert(sendq.size() <= tags.size());
-		ctx::sleep(milliseconds(send_rate));
+		if(tags.size() > size_t(send_burst))
+			ctx::sleep(milliseconds(send_rate));
 
 		const unwind::nominal::assertion na;
 		assert(!sendq.empty());
-		flush(sendq.front());
+		const uint16_t next(sendq.front());
 		sendq.pop_front();
+		flush(next);
 	}
 }
 
@@ -2925,7 +2934,7 @@ ircd::net::dns::resolver::check_timeouts(const milliseconds &timeout)
 	{
 		const auto &id(it->first);
 		auto &tag(it->second);
-		if(!check_timeout(id, tag, cutoff))
+		if(check_timeout(id, tag, cutoff))
 			it = tags.erase(it);
 		else
 			++it;
@@ -2938,26 +2947,49 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
                                         const steady_point &cutoff)
 {
 	if(tag.last == steady_point{})
-		return true;
+		return false;
 
-	if(tag.last < cutoff)
-		return true;
+	if(tag.last > cutoff)
+		return false;
 
-	//TODO: retry
-	log.error("DNS timeout id:%u", id);
+	log::warning
+	{
+		log, "DNS timeout id:%u on attempt %u", id, tag.tries
+	};
+
+	tag.last = steady_point{};
+	if(tag.tries < size_t(retry_max))
+	{
+		submit(tag);
+		return false;
+	}
+
+	if(!tag.cb)
+		return true;
 
 	// Callback gets a fresh stack off this timeout worker ctx's stack.
-	std::string host{tag.hp.host};
-	if(tag.cb) ircd::post([cb(std::move(tag.cb)), host(std::move(host)), port(tag.hp.port)]
+	ircd::post([this, id, &tag]
 	{
 		using boost::system::system_error;
-		const error_code ec
+		static const error_code ec
 		{
 			boost::system::errc::timed_out, boost::system::system_category()
 		};
 
-		const hostport hp{host, port};
-		cb(std::make_exception_ptr(system_error{ec}), hp, {});
+		// Have to check if the tag is still mapped at this point. It may
+		// have been removed if a belated reply came in while this closure
+		// was posting. If so, that's good news and we bail on the timeout.
+		if(!tags.count(id))
+			return;
+
+		log::error
+		{
+			log, "DNS timeout id:%u", id
+		};
+
+		tag.cb(std::make_exception_ptr(system_error{ec}), tag.hp, {});
+		const auto erased(tags.erase(tag.id));
+		assert(erased == 1);
 	});
 
 	return false;
@@ -3035,6 +3067,7 @@ ircd::net::dns::resolver::set_tag(A&&... args)
 void
 ircd::net::dns::resolver::queue_query(tag &tag)
 {
+	assert(sendq.size() <= tags.size());
 	sendq.emplace_back(tag.id);
 	dock.notify_one();
 }
@@ -3168,6 +3201,8 @@ try
 		tags.erase(it);
 	}};
 
+	assert(tag.tries > 0);
+	tag.last = steady_point{};
 	handle_reply(header, body, tag);
 }
 catch(const std::exception &e)
