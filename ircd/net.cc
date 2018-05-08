@@ -2411,7 +2411,7 @@ ircd::net::dns::operator()(const hostport &hp,
 
 	auto srv_opts{opts};
 	srv_opts.nxdomain_exceptions = false;
-	operator()(hp, srv_opts, [this, opts(opts), calluser(std::move(calluser))]
+	operator()(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
 	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
 	mutable
 	{
@@ -2428,7 +2428,7 @@ ircd::net::dns::operator()(const hostport &hp,
 		opts.srv = {};
 		opts.proto = {};
 
-		this->operator()(hp, opts, [calluser(std::move(calluser))]
+		net::dns(hp, opts, [calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
 			calluser(std::move(eptr), hp, record.ip4);
