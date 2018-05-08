@@ -162,8 +162,8 @@ const char *const termstop_message
 *** This is a client and your commands will originate from the server itself.
 ***)"};
 
-void
-console_termstop()
+static void
+_console_termstop()
 try
 {
 	const unwind atexit([]
@@ -191,6 +191,21 @@ catch(const std::exception &e)
 	ircd::log::error
 	{
 		"console_termstop(): %s", e.what()
+	};
+}
+
+void
+console_termstop()
+{
+	if(ctx::current)
+		return _console_termstop();
+
+	ircd::context
+	{
+		"console",
+		stack_sz,
+		_console_termstop,
+		ircd::context::DETACH
 	};
 }
 
