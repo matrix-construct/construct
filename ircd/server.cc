@@ -370,11 +370,10 @@ void
 ircd::server::peer::close(const net::close_opts &opts)
 {
 	op_fini = true;
-	assert(!ctx::current);
-	thread_local link *links[LINK_MAX];
-	pointers(this->links, links);
-	for(size_t i(0); i < this->links.size(); ++i)
-		links[i]->close(opts);
+	link *links[LINK_MAX];
+	const auto end(pointers(this->links, links));
+	for(link **link(links); link != end; ++link)
+		(*link)->close(opts);
 
 	if(finished())
 		return handle_finished();
@@ -867,6 +866,7 @@ ircd::server::peer::handle_resolve(std::exception_ptr eptr,
                                    const ipport &ipport)
 try
 {
+	const ctx::critical_assertion ca;
 	assert(op_resolve);
 	op_resolve = false;
 
@@ -891,11 +891,10 @@ try
 	if(op_fini)
 		return;
 
-	assert(!ctx::current);
-	thread_local link *links[LINK_MAX];
-	pointers(this->links, links);
-	for(size_t i(0); i < this->links.size(); ++i)
-		links[i]->open(open_opts);
+	link *links[LINK_MAX];
+	const auto end(pointers(this->links, links));
+	for(link **link(links); link != end; ++link)
+		(*link)->open(open_opts);
 }
 catch(const std::exception &e)
 {
