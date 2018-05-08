@@ -2847,6 +2847,7 @@ noexcept
 	assert(tags.empty());
 }
 
+__attribute__((noreturn))
 void
 ircd::net::dns::resolver::sendq_worker()
 {
@@ -2893,6 +2894,7 @@ catch(const std::out_of_range &e)
 	};
 }
 
+__attribute__((noreturn))
 void
 ircd::net::dns::resolver::timeout_worker()
 {
