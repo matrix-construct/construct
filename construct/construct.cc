@@ -175,7 +175,8 @@ catch(const std::exception &e)
 	return EXIT_FAILURE;
 }
 
-void print_version()
+void
+print_version()
 {
 	printf("VERSION :%s\n",
 	       RB_VERSION);
@@ -187,7 +188,8 @@ void print_version()
 	#endif
 }
 
-bool startup_checks()
+bool
+startup_checks()
 try
 {
 	#ifndef _WIN32
@@ -232,7 +234,6 @@ enable_coredumps()
 
 static bool handle_quit();
 static bool handle_interruption();
-static bool handle_termstop();
 static bool handle_hangup();
 static bool handle(const int &signum);
 
@@ -269,7 +270,6 @@ handle(const int &signum)
 	switch(signum)
 	{
 		case SIGINT:   return handle_interruption();
-		case SIGTSTP:  return handle_termstop();
 		case SIGHUP:   return handle_hangup();
 		case SIGQUIT:  return handle_quit();
 		case SIGTERM:  return handle_quit();
@@ -307,23 +307,6 @@ catch(const std::exception &e)
 	ircd::log::error
 	{
 		"SIGHUP handler: %s", e.what()
-	};
-
-	return true;
-}
-
-bool
-handle_termstop()
-try
-{
-	console_termstop();
-	return true;
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGTSTP handler: %s", e.what()
 	};
 
 	return true;

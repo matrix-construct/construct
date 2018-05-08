@@ -34,13 +34,6 @@ A `ctrl-c` to Construct will bring up the command line console interface. It
 will not halt the daemon. Log messages will be suppressed while the console
 is waiting for input, but service is still continuing in the background.
 
-##### SIGTSTP
-
-A `ctrl-z` or "Terminal SToP" to Construct will bring up the command line
-console like with `SIGINT` except that the entire daemon will pause while
-waiting for console input. When paused, a second `SIGTSTP` will exhibit default
-behavior so your shell can offer its functionality here.
-
 ##### SIGHUP
 
 A "HangUP" to Construct is only relevant to the command line console, and

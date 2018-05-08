@@ -155,60 +155,6 @@ catch(const std::exception &e)
 	};
 }
 
-const char *const termstop_message
-{R"(
-***
-*** The server has been paused and will resume when you hit enter.
-*** This is a client and your commands will originate from the server itself.
-***)"};
-
-static void
-_console_termstop()
-try
-{
-	const unwind atexit([]
-	{
-		console_fini();
-	});
-
-	console_init();
-	std::cout << termstop_message << generic_message;
-
-	std::string line;
-	std::cout << "\n> " << std::flush;
-	std::getline(std::cin, line);
-	if(std::cin.eof())
-	{
-		std::cout << std::endl;
-		std::cin.clear();
-		return;
-	}
-
-	handle_line(line);
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"console_termstop(): %s", e.what()
-	};
-}
-
-void
-console_termstop()
-{
-	if(ctx::current)
-		return _console_termstop();
-
-	ircd::context
-	{
-		"console",
-		stack_sz,
-		_console_termstop,
-		ircd::context::DETACH
-	};
-}
-
 void
 execute(const std::vector<std::string> lines)
 try
