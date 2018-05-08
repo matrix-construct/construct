@@ -890,8 +890,10 @@ try
 	if(op_fini)
 		return;
 
-	for(auto &link : links)
-		link.open(open_opts);
+	std::vector<link *> links(this->links.size());
+	pointers(this->links, links);
+	for(const auto &link : links)
+		link->open(open_opts);
 }
 catch(const std::exception &e)
 {
