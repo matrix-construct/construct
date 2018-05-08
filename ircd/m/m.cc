@@ -2049,6 +2049,33 @@ ircd::m::user::mitsein::mitsein(const m::user &user)
 {
 }
 
+size_t
+ircd::m::user::mitsein::count(const string_view &membership)
+const
+{
+	size_t ret{0};
+	for_each(membership, [&ret](const m::user &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::user::mitsein::count(const m::user &user,
+                              const string_view &membership)
+const
+{
+	size_t ret{0};
+	for_each(user, membership, [&ret](const m::room &, const string_view &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
 void
 ircd::m::user::mitsein::for_each(const closure &closure)
 const
