@@ -56,6 +56,13 @@ backfill_limit_default
 	{ "default",  64L                                      },
 };
 
+conf::item<size_t>
+backfill_flush_hiwat
+{
+	{ "name",     "ircd.federation.backfill.flush.hiwat" },
+	{ "default",  16384L                                 },
+};
+
 resource::response
 get__backfill(client &client,
               const resource::request &request)
@@ -92,12 +99,17 @@ get__backfill(client &client,
 		client, http::OK
 	};
 
-	json::stack out{buf, [&response]
+	const auto flush{[&response]
 	(const const_buffer &buf)
 	{
 		response.write(buf);
 		return buf;
 	}};
+
+	json::stack out
+	{
+		buf, flush, size_t(backfill_flush_hiwat)
+	};
 
 	json::stack::object top{out};
 	json::stack::member pdus_m

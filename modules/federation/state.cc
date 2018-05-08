@@ -26,6 +26,13 @@ state_resource
 	}
 };
 
+conf::item<size_t>
+state_flush_hiwat
+{
+	{ "name",     "ircd.federation.state.flush.hiwat" },
+	{ "default",  16384L                              },
+};
+
 resource::response
 get__state(client &client,
            const resource::request &request)
@@ -59,12 +66,17 @@ get__state(client &client,
 		client, http::OK
 	};
 
-	json::stack out{buf, [&response]
+	const auto flush{[&response]
 	(const const_buffer &buf)
 	{
 		response.write(buf);
 		return buf;
 	}};
+
+	json::stack out
+	{
+		buf, flush, size_t(state_flush_hiwat)
+	};
 
 	json::stack::object top{out};
 	json::stack::member pdus_m
