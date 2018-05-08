@@ -48,6 +48,7 @@ namespace ircd
 #include "pointers.h"
 #include "iterator.h"
 #include "nothrow.h"
+#include "what.h"
 
 // Unsorted section
 namespace ircd {
@@ -218,26 +219,6 @@ constexpr bool
 is_powerof2(const long long v)
 {
 	return v && !(v & (v - 1LL));
-}
-
-/// Get what() from exception_ptr
-///
-inline ircd::string_view
-what(const std::exception_ptr &eptr)
-try
-{
-	if(likely(eptr))
-		std::rethrow_exception(eptr);
-
-	return {};
-}
-catch(const std::exception &e)
-{
-	return e.what();
-}
-catch(...)
-{
-	return {};
 }
 
 } // namespace util
