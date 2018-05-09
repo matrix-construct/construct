@@ -192,10 +192,10 @@ struct ircd::m::event::fetch
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);
 
-	static idx index(const id &, std::nothrow_t);
-	static idx index(const id &);
-	static idx index(const event &, std::nothrow_t);
-	static idx index(const event &);
+	friend idx index(const id &, std::nothrow_t);
+	friend idx index(const id &);
+	friend idx index(const event &, std::nothrow_t);
+	friend idx index(const event &);
 
 	friend bool seek(fetch &, const idx &, std::nothrow_t);
 	friend void seek(fetch &, const idx &);

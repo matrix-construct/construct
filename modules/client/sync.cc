@@ -695,7 +695,7 @@ polylog_sync_account_data(shortpoll &sp,
 	{
 		const auto &event_idx
 		{
-			m::event::fetch::index(event)
+			index(event)
 		};
 
 		if(event_idx < sp.since || event_idx >= sp.current)
@@ -873,7 +873,7 @@ polylog_sync_room_state(shortpoll &sp,
 
 		const auto &event_idx
 		{
-			m::event::fetch::index(event)
+			index(event)
 		};
 
 		if(event_idx < sp.since || event_idx >= sp.current)
@@ -1000,7 +1000,7 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 		{
 			const auto &event_idx
 			{
-				m::event::fetch::index(event)
+				index(event)
 			};
 
 			if(event_idx < sp.since || event_idx >= sp.current)

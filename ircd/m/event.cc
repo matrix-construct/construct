@@ -559,7 +559,7 @@ ircd::m::event::event(const id &id,
                       const mutable_buffer &buf)
 :event
 {
-	fetch::index(id), buf
+	index(id), buf
 }
 {
 }
@@ -1210,9 +1210,9 @@ ircd::m::seek(event::fetch &fetch,
               const event::id &event_id,
               std::nothrow_t)
 {
-	const event::idx &event_idx
+	const auto &event_idx
 	{
-		event::fetch::index(event_id, std::nothrow)
+		index(event_id, std::nothrow)
 	};
 
 	return seek(fetch, event_idx, std::nothrow);
@@ -1250,20 +1250,20 @@ ircd::m::seek(event::fetch &fetch,
 }
 
 ircd::m::event::idx
-ircd::m::event::fetch::index(const event &event)
+ircd::m::index(const event &event)
 {
 	return index(at<"event_id"_>(event));
 }
 
 ircd::m::event::idx
-ircd::m::event::fetch::index(const event &event,
-                             std::nothrow_t)
+ircd::m::index(const event &event,
+               std::nothrow_t)
 {
 	return index(at<"event_id"_>(event), std::nothrow);
 }
 
 ircd::m::event::idx
-ircd::m::event::fetch::index(const id &event_id)
+ircd::m::index(const event::id &event_id)
 {
 	auto &column
 	{
@@ -1281,8 +1281,8 @@ ircd::m::event::fetch::index(const id &event_id)
 }
 
 ircd::m::event::idx
-ircd::m::event::fetch::index(const id &event_id,
-                             std::nothrow_t)
+ircd::m::index(const event::id &event_id,
+               std::nothrow_t)
 {
 	auto &column
 	{

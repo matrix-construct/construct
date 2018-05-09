@@ -464,7 +464,7 @@ ircd::m::room::messages::seek(const event::id &event_id)
 
 	const event::idx event_idx
 	{
-		event::fetch::index(event_id)
+		index(event_id)
 	};
 
 	uint64_t depth;
@@ -669,7 +669,7 @@ const try
 		m::state::get(root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
-			closure(event::fetch::index(unquote(event_id)));
+			closure(index(unquote(event_id)));
 		});
 
 	auto &column{dbs::room_state};
@@ -743,7 +743,7 @@ const
 		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
-			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+			return closure(index(unquote(event_id), std::nothrow));
 		});
 
 	auto &column{dbs::room_state};
@@ -868,7 +868,7 @@ const
 		return m::state::test(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+			return closure(index(unquote(event_id), std::nothrow));
 		});
 
 	auto &column{dbs::room_state};
@@ -931,7 +931,7 @@ const
 		return m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+			return closure(index(unquote(event_id), std::nothrow));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -1045,7 +1045,7 @@ const
 		return m::state::test(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return closure(event::fetch::index(unquote(event_id), std::nothrow));
+			return closure(index(unquote(event_id), std::nothrow));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -1105,7 +1105,7 @@ const
 		return m::state::for_each(root_id, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			closure(event::fetch::index(unquote(event_id), std::nothrow));
+			closure(index(unquote(event_id), std::nothrow));
 		});
 
 	auto &column{dbs::room_state};
@@ -1155,7 +1155,7 @@ const
 		return m::state::for_each(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			closure(event::fetch::index(unquote(event_id), std::nothrow));
+			closure(index(unquote(event_id), std::nothrow));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];

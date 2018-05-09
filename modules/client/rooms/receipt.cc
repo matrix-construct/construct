@@ -158,12 +158,12 @@ try
 
 		const m::event::idx &previous_idx
 		{
-			m::event::fetch::index(previous_id)
+			index(previous_id)
 		};
 
 		const m::event::idx &event_idx
 		{
-			m::event::fetch::index(event_id)
+			index(event_id)
 		};
 
 		ret = event_idx > previous_idx;
