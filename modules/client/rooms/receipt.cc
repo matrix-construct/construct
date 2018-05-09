@@ -129,6 +129,7 @@ bool
 fresher__m_receipt_m_read(const m::room::id &room_id,
                           const m::user::id &user_id,
                           const m::event::id &event_id)
+try
 {
 	const m::user::room user_room
 	{
@@ -136,7 +137,7 @@ fresher__m_receipt_m_read(const m::room::id &room_id,
 	};
 
 	bool ret{true};
-	user_room.get(std::nothrow, "ircd.read", room_id, [&ret, &event_id]
+	user_room.get("ircd.read", room_id, [&ret, &event_id]
 	(const m::event &event)
 	{
 		const auto &content
@@ -169,6 +170,19 @@ fresher__m_receipt_m_read(const m::room::id &room_id,
 	});
 
 	return ret;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		m::log, "Freshness of receipt in %s from %s for %s :%s",
+		string_view{room_id},
+		string_view{user_id},
+		string_view{event_id},
+		e.what()
+	};
+
+	return true;
 }
 
 bool
