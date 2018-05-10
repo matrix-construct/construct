@@ -494,6 +494,9 @@ catch(const std::exception &e)
 ircd::server::link *
 ircd::server::peer::link_get(const request &request)
 {
+	assert(request.opt);
+	const auto &prio(request.opt->priority);
+
 	if(links.empty())
 		return &link_add(1);
 
@@ -557,6 +560,20 @@ ircd::server::peer::link_get(const request &request)
 			continue;
 
 		best = &cand;
+	}
+
+	// Even though the prio is set to the super special value we allow the
+	// normal loop to first come up with a best link which already is open
+	// rather than unconditionally opening a new connection.
+	if(prio == std::numeric_limits<std::remove_reference<decltype(prio)>::type>::min())
+	{
+		if(!best)
+			return &link_add(1);
+
+		if(best->tag_committed())
+			return &link_add(1);
+
+		return best;
 	}
 
 	if(links_maxed)

@@ -114,7 +114,7 @@ try
 		downloading_dock.notify_all();
 	}};
 
-	if(exists(m::room{room_id}))
+	if(exists(room_id))
 		return room_id;
 
 	const unique_buffer<mutable_buffer> buf

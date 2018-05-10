@@ -136,6 +136,15 @@ struct ircd::server::request::opts
 	/// set this option to false.
 	bool contiguous_content {true};
 
+	/// Priority indication is factored into the link selection algorithm for
+	/// making this request to the peer. It is not the only factor, and the
+	/// default is usually sufficient. Lower priority values are favored when
+	/// two requests are compared. When the priority is set to the lowest
+	/// possible value, a dedicated link may be opened to the peer even if the
+	/// maximum number of links are already open; other limits may be exceeded;
+	/// use that value with caution.
+	int16_t priority {0};
+
 	/// Only applies when using dynamic content allocation with a chunked
 	/// encoded response. This will hint the chunk vector. Ideally it can be
 	/// set to the number of chunks expected in a response to avoid growth of
