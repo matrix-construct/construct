@@ -161,10 +161,16 @@ ircd::db::sort(database &d,
 void
 ircd::db::compact(database &d)
 {
+	static const std::pair<string_view, string_view> range
+	{
+		{}, {}
+	};
+
 	for(const auto &c : d.columns)
 	{
 		db::column column{*c};
-		compact(column, string_view{}, string_view{});
+		compact(column, range, -1);
+		compact(column, -1);
 	}
 }
 
@@ -4016,42 +4022,18 @@ ircd::db::sort(column &column,
 
 void
 ircd::db::compact(column &column,
-                  const string_view &begin_,
-                  const string_view &end_)
+                  const int &level_)
 {
 	database::column &c(column);
 	database &d(*c.d);
-
-	const auto begin(slice(begin_));
-	const rocksdb::Slice *const b
-	{
-		empty(begin_)? nullptr : &begin
-	};
-
-	const auto end(slice(end_));
-	const rocksdb::Slice *const e
-	{
-		empty(end_)? nullptr : &end
-	};
-
-	log.debug("'%s':'%s' @%lu COMPACT [%s, %s]",
-	          name(d),
-	          name(c),
-	          sequence(d),
-	          begin_,
-	          end_);
-
-	rocksdb::CompactRangeOptions opts;
-	opts.change_level = true;
-	throw_on_error
-	{
-		d.d->CompactRange(opts, c, b, e)
-	};
 
 	rocksdb::ColumnFamilyMetaData cfmd;
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 	for(const auto &level : cfmd.levels)
 	{
+		if(level_ != -1 && level.level != level_)
+			continue;
+
 		if(level.files.empty())
 			continue;
 
@@ -4062,12 +4044,15 @@ ircd::db::compact(column &column,
 			return std::move(metadata.name);
 		});
 
-		log.debug("'%s':'%s' COMPACT level:%d files:%zu size:%zu",
-		          name(d),
-		          name(c),
-		          level.level,
-		          level.files.size(),
-		          level.size);
+		log::debug
+		{
+			log, "'%s':'%s' COMPACT level:%d files:%zu size:%zu",
+			name(d),
+			name(c),
+			level.level,
+			level.files.size(),
+			level.size
+		};
 
 		rocksdb::CompactionOptions opts;
 		throw_on_error
@@ -4075,6 +4060,47 @@ ircd::db::compact(column &column,
 			d.d->CompactFiles(opts, c, files, level.level)
 		};
 	}
+}
+
+void
+ircd::db::compact(column &column,
+                  const std::pair<string_view, string_view> &range,
+                  const int &to_level)
+{
+	database::column &c(column);
+	database &d(*c.d);
+
+	const auto begin(slice(range.first));
+	const rocksdb::Slice *const b
+	{
+		empty(range.first)? nullptr : &begin
+	};
+
+	const auto end(slice(range.second));
+	const rocksdb::Slice *const e
+	{
+		empty(range.second)? nullptr : &end
+	};
+
+	log::debug
+	{
+		log, "'%s':'%s' @%lu COMPACT [%s, %s] to level %d",
+		name(d),
+		name(c),
+		sequence(d),
+		range.first,
+		range.second,
+		to_level
+	};
+
+	rocksdb::CompactRangeOptions opts;
+	opts.change_level = true;
+	opts.target_level = to_level;
+	opts.allow_write_stall = true;
+	throw_on_error
+	{
+		d.d->CompactRange(opts, c, b, e)
+	};
 }
 
 void

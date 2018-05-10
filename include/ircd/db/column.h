@@ -51,7 +51,8 @@ namespace ircd::db
 
 	// [SET] Other operations
 	void setopt(column &, const string_view &key, const string_view &val);
-	void compact(column &, const string_view &begin = {}, const string_view &end = {});
+	void compact(column &, const std::pair<string_view, string_view> &, const int &to_level = -1);
+	void compact(column &, const int &level = -1);
 	void sort(column &, const bool &blocking = false);
 }
 

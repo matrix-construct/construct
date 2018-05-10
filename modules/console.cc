@@ -946,7 +946,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "[colname]", "[begin]", "[end]"
+		"dbname", "[colname]", "[begin]", "[end]", "[level]"
 	}};
 
 	const auto dbname
@@ -969,6 +969,11 @@ try
 		param[3]
 	};
 
+	const auto level
+	{
+		param.at(4, -1)
+	};
+
 	auto &database
 	{
 		*db::database::dbs.at(dbname)
@@ -986,7 +991,19 @@ try
 		database, colname
 	};
 
-	compact(column, begin, end);
+	const bool integer
+	{
+		begin? try_lex_cast<uint64_t>(begin) : false
+	};
+
+	const std::pair<string_view, string_view> range
+	{
+		integer? byte_view<string_view>(lex_cast<uint64_t>(begin)) : begin,
+		integer && end? byte_view<string_view>(lex_cast<uint64_t>(end)) : end,
+	};
+
+	compact(column, range, level);
+	compact(column, level);
 	out << "done" << std::endl;
 	return true;
 }
