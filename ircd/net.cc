@@ -1847,9 +1847,7 @@ noexcept try
 		// All other errors are unexpected, logged and ignored here.
 		default: throw assertive
 		{
-			"unexpected: %s\n",
-			(const void *)this,
-			string(ec)
+			"socket(%p): unexpected: %s\n", (const void *)this, string(ec)
 		};
 	}
 	else ec = { operation_canceled, system_category() };
@@ -2396,7 +2394,14 @@ ircd::net::dns::operator()(const hostport &hp,
 			return callback(std::move(eptr), hp, {});
 
 		if(!ip)
-			return callback(std::make_exception_ptr(net::not_found{"Host has no A record"}), hp, {});
+		{
+			static const net::not_found no_record
+			{
+				"Host has no A record"
+			};
+
+			return callback(std::make_exception_ptr(no_record), hp, {});
+		}
 
 		const ipport ipport{ip, port(hp)};
 		callback(std::move(eptr), hp, ipport);
