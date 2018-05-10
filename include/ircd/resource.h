@@ -194,6 +194,9 @@ struct ircd::resource::method
 		/// larger will be summarily rejected with a 413.
 		size_t payload_max {128_KiB};
 
+		/// MIME type; first part is the Registry (i.e application) and second
+		/// part is the format (i.e json). Empty value means nothing rejected.
+		std::pair<string_view, string_view> mime;
 	};
 
 	string_view name;

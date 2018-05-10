@@ -278,6 +278,22 @@ ircd::resource::operator()(client &client,
 			http::PAYLOAD_TOO_LARGE
 		};
 
+	// Check if the resource method wants a specific MIME type. If no option
+	// is given by the resource then any Content-Type by the client will pass.
+	if(method.opts.mime.first)
+	{
+		const auto &ct(split(head.content_type, ';'));
+		const auto &supplied(split(ct.first, '/'));
+		const auto &charset(ct.second);
+		const auto &required(method.opts.mime);
+		if(required.first != supplied.first ||
+		   (required.second && required.second != supplied.second))
+			throw http::error
+			{
+				http::UNSUPPORTED_MEDIA_TYPE
+			};
+	}
+
 	// This timer will keep the request from hanging forever for whatever
 	// reason. The resource method may want to do its own timing and can
 	// disable this in its options structure.
