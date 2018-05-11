@@ -3682,6 +3682,39 @@ console_cmd__node__keys(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__node__key(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"node_id", "key_id"
+	}};
+
+	const m::node &node
+	{
+		param.at(0)
+	};
+
+	const auto &key_id
+	{
+		param[1]
+	};
+
+	const m::node::room node_room{node};
+	node_room.get("ircd.key", [&out]
+	(const m::event &event)
+	{
+		const m::keys key
+		{
+			json::get<"content"_>(event)
+		};
+
+		out << key << std::endl;
+	});
+
+	return true;
+}
+
 //
 // feds
 //
