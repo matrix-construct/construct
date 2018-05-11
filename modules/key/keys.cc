@@ -8,12 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd::m;
 using namespace ircd;
 
-static bool verify(const m::keys &) noexcept;
-static bool get_local(const string_view &server_name, const m::keys::closure &);
-static event::id::buf set_keys(const m::keys &);
+extern "C" bool verify__keys(const m::keys &) noexcept;
+static bool cache_get(const string_view &server, const string_view &key_id, const m::keys::closure &);
+static size_t cache_set(const json::object &);
+
+extern "C" void get__keys(const string_view &server, const string_view &key_id, const m::keys::closure &);
+extern "C" bool query__keys(const string_view &query_server, const m::keys::queries &, const m::keys::closure_bool &);
 
 mapi::header
 IRCD_MODULE
@@ -21,14 +23,100 @@ IRCD_MODULE
 	"Federation 2.3 :Retrieving Server Keys"
 };
 
-extern "C" void
+conf::item<milliseconds>
+query_keys_timeout
+{
+	{ "name",     "ircd.key.keys.query.timeout" },
+	{ "default",  20000L                        }
+};
+
+extern "C" bool
+query__keys(const string_view &query_server,
+            const m::keys::queries &queries,
+            const m::keys::closure_bool &closure)
+try
+{
+	assert(!query_server.empty());
+
+	m::v1::key::opts opts;
+	opts.remote = net::hostport{query_server};
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::key::query request
+	{
+		queries, buf, std::move(opts)
+	};
+
+	const milliseconds timeout(query_keys_timeout);
+	request.wait(timeout);
+	const auto &code
+	{
+		request.get()
+	};
+
+	const json::array &response
+	{
+		request
+	};
+
+	for(const json::object &k : response)
+	{
+		const m::keys &key{k};
+		if(!verify__keys(key))
+		{
+			log::derror
+			{
+				"Failed to verify keys for '%s' from '%s'",
+				at<"server_name"_>(key),
+				query_server
+			};
+
+			continue;
+		}
+
+		log::debug
+		{
+			m::log, "Verified keys for '%s' from '%s'",
+			at<"server_name"_>(key),
+			query_server
+		};
+
+		if(!closure(k))
+			return false;
+	}
+
+	return true;
+}
+catch(const ctx::timeout &e)
+{
+	throw m::error
+	{
+		http::REQUEST_TIMEOUT, "M_TIMEOUT",
+		"Failed to query keys from '%s' in time",
+		query_server
+	};
+}
+
+conf::item<milliseconds>
+get_keys_timeout
+{
+	{ "name",     "ircd.key.keys.get.timeout" },
+	{ "default",  20000L                       }
+};
+
+void
 get__keys(const string_view &server_name,
+          const string_view &key_id,
           const m::keys::closure &closure)
 try
 {
 	assert(!server_name.empty());
 
-	if(get_local(server_name, closure))
+	if(cache_get(server_name, key_id, closure))
 		return;
 
 	if(server_name == my_host())
@@ -53,24 +141,24 @@ try
 		server_name, buf, std::move(opts)
 	};
 
-	//TODO: conf
-	request.wait(seconds(20));
-	const auto status
+	const milliseconds timeout(get_keys_timeout);
+	request.wait(timeout);
+	const auto &status
 	{
 		request.get()
 	};
 
-	const json::object response
+	const json::object &response
 	{
 		request
 	};
 
-	const m::keys &keys
+	const json::object &keys
 	{
 		response
 	};
 
-	if(!verify(keys)) throw m::error
+	if(!verify__keys(keys)) throw m::error
 	{
 		http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
 		"Failed to verify keys for '%s'",
@@ -82,7 +170,7 @@ try
 		m::log, "Verified keys from '%s'", server_name
 	};
 
-	set_keys(keys);
+	cache_set(keys);
 	closure(keys);
 }
 catch(const ctx::timeout &e)
@@ -95,84 +183,12 @@ catch(const ctx::timeout &e)
 	};
 }
 
-extern "C" bool
-query__keys(const string_view &query_server,
-            const m::keys::queries &queries,
-            const m::keys::closure_bool &closure)
-try
-{
-	assert(!query_server.empty());
-
-	m::v1::key::opts opts;
-	opts.remote = net::hostport{query_server};
-	opts.dynamic = true;
-	const unique_buffer<mutable_buffer> buf
-	{
-		16_KiB
-	};
-
-	m::v1::key::query request
-	{
-		queries, buf, std::move(opts)
-	};
-
-	//TODO: conf
-	request.wait(seconds(20));
-	const auto code
-	{
-		request.get()
-	};
-
-	const json::array response
-	{
-		request
-	};
-
-	for(const json::object &k : response)
-	{
-		const m::keys &key{k};
-		if(!verify(key))
-		{
-			log::derror
-			{
-				"Failed to verify keys for '%s' from '%s'",
-				at<"server_name"_>(key),
-				query_server
-			};
-
-			continue;
-		}
-
-		log::debug
-		{
-			m::log, "Verified keys for '%s' from '%s'",
-			at<"server_name"_>(key),
-			query_server
-		};
-
-		set_keys(key);
-		if(!closure(key))
-			return false;
-	}
-
-	return true;
-}
-catch(const ctx::timeout &e)
-{
-	throw m::error
-	{
-		http::REQUEST_TIMEOUT, "M_TIMEOUT",
-		"Failed to query keys from '%s' in time",
-		query_server
-	};
-}
-
-event::id::buf
-set_keys(const m::keys &keys)
+size_t
+cache_set(const json::object &keys)
 {
 	const auto &server_name
 	{
-		unquote(at<"server_name"_>(keys))
+		unquote(keys.at("server_name"))
 	};
 
 	const m::node::id::buf node_id
@@ -188,19 +204,31 @@ set_keys(const m::keys &keys)
 	if(!exists(node_room.room_id))
 		create(node_room, m::me.user_id);
 
-	const json::strung derp
+	const json::object &vks
 	{
-		keys
+		keys.at("verify_keys")
 	};
 
-	return send(node_room, m::me.user_id, "ircd.keys", "", json::object{derp});
+	size_t ret{0};
+	for(const auto &member : vks)
+	{
+		if(ret > 16)
+			return ret;
+
+		const auto &key_id(unquote(member.first));
+		send(node_room, m::me.user_id, "ircd.key", key_id, keys);
+		++ret;
+	}
+
+	return ret;
 }
 
 bool
-get_local(const string_view &server_name,
+cache_get(const string_view &server_name,
+          const string_view &key_id,
           const m::keys::closure &closure)
 {
-	const node::id::buf node_id
+	const m::node::id::buf node_id
 	{
 		"", server_name
 	};
@@ -210,7 +238,7 @@ get_local(const string_view &server_name,
 		node_id
 	};
 
-	return node_room.get(std::nothrow, "ircd.keys", "", [&closure]
+	return node_room.get(std::nothrow, "ircd.key", key_id, [&closure]
 	(const m::event &event)
 	{
 		closure(json::get<"content"_>(event));
@@ -218,7 +246,7 @@ get_local(const string_view &server_name,
 }
 
 bool
-verify(const m::keys &keys)
+verify__keys(const m::keys &keys)
 noexcept try
 {
 	const auto &valid_until_ts
@@ -303,15 +331,15 @@ create_my_key(const m::event &)
 {
 	const json::strung verify_keys{json::members
 	{
-		{ string_view{self::public_key_id},
+		{ string_view{m::self::public_key_id},
 		{
-			{ "key", self::public_key_b64 }
+			{ "key", m::self::public_key_b64 }
 		}}
 	}};
 
 	const json::members tlsfps
 	{
-		{ "sha256", self::tls_cert_der_sha256_b64 }
+		{ "sha256", m::self::tls_cert_der_sha256_b64 }
 	};
 
 	const json::value tlsfp[1]
@@ -338,7 +366,7 @@ create_my_key(const m::event &)
 
 	const ed25519::sig sig
 	{
-		self::secret_key.sign(const_buffer{presig})
+		m::self::secret_key.sign(const_buffer{presig})
 	};
 
 	char signature[256];
@@ -346,12 +374,12 @@ create_my_key(const m::event &)
 	{
 		{ my_host(),
 		{
-			{ string_view{self::public_key_id}, b64encode_unpadded(signature, sig) }
+			{ string_view{m::self::public_key_id}, b64encode_unpadded(signature, sig) }
 		}}
 	}};
 
 	json::get<"signatures"_>(my_key) = signatures;
-	set_keys(my_key);
+	cache_set(json::strung{my_key});
 }
 
 const m::hook

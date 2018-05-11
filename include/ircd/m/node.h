@@ -38,6 +38,8 @@ struct ircd::m::node
 {
 	struct room;
 	using id = m::id::node;
+	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
+	using ed25519_closure = std::function<void (const ed25519::pk &)>;
 
 	id node_id;
 
@@ -45,6 +47,9 @@ struct ircd::m::node
 
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
+
+	void key(const string_view &key_id, const ed25519_closure &) const;
+	void key(const string_view &key_id, const key_closure &) const;
 
 	node(const id &node_id)
 	:node_id{node_id}

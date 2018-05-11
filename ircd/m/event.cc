@@ -849,8 +849,18 @@ ircd::m::verify(const event &event,
                 const string_view &keyid)
 try
 {
+	const m::node::id::buf node_id
+	{
+		"", origin
+	};
+
+	const m::node node
+	{
+		node_id
+	};
+
 	bool ret{false};
-	m::keys::get(origin, keyid, [&ret, &event, &origin, &keyid]
+	node.key(keyid, [&ret, &event, &origin, &keyid]
 	(const ed25519::pk &pk)
 	{
 		ret = verify(event, pk, origin, keyid);
@@ -913,7 +923,7 @@ ircd::m::verify(const event &event_,
 	json::get<"signatures"_>(event) = {};
 
 	thread_local char buf[64_KiB];
-	const string_view preimage
+	const json::object &preimage
 	{
 		stringify(buf, event)
 	};

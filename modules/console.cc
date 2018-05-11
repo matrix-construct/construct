@@ -1936,16 +1936,31 @@ console_cmd__key(opt &out, const string_view &line)
 bool
 console_cmd__key__get(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"server_name", "[query_server]"
+	}};
+
 	const auto server_name
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
-	m::keys::get(server_name, [&out]
-	(const auto &keys)
+	const auto query_server
 	{
-		out << keys << std::endl;
-	});
+		param[1]
+	};
+
+	if(!query_server)
+	{
+		m::keys::get(server_name, [&out]
+		(const auto &keys)
+		{
+			out << keys << std::endl;
+		});
+
+		return true;
+	}
 
 	return true;
 }
@@ -4812,11 +4827,16 @@ console_cmd__fed__key(opt &out, const string_view &line)
 		param.at(0)
 	};
 
+	const auto &key_id
+	{
+		param[1]
+	};
+
 	const unique_buffer<mutable_buffer> buf{16_KiB};
 	m::v1::key::opts opts;
 	m::v1::key::keys request
 	{
-		server_name, buf, std::move(opts)
+		{server_name, key_id}, buf, std::move(opts)
 	};
 
 	request.wait(out.timeout);

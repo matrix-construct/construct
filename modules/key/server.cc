@@ -36,16 +36,17 @@ handle_get(client &client,
 		url::decode(request.parv[0], key_id_buf)
 	};
 
-	std::string my_keys;
-	m::keys::get(my_host(), key_id, [&my_keys](const m::keys &keys)
+	m::keys::get(my_host(), key_id, [&client]
+	(const json::object &keys)
 	{
-		my_keys = json::strung(keys);
+		resource::response
+		{
+			client, http::OK, keys
+		};
 	});
 
-	return resource::response
-	{
-		client, http::OK, json::object{my_keys}
-	};
+	assert(0);
+	return {};
 }
 
 resource::method

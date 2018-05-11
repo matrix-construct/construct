@@ -696,6 +696,23 @@ ircd::m::vm::accepted::accepted(const m::event &event,
 // m/keys.h
 //
 
+bool
+ircd::m::verify(const m::keys &keys)
+{
+	using prototype = bool (const m::keys &) noexcept;
+
+	static import<prototype> function
+	{
+		"key_keys", "verify__keys"
+	};
+
+	return function(keys);
+}
+
+//
+// m::self
+//
+
 ircd::ed25519::sk
 ircd::m::self::secret_key
 {};
@@ -720,86 +737,30 @@ std::string
 ircd::m::self::tls_cert_der_sha256_b64
 {};
 
-void
-ircd::m::keys::get(const string_view &server_name,
-                   const string_view &key_id,
-                   const ed25519_closure &closure)
-{
-	get(server_name, key_id, key_closure{[&closure]
-	(const string_view &keyb64)
-	{
-		const ed25519::pk pk
-		{
-			[&keyb64](auto &buf)
-			{
-				b64decode(buf, unquote(keyb64));
-			}
-		};
-
-		closure(pk);
-	}});
-}
+//
+// keys
+//
 
 void
 ircd::m::keys::get(const string_view &server_name,
-                   const string_view &key_id,
-                   const key_closure &closure)
-try
-{
-	get(server_name, [&key_id, &closure](const keys &keys)
-	{
-		const json::object vks
-		{
-			at<"verify_keys"_>(keys)
-		};
-
-		const json::object vkk
-		{
-			vks.at(key_id)
-		};
-
-		const string_view &key
-		{
-			vkk.at("key")
-		};
-
-		closure(key);
-	});
-}
-catch(const json::not_found &e)
-{
-	throw m::NOT_FOUND
-	{
-		"Failed to find key '%s' for '%s': %s",
-		key_id,
-		server_name,
-		e.what()
-	};
-}
-
-void
-ircd::m::keys::get(const string_view &server_name,
-                   const string_view &key_id,
                    const closure &closure)
 {
-	get(server_name, [&key_id, &closure](const keys &keys)
-	{
-		closure(keys);
-	});
+	return get(server_name, "", closure);
 }
 
 void
 ircd::m::keys::get(const string_view &server_name,
+                   const string_view &key_id,
                    const closure &closure_)
 {
-	using prototype = void (const string_view &, const closure &);
+	using prototype = void (const string_view &, const string_view &, const closure &);
 
 	static import<prototype> function
 	{
 		"key_keys", "get__keys"
 	};
 
-	return function(server_name, closure_);
+	return function(server_name, key_id, closure_);
 }
 
 bool
@@ -1247,6 +1208,58 @@ ircd::m::my(const node &node)
 //
 // node
 //
+
+void
+ircd::m::node::key(const string_view &key_id,
+                   const ed25519_closure &closure)
+const
+{
+	key(key_id, key_closure{[&closure]
+	(const string_view &keyb64)
+	{
+		const ed25519::pk pk
+		{
+			[&keyb64](auto &buf)
+			{
+				b64decode(buf, unquote(keyb64));
+			}
+		};
+
+		closure(pk);
+	}});
+}
+
+void
+ircd::m::node::key(const string_view &key_id,
+                   const key_closure &closure)
+const
+{
+	const auto &server_name
+	{
+		node_id.hostname()
+	};
+
+	m::keys::get(server_name, key_id, [&closure, &key_id]
+	(const json::object &keys)
+	{
+		const json::object &vks
+		{
+			keys.at("verify_keys")
+		};
+
+		const json::object &vkk
+		{
+			vks.at(key_id)
+		};
+
+		const string_view &key
+		{
+			vkk.at("key")
+		};
+
+		closure(key);
+	});
+}
 
 /// Generates a node-room ID into buffer; see room_id() overload.
 ircd::m::id::room::buf

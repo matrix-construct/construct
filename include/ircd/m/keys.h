@@ -14,6 +14,8 @@
 namespace ircd::m
 {
 	struct keys;
+
+	bool verify(const m::keys &);
 }
 
 namespace ircd::m::self
@@ -63,16 +65,12 @@ struct ircd::m::keys
 	struct init;
 
   public:
-	using closure = std::function<void (const keys &)>;
-	using closure_bool = std::function<bool (const keys &)>;
-	using key_closure = std::function<void (const string_view &)>;  // remember to unquote()!!!
-	using ed25519_closure = std::function<void (const ed25519::pk &)>;
-	using queries = vector_view<const std::pair<string_view, string_view>>; // server, key_id
+	using queries = vector_view<const m::v1::key::server_key>; // <server, key_id>
+	using closure = std::function<void (const json::object &)>;
+	using closure_bool = std::function<bool (const json::object &)>;
 
 	static void get(const string_view &server_name, const closure &);
 	static void get(const string_view &server_name, const string_view &key_id, const closure &);
-	static void get(const string_view &server_name, const string_view &key_id, const key_closure &);
-	static void get(const string_view &server_name, const string_view &key_id, const ed25519_closure &);
 	static bool query(const string_view &query_server, const queries &, const closure_bool &);
 
 	using super_type::tuple;

@@ -172,13 +172,18 @@ const
 		}
 	};
 
-	const auto &origin
+	const m::node::id::buf node_id
 	{
-		unquote(at<"origin"_>(*this))
+		"", unquote(at<"origin"_>(*this))
+	};
+
+	const m::node node
+	{
+		node_id
 	};
 
 	bool verified{false};
-	m::keys::get(origin, key, [this, &verified, &sig]
+	node.key(key, [this, &verified, &sig]
 	(const ed25519::pk &pk)
 	{
 		verified = verify(pk, sig);
