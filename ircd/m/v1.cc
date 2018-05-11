@@ -935,8 +935,21 @@ ircd::m::v1::query::query(const string_view &type,
 ircd::m::v1::key::keys::keys(const string_view &server_name,
                              const mutable_buffer &buf,
                              opts opts)
+:keys
+{
+	server_key{server_name, ""}, buf, std::move(opts)
+}
+{
+}
+
+ircd::m::v1::key::keys::keys(const server_key &server_key,
+                             const mutable_buffer &buf,
+                             opts opts)
 :server::request{[&]
 {
+	const auto &server_name{server_key.first};
+	const auto &key_id{server_key.second};
+
 	if(!opts.remote)
 		opts.remote = net::hostport{server_name};
 
@@ -953,7 +966,17 @@ ircd::m::v1::key::keys::keys(const string_view &server_name,
 		json::get<"content"_>(opts.request) = json::object{opts.out.content};
 
 	if(!defined(json::get<"uri"_>(opts.request)))
-		json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server/";
+	{
+		if(!empty(key_id))
+		{
+			thread_local char uribuf[512];
+			json::get<"uri"_>(opts.request) = fmt::sprintf
+			{
+				uribuf, "/_matrix/key/v2/server/%s/", key_id
+			};
+		}
+		else json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server/";
+	}
 
 	json::get<"method"_>(opts.request) = "GET";
 

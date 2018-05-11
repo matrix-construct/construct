@@ -30,6 +30,7 @@ struct ircd::m::v1::key::keys
 		return object;
 	}
 
+	keys(const server_key &, const mutable_buffer &, opts);
 	keys(const string_view &server_name, const mutable_buffer &, opts);
 	keys() = default;
 };
