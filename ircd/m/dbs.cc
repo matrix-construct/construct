@@ -448,7 +448,7 @@ ircd::string_view
 ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::event &event_id)
 {
-	return state_root(out, event::fetch::index(event_id));
+	return state_root(out, index(event_id));
 }
 
 ircd::string_view
@@ -480,7 +480,7 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::room &room_id,
                          const id::event &event_id)
 {
-	return state_root(out, room_id, event::fetch::index(event_id));
+	return state_root(out, room_id, index(event_id));
 }
 
 ircd::string_view
@@ -514,7 +514,7 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
                          const id::event &event_id,
                          const uint64_t &depth)
 {
-	return state_root(out, room_id, event::fetch::index(event_id), depth);
+	return state_root(out, room_id, index(event_id), depth);
 }
 
 ircd::string_view

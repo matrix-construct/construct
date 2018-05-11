@@ -2055,7 +2055,7 @@ console_cmd__event(opt &out, const string_view &line)
 			return true;
 
 		case hash("idx"):
-			out << m::event::fetch::index(event) << std::endl;
+			out << index(event) << std::endl;
 			return true;
 
 		case hash("content"):
@@ -2132,7 +2132,7 @@ console_cmd__event__erase(opt &out, const string_view &line)
 
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
-	opts.idx = m::event::fetch::index(event);
+	opts.idx = index(event);
 	m::dbs::write(txn, event, opts);
 	txn();
 
