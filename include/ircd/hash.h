@@ -82,7 +82,7 @@ final
 {
 	struct ctx;
 
-	static constexpr const size_t digest_size
+	static constexpr const size_t &digest_size
 	{
 		256 / 8
 	};
@@ -111,7 +111,7 @@ final
 {
 	struct ctx;
 
-	static constexpr const size_t digest_size
+	static constexpr const size_t &digest_size
 	{
 		160 / 8
 	};
