@@ -67,12 +67,47 @@ ircd::net::log
 	"net", 'N'
 };
 
+ircd::string_view
+ircd::net::peer_cert_der_sha256_b64(const mutable_buffer &buf,
+                                    const socket &socket)
+{
+	thread_local char shabuf[sha256::digest_size];
+
+	const auto hash
+	{
+		peer_cert_der_sha256(shabuf, socket)
+	};
+
+	return b64encode_unpadded(buf, hash);
+}
+
+ircd::const_buffer
+ircd::net::peer_cert_der_sha256(const mutable_buffer &buf,
+                                const socket &socket)
+{
+	thread_local char derbuf[16384];
+
+	sha256
+	{
+		buf, peer_cert_der(derbuf, socket)
+	};
+
+	return
+	{
+		data(buf), sha256::digest_size
+	};
+}
+
 ircd::const_buffer
 ircd::net::peer_cert_der(const mutable_buffer &buf,
                          const socket &socket)
 {
 	const SSL &ssl(socket);
-	const X509 &cert{openssl::peer_cert(ssl)};
+	const X509 &cert
+	{
+		openssl::peer_cert(ssl)
+	};
+
 	return openssl::i2d(buf, cert);
 }
 
