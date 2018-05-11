@@ -343,7 +343,7 @@ block_set(const m::room &room,
           const m::user::id &user_id,
           const const_buffer &block)
 {
-	static const auto bufsz
+	static constexpr const auto bufsz
 	{
 		b58encode_size(sha256::digest_size)
 	};
