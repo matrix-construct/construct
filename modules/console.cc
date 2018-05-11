@@ -297,6 +297,7 @@ console_cmd__test(opt &out, const string_view &line)
 //
 
 bool console_id__user(opt &, const m::user::id &id, const string_view &line);
+bool console_id__node(opt &, const m::node::id &id, const string_view &line);
 bool console_id__room(opt &, const m::room::id &id, const string_view &line);
 bool console_id__event(opt &, const m::event::id &id, const string_view &line);
 bool console_json(const json::object &);
@@ -312,6 +313,9 @@ console_command_derived(opt &out, const string_view &line)
 
 		case m::id::ROOM:
 			return console_id__room(out, id, line);
+
+		case m::id::NODE:
+			return console_id__node(out, id, line);
 
 		case m::id::USER:
 			return console_id__user(out, id, line);
@@ -3600,6 +3604,58 @@ console_cmd__user__read(opt &out, const string_view &line)
 		    << " " << at<"event_id"_>(event)
 		    << std::endl;
 	}});
+
+	return true;
+}
+
+//
+// node
+//
+
+//TODO: XXX
+bool
+console_id__node(opt &out,
+                 const m::node::id &id,
+                 const string_view &args)
+{
+	return true;
+}
+
+bool
+console_cmd__node__keys(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"node_id", "[limit]"
+	}};
+
+	const m::node &node
+	{
+		param.at(0)
+	};
+
+	auto limit
+	{
+		param.at(1, size_t(1))
+	};
+
+	const m::node::room node_room
+	{
+		node
+	};
+
+	const m::room::state state{node_room};
+	state.for_each("ircd.key", [&out, &limit]
+	(const m::event &event)
+	{
+		const m::keys keys
+		{
+			json::get<"content"_>(event)
+		};
+
+		out << keys << std::endl;
+		return --limit;
+	});
 
 	return true;
 }
