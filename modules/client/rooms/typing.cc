@@ -160,11 +160,11 @@ commit__m_typing(const m::typing &edu)
 	};
 
 	m::vm::copts opts;
-	opts.hash = false;
-	opts.sign = false;
-	opts.event_id = false;
-	opts.origin = true;
-	opts.origin_server_ts = false;
+	opts.add_hash = false;
+	opts.add_sig = false;
+	opts.add_event_id = false;
+	opts.add_origin = true;
+	opts.add_origin_server_ts = false;
 	opts.conforming = false;
 	return m::vm::eval
 	{

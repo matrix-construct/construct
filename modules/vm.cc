@@ -312,7 +312,7 @@ ircd::m::vm::eval__commit(eval &eval,
 
 	const json::iov::add_if _origin
 	{
-		event, opts.origin,
+		event, opts.add_origin,
 		{
 			"origin", my_host()
 		}
@@ -320,7 +320,7 @@ ircd::m::vm::eval__commit(eval &eval,
 
 	const json::iov::add_if _origin_server_ts
 	{
-		event, opts.origin_server_ts,
+		event, opts.add_origin_server_ts,
 		{
 			"origin_server_ts", ircd::time<milliseconds>()
 		}
@@ -334,7 +334,7 @@ ircd::m::vm::eval__commit(eval &eval,
 	// event_id
 
 	sha256::buf event_id_hash;
-	if(opts.event_id)
+	if(opts.add_event_id)
 	{
 		const json::iov::push _content
 		{
@@ -350,14 +350,17 @@ ircd::m::vm::eval__commit(eval &eval,
 
 	const string_view event_id
 	{
-		opts.event_id?
+		opts.add_event_id?
 			make_id(event, eval.event_id, event_id_hash):
 			string_view{}
 	};
 
 	const json::iov::add_if _event_id
 	{
-		event, opts.event_id, { "event_id", event_id }
+		event, opts.add_event_id,
+		{
+			"event_id", event_id
+		}
 	};
 
 	// hashes
@@ -365,14 +368,17 @@ ircd::m::vm::eval__commit(eval &eval,
 	char hashes_buf[128];
 	const string_view hashes
 	{
-		opts.hash?
+		opts.add_hash?
 			m::event::hashes(hashes_buf, event, content):
 			string_view{}
 	};
 
 	const json::iov::add_if _hashes
 	{
-		event, opts.hash, { "hashes", hashes }
+		event, opts.add_hash,
+		{
+			"hashes", hashes
+		}
 	};
 
 	// sigs
@@ -380,14 +386,17 @@ ircd::m::vm::eval__commit(eval &eval,
 	char sigs_buf[384];
 	const string_view sigs
 	{
-		opts.sign?
+		opts.add_sig?
 			m::event::signatures(sigs_buf, event, contents):
 			string_view{}
 	};
 
 	const json::iov::add_if _sigs
 	{
-		event, opts.sign, { "signatures",  sigs }
+		event, opts.add_sig,
+		{
+			"signatures",  sigs
+		}
 	};
 
 	const json::iov::push _content

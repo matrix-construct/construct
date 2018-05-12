@@ -216,19 +216,19 @@ struct ircd::m::vm::copts
 :opts
 {
 	/// Hash and include hashes object.
-	bool hash {true};
+	bool add_hash {true};
 
 	/// Sign and include signatures object
-	bool sign {true};
+	bool add_sig {true};
 
 	/// Generate and include event_id
-	bool event_id {true};
+	bool add_event_id {true};
 
 	/// Include our origin
-	bool origin {true};
+	bool add_origin {true};
 
 	/// Include origin_server_ts
-	bool origin_server_ts {true};
+	bool add_origin_server_ts {true};
 
 	/// Whether to log a debug message before commit
 	bool debuglog_precommit {false};
