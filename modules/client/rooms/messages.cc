@@ -32,9 +32,26 @@ get__messages(client &client,
 		request
 	};
 
-	const string_view &filter
+	const auto &filter_query
 	{
 		request.query["filter"]
+	};
+
+	const unique_buffer<mutable_buffer> filter_buf
+	{
+		size(filter_query) * 3
+	};
+
+	const json::object &filter_json
+	{
+		url::decode(filter_query, filter_buf)
+	};
+
+	const m::room_event_filter filter
+	{
+		filter_json.has("filter_json")?
+			json::object{filter_json.get("filter_json")}:
+			filter_json
 	};
 
 	const m::room room
@@ -91,8 +108,13 @@ get__messages(client &client,
 				break;
 			}
 
-			messages.append(event);
-			if(++count >= page.limit)
+			if(empty(filter_json) || match(filter, event))
+			{
+				messages.append(event);
+				++count;
+			}
+
+			if(count >= page.limit)
 			{
 				if(page.dir == 'b')
 					end = at<"event_id"_>(event);
