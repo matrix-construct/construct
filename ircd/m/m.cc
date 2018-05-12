@@ -1436,10 +1436,15 @@ ircd::m::events::for_each(const uint64_t &start,
 //
 
 //TODO: globular expression
+//TODO: tribool for contains_url; we currently ignore the false value.
 bool
 ircd::m::match(const room_event_filter &filter,
                const event &event)
 {
+	if(json::get<"contains_url"_>(filter) == true)
+		if(!at<"content"_>(event).has("url"))
+			return false;
+
 	for(const auto &room_id : json::get<"not_rooms"_>(filter))
 		if(at<"room_id"_>(event) == unquote(room_id))
 			return false;
