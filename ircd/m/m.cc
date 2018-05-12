@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m
-{
-	static void leave_ircd_room();
-	static void join_ircd_room();
-}
-
 decltype(ircd::m::log)
 ircd::m::log
 {
@@ -27,6 +21,20 @@ ircd::m::listeners
 //
 // init
 //
+
+ircd::conf::item<std::string>
+me_online_status_msg
+{
+	{ "name",     "ircd.me.online.status_msg"          },
+	{ "default",  "Wanna chat? IRCd at your service!"  }
+};
+
+ircd::conf::item<std::string>
+me_offline_status_msg
+{
+	{ "name",     "ircd.me.offline.status_msg"     },
+	{ "default",  "Catch ya on the flip side..."   }
+};
 
 struct ircd::m::init::modules
 {
@@ -71,7 +79,7 @@ try
 	std::make_unique<struct listeners>(config)
 }
 {
-	join_ircd_room();
+	presence::set(me, "online", me_online_status_msg);
 }
 catch(const m::error &e)
 {
@@ -86,7 +94,7 @@ ircd::m::init::~init()
 noexcept try
 {
 	listeners.reset(nullptr);
-	leave_ircd_room();
+	presence::set(me, "offline", me_offline_status_msg);
 }
 catch(const m::error &e)
 {
@@ -220,9 +228,12 @@ ircd::m::init::bootstrap()
 		};
 
 	create(user::users, me.user_id);
+
 	create(my_room, me.user_id);
 	create(me.user_id);
 	me.activate();
+
+	join(my_room, me.user_id);
 
 	send(my_room, me.user_id, "m.room.name", "",
 	{
@@ -244,39 +255,6 @@ ircd::m::init::bootstrap()
 	{
 		{ "name", "User Tokens" }
 	});
-}
-
-ircd::conf::item<std::string>
-me_online_status_msg
-{
-	{ "name",     "ircd.me.online.status_msg"          },
-	{ "default",  "Wanna chat? IRCd at your service!"  }
-};
-
-void
-ircd::m::join_ircd_room()
-try
-{
-	presence::set(me, "online", me_online_status_msg);
-	join(my_room, me.user_id);
-}
-catch(const m::ALREADY_MEMBER &e)
-{
-	log.warning("IRCd did not shut down correctly...");
-}
-
-ircd::conf::item<std::string>
-me_offline_status_msg
-{
-	{ "name",     "ircd.me.offline.status_msg"     },
-	{ "default",  "Catch ya on the flip side..."   }
-};
-
-void
-ircd::m::leave_ircd_room()
-{
-	leave(my_room, me.user_id);
-	presence::set(me, "offline", me_offline_status_msg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
