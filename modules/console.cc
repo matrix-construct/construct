@@ -2798,12 +2798,12 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "[membership]", "[event_id]"
+		"event_id", "[membership]"
 	}};
 
-	const auto &room_id
+	const m::event::id &event_id
 	{
-		m::room_id(param.at(0))
+		param.at(0)
 	};
 
 	const string_view membership
@@ -2811,9 +2811,9 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 		param[1]
 	};
 
-	const string_view event_id
+	m::room::id::buf room_id
 	{
-		param[2]
+		m::get(event_id, "room_id", room_id)
 	};
 
 	const m::room room
