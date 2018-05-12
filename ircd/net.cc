@@ -20,7 +20,7 @@ namespace ircd::net
 void
 ircd::net::wait_close_sockets()
 {
-    while(socket::instances)
+	while(socket::instances)
 		if(!dock.wait_for(seconds(2)))
 			log.warning("Waiting for %zu sockets to destruct",
 			            socket::instances);
