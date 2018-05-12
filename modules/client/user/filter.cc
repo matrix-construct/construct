@@ -23,7 +23,12 @@ get__filter(client &client,
 		url::decode(request.parv[2], filter_id_buf)
 	};
 
-	m::filter::get(user_id, filter_id, [&client]
+	const m::user user
+	{
+		user_id
+	};
+
+	user.filter(filter_id, [&client]
 	(const json::object &filter)
 	{
 		resource::response
@@ -94,10 +99,15 @@ post__filter(client &client,
 		json::get<"presence"_>(request)
 	};
 
+	m::user user
+	{
+		user_id
+	};
+
 	char filter_id_buf[64];
 	const auto filter_id
 	{
-		m::filter::set(filter_id_buf, user_id, request.body)
+		user.filter(request.body, filter_id_buf)
 	};
 
 	return resource::response
@@ -107,4 +117,55 @@ post__filter(client &client,
 			{ "filter_id", filter_id }
 		}
 	};
+}
+
+m::event::id::buf
+filter_set(const m::user &user,
+           const json::object &filter,
+           const mutable_buffer &idbuf)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const sha256::buf hash
+	{
+		sha256{filter}
+	};
+
+	const string_view filter_id
+	{
+		b64encode_unpadded(idbuf, hash)
+	};
+
+	//TODO: ABA
+	if(user_room.has("ircd.filter", filter_id))
+		return {};
+
+	//TODO: ABA
+	return send(user_room, user.user_id, "ircd.filter", filter_id, filter);
+}
+
+bool
+filter_get(std::nothrow_t,
+           const m::user &user,
+           const string_view &filter_id,
+           const m::user::filter_closure &closure)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	return user_room.get(std::nothrow, "ircd.filter", filter_id, [&closure]
+	(const m::event &event)
+	{
+		const json::object &content
+		{
+			at<"content"_>(event)
+		};
+
+		closure(content);
+	});
 }

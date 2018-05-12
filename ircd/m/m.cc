@@ -1432,6 +1432,132 @@ ircd::m::events::for_each(const uint64_t &start,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/filter.h
+//
+
+//TODO: globular expression
+bool
+ircd::m::match(const room_event_filter &filter,
+               const event &event)
+{
+	for(const auto &room_id : json::get<"not_rooms"_>(filter))
+		if(at<"room_id"_>(event) == unquote(room_id))
+			return false;
+
+	if(empty(json::get<"rooms"_>(filter)))
+		return match(event_filter{filter}, event);
+
+	for(const auto &room_id : json::get<"rooms"_>(filter))
+		if(at<"room_id"_>(event) == unquote(room_id))
+			return match(event_filter{filter}, event);
+
+	return false;
+}
+
+//TODO: globular expression
+bool
+ircd::m::match(const event_filter &filter,
+               const event &event)
+{
+	for(const auto &type : json::get<"not_types"_>(filter))
+		if(at<"type"_>(event) == unquote(type))
+			return false;
+
+	for(const auto &sender : json::get<"not_senders"_>(filter))
+		if(at<"sender"_>(event) == unquote(sender))
+			return false;
+
+	if(empty(json::get<"senders"_>(filter)) && empty(json::get<"types"_>(filter)))
+		return true;
+
+	if(empty(json::get<"senders"_>(filter)))
+	{
+		for(const auto &type : json::get<"types"_>(filter))
+			if(at<"type"_>(event) == unquote(type))
+				return true;
+
+		return false;
+	}
+
+	if(empty(json::get<"types"_>(filter)))
+	{
+		for(const auto &sender : json::get<"senders"_>(filter))
+			if(at<"sender"_>(event) == unquote(sender))
+				return true;
+
+		return false;
+	}
+
+	return true;
+}
+
+//
+// filter
+//
+
+ircd::m::filter::filter(const user &user,
+                        const string_view &filter_id,
+                        const mutable_buffer &buf)
+{
+	get(user, filter_id, [this, &buf]
+	(const json::object &filter)
+	{
+		const size_t len
+		{
+			copy(buf, string_view{filter})
+		};
+
+		new (this) m::filter
+		{
+			json::object
+			{
+				data(buf), len
+			}
+		};
+	});
+}
+
+//
+// room_filter
+//
+
+ircd::m::room_filter::room_filter(const mutable_buffer &buf,
+                                  const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+//
+// room_event_filter
+//
+
+ircd::m::room_event_filter::room_event_filter(const mutable_buffer &buf,
+                                              const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+//
+// event_filter
+//
+
+ircd::m::event_filter::event_filter(const mutable_buffer &buf,
+                                    const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/rooms.h
 //
 
@@ -1677,6 +1803,77 @@ const
 	};
 
 	return function(*this);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::filter(const json::object &filter,
+                      const mutable_buffer &idbuf)
+{
+	using prototype = event::id::buf (const m::user &, const json::object &, const mutable_buffer &);
+
+	static import<prototype> function
+	{
+		"client_user", "filter_set"
+	};
+
+	return function(*this, filter, idbuf);
+}
+
+std::string
+ircd::m::user::filter(const string_view &filter_id)
+const
+{
+	std::string ret;
+	filter(filter_id, [&ret]
+	(const json::object &filter)
+	{
+		ret.assign(data(filter), size(filter));
+	});
+
+	return ret;
+}
+
+std::string
+ircd::m::user::filter(std::nothrow_t,
+                      const string_view &filter_id)
+const
+{
+	std::string ret;
+	filter(std::nothrow, filter_id, [&ret]
+	(const json::object &filter)
+	{
+		ret.assign(data(filter), size(filter));
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::filter(const string_view &filter_id,
+                      const filter_closure &closure)
+const
+{
+	if(!filter(std::nothrow, filter_id, closure))
+		throw m::NOT_FOUND
+		{
+			"Filter '%s' not found", filter_id
+		};
+}
+
+bool
+ircd::m::user::filter(std::nothrow_t,
+                      const string_view &filter_id,
+                      const filter_closure &closure)
+const
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const filter_closure &);
+
+	static import<prototype> function
+	{
+		"client_user", "filter_get"
+	};
+
+	return function(std::nothrow, *this, filter_id, closure);
 }
 
 ircd::m::event::id::buf

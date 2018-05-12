@@ -15,6 +15,17 @@ extern ircd::resource user_resource;
 // filter.cc
 //
 
+extern "C" bool
+filter_get(std::nothrow_t,
+           const ircd::m::user &,
+           const ircd::string_view &filter_id,
+           const ircd::m::user::filter_closure &);
+
+extern "C" ircd::m::event::id::buf
+filter_set(const ircd::m::user &,
+           const ircd::json::object &filter,
+           const ircd::mutable_buffer &idbuf);
+
 ircd::resource::response
 get__filter(ircd::client &,
             const ircd::resource::request &,

@@ -91,15 +91,8 @@ struct ircd::m::filter
 >
 {
 	using super_type::tuple;
-	using super_type::operator=;
-
-	using closure = std::function<void (const json::object &)>;
-
-	static bool get(std::nothrow_t, const user &, const string_view &filter_id, const closure &);
-	static void get(const user &, const string_view &filter_id, const closure &);
-	static string_view set(const mutable_buffer &id, const user &, const json::object &filter);
-
 	filter(const user &, const string_view &filter_id, const mutable_buffer &);
+	using super_type::operator=;
 };
 
 #pragma GCC diagnostic pop
