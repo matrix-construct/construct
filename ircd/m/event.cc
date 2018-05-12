@@ -1204,6 +1204,129 @@ const
 // event::fetch
 //
 
+ircd::const_buffer
+ircd::m::get(const event::id &event_id,
+             const string_view &key,
+             const mutable_buffer &out)
+{
+	const auto &ret
+	{
+		get(std::nothrow, index(event_id), key, out)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"%s for %s not found in database",
+			key,
+			string_view{event_id}
+		};
+
+	return ret;
+}
+
+ircd::const_buffer
+ircd::m::get(const event::idx &event_idx,
+             const string_view &key,
+             const mutable_buffer &out)
+{
+	const const_buffer ret
+	{
+		get(std::nothrow, event_idx, key, out)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"%s for event_idx[%lu] not found in database",
+			key,
+			event_idx
+		};
+
+	return ret;
+}
+
+ircd::const_buffer
+ircd::m::get(std::nothrow_t,
+             const event::id &event_id,
+             const string_view &key,
+             const mutable_buffer &buf)
+{
+	return get(std::nothrow, index(event_id), key, buf);
+}
+
+ircd::const_buffer
+ircd::m::get(std::nothrow_t,
+             const event::idx &event_idx,
+             const string_view &key,
+             const mutable_buffer &buf)
+{
+	const_buffer ret;
+	get(std::nothrow, event_idx, key, [&buf, &ret]
+	(const string_view &value)
+	{
+		ret = { data(buf), copy(buf, value) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::get(const event::id &event_id,
+             const string_view &key,
+             const event::fetch::view_closure &closure)
+{
+	if(!get(std::nothrow, index(event_id), key, closure))
+		throw m::NOT_FOUND
+		{
+			"%s for %s not found in database",
+			key,
+			string_view{event_id}
+		};
+}
+
+void
+ircd::m::get(const event::idx &event_idx,
+             const string_view &key,
+             const event::fetch::view_closure &closure)
+{
+	if(!get(std::nothrow, event_idx, key, closure))
+		throw m::NOT_FOUND
+		{
+			"%s for event_idx[%lu] not found in database",
+			key,
+			event_idx
+		};
+}
+
+bool
+ircd::m::get(std::nothrow_t,
+             const event::id &event_id,
+             const string_view &key,
+             const event::fetch::view_closure &closure)
+{
+	return get(std::nothrow, index(event_id), key, closure);
+}
+
+bool
+ircd::m::get(std::nothrow_t,
+             const event::idx &event_idx,
+             const string_view &key,
+             const event::fetch::view_closure &closure)
+{
+	const auto &column_idx
+	{
+		json::indexof<event>(key)
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	return column(byte_view<string_view>{event_idx}, std::nothrow, closure);
+}
+
 void
 ircd::m::seek(event::fetch &fetch,
               const event::id &event_id)

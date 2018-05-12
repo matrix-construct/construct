@@ -201,6 +201,17 @@ struct ircd::m::event::fetch
 	friend void seek(fetch &, const idx &);
 	friend bool seek(fetch &, const id &, std::nothrow_t);
 	friend void seek(fetch &, const id &);
+
+	using view_closure = std::function<void (const string_view &)>;
+	friend bool get(std::nothrow_t, const idx &, const string_view &key, const view_closure &);
+	friend bool get(std::nothrow_t, const id &, const string_view &key, const view_closure &);
+	friend void get(const idx &, const string_view &key, const view_closure &);
+	friend void get(const id &, const string_view &key, const view_closure &);
+
+	friend const_buffer get(std::nothrow_t, const idx &, const string_view &key, const mutable_buffer &out);
+	friend const_buffer get(std::nothrow_t, const id &, const string_view &key, const mutable_buffer &out);
+	friend const_buffer get(const idx &, const string_view &key, const mutable_buffer &out);
+	friend const_buffer get(const id &, const string_view &key, const mutable_buffer &out);
 };
 
 /// Device to evaluate the conformity of an event object. This is an 'in vitro'
