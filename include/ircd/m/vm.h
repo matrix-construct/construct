@@ -215,19 +215,19 @@ struct ircd::m::vm::opts
 struct ircd::m::vm::copts
 :opts
 {
-	// Hash and include hashes object.
+	/// Hash and include hashes object.
 	bool hash {true};
 
-	// Sign and include signatures object
+	/// Sign and include signatures object
 	bool sign {true};
 
-	// Generate and include event_id
+	/// Generate and include event_id
 	bool event_id {true};
 
-	// Include our origin
+	/// Include our origin
 	bool origin {true};
 
-	// Include origin_server_ts
+	/// Include origin_server_ts
 	bool origin_server_ts {true};
 
 	/// Whether to log a debug message before commit
