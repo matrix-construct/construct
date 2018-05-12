@@ -151,14 +151,9 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	};
 
 	char ae_buf[512];
-	json::array auth_events
-	{
-		json::get<"auth_events"_>(evf)?
-			json::get<"auth_events"_>(evf):
-			json::array{"[]"}
-	};
+	json::array auth_events;
 
-	if(depth != -1)
+	if(depth != -1 && opts.add_auth_events)
 	{
 		std::vector<json::value> ae;
 
@@ -247,49 +242,31 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		});
 	}
 
-	//TODO: X
-	const auto &prev_state
+	static const json::array &prev_state
 	{
-		json::get<"prev_state"_>(evf)?
-			json::get<"prev_state"_>(evf):
-			json::array{"[]"}
-	};
-/*
-	const event::fetch pvf
-	{
-		prev_event_id, std::nothrow
-	};
-*/
-	//TODO: X
-	json::value prev_event0[]
-	{
-		{ string_view{prev_event_id}  },
-		{ json::get<"hashes"_>(evf) }
+		json::empty_array
 	};
 
-	//TODO: X
-	json::value prev_event
+	const json::iov::add_if prevs[]
 	{
-		prev_event0, empty(prev_event_id)? 0UL: 2UL
-	};
-
-	//TODO: X
-	json::value prev_events_
-	{
-		&prev_event, !empty(prev_event_id)
-	};
-
-	std::string prev_events
-	{
-		json::strung(prev_events_)
-	};
-
-	//TODO: X
-	const json::iov::push prevs[]
-	{
-		{ event, { "auth_events",  auth_events  } },
-		{ event, { "prev_events",  prev_events  } },
-		{ event, { "prev_state",   prev_state   } },
+		{
+			event, opts.add_auth_events,
+			{
+				"auth_events", auth_events
+			}
+		},
+		{
+			event, opts.add_prev_events,
+			{
+				"prev_events", prev_events
+			}
+		},
+		{
+			event, opts.add_prev_state,
+			{
+				"prev_state", prev_state
+			}
+		},
 	};
 
 	return eval(event, contents);

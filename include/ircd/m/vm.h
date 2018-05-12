@@ -230,6 +230,15 @@ struct ircd::m::vm::copts
 	/// Include origin_server_ts
 	bool add_origin_server_ts {true};
 
+	/// Add prev_events
+	bool add_prev_events {true};
+
+	/// Add prev_state
+	bool add_prev_state {true};
+
+	/// Add auth_events
+	bool add_auth_events {true};
+
 	/// Whether to log a debug message before commit
 	bool debuglog_precommit {false};
 
