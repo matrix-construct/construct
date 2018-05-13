@@ -25,7 +25,7 @@ struct ircd::byte_view
 
 	operator const T &() const
 	{
-		assert(sizeof(T) == size(s));
+		assert(sizeof(T) <= size(s));
 		if(unlikely(sizeof(T) > s.size()))
 			throw std::bad_cast();
 
