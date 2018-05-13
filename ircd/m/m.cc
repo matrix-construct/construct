@@ -3094,7 +3094,11 @@ noexcept
 void
 ircd::m::hook::site::operator()(const event &event)
 {
-	std::set<hook *> matching;     //TODO: allocator
+	std::set<hook *> matching //TODO: allocator
+	{
+		begin(always), end(always)
+	};
+
 	const auto site_match{[&matching]
 	(auto &map, const string_view &key)
 	{
@@ -3190,6 +3194,11 @@ ircd::m::hook::site::add(hook &hook)
 	if(json::get<"type"_>(hook.matching))
 		map(type, at<"type"_>(hook.matching));
 
+	// Hook had no mappings which means it will match everything.
+	// We don't increment the matcher count for this case.
+	if(!hook.matchers)
+		always.emplace_back(&hook);
+
 	++count;
 	hook.registered = true;
 	return true;
@@ -3215,6 +3224,9 @@ ircd::m::hook::site::del(hook &hook)
 		assert(0);
 		return end(map);
 	}};
+
+	// Unconditional attempt to remove from always.
+	std::remove(begin(always), end(always), &hook);
 
 	if(json::get<"origin"_>(hook.matching))
 		unmap(origin, at<"origin"_>(hook.matching));
