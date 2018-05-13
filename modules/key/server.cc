@@ -45,7 +45,6 @@ handle_get(client &client,
 		};
 	});
 
-	assert(0);
 	return {};
 }
 
