@@ -15,7 +15,6 @@ namespace ircd::m::vm
 	extern hook::site eval_hook;
 	extern hook::site notify_hook;
 
-	static void _tmp_effects(const m::event &event); //TODO: X
 	static void write(eval &);
 	static fault _eval_edu(eval &, const event &);
 	static fault _eval_pdu(eval &, const event &);
@@ -451,9 +450,6 @@ try
 	if(opts.notify)
 		vm::accept(accepted);
 
-	if(opts.effects)
-		_tmp_effects(event);
-
 	if(opts.debuglog_accept)
 		log.debug("%s", pretty_oneline(event));
 
@@ -732,21 +728,4 @@ ircd::m::vm::retired_sequence(event::id::buf &event_id)
 
 	event_id = it->second;
 	return ret;
-}
-
-//TODO: X
-void
-ircd::m::vm::_tmp_effects(const m::event &event)
-{
-	const auto &type{at<"type"_>(event)};
-
-	//TODO: X
-	if(type == "m.room.join_rules")
-	{
-		const m::room::id room_id{at<"room_id"_>(event)};
-		const m::user::id sender{at<"sender"_>(event)};
-		if(my_host(sender.host()))
-			send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
-	}
-
 }
