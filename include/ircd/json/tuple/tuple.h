@@ -228,19 +228,33 @@ tuple<T...>::size()
 template<class tuple,
          class it_a,
          class it_b,
+         size_t i,
          class closure>
-constexpr auto
+constexpr typename std::enable_if<i == tuple::size(), it_a>::type
 _key_transform(it_a it,
-               const it_b end,
+               const it_b &end,
                closure&& lambda)
 {
-	for(size_t i(0); i < tuple::size() && it != end; ++i)
+	return it;
+}
+
+template<class tuple,
+         class it_a,
+         class it_b,
+         size_t i = 0,
+         class closure>
+constexpr typename std::enable_if<i < tuple::size(), it_a>::type
+_key_transform(it_a it,
+               const it_b &end,
+               closure&& lambda)
+{
+	if(it != end)
 	{
 		*it = lambda(key<tuple, i>());
 		++it;
 	}
 
-	return it;
+	return _key_transform<tuple, it_a, it_b, i + 1>(it, end, std::move(lambda));
 }
 
 template<class tuple,
@@ -248,15 +262,13 @@ template<class tuple,
          class it_b>
 constexpr auto
 _key_transform(it_a it,
-               const it_b end)
+               const it_b &end)
 {
-	for(size_t i(0); i < tuple::size() && it != end; ++i)
+	return _key_transform<tuple>(it, end, []
+	(auto&& key)
 	{
-		*it = key<tuple, i>();
-		++it;
-	}
-
-	return it;
+		return key;
+	});
 }
 
 template<class it_a,
@@ -265,7 +277,7 @@ template<class it_a,
 auto
 _key_transform(const tuple<T...> &tuple,
                it_a it,
-               const it_b end)
+               const it_b &end)
 {
 	for_each(tuple, [&it, &end]
 	(const auto &key, const auto &val)
