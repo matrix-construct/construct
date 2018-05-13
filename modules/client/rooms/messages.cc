@@ -22,6 +22,13 @@ struct pagination_tokens
 	pagination_tokens(const resource::request &);
 };
 
+conf::item<size_t>
+max_filter_miss
+{
+	{ "name",      "ircd.client.rooms.messages.max_filter_miss" },
+	{ "default",   2048L                                        },
+};
+
 resource::response
 get__messages(client &client,
               const resource::request &request,
@@ -39,7 +46,7 @@ get__messages(client &client,
 
 	const unique_buffer<mutable_buffer> filter_buf
 	{
-		size(filter_query) * 3
+		size(filter_query)
 	};
 
 	const json::object &filter_json
@@ -92,7 +99,7 @@ get__messages(client &client,
 	else if(it)
 		++it;
 
-	size_t count{0};
+	size_t hit{0}, miss{0};
 	m::event::id::buf start, end;
 	{
 		json::stack::member chunk{ret, "chunk"};
@@ -111,10 +118,11 @@ get__messages(client &client,
 			if(empty(filter_json) || match(filter, event))
 			{
 				messages.append(event);
-				++count;
+				++hit;
 			}
+			else ++miss;
 
-			if(count >= page.limit)
+			if(hit >= page.limit || miss >= size_t(max_filter_miss))
 			{
 				if(page.dir == 'b')
 					end = at<"event_id"_>(event);
