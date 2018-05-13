@@ -28,6 +28,7 @@ struct ircd::m::hook
 	m::event matching;
 	std::function<void (const m::event &)> function;
 	bool registered {false};
+	size_t calls {0};
 
 	string_view site_name() const;
 	site *find_site() const;

@@ -3137,6 +3137,7 @@ ircd::m::hook::site::call(hook &hook,
                           const event &event)
 try
 {
+	++hook.calls;
 	hook.function(event);
 }
 catch(const std::exception &e)
