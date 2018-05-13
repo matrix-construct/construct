@@ -3717,28 +3717,30 @@ ircd::db::row::row(database &d,
 		make_opts(opts)
 	};
 
-	//TODO: allocator
-	std::vector<database::column *> colptr
+	const size_t column_count
 	{
-		colnames.empty()? d.columns.size() : colnames.size()
+		colnames.empty()?
+			d.columns.size():
+			colnames.size()
 	};
 
+	database::column *colptr[column_count];
 	if(colnames.empty())
-		std::transform(begin(d.columns), end(d.columns), begin(colptr), [&colnames]
+		std::transform(begin(d.columns), end(d.columns), colptr, [&colnames]
 		(const auto &p)
 		{
 			return p.get();
 		});
 	else
-		std::transform(begin(colnames), end(colnames), begin(colptr), [&d]
+		std::transform(begin(colnames), end(colnames), colptr, [&d]
 		(const auto &name)
 		{
 			return &d[name];
 		});
 
 	//TODO: allocator
-	std::vector<ColumnFamilyHandle *> handles(colptr.size());
-	std::transform(begin(colptr), end(colptr), begin(handles), []
+	std::vector<ColumnFamilyHandle *> handles(column_count);
+	std::transform(colptr, colptr + column_count, begin(handles), []
 	(database::column *const &ptr)
 	{
 		return ptr->handle.get();
@@ -3751,10 +3753,10 @@ ircd::db::row::row(database &d,
 		d.d->NewIterators(options, handles, &iterators)
 	};
 
-	for(size_t i(0); i < this->size(); ++i)
+	for(size_t i(0); i < this->size() && i < column_count; ++i)
 	{
 		std::unique_ptr<Iterator> it(iterators.at(i));
-		(*this)[i] = cell { *colptr.at(i), key, std::move(it), opts };
+		(*this)[i] = cell { *colptr[i], key, std::move(it), opts };
 	}
 }
 
