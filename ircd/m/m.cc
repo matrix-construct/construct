@@ -3156,6 +3156,7 @@ ircd::m::hook::site::add(hook &hook)
 {
 	assert(!hook.registered);
 	assert(hook.site_name() == name());
+	assert(hook.matchers == 0);
 
 	if(!hooks.emplace(&hook).second)
 	{
@@ -3167,20 +3168,27 @@ ircd::m::hook::site::add(hook &hook)
 		return false;
 	}
 
+	const auto map{[&hook]
+	(auto &map, const string_view &value)
+	{
+		map.emplace(value, &hook);
+		++hook.matchers;
+	}};
+
 	if(json::get<"origin"_>(hook.matching))
-		origin.emplace(at<"origin"_>(hook.matching), &hook);
+		map(origin, at<"origin"_>(hook.matching));
 
 	if(json::get<"room_id"_>(hook.matching))
-		room_id.emplace(at<"room_id"_>(hook.matching), &hook);
+		map(room_id, at<"room_id"_>(hook.matching));
 
 	if(json::get<"sender"_>(hook.matching))
-		sender.emplace(at<"sender"_>(hook.matching), &hook);
+		map(sender, at<"sender"_>(hook.matching));
 
 	if(json::get<"state_key"_>(hook.matching))
-		state_key.emplace(at<"state_key"_>(hook.matching), &hook);
+		map(state_key, at<"state_key"_>(hook.matching));
 
 	if(json::get<"type"_>(hook.matching))
-		type.emplace(at<"type"_>(hook.matching), &hook);
+		map(type, at<"type"_>(hook.matching));
 
 	++count;
 	hook.registered = true;
@@ -3199,7 +3207,10 @@ ircd::m::hook::site::del(hook &hook)
 		auto pit{map.equal_range(key)};
 		for(; pit.first != pit.second; ++pit.first)
 			if(pit.first->second == &hook)
+			{
+				--hook.matchers;
 				return map.erase(pit.first);
+			}
 
 		assert(0);
 		return end(map);
@@ -3226,6 +3237,7 @@ ircd::m::hook::site::del(hook &hook)
 	};
 
 	assert(erased);
+	assert(hook.matchers == 0);
 	--count;
 	hook.registered = false;
 	return true;
