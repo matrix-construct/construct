@@ -3699,7 +3699,7 @@ template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
 
 ircd::db::row::row(database &d,
                    const string_view &key,
-                   const vector_view<string_view> &colnames,
+                   const vector_view<const string_view> &colnames,
                    const vector_view<cell> &buf,
                    gopts opts)
 :vector_view<cell>{buf}
