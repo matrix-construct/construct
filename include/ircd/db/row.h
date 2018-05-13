@@ -111,8 +111,7 @@ ircd::db::row::row(database &d,
 :row{[&d, &key, &t, &buf, &opts]
 () -> row
 {
-	std::array<string_view, t.size()> cols;
-	json::_key_transform(t, std::begin(cols), std::end(cols));
+	static const typename json::tuple<T...>::keys cols;
 	return { d, key, cols, buf, opts };
 }()}
 {
