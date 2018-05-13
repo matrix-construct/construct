@@ -749,11 +749,4 @@ ircd::m::vm::_tmp_effects(const m::event &event)
 			send(room::id{"!public:zemos.net"}, sender, "ircd.room", room_id, {});
 	}
 
-	//TODO: X
-	if(type == "m.room.create")
-	{
-		const string_view local{m::room::id{at<"room_id"_>(event)}.localname()};
-		if(local != "users") //TODO: circ dep
-			send(my_room, at<"sender"_>(event), "ircd.room", at<"room_id"_>(event), json::object{});
-	}
 }

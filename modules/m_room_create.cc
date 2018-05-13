@@ -35,7 +35,18 @@ _can_create_room_hookfn
 static void
 _created_room(const m::event &event)
 {
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
 
+	const string_view &local
+	{
+		room_id.localname()
+	};
+
+	if(local != "users") //TODO: circ dep
+		send(m::my_room, at<"sender"_>(event), "ircd.room", room_id, json::object{});
 }
 
 const m::hook
