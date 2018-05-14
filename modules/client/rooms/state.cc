@@ -215,3 +215,43 @@ state__iov(const room &room,
 
 	return commit(room, event, content);
 }
+
+extern "C" size_t
+state__rebuild_present(const m::room &room)
+{
+	size_t ret{0};
+	const auto create_id
+	{
+		room::state{room}.get("m.room.create")
+	};
+
+	room::messages it
+	{
+		room, create_id
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn{*dbs::events};
+	for(; it; ++it)
+	{
+		const event &event{*it};
+		if(!defined(json::get<"state_key"_>(event)))
+			continue;
+
+		dbs::write_opts opts;
+		opts.idx = it.event_idx();
+		opts.present = true;
+		opts.history = false;
+		opts.head = false;
+		opts.refs = false;
+
+		dbs::_index__room_state(txn, event, opts);
+		dbs::_index__room_joined(txn, event, opts);
+		++ret;
+	}
+
+	txn();
+	return ret;
+}
