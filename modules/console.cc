@@ -1523,6 +1523,29 @@ try
 		*db::database::dbs.at(param.at(0))
 	};
 
+	out << "sequence                : " << sequence(database) << std::endl;
+	out << "database size:          : " << bytes(database) << std::endl;
+
+	out << "database keys (est)     : "
+	    << db::property(database, "rocksdb.estimate-num-keys")
+	    << std::endl;
+
+	out << "all tables size         : "
+	    << db::property(database, "rocksdb.size-all-mem-tables")
+	    << std::endl;
+
+	out << "active table size       : "
+	    << db::property(database, "rocksdb.cur-size-active-mem-table")
+	    << std::endl;
+
+	out << "active table entries    : "
+	    << db::property(database, "rocksdb.num-entries-active-mem-table")
+	    << std::endl;
+
+	out << "active table deletes    : "
+	    << db::property(database, "rocksdb.num-deletes-active-mem-table")
+	    << std::endl;
+
 	return true;
 }
 catch(const std::out_of_range &e)
