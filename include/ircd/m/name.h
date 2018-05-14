@@ -88,6 +88,7 @@ namespace ircd::m::name
 	constexpr const char *const senders {"senders"};
 	constexpr const char *const not_senders {"not_senders"};
 	constexpr const char *const limit {"limit"};
+	constexpr const char *const contains_url {"contains_url"};
 
 	constexpr const char *const edu_type {"edu_type"};
 
