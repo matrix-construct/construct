@@ -343,7 +343,6 @@ try
 			m::vm::accept.wait_until(lock, args.timesout)
 		};
 
-		const unlock_guard<decltype(lock)> ul(lock);
 		if(synchronize(client, request, args, accepted))
 			return;
 	}
@@ -546,7 +545,7 @@ update_sync(client &client,
 	};
 
 	std::vector<json::value> presents;
-	ur.get(std::nothrow, "m.presence", [&]
+	ur.get(std::nothrow, "ircd.presence", [&]
 	(const m::event &event)
 	{
 		const auto &content
@@ -595,18 +594,8 @@ polylog_sync(client &client,
              const resource::request &request,
              shortpoll &sp,
              json::stack::object &object)
+try
 {
-	const unwind::exceptional uw{[&sp]
-	{
-		log::error
-		{
-			"polylog sync ERROR %lu to %lu (vm @ %zu)"
-			,sp.since
-			,sp.current
-			,m::vm::current_sequence
-		};
-	}};
-
 	{
 		json::stack::member member{object, "rooms"};
 		json::stack::object object{member};
@@ -633,6 +622,19 @@ polylog_sync(client &client,
 	}
 
 	return sp.committed;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"polylog sync ERROR %lu to %lu (vm @ %zu) :%s"
+		,sp.since
+		,sp.current
+		,m::vm::current_sequence
+		,e.what()
+	};
+
+	throw;
 }
 
 void
@@ -842,7 +844,7 @@ polylog_sync_room(shortpoll &sp,
 	{
 		json::stack::member member{out, "account_data"};
 		json::stack::object object{member};
-		polylog_sync_room_ephemeral(sp, object, room);
+		polylog_sync_room_account_data(sp, object, room);
 	}
 
 	// unread_notifications
