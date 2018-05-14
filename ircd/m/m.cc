@@ -2856,6 +2856,14 @@ ircd::m::txn::create_id(const mutable_buffer &out,
 // m/hook.h
 //
 
+namespace ircd::m
+{
+	static void _hook_fix_state_key(const json::members &, json::member &);
+	static void _hook_fix_room_id(const json::members &, json::member &);
+	static void _hook_fix_sender(const json::members &, json::member &);
+	static json::strung _hook_make_feature(const json::members &);
+}
+
 /// Instance list linkage for all hooks
 template<>
 decltype(ircd::util::instance_list<ircd::m::hook>::list)
@@ -2877,69 +2885,10 @@ ircd::m::hook::hook(decltype(function) function,
 ircd::m::hook::hook(const json::members &members,
                     decltype(function) function)
 try
-:_feature{[&members]() -> json::strung
+:_feature
 {
-	const ctx::critical_assertion ca;
-	std::vector<json::member> copy
-	{
-		begin(members), end(members)
-	};
-
-	for(auto &member : copy) switch(hash(member.first))
-	{
-		case hash("room_id"):
-		{
-			// Rewrite the room_id if the supplied input has no hostname
-			if(valid_local_only(id::ROOM, member.second))
-			{
-				assert(my_host());
-				thread_local char buf[256];
-				member.second = id::room { buf, member.second, my_host() };
-			}
-
-			validate(id::ROOM, member.second);
-			continue;
-		}
-
-		case hash("sender"):
-		{
-			// Rewrite the sender if the supplied input has no hostname
-			if(valid_local_only(id::USER, member.second))
-			{
-				assert(my_host());
-				thread_local char buf[256];
-				member.second = id::user { buf, member.second, my_host() };
-			}
-
-			validate(id::USER, member.second);
-			continue;
-		}
-
-		case hash("state_key"):
-		{
-			const bool is_member_event
-			{
-				end(members) != std::find_if(begin(members), end(members), [](const auto &member)
-				{
-					return member.first == "type" && member.second == "m.room.member";
-				})
-			};
-
-			// Rewrite the sender if the supplied input has no hostname
-			if(valid_local_only(id::USER, member.second))
-			{
-				assert(my_host());
-				thread_local char buf[256];
-				member.second = id::user { buf, member.second, my_host() };
-			}
-
-			validate(id::USER, member.second);
-			continue;
-		}
-	}
-
-	return { copy.data(), copy.data() + copy.size() };
-}()}
+	_hook_make_feature(members)
+}
 ,feature
 {
 	_feature
@@ -2959,23 +2908,104 @@ try
 }
 catch(...)
 {
-	if(registered)
+	if(!registered)
+		throw;
+
+	auto *const site(find_site());
+	assert(site != nullptr);
+	site->del(*this);
+}
+
+ircd::json::strung
+ircd::m::_hook_make_feature(const json::members &members)
+{
+	const ctx::critical_assertion ca;
+	std::vector<json::member> copy
 	{
-		auto *const site(find_site());
-		assert(site != nullptr);
-		site->del(*this);
+		begin(members), end(members)
+	};
+
+	for(auto &member : copy) switch(hash(member.first))
+	{
+		case hash("room_id"):
+			_hook_fix_room_id(members, member);
+			continue;
+
+		case hash("sender"):
+			_hook_fix_sender(members, member);
+			continue;
+
+		case hash("state_key"):
+			_hook_fix_state_key(members, member);
+			continue;
 	}
+
+	return { copy.data(), copy.data() + copy.size() };
+}
+
+void
+ircd::m::_hook_fix_sender(const json::members &members,
+                          json::member &member)
+{
+	// Rewrite the sender if the supplied input has no hostname
+	if(valid_local_only(id::USER, member.second))
+	{
+		assert(my_host());
+		thread_local char buf[256];
+		member.second = id::user { buf, member.second, my_host() };
+	}
+
+	validate(id::USER, member.second);
+}
+
+void
+ircd::m::_hook_fix_room_id(const json::members &members,
+                           json::member &member)
+{
+	// Rewrite the room_id if the supplied input has no hostname
+	if(valid_local_only(id::ROOM, member.second))
+	{
+		assert(my_host());
+		thread_local char buf[256];
+		member.second = id::room { buf, member.second, my_host() };
+	}
+
+	validate(id::ROOM, member.second);
+}
+
+void
+ircd::m::_hook_fix_state_key(const json::members &members,
+                             json::member &member)
+{
+	const bool is_member_event
+	{
+		end(members) != std::find_if(begin(members), end(members), []
+		(const auto &member)
+		{
+			return member.first == "type" && member.second == "m.room.member";
+		})
+	};
+
+	// Rewrite the sender if the supplied input has no hostname
+	if(valid_local_only(id::USER, member.second))
+	{
+		assert(my_host());
+		thread_local char buf[256];
+		member.second = id::user { buf, member.second, my_host() };
+	}
+
+	validate(id::USER, member.second);
 }
 
 ircd::m::hook::~hook()
 noexcept
 {
-	if(registered)
-	{
-		auto *const site(find_site());
-		assert(site != nullptr);
-		site->del(*this);
-	}
+	if(!registered)
+		return;
+
+	auto *const site(find_site());
+	assert(site != nullptr);
+	site->del(*this);
 }
 
 ircd::m::hook::site *
