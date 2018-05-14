@@ -3979,16 +3979,128 @@ console_cmd__feds__head(opt &out, const string_view &line)
 		param.at(1, m::me.user_id)
 	};
 
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
 	using prototype = void (const m::room::id &,
 	                        const m::user::id &,
-	                        std::ostream &);
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
 
 	static m::import<prototype> feds__head
 	{
 		"federation_federation", "feds__head"
 	};
 
-	feds__head(room_id, user_id, out);
+	feds__head(room_id, user_id, out.timeout, [&out]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
+	{
+		if(eptr)
+			return true;
+
+		const json::array prev_events
+		{
+			event.at("prev_events")
+		};
+
+		out << "+ " << std::setw(40) << std::left << origin;
+		out << " " << event.at("depth");
+		for(const json::array prev_event : prev_events)
+		{
+			const auto &prev_event_id
+			{
+				unquote(prev_event.at(0))
+			};
+
+			out << " " << string_view{prev_event_id};
+		};
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__feds__heads(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[user_id]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::user::id &user_id
+	{
+		param.at(1, m::me.user_id)
+	};
+
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
+	};
+
+	std::forward_list<std::string> origins;
+	std::map<std::string, std::forward_list<string_view>, std::less<>> grid;
+
+	feds__head(room_id, user_id, out.timeout, [&origins, &grid]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
+	{
+		if(eptr)
+			return true;
+
+		const json::array &prev_events
+		{
+			event.at("prev_events")
+		};
+
+		for(const json::array &prev_event : prev_events)
+		{
+			const auto &event_id
+			{
+				unquote(prev_event.at(0))
+			};
+
+			auto it
+			{
+				grid.lower_bound(event_id)
+			};
+
+			if(it == end(grid) || it->first != event_id)
+				it = grid.emplace_hint(it, event_id, std::forward_list<string_view>{});
+
+			origins.emplace_front(origin);
+			it->second.emplace_front(origins.front());
+		}
+
+		return true;
+	});
+
+	for(auto &p : grid)
+	{
+		p.second.sort();
+
+		out << std::setw(64) << std::left << p.first << " : ";
+		for(const auto &origin : p.second)
+			out << " " << origin;
+
+		out << std::endl;
+	}
+
 	return true;
 }
 
