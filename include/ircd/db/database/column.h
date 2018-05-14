@@ -20,11 +20,10 @@
 /// points to an internally managed database::column.
 namespace ircd::db
 {
-	std::shared_ptr<const database::column> shared_from(const database::column &);
-	std::shared_ptr<database::column> shared_from(database::column &);
 	const database::descriptor &describe(const database::column &);
 	const std::string &name(const database::column &);
 	uint32_t id(const database::column &);
+
 	void drop(database::column &);                   // Request to erase column from db
 }
 
@@ -57,4 +56,7 @@ struct ircd::db::database::column final
 	column &operator=(column &&) = delete;
 	column &operator=(const column &) = delete;
 	~column() noexcept;
+
+	friend std::shared_ptr<const column> shared_from(const column &);
+	friend std::shared_ptr<column> shared_from(column &);
 };
