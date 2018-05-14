@@ -89,6 +89,13 @@ sync_timeout_default
 	{ "default",  10 * 1000L                        },
 };
 
+conf::item<size_t>
+sync_flush_hiwat
+{
+	{ "name",     "ircd.client.sync.flush.hiwat" },
+	{ "default",  long(24_KiB)                   },
+};
+
 syncargs::syncargs(const resource::request &request)
 :filter_id
 {

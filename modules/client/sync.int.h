@@ -10,6 +10,8 @@
 
 using namespace ircd;
 
+extern conf::item<size_t> sync_flush_hiwat;
+
 /// Argument parser for the client's /sync request
 struct syncargs
 {
@@ -85,7 +87,8 @@ struct shortpoll
 
 			response->write(buf);
 			return buf;
-		}
+		},
+		size_t(sync_flush_hiwat)
 	};
 
 	shortpoll(ircd::client &client,
