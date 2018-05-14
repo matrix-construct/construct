@@ -4105,6 +4105,66 @@ console_cmd__feds__heads(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__feds__perspective(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "server_name", "key_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view &server_name
+	{
+		param.at(1)
+	};
+
+	const string_view &key_id
+	{
+		param.at(2)
+	};
+
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::array &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::v1::key::server_key &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__perspective
+	{
+		"federation_federation", "feds__perspective"
+	};
+
+	const m::v1::key::server_key server_key
+	{
+		server_name, key_id
+	};
+
+	feds__perspective(room_id, server_key, out.timeout, [&out]
+	(const string_view &origin, std::exception_ptr eptr, const json::array &keys)
+	{
+		if(eptr)
+			return true;
+
+		for(const json::object &_key : keys)
+		{
+			const m::keys &key{_key};
+			out << key << std::endl;
+		}
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__feds__backfill(opt &out, const string_view &line)
 {
 	const params param{line, " ",
