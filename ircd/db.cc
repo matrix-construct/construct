@@ -308,6 +308,18 @@ ircd::db::sequence(const database &cd)
 	return d.d->GetLatestSequenceNumber();
 }
 
+rocksdb::Cache *
+ircd::db::cache(database &d)
+{
+	return d.cache.get();
+}
+
+const rocksdb::Cache *
+ircd::db::cache(const database &d)
+{
+	return d.cache.get();
+}
+
 template<>
 ircd::db::prop_int
 ircd::db::property(const database &cd,
@@ -3906,6 +3918,34 @@ ircd::db::read(column &column,
 	return ret;
 }
 
+rocksdb::Cache *
+ircd::db::cache(column &column)
+{
+	database::column &c(column);
+	return c.table_opts.block_cache.get();
+}
+
+rocksdb::Cache *
+ircd::db::cache_compressed(column &column)
+{
+	database::column &c(column);
+	return c.table_opts.block_cache_compressed.get();
+}
+
+const rocksdb::Cache *
+ircd::db::cache(const column &column)
+{
+	const database::column &c(column);
+	return c.table_opts.block_cache.get();
+}
+
+const rocksdb::Cache *
+ircd::db::cache_compressed(const column &column)
+{
+	const database::column &c(column);
+	return c.table_opts.block_cache_compressed.get();
+}
+
 template<>
 ircd::db::prop_str
 ircd::db::property(const column &column,
@@ -5027,6 +5067,53 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 	}
 
 	return it;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// cache.h
+//
+
+size_t
+ircd::db::usage(const rocksdb::Cache *const &cache)
+{
+	return cache? usage(*cache) : 0;
+}
+
+size_t
+ircd::db::usage(const rocksdb::Cache &cache)
+{
+	return cache.GetUsage();
+}
+
+bool
+ircd::db::capacity(rocksdb::Cache *const &cache,
+                   const size_t &cap)
+{
+	if(!cache)
+		return false;
+
+	capacity(*cache, cap);
+	return true;
+}
+
+void
+ircd::db::capacity(rocksdb::Cache &cache,
+                   const size_t &cap)
+{
+	cache.SetCapacity(cap);
+}
+
+size_t
+ircd::db::capacity(const rocksdb::Cache *const &cache)
+{
+	return cache? capacity(*cache): 0;
+}
+
+size_t
+ircd::db::capacity(const rocksdb::Cache &cache)
+{
+	return cache.GetCapacity();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

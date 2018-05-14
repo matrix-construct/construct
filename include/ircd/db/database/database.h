@@ -30,6 +30,10 @@ namespace ircd::db
 	template<class R = prop_int> R property(const database &, const string_view &name);
 	template<> prop_int property(const database &, const string_view &name);
 
+	// Access to the database's row cache (see cache.h interface)
+	const rocksdb::Cache *cache(const database &);
+	rocksdb::Cache *cache(database &);
+
 	// Ticker
 	extern const uint32_t ticker_max;
 	string_view ticker_id(const uint32_t &id);

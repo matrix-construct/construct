@@ -68,6 +68,7 @@ enum class ircd::db::pos
 #include "database/descriptor.h"
 #include "database/options.h"
 #include "database/snapshot.h"
+#include "cache.h"
 #include "opts.h"
 #include "column.h"
 #include "cell.h"
