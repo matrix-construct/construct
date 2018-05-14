@@ -5074,6 +5074,28 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 // cache.h
 //
 
+bool
+ircd::db::exists(rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	return cache? exists(*cache, key) : false;
+}
+
+bool
+ircd::db::exists(rocksdb::Cache &cache,
+                 const string_view &key)
+{
+	const custom_ptr<rocksdb::Cache::Handle> handle
+	{
+		cache.Lookup(slice(key)), [&cache](auto *const &handle)
+		{
+			cache.Release(handle);
+		}
+	};
+
+	return bool(handle);
+}
+
 size_t
 ircd::db::usage(const rocksdb::Cache *const &cache)
 {

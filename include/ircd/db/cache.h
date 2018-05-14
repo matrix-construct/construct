@@ -32,4 +32,8 @@ namespace ircd::db
 	// Get usage
 	size_t usage(const rocksdb::Cache &);
 	size_t usage(const rocksdb::Cache *const &);
+
+	// Test if key exists
+	bool exists(rocksdb::Cache &, const string_view &key);
+	bool exists(rocksdb::Cache *const &, const string_view &key);
 }
