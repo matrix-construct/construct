@@ -251,9 +251,11 @@ struct ircd::m::id::buf
 		return *this;
 	}
 
+	// Universal reference with perfect forwarding will be too greedy here by
+	// overriding some of the other semantics. const reference pack is fine.
 	template<class... args>
-	buf(args&&... a)
-	:T{b, std::forward<args>(a)...}
+	buf(const args &...a)
+	:T{b, a...}
 	{}
 
 	buf() = default;
