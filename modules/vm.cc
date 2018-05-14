@@ -11,9 +11,9 @@
 namespace ircd::m::vm
 {
 	extern log::log log;
-	extern hook::site commit_hook;
-	extern hook::site eval_hook;
-	extern hook::site notify_hook;
+	extern hook<>::site commit_hook;
+	extern hook<>::site eval_hook;
+	extern hook<>::site notify_hook;
 
 	static void write(eval &);
 	static fault _eval_edu(eval &, const event &);

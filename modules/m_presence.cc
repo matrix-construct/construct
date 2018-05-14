@@ -35,7 +35,7 @@ presence_valid_state(const string_view &state)
 static void handle_edu_m_presence_(const m::event &, const m::edu::m_presence &edu);
 static void handle_edu_m_presence(const m::event &);
 
-const m::hook
+const m::hook<>
 _m_presence_eval
 {
 	handle_edu_m_presence,

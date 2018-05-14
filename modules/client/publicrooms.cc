@@ -164,7 +164,7 @@ _create_public_room(const m::event &)
 /// Create the public rooms room at the appropriate time on startup.
 /// The startup event chosen here is when @ircd joins the !ircd room,
 /// which is a fundamental notification toward the end of init.
-const m::hook
+const m::hook<>
 _create_public_hook
 {
 	_create_public_room,

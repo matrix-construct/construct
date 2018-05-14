@@ -105,7 +105,7 @@ catch(const std::exception &e)
 	notice(control_room, e.what());
 }
 
-const m::hook
+const m::hook<>
 command_control_hook
 {
 	command_control,
@@ -134,7 +134,7 @@ create_control_room(const m::event &)
 	notice(control_room, m::me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
 }
 
-const m::hook
+const m::hook<>
 create_control_hook
 {
 	create_control_room,

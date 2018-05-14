@@ -257,7 +257,7 @@ validate_password(const string_view &password)
 
 static void _first_user_registered(const m::event &event);
 
-const m::hook
+const m::hook<>
 _first_user_hook
 {
 	_first_user_registered,

@@ -43,7 +43,7 @@ affect_user_room(const m::event &event)
 	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
 }
 
-const m::hook
+const m::hook<>
 affect_user_room_hookfn
 {
 	{
@@ -59,7 +59,7 @@ _can_join_room(const m::event &event)
 
 }
 
-const m::hook
+const m::hook<>
 _can_join_room_hookfn
 {
 	{
@@ -76,7 +76,7 @@ _join_room(const m::event &event)
 
 }
 
-const m::hook
+const m::hook<>
 _join_room_hookfn
 {
 	{
@@ -127,7 +127,7 @@ invite_foreign(const m::event &event)
 
 }
 
-const m::hook
+const m::hook<>
 invite_foreign_hookfn
 {
 	{

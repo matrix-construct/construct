@@ -241,7 +241,7 @@ room_alias_fetch(const mutable_buffer &out,
 	return response;
 }
 
-const m::hook
+const m::hook<>
 _create_alias_room
 {
 	{

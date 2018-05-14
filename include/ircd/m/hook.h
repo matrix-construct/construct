@@ -13,11 +13,13 @@
 
 namespace ircd::m
 {
-	struct hook;
+	template<class data = void> struct hook;    // doesn't exist.
+	template<> struct hook<void>;               // base of hook system
 }
 
-struct ircd::m::hook
-:instance_list<hook>
+template<>
+struct ircd::m::hook<>
+:instance_list<hook<>>
 {
 	struct site;
 
@@ -52,7 +54,7 @@ struct ircd::m::hook
 /// A hook::site can be created or destroyed at any time (for example if it's
 /// in a module which is reloaded) while being agnostic to the hooks it
 /// cooperates with.
-struct ircd::m::hook::site
+struct ircd::m::hook<>::site
 :instance_list<site>
 {
 	json::strung _feature;
@@ -81,5 +83,5 @@ struct ircd::m::hook::site
 	site(const json::members &);
 	site(site &&) = delete;
 	site(const site &) = delete;
-	~site() noexcept;
+	virtual ~site() noexcept;
 };

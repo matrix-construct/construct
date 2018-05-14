@@ -382,7 +382,7 @@ create_my_key(const m::event &)
 	cache_set(json::strung{my_key});
 }
 
-const m::hook
+const m::hook<>
 create_my_key_hook
 {
 	create_my_key,
