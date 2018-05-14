@@ -1765,6 +1765,43 @@ console_cmd__peer__version(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__peer__find(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"ip:port"
+	}};
+
+	const auto &ip{rsplit(param.at(0), ':').first};
+	const auto &port{rsplit(param.at(0), ':').second};
+	const net::ipport ipp{ip, port? port : "0"};
+
+	for(const auto &p : server::peers)
+	{
+		const auto &hostname{p.first};
+		const auto &peer{*p.second};
+		const net::ipport &ipp_
+		{
+			peer.remote
+		};
+
+		if(is_v6(ipp) && (!is_v6(ipp_) || host6(ipp) != host6(ipp_)))
+			continue;
+
+		if(is_v4(ipp) && (!is_v4(ipp_) || host4(ipp) != host4(ipp_)))
+			continue;
+
+		if(net::port(ipp) && net::port(ipp) != net::port(ipp_))
+			continue;
+
+		out << hostname << std::endl;
+		break;
+	}
+
+	return true;
+}
+
 //
 // net
 //
