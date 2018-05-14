@@ -5074,6 +5074,50 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 // cache.h
 //
 
+void
+ircd::db::for_each(rocksdb::Cache *const &cache,
+                   const cache_closure &closure)
+{
+	if(cache)
+		for_each(*cache, closure);
+}
+
+void
+ircd::db::for_each(rocksdb::Cache &cache,
+                   const cache_closure &closure)
+{
+	thread_local rocksdb::Cache *_cache;
+	_cache = &cache;
+
+	thread_local const cache_closure *_closure;
+	_closure = &closure;
+
+	cache.ApplyToAllCacheEntries([]
+	(void *const data, const size_t charge)
+	{
+		assert(_cache);
+		assert(_closure);
+		auto *const &handle
+		{
+			reinterpret_cast<rocksdb::Cache::Handle *>(data)
+		};
+
+		const void *const &value
+		{
+			_cache->Value(handle)
+		};
+
+		assert(value);
+		const auto &s
+		{
+			*reinterpret_cast<const rocksdb::Slice *>(value)
+		};
+
+		(*_closure)(slice(s), charge);
+	},
+	false);
+}
+
 bool
 ircd::db::exists(rocksdb::Cache *const &cache,
                  const string_view &key)
