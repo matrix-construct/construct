@@ -1515,7 +1515,7 @@ try
 
 	const params param{line, " ",
 	{
-		"dbname", "column"
+		"dbname"
 	}};
 
 	auto &database
@@ -1523,27 +1523,52 @@ try
 		*db::database::dbs.at(param.at(0))
 	};
 
-	out << "sequence                : " << sequence(database) << std::endl;
-	out << "database size:          : " << bytes(database) << std::endl;
-
-	out << "database keys (est)     : "
-	    << db::property(database, "rocksdb.estimate-num-keys")
+	out << std::left << std::setw(28) << std::setfill('_') << "columns "
+	    << " " << database.columns.size()
 	    << std::endl;
 
-	out << "all tables size         : "
-	    << db::property(database, "rocksdb.size-all-mem-tables")
+	out << std::left << std::setw(28) << std::setfill('_') << "files "
+	    << " " << file_count(database)
 	    << std::endl;
 
-	out << "active table size       : "
-	    << db::property(database, "rocksdb.cur-size-active-mem-table")
+	out << std::left << std::setw(28) << std::setfill('_') << "keys "
+	    << " " << db::property(database, "rocksdb.estimate-num-keys")
 	    << std::endl;
 
-	out << "active table entries    : "
-	    << db::property(database, "rocksdb.num-entries-active-mem-table")
+	out << std::left << std::setw(28) << std::setfill('_') << "size "
+	    << " " << bytes(database)
 	    << std::endl;
 
-	out << "active table deletes    : "
-	    << db::property(database, "rocksdb.num-deletes-active-mem-table")
+	out << std::left << std::setw(28) << std::setfill('_') << "live data size "
+	    << " " << db::property(database, "rocksdb.estimate-live-data-size")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "all tables size "
+	    << " " << db::property(database, "rocksdb.size-all-mem-tables")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "active table size "
+	    << " " << db::property(database, "rocksdb.cur-size-active-mem-table")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "active table entries "
+	    << " " << db::property(database, "rocksdb.num-entries-active-mem-table")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "active table deletes "
+	    << " " << db::property(database, "rocksdb.num-deletes-active-mem-table")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "lsm super sequence "
+	    << " " << db::property(database, "rocksdb.current-super-version-number")
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "sequence "
+	    << " " << sequence(database)
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "errors "
+	    << " " << db::property(database, "rocksdb.background-errors")
 	    << std::endl;
 
 	return true;
