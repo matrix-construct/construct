@@ -205,6 +205,7 @@ noexcept try
 	// Any deinits which have to be done with all subsystems intact
 	const unwind shutdown{[&]
 	{
+		_matrix_.close();
 		_server_.interrupt();
 		_client_.interrupt();
 		_server_.close();

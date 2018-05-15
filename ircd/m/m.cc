@@ -102,6 +102,12 @@ catch(const m::error &e)
 	ircd::terminate();
 }
 
+void
+ircd::m::init::close()
+{
+	listeners.reset(nullptr);
+}
+
 ircd::m::init::modules::modules(const json::object &config)
 try
 {

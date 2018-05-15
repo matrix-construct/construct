@@ -99,6 +99,8 @@ struct ircd::m::init
 
 	static void bootstrap();
 
+	void close();
+
   public:
 	init();
 	~init() noexcept;
