@@ -1919,11 +1919,54 @@ ircd::m::dbs::desc::events_prev_state
 	false,
 };
 
+namespace ircd::m::dbs::desc
+{
+	extern const ircd::database::descriptor events__default;
+};
+
+const ircd::database::descriptor
+ircd::m::dbs::desc::events__default
+{
+	// name
+	"default",
+
+	// explanation
+	R"(
+		This column is unused but required.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// cache size
+	0_MiB,
+
+	// cache size for compressed assets
+	0_MiB,
+
+	// bloom filter bits
+	0,
+
+	// expect queries hit
+	false,
+};
+
 const ircd::database::description
 ircd::m::dbs::desc::events
 {
 	// Requirement of RocksDB/LevelDB
-	{ "default" },
+	events__default,
 
 	//
 	// These columns directly represent event fields indexed by event_idx
