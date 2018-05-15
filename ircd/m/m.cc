@@ -1296,7 +1296,7 @@ ircd::m::node::room::room(const m::node &node)
 //
 
 bool
-ircd::m::events::rfor_each(const uint64_t &start,
+ircd::m::events::rfor_each(const event::idx &start,
                            const event_filter &filter,
                            const closure_bool &closure)
 {
@@ -1320,7 +1320,7 @@ ircd::m::events::rfor_each(const uint64_t &start,
 }
 
 bool
-ircd::m::events::rfor_each(const uint64_t &start,
+ircd::m::events::rfor_each(const event::idx &start,
                            const closure_bool &closure)
 {
 	event::fetch event;
@@ -1335,7 +1335,7 @@ ircd::m::events::rfor_each(const uint64_t &start,
 }
 
 bool
-ircd::m::events::rfor_each(const uint64_t &start,
+ircd::m::events::rfor_each(const event::idx &start,
                            const id_closure_bool &closure)
 {
 	static constexpr auto column_idx
@@ -1370,7 +1370,7 @@ ircd::m::events::rfor_each(const uint64_t &start,
 }
 
 bool
-ircd::m::events::for_each(const uint64_t &start,
+ircd::m::events::for_each(const event::idx &start,
                           const event_filter &filter,
                           const closure_bool &closure)
 {
@@ -1394,7 +1394,7 @@ ircd::m::events::for_each(const uint64_t &start,
 }
 
 bool
-ircd::m::events::for_each(const uint64_t &start,
+ircd::m::events::for_each(const event::idx &start,
                           const closure_bool &closure)
 {
 	event::fetch event;
@@ -1409,7 +1409,7 @@ ircd::m::events::for_each(const uint64_t &start,
 }
 
 bool
-ircd::m::events::for_each(const uint64_t &start,
+ircd::m::events::for_each(const event::idx &start,
                           const id_closure_bool &closure)
 {
 	static constexpr auto column_idx
