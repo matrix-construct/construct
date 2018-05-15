@@ -1680,6 +1680,10 @@ try
 	    << " " << bytes(database)
 	    << std::endl;
 
+	out << std::left << std::setw(28) << std::setfill('_') << "row cache size "
+	    << " " << db::usage(cache(database))
+	    << std::endl;
+
 	out << std::left << std::setw(28) << std::setfill('_') << "live data size "
 	    << " " << db::property(database, "rocksdb.estimate-live-data-size")
 	    << std::endl;
