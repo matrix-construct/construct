@@ -1186,34 +1186,55 @@ try
 
 		out << "(row cache) "
 		    << std::setw(9) << usage
-		    << " of "
+		    << " "
 		    << std::setw(9) << capacity
-		    << " B ("
+		    << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
-		    << "%)"
+		    << "%"
 		    << std::endl;
 
 		return true;
 	}
 
+	out << std::left
+	    << std::setw(16) << "COLUMN"
+	    << std::right
+	    << " "
+	    << std::setw(9) << "CACHED"
+	    << " "
+	    << std::setw(9) << "CAPACITY"
+	    << " "
+	    << std::setw(5) << "   PCT"
+	    << " "
+	    << std::setw(9) << " COMPRESS"
+	    << " "
+	    << std::setw(9) << "CAPACITY"
+	    << " "
+	    << std::setw(5) << "   PCT"
+	    << " "
+	    << std::endl;
+
 	const auto output{[&out]
-	(const size_t &usage, const size_t &capacity,
+	(const string_view &column_name,
+	 const size_t &usage, const size_t &capacity,
 	 const size_t usage_comp, const size_t &capacity_comp,
 	 const double &usage_pct, const double &usage_comp_pct)
 	{
-		out << std::right
+		out << std::setw(16) << std::left << column_name
+		    << " "
+		    << std::right
 		    << std::setw(9) << usage
-		    << " of "
+		    << " "
 		    << std::setw(9) << capacity
-		    << " B ("
+		    << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
-		    << "%), "
+		    << "% "
 		    << std::setw(9) << usage_comp
-		    << " of "
+		    << " "
 		    << std::setw(9) << capacity_comp
-		    << " B ("
+		    << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
-		    << "%) (compressed) "
+		    << "%"
 		    << std::endl;
 	}};
 
@@ -1239,7 +1260,7 @@ try
 			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
 		};
 
-		output(usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+		output(colname, usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
 	}};
 
 	// Querying the totals for all caches for all columns in a loop
@@ -1266,7 +1287,7 @@ try
 			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
 		};
 
-		output(usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+		output("*", usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
 		return true;
 	}
 
@@ -1279,10 +1300,7 @@ try
 
 	// Querying the cache for all columns in a loop
 	for(const auto &column_name : database.column_names)
-	{
-		out << std::setw(16) << std::left << column_name << " ";
 		query(column_name);
-	}
 
 	return true;
 }
