@@ -59,8 +59,11 @@ ircd::openssl::current_cert(X509_STORE_CTX &cx)
 		X509_STORE_CTX_get_current_cert(&cx)
 	};
 
-	if(!ret)
-		throw std::out_of_range{"No current certificate"};
+	if(unlikely(!ret))
+		throw error
+		{
+			"No current certificate"
+		};
 
 	return *ret;
 }
@@ -74,8 +77,11 @@ ircd::openssl::current_cert(const X509_STORE_CTX &cx)
 		X509_STORE_CTX_get_current_cert(&mcx)
 	};
 
-	if(!ret)
-		throw std::out_of_range{"No current certificate"};
+	if(unlikely(!ret))
+		throw error
+		{
+			"No current certificate"
+		};
 
 	return *ret;
 }
