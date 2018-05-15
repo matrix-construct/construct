@@ -419,7 +419,7 @@ try
 () -> std::shared_ptr<rocksdb::Cache>
 {
 	//TODO: conf
-	const auto lru_cache_size{256_MiB};
+	const auto lru_cache_size{16_MiB};
 	return rocksdb::NewLRUCache(lru_cache_size);
 }()}
 ,descriptors
