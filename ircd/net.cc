@@ -889,7 +889,7 @@ decltype(ircd::net::listener::acceptor::timeout)
 ircd::net::listener::acceptor::timeout
 {
 	{ "name",     "ircd.net.acceptor.timeout" },
-	{ "default",  5000L                       },
+	{ "default",  12000L                      },
 };
 
 ircd::net::listener::acceptor::acceptor(const string_view &name,
