@@ -458,7 +458,27 @@ try
 
 	return ret;
 }
-catch(const error &e)
+catch(const ctx::interrupted &e) // INTERRUPTION
+{
+	if(eval.opts->errorlog & fault::INTERRUPT)
+		log::error
+		{
+			log, "eval %s: #NMI: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
+
+	if(eval.opts->warnlog & fault::INTERRUPT)
+		log::warning
+		{
+			log, "eval %s: #NMI: %s",
+			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			e.what()
+		};
+
+	throw;
+}
+catch(const error &e) // VM FAULT CODE
 {
 	if(eval.opts->errorlog & e.code)
 		log::error
@@ -483,27 +503,32 @@ catch(const error &e)
 
 	throw;
 }
-catch(const ctx::interrupted &e)
+catch(const m::error &e) // GENERAL MATRIX ERROR
 {
-	if(eval.opts->errorlog & fault::INTERRUPT)
+	if(eval.opts->errorlog & fault::GENERAL)
 		log::error
 		{
-			log, "eval %s: #NMI: %s",
+			log, "eval %s: #GP: %s :%s",
 			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
+			e.what(),
+			e.content
 		};
 
-	if(eval.opts->warnlog & fault::INTERRUPT)
+	if(eval.opts->warnlog & fault::GENERAL)
 		log::warning
 		{
-			log, "eval %s: #NMI: %s",
+			log, "eval %s: #GP: %s :%s",
 			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
+			e.what(),
+			e.content
 		};
+
+	if(eval.opts->nothrows & fault::GENERAL)
+		return fault::GENERAL;
 
 	throw;
 }
-catch(const std::exception &e)
+catch(const std::exception &e) // ALL OTHER ERRORS
 {
 	if(eval.opts->errorlog & fault::GENERAL)
 		log::error
