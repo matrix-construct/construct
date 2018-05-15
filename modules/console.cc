@@ -1152,6 +1152,147 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__cache(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column",
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param[1]
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	if(!colname)
+	{
+		const auto usage(db::usage(cache(database)));
+		const auto capacity(db::capacity(cache(database)));
+		const auto usage_pct
+		{
+			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
+		};
+
+		out << "(row cache) "
+		    << std::setw(9) << usage
+		    << " of "
+		    << std::setw(9) << capacity
+		    << " B ("
+		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << "%)"
+		    << std::endl;
+
+		return true;
+	}
+
+	const auto output{[&out]
+	(const size_t &usage, const size_t &capacity,
+	 const size_t usage_comp, const size_t &capacity_comp,
+	 const double &usage_pct, const double &usage_comp_pct)
+	{
+		out << std::right
+		    << std::setw(9) << usage
+		    << " of "
+		    << std::setw(9) << capacity
+		    << " B ("
+		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << "%), "
+		    << std::setw(9) << usage_comp
+		    << " of "
+		    << std::setw(9) << capacity_comp
+		    << " B ("
+		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
+		    << "%) (compressed) "
+		    << std::endl;
+	}};
+
+	const auto query{[&output, &database]
+	(const string_view &colname)
+	{
+		const db::column column
+		{
+			database, colname
+		};
+
+		const auto usage(db::usage(cache(column)));
+		const auto capacity(db::capacity(cache(column)));
+		const auto usage_pct
+		{
+			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
+		};
+
+		const auto usage_comp(db::usage(cache_compressed(column)));
+		const auto capacity_comp(db::capacity(cache_compressed(column)));
+		const auto usage_comp_pct
+		{
+			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
+		};
+
+		output(usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+	}};
+
+	// Querying the totals for all caches for all columns in a loop
+	if(colname == "*")
+	{
+		size_t usage(0), usage_comp(0);
+		size_t capacity(0), capacity_comp(0);
+		for(const auto &column : database.columns)
+		{
+			const db::column c(*column);
+			usage += db::usage(cache(c));
+			capacity += db::capacity(cache(c));
+			usage_comp += db::usage(cache_compressed(c));
+			capacity_comp += db::capacity(cache_compressed(c));
+		}
+
+		const auto usage_pct
+		{
+			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
+		};
+
+		const auto usage_comp_pct
+		{
+			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
+		};
+
+		output(usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+		return true;
+	}
+
+	// Query the cache for a single column
+	if(colname != "**")
+	{
+		query(colname);
+		return true;
+	}
+
+	// Querying the cache for all columns in a loop
+	for(const auto &column_name : database.column_names)
+	{
+		out << std::setw(16) << std::left << column_name << " ";
+		query(column_name);
+	}
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__stats(opt &out, const string_view &line)
 {
 	const params param{line, " ",
