@@ -37,6 +37,10 @@ namespace ircd::db
 	bool exists(rocksdb::Cache &, const string_view &key);
 	bool exists(rocksdb::Cache *const &, const string_view &key);
 
+	// Remove key if it exists
+	void remove(rocksdb::Cache &, const string_view &key);
+	void remove(rocksdb::Cache *const &, const string_view &key);
+
 	// Iterate the cache entries.
 	using cache_closure = std::function<void (const string_view &, const size_t &)>;
 	void for_each(rocksdb::Cache &, const cache_closure &);

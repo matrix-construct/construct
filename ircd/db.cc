@@ -5118,6 +5118,21 @@ ircd::db::for_each(rocksdb::Cache &cache,
 	false);
 }
 
+void
+ircd::db::remove(rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	if(cache)
+		remove(*cache, key);
+}
+
+void
+ircd::db::remove(rocksdb::Cache &cache,
+                 const string_view &key)
+{
+	cache.Erase(slice(key));
+}
+
 bool
 ircd::db::exists(rocksdb::Cache *const &cache,
                  const string_view &key)
