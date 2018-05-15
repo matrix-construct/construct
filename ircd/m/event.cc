@@ -601,12 +601,7 @@ ircd::m::event::hashes(const mutable_buffer &out,
 		hash(event, content)
 	};
 
-	static const size_t hashb64sz
-	{
-		size_t(sizeof(hash_) * 1.34) + 1
-	};
-
-	thread_local char hashb64buf[hashb64sz];
+	thread_local char hashb64buf[b64encode_size(sizeof(hash_))];
 	const json::members hashes
 	{
 		{ "sha256", b64encode_unpadded(hashb64buf, hash_) }
@@ -714,12 +709,7 @@ ircd::m::event::signatures(const mutable_buffer &out,
 		sign(event, content)
 	};
 
-	static const size_t sigb64sz
-	{
-		size_t(sizeof(sig) * 1.34) + 1
-	};
-
-	thread_local char sigb64buf[sigb64sz];
+	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
 	const json::members sigb64
 	{
 		{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
