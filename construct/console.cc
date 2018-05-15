@@ -105,7 +105,7 @@ try
 		       ircd::runlevel == ircd::runlevel::HALT;
 	});
 
-	if(ircd::runlevel == ircd::runlevel::HALT)
+	if(ircd::runlevel != ircd::runlevel::RUN)
 		return;
 
 	const unwind atexit([]

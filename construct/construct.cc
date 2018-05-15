@@ -232,10 +232,10 @@ enable_coredumps()
 }
 #endif
 
-static bool handle_quit();
-static bool handle_interruption();
-static bool handle_hangup();
-static bool handle(const int &signum);
+static void handle_quit();
+static void handle_interruption();
+static void handle_hangup();
+static void handle(const int &signum);
 
 void
 sigfd_handler(const boost::system::error_code &ec,
@@ -258,13 +258,20 @@ noexcept
 			throw std::runtime_error(ec.message());
 	}
 
-	if(!handle(signum))
-		return;
+	handle(signum);
 
-	sigs.async_wait(sigfd_handler);
+	switch(ircd::runlevel)
+	{
+		case ircd::runlevel::QUIT:
+		case ircd::runlevel::FAULT:
+			return;
+
+		default:
+			sigs.async_wait(sigfd_handler);
+	}
 }
 
-bool
+void
 handle(const int &signum)
 {
 	switch(signum)
@@ -273,17 +280,15 @@ handle(const int &signum)
 		case SIGHUP:   return handle_hangup();
 		case SIGQUIT:  return handle_quit();
 		case SIGTERM:  return handle_quit();
-		default:       return true;
 	}
 }
 
-bool
+void
 handle_quit()
 try
 {
 	console_cancel();
 	ircd::quit();
-	return false;
 }
 catch(const std::exception &e)
 {
@@ -291,16 +296,13 @@ catch(const std::exception &e)
 	{
 		"SIGQUIT handler: %s", e.what()
 	};
-
-	return true;
 }
 
-bool
+void
 handle_hangup()
 try
 {
 	console_hangup();
-	return true;
 }
 catch(const std::exception &e)
 {
@@ -308,11 +310,9 @@ catch(const std::exception &e)
 	{
 		"SIGHUP handler: %s", e.what()
 	};
-
-	return true;
 }
 
-bool
+void
 handle_interruption()
 try
 {
@@ -320,8 +320,6 @@ try
 		console_cancel();
 	else
 		console_spawn();
-
-	return true;
 }
 catch(const std::exception &e)
 {
@@ -329,6 +327,4 @@ catch(const std::exception &e)
 	{
 		"SIGINT handler: %s", e.what()
 	};
-
-	return true;
 }
