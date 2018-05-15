@@ -653,6 +653,15 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	//TODO: ex
 	if(opts.write && prev_count)
 	{
+		int64_t top;
+		id::event::buf head;
+		std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
+		if(top < 0 && (opts.head_must_exist || opts.history))
+			throw error
+			{
+				fault::STATE, "Found nothing for room %s", string_view{room_id}
+			};
+
 		for(size_t i(0); i < prev_count; ++i)
 		{
 			const auto prev_id{prev.prev_event(i)};
@@ -662,15 +671,6 @@ ircd::m::vm::_eval_pdu(eval &eval,
 					fault::EVENT, "Missing prev event %s", string_view{prev_id}
 				};
 		}
-
-		int64_t top;
-		id::event::buf head;
-		std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
-		if(top < 0 && (opts.head_must_exist || opts.history))
-			throw error
-			{
-				fault::STATE, "Found nothing for room %s", string_view{room_id}
-			};
 
 		m::room room{room_id, head};
 		m::room::state state{room};
