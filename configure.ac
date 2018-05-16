@@ -151,11 +151,40 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
 	AC_SUBST(DEBUG, 0)
-	CPPDEFINE([NDEBUG])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
 ])
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
+
+dnl Explicit assert switch for still using assert() without --enable-debug
+
+AC_MSG_CHECKING(if you want to explicitly enable assertions)
+AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
+[
+	AC_SUBST(ASSERT, 1)
+], [
+	AC_SUBST(ASSERT, $DEBUG)
+])
+
+AM_CONDITIONAL([ASSERT], [[[[ "$ASSERT" = "1" ]]]])
+
+AM_COND_IF(ASSERT,
+[
+], [
+	CPPDEFINE([NDEBUG])
+])
+
+dnl Explicit optimize switch for enabling optimization when using --enable-debug
+
+AC_MSG_CHECKING(if you want to explicitly enable optimized build)
+AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
+[
+	AC_SUBST(OPTIMIZE, 1)
+], [
+	AC_SUBST(OPTIMIZE, $DEBUG != "1")
+])
+
+AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
 
 
 dnl
@@ -198,11 +227,8 @@ dnl
 dnl Optimization
 dnl
 
-AM_COND_IF([DEBUG],
+AM_COND_IF([OPTIMIZE],
 [
-	CXXFLAGS+=" -O0"
-	CXXFLAGS+=" -ggdb"
-], [
 	CXXFLAGS+=" -O3"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
@@ -224,6 +250,9 @@ AM_COND_IF([DEBUG],
 	dnl CXXFLAGS+=" -fdevirtualize-at-ltrans"
 
 	dnl remember to axe this when lto is enabled
+	CXXFLAGS+=" -ggdb"
+], [
+	CXXFLAGS+=" -O0"
 	CXXFLAGS+=" -ggdb"
 ])
 
@@ -1412,6 +1441,18 @@ else
 	debug="no"
 fi
 
+if [[ $OPTIMIZE ]]; then
+	optimize="yes"
+else
+	optimize="no"
+fi
+
+if [[ $ASSERT ]]; then
+	assert="yes"
+else
+	assert="no"
+fi
+
 dnl Make it look sexay!
 echo
 echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
@@ -1427,10 +1468,12 @@ echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support........................ $SSL_TYPE"
 echo "Magic support...................... $have_magic"
+echo "Linux AIO support ................. $aio"
+echo "IPv6 support ...................... $ipv6"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
-echo "IPv6 support ...................... $ipv6"
-echo "Linux AIO support ................. $aio"
+echo "Developer assert .................. $assert"
+echo "Optimized build ................... $optimize"
 echo "Installing into ................... $prefix"
 echo
 echo "* Ready to build $PACKAGE_NAME"
