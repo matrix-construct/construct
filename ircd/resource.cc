@@ -28,7 +28,7 @@ ircd::resource::find(const string_view &path_)
 	if(it == end(resources)) try
 	{
 		--it;
-		if(it == begin(resources) || !startswith(path, rstrip(it->first, '/')))
+		if(it == begin(resources) || !startswith(path, it->first))
 			return *resources.at("/");
 	}
 	catch(const std::out_of_range &e)
@@ -39,10 +39,8 @@ ircd::resource::find(const string_view &path_)
 		};
 	}
 
-	auto rpath
-	{
-		rstrip(it->first, '/')
-	};
+	auto rpath{it->first};
+	//assert(!endswith(rpath, '/'));
 
 	// Exact file or directory match
 	if(path == rpath)
@@ -59,7 +57,7 @@ ircd::resource::find(const string_view &path_)
 			};
 
 		--it;
-		rpath = rstrip(it->first, '/');
+		rpath = it->first;
 		if(!startswith(path, rpath))
 			throw http::error
 			{
@@ -102,10 +100,13 @@ ircd::resource::resource(const string_view &path)
 
 ircd::resource::resource(const string_view &path,
                          const opts &opts)
-:path{path}
+:path
+{
+	rstrip(path, '/')
+}
 ,description{opts.description}
 ,flags{opts.flags}
-,resources_it{[this, &path]
+,resources_it{[this]
 {
 	const auto iit
 	{
@@ -115,7 +116,7 @@ ircd::resource::resource(const string_view &path,
 	if(!iit.second)
 		throw error
 		{
-			"resource \"%s\" already registered", path
+			"resource \"%s\" already registered", this->path
 		};
 
 	return unique_const_iterator<decltype(resources)>
@@ -126,7 +127,7 @@ ircd::resource::resource(const string_view &path,
 {
 	log::debug
 	{
-		"Registered resource \"%s\"", path.empty()? string_view{"/"} : path
+		"Registered resource \"%s\"", path.empty()? string_view{"/"} : this->path
 	};
 }
 
