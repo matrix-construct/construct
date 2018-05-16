@@ -238,6 +238,16 @@ cache_get(const string_view &server_name,
 		node_id
 	};
 
+	// Without a key_id we search for the most recent key; note this is not
+	// the same as making a state_key="" query, as that would be an actual
+	// ircd.key entry without an id (which shouldn't exist).
+	if(!key_id)
+		return node_room.get(std::nothrow, "ircd.key", [&closure]
+		(const m::event &event)
+		{
+			closure(json::get<"content"_>(event));
+		});
+
 	return node_room.get(std::nothrow, "ircd.key", key_id, [&closure]
 	(const m::event &event)
 	{
