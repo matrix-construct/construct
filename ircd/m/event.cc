@@ -910,8 +910,6 @@ ircd::m::verify(const event &event_,
 		essential(event_, content)
 	};
 
-	json::get<"signatures"_>(event) = {};
-
 	thread_local char buf[64_KiB];
 	const json::object &preimage
 	{
@@ -1117,6 +1115,7 @@ ircd::m::essential(m::event event,
 		content = "{}"_sv;
 	}
 
+	json::get<"signatures"_>(event) = {};
 	return event;
 }
 
