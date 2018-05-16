@@ -24,7 +24,9 @@ real-time communication for free and open source software: a *federation of netw
 fast and highly scalable, and to be community developed by volunteer contributors over
 the internet. This mission strives to make the software easy to understand, modify, audit,
 and extend. It remains true to its roots with its modular design and having minimal
-requirements. Even though all of the old code has been rewritten, the same spirit and
+requirements.
+
+Even though all of the old code has been rewritten, the same spirit and
 _philosophy of its predecessors_ is still obvious throughout.
 
 Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
@@ -32,13 +34,6 @@ for its day to aid the virility of implementations. A vibrant and growing ecosys
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
 <br />
-
-## Installation
-
-Getting up and running with Construct is easy. A deployment can scale from as little as
-a low-end virtual machine running a stock linux distribution to a large load balanced
-cluster operating in synchrony over a network.
-
 
 #### Dependencies
 
@@ -65,34 +60,26 @@ Content MIME type recognition.
 - **zlib** or **lz4** or **snappy** (Optional):
 Provides compression for the database, etc.
 
-##### Planned dependencies
-
-- **Adobe GIL** (Optional):
-Image resizing & manipulation for the media system.
-
-- **libmozjs** (Optional JavaScript embedding):
-The matrix room is directly represented as a javascript object. :art:
-
-- **libpbc** (Pairing Based Cryptography):
-Heads up! Heavy items are falling from the ivory tower!
-
-- **libgmp** (Custom Maths):
-Experimental Post-Quantum Ideal Lattice Cryptography. :open_mouth:
-
 *Notes*:
 - libircd requires a platform capable of loading dynamic shared objects at runtime.
 
 
 #### Platforms
 
-[![Construct](https://img.shields.io/SemVer/v5.0.0-dev.png)](https://github.com/jevolk/charybdis/tree/master)
+[![Construct](https://img.shields.io/SemVer/v0.0.0-dev.png)](https://github.com/jevolk/charybdis/tree/master)
 
 | <sub> Continuously Integrated Host </sub>   | <sub> Compiler </sub>    | <sub> Third party </sub> | <sub> Status </sub> |
 |:------------------------------------------- |:------------------------ |:------------------------ |:------------------- |
-| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.61 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
+| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
 
 
-### Building from git (production)
+## Installation
+
+<a href="https://github.com/tulir/gomuks">
+	<img align="right" src="https://i.imgur.com/30zJfPb.png" />
+</a>
+
+### Building from git (RELEASE)
 
 ```
 ./autogen.sh
@@ -101,17 +88,11 @@ make
 sudo make install
 ```
 
+#### Building from git (DEVELOPER PREVIEW)
 
-#### Building from git (DEVELOPER PREVIEW INSTRUCTIONS)
-
-*This is only intended to allow development with dependencies that have not made
-their way to mainstream systems yet.* **Not for release.**
-
-The developer preview will install Construct in a specific directory isolated from the
-system. It will avoid using system libraries by downloading and building the dependencies
-from the submodules we have pinned here and build them the way we have configured. You may
-need to set the `LD_LIBRARY_PATH` to the built libraries and/or maintain an intact build
-directory.
+*This is only intended to allow isolated development with dependencies that have not made
+their way to mainstream systems yet.*
+**Not for release.**
 
 ```
 ./autogen.sh
