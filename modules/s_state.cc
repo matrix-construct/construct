@@ -10,6 +10,12 @@
 
 using namespace ircd;
 
+mapi::header
+IRCD_MODULE
+{
+	"Matrix state library; modular components."
+};
+
 extern "C" size_t
 state__rebuild_present(const m::room &room)
 {
