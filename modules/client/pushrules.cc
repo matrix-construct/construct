@@ -23,6 +23,7 @@ pushrules
 	{
 		"(11.12.1.5) Clients can retrieve, add, modify and remove push"
 		" rules globally or per-device"
+		,resource::DIRECTORY
 	}
 };
 
