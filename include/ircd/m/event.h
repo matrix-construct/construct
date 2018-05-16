@@ -119,6 +119,7 @@ struct ircd::m::event
 	static ed25519::sig sign(json::iov &event, const json::iov &content, const ed25519::sk &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
 	static string_view signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
+	friend event signatures(const mutable_buffer &, const m::event &);
 
 	friend bool verify_sha256b64(const event &, const string_view &);
 	friend bool verify_hash(const event &, const sha256::buf &);

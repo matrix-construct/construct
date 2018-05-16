@@ -723,6 +723,48 @@ ircd::m::event::signatures(const mutable_buffer &out,
 	return json::stringify(mutable_buffer{out}, sigs);
 }
 
+ircd::m::event
+ircd::m::signatures(const mutable_buffer &out,
+                    const m::event &event_)
+{
+	thread_local char content[64_KiB];
+	m::event event
+	{
+		essential(event_, content)
+	};
+
+	thread_local char buf[64_KiB];
+	const json::object &preimage
+	{
+		stringify(buf, event)
+	};
+
+	const ed25519::sig sig
+	{
+		sign(preimage)
+	};
+
+	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
+	const json::member my_sig
+	{
+		my_host(), json::members
+		{
+			{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
+		}
+	};
+
+	static const size_t SIG_MAX{64};
+	thread_local std::array<json::member, SIG_MAX> sigs;
+
+	size_t i(0);
+	sigs.at(i++) = my_sig;
+	for(const auto &other : json::get<"signatures"_>(event_))
+		sigs.at(i++) = { other.first, other.second };
+
+	json::get<"signatures"_>(event) = json::stringify(mutable_buffer{out}, sigs.data(), sigs.data() + i);
+	return event;
+}
+
 ircd::ed25519::sig
 ircd::m::event::sign(json::iov &event,
                      const json::iov &contents)
