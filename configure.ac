@@ -146,11 +146,12 @@ dnl
 AC_MSG_CHECKING(if you want to enable debugging)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
+	AC_MSG_RESULT([yes])
 	AC_SUBST(DEBUG, 1)
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
-	AC_SUBST(DEBUG, 0)
+	AC_MSG_RESULT([no])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
 ])
 
@@ -161,9 +162,18 @@ dnl Explicit assert switch for still using assert() without --enable-debug
 AC_MSG_CHECKING(if you want to explicitly enable assertions)
 AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
 [
+	AC_MSG_RESULT([yes])
 	AC_SUBST(ASSERT, 1)
 ], [
-	AC_SUBST(ASSERT, $DEBUG)
+	AC_MSG_RESULT([no])
+	AM_COND_IF(DEBUG,
+	[
+		AC_MSG_RESULT([no, but assertions are enabled anyway])
+		AC_SUBST(ASSERT, 1)
+	], [
+		AC_MSG_RESULT([no])
+		AC_SUBST(ASSERT, 0)
+	])
 ])
 
 AM_CONDITIONAL([ASSERT], [[[[ "$ASSERT" = "1" ]]]])
@@ -179,9 +189,17 @@ dnl Explicit optimize switch for enabling optimization when using --enable-debug
 AC_MSG_CHECKING(if you want to explicitly enable optimized build)
 AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
 [
+	AC_MSG_RESULT([yes])
 	AC_SUBST(OPTIMIZE, 1)
 ], [
-	AC_SUBST(OPTIMIZE, $DEBUG != "1")
+	AM_COND_IF(DEBUG,
+	[
+		AC_MSG_RESULT([no])
+		AC_SUBST(OPTIMIZE, 0)
+	], [
+		AC_MSG_RESULT([no, but optimized build is enabled anyway])
+		AC_SUBST(OPTIMIZE, 1)
+	])
 ])
 
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
