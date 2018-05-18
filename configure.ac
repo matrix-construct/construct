@@ -143,7 +143,7 @@ dnl
 dnl Debugging mode
 dnl
 
-AC_MSG_CHECKING(if you want to enable debugging)
+AC_MSG_CHECKING(whether to enable debugging)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
 	AC_MSG_RESULT([yes])
@@ -159,7 +159,7 @@ AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
 
 dnl Explicit assert switch for still using assert() without --enable-debug
 
-AC_MSG_CHECKING(if you want to explicitly enable assertions)
+AC_MSG_CHECKING(whether to explicitly enable assertions)
 AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
 [
 	AC_MSG_RESULT([yes])
@@ -186,7 +186,7 @@ AM_COND_IF(ASSERT,
 
 dnl Explicit optimize switch for enabling optimization when using --enable-debug
 
-AC_MSG_CHECKING(if you want to explicitly enable optimized build)
+AC_MSG_CHECKING(whether to explicitly enable optimized build)
 AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
 [
 	AC_MSG_RESULT([yes])
@@ -209,7 +209,7 @@ dnl
 dnl Profiling mode
 dnl
 
-AC_MSG_CHECKING(if you want to do a profile build)
+AC_MSG_CHECKING(whether to do a profile build)
 AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 [
 	if test "$ac_cv_c_compiler_gnu" = yes; then
@@ -227,7 +227,7 @@ dnl
 dnl Precompiled headers
 dnl
 
-AC_MSG_CHECKING(if you want to disable precompiled headers)
+AC_MSG_CHECKING(whether to disable precompiled headers)
 AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
 [
 	build_pch="no"
@@ -301,7 +301,7 @@ dnl
 STACK_USAGE_WARNING=16384
 FRAME_SIZE_WARNING=8192
 CWARNS=""
-AC_MSG_CHECKING(if you want to disable warnings)
+AC_MSG_CHECKING(whether to disable warnings)
 AC_ARG_ENABLE(warnings,
 AC_HELP_STRING([--disable-warnings],[Disable all sorts of warnings like a rockstar]),
 [],
