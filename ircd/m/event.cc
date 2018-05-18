@@ -724,7 +724,7 @@ ircd::m::event::signatures(const mutable_buffer &out,
 }
 
 ircd::m::event
-ircd::m::signatures(const mutable_buffer &out,
+ircd::m::signatures(const mutable_buffer &out_,
                     const m::event &event_)
 {
 	thread_local char content[64_KiB];
@@ -759,9 +759,11 @@ ircd::m::signatures(const mutable_buffer &out,
 	size_t i(0);
 	sigs.at(i++) = my_sig;
 	for(const auto &other : json::get<"signatures"_>(event_))
-		sigs.at(i++) = { other.first, other.second };
+		if(!my_host(unquote(other.first)))
+			sigs.at(i++) = { other.first, other.second };
 
-	json::get<"signatures"_>(event) = json::stringify(mutable_buffer{out}, sigs.data(), sigs.data() + i);
+	mutable_buffer out{out_};
+	json::get<"signatures"_>(event) = json::stringify(out, sigs.data(), sigs.data() + i);
 	return event;
 }
 
