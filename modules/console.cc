@@ -3165,9 +3165,14 @@ console_cmd__room__state(opt &out, const string_view &line)
 bool
 console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
 	const m::room room
