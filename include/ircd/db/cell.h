@@ -76,10 +76,6 @@ struct ircd::db::cell
 	// [SET] assign cell
 	cell &operator=(const string_view &);
 
-	// [GET] -> [SET] assign cell (atomic)
-	bool compare_exchange(string_view &expected, const string_view &desired);
-	string_view exchange(const string_view &desired);
-
 	// [GET] load cell only (returns valid)
 	bool load(const string_view &index = {}, gopts = {});
 

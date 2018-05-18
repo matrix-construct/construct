@@ -3462,48 +3462,8 @@ ircd::db::cell::load(const string_view &index,
 		this->ss = std::move(opts.snapshot);
 	}
 
-	std::unique_ptr<rocksdb::TransactionLogIterator> tit;
-	throw_on_error(d.d->GetUpdatesSince(0, &tit));
-	while(tit && tit->Valid())
-	{
-		auto batchres(tit->GetBatch());
-		//std::cout << "seq: " << batchres.sequence;
-		if(batchres.writeBatchPtr)
-		{
-			auto &batch(*batchres.writeBatchPtr);
-			//std::cout << " count " << batch.Count() << " ds: " << batch.GetDataSize() << " " << batch.Data() << std::endl;
-		}
-
-		tit->Next();
-	}
-
 	database::column &c(this->c);
 	return seek(c, index, opts, this->it);
-}
-
-ircd::string_view
-ircd::db::cell::exchange(const string_view &desired)
-{
-	const auto ret(val());
-	(*this) = desired;
-	return ret;
-}
-
-bool
-ircd::db::cell::compare_exchange(string_view &expected,
-                                 const string_view &desired)
-{
-	const auto existing(val());
-	if(expected.size() != existing.size() ||
-	   memcmp(expected.data(), existing.data(), expected.size()) != 0)
-	{
-		expected = existing;
-		return false;
-	}
-
-	expected = existing;
-	(*this) = desired;
-	return true;
 }
 
 ircd::db::cell &
