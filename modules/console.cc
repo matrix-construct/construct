@@ -3281,7 +3281,7 @@ console_cmd__room__events(opt &out, const string_view &line)
 
 	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
 		if(roots)
-			out << std::setw(40) << std::left << it.state_root()
+			out << std::setw(48) << std::left << it.state_root()
 			    << " " << std::setw(8) << std::left << it.event_idx()
 			    << " " << it.event_id()
 			    << std::endl;
