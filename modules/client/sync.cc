@@ -627,7 +627,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"polylog sync ERROR %lu to %lu (vm @ %zu) :%s"
+		"polylog sync FAILED %lu to %lu (vm @ %zu) :%s"
 		,sp.since
 		,sp.current
 		,m::vm::current_sequence
@@ -652,7 +652,7 @@ polylog_sync_presence(shortpoll &sp,
 	(const m::user &user)
 	{
 		const m::user::room user_room{user};
-		if(head_idx(user_room) <= sp.since)
+		if(head_idx(std::nothrow, user_room) <= sp.since)
 			return;
 
 		//TODO: can't check event_idx cuz only closed presence content
@@ -704,7 +704,7 @@ polylog_sync_account_data(shortpoll &sp,
 	{
 		const auto &event_idx
 		{
-			index(event)
+			index(event, std::nothrow)
 		};
 
 		if(event_idx < sp.since || event_idx >= sp.current)
@@ -772,7 +772,7 @@ polylog_sync_rooms__membership(shortpoll &sp,
 	sp.rooms.for_each(membership, [&]
 	(const m::room &room, const string_view &)
 	{
-		if(head_idx(room) <= sp.since)
+		if(head_idx(std::nothrow, room) <= sp.since)
 			return;
 
 		const m::room::id &room_id{room.room_id};
@@ -882,7 +882,7 @@ polylog_sync_room_state(shortpoll &sp,
 
 		const auto &event_idx
 		{
-			index(event)
+			index(event, std::nothrow)
 		};
 
 		if(event_idx < sp.since || event_idx >= sp.current)
@@ -1001,7 +1001,7 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 	(const m::user &user)
 	{
 		const m::user::room user_room{user};
-		if(head_idx(user_room) <= sp.since)
+		if(head_idx(std::nothrow, user_room) <= sp.since)
 			return;
 
 		user_room.get(std::nothrow, "ircd.read", room.room_id, [&]
@@ -1009,7 +1009,7 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 		{
 			const auto &event_idx
 			{
-				index(event)
+				index(event, std::nothrow)
 			};
 
 			if(event_idx < sp.since || event_idx >= sp.current)
