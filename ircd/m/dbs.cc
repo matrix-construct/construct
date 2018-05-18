@@ -168,7 +168,7 @@ ircd::m::dbs::_index_ephem(db::txn &txn,
                            const write_opts &opts)
 {
 	_index__room_events(txn, event, opts, opts.root_in);
-	return opts.root_in;
+	return strlcpy(opts.root_out, opts.root_in);
 }
 
 ircd::string_view
@@ -198,12 +198,13 @@ try
 	if(!defined(json::get<"state_key"_>(target)))
 	{
 		_index__room_events(txn, event, opts, opts.root_in);
-		return opts.root_in;
+		return strlcpy(opts.root_out, opts.root_in);
 	}
 
 	const string_view new_root
 	{
-		opts.root_in //state::remove(txn, state_root_out, state_root_in, target)
+		//state::remove(txn, state_root_out, state_root_in, target)
+		strlcpy(opts.root_out, opts.root_in)
 	};
 
 	_index__room_events(txn, event, opts, new_root);
@@ -239,7 +240,7 @@ try
 	{
 		opts.op == db::op::SET && opts.history?
 			state::insert(txn, opts.root_out, opts.root_in, event):
-			opts.root_in
+			strlcpy(opts.root_out, opts.root_in)
 	};
 
 	_index__room_events(txn, event, opts, new_root);
