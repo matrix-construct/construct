@@ -63,13 +63,11 @@ s_moduledir = @moduledir@
 s_conf_la_SOURCES = s_conf.cc
 s_control_la_SOURCES = s_control.cc
 s_node_la_SOURCES = s_node.cc
-s_state_la_SOURCES = s_state.cc
 
 s_module_LTLIBRARIES = \
 	s_conf.la \
 	s_control.la \
 	s_node.la \
-	s_state.la \
 	###
 
 ###############################################################################
@@ -83,6 +81,7 @@ m_noop_la_SOURCES = m_noop.cc
 m_typing_la_SOURCES = m_typing.cc
 m_receipt_la_SOURCES = m_receipt.cc
 m_presence_la_SOURCES = m_presence.cc
+m_room_la_SOURCES = m_room.cc
 m_room_create_la_SOURCES = m_room_create.cc
 m_room_member_la_SOURCES = m_room_member.cc
 m_room_join_rules_la_SOURCES = m_room_join_rules.cc
@@ -92,6 +91,7 @@ m_module_LTLIBRARIES = \
 	m_typing.la \
 	m_receipt.la \
 	m_presence.la \
+	m_room.la \
 	m_room_create.la \
 	m_room_member.la \
 	m_room_join_rules.la \
