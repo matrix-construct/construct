@@ -1633,10 +1633,10 @@ ircd::m::pretty(const room::state::tuple &state)
 			return;
 
 		s << std::setw(28) << std::right << key
-		  << " : " << at<"event_id"_>(event)
+		  << " :" << json::get<"depth"_>(event)
+		  << " " << at<"event_id"_>(event)
 		  << " " << json::get<"sender"_>(event)
-		  << " " << json::get<"depth"_>(event)
-		  << " " << pretty_oneline(event::prev{event})
+		  << " " << json::get<"content"_>(event)
 		  << std::endl;
 	}};
 
