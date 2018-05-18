@@ -2354,6 +2354,84 @@ console_id__event(opt &out,
 }
 
 bool
+console_cmd__event__sign(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "[host]", "[accept|eval]"
+	}};
+
+	const m::event::id event_id
+	{
+		param.at(0)
+	};
+
+	const auto &host
+	{
+		param.at(1, event_id.host())
+	};
+
+	const auto &op
+	{
+		param[2]
+	};
+
+	m::v1::event::opts opts;
+	opts.remote = host;
+	opts.dynamic = false;
+	const unique_buffer<mutable_buffer> buf
+	{
+		96_KiB
+	};
+
+	m::v1::event request
+	{
+		event_id, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const m::event orig_event
+	{
+		request
+	};
+
+	thread_local char sigbuf[64_KiB];
+	const auto event
+	{
+		m::signatures(mutable_buffer{sigbuf}, orig_event)
+	};
+
+	out << pretty(event)
+	    << std::endl;
+
+	if(op == "accept")
+	{
+		const m::vm::opts opts;
+		m::vm::accepted a
+		{
+			event, &opts, &opts.report
+		};
+
+		m::vm::accept(a);
+	}
+	else if(op == "eval")
+	{
+		m::vm::opts opts;
+		m::vm::eval
+		{
+			event, opts
+		};
+	}
+
+	return true;
+}
+
+bool
 console_cmd__event__bad(opt &out, const string_view &line)
 {
 	const params param{line, " ",
