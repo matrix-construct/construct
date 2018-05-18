@@ -3196,6 +3196,39 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__rebuild__history(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	using prototype = size_t (const m::room &);
+	static m::import<prototype> state__rebuild_history
+	{
+		"s_state", "state__rebuild_history"
+	};
+
+	const size_t count
+	{
+		state__rebuild_history(room)
+	};
+
+	out << "done " << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
 	const params param{line, " ",
