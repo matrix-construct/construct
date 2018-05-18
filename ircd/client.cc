@@ -319,7 +319,6 @@ namespace ircd
 bool
 ircd::client::async()
 {
-	const unwind::nominal::assertion na;
 	assert(bool(this->sock));
 	assert(bool(this->conf));
 	auto &sock(*this->sock);
