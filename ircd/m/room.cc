@@ -1582,9 +1582,32 @@ const
 //
 
 ircd::m::room::state::tuple::tuple(const m::room &room,
-                                   const mutable_buffer &buf)
+                                   const mutable_buffer &buf_)
 {
+	const m::room::state state
+	{
+		room
+	};
 
+	window_buffer buf{buf_};
+	json::for_each(*this, [&state, &buf]
+	(const string_view &type, auto &event)
+	{
+		state.get(std::nothrow, type, "", [&buf, &event]
+		(const event::idx &event_idx)
+		{
+			buf([&event, &event_idx]
+			(const mutable_buffer &buf)
+			{
+				event = m::event
+				{
+					event_idx, buf
+				};
+
+				return serialized(event);
+			});
+		});
+	});
 }
 
 ircd::m::room::state::tuple::tuple(const json::array &pdus)
