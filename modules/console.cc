@@ -2895,9 +2895,19 @@ console_cmd__room__top(opt &out, const string_view &line)
 		m::top(std::nothrow, room_id)
 	};
 
-	out << "idx:    " << std::get<m::event::idx>(top) << std::endl;
-	out << "depth:  " << std::get<int64_t>(top) << std::endl;
-	out << "event:  " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "idx:      " << std::get<m::event::idx>(top) << std::endl;
+	out << "depth:    " << std::get<int64_t>(top) << std::endl;
+	out << "event:    " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "m_state:  " << std::endl;
+
+	const unique_buffer<mutable_buffer> buf{64_KiB};
+	const m::room::state::tuple state
+	{
+		room_id, buf
+	};
+
+	out << pretty(state) << std::endl;
+
 	return true;
 }
 
