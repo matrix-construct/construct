@@ -310,7 +310,7 @@ linear_sync(client &client,
 	{
 		client, json::members
 		{
-			{ "next_batch",  int64_t(since)   },
+			{ "next_batch",  json::value { lex_cast(int64_t(since)), json::STRING } },
 			{ "rooms",       rooms   },
 			{ "presence",    json::object{} },
 		}
@@ -360,7 +360,7 @@ catch(const ctx::timeout &e)
 	{
 		client, json::members
 		{
-			{ "next_batch",  int64_t(since)  },
+			{ "next_batch",  json::value { lex_cast(int64_t(since)), json::STRING }  },
 			{ "rooms",       json::object{}  },
 			{ "presence",    json::object{}  },
 		}
@@ -570,7 +570,7 @@ update_sync(client &client,
 	{
 		client, json::members
 		{
-			{ "next_batch",  next_batch  },
+			{ "next_batch",  json::value { lex_cast(next_batch), json::STRING } },
 			{ "rooms",       rooms       },
 			{ "presence",    presence    },
 		}
@@ -617,7 +617,7 @@ try
 	{
 		json::stack::member member
 		{
-			object, "next_batch", json::value{int64_t(sp.current)}
+			object, "next_batch", json::value(lex_cast(int64_t(sp.current)), json::STRING)
 		};
 	}
 
