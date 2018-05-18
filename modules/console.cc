@@ -2406,7 +2406,7 @@ console_cmd__event__erase(opt &out, const string_view &line)
 
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
-	opts.idx = index(event);
+	opts.event_idx = index(event);
 	m::dbs::write(txn, event, opts);
 	txn();
 

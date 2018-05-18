@@ -70,7 +70,7 @@ namespace ircd::m::dbs
 
 struct ircd::m::dbs::write_opts
 {
-	uint64_t idx {0};
+	uint64_t event_idx {0};
 	string_view root_in;
 	mutable_buffer root_out;
 	db::op op {db::op::SET};
@@ -150,6 +150,7 @@ namespace ircd::m::dbs
 	string_view _index_state(db::txn &, const event &, const write_opts &);
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
 	string_view _index_ephem(db::txn &, const event &, const write_opts &);
+	void _index__event(db::txn &, const event &, const write_opts &);
 }
 
 struct ircd::m::dbs::init

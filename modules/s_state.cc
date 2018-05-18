@@ -50,7 +50,7 @@ state__rebuild_present(const m::room &room)
 			continue;
 
 		m::dbs::write_opts opts;
-		opts.idx = it.event_idx();
+		opts.event_idx = it.event_idx();
 		opts.present = true;
 		opts.history = false;
 		opts.head = false;
@@ -106,7 +106,7 @@ state__rebuild_history(const m::room &room)
 	for(; it; ++it)
 	{
 		const m::event &event{*it};
-		opts.idx = it.event_idx();
+		opts.event_idx = it.event_idx();
 		if(at<"depth"_>(event) == depth + 1)
 			++depth;
 

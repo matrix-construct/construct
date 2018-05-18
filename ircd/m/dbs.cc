@@ -113,8 +113,8 @@ ircd::m::dbs::blacklist(db::txn &txn,
 		{
 			opts.op,
 			string_view{event_id},
-			opts.idx != uint64_t(-1) && opts.op == db::op::SET?
-				byte_view<string_view>(opts.idx):
+			opts.event_idx != uint64_t(-1) && opts.op == db::op::SET?
+				byte_view<string_view>(opts.event_idx):
 				string_view{}
 		}
 	};
@@ -125,25 +125,20 @@ ircd::m::dbs::write(db::txn &txn,
                     const event &event,
                     const write_opts &opts)
 {
-	if(unlikely(opts.idx == 0))
+	if(unlikely(opts.event_idx == 0))
 		throw ircd::error
 		{
 			"Cannot write to database: no index specified for event."
 		};
 
-	if(opts.indexer) db::txn::append
-	{
-		txn, dbs::event_idx,
-		{
-			opts.op,
-			at<"event_id"_>(event),
-			byte_view<string_view>(opts.idx)
-		}
-	};
+	// event_idx
+	if(opts.indexer)
+		_index__event(txn, event, opts);
 
+	// Direct columns
 	db::txn::append
 	{
-		txn, byte_view<string_view>(opts.idx), event, event_column, opts.op
+		txn, byte_view<string_view>(opts.event_idx), event, event_column, opts.op
 	};
 
 	if(opts.head || opts.refs)
@@ -161,6 +156,22 @@ ircd::m::dbs::write(db::txn &txn,
 //
 // Internal interface
 //
+
+void
+ircd::m::dbs::_index__event(db::txn &txn,
+                            const event &event,
+                            const write_opts &opts)
+{
+	db::txn::append
+	{
+		txn, dbs::event_idx,
+		{
+			opts.op,
+			at<"event_id"_>(event),
+			byte_view<string_view>(opts.event_idx)
+		}
+	};
+}
 
 ircd::string_view
 ircd::m::dbs::_index_ephem(db::txn &txn,
@@ -279,7 +290,7 @@ ircd::m::dbs::_index__room_head(db::txn &txn,
 			{
 				opts.op,
 				key,
-				byte_view<string_view>{opts.idx}
+				byte_view<string_view>{opts.event_idx}
 			}
 		};
 	}
@@ -327,7 +338,7 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
 	thread_local char buf[ROOM_EVENTS_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), opts.idx)
+		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), opts.event_idx)
 	};
 
 	db::txn::append
@@ -417,7 +428,7 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 
 	const string_view val
 	{
-		byte_view<string_view>(opts.idx)
+		byte_view<string_view>(opts.event_idx)
 	};
 
 	const db::op op
