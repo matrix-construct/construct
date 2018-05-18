@@ -63,11 +63,13 @@ s_moduledir = @moduledir@
 s_conf_la_SOURCES = s_conf.cc
 s_control_la_SOURCES = s_control.cc
 s_node_la_SOURCES = s_node.cc
+s_state_la_SOURCES = s_state.cc
 
 s_module_LTLIBRARIES = \
 	s_conf.la \
 	s_control.la \
 	s_node.la \
+	s_state.la \
 	###
 
 ###############################################################################
