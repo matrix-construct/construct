@@ -19,7 +19,21 @@ IRCD_MODULE
 static void
 _can_create_room(const m::event &event)
 {
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
 
+	const m::user::id &sender
+	{
+		at<"sender"_>(event)
+	};
+
+	if(room_id.host() != sender.host())
+		throw m::ACCESS_DENIED
+		{
+			"sender must be on the room_id's host"
+		};
 }
 
 const m::hook<>
