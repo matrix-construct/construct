@@ -207,7 +207,8 @@ try
 		object.verify(x_matrix.key, x_matrix.sig)
 	};
 
-	request.origin = x_matrix.origin;
+	request.node_id = {"", x_matrix.origin};
+	request.origin = request.node_id.host();
 	return verified;
 }
 catch(const std::exception &e)
