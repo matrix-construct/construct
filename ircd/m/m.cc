@@ -2733,6 +2733,71 @@ ircd::m::exists(const id::room_alias &room_alias,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/event.h
+//
+
+bool
+ircd::m::visible(const event::id &event_id,
+                 const node::id &origin)
+{
+	m::room::id::buf room_id
+	{
+		get(event_id, "room_id", room_id)
+	};
+
+	const m::event event
+	{
+		{ "event_id",  event_id  },
+		{ "room_id",   room_id   }
+	};
+
+	return visible(event, origin);
+}
+
+bool
+ircd::m::visible(const event::id &event_id,
+                 const user::id &user_id)
+{
+	m::room::id::buf room_id
+	{
+		get(event_id, "room_id", room_id)
+	};
+
+	const m::event event
+	{
+		{ "event_id",  event_id  },
+		{ "room_id",   room_id   }
+	};
+
+	return visible(event, user_id);
+}
+
+bool
+ircd::m::visible(const event &event,
+                 const node::id &origin)
+{
+	const m::room room
+	{
+		at<"room_id"_>(event), at<"event_id"_>(event)
+	};
+
+	return room.visible(origin);
+}
+
+bool
+ircd::m::visible(const event &event,
+                 const user::id &user_id)
+{
+	const m::room room
+	{
+		at<"room_id"_>(event), at<"event_id"_>(event)
+	};
+
+	return room.visible(user_id);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/txn.h
 //
 

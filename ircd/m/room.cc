@@ -162,6 +162,20 @@ ircd::m::my(const room &room)
 //
 
 bool
+ircd::m::room::visible(const m::user::id &user_id)
+const
+{
+	return true;
+}
+
+bool
+ircd::m::room::visible(const m::node::id &origin)
+const
+{
+	return true;
+}
+
+bool
 ircd::m::room::membership(const m::id::user &user_id,
                           const string_view &membership)
 const
