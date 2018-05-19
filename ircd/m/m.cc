@@ -2927,6 +2927,7 @@ ircd::m::txn::create_id(const mutable_buffer &out,
 // m/hook.h
 //
 
+// Internal utils
 namespace ircd::m
 {
 	static void _hook_fix_state_key(const json::members &, json::member &);
@@ -2987,6 +2988,11 @@ catch(...)
 	site->del(*this);
 }
 
+/// Internal interface which manipulates the initializer supplied by the
+/// developer to the hook to create the proper JSON output. i.e They supply
+/// a "room_id" of "!config" which has no hostname, that is added here
+/// depending on my_host() in the deployment runtime...
+///
 ircd::json::strung
 ircd::m::_hook_make_feature(const json::members &members)
 {

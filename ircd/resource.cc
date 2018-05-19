@@ -936,8 +936,7 @@ ircd::resource::response::response(client &client,
 			log::facility::DWARNING:
 		ushort(code) >= 400 && ushort(code) < 500?
 			log::facility::DERROR:
-
-		log::facility::ERROR
+			log::facility::ERROR
 	};
 
 	log::logf
