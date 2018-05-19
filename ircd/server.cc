@@ -103,16 +103,22 @@ ircd::server::get(const net::hostport &hostport)
 std::unique_ptr<ircd::server::peer>
 ircd::server::create(const net::hostport &hostport)
 {
-	auto peer(std::make_unique<peer>());
-	peer->hostname = net::canonize(hostport);
+	auto peer
+	{
+		std::make_unique<server::peer>(net::canonize(hostport))
+	};
+
 	peer->open_opts = net::open_opts
 	{
-		peer->remote, net::hostport{peer->hostname}
+		peer->remote, net::hostport
+		{
+			peer->hostname, "matrix", port(hostport)
+		}
 	};
 
 	// Async DNS resolve. The links for the new peer will be connected
 	// once the resolver calls back into peer::handle_resolve().
-	peer->resolve(hostport);
+	peer->resolve(peer->open_opts.hostport);
 	return peer;
 }
 
@@ -330,8 +336,9 @@ ircd::server::submit(const hostport &hostport,
 	peer.submit(request);
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// peer
+// server/peer.h
 //
 
 decltype(ircd::server::peers)
@@ -356,7 +363,8 @@ ircd::server::peer::link_max_default
 // peer::peer
 //
 
-ircd::server::peer::peer()
+ircd::server::peer::peer(std::string hostname)
+:hostname{std::move(hostname)}
 {
 }
 

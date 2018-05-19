@@ -109,7 +109,7 @@ struct ircd::server::peer
 	void interrupt();
 	void close(const net::close_opts & = net::close_opts_default);
 
-	peer();
+	peer(std::string hostname);
 	peer(peer &&) = delete;
 	peer(const peer &) = delete;
 	~peer() noexcept;
