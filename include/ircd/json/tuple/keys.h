@@ -36,7 +36,7 @@ struct ircd::json::keys
 
 	operator vector_view<const string_view>() const;
 
-	keys(const selection &);
+	explicit keys(const selection &);
 	keys();
 };
 
@@ -70,6 +70,10 @@ struct ircd::json::keys<tuple>::include
 		for(const auto &key : list)
 			this->set(indexof<tuple>(key), true);
 	}
+
+	include(const std::initializer_list<const string_view> &list)
+	:include(vector_view<const string_view>(list))
+	{}
 };
 
 /// Construct this class with a list of keys you want to deselect for a given
@@ -85,6 +89,10 @@ struct ircd::json::keys<tuple>::exclude
 		for(const auto &key : list)
 			this->set(indexof<tuple>(key), false);
 	}
+
+	exclude(const std::initializer_list<const string_view> &list)
+	:exclude(vector_view<const string_view>(list))
+	{}
 };
 
 //
