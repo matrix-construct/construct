@@ -3194,6 +3194,11 @@ ircd::m::hook<>::site::site(const json::members &members)
 ircd::m::hook<>::site::~site()
 noexcept
 {
+	const std::vector<hook *> hooks
+	{
+		begin(this->hooks), end(this->hooks)
+	};
+
 	for(auto *const hook : hooks)
 		del(*hook);
 }
