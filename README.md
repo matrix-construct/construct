@@ -104,7 +104,7 @@ mkdir build
 statement below.
 
 ```
-CXX=g++-6 ./configure --prefix=$PWD/build --enable-debug --with-included-boost=shared --with-included-rocksdb=shared
+CXX=g++-6 ./configure --prefix=$PWD/build --with-included-boost=shared --with-included-rocksdb=shared
 ```
 
 - Many systems alias `g++` to an older version. To be safe, specify a version manually
