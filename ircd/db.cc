@@ -3674,7 +3674,13 @@ ircd::db::row::row(database &d,
                    const vector_view<const string_view> &colnames,
                    const vector_view<cell> &buf,
                    gopts opts)
-:vector_view<cell>{buf}
+:vector_view<cell>
+{
+	buf.data(),
+	colnames.empty()?
+		d.columns.size():
+		colnames.size()
+}
 {
 	using std::end;
 	using std::begin;
@@ -3689,11 +3695,9 @@ ircd::db::row::row(database &d,
 		make_opts(opts)
 	};
 
-	const size_t column_count
+	const size_t &column_count
 	{
-		colnames.empty()?
-			d.columns.size():
-			colnames.size()
+		vector_view<cell>::size()
 	};
 
 	database::column *colptr[column_count];
