@@ -570,15 +570,6 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 //
 
 ircd::m::room::state::state(const m::room &room)
-:state
-{
-	room, opts{}
-}
-{
-}
-
-ircd::m::room::state::state(const m::room &room,
-                            const opts &opts)
 :room_id
 {
 	room.room_id
@@ -587,9 +578,7 @@ ircd::m::room::state::state(const m::room &room,
 {
 	room.event_id?
 		event::id::buf{room.event_id}:
-	opts.snapshot?
-		m::head(room_id):
-	event::id::buf{}
+		event::id::buf{}
 }
 ,root_id
 {

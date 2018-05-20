@@ -280,25 +280,10 @@ struct ircd::m::room::state
 	event::id::buf get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
 	event::id::buf get(const string_view &type, const string_view &state_key = "") const;
 
-	state(const m::room &, const opts &);
 	state(const m::room &);
 	state() = default;
 	state(const state &) = delete;
 	state &operator=(const state &) = delete;
-};
-
-struct ircd::m::room::state::opts
-{
-	/// If true, the state btree at the present state may become the source of
-	/// the data for this interface. This is only significant if no event_id
-	/// was specified in the room object, otherwise snapshot is implied at that
-	/// event. If false the faster sequential present state table is used; note
-	/// that the present state may change while you use this object.
-	///
-	/// Also note that passing an event_id (implied snapshot) may still take
-	/// advantage of a rocksdb snapshot of the present state table and not the
-	/// btree as an optimization if possible.
-	bool snapshot {false};
 };
 
 /// Interface to the members of a room.
