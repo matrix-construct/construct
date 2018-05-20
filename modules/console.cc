@@ -2307,9 +2307,14 @@ console_cmd__events__filter(opt &out, const string_view &line)
 bool
 console_cmd__event(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
 	const m::event::id event_id
 	{
-		token(line, ' ', 0)
+		param.at(0)
 	};
 
 	const auto args
@@ -2317,16 +2322,15 @@ console_cmd__event(opt &out, const string_view &line)
 		tokens_after(line, ' ', 0)
 	};
 
-	static char buf[64_KiB];
-	const m::event event
+	const m::event::fetch event
 	{
-		event_id, buf
+		event_id
 	};
 
 	if(!empty(args)) switch(hash(token(args, ' ', 0)))
 	{
 		case hash("raw"):
-			out << json::object{buf} << std::endl;
+			out << event << std::endl;
 			return true;
 
 		case hash("idx"):
