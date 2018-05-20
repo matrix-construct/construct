@@ -3644,6 +3644,18 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 // net/hostport.h
 //
 
+decltype(ircd::net::canon_port)
+ircd::net::canon_port
+{
+	8448
+};
+
+decltype(ircd::net::canon_service)
+ircd::net::canon_service
+{
+	"matrix"
+};
+
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const hostport &t)
 {
@@ -3659,7 +3671,7 @@ ircd::net::canonize(const hostport &hp,
 {
 	const size_t len
 	{
-		size(host(hp)) + 6 // optimistic ':' + portnum
+		size(host(hp)) + 1 + 5 + 1 // optimistic ':' + portnum
 	};
 
 	return ircd::string(len, [&hp, &port]

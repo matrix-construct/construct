@@ -15,16 +15,20 @@ namespace ircd::net
 {
 	struct hostport;
 
+	// abstraction bleed
+	extern const uint16_t canon_port;
+	extern const string_view canon_service;
+
 	const uint16_t &port(const hostport &);
 	const string_view &host(const hostport &);
 	const string_view &service(const hostport &);
 
 	uint16_t &port(hostport &);
 	string_view &host(hostport &);
-
 	string_view string(const mutable_buffer &out, const hostport &);
-	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = 8448);
-	std::string canonize(const hostport &, const uint16_t &port = 8448);
+
+	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = canon_port);
+	std::string canonize(const hostport &, const uint16_t &port = canon_port);
 }
 
 namespace ircd
@@ -49,12 +53,12 @@ namespace ircd
 struct ircd::net::hostport
 {
 	string_view host {"0.0.0.0"};
-	string_view service {"matrix"};
-	uint16_t port {8448};
+	string_view service {canon_service};
+	uint16_t port {canon_port};
 
 	bool operator!() const;
 
-	hostport(const string_view &host, const string_view &service, const uint16_t &port = 8448);
+	hostport(const string_view &host, const string_view &service, const uint16_t &port = canon_port);
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport() = default;
