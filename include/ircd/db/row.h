@@ -111,7 +111,7 @@ ircd::db::row::row(database &d,
 :row{[&d, &key, &t, &buf, &opts]
 () -> row
 {
-	static const typename json::tuple<T...>::keys cols;
+	static const json::keys<json::tuple<T...>> cols;
 	return { d, key, cols, buf, opts };
 }()}
 {
