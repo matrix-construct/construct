@@ -59,13 +59,6 @@ struct ircd::db::row
 	    const vector_view<cell> &buf = {},
 	    gopts opts = {});
 
-	template<class... T>
-	row(database &,
-	    const string_view &key = {},
-	    const json::tuple<T...> & = {},
-	    const vector_view<cell> &buf = {},
-	    gopts opts = {});
-
 	template<class pos> friend size_t seek(row &, const pos &);
 };
 
@@ -101,21 +94,6 @@ struct ircd::db::row::delta
 	:std::tuple<enum op, row *>{op, &r}
 	{}
 };
-
-template<class... T>
-ircd::db::row::row(database &d,
-                   const string_view &key,
-                   const json::tuple<T...> &t,
-                   const vector_view<cell> &buf,
-                   gopts opts)
-:row{[&d, &key, &t, &buf, &opts]
-() -> row
-{
-	static const json::keys<json::tuple<T...>> cols;
-	return { d, key, cols, buf, opts };
-}()}
-{
-}
 
 inline ircd::db::cell &
 ircd::db::row::operator[](const size_t &i)
