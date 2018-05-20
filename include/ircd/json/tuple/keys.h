@@ -26,7 +26,7 @@ template<class tuple> struct keys;
 /// array so you cannot rely on this for a key's index into the tuple.
 template<class tuple>
 struct ircd::json::keys
-:std::array<ircd::string_view, tuple::size()>
+:std::array<string_view, tuple::size()>
 {
 	struct selection;
 	struct include;
@@ -36,8 +36,7 @@ struct ircd::json::keys
 
 	operator vector_view<const string_view>() const;
 
-	explicit keys(const selection &);
-	keys();
+	constexpr keys(const selection & = {});
 };
 
 /// Selection of keys in a tuple represented by a bitset. Users generally
@@ -48,14 +47,20 @@ struct ircd::json::keys<tuple>::selection
 :std::bitset<tuple::size()>
 {
 	template<class closure>
-	bool until(closure &&function) const;
+	constexpr bool until(closure &&function) const;
 
 	template<class closure>
-	void for_each(closure &&function) const;
+	constexpr void for_each(closure &&function) const;
 
 	template<class it_a,
 	         class it_b>
-	it_a transform(it_a it, const it_b end) const;
+	constexpr it_a transform(it_a it, const it_b end) const;
+
+	constexpr selection(const uint64_t &val = -1)
+	:std::bitset<tuple::size()>{val}
+	{}
+
+	static_assert(tuple::size() <= sizeof(uint64_t) * 8);
 };
 
 /// Construct this class with a list of keys you want to select for a given
@@ -66,7 +71,9 @@ struct ircd::json::keys<tuple>::include
 :selection
 {
 	include(const vector_view<const string_view> &list)
+	:selection{0}
 	{
+		assert(this->none());
 		for(const auto &key : list)
 			this->set(indexof<tuple>(key), true);
 	}
@@ -84,8 +91,9 @@ struct ircd::json::keys<tuple>::exclude
 :selection
 {
 	exclude(const vector_view<const string_view> &list)
+	:selection{}
 	{
-		this->set();
+		assert(this->all());
 		for(const auto &key : list)
 			this->set(indexof<tuple>(key), false);
 	}
@@ -102,7 +110,7 @@ struct ircd::json::keys<tuple>::exclude
 template<class tuple>
 template<class it_a,
 	     class it_b>
-it_a
+constexpr it_a
 ircd::json::keys<tuple>::selection::transform(it_a it,
                                               const it_b end)
 const
@@ -122,7 +130,7 @@ const
 
 template<class tuple>
 template<class closure>
-void
+constexpr void
 ircd::json::keys<tuple>::selection::for_each(closure &&function)
 const
 {
@@ -135,7 +143,7 @@ const
 
 template<class tuple>
 template<class closure>
-bool
+constexpr bool
 ircd::json::keys<tuple>::selection::until(closure &&function)
 const
 {
@@ -152,12 +160,7 @@ const
 //
 
 template<class tuple>
-ircd::json::keys<tuple>::keys()
-{
-	_key_transform<tuple>(this->begin(), this->end());
-}
-
-template<class tuple>
+constexpr
 ircd::json::keys<tuple>::keys(const selection &selection)
 {
 	selection.transform(this->begin(), this->end());
