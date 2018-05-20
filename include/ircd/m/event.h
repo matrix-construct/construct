@@ -191,16 +191,11 @@ struct ircd::m::event::fetch
 	bool valid;
 
   public:
-	fetch(const idx &, std::nothrow_t, const keys::selection &);
-	fetch(const idx &, std::nothrow_t);
-	fetch(const idx &, const keys::selection &);
-	fetch(const idx &);
-	fetch(const id &, std::nothrow_t, const keys::selection &);
-	fetch(const id &, std::nothrow_t);
-	fetch(const id &, const keys::selection &);
-	fetch(const id &);
-	fetch(const keys::selection &);
-	fetch();
+	fetch(const idx &, std::nothrow_t, const keys & = {});
+	fetch(const idx &, const keys & = {});
+	fetch(const id &, std::nothrow_t, const keys & = {});
+	fetch(const id &, const keys & = {});
+	fetch(const keys & = {});
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);

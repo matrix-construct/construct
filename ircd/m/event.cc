@@ -1498,30 +1498,11 @@ ircd::m::event::fetch::event_id(const idx &idx,
 	});
 }
 
-// db::row finds the layout of an event tuple because we pass this as a
-// reference argument to its constructor, rather than making db::row into
-// a template type.
-const ircd::m::event
-_dummy_event_;
-
 /// Seekless constructor.
-ircd::m::event::fetch::fetch()
+ircd::m::event::fetch::fetch(const keys &keys)
 :row
 {
-	*dbs::events, string_view{}, _dummy_event_, cell
-}
-,valid
-{
-	false
-}
-{
-}
-
-/// Seekless constructor.
-ircd::m::event::fetch::fetch(const keys::selection &selection)
-:row
-{
-	*dbs::events, string_view{}, keys{selection}, cell
+	*dbs::events, string_view{}, keys, cell
 }
 ,valid
 {
@@ -1532,32 +1513,11 @@ ircd::m::event::fetch::fetch(const keys::selection &selection)
 
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
-ircd::m::event::fetch::fetch(const event::id &event_id)
-:fetch
-{
-	index(event_id)
-}
-{
-}
-
-/// Seek to event_id and populate this event from database.
-/// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
-                             const keys::selection &selection)
+                             const keys &keys)
 :fetch
 {
-	index(event_id), selection
-}
-{
-}
-
-/// Seek to event_id and populate this event from database.
-/// Event is not populated if not found in database.
-ircd::m::event::fetch::fetch(const event::id &event_id,
-                             std::nothrow_t)
-:fetch
-{
-	index(event_id, std::nothrow), std::nothrow
+	index(event_id), keys
 }
 {
 }
@@ -1566,36 +1526,21 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
                              std::nothrow_t,
-                             const keys::selection &selection)
+                             const keys &keys)
 :fetch
 {
-	index(event_id, std::nothrow), std::nothrow, selection
+	index(event_id, std::nothrow), std::nothrow, keys
 }
 {
-}
-
-/// Seek to event_idx and populate this event from database.
-/// Throws if event not in database.
-ircd::m::event::fetch::fetch(const event::idx &event_idx)
-:fetch
-{
-	event_idx, std::nothrow
-}
-{
-	if(!valid)
-		throw m::NOT_FOUND
-		{
-			"idx %zu not found in database", event_idx
-		};
 }
 
 /// Seek to event_idx and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
-                             const keys::selection &selection)
+                             const keys &keys)
 :fetch
 {
-	event_idx, std::nothrow, selection
+	event_idx, std::nothrow, keys
 }
 {
 	if(!valid)
@@ -1608,28 +1553,11 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 /// Seek to event_idx and populate this event from database.
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
-                             std::nothrow_t)
-:row
-{
-	*dbs::events, byte_view<string_view>{event_idx}, _dummy_event_, cell
-}
-,valid
-{
-	row.valid(byte_view<string_view>{event_idx})
-}
-{
-	if(valid)
-		assign(*this, row, byte_view<string_view>{event_idx});
-}
-
-/// Seek to event_idx and populate this event from database.
-/// Event is not populated if not found in database.
-ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
-                             const keys::selection &selection)
+                             const keys &keys)
 :row
 {
-	*dbs::events, byte_view<string_view>{event_idx}, keys{selection}, cell
+	*dbs::events, byte_view<string_view>{event_idx}, keys, cell
 }
 ,valid
 {
