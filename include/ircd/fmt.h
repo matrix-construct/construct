@@ -100,8 +100,8 @@ class ircd::fmt::snprintf
 	short idx;                                   // Keeps count of the args for better err msgs
 
   protected:
-	auto finished() const                        { return !fstart || fstop >= fend;                }
-	size_t remaining() const                     { return std::max(oend - out - 1, 0L);            }
+	bool finished() const;
+	size_t remaining() const;
 	size_t consumed() const                      { return out - obeg;                              }
 	auto &buffer() const                         { return obeg;                                    }
 

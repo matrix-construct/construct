@@ -266,16 +266,14 @@ try
 	{
 		const mutable_buffer dst{out, max};
 		const const_buffer src{fstr, fend};
-		this->out += strlcpy(dst, src);
+		this->out += size_t(strlcpy(dst, src));
 		return;
 	}
 
 	append(fstr, fstart);
 	auto it(begin(v));
-	for(size_t i(0); i < v.size(); ++it, i++)
+	for(size_t i(0); i < v.size() && !finished(); ++it, i++)
 	{
-		assert(!finished()); // You passed too many arguments for your format string
-
 		const auto &ptr(get<0>(*it));
 		const auto &type(get<1>(*it));
 		argument(std::make_tuple(ptr, std::type_index(*type)));
@@ -296,9 +294,6 @@ catch(const std::out_of_range &e)
 void
 fmt::snprintf::argument(const arg &val)
 {
-	if(finished())
-		return;
-
 	fmt::spec spec;
 	if(qi::parse(fstart, fend, parser, spec))
 		handle_specifier(out, remaining(), idx++, spec, val);
@@ -315,10 +310,34 @@ void
 fmt::snprintf::append(const char *const &begin,
                       const char *const &end)
 {
-	const size_t &len(std::distance(begin, end));
-	const size_t &cpsz(std::min(len, remaining()));
+	assert(begin <= end);
+	const size_t rem(remaining());
+	const size_t len(end - begin);
+	const size_t &cpsz
+	{
+		std::min(len, rem)
+	};
+
 	memcpy(out, begin, cpsz);
 	out += cpsz;
+	assert(out < oend);
+}
+
+size_t
+fmt::snprintf::remaining()
+const
+{
+	assert(out < oend);
+	assert(obeg <= oend);
+	const ssize_t r(oend - out);
+	return std::max(r - 1, ssize_t(0));
+}
+
+bool
+fmt::snprintf::finished()
+const
+{
+	return !fstart || fstop >= fend || remaining() == 0;
 }
 
 const decltype(fmt::_specifiers) &
