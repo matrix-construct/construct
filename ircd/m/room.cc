@@ -332,7 +332,11 @@ ircd::m::room::for_each(const string_view &type,
                         const event::closure_bool &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	return for_each(type, event::closure_idx_bool{[&closure, &event]
 	(const event::idx &event_idx)
 	{
@@ -437,6 +441,7 @@ const
 
 ircd::m::room::messages::messages(const m::room &room)
 :room{room}
+,_event{room.fopts}
 {
 	seek();
 }
@@ -444,6 +449,7 @@ ircd::m::room::messages::messages(const m::room &room)
 ircd::m::room::messages::messages(const m::room &room,
                                   const event::id &event_id)
 :room{room}
+,_event{room.fopts}
 {
 	seek(event_id);
 }
@@ -451,6 +457,7 @@ ircd::m::room::messages::messages(const m::room &room,
 ircd::m::room::messages::messages(const m::room &room,
                                   const uint64_t &depth)
 :room{room}
+,_event{room.fopts}
 {
 	seek(depth);
 }
@@ -553,7 +560,7 @@ const ircd::m::event &
 ircd::m::room::messages::fetch(std::nothrow_t)
 {
 	if(!m::seek(_event, event_idx(), std::nothrow))
-		_event = m::event::fetch{};
+		_event = m::event::fetch{room.fopts};
 
 	return _event;
 }
@@ -589,6 +596,10 @@ ircd::m::room::state::state(const m::room &room,
 	event_id?
 		dbs::state_root(root_id_buf, room_id, event_id):
 		m::state::id{}
+}
+,fopts
+{
+	room.fopts
 }
 {
 }
@@ -630,12 +641,12 @@ ircd::m::room::state::get(const string_view &type,
                           const event::closure &closure)
 const
 {
-	get(type, state_key, event::closure_idx{[&closure]
+	get(type, state_key, event::closure_idx{[this, &closure]
 	(const event::idx &event_idx)
 	{
 		const event::fetch event
 		{
-			event_idx
+			event_idx, fopts
 		};
 
 		closure(event);
@@ -713,12 +724,12 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::closure &closure)
 const
 {
-	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
+	return get(std::nothrow, type, state_key, event::closure_idx{[this, &closure]
 	(const event::idx &event_idx)
 	{
 		const event::fetch event
 		{
-			event_idx, std::nothrow
+			event_idx, std::nothrow, fopts
 		};
 
 		closure(event);
@@ -837,7 +848,11 @@ bool
 ircd::m::room::state::test(const event::closure_bool &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	return test(event::closure_idx_bool{[&event, &closure]
 	(const event::idx &event_idx)
 	{
@@ -898,7 +913,11 @@ ircd::m::room::state::test(const string_view &type,
                            const event::closure_bool &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	return test(type, event::closure_idx_bool{[&event, &closure]
 	(const event::idx &event_idx)
 	{
@@ -1010,7 +1029,11 @@ ircd::m::room::state::test(const string_view &type,
                            const event::closure_bool &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	return test(type, state_key_lb, event::closure_idx_bool{[&event, &closure]
 	(const event::idx &event_idx)
 	{
@@ -1084,7 +1107,11 @@ void
 ircd::m::room::state::for_each(const event::closure &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	for_each(event::closure_idx{[&event, &closure]
 	(const event::idx &event_idx)
 	{
@@ -1132,7 +1159,11 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::closure &closure)
 const
 {
-	event::fetch event;
+	event::fetch event
+	{
+		fopts
+	};
+
 	for_each(type, event::closure_idx{[&event, &closure]
 	(const event::idx &event_idx)
 	{

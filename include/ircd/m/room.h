@@ -114,6 +114,7 @@ struct ircd::m::room
 	id room_id;
 	event::id event_id;
 	const vm::copts *opts {nullptr};
+	const event::fetch::opts *fopts {nullptr};
 
 	operator const id &() const;
 
@@ -147,15 +148,22 @@ struct ircd::m::room
 	bool visible(const id::user &) const;
 	bool visible(const id::node &) const;
 
-	room(const id &room_id, const string_view &event_id, const vm::copts *const &opts = nullptr)
+	room(const id &room_id,
+	     const string_view &event_id,
+	     const vm::copts *const &opts = nullptr,
+	     const event::fetch::opts *const &fopts = nullptr)
 	:room_id{room_id}
 	,event_id{event_id? event::id{event_id} : event::id{}}
 	,opts{opts}
+	,fopts{fopts}
 	{}
 
-	room(const id &room_id, const vm::copts *const &opts = nullptr)
+	room(const id &room_id,
+	     const vm::copts *const &opts = nullptr,
+	     const event::fetch::opts *const &fopts = nullptr)
 	:room_id{room_id}
 	,opts{opts}
+	,fopts{fopts}
 	{}
 
 	room() = default;
@@ -227,6 +235,7 @@ struct ircd::m::room::state
 	event::id::buf event_id;
 	m::state::id_buffer root_id_buf;
 	m::state::id root_id;
+	const event::fetch::opts *fopts {nullptr};
 
 	bool present() const;
 
