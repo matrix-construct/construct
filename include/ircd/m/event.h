@@ -199,6 +199,7 @@ struct ircd::m::event::fetch
 	fetch(const id &, std::nothrow_t);
 	fetch(const id &, const keys::selection &);
 	fetch(const id &);
+	fetch(const keys::selection &);
 	fetch();
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);

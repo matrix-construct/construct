@@ -1517,6 +1517,19 @@ ircd::m::event::fetch::fetch()
 {
 }
 
+/// Seekless constructor.
+ircd::m::event::fetch::fetch(const keys::selection &selection)
+:row
+{
+	*dbs::events, string_view{}, keys{selection}, cell
+}
+,valid
+{
+	false
+}
+{
+}
+
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::id &event_id)
