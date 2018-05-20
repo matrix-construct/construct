@@ -2266,7 +2266,10 @@ const
 				break;
 	}
 
-	throw type_error("value type[%d] is not a string", int(type));
+	throw type_error
+	{
+		"value type[%d] is not a string", int(type)
+	};
 }
 
 ircd::json::value::operator int64_t()
@@ -2286,7 +2289,10 @@ const
 			break;
 	}
 
-	throw type_error("value type[%d] is not an int64_t", int(type));
+	throw type_error
+	{
+		"value type[%d] is not an int64_t", int(type)
+	};
 }
 
 ircd::json::value::operator double()
@@ -2306,7 +2312,10 @@ const
 			break;
 	}
 
-	throw type_error("value type[%d] is not a float", int(type));
+	throw type_error
+	{
+		"value type[%d] is not a float", int(type)
+	};
 }
 
 bool
@@ -2342,7 +2351,10 @@ const
 				return !bool(integer);
 	};
 
-	throw type_error("deciding if a type[%u] is falsy is undefined", int(type));
+	throw type_error
+	{
+		"deciding if a type[%u] is falsy is undefined", int(type)
+	};
 }
 
 bool
@@ -2374,7 +2386,10 @@ const
 			               false;
 	};
 
-	throw type_error("deciding if a type[%u] is empty is undefined", int(type));
+	throw type_error
+	{
+		"deciding if a type[%u] is empty is undefined", int(type)
+	};
 }
 
 bool
@@ -2407,7 +2422,10 @@ const
 			               false;
 	};
 
-	throw type_error("deciding if a type[%u] is null is undefined", int(type));
+	throw type_error
+	{
+		"deciding if a type[%u] is null is undefined", int(type)
+	};
 }
 
 bool
@@ -2437,7 +2455,10 @@ const
 			               false;
 	};
 
-	throw type_error("deciding if a type[%u] is undefined is undefined", int(type));
+	throw type_error
+	{
+		"deciding if a type[%u] is undefined is undefined", int(type)
+	};
 }
 
 void
@@ -2470,55 +2491,55 @@ ircd::json::value::create_string(const size_t &len,
 bool
 ircd::json::operator>(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) > static_cast<string_view>(b);
+	return static_cast<string_view>(a) > static_cast<string_view>(b);
 }
 
 bool
 ircd::json::operator<(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) < static_cast<string_view>(b);
+	return static_cast<string_view>(a) < static_cast<string_view>(b);
 }
 
 bool
 ircd::json::operator>=(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) >= static_cast<string_view>(b);
+	return static_cast<string_view>(a) >= static_cast<string_view>(b);
 }
 
 bool
 ircd::json::operator<=(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) <= static_cast<string_view>(b);
+	return static_cast<string_view>(a) <= static_cast<string_view>(b);
 }
 
 bool
 ircd::json::operator!=(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) != static_cast<string_view>(b);
+	return static_cast<string_view>(a) != static_cast<string_view>(b);
 }
 
 bool
 ircd::json::operator==(const value &a, const value &b)
 {
-    if(unlikely(type(a) != STRING || type(b) != STRING))
-        throw type_error("cannot compare values");
+	if(unlikely(type(a) != STRING || type(b) != STRING))
+		throw type_error("cannot compare values");
 
-    return static_cast<string_view>(a) == static_cast<string_view>(b);
+	return static_cast<string_view>(a) == static_cast<string_view>(b);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2626,11 +2647,17 @@ ircd::json::serialized(const string_view &v)
 enum ircd::json::type
 ircd::json::type(const string_view &buf)
 {
-	static const auto flag(qi::skip_flag::dont_postskip);
+	static const auto flag
+	{
+		qi::skip_flag::dont_postskip
+	};
 
 	enum type ret;
 	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
-		throw type_error("Failed to get type from buffer");
+		throw type_error
+		{
+			"Failed to get type from buffer"
+		};
 
 	return ret;
 }
@@ -2639,7 +2666,10 @@ enum ircd::json::type
 ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
-	static const auto flag(qi::skip_flag::dont_postskip);
+	static const auto flag
+	{
+		qi::skip_flag::dont_postskip
+	};
 
 	enum type ret;
 	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
