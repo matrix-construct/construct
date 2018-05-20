@@ -34,6 +34,8 @@ struct ircd::json::keys
 
 	size_t count() const;
 
+	operator vector_view<const string_view>() const;
+
 	keys(const selection &);
 	keys();
 };
@@ -151,6 +153,14 @@ template<class tuple>
 ircd::json::keys<tuple>::keys(const selection &selection)
 {
 	selection.transform(this->begin(), this->end());
+}
+
+template<class tuple>
+ircd::json::keys<tuple>::operator
+vector_view<const string_view>()
+const
+{
+	return { this->data(), this->count() };
 }
 
 template<class tuple>
