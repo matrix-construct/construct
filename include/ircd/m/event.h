@@ -184,18 +184,21 @@ struct ircd::m::event::prev
 struct ircd::m::event::fetch
 :event
 {
+	struct opts;
 	using keys = event::keys;
+
+	static const opts default_opts;
 
 	std::array<db::cell, event::size()> cell;
 	db::row row;
 	bool valid;
 
   public:
-	fetch(const idx &, std::nothrow_t, const keys & = {});
-	fetch(const idx &, const keys & = {});
-	fetch(const id &, std::nothrow_t, const keys & = {});
-	fetch(const id &, const keys & = {});
-	fetch(const keys & = {});
+	fetch(const idx &, std::nothrow_t, const opts *const & = nullptr);
+	fetch(const idx &, const opts *const & = nullptr);
+	fetch(const id &, std::nothrow_t, const opts *const & = nullptr);
+	fetch(const id &, const opts *const & = nullptr);
+	fetch(const opts *const & = nullptr);
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);
@@ -220,6 +223,17 @@ struct ircd::m::event::fetch
 	friend const_buffer get(std::nothrow_t, const id &, const string_view &key, const mutable_buffer &out);
 	friend const_buffer get(const idx &, const string_view &key, const mutable_buffer &out);
 	friend const_buffer get(const id &, const string_view &key, const mutable_buffer &out);
+};
+
+struct ircd::m::event::fetch::opts
+{
+	event::keys keys;
+	db::gopts gopts;
+
+	opts(const event::keys &, const db::gopts & = {});
+	opts(const event::keys::selection &, const db::gopts & = {});
+	opts(const db::gopts &, const event::keys::selection & = {});
+	opts() = default;
 };
 
 /// Device to evaluate the conformity of an event object. This is an 'in vitro'

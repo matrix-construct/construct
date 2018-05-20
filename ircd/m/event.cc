@@ -1237,6 +1237,10 @@ const
 // event::fetch
 //
 
+decltype(ircd::m::event::fetch::default_opts)
+ircd::m::event::fetch::default_opts
+{};
+
 ircd::const_buffer
 ircd::m::get(const event::id &event_id,
              const string_view &key,
@@ -1499,10 +1503,14 @@ ircd::m::event::fetch::event_id(const idx &idx,
 }
 
 /// Seekless constructor.
-ircd::m::event::fetch::fetch(const keys &keys)
+ircd::m::event::fetch::fetch(const opts *const &opts)
 :row
 {
-	*dbs::events, string_view{}, keys, cell
+	*dbs::events,
+	string_view{},
+	opts? opts->keys : default_opts.keys,
+	cell,
+	opts? opts->gopts : default_opts.gopts
 }
 ,valid
 {
@@ -1514,10 +1522,10 @@ ircd::m::event::fetch::fetch(const keys &keys)
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
-                             const keys &keys)
+                             const opts *const &opts)
 :fetch
 {
-	index(event_id), keys
+	index(event_id), opts
 }
 {
 }
@@ -1526,10 +1534,10 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
                              std::nothrow_t,
-                             const keys &keys)
+                             const opts *const &opts)
 :fetch
 {
-	index(event_id, std::nothrow), std::nothrow, keys
+	index(event_id, std::nothrow), std::nothrow, opts
 }
 {
 }
@@ -1537,10 +1545,10 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 /// Seek to event_idx and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
-                             const keys &keys)
+                             const opts *const &opts)
 :fetch
 {
-	event_idx, std::nothrow, keys
+	event_idx, std::nothrow, opts
 }
 {
 	if(!valid)
@@ -1554,10 +1562,14 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
-                             const keys &keys)
+                             const opts *const &opts)
 :row
 {
-	*dbs::events, byte_view<string_view>{event_idx}, keys, cell
+	*dbs::events,
+	byte_view<string_view>{event_idx},
+	opts? opts->keys : default_opts.keys,
+	cell,
+	opts? opts->gopts : default_opts.gopts
 }
 ,valid
 {
@@ -1566,6 +1578,35 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 {
 	if(valid)
 		assign(*this, row, byte_view<string_view>{event_idx});
+}
+
+//
+// event::fetch::opts
+//
+
+ircd::m::event::fetch::opts::opts(const db::gopts &gopts,
+                                  const event::keys::selection &selection)
+:opts
+{
+	selection, gopts
+}
+{
+}
+
+ircd::m::event::fetch::opts::opts(const event::keys::selection &selection,
+                                  const db::gopts &gopts)
+:opts
+{
+	event::keys{selection}, gopts
+}
+{
+}
+
+ircd::m::event::fetch::opts::opts(const event::keys &keys,
+                                  const db::gopts &gopts)
+:keys{keys}
+,gopts{gopts}
+{
 }
 
 //
