@@ -106,6 +106,9 @@ ircd::db::_assign_invalid(tuple &t,
                           const cell &cell)
 {
 	const column &c{cell};
+	if(!c)
+		return;
+
 	const auto &descriptor
 	{
 		describe(c)
