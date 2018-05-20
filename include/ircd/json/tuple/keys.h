@@ -14,83 +14,154 @@
 namespace ircd {
 namespace json {
 
-template<class... T>
-struct tuple<T...>::keys
-:std::array<string_view, tuple<T...>::size()>
+template<class tuple> struct keys;
+
+} // namespace json
+} // namespace ircd
+
+/// Array of string literals (in string_views) representing just the keys of a
+/// tuple. By default construction all keys are included in the array. A
+/// selection construction will only include keys that are selected. Note that
+/// the selection construction packs all the chosen keys at the front of the
+/// array so you cannot rely on this for a key's index into the tuple.
+template<class tuple>
+struct ircd::json::keys
+:std::array<ircd::string_view, tuple::size()>
 {
 	struct selection;
 	struct include;
 	struct exclude;
 
-	constexpr keys()
-	{
-		_key_transform<tuple<T...>>(this->begin(), this->end());
-	}
+	size_t count() const;
+
+	keys(const selection &);
+	keys();
 };
 
-template<class... T>
-struct tuple<T...>::keys::selection
-:std::bitset<tuple<T...>::size()>
+/// Selection of keys in a tuple represented by a bitset. Users generally
+/// do not construct this class directly. Instead, construct one of the
+/// `include` or `exclude` classes which will set these bits appropriately.
+template<class tuple>
+struct ircd::json::keys<tuple>::selection
+:std::bitset<tuple::size()>
 {
 	template<class closure>
-	constexpr bool until(closure &&function) const
-	{
-		for(size_t i(0); i < this->size(); ++i)
-			if(this->test(i))
-				if(!function(key<tuple<T...>, i>()))
-					return false;
-
-		return true;
-	}
+	bool until(closure &&function) const;
 
 	template<class closure>
-	constexpr void for_each(closure &&function) const
-	{
-		this->until([&function](auto&& key)
-		{
-			function(key);
-			return true;
-		});
-	}
+	void for_each(closure &&function) const;
 
 	template<class it_a,
 	         class it_b>
-	constexpr auto transform(it_a it, const it_b end) const
-	{
-		this->until([&it, &end](auto&& key)
-		{
-			if(it == end)
-				return false;
-
-			*it = key;
-			++it;
-			return true;
-		});
-	}
+	it_a transform(it_a it, const it_b end) const;
 };
 
-template<class... T>
-struct tuple<T...>::keys::include
+/// Construct this class with a list of keys you want to select for a given
+/// tuple. This constructs a bitset representing the keys of the tuple and
+/// lights the bits for your selections.
+template<class tuple>
+struct ircd::json::keys<tuple>::include
 :selection
 {
-	constexpr include(const std::initializer_list<string_view> &list)
+	include(const std::initializer_list<string_view> &list)
 	{
 		for(const auto &key : list)
-			this->set(indexof<tuple<T...>>(key), true);
+			this->set(indexof<tuple>(key), true);
 	}
 };
 
-template<class... T>
-struct tuple<T...>::keys::exclude
+/// Construct this class with a list of keys you want to deselect for a given
+/// tuple. This constructs a bitset representing the keys of the tuple and
+/// lights the bits which are not in the list.
+template<class tuple>
+struct ircd::json::keys<tuple>::exclude
 :selection
 {
-	constexpr exclude(const std::initializer_list<string_view> &list)
+	exclude(const std::initializer_list<string_view> &list)
 	{
 		this->set();
 		for(const auto &key : list)
-			this->set(indexof<tuple<T...>>(key), false);
+			this->set(indexof<tuple>(key), false);
 	}
 };
 
-} // namespace json
-} // namespace ircd
+//
+// selection
+//
+
+template<class tuple>
+template<class it_a,
+	     class it_b>
+it_a
+ircd::json::keys<tuple>::selection::transform(it_a it,
+                                              const it_b end)
+const
+{
+	this->until([&it, &end](auto&& key)
+	{
+		if(it == end)
+			return false;
+
+		*it = key;
+		++it;
+		return true;
+	});
+
+	return it;
+}
+
+template<class tuple>
+template<class closure>
+void
+ircd::json::keys<tuple>::selection::for_each(closure &&function)
+const
+{
+	this->until([&function](auto&& key)
+	{
+		function(key);
+		return true;
+	});
+}
+
+template<class tuple>
+template<class closure>
+bool
+ircd::json::keys<tuple>::selection::until(closure &&function)
+const
+{
+	for(size_t i(0); i < tuple::size(); ++i)
+		if(this->test(i))
+			if(!function(key<tuple>(i)))
+				return false;
+
+	return true;
+}
+
+//
+// keys
+//
+
+template<class tuple>
+ircd::json::keys<tuple>::keys()
+{
+	_key_transform<tuple>(this->begin(), this->end());
+}
+
+template<class tuple>
+ircd::json::keys<tuple>::keys(const selection &selection)
+{
+	selection.transform(this->begin(), this->end());
+}
+
+template<class tuple>
+size_t
+ircd::json::keys<tuple>::count()
+const
+{
+	size_t i(0);
+	for(; i < this->size(); ++i)
+		if(!(*this)[i])
+			break;
+
+	return i;
+}

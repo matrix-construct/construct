@@ -16,6 +16,9 @@
 namespace ircd {
 namespace json {
 
+//TODO: sort
+template<class tuple> struct keys;
+
 /// All tuple templates inherit from this non-template type for tagging.
 struct tuple_base
 {
@@ -51,9 +54,9 @@ struct tuple
 :std::tuple<T...>
 ,tuple_base
 {
-	struct keys;
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
+	using keys = json::keys<super_type>;
 
 	static constexpr size_t size();
 
