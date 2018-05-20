@@ -1528,12 +1528,35 @@ ircd::m::event::fetch::fetch(const event::id &event_id)
 }
 
 /// Seek to event_id and populate this event from database.
+/// Throws if event not in database.
+ircd::m::event::fetch::fetch(const event::id &event_id,
+                             const keys::selection &selection)
+:fetch
+{
+	index(event_id), selection
+}
+{
+}
+
+/// Seek to event_id and populate this event from database.
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
                              std::nothrow_t)
 :fetch
 {
 	index(event_id, std::nothrow), std::nothrow
+}
+{
+}
+
+/// Seek to event_id and populate this event from database.
+/// Event is not populated if not found in database.
+ircd::m::event::fetch::fetch(const event::id &event_id,
+                             std::nothrow_t,
+                             const keys::selection &selection)
+:fetch
+{
+	index(event_id, std::nothrow), std::nothrow, selection
 }
 {
 }
@@ -1554,12 +1577,46 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx)
 }
 
 /// Seek to event_idx and populate this event from database.
+/// Throws if event not in database.
+ircd::m::event::fetch::fetch(const event::idx &event_idx,
+                             const keys::selection &selection)
+:fetch
+{
+	event_idx, std::nothrow, selection
+}
+{
+	if(!valid)
+		throw m::NOT_FOUND
+		{
+			"idx %zu not found in database", event_idx
+		};
+}
+
+/// Seek to event_idx and populate this event from database.
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t)
 :row
 {
 	*dbs::events, byte_view<string_view>{event_idx}, _dummy_event_, cell
+}
+,valid
+{
+	row.valid(byte_view<string_view>{event_idx})
+}
+{
+	if(valid)
+		assign(*this, row, byte_view<string_view>{event_idx});
+}
+
+/// Seek to event_idx and populate this event from database.
+/// Event is not populated if not found in database.
+ircd::m::event::fetch::fetch(const event::idx &event_idx,
+                             std::nothrow_t,
+                             const keys::selection &selection)
+:row
+{
+	*dbs::events, byte_view<string_view>{event_idx}, keys{selection}, cell
 }
 ,valid
 {

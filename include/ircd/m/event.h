@@ -90,6 +90,7 @@ struct ircd::m::event
 	struct prev;
 	struct fetch;
 	struct conforms;
+	using keys = json::keys<event>;
 
 	// Common convenience aliases
 	using id = m::id::event;
@@ -183,14 +184,20 @@ struct ircd::m::event::prev
 struct ircd::m::event::fetch
 :event
 {
+	using keys = event::keys;
+
 	std::array<db::cell, event::size()> cell;
 	db::row row;
 	bool valid;
 
   public:
+	fetch(const idx &, std::nothrow_t, const keys::selection &);
 	fetch(const idx &, std::nothrow_t);
+	fetch(const idx &, const keys::selection &);
 	fetch(const idx &);
+	fetch(const id &, std::nothrow_t, const keys::selection &);
 	fetch(const id &, std::nothrow_t);
+	fetch(const id &, const keys::selection &);
 	fetch(const id &);
 	fetch();
 
