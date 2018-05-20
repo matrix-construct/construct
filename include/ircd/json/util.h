@@ -28,6 +28,7 @@ namespace ircd::json
 	extern const string_view empty_string;
 	extern const string_view empty_object;
 	extern const string_view empty_array;
+	extern const int64_t undefined_number;
 
 	size_t serialized(const string_view &);
 	string_view stringify(mutable_buffer &, const string_view &);

@@ -133,7 +133,7 @@ ircd::db::_assign_invalid(tuple &t,
 
 	if(is_integer)
 	{
-		json::set(t, cell.col(), 0L);
+		json::set(t, cell.col(), json::undefined_number);
 		return;
 	}
 }

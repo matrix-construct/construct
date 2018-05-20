@@ -1733,6 +1733,12 @@ const ircd::string_view ircd::json::empty_string   { "\"\""   };
 const ircd::string_view ircd::json::empty_object   { "{}"     };
 const ircd::string_view ircd::json::empty_array    { "[]"     };
 
+decltype(ircd::json::undefined_number)
+ircd::json::undefined_number
+{
+	std::numeric_limits<decltype(ircd::json::undefined_number)>::max()
+};
+
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
 {
@@ -2411,7 +2417,7 @@ const
 	switch(type)
 	{
 		case NUMBER:
-			return integer == std::numeric_limits<decltype(integer)>::max();
+			return integer == undefined_number;
 
 		case STRING:
 			return string_view{string, len}.undefined();
