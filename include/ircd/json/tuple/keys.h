@@ -65,7 +65,7 @@ template<class tuple>
 struct ircd::json::keys<tuple>::include
 :selection
 {
-	include(const std::initializer_list<string_view> &list)
+	include(const vector_view<const string_view> &list)
 	{
 		for(const auto &key : list)
 			this->set(indexof<tuple>(key), true);
@@ -79,7 +79,7 @@ template<class tuple>
 struct ircd::json::keys<tuple>::exclude
 :selection
 {
-	exclude(const std::initializer_list<string_view> &list)
+	exclude(const vector_view<const string_view> &list)
 	{
 		this->set();
 		for(const auto &key : list)
