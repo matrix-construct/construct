@@ -84,17 +84,24 @@ ircd::server::interrupt_all()
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
-	auto it(peers.lower_bound(host(hostport)));
-	if(it == peers.end() || it->first != host(hostport))
+	thread_local char canonbuf[512];
+	const auto canonized
+	{
+		net::canonize(canonbuf, hostport)
+	};
+
+	auto it(peers.lower_bound(canonized));
+	if(it == peers.end() || it->first != canonized)
 	{
 		auto peer{create(hostport)};
 		log.debug("peer(%p) for %s created; adding...",
 		          peer.get(),
-		          string(hostport));
+		          canonized);
 
 		const string_view key{peer->hostname};
 		it = peers.emplace_hint(it, key, std::move(peer));
 		assert(it->second->hostname.data() == it->first.data());
+		assert(key == canonized);
 	}
 
 	return *it->second;
@@ -112,7 +119,7 @@ ircd::server::create(const net::hostport &hostport)
 	{
 		peer->remote, net::hostport
 		{
-			peer->hostname, "matrix", port(hostport)
+			peer->hostname, net::canon_service, port(hostport)
 		}
 	};
 
