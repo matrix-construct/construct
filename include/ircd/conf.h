@@ -16,6 +16,7 @@ namespace ircd::conf
 	template<class T = void> struct item;  // doesn't exist
 	template<> struct item<void>;          // base class of all conf items
 	template<> struct item<std::string>;
+	template<> struct item<bool>;
 	template<> struct item<uint64_t>;
 	template<> struct item<int64_t>;
 	template<> struct item<hours>;
@@ -125,6 +126,43 @@ struct ircd::conf::item<std::string>
 	item(const json::members &members)
 	:conf::item<>{members}
 	,value{unquote(feature.get("default"))}
+	{}
+};
+
+template<>
+struct ircd::conf::item<bool>
+:conf::item<>
+,conf::value<bool>
+{
+	string_view get(const mutable_buffer &out) const override
+	{
+		return _value?
+			strlcpy(out, "true"_sv):
+			strlcpy(out, "false"_sv);
+	}
+
+	bool set(const string_view &s) override
+	{
+		switch(hash(s))
+		{
+			case "true"_:
+				_value = true;
+				return true;
+
+			case "false"_:
+				_value = false;
+				return true;
+
+			default: throw bad_value
+			{
+				"Conf item '%s' not assigned a bool literal", name
+			};
+		}
+	}
+
+	item(const json::members &members)
+	:conf::item<>{members}
+	,value{feature.get<bool>("default", false)}
 	{}
 };
 
