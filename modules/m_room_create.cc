@@ -36,7 +36,7 @@ _can_create_room(const m::event &event)
 		};
 }
 
-const m::hook<>
+const m::hook
 _can_create_room_hookfn
 {
 	_can_create_room,
@@ -63,7 +63,7 @@ _created_room(const m::event &event)
 		send(m::my_room, at<"sender"_>(event), "ircd.room", room_id, json::object{});
 }
 
-const m::hook<>
+const m::hook
 _created_room_hookfn
 {
 	_created_room,

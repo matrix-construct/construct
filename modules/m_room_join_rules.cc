@@ -40,7 +40,7 @@ _changed_rules(const m::event &event)
 	send(public_room, sender, "ircd.room", room_id, json::strung{event});
 }
 
-const m::hook<>
+const m::hook
 _changed_rules_hookfn
 {
 	_changed_rules,

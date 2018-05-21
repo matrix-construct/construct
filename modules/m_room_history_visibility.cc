@@ -22,7 +22,7 @@ _changed_visibility(const m::event &event)
 
 }
 
-const m::hook<>
+const m::hook
 _changed_visibility_hookfn
 {
 	_changed_visibility,
@@ -38,7 +38,7 @@ _event_visible(const m::event &event)
 
 }
 
-const m::hook<>
+const m::hook
 _event_visible_hookfn
 {
 	_event_visible,

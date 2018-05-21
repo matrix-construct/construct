@@ -2938,14 +2938,14 @@ namespace ircd::m
 
 /// Instance list linkage for all hooks
 template<>
-decltype(ircd::util::instance_list<ircd::m::hook<>>::list)
-ircd::util::instance_list<ircd::m::hook<>>::list
+decltype(ircd::util::instance_list<ircd::m::hook>::list)
+ircd::util::instance_list<ircd::m::hook>::list
 {};
 
 /// Alternative hook ctor simply allowing the the function argument
 /// first and description after.
-ircd::m::hook<>::hook(decltype(function) function,
-                      const json::members &members)
+ircd::m::hook::hook(decltype(function) function,
+                    const json::members &members)
 :hook
 {
 	members, std::move(function)
@@ -2954,8 +2954,8 @@ ircd::m::hook<>::hook(decltype(function) function,
 }
 
 /// Primary hook ctor
-ircd::m::hook<>::hook(const json::members &members,
-                      decltype(function) function)
+ircd::m::hook::hook(const json::members &members,
+                    decltype(function) function)
 try
 :_feature
 {
@@ -3074,7 +3074,7 @@ ircd::m::_hook_fix_state_key(const json::members &members,
 	validate(id::USER, member.second);
 }
 
-ircd::m::hook<>::~hook()
+ircd::m::hook::~hook()
 noexcept
 {
 	if(!registered)
@@ -3085,8 +3085,8 @@ noexcept
 	site->del(*this);
 }
 
-ircd::m::hook<>::site *
-ircd::m::hook<>::find_site()
+ircd::m::hook::site *
+ircd::m::hook::find_site()
 const
 {
 	const auto &site_name
@@ -3097,7 +3097,7 @@ const
 	if(!site_name)
 		return nullptr;
 
-	for(auto *const &site : m::hook<>::site::list)
+	for(auto *const &site : m::hook::site::list)
 		if(site->name() == site_name)
 			return site;
 
@@ -3105,7 +3105,7 @@ const
 }
 
 ircd::string_view
-ircd::m::hook<>::site_name()
+ircd::m::hook::site_name()
 const try
 {
 	return unquote(feature.at("_site"));
@@ -3119,7 +3119,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-ircd::m::hook<>::match(const m::event &event)
+ircd::m::hook::match(const m::event &event)
 const
 {
 	if(json::get<"origin"_>(matching))
@@ -3161,11 +3161,11 @@ const
 
 /// Instance list linkage for all hook sites
 template<>
-decltype(ircd::util::instance_list<ircd::m::hook<>::site>::list)
-ircd::util::instance_list<ircd::m::hook<>::site>::list
+decltype(ircd::util::instance_list<ircd::m::hook::site>::list)
+ircd::util::instance_list<ircd::m::hook::site>::list
 {};
 
-ircd::m::hook<>::site::site(const json::members &members)
+ircd::m::hook::site::site(const json::members &members)
 :_feature
 {
 	members
@@ -3186,12 +3186,12 @@ ircd::m::hook<>::site::site(const json::members &members)
 
 	// Find and register all of the orphan hooks which were constructed before
 	// this site was constructed.
-	for(auto *const &hook : m::hook<>::list)
+	for(auto *const &hook : m::hook::list)
 		if(hook->site_name() == name())
 			add(*hook);
 }
 
-ircd::m::hook<>::site::~site()
+ircd::m::hook::site::~site()
 noexcept
 {
 	const std::vector<hook *> hooks
@@ -3204,7 +3204,7 @@ noexcept
 }
 
 void
-ircd::m::hook<>::site::operator()(const event &event)
+ircd::m::hook::site::operator()(const event &event)
 {
 	std::set<hook *> matching //TODO: allocator
 	{
@@ -3249,8 +3249,8 @@ ircd::m::hook<>::site::operator()(const event &event)
 }
 
 void
-ircd::m::hook<>::site::call(hook &hook,
-                            const event &event)
+ircd::m::hook::site::call(hook &hook,
+                          const event &event)
 try
 {
 	++hook.calls;
@@ -3268,7 +3268,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::m::hook<>::site::add(hook &hook)
+ircd::m::hook::site::add(hook &hook)
 {
 	assert(!hook.registered);
 	assert(hook.site_name() == name());
@@ -3317,7 +3317,7 @@ ircd::m::hook<>::site::add(hook &hook)
 }
 
 bool
-ircd::m::hook<>::site::del(hook &hook)
+ircd::m::hook::site::del(hook &hook)
 {
 	assert(hook.registered);
 	assert(hook.site_name() == name());
@@ -3368,7 +3368,7 @@ ircd::m::hook<>::site::del(hook &hook)
 }
 
 ircd::string_view
-ircd::m::hook<>::site::name()
+ircd::m::hook::site::name()
 const try
 {
 	return unquote(feature.at("name"));

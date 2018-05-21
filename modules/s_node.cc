@@ -54,7 +54,7 @@ create_my_node_room(const m::event &)
 	create(m::my_node.room_id(), m::me.user_id);
 }
 
-const m::hook<>
+const m::hook
 create_my_node_hook
 {
 	create_my_node_room,
@@ -71,7 +71,7 @@ create_nodes_room(const m::event &)
 	create(nodes_room, m::me.user_id);
 }
 
-const m::hook<>
+const m::hook
 create_nodes_hook
 {
 	create_nodes_room,

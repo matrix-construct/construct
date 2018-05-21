@@ -581,7 +581,7 @@ console_cmd__conf__get(opt &out, const string_view &line)
 bool
 console_cmd__hook__list(opt &out, const string_view &line)
 {
-	for(const auto &site : m::hook<>::site::list)
+	for(const auto &site : m::hook::site::list)
 	{
 		out << std::setw(24) << std::left << site->name()
 		    << std::endl;
