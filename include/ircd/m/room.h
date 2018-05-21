@@ -280,7 +280,8 @@ struct ircd::m::room::state
 	event::id::buf get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
 	event::id::buf get(const string_view &type, const string_view &state_key = "") const;
 
-	state(const m::room &);
+	state(const m::room &room, const event::fetch::opts *const &fopts);
+	state(const m::room &room);
 	state() = default;
 	state(const state &) = delete;
 	state &operator=(const state &) = delete;

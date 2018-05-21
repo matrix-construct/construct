@@ -570,6 +570,15 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 //
 
 ircd::m::room::state::state(const m::room &room)
+:state
+{
+	room, room.fopts
+}
+{
+}
+
+ircd::m::room::state::state(const m::room &room,
+                            const event::fetch::opts *const &fopts)
 :room_id
 {
 	room.room_id
@@ -588,7 +597,7 @@ ircd::m::room::state::state(const m::room &room)
 }
 ,fopts
 {
-	room.fopts
+	fopts
 }
 {
 }
