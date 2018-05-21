@@ -304,6 +304,7 @@ enum ircd::http::code
 	NOT_IMPLEMENTED                         = 501,
 	BAD_GATEWAY                             = 502,
 	SERVICE_UNAVAILABLE                     = 503,
+	GATEWAY_TIMEOUT                         = 504,
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
 	INSUFFICIENT_STORAGE                    = 507,
 };

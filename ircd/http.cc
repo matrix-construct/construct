@@ -97,6 +97,7 @@ ircd::http::reason
 	{ code::NOT_IMPLEMENTED,                     "Not Implemented"                                 },
 	{ code::BAD_GATEWAY,                         "Bad Gateway"                                     },
 	{ code::SERVICE_UNAVAILABLE,                 "Service Unavailable"                             },
+	{ code::GATEWAY_TIMEOUT,                     "Gateway Timeout"                                 },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
 };
