@@ -1339,6 +1339,7 @@ const
 			"event_id",
 			"membership",
 			"state_key",
+			"content",    // Required because synapse events randomly have no event.membership
 		}
 	};
 
@@ -1420,7 +1421,7 @@ const
 	return test(event::closure_bool{[&membership, &closure]
 	(const event &event)
 	{
-		if(at<"membership"_>(event) == membership)
+		if(m::membership(event) == membership)
 			if(closure(event))
 				return true;
 
