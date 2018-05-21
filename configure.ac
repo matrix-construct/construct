@@ -204,6 +204,51 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
 
+dnl
+dnl Explicit log level
+dnl
+
+AC_MSG_CHECKING(whether to explicitly set the logging level ceiling)
+AC_ARG_WITH(log-level, AC_HELP_STRING([--with-log-level[[[=INFO]]]], [Explicitly set the log level ceiling]),
+[
+	AC_MSG_RESULT([yes, enabling log level $withval and below])
+
+	level=4
+	if [[ $withval = "DEBUG" ]]; then
+		level=7
+	elif [[ $withval = "DWARNING" ]]; then
+		level=6
+	elif [[ $withval = "DERROR" ]]; then
+		level=5
+	elif [[ $withval = "INFO" ]]; then
+		level=4
+	elif [[ $withval = "NOTICE" ]]; then
+		level=3
+	elif [[ $withval = "WARNING" ]]; then
+		level=2
+	elif [[ $withval = "ERROR" ]]; then
+		level=1
+	elif [[ $withval = "CRITICAL" ]]; then
+		level=0
+	elif [[ $withval = "-1" ]]; then
+		level=-1
+	fi
+
+	AC_SUBST(LOG_LEVEL, $level)
+	RB_DEFINE_UNQUOTED([LOG_LEVEL], [$level], [Log messages for user configured level and below.])
+], [
+	AM_COND_IF(DEBUG,
+	[
+		AC_MSG_RESULT([no, but debug mode enables all log levels through DEBUG])
+		AC_SUBST(LOG_LEVEL, 7)
+		RB_DEFINE_UNQUOTED([LOG_LEVEL], [7], [Log message level default for DEBUG mode])
+	], [
+		AC_MSG_RESULT([no])
+		AC_SUBST(LOG_LEVEL, 4)
+		RB_DEFINE_UNQUOTED([LOG_LEVEL], [4], [Log message level default for release mode])
+	])
+])
+
 
 dnl
 dnl Profiling mode
@@ -1492,6 +1537,7 @@ echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert"
 echo "Optimized build ................... $optimize"
+echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo
 echo "* Ready to build $PACKAGE_NAME"
