@@ -16,6 +16,13 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
+ircd::conf::item<bool>
+register_enable
+{
+	{ "name",     "ircd.client.register.enable" },
+	{ "default",  true                          }
+};
+
 static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
 
@@ -24,6 +31,13 @@ post__register_user(client &client,
                     const resource::request::object<m::registar> &request)
 try
 {
+	if(!bool(register_enable))
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_REGISTRATION_DISABLED",
+			"Registration for this server is disabled."
+		};
+
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
 	const json::object &auth
 	{
