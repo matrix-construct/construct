@@ -194,3 +194,70 @@ catch(const std::exception &e)
 
 	throw;
 }
+
+//
+// Non-inline template specialization definitions
+//
+
+//
+// std::string
+//
+
+ircd::conf::item<std::string>::item(const json::members &members)
+:conf::item<>{members}
+,value{unquote(feature.get("default"))}
+{
+}
+
+bool
+ircd::conf::item<std::string>::set(const string_view &s)
+{
+	_value = std::string{s};
+	return true;
+}
+
+ircd::string_view
+ircd::conf::item<std::string>::get(const mutable_buffer &out)
+const
+{
+	return { data(out), _value.copy(data(out), size(out)) };
+}
+
+//
+// bool
+//
+
+ircd::conf::item<bool>::item(const json::members &members)
+:conf::item<>{members}
+,value{feature.get<bool>("default", false)}
+{
+}
+
+bool
+ircd::conf::item<bool>::set(const string_view &s)
+{
+	switch(hash(s))
+	{
+		case "true"_:
+			_value = true;
+			return true;
+
+		case "false"_:
+			_value = false;
+			return true;
+
+		default: throw bad_value
+		{
+			"Conf item '%s' not assigned a bool literal", name
+		};
+	}
+}
+
+ircd::string_view
+ircd::conf::item<bool>::get(const mutable_buffer &out)
+const
+{
+	return _value?
+		strlcpy(out, "true"_sv):
+		strlcpy(out, "false"_sv);
+}

@@ -112,21 +112,10 @@ struct ircd::conf::item<std::string>
 		return _value;
 	}
 
-	string_view get(const mutable_buffer &out) const override
-	{
-		return { data(out), _value.copy(data(out), size(out)) };
-	}
+	string_view get(const mutable_buffer &out) const override;
+	bool set(const string_view &s) override;
 
-	bool set(const string_view &s) override
-	{
-		_value = std::string{s};
-		return true;
-	}
-
-	item(const json::members &members)
-	:conf::item<>{members}
-	,value{unquote(feature.get("default"))}
-	{}
+	item(const json::members &members);
 };
 
 template<>
@@ -134,36 +123,10 @@ struct ircd::conf::item<bool>
 :conf::item<>
 ,conf::value<bool>
 {
-	string_view get(const mutable_buffer &out) const override
-	{
-		return _value?
-			strlcpy(out, "true"_sv):
-			strlcpy(out, "false"_sv);
-	}
+	string_view get(const mutable_buffer &out) const override;
+	bool set(const string_view &s) override;
 
-	bool set(const string_view &s) override
-	{
-		switch(hash(s))
-		{
-			case "true"_:
-				_value = true;
-				return true;
-
-			case "false"_:
-				_value = false;
-				return true;
-
-			default: throw bad_value
-			{
-				"Conf item '%s' not assigned a bool literal", name
-			};
-		}
-	}
-
-	item(const json::members &members)
-	:conf::item<>{members}
-	,value{feature.get<bool>("default", false)}
-	{}
+	item(const json::members &members);
 };
 
 template<>
