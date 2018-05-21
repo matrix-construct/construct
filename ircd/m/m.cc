@@ -2111,22 +2111,7 @@ void
 ircd::m::user::rooms::for_each(const closure_bool &closure)
 const
 {
-	const m::room::state state{user_room};
-	state.test("ircd.member", [&closure]
-	(const m::event &event)
-	{
-		const m::room::id &room_id
-		{
-			at<"state_key"_>(event)
-		};
-
-		const string_view &membership
-		{
-			unquote(at<"content"_>(event).at("membership"))
-		};
-
-		return !closure(room_id, membership);
-	});
+	for_each(string_view{}, closure);
 }
 
 void
@@ -2147,8 +2132,6 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
-	if(empty(membership))
-		return for_each(closure);
 
 	const m::room::state state{user_room};
 	state.test("ircd.member", [&membership, &closure]
@@ -2159,7 +2142,7 @@ const
 			unquote(at<"content"_>(event).at("membership"))
 		};
 
-		if(membership_ != membership)
+		if(membership && membership_ != membership)
 			return false;
 
 		const m::room::id &room_id
