@@ -2132,8 +2132,27 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
+	// Setup the list of event fields to fetch for the closure
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"event_id",
+			"state_key",
+			"content",
+		}
+    };
 
-	const m::room::state state{user_room};
+	const m::event::fetch::opts fopts
+	{
+		keys, user_room.fopts? user_room.fopts->gopts : db::gopts{}
+	};
+
+	const m::room::state state
+	{
+		user_room, &fopts
+	};
+
 	state.test("ircd.member", [&membership, &closure]
 	(const m::event &event)
 	{
