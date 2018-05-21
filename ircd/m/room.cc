@@ -1448,9 +1448,25 @@ const
 		return ret;
 	}
 
+	// The list of event fields to fetch for the closure
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"event_id",    // Added for any upstack usage (but may be unnecessary).
+			"membership",  // Required for membership test.
+			"content",     // Required because synapse events randomly have no event.membership
+		}
+	};
+
+	const m::event::fetch::opts fopts
+	{
+		keys, room.fopts? room.fopts->gopts : db::gopts{}
+	};
+
 	const room::state state
 	{
-		room
+		room, &fopts
 	};
 
 	size_t ret{0};
