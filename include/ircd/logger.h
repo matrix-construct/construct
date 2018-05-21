@@ -70,11 +70,11 @@ enum ircd::log::facility
 {
 	CRITICAL  = 0,  ///< Catastrophic/unrecoverable; program is in a compromised state.
 	ERROR     = 1,  ///< Things that shouldn't happen; user impacted and should know.
-	DERROR    = 2,  ///< An error but only worthy of developers in debug mode.
-	WARNING   = 3,  ///< Non-impacting undesirable behavior user should know about.
-	DWARNING  = 4,  ///< A warning but only for developers in debug mode.
-	NOTICE    = 5,  ///< An infrequent important message with neutral or positive news.
-	INFO      = 6,  ///< A more frequent message with good news.
+	WARNING   = 2,  ///< Non-impacting undesirable behavior user should know about.
+	NOTICE    = 3,  ///< An infrequent important message with neutral or positive news.
+	INFO      = 4,  ///< A more frequent message with good news.
+	DERROR    = 5,  ///< An error but only worthy of developers in debug mode.
+	DWARNING  = 6,  ///< A warning but only for developers in debug mode.
 	DEBUG     = 7,  ///< Maximum verbosity for developers.
 	_NUM_
 };
