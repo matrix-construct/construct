@@ -11,9 +11,11 @@
 #pragma once
 #define HAVE_IRCD_LOCALE_H
 
-//
-// Utilities for internationalization.
-//
+/// Utilities for internationalization.
+namespace ircd::locale
+{
+
+}
 
 // On newer platforms (gcc-5 etc) these conversions are standard C++.
 // On older platforms the definition file may use boost::locale.

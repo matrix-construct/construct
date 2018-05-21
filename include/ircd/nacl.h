@@ -11,6 +11,7 @@
 #pragma once
 #define HAVE_IRCD_NACL_H
 
+/// libsodium utility interface. (otherwise see: ircd::ed25519)
 namespace ircd::nacl
 {
 	IRCD_EXCEPTION(ircd::error, error)

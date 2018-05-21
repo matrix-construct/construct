@@ -143,6 +143,10 @@ struct ircd::strlcpy
 	{}
 };
 
+/// This is a function. It works the same as the standard strlcat() but it has
+/// some useful modernizations and may be informally referred to as strlcat++.
+/// see: ircd::strlcpy().
+///
 struct ircd::strlcat
 {
 	mutable_buffer ret;

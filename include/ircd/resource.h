@@ -17,6 +17,8 @@ namespace ircd
 	struct resource;
 }
 
+/// The target of an HTTP request specified by clients with a path.
+///
 struct ircd::resource
 {
 	IRCD_EXCEPTION(ircd::error, error)

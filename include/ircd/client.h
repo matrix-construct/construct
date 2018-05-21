@@ -22,6 +22,7 @@ namespace ircd
 	std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 }
 
+/// Remote party connecting to our daemon to make requests.
 struct ircd::client
 :std::enable_shared_from_this<client>
 ,ircd::instance_list<client>

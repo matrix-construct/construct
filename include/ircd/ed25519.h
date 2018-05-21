@@ -11,6 +11,7 @@
 #pragma once
 #define HAVE_IRCD_ED25519_H
 
+/// y^2 = x^3 + 486662x^2 + x  GF(2^255 − 19)
 namespace ircd::ed25519
 {
 	IRCD_EXCEPTION(ircd::error, error)

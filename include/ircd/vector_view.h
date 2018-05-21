@@ -20,6 +20,7 @@ namespace ircd
 	template<class T> T *data(const vector_view<T> &);
 }
 
+/// Template to represent a contiguous vector or array in a generic way.
 template<class T>
 struct ircd::vector_view
 {

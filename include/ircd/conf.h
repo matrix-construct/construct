@@ -11,6 +11,8 @@
 #pragma once
 #define HAVE_IRCD_CONF_H
 
+/// Configuration system.
+///
 namespace ircd::conf
 {
 	template<class T = void> struct item;  // doesn't exist
