@@ -16,6 +16,33 @@ IRCD_MODULE
 	"Matrix m.room.history_visibility"
 };
 
+namespace ircd::m
+{
+	extern hook::site visible_hook;
+}
+
+decltype(ircd::m::visible_hook)
+ircd::m::visible_hook
+{
+	{ "name", "m.event.visible" }
+};
+
+extern "C" bool
+_visible__user(const m::room &room,
+               const m::user &user,
+               const m::event *const &event)
+{
+	return true;
+}
+
+extern "C" bool
+_visible__node(const m::room &room,
+               const m::node &node,
+               const m::event *const &event)
+{
+	return true;
+}
+
 static void
 _changed_visibility(const m::event &event)
 {

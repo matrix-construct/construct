@@ -162,17 +162,33 @@ ircd::m::my(const room &room)
 //
 
 bool
-ircd::m::room::visible(const m::user::id &user_id)
+ircd::m::room::visible(const user::id &user_id,
+                       const event *const &event_)
 const
 {
-	return true;
+	using prototype = bool (const room &, const user &, const event *const &);
+
+	static import<prototype> function
+	{
+		"m_room_history_visibility", "visible__user"
+	};
+
+	return function(*this, user_id, event_);
 }
 
 bool
-ircd::m::room::visible(const m::node::id &origin)
+ircd::m::room::visible(const node::id &node_id,
+                       const event *const &event_)
 const
 {
-	return true;
+	using prototype = bool (const room &, const node &, const event *const &);
+
+	static import<prototype> function
+	{
+		"m_room_history_visibility", "visible__node"
+	};
+
+	return function(*this, node_id, event_);
 }
 
 bool

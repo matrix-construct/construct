@@ -2783,7 +2783,7 @@ ircd::m::visible(const event &event,
 		at<"room_id"_>(event), at<"event_id"_>(event)
 	};
 
-	return room.visible(origin);
+	return room.visible(origin, &event);
 }
 
 bool
@@ -2795,7 +2795,7 @@ ircd::m::visible(const event &event,
 		at<"room_id"_>(event), at<"event_id"_>(event)
 	};
 
-	return room.visible(user_id);
+	return room.visible(user_id, &event);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -145,8 +145,8 @@ struct ircd::m::room
 	// misc
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 	string_view membership(const mutable_buffer &out, const m::id::user &) const;
-	bool visible(const id::user &) const;
-	bool visible(const id::node &) const;
+	bool visible(const id::user &, const m::event *const & = nullptr) const;
+	bool visible(const id::node &, const m::event *const & = nullptr) const;
 
 	room(const id &room_id,
 	     const string_view &event_id,
