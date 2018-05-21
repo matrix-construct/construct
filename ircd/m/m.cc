@@ -483,7 +483,7 @@ ircd::m::vm::eval::operator()(const room &room,
 	// This eval entry point is only used for commits. We try to find the
 	// commit opts the user supplied directly to this eval or with the room.
 	if(!copts)
-		copts = room.opts;
+		copts = room.copts;
 
 	if(!copts)
 		copts = &vm::default_copts;
@@ -2652,7 +2652,9 @@ ircd::m::commit(const room &room,
 {
 	vm::copts opts
 	{
-		room.opts? *room.opts : vm::default_copts
+		room.copts?
+			*room.copts:
+			vm::default_copts
 	};
 
 	// Some functionality on this server may create an event on behalf

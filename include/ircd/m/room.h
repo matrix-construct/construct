@@ -113,7 +113,7 @@ struct ircd::m::room
 
 	id room_id;
 	event::id event_id;
-	const vm::copts *opts {nullptr};
+	const vm::copts *copts {nullptr};
 	const event::fetch::opts *fopts {nullptr};
 
 	operator const id &() const;
@@ -150,19 +150,19 @@ struct ircd::m::room
 
 	room(const id &room_id,
 	     const string_view &event_id,
-	     const vm::copts *const &opts = nullptr,
+	     const vm::copts *const &copts = nullptr,
 	     const event::fetch::opts *const &fopts = nullptr)
 	:room_id{room_id}
 	,event_id{event_id? event::id{event_id} : event::id{}}
-	,opts{opts}
+	,copts{copts}
 	,fopts{fopts}
 	{}
 
 	room(const id &room_id,
-	     const vm::copts *const &opts = nullptr,
+	     const vm::copts *const &copts = nullptr,
 	     const event::fetch::opts *const &fopts = nullptr)
 	:room_id{room_id}
-	,opts{opts}
+	,copts{copts}
 	,fopts{fopts}
 	{}
 
