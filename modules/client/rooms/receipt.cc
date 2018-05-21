@@ -55,6 +55,11 @@ post__receipt(client &client,
 		url::decode(request.parv[3], event_id)
 	};
 
+	const auto eid
+	{
+		m::receipt::read(room_id, request.user_id, event_id)
+	};
+
 	return resource::response
 	{
 		client, http::OK
