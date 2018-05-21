@@ -157,7 +157,9 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
 
+dnl
 dnl Explicit assert switch for still using assert() without --enable-debug
+dnl
 
 AC_MSG_CHECKING(whether to explicitly enable assertions)
 AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
@@ -165,7 +167,6 @@ AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions witho
 	AC_MSG_RESULT([yes])
 	AC_SUBST(ASSERT, 1)
 ], [
-	AC_MSG_RESULT([no])
 	AM_COND_IF(DEBUG,
 	[
 		AC_MSG_RESULT([no, but assertions are enabled anyway])
@@ -184,7 +185,9 @@ AM_COND_IF(ASSERT,
 	CPPDEFINE([NDEBUG])
 ])
 
+dnl
 dnl Explicit optimize switch for enabling optimization when using --enable-debug
+dnl
 
 AC_MSG_CHECKING(whether to explicitly enable optimized build)
 AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
@@ -1515,6 +1518,7 @@ if [[ $ASSERT ]]; then
 else
 	assert="no"
 fi
+
 
 dnl Make it look sexay!
 echo
