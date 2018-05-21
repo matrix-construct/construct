@@ -1322,11 +1322,44 @@ const
 	}});
 }
 
+/// Iterate the mxid's of the users in the room, optionally with a specific
+/// membership state. This query contains internal optimizations as the closure
+/// only requires a user::id. The db::gopts set in the room.fopts pointer is
+/// still used if provided.
 bool
 ircd::m::room::members::for_each(const string_view &membership,
                                  const closure_bool &closure)
 const
 {
+	// Setup the list of event fields to fetch for the closure
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"event_id",
+			"membership",
+			"state_key",
+		}
+	};
+
+	// In this case the fetch opts isn't static so it can maintain the
+	// previously given db::gopts, but it will use our keys list.
+	const m::event::fetch::opts fopts
+	{
+		keys, room.fopts? room.fopts->gopts : db::gopts{}
+	};
+
+	// Stack-over the the current fetch opts with our new opts for this query,
+	// putting them back when we're finished. This requires a const_cast which
+	// should be okay here.
+	auto &room(const_cast<m::room &>(this->room));
+	const auto theirs{room.fopts};
+	room.fopts = &fopts;
+	const unwind reset{[&room, &theirs]
+	{
+		room.fopts = theirs;
+	}};
+
 	return !test(membership, event::closure_bool{[&closure]
 	(const event &event)
 	{
