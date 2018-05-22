@@ -217,6 +217,10 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 {
 	if(unlikely(flags & context::TERMINATED))
 	{
+		// see: interruption_point().
+		if(flags & context::NOINTERRUPT)
+			return false;
+
 		mark(prof::event::CUR_TERMINATE);
 		return true;
 	}
