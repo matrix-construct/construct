@@ -169,6 +169,7 @@ run git submodule update --init --recursive --checkout libs/gil
 
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
+run ./bjam --clean
 run ./b2 -d0 headers
 run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all
 
