@@ -119,6 +119,10 @@ make install
 
 ## Developers
 
+<a href="https://github.com/mujx/nheko">
+	<img align="right" src="https://i.imgur.com/GQ91GOK.png" />
+</a>
+
 [![](https://img.shields.io/badge/License-BSD-brightgreen.svg)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)]()
 
  * Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
