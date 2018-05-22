@@ -1039,7 +1039,8 @@ try
 }
 catch(const interrupted &e)
 {
-	throw;
+	// Interrupt is stopped here so this ctx can be reused for a new job.
+	return;
 }
 catch(const std::exception &e)
 {
