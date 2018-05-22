@@ -402,7 +402,11 @@ console_cmd__log__level(opt &out, const string_view &line)
 	};
 
 	for(int i(0); i < num_of<log::facility>(); ++i)
-		if(i <= level)
+		if(i > RB_LOG_LEVEL)
+		{
+			out << "[\033[1;40m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+		}
+		else if(i <= level)
 		{
 			console_enable(log::facility(i));
 			out << "[\033[1;42m+\033[0m]: " << reflect(log::facility(i)) << std::endl;
