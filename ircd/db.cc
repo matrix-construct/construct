@@ -174,6 +174,16 @@ ircd::db::compact(database &d)
 	}
 }
 
+void
+ircd::db::check(database &d)
+{
+	assert(d.d);
+	throw_on_error
+	{
+		d.d->VerifyChecksum()
+	};
+}
+
 /// Writes a snapshot of this database to the directory specified. The
 /// snapshot consists of hardlinks to the bulk data files of this db, but
 /// copies the other stuff that usually gets corrupted. The directory can
@@ -629,12 +639,14 @@ try
 	dbs, dbs.emplace(string_view{this->name}, this).first
 }
 {
-	throw_on_error
+	#ifdef RB_DEBUG
+	log::notice
 	{
-		#ifdef RB_DEBUG
-		d->VerifyChecksum() //TODO: worth doing this for real here?
-		#endif
+		log, "'%s': Verifying database integrity. This may take several minutes...",
+		this->name
 	};
+	check(*this);
+	#endif
 
 	log.info("'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
 	         this->name,

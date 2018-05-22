@@ -50,6 +50,7 @@ namespace ircd::db
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	void checkpoint(database &, const string_view &dir);
+	void check(database &);
 	void compact(database &);
 	void sort(database &, const bool &blocking = true);
 	void flush(database &, const bool &sync = false);
