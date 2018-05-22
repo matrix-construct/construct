@@ -2171,8 +2171,23 @@ console_cmd__client(opt &out, const string_view &line)
 	using std::left;
 	using std::right;
 
+	const params param{line, " ",
+	{
+		"[id]",
+	}};
+
+	const auto &idnum
+	{
+		param.at<ulong>(0, 0)
+	};
+
 	for(const auto *const &client : ircd::client::list)
 	{
+		if(idnum && client->id < idnum)
+			continue;
+		else if(idnum && client->id > idnum)
+			break;
+
 		out << setw(8) << left << client->id
 		    << "  " << right << setw(22) << local(*client)
 		    << "  " << left << setw(22) << remote(*client)
