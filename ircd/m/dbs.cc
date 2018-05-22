@@ -836,6 +836,12 @@ ircd::m::dbs::desc::events__room_events__cmp
 			std::get<0>(pair[1]) < std::get<0>(pair[0]):
 			std::get<1>(pair[1]) < std::get<1>(pair[0]);
 	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
 };
 
 ircd::string_view
