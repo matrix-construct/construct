@@ -18,6 +18,7 @@ inline namespace this_ctx
 	struct critical_indicator;                   // Indicates if yielding happened for a section
 	struct critical_assertion;                   // Assert no yielding for a section
 	struct exception_handler;                    // Must be present to yield in a handler
+	struct uninterruptible;                      // Scope convenience for interruptible()
 
 	struct ctx &cur();                           ///< Assumptional reference to *current
 
@@ -29,6 +30,8 @@ inline namespace this_ctx
 
 	void interruption_point();                   // throws if interruption_requested()
 	bool interruption_requested();               // interruption(cur())
+	void interruptible(const bool &);            // interruptible(cur(), bool) +INTERRUPTION POINT
+	void interruptible(const bool &, std::nothrow_t) noexcept;
 
 	struct stack_usage_assertion;                // Assert safety factor (see ctx/prof.h)
 	size_t stack_at_here() __attribute__((noinline));
@@ -132,6 +135,34 @@ struct ircd::ctx::this_ctx::exception_handler
 	exception_handler(const exception_handler &) = delete;
 	exception_handler &operator=(exception_handler &&) = delete;
 	exception_handler &operator=(const exception_handler &) = delete;
+};
+
+/// An instance of uninterruptible will suppress interrupts sent to the
+/// context for the scope. Suppression does not discard any interrupt,
+/// it merely ignores it at all interruption points until the suppression
+/// ends, after which it will be thrown.
+///
+struct ircd::ctx::this_ctx::uninterruptible
+{
+	struct nothrow;
+
+	uninterruptible();
+	uninterruptible(uninterruptible &&) = delete;
+	uninterruptible(const uninterruptible &) = delete;
+	~uninterruptible() noexcept(false);
+};
+
+/// A variant of uinterruptible for users that must guarantee the ending of
+/// the suppression scope will not be an interruption point. The default
+/// behavior for uninterruptible is to throw, even from its destructor, to
+/// fulfill the interruption request without any more delay.
+///
+struct ircd::ctx::this_ctx::uninterruptible::nothrow
+{
+	nothrow() noexcept;
+	nothrow(nothrow &&) = delete;
+	nothrow(const nothrow &) = delete;
+	~nothrow() noexcept;
 };
 
 /// This overload matches ::sleep() and acts as a drop-in for ircd contexts.

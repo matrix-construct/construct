@@ -55,6 +55,7 @@ namespace ircd::ctx
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
 	const uint64_t &yields(const ctx &);         // Context switching counter
 	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
+	bool interruptible(const ctx &);             // Context can throw at interruption point
 	bool interruption(const ctx &);              // Context was marked for interruption
 	bool termination(const ctx &);               // Context was marked for termination
 	bool finished(const ctx &);                  // Context function returned (or exception).
@@ -62,6 +63,7 @@ namespace ircd::ctx
 	bool running(const ctx &);                   // Context is the currently running ctx.
 	bool waiting(const ctx &);                   // started() && !finished() && !running()
 
+	void interruptible(ctx &, const bool &);     // False for interrupt suppression.
 	void interrupt(ctx &);                       // Interrupt the context.
 	void terminate(ctx &);                       // Interrupt for termination.
 	void signal(ctx &, std::function<void ()>);  // Post function to context strand

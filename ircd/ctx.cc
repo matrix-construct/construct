@@ -232,6 +232,12 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 	// so please eat this branch misprediction.
 	if(unlikely(flags & context::INTERRUPTED))
 	{
+		// The NOINTERRUPT flag works by pretending there is no INTERRUPTED
+		// flag set and also does not clear the flag. This allows the interrupt
+		// to remaing pending until the uninterruptible section is complete.
+		if(flags & context::NOINTERRUPT)
+			return false;
+
 		mark(prof::event::CUR_INTERRUPT);
 		flags &= ~context::INTERRUPTED;
 		return true;
@@ -332,6 +338,20 @@ ircd::ctx::interrupt(ctx &ctx)
 		ctx.cont->interrupted(current);
 }
 
+/// Marks `ctx` for whether to allow or suppress interruption. Suppression
+/// does not ignore an interrupt itself, it only ignores the interruption
+/// points. Thus when a suppression ends if the interrupt flag was ever set
+/// the next interruption point will throw as expected.
+void
+ircd::ctx::interruptible(ctx &ctx,
+                         const bool &b)
+{
+	if(b)
+		ctx.flags &= ~context::NOINTERRUPT;
+	else
+		ctx.flags |= context::NOINTERRUPT;
+}
+
 /// started() && !finished() && !running
 bool
 ircd::ctx::waiting(const ctx &ctx)
@@ -372,6 +392,13 @@ bool
 ircd::ctx::interruption(const ctx &c)
 {
 	return c.flags & context::INTERRUPTED;
+}
+
+/// Indicates if `ctx` will suppress any interrupts.
+bool
+ircd::ctx::interruptible(const ctx &c)
+{
+	return c.flags & ~context::NOINTERRUPT;
 }
 
 /// Returns the cycle count for `ctx`
@@ -524,6 +551,25 @@ ircd::ctx::this_ctx::stack_at_here()
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
 void
+ircd::ctx::this_ctx::interruptible(const bool &b)
+{
+	interruptible(b, std::nothrow);
+	interruption_point();
+}
+
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
+void
+ircd::ctx::this_ctx::interruptible(const bool &b,
+                                   std::nothrow_t)
+noexcept
+{
+	interruptible(cur(), b);
+}
+
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
+void
 ircd::ctx::this_ctx::interruption_point()
 {
 	return cur().interruption_point();
@@ -551,6 +597,37 @@ ircd::ctx::this_ctx::name()
 {
 	static const string_view nada{"*"};
 	return current? name(cur()) : nada;
+}
+
+//
+// uinterruptible
+//
+
+ircd::ctx::this_ctx::uninterruptible::uninterruptible()
+{
+	interruptible(false);
+}
+
+ircd::ctx::this_ctx::uninterruptible::~uninterruptible()
+noexcept(false)
+{
+	interruptible(true);
+}
+
+//
+// uninterruptible::nothrow
+//
+
+ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
+noexcept
+{
+	interruptible(false, std::nothrow);
+}
+
+ircd::ctx::this_ctx::uninterruptible::nothrow::~nothrow()
+noexcept
+{
+	interruptible(true, std::nothrow);
 }
 
 //

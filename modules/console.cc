@@ -826,6 +826,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (running(ctx)? 'R' : '-')
 		    << (waiting(ctx)? 'W' : '-')
 		    << (finished(ctx)? 'F' : '-')
+		    << (interruptible(ctx)? '-' : 'N')
 		    << (interruption(ctx)? 'I' : '-')
 		    << (termination(ctx)? 'T' : '-')
 		    ;

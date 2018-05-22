@@ -102,6 +102,7 @@ enum ircd::ctx::context::flags
 	POST            = 0x01,   ///< Defers spawn with an ios.post()
 	DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)
 	DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
+	NOINTERRUPT     = 0x08,   ///< Interruption points won't throw while lit.
 
 	INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
 	TERMINATED      = 0x20,   ///< (INDICATOR)
