@@ -455,25 +455,41 @@ const
 // room::messages
 //
 
-ircd::m::room::messages::messages(const m::room &room)
+ircd::m::room::messages::messages(const m::room &room,
+                                  const event::fetch::opts *const &fopts)
 :room{room}
-,_event{room.fopts}
+,_event
+{
+	fopts?
+		fopts:
+		room.fopts
+}
 {
 	seek();
 }
 
 ircd::m::room::messages::messages(const m::room &room,
-                                  const event::id &event_id)
+                                  const event::id &event_id,
+                                  const event::fetch::opts *const &fopts)
 :room{room}
-,_event{room.fopts}
+,_event
+{
+	fopts?
+		fopts:
+		room.fopts
+}
 {
 	seek(event_id);
 }
 
 ircd::m::room::messages::messages(const m::room &room,
-                                  const uint64_t &depth)
+                                  const uint64_t &depth,
+                                  const event::fetch::opts *const &fopts)
 :room{room}
-,_event{room.fopts}
+,_event
+{
+	fopts? fopts : room.fopts
+}
 {
 	seek(depth);
 }
@@ -585,14 +601,6 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 // room::state
 //
 
-ircd::m::room::state::state(const m::room &room)
-:state
-{
-	room, room.fopts
-}
-{
-}
-
 ircd::m::room::state::state(const m::room &room,
                             const event::fetch::opts *const &fopts)
 :room_id
@@ -613,7 +621,9 @@ ircd::m::room::state::state(const m::room &room,
 }
 ,fopts
 {
-	fopts
+	fopts?
+		fopts:
+		room.fopts
 }
 {
 }
