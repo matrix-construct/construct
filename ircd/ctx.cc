@@ -1293,13 +1293,22 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 		signal(*context, kick);
 	});
 
+	// interrupt(ctx) is suppressed while this context has offloaded some work
+	// to another thread. This context must stay right here and not disappear
+	// until the other thread signals back. Note that the destructor is
+	// capable of throwing an interrupt that was received during this scope.
+	const this_ctx::uninterruptible uninterruptible;
+
 	push(std::move(closure)); do
 	{
 		wait();
 	}
 	while(!done);
 
-	if(eptr)
+	// Don't throw any exception if there is a pending interrupt for this ctx.
+	// Two exceptions will be thrown in that case and if there's an interrupt
+	// we don't care about eptr anyway.
+	if(eptr && likely(!interruption_requested()))
 		std::rethrow_exception(eptr);
 }
 
