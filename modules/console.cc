@@ -396,6 +396,19 @@ console_cmd__log__level(opt &out, const string_view &line)
 		"level",
 	}};
 
+	if(!param.count())
+	{
+		for(int i(0); i < num_of<log::facility>(); ++i)
+			if(i > RB_LOG_LEVEL)
+				out << "[\033[1;40m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+			else if(console_enabled(log::facility(i)))
+				out << "[\033[1;42m+\033[0m]: " << reflect(log::facility(i)) << std::endl;
+			else
+				out << "[\033[1;41m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+
+		return true;
+	}
+
 	const int level
 	{
 		param.at<int>(0)
