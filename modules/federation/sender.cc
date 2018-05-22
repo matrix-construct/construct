@@ -90,6 +90,9 @@ send(const m::event &event)
 		json::get<"room_id"_>(event)
 	};
 
+	if(json::get<"depth"_>(event) == json::undefined_number)
+		return;
+
 	if(room_id)
 		return send(event, room_id);
 }
