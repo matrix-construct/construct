@@ -173,7 +173,6 @@ AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions witho
 		AC_SUBST(ASSERT, 1)
 	], [
 		AC_MSG_RESULT([no])
-		AC_SUBST(ASSERT, 0)
 	])
 ])
 
@@ -198,7 +197,6 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 	AM_COND_IF(DEBUG,
 	[
 		AC_MSG_RESULT([no])
-		AC_SUBST(OPTIMIZE, 0)
 	], [
 		AC_MSG_RESULT([no, but optimized build is enabled anyway])
 		AC_SUBST(OPTIMIZE, 1)
