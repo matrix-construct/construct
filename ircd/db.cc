@@ -864,17 +864,22 @@ const noexcept
 }
 
 void
-ircd::db::database::comparator::FindShortSuccessor(std::string *key)
+ircd::db::database::comparator::FindShortestSeparator(std::string *const key,
+                                                      const Slice &limit)
 const noexcept
 {
+	assert(key != nullptr);
+	if(user.separator)
+		user.separator(*key, slice(limit));
 }
 
 void
-ircd::db::database::comparator::FindShortestSeparator(std::string *key,
-                                                      const Slice &_limit)
+ircd::db::database::comparator::FindShortSuccessor(std::string *const key)
 const noexcept
 {
-	const string_view limit{_limit.data(), _limit.size()};
+	assert(key != nullptr);
+	if(user.successor)
+		user.successor(*key);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
