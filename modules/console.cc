@@ -753,20 +753,16 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"id",
+		"id", "[id]..."
 	}};
 
-	const uint64_t ctxid
-	{
-		param.at<uint64_t>(0)
-	};
-
-	for(auto *const &ctx : ctx::ctxs)
-		if(id(*ctx) == ctxid)
-		{
-			interrupt(*ctx);
-			break;
-		}
+	for(size_t i(0); i < param.count(); ++i)
+		for(auto *const &ctx : ctx::ctxs)
+			if(id(*ctx) == param.at<uint64_t>(i))
+			{
+				interrupt(*ctx);
+				break;
+			}
 
 	return true;
 }
@@ -776,20 +772,16 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"id",
+		"id", "[id]..."
 	}};
 
-	const uint64_t ctxid
-	{
-		param.at<uint64_t>(0)
-	};
-
-	for(auto *const &ctx : ctx::ctxs)
-		if(id(*ctx) == ctxid)
-		{
-			terminate(*ctx);
-			break;
-		}
+	for(size_t i(0); i < param.count(); ++i)
+		for(auto *const &ctx : ctx::ctxs)
+			if(id(*ctx) == param.at<uint64_t>(i))
+			{
+				terminate(*ctx);
+				break;
+			}
 
 	return true;
 }
