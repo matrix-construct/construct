@@ -141,3 +141,42 @@ state__rebuild_history(const m::room &room)
 	txn();
 	return ret;
 }
+
+extern "C" size_t
+head__rebuild(const m::room &room)
+{
+	size_t ret{0};
+	const m::room::state state{room};
+	const auto create_id
+	{
+		state.get("m.room.create")
+	};
+
+	m::room::messages it
+	{
+		room, create_id
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	m::dbs::write_opts opts;
+	opts.op = db::op::SET;
+	opts.head = true;
+	opts.refs = true;
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		opts.event_idx = it.event_idx();
+		m::dbs::_index__room_head(txn, event, opts);
+		++ret;
+	}
+
+	txn();
+	return ret;
+}

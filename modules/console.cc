@@ -3091,6 +3091,39 @@ console_cmd__room__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__head__rebuild(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	using prototype = size_t (const m::room &);
+	static m::import<prototype> head__rebuild
+	{
+		"m_room", "head__rebuild"
+	};
+
+	const size_t count
+	{
+		head__rebuild(room)
+	};
+
+	out << "done " << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__depth(opt &out, const string_view &line)
 {
 	const auto &room_id
