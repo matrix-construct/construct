@@ -860,6 +860,29 @@ polylog_sync_room_state(shortpoll &sp,
                         json::stack::object &out,
                         const m::room &room)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content",
+			"depth",
+			"event_id",
+			"membership",
+			"origin_server_ts",
+			"prev_events",
+			"redacts",
+			"room_id",
+			"sender",
+			"state_key",
+			"type",
+		},
+
+		db::gopts
+		{
+			db::get::NO_CACHE | db::get::NO_CHECKSUM
+		}
+	};
+
 	json::stack::member member
 	{
 		out, "events"
@@ -870,12 +893,13 @@ polylog_sync_room_state(shortpoll &sp,
 		member
 	};
 
-	const m::room::state state
+	m::room::state state
 	{
-		room
+		room, &fopts
 	};
 
-	state.for_each([&](const m::event &event)
+	state.for_each([&]
+	(const m::event &event)
 	{
 		if(at<"depth"_>(event) >= int64_t(sp.state_at))
 			return;
@@ -936,6 +960,29 @@ polylog_sync_room_timeline_events(shortpoll &sp,
                                   const m::room &room,
                                   bool &limited)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content",
+			"depth",
+			"event_id",
+			"membership",
+			"origin_server_ts",
+			"prev_events",
+			"redacts",
+			"room_id",
+			"sender",
+			"state_key",
+			"type",
+		},
+
+		db::gopts
+		{
+			db::get::NO_CACHE | db::get::NO_CHECKSUM
+		}
+	};
+
 	// messages seeks to the newest event, but the client wants the oldest
 	// event first so we seek down first and then iterate back up. Due to
 	// an issue with rocksdb's prefix-iteration this iterator becomes
@@ -944,7 +991,11 @@ polylog_sync_room_timeline_events(shortpoll &sp,
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	ssize_t i(0);
 	m::event::id::buf event_id;
-	m::room::messages it{room};
+	m::room::messages it
+	{
+		room, &fopts
+	};
+
 	for(; it && i < 10; --it, ++i)
 	{
 		event_id = it.event_id();
@@ -1000,7 +1051,24 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 	members.for_each("join", m::room::members::closure{[&]
 	(const m::user &user)
 	{
-		const m::user::room user_room{user};
+		static const m::event::fetch::opts fopts
+		{
+			db::gopts
+			{
+				db::get::NO_CACHE | db::get::NO_CHECKSUM
+			},
+
+			m::event::keys::include
+			{
+				"event_id",
+				"content",
+				"sender",
+			}
+		};
+
+		m::user::room user_room{user};
+		user_room.fopts = &fopts;
+
 		if(head_idx(std::nothrow, user_room) <= sp.since)
 			return;
 
