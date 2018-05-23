@@ -87,7 +87,10 @@ namespace ircd::db
 	std::string path(const std::string &name);
 	std::vector<std::string> available();
 
-	void log_rdb_perf_context(const bool &all = true);
+	uint perf_level();
+	void perf_level(const uint &);
+	const rocksdb::PerfContext &perf_current();
+	std::string string(const rocksdb::PerfContext &, const bool &all = false);
 
 	string_view reflect(const pos &);
 }

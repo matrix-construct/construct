@@ -31,6 +31,7 @@ namespace rocksdb
 	struct Slice;
 	struct Checkpoint;
 	struct SstFileManager;
+	struct PerfContext;
 }
 
 //

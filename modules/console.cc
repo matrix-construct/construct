@@ -1131,6 +1131,47 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__perf(opt &out, const string_view &line)
+{
+	const auto &pc
+	{
+		db::perf_current()
+	};
+
+	out << db::string(pc) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__perf__level(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[level]"
+	}};
+
+	if(!param.count())
+	{
+		const auto &level
+		{
+			db::perf_level()
+		};
+
+		out << "Current level is: " << level << std::endl;
+		return true;
+	}
+
+	const auto &level
+	{
+		param.at<uint>(0)
+	};
+
+	db::perf_level(level);
+	out << "Set level to: " << level << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__prop(opt &out, const string_view &line)
 try
 {

@@ -1304,17 +1304,49 @@ catch(const std::exception &e)
 // database::stats
 //
 
-void
-ircd::db::log_rdb_perf_context(const bool &all)
+std::string
+ircd::db::string(const rocksdb::PerfContext &pc,
+                 const bool &all)
 {
-	const auto pc
+	const bool exclude_zeros(!all);
+	return pc.ToString(exclude_zeros);
+}
+
+const rocksdb::PerfContext &
+ircd::db::perf_current()
+{
+	const auto *const &ret
 	{
 		rocksdb::get_perf_context()
 	};
 
-	assert(pc);
-	const bool exclude_zeros(!all);
-	log.debug("%s", pc->ToString(exclude_zeros));
+	if(unlikely(!ret))
+		throw error
+		{
+			"Performance counters are not available on this thread."
+		};
+
+	return *ret;
+}
+
+void
+ircd::db::perf_level(const uint &level)
+{
+	if(level >= rocksdb::PerfLevel::kOutOfBounds)
+		throw error
+		{
+			"Perf level of '%u' is invalid; maximum is '%u'",
+			level,
+			uint(rocksdb::PerfLevel::kOutOfBounds)
+		};
+
+	rocksdb::SetPerfLevel(rocksdb::PerfLevel(level));
+}
+
+uint
+ircd::db::perf_level()
+{
+	return rocksdb::GetPerfLevel();
 }
 
 uint32_t
