@@ -81,8 +81,14 @@ struct ircd::m::user::room
 	m::user user;
 	id::room::buf room_id;
 
-	room(const m::user &user);
-	room(const m::user::id &user_id);
+	room(const m::user &user,
+	     const vm::copts *const & = nullptr,
+	     const event::fetch::opts *const & = nullptr);
+
+	room(const m::user::id &user_id,
+	     const vm::copts *const & = nullptr,
+	     const event::fetch::opts *const & = nullptr);
+
 	room() = default;
 	room(const room &) = delete;
 	room &operator=(const room &) = delete;

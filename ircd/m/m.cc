@@ -2047,15 +2047,26 @@ catch(const std::exception &e)
 // user::room
 //
 
-ircd::m::user::room::room(const m::user::id &user_id)
-:room{m::user{user_id}}
-{}
+ircd::m::user::room::room(const m::user::id &user_id,
+                          const vm::copts *const &copts,
+                          const event::fetch::opts *const &fopts)
+:room
+{
+	m::user{user_id}, copts, fopts
+}
+{
+}
 
-ircd::m::user::room::room(const m::user &user)
+ircd::m::user::room::room(const m::user &user,
+                          const vm::copts *const &copts,
+                          const event::fetch::opts *const &fopts)
 :user{user}
 ,room_id{user.room_id()}
 {
-	static_cast<m::room &>(*this) = room_id;
+	static_cast<m::room &>(*this) =
+	{
+		room_id, copts, fopts
+	};
 }
 
 //
