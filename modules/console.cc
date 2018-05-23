@@ -3538,7 +3538,7 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 
 	const string_view membership
 	{
-		param[1]
+		param.at(1, "join"_sv)
 	};
 
 	m::room::id::buf room_id
@@ -5553,6 +5553,8 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
 	vmopts.notify = false;
+	vmopts.head = false;
+	vmopts.refs = true;
 	m::vm::eval eval
 	{
 		vmopts
