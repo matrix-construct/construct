@@ -28,17 +28,17 @@ ircd::m::visible_hook
 };
 
 extern "C" bool
-_visible__user(const m::room &room,
-               const m::user &user,
-               const m::event *const &event)
+visible__user(const m::room &room,
+              const m::user &user,
+              const m::event *const &event)
 {
 	return true;
 }
 
 extern "C" bool
-_visible__node(const m::room &room,
-               const m::node &node,
-               const m::event *const &event)
+visible__node(const m::room &room,
+              const m::node &node,
+              const m::event *const &event)
 {
 	return true;
 }
@@ -46,7 +46,14 @@ _visible__node(const m::room &room,
 static void
 _changed_visibility(const m::event &event)
 {
-
+	log::info
+	{
+		"Changed visibility of %s to %s by %s => %s",
+		json::get<"room_id"_>(event),
+		json::get<"content"_>(event).get("history_visibility"),
+		json::get<"sender"_>(event),
+		json::get<"event_id"_>(event)
+	};
 }
 
 const m::hook
