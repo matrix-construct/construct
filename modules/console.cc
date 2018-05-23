@@ -1093,7 +1093,7 @@ try
 	};
 
 	// Special branch for integer properties that RocksDB aggregates.
-	if(!empty(ticker))
+	if(ticker && ticker != "-a")
 	{
 		out << ticker << ": " << db::ticker(database, ticker) << std::endl;
 		return true;
@@ -1109,8 +1109,16 @@ try
 		if(!name)
 			continue;
 
-		out << std::setw(48) << std::right << name
-		    << "  " << db::ticker(database, i)
+		const auto &val
+		{
+			db::ticker(database, i)
+		};
+
+		if(val == 0 && ticker != "-a")
+			continue;
+
+		out << std::left << std::setw(48) << std::setfill('_') << name
+		    << "  " << val
 		    << std::endl;
 	}
 
@@ -1737,12 +1745,20 @@ try
 	    << " " << uuid(database)
 	    << std::endl;
 
+	out << std::left << std::setw(28) << std::setfill('_') << "errors "
+	    << " " << db::property(database, "rocksdb.background-errors")
+	    << std::endl;
+
 	out << std::left << std::setw(28) << std::setfill('_') << "columns "
 	    << " " << database.columns.size()
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "files "
 	    << " " << file_count(database)
+	    << std::endl;
+
+	out << std::left << std::setw(28) << std::setfill('_') << "sequence "
+	    << " " << sequence(database)
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "keys "
@@ -1777,16 +1793,8 @@ try
 	    << " " << db::property(database, "rocksdb.num-deletes-active-mem-table")
 	    << std::endl;
 
-	out << std::left << std::setw(28) << std::setfill('_') << "lsm super sequence "
+	out << std::left << std::setw(28) << std::setfill('_') << "lsm sequence "
 	    << " " << db::property(database, "rocksdb.current-super-version-number")
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "sequence "
-	    << " " << sequence(database)
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "errors "
-	    << " " << db::property(database, "rocksdb.background-errors")
 	    << std::endl;
 
 	return true;
