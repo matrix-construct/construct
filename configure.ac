@@ -316,7 +316,7 @@ AM_COND_IF([OPTIMIZE],
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -ggdb"
 ], [
-	CXXFLAGS+=" -O0"
+	CXXFLAGS+=" -Og"
 	CXXFLAGS+=" -ggdb"
 ])
 
