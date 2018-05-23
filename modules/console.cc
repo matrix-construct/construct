@@ -3578,7 +3578,22 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 			at<"state_key"_>(event)
 		};
 
-		const m::user::room user_room{user};
+		static const m::event::fetch::opts fopts
+		{
+			m::event::keys::include
+			{
+				"event_id", "content", "origin_server_ts", "sender"
+			},
+			{
+				db::get::NO_CACHE
+			},
+		};
+
+		const m::user::room user_room
+		{
+			user, nullptr, &fopts
+		};
+
 		user_room.get(std::nothrow, "ircd.read", room_id, event_closure);
 	}};
 
