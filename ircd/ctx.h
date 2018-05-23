@@ -48,12 +48,12 @@ struct ircd::ctx::ctx
 	boost::asio::io_service::strand strand;      // mutex/serializer
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
 	boost::asio::yield_context *yc {nullptr};    // boost interface
+	continuation *cont {nullptr};                // valid when asleep; invalid when awake
 	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ircd::ctx::stack stack;                      // stack related structure
 	ircd::ctx::profile profile;                  // prof related structure
-	continuation *cont {nullptr};                // valid when asleep; invalid when awake
-	ctx *adjoindre {nullptr};                    // context waiting for this to join()
 	list::node node;                             // node for ctx::list
+	dock adjoindre;                              // contexts waiting for this to join()
 
 	bool started() const                         { return stack.base != 0;                         }
 	bool finished() const                        { return started() && yc == nullptr;              }

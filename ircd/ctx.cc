@@ -52,10 +52,7 @@ noexcept try
 	const unwind atexit([this]
 	{
 		mark(prof::event::CUR_LEAVE);
-
-		if(adjoindre)
-			notify(*adjoindre);
-
+		adjoindre.notify_all();
 		ircd::ctx::current = nullptr;
 		this->yc = nullptr;
 
@@ -918,9 +915,7 @@ ircd::ctx::context::join()
 
 	mark(prof::event::JOIN);
 	assert(bool(c));
-	assert(!c->adjoindre);
-	c->adjoindre = &cur();       // Set the target context to notify this context when it finishes
-	wait();
+	c->adjoindre.wait();
 	mark(prof::event::JOINED);
 }
 
