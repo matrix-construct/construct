@@ -33,7 +33,7 @@ struct opt
 {
 	std::ostream &out;
 	bool html {false};
-	seconds timeout {30};
+	seconds timeout {45};
 	string_view special;
 
 	operator std::ostream &()
