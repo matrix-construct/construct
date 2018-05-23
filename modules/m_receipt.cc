@@ -164,7 +164,7 @@ try
 	};
 
 	m::event receipt;
-	json::get<"depth"_>(receipt) = std::numeric_limits<int64_t>::max();
+	json::get<"depth"_>(receipt) = json::undefined_number;
 	json::get<"type"_>(receipt) = "m.receipt";
 	json::get<"room_id"_>(receipt) = room_id;
 	json::get<"sender"_>(receipt) = user_id;
