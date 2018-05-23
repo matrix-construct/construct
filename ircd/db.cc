@@ -1305,6 +1305,31 @@ catch(const std::exception &e)
 //
 
 std::string
+ircd::db::string(const rocksdb::IOStatsContext &ic,
+                 const bool &all)
+{
+	const bool exclude_zeros(!all);
+	return ic.ToString(exclude_zeros);
+}
+
+const rocksdb::IOStatsContext &
+ircd::db::iostats_current()
+{
+	const auto *const &ret
+	{
+		rocksdb::get_iostats_context()
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"IO counters are not available on this thread."
+		};
+
+	return *ret;
+}
+
+std::string
 ircd::db::string(const rocksdb::PerfContext &pc,
                  const bool &all)
 {

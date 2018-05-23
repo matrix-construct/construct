@@ -32,6 +32,7 @@ namespace rocksdb
 	struct Checkpoint;
 	struct SstFileManager;
 	struct PerfContext;
+	struct IOStatsContext;
 }
 
 //

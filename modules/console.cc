@@ -1131,6 +1131,18 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__io(opt &out, const string_view &line)
+{
+	const auto &ic
+	{
+		db::iostats_current()
+	};
+
+	out << db::string(ic) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__perf(opt &out, const string_view &line)
 {
 	const auto &pc

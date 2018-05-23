@@ -92,6 +92,9 @@ namespace ircd::db
 	const rocksdb::PerfContext &perf_current();
 	std::string string(const rocksdb::PerfContext &, const bool &all = false);
 
+	const rocksdb::IOStatsContext &iostats_current();
+	std::string string(const rocksdb::IOStatsContext &, const bool &all = false);
+
 	string_view reflect(const pos &);
 }
 
