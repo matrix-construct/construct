@@ -125,15 +125,15 @@ make install
 
 [![](https://img.shields.io/badge/License-BSD-brightgreen.svg)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)]()
 
- * Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
- directory is doc/html. Browse to doc/html/index.html
+ Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
+ directory is `doc/html`. Browse to `doc/html/index.html`.
 
 ## Plan
 
 #### Roadmap for service
 
 - [x] **Phase One**: Matrix clients using HTTPS.
-- [ ] **Phase Two**: Legacy IRC networks using TS6 protocol.
+- [ ] **Phase Two**: Legacy IRC network TS6 protocol.
 - [ ] **Phase Three**: Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
 
 #### Roadmap for deployments
