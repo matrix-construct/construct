@@ -45,7 +45,7 @@ noexcept try
 {
 	this->yc = &yc;
 	notes = 1;
-	stack_base = uintptr_t(__builtin_frame_address(0));
+	stack.base = uintptr_t(__builtin_frame_address(0));
 	ircd::ctx::current = this;
 	mark(prof::event::CUR_ENTER);
 
@@ -409,14 +409,14 @@ ircd::ctx::interruptible(const ctx &c)
 const ulong &
 ircd::ctx::cycles(const ctx &ctx)
 {
-	return ctx.cycles;
+	return ctx.profile.cycles;
 }
 
 /// Returns the yield count for `ctx`
 const uint64_t &
 ircd::ctx::yields(const ctx &ctx)
 {
-	return ctx.yields;
+	return ctx.profile.yields;
 }
 
 /// Returns the notification count for `ctx`
@@ -430,14 +430,14 @@ ircd::ctx::notes(const ctx &ctx)
 const size_t &
 ircd::ctx::stack_at(const ctx &ctx)
 {
-	return ctx.stack_at;
+	return ctx.stack.at;
 }
 
 /// Returns the notification count for `ctx`
 const size_t &
 ircd::ctx::stack_max(const ctx &ctx)
 {
-	return ctx.stack_max;
+	return ctx.stack.max;
 }
 
 /// Returns the developer's optional name literal for `ctx`
@@ -549,7 +549,7 @@ size_t
 ircd::ctx::this_ctx::stack_at_here()
 {
 	assert(current);
-	return cur().stack_base - uintptr_t(__builtin_frame_address(0));
+	return cur().stack.base - uintptr_t(__builtin_frame_address(0));
 }
 
 /// Throws interrupted if the currently running context was interrupted
@@ -685,14 +685,14 @@ noexcept
 ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
 {
 	const auto stack_usage(stack_at_here());
-	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
+	assert(stack_usage < cur().stack.max * prof::settings.stack_usage_assertion);
 }
 
 ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
 noexcept
 {
 	const auto stack_usage(stack_at_here());
-	assert(stack_usage < cur().stack_max * prof::settings.stack_usage_assertion);
+	assert(stack_usage < cur().stack.max * prof::settings.stack_usage_assertion);
 }
 
 #endif // NDEBUG
@@ -724,7 +724,7 @@ ircd::ctx::continuation::continuation(ctx *const &self)
 	assert(!std::current_exception());
 	//assert(!std::uncaught_exceptions());
 
-	self->yields++;
+	self->profile.yields++;
 	self->cont = this;
 	ircd::ctx::current = nullptr;
 }
@@ -785,7 +785,7 @@ ircd::ctx::spawn(ctx *const c,
 {
 	const boost::coroutines::attributes attrs
 	{
-		c->stack_max,
+		c->stack.max,
 		boost::coroutines::stack_unwind
 	};
 
@@ -1180,7 +1180,7 @@ ircd::ctx::prof::check_slice()
 	};
 
 	auto &c(cur());
-	c.cycles += last_cycles;
+	c.profile.cycles += last_cycles;
 	_slice_total += last_cycles;
 
 	if(unlikely(settings.slice_warning > 0 && last_cycles >= settings.slice_warning))
@@ -1210,9 +1210,9 @@ void
 ircd::ctx::prof::check_stack()
 {
 	auto &c(cur());
-	const double &stack_max(c.stack_max);
+	const double &stack_max(c.stack.max);
 	const auto &stack_at(stack_at_here());
-	c.stack_at = stack_at;
+	c.stack.at = stack_at;
 
 	if(unlikely(stack_at > stack_max * settings.stack_usage_warning))
 	{
@@ -1222,10 +1222,10 @@ ircd::ctx::prof::check_stack()
 			name(c),
 			id(c),
 			stack_at,
-			c.stack_max
+			c.stack.max
 		};
 
-		assert(stack_at < c.stack_max * settings.stack_usage_assertion);
+		assert(stack_at < c.stack.max * settings.stack_usage_assertion);
 	}
 }
 

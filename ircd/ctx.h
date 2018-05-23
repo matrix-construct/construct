@@ -8,6 +8,31 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::ctx
+{
+	struct stack;
+	struct profile;
+}
+
+/// Internal structure aggregating any stack related state for the ctx
+struct ircd::ctx::stack
+{
+	uintptr_t base {0};                    // assigned when spawned
+	size_t max {0};                        // User given stack size
+	size_t at {0};                         // Updated for profiling at sleep
+
+	stack(const size_t &max = 0)
+	:max{max}
+	{}
+};
+
+/// Internal structure aggregating any profiling related state for the ctx
+struct ircd::ctx::profile
+{
+	ulong cycles {0};                            // monotonic counter (rdtsc)
+	uint64_t yields {0};                         // monotonic counter
+};
+
 /// Internal context implementation
 ///
 struct ircd::ctx::ctx
@@ -23,17 +48,14 @@ struct ircd::ctx::ctx
 	boost::asio::io_service::strand strand;      // mutex/serializer
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
 	boost::asio::yield_context *yc {nullptr};    // boost interface
-	uintptr_t stack_base {0};                    // assigned when spawned
-	size_t stack_max {0};                        // User given stack size
-	size_t stack_at {0};                         // Updated for profiling at sleep
 	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
-	ulong cycles {0};                            // monotonic counter (rdtsc)
-	uint64_t yields {0};                         // monotonic counter
+	ircd::ctx::stack stack;                      // stack related structure
+	ircd::ctx::profile profile;                  // prof related structure
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
 	ctx *adjoindre {nullptr};                    // context waiting for this to join()
 	list::node node;                             // node for ctx::list
 
-	bool started() const                         { return stack_base != 0;                         }
+	bool started() const                         { return stack.base != 0;                         }
 	bool finished() const                        { return started() && yc == nullptr;              }
 
 	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
@@ -55,7 +77,7 @@ struct ircd::ctx::ctx
 	,flags{flags}
 	,strand{*ios}
 	,alarm{*ios}
-	,stack_max{stack_max}
+	,stack{stack_max}
 	{}
 
 	ctx(ctx &&) = delete;
