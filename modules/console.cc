@@ -25,6 +25,13 @@ IRCD_MODULE
 	}
 };
 
+conf::item<seconds>
+default_synapse
+{
+	{ "name",     "ircd.console.timeout" },
+	{ "default",  45L                    },
+};
+
 /// The first parameter for all commands. This aggregates general options
 /// passed to commands as well as providing the output facility with an
 /// ostream interface. Commands should only send output to this object. The
@@ -33,7 +40,7 @@ struct opt
 {
 	std::ostream &out;
 	bool html {false};
-	seconds timeout {45};
+	seconds timeout {default_synapse};
 	string_view special;
 
 	operator std::ostream &()
