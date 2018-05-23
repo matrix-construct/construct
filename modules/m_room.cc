@@ -185,42 +185,61 @@ extern "C" size_t
 head__reset(const m::room &room)
 {
 	size_t ret{0};
-	const m::room::state state{room};
-	const auto create_id
-	{
-		state.get("m.room.create")
-	};
-
 	m::room::messages it
 	{
-		room, create_id
+		room
 	};
 
 	if(!it)
 		return ret;
+
+	// Replacement will be the single new head
+	const m::event replacement
+	{
+		*it
+	};
 
 	db::txn txn
 	{
 		*m::dbs::events
 	};
 
+	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
 	opts.head = true;
-	for(; it; ++it)
+	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
+	(const m::event::idx &event_idx, const m::event::id &event_id)
 	{
-		const m::event &event{*it};
-		opts.event_idx = it.event_idx();
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			log::derror
+			{
+				"Invalid event '%s' idx %lu in head for %s",
+				string_view{event_id},
+				event_idx,
+				string_view{room.room_id}
+			};
+
+			return;
+		}
+
+		opts.event_idx = event_idx;
 		m::dbs::_index__room_head(txn, event, opts);
 		++ret;
-	}
+	});
 
-	{
-		opts.op = db::op::SET;
-		const m::event::fetch event{opts.event_idx};
-		m::dbs::_index__room_head(txn, event, opts);
-	}
+	// Finally add the replacement to the txn
+	opts.op = db::op::SET;
+	opts.event_idx = it.event_idx();
+	m::dbs::_index__room_head(txn, replacement, opts);
 
+	// Commit txn
 	txn();
 	return ret;
 }
