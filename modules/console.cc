@@ -296,6 +296,7 @@ console_cmd__test(opt &out, const string_view &line)
 // Derived commands
 //
 
+int console_command_numeric(opt &, const string_view &line);
 bool console_id__user(opt &, const m::user::id &id, const string_view &line);
 bool console_id__node(opt &, const m::node::id &id, const string_view &line);
 bool console_id__room(opt &, const m::room::id &id, const string_view &line);
@@ -305,7 +306,17 @@ bool console_json(const json::object &);
 int
 console_command_derived(opt &out, const string_view &line)
 {
-	const string_view id{token(line, ' ', 0)};
+	const string_view id
+	{
+		token(line, ' ', 0)
+	};
+
+	// First check if the line starts with a number, this is a special case
+	// sent to a custom dispatcher (which right now is specifically for the
+	// event composer suite).
+	if(try_lex_cast<int>(id))
+		return console_command_numeric(out, line);
+
 	if(m::has_sigil(id)) switch(m::sigil(id))
 	{
 		case m::id::EVENT:
@@ -2267,6 +2278,173 @@ console_cmd__key__get(opt &out, const string_view &line)
 	}
 
 	return true;
+}
+
+//
+// compose
+//
+
+std::vector<std::string> compose;
+
+bool
+console_cmd__compose__list(opt &out, const string_view &line)
+{
+	for(const json::object &object : compose)
+	{
+		const m::event event{object};
+		out << pretty_oneline(event) << std::endl;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__compose(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id", "[json]"
+	}};
+
+	if(!param.count())
+		return console_cmd__compose__list(out, line);
+
+	const auto &id
+	{
+		param.at<uint>(0)
+	};
+
+	if(compose.size() < id)
+		throw error
+		{
+			"Cannot compose position %d without composing %d first", id, compose.size()
+		};
+
+	if(compose.size() == id)
+	{
+		const m::event base_event
+		{
+			{ "depth",             json::undefined_number  },
+			{ "origin",            my_host()               },
+			{ "origin_server_ts",  time<milliseconds>()    },
+			{ "sender",            m::me.user_id           },
+			{ "room_id",           m::my_room.room_id      },
+			{ "type",              "m.room.message"        },
+		};
+
+		compose.emplace_back(json::strung(base_event));
+	}
+
+	const auto &key
+	{
+		param[1]
+	};
+
+	const auto &val
+	{
+		tokens_after(line, ' ', 1)
+	};
+
+	if(key && val)
+	{
+		m::event event{compose.at(id)};
+		set(event, key, val);
+		compose.at(id) = json::strung{event};
+	}
+
+	const m::event event
+	{
+		compose.at(id)
+	};
+
+	out << pretty(event) << std::endl;
+	out << compose.at(id) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__compose__clear(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]",
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	if(id == -1)
+	{
+		compose.clear();
+		return true;
+	}
+
+	compose.at(id).clear();
+	return true;
+}
+
+bool
+console_cmd__compose__eval(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]",
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	m::vm::opts opts;
+	m::vm::eval eval
+	{
+		opts
+	};
+
+	if(id == -1)
+		for(size_t i(0); i < compose.size(); ++i)
+			eval(m::event{compose.at(i)});
+	else
+		eval(m::event{compose.at(id)});
+
+	return true;
+}
+
+bool
+console_cmd__compose__commit(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]",
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	m::vm::copts copts;
+	m::vm::eval eval
+	{
+		copts
+	};
+
+	if(id == -1)
+		for(size_t i(0); i < compose.size(); ++i)
+			eval(m::event{compose.at(i)});
+	else
+		eval(m::event{compose.at(id)});
+
+	return true;
+}
+
+int
+console_command_numeric(opt &out, const string_view &line)
+{
+	return console_cmd__compose(out, line);
 }
 
 //
