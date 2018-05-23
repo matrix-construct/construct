@@ -1760,7 +1760,7 @@ ircd::m::event::conforms::conforms(const event &e)
 			if(empty(json::get<"prev_state"_>(e)))
 				set(MISSING_PREV_STATE);
 
-	if(json::get<"depth"_>(e) < 0)
+	if(json::get<"depth"_>(e) != json::undefined_number && json::get<"depth"_>(e) < 0)
 		set(DEPTH_NEGATIVE);
 
 	if(json::get<"type"_>(e) != "m.room.create")

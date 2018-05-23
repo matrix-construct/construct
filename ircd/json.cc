@@ -1736,8 +1736,13 @@ const ircd::string_view ircd::json::empty_array    { "[]"     };
 decltype(ircd::json::undefined_number)
 ircd::json::undefined_number
 {
-	std::numeric_limits<decltype(ircd::json::undefined_number)>::max()
+	std::numeric_limits<decltype(ircd::json::undefined_number)>::min()
 };
+
+static_assert
+(
+	ircd::json::undefined_number != 0
+);
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
