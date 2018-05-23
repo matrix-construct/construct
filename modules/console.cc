@@ -1715,6 +1715,10 @@ try
 		*db::database::dbs.at(param.at(0))
 	};
 
+	out << std::left << std::setw(28) << std::setfill('_') << "UUID "
+	    << " " << uuid(database)
+	    << std::endl;
+
 	out << std::left << std::setw(28) << std::setfill('_') << "columns "
 	    << " " << database.columns.size()
 	    << std::endl;

@@ -360,6 +360,18 @@ ircd::db::shared_from(const database::column &column)
 	return column.shared_from_this();
 }
 
+const std::string &
+ircd::db::uuid(const database &d)
+{
+	return d.uuid;
+}
+
+const std::string &
+ircd::db::name(const database &d)
+{
+	return d.name;
+}
+
 //
 // database
 //
@@ -621,6 +633,16 @@ try
 				db::id(*this->columns[i]),
 				db::name(*this->columns[i])
 			};
+
+	return ret;
+}()}
+,uuid{[this]
+{
+	std::string ret;
+	throw_on_error
+	{
+		d->GetDbIdentity(ret)
+	};
 
 	return ret;
 }()}
@@ -1110,12 +1132,6 @@ const rocksdb::ColumnFamilyHandle *()
 const
 {
 	return handle.get();
-}
-
-const std::string &
-ircd::db::name(const database &d)
-{
-	return d.name;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

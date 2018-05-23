@@ -17,6 +17,7 @@ namespace ircd::db
 
 	// General information
 	const std::string &name(const database &);
+	const std::string &uuid(const database &);
 	uint64_t sequence(const database &); // Latest sequence number
 	std::vector<std::string> files(const database &, uint64_t &msz);
 	std::vector<std::string> files(const database &);
@@ -104,6 +105,7 @@ struct ircd::db::database
 	std::unordered_map<string_view, size_t> column_index;
 	std::vector<std::shared_ptr<column>> columns;
 	std::unique_ptr<rocksdb::DB> d;
+	std::string uuid;
 	std::unique_ptr<rocksdb::Checkpoint> checkpoint;
 	unique_const_iterator<decltype(dbs)> dbs_it;
 
