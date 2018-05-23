@@ -243,3 +243,54 @@ head__reset(const m::room &room)
 	txn();
 	return ret;
 }
+
+extern "C" size_t
+dagree_histogram(const m::room &room,
+                 std::vector<size_t> &vec)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"event_id",
+			"prev_events",
+		},
+
+		db::gopts
+		{
+			db::get::NO_CACHE |
+			db::get::NO_CHECKSUM
+		}
+	};
+
+	m::room::messages it
+	{
+		room, &fopts
+	};
+
+	size_t ret{0};
+	for(; it; --it)
+	{
+		const m::event event{*it};
+		const size_t num
+		{
+			size(json::get<"prev_events"_>(event))
+		};
+
+		if(unlikely(num >= vec.size()))
+		{
+			log::warning
+			{
+				"Event '%s' had %zu prev events (ignored)",
+				string_view(at<"event_id"_>(event))
+			};
+
+			continue;
+		}
+
+		++vec[num];
+		++ret;
+	}
+
+	return ret;
+}

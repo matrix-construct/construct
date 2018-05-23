@@ -4122,6 +4122,42 @@ console_cmd__room__purge(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__dagree(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	using prototype = size_t (const m::room &, std::vector<size_t> &);
+	static m::import<prototype> dagree_histogram
+	{
+		"m_room", "dagree_histogram"
+	};
+
+	std::vector<size_t> v(32, 0);
+	const size_t count
+	{
+		dagree_histogram(room, v)
+	};
+
+	for(size_t i(0); i < v.size(); ++i)
+		out << std::setw(2) << std::right << i << ": " << v.at(i) << std::endl;
+
+	return true;
+}
+
 //
 // user
 //
