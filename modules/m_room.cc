@@ -271,11 +271,7 @@ dagree_histogram(const m::room &room,
 	for(; it; --it)
 	{
 		const m::event event{*it};
-		const size_t num
-		{
-			size(json::get<"prev_events"_>(event))
-		};
-
+		const size_t num{degree(event)};
 		if(unlikely(num >= vec.size()))
 		{
 			log::warning
