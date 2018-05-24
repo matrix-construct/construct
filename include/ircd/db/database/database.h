@@ -35,18 +35,6 @@ namespace ircd::db
 	const rocksdb::Cache *cache(const database &);
 	rocksdb::Cache *cache(database &);
 
-	// Ticker
-	extern const uint32_t ticker_max;
-	string_view ticker_id(const uint32_t &id);
-	uint32_t ticker_id(const string_view &key);
-	uint64_t ticker(const database &, const uint32_t &id);
-	uint64_t ticker(const database &, const string_view &key);
-
-	// Histogram
-	extern const uint32_t histogram_max;
-	string_view histogram_id(const uint32_t &id);
-	uint32_t histogram_id(const string_view &key);
-
 	// Control panel
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);

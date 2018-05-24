@@ -15,6 +15,7 @@
 #include <rocksdb/merge_operator.h>
 #include <rocksdb/perf_level.h>
 #include <rocksdb/perf_context.h>
+#include <rocksdb/iostats_context.h>
 #include <rocksdb/listener.h>
 #include <rocksdb/statistics.h>
 #include <rocksdb/convenience.h>
@@ -1301,7 +1302,7 @@ catch(const std::exception &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// database::stats
+// db/stats.h
 //
 
 std::string
@@ -1431,6 +1432,11 @@ ircd::db::histogram_max
 {
 	rocksdb::HISTOGRAM_ENUM_MAX
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::stats (db/database/stats.h) internal
+//
 
 uint64_t
 ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
