@@ -258,8 +258,7 @@ dagree_histogram(const m::room &room,
 
 		db::gopts
 		{
-			db::get::NO_CACHE |
-			db::get::NO_CHECKSUM
+			db::get::NO_CACHE
 		}
 	};
 

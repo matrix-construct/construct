@@ -879,7 +879,7 @@ polylog_sync_room_state(shortpoll &sp,
 
 		db::gopts
 		{
-			db::get::NO_CACHE | db::get::NO_CHECKSUM
+			db::get::NO_CACHE
 		}
 	};
 
@@ -979,7 +979,7 @@ polylog_sync_room_timeline_events(shortpoll &sp,
 
 		db::gopts
 		{
-			db::get::NO_CACHE | db::get::NO_CHECKSUM
+			db::get::NO_CACHE
 		}
 	};
 
@@ -1055,7 +1055,7 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 		{
 			db::gopts
 			{
-				db::get::NO_CACHE | db::get::NO_CHECKSUM
+				db::get::NO_CACHE
 			},
 
 			m::event::keys::include

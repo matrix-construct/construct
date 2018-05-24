@@ -5501,6 +5501,13 @@ ircd::db::make_opts(const gopts &opts)
 	return ret;
 }
 
+ircd::conf::item<bool>
+read_checksum
+{
+	{ "name",     "ircd.db.read.checksum" },
+	{ "default",  false                   }
+};
+
 rocksdb::ReadOptions &
 ircd::db::operator+=(rocksdb::ReadOptions &ret,
                      const gopts &opts)
@@ -5515,9 +5522,11 @@ ircd::db::operator+=(rocksdb::ReadOptions &ret,
 	ret.fill_cache |= test(opts, get::CACHE);
 	ret.fill_cache &= !test(opts, get::NO_CACHE);
 	ret.tailing = test(opts, get::NO_SNAPSHOT);
-	ret.verify_checksums = !test(opts, get::NO_CHECKSUM);
 	ret.prefix_same_as_start = test(opts, get::PREFIX);
 	ret.total_order_seek = test(opts, get::ORDERED);
+	ret.verify_checksums = bool(read_checksum);
+	ret.verify_checksums |= test(opts, get::CHECKSUM);
+	ret.verify_checksums &= !test(opts, get::NO_CHECKSUM);
 	return ret;
 }
 
