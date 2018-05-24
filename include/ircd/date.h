@@ -16,6 +16,7 @@ namespace ircd
 	using microtime_t = std::pair<time_t, int32_t>;
 	using steady_point = time_point<steady_clock>;
 	using system_point = time_point<system_clock>;
+	template<class rep, class period> using duration = std::chrono::duration<rep, period>;
 
 	microtime_t microtime();
 	string_view microtime(const mutable_buffer &);
@@ -45,6 +46,17 @@ namespace ircd
 	template<class... args> std::string timestr(args&&...);
 
 	std::ostream &operator<<(std::ostream &, const system_point &);
+	template<class rep, class period> std::ostream &operator<<(std::ostream &, const duration<rep, period> &);
+}
+
+template<class rep,
+         class period>
+std::ostream &
+ircd::operator<<(std::ostream &s,
+                 const duration<rep, period> &duration)
+{
+	s << duration.count();
+	return s;
 }
 
 inline std::ostream &
