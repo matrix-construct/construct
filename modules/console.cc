@@ -1423,6 +1423,61 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__cache__clear(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param[1]
+	};
+
+	auto &database
+	{
+		*db::database::dbs.at(dbname)
+	};
+
+	const auto clear{[&out, &database]
+	(const string_view &colname)
+	{
+		db::column column
+		{
+			database, colname
+		};
+
+		db::clear(cache(column));
+		db::clear(cache_compressed(column));
+		out << "Cleared caches for '" << name(database) << "' '" << colname << "'"
+		    << std::endl;
+	}};
+
+	if(!colname || colname == "**")
+	{
+		for(const auto &colname : database.column_names)
+			clear(colname);
+
+		return true;
+	}
+
+	clear(colname);
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__stats(opt &out, const string_view &line)
 {
 	const params param{line, " ",

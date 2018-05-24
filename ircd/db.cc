@@ -5179,6 +5179,19 @@ ircd::db::for_each(rocksdb::Cache &cache,
 }
 
 void
+ircd::db::clear(rocksdb::Cache *const &cache)
+{
+	if(cache)
+		clear(*cache);
+}
+
+void
+ircd::db::clear(rocksdb::Cache &cache)
+{
+	cache.EraseUnRefEntries();
+}
+
+void
 ircd::db::remove(rocksdb::Cache *const &cache,
                  const string_view &key)
 {

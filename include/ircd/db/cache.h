@@ -41,6 +41,10 @@ namespace ircd::db
 	void remove(rocksdb::Cache &, const string_view &key);
 	void remove(rocksdb::Cache *const &, const string_view &key);
 
+	// Clear the cache (won't clear entries which are actively referenced)
+	void clear(rocksdb::Cache &);
+	void clear(rocksdb::Cache *const &);
+
 	// Iterate the cache entries.
 	using cache_closure = std::function<void (const string_view &, const size_t &)>;
 	void for_each(rocksdb::Cache &, const cache_closure &);
