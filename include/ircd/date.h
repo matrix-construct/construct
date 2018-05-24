@@ -18,18 +18,21 @@ namespace ircd
 	using system_point = time_point<system_clock>;
 	template<class rep, class period> using duration = std::chrono::duration<rep, period>;
 
-	microtime_t microtime();
-	string_view microtime(const mutable_buffer &);
-	std::ostream &operator<<(std::ostream &, const microtime_t &);
-
+	// Standard time_point samples
 	template<class unit = seconds> unit now();
 	template<> steady_point now();
 	template<> system_point now();
 
+	// Standard time_point (system_clock only) directly into long integer.
 	template<class unit = seconds> time_t &time(time_t &ref);
 	template<class unit = seconds> time_t time();
 	template<class unit = seconds> time_t time(time_t *const &ptr);
 
+	// System vdso microtime suite
+	microtime_t microtime();
+	string_view microtime(const mutable_buffer &);
+
+	// System vdso formatted time suite
 	const char *const rfc7231_fmt
 	{
 		"%a, %d %b %Y %T %z"
@@ -43,8 +46,9 @@ namespace ircd
 	string_view timef(const mutable_buffer &out, const system_point &epoch, localtime_t, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, localtime_t, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const char *const &fmt = rfc7231_fmt);
-	template<class... args> std::string timestr(args&&...);
+	template<size_t max = 128, class... args> std::string timestr(args&&...);
 
+	std::ostream &operator<<(std::ostream &, const microtime_t &);
 	std::ostream &operator<<(std::ostream &, const system_point &);
 	template<class rep, class period> std::ostream &operator<<(std::ostream &, const duration<rep, period> &);
 }
@@ -66,11 +70,23 @@ ircd::operator<<(std::ostream &s, const system_point &tp)
 	return (s << timef(buf, tp));
 }
 
-template<class... args>
+inline std::ostream &
+ircd::operator<<(std::ostream &s, const microtime_t &t)
+{
+	char buf[64];
+	s << microtime(buf);
+	return s;
+}
+
+/// timestr() is a passthru to timef() where you don't give the first argument
+/// (the mutable_buffer). Instead of supplying a buffer an allocated
+/// std::string is returned with the result. By default this string's buffer
+/// is sufficiently large, but may be further tuned in the template parameter.
+template<size_t max,
+         class... args>
 std::string
 ircd::timestr(args&&... a)
 {
-	static const size_t max{128};
 	return string(max, [&](const mutable_buffer &buf)
 	{
 		return timef(buf, std::forward<args>(a)...);
@@ -155,6 +171,29 @@ ircd::timef(const mutable_buffer &out,
 	return { data(out), len };
 }
 
+inline ircd::string_view
+ircd::microtime(const mutable_buffer &buf)
+{
+	const auto mt{microtime()};
+	const auto length
+	{
+		snprintf(data(buf), size(buf), "%zd.%06d", mt.first, mt.second)
+	};
+
+	return string_view
+	{
+		data(buf), size_t(length)
+	};
+}
+
+inline ircd::microtime_t
+ircd::microtime()
+{
+	struct timeval tv;
+	syscall(&::gettimeofday, &tv, nullptr);
+	return { tv.tv_sec, tv.tv_usec };
+}
+
 template<class unit>
 time_t
 ircd::time(time_t *const &ptr)
@@ -208,35 +247,4 @@ ircd::now()
 	};
 
 	return std::chrono::duration_cast<unit>(tse);
-}
-
-inline std::ostream &
-ircd::operator<<(std::ostream &s, const microtime_t &t)
-{
-	char buf[64];
-	s << microtime(buf);
-	return s;
-}
-
-inline ircd::string_view
-ircd::microtime(const mutable_buffer &buf)
-{
-	const auto mt{microtime()};
-	const auto length
-	{
-		snprintf(data(buf), size(buf), "%zd.%06d", mt.first, mt.second)
-	};
-
-	return string_view
-	{
-		data(buf), size_t(length)
-	};
-}
-
-inline ircd::microtime_t
-ircd::microtime()
-{
-	struct timeval tv;
-	syscall(&::gettimeofday, &tv, nullptr);
-	return { tv.tv_sec, tv.tv_usec };
 }
