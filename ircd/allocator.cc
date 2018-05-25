@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+//
+// allocator::state
+//
+
 void
 ircd::allocator::state::deallocate(const uint &pos,
                                    const size_type &n)
@@ -64,3 +68,90 @@ const
 
 	return ret - n;
 }
+
+//
+// allocator::profile
+//
+
+thread_local ircd::allocator::profile
+ircd::allocator::profile::this_thread
+{};
+
+ircd::allocator::profile
+ircd::allocator::operator-(const profile &a,
+                           const profile &b)
+{
+	profile ret(a);
+	ret -= b;
+	return ret;
+}
+
+ircd::allocator::profile
+ircd::allocator::operator+(const profile &a,
+                           const profile &b)
+{
+	profile ret(a);
+	ret += b;
+	return ret;
+}
+
+ircd::allocator::profile &
+ircd::allocator::operator-=(profile &a,
+                            const profile &b)
+{
+	a.alloc_count -= b.alloc_count;
+	a.free_count -= b.free_count;
+	a.alloc_bytes -= b.alloc_bytes;
+	a.free_bytes -= b.free_bytes;
+	return a;
+}
+
+ircd::allocator::profile &
+ircd::allocator::operator+=(profile &a,
+                            const profile &b)
+{
+	a.alloc_count += b.alloc_count;
+	a.free_count += b.free_count;
+	a.alloc_bytes += b.alloc_bytes;
+	a.free_bytes += b.free_bytes;
+	return a;
+}
+
+#ifdef RB_PROF_ALLOC // --------------------------------------------------
+
+__attribute__((alloc_size(1), malloc))
+void *
+operator new(const size_t size)
+{
+	void *const &ptr(::malloc(size));
+	if(unlikely(!ptr))
+		throw std::bad_alloc();
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += size;
+	this_thread.alloc_count++;
+
+	return ptr;
+}
+
+void
+operator delete(void *const ptr)
+{
+	::free(ptr);
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.free_count++;
+}
+
+void
+operator delete(void *const ptr,
+                const size_t size)
+{
+	::free(ptr);
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.free_bytes += size;
+	this_thread.free_count++;
+}
+
+#endif // RB_PROF_ALLOC --------------------------------------------------

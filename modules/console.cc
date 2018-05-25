@@ -519,6 +519,28 @@ console_cmd__info(opt &out, const string_view &line)
 }
 
 //
+// mem
+//
+
+bool
+console_cmd__mem(opt &out, const string_view &line)
+{
+	auto &this_thread
+	{
+		ircd::allocator::profile::this_thread
+	};
+
+	out << "IRCd thread allocations:" << std::endl
+	    << "alloc count ____ " << this_thread.alloc_count << std::endl
+	    << "freed count ____ " << this_thread.free_count << std::endl
+	    << "alloc bytes ____ " << this_thread.alloc_bytes << std::endl
+	    << "freed bytes ____ " << this_thread.free_bytes << std::endl
+	    ;
+
+	return true;
+}
+
+//
 // conf
 //
 

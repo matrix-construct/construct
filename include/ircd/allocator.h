@@ -20,9 +20,30 @@
 namespace ircd::allocator
 {
 	struct state;
+	struct profile;
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
 	template<class T> struct node;
+};
+
+/// Profiling counters.
+struct ircd::allocator::profile
+{
+	struct scope;
+
+	uint64_t alloc_count {0};
+	uint64_t free_count {0};
+	size_t alloc_bytes {0};
+	size_t free_bytes {0};
+
+	friend profile &operator+=(profile &, const profile &);
+	friend profile &operator-=(profile &, const profile &);
+	friend profile operator+(const profile &, const profile &);
+	friend profile operator-(const profile &, const profile &);
+
+	/// Explicitly enabled by define at compile time only. Note: replaces
+	/// global `new` and `delete` when enabled.
+	static thread_local profile this_thread;
 };
 
 /// Internal state structure for some of these tools. This is a very small and
