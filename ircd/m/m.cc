@@ -1338,6 +1338,11 @@ bool
 ircd::m::events::rfor_each(const event::idx &start,
                            const id_closure_bool &closure)
 {
+	static const db::gopts opts
+	{
+		db::get::NO_CACHE
+	};
+
 	static constexpr auto column_idx
 	{
 		json::indexof<event, "event_id"_>()
@@ -1350,7 +1355,7 @@ ircd::m::events::rfor_each(const event::idx &start,
 
 	if(start == uint64_t(-1))
 	{
-		for(auto it(column.rbegin()); it; ++it)
+		for(auto it(column.rbegin(opts)); it; ++it)
 			if(!closure(byte_view<event::idx>(it->first), it->second))
 				return false;
 
@@ -1359,10 +1364,10 @@ ircd::m::events::rfor_each(const event::idx &start,
 
 	auto it
 	{
-		column.lower_bound(byte_view<string_view>(start))
+		column.lower_bound(byte_view<string_view>(start), opts)
 	};
 
-	for(; it; ++it)
+	for(; it; --it)
 		if(!closure(byte_view<event::idx>(it->first), it->second))
 			return false;
 
@@ -1412,6 +1417,11 @@ bool
 ircd::m::events::for_each(const event::idx &start,
                           const id_closure_bool &closure)
 {
+	static const db::gopts opts
+	{
+		db::get::NO_CACHE
+	};
+
 	static constexpr auto column_idx
 	{
 		json::indexof<event, "event_id"_>()
@@ -1425,8 +1435,8 @@ ircd::m::events::for_each(const event::idx &start,
 	auto it
 	{
 		start > 0?
-			column.lower_bound(byte_view<string_view>(start)):
-			column.begin()
+			column.lower_bound(byte_view<string_view>(start), opts):
+			column.begin(opts)
 	};
 
 	for(; it; ++it)
