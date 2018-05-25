@@ -20,6 +20,7 @@ struct ircd::m::hook
 :instance_list<hook>
 {
 	struct site;
+	struct maps;
 
 	IRCD_EXCEPTION(ircd::error, error)
 
@@ -33,8 +34,6 @@ struct ircd::m::hook
 
 	string_view site_name() const;
 	site *find_site() const;
-
-	bool match(const m::event &) const;
 
  public:
 	hook(const json::members &, decltype(function));
@@ -55,21 +54,15 @@ struct ircd::m::hook
 struct ircd::m::hook::site
 :instance_list<site>
 {
+	friend class hook;
+
 	json::strung _feature;
 	json::object feature;
 	size_t count {0};
-
-	string_view name() const;
-
-	std::multimap<string_view, hook *> origin;
-	std::multimap<string_view, hook *> room_id;
-	std::multimap<string_view, hook *> sender;
-	std::multimap<string_view, hook *> state_key;
-	std::multimap<string_view, hook *> type;
-	std::vector<hook *> always;
+	std::unique_ptr<hook::maps> maps;
 	std::set<hook *> hooks;
 
-	friend class hook;
+	string_view name() const;
 	bool add(hook &);
 	bool del(hook &);
 
