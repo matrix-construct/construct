@@ -5074,7 +5074,37 @@ ircd::db::_seek(database::column &c,
 		valid(*it)
 	};
 
-	// Start with a non-blocking query.
+	const size_t it_key_size
+	{
+		valid_it? size(slice(it->key())) : 0
+	};
+
+	if(unlikely(it_key_size > 1024))
+		throw error
+		{
+			"Iteration with key size %zu not supported atm", it_key_size
+		};
+
+	char it_key_buf[it_key_size];
+	const mutable_buffer it_key_mb
+	{
+		it_key_buf, it_key_size
+	};
+
+	// Unfortunately we have to copy the key unless we use a pinned iterator.
+	// In the future this offloading system should disappear when the env impl
+	// is completed to use AIO. Right now the majority case for this copy is
+	// only an 8 byte key...
+	const auto it_key
+	{
+		valid_it?
+			string_view{it_key_buf, copy(it_key_mb, slice(it->key()))}:
+			string_view{}
+	};
+
+	// Start with a non-blocking query. This used to not invalidate the
+	// iterator when it failed with a cache miss (incomplete), but now it
+	// does (hence the copy above).
 	_seek_(*it, p);
 
 	// Branch for query being fulfilled from cache
@@ -5093,11 +5123,6 @@ ircd::db::_seek(database::column &c,
 */
 		return valid(*it);
 	}
-
-	const auto it_key
-	{
-		valid_it? slice(it->key()) : string_view{}
-	};
 
 	const auto blocking_it
 	{
