@@ -2596,7 +2596,7 @@ console_cmd__events(opt &out, const string_view &line)
 	};
 
 	const auto closure{[&out, &limit]
-	(const uint64_t &seq, const m::event &event)
+	(const m::event::idx &seq, const m::event &event)
 	{
 		out << seq << " " << pretty_oneline(event) << std::endl;;
 		return --limit;
@@ -2629,7 +2629,7 @@ console_cmd__events__filter(opt &out, const string_view &line)
 	};
 
 	m::events::rfor_each(start, filter, [&out]
-	(const uint64_t &seq, const m::event &event)
+	(const m::event::idx &seq, const m::event &event)
 	{
 		out << seq << " " << pretty_oneline(event) << std::endl;;
 		return true;
