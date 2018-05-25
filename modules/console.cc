@@ -914,7 +914,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	sync(database);
@@ -948,7 +948,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	flush(database, sync);
@@ -982,7 +982,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	sort(database, blocking);
@@ -1031,7 +1031,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	if(!colname)
@@ -1089,7 +1089,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	// Special branch for integer properties that RocksDB aggregates.
@@ -1209,7 +1209,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	// Special branch for integer properties that RocksDB aggregates.
@@ -1284,7 +1284,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	if(!colname)
@@ -1443,7 +1443,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	const auto clear{[&out, &database]
@@ -1524,7 +1524,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	// Special branch for DBOptions
@@ -1577,7 +1577,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	uint64_t msz;
@@ -1611,7 +1611,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(param.at(0))
+		db::database::get(param.at(0))
 	};
 
 	if(!param[1] || param[1] == "*")
@@ -1687,7 +1687,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	for_each(database, seqnum, db::seq_closure_bool{[&out, &limit]
@@ -1740,7 +1740,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
 	get(database, seqnum, db::seq_closure{[&out]
@@ -1774,20 +1774,18 @@ try
 		token(line, ' ', 0)
 	};
 
-	const auto directory
-	{
-		token(line, ' ', 1)
-	};
-
 	auto &database
 	{
-		*db::database::dbs.at(dbname)
+		db::database::get(dbname)
 	};
 
-	checkpoint(database, directory);
+	const auto seqnum
+	{
+		checkpoint(database)
+	};
 
 	out << "Checkpoint " << name(database)
-	    << " to " << directory << " complete."
+	    << " at sequence " << seqnum << " complete."
 	    << std::endl;
 
 	return true;
@@ -1810,17 +1808,17 @@ console_cmd__db__list(opt &out, const string_view &line)
 	{
 		const auto name
 		{
-			lstrip(path, db::path("/"))
+			replace(lstrip(lstrip(path, fs::DBPATH), '/'), "/", ":")
 		};
 
-		const auto it
+		const auto &d
 		{
-			db::database::dbs.find(name)
+			db::database::get(std::nothrow, name)
 		};
 
 		const auto &light
 		{
-			it != end(db::database::dbs)? "\033[1;42m \033[0m" : " "
+			d? "\033[1;42m \033[0m" : " "
 		};
 
 		out << "[" << light << "]"
@@ -1846,7 +1844,7 @@ try
 
 	auto &database
 	{
-		*db::database::dbs.at(param.at(0))
+		db::database::get(param.at(0))
 	};
 
 	out << std::left << std::setw(28) << std::setfill('_') << "UUID "

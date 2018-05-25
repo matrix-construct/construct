@@ -85,7 +85,14 @@ namespace ircd::db
 {
 	extern const char *const version;
 
-	std::string path(const std::string &name);
+	// Utils for "name:checkpoint" string amalgam
+	std::string namepoint(const string_view &name, const uint64_t &checkpoint);
+	std::pair<string_view, uint64_t> namepoint(const string_view &name);
+
+	// Generate local filesytem path based on name / name:checkpoint / etc.
+	std::string path(const string_view &name, const uint64_t &checkpoint);
+	std::string path(const string_view &name);
+
 	std::vector<std::string> available();
 
 	string_view reflect(const pos &);

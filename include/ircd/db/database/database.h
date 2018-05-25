@@ -38,7 +38,7 @@ namespace ircd::db
 	// Control panel
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
-	void checkpoint(database &, const string_view &dir);
+	uint64_t checkpoint(database &);
 	void check(database &);
 	void compact(database &);
 	void sort(database &, const bool &blocking = true);
@@ -60,6 +60,7 @@ namespace ircd::db
 ///
 struct ircd::db::database
 :std::enable_shared_from_this<database>
+,instance_list<database>
 {
 	struct descriptor;
 	struct options;
@@ -75,12 +76,10 @@ struct ircd::db::database
 
 	using description = std::vector<descriptor>;
 
-	// central collection of open databases for iteration (non-owning)
-	static std::map<string_view, database *> dbs;
-
 	std::string name;
-	std::string path;
+	uint64_t checkpoint;
 	std::string optstr;
+	std::string path;
 	std::shared_ptr<struct env> env;
 	std::shared_ptr<struct logs> logs;
 	std::shared_ptr<struct stats> stats;
@@ -94,8 +93,7 @@ struct ircd::db::database
 	std::vector<std::shared_ptr<column>> columns;
 	std::unique_ptr<rocksdb::DB> d;
 	std::string uuid;
-	std::unique_ptr<rocksdb::Checkpoint> checkpoint;
-	unique_const_iterator<decltype(dbs)> dbs_it;
+	std::unique_ptr<rocksdb::Checkpoint> checkpointer;
 
 	operator std::shared_ptr<database>()         { return shared_from_this();                      }
 	operator const rocksdb::DB &() const         { return *d;                                      }
@@ -114,17 +112,28 @@ struct ircd::db::database
 	void operator()(const std::initializer_list<delta> &);
 	void operator()(const delta &);
 
-	database(std::string name,
+	database(const string_view &name,
+	         const uint64_t &checkpoint,
 	         std::string options,
 	         description);
 
-	database(std::string name,
+	database(const string_view &name,
+	         std::string options,
+	         description);
+
+	database(const string_view &name,
 	         std::string options = {});
 
 	database() = default;
 	database(database &&) = delete;
 	database(const database &) = delete;
 	~database() noexcept;
+
+	// Find this instance by name (and checkpoint id) in the instance list
+	static database *get(std::nothrow_t, const string_view &name, const uint64_t &checkpoint);
+	static database *get(std::nothrow_t, const string_view &name); // optionally "name:checkpoint"
+	static database &get(const string_view &name, const uint64_t &checkpoint);
+	static database &get(const string_view &name); // optionally "name:checkpoint"
 
 	// Get this instance from any column.
 	static const database &get(const column &);
