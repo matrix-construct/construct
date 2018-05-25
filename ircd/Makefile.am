@@ -73,6 +73,7 @@ libircd_la_LIBADD = \
 # systems.
 libircd_la_SOURCES =   \
 	exception.cc       \
+	allocator.cc       \
 	lexical.cc         \
 	tokens.cc          \
 	json.cc            \
