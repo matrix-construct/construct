@@ -2628,6 +2628,85 @@ console_cmd__events__filter(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__dump(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"filename"
+	}};
+
+	const auto filename
+	{
+		param.at(0)
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		512_KiB
+	};
+
+	char *pos{data(buf)};
+	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	m::events::for_each(0, [&](const uint64_t &seq, const m::event &event)
+	{
+		const auto remain
+		{
+			size_t(data(buf) + size(buf) - pos)
+		};
+
+		assert(remain >= 64_KiB && remain <= size(buf));
+		const mutable_buffer mb{pos, remain};
+		pos += json::print(mb, event);
+		++ecount;
+
+		if(pos + 64_KiB > data(buf) + size(buf))
+		{
+			const const_buffer cb{data(buf), pos};
+			foff += size(fs::append(filename, cb));
+			pos = data(buf);
+			++acount;
+
+			const double pct
+			{
+				(seq / double(m::vm::current_sequence)) * 100.0
+			};
+
+			log::info
+			{
+				"dump[%s] %lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
+				filename,
+				pct,
+				'%', //TODO: fix gram
+				seq,
+				m::vm::current_sequence,
+				ecount,
+				foff,
+				acount,
+				errcount
+			};
+		}
+
+		return true;
+	});
+
+	if(pos > data(buf))
+	{
+		const const_buffer cb{data(buf), pos};
+		foff += size(fs::append(filename, cb));
+		++acount;
+	}
+
+	out << "Dumped " << ecount << " events"
+	    << " using " << foff << " bytes"
+	    << " in " << acount << " writes"
+	    << " to " << filename
+	    << " with " << errcount << " errors"
+	    << std::endl;
+
+	return true;
+}
+
 //
 // event
 //
@@ -2845,85 +2924,6 @@ console_cmd__event__erase(opt &out, const string_view &line)
 
 	out << "erased " << txn.size() << " cells"
 	    << " for " << event_id << std::endl;
-
-	return true;
-}
-
-bool
-console_cmd__event__dump(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"filename"
-	}};
-
-	const auto filename
-	{
-		param.at(0)
-	};
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		512_KiB
-	};
-
-	char *pos{data(buf)};
-	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	m::events::for_each(0, [&](const uint64_t &seq, const m::event &event)
-	{
-		const auto remain
-		{
-			size_t(data(buf) + size(buf) - pos)
-		};
-
-		assert(remain >= 64_KiB && remain <= size(buf));
-		const mutable_buffer mb{pos, remain};
-		pos += json::print(mb, event);
-		++ecount;
-
-		if(pos + 64_KiB > data(buf) + size(buf))
-		{
-			const const_buffer cb{data(buf), pos};
-			foff += size(fs::append(filename, cb));
-			pos = data(buf);
-			++acount;
-
-			const double pct
-			{
-				(seq / double(m::vm::current_sequence)) * 100.0
-			};
-
-			log::info
-			{
-				"dump[%s] %lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
-				filename,
-				pct,
-				'%', //TODO: fix gram
-				seq,
-				m::vm::current_sequence,
-				ecount,
-				foff,
-				acount,
-				errcount
-			};
-		}
-
-		return true;
-	});
-
-	if(pos > data(buf))
-	{
-		const const_buffer cb{data(buf), pos};
-		foff += size(fs::append(filename, cb));
-		++acount;
-	}
-
-	out << "Dumped " << ecount << " events"
-	    << " using " << foff << " bytes"
-	    << " in " << acount << " writes"
-	    << " to " << filename
-	    << " with " << errcount << " errors"
-	    << std::endl;
 
 	return true;
 }
