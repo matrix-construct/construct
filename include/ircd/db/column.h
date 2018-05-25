@@ -114,15 +114,15 @@ struct ircd::db::column
 	bool operator!() const                       { return !c;                                      }
 
 	// [GET] Iterations
-	const_iterator begin(const gopts & = {});
-	const_iterator end(const gopts & = {});
+	const_iterator begin(gopts = {});
+	const_iterator end(gopts = {});
 
-	const_reverse_iterator rbegin(const gopts & = {});
-	const_reverse_iterator rend(const gopts & = {});
+	const_reverse_iterator rbegin(gopts = {});
+	const_reverse_iterator rend(gopts = {});
 
-	const_iterator find(const string_view &key, const gopts & = {});
-	const_iterator lower_bound(const string_view &key, const gopts & = {});
-	const_iterator upper_bound(const string_view &key, const gopts & = {});
+	const_iterator find(const string_view &key, gopts = {});
+	const_iterator lower_bound(const string_view &key, gopts = {});
+	const_iterator upper_bound(const string_view &key, gopts = {});
 
 	// [GET] Get cell
 	cell operator[](const string_view &key) const;
@@ -192,18 +192,20 @@ struct ircd::db::column::const_iterator_base
 
   protected:
 	database::column *c;
-	database::snapshot ss;
+	gopts opts;
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
 
-	const_iterator_base(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, database::snapshot = {});
+	const_iterator_base(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, db::gopts = {});
 
   public:
-	explicit operator const database::snapshot &() const;
 	explicit operator const database::column &() const;
+	explicit operator const database::snapshot &() const;
+	explicit operator const gopts &() const;
 
-	explicit operator database::snapshot &();
 	explicit operator database::column &();
+	explicit operator database::snapshot &();
+	explicit operator gopts &();
 
 	operator bool() const;
 	bool operator!() const;
@@ -221,7 +223,7 @@ struct ircd::db::column::const_iterator_base
 	friend bool operator<(const const_iterator_base &, const const_iterator_base &);
 	friend bool operator>(const const_iterator_base &, const const_iterator_base &);
 
-	template<class pos> friend bool seek(column::const_iterator_base &, const pos &, const gopts & = {});
+	template<class pos> friend bool seek(column::const_iterator_base &, const pos &);
 };
 
 struct ircd::db::column::const_iterator
@@ -247,15 +249,35 @@ struct ircd::db::column::const_reverse_iterator
 };
 
 inline ircd::db::column::const_iterator_base::operator
+gopts &()
+{
+	return opts;
+}
+
+inline ircd::db::column::const_iterator_base::operator
+database::snapshot &()
+{
+	return opts.snapshot;
+}
+
+inline ircd::db::column::const_iterator_base::operator
 database::column &()
 {
 	return *c;
 }
 
 inline ircd::db::column::const_iterator_base::operator
-database::snapshot &()
+const gopts &()
+const
 {
-	return ss;
+	return opts;
+}
+
+inline ircd::db::column::const_iterator_base::operator
+const database::snapshot &()
+const
+{
+	return opts.snapshot;
 }
 
 inline ircd::db::column::const_iterator_base::operator
@@ -263,13 +285,6 @@ const database::column &()
 const
 {
 	return *c;
-}
-
-inline ircd::db::column::const_iterator_base::operator
-const database::snapshot &()
-const
-{
-	return ss;
 }
 
 inline ircd::db::column::operator
