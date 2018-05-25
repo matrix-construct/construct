@@ -25,7 +25,7 @@ namespace ircd::fs
 
 	filesystem::path path(std::string);
 	filesystem::path path(const string_view &);
-	filesystem::path path(const std::initializer_list<string_view> &);
+	filesystem::path path(const vector_view<const string_view> &);
 }
 
 /// Non-null when aio is available for use
@@ -457,7 +457,7 @@ catch(const filesystem::filesystem_error &e)
 }
 
 std::string
-ircd::fs::make_path(const std::initializer_list<string_view> &list)
+ircd::fs::make_path(const vector_view<const string_view> &list)
 {
 	filesystem::path ret;
 	for(const auto &s : list)
@@ -467,7 +467,7 @@ ircd::fs::make_path(const std::initializer_list<string_view> &list)
 }
 
 filesystem::path
-ircd::fs::path(const std::initializer_list<string_view> &list)
+ircd::fs::path(const vector_view<const string_view> &list)
 {
 	filesystem::path ret;
 	for(const auto &s : list)

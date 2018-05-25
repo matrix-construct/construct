@@ -68,7 +68,7 @@ namespace ircd::fs
 	const char *get(index) noexcept;
 	const char *name(index) noexcept;
 
-	std::string make_path(const std::initializer_list<string_view> &);
+	std::string make_path(const vector_view<const string_view> &);
 
 	bool exists(const string_view &path);
 	bool is_dir(const string_view &path);
