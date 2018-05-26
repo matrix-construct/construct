@@ -122,17 +122,23 @@ try
 		return;
 	}
 
-	static const string_view prefixes[]
-	{
-		"s_", "m_", "client_", "key_", "federation_", "media_"
-	};
-
+	// Manually load first modules
 	m::modules.emplace("vm"s, "vm"s);
 
-	for(const auto &name : mods::available())
-		if(startswith_any(name, std::begin(prefixes), std::end(prefixes)))
-			m::modules.emplace(name, name);
+	// The order of these prefixes will be the loading order. Order of
+	// specific modules within a prefix is not determined here.
+	static const string_view prefixes[]
+	{
+		"s_", "m_", "key_", "media_", "client_", "federation_"
+	};
 
+	// Load modules by prefix.
+	for(const auto &prefix : prefixes)
+		for(const auto &name : mods::available())
+			if(startswith(name, prefix))
+				m::modules.emplace(name, name);
+
+	// Manually load last modules
 	m::modules.emplace("root"s, "root"s);
 }
 catch(...)
