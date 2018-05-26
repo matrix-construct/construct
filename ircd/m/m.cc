@@ -69,6 +69,21 @@ try
 ,modules{[this]
 {
 	auto ret{std::make_unique<struct modules>(config)};
+
+	//TODO: XXX
+	// Because s_conf is loaded before other modules are loaded, all items
+	// have not registered at that time. s_conf reads the !conf room on load
+	// but each conf::item does not read from the conf room itself when it
+	// loads after that. Instead they start with their "default" value. This
+	// isn't good, but for the time being we can trigger a rehash here.
+	import<void ()> rehash_conf
+	{
+		"s_conf", "rehash_conf"
+	};
+
+//	if(rehash_conf)
+//		rehash_conf();
+
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 
