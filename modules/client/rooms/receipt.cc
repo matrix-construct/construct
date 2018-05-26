@@ -80,6 +80,27 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 		user_id
 	};
 
+	bool ignored{false};
+	m::get(std::nothrow, event_id, "sender", [&ignored, &user_room]
+	(const string_view &sender)
+	{
+		ignored = user_room.has("ircd.read.ignore", sender);
+	});
+
+	if(ignored)
+	{
+		log::debug
+		{
+			"no receipt for %s by %s in %s @ %zd (ircd.read.ignore)",
+			string_view{event_id},
+			string_view{user_id},
+			string_view{room_id},
+			ms
+		};
+
+		return {};
+	}
+
 	const auto evid
 	{
 		send(user_room, user_id, "ircd.read", room_id,

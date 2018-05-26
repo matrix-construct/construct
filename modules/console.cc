@@ -4648,6 +4648,51 @@ console_cmd__user__read(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__read__ignore(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"my_user_id", "target_user_id"
+	}};
+
+	const m::user my_user
+	{
+		param.at(0)
+	};
+
+	const m::user::id target_user
+	{
+		param.at(1)
+	};
+
+	const m::user::room user_room
+	{
+		my_user
+	};
+
+	if(user_room.has("ircd.read.ignore", target_user))
+	{
+		out << "User " << my_user.user_id << " is already not sending"
+		    << " receipts for messages from user " << target_user
+		    << std::endl;
+
+		return true;
+	}
+
+	const auto eid
+	{
+		send(user_room, m::me.user_id, "ircd.read.ignore", target_user, json::object{})
+	};
+
+	out << "User " << my_user.user_id << " will not send receipts for"
+	    << " messages from user " << target_user
+	    << " (" << eid << ")"
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__user__filter(opt &out, const string_view &line)
 {
 	const params param{line, " ",
