@@ -110,7 +110,7 @@ ircd::ctx::ctx::jump()
 	// with continuation of source after target
 	{
 		current->notes = 0; // Unconditionally cleared here
-		const continuation continuation{current};
+		const continuation continuation;
 		target();
 	}
 
@@ -703,8 +703,11 @@ noexcept
 // continuation
 //
 
-ircd::ctx::continuation::continuation(ctx *const &self)
-:self{self}
+ircd::ctx::continuation::continuation()
+:self
+{
+	ircd::ctx::current
+}
 {
 	mark(prof::event::CUR_YIELD);
 	assert(!critical_asserted);

@@ -52,7 +52,7 @@ struct ircd::ctx::continuation
 
 	virtual void interrupted(ctx *const &) noexcept;
 
-	continuation(ctx *const &self = ircd::ctx::current);
+	continuation();
 	virtual ~continuation() noexcept;
 };
 
@@ -79,6 +79,5 @@ struct ircd::ctx::to_asio
 
 inline
 ircd::ctx::to_asio::to_asio(const function &handler)
-:continuation{ircd::ctx::current}
-,handler{handler}
+:handler{handler}
 {}
