@@ -27,22 +27,6 @@ ircd::conf::init(const string_view &filename)
 	_config = read_json_file(filename);
 }
 
-ircd::string_view
-ircd::conf::get(const string_view &key,
-                const mutable_buffer &out)
-try
-{
-	const auto &item(*items.at(key));
-	return item.get(out);
-}
-catch(const std::out_of_range &e)
-{
-	throw not_found
-	{
-		"Conf item '%s' is not available", key
-	};
-}
-
 bool
 ircd::conf::set(std::nothrow_t,
                 const string_view &key,
@@ -82,6 +66,28 @@ catch(const std::out_of_range &e)
 	{
 		"Conf item '%s' is not available", key
 	};
+}
+
+ircd::string_view
+ircd::conf::get(const string_view &key,
+                const mutable_buffer &out)
+try
+{
+	const auto &item(*items.at(key));
+	return item.get(out);
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
+bool
+ircd::conf::exists(const string_view &key)
+{
+	return items.count(key);
 }
 
 //
