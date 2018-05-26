@@ -1075,6 +1075,29 @@ ircd::m::event::essential(json::iov &event,
 
 		closure(event);
 	}
+	else if(type == "m.room.redaction")
+	{
+		// This simply finds the redacts key and swaps it with jsundefined for
+		// the scope's duration. The redacts key will still be present and
+		// visible in the json::iov which is incorrect if directly serialized.
+		// However, this iov is turned into a json::tuple (m::event) which ends
+		// up being serialized for signing. That serialization is where the
+		// jsundefined redacts value is ignored.
+		auto &redacts{event.at("redacts")};
+		json::value temp(std::move(redacts));
+		redacts = json::value{};
+		const unwind _{[&redacts, &temp]
+		{
+			redacts = std::move(temp);
+		}};
+
+		const json::iov::push _content
+		{
+			event, { "content", "{}" }
+		};
+
+		closure(event);
+	}
 	else
 	{
 		const json::iov::push _content
@@ -1153,6 +1176,11 @@ ircd::m::essential(m::event event,
 			{ "users", unquote(content.at("users"))                   },
 			{ "users_default", unquote(content.at("users_default"))   },
 		});
+	}
+	else if(type == "m.room.redaction")
+	{
+		json::get<"redacts"_>(event) = string_view{};
+		content = "{}"_sv;
 	}
 	else
 	{
