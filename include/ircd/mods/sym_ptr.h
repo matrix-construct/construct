@@ -25,7 +25,7 @@ class ircd::mods::sym_ptr
 
   public:
 	bool operator!() const;
-	operator bool() const;
+	explicit operator bool() const;
 
 	template<class T> const T *get() const;
 	template<class T> const T *operator->() const;
@@ -106,7 +106,7 @@ inline ircd::mods::sym_ptr::operator
 bool()
 const
 {
-	return !bool(*this);
+	return !operator!();
 }
 
 inline bool
