@@ -55,6 +55,7 @@ struct ircd::json::iov
   public:
 	bool has(const string_view &key) const;
 	const value &at(const string_view &key) const;
+	value &at(const string_view &key);
 
 	iov() = default;
 

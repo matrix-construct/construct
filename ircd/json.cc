@@ -987,15 +987,25 @@ ircd::json::serialized(const iov &iov)
 	});
 }
 
-bool
-ircd::json::iov::has(const string_view &key)
-const
+ircd::json::value &
+ircd::json::iov::at(const string_view &key)
 {
-	return std::any_of(std::begin(*this), std::end(*this), [&key]
-	(const auto &member)
+	const auto it
 	{
-		return string_view{member.first} == key;
-	});
+		std::find_if(std::begin(*this), std::end(*this), [&key]
+		(const auto &member)
+		{
+			return string_view{member.first} == key;
+		})
+	};
+
+	if(it == std::end(*this))
+		throw not_found
+		{
+			"key '%s' not found", key
+		};
+
+	return it->second;
 }
 
 const ircd::json::value &
@@ -1018,6 +1028,17 @@ const
 		};
 
 	return it->second;
+}
+
+bool
+ircd::json::iov::has(const string_view &key)
+const
+{
+	return std::any_of(std::begin(*this), std::end(*this), [&key]
+	(const auto &member)
+	{
+		return string_view{member.first} == key;
+	});
 }
 
 ircd::json::iov::add::add(iov &iov,
