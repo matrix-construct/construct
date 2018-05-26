@@ -244,6 +244,32 @@ head__reset(const m::room &room)
 	return ret;
 }
 
+extern "C" void
+head__modify(const m::event::id &event_id,
+             const db::op &op)
+{
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	// Iterate all of the existing heads with a delete operation
+	m::dbs::write_opts opts;
+	opts.op = op;
+	opts.head = true;
+	opts.refs = true;
+	opts.event_idx = index(event);
+	m::dbs::_index__room_head(txn, event, opts);
+
+	// Commit txn
+	txn();
+}
+
 extern "C" size_t
 dagree_histogram(const m::room &room,
                  std::vector<size_t> &vec)

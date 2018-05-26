@@ -3459,6 +3459,54 @@ console_cmd__room__head__rebuild(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__head__add(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at(0)
+	};
+
+	using prototype = void (const m::event::id &, const db::op &);
+	static m::import<prototype> head__modify
+	{
+		"m_room", "head__modify"
+	};
+
+	head__modify(event_id, db::op::SET);
+	out << "Added " << event_id << " to head " << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__head__del(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at(0)
+	};
+
+	using prototype = void (const m::event::id &, const db::op &);
+	static m::import<prototype> head__modify
+	{
+		"m_room", "head__modify"
+	};
+
+	head__modify(event_id, db::op::DELETE);
+	out << "Deleted " << event_id << " from head (if existed)" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__head__reset(opt &out, const string_view &line)
 {
 	const params param{line, " ",
