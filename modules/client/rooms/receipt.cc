@@ -89,6 +89,16 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 		})
 	};
 
+	log::info
+	{
+		"%s read by %s in %s @ %zd => %s (local)",
+		string_view{event_id},
+		string_view{user_id},
+		string_view{room_id},
+		ms,
+		string_view{evid}
+	};
+
 	const json::value event_ids[]
 	{
 		{ event_id }
