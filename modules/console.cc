@@ -2660,6 +2660,13 @@ console_cmd__events__filter(opt &out, const string_view &line)
 	return true;
 }
 
+conf::item<size_t>
+events_dump_buffer_size
+{
+	{ "name",     "ircd.console.events.dump.buffer_size" },
+	{ "default",  int64_t(4_MiB)                         },
+};
+
 bool
 console_cmd__events__dump(opt &out, const string_view &line)
 {
@@ -2675,7 +2682,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		512_KiB
+		size_t(events_dump_buffer_size)
 	};
 
 	char *pos{data(buf)};
@@ -2688,12 +2695,12 @@ console_cmd__events__dump(opt &out, const string_view &line)
 			size_t(data(buf) + size(buf) - pos)
 		};
 
-		assert(remain >= 64_KiB && remain <= size(buf));
+		assert(remain >= m::event::MAX_SIZE && remain <= size(buf));
 		const mutable_buffer mb{pos, remain};
 		pos += json::print(mb, event);
 		++ecount;
 
-		if(pos + 64_KiB > data(buf) + size(buf))
+		if(pos + m::event::MAX_SIZE > data(buf) + size(buf))
 		{
 			const const_buffer cb{data(buf), pos};
 			foff += size(fs::append(filename, cb));
@@ -5240,7 +5247,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		event_id
 	};
 
-	thread_local char pdubuf[64_KiB];
+	thread_local char pdubuf[m::event::MAX_SIZE];
 	const json::value pdu
 	{
 		json::stringify(mutable_buffer{pdubuf}, event)
