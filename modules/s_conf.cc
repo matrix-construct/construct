@@ -84,6 +84,17 @@ noexcept try
 		"Updating conf [%s] => %s", key, value
 	};
 
+	if(runlevel == runlevel::START && !conf::exists(key))
+	{
+		log::dwarning
+		{
+			"Cannot set conf item '%s'; does not exist or not loaded yet",
+			key
+		};
+
+		return;
+	}
+
 	ircd::conf::set(key, value);
 }
 catch(const std::exception &e)
