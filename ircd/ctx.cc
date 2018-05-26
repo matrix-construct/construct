@@ -1233,36 +1233,42 @@ namespace ircd::ctx::ole
 {
 	using closure = std::function<void () noexcept>;
 
+	extern conf::item<size_t> thread_max;
+
 	std::mutex mutex;
 	std::condition_variable cond;
+	bool termination;
 	std::deque<closure> queue;
-	bool interruption;
-	std::thread *thread;
+	std::vector<std::thread> threads;
 
 	closure pop();
-	void worker() noexcept;
 	void push(closure &&);
+	void worker() noexcept;
 }
+
+decltype(ircd::ctx::ole::thread_max)
+ircd::ctx::ole::thread_max
+{
+	{ "name",     "ircd.ctx.ole.thread.max"  },
+	{ "default",  int64_t(1)                 },
+};
 
 ircd::ctx::ole::init::init()
 {
-	assert(!thread);
-	interruption = false;
+	assert(threads.empty());
+	termination = false;
 }
 
 ircd::ctx::ole::init::~init()
 noexcept
 {
-	if(!thread)
-		return;
-
-	mutex.lock();
-	interruption = true;
-	cond.notify_one();
-	mutex.unlock();
-	thread->join();
-	delete thread;
-	thread = nullptr;
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	termination = true;
+	cond.notify_all();
+	cond.wait(lock, []
+	{
+		return threads.empty();
+	});
 }
 
 void
@@ -1315,12 +1321,12 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 void
 ircd::ctx::ole::push(closure &&func)
 {
-	if(unlikely(!thread))
-		thread = new std::thread(&worker);
+	if(unlikely(threads.size() < size_t(thread_max)))
+		threads.emplace_back(&worker);
 
 	const std::lock_guard<decltype(mutex)> lock(mutex);
 	queue.emplace_back(std::move(func));
-	cond.notify_one();
+	cond.notify_all();
 }
 
 void
@@ -1335,7 +1341,18 @@ noexcept try
 }
 catch(const interrupted &)
 {
-	return;
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	const auto it(std::find_if(begin(threads), end(threads), []
+	(const auto &thread)
+	{
+		return thread.get_id() == std::this_thread::get_id();
+	}));
+
+	assert(it != end(threads));
+	auto &this_thread(*it);
+	this_thread.detach();
+	threads.erase(it);
+	cond.notify_all();
 }
 
 ircd::ctx::ole::closure
@@ -1347,8 +1364,8 @@ ircd::ctx::ole::pop()
 		if(!queue.empty())
 			return true;
 
-		if(unlikely(interruption))
-			throw interrupted();
+		if(unlikely(termination))
+			throw interrupted{};
 
 		return false;
 	});
