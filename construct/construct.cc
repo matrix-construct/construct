@@ -115,6 +115,7 @@ try
 	sigs.add(SIGINT);
 	sigs.add(SIGQUIT);
 	sigs.add(SIGTERM);
+	sigs.add(SIGUSR1);
 	sigs.async_wait(sigfd_handler);
 
 	// Because we registered signal handlers with the io_context, ios->run()
@@ -234,6 +235,7 @@ enable_coredumps()
 static void handle_quit();
 static void handle_interruption();
 static void handle_hangup();
+static void handle_usr1();
 static void handle(const int &signum);
 
 void
@@ -279,6 +281,7 @@ handle(const int &signum)
 		case SIGHUP:   return handle_hangup();
 		case SIGQUIT:  return handle_quit();
 		case SIGTERM:  return handle_quit();
+		case SIGUSR1:  return handle_usr1();
 	}
 }
 
@@ -325,5 +328,24 @@ catch(const std::exception &e)
 	ircd::log::error
 	{
 		"SIGINT handler: %s", e.what()
+	};
+}
+
+void
+handle_usr1()
+try
+{
+	static ircd::m::import<void ()> rehash_conf
+	{
+		"s_conf", "rehash_conf"
+	};
+
+	rehash_conf();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error
+	{
+		"SIGUSR1 handler: %s", e.what()
 	};
 }
