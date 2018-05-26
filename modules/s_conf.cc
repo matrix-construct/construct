@@ -10,10 +10,15 @@
 
 using namespace ircd;
 
+extern "C" void rehash_conf();
+
 mapi::header
 IRCD_MODULE
 {
-	"Server Configuration"
+	"Server Configuration", []
+	{
+		rehash_conf();
+	}
 };
 
 const m::room::id::buf
@@ -56,7 +61,7 @@ get_conf_item(const string_view &key,
 }
 
 static void
-update_conf(const m::event &event)
+conf_updated(const m::event &event)
 noexcept try
 {
 	const auto &content
@@ -92,9 +97,9 @@ catch(const std::exception &e)
 }
 
 const m::hook
-update_conf_hook
+conf_updated_hook
 {
-	update_conf,
+	conf_updated,
 	{
 		{ "_site",       "vm.notify"       },
 		{ "room_id",     "!conf"           },
@@ -113,7 +118,7 @@ init_conf_items(const m::event &)
 	state.for_each("ircd.conf.item", []
 	(const m::event &event)
 	{
-		update_conf(event);
+		conf_updated(event);
 	});
 }
 
@@ -129,6 +134,12 @@ init_conf_items_hook
 		{ "state_key",   "@ircd"          },
 	}
 };
+
+void
+rehash_conf()
+{
+	init_conf_items(m::event{});
+}
 
 static void
 create_conf_item(const string_view &key,

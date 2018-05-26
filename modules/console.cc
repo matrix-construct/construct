@@ -631,6 +631,23 @@ console_cmd__conf__get(opt &out, const string_view &line)
 	};
 }
 
+bool
+console_cmd__conf__rehash(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static m::import<prototype> rehash_conf
+	{
+		"s_conf", "rehash_conf"
+	};
+
+	rehash_conf();
+	out << "Updated any runtime conf items"
+	    << " from the current state in !conf:" << my_host()
+	    << std::endl;
+
+	return true;
+}
+
 //
 // hook
 //
