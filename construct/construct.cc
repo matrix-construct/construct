@@ -113,7 +113,6 @@ try
 	// platformness with windows etc.
 	sigs.add(SIGHUP);
 	sigs.add(SIGINT);
-	sigs.add(SIGTSTP);
 	sigs.add(SIGQUIT);
 	sigs.add(SIGTERM);
 	sigs.async_wait(sigfd_handler);
