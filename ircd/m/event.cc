@@ -591,7 +591,24 @@ ircd::m::event::event(const idx &idx,
 	new (this) m::event(obj);
 }
 
-ircd::string_view
+namespace ircd::m
+{
+	static json::object make_hashes(const mutable_buffer &out, const sha256::buf &hash);
+}
+
+ircd::json::object
+ircd::m::hashes(const mutable_buffer &out,
+                const event &event)
+{
+	const sha256::buf hash_
+	{
+		hash(event)
+	};
+
+	return make_hashes(out, hash_);
+}
+
+ircd::json::object
 ircd::m::event::hashes(const mutable_buffer &out,
                        json::iov &event,
                        const string_view &content)
@@ -601,10 +618,18 @@ ircd::m::event::hashes(const mutable_buffer &out,
 		hash(event, content)
 	};
 
-	thread_local char hashb64buf[b64encode_size(sizeof(hash_))];
+	return make_hashes(out, hash_);
+}
+
+ircd::json::object
+ircd::m::make_hashes(const mutable_buffer &out,
+                     const sha256::buf &hash)
+{
+	static const auto b64bufsz(b64encode_size(sizeof(hash)));
+	thread_local char hashb64buf[b64bufsz];
 	const json::members hashes
 	{
-		{ "sha256", b64encode_unpadded(hashb64buf, hash_) }
+		{ "sha256", b64encode_unpadded(hashb64buf, hash) }
 	};
 
 	return json::stringify(mutable_buffer{out}, hashes);
@@ -699,7 +724,7 @@ catch(const json::not_found &)
 	return false;
 }
 
-ircd::string_view
+ircd::json::object
 ircd::m::event::signatures(const mutable_buffer &out,
                            json::iov &event,
                            const json::iov &content)

@@ -123,7 +123,7 @@ struct ircd::m::event
 	friend ed25519::sig sign(const event &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content, const ed25519::sk &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
-	static string_view signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
+	static json::object signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
 	friend event signatures(const mutable_buffer &, const m::event &);
 
 	friend bool verify_sha256b64(const event &, const string_view &);
@@ -132,7 +132,8 @@ struct ircd::m::event
 
 	friend sha256::buf hash(const event &);
 	static sha256::buf hash(json::iov &event, const string_view &content);
-	static string_view hashes(const mutable_buffer &, json::iov &event, const string_view &content);
+	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
+	friend json::object hashes(const mutable_buffer &, const event &);
 
 	using super_type::tuple;
 	using super_type::operator=;
