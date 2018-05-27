@@ -2523,6 +2523,44 @@ console_cmd__compose(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__compose__final(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]",
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	m::event event
+	{
+		compose.at(id)
+	};
+
+	m::event::id::buf event_id_buf;
+	json::get<"event_id"_>(event) = make_id(event, event_id_buf);
+
+	thread_local char hashes_buf[512];
+	json::get<"hashes"_>(event) = m::hashes(hashes_buf, event);
+
+	thread_local char sigs_buf[512];
+	event = signatures(sigs_buf, event);
+
+	compose.at(id) = json::strung
+	{
+		event
+	};
+
+	event = m::event(compose.at(id));
+	out << pretty(event) << std::endl;
+	out << compose.at(id) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__compose__clear(opt &out, const string_view &line)
 {
 	const params param{line, " ",
