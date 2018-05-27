@@ -2983,26 +2983,175 @@ namespace ircd::m
 	static json::strung _hook_make_feature(const json::members &);
 }
 
+//
+// hook::maps
+//
+
+struct ircd::m::hook::maps
+{
+	std::multimap<string_view, base *> origin;
+	std::multimap<string_view, base *> room_id;
+	std::multimap<string_view, base *> sender;
+	std::multimap<string_view, base *> state_key;
+	std::multimap<string_view, base *> type;
+	std::vector<base *> always;
+
+	size_t match(const event &match, const std::function<bool (base &)> &) const;
+	size_t add(base &hook, const event &matching);
+	size_t del(base &hook, const event &matching);
+
+	maps();
+	~maps() noexcept;
+};
+
+ircd::m::hook::maps::maps()
+{
+}
+
+ircd::m::hook::maps::~maps()
+noexcept
+{
+}
+
+size_t
+ircd::m::hook::maps::add(base &hook,
+                         const event &matching)
+{
+	size_t ret{0};
+	const auto map{[&hook, &ret]
+	(auto &map, const string_view &value)
+	{
+		map.emplace(value, &hook);
+		++ret;
+	}};
+
+	if(json::get<"origin"_>(matching))
+		map(origin, at<"origin"_>(matching));
+
+	if(json::get<"room_id"_>(matching))
+		map(room_id, at<"room_id"_>(matching));
+
+	if(json::get<"sender"_>(matching))
+		map(sender, at<"sender"_>(matching));
+
+	if(json::get<"state_key"_>(matching))
+		map(state_key, at<"state_key"_>(matching));
+
+	if(json::get<"type"_>(matching))
+		map(type, at<"type"_>(matching));
+
+	// Hook had no mappings which means it will match everything.
+	// We don't increment the matcher count for this case.
+	if(!ret)
+		always.emplace_back(&hook);
+
+	return ret;
+}
+
+size_t
+ircd::m::hook::maps::del(base &hook,
+                         const event &matching)
+{
+	size_t ret{0};
+	const auto unmap{[&hook, &ret]
+	(auto &map, const string_view &key)
+	{
+		auto pit{map.equal_range(key)};
+		for(; pit.first != pit.second; ++pit.first)
+			if(pit.first->second == &hook)
+			{
+				++ret;
+				return map.erase(pit.first);
+			}
+
+		assert(0);
+		return end(map);
+	}};
+
+	// Unconditional attempt to remove from always.
+	std::remove(begin(always), end(always), &hook);
+
+	if(json::get<"origin"_>(matching))
+		unmap(origin, at<"origin"_>(matching));
+
+	if(json::get<"room_id"_>(matching))
+		unmap(room_id, at<"room_id"_>(matching));
+
+	if(json::get<"sender"_>(matching))
+		unmap(sender, at<"sender"_>(matching));
+
+	if(json::get<"state_key"_>(matching))
+		unmap(state_key, at<"state_key"_>(matching));
+
+	if(json::get<"type"_>(matching))
+		unmap(type, at<"type"_>(matching));
+
+	return ret;
+}
+
+size_t
+ircd::m::hook::maps::match(const event &event,
+                           const std::function<bool (base &)> &callback)
+const
+{
+	std::set<base *> matching
+	{
+		begin(always), end(always)
+	};
+
+	const auto site_match{[&matching]
+	(auto &map, const string_view &key)
+	{
+		auto pit{map.equal_range(key)};
+		for(; pit.first != pit.second; ++pit.first)
+			matching.emplace(pit.first->second);
+	}};
+
+	if(json::get<"origin"_>(event))
+		site_match(origin, at<"origin"_>(event));
+
+	if(json::get<"room_id"_>(event))
+		site_match(room_id, at<"room_id"_>(event));
+
+	if(json::get<"sender"_>(event))
+		site_match(sender, at<"sender"_>(event));
+
+	if(json::get<"type"_>(event))
+		site_match(type, at<"type"_>(event));
+
+	if(json::get<"state_key"_>(event))
+		site_match(state_key, at<"state_key"_>(event));
+
+	auto it(begin(matching));
+	while(it != end(matching))
+	{
+		const base &hook(**it);
+		if(!_hook_match(hook.matching, event))
+			it = matching.erase(it);
+		else
+			++it;
+	}
+
+	size_t ret{0};
+	for(auto it(begin(matching)); it != end(matching); ++it, ++ret)
+		if(!callback(**it))
+			return ret;
+
+	return ret;
+}
+
+//
+// hook::base
+//
+
 /// Instance list linkage for all hooks
 template<>
-decltype(ircd::util::instance_list<ircd::m::hook>::list)
-ircd::util::instance_list<ircd::m::hook>::list
+decltype(ircd::util::instance_list<ircd::m::hook::base>::list)
+ircd::util::instance_list<ircd::m::hook::base>::list
 {};
 
-/// Alternative hook ctor simply allowing the the function argument
-/// first and description after.
-ircd::m::hook::hook(decltype(function) function,
-                    const json::members &members)
-:hook
-{
-	members, std::move(function)
-}
-{
-}
-
 /// Primary hook ctor
-ircd::m::hook::hook(const json::members &members,
-                    decltype(function) function)
+ircd::m::hook::base::base(const json::members &members)
 try
 :_feature
 {
@@ -3015,10 +3164,6 @@ try
 ,matching
 {
 	feature
-}
-,function
-{
-	std::move(function)
 }
 {
 	site *site;
@@ -3035,7 +3180,7 @@ catch(...)
 	site->del(*this);
 }
 
-ircd::m::hook::~hook()
+ircd::m::hook::base::~base()
 noexcept
 {
 	if(!registered)
@@ -3046,8 +3191,8 @@ noexcept
 	site->del(*this);
 }
 
-ircd::m::hook::site *
-ircd::m::hook::find_site()
+ircd::m::hook::base::site *
+ircd::m::hook::base::find_site()
 const
 {
 	const auto &site_name
@@ -3058,7 +3203,7 @@ const
 	if(!site_name)
 		return nullptr;
 
-	for(auto *const &site : m::hook::site::list)
+	for(auto *const &site : m::hook::base::site::list)
 		if(site->name() == site_name)
 			return site;
 
@@ -3066,7 +3211,7 @@ const
 }
 
 ircd::string_view
-ircd::m::hook::site_name()
+ircd::m::hook::base::site_name()
 const try
 {
 	return unquote(feature.at("_site"));
@@ -3080,46 +3225,20 @@ catch(const std::out_of_range &e)
 }
 
 //
-// hook::maps
-//
-
-struct ircd::m::hook::maps
-{
-	std::multimap<string_view, hook *> origin;
-	std::multimap<string_view, hook *> room_id;
-	std::multimap<string_view, hook *> sender;
-	std::multimap<string_view, hook *> state_key;
-	std::multimap<string_view, hook *> type;
-	std::vector<hook *> always;
-
-	maps();
-	~maps() noexcept;
-};
-
-ircd::m::hook::maps::maps()
-{
-}
-
-ircd::m::hook::maps::~maps()
-noexcept
-{
-}
-
-//
 // hook::site
 //
 
 /// Instance list linkage for all hook sites
 template<>
-decltype(ircd::util::instance_list<ircd::m::hook::site>::list)
-ircd::util::instance_list<ircd::m::hook::site>::list
+decltype(ircd::util::instance_list<ircd::m::hook::base::site>::list)
+ircd::util::instance_list<ircd::m::hook::base::site>::list
 {};
 
 //
 // hook::site::site
 //
 
-ircd::m::hook::site::site(const json::members &members)
+ircd::m::hook::base::site::site(const json::members &members)
 :_feature
 {
 	members
@@ -3130,7 +3249,7 @@ ircd::m::hook::site::site(const json::members &members)
 }
 ,maps
 {
-	std::make_unique<hook::maps>()
+	std::make_unique<struct maps>()
 }
 {
 	for(const auto &site : list)
@@ -3144,15 +3263,15 @@ ircd::m::hook::site::site(const json::members &members)
 
 	// Find and register all of the orphan hooks which were constructed before
 	// this site was constructed.
-	for(auto *const &hook : m::hook::list)
-		if(hook->site_name() == name())
+	for(auto *const &hook : m::hook::base::list)
+	if(hook->site_name() == name())
 			add(*hook);
 }
 
-ircd::m::hook::site::~site()
+ircd::m::hook::base::site::~site()
 noexcept
 {
-	const std::vector<hook *> hooks
+	const std::vector<base *> hooks
 	{
 		begin(this->hooks), end(this->hooks)
 	};
@@ -3162,71 +3281,14 @@ noexcept
 }
 
 void
-ircd::m::hook::site::operator()(const event &event)
+ircd::m::hook::base::site::match(const event &event,
+                                 const std::function<bool (base &)> &callback)
 {
-	std::set<hook *> matching //TODO: allocator
-	{
-		begin(maps->always), end(maps->always)
-	};
-
-	const auto site_match{[&matching]
-	(auto &map, const string_view &key)
-	{
-		auto pit{map.equal_range(key)};
-		for(; pit.first != pit.second; ++pit.first)
-			matching.emplace(pit.first->second);
-	}};
-
-	if(json::get<"origin"_>(event))
-		site_match(maps->origin, at<"origin"_>(event));
-
-	if(json::get<"room_id"_>(event))
-		site_match(maps->room_id, at<"room_id"_>(event));
-
-	if(json::get<"sender"_>(event))
-		site_match(maps->sender, at<"sender"_>(event));
-
-	if(json::get<"type"_>(event))
-		site_match(maps->type, at<"type"_>(event));
-
-	if(json::get<"state_key"_>(event))
-		site_match(maps->state_key, at<"state_key"_>(event));
-
-	auto it(begin(matching));
-	while(it != end(matching))
-	{
-		const hook &hook(**it);
-		if(!_hook_match(hook.matching, event))
-			it = matching.erase(it);
-		else
-			++it;
-	}
-
-	for(const auto &hook : matching)
-		call(*hook, event);
-}
-
-void
-ircd::m::hook::site::call(hook &hook,
-                          const event &event)
-try
-{
-	++hook.calls;
-	hook.function(event);
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		"Unhandled hookfn(%p) %s error :%s",
-		&hook,
-		string_view{hook.feature},
-		e.what()
-	};
+	maps->match(event, callback);
 }
 
 bool
-ircd::m::hook::site::add(hook &hook)
+ircd::m::hook::base::site::add(base &hook)
 {
 	assert(!hook.registered);
 	assert(hook.site_name() == name());
@@ -3242,91 +3304,46 @@ ircd::m::hook::site::add(hook &hook)
 		return false;
 	}
 
-	const auto map{[&hook]
-	(auto &map, const string_view &value)
+	assert(maps);
+	const size_t matched
 	{
-		map.emplace(value, &hook);
-		++hook.matchers;
-	}};
+		maps->add(hook, hook.matching)
+	};
 
-	if(json::get<"origin"_>(hook.matching))
-		map(maps->origin, at<"origin"_>(hook.matching));
-
-	if(json::get<"room_id"_>(hook.matching))
-		map(maps->room_id, at<"room_id"_>(hook.matching));
-
-	if(json::get<"sender"_>(hook.matching))
-		map(maps->sender, at<"sender"_>(hook.matching));
-
-	if(json::get<"state_key"_>(hook.matching))
-		map(maps->state_key, at<"state_key"_>(hook.matching));
-
-	if(json::get<"type"_>(hook.matching))
-		map(maps->type, at<"type"_>(hook.matching));
-
-	// Hook had no mappings which means it will match everything.
-	// We don't increment the matcher count for this case.
-	if(!hook.matchers)
-		maps->always.emplace_back(&hook);
-
-	++count;
+	hook.matchers = matched;
 	hook.registered = true;
+	matchers += matched;
+	++count;
 	return true;
 }
 
 bool
-ircd::m::hook::site::del(hook &hook)
+ircd::m::hook::base::site::del(base &hook)
 {
 	assert(hook.registered);
 	assert(hook.site_name() == name());
 
-	const auto unmap{[&hook]
-	(auto &map, const string_view &key)
+	const size_t matched
 	{
-		auto pit{map.equal_range(key)};
-		for(; pit.first != pit.second; ++pit.first)
-			if(pit.first->second == &hook)
-			{
-				--hook.matchers;
-				return map.erase(pit.first);
-			}
-
-		assert(0);
-		return end(map);
-	}};
-
-	// Unconditional attempt to remove from always.
-	std::remove(begin(maps->always), end(maps->always), &hook);
-
-	if(json::get<"origin"_>(hook.matching))
-		unmap(maps->origin, at<"origin"_>(hook.matching));
-
-	if(json::get<"room_id"_>(hook.matching))
-		unmap(maps->room_id, at<"room_id"_>(hook.matching));
-
-	if(json::get<"sender"_>(hook.matching))
-		unmap(maps->sender, at<"sender"_>(hook.matching));
-
-	if(json::get<"state_key"_>(hook.matching))
-		unmap(maps->state_key, at<"state_key"_>(hook.matching));
-
-	if(json::get<"type"_>(hook.matching))
-		unmap(maps->type, at<"type"_>(hook.matching));
+		maps->del(hook, hook.matching)
+	};
 
 	const auto erased
 	{
 		hooks.erase(&hook)
 	};
 
-	assert(erased);
-	assert(hook.matchers == 0);
-	--count;
+	hook.matchers -= matched;
 	hook.registered = false;
+	matchers -= matched;
+	--count;
+	assert(hook.matchers == 0);
+	assert(erased);
 	return true;
 }
 
 ircd::string_view
-ircd::m::hook::site::name()
+ircd::m::hook::base::site::name()
 const try
 {
 	return unquote(feature.at("name"));
@@ -3336,6 +3353,59 @@ catch(const std::out_of_range &e)
 	throw assertive
 	{
 		"Hook site %p requires a name", this
+	};
+}
+
+//
+// hook<void>
+//
+
+ircd::m::hook::hook<void>::hook(const json::members &feature,
+                                decltype(function) function)
+:base{feature}
+,function{std::move(function)}
+{
+}
+
+ircd::m::hook::hook<void>::hook(decltype(function) function,
+                                const json::members &feature)
+:base{feature}
+,function{std::move(function)}
+{
+}
+
+ircd::m::hook::site<void>::site(const json::members &feature)
+:base::site{feature}
+{
+}
+
+void
+ircd::m::hook::site<void>::operator()(const event &event)
+{
+	match(event, [this, &event]
+	(base &base)
+	{
+		call(dynamic_cast<hook<void> &>(base), event);
+		return true;
+	});
+}
+
+void
+ircd::m::hook::site<void>::call(hook<void> &hfn,
+                                const event &event)
+try
+{
+	++hfn.calls;
+	hfn.function(event);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Unhandled hookfn(%p) %s error :%s",
+		&hfn,
+		string_view{hfn.feature},
+		e.what()
 	};
 }
 

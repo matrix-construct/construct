@@ -22,7 +22,7 @@ static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::room::id &, const json::object &);
 static void handle_edu_m_receipt(const m::event &);
 
-const m::hook
+const m::hookfn<>
 _m_receipt_eval
 {
 	handle_edu_m_receipt,

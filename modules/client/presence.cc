@@ -387,7 +387,7 @@ handle_my_presence_changed(const m::event &event)
 
 }
 
-const m::hook
+const m::hookfn<>
 my_presence_changed
 {
 	handle_my_presence_changed,

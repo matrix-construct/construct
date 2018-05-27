@@ -11,23 +11,33 @@
 #pragma once
 #define HAVE_IRCD_M_HOOK_H
 
-namespace ircd::m
+namespace ircd::m::hook
 {
-	struct hook;
-}
+	IRCD_EXCEPTION(ircd::error, error)
 
-struct ircd::m::hook
-:instance_list<hook>
-{
-	struct site;
+	struct base;
 	struct maps;
 
-	IRCD_EXCEPTION(ircd::error, error)
+	template<class data = void> struct hook;
+	template<class data = void> struct site;
+
+	template<> struct hook<void>;
+	template<> struct site<void>;
+}
+
+namespace ircd::m
+{
+	template<class data = void> using hookfn = m::hook::hook<data>;
+}
+
+struct ircd::m::hook::base
+:instance_list<base>
+{
+	struct site;
 
 	json::strung _feature;
 	json::object feature;
 	m::event matching;
-	std::function<void (const m::event &)> function;
 	bool registered {false};
 	size_t matchers {0};
 	size_t calls {0};
@@ -35,44 +45,124 @@ struct ircd::m::hook
 	string_view site_name() const;
 	site *find_site() const;
 
- public:
-	hook(const json::members &, decltype(function));
-	hook(decltype(function), const json::members &);
-	hook(hook &&) = delete;
-	hook(const hook &) = delete;
-	virtual ~hook() noexcept;
+ protected:
+	base(const json::members &);
+	base(base &&) = delete;
+	base(const base &) = delete;
+	virtual ~base() noexcept;
 };
 
-/// The hook::site is the call-site for a hook. Each hook site is named
-/// and registers itself with the master extern hook::site::list. Each hook
-/// then registers itself with a hook::site. The site contains internal
-/// state to manage the efficient calling of the participating hooks.
-///
-/// A hook::site can be created or destroyed at any time (for example if it's
-/// in a module which is reloaded) while being agnostic to the hooks it
-/// cooperates with.
-struct ircd::m::hook::site
+struct ircd::m::hook::base::site
 :instance_list<site>
 {
-	friend class hook;
-
 	json::strung _feature;
 	json::object feature;
 	size_t count {0};
-	std::unique_ptr<hook::maps> maps;
-	std::set<hook *> hooks;
+	std::unique_ptr<struct maps> maps;
+	std::set<base *> hooks;
+	size_t matchers {0};
 
+	friend class base;
 	string_view name() const;
-	bool add(hook &);
-	bool del(hook &);
+	bool add(base &);
+	bool del(base &);
 
-	void call(hook &, const event &);
+	void match(const event &, const std::function<bool (base &)> &);
+
+  protected:
+	site(const json::members &);
+	site(site &&) = delete;
+	site(const site &) = delete;
+	virtual ~site() noexcept;
+};
+
+template<>
+struct ircd::m::hook::hook<void>
+final
+:base
+{
+	std::function<void (const m::event &)> function;
+
+ public:
+	hook(const json::members &feature, decltype(function) function);
+	hook(decltype(function) function, const json::members &feature);
+};
+
+template<>
+struct ircd::m::hook::site<void>
+final
+:base::site
+{
+	void call(hook<void> &, const event &);
 
   public:
 	void operator()(const event &);
 
-	site(const json::members &);
-	site(site &&) = delete;
-	site(const site &) = delete;
-	~site() noexcept;
+	site(const json::members &feature);
 };
+
+template<class data>
+struct ircd::m::hook::hook
+:base
+{
+	std::function<void (const m::event &, data)> function;
+
+ public:
+	hook(const json::members &feature, decltype(function) function)
+	:base{feature}
+	,function{std::move(function)}
+	{}
+
+	hook(decltype(function) function, const json::members &feature)
+	:base{feature}
+	,function{std::move(function)}
+	{}
+};
+
+template<class data>
+struct ircd::m::hook::site
+:base::site
+{
+	void call(hook<data> &hfn, const event &event, data d);
+
+  public:
+	void operator()(const event &event, data d);
+
+	site(const json::members &feature)
+	:base::site{feature}
+	{}
+};
+
+template<class data>
+void
+ircd::m::hook::site<data>::operator()(const event &event,
+                                      data d)
+{
+	match(event, [this, &event, &d]
+	(base &base)
+	{
+		call(dynamic_cast<hook<data> &>(base), event, d);
+		return true;
+	});
+}
+
+template<class data>
+void
+ircd::m::hook::site<data>::call(hook<data> &hfn,
+                                const event &event,
+                                data d)
+try
+{
+	++hfn.calls;
+	hfn.function(event, d);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Unhandled hookfn(%p) %s error :%s",
+		&hfn,
+		string_view{hfn.feature},
+		e.what()
+	};
+}

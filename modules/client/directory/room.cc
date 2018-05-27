@@ -241,7 +241,7 @@ room_alias_fetch(const mutable_buffer &out,
 	return response;
 }
 
-const m::hook
+const m::hookfn<>
 _create_alias_room
 {
 	{
@@ -249,6 +249,7 @@ _create_alias_room
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
+
 	[](const m::event &)
 	{
 		m::create(alias_room_id, m::me.user_id);

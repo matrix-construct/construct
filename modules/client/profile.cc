@@ -389,7 +389,7 @@ handle_my_profile_changed(const m::event &event)
 		return handle_my_profile_changed__avatar_url(event);
 }
 
-const m::hook
+const m::hookfn<>
 my_profile_changed
 {
 	handle_my_profile_changed,

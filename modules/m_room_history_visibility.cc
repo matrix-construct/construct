@@ -18,7 +18,7 @@ IRCD_MODULE
 
 namespace ircd::m
 {
-	extern hook::site visible_hook;
+	extern hook::site<> visible_hook;
 }
 
 decltype(ircd::m::visible_hook)
@@ -56,7 +56,7 @@ _changed_visibility(const m::event &event)
 	};
 }
 
-const m::hook
+const m::hookfn<>
 _changed_visibility_hookfn
 {
 	_changed_visibility,
@@ -72,7 +72,7 @@ _event_visible(const m::event &event)
 
 }
 
-const m::hook
+const m::hookfn<>
 _event_visible_hookfn
 {
 	_event_visible,

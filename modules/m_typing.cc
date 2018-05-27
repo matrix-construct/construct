@@ -19,7 +19,7 @@ IRCD_MODULE
 static void _handle_edu_m_typing(const m::event &, const m::edu::m_typing &edu);
 static void handle_edu_m_typing(const m::event &);
 
-const m::hook
+const m::hookfn<>
 _m_typing_eval
 {
 	handle_edu_m_typing,

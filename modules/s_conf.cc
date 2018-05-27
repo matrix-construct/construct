@@ -107,7 +107,7 @@ catch(const std::exception &e)
 	};
 }
 
-const m::hook
+const m::hookfn<>
 conf_updated_hook
 {
 	conf_updated,
@@ -133,7 +133,7 @@ init_conf_items(const m::event &)
 	});
 }
 
-const m::hook
+const m::hookfn<>
 init_conf_items_hook
 {
 	init_conf_items,
@@ -181,7 +181,7 @@ create_conf_room(const m::event &)
 	}
 }
 
-const m::hook
+const m::hookfn<>
 create_conf_room_hook
 {
 	create_conf_room,
