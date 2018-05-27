@@ -79,7 +79,7 @@ Provides compression for the database, etc.
 	<img align="right" src="https://i.imgur.com/30zJfPb.png" />
 </a>
 
-### Building from git (RELEASE)
+### Building from git
 
 ```
 ./autogen.sh
@@ -88,11 +88,10 @@ make
 sudo make install
 ```
 
-#### Building from git (DEVELOPER PREVIEW)
+#### Building from git (STANDALONE)
 
-*This is only intended to allow isolated development with dependencies that have not made
-their way to mainstream systems yet.*
-**Not for release.**
+*Intended to allow building with dependencies that have not made their way
+to mainstream systems.*
 
 ```
 ./autogen.sh
@@ -113,14 +112,75 @@ in `CXX`. This will also build the submodule dependencies with that version.
 as submodules. Include `=shared` for now until static libraries are better handled.
 
 ```
-make
 make install
 ```
+
+#### Building from git (DEVELOPMENT)
+
+Development builds should follow the same instructions as the standalone
+section above while taking note of the following `./configure` options:
+
+##### Debug mode
+
+```
+--enable-debug
+```
+Full debug mode. Includes additional code within `#ifdef RB_DEBUG` sections.
+Optimization level is `-Og`, which is still valgrind-worthy. Debugger support
+is `-ggdb`. Log level is `DEBUG` (maximum). Assertions are enabled.
+
+
+##### Manually enable assertions
+
+```
+--enable-assert
+```
+Implied by `--enable-debug`. This is useful to specifically enable `assert()`
+statements when `--enable-debug` is not used.
+
+
+##### Manually enable optimization
+
+```
+--enable-optimize
+```
+This manually applies full release-mode optimizations even when using
+`--enable-debug`. Implied when not in debug mode.
+
+
+##### Logging level
+
+```
+--with-log-level=
+```
+This manually sets the level of logging. All log levels at or below this level
+will be available. When a log level is not available, all code used to generate
+its messages will be entirely eliminated via *dead-code-elimination* at compile
+time.
+
+The log levels are (from logger.h):
+```
+7  DEBUG      Maximum verbosity for developers.
+6  DWARNING   A warning but only for developers (more frequent than WARNING).
+5  DERROR     An error but only worthy of developers (more frequent than ERROR).
+4  INFO       A more frequent message with good news.
+3  NOTICE     An infrequent important message with neutral or positive news.
+2  WARNING    Non-impacting undesirable behavior user should know about.
+1  ERROR      Things that shouldn't happen; user impacted and should know.
+0  CRITICAL   Catastrophic/unrecoverable; program is in a compromised state.
+```
+
+When `--enable-debug` is used `--with-log-level=DEBUG` is implied. Otherwise
+for release mode `--with-log-level=INFO` is implied. Large deployments with
+many users may consider lower than `INFO` to maximize optimization and reduce
+noise.
+
 
 ## Developers
 
 <a href="https://github.com/mujx/nheko">
 	<img align="right" src="https://i.imgur.com/GQ91GOK.png" />
+	<br />
 </a>
 
 [![](https://img.shields.io/badge/License-BSD-brightgreen.svg)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)]()
