@@ -3526,13 +3526,13 @@ console_cmd__room__head__add(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	using prototype = void (const m::event::id &, const db::op &);
+	using prototype = void (const m::event::id &, const db::op &, const bool &);
 	static m::import<prototype> head__modify
 	{
 		"m_room", "head__modify"
 	};
 
-	head__modify(event_id, db::op::SET);
+	head__modify(event_id, db::op::SET, true);
 	out << "Added " << event_id << " to head " << std::endl;
 	return true;
 }
@@ -3550,13 +3550,13 @@ console_cmd__room__head__del(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	using prototype = void (const m::event::id &, const db::op &);
+	using prototype = void (const m::event::id &, const db::op &, const bool &);
 	static m::import<prototype> head__modify
 	{
 		"m_room", "head__modify"
 	};
 
-	head__modify(event_id, db::op::DELETE);
+	head__modify(event_id, db::op::DELETE, true);
 	out << "Deleted " << event_id << " from head (if existed)" << std::endl;
 	return true;
 }
