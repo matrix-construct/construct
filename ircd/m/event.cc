@@ -787,6 +787,7 @@ ircd::m::signatures(const mutable_buffer &out_,
 		if(!my_host(unquote(other.first)))
 			sigs.at(i++) = { other.first, other.second };
 
+	event = event_;
 	mutable_buffer out{out_};
 	json::get<"signatures"_>(event) = json::stringify(out, sigs.data(), sigs.data() + i);
 	return event;
