@@ -120,8 +120,15 @@ struct ircd::m::vm::opts
 	/// Apply effects of the eval
 	bool effects {true};
 
-	/// Broadcast to clients/servers
-	bool notify {true};
+	/// Broadcast to clients/servers. When true, individual notify options
+	/// that follow are considered. When false, no notifications occur.
+	short notify {true};
+
+	/// Broadcast to local clients (/sync stream).
+	bool notify_clients {true};
+
+	/// Broadcast to federation servers (/federation/send/).
+	bool notify_servers {true};
 
 	/// False to allow a dirty conforms report (not recommended).
 	bool conforming {true};

@@ -70,8 +70,14 @@ send_worker()
 			m::vm::accept.wait(lock)
 		};
 
-		if(my(event))
-			send(event);
+		if(!my(event))
+			continue;
+
+		assert(event.opts);
+		if(!event.opts->notify_servers)
+			continue;
+
+		send(event);
 	}
 	catch(const std::exception &e)
 	{

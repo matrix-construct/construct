@@ -343,6 +343,10 @@ try
 			m::vm::accept.wait_until(lock, args.timesout)
 		};
 
+		assert(accepted.opts);
+		if(!accepted.opts->notify_clients)
+			continue;
+
 		if(synchronize(client, request, args, accepted))
 			return;
 	}
