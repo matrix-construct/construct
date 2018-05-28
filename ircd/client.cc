@@ -186,14 +186,7 @@ ircd::client::wait_all()
 			context.active(),
 			context.size()
 		};
-	else
-		log::debug
-		{
-			"Waiting for %zu request contexts to join...",
-			context.size()
-		};
 
-	context.join();
 	while(!client::list.empty())
 	{
 		if(!dock.wait_for(seconds(2)))
@@ -202,6 +195,14 @@ ircd::client::wait_all()
 				"Waiting for %zu clients to close...", client::list.size()
 			};
 	}
+
+	log::debug
+	{
+		"Waiting for %zu request contexts to join...",
+		context.size()
+	};
+
+	context.join();
 }
 
 ircd::parse::read_closure
