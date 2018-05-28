@@ -317,6 +317,12 @@ ircd::resource::operator()(client &client,
 				head.path
 			};
 
+			// The interrupt is effective when the socket has already been
+			// closed and/or the client is still stuck in a request for
+			// some reason.
+			if(client.reqctx)
+				ctx::interrupt(*client.reqctx);
+
 			//TODO: If we know that no response has been sent yet
 			//TODO: we can respond with http::REQUEST_TIMEOUT instead.
 			client.close(net::dc::RST, net::close_ignore);
