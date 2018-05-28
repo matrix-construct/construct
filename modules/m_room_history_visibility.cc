@@ -28,17 +28,15 @@ ircd::m::visible_hook
 };
 
 extern "C" bool
-visible__user(const m::room &room,
-              const m::user &user,
-              const m::event *const &event)
+visible__user(const m::event &event,
+              const m::user &user)
 {
 	return true;
 }
 
 extern "C" bool
-visible__node(const m::room &room,
-              const m::node &node,
-              const m::event *const &event)
+visible__node(const m::event &event,
+              const m::node &node)
 {
 	return true;
 }

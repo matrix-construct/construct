@@ -992,6 +992,75 @@ ircd::m::keys::init::signing()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/visible.h
+//
+
+bool
+ircd::m::visible(const event::id &event_id,
+                 const node::id &origin)
+{
+	m::room::id::buf room_id
+	{
+		get(event_id, "room_id", room_id)
+	};
+
+	const m::event event
+	{
+		{ "event_id",  event_id  },
+		{ "room_id",   room_id   }
+	};
+
+	return visible(event, origin);
+}
+
+bool
+ircd::m::visible(const event::id &event_id,
+                 const user::id &user_id)
+{
+	m::room::id::buf room_id
+	{
+		get(event_id, "room_id", room_id)
+	};
+
+	const m::event event
+	{
+		{ "event_id",  event_id  },
+		{ "room_id",   room_id   }
+	};
+
+	return visible(event, user_id);
+}
+
+bool
+ircd::m::visible(const event &event,
+                 const node::id &origin)
+{
+	using prototype = bool (const m::event &, const node &);
+
+	static import<prototype> function
+	{
+		"m_room_history_visibility", "visible__node"
+	};
+
+	return function(event, origin);
+}
+
+bool
+ircd::m::visible(const event &event,
+                 const user::id &user_id)
+{
+	using prototype = bool (const m::event &, const user &);
+
+	static import<prototype> function
+	{
+		"m_room_history_visibility", "visible__user"
+	};
+
+	return function(event, user_id);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/receipt.h
 //
 
@@ -2775,71 +2844,6 @@ ircd::m::exists(const id::room_alias &room_alias,
 	};
 
 	return function(room_alias, remote_query);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/event.h
-//
-
-bool
-ircd::m::visible(const event::id &event_id,
-                 const node::id &origin)
-{
-	m::room::id::buf room_id
-	{
-		get(event_id, "room_id", room_id)
-	};
-
-	const m::event event
-	{
-		{ "event_id",  event_id  },
-		{ "room_id",   room_id   }
-	};
-
-	return visible(event, origin);
-}
-
-bool
-ircd::m::visible(const event::id &event_id,
-                 const user::id &user_id)
-{
-	m::room::id::buf room_id
-	{
-		get(event_id, "room_id", room_id)
-	};
-
-	const m::event event
-	{
-		{ "event_id",  event_id  },
-		{ "room_id",   room_id   }
-	};
-
-	return visible(event, user_id);
-}
-
-bool
-ircd::m::visible(const event &event,
-                 const node::id &origin)
-{
-	const m::room room
-	{
-		at<"room_id"_>(event), at<"event_id"_>(event)
-	};
-
-	return room.visible(origin, &event);
-}
-
-bool
-ircd::m::visible(const event &event,
-                 const user::id &user_id)
-{
-	const m::room room
-	{
-		at<"room_id"_>(event), at<"event_id"_>(event)
-	};
-
-	return room.visible(user_id, &event);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
