@@ -95,6 +95,7 @@ _handle_edu_m_typing(const m::event &event,
 	});
 
 	m::vm::opts vmopts;
+	vmopts.notify_servers = false;
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
