@@ -155,3 +155,51 @@ catch(const m::error &e)
 		e.content
 	};
 }
+
+extern "C" bool
+get__m_presence(const std::nothrow_t,
+                const m::user &user,
+                const m::presence::event_closure &closure)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"event_id",
+			"content",
+			"origin_server_ts",
+		}
+	};
+
+	const m::user::room user_room
+	{
+		user, nullptr, &fopts
+	};
+
+	return user_room.get(std::nothrow, "ircd.presence", "", [&closure]
+	(const m::event &event)
+	{
+		closure(event, json::get<"content"_>(event));
+	});
+}
+
+extern "C" m::event::id::buf
+commit__m_presence(const m::presence &content)
+{
+	const m::user user
+	{
+		at<"user_id"_>(content)
+	};
+
+	//TODO: ABA
+	if(!exists(user))
+		create(user.user_id);
+
+	const m::user::room user_room
+	{
+		user
+	};
+
+	//TODO: ABA
+	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
+}

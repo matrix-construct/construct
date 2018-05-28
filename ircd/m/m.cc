@@ -1140,7 +1140,7 @@ ircd::m::presence::set(const presence &object)
 
 	static import<prototype> function
 	{
-		"client_presence", "commit__m_presence"
+		"m_presence", "commit__m_presence"
 	};
 
 	return function(object);
@@ -1204,7 +1204,7 @@ ircd::m::presence::get(std::nothrow_t,
 
 	static import<prototype> function
 	{
-		"client_presence", "m_presence_get"
+		"m_presence", "get__m_presence"
 	};
 
 	return function(std::nothrow, user, closure);

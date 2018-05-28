@@ -140,23 +140,6 @@ get__presence_list(client &client,
 	};
 }
 
-extern "C" bool
-m_presence_get(const std::nothrow_t,
-               const m::user &user,
-               const m::presence::event_closure &closure)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	return user_room.get(std::nothrow, "ircd.presence", "", [&closure]
-	(const m::event &event)
-	{
-		closure(event, json::get<"content"_>(event));
-	});
-}
-
 //
 // POST ?
 //
@@ -342,27 +325,6 @@ put__presence_status(client &client,
 	{
 		client, http::OK
 	};
-}
-
-extern "C" m::event::id::buf
-commit__m_presence(const m::presence &content)
-{
-	const m::user user
-	{
-		at<"user_id"_>(content)
-	};
-
-	//TODO: ABA
-	if(!exists(user))
-		create(user.user_id);
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	//TODO: ABA
-	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
 }
 
 static void
