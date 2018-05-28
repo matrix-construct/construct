@@ -889,14 +889,12 @@ ircd::ctx::context::context(function func,
 ircd::ctx::context::~context()
 noexcept
 {
-	if(!c)
-		return;
-
 	// Can't join to bare metal, only from within another context.
-	if(current)
+	if(c && current)
 	{
 		interrupt();
 		join();
+		return;
 	}
 
 	// because *this uses unique_ptr's, if we dtor the ircd::ctx from
@@ -905,8 +903,17 @@ noexcept
 	// queue.
 	if(c && !started(*c))
 	{
-		c->flags |= context::DETACH;
-		c.release();
+		detach();
+		return;
+	}
+
+	// When this is bare metal the above join branch will not have been
+	// taken. In that case we should detach the context so it frees itself,
+	// but only if the context has not already finished.
+	if(c && !current && !finished(*c))
+	{
+		detach();
+		return;
 	}
 }
 
