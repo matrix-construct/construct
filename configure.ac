@@ -206,6 +206,40 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
 
 dnl
+dnl Explicit optimization level switch
+dnl
+
+AC_MSG_CHECKING(whether to explicitly set the optimization level)
+AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Explicitly set the optimize level]),
+[
+	optimize_level=$withval
+	AC_MSG_RESULT([yes, enabling optimization level -O$optimize_level])
+	AC_SUBST(OPTMIZE_LEVEL, $optimize_level)
+	RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [User configured optimization level])
+], [
+	AM_COND_IF(OPTIMIZE,
+	[
+		optimize_level="3"
+		AC_MSG_RESULT([no, but --enable-optimize has implied level -O$optimize_level])
+		AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
+		RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Explicitly set release mode optimization])
+	], [
+		AM_COND_IF(DEBUG,
+		[
+			optimize_level="g"
+			AC_MSG_RESULT([no, but --enable-debug has implied level -O$optimize_level])
+			AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
+			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Debug mode optimization level])
+		], [
+			optimize_level="3"
+			AC_MSG_RESULT([no, but release mode has implied level -O$optimize_level])
+			AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
+			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Release mode optimization])
+		])
+	])
+])
+
+dnl
 dnl Explicit log level
 dnl
 
@@ -293,7 +327,7 @@ dnl
 
 AM_COND_IF([OPTIMIZE],
 [
-	CXXFLAGS+=" -O3"
+	CXXFLAGS+=" -O$optimize_level"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
@@ -316,7 +350,7 @@ AM_COND_IF([OPTIMIZE],
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -ggdb"
 ], [
-	CXXFLAGS+=" -Og"
+	CXXFLAGS+=" -O$optimize_level"
 	CXXFLAGS+=" -ggdb"
 ])
 
@@ -1540,6 +1574,7 @@ echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert"
 echo "Optimized build ................... $optimize"
+echo "Optimization level ................ $optimize_level"
 echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo
