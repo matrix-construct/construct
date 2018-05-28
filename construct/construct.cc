@@ -335,12 +335,34 @@ void
 handle_usr1()
 try
 {
-	static ircd::m::import<void ()> rehash_conf
+	// Spawning the context that follows this branch and doing a rehash
+	// when not in a stable state like runlevel::RUN will just make a mess
+	// so any signal received is just dropped and the user can try again.
+	if(ircd::runlevel != ircd::runlevel::RUN)
 	{
-		"s_conf", "rehash_conf"
-	};
+		ircd::log::warning
+		{
+			"Not rehashing conf from SIGUSR1 in runlevel %s",
+			reflect(ircd::runlevel)
+		};
 
-	rehash_conf();
+		return;
+	}
+
+	// This signal handler (though not a *real* signal handler) is still
+	// running on the main async stack and not an ircd::ctx. The rehash
+	// function does a lot of IO so it requires an ircd::ctx. Note that
+	// because this is the main stack, the ircd::context{} will return
+	// immediately (no waiting/join can occur) but will execute later.
+	ircd::context{[]
+	{
+		ircd::m::import<void ()> rehash_conf
+		{
+			"s_conf", "rehash_conf"
+		};
+
+		rehash_conf();
+	}};
 }
 catch(const std::exception &e)
 {
