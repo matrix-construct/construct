@@ -72,8 +72,8 @@ libircd_la_LIBADD = \
 # the units that compile spirit grammars otherwise they thrash weaker
 # systems.
 libircd_la_SOURCES =   \
-	exception.cc       \
 	allocator.cc       \
+	exception.cc       \
 	lexical.cc         \
 	tokens.cc          \
 	json.cc            \
