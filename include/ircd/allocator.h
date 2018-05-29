@@ -29,8 +29,6 @@ namespace ircd::allocator
 /// Profiling counters.
 struct ircd::allocator::profile
 {
-	struct scope;
-
 	uint64_t alloc_count {0};
 	uint64_t free_count {0};
 	size_t alloc_bytes {0};
