@@ -4607,7 +4607,7 @@ console_cmd__user__presence(opt &out, const string_view &line)
 	};
 
 	const m::user::room user_room{user};
-	user_room.for_each("m.presence", m::event::closure_bool{[&out, &limit]
+	user_room.for_each("ircd.presence", m::event::closure_bool{[&out, &limit]
 	(const m::event &event)
 	{
 		out << timestr(at<"origin_server_ts"_>(event) / 1000)
