@@ -2198,6 +2198,36 @@ console_cmd__peer__find(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__peer__cancel(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"hostport"
+	}};
+
+	const auto &hostport
+	{
+		param.at(0)
+	};
+
+	auto &peer
+	{
+		server::find(hostport)
+	};
+
+	peer.cancel();
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	throw error
+	{
+		"Peer not found"
+	};
+}
+
 //
 // net
 //
