@@ -265,17 +265,17 @@ ircd::buffer::move(it &dest,
                    const it &stop,
                    const const_buffer &src)
 {
-	const it ret{dest};
-	const ssize_t srcsz(size(src));
-	assert(ret <= stop);
-	const ssize_t remain{std::distance(ret, stop)};
-	const ssize_t mvsz{std::min(srcsz, remain)};
+	assert(dest <= stop);
+	const it ret(dest);
+	const ssize_t &srcsz(size(src));
+	const ssize_t &remain(std::distance(ret, stop));
+	const ssize_t &mvsz(std::min(srcsz, remain));
+	dest += mvsz;
+	assert(dest <= stop);
 	assert(mvsz <= srcsz);
 	assert(mvsz <= remain);
 	assert(remain >= 0);
 	memmove(ret, data(src), mvsz);
-	dest += mvsz;
-	assert(dest <= stop);
 	return ret;
 }
 
@@ -285,17 +285,17 @@ ircd::buffer::copy(it &dest,
                    const it &stop,
                    const const_buffer &src)
 {
-	const it ret{dest};
-	const ssize_t srcsz(size(src));
-	assert(ret <= stop);
-	const ssize_t remain{std::distance(ret, stop)};
-	const ssize_t cpsz{std::min(srcsz, remain)};
+	assert(dest <= stop);
+	const it ret(dest);
+	const ssize_t &srcsz(size(src));
+	const ssize_t &remain(std::distance(ret, stop));
+	const ssize_t &cpsz(std::min(srcsz, remain));
+	dest += cpsz;
+	assert(dest <= stop);
 	assert(cpsz <= srcsz);
 	assert(cpsz <= remain);
 	assert(remain >= 0);
 	memcpy(ret, data(src), cpsz);
-	dest += cpsz;
-	assert(dest <= stop);
 	return ret;
 }
 
