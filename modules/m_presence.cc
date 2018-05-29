@@ -124,7 +124,18 @@ try
 			json::get<"origin_server_ts"_>(event) - now_active_ago
 		};
 
-		useful = now_active_absolute > prev_active_absolute;
+		// First way to filter out the synapse presence spam bug is seeing
+		// if the update is older than the last update.
+		if(now_active_absolute < prev_active_absolute)
+			useful = false;
+		else if(json::get<"presence"_>(object) != unquote(existing_object.get("presence")))
+			useful = true;
+		else if(json::get<"currently_active"_>(object) != existing_object.get<bool>("currently_active"))
+			useful = true;
+		else if(json::get<"currently_active"_>(object))
+			useful = true;
+		else
+			useful = false;
 	});
 
 	if(!useful)
