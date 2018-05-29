@@ -1742,10 +1742,12 @@ ircd::db::database::env::NewSequentialFile(const std::string& name,
                                            const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': new sequential file '%s' options:%p",
 	          d.name,
 	          name,
 	          &options);
+	#endif
 
 	std::unique_ptr<SequentialFile> defaults;
 	const auto ret
@@ -1763,10 +1765,12 @@ ircd::db::database::env::NewRandomAccessFile(const std::string& name,
                                              const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': new random access file '%s' options:%p",
 	          d.name,
 	          name,
 	          &options);
+	#endif
 
 	std::unique_ptr<RandomAccessFile> defaults;
 	const auto ret
@@ -1785,10 +1789,12 @@ ircd::db::database::env::NewWritableFile(const std::string& name,
                                          const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': new writable file '%s' options:%p",
 	          d.name,
 	          name,
 	          &options);
+	#endif
 
 	std::unique_ptr<WritableFile> defaults;
 	const auto ret
@@ -1806,10 +1812,12 @@ ircd::db::database::env::NewRandomRWFile(const std::string& name,
                                          const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': new random read/write file '%s' options:%p",
 	          d.name,
 	          name,
 	          &options);
+	#endif
 
 	std::unique_ptr<RandomRWFile> defaults;
 	const auto ret
@@ -1826,9 +1834,11 @@ ircd::db::database::env::NewDirectory(const std::string& name,
                                       std::unique_ptr<Directory>* result)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': new directory '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	std::unique_ptr<Directory> defaults;
 	const auto ret
@@ -1846,10 +1856,12 @@ ircd::db::database::env::ReopenWritableFile(const std::string& name,
                                             const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': reopen writable file '%s' options:%p",
 	          d.name,
 	          name,
 	          &options);
+	#endif
 
 	return defaults.ReopenWritableFile(name, result, options);
 }
@@ -1861,11 +1873,13 @@ ircd::db::database::env::ReuseWritableFile(const std::string& name,
                                            const EnvOptions& options)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': reuse writable file '%s' old '%s' options:%p",
 	          d.name,
 	          name,
 	          old_name,
 	          &options);
+	#endif
 
 	return defaults.ReuseWritableFile(name, old_name, r, options);
 }
@@ -1874,9 +1888,11 @@ rocksdb::Status
 ircd::db::database::env::FileExists(const std::string& f)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': file exists '%s'",
 	          d.name,
 	          f);
+	#endif
 
 	return defaults.FileExists(f);
 }
@@ -1886,9 +1902,11 @@ ircd::db::database::env::GetChildren(const std::string& dir,
                                      std::vector<std::string>* r)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get children of directory '%s'",
 	          d.name,
 	          dir);
+	#endif
 
 	return defaults.GetChildren(dir, r);
 }
@@ -1898,9 +1916,11 @@ ircd::db::database::env::GetChildrenFileAttributes(const std::string& dir,
                                                    std::vector<FileAttributes>* result)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get children file attributes of directory '%s'",
 	          d.name,
 	          dir);
+	#endif
 
 	return defaults.GetChildrenFileAttributes(dir, result);
 }
@@ -1909,9 +1929,11 @@ rocksdb::Status
 ircd::db::database::env::DeleteFile(const std::string& name)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': delete file '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.DeleteFile(name);
 }
@@ -1920,9 +1942,11 @@ rocksdb::Status
 ircd::db::database::env::CreateDir(const std::string& name)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': create directory '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.CreateDir(name);
 }
@@ -1931,9 +1955,11 @@ rocksdb::Status
 ircd::db::database::env::CreateDirIfMissing(const std::string& name)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': create directory if missing '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.CreateDirIfMissing(name);
 }
@@ -1942,9 +1968,11 @@ rocksdb::Status
 ircd::db::database::env::DeleteDir(const std::string& name)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': delete directory '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.DeleteDir(name);
 }
@@ -1954,9 +1982,11 @@ ircd::db::database::env::GetFileSize(const std::string& name,
                                      uint64_t* s)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get file size '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.GetFileSize(name, s);
 }
@@ -1966,9 +1996,11 @@ ircd::db::database::env::GetFileModificationTime(const std::string& name,
                                                  uint64_t* file_mtime)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get file mtime '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.GetFileModificationTime(name, file_mtime);
 }
@@ -1978,10 +2010,12 @@ ircd::db::database::env::RenameFile(const std::string& s,
                                     const std::string& t)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rename file '%s' to '%s'",
 	          d.name,
 	          s,
 	          t);
+	#endif
 
 	return defaults.RenameFile(s, t);
 }
@@ -1991,10 +2025,12 @@ ircd::db::database::env::LinkFile(const std::string& s,
                                   const std::string& t)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': link file '%s' to '%s'",
 	          d.name,
 	          s,
 	          t);
+	#endif
 
 	return defaults.LinkFile(s, t);
 }
@@ -2004,9 +2040,11 @@ ircd::db::database::env::LockFile(const std::string& name,
                                   FileLock** l)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': lock file '%s'",
 	          d.name,
 	          name);
+	#endif
 
 	return defaults.LockFile(name, l);
 }
@@ -2015,9 +2053,11 @@ rocksdb::Status
 ircd::db::database::env::UnlockFile(FileLock* l)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': unlock file lock:%p",
 	          d.name,
 	          l);
+	#endif
 
 	return defaults.UnlockFile(l);
 }
@@ -2030,6 +2070,7 @@ ircd::db::database::env::Schedule(void (*f)(void* arg),
                                   void (*u)(void* arg))
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': schedule func:%p a:%p tag:%p u:%p prio:%s",
 	          d.name,
 	          f,
@@ -2037,6 +2078,7 @@ noexcept
 	          tag,
 	          u,
 	          reflect(prio));
+	#endif
 
 	return defaults.Schedule(f, a, prio, tag, u);
 }
@@ -2046,10 +2088,12 @@ ircd::db::database::env::UnSchedule(void* tag,
                                     Priority pri)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': unschedule tag:%p prio:%s",
 	          d.name,
 	          tag,
 	          reflect(pri));
+	#endif
 
 	return defaults.UnSchedule(tag, pri);
 }
@@ -2059,10 +2103,12 @@ ircd::db::database::env::StartThread(void (*f)(void*),
                                      void* a)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': start thread func:%p a:%p",
 	          d.name,
 	          f,
 	          a);
+	#endif
 
 	return defaults.StartThread(f, a);
 }
@@ -2078,9 +2124,11 @@ unsigned int
 ircd::db::database::env::GetThreadPoolQueueLen(Priority pri)
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get thread pool queue len prio:%s",
 	          d.name,
 	          reflect(pri));
+	#endif
 
 	return defaults.GetThreadPoolQueueLen(pri);
 }
@@ -2111,9 +2159,11 @@ void
 ircd::db::database::env::SleepForMicroseconds(int micros)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': sleep for %d microseconds",
 	          d.name,
 	          micros);
+	#endif
 
 	defaults.SleepForMicroseconds(micros);
 }
@@ -2123,10 +2173,12 @@ ircd::db::database::env::GetHostName(char* name,
                                      uint64_t len)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get host name name:%p len:%lu",
 	          d.name,
 	          name,
 	          len);
+	#endif
 
 	return defaults.GetHostName(name, len);
 }
@@ -2143,10 +2195,12 @@ ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
                                          std::string* output_path)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': get absolute path from '%s' ret:%p",
 	          d.name,
 	          db_path,
 	          output_path);
+	#endif
 
 	return defaults.GetAbsolutePath(db_path, output_path);
 }
@@ -2156,10 +2210,12 @@ ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority pri)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': set background threads num:%d prio:%s",
 	          d.name,
 	          num,
 	          reflect(pri));
+	#endif
 
 	return defaults.SetBackgroundThreads(num, pri);
 }
@@ -2169,10 +2225,12 @@ ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
                                                       Priority pri)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': increase background threads num:%d prio:%s",
 	          d.name,
 	          num,
 	          reflect(pri));
+	#endif
 
 	return defaults.IncBackgroundThreadsIfNeeded(num, pri);
 }
@@ -2181,9 +2239,11 @@ void
 ircd::db::database::env::LowerThreadPoolIOPriority(Priority pool)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': lower thread pool priority prio:%s",
 	          d.name,
 	          reflect(pool));
+	#endif
 
 	defaults.LowerThreadPoolIOPriority(pool);
 }
@@ -2245,13 +2305,13 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Append(const Slice& s)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p append:%p bytes:%zu",
 	          d.name,
 	          this,
 	          data(s),
 	          size(s));
-*/
+	#endif
 
 	return defaults->Append(s);
 }
@@ -2261,12 +2321,14 @@ ircd::db::database::env::writable_file::PositionedAppend(const Slice& s,
                                                          uint64_t offset)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p append:%p bytes:%zu offset:%lu",
 	          d.name,
 	          this,
 	          data(s),
 	          size(s),
 	          offset);
+	#endif
 
 	return defaults->PositionedAppend(s, offset);
 }
@@ -2275,10 +2337,12 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Truncate(uint64_t size)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p truncate to %lu bytes",
 	          d.name,
 	          this,
 	          size);
+	#endif
 
 	return defaults->Truncate(size);
 }
@@ -2287,11 +2351,12 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Close()
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p close",
 	          d.name,
 	          this);
-*/
+	#endif
+
 	return defaults->Close();
 }
 
@@ -2299,11 +2364,12 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Flush()
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p flush",
 	          d.name,
 	          this);
-*/
+	#endif
+
 	return defaults->Flush();
 }
 
@@ -2311,9 +2377,11 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Sync()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p sync",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Sync();
 }
@@ -2322,9 +2390,11 @@ rocksdb::Status
 ircd::db::database::env::writable_file::Fsync()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p fsync",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Fsync();
 }
@@ -2340,10 +2410,12 @@ void
 ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p set IO prio to %s",
 	          d.name,
 	          this,
 	          reflect(prio));
+	#endif
 
 	defaults->SetIOPriority(prio);
 }
@@ -2367,11 +2439,13 @@ ircd::db::database::env::writable_file::GetPreallocationStatus(size_t* block_siz
                                                                size_t* last_allocated_block)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p get preallocation block_size:%p last_block:%p",
 	          d.name,
 	          this,
 	          block_size,
 	          last_allocated_block);
+	#endif
 
 	defaults->GetPreallocationStatus(block_size, last_allocated_block);
 }
@@ -2381,11 +2455,13 @@ ircd::db::database::env::writable_file::GetUniqueId(char* id,
                                                     size_t max_size)
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p get unique id:%p max_size:%zu",
 	          d.name,
 	          this,
 	          id,
 	          max_size);
+	#endif
 
 	return defaults->GetUniqueId(id, max_size);
 }
@@ -2395,11 +2471,13 @@ ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
                                                         size_t length)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
+	#endif
 
 	return defaults->InvalidateCache(offset, length);
 }
@@ -2408,10 +2486,12 @@ void
 ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p set preallocation block size:%zu",
 	          d.name,
 	          this,
 	          size);
+	#endif
 
 	defaults->SetPreallocationBlockSize(size);
 }
@@ -2421,13 +2501,14 @@ ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
                                                      size_t length)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p prepare write offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
-*/
+	#endif
+
 	defaults->PrepareWrite(offset, length);
 }
 
@@ -2436,11 +2517,13 @@ ircd::db::database::env::writable_file::Allocate(uint64_t offset,
                                                  uint64_t length)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p allocate offset:%lu length:%lu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
+	#endif
 
 	return defaults->Allocate(offset, length);
 }
@@ -2450,11 +2533,13 @@ ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
                                                   uint64_t length)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': wfile:%p range sync offset:%lu length:%lu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
+	#endif
 
 	return defaults->RangeSync(offset, length);
 }
@@ -2483,14 +2568,15 @@ ircd::db::database::env::sequential_file::Read(size_t length,
                                                char *scratch)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': seqfile:%p read:%p length:%zu scratch:%p",
 	          d.name,
 	          this,
 	          result,
 	          length,
 	          scratch);
-*/
+	#endif
+
 	return defaults->Read(length, result, scratch);
 }
 
@@ -2501,7 +2587,7 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
                                                          char *scratch)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': seqfile:%p read:%p length:%zu offset:%zu scratch:%p",
 	          d.name,
 	          this,
@@ -2509,7 +2595,8 @@ noexcept
 	          length,
 	          offset,
 	          scratch);
-*/
+	#endif
+
 	return defaults->PositionedRead(offset, length, result, scratch);
 }
 
@@ -2517,10 +2604,12 @@ rocksdb::Status
 ircd::db::database::env::sequential_file::Skip(uint64_t size)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': seqfile:%p skip:%zu",
 	          d.name,
 	          this,
 	          size);
+	#endif
 
 	return defaults->Skip(size);
 }
@@ -2530,11 +2619,13 @@ ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
                                                           size_t length)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
+	#endif
 
 	return defaults->InvalidateCache(offset, length);
 }
@@ -2576,13 +2667,14 @@ ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
                                                       size_t length)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rfile:%p prefetch offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
-*/
+	#endif
+
 	return defaults->Prefetch(offset, length);
 }
 
@@ -2593,7 +2685,7 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   char *scratch)
 const noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
 	          d.name,
 	          this,
@@ -2601,7 +2693,8 @@ const noexcept
 	          offset,
 	          length,
 	          scratch);
-*/
+	#endif
+
 	return defaults->Read(offset, length, result, scratch);
 }
 
@@ -2610,11 +2703,13 @@ ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
                                                              size_t length)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rfile:%p invalidate cache offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          offset,
 	          length);
+	#endif
 
 	return defaults->InvalidateCache(offset, length);
 }
@@ -2624,11 +2719,13 @@ ircd::db::database::env::random_access_file::GetUniqueId(char* id,
                                                          size_t max_size)
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rfile:%p get unique id:%p max_size:%zu",
 	          d.name,
 	          this,
 	          id,
 	          max_size);
+	#endif
 
 	return defaults->GetUniqueId(id, max_size);
 }
@@ -2637,12 +2734,13 @@ void
 ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
 noexcept
 {
-/*
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rfile:%p hint %s",
 	          d.name,
 	          this,
 	          reflect(pattern));
-*/
+	#endif
+
 	return defaults->Hint(pattern);
 }
 
@@ -2682,9 +2780,11 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Close()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p closec",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Close();
 }
@@ -2693,9 +2793,11 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Fsync()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p fsync",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Fsync();
 }
@@ -2704,9 +2806,11 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Sync()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p sync",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Sync();
 }
@@ -2715,9 +2819,11 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Flush()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p flush",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Flush();
 }
@@ -2729,6 +2835,7 @@ ircd::db::database::env::random_rw_file::Read(uint64_t offset,
                                               char *scratch)
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
 	          d.name,
 	          this,
@@ -2736,6 +2843,7 @@ const noexcept
 	          offset,
 	          length,
 	          scratch);
+	#endif
 
 	return defaults->Read(offset, length, result, scratch);
 }
@@ -2745,12 +2853,14 @@ ircd::db::database::env::random_rw_file::Write(uint64_t offset,
                                                const Slice &slice)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': rwfile:%p write:%p offset:%zu length:%zu",
 	          d.name,
 	          this,
 	          data(slice),
 	          offset,
 	          size(slice));
+	#endif
 
 	return defaults->Write(offset, slice);
 }
@@ -2790,9 +2900,11 @@ rocksdb::Status
 ircd::db::database::env::directory::Fsync()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log.debug("'%s': directory:%p fsync",
 	          d.name,
 	          this);
+	#endif
 
 	return defaults->Fsync();
 }
@@ -3865,9 +3977,12 @@ ircd::db::seek(row &r,
 	if(r.empty())
 		return 0;
 
+	#ifdef RB_DEBUG_DB_SEEK
+	const ircd::timer timer;
+	#endif
+
 	const column &c(r[0]);
 	const database &d(c);
-//	const ircd::timer timer;
 	const auto ret
 	{
 		std::count_if(begin(r), end(r), [&p]
@@ -3876,16 +3991,21 @@ ircd::db::seek(row &r,
 			return seek(cell, p);
 		})
 	};
-/*
-	log.debug("'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
-	          name(d),
-	          sequence(d),
-	          sequence(r[0]),
-	          name(c),
-	          ret,
-	          r.size(),
-	          timer.at<microseconds>().count());
-*/
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
+		name(d),
+		sequence(d),
+		sequence(r[0]),
+		name(c),
+		ret,
+		r.size(),
+		timer.at<microseconds>().count()
+	};
+	#endif
+
 	return ret;
 }
 template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
@@ -5052,15 +5172,20 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-/*		log.debug("'%s' %lu:%lu SEEK %s %s in %ld$us '%s'",
-		          name(d),
-		          sequence(d),
-		          sequence(opts.snapshot),
-		          it->status().ToString(),
-		          valid(*it)? "VALID" : "INVALID",
-		          timer.at<microseconds>().count(),
-		          name(c));
-*/
+		#ifdef RB_DEBUG_DB_SEEK
+		log::debug
+		{
+			log, "'%s' %lu:%lu SEEK %s %s in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			it->status().ToString(),
+			valid(*it)? "VALID" : "INVALID",
+			timer.at<microseconds>().count(),
+			name(c)
+		};
+		#endif
+
 		return valid(*it);
 	}
 
@@ -5076,26 +5201,38 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-/*		log.debug("'%s' %lu:%lu SEEK %s INVALID CACHE MISS in %ld$us '%s'",
-		          name(d),
-		          sequence(d),
-		          sequence(opts.snapshot),
-		          it->status().ToString(),
-		          timer.at<microseconds>().count(),
-		          name(c));
-*/
+
+		#ifdef RB_DEBUG_DB_SEEK
+		log::debug
+		{
+			log, "'%s' %lu:%lu SEEK %s INVALID CACHE MISS in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			it->status().ToString(),
+			timer.at<microseconds>().count(),
+			name(c)
+		};
+		#endif
+
 		return false;
 	}
 
 	it.reset(nullptr);
-/*	log.debug("'%s' %lu:%lu SEEK %s VALID CACHE MISS in %ld$us '%s'",
-	          name(d),
-	          sequence(d),
-	          sequence(opts.snapshot),
-	          blocking_it->status().ToString(),
-	          timer.at<microseconds>().count(),
-	          name(c));
-*/
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu:%lu SEEK %s VALID CACHE MISS in %ld$us '%s'",
+		name(d),
+		sequence(d),
+		sequence(opts.snapshot),
+		blocking_it->status().ToString(),
+		timer.at<microseconds>().count(),
+		name(c)
+	};
+	#endif
+
 	return seek(c, slice(blocking_it->key()), opts, it);
 }
 
@@ -5154,17 +5291,22 @@ ircd::db::_seek(database::column &c,
 	// Branch for query being fulfilled from cache
 	if(!it->status().IsIncomplete())
 	{
-/*		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s in %ld$us '%s'",
-		          name(d),
-		          sequence(d),
-		          sequence(opts.snapshot),
-		          reflect(p),
-		          it->status().ToString(),
-		          valid_it? "VALID" : "INVALID",
-		          valid(*it)? "VALID" : "INVALID",
-		          timer.at<microseconds>().count(),
-		          name(c));
-*/
+		#ifdef RB_DEBUG_DB_SEEK
+		log::debug
+		{
+			log, "'%s' %lu:%lu SEEK[%s] %s %s -> %s in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			reflect(p),
+			it->status().ToString(),
+			valid_it? "VALID" : "INVALID",
+			valid(*it)? "VALID" : "INVALID",
+			timer.at<microseconds>().count(),
+			name(c)
+		};
+		#endif
+
 		return valid(*it);
 	}
 
@@ -5184,31 +5326,43 @@ ircd::db::_seek(database::column &c,
 	if(!valid(*blocking_it))
 	{
 		it.reset(rocksdb::NewErrorIterator(blocking_it->status()));
-/*		log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> %s|INVALID CACHE MISS in %ld$us '%s'",
-		          name(d),
-		          sequence(d),
-		          sequence(opts.snapshot),
-		          reflect(p),
-		          it->status().ToString(),
-		          valid_it? "VALID" : "INVALID",
-		          valid(*it)? "VALID" : "INVALID",
-		          timer.at<microseconds>().count(),
-		          name(c));
-*/
+
+		#ifdef RB_DEBUG_DB_SEEK
+		log::debug
+		{
+			log, "'%s' %lu:%lu SEEK[%s] %s %s -> %s|INVALID CACHE MISS in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			reflect(p),
+			it->status().ToString(),
+			valid_it? "VALID" : "INVALID",
+			valid(*it)? "VALID" : "INVALID",
+			timer.at<microseconds>().count(),
+			name(c)
+		};
+		#endif
+
 		return false;
 	}
 
 	it.reset(nullptr);
-/*	log.debug("'%s' %lu:%lu SEEK[%s] %s %s -> VALID CACHE MISS in %ld$us '%s'",
-	          name(d),
-	          sequence(d),
-	          sequence(opts.snapshot),
-	          reflect(p),
-	          blocking_it->status().ToString(),
-	          valid_it? "VALID" : "INVALID",
-	          timer.at<microseconds>().count(),
-	          name(c));
-*/
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu:%lu SEEK[%s] %s %s -> VALID CACHE MISS in %ld$us '%s'",
+		name(d),
+		sequence(d),
+		sequence(opts.snapshot),
+		reflect(p),
+		blocking_it->status().ToString(),
+		valid_it? "VALID" : "INVALID",
+		timer.at<microseconds>().count(),
+		name(c)
+	};
+	#endif
+
 	return seek(c, slice(blocking_it->key()), opts, it);
 }
 

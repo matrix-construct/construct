@@ -10,6 +10,19 @@
 
 #pragma once
 
+/// Uncomment or -D this #define to enable extensive log messages covering the
+/// entire RocksDB callback surface. This is only useful for developers
+/// specifically working on the backend of the DB and no real use for
+/// developers making frontend queries to it. Massively verbose.
+///
+//#define RB_DEBUG_DB_ENV
+
+/// This #define is more useful to developers making queries to the database.
+/// It is still so verbose that it goes beyond what is tolerable and generally
+/// useful even in debug-mode builds, thus the manual #define being required.
+///
+//#define RB_DEBUG_DB_SEEK
+
 namespace ircd::db
 {
 	struct throw_on_error;
