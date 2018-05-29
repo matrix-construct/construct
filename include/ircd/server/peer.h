@@ -106,7 +106,7 @@ struct ircd::server::peer
 	bool err_check();
 
 	// control panel
-	void interrupt();
+	void cancel();
 	void close(const net::close_opts & = net::close_opts_default);
 
 	peer(std::string hostname);

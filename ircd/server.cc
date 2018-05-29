@@ -78,7 +78,7 @@ ircd::server::interrupt_all()
 	          peer_count());
 
 	for(auto &peer : peers)
-		peer.second->interrupt();
+		peer.second->cancel();
 }
 
 ircd::server::peer &
@@ -395,7 +395,7 @@ ircd::server::peer::close(const net::close_opts &opts)
 }
 
 void
-ircd::server::peer::interrupt()
+ircd::server::peer::cancel()
 {
 	for(auto &link : this->links)
 		link.cancel_all(std::make_exception_ptr(canceled
