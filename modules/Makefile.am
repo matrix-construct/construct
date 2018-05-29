@@ -128,6 +128,7 @@ client_client_directory_room_la_SOURCES = client/directory/room.cc
 client_client_directory_user_la_SOURCES = client/directory/user.cc
 client_client_publicised_groups_la_SOURCES = client/publicised_groups.cc
 client_client_initialsync_la_SOURCES = client/initialsync.cc
+client_client_search_la_SOURCES = client/search.cc
 
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -150,6 +151,7 @@ client_module_LTLIBRARIES = \
 	client/client_directory_user.la \
 	client/client_publicised_groups.la \
 	client/client_initialsync.la \
+	client/client_search.la \
 	###
 
 #
