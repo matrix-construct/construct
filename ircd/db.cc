@@ -686,17 +686,20 @@ try
 	// NOTE: rocksdb sez RepairDB is broken; can't use now
 	if(fsck && fs::is_dir(path))
 	{
-		log.notice("Checking database @ `%s' columns[%zu]",
-		           path,
-		           columns.size());
+		log::notice
+		{
+			log, "Checking database @ `%s' columns[%zu]", path, columns.size()
+		};
 
 		throw_on_error
 		{
 			rocksdb::RepairDB(path, opts, columns)
 		};
 
-		log.info("Database @ `%s' check complete",
-		         path);
+		log::info
+		{
+			log, "Database @ `%s' check complete", path
+		};
 	}
 
 	// If the directory does not exist, though rocksdb will create it, we can
@@ -705,10 +708,13 @@ try
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
-	log.info("Opening database \"%s\" @ `%s' with %zu columns...",
-	         this->name,
-	         path,
-	         columns.size());
+	log::info
+	{
+		log, "Opening database \"%s\" @ `%s' with %zu columns...",
+		this->name,
+		path,
+		columns.size()
+	};
 
 	// Open DB into ptr
 	rocksdb::DB *ptr;
@@ -776,11 +782,14 @@ try
 	check(*this);
 	#endif
 
-	log.info("'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
-	         this->name,
-	         path,
-	         columns.size(),
-	         d->GetLatestSequenceNumber());
+	log::info
+	{
+		log, "'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
+		this->name,
+		path,
+		columns.size(),
+		d->GetLatestSequenceNumber()
+	};
 }
 catch(const std::exception &e)
 {
@@ -795,24 +804,36 @@ catch(const std::exception &e)
 ircd::db::database::~database()
 noexcept try
 {
-	log.info("'%s': closing database @ `%s'...",
-	         name,
-	         path);
+	log::info
+	{
+		log, "'%s': closing database @ `%s'...",
+		name,
+		path
+	};
 
 	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
-	log.debug("'%s': background_errors: %lu; flushing...",
-	          name,
-	          property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors));
+	log::debug
+	{
+		log, "'%s': background_errors: %lu; flushing...",
+		name,
+		property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors)
+	};
 
 	flush(*this);
 	this->checkpointer.reset(nullptr);
 	this->columns.clear();
-	log.debug("'%s': closed columns; synchronizing...",
-	          name);
+	log::debug
+	{
+		log, "'%s': closed columns; synchronizing...",
+		name
+	};
 
 	sync(*this);
-	log.debug("'%s': synchronized with hardware.",
-	          name);
+	log::debug
+	{
+		log, "'%s': synchronized with hardware.",
+		name
+	};
 
 	const auto sequence
 	{
@@ -824,10 +845,13 @@ noexcept try
 		d->Close()
 	};
 
-	log.info("'%s': closed database @ `%s' at sequence number %lu.",
-	         name,
-	         path,
-	         sequence);
+	log::info
+	{
+		log, "'%s': closed database @ `%s' at sequence number %lu.",
+		name,
+		path,
+		sequence
+	};
 }
 catch(const std::exception &e)
 {
@@ -905,9 +929,12 @@ ircd::db::database::operator[](const string_view &name)
 {
 	const auto it{column_index.find(name)};
 	if(unlikely(it == std::end(column_index)))
-		throw schema_error("'%s': column '%s' is not available or specified in schema",
-		                   this->name,
-		                   name);
+		throw schema_error
+		{
+			"'%s': column '%s' is not available or specified in schema",
+			this->name,
+			name
+		};
 
 	return operator[](it->second);
 }
@@ -920,9 +947,12 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw schema_error("'%s': column id[%u] is not available or specified in schema",
-	                   this->name,
-	                   id);
+	throw schema_error
+	{
+		"'%s': column id[%u] is not available or specified in schema",
+		this->name,
+		id
+	};
 }
 
 const ircd::db::database::column &
@@ -931,9 +961,12 @@ const
 {
 	const auto it{column_index.find(name)};
 	if(unlikely(it == std::end(column_index)))
-		throw schema_error("'%s': column '%s' is not available or specified in schema",
-		                   this->name,
-		                   name);
+		throw schema_error
+		{
+			"'%s': column '%s' is not available or specified in schema",
+			this->name,
+			name
+		};
 
 	return operator[](it->second);
 }
@@ -946,9 +979,12 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw schema_error("'%s': column id[%u] is not available or specified in schema",
-	                   this->name,
-	                   id);
+	throw schema_error
+	{
+		"'%s': column id[%u] is not available or specified in schema",
+		this->name,
+		id
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2974,7 +3010,11 @@ noexcept try
 catch(const std::exception &e)
 {
 	_continue = false;
-	log::critical("txn::handler: cfid[%u]: %s", cfid, e.what());
+	log::critical
+	{
+		"txn::handler: cfid[%u]: %s", cfid, e.what()
+	};
+
 	ircd::terminate();
 }
 
@@ -3936,7 +3976,10 @@ ircd::db::row::operator[](const string_view &column)
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw schema_error("column '%s' not specified in the descriptor schema", column);
+		throw schema_error
+		{
+			"column '%s' not specified in the descriptor schema", column
+		};
 
 	return *it;
 }
@@ -3947,7 +3990,10 @@ const
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw schema_error("column '%s' not specified in the descriptor schema", column);
+		throw schema_error
+		{
+			"column '%s' not specified in the descriptor schema", column
+		};
 
 	return *it;
 }
@@ -4872,39 +4918,37 @@ ircd::db::commit(database &d,
 	};
 
 	#ifdef RB_DEBUG
-	log.debug("'%s' %lu COMMIT %s in %ld$us",
-	          d.name,
-	          sequence(d),
-	          debug(batch),
-	          timer.at<microseconds>().count());
+	log::debug
+	{
+		log, "'%s' %lu COMMIT %s in %ld$us",
+		d.name,
+		sequence(d),
+		debug(batch),
+		timer.at<microseconds>().count()
+	};
 	#endif
 }
 
 std::string
 ircd::db::debug(const rocksdb::WriteBatch &batch)
 {
-	std::string ret;
-	ret.resize(511, char());
-
-	const auto size
+	return ircd::string(512, [&batch]
+	(const mutable_buffer &ret)
 	{
-		snprintf(const_cast<char *>(ret.data()), ret.size() + 1,
-		         "%d deltas; size: %zuB :%s%s%s%s%s%s%s%s%s",
-		         batch.Count(),
-		         batch.GetDataSize(),
-		         batch.HasPut()? " PUT" : "",
-		         batch.HasDelete()? " DELETE" : "",
-		         batch.HasSingleDelete()? " SINGLE_DELETE" : "",
-		         batch.HasDeleteRange()? " DELETE_RANGE" : "",
-		         batch.HasMerge()? " MERGE" : "",
-		         batch.HasBeginPrepare()? " BEGIN_PREPARE" : "",
-		         batch.HasEndPrepare()? " END_PREPARE" : "",
-		         batch.HasCommit()? " COMMIT" : "",
-		         batch.HasRollback()? " ROLLBACK" : "")
-	};
-
-	ret.resize(size);
-	return ret;
+		return snprintf(data(ret), size(ret)+1,
+		                "%d deltas; size: %zuB :%s%s%s%s%s%s%s%s%s",
+		                batch.Count(),
+		                batch.GetDataSize(),
+		                batch.HasPut()? " PUT" : "",
+		                batch.HasDelete()? " DELETE" : "",
+		                batch.HasSingleDelete()? " SINGLE_DELETE" : "",
+		                batch.HasDeleteRange()? " DELETE_RANGE" : "",
+		                batch.HasMerge()? " MERGE" : "",
+		                batch.HasBeginPrepare()? " BEGIN_PREPARE" : "",
+		                batch.HasEndPrepare()? " END_PREPARE" : "",
+		                batch.HasCommit()? " COMMIT" : "",
+		                batch.HasRollback()? " ROLLBACK" : "");
+	});
 }
 
 bool
