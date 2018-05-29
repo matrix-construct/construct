@@ -402,6 +402,13 @@ decltype(ircd::m::vm::default_copts)
 ircd::m::vm::default_copts
 {};
 
+//
+// Eval
+//
+// Processes any event from any place from any time and does whatever is
+// necessary to validate, reject, learn from new information, ignore old
+// information and advance the state of IRCd as best as possible.
+
 /// Instance list linkage for all of the evaluations.
 template<>
 decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
@@ -411,13 +418,6 @@ ircd::util::instance_list<ircd::m::vm::eval>::list
 decltype(ircd::m::vm::eval::id_ctr)
 ircd::m::vm::eval::id_ctr
 {};
-
-//
-// Eval
-//
-// Processes any event from any place from any time and does whatever is
-// necessary to validate, reject, learn from new information, ignore old
-// information and advance the state of IRCd as best as possible.
 
 //
 // eval::eval
@@ -501,31 +501,6 @@ ircd::m::vm::eval::operator()(const room &room,
 		"vm", "eval__commit_room"
 	};
 
-	// This eval entry point is only used for commits. We try to find the
-	// commit opts the user supplied directly to this eval or with the room.
-	if(!copts)
-		copts = room.copts;
-
-	if(!copts)
-		copts = &vm::default_copts;
-
-	// Note that the regular opts is unconditionally overridden because the
-	// user should have provided copts instead.
-	this->opts = copts;
-
-	// Set a member pointer to the json::iov currently being composed. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is attempting to do.
-	issue = &event;
-	room_id = room.room_id;
-	phase = phase::ENTER;
-	const unwind deissue{[this]
-	{
-		phase = phase::ACCEPT;
-		room_id = {};
-		issue = nullptr;
-	}};
-
 	return function(*this, room, event, contents);
 }
 
@@ -542,36 +517,6 @@ ircd::m::vm::eval::operator()(json::iov &event,
 		"vm", "eval__commit"
 	};
 
-	// This eval entry point is only used for commits. If the user did not
-	// supply commit opts we supply the default ones here.
-	if(!copts)
-		copts = &vm::default_copts;
-
-	// Note that the regular opts is unconditionally overridden because the
-	// user should have provided copts instead.
-	this->opts = copts;
-
-	// Set a member pointer to the json::iov currently being composed. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is attempting to do.
-	assert(!room_id || issue == &event);
-	if(!room_id)
-	{
-		issue = &event;
-		phase = phase::ENTER;
-	}
-
-	const unwind deissue{[this]
-	{
-		// issue is untouched when room_id is set; that indicates it was set
-		// and will be unset by another eval function (i.e above).
-		if(!room_id)
-		{
-			phase = phase::ACCEPT;
-			issue = nullptr;
-		}
-	}};
-
 	return function(*this, event, contents);
 }
 
@@ -584,21 +529,6 @@ ircd::m::vm::eval::operator()(const event &event)
 	{
 		"vm", "eval__event"
 	};
-
-	// Set a member pointer to the event currently being evaluated. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is working on. The pointer must be nulled on the way out.
-	this->event_= &event;
-	if(!issue)
-		phase = phase::ENTER;
-
-	const unwind null_event{[this]
-	{
-		if(!issue)
-			phase = phase::ACCEPT;
-
-		this->event_ = nullptr;
-	}};
 
 	return function(*this, event);
 }
@@ -670,16 +600,20 @@ ircd::m::vm::reflect(const enum fault &code)
 	return "??????";
 }
 
-ircd::string_view
-ircd::m::vm::reflect(const enum eval::phase &phase)
-{
-	switch(phase)
-	{
-		case eval::phase::ACCEPT:      return "ACCEPT";
-		case eval::phase::ENTER:       return "ENTER";
-	}
+//
+// vm::phase
+//
 
-	return "??????";
+/// Instance list linkage for all of the vm phases
+template<>
+decltype(ircd::util::instance_list<ircd::m::vm::phase>::list)
+ircd::util::instance_list<ircd::m::vm::phase>::list
+{};
+
+
+ircd::m::vm::phase::phase(const string_view &name)
+:name{name}
+{
 }
 
 //

@@ -19,6 +19,7 @@ namespace ircd::m::vm
 	struct opts;
 	struct copts;
 	struct eval;
+	struct phase;
 	struct accepted;
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
@@ -45,8 +46,6 @@ namespace ircd::m::vm
 struct ircd::m::vm::eval
 :instance_list<eval>
 {
-	enum phase :uint8_t;
-
 	static uint64_t id_ctr; // monotonic
 
 	const vm::opts *opts {&default_opts};
@@ -56,7 +55,7 @@ struct ircd::m::vm::eval
 	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	enum phase phase {(enum phase)0};
+	vm::phase *phase {nullptr};
 	uint64_t sequence {0};
 	db::txn *txn {nullptr};
 	event::id::buf event_id;
@@ -77,16 +76,6 @@ struct ircd::m::vm::eval
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
 	~eval() noexcept;
-
-	friend string_view reflect(const enum phase &);
-};
-
-/// Evaluation phases
-enum ircd::m::vm::eval::phase
-:uint8_t
-{
-	ACCEPT        = 0x00,
-	ENTER         = 0x01,
 };
 
 /// Evaluation faults. These are reasons which evaluation has halted but may
@@ -251,6 +240,14 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
+};
+
+struct ircd::m::vm::phase
+:instance_list<phase>
+{
+	string_view name;
+
+	phase(const string_view &name);
 };
 
 struct ircd::m::vm::accepted

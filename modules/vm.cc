@@ -14,6 +14,8 @@ namespace ircd::m::vm
 	extern hook::site<> commit_hook;
 	extern hook::site<> eval_hook;
 	extern hook::site<> notify_hook;
+	extern phase enter;
+	extern phase leave;
 
 	static void write(eval &);
 	static fault _eval_edu(eval &, const event &);
@@ -105,6 +107,31 @@ ircd::m::vm::eval__commit_room(eval &eval,
                                json::iov &event,
                                const json::iov &contents)
 {
+	// This eval entry point is only used for commits. We try to find the
+	// commit opts the user supplied directly to this eval or with the room.
+	if(!eval.copts)
+		eval.copts = room.copts;
+
+	if(!eval.copts)
+		eval.copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	eval.opts = eval.copts;
+
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is attempting to do.
+	eval.issue = &event;
+	eval.room_id = room.room_id;
+	eval.phase = &vm::enter;
+	const unwind deissue{[&eval]
+	{
+		eval.phase = &vm::leave;
+		eval.room_id = {};
+		eval.issue = nullptr;
+	}};
+
 	assert(eval.issue);
 	assert(eval.room_id);
 	assert(eval.copts);
@@ -276,6 +303,36 @@ ircd::m::vm::eval__commit(eval &eval,
                           json::iov &event,
                           const json::iov &contents)
 {
+	// This eval entry point is only used for commits. If the user did not
+	// supply commit opts we supply the default ones here.
+	if(!eval.copts)
+		eval.copts = &vm::default_copts;
+
+	// Note that the regular opts is unconditionally overridden because the
+	// user should have provided copts instead.
+	eval.opts = eval.copts;
+
+	// Set a member pointer to the json::iov currently being composed. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is attempting to do.
+	assert(!eval.room_id || eval.issue == &event);
+	if(!eval.room_id)
+	{
+		eval.issue = &event;
+		eval.phase = &enter;
+	}
+
+	const unwind deissue{[&eval]
+	{
+		// issue is untouched when room_id is set; that indicates it was set
+		// and will be unset by another eval function (i.e above).
+		if(!eval.room_id)
+		{
+			eval.phase = &leave;
+			eval.issue = nullptr;
+		}
+	}};
+
 	assert(eval.issue);
 	assert(eval.copts);
 	assert(eval.opts);
@@ -388,6 +445,21 @@ ircd::m::vm::eval__event(eval &eval,
                          const event &event)
 try
 {
+	// Set a member pointer to the event currently being evaluated. This
+	// allows other parallel evals to have deep access to exactly what this
+	// eval is working on. The pointer must be nulled on the way out.
+    eval.event_ = &event;
+	if(!eval.issue)
+		eval.phase = &enter;
+
+	const unwind null_event{[&eval]
+	{
+		if(!eval.issue)
+			eval.phase = &leave;
+
+		eval.event_ = nullptr;
+	}};
+
 	assert(eval.opts);
 	assert(eval.event_);
 	assert(eval.id);
@@ -754,3 +826,23 @@ ircd::m::vm::retired_sequence(event::id::buf &event_id)
 	event_id = it->second;
 	return ret;
 }
+
+//
+// phase enter
+//
+
+decltype(ircd::m::vm::enter)
+ircd::m::vm::enter
+{
+	"enter"
+};
+
+//
+// phase leave
+//
+
+decltype(ircd::m::vm::leave)
+ircd::m::vm::leave
+{
+	"leave"
+};
