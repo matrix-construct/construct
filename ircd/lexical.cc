@@ -71,7 +71,7 @@ T
 ircd::_lex_cast(const string_view &s)
 try
 {
-	return boost::lexical_cast<T>(s);
+	return boost::lexical_cast<T>(data(s), size(s));
 }
 catch(const boost::bad_lexical_cast &e)
 {
