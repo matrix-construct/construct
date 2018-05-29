@@ -351,9 +351,7 @@ try
 
 	// This signal handler (though not a *real* signal handler) is still
 	// running on the main async stack and not an ircd::ctx. The rehash
-	// function does a lot of IO so it requires an ircd::ctx. Note that
-	// because this is the main stack, the ircd::context{} will return
-	// immediately (no waiting/join can occur) but will execute later.
+	// function does a lot of IO so it requires an ircd::ctx.
 	ircd::context{[]
 	{
 		ircd::m::import<void ()> rehash_conf
