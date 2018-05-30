@@ -2645,6 +2645,45 @@ console_cmd__compose__final(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__compose__copy(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"srcid", "[dstid]"
+	}};
+
+	const auto &srcid
+	{
+		param.at<uint>(0)
+	};
+
+	const auto &dstid
+	{
+		param.at<uint>(1, compose.size())
+	};
+
+	const auto &src
+	{
+		compose.at(srcid)
+	};
+
+	if(compose.size() < dstid)
+		throw error
+		{
+			"Cannot compose position %d without composing %d first", dstid, compose.size()
+		};
+
+	if(compose.size() == dstid)
+	{
+		compose.emplace_back(src);
+		return true;
+	}
+
+	compose.at(dstid) = src;
+	return true;
+}
+
+bool
 console_cmd__compose__clear(opt &out, const string_view &line)
 {
 	const params param{line, " ",
