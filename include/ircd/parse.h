@@ -16,6 +16,10 @@ namespace ircd
 	struct parse;
 }
 
+/// NOTE: This interface will likely be removed. It predates the entire
+/// NOTE: ircd::buffer system and only has very few unique qualities left
+/// NOTE: which have not been replicated within ircd::buffer yet.
+///
 struct ircd::parse
 {
 	IRCD_EXCEPTION(ircd::error, error)
