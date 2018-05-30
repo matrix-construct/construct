@@ -2603,12 +2603,17 @@ console_cmd__compose__final(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"[id]",
+		"[id]", "[options]"
 	}};
 
 	const int &id
 	{
 		param.at<int>(0, -1)
+	};
+
+	const auto opts
+	{
+		param[1]
 	};
 
 	m::event event
@@ -2617,13 +2622,16 @@ console_cmd__compose__final(opt &out, const string_view &line)
 	};
 
 	m::event::id::buf event_id_buf;
-	json::get<"event_id"_>(event) = make_id(event, event_id_buf);
+	if(!has(opts, "no_event_id"))
+		json::get<"event_id"_>(event) = make_id(event, event_id_buf);
 
 	thread_local char hashes_buf[512];
-	json::get<"hashes"_>(event) = m::hashes(hashes_buf, event);
+	if(!has(opts, "no_hashes"))
+		json::get<"hashes"_>(event) = m::hashes(hashes_buf, event);
 
 	thread_local char sigs_buf[512];
-	event = signatures(sigs_buf, event);
+	if(!has(opts, "no_signatures"))
+		event = signatures(sigs_buf, event);
 
 	compose.at(id) = json::strung
 	{
