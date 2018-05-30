@@ -47,6 +47,8 @@ struct ircd::fs::fd::opts
 	ulong flags {0};
 	ulong mask {0};
 	bool ate {false};
+	bool direct {false};
+	bool cloexec {true};
 
 	opts(const std::ios::open_mode &);
 	opts() = default;

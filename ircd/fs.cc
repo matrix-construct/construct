@@ -357,7 +357,6 @@ ircd::fs::fd::opts::opts(const std::ios::open_mode &mode)
 :flags
 {
 	posix_flags(mode)
-	| O_CLOEXEC
 }
 ,mask
 {
@@ -383,10 +382,17 @@ ircd::fs::fd::fd(const string_view &path)
 
 ircd::fs::fd::fd(const string_view &path,
                  const opts &opts)
-:fdno
+:fdno{[&path, &opts]
+() -> int
 {
-	int(syscall(::open, path_str(path), int(opts.flags), mode_t(opts.mask)))
-}
+	int flags(opts.flags);
+	flags |= opts.direct? O_DIRECT : 0U;
+	flags |= opts.cloexec? O_CLOEXEC : 0U;
+
+	const mode_t &mode(opts.mask);
+	const char *const &p(path_str(path));
+	return syscall(::open, p, flags, mode);
+}()}
 {
 	if(opts.ate)
 		syscall(::lseek, fdno, 0, SEEK_END);
