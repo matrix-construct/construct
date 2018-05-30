@@ -51,20 +51,29 @@ try
 	if(it == end(files))
 		throw http::error{http::NOT_FOUND};
 
+	const auto &file_name
+	{
+		it->second
+	};
+
+	const fs::fd fd
+	{
+		file_name
+	};
+
+	const size_t file_size
+	{
+		size(fd)
+	};
+
 	const unique_buffer<mutable_buffer> buffer
 	{
 		24_KiB
 	};
 
-	const auto &file_name{it->second};
-	const size_t file_size
-	{
-		fs::size(file_name)
-	};
-
 	string_view chunk
 	{
-		fs::read(file_name, buffer)
+		fs::read(fd, buffer)
 	};
 
 	char content_type_buf[64];
@@ -93,7 +102,7 @@ try
 
 	while(offset < file_size)
 	{
-		chunk = fs::read(file_name, buffer, offset);
+		chunk = fs::read(fd, buffer, offset);
 		assert(!empty(chunk));
 		written += client.write_all(chunk);
 		offset += size(chunk);
