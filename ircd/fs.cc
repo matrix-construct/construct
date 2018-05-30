@@ -262,6 +262,121 @@ ircd::fs::write__std(const string_view &path,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/fd.h
+//
+// TODO: x-platform
+//
+
+namespace ircd::fs
+{
+	thread_local char path_buf[2048];
+	static const char *path_str(const string_view &);
+	static uint posix_flags(const std::ios::open_mode &mode);
+}
+
+uint
+ircd::fs::posix_flags(const std::ios::open_mode &mode)
+{
+	static const auto rdwr
+	{
+		std::ios::in | std::ios::out
+	};
+
+	uint ret{0};
+	if((mode & rdwr) == rdwr)
+		ret |= O_RDWR;
+	else if(mode & std::ios::out)
+		ret |= O_WRONLY;
+	else
+		ret |= O_RDONLY;
+
+	ret |= mode & std::ios::trunc? O_TRUNC : 0;
+	ret |= mode & std::ios::app? O_APPEND : 0;
+	ret |= ret & O_WRONLY? O_CREAT : 0;
+	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
+	return ret;
+}
+
+const char *
+ircd::fs::path_str(const string_view &s)
+{
+	return data(strlcpy(path_buf, s));
+}
+
+//
+// fd::opts
+//
+
+ircd::fs::fd::opts::opts(const std::ios::open_mode &mode)
+:flags
+{
+	posix_flags(mode)
+	| O_CLOEXEC
+}
+,mask
+{
+	flags & O_CREAT?
+		S_IRUSR | S_IWUSR:
+		0U
+}
+,ate
+{
+	bool(mode & std::ios::ate)
+}
+{
+}
+
+//
+// fd::fd
+//
+
+ircd::fs::fd::fd(const string_view &path)
+:fd{path, opts{}}
+{
+}
+
+ircd::fs::fd::fd(const string_view &path,
+                 const opts &opts)
+:fdno
+{
+	int(syscall(::open, path_str(path), int(opts.flags), mode_t(opts.mask)))
+}
+{
+	if(opts.ate)
+		syscall(::lseek, fdno, 0, SEEK_END);
+}
+
+ircd::fs::fd::fd(fd &&o)
+noexcept
+:fdno
+{
+	std::move(o.fdno)
+}
+{
+	o.fdno = -1;
+}
+
+ircd::fs::fd &
+ircd::fs::fd::operator=(fd &&o)
+noexcept
+{
+	this->~fd();
+	fdno = std::move(o.fdno);
+	o.fdno = -1;
+	return *this;
+}
+
+ircd::fs::fd::~fd()
+noexcept(false)
+{
+	if(fdno < 0)
+		return;
+
+	syscall(::close, fdno);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs.h / misc
 //
 

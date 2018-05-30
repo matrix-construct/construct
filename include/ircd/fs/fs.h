@@ -91,6 +91,7 @@ namespace ircd::fs
 	extern aio *aioctx;
 }
 
+#include "fd.h"
 #include "read.h"
 #include "write.h"
 #include "stdin.h"
