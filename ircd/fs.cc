@@ -216,11 +216,6 @@ catch(const std::exception &e)
 // fs/write.h
 //
 
-namespace ircd::fs
-{
-	const_buffer write__std(const string_view &path, const const_buffer &, const write_opts &);
-}
-
 ircd::fs::write_opts
 const ircd::fs::write_opts_default
 {};
@@ -231,12 +226,16 @@ ircd::fs::write(const string_view &path,
                 const write_opts &opts)
 try
 {
-	#ifdef IRCD_USE_AIO
-	if(likely(aioctx))
-		return write__aio(path, buf, opts);
-	#endif
+	const fd fd
+	{
+		path, std::ios::out
+	};
 
-	return write__std(path, buf, opts);
+	return write(fd, buf, opts);
+}
+catch(const filesystem_error &)
+{
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -247,29 +246,32 @@ catch(const std::exception &e)
 }
 
 ircd::const_buffer
-ircd::fs::write__std(const string_view &path,
-                     const const_buffer &buf,
-                     const write_opts &opts)
+ircd::fs::write(const fd &fd,
+                const const_buffer &buf,
+                const write_opts &opts)
+try
 {
-	const auto open_mode
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		return write__aio(fd, buf, opts);
+	#endif
+
+	return
 	{
-		opts.append?
-			std::ios::app:
-
-		opts.overwrite?
-			std::ios::trunc:
-
-		std::ios::out
+		data(buf),
+		size_t(syscall(::pwrite, fd, data(buf), size(buf), opts.offset))
 	};
-
-	std::ofstream file
+}
+catch(const filesystem_error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
 	{
-		std::string{path}, open_mode
+		"%s", e.what()
 	};
-
-	file.seekp(opts.offset, file.beg);
-	file.write(data(buf), size(buf));
-	return buf;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

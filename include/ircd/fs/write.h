@@ -16,6 +16,7 @@ namespace ircd::fs
 	struct write_opts extern const write_opts_default;
 
 	// Yields ircd::ctx for write from buffer; returns view of written portion
+	const_buffer write(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
 	// Yields ircd::ctx to overwrite (trunc) file from buffer; returns view of written portion
@@ -30,15 +31,6 @@ struct ircd::fs::write_opts
 {
 	write_opts() = default;
 	write_opts(const off_t &);
-
-	/// Overwrite (trunc) the file
-	bool overwrite {false};
-
-	/// Append to the file (offset is ignored)
-	bool append {false};
-
-	/// Create the file if necessary (default)
-	bool create {true};
 
 	/// Offset in the file to start the write from.
 	off_t offset {0};
@@ -55,19 +47,25 @@ ircd::fs::write_opts::write_opts(const off_t &offset)
 inline ircd::const_buffer
 ircd::fs::overwrite(const string_view &path,
                     const const_buffer &buf,
-                    const write_opts &opts_)
+                    const write_opts &opts)
 {
-	auto opts(opts_);
-	opts.overwrite = true;
-	return write(path, buf, opts);
+	const fd fd
+	{
+		path, std::ios::out | std::ios::trunc
+	};
+
+	return write(fd, buf, opts);
 }
 
 inline ircd::const_buffer
 ircd::fs::append(const string_view &path,
                  const const_buffer &buf,
-                 const write_opts &opts_)
+                 const write_opts &opts)
 {
-	auto opts(opts_);
-	opts.append = true;
-	return write(path, buf, opts);
+	const fd fd
+	{
+		path, std::ios::out | std::ios::app
+	};
+
+	return write(fd, buf, opts);
 }

@@ -343,39 +343,13 @@ ircd::fs::aio::request::write::write(const int &fd,
 //
 
 ircd::const_buffer
-ircd::fs::write__aio(const string_view &path,
+ircd::fs::write__aio(const fd &fd,
                      const const_buffer &buf,
                      const write_opts &opts)
 {
-	// Path to open(2) must be null terminated;
-	static thread_local char pathstr[2048];
-	strlcpy(pathstr, path, sizeof(pathstr));
-
-	uint flags{0};
-	flags |= O_WRONLY;
-	flags |= O_CLOEXEC;
-	flags |= opts.create? O_CREAT : 0;
-	flags |= opts.append? O_APPEND : 0;
-	flags |= opts.overwrite? O_TRUNC : 0;
-
-	const mode_t mask
-	{
-		opts.create? S_IRUSR | S_IWUSR : 0U
-	};
-
-	const auto fd
-	{
-		syscall(::open, pathstr, flags, mask)
-	};
-
-	const unwind cfd{[&fd]
-	{
-		syscall(::close, fd);
-	}};
-
 	aio::request::write request
 	{
-		int(fd), buf, opts
+		fd, buf, opts
 	};
 
 	const size_t bytes
