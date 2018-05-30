@@ -10,33 +10,84 @@
 
 #include <ircd/spirit.h>
 
+namespace ircd::fmt
+{
+	using namespace ircd::spirit;
+
+	struct spec;
+	struct specifier;
+
+	constexpr char SPECIFIER
+	{
+		'%'
+    };
+
+	constexpr char SPECIFIER_TERMINATOR
+	{
+		'$'
+	};
+
+	struct parser extern const parser;
+	extern std::map<string_view, specifier *, std::less<>> specifiers;
+
+	bool is_specifier(const string_view &name);
+	void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
+	template<class generator> bool generate_string(char *&out, const generator &gen, const arg &val);
+	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
+}
+
+// Structural representation of a format specifier
+struct ircd::fmt::spec
+{
+	char sign {'+'};
+	ushort width {0};
+	string_view name;
+
+	spec() = default;
+};
+
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
-	( decltype(ircd::fmt::spec::sign), sign )
-	( decltype(ircd::fmt::spec::width), width )
-	( decltype(ircd::fmt::spec::name), name )
+	( decltype(ircd::fmt::spec::sign),   sign   )
+	( decltype(ircd::fmt::spec::width),  width  )
+	( decltype(ircd::fmt::spec::name),   name   )
 )
 
-namespace ircd {
-namespace fmt  {
+// A format specifier handler module.
+// This allows a new "%foo" to be defined with custom handling.
+class ircd::fmt::specifier
+{
+	std::set<std::string> names;
 
-using namespace ircd::spirit;
+  public:
+	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
 
-std::map<string_view, specifier *, std::less<>> _specifiers;
+	specifier(const std::initializer_list<std::string> &names);
+	specifier(const std::string &name);
+	virtual ~specifier() noexcept;
+};
 
-bool is_specifier(const string_view &name);
-void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
-template<class generator> bool generate_string(char *&out, const generator &gen, const arg &val);
-template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
+decltype(ircd::fmt::specifiers)
+ircd::fmt::specifiers;
 
-struct parser
+struct ircd::fmt::parser
 :qi::grammar<const char *, fmt::spec>
 {
 	template<class R = unused_type> using rule = qi::rule<const char *, R>;
 
-	const rule<> specsym           { lit(SPECIFIER)                            ,"format specifier" };
-	const rule<> specterm          { lit(SPECIFIER_TERMINATOR)            ,"specifier termination" };
+	const rule<> specsym
+	{
+		lit(SPECIFIER)
+		,"format specifier"
+	};
+
+	const rule<> specterm
+	{
+		lit(SPECIFIER_TERMINATOR)
+		,"specifier termination"
+	};
+
 	const rule<string_view> name
 	{
 		raw[repeat(1,14)[char_("A-Za-z")]]
@@ -57,7 +108,10 @@ struct parser
 		spec %= specsym >> -(char_('+') | char_('-')) >> -ushort_ >> name[is_valid] >> -specterm;
 	}
 }
-const parser;
+const ircd::fmt::parser;
+
+namespace ircd {
+namespace fmt  {
 
 struct string_specifier
 :specifier
@@ -340,12 +394,6 @@ const
 	return !fstart || fstop >= fend || remaining() == 0;
 }
 
-const decltype(fmt::_specifiers) &
-fmt::specifiers()
-{
-	return _specifiers;
-}
-
 fmt::specifier::specifier(const std::string &name)
 :specifier{{name}}
 {
@@ -362,20 +410,20 @@ fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 			};
 
 	for(const auto &name : this->names)
-		_specifiers.emplace(name, this);
+		specifiers.emplace(name, this);
 }
 
 fmt::specifier::~specifier()
 noexcept
 {
 	for(const auto &name : names)
-		_specifiers.erase(name);
+		specifiers.erase(name);
 }
 
 bool
 fmt::is_specifier(const string_view &name)
 {
-	return specifiers().count(name);
+	return specifiers.count(name);
 }
 
 void
@@ -387,7 +435,7 @@ fmt::handle_specifier(char *&out,
 try
 {
 	const auto &type(get<1>(val));
-	const auto &handler(*specifiers().at(spec.name));
+	const auto &handler(*specifiers.at(spec.name));
 	if(unlikely(!handler(out, max, spec, val)))
 		throw invalid_type
 		{

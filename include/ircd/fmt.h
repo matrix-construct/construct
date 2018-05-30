@@ -19,8 +19,6 @@ namespace ircd::fmt
 	IRCD_EXCEPTION(error, invalid_type);
 	IRCD_EXCEPTION(error, illegal);
 
-	struct spec;
-	struct specifier;
 	struct sprintf;
 	struct vsprintf;
 	struct snprintf;
@@ -28,52 +26,8 @@ namespace ircd::fmt
 	struct snstringf;
 	struct vsnstringf;
 	template<size_t MAX> struct bsprintf;
-
-	//
-	// Module API
-	//
-	constexpr char SPECIFIER
-	{
-		'%'
-	};
-
-	constexpr char SPECIFIER_TERMINATOR
-	{
-		'$'
-	};
-
 	using arg = std::tuple<const void *, std::type_index>;
-
-	const std::map<string_view, specifier *, std::less<>> &specifiers();
 }
-
-// Structural representation of a format specifier
-struct ircd::fmt::spec
-{
-	char sign {'+'};
-	ushort width {0};
-	string_view name;
-
-	spec() = default;
-};
-
-// A format specifier handler module.
-// This allows a new "%foo" to be defined with custom handling.
-class ircd::fmt::specifier
-{
-	std::set<std::string> names;
-
-  public:
-	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
-
-	specifier(const std::initializer_list<std::string> &names);
-	specifier(const std::string &name);
-	virtual ~specifier() noexcept;
-};
-
-//
-// User API
-//
 
 /// Typesafe snprintf() from formal grammar and RTTI.
 ///
@@ -84,10 +38,6 @@ class ircd::fmt::specifier
 /// and references are passed to the formal output grammars. This means you can
 /// pass an std::string directly without calling c_str(), as well as pass a
 /// non-null-terminated string_view safely.
-///
-/// Furthermore, other features of ircd::fmt enable custom format specifiers
-/// and handling of types not recognized by existing grammars through this
-/// function.
 ///
 class ircd::fmt::snprintf
 {
@@ -183,12 +133,13 @@ struct ircd::fmt::vsnstringf
 	           const va_rtti &ap)
 	:std::string
 	{
-		[&max, &fmt, &ap]
+		ircd::string(max, [&fmt, &ap]
+		(const mutable_buffer &buf) -> string_view
 		{
-			std::string ret(max, char{});
-			ret.resize(vsnprintf(const_cast<char *>(ret.data()), ret.size() + 1, fmt, ap));
-			return ret;
-		}()
+			using buffer::data;
+			using buffer::size;
+			return vsnprintf(data(buf), size(buf), fmt, ap);
+		})
 	}{}
 };
 
