@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SYS_RESOURCE_H
-#include <ircd/asio.h>
+#include <boost/version.hpp>
 
 void
 ircd::info::init()
