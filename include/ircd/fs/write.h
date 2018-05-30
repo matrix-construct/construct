@@ -19,11 +19,12 @@ namespace ircd::fs
 	const_buffer write(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
+	// Yields ircd::ctx to append to file from buffer; returns view of written portion
+	const_buffer append(const fd &, const const_buffer &, const write_opts & = write_opts_default);
+	const_buffer append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
+
 	// Yields ircd::ctx to overwrite (trunc) file from buffer; returns view of written portion
 	const_buffer overwrite(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
-
-	// Yields ircd::ctx to append to file from buffer; returns view of written portion
-	const_buffer append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 }
 
 /// Options for a write operation

@@ -221,6 +221,30 @@ const ircd::fs::write_opts_default
 {};
 
 ircd::const_buffer
+ircd::fs::append(const fd &fd,
+                 const const_buffer &buf,
+                 const write_opts &opts_)
+try
+{
+	assert(opts_.offset == 0);
+
+	auto opts(opts_);
+	opts.offset = syscall(::lseek, fd, 0, SEEK_END);
+	return write(fd, buf, opts);
+}
+catch(const filesystem_error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+
+ircd::const_buffer
 ircd::fs::write(const string_view &path,
                 const const_buffer &buf,
                 const write_opts &opts)
