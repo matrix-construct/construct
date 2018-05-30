@@ -2762,6 +2762,79 @@ console_cmd__compose__commit(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__compose__send(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote", "[id]"
+	}};
+
+	const net::hostport remote
+	{
+		param.at(0)
+	};
+
+	const int &id
+	{
+		param.at<int>(1, -1)
+	};
+
+	std::vector<json::value> pduv;
+	if(id > -1)
+		pduv.emplace_back(compose.at(id));
+	else
+		for(size_t i(0); i < compose.size(); ++i)
+			pduv.emplace_back(compose.at(i));
+
+	const auto txn
+	{
+		m::txn::create(pduv)
+	};
+
+	thread_local char idbuf[128];
+	const auto txnid
+	{
+		m::txn::create_id(idbuf, txn)
+	};
+
+	const unique_buffer<mutable_buffer> bufs
+	{
+		16_KiB
+	};
+
+	m::v1::send::opts opts;
+	opts.remote = remote;
+	m::v1::send request
+	{
+		txnid, const_buffer{txn}, bufs, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object response{request};
+	const m::v1::send::response resp
+	{
+		response
+	};
+
+	resp.for_each_pdu([&]
+	(const m::event::id &event_id, const json::object &error)
+	{
+		out << remote << " ->" << txnid << " " << event_id << " ";
+		if(empty(error))
+			out << http::status(code) << std::endl;
+		else
+			out << string_view{error} << std::endl;
+	});
+
+	return true;
+}
+
 int
 console_command_numeric(opt &out, const string_view &line)
 {
