@@ -189,7 +189,7 @@ ircd::client::wait_all()
 
 	while(!client::list.empty())
 	{
-		if(!dock.wait_for(seconds(2)))
+		if(!dock.wait_for(seconds(2)) && !client::list.empty())
 			log::warning
 			{
 				"Waiting for %zu clients to close...", client::list.size()
@@ -463,9 +463,12 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p) EOF: %s",
-	           client.sock.get(),
-	           e.what());
+	log::error
+	{
+		"socket(%p) EOF: %s",
+		client.sock.get(),
+		e.what()
+	};
 
 	return false;
 }
@@ -490,9 +493,12 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error("socket(%p) short_read: %s",
-	           client.sock.get(),
-	           e.what());
+	log::error
+	{
+		"socket(%p) short_read: %s",
+		client.sock.get(),
+		e.what()
+	};
 
 	return false;
 }
