@@ -14,6 +14,8 @@
 namespace ircd::fs
 {
 	struct fd;
+
+	size_t size(const fd &);
 }
 
 /// Object for maintaining state to an open file or directory. Instances can

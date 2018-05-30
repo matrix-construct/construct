@@ -274,6 +274,14 @@ namespace ircd::fs
 	static uint posix_flags(const std::ios::open_mode &mode);
 }
 
+size_t
+ircd::fs::size(const fd &fd)
+{
+	struct stat stat;
+	syscall(::fstat, fd, &stat);
+	return stat.st_size;
+};
+
 uint
 ircd::fs::posix_flags(const std::ios::open_mode &mode)
 {
