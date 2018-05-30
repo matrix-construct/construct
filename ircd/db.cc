@@ -26,6 +26,7 @@
 #include <rocksdb/table.h>
 #include <rocksdb/sst_file_manager.h>
 
+// ircd::db interfaces requiring complete RocksDB (frontside).
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
 #include <ircd/db/database/mergeop.h>
@@ -34,6 +35,8 @@
 #include <ircd/db/database/logs.h>
 #include <ircd/db/database/column.h>
 #include <ircd/db/database/txn.h>
+
+// RocksDB embedding environment callback interfaces (backside).
 #include <ircd/db/database/env/env.h>
 #include <ircd/db/database/env/writable_file.h>
 #include <ircd/db/database/env/sequential_file.h>
@@ -42,7 +45,17 @@
 #include <ircd/db/database/env/directory.h>
 #include <ircd/db/database/env/file_lock.h>
 
+// RocksDB port linktime-overriding interfaces (experimental).
+#ifdef IRCD_DB_PORT
+#include <ircd/db/database/env/port.h>
+#endif
+
+// Internal utility interface for this definition file.
 #include "db.h"
+
+//
+// Misc / General linkages
+//
 
 decltype(ircd::db::log)
 ircd::db::log
@@ -2922,6 +2935,125 @@ ircd::db::database::env::file_lock::~file_lock()
 noexcept
 {
 }
+
+//
+// rocksdb::port (EXPERIMENTAL)
+//
+
+#ifdef IRCD_DB_PORT
+
+//
+// Mutex
+//
+
+rocksdb::port::Mutex::Mutex()
+{
+}
+
+rocksdb::port::Mutex::Mutex(bool adaptive)
+{
+}
+
+void
+rocksdb::port::Mutex::Lock()
+{
+	mu.lock();
+}
+
+void
+rocksdb::port::Mutex::Unlock()
+{
+	mu.unlock();
+}
+
+void
+rocksdb::port::Mutex::AssertHeld()
+{
+	assert(1);
+}
+
+//
+// RWMutex
+//
+
+rocksdb::port::RWMutex::RWMutex()
+{
+}
+
+rocksdb::port::RWMutex::~RWMutex()
+{
+}
+
+void
+rocksdb::port::RWMutex::ReadLock()
+{
+	mu.lock_shared();
+}
+
+void
+rocksdb::port::RWMutex::WriteLock()
+{
+	mu.lock();
+}
+
+void
+rocksdb::port::RWMutex::ReadUnlock()
+{
+	mu.unlock_shared();
+}
+
+void
+rocksdb::port::RWMutex::WriteUnlock()
+{
+	mu.unlock();
+}
+
+//
+// CondVar
+//
+
+rocksdb::port::CondVar::CondVar(Mutex *mu)
+:mu{mu}
+{
+}
+
+rocksdb::port::CondVar::~CondVar()
+{
+}
+
+void
+rocksdb::port::CondVar::Wait()
+{
+	assert(mu);
+	std::unique_lock<decltype(mu->mu)> ul(mu->mu);
+	cv.wait(ul);
+}
+
+// Returns true if timeout occurred
+bool
+rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
+{
+	assert(mu);
+	const std::chrono::microseconds us(abs_time_us);
+	const std::chrono::system_clock::time_point tp(us);
+	std::unique_lock<decltype(mu->mu)> ul(mu->mu);
+	const auto cvs(cv.wait_until(ul, tp));
+	return cvs == std::cv_status::timeout;
+}
+
+void
+rocksdb::port::CondVar::Signal()
+{
+	cv.notify_one();
+}
+
+void
+rocksdb::port::CondVar::SignalAll()
+{
+	cv.notify_all();
+}
+
+#endif // IRCD_DB_PORT
 
 ///////////////////////////////////////////////////////////////////////////////
 //
