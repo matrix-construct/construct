@@ -388,6 +388,7 @@ ircd::fs::fd::fd(const string_view &path,
 	int flags(opts.flags);
 	flags |= opts.direct? O_DIRECT : 0U;
 	flags |= opts.cloexec? O_CLOEXEC : 0U;
+	flags &= opts.nocreate? ~O_CREAT : flags;
 
 	const mode_t &mode(opts.mask);
 	const char *const &p(path_str(path));

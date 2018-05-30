@@ -49,6 +49,7 @@ struct ircd::fs::fd::opts
 	bool ate {false};
 	bool direct {false};
 	bool cloexec {true};
+	bool nocreate {false};
 
 	opts(const std::ios::open_mode &);
 	opts() = default;
