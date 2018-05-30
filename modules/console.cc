@@ -2228,6 +2228,51 @@ catch(const std::out_of_range &e)
 	};
 }
 
+bool
+console_cmd__peer__close(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"hostport", "[dc]"
+	}};
+
+	const auto &hostport
+	{
+		param.at(0)
+	};
+
+	const auto &dc
+	{
+		param.at(1, "SSL_NOTIFY"_sv)
+	};
+
+	auto &peer
+	{
+		server::find(hostport)
+	};
+
+	const net::close_opts opts
+	{
+		dc == "RST"?
+			net::dc::RST:
+		dc == "SSL_NOTIFY"?
+			net::dc::SSL_NOTIFY:
+			net::dc::SSL_NOTIFY
+	};
+
+	peer.close(opts);
+	peer.err_clear();
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	throw error
+	{
+		"Peer not found"
+	};
+}
+
 //
 // net
 //
