@@ -33,6 +33,7 @@ AM_LDFLAGS = \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,--gc-sections \
+	-Wl,--dynamic-list-data \
 	-Wl,--icf=all \
 	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS) \
