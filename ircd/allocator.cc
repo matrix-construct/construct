@@ -8,6 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+// Uncomment or -D this #define to enable our own crude but simple ability to
+// profile dynamic memory usage. Global `new` and `delete` will be captured
+// here by this definition file into thread_local counters accessible via
+// ircd::allocator::profile. This feature allows the developer to find out if
+// allocations are occurring during some scope by sampling the counters.
+//
+// #define RB_PROF_ALLOC
+
 //
 // allocator::state
 //
