@@ -698,56 +698,6 @@ const
 	});
 }
 
-/*
-	if(type == typeid(const char[]))
-	{
-		const auto &i(reinterpret_cast<const char *>(ptr));
-		if(!try_lex_cast<ssize_t>(i))
-			throw illegal("The string literal value for integer specifier is not a valid integer");
-
-		const auto len(std::min(max, strlen(i)));
-		memcpy(out, i, len);
-		out += len;
-		return true;
-	}
-
-	if(type == typeid(const char *))
-	{
-		const auto &i(*reinterpret_cast<const char *const *>(ptr));
-		if(!try_lex_cast<ssize_t>(i))
-			throw illegal("The character buffer for integer specifier is not a valid integer");
-
-		const auto len(std::min(max, strlen(i)));
-		memcpy(out, i, len);
-		out += len;
-		return true;
-	}
-
-	if(type == typeid(const std::string))
-	{
-		const auto &i(*reinterpret_cast<const std::string *>(ptr));
-		if(!try_lex_cast<ssize_t>(i))
-			throw illegal("The string argument for integer specifier is not a valid integer");
-
-		const auto len(std::min(max, i.size()));
-		memcpy(out, i.data(), len);
-		out += len;
-		return true;
-	}
-
-	if(type == typeid(const string_view) || type == typeid(const std::string_view))
-	{
-		const auto &i(*reinterpret_cast<const std::string_view *>(ptr));
-		if(!try_lex_cast<ssize_t>(i))
-			throw illegal("The string argument for integer specifier is not a valid integer");
-
-		const auto len(std::min(max, i.size()));
-		memcpy(out, i.data(), len);
-		out += len;
-		return true;
-	}
-*/
-
 bool
 fmt::string_specifier::operator()(char *&out,
                                   const size_t &max,
