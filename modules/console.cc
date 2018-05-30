@@ -2765,6 +2765,11 @@ console_cmd__events__dump(opt &out, const string_view &line)
 		param.at(0)
 	};
 
+	const fs::fd file
+	{
+		filename, std::ios::out | std::ios::app
+	};
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		size_t(events_dump_buffer_size)
@@ -2788,7 +2793,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 		if(pos + m::event::MAX_SIZE > data(buf) + size(buf))
 		{
 			const const_buffer cb{data(buf), pos};
-			foff += size(fs::append(filename, cb));
+			foff += size(fs::append(file, cb));
 			pos = data(buf);
 			++acount;
 
@@ -2818,7 +2823,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 	if(pos > data(buf))
 	{
 		const const_buffer cb{data(buf), pos};
-		foff += size(fs::append(filename, cb));
+		foff += size(fs::append(file, cb));
 		++acount;
 	}
 
@@ -3311,6 +3316,11 @@ console_cmd__eval__file(opt &out, const string_view &line)
 		token.at(0)
 	};
 
+	const fs::fd file
+	{
+		path
+	};
+
 	const auto limit
 	{
 		token.at<size_t>(1)
@@ -3355,7 +3365,7 @@ console_cmd__eval__file(opt &out, const string_view &line)
 		static char buf[512_KiB];
 		const string_view read
 		{
-			ircd::fs::read(path, buf, foff)
+			fs::read(file, buf, foff)
 		};
 
 		size_t boff(0);
