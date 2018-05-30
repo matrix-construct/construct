@@ -4896,7 +4896,7 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"my_user_id", "target_user_id"
+		"my_user_id", "target_user|room_id"
 	}};
 
 	const m::user my_user
@@ -4904,20 +4904,37 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	const m::user::id target_user
+	string_view target
 	{
 		param.at(1)
 	};
+
+	char buf[m::id::MAX_SIZE];
+	switch(m::sigil(target))
+	{
+		case m::id::USER:
+		case m::id::ROOM:
+			break;
+
+		case m::id::ROOM_ALIAS:
+			target = m::room_id(buf, target);
+			break;
+
+		default: throw error
+		{
+			"Unsupported target MXID type for receipt ignores."
+		};
+	}
 
 	const m::user::room user_room
 	{
 		my_user
 	};
 
-	if(user_room.has("ircd.read.ignore", target_user))
+	if(user_room.has("ircd.read.ignore", target))
 	{
 		out << "User " << my_user.user_id << " is already not sending"
-		    << " receipts for messages from user " << target_user
+		    << " receipts for messages from " << target
 		    << std::endl;
 
 		return true;
@@ -4925,11 +4942,11 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 
 	const auto eid
 	{
-		send(user_room, m::me.user_id, "ircd.read.ignore", target_user, json::object{})
+		send(user_room, m::me.user_id, "ircd.read.ignore", target, json::object{})
 	};
 
 	out << "User " << my_user.user_id << " will not send receipts for"
-	    << " messages from user " << target_user
+	    << " messages from " << target
 	    << " (" << eid << ")"
 	    << std::endl;
 

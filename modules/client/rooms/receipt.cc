@@ -66,6 +66,30 @@ post__receipt(client &client,
 	};
 }
 
+/// Does the user wish to not send receipts for events sent by its specific
+/// sender?
+static bool
+user_ignoring_receipts_sender(const m::user::room &user_room,
+                              const m::event::id &event_id)
+{
+	bool ret{false};
+	m::get(std::nothrow, event_id, "sender", [&ret, &user_room]
+	(const string_view &sender)
+	{
+		ret = user_room.has("ircd.read.ignore", sender);
+	});
+
+	return ret;
+}
+
+/// Does the user wish to not send receipts for events for this entire room?
+static bool
+user_ignoring_receipts_room(const m::user::room &user_room,
+                            const m::room::id &room_id)
+{
+	return user_room.has("ircd.read.ignore", room_id);
+}
+
 m::event::id::buf
 commit__m_receipt_m_read(const m::room::id &room_id,
                          const m::user::id &user_id,
@@ -80,12 +104,14 @@ commit__m_receipt_m_read(const m::room::id &room_id,
 		user_id
 	};
 
-	bool ignored{false};
-	m::get(std::nothrow, event_id, "sender", [&ignored, &user_room]
-	(const string_view &sender)
+	// Check if receipts for the room are disabled first because we have the
+	// room_id on the stack, whereas the event sender requires column queries
+	// from the event_id.
+	const bool ignored
 	{
-		ignored = user_room.has("ircd.read.ignore", sender);
-	});
+		user_ignoring_receipts_room(user_room, room_id) ||
+		user_ignoring_receipts_sender(user_room, event_id)
+	};
 
 	if(ignored)
 	{
