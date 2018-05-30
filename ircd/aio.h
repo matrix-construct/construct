@@ -75,8 +75,7 @@ struct ircd::fs::aio::request
 namespace ircd::fs
 {
 	const_buffer write__aio(const string_view &path, const const_buffer &, const write_opts &);
-	const_buffer read__aio(const string_view &path, const mutable_buffer &, const read_opts &);
-	std::string read__aio(const string_view &path, const read_opts &);
+	const_buffer read__aio(const fd &, const mutable_buffer &, const read_opts &);
 }
 
 /// Read request control block

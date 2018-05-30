@@ -114,12 +114,6 @@ ircd::fs::stdin::readline(const mutable_buffer &buf)
 // fs/read.h
 //
 
-namespace ircd::fs
-{
-	const_buffer read__std(const string_view &path, const mutable_buffer &, const read_opts &);
-	std::string read__std(const string_view &path, const read_opts &);
-}
-
 ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
@@ -133,12 +127,16 @@ ircd::fs::read(const string_view &path,
                const read_opts &opts)
 try
 {
-	#ifdef IRCD_USE_AIO
-	if(likely(aioctx))
-		return read__aio(path, opts);
-	#endif
+	const fd fd
+	{
+		path
+	};
 
-	return read__std(path, opts);
+	return read(fd, opts);
+}
+catch(const filesystem_error &)
+{
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -146,6 +144,17 @@ catch(const std::exception &e)
 	{
 		"%s", e.what()
 	};
+}
+
+std::string
+ircd::fs::read(const fd &fd,
+               const read_opts &opts)
+{
+	return string(size(fd), [&fd, &opts]
+	(const mutable_buffer &buf)
+	{
+		return read(fd, buf, opts);
+	});
 }
 
 ircd::const_buffer
@@ -154,12 +163,16 @@ ircd::fs::read(const string_view &path,
                const read_opts &opts)
 try
 {
-	#ifdef IRCD_USE_AIO
-	if(likely(aioctx))
-		return read__aio(path, buf, opts);
-	#endif
+	const fd fd
+	{
+		path
+	};
 
-	return read__std(path, buf, opts);
+	return read(fd, buf, opts);
+}
+catch(const filesystem_error &)
+{
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -169,33 +182,32 @@ catch(const std::exception &e)
 	};
 }
 
-//
-// std read
-//
-
-std::string
-ircd::fs::read__std(const string_view &path,
-                    const read_opts &opts)
-{
-	std::ifstream file{std::string{path}};
-	std::noskipws(file);
-	std::istream_iterator<char> b{file};
-	std::istream_iterator<char> e{};
-	return std::string{b, e};
-}
-
 ircd::const_buffer
-ircd::fs::read__std(const string_view &path,
-                    const mutable_buffer &buf,
-                    const read_opts &opts)
+ircd::fs::read(const fd &fd,
+               const mutable_buffer &buf,
+               const read_opts &opts)
+try
 {
-	std::ifstream file{std::string{path}};
-	file.exceptions(file.failbit | file.badbit);
-	file.seekg(opts.offset, file.beg);
-	file.read(data(buf), size(buf));
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		return read__aio(fd, buf, opts);
+	#endif
+
 	return
 	{
-		data(buf), size_t(file.gcount())
+		data(buf),
+		size_t(syscall(::pread, fd, data(buf), size(buf), opts.offset))
+	};
+}
+catch(const filesystem_error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
 	};
 }
 

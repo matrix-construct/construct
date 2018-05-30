@@ -293,68 +293,14 @@ ircd::fs::aio::request::read::read(const int &fd,
 // ircd::fs interface
 //
 
-std::string
-ircd::fs::read__aio(const string_view &path,
-                    const read_opts &opts)
-{
-	// Path to open(2) must be null terminated;
-	static thread_local char pathstr[2048];
-	strlcpy(pathstr, path, sizeof(pathstr));
-
-	uint flags{0};
-	flags |= O_RDONLY;
-	flags |= O_CLOEXEC;
-
-	const auto fd
-	{
-		syscall(::open, pathstr, flags, 0)
-	};
-
-	const unwind cfd{[&fd]
-	{
-		syscall(::close, fd);
-	}};
-
-	struct stat stat;
-	syscall(::fstat, fd, &stat);
-	return string(stat.st_size, [&fd, &opts]
-	(const mutable_buffer &buf)
-	{
-		aio::request::read request
-		{
-			int(fd), buf, opts
-		};
-
-		return request();
-	});
-}
-
 ircd::const_buffer
-ircd::fs::read__aio(const string_view &path,
+ircd::fs::read__aio(const fd &fd,
                     const mutable_buffer &buf,
                     const read_opts &opts)
 {
-	// Path to open(2) must be null terminated;
-	static thread_local char pathstr[2048];
-	strlcpy(pathstr, path, sizeof(pathstr));
-
-	uint flags{0};
-	flags |= O_RDONLY;
-	flags |= O_CLOEXEC;
-
-	const auto fd
-	{
-		syscall(::open, pathstr, flags, 0)
-	};
-
-	const unwind cfd{[&fd]
-	{
-		syscall(::close, fd);
-	}};
-
 	aio::request::read request
 	{
-		int(fd), buf, opts
+		fd, buf, opts
 	};
 
 	const size_t bytes
