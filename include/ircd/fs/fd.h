@@ -44,13 +44,26 @@ struct ircd::fs::fd
 
 struct ircd::fs::fd::opts
 {
+	/// open(2) flags. Usually generated from ios::open_mode ctor.
 	ulong flags {0};
+
+	/// open(2) mode_t mode used for file creation.
 	ulong mask {0};
+
+	/// Seek to end after open. This exists to convey the flag for open_mode.
 	bool ate {false};
+
+	/// (O_DIRECT) Direct IO bypassing the operating system caches.
 	bool direct {false};
+
+	/// (O_CLOEXEC) Close this descriptor on an exec().
 	bool cloexec {true};
+
+	/// Prevents file from being created if it doesn't exist. This clears
+	/// any implied O_CREAT from the open_mode ctor and in flags too.
 	bool nocreate {false};
 
+	/// Construct options from an std::ios::open_mode bitmask.
 	opts(const std::ios::open_mode &);
 	opts() = default;
 };
