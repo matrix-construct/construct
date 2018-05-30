@@ -2038,12 +2038,13 @@ console_cmd__peer(opt &out, const string_view &line)
 		else
 		    out << ' ' << setw(22) << left << " ";
 
-		out << " " << setw(2) << right << peer.link_count()   << " L"
-		    << " " << setw(2) << right << peer.tag_count()    << " T"
-		    << " " << setw(9) << right << peer.write_size()   << " UP Q"
-		    << " " << setw(9) << right << peer.read_size()    << " DN Q"
-		    << " " << setw(9) << right << peer.write_total()  << " UP"
-		    << " " << setw(9) << right << peer.read_total()   << " DN"
+		out << " " << setw(2) << right << peer.link_count()     << " L"
+		    << " " << setw(2) << right << peer.tag_count()      << " T"
+		    << " " << setw(2) << right << peer.tag_committed()  << " TC"
+		    << " " << setw(9) << right << peer.write_size()     << " UP Q"
+		    << " " << setw(9) << right << peer.read_size()      << " DN Q"
+		    << " " << setw(9) << right << peer.write_total()    << " UP"
+		    << " " << setw(9) << right << peer.read_total()     << " DN"
 		    ;
 
 		if(peer.err_has() && peer.err_msg())
