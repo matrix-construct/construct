@@ -12,6 +12,27 @@
 
 using namespace ircd;
 
+const size_t
+default_limit
+{
+	// 11.20.1.1 - The maximum number of events to return. Default: 10.
+	10
+};
+
+conf::item<size_t>
+limit_max
+{
+	{ "name",     "ircd.client.rooms.context.limit.max" },
+	{ "default",  128L                                  },
+};
+
+conf::item<size_t>
+flush_hiwat
+{
+	{ "name",     "ircd.client.rooms.context.flush.hiwat" },
+	{ "default",  16384L                                  },
+};
+
 resource::response
 get__context(client &client,
              const resource::request &request,
@@ -22,19 +43,105 @@ get__context(client &client,
 		url::decode(request.parv[2], event_id)
 	};
 
-	//TODO: XXX
-	assert(0);
+	const auto limit{[&request]
+	{
+		auto ret(request.query.get<size_t>("limit", default_limit));
+		return std::min(ret, size_t(limit_max));
+	}()};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
 
 	const m::event::fetch event
 	{
 		event_id
 	};
 
-	return resource::response
+	const unique_buffer<mutable_buffer> buf
 	{
-		client, json::members
-		{
-			{ "event", event }
-		}
+		96_KiB
 	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	const auto flush{[&response]
+	(const const_buffer &buf)
+	{
+		response.write(buf);
+		return buf;
+	}};
+
+	json::stack out
+	{
+		buf, flush, size_t(flush_hiwat)
+	};
+
+	json::stack::object ret
+	{
+		out
+	};
+
+	json::stack::member
+	{
+		ret, "event", event
+	};
+
+	m::event::id::buf start{event_id};
+	{
+		json::stack::member member{ret, "events_before"};
+		json::stack::array array{member};
+		m::room::messages before{room, event_id};
+		if(before)
+			--before;
+
+		for(size_t i(0); i < limit && before; --before, ++i)
+		{
+			const m::event &event{*before};
+			start = at<"event_id"_>(event);
+			array.append(event);
+		}
+	}
+
+	json::stack::member
+	{
+		ret, "start", json::value{start}
+	};
+
+	m::event::id::buf end{event_id};
+	{
+		json::stack::member member{ret, "events_after"};
+		json::stack::array array{member};
+		m::room::messages after{room, event_id};
+		if(after)
+			++after;
+
+		for(size_t i(0); i < limit && after; ++after, ++i)
+		{
+			const m::event &event{*after};
+			end = at<"event_id"_>(event);
+			array.append(event);
+		}
+	}
+
+	json::stack::member
+	{
+		ret, "end", json::value{end}
+	};
+
+	{
+		json::stack::member member{ret, "state"};
+		json::stack::array array{member};
+		m::room::state{room}.for_each([&array]
+		(const m::event &event)
+		{
+			array.append(event);
+		});
+	}
+
+	return {};
 }
