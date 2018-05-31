@@ -54,6 +54,12 @@ get__context(client &client,
 		room_id, event_id
 	};
 
+	if(!room.visible(request.user_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view the room at this event"
+		};
+
 	const m::event::fetch event
 	{
 		event_id
@@ -102,6 +108,9 @@ get__context(client &client,
 		for(size_t i(0); i < limit && before; --before, ++i)
 		{
 			const m::event &event{*before};
+			if(!visible(event, request.user_id))
+				break;
+
 			start = at<"event_id"_>(event);
 			array.append(event);
 		}
@@ -123,6 +132,9 @@ get__context(client &client,
 		for(size_t i(0); i < limit && after; ++after, ++i)
 		{
 			const m::event &event{*after};
+			if(!visible(event, request.user_id))
+				break;
+
 			end = at<"event_id"_>(event);
 			array.append(event);
 		}
