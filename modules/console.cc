@@ -3801,6 +3801,42 @@ console_cmd__room__head__reset(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__complete(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	using prototype = std::pair<bool, int64_t> (const m::room &);
+	static m::import<prototype> is_complete
+	{
+		"m_room", "is_complete"
+	};
+
+	const auto res
+	{
+		is_complete(room)
+	};
+
+	out << (res.first? "YES" : "NO")
+	    << " @ depth " << res.second
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__room__depth(opt &out, const string_view &line)
 {
 	const auto &room_id

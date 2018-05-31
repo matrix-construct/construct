@@ -16,6 +16,46 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
+extern "C" std::pair<bool, int64_t>
+is_complete(const m::room &room)
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	const auto create_id
+	{
+		state.get("m.room.create")
+	};
+
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include{"depth"}
+	};
+
+	m::room::messages it
+	{
+		room, create_id, &fopts
+	};
+
+	int64_t depth{0};
+	if(!it)
+		return {false, depth};
+
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		if(at<"depth"_>(event) == depth + 1)
+			++depth;
+
+		if(at<"depth"_>(event) != depth)
+			return {false, depth};
+	}
+
+	return {true, depth};
+}
+
 extern "C" size_t
 state__rebuild_present(const m::room &room)
 {
