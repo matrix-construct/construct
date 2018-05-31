@@ -310,7 +310,7 @@ ircd::fs::read__aio(const fd &fd,
 
 	const const_buffer view
 	{
-		reinterpret_cast<const char *>(data(buf)), bytes
+		const_cast<const char *>(data(buf)), bytes
 	};
 
 	return view;
