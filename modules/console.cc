@@ -2013,25 +2013,15 @@ console_cmd__peer(opt &out, const string_view &line)
 	if(out.html)
 		return html__peer(out, line);
 
-	const bool all
-	{
-		has(line, "all")
-	};
-
-	for(const auto &p : server::peers)
+	const auto print{[&out]
+	(const auto &host, const auto &peer)
 	{
 		using std::setw;
 		using std::left;
 		using std::right;
 
-		const auto &host{p.first};
-		const auto &peer{*p.second};
 		const net::ipport &ipp{peer.remote};
-
-		if(peer.err_has() && !all)
-			continue;
-
-		out << setw(40) << right << host;
+		out << setw(40) << left << host;
 
 		if(ipp)
 		    out << ' ' << setw(22) << left << ipp;
@@ -2053,6 +2043,42 @@ console_cmd__peer(opt &out, const string_view &line)
 			out << "  <unknown error>"_sv;
 
 		out << std::endl;
+	}};
+
+	const params param{line, " ",
+	{
+		"[hostport]", "[all]"
+	}};
+
+	const auto &hostport
+	{
+		param[0]
+	};
+
+	const bool all
+	{
+		has(line, "all")
+	};
+
+	if(hostport && hostport != "all")
+	{
+		auto &peer
+		{
+			server::find(hostport)
+		};
+
+		print(peer.hostname, peer);
+		return true;
+	}
+
+	for(const auto &p : server::peers)
+	{
+		const auto &host{p.first};
+		const auto &peer{*p.second};
+		if(peer.err_has() && !all)
+			continue;
+
+		print(host, peer);
 	}
 
 	return true;
