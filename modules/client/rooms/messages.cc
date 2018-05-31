@@ -63,8 +63,14 @@ get__messages(client &client,
 
 	const m::room room
 	{
-		room_id
+		room_id, page.from
 	};
+
+	if(!room.visible(request.user_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view the room at this event"
+		};
 
 	m::room::messages it
 	{
@@ -107,6 +113,9 @@ get__messages(client &client,
 		for(; it; page.dir == 'b'? --it : ++it)
 		{
 			const m::event &event{*it};
+			if(!visible(event, request.user_id))
+				break;
+
 			if(page.to && at<"event_id"_>(event) == page.to)
 			{
 				if(page.dir != 'b')
