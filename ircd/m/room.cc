@@ -192,13 +192,34 @@ ircd::m::room::membership(const mutable_buffer &out,
                           const m::id::user &user_id)
 const
 {
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"membership",
+		}
+	};
+
+	// Since this is a member function of m::room there might be a supplied
+	// fopts. Whatever keys it has are irrelevant, but we can preserve gopts.
+	const m::event::fetch::opts fopts
+	{
+		keys, this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	const state state
+	{
+		*this, &fopts
+	};
+
 	string_view ret;
-	const state state{*this};
 	state.get(std::nothrow, "m.room.member"_sv, user_id, [&out, &ret]
 	(const m::event &event)
 	{
-		assert(json::get<"type"_>(event) == "m.room.member");
-		ret = { data(out), copy(out, unquote(at<"membership"_>(event))) };
+		ret =
+		{
+			data(out), copy(out, unquote(at<"membership"_>(event)))
+		};
 	});
 
 	return ret;
