@@ -56,7 +56,12 @@ _visible_(const m::event &event,
           const m::room &room,
           const string_view &history_visibility)
 {
-	return true;
+	const m::room::origins origins
+	{
+		room
+	};
+
+	return origins.has(node_id.host());
 }
 
 static bool
