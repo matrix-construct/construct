@@ -23,6 +23,7 @@ namespace ircd
 	bool debugmode;                              // meaningful ifdef RB_DEBUG
 	bool nolisten;                               // indicates no listener binding
 	bool noautomod;                              // no module loading on init
+	bool checkdb;                                // check databases when opening
 
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;

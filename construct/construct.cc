@@ -54,6 +54,7 @@ lgetopt opts[] =
 	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
 	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ "noautomod",  &ircd::noautomod, lgetopt::BOOL,    "Normal execution but without autoloading modules" },
+	{ "checkdb",    &ircd::checkdb,   lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 

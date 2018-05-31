@@ -786,14 +786,16 @@ try
 	return checkpointer;
 }()}
 {
-	#ifdef RB_DEBUG
-	log::notice
+	if(ircd::checkdb)
 	{
-		log, "'%s': Verifying database integrity. This may take several minutes...",
-		this->name
-	};
-	check(*this);
-	#endif
+		log::notice
+		{
+			log, "'%s': Verifying database integrity. This may take several minutes...",
+			this->name
+		};
+
+		check(*this);
+	}
 
 	log::info
 	{

@@ -186,6 +186,7 @@ namespace ircd
 	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.
+	extern bool checkdb;               ///< Perform checks on database opens
 }
 
 #include "string_view.h"
