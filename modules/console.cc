@@ -3880,6 +3880,54 @@ console_cmd__room__depth(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__visible(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "user_id|node_id", "event_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view &mxid
+	{
+		param[1] && param[1] != "*"?
+			param[1]:
+		param[1] == "*"?
+			string_view{}:
+			param[1]
+	};
+
+	const auto &event_id
+	{
+		param[2]
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const bool visible
+	{
+		room.visible(mxid)
+	};
+
+	out << room_id << " is "
+	    << (visible? "VISIBLE" : "NOT VISIBLE")
+	    << (mxid? " to " : "")
+	    << mxid
+	    << (event_id? " at " : "")
+	    << event_id
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__room__members(opt &out, const string_view &line)
 {
 	const params param{line, " ",
