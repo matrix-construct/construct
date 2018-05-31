@@ -38,6 +38,12 @@ handle_get(client &client,
 		url::decode(request.parv[0], event_id)
 	};
 
+	if(!visible(event_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view this event"
+		};
+
 	const unique_buffer<mutable_buffer> buffer
 	{
 		64_KiB

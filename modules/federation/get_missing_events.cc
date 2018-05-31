@@ -118,6 +118,9 @@ get__missing_events(client &client,
 		for(; it && ret.size() < limit && goose < size_t(max_goose); ++it, ++goose)
 		{
 			const m::event &event{*it};
+			if(!visible(event, request.node_id))
+				continue;
+
 			ret.emplace_back(json::strung{event});
 			if(in_latest(at<"event_id"_>(event)))
 				break;

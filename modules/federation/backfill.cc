@@ -79,6 +79,12 @@ get__backfill(client &client,
 			m::head(room_id)
 	};
 
+	if(!visible(event_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view the room at this event."
+		};
+
 	const size_t limit
 	{
 		calc_limit(request)
@@ -124,7 +130,13 @@ get__backfill(client &client,
 
 	size_t count{0};
 	for(; it && count < limit; ++count, --it)
-		pdus.append(*it);
+	{
+		const m::event &event(*it);
+		if(!visible(event, request.node_id))
+			continue;
+
+		pdus.append(event);
+	}
 
 	return {};
 }

@@ -44,6 +44,12 @@ get__state_ids(client &client,
 		room_id, event_id
 	};
 
+	if(!room.visible(request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view the room at this event"
+		};
+
 	const m::room::state state
 	{
 		room
