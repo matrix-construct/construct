@@ -44,28 +44,43 @@ handle_get(client &client,
 			"You are not permitted to view this event"
 		};
 
-	const unique_buffer<mutable_buffer> buffer
-	{
-		64_KiB
-	};
-
 	const m::event::fetch event
 	{
 		event_id
 	};
 
-	const json::value pdu
+	const unique_buffer<mutable_buffer> buf
 	{
-		static_cast<const m::event &>(event)
+		96_KiB
 	};
 
-	return resource::response
+	resource::response::chunked response
 	{
-		client, json::members
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		buf, [&response](const const_buffer &buf)
 		{
-			{ "pdus", { &pdu, 1 } }
+			response.write(buf);
+			return buf;
 		}
 	};
+
+	json::stack::object top{out};
+	json::stack::member pdus_m
+	{
+		top, "pdus"
+	};
+
+	json::stack::array pdus
+	{
+		pdus_m
+	};
+
+	pdus.append(event);
+	return {};
 }
 
 resource::method method_get
