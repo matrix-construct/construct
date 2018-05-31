@@ -188,7 +188,16 @@ ircd::authenticate(client &client,
 	if(!request.access_token)
 		return {};
 
-	m::user::tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"sender"
+		}
+	};
+
+	const m::room::state tokens{m::user::tokens, &fopts};
+	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
 	(const m::event &event)
 	{
 		// The user sent this access token to the tokens room
