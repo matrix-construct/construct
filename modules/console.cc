@@ -4906,8 +4906,25 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 
 	string_view target
 	{
-		param.at(1)
+		param[1]
 	};
+
+	const m::user::room user_room
+	{
+		my_user
+	};
+
+	if(!target)
+	{
+		m::room::state{user_room}.for_each("ircd.read.ignore", [&out]
+		(const m::event &event)
+		{
+			out << at<"state_key"_>(event)
+			    << std::endl;
+		});
+
+		return true;
+	}
 
 	char buf[m::id::MAX_SIZE];
 	switch(m::sigil(target))
@@ -4925,11 +4942,6 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 			"Unsupported target MXID type for receipt ignores."
 		};
 	}
-
-	const m::user::room user_room
-	{
-		my_user
-	};
 
 	if(user_room.has("ircd.read.ignore", target))
 	{
