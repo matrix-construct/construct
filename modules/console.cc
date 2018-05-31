@@ -3299,6 +3299,38 @@ console_cmd__event__fetch(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__visible(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "user_id|node_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at(0)
+	};
+
+	const string_view &mxid
+	{
+		param[1]
+	};
+
+	const bool visible
+	{
+		m::visible(event_id, mxid)
+	};
+
+	out << event_id << " is "
+	    << (visible? "VISIBLE" : "NOT VISIBLE")
+	    << (mxid? " to " : "")
+	    << mxid
+	    << std::endl;
+
+	return true;
+}
+
 //
 // state
 //
