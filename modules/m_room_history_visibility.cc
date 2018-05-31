@@ -38,8 +38,16 @@ _visible_(const m::event &event,
 		return membership == "invite";
 
 	assert(history_visibility == "shared");
-	const m::room present{room.room_id};
-	return present.membership(user_id, "join");
+
+	// If the room is not at the present event then we have to run another
+	// test for membership here. Otherwise the "join" test already failed.
+	if(room.event_id)
+	{
+		const m::room present{room.room_id};
+		return present.membership(user_id, "join");
+	}
+
+	return false;
 }
 
 static bool
@@ -85,7 +93,7 @@ visible(const m::event &event,
 {
 	const m::room room
 	{
-		at<"room_id"_>(event), at<"event_id"_>(event)
+		at<"room_id"_>(event), json::get<"event_id"_>(event)
 	};
 
 	static const m::event::fetch::opts fopts
