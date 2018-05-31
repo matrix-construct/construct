@@ -31,7 +31,8 @@ is_complete(const m::room &room)
 
 	static const m::event::fetch::opts fopts
 	{
-		m::event::keys::include{"depth"}
+		m::event::keys::include{"depth"},
+		{ db::get::NO_CACHE }
 	};
 
 	m::room::messages it
@@ -70,9 +71,14 @@ state__rebuild_present(const m::room &room)
 		state.get("m.room.create")
 	};
 
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
 	m::room::messages it
 	{
-		room, create_id
+		room, create_id, &fopts
 	};
 
 	if(!it)
@@ -119,9 +125,14 @@ state__rebuild_history(const m::room &room)
 		state.get("m.room.create")
 	};
 
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
 	m::room::messages it
 	{
-		room, create_id
+		room, create_id, &fopts
 	};
 
 	if(!it)
@@ -192,9 +203,14 @@ head__rebuild(const m::room &room)
 		state.get("m.room.create")
 	};
 
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
 	m::room::messages it
 	{
-		room, create_id
+		room, create_id, &fopts
 	};
 
 	if(!it)
@@ -316,15 +332,11 @@ dagree_histogram(const m::room &room,
 {
 	static const m::event::fetch::opts fopts
 	{
+		{ db::get::NO_CACHE },
 		m::event::keys::include
 		{
 			"event_id",
 			"prev_events",
-		},
-
-		db::gopts
-		{
-			db::get::NO_CACHE
 		}
 	};
 
