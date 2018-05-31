@@ -30,6 +30,7 @@ AM_LDFLAGS += \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
+	-Wl,--rosegment \
 	$(PLATFORM_LDFLAGS) \
 	# -Wl,--no-undefined \
 	# -export-symbols-regex IRCD_MODULE* \

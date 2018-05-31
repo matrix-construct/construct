@@ -29,15 +29,18 @@ endif
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
 	-Wl,-fuse-ld=gold \
-	-Wl,--no-allow-shlib-undefined \
+	-Wl,--detect-odr-violations \
 	-Wl,--export-dynamic \
+	-Wl,--no-undefined \
 	-Wl,--no-gnu-unique \
 	-Wl,--gc-sections \
-	-Wl,--dynamic-list-data \
 	-Wl,--icf=all \
+	-Wl,--rosegment \
+	-Wl,-z -Wl,initfirst \
+	-Wl,-z -Wl,nodelete \
+	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS) \
-	-Wl,--no-undefined \
 	###
 
 libircd_LTLIBRARIES = libircd.la

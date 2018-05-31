@@ -14,11 +14,19 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
-	-Wl,--no-gnu-unique \
+	-Wl,--warn-execstack \
+	-Wl,--warn-common \
+	-Wl,--detect-odr-violations \
 	-Wl,--no-allow-shlib-undefined \
+	-Wl,--no-gnu-unique \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections \
+	-Wl,--dynamic-list-data \
+	-Wl,--dynamic-list-cpp-new\
+	-Wl,--dynamic-list-cpp-typeinfo \
 	-Wl,--icf=all \
+	-Wl,--rosegment \
+	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,now \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
