@@ -302,7 +302,8 @@ head__reset(const m::room &room)
 
 extern "C" void
 head__modify(const m::event::id &event_id,
-             const db::op &op)
+             const db::op &op,
+             const bool &refs)
 {
 	const m::event::fetch event
 	{
@@ -318,7 +319,7 @@ head__modify(const m::event::id &event_id,
 	m::dbs::write_opts opts;
 	opts.op = op;
 	opts.head = true;
-	opts.refs = true;
+	opts.refs = refs;
 	opts.event_idx = index(event);
 	m::dbs::_index__room_head(txn, event, opts);
 
