@@ -594,7 +594,7 @@ const
 bool
 fmt::signed_specifier::operator()(char *&out,
                                   const size_t &max,
-                                  const spec &s,
+                                  const spec &spec,
                                   const arg &val)
 const
 {
@@ -603,10 +603,10 @@ const
 		throw illegal("Failed to print signed value");
 	});
 
-	const auto closure([&](const long &integer)
+	const auto closure([&out, &max, &spec, &val]
+	(const long &integer)
 	{
 		using karma::long_;
-		using karma::maxwidth;
 
 		struct generator
 		:karma::grammar<char *, long()>
@@ -617,11 +617,43 @@ const
 				,"signed long integer"
 			};
 
+			_r1_type width;
+			karma::rule<char *, long(ushort)> aligned_left
+			{
+				karma::left_align(width)[rule]
+				,"left aligned"
+			};
+
+			karma::rule<char *, long(ushort)> aligned_right
+			{
+				karma::right_align(width)[rule]
+				,"right aligned"
+			};
+
+			karma::rule<char *, long(ushort)> aligned_center
+			{
+				karma::center(width)[rule]
+				,"center aligned"
+			};
+
 			generator(): generator::base_type{rule} {}
 		}
 		static const generator;
 
-		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], integer);
+		const auto &mw(maxwidth(max));
+		static const auto &ep(eps[throw_illegal]);
+
+		if(!spec.width)
+			return karma::generate(out, mw[generator] | ep, integer);
+
+		if(spec.sign == '-')
+		{
+			const auto &g(generator.aligned_left(spec.width));
+			return karma::generate(out, mw[g] | ep, integer);
+		}
+
+		const auto &g(generator.aligned_right(spec.width));
+		return karma::generate(out, mw[g] | ep, integer);
 	});
 
 	return !until(types, [&](auto type)
@@ -633,7 +665,7 @@ const
 bool
 fmt::unsigned_specifier::operator()(char *&out,
                                     const size_t &max,
-                                    const spec &s,
+                                    const spec &spec,
                                     const arg &val)
 const
 {
@@ -642,10 +674,10 @@ const
 		throw illegal("Failed to print unsigned value");
 	});
 
-	const auto closure([&](const ulong &integer)
+	const auto closure([&out, &max, &spec, &val]
+	(const ulong &integer)
 	{
 		using karma::ulong_;
-		using karma::maxwidth;
 
 		struct generator
 		:karma::grammar<char *, ulong()>
@@ -656,11 +688,43 @@ const
 				,"unsigned long integer"
 			};
 
+			_r1_type width;
+			karma::rule<char *, ulong(ushort)> aligned_left
+			{
+				karma::left_align(width)[rule]
+				,"left aligned"
+			};
+
+			karma::rule<char *, ulong(ushort)> aligned_right
+			{
+				karma::right_align(width)[rule]
+				,"right aligned"
+			};
+
+			karma::rule<char *, ulong(ushort)> aligned_center
+			{
+				karma::center(width)[rule]
+				,"center aligned"
+			};
+
 			generator(): generator::base_type{rule} {}
 		}
 		static const generator;
 
-		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], integer);
+		const auto &mw(maxwidth(max));
+		static const auto &ep(eps[throw_illegal]);
+
+		if(!spec.width)
+			return karma::generate(out, mw[generator] | ep, integer);
+
+		if(spec.sign == '-')
+		{
+			const auto &g(generator.aligned_left(spec.width));
+			return karma::generate(out, mw[g] | ep, integer);
+		}
+
+		const auto &g(generator.aligned_right(spec.width));
+		return karma::generate(out, mw[g] | ep, integer);
 	});
 
 	return !until(types, [&](auto type)
