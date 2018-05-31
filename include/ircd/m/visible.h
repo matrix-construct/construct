@@ -13,8 +13,9 @@
 
 namespace ircd::m
 {
-	bool visible(const event &, const id::user &);
-	bool visible(const event &, const id::node &);
-	bool visible(const id::event &, const id::user &);
-	bool visible(const id::event &, const id::node &);
+	// The mxid argument is a string_view because it may be empty when no
+	// authentication is supplied (m::id cannot be empty because that's
+	// considered an invalid mxid). In that case the test is for public vis.
+	bool visible(const event &, const string_view &mxid);
+	bool visible(const id::event &, const string_view &mxid);
 }

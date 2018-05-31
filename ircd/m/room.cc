@@ -162,12 +162,12 @@ ircd::m::my(const room &room)
 //
 
 bool
-ircd::m::room::visible(const user::id &user_id,
+ircd::m::room::visible(const string_view &mxid,
                        const event *const &event)
 const
 {
 	if(event)
-		return m::visible(*event, user_id);
+		return m::visible(*event, mxid);
 
 	const m::event event_
 	{
@@ -175,24 +175,7 @@ const
 		{ "room_id",   room_id   },
 	};
 
-	return m::visible(event_, user_id);
-}
-
-bool
-ircd::m::room::visible(const node::id &node_id,
-                       const event *const &event)
-const
-{
-	if(event)
-		return m::visible(*event, node_id);
-
-	const m::event event_
-	{
-		{ "event_id",  event_id  },
-		{ "room_id",   room_id   },
-	};
-
-	return m::visible(event_, node_id);
+	return m::visible(event_, mxid);
 }
 
 bool
