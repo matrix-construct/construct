@@ -749,7 +749,7 @@ const
 bool
 fmt::string_specifier::operator()(char *&out,
                                   const size_t &max,
-                                  const spec &,
+                                  const spec &spec,
                                   const arg &val)
 const
 {
@@ -772,11 +772,43 @@ const
 			,"string"
 		};
 
+		_r1_type width;
+		karma::rule<char *, const string_view &(ushort)> aligned_left
+		{
+			karma::left_align(width)[string]
+			,"left aligned"
+		};
+
+		karma::rule<char *, const string_view &(ushort)> aligned_right
+		{
+			karma::right_align(width)[string]
+			,"right aligned"
+		};
+
+		karma::rule<char *, const string_view &(ushort)> aligned_center
+		{
+			karma::center(width)[string]
+			,"center aligned"
+		};
+
 		generator() :generator::base_type{string} {}
 	}
 	static const generator;
 
-	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+	const auto &mw(maxwidth(max));
+	static const auto &ep(eps[throw_illegal]);
+
+	if(!spec.width)
+		return generate_string(out, mw[generator] | ep, val);
+
+	if(spec.sign == '-')
+	{
+		const auto &g(generator.aligned_left(spec.width));
+		return generate_string(out, mw[g] | ep, val);
+	}
+
+	const auto &g(generator.aligned_right(spec.width));
+	return generate_string(out, mw[g] | ep, val);
 }
 
 template<class generator>
