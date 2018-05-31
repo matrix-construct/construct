@@ -78,6 +78,7 @@ namespace ircd
 #include "receipt.h"
 #include "txn.h"
 #include "hook.h"
+#include "visible.h"
 
 struct ircd::m::self::init
 {

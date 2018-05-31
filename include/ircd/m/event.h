@@ -27,10 +27,6 @@ namespace ircd::m
 	bool exists(const id::event &);
 	bool bad(const id::event &, uint64_t &);
 	bool bad(const id::event &);
-	bool visible(const event &, const id::user &);
-	bool visible(const event &, const id::node &);
-	bool visible(const id::event &, const id::user &);
-	bool visible(const id::event &, const id::node &);
 
 	// Depth comparison; expect unstable sorting.
 	bool operator<(const event &, const event &);
