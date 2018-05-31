@@ -143,11 +143,16 @@ noexcept
 namespace ircd
 {
 	static void cache_warm_origin(const string_view &origin);
-	static bool verify_origin(client &client, resource::method &method, resource::request &request);
-	static bool authenticate(client &client, resource::method &method, resource::request &request);
+	static string_view verify_origin(client &client, resource::method &method, resource::request &request);
+	static string_view authenticate(client &client, resource::method &method, resource::request &request);
 }
 
-bool
+/// Authenticate a client based on access_token either in the query string or
+/// in the Authentication bearer header. If a token is found the user_id owning
+/// the token is copied into the request. If it is not found or it is invalid
+/// then the method being requested is checked to see if it is required. If so
+/// the appropriate exception is thrown.
+ircd::string_view
 ircd::authenticate(client &client,
                    resource::method &method,
                    resource::request &request)
@@ -168,14 +173,22 @@ ircd::authenticate(client &client,
 			request.access_token = authorization.second;
 	}
 
-	if(!request.access_token)
+	const bool requires_auth
+	{
+		method.opts.flags & method.REQUIRES_AUTH
+	};
+
+	if(!request.access_token && requires_auth)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_MISSING_TOKEN",
 			"Credentials for this method are required but missing."
 		};
 
-	return m::user::tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
+	if(!request.access_token)
+		return {};
+
+	m::user::tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
 	(const m::event &event)
 	{
 		// The user sent this access token to the tokens room
@@ -184,14 +197,48 @@ ircd::authenticate(client &client,
 			at<"sender"_>(event)
 		};
 	});
+
+	if(!request.user_id && requires_auth)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
+			"Credentials for this method are required but invalid."
+		};
+
+	return request.user_id;
 }
 
-bool
+ircd::string_view
 ircd::verify_origin(client &client,
                     resource::method &method,
                     resource::request &request)
 try
 {
+	const bool required
+	{
+		method.opts.flags & method.VERIFY_ORIGIN
+	};
+
+	const auto authorization
+	{
+		split(request.head.authorization, ' ')
+	};
+
+	const bool supplied
+	{
+		iequals(authorization.first, "X-Matrix"_sv)
+	};
+
+	if(!supplied && !required)
+		return {};
+
+	if(!supplied && required)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
+			"Required X-Matrix Authorization was not supplied"
+		};
+
 	const m::request::x_matrix x_matrix
 	{
 		request.head.authorization
@@ -202,14 +249,28 @@ try
 		x_matrix.origin, my_host(), method.name, request.head.uri, request.content
 	};
 
-	const auto verified
-	{
-		object.verify(x_matrix.key, x_matrix.sig)
-	};
+	if(!object.verify(x_matrix.key, x_matrix.sig))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVALID_SIGNATURE",
+			"The X-Matrix Authorization is invalid."
+		};
 
 	request.node_id = {"", x_matrix.origin};
-	request.origin = request.node_id.host();
-	return verified;
+	request.origin = x_matrix.origin;
+
+	// If we have an error cached from previously not being able to
+	// contact this origin we can clear that now that they're alive.
+	server::errclear(request.origin);
+
+	// The origin was verified so we can invoke the cache warming now.
+	cache_warm_origin(request.origin);
+
+	return request.origin;
+}
+catch(const m::error &)
+{
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -395,31 +456,17 @@ ircd::resource::operator()(client &client,
 		client.request.param, tokens(pathparm, '/', client.request.param)
 	};
 
-	if(method.opts.flags & method.REQUIRES_AUTH)
-		if(!authenticate(client, method, client.request))
-			throw m::error
-			{
-				http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
-				"Credentials for this method are required but invalid."
-			};
+	// Client access token verified here. On success, user_id owning the token
+	// is copied into the client.request structure. On failure, the method is
+	// checked to see if it requires authentication and if so, this throws.
+	authenticate(client, method, client.request);
 
-	if(method.opts.flags & method.VERIFY_ORIGIN)
-	{
-		if(!verify_origin(client, method, client.request))
-			throw m::error
-			{
-				http::UNAUTHORIZED, "M_INVALID_SIGNATURE",
-				"The X-Matrix Authorization is invalid."
-			};
+	// Server X-Matrix header verified here. Similar to client auth, origin
+	// which has been authed is referenced in the client.request. If the method
+	// requires, and auth fails or not provided, this function throws.
+	verify_origin(client, method, client.request);
 
-		// If we have an error cached from previously not being able to
-		// contact this origin we can clear that now that they're alive.
-		server::errclear(client.request.origin);
-
-		// The origin was verified so we can invoke the cache warming now.
-		cache_warm_origin(client.request.origin);
-	}
-
+	// Finally handle the request.
 	handle_request(client, method, client.request);
 }
 
