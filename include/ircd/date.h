@@ -177,7 +177,7 @@ ircd::microtime(const mutable_buffer &buf)
 	const auto mt{microtime()};
 	const auto length
 	{
-		snprintf(data(buf), size(buf), "%zd.%06d", mt.first, mt.second)
+		::snprintf(data(buf), size(buf), "%zd.%06d", mt.first, mt.second)
 	};
 
 	return string_view
