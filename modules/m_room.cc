@@ -16,6 +16,83 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
+extern "C" int64_t
+make_prev(const m::room &room,
+          json::stack::array &out,
+          size_t limit,
+          bool need_tophead = true)
+{
+	const auto top_head
+	{
+		need_tophead?
+			m::top(std::nothrow, room.room_id):
+			std::tuple<m::id::event::buf, int64_t, m::event::idx>{}
+	};
+
+	int64_t depth{-1};
+	m::event::fetch event;
+	const m::room::head head{room};
+	head.for_each(m::room::head::closure_bool{[&]
+	(const m::event::idx &idx, const m::event::id &event_id)
+	{
+		seek(event, idx, std::nothrow);
+		if(!event.valid)
+			return true;
+
+		if(need_tophead)
+			if(json::get<"event_id"_>(event) == std::get<0>(top_head))
+				need_tophead = false;
+
+		depth = std::max(json::get<"depth"_>(event), depth);
+		json::stack::array prev{out};
+		prev.append(event_id);
+		{
+			json::stack::object hash{prev};
+			json::stack::member will
+			{
+				hash, "willy", "nilly"
+			};
+		}
+
+		return --limit - need_tophead > 0;
+	}});
+
+	if(need_tophead)
+	{
+		depth = std::get<1>(top_head);
+		json::stack::array prev{out};
+		prev.append(std::get<0>(top_head));
+		{
+			json::stack::object hash{prev};
+			json::stack::member will
+			{
+				hash, "willy", "nilly"
+			};
+		}
+	}
+
+	return depth;
+}
+
+extern "C" std::pair<json::array, int64_t>
+make_prev__buf(const m::room &room,
+               const mutable_buffer &buf,
+               const size_t &limit,
+               const bool &need_tophead)
+{
+	int64_t depth;
+	json::stack ps{buf};
+	{
+		json::stack::array top{ps};
+		depth = make_prev(room, top, limit, need_tophead);
+	}
+
+	return
+	{
+		json::array{ps.completed()}, depth
+	};
+}
+
 extern "C" std::pair<bool, int64_t>
 is_complete(const m::room &room)
 {
