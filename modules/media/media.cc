@@ -44,11 +44,20 @@ media_description
 mapi::header
 IRCD_MODULE
 {
-	"11.7 :Content respository", []
+	"11.7 :Content respository",
+	[] // init
 	{
 		static const std::string dbopts;
 		media = std::make_shared<database>("media", dbopts, media_description);
 		blocks = db::column{*media, "blocks"};
+	},
+	[] // fini
+	{
+		// The database close contains pthread_join()'s within RocksDB which
+		// deadlock under certain conditions when called during a dlclose()
+		// (i.e static destruction of this module). Therefor we must manually
+		// close the db here first.
+		media = std::shared_ptr<database>{};
 	}
 };
 
