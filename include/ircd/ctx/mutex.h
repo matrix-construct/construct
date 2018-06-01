@@ -29,6 +29,7 @@ class ircd::ctx::mutex
 	list q;
 
   public:
+	bool locked() const;
 	size_t waiting() const;
 
 	bool try_lock();
@@ -138,6 +139,13 @@ ircd::ctx::mutex::waiting()
 const
 {
 	return q.size();
+}
+
+inline bool
+ircd::ctx::mutex::locked()
+const
+{
+	return m;
 }
 
 template<class queue>
