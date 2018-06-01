@@ -486,6 +486,13 @@ ircd::net::reflect(const ready &type)
 // net/close.h
 //
 
+decltype(ircd::net::close_opts::default_timeout)
+ircd::net::close_opts::default_timeout
+{
+	{ "name",     "ircd.net.close.timeout"  },
+	{ "default",  7500L                     },
+};
+
 /// Static instance of default close options.
 ircd::net::close_opts
 const ircd::net::close_opts_default

@@ -42,6 +42,8 @@ enum class ircd::net::dc
 /// Close options structure.
 struct ircd::net::close_opts
 {
+	static conf::item<milliseconds> default_timeout;
+
 	close_opts() = default;
 	close_opts(const net::dc &);
 
@@ -49,7 +51,7 @@ struct ircd::net::close_opts
 	net::dc type { dc::SSL_NOTIFY };
 
 	/// The coarse duration allowed for the close() process.
-	milliseconds timeout { 5000ms };
+	milliseconds timeout { default_timeout };
 
 	/// If specified, these socket options will be applied when conducting
 	/// the disconnect (useful for adding an SO_LINGER time etc).
