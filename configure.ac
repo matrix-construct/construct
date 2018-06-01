@@ -1359,6 +1359,7 @@ AM_COND_IF([MINGW],
 [
 
 ], [
+	CXXFLAGS+=" -pthread"
 	LIBS+="-lpthread -latomic"
 ])
 
