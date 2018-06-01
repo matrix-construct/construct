@@ -2625,6 +2625,58 @@ console_cmd__compose(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__compose__make_prev(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]", "[limit]"
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	const auto &limit
+	{
+		param.at<size_t>(1, 16)
+	};
+
+	m::event event
+	{
+		compose.at(id)
+	};
+
+	using prototype = std::pair<json::array, int64_t> (const m::room &,
+	                                                   const mutable_buffer &,
+	                                                   const size_t &,
+	                                                   const bool &);
+	static m::import<prototype> make_prev__buf
+	{
+		"m_room", "make_prev__buf"
+	};
+
+	thread_local char buf[8192];
+	const auto prev
+	{
+		make_prev__buf(m::room{at<"room_id"_>(event)}, buf, limit, true)
+	};
+
+	json::get<"prev_events"_>(event) = prev.first;
+	json::get<"depth"_>(event) = prev.second;
+
+	compose.at(id) = json::strung
+	{
+		event
+	};
+
+	event = m::event(compose.at(id));
+	out << pretty(event) << std::endl;
+	out << compose.at(id) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__compose__final(opt &out, const string_view &line)
 {
 	const params param{line, " ",
