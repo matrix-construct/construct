@@ -63,7 +63,7 @@ ircd::rfc1035::question::question(const string_view &fqdn,
 	// The name string_view is reduced to not view the null terminator
 	// making it easier for external users. We'll account for this
 	// internally. If this->name was a const_buffer it would have the
-	// null, but doing it this way with the string_view covention prevents
+	// null, but doing it this way with the string_view convention prevents
 	// the null from leaking into the rest of the system when users want
 	// to know the question.
 	namebuf, size(make_name(namebuf, fqdn)) - 1
