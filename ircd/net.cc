@@ -533,6 +533,41 @@ ircd::net::close(socket &socket,
 // net/open.h
 //
 
+decltype(ircd::net::open_opts::default_connect_timeout)
+ircd::net::open_opts::default_connect_timeout
+{
+	{ "name",     "ircd.net.open.connect_timeout"  },
+	{ "default",  7500L                            },
+};
+
+decltype(ircd::net::open_opts::default_handshake_timeout)
+ircd::net::open_opts::default_handshake_timeout
+{
+	{ "name",     "ircd.net.open.handshake_timeout"  },
+	{ "default",  7500L                              },
+};
+
+decltype(ircd::net::open_opts::default_verify_certificate)
+ircd::net::open_opts::default_verify_certificate
+{
+	{ "name",     "ircd.net.open.verify_certificate"  },
+	{ "default",  true                                },
+};
+
+decltype(ircd::net::open_opts::default_allow_self_signed)
+ircd::net::open_opts::default_allow_self_signed
+{
+	{ "name",     "ircd.net.open.allow_self_signed"  },
+	{ "default",  false                              },
+};
+
+decltype(ircd::net::open_opts::default_allow_expired)
+ircd::net::open_opts::default_allow_expired
+{
+	{ "name",     "ircd.net.open.allow_expired"  },
+	{ "default",  false                          },
+};
+
 /// Open new socket with future-based report.
 ///
 ircd::ctx::future<std::shared_ptr<ircd::net::socket>>

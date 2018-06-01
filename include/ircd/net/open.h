@@ -32,6 +32,12 @@ namespace ircd::net
 /// will have to remain valid for the duration of the open().
 struct ircd::net::open_opts
 {
+	static conf::item<milliseconds> default_connect_timeout;
+	static conf::item<milliseconds> default_handshake_timeout;
+	static conf::item<bool> default_verify_certificate;
+	static conf::item<bool> default_allow_self_signed;
+	static conf::item<bool> default_allow_expired;
+
 	// Get the proper target CN from the options structure
 	friend string_view common_name(const open_opts &);
 
@@ -49,7 +55,7 @@ struct ircd::net::open_opts
 	net::ipport ipport;
 
 	/// The duration allowed for the TCP connection.
-	milliseconds connect_timeout { 5000ms };
+	milliseconds connect_timeout { default_connect_timeout };
 
 	/// Pointer to a sock_opts structure which will be applied to this socket
 	/// if given. Defaults to null; no application is made.
@@ -59,11 +65,11 @@ struct ircd::net::open_opts
 	bool handshake { true };
 
 	/// The duration allowed for the SSL handshake
-	milliseconds handshake_timeout { 5000ms };
+	milliseconds handshake_timeout { default_handshake_timeout };
 
 	/// Option to toggle whether to perform any certificate verification; if
 	/// false, everything no matter what is considered valid; you want true.
-	bool verify_certificate { true };
+	bool verify_certificate { default_verify_certificate };
 
 	/// Option to toggle whether to perform CN verification to ensure the
 	/// certificate is signed to the actual host we want to talk to. When
@@ -85,14 +91,14 @@ struct ircd::net::open_opts
 	/// Option to toggle whether to allow self-signed certificates. This
 	/// currently defaults to true to not break Matrix development but will
 	/// likely change later and require setting to true for specific conns.
-	bool allow_self_signed { true };
+	bool allow_self_signed { default_allow_self_signed };
 
 	/// Option to toggle whether to allow self-signed certificate authorities
 	/// in the chain. This is what corporate network nanny's may use to spy.
 	bool allow_self_chain { false };
 
 	/// Option to allow expired certificates.
-	bool allow_expired { false };
+	bool allow_expired { default_allow_expired };
 };
 
 /// Constructor intended to provide implicit conversions (no-brackets required)
