@@ -2677,6 +2677,67 @@ console_cmd__compose__make_prev(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__compose__make_auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]"
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	m::event event
+	{
+		compose.at(id)
+	};
+
+	using prototype = json::array (const m::room &,
+	                               const mutable_buffer &,
+	                               const vector_view<const string_view> &,
+	                               const string_view &);
+
+	static m::import<prototype> make_auth__buf
+	{
+		"m_room", "make_auth__buf"
+	};
+
+	static const string_view types[]
+	{
+		"m.room.create",
+		"m.room.join_rules",
+		"m.room.power_levels",
+	};
+
+	const auto member
+	{
+		at<"type"_>(event) != "m.room.member"?
+			at<"sender"_>(event):
+			string_view{}
+	};
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
+	thread_local char buf[1024];
+	json::get<"auth_events"_>(event) = make_auth__buf(room, buf, types, member);
+
+	compose.at(id) = json::strung
+	{
+		event
+	};
+
+	event = m::event(compose.at(id));
+	out << pretty(event) << std::endl;
+	out << compose.at(id) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__compose__final(opt &out, const string_view &line)
 {
 	const params param{line, " ",
