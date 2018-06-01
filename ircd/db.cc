@@ -2077,6 +2077,85 @@ noexcept
 	return defaults.UnlockFile(l);
 }
 
+rocksdb::Status
+ircd::db::database::env::GetTestDirectory(std::string* path)
+noexcept
+{
+	return defaults.GetTestDirectory(path);
+}
+
+rocksdb::Status
+ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
+                                         std::string* output_path)
+noexcept
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log.debug("'%s': get absolute path from '%s' ret:%p",
+	          d.name,
+	          db_path,
+	          output_path);
+	#endif
+
+	return defaults.GetAbsolutePath(db_path, output_path);
+}
+
+rocksdb::Status
+ircd::db::database::env::NewLogger(const std::string& name,
+                                   std::shared_ptr<Logger>* result)
+noexcept
+{
+	return defaults.NewLogger(name, result);
+}
+
+rocksdb::Status
+ircd::db::database::env::GetHostName(char* name,
+                                     uint64_t len)
+noexcept
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log.debug("'%s': get host name name:%p len:%lu",
+	          d.name,
+	          name,
+	          len);
+	#endif
+
+	return defaults.GetHostName(name, len);
+}
+
+uint64_t
+ircd::db::database::env::NowMicros()
+noexcept
+{
+	return defaults.NowMicros();
+}
+
+rocksdb::Status
+ircd::db::database::env::GetCurrentTime(int64_t* unix_time)
+noexcept
+{
+	return defaults.GetCurrentTime(unix_time);
+}
+
+std::string
+ircd::db::database::env::TimeToString(uint64_t time)
+noexcept
+{
+	return defaults.TimeToString(time);
+}
+
+void
+ircd::db::database::env::SleepForMicroseconds(int micros)
+noexcept
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log.debug("'%s': sleep for %d microseconds",
+	          d.name,
+	          micros);
+	#endif
+
+	defaults.SleepForMicroseconds(micros);
+}
+
 void
 ircd::db::database::env::Schedule(void (*f)(void* arg),
                                   void* a,
@@ -2148,78 +2227,6 @@ const noexcept
 	return defaults.GetThreadPoolQueueLen(pri);
 }
 
-rocksdb::Status
-ircd::db::database::env::GetTestDirectory(std::string* path)
-noexcept
-{
-	return defaults.GetTestDirectory(path);
-}
-
-rocksdb::Status
-ircd::db::database::env::NewLogger(const std::string& name,
-                                   std::shared_ptr<Logger>* result)
-noexcept
-{
-	return defaults.NewLogger(name, result);
-}
-
-uint64_t
-ircd::db::database::env::NowMicros()
-noexcept
-{
-	return defaults.NowMicros();
-}
-
-void
-ircd::db::database::env::SleepForMicroseconds(int micros)
-noexcept
-{
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': sleep for %d microseconds",
-	          d.name,
-	          micros);
-	#endif
-
-	defaults.SleepForMicroseconds(micros);
-}
-
-rocksdb::Status
-ircd::db::database::env::GetHostName(char* name,
-                                     uint64_t len)
-noexcept
-{
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get host name name:%p len:%lu",
-	          d.name,
-	          name,
-	          len);
-	#endif
-
-	return defaults.GetHostName(name, len);
-}
-
-rocksdb::Status
-ircd::db::database::env::GetCurrentTime(int64_t* unix_time)
-noexcept
-{
-	return defaults.GetCurrentTime(unix_time);
-}
-
-rocksdb::Status
-ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
-                                         std::string* output_path)
-noexcept
-{
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get absolute path from '%s' ret:%p",
-	          d.name,
-	          db_path,
-	          output_path);
-	#endif
-
-	return defaults.GetAbsolutePath(db_path, output_path);
-}
-
 void
 ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority pri)
@@ -2261,13 +2268,6 @@ noexcept
 	#endif
 
 	defaults.LowerThreadPoolIOPriority(pool);
-}
-
-std::string
-ircd::db::database::env::TimeToString(uint64_t time)
-noexcept
-{
-	return defaults.TimeToString(time);
 }
 
 rocksdb::Status
