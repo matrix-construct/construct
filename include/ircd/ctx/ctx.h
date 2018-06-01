@@ -81,6 +81,7 @@ namespace ircd::ctx
 #include "mutex.h"
 #include "shared_mutex.h"
 #include "unlock_guard.h"
+#include "condition_variable.h"
 #include "peek.h"
 #include "view.h"
 #include "shared_state.h"
