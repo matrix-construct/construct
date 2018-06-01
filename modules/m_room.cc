@@ -16,6 +16,57 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
+extern "C" void
+make_auth(const m::room &room,
+          json::stack::array &out,
+          const vector_view<const string_view> &types,
+          const string_view &member)
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	const auto fetch{[&out, &state]
+	(const string_view &type, const string_view &state_key)
+	{
+		state.get(std::nothrow, type, state_key, m::event::id::closure{[&out]
+		(const auto &event_id)
+		{
+			json::stack::array auth{out};
+			auth.append(event_id);
+			{
+				json::stack::object hash{auth};
+				json::stack::member will
+				{
+					hash, "willy", "nilly"
+				};
+			}
+		}});
+	}};
+
+	for(const auto &type : types)
+		fetch(type, "");
+
+	if(member)
+		fetch("m.room.member", member);
+}
+
+extern "C" json::array
+make_auth__buf(const m::room &room,
+               const mutable_buffer &buf,
+               const vector_view<const string_view> &types,
+               const string_view &member)
+{
+	json::stack ps{buf};
+	{
+		json::stack::array top{ps};
+		make_auth(room, top, types, member);
+	}
+
+	return json::array{ps.completed()};
+}
+
 extern "C" int64_t
 make_prev(const m::room &room,
           json::stack::array &out,
