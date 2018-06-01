@@ -2211,6 +2211,14 @@ void
 ircd::db::database::env::WaitForJoin()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': wait for all ctx to join",
+		d.name
+	};
+	#endif
+
 	return defaults.WaitForJoin();
 }
 
