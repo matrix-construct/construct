@@ -148,124 +148,61 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		event, { "room_id", room.room_id }
 	};
 
-	int64_t depth{-1};
-	event::id::buf prev_event_id
+	using prev_prototype = std::pair<json::array, int64_t> (const m::room &,
+	                                                        const mutable_buffer &,
+	                                                        const size_t &,
+	                                                        const bool &);
+	static m::import<prev_prototype> make_prev__buf
 	{
+		"m_room", "make_prev__buf"
 	};
 
-	if(room.event_id)
-		prev_event_id = room.event_id;
-	else
-		std::tie(prev_event_id, depth, std::ignore) = m::top(std::nothrow, room.room_id);
-
-	//TODO: X
-	const event::fetch evf
+	const bool need_tophead{event.at("type") != "m.room.create"};
+	const unique_buffer<mutable_buffer> prev_buf{8192};
+	const auto prev
 	{
-		prev_event_id, std::nothrow
+		make_prev__buf(room, prev_buf, 16, need_tophead)
 	};
 
-	if(room.event_id)
-		depth = at<"depth"_>(evf);
-
-	//TODO: X
+	const auto &prev_events{prev.first};
+	const auto &depth{prev.second};
 	const json::iov::set_if depth_
 	{
 		event, !event.has("depth"),
 		{
-			"depth", depth + 1
+			"depth", depth == std::numeric_limits<int64_t>::max()? depth : depth + 1
 		}
+	};
+
+	using auth_prototype = json::array (const m::room &,
+	                                    const mutable_buffer &,
+	                                    const vector_view<const string_view> &,
+	                                    const string_view &);
+
+	static m::import<auth_prototype> make_auth__buf
+	{
+		"m_room", "make_auth__buf"
 	};
 
 	char ae_buf[512];
 	json::array auth_events;
-
 	if(depth != -1 && opts.add_auth_events)
 	{
-		std::vector<json::value> ae;
-
-		room.get(std::nothrow, "m.room.create", "", [&ae]
-		(const m::event &event)
+		static const string_view types[]
 		{
-			const json::value ae0[]
-			{
-				{ json::get<"event_id"_>(event) },
-				{ json::get<"hashes"_>(event)   }
-			};
+			"m.room.create",
+			"m.room.join_rules",
+			"m.room.power_levels",
+		};
 
-			const json::value ae_
-			{
-				ae0, 2
-			};
-
-			ae.emplace_back(ae_);
-		});
-
-		room.get(std::nothrow, "m.room.join_rules", "", [&ae]
-		(const m::event &event)
+		const auto member
 		{
-			const json::value ae0[]
-			{
-				{ json::get<"event_id"_>(event) },
-				{ json::get<"hashes"_>(event)   }
-			};
+			event.at("type") != "m.room.member"?
+				string_view{event.at("sender")}:
+				string_view{}
+		};
 
-			const json::value ae_
-			{
-				ae0, 2
-			};
-
-			ae.emplace_back(ae_);
-		});
-
-		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
-		{
-			ae.data(), ae.size()
-		});
-
-		room.get(std::nothrow, "m.room.power_levels", "", [&ae]
-		(const m::event &event)
-		{
-			const json::value ae0[]
-			{
-				{ json::get<"event_id"_>(event) },
-				{ json::get<"hashes"_>(event)   }
-			};
-
-			const json::value ae_
-			{
-				ae0, 2
-			};
-
-			ae.emplace_back(ae_);
-		});
-
-		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
-		{
-			ae.data(), ae.size()
-		});
-
-		if(event.at("type") != "m.room.member")
-		room.get(std::nothrow, "m.room.member", event.at("sender"), [&ae]
-		(const m::event &event)
-		{
-			const json::value ae0[]
-			{
-				{ json::get<"event_id"_>(event) },
-				{ json::get<"hashes"_>(event)   }
-			};
-
-			const json::value ae_
-			{
-				ae0, 2
-			};
-
-			ae.emplace_back(ae_);
-		});
-
-		auth_events = json::stringify(mutable_buffer{ae_buf}, json::value
-		{
-			ae.data(), ae.size()
-		});
+		auth_events = make_auth__buf(room, ae_buf, types, member);
 	}
 
 	static const json::array &prev_state
