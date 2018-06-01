@@ -34,6 +34,8 @@
 
 namespace rocksdb::port
 {
+	using namespace ircd;
+
 	struct Mutex;
 	struct CondVar;
 	struct RWMutex;
@@ -43,7 +45,7 @@ class rocksdb::port::Mutex
 {
 	friend class CondVar;
 
-	std::mutex mu;
+	ctx::mutex mu;
 
   public:
 	void Lock();
@@ -60,7 +62,7 @@ class rocksdb::port::Mutex
 class rocksdb::port::CondVar
 {
 	Mutex *mu;
-	std::condition_variable cv;
+	ctx::condition_variable cv;
 
   public:
 	void Wait();
@@ -74,7 +76,7 @@ class rocksdb::port::CondVar
 
 class rocksdb::port::RWMutex
 {
-	std::shared_mutex mu;
+	ctx::shared_mutex mu;
 
   public:
 	void ReadLock();

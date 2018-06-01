@@ -2950,28 +2950,75 @@ noexcept
 
 rocksdb::port::Mutex::Mutex()
 {
+	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current || !is_main_thread()))
+		return;
+
+	log::debug
+	{
+		db::log, "mutex %lu %p CTOR", ctx::id(), this
+	};
+	#endif
 }
 
 rocksdb::port::Mutex::Mutex(bool adaptive)
+:Mutex{}
 {
+}
+
+rocksdb::port::Mutex::~Mutex()
+{
+	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current || !is_main_thread()))
+		return;
+
+	log::debug
+	{
+		db::log, "mutex %lu %p DTOR", ctx::id(), this
+	};
+	#endif
 }
 
 void
 rocksdb::port::Mutex::Lock()
 {
+	if(unlikely(!is_main_thread() || !ctx::current))
+		return;
+
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "mutex %lu %p LOCK", ctx::id(), this
+	};
+	#endif
+
 	mu.lock();
 }
 
 void
 rocksdb::port::Mutex::Unlock()
 {
+	if(unlikely(!is_main_thread() || !ctx::current))
+		return;
+
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "mutex %lu %p UNLOCK", ctx::id(), this
+	};
+	#endif
+
+	assert(mu.locked());
 	mu.unlock();
 }
 
 void
 rocksdb::port::Mutex::AssertHeld()
 {
-	assert(1);
+	if(unlikely(!is_main_thread() || !ctx::current))
+		return;
+
+	assert(mu.locked());
 }
 
 //
@@ -2980,33 +3027,77 @@ rocksdb::port::Mutex::AssertHeld()
 
 rocksdb::port::RWMutex::RWMutex()
 {
+	#ifdef RB_DEBUG_DB_PORT_
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p CTOR", ctx::id(), this
+	};
+	#endif
 }
 
 rocksdb::port::RWMutex::~RWMutex()
 {
+	#ifdef RB_DEBUG_DB_PORT_
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p DTOR", ctx::id(), this
+	};
+	#endif
 }
 
 void
 rocksdb::port::RWMutex::ReadLock()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p LOCK SHARED", ctx::id(), this
+	};
+	#endif
+
+	assert_main_thread();
 	mu.lock_shared();
 }
 
 void
 rocksdb::port::RWMutex::WriteLock()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p LOCK", ctx::id(), this
+	};
+	#endif
+
+	assert_main_thread();
 	mu.lock();
 }
 
 void
 rocksdb::port::RWMutex::ReadUnlock()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p UNLOCK SHARED", ctx::id(), this
+	};
+	#endif
+
+	assert_main_thread();
 	mu.unlock_shared();
 }
 
 void
 rocksdb::port::RWMutex::WriteUnlock()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "shared_mutex %lu %p UNLOCK", ctx::id(), this
+	};
+	#endif
+
+	assert_main_thread();
 	mu.unlock();
 }
 
@@ -3017,41 +3108,92 @@ rocksdb::port::RWMutex::WriteUnlock()
 rocksdb::port::CondVar::CondVar(Mutex *mu)
 :mu{mu}
 {
+	#ifdef RB_DEBUG_DB_PORT_
+	log::debug
+	{
+		db::log, "cond %lu %p %p CTOR", ctx::id(), this, mu
+	};
+	#endif
 }
 
 rocksdb::port::CondVar::~CondVar()
 {
+	#ifdef RB_DEBUG_DB_PORT_
+	log::debug
+	{
+		db::log, "cond %lu %p %p DTOR", ctx::id(), this, mu
+	};
+	#endif
 }
 
 void
 rocksdb::port::CondVar::Wait()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "cond %lu %p %p WAIT", ctx::id(), this, mu
+	};
+	#endif
+
 	assert(mu);
-	std::unique_lock<decltype(mu->mu)> ul(mu->mu);
-	cv.wait(ul);
+	assert_main_thread();
+	std::unique_lock<decltype(mu->mu)> l
+	{
+		mu->mu, std::adopt_lock
+	};
+
+	cv.wait(l);
 }
 
 // Returns true if timeout occurred
 bool
 rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "cond %lu %p %p WAIT_UNTIL %lu", ctx::id(), this, mu, abs_time_us
+	};
+	#endif
+
 	assert(mu);
+	assert_main_thread();
 	const std::chrono::microseconds us(abs_time_us);
-	const std::chrono::system_clock::time_point tp(us);
-	std::unique_lock<decltype(mu->mu)> ul(mu->mu);
-	const auto cvs(cv.wait_until(ul, tp));
-	return cvs == std::cv_status::timeout;
+	const std::chrono::steady_clock::time_point tp(us);
+	std::unique_lock<decltype(mu->mu)> l
+	{
+		mu->mu, std::adopt_lock
+	};
+
+	return cv.wait_until(l, tp) == std::cv_status::timeout;
 }
 
 void
 rocksdb::port::CondVar::Signal()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "cond %lu %p %p NOTIFY", ctx::id(), this, mu
+	};
+	#endif
+
+	assert_main_thread();
 	cv.notify_one();
 }
 
 void
 rocksdb::port::CondVar::SignalAll()
 {
+	#ifdef RB_DEBUG_DB_PORT
+	log::debug
+	{
+		db::log, "cond %lu %p %p BROADCAST", ctx::id(), this, mu
+	};
+	#endif
+
+	assert_main_thread();
 	cv.notify_all();
 }
 
