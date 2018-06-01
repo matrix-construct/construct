@@ -240,6 +240,7 @@ ircd::ctx::shared_mutex::lock_upgrade()
 	if(likely(try_lock_upgrade()))
 		return;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock_upgrade())
 		wait();
@@ -251,6 +252,7 @@ ircd::ctx::shared_mutex::lock_shared()
 	if(likely(try_lock_shared()))
 		return;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock_shared())
 		wait();
@@ -262,6 +264,7 @@ ircd::ctx::shared_mutex::lock()
 	if(likely(try_lock()))
 		return;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock())
 		wait();
@@ -311,6 +314,7 @@ ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 	if(likely(try_lock()))
 		return true;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock())
 	{

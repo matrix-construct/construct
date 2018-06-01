@@ -92,6 +92,7 @@ ircd::ctx::mutex::lock()
 	if(likely(try_lock()))
 		return;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock())
 		wait();
@@ -111,6 +112,7 @@ ircd::ctx::mutex::try_lock_until(const time_point &tp)
 	if(likely(try_lock()))
 		return true;
 
+	assert(current);
 	q.push_back(current);
 	while(!try_lock())
 	{
@@ -152,6 +154,8 @@ template<class queue>
 void
 ircd::ctx::release_sequence(queue &q)
 {
+	assert(current);
+
 	ctx *next; do
 	{
 		if(!q.empty())
