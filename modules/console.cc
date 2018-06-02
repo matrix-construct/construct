@@ -320,7 +320,7 @@ console_command_derived(opt &out, const string_view &line)
 
 	// First check if the line starts with a number, this is a special case
 	// sent to a custom dispatcher (which right now is specifically for the
-	// event composer suite).
+	// event stager suite).
 	if(try_lex_cast<int>(id))
 		return console_command_numeric(out, line);
 
@@ -2543,15 +2543,15 @@ console_cmd__key__get(opt &out, const string_view &line)
 }
 
 //
-// compose
+// stage
 //
 
-std::vector<std::string> compose;
+std::vector<std::string> stage;
 
 bool
-console_cmd__compose__list(opt &out, const string_view &line)
+console_cmd__stage__list(opt &out, const string_view &line)
 {
-	for(const json::object &object : compose)
+	for(const json::object &object : stage)
 	{
 		const m::event event{object};
 		out << pretty_oneline(event) << std::endl;
@@ -2561,7 +2561,7 @@ console_cmd__compose__list(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__compose(opt &out, const string_view &line)
+console_cmd__stage(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2569,20 +2569,20 @@ console_cmd__compose(opt &out, const string_view &line)
 	}};
 
 	if(!param.count())
-		return console_cmd__compose__list(out, line);
+		return console_cmd__stage__list(out, line);
 
 	const auto &id
 	{
 		param.at<uint>(0)
 	};
 
-	if(compose.size() < id)
+	if(stage.size() < id)
 		throw error
 		{
-			"Cannot compose position %d without composing %d first", id, compose.size()
+			"Cannot stage position %d without composing %d first", id, stage.size()
 		};
 
-	if(compose.size() == id)
+	if(stage.size() == id)
 	{
 		const m::event base_event
 		{
@@ -2594,7 +2594,7 @@ console_cmd__compose(opt &out, const string_view &line)
 			{ "type",              "m.room.message"        },
 		};
 
-		compose.emplace_back(json::strung(base_event));
+		stage.emplace_back(json::strung(base_event));
 	}
 
 	const auto &key
@@ -2609,23 +2609,23 @@ console_cmd__compose(opt &out, const string_view &line)
 
 	if(key && val)
 	{
-		m::event event{compose.at(id)};
+		m::event event{stage.at(id)};
 		set(event, key, val);
-		compose.at(id) = json::strung{event};
+		stage.at(id) = json::strung{event};
 	}
 
 	const m::event event
 	{
-		compose.at(id)
+		stage.at(id)
 	};
 
 	out << pretty(event) << std::endl;
-	out << compose.at(id) << std::endl;
+	out << stage.at(id) << std::endl;
 	return true;
 }
 
 bool
-console_cmd__compose__make_prev(opt &out, const string_view &line)
+console_cmd__stage__make_prev(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2644,7 +2644,7 @@ console_cmd__compose__make_prev(opt &out, const string_view &line)
 
 	m::event event
 	{
-		compose.at(id)
+		stage.at(id)
 	};
 
 	using prototype = std::pair<json::array, int64_t> (const m::room &,
@@ -2665,19 +2665,19 @@ console_cmd__compose__make_prev(opt &out, const string_view &line)
 	json::get<"prev_events"_>(event) = prev.first;
 	json::get<"depth"_>(event) = prev.second;
 
-	compose.at(id) = json::strung
+	stage.at(id) = json::strung
 	{
 		event
 	};
 
-	event = m::event(compose.at(id));
+	event = m::event(stage.at(id));
 	out << pretty(event) << std::endl;
-	out << compose.at(id) << std::endl;
+	out << stage.at(id) << std::endl;
 	return true;
 }
 
 bool
-console_cmd__compose__make_auth(opt &out, const string_view &line)
+console_cmd__stage__make_auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2691,7 +2691,7 @@ console_cmd__compose__make_auth(opt &out, const string_view &line)
 
 	m::event event
 	{
-		compose.at(id)
+		stage.at(id)
 	};
 
 	using prototype = json::array (const m::room &,
@@ -2726,19 +2726,19 @@ console_cmd__compose__make_auth(opt &out, const string_view &line)
 	thread_local char buf[1024];
 	json::get<"auth_events"_>(event) = make_auth__buf(room, buf, types, member);
 
-	compose.at(id) = json::strung
+	stage.at(id) = json::strung
 	{
 		event
 	};
 
-	event = m::event(compose.at(id));
+	event = m::event(stage.at(id));
 	out << pretty(event) << std::endl;
-	out << compose.at(id) << std::endl;
+	out << stage.at(id) << std::endl;
 	return true;
 }
 
 bool
-console_cmd__compose__final(opt &out, const string_view &line)
+console_cmd__stage__final(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2757,7 +2757,7 @@ console_cmd__compose__final(opt &out, const string_view &line)
 
 	m::event event
 	{
-		compose.at(id)
+		stage.at(id)
 	};
 
 	m::event::id::buf event_id_buf;
@@ -2772,27 +2772,27 @@ console_cmd__compose__final(opt &out, const string_view &line)
 	if(!has(opts, "no_signatures"))
 		event = signatures(sigs_buf, event);
 
-	compose.at(id) = json::strung
+	stage.at(id) = json::strung
 	{
 		event
 	};
 
-	event = m::event(compose.at(id));
+	event = m::event(stage.at(id));
 	out << pretty(event) << std::endl;
-	out << compose.at(id) << std::endl;
+	out << stage.at(id) << std::endl;
 	return true;
 }
 
 bool
-console_cmd__compose__make_vector(opt &out, const string_view &line)
+console_cmd__stage__make_vector(opt &out, const string_view &line)
 {
 	m::event::id::buf prev_;
-	for(size_t i(1); i < compose.size(); ++i)
+	for(size_t i(1); i < stage.size(); ++i)
 	{
-		const auto prev(unquote(json::object{compose.at(i-1)}.get("event_id")));
-		const int64_t depth(json::object{compose.at(i-1)}.get<int64_t>("depth"));
+		const auto prev(unquote(json::object{stage.at(i-1)}.get("event_id")));
+		const int64_t depth(json::object{stage.at(i-1)}.get<int64_t>("depth"));
 		thread_local char buf[1024], hb[512], sb[512];
-		m::event event{compose.at(i)};
+		m::event event{stage.at(i)};
 		json::stack st{buf};
 		{
 			json::stack::array top{st};
@@ -2810,15 +2810,15 @@ console_cmd__compose__make_vector(opt &out, const string_view &line)
 		json::get<"event_id"_>(event) = make_id(event, prev_);
 		json::get<"hashes"_>(event) = m::hashes(hb, event);
 		event = signatures(sb, event);
-		compose.at(i) = json::strung{event};
-		out << unquote(json::object{compose.at(i)}.at("event_id")) << std::endl;
+		stage.at(i) = json::strung{event};
+		out << unquote(json::object{stage.at(i)}.at("event_id")) << std::endl;
 	}
 
 	return true;
 }
 
 bool
-console_cmd__compose__copy(opt &out, const string_view &line)
+console_cmd__stage__copy(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2832,32 +2832,32 @@ console_cmd__compose__copy(opt &out, const string_view &line)
 
 	const auto &dstid
 	{
-		param.at<uint>(1, compose.size())
+		param.at<uint>(1, stage.size())
 	};
 
 	const auto &src
 	{
-		compose.at(srcid)
+		stage.at(srcid)
 	};
 
-	if(compose.size() < dstid)
+	if(stage.size() < dstid)
 		throw error
 		{
-			"Cannot compose position %d without composing %d first", dstid, compose.size()
+			"Cannot stage position %d without composing %d first", dstid, stage.size()
 		};
 
-	if(compose.size() == dstid)
+	if(stage.size() == dstid)
 	{
-		compose.emplace_back(src);
+		stage.emplace_back(src);
 		return true;
 	}
 
-	compose.at(dstid) = src;
+	stage.at(dstid) = src;
 	return true;
 }
 
 bool
-console_cmd__compose__clear(opt &out, const string_view &line)
+console_cmd__stage__clear(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2871,16 +2871,16 @@ console_cmd__compose__clear(opt &out, const string_view &line)
 
 	if(id == -1)
 	{
-		compose.clear();
+		stage.clear();
 		return true;
 	}
 
-	compose.at(id).clear();
+	stage.at(id).clear();
 	return true;
 }
 
 bool
-console_cmd__compose__eval(opt &out, const string_view &line)
+console_cmd__stage__eval(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2899,16 +2899,16 @@ console_cmd__compose__eval(opt &out, const string_view &line)
 	};
 
 	if(id == -1)
-		for(size_t i(0); i < compose.size(); ++i)
-			eval(m::event{compose.at(i)});
+		for(size_t i(0); i < stage.size(); ++i)
+			eval(m::event{stage.at(i)});
 	else
-		eval(m::event{compose.at(id)});
+		eval(m::event{stage.at(id)});
 
 	return true;
 }
 
 bool
-console_cmd__compose__commit(opt &out, const string_view &line)
+console_cmd__stage__commit(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2927,16 +2927,16 @@ console_cmd__compose__commit(opt &out, const string_view &line)
 	};
 
 	if(id == -1)
-		for(size_t i(0); i < compose.size(); ++i)
-			eval(m::event{compose.at(i)});
+		for(size_t i(0); i < stage.size(); ++i)
+			eval(m::event{stage.at(i)});
 	else
-		eval(m::event{compose.at(id)});
+		eval(m::event{stage.at(id)});
 
 	return true;
 }
 
 bool
-console_cmd__compose__send(opt &out, const string_view &line)
+console_cmd__stage__send(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -2955,10 +2955,10 @@ console_cmd__compose__send(opt &out, const string_view &line)
 
 	std::vector<json::value> pduv;
 	if(id > -1)
-		pduv.emplace_back(compose.at(id));
+		pduv.emplace_back(stage.at(id));
 	else
-		for(size_t i(0); i < compose.size(); ++i)
-			pduv.emplace_back(compose.at(i));
+		for(size_t i(0); i < stage.size(); ++i)
+			pduv.emplace_back(stage.at(i));
 
 	const auto txn
 	{
@@ -3011,7 +3011,7 @@ console_cmd__compose__send(opt &out, const string_view &line)
 int
 console_command_numeric(opt &out, const string_view &line)
 {
-	return console_cmd__compose(out, line);
+	return console_cmd__stage(out, line);
 }
 
 //
