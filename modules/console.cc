@@ -3973,6 +3973,35 @@ console_cmd__room__head__del(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__herd(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "user_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::user::id &user_id
+	{
+		param.at(1)
+	};
+
+	using prototype = void (const m::room &, const m::user &, const milliseconds &);
+	static m::import<prototype> room_herd
+	{
+		"m_room", "room_herd"
+	};
+
+	room_herd(room_id, user_id, out.timeout);
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__head__reset(opt &out, const string_view &line)
 {
 	const params param{line, " ",

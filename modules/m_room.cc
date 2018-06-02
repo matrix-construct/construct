@@ -496,3 +496,71 @@ dagree_histogram(const m::room &room,
 
 	return ret;
 }
+
+extern "C" void
+room_herd(const m::room &room,
+          const m::user &user,
+          const milliseconds &timeout)
+{
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
+	};
+
+	std::set<std::string> event_ids;
+	feds__head(room.room_id, user.user_id, timeout, [&event_ids]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
+	{
+		if(eptr)
+			return true;
+
+		const json::array prev_events
+		{
+			event.at("prev_events")
+		};
+
+		for(const json::array prev_event : prev_events)
+		{
+			const auto &prev_event_id
+			{
+				unquote(prev_event.at(0))
+			};
+
+			event_ids.emplace(prev_event_id);
+		};
+
+		return true;
+	});
+
+	ssize_t i(0);
+	for(const m::event::id &event_id : event_ids)
+		if(exists(event_id))
+		{
+			head__modify(event_id, db::op::SET, false);
+			++i;
+		}
+
+	const m::room::head head
+	{
+		room
+	};
+
+	for(; i >= 0 && head.count() > 1; --i)
+	{
+		const auto eid
+		{
+			send(room, user, "ircd.room.revelation", json::object{})
+		};
+
+		ctx::sleep(seconds(2));
+	}
+}
