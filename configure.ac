@@ -65,37 +65,6 @@ AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
 
 
-dnl
-dnl Recursive local targets (clean-local is implied)
-dnl
-
-#AM_EXTRA_RECURSIVE_TARGETS([
-#	mrproper
-#])
-
-
-dnl
-dnl Coarse compiler test macros
-dnl
-
-AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
-AM_CONDITIONAL([CLANG],      [[[[ $CXX = clang* ]]]])
-
-
-dnl
-dnl Coarse operating system test macros
-dnl
-
-AM_CONDITIONAL([LINUX],      [[[[ $host_os = *linux* ]]]])
-AM_CONDITIONAL([NETBSD],     [[[[ $host_os = *netbsd* ]]]])
-AM_CONDITIONAL([FREEBSD],    [[[[ $host_os = *freebsd* ]]]])
-AM_CONDITIONAL([MINGW],      [[[[ $host_os = *mingw* ]] || [[ $host_os = *msys* ]]]])
-AM_CONDITIONAL([CYGWIN],     [[[[ $host_os = *cygwin* ]]]])
-AM_CONDITIONAL([INTERIX],    [[[[ $host_os = *interix* ]]]])
-AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
-
-
-
 dnl ***************************************************************************
 dnl Preprocessor define macros
 dnl
@@ -135,6 +104,46 @@ AC_DEFUN([CPPDEFINE],
 
 
 dnl ***************************************************************************
+dnl Platform
+dnl
+
+
+dnl
+dnl Recursive local targets (clean-local is implied)
+dnl
+
+#AM_EXTRA_RECURSIVE_TARGETS([
+#	mrproper
+#])
+
+
+dnl
+dnl Coarse compiler test macros
+dnl
+
+AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
+AM_CONDITIONAL([CLANG],      [[[[ $CXX = clang* ]]]])
+
+RB_DEFINE_UNQUOTED([CXX], ["$CXX"], [CXX Compiler])
+
+
+dnl
+dnl Coarse operating system test macros
+dnl
+
+AM_CONDITIONAL([LINUX],      [[[[ $host_os = *linux* ]]]])
+AM_CONDITIONAL([NETBSD],     [[[[ $host_os = *netbsd* ]]]])
+AM_CONDITIONAL([FREEBSD],    [[[[ $host_os = *freebsd* ]]]])
+AM_CONDITIONAL([MINGW],      [[[[ $host_os = *mingw* ]] || [[ $host_os = *msys* ]]]])
+AM_CONDITIONAL([CYGWIN],     [[[[ $host_os = *cygwin* ]]]])
+AM_CONDITIONAL([INTERIX],    [[[[ $host_os = *interix* ]]]])
+AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
+
+RB_DEFINE_UNQUOTED([OS], ["$host_os"], [Host operating system])
+
+
+
+dnl ***************************************************************************
 dnl Developer options
 dnl
 
@@ -156,6 +165,7 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 ])
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
+
 
 dnl
 dnl Explicit assert switch for still using assert() without --enable-debug
@@ -184,6 +194,7 @@ AM_COND_IF(ASSERT,
 	CPPDEFINE([NDEBUG])
 ])
 
+
 dnl
 dnl Explicit optimize switch for enabling optimization when using --enable-debug
 dnl
@@ -204,6 +215,7 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 ])
 
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
+
 
 dnl
 dnl Explicit optimization level switch
@@ -238,6 +250,7 @@ AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Exp
 		])
 	])
 ])
+
 
 dnl
 dnl Explicit log level
@@ -468,6 +481,7 @@ AM_COND_IF([CLANG],
 ])
 
 CPPFLAGS+="$CWARNS"
+
 
 
 dnl ***************************************************************************
