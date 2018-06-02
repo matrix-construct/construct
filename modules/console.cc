@@ -2784,6 +2784,40 @@ console_cmd__compose__final(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__compose__make_vector(opt &out, const string_view &line)
+{
+	m::event::id::buf prev_;
+	for(size_t i(1); i < compose.size(); ++i)
+	{
+		const auto prev(unquote(json::object{compose.at(i-1)}.get("event_id")));
+		const int64_t depth(json::object{compose.at(i-1)}.get<int64_t>("depth"));
+		thread_local char buf[1024], hb[512], sb[512];
+		m::event event{compose.at(i)};
+		json::stack st{buf};
+		{
+			json::stack::array top{st};
+			{
+				json::stack::array a{top};
+				a.append(prev);
+				{
+					json::stack::object hash{a};
+					json::stack::member{hash, "w", "nil"};
+				}
+			}
+		}
+		json::get<"depth"_>(event) = depth + 1;
+		json::get<"prev_events"_>(event) = json::array{st.completed()};
+		json::get<"event_id"_>(event) = make_id(event, prev_);
+		json::get<"hashes"_>(event) = m::hashes(hb, event);
+		event = signatures(sb, event);
+		compose.at(i) = json::strung{event};
+		out << unquote(json::object{compose.at(i)}.at("event_id")) << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__compose__copy(opt &out, const string_view &line)
 {
 	const params param{line, " ",
