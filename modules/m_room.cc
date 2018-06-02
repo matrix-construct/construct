@@ -39,7 +39,7 @@ make_auth(const m::room &room,
 				json::stack::object hash{auth};
 				json::stack::member will
 				{
-					hash, "willy", "nilly"
+					hash, "", ""
 				};
 			}
 		}});
@@ -101,7 +101,7 @@ make_prev(const m::room &room,
 			json::stack::object hash{prev};
 			json::stack::member will
 			{
-				hash, "willy", "nilly"
+				hash, "", ""
 			};
 		}
 
@@ -117,7 +117,7 @@ make_prev(const m::room &room,
 			json::stack::object hash{prev};
 			json::stack::member will
 			{
-				hash, "willy", "nilly"
+				hash, "", ""
 			};
 		}
 	}
