@@ -2282,6 +2282,16 @@ rocksdb::Status
 ircd::db::database::env::GetThreadList(std::vector<ThreadStatus>* thread_list)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': get thread list %p (%zu)",
+		d.name,
+		thread_list,
+		thread_list? thread_list->size() : 0UL
+	};
+	#endif
+
 	return defaults.GetThreadList(thread_list);
 }
 
@@ -2289,6 +2299,14 @@ rocksdb::ThreadStatusUpdater*
 ircd::db::database::env::GetThreadStatusUpdater()
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': get thread status updater",
+		d.name,
+	};
+	#endif
+
 	return defaults.GetThreadStatusUpdater();
 }
 
@@ -2296,6 +2314,14 @@ uint64_t
 ircd::db::database::env::GetThreadID()
 const noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': get thread ID",
+		d.name,
+	};
+	#endif
+
 	return defaults.GetThreadID();
 }
 
@@ -2303,6 +2329,15 @@ int
 ircd::db::database::env::GetBackgroundThreads(Priority pri)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': get background threads prio:%s",
+		d.name,
+		reflect(pri)
+	};
+	#endif
+
 	return defaults.GetBackgroundThreads(pri);
 }
 
