@@ -2582,9 +2582,19 @@ console_cmd__stage(opt &out, const string_view &line)
 			"Cannot stage position %d without composing %d first", id, stage.size()
 		};
 
+	const auto &key
+	{
+		param[1]
+	};
+
+	const auto &val
+	{
+		key? tokens_after(line, ' ', 1) : string_view{}
+	};
+
 	if(stage.size() == id)
 	{
-		const m::event base_event
+		m::event base_event
 		{
 			{ "depth",             json::undefined_number  },
 			{ "origin",            my_host()               },
@@ -2594,24 +2604,25 @@ console_cmd__stage(opt &out, const string_view &line)
 			{ "type",              "m.room.message"        },
 		};
 
+		const json::strung content{json::members
+		{
+			{ "body",     "test"    },
+			{ "msgtype",  "m.text"  }
+		}};
+
+		json::get<"content"_>(base_event) = content;
 		stage.emplace_back(json::strung(base_event));
 	}
-
-	const auto &key
-	{
-		param[1]
-	};
-
-	const auto &val
-	{
-		tokens_after(line, ' ', 1)
-	};
 
 	if(key && val)
 	{
 		m::event event{stage.at(id)};
 		set(event, key, val);
 		stage.at(id) = json::strung{event};
+	}
+	else if(key)
+	{
+		stage.at(id) = std::string{key};
 	}
 
 	const m::event event
@@ -2621,6 +2632,35 @@ console_cmd__stage(opt &out, const string_view &line)
 
 	out << pretty(event) << std::endl;
 	out << stage.at(id) << std::endl;
+
+	try
+	{
+		if(!verify(event))
+			out << "- SIGNATURE FAILED" << std::endl;
+	}
+	catch(const std::exception &e)
+	{
+		out << "- UNABLE TO VERIFY SIGNATURES" << std::endl;
+	}
+
+	try
+	{
+		if(!verify_hash(event))
+			out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
+	}
+	catch(const std::exception &e)
+	{
+		out << "- UNABLE TO VERIFY HASHES" << std::endl;
+	}
+
+	const m::event::conforms conforms
+	{
+		event
+	};
+
+	if(!conforms.clean())
+		out << "- " << conforms << std::endl;
+
 	return true;
 }
 
@@ -2704,16 +2744,34 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		"m_room", "make_auth__buf"
 	};
 
-	static const string_view types[]
+	static const string_view types_general[]
+	{
+		"m.room.create",
+		"m.room.power_levels",
+	};
+
+	static const string_view types_membership[]
 	{
 		"m.room.create",
 		"m.room.join_rules",
 		"m.room.power_levels",
 	};
 
+	const auto is_membership
+	{
+		at<"type"_>(event) == "m.room.member"
+	};
+
+	const auto &types
+	{
+		is_membership?
+			vector_view<const string_view>(types_membership):
+			vector_view<const string_view>(types_general)
+	};
+
 	const auto member
 	{
-		at<"type"_>(event) != "m.room.member"?
+		!is_membership?
 			at<"sender"_>(event):
 			string_view{}
 	};
