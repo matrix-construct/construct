@@ -122,6 +122,31 @@ const ircd::fs::read_opts_default
 // ircd::fs interface linkage
 //
 
+#ifdef __linux__
+void
+ircd::fs::prefetch(const fd &fd,
+                   const size_t &count,
+                   const read_opts &opts)
+{
+	const auto flags
+	{
+		syscall(::fcntl, fd, F_GETFL)
+	};
+
+	if(flags & O_DIRECT)
+		return; //TODO: AIO prefetch scheme
+
+	syscall(::readahead, fd, opts.offset, count);
+}
+#else
+void
+ircd::fs::prefetch(const fd &fd,
+                   const size_t &count,
+                   const read_opts &opts)
+{
+}
+#endif
+
 std::string
 ircd::fs::read(const string_view &path,
                const read_opts &opts)

@@ -22,6 +22,9 @@ namespace ircd::fs
 	// Yields ircd::ctx for read into allocated string; returns that string
 	std::string read(const fd &, const read_opts & = read_opts_default);
 	std::string read(const string_view &path, const read_opts & = read_opts_default);
+
+	// Prefetch bytes for subsequent read(); offset is given in opts.
+	void prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
 }
 
 /// Options for a read operation
