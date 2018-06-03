@@ -30,7 +30,7 @@ conf::item<size_t>
 backfill_ids_limit_max
 {
 	{ "name",     "ircd.federation.backfill_ids.limit.max" },
-	{ "default",  2048L /* TODO: hiiigherrrr */            },
+	{ "default",  131072L                                  },
 };
 
 conf::item<size_t>
@@ -51,7 +51,7 @@ calc_limit(const resource::request &request)
 	if(!limit)
 		return size_t(backfill_ids_limit_default);
 
-	size_t ret
+	const size_t &ret
 	{
 		lex_cast<size_t>(limit)
 	};
@@ -93,7 +93,7 @@ get__backfill_ids(client &client,
 
 	m::room::messages it
 	{
-		room_id, event_id
+		room
 	};
 
 	const unique_buffer<mutable_buffer> buf
