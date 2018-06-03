@@ -28,6 +28,12 @@ struct ircd::mods::import
 		return sym_ptr::operator()<T>(std::forward<args>(a)...);
 	}
 
+	template<class... args>
+	auto operator()(args&&... a)
+	{
+		return sym_ptr::operator()<T>(std::forward<args>(a)...);
+	}
+
 	const T *operator->() const                  { return sym_ptr::operator-><T>();                }
 	const T &operator*() const                   { return sym_ptr::operator*<T>();                 }
 	operator const T &() const                   { return sym_ptr::operator*<T>();                 }

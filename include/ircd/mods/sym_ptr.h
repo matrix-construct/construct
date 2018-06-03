@@ -35,12 +35,21 @@ class ircd::mods::sym_ptr
 	template<class T> T *get();
 	template<class T> T *operator->();
 	template<class T> T &operator*();
+	template<class T, class... args> auto operator()(args&&... a);
 
 	explicit sym_ptr(mod &, const string_view &symname);
 	sym_ptr(module, const string_view &symname);
 	sym_ptr(const string_view &modname, const string_view &symname);
 	sym_ptr() = default;
 };
+
+template<class T,
+         class... args>
+auto
+ircd::mods::sym_ptr::operator()(args&&... a)
+{
+	return (*get<T>())(std::forward<args>(a)...);
+}
 
 template<class T>
 T &
