@@ -109,6 +109,29 @@ ircd::fs::stdin::readline(const mutable_buffer &buf)
 	};
 }
 
+//
+// tty
+//
+
+ircd::fs::stdin::tty::tty()
+:fd{[]
+{
+	thread_local char buf[256];
+	syscall(::ttyname_r, STDIN_FILENO, buf, sizeof(buf));
+	return fd
+	{
+		string_view{buf}, std::ios_base::out
+	};
+}()}
+{
+}
+
+size_t
+ircd::fs::stdin::tty::write(const string_view &buf)
+{
+	return syscall(::write, int(*this), buf.data(), buf.size());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/read.h
