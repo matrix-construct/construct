@@ -535,6 +535,7 @@ ircd::m::room::messages::seek()
 
 bool
 ircd::m::room::messages::seek(const event::id &event_id)
+try
 {
 	auto &column
 	{
@@ -561,6 +562,10 @@ ircd::m::room::messages::seek(const event::id &event_id)
 
 	this->it = dbs::room_events.begin(seek_key);
 	return bool(*this);
+}
+catch(const db::not_found &e)
+{
+	return false;
 }
 
 bool
