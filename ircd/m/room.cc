@@ -197,6 +197,7 @@ const
 		event::keys::include
 		{
 			"membership",
+			"content"
 		}
 	};
 
@@ -218,7 +219,7 @@ const
 	{
 		ret =
 		{
-			data(out), copy(out, unquote(at<"membership"_>(event)))
+			data(out), copy(out, m::membership(event))
 		};
 	});
 
