@@ -176,7 +176,7 @@ struct ircd::m::vm::opts
 	/// This value is added to reserve_bytes to account for indexing overhead
 	/// in the database transaction allocation. Most evaluators have little
 	/// reason to ever adjust this.
-	size_t reserve_index {1536};
+	size_t reserve_index {1024};
 
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
