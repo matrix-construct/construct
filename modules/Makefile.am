@@ -47,11 +47,13 @@ moduledir = @moduledir@
 root_la_SOURCES = root.cc
 console_la_SOURCES = console.cc
 vm_la_SOURCES = vm.cc
+vm_fetch_la_SOURCES = vm_fetch.cc
 
 module_LTLIBRARIES = \
 	root.la \
 	console.la \
 	vm.la \
+	vm_fetch.la \
 	###
 
 ###############################################################################

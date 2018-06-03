@@ -60,6 +60,8 @@ ircd::m::vm::notify_hook
 void
 ircd::m::vm::init()
 {
+	m::modules.emplace("vm_fetch"s, "vm_fetch"s);
+
 	id::event::buf event_id;
 	current_sequence = retired_sequence(event_id);
 
@@ -75,6 +77,8 @@ ircd::m::vm::init()
 void
 ircd::m::vm::fini()
 {
+	m::modules.erase("vm_fetch"s);
+
 	id::event::buf event_id;
 	const auto current_sequence
 	{
