@@ -491,7 +491,10 @@ ircd::m::room::messages::messages(const m::room &room,
 		room.fopts
 }
 {
-	seek();
+	if(room.event_id)
+		seek(room.event_id);
+	else
+		seek();
 }
 
 ircd::m::room::messages::messages(const m::room &room,
