@@ -192,36 +192,53 @@ ircd::m::room::membership(const mutable_buffer &out,
                           const m::id::user &user_id)
 const
 {
-	static const event::keys keys
+	static const event::keys membership_keys
 	{
-		event::keys::include
-		{
-			"membership",
-			"content"
-		}
+		event::keys::include{"membership"}
 	};
 
 	// Since this is a member function of m::room there might be a supplied
 	// fopts. Whatever keys it has are irrelevant, but we can preserve gopts.
 	const m::event::fetch::opts fopts
 	{
-		keys, this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	const state state
-	{
-		*this, &fopts
+		membership_keys, this->fopts? this->fopts->gopts : db::gopts{}
 	};
 
 	string_view ret;
-	state.get(std::nothrow, "m.room.member"_sv, user_id, [&out, &ret]
+	const auto result_closure{[&out, &ret]
 	(const m::event &event)
 	{
 		ret =
 		{
 			data(out), copy(out, m::membership(event))
 		};
-	});
+	}};
+
+	const room::state state{*this, &fopts};
+	const bool exists
+	{
+		state.get(std::nothrow, "m.room.member"_sv, user_id, result_closure)
+	};
+
+	// This branch is taken when the event exists but the event.membership had
+	// no value. Due to wanton protocol violations event.membership may be
+	// jsundefined and only event.content.membership will exist in event. This
+	// is a rare case so both queries are optimized to only seek for their key.
+	if(exists && !ret)
+	{
+		static const event::keys content_membership_keys
+		{
+			event::keys::include{"content"}
+		};
+
+		const m::event::fetch::opts fopts
+		{
+			content_membership_keys, this->fopts? this->fopts->gopts : db::gopts{}
+		};
+
+		const room::state state{*this, &fopts};
+		state.get(std::nothrow, "m.room.member"_sv, user_id, result_closure);
+	}
 
 	return ret;
 }
