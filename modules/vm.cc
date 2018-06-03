@@ -10,7 +10,6 @@
 
 namespace ircd::m::vm
 {
-	extern log::log log;
 	extern hook::site<> commit_hook;
 	extern hook::site<> eval_hook;
 	extern hook::site<> notify_hook;
@@ -34,12 +33,6 @@ IRCD_MODULE
 {
 	"Matrix Virtual Machine",
 	ircd::m::vm::init, ircd::m::vm::fini
-};
-
-decltype(ircd::m::vm::log)
-ircd::m::vm::log
-{
-	"vm", 'v'
 };
 
 decltype(ircd::m::vm::commit_hook)

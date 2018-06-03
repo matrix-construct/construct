@@ -386,6 +386,12 @@ noexcept
 // m/vm.h
 //
 
+decltype(ircd::m::vm::log)
+ircd::m::vm::log
+{
+	"vm", 'v'
+};
+
 decltype(ircd::m::vm::accept)
 ircd::m::vm::accept
 {};

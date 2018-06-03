@@ -24,6 +24,7 @@ namespace ircd::m::vm
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
+	extern log::log log;
 	extern ctx::shared_view<accepted> accept;
 	extern uint64_t current_sequence;
 	extern const opts default_opts;
