@@ -64,6 +64,12 @@ resource::response
 get__missing_events(client &client,
                     const resource::request &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"room_id path parameter required"
+		};
+
 	m::room::id::buf room_id
 	{
 		url::decode(request.parv[0], room_id)
@@ -108,7 +114,7 @@ get__missing_events(client &client,
 	std::vector<std::string> ret;
 	ret.reserve(limit);
 	size_t goose{0};
-	for(const auto &event_id : earliest)
+	for(const auto &event_id : earliest) try
 	{
 		m::room::messages it
 		{
@@ -125,6 +131,16 @@ get__missing_events(client &client,
 			if(in_latest(at<"event_id"_>(event)))
 				break;
 		}
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			"Request from %s for earliest missing %s :%s",
+			string(remote(client)),
+			unquote(event_id),
+			e.what()
+		};
 	}
 
 	return resource::response
