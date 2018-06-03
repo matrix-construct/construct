@@ -13,6 +13,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
 	@MAGIC_CPPFLAGS@ \
+	@Z_CPPFLAGS@ \
 	-include ircd/ircd.h \
 	###
 
@@ -52,6 +53,7 @@ libircd_la_LDFLAGS = \
 	@BOOST_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
 	@MAGIC_LDFLAGS@ \
+	@Z_LDFLAGS@ \
 	###
 
 libircd_la_LIBADD = \
@@ -62,7 +64,7 @@ libircd_la_LIBADD = \
 	@MAGIC_LIBS@ \
 	-lcrypto \
 	-lssl \
-	-lz \
+	@Z_LIBS@ \
 	###
 
 # Since this is a GNU C++ project we assume the non-standard respect for

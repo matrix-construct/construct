@@ -9,6 +9,8 @@ AM_CPPFLAGS = \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
+	@LZ4_CPPFLAGS@ \
+	@Z_CPPFLAGS@ \
 	###
 
 AM_LDFLAGS = \
@@ -41,6 +43,8 @@ construct_LDFLAGS = \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
+	@LZ4_LDFLAGS@ \
+	@Z_LDFLAGS@ \
 	###
 
 construct_LDADD = \
@@ -51,7 +55,8 @@ construct_LDADD = \
 	@SODIUM_LIBS@ \
 	-lcrypto \
 	-lssl \
-	-lz \
+	@LZ4_LIBS@ \
+	@Z_LIBS@ \
 	###
 
 construct_SOURCES = \

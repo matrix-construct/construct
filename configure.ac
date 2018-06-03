@@ -880,6 +880,67 @@ dnl Third party
 dnl
 
 
+dnl
+dnl zlib support
+dnl
+
+AC_SUBST(Z_CPPFLAGS)
+AC_SUBST(Z_LDFLAGS)
+AC_SUBST(Z_LIBS)
+
+AC_ARG_WITH(zlib,
+AC_HELP_STRING([--with-zlib=[[[DIR]]]], [Path to libz.so for ziplinks support.]),
+[
+	AC_SUBST(Z_LDFLAGS, ["-L$withval"])
+], [
+
+])
+
+AC_CHECK_HEADER(zlib.h,
+[
+	AC_CHECK_LIB(z, zlibVersion,
+	[
+		zlib=yes
+		AC_SUBST(Z_LIBS, -lz)
+		AC_DEFINE(HAVE_LIBZ, 1, [Define to 1 if zlib (-lz) is available.])
+	], [
+		zlib=no
+	])
+], [
+	zlib=no
+])
+
+
+dnl
+dnl lz4 support
+dnl
+
+AC_SUBST(LZ4_CPPFLAGS)
+AC_SUBST(LZ4_LDFLAGS)
+AC_SUBST(LZ4_LIBS)
+
+AC_ARG_WITH(lz4,
+AC_HELP_STRING([--with-lz4=[[[DIR]]]], [Path to liblz4.so for lz4 compression support.]),
+[
+	AC_SUBST(LZ4_LDFLAGS, ["-L$withval"])
+], [
+
+])
+
+AC_CHECK_HEADER(lz4.h,
+[
+	AC_CHECK_LIB(lz4, LZ4_versionNumber,
+	[
+		lz4=yes
+		AC_SUBST(LZ4_LIBS, -llz4)
+		AC_DEFINE(HAVE_LIBLZ4, 1, [Define to 1 if liblz4 (-llz4) is available.])
+	], [
+		lz4=no
+	])
+], [
+	lz4=no
+])
+
 
 dnl
 dnl boost support
@@ -1018,7 +1079,6 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 ])
 
 
-
 dnl
 dnl SpiderMonkey support
 dnl
@@ -1098,39 +1158,6 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 
 dnl TODO use an $enable_js var
 AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
-
-
-
-dnl
-dnl libgmp support
-dnl
-
-PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
-AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
-
-AC_SUBST(GMP_CPPFLAGS, [])
-AC_SUBST(GMP_LDFLAGS, [])
-AC_SUBST(GMP_LIBS, ["-lgmp"])
-
-
-
-dnl
-dnl libsodium (NaCl) crypto support
-dnl
-
-dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
-AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
-AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
-
-AM_COND_IF([SODIUM], [],
-[
-	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
-])
-
-AC_SUBST(SODIUM_CPPFLAGS, [])
-AC_SUBST(SODIUM_LDFLAGS, [])
-AC_SUBST(SODIUM_LIBS, ["-lsodium"])
-
 
 
 dnl
@@ -1217,7 +1244,6 @@ if test "$cf_enable_openssl" != no; then
 	else
 	        AC_MSG_RESULT(no - OpenSSL support disabled)
 	fi
-
 fi
 
 if test "$cf_enable_openssl" != no; then
@@ -1238,7 +1264,6 @@ AC_SUBST(SSL_SRCS_ENABLE)
 AC_SUBST(SSL_INCLUDES)
 AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
-
 
 
 dnl
@@ -1263,7 +1288,6 @@ AC_SUBST(MBEDTLS_CFLAGS)
 AC_SUBST(MBEDTLS_LIBS)
 
 
-
 dnl
 dnl GnuTLS support
 dnl
@@ -1283,7 +1307,6 @@ fi
 
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
-
 
 dnl mbed TLS is given highest preference when no specified TLS library is provided
 if test "$cf_enable_openssl" = "auto" -a "$cf_enable_mbedtls" = "yes"; then
@@ -1318,31 +1341,34 @@ elif test x"$cf_enable_gnutls" != xno; then
 fi
 
 
+dnl
+dnl libsodium (NaCl) crypto support
+dnl
+
+dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
+AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
+AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
+
+AM_COND_IF([SODIUM], [],
+[
+	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
+])
+
+AC_SUBST(SODIUM_CPPFLAGS, [])
+AC_SUBST(SODIUM_LDFLAGS, [])
+AC_SUBST(SODIUM_LIBS, ["-lsodium"])
+
 
 dnl
-dnl zlib support
+dnl libgmp support
 dnl
 
-AC_ARG_WITH(zlib-path,
-AC_HELP_STRING([--with-zlib-path=DIR],[Path to libz.so for ziplinks support.]),
-[LIBS="$LIBS -L$withval"],)
+PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
+AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
 
-AC_ARG_ENABLE(zlib,
-AC_HELP_STRING([--disable-zlib],[Disable ziplinks support]),
-[zlib=$enableval],[zlib=yes])
-
-if test "$zlib" = yes; then
-
-AC_CHECK_HEADER(zlib.h, [
-	AC_CHECK_LIB(z, zlibVersion,
-	[
-		AC_SUBST(ZLIB_LD, -lz)
-		AC_DEFINE(HAVE_LIBZ, 1, [Define to 1 if zlib (-lz) is available.])
-	], zlib=no)
-], zlib=no)
-
-fi
-
+AC_SUBST(GMP_CPPFLAGS, [])
+AC_SUBST(GMP_LDFLAGS, [])
+AC_SUBST(GMP_LIBS, ["-lgmp"])
 
 
 dnl
@@ -1362,7 +1388,6 @@ AC_CHECK_LIB(magic, magic_version,
 ])
 
 AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
-
 
 
 dnl
@@ -1579,6 +1604,8 @@ echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB................... $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
+echo "Ziplinks (libz) support ........... $zlib"
+echo "LZ4 support ....................... $lz4"
 echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support........................ $SSL_TYPE"
