@@ -6454,6 +6454,72 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__frontfill(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote", "earliest", "latest", "[limit]", "[min_depth]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const net::hostport remote
+	{
+		param.at(1, room_id.host())
+	};
+
+	const m::event::id &earliest
+	{
+		param.at(2)
+	};
+
+	const m::event::id::buf &latest
+	{
+		param.at(3, m::head(std::nothrow, room_id))
+	};
+
+	const auto &limit
+	{
+		param.at(4, 32UL)
+	};
+
+	const auto &min_depth
+	{
+		param.at(5, 0UL)
+	};
+
+	m::v1::frontfill::opts opts;
+	opts.remote = remote;
+	opts.limit = limit;
+	opts.min_depth = min_depth;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::frontfill request
+	{
+		room_id, {earliest, latest}, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::array &response
+	{
+		request
+	};
+
+	for(const json::object &event : response)
+		out << pretty_oneline(m::event{event}) << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__fed__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
