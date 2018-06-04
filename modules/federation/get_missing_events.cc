@@ -96,7 +96,7 @@ get__missing_events(client &client,
 
 	const json::array &latest
 	{
-		request["latest"]
+		request["latest_events"]
 	};
 
 	const auto in_latest
