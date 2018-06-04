@@ -2602,6 +2602,7 @@ console_cmd__stage(opt &out, const string_view &line)
 			{ "sender",            m::me.user_id           },
 			{ "room_id",           m::my_room.room_id      },
 			{ "type",              "m.room.message"        },
+			{ "prev_state",        "[]"                    },
 		};
 
 		const json::strung content{json::members
