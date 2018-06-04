@@ -105,6 +105,7 @@ struct ircd::m::room
 	struct members;
 	struct origins;
 	struct head;
+	struct power;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -370,6 +371,62 @@ struct ircd::m::room::head
 
 	head(const m::room &room)
 	:room{room}
+	{}
+};
+
+/// Interface to the power levels
+///
+/// This interface focuses specifically on making the power levels accessible
+/// to developers for common query and manipulation operations. power_levels
+/// is a single state event in the room containing integer thresholds for
+/// privileges in the room in addition to a list of users mapping to an integer
+/// for their level. This interface hides the details of that event by
+/// presenting single operations which can appear succinctly in IRCd code.
+///
+struct ircd::m::room::power
+{
+	using closure = std::function<void (const string_view &, const int64_t &)>;
+	using closure_bool = std::function<bool (const string_view &, const int64_t &)>;
+
+	static const int64_t default_power_level;
+	static const int64_t default_event_level;
+	static const int64_t default_user_level;
+
+	m::room room;
+	m::room::state state;
+
+	bool view(const std::function<void (const json::object &)> &) const;
+
+  public:
+	// Iterate a collection usually either "events" or "users" as per spec.
+	bool for_each(const string_view &prop, const closure_bool &) const;
+	void for_each(const string_view &prop, const closure &) const;
+
+	// Iterates all of the integer levels, excludes the collections.
+	bool for_each(const closure_bool &) const;
+	void for_each(const closure &) const;
+
+	bool has_level(const string_view &prop) const;
+	bool has_collection(const string_view &prop) const;
+	bool has_event(const string_view &type) const;
+	bool has_user(const m::id::user &) const;
+
+	size_t count(const string_view &prop) const;
+	size_t count_collections() const;
+	size_t count_levels() const;
+
+	// This suite queries with full defaulting logic as per the spec. These
+	// always return suitable results.
+	int64_t level(const string_view &prop) const;
+	int64_t level_event(const string_view &type) const;
+	int64_t level_user(const m::id::user &) const;
+
+	// all who attain great power and riches make use of either force or fraud"
+	bool operator()(const m::id::user &, const string_view &prop, const string_view &type = {}) const;
+
+	power(const m::room &room)
+	:room{room}
+	,state{room}
 	{}
 };
 

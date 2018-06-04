@@ -1731,6 +1731,350 @@ const
 }
 
 //
+// room::power
+//
+
+decltype(ircd::m::room::power::default_power_level)
+ircd::m::room::power::default_power_level
+{
+	50
+};
+
+decltype(ircd::m::room::power::default_event_level)
+ircd::m::room::power::default_event_level
+{
+	0
+};
+
+decltype(ircd::m::room::power::default_user_level)
+ircd::m::room::power::default_user_level
+{
+	0
+};
+
+bool
+ircd::m::room::power::operator()(const m::user::id &user_id,
+                                 const string_view &prop,
+                                 const string_view &type)
+const
+{
+	const auto &user_level
+	{
+		level_user(user_id)
+	};
+
+	const auto &required_level
+	{
+		prop == "events"?
+			level_event(type):
+			level(prop)
+	};
+
+	return user_level >= required_level;
+}
+
+int64_t
+ircd::m::room::power::level_user(const m::user::id &user_id)
+const try
+{
+	int64_t ret
+	{
+		default_user_level
+	};
+
+	view([&user_id, &ret]
+	(const json::object &content)
+	{
+		const json::object &users
+		{
+			content.at("users")
+		};
+
+		ret = users.at<int64_t>(user_id);
+	});
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_user_level;
+}
+
+int64_t
+ircd::m::room::power::level_event(const string_view &type)
+const try
+{
+	int64_t ret
+	{
+		default_event_level
+	};
+
+	view([&type, &ret]
+	(const json::object &content)
+	{
+		const json::object &events
+		{
+			content.at("events")
+		};
+
+		ret = events.at<int64_t>(type);
+	});
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_event_level;
+}
+
+int64_t
+ircd::m::room::power::level(const string_view &prop)
+const try
+{
+	int64_t ret
+	{
+		default_power_level
+	};
+
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		ret = content.at<int64_t>(prop);
+	});
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_power_level;
+}
+
+size_t
+ircd::m::room::power::count_levels()
+const
+{
+	size_t ret{0};
+	for_each([&ret]
+	(const string_view &, const int64_t &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::power::count_collections()
+const
+{
+	size_t ret{0};
+	view([&ret]
+	(const json::object &content)
+	{
+		for(const auto &member : content)
+			ret += json::type(member.second) == json::OBJECT;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::power::count(const string_view &prop)
+const
+{
+	size_t ret{0};
+	for_each(prop, [&ret]
+	(const string_view &, const int64_t &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::has_event(const string_view &type)
+const try
+{
+	bool ret{false};
+	view([&type, &ret]
+	(const json::object &content)
+	{
+		const json::object &events
+		{
+			content.at("events")
+		};
+
+		const string_view &level
+		{
+			events.at(type)
+		};
+
+		ret = json::type(level) == json::NUMBER;
+	});
+
+	return ret;
+}
+catch(const json::error &)
+{
+	return false;
+}
+
+bool
+ircd::m::room::power::has_user(const m::user::id &user_id)
+const try
+{
+	bool ret{false};
+	view([&user_id, &ret]
+	(const json::object &content)
+	{
+		const json::object &users
+		{
+			content.at("users")
+		};
+
+		const string_view &level
+		{
+			users.at(user_id)
+		};
+
+		ret = json::type(level) == json::NUMBER;
+	});
+
+	return ret;
+}
+catch(const json::error &)
+{
+	return false;
+}
+
+bool
+ircd::m::room::power::has_collection(const string_view &prop)
+const
+{
+	bool ret{false};
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		const auto &value{content.get(prop)};
+		if(value && json::type(value) == json::OBJECT)
+			ret = true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::has_level(const string_view &prop)
+const
+{
+	bool ret{false};
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		const auto &value{content.get(prop)};
+		if(value && json::type(value) == json::NUMBER)
+			ret = true;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::room::power::for_each(const closure &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::power::for_each(const closure_bool &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+void
+ircd::m::room::power::for_each(const string_view &prop,
+                               const closure &closure)
+const
+{
+	for_each(prop, closure_bool{[&closure]
+	(const string_view &key, const int64_t &level)
+	{
+		closure(key, level);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::power::for_each(const string_view &prop,
+                               const closure_bool &closure)
+const
+{
+	bool ret{true};
+	view([&prop, &closure, &ret]
+	(const json::object &content)
+	{
+		const json::object &collection
+		{
+			// This little cmov gimmick sets collection to be the outer object
+			// itself if no property was given, allowing us to reuse this func
+			// for all iterations of key -> level mappings.
+			prop? json::object{content.get(prop)} : content
+		};
+
+		if(prop && json::type(string_view{collection}) != json::OBJECT)
+			return;
+
+		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
+		{
+			const auto &member(*it);
+			if(json::type(member.second) != json::NUMBER)
+				continue;
+
+			const auto &key
+			{
+				unquote(member.first)
+			};
+
+			const auto &val
+			{
+				lex_cast<int64_t>(member.second)
+			};
+
+			ret = closure(key, val);
+		}
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::view(const std::function<void (const json::object &)> &closure)
+const
+{
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"content",
+		}
+	};
+
+	const m::event::fetch::opts fopts
+	{
+		keys, state.fopts? state.fopts->gopts : db::gopts{}
+	};
+
+	return state.get(std::nothrow, "m.room.power_levels", "", [&closure]
+	(const m::event &event)
+	{
+		closure(json::get<"content"_>(event));
+	});
+}
+
+//
 // room::state::tuple
 //
 
