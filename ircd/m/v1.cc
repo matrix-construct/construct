@@ -215,6 +215,111 @@ ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// v1/frontfill.h
+//
+
+ircd::m::v1::frontfill::frontfill(const room::id &room_id,
+                                  const span &span,
+                                  const mutable_buffer &buf,
+                                  opts opts)
+:frontfill
+{
+	room_id,
+	ranges { vector(&span.first, 1), vector(&span.second, 1) },
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::frontfill::frontfill(const room::id &room_id,
+                                  const ranges &pair,
+                                  const mutable_buffer &buf_,
+                                  opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+	{
+		thread_local char urlbuf[1024], ridbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			urlbuf, "/_matrix/federation/v1/get_missing_events/%s/",
+			url::encode(room_id, ridbuf)
+		};
+	}
+
+	window_buffer buf{buf_};
+	if(!defined(json::get<"content"_>(opts.request)))
+	{
+		buf([&pair, &opts](const mutable_buffer &buf)
+		{
+			return make_content(buf, pair, opts);
+		});
+
+		json::get<"content"_>(opts.request) = json::object{buf.completed()};
+		opts.out.content = json::get<"content"_>(opts.request);
+	}
+
+	json::get<"method"_>(opts.request) = "POST";
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+ircd::const_buffer
+ircd::m::v1::frontfill::make_content(const mutable_buffer &buf,
+	                                 const ranges &pair,
+	                                 const opts &opts)
+{
+	json::stack out{buf};
+	{
+		// note: This object must be in abc order
+		json::stack::object top{out};
+		{
+			json::stack::member earliest{top, "earliest_events"};
+			json::stack::array array{earliest};
+			for(const auto &id : pair.first)
+				array.append(id);
+		}
+		{
+			json::stack::member latest{top, "latest_events"};
+			json::stack::array array{latest};
+			for(const auto &id : pair.second)
+				array.append(id);
+		}
+		json::stack::member{top, "limit", json::value(int64_t(opts.limit))};
+		json::stack::member{top, "min_depth", json::value(int64_t(opts.min_depth))};
+	}
+
+	return out.completed();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // v1/backfill.h
 //
 
