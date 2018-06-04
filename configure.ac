@@ -944,6 +944,37 @@ AC_CHECK_HEADER(lz4.h,
 
 
 dnl
+dnl snappy support
+dnl
+
+AC_SUBST(SNAPPY_CPPFLAGS)
+AC_SUBST(SNAPPY_LDFLAGS)
+AC_SUBST(SNAPPY_LIBS)
+
+AC_ARG_WITH(snappy,
+AC_HELP_STRING([--with-snappy=[[[DIR]]]], [Path to libsnappy.so for snappy compression support.]),
+[
+	AC_SUBST(SNAPPY_LDFLAGS, ["-L$withval"])
+], [
+
+])
+
+AC_CHECK_HEADER(snappy.h,
+[
+	AC_CHECK_LIB(snappy, snappy_compress,
+	[
+		snappy=yes
+		AC_SUBST(SNAPPY_LIBS, -lsnappy)
+		AC_DEFINE(HAVE_LIBSNAPPY, 1, [Define to 1 if libsnappy (-lsnappy) is available.])
+	], [
+		snappy=no
+	])
+], [
+	snappy=no
+])
+
+
+dnl
 dnl boost support
 dnl
 
@@ -1607,6 +1638,7 @@ echo "Building RocksDB................... $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "Ziplinks (libz) support ........... $zlib"
 echo "LZ4 support ....................... $lz4"
+echo "Snappy support .................... $snappy"
 echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support........................ $SSL_TYPE"

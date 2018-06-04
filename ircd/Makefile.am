@@ -13,6 +13,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
 	@MAGIC_CPPFLAGS@ \
+	@SNAPPY_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
 	-include ircd/ircd.h \
@@ -54,6 +55,7 @@ libircd_la_LDFLAGS = \
 	@BOOST_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
 	@MAGIC_LDFLAGS@ \
+	@SNAPPY_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
 	@Z_LDFLAGS@ \
 	###
@@ -66,6 +68,7 @@ libircd_la_LIBADD = \
 	@MAGIC_LIBS@ \
 	-lcrypto \
 	-lssl \
+	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
 	###
