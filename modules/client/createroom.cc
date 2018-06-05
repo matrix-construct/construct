@@ -131,19 +131,25 @@ createroom__parent_type(const id::room &room_id,
 		{ content,   { "creator",  creator  }},
 	};
 
-	const json::iov::add_if _parent
+	const json::iov::add _parent
 	{
 		content, !parent.empty() && parent.local() != "init",
 		{
-			"parent", parent
+			"parent", [&parent]() -> json::value
+			{
+				return parent;
+			}
 		}
 	};
 
-	const json::iov::add_if _type
+	const json::iov::add _type
 	{
 		content, !type.empty() && type != "room",
 		{
-			"type", type
+			"type", [&type]() -> json::value
+			{
+				return type;
+			}
 		}
 	};
 

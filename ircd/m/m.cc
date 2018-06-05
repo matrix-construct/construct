@@ -2836,27 +2836,36 @@ ircd::m::txn::create(const closure &closure,
 		{ iov, { "origin_server_ts",  ircd::time<milliseconds>()  }},
 	};
 
-	const json::iov::add_if _pdus
+	const json::iov::add _pdus
 	{
 		iov, !empty(pdu),
 		{
-			"pdus", { data(pdu), size(pdu) }
+			"pdus", [&pdu]() -> json::value
+			{
+				return { data(pdu), size(pdu) };
+			}
 		}
 	};
 
-	const json::iov::add_if _edus
+	const json::iov::add _edus
 	{
 		iov, !empty(edu),
 		{
-			"edus", { data(edu), size(edu) }
+			"edus", [&edu]() -> json::value
+			{
+				return { data(edu), size(edu) };
+			}
 		}
 	};
 
-	const json::iov::add_if _pdu_failures
+	const json::iov::add _pdu_failures
 	{
 		iov, !empty(pdu_failure),
 		{
-			"pdu_failures", { data(pdu_failure), size(pdu_failure) }
+			"pdu_failures", [&pdu_failure]() -> json::value
+			{
+				return { data(pdu_failure), size(pdu_failure) };
+			}
 		}
 	};
 

@@ -213,11 +213,14 @@ state__iov(const room &room,
 		{ event,    { "state_key",  state_key  }},
 	};
 
-	const json::iov::add_if member_
+	const json::iov::add member_
 	{
-		event, type == "m.room.member", "membership", [&content]
+		event, type == "m.room.member",
 		{
-			return content.at("membership");
+			"membership", [&content]() -> json::value
+			{
+				return content.at("membership");
+			}
 		}
 	};
 

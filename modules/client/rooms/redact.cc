@@ -125,11 +125,14 @@ redact__(const room &room,
 	};
 
 	json::iov content;
-	const json::iov::set_if _reason
+	const json::iov::set _reason
 	{
 		content, !empty(reason),
 		{
-			"reason", reason
+			"reason", [&reason]() -> json::value
+			{
+				return reason;
+			}
 		}
 	};
 

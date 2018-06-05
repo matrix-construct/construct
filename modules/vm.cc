@@ -163,11 +163,17 @@ ircd::m::vm::eval__commit_room(eval &eval,
 
 	const auto &prev_events{prev.first};
 	const auto &depth{prev.second};
-	const json::iov::set_if depth_
+	const json::iov::set depth_
 	{
 		event, !event.has("depth"),
 		{
-			"depth", depth == std::numeric_limits<int64_t>::max()? depth : depth + 1
+			"depth", [&depth]
+			{
+				return json::value
+				{
+					depth == std::numeric_limits<int64_t>::max()? depth : depth + 1
+				};
+			}
 		}
 	};
 
@@ -202,31 +208,37 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		auth_events = make_auth__buf(room, ae_buf, types, member);
 	}
 
-	static const json::array &prev_state
+	const json::iov::add auth_events_
 	{
-		json::empty_array
+		event, opts.add_auth_events,
+		{
+			"auth_events", [&auth_events]() -> json::value
+			{
+				return auth_events;
+			}
+		}
 	};
 
-	const json::iov::add_if prevs[]
+	const json::iov::add prev_events_
 	{
+		event, opts.add_prev_events,
 		{
-			event, opts.add_auth_events,
+			"prev_events", [&prev_events]() -> json::value
 			{
-				"auth_events", auth_events
+				return prev_events;
 			}
-		},
+		}
+	};
+
+	const json::iov::add prev_state_
+	{
+		event, opts.add_prev_state,
 		{
-			event, opts.add_prev_events,
+			"prev_state", []
 			{
-				"prev_events", prev_events
+				return json::empty_array;
 			}
-		},
-		{
-			event, opts.add_prev_state,
-			{
-				"prev_state", prev_state
-			}
-		},
+		}
 	};
 
 	return eval(event, contents);
@@ -277,19 +289,25 @@ ircd::m::vm::eval__commit(eval &eval,
 		*eval.copts
 	};
 
-	const json::iov::add_if _origin
+	const json::iov::add origin_
 	{
 		event, opts.add_origin,
 		{
-			"origin", my_host()
+			"origin", []() -> json::value
+			{
+				return my_host();
+			}
 		}
 	};
 
-	const json::iov::add_if _origin_server_ts
+	const json::iov::add origin_server_ts_
 	{
 		event, opts.add_origin_server_ts,
 		{
-			"origin_server_ts", ircd::time<milliseconds>()
+			"origin_server_ts", []
+			{
+				return json::value{ircd::time<milliseconds>()};
+			}
 		}
 	};
 
@@ -322,11 +340,14 @@ ircd::m::vm::eval__commit(eval &eval,
 			string_view{}
 	};
 
-	const json::iov::add_if _event_id
+	const json::iov::add event_id_
 	{
 		event, opts.add_event_id,
 		{
-			"event_id", event_id
+			"event_id", [&event_id]() -> json::value
+			{
+				return event_id;
+			}
 		}
 	};
 
@@ -340,11 +361,14 @@ ircd::m::vm::eval__commit(eval &eval,
 			string_view{}
 	};
 
-	const json::iov::add_if _hashes
+	const json::iov::add hashes_
 	{
 		event, opts.add_hash,
 		{
-			"hashes", hashes
+			"hashes", [&hashes]() -> json::value
+			{
+				return hashes;
+			}
 		}
 	};
 
@@ -358,15 +382,18 @@ ircd::m::vm::eval__commit(eval &eval,
 			string_view{}
 	};
 
-	const json::iov::add_if _sigs
+	const json::iov::add sigs_
 	{
 		event, opts.add_sig,
 		{
-			"signatures",  sigs
+			"signatures", [&sigs]() -> json::value
+			{
+				return sigs;
+			}
 		}
 	};
 
-	const json::iov::push _content
+	const json::iov::push content_
 	{
 		event, { "content", content },
 	};

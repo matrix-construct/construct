@@ -86,10 +86,26 @@ join__room_user(const room &room,
 		user.profile(avatar_url_buf, "avatar_url")
 	};
 
-	const json::iov::add_if add_if[]
+	const json::iov::add _displayname
 	{
-		{ content,  !empty(displayname),  { "displayname",  displayname  }},
-		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
+		content, !empty(displayname),
+		{
+			"displayname", [&displayname]() -> json::value
+			{
+				return displayname;
+			}
+		}
+	};
+
+	const json::iov::add _avatar_url
+	{
+		content, !empty(avatar_url),
+		{
+			"avatar_url", [&avatar_url]() -> json::value
+			{
+				return avatar_url;
+			}
+		}
 	};
 
 	return commit(room, event, content);
@@ -184,10 +200,26 @@ bootstrap(const m::room::alias &room_alias,
 		user.profile(avatar_url_buf, "avatar_url")
 	};
 
-	const json::iov::add_if add_if[]
+	const json::iov::add _displayname
 	{
-		{ content,  !empty(displayname),  { "displayname",  displayname  }},
-		{ content,  !empty(avatar_url),   { "avatar_url",    avatar_url  }},
+		content, !empty(displayname),
+		{
+			"displayname", [&displayname]() -> json::value
+			{
+				return displayname;
+			}
+		}
+	};
+
+	const json::iov::add _avatar_url
+	{
+		content, !empty(avatar_url),
+		{
+			"avatar_url", [&avatar_url]() -> json::value
+			{
+				return avatar_url;
+			}
+		}
 	};
 
 	m::vm::copts opts;
