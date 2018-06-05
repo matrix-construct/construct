@@ -90,6 +90,7 @@ struct ircd::json::iov::add
 struct ircd::json::iov::add_if
 :protected ircd::json::iov::node
 {
+	add_if(iov &, const bool &, const string_view &, const std::function<json::value ()> &);
 	add_if(iov &, const bool &, member);
 	add_if() = default;
 };

@@ -1069,6 +1069,19 @@ ircd::json::iov::add_if::add_if(iov &iov,
 		iov.pop_front();
 }
 
+ircd::json::iov::add_if::add_if(iov &iov,
+                                const bool &b,
+                                const string_view &key,
+                                const std::function<json::value ()> &val)
+:node
+{
+	iov, b? member{key, val()} : member{}
+}
+{
+	if(!b)
+		iov.pop_front();
+}
+
 ircd::json::iov::set::set(iov &iov, member member)
 :node
 {
