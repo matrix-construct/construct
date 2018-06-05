@@ -45,6 +45,7 @@ struct ircd::json::iov
 	struct set_if;
 	struct defaults;
 	struct defaults_if;
+	using conditional_member = std::pair<string_view, std::function<json::value ()>>;
 
 	IRCD_EXCEPTION(json::error, error);
 	IRCD_EXCEPTION(error, exists);
@@ -71,10 +72,8 @@ struct ircd::json::iov::push
 	operator const member &() const;
 	operator member &();
 
-	push(iov &iov, member m)
-	:node(iov, std::move(m))
-	{}
-
+	push(iov &, const bool &, const conditional_member &);
+	push(iov &iov, member m);
 	push() = default;
 };
 
@@ -82,49 +81,27 @@ struct ircd::json::iov::push
 struct ircd::json::iov::add
 :protected ircd::json::iov::node
 {
+	add(iov &, const bool &, const conditional_member &);
 	add(iov &, member);
 	add() = default;
-};
-
-/// iov::add only if the bool argument is true for your condition
-struct ircd::json::iov::add_if
-:protected ircd::json::iov::node
-{
-	add_if(iov &, const bool &, const string_view &, const std::function<json::value ()> &);
-	add_if(iov &, const bool &, member);
-	add_if() = default;
 };
 
 /// Add or overwrite a member in the object vector.
 struct ircd::json::iov::set
 :protected ircd::json::iov::node
 {
+	set(iov &, const bool &, const conditional_member &);
 	set(iov &, member);
 	set() = default;
-};
-
-/// iov::set only if the bool argument is true for your condition
-struct ircd::json::iov::set_if
-:protected ircd::json::iov::node
-{
-	set_if(iov &, const bool &, member);
-	set_if() = default;
 };
 
 /// Add member to the object vector if doesn't exist; otherwise ignored
 struct ircd::json::iov::defaults
 :protected ircd::json::iov::node
 {
+	defaults(iov &, bool, const conditional_member &);
 	defaults(iov &, member);
 	defaults() = default;
-};
-
-/// iov::defaults only if the bool argument is true for your condition
-struct ircd::json::iov::defaults_if
-:protected ircd::json::iov::node
-{
-	defaults_if(iov &, const bool &, member);
-	defaults_if() = default;
 };
 
 inline ircd::json::iov::push::operator

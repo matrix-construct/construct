@@ -1041,6 +1041,31 @@ const
 	});
 }
 
+ircd::json::iov::push::push(iov &iov,
+                            member member)
+:node
+{
+	iov, std::move(member)
+}
+{
+}
+
+ircd::json::iov::push::push(iov &iov,
+                            const bool &b,
+                            const conditional_member &cp)
+:node
+{
+	b?
+		&iov:
+		nullptr,
+
+	b?
+		member{cp.first, cp.second()}:
+		member{}
+}
+{
+}
+
 ircd::json::iov::add::add(iov &iov,
                           member member)
 :node
@@ -1048,8 +1073,11 @@ ircd::json::iov::add::add(iov &iov,
 	iov, [&iov, &member]
 	{
 		if(iov.has(member.first))
-			throw exists("failed to add member '%s': already exists",
-			             string_view{member.first});
+			throw exists
+			{
+				"failed to add member '%s': already exists",
+				string_view{member.first}
+			};
 
 		return std::move(member);
 	}()
@@ -1057,32 +1085,38 @@ ircd::json::iov::add::add(iov &iov,
 {
 }
 
-ircd::json::iov::add_if::add_if(iov &iov,
-                                const bool &b,
-                                member member)
+ircd::json::iov::add::add(iov &iov,
+                          const bool &b,
+                          const conditional_member &cp)
 :node
 {
-	iov, std::move(member)
+	b?
+		&iov:
+		nullptr,
+
+	[&iov, &b, &cp]
+	{
+		if(!b)
+			return member{};
+
+		if(iov.has(cp.first))
+			throw exists
+			{
+				"failed to add member '%s': already exists",
+				string_view{cp.first}
+			};
+
+		return member
+		{
+			cp.first, cp.second()
+		};
+	}()
 }
 {
-	if(!b)
-		iov.pop_front();
 }
 
-ircd::json::iov::add_if::add_if(iov &iov,
-                                const bool &b,
-                                const string_view &key,
-                                const std::function<json::value ()> &val)
-:node
-{
-	iov, b? member{key, val()} : member{}
-}
-{
-	if(!b)
-		iov.pop_front();
-}
-
-ircd::json::iov::set::set(iov &iov, member member)
+ircd::json::iov::set::set(iov &iov,
+                          member member)
 :node
 {
 	iov, [&iov, &member]
@@ -1098,48 +1132,76 @@ ircd::json::iov::set::set(iov &iov, member member)
 {
 }
 
-ircd::json::iov::set_if::set_if(iov &iov,
-                                const bool &b,
-                                member member)
+ircd::json::iov::set::set(iov &iov,
+                          const bool &b,
+                          const conditional_member &cp)
 :node
 {
-	iov, std::move(member)
+	b?
+		&iov:
+		nullptr,
+
+	[&iov, &b, &cp]
+	{
+		if(!b)
+			return member{};
+
+		iov.remove_if([&cp](const auto &existing)
+		{
+			return string_view{existing.first} == cp.first;
+		});
+
+		return member
+		{
+			cp.first, cp.second()
+		};
+	}()
 }
 {
-	if(!b)
-		iov.pop_front();
 }
 
 ircd::json::iov::defaults::defaults(iov &iov,
                                     member member)
 :node
 {
-	iov, std::move(member)
+	!iov.has(member.first)?
+		&iov:
+		nullptr,
+
+	std::move(member)
 }
 {
-	const auto count
-	{
-		std::count_if(std::begin(iov), std::end(iov), [&member]
-		(const auto &existing)
-		{
-			return string_view{existing.first} == string_view{member.first};
-		})
-	};
-
-	if(count > 1)
-		iov.pop_front();
 }
 
-ircd::json::iov::defaults_if::defaults_if(iov &iov,
-                                          const bool &b,
-                                          member member)
+ircd::json::iov::defaults::defaults(iov &iov,
+                                    bool b,
+                                    const conditional_member &cp)
 :node
 {
-	iov, std::move(member)
+	[&iov, &b, &cp]() -> json::iov *
+	{
+		if(!b)
+			return nullptr;
+
+		if(!iov.has(cp.first))
+			return &iov;
+
+		b = false;
+		return nullptr;
+	}(),
+
+	[&iov, &b, &cp]
+	{
+		if(!b)
+			return member{};
+
+		return member
+		{
+			cp.first, cp.second()
+		};
+	}()
 }
 {
-	if(!b)
-		iov.pop_front();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
