@@ -516,8 +516,9 @@ catch(const error &e) // VM FAULT CODE
 	if(eval.opts->errorlog & e.code)
 		log::error
 		{
-			log, "eval %s: %s %s",
+			log, "eval %s: %s: %s %s",
 			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			reflect(e.code),
 			e.what(),
 			e.content
 		};
@@ -525,8 +526,9 @@ catch(const error &e) // VM FAULT CODE
 	if(eval.opts->warnlog & e.code)
 		log::warning
 		{
-			log, "eval %s: %s %s",
+			log, "eval %s: %s: %s %s",
 			json::get<"event_id"_>(event)?: json::string{"<edu>"},
+			reflect(e.code),
 			e.what(),
 			e.content
 		};
