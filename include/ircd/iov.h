@@ -52,6 +52,7 @@ struct ircd::iov<T>::node
 	operator T &();
 
 	node() = default;
+	template<class... args> node(iov *const &, args&&...);
 	template<class... args> node(iov &, args&&...);
 	node(node &&) = delete;
 	node(const node &) = delete;
@@ -64,11 +65,24 @@ template<class T>
 template<class... args>
 ircd::iov<T>::node::node(iov &iov,
                          args&&... a)
-:i{&iov}
+:node
 {
+	&iov, std::forward<args>(a)...
+}
+{}
+
+template<class T>
+template<class... args>
+ircd::iov<T>::node::node(iov *const &iov,
+                         args&&... a)
+:i{iov}
+{
+	if(!iov)
+		return;
+
 	auto &list
 	{
-		static_cast<iov::list &>(iov)
+		*static_cast<iov::list *>(iov)
 	};
 
 	auto &list_node
@@ -99,6 +113,7 @@ template<class T>
 ircd::iov<T>::node::operator
 T &()
 {
+	assert(i);
 	auto &list_node(static_cast<iov::list_node &>(*this));
 	return *list_node._M_valptr(); //TODO: XXX
 }
@@ -108,6 +123,7 @@ ircd::iov<T>::node::operator
 const T &()
 const
 {
+	assert(i);
 	const auto &list_node(static_cast<const iov::list_node &>(*this));
 	return *list_node._M_valptr(); //TODO: XXX
 }
