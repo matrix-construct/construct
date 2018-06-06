@@ -124,7 +124,7 @@ try
 	{
 		std::cout << "\n> " << std::flush;
 
-		char buf[1024];
+		thread_local char buf[64_KiB];
 		string_view line;
 		// Suppression scope ends after the command is entered
 		// so the output of the command (if log messages) can be seen.
