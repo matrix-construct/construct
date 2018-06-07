@@ -5027,6 +5027,50 @@ console_id__user(opt &out,
 }
 
 bool
+console_cmd__user__register(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"username", "password"
+	}};
+
+	const string_view &username
+	{
+		param.at(0)
+	};
+
+	const string_view &password
+	{
+		param.at(1)
+	};
+
+	const m::registar request
+	{
+		{ "username",    username },
+		{ "password",    password },
+		{ "bind_email",  false    },
+	};
+
+	using prototype = std::string
+	                  (const m::registar &,
+	                   const client *const &,
+	                   const bool &);
+
+	static m::import<prototype> register_user
+	{
+		"client_register", "register_user"
+	};
+
+	const auto ret
+	{
+		register_user(request, nullptr, false)
+	};
+
+	out << ret << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__password(opt &out, const string_view &line)
 {
 	const params param
