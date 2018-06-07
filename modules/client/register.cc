@@ -16,6 +16,38 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
+static void validate_user_id(const m::id::user &user_id);
+static void validate_password(const string_view &password);
+
+extern "C" std::string
+register_user(const m::registar &,
+              const client *const & = nullptr,
+              const bool &gen_token = false);
+
+static resource::response
+post__register_guest(client &client, const resource::request::object<m::registar> &request);
+
+static resource::response
+post__register_user(client &client, const resource::request::object<m::registar> &request);
+
+static resource::response
+post__register(client &client, const resource::request::object<m::registar> &request);
+
+resource
+register_resource
+{
+	"/_matrix/client/r0/register",
+	{
+		"(3.3.1) Register for an account on this homeserver."
+	}
+};
+
+resource::method
+method_post
+{
+	register_resource, "POST", post__register
+};
+
 ircd::conf::item<bool>
 register_enable
 {
@@ -23,13 +55,11 @@ register_enable
 	{ "default",  true                          }
 };
 
-static void validate_user_id(const m::id::user &user_id);
-static void validate_password(const string_view &password);
-
+/// see: ircd/m/register.h for the m::registar tuple.
+///
 resource::response
-post__register_user(client &client,
-                    const resource::request::object<m::registar> &request)
-try
+post__register(client &client,
+               const resource::request::object<m::registar> &request)
 {
 	if(!bool(register_enable))
 		throw m::error
@@ -38,6 +68,107 @@ try
 			"Registration for this server is disabled."
 		};
 
+	const auto kind
+	{
+		request.query["kind"]
+	};
+
+	if(kind == "guest")
+		return post__register_guest(client, request);
+
+	if(kind.empty() || kind == "user")
+		return post__register_user(client, request);
+
+	throw m::UNSUPPORTED
+	{
+		"Unknown 'kind' of registration specified in query."
+	};
+}
+
+ircd::conf::item<bool>
+register_user_enable
+{
+	{ "name",     "ircd.client.register.user.enable" },
+	{ "default",  true                               }
+};
+
+resource::response
+post__register_user(client &client,
+                    const resource::request::object<m::registar> &request)
+try
+{
+	if(!bool(register_user_enable))
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_REGISTRATION_DISABLED",
+			"User registration for this server is disabled."
+		};
+
+	const std::string response
+	{
+		register_user(request, &client, true)
+	};
+
+	// Send response to user
+	return resource::response
+	{
+		client, http::CREATED, json::object{response}
+	};
+}
+catch(const m::INVALID_MXID &e)
+{
+	throw m::error
+	{
+		http::BAD_REQUEST, "M_INVALID_USERNAME",
+		"Not a valid username. Please try again."
+	};
+};
+
+ircd::conf::item<bool>
+register_guest_enable
+{
+	{ "name",     "ircd.client.register.guest.enable" },
+	{ "default",  true                                }
+};
+
+resource::response
+post__register_guest(client &client,
+                     const resource::request::object<m::registar> &request)
+{
+	if(!bool(register_guest_enable))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_GUEST_DISABLED",
+			"Guest access is disabled"
+		};
+
+	const m::id::user::buf user_id
+	{
+		m::generate, my_host()
+	};
+
+	char access_token_buf[32];
+	const string_view access_token
+	{
+		m::user::gen_access_token(access_token_buf)
+	};
+
+	return resource::response
+	{
+		client, http::CREATED,
+		{
+			{ "user_id",         user_id        },
+			{ "home_server",     my_host()      },
+			{ "access_token",    access_token   },
+		}
+	};
+}
+
+std::string
+register_user(const m::registar &request,
+              const client *const &client,
+              const bool &gen_token)
+{
 	// 3.3.1 Additional authentication information for the user-interactive authentication API.
 	const json::object &auth
 	{
@@ -143,22 +274,27 @@ try
 	char access_token_buf[32];
 	const string_view access_token
 	{
-		m::user::gen_access_token(access_token_buf)
+		gen_token?
+			m::user::gen_access_token(access_token_buf):
+			string_view{}
 	};
 
-	// Log the user in by issuing an event in the tokens room containing
-	// the generated token. When this call completes without throwing the
-	// access_token will be committed and the user will be logged in.
-	m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
+	if(gen_token)
 	{
-		{ "ip",      string(remote(client))  },
-		{ "device",  device_id               },
-	});
+		// Log the user in by issuing an event in the tokens room containing
+		// the generated token. When this call completes without throwing the
+		// access_token will be committed and the user will be logged in.
+		m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
+		{
+			{ "ip",      client? string(remote(*client)) : std::string{} },
+			{ "device",  device_id                                       },
+		});
+	}
 
 	// Send response to user
-	return resource::response
+	return json::strung
 	{
-		client, http::CREATED,
+		json::members
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     my_host()      },
@@ -167,82 +303,6 @@ try
 		}
 	};
 }
-catch(const m::INVALID_MXID &e)
-{
-	throw m::error
-	{
-		http::BAD_REQUEST, "M_INVALID_USERNAME",
-		"Not a valid username. Please try again."
-	};
-};
-
-resource::response
-post__register_guest(client &client,
-                     const resource::request::object<m::registar> &request)
-{
-	throw m::error
-	{
-		http::FORBIDDEN, "M_GUEST_DISABLED",
-		"Guest access is disabled"
-	};
-
-	const m::id::user::buf user_id
-	{
-		m::generate, my_host()
-	};
-
-	char access_token_buf[32];
-	const string_view access_token
-	{
-		m::user::gen_access_token(access_token_buf)
-	};
-
-	return resource::response
-	{
-		client, http::CREATED,
-		{
-			{ "user_id",         user_id        },
-			{ "home_server",     my_host()      },
-			{ "access_token",    access_token   },
-		}
-	};
-}
-
-resource::response
-post__register(client &client,
-               const resource::request::object<m::registar> &request)
-{
-	const auto kind
-	{
-		request.query["kind"]
-	};
-
-	if(kind == "guest")
-		return post__register_guest(client, request);
-
-	if(kind.empty() || kind == "user")
-		return post__register_user(client, request);
-
-	throw m::UNSUPPORTED
-	{
-		"Unknown 'kind' of registration specified in query."
-	};
-}
-
-resource
-register_resource
-{
-	"/_matrix/client/r0/register",
-	{
-		"(3.3.1) Register for an account on this homeserver."
-	}
-};
-
-resource::method
-method_post
-{
-	register_resource, "POST", post__register
-};
 
 void
 validate_user_id(const m::id::user &user_id)
