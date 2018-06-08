@@ -6613,8 +6613,15 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	out << pretty(event) << std::endl;
 
-	if(!verify(event))
-		out << "- SIGNATURE FAILED" << std::endl;
+	try
+	{
+		if(!verify(event))
+			out << "- SIGNATURE FAILED" << std::endl;
+	}
+	catch(const std::exception &e)
+	{
+		out << "- SIGNATURE FAILED: " << e.what() << std::endl;
+	}
 
 	if(!verify_hash(event))
 		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
