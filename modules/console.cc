@@ -535,6 +535,11 @@ console_cmd__mem(opt &out, const string_view &line)
 	    << "freed count ____ " << this_thread.free_count << std::endl
 	    << "alloc bytes ____ " << this_thread.alloc_bytes << std::endl
 	    << "freed bytes ____ " << this_thread.free_bytes << std::endl
+	    << std::endl;
+
+	thread_local char buf[1024];
+	out << "malloc() information:" << std::endl
+	    << allocator::info(buf) << std::endl
 	    ;
 
 	return true;

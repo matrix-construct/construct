@@ -19,6 +19,40 @@
 // #define RB_PROF_ALLOC
 
 #if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+ircd::string_view
+ircd::allocator::info(const mutable_buffer &buf)
+{
+	std::stringstream out;
+	pubsetbuf(out, buf);
+
+	const auto ma
+	{
+		::mallinfo()
+	};
+
+	out << "arena:     " << ma.arena << std::endl
+	    << "ordblks:   " << ma.ordblks << std::endl
+	    << "smblks:    " << ma.smblks << std::endl
+	    << "hblks:     " << ma.hblks << std::endl
+	    << "hblkhd:    " << ma.hblkhd << std::endl
+	    << "usmblks:   " << ma.usmblks << std::endl
+	    << "fsmblks:   " << ma.fsmblks << std::endl
+	    << "uordblks:  " << ma.uordblks << std::endl
+	    << "fordblks:  " << ma.fordblks << std::endl
+	    << "keepcost:  " << ma.keepcost << std::endl
+	    ;
+
+	return view(out, buf);
+}
+#else
+ircd::string_view
+ircd::allocator::info(const mutable_buffer &buf)
+{
+	return {};
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
 bool
 ircd::allocator::trim(const size_t &pad)
 {

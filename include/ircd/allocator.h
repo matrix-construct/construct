@@ -26,6 +26,7 @@ namespace ircd::allocator
 	template<class T> struct node;
 
 	bool trim(const size_t &pad = 0); // malloc_trim(3)
+	string_view info(const mutable_buffer &);
 };
 
 /// Profiling counters.
