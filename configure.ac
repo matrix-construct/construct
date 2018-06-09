@@ -597,6 +597,7 @@ RB_CHK_SYSHEADER(sys/syscall.h, [SYS_SYSCALL_H])
 RB_CHK_SYSHEADER(sys/utsname.h, [SYS_UTSNAME_H])
 
 dnl linux platform
+RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])
 RB_CHK_SYSHEADER(linux/aio_abi.h, [LINUX_AIO_ABI_H])
 
