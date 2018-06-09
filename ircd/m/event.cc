@@ -255,10 +255,27 @@ ircd::m::make_id(const event &event,
 }
 
 bool
-ircd::m::operator==(const event &a, const event &b)
+ircd::m::before(const event &a,
+                const event &b)
 {
-	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"event_id"_>(a) == at<"event_id"_>(b);
+	const event::prev prev_b{b};
+	const json::array &prev_b_events
+	{
+		json::get<"prev_events"_>(prev_b)
+	};
+
+	for(const json::array &prev_event : prev_b_events)
+	{
+		const event::id prev_event_id
+		{
+			unquote(prev_event.at(0))
+		};
+
+		if(prev_event_id == at<"event_id"_>(a))
+			return true;
+	}
+
+	return false;
 }
 
 bool
@@ -287,6 +304,13 @@ ircd::m::operator<(const event &a, const event &b)
 {
 	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
 	return at<"depth"_>(a) < at<"depth"_>(b);
+}
+
+bool
+ircd::m::operator==(const event &a, const event &b)
+{
+	assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
+	return at<"event_id"_>(a) == at<"event_id"_>(b);
 }
 
 bool
@@ -376,46 +400,6 @@ size_t
 ircd::m::degree(const event &event)
 {
 	return degree(event::prev{event});
-}
-
-size_t
-ircd::m::degree(const event::prev &prev)
-{
-	size_t ret{0};
-	json::for_each(prev, [&ret]
-	(const auto &, const json::array &prevs)
-	{
-		ret += prevs.count();
-	});
-
-	return ret;
-}
-
-size_t
-ircd::m::count(const event::prev &prev)
-{
-	size_t ret{0};
-	m::for_each(prev, [&ret](const event::id &event_id)
-	{
-		++ret;
-	});
-
-	return ret;
-}
-
-void
-ircd::m::for_each(const event::prev &prev,
-                  const std::function<void (const event::id &)> &closure)
-{
-	json::for_each(prev, [&closure]
-	(const auto &key, const json::array &prevs)
-	{
-		for(const json::array &prev : prevs)
-		{
-			const event::id &id{unquote(prev[0])};
-			closure(id);
-		}
-	});
 }
 
 std::string
@@ -516,6 +500,58 @@ ircd::m::pretty_oneline(std::ostream &s,
 	s << "] ";
 
 	return s;
+}
+
+size_t
+ircd::m::degree(const event::prev &prev)
+{
+	size_t ret{0};
+	json::for_each(prev, [&ret]
+	(const auto &, const json::array &prevs)
+	{
+		ret += prevs.count();
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::count(const event::prev &prev)
+{
+	size_t ret{0};
+	m::for_each(prev, [&ret](const event::id &event_id)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::for_each(const event::prev &prev,
+                  const event::id::closure &closure)
+{
+	m::for_each(prev, event::id::closure_bool{[&closure]
+	(const event::id &event_id)
+	{
+		closure(event_id);
+		return true;
+	}});
+}
+
+bool
+ircd::m::for_each(const event::prev &prev,
+                  const event::id::closure_bool &closure)
+{
+	return json::until(prev, [&closure]
+	(const auto &key, const json::array &prevs)
+	{
+		for(const json::array &prev : prevs)
+			if(!closure(event::id(unquote(prev.at(0)))))
+				return false;
+
+		return true;
+	});
 }
 
 bool

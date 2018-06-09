@@ -28,14 +28,17 @@ namespace ircd::m
 	bool bad(const id::event &, uint64_t &);
 	bool bad(const id::event &);
 
+	// Equality tests the event_id only! know this.
+	bool operator==(const event &a, const event &b);
+
 	// Depth comparison; expect unstable sorting.
 	bool operator<(const event &, const event &);
 	bool operator>(const event &, const event &);
 	bool operator<=(const event &, const event &);
 	bool operator>=(const event &, const event &);
 
-	// Equality tests the event_id only! know this.
-	bool operator==(const event &a, const event &b);
+	// Topological
+	bool before(const event &a, const event &b); // A directly referenced by B
 
 	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event make_id(const event &, id::event::buf &buf);
@@ -142,7 +145,8 @@ struct ircd::m::event
 
 namespace ircd::m
 {
-	void for_each(const event::prev &, const std::function<void (const event::id &)> &);
+	bool for_each(const event::prev &, const event::id::closure_bool &);
+	void for_each(const event::prev &, const event::id::closure &);
 	size_t degree(const event::prev &);
 	size_t count(const event::prev &);
 
