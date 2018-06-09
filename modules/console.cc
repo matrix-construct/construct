@@ -3067,6 +3067,40 @@ console_cmd__stage__send(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__stage__broadcast(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"[id]"
+	}};
+
+	const int &id
+	{
+		param.at<int>(0, -1)
+	};
+
+	const auto start
+	{
+		id > -1? id : 0
+	};
+
+	const auto stop
+	{
+		id > -1? id + 1 : stage.size()
+	};
+
+	for(size_t i(start); i < stop; ++i)
+	{
+		const m::vm::opts opts;
+		const m::event event{stage.at(i)};
+		m::vm::accepted a{event, &opts, &opts.report};
+		m::vm::accept(a);
+	}
+
+	return true;
+}
+
 int
 console_command_numeric(opt &out, const string_view &line)
 {
