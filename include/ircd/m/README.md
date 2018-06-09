@@ -1,13 +1,13 @@
 # Matrix Protocol
 
-### Introduction
+## Introduction
 
 *The authoritative place for learning about matrix is at [matrix.org](https://matrix.org) but
 it may be worthwhile to spend a moment and consider this introduction which explains things
 by distilling the formal core of the protocol before introducing all of the networking and
 communicative accoutrements...*
 
-#### Identity
+### Identity
 
 The Matrix-ID or `mxid` is a universally unique plain-text string allowing
 an entity to be addressed internet-wide which is fundamental to the matrix
@@ -17,7 +17,7 @@ mxid:  "@user:host" where `host` is a public DNS name, `user` is a party to
 character, called a `sigil`, is defined to be '!' for `room_id` identifiers,
 '$' for `event_id` identifiers, '#' for room aliases, and '@' for users.
 
-#### Event
+### Event
 
 The fundamental primitive of this protocol is the `event` object. This object
 contains some set of key/value pairs and the protocol defines a list of such keys
@@ -57,17 +57,16 @@ describes an *abstract state machine* which has its state updated by an event, i
 addition to providing a standard means for communication of events between parties
 over the internet. That's it.
 
-#### Timeline
+### Timeline
 
 The data tape of the matrix machine consists of a singly-linked list of `event`
-objects with each referencing the `event_id` of its preceding parent somewhere
+objects with each referencing the `event_id` of its preceding parents somewhere
 in the `prev_` keys; this is called the `timeline`. Each event is signed by its
 creator and affirms all referenced events preceding it. This is a very similar
 structure to that used by software like Git, and Bitcoin. It allows looking back
-into the past from any point, but doesn't force a party to accept a future and
-leaves dispute resolution open-ended (which will be explained later).
+into the past from any point.
 
-#### State
+### State
 
 The `state` consists of a subset of events which are accumulated according to a
 few rules when playing the tape through the machine. Events which are selected
@@ -87,7 +86,7 @@ singleton `state` events, like an `m.room.create` event. The `state_key`
 is used to represent a set, like with `m.room.member` events, where the
 value of the `state_key` is a user `mxid`.
 
-#### Rooms
+### Room
 
 The `room` structure encapsulates an instance of the matrix machine. A room
 is a container of `event` objects in the form of a timeline. The query
@@ -126,16 +125,39 @@ type events ourselves. This project tends to create events in the namespace
 `ircd.*` These events should not alter the room's functionality for a client
 with knowledge of only the published `m.room.*` events wouldn't understand.
 
+### Server
 
-#### Coherence
+Matrix rooms are intended to be distributed entities that are replicated by
+all participating servers. It is important to make this clear by contrasting
+it with a common assumption that rooms are "hosted" by some entity. For example
+when one sees an `mxid` such as `!matrix:matrix.org` it is incorrect to assume
+that `matrix.org` is "hosting" this room or that it plays any critical role in
+its operation.
 
-Matrix is specified as a directed acyclic graph of messages. The conversation of
-messages moves in one direction: past to future. Messages only reference other
-messages which have a lower degree of separation indicated by the `depth` from
-the first message in the graph (where `type` was `m.room.create`). Specifically,
-each message makes a reference to all known messages at the last `depth`, or all
-previously unknown messages at some lower `depth`. Each new message is broadcast
-to all participants in a room.
+Servers are simply obliged to adhere to the rules of the protocol. There is no
+cryptographic guarantee that rules will be followed (e.g. zkSNARK), and no
+central server to query as an authority. Servers should disregard violations
+of the protocol as the room unfolds from the point of its creation.
+
+The notion of hosting does exist for room aliases. In the above example the
+room mxid `!matrix:matrix.org` may be referred to by `#matrix:matrix.org`.
+As an analogy, if one considers the room mxid to be an IP address then the
+alias is like a domain name pointing to the IP address. The example alias is
+hosted by `matrix.org` under their authority and may be directed to any room
+mxid. The alias is not useful when its host is not available, but the room
+itself is still available from all other servers.
+
+### Communication
+
+Servers communicate by broadcasting events to all other servers joined to the
+room. When a server wishes to broadcast a message, it constructs an event which
+references all previous events in the timeline which have not yet been
+referenced. This forms a directed acyclic graph of events, or DAG.
+
+The conversation of messages moves in one direction: past to future. Messages
+only reference other messages which have a lower degree of separation indicated
+by the `depth` from the first message in the graph (where `type` was
+`m.room.create`).
 
 * The monotonic increase in `depth` contributes to an intuitive "light cone"
 read coherence. Knowledge of any piece of information (like an event) offers
@@ -147,35 +169,133 @@ depth from independent actors and multiple reference trees may form
 independent of others. This provides the scalar for performance in a large
 distributed internet system.
 
-References to previous events:
+#### DAG
+
+The DAG is a tool which aids with the presentation of a coherent conversation
+for the room in lieu of the relaxed write consistency as previously mentioned.
+This tool is not very difficult to comprehend, it only becomes complicated in
+the most academically contrived corner-cases -- most of which are born out of
+malice.
+
+In the following diagrams each box represents a message and their reference
+connections in the timeline, which begins at the top and flows down. For the
+sake of simplicity one can consider each message to always be sent by a
+different server in the room.
+
+```
+Over the lifetime of the average room, for an overwhelming majority of that
+time, the DAG is linear.
+
+            [M00]
+              |
+            [M01]
+              |
+            [M02]
+              |
+            [M03]
+              |
+            [M04]
+              |
+```
+
+This is because computers and the modern internet are actually quite fast. Even
+in the broadcast model for reasonably large room, a server will have conveyed
+an event to all other servers, or at least to the next server which will
+transmit, before there is any conflict. This is the overwhelming majority of
+cases.
+
+For example, consider this curve from data collected in
+#matrix-architecture:matrix.org. The number of references an event makes
+is the key, and the count of events which has made that number of references
+is the value.
+
+```
+1: 6848
+2: 248
+3: 7
+4: 1
+5: 1
+6: 0
+7: 0
+```
+
+Conflicts occurred about 3.5% of the time, and more than a simple conflict
+occurred about 0.1% of the time. We will refer to these as periods of
+"turbulence."
+
+```
+
+            [M00]
+              |
+            [M01]
+           /     \
+
+      [M02]       [M02]
+
+           \     /
+            [M03]
+              |
+            [M04]
+              |
+```
+Above: when two servers transmit at the same time.
+Below: when three servers transmit at the same time:
+
+```
+            [M00]
+              |
+            [M01]
+          /   |   \
+
+   [M02]    [M02]    [M02]
+
+          \   |   /
+            [M03]
+              |
+            [M04]
+              |
+```
+Below: when three servers transmit, and then a fourth server transmits
+having only received two out of the three transmissions in the previous round.
+```
+            [M00]
+              |
+            [M01]
+          /   |   \
+
+   [M02]    [M02]    [M02]
+
+       \        \     /
+        \        [M03]
+
+           \     /
+            [M04]
+              |
+            [M05]
+              |
+```
+The above scenario is a very rare occurrence but it is certainly seen in
+practice by slow servers participating in large and busy rooms.
 
 
 ```
- [A0] <-- [A1] <-- [A2]       | A has seen B1 and includes a reference in A2
-  ^                 |
-  |        <---<----<
-  |        |
-  ^------ [B1] <-- [B2]       | B hasn't yet seen A1 or A2
+                  [0]
+           [1]           [B]
 
-[T0]  A release A0  :
-[T1]  A release A1  :  B acquire A0
-[T2]                :  B release B1
-[T3]  A acquire B1  :  B release B2
-[T4]  A release A2  :
-```
+      [2]                     [A]
 
-Both actors will have their clock (depth) now set to 2 and will issue the
-next new message at clock cycle 3 referencing all messages from cycle 2 to
-merge the split in the illustration above which is happening.
 
+    [3]                         [9]
+
+
+      [4]                     [8]
+
+           [5]           [7]
+                  [6]
 
 ```
- [A0] <-- [A1] <-- [A2]            [A4]      | A now sees B3, B2, and B1
- ^                 |  |            |
- |        <---<----<  ^--<--<   <--<
- |        |                 |   |
- ^------- [B1] <-- [B2] <-- [B3]             | B now sees A2, A1, and A0
-```
+
+#### Coherence
 
 Keen observers may have realized by now this system is not fully coherent.
 To be coherent, a system must leverage *entry consistency* and/or *release
