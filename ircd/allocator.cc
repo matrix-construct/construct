@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_MALLOC_H
+
 // Uncomment or -D this #define to enable our own crude but simple ability to
 // profile dynamic memory usage. Global `new` and `delete` will be captured
 // here by this definition file into thread_local counters accessible via
@@ -15,6 +17,20 @@
 // allocations are occurring during some scope by sampling the counters.
 //
 // #define RB_PROF_ALLOC
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+bool
+ircd::allocator::trim(const size_t &pad)
+{
+	return malloc_trim(pad);
+}
+#else
+bool
+ircd::allocator::trim(const size_t &pad)
+{
+	return false;
+}
+#endif
 
 //
 // allocator::state

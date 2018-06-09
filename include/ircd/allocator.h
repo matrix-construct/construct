@@ -24,6 +24,8 @@ namespace ircd::allocator
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
 	template<class T> struct node;
+
+	bool trim(const size_t &pad = 0); // malloc_trim(3)
 };
 
 /// Profiling counters.
