@@ -44,6 +44,8 @@
 #include <ircd/db/database/env/random_rw_file.h>
 #include <ircd/db/database/env/directory.h>
 #include <ircd/db/database/env/file_lock.h>
+#include <ircd/db/database/env/state.h>
+
 
 // RocksDB port linktime-overriding interfaces (experimental).
 #ifdef IRCD_DB_PORT
@@ -1742,7 +1744,8 @@ noexcept
 //
 
 ircd::db::database::env::env(database *const &d)
-:d{*d}
+:d{*d},
+st{std::make_unique<state>(d)}
 {
 }
 
@@ -3241,6 +3244,21 @@ rocksdb::port::CondVar::SignalAll()
 }
 
 #endif // IRCD_DB_PORT
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/database/env/state.h
+//
+
+ircd::db::database::env::state::state(database *const &d)
+:d{*d}
+{
+}
+
+ircd::db::database::env::state::~state()
+noexcept
+{
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

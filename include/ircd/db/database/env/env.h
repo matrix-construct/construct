@@ -26,6 +26,7 @@ struct ircd::db::database::env final
 	struct random_rw_file;
 	struct directory;
 	struct file_lock;
+	struct state;
 
 	using Status = rocksdb::Status;
 	using EnvOptions = rocksdb::EnvOptions;
@@ -44,6 +45,8 @@ struct ircd::db::database::env final
 	{
 		*rocksdb::Env::Default()
 	};
+
+	std::unique_ptr<struct state> st;
 
 	Status NewSequentialFile(const std::string& f, std::unique_ptr<SequentialFile>* r, const EnvOptions& options) noexcept override;
 	Status NewRandomAccessFile(const std::string& f, std::unique_ptr<RandomAccessFile>* r, const EnvOptions& options) noexcept override;
