@@ -5801,6 +5801,66 @@ console_cmd__feds__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__feds__auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[user_id]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::user::id &user_id
+	{
+		param.at(1, m::me.user_id)
+	};
+
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
+	};
+
+	feds__head(room_id, user_id, out.timeout, [&out]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
+	{
+		if(eptr)
+			return true;
+
+		const json::array auth_events
+		{
+			event.at("auth_events")
+		};
+
+		out << "+ " << std::setw(40) << std::left << origin;
+		for(const json::array auth_event : auth_events)
+		{
+			const auto &auth_event_id
+			{
+				unquote(auth_event.at(0))
+			};
+
+			out << " " << string_view{auth_event_id};
+		};
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__feds__heads(opt &out, const string_view &line)
 {
 	const params param{line, " ",
