@@ -48,6 +48,8 @@ namespace ircd::info
 	extern const size_t rlimit_data;
 	extern const size_t rlimit_rss;
 	extern const size_t rlimit_nofile;
+
+	extern const int glibc[3];
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif

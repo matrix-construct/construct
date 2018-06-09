@@ -183,6 +183,14 @@ ircd::info::startup
 // System / platform information
 //
 
+const int
+glibc[3]
+{
+	__GNU_LIBRARY__,
+	__GLIBC__,
+	__GLIBC_MINOR__,
+};
+
 #ifdef HAVE_SYS_UTSNAME_H
 decltype(ircd::info::utsname)
 ircd::info::utsname{[]
