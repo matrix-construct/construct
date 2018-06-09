@@ -29,7 +29,20 @@ namespace ircd::allocator
 	string_view info(const mutable_buffer &);
 };
 
-/// Profiling counters.
+/// Profiling counters. The purpose of this device is to gauge whether unwanted
+/// or non-obvious allocations are taking place for a specific section. This
+/// profiler has that very specific purpose and is not a replacement for
+/// full-fledged memory profiling. This works by replacing global operator new
+/// and delete, not any deeper hooks on malloc() at this time. To operate this
+/// device you must first recompile and relink with RB_PROF_ALLOC defined at
+/// least for the ircd/allocator.cc unit.
+///
+/// 1. Create an instance by copying the this_thread variable which will
+/// snapshot the current counters.
+/// 2. At some later point, create a second instance by copying the
+/// this_thread variable again.
+/// 3. Use the arithmetic operators to compute the difference between the two
+/// snapshots and the result will be the count isolated between them.
 struct ircd::allocator::profile
 {
 	uint64_t alloc_count {0};
