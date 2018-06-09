@@ -5347,6 +5347,45 @@ console_cmd__user__read(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__read__receipt(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "event_id", "[room_id]|[time]"
+	}};
+
+	const m::user::id user_id
+	{
+		param.at(0)
+	};
+
+	const m::event::id event_id
+	{
+		param.at(1)
+	};
+
+	m::room::id::buf room_id
+	{
+		param[2]?
+			param[2]:
+			string_view{m::get(event_id, "room_id", room_id)}
+	};
+
+	const time_t &ms
+	{
+		param.at(3, ircd::time<milliseconds>())
+	};
+
+	const auto eid
+	{
+		m::receipt::read(room_id, user_id, event_id, ms)
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__read__ignore(opt &out, const string_view &line)
 {
 	const params param{line, " ",
