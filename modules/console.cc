@@ -2447,12 +2447,19 @@ console_cmd__client(opt &out, const string_view &line)
 
 	const params param{line, " ",
 	{
-		"[id]",
+		"[reqs|id]",
 	}};
+
+	const bool &reqs
+	{
+		param[0] == "reqs"
+	};
 
 	const auto &idnum
 	{
-		param.at<ulong>(0, 0)
+		!reqs?
+			param.at<ulong>(0, 0):
+			0
 	};
 
 	for(const auto *const &client : ircd::client::list)
@@ -2461,6 +2468,8 @@ console_cmd__client(opt &out, const string_view &line)
 			continue;
 		else if(idnum && client->id > idnum)
 			break;
+		else if(reqs && !client->reqctx)
+			continue;
 
 		out << setw(8) << left << client->id
 		    << "  " << right << setw(22) << local(*client)
