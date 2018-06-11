@@ -72,9 +72,19 @@ ircd::util::demangle(const mutable_buffer &out,
 			"Demangle failed -1: memory allocation failure"
 		};
 
+		/*
 		case -2: throw not_mangled
 		{
 			"Demangle failed -2: mangled name '%s' is not valid", symbol
+		};
+		*/
+
+		// No real use case within IRCd for throwing not_mangled which may
+		// happen for extern "C" related; instead simply copying the input
+		// to the output (as per expectation) is much better behavior.
+		case -2: return string_view
+		{
+			symbol, strlcpy(out, symbol)
 		};
 
 		case -3: throw demangle_error
