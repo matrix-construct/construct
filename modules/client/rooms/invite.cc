@@ -72,7 +72,7 @@ invite__room_user(const m::room &room,
 	return commit(room, event, content);
 }
 
-m::event::id::buf
+extern "C" m::event::id::buf
 invite__foreign(const m::event &event)
 {
 	const auto &event_id
