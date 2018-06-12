@@ -139,6 +139,7 @@ try
 
 	// Manually load first modules
 	m::modules.emplace("vm"s, "vm"s);
+	m::modules.emplace("vm_fetch"s, "vm_fetch"s);
 
 	// The order of these prefixes will be the loading order. Order of
 	// specific modules within a prefix is not determined here.
