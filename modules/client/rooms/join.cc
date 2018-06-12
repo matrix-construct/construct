@@ -14,7 +14,7 @@ using namespace ircd::m;
 using namespace ircd;
 
 static event::id::buf
-bootstrap(const m::room::alias &room_alias,
+bootstrap(const string_view &host,
           const m::room::id &room_id,
           const m::user::id &user_id);
 
@@ -36,6 +36,11 @@ post__join(client &client,
 		unquote(request["third_party_signed"])
 	};
 
+	const string_view &server_name
+	{
+		unquote(request["server_name"])
+	};
+
 	join__room_user(room_id, request.user_id);
 
 	return resource::response
@@ -52,11 +57,10 @@ join__room_user(const room &room,
                 const id::user &user_id)
 {
 	if(!exists(room))
-		throw m::NOT_FOUND
-		{
-			"Not aware of room %s",
-			string_view{room.room_id}
-		};
+	{
+		const auto &room_id(room.room_id);
+		return bootstrap(room_id.host(), room_id, user_id); //TODO: host
+	}
 
 	json::iov event;
 	json::iov content;
@@ -121,13 +125,13 @@ join__alias_user(const m::room::alias &room_alias,
 	};
 
 	if(!exists(room_id))
-		return bootstrap(room_alias, room_id, user_id);
+		return bootstrap(room_alias.host(), room_id, user_id);
 
 	return join__room_user(room_id, user_id);
 }
 
 static event::id::buf
-bootstrap(const m::room::alias &room_alias,
+bootstrap(const string_view &host,
           const m::room::id &room_id,
           const m::user::id &user_id)
 {
@@ -138,7 +142,7 @@ bootstrap(const m::room::alias &room_alias,
 
 	m::v1::make_join request
 	{
-		room_id, user_id, buf, { room_alias.host() }
+		room_id, user_id, buf, { host }
 	};
 
 	request.wait(seconds(8)); //TODO: conf
@@ -226,6 +230,7 @@ bootstrap(const m::room::alias &room_alias,
 	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.prev_check_exists = false;
+	opts.head_must_exist = false;
 	opts.history = false;
 	opts.infolog_accept = true;
 	const m::event::id::buf event_id
@@ -258,7 +263,7 @@ bootstrap(const m::room::alias &room_alias,
 
 	m::v1::send_join sj
 	{
-		room_id, event_id, strung, buf2, { room_alias.host() }
+		room_id, event_id, strung, buf2, { host }
 	};
 
 	sj.wait(seconds(8)); //TODO: conf
