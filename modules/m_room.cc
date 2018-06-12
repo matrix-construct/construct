@@ -185,6 +185,35 @@ is_complete(const m::room &room)
 	return {true, depth};
 }
 
+extern "C" bool
+state__force_present(const m::event &event)
+{
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	if(!defined(json::get<"state_key"_>(event)))
+		throw error
+		{
+			"event %s is not a state event (no state_key)",
+			json::get<"event_id"_>(event)
+		};
+
+	m::dbs::write_opts opts;
+	opts.event_idx = index(event);
+	opts.present = true;
+	opts.history = false;
+	opts.head = false;
+	opts.refs = false;
+
+	m::dbs::_index__room_state(txn, event, opts);
+	m::dbs::_index__room_joined(txn, event, opts);
+
+	txn();
+	return true;
+}
+
 extern "C" size_t
 state__rebuild_present(const m::room &room)
 {

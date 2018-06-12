@@ -4499,6 +4499,39 @@ console_cmd__room__state(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__force(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at(0)
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	using prototype = bool (const m::event &);
+	static m::import<prototype> state__force_present
+	{
+		"m_room", "state__force_present"
+	};
+
+	const auto res
+	{
+		state__force_present(event)
+	};
+
+	out << "forced " << event_id << " into present state" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 {
 	const params param{line, " ",
