@@ -78,6 +78,7 @@ void
 ircd::m::vm::fini()
 {
 	m::modules.erase("vm_fetch"s);
+	assert(eval::list.empty());
 
 	id::event::buf event_id;
 	const auto current_sequence
@@ -114,6 +115,7 @@ ircd::m::vm::eval__commit_room(eval &eval,
 
 	// Note that the regular opts is unconditionally overridden because the
 	// user should have provided copts instead.
+	assert(!eval.opts || eval.opts == eval.copts);
 	eval.opts = eval.copts;
 
 	// Set a member pointer to the json::iov currently being composed. This
@@ -256,6 +258,7 @@ ircd::m::vm::eval__commit(eval &eval,
 
 	// Note that the regular opts is unconditionally overridden because the
 	// user should have provided copts instead.
+	assert(!eval.opts || eval.opts == eval.copts);
 	eval.opts = eval.copts;
 
 	// Set a member pointer to the json::iov currently being composed. This
@@ -648,7 +651,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	};
 
 	eval.txn = &txn;
-	const unwind cleartxn{[&eval]
+	const unwind clear{[&eval]
 	{
 		eval.txn = nullptr;
 	}};
@@ -736,6 +739,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 void
 ircd::m::vm::write(eval &eval)
 {
+	assert(eval.txn);
 	auto &txn(*eval.txn);
 	if(eval.opts->debuglog_accept)
 		log::debug
