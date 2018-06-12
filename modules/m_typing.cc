@@ -81,7 +81,7 @@ _handle_edu_m_typing(const m::event &event,
 
 	m::event typing{event};
 	json::get<"room_id"_>(typing) = room_id;
-	json::get<"type"_>(typing) = "m.typing";
+	json::get<"type"_>(typing) = "m.typing"_sv;
 
 	char buf[512];
 	const json::value user_ids[]

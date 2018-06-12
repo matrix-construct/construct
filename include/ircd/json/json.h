@@ -86,7 +86,11 @@ namespace ircd
 struct ircd::json::string
 :string_view
 {
-	using string_view::string_view;
+	string(const string_view &s)
+	:string_view{unquote(s)}
+	{}
+
+	string() = default;
 };
 
 template<size_t SIZE>
