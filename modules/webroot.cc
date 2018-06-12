@@ -10,24 +10,57 @@
 
 using namespace ircd;
 
-std::map<std::string, std::string, iless> files
-{};
+std::map<std::string, std::string, iless> files;
+
+static string_view
+content_type(const mutable_buffer &out, const string_view &filename, const string_view &content);
+
+resource::response
+get_root(client &client, const resource::request &request);
+
+static void
+init_files();
+
+mapi::header
+IRCD_MODULE
+{
+	"Web root content resource",
+	init_files
+};
+
+resource
+root_resource
+{
+	"/",
+	{
+		"Webroot resource",
+		root_resource.DIRECTORY
+	}
+};
+
+resource::method
+root_get
+{
+	root_resource, "GET", get_root
+};
 
 void
 init_files()
 {
 	// TODO: XXX
-	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static"))
+	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/deps/riot-web/webapp/"))
+	{
+		const auto name(tokens_after(file, '/', 6));
+		files.emplace(std::string(name), file);
+	}
+/*
+	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static/"))
 	{
 		const auto name(tokens_after(file, '/', 5));
 		files.emplace(std::string(name), file);
 	}
+*/
 }
-
-static string_view
-content_type(const mutable_buffer &out,
-             const string_view &filename,
-             const string_view &content);
 
 resource::response
 get_root(client &client,
@@ -159,23 +192,3 @@ content_type(const mutable_buffer &out,
 
 	return content_type;
 }
-
-resource root_resource
-{
-	"/",
-	{
-		"Webroot resource",
-		root_resource.DIRECTORY
-	}
-};
-
-resource::method root_get
-{
-	root_resource, "GET", get_root
-};
-
-mapi::header IRCD_MODULE
-{
-	"Web root content resource",
-	init_files
-};

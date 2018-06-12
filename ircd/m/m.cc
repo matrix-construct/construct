@@ -154,7 +154,7 @@ try
 				m::modules.emplace(name, name);
 
 	// Manually load last modules
-	m::modules.emplace("root"s, "root"s);
+	m::modules.emplace("webroot"s, "webroot"s);
 }
 catch(...)
 {
