@@ -298,6 +298,8 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 struct ircd::m::feds::head
 :m::v1::make_join
 {
+	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
+
 	char origin[256];
 	char buf[16_KiB];
 
@@ -342,7 +344,7 @@ extern "C" void
 feds__head(const m::room::id &room_id,
            const m::user::id &user_id,
            const milliseconds &timeout,
-           const m::feds::state::closure &closure)
+           const m::feds::head::closure &closure)
 {
 	auto reqs
 	{
