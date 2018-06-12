@@ -1373,7 +1373,7 @@ ircd::m::dbs::desc::events_content
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	32_MiB, //TODO: conf
 
 	// cache size for compressed assets
 	8_MiB, //TODO: conf
@@ -1885,7 +1885,7 @@ ircd::m::dbs::desc::events_prev_events
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	24_MiB, //TODO: conf
 
 	// cache size for compressed assets
 	8_MiB, //TODO: conf
