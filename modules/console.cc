@@ -7395,6 +7395,7 @@ console_cmd__vm__eval(opt &out, const string_view &line)
 		out << std::setw(9) << std::right << eval->id
 		    << " | " << std::setw(4) << std::right << id(*eval->ctx)
 		    << " | " << std::setw(4) << std::right << eval->sequence
+		    << " | " << std::setw(16) << std::left << (eval->phase? eval->phase->name : "")
 		    << " | " << std::setw(64) << std::left << eval->event_id
 		    ;
 

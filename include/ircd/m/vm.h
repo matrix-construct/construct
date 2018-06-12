@@ -247,8 +247,11 @@ struct ircd::m::vm::phase
 :instance_list<phase>
 {
 	string_view name;
+	std::function<void (eval &)> function;
 
-	phase(const string_view &name);
+	void operator()(eval &);
+
+	phase(const string_view &name, decltype(function) = nullptr);
 };
 
 struct ircd::m::vm::accepted
