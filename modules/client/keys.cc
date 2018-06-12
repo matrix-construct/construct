@@ -90,7 +90,7 @@ post__keys_upload(client &client,
 	}
 
 	const int64_t curve25519_count{0};
-	const int64_t signed_curve25519_count{size(one_time_keys)};
+	const int64_t signed_curve25519_count{0};
 	const json::members one_time_key_counts
 	{
 		{ "curve25519",         curve25519_count        },
