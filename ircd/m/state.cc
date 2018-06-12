@@ -357,14 +357,11 @@ ircd::m::state::insert(db::txn &txn,
 	const auto &type{at<"type"_>(event)};
 	const auto &state_key{at<"state_key"_>(event)};
 	const auto &event_id{at<"event_id"_>(event)};
+	assert(defined(state_key));
 
-	if(type == "m.room.create")
-	{
-		assert(empty(rootin));
+	if(empty(rootin))
 		return _create(txn, rootout, type, state_key, event_id);
-	}
 
-	assert(!empty(rootin));
 	return insert(txn, rootout, rootin, type, state_key, event_id);
 }
 
@@ -375,9 +372,6 @@ ircd::m::state::_create(db::txn &txn,
                         const string_view &state_key,
                         const string_view &val)
 {
-	assert(type == "m.room.create");
-	assert(defined(state_key));
-
 	// Because this is a new tree and nothing is read from the DB, all
 	// writes here are just copies into the txn and these buffers can
 	// remain off-stack.
