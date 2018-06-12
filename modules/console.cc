@@ -6856,6 +6856,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
 	vmopts.notify = false;
+	vmopts.verify = false;
 	m::vm::eval eval
 	{
 		vmopts
