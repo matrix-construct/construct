@@ -98,11 +98,17 @@ try
 }
 catch(const m::error &e)
 {
-	log.error("%s %s", e.what(), e.content);
+	log::error
+	{
+		log, "%s %s", e.what(), e.content
+	};
 }
 catch(const std::exception &e)
 {
-	log.error("%s", e.what());
+	log::error
+	{
+		log, "%s", e.what()
+	};
 }
 
 ircd::m::init::~init()
@@ -758,19 +764,19 @@ noexcept
 void
 ircd::m::keys::init::certificate()
 {
-	const string_view origin
+	const std::string origin
 	{
-		unquote(this->config.at({"ircd", "origin"}))
+		unquote(this->config.get({"ircd", "origin"}, "localhost"s))
 	};
 
 	const json::object config
 	{
-		this->config.at({"origin", origin})
+		this->config.get({"origin", origin})
 	};
 
 	const std::string private_key_file
 	{
-		unquote(config.get("ssl_private_key_pem_path"))
+		unquote(config.get("ssl_private_key_pem_path", origin + ".crt.key"))
 	};
 
 	const std::string public_key_file
@@ -800,17 +806,8 @@ ircd::m::keys::init::certificate()
 
 	const std::string cert_file
 	{
-		unquote(config.get("ssl_certificate_pem_path"))
+		unquote(config.get("ssl_certificate_pem_path", origin + ".crt"))
 	};
-
-	if(!cert_file)
-		throw user_error
-		{
-			"You must specify an SSL certificate file path in the config at"
-			" origin.[%s].ssl_certificate_pem_path even if you do not have one;"
-			" it will be created there.",
-			origin
-		};
 
 	if(!fs::exists(cert_file))
 	{
@@ -875,16 +872,22 @@ ircd::m::keys::init::certificate()
 		b64encode_unpadded(hash)
 	};
 
-	log.info("Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
-	         cert_file,
-	         cert_pem.size(),
-	         ircd::size(cert_der),
-	         self::tls_cert_der_sha256_b64);
+	log::info
+	{
+		log, "Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
+		cert_file,
+		cert_pem.size(),
+		ircd::size(cert_der),
+		self::tls_cert_der_sha256_b64
+	};
 
 	thread_local char print_buf[8_KiB];
-	log.info("Certificate `%s' :%s",
-	         cert_file,
-	         openssl::print_subject(print_buf, cert_pem));
+	log::info
+	{
+		log, "Certificate `%s' :%s",
+		cert_file,
+		openssl::print_subject(print_buf, cert_pem)
+	};
 }
 
 void
