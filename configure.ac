@@ -142,6 +142,30 @@ AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
 RB_DEFINE_UNQUOTED([OS], ["$host_os"], [Host operating system])
 
 
+dnl
+dnl The CXX standard check even with the sd6 check wasn't enough for GCC. This
+dnl is because we're developing with C++15'ish, which is in some grey area
+dnl between C++14 and C++17 and the implementation differs between GCC 5.x and
+dnl GCC 6.x. The build will b0rk with GCC 5.x so the version must be checked.
+dnl
+
+AC_MSG_CHECKING(whether specific compiler version is sufficient)
+AM_COND_IF([GCC],
+[
+	gvmaj=`$CXX -dumpversion | cut -d"." -f1`
+	gvmin=`$CXX -dumpversion | cut -d"." -f2`
+
+	if [[ "$gvmaj" -ge "6" ]]; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+		AC_MSG_ERROR([Did you forget to export CXX=g++-6 ?])
+	fi
+], [
+	AC_MSG_RESULT([yes])
+])
+
+
 
 dnl ***************************************************************************
 dnl Developer options
