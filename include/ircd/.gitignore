@@ -1,5 +1,5 @@
 setup.h*
 serno.h
-stdinc.pic*
+ircd.pic*
 config.h
 config.h.in

@@ -24,19 +24,19 @@ endif
 
 if BUILD_PCH
 BUILT_SOURCES = \
-	stdinc.h.gch \
-	stdinc.pic.h.gch \
+	ircd.h.gch \
+	ircd.pic.h.gch \
 	###
 endif
 
-stdinc.h.gch:
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o stdinc.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) stdinc.h
+ircd.h.gch:
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
 
-stdinc.pic.h.gch:
-	cp stdinc.h stdinc.pic.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o stdinc.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) stdinc.pic.h
+ircd.pic.h.gch:
+	cp ircd.h ircd.pic.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.pic.h
 
 clean-local:
-	rm -f stdinc.h.gch
-	rm -f stdinc.pic.h
-	rm -f stdinc.pic.h.gch
+	rm -f ircd.h.gch
+	rm -f ircd.pic.h
+	rm -f ircd.pic.h.gch

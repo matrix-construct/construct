@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
-	-include $(top_srcdir)/include/ircd/ircd.h \
+	-include $(top_srcdir)/include/ircd/ircd.pic.h \
 	-include $(top_srcdir)/include/ircd/mods/mapi.h \
 	###
 

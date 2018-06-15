@@ -27,10 +27,10 @@ involves the standard library and most of libircd. This is what an embedder
 will be working with. These headers will expose our own interfaces wrapping
 3rd party dependencies which are not included there.
 
-	There are actually two files in play here: `<ircd/stdinc.h>` and `<ircd/ircd.h>`.
-	We have to offer two different pre-compilations: one with `-fPIC`
-	and one without. Therefor the contents are in `<ircd/stdinc.h>` and the
-	preprocessor determination for which is in `<ircd/ircd.h>`.
+	There are actually two files in play here: `<ircd/ircd.h>` and
+	`<ircd/ircd.pic.h>`. The latter is generated dynamically and will not
+	exist until `make` creates it. We have to offer two different
+	pre-compilations: one with `-fPIC` and one without.
 
 - Boost ASIO include group `<ircd/asio.h>` is a header group exposing the
 boost::asio library. We only involve this header in compilation units working

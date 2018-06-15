@@ -16,7 +16,7 @@ AM_CPPFLAGS = \
 	@SNAPPY_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
-	-include ircd/ircd.h \
+	-include ircd/ircd.pic.h \
 	###
 
 if MINGW
