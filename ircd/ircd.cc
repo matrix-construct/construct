@@ -16,14 +16,14 @@ namespace ircd
 	enum runlevel _runlevel {runlevel::HALT};    // Current libircd runlevel
 	const enum runlevel &runlevel {_runlevel};   // Observer for current RL
 
-	boost::asio::io_context *ios;                // user's io service
-	struct strand *strand;                       // libircd event serializer
-
-	ctx::ctx *main_context;                      // Main program loop
 	bool debugmode;                              // meaningful ifdef RB_DEBUG
 	bool nolisten;                               // indicates no listener binding
 	bool noautomod;                              // no module loading on init
 	bool checkdb;                                // check databases when opening
+
+	boost::asio::io_context *ios;                // user's io service
+	ircd::strand *strand;                        // libircd event serializer
+	ctx::ctx *main_context;                      // Main program loop
 
 	void set_runlevel(const enum runlevel &);
 	void at_main_exit() noexcept;
@@ -84,12 +84,12 @@ try
 	log::init();
 	log::mark("DEADSTART"); // 6600
 
-	// The conf supplied by the user is read in; see: ircd::conf.
-	conf::init(configfile);
-
 	// This starts off the log with library information.
 	info::init();
 	info::dump();
+
+	// The conf supplied by the user is read in; see: ircd::conf.
+	conf::init(configfile);
 
 	// Setup the main context, which is a new stack executing the function
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned
