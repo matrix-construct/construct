@@ -907,6 +907,56 @@ dnl
 
 
 dnl
+dnl libsodium (NaCl) crypto support
+dnl
+
+dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
+AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
+AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
+
+AM_COND_IF([SODIUM], [],
+[
+	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
+])
+
+AC_SUBST(SODIUM_CPPFLAGS, [])
+AC_SUBST(SODIUM_LDFLAGS, [])
+AC_SUBST(SODIUM_LIBS, ["-lsodium"])
+
+
+dnl
+dnl libgmp support
+dnl
+
+PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
+AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
+
+AC_SUBST(GMP_CPPFLAGS, [])
+AC_SUBST(GMP_LDFLAGS, [])
+AC_SUBST(GMP_LIBS, ["-lgmp"])
+
+
+dnl
+dnl libmagic support
+dnl
+
+RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
+AC_CHECK_LIB(magic, magic_version,
+[
+	have_magic="yes"
+	AC_SUBST(MAGIC_CPPFLAGS, [])
+	AC_SUBST(MAGIC_LDFLAGS, [])
+	AC_SUBST(MAGIC_LIBS, ["-lmagic"])
+	AC_DEFINE(HAVE_MAGIC, 1, [Define to 1 if libmagic (-lmagic) is available.])
+], [
+	have_magic="no"
+	AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
+])
+
+AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
+
+
+dnl
 dnl zlib support
 dnl
 
@@ -1396,56 +1446,6 @@ elif test x"$cf_enable_gnutls" != xno; then
 	MBEDTLS_CFLAGS=""
 	SSL_TYPE="gnutls"
 fi
-
-
-dnl
-dnl libsodium (NaCl) crypto support
-dnl
-
-dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
-AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
-AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
-
-AM_COND_IF([SODIUM], [],
-[
-	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
-])
-
-AC_SUBST(SODIUM_CPPFLAGS, [])
-AC_SUBST(SODIUM_LDFLAGS, [])
-AC_SUBST(SODIUM_LIBS, ["-lsodium"])
-
-
-dnl
-dnl libgmp support
-dnl
-
-PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
-AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
-
-AC_SUBST(GMP_CPPFLAGS, [])
-AC_SUBST(GMP_LDFLAGS, [])
-AC_SUBST(GMP_LIBS, ["-lgmp"])
-
-
-dnl
-dnl libmagic support
-dnl
-
-RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
-AC_CHECK_LIB(magic, magic_version,
-[
-	have_magic="yes"
-	AC_SUBST(MAGIC_CPPFLAGS, [])
-	AC_SUBST(MAGIC_LDFLAGS, [])
-	AC_SUBST(MAGIC_LIBS, ["-lmagic"])
-	AC_DEFINE(HAVE_MAGIC, 1, [Define to 1 if libmagic (-lmagic) is available.])
-], [
-	have_magic="no"
-	AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
-])
-
-AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
 
 
 dnl
