@@ -39,7 +39,6 @@ const char *const usererrstr
 )"};
 
 bool printversion;
-bool testing_conf;
 bool cmdline;
 const char *configfile;
 const char *execute;
@@ -48,7 +47,6 @@ lgetopt opts[] =
 	{ "help",       nullptr,          lgetopt::USAGE,   "Print this text" },
 	{ "version",    &printversion,    lgetopt::BOOL,    "Print version and exit" },
 	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
-	{ "conftest",   &testing_conf,    lgetopt::YESNO,   "Test the configuration files and exit" },
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
 	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
