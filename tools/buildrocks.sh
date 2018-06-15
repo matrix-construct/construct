@@ -48,5 +48,6 @@ run git submodule update --init deps/rocksdb
 
 run cd deps/rocksdb
 run git checkout $BRANCH
-CFLAGS="-fPIC -frtti -DROCKSDB_USE_RTTI" run make -j4 $LINKAGE
+NJOBS=`nproc`
+CFLAGS="-fPIC -frtti -DROCKSDB_USE_RTTI" run make -j$NJOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
