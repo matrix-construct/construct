@@ -1442,6 +1442,7 @@ AC_CHECK_LIB(magic, magic_version,
 	AC_DEFINE(HAVE_MAGIC, 1, [Define to 1 if libmagic (-lmagic) is available.])
 ], [
 	have_magic="no"
+	AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
 ])
 
 AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
