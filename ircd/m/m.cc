@@ -811,7 +811,17 @@ ircd::m::keys::init::certificate()
 
 	if(!fs::exists(cert_file))
 	{
-		if(!this->config.has({"certificate", origin, "subject"}))
+		std::string subject
+		{
+			this->config.get({"certificate", origin, "subject"})
+		};
+
+		if(!subject)
+			subject = json::strung{json::members
+			{
+				{ "CN", origin }
+			}};
+/*
 			throw user_error
 			{
 				"Failed to find SSL certificate @ `%s'. Additionally, no"
@@ -819,7 +829,7 @@ ircd::m::keys::init::certificate()
 				cert_file,
 				origin
 			};
-
+*/
 		log::warning
 		{
 			"Failed to find SSL certificate @ `%s'; creating for '%s'...",
@@ -836,7 +846,7 @@ ircd::m::keys::init::certificate()
 		{
 			{ "private_key_pem_path",  private_key_file  },
 			{ "public_key_pem_path",   public_key_file   },
-			{ "subject", this->config.get({"certificate", origin, "subject"}) }
+			{ "subject",               subject           },
 		}};
 
 		const auto cert
@@ -893,19 +903,19 @@ ircd::m::keys::init::certificate()
 void
 ircd::m::keys::init::signing()
 {
-	const string_view origin
+	const std::string origin
 	{
-		unquote(this->config.at({"ircd", "origin"}))
+		unquote(this->config.get({"ircd", "origin"}, "localhost"))
 	};
 
 	const json::object config
 	{
-		this->config.at({"origin", unquote(origin)})
+		this->config.get({"origin", origin})
 	};
 
 	const std::string sk_file
 	{
-		unquote(config.get("ed25519_private_key_path"))
+		unquote(config.get("ed25519_private_key_path", origin + ".key"))
 	};
 
 	if(!sk_file)
