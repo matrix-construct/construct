@@ -15,7 +15,7 @@ namespace ircd::m
 {
 	struct node;
 
-	extern const room nodes;
+	extern room nodes;
 
 	bool my(const node &);
 	bool exists(const id::node &);
@@ -26,7 +26,7 @@ namespace ircd::m
 /// node may be a peer (ircd::server::peer) which is directly connected or it
 /// may be indirect. The node may be a matrix "origin" or it may be a member
 /// of a cluster perusing under the same origin.
-/// 
+///
 /// First consider the node_id, which has the sigil ':'. A node which addresses
 /// an origin as a whole has the mxid `::domain.tld` which has an empty
 /// localpart. A node which is concerned with some entity within an origin has

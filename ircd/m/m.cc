@@ -360,6 +360,11 @@ ircd::m::self::host()
 // init
 //
 
+//TODO: XXX
+extern ircd::m::room::id::buf users_room_id;
+extern ircd::m::room::id::buf tokens_room_id;
+extern ircd::m::room::id::buf nodes_room_id;
+
 ircd::m::self::init::init(const json::object &config)
 {
 	const string_view &origin_name
@@ -375,6 +380,15 @@ ircd::m::self::init::init(const json::object &config)
 
 	ircd_node_id = {"", origin_name};
 	m::my_node = {ircd_node_id};
+
+	users_room_id = {"users", origin_name};
+	m::user::users = {users_room_id};
+
+	tokens_room_id = {"tokens", origin_name};
+	m::user::tokens = {tokens_room_id};
+
+	nodes_room_id = {"nodes", origin_name};
+	m::nodes = {nodes_room_id};
 
 	if(origin_name == "localhost")
 		log::warning
@@ -905,7 +919,7 @@ ircd::m::keys::init::signing()
 {
 	const std::string origin
 	{
-		unquote(this->config.get({"ircd", "origin"}, "localhost"))
+		unquote(this->config.get({"ircd", "origin"}, "localhost"s))
 	};
 
 	const json::object config
@@ -1167,7 +1181,7 @@ ircd::m::presence::valid_state(const string_view &state)
 
 /// ID of the room which indexes all nodes (an instance of the room is
 /// provided below).
-const ircd::m::room::id::buf
+ircd::m::room::id::buf
 nodes_room_id
 {
 	"nodes", ircd::my_host()
@@ -1176,7 +1190,7 @@ nodes_room_id
 /// The nodes room is the database of all nodes. It primarily serves as an
 /// indexing mechanism and for top-level node related keys.
 ///
-const ircd::m::room
+ircd::m::room
 ircd::m::nodes
 {
 	nodes_room_id
@@ -1697,7 +1711,7 @@ ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 
 /// ID of the room which indexes all users (an instance of the room is
 /// provided below).
-const ircd::m::room::id::buf
+ircd::m::room::id::buf
 users_room_id
 {
 	"users", ircd::my_host()
@@ -1716,7 +1730,7 @@ ircd::m::user::users
 
 /// ID of the room which stores ephemeral tokens (an instance of the room is
 /// provided below).
-const ircd::m::room::id::buf
+ircd::m::room::id::buf
 tokens_room_id
 {
 	"tokens", ircd::my_host()
