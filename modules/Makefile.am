@@ -136,6 +136,7 @@ client_client_directory_user_la_SOURCES = client/directory/user.cc
 client_client_publicised_groups_la_SOURCES = client/publicised_groups.cc
 client_client_initialsync_la_SOURCES = client/initialsync.cc
 client_client_search_la_SOURCES = client/search.cc
+client_client_joined_groups_la_SOURCES = client/joined_groups.cc
 
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -159,6 +160,7 @@ client_module_LTLIBRARIES = \
 	client/client_publicised_groups.la \
 	client/client_initialsync.la \
 	client/client_search.la \
+	client/client_joined_groups.la \
 	###
 
 #
