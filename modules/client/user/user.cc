@@ -59,6 +59,9 @@ get_user(client &client, const resource::request &request)
 	if(cmd == "account_data")
 		return get__account_data(client, request, user_id);
 
+	if(cmd == "rooms")
+		return get__rooms(client, request, user_id);
+
 	throw m::NOT_FOUND
 	{
 		"/user command not found"

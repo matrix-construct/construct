@@ -67,6 +67,11 @@ post__openid(ircd::client &client,
 //
 
 ircd::resource::response
+get__rooms(ircd::client &client,
+           const ircd::resource::request &request,
+           const ircd::m::user::id &user_id);
+
+ircd::resource::response
 put__rooms(ircd::client &client,
            const ircd::resource::request &request,
            const ircd::m::user::id &user_id);
