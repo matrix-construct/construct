@@ -2060,6 +2060,20 @@ const
 	return function(*this, type, closure);
 }
 
+ircd::string_view
+ircd::m::user::_account_data_type(const mutable_buffer &out,
+                                  const m::room::id &room_id)
+{
+	using prototype = string_view (const mutable_buffer &, const m::room::id &);
+
+	static import<prototype> function
+	{
+		"client_user", "room_account_data_type"
+	};
+
+	return function(out, room_id);
+}
+
 ircd::m::event::id::buf
 ircd::m::user::profile(const m::user &sender,
                        const string_view &key,

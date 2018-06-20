@@ -186,9 +186,9 @@ room_account_data_typebuf_size
 	m::room::id::MAX_SIZE + size(room_account_data_type_prefix)
 };
 
-static string_view
-make_type(const mutable_buffer &out,
-          const m::room::id &room_id)
+extern "C" string_view
+room_account_data_type(const mutable_buffer &out,
+                       const m::room::id &room_id)
 {
 	assert(size(out) >= room_account_data_typebuf_size);
 
@@ -208,7 +208,7 @@ try
 	char typebuf[room_account_data_typebuf_size];
 	const string_view type
 	{
-		make_type(typebuf, room.room_id)
+		room_account_data_type(typebuf, room.room_id)
 	};
 
 	const m::user::room user_room
@@ -248,7 +248,7 @@ room_account_data_set(const m::user &user,
 	char typebuf[room_account_data_typebuf_size];
 	const string_view type
 	{
-		make_type(typebuf, room.room_id)
+		room_account_data_type(typebuf, room.room_id)
 	};
 
 	const m::user::room user_room

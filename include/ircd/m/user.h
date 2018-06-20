@@ -52,6 +52,7 @@ struct ircd::m::user
 	event::id::buf profile(const m::user &sender, const string_view &key, const string_view &value);
 
 	using account_data_closure = std::function<void (const json::object &)>;
+	static string_view _account_data_type(const mutable_buffer &out, const m::room::id &);
 	void account_data(const string_view &type, const account_data_closure &) const;
 	void account_data(const m::room &, const string_view &type, const account_data_closure &) const;
 	bool account_data(std::nothrow_t, const string_view &type, const account_data_closure &) const;
