@@ -1939,6 +1939,22 @@ const
 }
 
 ircd::m::event::id::buf
+ircd::m::user::account_data(const m::room &room,
+                            const m::user &sender,
+                            const string_view &type,
+                            const json::object &val)
+{
+	using prototype = event::id::buf (const m::user &, const m::room &, const m::user &, const string_view &, const json::object &);
+
+	static import<prototype> function
+	{
+		"client_user", "room_account_data_set"
+	};
+
+	return function(*this, room, sender, type, val);
+}
+
+ircd::m::event::id::buf
 ircd::m::user::account_data(const m::user &sender,
                             const string_view &type,
                             const json::object &val)
@@ -1951,6 +1967,22 @@ ircd::m::user::account_data(const m::user &sender,
 	};
 
 	return function(*this, sender, type, val);
+}
+
+ircd::json::object
+ircd::m::user::account_data(const mutable_buffer &out,
+                            const m::room &room,
+                            const string_view &type)
+const
+{
+	json::object ret;
+	account_data(std::nothrow, room, type, [&out, &ret]
+	(const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
 }
 
 ircd::json::object
@@ -1970,6 +2002,21 @@ const
 
 bool
 ircd::m::user::account_data(std::nothrow_t,
+                            const m::room &room,
+                            const string_view &type,
+                            const account_data_closure &closure)
+const try
+{
+	account_data(room, type, closure);
+	return true;
+}
+catch(const std::exception &e)
+{
+	return false;
+}
+
+bool
+ircd::m::user::account_data(std::nothrow_t,
                             const string_view &type,
                             const account_data_closure &closure)
 const try
@@ -1980,6 +2027,22 @@ const try
 catch(const std::exception &e)
 {
 	return false;
+}
+
+void
+ircd::m::user::account_data(const m::room &room,
+                            const string_view &type,
+                            const account_data_closure &closure)
+const
+{
+	using prototype = void (const m::user &, const m::room &, const string_view &, const account_data_closure &);
+
+	static import<prototype> function
+	{
+		"client_user", "room_account_data_get"
+	};
+
+	return function(*this, room, type, closure);
 }
 
 void

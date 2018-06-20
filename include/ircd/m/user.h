@@ -53,9 +53,13 @@ struct ircd::m::user
 
 	using account_data_closure = std::function<void (const json::object &)>;
 	void account_data(const string_view &type, const account_data_closure &) const;
+	void account_data(const m::room &, const string_view &type, const account_data_closure &) const;
 	bool account_data(std::nothrow_t, const string_view &type, const account_data_closure &) const;
+	bool account_data(std::nothrow_t, const m::room &, const string_view &type, const account_data_closure &) const;
 	json::object account_data(const mutable_buffer &out, const string_view &type) const; //nothrow
+	json::object account_data(const mutable_buffer &out, const m::room &, const string_view &type) const; //nothrow
 	event::id::buf account_data(const m::user &sender, const string_view &type, const json::object &value);
+	event::id::buf account_data(const m::room &, const m::user &sender, const string_view &type, const json::object &value);
 
 	using filter_closure = std::function<void (const json::object &)>;
 	bool filter(std::nothrow_t, const string_view &filter_id, const filter_closure &) const;
