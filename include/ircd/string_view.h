@@ -15,8 +15,8 @@ namespace ircd
 {
 	struct string_view;
 
-	const char *data(const string_view &);
-	size_t size(const string_view &);
+	constexpr const char *data(const string_view &);
+	constexpr size_t size(const string_view &);
 	bool empty(const string_view &);
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
@@ -244,13 +244,13 @@ ircd::defined(const string_view &str)
 	return str.defined();
 }
 
-inline size_t
+constexpr size_t
 ircd::size(const string_view &str)
 {
 	return str.size();
 }
 
-inline const char *
+constexpr const char *
 ircd::data(const string_view &str)
 {
 	return str.data();
