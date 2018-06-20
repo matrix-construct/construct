@@ -1134,7 +1134,48 @@ polylog_sync_room_account_data(shortpoll &sp,
                                json::stack::object &out,
                                const m::room &room)
 {
+	json::stack::member member{out, "events"};
+	json::stack::array array{member};
+	const m::room::state state
+	{
+		sp.user_room
+	};
 
+	char typebuf[288]; //TODO: room_account_data_typebuf_size
+	const auto type
+	{
+		m::user::_account_data_type(typebuf, room.room_id)
+	};
+
+	state.for_each(type, [&sp, &array]
+	(const m::event &event)
+	{
+		const auto &event_idx
+		{
+			index(event, std::nothrow)
+		};
+
+		if(event_idx < sp.since || event_idx >= sp.current)
+			return;
+
+		json::stack::object object{array};
+
+		// type
+		{
+			json::stack::member member
+			{
+				object, "type", at<"state_key"_>(event)
+			};
+		}
+
+		// content
+		{
+			json::stack::member member
+			{
+				object, "content", at<"content"_>(event)
+			};
+		}
+	});
 }
 
 
