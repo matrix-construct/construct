@@ -147,6 +147,7 @@ struct ircd::m::room
 	bool membership(const m::id::user &, const string_view &membership = "join") const;
 	string_view membership(const mutable_buffer &out, const m::id::user &) const;
 	bool visible(const string_view &mxid, const m::event *const & = nullptr) const;
+	bool lonly() const;
 
 	room(const id &room_id,
 	     const string_view &event_id,

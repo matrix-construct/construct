@@ -161,6 +161,25 @@ ircd::m::my(const room &room)
 // room
 //
 
+/// The only joined members are from our origin (local only). This indicates
+/// we won't have any other federation servers to query for room data, nor do
+/// we need to broadcast events to the federation. This is not an authority
+/// about a room's type or ability to federate. Returned value changes to false
+/// when another origin joins.
+bool
+ircd::m::room::lonly()
+const
+{
+	const origins origins(*this);
+	if(origins.count() != 1)
+		return false;
+
+	if(!origins.has(m::my_host()))
+		return false;
+
+	return true;
+}
+
 bool
 ircd::m::room::visible(const string_view &mxid,
                        const event *const &event)
