@@ -953,7 +953,7 @@ try
 }
 ,ep
 {
-	ip::address::from_string(unquote(opts.get("host", "127.0.0.1"s))),
+	ip::address::from_string(unquote(opts.get("host", "0.0.0.0"s))),
 	opts.get<uint16_t>("port", 8448L)
 }
 ,a
