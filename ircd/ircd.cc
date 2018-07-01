@@ -22,7 +22,7 @@ namespace ircd
 	bool checkdb;                                // check databases when opening
 
 	boost::asio::io_context *ios;                // user's io service
-	ircd::strand *strand;                        // libircd event serializer
+	struct strand *strand;                       // libircd event serializer
 	ctx::ctx *main_context;                      // Main program loop
 
 	void set_runlevel(const enum runlevel &);
