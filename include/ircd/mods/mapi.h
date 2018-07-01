@@ -17,7 +17,7 @@ namespace ircd::mapi
 	struct header;
 	using magic_t = uint16_t;
 	using version_t = uint16_t;
-	using metadata = std::map<std::string, std::string>;
+	using metadata = std::map<string_view, string_view, std::less<>>;
 	using init_function = std::function<void ()>;
 	using fini_function = std::function<void ()>;
 
@@ -47,14 +47,14 @@ struct ircd::mapi::header
 	mods::mod *self;                             // Module instance once loaded
 
 	// get and set metadata
-	auto &operator[](const std::string &s) const;
-	auto &operator[](const std::string &s);
+	auto &operator[](const string_view &s) const;
+	auto &operator[](const string_view &s);
 
 	// become self
 	operator const mods::mod &() const;
 	operator mods::mod &();
 
-	header(const char *const &desc = "<no description>",
+	header(const string_view &desc = "<no description>",
 	       init_function = {},
 	       fini_function = {});
 
@@ -62,7 +62,7 @@ struct ircd::mapi::header
 };
 
 inline
-ircd::mapi::header::header(const char *const &desc,
+ircd::mapi::header::header(const string_view &desc,
                            init_function init,
                            fini_function fini)
 :magic(MAGIC)
@@ -101,13 +101,13 @@ const
 }
 
 inline auto &
-ircd::mapi::header::operator[](const std::string &key)
+ircd::mapi::header::operator[](const string_view &key)
 {
 	return meta[key];
 }
 
 inline auto &
-ircd::mapi::header::operator[](const std::string &key)
+ircd::mapi::header::operator[](const string_view &key)
 const
 {
 	return meta.at(key);
