@@ -1490,6 +1490,10 @@ size_t
 ircd::m::room::members::count(const string_view &membership)
 const
 {
+	// Allow empty membership string to count all memberships
+	if(!membership)
+		return count();
+
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(!room.event_id && membership == "join")
