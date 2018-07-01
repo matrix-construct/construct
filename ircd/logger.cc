@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_IOSTREAM
+// <iostream> inclusion here runs std::ios_base::Init() statically as this unit
+// is initialized (GNU initialization order given in Makefile).
+
 namespace ircd::log
 {
 	// Option toggles

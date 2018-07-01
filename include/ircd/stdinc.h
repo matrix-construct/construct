@@ -78,7 +78,7 @@ extern "C"
 #include <RB_INC_QUEUE
 #include <RB_INC_SSTREAM
 #include <RB_INC_FSTREAM
-#include <RB_INC_IOSTREAM
+#include <RB_INC_IOSFWD
 #include <RB_INC_IOMANIP
 #include <RB_INC_CSTDIO
 #include <RB_INC_CHRONO
@@ -127,6 +127,17 @@ namespace std
 	using experimental::optional;
 }
 #endif
+
+// Forward declare the existence of these in std:: to allow their immediate
+// use throughout the project as a developer convenience. <iostream> is not
+// included here because it generates naive initialization code in every unit,
+// whereas we conduct it once for libircd in the right place.
+namespace std
+{
+	extern istream cin;
+	extern ostream cout;
+	extern ostream cerr;
+}
 
 // OpenSSL
 // Additional forward declarations in the extern namespace are introduced
