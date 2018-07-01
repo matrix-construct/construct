@@ -1314,7 +1314,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	{
 		const std::string filename
 		{
-			unquote(opts["certificate_pem_path"])
+			unquote(opts.get("certificate_pem_path", name + ".crt"))
 		};
 
 		if(!fs::exists(filename))
@@ -1335,7 +1335,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	{
 		const std::string filename
 		{
-			unquote(opts["private_key_pem_path"])
+			unquote(opts.get("private_key_pem_path", name + ".crt.key"))
 		};
 
 		if(!fs::exists(filename))
@@ -1356,7 +1356,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	{
 		const std::string filename
 		{
-			unquote(opts["tmp_dh_path"])
+			unquote(opts.at("tmp_dh_path"))
 		};
 
 		if(!fs::exists(filename))
