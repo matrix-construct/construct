@@ -261,34 +261,47 @@ ircd::m::init::bootstrap()
 			" database and start over."
 		};
 
-	create(user::users, me.user_id);
+	if(!exists(user::users))
+		create(user::users, me.user_id);
 
-	create(my_room, me.user_id);
-	create(me.user_id);
-	me.activate();
+	if(!exists(my_room))
+		create(my_room, me.user_id);
 
-	join(my_room, me.user_id);
-
-	send(my_room, me.user_id, "m.room.name", "",
+	if(!exists(me))
 	{
-		{ "name", "IRCd's Room" }
-	});
+		create(me.user_id);
+		me.activate();
+	}
 
-	send(my_room, me.user_id, "m.room.topic", "",
-	{
-		{ "topic", "The daemon's den." }
-	});
+	if(!my_room.membership(me.user_id, "join"))
+		join(my_room, me.user_id);
 
-	send(user::users, me.user_id, "m.room.name", "",
-	{
-		{ "name", "Users" }
-	});
+	if(!my_room.has("m.room.name", ""))
+		send(my_room, me.user_id, "m.room.name", "",
+		{
+			{ "name", "IRCd's Room" }
+		});
 
-	create(user::tokens, me.user_id);
-	send(user::tokens, me.user_id, "m.room.name", "",
-	{
-		{ "name", "User Tokens" }
-	});
+	if(!my_room.has("m.room.topic", ""))
+		send(my_room, me.user_id, "m.room.topic", "",
+		{
+			{ "topic", "The daemon's den." }
+		});
+
+	if(!user::users.has("m.room.name", ""))
+		send(user::users, me.user_id, "m.room.name", "",
+		{
+			{ "name", "Users" }
+		});
+
+	if(!exists(user::tokens))
+		create(user::tokens, me.user_id);
+
+	if(!user::tokens.has("m.room.name",""))
+		send(user::tokens, me.user_id, "m.room.name", "",
+		{
+			{ "name", "User Tokens" }
+		});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
