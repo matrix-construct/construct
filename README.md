@@ -76,7 +76,7 @@ Provides compression for the database, etc.
 ## Installation
 
 <a href="https://github.com/tulir/gomuks">
-	<img align="right" src="https://i.imgur.com/30zJfPb.png" />
+	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
 </a>
 
 ### Building from git
