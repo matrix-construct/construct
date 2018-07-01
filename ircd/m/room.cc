@@ -171,13 +171,7 @@ ircd::m::room::lonly()
 const
 {
 	const origins origins(*this);
-	if(origins.count() != 1)
-		return false;
-
-	if(!origins.has(m::my_host()))
-		return false;
-
-	return true;
+	return origins.only(my_host());
 }
 
 bool
@@ -1566,6 +1560,28 @@ const
 	for_each([&ret](const string_view &)
 	{
 		++ret;
+	});
+
+	return ret;
+}
+
+/// Tests if argument is the only origin in the room.
+/// If a zero or more than one origins exist, returns false. If the only origin
+/// in the room is the argument origin, returns true.
+bool
+ircd::m::room::origins::only(const string_view &origin)
+const
+{
+	bool ret{false};
+	test([&ret, &origin]
+	(const string_view &origin_)
+	{
+		if(origin == origin_)
+			ret = true;
+		else if(ret)
+			ret = false;
+
+		return ret;
 	});
 
 	return ret;
