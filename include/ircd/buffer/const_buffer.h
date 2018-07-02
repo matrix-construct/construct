@@ -17,6 +17,9 @@ struct ircd::buffer::const_buffer
 	// Definition for this is somewhere in the .cc files where boost is incl.
 	operator boost::asio::const_buffer() const;
 
+	// For boost::spirit conceptual compliance; illegal/noop
+	void insert(const char *const &, const char &);
+
 	using buffer<const char *>::buffer;
 	template<size_t SIZE> const_buffer(const char (&buf)[SIZE]);
 	template<size_t SIZE> const_buffer(const std::array<char, SIZE> &buf);
@@ -56,3 +59,13 @@ template<size_t SIZE>
 ircd::buffer::const_buffer::const_buffer(const std::array<char, SIZE> &buf)
 :buffer<const char *>{reinterpret_cast<const char *>(buf.data()), SIZE}
 {}
+
+#ifndef _NDEBUG
+__attribute__((noreturn))
+#endif
+inline void
+ircd::buffer::const_buffer::insert(const char *const &,
+                                   const char &)
+{
+	assert(0);
+}
