@@ -32,6 +32,9 @@ struct ircd::buffer::buffer
 	auto &operator[](const size_t &i) const;
 	auto &operator[](const size_t &i);
 
+	// For boost::spirit conceptual compliance.
+	auto empty() const                 { return ircd::buffer::empty(*this);    }
+
 	buffer(const it &start, const it &stop);
 	buffer(const it &start, const size_t &size);
 	buffer();
