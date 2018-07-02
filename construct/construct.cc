@@ -58,8 +58,7 @@ lgetopt opts[] =
 
 std::unique_ptr<boost::asio::io_context> ios
 {
-	// Having trouble with static destruction in clang so this
-	// has to become still-reachable
+	// Having trouble with static dtor in clang so this has tp be dynamic
 	std::make_unique<boost::asio::io_context>()
 };
 
@@ -67,11 +66,6 @@ boost::asio::signal_set sigs
 {
 	*ios
 };
-
-// TODO: XXX: This has to be declared first before any modules
-// are loaded otherwise the module will not be unloadable.
-boost::asio::ip::tcp::acceptor _dummy_acceptor_ { *ios };
-boost::asio::ip::tcp::socket _dummy_sock_ { *ios };
 
 int main(int argc, char *const *argv)
 try
