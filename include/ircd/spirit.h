@@ -28,9 +28,22 @@ namespace ircd::spirit
 	namespace ascii = spirit::ascii;
 	namespace karma = spirit::karma;
 	namespace qi = spirit::qi;
+	namespace phx = boost::phoenix;
 
 	using spirit::unused_type;
 
+	using qi::locals;
+	using qi::_a;
+	using qi::_r1_type;
+	using qi::raw;
+	using qi::omit;
+	using qi::matches;
+	using qi::hold;
+	using qi::eoi;
+	using qi::eps;
+	using qi::attr;
+	using qi::attr_cast;
+	using qi::repeat;
 	using qi::lit;
 	using qi::char_;
 	using qi::byte_;
@@ -58,16 +71,6 @@ namespace ircd::spirit
 	using qi::bin_double;
 	using qi::big_bin_double;
 	using qi::little_bin_double;
-	using qi::raw;
-	using qi::omit;
-	using qi::matches;
-	using qi::hold;
-	using qi::eoi;
-	using qi::eps;
-	using qi::attr;
-	using qi::attr_cast;
-	using qi::repeat;
-	using qi::_r1_type;
 
 	using karma::lit;
 	using karma::char_;
@@ -78,4 +81,11 @@ namespace ircd::spirit
 	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
+}
+
+namespace ircd::spirit::local
+{
+	using qi::_1;
+	using qi::_2;
+	using qi::_3;
 }
