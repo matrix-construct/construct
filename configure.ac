@@ -1232,7 +1232,6 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	fi
 
 	js_branch="esr52"
-	js_jobs="4"
 
 	if [[ $DEBUG ]]; then
 		js_options="--disable-optimize --enable-debug --disable-js-shell"
@@ -1240,7 +1239,7 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 		js_options="--enable-optimize --disable-js-shell"
 	fi
 
-	bash tools/buildjs.sh "$js_branch" "$js_options" "$js_jobs"
+	bash tools/buildjs.sh "$js_branch" "$js_options"
 
 	RB_DEFINE_UNQUOTED([ENABLE_JS], [1], [ Enable JavaScript support. ])
 	RB_DEFINE_UNQUOTED([INC_JSAPI_H], [jsapi.h>], [ SpiderMonkey JavaScript API. ])

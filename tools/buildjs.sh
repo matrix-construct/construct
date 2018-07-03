@@ -66,6 +66,7 @@ fi
 #run ../configure --enable-debug
 # run ../configure --disable-shared-js --enable-debug # --enable-replace-malloc
 
-run make -j8
+NJOBS=`nproc`
+run make -j$NJOBS
 
 run cd $USERDIR         # Return to user's original directory
