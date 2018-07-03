@@ -1402,15 +1402,37 @@ ircd::js::bytecodes(const JS::Handle<JSScript *> &s,
                     uint8_t *const &buf,
                     const size_t &max)
 {
-	uint32_t len(0);
-	const custom_ptr<void> ptr
+	JS::TranscodeBuffer tcbuf;
+	const auto code
 	{
-		//JS_EncodeScript(*cx, s, &len), js_free
+		JS::EncodeScript(*cx, tcbuf, s)
 	};
 
-	const auto ret(std::min(size_t(len), max));
-	memcpy(buf, ptr.get(), ret);
-	return ret;
+	switch(code)
+	{
+		case JS::TranscodeResult_Ok:
+		{
+			if(unlikely(tcbuf.length() > max))
+				throw internal_error
+				{
+					"Insufficient buffer size %zu where %zu is required.",
+					max,
+					tcbuf.length()
+				};
+
+			memcpy(buf, tcbuf.begin(), tcbuf.length());
+			return tcbuf.length();
+		}
+
+		case JS::TranscodeResult_Throw:
+			throw jserror(jserror::pending);
+
+		default:
+			throw internal_error
+			{
+				"Failed to encode script to XDR (error %d)", code
+			};
+	};
 }
 
 ircd::js::string
