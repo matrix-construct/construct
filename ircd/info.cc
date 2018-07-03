@@ -37,12 +37,13 @@ ircd::info::dump()
 	// assumed for this execution.
 	log::info
 	{
-		"%s. boost %u.%u.%u. rocksdb %s. sodium %s. %s. libmagic %d.",
+		"%s. boost %u.%u.%u. RocksDB %s. SpiderMonkey %s. sodium %s. %s. libmagic %d.",
 		PACKAGE_STRING,
 		boost_version[0],
 		boost_version[1],
 		boost_version[2],
 		db::version,
+		js::version(js::ver::IMPLEMENTATION),
 		nacl::version(),
 		openssl::version(),
 		magic::version()
