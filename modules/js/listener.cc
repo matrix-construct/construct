@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/listen.h>
+#include <ircd/net/listener.h>
 #include <ircd/js/js.h>
 
 namespace ircd {
@@ -29,11 +29,13 @@ static listener;
 struct listener::listen
 :trap::function
 {
-	ircd::listener *l;
+	net::listener *l;
 
 	value on_call(object::handle obj, value::handle _this, const args &args) override
 	{
-		l = new ircd::listener(std::string(args[0]));
+		const std::string a(args[0]);
+		const ircd::json::object o(a);
+		l = new net::listener(o.get("name", "js"), o);
 		return {};
 	}
 
@@ -81,7 +83,7 @@ ircd::js::listener::listener()
 {
 }
 
-extern "C" ircd::js::module *
+ircd::js::module *
 IRCD_JS_MODULE
 {
 	&ircd::js::listener.module

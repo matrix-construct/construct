@@ -21,14 +21,15 @@
 // Use JS_DEBUG as an analog instead.
 #undef DEBUG
 
-namespace ircd {
-namespace js   {
-
 // Logging facility for this submodule with SNOMASK.
-struct log::log log
+decltype(ircd::js::log)
+ircd::js::log
 {
 	"js", 'J'
 };
+
+namespace ircd {
+namespace js   {
 
 // Location of the thread_local runtext (js/context.h)
 // If this is null, js is not available on your thread.
@@ -333,7 +334,7 @@ ircd::js::global::import(module &importer,
 	fname = substr(fname, 0, fname.size() - 1);
 	fname += ".so";
 
-	ircd::module *const m(new ircd::module(fname));
+	ircd::module *const m(new ircd::module(std::string(fname)));
 	const auto exporter(m->get<module *>("IRCD_JS_MODULE"));
 	const auto iit(imports.emplace(requesting, exporter));
 	const string name(exporter->trap->name);
@@ -752,14 +753,12 @@ ircd::js::trap::prototype(const object::handle &globals)
 		{ 0 }
 	};
 
-/*
-	std::transform(begin(this->memfunc), end(this->memfunc), begin(memfunc), []
-	(const auto &it)
-	{
-		const auto &function(*it.second);
-		return function.spec;
-	});
-*/
+//	std::transform(begin(this->memfunc), end(this->memfunc), begin(memfunc), []
+//	(const auto &it)
+//	{
+//		const auto &function(*it.second);
+//		return function.spec;
+//	});
 
 	// Create object
 	const object proto
@@ -1303,27 +1302,23 @@ bool
 ircd::js::trap::on_has(object::handle,
                        id::handle id)
 {
-/*
-	const string sid(id);
-	if(children.count(sid))
-		return false;
-
-	if(std::any_of(begin(memfun), end(memfun), [&sid]
-	(const auto &it)
-	{
-		const auto &memfun(*it.second);
-		return sid == memfun.name;
-	}))
-		return false;
-*/
-
-/*
-	value val;
-	const auto flags(JSPROP_SHARED | JSPROP_ENUMERATE);
-	if(!JS_DefinePropertyById(*cx, obj, id, val, flags, handle_getter, handle_setter))
-		throw jserror("Failed to define property '%s'", sid.c_str());
-
-*/
+//	const string sid(id);
+//	if(children.count(sid))
+//		return false;
+//
+//	if(std::any_of(begin(memfun), end(memfun), [&sid]
+//	(const auto &it)
+//	{
+//		const auto &memfun(*it.second);
+//		return sid == memfun.name;
+//	}))
+//		return false;
+//
+//	value val;
+//	const auto flags(JSPROP_SHARED | JSPROP_ENUMERATE);
+//	if(!JS_DefinePropertyById(*cx, obj, id, val, flags, handle_getter, handle_setter))
+//		throw jserror("Failed to define property '%s'", sid.c_str());
+//
 //	const auto flags(0);
 //	if(!JS_DefineObject(*cx, obj, sid.c_str(), &jsclass(), flags))
 //		throw jserror("Failed to define property '%s'", sid.c_str());
@@ -1464,13 +1459,11 @@ noexcept
 {
 	// This frame is entered on a thread owned by SpiderMonkey, not IRCd. Do not call
 	// ircd::log from here, it is not thread-safe.
-	/*
-	printf("[thread %s]: context(%p): compile(%p) READY (priv: %p)\n",
-	       ircd::string(std::this_thread::get_id()).c_str(),
-	       (const void *)cx,
-	       token,
-	       priv);
-	*/
+//	printf("[thread %s]: context(%p): compile(%p) READY (priv: %p)\n",
+//	       ircd::string(std::this_thread::get_id()).c_str(),
+//	       (const void *)cx,
+//	       token,
+//	       priv);
 
 	// Setting the value of the promise and then deleting the promise is thread-safe.
 	// Note that JS::FinishOffThreadScript(); will need to be called on the main thread.
@@ -1813,7 +1806,7 @@ ircd::js::del(const object::handle &src,
 	object obj(src);
 	const char *fail(nullptr);
 	char buffer[strlen(path) + 1];
-	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &val, &obj, &fail]
+	ircd::tokens(path, ".", mutable_buffer{buffer, sizeof(buffer)}, [&path, &val, &obj, &fail]
 	(const string_view &part)
 	{
 		if(fail)
@@ -1889,7 +1882,7 @@ ircd::js::set(const object::handle &src,
 	object obj(src);
 	char buffer[strlen(path) + 1];
 	const char *fail(nullptr), *key(nullptr);
-	ircd::tokens(path, ".", buffer, sizeof(buffer), [&path, &obj, &fail, &key]
+	ircd::tokens(path, ".", mutable_buffer{buffer, sizeof(buffer)}, [&path, &obj, &fail, &key]
 	(const string_view &part)
 	{
 		if(fail)
@@ -1981,8 +1974,8 @@ ircd::js::get(const object::handle &src,
 	value ret;
 	object obj(src);
 	const char *fail(nullptr);
-	char buf[strlen(path) + 1];
-	ircd::tokens(path, ".", buf, sizeof(buf), [&obj, &path, &ret, &fail]
+	char buffer[strlen(path) + 1];
+	ircd::tokens(path, ".", mutable_buffer{buffer, sizeof(buffer)}, [&obj, &path, &ret, &fail]
 	(const string_view &part)
 	{
 		if(fail)
@@ -2046,8 +2039,8 @@ ircd::js::has(const object::handle &src,
 	bool ret(true);
 	object obj(src);
 	const char *fail(nullptr);
-	char buf[strlen(path) + 1];
-	ircd::tokens(path, ".", buf, sizeof(buf), [&obj, &path, &ret, &fail]
+	char buffer[strlen(path) + 1];
+	ircd::tokens(path, ".", mutable_buffer{buffer, sizeof(buffer)}, [&obj, &path, &ret, &fail]
 	(const string_view &part)
 	{
 		if(fail)
@@ -2391,17 +2384,6 @@ ircd::js::jserror::jserror(generate_skip_t)
 {
 }
 
-ircd::js::jserror::jserror(const char *const fmt,
-                           ...)
-:ircd::js::error{generate_skip}
-,val{}
-{
-	va_list ap;
-	va_start(ap, fmt);
-	generate(JSEXN_ERR, fmt, ap);
-	va_end(ap);
-}
-
 ircd::js::jserror::jserror(const JSErrorReport &report)
 :ircd::js::error{generate_skip}
 ,val{}
@@ -2455,7 +2437,7 @@ const
 void
 ircd::js::jserror::generate(const JSExnType &type,
                             const char *const &fmt,
-                            va_list ap)
+                            const va_rtti &ap)
 {
 	ircd::exception::generate(fmt, ap);
 	const auto msg(locale::char16::conv(what()));

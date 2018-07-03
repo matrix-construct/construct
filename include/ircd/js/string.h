@@ -531,7 +531,7 @@ inline auto
 hash(const string &s)
 {
 	//TODO: optimize
-	return ircd::util::hash(std::u16string(s));
+	return ircd::hash(std::u16string(s));
 }
 
 template<class A,

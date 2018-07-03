@@ -28,14 +28,14 @@ struct jserror
 
 	void create(JSErrorReport &);
 	void create(const JSErrorReport &);
-	void generate(const JSExnType &type, const char *const &fmt, va_list ap);
+	void generate(const JSExnType &type, const char *const &fmt, const va_rtti &ap);
 	void set_pending() const;
 	void set_uncatchable() const;
 
 	jserror(pending_t);
 	jserror(generate_skip_t);
 	jserror(const JSErrorReport &);
-	jserror(const char *fmt = " ", ...) AFP(2, 3);
+	template<class... args> jserror(const char *const &fmt = " ", args&&...);
 	jserror(JSObject &);
 	jserror(JSObject *const &);
 	jserror(const JS::Value &);
@@ -65,3 +65,12 @@ IRCD_JS_ERROR_DEF( uri_error,        JSEXN_URIERR )
 
 } // namespace js
 } // namespace ircd
+
+template<class... args>
+ircd::js::jserror::jserror(const char *const &fmt,
+                           args&&... a)
+:ircd::js::error{generate_skip}
+,val{}
+{
+    generate(JSEXN_ERR, fmt, va_rtti{std::forward<args>(a)...});
+}
