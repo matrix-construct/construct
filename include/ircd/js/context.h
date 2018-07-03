@@ -66,6 +66,7 @@ class context
 	static bool handle_start_async_task(JSContext *, JS::AsyncTask *) noexcept;
 	static bool handle_finish_async_task(JS::AsyncTask *) noexcept;
 	static JSObject *handle_get_incumbent_global(JSContext *) noexcept;
+	static bool handle_set_build_id_op(JS::BuildIdCharVector *) noexcept;
 
   public:
 	struct opts;

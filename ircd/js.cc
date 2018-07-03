@@ -2766,6 +2766,7 @@ ircd::js::context::context(std::unique_ptr<struct opts> opts,
 	::js::SetStopwatchStartCallback(get(), handle_stopwatch_start, this);
 	::js::SetStopwatchCommitCallback(get(), handle_stopwatch_commit, this);
 	::js::SetGetPerformanceGroupsCallback(get(), handle_get_performance_groups, nullptr);
+	JS::SetBuildIdOp(get(), handle_set_build_id_op);
 
 	timer.set(this->opts->timer_limit);
 	JS_SetNativeStackQuota(get(), this->opts->code_stack_max, this->opts->trusted_stack_max, this->opts->untrusted_stack_max);
@@ -2963,6 +2964,22 @@ noexcept
 //
 // Callback surface
 //
+
+bool
+ircd::js::context::handle_set_build_id_op(JS::BuildIdCharVector *const vector)
+noexcept
+{
+	static const string_view id
+	{
+		"construct 0"
+	};
+
+	assert(vector);
+	const bool resized(vector->resize(size(id)));
+	assert(resized);
+	memcpy(vector->begin(), data(id), size(id));
+	return true;
+}
 
 JSObject *
 ircd::js::context::handle_get_incumbent_global(JSContext *const cx)
