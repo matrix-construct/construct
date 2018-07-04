@@ -31,9 +31,9 @@ struct xdr
 	struct object;
 
 	const struct header *header;
+	const struct sourcecode *sourcecode;
 	const struct atom *name;
 	const struct binding *binding;
-	const struct sourcecode *sourcecode;
 	const struct sourcemap *sourcemap;
 	const struct displayurl *displayurl;
 	const struct filename *filename;
@@ -51,18 +51,13 @@ struct xdr
 	void for_each_const(const std::function<void (const struct consts &)> &) const;
 	void for_each_object(const std::function<void (const struct object &)> &) const;
 
-	xdr(const uint8_t *const &buffer, const size_t &len);
+	xdr(const const_buffer &);
 };
 
 struct xdr::header
 {
-	uint32_t magic;
-	uint16_t n_args;
-	uint16_t n_block_locals;
-	uint16_t n_body_level_lexicals;
-	uint32_t n_vars;
-	uint32_t n_unaliased_vars;
-	uint16_t n_unaliased_body_level_lexicals;
+	uint32_t build_id_length;
+	uint32_t build_id;
 	uint32_t length;
 	uint32_t prologue_length;
 	uint32_t version;
@@ -70,9 +65,9 @@ struct xdr::header
 	uint32_t n_srcnotes;
 	uint32_t n_consts;
 	uint32_t n_objects;
-	uint32_t n_regexps;
+	uint32_t n_scopes;
 	uint32_t n_try_notes;
-	uint32_t n_block_scopes;
+	uint32_t n_scope_notes;
 	uint32_t n_yield_offsets;
 	uint32_t n_typesets;
 	uint32_t fun_length;
@@ -80,28 +75,10 @@ struct xdr::header
 
 	size_t num_names() const;
 	size_t num_bindings() const;
-}
-__attribute__((packed));
 
-struct xdr::atom
-{
-	uint32_t encoding  : 1;
-	uint32_t length    : 31; union
-	{
-		const char latin1[0];
-		const char16_t two_byte[0];
-	};
-}
-__attribute__((packed));
-static_assert(sizeof(struct xdr::atom) == 4, "");
-
-struct xdr::binding
-{
-	uint8_t aliased  : 1;
-	uint8_t kind     : 7;
-}
-__attribute__((packed));
-static_assert(sizeof(struct xdr::binding) == 1, "");
+	// debug print
+	friend std::ostream &operator<<(std::ostream &, const header &);
+};
 
 struct xdr::sourcecode
 {
@@ -111,6 +88,9 @@ struct xdr::sourcecode
 	uint32_t compressed_length;
 	uint8_t arguments_not_included;
 	const char16_t code[0];
+
+	// debug print
+	friend std::ostream &operator<<(std::ostream &, const sourcecode &);
 }
 __attribute__((packed));
 
@@ -119,16 +99,14 @@ struct xdr::sourcemap
 	uint8_t have;
 	uint32_t len;
 	const char16_t url[0];
-}
-__attribute__((packed));
+};
 
 struct xdr::displayurl
 {
 	uint8_t have;
 	uint32_t len;
 	const char16_t url[0];
-}
-__attribute__((packed));
+};
 
 struct xdr::filename
 {
@@ -136,13 +114,34 @@ struct xdr::filename
 	const char name[0];
 };
 
+struct xdr::atom
+{
+	uint32_t encoding  : 1;
+	uint32_t length    : 31; union
+	{
+		const char latin1[0];
+		const char16_t two_byte[0];
+	};
+};
+static_assert(sizeof(struct xdr::atom) == 4, "");
+
+struct xdr::binding
+{
+	uint8_t aliased  : 1;
+	uint8_t kind     : 7;
+};
+static_assert(sizeof(struct xdr::binding) == 1, "");
+
 struct xdr::source
 {
 	uint32_t start;
 	uint32_t end;
 	uint32_t lineno;
 	uint32_t column;
+	uint32_t nfixed;
 	uint32_t nslots;
+
+	friend std::ostream &operator<<(std::ostream &, const source &);
 };
 
 struct xdr::bytecode

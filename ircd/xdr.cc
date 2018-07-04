@@ -23,31 +23,84 @@ decltype(xdr::bytecode::info) xdr::bytecode::info
 } // namespace js
 } // namespace ircd
 
-ircd::js::xdr::xdr(const uint8_t *const &buf,
-                   const size_t &len)
+std::ostream &
+ircd::js::operator<<(std::ostream &s, const struct xdr::header &h)
+{
+	s << std::setw(34) << std::left << "build_id_length" << h.build_id_length << std::endl;
+	s << std::setw(34) << std::left << "build_id" << h.build_id << std::endl;
+	s << std::setw(34) << std::left << "length" << h.length << std::endl;
+	s << std::setw(34) << std::left << "prologue_length" << h.prologue_length << std::endl;
+	s << std::setw(34) << std::left << "version" << h.version << std::endl;
+	s << std::setw(34) << std::left << "n_atoms" << h.n_atoms << std::endl;
+	s << std::setw(34) << std::left << "n_srcnotes" << h.n_srcnotes << std::endl;
+	s << std::setw(34) << std::left << "n_consts" << h.n_consts << std::endl;
+	s << std::setw(34) << std::left << "n_objects" << h.n_objects << std::endl;
+	s << std::setw(34) << std::left << "n_scopes" << h.n_scopes << std::endl;
+	s << std::setw(34) << std::left << "n_try_notes" << h.n_try_notes << std::endl;
+	s << std::setw(34) << std::left << "n_scope_notes" << h.n_scope_notes << std::endl;
+	s << std::setw(34) << std::left << "n_yield_offsets" << h.n_yield_offsets << std::endl;
+	s << std::setw(34) << std::left << "n_typesets" << h.n_typesets << std::endl;
+	s << std::setw(34) << std::left << "fun_length" << h.fun_length << std::endl;
+	s << std::setw(34) << std::left << "script_bits" << h.script_bits << std::endl;
+	return s;
+}
+
+std::ostream &
+ircd::js::operator<<(std::ostream &s, const struct xdr::sourcecode &h)
+{
+	s << std::setw(34) << std::left << "has_source" << bool(h.has_source) << std::endl;
+	s << std::setw(34) << std::left << "retrievable" << bool(h.retrievable) << std::endl;
+	s << std::setw(34) << std::left << "length" << h.length << std::endl;
+	s << std::setw(34) << std::left << "compressed_length" << h.compressed_length << std::endl;
+	s << std::setw(34) << std::left << "arguments_not_included" << bool(h.arguments_not_included) << std::endl;
+	return s;
+}
+
+std::ostream &
+ircd::js::operator<<(std::ostream &s, const struct xdr::source &h)
+{
+	s << std::setw(34) << std::left << "start" << h.start << std::endl;
+	s << std::setw(34) << std::left << "end" << h.end << std::endl;
+	s << std::setw(34) << std::left << "lineno" << h.lineno << std::endl;
+	s << std::setw(34) << std::left << "column" << h.column << std::endl;
+	s << std::setw(34) << std::left << "nfixed" << h.nfixed << std::endl;
+	s << std::setw(34) << std::left << "nslots" << h.nslots << std::endl;
+	return s;
+}
+
+__attribute__((optimize("-O0")))
+ircd::js::xdr::xdr(const const_buffer &buf)
 :header
 {
-	reinterpret_cast<const struct header *>(buf)
+	reinterpret_cast<const struct header *>(data(buf))
 }
+,sourcecode{[this]() -> const struct sourcecode *
+{
+	if(this->header->script_bits & ~(1 << 14))
+		return nullptr;
+
+	return reinterpret_cast<const struct sourcecode *>(this->header + 1);
+}()}
+/*
 ,name
 {
-	reinterpret_cast<const struct atom *>(buf + sizeof(*header))
+	reinterpret_cast<const struct atom *>(data(buf) + sizeof(struct header))
 }
 ,binding{[this]
 {
-	const auto *ret(reinterpret_cast<const uint8_t *>(this->name));
+	std::cout << *this->header << std::endl;
+
+	const auto *ret
+	{
+		reinterpret_cast<const uint8_t *>(this->name)
+	};
+
 	for_each_name([&ret](const struct atom &atom)
 	{
 		ret += sizeof(struct atom) + atom.length;
 	});
 
 	return reinterpret_cast<const struct binding *>(ret);
-}()}
-,sourcecode{[this]
-{
-	const auto bindings(header->num_bindings());
-	const auto *ptr(reinterpret_cast<const uint8_t *>(this->binding + bindings));
-	return reinterpret_cast<const struct sourcecode *>(ptr);
 }()}
 ,sourcemap{[this]
 {
@@ -122,6 +175,7 @@ ircd::js::xdr::xdr(const uint8_t *const &buf,
 
 	return reinterpret_cast<const struct object *>(ptr);
 }()}
+*/
 {
 }
 
@@ -215,7 +269,7 @@ size_t
 ircd::js::xdr::header::num_names()
 const
 {
-	return n_args + n_vars + n_body_level_lexicals;
+	return 0;//return n_args + n_vars + n_body_level_lexicals;
 }
 
 
