@@ -578,7 +578,7 @@ try
 }
 ,ssts
 {
-	rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
+	//rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
 }
 ,cache{[this]
 () -> std::shared_ptr<rocksdb::Cache>
@@ -652,6 +652,7 @@ try
 	opts.max_file_opening_threads = 0;
 	opts.stats_dump_period_sec = 0;
 	opts.enable_thread_tracking = true;
+	opts.avoid_flush_during_recovery = true;
 	opts.delete_obsolete_files_period_micros = 0;
 	opts.max_background_jobs = 2;
 	opts.max_background_flushes = 1;
