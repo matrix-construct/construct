@@ -81,6 +81,94 @@ ircd::js::xdr::xdr(const const_buffer &buf)
 
 	return reinterpret_cast<const struct sourcecode *>(this->header + 1);
 }()}
+,sourcemap{[this]
+{
+	//assert(this->sourcecode->has_source);
+	assert(!this->sourcecode->compressed_length);
+	const auto *const ptr
+	{
+		reinterpret_cast<const uint8_t *>(this->sourcecode->code + this->sourcecode->length)
+	};
+
+	return reinterpret_cast<const struct sourcemap *>(ptr);
+}()}
+,displayurl{[this]
+{
+	if(!this->sourcemap->have)
+	{
+		const auto ptr(reinterpret_cast<const uint8_t *>(this->sourcemap) + 1);
+		return reinterpret_cast<const struct displayurl *>(ptr);
+	}
+
+	const auto ptr(reinterpret_cast<const uint8_t *>(this->sourcemap->url + this->sourcemap->len));
+	return reinterpret_cast<const struct displayurl *>(ptr);
+}()}
+,filename{[this]
+{
+	if(!this->displayurl->have)
+	{
+		const auto ptr(reinterpret_cast<const uint8_t *>(this->displayurl) + 1);
+		return reinterpret_cast<const struct filename *>(ptr);
+	}
+
+	const auto ptr(reinterpret_cast<const uint8_t *>(this->displayurl->url + this->displayurl->len));
+	return reinterpret_cast<const struct filename *>(ptr);
+}()}
+,source{[this]
+{
+	if(!this->filename->have)
+	{
+		const auto ptr(reinterpret_cast<const uint8_t *>(this->filename) + 1);
+		return reinterpret_cast<const struct source *>(ptr);
+	}
+
+	const auto ptr
+	{
+		reinterpret_cast<const uint8_t *>(this->filename->name + strlen(this->filename->name))
+	};
+
+	return reinterpret_cast<const struct source *>(ptr);
+}()}
+,body_scope_index{[this]
+{
+	return reinterpret_cast<const uint32_t *>(this->source + 1);
+}()}
+,bytecode{[this]
+{
+	return reinterpret_cast<const struct bytecode *>(this->body_scope_index + 1);
+}()}
+,srcnote{[this]
+{
+	const auto ptr
+	{
+		reinterpret_cast<const uint8_t *>(this->bytecode) + this->header->length
+	};
+
+	return reinterpret_cast<const struct srcnote *>(ptr);
+}()}
+,atom{[this]
+{
+	const auto ptr
+	{
+		this->srcnote + this->header->n_srcnotes
+	};
+
+	return reinterpret_cast<const struct atom *>(ptr);
+}()}
+,consts{[this]
+{
+	const auto *ptr
+	{
+		reinterpret_cast<const uint8_t *>(this->atom)
+	};
+
+	for_each_atom([&ptr](const struct atom &atom)
+	{
+		ptr += sizeof(struct atom) + atom.length;
+	});
+
+	return reinterpret_cast<const struct consts *>(ptr);
+}()}
 /*
 ,name
 {
@@ -88,8 +176,6 @@ ircd::js::xdr::xdr(const const_buffer &buf)
 }
 ,binding{[this]
 {
-	std::cout << *this->header << std::endl;
-
 	const auto *ret
 	{
 		reinterpret_cast<const uint8_t *>(this->name)
@@ -101,69 +187,6 @@ ircd::js::xdr::xdr(const const_buffer &buf)
 	});
 
 	return reinterpret_cast<const struct binding *>(ret);
-}()}
-,sourcemap{[this]
-{
-	const auto *ptr(reinterpret_cast<const uint8_t *>(this->sourcecode + 1) + this->sourcecode->compressed_length);
-	return reinterpret_cast<const struct sourcemap *>(ptr);
-}()}
-,displayurl{[this]
-{
-	if(!this->sourcemap->have)
-	{
-		const auto ptr(reinterpret_cast<const uint8_t *>(this->sourcemap) + 1);
-		return reinterpret_cast<const struct displayurl *>(ptr);
-	}
-
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->sourcemap + 1) + this->sourcemap->len);
-	return reinterpret_cast<const struct displayurl *>(ptr);
-}()}
-,filename{[this]
-{
-	if(!this->displayurl->have)
-	{
-		const auto ptr(reinterpret_cast<const uint8_t *>(this->displayurl) + 1);
-		return reinterpret_cast<const struct filename *>(ptr);
-	}
-
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->displayurl + 1) + this->displayurl->len);
-	return reinterpret_cast<const struct filename *>(ptr);
-}()}
-,source{[this]
-{
-	if(!this->filename->have)
-	{
-		const auto ptr(reinterpret_cast<const uint8_t *>(this->filename) + 1);
-		return reinterpret_cast<const struct source *>(ptr);
-	}
-
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->filename + 1) + strlen(this->filename->name) + 1);
-	return reinterpret_cast<const struct source *>(ptr);
-}()}
-,bytecode{[this]
-{
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->source + 1));
-	return reinterpret_cast<const struct bytecode *>(ptr);
-}()}
-,srcnote{[this]
-{
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->bytecode + this->header->length));
-	return reinterpret_cast<const struct srcnote *>(ptr);
-}()}
-,atom{[this]
-{
-	const auto ptr(reinterpret_cast<const uint8_t *>(this->srcnote + this->header->n_srcnotes));
-	return reinterpret_cast<const struct atom *>(ptr);
-}()}
-,consts{[this]
-{
-	const auto *ptr(reinterpret_cast<const uint8_t *>(this->atom));
-	for_each_atom([&ptr](const struct atom &atom)
-	{
-		ptr += sizeof(struct atom) + atom.length;
-	});
-
-	return reinterpret_cast<const struct consts *>(ptr);
 }()}
 ,object{[this]
 {
@@ -198,7 +221,11 @@ ircd::js::xdr::for_each_const(const std::function<void (const struct consts &)> 
 const
 {
 	auto consts(this->consts);
-	const auto *ptr(reinterpret_cast<const uint8_t *>(this->consts));
+	const auto *ptr
+	{
+		reinterpret_cast<const uint8_t *>(this->consts)
+	};
+
 	for(size_t i(0); i< header->n_consts; i++)
 	{
 		cb(*consts);
@@ -232,29 +259,20 @@ const
 }
 
 void
-ircd::js::xdr::for_each_name(const std::function<void (const struct atom &)> &cb)
-const
-{
-	const uint8_t *ptr(reinterpret_cast<const uint8_t *>(name));
-	const auto names(header->num_names());
-	for(size_t i(0); i < names; ++i)
-	{
-		const auto atom(reinterpret_cast<const struct atom *>(ptr));
-		cb(*atom);
-        ptr += sizeof(struct atom) + atom->length;
-    }
-}
-
-void
 ircd::js::xdr::for_each_atom(const std::function<void (const struct atom &)> &cb)
 const
 {
 	const uint8_t *ptr(reinterpret_cast<const uint8_t *>(atom));
 	for(size_t i(0); i < header->n_atoms; ++i)
 	{
-		const auto atom(reinterpret_cast<const struct atom *>(ptr));
-		cb(*atom);
-        ptr += sizeof(struct atom) + atom->length;
+		const auto &atom
+		{
+			*reinterpret_cast<const struct atom *>(ptr)
+		};
+
+		cb(atom);
+        ptr += sizeof(struct atom) + atom.length;
+        static_assert(sizeof(struct atom) == 4);
     }
 }
 

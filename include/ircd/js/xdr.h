@@ -32,20 +32,19 @@ struct xdr
 
 	const struct header *header;
 	const struct sourcecode *sourcecode;
-	const struct atom *name;
-	const struct binding *binding;
 	const struct sourcemap *sourcemap;
 	const struct displayurl *displayurl;
 	const struct filename *filename;
 	const struct source *source;
+	const uint32_t *body_scope_index;
 	const struct bytecode *bytecode;
 	const struct srcnote *srcnote;
 	const struct atom *atom;
+	const struct binding *binding;
 	const struct consts *consts;
 	const struct object *object;
 
 	void for_each_atom(const std::function<void (const struct atom &)> &) const;
-	void for_each_name(const std::function<void (const struct atom &)> &) const;
 	void for_each_binding(const std::function<void (const struct binding &)> &) const;
 	void for_each_bytecode(const std::function<void (const struct bytecode &)> &) const;
 	void for_each_const(const std::function<void (const struct consts &)> &) const;
@@ -54,10 +53,11 @@ struct xdr
 	xdr(const const_buffer &);
 };
 
+// Punnable
 struct xdr::header
 {
-	uint32_t build_id_length;
-	uint32_t build_id;
+	uint32_t build_id_length;    // Always 4 for IRCd build_id codes
+	uint32_t build_id;           // Custom IRCd 4 byte build_id code
 	uint32_t length;
 	uint32_t prologue_length;
 	uint32_t version;
@@ -99,38 +99,22 @@ struct xdr::sourcemap
 	uint8_t have;
 	uint32_t len;
 	const char16_t url[0];
-};
+}
+__attribute__((packed));
 
 struct xdr::displayurl
 {
 	uint8_t have;
 	uint32_t len;
 	const char16_t url[0];
-};
+}
+__attribute__((packed));
 
 struct xdr::filename
 {
 	uint8_t have;
 	const char name[0];
 };
-
-struct xdr::atom
-{
-	uint32_t encoding  : 1;
-	uint32_t length    : 31; union
-	{
-		const char latin1[0];
-		const char16_t two_byte[0];
-	};
-};
-static_assert(sizeof(struct xdr::atom) == 4, "");
-
-struct xdr::binding
-{
-	uint8_t aliased  : 1;
-	uint8_t kind     : 7;
-};
-static_assert(sizeof(struct xdr::binding) == 1, "");
 
 struct xdr::source
 {
@@ -168,6 +152,18 @@ struct xdr::srcnote
 	uint8_t note;
 };
 
+struct xdr::atom
+{
+	uint32_t encoding  : 1;    // 1 = latin1; 0 = ucs2
+	uint32_t length    : 31;
+	union
+	{
+		const char latin1[0];
+		const char16_t ucs2[0];
+	};
+};
+static_assert(sizeof(struct xdr::atom) == 4, "");
+
 struct xdr::object
 {
 	struct block
@@ -202,12 +198,6 @@ struct xdr::object
 	};
 };
 
-size_t length(const struct xdr::object::block &);
-size_t length(const struct xdr::object::with &);
-size_t length(const struct xdr::object::function &);
-size_t length(const struct xdr::object::literal &);
-size_t length(const struct xdr::object &);
-
 struct xdr::consts
 {
 	uint32_t tag; union
@@ -220,6 +210,19 @@ struct xdr::consts
 };
 
 size_t length(const struct xdr::consts &consts);
+
+struct xdr::binding
+{
+	uint8_t aliased  : 1;
+	uint8_t kind     : 7;
+};
+static_assert(sizeof(struct xdr::binding) == 1, "");
+
+size_t length(const struct xdr::object::block &);
+size_t length(const struct xdr::object::with &);
+size_t length(const struct xdr::object::function &);
+size_t length(const struct xdr::object::literal &);
+size_t length(const struct xdr::object &);
 
 } // namespace js
 } // namespace ircd
