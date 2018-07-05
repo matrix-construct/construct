@@ -2998,15 +2998,15 @@ bool
 ircd::js::context::handle_set_build_id_op(JS::BuildIdCharVector *const vector)
 noexcept
 {
-	static const string_view id
+	static const uint32_t build_id
 	{
-		"construct 0"
+		0
 	};
 
 	assert(vector);
-	const bool resized(vector->resize(size(id)));
+	const bool resized(vector->resize(sizeof(build_id)));
 	assert(resized);
-	memcpy(vector->begin(), data(id), size(id));
+	memcpy(vector->begin(), &build_id, sizeof(build_id));
 	return true;
 }
 
