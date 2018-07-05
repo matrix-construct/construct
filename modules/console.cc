@@ -4344,6 +4344,38 @@ console_cmd__room__members__events(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__members__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[membership]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view membership
+	{
+		param[1]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	out << members.count(membership) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__members__origin(opt &out, const string_view &line)
 {
 	const params param{line, " ",
