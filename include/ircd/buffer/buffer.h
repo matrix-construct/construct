@@ -115,6 +115,8 @@ namespace ircd
 	using buffer::data;
 	using buffer::copy;
 	using buffer::consume;
+	using buffer::begin;
+	using buffer::end;
 }
 
 template<template<class>
