@@ -53,6 +53,7 @@ lgetopt opts[] =
 	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ "noautomod",  &ircd::noautomod, lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "checkdb",    &ircd::checkdb,   lgetopt::BOOL,    "Perform complete checks of databases when opening" },
+	{ "nojs",       &ircd::nojs,      lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 

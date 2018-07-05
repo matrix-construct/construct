@@ -25,6 +25,7 @@ namespace ircd
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.
 	extern bool checkdb;               ///< Perform checks on database opens
+	extern bool nojs;                  ///< Option to not init js subsystem.
 }
 
 #include "string_view.h"

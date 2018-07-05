@@ -55,9 +55,22 @@ const char *reflect(const ::js::CTypesActivityType &);
 
 ircd::js::init::init()
 {
-	log.info("Initializing the JS engine [%s: %s]",
-	         "SpiderMonkey",
-	         version(ver::IMPLEMENTATION));
+	if(ircd::nojs)
+	{
+		log::warning
+		{
+			log, "Not initializing the JS engine due to -nojs set by user."
+		};
+
+		return;
+	}
+
+	log::info
+	{
+		log, "Initializing the JS engine [%s: %s]",
+		"SpiderMonkey",
+		version(ver::IMPLEMENTATION)
+	};
 
 	const unwind exit([this]
 	{
@@ -73,8 +86,11 @@ ircd::js::init::init()
 	}
 
 	struct context::opts context_opts;
-	log.info("Initializing the main JS context (main_maxbytes: %zu)",
-	         context_opts.max_bytes);
+	log::info
+	{
+		log, "Initializing the main JS context (main_maxbytes: %zu)",
+		context_opts.max_bytes
+	};
 
 	assert(!cx);
 	cx = new context(context_opts);
@@ -82,19 +98,32 @@ ircd::js::init::init()
 	// Additional options
 	//set(*cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
 
-	log.info("Initialized main JS context (version: '%s')",
-	         version(*cx));
+	log::info
+	{
+		log, "Initialized main JS context (version: '%s')",
+		version(*cx)
+	};
 }
 
 ircd::js::init::~init()
 noexcept
 {
-	log.info("Terminating the main JS context");
+	if(!cx)
+		return;
+
+	log::info
+	{
+		log, "Terminating the main JS context"
+	};
 
  	delete cx;
 	cx = nullptr;
 
-	log.info("Terminating the JS Engine");
+	log::info
+	{
+		log, "Terminating the JS Engine"
+	};
+
 	JS_ShutDown();
 }
 
