@@ -1841,6 +1841,32 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__check(opt &out, const string_view &line)
+try
+{
+	const auto dbname
+	{
+		token(line, ' ', 0)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	check(database);
+	out << "Check of " << dbname << " completed without error."
+	    << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__list(opt &out, const string_view &line)
 {
 	const auto available
