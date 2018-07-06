@@ -448,7 +448,7 @@ ircd::replace(const string_view &s,
 std::string
 ircd::u2a(const const_buffer &in)
 {
-	return string(size(in) * 2, [&in]
+	return string(size(in) * 2 + 1, [&in]
 	(const mutable_buffer &out)
 	{
 		return u2a(out, in);
