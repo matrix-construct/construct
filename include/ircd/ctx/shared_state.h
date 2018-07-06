@@ -58,7 +58,11 @@ struct ircd::ctx::shared_state
 	using pointer_type    = T *;
 	using reference_type  = T &;
 
-	promise<T> *p {nullptr};
+	union
+	{
+		promise<T> *p {nullptr};
+		future_state st;
+	};
 	T val;
 
 	shared_state(promise<T> &p)
@@ -76,7 +80,11 @@ struct ircd::ctx::shared_state<void>
 {
 	using value_type      = void;
 
-	promise<void> *p {nullptr};
+	union
+	{
+		promise<void> *p {nullptr};
+		future_state st;
+	};
 
 	shared_state(promise<void> &p)
 	:p{&p}
@@ -116,22 +124,17 @@ void
 ircd::ctx::set(shared_state<T> &st,
                const future_state &state)
 {
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 	switch(state)
 	{
 		case future_state::INVALID:  assert(0);  return;
 		case future_state::PENDING:  assert(0);  return;
 		case future_state::OBSERVED:
 		case future_state::READY:
-			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x42);
-			return;
-
 		case future_state::RETRIEVED:
-			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x123);
+		default:
+			st.st = state;
 			return;
 	}
-	#pragma GCC diagnostic pop
 }
 
 /// Internal use
@@ -140,22 +143,17 @@ inline void
 ircd::ctx::set(shared_state<void> &st,
                const future_state &state)
 {
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 	switch(state)
 	{
 		case future_state::INVALID:  assert(0);  return;
 		case future_state::PENDING:  assert(0);  return;
 		case future_state::READY:
-			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x42);
-			return;
-
 		case future_state::OBSERVED:
 		case future_state::RETRIEVED:
-			reinterpret_cast<uintptr_t &>(st.p) = uintptr_t(0x123);
+		default:
+			st.st = state;
 			return;
 	}
-	#pragma GCC diagnostic pop
 }
 
 /// Internal; check if the current state is something; safe but unnecessary
@@ -174,13 +172,7 @@ template<class T>
 ircd::ctx::future_state
 ircd::ctx::state(const shared_state<T> &st)
 {
-	switch(uintptr_t(st.p))
-	{
-		case 0x00:       return future_state::INVALID;
-		case 0x42:       return future_state::READY;
-		case 0x123:      return future_state::RETRIEVED;
-		default:
-			assert(uintptr_t(st.p) >= 0x1000);
-			return future_state::PENDING;
-	}
+	return uintptr_t(st.p) >= 0x1000?
+		future_state::PENDING:
+		st.st;
 }
