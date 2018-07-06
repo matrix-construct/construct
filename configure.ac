@@ -359,6 +359,31 @@ AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
 
 
 dnl
+dnl Generic Mode compilation
+dnl
+
+AC_MSG_CHECKING(whether to enable generic mode or tune for this host)
+AC_ARG_ENABLE(generic, AC_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries.]),
+[
+	enable_generic="yes"
+	AC_MSG_RESULT([yes])
+	RB_DEFINE([GENERIC], [1], [Building binary tuned for generic architectures])
+], [
+	enable_generic="no"
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
+
+AM_COND_IF([GENERIC],
+[
+	CXXFLAGS+=" -mtune=generic"
+], [
+	CXXFLAGS+=" -march=native"
+])
+
+
+dnl
 dnl Optimization
 dnl
 
@@ -387,6 +412,7 @@ AM_COND_IF([OPTIMIZE],
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -ggdb"
 ], [
+	CXXFLAGS+=" -march=native"
 	CXXFLAGS+=" -O$optimize_level"
 	CXXFLAGS+=" -ggdb"
 ])
@@ -1676,6 +1702,7 @@ echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert"
 echo "Optimized build ................... $optimize"
 echo "Optimization level ................ $optimize_level"
+echo "Generic binary .................... $enable_generic"
 echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo
