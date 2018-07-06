@@ -25,6 +25,7 @@ namespace ircd
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.
 	extern bool checkdb;               ///< Perform checks on database opens
+	extern bool pitrecdb;              ///< Allow Point-In-Time Recovery if DB corrupt.
 	extern bool nojs;                  ///< Option to not init js subsystem.
 }
 

@@ -17,6 +17,7 @@ namespace ircd
 	bool nolisten;                               // indicates no listener binding
 	bool noautomod;                              // no module loading on init
 	bool checkdb;                                // check databases when opening
+	bool pitrecdb;                               // point-in-time recovery for db
 	bool nojs;                                   // no ircd::js system init.
 
 	boost::asio::io_context *ios;                // user's io service

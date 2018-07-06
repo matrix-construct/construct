@@ -689,11 +689,25 @@ try
 	// Setup performance metric options
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
 
-	// Setup journal recovery options
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+	// Default corruption tolerance is zero-tolerance; db fails to open with
+	// error by default to inform the user. The rest of the options are
+	// various relaxations for how to proceed.
 	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+
+	// When corrupted after crash, the DB is rolled back before the first
+	// corruption and erases everything after it, giving a consistent
+	// state up at that point, though losing some recent data.
+	if(ircd::pitrecdb) //TODO: no global?
+		opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+
+	// Skipping corrupted records will create gaps in the DB timeline where the
+	// application (like a matrix timeline) cannot tolerate the unexpected gap.
 	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
+
+	// Tolerating corrupted records is very last-ditch for getting the database to
+	// open in a catastrophe. We have no use for this option but should use it for
+	//TODO: emergency salvage-mode.
+	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
 
 	// Setup cache
 	opts.row_cache = this->cache;
@@ -825,6 +839,15 @@ try
 		path,
 		columns.size(),
 		d->GetLatestSequenceNumber()
+	};
+}
+catch(const corruption &e)
+{
+	throw corruption
+	{
+		"Corruption for '%s' (%s). Try restarting with the -pitrecdb command line option",
+		this->name,
+		e.what()
 	};
 }
 catch(const std::exception &e)
