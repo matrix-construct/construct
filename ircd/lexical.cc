@@ -461,7 +461,7 @@ ircd::u2a(const mutable_buffer &out,
 {
 	char *p(data(out));
 	for(size_t i(0); i < size(in); ++i, p += 2)
-		snprintf(p, end(out) - p, "%02x", in[i]);
+		::snprintf(p, end(out) - p, "%02x", in[i]);
 
 	return { data(out), p };
 }
