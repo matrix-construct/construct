@@ -23,7 +23,6 @@ namespace ircd
 	ctx::ctx *main_context;                      // Main program loop
 
 	void set_runlevel(const enum runlevel &);
-	void at_main_exit() noexcept;
 	void main() noexcept;
 }
 
@@ -175,7 +174,6 @@ noexcept try
 	// transitions to HALT.
 	const unwind halted{[]
 	{
-		at_main_exit();
 		set_runlevel(runlevel::HALT);
 	}};
 
@@ -236,17 +234,6 @@ catch(...)
 	{
 		"IRCd main exited: %s", what(std::current_exception())
 	};
-}
-
-void
-ircd::at_main_exit()
-noexcept
-{
-	strand->post([]
-	{
-		delete strand;
-		strand = nullptr;
-	});
 }
 
 /// IRCd uptime in seconds
