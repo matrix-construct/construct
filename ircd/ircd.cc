@@ -8,9 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/asio.h>
-#include <ircd/m/m.h>
-
 namespace ircd
 {
 	enum runlevel _runlevel {runlevel::HALT};    // Current libircd runlevel
@@ -23,7 +20,6 @@ namespace ircd
 	bool nojs;                                   // no ircd::js system init.
 
 	boost::asio::io_context *ios;                // user's io service
-	struct strand *strand;                       // libircd event serializer
 	ctx::ctx *main_context;                      // Main program loop
 
 	void set_runlevel(const enum runlevel &);
@@ -76,10 +72,8 @@ try
 	// ios.run() is really running.
 	ircd::thread_id = std::this_thread::get_id();
 
-	// Global ircd:: reference to the user's io_context and setup our main
-	// strand on that service.
+	// Global ircd:: reference to the user's io_context
 	ircd::ios = &ios;
-	ircd::strand = new struct strand(ios);
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();
@@ -122,8 +116,6 @@ try
 }
 catch(const std::exception &e)
 {
-	delete strand;
-	strand = nullptr;
 	throw;
 }
 
@@ -309,7 +301,7 @@ try
 	// CONTINUATION ON THIS STACK by the user.
 	if(!ircd::runlevel_changed::list.empty())
 	{
-		ios->post([new_runlevel]
+		ircd::post([new_runlevel]
 		{
 			if(new_runlevel == runlevel::HALT)
 				log::notice

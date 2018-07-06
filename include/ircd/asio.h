@@ -30,19 +30,6 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/io_service.hpp>
 
-struct ircd::strand
-:asio::io_service::strand
-{
-    using handler = std::function<void ()>;
-
-    operator const asio::io_service &() const;
-    operator asio::io_service &();
-
-	strand(asio::io_service &ios)
-	:asio::io_service::strand{ios}
-	{}
-};
-
 ///
 /// The following IRCd headers are not included in the main stdinc.h list of
 /// includes because they require boost directly or symbols which we cannot
@@ -52,16 +39,3 @@ struct ircd::strand
 
 #include <ircd/ctx/continuation.h>
 #include <ircd/net/asio.h>
-
-inline ircd::strand::operator
-asio::io_service &()
-{
-    return get_io_service();
-}
-
-inline ircd::strand::operator
-const asio::io_service &()
-const
-{
-    return const_cast<strand *>(this)->get_io_service();
-}

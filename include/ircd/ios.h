@@ -35,9 +35,6 @@ namespace ircd
 	/// The user's io_service
 	extern asio::io_context *ios;
 
-	/// IRCd's strand of the io_service
-	struct strand extern *strand;
-
 	bool is_main_thread();
 	void assert_main_thread();
 
