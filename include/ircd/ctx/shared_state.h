@@ -163,7 +163,25 @@ bool
 ircd::ctx::is(const shared_state<T> &st,
               const future_state &state_)
 {
-	return state(st) == state_;
+	switch(st.st)
+	{
+		case future_state::READY:
+		case future_state::OBSERVED:
+		case future_state::RETRIEVED:
+			return state_ == st.st;
+
+		default: switch(state_)
+		{
+			case future_state::INVALID:
+				return st.p == nullptr;
+
+			case future_state::PENDING:
+				return uintptr_t(st.p) >= 0x1000;
+
+			default:
+				return false;
+		}
+	}
 }
 
 /// Internal; get the current state of the shared_state; safe but unnecessary
