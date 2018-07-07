@@ -131,9 +131,10 @@ struct ircd::server::request::opts
 
 	/// Only applies when using dynamic content allocation when the message is
 	/// received with chunked encoding. By default, chunks are saved in
-	/// individual buffers and copied to a final contiguous buffer. To skip the
-	/// contiguous allocation + copy and maintain the individual buffers,
-	/// set this option to false.
+	/// individual buffers and copied to a final contiguous buffer. We skip
+	/// that final step of allocating the contiguous buffer and the copy when
+	/// this is set to false; the chunk buffers will then remain in the chunks
+	/// vector as-is.
 	bool contiguous_content {true};
 
 	/// Priority indication is factored into the link selection algorithm for
