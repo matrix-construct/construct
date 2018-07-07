@@ -35,7 +35,12 @@ struct listener::listen
 	{
 		const std::string a(args[0]);
 		const ircd::json::object o(a);
-		l = new net::listener(o.get("name", "js"), o);
+		l = new net::listener(o.get("name", "js"), o, []
+		(const auto &sock)
+		{
+			add_client(sock);
+		});
+
 		return {};
 	}
 

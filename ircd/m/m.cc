@@ -238,7 +238,11 @@ ircd::m::init_listener(const json::object &config,
                        const string_view &name,
                        const json::object &opts)
 {
-	m::listeners.emplace_back(name, opts);
+	m::listeners.emplace_back(name, opts, []
+	(const auto &sock)
+	{
+		add_client(sock);
+	});
 }
 
 void
