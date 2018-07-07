@@ -886,19 +886,21 @@ ircd::net::blocking(const socket &socket)
 //
 
 ircd::net::listener::listener(const string_view &name,
-                              const std::string &opts)
+                              const std::string &opts,
+                              callback cb)
 :listener
 {
-	name, json::object{opts}
+	name, json::object{opts}, std::move(cb)
 }
 {
 }
 
 ircd::net::listener::listener(const string_view &name,
-                              const json::object &opts)
+                              const json::object &opts,
+                              callback cb)
 :acceptor
 {
-	std::make_shared<struct acceptor>(name, opts)
+	std::make_shared<struct acceptor>(name, opts, std::move(cb))
 }
 {
 	// Starts the first asynchronous accept. This has to be done out here after
@@ -935,7 +937,8 @@ ircd::net::listener::acceptor::timeout
 };
 
 ircd::net::listener::acceptor::acceptor(const string_view &name,
-                                        const json::object &opts)
+                                        const json::object &opts,
+                                        listener::callback cb)
 try
 :name
 {
@@ -946,6 +949,10 @@ try
 	//TODO: XXX
 	//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
 	std::min(opts.get<uint>("backlog", SOMAXCONN), uint(SOMAXCONN))
+}
+,cb
+{
+	std::move(cb)
 }
 ,ssl
 {
@@ -1199,7 +1206,8 @@ noexcept try
 
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
-	add_client(sock);
+	assert(bool(cb));
+	cb(sock);
 }
 catch(const ctx::interrupted &e)
 {

@@ -26,6 +26,7 @@ struct ircd::net::listener::acceptor
 
 	std::string name;
 	size_t backlog;
+	listener::callback cb;
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
@@ -52,6 +53,9 @@ struct ircd::net::listener::acceptor
 	bool interrupt() noexcept;
 	void join() noexcept;
 
-	acceptor(const string_view &name, const json::object &opts);
+	acceptor(const string_view &name,
+	         const json::object &opts,
+	         listener::callback);
+
 	~acceptor() noexcept;
 };

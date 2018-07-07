@@ -19,6 +19,7 @@ namespace ircd::net
 struct ircd::net::listener
 {
 	struct acceptor;
+	using callback = std::function<void (const std::shared_ptr<socket> &)>;
 
 	IRCD_EXCEPTION(ircd::error, error)
 
@@ -26,7 +27,14 @@ struct ircd::net::listener
 	std::shared_ptr<struct acceptor> acceptor;
 
   public:
-	explicit listener(const string_view &name, const std::string &options);
-	listener(const string_view &name, const json::object &options);
+	listener(const string_view &name,
+	         const json::object &options,
+	         callback);
+
+	explicit
+	listener(const string_view &name,
+	         const std::string &options,
+	         callback);
+
 	~listener() noexcept;
 };
