@@ -1034,8 +1034,8 @@ bool
 ircd::net::listener::acceptor::interrupt()
 noexcept try
 {
-	a.cancel();
 	interrupting = true;
+	a.cancel();
 	return true;
 }
 catch(const boost::system::system_error &e)
