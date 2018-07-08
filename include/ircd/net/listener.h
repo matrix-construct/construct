@@ -66,10 +66,27 @@ struct ircd::net::listener_udp
 
 struct ircd::net::listener_udp::datagram
 {
-	mutable_buffer buf;
+	union
+	{
+		const_buffer cbuf;
+		mutable_buffer mbuf;
+	};
+
+	union
+	{
+		vector_view<const_buffer> cbufs;
+		vector_view<mutable_buffer> mbufs;
+	};
+
 	ipport remote;
 	enum flag flag {(enum flag)0};
-	vector_view<mutable_buffer> bufs { &buf, 1 };
+
+	datagram(const const_buffer &buf,
+	         const ipport &remote,
+	         const enum flag &flag = (enum flag)0);
+
+	datagram(const mutable_buffer &buf,
+	         const enum flag &flag = (enum flag)0);
 
 	datagram() = default;
 };

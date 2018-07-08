@@ -1559,11 +1559,11 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 	ip::udp::endpoint ep;
 	const size_t rlen
 	{
-		a.async_receive_from(datagram.bufs, ep, flags(datagram.flag), yield_context{to_asio{}})
+		a.async_receive_from(datagram.mbufs, ep, flags(datagram.flag), yield_context{to_asio{}})
 	};
 
 	datagram.remote = make_ipport(ep);
-	datagram.buf = {data(datagram.buf), rlen};
+	datagram.mbuf = {data(datagram.mbuf), rlen};
 	return datagram;
 }
 
@@ -1577,6 +1577,26 @@ ircd::net::listener_udp::acceptor::flags(const flag &flag)
 
 	return ret;
 }
+
+//
+// listener_udp::datagram
+//
+
+ircd::net::listener_udp::datagram::datagram(const const_buffer &buf,
+                                            const ipport &remote,
+                                            const enum flag &flag)
+:cbuf{buf}
+,cbufs{&cbuf, 1}
+,remote{remote}
+,flag{flag}
+{}
+
+ircd::net::listener_udp::datagram::datagram(const mutable_buffer &buf,
+                                            const enum flag &flag)
+:mbuf{buf}
+,mbufs{&mbuf, 1}
+,flag{flag}
+{}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
