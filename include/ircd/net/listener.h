@@ -14,6 +14,7 @@
 namespace ircd::net
 {
 	struct listener;
+	struct listener_udp;
 }
 
 struct ircd::net::listener
@@ -37,4 +38,44 @@ struct ircd::net::listener
 	         callback);
 
 	~listener() noexcept;
+};
+
+struct ircd::net::listener_udp
+{
+	struct acceptor;
+	struct datagram;
+	enum flag :uint;
+
+	IRCD_EXCEPTION(net::error, error)
+
+  private:
+	std::unique_ptr<struct acceptor> acceptor;
+
+  public:
+	datagram &operator()(datagram &);
+
+	listener_udp(const string_view &name,
+	             const json::object &options);
+
+	explicit
+	listener_udp(const string_view &name,
+	             const std::string &options);
+
+	~listener_udp() noexcept;
+};
+
+struct ircd::net::listener_udp::datagram
+{
+	mutable_buffer buf;
+	ipport remote;
+	enum flag flag {(enum flag)0};
+	vector_view<mutable_buffer> bufs { &buf, 1 };
+
+	datagram() = default;
+};
+
+enum ircd::net::listener_udp::flag
+:uint
+{
+	PEEK  = 0x01,
 };

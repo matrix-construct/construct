@@ -885,6 +885,10 @@ ircd::net::blocking(const socket &socket)
 // net/listener.h
 //
 
+//
+// listener
+//
+
 ircd::net::listener::listener(const string_view &name,
                               const std::string &opts,
                               callback cb)
@@ -918,9 +922,49 @@ noexcept
 		acceptor->join();
 }
 
+//
+// listener_udp
+//
+
+ircd::net::listener_udp::listener_udp(const string_view &name,
+                                      const std::string &opts)
+:listener_udp
+{
+	name, json::object{opts}
+}
+{
+}
+
+ircd::net::listener_udp::listener_udp(const string_view &name,
+                                      const json::object &opts)
+:acceptor
+{
+	std::make_unique<struct acceptor>(name, opts)
+}
+{
+}
+
+ircd::net::listener_udp::~listener_udp()
+noexcept
+{
+	if(acceptor)
+		acceptor->join();
+}
+
+ircd::net::listener_udp::datagram &
+ircd::net::listener_udp::operator()(datagram &datagram)
+{
+	assert(acceptor);
+	return acceptor->operator()(datagram);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/acceptor.h
+//
+
+//
+// listener::acceptor
 //
 
 ircd::log::log
@@ -935,6 +979,10 @@ ircd::net::listener::acceptor::timeout
 	{ "name",     "ircd.net.acceptor.timeout" },
 	{ "default",  12000L                      },
 };
+
+//
+// listener::acceptor::acceptor
+//
 
 ircd::net::listener::acceptor::acceptor(const string_view &name,
                                         const json::object &opts,
@@ -1393,6 +1441,141 @@ const
 		string(ep.address()),
 		ep.port()
 	};
+}
+
+//
+// listener_udp::acceptor
+//
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const struct listener_udp::acceptor &a)
+{
+	s << "'" << a.name << "' @ [" << string(a.ep.address()) << "]:" << a.ep.port();
+	return s;
+}
+
+//
+// listener_udp::acceptor::acceptor
+//
+
+ircd::net::listener_udp::acceptor::acceptor(const string_view &name,
+                                            const json::object &opts)
+try
+:name
+{
+	name
+}
+,opts
+{
+	opts
+}
+,ep
+{
+	ip::address::from_string(unquote(opts.get("host", "0.0.0.0"s))),
+	opts.get<uint16_t>("port", 8448L)
+}
+,a
+{
+	*ircd::ios
+}
+{
+	static const ip::udp::socket::reuse_address reuse_address
+	{
+		true
+	};
+
+	a.open(ep.protocol());
+	a.set_option(reuse_address);
+	log::debug
+	{
+		log, "%s opened listener socket", string(*this)
+	};
+
+	a.bind(ep);
+	log::debug
+	{
+		log, "%s bound listener socket", string(*this)
+	};
+}
+catch(const boost::system::system_error &e)
+{
+	throw error
+	{
+		"listener_udp: %s", e.what()
+	};
+}
+
+ircd::net::listener_udp::acceptor::~acceptor()
+noexcept
+{
+}
+
+void
+ircd::net::listener_udp::acceptor::join()
+noexcept try
+{
+	interrupt();
+	joining.wait([this]
+	{
+		return waiting == 0;
+	});
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "acceptor(%p) join: %s", this, e.what()
+	};
+}
+
+bool
+ircd::net::listener_udp::acceptor::interrupt()
+noexcept try
+{
+	a.cancel();
+	return true;
+}
+catch(const boost::system::system_error &e)
+{
+	log::error
+	{
+		log, "acceptor(%p) interrupt: %s", this, string(e)
+	};
+
+	return false;
+}
+
+ircd::net::listener_udp::datagram &
+ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
+{
+	assert(ctx::current);
+
+	this->waiting++;
+	const unwind dec{[this]
+	{
+		this->waiting--;
+	}};
+
+	ip::udp::endpoint ep;
+	const size_t rlen
+	{
+		a.async_receive_from(datagram.bufs, ep, flags(datagram.flag), yield_context{to_asio{}})
+	};
+
+	datagram.remote = make_ipport(ep);
+	datagram.buf = {data(datagram.buf), rlen};
+	return datagram;
+}
+
+boost::asio::ip::udp::socket::message_flags
+ircd::net::listener_udp::acceptor::flags(const flag &flag)
+{
+	ip::udp::socket::message_flags ret{0};
+
+	if(flag & flag::PEEK)
+		ret |= ip::udp::socket::message_peek;
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

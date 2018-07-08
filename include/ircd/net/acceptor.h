@@ -59,3 +59,32 @@ struct ircd::net::listener::acceptor
 
 	~acceptor() noexcept;
 };
+
+struct ircd::net::listener_udp::acceptor
+{
+	using error_code = boost::system::error_code;
+
+	static constexpr log::log &log {listener::acceptor::log};
+	static ip::udp::socket::message_flags flags(const flag &);
+
+	std::string name;
+	std::string opts;
+	ip::udp::endpoint ep;
+	ip::udp::socket a;
+	size_t waiting {0};
+	ctx::dock joining;
+
+	// Yield context for datagram.
+	datagram &operator()(datagram &);
+
+	// Acceptor shutdown
+	bool interrupt() noexcept;
+	void join() noexcept;
+
+	acceptor(const string_view &name,
+	         const json::object &opts);
+
+	~acceptor() noexcept;
+
+	friend std::ostream &operator<<(std::ostream &s, const acceptor &);
+};
