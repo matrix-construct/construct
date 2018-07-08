@@ -21,7 +21,7 @@ struct ircd::net::listener
 	struct acceptor;
 	using callback = std::function<void (const std::shared_ptr<socket> &)>;
 
-	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(net::error, error)
 
   private:
 	std::shared_ptr<struct acceptor> acceptor;
