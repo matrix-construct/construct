@@ -794,14 +794,8 @@ ircd::m::dbs::desc::events__room_events__cmp
 			pt.get(b),
 		};
 
-		const size_t sizes[2]
-		{
-			size(pre[0]),
-			size(pre[1])
-		};
-
-		if(sizes[0] != sizes[1])
-			return sizes[0] < sizes[1];
+		if(size(pre[0]) != size(pre[1]))
+			return size(pre[0]) < size(pre[1]);
 
 		if(pre[0] != pre[1])
 			return pre[0] < pre[1];
@@ -809,8 +803,8 @@ ircd::m::dbs::desc::events__room_events__cmp
 		// After the prefix is the depth + event_idx
 		const string_view post[2]
 		{
-			a.substr(sizes[0]),
-			b.substr(sizes[1]),
+			a.substr(size(pre[0])),
+			b.substr(size(pre[1])),
 		};
 
 		// These conditions are matched on some queries when the user only
