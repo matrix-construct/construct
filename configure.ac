@@ -938,6 +938,7 @@ dnl libsodium (NaCl) crypto support
 dnl
 
 dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
+RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
 AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
 AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
 
