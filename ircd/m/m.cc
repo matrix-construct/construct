@@ -2293,7 +2293,6 @@ const
 	{
 		event::keys::include
 		{
-			"event_id",
 			"state_key",
 			"content",
 		}
