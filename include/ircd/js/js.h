@@ -75,7 +75,6 @@ using ircd::operator<<;
 #include "del.h"
 #include "vector.h"
 #include "for_each.h"
-#include "xdr.h"
 #include "script.h"
 #include "module.h"
 #include "args.h"

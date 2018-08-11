@@ -135,7 +135,6 @@ endif
 if JS
 libircd_la_SOURCES +=  \
 	js.cc              \
-	xdr.cc             \
 	###
 endif
 
