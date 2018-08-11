@@ -18,13 +18,13 @@ namespace ircd::magic
 
 	IRCD_EXCEPTION(ircd::error, error)
 
-	int version();
-
 	string_view mime(const mutable_buffer &out, const const_buffer &);
 	string_view mime_type(const mutable_buffer &out, const const_buffer &);
 	string_view mime_encoding(const mutable_buffer &out, const const_buffer &);
 	string_view extensions(const mutable_buffer &out, const const_buffer &);
 	string_view description(const mutable_buffer &out, const const_buffer &);
+
+	int version();
 }
 
 struct ircd::magic::init
