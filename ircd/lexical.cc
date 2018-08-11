@@ -448,7 +448,7 @@ ircd::replace(const string_view &s,
 std::string
 ircd::u2a(const const_buffer &in)
 {
-	return string(size(in) * 2 + 1, [&in]
+	return string(size(in) * 2, [&in]
 	(const mutable_buffer &out)
 	{
 		return u2a(out, in);
@@ -460,8 +460,13 @@ ircd::u2a(const mutable_buffer &out,
           const const_buffer &in)
 {
 	char *p(data(out));
-	for(size_t i(0); i < size(in); ++i, p += 2)
-		::snprintf(p, end(out) - p, "%02x", in[i]);
+	for(size_t i(0); i < size(in) && p + 2 <= end(out); ++i)
+	{
+		char tmp[3];
+		::snprintf(tmp, sizeof(tmp), "%02x", in[i]);
+		*p++ = tmp[0];
+		*p++ = tmp[1];
+	}
 
 	return { data(out), p };
 }
