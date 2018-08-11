@@ -284,32 +284,31 @@ try
 	ircd::_runlevel = new_runlevel;
 	ircd::runlevel_changed::dock.notify_all();
 
-	// This function will notify the user of the change to IRCd. The
-	// notification is posted to the io_context ensuring THERE IS NO
-	// CONTINUATION ON THIS STACK by the user.
-	if(!ircd::runlevel_changed::list.empty())
+	// This function will notify the user of the change to IRCd. When there
+	// are listeners, function is posted to the io_context ensuring THERE IS
+	// NO CONTINUATION ON THIS STACK by the user.
+	const auto call_users{[new_runlevel]
 	{
-		ircd::post([new_runlevel]
-		{
-			if(new_runlevel == runlevel::HALT)
-				log::notice
-				{
-					"IRCd %s", reflect(new_runlevel)
-				};
+		assert(new_runlevel == ircd::_runlevel);
 
-			ircd::log::fini();
-			for(const auto &handler : ircd::runlevel_changed::list)
-				(*handler)(new_runlevel);
-		});
-	}
-
-	if(new_runlevel != runlevel::HALT)
 		log::notice
 		{
 			"IRCd %s", reflect(new_runlevel)
 		};
 
-	ircd::log::flush();
+		if(new_runlevel == runlevel::HALT)
+			ircd::log::fini();
+		else
+			ircd::log::flush();
+
+		for(const auto &handler : ircd::runlevel_changed::list)
+			(*handler)(new_runlevel);
+	}};
+
+	if(!ircd::runlevel_changed::list.empty())
+		ircd::post(call_users);
+	else
+		call_users();
 }
 catch(const std::exception &e)
 {
