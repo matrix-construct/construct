@@ -536,7 +536,7 @@ catch(const filesystem::filesystem_error &e)
 {
 	throw filesystem_error
 	{
-		"%s", e.what()
+		"`%s': %s", path, e.what()
 	};
 }
 
@@ -550,7 +550,7 @@ catch(const filesystem::filesystem_error &e)
 {
 	throw filesystem_error
 	{
-		"%s", e.what()
+		"`%s': %s", path, e.what()
 	};
 }
 
@@ -564,7 +564,7 @@ catch(const filesystem::filesystem_error &e)
 {
 	throw filesystem_error
 	{
-		"%s", e.what()
+		"`%s': %s", path, e.what()
 	};
 }
 
@@ -587,7 +587,7 @@ catch(const filesystem::filesystem_error &e)
 {
 	throw filesystem_error
 	{
-		"%s", e.what()
+		"`%s' -> `%s': %s", old, new_, e.what()
 	};
 }
 
