@@ -35,7 +35,9 @@ AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201500)
 
 
 dnl ***************************************************************************
+dnl
 dnl Makefile tree
+dnl
 dnl These (and Makefile.in) are generated from a Makefile.am in the same dir.
 dnl
 
@@ -51,7 +53,6 @@ AC_CONFIG_FILES(\
 
 AM_INIT_AUTOMAKE([subdir-objects])
 
-
 dnl
 dnl Initialization of variables exported to Makefile.am.
 dnl These will be further composed throughout this file...
@@ -64,8 +65,7 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
 
-
-dnl ***************************************************************************
+dnl
 dnl Preprocessor define macros
 dnl
 dnl Use RB_DEFINE() et al to generate defines in config.h
@@ -101,12 +101,10 @@ AC_DEFUN([CPPDEFINE],
 	fi
 ])
 
-
-
 dnl ***************************************************************************
+dnl
 dnl Platform
 dnl
-
 
 dnl
 dnl Recursive local targets (clean-local is implied)
@@ -116,7 +114,6 @@ dnl
 #	mrproper
 #])
 
-
 dnl
 dnl Coarse compiler test macros
 dnl
@@ -125,7 +122,6 @@ AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
 AM_CONDITIONAL([CLANG],      [[[[ $CXX = clang* ]]]])
 
 RB_DEFINE_UNQUOTED([CXX], ["$CXX"], [CXX Compiler])
-
 
 dnl
 dnl Coarse operating system test macros
@@ -140,7 +136,6 @@ AM_CONDITIONAL([INTERIX],    [[[[ $host_os = *interix* ]]]])
 AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
 
 RB_DEFINE_UNQUOTED([OS], ["$host_os"], [Host operating system])
-
 
 dnl
 dnl The CXX standard check even with the sd6 check wasn't enough for GCC. This
@@ -166,11 +161,10 @@ AM_COND_IF([GCC],
 ])
 
 
-
 dnl ***************************************************************************
+dnl
 dnl Developer options
 dnl
-
 
 dnl
 dnl Debugging mode
@@ -189,7 +183,6 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 ])
 
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
-
 
 dnl
 dnl Explicit assert switch for still using assert() without --enable-debug
@@ -218,7 +211,6 @@ AM_COND_IF(ASSERT,
 	CPPDEFINE([NDEBUG])
 ])
 
-
 dnl
 dnl Explicit optimize switch for enabling optimization when using --enable-debug
 dnl
@@ -239,7 +231,6 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 ])
 
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
-
 
 dnl
 dnl Explicit optimization level switch
@@ -275,9 +266,10 @@ AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Exp
 	])
 ])
 
-
 dnl
 dnl Explicit log level
+dnl
+dnl NOTE: Log levels here must be manually sync'ed with ircd/logger.h
 dnl
 
 AC_MSG_CHECKING(whether to explicitly set the logging level ceiling)
@@ -321,7 +313,6 @@ AC_ARG_WITH(log-level, AC_HELP_STRING([--with-log-level[[[=INFO]]]], [Explicitly
 	])
 ])
 
-
 dnl
 dnl Profiling mode
 dnl
@@ -339,7 +330,6 @@ AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 ], [
 ])
 
-
 dnl
 dnl Precompiled headers
 dnl
@@ -356,7 +346,6 @@ AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header g
 ])
 
 AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
-
 
 dnl
 dnl Generic Mode compilation
@@ -381,7 +370,6 @@ AM_COND_IF([GENERIC],
 ], [
 	CXXFLAGS+=" -march=native"
 ])
-
 
 dnl
 dnl Optimization
@@ -417,7 +405,6 @@ AM_COND_IF([OPTIMIZE],
 	CXXFLAGS+=" -ggdb"
 ])
 
-
 dnl
 dnl Compiler intrumentation
 dnl
@@ -435,7 +422,6 @@ CXXFLAGS+=" -ffriend-injection"
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
 CXXFLAGS+=" -fvisibility-inlines-hidden"
-
 
 dnl
 dnl Compiler warnings
@@ -534,8 +520,8 @@ AM_COND_IF([CLANG],
 CPPFLAGS+="$CWARNS"
 
 
-
 dnl ***************************************************************************
+dnl
 dnl Philology checks
 dnl
 
@@ -563,10 +549,8 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(__int128)
 
-
 dnl -fsigned-char ensures 'char' is signed on all platforms
 CXXFLAGS+=" -fsigned-char"
-
 
 dnl
 dnl Header files
@@ -665,7 +649,6 @@ dnl experimental
 RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])
 RB_CHK_SYSHEADER(experimental/optional, [EXPERIMENTAL_OPTIONAL])
 
-
 dnl
 dnl Specific function checks
 dnl
@@ -680,7 +663,6 @@ AC_CHECK_FUNCS([        \
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
-
 
 dnl
 dnl Networking Functions
@@ -703,7 +685,8 @@ fi
 
 
 dnl ***************************************************************************
-dnl TODO: sort this OS-specific section
+dnl
+dnl Miscellaneous operating system specific
 dnl
 
 AM_COND_IF(MINGW,
@@ -720,7 +703,6 @@ AM_COND_IF(INTERIX,
 	CPPDEFINE([_POSIX_PTHREAD_SEMANTICS])
 	CPPDEFINE([_XPG4_2])
 ],[])
-
 
 dnl
 dnl Linux AIO support
@@ -747,6 +729,7 @@ AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
 
 
 dnl ***************************************************************************
+dnl
 dnl Installation Layout
 dnl
 
@@ -927,14 +910,15 @@ AC_SUBST([PROGRAM_PREFIX])
 AC_DEFINE_UNQUOTED([PROGRAM_PREFIX], ["$with_program_prefix"], [String with which all programs intended to be in PATH are prefixed.])
 
 
-
 dnl ***************************************************************************
+dnl
 dnl Third party
 dnl
 
-
+dnl
 dnl
 dnl libsodium (NaCl) crypto support
+dnl
 dnl
 
 dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
@@ -951,9 +935,10 @@ AC_SUBST(SODIUM_CPPFLAGS, [])
 AC_SUBST(SODIUM_LDFLAGS, [])
 AC_SUBST(SODIUM_LIBS, ["-lsodium"])
 
-
+dnl
 dnl
 dnl libgmp support
+dnl
 dnl
 
 PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
@@ -963,9 +948,10 @@ AC_SUBST(GMP_CPPFLAGS, [])
 AC_SUBST(GMP_LDFLAGS, [])
 AC_SUBST(GMP_LIBS, ["-lgmp"])
 
-
+dnl
 dnl
 dnl libmagic support
+dnl
 dnl
 
 RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
@@ -983,9 +969,10 @@ AC_CHECK_LIB(magic, magic_version,
 
 AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
 
-
+dnl
 dnl
 dnl zlib support
+dnl
 dnl
 
 AC_SUBST(Z_CPPFLAGS)
@@ -1014,9 +1001,10 @@ AC_CHECK_HEADER(zlib.h,
 	zlib=no
 ])
 
-
+dnl
 dnl
 dnl lz4 support
+dnl
 dnl
 
 AC_SUBST(LZ4_CPPFLAGS)
@@ -1045,9 +1033,10 @@ AC_CHECK_HEADER(lz4.h,
 	lz4=no
 ])
 
-
+dnl
 dnl
 dnl snappy support
+dnl
 dnl
 
 AC_SUBST(SNAPPY_CPPFLAGS)
@@ -1076,9 +1065,10 @@ AC_CHECK_HEADER(snappy.h,
 	snappy=no
 ])
 
-
+dnl
 dnl
 dnl boost support
+dnl
 dnl
 
 BOOST_VERSION_MIN="1.66"
@@ -1165,9 +1155,10 @@ fi
 
 BOOST_CPPFLAGS+=" -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1"
 
-
+dnl
 dnl
 dnl RocksDB support
+dnl
 dnl
 
 AC_MSG_CHECKING([whether you asked to use the RocksDB included here])
@@ -1213,9 +1204,10 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 ])
 
-
+dnl
 dnl
 dnl SpiderMonkey support
+dnl
 dnl
 
 AC_MSG_CHECKING([whether you asked to use the JS engine included here])
@@ -1293,9 +1285,10 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 dnl TODO use an $enable_js var
 AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
 
-
+dnl
 dnl
 dnl OpenSSL support
+dnl
 dnl
 
 AC_MSG_CHECKING([for OpenSSL])
@@ -1399,9 +1392,10 @@ AC_SUBST(SSL_INCLUDES)
 AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
 
-
+dnl
 dnl
 dnl mbedTLS support
+dnl
 dnl
 
 AC_ARG_ENABLE(mbedtls,
@@ -1421,9 +1415,10 @@ fi
 AC_SUBST(MBEDTLS_CFLAGS)
 AC_SUBST(MBEDTLS_LIBS)
 
-
+dnl
 dnl
 dnl GnuTLS support
+dnl
 dnl
 
 AC_MSG_CHECKING(for GnuTLS)
@@ -1474,9 +1469,10 @@ elif test x"$cf_enable_gnutls" != xno; then
 	SSL_TYPE="gnutls"
 fi
 
-
+dnl
 dnl
 dnl Additional linkages
+dnl
 dnl
 
 AM_COND_IF([MINGW],
@@ -1487,9 +1483,8 @@ AM_COND_IF([MINGW],
 	LIBS+="-lpthread -latomic"
 ])
 
-
-
 dnl ***************************************************************************
+dnl
 dnl Application settings
 dnl
 
@@ -1547,7 +1542,6 @@ AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGT
 
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 
-
 dnl
 dnl --with-topiclen
 dnl
@@ -1566,8 +1560,8 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 
 
-
 dnl ***************************************************************************
+dnl
 dnl Branding defined in the compilation
 dnl
 
@@ -1603,7 +1597,6 @@ RB_DEFINE_UNQUOTED([TIME_CONFIGURED], [$RB_DATECODE], [UNIX epoch time at config
 RB_DEFINE_UNQUOTED([DATE_CONFIGURED], ["$RB_DATESTR"], [Convenience string of RB_TIME_CONFIGURED])
 CPPDEFINE([RB_TIME_COMPILED], [$(date +%s)])
 
-
 dnl
 dnl --with-custom-branding
 dnl
@@ -1619,7 +1612,6 @@ AC_ARG_WITH(custom-branding, AC_HELP_STRING([--with-custom-branding=NAME], [Cust
 	AC_MSG_RESULT([no])
 ])
 
-
 dnl
 dnl --with-custom-version
 dnl
@@ -1634,9 +1626,8 @@ AC_ARG_WITH(custom-version, AC_HELP_STRING([--with-custom-version=NAME], [Custom
 	AC_MSG_RESULT([no])
 ])
 
-
-
 dnl ***************************************************************************
+dnl
 dnl Misc
 dnl
 
@@ -1652,12 +1643,11 @@ AC_CONFIG_COMMANDS([tools/genssl_chmod], [chmod 755 tools/genssl])
 
 
 dnl ***************************************************************************
+dnl
 dnl Output
 dnl
 
-
 AC_OUTPUT
-
 
 if [[ $DEBUG ]]; then
 	debug="yes"
