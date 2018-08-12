@@ -1488,78 +1488,6 @@ dnl
 dnl Application settings
 dnl
 
-AC_DEFINE([NICKNAMEHISTORYLENGTH], 15000, [Size of the WHOWAS array.])
-AC_DEFINE([CHANNEL_HEAP_SIZE],     8192, [Size of the channel heap.])
-AC_DEFINE([BAN_HEAP_SIZE],         4096, [Size of the ban heap.])
-AC_DEFINE([CLIENT_HEAP_SIZE],      8192, [Size of the client heap.])
-AC_DEFINE([LCLIENT_HEAP_SIZE],     1024, [Size of the local client heap.])
-AC_DEFINE([PCLIENT_HEAP_SIZE],     256, [Size of the pre-client heap.])
-AC_DEFINE([USER_HEAP_SIZE],        8192, [Size of the user heap.])
-AC_DEFINE([DNODE_HEAP_SIZE],       8192, [Size of the dlink_node heap.])
-AC_DEFINE([TOPIC_HEAP_SIZE],       4096, [Size of the topic heap.])
-AC_DEFINE([LINEBUF_HEAP_SIZE],     2048, [Size of the linebuf heap.])
-AC_DEFINE([MEMBER_HEAP_SIZE],      32768, [Sizeof member heap.])
-AC_DEFINE([ND_HEAP_SIZE],          512, [Size of the nick delay heap.])
-AC_DEFINE([CONFITEM_HEAP_SIZE],    256, [Size of the confitem heap.])
-AC_DEFINE([MONITOR_HEAP_SIZE],     1024, [Size of the monitor heap.])
-AC_DEFINE([FD_HEAP_SIZE],          1024, [Size of fd heap.])
-AC_DEFINE([AWAY_HEAP_SIZE],        512, [Size of away heap.])
-
-
-dnl
-dnl --enable-oper-chghost
-dnl
-
-AC_ARG_ENABLE(oper-chghost,
-AC_HELP_STRING([--enable-oper-chghost],[Enable opers to use the CHGHOST command]),
-[operchghost=$enableval],[operchghost=no])
-
-if test "$operchghost" = yes; then
-	AC_DEFINE(ENABLE_OPER_CHGHOST, 1, [Define this to enable opers to use the CHGHOST command.])
-fi
-
-
-dnl
-dnl --with-nicklen
-dnl
-
-AC_ARG_WITH(nicklen,
-AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGTH (default 31, max 50)]),
-[
-  if ! expr "$withval" + 0 >/dev/null 2>&1; then
-	AC_ERROR([NICKLEN must be a numeric value])
-  fi
-  if test $withval -gt 50; then
-	NICKLEN=50
-	AC_MSG_WARN([NICKLEN has a hard limit of 50. Setting NICKLEN=50])
-  elif test $withval -lt 9; then
-	NICKLEN=9
-	AC_MSG_WARN([NICKLEN has a lower limit of 9. Setting NICKLEN=9])
-  else
-	NICKLEN="$withval"
-  fi
-], [NICKLEN=31])
-
-AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
-
-dnl
-dnl --with-topiclen
-dnl
-
-AC_ARG_WITH(topiclen,
-AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (default 390, max 390)]),
-[
- if test $withval -gt 390; then
-	TOPICLEN=390
-	AC_MSG_WARN([TOPICLEN has a hard limit of 390. Setting TOPICLEN=390])
- else
- 	TOPICLEN=$withval
- fi
-], [TOPICLEN=390])
-
-AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
-
-
 dnl ***************************************************************************
 dnl
 dnl Branding defined in the compilation
@@ -1630,17 +1558,6 @@ dnl ***************************************************************************
 dnl
 dnl Misc
 dnl
-
-
-AC_SUBST(MODULES_LIBS)
-AC_SUBST(MOD_TARGET)
-AC_SUBST(PICFLAGS)
-AC_SUBST(SEDOBJ)
-
-
-AC_CONFIG_COMMANDS([tools/genssl_chmod], [chmod 755 tools/genssl])
-
-
 
 dnl ***************************************************************************
 dnl
