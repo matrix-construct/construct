@@ -544,7 +544,7 @@ bool
 ircd::fs::mkdir(const string_view &path)
 try
 {
-	return filesystem::create_directory(fs::path(path));
+	return filesystem::create_directories(fs::path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
