@@ -1488,6 +1488,31 @@ dnl
 dnl Application settings
 dnl
 
+dnl
+dnl --with-mxid-maxlen
+dnl
+
+AC_ARG_WITH(mxid-maxlen,
+AC_HELP_STRING([--with-mxid-maxlen=LENGTH],[Set the upper-bound mxid length to LENGTH (default 255, max 511)]),
+[
+  if ! expr "$withval" + 0 >/dev/null 2>&1; then
+	AC_ERROR([MXID_MAXLEN must be a numeric value])
+  fi
+  if test $withval -gt 511; then
+	MXID_MAXLEN=511
+	AC_MSG_WARN([MXID_MAXLEN has a hard limit of 511. Setting MXID_MAXLEN=511])
+  elif test $withval -lt 4; then
+	MXID_MAXLEN=4
+	AC_MSG_WARN([MXID_MAXLEN has a lower limit of 4. Setting MXID_MAXLEN=4])
+  else
+	MXID_MAXLEN="$withval"
+  fi
+], [
+	MXID_MAXLEN=255
+])
+
+RB_DEFINE_UNQUOTED([MXID_MAXLEN], [$MXID_MAXLEN], [Maximum string length of an MXID (not including null)])
+
 dnl ***************************************************************************
 dnl
 dnl Branding defined in the compilation

@@ -62,7 +62,7 @@ struct ircd::m::id
 
 	static constexpr const size_t &MAX_SIZE
 	{
-		255
+		RB_MXID_MAXLEN // set by ./configure; should be 255
 	};
 
   public:
