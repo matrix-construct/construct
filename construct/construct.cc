@@ -92,7 +92,7 @@ try
 	// argument or fall back to the default.
 	const std::string confpath
 	{
-		configfile?: fs::get(fs::IRCD_CONF)
+		configfile?: ""
 	};
 
 	// Associates libircd with our io_context and posts the initial routines

@@ -19,10 +19,6 @@ namespace filesystem = boost::filesystem;
 
 namespace ircd::fs
 {
-	enum { NAME, PATH };
-	using ent = std::pair<std::string, std::string>;
-	extern const std::array<ent, num_of<index>()> paths;
-
 	filesystem::path path(std::string);
 	filesystem::path path(const string_view &);
 	filesystem::path path(const vector_view<const string_view> &);
@@ -32,20 +28,6 @@ namespace ircd::fs
 decltype(ircd::fs::aioctx)
 ircd::fs::aioctx
 {};
-
-decltype(ircd::fs::paths)
-ircd::fs::paths
-{{
-	{ "prefix",            DPATH         },
-	{ "binary dir",        BINPATH       },
-	{ "config",            ETCPATH       },
-	{ "log",               LOGPATH       },
-	{ "libexec dir",       PKGLIBEXECDIR },
-	{ "modules",           MODPATH       },
-	{ "ircd.conf",         CPATH         },
-	{ "ircd binary",       SPATH         },
-	{ "db",                DBPATH        },
-}};
 
 ircd::fs::init::init()
 {
@@ -69,6 +51,55 @@ noexcept
 	#endif
 
 	assert(!aioctx);
+}
+
+//
+// Compile-time path index
+//
+
+namespace ircd::fs
+{
+	struct sysent;
+	extern const std::array<struct sysent, num_of<index>()> syspaths;
+}
+
+struct ircd::fs::sysent
+{
+	string_view name;
+	string_view path;
+};
+
+decltype(ircd::fs::syspaths)
+ircd::fs::syspaths
+{{
+	{ "prefix",            RB_PREFIX      },
+	{ "binary dir",        RB_BIN_DIR     },
+	{ "database",          RB_DB_DIR      },
+	{ "conf",              RB_CONF_DIR    },
+	{ "log",               RB_LOG_DIR     },
+	{ "modules",           RB_MODULE_DIR  },
+}};
+
+ircd::string_view
+ircd::fs::get(index index)
+noexcept try
+{
+	return syspaths.at(index).path;
+}
+catch(const std::out_of_range &e)
+{
+	return {};
+}
+
+ircd::string_view
+ircd::fs::name(index index)
+noexcept try
+{
+	return syspaths.at(index).name;
+}
+catch(const std::out_of_range &e)
+{
+	return {};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -355,7 +386,7 @@ catch(const std::exception &e)
 
 namespace ircd::fs
 {
-	thread_local char path_buf[2048];
+	thread_local char path_buf[PATH_MAX];
 	static const char *path_str(const string_view &);
 	static uint posix_flags(const std::ios::open_mode &mode);
 }
@@ -481,6 +512,20 @@ noexcept(false)
 // fs.h / misc
 //
 
+std::string
+ircd::fs::cwd()
+try
+{
+	return filesystem::current_path().string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+
 void
 ircd::fs::chdir(const string_view &path)
 try
@@ -500,20 +545,6 @@ ircd::fs::mkdir(const string_view &path)
 try
 {
 	return filesystem::create_directory(fs::path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
-}
-
-std::string
-ircd::fs::cwd()
-try
-{
-	return filesystem::current_path().string();
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -702,26 +733,4 @@ filesystem::path
 ircd::fs::path(std::string s)
 {
 	return filesystem::path(std::move(s));
-}
-
-const char *
-ircd::fs::get(index index)
-noexcept try
-{
-	return std::get<PATH>(paths.at(index)).c_str();
-}
-catch(const std::out_of_range &e)
-{
-	return nullptr;
-}
-
-const char *
-ircd::fs::name(index index)
-noexcept try
-{
-	return std::get<NAME>(paths.at(index)).c_str();
-}
-catch(const std::out_of_range &e)
-{
-	return nullptr;
 }

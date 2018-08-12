@@ -36,38 +36,17 @@ namespace ircd::fs
 {
 	struct aio;
 	struct init;
+	enum index :int;
 
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, filesystem_error)
 
-	constexpr auto DPATH = IRCD_PREFIX;
-	constexpr auto BINPATH = IRCD_PREFIX "/bin";
-	constexpr auto ETCPATH = RB_ETC_DIR;
-	constexpr auto LOGPATH = RB_LOG_DIR;
-	constexpr auto MODPATH = RB_MODULE_DIR;
-	constexpr auto CPATH = RB_ETC_DIR "/ircd.conf";              // ircd.conf file
-	constexpr auto SPATH = RB_BIN_DIR "/" BRANDING_NAME;         // ircd executable
-	constexpr auto DBPATH = PKGLOCALSTATEDIR "/db";              // database prefix
+	constexpr size_t PATH_MAX { 2048 };
 
-	// Below are the elements for default paths.
-	enum index
-	{
-		PREFIX,
-		BIN,
-		ETC,
-		LOG,
-		LIBEXEC,
-		MODULES,
-		IRCD_CONF,
-		IRCD_EXEC,
-		DB,
+	extern aio *aioctx;
 
-		_NUM_
-	};
-
-	const char *get(index) noexcept;
-	const char *name(index) noexcept;
-
+	string_view get(index) noexcept;
+	string_view name(index) noexcept;
 	std::string make_path(const vector_view<const string_view> &);
 
 	bool exists(const string_view &path);
@@ -80,16 +59,28 @@ namespace ircd::fs
 
 	bool rename(std::nothrow_t, const string_view &old, const string_view &new_);
 	void rename(const string_view &old, const string_view &new_);
-
 	bool remove(std::nothrow_t, const string_view &path);
 	bool remove(const string_view &path);
 
-	std::string cwd();
 	void chdir(const string_view &path);
 	bool mkdir(const string_view &path);
 
-	extern aio *aioctx;
+	std::string cwd();
 }
+
+/// elements for default paths.
+enum ircd::fs::index
+:int
+{
+	PREFIX,
+	BIN,
+	CONF,
+	DB,
+	LOG,
+	MODULES,
+
+	_NUM_
+};
 
 #include "fd.h"
 #include "read.h"

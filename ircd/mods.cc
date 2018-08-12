@@ -473,7 +473,7 @@ namespace ircd::mods
 decltype(ircd::mods::modroot)
 ircd::mods::modroot
 {
-	ircd::fs::get(ircd::fs::MODULES)
+	std::string{ircd::fs::get(ircd::fs::MODULES)}
 };
 
 decltype(ircd::mods::paths)

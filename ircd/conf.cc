@@ -10,8 +10,10 @@
 
 namespace ircd::conf
 {
+	extern const string_view default_filename;
+
 	std::string _config;
-	static std::string read_json_file(string_view filename);
+	static std::string read_json_file(std::string filename);
 }
 
 //TODO: X
@@ -21,10 +23,16 @@ ircd::conf::config
 	_config
 };
 
+decltype(ircd::conf::default_filename)
+ircd::conf::default_filename
+{
+	"ircd.conf"
+};
+
 void
 ircd::conf::init(const string_view &filename)
 {
-	_config = read_json_file(filename);
+	_config = read_json_file(std::string{filename});
 }
 
 bool
@@ -149,7 +157,7 @@ const
 //
 
 std::string
-ircd::conf::read_json_file(string_view filename)
+ircd::conf::read_json_file(std::string filename)
 try
 {
 	if(!filename.empty())
@@ -159,7 +167,10 @@ try
 		};
 
 	if(filename.empty())
-		filename = fs::CPATH;
+		filename = fs::make_path(
+		{
+			fs::get(fs::CONF), conf::default_filename
+		});
 
 	if(!fs::exists(filename))
 		return {};

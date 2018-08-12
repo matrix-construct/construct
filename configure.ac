@@ -9,7 +9,7 @@ AC_INIT([construct], [1.0])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_MACRO_DIR([m4])
-AC_PREFIX_DEFAULT($HOME/ircd)
+AC_PREFIX_DEFAULT([/])
 
 AC_PATH_PROG(AUTOMAKE, automake)
 AC_PATH_PROG(ACLOCAL, aclocal)
@@ -713,8 +713,7 @@ AM_COND_IF(LINUX,
 	AC_ARG_ENABLE(aio, AC_HELP_STRING([--disable-aio], [Disable kernel AIO support]),
 	[
 		aio=$enableval
-	],
-	[
+	], [
 		aio=yes
 	])
 ], [])
@@ -736,179 +735,95 @@ dnl
 PKG_PROG_PKG_CONFIG
 
 if test "$prefix" = "NONE"; then
-	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where librb is installed.])
+	prefix="$ac_default_prefix"
 else
 	dnl Don't get bitten by Cygwin's stupidity if the user specified
 	dnl a custom prefix with a trailing slash
 	prefix=`echo $prefix | sed 's/\/$//'`
-	AC_DEFINE_UNQUOTED(RB_PREFIX, "$prefix", [Prefix where librb is installed.])
-	AC_SUBST(RB_PREFIX)
 fi
 
+RB_DEFINE_UNQUOTED(PREFIX, ["$prefix"], [Prefix of IRCd install])
+AC_SUBST_DIR([prefix])
 
-if test "$prefix" = "NONE"; then
-	AC_DEFINE_UNQUOTED(IRCD_PREFIX, "$ac_default_prefix", [Prefix where the ircd is installed.])
-else
-	dnl Don't get bitten by Cygwin's stupidity if the user specified
-	dnl a custom prefix with a trailing slash
-	prefix=`echo $prefix | sed 's/\/$//'`
-	AC_DEFINE_UNQUOTED(IRCD_PREFIX, "$prefix", [Prefix where the ircd is installed.])
-fi
+dnl
+dnl bindir
+dnl
 
+RB_DEFINE_UNQUOTED([BIN_DIR], ["$(bindir)"], [Directory where binary executables are to be found.])
+AC_SUBST_DIR([bindir])
 
-AC_ARG_ENABLE([fhs-paths],
-	[AS_HELP_STRING([--enable-fhs-paths], [Use more FHS-like pathnames (for packagers).])],
-	[],
-	[dnl detect if the user appears to want --enable-fhs-paths
-	AS_IF([test "$libexecdir" = '${exec_prefix}/libexec' && \
-		test "$localstatedir" = '${prefix}/var' && \
-		test "$libdir" = '${exec_prefix}/lib'],
-		[enable_fhs_paths=no],
-		[enable_fhs_paths=yes])
-	])
-dnl use directory structure of cached as default (hack)
-AS_IF([test "x$enable_fhs_paths" = "xyes"],
-	[dnl Avoid name collisions.
-	pkglibexecdir='${libexecdir}/${PACKAGE_TARNAME}'
-	rundir=${rundir-'${prefix}/run'}
-	pkgrundir='${rundir}/${PACKAGE_TARNAME}'
-	pkglocalstatedir='${localstatedir}/${PACKAGE_TARNAME}'
-	AC_DEFINE([ENABLE_FHS_PATHS], [1], [Uncomment if FHS pathnames are enabled])],
-	[libexecdir='${bindir}'
-	pkglibexecdir='${libexecdir}'
-	rundir='${sysconfdir}'
-	pkgrundir='${rundir}'
-	localstatedir='${prefix}'
-	pkglocalstatedir='${sysconfdir}'])
-pkglibdir='${libdir}/${PACKAGE_TARNAME}'
-AC_SUBST([pkglibdir])
-AC_SUBST([rundir])
-AC_SUBST([pkgrundir])
-AC_SUBST([pkglocalstatedir])
-AC_DEFINE_DIR([PKGLOCALSTATEDIR], [pkglocalstatedir], [[Directory in which to store state, such as ban database]])
-AC_SUBST([pkglibexecdir])
-AC_DEFINE_DIR([PKGLIBEXECDIR], [pkglibexecdir], [Directory where binaries the IRCd itself spawns live])
+dnl
+dnl libdir
+dnl
 
+RB_DEFINE_UNQUOTED([LIB_DIR], ["$(libdir)"], [Prefix where libs are installed.])
+AC_SUBST_DIR([libdir])
+
+dnl
+dnl localstatedir
+dnl
+
+dnl Avoid name collisions.
+RB_DEFINE_UNQUOTED([LOCALSTATE_DIR], ["$(localstatedir)"], [Prefix where db and logs go.])
+AC_SUBST_DIR([localstatedir])
 
 dnl
 dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
 dnl
 
-AC_ARG_WITH([confdir],
-	[AC_HELP_STRING([--with-confdir=DIR],
-	       [Directory to install config files [deprecated, use --sysconfdir instead].])],
-	[ sysconfdir=`echo $withval | sed 's/\/$//'` ],
-	[ confdir='etc' ])
-RB_DEFINE_UNQUOTED([ETC_DIR], ["${prefix}/${confdir}"], [Prefix where config files are installed.])
-
+RB_DEFINE_UNQUOTED([CONF_DIR], ["$(sysconfdir)"], [Prefix where config files are installed.])
+AC_SUBST_DIR([sysconfdir])
 
 dnl
-dnl Check for --with-bindir
+dnl Check for --with-dbdir
 dnl
 
-AC_MSG_CHECKING([whether to modify binary directory])
-AC_ARG_WITH(bindir,
-AC_HELP_STRING([--with-bindir=DIR],
-	       [Directory where binary executables are placed.]),
-	       [ logdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)],
-	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[bindir="${prefix}/bin"],
-			[bindir="${prefix}/bin"])
-		 AC_MSG_RESULT(no)])
-RB_DEFINE_UNQUOTED([BIN_DIR], ["${bindir}"], [Directory where binary executables are to be found.])
-AC_SUBST_DIR([bindir])
+AC_MSG_CHECKING([whether to modify database directory])
+AC_ARG_WITH(dbdir, AC_HELP_STRING([--with-dbdir=DIR], [Directory where databases are located]),
+[
+	AC_MSG_RESULT(yes)
+	dbdir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	dbdir="${localstatedir}/db/${PACKAGE_TARNAME}"
+])
 
+RB_DEFINE_UNQUOTED([DB_DIR], ["$dbdir"], [Directory where databases are located])
+AC_SUBST_DIR([dbdir])
 
 dnl
 dnl Check for --with-logdir
 dnl
 
 AC_MSG_CHECKING([whether to modify logdir])
-AC_ARG_WITH(logdir,
-AC_HELP_STRING([--with-logdir=DIR],
-	       [Directory where to write logfiles.]),
-	       [ logdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)],
-	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[logdir="${prefix}/var/log"],
-			[logdir="${prefix}/var/${PACKAGE_TARNAME}/log"])
-		 AC_MSG_RESULT(no)])
-RB_DEFINE_UNQUOTED([LOG_DIR], ["${logdir}"], [Prefix where to write logfiles.])
+AC_ARG_WITH(logdir, AC_HELP_STRING([--with-logdir=DIR], [Directory where to write logfiles.]),
+[
+	AC_MSG_RESULT(yes)
+	logdir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	logdir="${localstatedir}/log/${PACKAGE_TARNAME}"
+])
+
+RB_DEFINE_UNQUOTED([LOG_DIR], ["$logdir"], [Prefix where to write logfiles.])
 AC_SUBST_DIR([logdir])
-
-
-dnl
-dnl Check for --with-helpdir
-dnl
-
-AC_MSG_CHECKING([whether to modify helpdir])
-AC_ARG_WITH(helpdir,
-AC_HELP_STRING([--with-helpdir=DIR],
-	       [Directory to install help files.]),
-	       [ helpdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes) ],
-	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[helpdir="${prefix}/share/help"],
-			[helpdir="${prefix}/share/${PACKAGE_TARNAME}/help"])
-		 AC_MSG_RESULT(no) ])
-RB_DEFINE_UNQUOTED([HELP_DIR], ["${helpdir}"], [Prefix where help files are installed.])
-AC_SUBST_DIR([helpdir])
-
 
 dnl
 dnl Check for --with-moduledir
 dnl
 
 AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir,
-	[AC_HELP_STRING([--with-moduledir=DIR],
-	       [Directory to install modules.])],
-	       [ moduledir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)],
-	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[moduledir="${prefix}/lib/modules"],
-			[moduledir="${prefix}/lib/${PACKAGE_TARNAME}/modules"])
-		 AC_MSG_RESULT(no)
-		])
-RB_DEFINE_UNQUOTED([MODULE_DIR], ["${moduledir}"], [Prefix where modules are installed.])
+AC_ARG_WITH(moduledir, [AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.])],
+[
+	AC_MSG_RESULT(yes)
+	moduledir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	moduledir="${libdir}/modules/${PACKAGE_TARNAME}"
+])
+
+RB_DEFINE_UNQUOTED([MODULE_DIR], ["$moduledir"], [Prefix where modules are installed.])
 AC_SUBST_DIR([moduledir])
-
-
-dnl
-dnl Check for --with-rundir
-dnl
-
-AC_MSG_CHECKING([whether or modify rundir])
-AC_ARG_WITH([rundir],
-	[AC_HELP_STRING([--with-rundir=DIR],
-		[Directory in which to store pidfile.])],
-	[AC_MSG_RESULT([yes])
-	rundir=`echo $withval | sed 's/\/$//'`],
-	[AC_MSG_RESULT([no])
-	AS_IF([test "x$enable_fhs_paths" = "xyes"],
-		[rundir="${prefix}/var/run"],
-		[rundir="${prefix}/${PACKAGE_TARNAME}/run"])])
-AC_SUBST([rundir])
-AC_DEFINE_DIR([PKGRUNDIR], ["${rundir}"], [Directory to store pidfile in.])
-
-
-dnl
-dnl Check for --with-program-prefix
-dnl
-
-dnl Installed utility program prefixes (does not affect binaries
-dnl installed into pkglibexecdir)
-AC_MSG_CHECKING([for program prefix])
-AC_ARG_WITH([program-prefix],
-	[AS_HELP_STRING([--with-program-prefix=], [If set, programs installed into PATH will be installed with names prefixed by this prefix.])],
-	[test "x$with_program_prefix" = "xno" && with_program_prefix=],
-	[with_program_prefix=])
-AC_MSG_RESULT(["$with_program_prefix"])
-PROGRAM_PREFIX="$with_program_prefix"
-AC_SUBST([PROGRAM_PREFIX])
-AC_DEFINE_UNQUOTED([PROGRAM_PREFIX], ["$with_program_prefix"], [String with which all programs intended to be in PATH are prefixed.])
-
 
 dnl ***************************************************************************
 dnl

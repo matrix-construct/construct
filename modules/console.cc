@@ -1878,7 +1878,7 @@ console_cmd__db__list(opt &out, const string_view &line)
 	{
 		const auto name
 		{
-			replace(lstrip(lstrip(path, fs::DBPATH), '/'), "/", ":")
+			replace(lstrip(lstrip(path, fs::get(fs::DB)), '/'), "/", ":")
 		};
 
 		const auto &d

@@ -139,4 +139,5 @@ libircd_la_SOURCES +=  \
 endif
 
 install-data-local:
-	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@
+	test -d $(logdir) || mkdir -p $(logdir)
+	test -d $(dbdir) || mkdir -p $(dbdir)
