@@ -50,8 +50,6 @@ ircd::log::init()
 {
 	//TODO: XXX: config + cmd control + other fancy stuff
 
-	//add_top_conf("log", NULL, NULL, conf_log_table);
-
 	console_out[CRITICAL]    = true;
 	console_out[ERROR]       = true;
 	console_out[DERROR]      = true;
@@ -105,7 +103,6 @@ ircd::log::init()
 void
 ircd::log::fini()
 {
-	//remove_top_conf("log");
 	flush();
 	close();
 }
