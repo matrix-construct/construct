@@ -68,7 +68,7 @@ namespace ircd::fs
 	std::string cwd();
 }
 
-/// elements for default paths.
+/// Index of default paths. Must be aligned with fs::syspaths (see: fs.cc)
 enum ircd::fs::index
 :int
 {

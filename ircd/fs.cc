@@ -72,12 +72,12 @@ struct ircd::fs::sysent
 decltype(ircd::fs::syspaths)
 ircd::fs::syspaths
 {{
-	{ "prefix",            RB_PREFIX      },
-	{ "binary dir",        RB_BIN_DIR     },
-	{ "database",          RB_DB_DIR      },
-	{ "conf",              RB_CONF_DIR    },
-	{ "log",               RB_LOG_DIR     },
-	{ "modules",           RB_MODULE_DIR  },
+	{ "installation prefix",      RB_PREFIX      },
+	{ "binary directory",         RB_BIN_DIR     },
+	{ "configuration directory",  RB_CONF_DIR    },
+	{ "database directory",       RB_DB_DIR      },
+	{ "log directory",            RB_LOG_DIR     },
+	{ "module directory",         RB_MODULE_DIR  },
 }};
 
 ircd::string_view
