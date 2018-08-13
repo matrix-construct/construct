@@ -39,12 +39,6 @@ std::thread::id
 ircd::thread_id
 {};
 
-void
-ircd::init(boost::asio::io_context &ios)
-{
-	init(ios, std::string{});
-}
-
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
 /// Pass your io_context instance, it will share it with the rest of your program.
@@ -56,7 +50,7 @@ ircd::init(boost::asio::io_context &ios)
 /// init() can only be called from a runlevel::HALT state
 void
 ircd::init(boost::asio::io_context &ios,
-           const std::string &configfile)
+           const string_view &hostname)
 try
 {
 	if(runlevel != runlevel::HALT)
@@ -82,9 +76,6 @@ try
 	// This starts off the log with library information.
 	info::init();
 	info::dump();
-
-	// The conf supplied by the user is read in; see: ircd::conf.
-	conf::init(configfile);
 
 	// Setup the main context, which is a new stack executing the function
 	// ircd::main(). The main_context is the first ircd::ctx to be spawned

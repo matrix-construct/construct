@@ -19,7 +19,7 @@ namespace fs = ircd::fs;
 static void sigfd_handler(const boost::system::error_code &, int) noexcept;
 static bool startup_checks();
 static void enable_coredumps();
-static void print_version();
+static int print_version();
 
 const char *const fatalerrstr
 {R"(
@@ -75,31 +75,40 @@ int main(int argc, char *const *argv)
 try
 {
 	umask(077);       // better safe than sorry --SRB
+
+	// '-' switched arguments come first; this function incs argv and decs argc
 	parseargs(&argc, &argv, opts);
-	if(!startup_checks())
-		return 1;
 
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash.
 	if(RB_DEBUG_LEVEL || ircd::debugmode)
 		enable_coredumps();
 
-	if(printversion)
-	{
-		print_version();
-		return 0;
-	}
+	if(!startup_checks())
+		return EXIT_FAILURE;
 
-	// Determine the configuration file from either the user's command line
-	// argument or fall back to the default.
-	const std::string confpath
+	if(printversion)
+		return print_version();
+
+	// The matrix origin (i.e hostname) is the first positional argument after any
+	// switched arguments. All other information about configuration and database
+	// location is found using this string.
+	const ircd::string_view hostname
 	{
-		configfile?: ""
+		argc? *argv : nullptr // where parseargs() left off
 	};
+
+	// at least one hostname argument is required for now.
+	if(!hostname)
+		throw ircd::user_error
+		{
+			"Must specify the origin (i.e hostname) after any switched parameters."
+		};
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
-	ircd::init(*ios, confpath);
+	// note: only supports service for one hostname at this time.
+	ircd::init(*ios, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling
@@ -172,7 +181,7 @@ catch(const std::exception &e)
 	return EXIT_FAILURE;
 }
 
-void
+int
 print_version()
 {
 	printf("VERSION :%s\n",
@@ -183,6 +192,8 @@ print_version()
 	       PACKAGE_NAME,
 	       PACKAGE_VERSION);
 	#endif
+
+	return EXIT_SUCCESS;
 }
 
 bool
