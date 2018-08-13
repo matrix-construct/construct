@@ -27,6 +27,7 @@ const char *const fatalerrstr
 *** A fatal error has occurred. Please contact the developer with the message below.
 *** Create a coredump by reproducing the error using the -debug command-line option.
 ***
+
 %s
 )"};
 
@@ -35,6 +36,7 @@ const char *const usererrstr
 ***
 *** A fatal startup error has occurred. Please fix the problem to continue. ***
 ***
+
 %s
 )"};
 
