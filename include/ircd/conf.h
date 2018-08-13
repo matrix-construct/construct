@@ -13,6 +13,16 @@
 
 /// Configuration system.
 ///
+/// This system disseminates mutable runtime values throughout IRCd. All users
+/// that integrate a configurable value will create a [static] conf::item<>
+/// instantiated with one of the explicit types available; also a name and
+/// default value.
+///
+/// All conf::items are collected by this system. Users that administrate
+/// configuration will push values to the conf::item's. The various items have
+/// O(1) access to the value contained in their item instance. Administrators
+/// have logarithmic access through this interface using the items map by name.
+///
 namespace ircd::conf
 {
 	template<class T = void> struct item;  // doesn't exist
@@ -33,15 +43,12 @@ namespace ircd::conf
 	IRCD_EXCEPTION(error, not_found)
 	IRCD_EXCEPTION(error, bad_value)
 
-	extern const std::string &config; //TODO: X
 	extern std::map<string_view, item<> *> items;
 
 	bool exists(const string_view &key);
 	string_view get(const string_view &key, const mutable_buffer &out);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
-
-	void init(const string_view &configfile);
 }
 
 /// Conf item base class. You don't create this directly; use one of the

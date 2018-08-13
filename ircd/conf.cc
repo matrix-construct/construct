@@ -8,32 +8,9 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::conf
-{
-	extern const string_view default_filename;
-
-	std::string _config;
-	static std::string read_json_file(std::string filename);
-}
-
-//TODO: X
-decltype(ircd::conf::config)
-ircd::conf::config
-{
-	_config
-};
-
-decltype(ircd::conf::default_filename)
-ircd::conf::default_filename
-{
-	"ircd.conf"
-};
-
-void
-ircd::conf::init(const string_view &filename)
-{
-	_config = read_json_file(std::string{filename});
-}
+decltype(ircd::conf::items)
+ircd::conf::items
+{};
 
 bool
 ircd::conf::set(std::nothrow_t,
@@ -102,10 +79,6 @@ ircd::conf::exists(const string_view &key)
 // item
 //
 
-decltype(ircd::conf::items)
-ircd::conf::items
-{};
-
 /// Conf item abstract constructor.
 ircd::conf::item<void>::item(const json::members &opts)
 :feature_
@@ -150,66 +123,6 @@ ircd::conf::item<void>::get(const mutable_buffer &)
 const
 {
 	return {};
-}
-
-//
-// misc
-//
-
-std::string
-ircd::conf::read_json_file(std::string filename)
-try
-{
-	if(!filename.empty())
-		log::debug
-		{
-			"User supplied a configuration file path: `%s'", filename
-		};
-
-	if(filename.empty())
-		filename = fs::make_path(
-		{
-			fs::get(fs::CONF), conf::default_filename
-		});
-
-	if(!fs::exists(filename))
-		return {};
-
-	// To reduce a level of silly, we consider the conf file to be an
-	// implicit object, this way it can just be a list of members.
-	std::stringstream ss;
-	ss << '{'
-	   << fs::read(filename)
-	   << '}';
-
-	std::string read
-	{
-		ss.str()
-	};
-
-	// grammar check; throws on error
-	json::valid(read);
-
-	const json::object object{read};
-	const size_t key_count{object.count()};
-	log::info
-	{
-		"Using configuration from: `%s': JSON object with %zu members in %zu bytes",
-		filename,
-		key_count,
-		read.size()
-	};
-
-	return read;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"Configuration @ `%s': %s", filename, e.what()
-	};
-
-	throw;
 }
 
 //
