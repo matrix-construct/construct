@@ -751,7 +751,7 @@ console_cmd__mod__reload(opt &out, const string_view &line)
 	for(auto it(names.begin()); it != names.end(); ++it)
 	{
 		const auto &name{*it};
-		if(m::modules.erase(std::string{name}))
+		if(m::imports.erase(std::string{name}))
 			out << name << " unloaded." << std::endl;
 		else
 			out << name << " is not loaded." << std::endl;
@@ -760,7 +760,7 @@ console_cmd__mod__reload(opt &out, const string_view &line)
 	for(auto it(names.rbegin()); it != names.rend(); ++it)
 	{
 		const auto &name{*it};
-		if(m::modules.emplace(std::string{name}, name).second)
+		if(m::imports.emplace(std::string{name}, name).second)
 			out << name << " loaded." << std::endl;
 		else
 			out << name << " is already loaded." << std::endl;
@@ -775,13 +775,13 @@ console_cmd__mod__load(opt &out, const string_view &line)
 	tokens(line, ' ', [&out]
 	(const string_view &name)
 	{
-		if(m::modules.find(name) != end(m::modules))
+		if(m::imports.find(name) != end(m::imports))
 		{
 			out << name << " is already loaded." << std::endl;
 			return;
 		}
 
-		m::modules.emplace(std::string{name}, name);
+		m::imports.emplace(std::string{name}, name);
 		out << name << " loaded." << std::endl;
 	});
 
@@ -794,7 +794,7 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 	tokens(line, ' ', [&out]
 	(const string_view &name)
 	{
-		if(!m::modules.erase(std::string{name}))
+		if(!m::imports.erase(std::string{name}))
 		{
 			out << name << " is not loaded." << std::endl;
 			return;

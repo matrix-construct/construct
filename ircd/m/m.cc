@@ -144,8 +144,8 @@ try
 	}
 
 	// Manually load first modules
-	m::modules.emplace("vm"s, "vm"s);
-	m::modules.emplace("vm_fetch"s, "vm_fetch"s);
+	m::imports.emplace("vm"s, "vm"s);
+	m::imports.emplace("vm_fetch"s, "vm_fetch"s);
 
 	// The order of these prefixes will be the loading order. Order of
 	// specific modules within a prefix is not determined here.
@@ -158,10 +158,10 @@ try
 	for(const auto &prefix : prefixes)
 		for(const auto &name : mods::available())
 			if(startswith(name, prefix))
-				m::modules.emplace(name, name);
+				m::imports.emplace(name, name);
 
 	// Manually load last modules
-	m::modules.emplace("webroot"s, "webroot"s);
+	m::imports.emplace("webroot"s, "webroot"s);
 }
 catch(...)
 {
@@ -171,7 +171,7 @@ catch(...)
 ircd::m::init::modules::~modules()
 noexcept
 {
-	m::modules.clear();
+	m::imports.clear();
 }
 
 namespace ircd::m
@@ -3598,8 +3598,8 @@ ircd::m::_hook_match(const m::event &matching,
 // m/import.h
 //
 
-decltype(ircd::m::modules)
-ircd::m::modules
+decltype(ircd::m::imports)
+ircd::m::imports
 {};
 
 ///////////////////////////////////////////////////////////////////////////////

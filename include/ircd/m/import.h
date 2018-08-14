@@ -15,7 +15,7 @@ namespace ircd::m
 {
 	template<class prototype> struct import;
 
-	extern std::map<std::string, ircd::module, std::less<>> modules;
+	extern std::map<std::string, ircd::module, std::less<>> imports;
 }
 
 template<class prototype>
@@ -58,7 +58,7 @@ ircd::m::import<prototype>::reload()
 try
 {
 	auto &import(static_cast<mods::import<prototype> &>(*this));
-	import = { modules.at(modname), symname };
+	import = { imports.at(modname), symname };
 }
 catch(const std::out_of_range &e)
 {
