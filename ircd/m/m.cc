@@ -14,10 +14,6 @@ ircd::m::log
 	"matrix", 'm'
 };
 
-decltype(ircd::m::listeners)
-ircd::m::listeners
-{};
-
 //
 // init
 //
@@ -36,64 +32,22 @@ me_offline_status_msg
 	{ "default",  "Catch ya on the flip side..."   }
 };
 
-struct ircd::m::init::modules
-{
-	modules(const json::object &);
-	~modules() noexcept;
-};
-
-struct ircd::m::init::listeners
-{
-	listeners(const json::object &);
-	~listeners() noexcept;
-};
-
 //
 // init::init
 //
 
-ircd::m::init::init()
+ircd::m::init::init(const string_view &origin)
 try
-:config
+:_self
 {
-	ircd::conf::config
-}
-,_self
-{
-	this->config
+	origin
 }
 ,_keys
 {
-	this->config
-}
-,modules{[this]
-{
-	auto ret{std::make_unique<struct modules>(config)};
-
-	//TODO: XXX
-	// Because s_conf is loaded before other modules are loaded, all items
-	// have not registered at that time. s_conf reads the !conf room on load
-	// but each conf::item does not read from the conf room itself when it
-	// loads after that. Instead they start with their "default" value. This
-	// isn't good, but for the time being we can trigger a rehash here.
-	import<void ()> rehash_conf
-	{
-		"s_conf", "rehash_conf"
-	};
-
-//	if(rehash_conf)
-//		rehash_conf();
-
-	if(db::sequence(*dbs::events) == 0)
-		bootstrap();
-
-	return ret;
-}()}
-,listeners
-{
-	std::make_unique<struct listeners>(config)
+	{}
 }
 {
+	init_imports();
 	presence::set(me, "online", me_online_status_msg);
 }
 catch(const m::error &e)
@@ -114,8 +68,8 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
-	listeners.reset(nullptr);
 	presence::set(me, "offline", me_offline_status_msg);
+	m::imports.clear();
 }
 catch(const m::error &e)
 {
@@ -126,10 +80,11 @@ catch(const m::error &e)
 void
 ircd::m::init::close()
 {
-	listeners.reset(nullptr);
+
 }
 
-ircd::m::init::modules::modules(const json::object &config)
+void
+ircd::m::init::init_imports()
 try
 {
 	if(ircd::noautomod)
@@ -143,106 +98,14 @@ try
 		return;
 	}
 
-	// Manually load first modules
-	m::imports.emplace("vm"s, "vm"s);
-	m::imports.emplace("vm_fetch"s, "vm_fetch"s);
+	m::imports.init();
 
-	// The order of these prefixes will be the loading order. Order of
-	// specific modules within a prefix is not determined here.
-	static const string_view prefixes[]
-	{
-		"s_", "m_", "key_", "media_", "client_", "federation_"
-	};
-
-	// Load modules by prefix.
-	for(const auto &prefix : prefixes)
-		for(const auto &name : mods::available())
-			if(startswith(name, prefix))
-				m::imports.emplace(name, name);
-
-	// Manually load last modules
-	m::imports.emplace("webroot"s, "webroot"s);
+	if(db::sequence(*dbs::events) == 0)
+		bootstrap();
 }
 catch(...)
-{
-	this->~modules();
-}
-
-ircd::m::init::modules::~modules()
-noexcept
 {
 	m::imports.clear();
-}
-
-namespace ircd::m
-{
-	static void init_listener(const json::object &config, const string_view &name, const json::object &conf);
-}
-
-ircd::m::init::listeners::listeners(const json::object &config)
-try
-{
-	if(ircd::nolisten)
-	{
-		log::warning
-		{
-			"Not listening on any addresses because nolisten flag is set."
-		};
-
-		return;
-	}
-
-	const json::array listeners
-	{
-		config[{"ircd", "listen"}]
-	};
-
-	for(const auto &name : listeners) try
-	{
-		const json::object &opts
-		{
-			config.at({"listen", unquote(name)})
-		};
-
-		if(!opts.has("tmp_dh_path"))
-			throw user_error
-			{
-				"Listener %s requires a 'tmp_dh_path' in the config. We do not"
-				" create this yet. Try `openssl dhparam -outform PEM -out dh512.pem 512`",
-				name
-			};
-
-		init_listener(config, unquote(name), opts);
-	}
-	catch(const json::not_found &e)
-	{
-		throw ircd::user_error
-		{
-			"Failed to find configuration block for listener %s", name
-		};
-	}
-}
-catch(...)
-{
-	this->~listeners();
-}
-
-ircd::m::init::listeners::~listeners()
-noexcept
-{
-	m::listeners.clear();
-}
-
-static void
-ircd::m::init_listener(const json::object &config,
-                       const string_view &name,
-                       const json::object &opts)
-{
-	m::listeners.emplace_back(name, opts, []
-	(const auto &sock)
-	{
-		add_client(sock);
-	});
 }
 
 void
@@ -251,11 +114,11 @@ ircd::m::init::bootstrap()
 	assert(dbs::events);
 	assert(db::sequence(*dbs::events) == 0);
 
-	ircd::log::notice
-	(
-		"This appears to be your first time running IRCd because the events "
+	log::notice
+	{
+		log, "This appears to be your first time running IRCd because the events "
 		"database is empty. I will be bootstrapping it with initial events now..."
-	);
+	};
 
 	if(me.user_id.hostname() == "localhost")
 		log::warning
@@ -306,6 +169,11 @@ ircd::m::init::bootstrap()
 		{
 			{ "name", "User Tokens" }
 		});
+
+	log::info
+	{
+		log, "Bootstrap event generation completed nominally."
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -382,41 +250,31 @@ extern ircd::m::room::id::buf users_room_id;
 extern ircd::m::room::id::buf tokens_room_id;
 extern ircd::m::room::id::buf nodes_room_id;
 
-ircd::m::self::init::init(const json::object &config)
+ircd::m::self::init::init(const string_view &origin)
 {
-	const string_view &origin_name
-	{
-		unquote(config.get({"ircd", "origin"}, "localhost"))
-	};
-
-	ircd_user_id = {"ircd", origin_name};
+	ircd_user_id = {"ircd", origin};
 	m::me = {ircd_user_id};
 
-	ircd_room_id = {"ircd", origin_name};
+	ircd_room_id = {"ircd", origin};
 	m::my_room = {ircd_room_id};
 
-	ircd_node_id = {"", origin_name};
+	ircd_node_id = {"", origin};
 	m::my_node = {ircd_node_id};
 
-	users_room_id = {"users", origin_name};
+	users_room_id = {"users", origin};
 	m::user::users = {users_room_id};
 
-	tokens_room_id = {"tokens", origin_name};
+	tokens_room_id = {"tokens", origin};
 	m::user::tokens = {tokens_room_id};
 
-	nodes_room_id = {"nodes", origin_name};
+	nodes_room_id = {"nodes", origin};
 	m::nodes = {nodes_room_id};
 
-	if(origin_name == "localhost")
+	if(origin == "localhost")
 		log::warning
 		{
-			"The ircd.origin is configured or has defaulted to 'localhost'"
+			"The origin is configured or has defaulted to 'localhost'"
 		};
-}
-
-ircd::m::self::init::~init()
-noexcept
-{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -797,7 +655,7 @@ ircd::m::keys::init::certificate()
 {
 	const std::string origin
 	{
-		unquote(this->config.get({"ircd", "origin"}, "localhost"s))
+		m::self::host()
 	};
 
 	const json::object config
@@ -3601,6 +3459,30 @@ ircd::m::_hook_match(const m::event &matching,
 decltype(ircd::m::imports)
 ircd::m::imports
 {};
+
+void
+ircd::m::imports::init()
+{
+	// Manually load first modules
+	this->emplace("vm"s, "vm"s);
+	this->emplace("vm_fetch"s, "vm_fetch"s);
+
+	// The order of these prefixes will be the loading order. Order of
+	// specific modules within a prefix is not determined here.
+	static const string_view prefixes[]
+	{
+		"s_", "m_", "key_", "media_", "client_", "federation_"
+	};
+
+	// Load modules by prefix.
+	for(const auto &prefix : prefixes)
+		for(const auto &name : mods::available())
+			if(startswith(name, prefix))
+				this->emplace(name, name);
+
+	// Manually load last modules
+	this->emplace("webroot"s, "webroot"s);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

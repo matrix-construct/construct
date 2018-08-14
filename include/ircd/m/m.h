@@ -14,21 +14,13 @@
 /// Matrix Protocol System
 namespace ircd::m
 {
+	using ircd::hash;
+
 	struct init;
+
+	IRCD_OVERLOAD(generate)
 
 	extern struct log::log log;
-	extern std::list<ircd::net::listener> listeners;
-
-	using ircd::hash;
-	IRCD_OVERLOAD(generate)
-}
-
-namespace ircd::m::self
-{
-	struct init;
-
-	string_view host();
-	bool host(const string_view &);
 }
 
 namespace ircd::m::vm
@@ -36,24 +28,10 @@ namespace ircd::m::vm
 	struct opts;
 }
 
-namespace ircd::m
-{
-	extern struct user me;
-	extern struct room my_room;
-	extern struct node my_node;
-
-	inline string_view my_host()                 { return self::host();        }
-	inline bool my_host(const string_view &h)    { return self::host(h);       }
-}
-
-namespace ircd
-{
-	using m::my_host;
-}
-
 #include "name.h"
 #include "error.h"
 #include "import.h"
+#include "self.h"
 #include "id.h"
 #include "event.h"
 #include "dbs.h"
@@ -80,29 +58,19 @@ namespace ircd
 #include "hook.h"
 #include "visible.h"
 
-struct ircd::m::self::init
-{
-	init(const json::object &config);
-	~init() noexcept;
-};
-
 struct ircd::m::init
 {
-	struct modules;
 	struct listeners;
 
-	json::object config;
 	self::init _self;
-	keys::init _keys;
 	dbs::init _dbs;
-	std::unique_ptr<modules> modules;
-	std::unique_ptr<listeners> listeners;
+	keys::init _keys;
 
 	static void bootstrap();
-
+	void init_imports();
 	void close();
 
   public:
-	init();
+	init(const string_view &origin);
 	~init() noexcept;
 };

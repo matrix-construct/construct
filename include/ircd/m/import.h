@@ -14,9 +14,14 @@
 namespace ircd::m
 {
 	template<class prototype> struct import;
-
-	extern std::map<std::string, ircd::module, std::less<>> imports;
+	struct imports extern imports;
 }
+
+struct ircd::m::imports
+:std::map<std::string, ircd::module, std::less<>>
+{
+	void init();
+};
 
 template<class prototype>
 struct ircd::m::import
