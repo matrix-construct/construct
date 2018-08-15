@@ -153,7 +153,10 @@ ircd::ctx::dock::wait_for(const duration &dur,
 
 	q.push_back(current); do
 	{
-		const bool expired(ircd::ctx::wait<std::nothrow_t>(dur) <= zero);
+		const bool expired
+		{
+			ircd::ctx::wait<std::nothrow_t>(dur) <= zero
+		};
 
 		if(pred())
 			return true;
