@@ -413,3 +413,13 @@ Some of those indications may say nothing more than `[GET]` and `[SET]` without
 any other comment. That is the minimum acceptable marking for something which
 will likely do read or write IO respectively to disk or even the network. In
 any such case the ircd::ctx will definitely yield if that happens.
+
+
+#### Nothing ticks
+
+The project makes considerable use of userspace threads which may be spawned by
+various subsystems to perform tasks: some of those tasks tend to be performed at
+intervals or in some cases may require scanning data at an interval (i.e timeout
+check). Our style is to not wakeup a context (or similarly queue a callback in
+the plain event loop) for an empty dataset. In other words, when there is no
+work, the program should be entirely comatose and not woken up by the OS.
