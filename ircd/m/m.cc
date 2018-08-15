@@ -56,6 +56,8 @@ catch(const m::error &e)
 	{
 		log, "%s %s", e.what(), e.content
 	};
+
+	m::imports.clear();
 }
 catch(const std::exception &e)
 {
@@ -63,6 +65,8 @@ catch(const std::exception &e)
 	{
 		log, "%s", e.what()
 	};
+
+	m::imports.clear();
 }
 
 ircd::m::init::~init()

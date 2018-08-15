@@ -10,22 +10,88 @@
 
 using namespace ircd;
 
+static void create_listener(const m::event &);
+static void init_listener(const string_view &, const json::object &);
+static void init_listeners();
+static void on_load();
+
 mapi::header
 IRCD_MODULE
 {
-	"Server listeners"
+	"Server listeners", on_load
 };
 
-namespace ircd::m
+std::list<net::listener>
+listeners;
+
+//
+// init
+//
+
+void
+on_load()
 {
-	void init_listener(const json::object &config);
+	if(ircd::nolisten)
+	{
+		log::warning
+		{
+			"Not listening on any addresses because nolisten flag is set."
+		};
+
+		return;
+	}
+
+	init_listeners();
 }
 
-static void
-create_listener(const m::event &)
+void
+init_listeners()
 {
-	std::cout << "hi" << std::endl;
+	m::room::state{m::my_room}.for_each("ircd.listen", []
+	(const m::event &event)
+	{
+		const string_view &name
+		{
+			at<"state_key"_>(event)
+		};
+
+		const json::object &opts
+		{
+			json::get<"content"_>(event)
+		};
+
+		init_listener(name, opts);
+	});
+
+	if(listeners.empty())
+		log::warning
+		{
+			"No listening sockets configured; can't hear anyone."
+		};
 }
+
+void
+init_listener(const string_view &name,
+              const json::object &opts)
+{
+	if(!opts.has("tmp_dh_path"))
+		throw user_error
+		{
+			"Listener %s requires a 'tmp_dh_path' in the config. We do not"
+			" create this yet. Try `openssl dhparam -outform PEM -out dh512.pem 512`",
+			name
+		};
+
+	listeners.emplace_back(name, opts, []
+	(const auto &sock)
+	{
+		ircd::add_client(sock);
+	});
+}
+
+//
+//
+//
 
 const m::hookfn<>
 create_listener_hook
@@ -39,50 +105,7 @@ create_listener_hook
 };
 
 void
-ircd::m::init_listener(const json::object &config)
+create_listener(const m::event &)
 {
-	if(ircd::nolisten)
-	{
-		log::warning
-		{
-			"Not listening on any addresses because nolisten flag is set."
-		};
 
-		return;
-	}
-
-	const json::array listeners
-	{
-		config[{"ircd", "listen"}]
-	};
-
-	for(const auto &name : listeners) try
-	{
-		const json::object &opts
-		{
-			config.at({"listen", unquote(name)})
-		};
-
-		if(!opts.has("tmp_dh_path"))
-			throw user_error
-			{
-				"Listener %s requires a 'tmp_dh_path' in the config. We do not"
-				" create this yet. Try `openssl dhparam -outform PEM -out dh512.pem 512`",
-				name
-			};
-/*
-		m::listeners.emplace_back(unquote(name), opts, []
-		(const auto &sock)
-		{
-			add_client(sock);
-		});
-*/
-	}
-	catch(const json::not_found &e)
-	{
-		throw ircd::user_error
-		{
-			"Failed to find configuration block for listener %s", name
-		};
-	}
 }
