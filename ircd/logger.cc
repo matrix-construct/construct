@@ -158,12 +158,9 @@ try
 }
 catch(const std::exception &e)
 {
-	char buf[BUFSIZE];
-	snprintf(buf, sizeof(buf), "!!! Opening log file [%s] failed: %s",
-	         fname[fac],
-	         e.what());
-
-	std::cerr << buf << std::endl;
+	fprintf(stderr, "!!! Opening log file [%s] failed: %s",
+	        fname[fac],
+	        e.what());
 	throw;
 }
 
@@ -524,7 +521,7 @@ noexcept try
 	if(likely(s.good()))
 		return;
 
-	char buf[128];
+	thread_local char buf[128];
 	snprintf(buf, sizeof(buf), "fatal: log stream good[%d] bad[%d] fail[%d] eof[%d]",
 	         s.good(),
 	         s.bad(),
