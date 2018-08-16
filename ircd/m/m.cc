@@ -844,7 +844,7 @@ ircd::m::keys::init::signing()
 	static const auto trunc_size{8};
 	self::public_key_id = fmt::snstringf
 	{
-		BUFSIZE, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
+		32, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
 	};
 
 	log.info("Current key is '%s' and the public key is: %s",

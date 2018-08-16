@@ -80,6 +80,11 @@ namespace ircd
 struct ircd::exception
 :std::exception
 {
+	static constexpr const size_t &BUFSIZE
+	{
+		512UL
+	};
+
   protected:
 	IRCD_OVERLOAD(generate_skip)
 

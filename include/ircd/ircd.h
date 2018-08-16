@@ -18,9 +18,8 @@ namespace ircd
 {
 	enum class runlevel :int;
 
-	constexpr size_t BUFSIZE { 512 };
 	extern const enum runlevel &runlevel;
-	extern const std::string &config;
+
 	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.

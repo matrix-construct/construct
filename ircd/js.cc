@@ -2585,7 +2585,7 @@ ircd::js::replace_message(JSErrorReport &report,
 	va_list ap;
 	va_start(ap, fmt);
 
-	char buf[BUFSIZE];
+	thread_local char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 
 	const size_t ucsz(sizeof(buf) * 2);
