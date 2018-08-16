@@ -26,6 +26,7 @@ class ircd::util::params
 	std::vector<const char *> names;
 
 	const char *name(const size_t &i) const;
+	size_t name(const string_view &) const;
 
   public:
 	IRCD_EXCEPTION(ircd::error, error)
@@ -33,10 +34,18 @@ class ircd::util::params
 	IRCD_EXCEPTION(error, invalid)
 
 	size_t count() const;
+
+	// Get positional argument by position index
 	string_view operator[](const size_t &i) const;            // returns empty
 	template<class T> T at(const size_t &i, const T &def) const;    // throws invalid
 	template<class T> T at(const size_t &i) const;                  // throws missing or invalid
 	string_view at(const size_t &i) const;                    // throws missing
+
+	// Get positional argument by name->index convenience.
+	string_view operator[](const string_view &) const;
+	template<class T> T at(const string_view &, const T &def) const;
+	template<class T> T at(const string_view &) const;
+	string_view at(const string_view &) const;
 
 	params(const string_view &in,
 	       const char *const &sep,
@@ -55,6 +64,37 @@ ircd::util::params::params(const string_view &in,
 
 template<class T>
 T
+ircd::util::params::at(const string_view &name,
+                       const T &def)
+const
+{
+	return at<T>(this->name(name), def);
+}
+
+template<class T>
+T
+ircd::util::params::at(const string_view &name)
+const
+{
+	return at<T>(this->name(name));
+}
+
+inline ircd::string_view
+ircd::util::params::at(const string_view &name)
+const
+{
+	return at(this->name(name));
+}
+
+inline ircd::string_view
+ircd::util::params::operator[](const string_view &name)
+const
+{
+	return operator[](this->name(name));
+}
+
+template<class T>
+T
 ircd::util::params::at(const size_t &i,
                        const T &def)
 const try
@@ -63,7 +103,10 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw invalid("parameter #%zu <%s>", i, name(i));
+	throw invalid
+	{
+		"parameter #%zu <%s>", i, name(i)
+	};
 }
 
 template<class T>
@@ -75,7 +118,10 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw invalid("parameter #%zu <%s>", i, name(i));
+	throw invalid
+	{
+		"parameter #%zu <%s>", i, name(i)
+	};
 }
 
 inline ircd::string_view
@@ -86,7 +132,10 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw missing("required parameter #%zu <%s>", i, name(i));
+	throw missing
+	{
+		"required parameter #%zu <%s>", i, name(i)
+	};
 }
 
 inline ircd::string_view
@@ -101,6 +150,13 @@ ircd::util::params::count()
 const
 {
 	return token_count(in, sep);
+}
+
+inline size_t
+ircd::util::params::name(const string_view &name)
+const
+{
+	return util::index(begin(names), end(names), name);
 }
 
 inline const char *
