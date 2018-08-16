@@ -10,8 +10,10 @@
 
 using namespace ircd;
 
-static void create_listener(const m::event &);
+extern "C" std::list<net::listener> listeners;
+
 static void init_listener(const string_view &, const json::object &);
+static void init_listener(const m::event &);
 static void init_listeners();
 static void on_load();
 
@@ -21,7 +23,8 @@ IRCD_MODULE
 	"Server listeners", on_load
 };
 
-std::list<net::listener>
+/// Active listener state
+decltype(listeners)
 listeners;
 
 //
@@ -50,17 +53,7 @@ init_listeners()
 	m::room::state{m::my_room}.for_each("ircd.listen", []
 	(const m::event &event)
 	{
-		const string_view &name
-		{
-			at<"state_key"_>(event)
-		};
-
-		const json::object &opts
-		{
-			json::get<"content"_>(event)
-		};
-
-		init_listener(name, opts);
+		init_listener(event);
 	});
 
 	if(listeners.empty())
@@ -68,6 +61,22 @@ init_listeners()
 		{
 			"No listening sockets configured; can't hear anyone."
 		};
+}
+
+void
+init_listener(const m::event &event)
+{
+	const string_view &name
+	{
+		at<"state_key"_>(event)
+	};
+
+	const json::object &opts
+	{
+		json::get<"content"_>(event)
+	};
+
+	init_listener(name, opts);
 }
 
 void
@@ -93,19 +102,19 @@ init_listener(const string_view &name,
 //
 //
 
+static void
+create_listener(const m::event &event)
+{
+	init_listener(event);
+}
+
 const m::hookfn<>
 create_listener_hook
 {
 	create_listener,
 	{
-		{ "_site",       "vm.notify"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.create"  },
+		{ "_site",       "vm.notify"    },
+		{ "room_id",     "!ircd"        },
+		{ "type",        "ircd.listen"  },
 	}
 };
-
-void
-create_listener(const m::event &)
-{
-
-}
