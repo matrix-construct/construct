@@ -6588,7 +6588,7 @@ ircd::db::reflect(const rocksdb::Env::Priority &p)
 		case rocksdb::Env::Priority::BOTTOM:  return "BOTTOM"_sv;
 		case rocksdb::Env::Priority::LOW:     return "LOW"_sv;
 		case rocksdb::Env::Priority::HIGH:    return "HIGH"_sv;
-		case rocksdb::Env::Priority::TOTAL:   return "TOTAL"_sv;
+		case rocksdb::Env::Priority::TOTAL:   assert(0); break;
 	}
 
 	return "????"_sv;
@@ -6601,7 +6601,7 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 	{
 		case rocksdb::Env::IOPriority::IO_LOW:     return "IO_LOW"_sv;
 		case rocksdb::Env::IOPriority::IO_HIGH:    return "IO_HIGH"_sv;
-		case rocksdb::Env::IOPriority::IO_TOTAL:   return "IO_TOTAL"_sv;
+		case rocksdb::Env::IOPriority::IO_TOTAL:   assert(0); break;
 	}
 
 	return "IO_????"_sv;
