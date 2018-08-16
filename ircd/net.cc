@@ -889,6 +889,17 @@ ircd::net::blocking(const socket &socket)
 // listener
 //
 
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const listener &a)
+{
+	s << *a.acceptor;
+	return s;
+}
+
+//
+// listener::listener
+//
+
 ircd::net::listener::listener(const string_view &name,
                               const std::string &opts,
                               callback cb)
@@ -924,6 +935,17 @@ noexcept
 
 //
 // listener_udp
+//
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const listener_udp &a)
+{
+	s << *a.acceptor;
+	return s;
+}
+
+//
+// listener_udp::listener_udp
 //
 
 ircd::net::listener_udp::listener_udp(const string_view &name,
@@ -980,6 +1002,13 @@ ircd::net::listener::acceptor::timeout
 	{ "default",  12000L                      },
 };
 
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
+{
+	s << "'" << a.name << "' @ [" << string(a.ep.address()) << "]:" << a.ep.port();
+	return s;
+}
+
 //
 // listener::acceptor::acceptor
 //
@@ -1031,20 +1060,20 @@ try
 	configure(opts);
 
 	log.debug("%s configured listener SSL",
-	          std::string(*this));
+	          string(*this));
 
 	a.open(ep.protocol());
 	a.set_option(reuse_address);
 	log.debug("%s opened listener socket",
-	          std::string(*this));
+	          string(*this));
 
 	a.bind(ep);
 	log.debug("%s bound listener socket",
-	          std::string(*this));
+	          string(*this));
 
 	a.listen(backlog);
 	log.debug("%s listening (backlog: %lu, max connections: %zu)",
-	          std::string(*this),
+	          string(*this),
 	          backlog,
 	          max_connections);
 }
@@ -1107,7 +1136,7 @@ try
 	auto sock(std::make_shared<ircd::socket>(ssl));
 /*
 	log.debug("%s: socket(%p) is the next socket to accept",
-	          std::string(*this),
+	          string(*this),
 	          sock.get());
 */
 	++accepting;
@@ -1118,7 +1147,7 @@ catch(const std::exception &e)
 {
 	throw assertive
 	{
-		"%s: %s", std::string(*this), e.what()
+		"%s: %s", string(*this), e.what()
 	};
 }
 
@@ -1146,7 +1175,7 @@ noexcept try
 
 	assert(bool(sock));
 	log.debug("%s: socket(%p) accepted(%zu) %s %s",
-	          std::string(*this),
+	          string(*this),
 	          sock.get(),
 	          accepting,
 	          string(remote_ipport(*sock)),
@@ -1175,7 +1204,7 @@ noexcept try
 catch(const ctx::interrupted &e)
 {
 	log.debug("%s: acceptor interrupted socket(%p) %s",
-	          std::string(*this),
+	          string(*this),
 	          sock.get(),
 	          string(ec));
 
@@ -1184,14 +1213,14 @@ catch(const ctx::interrupted &e)
 catch(const boost::system::system_error &e)
 {
 	log.derror("%s: socket(%p) in accept(): %s",
-	           std::string(*this),
+	           string(*this),
 	           sock.get(),
 	           string(e));
 }
 catch(const std::exception &e)
 {
 	log.error("%s: socket(%p) in accept(): %s",
-	          std::string(*this),
+	          string(*this),
 	          sock.get(),
 	          e.what());
 }
@@ -1260,7 +1289,7 @@ noexcept try
 catch(const ctx::interrupted &e)
 {
 	log.debug("%s: SSL handshake interrupted socket(%p) %s",
-	          std::string(*this),
+	          string(*this),
 	          sock.get(),
 	          string(ec));
 
@@ -1269,14 +1298,14 @@ catch(const ctx::interrupted &e)
 catch(const boost::system::system_error &e)
 {
 	log.derror("%s: socket(%p) in handshake(): %s",
-	           std::string(*this),
+	           string(*this),
 	           sock.get(),
 	           string(e));
 }
 catch(const std::exception &e)
 {
 	log.error("%s: socket(%p) in handshake(): %s",
-	          std::string(*this),
+	          string(*this),
 	          sock.get(),
 	          e.what());
 }
@@ -1318,7 +1347,7 @@ void
 ircd::net::listener::acceptor::configure(const json::object &opts)
 {
 	log.debug("%s preparing listener socket configuration...",
-	          std::string(*this));
+	          string(*this));
 
 	ssl.set_options
 	(
@@ -1337,7 +1366,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	(const auto &size, const auto &purpose)
 	{
 		log.debug("%s asking for password with purpose '%s' (size: %zu)",
-		          std::string(*this),
+		          string(*this),
 		          purpose,
 		          size);
 
@@ -1356,13 +1385,13 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate chain file @ `%s' not found",
-				std::string(*this),
+				string(*this),
 				filename
 			};
 
 		ssl.use_certificate_chain_file(filename);
 		log.info("%s using certificate chain file '%s'",
-		         std::string(*this),
+		         string(*this),
 		         filename);
 	}
 
@@ -1377,13 +1406,13 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate pem file @ `%s' not found",
-				std::string(*this),
+				string(*this),
 				filename
 			};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
 		log.info("%s using certificate file '%s'",
-		         std::string(*this),
+		         string(*this),
 		         filename);
 	}
 
@@ -1398,13 +1427,13 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL private key file @ `%s' not found",
-				std::string(*this),
+				string(*this),
 				filename
 			};
 
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
 		log.info("%s using private key file '%s'",
-		         std::string(*this),
+		         string(*this),
 		         filename);
 	}
 
@@ -1419,28 +1448,15 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL tmp dh file @ `%s' not found",
-				std::string(*this),
+				string(*this),
 				filename
 			};
 
 		ssl.use_tmp_dh_file(filename);
 		log.info("%s using tmp dh file '%s'",
-		         std::string(*this),
+		         string(*this),
 		         filename);
 	}
-}
-
-ircd::net::listener::acceptor::operator
-std::string()
-const
-{
-	return fmt::snstringf
-	{
-		256, "'%s' @ [%s]:%u",
-		name,
-		string(ep.address()),
-		ep.port()
-	};
 }
 
 //

@@ -35,7 +35,6 @@ struct ircd::net::listener::acceptor
 	bool interrupting {false};
 	ctx::dock joining;
 
-	explicit operator std::string() const;
 	void configure(const json::object &opts);
 
 	// Handshake stack
@@ -58,6 +57,8 @@ struct ircd::net::listener::acceptor
 	         listener::callback);
 
 	~acceptor() noexcept;
+
+	friend std::ostream &operator<<(std::ostream &s, const acceptor &);
 };
 
 struct ircd::net::listener_udp::acceptor

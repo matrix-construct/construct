@@ -38,6 +38,8 @@ struct ircd::net::listener
 	         callback);
 
 	~listener() noexcept;
+
+	friend std::ostream &operator<<(std::ostream &s, const listener &);
 };
 
 struct ircd::net::listener_udp
@@ -62,6 +64,8 @@ struct ircd::net::listener_udp
 	             const std::string &options);
 
 	~listener_udp() noexcept;
+
+	friend std::ostream &operator<<(std::ostream &s, const listener_udp &);
 };
 
 struct ircd::net::listener_udp::datagram
