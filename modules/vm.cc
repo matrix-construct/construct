@@ -440,9 +440,12 @@ try
 			};
 
 		if(eval.copts->debuglog_precommit)
-			log.debug("injecting event(mark +%ld) %s",
-			          vm::current_sequence,
-			          pretty_oneline(event));
+			log::debug
+			{
+				log, "injecting event(mark +%ld) %s",
+				vm::current_sequence,
+				pretty_oneline(event)
+			};
 
 		check_size(event);
 		commit_hook(event);
@@ -484,10 +487,16 @@ try
 		vm::accept(accepted);
 
 	if(opts.debuglog_accept)
-		log.debug("%s", pretty_oneline(event));
+		log::debug
+		{
+			log, "%s", pretty_oneline(event)
+		};
 
 	if(opts.infolog_accept)
-		log.info("%s", pretty_oneline(event));
+		log::debug
+		{
+			log, "%s", pretty_oneline(event)
+		};
 
 	return ret;
 }
