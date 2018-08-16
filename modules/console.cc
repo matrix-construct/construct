@@ -2460,6 +2460,61 @@ console_cmd__net__host__prefetch(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__net__listen__list(opt &out, const string_view &line)
+{
+	using list = std::list<net::listener>;
+
+	static m::import<list> listeners
+	{
+		"s_listen", "listeners"
+	};
+
+	const list &l(listeners);
+	for(const auto &listener : l)
+		out << "one at " << (const void *)&listener << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__net__listen(opt &out, const string_view &line)
+{
+	if(empty(line))
+		return console_cmd__net__listen__list(out, line);
+
+	const params token{line, " ",
+	{
+		"name",
+		"host",
+		"port",
+		"certificate_pem_path",
+		"private_key_pem_path",
+		"tmp_dh_path",
+		"backlog",
+		"max_connections",
+	}};
+
+	const json::members opts
+	{
+		{ "host",                      token.at("host", "0.0.0.0"_sv)           },
+		{ "port",                      token.at("port", 8448L)                  },
+		{ "certificate_pem_path",      token.at("certificate_pem_path")         },
+		{ "private_key_pem_path",      token.at("private_key_pem_path")         },
+		{ "tmp_dh_path",               token.at("tmp_dh_path")                  },
+		{ "backlog",                   token.at("backlog", -1L)                 },
+		{ "max_connections",           token.at("max_connections", -1L)         },
+	};
+
+	const auto eid
+	{
+		m::send(m::my_room, m::me, "ircd.listen", token.at("name"), opts)
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
 //
 // client
 //
