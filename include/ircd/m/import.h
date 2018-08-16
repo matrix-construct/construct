@@ -34,6 +34,9 @@ struct ircd::m::import
 
   public:
 	template<class... args> auto operator()(args&&... a);
+	prototype *operator->();
+	prototype &operator*();
+	operator prototype &();
 
 	import(std::string modname, std::string symname);
 };
@@ -45,6 +48,30 @@ ircd::m::import<prototype>::import(std::string modname,
 ,modname{std::move(modname)}
 ,symname{std::move(symname)}
 {}
+
+template<class prototype>
+ircd::m::import<prototype>::operator
+prototype &()
+{
+	return this->operator*();
+}
+
+template<class prototype>
+prototype &
+ircd::m::import<prototype>::operator*()
+{
+	return *this->operator->();
+}
+
+template<class prototype>
+prototype *
+ircd::m::import<prototype>::operator->()
+{
+	if(unlikely(!*this))
+		reload();
+
+	return mods::import<prototype>::operator->();
+}
 
 template<class prototype>
 template<class... args>
