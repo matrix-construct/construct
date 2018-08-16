@@ -23,6 +23,13 @@
 ///
 //#define RB_DEBUG_DB_SEEK
 
+/// Uncomment or -D this #define to enable extensive log messages for the
+/// experimental db environment-port implementation. This is only useful
+/// for developers working on the port impl and want to debug all locking
+/// and unlocking etc.
+///
+//#define RB_DEBUG_DB_PORT
+
 namespace ircd::db
 {
 	struct throw_on_error;
