@@ -163,7 +163,33 @@ at(It &&start,
 		if(!i)
 			return start;
 
-	throw std::out_of_range("at(a, b, i): 'i' out of range");
+	throw std::out_of_range
+	{
+		"at(a, b, i): 'i' out of range"
+	};
+}
+
+/// Like std::find() -> std::distance(), but with out_of_range exception
+///
+template<class It,
+         class value>
+typename std::enable_if<is_forward_iterator<It>() || is_input_iterator<It>(), size_t>::type
+index(const It &start,
+      const It &stop,
+      value &&val)
+{
+	const auto it
+	{
+		std::find(start, stop, std::forward<value>(val))
+	};
+
+	if(likely(it != stop))
+		return std::distance(start, it);
+
+	throw std::out_of_range
+	{
+		"index(a, b, val): 'val' not contained in set"
+	};
 }
 
 //
