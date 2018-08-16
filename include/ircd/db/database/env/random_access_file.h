@@ -22,7 +22,7 @@ struct ircd::db::database::env::random_access_file final
 	using Slice = rocksdb::Slice;
 
 	database &d;
-	std::unique_ptr<RandomAccessFile> defaults;
+	fs::fd fd;
 
 	bool use_direct_io() const noexcept override;
 	size_t GetRequiredBufferAlignment() const noexcept override;
@@ -32,6 +32,6 @@ struct ircd::db::database::env::random_access_file final
 	Status Read(uint64_t offset, size_t n, Slice *result, char *scratch) const noexcept override;
 	Status Prefetch(uint64_t offset, size_t n) noexcept override;
 
-	random_access_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<RandomAccessFile> defaults);
+	random_access_file(database *const &d, const std::string &name, const EnvOptions &);
 	~random_access_file() noexcept;
 };

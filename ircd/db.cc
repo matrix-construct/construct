@@ -1837,21 +1837,17 @@ ircd::db::database::env::NewRandomAccessFile(const std::string& name,
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': new random access file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
+	log::debug
+	{
+		log, "'%s': new random access file '%s' options:%p",
+		d.name,
+		name,
+		&options
+	};
 	#endif
 
-	std::unique_ptr<RandomAccessFile> defaults;
-	const auto ret
-	{
-		this->defaults.NewRandomAccessFile(name, &defaults, options)
-	};
-
-	*r = std::make_unique<random_access_file>(&d, name, options, std::move(defaults));
-	return ret;
-
+	*r = std::make_unique<random_access_file>(&d, name, options);
+	return Status::OK();
 }
 
 rocksdb::Status
@@ -2876,10 +2872,15 @@ const noexcept
 
 ircd::db::database::env::random_access_file::random_access_file(database *const &d,
                                                                 const std::string &name,
-                                                                const EnvOptions &opts,
-                                                               std::unique_ptr<RandomAccessFile> defaults)
-:d{*d}
-,defaults{std::move(defaults)}
+                                                                const EnvOptions &opts)
+:d
+{
+	*d
+}
+,fd
+{
+	name, std::ios_base::in | std::ios_base::out
+}
 {
 }
 
@@ -2894,14 +2895,17 @@ ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rfile:%p prefetch offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
+	log::debug
+	{
+		log, "'%s': rfile:%p prefetch offset:%zu length:%zu",
+		d.name,
+		this,
+		offset,
+		length
+	};
 	#endif
 
-	return defaults->Prefetch(offset, length);
+	return Status::OK();
 }
 
 rocksdb::Status
@@ -2912,16 +2916,32 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
 const noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
-	          d.name,
-	          this,
-	          result,
-	          offset,
-	          length,
-	          scratch);
+	log::debug
+	{
+		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch
+	};
 	#endif
 
-	return defaults->Read(offset, length, result, scratch);
+	assert(result);
+	const mutable_buffer buf
+	{
+		scratch, length
+	};
+
+	const auto read
+	{
+		fs::read(fd, buf, offset)
+	};
+
+	*result = slice(read);
+
+	return Status::OK();
 }
 
 rocksdb::Status
@@ -2930,14 +2950,17 @@ ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rfile:%p invalidate cache offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
+	log::debug
+	{
+		log, "'%s': rfile:%p invalidate cache offset:%zu length:%zu",
+		d.name,
+		this,
+		offset,
+		length
+	};
 	#endif
 
-	return defaults->InvalidateCache(offset, length);
+	return Status::OK();
 }
 
 size_t
@@ -2946,14 +2969,17 @@ ircd::db::database::env::random_access_file::GetUniqueId(char* id,
 const noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rfile:%p get unique id:%p max_size:%zu",
-	          d.name,
-	          this,
-	          id,
-	          max_size);
+	log::debug
+	{
+		log, "'%s': rfile:%p get unique id:%p max_size:%zu",
+		d.name,
+		this,
+		id,
+		max_size
+	};
 	#endif
 
-	return defaults->GetUniqueId(id, max_size);
+	return 0;
 }
 
 void
@@ -2961,27 +2987,28 @@ ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rfile:%p hint %s",
-	          d.name,
-	          this,
-	          reflect(pattern));
+	log::debug
+	{
+		log, "'%s': rfile:%p hint %s",
+		d.name,
+		this,
+		reflect(pattern)
+	};
 	#endif
-
-	return defaults->Hint(pattern);
 }
 
 bool
 ircd::db::database::env::random_access_file::use_direct_io()
 const noexcept
 {
-	return defaults->use_direct_io();
+	return false;
 }
 
 size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return defaults->GetRequiredBufferAlignment();
+	return 16;
 }
 
 //
