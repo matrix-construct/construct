@@ -153,32 +153,31 @@ noexcept try
 		*reinterpret_cast<aio::request *>(event.data)
 	};
 
-	// The relevant iocb is repeated back to us in the result; we assert
-	// some basic sanity here about the layout of the request conglomerate.
 	assert(reinterpret_cast<iocb *>(event.obj) == static_cast<iocb *>(&request));
-
-	// error conventions are like so
-	assert(event.res >= -1);  // unix syscall return value semantic
-	assert(event.res2 >= 0);  // errno code semantic
+	assert(event.res2 >= 0);
 	assert(event.res == -1 || event.res2 == 0);
 
 	// Set result indicators
-	request.retval = event.res;
-	request.errcode = event.res2;
+	request.retval = std::max(event.res, -1LL);
+	request.errcode = event.res >= -1? event.res2 : std::abs(event.res);
 
 	if(likely(request.waiter && request.waiter != ctx::current))
 		ctx::notify(*request.waiter);
+
 /*
-	log::debug("AIO request(%p) fd:%d op:%d bytes:%lu off:%ld prio:%d ctx:%p result: bytes:%ld errno:%ld",
-	           request,
-	           request->aio_fildes,
-	           request->aio_lio_opcode,
-	           request->aio_nbytes,
-	           request->aio_offset,
-	           request->aio_reqprio,
-	           request->waiter,
-	           request->retval,
-	           request->errcode);
+	log::debug
+	{
+		"AIO request(%p) fd:%d op:%d bytes:%lu off:%ld prio:%d ctx:%p result: bytes:%ld errno:%ld",
+		request,
+		request->aio_fildes,
+		request->aio_lio_opcode,
+		request->aio_nbytes,
+		request->aio_offset,
+		request->aio_reqprio,
+		request->waiter,
+		request->retval,
+		request->errcode
+	};
 */
 }
 catch(const std::exception &e)
@@ -246,7 +245,7 @@ try
 	{
 		ctx::wait();
 	}
-	while(retval == -2);
+	while(retval == std::numeric_limits<ssize_t>::min());
 
 	if(retval == -1)
 		throw_system_error(errcode);

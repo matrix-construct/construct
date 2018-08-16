@@ -60,7 +60,7 @@ struct ircd::fs::aio::request
 	struct read;
 	struct write;
 
-	ssize_t retval {-2};
+	ssize_t retval {std::numeric_limits<ssize_t>::min()};
 	ssize_t errcode {0};
 	ctx::ctx *waiter {ctx::current};
 
