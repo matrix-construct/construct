@@ -179,13 +179,15 @@ ircd::assertion()
 noexcept(RB_DEBUG_LEVEL)
 {
 	if(std::uncaught_exceptions())
-	{
 		assertion(std::current_exception());
-	} else {
-		log::critical("IRCd Assertion without exception.");
-		assert(0);
-		throw assertive{};
-	}
+
+	log::critical
+	{
+		"IRCd Assertion without exception."
+	};
+
+	assert(0);
+	throw assertive{};
 }
 
 void
@@ -206,7 +208,11 @@ noexcept(RB_DEBUG_LEVEL)
 	#ifdef RB_DEBUG
 		terminate(e);
 	#else
-		log::critical("IRCd Assertion %s", e.what());
+		log::critical
+		{
+			"IRCd Assertion %s", e.what()
+		};
+
 		throw e;
 	#endif
 }
@@ -231,7 +237,11 @@ noexcept
 		terminate(e);
 	}
 
-	log::critical("IRCd Terminate without exception");
+	log::critical
+	{
+		"IRCd Terminate without exception"
+	};
+
 	std::terminate();
 }
 
@@ -239,6 +249,10 @@ void
 ircd::terminate(const std::exception &e)
 noexcept
 {
-	log::critical("IRCd Terminated: %s", e.what());
+	log::critical
+	{
+		"IRCd Terminated: %s", e.what()
+	};
+
 	throw e;
 }
