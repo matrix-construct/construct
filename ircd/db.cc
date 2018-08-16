@@ -109,13 +109,23 @@ try
 	};
 
 	if(fs::mkdir(dbdir))
-		log.notice("Created new database directory at `%s'", dbdir);
+		log::notice
+		{
+			log, "Created new database directory at `%s'", dbdir
+		};
 	else
-		log.info("Using database directory at `%s'", dbdir);
+		log::info
+		{
+			log, "Using database directory at `%s'", dbdir
+		};
 }
 catch(const fs::error &e)
 {
-	log.error("Cannot start database system: %s", e.what());
+	log::error
+	{
+		log, "Cannot start database system: %s", e.what()
+	};
+
 	if(ircd::debugmode)
 		throw;
 }
@@ -2149,6 +2159,16 @@ ircd::db::database::env::NewLogger(const std::string& name,
                                    std::shared_ptr<Logger>* result)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': new logger '%s' result:%p",
+		d.name,
+		name,
+		(const void *)result
+	};
+	#endif
+
 	return defaults.NewLogger(name, result);
 }
 
