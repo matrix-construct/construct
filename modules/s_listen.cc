@@ -28,7 +28,8 @@ decltype(listeners)
 listeners;
 
 //
-// init
+// On module load any existing listener descriptions are sought out
+// of room state and instantiated (i.e on startup).
 //
 
 void
@@ -62,6 +63,33 @@ init_listeners()
 			"No listening sockets configured; can't hear anyone."
 		};
 }
+
+//
+// Upon processing of a new event which saved a listener description
+// to room state in its content, we instantiate the listener here.
+//
+
+static void
+create_listener(const m::event &event)
+{
+	init_listener(event);
+}
+
+/// Hook for a new listener description being sent.
+const m::hookfn<>
+create_listener_hook
+{
+	create_listener,
+	{
+		{ "_site",       "vm.notify"    },
+		{ "room_id",     "!ircd"        },
+		{ "type",        "ircd.listen"  },
+	}
+};
+
+//
+// Common
+//
 
 void
 init_listener(const m::event &event)
@@ -97,24 +125,3 @@ init_listener(const string_view &name,
 		ircd::add_client(sock);
 	});
 }
-
-//
-//
-//
-
-static void
-create_listener(const m::event &event)
-{
-	init_listener(event);
-}
-
-const m::hookfn<>
-create_listener_hook
-{
-	create_listener,
-	{
-		{ "_site",       "vm.notify"    },
-		{ "room_id",     "!ircd"        },
-		{ "type",        "ircd.listen"  },
-	}
-};
