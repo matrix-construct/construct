@@ -56,7 +56,10 @@ T &
 ircd::mods::sym_ptr::operator*()
 {
 	if(unlikely(expired()))
-		throw expired_symbol("The reference to a symbol in another module is no longer valid");
+		throw expired_symbol
+		{
+			"The reference to a symbol in another module is no longer valid"
+		};
 
 	return *get<T>();
 }
@@ -90,7 +93,10 @@ ircd::mods::sym_ptr::operator*()
 const
 {
 	if(unlikely(expired()))
-		throw expired_symbol("The const reference to a symbol in another module is no longer valid");
+		throw expired_symbol
+		{
+			"The const reference to a symbol in another module is no longer valid"
+		};
 
 	return *get<T>();
 }
