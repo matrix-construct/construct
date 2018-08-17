@@ -4904,10 +4904,6 @@ ircd::db::compact(column &column,
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 	for(const auto &level : cfmd.levels)
 	{
-		// The operations in this loop might last a while. We don't want
-		// to play games with the stack while rocksdb is in work, so we
-		// mask interruptions during each iteration. The interruption will
-		// be thrown either at ctor OR DTOR of this object if requested.
 		ctx::interruption_point();
 		ctx::uninterruptible::nothrow ui;
 
@@ -4947,9 +4943,6 @@ ircd::db::compact(column &column,
                   const std::pair<string_view, string_view> &range,
                   const int &to_level)
 {
-	// We don't want to play games with the stack while rocksdb is in work,
-	// interruptions are masked for this frame. An interruption will be
-	// thrown either at ctor OR DTOR of this object if requested.
 	ctx::interruption_point();
 	ctx::uninterruptible::nothrow ui;
 

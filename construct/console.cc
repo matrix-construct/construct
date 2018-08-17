@@ -138,6 +138,8 @@ try
 
 		if(!handle_line(line))
 			break;
+
+		ctx::interruption_point();
 	}
 
 	std::cout << std::endl;
