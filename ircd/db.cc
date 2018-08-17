@@ -3377,12 +3377,7 @@ rocksdb::port::CondVar::Wait()
 	assert(mu);
 	assert_main_thread();
 	mu->AssertHeld();
-	std::unique_lock<decltype(mu->mu)> l
-	{
-		mu->mu, std::adopt_lock
-	};
-
-	cv.wait(l);
+	cv.wait(mu->mu);
 }
 
 // Returns true if timeout occurred
@@ -3401,12 +3396,7 @@ rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 	mu->AssertHeld();
 	const std::chrono::microseconds us(abs_time_us);
 	const std::chrono::steady_clock::time_point tp(us);
-	std::unique_lock<decltype(mu->mu)> l
-	{
-		mu->mu, std::adopt_lock
-	};
-
-	return cv.wait_until(l, tp) == std::cv_status::timeout;
+	return cv.wait_until(mu->mu, tp) == std::cv_status::timeout;
 }
 
 void
