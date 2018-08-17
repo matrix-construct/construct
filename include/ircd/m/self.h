@@ -15,6 +15,14 @@ namespace ircd::m::self
 {
 	struct init;
 
+	extern std::string origin;
+	extern ed25519::sk secret_key;
+	extern ed25519::pk public_key;
+	extern std::string public_key_b64;
+	extern std::string public_key_id;
+	extern std::string tls_cert_der;
+	extern std::string tls_cert_der_sha256_b64;
+
 	string_view host();
 	bool host(const string_view &);
 }

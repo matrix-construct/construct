@@ -67,12 +67,14 @@ s_conf_la_SOURCES = s_conf.cc
 s_control_la_SOURCES = s_control.cc
 s_node_la_SOURCES = s_node.cc
 s_listen_la_SOURCES = s_listen.cc
+s_keys_la_SOURCES = s_keys.cc
 
 s_module_LTLIBRARIES = \
 	s_conf.la \
 	s_control.la \
 	s_node.la \
 	s_listen.la \
+	s_keys.la \
 	###
 
 ###############################################################################
@@ -240,12 +242,10 @@ client_module_LTLIBRARIES += \
 
 key_moduledir = @moduledir@
 
-key_key_keys_la_SOURCES = key/keys.cc
 key_key_server_la_SOURCES = key/server.cc
 key_key_query_la_SOURCES = key/query.cc
 
 key_module_LTLIBRARIES = \
-	key/key_keys.la \
 	key/key_server.la \
 	key/key_query.la \
 	###

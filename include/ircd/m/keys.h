@@ -18,17 +18,6 @@ namespace ircd::m
 	bool verify(const m::keys &);
 }
 
-namespace ircd::m::self
-{
-	extern ed25519::sk secret_key;
-	extern ed25519::pk public_key;
-	extern std::string public_key_b64;
-	extern std::string public_key_id;
-
-	extern std::string tls_cert_der;
-	extern std::string tls_cert_der_sha256_b64;
-}
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// Contains the public keys and proof of identity for a remote server.
@@ -62,9 +51,6 @@ struct ircd::m::keys
 	json::property<name::verify_keys, json::object>
 >
 {
-	struct init;
-
-  public:
 	using queries = vector_view<const m::v1::key::server_key>; // <server, key_id>
 	using closure = std::function<void (const json::object &)>;
 	using closure_bool = std::function<bool (const json::object &)>;
@@ -77,15 +63,3 @@ struct ircd::m::keys
 	using super_type::operator=;
 };
 #pragma GCC diagnostic pop
-
-struct ircd::m::keys::init
-{
-	json::object config;
-
-	void certificate();
-	void signing();
-
-  public:
-	init(const json::object &config);
-	~init() noexcept;
-};

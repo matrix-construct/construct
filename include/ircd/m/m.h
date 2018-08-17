@@ -64,10 +64,10 @@ struct ircd::m::init
 
 	self::init _self;
 	dbs::init _dbs;
-	keys::init _keys;
 
 	static void bootstrap();
 	void init_imports();
+	void init_keys();
 	void close();
 
   public:

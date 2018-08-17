@@ -42,11 +42,8 @@ try
 {
 	origin
 }
-,_keys
 {
-	{}
-}
-{
+	init_keys();
 	init_imports();
 	presence::set(me, "online", me_online_status_msg);
 }
@@ -77,7 +74,11 @@ noexcept try
 }
 catch(const m::error &e)
 {
-	log.critical("%s %s", e.what(), e.content);
+	log::critical
+	{
+		log, "%s %s", e.what(), e.content
+	};
+
 	ircd::terminate();
 }
 
@@ -85,6 +86,28 @@ void
 ircd::m::init::close()
 {
 
+}
+
+void
+ircd::m::init::init_keys()
+try
+{
+	m::imports.emplace("s_keys"s, "s_keys"s);
+	static m::import<void ()> init_my_keys
+	{
+		"s_keys", "init_my_keys"
+	};
+
+	init_my_keys();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to initialize server keys :%s", e.what()
+	};
+
+	throw;
 }
 
 void
@@ -185,6 +208,34 @@ ircd::m::init::bootstrap()
 // m/self.h
 //
 
+std::string
+ircd::m::self::origin
+{};
+
+ircd::ed25519::sk
+ircd::m::self::secret_key
+{};
+
+ircd::ed25519::pk
+ircd::m::self::public_key
+{};
+
+std::string
+ircd::m::self::public_key_b64
+{};
+
+std::string
+ircd::m::self::public_key_id
+{};
+
+std::string
+ircd::m::self::tls_cert_der
+{};
+
+std::string
+ircd::m::self::tls_cert_der_sha256_b64
+{};
+
 //
 // my user
 //
@@ -256,6 +307,8 @@ extern ircd::m::room::id::buf nodes_room_id;
 
 ircd::m::self::init::init(const string_view &origin)
 {
+	self::origin = std::string{origin};
+
 	ircd_user_id = {"ircd", origin};
 	m::me = {ircd_user_id};
 
@@ -563,39 +616,11 @@ ircd::m::verify(const m::keys &keys)
 
 	static import<prototype> function
 	{
-		"key_keys", "verify__keys"
+		"s_keys", "verify__keys"
 	};
 
 	return function(keys);
 }
-
-//
-// m::self
-//
-
-ircd::ed25519::sk
-ircd::m::self::secret_key
-{};
-
-ircd::ed25519::pk
-ircd::m::self::public_key
-{};
-
-std::string
-ircd::m::self::public_key_b64
-{};
-
-std::string
-ircd::m::self::public_key_id
-{};
-
-std::string
-ircd::m::self::tls_cert_der
-{};
-
-std::string
-ircd::m::self::tls_cert_der_sha256_b64
-{};
 
 //
 // keys
@@ -617,7 +642,7 @@ ircd::m::keys::get(const string_view &server_name,
 
 	static import<prototype> function
 	{
-		"key_keys", "get__keys"
+		"s_keys", "get__keys"
 	};
 
 	return function(server_name, key_id, closure_);
@@ -632,224 +657,10 @@ ircd::m::keys::query(const string_view &query_server,
 
 	static import<prototype> function
 	{
-		"key_keys", "query__keys"
+		"s_keys", "query__keys"
 	};
 
 	return function(query_server, queries_, closure);
-}
-
-//
-// init
-//
-
-ircd::m::keys::init::init(const json::object &config)
-:config{config}
-{
-	certificate();
-	signing();
-}
-
-ircd::m::keys::init::~init()
-noexcept
-{
-}
-
-void
-ircd::m::keys::init::certificate()
-{
-	const std::string origin
-	{
-		m::self::host()
-	};
-
-	const json::object config
-	{
-		this->config.get({"origin", origin})
-	};
-
-	const std::string private_key_file
-	{
-		unquote(config.get("ssl_private_key_pem_path", origin + ".crt.key"))
-	};
-
-	const std::string public_key_file
-	{
-		unquote(config.get("ssl_public_key_pem_path", private_key_file + ".pub"))
-	};
-
-	if(!private_key_file)
-		throw user_error
-		{
-			"You must specify an SSL private key file at"
-			" origin.[%s].ssl_private_pem_path even if you do not have one;"
-			" it will be created there.",
-			origin
-		};
-
-	if(!fs::exists(private_key_file))
-	{
-		log::warning
-		{
-			"Failed to find certificate private key @ `%s'; creating...",
-			private_key_file
-		};
-
-		openssl::genrsa(private_key_file, public_key_file);
-	}
-
-	const std::string cert_file
-	{
-		unquote(config.get("ssl_certificate_pem_path", origin + ".crt"))
-	};
-
-	if(!fs::exists(cert_file))
-	{
-		std::string subject
-		{
-			this->config.get({"certificate", origin, "subject"})
-		};
-
-		if(!subject)
-			subject = json::strung{json::members
-			{
-				{ "CN", origin }
-			}};
-/*
-			throw user_error
-			{
-				"Failed to find SSL certificate @ `%s'. Additionally, no"
-				" certificate.[%s].subject was found in the conf to generate one.",
-				cert_file,
-				origin
-			};
-*/
-		log::warning
-		{
-			"Failed to find SSL certificate @ `%s'; creating for '%s'...",
-			cert_file,
-			origin
-		};
-
-		const unique_buffer<mutable_buffer> buf
-		{
-			1_MiB
-		};
-
-		const json::strung opts{json::members
-		{
-			{ "private_key_pem_path",  private_key_file  },
-			{ "public_key_pem_path",   public_key_file   },
-			{ "subject",               subject           },
-		}};
-
-		const auto cert
-		{
-			openssl::genX509_rsa(buf, opts)
-		};
-
-		fs::overwrite(cert_file, cert);
-	}
-
-	const auto cert_pem
-	{
-		fs::read(cert_file)
-	};
-
-	const unique_buffer<mutable_buffer> der_buf
-	{
-		8_KiB
-	};
-
-	const auto cert_der
-	{
-		openssl::cert2d(der_buf, cert_pem)
-	};
-
-	const fixed_buffer<const_buffer, crh::sha256::digest_size> hash
-	{
-		sha256{cert_der}
-	};
-
-	self::tls_cert_der_sha256_b64 =
-	{
-		b64encode_unpadded(hash)
-	};
-
-	log::info
-	{
-		log, "Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
-		cert_file,
-		cert_pem.size(),
-		ircd::size(cert_der),
-		self::tls_cert_der_sha256_b64
-	};
-
-	thread_local char print_buf[8_KiB];
-	log::info
-	{
-		log, "Certificate `%s' :%s",
-		cert_file,
-		openssl::print_subject(print_buf, cert_pem)
-	};
-}
-
-void
-ircd::m::keys::init::signing()
-{
-	const std::string origin
-	{
-		unquote(this->config.get({"ircd", "origin"}, "localhost"s))
-	};
-
-	const json::object config
-	{
-		this->config.get({"origin", origin})
-	};
-
-	const std::string sk_file
-	{
-		unquote(config.get("ed25519_private_key_path", origin + ".key"))
-	};
-
-	if(!sk_file)
-		throw user_error
-		{
-			"Failed to find ed25519 secret key path at"
-			" origin.[%s].ed25519_private_key_path in config. If you do not"
-			" have a private key, specify a path for one to be created.",
-			origin
-		};
-
-	if(fs::exists(sk_file))
-		log.info("Using ed25519 secret key @ `%s'", sk_file);
-	else
-		log.notice("Creating ed25519 secret key @ `%s'", sk_file);
-
-	self::secret_key = ed25519::sk
-	{
-		sk_file, &self::public_key
-	};
-
-	self::public_key_b64 = b64encode_unpadded(self::public_key);
-	const fixed_buffer<const_buffer, sha256::digest_size> hash
-	{
-		sha256{self::public_key}
-	};
-
-	const auto public_key_hash_b58
-	{
-		b58encode(hash)
-	};
-
-	static const auto trunc_size{8};
-	self::public_key_id = fmt::snstringf
-	{
-		32, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
-	};
-
-	log.info("Current key is '%s' and the public key is: %s",
-	         self::public_key_id,
-	         self::public_key_b64);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
