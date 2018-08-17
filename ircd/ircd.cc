@@ -20,6 +20,7 @@ namespace ircd
 	bool pitrecdb;                               // point-in-time recovery for db
 	bool nojs;                                   // no ircd::js system init.
 
+	std::string _hostname;                       // user's supplied param
 	boost::asio::io_context *ios;                // user's io service
 	ctx::ctx *main_context;                      // Main program loop
 
@@ -68,6 +69,9 @@ try
 
 	// Global ircd:: reference to the user's io_context
 	ircd::ios = &ios;
+
+	// Save the hostname param used for m::init later.
+	_hostname = std::string{hostname};
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();
@@ -184,7 +188,10 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
-	m::init _matrix_;        // Matrix
+	m::init _matrix_         // Matrix
+	{
+		_hostname // the hostname string saved here by ircd::init().
+	};
 
 	// Any deinits which have to be done with all subsystems intact
 	const unwind shutdown{[&]
