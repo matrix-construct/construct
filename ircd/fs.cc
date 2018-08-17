@@ -704,6 +704,16 @@ catch(const filesystem::filesystem_error &e)
 }
 
 std::string
+ircd::fs::make_path(const vector_view<const std::string> &list)
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= path(s);
+
+	return ret.string();
+}
+
+std::string
 ircd::fs::make_path(const vector_view<const string_view> &list)
 {
 	filesystem::path ret;

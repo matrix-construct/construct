@@ -48,6 +48,7 @@ namespace ircd::fs
 	string_view get(index) noexcept;
 	string_view name(index) noexcept;
 	std::string make_path(const vector_view<const string_view> &);
+	std::string make_path(const vector_view<const std::string> &);
 
 	bool exists(const string_view &path);
 	bool is_dir(const string_view &path);
