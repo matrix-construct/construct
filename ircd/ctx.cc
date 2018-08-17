@@ -971,6 +971,9 @@ ircd::ctx::pool::del(const size_t &num)
 {
 	const ssize_t requested(size() - num);
 	const size_t target(std::max(requested, ssize_t(0)));
+	for(size_t i(target); i < ctxs.size(); ++i)
+		ctxs.at(i).terminate();
+
 	while(ctxs.size() > target)
 		ctxs.pop_back();
 }
