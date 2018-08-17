@@ -205,17 +205,10 @@ noexcept try
 		_client_.wait();
 	}};
 
-	// When the call to wait() below completes, IRCd exits from the RUN state
-	// and enters one of the two states below depending on whether the unwind
-	// is taking place normally or because of an exception.
-	const unwind::nominal nominal
+	// When the call to wait() below completes, IRCd exits from the RUN state.
+	const unwind nominal
 	{
 		std::bind(&ircd::set_runlevel, runlevel::QUIT)
-	};
-
-	const unwind::exceptional exceptional
-	{
-		std::bind(&ircd::set_runlevel, runlevel::FAULT)
 	};
 
 	// IRCd will now transition to the RUN state indicating full functionality.
