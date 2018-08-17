@@ -242,22 +242,9 @@ ircd::uptime()
 	return seconds(ircd::time() - info::startup_time);
 }
 
-template<>
-decltype(ircd::runlevel_changed::list)
-ircd::util::instance_list<ircd::runlevel_changed>::list
-{};
-
-decltype(ircd::runlevel_changed::dock)
-ircd::runlevel_changed::dock
-{};
-
-ircd::runlevel_changed::runlevel_changed(handler function)
-:handler{std::move(function)}
-{}
-
-ircd::runlevel_changed::~runlevel_changed()
-noexcept
-{}
+//
+// runlevel
+//
 
 /// Sets the runlevel of IRCd and notifies users. This should never be called
 /// manually/directly, as it doesn't trigger a runlevel change itself, it just
@@ -333,3 +320,28 @@ ircd::reflect(const enum runlevel &level)
 
 	return "??????";
 }
+
+//
+// runlevel_changed
+//
+
+template<>
+decltype(ircd::runlevel_changed::list)
+ircd::util::instance_list<ircd::runlevel_changed>::list
+{};
+
+decltype(ircd::runlevel_changed::dock)
+ircd::runlevel_changed::dock
+{};
+
+//
+// runlevel_changed::runlevel_changed
+//
+
+ircd::runlevel_changed::runlevel_changed(handler function)
+:handler{std::move(function)}
+{}
+
+ircd::runlevel_changed::~runlevel_changed()
+noexcept
+{}
