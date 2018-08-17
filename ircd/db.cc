@@ -2257,6 +2257,8 @@ noexcept
 
 	pool([this, &tasks]
 	{
+		ctx::uninterruptible::nothrow ui;
+
 		assert(this->st);
 		if(tasks.empty())
 			return;
@@ -2288,6 +2290,8 @@ ircd::db::database::env::UnSchedule(void *const tag,
                                     const Priority prio)
 noexcept
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4900,6 +4904,13 @@ ircd::db::compact(column &column,
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 	for(const auto &level : cfmd.levels)
 	{
+		// The operations in this loop might last a while. We don't want
+		// to play games with the stack while rocksdb is in work, so we
+		// mask interruptions during each iteration. The interruption will
+		// be thrown either at ctor OR DTOR of this object if requested.
+		ctx::interruption_point();
+		ctx::uninterruptible::nothrow ui;
+
 		if(level_ != -1 && level.level != level_)
 			continue;
 
@@ -4936,6 +4947,12 @@ ircd::db::compact(column &column,
                   const std::pair<string_view, string_view> &range,
                   const int &to_level)
 {
+	// We don't want to play games with the stack while rocksdb is in work,
+	// interruptions are masked for this frame. An interruption will be
+	// thrown either at ctor OR DTOR of this object if requested.
+	ctx::interruption_point();
+	ctx::uninterruptible::nothrow ui;
+
 	database::column &c(column);
 	database &d(*c.d);
 
