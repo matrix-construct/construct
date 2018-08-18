@@ -325,11 +325,11 @@ ircd::ctx::terminate(ctx &ctx)
 void
 ircd::ctx::interrupt(ctx &ctx)
 {
-	if(finished(ctx))
-		return;
-
 	if(unlikely(ircd::runlevel == runlevel::QUIT))
 		return terminate(ctx);
+
+	if(finished(ctx))
+		return;
 
 	if(interruption(ctx))
 		return;
