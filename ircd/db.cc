@@ -74,6 +74,21 @@ ircd::db::rog
 	"rdb", 'R'
 };
 
+/// Concurrent request pool. Requests to seek may be executed on this
+/// pool in cases where a single context would find it advantageous.
+/// Some examples are a db::row seek, or asynchronous prefetching.
+///
+/// The number of workers in this pool should upper bound at the
+/// number of concurrent AIO requests which are effective on this
+/// system. This is a static pool shared by all databases.
+decltype(ircd::db::request)
+ircd::db::request
+{
+	"db req",
+	128_KiB,   // stack size (must be adequate for transfer to rocksdb)
+	0,         // don't prespawn because this is static
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -93,11 +108,14 @@ ircd::db::init::init()
 {
 	init_compressions();
 	init_directory();
+	request.add(16);
 }
 
 ircd::db::init::~init()
 noexcept
 {
+	request.interrupt();
+	request.join();
 }
 
 void
@@ -4514,21 +4532,22 @@ ircd::db::seek(row &r,
 		return 0;
 
 	#ifdef RB_DEBUG_DB_SEEK
-	const column &c(r[0]);
-	const database &d(c);
 	const ircd::timer timer;
 	#endif
 
-	const auto ret
+	size_t ret{0};
+	ctx::latch latch{r.size()};
+	for(auto &cell : r) request([&latch, &ret, &cell, &p]
 	{
-		std::count_if(begin(r), end(r), [&p]
-		(auto &cell)
-		{
-			return seek(cell, p);
-		})
-	};
+		ret += bool(seek(cell, p));
+		latch.count_down();
+	});
+
+	latch.wait();
 
 	#ifdef RB_DEBUG_DB_SEEK
+	const column &c(r[0]);
+	const database &d(c);
 	log::debug
 	{
 		log, "'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
@@ -4542,6 +4561,7 @@ ircd::db::seek(row &r,
 	};
 	#endif
 
+	assert(ret <= r.size());
 	return ret;
 }
 template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);

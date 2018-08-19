@@ -39,6 +39,7 @@ namespace ircd::db
 	const auto DEFAULT_READAHEAD = 4_MiB;
 
 	extern log::log rog;
+	extern ctx::pool request;
 
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
