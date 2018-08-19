@@ -969,11 +969,20 @@ ircd::ctx::pool::operator()(closure closure)
 void
 ircd::ctx::pool::del(const size_t &num)
 {
-	const ssize_t requested(size() - num);
-	const size_t target(std::max(requested, ssize_t(0)));
+	const auto requested
+	{
+		ssize_t(size()) - ssize_t(num)
+	};
+
+	const auto target
+	{
+		size_t(std::max(requested, 0L))
+	};
+
 	for(size_t i(target); i < ctxs.size(); ++i)
 		ctxs.at(i).terminate();
 
+	const uninterruptible ui;
 	while(ctxs.size() > target)
 		ctxs.pop_back();
 }
@@ -996,6 +1005,13 @@ ircd::ctx::pool::interrupt()
 {
 	for(auto &context : ctxs)
 		context.interrupt();
+}
+
+void
+ircd::ctx::pool::terminate()
+{
+	for(auto &context : ctxs)
+		context.terminate();
 }
 
 void
