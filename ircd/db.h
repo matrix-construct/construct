@@ -38,7 +38,6 @@ namespace ircd::db
 	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
 	const auto DEFAULT_READAHEAD = 4_MiB;
 
-	// Dedicated logging facility for rocksdb's log callbacks
 	extern log::log rog;
 
 	string_view reflect(const rocksdb::Env::Priority &p);

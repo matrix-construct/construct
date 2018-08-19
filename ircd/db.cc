@@ -60,17 +60,17 @@
 // Misc / General linkages
 //
 
+/// Dedicated logging facility for the database subsystem
 decltype(ircd::db::log)
 ircd::db::log
 {
-	// Dedicated logging facility for the database subsystem
 	"db", 'D'
 };
 
+/// Dedicated logging facility for rocksdb's log callbacks
 decltype(ircd::db::rog)
 ircd::db::rog
 {
-	// Dedicated logging facility for rocksdb's log callbacks
 	"rdb", 'R'
 };
 
@@ -4514,11 +4514,11 @@ ircd::db::seek(row &r,
 		return 0;
 
 	#ifdef RB_DEBUG_DB_SEEK
+	const column &c(r[0]);
+	const database &d(c);
 	const ircd::timer timer;
 	#endif
 
-	const column &c(r[0]);
-	const database &d(c);
 	const auto ret
 	{
 		std::count_if(begin(r), end(r), [&p]
@@ -5641,8 +5641,8 @@ namespace ircd::db
 	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
 	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
 	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
-	bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
-	bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+	bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+	bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
 }
 
 std::unique_ptr<rocksdb::Iterator>
@@ -5687,19 +5687,21 @@ ircd::db::seek(database::column &c,
 		it.reset(d.d->NewIterator(opts, cf));
 	}
 
-	return _seek(c, p, opts, it);
+	return _seek(c, p, opts, *it);
 }
 
 bool
 ircd::db::_seek(database::column &c,
                 const string_view &p,
                 const rocksdb::ReadOptions &opts,
-                std::unique_ptr<rocksdb::Iterator> &it)
+                rocksdb::Iterator &it)
 {
+	#ifdef RB_DEBUG_DB_SEEK
 	database &d(*c.d);
 	const ircd::timer timer;
+	#endif
 
-	_seek_(*it, p);
+	_seek_(it, p);
 
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
@@ -5708,29 +5710,31 @@ ircd::db::_seek(database::column &c,
 		name(d),
 		sequence(d),
 		sequence(opts.snapshot),
-		it->status().ToString(),
+		it.status().ToString(),
 		timer.at<microseconds>().count(),
 		name(c)
 	};
 	#endif
 
-	return valid(*it);
+	return valid(it);
 }
 
 bool
 ircd::db::_seek(database::column &c,
                 const pos &p,
                 const rocksdb::ReadOptions &opts,
-                std::unique_ptr<rocksdb::Iterator> &it)
+                rocksdb::Iterator &it)
 {
+	#ifdef RB_DEBUG_DB_SEEK
 	database &d(*c.d);
 	const ircd::timer timer;
 	const bool valid_it
 	{
-		valid(*it)
+		valid(it)
 	};
+	#endif
 
-	_seek_(*it, p);
+	_seek_(it, p);
 
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
@@ -5741,13 +5745,13 @@ ircd::db::_seek(database::column &c,
 		sequence(opts.snapshot),
 		reflect(p),
 		valid_it? "VALID" : "INVALID",
-		it->status().ToString(),
+		it.status().ToString(),
 		timer.at<microseconds>().count(),
 		name(c)
 	};
 	#endif
 
-	return valid(*it);
+	return valid(it);
 }
 
 /// Seek to entry NOT GREATER THAN key. That is, equal to or less than key

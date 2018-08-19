@@ -31,9 +31,9 @@ struct ircd::db::database::env::state
 	std::array<ctx::pool, POOLS> pool
 	{{
 		// name of pool    stack size    initial workers
-		{ "bottom",        128_KiB,      0                 },
-		{ "low",           128_KiB,      0                 },
-		{ "high",          128_KiB,      0                 },
+		{ "rdb bott",      128_KiB,      0                 },
+		{ "rdb low",       128_KiB,      0                 },
+		{ "rdb high",      128_KiB,      0                 },
 	}};
 
 	state(database *const &d)
