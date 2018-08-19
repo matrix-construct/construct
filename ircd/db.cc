@@ -3190,6 +3190,13 @@ noexcept
 // Mutex
 //
 
+static_assert
+(
+	sizeof(rocksdb::port::Mutex) <= sizeof(pthread_mutex_t) + 1,
+	"link-time punning of our structure won't work if the structure is larger "
+	"than the one rocksdb has assumed space for."
+);
+
 rocksdb::port::Mutex::Mutex()
 {
 	#ifdef RB_DEBUG_DB_PORT_
@@ -3266,6 +3273,13 @@ rocksdb::port::Mutex::AssertHeld()
 //
 // RWMutex
 //
+
+static_assert
+(
+	sizeof(rocksdb::port::RWMutex) <= sizeof(pthread_rwlock_t),
+	"link-time punning of our structure won't work if the structure is larger "
+	"than the one rocksdb has assumed space for."
+);
 
 rocksdb::port::RWMutex::RWMutex()
 {
@@ -3346,6 +3360,13 @@ rocksdb::port::RWMutex::WriteUnlock()
 //
 // CondVar
 //
+
+static_assert
+(
+	sizeof(rocksdb::port::CondVar) <= sizeof(pthread_cond_t) + sizeof(void *),
+	"link-time punning of our structure won't work if the structure is larger "
+	"than the one rocksdb has assumed space for."
+);
 
 rocksdb::port::CondVar::CondVar(Mutex *mu)
 :mu{mu}
