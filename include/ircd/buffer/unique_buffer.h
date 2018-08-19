@@ -18,8 +18,9 @@ template<class buffer,
 struct ircd::buffer::unique_buffer
 :buffer
 {
-	unique_buffer(std::unique_ptr<uint8_t[]> &&, const size_t &size);
 	unique_buffer(const size_t &size);
+	unique_buffer(std::unique_ptr<char[]> &&, const size_t &size);
+	explicit unique_buffer(const buffer &);
 	unique_buffer();
 	unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
@@ -39,26 +40,37 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer()
 
 template<class buffer,
          uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<uint8_t[]> &&b,
-                                                              const size_t &size)
-:buffer
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const buffer &src)
+:buffer{[&src]() -> buffer
 {
-	typename buffer::iterator(b.release()), size
+	std::unique_ptr<char[]> ret
+	{
+		new __attribute__((aligned(16))) char[size(src)]
+	};
+
+	const mutable_buffer dst
+	{
+		ret.get(), size(src)
+	};
+
+	copy(dst, src);
+	return dst;
+}()}
+{
 }
-{}
 
 template<class buffer,
          uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
 :unique_buffer<buffer, alignment>
 {
-	std::unique_ptr<uint8_t[]>
+	std::unique_ptr<char[]>
 	{
 		//TODO: Can't use a template parameter to the attribute even though
 		// it's known at compile time. Hardcoding this until fixed with better
 		// aligned dynamic memory.
-		//new __attribute__((aligned(alignment))) uint8_t[size]
-		new __attribute__((aligned(16))) uint8_t[size]
+		//new __attribute__((aligned(alignment))) char[size]
+		new __attribute__((aligned(16))) char[size]
 	},
 	size
 }
@@ -66,6 +78,16 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size
 	// Alignment can only be 16 bytes for now
 	assert(alignment == 16);
 }
+
+template<class buffer,
+         uint alignment>
+ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<char[]> &&b,
+                                                              const size_t &size)
+:buffer
+{
+	typename buffer::iterator(b.release()), size
+}
+{}
 
 template<class buffer,
          uint alignment>
