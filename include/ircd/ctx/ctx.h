@@ -77,6 +77,7 @@ namespace ircd::ctx
 #include "prof.h"
 #include "list.h"
 #include "dock.h"
+#include "latch.h"
 #include "queue.h"
 #include "mutex.h"
 #include "shared_mutex.h"
