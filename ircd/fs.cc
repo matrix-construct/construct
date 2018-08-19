@@ -237,10 +237,16 @@ ircd::fs::prefetch(const fd &fd,
 		syscall(::fcntl, fd, F_GETFL)
 	};
 
-	if(flags & O_DIRECT)
-		return; //TODO: AIO prefetch scheme
+	if(~flags & O_DIRECT)
+	{
+		syscall(::readahead, fd, opts.offset, count);
+		return;
+	}
 
-	syscall(::readahead, fd, opts.offset, count);
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		prefetch__aio(fd, count, opts);
+	#endif
 }
 #else
 void

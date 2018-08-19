@@ -149,6 +149,18 @@ ircd::fs::write__aio(const fd &fd,
 }
 
 //
+// request::prefetch
+//
+
+void
+ircd::fs::prefetch__aio(const fd &fd,
+                        const size_t &size,
+                        const read_opts &opts)
+{
+
+}
+
+//
 // aio
 //
 
