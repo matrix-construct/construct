@@ -89,6 +89,13 @@ ircd::db::request
 	0,         // don't prespawn because this is static
 };
 
+ircd::conf::item<size_t>
+request_pool_default
+{
+	{ "name",     "ircd.db.request_pool.default" },
+	{ "default",  32L                            }
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -108,7 +115,7 @@ ircd::db::init::init()
 {
 	init_compressions();
 	init_directory();
-	request.add(16);
+	request.add(size_t(request_pool_default));
 }
 
 ircd::db::init::~init()
