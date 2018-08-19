@@ -18,6 +18,8 @@ template<class buffer,
 struct ircd::buffer::unique_buffer
 :buffer
 {
+	buffer release();
+
 	unique_buffer(const size_t &size);
 	unique_buffer(std::unique_ptr<char[]> &&, const size_t &size);
 	explicit unique_buffer(const buffer &);
@@ -121,4 +123,14 @@ ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
 noexcept
 {
 	delete[] data(*this);
+}
+
+template<class buffer,
+         uint alignment>
+buffer
+ircd::buffer::unique_buffer<buffer, alignment>::release()
+{
+	const buffer ret{static_cast<buffer>(*this)};
+	static_cast<buffer &>(*this) = buffer{};
+	return ret;
 }
