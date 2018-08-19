@@ -15,10 +15,7 @@ namespace ircd::ctx
 {
 	struct context;
 
-	const size_t DEFAULT_STACK_SIZE
-	{
-		64_KiB
-	};
+	const size_t DEFAULT_STACK_SIZE {64_KiB};
 }
 
 /// Principal interface for a context.
