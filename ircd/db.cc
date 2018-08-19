@@ -4523,20 +4523,17 @@ ircd::db::write(const row::delta *const &begin,
 	write(&deltas.front(), &deltas.front() + deltas.size(), sopts);
 }
 
-template<class pos>
 size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
-	if(r.empty())
-		return 0;
-
 	#ifdef RB_DEBUG_DB_SEEK
 	const ircd::timer timer;
 	#endif
 
 	size_t ret{0};
 	ctx::latch latch{r.size()};
+	const ctx::uninterruptible ui;
 	for(auto &cell : r) request([&latch, &ret, &cell, &p]
 	{
 		ret += bool(seek(cell, p));
@@ -4550,7 +4547,7 @@ ircd::db::seek(row &r,
 	const database &d(c);
 	log::debug
 	{
-		log, "'%s' %lu:%lu '%s' row SEEK %zu of %zu in %ld$us",
+		log, "'%s' %lu:%lu '%s' row SEEK POS %zu of %zu in %ld$us",
 		name(d),
 		sequence(d),
 		sequence(r[0]),
@@ -4564,8 +4561,58 @@ ircd::db::seek(row &r,
 	assert(ret <= r.size());
 	return ret;
 }
-template size_t ircd::db::seek<ircd::db::pos>(row &, const pos &);
-template size_t ircd::db::seek<ircd::string_view>(row &, const string_view &);
+
+size_t
+ircd::db::seek(row &r,
+               const string_view &key)
+{
+	#ifdef RB_DEBUG_DB_SEEK
+	const ircd::timer timer;
+	#endif
+
+	size_t ret{0};
+	ctx::latch latch{r.size()};
+	const auto closure{[&latch, &ret, &key]
+	(auto &cell)
+	{
+		ret += bool(seek(cell, key));
+		latch.count_down();
+	}};
+
+	const ctx::uninterruptible ui;
+	for(auto &cell : r)
+	{
+		db::column &column(cell);
+		if(!exists(cache(column), key))
+			request([&closure, &cell]
+			{
+				closure(cell);
+			});
+		else
+			closure(cell);
+	}
+
+	latch.wait();
+
+	#ifdef RB_DEBUG_DB_SEEK
+	const column &c(r[0]);
+	const database &d(c);
+	log::debug
+	{
+		log, "'%s' %lu:%lu '%s' row SEEK KEY %zu of %zu in %ld$us",
+		name(d),
+		sequence(d),
+		sequence(r[0]),
+		name(c),
+		ret,
+		r.size(),
+		timer.at<microseconds>().count()
+	};
+	#endif
+
+	assert(ret <= r.size());
+	return ret;
+}
 
 //
 // row
@@ -4634,8 +4681,11 @@ ircd::db::row::row(database &d,
 	for(size_t i(0); i < this->size() && i < column_count; ++i)
 	{
 		std::unique_ptr<Iterator> it(iterators.at(i));
-		(*this)[i] = cell { *colptr[i], key, std::move(it), opts };
+		(*this)[i] = cell { *colptr[i], std::move(it), opts };
 	}
+
+	if(key)
+		seek(*this, key);
 }
 
 void
