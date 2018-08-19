@@ -13,7 +13,91 @@
 #include "aio.h"
 
 //
+// request::read
+//
+
+ircd::fs::aio::request::read::read(const int &fd,
+                                   const mutable_buffer &buf,
+                                   const read_opts &opts)
+:request{fd}
+{
+	aio_reqprio = opts.priority;
+	aio_lio_opcode = IOCB_CMD_PREAD;
+
+	aio_buf = uintptr_t(buffer::data(buf));
+	aio_nbytes = buffer::size(buf);
+	aio_offset = opts.offset;
+}
+
+ircd::const_buffer
+ircd::fs::read__aio(const fd &fd,
+                    const mutable_buffer &buf,
+                    const read_opts &opts)
+{
+	aio::request::read request
+	{
+		fd, buf, opts
+	};
+
+	const size_t bytes
+	{
+		request()
+	};
+
+	const const_buffer view
+	{
+		const_cast<const char *>(data(buf)), bytes
+	};
+
+	return view;
+}
+
+//
+// request::write
+//
+
+ircd::fs::aio::request::write::write(const int &fd,
+                                     const const_buffer &buf,
+                                     const write_opts &opts)
+:request{fd}
+{
+	aio_reqprio = opts.priority;
+	aio_lio_opcode = IOCB_CMD_PWRITE;
+
+	aio_buf = uintptr_t(buffer::data(buf));
+	aio_nbytes = buffer::size(buf);
+	aio_offset = opts.offset;
+}
+
+ircd::const_buffer
+ircd::fs::write__aio(const fd &fd,
+                     const const_buffer &buf,
+                     const write_opts &opts)
+{
+	aio::request::write request
+	{
+		fd, buf, opts
+	};
+
+	const size_t bytes
+	{
+		request()
+	};
+
+	const const_buffer view
+	{
+		data(buf), bytes
+	};
+
+	return view;
+}
+
+//
 // aio
+//
+
+//
+// aio::aio
 //
 
 ircd::fs::aio::aio()
@@ -30,7 +114,7 @@ ircd::fs::aio::~aio()
 noexcept
 {
 	interrupt();
-	wait_interrupt();
+	wait();
 
 	boost::system::error_code ec;
 	resfd.close(ec);
@@ -49,7 +133,7 @@ ircd::fs::aio::interrupt()
 }
 
 bool
-ircd::fs::aio::wait_interrupt()
+ircd::fs::aio::wait()
 {
 	if(!resfd.is_open())
 		return false;
@@ -264,102 +348,4 @@ catch(const ctx::terminated &)
 {
 	cancel();
 	throw;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// fs/read.h
-//
-
-//
-// request::read
-//
-
-ircd::fs::aio::request::read::read(const int &fd,
-                                   const mutable_buffer &buf,
-                                   const read_opts &opts)
-:request{fd}
-{
-	aio_reqprio = opts.priority;
-	aio_lio_opcode = IOCB_CMD_PREAD;
-
-	aio_buf = uintptr_t(buffer::data(buf));
-	aio_nbytes = buffer::size(buf);
-	aio_offset = opts.offset;
-}
-
-//
-// ircd::fs interface
-//
-
-ircd::const_buffer
-ircd::fs::read__aio(const fd &fd,
-                    const mutable_buffer &buf,
-                    const read_opts &opts)
-{
-	aio::request::read request
-	{
-		fd, buf, opts
-	};
-
-	const size_t bytes
-	{
-		request()
-	};
-
-	const const_buffer view
-	{
-		const_cast<const char *>(data(buf)), bytes
-	};
-
-	return view;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// fs/write.h
-//
-
-//
-// request::write
-//
-
-ircd::fs::aio::request::write::write(const int &fd,
-                                     const const_buffer &buf,
-                                     const write_opts &opts)
-:request{fd}
-{
-	aio_reqprio = opts.priority;
-	aio_lio_opcode = IOCB_CMD_PWRITE;
-
-	aio_buf = uintptr_t(buffer::data(buf));
-	aio_nbytes = buffer::size(buf);
-	aio_offset = opts.offset;
-}
-
-//
-// ircd::fs interface
-//
-
-ircd::const_buffer
-ircd::fs::write__aio(const fd &fd,
-                     const const_buffer &buf,
-                     const write_opts &opts)
-{
-	aio::request::write request
-	{
-		fd, buf, opts
-	};
-
-	const size_t bytes
-	{
-		request()
-	};
-
-	const const_buffer view
-	{
-		data(buf), bytes
-	};
-
-	return view;
 }
