@@ -4527,13 +4527,16 @@ size_t
 ircd::db::seek(row &r,
                const pos &p)
 {
+	// This frame can't be interrupted because it may have requests
+	// pending in the request pool which must synchronize back here.
+	const ctx::uninterruptible ui;
+
 	#ifdef RB_DEBUG_DB_SEEK
 	const ircd::timer timer;
 	#endif
 
 	size_t ret{0};
 	ctx::latch latch{r.size()};
-	const ctx::uninterruptible ui;
 	for(auto &cell : r) request([&latch, &ret, &cell, &p]
 	{
 		ret += bool(seek(cell, p));
@@ -4566,6 +4569,10 @@ size_t
 ircd::db::seek(row &r,
                const string_view &key)
 {
+	// This frame can't be interrupted because it may have requests
+	// pending in the request pool which must synchronize back here.
+	const ctx::uninterruptible ui;
+
 	#ifdef RB_DEBUG_DB_SEEK
 	const ircd::timer timer;
 	#endif
@@ -4579,7 +4586,6 @@ ircd::db::seek(row &r,
 		latch.count_down();
 	}};
 
-	const ctx::uninterruptible ui;
 	for(auto &cell : r)
 	{
 		db::column &column(cell);
