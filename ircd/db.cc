@@ -694,9 +694,10 @@ try
 	opts.max_background_flushes = 1;
 	opts.max_background_compactions = 1;
 	opts.max_subcompactions = 1;
-	opts.max_open_files = -1; //ircd::info::rlimit_nofile / 4;
+	opts.max_open_files = 0; //ircd::info::rlimit_nofile / 4;
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
+	opts.use_direct_reads = true;
 	//opts.use_fsync = true;
 
 	#ifdef RB_DEBUG
@@ -2899,6 +2900,14 @@ const noexcept
 // random_access_file
 //
 
+const ircd::fs::fd::opts
+_random_access_file_opts{[]
+{
+	ircd::fs::fd::opts ret{std::ios_base::in};
+	ret.direct = true;
+	return ret;
+}()};
+
 ircd::db::database::env::random_access_file::random_access_file(database *const &d,
                                                                 const std::string &name,
                                                                 const EnvOptions &opts)
@@ -2908,7 +2917,7 @@ ircd::db::database::env::random_access_file::random_access_file(database *const 
 }
 ,fd
 {
-	name, std::ios_base::in | std::ios_base::out
+	name, _random_access_file_opts
 }
 {
 }
@@ -3061,14 +3070,14 @@ bool
 ircd::db::database::env::random_access_file::use_direct_io()
 const noexcept
 {
-	return false;
+	return _random_access_file_opts.direct;
 }
 
 size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return 16;
+	return 4096;
 }
 
 //
