@@ -2921,7 +2921,7 @@ noexcept
 rocksdb::Status
 ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
                                                       size_t length)
-noexcept
+noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2934,7 +2934,22 @@ noexcept
 	};
 	#endif
 
+	fs::prefetch(fd, length, offset);
 	return Status::OK();
+}
+catch(const fs::filesystem_error &e)
+{
+	log::error
+	{
+		log, "'%s': rfile:%p prefetch offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		offset,
+		length,
+		e.what()
+	};
+
+	return Status::InvalidArgument();
 }
 
 rocksdb::Status
@@ -2942,8 +2957,9 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   size_t length,
                                                   Slice *result,
                                                   char *scratch)
-const noexcept
+const noexcept try
 {
+	assert(result);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2957,7 +2973,6 @@ const noexcept
 	};
 	#endif
 
-	assert(result);
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -2971,6 +2986,22 @@ const noexcept
 	*result = slice(read);
 
 	return Status::OK();
+}
+catch(const fs::filesystem_error &e)
+{
+	log::error
+	{
+		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return Status::InvalidArgument();
 }
 
 rocksdb::Status
