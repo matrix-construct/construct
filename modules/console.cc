@@ -1472,17 +1472,22 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "column"
+		"dbname", "column", "[key]"
 	}};
 
-	const auto dbname
+	const auto &dbname
 	{
 		param.at(0)
 	};
 
-	const auto colname
+	const auto &colname
 	{
 		param[1]
+	};
+
+	const auto &key
+	{
+		param[2]
 	};
 
 	auto &database
@@ -1504,6 +1509,30 @@ try
 		    << std::endl;
 	}};
 
+	const auto remove{[&out, &database]
+	(const string_view &colname, const string_view &key)
+	{
+		db::column column
+		{
+			database, colname
+		};
+
+		const bool removed[]
+		{
+			db::remove(cache(column), key),
+			db::remove(cache_compressed(column), key)
+		};
+
+		out << "Removed key from";
+		if(removed[0])
+			out << " [uncompressed cache]";
+
+		if(removed[1])
+			out << " [compressed cache]";
+
+		out << std::endl;
+	}};
+
 	if(!colname || colname == "**")
 	{
 		for(const auto &colname : database.column_names)
@@ -1512,7 +1541,56 @@ try
 		return true;
 	}
 
-	clear(colname);
+	if(!key)
+	{
+		clear(colname);
+		return true;
+	}
+
+	remove(colname, key);
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__cache__fetch(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column", "key"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param[1]
+	};
+
+	const auto key
+	{
+		param[2]
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	db::column column
+	{
+		database, colname
+	};
+
+	db::fetch(cache(column), column, key);
 	return true;
 }
 catch(const std::out_of_range &e)
