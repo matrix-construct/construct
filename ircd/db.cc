@@ -5785,7 +5785,159 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 //
 
 void
-ircd::db::for_each(rocksdb::Cache *const &cache,
+ircd::db::prefetch(rocksdb::Cache *const &cache,
+                   column &column,
+                   const string_view &key)
+{
+	if(cache)
+		return prefetch(*cache, column, key);
+}
+
+void
+ircd::db::prefetch(rocksdb::Cache &cache,
+                   column &column,
+                   const string_view &key)
+{
+	assert(0);
+}
+
+bool
+ircd::db::fetch(rocksdb::Cache *const &cache,
+                column &column,
+                const string_view &key)
+{
+	if(cache)
+		return fetch(*cache, column, key);
+}
+
+bool
+ircd::db::fetch(rocksdb::Cache &cache,
+                column &column,
+                const string_view &key)
+{
+	const db::gopts opts
+	{
+		// skip rocksdb inserting this into the columns cache twice.
+		&cache == db::cache(column) || &cache == db::cache_compressed(column)?
+			db::get::NO_CACHE:
+			(enum db::get)0
+	};
+
+	const auto closure{[&cache, &key]
+	(const string_view &value)
+	{
+		insert(cache, key, value);
+	}};
+
+	return column(key, std::nothrow, closure, opts);
+}
+
+void
+ircd::db::clear(rocksdb::Cache *const &cache)
+{
+	if(cache)
+		return clear(*cache);
+}
+
+void
+ircd::db::clear(rocksdb::Cache &cache)
+{
+	cache.EraseUnRefEntries();
+}
+
+bool
+ircd::db::remove(rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	if(cache)
+		return remove(*cache, key);
+}
+
+bool
+ircd::db::remove(rocksdb::Cache &cache,
+                 const string_view &key)
+{
+	cache.Erase(slice(key));
+	return true;
+}
+
+bool
+ircd::db::insert(rocksdb::Cache *const &cache,
+                 const string_view &key,
+                 const string_view &value)
+{
+	if(cache)
+		return insert(*cache, key, value);
+}
+
+bool
+ircd::db::insert(rocksdb::Cache &cache,
+                 const string_view &key,
+                 const string_view &value)
+{
+	unique_buffer<const_buffer> buf
+	{
+		const_buffer{value}
+	};
+
+	return insert(cache, key, std::move(buf));
+}
+
+bool
+ircd::db::insert(rocksdb::Cache *const &cache,
+                 const string_view &key,
+                 unique_buffer<const_buffer> value)
+{
+	if(cache)
+		return insert(*cache, key, std::move(value));
+}
+
+bool
+ircd::db::insert(rocksdb::Cache &cache,
+                 const string_view &key,
+                 unique_buffer<const_buffer> value)
+{
+	static const auto deleter{[]
+	(const rocksdb::Slice &key, void *const value)
+	{
+		if(!value)
+			return;
+
+		const rocksdb::Slice *const &s
+		{
+			reinterpret_cast<const rocksdb::Slice *>(value)
+		};
+
+		const char *const &buf
+		{
+			reinterpret_cast<const char *>(data(slice(*s)))
+		};
+
+		delete[] buf;
+		delete s;
+	}};
+
+	auto s
+	{
+		std::make_unique<rocksdb::Slice>(data(value), size(value))
+	};
+
+	// Note that because of the nullptr handle argument below, rocksdb
+	// will run the deleter if the insert throws; otherwise these
+	// operations have to be moved below the insert so the cleanup can
+	// happen out here. Right now this is all just here gratuitiously.
+	s.release();
+	value.release();
+	throw_on_error
+	{
+		cache.Insert(slice(key), s.get(), size(value), deleter, nullptr)
+	};
+
+	return true;
+}
+
+void
+ircd::db::for_each(const rocksdb::Cache *const &cache,
                    const cache_closure &closure)
 {
 	if(cache)
@@ -5793,16 +5945,16 @@ ircd::db::for_each(rocksdb::Cache *const &cache,
 }
 
 void
-ircd::db::for_each(rocksdb::Cache &cache,
+ircd::db::for_each(const rocksdb::Cache &cache,
                    const cache_closure &closure)
 {
 	thread_local rocksdb::Cache *_cache;
-	_cache = &cache;
+	_cache = const_cast<rocksdb::Cache *>(&cache);
 
 	thread_local const cache_closure *_closure;
 	_closure = &closure;
 
-	cache.ApplyToAllCacheEntries([]
+	_cache->ApplyToAllCacheEntries([]
 	(void *const data, const size_t charge)
 	{
 		assert(_cache);
@@ -5828,45 +5980,18 @@ ircd::db::for_each(rocksdb::Cache &cache,
 	false);
 }
 
-void
-ircd::db::clear(rocksdb::Cache *const &cache)
-{
-	if(cache)
-		clear(*cache);
-}
-
-void
-ircd::db::clear(rocksdb::Cache &cache)
-{
-	cache.EraseUnRefEntries();
-}
-
-void
-ircd::db::remove(rocksdb::Cache *const &cache,
-                 const string_view &key)
-{
-	if(cache)
-		remove(*cache, key);
-}
-
-void
-ircd::db::remove(rocksdb::Cache &cache,
-                 const string_view &key)
-{
-	cache.Erase(slice(key));
-}
-
 bool
-ircd::db::exists(rocksdb::Cache *const &cache,
+ircd::db::exists(const rocksdb::Cache *const &cache,
                  const string_view &key)
 {
 	return cache? exists(*cache, key) : false;
 }
 
 bool
-ircd::db::exists(rocksdb::Cache &cache,
+ircd::db::exists(const rocksdb::Cache &cache_,
                  const string_view &key)
 {
+	auto &cache(const_cast<rocksdb::Cache &>(cache_));
 	const custom_ptr<rocksdb::Cache::Handle> handle
 	{
 		cache.Lookup(slice(key)), [&cache](auto *const &handle)

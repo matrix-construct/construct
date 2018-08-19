@@ -34,19 +34,35 @@ namespace ircd::db
 	size_t usage(const rocksdb::Cache *const &);
 
 	// Test if key exists
-	bool exists(rocksdb::Cache &, const string_view &key);
-	bool exists(rocksdb::Cache *const &, const string_view &key);
+	bool exists(const rocksdb::Cache &, const string_view &key);
+	bool exists(const rocksdb::Cache *const &, const string_view &key);
+
+	// Iterate the cache entries.
+	using cache_closure = std::function<void (const string_view &, const size_t &)>;
+	void for_each(const rocksdb::Cache &, const cache_closure &);
+	void for_each(const rocksdb::Cache *const &, const cache_closure &);
+
+	// Manually cache a key/value directly
+	bool insert(rocksdb::Cache &, const string_view &key, unique_buffer<const_buffer>);
+	bool insert(rocksdb::Cache *const &, const string_view &key, unique_buffer<const_buffer>);
+
+	// Manually cache a copy of key/value
+	bool insert(rocksdb::Cache &, const string_view &key, const string_view &value);
+	bool insert(rocksdb::Cache *const &, const string_view &key, const string_view &value);
 
 	// Remove key if it exists
-	void remove(rocksdb::Cache &, const string_view &key);
-	void remove(rocksdb::Cache *const &, const string_view &key);
+	bool remove(rocksdb::Cache &, const string_view &key);
+	bool remove(rocksdb::Cache *const &, const string_view &key);
 
 	// Clear the cache (won't clear entries which are actively referenced)
 	void clear(rocksdb::Cache &);
 	void clear(rocksdb::Cache *const &);
 
-	// Iterate the cache entries.
-	using cache_closure = std::function<void (const string_view &, const size_t &)>;
-	void for_each(rocksdb::Cache &, const cache_closure &);
-	void for_each(rocksdb::Cache *const &, const cache_closure &);
+	// Read the key from disk into cache; yields when done; returns exists.
+	bool fetch(rocksdb::Cache &, column &, const string_view &key);
+	bool fetch(rocksdb::Cache *const &, column &, const string_view &key);
+
+	// Read the key from disk into cache asynchronously; returns immediately.
+	void prefetch(rocksdb::Cache &, column &, const string_view &key);
+	void prefetch(rocksdb::Cache *const &, column &, const string_view &key);
 }
