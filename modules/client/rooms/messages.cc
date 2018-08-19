@@ -29,6 +29,25 @@ max_filter_miss
 	{ "default",   2048L                                        },
 };
 
+static const m::event::fetch::opts
+default_fetch_opts
+{
+	m::event::keys::include
+	{
+		"content",
+		"depth",
+		"event_id",
+		"membership",
+		"origin_server_ts",
+		"prev_events",
+		"redacts",
+		"room_id",
+		"sender",
+		"state_key",
+		"type",
+	},
+};
+
 resource::response
 get__messages(client &client,
               const resource::request &request,
@@ -74,7 +93,7 @@ get__messages(client &client,
 
 	m::room::messages it
 	{
-		room, page.from
+		room, page.from, &default_fetch_opts
 	};
 
 	const unique_buffer<mutable_buffer> buf
