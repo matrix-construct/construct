@@ -5912,8 +5912,7 @@ ircd::db::fetch(rocksdb::Cache *const &cache,
                 column &column,
                 const string_view &key)
 {
-	if(cache)
-		return fetch(*cache, column, key);
+	return cache? fetch(*cache, column, key) : false;
 }
 
 bool
@@ -5955,8 +5954,7 @@ bool
 ircd::db::remove(rocksdb::Cache *const &cache,
                  const string_view &key)
 {
-	if(cache)
-		return remove(*cache, key);
+	return cache? remove(*cache, key) : false;
 }
 
 bool
@@ -5972,8 +5970,7 @@ ircd::db::insert(rocksdb::Cache *const &cache,
                  const string_view &key,
                  const string_view &value)
 {
-	if(cache)
-		return insert(*cache, key, value);
+	return cache? insert(*cache, key, value) : false;
 }
 
 bool
@@ -5994,8 +5991,7 @@ ircd::db::insert(rocksdb::Cache *const &cache,
                  const string_view &key,
                  unique_buffer<const_buffer> value)
 {
-	if(cache)
-		return insert(*cache, key, std::move(value));
+	return cache? insert(*cache, key, std::move(value)) : false;
 }
 
 bool
