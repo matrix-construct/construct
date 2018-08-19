@@ -5083,13 +5083,26 @@ ircd::db::write(column &column,
 	};
 }
 
-///
-/// TODO: As soon as rocksdb regressed from allowing a null value argument
-/// to the query, we are forced to watch rocksdb allocate and copy the value
-/// into our string `discard` for no reason at all. If this regression remains
-/// it may be more efficient to use a regular iterator seek like everything
-/// else. Otherwise if they fix this, the discard string should become a
-/// nullptr instead.
+bool
+ircd::db::cached(column &column,
+                 const string_view &key,
+                 const gopts &gopts)
+{
+	database &d(column);
+	database::column &c(column);
+
+	auto opts(make_opts(gopts));
+	opts.read_tier = NON_BLOCKING;
+	opts.fill_cache = false;
+
+	std::unique_ptr<rocksdb::Iterator> it;
+	if(!seek(c, key, opts, it))
+		return false;
+
+	assert(bool(it));
+	return valid_eq(*it, key);
+}
+
 bool
 ircd::db::has(column &column,
               const string_view &key,
@@ -5100,8 +5113,6 @@ ircd::db::has(column &column,
 
 	const auto k(slice(key));
 	auto opts(make_opts(gopts));
-
-	// Perform queries which are stymied from any sysentry
 	opts.read_tier = NON_BLOCKING;
 
 	// Perform a co-RP query to the filtration
