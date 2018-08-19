@@ -13,6 +13,62 @@
 #include "aio.h"
 
 //
+// request::fsync
+//
+
+ircd::fs::aio::request::fsync::fsync(const int &fd,
+                                     const fsync_opts &opts)
+:request{fd}
+{
+	aio_reqprio = opts.priority;
+	aio_lio_opcode = IOCB_CMD_FSYNC;
+
+	aio_buf = 0;
+	aio_nbytes = 0;
+	aio_offset = 0;
+}
+
+void
+ircd::fs::fsync__aio(const fd &fd,
+                     const fsync_opts &opts)
+{
+	aio::request::fsync request
+	{
+		fd, opts
+	};
+
+	request();
+}
+
+//
+// request::fdsync
+//
+
+ircd::fs::aio::request::fdsync::fdsync(const int &fd,
+                                       const fsync_opts &opts)
+:request{fd}
+{
+	aio_reqprio = opts.priority;
+	aio_lio_opcode = IOCB_CMD_FDSYNC;
+
+	aio_buf = 0;
+	aio_nbytes = 0;
+	aio_offset = 0;
+}
+
+void
+ircd::fs::fdsync__aio(const fd &fd,
+                      const fsync_opts &opts)
+{
+	aio::request::fdsync request
+	{
+		fd, opts
+	};
+
+	request();
+}
+
+//
 // request::read
 //
 
@@ -212,7 +268,7 @@ noexcept try
 
 	// The count should be at least 1 event. The only reason to return 0 might
 	// be related to an INTR; this assert will find out and may be commented.
-	assert(count > 0);
+	//assert(count > 0);
 
 	for(ssize_t i(0); i < count; ++i)
 		handle_event(event[i]);

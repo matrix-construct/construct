@@ -21,7 +21,7 @@ struct ircd::fs::aio
 	struct request;
 
 	/// Maximum number of events we can submit to kernel
-	static constexpr const size_t &MAX_EVENTS {64};
+	static constexpr const size_t &MAX_EVENTS {512};
 
 	/// Internal semaphore for synchronization of this object
 	ctx::dock dock;
@@ -46,7 +46,7 @@ struct ircd::fs::aio
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
-	bool wait_interrupt();
+	bool wait();
 	bool interrupt();
 
 	aio();
@@ -59,6 +59,8 @@ struct ircd::fs::aio::request
 {
 	struct read;
 	struct write;
+	struct fdsync;
+	struct fsync;
 
 	ssize_t retval {std::numeric_limits<ssize_t>::min()};
 	ssize_t errcode {0};
@@ -76,6 +78,8 @@ namespace ircd::fs
 {
 	const_buffer write__aio(const fd &, const const_buffer &, const write_opts &);
 	const_buffer read__aio(const fd &, const mutable_buffer &, const read_opts &);
+	void fdsync__aio(const fd &, const fsync_opts &);
+	void fsync__aio(const fd &, const fsync_opts &);
 }
 
 /// Read request control block
@@ -90,4 +94,18 @@ struct ircd::fs::aio::request::write
 :request
 {
 	write(const int &fd, const const_buffer &, const write_opts &);
+};
+
+/// fdsync request control block
+struct ircd::fs::aio::request::fdsync
+:request
+{
+	fdsync(const int &fd, const fsync_opts &);
+};
+
+/// fsync request control block
+struct ircd::fs::aio::request::fsync
+:request
+{
+	fsync(const int &fd, const fsync_opts &);
 };

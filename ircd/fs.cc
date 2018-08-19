@@ -165,16 +165,66 @@ ircd::fs::stdin::tty::write(const string_view &buf)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/fsync.h
+//
+
+ircd::fs::fsync_opts
+const ircd::fs::fsync_opts_default
+{};
+
+void
+ircd::fs::fsync(const fd &fd,
+                const fsync_opts &opts)
+try
+{
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		return fsync__aio(fd, opts);
+	#endif
+
+	syscall(::fsync, fd);
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+
+void
+ircd::fs::fdsync(const fd &fd,
+                 const fsync_opts &opts)
+try
+{
+	#ifdef IRCD_USE_AIO
+	if(likely(aioctx))
+		return fdsync__aio(fd, opts);
+	#endif
+
+	syscall(::fdatasync, fd);
+}
+catch(const std::exception &e)
+{
+	throw filesystem_error
+	{
+		"%s", e.what()
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/prefetch.h
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/read.h
 //
 
 ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
-
-//
-// ircd::fs interface linkage
-//
 
 #ifdef __linux__
 void
