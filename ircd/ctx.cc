@@ -246,6 +246,20 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 	else return false;
 }
 
+bool
+ircd::ctx::ctx::started()
+const
+{
+	return stack.base != 0;
+}
+
+bool
+ircd::ctx::ctx::finished()
+const
+{
+	return started() && yc == nullptr;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ctx/ctx.h
@@ -923,9 +937,13 @@ ircd::ctx::context::join()
 	if(joined())
 		return;
 
-	mark(prof::event::JOIN);
 	assert(bool(c));
-	c->adjoindre.wait();
+	mark(prof::event::JOIN);
+	c->adjoindre.wait([this]
+	{
+		return joined();
+	});
+
 	mark(prof::event::JOINED);
 }
 

@@ -55,8 +55,8 @@ struct ircd::ctx::ctx
 	list::node node;                             // node for ctx::list
 	dock adjoindre;                              // contexts waiting for this to join()
 
-	bool started() const                         { return stack.base != 0;                         }
-	bool finished() const                        { return started() && yc == nullptr;              }
+	bool started() const;                        // context was ever entered
+	bool finished() const;                       // context will not be further entered.
 
 	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
 	bool termination_point(std::nothrow_t);      // Check for terminate
