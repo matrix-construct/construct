@@ -5024,12 +5024,16 @@ ircd::db::sort(column &column,
 {
 	database::column &c(column);
 	database &d(*c.d);
+
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
-	log.debug("'%s':'%s' @%lu FLUSH (sort)",
-	          name(d),
-	          name(c),
-	          sequence(d));
+	log::debug
+	{
+		log, "'%s':'%s' @%lu FLUSH (sort)",
+		name(d),
+		name(c),
+		sequence(d)
+	};
 
 	throw_on_error
 	{
