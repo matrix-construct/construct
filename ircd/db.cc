@@ -191,6 +191,7 @@ ircd::db::init_version()
 void
 ircd::db::sync(database &d)
 {
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		d.d->SyncWAL()
@@ -203,6 +204,7 @@ void
 ircd::db::flush(database &d,
                 const bool &sync)
 {
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		d.d->FlushWAL(sync)
@@ -244,6 +246,7 @@ void
 ircd::db::check(database &d)
 {
 	assert(d.d);
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		d.d->VerifyChecksum()
@@ -259,6 +262,7 @@ ircd::db::check(database &d)
 uint64_t
 ircd::db::checkpoint(database &d)
 {
+	const ctx::uninterruptible ui;
 	if(!d.checkpointer)
 		throw error
 		{
@@ -303,6 +307,7 @@ ircd::db::fdeletions(database &d,
                      const bool &enable,
                      const bool &force)
 {
+	const ctx::uninterruptible ui;
 	if(enable) throw_on_error
 	{
 		d.d->EnableFileDeletions(force)
@@ -318,6 +323,7 @@ ircd::db::setopt(database &d,
                  const string_view &key,
                  const string_view &val)
 {
+	const ctx::uninterruptible ui;
 	const std::unordered_map<std::string, std::string> options
 	{
 		{ std::string{key}, std::string{val} }
@@ -384,6 +390,7 @@ std::vector<std::string>
 ircd::db::files(const database &cd,
                 uint64_t &msz)
 {
+	const ctx::uninterruptible ui;
 	std::vector<std::string> ret;
 	auto &d(const_cast<database &>(cd));
 	throw_on_error
@@ -771,6 +778,8 @@ try
 	// NOTE: rocksdb sez RepairDB is broken; can't use now
 	if(fsck && fs::is_dir(path))
 	{
+		const ctx::uninterruptible ui;
+
 		log::notice
 		{
 			log, "Checking database @ `%s' columns[%zu]", path, columns.size()
@@ -793,6 +802,7 @@ try
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
+	const ctx::uninterruptible ui;
 	log::info
 	{
 		log, "Opening database \"%s\" @ `%s' with %zu columns...",
@@ -839,6 +849,7 @@ try
 }()}
 ,uuid{[this]
 {
+	const ctx::uninterruptible ui;
 	std::string ret;
 	throw_on_error
 	{
@@ -849,6 +860,7 @@ try
 }()}
 ,checkpointer{[this]
 {
+	const ctx::uninterruptible ui;
 	rocksdb::Checkpoint *checkpointer{nullptr};
 	throw_on_error
 	{
@@ -866,6 +878,7 @@ try
 			this->name
 		};
 
+		const ctx::uninterruptible ui;
 		check(*this);
 	}
 
@@ -900,6 +913,8 @@ catch(const std::exception &e)
 ircd::db::database::~database()
 noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	log::info
 	{
 		log, "'%s': closing database @ `%s'...",
@@ -1184,6 +1199,7 @@ const noexcept
 void
 ircd::db::drop(database::column &c)
 {
+	const ctx::uninterruptible ui;
 	if(!c.handle)
 		return;
 
@@ -3577,14 +3593,19 @@ ircd::db::for_each(database &d,
                    const seq_closure_bool &closure)
 {
 	std::unique_ptr<rocksdb::TransactionLogIterator> tit;
-	throw_on_error
 	{
-		d.d->GetUpdatesSince(seq, &tit)
-	};
+		const ctx::uninterruptible ui;
+		throw_on_error
+		{
+			d.d->GetUpdatesSince(seq, &tit)
+		};
+	}
 
 	assert(bool(tit));
 	for(; tit->Valid(); tit->Next())
 	{
+		const ctx::uninterruptible ui;
+
 		auto batchres
 		{
 			tit->GetBatch()
@@ -3998,6 +4019,7 @@ ircd::db::txn::checkpoint::checkpoint(txn &t)
 ircd::db::txn::checkpoint::~checkpoint()
 noexcept
 {
+	const ctx::uninterruptible ui;
 	if(likely(!std::uncaught_exception()))
 		throw_on_error { t.wb->PopSavePoint() };
 	else
@@ -4742,10 +4764,13 @@ ircd::db::row::row(database &d,
 
 	//TODO: does this block?
 	std::vector<Iterator *> iterators;
-	throw_on_error
 	{
-		d.d->NewIterators(options, handles, &iterators)
-	};
+		const ctx::uninterruptible ui;
+		throw_on_error
+		{
+			d.d->NewIterators(options, handles, &iterators)
+		};
+	}
 
 	for(size_t i(0); i < this->size() && i < column_count; ++i)
 	{
@@ -5038,11 +5063,13 @@ void
 ircd::db::sort(column &column,
                const bool &blocking)
 {
+	const ctx::uninterruptible ui;
 	database::column &c(column);
 	database &d(*c.d);
 
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
+
 	log::debug
 	{
 		log, "'%s':'%s' @%lu FLUSH (sort)",
@@ -5151,6 +5178,7 @@ ircd::db::setopt(column &column,
                  const string_view &key,
                  const string_view &val)
 {
+	const ctx::uninterruptible ui;
 	const std::unordered_map<std::string, std::string> options
 	{
 		{ std::string{key}, std::string{val} }
@@ -5169,13 +5197,17 @@ ircd::db::del(column &column,
               const string_view &key,
               const sopts &sopts)
 {
-	database &d(column);
+	const ctx::uninterruptible ui;
 	database::column &c(column);
-	log.debug("'%s' %lu '%s' DELETE key(%zu B)",
-	          name(d),
-	          sequence(d),
-	          name(c),
-	          key.size());
+	database &d(column);
+	log::debug
+	{
+		log, "'%s' %lu '%s' DELETE key(%zu B)",
+		name(d),
+		sequence(d),
+		name(c),
+		key.size()
+	};
 
 	auto opts(make_opts(sopts));
 	throw_on_error
@@ -5190,14 +5222,18 @@ ircd::db::write(column &column,
                 const const_buffer &val,
                 const sopts &sopts)
 {
-	database &d(column);
+	const ctx::uninterruptible ui;
 	database::column &c(column);
-	log.debug("'%s' %lu '%s' PUT key(%zu B) val(%zu B)",
-	          name(d),
-	          sequence(d),
-	          name(c),
-	          size(key),
-	          size(val));
+	database &d(column);
+	log::debug
+	{
+		log, "'%s' %lu '%s' PUT key(%zu B) val(%zu B)",
+		name(d),
+		sequence(d),
+		name(c),
+		size(key),
+		size(val)
+	};
 
 	auto opts(make_opts(sopts));
 	throw_on_error
@@ -5724,6 +5760,8 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
+	const ctx::uninterruptible ui;
+
 	#ifdef RB_DEBUG
 	ircd::timer timer;
 	#endif
@@ -5834,6 +5872,8 @@ ircd::db::seek(database::column &c,
                const rocksdb::ReadOptions &opts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
+	const ctx::uninterruptible ui;
+
 	if(!it)
 	{
 		database &d(*c.d);
@@ -6092,6 +6132,7 @@ ircd::db::insert(rocksdb::Cache &cache,
 		delete s;
 	}};
 
+	const ctx::uninterruptible ui;
 	auto s
 	{
 		std::make_unique<rocksdb::Slice>(data(value), size(value))
@@ -6237,6 +6278,7 @@ ircd::db::column_names(const std::string &path,
                        const rocksdb::DBOptions &opts)
 try
 {
+	const ctx::uninterruptible ui;
 	std::vector<std::string> ret;
 	throw_on_error
 	{
