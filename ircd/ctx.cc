@@ -925,7 +925,7 @@ noexcept
 	// Can't join to bare metal, only from within another context.
 	if(current)
 	{
-		interrupt();
+		terminate();
 		join();
 		return;
 	}
