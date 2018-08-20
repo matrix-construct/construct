@@ -84,4 +84,5 @@ struct ircd::ctx::ctx
 	ctx(const ctx &) = delete;
 	ctx &operator=(ctx &&) = delete;
 	ctx &operator=(const ctx &) = delete;
+	~ctx() noexcept;
 };

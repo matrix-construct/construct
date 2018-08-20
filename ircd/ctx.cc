@@ -34,6 +34,12 @@ ircd::ctx::ctx::id_ctr
 	0
 };
 
+// linkage for dtor
+ircd::ctx::ctx::~ctx()
+noexcept
+{
+}
+
 /// Base frame for a context.
 ///
 /// This function is the first thing executed on the new context's stack
@@ -913,8 +919,11 @@ ircd::ctx::context::context(function func,
 ircd::ctx::context::~context()
 noexcept
 {
+	if(!c)
+		return;
+
 	// Can't join to bare metal, only from within another context.
-	if(c && current)
+	if(current)
 	{
 		interrupt();
 		join();
@@ -925,7 +934,7 @@ noexcept
 	// right here and ircd::ctx hasn't been entered yet because the user
 	// passed the POST flag, the ctx::spawn() is still sitting in the ios
 	// queue.
-	if(c && !started(*c))
+	if(!started(*c))
 	{
 		detach();
 		return;
@@ -934,7 +943,7 @@ noexcept
 	// When this is bare metal the above join branch will not have been
 	// taken. In that case we should detach the context so it frees itself,
 	// but only if the context has not already finished.
-	if(c && !current && !finished(*c))
+	if(!current && !finished(*c))
 	{
 		detach();
 		return;
@@ -984,7 +993,10 @@ ircd::ctx::pool::pool(const char *const &name,
 ircd::ctx::pool::~pool()
 noexcept
 {
-	del(size());
+	terminate();
+	join();
+	assert(ctxs.empty());
+	assert(queue.empty());
 }
 
 void
@@ -1007,12 +1019,12 @@ ircd::ctx::pool::del(const size_t &num)
 		size_t(std::max(requested, 0L))
 	};
 
-	for(size_t i(target); i < ctxs.size(); ++i)
-		ctxs.at(i).terminate();
-
 	const uninterruptible ui;
 	while(ctxs.size() > target)
+	{
+		ctxs.back().terminate();
 		ctxs.pop_back();
+	}
 }
 
 void
@@ -1025,7 +1037,10 @@ ircd::ctx::pool::add(const size_t &num)
 void
 ircd::ctx::pool::join()
 {
-	del(size());
+	for(auto &context : ctxs)
+		context.join();
+
+	ctxs.clear();
 }
 
 void
@@ -1360,7 +1375,7 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 	// to another thread. This context must stay right here and not disappear
 	// until the other thread signals back. Note that the destructor is
 	// capable of throwing an interrupt that was received during this scope.
-	const this_ctx::uninterruptible uninterruptible;
+	const uninterruptible uninterruptible;
 
 	push(std::move(closure)); do
 	{
