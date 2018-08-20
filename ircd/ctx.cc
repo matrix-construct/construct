@@ -577,8 +577,18 @@ ircd::ctx::this_ctx::stack_at_here()
 void
 ircd::ctx::this_ctx::interruptible(const bool &b)
 {
+	const bool theirs
+	{
+		interruptible(cur())
+	};
+
+	if(theirs && !b)
+		interruption_point();
+
 	interruptible(cur(), b);
-	interruption_point();
+
+	if(!theirs && b)
+		interruption_point();
 }
 
 /// Throws interrupted if the currently running context was interrupted
@@ -1023,7 +1033,6 @@ ircd::ctx::pool::del(const size_t &num)
 		size_t(std::max(requested, 0L))
 	};
 
-	const uninterruptible ui;
 	while(ctxs.size() > target)
 		ctxs.pop_back();
 }
