@@ -105,9 +105,12 @@ ircd::client::init::init()
 ircd::client::init::~init()
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	interrupt();
 	close();
 	wait();
+
 	assert(client::list.empty());
 }
 
@@ -139,12 +142,14 @@ ircd::client::interrupt_all()
 	if(context.active())
 		log::warning
 		{
-			"Interrupting %zu requests; dropping %zu requests...",
+			"Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
 			context.active(),
-			context.pending()
+			context.size(),
+			context.pending(),
+			context.queued()
 		};
 
-	context.interrupt();
+	context.terminate();
 }
 
 void
@@ -182,27 +187,34 @@ ircd::client::wait_all()
 	if(context.active())
 		log::dwarning
 		{
-			"Joining %zu active of %zu remaining request contexts...",
+			"Waiting on %zu active of %zu client request contexts; %zu pending; %zu queued.",
 			context.active(),
-			context.size()
+			context.size(),
+			context.pending(),
+			context.queued()
 		};
 
 	while(!client::list.empty())
-	{
 		if(!dock.wait_for(seconds(2)) && !client::list.empty())
 			log::warning
 			{
 				"Waiting for %zu clients to close...", client::list.size()
 			};
-	}
 
 	log::debug
 	{
-		"Waiting for %zu request contexts to join...",
-		context.size()
+		"Joining %zu active of %zu client request contexts; %zu pending; %zu queued",
+		context.active(),
+		context.size(),
+		context.pending(),
+		context.queued()
 	};
 
 	context.join();
+	log::debug
+	{
+		"All client contexts, connections, and requests are clear.",
+	};
 }
 
 ircd::parse::read_closure
@@ -300,7 +312,7 @@ namespace ircd
 	static bool handle_ec_eof(client &);
 	static bool handle_ec(client &, const error_code &);
 
-	static void handle_client_request(std::shared_ptr<client>) noexcept;
+	static void handle_client_request(std::shared_ptr<client>);
 	static void handle_client_ready(std::shared_ptr<client>, const error_code &ec);
 }
 
@@ -379,7 +391,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 /// or die.
 void
 ircd::handle_client_request(std::shared_ptr<client> client)
-noexcept try
+try
 {
 	// The ircd::ctx now handling this request is referenced and accessible
 	// in client for the duration of this handling.
@@ -399,14 +411,14 @@ noexcept try
 	else
 		client->close(net::dc::SSL_NOTIFY).wait();
 }
-catch(...)
+catch(const std::exception &e)
 {
 	log::derror
 	{
 		"socket(%p) client(%p) (below main) :%s",
 		client->sock.get(),
 		client.get(),
-		what(std::current_exception())
+		e.what()
 	};
 }
 
@@ -604,7 +616,7 @@ catch(const std::exception &e)
 /// async mode and relinquishes this stack. returning false will disconnect
 /// the client rather than putting it back into async mode.
 ///
-/// Exceptions do not pass below main() therefor anything unhandled is an
+/// Normal exceptions do not pass below main() therefor anything unhandled is an
 /// internal server error and the client is disconnected. The exception handler
 /// here though is executing on a request ctx stack, and we can choose to take
 /// advantage of that; in contrast to the handle_ec() switch which handles
@@ -612,7 +624,7 @@ catch(const std::exception &e)
 ///
 bool
 ircd::client::main()
-noexcept try
+try
 {
 	parse::buffer pb{head_buffer};
 	parse::capstan pc{pb, read_closure(*this)}; do
@@ -735,7 +747,7 @@ catch(const std::exception &e)
 catch(const ctx::terminated &)
 {
 	close(net::dc::RST, net::close_ignore);
-	return false;
+	throw;
 }
 
 /// Handle a single request within the client main() loop.

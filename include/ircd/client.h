@@ -59,7 +59,7 @@ struct ircd::client
 	void discard_unconsumed(const http::request::head &);
 	bool resource_request(const http::request::head &);
 	bool handle_request(parse::capstan &pc);
-	bool main() noexcept;
+	bool main();
 	bool async();
 
   public:
