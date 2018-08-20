@@ -577,11 +577,8 @@ ircd::ctx::this_ctx::stack_at_here()
 void
 ircd::ctx::this_ctx::interruptible(const bool &b)
 {
-	if(likely(current))
-	{
-		interruptible(cur(), b);
-		interruption_point();
-	}
+	interruptible(cur(), b);
+	interruption_point();
 }
 
 /// Throws interrupted if the currently running context was interrupted
@@ -594,8 +591,7 @@ ircd::ctx::this_ctx::interruptible(const bool &b,
                                    std::nothrow_t)
 noexcept
 {
-	if(likely(current))
-		interruptible(cur(), b);
+	interruptible(cur(), b);
 }
 
 /// Throws interrupted if the currently running context was interrupted
@@ -635,6 +631,10 @@ ircd::ctx::this_ctx::name()
 //
 
 ircd::ctx::this_ctx::uninterruptible::uninterruptible()
+:theirs
+{
+	interruptible(cur())
+}
 {
 	interruptible(false);
 }
@@ -642,7 +642,7 @@ ircd::ctx::this_ctx::uninterruptible::uninterruptible()
 ircd::ctx::this_ctx::uninterruptible::~uninterruptible()
 noexcept(false)
 {
-	interruptible(true);
+	interruptible(theirs);
 }
 
 //
@@ -651,6 +651,10 @@ noexcept(false)
 
 ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
 noexcept
+:theirs
+{
+	interruptible(cur())
+}
 {
 	interruptible(false, std::nothrow);
 }
@@ -658,7 +662,7 @@ noexcept
 ircd::ctx::this_ctx::uninterruptible::nothrow::~nothrow()
 noexcept
 {
-	interruptible(true, std::nothrow);
+	interruptible(theirs, std::nothrow);
 }
 
 //

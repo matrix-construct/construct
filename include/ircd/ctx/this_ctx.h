@@ -146,6 +146,8 @@ struct ircd::ctx::this_ctx::uninterruptible
 {
 	struct nothrow;
 
+	bool theirs;
+
 	uninterruptible();
 	uninterruptible(uninterruptible &&) = delete;
 	uninterruptible(const uninterruptible &) = delete;
@@ -159,6 +161,8 @@ struct ircd::ctx::this_ctx::uninterruptible
 ///
 struct ircd::ctx::this_ctx::uninterruptible::nothrow
 {
+	bool theirs;
+
 	nothrow() noexcept;
 	nothrow(nothrow &&) = delete;
 	nothrow(const nothrow &) = delete;
