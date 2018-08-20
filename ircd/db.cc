@@ -1862,6 +1862,8 @@ ircd::db::database::env::NewRandomAccessFile(const std::string& name,
                                              const EnvOptions& options)
 noexcept
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2402,6 +2404,8 @@ ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority prio)
 noexcept
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2434,6 +2438,8 @@ ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
                                                       Priority prio)
 noexcept
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2932,6 +2938,8 @@ ircd::db::database::env::random_access_file::Prefetch(uint64_t offset,
                                                       size_t length)
 noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2968,6 +2976,8 @@ ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   char *scratch)
 const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	assert(result);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -3018,6 +3028,8 @@ ircd::db::database::env::random_access_file::InvalidateCache(size_t offset,
                                                              size_t length)
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -3037,6 +3049,8 @@ ircd::db::database::env::random_access_file::GetUniqueId(char* id,
                                                          size_t max_size)
 const noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -3055,6 +3069,8 @@ void
 ircd::db::database::env::random_access_file::Hint(AccessPattern pattern)
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
