@@ -925,7 +925,7 @@ noexcept
 	// Can't join to bare metal, only from within another context.
 	if(current)
 	{
-		terminate();
+		interrupt();
 		join();
 		return;
 	}
@@ -993,7 +993,7 @@ ircd::ctx::pool::pool(const char *const &name,
 ircd::ctx::pool::~pool()
 noexcept
 {
-	terminate();
+	interrupt();
 	join();
 	assert(ctxs.empty());
 	assert(queue.empty());
@@ -1021,10 +1021,7 @@ ircd::ctx::pool::del(const size_t &num)
 
 	const uninterruptible ui;
 	while(ctxs.size() > target)
-	{
-		ctxs.back().terminate();
 		ctxs.pop_back();
-	}
 }
 
 void
@@ -1037,10 +1034,7 @@ ircd::ctx::pool::add(const size_t &num)
 void
 ircd::ctx::pool::join()
 {
-	for(auto &context : ctxs)
-		context.join();
-
-	ctxs.clear();
+	del(size());
 }
 
 void
