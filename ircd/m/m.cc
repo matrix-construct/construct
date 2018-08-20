@@ -85,7 +85,7 @@ catch(const m::error &e)
 void
 ircd::m::init::close()
 {
-
+	m::imports.erase("s_listen"s);
 }
 
 void
