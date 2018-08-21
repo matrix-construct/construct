@@ -3085,7 +3085,12 @@ const noexcept
 	};
 	#endif
 
-	return 0;
+	const mutable_buffer buf
+	{
+		id, max_size
+	};
+
+	return size(fs::uuid(fd, buf));
 }
 
 void
