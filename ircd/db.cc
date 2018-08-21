@@ -6124,41 +6124,28 @@ ircd::db::insert(rocksdb::Cache &cache,
                  const string_view &key,
                  unique_buffer<const_buffer> value)
 {
+	const ctx::uninterruptible ui;
+	const size_t value_size
+	{
+		size(value)
+	};
+
 	static const auto deleter{[]
 	(const rocksdb::Slice &key, void *const value)
 	{
-		if(!value)
-			return;
-
-		const rocksdb::Slice *const &s
-		{
-			reinterpret_cast<const rocksdb::Slice *>(value)
-		};
-
-		const char *const &buf
-		{
-			reinterpret_cast<const char *>(data(slice(*s)))
-		};
-
-		delete[] buf;
-		delete s;
+		delete[] reinterpret_cast<const char *>(value);
 	}};
 
-	const ctx::uninterruptible ui;
-	auto s
-	{
-		std::make_unique<rocksdb::Slice>(data(value), size(value))
-	};
-
 	// Note that because of the nullptr handle argument below, rocksdb
-	// will run the deleter if the insert throws; otherwise these
-	// operations have to be moved below the insert so the cleanup can
-	// happen out here. Right now this is all just here gratuitiously.
-	s.release();
-	value.release();
+	// will run the deleter if the insert throws; just make sure
+	// the argument execution doesn't throw after release()
 	throw_on_error
 	{
-		cache.Insert(slice(key), s.get(), size(value), deleter, nullptr)
+		cache.Insert(slice(key),
+		             const_cast<char *>(data(value.release())),
+		             value_size,
+		             deleter,
+		             nullptr)
 	};
 
 	return true;
