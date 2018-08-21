@@ -16,6 +16,7 @@ namespace ircd::fs
 	struct fd;
 
 	size_t size(const fd &);
+	string_view uuid(const fd &, const mutable_buffer &);
 }
 
 /// Object for maintaining state to an open file or directory. Instances can

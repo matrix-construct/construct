@@ -447,6 +447,28 @@ namespace ircd::fs
 	static uint posix_flags(const std::ios::open_mode &mode);
 }
 
+/// This is not a standard UUID of any sort; this is custom, and intended for
+/// rocksdb (though rocksdb has no requirement for its format specifically).
+/// The format is plain-text, fs major and minor number, inode number, and
+/// a three letter file type; all obtained from fstat(2).
+ircd::string_view
+ircd::fs::uuid(const fd &fd,
+               const mutable_buffer &buf)
+{
+	struct stat stat;
+	syscall(::fstat, fd, &stat);
+	return fmt::sprintf
+	{
+		buf, "%u-%u-%lu-%s",
+		major(stat.st_dev),
+		minor(stat.st_dev),
+		stat.st_ino,
+		S_ISREG(stat.st_mode)? "reg":
+		S_ISDIR(stat.st_mode)? "dir":
+		                       "???"
+	};
+}
+
 size_t
 ircd::fs::size(const fd &fd)
 {
