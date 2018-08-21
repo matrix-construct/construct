@@ -4690,6 +4690,39 @@ console_cmd__room__state(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__types(opt &out, const string_view &line)
+{
+	const auto &room_id
+	{
+		m::room_id(token(line, ' ', 0))
+	};
+
+	const auto &event_id
+	{
+		token(line, ' ', 1, {})
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	state.for_each(m::room::state::types{[&out]
+	(const string_view &type)
+	{
+		out << type << std::endl;
+		return true;
+	}});
+
+	return true;
+}
+
+bool
 console_cmd__room__state__force(opt &out, const string_view &line)
 {
 	const params param{line, " ",
