@@ -14,6 +14,15 @@
 #include <linux/aio_abi.h>
 #include <ircd/asio.h>
 
+namespace ircd::fs
+{
+	void prefetch__aio(const fd &, const size_t &, const read_opts &);
+	const_buffer write__aio(const fd &, const const_buffer &, const write_opts &);
+	const_buffer read__aio(const fd &, const mutable_buffer &, const read_opts &);
+	void fdsync__aio(const fd &, const fsync_opts &);
+	void fsync__aio(const fd &, const fsync_opts &);
+}
+
 /// AIO context instance. Right now this is a singleton with an extern
 /// instance at fs::aioctx.
 struct ircd::fs::aio
@@ -21,7 +30,7 @@ struct ircd::fs::aio
 	struct request;
 
 	/// Maximum number of events we can submit to kernel
-	static constexpr const size_t &MAX_EVENTS {512};
+	static const size_t MAX_EVENTS;
 
 	/// Internal semaphore for synchronization of this object
 	ctx::dock dock;
@@ -73,15 +82,6 @@ struct ircd::fs::aio::request
 	request(const int &fd);
 	~request() noexcept;
 };
-
-namespace ircd::fs
-{
-	void prefetch__aio(const fd &, const size_t &, const read_opts &);
-	const_buffer write__aio(const fd &, const const_buffer &, const write_opts &);
-	const_buffer read__aio(const fd &, const mutable_buffer &, const read_opts &);
-	void fdsync__aio(const fd &, const fsync_opts &);
-	void fsync__aio(const fd &, const fsync_opts &);
-}
 
 /// Read request control block
 struct ircd::fs::aio::request::read

@@ -164,6 +164,12 @@ ircd::fs::prefetch__aio(const fd &fd,
 // aio
 //
 
+decltype(ircd::fs::aio::MAX_EVENTS)
+ircd::fs::aio::MAX_EVENTS
+{
+	512
+};
+
 //
 // aio::aio
 //
@@ -313,7 +319,11 @@ noexcept try
 	request.retval = std::max(event.res, -1LL);
 	request.errcode = event.res >= -1? event.res2 : std::abs(event.res);
 
-	if(likely(request.waiter && request.waiter != ctx::current))
+	// Notify the waiting context. Note that we are on the main async stack
+	// but it is safe to notify from here. The waiter may be null if it left.
+	assert(!request.waiter || request.waiter != ctx::current);
+	assert(ctx::current == nullptr);
+	if(likely(request.waiter))
 		ctx::notify(*request.waiter);
 
 /*
