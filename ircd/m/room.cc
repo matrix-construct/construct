@@ -883,9 +883,17 @@ const
 	if(!present())
 		return m::state::count(root_id);
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	size_t ret{0};
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id)}; bool(it); ++it)
+	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
 		++ret;
 
 	return ret;
@@ -904,9 +912,17 @@ const
 		dbs::room_state_key(keybuf, room_id, type)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	size_t ret{0};
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 			++ret;
 		else
@@ -971,8 +987,16 @@ const
 			return closure(index(unquote(event_id), std::nothrow));
 		});
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id)}; bool(it); ++it)
+	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
 		if(closure(byte_view<event::idx>(it->second)))
 			return true;
 
@@ -1044,8 +1068,16 @@ const
 		dbs::room_state_key(keybuf, room_id, type)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 		{
 			if(closure(byte_view<event::idx>(it->second)))
@@ -1075,8 +1107,16 @@ const
 		dbs::room_state_key(keybuf, room_id, type)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 	{
 		const auto part
 		{
@@ -1162,8 +1202,16 @@ const
 		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 		{
 			if(closure(byte_view<event::idx>(it->second)))
@@ -1231,8 +1279,16 @@ const
 			closure(index(unquote(event_id), std::nothrow));
 		});
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id)}; bool(it); ++it)
+	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
 		closure(byte_view<event::idx>(it->second));
 }
 
@@ -1291,8 +1347,16 @@ const
 		dbs::room_state_key(keybuf, room_id, type)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 		if(std::get<0>(dbs::room_state_key(it->first)) == type)
 			closure(byte_view<event::idx>(it->second));
 		else
@@ -1318,8 +1382,16 @@ const
 		dbs::room_state_key(keybuf, room_id, type)
 	};
 
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	if(!opts.readahead)
+		opts.readahead = 0_KiB;
+
 	auto &column{dbs::room_state};
-	for(auto it{column.begin(key)}; bool(it); ++it)
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 	{
 		const auto part
 		{
