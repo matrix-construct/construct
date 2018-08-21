@@ -34,6 +34,25 @@ ircd::ctx::ctx::id_ctr
 	0
 };
 
+/// Spawn (internal)
+void
+ircd::ctx::spawn(ctx *const c,
+                 context::function func)
+{
+	const boost::coroutines::attributes attrs
+	{
+		c->stack.max,
+		boost::coroutines::stack_unwind
+	};
+
+	auto bound
+	{
+		std::bind(&ctx::operator(), c, ph::_1, std::move(func))
+	};
+
+	boost::asio::spawn(c->strand, std::move(bound), attrs);
+}
+
 // linkage for dtor
 ircd::ctx::ctx::~ctx()
 noexcept
@@ -811,29 +830,6 @@ noexcept
 //
 // ctx/context.h
 //
-
-namespace ircd::ctx
-{
-	static void spawn(ctx *const c, context::function func);
-}
-
-void
-ircd::ctx::spawn(ctx *const c,
-                 context::function func)
-{
-	const boost::coroutines::attributes attrs
-	{
-		c->stack.max,
-		boost::coroutines::stack_unwind
-	};
-
-	auto bound
-	{
-		std::bind(&ctx::operator(), c, ph::_1, std::move(func))
-	};
-
-	boost::asio::spawn(c->strand, std::move(bound), attrs);
-}
 
 ircd::ctx::context::context(const char *const &name,
                             const size_t &stack_sz,

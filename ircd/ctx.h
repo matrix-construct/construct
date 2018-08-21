@@ -12,6 +12,8 @@ namespace ircd::ctx
 {
 	struct stack;
 	struct profile;
+
+	void spawn(ctx *const c, context::function func);
 }
 
 /// Internal structure aggregating any stack related state for the ctx
