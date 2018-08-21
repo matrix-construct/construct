@@ -1174,6 +1174,17 @@ const
 	return false;
 }
 
+bool
+ircd::m::room::state::test(const types &closure)
+const
+{
+	return !for_each(types{[&closure]
+	(const string_view &type)
+	{
+		return !closure(type);
+	}});
+}
+
 void
 ircd::m::room::state::for_each(const event::closure &closure)
 const
@@ -1320,6 +1331,68 @@ const
 		else
 			break;
 	}
+}
+
+bool
+ircd::m::room::state::for_each(const types &closure)
+const
+{
+	string_view last;
+	char lastbuf[256]; //TODO: type maxlen
+	if(!present())
+	{
+		m::state::for_each(root_id, [&closure, &last, &lastbuf]
+		(const json::array &key, const string_view &)
+		{
+			assert(size(key) >= 2);
+			const auto type
+			{
+				unquote(key.at(0))
+			};
+
+			if(type == last)
+				return true;
+
+			last = strlcpy(lastbuf, type);
+			return closure(type);
+		});
+
+		return true;
+	}
+
+	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
+	const auto &key
+	{
+		dbs::room_state_key(keybuf, room_id, string_view{})
+	};
+
+	db::gopts opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(key, opts)}; bool(it); ++it)
+	{
+		const auto part
+		{
+			dbs::room_state_key(it->first)
+		};
+
+		const auto &type
+		{
+			std::get<0>(part)
+		};
+
+		if(type == last)
+			continue;
+
+		last = strlcpy(lastbuf, type);
+		if(!closure(type))
+			return false;
+	}
+
+	return true;
 }
 
 bool
