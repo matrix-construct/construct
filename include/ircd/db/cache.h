@@ -38,7 +38,7 @@ namespace ircd::db
 	bool exists(const rocksdb::Cache *const &, const string_view &key);
 
 	// Iterate the cache entries.
-	using cache_closure = std::function<void (const string_view &, const string_view &)>;
+	using cache_closure = std::function<void (const const_buffer &)>;
 	void for_each(const rocksdb::Cache &, const cache_closure &);
 	void for_each(const rocksdb::Cache *const &, const cache_closure &);
 

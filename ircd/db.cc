@@ -6194,23 +6194,12 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	{
 		assert(_cache);
 		assert(_closure);
-		assert(data);
-		const auto &s
+		const const_buffer buf
 		{
-			slice(*reinterpret_cast<const rocksdb::Slice *>(value_buffer))
+			reinterpret_cast<const char *>(value_buffer), buffer_size
 		};
 
-		const string_view &key
-		{
-			data(s), buffer_size - size(s)
-		};
-
-		const string_view &val
-		{
-			data(s) + size(key), buffer_size - size(key)
-		};
-
-		(*_closure)(key, val);
+		(*_closure)(buf);
 	},
 	true);
 }
