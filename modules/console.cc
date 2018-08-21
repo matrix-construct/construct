@@ -4105,13 +4105,26 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "event:    " << std::get<m::event::id::buf>(top) << std::endl;
 	out << "m_state:  " << std::endl;
 
-	const unique_buffer<mutable_buffer> buf{64_KiB};
-	const m::room::state::tuple state
+	const m::room::state state
 	{
-		room_id, buf
+		room_id
 	};
 
-	out << pretty(state) << std::endl;
+	state.for_each(m::room::state::types{[&out, &state]
+	(const string_view &type)
+	{
+		if(!startswith(type, "m."))
+			return true;
+
+		state.for_each(type, m::event::closure{[&out]
+		(const m::event &event)
+		{
+			if(json::get<"state_key"_>(event) == "")
+				out << pretty_oneline(event) << std::endl;
+		}});
+
+		return true;
+	}});
 
 	return true;
 }
