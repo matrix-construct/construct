@@ -571,9 +571,6 @@ ircd::ctx::this_ctx::stack_at_here()
 
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
-///
-/// Unlike most of this_ctx::, this function is a no-op if not currently
-/// on a context.
 void
 ircd::ctx::this_ctx::interruptible(const bool &b)
 {
@@ -593,9 +590,6 @@ ircd::ctx::this_ctx::interruptible(const bool &b)
 
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
-///
-/// Unlike most of this_ctx::, this function is a no-op if not currently
-/// on a context.
 void
 ircd::ctx::this_ctx::interruptible(const bool &b,
                                    std::nothrow_t)
