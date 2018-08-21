@@ -6177,28 +6177,28 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	_closure = &closure;
 
 	_cache->ApplyToAllCacheEntries([]
-	(void *const data, const size_t charge)
+	(void *const value_buffer, const size_t buffer_size)
 	noexcept
 	{
 		assert(_cache);
 		assert(_closure);
-		auto *const &handle
-		{
-			reinterpret_cast<rocksdb::Cache::Handle *>(data)
-		};
-
-		const void *const &value
-		{
-			_cache->Value(handle)
-		};
-
-		assert(value);
+		assert(data);
 		const auto &s
 		{
-			*reinterpret_cast<const rocksdb::Slice *>(value)
+			slice(*reinterpret_cast<const rocksdb::Slice *>(value_buffer))
 		};
 
-		(*_closure)(slice(s), charge);
+		const string_view &key
+		{
+			data(s), buffer_size - size(s)
+		};
+
+		const string_view &val
+		{
+			data(s) + size(key), buffer_size - size(key)
+		};
+
+		(*_closure)(key, val);
 	},
 	true);
 }
