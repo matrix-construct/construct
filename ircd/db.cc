@@ -6164,6 +6164,12 @@ void
 ircd::db::for_each(const rocksdb::Cache &cache,
                    const cache_closure &closure)
 {
+	// Due to the use of the global variables which are required when using a
+	// C-style callback for RocksDB, we have to make use of this function
+	// exclusive for different contexts.
+	static ctx::mutex mutex;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	thread_local rocksdb::Cache *_cache;
 	_cache = const_cast<rocksdb::Cache *>(&cache);
 
@@ -6172,6 +6178,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 
 	_cache->ApplyToAllCacheEntries([]
 	(void *const data, const size_t charge)
+	noexcept
 	{
 		assert(_cache);
 		assert(_closure);
@@ -6193,7 +6200,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 
 		(*_closure)(slice(s), charge);
 	},
-	false);
+	true);
 }
 
 bool
