@@ -621,6 +621,10 @@ try
 }
 ,ssts
 {
+	// note: the sst file manager cannot be used for now because it will spawn
+	// note: a pthread internally in rocksdb which does not use our callbacks
+	// note: we gave in the supplied env. we really don't want that.
+
 	//rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
 }
 ,cache{[this]
@@ -1331,16 +1335,19 @@ ircd::db::database::column::column(database *const &d,
 	this->options.target_file_size_multiplier = 4;        // size at level
 	this->options.level0_file_num_compaction_trigger = 2;
 
-	log.debug("schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
-	          db::name(*d),
-	          demangle(key_type.name()),
-	          demangle(mapped_type.name()),
-	          this->cmp.Name(),
-	          this->options.prefix_extractor? this->prefix.Name() : "none",
-	          cache_size,
-	          cache_size_comp,
-	          bloom_bits,
-	          this->descriptor.name);
+	log::debug
+	{
+		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
+		db::name(*d),
+		demangle(key_type.name()),
+		demangle(mapped_type.name()),
+		this->cmp.Name(),
+		this->options.prefix_extractor? this->prefix.Name() : "none",
+		cache_size,
+		cache_size_comp,
+		bloom_bits,
+		this->descriptor.name
+	};
 }
 
 ircd::db::database::column::~column()
