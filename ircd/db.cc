@@ -3029,7 +3029,7 @@ const noexcept try
 
 	return Status::OK();
 }
-catch(const fs::filesystem_error &e)
+catch(const std::exception &e)
 {
 	log::error
 	{
