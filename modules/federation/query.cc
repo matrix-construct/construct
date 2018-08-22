@@ -40,6 +40,10 @@ static resource::response
 get__query_profile(client &client,
                    const resource::request &request);
 
+static resource::response
+get__query_directory(client &client,
+                     const resource::request &request);
+
 resource::response
 get__query(client &client,
            const resource::request &request)
@@ -51,6 +55,9 @@ get__query(client &client,
 
 	if(type == "profile")
 		return get__query_profile(client, request);
+
+	if(type == "directory")
+		return get__query_directory(client, request);
 
 	throw m::NOT_FOUND
 	{
@@ -100,4 +107,49 @@ get__query_profile(client &client,
 	});
 
 	return {}; // responded from closure
+}
+
+resource::response
+get__query_directory(client &client,
+                     const resource::request &request)
+{
+	m::room::alias::buf room_alias
+	{
+		url::decode(request.query.at("room_alias"), room_alias)
+	};
+
+	const ircd::m::room::id::buf
+	alias_room_id
+	{
+		"alias", ircd::my_host()
+	};
+
+	const m::room alias_room
+	{
+		alias_room_id
+	};
+
+	const m::room::state state
+	{
+		alias_room
+	};
+
+	state.get("ircd.alias", room_alias, [&client, &room_alias]
+	(const m::event &event)
+	{
+		const m::room::id &room_id
+		{
+			unquote(at<"content"_>(event).at("room_id"))
+		};
+
+		resource::response
+		{
+			client, json::members
+			{
+				{ "room_id", room_id }
+			}
+		};
+	});
+
+	return {};
 }
