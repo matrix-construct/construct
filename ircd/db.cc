@@ -2949,11 +2949,31 @@ ircd::db::database::env::random_access_file::random_access_file(database *const 
 	name, _random_access_file_opts
 }
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': opened rfile:%p fd:%d '%s' opts:%p",
+		d->name,
+		this,
+		int(fd),
+		name,
+		&opts
+	};
+	#endif
 }
 
 ircd::db::database::env::random_access_file::~random_access_file()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': close rfile:%p fd:%d",
+		d.name,
+		this,
+		int(fd)
+	};
+	#endif
 }
 
 rocksdb::Status
