@@ -80,7 +80,8 @@ ircd::conf::exists(const string_view &key)
 //
 
 /// Conf item abstract constructor.
-ircd::conf::item<void>::item(const json::members &opts)
+ircd::conf::item<void>::item(const json::members &opts,
+                             conf::set_cb set_cb)
 :feature_
 {
 	opts
@@ -92,6 +93,10 @@ ircd::conf::item<void>::item(const json::members &opts)
 ,name
 {
 	unquote(feature.at("name"))
+}
+,set_cb
+{
+	std::move(set_cb)
 }
 {
 	if(!items.emplace(name, this).second)
@@ -119,6 +124,18 @@ ircd::conf::item<void>::set(const string_view &val)
 	{
 		on_set(val)
 	};
+
+	if(set_cb) try
+	{
+		set_cb();
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			"conf item[%s] set callback :%s", e.what()
+		};
+	}
 
 	return ret;
 }
@@ -151,9 +168,16 @@ const
 // std::string
 //
 
-ircd::conf::item<std::string>::item(const json::members &members)
-:conf::item<>{members}
-,value{unquote(feature.get("default"))}
+ircd::conf::item<std::string>::item(const json::members &members,
+                                    conf::set_cb set_cb)
+:conf::item<>
+{
+	members, std::move(set_cb)
+}
+,value
+{
+	unquote(feature.get("default"))
+}
 {
 }
 
@@ -175,9 +199,16 @@ const
 // bool
 //
 
-ircd::conf::item<bool>::item(const json::members &members)
-:conf::item<>{members}
-,value{feature.get<bool>("default", false)}
+ircd::conf::item<bool>::item(const json::members &members,
+                             conf::set_cb set_cb)
+:conf::item<>
+{
+	members, std::move(set_cb)
+}
+,value
+{
+	feature.get<bool>("default", false)
+}
 {
 }
 

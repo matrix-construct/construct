@@ -43,6 +43,8 @@ namespace ircd::conf
 	IRCD_EXCEPTION(error, not_found)
 	IRCD_EXCEPTION(error, bad_value)
 
+	using set_cb = std::function<void ()>;
+
 	extern std::map<string_view, item<> *> items;
 
 	bool exists(const string_view &key);
@@ -59,6 +61,7 @@ struct ircd::conf::item<void>
 	json::strung feature_;
 	json::object feature;
 	string_view name;
+	conf::set_cb set_cb;
 
   protected:
 	virtual string_view on_get(const mutable_buffer &) const;
@@ -68,7 +71,7 @@ struct ircd::conf::item<void>
 	string_view get(const mutable_buffer &) const;
 	bool set(const string_view &);
 
-	item(const json::members &);
+	item(const json::members &, conf::set_cb = {});
 	item(item &&) = delete;
 	item(const item &) = delete;
 	virtual ~item() noexcept;
@@ -111,9 +114,16 @@ struct ircd::conf::lex_castable
 		return true;
 	}
 
-	lex_castable(const json::members &members)
-	:conf::item<>{members}
-	,conf::value<T>(feature.get("default", long(0)))
+	lex_castable(const json::members &members,
+	             conf::set_cb set_cb = {})
+	:conf::item<>
+	{
+		members, std::move(set_cb)
+	}
+	,conf::value<T>
+	(
+		feature.get("default", long(0))
+	)
 	{}
 };
 
@@ -130,7 +140,7 @@ struct ircd::conf::item<std::string>
 	string_view on_get(const mutable_buffer &out) const override;
 	bool on_set(const string_view &s) override;
 
-	item(const json::members &members);
+	item(const json::members &members, conf::set_cb set_cb = {});
 };
 
 template<>
@@ -141,7 +151,7 @@ struct ircd::conf::item<bool>
 	string_view on_get(const mutable_buffer &out) const override;
 	bool on_set(const string_view &s) override;
 
-	item(const json::members &members);
+	item(const json::members &members, conf::set_cb set_cb = {});
 };
 
 template<>
