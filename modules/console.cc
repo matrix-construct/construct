@@ -5292,6 +5292,23 @@ console_cmd__room__purge(opt &out, const string_view &line)
 		m::room_id(token(line, ' ', 0))
 	};
 
+	const m::room room
+	{
+		room_id
+	};
+
+	using prototype = size_t (const m::room &);
+	static m::import<prototype> purge
+	{
+		"m_room", "purge"
+	};
+
+	const size_t ret
+	{
+		purge(room)
+	};
+
+	out << "erased " << ret << std::endl;
 	return true;
 }
 

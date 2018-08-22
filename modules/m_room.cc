@@ -16,6 +16,34 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
+extern "C" size_t
+purge(const m::room &room)
+{
+	size_t ret(0);
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	room.for_each([&txn, &ret]
+	(const m::event::idx &idx)
+	{
+		const m::event::fetch event
+		{
+			idx
+		};
+
+		m::dbs::write_opts opts;
+		opts.op = db::op::DELETE;
+		opts.event_idx = idx;
+		m::dbs::write(txn, event, opts);
+		++ret;
+	});
+
+	txn();
+	return ret;
+}
+
 extern "C" void
 make_auth(const m::room &room,
           json::stack::array &out,
