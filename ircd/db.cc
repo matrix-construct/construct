@@ -705,7 +705,7 @@ try
 	opts.max_background_flushes = 1;
 	opts.max_background_compactions = 1;
 	opts.max_subcompactions = 1;
-	opts.max_open_files = 0; //ircd::info::rlimit_nofile / 4;
+	opts.max_open_files = -1; //ircd::info::rlimit_nofile / 4;
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
 	opts.use_direct_reads = true;
