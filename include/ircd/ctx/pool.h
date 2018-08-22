@@ -43,6 +43,7 @@ struct ircd::ctx::pool
 	// control panel
 	void add(const size_t & = 1);
 	void del(const size_t & = 1);
+	void set(const size_t &);
 	void terminate();
 	void interrupt();
 	void join();

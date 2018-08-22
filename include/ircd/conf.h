@@ -71,7 +71,7 @@ struct ircd::conf::item<void>
 	string_view get(const mutable_buffer &) const;
 	bool set(const string_view &);
 
-	item(const json::members &, conf::set_cb = {});
+	item(const json::members &, conf::set_cb);
 	item(item &&) = delete;
 	item(const item &) = delete;
 	virtual ~item() noexcept;

@@ -1011,6 +1011,15 @@ ircd::ctx::pool::operator()(closure closure)
 }
 
 void
+ircd::ctx::pool::set(const size_t &num)
+{
+	if(size() > num)
+		del(size() - num);
+	else
+		add(num - size());
+}
+
+void
 ircd::ctx::pool::del(const size_t &num)
 {
 	const auto requested
@@ -1037,7 +1046,7 @@ ircd::ctx::pool::add(const size_t &num)
 void
 ircd::ctx::pool::join()
 {
-	del(size());
+	set(0);
 }
 
 void
