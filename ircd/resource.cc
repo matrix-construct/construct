@@ -358,8 +358,8 @@ ircd::resource::operator()(client &client,
 		const auto &supplied(split(ct.first, '/'));
 		const auto &charset(ct.second);
 		const auto &required(method.opts.mime);
-		if(required.first != supplied.first ||
-		   (required.second && required.second != supplied.second))
+		if(required.first != supplied.first
+		||(required.second && required.second != supplied.second))
 			throw http::error
 			{
 				http::UNSUPPORTED_MEDIA_TYPE
