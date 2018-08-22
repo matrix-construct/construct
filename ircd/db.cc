@@ -74,6 +74,25 @@ ircd::db::rog
 	"rdb", 'R'
 };
 
+ircd::conf::item<size_t>
+ircd::db::request_pool_stack_size
+{
+	{ "name",     "ircd.db.request_pool.stack_size" },
+	{ "default",  long(128_KiB)                     },
+};
+
+ircd::conf::item<size_t>
+ircd::db::request_pool_size
+{
+	{
+		{ "name",     "ircd.db.request_pool.size" },
+		{ "default",  32L                         },
+	}, []
+	{
+		request.set(size_t(request_pool_size));
+	}
+};
+
 /// Concurrent request pool. Requests to seek may be executed on this
 /// pool in cases where a single context would find it advantageous.
 /// Some examples are a db::row seek, or asynchronous prefetching.
@@ -85,15 +104,8 @@ decltype(ircd::db::request)
 ircd::db::request
 {
 	"db req",
-	128_KiB,   // stack size (must be adequate for transfer to rocksdb)
-	0,         // don't prespawn because this is static
-};
-
-ircd::conf::item<size_t>
-request_pool_default
-{
-	{ "name",     "ircd.db.request_pool.default" },
-	{ "default",  32L                            }
+	size_t(request_pool_stack_size),
+	0, // don't prespawn because this is static
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,7 +127,7 @@ ircd::db::init::init()
 {
 	init_compressions();
 	init_directory();
-	request.add(size_t(request_pool_default));
+	request.add(request_pool_size);
 }
 
 ircd::db::init::~init()
