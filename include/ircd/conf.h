@@ -60,8 +60,13 @@ struct ircd::conf::item<void>
 	json::object feature;
 	string_view name;
 
-	virtual string_view get(const mutable_buffer &) const;
-	virtual bool set(const string_view &);
+  protected:
+	virtual string_view on_get(const mutable_buffer &) const;
+	virtual bool on_set(const string_view &);
+
+  public:
+	string_view get(const mutable_buffer &) const;
+	bool set(const string_view &);
 
 	item(const json::members &);
 	item(item &&) = delete;
@@ -95,12 +100,12 @@ struct ircd::conf::lex_castable
 :conf::item<>
 ,conf::value<T>
 {
-	string_view get(const mutable_buffer &out) const override
+	string_view on_get(const mutable_buffer &out) const override
 	{
 		return lex_cast(this->_value, out);
 	}
 
-	bool set(const string_view &s) override
+	bool on_set(const string_view &s) override
 	{
 		this->_value = lex_cast<T>(s);
 		return true;
@@ -122,8 +127,8 @@ struct ircd::conf::item<std::string>
 		return _value;
 	}
 
-	string_view get(const mutable_buffer &out) const override;
-	bool set(const string_view &s) override;
+	string_view on_get(const mutable_buffer &out) const override;
+	bool on_set(const string_view &s) override;
 
 	item(const json::members &members);
 };
@@ -133,8 +138,8 @@ struct ircd::conf::item<bool>
 :conf::item<>
 ,conf::value<bool>
 {
-	string_view get(const mutable_buffer &out) const override;
-	bool set(const string_view &s) override;
+	string_view on_get(const mutable_buffer &out) const override;
+	bool on_set(const string_view &s) override;
 
 	item(const json::members &members);
 };

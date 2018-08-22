@@ -113,13 +113,31 @@ noexcept
 }
 
 bool
-ircd::conf::item<void>::set(const string_view &)
+ircd::conf::item<void>::set(const string_view &val)
+{
+	const bool ret
+	{
+		on_set(val)
+	};
+
+	return ret;
+}
+
+ircd::string_view
+ircd::conf::item<void>::get(const mutable_buffer &buf)
+const
+{
+	return on_get(buf);
+}
+
+bool
+ircd::conf::item<void>::on_set(const string_view &)
 {
 	return false;
 }
 
 ircd::string_view
-ircd::conf::item<void>::get(const mutable_buffer &)
+ircd::conf::item<void>::on_get(const mutable_buffer &)
 const
 {
 	return {};
@@ -140,14 +158,14 @@ ircd::conf::item<std::string>::item(const json::members &members)
 }
 
 bool
-ircd::conf::item<std::string>::set(const string_view &s)
+ircd::conf::item<std::string>::on_set(const string_view &s)
 {
 	_value = std::string{s};
 	return true;
 }
 
 ircd::string_view
-ircd::conf::item<std::string>::get(const mutable_buffer &out)
+ircd::conf::item<std::string>::on_get(const mutable_buffer &out)
 const
 {
 	return { data(out), _value.copy(data(out), size(out)) };
@@ -164,7 +182,7 @@ ircd::conf::item<bool>::item(const json::members &members)
 }
 
 bool
-ircd::conf::item<bool>::set(const string_view &s)
+ircd::conf::item<bool>::on_set(const string_view &s)
 {
 	switch(hash(s))
 	{
@@ -184,7 +202,7 @@ ircd::conf::item<bool>::set(const string_view &s)
 }
 
 ircd::string_view
-ircd::conf::item<bool>::get(const mutable_buffer &out)
+ircd::conf::item<bool>::on_get(const mutable_buffer &out)
 const
 {
 	return _value?
