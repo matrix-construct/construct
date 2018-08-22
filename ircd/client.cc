@@ -31,8 +31,14 @@ ircd::client::settings::stack_size
 ircd::conf::item<size_t>
 ircd::client::settings::pool_size
 {
-	{ "name",     "ircd.client.pool_size " },
-	{ "default",  64L                      },
+	{
+		{ "name",     "ircd.client.pool_size " },
+		{ "default",  64L                      },
+	}, []
+	{
+		using client = ircd::client;
+		client::context.set(client::settings::pool_size);
+	}
 };
 
 /// Linkage for the default settings
