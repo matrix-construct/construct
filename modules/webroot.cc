@@ -146,11 +146,15 @@ try
 	assert(written == offset);
 	return {};
 }
-catch(const fs::filesystem_error &e)
+catch(const fs::error &e)
 {
 	throw http::error
 	{
-		http::NOT_FOUND  //TODO: interp error_code
+		e.code == std::errc::no_such_file_or_directory?
+			http::NOT_FOUND:
+			http::INTERNAL_SERVER_ERROR,
+
+		"%s", e.what()
 	};
 }
 
