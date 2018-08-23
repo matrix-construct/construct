@@ -2410,7 +2410,9 @@ noexcept
 	};
 	#endif
 
-	return defaults.WaitForJoin();
+	assert(st);
+	for(auto &pool : st->pool)
+		pool.join();
 }
 
 unsigned int
