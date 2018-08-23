@@ -2939,7 +2939,7 @@ noexcept try
 	offset += length;
 	return Status::OK();
 }
-catch(const std::exception &e)
+catch(const fs::error &e)
 {
 	log::error
 	{
@@ -2953,7 +2953,23 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	return Status::InvalidArgument();
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
@@ -2992,7 +3008,7 @@ noexcept try
 	*result = slice(read);
 	return Status::OK();
 }
-catch(const std::exception &e)
+catch(const fs::error &e)
 {
 	log::error
 	{
@@ -3006,7 +3022,23 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	return Status::InvalidArgument();
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
@@ -3138,9 +3170,13 @@ noexcept try
 	fs::prefetch(fd, length, offset);
 	return Status::OK();
 }
-catch(const fs::filesystem_error &e)
+catch(const fs::error &e)
 {
-	log::error
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
 	{
 		log, "'%s': rfile:%p prefetch offset:%zu length:%zu :%s",
 		d.name,
@@ -3150,7 +3186,7 @@ catch(const fs::filesystem_error &e)
 		e.what()
 	};
 
-	return Status::InvalidArgument();
+	return error_to_status{e};
 }
 
 rocksdb::Status
@@ -3190,7 +3226,7 @@ const noexcept try
 
 	return Status::OK();
 }
-catch(const std::exception &e)
+catch(const fs::error &e)
 {
 	log::error
 	{
@@ -3204,7 +3240,23 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	return Status::InvalidArgument();
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
@@ -3231,7 +3283,7 @@ noexcept
 size_t
 ircd::db::database::env::random_access_file::GetUniqueId(char* id,
                                                          size_t max_size)
-const noexcept
+const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
@@ -3252,6 +3304,20 @@ const noexcept
 	};
 
 	return size(fs::uuid(fd, buf));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': rfile:%p GetUniqueId id:%p max_size:%zu :%s",
+		d.name,
+		this,
+		id,
+		max_size,
+		e.what()
+	};
+
+	return 0;
 }
 
 void
