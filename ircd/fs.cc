@@ -184,9 +184,17 @@ try
 
 	syscall(::fsync, fd);
 }
+catch(const error &e)
+{
+	throw;
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -204,9 +212,17 @@ try
 
 	syscall(::fdatasync, fd);
 }
+catch(const error &e)
+{
+	throw;
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -269,13 +285,17 @@ try
 
 	return read(fd, opts);
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -305,13 +325,17 @@ try
 
 	return read(fd, buf, opts);
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -334,13 +358,17 @@ try
 		size_t(syscall(::pread, fd, data(buf), size(buf), opts.offset))
 	};
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -367,13 +395,17 @@ try
 	opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 	return write(fd, buf, opts);
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -392,13 +424,17 @@ try
 
 	return write(fd, buf, opts);
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -421,13 +457,17 @@ try
 		size_t(syscall(::pwrite, fd, data(buf), size(buf), opts.offset))
 	};
 }
-catch(const filesystem_error &)
+catch(const error &e)
 {
 	throw;
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 catch(const std::exception &e)
 {
-	throw filesystem_error
+	throw error
 	{
 		"%s", e.what()
 	};
@@ -598,10 +638,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 void
@@ -612,9 +649,9 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
+	throw error
 	{
-		"`%s': %s", path, e.what()
+		e, "`%s' :%s", path, e.what()
 	};
 }
 
@@ -626,9 +663,9 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
+	throw error
 	{
-		"`%s': %s", path, e.what()
+		e, "`%s' :%s", path, e.what()
 	};
 }
 
@@ -640,9 +677,9 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
+	throw error
 	{
-		"`%s': %s", path, e.what()
+		e, "`%s' :%s", path, e.what()
 	};
 }
 
@@ -663,9 +700,9 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
+	throw error
 	{
-		"`%s' -> `%s': %s", old, new_, e.what()
+		e, "`%s' -> `%s' :%s", old, new_, e.what()
 	};
 }
 
@@ -700,10 +737,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 std::vector<std::string>
@@ -727,10 +761,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 size_t
@@ -747,10 +778,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -761,10 +789,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -775,10 +800,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw filesystem_error
-	{
-		"%s", e.what()
-	};
+	throw error{e};
 }
 
 std::string
@@ -821,4 +843,19 @@ filesystem::path
 ircd::fs::path(std::string s)
 {
 	return filesystem::path(std::move(s));
+}
+
+//
+// fs/error.h
+//
+
+std::error_code
+ircd::make_error_code(const boost::filesystem::filesystem_error &e)
+{
+	const boost::system::error_code &ec
+	{
+		e.code()
+	};
+
+	return make_error_code(ec);
 }

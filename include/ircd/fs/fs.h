@@ -37,9 +37,7 @@ namespace ircd::fs
 	struct aio;
 	struct init;
 	enum index :int;
-
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, filesystem_error)
+	struct error; // custom exception; still inherits from ircd::error
 
 	constexpr size_t PATH_MAX { 2048 };
 
@@ -83,6 +81,7 @@ enum ircd::fs::index
 	_NUM_
 };
 
+#include "error.h"
 #include "fd.h"
 #include "read.h"
 #include "write.h"

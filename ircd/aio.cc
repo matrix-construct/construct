@@ -410,7 +410,10 @@ try
 	while(retval == std::numeric_limits<ssize_t>::min());
 
 	if(retval == -1)
-		throw_system_error(errcode);
+		throw fs::error
+		{
+			make_error_code(errcode)
+		};
 
 	return size_t(retval);
 }
