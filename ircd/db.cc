@@ -2106,17 +2106,30 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::database::env::GetFileSize(const std::string& name,
-                                     uint64_t* s)
-noexcept
+ircd::db::database::env::GetFileSize(const std::string &name,
+                                     uint64_t *const s)
+noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get file size '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': get file size '%s'",
+		d.name,
+		name
+	};
 	#endif
 
-	return defaults.GetFileSize(name, s);
+	assert(s);
+	*s = fs::size(name);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 rocksdb::Status
