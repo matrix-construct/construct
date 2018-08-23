@@ -1870,25 +1870,22 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::NewSequentialFile(const std::string& name,
-                                           std::unique_ptr<SequentialFile>* r,
-                                           const EnvOptions& options)
+                                           std::unique_ptr<SequentialFile> *const r,
+                                           const EnvOptions &options)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': new sequential file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
+	log::debug
+	{
+		log, "'%s': new sequential file '%s' options:%p",
+		d.name,
+		name,
+		&options
+	};
 	#endif
 
-	std::unique_ptr<SequentialFile> defaults;
-	const auto ret
-	{
-		this->defaults.NewSequentialFile(name, &defaults, options)
-	};
-
-	*r = std::make_unique<sequential_file>(&d, name, options, std::move(defaults));
-	return ret;
+	*r = std::make_unique<sequential_file>(&d, name, options);
+	return Status::OK();
 }
 
 rocksdb::Status
@@ -2841,36 +2838,113 @@ noexcept
 // sequential_file
 //
 
+decltype(ircd::db::database::env::sequential_file::default_opts)
+ircd::db::database::env::sequential_file::default_opts{[]
+{
+	ircd::fs::fd::opts ret{std::ios_base::in};
+	ret.direct = false;
+	return ret;
+}()};
+
 ircd::db::database::env::sequential_file::sequential_file(database *const &d,
                                                           const std::string &name,
-                                                          const EnvOptions &opts,
-                                                          std::unique_ptr<SequentialFile> defaults)
-:d{*d}
-,defaults{std::move(defaults)}
+                                                          const EnvOptions &env_opts)
+:d
 {
+	*d
+}
+,opts{[&env_opts]
+{
+	fs::fd::opts ret{default_opts};
+	ret.direct = env_opts.use_direct_reads;
+	return ret;
+}()}
+,fd
+{
+	name, this->opts
+}
+,offset
+{
+	0
+}
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': opened seqfile:%p fd:%d '%s'",
+		d->name,
+		this,
+		int(fd),
+		name
+	};
+	#endif
 }
 
 ircd::db::database::env::sequential_file::~sequential_file()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': close seqfile:%p fd:%d",
+		d.name,
+		this,
+		int(fd)
+	};
+	#endif
 }
 
 rocksdb::Status
 ircd::db::database::env::sequential_file::Read(size_t length,
                                                Slice *result,
                                                char *scratch)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
+	assert(result);
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': seqfile:%p read:%p length:%zu scratch:%p",
-	          d.name,
-	          this,
-	          result,
-	          length,
-	          scratch);
+	log::debug
+	{
+		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch
+	};
 	#endif
 
-	return defaults->Read(length, result, scratch);
+	const mutable_buffer buf
+	{
+		scratch, length
+	};
+
+	const auto read
+	{
+		fs::read(fd, buf, offset)
+	};
+
+	*result = slice(read);
+	offset += length;
+	return Status::OK();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return Status::InvalidArgument();
 }
 
 rocksdb::Status
@@ -2878,19 +2952,52 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
                                                          size_t length,
                                                          Slice *result,
                                                          char *scratch)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
+	assert(result);
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': seqfile:%p read:%p length:%zu offset:%zu scratch:%p",
-	          d.name,
-	          this,
-	          result,
-	          length,
-	          offset,
-	          scratch);
+	log::debug
+	{
+		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch
+	};
 	#endif
 
-	return defaults->PositionedRead(offset, length, result, scratch);
+	const mutable_buffer buf
+	{
+		scratch, length
+	};
+
+	const auto read
+	{
+		fs::read(fd, buf, offset)
+	};
+
+	*result = slice(read);
+	return Status::OK();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return Status::InvalidArgument();
 }
 
 rocksdb::Status
@@ -2898,13 +3005,18 @@ ircd::db::database::env::sequential_file::Skip(uint64_t size)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': seqfile:%p skip:%zu",
-	          d.name,
-	          this,
-	          size);
+	log::debug
+	{
+		"'%s': seqfile:%p offset:zu skip:%zu",
+		d.name,
+		this,
+		offset,
+		size
+	};
 	#endif
 
-	return defaults->Skip(size);
+	offset += size;
+	return Status::OK();
 }
 
 rocksdb::Status
@@ -2913,28 +3025,31 @@ ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
+	log::debug
+	{
+		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
+		d.name,
+		this,
+		offset,
+		length
+	};
 	#endif
 
-	return defaults->InvalidateCache(offset, length);
+	return Status::OK();
 }
 
 bool
 ircd::db::database::env::sequential_file::use_direct_io()
 const noexcept
 {
-	return defaults->use_direct_io();
+	return opts.direct;
 }
 
 size_t
 ircd::db::database::env::sequential_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return defaults->GetRequiredBufferAlignment();
+	return ircd::info::page_size;
 }
 
 //

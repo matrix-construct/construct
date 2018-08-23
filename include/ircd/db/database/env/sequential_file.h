@@ -21,8 +21,12 @@ struct ircd::db::database::env::sequential_file final
 	using Status = rocksdb::Status;
 	using Slice = rocksdb::Slice;
 
+	static const fs::fd::opts default_opts;
+
 	database &d;
-	std::unique_ptr<SequentialFile> defaults;
+	fs::fd::opts opts;
+	fs::fd fd;
+	off_t offset;
 
 	bool use_direct_io() const noexcept override;
 	size_t GetRequiredBufferAlignment() const noexcept override;
@@ -31,6 +35,6 @@ struct ircd::db::database::env::sequential_file final
 	Status Read(size_t n, Slice *result, char *scratch) noexcept override;
 	Status Skip(uint64_t size) noexcept override;
 
-	sequential_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<SequentialFile> defaults);
+	sequential_file(database *const &d, const std::string &name, const EnvOptions &);
 	~sequential_file() noexcept;
 };
