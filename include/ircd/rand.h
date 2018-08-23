@@ -28,7 +28,7 @@ namespace ircd::rand
 	extern std::mt19937_64 mt;
 
 	uint64_t integer();
-	uint64_t integer(const uint64_t &min, const uint64_t &max);
+	uint64_t integer(const uint64_t &min, const uint64_t &max); // inclusive
 
 	// Random character from dictionary
 	char character(const std::string &dict = dict::alnum);
