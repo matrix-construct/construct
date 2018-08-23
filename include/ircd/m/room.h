@@ -344,6 +344,7 @@ struct ircd::m::room::origins
 
 	bool _test_(const closure_bool &view) const;
 	bool test(const closure_bool &view) const;
+	bool for_each(const closure_bool &view) const;
 	void for_each(const closure &view) const;
 	bool has(const string_view &origin) const;
 	bool only(const string_view &origin) const;

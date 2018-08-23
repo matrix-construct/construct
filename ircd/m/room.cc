@@ -1784,6 +1784,16 @@ const
 }
 
 bool
+ircd::m::room::origins::for_each(const closure_bool &view)
+const
+{
+	return !test([&view](const string_view &origin)
+	{
+		return !view(origin);
+	});
+}
+
+bool
 ircd::m::room::origins::test(const closure_bool &view)
 const
 {
