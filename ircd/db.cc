@@ -1890,8 +1890,8 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::NewRandomAccessFile(const std::string& name,
-                                             std::unique_ptr<RandomAccessFile>* r,
-                                             const EnvOptions& options)
+                                             std::unique_ptr<RandomAccessFile> *const r,
+                                             const EnvOptions &options)
 noexcept
 {
 	ctx::uninterruptible::nothrow ui;
@@ -3056,8 +3056,8 @@ const noexcept
 // random_access_file
 //
 
-const ircd::fs::fd::opts
-_random_access_file_opts{[]
+decltype(ircd::db::database::env::random_access_file::default_opts)
+ircd::db::database::env::random_access_file::default_opts{[]
 {
 	ircd::fs::fd::opts ret{std::ios_base::in};
 	ret.direct = true;
@@ -3066,25 +3066,30 @@ _random_access_file_opts{[]
 
 ircd::db::database::env::random_access_file::random_access_file(database *const &d,
                                                                 const std::string &name,
-                                                                const EnvOptions &opts)
+                                                                const EnvOptions &env_opts)
 :d
 {
 	*d
 }
+,opts{[&env_opts]
+{
+	fs::fd::opts ret{default_opts};
+	ret.direct = env_opts.use_direct_reads;
+	return ret;
+}()}
 ,fd
 {
-	name, _random_access_file_opts
+	name, this->opts
 }
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rfile:%p fd:%d '%s' opts:%p",
+		log, "'%s': opened rfile:%p fd:%d '%s'",
 		d->name,
 		this,
 		int(fd),
-		name,
-		&opts
+		name
 	};
 	#endif
 }
@@ -3261,14 +3266,14 @@ bool
 ircd::db::database::env::random_access_file::use_direct_io()
 const noexcept
 {
-	return _random_access_file_opts.direct;
+	return opts.direct;
 }
 
 size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return 4096;
+	return ircd::info::page_size;
 }
 
 //

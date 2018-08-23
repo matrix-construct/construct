@@ -21,7 +21,10 @@ struct ircd::db::database::env::random_access_file final
 	using Status = rocksdb::Status;
 	using Slice = rocksdb::Slice;
 
+	static const fs::fd::opts default_opts;
+
 	database &d;
+	fs::fd::opts opts;
 	fs::fd fd;
 
 	bool use_direct_io() const noexcept override;
