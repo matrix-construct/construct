@@ -38,16 +38,20 @@ namespace ircd::db
 	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
 	const auto DEFAULT_READAHEAD = 4_MiB;
 
+	// state
 	extern log::log rog;
 	extern conf::item<size_t> request_pool_size;
 	extern conf::item<size_t> request_pool_stack_size;
 	extern ctx::pool request;
 
+	// reflections
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
 	string_view reflect(const rocksdb::RandomAccessFile::AccessPattern &p);
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
+
+	// string_view <-> slice
 	rocksdb::Slice slice(const string_view &);
 	string_view slice(const rocksdb::Slice &);
 
@@ -78,7 +82,6 @@ namespace ircd::db
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
 	std::vector<row::value_type> seek(database &, const gopts &);
-
 	std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
 
 	// [SET] writebatch suite

@@ -6793,6 +6793,10 @@ ircd::db::valid(const rocksdb::Iterator &it)
 	return it.Valid();
 }
 
+//
+// throw_on_error
+//
+
 ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &s)
 {
 	using rocksdb::Status;
@@ -6813,10 +6817,16 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &s)
 		case Status::kBusy:                 throw busy("%s", s.ToString());
 		case Status::kExpired:              throw expired("%s", s.ToString());
 		case Status::kTryAgain:             throw try_again("%s", s.ToString());
-		default:
-			throw error("code[%d] %s", s.code(), s.ToString());
+		default: throw error
+		{
+			"code[%d] %s", s.code(), s.ToString()
+		};
 	}
 }
+
+//
+//
+//
 
 std::vector<std::string>
 ircd::db::available()
