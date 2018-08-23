@@ -2394,8 +2394,10 @@ noexcept
 	};
 	#endif
 
-	assert(0);
-	return defaults.StartThread(f, a);
+	throw assertive
+	{
+		"Independent (non-pool) context spawning not yet implemented"
+	};
 }
 
 void
