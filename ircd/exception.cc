@@ -136,6 +136,12 @@ ircd::make_error_code(const boost::system::error_code &ec)
 }
 
 std::error_code
+ircd::make_error_code(const std::system_error &e)
+{
+	return e.code();
+}
+
+std::error_code
 ircd::make_error_code(const int &code)
 {
 	return std::error_code
