@@ -40,6 +40,7 @@ namespace ircd::info
 	extern const string_view startup;
 
 	// System / platform information
+	extern const size_t page_size;
 	extern const size_t max_align;
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;

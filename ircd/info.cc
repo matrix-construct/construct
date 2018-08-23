@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SYS_RESOURCE_H
+#include <RB_INC_UNISTD_H
 #include <boost/version.hpp>
 
 void
@@ -67,11 +68,12 @@ ircd::info::dump()
 	// IRCd is compiled for and running on.
 	log::debug
 	{
-		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		"page_size=%zu max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		page_size,
 		max_align,
 		hardware_concurrency,
 		destructive_interference,
-		constructive_interference
+		constructive_interference,
 	};
 
 	// This message flashes posix information about the resource limits
@@ -240,6 +242,12 @@ decltype(ircd::info::rlimit_nofile)
 ircd::info::rlimit_nofile
 {
 	_get_rlimit(RLIMIT_NOFILE)
+};
+
+decltype(ircd::info::page_size)
+ircd::info::page_size
+{
+	size_t(syscall(::sysconf, _SC_PAGESIZE))
 };
 
 decltype(ircd::info::max_align)
