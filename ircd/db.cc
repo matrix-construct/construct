@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <rocksdb/version.h>
+#include <rocksdb/status.h>
 #include <rocksdb/db.h>
 #include <rocksdb/cache.h>
 #include <rocksdb/comparator.h>
@@ -6791,6 +6792,67 @@ ircd::db::valid(const rocksdb::Iterator &it)
 	}
 
 	return it.Valid();
+}
+
+//
+// error_to_status
+//
+
+ircd::db::error_to_status::error_to_status(const fs::error &e)
+:error_to_status{e.code}
+{
+}
+
+ircd::db::error_to_status::error_to_status(const std::exception &e)
+:rocksdb::Status
+{
+	Status::Aborted(slice(string_view(e.what())))
+}
+{
+}
+
+ircd::db::error_to_status::error_to_status(const std::error_code &e)
+:rocksdb::Status{[&e]
+{
+	using std::errc;
+
+	switch(e.value())
+	{
+		case 0:
+			return Status::OK();
+
+		case int(errc::no_such_file_or_directory):
+			return Status::NotFound();
+
+		case int(errc::not_supported):
+			return Status::NotSupported();
+
+		case int(errc::invalid_argument):
+			return Status::InvalidArgument();
+
+		case int(errc::io_error):
+			 return Status::IOError();
+
+		case int(errc::timed_out):
+			return Status::TimedOut();
+
+		case int(errc::device_or_resource_busy):
+			return Status::Busy();
+
+		case int(errc::resource_unavailable_try_again):
+			return Status::TryAgain();
+
+		case int(errc::no_space_on_device):
+			return Status::NoSpace();
+
+		case int(errc::not_enough_memory):
+			return Status::MemoryLimit();
+
+		default:
+			return Status::Aborted(slice(string_view(e.message())));
+	}
+}()}
+{
 }
 
 //

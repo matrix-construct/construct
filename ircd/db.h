@@ -33,6 +33,7 @@
 namespace ircd::db
 {
 	struct throw_on_error;
+	struct error_to_status;
 
 	const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
 	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
@@ -99,4 +100,12 @@ namespace ircd::db
 struct ircd::db::throw_on_error
 {
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
+};
+
+struct ircd::db::error_to_status
+:rocksdb::Status
+{
+	error_to_status(const std::error_code &);
+	error_to_status(const fs::error &);
+	error_to_status(const std::exception &);
 };
