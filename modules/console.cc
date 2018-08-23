@@ -4685,7 +4685,7 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 
 	const params param{line, " ",
 	{
-		"room_id"
+		"room_id", "[noerror]"
 	}};
 
 	const auto &room_id
@@ -4693,15 +4693,29 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
+	const bool noerror
+	{
+		param.at<bool>("[noerror]", false)
+	};
+
 	const m::room room
 	{
 		room_id
 	};
 
+	const auto ok{[&noerror]
+	(const string_view &origin)
+	{
+		if(noerror && ircd::server::errmsg(origin))
+			return false;
+
+		return true;
+	}};
+
 	char buf[256];
 	const string_view origin
 	{
-		random_origin(room, buf, nullptr)
+		random_origin(room, buf, ok)
 	};
 
 	if(!origin)
