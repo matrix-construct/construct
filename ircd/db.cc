@@ -2270,12 +2270,16 @@ ircd::db::database::env::SleepForMicroseconds(int micros)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': sleep for %d microseconds",
-	          d.name,
-	          micros);
+	log::debug
+	{
+		"'%s': sleep for %d microseconds",
+		d.name,
+		micros
+	};
 	#endif
 
-	defaults.SleepForMicroseconds(micros);
+	assert(ctx::current);
+	ctx::sleep(microseconds(micros));
 }
 
 void
