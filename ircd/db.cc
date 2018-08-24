@@ -1873,7 +1873,7 @@ rocksdb::Status
 ircd::db::database::env::NewSequentialFile(const std::string& name,
                                            std::unique_ptr<SequentialFile> *const r,
                                            const EnvOptions &options)
-noexcept
+noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1888,12 +1888,20 @@ noexcept
 	*r = std::make_unique<sequential_file>(&d, name, options);
 	return Status::OK();
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
 ircd::db::database::env::NewRandomAccessFile(const std::string& name,
                                              std::unique_ptr<RandomAccessFile> *const r,
                                              const EnvOptions &options)
-noexcept
+noexcept try
 {
 	ctx::uninterruptible::nothrow ui;
 
@@ -1909,6 +1917,14 @@ noexcept
 
 	*r = std::make_unique<random_access_file>(&d, name, options);
 	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 rocksdb::Status
