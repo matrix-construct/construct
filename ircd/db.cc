@@ -722,7 +722,7 @@ try
 	//opts.allow_concurrent_memtable_write = true;
 	//opts.enable_write_thread_adaptive_yield = false;
 	opts.use_direct_reads = true;
-	//opts.use_fsync = true;
+	opts.use_direct_io_for_flush_and_compaction = true;
 
 	#ifdef RB_DEBUG
 	opts.dump_malloc_stats = true;
@@ -985,9 +985,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"'%s': Error closing database @ '%s' :%s",
+		log, "'%s': Error closing database(%p) :%s",
 		name,
-		path,
+		this,
 		e.what()
 	};
 
@@ -1947,8 +1947,8 @@ noexcept try
 	};
 	#endif
 
-	std::unique_ptr<WritableFile> defaults;
-	const auto ret
+	*r = std::make_unique<writable_file>(&d, name, options, true);
+	return Status::OK();
 }
 catch(const fs::error &e)
 {
@@ -1961,7 +1961,7 @@ catch(const std::exception &e)
 
 rocksdb::Status
 ircd::db::database::env::ReopenWritableFile(const std::string &name,
-                                            std::unique_ptr<WritableFile> *const result,
+                                            std::unique_ptr<WritableFile> *const r,
                                             const EnvOptions &options)
 noexcept try
 {
@@ -1977,8 +1977,8 @@ noexcept try
 	};
 	#endif
 
-	*r = std::make_unique<writable_file>(&d, name, options, std::move(defaults));
-	return ret;
+	*r = std::make_unique<writable_file>(&d, name, options, false);
+	return Status::OK();
 }
 catch(const fs::error &e)
 {
@@ -2009,7 +2009,9 @@ noexcept try
 	};
 	#endif
 
-	return defaults.ReuseWritableFile(name, old_name, r, options);
+	assert(0);
+	return Status::OK();
+	//return defaults.ReuseWritableFile(name, old_name, r, options);
 }
 catch(const fs::error &e)
 {
@@ -2038,8 +2040,8 @@ noexcept try
 	};
 	#endif
 
-	*result = std::make_unique<random_rw_file>(&d, name, options, std::move(defaults));
-	return ret;
+	*result = std::make_unique<random_rw_file>(&d, name, options);
+	return Status::OK();
 }
 catch(const fs::error &e)
 {
@@ -3039,121 +3041,487 @@ catch(const std::exception &e)
 
 ircd::db::database::env::writable_file::writable_file(database *const &d,
                                                       const std::string &name,
-                                                      const EnvOptions &opts,
-                                                      std::unique_ptr<WritableFile> defaults)
-:d{*d}
-,defaults{std::move(defaults)}
+                                                      const EnvOptions &env_opts,
+                                                      const bool &trunc)
+try
+:d
 {
+	*d
+}
+,env_opts
+{
+	env_opts
+}
+,opts{[this, &trunc]
+{
+	fs::fd::opts ret
+	{
+		std::ios_base::out |
+		(trunc? std::ios::trunc : 0)
+	};
+
+	ret.direct = this->env_opts.use_direct_writes;
+	ret.cloexec = this->env_opts.set_fd_cloexec;
+	return ret;
+}()}
+,fd
+{
+	name, this->opts
+}
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': opened wfile:%p fd:%d '%s'",
+		d->name,
+		this,
+		int(fd),
+		name
+	};
+	#endif
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': opening wfile:%p `%s' :%s",
+		d->name,
+		this,
+		name,
+		e.what()
+	};
 }
 
 ircd::db::database::env::writable_file::~writable_file()
 noexcept
 {
-}
-
-rocksdb::Status
-ircd::db::database::env::writable_file::Append(const Slice& s)
-noexcept
-{
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p append:%p bytes:%zu",
-	          d.name,
-	          this,
-	          data(s),
-	          size(s));
+	log::debug
+	{
+		log, "'%s': closed wfile:%p fd:%d",
+		d.name,
+		this,
+		int(fd)
+	};
 	#endif
-
-	return defaults->Append(s);
-}
-
-rocksdb::Status
-ircd::db::database::env::writable_file::PositionedAppend(const Slice& s,
-                                                         uint64_t offset)
-noexcept
-{
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p append:%p bytes:%zu offset:%lu",
-	          d.name,
-	          this,
-	          data(s),
-	          size(s),
-	          offset);
-	#endif
-
-	return defaults->PositionedAppend(s, offset);
-}
-
-rocksdb::Status
-ircd::db::database::env::writable_file::Truncate(uint64_t size)
-noexcept
-{
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p truncate to %lu bytes",
-	          d.name,
-	          this,
-	          size);
-	#endif
-
-	return defaults->Truncate(size);
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Close()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p close",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d close",
+		d.name,
+		this,
+		int(fd)
+	};
 	#endif
 
-	return defaults->Close();
+	this->fd = fs::fd{};
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p close :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p close :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Flush()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p flush",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d flush",
+		d.name,
+		this,
+		int(fd),
+	};
 	#endif
 
-	return defaults->Flush();
+	fs::fdsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d flush :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d flush :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Sync()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p sync",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': wfile:%p sync",
+		d.name,
+		this
+	};
 	#endif
 
-	return defaults->Sync();
+	fs::fdsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p sync :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p sync :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Fsync()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p fsync",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': wfile:%p fsync",
+		d.name,
+		this
+	};
 	#endif
 
-	return defaults->Fsync();
+	fs::fsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fsync :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fsync :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
+                                                  uint64_t length)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': wfile:%p fd:%d range sync offset:%lu length:%lu",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length
+	};
+	#endif
+
+	assert(0);
+	return Status::NotSupported();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Append(const Slice &s)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d append:%p bytes:%zu",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s)
+	};
+	#endif
+
+	const const_buffer buf
+	{
+		data(s), size(s)
+	};
+
+	fs::append(fd, buf);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d append:%p size:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d append:%p size:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::PositionedAppend(const Slice &s,
+                                                         uint64_t offset)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': wfile:%p fd:%d append:%p bytes:%zu offset:%lu",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s),
+		offset
+	};
+	#endif
+
+	assert(0);
+	return Status::NotSupported();
+
+	const const_buffer buf
+	{
+		data(s), size(s)
+	};
+
+	fs::append(fd, buf, offset);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d append:%p size:%zu offset:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s),
+		offset,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d append:%p size:%zu offset:%lu :%s",
+		d.name,
+		this,
+		int(fd),
+		data(s),
+		size(s),
+		offset,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::writable_file::Truncate(uint64_t size)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': wfile:%p fd:%d truncate to %lu bytes",
+		d.name,
+		this,
+		int(fd),
+		size
+	};
+	#endif
+
+	fs::truncate(fd, size);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d truncate to %lu bytes :%s",
+		d.name,
+		this,
+		int(fd),
+		size,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d truncate to %lu bytes :%s",
+		d.name,
+		this,
+		int(fd),
+		size,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 bool
 ircd::db::database::env::writable_file::IsSyncThreadSafe()
-const noexcept
+const noexcept try
 {
-	return defaults->IsSyncThreadSafe();
+	return true;
+}
+catch(...)
+{
+	return false;
 }
 
 void
@@ -3161,75 +3529,167 @@ ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p set IO prio to %s",
-	          d.name,
-	          this,
-	          reflect(prio));
+	log::debug
+	{
+		log, "'%s': wfile:%p set IO prio to %s",
+		d.name,
+		this,
+		reflect(prio)
+	};
 	#endif
 
-	defaults->SetIOPriority(prio);
+	this->prio = prio;
 }
 
 rocksdb::Env::IOPriority
 ircd::db::database::env::writable_file::GetIOPriority()
 noexcept
 {
-	return defaults->GetIOPriority();
+	return prio;
 }
 
 uint64_t
 ircd::db::database::env::writable_file::GetFileSize()
-noexcept
+noexcept try
 {
-	return defaults->GetFileSize();
-}
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
 
-void
-ircd::db::database::env::writable_file::GetPreallocationStatus(size_t* block_size,
-                                                               size_t* last_allocated_block)
-noexcept
-{
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p get preallocation block_size:%p last_block:%p",
-	          d.name,
-	          this,
-	          block_size,
-	          last_allocated_block);
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d get file size",
+		d.name,
+		this,
+		int(fd)
+	};
 	#endif
 
-	defaults->GetPreallocationStatus(block_size, last_allocated_block);
+	return fs::size(fd);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d get file size :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return 0;
 }
 
 size_t
-ircd::db::database::env::writable_file::GetUniqueId(char* id,
+ircd::db::database::env::writable_file::GetUniqueId(char *const id,
                                                     size_t max_size)
-const noexcept
+const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p get unique id:%p max_size:%zu",
-	          d.name,
-	          this,
-	          id,
-	          max_size);
+	log::debug
+	{
+		"'%s': wfile:%p get unique id:%p max_size:%zu",
+		d.name,
+		this,
+		id,
+		max_size
+	};
 	#endif
 
-	return defaults->GetUniqueId(id, max_size);
+	const mutable_buffer buf
+	{
+		id, max_size
+	};
+
+	return size(fs::uuid(fd, buf));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p get unique id :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return 0;
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
                                                         size_t length)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length
+	};
+	#endif
+
+	//TODO: ircd::fs::
+	//syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length
+	};
+
+	return error_to_status{e};
+}
+
+void
+ircd::db::database::env::writable_file::GetPreallocationStatus(size_t *const block_size,
+                                                               size_t *const last_allocated_block)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p invalidate cache offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
+	log::debug
+	{
+		log, "'%s': wfile:%p get preallocation block_size:%p last_block:%p",
+		d.name,
+		this,
+		block_size,
+		last_allocated_block
+	};
 	#endif
 
-	return defaults->InvalidateCache(offset, length);
+	*block_size = this->preallocation_block_size;
+	*last_allocated_block = this->preallocation_last_block;
 }
 
 void
@@ -3237,13 +3697,16 @@ ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
 noexcept
 {
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p set preallocation block size:%zu",
-	          d.name,
-	          this,
-	          size);
+	log::debug
+	{
+		log, "'%s': wfile:%p set preallocation block size:%zu",
+		d.name,
+		this,
+		size
+	};
 	#endif
 
-	defaults->SetPreallocationBlockSize(size);
+	this->preallocation_block_size = size;
 }
 
 void
@@ -3251,64 +3714,96 @@ ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
                                                      size_t length)
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p prepare write offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
-	#endif
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
 
-	defaults->PrepareWrite(offset, length);
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': wfile:%p prepare write offset:%zu length:%zu",
+		d.name,
+		this,
+		offset,
+		length
+	};
+	#endif
 }
 
 rocksdb::Status
 ircd::db::database::env::writable_file::Allocate(uint64_t offset,
                                                  uint64_t length)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p allocate offset:%lu length:%lu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
+	log::debug
+	{
+		log, "'%s': wfile:%p fd:%d allocate offset:%lu length:%lu%s",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length,
+		env_opts.fallocate_with_keep_size? " KEEP_SIZE" : ""
+	};
 	#endif
 
-	return defaults->Allocate(offset, length);
+	fs::write_opts wopts;
+	wopts.offset = offset;
+	wopts.keep_size = env_opts.fallocate_with_keep_size;
+
+	fs::allocate(fd, length, wopts);
+	this->preallocation_last_block = offset;
+	return Status::OK();
 }
-
-rocksdb::Status
-ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
-                                                  uint64_t length)
-noexcept
+catch(const fs::error &e)
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': wfile:%p range sync offset:%lu length:%lu",
-	          d.name,
-	          this,
-	          offset,
-	          length);
-	#endif
+	log::error
+	{
+		log, "'%s': wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length,
+		e.what()
+	};
 
-	return defaults->RangeSync(offset, length);
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		int(fd),
+		offset,
+		length,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 //
-// random_access_file
+// sequential_file
 //
 
 decltype(ircd::db::database::env::sequential_file::default_opts)
 ircd::db::database::env::sequential_file::default_opts{[]
 {
 	ircd::fs::fd::opts ret{std::ios_base::in};
-	ret.direct = false;
 	return ret;
 }()};
 
 ircd::db::database::env::sequential_file::sequential_file(database *const &d,
                                                           const std::string &name,
                                                           const EnvOptions &env_opts)
+try
 :d
 {
 	*d
@@ -3338,6 +3833,17 @@ ircd::db::database::env::sequential_file::sequential_file(database *const &d,
 		name
 	};
 	#endif
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': opening seqfile:%p `%s' :%s",
+		d->name,
+		this,
+		name,
+		e.what()
+	};
 }
 
 ircd::db::database::env::sequential_file::~sequential_file()
@@ -3496,6 +4002,8 @@ rocksdb::Status
 ircd::db::database::env::sequential_file::Skip(uint64_t size)
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -3514,8 +4022,10 @@ noexcept
 rocksdb::Status
 ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
                                                           size_t length)
-noexcept
+noexcept try
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -3528,6 +4038,34 @@ noexcept
 	#endif
 
 	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		offset,
+		length,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu :%s",
+		d.name,
+		this,
+		offset,
+		length,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 bool
@@ -3559,6 +4097,7 @@ ircd::db::database::env::random_access_file::default_opts{[]
 ircd::db::database::env::random_access_file::random_access_file(database *const &d,
                                                                 const std::string &name,
                                                                 const EnvOptions &env_opts)
+try
 :d
 {
 	*d
@@ -3584,6 +4123,17 @@ ircd::db::database::env::random_access_file::random_access_file(database *const 
 		name
 	};
 	#endif
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': opening rfile:%p `%s' :%s",
+		d->name,
+		this,
+		name,
+		e.what()
+	};
 }
 
 ircd::db::database::env::random_access_file::~random_access_file()
@@ -3674,7 +4224,6 @@ const noexcept try
 	};
 
 	*result = slice(read);
-
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -3732,7 +4281,7 @@ noexcept
 }
 
 size_t
-ircd::db::database::env::random_access_file::GetUniqueId(char* id,
+ircd::db::database::env::random_access_file::GetUniqueId(char *const id,
                                                          size_t max_size)
 const noexcept try
 {
@@ -3806,121 +4355,400 @@ const noexcept
 // random_rw_file
 //
 
+decltype(ircd::db::database::env::random_rw_file::default_opts)
+ircd::db::database::env::random_rw_file::default_opts{[]
+{
+	ircd::fs::fd::opts ret
+	{
+		std::ios_base::in | std::ios_base::out
+	};
+
+	return ret;
+}()};
+
 ircd::db::database::env::random_rw_file::random_rw_file(database *const &d,
                                                         const std::string &name,
-                                                        const EnvOptions &opts,
-                                                        std::unique_ptr<RandomRWFile> defaults)
-:d{*d}
-,defaults{std::move(defaults)}
+                                                        const EnvOptions &opts)
+try
+:d
 {
+	*d
+}
+,opts{[&opts]
+{
+	fs::fd::opts ret{default_opts};
+	ret.direct = opts.use_direct_reads && opts.use_direct_writes;
+	return ret;
+}()}
+,fd
+{
+	name, this->opts
+}
+{
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': opened rwfile:%p fd:%d '%s'",
+		d->name,
+		this,
+		int(fd),
+		name
+	};
+	#endif
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "'%s': opening rwfile:%p `%s' :%s",
+		d->name,
+		this,
+		name,
+		e.what()
+	};
 }
 
 ircd::db::database::env::random_rw_file::~random_rw_file()
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s': close rwfile:%p fd:%d '%s'",
+		d.name,
+		this,
+		int(fd)
+	};
+	#endif
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Close()
-noexcept
+noexcept try
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p closec",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': opened rwfile:%p fd:%d '%s'",
+		d.name,
+		this,
+		int(fd)
+	};
 	#endif
 
-	return defaults->Close();
+	this->fd = fs::fd{};
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		"'%s': rwfile:%p close :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"'%s': rwfile:%p close :%s",
+		d.name,
+		this,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Fsync()
-noexcept
+noexcept try
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p fsync",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': rwfile:%p fd:%d fsync",
+		d.name,
+		int(fd),
+		this
+	};
 	#endif
 
-	return defaults->Fsync();
+	fs::fsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		"'%s': rwfile:%p fd:%d fsync :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"'%s': rwfile:%p fd:%d fsync :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Sync()
-noexcept
+noexcept try
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p sync",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': rwfile:%p fd:%d sync",
+		d.name,
+		int(fd),
+		this
+	};
 	#endif
 
-	return defaults->Sync();
+	fs::fdsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		"'%s': rwfile:%p fd:%d sync :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"'%s': rwfile:%p fd:%d sync :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Flush()
-noexcept
+noexcept try
 {
+	ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p flush",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': rwfile:%p fd:%d flush",
+		d.name,
+		int(fd),
+		this
+	};
 	#endif
 
-	return defaults->Flush();
+	fs::fdsync(fd);
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		"'%s': rwfile:%p fd:%d flush :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"'%s': rwfile:%p fd:%d flush :%s",
+		d.name,
+		this,
+		int(fd),
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Read(uint64_t offset,
                                               size_t length,
-                                              Slice *result,
-                                              char *scratch)
-const noexcept
+                                              Slice *const result,
+                                              char *const scratch)
+const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
+	assert(result);
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
-	          d.name,
-	          this,
-	          result,
-	          offset,
-	          length,
-	          scratch);
+	log::debug
+	{
+		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch
+	};
 	#endif
 
-	return defaults->Read(offset, length, result, scratch);
+	const mutable_buffer buf
+	{
+		scratch, length
+	};
+
+	const auto read
+	{
+		fs::read(fd, buf, offset)
+	};
+
+	*result = slice(read);
+
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		d.name,
+		this,
+		result,
+		offset,
+		length,
+		scratch,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
 rocksdb::Status
 ircd::db::database::env::random_rw_file::Write(uint64_t offset,
                                                const Slice &slice)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rwfile:%p write:%p offset:%zu length:%zu",
-	          d.name,
-	          this,
-	          data(slice),
-	          offset,
-	          size(slice));
+	log::debug
+	{
+		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		d.name,
+		this,
+		int(fd),
+		data(slice),
+		size(slice),
+		offset
+	};
 	#endif
 
-	return defaults->Write(offset, slice);
+	const const_buffer buf
+	{
+		data(slice), size(slice)
+	};
+
+	const auto read
+	{
+		fs::write(fd, buf, offset)
+	};
+
+	return Status::OK();
+}
+catch(const fs::error &e)
+{
+	log::error
+	{
+		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		d.name,
+		this,
+		int(fd),
+		data(slice),
+		size(slice),
+		offset
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		d.name,
+		this,
+		int(fd),
+		data(slice),
+		size(slice),
+		offset
+	};
+
+	return error_to_status{e};
 }
 
 bool
 ircd::db::database::env::random_rw_file::use_direct_io()
 const noexcept
 {
-	return defaults->use_direct_io();
+	return opts.direct;
 }
 
 size_t
 ircd::db::database::env::random_rw_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return defaults->GetRequiredBufferAlignment();
+	return info::page_size;
 }
 
 //

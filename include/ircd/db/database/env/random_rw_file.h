@@ -21,8 +21,11 @@ struct ircd::db::database::env::random_rw_file final
 	using Status = rocksdb::Status;
 	using Slice = rocksdb::Slice;
 
+	static const fs::fd::opts default_opts;
+
 	database &d;
-	std::unique_ptr<RandomRWFile> defaults;
+	fs::fd::opts opts;
+	fs::fd fd;
 
 	bool use_direct_io() const noexcept override;
 	size_t GetRequiredBufferAlignment() const noexcept override;
@@ -33,6 +36,6 @@ struct ircd::db::database::env::random_rw_file final
 	Status Fsync() noexcept override;
 	Status Close() noexcept override;
 
-	random_rw_file(database *const &d, const std::string &name, const EnvOptions &, std::unique_ptr<RandomRWFile> defaults);
+	random_rw_file(database *const &d, const std::string &name, const EnvOptions &);
 	~random_rw_file() noexcept;
 };
