@@ -74,8 +74,8 @@ ircd::fs::error::error(const std::error_code &code)
 
 template<class... args>
 ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
-	                   const char *const &fmt,
-	                   args&&... a)
+                       const char *const &fmt,
+                       args&&... a)
 :error
 {
 	make_error_code(e), fmt, std::forward<args>(a)...
@@ -85,8 +85,8 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
 
 template<class... args>
 ircd::fs::error::error(const std::system_error &e,
-	                   const char *const &fmt,
-	                   args&&... a)
+                       const char *const &fmt,
+                       args&&... a)
 :error
 {
 	make_error_code(e), fmt, std::forward<args>(a)...
@@ -96,8 +96,8 @@ ircd::fs::error::error(const std::system_error &e,
 
 template<class... args>
 ircd::fs::error::error(const std::error_code &e,
-	                   const char *const &fmt,
-	                   args&&... a)
+                       const char *const &fmt,
+                       args&&... a)
 :ircd::error
 {
 	fmt, std::forward<args>(a)...
@@ -111,7 +111,7 @@ ircd::fs::error::error(const std::error_code &e,
 
 template<class... args>
 ircd::fs::error::error(const char *const &fmt,
-	                   args&&... a)
+                       args&&... a)
 :ircd::error
 {
 	fmt, std::forward<args>(a)...
