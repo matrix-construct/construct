@@ -384,6 +384,27 @@ const ircd::fs::write_opts_default
 {};
 
 ircd::const_buffer
+ircd::fs::overwrite(const string_view &path,
+                    const const_buffer &buf,
+                    const write_opts &opts)
+{
+	const fd fd
+	{
+		path, std::ios::out | std::ios::trunc
+	};
+
+	return overwrite(fd, buf, opts);
+}
+
+ircd::const_buffer
+ircd::fs::overwrite(const fd &fd,
+                    const const_buffer &buf,
+                    const write_opts &opts)
+{
+	return write(fd, buf, opts);
+}
+
+ircd::const_buffer
 ircd::fs::append(const fd &fd,
                  const const_buffer &buf,
                  const write_opts &opts_)
