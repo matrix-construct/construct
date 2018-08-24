@@ -5850,6 +5850,51 @@ console_cmd__user__filter(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__events(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "limit"
+	}};
+
+	const m::user::events user
+	{
+		m::user(param.at("user_id"))
+	};
+
+	size_t limit
+	{
+		param.at<size_t>("limit", 32)
+	};
+
+	user.for_each([&out, &limit]
+	(const m::event &event)
+	{
+		out << pretty_oneline(event) << std::endl;;
+		return bool(--limit);
+	});
+
+	return true;
+}
+
+bool
+console_cmd__user__events__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id"
+	}};
+
+	const m::user::events user
+	{
+		m::user(param.at("user_id"))
+	};
+
+	out << user.count() << std::endl;
+	return true;
+}
+
 //
 // node
 //

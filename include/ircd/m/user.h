@@ -26,6 +26,7 @@ struct ircd::m::user
 	struct room;
 	struct rooms;
 	struct mitsein;
+	struct events;
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
@@ -163,6 +164,22 @@ struct ircd::m::user::mitsein
 	size_t count(const string_view &membership = {}) const;
 
 	mitsein(const m::user &user);
+};
+
+/// Interface to all events from a user (sender)
+struct ircd::m::user::events
+{
+	using idx_closure_bool = std::function<bool (const event::idx &)>;
+	using closure_bool = std::function<bool (const event &)>;
+
+	m::user user;
+
+  public:
+	bool for_each(const idx_closure_bool &) const;
+	bool for_each(const closure_bool &) const;
+	size_t count() const;
+
+	events(const m::user &user);
 };
 
 inline ircd::m::user::operator
