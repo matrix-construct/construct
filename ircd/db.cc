@@ -1870,11 +1870,13 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::database::env::NewSequentialFile(const std::string& name,
+ircd::db::database::env::NewSequentialFile(const std::string &name,
                                            std::unique_ptr<SequentialFile> *const r,
                                            const EnvOptions &options)
 noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -1898,7 +1900,7 @@ catch(const std::exception &e)
 }
 
 rocksdb::Status
-ircd::db::database::env::NewRandomAccessFile(const std::string& name,
+ircd::db::database::env::NewRandomAccessFile(const std::string &name,
                                              std::unique_ptr<RandomAccessFile> *const r,
                                              const EnvOptions &options)
 noexcept try
@@ -1928,60 +1930,140 @@ catch(const std::exception &e)
 }
 
 rocksdb::Status
-ircd::db::database::env::NewWritableFile(const std::string& name,
-                                         std::unique_ptr<WritableFile>* r,
-                                         const EnvOptions& options)
-noexcept
+ircd::db::database::env::NewWritableFile(const std::string &name,
+                                         std::unique_ptr<WritableFile> *const r,
+                                         const EnvOptions &options)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': new writable file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
+	log::debug
+	{
+		log, "'%s': new writable file '%s' options:%p",
+		d.name,
+		name,
+		&options
+	};
 	#endif
 
 	std::unique_ptr<WritableFile> defaults;
 	const auto ret
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::ReopenWritableFile(const std::string &name,
+                                            std::unique_ptr<WritableFile> *const result,
+                                            const EnvOptions &options)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
 	{
-		this->defaults.NewWritableFile(name, &defaults, options)
+		log, "'%s': reopen writable file '%s' options:%p",
+		d.name,
+		name,
+		&options
 	};
+	#endif
 
 	*r = std::make_unique<writable_file>(&d, name, options, std::move(defaults));
 	return ret;
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::NewRandomRWFile(const std::string& name,
-                                         std::unique_ptr<RandomRWFile>* result,
-                                         const EnvOptions& options)
-noexcept
+ircd::db::database::env::ReuseWritableFile(const std::string &name,
+                                           const std::string &old_name,
+                                           std::unique_ptr<WritableFile> *const r,
+                                           const EnvOptions &options)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': new random read/write file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
+	log::debug
+	{
+		log, "'%s': reuse writable file '%s' old '%s' options:%p",
+		d.name,
+		name,
+		old_name,
+		&options
+	};
 	#endif
 
-	std::unique_ptr<RandomRWFile> defaults;
-	const auto ret
+	return defaults.ReuseWritableFile(name, old_name, r, options);
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::NewRandomRWFile(const std::string &name,
+                                         std::unique_ptr<RandomRWFile> *const result,
+                                         const EnvOptions &options)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
 	{
-		this->defaults.NewRandomRWFile(name, &defaults, options)
+		log, "'%s': new random read/write file '%s' options:%p",
+		d.name,
+		name,
+		&options
 	};
+	#endif
 
 	*result = std::make_unique<random_rw_file>(&d, name, options, std::move(defaults));
 	return ret;
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::NewDirectory(const std::string& name,
-                                      std::unique_ptr<Directory>* result)
-noexcept
+ircd::db::database::env::NewDirectory(const std::string &name,
+                                      std::unique_ptr<Directory> *const result)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': new directory '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': new directory '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	std::unique_ptr<Directory> defaults;
@@ -1993,132 +2075,197 @@ noexcept
 	*result = std::make_unique<directory>(&d, name, std::move(defaults));
 	return ret;
 }
-
-rocksdb::Status
-ircd::db::database::env::ReopenWritableFile(const std::string& name,
-                                            std::unique_ptr<WritableFile>* result,
-                                            const EnvOptions& options)
-noexcept
+catch(const fs::error &e)
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': reopen writable file '%s' options:%p",
-	          d.name,
-	          name,
-	          &options);
-	#endif
-
-	return defaults.ReopenWritableFile(name, result, options);
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 rocksdb::Status
-ircd::db::database::env::ReuseWritableFile(const std::string& name,
-                                           const std::string& old_name,
-                                           std::unique_ptr<WritableFile>* r,
-                                           const EnvOptions& options)
-noexcept
+ircd::db::database::env::FileExists(const std::string &f)
+noexcept try
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': reuse writable file '%s' old '%s' options:%p",
-	          d.name,
-	          name,
-	          old_name,
-	          &options);
-	#endif
+	const ctx::uninterruptible::nothrow ui;
 
-	return defaults.ReuseWritableFile(name, old_name, r, options);
-}
-
-rocksdb::Status
-ircd::db::database::env::FileExists(const std::string& f)
-noexcept
-{
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': file exists '%s'",
-	          d.name,
-	          f);
+	log::debug
+	{
+		log, "'%s': file exists '%s'",
+		d.name,
+		f
+	};
 	#endif
 
 	return defaults.FileExists(f);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::GetChildren(const std::string& dir,
-                                     std::vector<std::string>* r)
-noexcept
+ircd::db::database::env::GetChildren(const std::string &dir,
+                                     std::vector<std::string> *const r)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get children of directory '%s'",
-	          d.name,
-	          dir);
+	log::debug
+	{
+		log, "'%s': get children of directory '%s'",
+		d.name,
+		dir
+	};
 	#endif
 
 	return defaults.GetChildren(dir, r);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::GetChildrenFileAttributes(const std::string& dir,
-                                                   std::vector<FileAttributes>* result)
-noexcept
+ircd::db::database::env::GetChildrenFileAttributes(const std::string &dir,
+                                                   std::vector<FileAttributes> *const result)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get children file attributes of directory '%s'",
-	          d.name,
-	          dir);
+	log::debug
+	{
+		log, "'%s': get children file attributes of directory '%s'",
+		d.name,
+		dir
+	};
 	#endif
 
 	return defaults.GetChildrenFileAttributes(dir, result);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::DeleteFile(const std::string& name)
-noexcept
+ircd::db::database::env::DeleteFile(const std::string &name)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': delete file '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': delete file '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.DeleteFile(name);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::CreateDir(const std::string& name)
-noexcept
+ircd::db::database::env::CreateDir(const std::string &name)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': create directory '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': create directory '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.CreateDir(name);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::CreateDirIfMissing(const std::string& name)
-noexcept
+ircd::db::database::env::CreateDirIfMissing(const std::string &name)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': create directory if missing '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': create directory if missing '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.CreateDirIfMissing(name);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::DeleteDir(const std::string& name)
-noexcept
+ircd::db::database::env::DeleteDir(const std::string &name)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': delete directory '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': delete directory '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.DeleteDir(name);
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 rocksdb::Status
@@ -2126,6 +2273,8 @@ ircd::db::database::env::GetFileSize(const std::string &name,
                                      uint64_t *const s)
 noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2149,103 +2298,193 @@ catch(const std::exception &e)
 }
 
 rocksdb::Status
-ircd::db::database::env::GetFileModificationTime(const std::string& name,
-                                                 uint64_t* file_mtime)
-noexcept
+ircd::db::database::env::GetFileModificationTime(const std::string &name,
+                                                 uint64_t *const file_mtime)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get file mtime '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': get file mtime '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.GetFileModificationTime(name, file_mtime);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::RenameFile(const std::string& s,
-                                    const std::string& t)
-noexcept
+ircd::db::database::env::RenameFile(const std::string &s,
+                                    const std::string &t)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': rename file '%s' to '%s'",
-	          d.name,
-	          s,
-	          t);
+	log::debug
+	{
+		log, "'%s': rename file '%s' to '%s'",
+		d.name,
+		s,
+		t
+	};
 	#endif
 
 	return defaults.RenameFile(s, t);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::LinkFile(const std::string& s,
-                                  const std::string& t)
-noexcept
+ircd::db::database::env::LinkFile(const std::string &s,
+                                  const std::string &t)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': link file '%s' to '%s'",
-	          d.name,
-	          s,
-	          t);
+	log::debug
+	{
+		log, "'%s': link file '%s' to '%s'",
+		d.name,
+		s,
+		t
+	};
 	#endif
 
 	return defaults.LinkFile(s, t);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::LockFile(const std::string& name,
+ircd::db::database::env::LockFile(const std::string &name,
                                   FileLock** l)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': lock file '%s'",
-	          d.name,
-	          name);
+	log::debug
+	{
+		log, "'%s': lock file '%s'",
+		d.name,
+		name
+	};
 	#endif
 
 	return defaults.LockFile(name, l);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::UnlockFile(FileLock* l)
-noexcept
+ircd::db::database::env::UnlockFile(FileLock *const l)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': unlock file lock:%p",
-	          d.name,
-	          l);
+	log::debug
+	{
+		log, "'%s': unlock file lock:%p",
+		d.name,
+		l
+	};
 	#endif
 
 	return defaults.UnlockFile(l);
 }
-
-rocksdb::Status
-ircd::db::database::env::GetTestDirectory(std::string* path)
-noexcept
+catch(const fs::error &e)
 {
-	return defaults.GetTestDirectory(path);
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 rocksdb::Status
-ircd::db::database::env::GetAbsolutePath(const std::string& db_path,
-                                         std::string* output_path)
-noexcept
+ircd::db::database::env::GetTestDirectory(std::string *const path)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
+	return defaults.GetTestDirectory(path);
+}
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
+
+rocksdb::Status
+ircd::db::database::env::GetAbsolutePath(const std::string &db_path,
+                                         std::string *const output_path)
+noexcept try
+{
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get absolute path from '%s' ret:%p",
-	          d.name,
-	          db_path,
-	          output_path);
+	log::debug
+	{
+		log, "'%s': get absolute path from '%s' ret:%p",
+		d.name,
+		db_path,
+		output_path
+	};
 	#endif
 
 	return defaults.GetAbsolutePath(db_path, output_path);
 }
+catch(const fs::error &e)
+{
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::NewLogger(const std::string& name,
-                                   std::shared_ptr<Logger>* result)
-noexcept
+ircd::db::database::env::NewLogger(const std::string &name,
+                                   std::shared_ptr<Logger> *const result)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2258,47 +2497,84 @@ noexcept
 
 	return defaults.NewLogger(name, result);
 }
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 rocksdb::Status
-ircd::db::database::env::GetHostName(char* name,
+ircd::db::database::env::GetHostName(char *const name,
                                      uint64_t len)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': get host name name:%p len:%lu",
-	          d.name,
-	          name,
-	          len);
+	log::debug
+	{
+		log, "'%s': get host name name:%p len:%lu",
+		d.name,
+		name,
+		len
+	};
 	#endif
 
 	return defaults.GetHostName(name, len);
 }
+catch(const std::exception &e)
+{
+	return error_to_status{e};
+}
 
 uint64_t
 ircd::db::database::env::NowMicros()
-noexcept
+noexcept try
 {
 	return defaults.NowMicros();
 }
+catch(const std::exception &e)
+{
+	throw assertive
+	{
+		"'%s': now micros :%s",
+		d.name,
+		e.what()
+	};
+}
 
 rocksdb::Status
-ircd::db::database::env::GetCurrentTime(int64_t* unix_time)
-noexcept
+ircd::db::database::env::GetCurrentTime(int64_t *const unix_time)
+noexcept try
 {
 	return defaults.GetCurrentTime(unix_time);
+}
+catch(const std::exception &e)
+{
+	return error_to_status{e};
 }
 
 std::string
 ircd::db::database::env::TimeToString(uint64_t time)
-noexcept
+noexcept try
 {
 	return defaults.TimeToString(time);
+}
+catch(const std::exception &e)
+{
+	throw assertive
+	{
+		"'%s': time to string :%s",
+		d.name,
+		e.what()
+	};
 }
 
 void
 ircd::db::database::env::SleepForMicroseconds(int micros)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2308,18 +2584,29 @@ noexcept
 	};
 	#endif
 
-	assert(ctx::current);
 	ctx::sleep(microseconds(micros));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': sleep micros:%d :%s",
+		d.name,
+		micros,
+		e.what()
+	};
 }
 
 void
 ircd::db::database::env::Schedule(void (*f)(void* arg),
-                                  void* a,
+                                  void *const a,
                                   Priority prio,
-                                  void* tag,
+                                  void *const tag,
                                   void (*u)(void* arg))
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2378,11 +2665,24 @@ noexcept
 		task.func(task.arg);
 	});
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': schedule func:%p a:%p tag:%p u:%p prio:%s",
+		d.name,
+		f,
+		a,
+		tag,
+		u,
+		reflect(prio)
+	};
+}
 
 int
 ircd::db::database::env::UnSchedule(void *const tag,
                                     const Priority prio)
-noexcept
+noexcept try
 {
 	ctx::uninterruptible::nothrow ui;
 
@@ -2408,12 +2708,27 @@ noexcept
 
 	return i;
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': unschedule tag:%p prio:%s :%s",
+		d.name,
+		tag,
+		reflect(prio),
+		e.what()
+	};
+
+	return 0;
+}
 
 void
 ircd::db::database::env::StartThread(void (*f)(void*),
-                                     void* a)
+                                     void *const a)
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2432,8 +2747,10 @@ noexcept
 
 void
 ircd::db::database::env::WaitForJoin()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2446,11 +2763,22 @@ noexcept
 	for(auto &pool : st->pool)
 		pool.join();
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': wait for join :%s",
+		d.name,
+		e.what()
+	};
+}
 
 unsigned int
 ircd::db::database::env::GetThreadPoolQueueLen(Priority prio)
-const noexcept
+const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2468,11 +2796,20 @@ const noexcept
 
 	return pool.queued();
 }
+catch(const std::exception &e)
+{
+	throw assertive
+	{
+		"'%s': set background threads :%s",
+		d.name,
+		e.what()
+	};
+}
 
 void
 ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority prio)
-noexcept
+noexcept try
 {
 	ctx::uninterruptible::nothrow ui;
 
@@ -2502,11 +2839,20 @@ noexcept
 	else if(size < num)
 		pool.add(num - size);
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': set background threads :%s",
+		d.name,
+		e.what()
+	};
+}
 
 void
 ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
                                                       Priority prio)
-noexcept
+noexcept try
 {
 	ctx::uninterruptible::nothrow ui;
 
@@ -2528,41 +2874,84 @@ noexcept
 
 	pool.add(num);
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': inc background threads num:%d prio:%s :%s",
+		d.name,
+		num,
+		reflect(prio),
+		e.what()
+	};
+}
 
 void
 ircd::db::database::env::LowerThreadPoolIOPriority(Priority pool)
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': lower thread pool priority prio:%s",
-	          d.name,
-	          reflect(pool));
+	log::debug
+	{
+		log, "'%s': lower thread pool priority prio:%s",
+		d.name,
+		reflect(pool)
+	};
 	#endif
 
 	defaults.LowerThreadPoolIOPriority(pool);
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': lower thread pool IO priority pool:%s :%s",
+		d.name,
+		reflect(pool),
+		e.what()
+	};
+}
 
 rocksdb::Status
-ircd::db::database::env::GetThreadList(std::vector<ThreadStatus>* thread_list)
-noexcept
+ircd::db::database::env::GetThreadList(std::vector<ThreadStatus> *const list)
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
 		log, "'%s': get thread list %p (%zu)",
 		d.name,
-		thread_list,
-		thread_list? thread_list->size() : 0UL
+		list,
+		list? list->size() : 0UL
 	};
 	#endif
 
-	return defaults.GetThreadList(thread_list);
+	assert(0);
+	return defaults.GetThreadList(list);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': get thread list:%p :%s",
+		d.name,
+		list,
+		e.what()
+	};
+
+	return error_to_status{e};
 }
 
-rocksdb::ThreadStatusUpdater*
+rocksdb::ThreadStatusUpdater *
 ircd::db::database::env::GetThreadStatusUpdater()
-const noexcept
+const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -2573,10 +2962,22 @@ const noexcept
 
 	return defaults.GetThreadStatusUpdater();
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': get thread status updater :%s",
+		d.name,
+		e.what()
+	};
+
+	return nullptr;
+}
+
 
 uint64_t
 ircd::db::database::env::GetThreadID()
-const noexcept
+const noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2588,10 +2989,19 @@ const noexcept
 
 	return ctx::this_ctx::id();
 }
+catch(const std::exception &e)
+{
+	throw assertive
+	{
+		"'%s': get thread id :%s",
+		d.name,
+		e.what()
+	};
+}
 
 int
 ircd::db::database::env::GetBackgroundThreads(Priority prio)
-noexcept
+noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2609,6 +3019,18 @@ noexcept
 	};
 
 	return pool.size();
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': get background threads prio:%s :%s",
+		d.name,
+		reflect(prio),
+		e.what()
+	};
+
+	return 0;
 }
 
 //
@@ -2873,7 +3295,7 @@ noexcept
 }
 
 //
-// sequential_file
+// random_access_file
 //
 
 decltype(ircd::db::database::env::sequential_file::default_opts)
