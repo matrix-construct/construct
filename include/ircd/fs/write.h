@@ -30,6 +30,9 @@ namespace ircd::fs
 	// Truncate file to explicit size
 	void truncate(const fd &, const size_t &, const write_opts & = write_opts_default);
 	void truncate(const string_view &path, const size_t &, const write_opts & = write_opts_default);
+
+	// Allocate
+	void allocate(const fd &, const size_t &size, const write_opts & = write_opts_default);
 }
 
 /// Options for a write operation

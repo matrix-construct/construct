@@ -384,6 +384,14 @@ const ircd::fs::write_opts_default
 {};
 
 void
+ircd::fs::allocate(const fd &fd,
+                   const size_t &size,
+                   const write_opts &opts)
+{
+	syscall(::posix_fallocate, fd, opts.offset, size);
+}
+
+void
 ircd::fs::truncate(const string_view &path,
                    const size_t &size,
                    const write_opts &opts)
