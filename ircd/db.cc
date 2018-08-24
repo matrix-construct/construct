@@ -3865,13 +3865,14 @@ noexcept
 
 rocksdb::Status
 ircd::db::database::env::sequential_file::Read(size_t length,
-                                               Slice *result,
-                                               char *scratch)
+                                               Slice *const result,
+                                               char *const scratch)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
 	assert(result);
+	assert(scratch);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -3935,13 +3936,14 @@ catch(const std::exception &e)
 rocksdb::Status
 ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
                                                          size_t length,
-                                                         Slice *result,
-                                                         char *scratch)
+                                                         Slice *const result,
+                                                         char *const scratch)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
 	assert(result);
+	assert(scratch);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4196,13 +4198,14 @@ catch(const std::exception &e)
 rocksdb::Status
 ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   size_t length,
-                                                  Slice *result,
-                                                  char *scratch)
+                                                  Slice *const result,
+                                                  char *const scratch)
 const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
 	assert(result);
+	assert(scratch);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4617,6 +4620,7 @@ const noexcept try
 	const ctx::uninterruptible::nothrow ui;
 
 	assert(result);
+	assert(scratch);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4641,7 +4645,6 @@ const noexcept try
 	};
 
 	*result = slice(read);
-
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -5887,7 +5890,12 @@ ircd::db::cell::cell(column column,
                      gopts opts)
 :c{std::move(column)}
 ,ss{opts.snapshot}
-,it{!index.empty()? seek(this->c, index, opts) : std::unique_ptr<rocksdb::Iterator>{}}
+,it
+{
+	!index.empty()?
+		seek(this->c, index, opts):
+		std::unique_ptr<rocksdb::Iterator>{}
+}
 {
 	if(bool(this->it))
 		if(!valid_eq(*this->it, index))
@@ -7680,7 +7688,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	// Due to the use of the global variables which are required when using a
 	// C-style callback for RocksDB, we have to make use of this function
 	// exclusive for different contexts.
-	static ctx::mutex mutex;
+	thread_local ctx::mutex mutex;
 	const std::lock_guard<decltype(mutex)> lock{mutex};
 
 	thread_local rocksdb::Cache *_cache;
