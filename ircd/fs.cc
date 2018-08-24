@@ -177,11 +177,13 @@ ircd::fs::fsync(const fd &fd,
                 const fsync_opts &opts)
 try
 {
+	//TODO: AIO fsync is throwing -EINVAL
+/*
 	#ifdef IRCD_USE_AIO
 	if(likely(aioctx))
 		return fsync__aio(fd, opts);
 	#endif
-
+*/
 	syscall(::fsync, fd);
 }
 catch(const error &e)
@@ -205,11 +207,13 @@ ircd::fs::fdsync(const fd &fd,
                  const fsync_opts &opts)
 try
 {
+	//TODO: AIO fdsync is throwing -EINVAL
+/*
 	#ifdef IRCD_USE_AIO
 	if(likely(aioctx))
 		return fdsync__aio(fd, opts);
 	#endif
-
+*/
 	syscall(::fdatasync, fd);
 }
 catch(const error &e)
