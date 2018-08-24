@@ -7281,11 +7281,16 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
-	const ctx::uninterruptible ui;
-
 	#ifdef RB_DEBUG_DB_SEEK
 	ircd::timer timer;
 	#endif
+
+	// This lock is necessary to serialize entry into rocksdb's write impl
+	// otherwise there's a risk of a deadlock if their internal pthread
+	// mutexes are contended.
+	thread_local ctx::mutex mutex;
+	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const ctx::uninterruptible ui;
 
 	throw_on_error
 	{
