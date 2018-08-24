@@ -46,6 +46,9 @@ struct ircd::fs::write_opts
 
 	/// Request priority (this option may be improved, avoid for now)
 	int16_t priority {0};
+
+	/// for allocate()
+	bool keep_size {false};
 };
 
 inline

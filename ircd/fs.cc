@@ -388,7 +388,9 @@ ircd::fs::allocate(const fd &fd,
                    const size_t &size,
                    const write_opts &opts)
 {
-	syscall(::posix_fallocate, fd, opts.offset, size);
+	int mode{0};
+	mode |= opts.keep_size? FALLOC_FL_KEEP_SIZE : 0;
+	syscall(::fallocate, fd, mode, opts.offset, size);
 }
 
 void
