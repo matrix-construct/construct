@@ -383,6 +383,27 @@ ircd::fs::write_opts
 const ircd::fs::write_opts_default
 {};
 
+void
+ircd::fs::truncate(const string_view &path,
+                   const size_t &size,
+                   const write_opts &opts)
+{
+	const fd fd
+	{
+		path, std::ios::out | std::ios::trunc
+	};
+
+	return truncate(fd, size, opts);
+}
+
+void
+ircd::fs::truncate(const fd &fd,
+                   const size_t &size,
+                   const write_opts &opts)
+{
+	syscall(::ftruncate, fd, size);
+}
+
 ircd::const_buffer
 ircd::fs::overwrite(const string_view &path,
                     const const_buffer &buf,

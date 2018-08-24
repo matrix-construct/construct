@@ -26,6 +26,10 @@ namespace ircd::fs
 	// Yields ircd::ctx to overwrite (trunc) file from buffer; returns view of written portion
 	const_buffer overwrite(const fd &, const const_buffer & = {}, const write_opts & = write_opts_default);
 	const_buffer overwrite(const string_view &path, const const_buffer & = {}, const write_opts & = write_opts_default);
+
+	// Truncate file to explicit size
+	void truncate(const fd &, const size_t &, const write_opts & = write_opts_default);
+	void truncate(const string_view &path, const size_t &, const write_opts & = write_opts_default);
 }
 
 /// Options for a write operation
