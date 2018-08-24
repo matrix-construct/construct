@@ -350,6 +350,10 @@ struct ircd::m::room::origins
 	bool only(const string_view &origin) const;
 	size_t count() const;
 
+	// select an origin in the room at random; use proffer to refuse and try another.
+	string_view random(const mutable_buffer &buf, const closure_bool &proffer = nullptr) const;
+	bool random(const closure &, const closure_bool &proffer = nullptr) const;
+
 	origins(const m::room &room)
 	:room{room}
 	{}

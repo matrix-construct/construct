@@ -16,12 +16,12 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
-extern "C" string_view
+extern "C" bool
 random_origin(const m::room &room,
-              const mutable_buffer &buf,
-              const std::function<bool (const string_view &)> &ok)
+              const m::room::origins::closure &view,
+              const m::room::origins::closure_bool &proffer = nullptr)
 {
-	string_view ret;
+	bool ret{false};
 	const m::room::origins origins
 	{
 		room
@@ -40,7 +40,7 @@ random_origin(const m::room &room,
 		ssize_t(rand::integer(0, max - 1))
 	};
 
-	const m::room::origins::closure_bool closure{[&ok, &buf, &ret, &select]
+	const m::room::origins::closure_bool closure{[&proffer, &view, &select]
 	(const string_view &origin)
 	{
 		if(select-- > 0)
@@ -48,23 +48,19 @@ random_origin(const m::room &room,
 
 		// Test if this random selection is "ok" e.g. the callback allows the
 		// user to test a blacklist for this origin. Skip to next if not.
-		if(ok && !ok(origin))
+		if(proffer && !proffer(origin))
 		{
 			++select;
 			return true;
 		}
 
-		ret =
-		{
-			data(buf), copy(buf, origin)
-		};
-
+		view(origin);
 		return false;
 	}};
 
-	const auto iteration{[&origins, &closure]
+	const auto iteration{[&origins, &closure, &ret]
 	{
-		origins.for_each(closure);
+		ret = !origins.for_each(closure);
 	}};
 
 	// Attempt select on first iteration

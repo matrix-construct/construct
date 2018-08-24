@@ -1701,6 +1701,39 @@ const
 // room::origins
 //
 
+ircd::string_view
+ircd::m::room::origins::random(const mutable_buffer &buf,
+                               const closure_bool &proffer)
+const
+{
+	string_view ret;
+	const auto closure{[&buf, &proffer, &ret]
+	(const string_view &origin)
+	{
+		ret = { data(buf), copy(buf, origin) };
+	}};
+
+	random(closure, proffer);
+	return ret;
+}
+
+bool
+ircd::m::room::origins::random(const closure &view,
+                               const closure_bool &proffer)
+const
+{
+	using prototype = bool (const m::room &,
+	                        const m::room::origins::closure &,
+	                        const m::room::origins::closure_bool &);
+
+	static m::import<prototype> random_origin
+	{
+		"m_room", "random_origin"
+	};
+
+	return random_origin(room, view, proffer);
+}
+
 size_t
 ircd::m::room::origins::count()
 const

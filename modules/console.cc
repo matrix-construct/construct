@@ -4674,15 +4674,6 @@ console_cmd__room__origins(opt &out, const string_view &line)
 bool
 console_cmd__room__origins__random(opt &out, const string_view &line)
 {
-	using prototype = string_view (const m::room &,
-	                               const mutable_buffer &,
-	                               const std::function<bool (const string_view &)> &);
-
-	static m::import<prototype> random_origin
-	{
-		"m_room", "random_origin"
-	};
-
 	const params param{line, " ",
 	{
 		"room_id", "[noerror]"
@@ -4703,6 +4694,11 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 		room_id
 	};
 
+	const m::room::origins origins
+	{
+		room
+	};
+
 	const auto ok{[&noerror]
 	(const string_view &origin)
 	{
@@ -4715,7 +4711,7 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 	char buf[256];
 	const string_view origin
 	{
-		random_origin(room, buf, ok)
+		origins.random(buf, ok)
 	};
 
 	if(!origin)
