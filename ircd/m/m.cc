@@ -1936,11 +1936,11 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::user::rooms::for_each(const closure_bool &closure)
 const
 {
-	for_each(string_view{}, closure);
+	return for_each(string_view{}, closure);
 }
 
 void
@@ -1956,7 +1956,7 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
@@ -1981,7 +1981,7 @@ const
 		user_room, &fopts
 	};
 
-	state.test("ircd.member", [&membership, &closure]
+	return !state.test("ircd.member", [&membership, &closure]
 	(const m::event &event)
 	{
 		const string_view &membership_
@@ -2017,11 +2017,11 @@ const
 	for_each(string_view{}, closure);
 }
 
-void
+bool
 ircd::m::user::rooms::origins::for_each(const closure_bool &closure)
 const
 {
-	for_each(string_view{}, closure);
+	return for_each(string_view{}, closure);
 }
 
 void
@@ -2037,7 +2037,7 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::user::rooms::origins::for_each(const string_view &membership,
                                         const closure_bool &closure)
 const
@@ -2048,7 +2048,7 @@ const
 	};
 
 	std::set<std::string, std::less<>> seen;
-	rooms.for_each(membership, rooms::closure_bool{[&closure, &seen]
+	return rooms.for_each(membership, rooms::closure_bool{[&closure, &seen]
 	(const m::room &room, const string_view &membership)
 	{
 		const m::room::origins origins{room};
@@ -2112,11 +2112,11 @@ const
 	for_each(string_view{}, closure);
 }
 
-void
+bool
 ircd::m::user::mitsein::for_each(const closure_bool &closure)
 const
 {
-	for_each(string_view{}, closure);
+	return for_each(string_view{}, closure);
 }
 
 void
@@ -2132,7 +2132,7 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::user::mitsein::for_each(const string_view &membership,
                                  const closure_bool &closure)
 const
@@ -2146,7 +2146,7 @@ const
 	///TODO: ideal: db schema
 	///TODO: minimally: custom alloc?
 	std::set<std::string, std::less<>> seen;
-	rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
+	return rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
 	(const m::room &room, const string_view &)
 	{
 		const m::room::members members{room};
@@ -2180,12 +2180,12 @@ const
 	for_each(user, string_view{}, closure);
 }
 
-void
+bool
 ircd::m::user::mitsein::for_each(const m::user &user,
                                  const rooms::closure_bool &closure)
 const
 {
-	for_each(user, string_view{}, closure);
+	return for_each(user, string_view{}, closure);
 }
 
 void
@@ -2202,7 +2202,7 @@ const
 	}});
 }
 
-void
+bool
 ircd::m::user::mitsein::for_each(const m::user &user,
                                  const string_view &membership,
                                  const rooms::closure_bool &closure)
@@ -2225,7 +2225,7 @@ const
 		use_our? user.user_id : this->user.user_id
 	};
 
-	rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &test_key]
+	return rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &test_key]
 	(const m::room &room, const string_view &)
 	{
 		if(!room.has("m.room.member", test_key))

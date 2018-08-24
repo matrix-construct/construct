@@ -111,11 +111,11 @@ struct ircd::m::user::rooms
 
   public:
 	// All rooms with specific membership
-	void for_each(const string_view &membership, const closure_bool &) const;
+	bool for_each(const string_view &membership, const closure_bool &) const;
 	void for_each(const string_view &membership, const closure &) const;
 
 	// All rooms with any membership
-	void for_each(const closure_bool &) const;
+	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
 	size_t count(const string_view &membership) const;
@@ -133,9 +133,9 @@ struct ircd::m::user::rooms::origins
 	m::user user;
 
   public:
-	void for_each(const string_view &membership, const closure_bool &) const;
+	bool for_each(const string_view &membership, const closure_bool &) const;
 	void for_each(const string_view &membership, const closure &) const;
-	void for_each(const closure_bool &) const;
+	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
 	origins(const m::user &user);
@@ -148,15 +148,15 @@ struct ircd::m::user::mitsein
 
   public:
 	// All common rooms with user
-	void for_each(const m::user &, const string_view &membership, const rooms::closure_bool &) const;
+	bool for_each(const m::user &, const string_view &membership, const rooms::closure_bool &) const;
 	void for_each(const m::user &, const string_view &membership, const rooms::closure &) const;
-	void for_each(const m::user &, const rooms::closure_bool &) const;
+	bool for_each(const m::user &, const rooms::closure_bool &) const;
 	void for_each(const m::user &, const rooms::closure &) const;
 
 	// All common users in all rooms
-	void for_each(const string_view &membership, const closure_bool &) const;
+	bool for_each(const string_view &membership, const closure_bool &) const;
 	void for_each(const string_view &membership, const closure &) const;
-	void for_each(const closure_bool &) const;
+	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
 	size_t count(const m::user &, const string_view &membership = {}) const;
