@@ -654,12 +654,14 @@ ircd::fs::fd::fd(const string_view &path,
 :fdno{[&path, &opts]
 () -> int
 {
-	int flags(opts.flags);
-	flags |= opts.direct? O_DIRECT : 0U;
-	flags |= opts.cloexec? O_CLOEXEC : 0U;
+	uint flags(opts.flags);
+	flags |= opts.direct? O_DIRECT : 0UL;
+	flags |= opts.cloexec? O_CLOEXEC : 0UL;
 	flags &= opts.nocreate? ~O_CREAT : flags;
 
 	const mode_t &mode(opts.mask);
+	assert((flags & ~O_CREAT) || mode != 0);
+
 	const char *const &p(path_str(path));
 	return syscall(::open, p, flags, mode);
 }()}
