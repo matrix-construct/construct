@@ -719,10 +719,13 @@ try
 	opts.max_background_compactions = 1;
 	opts.max_subcompactions = 1;
 	opts.max_open_files = -1; //ircd::info::rlimit_nofile / 4;
-	//opts.allow_concurrent_memtable_write = true;
-	//opts.enable_write_thread_adaptive_yield = false;
+	opts.allow_concurrent_memtable_write = false;
+	opts.enable_write_thread_adaptive_yield = false;
+	opts.enable_pipelined_write = false;
 	opts.use_direct_reads = true;
-	opts.use_direct_io_for_flush_and_compaction = true;
+	opts.write_thread_max_yield_usec = 0;
+	opts.write_thread_slow_yield_usec = 0;
+	opts.use_direct_io_for_flush_and_compaction = false;
 
 	#ifdef RB_DEBUG
 	opts.dump_malloc_stats = true;
@@ -7280,7 +7283,7 @@ ircd::db::commit(database &d,
 {
 	const ctx::uninterruptible ui;
 
-	#ifdef RB_DEBUG
+	#ifdef RB_DEBUG_DB_SEEK
 	ircd::timer timer;
 	#endif
 
@@ -7289,7 +7292,7 @@ ircd::db::commit(database &d,
 		d.d->Write(opts, &batch)
 	};
 
-	#ifdef RB_DEBUG
+	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
 		log, "'%s' %lu COMMIT %s in %ld$us",
