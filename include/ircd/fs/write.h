@@ -52,15 +52,3 @@ inline
 ircd::fs::write_opts::write_opts(const off_t &offset)
 :offset{offset}
 {}
-inline ircd::const_buffer
-ircd::fs::append(const string_view &path,
-                 const const_buffer &buf,
-                 const write_opts &opts)
-{
-	const fd fd
-	{
-		path, std::ios::out | std::ios::app
-	};
-
-	return write(fd, buf, opts);
-}

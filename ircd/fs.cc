@@ -434,15 +434,28 @@ ircd::fs::overwrite(const fd &fd,
 }
 
 ircd::const_buffer
+ircd::fs::append(const string_view &path,
+                 const const_buffer &buf,
+                 const write_opts &opts)
+{
+	const fd fd
+	{
+		path, std::ios::out | std::ios::app
+	};
+
+	return write(fd, buf, opts);
+}
+
+ircd::const_buffer
 ircd::fs::append(const fd &fd,
                  const const_buffer &buf,
                  const write_opts &opts_)
 try
 {
-	assert(opts_.offset == 0);
-
 	auto opts(opts_);
-	opts.offset = syscall(::lseek, fd, 0, SEEK_END);
+	if(!opts.offset)
+		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
+
 	return write(fd, buf, opts);
 }
 catch(const error &e)
