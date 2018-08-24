@@ -575,10 +575,19 @@ ircd::fs::uuid(const fd &fd,
 size_t
 ircd::fs::size(const fd &fd)
 {
-	struct stat stat;
-	syscall(::fstat, fd, &stat);
-	return stat.st_size;
-};
+	const off_t cur
+	{
+		syscall(::lseek, fd, 0, SEEK_CUR)
+	};
+
+	const off_t end
+	{
+		syscall(::lseek, fd, 0, SEEK_END)
+	};
+
+	syscall(::lseek, fd, cur, SEEK_SET);
+	return end;
+}
 
 uint
 ircd::fs::posix_flags(const std::ios::open_mode &mode)
