@@ -33,7 +33,6 @@ Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologi
 for its day to aid the virility of implementations. A vibrant and growing ecosystem
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
-<br />
 
 #### Dependencies
 
@@ -79,7 +78,10 @@ Provides compression for the database, etc.
 	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
 </a>
 
-### Building from git
+### Building from source
+
+*Please follow the standalone build instructions in the next section until this
+notice is removed.*
 
 ```
 ./autogen.sh
@@ -88,7 +90,7 @@ make
 sudo make install
 ```
 
-#### Building from git (STANDALONE)
+#### Building from source (STANDALONE)
 
 *Intended to allow building with dependencies that have not made their way
 to mainstream systems.*
@@ -128,6 +130,18 @@ section above while taking note of the following `./configure` options:
 Full debug mode. Includes additional code within `#ifdef RB_DEBUG` sections.
 Optimization level is `-Og`, which is still valgrind-worthy. Debugger support
 is `-ggdb`. Log level is `DEBUG` (maximum). Assertions are enabled.
+
+
+##### Release modes (for distribution packages)
+
+Options in this section may help distribution maintainers create packages.
+Users building for themselves (whether standalone or fully installed) probably
+don't need anything here.
+
+```
+--enable-generic
+```
+Sets `-mtune=generic` as `native` is otherwise the default.
 
 
 ##### Manually enable assertions
