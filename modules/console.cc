@@ -7263,6 +7263,14 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
+	// Use this option to debug from the actual http response
+	// content sent from the remote without any further action.
+	if(has(op, "noparse"))
+	{
+		out << string_view{request.in.content} << std::endl;
+		return true;
+	}
+
 	const json::object &response
 	{
 		request
