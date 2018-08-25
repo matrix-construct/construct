@@ -143,6 +143,8 @@ struct ircd::resource::response
 {
 	struct chunked;
 
+	static const size_t HEAD_BUF_SZ;
+
 	response(client &, const http::code &, const string_view &content_type, const size_t &content_length, const string_view &headers = {});
 	response(client &, const string_view &str, const string_view &content_type, const http::code &, const vector_view<const http::header> &);
 	response(client &, const string_view &str, const string_view &content_type, const http::code & = http::OK, const string_view &headers = {});

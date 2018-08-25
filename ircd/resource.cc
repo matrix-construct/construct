@@ -740,6 +740,14 @@ catch(...)
 // resource::response
 //
 
+// A buffer of this size will be passed to the socket and sent
+// out and must be on stack.
+decltype(ircd::resource::response::HEAD_BUF_SZ)
+ircd::resource::response::HEAD_BUF_SZ
+{
+	4_KiB
+};
+
 ircd::resource::response::response(client &client,
                                    const http::code &code)
 :response{client, json::object{json::empty_object}, code}
@@ -960,9 +968,7 @@ ircd::resource::response::response(client &client,
 		"%zd$us", request_time
 	};
 
-	// This buffer will be passed to the socket and sent out;
-	// cannot be static/tls.
-	char head_buf[4_KiB];
+	char head_buf[HEAD_BUF_SZ];
 	window_buffer head{head_buf};
 	http::response
 	{
@@ -977,7 +983,7 @@ ircd::resource::response::response(client &client,
 		},
 	};
 
-	// Maximum size is is realistically ok but ideally a small
+	// Maximum size is realistically ok but ideally a small
 	// maximum; this exception should hit the developer in testing.
 	if(unlikely(!head.remaining()))
 		throw assertive
