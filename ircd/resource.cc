@@ -1011,7 +1011,7 @@ ircd::resource::response::response(client &client,
 	log::logf
 	{
 		log::general, facility,
-		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %zd content",
+		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %s content",
 		client.sock.get(),
 		string(local(client)),
 		string(remote(client)),
@@ -1019,7 +1019,7 @@ ircd::resource::response::response(client &client,
 		http::status(code),
 		request_time,
 		content_type,
-		ssize_t(content_length),
+		ssize_t(content_length) >= 0? lex_cast(content_length): "chunked"_sv
 	};
 	#endif
 
