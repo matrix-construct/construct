@@ -77,7 +77,7 @@ struct ircd::json::input
 	// numerical (TODO: exponent)
 	rule<> number
 	{
-		long_ | double_
+		double_ | long_
 		,"number"
 	};
 
