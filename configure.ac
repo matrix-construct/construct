@@ -1018,12 +1018,13 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/deps/boost/include"])
 
 	AC_MSG_CHECKING([whether to use shared boost])
-	if [[ $withval = "shared" ]]; then
-		AC_MSG_RESULT([yes])
-		BOOST_LDFLAGS+=" -Wl,-rpath=$boost_libdir"
-	else
+	if [[ $withval = "static" ]]; then
 		AC_MSG_RESULT([no])
 		withval="static"
+	else
+		AC_MSG_RESULT([yes])
+		BOOST_LDFLAGS+=" -Wl,-rpath=$boost_libdir"
+		withval="shared"
 	fi
 
 	boost_linkage="$withval"
@@ -1087,18 +1088,20 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/deps/rocksdb/"])
 
 	AC_MSG_CHECKING([whether to use shared RocksDB])
-	if [[ $withval = "shared" ]]; then
-		AC_MSG_RESULT([yes])
-		rocksdb_linkage="shared_lib"
-		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
-		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
-		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
-	else
+	if [[ $withval = "static" ]]; then
 		AC_MSG_RESULT([no])
+		withval="static"
 		rocksdb_linkage="static_lib"
 		AC_MSG_NOTICE([static RocksDB linkage requires multiple dependencies])
 		AC_MSG_NOTICE([| You will need: bzip2, zlib, snappy])
 		AC_SUBST(ROCKSDB_LIBS, ["$PWD/deps/rocksdb/librocksdb.a"])
+	else
+		AC_MSG_RESULT([yes])
+		withval="shared"
+		rocksdb_linkage="shared_lib"
+		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
+		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
+		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 	fi
 
 	bash tools/buildrocks.sh $rocksdb_linkage "v5.12.2"
