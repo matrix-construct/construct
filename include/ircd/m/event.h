@@ -177,6 +177,14 @@ struct ircd::m::event::prev
 	event::id prev_state(const uint &idx) const;
 	event::id prev_event(const uint &idx) const;
 
+	size_t auth_events_count() const;
+	size_t prev_states_count() const;
+	size_t prev_events_count() const;
+
+	bool auth_events_has(const event::id &) const;
+	bool prev_states_has(const event::id &) const;
+	bool prev_events_has(const event::id &) const;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };

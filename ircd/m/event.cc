@@ -258,24 +258,8 @@ bool
 ircd::m::before(const event &a,
                 const event &b)
 {
-	const event::prev prev_b{b};
-	const json::array &prev_b_events
-	{
-		json::get<"prev_events"_>(prev_b)
-	};
-
-	for(const json::array &prev_event : prev_b_events)
-	{
-		const event::id prev_event_id
-		{
-			unquote(prev_event.at(0))
-		};
-
-		if(prev_event_id == at<"event_id"_>(a))
-			return true;
-	}
-
-	return false;
+	const event::prev prev{b};
+	return prev.prev_events_has(at<"event_id"_>(a));
 }
 
 bool
@@ -1256,6 +1240,60 @@ ircd::m::essential(m::event event,
 //
 // event::prev
 //
+
+bool
+ircd::m::event::prev::prev_events_has(const event::id &event_id)
+const
+{
+	for(const json::array &p : json::get<"prev_events"_>(*this))
+		if(unquote(p.at(0)) == event_id)
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::event::prev::prev_states_has(const event::id &event_id)
+const
+{
+	for(const json::array &p : json::get<"prev_state"_>(*this))
+		if(unquote(p.at(0)) == event_id)
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::event::prev::auth_events_has(const event::id &event_id)
+const
+{
+	for(const json::array &p : json::get<"auth_events"_>(*this))
+		if(unquote(p.at(0)) == event_id)
+			return true;
+
+	return false;
+}
+
+size_t
+ircd::m::event::prev::prev_events_count()
+const
+{
+	return json::get<"prev_events"_>(*this).count();
+}
+
+size_t
+ircd::m::event::prev::prev_states_count()
+const
+{
+	return json::get<"prev_state"_>(*this).count();
+}
+
+size_t
+ircd::m::event::prev::auth_events_count()
+const
+{
+	return json::get<"auth_events"_>(*this).count();
+}
 
 ircd::m::event::id
 ircd::m::event::prev::auth_event(const uint &idx)
