@@ -127,6 +127,13 @@ const
 	return ret - n;
 }
 
+bool
+ircd::allocator::state::available(const size_t &n)
+const
+{
+	return this->next(n) < size;
+}
+
 //
 // allocator::profile
 //

@@ -89,6 +89,7 @@ struct ircd::allocator::state
 	uint next(const size_t &n) const;
 
   public:
+	bool available(const size_t &n = 1) const;
 	void deallocate(const uint &p, const size_t &n);
 	uint allocate(const size_t &n, const uint &hint = -1);
 
