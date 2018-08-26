@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation :General Library and Utils"
 };
 
-namespace ircd::m::feds
+namespace ircd::m::feds::v1
 {
 	struct version;
 	struct state;
@@ -24,7 +24,7 @@ namespace ircd::m::feds
 	struct perspective;
 }
 
-struct ircd::m::feds::version
+struct ircd::m::feds::v1::version
 :m::v1::version
 {
 	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
@@ -46,10 +46,10 @@ struct ircd::m::feds::version
 	version(const version &) = delete;
 };
 
-std::list<m::feds::version>
+std::list<m::feds::v1::version>
 feds__version(const m::room::id &room_id)
 {
-	std::list<m::feds::version> reqs;
+	std::list<m::feds::v1::version> reqs;
 	m::room::origins{room_id}.for_each([&reqs]
 	(const string_view &origin)
 	{
@@ -74,7 +74,7 @@ feds__version(const m::room::id &room_id)
 extern "C" void
 feds__version(const m::room::id &room_id,
               const milliseconds &timeout,
-              const m::feds::version::closure &closure)
+              const m::feds::v1::version::closure &closure)
 {
 	auto reqs
 	{
@@ -118,7 +118,7 @@ feds__version(const m::room::id &room_id,
 	}
 }
 
-struct ircd::m::feds::state
+struct ircd::m::feds::v1::state
 :m::v1::state
 {
 	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
@@ -142,11 +142,11 @@ struct ircd::m::feds::state
 	state(const state &) = delete;
 };
 
-std::list<m::feds::state>
+std::list<m::feds::v1::state>
 feds__state(const m::room::id &room_id,
             const m::event::id &event_id)
 {
-	std::list<m::feds::state> reqs;
+	std::list<m::feds::v1::state> reqs;
 	m::room::origins{room_id}.for_each([&room_id, &event_id, &reqs]
 	(const string_view &origin)
 	{
@@ -172,7 +172,7 @@ extern "C" void
 feds__state(const m::room::id &room_id,
             const m::event::id &event_id,
             const milliseconds &timeout,
-            const m::feds::state::closure &closure)
+            const m::feds::v1::state::closure &closure)
 {
 	auto reqs
 	{
@@ -295,7 +295,7 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 	}
 }
 
-struct ircd::m::feds::head
+struct ircd::m::feds::v1::head
 :m::v1::make_join
 {
 	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
@@ -314,11 +314,11 @@ struct ircd::m::feds::head
 	{}
 };
 
-std::list<m::feds::head>
+std::list<m::feds::v1::head>
 feds__head(const m::room::id &room_id,
            const m::user::id &user_id)
 {
-	std::list<m::feds::head> reqs;
+	std::list<m::feds::v1::head> reqs;
 	m::room::origins{room_id}.for_each([&reqs, &room_id, &user_id]
 	(const string_view &origin)
 	{
@@ -344,7 +344,7 @@ extern "C" void
 feds__head(const m::room::id &room_id,
            const m::user::id &user_id,
            const milliseconds &timeout,
-           const m::feds::head::closure &closure)
+           const m::feds::v1::head::closure &closure)
 {
 	auto reqs
 	{
@@ -487,7 +487,7 @@ feds__backfill(const m::room::id &room_id,
 	}
 }
 
-struct ircd::m::feds::perspective
+struct ircd::m::feds::v1::perspective
 :m::v1::key::query
 {
 	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::array &)>;
@@ -513,11 +513,11 @@ struct ircd::m::feds::perspective
 	perspective(const perspective &) = delete;
 };
 
-std::list<m::feds::perspective>
+std::list<m::feds::v1::perspective>
 feds__perspective(const m::room::id &room_id,
                   const m::v1::key::server_key &server_key)
 {
-	std::list<m::feds::perspective> reqs;
+	std::list<m::feds::v1::perspective> reqs;
 	m::room::origins{room_id}.for_each([&reqs, &server_key]
 	(const string_view &origin)
 	{
@@ -543,7 +543,7 @@ extern "C" void
 feds__perspective(const m::room::id &room_id,
                   const m::v1::key::server_key &server_key, // pair<server_name, key_id>
                   const milliseconds &timeout,
-                  const m::feds::perspective::closure &closure)
+                  const m::feds::v1::perspective::closure &closure)
 {
 	auto reqs
 	{
