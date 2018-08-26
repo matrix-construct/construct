@@ -6048,24 +6048,9 @@ console_cmd__feds__state(opt &out, const string_view &line)
 		param.count() > 1? param.at(1) : m::head(room_id)
 	};
 
-	using closure_prototype = bool (const string_view &,
-	                                std::exception_ptr,
-	                                const json::object &);
-
-	using prototype = void (const m::room::id &,
-	                        const m::event::id &,
-	                        const milliseconds &,
-	                        const std::function<closure_prototype> &);
-
-	static m::import<prototype> feds__state
-	{
-		"federation_federation", "feds__state"
-	};
-
 	std::forward_list<std::string> origins;
 	std::map<std::string, std::forward_list<string_view>, std::less<>> grid;
-
-	feds__state(room_id, event_id, out.timeout, [&out, &grid, &origins]
+	const auto closure{[&out, &grid, &origins]
 	(const string_view &origin, std::exception_ptr eptr, const json::object &response)
 	{
 		if(eptr)
@@ -6097,7 +6082,12 @@ console_cmd__feds__state(opt &out, const string_view &line)
 		}
 
 		return true;
-	});
+	}};
+
+	m::feds::state
+	{
+		room_id, event_id, out.timeout, closure
+	};
 
 	for(auto &p : grid)
 	{

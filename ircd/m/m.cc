@@ -336,6 +336,33 @@ ircd::m::self::init::init(const string_view &origin)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/feds.h
+//
+
+ircd::m::feds::state::state(const m::room::id &room_id,
+                            const m::event::id &event_id,
+                            const milliseconds &to,
+                            const closure &view)
+{
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::event::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static m::import<prototype> feds__state
+	{
+		"federation_federation", "feds__state"
+	};
+
+	feds__state(room_id, event_id, to, view);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/vm.h
 //
 
