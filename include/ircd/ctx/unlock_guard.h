@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_UTIL_H
+#define HAVE_IRCD_CTX_UNLOCK_GUARD_H
 
 namespace ircd::ctx
 {
