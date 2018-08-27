@@ -109,6 +109,9 @@ ircd::db::request
 	0, // don't prespawn because this is static
 };
 
+decltype(ircd::db::write_mutex)
+ircd::db::write_mutex;
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -6624,9 +6627,6 @@ ircd::db::compact(column &column,
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 	for(const auto &level : cfmd.levels)
 	{
-		ctx::interruption_point();
-		ctx::uninterruptible::nothrow ui;
-
 		if(level_ != -1 && level.level != level_)
 			continue;
 
@@ -6639,6 +6639,16 @@ ircd::db::compact(column &column,
 		{
 			return std::move(metadata.name);
 		});
+
+		// Locking the write_mutex here prevents writes during a column's
+		// compaction. This is needed because if contention occurs inside
+		// rocksdb we will hit some std::mutex's which do not use the
+		// rocksdb::port wrapper and deadlock the process. (It is an error
+		// on the part of rocksdb to directly use std::mutex rather than their
+		// port wrapper).
+		ctx::interruption_point();
+		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+		const ctx::uninterruptible::nothrow ui;
 
 		log::debug
 		{
@@ -7295,9 +7305,10 @@ ircd::db::commit(database &d,
 
 	// This lock is necessary to serialize entry into rocksdb's write impl
 	// otherwise there's a risk of a deadlock if their internal pthread
-	// mutexes are contended.
-	thread_local ctx::mutex mutex;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	// mutexes are contended. This is because a few parts of rocksdb are
+	// using std::mutex directly when they ought to be using their
+	// rocksdb::port wrapper.
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	const ctx::uninterruptible ui;
 
 	throw_on_error

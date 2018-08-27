@@ -44,6 +44,7 @@ namespace ircd::db
 	extern conf::item<size_t> request_pool_size;
 	extern conf::item<size_t> request_pool_stack_size;
 	extern ctx::pool request;
+	extern ctx::mutex write_mutex;
 
 	// reflections
 	string_view reflect(const rocksdb::Env::Priority &p);
