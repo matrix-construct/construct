@@ -23,6 +23,8 @@ struct ircd::ctx::unlock_guard
 	lockable &l;
 
 	unlock_guard(lockable &l);
+	unlock_guard(unlock_guard &&) = delete;
+	unlock_guard(const unlock_guard &) = delete;
 	~unlock_guard() noexcept;
 };
 
