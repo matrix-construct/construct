@@ -1513,8 +1513,12 @@ ircd::ctx::list::pop_back()
 	};
 
 	if(!tail)
+	{
+		assert(!head);
 		return tail;
+	}
 
+	assert(head);
 	assert(!next(tail));
 	if(!prev(tail))
 	{
@@ -1540,8 +1544,12 @@ ircd::ctx::list::pop_front()
 	};
 
 	if(!head)
+	{
+		assert(!tail);
 		return head;
+	}
 
+	assert(tail);
 	assert(!prev(head));
 	if(!next(head))
 	{
@@ -1566,6 +1574,7 @@ ircd::ctx::list::push_front(ctx *const &c)
 
 	if(!head)
 	{
+		assert(!tail);
 		head = c;
 		tail = c;
 		return;
