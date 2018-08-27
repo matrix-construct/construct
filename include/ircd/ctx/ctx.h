@@ -80,6 +80,7 @@ namespace ircd::ctx
 #include "queue.h"
 #include "mutex.h"
 #include "shared_mutex.h"
+#include "upgrade_lock.h"
 #include "unlock_guard.h"
 #include "condition_variable.h"
 #include "peek.h"
