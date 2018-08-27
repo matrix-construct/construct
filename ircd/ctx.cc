@@ -831,11 +831,19 @@ noexcept
 // ctx/context.h
 //
 
+// Linkage here for default construction because ctx is internal.
+ircd::ctx::context::context()
+{
+}
+
 ircd::ctx::context::context(const char *const &name,
                             const size_t &stack_sz,
                             const flags &flags,
                             function func)
-:c{std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)}
+:c
+{
+	std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)
+}
 {
 	auto spawn
 	{
@@ -918,6 +926,20 @@ ircd::ctx::context::context(function func,
 	"<noname>", DEFAULT_STACK_SIZE, flags, std::move(func)
 }
 {
+}
+
+ircd::ctx::context::context(context &&other)
+noexcept
+:c{std::move(other.c)}
+{
+}
+
+ircd::ctx::context &
+ircd::ctx::context::operator=(context &&other)
+noexcept
+{
+	std::swap(this->c, other.c);
+	return *this;
 }
 
 ircd::ctx::context::~context()

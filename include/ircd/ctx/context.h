@@ -83,10 +83,10 @@ struct ircd::ctx::context
 	context(function,
 	        const flags & = (flags)0);
 
-	context() = default;
-	context(context &&) = default;
+	context();
+	context(context &&) noexcept;
 	context(const context &) = delete;
-	context &operator=(context &&) = default;
+	context &operator=(context &&) noexcept;
 	context &operator=(const context &) = delete;
 	~context() noexcept;
 
