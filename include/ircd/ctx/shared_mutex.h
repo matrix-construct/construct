@@ -25,6 +25,8 @@ class ircd::ctx::shared_mutex
 	void release();
 
   public:
+	bool unique() const;
+	bool upgrade() const;
 	size_t shares() const;
 	size_t waiting() const;
 
@@ -370,6 +372,20 @@ ircd::ctx::shared_mutex::shares()
 const
 {
 	return std::max(s, ssize_t(0));
+}
+
+inline bool
+ircd::ctx::shared_mutex::upgrade()
+const
+{
+	return u;
+}
+
+inline bool
+ircd::ctx::shared_mutex::unique()
+const
+{
+	return s == std::numeric_limits<decltype(s)>::min();
 }
 
 inline void
