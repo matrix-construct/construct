@@ -1,10 +1,33 @@
 # Userspace Context Switching
 
 The `ircd::ctx` subsystem is a userspace threading library meant to regress
-the asynchronous callback pattern back to synchronous suspensions. This is
-essentially a full elaboration of a `setjmp() / longjmp()` between independent
-stacks, but justified with modern techniques and comprehensive integration
-throughout IRCd.
+the asynchronous callback pattern back to synchronous suspensions. These are
+stackful coroutines which provide developers with more intuitive control in
+environments which conduct frequent I/O which would otherwise break up a single
+asynchronous stack into callback-hell.
+
+### Motivation
+
+Userspace threads are an alternative to using posix kernel threads as a way
+to develop intuitively-stackful programs in applications which are primarily
+I/O-bound rather than CPU-bound. This is born out of a recognition that a
+single CPU core has enough capacity to compute the entirety of all requests for
+an efficiently-written network daemon if I/O were instantaneous; if one
+*could* use a single thread it is advantageous to do so right up until the
+compute-bound is reached, rather than introducing more threads for any other
+reason. The limits to single-threading and scaling beyond a single CPU is then
+pushed to higher-level application logic: either message-passing between
+multiple processes (or machines in a cluster), and/or threads which have
+extremely low interference.
+
+`ircd::ctx` allows for a very large number of contexts to exist, on the order
+of thousands or more, and still efficiently make progress without the overhead
+of kernel context switches. As an anecdotal example, a kernel context switch
+from a contended mutex could realistically be five to ten times more costly
+than a userspace context switch if not significantly more, and with effects
+that are less predictable. Contexts will accomplish as much work as possible
+in a "straight line" before yielding to the kernel to wait for the completion
+of any I/O event.
 
 ### Foundation
 
