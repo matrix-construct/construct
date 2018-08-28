@@ -1805,16 +1805,28 @@ ircd::openssl::genprime_cb(const int stat,
 {
 	assert(ctx != nullptr);
 	auto &arg{ctx->arg};
+	const auto yield_point{[]
+	{
+		if(ctx::current)
+			ctx::yield();
+	}};
+
 	switch(stat)
 	{
 		case 0: // generating i-th potential prime
 			return true;
 
 		case 1: // testing i-th potential prime
+		{
+			yield_point();
 			return true;
+		}
 
 		case 2: // found i-th potential prime but rejected for RSA
+		{
+			yield_point();
 			return true;
+		}
 
 		case 3: switch(ith) // found for RSA...
 		{
