@@ -1478,6 +1478,24 @@ noexcept
 // database::logs
 //
 
+ircd::db::database::logs::logs(database *const &d)
+:rocksdb::Logger{}
+,d{d}
+{
+}
+
+ircd::db::database::logs::~logs()
+noexcept
+{
+}
+
+rocksdb::Status
+ircd::db::database::logs::Close()
+noexcept
+{
+	return rocksdb::Status::NotSupported();
+}
+
 static
 ircd::log::facility
 translate(const rocksdb::InfoLogLevel &level)
@@ -1547,6 +1565,23 @@ noexcept
 //
 // database::mergeop
 //
+
+ircd::db::database::mergeop::mergeop(database *const &d,
+                                     merge_closure merger)
+:d{d}
+,merger
+{
+	merger?
+		std::move(merger):
+		ircd::db::merge_operator
+}
+{
+}
+
+ircd::db::database::mergeop::~mergeop()
+noexcept
+{
+}
 
 const char *
 ircd::db::database::mergeop::Name()

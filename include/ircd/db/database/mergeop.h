@@ -25,8 +25,6 @@ struct ircd::db::database::mergeop final
 	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const noexcept override;
 	const char *Name() const noexcept override;
 
-	mergeop(database *const &d, merge_closure merger = nullptr)
-	:d{d}
-	,merger{merger? std::move(merger) : ircd::db::merge_operator}
-	{}
+	mergeop(database *const &d, merge_closure merger = nullptr);
+	~mergeop() noexcept;
 };
