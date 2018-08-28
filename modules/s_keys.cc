@@ -17,8 +17,7 @@ extern "C" bool verify__keys(const m::keys &) noexcept;
 extern "C" void get__keys(const string_view &server, const string_view &key_id, const m::keys::closure &);
 extern "C" bool query__keys(const string_view &query_server, const m::keys::queries &, const m::keys::closure_bool &);
 
-static void create_my_key(const m::event &);
-
+extern "C" void create_my_key(const m::event &);
 static void init_my_ed25519();
 static void init_my_tls_crt();
 extern "C" void init_my_keys();
