@@ -200,11 +200,6 @@ bool
 startup_checks()
 try
 {
-	#ifndef _WIN32
-	if(geteuid() == 0)
-		throw ircd::error("Don't run ircd as root!!!");
-	#endif
-
 	fs::chdir(fs::get(fs::PREFIX));
 	return true;
 }
