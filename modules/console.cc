@@ -2715,6 +2715,21 @@ console_cmd__key__get(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__key__crt__sign(opt &out, const string_view &line)
+{
+	using prototype = void (const m::event &);
+	static m::import<prototype> create_my_key
+	{
+		"s_keys", "create_my_key"
+	};
+
+	create_my_key({});
+
+	out << "done" << std::endl;
+	return true;
+}
+
 //
 // stage
 //
