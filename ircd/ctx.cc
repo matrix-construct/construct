@@ -951,6 +951,7 @@ noexcept
 	// Can't join to bare metal, only from within another context.
 	if(current)
 	{
+		const uninterruptible::nothrow ui;
 		interrupt();
 		join();
 		return;
@@ -1019,8 +1020,9 @@ ircd::ctx::pool::pool(const char *const &name,
 ircd::ctx::pool::~pool()
 noexcept
 {
-	interrupt();
+	terminate();
 	join();
+
 	assert(ctxs.empty());
 	assert(queue.empty());
 }

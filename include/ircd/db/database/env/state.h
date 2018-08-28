@@ -36,9 +36,8 @@ struct ircd::db::database::env::state
 		{ "rdb high",      128_KiB,      0                 },
 	}};
 
-	state(database *const &d)
-	:d{*d}
-	{}
+	state(database *const &d);
+	~state() noexcept;
 };
 
 struct ircd::db::database::env::state::task

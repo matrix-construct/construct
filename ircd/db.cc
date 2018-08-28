@@ -148,8 +148,16 @@ noexcept
 		};
 
 	request.terminate();
-	request.join();
+	log::debug
+	{
+		log, "Waiting for %zu active of %zu client request contexts; %zu pending; %zu queued",
+		request.active(),
+		request.size(),
+		request.pending(),
+		request.queued()
+	};
 
+	request.join();
 	log::debug
 	{
 		log, "All contexts joined; all requests are clear."
@@ -1010,6 +1018,17 @@ catch(const std::exception &e)
 		name,
 		this,
 		e.what()
+	};
+
+	return;
+}
+catch(...)
+{
+	log::critical
+	{
+		log, "'%s': Unknown error closing database(%p)",
+		name,
+		this
 	};
 
 	return;
@@ -1876,7 +1895,30 @@ noexcept
 //
 
 //
-// env
+// env::state
+//
+
+ircd::db::database::env::state::state(database *const &d)
+:d{*d}
+{
+}
+
+ircd::db::database::env::state::~state()
+noexcept
+{
+	for(auto &p : pool) try
+	{
+		p.terminate();
+		p.join();
+	}
+	catch(...)
+	{
+		continue;
+	}
+}
+
+//
+// env::env
 //
 
 ircd::db::database::env::env(database *const &d)

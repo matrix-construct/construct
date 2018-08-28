@@ -43,6 +43,11 @@ try
 	origin
 }
 {
+	const unwind::exceptional uw{[]
+	{
+		m::imports.clear();
+	}};
+
 	init_keys();
 	init_imports();
 	presence::set(me, "online", me_online_status_msg);
@@ -53,8 +58,6 @@ catch(const m::error &e)
 	{
 		log, "%s %s", e.what(), e.content
 	};
-
-	m::imports.clear();
 }
 catch(const std::exception &e)
 {
@@ -62,8 +65,6 @@ catch(const std::exception &e)
 	{
 		log, "%s", e.what()
 	};
-
-	m::imports.clear();
 }
 
 ircd::m::init::~init()
@@ -93,7 +94,7 @@ ircd::m::init::init_keys()
 try
 {
 	m::imports.emplace("s_keys"s, "s_keys"s);
-	static m::import<void ()> init_my_keys
+	m::import<void ()> init_my_keys
 	{
 		"s_keys", "init_my_keys"
 	};

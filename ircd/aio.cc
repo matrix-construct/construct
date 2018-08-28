@@ -175,6 +175,7 @@ ircd::fs::aio::MAX_EVENTS
 //
 
 ircd::fs::aio::aio()
+try
 :resfd
 {
 	*ircd::ios, int(syscall(::eventfd, semval, EFD_NONBLOCK))
@@ -182,11 +183,27 @@ ircd::fs::aio::aio()
 {
 	syscall<SYS_io_setup>(MAX_EVENTS, &idp);
 	set_handle();
+
+	log::debug
+	{
+		"Established AIO context %p", this
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Error starting AIO context %p :%s",
+		(const void *)this,
+		e.what()
+	};
 }
 
 ircd::fs::aio::~aio()
-noexcept
+noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	interrupt();
 	wait();
 
@@ -194,6 +211,15 @@ noexcept
 	resfd.close(ec);
 
 	syscall<SYS_io_destroy>(idp);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Error shutting down AIO context %p :%s",
+		(const void *)this,
+		e.what()
+	};
 }
 
 bool

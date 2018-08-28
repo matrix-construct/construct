@@ -32,7 +32,7 @@ namespace ircd::openssl
 	         class... args>
 	static int call(function&& f, args&&... a);
 
-	static int genprime_cb(const int, const int, BN_GENCB *const);
+	static int genprime_cb(const int, const int, BN_GENCB *const) noexcept;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1802,6 +1802,7 @@ int
 ircd::openssl::genprime_cb(const int stat,
                            const int ith,
                            BN_GENCB *const ctx)
+noexcept try
 {
 	assert(ctx != nullptr);
 	auto &arg{ctx->arg};
@@ -1843,6 +1844,10 @@ ircd::openssl::genprime_cb(const int stat,
 		default:
 			return false;
 	}
+}
+catch(...)
+{
+	return false;
 }
 
 //

@@ -24,7 +24,7 @@ namespace ircd
 	boost::asio::io_context *ios;                // user's io service
 	ctx::ctx *main_context;                      // Main program loop
 
-	void set_runlevel(const enum runlevel &);
+	bool set_runlevel(const enum runlevel &);
 	void main() noexcept;
 }
 
@@ -129,14 +129,45 @@ bool
 ircd::quit()
 noexcept
 {
-	if(runlevel != runlevel::RUN)
-		return false;
+	log::debug
+	{
+		"IRCd quit requested from runlevel:%s ctx:%p main_context:%p",
+		reflect(runlevel),
+		(const void *)ctx::current,
+		(const void *)main_context
+	};
 
-	if(!main_context)
-		return false;
+	if(main_context) switch(runlevel)
+	{
+		case runlevel::READY:
+		{
+			ctx::terminate(*main_context);
+			main_context = nullptr;
+			ircd::set_runlevel(runlevel::HALT);
+			return true;
+		}
 
-	ctx::notify(*main_context);
-	return true;
+		case runlevel::START:
+		{
+			ctx::terminate(*main_context);
+			main_context = nullptr;
+			return true;
+		}
+
+		case runlevel::RUN:
+		{
+			ctx::notify(*main_context);
+			main_context = nullptr;
+			return true;
+		}
+
+		case runlevel::HALT:
+		case runlevel::QUIT:
+		case runlevel::FAULT:
+			return false;
+	}
+
+	return false;
 }
 
 /// Main context; Main program. Do not call this function directly.
@@ -162,16 +193,16 @@ noexcept try
 	// threads, but we consider this one thread a main thread for now...
 	ircd::thread_id = std::this_thread::get_id();
 
-	// When this function is entered IRCd will transition to START indicating
-	// that subsystems are initializing.
-	ircd::set_runlevel(runlevel::START);
-
 	// When this function completes, subsystems are done shutting down and IRCd
 	// transitions to HALT.
 	const unwind halted{[]
 	{
 		set_runlevel(runlevel::HALT);
 	}};
+
+	// When this function is entered IRCd will transition to START indicating
+	// that subsystems are initializing.
+	ircd::set_runlevel(runlevel::START);
 
 	// These objects are the init()'s and fini()'s for each subsystem.
 	// Appearing here ties their life to the main context. Initialization can
@@ -247,10 +278,13 @@ ircd::uptime()
 /// prevent the callback from continuing execution on some ircd::ctx stack and
 /// instead invoke their function on the main stack in their own io_context
 /// event slice.
-void
+bool
 ircd::set_runlevel(const enum runlevel &new_runlevel)
 try
 {
+	if(ircd::runlevel == new_runlevel)
+		return false;
+
 	log::debug
 	{
 		"IRCd runlevel transition from '%s' to '%s' (notifying %zu)",
@@ -287,6 +321,8 @@ try
 		ircd::post(call_users);
 	else
 		call_users();
+
+	return true;
 }
 catch(const std::exception &e)
 {
@@ -296,6 +332,7 @@ catch(const std::exception &e)
 	};
 
 	ircd::terminate();
+	return false;
 }
 
 ircd::string_view
