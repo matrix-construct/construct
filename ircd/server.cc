@@ -40,6 +40,49 @@ close_all_timeout
 	{ "default",  2L                              },
 };
 
+//
+// init
+//
+
+ircd::server::init::init()
+{
+}
+
+ircd::server::init::~init()
+noexcept
+{
+	close();
+	wait();
+	peers.clear();
+
+	log::debug
+	{
+		log, "All server peers, connections, and requests are clear."
+	};
+}
+
+void
+ircd::server::init::wait()
+{
+	wait_all();
+}
+
+void
+ircd::server::init::close()
+{
+	close_all();
+}
+
+void
+ircd::server::init::interrupt()
+{
+	interrupt_all();
+}
+
+//
+// server
+//
+
 void
 ircd::server::wait_all()
 {
@@ -48,23 +91,28 @@ ircd::server::wait_all()
 		if(dock.wait_for(seconds(2)))
 			continue;
 
-		log.warning("Waiting for %zu tags on %zu links on %zu of %zu peers to close...",
-		            tag_count(),
-		            link_count(),
-		            peer_unfinished(),
-		            peer_count());
+		log::warning
+		{
+			log, "Waiting for %zu tags on %zu links on %zu of %zu peers to close...",
+			tag_count(),
+			link_count(),
+			peer_unfinished(),
+			peer_count()
+		};
 	}
 }
 
 void
 ircd::server::close_all()
 {
-	log.debug("Closing all %zu peers",
-	          peer_count());
+	log::debug
+	{
+		log, "Closing all %zu peers",
+		peer_count()
+	};
 
 	net::close_opts opts;
 	opts.timeout = seconds(close_all_timeout);
-
 	for(auto &peer : peers)
 		peer.second->close(opts);
 }
@@ -72,10 +120,13 @@ ircd::server::close_all()
 void
 ircd::server::interrupt_all()
 {
-	log.debug("Interrupting %zu tags on %zu links on %zu peers",
-	          tag_count(),
-	          link_count(),
-	          peer_count());
+	log::debug
+	{
+		log, "Interrupting %zu tags on %zu links on %zu peers",
+		tag_count(),
+		link_count(),
+		peer_count()
+	};
 
 	for(auto &peer : peers)
 		peer.second->cancel();
@@ -93,10 +144,17 @@ ircd::server::get(const net::hostport &hostport)
 	auto it(peers.lower_bound(canonized));
 	if(it == peers.end() || it->first != canonized)
 	{
-		auto peer{create(hostport)};
-		log.debug("peer(%p) for %s created; adding...",
-		          peer.get(),
-		          canonized);
+		auto peer
+		{
+			create(hostport)
+		};
+
+		log::debug
+		{
+			log, "peer(%p) for %s created; adding...",
+			peer.get(),
+			canonized
+		};
 
 		const string_view key{peer->hostname};
 		it = peers.emplace_hint(it, key, std::move(peer));
@@ -238,40 +296,6 @@ ircd::server::accumulate_peers(F&& closure)
 		const auto &peer{*pair.second};
 		return ret += closure(peer);
 	});
-}
-
-//
-// init
-//
-
-ircd::server::init::init()
-{
-}
-
-ircd::server::init::~init()
-noexcept
-{
-	close();
-	wait();
-	peers.clear();
-}
-
-void
-ircd::server::init::wait()
-{
-	wait_all();
-}
-
-void
-ircd::server::init::close()
-{
-	close_all();
-}
-
-void
-ircd::server::init::interrupt()
-{
-	interrupt_all();
 }
 
 ///

@@ -117,6 +117,11 @@ noexcept
 	close();
 	wait();
 
+	log::debug
+	{
+		"All client contexts, connections, and requests are clear.",
+	};
+
 	assert(client::list.empty());
 }
 
@@ -217,10 +222,6 @@ ircd::client::wait_all()
 	};
 
 	context.join();
-	log::debug
-	{
-		"All client contexts, connections, and requests are clear.",
-	};
 }
 
 ircd::parse::read_closure
@@ -412,10 +413,13 @@ try
 		client->reqctx = nullptr;
 	}};
 
-	if(client->main())
-		client->async();
-	else
+	if(!client->main())
+	{
 		client->close(net::dc::SSL_NOTIFY).wait();
+		return;
+	}
+
+	client->async();
 }
 catch(const std::exception &e)
 {

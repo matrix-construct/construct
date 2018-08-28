@@ -1824,13 +1824,16 @@ try
 		return;
 	}
 
-	log.debug("socket(%p) local[%s] remote[%s] disconnect type:%d user: in:%zu out:%zu",
-	          (const void *)this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          uint(opts.type),
-	          in.bytes,
-	          out.bytes);
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] disconnect type:%d user: in:%zu out:%zu",
+		(const void *)this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		uint(opts.type),
+		in.bytes,
+		out.bytes
+	};
 
 	assert(!fini);
 	fini = true;
@@ -1874,6 +1877,14 @@ try
 }
 catch(const boost::system::system_error &e)
 {
+	log::derror
+	{
+		log, "socket(%p) disconnect type:%d :%s",
+		(const void *)this,
+		uint(opts.type),
+		e.what()
+	};
+
 	call_user(callback, e.code());
 }
 catch(const std::exception &e)
