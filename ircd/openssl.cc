@@ -30,6 +30,8 @@ namespace ircd::openssl
 	         class function,
 	         class... args>
 	static int call(function&& f, args&&... a);
+
+	static int genprime_cb(const int, const int, BN_GENCB *const);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -756,11 +758,6 @@ ircd::openssl::genrsa(const string_view &skfile,
 	});
 }
 
-namespace ircd::openssl
-{
-	static int genrsa_cb(const int, const int, BN_GENCB *const);
-}
-
 RSA &
 ircd::openssl::genrsa(RSA &out,
                       const uint &bits,
@@ -768,51 +765,12 @@ ircd::openssl::genrsa(RSA &out,
 {
 	BN_GENCB gencb{0};
 	void *const arg{nullptr}; // privdata passed to cb
-	BN_GENCB_set(&gencb, &ircd::openssl::genrsa_cb, arg);
+	BN_GENCB_set(&gencb, &ircd::openssl::genprime_cb, arg);
 
 	bignum e{exp};
 	call(::RSA_generate_key_ex, &out, bits, e, &gencb);
 
 	return out;
-}
-
-// This callback can be used to integrate generating with ircd::ctx
-// or ctx::offload/thread or some status update. For now we just eat
-// the milliseconds of prime generation on main.
-// return false causes call(RSA_generate_key_ex) to throw
-int
-ircd::openssl::genrsa_cb(const int stat,
-                         const int ith,
-                         BN_GENCB *const ctx)
-{
-	assert(ctx != nullptr);
-	auto &arg{ctx->arg};
-	switch(stat)
-	{
-		case 0: // generating i-th potential prime
-			return true;
-
-		case 1: // testing i-th potential prime
-			return true;
-
-		case 2: // found i-th potential prime but rejected for RSA
-			return true;
-
-		case 3: switch(ith) // found for RSA...
-		{
-			case 0: // found P
-				return true;
-
-			case 1: // found Q
-				return true;
-
-			default:
-				return false;
-		}
-
-		default:
-			return false;
-	}
 }
 
 ircd::string_view
@@ -1770,6 +1728,49 @@ ircd::openssl::locking::reflect(const int &mode)
 	}
 
 	return "?????";
+}
+
+//
+// internal util
+//
+
+// This callback can be used to integrate generating with ircd::ctx
+// or ctx::offload/thread or some status update. For now we just eat
+// the milliseconds of prime generation on main.
+// return false causes call(RSA_generate_key_ex) to throw
+int
+ircd::openssl::genprime_cb(const int stat,
+                           const int ith,
+                           BN_GENCB *const ctx)
+{
+	assert(ctx != nullptr);
+	auto &arg{ctx->arg};
+	switch(stat)
+	{
+		case 0: // generating i-th potential prime
+			return true;
+
+		case 1: // testing i-th potential prime
+			return true;
+
+		case 2: // found i-th potential prime but rejected for RSA
+			return true;
+
+		case 3: switch(ith) // found for RSA...
+		{
+			case 0: // found P
+				return true;
+
+			case 1: // found Q
+				return true;
+
+			default:
+				return false;
+		}
+
+		default:
+			return false;
+	}
 }
 
 //
