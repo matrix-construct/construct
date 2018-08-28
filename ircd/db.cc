@@ -137,8 +137,23 @@ ircd::db::init::init()
 ircd::db::init::~init()
 noexcept
 {
-	request.interrupt();
+	if(request.active())
+		log::warning
+		{
+			log, "Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
+			request.active(),
+			request.size(),
+			request.pending(),
+			request.queued()
+		};
+
+	request.terminate();
 	request.join();
+
+	log::debug
+	{
+		log, "All contexts joined; all requests are clear."
+	};
 }
 
 void
