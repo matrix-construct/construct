@@ -110,7 +110,8 @@ init_my_tls_crt()
 	{
 		log::warning
 		{
-			"Failed to find dhparam file @ `%s'; creating; this will take a long time...",
+			"Failed to find dhparam file @ `%s'; creating; "
+			"this will take about 2 to 5 minutes...",
 			dhparam_file
 		};
 
