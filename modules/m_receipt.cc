@@ -194,12 +194,11 @@ try
 
 	log::info
 	{
-		"%s read by %s in %s @ %zd => %s",
+		"%s read by %s in %s @ %zd",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
-		ts,
-		string_view{evid}
+		ts
 	};
 }
 catch(const std::exception &e)
