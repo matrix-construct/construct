@@ -63,6 +63,12 @@ init_my_tls_crt()
 		m::self::origin + ".crt.key.pub",
 	};
 
+	const std::string dhparam_path_parts[]
+	{
+		tls_key_dir,
+		m::self::origin + ".crt.dh",
+	};
+
 	const std::string certificate_path_parts[]
 	{
 		tls_key_dir,
@@ -79,6 +85,11 @@ init_my_tls_crt()
 		fs::make_path(public_key_path_parts)
 	};
 
+	const std::string dhparam_file
+	{
+		fs::make_path(dhparam_path_parts)
+	};
+
 	const std::string cert_file
 	{
 		fs::make_path(certificate_path_parts)
@@ -93,6 +104,17 @@ init_my_tls_crt()
 		};
 
 		openssl::genrsa(private_key_file, public_key_file);
+	}
+
+	if(!fs::exists(dhparam_file))
+	{
+		log::warning
+		{
+			"Failed to find dhparam file @ `%s'; creating; this will take a long time...",
+			dhparam_file
+		};
+
+		openssl::gendh(dhparam_file);
 	}
 
 	const json::object config{};
