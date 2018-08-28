@@ -25,6 +25,7 @@ struct evp_pkey_st;
 struct ec_group_st;
 struct ec_point_st;
 struct ec_key_st;
+struct dh_st;
 
 /// OpenSSL library interface. Provides things we need to expose from OpenSSL
 /// to the rest of the project.
@@ -48,6 +49,7 @@ namespace ircd::openssl
 	using EC_GROUP = ::ec_group_st;
 	using EC_POINT = ::ec_point_st;
 	using EC_KEY = ::ec_key_st;
+	using DH = ::dh_st;
 
 	// Library general
 	string_view version();
@@ -82,6 +84,13 @@ namespace ircd::openssl
 	bool check(const EC_KEY &, const std::nothrow_t);
 	string_view print(const mutable_buffer &buf, const EC_KEY &, const off_t &offset = 0);
 	void genec(const string_view &skfile, const string_view &pkfile, const EC_GROUP *const & = secp256k1);
+
+	// DH suite
+	extern const size_t DH_DEFAULT_GEN;
+	extern const size_t DH_DEFAULT_BITS;
+	DH &gendh(DH &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
+	string_view gendh(const mutable_buffer &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
+	void gendh(const string_view &dhfile, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
 
 	// X.509 suite
 	const_buffer i2d(const mutable_buffer &out, const X509 &);

@@ -16,6 +16,7 @@
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/ripemd.h>
+#include <openssl/dh.h>
 
 namespace ircd::openssl
 {
@@ -616,6 +617,65 @@ ircd::openssl::get_time(const ASN1_TIME &t)
 	};
 
 	return ircd::time() + sec;
+}
+
+//
+// DH
+//
+
+decltype(ircd::openssl::DH_DEFAULT_BITS)
+ircd::openssl::DH_DEFAULT_BITS
+{
+	2048
+};
+
+decltype(ircd::openssl::DH_DEFAULT_GEN)
+ircd::openssl::DH_DEFAULT_GEN
+{
+	5
+};
+
+void
+ircd::openssl::gendh(const string_view &dhfile,
+                     const uint &bits,
+                     const uint &gen)
+{
+	bio::write_file(dhfile, [&bits, &gen]
+	(const mutable_buffer &buf)
+	{
+		return gendh(buf, bits, gen);
+	});
+}
+
+ircd::string_view
+ircd::openssl::gendh(const mutable_buffer &buf,
+                     const uint &bits,
+                     const uint &gen)
+{
+	const custom_ptr<DH> dh
+	{
+		DH_new(), DH_free
+	};
+
+	gendh(*dh, bits, gen);
+	return bio::write(buf, [&dh]
+	(BIO *const &bio)
+	{
+		call(::DHparams_print, bio, dh.get());
+	});
+}
+
+DH &
+ircd::openssl::gendh(DH &dh,
+                     const uint &bits,
+                     const uint &gen)
+{
+	BN_GENCB gencb{0};
+	void *const arg{nullptr}; // privdata passed to cb
+	BN_GENCB_set(&gencb, &ircd::openssl::genprime_cb, arg);
+
+	call<error, 0>(::DH_generate_parameters_ex, &dh, bits, gen, &gencb);
+	return dh;
 }
 
 //
