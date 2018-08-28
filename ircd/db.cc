@@ -4916,7 +4916,7 @@ static_assert
 rocksdb::port::Mutex::Mutex()
 {
 	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current || !is_main_thread()))
+	if(unlikely(!ctx::current))
 		return;
 
 	log::debug
@@ -4934,7 +4934,7 @@ rocksdb::port::Mutex::Mutex(bool adaptive)
 rocksdb::port::Mutex::~Mutex()
 {
 	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current || !is_main_thread()))
+	if(unlikely(!ctx::current))
 		return;
 
 	log::debug
@@ -4947,7 +4947,7 @@ rocksdb::port::Mutex::~Mutex()
 void
 rocksdb::port::Mutex::Lock()
 {
-	if(unlikely(!is_main_thread() || !ctx::current))
+	if(unlikely(!ctx::current))
 		return;
 
 	#ifdef RB_DEBUG_DB_PORT
@@ -4963,7 +4963,7 @@ rocksdb::port::Mutex::Lock()
 void
 rocksdb::port::Mutex::Unlock()
 {
-	if(unlikely(!is_main_thread() || !ctx::current))
+	if(unlikely(!ctx::current))
 		return;
 
 	#ifdef RB_DEBUG_DB_PORT
@@ -4980,7 +4980,7 @@ rocksdb::port::Mutex::Unlock()
 void
 rocksdb::port::Mutex::AssertHeld()
 {
-	if(unlikely(!is_main_thread() || !ctx::current))
+	if(unlikely(!ctx::current))
 		return;
 
 	assert(mu.locked());
@@ -5000,6 +5000,9 @@ static_assert
 rocksdb::port::RWMutex::RWMutex()
 {
 	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current))
+		return;
+
 	log::debug
 	{
 		db::log, "shared_mutex %lu %p CTOR", ctx::id(), this
@@ -5010,6 +5013,9 @@ rocksdb::port::RWMutex::RWMutex()
 rocksdb::port::RWMutex::~RWMutex()
 {
 	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current))
+		return;
+
 	log::debug
 	{
 		db::log, "shared_mutex %lu %p DTOR", ctx::id(), this
@@ -5020,6 +5026,9 @@ rocksdb::port::RWMutex::~RWMutex()
 void
 rocksdb::port::RWMutex::ReadLock()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5034,6 +5043,9 @@ rocksdb::port::RWMutex::ReadLock()
 void
 rocksdb::port::RWMutex::WriteLock()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5048,6 +5060,9 @@ rocksdb::port::RWMutex::WriteLock()
 void
 rocksdb::port::RWMutex::ReadUnlock()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5062,6 +5077,9 @@ rocksdb::port::RWMutex::ReadUnlock()
 void
 rocksdb::port::RWMutex::WriteUnlock()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5088,6 +5106,9 @@ rocksdb::port::CondVar::CondVar(Mutex *mu)
 :mu{mu}
 {
 	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current))
+		return;
+
 	log::debug
 	{
 		db::log, "cond %lu %p %p CTOR", ctx::id(), this, mu
@@ -5098,6 +5119,9 @@ rocksdb::port::CondVar::CondVar(Mutex *mu)
 rocksdb::port::CondVar::~CondVar()
 {
 	#ifdef RB_DEBUG_DB_PORT_
+	if(unlikely(!ctx::current))
+		return;
+
 	log::debug
 	{
 		db::log, "cond %lu %p %p DTOR", ctx::id(), this, mu
@@ -5108,6 +5132,9 @@ rocksdb::port::CondVar::~CondVar()
 void
 rocksdb::port::CondVar::Wait()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5125,6 +5152,8 @@ rocksdb::port::CondVar::Wait()
 bool
 rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 {
+	assert(ctx::current);
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5143,6 +5172,9 @@ rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 void
 rocksdb::port::CondVar::Signal()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -5157,6 +5189,9 @@ rocksdb::port::CondVar::Signal()
 void
 rocksdb::port::CondVar::SignalAll()
 {
+	if(unlikely(!ctx::current))
+		return;
+
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
