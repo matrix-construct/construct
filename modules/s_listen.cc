@@ -110,18 +110,20 @@ init_listener(const m::event &event)
 void
 init_listener(const string_view &name,
               const json::object &opts)
+try
 {
-	if(!opts.has("tmp_dh_path"))
-		throw user_error
-		{
-			"Listener %s requires a 'tmp_dh_path' in the config. We do not"
-			" create this yet. Try `openssl dhparam -outform PEM -out dh512.pem 512`",
-			name
-		};
-
 	listeners.emplace_back(name, opts, []
 	(const auto &sock)
 	{
 		ircd::add_client(sock);
 	});
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to init listener '%s' :%s",
+		name,
+		e.what()
+	};
 }
