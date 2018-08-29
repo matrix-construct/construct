@@ -4179,7 +4179,23 @@ size_t
 ircd::db::database::env::sequential_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return ircd::info::page_size;
+	const auto ret
+	{
+		fs::block_size(fd)
+	};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': seqfile:%p fd:%d required alignment (logical block size) %zu",
+		d.name,
+		this,
+		int(fd),
+		ret
+	};
+	#endif
+
+	return ret;
 }
 
 //
@@ -4449,7 +4465,23 @@ size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return ircd::info::page_size;
+	const auto ret
+	{
+		fs::block_size(fd)
+	};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': rfile:%p fd:%d required alignment (logical block size) %zu",
+		d.name,
+		this,
+		int(fd),
+		ret
+	};
+	#endif
+
+	return ret;
 }
 
 //
@@ -4849,7 +4881,23 @@ size_t
 ircd::db::database::env::random_rw_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	return info::page_size;
+	const auto ret
+	{
+		fs::block_size(fd)
+	};
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		"'%s': rwfile:%p fd:%d required alignment (logical block size) %zu",
+		d.name,
+		this,
+		int(fd),
+		ret
+	};
+	#endif
+
+	return ret;
 }
 
 //
