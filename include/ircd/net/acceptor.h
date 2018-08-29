@@ -25,6 +25,7 @@ struct ircd::net::listener::acceptor
 	static conf::item<milliseconds> timeout;
 
 	std::string name;
+	std::string opts;
 	size_t backlog;
 	listener::callback cb;
 	asio::ssl::context ssl;

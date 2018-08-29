@@ -28,6 +28,8 @@ struct ircd::net::listener
 	std::shared_ptr<struct acceptor> acceptor;
 
   public:
+	explicit operator json::object() const;
+
 	listener(const string_view &name,
 	         const json::object &options,
 	         callback);
@@ -54,6 +56,8 @@ struct ircd::net::listener_udp
 	std::unique_ptr<struct acceptor> acceptor;
 
   public:
+	explicit operator json::object() const;
+
 	datagram &operator()(datagram &);
 
 	listener_udp(const string_view &name,

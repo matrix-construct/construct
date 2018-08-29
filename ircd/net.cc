@@ -933,6 +933,14 @@ noexcept
 		acceptor->join();
 }
 
+ircd::net::listener::operator
+ircd::json::object()
+const
+{
+	assert(acceptor);
+	return acceptor->opts;
+}
+
 //
 // listener_udp
 //
@@ -980,6 +988,14 @@ ircd::net::listener_udp::operator()(datagram &datagram)
 	return acceptor->operator()(datagram);
 }
 
+ircd::net::listener_udp::operator
+ircd::json::object()
+const
+{
+	assert(acceptor);
+	return acceptor->opts;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/acceptor.h
@@ -1020,6 +1036,10 @@ try
 :name
 {
 	name
+}
+,opts
+{
+	opts
 }
 ,backlog
 {
