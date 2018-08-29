@@ -16,6 +16,7 @@ namespace ircd::fs
 	struct fd;
 
 	size_t size(const fd &);
+	size_t block_size(const fd &);
 	string_view uuid(const fd &, const mutable_buffer &);
 }
 

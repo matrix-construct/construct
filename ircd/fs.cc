@@ -556,6 +556,22 @@ namespace ircd::fs
 	static uint posix_flags(const std::ios::open_mode &mode);
 }
 
+#ifdef HAVE_SYS_STAT_H
+size_t
+ircd::fs::block_size(const fd &fd)
+{
+	struct stat stat;
+	syscall(::fstat, fd, &stat);
+	return stat.st_blksize;
+}
+#else
+size_t
+ircd::fs::block_size(const fd &fd)
+{
+	return info::page_size;
+}
+#endif
+
 /// This is not a standard UUID of any sort; this is custom, and intended for
 /// rocksdb (though rocksdb has no requirement for its format specifically).
 /// The format is plain-text, fs major and minor number, inode number, and
