@@ -230,7 +230,15 @@ ircd::db::init_version()
 void
 ircd::db::sync(database &d)
 {
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	log::debug
+	{
+		log, "'%s': @%lu SYNC WAL",
+		name(d),
+		sequence(d)
+	};
+
 	throw_on_error
 	{
 		d.d->SyncWAL()
@@ -243,7 +251,15 @@ void
 ircd::db::flush(database &d,
                 const bool &sync)
 {
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	log::debug
+	{
+		log, "'%s': @%lu FLUSH WAL",
+		name(d),
+		sequence(d)
+	};
+
 	throw_on_error
 	{
 		d.d->FlushWAL(sync)
@@ -285,7 +301,7 @@ void
 ircd::db::check(database &d)
 {
 	assert(d.d);
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->VerifyChecksum()
@@ -301,7 +317,6 @@ ircd::db::check(database &d)
 uint64_t
 ircd::db::checkpoint(database &d)
 {
-	const ctx::uninterruptible ui;
 	if(!d.checkpointer)
 		throw error
 		{
@@ -310,6 +325,8 @@ ircd::db::checkpoint(database &d)
 			name(d)
 		};
 
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	const auto seqnum
 	{
 		sequence(d)
@@ -346,7 +363,9 @@ ircd::db::fdeletions(database &d,
                      const bool &enable,
                      const bool &force)
 {
-	const ctx::uninterruptible ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
+
 	if(enable) throw_on_error
 	{
 		d.d->EnableFileDeletions(force)
@@ -362,12 +381,13 @@ ircd::db::setopt(database &d,
                  const string_view &key,
                  const string_view &val)
 {
-	const ctx::uninterruptible ui;
 	const std::unordered_map<std::string, std::string> options
 	{
 		{ std::string{key}, std::string{val} }
 	};
 
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SetDBOptions(options)
@@ -429,9 +449,9 @@ std::vector<std::string>
 ircd::db::files(const database &cd,
                 uint64_t &msz)
 {
-	const ctx::uninterruptible ui;
 	std::vector<std::string> ret;
 	auto &d(const_cast<database &>(cd));
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->GetLiveFiles(ret, &msz, false)
@@ -466,6 +486,7 @@ ircd::db::property(const database &cd,
 {
 	uint64_t ret;
 	database &d(const_cast<database &>(cd));
+	const ctx::uninterruptible::nothrow ui;
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
 		throw not_found
 		{
@@ -6770,19 +6791,21 @@ void
 ircd::db::sort(column &column,
                const bool &blocking)
 {
-	const ctx::uninterruptible ui;
 	database::column &c(column);
 	database &d(*c.d);
 
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
 
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	log::debug
 	{
-		log, "'%s':'%s' @%lu FLUSH (sort)",
+		log, "'%s':'%s' @%lu FLUSH (sort) %s",
 		name(d),
 		name(c),
-		sequence(d)
+		sequence(d),
+		blocking? "blocking"_sv: "non-blocking"_sv
 	};
 
 	throw_on_error
@@ -6808,6 +6831,7 @@ ircd::db::compact(column &column,
 		if(level.files.empty())
 			continue;
 
+		rocksdb::CompactionOptions opts;
 		std::vector<std::string> files(level.files.size());
 		std::transform(level.files.begin(), level.files.end(), files.begin(), []
 		(auto &metadata)
@@ -6822,9 +6846,8 @@ ircd::db::compact(column &column,
 		// on the part of rocksdb to directly use std::mutex rather than their
 		// port wrapper).
 		ctx::interruption_point();
-		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 		const ctx::uninterruptible::nothrow ui;
-
+		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 		log::debug
 		{
 			log, "'%s':'%s' COMPACT level:%d files:%zu size:%zu",
@@ -6835,7 +6858,6 @@ ircd::db::compact(column &column,
 			level.size
 		};
 
-		rocksdb::CompactionOptions opts;
 		throw_on_error
 		{
 			d.d->CompactFiles(opts, c, files, level.level)
@@ -6848,11 +6870,8 @@ ircd::db::compact(column &column,
                   const std::pair<string_view, string_view> &range,
                   const int &to_level)
 {
-	ctx::interruption_point();
-	ctx::uninterruptible::nothrow ui;
-
+	database &d(column);
 	database::column &c(column);
-	database &d(*c.d);
 
 	const auto begin(slice(range.first));
 	const rocksdb::Slice *const b
@@ -6866,6 +6885,13 @@ ircd::db::compact(column &column,
 		empty(range.second)? nullptr : &end
 	};
 
+	rocksdb::CompactRangeOptions opts;
+	opts.change_level = true;
+	opts.target_level = to_level;
+	opts.allow_write_stall = true;
+
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	log::debug
 	{
 		log, "'%s':'%s' @%lu COMPACT [%s, %s] to level %d",
@@ -6877,10 +6903,6 @@ ircd::db::compact(column &column,
 		to_level
 	};
 
-	rocksdb::CompactRangeOptions opts;
-	opts.change_level = true;
-	opts.target_level = to_level;
-	opts.allow_write_stall = true;
 	throw_on_error
 	{
 		d.d->CompactRange(opts, c, b, e)
@@ -6892,14 +6914,15 @@ ircd::db::setopt(column &column,
                  const string_view &key,
                  const string_view &val)
 {
-	const ctx::uninterruptible ui;
+	database &d(column);
+	database::column &c(column);
 	const std::unordered_map<std::string, std::string> options
 	{
 		{ std::string{key}, std::string{val} }
 	};
 
-	database::column &c(column);
-	database &d(c);
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SetOptions(c, options)
@@ -6911,9 +6934,12 @@ ircd::db::del(column &column,
               const string_view &key,
               const sopts &sopts)
 {
-	const ctx::uninterruptible ui;
-	database::column &c(column);
 	database &d(column);
+	database::column &c(column);
+	auto opts(make_opts(sopts));
+
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
 		log, "'%s' %lu '%s' DELETE key(%zu B)",
@@ -6923,7 +6949,6 @@ ircd::db::del(column &column,
 		key.size()
 	};
 
-	auto opts(make_opts(sopts));
 	throw_on_error
 	{
 		d.d->Delete(opts, c, slice(key))
@@ -6936,9 +6961,12 @@ ircd::db::write(column &column,
                 const const_buffer &val,
                 const sopts &sopts)
 {
-	const ctx::uninterruptible ui;
-	database::column &c(column);
 	database &d(column);
+	database::column &c(column);
+	auto opts(make_opts(sopts));
+
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
 		log, "'%s' %lu '%s' PUT key(%zu B) val(%zu B)",
@@ -6949,7 +6977,6 @@ ircd::db::write(column &column,
 		size(val)
 	};
 
-	auto opts(make_opts(sopts));
 	throw_on_error
 	{
 		d.d->Put(opts, c, slice(key), slice(val))
@@ -7485,7 +7512,6 @@ ircd::db::commit(database &d,
 	// rocksdb::port wrapper.
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	const ctx::uninterruptible ui;
-
 	throw_on_error
 	{
 		d.d->Write(opts, &batch)
