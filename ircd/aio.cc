@@ -10,6 +10,7 @@
 
 #include <sys/syscall.h>
 #include <sys/eventfd.h>
+#include <ircd/asio.h>
 #include "aio.h"
 
 //

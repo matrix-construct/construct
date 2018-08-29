@@ -10,9 +10,7 @@
 
 #pragma once
 #define HAVE_AIO_H
-
 #include <linux/aio_abi.h>
-#include <ircd/asio.h>
 
 namespace ircd::fs
 {
