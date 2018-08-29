@@ -2550,7 +2550,10 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 
 	const list &l(listeners);
 	for(const auto &listener : l)
-		out << "one at " << (const void *)&listener << std::endl;
+	{
+		const json::object opts(listener);
+		out << listener << ": " << opts << std::endl;
+	}
 
 	return true;
 }
