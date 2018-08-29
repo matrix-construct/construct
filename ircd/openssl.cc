@@ -623,6 +623,20 @@ ircd::openssl::get_time(const ASN1_TIME &t)
 // DH
 //
 
+decltype(ircd::openssl::rfc3526_dh_params_pem)
+ircd::openssl::rfc3526_dh_params_pem
+{R"(
+2048-bit DH parameters taken from rfc3526
+-----BEGIN DH PARAMETERS-----
+MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb
+IlFKCHmONATd75UZs806QxswKwpt8l8UN0/hNW1tUcJF5IW1dmJefsb0TELppjft
+awv/XLb0Brft7jhr+1qJn6WunyQRfEsf5kkoZlHs5Fs9wgB8uKFjvwWY2kg2HFXT
+mmkWP6j9JM9fg2VdI9yjrZYcYvNWIIVSu57VKQdwlpZtZww1Tkq8mATxdGwIyhgh
+fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq
+5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==
+-----END DH PARAMETERS-----
+)"};
+
 decltype(ircd::openssl::DH_DEFAULT_BITS)
 ircd::openssl::DH_DEFAULT_BITS
 {

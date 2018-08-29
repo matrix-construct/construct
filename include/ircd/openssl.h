@@ -88,6 +88,7 @@ namespace ircd::openssl
 	// DH suite
 	extern const size_t DH_DEFAULT_GEN;
 	extern const size_t DH_DEFAULT_BITS;
+	extern const string_view rfc3526_dh_params_pem;
 	DH &gendh(DH &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
 	string_view gendh(const mutable_buffer &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
 	void gendh(const string_view &dhfile, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);

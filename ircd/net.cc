@@ -1457,7 +1457,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		         filename);
 	}
 
-	if(opts.has("tmp_dh_path"))
+	if(opts.has("tmp_dh_path") && !empty(unquote(opts.at("tmp_dh_path"))))
 	{
 		const std::string filename
 		{
@@ -1476,6 +1476,35 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log.info("%s using tmp dh file '%s'",
 		         string(*this),
 		         filename);
+	}
+	else if(opts.has("tmp_dh"))
+	{
+		const const_buffer buf
+		{
+			unquote(opts.at("tmp_dh"))
+		};
+
+		ssl.use_tmp_dh(buf);
+		log::info
+		{
+			log, "%s using DH params supplied in options (%zu bytes)",
+			string(*this),
+			size(buf)
+		};
+	}
+	else
+	{
+		const const_buffer &buf
+		{
+			openssl::rfc3526_dh_params_pem
+		};
+
+		ssl.use_tmp_dh(buf);
+		log::info
+		{
+			log, "%s using pre-supplied rfc3526 DH parameters.",
+			string(*this)
+		};
 	}
 }
 
