@@ -415,14 +415,18 @@ file_room_id(m::room::id::buf &out,
 			"Invalid MXC: empty server or file parameters..."
 		};
 
-	size_t len;
 	thread_local char buf[512];
-	len = strlcpy(buf, server);
-	len = strlcat(buf, "/"_sv);
-	len = strlcat(buf, file);
+	const string_view path
+	{
+		fmt::sprintf
+		{
+			buf, "%s/%s", server, file
+		}
+	};
+
 	const sha256::buf hash
 	{
-		sha256{string_view{buf, len}}
+		sha256{path}
 	};
 
 	out =
