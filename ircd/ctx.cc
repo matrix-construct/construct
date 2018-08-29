@@ -1479,6 +1479,23 @@ ircd::ctx::ole::pop()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ctx/shared_shared.h
+//
+
+// Linkage
+ircd::ctx::shared_state_base::shared_state_base()
+{
+}
+
+// Linkage
+ircd::ctx::shared_state_base::~shared_state_base()
+noexcept
+{
+	then = {};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ctx_list.h
 //
 

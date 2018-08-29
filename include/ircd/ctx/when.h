@@ -45,9 +45,10 @@ ircd::ctx::when_all(it first,
 		[&p](it &f)
 		{
 			state(*f).then = [p]
-			(shared_state_base &) mutable
+			(shared_state_base &sb) mutable
 			{
-				then(p);
+				if(sb.then)
+					then(p);
 			};
 		}
 	};
@@ -96,9 +97,10 @@ ircd::ctx::when_any(it first,
 		[&p](it &f)
 		{
 			state(*f).then = [p, f]             // alloc
-			(shared_state_base &) mutable
+			(shared_state_base &sb) mutable
 			{
-				then(p, f);
+				if(sb.then)
+					then(p, f);
 			};
 		}
 	};

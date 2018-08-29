@@ -18,7 +18,7 @@ namespace ircd::ctx
 	template<> struct shared_state<void>;
 	template<class T> struct promise;
 	template<> struct promise<void>;
-	enum class future_state;
+	enum class future_state :uintptr_t;
 
 	template<class T> future_state state(const shared_state<T> &);
 	template<class T> bool is(const shared_state<T> &, const future_state &);
@@ -31,8 +31,9 @@ namespace ircd::ctx
 /// all be observed through state() or is(); only some can be set(). This is
 /// not for public manipulation.
 enum class ircd::ctx::future_state
+:uintptr_t
 {
-	INVALID,     ///< Null.
+	INVALID = 0, ///< Null.
 	PENDING,     ///< Promise is attached and busy.
 	READY,       ///< Result ready; promise is gone.
 	OBSERVED,    ///< Special case for when_*(); not a state; promise is gone.
@@ -47,6 +48,13 @@ struct ircd::ctx::shared_state_base
 	mutable dock cond;
 	std::exception_ptr eptr;
 	std::function<void (shared_state_base &)> then;
+
+	shared_state_base();
+	shared_state_base(shared_state_base &&) = default;
+	shared_state_base(const shared_state_base &) = delete;
+	shared_state_base &operator=(shared_state_base &&) = default;
+	shared_state_base &operator=(const shared_state_base &) = delete;
+	~shared_state_base() noexcept;
 };
 
 /// Internal shared state between future and promise appropos a future value.
