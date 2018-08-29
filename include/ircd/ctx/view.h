@@ -83,6 +83,7 @@ ircd::ctx::view<T, mutex>::operator()(T &t)
 		q.notify_all();
 	}};
 
+	const uninterruptible ui;
 	produce(&t, wanting);
 	produce(nullptr, waiting);
 }
