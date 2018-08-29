@@ -85,11 +85,6 @@ init_my_tls_crt()
 		fs::make_path(public_key_path_parts)
 	};
 
-	const std::string dhparam_file
-	{
-		fs::make_path(dhparam_path_parts)
-	};
-
 	const std::string cert_file
 	{
 		fs::make_path(certificate_path_parts)
@@ -106,6 +101,12 @@ init_my_tls_crt()
 		openssl::genrsa(private_key_file, public_key_file);
 	}
 
+/*
+	const std::string dhparam_file
+	{
+		fs::make_path(dhparam_path_parts)
+	};
+
 	if(!fs::exists(dhparam_file))
 	{
 		log::warning
@@ -117,6 +118,7 @@ init_my_tls_crt()
 
 		openssl::gendh(dhparam_file);
 	}
+*/
 
 	const json::object config{};
 	if(!fs::exists(cert_file))
