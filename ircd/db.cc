@@ -109,6 +109,11 @@ ircd::db::request
 	0, // don't prespawn because this is static
 };
 
+/// This mutex is necessary to serialize entry into rocksdb's write impl
+/// otherwise there's a risk of a deadlock if their internal pthread
+/// mutexes are contended. This is because a few parts of rocksdb are
+/// incorrectly using std::mutex directly when they ought to be using their
+/// rocksdb::port wrapper.
 decltype(ircd::db::write_mutex)
 ircd::db::write_mutex;
 
@@ -7505,11 +7510,6 @@ ircd::db::commit(database &d,
 	ircd::timer timer;
 	#endif
 
-	// This lock is necessary to serialize entry into rocksdb's write impl
-	// otherwise there's a risk of a deadlock if their internal pthread
-	// mutexes are contended. This is because a few parts of rocksdb are
-	// using std::mutex directly when they ought to be using their
-	// rocksdb::port wrapper.
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	const ctx::uninterruptible ui;
 	throw_on_error
