@@ -63,11 +63,11 @@ mc.event.prototype.cmp = function(other)
 		a == b?          0:
 		                 undefined;
 
-	let age_a = maybe(() => this.unsigned.age);
-	let age_b = maybe(() => other.unsigned.age);
-	let ret;// = cmp(age_b, age_a);
-	//if(ret !== undefined)
-	//	return ret;
+	let depth_a = maybe(() => this.depth);
+	let depth_b = maybe(() => other.depth);
+	let ret = cmp(depth_a, depth_b);
+	if(ret !== undefined)
+		return ret;
 
 	// The origin server ts is used next to calculate the age
 	let ts_a = maybe(() => this.origin_server_ts);
