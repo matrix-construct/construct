@@ -523,7 +523,18 @@ const
 {
 	const auto ret(operator[](key));
 	if(ret.empty())
-		throw std::out_of_range{"Failed to find value for required query string key"};
+	{
+		thread_local char buf[1024];
+		const string_view msg{fmt::sprintf
+		{
+			buf, "Failed to find value for required query string key '%s'", key
+		}};
+
+		throw std::out_of_range
+		{
+			msg.c_str() // fmt::sprintf() will null terminate msg
+		};
+	}
 
 	return ret;
 }
