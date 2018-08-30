@@ -39,7 +39,7 @@ mc.users.sync.event = function(event)
 
 	if(!(event.type in this.sync.event))
 	{
-		console.error("Unhandled mc.users.sync event[" + event.type + "]" + e);
+		console.error("Unhandled mc.users.sync event[" + event.type + "]" + event.id);
 		return;
 	}
 
