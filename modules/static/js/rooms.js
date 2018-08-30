@@ -189,6 +189,11 @@ mc.rooms.sort.focused = function(rooms)
 {
 	return rooms.sort((a, b) =>
 	{
+		let at = maybe(() => a.timeline.modified);
+		let bt = maybe(() => b.timeline.modified);
+		if(at && bt)
+			return at > bt? -1: at == bt? 0: 1;
+
 		let af = maybe(() => a.focus.last);
 		let bf = maybe(() => b.focus.last);
 		return af > bf? -1: af == bf? 0: 1;
