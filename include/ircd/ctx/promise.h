@@ -85,6 +85,8 @@ struct ircd::ctx::promise<void>
 
 namespace ircd::ctx
 {
+	template<class T> const shared_state<T> &state(const promise<T> &);
+	template<class T> shared_state<T> &state(promise<T> &);
 	template<class T> size_t refcount(const shared_state<T> &);
 	template<class T> void update(shared_state<T> &s);
 	template<class T> void invalidate(shared_state<T> &);
@@ -362,4 +364,18 @@ ircd::ctx::refcount(const shared_state<T> &st)
 			++ret;
 
 	return ret;
+}
+
+template<class T>
+ircd::ctx::shared_state<T> &
+ircd::ctx::state(promise<T> &promise)
+{
+    return promise.state();
+}
+
+template<class T>
+const ircd::ctx::shared_state<T> &
+ircd::ctx::state(const promise<T> &promise)
+{
+    return promise.state();
 }
