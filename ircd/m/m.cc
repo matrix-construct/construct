@@ -70,7 +70,9 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
-	presence::set(me, "offline", me_offline_status_msg);
+	if(!std::current_exception())
+		presence::set(me, "offline", me_offline_status_msg);
+
 	m::imports.clear();
 }
 catch(const m::error &e)
