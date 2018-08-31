@@ -544,28 +544,29 @@ ircd::http::query::string::operator[](const string_view &key)
 const
 {
 	string_view ret;
-	const auto match([&key, &ret](const query &query) -> bool
+	const auto match{[&key, &ret]
+	(const query &query) -> bool
 	{
-		if(query.first == key)
-		{
-			ret = query.second;
-			return false;         // false to break out of until()
-		}
-		else return true;
-	});
+		if(query.first != key)
+			return true;
 
-	until(match);
+		ret = query.second;
+		return false;         // false to break out of for_each()
+	}};
+
+	for_each(match);
 	return ret;
 }
 
 bool
-ircd::http::query::string::until(const std::function<bool (const query &)> &closure)
+ircd::http::query::string::for_each(const closure &view)
 const
 {
-	const auto action([&closure](const auto &attribute, const auto &context, auto &halt)
+	const auto action{[&view]
+	(const auto &attribute, const auto &context, auto &continue_)
 	{
-		halt = closure(attribute);
-	});
+		continue_ = view(attribute);
+	}};
 
 	const parser::rule<unused_type> grammar
 	{
@@ -573,27 +574,8 @@ const
 	};
 
 	const string_view &s(*this);
-	const char *start(s.data()), *const stop(s.data() + s.size());
+	const char *start(s.begin()), *const stop(s.end());
 	return qi::parse(start, stop, grammar);
-}
-
-void
-ircd::http::query::string::for_each(const std::function<void (const query &)> &closure)
-const
-{
-	const auto action([&closure](const auto &attribute, const auto &context, auto &halt)
-	{
-		closure(attribute);
-	});
-
-	const parser::rule<unused_type> grammar
-	{
-		-parser.question >> (parser.query[action] % parser.ampersand)
-	};
-
-	const string_view &s(*this);
-	const char *start(s.data()), *const stop(s.data() + s.size());
-	qi::parse(start, stop, grammar);
 }
 
 size_t

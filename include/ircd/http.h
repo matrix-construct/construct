@@ -134,9 +134,9 @@ struct ircd::http::query
 struct ircd::http::query::string
 :string_view
 {
-	void for_each(const std::function<void (const query &)> &) const;
-	bool until(const std::function<bool (const query &)> &) const;
+	using closure = std::function<bool (const query &)>;
 
+	bool for_each(const closure &) const;
 	string_view at(const string_view &key) const;
 	string_view operator[](const string_view &key) const;
 	template<class T> T at(const string_view &key) const;
