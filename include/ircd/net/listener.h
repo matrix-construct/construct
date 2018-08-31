@@ -29,6 +29,7 @@ struct ircd::net::listener
 
   public:
 	explicit operator json::object() const;
+	string_view name() const;
 
 	listener(const string_view &name,
 	         const json::object &options,
@@ -57,6 +58,7 @@ struct ircd::net::listener_udp
 
   public:
 	explicit operator json::object() const;
+	string_view name() const;
 
 	datagram &operator()(datagram &);
 

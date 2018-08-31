@@ -933,6 +933,14 @@ noexcept
 		acceptor->join();
 }
 
+ircd::string_view
+ircd::net::listener::name()
+const
+{
+	assert(acceptor);
+	return acceptor->name;
+}
+
 ircd::net::listener::operator
 ircd::json::object()
 const
@@ -986,6 +994,14 @@ ircd::net::listener_udp::operator()(datagram &datagram)
 {
 	assert(acceptor);
 	return acceptor->operator()(datagram);
+}
+
+ircd::string_view
+ircd::net::listener_udp::name()
+const
+{
+	assert(acceptor);
+	return acceptor->name;
 }
 
 ircd::net::listener_udp::operator
