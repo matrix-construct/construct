@@ -2596,6 +2596,52 @@ console_cmd__net__listen(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__net__listen__load(opt &out, const string_view &line)
+{
+	using prototype = bool (const string_view &);
+
+	static m::import<prototype> load_listener
+	{
+		"s_listen", "load_listener"
+	};
+
+	const params params{line, " ",
+	{
+		"name",
+	}};
+
+	if(load_listener(params.at("name")))
+		out << "loaded listener '" << params.at("name") << "'" << std::endl;
+	else
+		out << "failed to load listener '" << params.at("name") << "'" << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__net__listen__unload(opt &out, const string_view &line)
+{
+	using prototype = bool (const string_view &);
+
+	static m::import<prototype> unload_listener
+	{
+		"s_listen", "unload_listener"
+	};
+
+	const params params{line, " ",
+	{
+		"name",
+	}};
+
+	if(unload_listener(params.at("name")))
+		out << "unloaded listener '" << params.at("name") << "'" << std::endl;
+	else
+		out << "failed to unload listener '" << params.at("name") << "'" << std::endl;
+
+	return true;
+}
+
 //
 // client
 //
