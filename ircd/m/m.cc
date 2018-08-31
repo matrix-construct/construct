@@ -43,11 +43,6 @@ try
 	origin
 }
 {
-	const unwind::exceptional uw{[]
-	{
-		m::imports.clear();
-	}};
-
 	init_keys();
 	init_imports();
 	presence::set(me, "online", me_online_status_msg);
@@ -58,6 +53,8 @@ catch(const m::error &e)
 	{
 		log, "%s %s", e.what(), e.content
 	};
+
+	assert(m::imports.empty());
 }
 catch(const std::exception &e)
 {
@@ -65,6 +62,8 @@ catch(const std::exception &e)
 	{
 		log, "%s", e.what()
 	};
+
+	assert(m::imports.empty());
 }
 
 ircd::m::init::~init()
@@ -96,6 +95,11 @@ ircd::m::init::init_keys()
 try
 {
 	m::imports.emplace("s_keys"s, "s_keys"s);
+	const unwind::exceptional uw{[]
+	{
+		m::imports.erase("s_keys"s);
+	}};
+
 	m::import<void ()> init_my_keys
 	{
 		"s_keys", "init_my_keys"
@@ -129,13 +133,23 @@ try
 	}
 
 	m::imports.init();
-
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 }
-catch(...)
+catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
 	m::imports.clear();
+	throw m::error
+	{
+		"M_INIT_ERROR", "%s", e.what()
+	};
+}
+catch(const ctx::terminated &)
+{
+	const ctx::exception_handler eh;
+	m::imports.clear();
+	throw ctx::terminated{};
 }
 
 void
