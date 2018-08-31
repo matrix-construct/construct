@@ -2717,6 +2717,15 @@ console_cmd__client(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__client__clear(opt &out, const string_view &line)
+{
+	client::interrupt_all();
+	client::close_all();
+	client::wait_all();
+	return true;
+}
+
 //
 // key
 //
