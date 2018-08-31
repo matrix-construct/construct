@@ -6775,7 +6775,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	// Used for out.head, out.content, in.head, but in.content is dynamic
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_KiB
+		32_KiB
 	};
 
 	m::v1::state::opts stopts;
