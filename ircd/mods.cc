@@ -50,9 +50,13 @@ ircd::mods::available()
 	}
 	catch(const filesystem::filesystem_error &e)
 	{
-		log.warning("Module path [%s]: %s",
-		            dir,
-		            e.what());
+		log::warning
+		{
+			log, "Module path [%s]: %s",
+			dir,
+			e.what()
+		};
+
 		continue;
 	}
 
@@ -67,9 +71,12 @@ ircd::mods::fullpath(const string_view &name)
 	if(path.empty())
 	{
 		for(const auto &str : why)
-			log.error("candidate for module '%s' failed: %s",
-			          name,
-			          str);
+			log::error
+			{
+				log, "candidate for module '%s' failed: %s",
+				name,
+				str
+			};
 
 		throw error
 		{
@@ -259,9 +266,12 @@ try
 	};
 
 	const auto path(fullpath(name));
-	log.debug("Attempting to load '%s' @ `%s'",
-	          name,
-	          path.string());
+	log::debug
+	{
+		log, "Attempting to load '%s' @ `%s'",
+		name,
+		path.string()
+	};
 
 	const auto ret
 	{
@@ -274,10 +284,15 @@ try
 	if(ret->header->init)
 		ret->header->init();
 
-	log.info("Loaded module %s v%u \"%s\"",
-	         ret->name(),
-	         ret->header->version,
-	         !ret->description().empty()? ret->description() : "<no description>"s);
+	log::info
+	{
+		log, "Loaded module %s v%u \"%s\"",
+		ret->name(),
+		ret->header->version,
+		!ret->description().empty()?
+			ret->description():
+			"<no description>"s
+	};
 
 	return ret;
 }()}
@@ -285,10 +300,12 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("Failed to load '%s': %s",
-	          name,
-	          e.what());
-	throw;
+	log::error
+	{
+		log, "Failed to load '%s': %s",
+		name,
+		e.what()
+	};
 }
 
 ircd::string_view
@@ -579,7 +596,11 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("Failed to add path: %s", e.what());
+	log::error
+	{
+		log, "Failed to add path: %s", e.what()
+	};
+
 	return false;
 }
 
@@ -664,7 +685,10 @@ try
 
 	const auto ours([]
 	{
-		log.critical("std::terminate() called during the static construction of a module.");
+		log::critical
+		{
+			log, "std::terminate() called during the static construction of a module."
+		};
 
 		if(std::current_exception()) try
 		{
@@ -672,7 +696,10 @@ try
 		}
 		catch(const std::exception &e)
 		{
-			log.error("%s", e.what());
+			log::error
+			{
+				log, "%s", e.what()
+			};
 		}
 	});
 
@@ -700,10 +727,13 @@ try
 	&handle.get<mapi::header>(mapi::header_symbol_name)
 }
 {
-	log.debug("Loaded static segment of '%s' @ `%s' with %zu symbols",
-	          name(),
-	          location(),
-	          mangles.size());
+	log::debug
+	{
+		log, "Loaded static segment of '%s' @ `%s' with %zu symbols",
+		name(),
+		location(),
+		mangles.size()
+	};
 
 	if(unlikely(!header))
 		throw error
@@ -729,9 +759,12 @@ try
 	{
 		const auto &m(mod::loading.top());
 		m->children.emplace_back(this);
-		log.debug("Module '%s' recursively loaded by '%s'",
-		          name(),
-		          m->path.filename().string());
+		log::debug
+		{
+			log, "Module '%s' recursively loaded by '%s'",
+			name(),
+			m->path.filename().string()
+		};
 	}
 
 	// Without init exception, the module is now considered loaded.
@@ -776,9 +809,12 @@ bool ircd::mapi::static_destruction;
 ircd::mods::mod::~mod()
 noexcept try
 {
-	log.debug("Attempting unload module '%s' @ `%s'",
-	          name(),
-	          location());
+	log::debug
+	{
+		log, "Attempting unload module '%s' @ `%s'",
+		name(),
+		location()
+	};
 
 	unload();
 
@@ -787,9 +823,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("Module @%p unload: %s",
-	             (const void *)this,
-	             e.what());
+	log::critical
+	{
+		log, "Module @%p unload: %s",
+		(const void *)this,
+		e.what()
+	};
 
 	if(!ircd::debugmode)
 		return;
@@ -816,9 +855,12 @@ ircd::mods::mod::unload()
 			ptr->unload();
 	});
 
-	log.debug("Attempting static unload for '%s' @ `%s'",
-	          name(),
-	          location());
+	log::debug
+	{
+		log, "Attempting static unload for '%s' @ `%s'",
+		name(),
+		location()
+	};
 
 	mapi::static_destruction = false;
 	handle.unload();
@@ -828,9 +870,11 @@ ircd::mods::mod::unload()
 	{
 		log.critical("Module \"%s\" is stuck and failing to unload.", name());
 		log.critical("Module \"%s\" may result in undefined behavior if not fixed.", name());
-	} else {
-		log.info("Unloaded '%s'", name());
 	}
+	else log::info
+	{
+		log, "Unloaded '%s'", name()
+	};
 
 	return true;
 }
