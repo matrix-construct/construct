@@ -2582,7 +2582,7 @@ console_cmd__net__listen(opt &out, const string_view &line)
 		{ "port",                      token.at("port", 8448L)                  },
 		{ "certificate_pem_path",      token.at("certificate_pem_path")         },
 		{ "private_key_pem_path",      token.at("private_key_pem_path")         },
-		{ "tmp_dh_path",               token.at("tmp_dh_path")                  },
+		{ "tmp_dh_path",               token.at("tmp_dh_path", ""_sv)           },
 		{ "backlog",                   token.at("backlog", -1L)                 },
 		{ "max_connections",           token.at("max_connections", -1L)         },
 	};
