@@ -12,8 +12,11 @@ using namespace ircd;
 
 extern "C" std::list<net::listener> listeners;
 
-static void init_listener(const string_view &, const json::object &);
-static void init_listener(const m::event &);
+extern "C" bool loaded_listener(const string_view &name);
+static bool load_listener(const string_view &, const json::object &);
+static bool load_listener(const m::event &);
+extern "C" bool unload_listener(const string_view &name);
+extern "C" bool load_listener(const string_view &name);
 static void init_listeners();
 static void on_load();
 
@@ -54,7 +57,7 @@ init_listeners()
 	m::room::state{m::my_room}.for_each("ircd.listen", []
 	(const m::event &event)
 	{
-		init_listener(event);
+		load_listener(event);
 	});
 
 	if(listeners.empty())
@@ -72,7 +75,7 @@ init_listeners()
 static void
 create_listener(const m::event &event)
 {
-	init_listener(event);
+	load_listener(event);
 }
 
 /// Hook for a new listener description being sent.
@@ -91,8 +94,48 @@ create_listener_hook
 // Common
 //
 
-void
-init_listener(const m::event &event)
+bool
+load_listener(const string_view &name)
+try
+{
+	bool ret{false};
+	const m::room::state state{m::my_room};
+	state.get("ircd.listen", name, [&ret]
+	(const m::event &event)
+	{
+		ret = load_listener(event);
+	});
+
+	return ret;
+}
+catch(const m::NOT_FOUND &e)
+{
+	log::error
+	{
+		"Failed to find any listener configuration for '%s'",
+		name
+	};
+
+	return false;
+}
+
+bool
+unload_listener(const string_view &name)
+{
+	if(!loaded_listener(name))
+		return false;
+
+	listeners.remove_if([&name]
+	(const auto &listener)
+	{
+		return listener.name() == name;
+	});
+
+	return true;
+}
+
+bool
+load_listener(const m::event &event)
 {
 	const string_view &name
 	{
@@ -104,19 +147,27 @@ init_listener(const m::event &event)
 		json::get<"content"_>(event)
 	};
 
-	init_listener(name, opts);
+	return load_listener(name, opts);
 }
 
-void
-init_listener(const string_view &name,
+bool
+load_listener(const string_view &name,
               const json::object &opts)
 try
 {
+	if(loaded_listener(name))
+		throw error
+		{
+			"A listener with the name '%s' is already loaded", name
+		};
+
 	listeners.emplace_back(name, opts, []
 	(const auto &sock)
 	{
 		ircd::add_client(sock);
 	});
+
+	return true;
 }
 catch(const std::exception &e)
 {
@@ -126,4 +177,16 @@ catch(const std::exception &e)
 		name,
 		e.what()
 	};
+
+	return false;
+}
+
+bool
+loaded_listener(const string_view &name)
+{
+	return end(listeners) != std::find_if(begin(listeners), end(listeners), [&name]
+	(const auto &listener)
+	{
+		return listener.name() == name;
+	});
 }
