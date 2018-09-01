@@ -105,7 +105,7 @@ ircd::util::instance_list<ircd::client>::list
 
 ircd::client::init::init()
 {
-	context.add(size_t(settings.pool_size));
+	spawn();
 }
 
 ircd::client::init::~init()
@@ -146,6 +146,12 @@ ircd::client::init::wait()
 //
 // util
 //
+
+void
+ircd::client::spawn()
+{
+	context.add(size_t(settings.pool_size));
+}
 
 void
 ircd::client::interrupt_all()

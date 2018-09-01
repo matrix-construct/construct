@@ -40,6 +40,7 @@ struct ircd::client
 	static void interrupt_all();
 	static void close_all();
 	static void wait_all();
+	static void spawn();
 
 	struct conf *conf {&default_conf};
 	unique_buffer<mutable_buffer> head_buffer;

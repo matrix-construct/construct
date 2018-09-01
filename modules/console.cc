@@ -2726,6 +2726,13 @@ console_cmd__client__clear(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__client__spawn(opt &out, const string_view &line)
+{
+	client::spawn();
+	return true;
+}
+
 //
 // key
 //
