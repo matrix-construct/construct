@@ -853,7 +853,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 {
 	out << "   "
 	    << "ID"
-	    << "   "
+	    << "    "
 	    << "STATE"
 	    << "   "
 	    << "YIELDS"
