@@ -80,27 +80,16 @@ ircd::m::sync::method_get
 ircd::resource::response
 ircd::m::sync::handle_get(client &client,
                           const resource::request &request)
+try
 {
 	const args args
 	{
 		request
 	};
 
-	if(!short_poll(client, request, args))
-		longpoll::poll(client, request, args);
-
-	return {};
-}
-
-bool
-ircd::m::sync::short_poll(client &client,
-                          const resource::request &request,
-                          const args &args)
-try
-{
 	shortpoll sp
 	{
-		client, request, args
+		client, args
 	};
 
 	if(sp.since > sp.current)
@@ -119,12 +108,19 @@ try
 		384 //TODO: conf
 	};
 
-	return
+	const bool shortpolled
+	{
 		sp.delta == 0?
 			false:
 		sp.delta > max_linear_sync?
-			polylog::handle(client, request, sp, top):
-			linear::handle(client, request, sp, top);
+			polylog::handle(client, sp, top):
+			linear::handle(client, sp, top)
+	};
+
+	if(!shortpolled)
+		longpoll::poll(client, args);
+
+	return {};
 }
 catch(const bad_lex_cast &e)
 {
@@ -136,7 +132,6 @@ catch(const bad_lex_cast &e)
 
 void
 ircd::m::sync::longpoll::poll(client &client,
-                              const resource::request &request,
                               const args &args)
 try
 {
@@ -156,7 +151,7 @@ try
 		if(!accepted.opts->notify_clients)
 			continue;
 
-		if(handle(client, request, args, accepted))
+		if(handle(client, args, accepted))
 			return;
 	}
 }
@@ -182,7 +177,6 @@ catch(const ctx::timeout &e)
 
 bool
 ircd::m::sync::longpoll::handle(client &client,
-                                const resource::request &request,
                                 const args &args,
                                 const m::event &event)
 {
@@ -194,7 +188,7 @@ ircd::m::sync::longpoll::handle(client &client,
 	if(room_id)
 	{
 		const m::room room{room_id};
-		return handle(client, request, args, event, room);
+		return handle(client, args, event, room);
 	}
 
 	return false;
@@ -202,14 +196,13 @@ ircd::m::sync::longpoll::handle(client &client,
 
 bool
 ircd::m::sync::longpoll::handle(client &client,
-                                const resource::request &request,
                                 const args &args,
                                 const m::event &event,
                                 const m::room &room)
 {
 	const m::user::id &user_id
 	{
-		request.user_id
+		args.request.user_id
 	};
 
 	if(!room.membership(user_id, "join"))
@@ -222,12 +215,15 @@ ircd::m::sync::longpoll::handle(client &client,
 
 	const auto rooms
 	{
-		sync_rooms(client, request, request.user_id, room, args, event)
+		sync_rooms(client, user_id, room, args, event)
 	};
 
 	const m::user::room ur
 	{
-		m::user::id{request.user_id}
+		m::user::id
+		{
+			args.request.user_id
+		}
 	};
 
 	std::vector<json::value> presents;
@@ -267,7 +263,6 @@ ircd::m::sync::longpoll::handle(client &client,
 
 std::string
 ircd::m::sync::longpoll::sync_rooms(client &client,
-                                    const resource::request &request,
                                     const m::user::id &user_id,
                                     const m::room &room,
                                     const args &args,
@@ -377,7 +372,6 @@ ircd::m::sync::longpoll::sync_room(client &client,
 
 bool
 ircd::m::sync::linear::handle(client &client,
-                              const resource::request &request,
                               shortpoll &sp,
                               json::stack::object &object)
 {
@@ -407,7 +401,7 @@ ircd::m::sync::linear::handle(client &client,
 			json::get<"room_id"_>(event)
 		};
 
-		if(!room.membership(request.user_id))
+		if(!room.membership(sp.args.request.user_id))
 			return true;
 
 		auto it
@@ -503,7 +497,6 @@ ircd::m::sync::linear::handle(client &client,
 
 bool
 ircd::m::sync::polylog::handle(client &client,
-                               const resource::request &request,
                                shortpoll &sp,
                                json::stack::object &object)
 try

@@ -14,10 +14,8 @@ namespace ircd::m::sync
 	struct stats;
 	struct shortpoll;
 
-	static bool short_poll(client &, const resource::request &, const args &);
 	static resource::response handle_get(client &, const resource::request &);
 	extern resource::method method_get;
-
 	extern const string_view description;
 	extern resource resource;
 }
@@ -25,15 +23,15 @@ namespace ircd::m::sync
 namespace ircd::m::sync::longpoll
 {
 	static std::string sync_room(client &, const m::room &, const args &, const m::event &);
-	static std::string sync_rooms(client &, const resource::request &, const m::user::id &, const m::room &, const args &, const m::event &);
-	static bool handle(client &, const resource::request &, const args &, const m::event &, const m::room &);
-	static bool handle(client &, const resource::request &, const args &, const m::event &);
-	static void poll(client &, const resource::request &, const args &);
+	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const m::event &);
+	static bool handle(client &, const args &, const m::event &, const m::room &);
+	static bool handle(client &, const args &, const m::event &);
+	static void poll(client &, const args &);
 }
 
 namespace ircd::m::sync::linear
 {
-	static bool handle(client &, const resource::request &, shortpoll &, json::stack::object &);
+	static bool handle(client &, shortpoll &, json::stack::object &);
 }
 
 namespace ircd::m::sync::polylog
@@ -50,7 +48,7 @@ namespace ircd::m::sync::polylog
 	static void rooms(shortpoll &, json::stack::object &);
 	static void presence(shortpoll &, json::stack::object &);
 	static void account_data(shortpoll &, json::stack::object &);
-	static bool handle(client &, const resource::request &, shortpoll &, json::stack::object &);
+	static bool handle(client &, shortpoll &, json::stack::object &);
 }
 
 /// Argument parser for the client's /sync request
@@ -59,6 +57,10 @@ struct ircd::m::sync::args
 	static conf::item<milliseconds> timeout_max;
 	static conf::item<milliseconds> timeout_min;
 	static conf::item<milliseconds> timeout_default;
+
+	args(const resource::request &request)
+	:request{request}
+	{}
 
 	const resource::request &request;
 
@@ -106,10 +108,6 @@ struct ircd::m::sync::args
 		// marked as being online when it uses this API. One of: ["offline"]
 		request.query.get("set_presence", true)
 	};
-
-	args(const resource::request &request)
-	:request{request}
-	{}
 };
 
 struct ircd::m::sync::stats
@@ -123,10 +121,19 @@ struct ircd::m::sync::shortpoll
 {
 	static conf::item<size_t> flush_hiwat;
 
-	ircd::client &client;
-	const resource::request &request;
-	const sync::args &args;
+	shortpoll(ircd::client &client,
+	          const sync::args &args)
+	:client{client}
+	,args{args}
+	{}
+
 	sync::stats stats;
+	ircd::client &client;
+	const sync::args &args;
+	const resource::request &request
+	{
+		args.request
+	};
 
 	const uint64_t &since
 	{
@@ -180,33 +187,35 @@ struct ircd::m::sync::shortpoll
 		false
 	};
 
-	unique_buffer<mutable_buffer> buf {96_KiB};
+	unique_buffer<mutable_buffer> buf
+	{
+		96_KiB
+	};
+
 	std::unique_ptr<resource::response::chunked> response;
 	json::stack out
 	{
-		buf, [this](const const_buffer &buf)
-		{
-			if(!committed)
-				return buf;
-
-			if(!response)
-				response = std::make_unique<resource::response::chunked>
-				(
-					client, http::OK, "application/json; charset=utf-8"
-				);
-
-			stats.flush_bytes += response->write(buf);
-			stats.flush_count++;
-			return buf;
-		},
-		size_t(flush_hiwat)
+		buf, std::bind(&shortpoll::flush, this, ph::_1), size_t(flush_hiwat)
 	};
 
-	shortpoll(ircd::client &client,
-	          const resource::request &request,
-	          const sync::args &args)
-	:client{client}
-	,request{request}
-	,args{args}
-	{}
+	void commit()
+	{
+		response = std::make_unique<resource::response::chunked>
+		(
+			client, http::OK, "application/json; charset=utf-8"
+		);
+	}
+
+	const_buffer flush(const const_buffer &buf)
+	{
+		if(!committed)
+			return buf;
+
+		if(!response)
+			commit();
+
+		stats.flush_bytes += response->write(buf);
+		stats.flush_count++;
+		return buf;
+	}
 };
