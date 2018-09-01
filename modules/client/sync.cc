@@ -798,6 +798,15 @@ ircd::m::sync::polylog::room_state(shortpoll &sp,
 	};
 
 	state.for_each([&]
+	(const m::event::idx &event_idx)
+	{
+		if(event_idx < sp.since || event_idx >= sp.current)
+			return;
+
+		m::prefetch(event_idx, fopts);
+	});
+
+	state.for_each([&]
 	(const m::event &event)
 	{
 		if(at<"depth"_>(event) >= int64_t(sp.state_at))
@@ -892,6 +901,8 @@ ircd::m::sync::polylog::room_timeline_events(shortpoll &sp,
 
 		if(it.event_idx() >= sp.current)
 			break;
+
+		m::prefetch(it.event_idx(), fopts);
 	}
 
 	limited = i >= 10;
