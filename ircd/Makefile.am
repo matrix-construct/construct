@@ -89,7 +89,6 @@ libircd_la_SOURCES =   \
 	lexical.cc         \
 	tokens.cc          \
 	json.cc            \
-	cbor.cc            \
 	locale.cc          \
 	logger.cc          \
 	info.cc            \

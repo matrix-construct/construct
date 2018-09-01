@@ -53,7 +53,7 @@ namespace ircd
 #include "parse.h"
 #include "rfc1459.h"
 #include "json/json.h"
-#include "cbor/cbor.h"
+//#include "cbor/cbor.h"
 #include "openssl.h"
 #include "http.h"
 #include "fmt.h"
