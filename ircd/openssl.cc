@@ -303,7 +303,7 @@ ircd::openssl::append_entries(X509 &cert,
 		const long value
 		{
 			opts.get<long>("notAfter", 0)?:
-			60 * 60 * 24 * opts.get<long>("days", 7L)
+			60 * 60 * 24 * opts.get<long>("days", 60L)
 		};
 
 		ASN1_TIME *const notAfter{X509_get_notAfter(&cert)};
