@@ -1369,6 +1369,51 @@ decltype(ircd::m::event::fetch::default_opts)
 ircd::m::event::fetch::default_opts
 {};
 
+void
+ircd::m::prefetch(const event::id &event_id,
+                  const event::fetch::opts &opts)
+{
+	prefetch(index(event_id), opts);
+}
+
+void
+ircd::m::prefetch(const event::id &event_id,
+                  const string_view &key)
+{
+	prefetch(index(event_id), key);
+}
+
+void
+ircd::m::prefetch(const event::idx &event_idx,
+                  const event::fetch::opts &opts)
+{
+	const vector_view<const string_view> cols
+	{
+		opts.keys
+	};
+
+	for(const auto &col : cols)
+		if(col)
+			prefetch(event_idx, col);
+}
+
+void
+ircd::m::prefetch(const event::idx &event_idx,
+                  const string_view &key)
+{
+	const auto &column_idx
+	{
+		json::indexof<event>(key)
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	db::prefetch(column, byte_view<string_view>{event_idx});
+}
+
 ircd::const_buffer
 ircd::m::get(const event::id &event_id,
              const string_view &key,

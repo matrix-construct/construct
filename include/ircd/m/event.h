@@ -232,6 +232,11 @@ struct ircd::m::event::fetch
 	friend const_buffer get(std::nothrow_t, const id &, const string_view &key, const mutable_buffer &out);
 	friend const_buffer get(const idx &, const string_view &key, const mutable_buffer &out);
 	friend const_buffer get(const id &, const string_view &key, const mutable_buffer &out);
+
+	friend void prefetch(const idx &, const string_view &key);
+	friend void prefetch(const idx &, const opts & = default_opts);
+	friend void prefetch(const id &, const string_view &key);
+	friend void prefetch(const id &, const opts & = default_opts);
 };
 
 struct ircd::m::event::fetch::opts
