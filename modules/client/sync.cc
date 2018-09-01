@@ -8,153 +8,94 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "sync.int.h"
+#include "sync.h"
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Client 6.2.1 :Sync"
 };
 
-//
-// sync resource
-//
-
-resource
-sync_resource
+decltype(ircd::m::sync::resource)
+ircd::m::sync::resource
 {
 	"/_matrix/client/r0/sync",
 	{
-		sync_description
+		description
 	}
 };
 
-const string_view
-sync_description
-{R"(
-
-6.2.1
+decltype(ircd::m::sync::description)
+ircd::m::sync::description
+{R"(6.2.1
 
 Synchronise the client's state with the latest state on the server. Clients
 use this API when they first log in to get an initial snapshot of the state
 on the server, and then continue to call this API to get incremental deltas
 to the state, and to receive new messages.
-
 )"};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_max
+{
+	{ "name",     "ircd.client.sync.timeout.max"  },
+	{ "default",  15 * 1000L                      },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_min
+{
+	{ "name",     "ircd.client.sync.timeout.min"  },
+	{ "default",  5 * 1000L                       },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_default
+{
+	{ "name",     "ircd.client.sync.timeout.default"  },
+	{ "default",  10 * 1000L                          },
+};
+
+ircd::conf::item<size_t>
+ircd::m::sync::shortpoll::flush_hiwat
+{
+	{ "name",     "ircd.client.sync.flush.hiwat"  },
+	{ "default",  long(24_KiB)                    },
+};
 
 //
 // GET sync
 //
 
-resource::method
-get_sync
+decltype(ircd::m::sync::method_get)
+ircd::m::sync::method_get
 {
-	sync_resource, "GET", sync,
+	resource, "GET", handle_get,
 	{
-		get_sync.REQUIRES_AUTH,
+		method_get.REQUIRES_AUTH,
 		-1s,
 	}
 };
 
-resource::response
-sync(client &client,
-     const resource::request &request)
+ircd::resource::response
+ircd::m::sync::handle_get(client &client,
+                          const resource::request &request)
 {
-	const syncargs args
+	const args args
 	{
 		request
 	};
 
-	return since_sync(client, request, args);
-}
-
-conf::item<milliseconds>
-sync_timeout_max
-{
-	{ "name",     "ircd.client.sync.timeout.max" },
-	{ "default",  15 * 1000L                    },
-};
-
-conf::item<milliseconds>
-sync_timeout_min
-{
-	{ "name",     "ircd.client.sync.timeout.min" },
-	{ "default",  5 * 1000L                     },
-};
-
-conf::item<milliseconds>
-sync_timeout_default
-{
-	{ "name",     "ircd.client.sync.timeout.default" },
-	{ "default",  10 * 1000L                        },
-};
-
-conf::item<size_t>
-sync_flush_hiwat
-{
-	{ "name",     "ircd.client.sync.flush.hiwat" },
-	{ "default",  long(24_KiB)                   },
-};
-
-syncargs::syncargs(const resource::request &request)
-:filter_id
-{
-	// 6.2.1 The ID of a filter created using the filter API or a filter JSON object
-	// encoded as a string. The server will detect whether it is an ID or a JSON object
-	// by whether the first character is a "{" open brace. Passing the JSON inline is best
-	// suited to one off requests. Creating a filter using the filter API is recommended
-	// for clients that reuse the same filter multiple times, for example in long poll requests.
-	request.query["filter"]
-}
-,since
-{
-	// 6.2.1 A point in time to continue a sync from.
-	request.query.get<uint64_t>("since", 0)
-}
-,timesout{[&request]
-{
-	// 6.2.1 The maximum time to poll in milliseconds before returning this request.
-	auto ret(request.query.get("timeout", milliseconds(sync_timeout_default)));
-	ret = std::min(ret, milliseconds(sync_timeout_max));
-	ret = std::max(ret, milliseconds(sync_timeout_min));
-	return now<steady_point>() + ret;
-}()}
-,full_state
-{
-	// 6.2.1 Controls whether to include the full state for all rooms the user is a member of.
-	// If this is set to true, then all state events will be returned, even if since is non-empty.
-	// The timeline will still be limited by the since parameter. In this case, the timeout
-	// parameter will be ignored and the query will return immediately, possibly with an
-	// empty timeline. If false, and since is non-empty, only state which has changed since
-	// the point indicated by since will be returned. By default, this is false.
-	request.query.get("full_state", false)
-}
-,set_presence
-{
-	// 6.2.1 Controls whether the client is automatically marked as online by polling this API.
-	// If this parameter is omitted then the client is automatically marked as online when it
-	// uses this API. Otherwise if the parameter is set to "offline" then the client is not
-	// marked as being online when it uses this API. One of: ["offline"]
-	request.query.get("set_presence", true)
-}
-{
-}
-
-resource::response
-since_sync(client &client,
-           const resource::request &request,
-           const syncargs &args)
-{
-	if(!shortpoll_sync(client, request, args))
-		longpoll_sync(client, request, args);
+	if(!short_poll(client, request, args))
+		longpoll::poll(client, request, args);
 
 	return {};
 }
 
 bool
-shortpoll_sync(client &client,
-               const resource::request &request,
-               const syncargs &args)
+ircd::m::sync::short_poll(client &client,
+                          const resource::request &request,
+                          const args &args)
 try
 {
 	shortpoll sp
@@ -175,15 +116,15 @@ try
 
 	static const auto max_linear_sync
 	{
-		8 //TODO: conf
+		384 //TODO: conf
 	};
 
 	return
 		sp.delta == 0?
 			false:
 		sp.delta > max_linear_sync?
-			polylog_sync(client, request, sp, top):
-			linear_sync(client, request, sp, top);
+			polylog::handle(client, request, sp, top):
+			linear::handle(client, request, sp, top);
 }
 catch(const bad_lex_cast &e)
 {
@@ -193,11 +134,252 @@ catch(const bad_lex_cast &e)
 	};
 }
 
+void
+ircd::m::sync::longpoll::poll(client &client,
+                              const resource::request &request,
+                              const args &args)
+try
+{
+	std::unique_lock<decltype(m::vm::accept)> lock
+	{
+		m::vm::accept
+	};
+
+	while(1)
+	{
+		auto &accepted
+		{
+			m::vm::accept.wait_until(lock, args.timesout)
+		};
+
+		assert(accepted.opts);
+		if(!accepted.opts->notify_clients)
+			continue;
+
+		if(handle(client, request, args, accepted))
+			return;
+	}
+}
+catch(const ctx::timeout &e)
+{
+	const ctx::exception_handler eh;
+
+	const int64_t &since
+	{
+		int64_t(m::vm::current_sequence)
+	};
+
+	resource::response
+	{
+		client, json::members
+		{
+			{ "next_batch",  json::value { lex_cast(int64_t(since)), json::STRING }  },
+			{ "rooms",       json::object{}  },
+			{ "presence",    json::object{}  },
+		}
+	};
+}
+
 bool
-linear_sync(client &client,
-            const resource::request &request,
-            shortpoll &sp,
-            json::stack::object &object)
+ircd::m::sync::longpoll::handle(client &client,
+                                const resource::request &request,
+                                const args &args,
+                                const m::event &event)
+{
+	const auto &room_id
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	if(room_id)
+	{
+		const m::room room{room_id};
+		return handle(client, request, args, event, room);
+	}
+
+	return false;
+}
+
+bool
+ircd::m::sync::longpoll::handle(client &client,
+                                const resource::request &request,
+                                const args &args,
+                                const m::event &event,
+                                const m::room &room)
+{
+	const m::user::id &user_id
+	{
+		request.user_id
+	};
+
+	if(!room.membership(user_id, "join"))
+		return false;
+
+//	if(json::get<"type"_>(event) == "m.room.message")
+//		if(json::get<"sender"_>(event) == user_id)
+//			return false;
+
+
+	const auto rooms
+	{
+		sync_rooms(client, request, request.user_id, room, args, event)
+	};
+
+	const m::user::room ur
+	{
+		m::user::id{request.user_id}
+	};
+
+	std::vector<json::value> presents;
+	ur.get(std::nothrow, "ircd.presence", [&]
+	(const m::event &event)
+	{
+		const auto &content
+		{
+			at<"content"_>(event)
+		};
+
+		presents.emplace_back(event);
+	});
+
+	const json::members presence
+	{
+		{ "events", json::value { presents.data(), presents.size() } },
+	};
+
+	const auto &next_batch
+	{
+		int64_t(m::vm::current_sequence)
+	};
+
+	resource::response
+	{
+		client, json::members
+		{
+			{ "next_batch",  json::value { lex_cast(next_batch), json::STRING } },
+			{ "rooms",       rooms       },
+			{ "presence",    presence    },
+		}
+	};
+
+	return true;
+}
+
+std::string
+ircd::m::sync::longpoll::sync_rooms(client &client,
+                                    const resource::request &request,
+                                    const m::user::id &user_id,
+                                    const m::room &room,
+                                    const args &args,
+                                    const m::event &event)
+{
+	std::vector<std::string> r[3];
+	std::vector<json::member> m[3];
+	r[0].emplace_back(sync_room(client, room, args, event));
+	m[0].emplace_back(room.room_id, r[0].back());
+
+	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
+	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
+	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
+	return json::strung(json::members
+	{
+		{ "join",     join    },
+		{ "leave",    leave   },
+		{ "invite",   invite  },
+	});
+}
+
+std::string
+ircd::m::sync::longpoll::sync_room(client &client,
+                                   const m::room &room,
+                                   const args &args,
+                                   const m::event &event)
+{
+	const auto &since
+	{
+		args.since
+	};
+
+	std::vector<std::string> state;
+	if(defined(json::get<"event_id"_>(event)) && defined(json::get<"state_key"_>(event)))
+		state.emplace_back(json::strung(event));
+
+	const json::strung state_serial
+	{
+		state.data(), state.data() + state.size()
+	};
+
+	std::vector<std::string> timeline;
+	if(defined(json::get<"event_id"_>(event)) && !defined(json::get<"state_key"_>(event)))
+		timeline.emplace_back(json::strung(event));
+
+	const json::strung timeline_serial
+	{
+		timeline.data(), timeline.data() + timeline.size()
+	};
+
+	std::vector<std::string> ephemeral;
+	if(json::get<"type"_>(event) == "m.typing") //TODO: X
+		ephemeral.emplace_back(json::strung{event});
+
+	if(json::get<"type"_>(event) == "m.receipt") //TODO: X
+		ephemeral.emplace_back(json::strung(event));
+
+	const json::strung ephemeral_serial
+	{
+		ephemeral.data(), ephemeral.data() + ephemeral.size()
+	};
+
+	const auto &prev_batch
+	{
+		!timeline.empty()?
+			unquote(json::object{timeline.front()}.get("event_id")):
+			string_view{}
+	};
+
+	//TODO: XXX
+	const bool limited
+	{
+		false
+	};
+
+	const int64_t notes
+	{
+		0
+	};
+
+	const json::members body
+	{
+		{ "account_data", json::members{} },
+		{ "unread_notifications",
+		{
+			{ "highlight_count",    int64_t(0) },
+			{ "notification_count", notes },
+		}},
+		{ "ephemeral",
+		{
+			{ "events", ephemeral_serial },
+		}},
+		{ "state",
+		{
+			{ "events", state_serial }
+		}},
+		{ "timeline",
+		{
+			{ "events",      timeline_serial  },
+			{ "prev_batch",  prev_batch       },
+			{ "limited",     limited          },
+		}},
+	};
+
+	return json::strung(body);
+}
+
+bool
+ircd::m::sync::linear::handle(client &client,
+                              const resource::request &request,
+                              shortpoll &sp,
+                              json::stack::object &object)
 {
 	uint64_t since
 	{
@@ -319,303 +501,29 @@ linear_sync(client &client,
 	return true;
 }
 
-static bool
-synchronize(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event);
-
-void
-longpoll_sync(client &client,
-              const resource::request &request,
-              const syncargs &args)
-try
-{
-	std::unique_lock<decltype(m::vm::accept)> lock
-	{
-		m::vm::accept
-	};
-
-	while(1)
-	{
-		auto &accepted
-		{
-			m::vm::accept.wait_until(lock, args.timesout)
-		};
-
-		assert(accepted.opts);
-		if(!accepted.opts->notify_clients)
-			continue;
-
-		if(synchronize(client, request, args, accepted))
-			return;
-	}
-}
-catch(const ctx::timeout &e)
-{
-	const ctx::exception_handler eh;
-
-	const int64_t &since
-	{
-		int64_t(m::vm::current_sequence)
-	};
-
-	resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  json::value { lex_cast(int64_t(since)), json::STRING }  },
-			{ "rooms",       json::object{}  },
-			{ "presence",    json::object{}  },
-		}
-	};
-}
-
-static bool
-synchronize(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event,
-            const m::room::id &room_id);
-
 bool
-synchronize(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event)
-{
-	const auto &room_id
-	{
-		json::get<"room_id"_>(event)
-	};
-
-	if(room_id)
-		return synchronize(client, request, args, event, room_id);
-
-	return false;
-}
-
-resource::response
-update_sync(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event,
-            const m::room &room);
-
-bool
-synchronize(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event,
-            const m::room::id &room_id)
-{
-	const m::room room
-	{
-		room_id
-	};
-
-	const m::user::id &user_id
-	{
-		request.user_id
-	};
-
-	if(!room.membership(user_id, "join"))
-		return false;
-
-	update_sync(client, request, args, event, room);
-	return true;
-}
-
-std::string
-update_sync_room(client &client,
-                 const m::room &room,
-                 const uint64_t &since,
-                 const m::event &event)
-{
-	std::vector<std::string> state;
-	if(defined(json::get<"event_id"_>(event)) && defined(json::get<"state_key"_>(event)))
-		state.emplace_back(json::strung(event));
-
-	const json::strung state_serial
-	{
-		state.data(), state.data() + state.size()
-	};
-
-	std::vector<std::string> timeline;
-	if(defined(json::get<"event_id"_>(event)) && !defined(json::get<"state_key"_>(event)))
-		timeline.emplace_back(json::strung(event));
-
-	const json::strung timeline_serial
-	{
-		timeline.data(), timeline.data() + timeline.size()
-	};
-
-	std::vector<std::string> ephemeral;
-	if(json::get<"type"_>(event) == "m.typing") //TODO: X
-		ephemeral.emplace_back(json::strung{event});
-
-	if(json::get<"type"_>(event) == "m.receipt") //TODO: X
-		ephemeral.emplace_back(json::strung(event));
-
-	const json::strung ephemeral_serial
-	{
-		ephemeral.data(), ephemeral.data() + ephemeral.size()
-	};
-
-	const auto &prev_batch
-	{
-		!timeline.empty()?
-			unquote(json::object{timeline.front()}.get("event_id")):
-			string_view{}
-	};
-
-	//TODO: XXX
-	const bool limited
-	{
-		false
-	};
-
-	const int64_t notes
-	{
-		0
-	};
-
-	const json::members body
-	{
-		{ "account_data", json::members{} },
-		{ "unread_notifications",
-		{
-			{ "highlight_count",    int64_t(0) },
-			{ "notification_count", notes },
-		}},
-		{ "ephemeral",
-		{
-			{ "events", ephemeral_serial },
-		}},
-		{ "state",
-		{
-			{ "events", state_serial }
-		}},
-		{ "timeline",
-		{
-			{ "events",      timeline_serial  },
-			{ "prev_batch",  prev_batch       },
-			{ "limited",     limited          },
-		}},
-	};
-
-	return json::strung(body);
-}
-
-std::string
-update_sync_rooms(client &client,
-                  const resource::request &request,
-                  const m::user::id &user_id,
-                  const m::room &room,
-                  const uint64_t &since,
-                  const m::event &event)
-{
-	std::vector<std::string> r[3];
-	std::vector<json::member> m[3];
-	r[0].emplace_back(update_sync_room(client, room, since, event));
-	m[0].emplace_back(room.room_id, r[0].back());
-
-	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
-	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
-	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
-	return json::strung(json::members
-	{
-		{ "join",     join    },
-		{ "leave",    leave   },
-		{ "invite",   invite  },
-	});
-}
-
-resource::response
-update_sync(client &client,
-            const resource::request &request,
-            const syncargs &args,
-            const m::event &event,
-            const m::room &room)
-{
-	const auto rooms
-	{
-		update_sync_rooms(client, request, request.user_id, room, args.since, event)
-	};
-
-	const m::user::room ur
-	{
-		m::user::id{request.user_id}
-	};
-
-	std::vector<json::value> presents;
-	ur.get(std::nothrow, "ircd.presence", [&]
-	(const m::event &event)
-	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
-
-		presents.emplace_back(event);
-	});
-
-	const json::members presence
-	{
-		{ "events", json::value { presents.data(), presents.size() } },
-	};
-
-	const auto &next_batch
-	{
-		int64_t(m::vm::current_sequence)
-	};
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  json::value { lex_cast(next_batch), json::STRING } },
-			{ "rooms",       rooms       },
-			{ "presence",    presence    },
-		}
-	};
-}
-
-static void
-polylog_sync_rooms(shortpoll &sp,
-                   json::stack::object &object);
-
-static void
-polylog_sync_presence(shortpoll &sp,
-                      json::stack::object &object);
-
-static void
-polylog_sync_account_data(shortpoll &sp,
-                          json::stack::object &object);
-
-bool
-polylog_sync(client &client,
-             const resource::request &request,
-             shortpoll &sp,
-             json::stack::object &object)
+ircd::m::sync::polylog::handle(client &client,
+                               const resource::request &request,
+                               shortpoll &sp,
+                               json::stack::object &object)
 try
 {
 	{
 		json::stack::member member{object, "rooms"};
 		json::stack::object object{member};
-		polylog_sync_rooms(sp, object);
+		rooms(sp, object);
 	}
 
 	{
 		json::stack::member member{object, "presence"};
 		json::stack::object object{member};
-		polylog_sync_presence(sp, object);
+		presence(sp, object);
 	}
 
 	{
 		json::stack::member member{object, "account_data"};
 		json::stack::object object{member};
-		polylog_sync_account_data(sp, object);
+		account_data(sp, object);
 	}
 
 	{
@@ -624,6 +532,8 @@ try
 			object, "next_batch", json::value(lex_cast(int64_t(sp.current)), json::STRING)
 		};
 	}
+
+	std::cout << "polylog sync in: " << sp.stats.timer.at<seconds>().count() << " seconds" << std::endl;
 
 	return sp.committed;
 }
@@ -642,15 +552,19 @@ catch(const std::exception &e)
 }
 
 void
-polylog_sync_presence(shortpoll &sp,
-                      json::stack::object &out)
+ircd::m::sync::polylog::presence(shortpoll &sp,
+                                 json::stack::object &out)
 {
 	json::stack::member member{out, "events"};
 	json::stack::array array{member};
+
 	const m::user::mitsein mitsein
 	{
 		sp.user
 	};
+
+try
+{
 
 	mitsein.for_each("join", [&sp, &array]
 	(const m::user &user)
@@ -690,11 +604,25 @@ polylog_sync_presence(shortpoll &sp,
 			}
 		});
 	});
+
+}
+catch(const json::not_found &e)
+{
+	log::error
+	{
+		"polylog sync for presence error %lu to %lu (vm @ %zu) :%s"
+		,sp.since
+		,sp.current
+		,m::vm::current_sequence
+		,e.what()
+	};
+}
+
 }
 
 void
-polylog_sync_account_data(shortpoll &sp,
-                          json::stack::object &out)
+ircd::m::sync::polylog::account_data(shortpoll &sp,
+                                     json::stack::object &out)
 {
 	json::stack::member member{out, "events"};
 	json::stack::array array{member};
@@ -734,44 +662,33 @@ polylog_sync_account_data(shortpoll &sp,
 	});
 }
 
-static void
-polylog_sync_rooms__membership(shortpoll &sp,
-                                   json::stack::object &object,
-                                   const string_view &membership);
-
 void
-polylog_sync_rooms(shortpoll &sp,
-                       json::stack::object &object)
+ircd::m::sync::polylog::rooms(shortpoll &sp,
+                              json::stack::object &object)
 {
 	{
 		json::stack::member member{object, "join"};
 		json::stack::object object{member};
-		polylog_sync_rooms__membership(sp, object, "join");
+		rooms__membership(sp, object, "join");
 	}
 
 	{
 		json::stack::member member{object, "leave"};
 		json::stack::object object{member};
-		polylog_sync_rooms__membership(sp, object, "leave");
+		rooms__membership(sp, object, "leave");
 	}
 
 	{
 		json::stack::member member{object, "invite"};
 		json::stack::object object{member};
-		polylog_sync_rooms__membership(sp, object, "invite");
+		rooms__membership(sp, object, "invite");
 	}
 }
 
-static void
-polylog_sync_room(shortpoll &sp,
-                  json::stack::object &object,
-                  const m::room &room,
-                  const string_view &membership);
-
 void
-polylog_sync_rooms__membership(shortpoll &sp,
-                               json::stack::object &object,
-                               const string_view &membership)
+ircd::m::sync::polylog::rooms__membership(shortpoll &sp,
+                                          json::stack::object &object,
+                                          const string_view &membership)
 {
 	sp.rooms.for_each(membership, [&]
 	(const m::room &room, const string_view &)
@@ -782,46 +699,24 @@ polylog_sync_rooms__membership(shortpoll &sp,
 		const m::room::id &room_id{room.room_id};
 		json::stack::member member{object, room_id};
 		json::stack::object object{member};
-		polylog_sync_room(sp, object, room, membership);
+		std::cout << "sync: " << room_id << std::endl;
+		sync_room(sp, object, room, membership);
+		std::cout << "done: " << room_id << std::endl;
 	});
 }
 
-static void
-polylog_sync_room_state(shortpoll &sp,
-                        json::stack::object &out,
-                        const m::room &room);
-
-static void
-polylog_sync_room_timeline(shortpoll &sp,
-                           json::stack::object &out,
-                           const m::room &room);
-
-static void
-polylog_sync_room_ephemeral(shortpoll &sp,
-                            json::stack::object &out,
-                            const m::room &room);
-
-static void
-polylog_sync_room_account_data(shortpoll &sp,
-                               json::stack::object &out,
-                               const m::room &room);
-
-static void
-polylog_sync_room_unread_notifications(shortpoll &sp,
-                                       json::stack::object &out,
-                                       const m::room &room);
-
 void
-polylog_sync_room(shortpoll &sp,
-                  json::stack::object &out,
-                  const m::room &room,
-                  const string_view &membership)
+ircd::m::sync::polylog::sync_room(shortpoll &sp,
+                                  json::stack::object &out,
+                                  const m::room &room,
+                                  const string_view &membership)
+try
 {
 	// timeline
 	{
 		json::stack::member member{out, "timeline"};
 		json::stack::object object{member};
-		polylog_sync_room_timeline(sp, object, room);
+		room_timeline(sp, object, room);
 	}
 
 	// state
@@ -834,35 +729,47 @@ polylog_sync_room(shortpoll &sp,
 		};
 
 		json::stack::object object{member};
-		polylog_sync_room_state(sp, object, room);
+		room_state(sp, object, room);
 	}
 
 	// ephemeral
 	{
 		json::stack::member member{out, "ephemeral"};
 		json::stack::object object{member};
-		polylog_sync_room_ephemeral(sp, object, room);
+		room_ephemeral(sp, object, room);
 	}
 
 	// account_data
 	{
 		json::stack::member member{out, "account_data"};
 		json::stack::object object{member};
-		polylog_sync_room_account_data(sp, object, room);
+		room_account_data(sp, object, room);
 	}
 
 	// unread_notifications
 	{
 		json::stack::member member{out, "unread_notifications"};
 		json::stack::object object{member};
-		polylog_sync_room_unread_notifications(sp, object, room);
+		room_unread_notifications(sp, object, room);
 	}
+}
+catch(const json::not_found &e)
+{
+	log::error
+	{
+		"polylog sync for room %s error %lu to %lu (vm @ %zu) :%s"
+		,string_view{room.room_id}
+		,sp.since
+		,sp.current
+		,m::vm::current_sequence
+		,e.what()
+	};
 }
 
 void
-polylog_sync_room_state(shortpoll &sp,
-                        json::stack::object &out,
-                        const m::room &room)
+ircd::m::sync::polylog::room_state(shortpoll &sp,
+                                   json::stack::object &out,
+                                   const m::room &room)
 {
 	static const m::event::fetch::opts fopts
 	{
@@ -873,18 +780,13 @@ polylog_sync_room_state(shortpoll &sp,
 			"event_id",
 			"membership",
 			"origin_server_ts",
-			"prev_events",
+			//"prev_events",
 			"redacts",
 			"room_id",
 			"sender",
 			"state_key",
 			"type",
 		},
-
-		db::gopts
-		{
-			db::get::NO_CACHE
-		}
 	};
 
 	json::stack::member member
@@ -921,16 +823,10 @@ polylog_sync_room_state(shortpoll &sp,
 	});
 }
 
-static m::event::id::buf
-polylog_sync_room_timeline_events(shortpoll &sp,
-                                  json::stack::array &out,
-                                  const m::room &room,
-                                  bool &limited);
-
 void
-polylog_sync_room_timeline(shortpoll &sp,
-                           json::stack::object &out,
-                           const m::room &room)
+ircd::m::sync::polylog::room_timeline(shortpoll &sp,
+                                      json::stack::object &out,
+                                      const m::room &room)
 {
 	// events
 	bool limited{false};
@@ -938,7 +834,7 @@ polylog_sync_room_timeline(shortpoll &sp,
 	{
 		json::stack::member member{out, "events"};
 		json::stack::array array{member};
-		prev = polylog_sync_room_timeline_events(sp, array, room, limited);
+		prev = room_timeline_events(sp, array, room, limited);
 	}
 
 	// prev_batch
@@ -958,11 +854,11 @@ polylog_sync_room_timeline(shortpoll &sp,
 	}
 }
 
-m::event::id::buf
-polylog_sync_room_timeline_events(shortpoll &sp,
-                                  json::stack::array &out,
-                                  const m::room &room,
-                                  bool &limited)
+ircd::m::event::id::buf
+ircd::m::sync::polylog::room_timeline_events(shortpoll &sp,
+                                             json::stack::array &out,
+                                             const m::room &room,
+                                             bool &limited)
 {
 	static const m::event::fetch::opts fopts
 	{
@@ -980,11 +876,6 @@ polylog_sync_room_timeline_events(shortpoll &sp,
 			"state_key",
 			"type",
 		},
-
-		db::gopts
-		{
-			db::get::NO_CACHE
-		}
 	};
 
 	// messages seeks to the newest event, but the client wants the oldest
@@ -1029,27 +920,22 @@ polylog_sync_room_timeline_events(shortpoll &sp,
 	return event_id;
 }
 
-static void
-polylog_sync_room_ephemeral_events(shortpoll &sp,
-                                   json::stack::array &out,
-                                   const m::room &room);
-
 void
-polylog_sync_room_ephemeral(shortpoll &sp,
-                            json::stack::object &out,
-                            const m::room &room)
+ircd::m::sync::polylog::room_ephemeral(shortpoll &sp,
+                                      json::stack::object &out,
+                                      const m::room &room)
 {
 	{
 		json::stack::member member{out, "events"};
 		json::stack::array array{member};
-		polylog_sync_room_ephemeral_events(sp, array, room);
+		room_ephemeral_events(sp, array, room);
 	}
 }
 
 void
-polylog_sync_room_ephemeral_events(shortpoll &sp,
-                                   json::stack::array &out,
-                                   const m::room &room)
+ircd::m::sync::polylog::room_ephemeral_events(shortpoll &sp,
+                                              json::stack::array &out,
+                                              const m::room &room)
 {
 	const m::room::members members{room};
 	members.for_each("join", m::room::members::closure{[&]
@@ -1057,17 +943,12 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 	{
 		static const m::event::fetch::opts fopts
 		{
-			db::gopts
-			{
-				db::get::NO_CACHE
-			},
-
 			m::event::keys::include
 			{
 				"event_id",
 				"content",
 				"sender",
-			}
+			},
 		};
 
 		m::user::room user_room{user};
@@ -1130,9 +1011,9 @@ polylog_sync_room_ephemeral_events(shortpoll &sp,
 }
 
 void
-polylog_sync_room_account_data(shortpoll &sp,
-                               json::stack::object &out,
-                               const m::room &room)
+ircd::m::sync::polylog::room_account_data(shortpoll &sp,
+                                          json::stack::object &out,
+                                          const m::room &room)
 {
 	json::stack::member member{out, "events"};
 	json::stack::array array{member};
@@ -1180,9 +1061,9 @@ polylog_sync_room_account_data(shortpoll &sp,
 
 
 void
-polylog_sync_room_unread_notifications(shortpoll &sp,
-                                       json::stack::object &out,
-                                       const m::room &room)
+ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
+                                                  json::stack::object &out,
+                                                  const m::room &room)
 {
 	// highlight_count
 	{
