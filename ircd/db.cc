@@ -6988,6 +6988,21 @@ ircd::db::write(column &column,
 	};
 }
 
+void
+ircd::db::prefetch(column &column,
+                   const string_view &key,
+                   const gopts &gopts)
+{
+	if(exists(cache(column), key))
+		return;
+
+	request([column(column), key(std::string(key)), gopts]
+	() mutable
+	{
+		has(column, key, gopts);
+	});
+}
+
 bool
 ircd::db::cached(column &column,
                  const string_view &key,

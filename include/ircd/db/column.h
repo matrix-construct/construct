@@ -40,6 +40,7 @@ namespace ircd::db
 	// [GET] Tests if key exists
 	bool has(column &, const string_view &key, const gopts & = {});
 	bool cached(column &, const string_view &key, const gopts & = {});
+	void prefetch(column &, const string_view &key, const gopts & = {});
 
 	// [GET] Convenience functions to copy data into your buffer.
 	string_view read(column &, const string_view &key, const mutable_buffer &, const gopts & = {});
