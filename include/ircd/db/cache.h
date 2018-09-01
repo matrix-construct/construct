@@ -57,12 +57,4 @@ namespace ircd::db
 	// Clear the cache (won't clear entries which are actively referenced)
 	void clear(rocksdb::Cache &);
 	void clear(rocksdb::Cache *const &);
-
-	// Read the key from disk into cache; yields when done; returns exists.
-	bool fetch(rocksdb::Cache &, column &, const string_view &key);
-	bool fetch(rocksdb::Cache *const &, column &, const string_view &key);
-
-	// Read the key from disk into cache asynchronously; returns immediately.
-	void prefetch(rocksdb::Cache &, column &, const string_view &key);
-	void prefetch(rocksdb::Cache *const &, column &, const string_view &key);
 }

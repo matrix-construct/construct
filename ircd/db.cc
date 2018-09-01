@@ -7750,53 +7750,6 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 //
 
 void
-ircd::db::prefetch(rocksdb::Cache *const &cache,
-                   column &column,
-                   const string_view &key)
-{
-	if(cache)
-		return prefetch(*cache, column, key);
-}
-
-void
-ircd::db::prefetch(rocksdb::Cache &cache,
-                   column &column,
-                   const string_view &key)
-{
-	assert(0);
-}
-
-bool
-ircd::db::fetch(rocksdb::Cache *const &cache,
-                column &column,
-                const string_view &key)
-{
-	return cache? fetch(*cache, column, key) : false;
-}
-
-bool
-ircd::db::fetch(rocksdb::Cache &cache,
-                column &column,
-                const string_view &key)
-{
-	const db::gopts opts
-	{
-		// skip rocksdb inserting this into the columns cache twice.
-		&cache == db::cache(column) || &cache == db::cache_compressed(column)?
-			db::get::NO_CACHE:
-			(enum db::get)0
-	};
-
-	const auto closure{[&cache, &key]
-	(const string_view &value)
-	{
-		insert(cache, key, value);
-	}};
-
-	return column(key, std::nothrow, closure, opts);
-}
-
-void
 ircd::db::clear(rocksdb::Cache *const &cache)
 {
 	if(cache)
