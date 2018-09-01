@@ -7016,28 +7016,20 @@ ircd::db::has(column &column,
 	database &d(column);
 	database::column &c(column);
 
+	// Perform a co-RP query to the filtration
 	const auto k(slice(key));
 	auto opts(make_opts(gopts));
 	opts.read_tier = NON_BLOCKING;
-
-	// Perform a co-RP query to the filtration
 	thread_local std::string discard;
-	bool ret
+	if(!d.d->KeyMayExist(opts, c, k, &discard, nullptr))
+		return false;
+
+	const auto it
 	{
-		d.d->KeyMayExist(opts, c, k, &discard, nullptr)
+		seek(column, key, gopts)
 	};
 
-	if(ret)
-	{
-		const auto it
-		{
-			seek(column, key, gopts)
-		};
-
-		ret = valid_eq(*it, key);
-	}
-
-	return ret;
+	return valid_eq(*it, key);
 }
 
 //
