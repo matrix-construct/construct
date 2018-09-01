@@ -34,7 +34,7 @@ struct ircd::client
 
 	static struct settings settings;
 	static struct conf default_conf;
-	static ctx::pool context;
+	static ctx::pool pool;
 	static uint64_t ctr;              // monotonic
 
 	static void interrupt_all();

@@ -37,7 +37,7 @@ ircd::client::settings::pool_size
 	}, []
 	{
 		using client = ircd::client;
-		client::context.set(client::settings::pool_size);
+		client::pool.set(client::settings::pool_size);
 	}
 };
 
@@ -84,7 +84,7 @@ ircd::client::default_conf
 /// a stack from this pool. The request handling and response logic can then be written
 /// in a synchronous manner as if each connection had its own thread.
 ircd::ctx::pool
-ircd::client::context
+ircd::client::pool
 {
 	"client", size_t(settings.stack_size)
 };
@@ -150,23 +150,23 @@ ircd::client::init::wait()
 void
 ircd::client::spawn()
 {
-	context.add(size_t(settings.pool_size));
+	pool.add(size_t(settings.pool_size));
 }
 
 void
 ircd::client::interrupt_all()
 {
-	if(context.active())
+	if(pool.active())
 		log::warning
 		{
 			"Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
-			context.active(),
-			context.size(),
-			context.pending(),
-			context.queued()
+			pool.active(),
+			pool.size(),
+			pool.pending(),
+			pool.queued()
 		};
 
-	context.terminate();
+	pool.terminate();
 }
 
 void
@@ -201,14 +201,14 @@ ircd::client::close_all()
 void
 ircd::client::wait_all()
 {
-	if(context.active())
+	if(pool.active())
 		log::dwarning
 		{
 			"Waiting on %zu active of %zu client request contexts; %zu pending; %zu queued.",
-			context.active(),
-			context.size(),
-			context.pending(),
-			context.queued()
+			pool.active(),
+			pool.size(),
+			pool.pending(),
+			pool.queued()
 		};
 
 	while(!client::list.empty())
@@ -221,13 +221,13 @@ ircd::client::wait_all()
 	log::debug
 	{
 		"Joining %zu active of %zu client request contexts; %zu pending; %zu queued",
-		context.active(),
-		context.size(),
-		context.pending(),
-		context.queued()
+		pool.active(),
+		pool.size(),
+		pool.pending(),
+		pool.queued()
 	};
 
-	context.join();
+	pool.join();
 }
 
 ircd::parse::read_closure
@@ -387,14 +387,14 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 		std::bind(ircd::handle_client_request, std::move(client))
 	};
 
-	if(client::context.avail() == 0)
+	if(client::pool.avail() == 0)
 		log::dwarning
 		{
 			"Client context pool exhausted. %zu requests queued.",
-			client::context.queued()
+			client::pool.queued()
 		};
 
-	client::context(std::move(handler));
+	client::pool(std::move(handler));
 }
 
 /// A request context has been dispatched and is now handling this client.
