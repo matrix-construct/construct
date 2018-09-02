@@ -150,6 +150,59 @@ load_listener(const m::event &event)
 	return load_listener(name, opts);
 }
 
+void
+_listener_action(const std::shared_ptr<socket> &sock)
+{
+	const auto client
+	{
+		std::make_shared<ircd::client>(sock)
+	};
+
+	client->async();
+}
+
+bool
+_listener_proffer(const net::ipport &ipport)
+{
+	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	{
+		log::dwarning
+		{
+			"Refusing to add new client from %s in runlevel %s",
+			string(ipport),
+			reflect(ircd::runlevel)
+		};
+
+		return false;
+	}
+
+	if(unlikely(client::map.size() >= size_t(client::settings::max_client)))
+	{
+		log::warning
+		{
+			"Refusing to add new client from %s because maximum of %zu reached",
+			string(ipport),
+			size_t(client::settings::max_client)
+		};
+
+		return false;
+	}
+
+	if(client::count(ipport) >= size_t(client::settings::max_client_per_peer))
+	{
+		log::dwarning
+		{
+			"Refusing to add new client from %s: maximum of %zu connections for peer.",
+			string(ipport),
+			size_t(client::settings::max_client_per_peer)
+		};
+
+		return false;
+	}
+
+	return true;
+}
+
 bool
 load_listener(const string_view &name,
               const json::object &opts)
@@ -161,12 +214,7 @@ try
 			"A listener with the name '%s' is already loaded", name
 		};
 
-	listeners.emplace_back(name, opts, []
-	(const auto &sock)
-	{
-		ircd::add_client(sock);
-	});
-
+	listeners.emplace_back(name, opts, _listener_action, _listener_proffer);
 	return true;
 }
 catch(const std::exception &e)

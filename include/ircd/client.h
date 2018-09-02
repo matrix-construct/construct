@@ -18,8 +18,6 @@ namespace ircd
 	//TODO: want to upgrade
 	char *read(client &, char *&start, char *const &stop);
 	parse::read_closure read_closure(client &);
-
-	std::shared_ptr<client> add_client(std::shared_ptr<socket>);  // Creates a client.
 }
 
 /// Remote party connecting to our daemon to make requests.
@@ -37,7 +35,7 @@ struct ircd::client
 	static ctx::pool pool;
 	static uint64_t ctr;              // monotonic
 
-	static size_t count(const net::ipport &remote);
+	static size_t count(net::ipport remote);
 	static void interrupt_all();
 	static void close_all();
 	static void wait_all();
@@ -102,6 +100,8 @@ struct ircd::client::settings
 {
 	static ircd::conf::item<size_t> stack_size;
 	static ircd::conf::item<size_t> pool_size;
+	static ircd::conf::item<size_t> max_client;
+	static ircd::conf::item<size_t> max_client_per_peer;
 };
 
 struct ircd::client::init

@@ -13,13 +13,25 @@
 namespace ircd
 {
 	ctx::dock dock;
-
-	template<class... args> std::shared_ptr<client> make_client(args&&...);
 }
 
 //
 // client::settings conf::item's
 //
+
+ircd::conf::item<size_t>
+ircd::client::settings::max_client
+{
+	{ "name",     "ircd.client.max_client"  },
+	{ "default",  16384L                    },
+};
+
+ircd::conf::item<size_t>
+ircd::client::settings::max_client_per_peer
+{
+	{ "name",     "ircd.client.max_client_per_peer"  },
+	{ "default",  24L                                },
+};
 
 ircd::conf::item<size_t>
 ircd::client::settings::stack_size
@@ -231,8 +243,9 @@ ircd::client::wait_all()
 }
 
 size_t
-ircd::client::count(const net::ipport &remote)
+ircd::client::count(net::ipport remote)
 {
+	std::get<remote.PORT>(remote) = 0;
 	return client::map.count(remote);
 }
 
@@ -265,38 +278,6 @@ ircd::read(client &client,
 	char *const base(start);
 	start += net::read(sock, buf);
 	return base;
-}
-
-std::shared_ptr<ircd::client>
-ircd::add_client(std::shared_ptr<socket> s)
-{
-	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
-	{
-		log::dwarning
-		{
-			"Refusing to add new client from %s in runlevel %s",
-			string(remote_ipport(*s)),
-			reflect(ircd::runlevel)
-		};
-
-		net::close(*s, net::dc::RST, net::close_ignore);
-		return {};
-	}
-
-	const auto client
-	{
-		make_client(std::move(s))
-	};
-
-	client->async();
-	return client;
-}
-
-template<class... args>
-std::shared_ptr<ircd::client>
-ircd::make_client(args&&... a)
-{
-	return std::make_shared<client>(std::forward<args>(a)...);
 }
 
 ircd::ipport
@@ -593,10 +574,15 @@ ircd::handle_ec_default(client &client,
 //
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:instance_multimap
+:instance_multimap{[&sock]
+() -> net::ipport
 {
-	remote_ipport(*sock)
-}
+	assert(bool(sock));
+	auto remote(remote_ipport(*sock));
+	assert(bool(remote));
+	std::get<remote.PORT>(remote) = 0;
+	return remote;
+}()}
 ,head_buffer
 {
 	conf->header_max_size
