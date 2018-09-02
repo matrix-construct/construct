@@ -1590,7 +1590,7 @@ try
 		database, colname
 	};
 
-	db::fetch(cache(column), column, key);
+	db::has(column, key);
 	return true;
 }
 catch(const std::out_of_range &e)
