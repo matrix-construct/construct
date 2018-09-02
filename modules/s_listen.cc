@@ -18,12 +18,13 @@ static bool load_listener(const m::event &);
 extern "C" bool unload_listener(const string_view &name);
 extern "C" bool load_listener(const string_view &name);
 static void init_listeners();
+static void on_unload();
 static void on_load();
 
 mapi::header
 IRCD_MODULE
 {
-	"Server listeners", on_load
+	"Server listeners", on_load, on_unload
 };
 
 /// Active listener state
@@ -49,6 +50,12 @@ on_load()
 	}
 
 	init_listeners();
+}
+
+void
+on_unload()
+{
+	listeners.clear();
 }
 
 void
