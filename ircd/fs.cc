@@ -585,8 +585,8 @@ ircd::fs::uuid(const fd &fd,
 	return fmt::sprintf
 	{
 		buf, "%u-%u-%lu-%s",
-		major(stat.st_dev),
-		minor(stat.st_dev),
+		gnu_dev_major(stat.st_dev),
+		gnu_dev_minor(stat.st_dev),
 		stat.st_ino,
 		S_ISREG(stat.st_mode)? "reg":
 		S_ISDIR(stat.st_mode)? "dir":
