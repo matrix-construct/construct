@@ -2670,8 +2670,10 @@ console_cmd__client(opt &out, const string_view &line)
 			0
 	};
 
-	for(const auto *const &client : ircd::client::list)
+	for(const auto &pair : ircd::client::map)
 	{
+		const auto &ipport{pair.first};
+		const auto *const &client{pair.second};
 		if(idnum && client->id < idnum)
 			continue;
 		else if(idnum && client->id > idnum)

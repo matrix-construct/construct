@@ -95,8 +95,8 @@ ircd::client::ctr
 
 // Linkage for the container of all active clients for iteration purposes.
 template<>
-decltype(ircd::util::instance_list<ircd::client>::list)
-ircd::util::instance_list<ircd::client>::list
+decltype(ircd::util::instance_multimap<ircd::net::ipport, ircd::client>::map)
+ircd::util::instance_multimap<ircd::net::ipport, ircd::client>::map
 {};
 
 //
@@ -122,7 +122,7 @@ noexcept
 		"All client contexts, connections, and requests are clear.",
 	};
 
-	assert(client::list.empty());
+	assert(client::map.empty());
 }
 
 void
@@ -172,16 +172,16 @@ ircd::client::interrupt_all()
 void
 ircd::client::close_all()
 {
-	if(!client::list.empty())
+	if(!client::map.empty())
 		log::debug
 		{
-			"Closing %zu clients", client::list.size()
+			"Closing %zu clients", client::map.size()
 		};
 
-	auto it(begin(client::list));
-	while(it != end(client::list))
+	auto it(begin(client::map));
+	while(it != end(client::map))
 	{
-		auto c(shared_from(**it)); ++it; try
+		auto c(shared_from(*it->second)); ++it; try
 		{
 			c->close(net::dc::RST, [c](const auto &e)
 			{
@@ -211,11 +211,11 @@ ircd::client::wait_all()
 			pool.queued()
 		};
 
-	while(!client::list.empty())
-		if(!dock.wait_for(seconds(2)) && !client::list.empty())
+	while(!client::map.empty())
+		if(!dock.wait_for(seconds(2)) && !client::map.empty())
 			log::warning
 			{
-				"Waiting for %zu clients to close...", client::list.size()
+				"Waiting for %zu clients to close...", client::map.size()
 			};
 
 	log::debug
@@ -586,14 +586,19 @@ ircd::handle_ec_default(client &client,
 // client
 //
 
-ircd::client::client()
-:client{std::shared_ptr<socket>{}}
-{
-}
-
 ircd::client::client(std::shared_ptr<socket> sock)
-:head_buffer{conf->header_max_size}
-,sock{std::move(sock)}
+:instance_multimap
+{
+	remote_ipport(*sock)
+}
+,head_buffer
+{
+	conf->header_max_size
+}
+,sock
+{
+	std::move(sock)
+}
 {
 	assert(size(head_buffer) >= 8_KiB);
 }

@@ -25,7 +25,7 @@ namespace ircd
 /// Remote party connecting to our daemon to make requests.
 struct ircd::client
 :std::enable_shared_from_this<client>
-,ircd::instance_list<client>
+,ircd::instance_multimap<net::ipport, client>
 {
 	struct init;
 	struct conf;
@@ -65,7 +65,6 @@ struct ircd::client
 
   public:
 	client(std::shared_ptr<socket>);
-	client();
 	client(client &&) = delete;
 	client(const client &) = delete;
 	client &operator=(client &&) = delete;
