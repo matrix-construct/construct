@@ -1145,9 +1145,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.error("acceptor(%p) join: %s",
-	          this,
-	          e.what());
+	log::error
+	{
+		log, "acceptor(%p) join: %s",
+		this,
+		e.what()
+	};
 }
 
 bool
@@ -1160,9 +1163,12 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("acceptor(%p) interrupt: %s",
-	          this,
-	          string(e));
+	log::error
+	{
+		log, "acceptor(%p) interrupt: %s",
+		this,
+		string(e)
+	};
 
 	return false;
 }
@@ -1217,12 +1223,15 @@ noexcept try
 	}};
 
 	assert(bool(sock));
-	log.debug("%s: socket(%p) accepted(%zu) %s %s",
-	          string(*this),
-	          sock.get(),
-	          accepting,
-	          string(remote_ipport(*sock)),
-	          string(ec));
+	log::debug
+	{
+		log, "%s: socket(%p) accepted(%zu) %s %s",
+		string(*this),
+		sock.get(),
+		accepting,
+		string(remote_ipport(*sock)),
+		string(ec)
+	};
 
 	if(!check_accept_error(ec, *sock))
 		return;
@@ -1254,26 +1263,35 @@ noexcept try
 }
 catch(const ctx::interrupted &e)
 {
-	log.debug("%s: acceptor interrupted socket(%p) %s",
-	          string(*this),
-	          sock.get(),
-	          string(ec));
+	log::debug
+	{
+		log, "%s: acceptor interrupted socket(%p) %s",
+		string(*this),
+		sock.get(),
+		string(ec)
+	};
 
 	joining.notify_all();
 }
 catch(const boost::system::system_error &e)
 {
-	log.derror("%s: socket(%p) in accept(): %s",
-	           string(*this),
-	           sock.get(),
-	           string(e));
+	log::derror
+	{
+		log, "%s: socket(%p) in accept(): %s",
+		string(*this),
+		sock.get(),
+		string(e)
+	};
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p) in accept(): %s",
-	          string(*this),
-	          sock.get(),
-	          e.what());
+	log::error
+	{
+		log, "%s: socket(%p) in accept(): %s",
+		string(*this),
+		sock.get(),
+		e.what()
+	};
 }
 
 /// Error handler for the accept socket callback. This handler determines
@@ -1325,12 +1343,15 @@ noexcept try
 	}};
 
 	assert(bool(sock));
-	log.debug("socket(%p) local[%s] remote[%s] handshook(%zu) %s",
-	          sock.get(),
-	          string(local_ipport(*sock)),
-	          string(remote_ipport(*sock)),
-	          handshaking,
-	          string(ec));
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] handshook(%zu) %s",
+		sock.get(),
+		string(local_ipport(*sock)),
+		string(remote_ipport(*sock)),
+		handshaking,
+		string(ec)
+	};
 
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
@@ -1339,26 +1360,35 @@ noexcept try
 }
 catch(const ctx::interrupted &e)
 {
-	log.debug("%s: SSL handshake interrupted socket(%p) %s",
-	          string(*this),
-	          sock.get(),
-	          string(ec));
+	log::debug
+	{
+		log, "%s: SSL handshake interrupted socket(%p) %s",
+		string(*this),
+		sock.get(),
+		string(ec)
+	};
 
 	joining.notify_all();
 }
 catch(const boost::system::system_error &e)
 {
-	log.derror("%s: socket(%p) in handshake(): %s",
-	           string(*this),
-	           sock.get(),
-	           string(e));
+	log::derror
+	{
+		log, "%s: socket(%p) in handshake(): %s",
+		string(*this),
+		sock.get(),
+		string(e)
+	};
 }
 catch(const std::exception &e)
 {
-	log.error("%s: socket(%p) in handshake(): %s",
-	          string(*this),
-	          sock.get(),
-	          e.what());
+	log::error
+	{
+		log, "%s: socket(%p) in handshake(): %s",
+		string(*this),
+		sock.get(),
+		e.what()
+	};
 }
 
 /// Error handler for the SSL handshake callback. This handler determines
