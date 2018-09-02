@@ -230,6 +230,12 @@ ircd::client::wait_all()
 	pool.join();
 }
 
+size_t
+ircd::client::count(const net::ipport &remote)
+{
+	return client::map.count(remote);
+}
+
 ircd::parse::read_closure
 ircd::read_closure(client &client)
 {

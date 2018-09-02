@@ -37,6 +37,7 @@ struct ircd::client
 	static ctx::pool pool;
 	static uint64_t ctr;              // monotonic
 
+	static size_t count(const net::ipport &remote);
 	static void interrupt_all();
 	static void close_all();
 	static void wait_all();
