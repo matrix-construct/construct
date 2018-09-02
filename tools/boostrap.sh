@@ -107,6 +107,7 @@ run git submodule update --init --recursive --checkout libs/asio
 run git submodule update --init --recursive --checkout libs/system
 run git submodule update --init --recursive --checkout libs/regex
 
+run git submodule update --init --recursive --checkout libs/serialization
 run git submodule update --init --recursive --checkout libs/lexical_cast
 run git submodule update --init --recursive --checkout libs/range
 run git submodule update --init --recursive --checkout libs/concept_check
