@@ -902,20 +902,22 @@ ircd::net::operator<<(std::ostream &s, const listener &a)
 
 ircd::net::listener::listener(const string_view &name,
                               const std::string &opts,
-                              callback cb)
+                              callback cb,
+                              proffer pcb)
 :listener
 {
-	name, json::object{opts}, std::move(cb)
+	name, json::object{opts}, std::move(cb), std::move(pcb)
 }
 {
 }
 
 ircd::net::listener::listener(const string_view &name,
                               const json::object &opts,
-                              callback cb)
+                              callback cb,
+                              proffer pcb)
 :acceptor
 {
-	std::make_shared<struct acceptor>(name, opts, std::move(cb))
+	std::make_shared<struct acceptor>(name, opts, std::move(cb), std::move(pcb))
 }
 {
 	// Starts the first asynchronous accept. This has to be done out here after
@@ -1047,7 +1049,8 @@ ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
 
 ircd::net::listener::acceptor::acceptor(const string_view &name,
                                         const json::object &opts,
-                                        listener::callback cb)
+                                        listener::callback cb,
+                                        listener::proffer pcb)
 try
 :name
 {
@@ -1066,6 +1069,10 @@ try
 ,cb
 {
 	std::move(cb)
+}
+,pcb
+{
+	std::move(pcb)
 }
 ,ssl
 {
@@ -1219,6 +1226,14 @@ noexcept try
 
 	if(!check_accept_error(ec, *sock))
 		return;
+
+	// Call the proffer-callback if available. This allows the application
+	// to check whether to allow or deny this remote before the handshake.
+	if(pcb && !pcb(remote_ipport(*sock)))
+	{
+		net::close(*sock, dc::RST, close_ignore);
+		return;
+	}
 
 	// Toggles the behavior of non-async functions; see func comment
 	blocking(*sock, false);

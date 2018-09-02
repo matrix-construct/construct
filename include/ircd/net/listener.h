@@ -21,6 +21,7 @@ struct ircd::net::listener
 {
 	struct acceptor;
 	using callback = std::function<void (const std::shared_ptr<socket> &)>;
+	using proffer = std::function<bool (const ipport &)>;
 
 	IRCD_EXCEPTION(net::error, error)
 
@@ -33,12 +34,14 @@ struct ircd::net::listener
 
 	listener(const string_view &name,
 	         const json::object &options,
-	         callback);
+	         callback,
+	         proffer = {});
 
 	explicit
 	listener(const string_view &name,
 	         const std::string &options,
-	         callback);
+	         callback,
+	         proffer = {});
 
 	~listener() noexcept;
 
