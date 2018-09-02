@@ -35,6 +35,7 @@ struct ircd::client
 	static ctx::pool pool;
 	static uint64_t ctr;              // monotonic
 
+	static void create(const std::shared_ptr<socket> &);
 	static size_t count(net::ipport remote);
 	static void interrupt_all();
 	static void close_all();
@@ -62,7 +63,6 @@ struct ircd::client
 	bool main();
 	bool async();
 
-  public:
 	client(std::shared_ptr<socket>);
 	client(client &&) = delete;
 	client(const client &) = delete;

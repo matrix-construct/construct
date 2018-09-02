@@ -242,6 +242,17 @@ ircd::client::wait_all()
 	pool.join();
 }
 
+void
+ircd::client::create(const std::shared_ptr<socket> &sock)
+{
+	const auto client
+	{
+		std::make_shared<ircd::client>(sock)
+	};
+
+	client->async();
+}
+
 size_t
 ircd::client::count(net::ipport remote)
 {

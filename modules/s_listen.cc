@@ -157,18 +157,7 @@ load_listener(const m::event &event)
 	return load_listener(name, opts);
 }
 
-void
-_listener_action(const std::shared_ptr<socket> &sock)
-{
-	const auto client
-	{
-		std::make_shared<ircd::client>(sock)
-	};
-
-	client->async();
-}
-
-bool
+static bool
 _listener_proffer(const net::ipport &ipport)
 {
 	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
@@ -221,7 +210,7 @@ try
 			"A listener with the name '%s' is already loaded", name
 		};
 
-	listeners.emplace_back(name, opts, _listener_action, _listener_proffer);
+	listeners.emplace_back(name, opts, client::create, _listener_proffer);
 	return true;
 }
 catch(const std::exception &e)
