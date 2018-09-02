@@ -2670,10 +2670,17 @@ console_cmd__client(opt &out, const string_view &line)
 			0
 	};
 
-	for(const auto &pair : ircd::client::map)
+	std::vector<client *> clients(client::map.size());
+	static const values<decltype(client::map)> values;
+	std::transform(begin(client::map), end(client::map), begin(clients), values);
+	std::sort(begin(clients), end(clients), []
+	(const auto &a, const auto &b)
 	{
-		const auto &ipport{pair.first};
-		const auto *const &client{pair.second};
+		return a->id < b->id;
+	});
+
+	for(const auto &client : clients)
+	{
 		if(idnum && client->id < idnum)
 			continue;
 		else if(idnum && client->id > idnum)
