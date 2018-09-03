@@ -133,7 +133,14 @@ const
 
 	const ctx::critical_assertion ca;
 	thread_local char buf[request_content_max];
-	assert(json::serialized(*this) < sizeof(buf));
+	if(unlikely(json::serialized(*this) > sizeof(buf)))
+		throw m::error
+		{
+			"M_REQUEST_TOO_LARGE", "This server generated a request of %zu bytes; limit is %zu",
+			json::serialized(*this),
+			sizeof(buf)
+		};
+
 	const json::object object
 	{
 		stringify(mutable_buffer{buf}, *this)
