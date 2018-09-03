@@ -23,6 +23,30 @@ IRCD_MODULE
 	}
 };
 
+/// Waits for the daemon to transition to the RUN state so we can gather all
+/// of the registered conf items and save any new ones to the !conf room.
+/// We can't do that on this module init for two reason:
+/// - More conf items will load in other modules after this module.
+/// - Events can't be safely sent to the !conf room until the RUN state.
+const ircd::runlevel_changed
+rehash_on_run{[]
+(const auto &runlevel)
+{
+	if(runlevel != ircd::runlevel::RUN)
+		return;
+
+	static const auto on_run{[]
+	{
+		rehash_conf(false);
+		reload_conf();
+	}};
+
+	ctx::context
+	{
+		"confhash", 256_KiB, on_run, ctx::context::POST
+	};
+}};
+
 const m::room::id::buf
 conf_room_id
 {
