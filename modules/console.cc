@@ -1358,7 +1358,7 @@ try
 		param.at(0)
 	};
 
-	const auto colname
+	auto colname
 	{
 		param[1]
 	};
@@ -1377,16 +1377,34 @@ try
 			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
 		};
 
-		out << "(row cache) "
+		out << std::left
+		    << std::setw(16) << "ROW"
+		    << std::right
+		    << " "
+		    << std::setw(9) << "CACHED"
+		    << " "
+		    << std::setw(9) << "CAPACITY"
+		    << " "
+		    << std::setw(6) << "    PCT"
+		    << " "
+		    << std::endl;
+
+		out << std::left
+		    << std::setw(16) << "*"
+		    << std::right
+		    << " "
 		    << std::setw(9) << usage
 		    << " "
 		    << std::setw(9) << capacity
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
+		    << std::endl
 		    << std::endl;
 
-		return true;
+		// Now set the colname to * so the column total branch is taken
+		// below and we output that line too.
+		colname = "*";
 	}
 
 	out << std::left
