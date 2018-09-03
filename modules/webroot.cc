@@ -44,22 +44,25 @@ root_get
 	root_resource, "GET", get_root
 };
 
+conf::item<std::string>
+webroot_path
+{
+	{ "name",       "ircd.webroot.path" },
+	{ "default",    ""                  },
+};
+
 void
 init_files()
 {
-	// TODO: XXX
-	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/deps/riot-web/webapp/"))
+	const std::string &path{webroot_path};
+	if(empty(path))
+		return;
+
+	for(const auto &file : fs::ls_recursive(path))
 	{
-		const auto name(tokens_after(file, '/', 6));
+		const auto name(lstrip(file, path));
 		files.emplace(std::string(name), file);
 	}
-/*
-	for(const auto &file : fs::ls_recursive("/home/jason/charybdis/charybdis/modules/static/"))
-	{
-		const auto name(tokens_after(file, '/', 5));
-		files.emplace(std::string(name), file);
-	}
-*/
 }
 
 resource::response
