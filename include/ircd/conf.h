@@ -46,6 +46,7 @@ namespace ircd::conf
 	using set_cb = std::function<void ()>;
 
 	extern std::map<string_view, item<> *> items;
+	extern std::function<void (item<> &)> _init_cb;
 
 	bool exists(const string_view &key);
 	string_view get(const string_view &key, const mutable_buffer &out);
@@ -69,6 +70,7 @@ struct ircd::conf::item<void>
   protected:
 	virtual string_view on_get(const mutable_buffer &) const;
 	virtual bool on_set(const string_view &);
+	void call_init();
 
   public:
 	string_view get(const mutable_buffer &) const;
@@ -127,7 +129,9 @@ struct ircd::conf::lex_castable
 	(
 		feature.get("default", long(0))
 	)
-	{}
+	{
+		call_init();
+	}
 };
 
 template<>

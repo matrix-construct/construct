@@ -12,6 +12,10 @@ decltype(ircd::conf::items)
 ircd::conf::items
 {};
 
+decltype(ircd::conf::_init_cb)
+ircd::conf::_init_cb
+{};
+
 size_t
 ircd::conf::reset()
 {
@@ -199,6 +203,23 @@ const
 	return on_get(buf);
 }
 
+void
+ircd::conf::item<void>::call_init()
+try
+{
+	if(_init_cb)
+		_init_cb(*this);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] init callback :%s",
+		name,
+		e.what()
+	};
+}
+
 bool
 ircd::conf::item<void>::on_set(const string_view &)
 {
@@ -231,6 +252,7 @@ ircd::conf::item<std::string>::item(const json::members &members,
 	unquote(feature.get("default"))
 }
 {
+	call_init();
 }
 
 bool
@@ -262,6 +284,7 @@ ircd::conf::item<bool>::item(const json::members &members,
 	feature.get<bool>("default", false)
 }
 {
+	call_init();
 }
 
 bool
