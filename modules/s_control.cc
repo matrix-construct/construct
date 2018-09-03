@@ -81,7 +81,8 @@ noexcept try
 
 	out << "<pre>";
 	static const string_view opts{"html"};
-	command(out, body, opts);
+	//command(out, body, opts);
+	out << "The control room is disabled until there are restrictions for joining it";
 	out << "</pre>";
 
 	std::string str
