@@ -8,6 +8,8 @@ AM_CPPFLAGS = \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
+	@SSL_CPPFLAGS@ \
+	@CRYPTO_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
@@ -42,6 +44,8 @@ construct_LDFLAGS = \
 	@ROCKSDB_LDFLAGS@ \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
+	@SSL_CPPFLAGS@ \
+	@CRYPTO_CPPFLAGS@ \
 	@SODIUM_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
 	@Z_LDFLAGS@ \
@@ -53,8 +57,8 @@ construct_LDADD = \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
 	@SODIUM_LIBS@ \
-	-lcrypto \
-	-lssl \
+	@SSL_LIBS@ \
+	@CRYPTO_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
 	###

@@ -1,7 +1,3 @@
-dnl TODO: clean up all the OpenSSL and shared module checking stuff;
-dnl the most major changes have already been made and it looks like
-dnl said functions need to be just about as complex as they already are.
-
 AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.11
 
@@ -852,6 +848,50 @@ AC_SUBST(SODIUM_LIBS, ["-lsodium"])
 
 dnl
 dnl
+dnl OpenSSL support
+dnl
+dnl
+
+RB_CHK_SYSHEADER(openssl/err.h,    [OPENSSL_ERR_H])
+RB_CHK_SYSHEADER(openssl/sha.h,    [OPENSSL_SHA_H])
+RB_CHK_SYSHEADER(openssl/ssl.h,    [OPENSSL_SSL_H])
+RB_CHK_SYSHEADER(openssl/ec.h,     [OPENSSL_EC_H])
+RB_CHK_SYSHEADER(openssl/rsa.h,    [OPENSSL_RSA_H])
+RB_CHK_SYSHEADER(openssl/x509.h,   [OPENSSL_X509_H])
+RB_CHK_SYSHEADER(openssl/evp.h,    [OPENSSL_EVP_H])
+RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
+RB_CHK_SYSHEADER(openssl/dh.h,     [OPENSSL_DH_H])
+
+AC_CHECK_LIB(ssl, SSL_version,
+[
+	have_ssl="yes"
+	AC_SUBST(SSL_CPPFLAGS, [])
+	AC_SUBST(SSL_LDFLAGS, [])
+	AC_SUBST(SSL_LIBS, ["-lssl"])
+	AC_DEFINE(HAVE_SSL, 1, [Define to 1 if libssl (-lssl) is available.])
+], [
+	have_ssl="no"
+	AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl1.0-dev])
+])
+
+AM_CONDITIONAL([SSL], [test "x$have_ssl" = "xyes"])
+
+AC_CHECK_LIB(crypto, SSLeay_version,
+[
+	have_crypto="yes"
+	AC_SUBST(CRYPTO_CPPFLAGS, [])
+	AC_SUBST(CRYPTO_LDFLAGS, [])
+	AC_SUBST(CRYPTO_LIBS, ["-lcrypto"])
+	AC_DEFINE(HAVE_CRYPTO, 1, [Define to 1 if libcrypto (-lcrypto) is available.])
+], [
+	have_crypto="no"
+	AC_MSG_ERROR([libcrypto is required but not found.])
+])
+
+AM_CONDITIONAL([CRYPTO], [test "x$have_crypto" = "xyes"])
+
+dnl
+dnl
 dnl libgmp support
 dnl
 dnl
@@ -1205,190 +1245,6 @@ AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
 
 dnl
 dnl
-dnl OpenSSL support
-dnl
-dnl
-
-AC_MSG_CHECKING([for OpenSSL])
-AC_ARG_ENABLE(openssl,
-[AC_HELP_STRING([--enable-openssl[=DIR]],[Enable OpenSSL support (DIR optional).])
-AC_HELP_STRING([--disable-openssl],[Disable OpenSSL support.])],
-[cf_enable_openssl=$enableval],
-[cf_enable_openssl="auto"])
-
-if test "$cf_enable_openssl" != "no" ; then
-	cf_openssl_basedir=""
-	if test "$cf_enable_openssl" != "auto" &&
-	test "$cf_enable_openssl" != "yes" ; then
-		dnl Support for --enable-openssl=/some/place
-		cf_openssl_basedir="`echo ${cf_enable_openssl} | sed 's/\/$//'`"
-	else
-	dnl Do the auto-probe here.  Check some common directory paths.
-		for dirs in /usr/local/ssl /usr/pkg /usr/local \
-		/usr/local/openssl ; do
-			if test -f "${dirs}/include/openssl/opensslv.h" ; then
-				cf_openssl_basedir="${dirs}"
-			break
-			fi
-		done
-		unset dirs
-	fi
-	dnl Now check cf_openssl_found to see if we found anything.
-	if test ! -z "$cf_openssl_basedir"; then
-		if test -f "${cf_openssl_basedir}/include/openssl/opensslv.h" ; then
-			SSL_CFLAGS="-I${cf_openssl_basedir}/include"
-			SSL_LIBS="-L${cf_openssl_basedir}/lib"
-		else
-		dnl OpenSSL wasn't found in the directory specified.  Naughty
-		dnl administrator...
-		cf_openssl_basedir=""
-		fi
-	else
-	dnl Check for stock FreeBSD 4.x and 5.x systems, since their files
-	dnl are in /usr/include and /usr/lib.  In this case, we don't want to
-	dnl change INCLUDES or LIBS, but still want to enable OpenSSL.
-	dnl We can't do this check above, because some people want two versions
-	dnl of OpenSSL installed (stock FreeBSD 4.x/5.x and /usr/local/ssl)
-	dnl and they want /usr/local/ssl to have preference.
-		if test -f "/usr/include/openssl/opensslv.h" ; then
-			cf_openssl_basedir="/usr"
-		fi
-	fi
-
-	dnl If we have a basedir defined, then everything is okay.  Otherwise,
-	dnl we have a problem.
-	if test ! -z "$cf_openssl_basedir"; then
-		AC_MSG_RESULT($cf_openssl_basedir)
-		cf_enable_openssl="yes"
-	else
-		AC_MSG_RESULT([not found. Specify a correct path?])
-		cf_enable_openssl="no"
-	fi
-	unset cf_openssl_basedir
-else
-	dnl If --disable-openssl was specified
-	AC_MSG_RESULT(disabled)
-fi
-
-CPPFLAGS="$CPPFLAGS $SSL_CFLAGS"
-if test "$cf_enable_openssl" != no; then
-	dnl Check OpenSSL version (must be 0.9.7 or above!)
-	AC_MSG_CHECKING(for OpenSSL 0.9.7 or above)
-	AC_RUN_IFELSE(
-		[AC_LANG_PROGRAM(
-	    	[#include <openssl/opensslv.h>
-		#include <stdlib.h>],
-		[[if (OPENSSL_VERSION_NUMBER >= 0x00907000)
-		exit(0); else exit(1);]])],
-	cf_enable_openssl=yes,
-	cf_enable_openssl=no,
-	cf_enable_openssl=no)
-
-	if test "$cf_enable_openssl" != no; then
-		AC_MSG_RESULT(found)
-	else
-	        AC_MSG_RESULT(no - OpenSSL support disabled)
-	fi
-fi
-
-if test "$cf_enable_openssl" != no; then
-	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
-	AC_CHECK_LIB(crypto, RAND_status,
-		[cf_enable_openssl=yes],
-		[cf_enable_openssl=no])
-fi
-
-if test "$cf_enable_openssl" != no; then
-	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
-	AC_CHECK_LIB(ssl, SSL_read,
-		[SSL_LIBS="$SSL_LIBS -lssl -lcrypto"],
-		[cf_enable_openssl=no], [-lcrypto])
-fi
-
-AC_SUBST(SSL_SRCS_ENABLE)
-AC_SUBST(SSL_INCLUDES)
-AC_SUBST(SSL_CFLAGS)
-AC_SUBST(SSL_LIBS)
-
-dnl
-dnl
-dnl mbedTLS support
-dnl
-dnl
-
-AC_ARG_ENABLE(mbedtls,
-[AC_HELP_STRING([--enable-mbedtls], [Enable mbedTLS support.])
-AC_HELP_STRING([--disable-mbedtls], [Disable mbedTLS support.])],
-[cf_enable_mbedtls=$enableval],
-[cf_enable_mbedtls="auto"])
-
-if test "$cf_enable_mbedtls" != no; then
-	LIBS="$LIBS $MBEDTLS_LIBS"
-	AC_CHECK_LIB(mbedtls, mbedtls_ssl_init, [
-		MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedx509 -lmbedcrypto"
-		cf_enable_mbedtls=yes
-	], [cf_enable_mbedtls=no], [-lmbedx509 -lmbedcrypto])
-fi
-
-AC_SUBST(MBEDTLS_CFLAGS)
-AC_SUBST(MBEDTLS_LIBS)
-
-dnl
-dnl
-dnl GnuTLS support
-dnl
-dnl
-
-AC_MSG_CHECKING(for GnuTLS)
-AC_ARG_ENABLE(gnutls,
-[AC_HELP_STRING([--enable-gnutls],[Enable GnuTLS support.])
-AC_HELP_STRING([--disable-gnutls],[Disable GnuTLS support.])],
-[cf_enable_gnutls=$enableval],
-[cf_enable_gnutls="auto"])
-
-if test "$cf_enable_gnutls" != no; then
-       PKG_CHECK_MODULES(GNUTLS, [gnutls], [
-               cf_enable_gnutls="yes"
-       ], [cf_enable_gnutls="no"])
-fi
-
-AC_SUBST(GNUTLS_CFLAGS)
-AC_SUBST(GNUTLS_LIBS)
-
-dnl mbed TLS is given highest preference when no specified TLS library is provided
-if test "$cf_enable_openssl" = "auto" -a "$cf_enable_mbedtls" = "yes"; then
-       cf_enable_openssl="no"
-fi
-
-if test "$cf_enable_gnutls" = "auto" -a "$cf_enable_openssl" = "yes" -a "$cf_enable_mbedtls" = "yes"; then
-       cf_enable_gnutls="no"
-fi
-
-if test x"$cf_enable_openssl" != xno; then
-	AC_DEFINE(HAVE_OPENSSL,1,[Has OpenSSL])
-	GNUTLS_CFLAGS=""
-	GNUTLS_LIBS=""
-	MBEDTLS_LIBS=""
-	MBEDTLS_CFLAGS=""
-	SSL_TYPE="openssl"
-elif test x"$cf_enable_mbedtls" != xno; then
-	AC_DEFINE(HAVE_MBEDTLS, 1, [Has mbedTLS])
-	SSL_LIBS=""
-	SSL_CFLAGS=""
-	GNUTLS_CFLAGS=""
-	GNUTLS_LIBS=""
-	SSL_TYPE="mbedtls"
-elif test x"$cf_enable_gnutls" != xno; then
-	AC_DEFINE(HAVE_GNUTLS, 1, [Has GnuTLS])
-	SSL_LIBS=""
-	SSL_CFLAGS=""
-	MBEDTLS_LIBS=""
-	MBEDTLS_CFLAGS=""
-	SSL_TYPE="gnutls"
-fi
-
-dnl
-dnl
 dnl Additional linkages
 dnl
 dnl
@@ -1544,7 +1400,8 @@ echo "LZ4 support ....................... $lz4"
 echo "Snappy support .................... $snappy"
 echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
-echo "SSL support ....................... $SSL_TYPE"
+echo "SSL support ....................... $have_ssl"
+echo "Crypto support .................... $have_crypto"
 echo "Magic support ..................... $have_magic"
 echo "Linux AIO support ................. $aio"
 echo "IPv6 support ...................... $ipv6"
