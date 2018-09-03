@@ -553,6 +553,32 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 // Database descriptors
 //
 
+decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
+ircd::m::dbs::desc::events__event_idx__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_idx.cache.size" },
+		{ "default",  long(64_MiB)                              },
+	}, []
+	{
+		const size_t &value{events__event_idx__cache__size};
+		db::capacity(db::cache(event_idx), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_idx__cache_comp__size)
+ircd::m::dbs::desc::events__event_idx__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_idx.cache_comp.size" },
+		{ "default",  long(16_MiB)                                   },
+	}, []
+	{
+		const size_t &value{events__event_idx__cache_comp__size};
+		db::capacity(db::cache_compressed(event_idx), value);
+	}
+};
+
 const ircd::database::descriptor
 ircd::m::dbs::desc::events__event_idx
 {
@@ -582,16 +608,42 @@ ircd::m::dbs::desc::events__event_idx
 	{},
 
 	// cache size
-	96_MiB, //TODO: conf
+	-1, //uses conf item
 
 	// cache size for compressed assets
-	16_MiB, //TODO: conf
+	-1, //uses conf item
 
 	// bloom filter bits
 	16,
 
 	// expect queries hit
 	false,
+};
+
+decltype(ircd::m::dbs::desc::events__event_bad__cache__size)
+ircd::m::dbs::desc::events__event_bad__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_bad.cache.size" },
+		{ "default",  long(16_MiB)                              },
+	}, []
+	{
+		const size_t &value{events__event_bad__cache__size};
+		db::capacity(db::cache(event_bad), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_bad__cache_comp__size)
+ircd::m::dbs::desc::events__event_bad__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_bad.cache_comp.size" },
+		{ "default",  long(16_MiB)                                   },
+	}, []
+	{
+		const size_t &value{events__event_bad__cache_comp__size};
+		db::capacity(db::cache_compressed(event_bad), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -633,10 +685,10 @@ ircd::m::dbs::desc::events__event_bad
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	16,
@@ -648,6 +700,19 @@ ircd::m::dbs::desc::events__event_bad
 //
 // room_head
 //
+
+decltype(ircd::m::dbs::desc::events__room_head__cache__size)
+ircd::m::dbs::desc::events__room_head__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_head.cache.size" },
+		{ "default",  long(16_MiB)                              },
+	}, []
+	{
+		const size_t &value{events__room_head__cache__size};
+		db::capacity(db::cache(room_head), value);
+	}
+};
 
 /// prefix transform for room_id,event_id in room_id
 ///
@@ -734,10 +799,10 @@ ircd::m::dbs::desc::events__room_head
 	events__room_head__pfx,
 
 	// cache size
-	32_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	0, //TODO: conf
+	0, //no compresed cache
 
 	// bloom filter bits
 	0,
@@ -749,6 +814,32 @@ ircd::m::dbs::desc::events__room_head
 //
 // room_events
 //
+
+decltype(ircd::m::dbs::desc::events__room_events__cache__size)
+ircd::m::dbs::desc::events__room_events__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_events.cache.size" },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__room_events__cache__size};
+		db::capacity(db::cache(room_events), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_events__cache_comp__size)
+ircd::m::dbs::desc::events__room_events__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_events.cache_comp.size" },
+		{ "default",  long(16_MiB)                                     },
+	}, []
+	{
+		const size_t &value{events__room_events__cache_comp__size};
+		db::capacity(db::cache_compressed(room_events), value);
+	}
+};
 
 /// Prefix transform for the events__room_events. The prefix here is a room_id
 /// and the suffix is the depth+event_id concatenation.
@@ -961,10 +1052,10 @@ ircd::m::dbs::desc::events__room_events
 	events__room_events__pfx,
 
 	// cache size
-	64_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	24_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	0, // no bloom filter because of possible comparator issues
@@ -976,6 +1067,32 @@ ircd::m::dbs::desc::events__room_events
 //
 // joined sequential
 //
+
+decltype(ircd::m::dbs::desc::events__room_joined__cache__size)
+ircd::m::dbs::desc::events__room_joined__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_joined.cache.size" },
+		{ "default",  long(8_MiB)                                 },
+	}, []
+	{
+		const size_t &value{events__room_joined__cache__size};
+		db::capacity(db::cache(room_joined), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_joined__cache_comp__size)
+ircd::m::dbs::desc::events__room_joined__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_joined.cache_comp.size" },
+		{ "default",  long(8_MiB)                                      },
+	}, []
+	{
+		const size_t &value{events__room_joined__cache_comp__size};
+		db::capacity(db::cache_compressed(room_joined), value);
+	}
+};
 
 /// Prefix transform for the events__room_joined
 ///
@@ -1072,10 +1189,10 @@ ircd::m::dbs::desc::events__room_joined
 	events__room_joined__pfx,
 
 	// cache size
-	64_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	10,
@@ -1087,6 +1204,32 @@ ircd::m::dbs::desc::events__room_joined
 //
 // state sequential
 //
+
+decltype(ircd::m::dbs::desc::events__room_state__cache__size)
+ircd::m::dbs::desc::events__room_state__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_state.cache.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__room_state__cache__size};
+		db::capacity(db::cache(room_state), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_state__cache_comp__size)
+ircd::m::dbs::desc::events__room_state__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_state.cache_comp.size"  },
+		{ "default",  long(8_MiB)                                      },
+	}, []
+	{
+		const size_t &value{events__room_state__cache_comp__size};
+		db::capacity(db::cache_compressed(room_state), value);
+	}
+};
 
 /// prefix transform for type,state_key in room_id
 ///
@@ -1181,16 +1324,46 @@ ircd::m::dbs::desc::events__room_state
 	events__room_state__pfx,
 
 	// cache size
-	128_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	32_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
-	16,
+	24,
 
 	// expect queries hit
 	false,
+};
+
+//
+// state node
+//
+
+decltype(ircd::m::dbs::desc::events__state_node__cache__size)
+ircd::m::dbs::desc::events__state_node__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._state_node.cache.size"  },
+		{ "default",  long(64_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__state_node__cache__size};
+		db::capacity(db::cache(state_node), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__state_node__cache_comp__size)
+ircd::m::dbs::desc::events__state_node__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._state_node.cache_comp.size"  },
+		{ "default",  long(32_MiB)                                     },
+	}, []
+	{
+		const size_t &value{events__state_node__cache_comp__size};
+		db::capacity(db::cache_compressed(state_node), value);
+	}
 };
 
 /// State nodes are pieces of the m::state:: b-tree. The key is the hash
@@ -1223,10 +1396,10 @@ ircd::m::dbs::desc::events__state_node
 	{},
 
 	// cache size
-	96_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	24_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
@@ -1238,6 +1411,38 @@ ircd::m::dbs::desc::events__state_node
 //
 // Direct column descriptors
 //
+
+//
+// event_id
+//
+
+decltype(ircd::m::dbs::desc::events__event_id__cache__size)
+ircd::m::dbs::desc::events__event_id__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.event_id.cache.size"  },
+		{ "default",  long(32_MiB)                             },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "event_id"_>()));
+		const size_t &value{events__event_id__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_id__cache_comp__size)
+ircd::m::dbs::desc::events__event_id__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.event_id.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                  },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "event_id"_>()));
+		const size_t &value{events__event_id__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
+};
 
 const ircd::database::descriptor
 ircd::m::dbs::desc::events_event_id
@@ -1273,16 +1478,48 @@ ircd::m::dbs::desc::events_event_id
 	{},
 
 	// cache size
-	32_MiB, //TODO: conf
+	-1, //use conf
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// type
+//
+
+decltype(ircd::m::dbs::desc::events__type__cache__size)
+ircd::m::dbs::desc::events__type__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.type.cache.size"  },
+		{ "default",  long(16_MiB)                         },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "type"_>()));
+		const size_t &value{events__type__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__type__cache_comp__size)
+ircd::m::dbs::desc::events__type__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.type.cache_comp.size"  },
+		{ "default",  long(16_MiB)                              },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "type"_>()));
+		const size_t &value{events__type__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1320,16 +1557,48 @@ ircd::m::dbs::desc::events_type
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// content
+//
+
+decltype(ircd::m::dbs::desc::events__content__cache__size)
+ircd::m::dbs::desc::events__content__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.content.cache.size"  },
+		{ "default",  long(32_MiB)                            },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "content"_>()));
+		const size_t &value{events__content__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__content__cache_comp__size)
+ircd::m::dbs::desc::events__content__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.content.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                 },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "content"_>()));
+		const size_t &value{events__content__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1367,16 +1636,48 @@ ircd::m::dbs::desc::events_content
 	{},
 
 	// cache size
-	32_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// redacts
+//
+
+decltype(ircd::m::dbs::desc::events__redacts__cache__size)
+ircd::m::dbs::desc::events__redacts__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.redacts.cache.size"  },
+		{ "default",  long(8_MiB)                             },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "redacts"_>()));
+		const size_t &value{events__redacts__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__redacts__cache_comp__size)
+ircd::m::dbs::desc::events__redacts__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.redacts.cache_comp.size"  },
+		{ "default",  long(4_MiB)                                  },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "redacts"_>()));
+		const size_t &value{events__redacts__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1408,16 +1709,48 @@ ircd::m::dbs::desc::events_redacts
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	false,
+};
+
+//
+// room_id
+//
+
+decltype(ircd::m::dbs::desc::events__room_id__cache__size)
+ircd::m::dbs::desc::events__room_id__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.room_id.cache.size"  },
+		{ "default",  long(16_MiB)                            },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "room_id"_>()));
+		const size_t &value{events__room_id__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_id__cache_comp__size)
+ircd::m::dbs::desc::events__room_id__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.room_id.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                 },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "room_id"_>()));
+		const size_t &value{events__room_id__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1454,16 +1787,48 @@ ircd::m::dbs::desc::events_room_id
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// sender
+//
+
+decltype(ircd::m::dbs::desc::events__sender__cache__size)
+ircd::m::dbs::desc::events__sender__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.sender.cache.size"  },
+		{ "default",  long(16_MiB)                           },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "sender"_>()));
+		const size_t &value{events__sender__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__sender__cache_comp__size)
+ircd::m::dbs::desc::events__sender__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.sender.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "sender"_>()));
+		const size_t &value{events__sender__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1500,16 +1865,48 @@ ircd::m::dbs::desc::events_sender
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// state_key
+//
+
+decltype(ircd::m::dbs::desc::events__state_key__cache__size)
+ircd::m::dbs::desc::events__state_key__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.state_key.cache.size"  },
+		{ "default",  long(16_MiB)                              },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "state_key"_>()));
+		const size_t &value{events__state_key__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__state_key__cache_comp__size)
+ircd::m::dbs::desc::events__state_key__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.state_key.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                   },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "state_key"_>()));
+		const size_t &value{events__state_key__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1548,16 +1945,48 @@ ircd::m::dbs::desc::events_state_key
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	false,
+};
+
+//
+// origin
+//
+
+decltype(ircd::m::dbs::desc::events__origin__cache__size)
+ircd::m::dbs::desc::events__origin__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.origin.cache.size"  },
+		{ "default",  long(16_MiB)                           },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "origin"_>()));
+		const size_t &value{events__origin__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__origin__cache_comp__size)
+ircd::m::dbs::desc::events__origin__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.origin.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "origin"_>()));
+		const size_t &value{events__origin__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1591,16 +2020,48 @@ ircd::m::dbs::desc::events_origin
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// origin_server_ts
+//
+
+decltype(ircd::m::dbs::desc::events__origin_server_ts__cache__size)
+ircd::m::dbs::desc::events__origin_server_ts__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.origin_server_ts.cache.size"  },
+		{ "default",  long(16_MiB)                                     },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "origin_server_ts"_>()));
+		const size_t &value{events__origin_server_ts__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__origin_server_ts__cache_comp__size)
+ircd::m::dbs::desc::events__origin_server_ts__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.origin_server_ts.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                          },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "origin_server_ts"_>()));
+		const size_t &value{events__origin_server_ts__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1638,16 +2099,48 @@ ircd::m::dbs::desc::events_origin_server_ts
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// signatures
+//
+
+decltype(ircd::m::dbs::desc::events__signatures__cache__size)
+ircd::m::dbs::desc::events__signatures__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.signatures.cache.size"  },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "signatures"_>()));
+		const size_t &value{events__signatures__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__signatures__cache_comp__size)
+ircd::m::dbs::desc::events__signatures__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.signatures.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                    },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "signatures"_>()));
+		const size_t &value{events__signatures__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1679,16 +2172,48 @@ ircd::m::dbs::desc::events_signatures
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// auth_events
+//
+
+decltype(ircd::m::dbs::desc::events__auth_events__cache__size)
+ircd::m::dbs::desc::events__auth_events__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.auth_events.cache.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "auth_events"_>()));
+		const size_t &value{events__auth_events__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__auth_events__cache_comp__size)
+ircd::m::dbs::desc::events__auth_events__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.auth_events.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                     },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "auth_events"_>()));
+		const size_t &value{events__auth_events__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1719,16 +2244,48 @@ ircd::m::dbs::desc::events_auth_events
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	false,
+};
+
+//
+// depth
+//
+
+decltype(ircd::m::dbs::desc::events__depth__cache__size)
+ircd::m::dbs::desc::events__depth__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.depth.cache.size"  },
+		{ "default",  long(16_MiB)                          },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "depth"_>()));
+		const size_t &value{events__depth__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__depth__cache_comp__size)
+ircd::m::dbs::desc::events__depth__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.depth.cache_comp.size"  },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "depth"_>()));
+		const size_t &value{events__depth__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1759,16 +2316,48 @@ ircd::m::dbs::desc::events_depth
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// hashes
+//
+
+decltype(ircd::m::dbs::desc::events__hashes__cache__size)
+ircd::m::dbs::desc::events__hashes__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.hashes.cache.size"  },
+		{ "default",  long(16_MiB)                           },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "hashes"_>()));
+		const size_t &value{events__hashes__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__hashes__cache_comp__size)
+ircd::m::dbs::desc::events__hashes__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.hashes.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "hashes"_>()));
+		const size_t &value{events__hashes__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1799,16 +2388,48 @@ ircd::m::dbs::desc::events_hashes
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// membership
+//
+
+decltype(ircd::m::dbs::desc::events__membership__cache__size)
+ircd::m::dbs::desc::events__membership__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.membership.cache.size"  },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "membership"_>()));
+		const size_t &value{events__membership__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__membership__cache_comp__size)
+ircd::m::dbs::desc::events__membership__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.membership.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                    },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "membership"_>()));
+		const size_t &value{events__membership__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1839,16 +2460,48 @@ ircd::m::dbs::desc::events_membership
 	{},
 
 	// cache size
-	16_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	false,
+};
+
+//
+// prev_events
+//
+
+decltype(ircd::m::dbs::desc::events__prev_events__cache__size)
+ircd::m::dbs::desc::events__prev_events__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.prev_events.cache.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "prev_events"_>()));
+		const size_t &value{events__prev_events__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__prev_events__cache_comp__size)
+ircd::m::dbs::desc::events__prev_events__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.prev_events.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                     },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "prev_events"_>()));
+		const size_t &value{events__prev_events__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1879,16 +2532,48 @@ ircd::m::dbs::desc::events_prev_events
 	{},
 
 	// cache size
-	24_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
 
 	// expect queries hit
 	true,
+};
+
+//
+// prev_state
+//
+
+decltype(ircd::m::dbs::desc::events__prev_state__cache__size)
+ircd::m::dbs::desc::events__prev_state__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.prev_state.cache.size"  },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "prev_state"_>()));
+		const size_t &value{events__prev_state__cache__size};
+		db::capacity(db::cache(column), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__prev_state__cache_comp__size)
+ircd::m::dbs::desc::events__prev_state__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.prev_state.cache_comp.size"  },
+		{ "default",  long(16_MiB)                                    },
+	}, []
+	{
+		auto &column(event_column.at(json::indexof<event, "prev_state"_>()));
+		const size_t &value{events__prev_state__cache_comp__size};
+		db::capacity(db::cache_compressed(column), value);
+	}
 };
 
 const ircd::database::descriptor
@@ -1919,10 +2604,10 @@ ircd::m::dbs::desc::events_prev_state
 	{},
 
 	// cache size
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// cache size for compressed assets
-	8_MiB, //TODO: conf
+	-1, //use conf item
 
 	// bloom filter bits
 	12,
