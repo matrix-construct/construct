@@ -23,6 +23,23 @@ IRCD_MODULE
 	}
 };
 
+/// Set to false to quiet errors from a conf item failing to set
+bool
+item_error_log
+{
+	true
+};
+
+static void
+on_run()
+{
+	// Suppress errors for this scope.
+	const unwind uw{[] { item_error_log = true; }};
+	item_error_log = false;
+	rehash_conf(false);
+	reload_conf();
+}
+
 /// Waits for the daemon to transition to the RUN state so we can gather all
 /// of the registered conf items and save any new ones to the !conf room.
 /// We can't do that on this module init for two reason:
@@ -32,19 +49,11 @@ const ircd::runlevel_changed
 rehash_on_run{[]
 (const auto &runlevel)
 {
-	if(runlevel != ircd::runlevel::RUN)
-		return;
-
-	static const auto on_run{[]
-	{
-		rehash_conf(false);
-		reload_conf();
-	}};
-
-	ctx::context
-	{
-		"confhash", 256_KiB, on_run, ctx::context::POST
-	};
+	if(runlevel == ircd::runlevel::RUN)
+		ctx::context
+		{
+			"confhash", 256_KiB, on_run, ctx::context::POST
+		};
 }};
 
 const m::room::id::buf
@@ -111,21 +120,13 @@ noexcept try
 	};
 
 	if(runlevel == runlevel::START && !conf::exists(key))
-	{
-		log::dwarning
-		{
-			"Cannot set conf item '%s'; does not exist or not loaded yet",
-			key
-		};
-
 		return;
-	}
 
 	ircd::conf::set(key, value);
 }
 catch(const std::exception &e)
 {
-	log::error
+	if(item_error_log) log::error
 	{
 		"Failed to set conf item '%s' :%s",
 		json::get<"state_key"_>(event),
