@@ -39,10 +39,10 @@ struct ircd::db::database::descriptor
 	db::prefix_transform prefix {};
 
 	/// Size of the LRU cache for uncompressed blocks
-	size_t cache_size { 16_MiB };
+	ssize_t cache_size { -1 };
 
 	/// Size of the LRU cache for compressed blocks
-	size_t cache_size_comp { 8_MiB };
+	ssize_t cache_size_comp { -1 };
 
 	/// Bloom filter bits. Filter is still useful even if queries are expected
 	/// to always hit on this column; see `expect_queries_hit` option.
