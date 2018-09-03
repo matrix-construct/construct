@@ -325,7 +325,7 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 	tgt = string_view{this->tgtbuf, len - 1};
 	pos += len;
 
-	assert(std::distance(pos, end(rdata)) == 0);
+	assert(std::distance(pos, end(rdata)) >= 0);
 }
 
 bool
