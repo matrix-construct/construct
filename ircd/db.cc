@@ -1414,14 +1414,14 @@ ircd::db::database::column::column(database *const &d,
 
 	log::debug
 	{
-		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%zu:%zu bloom:%zu %s",
+		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%s:%s bloom:%zu %s",
 		db::name(*d),
 		demangle(key_type.name()),
 		demangle(mapped_type.name()),
 		this->cmp.Name(),
 		this->options.prefix_extractor? this->prefix.Name() : "none",
-		cache_size,
-		cache_size_comp,
+		cache_size? "YES": "NO",
+		cache_size_comp? "YES": "NO",
 		bloom_bits,
 		this->descriptor.name
 	};
