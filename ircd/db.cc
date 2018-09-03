@@ -4448,7 +4448,6 @@ decltype(ircd::db::database::env::random_access_file::default_opts)
 ircd::db::database::env::random_access_file::default_opts{[]
 {
 	ircd::fs::fd::opts ret{std::ios_base::in};
-	ret.direct = true;
 	return ret;
 }()};
 
