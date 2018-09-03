@@ -772,7 +772,7 @@ try
 	opts.allow_concurrent_memtable_write = false;
 	opts.enable_write_thread_adaptive_yield = false;
 	opts.enable_pipelined_write = false;
-	opts.use_direct_reads = true;
+	opts.use_direct_reads = !ircd::nodirect;
 	opts.write_thread_max_yield_usec = 0;
 	opts.write_thread_slow_yield_usec = 0;
 	opts.use_direct_io_for_flush_and_compaction = false;

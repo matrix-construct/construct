@@ -19,6 +19,7 @@ namespace ircd
 	bool checkdb;                                // check databases when opening
 	bool pitrecdb;                               // point-in-time recovery for db
 	bool nojs;                                   // no ircd::js system init.
+	bool nodirect;                               // no use of O_DIRECT.
 
 	std::string _hostname;                       // user's supplied param
 	boost::asio::io_context *ios;                // user's io service

@@ -57,6 +57,7 @@ lgetopt opts[] =
 	{ "checkdb",    &ircd::checkdb,   lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &ircd::pitrecdb,  lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
 	{ "nojs",       &ircd::nojs,      lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
+	{ "nodirect",   &ircd::nodirect,  lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
