@@ -12,6 +12,58 @@ decltype(ircd::conf::items)
 ircd::conf::items
 {};
 
+size_t
+ircd::conf::reset()
+{
+	size_t ret{0};
+	for(const auto &p : items)
+		ret += reset(p.first);
+
+	return ret;
+}
+
+bool
+ircd::conf::reset(const string_view &key)
+try
+{
+	return reset(std::nothrow, key);
+}
+catch(const std::exception &e)
+{
+	return false;
+}
+
+bool
+ircd::conf::reset(std::nothrow_t,
+                  const string_view &key)
+try
+{
+	auto &item(*items.at(key));
+	if(!item.set_cb)
+		return false;
+
+	item.set_cb();
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] set callback :%s",
+		key,
+		e.what()
+	};
+
+	throw;
+}
+
 bool
 ircd::conf::set(std::nothrow_t,
                 const string_view &key,

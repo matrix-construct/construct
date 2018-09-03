@@ -51,6 +51,9 @@ namespace ircd::conf
 	string_view get(const string_view &key, const mutable_buffer &out);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
+	bool reset(std::nothrow_t, const string_view &key);
+	bool reset(const string_view &key);
+	size_t reset();
 }
 
 /// Conf item base class. You don't create this directly; use one of the
