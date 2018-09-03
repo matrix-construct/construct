@@ -13,13 +13,18 @@ using namespace ircd;
 extern "C" void rehash_conf(const bool &existing = false);
 extern "C" void reload_conf();
 extern "C" void refresh_conf();
+static void init_conf_item(conf::item<> &);
 
 mapi::header
 IRCD_MODULE
 {
 	"Server Configuration", []
 	{
+		ircd::conf::_init_cb = init_conf_item;
 		reload_conf();
+	}, []
+	{
+		ircd::conf::_init_cb = nullptr;
 	}
 };
 
@@ -154,6 +159,21 @@ init_conf_items(const m::event &)
 	};
 
 	state.for_each("ircd.conf.item", []
+	(const m::event &event)
+	{
+		conf_updated(event);
+	});
+}
+
+static void
+init_conf_item(conf::item<> &item)
+{
+	const m::room::state state
+	{
+		conf_room
+	};
+
+	state.get(std::nothrow, "ircd.conf.item", item.name, []
 	(const m::event &event)
 	{
 		conf_updated(event);
