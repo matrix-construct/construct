@@ -148,9 +148,12 @@ get__context(client &client,
 	{
 		json::stack::member member{ret, "state"};
 		json::stack::array array{member};
-		m::room::state{room}.for_each([&array]
+		m::room::state{room}.for_each([&array, &request]
 		(const m::event &event)
 		{
+			if(!visible(event, request.user_id))
+				return;
+
 			array.append(event);
 		});
 	}
