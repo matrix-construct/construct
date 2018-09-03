@@ -1382,7 +1382,7 @@ try
 		    << " "
 		    << std::setw(9) << capacity
 		    << " "
-		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
 		    << std::endl;
 
@@ -1397,13 +1397,13 @@ try
 	    << " "
 	    << std::setw(9) << "CAPACITY"
 	    << " "
-	    << std::setw(5) << "   PCT"
+	    << std::setw(6) << "    PCT"
 	    << " "
 	    << std::setw(9) << " COMPRESS"
 	    << " "
 	    << std::setw(9) << "CAPACITY"
 	    << " "
-	    << std::setw(5) << "   PCT"
+	    << std::setw(6) << "    PCT"
 	    << " "
 	    << std::endl;
 
@@ -1420,13 +1420,13 @@ try
 		    << " "
 		    << std::setw(9) << capacity
 		    << " "
-		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "% "
 		    << std::setw(9) << usage_comp
 		    << " "
 		    << std::setw(9) << capacity_comp
 		    << " "
-		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
 		    << "%"
 		    << std::endl;
 	}};
