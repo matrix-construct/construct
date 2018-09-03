@@ -2197,6 +2197,22 @@ console_cmd__peer(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__peer__count(opt &out, const string_view &line)
+{
+	size_t i{0};
+	for(const auto &pair : ircd::server::peers)
+	{
+		assert(bool(pair.second));
+		const auto &peer{*pair.second};
+		if(!peer.err_has())
+			++i;
+	}
+
+	out << i << std::endl;
+	return true;
+}
+
+bool
 console_cmd__peer__error(opt &out, const string_view &line)
 {
 	for(const auto &pair : ircd::server::peers)
@@ -2229,6 +2245,22 @@ console_cmd__peer__error(opt &out, const string_view &line)
 		out << std::endl;
 	}
 
+	return true;
+}
+
+bool
+console_cmd__peer__error__count(opt &out, const string_view &line)
+{
+	size_t i{0};
+	for(const auto &pair : ircd::server::peers)
+	{
+		assert(bool(pair.second));
+		const auto &peer{*pair.second};
+		if(peer.err_has())
+			++i;
+	}
+
+	out << i << std::endl;
 	return true;
 }
 
@@ -2484,6 +2516,22 @@ console_cmd__net__host__cache__A(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__host__cache__A__count(opt &out, const string_view &line)
+{
+	size_t count[2] {0};
+	for(const auto &pair : net::dns::cache.A)
+	{
+		const auto &host{pair.first};
+		const auto &record{pair.second};
+		++count[bool(record.ip4)];
+	}
+
+	out << "resolved:  " << count[1] << std::endl;
+	out << "error:     " << count[0] << std::endl;
+	return true;
+}
+
+bool
 console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 {
 	for(const auto &pair : net::dns::cache.SRV)
@@ -2502,6 +2550,22 @@ console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 		    << std::endl;
 	}
 
+	return true;
+}
+
+bool
+console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
+{
+	size_t count[2] {0};
+	for(const auto &pair : net::dns::cache.SRV)
+	{
+		const auto &host{pair.first};
+		const auto &record{pair.second};
+		++count[bool(record.tgt)];
+	}
+
+	out << "resolved:  " << count[1] << std::endl;
+	out << "error:     " << count[0] << std::endl;
 	return true;
 }
 
