@@ -36,6 +36,7 @@
 #include <ircd/db/database/logs.h>
 #include <ircd/db/database/column.h>
 #include <ircd/db/database/txn.h>
+#include <ircd/db/database/cache.h>
 
 // RocksDB embedding environment callback interfaces (backside).
 #include <ircd/db/database/env/env.h>
@@ -475,13 +476,13 @@ ircd::db::sequence(const database &cd)
 rocksdb::Cache *
 ircd::db::cache(database &d)
 {
-	return d.cache.get();
+	return d.row_cache.get();
 }
 
 const rocksdb::Cache *
 ircd::db::cache(const database &d)
 {
-	return d.cache.get();
+	return d.row_cache.get();
 }
 
 template<>
@@ -692,13 +693,10 @@ try
 
 	//rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
 }
-,cache{[this]
-() -> std::shared_ptr<rocksdb::Cache>
+,row_cache
 {
-	//TODO: conf
-	const auto lru_cache_size{16_MiB};
-	return rocksdb::NewLRUCache(lru_cache_size);
-}()}
+	std::make_shared<database::cache>(this, 16_MiB)
+}
 ,descriptors
 {
 	std::move(description)
@@ -826,7 +824,7 @@ try
 	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
 
 	// Setup cache
-	opts.row_cache = this->cache;
+	opts.row_cache = this->row_cache;
 
 	// Setup column families
 	for(const auto &desc : descriptors)
@@ -1948,6 +1946,224 @@ noexcept
 	          d->name,
 	          h->GetName(),
 	          h);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::cache (internal)
+//
+
+decltype(ircd::db::database::cache::DEFAULT_SHARD_BITS)
+ircd::db::database::cache::DEFAULT_SHARD_BITS
+{
+	-1
+};
+
+decltype(ircd::db::database::cache::DEFAULT_STRICT)
+ircd::db::database::cache::DEFAULT_STRICT
+{
+	true
+};
+
+decltype(ircd::db::database::cache::DEFAULT_HI_PRIO)
+ircd::db::database::cache::DEFAULT_HI_PRIO
+{
+	0.0
+};
+
+//
+// cache::cache
+//
+
+ircd::db::database::cache::cache(database *const &d,
+                                 const ssize_t &initial_capacity)
+:d{d}
+,c
+{
+	rocksdb::NewLRUCache
+	(
+		std::max(initial_capacity, ssize_t(0)),
+		DEFAULT_SHARD_BITS,
+		DEFAULT_STRICT,
+		DEFAULT_HI_PRIO
+	)
+}
+{
+}
+
+ircd::db::database::cache::~cache()
+noexcept
+{
+}
+
+const char *
+ircd::db::database::cache::Name()
+const noexcept
+{
+	assert(bool(c));
+	return c->Name();
+}
+
+rocksdb::Status
+ircd::db::database::cache::Insert(const Slice &key,
+                                  void *const value,
+                                  size_t charge,
+                                  deleter del,
+                                  Handle **const handle,
+                                  Priority priority)
+noexcept
+{
+	assert(bool(c));
+	return c->Insert(key, value, charge, del, handle, priority);
+}
+
+rocksdb::Cache::Handle *
+ircd::db::database::cache::Lookup(const Slice &key,
+                                  Statistics *const statistics)
+noexcept
+{
+	assert(bool(c));
+	return c->Lookup(key, statistics);
+}
+
+bool
+ircd::db::database::cache::Ref(Handle *const handle)
+noexcept
+{
+	assert(bool(c));
+	return c->Ref(handle);
+}
+
+bool
+ircd::db::database::cache::Release(Handle *const handle,
+                                   bool force_erase)
+noexcept
+{
+	assert(bool(c));
+	return c->Release(handle, force_erase);
+}
+
+void *
+ircd::db::database::cache::Value(Handle *const handle)
+noexcept
+{
+	assert(bool(c));
+	return c->Value(handle);
+}
+
+void
+ircd::db::database::cache::Erase(const Slice &key)
+noexcept
+{
+	assert(bool(c));
+	return c->Erase(key);
+}
+
+uint64_t
+ircd::db::database::cache::NewId()
+noexcept
+{
+	assert(bool(c));
+	return c->NewId();
+}
+
+void
+ircd::db::database::cache::SetCapacity(size_t capacity)
+noexcept
+{
+	assert(bool(c));
+	return c->SetCapacity(capacity);
+}
+
+void
+ircd::db::database::cache::SetStrictCapacityLimit(bool strict_capacity_limit)
+noexcept
+{
+	assert(bool(c));
+	return c->SetStrictCapacityLimit(strict_capacity_limit);
+}
+
+bool
+ircd::db::database::cache::HasStrictCapacityLimit()
+const noexcept
+{
+	assert(bool(c));
+	return c->HasStrictCapacityLimit();
+}
+
+size_t
+ircd::db::database::cache::GetCapacity()
+const noexcept
+{
+	assert(bool(c));
+	return c->GetCapacity();
+}
+
+size_t
+ircd::db::database::cache::GetUsage()
+const noexcept
+{
+	assert(bool(c));
+	return c->GetUsage();
+}
+
+size_t
+ircd::db::database::cache::GetUsage(Handle *const handle)
+const noexcept
+{
+	assert(bool(c));
+	return c->GetUsage(handle);
+}
+
+size_t
+ircd::db::database::cache::GetPinnedUsage()
+const noexcept
+{
+	assert(bool(c));
+	return c->GetPinnedUsage();
+}
+
+void
+ircd::db::database::cache::DisownData()
+noexcept
+{
+	assert(bool(c));
+	return c->DisownData();
+}
+
+void
+ircd::db::database::cache::ApplyToAllCacheEntries(callback cb,
+                                                  bool thread_safe)
+noexcept
+{
+	assert(bool(c));
+	return c->ApplyToAllCacheEntries(cb, thread_safe);
+}
+
+void
+ircd::db::database::cache::EraseUnRefEntries()
+noexcept
+{
+	assert(bool(c));
+	return c->EraseUnRefEntries();
+}
+
+std::string
+ircd::db::database::cache::GetPrintableOptions()
+const noexcept
+{
+	assert(bool(c));
+	return c->GetPrintableOptions();
+}
+
+void
+ircd::db::database::cache::TEST_mark_as_data_block(const Slice &key,
+                                                   size_t charge)
+noexcept
+{
+	assert(bool(c));
+	return c->TEST_mark_as_data_block(key, charge);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -58,6 +58,11 @@ namespace ircd::db
 /// The instance registers and deregisters itself in a global set of open
 /// databases and can be found that way if necessary.
 ///
+/// Internal structures declared within this class comprise the backend which
+/// supports RocksDB; they are not involved in the standard include stack
+/// beyond this declaration and not meant for IRCd developers merely using the
+/// ircd::db interface.
+///
 struct ircd::db::database
 :std::enable_shared_from_this<database>
 ,instance_list<database>
@@ -73,6 +78,7 @@ struct ircd::db::database
 	struct prefix_transform;
 	struct column;
 	struct env;
+	struct cache;
 
 	using description = std::vector<descriptor>;
 
@@ -86,7 +92,7 @@ struct ircd::db::database
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
 	std::shared_ptr<rocksdb::SstFileManager> ssts;
-	std::shared_ptr<rocksdb::Cache> cache;
+	std::shared_ptr<rocksdb::Cache> row_cache;
 	std::vector<descriptor> descriptors;
 	std::vector<string_view> column_names;
 	std::unordered_map<string_view, size_t> column_index;
