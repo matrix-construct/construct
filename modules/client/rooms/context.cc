@@ -33,6 +33,24 @@ flush_hiwat
 	{ "default",  16384L                                  },
 };
 
+const m::event::fetch::opts
+default_fetch_opts
+{
+	m::event::keys::include
+	{
+		"content",
+		"depth",
+		"event_id",
+		"membership",
+		"origin_server_ts",
+		"redacts",
+		"room_id",
+		"sender",
+		"state_key",
+		"type",
+	},
+};
+
 resource::response
 get__context(client &client,
              const resource::request &request,
@@ -101,7 +119,11 @@ get__context(client &client,
 	{
 		json::stack::member member{ret, "events_before"};
 		json::stack::array array{member};
-		m::room::messages before{room, event_id};
+		m::room::messages before
+		{
+			room, event_id, &default_fetch_opts
+		};
+
 		if(before)
 			--before;
 
@@ -125,7 +147,11 @@ get__context(client &client,
 	{
 		json::stack::member member{ret, "events_after"};
 		json::stack::array array{member};
-		m::room::messages after{room, event_id};
+		m::room::messages after
+		{
+			room, event_id, &default_fetch_opts
+		};
+
 		if(after)
 			++after;
 
@@ -148,7 +174,12 @@ get__context(client &client,
 	{
 		json::stack::member member{ret, "state"};
 		json::stack::array array{member};
-		m::room::state{room}.for_each([&array, &request]
+		const m::room::state state
+		{
+			room, &default_fetch_opts
+		};
+
+		state.for_each([&array, &request]
 		(const m::event &event)
 		{
 			if(!visible(event, request.user_id))
