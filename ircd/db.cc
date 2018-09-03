@@ -1962,7 +1962,7 @@ ircd::db::database::cache::DEFAULT_SHARD_BITS
 decltype(ircd::db::database::cache::DEFAULT_STRICT)
 ircd::db::database::cache::DEFAULT_STRICT
 {
-	true
+	false
 };
 
 decltype(ircd::db::database::cache::DEFAULT_HI_PRIO)
