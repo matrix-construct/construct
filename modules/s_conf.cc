@@ -10,14 +10,16 @@
 
 using namespace ircd;
 
-extern "C" void rehash_conf();
+extern "C" void rehash_conf(const bool &existing = false);
+extern "C" void reload_conf();
+extern "C" void refresh_conf();
 
 mapi::header
 IRCD_MODULE
 {
 	"Server Configuration", []
 	{
-		rehash_conf();
+		reload_conf();
 	}
 };
 
@@ -146,12 +148,6 @@ init_conf_items_hook
 	}
 };
 
-void
-rehash_conf()
-{
-	init_conf_items(m::event{});
-}
-
 static void
 create_conf_item(const string_view &key,
                  const conf::item<> &item)
@@ -191,3 +187,35 @@ create_conf_room_hook
 		{ "type",        "m.room.create"  },
 	}
 };
+
+void
+rehash_conf(const bool &existing)
+{
+	const m::room::state state
+	{
+		conf_room
+	};
+
+	for(const auto &p : conf::items)
+	{
+		const auto &key{p.first};
+		const auto &item{p.second}; assert(item);
+		if(!existing)
+			if(state.has("ircd.conf.item", key))
+				continue;
+
+		create_conf_item(key, *item);
+	}
+}
+
+void
+reload_conf()
+{
+	init_conf_items(m::event{});
+}
+
+void
+refresh_conf()
+{
+	ircd::conf::reset();
+}

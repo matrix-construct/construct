@@ -353,16 +353,16 @@ try
 	}
 
 	// This signal handler (though not a *real* signal handler) is still
-	// running on the main async stack and not an ircd::ctx. The rehash
+	// running on the main async stack and not an ircd::ctx. The reload
 	// function does a lot of IO so it requires an ircd::ctx.
 	ircd::context{[]
 	{
-		ircd::m::import<void ()> rehash_conf
+		ircd::m::import<void ()> reload_conf
 		{
-			"s_conf", "rehash_conf"
+			"s_conf", "reload_conf"
 		};
 
-		rehash_conf();
+		reload_conf();
 	}};
 }
 catch(const std::exception &e)

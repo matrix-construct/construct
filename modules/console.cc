@@ -642,15 +642,49 @@ console_cmd__conf__get(opt &out, const string_view &line)
 bool
 console_cmd__conf__rehash(opt &out, const string_view &line)
 {
-	using prototype = void ();
+	using prototype = void (const bool &);
 	static m::import<prototype> rehash_conf
 	{
 		"s_conf", "rehash_conf"
 	};
 
-	rehash_conf();
+	rehash_conf(false);
+	out << "Saved runtime conf items"
+	    << " from the current state into !conf:" << my_host()
+	    << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__conf__reload(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static m::import<prototype> reload_conf
+	{
+		"s_conf", "reload_conf"
+	};
+
+	reload_conf();
 	out << "Updated any runtime conf items"
 	    << " from the current state in !conf:" << my_host()
+	    << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__conf__reset(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static m::import<prototype> refresh_conf
+	{
+		"s_conf", "refresh_conf"
+	};
+
+	refresh_conf();
+	out << "All conf items which execute code upon a change"
+	    << " have done so with the latest runtime value."
 	    << std::endl;
 
 	return true;
