@@ -614,7 +614,7 @@ ircd::m::dbs::desc::events__event_idx
 	-1, //uses conf item
 
 	// bloom filter bits
-	16,
+	24,
 
 	// expect queries hit
 	false,
@@ -691,7 +691,7 @@ ircd::m::dbs::desc::events__event_bad
 	-1, //use conf item
 
 	// bloom filter bits
-	16,
+	24,
 
 	// expect queries hit
 	false,
@@ -1195,7 +1195,7 @@ ircd::m::dbs::desc::events__room_joined
 	-1, //use conf item
 
 	// bloom filter bits
-	10,
+	24,
 
 	// expect queries hit
 	false,
@@ -1402,7 +1402,7 @@ ircd::m::dbs::desc::events__state_node
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	16,
 
 	// expect queries hit
 	true,
@@ -1484,7 +1484,7 @@ ircd::m::dbs::desc::events_event_id
 	-1, //use conf
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -1563,7 +1563,7 @@ ircd::m::dbs::desc::events_type
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -1642,7 +1642,7 @@ ircd::m::dbs::desc::events_content
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -1715,7 +1715,7 @@ ircd::m::dbs::desc::events_redacts
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	false,
@@ -1793,7 +1793,7 @@ ircd::m::dbs::desc::events_room_id
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -1871,7 +1871,7 @@ ircd::m::dbs::desc::events_sender
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -1951,7 +1951,7 @@ ircd::m::dbs::desc::events_state_key
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	false,
@@ -2026,7 +2026,7 @@ ircd::m::dbs::desc::events_origin
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2105,7 +2105,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2178,7 +2178,7 @@ ircd::m::dbs::desc::events_signatures
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2250,7 +2250,7 @@ ircd::m::dbs::desc::events_auth_events
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	false,
@@ -2322,7 +2322,7 @@ ircd::m::dbs::desc::events_depth
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2394,7 +2394,7 @@ ircd::m::dbs::desc::events_hashes
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2466,7 +2466,7 @@ ircd::m::dbs::desc::events_membership
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	false,
@@ -2538,7 +2538,7 @@ ircd::m::dbs::desc::events_prev_events
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	true,
@@ -2610,7 +2610,7 @@ ircd::m::dbs::desc::events_prev_state
 	-1, //use conf item
 
 	// bloom filter bits
-	12,
+	24,
 
 	// expect queries hit
 	false,
