@@ -42,7 +42,6 @@ AC_CONFIG_FILES(\
 	include/ircd/Makefile   \
 	construct/Makefile      \
 	ircd/Makefile           \
-	doc/Makefile            \
 	modules/Makefile        \
 )
 

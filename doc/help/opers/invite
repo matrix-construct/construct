@@ -1,6 +1,0 @@
-INVITE <nickname> <channel>
-
-INVITE sends a notice to the user that you have 
-asked him/her to come to the specified channel.
-If the channel is +i, +j, +l or +r, this will
-allow the user to bypass these modes.

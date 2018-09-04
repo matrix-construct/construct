@@ -1,5 +1,0 @@
-TESTMASK <[nick!]user@host> [:gecos]
-
-Will test the given nick!user@host gecos mask, reporting how many local
-and global clients match the given mask.  Supports using CIDR ip masks
-as a host.

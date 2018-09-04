@@ -1,8 +1,0 @@
-MODLIST [match string]
-
--- List the modules that are currently loaded into the
-ircd, along with their address and version.
-When a match string is provided, modlist only prints
-modules with names matching the match string.
-
-- Requires Oper Priv: oper:admin

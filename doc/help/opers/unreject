@@ -1,6 +1,0 @@
-UNREJECT <ip>
-
-Removes an IP address from the reject cache.  IP
-addresses are added to the reject cache if they are
-rejected (e.g. connect and are K-lined) several
-times in a short period of time.

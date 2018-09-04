@@ -1,8 +1,0 @@
-MODLOAD <[path/]module.so>
-
--- Load a module into the ircd
-the optional path can be an absolute path
-from / or from the IRCD_PREFIX
-(ie modules/autoload/m_users.so)
-
-- Requires Oper Priv: oper:admin

@@ -1,8 +1,0 @@
-INFO [server]
-
-INFO displays the copyright, list of authors and contributors
-to ircd, and the server configuration (as defined in config.h
-and ircd.conf).
-
-If an argument is supplied, the information for the server
-specified will be returned.

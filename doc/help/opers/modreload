@@ -1,6 +1,0 @@
-MODRELOAD <module.so>
-
--- Reload a module in the ircd
-Use just the module name, the path is not needed.
-
-- Requires Oper Priv: oper:admin

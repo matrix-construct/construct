@@ -1,7 +1,0 @@
-MODRESTART
-
--- Reload all modules into the ircd
-All modules are unloaded, then those in modules/autoload
-are loaded
-
-- Requires Oper Priv: oper:admin

@@ -1,4 +1,0 @@
-VERSION [servername]
-
-VERSION will display the server version of the specified
-server, or the local server if there was no parameter.
