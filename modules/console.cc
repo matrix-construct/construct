@@ -271,8 +271,8 @@ console_cmd__help(opt &out, const string_view &line)
 			if(last == prefix)
 				continue;
 
-			if(prefix != name && !startswith(lstrip(prefix, name), ' '))
-				continue;
+			if(name && prefix != name && !startswith(lstrip(prefix, name), ' '))
+				break;
 
 			last = prefix;
 			const auto suffix
