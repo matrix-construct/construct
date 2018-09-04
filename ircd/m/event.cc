@@ -21,115 +21,15 @@ ircd::m::pretty(const event &event)
 
 std::ostream &
 ircd::m::pretty(std::ostream &s,
-                const event &event)
+                const event &e)
 {
-	const auto out{[&s]
-	(const string_view &key, auto&& val)
+	using prototype = void (std::ostream &, const event &);
+	static import<prototype> pretty
 	{
-		if(defined(json::value(val)))
-			s << std::setw(16) << std::right << key << " :" << val << std::endl;
-	}};
-
-	const string_view top_keys[]
-	{
-		"origin",
-		"event_id",
-		"room_id",
-		"sender",
-		"type",
-		"depth",
-		"state_key",
-		"membership",
-		"redacts",
+		"m_event", "pretty__event"
 	};
 
-	json::for_each(event, top_keys, out);
-
-	const auto &ts{json::get<"origin_server_ts"_>(event)};
-	{
-		thread_local char buf[128];
-		s << std::setw(16) << std::right << "origin_server_ts" << " :"
-		  << timef(buf, ts / 1000L, localtime)
-		  << " (" << ts << ")"
-		  << std::endl;
-	}
-
-	const json::object &contents{json::get<"content"_>(event)};
-	if(!contents.empty())
-		s << std::setw(16) << std::right << "content" << " :"
-		  << size(contents) << " keys; "
-		  << size(string_view{contents}) << " bytes."
-		  << std::endl;
-
-	const auto &hashes{json::get<"hashes"_>(event)};
-	for(const auto &hash : hashes)
-	{
-		s << std::setw(16) << std::right << "[hash]" << " :"
-		  << hash.first
-		  << " "
-		  << unquote(hash.second)
-		  << std::endl;
-	}
-
-	const auto &signatures{json::get<"signatures"_>(event)};
-	for(const auto &signature : signatures)
-	{
-		s << std::setw(16) << std::right << "[signature]" << " :"
-		  << signature.first << " ";
-
-		for(const auto &key : json::object{signature.second})
-			s << key.first << " ";
-
-		s << std::endl;
-	}
-
-	const auto &auth_events{json::get<"auth_events"_>(event)};
-	for(const json::array auth_event : auth_events)
-	{
-		s << std::setw(16) << std::right << "[auth event]"
-		  << " :" << unquote(auth_event[0]);
-
-		for(const auto &hash : json::object{auth_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_states{json::get<"prev_state"_>(event)};
-	for(const json::array prev_state : prev_states)
-	{
-		s << std::setw(16) << std::right << "[prev state]"
-		  << " :" << unquote(prev_state[0]);
-
-		for(const auto &hash : json::object{prev_state[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_events{json::get<"prev_events"_>(event)};
-	for(const json::array prev_event : prev_events)
-	{
-		s << std::setw(16) << std::right << "[prev_event]"
-		  << " :" << unquote(prev_event[0]);
-
-		for(const auto &hash : json::object{prev_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	if(!contents.empty())
-		for(const json::object::member &content : contents)
-			s << std::setw(16) << std::right << "[content]" << " :"
-			  << std::setw(7) << std::left << reflect(json::type(content.second)) << " "
-			  << std::setw(5) << std::right << size(string_view{content.second}) << " bytes "
-			  << ':' << content.first
-			  << std::endl;
-
+	pretty(s, e);
 	return s;
 }
 
@@ -147,87 +47,16 @@ ircd::m::pretty_oneline(const event &event,
 
 std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
-                        const event &event,
+                        const event &e,
                         const bool &content_keys)
 {
-	const auto out{[&s]
-	(const string_view &key, auto&& val)
+	using prototype = void (std::ostream &, const event &, const bool &);
+	static import<prototype> pretty_oneline
 	{
-		if(defined(json::value(val)))
-			s << val << " ";
-		else
-			s << "* ";
-	}};
-
-	const string_view top_keys[]
-	{
-		"origin",
-		"event_id",
-		"sender",
+		"m_event", "pretty_oneline__event"
 	};
 
-	s << json::get<"room_id"_>(event) << " ";
-	s << json::get<"depth"_>(event) << " :";
-	json::for_each(event, top_keys, out);
-
-	const auto &auth_events{json::get<"auth_events"_>(event)};
-	s << "A:" << auth_events.count() << " ";
-
-	const auto &prev_states{json::get<"prev_state"_>(event)};
-	s << "S:" << prev_states.count() << " ";
-
-	const auto &prev_events{json::get<"prev_events"_>(event)};
-	s << "E:" << prev_events.count() << " ";
-
-	const auto &hashes{json::get<"hashes"_>(event)};
-	s << "[ ";
-	for(const auto &hash : hashes)
-		s << hash.first << " ";
-	s << "] ";
-
-	const auto &signatures{json::get<"signatures"_>(event)};
-	s << "[ ";
-	for(const auto &signature : signatures)
-	{
-		s << signature.first << "[ ";
-		for(const auto &key : json::object{signature.second})
-			s << key.first << " ";
-
-		s << "] ";
-	}
-	s << "] ";
-
-	out("type", json::get<"type"_>(event));
-
-	const auto &state_key
-	{
-		json::get<"state_key"_>(event)
-	};
-
-	if(defined(state_key) && empty(state_key))
-		s << "\"\"" << " ";
-	else if(defined(state_key))
-		s << state_key << " ";
-	else
-		s << "*" << " ";
-
-	out("membership", json::get<"membership"_>(event));
-	out("redacts", json::get<"redacts"_>(event));
-
-	const json::object &contents
-	{
-		content_keys?
-			json::get<"content"_>(event):
-			json::object{}
-	};
-
-	if(!contents.empty())
-	{
-		s << "+" << string_view{contents}.size() << " bytes :";
-		for(const auto &content : contents)
-			s << content.first << " ";
-	}
-
+	pretty_oneline(s, e, content_keys);
 	return s;
 }
 
@@ -244,42 +73,65 @@ ircd::m::pretty_msgline(const event &event)
 
 std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
-                        const event &event)
+                        const event &e)
 {
-	s << json::get<"depth"_>(event) << " :";
-	s << json::get<"type"_>(event) << " ";
-	s << json::get<"sender"_>(event) << " ";
-	s << json::get<"event_id"_>(event) << " ";
-
-	const auto &state_key
+	using prototype = void (std::ostream &, const event &);
+	static import<prototype> pretty_msgline
 	{
-		json::get<"state_key"_>(event)
+		"m_event", "pretty_msgline__event"
 	};
 
-	if(defined(state_key) && empty(state_key))
-		s << "\"\"" << " ";
-	else if(defined(state_key))
-		s << state_key << " ";
-	else
-		s << "*" << " ";
+	pretty_msgline(s, e);
+	return s;
+}
 
-	const json::object &content
+std::string
+ircd::m::pretty(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty(s, prev);
+	resizebuf(s, ret);
+	return ret;
+}
+
+std::ostream &
+ircd::m::pretty(std::ostream &s,
+                const event::prev &prev)
+{
+	using prototype = void (std::ostream &, const event &);
+	static import<prototype> pretty
 	{
-		json::get<"content"_>(event)
+		"m_event", "pretty__prev"
 	};
 
-	switch(hash(json::get<"type"_>(event)))
+	pretty(s, prev);
+	return s;
+}
+
+std::string
+ircd::m::pretty_oneline(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty_oneline(s, prev);
+	resizebuf(s, ret);
+	return ret;
+}
+
+std::ostream &
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event::prev &prev)
+{
+	using prototype = void (std::ostream &, const event::prev &);
+	static import<prototype> pretty_oneline
 	{
-		case "m.room.message"_:
-			s << unquote(content.get("msgtype")) << " ";
-			s << unquote(content.get("body")) << " ";
-			break;
+		"m_event", "pretty_oneline__prev"
+	};
 
-		default:
-			s << string_view{content};
-			break;
-	}
-
+	pretty_oneline(s, prev);
 	return s;
 }
 
@@ -436,106 +288,6 @@ size_t
 ircd::m::degree(const event &event)
 {
 	return degree(event::prev{event});
-}
-
-std::string
-ircd::m::pretty(const event::prev &prev)
-{
-	std::string ret;
-	std::stringstream s;
-	pubsetbuf(s, ret, 4096);
-	pretty(s, prev);
-	resizebuf(s, ret);
-	return ret;
-}
-
-std::ostream &
-ircd::m::pretty(std::ostream &s,
-                const event::prev &prev)
-{
-	const auto out{[&s]
-	(const string_view &key, auto&& val)
-	{
-		if(json::defined(val))
-			s << key << " :" << val << std::endl;
-	}};
-
-	const auto &auth_events{json::get<"auth_events"_>(prev)};
-	for(const json::array auth_event : auth_events)
-	{
-		s << std::setw(16) << std::right << "[auth event]"
-		  << " :" << unquote(auth_event[0]);
-
-		for(const auto &hash : json::object{auth_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_states{json::get<"prev_state"_>(prev)};
-	for(const json::array prev_state : prev_states)
-	{
-		s << std::setw(16) << std::right << "[prev state]"
-		  << " :" << unquote(prev_state[0]);
-
-		for(const auto &hash : json::object{prev_state[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	const auto &prev_events{json::get<"prev_events"_>(prev)};
-	for(const json::array prev_event : prev_events)
-	{
-		s << std::setw(16) << std::right << "[prev_event]"
-		  << " :" << unquote(prev_event[0]);
-
-		for(const auto &hash : json::object{prev_event[1]})
-			s << " " << unquote(hash.first)
-			  << ": " << unquote(hash.second);
-
-		s << std::endl;
-	}
-
-	return s;
-}
-
-std::string
-ircd::m::pretty_oneline(const event::prev &prev)
-{
-	std::string ret;
-	std::stringstream s;
-	pubsetbuf(s, ret, 4096);
-	pretty_oneline(s, prev);
-	resizebuf(s, ret);
-	return ret;
-}
-
-std::ostream &
-ircd::m::pretty_oneline(std::ostream &s,
-                        const event::prev &prev)
-{
-	const auto &auth_events{json::get<"auth_events"_>(prev)};
-	s << "A[ ";
-	for(const json::array auth_event : auth_events)
-		s << unquote(auth_event[0]) << " ";
-	s << "] ";
-
-	const auto &prev_states{json::get<"prev_state"_>(prev)};
-	s << "S[ ";
-	for(const json::array prev_state : prev_states)
-		s << unquote(prev_state[0]) << " ";
-	s << "] ";
-
-	const auto &prev_events{json::get<"prev_events"_>(prev)};
-	s << "E[ ";
-	for(const json::array prev_event : prev_events)
-		s << unquote(prev_event[0]) << " ";
-	s << "] ";
-
-	return s;
 }
 
 size_t
