@@ -133,6 +133,21 @@ namespace ircd::db
 static char ircd_db_version[64];
 const char *const ircd::db::version(ircd_db_version);
 
+// Renders a version string from the defines included here.
+__attribute__((constructor))
+void
+ircd::db::init_version()
+{
+	::snprintf(ircd_db_version, sizeof(ircd_db_version), "%d.%d.%d",
+	           ROCKSDB_MAJOR,
+	           ROCKSDB_MINOR,
+	           ROCKSDB_PATCH);
+}
+
+//
+// init::init
+//
+
 ircd::db::init::init()
 {
 	init_compressions();
@@ -215,17 +230,6 @@ ircd::db::init_compressions()
 			"No compression libraries have been linked with the DB."
 			" This is probably not what you want."
 		};
-}
-
-// Renders a version string from the defines included here.
-__attribute__((constructor))
-void
-ircd::db::init_version()
-{
-	snprintf(ircd_db_version, sizeof(ircd_db_version), "%d.%d.%d",
-	         ROCKSDB_MAJOR,
-	         ROCKSDB_MINOR,
-	         ROCKSDB_PATCH);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
