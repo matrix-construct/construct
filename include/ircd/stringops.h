@@ -524,8 +524,9 @@ inline ircd::string_view
 ircd::lstrip(string_view str,
              const string_view &c)
 {
-	while(startswith(str, c))
-		str = str.substr(size(c));
+	if(c)
+		while(startswith(str, c))
+			str = str.substr(size(c));
 
 	return str;
 }
@@ -536,8 +537,9 @@ ircd::lstrip(string_view str,
              const string_view &c,
              size_t n)
 {
-	while(startswith(str, c) && n--)
-		str = str.substr(size(c));
+	if(c)
+		while(startswith(str, c) && n--)
+			str = str.substr(size(c));
 
 	return str;
 }
