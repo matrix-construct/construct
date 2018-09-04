@@ -44,7 +44,6 @@ AC_CONFIG_FILES(\
 	ircd/Makefile           \
 	doc/Makefile            \
 	modules/Makefile        \
-	tools/Makefile          \
 )
 
 AM_INIT_AUTOMAKE([subdir-objects])

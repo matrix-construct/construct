@@ -5,7 +5,6 @@ SUBDIRS = include/ircd
 SUBDIRS += ircd
 SUBDIRS += modules
 SUBDIRS += construct
-SUBDIRS += tools
 SUBDIRS += doc
 
 .PHONY:      subdirs $(SUBDIRS)
