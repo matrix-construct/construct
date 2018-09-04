@@ -125,6 +125,8 @@ ircd::db::write_mutex;
 
 namespace ircd::db
 {
+	static std::string direct_io_test_file_path();
+	static void init_test_direct_io();
 	static void init_compressions();
 	static void init_directory();
 	static void init_version();
@@ -152,6 +154,7 @@ ircd::db::init::init()
 {
 	init_compressions();
 	init_directory();
+	init_test_direct_io();
 	request.add(request_pool_size);
 }
 
@@ -214,6 +217,46 @@ catch(const fs::error &e)
 
 	if(ircd::debugmode)
 		throw;
+}
+
+void
+ircd::db::init_test_direct_io()
+try
+{
+	if(fs::direct_io_support(direct_io_test_file_path()))
+		log::debug
+		{
+			log, "Detected Direct-IO works by opening test file at `%s'",
+			direct_io_test_file_path()
+		};
+	else
+		log::warning
+		{
+			log, "Direct-IO is not supported in the database directory `%s'"
+			"; Concurrent database queries will not be possible.",
+			fs::get(fs::DB)
+		};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to test if Direct-IO possible with test file `%s'"
+		"; Concurrent database queries will not be possible :%s",
+		direct_io_test_file_path(),
+		e.what()
+	};
+}
+
+std::string
+ircd::db::direct_io_test_file_path()
+{
+	const auto dbdir
+	{
+		fs::get(fs::DB)
+	};
+
+	return fs::make_path({dbdir, "SUPPORTS_DIRECT_IO"s});
 }
 
 void
@@ -776,10 +819,15 @@ try
 	opts.allow_concurrent_memtable_write = false;
 	opts.enable_write_thread_adaptive_yield = false;
 	opts.enable_pipelined_write = false;
-	opts.use_direct_reads = !ircd::nodirect;
 	opts.write_thread_max_yield_usec = 0;
 	opts.write_thread_slow_yield_usec = 0;
 	opts.use_direct_io_for_flush_and_compaction = false;
+
+	// Detect if O_DIRECT is possible if db::init left a file in the
+	// database directory claiming such. User can force no direct io
+	// with program option at startup (i.e -nodirect).
+	opts.use_direct_reads = ircd::nodirect? false:
+	                        fs::exists(direct_io_test_file_path());
 
 	#ifdef RB_DEBUG
 	opts.dump_malloc_stats = true;
