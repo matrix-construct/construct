@@ -8706,6 +8706,9 @@ ircd::db::available()
 	std::vector<std::string> ret;
 	for(const auto &dir : dirs)
 	{
+		if(!fs::is_dir(dir))
+			continue;
+
 		const auto name
 		{
 			lstrip(dir, prefix)
