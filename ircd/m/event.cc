@@ -231,6 +231,58 @@ ircd::m::pretty_oneline(std::ostream &s,
 	return s;
 }
 
+std::string
+ircd::m::pretty_msgline(const event &event)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty_msgline(s, event);
+	resizebuf(s, ret);
+	return ret;
+}
+
+std::ostream &
+ircd::m::pretty_msgline(std::ostream &s,
+                        const event &event)
+{
+	s << json::get<"depth"_>(event) << " :";
+	s << json::get<"type"_>(event) << " ";
+	s << json::get<"sender"_>(event) << " ";
+	s << json::get<"event_id"_>(event) << " ";
+
+	const auto &state_key
+	{
+		json::get<"state_key"_>(event)
+	};
+
+	if(defined(state_key) && empty(state_key))
+		s << "\"\"" << " ";
+	else if(defined(state_key))
+		s << state_key << " ";
+	else
+		s << "*" << " ";
+
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	switch(hash(json::get<"type"_>(event)))
+	{
+		case "m.room.message"_:
+			s << unquote(content.get("msgtype")) << " ";
+			s << unquote(content.get("body")) << " ";
+			break;
+
+		default:
+			s << string_view{content};
+			break;
+	}
+
+	return s;
+}
+
 ircd::m::id::event
 ircd::m::make_id(const event &event,
                  id::event::buf &buf)

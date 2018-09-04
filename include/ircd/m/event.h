@@ -50,6 +50,10 @@ namespace ircd::m
 	// Informational pretty string on multiple lines.
 	std::ostream &pretty(std::ostream &, const event &);
 	std::string pretty(const event &);
+
+	// Informational content-oriented
+	std::ostream &pretty_msgline(std::ostream &, const event &);
+	std::string pretty_msgline(const event &);
 }
 
 #pragma GCC diagnostic push
