@@ -52,6 +52,7 @@ namespace ircd::fs
 	bool is_dir(const string_view &path);
 	bool is_reg(const string_view &path);
 	size_t size(const string_view &path);
+	bool direct_io_support(const string_view &path);
 
 	std::vector<std::string> ls(const string_view &path);
 	std::vector<std::string> ls_recursive(const string_view &path);

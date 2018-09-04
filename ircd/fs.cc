@@ -860,6 +860,30 @@ catch(const filesystem::filesystem_error &e)
 	throw error{e};
 }
 
+bool
+ircd::fs::direct_io_support(const string_view &path)
+try
+{
+	fd::opts opts{std::ios::out};
+	opts.direct = true;
+	fd{path, opts};
+	return true;
+}
+catch(const std::system_error &e)
+{
+	const auto &code(e.code());
+	if(code.category() == std::system_category()) switch(code.value())
+	{
+		case int(std::errc::invalid_argument):
+			return false;
+
+		default:
+			break;
+	}
+
+	throw;
+}
+
 size_t
 ircd::fs::size(const string_view &path)
 {
