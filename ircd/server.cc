@@ -1614,7 +1614,8 @@ try
 	while(!done);
 
 	assert(peer);
-	peer->handle_tag_done(*this, queue.front());
+	peer->handle_tag_done(*this, tag);
+	assert(!queue.empty());
 	queue.pop_front();
 	return true;
 }
