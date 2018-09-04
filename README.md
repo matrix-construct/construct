@@ -78,7 +78,7 @@ Provides compression for the database, etc.
 	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
 </a>
 
-### Building from source
+### BUILD
 
 *Please follow the standalone build instructions in the next section until this
 notice is removed.*
@@ -90,7 +90,7 @@ make
 sudo make install
 ```
 
-#### Building from source (STANDALONE)
+### BUILD (standalone)
 
 *Intended to allow building with dependencies that have not made their way
 to mainstream systems.*
@@ -117,7 +117,69 @@ as submodules.
 make install
 ```
 
-#### Building from git (DEVELOPMENT)
+### SETUP
+
+- For standalone builds you will need to add the `deps/boost/lib` directory
+in your git repo to the library path:
+`export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
+
+- To ease these instructions we will refer to your server as `host.tld`. For
+those familiar with matrix: this is your origin and mxid `@user:host.tld`
+hostpart. If your DNS uses `matrix.host.tld` that subdomain is not involved
+when we refer to `host.tld` unless we explicitly mention to involve it.
+
+
+1. Execute
+	```
+	bin/construct host.tld
+	````
+	> There is no configuration file.
+
+	> Log messages will appear in terminal concluding with notice `IRCd RUN`.
+
+
+2. Strike ctrl-c on keyboard
+	> The command-line console will appear.
+
+
+3. Create a general listener socket by entering the following command:
+	- If you have existing TLS certificates, replace those parts of the
+	command with paths to your certificate and key, respectively. If you
+	do not, those files will be created and self-signed in the current
+	directory; another target path may be specified.
+
+	```
+	net listen matrix 0.0.0.0 8448 host.tld.crt host.tld.crt.key
+	```
+
+	> The Matrix Federation Tester should now pass. Browse to
+	https://matrix.org/federationtester/api/report?server_name=host.tld and
+	verify `"AllChecksOK": true`
+
+4. Relax restrictions for self-signed certificates.
+	- Due to the current nature of the federation and the number of
+	unsophisticated personal deployments we have little choice but to
+	advise this step. We cannot, in good faith, ship this software
+	configured insecurely by default; therefor we leave this step to
+	you.
+
+	```
+	conf set ircd.net.open.allow_self_signed true
+	```
+
+5. To use a web-based client like Riot, configure the "webroot" directory
+to point at Riot's `webapp/` directory by entering the following:
+	```
+	conf set ircd.webroot.path /path/to/riot-web/webapp/
+	mod reload webroot
+	```
+
+6. Browse to `https://host.tld:8448/` and register a user.
+
+
+## Addendum
+
+#### Additional build options
 
 Development builds should follow the same instructions as the standalone
 section above while taking note of the following `./configure` options:
