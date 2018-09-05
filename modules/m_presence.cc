@@ -102,6 +102,15 @@ try
 	m::presence::get(std::nothrow, user_id, [&event, &object, &useful]
 	(const m::event &existing_event, const json::object &existing_object)
 	{
+		// This check shouldn't have to exist. I think this was a result of corrupting
+		// my DB during development and it fails on only one user. Nevertheless, it's
+		// a valid assertion so might as well keep it.
+		if(unlikely(json::get<"user_id"_>(object) != unquote(existing_object.get("user_id"))))
+		{
+			//log::critical("%s != %s", json::get<"user_id"_>(object), unquote(existing_object.get("user_id")));
+			return;
+		}
+
 		assert(json::get<"user_id"_>(object) == unquote(existing_object.get("user_id")));
 
 		const auto &prev_active_ago
