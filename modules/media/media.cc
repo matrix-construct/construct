@@ -181,7 +181,7 @@ try
 		magic::mime(mime_type_buf, content)
 	};
 
-	if(content_type != head.content_type) log::warning
+	if(content_type != head.content_type) log::dwarning
 	{
 		media_log, "Server %s claims thumbnail %s is '%s' but we think it is '%s'",
 		string(remote),
