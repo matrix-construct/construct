@@ -96,22 +96,15 @@ get__backfill_ids(client &client,
 		room
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		4_KiB
-	};
-
 	resource::response::chunked response
 	{
 		client, http::OK
 	};
 
-	json::stack out{buf, [&response]
-	(const const_buffer &buf)
+	json::stack out
 	{
-		response.write(buf);
-		return buf;
-	}};
+		response.buf, response.flusher()
+	};
 
 	json::stack::object top{out};
 	json::stack::member pdus_m

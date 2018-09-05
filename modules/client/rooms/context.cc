@@ -83,26 +83,14 @@ get__context(client &client,
 		event_id
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		96_KiB
-	};
-
 	resource::response::chunked response
 	{
 		client, http::OK
 	};
 
-	const auto flush{[&response]
-	(const const_buffer &buf)
-	{
-		response.write(buf);
-		return buf;
-	}};
-
 	json::stack out
 	{
-		buf, flush, size_t(flush_hiwat)
+		response.buf, response.flusher(), size_t(flush_hiwat)
 	};
 
 	json::stack::object ret

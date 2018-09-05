@@ -49,11 +49,6 @@ handle_get(client &client,
 		event_id
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		96_KiB
-	};
-
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -61,11 +56,7 @@ handle_get(client &client,
 
 	json::stack out
 	{
-		buf, [&response](const const_buffer &buf)
-		{
-			response.write(buf);
-			return buf;
-		}
+		response.buf, response.flusher()
 	};
 
 	json::stack::object top{out};

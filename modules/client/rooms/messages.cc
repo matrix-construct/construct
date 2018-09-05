@@ -96,22 +96,15 @@ get__messages(client &client,
 		room, page.from, &default_fetch_opts
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		96_KiB
-	};
-
 	resource::response::chunked response
 	{
 		client, http::OK
 	};
 
-	json::stack out{buf, [&response]
-	(const const_buffer &buf)
+	json::stack out
 	{
-		response.write(buf);
-		return buf;
-	}};
+		response.buf, response.flusher()
+	};
 
 	json::stack::object ret
 	{
