@@ -2066,7 +2066,13 @@ ircd::db::database::cache::Insert(const Slice &key,
 noexcept
 {
 	assert(bool(c));
-	return c->Insert(key, value, charge, del, handle, priority);
+	const rocksdb::Status &ret
+	{
+		c->Insert(key, value, charge, del, handle, priority)
+	};
+
+	stats.inserts += ret.ok();
+	return ret;
 }
 
 rocksdb::Cache::Handle *
@@ -2075,7 +2081,14 @@ ircd::db::database::cache::Lookup(const Slice &key,
 noexcept
 {
 	assert(bool(c));
-	return c->Lookup(key, statistics);
+	auto *const &ret
+	{
+		c->Lookup(key, statistics)
+	};
+
+	stats.hits += bool(ret);
+	stats.misses += !bool(ret);
+	return ret;
 }
 
 bool
@@ -8215,6 +8228,23 @@ size_t
 ircd::db::capacity(const rocksdb::Cache &cache)
 {
 	return cache.GetCapacity();
+}
+
+ircd::db::cache_stats
+ircd::db::stats(const rocksdb::Cache *const &cache)
+{
+	return cache? stats(*cache) : cache_stats{};
+}
+
+const ircd::db::cache_stats &
+ircd::db::stats(const rocksdb::Cache &cache)
+{
+	const auto &dc
+	{
+		dynamic_cast<const database::cache &>(cache)
+	};
+
+	return dc.stats;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

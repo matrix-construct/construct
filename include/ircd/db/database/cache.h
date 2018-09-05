@@ -34,6 +34,7 @@ final
 	static const bool DEFAULT_STRICT;
 
 	database *d;
+	cache_stats stats;
 	std::shared_ptr<rocksdb::Cache> c;
 
 	const char *Name() const noexcept override;

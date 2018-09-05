@@ -21,6 +21,12 @@
 
 namespace ircd::db
 {
+	struct cache_stats;
+
+	// Get our stats
+	const cache_stats &stats(const rocksdb::Cache &);
+	cache_stats stats(const rocksdb::Cache *const &);
+
 	// Get capacity
 	size_t capacity(const rocksdb::Cache &);
 	size_t capacity(const rocksdb::Cache *const &);
@@ -58,3 +64,13 @@ namespace ircd::db
 	void clear(rocksdb::Cache &);
 	void clear(rocksdb::Cache *const &);
 }
+
+/// Our custom cache statistics. Though the rocksdb::Statistics ticker could
+/// be instantiated for each cache we have our own counters, and we let the
+/// rocksdb cache impl update our database ticker instead for aggregate stats.
+struct ircd::db::cache_stats
+{
+	size_t inserts {0};
+	size_t misses {0};
+	size_t hits {0};
+};
