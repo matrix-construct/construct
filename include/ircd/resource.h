@@ -163,10 +163,16 @@ struct ircd::resource::response
 struct ircd::resource::response::chunked
 :resource::response
 {
+	static conf::item<size_t> default_buffer_size;
+
 	client *c {nullptr};
+	unique_buffer<mutable_buffer> buf;
 
 	size_t write(const const_buffer &chunk);
+	const_buffer flush(const const_buffer &);
 	bool finish();
+
+	std::function<const_buffer (const const_buffer &)> flusher();
 
 	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {});
 	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &);

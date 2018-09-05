@@ -658,33 +658,49 @@ ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
                                            const vector_view<const http::header> &headers)
-:c{&client}
+:chunked
 {
-	assert(!empty(content_type));
-
-	thread_local char buffer[4_KiB];
-	window_buffer sb{buffer};
+	client, code, content_type, [&headers]
 	{
-		const critical_assertion ca;
+		// Note that the headers which are composed into this buffer are
+		// copied again before the response goes out from resource::response.
+		// There must not be any context switch between now and that copy so
+		// we can return a string_view of this TLS buffer.
+
+		thread_local char buffer[4_KiB];
+		window_buffer sb{buffer};
 		http::write(sb, headers);
-	}
-
-	response
-	{
-		client, code, content_type, size_t(-1), string_view{sb.completed()}
-	};
+		return string_view{sb.completed()};
+	}()
 }
+{
+}
+
+decltype(ircd::resource::response::chunked::default_buffer_size)
+ircd::resource::response::chunked::default_buffer_size
+{
+	{ "name",    "ircd.resource.response.chunked.buffer_size" },
+	{ "default", long(96_KiB)                                 },
+};
 
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
                                            const string_view &headers)
-:c{&client}
+:response
 {
-	response
-	{
-		client, code, content_type, size_t(-1), headers
-	};
+	client, code, content_type, size_t(-1), headers
+}
+,c
+{
+	&client
+}
+,buf
+{
+	size_t(default_buffer_size)
+}
+{
+	assert(!empty(content_type));
 }
 
 ircd::resource::response::chunked::~chunked()
@@ -703,6 +719,12 @@ catch(...)
 	return;
 }
 
+std::function<ircd::const_buffer (const ircd::const_buffer &)>
+ircd::resource::response::chunked::flusher()
+{
+	return std::bind(&chunked::flush, this, ph::_1);
+}
+
 bool
 ircd::resource::response::chunked::finish()
 {
@@ -712,6 +734,17 @@ ircd::resource::response::chunked::finish()
 	write(const_buffer{});
 	c = nullptr;
 	return true;
+}
+
+ircd::const_buffer
+ircd::resource::response::chunked::flush(const const_buffer &buf)
+{
+	const const_buffer wrote
+	{
+		data(buf), write(buf)
+	};
+
+	return wrote;
 }
 
 size_t
