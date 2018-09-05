@@ -36,6 +36,13 @@ publicrooms_resource
 	}
 };
 
+conf::item<size_t>
+flush_hiwat
+{
+	{ "name",     "ircd.client.publicrooms.flush.hiwat" },
+	{ "default",  16384L                                },
+};
+
 static resource::response
 post__publicrooms_since(client &client,
                         const resource::request &request,
@@ -47,6 +54,149 @@ post__publicrooms_remote(client &client,
                          const string_view &server,
                          const string_view &search,
                          const size_t &limit);
+
+resource::response
+post__publicrooms(client &client,
+                  const resource::request &request)
+{
+	const string_view &since
+	{
+		unquote(request["since"])
+	};
+
+	const auto &server
+	{
+		request.query["server"]
+	};
+
+	const json::object &filter
+	{
+		request["filter"]
+	};
+
+	const string_view &search_term
+	{
+		unquote(filter["generic_search_term"])
+	};
+
+	const uint8_t limit
+	{
+		uint8_t(request.get<ushort>("limit", 16U))
+	};
+
+	const bool include_all_networks
+	{
+		request.get<bool>("include_all_networks", false)
+	};
+
+	if(server && server != my_host())
+		return post__publicrooms_remote(client, request, server, search_term, limit);
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher(), size_t(flush_hiwat)
+	};
+
+	m::room::id::buf prev_batch_buf;
+	m::room::id::buf next_batch_buf;
+	const m::room::state publix
+	{
+		public_
+	};
+
+	json::stack::object top{out};
+	{
+		json::stack::member chunk_m{top, "chunk"};
+		json::stack::array chunk{chunk_m};
+
+		size_t count{0};
+		publix.test("ircd.room", since, [&](const m::event &event)
+		{
+			if(!count)
+				prev_batch_buf = at<"state_key"_>(event);
+
+			json::stack::object obj{chunk};
+			json::stack::member
+			{
+				obj, "aliases", json::empty_array
+			};
+
+			json::stack::member
+			{
+				obj, "canonical_alias", string_view{}
+			};
+
+			json::stack::member
+			{
+				obj, "name", string_view{}
+			};
+
+			json::stack::member
+			{
+				obj, "num_joined_members", json::value{1L}
+			};
+
+			json::stack::member
+			{
+				obj, "room_id", at<"state_key"_>(event)
+			};
+
+			json::stack::member
+			{
+				obj, "topic", string_view{}
+			};
+
+			json::stack::member
+			{
+				obj, "world_readable", json::value{true}
+			};
+
+			json::stack::member
+			{
+				obj, "guest_can_join", json::value{true}
+			};
+
+			json::stack::member
+			{
+				obj, "avatar_url", string_view{}
+			};
+
+			next_batch_buf = at<"state_key"_>(event);
+			return count >= limit;
+		});
+	}
+
+	json::stack::member
+	{
+		top, "total_room_count_estimate", json::value
+		{
+			long(publix.count("ircd.room"))
+		}
+	};
+
+	json::stack::member
+	{
+		top, "prev_batch", prev_batch_buf
+	};
+
+	json::stack::member
+	{
+		top, "next_batch", next_batch_buf
+	};
+
+	return {};
+}
+
+resource::method
+post_method
+{
+	publicrooms_resource, "POST", post__publicrooms
+};
 
 resource::response
 get__publicrooms(client &client,
@@ -92,50 +242,17 @@ get_method
 	publicrooms_resource, "GET", get__publicrooms
 };
 
-resource::response
-post__publicrooms(client &client,
-                  const resource::request &request)
+static resource::response
+post__publicrooms_remote(client &client,
+                         const resource::request &request,
+                         const string_view &server,
+                         const string_view &search,
+                         const size_t &limit)
 {
-	const string_view &since
-	{
-		unquote(request["since"])
-	};
-
-	if(!empty(since))
-		return post__publicrooms_since(client, request, since);
-
-	const auto &server
-	{
-		request.query["server"]
-	};
-
-	const json::object &filter
-	{
-		request["filter"]
-	};
-
-	const string_view &search_term
-	{
-		unquote(filter["generic_search_term"])
-	};
-
-	const uint8_t limit
-	{
-		uint8_t(request.get<ushort>("limit", 16U))
-	};
-
-	const bool include_all_networks
-	{
-		request.get<bool>("include_all_networks", false)
-	};
-
-	if(server && server != my_host())
-		return post__publicrooms_remote(client, request, server, search_term, limit);
-
 	std::vector<json::value> chunk;
+	int64_t total_room_count_estimate{0};
 	const string_view next_batch;
 	const string_view prev_batch;
-	const int64_t total_room_count_estimate{0};
 
 	return resource::response
 	{
@@ -148,12 +265,6 @@ post__publicrooms(client &client,
 		}
 	};
 }
-
-resource::method
-get_method
-{
-	publicrooms_resource, "GET", get__publicrooms
-};
 
 static void
 _create_public_room(const m::event &)
