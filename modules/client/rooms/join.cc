@@ -130,6 +130,20 @@ join__alias_user(const m::room::alias &room_alias,
 	return join__room_user(room_id, user_id);
 }
 
+conf::item<seconds>
+make_join_timeout
+{
+	{ "name",     "ircd.client.rooms.join.make_join.timeout" },
+	{ "default",  15L                                        },
+};
+
+conf::item<seconds>
+send_join_timeout
+{
+	{ "name",     "ircd.client.rooms.join_send_join.timeout" },
+	{ "default",  45L  /* spinappse */                       },
+};
+
 static event::id::buf
 bootstrap(const string_view &host,
           const m::room::id &room_id,
@@ -145,7 +159,7 @@ bootstrap(const string_view &host,
 		room_id, user_id, buf, { host }
 	};
 
-	request.wait(seconds(8)); //TODO: conf
+	request.wait(seconds(make_join_timeout));
 	const auto code
 	{
 		request.get()
@@ -266,7 +280,7 @@ bootstrap(const string_view &host,
 		room_id, event_id, strung, buf2, { host }
 	};
 
-	sj.wait(seconds(8)); //TODO: conf
+	sj.wait(seconds(send_join_timeout));
 
 	const auto sjcode
 	{
