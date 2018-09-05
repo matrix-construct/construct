@@ -130,6 +130,16 @@ handle_put(client &client,
 		pdu_failures.count()
 	};
 
+	// Don't accept sends to ourself for whatever reason (i.e a 127.0.0.1
+	// leaked into the target list). This should be a 500 so it's not
+	// considered success or cached as failure by the sender's state.
+	if(unlikely(my_host(request.origin)))
+		throw m::error
+		{
+			"M_SEND_TO_SELF", "Tried to send %s from myself to myself.",
+			txn_id
+		};
+
 	for(const auto &pdu_failure : pdu_failures)
 		handle_pdu_failure(client, request, txn_id, pdu_failure);
 
