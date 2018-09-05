@@ -57,7 +57,7 @@ send_worker()
 	// In order to synchronize with the vm core, this context has to
 	// maintain this shared_lock at all times. If this is unlocked we
 	// can miss an event being broadcast.
-	std::shared_lock<decltype(m::vm::accept)> lock
+	std::unique_lock<decltype(m::vm::accept)> lock
 	{
 		m::vm::accept
 	};
