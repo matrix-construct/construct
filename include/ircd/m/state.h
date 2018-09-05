@@ -198,6 +198,7 @@ struct ircd::m::state::node::rep
 	size_t nn {0};
 
 	bool full() const;
+	bool last() const;
 	bool overfull() const;
 	bool duplicates() const;
 	size_t childs() const;

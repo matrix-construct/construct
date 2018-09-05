@@ -753,6 +753,7 @@ ircd::m::state::_remove(int8_t &height,
 		child = _remove(height, txn, key, node, idbuf, pushed);
 	});
 
+	return {};
 }
 
 /// This function returns a thread_local buffer intended for writing temporary
@@ -1069,6 +1070,14 @@ const
 {
 	assert(kn == vn);
 	return kn > NODE_MAX_KEY;
+}
+
+bool
+ircd::m::state::node::rep::last()
+const
+{
+	assert(kn == vn);
+	return kn == 1;
 }
 
 bool
