@@ -383,6 +383,12 @@ ircd::m::feds::state::state(const m::room::id &room_id,
 // m/vm.h
 //
 
+namespace ircd::m::vm
+{
+	extern std::map<event::id::buf, ctx::promise<>> depends;
+	static void notify_depends(const event::id &, std::exception_ptr);
+}
+
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
@@ -404,6 +410,115 @@ ircd::m::vm::default_opts
 decltype(ircd::m::vm::default_copts)
 ircd::m::vm::default_copts
 {};
+
+decltype(ircd::m::vm::depends)
+ircd::m::vm::depends
+{};
+
+void
+ircd::m::vm::notify_depends(const event::id &event_id,
+                            std::exception_ptr eptr)
+{
+	const auto it
+	{
+		depends.find(event_id)
+	};
+
+	if(it == end(depends))
+		return;
+
+	auto &promise(it->second);
+	if(eptr)
+		promise.set_exception(std::move(eptr));
+	else
+		promise.set_value();
+
+	depends.erase(it);
+}
+
+ircd::ctx::future<>
+ircd::m::vm::evaluated(const event::id &event_id)
+{
+	if(exists(event_id))
+		return ctx::future<>::already;
+
+	const auto iit
+	{
+		depends.emplace(event_id, ctx::promise<>{})
+	};
+
+	return ctx::future<>
+	{
+		iit.first->second
+	};
+}
+
+const uint64_t &
+ircd::m::vm::sequence(const eval &eval)
+{
+	return eval.sequence;
+}
+
+uint64_t
+ircd::m::vm::retired_sequence()
+{
+	event::id::buf event_id;
+	return retired_sequence(event_id);
+}
+
+uint64_t
+ircd::m::vm::retired_sequence(event::id::buf &event_id)
+{
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	const auto it
+	{
+		column.rbegin()
+	};
+
+	if(!it)
+	{
+		// If this iterator is invalid the events db should
+		// be completely fresh.
+		assert(db::sequence(*dbs::events) == 0);
+		return 0;
+	}
+
+	const auto &ret
+	{
+		byte_view<uint64_t>(it->first)
+	};
+
+	event_id = it->second;
+	return ret;
+}
+
+ircd::string_view
+ircd::m::vm::reflect(const enum fault &code)
+{
+	switch(code)
+	{
+		case fault::ACCEPT:       return "ACCEPT";
+		case fault::EXISTS:       return "EXISTS";
+		case fault::INVALID:      return "INVALID";
+		case fault::DEBUGSTEP:    return "DEBUGSTEP";
+		case fault::BREAKPOINT:   return "BREAKPOINT";
+		case fault::GENERAL:      return "GENERAL";
+		case fault::EVENT:        return "EVENT";
+		case fault::STATE:        return "STATE";
+		case fault::INTERRUPT:    return "INTERRUPT";
+	}
+
+	return "??????";
+}
 
 //
 // Eval
@@ -525,6 +640,7 @@ ircd::m::vm::eval::operator()(json::iov &event,
 
 enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
+try
 {
 	using prototype = fault (eval &, const m::event &);
 
@@ -533,74 +649,36 @@ ircd::m::vm::eval::operator()(const event &event)
 		"vm", "eval__event"
 	};
 
-	return function(*this, event);
-}
-
-const uint64_t &
-ircd::m::vm::sequence(const eval &eval)
-{
-	return eval.sequence;
-}
-
-uint64_t
-ircd::m::vm::retired_sequence()
-{
-	event::id::buf event_id;
-	return retired_sequence(event_id);
-}
-
-uint64_t
-ircd::m::vm::retired_sequence(event::id::buf &event_id)
-{
-	static constexpr auto column_idx
+	const vm::fault ret
 	{
-		json::indexof<event, "event_id"_>()
+		function(*this, event)
 	};
 
-	auto &column
+	if(json::get<"event_id"_>(event)) switch(ret)
 	{
-		dbs::event_column.at(column_idx)
-	};
+		case fault::ACCEPT:
+			notify_depends(at<"event_id"_>(event), std::exception_ptr{});
+			break;
 
-	const auto it
-	{
-		column.rbegin()
-	};
+		default:
+		{
+			notify_depends(at<"event_id"_>(event), std::make_exception_ptr(error
+			{
+				ret, "fault"
+			}));
 
-	if(!it)
-	{
-		// If this iterator is invalid the events db should
-		// be completely fresh.
-		assert(db::sequence(*dbs::events) == 0);
-		return 0;
+			break;
+		}
 	}
 
-	const auto &ret
-	{
-		byte_view<uint64_t>(it->first)
-	};
-
-	event_id = it->second;
 	return ret;
 }
-
-ircd::string_view
-ircd::m::vm::reflect(const enum fault &code)
+catch(...)
 {
-	switch(code)
-	{
-		case fault::ACCEPT:       return "ACCEPT";
-		case fault::EXISTS:       return "EXISTS";
-		case fault::INVALID:      return "INVALID";
-		case fault::DEBUGSTEP:    return "DEBUGSTEP";
-		case fault::BREAKPOINT:   return "BREAKPOINT";
-		case fault::GENERAL:      return "GENERAL";
-		case fault::EVENT:        return "EVENT";
-		case fault::STATE:        return "STATE";
-		case fault::INTERRUPT:    return "INTERRUPT";
-	}
+	if(json::get<"event_id"_>(event))
+		notify_depends(at<"event_id"_>(event), std::current_exception());
 
-	return "??????";
+	throw;
 }
 
 //

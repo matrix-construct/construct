@@ -34,6 +34,8 @@ namespace ircd::m::vm
 	const uint64_t &sequence(const eval &);
 	uint64_t retired_sequence(id::event::buf &);
 	uint64_t retired_sequence();
+
+	ctx::future<> evaluated(const event::id &);
 }
 
 /// Event Evaluation Device
