@@ -1385,7 +1385,7 @@ try
 		    << " "
 		    << std::setw(9) << "CAPACITY"
 		    << " "
-		    << std::setw(6) << "    PCT"
+		    << std::setw(6) << "PCT"
 		    << " "
 		    << std::endl;
 
@@ -1411,41 +1411,68 @@ try
 	    << std::setw(16) << "COLUMN"
 	    << std::right
 	    << " "
-	    << std::setw(9) << "CACHED"
+	    << std::setw(9) << "HITS"
 	    << " "
-	    << std::setw(9) << "CAPACITY"
+	    << std::setw(9) << "MISSES"
 	    << " "
-	    << std::setw(6) << "    PCT"
+	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(9) << " COMPRESS"
+	    << std::setw(10) << "CACHED"
 	    << " "
-	    << std::setw(9) << "CAPACITY"
+	    << std::setw(10) << "CAPACITY"
 	    << " "
-	    << std::setw(6) << "    PCT"
+	    << std::setw(7) << "PCT"
 	    << " "
+	    << "|"
+	    << std::setw(9) << "HITS"
+	    << " "
+	    << std::setw(9) << "MISSES"
+	    << " "
+	    << std::setw(9) << "INSERTS"
+	    << " "
+	    << std::setw(10) << "CACHED"
+	    << " "
+	    << std::setw(10) << "CAPACITY"
+	    << " "
+	    << std::setw(7) << "PCT"
 	    << std::endl;
 
 	const auto output{[&out]
 	(const string_view &column_name,
 	 const size_t &usage, const size_t &capacity,
 	 const size_t usage_comp, const size_t &capacity_comp,
-	 const double &usage_pct, const double &usage_comp_pct)
+	 const double &usage_pct, const double &usage_comp_pct,
+	 const db::cache_stats &stats, const db::cache_stats &stats_comp)
 	{
 		out << std::setw(16) << std::left << column_name
-		    << " "
 		    << std::right
-		    << std::setw(9) << usage
 		    << " "
-		    << std::setw(9) << capacity
+		    << std::setw(9) << stats.hits
+		    << " "
+		    << std::setw(9) << stats.misses
+		    << " "
+		    << std::setw(9) << stats.inserts
+		    << " "
+		    << std::setw(10) << usage
+		    << " "
+		    << std::setw(10) << capacity
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
-		    << "% "
-		    << std::setw(9) << usage_comp
+		    << '%'
 		    << " "
-		    << std::setw(9) << capacity_comp
+		    << "|"
+		    << std::setw(9) << stats_comp.hits
+		    << " "
+		    << std::setw(9) << stats_comp.misses
+		    << " "
+		    << std::setw(9) << stats_comp.inserts
+		    << " "
+		    << std::setw(10) << usage_comp
+		    << " "
+		    << std::setw(10) << capacity_comp
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
-		    << "%"
+		    << '%'
 		    << std::endl;
 	}};
 
@@ -1471,7 +1498,9 @@ try
 			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
 		};
 
-		output(colname, usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+		const auto stats(db::stats(cache(column)));
+		const auto stats_comp(db::stats(cache_compressed(column)));
+		output(colname, usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
 	}};
 
 	// Querying the totals for all caches for all columns in a loop
@@ -1479,6 +1508,7 @@ try
 	{
 		size_t usage(0), usage_comp(0);
 		size_t capacity(0), capacity_comp(0);
+		db::cache_stats stats, stats_comp;
 		for(const auto &column : database.columns)
 		{
 			const db::column c(*column);
@@ -1486,6 +1516,16 @@ try
 			capacity += db::capacity(cache(c));
 			usage_comp += db::usage(cache_compressed(c));
 			capacity_comp += db::capacity(cache_compressed(c));
+
+			const auto _stats(db::stats(cache(c)));
+			stats.inserts += _stats.inserts;
+			stats.misses += _stats.misses;
+			stats.hits += _stats.hits;
+
+			const auto _stats_comp(db::stats(cache_compressed(c)));
+			stats_comp.inserts += _stats_comp.inserts;
+			stats_comp.misses += _stats_comp.misses;
+			stats_comp.hits += _stats_comp.hits;
 		}
 
 		const auto usage_pct
@@ -1498,7 +1538,7 @@ try
 			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
 		};
 
-		output("*", usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct);
+		output("*", usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
 		return true;
 	}
 
