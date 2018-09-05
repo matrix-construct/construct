@@ -2000,6 +2000,43 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__DROP__DROP__DROP(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param.at(0)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	throw error
+	{
+		"TODO: please implement."
+	};
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__list(opt &out, const string_view &line)
 {
 	const auto available
