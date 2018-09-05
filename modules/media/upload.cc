@@ -73,7 +73,7 @@ post__upload(client &client,
 	};
 
 	copy(buf, request.content);
-	client.content_consumed += read_all(*client.sock, buf);
+	client.content_consumed += read_all(*client.sock, buf + client.content_consumed);
 	assert(client.content_consumed == request.head.content_length);
 
 	const size_t written
