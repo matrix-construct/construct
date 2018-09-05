@@ -10,7 +10,7 @@
 
 #include <boost/gil/image.hpp>
 #include <boost/gil/typedefs.hpp>
-#include <boost/gil/extension/io/jpeg_io.hpp>
+// #include <boost/gil/extension/io/jpeg_io.hpp>
 // #include <boost/gil/extension/numeric/sampler.hpp>
 // #include <boost/gil/extension/numeric/resample.hpp>
 
