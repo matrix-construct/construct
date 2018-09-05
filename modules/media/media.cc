@@ -84,6 +84,9 @@ media_blocks_cache_size
 		{ "default",  long(48_MiB)                   },
 	}, []
 	{
+		if(!blocks)
+			return;
+
 		const size_t &value{media_blocks_cache_size};
 		db::capacity(db::cache(blocks), value);
 	}
@@ -97,6 +100,9 @@ media_blocks_cache_comp_size
 		{ "default",  long(16_MiB)                        },
 	}, []
 	{
+		if(!blocks)
+			return;
+
 		const size_t &value{media_blocks_cache_comp_size};
 		db::capacity(db::cache_compressed(blocks), value);
 	}
