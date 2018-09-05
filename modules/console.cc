@@ -2938,8 +2938,20 @@ console_cmd__key__get(opt &out, const string_view &line)
 		{
 			out << keys << std::endl;
 		});
+	}
+	else
+	{
+		const std::pair<string_view, string_view> queries[1]
+		{
+			{ server_name, {} }
+		};
 
-		return true;
+		m::keys::query(query_server, queries, [&out]
+		(const auto &keys)
+		{
+			out << keys << std::endl;
+			return true;
+		});
 	}
 
 	return true;
