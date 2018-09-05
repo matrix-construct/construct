@@ -7089,6 +7089,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
+	vmopts.verify = false;
 	vmopts.notify = false;
 	vmopts.debuglog_accept = true;
 	vmopts.nothrows = -1;
@@ -7181,6 +7182,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
+	vmopts.verify = false;
 	vmopts.history = false;
 	vmopts.notify = false;
 	m::vm::eval eval
@@ -7337,6 +7339,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
+	vmopts.verify = false;
 	vmopts.notify = false;
 	vmopts.head = false;
 	vmopts.refs = true;
