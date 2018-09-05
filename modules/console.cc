@@ -3923,49 +3923,56 @@ console_cmd__event__erase(opt &out, const string_view &line)
 bool
 console_cmd__event__fetch(opt &out, const string_view &line)
 {
-	const m::event::id event_id
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"room_id", "event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
 	};
 
-	const auto args
+	const auto &room_id
 	{
-		tokens_after(line, ' ', 0)
+		m::room_id(param.at("room_id"))
 	};
-
-	const auto host
-	{
-		!empty(args)? token(args, ' ', 0) : ""_sv
-	};
-
-	m::v1::event::opts opts;
-	if(host)
-		opts.remote = host;
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		96_KiB
+		64_KiB
 	};
 
-	m::v1::event request
-	{
-		event_id, buf, std::move(opts)
-	};
+	using prototype = json::object (const m::room::id &,
+	                                const m::event::id &,
+	                                const mutable_buffer &);
 
-	request.wait(out.timeout);
-	const auto code
+	static m::import<prototype> acquire
 	{
-		request.get()
+		"vm_fetch", "acquire"
 	};
 
 	const m::event event
 	{
-		request
+		acquire(room_id, event_id, buf)
 	};
 
-	out << json::object{request} << std::endl;
-	out << std::endl;
-	out << pretty(event) << std::endl;
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	vmopts.prev_check_exists = false;
+	vmopts.head_must_exist = false;
+	vmopts.history = false;
+	vmopts.notify = false;
+	vmopts.verify = false;
+	m::vm::eval eval
+	{
+		vmopts
+	};
+
+	eval(event);
+
+	out << event << std::endl;
 	return true;
 }
 
