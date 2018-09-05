@@ -61,23 +61,26 @@ namespace ircd
 
 /// The root exception type.
 ///
-/// All exceptions in the project inherit from this type.
-/// To catch any exception from a project developer's code:
-///   catch(const ircd::exception &) {}
+/// All exceptions in the project inherit from this type. We generally don't
+/// have catch blocks on this type. Instead we use `ircd::error` to catch
+/// project-specific exceptions. This gives us just a little more indirection
+/// to play with before inheriting from std::exception.
 ///
-/// Remember: not all exceptions are from project developer's code, such as
-/// std::out_of_range. In most contexts if you have to deal with this someone
-/// else was lazy, which is bad. To be sure and catch any exception:
-///   catch(const std::exception &) {}
+/// Not all exceptions are from project developer's code, such as
+/// `std::out_of_range`, etc. It's not necessarily bad to just catch
+/// `std::exception` and we do it often enough, but be considerate.
 ///
-/// Remember: not all exceptions have to inherit from std::exception. We have
-/// only one example of this: ctx::terminated. To be sure nothing can possibly
-/// get through, add to the bottom, with care:
-///   catch(...) {}
+/// Remember: Not all exceptions have to inherit from `std::exception` either.
+/// We have only one example of this: ctx::terminated. To be sure nothing can
+/// possibly get through you can `catch(...)` but with extreme care that you
+/// are not discarding a termination which will hang the `ircd::ctx` you're on.
 ///
-/// Note: Prefer 'noexcept' instead of catch(...), noexcept is like an 'assert'
-/// for exceptions, and a rogue can be found-out in testing.
-///
+/// !!!
+/// NOTE: CONTEXT SWITCHES CANNOT OCCUR INSIDE CATCH BLOCKS UNLESS YOU USE THE
+/// MITIGATION TOOLS PROVIDED IN `ircd::ctx` WHICH RESULT IN THE LOSS OF THE
+/// ABILITY TO RETHROW THE EXCEPTION (i.e `throw` statement). BEST PRACTICE
+/// IS TO RETURN CONTROL FROM THE CATCH BLOCK BEFORE CONTEXT SWITCHING.
+/// !!!
 struct ircd::exception
 :std::exception
 {
