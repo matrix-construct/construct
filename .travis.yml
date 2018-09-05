@@ -2,7 +2,6 @@
 # see travis-ci.org for details
 
 language: cpp
-sudo: required
 
 git:
   submodules: false
@@ -15,27 +14,25 @@ git:
 #    on_failure: always
 #    on_start: always
 
-matrix:
-  include:
-  - os: linux
-    dist: trusty
-    compiler: g++-6
-    sudo: required
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - ['gcc-6', 'g++-6']
-        - ['libssl-dev', 'libsodium-dev']
-        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
-    env:
-    - CCOMPILER=gcc-6
-    - CXXCOMPILER=g++-6
-    - WITH_INCLUDED_BOOST=--with-included-boost
-    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-    - WITH_INCLUDED_JS=
-    # - WITH_INCLUDED_JS=--with-included-js=shared
+#matrix:
+#  include:
+#  - os: linux
+#    dist: xenial
+#    sudo: required
+#    compiler: g++-6
+#    addons:
+#      apt:
+#        packages:
+#        - ['gcc-6', 'g++-6']
+#        - ['libssl-dev', 'libsodium-dev']
+#        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool']
+#    env:
+#    - CCOMPILER=gcc-6
+#    - CXXCOMPILER=g++-6
+#    - WITH_INCLUDED_BOOST=--with-included-boost
+#    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+#    - WITH_INCLUDED_JS=
+#    # - WITH_INCLUDED_JS=--with-included-js=shared
 
 #  - os: linux
 #    dist: xenial
@@ -67,7 +64,7 @@ matrix:
 #    - LIBTOOLIZE=glibtoolize
 #    - WITH_INCLUDED_BOOST=--with-included-boost
 #    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
-#    - WITH_INCLUDED_JS=--with-included-js=shared
+#    # - WITH_INCLUDED_JS=--with-included-js=shared
 #
 #osx_image: xcode7.3
 
