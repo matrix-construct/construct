@@ -10,6 +10,32 @@
 
 #include "media.h"
 
+conf::item<size_t>
+media_blocks_cache_size
+{
+	{
+		{ "name",     "ircd.media.blocks.cache.size" },
+		{ "default",  long(48_MiB)                   },
+	}, []
+	{
+		const size_t &value{media_blocks_cache_size};
+		db::capacity(db::cache(blocks), value);
+	}
+};
+
+conf::item<size_t>
+media_blocks_cache_comp_size
+{
+	{
+		{ "name",     "ircd.media.blocks.cache_comp.size" },
+		{ "default",  long(16_MiB)                        },
+	}, []
+	{
+		const size_t &value{media_blocks_cache_comp_size};
+		db::capacity(db::cache_compressed(blocks), value);
+	}
+};
+
 // Blocks column
 const db::database::descriptor
 media_blocks_descriptor
@@ -29,8 +55,11 @@ media_blocks_descriptor
 		typeid(string_view), typeid(string_view)
 	},
 
-	// options
-	{}
+	{},      // options
+	{},      // comparaor
+	{},      // prefix transform
+	-1,      // cache size (uses conf item)
+	-1,      // compressed cache size (uses conf item)
 };
 
 const db::database::description
