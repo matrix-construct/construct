@@ -123,10 +123,10 @@ make install
 in your git repo to the library path:
 `export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
 
-- To ease these instructions we will refer to your server as `host.tld`. For
-those familiar with matrix: this is your origin and mxid `@user:host.tld`
-hostpart. If your DNS uses `matrix.host.tld` that subdomain is not involved
-when we refer to `host.tld` unless we explicitly mention to involve it.
+- We will refer to your server as `host.tld`. For those familiar with matrix:
+this is your origin and mxid `@user:host.tld` hostpart. If your DNS uses
+`matrix.host.tld` that subdomain is not involved when we refer to
+`host.tld` unless we explicitly mention to involve it.
 
 
 1. Execute
@@ -157,15 +157,14 @@ when we refer to `host.tld` unless we explicitly mention to involve it.
 	verify `"AllChecksOK": true`
 
 4. Relax restrictions for self-signed certificates.
-	- Due to the current nature of the federation and the number of
-	unsophisticated personal deployments we have little choice but to
-	advise this step. We cannot, in good faith, ship this software
-	configured insecurely by default; therefor we leave this step to
-	you.
+	- We cannot, in good faith, ship this software configured insecurely
+	by default; therefor we leave this step to you.
 
 	```
 	conf set ircd.net.open.allow_self_signed true
 	```
+	> Most federation servers are personal deployments with self-signed
+	certificates. Setting this option will decrease federation fragmentation.
 
 5. To use a web-based client like Riot, configure the "webroot" directory
 to point at Riot's `webapp/` directory by entering the following:
