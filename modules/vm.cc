@@ -16,7 +16,7 @@ namespace ircd::m::vm
 	extern phase enter;
 	extern phase leave;
 
-	static void write(eval &);
+	static void write_commit(eval &);
 	static fault _eval_edu(eval &, const event &);
 	static fault _eval_pdu(eval &, const event &);
 
@@ -627,6 +627,11 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		at<"room_id"_>(event)
 	};
 
+	const string_view &type
+	{
+		at<"type"_>(event)
+	};
+
 	if(!opts.replays && exists(event_id))  //TODO: exclusivity
 		throw error
 		{
@@ -647,6 +652,31 @@ ircd::m::vm::_eval_pdu(eval &eval,
 			opts.reserve_bytes
 	};
 
+	// Obtain sequence number here
+	eval.sequence = ++vm::current_sequence;
+
+	eval_hook(event);
+
+	int64_t top;
+	id::event::buf head;
+	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
+	if(top < 0 && (opts.head_must_exist || opts.history))
+		if(type != "m.room.create")
+			throw error
+			{
+				fault::STATE, "Found nothing for room %s", string_view{room_id}
+			};
+
+	static m::import<m::vm::phase> fetch
+	{
+		"vm_fetch", "phase"
+	};
+
+	fetch(eval);
+
+	if(!opts.write)
+		return fault::ACCEPT;
+
 	db::txn txn
 	{
 		*dbs::events, db::txn::opts
@@ -656,94 +686,42 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		}
 	};
 
+	// Expose to eval interface
 	eval.txn = &txn;
 	const unwind clear{[&eval]
 	{
 		eval.txn = nullptr;
 	}};
 
-	// Obtain sequence number here
-	eval.sequence = ++vm::current_sequence;
-
+	// Preliminary write_opts
 	m::dbs::write_opts wopts;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
 	wopts.head = opts.head;
 	wopts.refs = opts.refs;
-	wopts.idx = eval.sequence;
+	wopts.event_idx = eval.sequence;
 
-	eval_hook(event);
-
-	const auto &depth
+	m::state::id_buffer new_root_buf;
+	wopts.root_out = new_root_buf;
+	string_view new_root;
+	if(type != "m.room.create")
 	{
-		json::get<"depth"_>(event)
-	};
-
-	const auto &type
-	{
-		unquote(at<"type"_>(event))
-	};
-
-	const event::prev prev
-	{
-		event
-	};
-
-	const size_t prev_count
-	{
-		size(json::get<"prev_events"_>(prev))
-	};
-
-	//TODO: ex
-	if(opts.write && prev_count)
-	{
-		int64_t top;
-		id::event::buf head;
-		std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
-		if(top < 0 && (opts.head_must_exist || opts.history))
-			throw error
-			{
-				fault::STATE, "Found nothing for room %s", string_view{room_id}
-			};
-
-		for(size_t i(0); i < prev_count; ++i)
-		{
-			const auto prev_id{prev.prev_event(i)};
-			if(opts.prev_check_exists && !exists(prev_id))
-				throw error
-				{
-					fault::EVENT, "Missing prev event %s", string_view{prev_id}
-				};
-		}
-
 		m::room room{room_id, head};
 		m::room::state state{room};
-		m::state::id_buffer new_root_buf;
 		wopts.root_in = state.root_id;
-		wopts.root_out = new_root_buf;
-		const auto new_root
-		{
-			dbs::write(*eval.txn, event, wopts)
-		};
+		new_root = dbs::write(txn, event, wopts);
 	}
-	else if(opts.write)
+	else
 	{
-		m::state::id_buffer new_root_buf;
-		wopts.root_out = new_root_buf;
-		const auto new_root
-		{
-			dbs::write(*eval.txn, event, wopts)
-		};
+		new_root = dbs::write(txn, event, wopts);
 	}
 
-	if(opts.write)
-		write(eval);
-
+	write_commit(eval);
 	return fault::ACCEPT;
 }
 
 void
-ircd::m::vm::write(eval &eval)
+ircd::m::vm::write_commit(eval &eval)
 {
 	assert(eval.txn);
 	auto &txn(*eval.txn);
