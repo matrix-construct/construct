@@ -152,15 +152,15 @@ struct ircd::json::input
 
 	const rule<unused_type(uint)> value
 	{
-		lit_false | lit_null | lit_true | object(depth + 1) | array(depth + 1) | number | string
+		lit_false | lit_null | lit_true | string | number | object(depth + 1) | array(depth + 1)
 		,"value"
 	};
 
 	rule<int> type
 	{
+		(omit[quote]           >> attr(json::STRING))  |
 		(omit[object_begin]    >> attr(json::OBJECT))  |
 		(omit[array_begin]     >> attr(json::ARRAY))   |
-		(omit[quote]           >> attr(json::STRING))  |
 		(omit[number >> eoi]   >> attr(json::NUMBER))  |
 		(omit[literal >> eoi]  >> attr(json::LITERAL))
 		,"type"
