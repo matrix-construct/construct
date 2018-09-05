@@ -129,6 +129,13 @@ catch(const m::NOT_FOUND &)
 	return false;
 }
 
+conf::item<seconds>
+room_alias_cache_ttl
+{
+	{ "name",    "ircd.client.directory.room.alias.cache.ttl" },
+	{ "default",  60 * 60 * 72L                               },
+};
+
 /// Translate a room alias into a room_id. This function first checks the
 /// local cache. A cache miss will then cause in a query to the remote, the
 /// result of which will be added to cache.
@@ -154,8 +161,7 @@ try
 			ircd::now() - milliseconds(at<"origin_server_ts"_>(event))
 		};
 
-		//TODO: Conf; cache TTL.
-		if(age > hours(72))
+		if(age > seconds(room_alias_cache_ttl))
 			return;
 
 		ret = string_view { data(out), copy(out, room_id) };
@@ -209,6 +215,13 @@ catch(const json::not_found &e)
 	};
 }
 
+conf::item<seconds>
+room_alias_fetch_timeout
+{
+	{ "name",    "ircd.client.directory.room.alias.fetch.timeout" },
+	{ "default",  20L                                             },
+};
+
 /// This function makes a room alias request to a remote. The alias
 /// room cache is not checked or updated from here, this is only the
 /// query operation.
@@ -221,8 +234,7 @@ room_alias_fetch(const mutable_buffer &out,
 		alias, out
 	};
 
-	//TODO: conf
-	if(!federation_request.wait(seconds(8), std::nothrow))
+	if(!federation_request.wait(seconds(room_alias_fetch_timeout), std::nothrow))
 		throw http::error
 		{
 			http::REQUEST_TIMEOUT
