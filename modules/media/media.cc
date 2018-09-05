@@ -214,6 +214,13 @@ catch(const ircd::server::unavailable &e)
 	};
 }
 
+conf::item<seconds>
+media_download_timeout
+{
+	{ "name",     "ircd.media.download.timeout" },
+	{ "default",  15L                           },
+};
+
 std::pair<http::response::head, unique_buffer<mutable_buffer>>
 download(const mutable_buffer &head_buf,
          const string_view &server,
@@ -253,8 +260,7 @@ download(const mutable_buffer &head_buf,
 		remote, { out_head }, { in_head, in_content }, opts
 	};
 
-	//TODO: conf
-	if(!remote_request.wait(seconds(10), std::nothrow))
+	if(!remote_request.wait(seconds(media_download_timeout), std::nothrow))
 		throw http::error
 		{
 			http::REQUEST_TIMEOUT
