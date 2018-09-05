@@ -10,66 +10,6 @@
 
 #include "media.h"
 
-conf::item<size_t>
-media_blocks_cache_size
-{
-	{
-		{ "name",     "ircd.media.blocks.cache.size" },
-		{ "default",  long(48_MiB)                   },
-	}, []
-	{
-		const size_t &value{media_blocks_cache_size};
-		db::capacity(db::cache(blocks), value);
-	}
-};
-
-conf::item<size_t>
-media_blocks_cache_comp_size
-{
-	{
-		{ "name",     "ircd.media.blocks.cache_comp.size" },
-		{ "default",  long(16_MiB)                        },
-	}, []
-	{
-		const size_t &value{media_blocks_cache_comp_size};
-		db::capacity(db::cache_compressed(blocks), value);
-	}
-};
-
-// Blocks column
-const db::database::descriptor
-media_blocks_descriptor
-{
-	// name
-	"blocks",
-
-	// explain
-	R"(
-	Key-value store of blocks belonging to files. The key is a hash of
-	the block. The key is plaintext sha256-b58 and the block is binary
-	up to 32768 bytes.
-	)",
-
-	// typing
-	{
-		typeid(string_view), typeid(string_view)
-	},
-
-	{},      // options
-	{},      // comparaor
-	{},      // prefix transform
-	-1,      // cache size (uses conf item)
-	-1,      // compressed cache size (uses conf item)
-};
-
-const db::database::description
-media_description
-{
-	{ "default" }, // requirement of RocksDB
-
-	media_blocks_descriptor,
-};
-
 mapi::header
 IRCD_MODULE
 {
@@ -96,11 +36,71 @@ media_log
 	"media"
 };
 
+// Blocks column
+decltype(media_blocks_descriptor)
+media_blocks_descriptor
+{
+	// name
+	"blocks",
+
+	// explain
+	R"(
+	Key-value store of blocks belonging to files. The key is a hash of
+	the block. The key is plaintext sha256-b58 and the block is binary
+	up to 32768 bytes.
+	)",
+
+	// typing
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	{},      // options
+	{},      // comparaor
+	{},      // prefix transform
+	-1,      // cache size (uses conf item)
+	-1,      // compressed cache size (uses conf item)
+};
+
+decltype(media_description)
+media_description
+{
+	{ "default" }, // requirement of RocksDB
+
+	media_blocks_descriptor,
+};
+
 decltype(media)
 media;
 
 decltype(blocks)
 blocks;
+
+decltype(media_blocks_cache_size)
+media_blocks_cache_size
+{
+	{
+		{ "name",     "ircd.media.blocks.cache.size" },
+		{ "default",  long(48_MiB)                   },
+	}, []
+	{
+		const size_t &value{media_blocks_cache_size};
+		db::capacity(db::cache(blocks), value);
+	}
+};
+
+decltype(media_blocks_cache_comp_size)
+media_blocks_cache_comp_size
+{
+	{
+		{ "name",     "ircd.media.blocks.cache_comp.size" },
+		{ "default",  long(16_MiB)                        },
+	}, []
+	{
+		const size_t &value{media_blocks_cache_comp_size};
+		db::capacity(db::cache_compressed(blocks), value);
+	}
+};
 
 std::set<m::room::id>
 downloading;
