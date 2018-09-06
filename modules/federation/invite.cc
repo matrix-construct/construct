@@ -85,31 +85,37 @@ put__invite(client &client,
 
 	check_event(request, event);
 
-	//TODO: eval()
-
-	const json::strung event_strung
+	thread_local char sigs[4_KiB];
+	const m::event signed_event
 	{
-		event
+		signatures(sigs, event)
 	};
 
-	const json::member revent
-	{
-		"event", event_strung
-	};
-
-	const json::value response[]
+	const json::strung revent{signed_event};
+	const json::value response[2]
 	{
 		json::value { 200L },
-		json::value { &revent, 1 },
+		json::members
+		{
+			{ "event", revent }
+		}
 	};
 
-	return resource::response
+	resource::response
 	{
 		client, json::value
 		{
 			response, 2
 		}
 	};
+
+	m::vm::opts vmopts;
+	m::vm::eval
+	{
+		signed_event, vmopts
+	};
+
+	return {};
 }
 
 resource::method
