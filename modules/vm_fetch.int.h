@@ -27,8 +27,8 @@ namespace ircd::m::vm::fetch
 	extern ctx::dock dock;
 	extern std::set<request, request> fetching;
 	extern std::deque<request *> fetched;
+	extern hookfn<eval &> hook;
 	extern ctx::context context;
-	extern "C" vm::phase phase;
 
 	// worker stack
 	static bool requesting();
@@ -42,7 +42,7 @@ namespace ircd::m::vm::fetch
 	extern "C" json::object acquire(const m::room::id &, const m::event::id &, const mutable_buffer &);
 
 	// phase stack
-	static void enter(m::vm::eval &);
+	static void enter(const event &, vm::eval &);
 }
 
 /// Fetch entity state

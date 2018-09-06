@@ -697,37 +697,6 @@ catch(...)
 }
 
 //
-// vm::phase
-//
-
-/// Instance list linkage for all of the vm phases
-template<>
-decltype(ircd::util::instance_list<ircd::m::vm::phase>::list)
-ircd::util::instance_list<ircd::m::vm::phase>::list
-{};
-
-ircd::m::vm::phase::phase(const string_view &name,
-                          decltype(function) function)
-:name{name}
-,function{std::move(function)}
-{
-}
-
-void
-ircd::m::vm::phase::operator()(eval &eval)
-{
-	auto theirs(eval.phase);
-	eval.phase = this;
-	const unwind _{[&eval, &theirs]
-	{
-		eval.phase = theirs;
-	}};
-
-	if(likely(function))
-		function(eval);
-}
-
-//
 // accepted
 //
 

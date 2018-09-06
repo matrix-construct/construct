@@ -11,10 +11,9 @@
 namespace ircd::m::vm
 {
 	extern hook::site<> commit_hook;
+	extern hook::site<eval &> fetch_hook;
 	extern hook::site<> eval_hook;
 	extern hook::site<> notify_hook;
-	extern phase enter;
-	extern phase leave;
 
 	static void write_commit(eval &);
 	static fault _eval_edu(eval &, const event &);
@@ -39,6 +38,12 @@ decltype(ircd::m::vm::commit_hook)
 ircd::m::vm::commit_hook
 {
 	{ "name", "vm.commit" }
+};
+
+decltype(ircd::m::vm::fetch_hook)
+ircd::m::vm::fetch_hook
+{
+	{ "name", "vm.fetch" }
 };
 
 decltype(ircd::m::vm::eval_hook)
@@ -120,10 +125,8 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	// eval is attempting to do.
 	eval.issue = &event;
 	eval.room_id = room.room_id;
-	eval.phase = &vm::enter;
 	const unwind deissue{[&eval]
 	{
-		eval.phase = &vm::leave;
 		eval.room_id = {};
 		eval.issue = nullptr;
 	}};
@@ -263,20 +266,14 @@ ircd::m::vm::eval__commit(eval &eval,
 	// eval is attempting to do.
 	assert(!eval.room_id || eval.issue == &event);
 	if(!eval.room_id)
-	{
 		eval.issue = &event;
-		eval.phase = &enter;
-	}
 
 	const unwind deissue{[&eval]
 	{
 		// issue is untouched when room_id is set; that indicates it was set
 		// and will be unset by another eval function (i.e above).
 		if(!eval.room_id)
-		{
-			eval.phase = &leave;
 			eval.issue = nullptr;
-		}
 	}};
 
 	assert(eval.issue);
@@ -410,14 +407,8 @@ try
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is working on. The pointer must be nulled on the way out.
     eval.event_ = &event;
-	if(!eval.issue)
-		eval.phase = &enter;
-
 	const unwind null_event{[&eval]
 	{
-		if(!eval.issue)
-			eval.phase = &leave;
-
 		eval.event_ = nullptr;
 	}};
 
@@ -655,7 +646,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	// Obtain sequence number here
 	eval.sequence = ++vm::current_sequence;
 
-	eval_hook(event);
+	// Fetch dependencies
+	fetch_hook(event, eval);
 
 	int64_t top;
 	id::event::buf head;
@@ -672,7 +664,8 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		"vm_fetch", "phase"
 	};
 
-	fetch(eval);
+	// Evaluation by module hooks
+	eval_hook(event);
 
 	if(!opts.write)
 		return fault::ACCEPT;
@@ -777,23 +770,3 @@ ircd::m::vm::retired_sequence(event::id::buf &event_id)
 	event_id = it->second;
 	return ret;
 }
-
-//
-// phase enter
-//
-
-decltype(ircd::m::vm::enter)
-ircd::m::vm::enter
-{
-	"enter"
-};
-
-//
-// phase leave
-//
-
-decltype(ircd::m::vm::leave)
-ircd::m::vm::leave
-{
-	"leave"
-};

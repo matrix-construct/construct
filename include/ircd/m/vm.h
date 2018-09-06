@@ -19,7 +19,6 @@ namespace ircd::m::vm
 	struct opts;
 	struct copts;
 	struct eval;
-	struct phase;
 	struct accepted;
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
@@ -58,7 +57,6 @@ struct ircd::m::vm::eval
 	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	vm::phase *phase {nullptr};
 	uint64_t sequence {0};
 	db::txn *txn {nullptr};
 	event::id::buf event_id;
@@ -246,17 +244,6 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
-};
-
-struct ircd::m::vm::phase
-:instance_list<phase>
-{
-	string_view name;
-	std::function<void (eval &)> function;
-
-	void operator()(eval &);
-
-	phase(const string_view &name, decltype(function) = nullptr);
 };
 
 struct ircd::m::vm::accepted

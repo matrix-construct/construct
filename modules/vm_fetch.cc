@@ -54,16 +54,19 @@ _fini()
 // fetch_phase
 //
 
-decltype(m::vm::fetch::phase)
-m::vm::fetch::phase
+decltype(m::vm::fetch::hook)
+m::vm::fetch::hook
 {
-	"fetch", enter
+	enter,
+	{
+		{ "_site",  "vm.fetch" }
+	}
 };
 
 void
-m::vm::fetch::enter(eval &eval)
+m::vm::fetch::enter(const event &event,
+                    eval &eval)
 {
-	assert(eval.event_);
 	assert(eval.opts);
 
 	const event::prev prev
