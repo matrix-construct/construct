@@ -33,10 +33,9 @@ namespace ircd::info
 	extern const string_view branch;
 	extern const string_view commit;
 	extern const time_t configured_time;
-	extern const time_t compiled_time;
 	extern const time_t startup_time;
-	extern const string_view compiled;
 	extern const string_view configured;
+	extern const string_view compiled;
 	extern const string_view startup;
 
 	// System / platform information

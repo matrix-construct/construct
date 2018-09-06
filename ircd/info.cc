@@ -151,12 +151,6 @@ ircd::info::configured_time
 	RB_TIME_CONFIGURED
 };
 
-decltype(ircd::info::compiled_time)
-ircd::info::compiled_time
-{
-	RB_TIME_COMPILED
-};
-
 decltype(ircd::info::startup_time)
 ircd::info::startup_time
 {
@@ -172,7 +166,6 @@ ircd::info::configured
 decltype(ircd::info::compiled)
 ircd::info::compiled
 {
-	//ctime(&compiled_time)
 	__TIMESTAMP__
 };
 
