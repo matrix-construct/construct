@@ -33,7 +33,7 @@ handle_edu(client &client,
            const m::edu &edu)
 {
 	m::event event;
-	json::get<"origin"_>(event) = at<"origin"_>(request);
+	json::get<"origin"_>(event) = request.origin;
 	json::get<"origin_server_ts"_>(event) = at<"origin_server_ts"_>(request);
 	json::get<"content"_>(event) = at<"content"_>(edu);
 	json::get<"type"_>(event) = at<"edu_type"_>(edu);
