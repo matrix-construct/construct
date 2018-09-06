@@ -77,7 +77,7 @@ inline
 ircd::json::member::member(const object::member &m)
 :std::pair<value, value>
 {
-	m.first, value { m.second, type(m.second) }
+	{ m.first, json::STRING }, value { m.second, type(m.second) }
 }
 {}
 
@@ -85,7 +85,7 @@ inline
 ircd::json::member::member(const string_view &k)
 :std::pair<value, value>
 {
-	k, string_view{}
+	{ k, json::STRING }, string_view{}
 }
 {}
 

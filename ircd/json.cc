@@ -1398,7 +1398,8 @@ ircd::json::stringify(mutable_buffer &buf,
 size_t
 ircd::json::serialized(const object::member &member)
 {
-	return serialized(member.first) + 1 + serialized(member.second);
+	const json::value key{member.first, json::STRING};
+	return serialized(key) + 1 + serialized(member.second);
 }
 
 std::ostream &
