@@ -649,21 +649,6 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	// Fetch dependencies
 	fetch_hook(event, eval);
 
-	int64_t top;
-	id::event::buf head;
-	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
-	if(top < 0 && (opts.head_must_exist || opts.history))
-		if(type != "m.room.create")
-			throw error
-			{
-				fault::STATE, "Found nothing for room %s", string_view{room_id}
-			};
-
-	static m::import<m::vm::phase> fetch
-	{
-		"vm_fetch", "phase"
-	};
-
 	// Evaluation by module hooks
 	eval_hook(event);
 
@@ -688,27 +673,35 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	// Preliminary write_opts
 	m::dbs::write_opts wopts;
+	m::state::id_buffer new_root_buf;
+	wopts.root_out = new_root_buf;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
 	wopts.head = opts.head;
 	wopts.refs = opts.refs;
 	wopts.event_idx = eval.sequence;
 
-	m::state::id_buffer new_root_buf;
-	wopts.root_out = new_root_buf;
-	string_view new_root;
-	if(type != "m.room.create")
+	if(type == "m.room.create")
 	{
-		m::room room{room_id, head};
-		m::room::state state{room};
-		wopts.root_in = state.root_id;
-		new_root = dbs::write(txn, event, wopts);
-	}
-	else
-	{
-		new_root = dbs::write(txn, event, wopts);
+		dbs::write(txn, event, wopts);
+		write_commit(eval);
+		return fault::ACCEPT;
 	}
 
+	int64_t top;
+	id::event::buf head;
+	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
+	if(top < 0 && (opts.head_must_exist || opts.history))
+		throw error
+		{
+			fault::STATE, "Found nothing for room %s",
+			string_view{room_id}
+		};
+
+	m::room room{room_id, head};
+	m::room::state state{room};
+	wopts.root_in = state.root_id;
+	dbs::write(txn, event, wopts);
 	write_commit(eval);
 	return fault::ACCEPT;
 }

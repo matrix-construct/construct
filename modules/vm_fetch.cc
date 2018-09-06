@@ -68,6 +68,26 @@ m::vm::fetch::enter(const event &event,
                     eval &eval)
 {
 	assert(eval.opts);
+	const auto &opts{*eval.opts};
+	const m::room::id &room_id{at<"room_id"_>(event)};
+
+	int64_t top;
+	id::event::buf head;
+	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
+	if(top < 0 && (opts.head_must_exist || opts.history))
+	{
+		const auto &type{at<"type"_>(event)};
+		if(type == "m.room.member" && membership(event) == "invite")
+		{
+			const auto &user_id{at<"state_key"_>(event)};
+			//m::join(m::room{room_id}, user_id);
+		}
+		else if(type != "m.room.create")
+			throw error
+			{
+				fault::STATE, "Found nothing for room %s", string_view{room_id}
+			};
+	}
 
 	const event::prev prev
 	{
@@ -96,14 +116,6 @@ m::vm::fetch::enter(const event &event,
 				json::get<"event_id"_>(*eval.event_),
 				json::get<"room_id"_>(*eval.event_)
 			};
-/*
-			auto future
-			{
-				vm::evaluated(prev_id)
-			};
-*/
-			//future.wait();
-//			std::cout << "got " << prev_id << " for " << json::get<"event_id"_>(*eval.event_) << std::endl;
 		}
 
 		if(eval.opts->prev_check_exists && !exists(prev_id))
