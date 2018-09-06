@@ -35,14 +35,17 @@ put__send(client &client,
 			"txnid parameter missing"
 		};
 
-	const string_view &txnid
+	const string_view &transaction_id
 	{
 		request.parv[3]
 	};
 
+	m::vm::copts copts;
+	copts.client_txnid = transaction_id;
+
 	room room
 	{
-		room_id
+		room_id, &copts
 	};
 
 	const json::object &content

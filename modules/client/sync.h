@@ -22,10 +22,10 @@ namespace ircd::m::sync
 
 namespace ircd::m::sync::longpoll
 {
-	static std::string sync_room(client &, const m::room &, const args &, const m::event &);
-	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const m::event &);
-	static bool handle(client &, const args &, const m::event &, const m::room &);
-	static bool handle(client &, const args &, const m::event &);
+	static std::string sync_room(client &, const m::room &, const args &, const vm::accepted &);
+	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const vm::accepted &);
+	static bool handle(client &, const args &, const vm::accepted &, const m::room &);
+	static bool handle(client &, const args &, const vm::accepted &);
 	static void poll(client &, const args &);
 }
 

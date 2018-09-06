@@ -214,6 +214,9 @@ struct ircd::m::vm::opts
 struct ircd::m::vm::copts
 :opts
 {
+	/// A matrix-spec opaque token from a client identifying this eval.
+	string_view client_txnid;
+
 	/// Hash and include hashes object.
 	bool add_hash {true};
 

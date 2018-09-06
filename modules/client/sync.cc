@@ -178,7 +178,7 @@ catch(const ctx::timeout &e)
 bool
 ircd::m::sync::longpoll::handle(client &client,
                                 const args &args,
-                                const m::event &event)
+                                const vm::accepted &event)
 {
 	const auto &room_id
 	{
@@ -197,7 +197,7 @@ ircd::m::sync::longpoll::handle(client &client,
 bool
 ircd::m::sync::longpoll::handle(client &client,
                                 const args &args,
-                                const m::event &event,
+                                const vm::accepted &event,
                                 const m::room &room)
 {
 	const m::user::id &user_id
@@ -207,11 +207,6 @@ ircd::m::sync::longpoll::handle(client &client,
 
 	if(!room.membership(user_id, "join"))
 		return false;
-
-//	if(json::get<"type"_>(event) == "m.room.message")
-//		if(json::get<"sender"_>(event) == user_id)
-//			return false;
-
 
 	const auto rooms
 	{
@@ -266,7 +261,7 @@ ircd::m::sync::longpoll::sync_rooms(client &client,
                                     const m::user::id &user_id,
                                     const m::room &room,
                                     const args &args,
-                                    const m::event &event)
+                                    const vm::accepted &event)
 {
 	std::vector<std::string> r[3];
 	std::vector<json::member> m[3];
@@ -288,16 +283,30 @@ std::string
 ircd::m::sync::longpoll::sync_room(client &client,
                                    const m::room &room,
                                    const args &args,
-                                   const m::event &event)
+                                   const vm::accepted &accepted)
 {
 	const auto &since
 	{
 		args.since
 	};
 
+	const m::event &event{accepted};
+
 	std::vector<std::string> state;
 	if(defined(json::get<"event_id"_>(event)) && defined(json::get<"state_key"_>(event)))
-		state.emplace_back(json::strung(event));
+	{
+		json::strung strung(event);
+		if(accepted.copts && accepted.copts->client_txnid)
+			strung = json::insert(strung, json::member
+			{
+				"unsigned", json::members
+				{
+					{ "transaction_id", accepted.copts->client_txnid }
+				}
+			});
+
+		state.emplace_back(std::move(strung));
+	}
 
 	const json::strung state_serial
 	{
@@ -306,7 +315,19 @@ ircd::m::sync::longpoll::sync_room(client &client,
 
 	std::vector<std::string> timeline;
 	if(defined(json::get<"event_id"_>(event)) && !defined(json::get<"state_key"_>(event)))
-		timeline.emplace_back(json::strung(event));
+	{
+		json::strung strung(event);
+		if(accepted.copts && accepted.copts->client_txnid)
+			strung = json::insert(strung, json::member
+			{
+				"unsigned", json::members
+				{
+					{ "transaction_id", accepted.copts->client_txnid }
+				}
+			});
+
+		timeline.emplace_back(std::move(strung));
+	}
 
 	const json::strung timeline_serial
 	{
