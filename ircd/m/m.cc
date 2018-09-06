@@ -718,10 +718,12 @@ ircd::m::vm::phase::operator()(eval &eval)
 
 ircd::m::vm::accepted::accepted(const m::event &event,
                                 const vm::opts *const &opts,
+                                const vm::copts *const &copts,
                                 const event::conforms *const &report)
 :m::event{event}
 ,context{ctx::current}
 ,opts{opts}
+,copts{copts}
 ,report{report}
 {
 }

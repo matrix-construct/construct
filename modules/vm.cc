@@ -477,7 +477,7 @@ try
 
 	vm::accepted accepted
 	{
-		event, &opts, &report
+		event, &opts, eval.copts, &report
 	};
 
 	if(opts.effects)

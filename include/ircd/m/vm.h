@@ -261,11 +261,13 @@ struct ircd::m::vm::accepted
 {
 	ctx::ctx *context;
 	const vm::opts *opts;
+	const vm::copts *copts;
 	const event::conforms *report;
 	shared_buffer<mutable_buffer> strung;
 
 	accepted(const m::event &event,
 	         const vm::opts *const &opts,
+	         const vm::copts *const &copts,
 	         const event::conforms *const &report);
 };
 

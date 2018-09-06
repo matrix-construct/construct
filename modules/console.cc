@@ -3564,7 +3564,7 @@ console_cmd__stage__broadcast(opt &out, const string_view &line)
 	{
 		const m::vm::opts opts;
 		const m::event event{stage.at(i)};
-		m::vm::accepted a{event, &opts, &opts.report};
+		m::vm::accepted a{event, &opts, nullptr, &opts.report};
 		m::vm::accept(a);
 	}
 
@@ -3880,7 +3880,7 @@ console_cmd__event__sign(opt &out, const string_view &line)
 		const m::vm::opts opts;
 		m::vm::accepted a
 		{
-			event, &opts, &opts.report
+			event, &opts, nullptr, &opts.report
 		};
 
 		m::vm::accept(a);
@@ -6797,7 +6797,7 @@ console_cmd__feds__resend(opt &out, const string_view &line)
 	};
 
 	const m::vm::opts opts;
-	m::vm::accepted a{event, &opts, &opts.report};
+	m::vm::accepted a{event, &opts, nullptr, &opts.report};
 	m::vm::accept(a);
 	return true;
 }
