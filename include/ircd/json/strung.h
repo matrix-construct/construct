@@ -32,6 +32,8 @@ struct ircd::json::strung
 	template<class... T> strung(T&&... t);
 	strung(strung &&s) noexcept;
 	strung(const strung &s);
+	strung &operator=(strung &&) = default;
+	strung &operator=(const strung &) = default;
 };
 
 inline
