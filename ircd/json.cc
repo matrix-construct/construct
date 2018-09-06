@@ -212,12 +212,6 @@ struct ircd::json::output
 		,"number"
 	};
 
-	rule<string_view> chars
-	{
-		*(char_)
-		,"characters"
-	};
-
 	rule<string_view> quoted
 	{
 		char_('"') << *char_ << char_('"')
@@ -1983,11 +1977,28 @@ ircd::json::stringify(mutable_buffer &buf,
 	{
 		case STRING:
 		{
-			const string_view sv{v};
-			printer(buf, printer.string, sv);
-			//TODO: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-			const string_view ret{start, begin(buf)};
-			if(endswith(ret, "\\\"")) printer(buf, printer.quote);
+			if(!v.string)
+			{
+				consume(buf, copy(buf, empty_string));
+				break;
+			}
+
+			const string_view sv
+			{
+				v.string, v.len
+			};
+
+			if(v.serial)
+			{
+				consume(buf, copy(buf, sv));
+				break;
+			}
+
+			if(surrounds(sv, '"'))
+				printer(buf, printer.quoted, sv);
+			else
+				printer(buf, printer.unquoted, sv);
+
 			break;
 		}
 
@@ -2123,6 +2134,9 @@ ircd::json::serialized(const value &v)
 		{
 			if(!v.string)
 				return size(empty_string);
+
+			if(v.serial)
+				return v.len;
 
 			size_t ret(v.len);
 			const string_view sv{v.string, v.len};
