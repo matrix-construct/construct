@@ -1206,6 +1206,25 @@ ircd::json::iov::defaults::defaults(iov &iov,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// json/strung.h
+//
+
+ircd::json::strung::operator
+json::array()
+const
+{
+	return string_view{*this};
+}
+
+ircd::json::strung::operator
+json::object()
+const
+{
+	return string_view{*this};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // json/vector.h
 //
 

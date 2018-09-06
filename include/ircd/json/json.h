@@ -49,18 +49,6 @@ namespace ircd::json
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 }
 
-/// Convenience template to allocate std::string and print() arguments to it.
-struct ircd::json::strung
-:std::string
-{
-	explicit operator json::object() const;
-	explicit operator json::array() const;
-
-	template<class... T> strung(T&&... t);
-	strung(strung &&s) noexcept: std::string{std::move(s)} {}
-	strung(const strung &s): std::string{s} {}
-};
-
 #include "util.h"
 #include "array.h"
 #include "object.h"
@@ -68,6 +56,7 @@ struct ircd::json::strung
 #include "value.h"
 #include "member.h"
 #include "iov.h"
+#include "strung.h"
 #include "tuple/tuple.h"
 #include "stack.h"
 
@@ -145,35 +134,4 @@ ircd::json::print(const mutable_buffer &buf,
 	buf[sv.size()] = '\0';
 	valid_output(sv, size(sv)); // no size expectation check
 	return sv.size();
-}
-
-template<class... T>
-ircd::json::strung::strung(T&&... t)
-:std::string
-{
-	util::string(serialized(std::forward<T>(t)...), [&t...]
-	(const mutable_buffer &out)
-	{
-		const auto sv
-		{
-			stringify(mutable_buffer{out}, std::forward<T>(t)...)
-		};
-
-		valid_output(sv, ircd::size(out));
-		return sv;
-	})
-}{}
-
-inline ircd::json::strung::operator
-json::array()
-const
-{
-	return string_view{*this};
-}
-
-inline ircd::json::strung::operator
-json::object()
-const
-{
-	return string_view{*this};
 }
