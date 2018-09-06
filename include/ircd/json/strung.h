@@ -14,6 +14,10 @@
 namespace ircd::json
 {
 	struct strung;
+
+	strung remove(const strung &, const string_view &key);
+	strung remove(const strung &, const size_t &index);
+	strung insert(const strung &, const json::member &);
 }
 
 /// Interface around an allocated std::string of JSON. This is not a
