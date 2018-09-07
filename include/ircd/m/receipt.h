@@ -13,6 +13,11 @@
 
 namespace ircd::m::receipt
 {
+	// [GET]
+	bool read(const id::room &, const id::user &, const event::id::closure &);
+	id::event read(id::event::buf &out, const id::room &, const id::user &);
+
+	// [SET]
 	id::event::buf read(const id::room &, const id::user &, const id::event &, const time_t &);
 	id::event::buf read(const id::room &, const id::user &, const id::event &); // now
 };

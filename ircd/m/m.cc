@@ -853,6 +853,37 @@ ircd::m::receipt::read(const id::room &room_id,
 	return function(room_id, user_id, event_id, ms);
 }
 
+ircd::m::event::id
+ircd::m::receipt::read(id::event::buf &out,
+                       const id::room &room_id,
+                       const id::user &user_id)
+{
+	const event::id::closure copy{[&out]
+	(const event::id &event_id)
+	{
+		out = event_id;
+	}};
+
+	return read(room_id, user_id, copy)?
+		event::id{out}:
+		event::id{};
+}
+
+bool
+ircd::m::receipt::read(const id::room &room_id,
+                       const id::user &user_id,
+                       const event::id::closure &closure)
+{
+	using prototype = bool (const id::room &, const id::user &, const id::event::closure &);
+
+	static import<prototype> function
+	{
+		"m_receipt", "last_receipt__event_id"
+	};
+
+	return function(room_id, user_id, closure);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/typing.h

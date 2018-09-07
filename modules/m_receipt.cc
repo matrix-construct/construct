@@ -16,6 +16,7 @@ IRCD_MODULE
 	"Matrix Receipts"
 };
 
+extern "C" bool last_receipt__event_id(const m::room::id &, const m::user::id &, const m::event::id::closure &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
@@ -211,4 +212,34 @@ catch(const std::exception &e)
 		string_view{event_id},
 		e.what()
 	};
+}
+
+bool
+last_receipt__event_id(const m::room::id &room_id,
+                       const m::user::id &user_id,
+                       const m::event::id::closure &closure)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content"
+		}
+	};
+
+	const m::user::room user_room
+	{
+		user_id, nullptr, &fopts
+	};
+
+	return user_room.get(std::nothrow, "ircd.read", room_id, [&closure]
+	(const m::event &event)
+	{
+		const m::event::id &event_id
+		{
+			unquote(at<"content"_>(event).get("event_id"))
+		};
+
+		closure(event_id);
+	});
 }
