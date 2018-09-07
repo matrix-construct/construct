@@ -16,6 +16,37 @@ IRCD_MODULE
 	"Matrix state library; modular components."
 };
 
+extern "C" size_t
+count_since(const m::room &room,
+            const m::event::idx &a,
+            const m::event::idx &b)
+{
+	assert(a <= b);
+	m::room::messages it{room};
+	it.seek_idx(a);
+
+	if(!it && !m::exists(room))
+		throw m::NOT_FOUND
+		{
+			"Cannot find room '%s' to count events in",
+			string_view{room.room_id}
+		};
+	else if(!it)
+		throw m::NOT_FOUND
+		{
+			"Event @ idx:%lu or idx:%lu not found in room '%s' or at all",
+			a,
+			b,
+			string_view{room.room_id}
+		};
+
+	size_t ret{0};
+	// Hit the iterator once first otherwise the count will always increment
+	// to `1` erroneously when it ought to show `0`.
+	for(++it; it && it.event_idx() < b; ++it, ++ret);
+	return ret;
+}
+
 extern "C" bool
 random_origin(const m::room &room,
               const m::room::origins::closure &view,

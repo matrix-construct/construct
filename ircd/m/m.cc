@@ -2702,6 +2702,52 @@ ircd::m::commit(const room &room,
 	return eval.event_id;
 }
 
+size_t
+ircd::m::count_since(const m::event::id &a,
+                     const m::event::id &b)
+{
+	return count_since(index(a), index(b));
+}
+
+size_t
+ircd::m::count_since(const m::event::idx &a,
+                     const m::event::idx &b)
+{
+	// Get the room_id from b here; a might not be in the same room but downstream
+	// the counter seeks to a in the given room and will properly fail there.
+	room::id::buf room_id
+	{
+		m::get(std::max(a, b), "room_id", room_id)
+	};
+
+	return count_since(room_id, a, b);
+}
+
+size_t
+ircd::m::count_since(const room &room,
+                     const m::event::id &a,
+                     const m::event::id &b)
+{
+	return count_since(room, index(a), index(b));
+}
+
+size_t
+ircd::m::count_since(const room &r,
+                     const event::idx &a,
+                     const event::idx &b)
+{
+	using prototype = bool (const room &,
+	                        const event::idx &,
+	                        const event::idx &);
+
+	static m::import<prototype> _count_since
+	{
+		"m_room", "count_since"
+	};
+
+	return _count_since(r, std::min(a, b), std::max(a, b));
+}
+
 ircd::m::id::room::buf
 ircd::m::room_id(const id::room_alias &room_alias)
 {
