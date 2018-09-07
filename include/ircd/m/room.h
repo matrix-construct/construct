@@ -196,6 +196,7 @@ struct ircd::m::room::messages
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
 
+	bool seek_idx(const event::idx &);
 	bool seek(const uint64_t &depth);
 	bool seek(const event::id &);
 	bool seek();

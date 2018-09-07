@@ -553,31 +553,12 @@ bool
 ircd::m::room::messages::seek(const event::id &event_id)
 try
 {
-	auto &column
-	{
-		dbs::event_column.at(json::indexof<event, "depth"_>())
-	};
-
-	const event::idx event_idx
+	const event::idx &event_idx
 	{
 		index(event_id)
 	};
 
-	uint64_t depth;
-	column(byte_view<string_view>(event_idx), [&depth]
-	(const string_view &value)
-	{
-		depth = byte_view<uint64_t>(value);
-	});
-
-	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
-	const auto seek_key
-	{
-		dbs::room_events_key(buf, room.room_id, depth, event_idx)
-	};
-
-	this->it = dbs::room_events.begin(seek_key);
-	return bool(*this);
+	return seek_idx(event_idx);
 }
 catch(const db::not_found &e)
 {
@@ -595,6 +576,37 @@ ircd::m::room::messages::seek(const uint64_t &depth)
 
 	this->it = dbs::room_events.begin(seek_key);
 	return bool(*this);
+}
+
+bool
+ircd::m::room::messages::seek_idx(const event::idx &event_idx)
+try
+{
+	uint64_t depth;
+	m::get(event_idx, "depth", mutable_buffer
+	{
+		reinterpret_cast<char *>(&depth), sizeof(depth)
+	});
+
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const auto &seek_key
+	{
+		dbs::room_events_key(buf, room.room_id, depth, event_idx)
+	};
+
+	this->it = dbs::room_events.begin(seek_key);
+	if(!bool(*this))
+		return false;
+
+	// Check if this event_idx is actually in this room
+	if(event_idx != this->event_idx())
+		return false;
+
+	return true;
+}
+catch(const db::not_found &e)
+{
+	return false;
 }
 
 ircd::m::event::id::buf
