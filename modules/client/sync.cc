@@ -291,30 +291,8 @@ ircd::m::sync::longpoll::sync_room(client &client,
 	};
 
 	const m::event &event{accepted};
-
-	std::vector<std::string> state;
-	if(defined(json::get<"event_id"_>(event)) && defined(json::get<"state_key"_>(event)))
-	{
-		json::strung strung(event);
-		if(accepted.copts && accepted.copts->client_txnid)
-			strung = json::insert(strung, json::member
-			{
-				"unsigned", json::members
-				{
-					{ "transaction_id", accepted.copts->client_txnid }
-				}
-			});
-
-		state.emplace_back(std::move(strung));
-	}
-
-	const json::strung state_serial
-	{
-		state.data(), state.data() + state.size()
-	};
-
 	std::vector<std::string> timeline;
-	if(defined(json::get<"event_id"_>(event)) && !defined(json::get<"state_key"_>(event)))
+	if(defined(json::get<"event_id"_>(event)))
 	{
 		json::strung strung(event);
 		if(accepted.copts && accepted.copts->client_txnid)
@@ -375,10 +353,6 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		{ "ephemeral",
 		{
 			{ "events", ephemeral_serial },
-		}},
-		{ "state",
-		{
-			{ "events", state_serial }
 		}},
 		{ "timeline",
 		{
