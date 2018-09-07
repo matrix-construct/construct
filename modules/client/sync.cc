@@ -337,9 +337,17 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		false
 	};
 
-	const int64_t notes
+	m::event::id::buf last_read_buf;
+	const m::event::id last_read
 	{
-		0
+		m::receipt::read(last_read_buf, room, args.request.user_id)
+	};
+
+	const auto notes
+	{
+		last_read && json::get<"event_id"_>(event)?
+			m::count_since(room, last_read, at<"event_id"_>(event)):
+			0UL
 	};
 
 	const json::members body
@@ -347,8 +355,8 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		{ "account_data", json::members{} },
 		{ "unread_notifications",
 		{
-			{ "highlight_count",    int64_t(0) },
-			{ "notification_count", notes },
+			{ "highlight_count",    int64_t(0)  },
+			{ "notification_count", long(notes) },
 		}},
 		{ "ephemeral",
 		{
@@ -437,6 +445,19 @@ ircd::m::sync::linear::handle(client &client,
 		const json::strung state_serial{state.data(), state.data() + state.size()};
 		const json::strung ephemeral_serial{ephemeral.data(), ephemeral.data() + ephemeral.size()};
 
+		m::event::id::buf last_read_buf;
+		const m::event::id last_read
+		{
+			m::receipt::read(last_read_buf, room_id, sp.user)
+		};
+
+		const auto notes
+		{
+			last_read?
+				m::count_since(m::room::id{room_id}, index(last_read), sp.current):
+				0UL
+		};
+
 		const string_view prev_batch
 		{
 			!timeline.empty()?
@@ -459,6 +480,11 @@ ircd::m::sync::linear::handle(client &client,
 				{ "events",      timeline_serial  },
 				{ "prev_batch",  prev_batch       },
 				{ "limited",     limited          },
+			}},
+			{ "unread_notifications",
+			{
+				{ "highlight_count",    int64_t(0)  },
+				{ "notification_count", long(notes) },
 			}},
 		};
 
@@ -1064,19 +1090,26 @@ ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
                                                   json::stack::object &out,
                                                   const m::room &room)
 {
-	// highlight_count
+	m::event::id::buf last_read_buf;
+	const m::event::id last_read
 	{
-		json::stack::member member
-		{
-			out, "highlight_count", json::value{0L}
-		};
-	}
+		m::receipt::read(last_read_buf, room, sp.user)
+	};
+
+	// highlight_count
+	json::stack::member
+	{
+		out, "highlight_count", json::value{0L}
+	};
 
 	// notification_count
+	json::stack::member
 	{
-		json::stack::member member
+		out, "notification_count", json::value
 		{
-			out, "notification_count", json::value{0L}
-		};
-	}
+			last_read?
+				long(m::count_since(room, index(last_read), sp.current)):
+				0L
+		}
+	};
 }
