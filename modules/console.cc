@@ -5622,6 +5622,47 @@ console_cmd__room__join(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__leave(opt &out, const string_view &line)
+{
+	const string_view room_id_or_alias
+	{
+		token(line, ' ', 0)
+	};
+
+	const m::user::id &user_id
+	{
+		token(line, ' ', 1)
+	};
+
+	switch(m::sigil(room_id_or_alias))
+	{
+		case m::id::ROOM:
+		case m::id::ROOM_ALIAS:
+		{
+			const m::room room
+			{
+				m::room_id(room_id_or_alias)
+			};
+
+			const auto leave_event
+			{
+				m::leave(room, user_id)
+			};
+
+			out << leave_event << std::endl;
+			return true;
+		}
+
+		default: throw error
+		{
+			"Don't know how to leave '%s'", room_id_or_alias
+		};
+	}
+
+	return true;
+}
+
+bool
 console_cmd__room__create(opt &out, const string_view &line)
 {
 	const params param
