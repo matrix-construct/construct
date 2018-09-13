@@ -32,7 +32,7 @@ presence_valid_state(const string_view &state)
 	});
 }
 
-static void handle_edu_m_presence_(const m::event &, const m::edu::m_presence &edu);
+static void handle_edu_m_presence_(const m::event &, const m::presence &edu);
 static void handle_edu_m_presence(const m::event &);
 
 const m::hookfn<>
@@ -77,7 +77,7 @@ catch(const std::exception &e)
 
 void
 handle_edu_m_presence_(const m::event &event,
-                       const m::edu::m_presence &object)
+                       const m::presence &object)
 try
 {
 	const m::user::id &user_id

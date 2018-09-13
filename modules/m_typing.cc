@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Matrix Typing"
 };
 
-static void _handle_edu_m_typing(const m::event &, const m::edu::m_typing &edu);
+static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void handle_edu_m_typing(const m::event &);
 
 const m::hookfn<>
@@ -42,7 +42,7 @@ handle_edu_m_typing(const m::event &event)
 
 void
 _handle_edu_m_typing(const m::event &event,
-                     const m::edu::m_typing &edu)
+                     const m::typing &edu)
 {
 	const auto &room_id
 	{

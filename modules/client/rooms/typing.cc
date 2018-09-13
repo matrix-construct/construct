@@ -86,7 +86,7 @@ put__typing(client &client,
 		request.get("typing", false)
 	};
 
-	const m::edu::m_typing event
+	const m::typing event
 	{
 		{ "room_id",  room_id   },
 		{ "typing",   typing    },
@@ -221,7 +221,7 @@ timeout_check()
 void
 timeout_timeout(const typist &t)
 {
-	const m::edu::m_typing event
+	const m::typing event
 	{
 		{ "user_id",  t.user_id   },
 		{ "room_id",  t.room_id   },
