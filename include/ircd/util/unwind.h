@@ -60,7 +60,7 @@ struct ircd::util::unwind::nominal
 
 	~nominal() noexcept
 	{
-		if(likely(!std::uncaught_exception()))
+		if(likely(!std::uncaught_exceptions()))
 			func();
 	}
 
@@ -87,7 +87,7 @@ struct ircd::util::unwind::exceptional
 
 	~exceptional() noexcept
 	{
-		if(unlikely(std::uncaught_exception()))
+		if(unlikely(std::uncaught_exceptions()))
 			func();
 	}
 
@@ -104,7 +104,7 @@ struct ircd::util::unwind::nominal::assertion
 {
 	~assertion() noexcept
 	{
-		assert(likely(!std::uncaught_exception()));
+		assert(likely(!std::uncaught_exceptions()));
 	}
 };
 
@@ -115,6 +115,6 @@ struct ircd::util::unwind::exceptional::assertion
 {
 	~assertion() noexcept
 	{
-		assert(likely(std::uncaught_exception()));
+		assert(likely(std::uncaught_exceptions()));
 	}
 };

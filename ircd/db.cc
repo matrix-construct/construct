@@ -6028,7 +6028,7 @@ ircd::db::txn::checkpoint::~checkpoint()
 noexcept
 {
 	const ctx::uninterruptible ui;
-	if(likely(!std::uncaught_exception()))
+	if(likely(!std::uncaught_exceptions()))
 		throw_on_error { t.wb->PopSavePoint() };
 	else
 		throw_on_error { t.wb->RollbackToSavePoint() };

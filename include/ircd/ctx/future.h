@@ -117,7 +117,7 @@ template<class... T>
 ircd::ctx::scoped_future<T...>::~scoped_future()
 noexcept
 {
-	if(std::uncaught_exception())
+	if(std::uncaught_exceptions())
 		return;
 
 	if(this->valid())
