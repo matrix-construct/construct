@@ -44,6 +44,11 @@ namespace ircd::json
 	void valid_output(const string_view &, const size_t &expected);
 }
 
+namespace ircd
+{
+	using json::operator<<;
+}
+
 inline std::ostream &
 ircd::json::operator<<(std::ostream &s, const path &p)
 {
