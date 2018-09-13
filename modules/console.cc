@@ -341,6 +341,12 @@ console_command_derived(opt &out, const string_view &line)
 		case m::id::USER:
 			return console_id__user(out, id, line);
 
+		case m::id::ROOM_ALIAS:
+		{
+			const auto room_id{m::room_id(id)};
+			return console_id__room(out, room_id, line);
+		}
+
 		default:
 			break;
 	}
