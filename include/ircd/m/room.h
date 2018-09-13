@@ -243,7 +243,6 @@ struct ircd::m::room::messages
 ///
 struct ircd::m::room::state
 {
-	struct tuple;
 	struct opts;
 
 	using keys = std::function<void (const string_view &)>;
@@ -448,53 +447,6 @@ struct ircd::m::room::power
 	,state{room}
 	{}
 };
-
-/// Tuple to represent fundamental room state singletons (state_key = "")
-///
-/// This is not a complete representation of room state. Missing from here
-/// are any state events with a state_key which is not an empty string. When
-/// the state_key is not "", multiple events of that type contribute to the
-/// room's eigenvalue. Additionally, state events which are not related to
-/// the matrix protocol `m.room.*` are not represented here.
-///
-/// NOTE that in C++-land state_key="" is represented as a valid but empty
-/// character pointer. It is not a string containing "". Testing for a
-/// "" state_key `ircd::defined(string_view) && ircd::empty(string_view)`
-/// analogous to `data() && !*data()`. A default constructed string_view{}
-/// is considered "JS undefined" because the character pointers are null.
-/// A "JS null" is rarer and carried with a hack which will not be discussed
-/// here.
-///
-struct ircd::m::room::state::tuple
-:json::tuple
-<
-	json::property<name::m_room_aliases, event>,
-	json::property<name::m_room_canonical_alias, event>,
-	json::property<name::m_room_create, event>,
-	json::property<name::m_room_join_rules, event>,
-	json::property<name::m_room_power_levels, event>,
-	json::property<name::m_room_message, event>,
-	json::property<name::m_room_name, event>,
-	json::property<name::m_room_topic, event>,
-	json::property<name::m_room_avatar, event>,
-	json::property<name::m_room_pinned_events, event>,
-	json::property<name::m_room_history_visibility, event>,
-	json::property<name::m_room_third_party_invite, event>,
-	json::property<name::m_room_guest_access, event>
->
-{
-	using super_type::tuple;
-
-	tuple(const json::array &pdus);
-	tuple(const m::room &, const mutable_buffer &);
-	tuple() = default;
-	using super_type::operator=;
-
-	friend std::string pretty(const room::state::tuple &);
-	friend std::string pretty_oneline(const room::state::tuple &);
-};
-
-#pragma GCC diagnostic pop
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()
