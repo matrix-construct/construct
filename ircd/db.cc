@@ -3461,8 +3461,8 @@ try
 {
 	fs::fd::opts ret
 	{
-		std::ios_base::out |
-		(trunc? std::ios::trunc : 0)
+		std::ios::out |
+		(trunc? std::ios::trunc : std::ios::openmode(0))
 	};
 
 	ret.direct = this->env_opts.use_direct_writes;

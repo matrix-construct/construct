@@ -66,6 +66,6 @@ struct ircd::fs::fd::opts
 	bool nocreate {false};
 
 	/// Construct options from an std::ios::open_mode bitmask.
-	opts(const std::ios::open_mode &);
+	opts(const std::ios::openmode &);
 	opts() = default;
 };

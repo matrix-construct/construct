@@ -553,7 +553,7 @@ namespace ircd::fs
 {
 	thread_local char path_buf[PATH_MAX];
 	static const char *path_str(const string_view &);
-	static uint posix_flags(const std::ios::open_mode &mode);
+	static uint posix_flags(const std::ios::openmode &mode);
 }
 
 #ifdef HAVE_SYS_STAT_H
@@ -612,7 +612,7 @@ ircd::fs::size(const fd &fd)
 }
 
 uint
-ircd::fs::posix_flags(const std::ios::open_mode &mode)
+ircd::fs::posix_flags(const std::ios::openmode &mode)
 {
 	static const auto rdwr
 	{
@@ -644,7 +644,7 @@ ircd::fs::path_str(const string_view &s)
 // fd::opts
 //
 
-ircd::fs::fd::opts::opts(const std::ios::open_mode &mode)
+ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
 :flags
 {
 	posix_flags(mode)
