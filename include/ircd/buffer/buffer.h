@@ -77,13 +77,16 @@ namespace ircd::buffer
 	void reverse(const mutable_buffer &buf);
 	void zero(const mutable_buffer &buf);
 
+	// Convenience copy to std stream
+	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
+}
+
+namespace ircd::buffer::buffers
+{
 	// Iterable of buffers tools
 	template<template<class> class I, class T> size_t size(const I<T> &buffers);
 	template<template<class> class I, class T> size_t copy(const mutable_buffer &, const I<T> &buffer);
 	template<template<class> class I, class T> size_t consume(I<T> &buffers, const size_t &bytes);
-
-	// Convenience copy to std stream
-	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
 	template<template<class> class I, class T> std::ostream &operator<<(std::ostream &s, const I<T> &buffers);
 }
 
@@ -123,7 +126,7 @@ template<template<class>
          class buffers,
          class T>
 std::ostream &
-ircd::buffer::operator<<(std::ostream &s, const buffers<T> &b)
+ircd::buffer::buffers::operator<<(std::ostream &s, const buffers<T> &b)
 {
 	using it = typename T::iterator;
 
@@ -140,14 +143,16 @@ template<template<class>
          class buffers,
          class T>
 size_t
-ircd::buffer::consume(buffers<T> &b,
-                      const size_t &bytes)
+ircd::buffer::buffers::consume(buffers<T> &b,
+                               const size_t &bytes)
 {
 	ssize_t remain(bytes);
 	for(auto it(std::begin(b)); it != std::end(b) && remain > 0; ++it)
 	{
 		using buffer = typename buffers<T>::value_type;
 		using iterator = typename buffer::iterator;
+		using ircd::buffer::size;
+		using ircd::buffer::consume;
 
 		buffer &b(const_cast<buffer &>(*it));
 		const ssize_t bsz(size(b));
@@ -164,10 +169,12 @@ template<template<class>
          class buffers,
          class T>
 size_t
-ircd::buffer::copy(const mutable_buffer &dest,
-                   const buffers<T> &b)
+ircd::buffer::buffers::copy(const mutable_buffer &dest,
+                            const buffers<T> &b)
 {
 	using it = typename T::iterator;
+	using ircd::buffer::copy;
+	using ircd::buffer::size;
 
 	size_t ret(0);
 	for(const buffer<it> &b : b)
@@ -180,9 +187,10 @@ template<template<class>
          class buffers,
          class T>
 size_t
-ircd::buffer::size(const buffers<T> &b)
+ircd::buffer::buffers::size(const buffers<T> &b)
 {
 	using it = typename T::iterator;
+	using ircd::buffer::size;
 
 	return std::accumulate(std::begin(b), std::end(b), size_t(0), []
 	(auto ret, const buffer<it> &b)
