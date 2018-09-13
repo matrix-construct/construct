@@ -4404,11 +4404,12 @@ console_cmd__room__top(opt &out, const string_view &line)
 		m::top(std::nothrow, room_id)
 	};
 
-	out << "idx:      " << std::get<m::event::idx>(top) << std::endl;
-	out << "depth:    " << std::get<int64_t>(top) << std::endl;
-	out << "event:    " << std::get<m::event::id::buf>(top) << std::endl;
-	out << "version:  " << m::version(room_id) << std::endl;
-	out << "m_state:  " << std::endl;
+	out << "idx:       " << std::get<m::event::idx>(top) << std::endl;
+	out << "depth:     " << std::get<int64_t>(top) << std::endl;
+	out << "event:     " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "version:   " << m::version(room_id) << std::endl;
+	out << "federate:  " << m::federate(room_id) << std::endl;
+	out << "m_state:   " << std::endl;
 
 	const m::room::state state
 	{

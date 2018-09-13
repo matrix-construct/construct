@@ -168,6 +168,32 @@ ircd::m::version(const id::room &room_id)
 }
 
 bool
+ircd::m::federate(const id::room &room_id)
+{
+	static const m::event::fetch::opts fopts
+	{
+		event::keys::include
+		{
+			"content",
+		}
+	};
+
+	const m::room::state state
+	{
+		room_id, &fopts
+	};
+
+	bool ret;
+	state.get("m.room.create", "", [&ret]
+	(const m::event &event)
+	{
+		ret = json::get<"content"_>(event).get("m.federate", true);
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::exists(const id::room &room_id)
 {
 	const auto it
