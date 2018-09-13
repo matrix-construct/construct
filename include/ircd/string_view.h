@@ -47,6 +47,19 @@ struct ircd::string_view
 		return !empty();
 	}
 
+	/// CAREFUL. THIS IS ON PURPOSE. By relaxing this conversion we're reducing
+	/// the amount of explicit std::string() pollution when calling out to code
+	/// which doesn't support string_view *yet* (keyword: yet). When it does
+	/// support string_view then this conversion won't happen, and we don't
+	/// have to change anything in our code. The price here is that an
+	/// occasional regression analysis on where these conversions are occurring
+	/// should be periodically performed to make sure there are no unwanted
+	/// silent accidents.
+	operator std::string() const
+	{
+		return std::string(cbegin(), cend());
+	}
+
 	/// (non-standard) When data() != nullptr we consider the string defined
 	/// downstream in this project wrt JS/JSON. This is the bit of information
 	/// we're deciding on for defined|undefined. If this string_view is
@@ -169,7 +182,7 @@ struct ircd::string_view
 //	:std::string_view{start, size}
 //	{}
 
-	explicit string_view(const std::string &string)
+	string_view(const std::string &string)
 	:std::string_view{string.data(), string.size()}
 	{}
 

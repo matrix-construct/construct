@@ -223,11 +223,16 @@ void
 ircd::db::init_test_direct_io()
 try
 {
-	if(fs::direct_io_support(direct_io_test_file_path()))
+	const auto test_file_path
+	{
+		direct_io_test_file_path()
+	};
+
+	if(fs::direct_io_support(test_file_path))
 		log::debug
 		{
 			log, "Detected Direct-IO works by opening test file at `%s'",
-			direct_io_test_file_path()
+			test_file_path
 		};
 	else
 		log::warning
@@ -256,7 +261,12 @@ ircd::db::direct_io_test_file_path()
 		fs::get(fs::DB)
 	};
 
-	return fs::make_path({dbdir, "SUPPORTS_DIRECT_IO"s});
+	const std::string parts[]
+	{
+		dbdir, "SUPPORTS_DIRECT_IO"s
+	};
+
+	return fs::make_path(parts);
 }
 
 void
@@ -8792,10 +8802,12 @@ ircd::db::path(const string_view &name,
 		fs::get(fs::DB)
 	};
 
-	return fs::make_path(
+	const string_view parts[]
 	{
 		prefix, name, lex_cast(checkpoint)
-	});
+	};
+
+	return fs::make_path(parts);
 }
 
 std::pair<ircd::string_view, uint64_t>

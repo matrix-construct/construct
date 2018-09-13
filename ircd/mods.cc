@@ -291,7 +291,7 @@ try
 		ret->header->version,
 		!ret->description().empty()?
 			ret->description():
-			"<no description>"s
+			"<no description>"_sv
 	};
 
 	return ret;
