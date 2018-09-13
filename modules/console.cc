@@ -4404,17 +4404,17 @@ console_cmd__room__top(opt &out, const string_view &line)
 		m::top(std::nothrow, room_id)
 	};
 
-	out << "idx:       " << std::get<m::event::idx>(top) << std::endl;
-	out << "depth:     " << std::get<int64_t>(top) << std::endl;
-	out << "event:     " << std::get<m::event::id::buf>(top) << std::endl;
-	out << "version:   " << m::version(room_id) << std::endl;
-	out << "federate:  " << m::federate(room_id) << std::endl;
-	out << "m_state:   " << std::endl;
-
 	const m::room::state state
 	{
 		room_id
 	};
+
+	out << "version:       " << m::version(room_id) << std::endl;
+	out << "federate:      " << std::boolalpha << m::federate(room_id) << std::endl;
+	out << "idx:           " << std::get<m::event::idx>(top) << std::endl;
+	out << "depth:         " << std::get<int64_t>(top) << std::endl;
+	out << "event:         " << std::get<m::event::id::buf>(top) << std::endl;
+	out << std::endl;
 
 	state.for_each(m::room::state::types{[&out, &state]
 	(const string_view &type)
@@ -4425,8 +4425,13 @@ console_cmd__room__top(opt &out, const string_view &line)
 		state.for_each(type, m::event::closure{[&out]
 		(const m::event &event)
 		{
-			if(json::get<"state_key"_>(event) == "")
-				out << pretty_oneline(event) << std::endl;
+			if(json::get<"state_key"_>(event) != "")
+				return;
+
+			out << json::get<"type"_>(event) << ':' << std::endl;
+			for(const auto &member : json::get<"content"_>(event))
+				out << '\t' << member.first << ": " << member.second << std::endl;
+			out << std::endl;
 		}});
 
 		return true;
