@@ -1,3 +1,13 @@
+```
+---------------------------------------------------------------------------------------------------
+|                                                                                                 |
+| THE CONSTRUCT HAS NOT BEEN RELEASED FOR PUBLIC USE. THIS IS FOR DEVELOPERS AND DEMONSTRATION    |
+| ONLY. IT IS NOT COMPLETE AND REQUIRES EXPERT KNOWLEDGE TO USE. YOU ARE STILL ENCOURAGED TO TRY  |
+| THIS SOFTWARE AND HELP US, BUT IN AN EXPERIMENTAL SETTING ONLY.                                 |
+|                                                                                                 |
+---------------------------------------------------------------------------------------------------
+```
+
 # This — is The **Construct**
 
 <img align="right" src="https://i.imgur.com/TIf8kEC.png" />
