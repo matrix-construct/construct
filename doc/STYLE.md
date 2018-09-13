@@ -423,3 +423,38 @@ intervals or in some cases may require scanning data at an interval (i.e timeout
 check). Our style is to not wakeup a context (or similarly queue a callback in
 the plain event loop) for an empty dataset. In other words, when there is no
 work, the program should be entirely comatose and not woken up by the OS.
+For example: if you were to `strace(1)` construct and then pull the network
+cable: eventually there would be complete silence.
+
+
+
+### Git / Development related
+
+- Commits in this project tend to have a `prefix:` like `ircd::m:`. This is
+simply an indicator of where the change occurred. If multiple areas of the
+project are changed: first determine if the change in each area can stand on
+its own and break what you're doing into multiple commits; this is generally
+the case when adding a low-level feature to support something built at a higher
+level. Otherwise, prefix the commit with the largest/most-fundamental area
+being changed.
+	- Prefixes tend to just be the namespace where the change is occurring.
+	- Prefixes can be an actual class name if that class has a lot of nested
+	assets and pretty much acts as a namespace.
+	- Prefixes for changes in `modules/` tend to be the path to the module
+	or the file in a large module. i.e `modules/s_conf:` or `modules/client/sync:`
+	- Prefixes for other areas of the project can just be the directory like `doc:`
+	or `tools:` or `README:`
+
+- Existing conventions for commit wording are documented here as follows:
+	Generally after the prefix, the most frequent words a commit start with
+	are "Add" "Fix" "Move" "Remove" and "Improve" and though it is not
+	required, if you can classify what you're doing with one of those that
+	is ideal.
+	- The use of the word "minor" indicates that no application logic was
+	affected by a commit: i.e code formatting changes and "minor cleanup" etc.
+	- The use of the word "various" indicates many not-very-related changes
+	or very spread-out changes: i.e "various fixes" etc; this tends not to be
+	something one is proud of using.
+	- The use of the word "checkpoint" indicates something sloppy and
+	incomplete is being committed; it compiles and runs; there is a pressing
+	need to get it out of the dirty head for the time being.
