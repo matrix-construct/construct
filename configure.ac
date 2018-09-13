@@ -1142,7 +1142,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
 	fi
 
-	bash tools/buildrocks.sh $rocksdb_linkage "v5.12.2"
+	bash tools/buildrocks.sh $rocksdb_linkage "v5.14.3"
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build RocksDB])
