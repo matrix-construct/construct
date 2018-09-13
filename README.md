@@ -105,11 +105,8 @@ mkdir build
 statement below.
 
 ```
-CXX=g++-6 ./configure --prefix=$PWD/build --with-included-boost --with-included-rocksdb
+./configure --prefix=$PWD/build --with-included-boost --with-included-rocksdb
 ```
-
-- Many systems alias `g++` to an older version. To be safe, specify a version manually
-in `CXX`. This will also build the submodule dependencies with that version.
 - The `--with-included-*` will fetch, configure **and build** the dependencies included
 as submodules.
 
