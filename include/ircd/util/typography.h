@@ -237,7 +237,7 @@ ctype(const char *const &begin,
 /// the template simply as `ctype<std::isprint>(const_buffer{"hi"});` which
 /// should fail because const_buffer's over a string literal see the trailing
 /// null character.
-template<int (&test)(int)>
+template<int (*test)(int)>
 ssize_t
 ctype(const const_buffer &s)
 {
@@ -245,7 +245,7 @@ ctype(const const_buffer &s)
 }
 
 /// Boolean alternative for ctype(const_buffer)
-template<int (&test)(int)>
+template<int (*test)(int)>
 bool
 all_of(const const_buffer &s)
 {
@@ -256,7 +256,7 @@ all_of(const const_buffer &s)
 }
 
 /// Boolean alternative for ctype(const_buffer)
-template<int (&test)(int)>
+template<int (*test)(int)>
 bool
 none_of(const const_buffer &s)
 {
