@@ -1333,7 +1333,7 @@ ircd::ctx::prof::check_stack()
 
 namespace ircd::ctx::ole
 {
-	using closure = std::function<void () noexcept>;
+	using closure = std::function<void ()>;
 
 	extern conf::item<size_t> thread_max;
 

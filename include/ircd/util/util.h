@@ -60,7 +60,7 @@ namespace util {
 /// unique_ptr template for custom deleters every single time.
 ///
 template<class T>
-using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
+using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
 
 //
 // Misc size() participants.

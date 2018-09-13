@@ -38,7 +38,7 @@ struct ircd::server::out
 	/// data most recently written. The second argument is a view of all data
 	/// written so far. This is only invoked for content. At the first
 	/// invocation, the head has been fully written.
-	std::function<void (const_buffer, const_buffer) noexcept> progress;
+	std::function<void (const_buffer, const_buffer)> progress;
 };
 
 /// Request data and options related to the receive side of the request.
@@ -59,7 +59,7 @@ struct ircd::server::in
 	/// data most recently received. The second argument is a view of all data
 	/// received so far. This is only invoked for content, not for the head;
 	/// however the first time it is invoked it is safe to view the in.head
-	std::function<void (const_buffer, const_buffer) noexcept> progress;
+	std::function<void (const_buffer, const_buffer)> progress;
 
 	/// The dynamic buffer is a convenience that allows for the content buffer
 	/// to be allocated on demand once the head is received and the length is

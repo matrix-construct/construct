@@ -68,7 +68,7 @@ struct ircd::ctx::continuation
 struct ircd::ctx::to_asio
 :ircd::ctx::continuation
 {
-	using function = std::function<void (ctx *const &) noexcept>;
+	using function = std::function<void (ctx *const &)>;
 
 	function handler;
 
