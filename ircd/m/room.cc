@@ -134,6 +134,39 @@ ircd::m::top(std::nothrow_t,
 	return ret;
 }
 
+uint
+ircd::m::version(const id::room &room_id)
+{
+	static const m::event::fetch::opts fopts
+	{
+		event::keys::include
+		{
+			"content",
+		}
+	};
+
+	const m::room::state state
+	{
+		room_id, &fopts
+	};
+
+	uint ret;
+	state.get("m.room.create", "", [&ret]
+	(const m::event &event)
+	{
+		const auto version_string
+		{
+			unquote(json::get<"content"_>(event).get("version", "1"))
+		};
+
+		ret = version_string?
+			lex_cast<uint>(version_string):
+			1;
+	});
+
+	return ret;
+}
+
 bool
 ircd::m::exists(const id::room &room_id)
 {

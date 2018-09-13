@@ -4407,6 +4407,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "idx:      " << std::get<m::event::idx>(top) << std::endl;
 	out << "depth:    " << std::get<int64_t>(top) << std::endl;
 	out << "event:    " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "version:  " << m::version(room_id) << std::endl;
 	out << "m_state:  " << std::endl;
 
 	const m::room::state state
@@ -4440,6 +4441,23 @@ console_id__room(opt &out,
 {
 	//TODO: XXX more detailed summary
 	return console_cmd__room__top(out, line);
+}
+
+bool
+console_cmd__room__version(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	out << m::version(room_id) << std::endl;
+	return true;
 }
 
 bool
