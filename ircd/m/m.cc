@@ -2782,14 +2782,16 @@ ircd::m::count_since(const room &r,
 ircd::m::id::room::buf
 ircd::m::room_id(const id::room_alias &room_alias)
 {
-	char buf[256];
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
 	return room_id(buf, room_alias);
 }
 
 ircd::m::id::room::buf
 ircd::m::room_id(const string_view &room_id_or_alias)
 {
-	char buf[256];
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
 	return room_id(buf, room_id_or_alias);
 }
 
