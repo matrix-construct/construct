@@ -263,20 +263,27 @@ ircd::m::sync::longpoll::sync_rooms(client &client,
                                     const args &args,
                                     const vm::accepted &event)
 {
-	std::vector<std::string> r[3];
-	std::vector<json::member> m[3];
-	r[0].emplace_back(sync_room(client, room, args, event));
-	m[0].emplace_back(room.room_id, r[0].back());
+	std::vector<std::string> r;
+	std::vector<json::member> m;
 
-	const std::string join{json::strung(m[0].data(), m[0].data() + m[0].size())};
-	const std::string leave{json::strung(m[1].data(), m[1].data() + m[1].size())};
-	const std::string invite{json::strung(m[2].data(), m[2].data() + m[2].size())};
-	return json::strung(json::members
+	thread_local char membership_buf[64];
+	const auto membership
 	{
-		{ "join",     join    },
-		{ "leave",    leave   },
-		{ "invite",   invite  },
-	});
+		room.membership(membership_buf, user_id)
+	};
+
+	r.emplace_back(sync_room(client, room, args, event));
+	m.emplace_back(room.room_id, r.back());
+
+	const json::strung body
+	{
+		m.data(), m.data() + m.size()
+	};
+
+	return json::strung{json::members
+	{
+		{ membership, body }
+	}};
 }
 
 std::string
@@ -422,7 +429,7 @@ ircd::m::sync::linear::handle(client &client,
 	if(r.empty())
 		return false;
 
-	std::vector<json::member> joins;
+	std::vector<json::member> events[3];
 
 	for(auto &p : r)
 	{
@@ -488,19 +495,39 @@ ircd::m::sync::linear::handle(client &client,
 			}},
 		};
 
-		joins.emplace_back(room_id, body);
+		thread_local char membership_buf[64];
+		const auto membership{m::room{room_id}.membership(membership_buf, sp.user)};
+		const int ep
+		{
+			membership == "join"? 0:
+			membership == "leave"? 1:
+			membership == "invite"? 2:
+			1 // default to leave (catches "ban" for now)
+		};
+
+		events[ep].emplace_back(room_id, body);
 	};
 
-	const json::value join
+	const json::value joinsv
 	{
-		joins.data(), joins.size()
+		events[0].data(), events[0].size()
+	};
+
+	const json::value leavesv
+	{
+		events[1].data(), events[1].size()
+	};
+
+	const json::value invitesv
+	{
+		events[2].data(), events[2].size()
 	};
 
 	const json::members rooms
 	{
-		{ "join",   join           },
-		{ "leave",  json::object{} },
-		{ "invite", json::object{} },
+		{ "join",   joinsv     },
+		{ "leave",  leavesv    },
+		{ "invite", invitesv   },
 	};
 
 	resource::response
