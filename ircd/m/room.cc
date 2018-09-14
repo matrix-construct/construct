@@ -1797,7 +1797,7 @@ const
 	                        const m::room::origins::closure &,
 	                        const m::room::origins::closure_bool &);
 
-	thread_local mods::import<prototype> random_origin
+	static mods::import<prototype> random_origin
 	{
 		"m_room", "random_origin"
 	};

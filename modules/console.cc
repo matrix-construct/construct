@@ -599,7 +599,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 	                                     const string_view &key,
 	                                     const string_view &val);
 
-	thread_local mods::import<prototype> set_conf_item
+	static mods::import<prototype> set_conf_item
 	{
 		"s_conf", "set_conf_item"
 	};
@@ -649,7 +649,7 @@ bool
 console_cmd__conf__rehash(opt &out, const string_view &line)
 {
 	using prototype = void (const bool &);
-	thread_local mods::import<prototype> rehash_conf
+	static mods::import<prototype> rehash_conf
 	{
 		"s_conf", "rehash_conf"
 	};
@@ -666,7 +666,7 @@ bool
 console_cmd__conf__reload(opt &out, const string_view &line)
 {
 	using prototype = void ();
-	thread_local mods::import<prototype> reload_conf
+	static mods::import<prototype> reload_conf
 	{
 		"s_conf", "reload_conf"
 	};
@@ -683,7 +683,7 @@ bool
 console_cmd__conf__reset(opt &out, const string_view &line)
 {
 	using prototype = void ();
-	thread_local mods::import<prototype> refresh_conf
+	static mods::import<prototype> refresh_conf
 	{
 		"s_conf", "refresh_conf"
 	};
@@ -2814,7 +2814,7 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 {
 	using list = std::list<net::listener>;
 
-	thread_local mods::import<list> listeners
+	static mods::import<list> listeners
 	{
 		"s_listen", "listeners"
 	};
@@ -2872,7 +2872,7 @@ console_cmd__net__listen__load(opt &out, const string_view &line)
 {
 	using prototype = bool (const string_view &);
 
-	thread_local mods::import<prototype> load_listener
+	static mods::import<prototype> load_listener
 	{
 		"s_listen", "load_listener"
 	};
@@ -2895,7 +2895,7 @@ console_cmd__net__listen__unload(opt &out, const string_view &line)
 {
 	using prototype = bool (const string_view &);
 
-	thread_local mods::import<prototype> unload_listener
+	static mods::import<prototype> unload_listener
 	{
 		"s_listen", "unload_listener"
 	};
@@ -3089,7 +3089,7 @@ bool
 console_cmd__key__crt__sign(opt &out, const string_view &line)
 {
 	using prototype = void (const m::event &);
-	thread_local mods::import<prototype> create_my_key
+	static mods::import<prototype> create_my_key
 	{
 		"s_keys", "create_my_key"
 	};
@@ -3250,7 +3250,7 @@ console_cmd__stage__make_prev(opt &out, const string_view &line)
 	                                                   const mutable_buffer &,
 	                                                   const size_t &,
 	                                                   const bool &);
-	thread_local mods::import<prototype> make_prev__buf
+	static mods::import<prototype> make_prev__buf
 	{
 		"m_room", "make_prev__buf"
 	};
@@ -3298,7 +3298,7 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 	                               const vector_view<const string_view> &,
 	                               const string_view &);
 
-	thread_local mods::import<prototype> make_auth__buf
+	static mods::import<prototype> make_auth__buf
 	{
 		"m_room", "make_auth__buf"
 	};
@@ -4075,7 +4075,7 @@ console_cmd__event__fetch(opt &out, const string_view &line)
 	                                const m::event::id &,
 	                                const mutable_buffer &);
 
-	thread_local mods::import<prototype> acquire
+	static mods::import<prototype> acquire
 	{
 		"vm_fetch", "acquire"
 	};
@@ -4605,7 +4605,7 @@ console_cmd__room__head__rebuild(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &);
-	thread_local mods::import<prototype> head__rebuild
+	static mods::import<prototype> head__rebuild
 	{
 		"m_room", "head__rebuild"
 	};
@@ -4633,7 +4633,7 @@ console_cmd__room__head__add(opt &out, const string_view &line)
 	};
 
 	using prototype = void (const m::event::id &, const db::op &, const bool &);
-	thread_local mods::import<prototype> head__modify
+	static mods::import<prototype> head__modify
 	{
 		"m_room", "head__modify"
 	};
@@ -4657,7 +4657,7 @@ console_cmd__room__head__del(opt &out, const string_view &line)
 	};
 
 	using prototype = void (const m::event::id &, const db::op &, const bool &);
-	thread_local mods::import<prototype> head__modify
+	static mods::import<prototype> head__modify
 	{
 		"m_room", "head__modify"
 	};
@@ -4686,7 +4686,7 @@ console_cmd__room__herd(opt &out, const string_view &line)
 	};
 
 	using prototype = void (const m::room &, const m::user &, const milliseconds &);
-	thread_local mods::import<prototype> room_herd
+	static mods::import<prototype> room_herd
 	{
 		"m_room", "room_herd"
 	};
@@ -4715,7 +4715,7 @@ console_cmd__room__head__reset(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &);
-	thread_local mods::import<prototype> head__reset
+	static mods::import<prototype> head__reset
 	{
 		"m_room", "head__reset"
 	};
@@ -4748,7 +4748,7 @@ console_cmd__room__complete(opt &out, const string_view &line)
 	};
 
 	using prototype = std::pair<bool, int64_t> (const m::room &);
-	thread_local mods::import<prototype> is_complete
+	static mods::import<prototype> is_complete
 	{
 		"m_room", "is_complete"
 	};
@@ -5223,7 +5223,7 @@ console_cmd__room__state__force(opt &out, const string_view &line)
 	};
 
 	using prototype = bool (const m::event &);
-	thread_local mods::import<prototype> state__force_present
+	static mods::import<prototype> state__force_present
 	{
 		"m_room", "state__force_present"
 	};
@@ -5256,7 +5256,7 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &);
-	thread_local mods::import<prototype> state__rebuild_present
+	static mods::import<prototype> state__rebuild_present
 	{
 		"m_room", "state__rebuild_present"
 	};
@@ -5289,7 +5289,7 @@ console_cmd__room__state__rebuild__history(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &);
-	thread_local mods::import<prototype> state__rebuild_history
+	static mods::import<prototype> state__rebuild_history
 	{
 		"m_room", "state__rebuild_history"
 	};
@@ -5813,7 +5813,7 @@ console_cmd__room__purge(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &);
-	thread_local mods::import<prototype> purge
+	static mods::import<prototype> purge
 	{
 		"m_room", "purge"
 	};
@@ -5846,7 +5846,7 @@ console_cmd__room__dagree(opt &out, const string_view &line)
 	};
 
 	using prototype = size_t (const m::room &, std::vector<size_t> &);
-	thread_local mods::import<prototype> dagree_histogram
+	static mods::import<prototype> dagree_histogram
 	{
 		"m_room", "dagree_histogram"
 	};
@@ -5906,7 +5906,7 @@ console_cmd__user__register(opt &out, const string_view &line)
 	                   const client *const &,
 	                   const bool &);
 
-	thread_local mods::import<prototype> register_user
+	static mods::import<prototype> register_user
 	{
 		"client_register", "register_user"
 	};
@@ -6467,7 +6467,7 @@ console_cmd__feds__version(opt &out, const string_view &line)
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__version
+	static mods::import<prototype> feds__version
 	{
 		"federation_federation", "feds__version"
 	};
@@ -6581,7 +6581,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 	using prototype = void (const m::event::id &,
 	                        std::ostream &);
 
-	thread_local mods::import<prototype> feds__event
+	static mods::import<prototype> feds__event
 	{
 		"federation_federation", "feds__event"
 	};
@@ -6617,7 +6617,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__head
+	static mods::import<prototype> feds__head
 	{
 		"federation_federation", "feds__head"
 	};
@@ -6678,7 +6678,7 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__head
+	static mods::import<prototype> feds__head
 	{
 		"federation_federation", "feds__head"
 	};
@@ -6738,7 +6738,7 @@ console_cmd__feds__heads(opt &out, const string_view &line)
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__head
+	static mods::import<prototype> feds__head
 	{
 		"federation_federation", "feds__head"
 	};
@@ -6825,7 +6825,7 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__perspective
+	static mods::import<prototype> feds__perspective
 	{
 		"federation_federation", "feds__perspective"
 	};
@@ -6881,7 +6881,7 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 	                        const size_t &,
 	                        std::ostream &);
 
-	thread_local mods::import<prototype> feds__backfill
+	static mods::import<prototype> feds__backfill
 	{
 		"federation_federation", "feds__backfill"
 	};
@@ -8149,7 +8149,7 @@ console_cmd__file__room(opt &out, const string_view &line)
 	                               const string_view &server,
 	                               const string_view &file);
 
-	thread_local mods::import<prototype> file_room_id
+	static mods::import<prototype> file_room_id
 	{
 		"media_media", "file_room_id"
 	};
@@ -8197,7 +8197,7 @@ console_cmd__file__download(opt &out, const string_view &line)
 	                                    const m::user::id &,
 	                                    const net::hostport &remote);
 
-	thread_local mods::import<prototype> download
+	static mods::import<prototype> download
 	{
 		"media_media", "download"
 	};

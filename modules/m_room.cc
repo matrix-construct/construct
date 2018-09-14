@@ -657,7 +657,7 @@ room_herd(const m::room &room,
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	thread_local mods::import<prototype> feds__head
+	static mods::import<prototype> feds__head
 	{
 		"federation_federation", "feds__head"
 	};

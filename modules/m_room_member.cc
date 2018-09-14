@@ -89,7 +89,7 @@ _join_room_hookfn
 };
 
 using invite_foreign_proto = m::event::id::buf (const m::event &);
-thread_local mods::import<invite_foreign_proto>
+mods::import<invite_foreign_proto>
 invite__foreign
 {
 	"client_rooms", "invite__foreign"

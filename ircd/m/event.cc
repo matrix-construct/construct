@@ -24,7 +24,7 @@ ircd::m::pretty(std::ostream &s,
                 const event &e)
 {
 	using prototype = void (std::ostream &, const event &);
-	thread_local mods::import<prototype> pretty
+	static mods::import<prototype> pretty
 	{
 		"m_event", "pretty__event"
 	};
@@ -51,7 +51,7 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const bool &content_keys)
 {
 	using prototype = void (std::ostream &, const event &, const bool &);
-	thread_local mods::import<prototype> pretty_oneline
+	static mods::import<prototype> pretty_oneline
 	{
 		"m_event", "pretty_oneline__event"
 	};
@@ -76,7 +76,7 @@ ircd::m::pretty_msgline(std::ostream &s,
                         const event &e)
 {
 	using prototype = void (std::ostream &, const event &);
-	thread_local mods::import<prototype> pretty_msgline
+	static mods::import<prototype> pretty_msgline
 	{
 		"m_event", "pretty_msgline__event"
 	};
@@ -101,7 +101,7 @@ ircd::m::pretty(std::ostream &s,
                 const event::prev &prev)
 {
 	using prototype = void (std::ostream &, const event &);
-	thread_local mods::import<prototype> pretty
+	static mods::import<prototype> pretty
 	{
 		"m_event", "pretty__prev"
 	};
@@ -126,7 +126,7 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const event::prev &prev)
 {
 	using prototype = void (std::ostream &, const event::prev &);
-	thread_local mods::import<prototype> pretty_oneline
+	static mods::import<prototype> pretty_oneline
 	{
 		"m_event", "pretty_oneline__prev"
 	};
