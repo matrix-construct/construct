@@ -71,9 +71,9 @@ noexcept try
 	};
 
 	using prototype = int (std::ostream &, const string_view &, const string_view &);
-	const mods::import<prototype> command
+	mods::import<prototype> command
 	{
-		*console_module, "console_command"
+		console_module, "console_command"s
 	};
 
 	std::ostringstream out;

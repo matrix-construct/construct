@@ -53,8 +53,6 @@ catch(const m::error &e)
 	{
 		log, "%s %s", e.what(), e.content
 	};
-
-	assert(m::imports.empty());
 }
 catch(const std::exception &e)
 {
@@ -62,8 +60,6 @@ catch(const std::exception &e)
 	{
 		log, "%s", e.what()
 	};
-
-	assert(m::imports.empty());
 }
 
 ircd::m::init::~init()
@@ -72,7 +68,7 @@ noexcept try
 	if(!std::current_exception())
 		presence::set(me, "offline", me_offline_status_msg);
 
-	m::imports.clear();
+	mods::imports.clear();
 }
 catch(const m::error &e)
 {
@@ -87,20 +83,20 @@ catch(const m::error &e)
 void
 ircd::m::init::close()
 {
-	m::imports.erase("s_listen"s);
+	mods::imports.erase("s_listen"s);
 }
 
 void
 ircd::m::init::init_keys()
 try
 {
-	m::imports.emplace("s_keys"s, "s_keys"s);
+	mods::imports.emplace("s_keys"s, "s_keys"s);
 	const unwind::exceptional uw{[]
 	{
-		m::imports.erase("s_keys"s);
+		mods::imports.erase("s_keys"s);
 	}};
 
-	m::import<void ()> init_my_keys
+	mods::import<void ()> init_my_keys
 	{
 		"s_keys", "init_my_keys"
 	};
@@ -132,14 +128,33 @@ try
 		return;
 	}
 
-	m::imports.init();
+	// Manually load first modules
+	mods::imports.emplace("vm"s, "vm"s);
+	mods::imports.emplace("vm_fetch"s, "vm_fetch"s);
+
+	// The order of these prefixes will be the loading order. Order of
+	// specific modules within a prefix is not determined here.
+	static const string_view prefixes[]
+	{
+		"s_", "m_", "key_", "media_", "client_", "federation_"
+	};
+
+	// Load modules by prefix.
+	for(const auto &prefix : prefixes)
+		for(const auto &name : mods::available())
+			if(startswith(name, prefix))
+				mods::imports.emplace(name, name);
+
+	// Manually load last modules
+	mods::imports.emplace("webroot"s, "webroot"s);
+
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 }
 catch(const std::exception &e)
 {
 	const ctx::exception_handler eh;
-	m::imports.clear();
+	mods::imports.clear();
 	throw m::error
 	{
 		"M_INIT_ERROR", "%s", e.what()
@@ -148,7 +163,7 @@ catch(const std::exception &e)
 catch(const ctx::terminated &)
 {
 	const ctx::exception_handler eh;
-	m::imports.clear();
+	mods::imports.clear();
 	throw ctx::terminated{};
 }
 
@@ -370,7 +385,7 @@ ircd::m::feds::state::state(const m::room::id &room_id,
 	                        const milliseconds &,
 	                        const std::function<closure_prototype> &);
 
-	static m::import<prototype> feds__state
+	thread_local mods::import<prototype> feds__state
 	{
 		"federation_federation", "feds__state"
 	};
@@ -614,7 +629,7 @@ ircd::m::vm::eval::operator()(const room &room,
 {
 	using prototype = fault (eval &, const m::room &, json::iov &, const json::iov &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"vm", "eval__commit_room"
 	};
@@ -630,7 +645,7 @@ ircd::m::vm::eval::operator()(json::iov &event,
 {
 	using prototype = fault (eval &, json::iov &, const json::iov &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"vm", "eval__commit"
 	};
@@ -644,7 +659,7 @@ try
 {
 	using prototype = fault (eval &, const m::event &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"vm", "eval__event"
 	};
@@ -738,7 +753,7 @@ ircd::m::verify(const m::keys &keys)
 {
 	using prototype = bool (const m::keys &) noexcept;
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"s_keys", "verify__keys"
 	};
@@ -764,7 +779,7 @@ ircd::m::keys::get(const string_view &server_name,
 {
 	using prototype = void (const string_view &, const string_view &, const closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"s_keys", "get__keys"
 	};
@@ -779,7 +794,7 @@ ircd::m::keys::query(const string_view &query_server,
 {
 	using prototype = bool (const string_view &, const queries &, const closure_bool &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"s_keys", "query__keys"
 	};
@@ -816,7 +831,7 @@ ircd::m::visible(const event &event,
 {
 	using prototype = bool (const m::event &, const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"m_room_history_visibility", "visible"
 	};
@@ -845,7 +860,7 @@ ircd::m::receipt::read(const id::room &room_id,
 {
 	using prototype = event::id::buf (const id::room &, const id::user &, const id::event &, const time_t &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "commit__m_receipt_m_read"
 	};
@@ -876,7 +891,7 @@ ircd::m::receipt::read(const id::room &room_id,
 {
 	using prototype = bool (const id::room &, const id::user &, const id::event::closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"m_receipt", "last_receipt__event_id"
 	};
@@ -894,7 +909,7 @@ ircd::m::typing::set(const m::typing &object)
 {
 	using prototype = event::id::buf (const m::typing &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "commit__m_typing"
 	};
@@ -934,7 +949,7 @@ ircd::m::presence::set(const presence &object)
 {
 	using prototype = event::id::buf (const presence &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"m_presence", "commit__m_presence"
 	};
@@ -998,7 +1013,7 @@ ircd::m::presence::get(std::nothrow_t,
 {
 	using prototype = bool (std::nothrow_t, const m::user &, const event_closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"m_presence", "get__m_presence"
 	};
@@ -1011,7 +1026,7 @@ ircd::m::presence::valid_state(const string_view &state)
 {
 	using prototype = bool (const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"m_presence", "presence_valid_state"
 	};
@@ -1047,7 +1062,7 @@ ircd::m::create(const id::node &node_id,
 {
 	using prototype = node (const id::node &, const json::members &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"s_node", "create_node"
 	};
@@ -1061,7 +1076,7 @@ ircd::m::exists(const node::id &node_id)
 {
 	using prototype = bool (const node::id &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"s_node", "exists__nodeid"
 	};
@@ -1598,7 +1613,7 @@ ircd::m::create(const id::user &user_id,
 {
 	using prototype = user (const id::user &, const json::members &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "user_create"
 	};
@@ -1677,7 +1692,7 @@ ircd::m::user::activate()
 {
 	using prototype = event::id::buf (const m::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_account", "activate__user"
 	};
@@ -1690,7 +1705,7 @@ ircd::m::user::deactivate()
 {
 	using prototype = event::id::buf (const m::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_account", "deactivate__user"
 	};
@@ -1704,7 +1719,7 @@ const
 {
 	using prototype = bool (const m::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_account", "is_active__user"
 	};
@@ -1718,7 +1733,7 @@ ircd::m::user::filter(const json::object &filter,
 {
 	using prototype = event::id::buf (const m::user &, const json::object &, const mutable_buffer &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "filter_set"
 	};
@@ -1775,7 +1790,7 @@ const
 {
 	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const filter_closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "filter_get"
 	};
@@ -1791,7 +1806,7 @@ ircd::m::user::account_data(const m::room &room,
 {
 	using prototype = event::id::buf (const m::user &, const m::room &, const m::user &, const string_view &, const json::object &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "room_account_data_set"
 	};
@@ -1806,7 +1821,7 @@ ircd::m::user::account_data(const m::user &sender,
 {
 	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const json::object &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "account_data_set"
 	};
@@ -1882,7 +1897,7 @@ const
 {
 	using prototype = void (const m::user &, const m::room &, const string_view &, const account_data_closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "room_account_data_get"
 	};
@@ -1897,7 +1912,7 @@ const
 {
 	using prototype = void (const m::user &, const string_view &, const account_data_closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "account_data_get"
 	};
@@ -1911,7 +1926,7 @@ ircd::m::user::_account_data_type(const mutable_buffer &out,
 {
 	using prototype = string_view (const mutable_buffer &, const m::room::id &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_user", "room_account_data_type"
 	};
@@ -1926,7 +1941,7 @@ ircd::m::user::profile(const m::user &sender,
 {
 	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_profile", "profile_set"
 	};
@@ -1970,7 +1985,7 @@ const
 {
 	using prototype = void (const m::user &, const string_view &, const profile_closure &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_profile", "profile_get"
 	};
@@ -1983,7 +1998,7 @@ ircd::m::user::password(const string_view &password)
 {
 	using prototype = event::id::buf (const m::user::id &, const string_view &) noexcept;
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_account", "set_password"
 	};
@@ -1997,7 +2012,7 @@ const noexcept try
 {
 	using prototype = bool (const m::user::id &, const string_view &) noexcept;
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_account", "is_password"
 	};
@@ -2473,7 +2488,7 @@ ircd::m::create(const id::room &room_id,
 {
 	using prototype = room (const id::room &, const id::user &, const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_createroom", "createroom__type"
 	};
@@ -2489,7 +2504,7 @@ ircd::m::create(const id::room &room_id,
 {
 	using prototype = room (const id::room &, const id::user &, const id::room &, const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_createroom", "createroom__parent_type"
 	};
@@ -2503,7 +2518,7 @@ ircd::m::join(const id::room_alias &room_alias,
 {
 	using prototype = event::id::buf (const id::room_alias &, const id::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "join__alias_user"
 	};
@@ -2517,7 +2532,7 @@ ircd::m::join(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "join__room_user"
 	};
@@ -2531,7 +2546,7 @@ ircd::m::leave(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "leave__room_user"
 	};
@@ -2546,7 +2561,7 @@ ircd::m::invite(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "invite__room_user"
 	};
@@ -2562,7 +2577,7 @@ ircd::m::redact(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &, const id::event &, const string_view &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "redact__"
 	};
@@ -2655,7 +2670,7 @@ ircd::m::send(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const string_view &, const json::iov &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "state__iov"
 	};
@@ -2693,7 +2708,7 @@ ircd::m::send(const room &room,
 {
 	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const json::iov &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_rooms", "send__iov"
 	};
@@ -2771,7 +2786,7 @@ ircd::m::count_since(const room &r,
 	                        const event::idx &,
 	                        const event::idx &);
 
-	static m::import<prototype> _count_since
+	thread_local mods::import<prototype> _count_since
 	{
 		"m_room", "count_since"
 	};
@@ -2815,7 +2830,7 @@ ircd::m::room_id(const mutable_buffer &out,
 {
 	using prototype = id::room (const mutable_buffer &, const id::room_alias &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_directory_room", "room_id__room_alias"
 	};
@@ -2829,7 +2844,7 @@ ircd::m::exists(const id::room_alias &room_alias,
 {
 	using prototype = bool (const id::room_alias, const bool &);
 
-	static import<prototype> function
+	thread_local mods::import<prototype> function
 	{
 		"client_directory_room", "room_alias_exists"
 	};
@@ -3538,39 +3553,6 @@ ircd::m::_hook_match(const m::event &matching,
 					return false;
 
 	return true;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/import.h
-//
-
-decltype(ircd::m::imports)
-ircd::m::imports
-{};
-
-void
-ircd::m::imports::init()
-{
-	// Manually load first modules
-	this->emplace("vm"s, "vm"s);
-	this->emplace("vm_fetch"s, "vm_fetch"s);
-
-	// The order of these prefixes will be the loading order. Order of
-	// specific modules within a prefix is not determined here.
-	static const string_view prefixes[]
-	{
-		"s_", "m_", "key_", "media_", "client_", "federation_"
-	};
-
-	// Load modules by prefix.
-	for(const auto &prefix : prefixes)
-		for(const auto &name : mods::available())
-			if(startswith(name, prefix))
-				this->emplace(name, name);
-
-	// Manually load last modules
-	this->emplace("webroot"s, "webroot"s);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

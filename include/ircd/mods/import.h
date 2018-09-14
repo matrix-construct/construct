@@ -14,7 +14,12 @@
 namespace ircd::mods
 {
 	template<class T> struct import;
+	struct imports extern imports;
 }
+
+struct ircd::mods::imports
+:std::map<std::string, mods::module, std::less<>>
+{};
 
 /// Representation of a symbol in a loaded shared library
 ///
@@ -22,6 +27,12 @@ template<class T>
 struct ircd::mods::import
 :sym_ptr
 {
+	std::string module_name;
+	std::string symbol_name;
+
+	void reload();
+
+  public:
 	template<class... args> auto operator()(args&&... a) const;
 	template<class... args> auto operator()(args&&... a);
 
@@ -33,26 +44,67 @@ struct ircd::mods::import
 	T &operator*();
 	operator T &();
 
-	using sym_ptr::sym_ptr;
+	explicit import(const mods::module &, std::string symbol_name);
+	import(std::string module_name, std::string symbol_name);
 };
 
 template<class T>
-ircd::mods::import<T>::operator T &()
+ircd::mods::import<T>::import(std::string module_name,
+                              std::string symbol_name)
+:sym_ptr
 {
-	return sym_ptr::operator*<T>();
+	// Note sym_ptr is purposely default constructed; this makes the import
+	// "lazy" and will be loaded via miss on first use. This is useful in
+	// the general use-case of static construction.
+}
+,module_name
+{
+	std::move(module_name)
+}
+,symbol_name
+{
+	std::move(symbol_name)
+}
+{}
+
+template<class T>
+ircd::mods::import<T>::import(const mods::module &module,
+                              std::string symbol_name)
+:sym_ptr
+{
+	module, symbol_name
+}
+,module_name
+{
+	module.name()
+}
+,symbol_name
+{
+	std::move(symbol_name)
+}
+{}
+
+template<class T>
+ircd::mods::import<T>::operator
+T &()
+{
+	return this->operator*();
 }
 
 template<class T>
 T &
 ircd::mods::import<T>::operator*()
 {
-	return sym_ptr::operator*<T>();
+	return *this->operator->();
 }
 
 template<class T>
 T *
 ircd::mods::import<T>::operator->()
 {
+	if(unlikely(!*this))
+		reload();
+
 	return sym_ptr::operator-><T>();
 }
 
@@ -61,7 +113,7 @@ ircd::mods::import<T>::operator
 const T &()
 const
 {
-	return sym_ptr::operator*<T>();
+	return this->operator*();
 }
 
 template<class T>
@@ -69,7 +121,7 @@ const T &
 ircd::mods::import<T>::operator*()
 const
 {
-	return sym_ptr::operator*<T>();
+	return this->operator->();
 }
 
 template<class T>
@@ -85,6 +137,9 @@ template<class... args>
 auto
 ircd::mods::import<T>::operator()(args&&... a)
 {
+	if(unlikely(!*this))
+		reload();
+
 	return sym_ptr::operator()<T>(std::forward<args>(a)...);
 }
 
@@ -95,4 +150,31 @@ ircd::mods::import<T>::operator()(args&&... a)
 const
 {
 	return sym_ptr::operator()<T>(std::forward<args>(a)...);
+}
+
+template<class T>
+void
+ircd::mods::import<T>::reload()
+try
+{
+	auto &module
+	{
+		imports.at(module_name)
+	};
+
+	auto &sp
+	{
+		static_cast<sym_ptr &>(*this)
+	};
+
+	sp = { module, symbol_name };
+}
+catch(const std::out_of_range &e)
+{
+	throw unavailable
+	{
+		"Sorry, %s in %s is currently unavailable.",
+		symbol_name,
+		module_name
+	};
 }

@@ -21,6 +21,7 @@ namespace ircd::mods
 	IRCD_EXCEPTION(error, invalid_export)
 	IRCD_EXCEPTION(error, expired_symbol)
 	IRCD_EXCEPTION(error, undefined_symbol)
+	IRCD_EXCEPTION(expired_symbol, unavailable)
 
 	string_view name(const mod &);
 	string_view path(const mod &);

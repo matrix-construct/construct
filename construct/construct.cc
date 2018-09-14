@@ -358,7 +358,7 @@ try
 	// function does a lot of IO so it requires an ircd::ctx.
 	ircd::context{[]
 	{
-		ircd::m::import<void ()> reload_conf
+		ircd::mods::import<void ()> reload_conf
 		{
 			"s_conf", "reload_conf"
 		};

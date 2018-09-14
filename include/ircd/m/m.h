@@ -30,7 +30,6 @@ namespace ircd::m::vm
 
 #include "name.h"
 #include "error.h"
-#include "import.h"
 #include "self.h"
 #include "id.h"
 #include "event.h"

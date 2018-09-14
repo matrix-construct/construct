@@ -148,7 +148,7 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	                                                        const mutable_buffer &,
 	                                                        const size_t &,
 	                                                        const bool &);
-	static m::import<prev_prototype> make_prev__buf
+	thread_local mods::import<prev_prototype> make_prev__buf
 	{
 		"m_room", "make_prev__buf"
 	};
@@ -181,7 +181,7 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	                                    const vector_view<const string_view> &,
 	                                    const string_view &);
 
-	static m::import<auth_prototype> make_auth__buf
+	thread_local mods::import<auth_prototype> make_auth__buf
 	{
 		"m_room", "make_auth__buf"
 	};

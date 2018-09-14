@@ -508,6 +508,13 @@ catch(const json::error &e)
 		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
 	};
 }
+catch(const mods::unavailable &e)
+{
+	throw m::UNAVAILABLE
+	{
+		"%s", e.what()
+	};
+}
 catch(const std::out_of_range &e)
 {
 	throw m::error
