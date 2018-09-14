@@ -43,33 +43,32 @@ Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologi
 for its day to aid the virility of implementations. A vibrant and growing ecosystem
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
 
-<h5>
-	Please visit us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
-	(<a href="https://matrix.to/#/#zemos-test:matrix.org">#zemos-test:matrix.org</a>)
-</h5>
+<h3 align="right">
+	Join us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
+	/ <a href="https://matrix.to/#/#zemos-test:matrix.org">#zemos-test:matrix.org</a>
+</h3>
+
+## Installation
+
+<a href="https://github.com/tulir/gomuks">
+	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
+</a>
 
 ### Dependencies
 
 - **Boost** (1.66 or later)
-Replacing libratbox with the rich and actively developed libraries.
-- **RocksDB** (based on LevelDB):
-A lightweight and embedded database superseding sqlite3.
-- **Sodium** (NaCl crypto):
-Provides ed25519 required for the Matrix Federation.
-- **OpenSSL** (libssl/libcrypto):
-Provides HTTPS TLS / X.509 / etc.
-
-##### Additional features
-
-- **libmagic** (~Optional~):
-Content MIME type recognition.
-- **zlib** or **lz4** or **snappy** (Optional):
-Provides compression for the database, etc.
+Replacing libratbox.
+- **RocksDB** Embedded database.
+- **Sodium** Curve ed25519 for Federation.
+- **OpenSSL** HTTPS TLS / X.509.
+- **libmagic** (~Optional~) MIME type recognition.
+- **zlib** or **lz4** or **snappy** (Optional) Compression.
 
 ##### Build tools
 
-- **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
-**autoconf-archive**, **libtool**, **shtool**
+- **GNU C++ compiler**, automake, autoconf, autoconf2.13,
+autoconf-archive, libtool.
+
 - A platform capable of loading dynamic shared objects at runtime is required.
 
 <!--
@@ -86,12 +85,6 @@ Provides compression for the database, etc.
 
 -->
 
-
-## Installation
-
-<a href="https://github.com/tulir/gomuks">
-	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
-</a>
 
 ### DOWNLOAD
 
