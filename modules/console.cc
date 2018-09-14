@@ -2667,6 +2667,36 @@ console_cmd__net__host__cache__A__count(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__host__cache__A__clear(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"hostport"
+	}};
+
+	if(!param.count())
+	{
+		const size_t size{net::dns::cache.A.size()};
+		net::dns::cache.A.clear();
+		out << size << std::endl;
+		return true;
+	}
+
+	const net::hostport hostport
+	{
+		param.at("hostport")
+	};
+
+	const auto ret
+	{
+		net::dns::cache.A.erase(host(hostport))
+	};
+
+	out << ret << std::endl;
+	return true;
+}
+
+bool
 console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 {
 	for(const auto &pair : net::dns::cache.SRV)
