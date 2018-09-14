@@ -85,6 +85,7 @@ s_module_LTLIBRARIES = \
 m_moduledir = @moduledir@
 
 m_noop_la_SOURCES = m_noop.cc
+m_user_la_SOURCES = m_user.cc
 m_event_la_SOURCES = m_event.cc
 m_typing_la_SOURCES = m_typing.cc
 m_receipt_la_SOURCES = m_receipt.cc
@@ -99,6 +100,7 @@ m_room_aliases_la_SOURCES = m_room_aliases.cc
 
 m_module_LTLIBRARIES = \
 	m_noop.la \
+	m_user.la \
 	m_event.la \
 	m_typing.la \
 	m_receipt.la \
