@@ -3016,6 +3016,19 @@ console_cmd__client__spawn(opt &out, const string_view &line)
 }
 
 //
+// resource
+//
+
+bool
+console_cmd__resource(opt &out, const string_view &line)
+{
+	for(const auto &p : resource::resources)
+		out << p.first << std::endl;
+
+	return true;
+}
+
+//
 // key
 //
 
