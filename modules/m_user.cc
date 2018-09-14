@@ -85,3 +85,37 @@ highlighted_count__between(const user &user,
 
 	return ret;
 }
+
+extern "C" size_t
+highlighted_count__since(const user &user,
+                         const room &room,
+                         const event::idx &current)
+{
+	event::id::buf last_read_buf;
+	const event::id last_read
+	{
+		receipt::read(last_read_buf, room, user)
+	};
+
+	if(!last_read)
+		return 0;
+
+	const auto &a
+	{
+		index(last_read)
+	};
+
+	return highlighted_count__between(user, room, a, current);
+}
+
+extern "C" size_t
+highlighted_count(const user &user,
+                  const room &room)
+{
+	const auto &current
+	{
+		head_idx(room)
+	};
+
+	return highlighted_count__since(user, room, current);
+}
