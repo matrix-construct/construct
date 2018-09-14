@@ -36,3 +36,52 @@ highlighted_event(const event &event,
 
 	return has(body, user.user_id);
 }
+
+extern "C" size_t
+highlighted_count__between(const user &user,
+                           const room &room,
+                           const event::idx &a,
+                           const event::idx &b)
+{
+	static const event::fetch::opts fopts
+	{
+		event::keys::include
+		{
+			"type", "content",
+		}
+	};
+
+	room::messages it
+	{
+		room, &fopts
+	};
+
+	assert(a <= b);
+	it.seek_idx(a);
+
+	if(!it && !exists(room))
+		throw NOT_FOUND
+		{
+			"Cannot find room '%s' to count highlights for '%s'",
+			string_view{room.room_id},
+			string_view{user.user_id}
+		};
+	else if(!it)
+		throw NOT_FOUND
+		{
+			"Event @ idx:%lu or idx:%lu not found in '%s' to count highlights for '%s'",
+			a,
+			b,
+			string_view{room.room_id},
+			string_view{user.user_id},
+		};
+
+	size_t ret{0};
+	for(++it; it && it.event_idx() <= b; ++it)
+	{
+		const event &event{*it};
+		ret += highlighted_event(event, user);
+	}
+
+	return ret;
+}
