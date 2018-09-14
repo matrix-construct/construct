@@ -27,6 +27,7 @@ namespace ircd
 
 	// wrapper to find(T) != npos
 	template<class T> bool has(const string_view &, const T &);
+	inline bool ihas(const string_view &s, const string_view &t);
 
 	// return view without any trailing characters contained in c
 	string_view rstripa(const string_view &str, const string_view &c);
@@ -570,6 +571,17 @@ ircd::rstripa(const string_view &str,
 {
 	const auto pos(str.find_last_not_of(c));
 	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+}
+
+inline bool
+ircd::ihas(const string_view &s,
+           const string_view &t)
+{
+	return end(s) != std::search(begin(s), end(s), begin(t), end(t), []
+	(const auto &a, const auto &b)
+	{
+		return tolower(a) == tolower(b);
+	});
 }
 
 template<class T>
