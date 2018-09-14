@@ -398,12 +398,6 @@ ircd::m::feds::state::state(const m::room::id &room_id,
 // m/vm.h
 //
 
-namespace ircd::m::vm
-{
-	extern std::map<event::id::buf, ctx::promise<>> depends;
-	static void notify_depends(const event::id &, std::exception_ptr);
-}
-
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
@@ -425,48 +419,6 @@ ircd::m::vm::default_opts
 decltype(ircd::m::vm::default_copts)
 ircd::m::vm::default_copts
 {};
-
-decltype(ircd::m::vm::depends)
-ircd::m::vm::depends
-{};
-
-void
-ircd::m::vm::notify_depends(const event::id &event_id,
-                            std::exception_ptr eptr)
-{
-	const auto it
-	{
-		depends.find(event_id)
-	};
-
-	if(it == end(depends))
-		return;
-
-	auto &promise(it->second);
-	if(eptr)
-		promise.set_exception(std::move(eptr));
-	else
-		promise.set_value();
-
-	depends.erase(it);
-}
-
-ircd::ctx::future<>
-ircd::m::vm::evaluated(const event::id &event_id)
-{
-	if(exists(event_id))
-		return ctx::future<>::already;
-
-	const auto iit
-	{
-		depends.emplace(event_id, ctx::promise<>{})
-	};
-
-	return ctx::future<>
-	{
-		iit.first->second
-	};
-}
 
 const uint64_t &
 ircd::m::vm::sequence(const eval &eval)
@@ -655,7 +607,6 @@ ircd::m::vm::eval::operator()(json::iov &event,
 
 enum ircd::m::vm::fault
 ircd::m::vm::eval::operator()(const event &event)
-try
 {
 	using prototype = fault (eval &, const m::event &);
 
@@ -669,31 +620,7 @@ try
 		function(*this, event)
 	};
 
-	if(json::get<"event_id"_>(event)) switch(ret)
-	{
-		case fault::ACCEPT:
-			notify_depends(at<"event_id"_>(event), std::exception_ptr{});
-			break;
-
-		default:
-		{
-			notify_depends(at<"event_id"_>(event), std::make_exception_ptr(error
-			{
-				ret, "fault"
-			}));
-
-			break;
-		}
-	}
-
 	return ret;
-}
-catch(...)
-{
-	if(json::get<"event_id"_>(event))
-		notify_depends(at<"event_id"_>(event), std::current_exception());
-
-	throw;
 }
 
 //
