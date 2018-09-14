@@ -12,21 +12,18 @@ intended that as many definitions as possible are pushed out into modules.
 
 The `modules/` directory is primarily shaped the same as the HTTP resource
 tree in which most of its modules register themselves in. This is **not**
-automatic (with one exception) and the mere inclusion of files/directories in
-`modules/` does not automatically expose them over HTTP. The exception is
-`modules/static` which is pre-read by the `webroot` module and served over HTTP.
+automatic and the mere inclusion of files/directories in `modules/`
+does not automatically expose them over HTTP.
 
 Note that the installation layout is not the same as the development source
 layout (i.e in git). Upon installation, the module tree is collapsed into a
 single directory and installed into `$prefix/lib/modules/construct/$directory_$module.so`;
-this may be subject to improvement. The `static` tree is installed to
-`$prefix/share/construct/static`.
+this may be subject to improvement.
 
 - `client/` contains resource handlers for the `/_matrix/client/` API
 - `federation/` contains resource handlers for the `/_matrix/federation/` API
 - `key/` contains resource handlers for the `/_matrix/key/` API
 - `media/` contains resource handlers for the `/_matrix/media/` API
-- `static/` contains web assets which are gathered and served under `/`
 - `js/` contains modules specific to the unreleased javascript embedding.
 - `s_` modules provide utility to the server's operation.
 - `m_` modules implement protocol logic for matrix event types.
