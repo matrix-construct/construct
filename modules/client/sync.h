@@ -14,6 +14,9 @@ namespace ircd::m::sync
 	struct stats;
 	struct shortpoll;
 
+	static long notification_count(const room &, const event::idx &a, const event::idx &b);
+	static long highlight_count(const room &, const user &, const event::idx &a, const event::idx &b);
+
 	static resource::response handle_get(client &, const resource::request &);
 	extern resource::method method_get;
 	extern const string_view description;

@@ -350,11 +350,32 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		m::receipt::read(last_read_buf, room, args.request.user_id)
 	};
 
-	const auto notes
+	const auto last_read_idx
 	{
 		last_read && json::get<"event_id"_>(event)?
-			m::count_since(room, last_read, at<"event_id"_>(event)):
+			index(last_read):
 			0UL
+	};
+
+	const auto current_idx
+	{
+		last_read_idx?
+			index(at<"event_id"_>(event)):
+			0UL
+	};
+
+	const auto notes
+	{
+		last_read_idx?
+			notification_count(room, last_read_idx, current_idx):
+			json::undefined_number
+	};
+
+	const auto highlights
+	{
+		last_read_idx?
+			highlight_count(room, args.request.user_id, last_read_idx, current_idx):
+			json::undefined_number
 	};
 
 	const json::members body
@@ -362,8 +383,8 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		{ "account_data", json::members{} },
 		{ "unread_notifications",
 		{
-			{ "highlight_count",    int64_t(0)  },
-			{ "notification_count", long(notes) },
+			{ "highlight_count",     highlights  },
+			{ "notification_count",  notes       },
 		}},
 		{ "ephemeral",
 		{
@@ -433,7 +454,7 @@ ircd::m::sync::linear::handle(client &client,
 
 	for(auto &p : r)
 	{
-		const auto &room_id{p.first};
+		const m::room::id &room_id{p.first};
 		auto &vec{p.second};
 
 		std::vector<std::string> timeline;
@@ -458,11 +479,25 @@ ircd::m::sync::linear::handle(client &client,
 			m::receipt::read(last_read_buf, room_id, sp.user)
 		};
 
-		const auto notes
+		const auto last_read_idx
 		{
 			last_read?
-				m::count_since(m::room::id{room_id}, index(last_read), sp.current):
+				index(last_read):
 				0UL
+		};
+
+		const auto notes
+		{
+			last_read_idx?
+				notification_count(room_id, last_read_idx, sp.current):
+				json::undefined_number
+		};
+
+		const auto highlights
+		{
+			last_read_idx?
+				highlight_count(room_id, sp.user, last_read_idx, sp.current):
+				json::undefined_number
 		};
 
 		const string_view prev_batch
@@ -490,8 +525,8 @@ ircd::m::sync::linear::handle(client &client,
 			}},
 			{ "unread_notifications",
 			{
-				{ "highlight_count",    int64_t(0)  },
-				{ "notification_count", long(notes) },
+				{ "highlight_count",     highlights  },
+				{ "notification_count",  notes       },
 			}},
 		};
 
@@ -1111,22 +1146,32 @@ ircd::m::sync::polylog::room_account_data(shortpoll &sp,
 	});
 }
 
-
 void
 ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
                                                   json::stack::object &out,
                                                   const m::room &room)
 {
 	m::event::id::buf last_read_buf;
-	const m::event::id last_read
+	const auto last_read
 	{
 		m::receipt::read(last_read_buf, room, sp.user)
+	};
+
+	if(!last_read)
+		return;
+
+	const auto last_read_idx
+	{
+		index(last_read)
 	};
 
 	// highlight_count
 	json::stack::member
 	{
-		out, "highlight_count", json::value{0L}
+		out, "highlight_count", json::value
+		{
+			highlight_count(room, sp.user, last_read_idx, sp.current)
+		}
 	};
 
 	// notification_count
@@ -1134,9 +1179,31 @@ ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
 	{
 		out, "notification_count", json::value
 		{
-			last_read?
-				long(m::count_since(room, index(last_read), sp.current)):
-				0L
+			notification_count(room, last_read_idx, sp.current)
 		}
 	};
+}
+
+long
+ircd::m::sync::highlight_count(const room &r,
+                               const user &u,
+                               const event::idx &a,
+                               const event::idx &b)
+{
+	using proto = size_t (const user &, const room &, const event::idx &, const event::idx &);
+
+	static mods::import<proto> count
+	{
+		"m_user", "highlighted_count__between"
+	};
+
+	return count(u, r, a, b);
+}
+
+long
+ircd::m::sync::notification_count(const room &room,
+                                  const event::idx &a,
+                                  const event::idx &b)
+{
+	return m::count_since(room, a, b);
 }
