@@ -2764,8 +2764,6 @@ console_cmd__net__host__cache__SRV__clear(opt &out, const string_view &line)
 		net::dns::make_SRV_key(srv_key_buf, hostport, opts)
 	};
 
-	out << srv_key << std::endl;
-
 	const auto ret
 	{
 		net::dns::cache.SRV.erase(srv_key)
