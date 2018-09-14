@@ -75,6 +75,7 @@ ircd::fs::syspaths
 	{ "installation prefix",      RB_PREFIX      },
 	{ "binary directory",         RB_BIN_DIR     },
 	{ "configuration directory",  RB_CONF_DIR    },
+	{ "data directory",           RB_DATA_DIR    },
 	{ "database directory",       RB_DB_DIR      },
 	{ "log directory",            RB_LOG_DIR     },
 	{ "module directory",         RB_MODULE_DIR  },

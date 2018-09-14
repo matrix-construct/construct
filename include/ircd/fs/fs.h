@@ -75,6 +75,7 @@ enum ircd::fs::index
 	PREFIX,
 	BIN,
 	CONF,
+	DATA,
 	DB,
 	LOG,
 	MODULES,

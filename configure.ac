@@ -43,6 +43,7 @@ AC_CONFIG_FILES(\
 	construct/Makefile      \
 	ircd/Makefile           \
 	modules/Makefile        \
+	share/Makefile          \
 )
 
 AM_INIT_AUTOMAKE([subdir-objects])
@@ -769,6 +770,21 @@ RB_DEFINE_UNQUOTED([CONF_DIR], ["$(sysconfdir)"], [Prefix where config files are
 AC_SUBST_DIR([sysconfdir])
 
 dnl
+dnl datarootdir
+dnl
+
+dnl Avoid name collisions.
+RB_DEFINE_UNQUOTED([DATAROOT_DIR], ["$(datarootdir)"], [Prefix where read-only assets go])
+AC_SUBST_DIR([datarootdir])
+
+dnl
+dnl datadir
+dnl
+
+RB_DEFINE_UNQUOTED([DATA_DIR], ["$(datadir)/${PACKAGE_TARNAME}"], [Directory where read-only assets go.])
+AC_SUBST_DIR([datadir])
+
+dnl
 dnl Check for --with-dbdir
 dnl
 
@@ -818,6 +834,24 @@ AC_ARG_WITH(moduledir, [AC_HELP_STRING([--with-moduledir=DIR], [Directory to ins
 
 RB_DEFINE_UNQUOTED([MODULE_DIR], ["$moduledir"], [Prefix where modules are installed.])
 AC_SUBST_DIR([moduledir])
+
+dnl
+dnl Check for --with-webappdir
+dnl
+
+AC_MSG_CHECKING([whether to modify webappdir])
+AC_ARG_WITH(webappdir, [AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets])],
+[
+	AC_MSG_RESULT(yes)
+	webappdir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	webappdir="${datadir}/webapp"
+])
+
+RB_DEFINE_UNQUOTED([WEBAPP_DIR], ["$webappdir"], [Prefix where website assets are served from.])
+AC_SUBST_DIR([webappdir])
+
 
 dnl ***************************************************************************
 dnl

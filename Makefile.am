@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = include/ircd
 SUBDIRS += ircd
 SUBDIRS += modules
+SUBDIRS += share
 SUBDIRS += construct
 
 .PHONY:      subdirs $(SUBDIRS)
