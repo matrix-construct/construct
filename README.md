@@ -42,36 +42,33 @@ _philosophy of its predecessors_ is still obvious throughout.
 Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
 for its day to aid the virility of implementations. A vibrant and growing ecosystem
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
+<br />
 
-
-#### Dependencies
+### Dependencies
 
 - **Boost** (1.66 or later)
 Replacing libratbox with the rich and actively developed libraries.
-
 - **RocksDB** (based on LevelDB):
 A lightweight and embedded database superseding sqlite3.
-
 - **Sodium** (NaCl crypto):
 Provides ed25519 required for the Matrix Federation.
-
 - **OpenSSL** (libssl/libcrypto):
 Provides HTTPS TLS / X.509 / etc.
 
-- **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
-**autoconf-archive**, **libtool**, **shtool**
-
-##### Additional dependencies
+##### Additional features
 
 - **libmagic** (~Optional~):
 Content MIME type recognition.
-
 - **zlib** or **lz4** or **snappy** (Optional):
 Provides compression for the database, etc.
 
-*Notes*:
-- libircd requires a platform capable of loading dynamic shared objects at runtime.
+##### Build tools
 
+- **GNU C++ compiler**, **automake**, **autoconf**, **autoconf2.13**,
+**autoconf-archive**, **libtool**, **shtool**
+- A platform capable of loading dynamic shared objects at runtime is required.
+
+<!--
 
 #### Platforms
 
@@ -80,6 +77,10 @@ Provides compression for the database, etc.
 | <sub> Continuously Integrated Host </sub>   | <sub> Compiler </sub>    | <sub> Third party </sub> | <sub> Status </sub> |
 |:------------------------------------------- |:------------------------ |:------------------------ |:------------------- |
 | <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
+| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 8       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
+| <sub> Linux Ubuntu 18.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
+
+-->
 
 
 ## Installation
