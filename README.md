@@ -93,9 +93,7 @@ and use the latest head.
 
 > The head of the `master` branch is consistent and should be safe to pull
 without checking out a release tag. When encountering a problem with the latest
-head on `master` that is when a release tag should be sought. Users who require
-stability over feature development will be pulling from a specific feature-locked
-stable branch. No stable branches exist yet, sorry.
+head on `master` that is when a release tag should be sought.
 
 ### BUILD
 
