@@ -29,6 +29,14 @@ highlighted_event(const event &event,
 		json::get<"content"_>(event)
 	};
 
+	const string_view &formatted_body
+	{
+		content.get("formatted_body")
+	};
+
+	if(has(formatted_body, user.user_id))
+		return true;
+
 	const string_view &body
 	{
 		content.get("body")
