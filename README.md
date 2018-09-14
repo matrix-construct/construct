@@ -42,7 +42,11 @@ _philosophy of its predecessors_ is still obvious throughout.
 Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
 for its day to aid the virility of implementations. A vibrant and growing ecosystem
 [already exists](https://matrix.org/docs/projects/try-matrix-now.html).
-<br />
+
+<h5>
+	Please visit us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
+	(<a href="https://matrix.to/#/#zemos-test:matrix.org">#zemos-test:matrix.org</a>)
+</h5>
 
 ### Dependencies
 
