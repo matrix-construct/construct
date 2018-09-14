@@ -68,7 +68,8 @@ _changed_canonical_alias_hookfn
 };
 
 void
-_can_change_canonical_alias(const m::event &event)
+_can_change_canonical_alias(const m::event &event,
+                            m::vm::eval &eval)
 {
 	const m::room::id &room_id
 	{
@@ -108,7 +109,7 @@ _can_change_canonical_alias(const m::event &event)
 		};
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _can_change_canonical_alias_hookfn
 {
 	_can_change_canonical_alias,

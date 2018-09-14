@@ -48,10 +48,10 @@ struct ircd::m::vm::eval
 {
 	static uint64_t id_ctr; // monotonic
 
+	uint64_t id {++id_ctr};
+	ctx::ctx *ctx {ctx::current};
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
-	ctx::ctx *ctx {ctx::current};
-	uint64_t id {++id_ctr};
 	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};

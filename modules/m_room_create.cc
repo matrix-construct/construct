@@ -17,7 +17,8 @@ IRCD_MODULE
 };
 
 static void
-_can_create_room(const m::event &event)
+_can_create_room(const m::event &event,
+                 m::vm::eval &eval)
 {
 	const m::room::id &room_id
 	{
@@ -36,7 +37,7 @@ _can_create_room(const m::event &event)
 		};
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _can_create_room_hookfn
 {
 	_can_create_room,

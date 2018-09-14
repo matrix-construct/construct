@@ -17,9 +17,9 @@ IRCD_MODULE
 };
 
 static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
-static void handle_edu_m_typing(const m::event &);
+static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _m_typing_eval
 {
 	handle_edu_m_typing,
@@ -30,7 +30,8 @@ _m_typing_eval
 };
 
 void
-handle_edu_m_typing(const m::event &event)
+handle_edu_m_typing(const m::event &event,
+                    m::vm::eval &eval)
 {
 	const json::object &content
 	{

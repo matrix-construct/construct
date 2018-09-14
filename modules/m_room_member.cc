@@ -54,12 +54,13 @@ affect_user_room_hookfn
 };
 
 static void
-_can_join_room(const m::event &event)
+_can_join_room(const m::event &event,
+               m::vm::eval &eval)
 {
 
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _can_join_room_hookfn
 {
 	{
@@ -95,7 +96,8 @@ invite__foreign
 };
 
 static void
-invite_foreign(const m::event &event)
+invite_foreign(const m::event &event,
+               m::vm::eval &eval)
 {
 	const m::room::id &room_id
 	{
@@ -127,7 +129,7 @@ invite_foreign(const m::event &event)
 
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 invite_foreign_hookfn
 {
 	{

@@ -21,9 +21,9 @@ static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, co
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::room::id &, const json::object &);
-static void handle_edu_m_receipt(const m::event &);
+static void handle_edu_m_receipt(const m::event &, m::vm::eval &);
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _m_receipt_eval
 {
 	handle_edu_m_receipt,
@@ -34,7 +34,8 @@ _m_receipt_eval
 };
 
 void
-handle_edu_m_receipt(const m::event &event)
+handle_edu_m_receipt(const m::event &event,
+                     m::vm::eval &eval)
 {
 	if(json::get<"room_id"_>(event))
 		return;

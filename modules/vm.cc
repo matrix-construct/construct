@@ -10,10 +10,11 @@
 
 namespace ircd::m::vm
 {
-	extern hook::site<> commit_hook;
-	extern hook::site<eval &> fetch_hook;
-	extern hook::site<> eval_hook;
-	extern hook::site<> notify_hook;
+
+	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
+	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
+	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event
+	extern hook::site<> notify_hook;        ///< Called after successful evaluation
 
 	static void write_commit(eval &);
 	static fault _eval_edu(eval &, const event &);
@@ -439,7 +440,7 @@ try
 			};
 
 		check_size(event);
-		commit_hook(event);
+		commit_hook(event, eval);
 	}
 
 	const event::conforms &report
@@ -594,7 +595,7 @@ enum ircd::m::vm::fault
 ircd::m::vm::_eval_edu(eval &eval,
                        const event &event)
 {
-	eval_hook(event);
+	eval_hook(event, eval);
 	return fault::ACCEPT;
 }
 
@@ -650,7 +651,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	fetch_hook(event, eval);
 
 	// Evaluation by module hooks
-	eval_hook(event);
+	eval_hook(event, eval);
 
 	if(!opts.write)
 		return fault::ACCEPT;

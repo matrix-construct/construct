@@ -33,9 +33,9 @@ presence_valid_state(const string_view &state)
 }
 
 static void handle_edu_m_presence_(const m::event &, const m::presence &edu);
-static void handle_edu_m_presence(const m::event &);
+static void handle_edu_m_presence(const m::event &, m::vm::eval &);
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _m_presence_eval
 {
 	handle_edu_m_presence,
@@ -46,7 +46,8 @@ _m_presence_eval
 };
 
 void
-handle_edu_m_presence(const m::event &event)
+handle_edu_m_presence(const m::event &event,
+                      m::vm::eval &eval)
 try
 {
 	if(m::my_host(at<"origin"_>(event)))
