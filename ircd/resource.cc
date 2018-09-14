@@ -47,7 +47,7 @@ ircd::resource::find(const string_view &path_)
 		return *it->second;
 
 	// Directories handle all paths under them.
-	if(!startswith(path, rpath))
+	while(!startswith(path, rpath))
 	{
 		// Walk the iterator back to find if there is a directory prefixing this path.
 		if(it == begin(resources))
@@ -58,11 +58,13 @@ ircd::resource::find(const string_view &path_)
 
 		--it;
 		rpath = it->first;
+		if(~it->second->flags & it->second->DIRECTORY)
+			continue;
+
+		// If the closest directory still doesn't match hand this off to the
+		// webroot which can then service or 404 this itself.
 		if(!startswith(path, rpath))
-			throw http::error
-			{
-				http::code::NOT_FOUND
-			};
+			return *resources.at("/");
 	}
 
 	// Check if the resource is a directory; if not, it can only
