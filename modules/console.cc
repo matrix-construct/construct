@@ -2735,6 +2735,47 @@ console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__host__cache__SRV__clear(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"hostport", "[service]"
+	}};
+
+	if(!param.count())
+	{
+		const size_t size{net::dns::cache.SRV.size()};
+		net::dns::cache.SRV.clear();
+		out << size << std::endl;
+		return true;
+	}
+
+	const net::hostport hostport
+	{
+		param.at("hostport")
+	};
+
+	net::dns::opts opts;
+	opts.srv = param.at("[service]", "_matrix._tcp."_sv);
+
+	thread_local char srv_key_buf[128];
+	const auto srv_key
+	{
+		net::dns::make_SRV_key(srv_key_buf, hostport, opts)
+	};
+
+	out << srv_key << std::endl;
+
+	const auto ret
+	{
+		net::dns::cache.SRV.erase(srv_key)
+	};
+
+	out << ret << std::endl;
+	return true;
+}
+
+bool
 console_cmd__net__host__prefetch(opt &out, const string_view &line)
 {
 	const params param{line, " ",
