@@ -744,45 +744,38 @@ dnl
 dnl bindir
 dnl
 
-RB_DEFINE_UNQUOTED([BIN_DIR], ["$(bindir)"], [Directory where binary executables are to be found.])
 AC_SUBST_DIR([bindir])
+RB_DEFINE_UNQUOTED([BIN_DIR], ["$bindir"], [Directory where binary executables are to be found.])
 
 dnl
 dnl libdir
 dnl
 
-RB_DEFINE_UNQUOTED([LIB_DIR], ["$(libdir)"], [Prefix where libs are installed.])
 AC_SUBST_DIR([libdir])
+RB_DEFINE_UNQUOTED([LIB_DIR], ["$libdir"], [Prefix where libs are installed.])
 
 dnl
 dnl localstatedir
 dnl
 
 dnl Avoid name collisions.
-RB_DEFINE_UNQUOTED([LOCALSTATE_DIR], ["$(localstatedir)"], [Prefix where db and logs go.])
 AC_SUBST_DIR([localstatedir])
+RB_DEFINE_UNQUOTED([LOCALSTATE_DIR], ["$localstatedir"], [Prefix where db and logs go.])
 
 dnl
 dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
 dnl
 
-RB_DEFINE_UNQUOTED([CONF_DIR], ["$(sysconfdir)"], [Prefix where config files are installed.])
 AC_SUBST_DIR([sysconfdir])
-
-dnl
-dnl datarootdir
-dnl
-
-dnl Avoid name collisions.
-RB_DEFINE_UNQUOTED([DATAROOT_DIR], ["$(datarootdir)"], [Prefix where read-only assets go])
-AC_SUBST_DIR([datarootdir])
+RB_DEFINE_UNQUOTED([CONF_DIR], ["$sysconfdir"], [Prefix where config files are installed.])
 
 dnl
 dnl datadir
 dnl
 
-RB_DEFINE_UNQUOTED([DATA_DIR], ["$(datadir)/${PACKAGE_TARNAME}"], [Directory where read-only assets go.])
+datadir="$prefix/share"
 AC_SUBST_DIR([datadir])
+RB_DEFINE_UNQUOTED([DATA_DIR], ["$datadir/${PACKAGE_TARNAME}"], [Directory where read-only assets go.])
 
 dnl
 dnl Check for --with-dbdir
