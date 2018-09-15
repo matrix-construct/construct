@@ -16,7 +16,7 @@ namespace ircd::util
 	template<class K, class T> struct instance_multimap;
 }
 
-/// See instance_multimap for purpose and overview.
+/// See instance_list for purpose and overview.
 template<class K,
          class T>
 struct ircd::util::instance_multimap
