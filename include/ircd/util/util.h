@@ -36,6 +36,7 @@ namespace ircd
 #include "reentrance.h"
 #include "enum.h"
 #include "syscall.h"
+#include "env.h"
 #include "va_rtti.h"
 #include "unique_iterator.h"
 #include "instance_list.h"
