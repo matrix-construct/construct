@@ -5781,6 +5781,38 @@ console_cmd__room__join(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__leave(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id_or_alias", "user_id"
+	}};
+
+	const m::room::id::buf room_id
+	{
+		m::room_id(param.at("room_id_or_alias"))
+	};
+
+	const m::user::id::buf user_id
+	{
+		param.at("user_id")
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto leave_event_id
+	{
+		m::leave(room, user_id)
+	};
+
+	out << leave_event_id << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__create(opt &out, const string_view &line)
 {
 	const params param
