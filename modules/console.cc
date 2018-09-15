@@ -555,6 +555,53 @@ console_cmd__mem(opt &out, const string_view &line)
 }
 
 //
+// env
+//
+
+bool
+console_cmd__env(opt &out, const string_view &line)
+{
+	if(!::environ)
+		throw error
+		{
+			"Env variable list not available."
+		};
+
+	const params param{line, " ",
+	{
+		"key"
+	}};
+
+	if(param["key"] == "*")
+	{
+		for(const char *const *e(::environ); *e; ++e)
+			out << *e << std::endl;
+
+		return true;
+	}
+
+	if(param["key"])
+	{
+		out << util::getenv(param["key"]) << std::endl;
+		return true;
+	}
+
+	for(const char *const *e(::environ); *e; ++e)
+	{
+		string_view kv[2];
+		tokens(*e, '=', kv);
+		if(!startswith(kv[0], "IRCD_") && !startswith(kv[0], "ircd_"))
+			continue;
+
+		out << std::setw(64) << std::left << kv[0]
+		    << " :" << kv[1]
+		    << std::endl;
+	}
+
+	return true;
+}
+
+//
 // conf
 //
 
