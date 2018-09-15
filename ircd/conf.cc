@@ -353,22 +353,19 @@ ircd::conf::item<bool>::item(const json::members &members,
 
 bool
 ircd::conf::item<bool>::on_set(const string_view &s)
+try
 {
-	switch(hash(s))
+	_value = lex_cast<bool>(s);
+	return true;
+}
+catch(const bad_lex_cast &e)
+{
+	throw bad_value
 	{
-		case "true"_:
-			_value = true;
-			return true;
-
-		case "false"_:
-			_value = false;
-			return true;
-
-		default: throw bad_value
-		{
-			"Conf item '%s' not assigned a bool literal", name
-		};
-	}
+		"Conf item '%s' not assigned a bool literal :%s",
+		name,
+		e.what()
+	};
 }
 
 ircd::string_view
