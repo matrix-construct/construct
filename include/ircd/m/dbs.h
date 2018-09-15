@@ -18,6 +18,10 @@ namespace ircd::m::dbs
 	struct init;
 	struct write_opts;
 
+	// General confs
+	extern conf::item<bool> events_cache_enable;
+	extern conf::item<bool> events_cache_comp_enable;
+
 	// Database instance
 	extern std::shared_ptr<db::database> events;
 

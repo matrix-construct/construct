@@ -56,6 +56,26 @@ decltype(ircd::m::dbs::state_node)
 ircd::m::dbs::state_node
 {};
 
+/// Coarse variable for enabling the uncompressed cache on the events database;
+/// note this conf item is only effective by setting an environmental variable
+/// before daemon startup. It has no effect in any other regard.
+decltype(ircd::m::dbs::events_cache_enable)
+ircd::m::dbs::events_cache_enable
+{
+	{ "name",     "ircd.m.dbs.events.__cache_enable" },
+	{ "default",  true                               },
+};
+
+/// Coarse variable for enabling the compressed cache on the events database;
+/// note this conf item is only effective by setting an environmental variable
+/// before daemon startup. It has no effect in any other regard.
+decltype(ircd::m::dbs::events_cache_comp_enable)
+ircd::m::dbs::events_cache_comp_enable
+{
+	{ "name",     "ircd.m.dbs.events.__cache_comp_enable" },
+	{ "default",  false                                   },
+};
+
 //
 // init
 //
@@ -608,10 +628,10 @@ ircd::m::dbs::desc::events__event_idx
 	{},
 
 	// cache size
-	-1, //uses conf item
+	bool(events_cache_enable)? -1 : 0, //uses conf item
 
 	// cache size for compressed assets
-	-1, //uses conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -685,10 +705,10 @@ ircd::m::dbs::desc::events__event_bad
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -799,7 +819,7 @@ ircd::m::dbs::desc::events__room_head
 	events__room_head__pfx,
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
 	0, //no compresed cache
@@ -1052,10 +1072,10 @@ ircd::m::dbs::desc::events__room_events
 	events__room_events__pfx,
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	0, // no bloom filter because of possible comparator issues
@@ -1189,10 +1209,10 @@ ircd::m::dbs::desc::events__room_joined
 	events__room_joined__pfx,
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1324,10 +1344,10 @@ ircd::m::dbs::desc::events__room_state
 	events__room_state__pfx,
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1396,10 +1416,10 @@ ircd::m::dbs::desc::events__state_node
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	16,
@@ -1478,10 +1498,10 @@ ircd::m::dbs::desc::events_event_id
 	{},
 
 	// cache size
-	-1, //use conf
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1557,10 +1577,10 @@ ircd::m::dbs::desc::events_type
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1636,10 +1656,10 @@ ircd::m::dbs::desc::events_content
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1709,10 +1729,10 @@ ircd::m::dbs::desc::events_redacts
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1787,10 +1807,10 @@ ircd::m::dbs::desc::events_room_id
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1865,10 +1885,10 @@ ircd::m::dbs::desc::events_sender
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -1945,10 +1965,10 @@ ircd::m::dbs::desc::events_state_key
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2020,10 +2040,10 @@ ircd::m::dbs::desc::events_origin
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2099,10 +2119,10 @@ ircd::m::dbs::desc::events_origin_server_ts
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2172,10 +2192,10 @@ ircd::m::dbs::desc::events_signatures
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2244,10 +2264,10 @@ ircd::m::dbs::desc::events_auth_events
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2316,10 +2336,10 @@ ircd::m::dbs::desc::events_depth
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2388,10 +2408,10 @@ ircd::m::dbs::desc::events_hashes
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2460,10 +2480,10 @@ ircd::m::dbs::desc::events_membership
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2532,10 +2552,10 @@ ircd::m::dbs::desc::events_prev_events
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
@@ -2604,10 +2624,10 @@ ircd::m::dbs::desc::events_prev_state
 	{},
 
 	// cache size
-	-1, //use conf item
+	bool(events_cache_enable)? -1 : 0,
 
 	// cache size for compressed assets
-	-1, //use conf item
+	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
 	24,
