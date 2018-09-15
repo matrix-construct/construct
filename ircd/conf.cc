@@ -218,22 +218,6 @@ const
 	return on_get(buf);
 }
 
-void
-ircd::conf::item<void>::call_init()
-try
-{
-	on_init(*this);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"conf item[%s] init callback :%s",
-		name,
-		e.what()
-	};
-}
-
 bool
 ircd::conf::item<void>::on_set(const string_view &)
 {
@@ -245,6 +229,72 @@ ircd::conf::item<void>::on_get(const mutable_buffer &)
 const
 {
 	return {};
+}
+
+namespace ircd::conf
+{
+	static void call_env(item<void> &) noexcept;
+	static void call_init(item<void> &) noexcept;
+}
+
+void
+ircd::conf::item<void>::call_init()
+{
+	// The conf item's default value specified by the constructor is its
+	// current value at this point; now we make callbacks to allow that value
+	// to be replaced with a better one (i.e reading a saved value from DB).
+	conf::call_init(*this);
+
+	// Environmental variables now get the final say; this allows any
+	// misconfiguration to be overridden by env vars. The variable name is
+	// the conf item name with any '.' replaced to '_', case is preserved.
+	conf::call_env(*this);
+}
+
+void
+ircd::conf::call_init(item<void> &item)
+noexcept try
+{
+	on_init(item);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] on_init callback :%s",
+		item.name,
+		e.what()
+	};
+}
+
+void
+ircd::conf::call_env(item<void> &item)
+noexcept try
+{
+	assert(size(item.name) <= item.NAME_MAX_LEN);
+	thread_local char key[item.NAME_MAX_LEN];
+	const string_view name
+	{
+		key,
+		std::replace_copy(begin(item.name), end(item.name), key, '.', '_')
+	};
+
+	const string_view val
+	{
+		util::getenv(name)
+	};
+
+	if(!empty(val))
+		item.set(val);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] environmental variable :%s",
+		item.name,
+		e.what()
+	};
 }
 
 //
