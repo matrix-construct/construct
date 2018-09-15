@@ -103,29 +103,29 @@ namespace ircd::m::name
 
 	constexpr const char *const typing {"typing"};
 
-	constexpr const auto user{"user"};
-	constexpr const auto medium{"medium"};
-	constexpr const auto address{"address"};
-	constexpr const auto password{"password"};
-	constexpr const auto token{"token"};
-	constexpr const auto device_id{"device_id"};
-	constexpr const auto initial_device_display_name{"initial_device_display_name"};
+	constexpr const char *const user {"user"};
+	constexpr const char *const medium {"medium"};
+	constexpr const char *const address {"address"};
+	constexpr const char *const password {"password"};
+	constexpr const char *const token {"token"};
+	constexpr const char *const device_id {"device_id"};
+	constexpr const char *const initial_device_display_name {"initial_device_display_name"};
 
-	constexpr const auto username {"username"};
-	constexpr const auto bind_email {"bind_email"};
-	constexpr const auto auth {"auth"};
+	constexpr const char *const username {"username"};
+	constexpr const char *const bind_email {"bind_email"};
+	constexpr const char *const auth {"auth"};
 
-	constexpr const auto visibility {"visibility"};
-	constexpr const auto room_alias_name {"room_alias_name"};
-	constexpr const auto name {"name"};
-	constexpr const auto topic {"topic"};
-	constexpr const auto invite {"invite"};
-	constexpr const auto invite_3pid {"invite_3pid"};
-	constexpr const auto creation_content {"creation_content"};
-	constexpr const auto initial_state {"initial_state"};
-	constexpr const auto preset {"preset"};
-	constexpr const auto is_direct {"is_direct"};
-	constexpr const auto guest_can_join {"guest_can_join"};
+	constexpr const char *const visibility {"visibility"};
+	constexpr const char *const room_alias_name {"room_alias_name"};
+	constexpr const char *const name {"name"};
+	constexpr const char *const topic {"topic"};
+	constexpr const char *const invite {"invite"};
+	constexpr const char *const invite_3pid {"invite_3pid"};
+	constexpr const char *const creation_content {"creation_content"};
+	constexpr const char *const initial_state {"initial_state"};
+	constexpr const char *const preset {"preset"};
+	constexpr const char *const is_direct {"is_direct"};
+	constexpr const char *const guest_can_join {"guest_can_join"};
 
-	constexpr const auto id_server {"id_server"};
+	constexpr const char *const id_server {"id_server"};
 }
