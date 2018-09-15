@@ -589,10 +589,8 @@ ircd::client::client(std::shared_ptr<socket> sock)
 () -> net::ipport
 {
 	assert(bool(sock));
-	auto remote(remote_ipport(*sock));
-	assert(bool(remote));
-	std::get<remote.PORT>(remote) = 0;
-	return remote;
+	const auto &ep(sock->remote());
+	return { ep.address(), 0 };
 }()}
 ,head_buffer
 {
