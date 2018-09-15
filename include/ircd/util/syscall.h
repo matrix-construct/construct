@@ -11,9 +11,6 @@
 #pragma once
 #define HAVE_IRCD_UTIL_SYSCALL_H
 
-// Declaring this here eliminates the need to include <unistd.h> for it
-extern "C" long syscall(long, ...) noexcept;
-
 namespace ircd::util
 {
 	template<class function, class... args> long syscall(function&& f, args&&... a);
