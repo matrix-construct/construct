@@ -46,7 +46,7 @@ namespace ircd::conf
 	using set_cb = std::function<void ()>;
 
 	extern std::map<string_view, item<> *> items;
-	extern std::function<void (item<> &)> _init_cb;
+	extern callbacks<void (item<> &)> on_init;
 
 	bool exists(const string_view &key);
 	string_view get(const string_view &key, const mutable_buffer &out);

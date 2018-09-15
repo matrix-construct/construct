@@ -15,16 +15,26 @@ extern "C" void reload_conf();
 extern "C" void refresh_conf();
 static void init_conf_item(conf::item<> &);
 
+// This module registers with conf::on_init to be called back
+// when a conf item is initialized; when this module is unloaded
+// we have to unregister that listener using this state.
+decltype(conf::on_init)::const_iterator
+conf_on_init_iter
+{
+	end(conf::on_init)
+};
+
 mapi::header
 IRCD_MODULE
 {
 	"Server Configuration", []
 	{
-		ircd::conf::_init_cb = init_conf_item;
+		conf_on_init_iter = conf::on_init.emplace(end(conf::on_init), init_conf_item);
 		reload_conf();
 	}, []
 	{
-		ircd::conf::_init_cb = nullptr;
+		assert(conf_on_init_iter != end(conf::on_init));
+		conf::on_init.erase(conf_on_init_iter);
 	}
 };
 

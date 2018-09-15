@@ -12,8 +12,8 @@ decltype(ircd::conf::items)
 ircd::conf::items
 {};
 
-decltype(ircd::conf::_init_cb)
-ircd::conf::_init_cb
+decltype(ircd::conf::on_init)
+ircd::conf::on_init
 {};
 
 size_t
@@ -207,8 +207,7 @@ void
 ircd::conf::item<void>::call_init()
 try
 {
-	if(_init_cb)
-		_init_cb(*this);
+	on_init(*this);
 }
 catch(const std::exception &e)
 {
