@@ -5624,41 +5624,32 @@ console_cmd__room__join(opt &out, const string_view &line)
 bool
 console_cmd__room__leave(opt &out, const string_view &line)
 {
-	const string_view room_id_or_alias
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"room_id_or_alias", "user_id"
+	}};
+
+	const m::room::id::buf room_id
+	{
+		m::room_id(param.at("room_id_or_alias"))
 	};
 
-	const m::user::id &user_id
+	const m::user::id::buf user_id
 	{
-		token(line, ' ', 1)
+		param.at("user_id")
 	};
 
-	switch(m::sigil(room_id_or_alias))
+	const m::room room
 	{
-		case m::id::ROOM:
-		case m::id::ROOM_ALIAS:
-		{
-			const m::room room
-			{
-				m::room_id(room_id_or_alias)
-			};
+		room_id
+	};
 
-			const auto leave_event
-			{
-				m::leave(room, user_id)
-			};
+	const auto leave_event_id
+	{
+		m::leave(room, user_id)
+	};
 
-			out << leave_event << std::endl;
-			return true;
-		}
-
-		default: throw error
-		{
-			"Don't know how to leave '%s'", room_id_or_alias
-		};
-	}
-
+	out << leave_event_id << std::endl;
 	return true;
 }
 
