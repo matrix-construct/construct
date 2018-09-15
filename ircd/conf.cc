@@ -135,6 +135,12 @@ ircd::conf::exists(const string_view &key)
 // item
 //
 
+decltype(ircd::conf::item<void>::NAME_MAX_LEN)
+ircd::conf::item<void>::NAME_MAX_LEN
+{
+	127
+};
+
 /// Conf item abstract constructor.
 ircd::conf::item<void>::item(const json::members &opts,
                              conf::set_cb set_cb)
@@ -155,6 +161,15 @@ ircd::conf::item<void>::item(const json::members &opts,
 	std::move(set_cb)
 }
 {
+	if(size(name) > NAME_MAX_LEN)
+		throw error
+		{
+			"Conf item '%s' name length:%zu exceeds max:%zu",
+			name,
+			size(name),
+			NAME_MAX_LEN
+		};
+
 	if(!items.emplace(name, this).second)
 		throw error
 		{

@@ -62,6 +62,8 @@ namespace ircd::conf
 template<>
 struct ircd::conf::item<void>
 {
+	static const size_t NAME_MAX_LEN;
+
 	json::strung feature_;
 	json::object feature;
 	string_view name;
