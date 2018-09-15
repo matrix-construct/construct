@@ -36,6 +36,20 @@ media_log
 	"media"
 };
 
+decltype(media_blocks_cache_enable)
+media_blocks_cache_enable
+{
+	{ "name",     "ircd.media.blocks.cache.enable"  },
+	{ "default",  true                              },
+};
+
+decltype(media_blocks_cache_comp_enable)
+media_blocks_cache_comp_enable
+{
+	{ "name",     "ircd.media.blocks.cache_comp.enable"  },
+	{ "default",  false                                  },
+};
+
 // Blocks column
 decltype(media_blocks_descriptor)
 media_blocks_descriptor
@@ -58,8 +72,8 @@ media_blocks_descriptor
 	{},      // options
 	{},      // comparaor
 	{},      // prefix transform
-	-1,      // cache size (uses conf item)
-	-1,      // compressed cache size (uses conf item)
+	bool(media_blocks_cache_enable)? -1 : 0,
+	bool(media_blocks_cache_comp_enable)? -1 : 0,
 };
 
 decltype(media_description)
