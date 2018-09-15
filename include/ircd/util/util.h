@@ -40,6 +40,7 @@ namespace ircd
 #include "unique_iterator.h"
 #include "instance_list.h"
 #include "instance_multimap.h"
+#include "callbacks.h"
 #include "bswap.h"
 #include "tuple.h"
 #include "timer.h"
