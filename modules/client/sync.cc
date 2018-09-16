@@ -1197,7 +1197,7 @@ ircd::m::sync::highlight_count(const room &r,
 		"m_user", "highlighted_count__between"
 	};
 
-	return count(u, r, a, b);
+	return count(u, r, std::min(a, b), std::max(a, b));
 }
 
 long
@@ -1205,5 +1205,5 @@ ircd::m::sync::notification_count(const room &room,
                                   const event::idx &a,
                                   const event::idx &b)
 {
-	return m::count_since(room, a, b);
+	return m::count_since(room, std::min(a, b), std::max(a, b));
 }
