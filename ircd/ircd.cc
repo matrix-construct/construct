@@ -229,12 +229,12 @@ noexcept try
 	const unwind shutdown{[&]
 	{
 		_matrix_.close();
-		_server_.interrupt();
-		_client_.interrupt();
-		_server_.close();
-		_client_.close();
-		_server_.wait();
-		_client_.wait();
+		server::interrupt_all();
+		client::terminate_all();
+		server::close_all();
+		client::close_all();
+		server::wait_all();
+		client::wait_all();
 	}};
 
 	// When the call to wait() below completes, IRCd exits from the RUN state.

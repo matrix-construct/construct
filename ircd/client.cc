@@ -125,9 +125,9 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	interrupt();
-	close();
-	wait();
+	terminate_all();
+	close_all();
+	wait_all();
 
 	log::debug
 	{
@@ -135,24 +135,6 @@ noexcept
 	};
 
 	assert(client::map.empty());
-}
-
-void
-ircd::client::init::interrupt()
-{
-	interrupt_all();
-}
-
-void
-ircd::client::init::close()
-{
-	close_all();
-}
-
-void
-ircd::client::init::wait()
-{
-	wait_all();
 }
 
 //
@@ -163,51 +145,6 @@ void
 ircd::client::spawn()
 {
 	pool.add(size_t(settings.pool_size));
-}
-
-void
-ircd::client::interrupt_all()
-{
-	if(pool.active())
-		log::warning
-		{
-			"Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
-			pool.active(),
-			pool.size(),
-			pool.pending(),
-			pool.queued()
-		};
-
-	pool.terminate();
-}
-
-void
-ircd::client::close_all()
-{
-	if(!client::map.empty())
-		log::debug
-		{
-			"Closing %zu clients", client::map.size()
-		};
-
-	auto it(begin(client::map));
-	while(it != end(client::map))
-	{
-		auto c(shared_from(*it->second)); ++it; try
-		{
-			c->close(net::dc::RST, [c](const auto &e)
-			{
-				dock.notify_one();
-			});
-		}
-		catch(const std::exception &e)
-		{
-			log::derror
-			{
-				"Error disconnecting client @%p: %s", c.get(), e.what()
-			};
-		}
-	}
 }
 
 void
@@ -240,6 +177,67 @@ ircd::client::wait_all()
 	};
 
 	pool.join();
+}
+
+void
+ircd::client::close_all()
+{
+	if(!client::map.empty())
+		log::debug
+		{
+			"Closing %zu clients", client::map.size()
+		};
+
+	auto it(begin(client::map));
+	while(it != end(client::map))
+	{
+		auto c(shared_from(*it->second)); ++it; try
+		{
+			c->close(net::dc::RST, [c](const auto &e)
+			{
+				dock.notify_one();
+			});
+		}
+		catch(const std::exception &e)
+		{
+			log::derror
+			{
+				"Error disconnecting client @%p: %s", c.get(), e.what()
+			};
+		}
+	}
+}
+
+void
+ircd::client::interrupt_all()
+{
+	if(pool.active())
+		log::warning
+		{
+			"Interrupting %zu active of %zu client request contexts; %zu pending; %zu queued",
+			pool.active(),
+			pool.size(),
+			pool.pending(),
+			pool.queued()
+		};
+
+	pool.interrupt();
+}
+
+void
+ircd::client::terminate_all()
+{
+	if(pool.active())
+		log::warning
+		{
+			"Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
+			pool.active(),
+			pool.size(),
+			pool.pending(),
+			pool.queued()
+		};
+
+	pool.terminate();
 }
 
 void

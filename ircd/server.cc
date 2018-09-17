@@ -22,9 +22,6 @@ namespace ircd::server
 
 	// Internal control
 	std::unique_ptr<peer> create(const net::hostport &);
-	void interrupt_all();
-	void close_all();
-	void wait_all();
 }
 
 decltype(ircd::server::log)
@@ -51,32 +48,14 @@ ircd::server::init::init()
 ircd::server::init::~init()
 noexcept
 {
-	close();
-	wait();
+	interrupt_all();
+	close_all();
+	wait_all();
 	peers.clear();
-
 	log::debug
 	{
 		log, "All server peers, connections, and requests are clear."
 	};
-}
-
-void
-ircd::server::init::wait()
-{
-	wait_all();
-}
-
-void
-ircd::server::init::close()
-{
-	close_all();
-}
-
-void
-ircd::server::init::interrupt()
-{
-	interrupt_all();
 }
 
 //

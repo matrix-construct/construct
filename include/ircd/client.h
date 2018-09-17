@@ -37,6 +37,7 @@ struct ircd::client
 
 	static void create(const std::shared_ptr<socket> &);
 	static size_t count(net::ipport remote);
+	static void terminate_all();
 	static void interrupt_all();
 	static void close_all();
 	static void wait_all();
@@ -106,10 +107,6 @@ struct ircd::client::settings
 
 struct ircd::client::init
 {
-	void interrupt();
-	void close();
-	void wait();
-
 	init();
 	~init() noexcept;
 };
