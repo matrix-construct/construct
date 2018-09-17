@@ -167,6 +167,7 @@ namespace ircd
 	using std::dynamic_pointer_cast;
 
 	using std::chrono::hours;
+	using std::chrono::minutes;
 	using std::chrono::seconds;
 	using std::chrono::milliseconds;
 	using std::chrono::microseconds;
