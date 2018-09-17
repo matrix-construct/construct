@@ -65,6 +65,15 @@ extern "C" bool for_each(const m::typing::closure_bool &);
 m::event::id::buf
 commit(const m::typing &edu)
 {
+	// Check if the user is actually in the room.
+	const m::room room{at<"room_id"_>(edu)};
+	if(!room.membership(at<"user_id"_>(edu), "join"))
+		throw m::FORBIDDEN
+		{
+			"Cannot type in a room %s to which you are not joined",
+			string_view{room.room_id}
+		};
+
 	// Clients like Riot will send erroneous and/or redundant typing requests
 	// for example requesting typing=false when the state already =false.
 	// We don't want to tax the vm::eval for this noise so we try to update
@@ -176,6 +185,24 @@ _handle_edu_m_typing(const m::event &event,
 	// condition for skipping redundant updates here too based on the state.
 	if(!my_host(at<"origin"_>(event)))
 	{
+		// Check if the user is actually in the room. The check is in this
+		// branch for remote servers only because our committer above did this
+		// already for our client.
+		const m::room room{room_id};
+		if(!room.membership(user_id, "join"))
+		{
+			log::dwarning
+			{
+				"Ignoring %s from %s for user %s because not in room '%s'",
+				at<"type"_>(event),
+				at<"origin"_>(event),
+				string_view{user_id},
+				string_view{room_id},
+			};
+
+			return;
+		}
+
 		// Set the (non-spec) timeout field of the edu which remote servers
 		// don't/can't set and then update the state. Use the maximum timeout
 		// value here because the minimum might unfairly time them out.
