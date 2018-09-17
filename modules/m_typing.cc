@@ -29,8 +29,11 @@ struct typist
 	bool operator()(const typist &a, const typist &b) const;
 };
 
-ctx::dock timeout_dock;
-std::set<typist, typist> typists;
+ctx::dock
+timeout_dock;
+
+std::set<typist, typist>
+typists;
 
 conf::item<milliseconds>
 timeout_max
@@ -48,8 +51,8 @@ timeout_min
 
 static system_point calc_timesout(milliseconds relative);
 static bool update_state(const m::typing &);
-extern "C" m::event::id::buf commit(const m::typing &edu);
 extern "C" bool for_each(const m::typing::closure_bool &);
+extern "C" m::event::id::buf commit(const m::typing &edu);
 
 //
 // typing commit handler stack (local user)
