@@ -41,6 +41,13 @@ extern "C" bool for_each(const m::typing::closure_bool &);
 // typing commit handler stack (local user)
 //
 
+// This function is called via ircd::m::typing linkage to create a typing
+// event originating from our client. This event takes the form of the
+// federation edu and is broadcast to servers. Unfortunately the matrix
+// client spec has a different edu format for typing; so to propagate this
+// event to clients we hook it during eval and create a new event formatted
+// for clients and then run that through eval too. (see below).
+//
 m::event::id::buf
 commit(const m::typing &edu)
 {
@@ -68,6 +75,12 @@ commit(const m::typing &edu)
 	opts.add_origin = true;
 	opts.add_origin_server_ts = false;
 	opts.conforming = false;
+
+	// Because the matrix spec should use the same format for client
+	// and federation typing events, we don't prevent this from being
+	// sent to clients who wish to preemptively implement this format.
+	//opts.notify_clients = false;
+
 	return m::vm::eval
 	{
 		event, content, opts
@@ -82,6 +95,11 @@ static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 
+/// Hooks all federation typing edus from remote servers as well as
+/// the above commit from local clients. This hook rewrites the edu into
+/// a new event formatted for client /sync and then runs that through eval
+/// so our clients can receive the typing events.
+///
 const m::hookfn<m::vm::eval &>
 _m_typing_eval
 {
