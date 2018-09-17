@@ -800,17 +800,19 @@ ircd::m::receipt::read(const id::room &room_id,
 // m/typing.h
 //
 
-ircd::m::event::id::buf
-ircd::m::typing::set(const m::typing &object)
+ircd::m::typing::commit::commit(const m::typing &object)
+:ircd::m::event::id::buf{[&object]
 {
-	using prototype = event::id::buf (const m::typing &);
+	using prototype = m::event::id::buf (const m::typing &);
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "commit__m_typing"
+		"m_typing", "commit"
 	};
 
 	return function(object);
+}()}
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

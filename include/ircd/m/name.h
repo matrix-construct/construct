@@ -102,6 +102,7 @@ namespace ircd::m::name
 	constexpr const char *const event_ids {"event_ids"};
 
 	constexpr const char *const typing {"typing"};
+	constexpr const char *const timeout {"timeout"};
 
 	constexpr const char *const user {"user"};
 	constexpr const char *const medium {"medium"};

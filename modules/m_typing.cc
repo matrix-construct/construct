@@ -16,6 +16,68 @@ IRCD_MODULE
 	"Matrix Typing"
 };
 
+struct typist
+{
+	using is_transparent = void;
+
+	system_point timesout;
+	m::user::id::buf user_id;
+	m::room::id::buf room_id;
+
+	bool operator()(const typist &a, const string_view &b) const;
+	bool operator()(const string_view &a, const typist &b) const;
+	bool operator()(const typist &a, const typist &b) const;
+};
+
+ctx::dock timeout_dock;
+std::set<typist, typist> typists;
+
+static system_point calc_timesout(milliseconds relative);
+static bool update_state(const m::typing &);
+extern "C" m::event::id::buf commit(const m::typing &edu);
+
+//
+// typing commit handler stack (local user)
+//
+
+m::event::id::buf
+commit(const m::typing &edu)
+{
+	// Clients like Riot will send erroneous and/or redundant typing requests
+	// for example requesting typing=false when the state already =false.
+	// We don't want to tax the vm::eval for this noise so we try to update
+	// state first and if that returns false it indicates we should ignore.
+	if(!update_state(edu))
+		return {};
+
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.typing"                  } },
+		{ event,    { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "user_id",  at<"user_id"_>(edu)         } },
+		{ content,  { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
+	};
+
+	m::vm::copts opts;
+	opts.add_hash = false;
+	opts.add_sig = false;
+	opts.add_event_id = false;
+	opts.add_origin = true;
+	opts.add_origin_server_ts = false;
+	opts.conforming = false;
+	return m::vm::eval
+	{
+		event, content, opts
+	};
+}
+
+//
+// typing edu handler stack (local and remote)
+//
+
+static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 
@@ -45,13 +107,16 @@ void
 _handle_edu_m_typing(const m::event &event,
                      const m::typing &edu)
 {
-	const auto &room_id
-	{
-		json::get<"room_id"_>(edu)
-	};
-
-	if(!room_id)
+	// This check prevents interference between the two competing edu formats;
+	// The federation edu has a room_id field while the client edu only has a
+	// user_id's array. We don't need to hook on the client edu here.
+	if(!json::get<"room_id"_>(edu))
 		return;
+
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(edu)
+	};
 
 	const m::user::id &user_id
 	{
@@ -84,7 +149,8 @@ _handle_edu_m_typing(const m::event &event,
 	json::get<"room_id"_>(typing) = room_id;
 	json::get<"type"_>(typing) = "m.typing"_sv;
 
-	char buf[512];
+	// Buffer has to hold user mxid and then some JSON overhead (see below)
+	char buf[m::id::MAX_SIZE + 65];
 	const json::value user_ids[]
 	{
 		{ user_id }
@@ -97,16 +163,201 @@ _handle_edu_m_typing(const m::event &event,
 
 	m::vm::opts vmopts;
 	vmopts.notify_servers = false;
-	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
-	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
-	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
-	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
+	vmopts.conforming = false;
 	m::vm::eval eval
 	{
 		typing, vmopts
 	};
+}
+
+//
+// timeout worker stack
+//
+
+static void timeout_timeout(const typist &);
+static bool timeout_check();
+static void timeout_worker();
+context timeout_context
+{
+	"typing", 128_KiB, context::POST, timeout_worker
+};
+
+void
+timeout_worker()
+{
+	while(1)
+	{
+		timeout_dock.wait([]
+		{
+			return !typists.empty();
+		});
+
+		if(!timeout_check())
+			ctx::sleep(seconds(5));
+	}
+}
+
+bool
+timeout_check()
+{
+	const auto now
+	{
+		ircd::now<system_point>()
+	};
+
+	auto it(begin(typists));
+	for(auto it(begin(typists)); it != end(typists); ++it)
+		if(it->timesout < now)
+		{
+			// have to restart the loop if there's a timeout because
+			// the call will update typist state and invalidate iterators.
+			timeout_timeout(*it);
+			return true;
+		}
+
+	return false;
+}
+
+void
+timeout_timeout(const typist &t)
+{
+	const m::typing event
+	{
+		{ "user_id",  t.user_id   },
+		{ "room_id",  t.room_id   },
+		{ "typing",   false       },
+	};
+
+	log::debug
+	{
+		"Typing timeout for %s in %s",
+		string_view{t.user_id},
+		string_view{t.room_id}
+	};
+
+	m::typing::commit
+	{
+		event
+	};
+}
+
+//
+// misc
+//
+
+bool
+update_state(const m::typing &object)
+{
+	const auto &user_id
+	{
+		at<"user_id"_>(object)
+	};
+
+	const auto &room_id
+	{
+		at<"room_id"_>(object)
+	};
+
+	const auto &typing
+	{
+		at<"typing"_>(object)
+	};
+
+	const milliseconds timeout
+	{
+		at<"timeout"_>(object)
+	};
+
+	auto it
+	{
+		typists.lower_bound(user_id)
+	};
+
+	const bool was_typing
+	{
+		it != end(typists) && it->user_id == user_id
+	};
+
+	if(typing && !was_typing)
+	{
+		typists.emplace_hint(it, typist
+		{
+			calc_timesout(timeout), user_id, room_id
+		});
+
+		timeout_dock.notify_one();
+	}
+	else if(typing && was_typing)
+	{
+		auto &t(const_cast<typist &>(*it));
+		t.timesout = calc_timesout(timeout);
+	}
+	else if(!typing && was_typing)
+	{
+		typists.erase(it);
+	}
+
+	const bool transmit
+	{
+		(typing && !was_typing) || (!typing && was_typing)
+	};
+
+	log::debug
+	{
+		"Typing %s in %s now[%b] was[%b] xmit[%b]",
+		string_view{at<"user_id"_>(object)},
+		string_view{at<"room_id"_>(object)},
+		json::get<"typing"_>(object),
+		was_typing,
+		transmit
+	};
+
+	return transmit;
+}
+
+conf::item<milliseconds>
+timeout_max
+{
+	{ "name",     "ircd.typing.timeout.max" },
+	{ "default",  90 * 1000L                },
+};
+
+conf::item<milliseconds>
+timeout_min
+{
+	{ "name",     "ircd.typing.timeout.min" },
+	{ "default",  15 * 1000L                },
+};
+
+system_point
+calc_timesout(milliseconds timeout)
+{
+	timeout = std::max(timeout, milliseconds(timeout_min));
+	timeout = std::min(timeout, milliseconds(timeout_max));
+	return now<system_point>() + timeout;
+}
+
+//
+// typist struct
+//
+
+bool
+typist::operator()(const typist &a, const string_view &b)
+const
+{
+    return a.user_id < b;
+}
+
+bool
+typist::operator()(const string_view &a, const typist &b)
+const
+{
+    return a < b.user_id;
+}
+
+bool
+typist::operator()(const typist &a, const typist &b)
+const
+{
+    return a.user_id < b.user_id;
 }

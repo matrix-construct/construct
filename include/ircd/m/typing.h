@@ -23,6 +23,7 @@ struct ircd::m::edu::m_typing
 <
 	json::property<name::user_id, json::string>,
 	json::property<name::room_id, json::string>,
+	json::property<name::timeout, time_t>,
 	json::property<name::typing, bool>
 >
 {
@@ -34,7 +35,13 @@ struct ircd::m::edu::m_typing
 struct ircd::m::typing
 :m::edu::m_typing
 {
-	static event::id::buf set(const typing &);
+	struct commit;
 
 	using edu::m_typing::m_typing;
+};
+
+struct ircd::m::typing::commit
+:event::id::buf
+{
+	commit(const typing &);
 };
