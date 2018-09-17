@@ -53,7 +53,7 @@ namespace ircd::m
 	int64_t depth(std::nothrow_t, const id::room &);
 	int64_t depth(const id::room &);
 
-	// [GET] Count the events in the room between two (note always >=1 if a!=b)
+	// [GET] Count the events in the room between two indexes.
 	size_t count_since(const room &, const m::event::idx &, const m::event::idx &);
 	size_t count_since(const room &, const m::event::id &, const m::event::id &);
 	size_t count_since(const m::event::idx &, const m::event::idx &);
