@@ -31,7 +31,7 @@ indexof()
 {
 	constexpr auto equal
 	{
-		ircd::hash(key<tuple, i>()) == hash
+		name_hash(key<tuple, i>()) == hash
 	};
 
 	return equal? i : indexof<tuple, hash, i + 1>();

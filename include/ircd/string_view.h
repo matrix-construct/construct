@@ -15,6 +15,7 @@ namespace ircd
 {
 	struct string_view;
 
+	constexpr size_t _constexpr_strlen(const char *);
 	constexpr const char *data(const string_view &);
 	constexpr size_t size(const string_view &);
 	bool empty(const string_view &);
@@ -112,7 +113,7 @@ struct ircd::string_view
 	string_view &assign(const char *const &begin, const char *const &end)
 	{
 		this->~string_view();
-		new (this) string_view{begin, size_t(std::distance(begin, end))};
+		new (this) string_view{begin, end};
 		return *this;
 	}
 
@@ -143,9 +144,11 @@ struct ircd::string_view
 	}
 
 	// (non-standard) our iterator-based constructor
-	string_view(const char *const &begin, const char *const &end)
-	:std::string_view{begin, size_t(std::distance(begin, end))}
-	{}
+	constexpr string_view(const char *const &begin, const char *const &end)
+	:string_view{begin, size_t(end - begin)}
+	{
+		assert(begin <= end);
+	}
 
 	// (non-standard) our iterator-based constructor
 	string_view(const std::string::const_iterator &begin, const std::string::const_iterator &end)
@@ -168,22 +171,16 @@ struct ircd::string_view
 		buf, std::find(buf, buf + SIZE, '\0')
 	}{}
 
-	// Required due to current instability in stdlib
-//	string_view(const std::experimental::string_view &esv)
-//	:std::string_view{esv}
-//	{}
+	constexpr string_view(const char *const &start, const size_t &size)
+	:std::string_view{start, size}
+	{}
 
-	// Required due to instability in stdlib
-//	constexpr string_view(const std::experimental::fundamentals_v1::basic_string_view<char> &bsv)
-//	:std::string_view{bsv}
-//	{}
-
-//	constexpr string_view(const char *const &start, const size_t &size)
-//	:std::string_view{start, size}
-//	{}
+	constexpr string_view(const char *const &start)
+	:std::string_view{start, _constexpr_strlen(start)}
+	{}
 
 	string_view(const std::string &string)
-	:std::string_view{string.data(), string.size()}
+	:string_view{string.data(), string.size()}
 	{}
 
 	constexpr string_view(const std::string_view &sv)
@@ -195,8 +192,6 @@ struct ircd::string_view
 	constexpr string_view()
 	:std::string_view{}
 	{}
-
-	using std::string_view::string_view;
 };
 
 /// Specialization for std::hash<> participation
@@ -267,4 +262,12 @@ constexpr const char *
 ircd::data(const string_view &str)
 {
 	return str.data();
+}
+
+constexpr size_t
+ircd::_constexpr_strlen(const char *const s)
+{
+	const char *e(s);
+	if(e) for(; *e; ++e);
+	return e - s;
 }

@@ -14,8 +14,7 @@
 namespace ircd::json
 {
 	using name_hash_t = size_t;
-	constexpr name_hash_t name_hash(const char *const name, const size_t len = 0);
-	constexpr name_hash_t name_hash(const string_view &name);
+	constexpr name_hash_t name_hash(const string_view name);
 	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
 
 	/// Higher order type beyond a string to cleanly delimit multiple keys.
@@ -68,17 +67,11 @@ ircd::json::operator<<(std::ostream &s, const path &p)
 constexpr ircd::json::name_hash_t
 ircd::json::operator ""_(const char *const text, const size_t len)
 {
-	return name_hash(text, len);
+	return name_hash(string_view(text, len));
 }
 
 constexpr ircd::json::name_hash_t
-ircd::json::name_hash(const string_view &name)
-{
-	return ircd::hash(name);
-}
-
-constexpr ircd::json::name_hash_t
-ircd::json::name_hash(const char *const name, const size_t len)
+ircd::json::name_hash(const string_view name)
 {
 	return ircd::hash(name);
 }
