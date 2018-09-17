@@ -35,6 +35,7 @@ std::set<typist, typist> typists;
 static system_point calc_timesout(milliseconds relative);
 static bool update_state(const m::typing &);
 extern "C" m::event::id::buf commit(const m::typing &edu);
+extern "C" bool for_each(const m::typing::closure_bool &);
 
 //
 // typing commit handler stack (local user)
@@ -244,6 +245,35 @@ timeout_timeout(const typist &t)
 //
 // misc
 //
+
+bool
+for_each(const m::typing::closure_bool &closure)
+{
+	// User cannot yield in their closure because the iteration
+	// may be invalidated by the timeout worker during their yield.
+	const ctx::critical_assertion ca;
+
+	for(const auto &t : typists)
+	{
+		const time_t timeout
+		{
+			system_clock::to_time_t(t.timesout)
+		};
+
+		const m::typing event
+		{
+			{ "user_id",  t.user_id   },
+			{ "room_id",  t.room_id   },
+			{ "typing",   true        },
+			{ "timeout",  timeout     },
+		};
+
+		if(!closure(event))
+			return false;
+	}
+
+	return true;
+}
 
 bool
 update_state(const m::typing &object)

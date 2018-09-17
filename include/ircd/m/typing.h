@@ -37,6 +37,13 @@ struct ircd::m::typing
 {
 	struct commit;
 
+	using closure_bool = std::function<bool (const typing &)>;
+	using closure = std::function<void (const typing &)>;
+
+	//NOTE: no yielding in this iteration.
+	static bool for_each(const closure_bool &);
+	static void for_each(const closure &);
+
 	using edu::m_typing::m_typing;
 };
 

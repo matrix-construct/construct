@@ -6472,6 +6472,22 @@ console_cmd__user__events__count(opt &out, const string_view &line)
 }
 
 //
+// typing
+//
+
+bool
+console_cmd__typing(opt &out, const string_view &line)
+{
+	m::typing::for_each([&out]
+	(const m::typing &event)
+	{
+		out << event << std::endl;
+	});
+
+	return true;
+}
+
+//
 // node
 //
 

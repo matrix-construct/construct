@@ -800,6 +800,10 @@ ircd::m::receipt::read(const id::room &room_id,
 // m/typing.h
 //
 
+//
+// m::typing::commit::commit
+//
+
 ircd::m::typing::commit::commit(const m::typing &object)
 :ircd::m::event::id::buf{[&object]
 {
@@ -813,6 +817,34 @@ ircd::m::typing::commit::commit(const m::typing &object)
 	return function(object);
 }()}
 {
+}
+
+//
+// m::typing util
+//
+
+void
+ircd::m::typing::for_each(const closure &closure)
+{
+	for_each(closure_bool{[&closure]
+	(const auto &event)
+	{
+		closure(event);
+		return true;
+	}});
+}
+
+bool
+ircd::m::typing::for_each(const closure_bool &closure)
+{
+	using prototype = bool (const m::typing::closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"m_typing", "for_each"
+	};
+
+	return function(closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
