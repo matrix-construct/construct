@@ -32,6 +32,20 @@ struct typist
 ctx::dock timeout_dock;
 std::set<typist, typist> typists;
 
+conf::item<milliseconds>
+timeout_max
+{
+	{ "name",     "ircd.typing.timeout.max" },
+	{ "default",  90 * 1000L                },
+};
+
+conf::item<milliseconds>
+timeout_min
+{
+	{ "name",     "ircd.typing.timeout.min" },
+	{ "default",  15 * 1000L                },
+};
+
 static system_point calc_timesout(milliseconds relative);
 static bool update_state(const m::typing &);
 extern "C" m::event::id::buf commit(const m::typing &edu);
@@ -142,7 +156,9 @@ _handle_edu_m_typing(const m::event &event,
 		at<"user_id"_>(edu)
 	};
 
-	if(user_id.host() != at<"origin"_>(event))
+	// Check if this server can send an edu for this user. We make an exception
+	// for our server to allow the timeout worker to use this codepath.
+	if(!my_host(at<"origin"_>(event)) && user_id.host() != at<"origin"_>(event))
 	{
 		log::dwarning
 		{
@@ -153,6 +169,20 @@ _handle_edu_m_typing(const m::event &event,
 		};
 
 		return;
+	}
+
+	// Update the typing state map for edu's from other servers only; the
+	// state map was already updated for our clients in the committer. Also
+	// condition for skipping redundant updates here too based on the state.
+	if(!my_host(at<"origin"_>(event)))
+	{
+		// Set the (non-spec) timeout field of the edu which remote servers
+		// don't/can't set and then update the state. Use the maximum timeout
+		// value here because the minimum might unfairly time them out.
+		auto _edu(edu);
+		json::get<"timeout"_>(_edu) = milliseconds(timeout_max).count();
+		if(!update_state(_edu))
+			return;
 	}
 
 	log::info
@@ -229,8 +259,10 @@ timeout_check()
 		if(it->timesout < now)
 		{
 			// have to restart the loop if there's a timeout because
-			// the call will update typist state and invalidate iterators.
-			timeout_timeout(*it);
+			// the call will have yields and invalidate iterators etc.
+			const auto copy(*it);
+			typists.erase(it);
+			timeout_timeout(copy);
 			return true;
 		}
 
@@ -240,7 +272,7 @@ timeout_check()
 void
 timeout_timeout(const typist &t)
 {
-	const m::typing event
+	const m::typing edu
 	{
 		{ "user_id",  t.user_id   },
 		{ "room_id",  t.room_id   },
@@ -254,10 +286,13 @@ timeout_timeout(const typist &t)
 		string_view{t.room_id}
 	};
 
-	m::typing::commit
-	{
-		event
-	};
+	m::event event;
+	json::get<"origin"_>(event) = my_host();
+	json::get<"type"_>(event) = "m.typing"_sv;
+
+	// Call this manually because it currently composes the event
+	// sent to clients to stop the typing for this timed out user.
+	_handle_edu_m_typing(event, edu);
 }
 
 //
@@ -362,20 +397,6 @@ update_state(const m::typing &object)
 
 	return transmit;
 }
-
-conf::item<milliseconds>
-timeout_max
-{
-	{ "name",     "ircd.typing.timeout.max" },
-	{ "default",  90 * 1000L                },
-};
-
-conf::item<milliseconds>
-timeout_min
-{
-	{ "name",     "ircd.typing.timeout.min" },
-	{ "default",  15 * 1000L                },
-};
 
 system_point
 calc_timesout(milliseconds timeout)
