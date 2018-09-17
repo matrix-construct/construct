@@ -562,6 +562,19 @@ console_cmd__uptime(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__date(opt &out, const string_view &line)
+{
+	out << ircd::time() << std::endl;
+
+	thread_local char buf[128];
+	const auto now{ircd::now<system_point>()};
+	out << timef(buf, now, ircd::localtime) << std::endl;
+	out << timef(buf, now) << " (UTC)" << std::endl;
+
+	return true;
+}
+
 //
 // mem
 //
