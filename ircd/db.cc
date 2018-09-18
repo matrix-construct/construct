@@ -1430,6 +1430,9 @@ ircd::db::database::column::column(database *const &d,
 	// Table options
 	//
 
+	// Setup the block size
+	table_opts.block_size = this->descriptor.block_size;
+
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
 	if(cache_size != 0)

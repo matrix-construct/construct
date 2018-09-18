@@ -53,4 +53,11 @@ struct ircd::db::database::descriptor
 	/// were first found from values in another column, where if the first
 	/// column missed there'd be no reason to query this column.
 	bool expect_queries_hit { false };
+
+	/// Data block size for uncompressed data. Compression will make the
+	/// block smaller when it IO's to and from disk. Smaller blocks may be
+	/// more space and query overhead if values exceed this size. Larger
+	/// blocks will read and cache unrelated data if values are smaller
+	/// than this size.
+	size_t block_size { 512 };
 };
