@@ -3286,6 +3286,17 @@ ircd::net::dns::resolver::~resolver()
 noexcept
 {
 	ns.close();
+	while(!tags.empty())
+	{
+		log::warning
+		{
+			log, "Waiting for %zu unfinished DNS resolutions",
+			tags.size()
+		};
+
+		ctx::sleep(3);
+	}
+
 	sendq_context.interrupt();
 	timeout_context.interrupt();
 	assert(tags.empty());
@@ -3388,7 +3399,7 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 	};
 
 	tag.last = steady_point{};
-	if(tag.tries < size_t(retry_max))
+	if(ns.is_open() && tag.tries < size_t(retry_max))
 	{
 		submit(tag);
 		return false;
