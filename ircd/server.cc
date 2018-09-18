@@ -306,13 +306,16 @@ ircd::server::cancel(request &request)
 	};
 
 /*
-	log.debug("cancel request(%p) tag(%p) commit:%d w:%zu hr:%zu cr:%zu",
-	          &request,
-	          &tag,
-	          tag.committed(),
-	          tag.state.written,
-	          tag.state.head_read,
-	          tag.state.content_read);
+	log::debug
+	{
+		log, "cancel request(%p) tag(%p) commit:%d w:%zu hr:%zu cr:%zu",
+		&request,
+		&tag,
+		tag.committed(),
+		tag.state.written,
+		tag.state.head_read,
+		tag.state.content_read
+	};
 */
 
 	tag.set_exception(canceled
@@ -642,11 +645,14 @@ ircd::server::peer::handle_open(link &link,
 		if(links.size() == 1)
 			err_set(eptr);
 
-		log.derror("peer(%p) link(%p) [%s]: open: %s",
-		           this,
-		           &link,
-		           string(remote),
-		           what(eptr));
+		log::derror
+		{
+			log, "peer(%p) link(%p) [%s]: open: %s",
+			this,
+			&link,
+			string(remote),
+			what(eptr)
+		};
 
 		if(op_fini)
 		{
@@ -666,11 +672,14 @@ ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
 {
 	if(eptr)
-		log.derror("peer(%p) link(%p) [%s]: close: %s",
-		           this,
-		           &link,
-		           string(remote),
-		           what(eptr));
+		log::derror
+		{
+			log, "peer(%p) link(%p) [%s]: close: %s",
+			this,
+			&link,
+			string(remote),
+			what(eptr)
+		};
 
 	if(link.finished())
 		handle_finished(link);
@@ -682,10 +691,13 @@ ircd::server::peer::handle_error(link &link,
 {
 	assert(bool(eptr));
 	link.cancel_committed(eptr);
-	log.derror("peer(%p) link(%p): %s",
-	           this,
-	           &link,
-	           what(eptr));
+	log::derror
+	{
+		log, "peer(%p) link(%p): %s",
+		this,
+		&link,
+		what(eptr)
+	};
 
 	link.close(net::dc::RST);
 }
@@ -711,11 +723,14 @@ ircd::server::peer::handle_error(link &link,
 	else if(ec.category() == get_misc_category()) switch(ec.value())
 	{
 		case asio::error::eof:
-			log.debug("peer(%p) link(%p) [%s]: %s",
-			          this,
-			          &link,
-			          string(remote),
-			          e.what());
+			log::debug
+			{
+				log, "peer(%p) link(%p) [%s]: %s",
+				this,
+				&link,
+				string(remote),
+				e.what()
+			};
 
 			link.close(net::close_opts_default);
 			return;
@@ -724,11 +739,14 @@ ircd::server::peer::handle_error(link &link,
 			break;
 	}
 
-	log.derror("peer(%p) link(%p) [%s]: error: %s",
-	           this,
-	           &link,
-	           string(remote),
-	           e.what());
+	log::derror
+	{
+		log, "peer(%p) link(%p) [%s]: error: %s",
+		this,
+		&link,
+		string(remote),
+		e.what()
+	};
 
 	link.cancel_committed(std::make_exception_ptr(e));
 	link.close(net::dc::RST);
@@ -754,27 +772,33 @@ ircd::server::peer::handle_tag_done(link &link,
                                     tag &tag)
 noexcept try
 {
-	log.debug("peer(%p) link(%p) tag(%p) done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
-	          this,
-	          &link,
-	          &tag,
-	          tag.write_size(),
-	          tag.read_size(),
-	          tag.state.head_read,
-	          tag.state.content_read,
-	          tag.state.content_length,
-	          link.tag_count() - 1);
+	log::debug
+	{
+		log, "peer(%p) link(%p) tag(%p) done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+		this,
+		&link,
+		&tag,
+		tag.write_size(),
+		tag.read_size(),
+		tag.state.head_read,
+		tag.state.content_read,
+		tag.state.content_length,
+		link.tag_count() - 1
+	};
 
 	if(link.tag_committed() >= link.tag_commit_max())
 		link.wait_writable();
 }
 catch(const std::exception &e)
 {
-	log.critical("peer(%p) link(%p) tag(%p) done; error: %s",
-	             this,
-	             &link,
-	             &tag,
-	             e.what());
+	log::critical
+	{
+		log, "peer(%p) link(%p) tag(%p) done; error: %s",
+		this,
+		&link,
+		&tag,
+		e.what()
+	};
 }
 
 /// This is where we're notified a link has processed its queue and has no
@@ -807,10 +831,13 @@ ircd::server::peer::handle_head_recv(const link &link,
 	if(!server_name && head.server)
 	{
 		server_name = std::string{head.server};
-		log.debug("peer(%p) learned %s is '%s'",
-		          this,
-		          string(remote),
-		          server_name);
+		log::debug
+		{
+			log, "peer(%p) learned %s is '%s'",
+			this,
+			string(remote),
+			server_name
+		};
 	}
 }
 
@@ -846,10 +873,13 @@ ircd::server::peer::disperse_uncommitted(link &link)
 	catch(const std::exception &e)
 	{
 		const auto &tag{*it};
-		log.warning("peer(%p) failed to resubmit tag(%p): %s",
-		            this,
-		            &tag,
-		            e.what());
+		log::warning
+		{
+			log, "peer(%p) failed to resubmit tag(%p): %s",
+			this,
+			&tag,
+			e.what()
+		};
 
 		it = queue.erase(it);
 	}
@@ -870,12 +900,15 @@ ircd::server::peer::del(link &link)
 	}));
 
 	assert(it != end(links));
-	log.debug("peer(%p) removing link(%p) %zu of %zu to %s",
-	          this,
-	          &link,
-	          std::distance(begin(links), it),
-	          links.size(),
-	          string(remote));
+	log::debug
+	{
+		log, "peer(%p) removing link(%p) %zu of %zu to %s",
+		this,
+		&link,
+		std::distance(begin(links), it),
+		links.size(),
+		string(remote)
+	};
 
 	links.erase(it);
 }
@@ -936,9 +969,13 @@ try
 }
 catch(const std::exception &e)
 {
-	log.derror("peer(%p): error: %s",
-	           this,
-	           e.what());
+	log::derror
+	{
+		log, "peer(%p): error: %s",
+		this,
+		e.what()
+	};
+
 	close();
 }
 
@@ -1175,10 +1212,13 @@ ircd::server::link::submit(request &request)
 		             queue.emplace(end(queue), request)
 	};
 /*
-	log.debug("tag(%p) submitted to link(%p) queue: %zu",
-	          &(*it),
-	          this,
-	          tag_count());
+	log::debug
+	{
+		log, "tag(%p) submitted to link(%p) queue: %zu",
+		&(*it),
+		this,
+		tag_count()
+	};
 */
 	if(ready())
 		wait_writable();
@@ -1380,12 +1420,15 @@ ircd::server::link::handle_writable_success()
 		auto &tag{*it};
 		if((tag.abandoned() || tag.canceled()) && !tag.committed())
 		{
-			log.debug("link(%p) discarding canceled:%d abandoned:%d uncommitted tag %zu of %zu",
-			          this,
-			          tag.canceled(),
-			          tag.abandoned(),
-			          tag_committed(),
-			          tag_count());
+			log::debug
+			{
+				log, "link(%p) discarding canceled:%d abandoned:%d uncommitted tag %zu of %zu",
+				this,
+				tag.canceled(),
+				tag.abandoned(),
+				tag_committed(),
+				tag_count()
+			};
 
 			it = queue.erase(it);
 			continue;
@@ -1393,10 +1436,13 @@ ircd::server::link::handle_writable_success()
 
 		if(tag.canceled() && tag.committed() && tag_committed() <= 1)
 		{
-			log.debug("link(%p) closing to interrupt canceled committed tag(%p) of %zu",
-			          this,
-			          &tag,
-			          tag_count());
+			log::debug
+			{
+				log, "link(%p) closing to interrupt canceled committed tag(%p) of %zu",
+				this,
+				&tag,
+				tag_count()
+			};
 
 			close();
 			break;
@@ -1423,13 +1469,16 @@ bool
 ircd::server::link::process_write(tag &tag)
 {
 	if(!tag.committed())
-		log.debug("peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu",
-		          peer,
-		          this,
-		          &tag,
-		          tag_committed(),
-		          tag_count(),
-		          tag.write_size());
+		log::debug
+		{
+			log, "peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu",
+			peer,
+			this,
+			&tag,
+			tag_committed(),
+			tag_count(),
+			tag.write_size()
+		};
 
 	while(tag.write_remaining())
 	{
@@ -1580,10 +1629,13 @@ try
 
 	if(tag.canceled() && tag_committed() <= 1)
 	{
-		log.debug("link(%p) closing to interrupt canceled committed tag(%p) of %zu",
-		          this,
-		          &tag,
-		          tag_count());
+		log::debug
+		{
+			log, "link(%p) closing to interrupt canceled committed tag(%p) of %zu",
+			this,
+			&tag,
+			tag_count()
+		};
 
 		close();
 		return false;
@@ -1709,12 +1761,15 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log.warning("link(%p) socket(%p) to %s discarded %zu of %zd unexpected bytes",
-	            this,
-	            socket.get(),
-	            likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
-	            discarded,
-	            discard);
+	log::warning
+	{
+		log, "link(%p) socket(%p) to %s discarded %zu of %zd unexpected bytes",
+		this,
+		socket.get(),
+		likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
+		discarded,
+		discard
+	};
 
 	// just in case so this doesn't get loopy with discarding zero with
 	// an empty queue...
