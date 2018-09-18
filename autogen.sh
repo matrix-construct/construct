@@ -79,7 +79,7 @@ run_or_die ()
 parse_options "$@"
 
 echo "*** Generating Charybdis build..."
-run_or_die $ACLOCAL -I m4
+run_or_die $ACLOCAL -I tools/m4
 run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER
 run_or_die $AUTOCONF

@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I tools/m4
 
 SUBDIRS = include/ircd
 SUBDIRS += ircd
