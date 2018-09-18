@@ -3116,7 +3116,25 @@ bool
 console_cmd__resource(opt &out, const string_view &line)
 {
 	for(const auto &p : resource::resources)
-		out << p.first << std::endl;
+	{
+		const auto &r(*p.second);
+		out << '`' << p.first << '\''
+		    << (r.flags & resource::DIRECTORY? " DIRECTORY" : "")
+		    << std::endl;
+
+		for(const auto &mp : p.second->methods)
+		{
+			const auto &m(*mp.second);
+			out << mp.first
+			    << (m.opts.flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
+			    << (m.opts.flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
+			    << (m.opts.flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
+			    << (m.opts.flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
+			    << std::endl;
+		}
+
+		out << std::endl;
+	}
 
 	return true;
 }
