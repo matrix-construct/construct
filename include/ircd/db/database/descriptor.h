@@ -60,4 +60,7 @@ struct ircd::db::database::descriptor
 	/// blocks will read and cache unrelated data if values are smaller
 	/// than this size.
 	size_t block_size { 512 };
+
+	/// User given compaction callback surface.
+	db::compactor compactor {};
 };

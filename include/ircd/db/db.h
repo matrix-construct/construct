@@ -61,6 +61,7 @@ enum class ircd::db::pos
 
 #include "delta.h"
 #include "comparator.h"
+#include "compactor.h"
 #include "prefix.h"
 #include "merge.h"
 #include "database/rocksdb.h"

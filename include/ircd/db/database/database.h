@@ -76,6 +76,7 @@ struct ircd::db::database
 	struct snapshot;
 	struct comparator;
 	struct prefix_transform;
+	struct compaction_filter;
 	struct column;
 	struct env;
 	struct cache;

@@ -26,10 +26,12 @@
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/table.h>
 #include <rocksdb/sst_file_manager.h>
+#include <rocksdb/compaction_filter.h>
 
 // ircd::db interfaces requiring complete RocksDB (frontside).
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
+#include <ircd/db/database/compaction_filter.h>
 #include <ircd/db/database/mergeop.h>
 #include <ircd/db/database/events.h>
 #include <ircd/db/database/stats.h>
@@ -1389,6 +1391,7 @@ ircd::db::database::column::column(database *const &d,
 ,descriptor{descriptor}
 ,cmp{d, this->descriptor.cmp}
 ,prefix{d, this->descriptor.prefix}
+,cfilter{this, this->descriptor.compactor}
 ,handle
 {
 	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
@@ -1426,6 +1429,9 @@ ircd::db::database::column::column(database *const &d,
 			&this->prefix, [](const rocksdb::SliceTransform *) {}
 		};
 
+	// Set the compaction filter
+	this->options.compaction_filter = &this->cfilter;
+
 	//
 	// Table options
 	//
@@ -1456,6 +1462,9 @@ ircd::db::database::column::column(database *const &d,
 	//
 	// Misc options
 	//
+
+	// More stats reported by the rocksdb.stats property.
+	this->options.report_bg_io_stats = true;
 
 	// Set the compaction style; we don't override this in the descriptor yet.
 	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
@@ -2242,6 +2251,105 @@ noexcept
 	assert(bool(c));
 	return c->TEST_mark_as_data_block(key, charge);
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::compaction_filter
+//
+
+ircd::db::database::compaction_filter::compaction_filter(column *const &c,
+                                                         db::compactor user)
+:c{c}
+,d{c->d}
+,user{std::move(user)}
+{
+}
+
+ircd::db::database::compaction_filter::~compaction_filter()
+noexcept
+{
+}
+
+rocksdb::CompactionFilter::Decision
+ircd::db::database::compaction_filter::FilterV2(const int level,
+                                                const Slice &key,
+                                                const ValueType type,
+                                                const Slice &oldval,
+                                                std::string *const newval,
+                                                std::string *const skip)
+const
+{
+	#ifdef RB_DEBUG_DB_ENV
+	const auto typestr
+	{
+		type == kValue?
+			"VALUE"_sv:
+		type == kMergeOperand?
+			"MERGE"_sv:
+			"BLOB"_sv
+	};
+
+	log::debug
+	{
+		log, "'%s':'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
+		d->name,
+		c->name,
+		level,
+		size(key),
+		data(key),
+		typestr,
+		size(oldval),
+		data(oldval),
+		(const void *)newval,
+		(const void *)skipuntil
+	};
+	#endif
+
+	db::op ret
+	{
+		db::op::GET
+	};
+
+	switch(type)
+	{
+		case ValueType::kValue:
+			if(user.value)
+				ret = user.value(level, slice(key), slice(oldval), newval, skip);
+			break;
+
+		case ValueType::kMergeOperand:
+			if(user.merge)
+				ret = user.merge(level, slice(key), slice(oldval), newval, skip);
+			break;
+
+		case ValueType::kBlobIndex:
+			break;
+	}
+
+	switch(ret)
+	{
+		default:
+		case db::op::GET:            return Decision::kKeep;
+		case db::op::SET:            return Decision::kChangeValue;
+		case db::op::DELETE:         return Decision::kRemove;
+		case db::op::DELETE_RANGE:   return Decision::kRemoveAndSkipUntil;
+	}
+}
+
+bool
+ircd::db::database::compaction_filter::IgnoreSnapshots()
+const
+{
+	return false;
+}
+
+const char *
+ircd::db::database::compaction_filter::Name()
+const
+{
+	assert(c);
+	return db::name(*c).c_str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
