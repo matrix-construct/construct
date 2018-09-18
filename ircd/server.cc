@@ -920,6 +920,9 @@ try
 	// The hostname in open_opts should still reference this object's string.
 	assert(host(open_opts.hostport).data() == this->hostname.data());
 
+	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+		op_fini = true;
+
 	if(unlikely(finished()))
 		return handle_finished();
 
