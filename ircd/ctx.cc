@@ -1024,14 +1024,13 @@ noexcept
 	join();
 
 	assert(ctxs.empty());
-	assert(queue.empty());
+	assert(q.empty());
 }
 
 void
 ircd::ctx::pool::operator()(closure closure)
 {
-	queue.push_back(std::move(closure));
-	dock.notify();
+	q.emplace(std::move(closure));
 }
 
 void
@@ -1119,10 +1118,10 @@ void
 ircd::ctx::pool::next()
 try
 {
-	dock.wait([this]
+	const auto func
 	{
-		return !queue.empty();
-	});
+		std::move(q.pop())
+	};
 
 	++working;
 	const unwind avail([this]
@@ -1130,8 +1129,6 @@ try
 		--working;
 	});
 
-	const auto func(std::move(queue.front()));
-	queue.pop_front();
 	func();
 }
 catch(const interrupted &e)
