@@ -27,11 +27,6 @@ configure
 stamp-h1
 scripts/*.tar.bz2
 scripts/*.tar.gz
-tools/charybdis-mkpasswd
-tools/charybdis-mkfingerprint
-tools/genssl
-tools/mkpasswd
-tools/viconf
 /libtool
 Makefile.in
 tools/m4/argz.m4
