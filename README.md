@@ -10,7 +10,9 @@
 
 # This — is The **Construct**
 
-<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
+<a href="share/webapp">
+	<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
+</a>
 
 #### Internet Relay Chat daemon: *Matrix Construct*
 
@@ -28,7 +30,9 @@ real-time communication for free and open source software: a *federation of netw
 	IRCd has been rewritten for the global federation of networks &nbsp;&nbsp&nbsp;
 </h4>
 
-<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
+<a href="https://github.com/vector-im/riot-web/">
+	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
+</a>
 
 **This is the Construct** — the first Matrix server written in C++. It is designed to be
 fast and highly scalable, and to be community developed by volunteer contributors over
