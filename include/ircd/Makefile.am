@@ -1,8 +1,17 @@
 AUTOMAKE_OPTIONS = foreign
 
-AM_CPPFLAGS =                 \
-    -I$(top_srcdir)/include   \
-    @BOOST_CPPFLAGS@          \
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@ROCKSDB_CPPFLAGS@ \
+	@JS_CPPFLAGS@ \
+	@BOOST_CPPFLAGS@ \
+	@SSL_CPPFLAGS@ \
+	@CRYPTO_CPPFLAGS@ \
+	@SODIUM_CPPFLAGS@ \
+	@MAGIC_CPPFLAGS@ \
+	@SNAPPY_CPPFLAGS@ \
+	@LZ4_CPPFLAGS@ \
+	@Z_CPPFLAGS@ \
     ###
 
 AM_CXXFLAGS = \
