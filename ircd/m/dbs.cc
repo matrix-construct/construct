@@ -573,6 +573,13 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 // Database descriptors
 //
 
+decltype(ircd::m::dbs::desc::events__event_idx__block__size)
+ircd::m::dbs::desc::events__event_idx__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_idx.block.size" },
+	{ "default",  512L                                      },
+};
+
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
 ircd::m::dbs::desc::events__event_idx__cache__size
 {
@@ -638,6 +645,9 @@ ircd::m::dbs::desc::events__event_idx
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__event_idx__block__size),
 };
 
 decltype(ircd::m::dbs::desc::events__event_bad__cache__size)
@@ -720,6 +730,13 @@ ircd::m::dbs::desc::events__event_bad
 //
 // room_head
 //
+
+decltype(ircd::m::dbs::desc::events__room_head__block__size)
+ircd::m::dbs::desc::events__room_head__block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_head.block.size" },
+	{ "default",  512L                                      },
+};
 
 decltype(ircd::m::dbs::desc::events__room_head__cache__size)
 ircd::m::dbs::desc::events__room_head__cache__size
@@ -829,11 +846,21 @@ ircd::m::dbs::desc::events__room_head
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__room_head__block__size),
 };
 
 //
 // room_events
 //
+
+decltype(ircd::m::dbs::desc::events__room_events__block__size)
+ircd::m::dbs::desc::events__room_events__block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_events.block.size" },
+	{ "default",  8192L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__room_events__cache__size)
 ircd::m::dbs::desc::events__room_events__cache__size
@@ -1082,11 +1109,21 @@ ircd::m::dbs::desc::events__room_events
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__room_events__block__size),
 };
 
 //
 // joined sequential
 //
+
+decltype(ircd::m::dbs::desc::events__room_joined__block__size)
+ircd::m::dbs::desc::events__room_joined__block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_joined.block.size" },
+	{ "default",  4096L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__room_joined__cache__size)
 ircd::m::dbs::desc::events__room_joined__cache__size
@@ -1219,11 +1256,21 @@ ircd::m::dbs::desc::events__room_joined
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__room_joined__block__size),
 };
 
 //
 // state sequential
 //
+
+decltype(ircd::m::dbs::desc::events__room_state__block__size)
+ircd::m::dbs::desc::events__room_state__block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_state.block.size" },
+	{ "default",  8192L                                      },
+};
 
 decltype(ircd::m::dbs::desc::events__room_state__cache__size)
 ircd::m::dbs::desc::events__room_state__cache__size
@@ -1354,11 +1401,21 @@ ircd::m::dbs::desc::events__room_state
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__room_state__block__size),
 };
 
 //
 // state node
 //
+
+decltype(ircd::m::dbs::desc::events__state_node__block__size)
+ircd::m::dbs::desc::events__state_node__block__size
+{
+	{ "name",     "ircd.m.dbs.events._state_node.block.size" },
+	{ "default",  512L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__state_node__cache__size)
 ircd::m::dbs::desc::events__state_node__cache__size
@@ -1426,6 +1483,9 @@ ircd::m::dbs::desc::events__state_node
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__state_node__block__size),
 };
 
 //
@@ -1435,6 +1495,13 @@ ircd::m::dbs::desc::events__state_node
 //
 // event_id
 //
+
+decltype(ircd::m::dbs::desc::events__event_id__block__size)
+ircd::m::dbs::desc::events__event_id__block__size
+{
+	{ "name",     "ircd.m.dbs.events.event_id.block.size"  },
+	{ "default",  512L                                     },
+};
 
 decltype(ircd::m::dbs::desc::events__event_id__cache__size)
 ircd::m::dbs::desc::events__event_id__cache__size
@@ -1508,11 +1575,21 @@ ircd::m::dbs::desc::events_event_id
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__event_id__block__size),
 };
 
 //
 // type
 //
+
+decltype(ircd::m::dbs::desc::events__type__block__size)
+ircd::m::dbs::desc::events__type__block__size
+{
+	{ "name",     "ircd.m.dbs.events.type.block.size"  },
+	{ "default",  512L                                 },
+};
 
 decltype(ircd::m::dbs::desc::events__type__cache__size)
 ircd::m::dbs::desc::events__type__cache__size
@@ -1587,11 +1664,21 @@ ircd::m::dbs::desc::events_type
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__type__block__size),
 };
 
 //
 // content
 //
+
+decltype(ircd::m::dbs::desc::events__content__block__size)
+ircd::m::dbs::desc::events__content__block__size
+{
+	{ "name",     "ircd.m.dbs.events.content.block.size"  },
+	{ "default",  2048L                                   },
+};
 
 decltype(ircd::m::dbs::desc::events__content__cache__size)
 ircd::m::dbs::desc::events__content__cache__size
@@ -1666,11 +1753,21 @@ ircd::m::dbs::desc::events_content
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__content__block__size),
 };
 
 //
 // redacts
 //
+
+decltype(ircd::m::dbs::desc::events__redacts__block__size)
+ircd::m::dbs::desc::events__redacts__block__size
+{
+	{ "name",     "ircd.m.dbs.events.redacts.block.size"  },
+	{ "default",  512L                                    },
+};
 
 decltype(ircd::m::dbs::desc::events__redacts__cache__size)
 ircd::m::dbs::desc::events__redacts__cache__size
@@ -1739,11 +1836,21 @@ ircd::m::dbs::desc::events_redacts
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__redacts__block__size),
 };
 
 //
 // room_id
 //
+
+decltype(ircd::m::dbs::desc::events__room_id__block__size)
+ircd::m::dbs::desc::events__room_id__block__size
+{
+	{ "name",     "ircd.m.dbs.events.room_id.block.size"  },
+	{ "default",  512L                                    },
+};
 
 decltype(ircd::m::dbs::desc::events__room_id__cache__size)
 ircd::m::dbs::desc::events__room_id__cache__size
@@ -1817,11 +1924,21 @@ ircd::m::dbs::desc::events_room_id
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__room_id__block__size),
 };
 
 //
 // sender
 //
+
+decltype(ircd::m::dbs::desc::events__sender__block__size)
+ircd::m::dbs::desc::events__sender__block__size
+{
+	{ "name",     "ircd.m.dbs.events.sender.block.size"  },
+	{ "default",  512L                                   },
+};
 
 decltype(ircd::m::dbs::desc::events__sender__cache__size)
 ircd::m::dbs::desc::events__sender__cache__size
@@ -1895,11 +2012,21 @@ ircd::m::dbs::desc::events_sender
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__sender__block__size),
 };
 
 //
 // state_key
 //
+
+decltype(ircd::m::dbs::desc::events__state_key__block__size)
+ircd::m::dbs::desc::events__state_key__block__size
+{
+	{ "name",     "ircd.m.dbs.events.state_key.block.size"  },
+	{ "default",  512L                                      },
+};
 
 decltype(ircd::m::dbs::desc::events__state_key__cache__size)
 ircd::m::dbs::desc::events__state_key__cache__size
@@ -1975,11 +2102,21 @@ ircd::m::dbs::desc::events_state_key
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__state_key__block__size),
 };
 
 //
 // origin
 //
+
+decltype(ircd::m::dbs::desc::events__origin__block__size)
+ircd::m::dbs::desc::events__origin__block__size
+{
+	{ "name",     "ircd.m.dbs.events.origin.block.size"  },
+	{ "default",  512L                                   },
+};
 
 decltype(ircd::m::dbs::desc::events__origin__cache__size)
 ircd::m::dbs::desc::events__origin__cache__size
@@ -2050,11 +2187,21 @@ ircd::m::dbs::desc::events_origin
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__origin__block__size),
 };
 
 //
 // origin_server_ts
 //
+
+decltype(ircd::m::dbs::desc::events__origin_server_ts__block__size)
+ircd::m::dbs::desc::events__origin_server_ts__block__size
+{
+	{ "name",     "ircd.m.dbs.events.origin_server_ts.block.size"  },
+	{ "default",  256L                                             },
+};
 
 decltype(ircd::m::dbs::desc::events__origin_server_ts__cache__size)
 ircd::m::dbs::desc::events__origin_server_ts__cache__size
@@ -2129,11 +2276,21 @@ ircd::m::dbs::desc::events_origin_server_ts
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__origin_server_ts__block__size),
 };
 
 //
 // signatures
 //
+
+decltype(ircd::m::dbs::desc::events__signatures__block__size)
+ircd::m::dbs::desc::events__signatures__block__size
+{
+	{ "name",     "ircd.m.dbs.events.signatures.block.size"  },
+	{ "default",  512L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__signatures__cache__size)
 ircd::m::dbs::desc::events__signatures__cache__size
@@ -2202,11 +2359,21 @@ ircd::m::dbs::desc::events_signatures
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__signatures__block__size),
 };
 
 //
 // auth_events
 //
+
+decltype(ircd::m::dbs::desc::events__auth_events__block__size)
+ircd::m::dbs::desc::events__auth_events__block__size
+{
+	{ "name",     "ircd.m.dbs.events.auth_events.block.size"  },
+	{ "default",  512L                                        },
+};
 
 decltype(ircd::m::dbs::desc::events__auth_events__cache__size)
 ircd::m::dbs::desc::events__auth_events__cache__size
@@ -2274,11 +2441,21 @@ ircd::m::dbs::desc::events_auth_events
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__auth_events__block__size),
 };
 
 //
 // depth
 //
+
+decltype(ircd::m::dbs::desc::events__depth__block__size)
+ircd::m::dbs::desc::events__depth__block__size
+{
+	{ "name",     "ircd.m.dbs.events.depth.block.size"  },
+	{ "default",  256L                                  },
+};
 
 decltype(ircd::m::dbs::desc::events__depth__cache__size)
 ircd::m::dbs::desc::events__depth__cache__size
@@ -2346,11 +2523,21 @@ ircd::m::dbs::desc::events_depth
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__depth__block__size),
 };
 
 //
 // hashes
 //
+
+decltype(ircd::m::dbs::desc::events__hashes__block__size)
+ircd::m::dbs::desc::events__hashes__block__size
+{
+	{ "name",     "ircd.m.dbs.events.hashes.block.size"  },
+	{ "default",  512L                                   },
+};
 
 decltype(ircd::m::dbs::desc::events__hashes__cache__size)
 ircd::m::dbs::desc::events__hashes__cache__size
@@ -2418,11 +2605,21 @@ ircd::m::dbs::desc::events_hashes
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__hashes__block__size),
 };
 
 //
 // membership
 //
+
+decltype(ircd::m::dbs::desc::events__membership__block__size)
+ircd::m::dbs::desc::events__membership__block__size
+{
+	{ "name",     "ircd.m.dbs.events.membership.block.size"  },
+	{ "default",  256L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__membership__cache__size)
 ircd::m::dbs::desc::events__membership__cache__size
@@ -2490,11 +2687,21 @@ ircd::m::dbs::desc::events_membership
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__membership__block__size),
 };
 
 //
 // prev_events
 //
+
+decltype(ircd::m::dbs::desc::events__prev_events__block__size)
+ircd::m::dbs::desc::events__prev_events__block__size
+{
+	{ "name",     "ircd.m.dbs.events.prev_events.block.size"  },
+	{ "default",  512L                                        },
+};
 
 decltype(ircd::m::dbs::desc::events__prev_events__cache__size)
 ircd::m::dbs::desc::events__prev_events__cache__size
@@ -2562,11 +2769,21 @@ ircd::m::dbs::desc::events_prev_events
 
 	// expect queries hit
 	true,
+
+	// block size
+	size_t(events__prev_events__block__size),
 };
 
 //
 // prev_state
 //
+
+decltype(ircd::m::dbs::desc::events__prev_state__block__size)
+ircd::m::dbs::desc::events__prev_state__block__size
+{
+	{ "name",     "ircd.m.dbs.events.prev_state.block.size"  },
+	{ "default",  256L                                       },
+};
 
 decltype(ircd::m::dbs::desc::events__prev_state__cache__size)
 ircd::m::dbs::desc::events__prev_state__cache__size
@@ -2634,6 +2851,9 @@ ircd::m::dbs::desc::events_prev_state
 
 	// expect queries hit
 	false,
+
+	// block size
+	size_t(events__prev_state__block__size),
 };
 
 namespace ircd::m::dbs::desc
