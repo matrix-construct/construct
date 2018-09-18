@@ -61,6 +61,7 @@ struct ircd::m::hook::base::site
 	std::unique_ptr<struct maps> maps;
 	std::set<base *> hooks;
 	size_t matchers {0};
+	bool exceptions {true};
 
 	friend class base;
 	string_view name() const;
@@ -158,6 +159,9 @@ try
 }
 catch(const std::exception &e)
 {
+	if(exceptions)
+		throw;
+
 	log::critical
 	{
 		"Unhandled hookfn(%p) %s error :%s",

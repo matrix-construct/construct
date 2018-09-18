@@ -3200,6 +3200,10 @@ ircd::m::hook::base::site::site(const json::members &members)
 {
 	std::make_unique<struct maps>()
 }
+,exceptions
+{
+	feature.get<bool>("exceptions", true)
+}
 {
 	for(const auto &site : list)
 		if(site->name() == name() && site != this)
@@ -3349,6 +3353,9 @@ try
 }
 catch(const std::exception &e)
 {
+	if(exceptions)
+		throw;
+
 	log::critical
 	{
 		"Unhandled hookfn(%p) %s error :%s",
