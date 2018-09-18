@@ -78,7 +78,7 @@ media_blocks_descriptor
 	bool(media_blocks_cache_comp_enable)? -1 : 0,
 
 	// bloom_bits
-	10,
+	0,
 
 	// expect hit
 	true,

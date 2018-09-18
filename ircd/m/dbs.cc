@@ -1479,7 +1479,7 @@ ircd::m::dbs::desc::events__state_node
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	16,
+	0,
 
 	// expect queries hit
 	true,
