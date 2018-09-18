@@ -72,8 +72,19 @@ media_blocks_descriptor
 	{},      // options
 	{},      // comparaor
 	{},      // prefix transform
+
 	bool(media_blocks_cache_enable)? -1 : 0,
+
 	bool(media_blocks_cache_comp_enable)? -1 : 0,
+
+	// bloom_bits
+	10,
+
+	// expect hit
+	true,
+
+	// block_size
+	32_KiB,
 };
 
 decltype(media_description)
