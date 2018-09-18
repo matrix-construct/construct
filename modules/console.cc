@@ -3095,7 +3095,7 @@ console_cmd__client(opt &out, const string_view &line)
 bool
 console_cmd__client__clear(opt &out, const string_view &line)
 {
-	client::interrupt_all();
+	client::terminate_all();
 	client::close_all();
 	client::wait_all();
 	return true;
