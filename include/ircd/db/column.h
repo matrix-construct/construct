@@ -18,7 +18,7 @@ namespace ircd::db
 	// Information about a column
 	uint32_t id(const column &);
 	const std::string &name(const column &);
-	const database::descriptor &describe(const column &);
+	const descriptor &describe(const column &);
 	size_t file_count(const column &);
 	size_t bytes(const column &);
 
@@ -107,7 +107,7 @@ struct ircd::db::column
   public:
 	explicit operator const database &() const;
 	explicit operator const database::column &() const;
-	explicit operator const database::descriptor &() const;
+	explicit operator const descriptor &() const;
 
 	explicit operator database &();
 	explicit operator database::column &();

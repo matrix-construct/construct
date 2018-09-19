@@ -606,7 +606,7 @@ ircd::m::dbs::desc::events__event_idx__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__event_idx
 {
 	// name
@@ -676,7 +676,7 @@ ircd::m::dbs::desc::events__event_bad__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__event_bad
 {
 	// name
@@ -810,7 +810,7 @@ ircd::m::dbs::room_head_key(const string_view &amalgam)
 /// At that time the prev_events of that event will be iterated and DELETE
 /// ops will be appended in the transaction.
 ///
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_head
 {
 	// name
@@ -1070,7 +1070,7 @@ ircd::m::dbs::room_events_key(const string_view &amalgam)
 /// for the time being, we pay the cost of an extra query to events_depth and
 /// find that missing piece to make the exact query with all three key parts.
 ///
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_events
 {
 	// name
@@ -1217,7 +1217,7 @@ ircd::m::dbs::room_joined_key(const string_view &amalgam)
 	};
 }
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_joined
 {
 	// name
@@ -1365,7 +1365,7 @@ ircd::m::dbs::room_state_key(const string_view &amalgam)
 	};
 }
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_state
 {
 	// name
@@ -1447,7 +1447,7 @@ ircd::m::dbs::desc::events__state_node__cache_comp__size
 /// of the value, which serves as the ID of the node when referenced in
 /// the tree. see: m/state.h for details.
 ///
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__state_node
 {
 	// name
@@ -1531,7 +1531,7 @@ ircd::m::dbs::desc::events__event_id__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_event_id
 {
 	// name
@@ -1619,7 +1619,7 @@ ircd::m::dbs::desc::events__type__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_type
 {
 	// name
@@ -1708,7 +1708,7 @@ ircd::m::dbs::desc::events__content__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_content
 {
 	// name
@@ -1797,7 +1797,7 @@ ircd::m::dbs::desc::events__redacts__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_redacts
 {
 	// name
@@ -1880,7 +1880,7 @@ ircd::m::dbs::desc::events__room_id__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_room_id
 {
 	// name
@@ -1968,7 +1968,7 @@ ircd::m::dbs::desc::events__sender__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_sender
 {
 	// name
@@ -2056,7 +2056,7 @@ ircd::m::dbs::desc::events__state_key__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_state_key
 {
 	// name
@@ -2146,7 +2146,7 @@ ircd::m::dbs::desc::events__origin__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_origin
 {
 	// name
@@ -2231,7 +2231,7 @@ ircd::m::dbs::desc::events__origin_server_ts__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_origin_server_ts
 {
 	// name
@@ -2320,7 +2320,7 @@ ircd::m::dbs::desc::events__signatures__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_signatures
 {
 	// name
@@ -2403,7 +2403,7 @@ ircd::m::dbs::desc::events__auth_events__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_auth_events
 {
 	// name
@@ -2485,7 +2485,7 @@ ircd::m::dbs::desc::events__depth__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_depth
 {
 	// name
@@ -2567,7 +2567,7 @@ ircd::m::dbs::desc::events__hashes__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_hashes
 {
 	// name
@@ -2649,7 +2649,7 @@ ircd::m::dbs::desc::events__membership__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_membership
 {
 	// name
@@ -2731,7 +2731,7 @@ ircd::m::dbs::desc::events__prev_events__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_prev_events
 {
 	// name
@@ -2813,7 +2813,7 @@ ircd::m::dbs::desc::events__prev_state__cache_comp__size
 	}
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_prev_state
 {
 	// name
@@ -2858,10 +2858,10 @@ ircd::m::dbs::desc::events_prev_state
 
 namespace ircd::m::dbs::desc
 {
-	extern const ircd::database::descriptor events__default;
+	extern const ircd::db::descriptor events__default;
 };
 
-const ircd::database::descriptor
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__default
 {
 	// name
@@ -2899,7 +2899,7 @@ ircd::m::dbs::desc::events__default
 	false,
 };
 
-const ircd::database::description
+const ircd::db::description
 ircd::m::dbs::desc::events
 {
 	// Requirement of RocksDB/LevelDB

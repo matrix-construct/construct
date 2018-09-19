@@ -90,7 +90,7 @@ struct ircd::m::dbs::write_opts
 namespace ircd::m::dbs::desc
 {
 	// Full description
-	extern const database::description events;
+	extern const db::description events;
 
 	//
 	// Direct columns
@@ -99,82 +99,82 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__auth_events__block__size;
 	extern conf::item<size_t> events__auth_events__cache__size;
 	extern conf::item<size_t> events__auth_events__cache_comp__size;
-	extern const database::descriptor events_auth_events;
+	extern const db::descriptor events_auth_events;
 
 	extern conf::item<size_t> events__content__block__size;
 	extern conf::item<size_t> events__content__cache__size;
 	extern conf::item<size_t> events__content__cache_comp__size;
-	extern const database::descriptor events_content;
+	extern const db::descriptor events_content;
 
 	extern conf::item<size_t> events__depth__block__size;
 	extern conf::item<size_t> events__depth__cache__size;
 	extern conf::item<size_t> events__depth__cache_comp__size;
-	extern const database::descriptor events_depth;
+	extern const db::descriptor events_depth;
 
 	extern conf::item<size_t> events__event_id__block__size;
 	extern conf::item<size_t> events__event_id__cache__size;
 	extern conf::item<size_t> events__event_id__cache_comp__size;
-	extern const database::descriptor events_event_id;
+	extern const db::descriptor events_event_id;
 
 	extern conf::item<size_t> events__hashes__block__size;
 	extern conf::item<size_t> events__hashes__cache__size;
 	extern conf::item<size_t> events__hashes__cache_comp__size;
-	extern const database::descriptor events_hashes;
+	extern const db::descriptor events_hashes;
 
 	extern conf::item<size_t> events__membership__block__size;
 	extern conf::item<size_t> events__membership__cache__size;
 	extern conf::item<size_t> events__membership__cache_comp__size;
-	extern const database::descriptor events_membership;
+	extern const db::descriptor events_membership;
 
 	extern conf::item<size_t> events__origin__block__size;
 	extern conf::item<size_t> events__origin__cache__size;
 	extern conf::item<size_t> events__origin__cache_comp__size;
-	extern const database::descriptor events_origin;
+	extern const db::descriptor events_origin;
 
 	extern conf::item<size_t> events__origin_server_ts__block__size;
 	extern conf::item<size_t> events__origin_server_ts__cache__size;
 	extern conf::item<size_t> events__origin_server_ts__cache_comp__size;
-	extern const database::descriptor events_origin_server_ts;
+	extern const db::descriptor events_origin_server_ts;
 
 	extern conf::item<size_t> events__prev_events__block__size;
 	extern conf::item<size_t> events__prev_events__cache__size;
 	extern conf::item<size_t> events__prev_events__cache_comp__size;
-	extern const database::descriptor events_prev_events;
+	extern const db::descriptor events_prev_events;
 
 	extern conf::item<size_t> events__prev_state__block__size;
 	extern conf::item<size_t> events__prev_state__cache__size;
 	extern conf::item<size_t> events__prev_state__cache_comp__size;
-	extern const database::descriptor events_prev_state;
+	extern const db::descriptor events_prev_state;
 
 	extern conf::item<size_t> events__redacts__block__size;
 	extern conf::item<size_t> events__redacts__cache__size;
 	extern conf::item<size_t> events__redacts__cache_comp__size;
-	extern const database::descriptor events_redacts;
+	extern const db::descriptor events_redacts;
 
 	extern conf::item<size_t> events__room_id__block__size;
 	extern conf::item<size_t> events__room_id__cache__size;
 	extern conf::item<size_t> events__room_id__cache_comp__size;
-	extern const database::descriptor events_room_id;
+	extern const db::descriptor events_room_id;
 
 	extern conf::item<size_t> events__sender__block__size;
 	extern conf::item<size_t> events__sender__cache__size;
 	extern conf::item<size_t> events__sender__cache_comp__size;
-	extern const database::descriptor events_sender;
+	extern const db::descriptor events_sender;
 
 	extern conf::item<size_t> events__signatures__block__size;
 	extern conf::item<size_t> events__signatures__cache__size;
 	extern conf::item<size_t> events__signatures__cache_comp__size;
-	extern const database::descriptor events_signatures;
+	extern const db::descriptor events_signatures;
 
 	extern conf::item<size_t> events__state_key__block__size;
 	extern conf::item<size_t> events__state_key__cache__size;
 	extern conf::item<size_t> events__state_key__cache_comp__size;
-	extern const database::descriptor events_state_key;
+	extern const db::descriptor events_state_key;
 
 	extern conf::item<size_t> events__type__block__size;
 	extern conf::item<size_t> events__type__cache__size;
 	extern conf::item<size_t> events__type__cache_comp__size;
-	extern const database::descriptor events_type;
+	extern const db::descriptor events_type;
 
 	//
 	// Metadata columns
@@ -184,19 +184,19 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_idx__block__size;
 	extern conf::item<size_t> events__event_idx__cache__size;
 	extern conf::item<size_t> events__event_idx__cache_comp__size;
-	extern const database::descriptor events__event_idx;
+	extern const db::descriptor events__event_idx;
 
 	// events blacklist
 	extern conf::item<size_t> events__event_bad__block__size;
 	extern conf::item<size_t> events__event_bad__cache__size;
 	extern conf::item<size_t> events__event_bad__cache_comp__size;
-	extern const database::descriptor events__event_bad;
+	extern const db::descriptor events__event_bad;
 
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
 	extern conf::item<size_t> events__room_head__cache__size;
 	extern const db::prefix_transform events__room_head__pfx;
-	extern const database::descriptor events__room_head;
+	extern const db::descriptor events__room_head;
 
 	// room events sequence
 	extern conf::item<size_t> events__room_events__block__size;
@@ -204,27 +204,27 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__room_events__cache_comp__size;
 	extern const db::prefix_transform events__room_events__pfx;
 	extern const db::comparator events__room_events__cmp;
-	extern const database::descriptor events__room_events;
+	extern const db::descriptor events__room_events;
 
 	// room present joined members sequence
 	extern conf::item<size_t> events__room_joined__block__size;
 	extern conf::item<size_t> events__room_joined__cache__size;
 	extern conf::item<size_t> events__room_joined__cache_comp__size;
 	extern const db::prefix_transform events__room_joined__pfx;
-	extern const database::descriptor events__room_joined;
+	extern const db::descriptor events__room_joined;
 
 	// room present state mapping sequence
 	extern conf::item<size_t> events__room_state__block__size;
 	extern conf::item<size_t> events__room_state__cache__size;
 	extern conf::item<size_t> events__room_state__cache_comp__size;
 	extern const db::prefix_transform events__room_state__pfx;
-	extern const database::descriptor events__room_state;
+	extern const db::descriptor events__room_state;
 
 	// state btree node key-value store
 	extern conf::item<size_t> events__state_node__block__size;
 	extern conf::item<size_t> events__state_node__cache__size;
 	extern conf::item<size_t> events__state_node__cache_comp__size;
-	extern const database::descriptor events__state_node;
+	extern const db::descriptor events__state_node;
 }
 
 // Internal interface; not for public.

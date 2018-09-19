@@ -67,7 +67,6 @@ struct ircd::db::database
 :std::enable_shared_from_this<database>
 ,instance_list<database>
 {
-	struct descriptor;
 	struct options;
 	struct events;
 	struct stats;
@@ -80,8 +79,6 @@ struct ircd::db::database
 	struct column;
 	struct env;
 	struct cache;
-
-	using description = std::vector<descriptor>;
 
 	std::string name;
 	uint64_t checkpoint;

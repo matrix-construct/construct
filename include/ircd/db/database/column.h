@@ -20,7 +20,7 @@
 /// points to an internally managed database::column.
 namespace ircd::db
 {
-	const database::descriptor &describe(const database::column &);
+	const descriptor &describe(const database::column &);
 	const std::string &name(const database::column &);
 	uint32_t id(const database::column &);
 
@@ -34,7 +34,7 @@ struct ircd::db::database::column final
 	database *d;
 	std::type_index key_type;
 	std::type_index mapped_type;
-	database::descriptor descriptor;
+	db::descriptor descriptor;
 	comparator cmp;
 	prefix_transform prefix;
 	compaction_filter cfilter;
@@ -50,7 +50,7 @@ struct ircd::db::database::column final
 	operator rocksdb::ColumnFamilyHandle *();
 	operator database &();
 
-	explicit column(database *const &d, const database::descriptor &);
+	explicit column(database *const &d, const db::descriptor &);
 	column() = delete;
 	column(column &&) = delete;
 	column(const column &) = delete;

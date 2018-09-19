@@ -16,8 +16,8 @@ extern conf::item<bool> media_blocks_cache_enable;
 extern conf::item<bool> media_blocks_cache_comp_enable;
 extern conf::item<size_t> media_blocks_cache_size;
 extern conf::item<size_t> media_blocks_cache_comp_size;
-extern const db::database::descriptor media_blocks_descriptor;
-extern const db::database::description media_description;
+extern const db::descriptor media_blocks_descriptor;
+extern const db::description media_description;
 extern std::shared_ptr<db::database> media;
 extern db::column blocks;
 

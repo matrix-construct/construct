@@ -593,7 +593,7 @@ ircd::db::name(const database &d)
 
 namespace ircd::db
 {
-	extern const database::description default_description;
+	extern const description default_description;
 }
 
 // Instance list linkage
@@ -1369,7 +1369,7 @@ ircd::db::name(const database::column &c)
 	return c.name;
 }
 
-const ircd::db::database::descriptor &
+const ircd::db::descriptor &
 ircd::db::describe(const database::column &c)
 {
 	return c.descriptor;
@@ -1380,7 +1380,7 @@ ircd::db::describe(const database::column &c)
 //
 
 ircd::db::database::column::column(database *const &d,
-                                   const database::descriptor &descriptor)
+                                   const db::descriptor &descriptor)
 :rocksdb::ColumnFamilyDescriptor
 (
 	descriptor.name, database::options{descriptor.options}
@@ -7316,7 +7316,7 @@ ircd::db::name(const column &column)
 	return name(c);
 }
 
-const ircd::db::database::descriptor &
+const ircd::db::descriptor &
 ircd::db::describe(const column &column)
 {
 	const database::column &c(column);
@@ -7679,7 +7679,7 @@ const
 }
 
 ircd::db::column::operator
-const database::descriptor &()
+const descriptor &()
 const
 {
 	return c->descriptor;

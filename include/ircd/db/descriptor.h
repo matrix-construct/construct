@@ -11,9 +11,15 @@
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_DESCRIPTOR_H
 
+namespace ircd::db
+{
+	struct descriptor;
+	using description = std::vector<descriptor>;
+}
+
 /// Descriptor of a column when opening database. Database must be opened with
 /// a consistent set of descriptors describing what will be found upon opening.
-struct ircd::db::database::descriptor
+struct ircd::db::descriptor
 {
 	using typing = std::pair<std::type_index, std::type_index>;
 
