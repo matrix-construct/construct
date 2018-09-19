@@ -1526,17 +1526,17 @@ ircd::server::link::wait_readable()
 	if(op_read || op_fini)
 		return;
 
-	auto handler
-	{
-		std::bind(&link::handle_readable, this, ph::_1)
-	};
-
 	assert(ready());
 	op_read = true;
 	const unwind::exceptional unhandled{[this]
 	{
 		op_read = false;
 	}};
+
+	auto handler
+	{
+		std::bind(&link::handle_readable, this, ph::_1)
+	};
 
 	net::wait(*socket, net::ready::READ, std::move(handler));
 }
