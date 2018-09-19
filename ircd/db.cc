@@ -347,7 +347,8 @@ ircd::db::sort(database &d,
 }
 
 void
-ircd::db::compact(database &d)
+ircd::db::compact(database &d,
+                  const compactor &cb)
 {
 	static const std::pair<string_view, string_view> range
 	{
@@ -357,8 +358,8 @@ ircd::db::compact(database &d)
 	for(const auto &c : d.columns)
 	{
 		db::column column{*c};
-		compact(column, range, -1);
-		compact(column, -1);
+		compact(column, range, cb);
+		compact(column, -1, cb);
 	}
 }
 
@@ -7350,7 +7351,8 @@ ircd::db::sort(column &column,
 
 void
 ircd::db::compact(column &column,
-                  const int &level_)
+                  const int &level_,
+                  const compactor &cb)
 {
 	database::column &c(column);
 	database &d(*c.d);
@@ -7382,6 +7384,19 @@ ircd::db::compact(column &column,
 		ctx::interruption_point();
 		const ctx::uninterruptible::nothrow ui;
 		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+
+		// Save and restore the existing filter callback so we can allow our
+		// caller to use theirs. Note that this manual compaction should be
+		// exclusive for this column (no background compaction should be
+		// occurring, at least one relying on this filter).
+		auto their_filter(std::move(c.cfilter.user));
+		const unwind unfilter{[&c, &their_filter]
+		{
+			c.cfilter.user = std::move(their_filter);
+		}};
+
+		c.cfilter.user = cb;
+
 		log::debug
 		{
 			log, "'%s':'%s' COMPACT level:%d files:%zu size:%zu",
@@ -7402,7 +7417,7 @@ ircd::db::compact(column &column,
 void
 ircd::db::compact(column &column,
                   const std::pair<string_view, string_view> &range,
-                  const int &to_level)
+                  const compactor &cb)
 {
 	database &d(column);
 	database::column &c(column);
@@ -7421,11 +7436,24 @@ ircd::db::compact(column &column,
 
 	rocksdb::CompactRangeOptions opts;
 	opts.change_level = true;
-	opts.target_level = to_level;
+	opts.target_level = -1;
 	opts.allow_write_stall = true;
 
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+
+	// Save and restore the existing filter callback so we can allow our
+	// caller to use theirs. Note that this manual compaction should be
+	// exclusive for this column (no background compaction should be
+	// occurring, at least one relying on this filter).
+	auto their_filter(std::move(c.cfilter.user));
+	const unwind unfilter{[&c, &their_filter]
+	{
+		c.cfilter.user = std::move(their_filter);
+	}};
+
+	c.cfilter.user = cb;
+
 	log::debug
 	{
 		log, "'%s':'%s' @%lu COMPACT [%s, %s] to level %d",
@@ -7434,7 +7462,7 @@ ircd::db::compact(column &column,
 		sequence(d),
 		range.first,
 		range.second,
-		to_level
+		opts.target_level
 	};
 
 	throw_on_error
