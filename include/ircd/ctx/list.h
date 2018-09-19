@@ -105,6 +105,7 @@ noexcept
 	this->~list();
 	std::swap(head, o.head);
 	std::swap(tail, o.tail);
+	assert(!o.head && !o.tail);
 	return *this;
 }
 

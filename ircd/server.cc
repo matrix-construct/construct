@@ -1959,6 +1959,7 @@ noexcept
 	// Must have a fully associated request/tag which has committed some
 	// data to the wire to enter this routine.
 	assert(tag.committed());
+	assert(!tag.canceled());
 	assert(request.tag == &tag);
 	assert(tag.request == &request);
 
