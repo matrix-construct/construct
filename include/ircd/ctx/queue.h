@@ -83,7 +83,6 @@ ircd::ctx::queue<T>::pop()
 	});
 
 	assert(!q.empty());
-	const unwind::nominal::assertion una;
 	auto ret(std::move(q.front()));
 	q.pop();
 	return ret;
@@ -106,7 +105,6 @@ ircd::ctx::queue<T>::pop_for(const duration &dur)
 		throw timeout{};
 
 	assert(!q.empty());
-	const unwind::nominal::assertion una;
 	auto ret(std::move(q.front()));
 	q.pop();
 	return ret;
@@ -129,7 +127,6 @@ ircd::ctx::queue<T>::pop_until(time_point&& tp)
 		throw timeout{};
 
 	assert(!q.empty());
-	const unwind::nominal::assertion una;
 	auto ret(std::move(q.front()));
 	q.pop();
 	return ret;
