@@ -393,10 +393,12 @@ AM_COND_IF([OPTIMIZE],
 	dnl CXXFLAGS+=" -fdevirtualize-at-ltrans"
 
 	dnl remember to axe this when lto is enabled
+	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
 ], [
 	CXXFLAGS+=" -march=native"
 	CXXFLAGS+=" -O$optimize_level"
+	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
 ])
 
