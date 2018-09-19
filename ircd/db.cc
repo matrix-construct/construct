@@ -2409,8 +2409,10 @@ ircd::db::database::compaction_filter::FilterV2(const int level,
                                                 const Slice &oldval,
                                                 std::string *const newval,
                                                 std::string *const skip)
-const
+const noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	const auto typestr
 	{
@@ -2468,14 +2470,14 @@ const
 
 bool
 ircd::db::database::compaction_filter::IgnoreSnapshots()
-const
+const noexcept
 {
 	return false;
 }
 
 const char *
 ircd::db::database::compaction_filter::Name()
-const
+const noexcept
 {
 	assert(c);
 	return db::name(*c).c_str();

@@ -25,9 +25,9 @@ final
 	database *d;
 	db::compactor user;
 
-	const char *Name() const override;
-	bool IgnoreSnapshots() const override;
-	Decision FilterV2(const int level, const Slice &key, const ValueType v, const Slice &oldval, std::string *newval, std::string *skipuntil) const override;
+	const char *Name() const noexcept override;
+	bool IgnoreSnapshots() const noexcept override;
+	Decision FilterV2(const int level, const Slice &key, const ValueType v, const Slice &oldval, std::string *newval, std::string *skipuntil) const noexcept override;
 
 	compaction_filter(column *const &c, db::compactor);
 	~compaction_filter() noexcept override;
