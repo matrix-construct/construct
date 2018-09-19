@@ -1,24 +1,48 @@
 ## IRCd Database
 
-The database is an object store built from the primitives of `cell`, `column`, and `row`.
+The database here is a strictly schematized key-value grid built from the primitives of
+`column`, `cell` and `row`. We use the database as both a flat-object store (matrix
+event db) using cells, columns and rows; as well as binary data block store (matrix
+media db) using just a single column.
 
 #### Columns
-While a simple key-value store could naively store a JSON document as a textual
-value, we provide additional structure schematized before opening a database:
-Every member of a JSON object is a `column` in this database. There is no
-specific support for recursion at this time, though that could be addressed
-by adding additional columns for the nested values.
+A column is a key-value store. We specify columns in the database descriptors when
+opening the database and (though technically somewhat possible) don't change them
+during runtime. The database must be opened with the same descriptors in properly
+aligned positions every single time. All keys and values in a column can be iterated.
+Columns can also be split into "domains" of keys (see: `db/index.h`) based on the
+key's prefix, allowing a seek and iteration isolated to just one domain.
+
+In practice we create a column to present a single property in a JSON object. There
+is no recursion and we also must know the name of the property in advance to specify
+a descriptor for it. In practice we create a column for each property in the Matrix
+event object and then optimize that column specifically for that property.
+
+```
+{
+	"origin_server_ts": 15373977384823,
+	"content": {"msgtype": "m.text", "body": "hello"}
+}
+
+```
+
+For the above example consider two columns: first `origin_server_ts` is optimized for
+timestamps by having values which are fixed 8 byte signed integers; next the content
+object is stored in whole as JSON text in the content column. Recursion is not yet
+supported but theoretically we can create more columns to hold nested properties
+if we want further optimizations.
 
 #### Rows
 Since `columns` are technically independent key-value stores (they have their own
-index), when an index key is the same between columns we call this a `row`. For basic
-object storage the schema is such that we use the same keys between all columns. For
-example, an index would be a username in a user database. The user database itself
-takes the form of a single JSON object and any member lookup happens on a user's row.
+index), when an index key is the same between columns we call this a `row`. In
+the Matrix event example, each property of the same event is sought together in a
+`row`. A row seek is optimized and the individual cells are queried concurrently and
+iterated in lock-step together.
 
 #### Cells
-A `cell` is a single value in a `column` indexed by a key that should be able to form
-a `row` between columns. Consider the following near-json expression:
+A `cell` is a gratuitious interface representing of a single value in a `column` with
+a common key that should be able to form a `row` between columns. A `row` is comprised
+of cells.
 
 ### Important notes
 
