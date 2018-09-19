@@ -49,10 +49,10 @@ noexcept
 
 template<class T>
 void
-ircd::ctx::queue<T>::push(T &&t)
+ircd::ctx::queue<T>::push(T&& t)
 noexcept
 {
-	q.push(std::move(t));
+	q.push(std::forward<T>(t));
 	dock.notify();
 }
 
@@ -82,14 +82,11 @@ ircd::ctx::queue<T>::pop()
 		return !q.empty();
 	});
 
-	const unwind pop([this]
-	{
-		assert(!q.empty());
-		q.pop();
-	});
-
-	auto &ret(q.front());
-	return std::move(ret);
+	assert(!q.empty());
+	const unwind::nominal::assertion una;
+	auto ret(std::move(q.front()));
+	q.pop();
+	return ret;
 }
 
 template<class T>
@@ -108,14 +105,11 @@ ircd::ctx::queue<T>::pop_for(const duration &dur)
 	if(!ready)
 		throw timeout{};
 
-	const unwind pop([this]
-	{
-		assert(!q.empty());
-		q.pop();
-	});
-
-	auto &ret(q.front());
-	return std::move(ret);
+	assert(!q.empty());
+	const unwind::nominal::assertion una;
+	auto ret(std::move(q.front()));
+	q.pop();
+	return ret;
 }
 
 template<class T>
@@ -134,12 +128,9 @@ ircd::ctx::queue<T>::pop_until(time_point&& tp)
 	if(!ready)
 		throw timeout{};
 
-	const unwind pop([this]
-	{
-		assert(!q.empty());
-		q.pop();
-	});
-
-	auto &ret(q.front());
-	return std::move(ret);
+	assert(!q.empty());
+	const unwind::nominal::assertion una;
+	auto ret(std::move(q.front()));
+	q.pop();
+	return ret;
 }
