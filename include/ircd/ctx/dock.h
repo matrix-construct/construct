@@ -77,9 +77,9 @@ inline void
 ircd::ctx::dock::notify_all()
 noexcept
 {
-	q.for_each([](ctx &c)
+	q.for_each([this](ctx &c)
 	{
-		ircd::ctx::notify(c);
+		notify(c);
 	});
 }
 
