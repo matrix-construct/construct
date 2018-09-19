@@ -21,6 +21,7 @@ struct ircd::db::database::events final
 {
 	database *d;
 
+	void OnFlushBegin(rocksdb::DB *, const rocksdb::FlushJobInfo &) noexcept override;
 	void OnFlushCompleted(rocksdb::DB *, const rocksdb::FlushJobInfo &) noexcept override;
 	void OnCompactionCompleted(rocksdb::DB *, const rocksdb::CompactionJobInfo &) noexcept override;
 	void OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &) noexcept override;
@@ -28,6 +29,9 @@ struct ircd::db::database::events final
 	void OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &) noexcept override;
 	void OnMemTableSealed(const rocksdb::MemTableInfo &) noexcept override;
 	void OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *) noexcept override;
+	void OnExternalFileIngested(rocksdb::DB *, const rocksdb::ExternalFileIngestionInfo &) noexcept override;
+	void OnBackgroundError(rocksdb::BackgroundErrorReason, rocksdb::Status *) noexcept override;
+	void OnStallConditionsChanged(const rocksdb::WriteStallInfo &) noexcept override;
 
 	events(database *const &d)
 	:d{d}

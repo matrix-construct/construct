@@ -1940,15 +1940,41 @@ ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
                                              const rocksdb::FlushJobInfo &info)
 noexcept
 {
-	rog.debug("'%s' @%p: flushed: column[%s] path[%s] tid[%lu] job[%d] writes[slow:%d stop:%d]",
-	          d->name,
-	          db,
-	          info.cf_name,
-	          info.file_path,
-	          info.thread_id,
-	          info.job_id,
-	          info.triggered_writes_slowdown,
-	          info.triggered_writes_stop);
+	log::info
+	{
+		rog, "'%s' flush complete: column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		d->name,
+		info.cf_name,
+		info.file_path,
+		info.thread_id,
+		info.job_id,
+		info.triggered_writes_slowdown,
+		info.triggered_writes_stop,
+		info.smallest_seqno,
+		info.largest_seqno,
+		int(info.flush_reason)
+	};
+}
+
+void
+ircd::db::database::events::OnFlushBegin(rocksdb::DB *const db,
+                                         const rocksdb::FlushJobInfo &info)
+noexcept
+{
+	log::info
+	{
+		rog, "'%s' flush begin column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		d->name,
+		info.cf_name,
+		info.file_path,
+		info.thread_id,
+		info.job_id,
+		info.triggered_writes_slowdown,
+		info.triggered_writes_stop,
+		info.smallest_seqno,
+		info.largest_seqno,
+		int(info.flush_reason)
+	};
 }
 
 void
@@ -1956,70 +1982,172 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
 noexcept
 {
-	rog.debug("'%s' @%p: compacted: column[%s] status[%d] tid[%lu] job[%d]",
-	          d->name,
-	          db,
-	          info.cf_name,
-	          int(info.status.code()),
-	          info.thread_id,
-	          info.job_id);
+	log::info
+	{
+		rog, "'%s' compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
+		d->name,
+		info.cf_name,
+		info.thread_id,
+		info.job_id,
+		info.base_input_level,
+		info.output_level,
+		info.input_files.size(),
+		info.output_files.size(),
+		int(info.compaction_reason),
+		info.status.ToString()
+	};
 }
 
 void
 ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &info)
 noexcept
 {
-	rog.debug("'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
-	          d->name,
-	          info.db_name,
-	          info.file_path,
-	          int(info.status.code()),
-	          info.job_id);
+	log::debug
+	{
+		rog, "'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
+		d->name,
+		info.db_name,
+		info.file_path,
+		int(info.status.code()),
+		info.job_id
+	};
 }
 
 void
 ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationInfo &info)
 noexcept
 {
-	rog.debug("'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
-	          d->name,
-	          info.db_name,
-	          info.file_path,
-	          int(info.status.code()),
-	          info.job_id);
+	log::debug
+	{
+		rog, "'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
+		d->name,
+		info.db_name,
+		info.file_path,
+		int(info.status.code()),
+		info.job_id
+	};
 }
 
 void
 ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &info)
 noexcept
 {
-	rog.debug("'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
-	          d->name,
-	          info.db_name,
-	          info.cf_name,
-	          info.file_path,
-	          info.job_id);
+	log::debug
+	{
+		rog, "'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
+		d->name,
+		info.db_name,
+		info.cf_name,
+		info.file_path,
+		info.job_id
+	};
 }
 
 void
 ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
 noexcept
 {
-	rog.debug("'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
-	          d->name,
-	          info.cf_name,
-	          info.num_entries,
-	          info.num_deletes);
+	log::debug
+	{
+		rog, "'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
+		d->name,
+		info.cf_name,
+		info.num_entries,
+		info.num_deletes
+	};
 }
 
 void
 ircd::db::database::events::OnColumnFamilyHandleDeletionStarted(rocksdb::ColumnFamilyHandle *const h)
 noexcept
 {
-	rog.debug("'%s': column[%s] handle closing @ %p",
-	          d->name,
-	          h->GetName(),
-	          h);
+	log::debug
+	{
+		rog, "'%s': column[%s] handle closing @ %p",
+		d->name,
+		h->GetName(),
+		h
+	};
+}
+
+void
+ircd::db::database::events::OnExternalFileIngested(rocksdb::DB *const d,
+                                                   const rocksdb::ExternalFileIngestionInfo &info)
+noexcept
+{
+	log::notice
+	{
+		rog, "'%s' external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
+		this->d->name,
+		info.cf_name,
+		info.external_file_path,
+		info.internal_file_path,
+		info.global_seqno
+	};
+}
+
+void
+ircd::db::database::events::OnBackgroundError(rocksdb::BackgroundErrorReason reason,
+                                              rocksdb::Status *const status)
+noexcept
+{
+	string_view str{"?????"}; switch(reason)
+	{
+		case rocksdb::BackgroundErrorReason::kFlush:
+			str = "FLUSH";
+			break;
+
+		case rocksdb::BackgroundErrorReason::kCompaction:
+			str = "COMPACTION";
+			break;
+
+		case rocksdb::BackgroundErrorReason::kWriteCallback:
+			str = "WRITE";
+			break;
+
+		case rocksdb::BackgroundErrorReason::kMemTable:
+			str = "MEMTABLE";
+			break;
+	}
+
+	assert(status);
+	log::error
+	{
+		rog, "'%s' background error in %s :%s",
+		d->name,
+		str,
+		status->ToString()
+	};
+}
+
+void
+ircd::db::database::events::OnStallConditionsChanged(const rocksdb::WriteStallInfo &info)
+noexcept
+{
+	static const auto str{[]
+	(const rocksdb::WriteStallCondition &c)
+	-> string_view
+	{
+		return
+			c == rocksdb::WriteStallCondition::kNormal?
+				"NORMAL"_sv:
+			c == rocksdb::WriteStallCondition::kDelayed?
+				"DELAYED"_sv:
+			c == rocksdb::WriteStallCondition::kStopped?
+				"STOPPED"_sv:
+				"UNKNOWN"_sv;
+	}};
+
+	log::warning
+	{
+		rog, "'%s' stall condition column[%s] %d (%s) -> %d (%s)",
+		d->name,
+		info.cf_name,
+		info.condition.prev,
+		str(info.condition.prev),
+		info.condition.cur,
+		str(info.condition.cur),
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
