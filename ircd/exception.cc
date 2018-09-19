@@ -67,10 +67,7 @@ ircd::string_view
 ircd::string(const mutable_buffer &buf,
              const boost::system::error_code &ec)
 {
-	return fmt::sprintf
-	{
-		buf, "%s: %s", ec.category().name(), ec.message()
-	};
+	return string(buf, make_system_error(ec));
 }
 
 ircd::string_view
