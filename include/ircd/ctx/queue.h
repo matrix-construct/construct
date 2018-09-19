@@ -76,7 +76,6 @@ ircd::ctx::queue<T>::emplace(args&&... a)
 template<class T>
 T
 ircd::ctx::queue<T>::pop()
-try
 {
 	dock.wait([this]
 	{
@@ -92,26 +91,11 @@ try
 	auto &ret(q.front());
 	return std::move(ret);
 }
-catch(const interrupted &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
-}
-catch(const terminated &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
-}
 
 template<class T>
 template<class duration>
 T
 ircd::ctx::queue<T>::pop_for(const duration &dur)
-try
 {
 	const bool ready
 	{
@@ -133,26 +117,11 @@ try
 	auto &ret(q.front());
 	return std::move(ret);
 }
-catch(const interrupted &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
-}
-catch(const terminated &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
-}
 
 template<class T>
 template<class time_point>
 T
 ircd::ctx::queue<T>::pop_until(time_point&& tp)
-try
 {
 	const bool ready
 	{
@@ -173,18 +142,4 @@ try
 
 	auto &ret(q.front());
 	return std::move(ret);
-}
-catch(const interrupted &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
-}
-catch(const terminated &)
-{
-	if(!q.empty())
-		dock.notify();
-
-	throw;
 }

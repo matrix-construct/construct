@@ -87,6 +87,11 @@ inline void
 ircd::ctx::dock::wait()
 {
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -104,6 +109,11 @@ ircd::ctx::dock::wait(predicate&& pred)
 		return;
 
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -124,6 +134,11 @@ ircd::ctx::dock::wait_for(const duration &dur)
 	static const duration zero(0);
 
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -146,6 +161,11 @@ ircd::ctx::dock::wait_for(const duration &dur,
 		return true;
 
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -173,6 +193,11 @@ bool
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -193,6 +218,11 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 		return true;
 
 	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
