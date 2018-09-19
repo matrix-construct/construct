@@ -25,12 +25,21 @@ namespace ircd::db
 ///
 struct ircd::db::compactor
 {
-	using prototype = db::op (const int &level,
-	                          const string_view &key,
-	                          const string_view &val,
-	                          std::string *const replace,
-	                          std::string *const skip_until);
+	struct args;
+	using proto = db::op (const args &);
+	using callback = std::function<proto>;
 
-	std::function<prototype> value;
-	std::function<prototype> merge;
+	callback value;
+	callback merge;
+};
+
+struct ircd::db::compactor::args
+{
+	const int &level;
+
+	const string_view key;
+	const string_view val;
+
+	std::string *const &replace;
+	std::string *const &skip_until;
 };

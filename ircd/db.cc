@@ -2436,28 +2436,26 @@ const
 	};
 	#endif
 
-	db::op ret
+	const db::compactor::callback &callback
 	{
-		db::op::GET
+		type == ValueType::kValue && user.value?
+			user.value:
+
+		type == ValueType::kMergeOperand && user.merge?
+			user.merge:
+
+		compactor::callback{}
 	};
 
-	switch(type)
+	if(!callback)
+		return Decision::kKeep;
+
+	const compactor::args args
 	{
-		case ValueType::kValue:
-			if(user.value)
-				ret = user.value(level, slice(key), slice(oldval), newval, skip);
-			break;
+		level, slice(key), slice(oldval), newval, skip
+	};
 
-		case ValueType::kMergeOperand:
-			if(user.merge)
-				ret = user.merge(level, slice(key), slice(oldval), newval, skip);
-			break;
-
-		case ValueType::kBlobIndex:
-			break;
-	}
-
-	switch(ret)
+	switch(callback(args))
 	{
 		default:
 		case db::op::GET:            return Decision::kKeep;
