@@ -1030,7 +1030,7 @@ noexcept
 void
 ircd::ctx::pool::operator()(closure closure)
 {
-	q.emplace(std::move(closure));
+	q.push(std::move(closure));
 }
 
 void
