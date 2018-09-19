@@ -1405,7 +1405,7 @@ catch(const boost::system::system_error &e)
 	assert(peer);
 	peer->handle_error(*this, e);
 }
-catch(const std::exception &e)
+catch(...)
 {
 	assert(peer);
 	peer->handle_error(*this, std::current_exception());
@@ -1576,7 +1576,7 @@ catch(const boost::system::system_error &e)
 	assert(peer);
 	peer->handle_error(*this, e);
 }
-catch(const std::exception &e)
+catch(...)
 {
 	assert(peer);
 	peer->handle_error(*this, std::current_exception());
