@@ -18,6 +18,60 @@
 
 #include <boost/lexical_cast.hpp>
 
+//
+// misc util
+//
+
+std::string
+ircd::u2a(const const_buffer &in)
+{
+	return string(size(in) * 2, [&in]
+	(const mutable_buffer &out)
+	{
+		return u2a(out, in);
+	});
+}
+
+ircd::string_view
+ircd::u2a(const mutable_buffer &out,
+          const const_buffer &in)
+{
+	char *p(data(out));
+	for(size_t i(0); i < size(in) && p + 2 <= end(out); ++i)
+	{
+		char tmp[3];
+		::snprintf(tmp, sizeof(tmp), "%02x", in[i]);
+		*p++ = tmp[0];
+		*p++ = tmp[1];
+	}
+
+	return { data(out), p };
+}
+
+ircd::const_buffer
+ircd::a2u(const mutable_buffer &out,
+          const const_buffer &in)
+{
+	const size_t len{size(in) / 2};
+	for(size_t i(0); i < len; ++i)
+	{
+		const char gl[3]
+		{
+			in[i * 2],
+			in[i * 2 + 1],
+			'\0'
+		};
+
+		out[i] = strtol(gl, nullptr, 16);
+	}
+
+	return { data(out), len };
+}
+
+//
+// lex_cast
+//
+
 namespace ircd
 {
 	/// The static lex_cast ring buffers are each LEX_CAST_BUFSIZE bytes;
@@ -443,50 +497,4 @@ ircd::replace(const string_view &s,
 
 		return std::distance(begin(buf), p);
 	});
-}
-
-std::string
-ircd::u2a(const const_buffer &in)
-{
-	return string(size(in) * 2, [&in]
-	(const mutable_buffer &out)
-	{
-		return u2a(out, in);
-	});
-}
-
-ircd::string_view
-ircd::u2a(const mutable_buffer &out,
-          const const_buffer &in)
-{
-	char *p(data(out));
-	for(size_t i(0); i < size(in) && p + 2 <= end(out); ++i)
-	{
-		char tmp[3];
-		::snprintf(tmp, sizeof(tmp), "%02x", in[i]);
-		*p++ = tmp[0];
-		*p++ = tmp[1];
-	}
-
-	return { data(out), p };
-}
-
-ircd::const_buffer
-ircd::a2u(const mutable_buffer &out,
-          const const_buffer &in)
-{
-	const size_t len{size(in) / 2};
-	for(size_t i(0); i < len; ++i)
-	{
-		const char gl[3]
-		{
-			in[i * 2],
-			in[i * 2 + 1],
-			'\0'
-		};
-
-		out[i] = strtol(gl, nullptr, 16);
-	}
-
-	return { data(out), len };
 }
