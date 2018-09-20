@@ -2485,6 +2485,68 @@ const noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// database::fileinfo
+//
+
+//
+// fileinfo::vector
+//
+
+ircd::db::database::fileinfo::vector::vector(const database &d)
+{
+	std::vector<rocksdb::LiveFileMetaData> v;
+	d.d->GetLiveFilesMetaData(&v);
+
+	this->resize(v.size());
+	std::transform(v.begin(), v.end(), this->begin(), []
+	(auto &&info)
+	{
+		return std::move(info);
+	});
+}
+
+//
+// fileinfo::fileinfo
+//
+
+ircd::db::database::fileinfo::fileinfo(const database &d,
+                                       const string_view &filename)
+{
+	std::vector<rocksdb::LiveFileMetaData> v;
+	d.d->GetLiveFilesMetaData(&v);
+
+	for(auto &md : v)
+		if(md.name == filename)
+		{
+			new (this) fileinfo(std::move(md));
+			return;
+		}
+
+	throw not_found
+	{
+		"No file named '%s' is live in database '%s'",
+		filename,
+		d.name
+	};
+}
+
+ircd::db::database::fileinfo::fileinfo(rocksdb::LiveFileMetaData &&md)
+:name{std::move(md.name)}
+,path{std::move(md.db_path)}
+,column{std::move(md.column_family_name)}
+,size{md.size}
+,min_seq{md.smallest_seqno}
+,max_seq{md.largest_seqno}
+,min_key{std::move(md.smallestkey)}
+,max_key{std::move(md.largestkey)}
+,num_reads{md.num_reads_sampled}
+,level{md.level}
+,compacting{md.being_compacted}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // database::env
 //
 

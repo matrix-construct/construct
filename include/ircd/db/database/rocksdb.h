@@ -33,6 +33,7 @@ namespace rocksdb
 	struct SstFileManager;
 	struct PerfContext;
 	struct IOStatsContext;
+	struct LiveFileMetaData;
 }
 
 //

@@ -79,6 +79,7 @@ struct ircd::db::database
 	struct column;
 	struct env;
 	struct cache;
+	struct fileinfo;
 
 	std::string name;
 	uint64_t checkpoint;
