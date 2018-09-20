@@ -1196,19 +1196,19 @@ try
 		param[1]
 	};
 
-	const auto begin
+	const auto level
 	{
-		param[2]
+		param.at(2, -1)
 	};
 
-	const auto end
+	const auto begin
 	{
 		param[3]
 	};
 
-	const auto level
+	const auto end
 	{
-		param.at(4, -1)
+		param[4]
 	};
 
 	auto &database
@@ -1233,14 +1233,23 @@ try
 		begin? try_lex_cast<uint64_t>(begin) : false
 	};
 
-	const std::pair<string_view, string_view> range
+	const uint64_t integers[2]
 	{
-		integer? byte_view<string_view>(lex_cast<uint64_t>(begin)) : begin,
-		integer && end? byte_view<string_view>(lex_cast<uint64_t>(end)) : end,
+		integer? lex_cast<uint64_t>(begin) : 0,
+		integer && end? lex_cast<uint64_t>(end) : 0
 	};
 
-	compact(column, range, level);
-	compact(column, level);
+	const std::pair<string_view, string_view> range
+	{
+		integer? byte_view<string_view>(integers[0]) : begin,
+		integer && end? byte_view<string_view>(integers[1]) : end,
+	};
+
+	compact(column, range);
+
+	if(level > -2)
+		compact(column, level);
+
 	out << "done" << std::endl;
 	return true;
 }
