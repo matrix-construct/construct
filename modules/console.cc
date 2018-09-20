@@ -1897,9 +1897,19 @@ bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {
+	const params param{line, " ",
+	{
+		"dbname", "column"
+	}};
+
 	const auto dbname
 	{
-		token(line, ' ', 0)
+		param.at("dbname")
+	};
+
+	const auto colname
+	{
+		param.at("column", "*"_sv)
 	};
 
 	auto &database
@@ -1907,17 +1917,59 @@ try
 		db::database::get(dbname)
 	};
 
-	uint64_t msz;
+	out << std::left
+	    << std::setw(16) << "name"
+	    << std::right
+	    << " " << std::setw(24) << "column"
+	    << " " << std::setw(5) << "level"
+	    << " " << std::setw(12) << "bytes"
+	    << " " << std::setw(25) << "sequence number"
+	    << " " << std::setw(12) << "reads"
+	    << " " << std::setw(10) << "compacting"
+	    << std::endl;
+
+	const auto print{[&out]
+	(const db::database::fileinfo &f)
+	{
+		out << std::left
+		    << std::setw(16) << f.name
+		    << " " << std::setw(24) << std::right << f.column
+		    << " " << std::setw(5) << std::left << f.level
+		    << " " << std::setw(12) << std::right << f.size
+		    << " " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
+		    << " " << std::setw(9) << std::right << f.num_reads
+		    << " " << std::setw(10) << std::right << std::boolalpha << f.compacting
+		    << std::endl;
+	}};
+
+	if(colname == "*")
+	{
+		const auto fileinfos
+		{
+			db::database::fileinfo::vector(database)
+		};
+
+		for(const auto &fileinfo : fileinfos)
+			print(fileinfo);
+
+		out << "-- " << fileinfos.size() << " files"
+		    << std::endl;
+
+		return true;
+	}
+
+	const db::column column
+	{
+		database, colname
+	};
+
 	const auto files
 	{
-		db::files(database, msz)
+		db::files(column)
 	};
 
 	for(const auto &file : files)
-		out << file << std::endl;
-
-	out << "-- " << files.size() << " files; "
-	    << "manifest is " << msz << " bytes.";
+		print(db::database::fileinfo{database, file});
 
 	return true;
 }
