@@ -19,6 +19,7 @@ namespace ircd::db
 	uint32_t id(const column &);
 	const std::string &name(const column &);
 	const descriptor &describe(const column &);
+	std::vector<std::string> files(const column &);
 	size_t file_count(const column &);
 	size_t bytes(const column &);
 

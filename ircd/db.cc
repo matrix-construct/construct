@@ -7324,6 +7324,28 @@ ircd::db::describe(const column &column)
 	return describe(c);
 }
 
+std::vector<std::string>
+ircd::db::files(const column &column)
+{
+	database::column &c(const_cast<db::column &>(column));
+	database &d(*c.d);
+
+	rocksdb::ColumnFamilyMetaData cfmd;
+	d.d->GetColumnFamilyMetaData(c, &cfmd);
+
+	size_t count(0);
+	for(const auto &level : cfmd.levels)
+		count += level.files.size();
+
+	std::vector<std::string> ret;
+	ret.reserve(count);
+	for(auto &level : cfmd.levels)
+		for(auto &file : level.files)
+			ret.emplace_back(std::move(file.name));
+
+	return ret;
+}
+
 void
 ircd::db::sort(column &column,
                const bool &blocking)
