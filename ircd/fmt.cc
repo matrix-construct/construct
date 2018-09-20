@@ -41,6 +41,7 @@ struct ircd::fmt::spec
 {
 	char sign {'+'};
 	ushort width {0};
+	ushort precision {0};
 	string_view name;
 
 	spec() = default;
@@ -49,9 +50,10 @@ struct ircd::fmt::spec
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
-	( decltype(ircd::fmt::spec::sign),   sign   )
-	( decltype(ircd::fmt::spec::width),  width  )
-	( decltype(ircd::fmt::spec::name),   name   )
+	( decltype(ircd::fmt::spec::sign),       sign   )
+	( decltype(ircd::fmt::spec::width),      width  )
+	( decltype(ircd::fmt::spec::precision),  precision  )
+	( decltype(ircd::fmt::spec::name),       name   )
 )
 
 // A format specifier handler module.
@@ -105,7 +107,12 @@ struct ircd::fmt::parser
 			valid = is_specifier(str);
 		});
 
-		spec %= specsym >> -(char_('+') | char_('-')) >> -ushort_ >> name[is_valid] >> -specterm;
+		spec %= specsym
+		     >> -(char_('+') | char_('-'))
+		     >> -ushort_
+		     >> -(lit('.') >> ushort_)
+		     >> name[is_valid]
+		     >> -specterm;
 	}
 }
 const ircd::fmt::parser;
@@ -249,11 +256,12 @@ struct float_specifier
 {
 	static const std::tuple
 	<
-		char,   unsigned char,
-		short,  unsigned short,
-		int,    unsigned int,
-		long,   unsigned long,
-		float,  double
+		char,        unsigned char,
+		short,       unsigned short,
+		int,         unsigned int,
+		long,        unsigned long,
+		float,       double,
+		long double
 	>
 	types;
 
@@ -783,18 +791,30 @@ const
 		throw illegal("Failed to print floating point value");
 	});
 
-	const auto closure([&](const double &floating)
+	thread_local uint _precision_;
+	_precision_ = s.precision;
+
+	const auto closure([&](const long double &floating)
 	{
 		using karma::double_;
 		using karma::maxwidth;
 
 		struct generator
-		:karma::grammar<char *, double()>
+		:karma::grammar<char *, long double()>
 		{
-			karma::rule<char *, double()> rule
+			struct policy
+			:karma::real_policies<long double>
 			{
-				double_
-				,"floating point integer"
+				static uint precision(const long double &)
+				{
+					return _precision_;
+				}
+			};
+
+			karma::rule<char *, long double()> rule
+			{
+				karma::real_generator<long double, policy>()
+				,"floating point real"
 			};
 
 			generator(): generator::base_type{rule} {}
