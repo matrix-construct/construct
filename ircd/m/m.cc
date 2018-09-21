@@ -42,24 +42,30 @@ try
 {
 	origin
 }
+,_modules
 {
-	init_keys();
-	init_imports();
+	std::make_unique<modules>()
+}
+{
 	presence::set(me, "online", me_online_status_msg);
 }
 catch(const m::error &e)
 {
-	log::error
+	log::critical
 	{
-		log, "%s %s", e.what(), e.content
+		log, "Failed to start matrix :%s %s", e.what(), e.content
 	};
+
+	throw;
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::critical
 	{
-		log, "%s", e.what()
+		log, "Failed to start matrix :%s", e.what()
 	};
+
+	throw;
 }
 
 ircd::m::init::~init()
@@ -67,8 +73,6 @@ noexcept try
 {
 	if(!std::current_exception())
 		presence::set(me, "offline", me_offline_status_msg);
-
-	mods::imports.clear();
 }
 catch(const m::error &e)
 {
@@ -86,16 +90,54 @@ ircd::m::init::close()
 	mods::imports.erase("s_listen"s);
 }
 
-void
-ircd::m::init::init_keys()
+ircd::m::init::modules::modules()
 try
 {
-	mods::imports.emplace("s_keys"s, "s_keys"s);
-	const unwind::exceptional uw{[]
+	init_keys();
+	init_imports();
+}
+catch(const m::error &e)
+{
+	const std::string what(e.what());
+	const std::string content(e.content);
+	const ctx::exception_handler eh;
+	log::critical
 	{
-		mods::imports.erase("s_keys"s);
-	}};
+		log, "%s %s", what, content
+	};
 
+	mods::imports.clear();
+	throw m::error
+	{
+		"M_INIT_ERROR", "Failed to start :%s :%s", what, content
+	};
+}
+catch(const std::exception &e)
+{
+	const std::string what(e.what());
+	const ctx::exception_handler eh;
+	log::critical
+	{
+		log, "%s", what
+	};
+
+	mods::imports.clear();
+	throw m::error
+	{
+		"M_INIT_ERROR", "Failed to start :%s", what
+	};
+}
+catch(const ctx::terminated &)
+{
+	const ctx::exception_handler eh;
+	mods::imports.clear();
+	throw ctx::terminated{};
+}
+
+void
+ircd::m::init::modules::init_keys()
+{
+	mods::imports.emplace("s_keys"s, "s_keys"s);
 	mods::import<void ()> init_my_keys
 	{
 		"s_keys", "init_my_keys"
@@ -103,19 +145,9 @@ try
 
 	init_my_keys();
 }
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Failed to initialize server keys :%s", e.what()
-	};
-
-	throw;
-}
 
 void
-ircd::m::init::init_imports()
-try
+ircd::m::init::modules::init_imports()
 {
 	if(ircd::noautomod)
 	{
@@ -151,20 +183,11 @@ try
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
 }
-catch(const std::exception &e)
+
+ircd::m::init::modules::~modules()
+noexcept
 {
-	const ctx::exception_handler eh;
 	mods::imports.clear();
-	throw m::error
-	{
-		"M_INIT_ERROR", "%s", e.what()
-	};
-}
-catch(const ctx::terminated &)
-{
-	const ctx::exception_handler eh;
-	mods::imports.clear();
-	throw ctx::terminated{};
 }
 
 void

@@ -60,17 +60,25 @@ namespace ircd::m::vm
 
 struct ircd::m::init
 {
-	struct listeners;
+	struct modules;
 
 	self::init _self;
 	dbs::init _dbs;
+	std::unique_ptr<modules> _modules;
 
 	static void bootstrap();
-	void init_imports();
-	void init_keys();
 	void close();
 
   public:
 	init(const string_view &origin);
 	~init() noexcept;
+};
+
+struct ircd::m::init::modules
+{
+	void init_imports();
+	void init_keys();
+
+	modules();
+	~modules() noexcept;
 };
