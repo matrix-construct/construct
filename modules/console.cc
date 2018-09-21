@@ -1894,6 +1894,49 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__ingest(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column", "path"
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	const auto colname
+	{
+		param.at("column")
+	};
+
+	const auto path
+	{
+		param.at("path")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	db::column column
+	{
+		database, colname
+	};
+
+	db::ingest(column, path);
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {

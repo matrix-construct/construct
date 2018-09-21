@@ -59,6 +59,7 @@ namespace ircd::db
 	void del(column &, const string_view &key, const sopts & = {});
 
 	// [SET] Other operations
+	void ingest(column &, const string_view &path);
 	void setopt(column &, const string_view &key, const string_view &val);
 	void compact(column &, const std::pair<string_view, string_view> &, const int &to_level = -1, const compactor & = {});
 	void compact(column &, const int &level = -1, const compactor & = {});

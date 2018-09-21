@@ -7581,6 +7581,30 @@ ircd::db::setopt(column &column,
 }
 
 void
+ircd::db::ingest(column &column,
+                 const string_view &path)
+{
+	database &d(column);
+	database::column &c(column);
+
+	rocksdb::IngestExternalFileOptions opts;
+	opts.allow_global_seqno = false;
+	opts.allow_blocking_flush = false;
+
+	const std::vector<std::string> files
+	{
+		{ std::string{path} }
+	};
+
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
+	throw_on_error
+	{
+		d.d->IngestExternalFile(c, files, opts)
+	};
+}
+
+void
 ircd::db::del(column &column,
               const string_view &key,
               const sopts &sopts)
