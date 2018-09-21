@@ -1412,19 +1412,12 @@ ircd::m::index(const event &event,
 ircd::m::event::idx
 ircd::m::index(const event::id &event_id)
 {
-	auto &column
-	{
-		dbs::event_idx
-	};
-
-	event::idx ret;
-	column(event_id, [&ret]
-	(const string_view &value)
-	{
-		ret = byte_view<event::idx>(value);
-	});
-
-	return ret;
+	if(!index(event_id, std::nothrow))
+		throw m::NOT_FOUND
+		{
+			"no index found for %s",
+			string_view{event_id}
+		};
 }
 
 ircd::m::event::idx
