@@ -4323,7 +4323,8 @@ const noexcept try
 		id, max_size
 	};
 
-	return size(fs::uuid(fd, buf));
+	//return size(fs::uuid(fd, buf));
+	return 0;
 }
 catch(const std::exception &e)
 {
@@ -5040,7 +5041,8 @@ const noexcept try
 		id, max_size
 	};
 
-	return size(fs::uuid(fd, buf));
+	//return size(fs::uuid(fd, buf));
+	return 0;
 }
 catch(const std::exception &e)
 {
