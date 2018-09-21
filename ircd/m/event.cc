@@ -1450,7 +1450,7 @@ void
 ircd::m::event::fetch::event_id(const idx &idx,
                                 const id::closure &closure)
 {
-	if(!event_id(idx, std::nothrow, closure))
+	if(!get(std::nothrow, idx, "event_id", closure))
 		throw m::NOT_FOUND
 		{
 			"%lu not found in database", idx
@@ -1462,21 +1462,7 @@ ircd::m::event::fetch::event_id(const idx &idx,
                                 std::nothrow_t,
                                 const id::closure &closure)
 {
-	static constexpr auto column_idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
-	return column(byte_view<string_view>{idx}, std::nothrow, [&closure]
-	(const string_view &value)
-	{
-		closure(value);
-	});
+	return get(std::nothrow, idx, "event_id", closure);
 }
 
 /// Seekless constructor.
