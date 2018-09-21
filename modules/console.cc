@@ -1966,22 +1966,38 @@ try
 	    << " " << std::setw(24) << "column"
 	    << " " << std::setw(5) << "level"
 	    << " " << std::setw(12) << "bytes"
-	    << " " << std::setw(25) << "sequence number"
-	    << " " << std::setw(12) << "reads"
+	    << " " << std::setw(9) << "reads"
 	    << " " << std::setw(10) << "compacting"
+	    << " " << std::setw(25) << "sequence number"
+	    << " " << std::setw(25) << "key range"
 	    << std::endl;
 
 	const auto print{[&out]
 	(const db::database::fileinfo &f)
 	{
+		const uint64_t &min_key
+		{
+			f.min_key.size() == 8?
+				uint64_t(byte_view<uint64_t>(f.min_key)):
+				0UL
+		};
+
+		const uint64_t &max_key
+		{
+			f.max_key.size() == 8?
+				uint64_t(byte_view<uint64_t>(f.max_key)):
+				0UL
+		};
+
 		out << std::left
 		    << std::setw(16) << f.name
 		    << " " << std::setw(24) << std::right << f.column
 		    << " " << std::setw(5) << std::left << f.level
 		    << " " << std::setw(12) << std::right << f.size
-		    << " " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
 		    << " " << std::setw(9) << std::right << f.num_reads
 		    << " " << std::setw(10) << std::right << std::boolalpha << f.compacting
+		    << " " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
+		    << " " << std::setw(12) << std::right << min_key << " -> " << std::setw(12) << std::left << max_key
 		    << std::endl;
 	}};
 
@@ -1998,6 +2014,12 @@ try
 		out << "-- " << fileinfos.size() << " files"
 		    << std::endl;
 
+		return true;
+	}
+
+	if(startswith(colname, "/"))
+	{
+		print(db::database::fileinfo{database, colname});
 		return true;
 	}
 
