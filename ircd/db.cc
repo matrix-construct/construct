@@ -358,7 +358,7 @@ ircd::db::compact(database &d,
 	for(const auto &c : d.columns)
 	{
 		db::column column{*c};
-		compact(column, range, cb);
+		compact(column, range, -1, cb);
 		compact(column, -1, cb);
 	}
 }
@@ -7505,6 +7505,7 @@ ircd::db::compact(column &column,
 void
 ircd::db::compact(column &column,
                   const std::pair<string_view, string_view> &range,
+                  const int &to_level,
                   const compactor &cb)
 {
 	database &d(column);
@@ -7524,7 +7525,7 @@ ircd::db::compact(column &column,
 
 	rocksdb::CompactRangeOptions opts;
 	opts.change_level = true;
-	opts.target_level = -1;
+	opts.target_level = std::max(to_level, -1);
 	opts.allow_write_stall = true;
 
 	const ctx::uninterruptible::nothrow ui;

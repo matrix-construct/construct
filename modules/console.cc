@@ -1245,7 +1245,7 @@ try
 		integer && end? byte_view<string_view>(integers[1]) : end,
 	};
 
-	compact(column, range);
+	compact(column, range, level);
 
 	if(level > -2)
 		compact(column, level);
