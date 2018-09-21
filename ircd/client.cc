@@ -125,8 +125,8 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	terminate_all();
 	close_all();
+	terminate_all();
 	wait_all();
 
 	log::debug
