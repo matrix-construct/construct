@@ -37,8 +37,8 @@ namespace ircd
 	string_view u2a(const mutable_buffer &out, const const_buffer &in);
 	std::string u2a(const const_buffer &in);
 
-	string_view pretty_iec_unit(const mutable_buffer &out, const uint64_t &value);
-	std::string pretty_iec_unit(const uint64_t &value);
+	string_view pretty_iec(const mutable_buffer &out, const uint64_t &value);
+	std::string pretty_iec(const uint64_t &value);
 }
 
 namespace ircd

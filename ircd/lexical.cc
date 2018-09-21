@@ -23,23 +23,23 @@
 //
 
 std::string
-ircd::pretty_iec_unit(const uint64_t &value)
+ircd::pretty_iec(const uint64_t &value)
 {
 	return util::string(32, [&value]
 	(const mutable_buffer &out)
 	{
-		return pretty_iec_unit(out, value);
+		return pretty_iec(out, value);
 	});
 }
 
 ircd::string_view
-ircd::pretty_iec_unit(const mutable_buffer &out,
-                      const uint64_t &value)
+ircd::pretty_iec(const mutable_buffer &out,
+                 const uint64_t &value)
 try
 {
 	auto pos(0);
-	auto v(value);
-	for(; v > 1024; v /= 1024, ++pos);
+	long double v(value);
+	for(; v > 1024.0; v /= 1024.0, ++pos);
 	static const std::array<string_view, 7>  unit
 	{
 		"B", " KiB", "MiB", "GiB", "TiB", "PiB", "EiB"
@@ -47,7 +47,7 @@ try
 
 	return fmt::sprintf
 	{
-		out, "%lu %s", v, unit.at(pos)
+		out, "%.2lf %s", v, unit.at(pos)
 	};
 }
 catch(const std::out_of_range &e)
