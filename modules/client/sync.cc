@@ -684,7 +684,7 @@ try
 }
 catch(const json::not_found &e)
 {
-	log::error
+	log::critical
 	{
 		"polylog sync for presence error %lu to %lu (vm @ %zu) :%s"
 		,sp.since
@@ -699,6 +699,7 @@ catch(const json::not_found &e)
 void
 ircd::m::sync::polylog::account_data(shortpoll &sp,
                                      json::stack::object &out)
+try
 {
 	json::stack::member member{out, "events"};
 	json::stack::array array{member};
@@ -736,6 +737,17 @@ ircd::m::sync::polylog::account_data(shortpoll &sp,
 			};
 		}
 	});
+}
+catch(const json::not_found &e)
+{
+	log::critical
+	{
+		"polylog sync account data error %lu to %lu (vm @ %zu) :%s"
+		,sp.since
+		,sp.current
+		,m::vm::current_sequence
+		,e.what()
+	};
 }
 
 void
