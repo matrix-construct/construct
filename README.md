@@ -139,9 +139,10 @@ make install
 
 ### SETUP
 
-- For standalone builds you will need to add the `deps/boost/lib` directory
+- For standalone builds you will need to add the included lib directories
 in your git repo to the library path:
 `export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
+`export LD_LIBRARY_PATH=/path/to/src/deps/rocksdb:$LD_LIBRARY_PATH`
 
 - We will refer to your server as `host.tld`. For those familiar with matrix:
 this is your origin and mxid `@user:host.tld` hostpart. If your DNS uses
