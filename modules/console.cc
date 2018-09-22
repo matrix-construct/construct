@@ -2014,7 +2014,7 @@ console_cmd__db__sst__dump(opt &out, const string_view &line)
 
 	const auto colname
 	{
-		param.at("column")
+		param.at("column", "*"_sv)
 	};
 
 	const auto begin
@@ -2037,18 +2037,32 @@ console_cmd__db__sst__dump(opt &out, const string_view &line)
 		db::database::get(dbname)
 	};
 
-	db::column column
-	{
-		database, colname
-	};
-
-	const db::database::sst::dump dump
-	{
-		column, {begin, end}, path
-	};
-
 	_print_sst_info_header(out);
-	_print_sst_info(out, dump.info);
+
+	const auto do_dump{[&](const string_view &colname)
+	{
+		db::column column
+		{
+			database, colname
+		};
+
+		const db::database::sst::dump dump
+		{
+			column, {begin, end}, path
+		};
+
+		_print_sst_info(out, dump.info);
+	}};
+
+	if(colname != "*")
+	{
+		do_dump(colname);
+		return true;
+	}
+
+	for(const auto &colname : database.column_names)
+		do_dump(colname);
+
 	return true;
 }
 
