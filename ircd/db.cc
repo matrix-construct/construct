@@ -26,6 +26,7 @@
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/table.h>
 #include <rocksdb/sst_file_manager.h>
+#include <rocksdb/sst_dump_tool.h>
 #include <rocksdb/compaction_filter.h>
 
 // ircd::db interfaces requiring complete RocksDB (frontside).
@@ -2487,6 +2488,36 @@ const noexcept
 //
 // database::fileinfo
 //
+
+void
+ircd::db::sst_dump(const vector_view<const string_view> &args)
+{
+	thread_local char arg[16][256]
+	{
+		"./sst_dump"
+	};
+
+	size_t i(0);
+	char *argv[16] { arg[i++] };
+	for(; i < 15 && i - 1 < args.size(); ++i)
+	{
+		strlcpy(arg[i], args.at(i - 1));
+		argv[i] = arg[i];
+	}
+	argv[i] = nullptr;
+
+	rocksdb::SSTDumpTool tool;
+	const int ret
+	{
+		tool.Run(i, argv)
+	};
+
+	if(ret != 0)
+		throw error
+		{
+			"Error from SST dump tool: return value: %d", ret
+		};
+}
 
 //
 // fileinfo::vector

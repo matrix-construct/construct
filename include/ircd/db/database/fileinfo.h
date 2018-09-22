@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_DB_DATABASE_FILEINFO_H
 
+namespace ircd::db
+{
+	void sst_dump(const vector_view<const string_view> &args);
+}
+
 /// Database snapshot object. Maintaining this object will maintain a
 /// consistent state of access to the database at the sequence number
 /// from when it's acquired.

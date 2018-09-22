@@ -1937,6 +1937,19 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__sstdump(opt &out, const string_view &line)
+{
+	string_view buf[16];
+	const vector_view<const string_view> args
+	{
+		buf, tokens(line, " ", buf)
+	};
+
+	db::sst_dump(args);
+	return true;
+}
+
+bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {
