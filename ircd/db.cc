@@ -836,6 +836,7 @@ try
 	opts.write_thread_max_yield_usec = 0;
 	opts.write_thread_slow_yield_usec = 0;
 	opts.use_direct_io_for_flush_and_compaction = false;
+	//opts.max_total_wal_size = 8_MiB;
 
 	// Detect if O_DIRECT is possible if db::init left a file in the
 	// database directory claiming such. User can force no direct io
@@ -1465,10 +1466,13 @@ ircd::db::database::column::column(database *const &d,
 	// Misc options
 	//
 
+	//this->options.paranoid_file_checks = true;
+
 	// More stats reported by the rocksdb.stats property.
 	this->options.report_bg_io_stats = true;
 
 	// Set the compaction style; we don't override this in the descriptor yet.
+	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
 	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
 
 	// Set the compaction priority; this should probably be in the descriptor
@@ -1480,15 +1484,19 @@ ircd::db::database::column::column(database *const &d,
 
 	// Compression
 	//TODO: descriptor / conf / detect etc...
-	//this->options.compression = rocksdb::kSnappyCompression;
+	this->options.compression = rocksdb::kSnappyCompression;
+	//this->options.compression = rocksdb::kNoCompression;
 
 	//TODO: descriptor / conf
-	this->options.num_levels = 8;
-	this->options.level0_file_num_compaction_trigger = 1;
-	this->options.target_file_size_base = 128_MiB;
-	this->options.max_bytes_for_level_base = 192_MiB;
-	this->options.target_file_size_multiplier = 2;        // size at level
-	this->options.max_bytes_for_level_multiplier = 2;        // size at level
+	//this->options.num_levels = 8;
+	//this->options.level0_file_num_compaction_trigger = 1;
+	//this->options.target_file_size_base = 128_MiB;
+	//this->options.max_bytes_for_level_base = 192_MiB;
+	//this->options.target_file_size_multiplier = 2;        // size at level
+	//this->options.max_bytes_for_level_multiplier = 3;        // size at level
+	//this->options.write_buffer_size = 2_MiB;
+	//this->options.disable_auto_compactions = true;
+	this->options.level_compaction_dynamic_level_bytes = true;
 
 	log::debug
 	{
@@ -7682,7 +7690,7 @@ ircd::db::ingest(column &column,
 
 	rocksdb::IngestExternalFileOptions opts;
 	opts.allow_global_seqno = true;
-	opts.allow_blocking_flush = false;
+	opts.allow_blocking_flush = true;
 
 	// Automatically determine if we can avoid issuing new sequence
 	// numbers by considering this ingestion as "backfill" of missing
