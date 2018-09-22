@@ -9,17 +9,25 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_DB_DATABASE_FILEINFO_H
+#define HAVE_IRCD_DB_DATABASE_SST_H
 
-namespace ircd::db
+struct ircd::db::database::sst
 {
-	void sst_dump(const vector_view<const string_view> &args);
-}
+	struct info;
 
-/// Database snapshot object. Maintaining this object will maintain a
-/// consistent state of access to the database at the sequence number
-/// from when it's acquired.
-struct ircd::db::database::fileinfo
+	static void dump(const vector_view<const string_view> &args);
+};
+
+struct ircd::db::database::sst::writer
+{
+	using key_range = std::pair<string_view, string_view>;
+
+	writer(const database &, const column &, const key_range & = {});
+};
+
+/// Get info about an SST file.
+///
+struct ircd::db::database::sst::info
 {
 	struct vector;
 
@@ -35,13 +43,13 @@ struct ircd::db::database::fileinfo
 	int level {-1};
 	bool compacting {false};
 
-	fileinfo() = default;
-	fileinfo(rocksdb::LiveFileMetaData &&);
-	fileinfo(const database &, const string_view &filename);
+	info() = default;
+	info(rocksdb::LiveFileMetaData &&);
+	info(const database &, const string_view &filename);
 };
 
-struct ircd::db::database::fileinfo::vector
-:std::vector<fileinfo>
+struct ircd::db::database::sst::info::vector
+:std::vector<info>
 {
 	vector() = default;
 	explicit vector(const database &);

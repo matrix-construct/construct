@@ -1945,7 +1945,7 @@ console_cmd__db__sstdump(opt &out, const string_view &line)
 		buf, tokens(line, " ", buf)
 	};
 
-	db::sst_dump(args);
+	db::database::sst::dump(args);
 	return true;
 }
 
@@ -1986,7 +1986,7 @@ try
 	    << std::endl;
 
 	const auto print{[&out]
-	(const db::database::fileinfo &f)
+	(const db::database::sst::info &f)
 	{
 		const uint64_t &min_key
 		{
@@ -2018,7 +2018,7 @@ try
 	{
 		const auto fileinfos
 		{
-			db::database::fileinfo::vector(database)
+			db::database::sst::info::vector(database)
 		};
 
 		for(const auto &fileinfo : fileinfos)
@@ -2032,7 +2032,7 @@ try
 
 	if(startswith(colname, "/"))
 	{
-		print(db::database::fileinfo{database, colname});
+		print(db::database::sst::info{database, colname});
 		return true;
 	}
 
@@ -2047,7 +2047,7 @@ try
 	};
 
 	for(const auto &file : files)
-		print(db::database::fileinfo{database, file});
+		print(db::database::sst::info{database, file});
 
 	return true;
 }

@@ -2486,25 +2486,29 @@ const noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// database::fileinfo
+// database::sst
 //
 
 void
-ircd::db::sst_dump(const vector_view<const string_view> &args)
+ircd::db::database::sst::dump(const vector_view<const string_view> &args)
 {
-	thread_local char arg[16][256]
+	static const size_t ARG_MAX {16};
+	static const size_t ARG_MAX_LEN {256};
+
+	thread_local char arg[ARG_MAX][ARG_MAX_LEN]
 	{
 		"./sst_dump"
 	};
 
 	size_t i(0);
-	char *argv[16] { arg[i++] };
-	for(; i < 15 && i - 1 < args.size(); ++i)
+	char *argv[ARG_MAX] { arg[i++] };
+	for(; i < ARG_MAX - 1 && i - 1 < args.size(); ++i)
 	{
 		strlcpy(arg[i], args.at(i - 1));
 		argv[i] = arg[i];
 	}
-	argv[i] = nullptr;
+	argv[i++] = nullptr;
+	assert(i <= ARG_MAX);
 
 	rocksdb::SSTDumpTool tool;
 	const int ret
@@ -2520,10 +2524,10 @@ ircd::db::sst_dump(const vector_view<const string_view> &args)
 }
 
 //
-// fileinfo::vector
+// sst::info::vector
 //
 
-ircd::db::database::fileinfo::vector::vector(const database &d)
+ircd::db::database::sst::info::vector::vector(const database &d)
 {
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
@@ -2540,8 +2544,8 @@ ircd::db::database::fileinfo::vector::vector(const database &d)
 // fileinfo::fileinfo
 //
 
-ircd::db::database::fileinfo::fileinfo(const database &d,
-                                       const string_view &filename)
+ircd::db::database::sst::info::info(const database &d,
+                                    const string_view &filename)
 {
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
@@ -2549,7 +2553,7 @@ ircd::db::database::fileinfo::fileinfo(const database &d,
 	for(auto &md : v)
 		if(md.name == filename)
 		{
-			new (this) fileinfo(std::move(md));
+			new (this) info(std::move(md));
 			return;
 		}
 
@@ -2561,7 +2565,7 @@ ircd::db::database::fileinfo::fileinfo(const database &d,
 	};
 }
 
-ircd::db::database::fileinfo::fileinfo(rocksdb::LiveFileMetaData &&md)
+ircd::db::database::sst::info::info(rocksdb::LiveFileMetaData &&md)
 :name{std::move(md.name)}
 ,path{std::move(md.db_path)}
 ,column{std::move(md.column_family_name)}
