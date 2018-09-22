@@ -2500,9 +2500,10 @@ const noexcept
 void
 ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	static const size_t ARG_MAX {16};
 	static const size_t ARG_MAX_LEN {256};
-
 	thread_local char arg[ARG_MAX][ARG_MAX_LEN]
 	{
 		"./sst_dump"
@@ -2539,8 +2540,10 @@ ircd::db::database::sst::dump::dump(db::column column,
                                     const key_range &range,
                                     const string_view &path_)
 {
-	const database &d(column);
+	const ctx::uninterruptible::nothrow ui;
 	database::column &c(column);
+	const database &d(column);
+
 	std::string path{path_};
 	if(path.empty())
 	{
@@ -2595,6 +2598,7 @@ ircd::db::database::sst::dump::dump(db::column column,
 
 ircd::db::database::sst::info::vector::vector(const database &d)
 {
+	const ctx::uninterruptible::nothrow ui;
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
 
@@ -2613,6 +2617,7 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 ircd::db::database::sst::info::info(const database &d,
                                     const string_view &filename)
 {
+	const ctx::uninterruptible::nothrow ui;
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
 
