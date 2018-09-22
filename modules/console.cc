@@ -1937,7 +1937,7 @@ catch(const std::out_of_range &e)
 }
 
 bool
-console_cmd__db__sstdump(opt &out, const string_view &line)
+console_cmd__db__sst(opt &out, const string_view &line)
 {
 	string_view buf[16];
 	const vector_view<const string_view> args
@@ -1945,7 +1945,54 @@ console_cmd__db__sstdump(opt &out, const string_view &line)
 		buf, tokens(line, " ", buf)
 	};
 
-	db::database::sst::dump(args);
+	db::database::sst::tool(args);
+	return true;
+}
+
+bool
+console_cmd__db__sst__dump(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"dbname", "column", "begin", "end", "path"
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	const auto colname
+	{
+		param.at("column")
+	};
+
+	const auto begin
+	{
+		param["begin"]
+	};
+
+	const auto end
+	{
+		param["end"]
+	};
+
+	const auto path
+	{
+		param["path"]
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	db::column column
+	{
+		database, colname
+	};
+
+	db::database::sst::dump(column, {begin, end}, path);
 	return true;
 }
 

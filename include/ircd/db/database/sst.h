@@ -14,15 +14,9 @@
 struct ircd::db::database::sst
 {
 	struct info;
+	struct dump;
 
-	static void dump(const vector_view<const string_view> &args);
-};
-
-struct ircd::db::database::sst::writer
-{
-	using key_range = std::pair<string_view, string_view>;
-
-	writer(const database &, const column &, const key_range & = {});
+	static void tool(const vector_view<const string_view> &args);
 };
 
 /// Get info about an SST file.
@@ -42,6 +36,8 @@ struct ircd::db::database::sst::info
 	uint64_t num_reads {0};
 	int level {-1};
 	bool compacting {false};
+	int32_t version {-1};
+	uint64_t entries {0};
 
 	info() = default;
 	info(rocksdb::LiveFileMetaData &&);
@@ -53,4 +49,15 @@ struct ircd::db::database::sst::info::vector
 {
 	vector() = default;
 	explicit vector(const database &);
+};
+
+struct ircd::db::database::sst::dump
+{
+	using key_range = std::pair<string_view, string_view>;
+
+	sst::info info;
+
+	dump(db::column, const key_range & = {}, const string_view &path = {});
+	dump(dump &&) = delete;
+	dump(const dump &) = delete;
 };

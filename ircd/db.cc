@@ -2490,7 +2490,7 @@ const noexcept
 //
 
 void
-ircd::db::database::sst::dump(const vector_view<const string_view> &args)
+ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 {
 	static const size_t ARG_MAX {16};
 	static const size_t ARG_MAX_LEN {256};
@@ -2524,6 +2524,64 @@ ircd::db::database::sst::dump(const vector_view<const string_view> &args)
 }
 
 //
+// sst::dump::dump
+//
+
+ircd::db::database::sst::dump::dump(db::column column,
+                                    const key_range &range,
+                                    const string_view &path_)
+{
+	const database &d(column);
+	database::column &c(column);
+	std::string path{path_};
+	if(path.empty())
+	{
+		const string_view path_parts[]
+		{
+			fs::get(fs::DB), db::name(d), db::name(c)
+		};
+
+		path = fs::make_path(path_parts);
+	}
+
+	rocksdb::Options opts(d.d->GetOptions(c));
+	rocksdb::EnvOptions eopts(opts);
+	rocksdb::SstFileWriter writer
+	{
+		eopts, opts, c
+	};
+
+	throw_on_error
+	{
+		writer.Open(path)
+	};
+
+	size_t i(0);
+	for(auto it(column.begin()); it != column.end(); ++it, ++i)
+		throw_on_error
+		{
+			writer.Put(slice(it->first), slice(it->second))
+		};
+
+	rocksdb::ExternalSstFileInfo info;
+	if(i)
+		throw_on_error
+		{
+			writer.Finish(&info)
+		};
+
+	this->info.column = db::name(column);
+	this->info.path = std::move(info.file_path);
+	this->info.min_key = std::move(info.smallest_key);
+	this->info.max_key = std::move(info.largest_key);
+	this->info.min_seq = info.sequence_number;
+	this->info.max_seq = info.sequence_number;
+	this->info.size = info.file_size;
+	this->info.entries = info.num_entries;
+	this->info.version = info.version;
+}
+
+//
 // sst::info::vector
 //
 
@@ -2541,7 +2599,7 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 }
 
 //
-// fileinfo::fileinfo
+// sst::info::info
 //
 
 ircd::db::database::sst::info::info(const database &d,
