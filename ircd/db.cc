@@ -7681,8 +7681,14 @@ ircd::db::ingest(column &column,
 	database::column &c(column);
 
 	rocksdb::IngestExternalFileOptions opts;
-	opts.allow_global_seqno = false;
+	opts.allow_global_seqno = true;
 	opts.allow_blocking_flush = false;
+
+	// Automatically determine if we can avoid issuing new sequence
+	// numbers by considering this ingestion as "backfill" of missing
+	// data which did actually exist but was physically removed.
+	const auto &copts{d.d->GetOptions(c)};
+	opts.ingest_behind = copts.allow_ingest_behind;
 
 	const std::vector<std::string> files
 	{
