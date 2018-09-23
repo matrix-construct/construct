@@ -5581,12 +5581,9 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 
 	const auto &room_id
 	{
-		m::room_id(param.at(0))
-	};
-
-	const m::room room
-	{
-		room_id
+		param.at("room_id") != "*"?
+			m::room_id(param.at(0)):
+			"*"_sv
 	};
 
 	using prototype = size_t (const m::room &);
@@ -5595,12 +5592,28 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 		"m_room", "state__rebuild_present"
 	};
 
+	if(room_id == "*")
+	{
+		m::rooms::for_each(m::room::id::closure{[&out]
+		(const m::room::id &room_id)
+		{
+			const size_t count
+			{
+				state__rebuild_present(m::room{room_id})
+			};
+
+			out << "done " << room_id << " " << count << std::endl;
+		}});
+
+		return true;
+	}
+
 	const size_t count
 	{
-		state__rebuild_present(room)
+		state__rebuild_present(m::room{room_id})
 	};
 
-	out << "done " << count << std::endl;
+	out << "done " << room_id << " " << count << std::endl;
 	return true;
 }
 
