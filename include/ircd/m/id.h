@@ -205,11 +205,16 @@ struct ircd::m::id::device
 // Utilities
 namespace ircd::m
 {
+	// Check if any sigil
+	bool is_sigil(const char &c) noexcept;
+	bool has_sigil(const string_view &) noexcept;
+
+	// Interpret sigil type (or throw)
 	id::sigil sigil(const char &c);
 	id::sigil sigil(const string_view &id);
 	string_view reflect(const id::sigil &);
 
-	// Checks
+	// Full ID checks
 	bool valid(const id::sigil &, const string_view &) noexcept;
 	bool valid_local(const id::sigil &, const string_view &) noexcept;  // Local part is valid
 	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
