@@ -40,6 +40,7 @@ struct ircd::db::database::sst::info
 	uint64_t entries {0};
 
 	info() = default;
+	info(rocksdb::SstFileMetaData &&);
 	info(rocksdb::LiveFileMetaData &&);
 	info(const database &, const string_view &filename);
 };
@@ -49,6 +50,7 @@ struct ircd::db::database::sst::info::vector
 {
 	vector() = default;
 	explicit vector(const database &);
+	explicit vector(const db::column &);
 };
 
 struct ircd::db::database::sst::dump

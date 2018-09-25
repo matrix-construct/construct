@@ -2608,6 +2608,26 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 	});
 }
 
+ircd::db::database::sst::info::vector::vector(const db::column &column)
+{
+	const ctx::uninterruptible::nothrow ui;
+	database::column &c(const_cast<db::column &>(column));
+	database &d(*c.d);
+
+	rocksdb::ColumnFamilyMetaData cfmd;
+	d.d->GetColumnFamilyMetaData(c, &cfmd);
+	this->reserve(cfmd.file_count);
+	for(rocksdb::LevelMetaData &level : cfmd.levels)
+	{
+		for(rocksdb::SstFileMetaData md : level.files)
+		{
+			this->emplace_back(std::move(md));
+			this->back().column = db::name(column);
+			this->back().level = level.level;
+		}
+	}
+}
+
 //
 // sst::info::info
 //
@@ -2645,6 +2665,19 @@ ircd::db::database::sst::info::info(rocksdb::LiveFileMetaData &&md)
 ,max_key{std::move(md.largestkey)}
 ,num_reads{md.num_reads_sampled}
 ,level{md.level}
+,compacting{md.being_compacted}
+{
+}
+
+ircd::db::database::sst::info::info(rocksdb::SstFileMetaData &&md)
+:name{std::move(md.name)}
+,path{std::move(md.db_path)}
+,size{md.size}
+,min_seq{md.smallest_seqno}
+,max_seq{md.largest_seqno}
+,min_key{std::move(md.smallestkey)}
+,max_key{std::move(md.largestkey)}
+,num_reads{md.num_reads_sampled}
 ,compacting{md.being_compacted}
 {
 }

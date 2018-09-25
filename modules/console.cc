@@ -2120,16 +2120,9 @@ try
 		database, colname
 	};
 
-	const auto files
-	{
-		db::files(column)
-	};
-
-	for(const auto &file : files)
-	{
-		const db::database::sst::info info{database, file};
+	const db::database::sst::info::vector vector{column};
+	for(const auto &info : vector)
 		_print_sst_info(out, info);
-	}
 
 	return true;
 }
