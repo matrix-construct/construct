@@ -2013,9 +2013,18 @@ ircd::net::socket::cancel()
 noexcept
 {
 	cancel_timeout();
+
 	boost::system::error_code ec;
 	sd.cancel(ec);
-	assert(!ec);
+	if(likely(ec == boost::system::errc::success))
+		return;
+
+	log::dwarning
+	{
+		log, "socket(%p) cancel :%s",
+		(const void *)this,
+		string(ec)
+	};
 }
 
 void
