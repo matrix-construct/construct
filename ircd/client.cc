@@ -125,8 +125,8 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	close_all();
 	terminate_all();
+	close_all();
 	wait_all();
 
 	log::debug
@@ -447,6 +447,21 @@ ircd::handle_ec(client &client,
 	using boost::system::system_category;
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
+
+	if(unlikely(runlevel != runlevel::RUN))
+	{
+		log::dwarning
+		{
+			"socket(%p) local[%s] remote[%s] refusing client request in runlevel %s",
+			client.sock.get(),
+			string(local(client)),
+			string(remote(client)),
+			reflect(runlevel)
+		};
+
+		client.close(net::dc::RST, net::close_ignore);
+		return false;
+	}
 
 	if(ec.category() == system_category()) switch(ec.value())
 	{

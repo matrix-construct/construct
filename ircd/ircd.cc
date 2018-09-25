@@ -230,9 +230,9 @@ noexcept try
 	{
 		_matrix_.close();
 		server::interrupt_all();
+		client::terminate_all();
 		client::close_all();
 		server::close_all();
-		client::terminate_all();
 		server::wait_all();
 		client::wait_all();
 	}};
