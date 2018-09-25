@@ -1550,9 +1550,9 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(28) << "CACHED"
+	    << std::setw(28) << "COMPRESSED CACHED"
 	    << " "
-	    << std::setw(28) << "CAPACITY"
+	    << std::setw(28) << "COMPRESSED CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << std::endl;
@@ -1950,17 +1950,18 @@ static void
 _print_sst_info_header(opt &out)
 {
 	out << std::left
-	    << std::setw(16) << "name"
+	    << std::setw(14) << "name"
 	    << std::right
-	    << " " << std::setw(24) << "column"
-	    << " " << std::setw(3) << "ver"
-	    << " " << std::setw(5) << "level"
-	    << " " << std::setw(9) << "entries"
-	    << " " << std::setw(12) << "bytes"
-	    << " " << std::setw(9) << "reads"
-	    << " " << std::setw(10) << "compacting"
-	    << " " << std::setw(25) << "sequence number"
-	    << " " << std::setw(25) << "key range"
+	    << "  " << std::setw(3) << "ver"
+	    << "  " << std::setw(26) << "bytes"
+	    << "  " << std::setw(9) << "entries"
+	    << "  " << std::setw(9) << "reads"
+	    << "  " << std::setw(10) << "compacting"
+	    << "  " << std::setw(28) << "sequence number"
+	    << "  " << std::setw(28) << "key range"
+	    << "  " << std::setw(5) << "level"
+	    << std::left
+	    << "  " << std::setw(24) << "column"
 	    << std::endl;
 }
 
@@ -1983,16 +1984,16 @@ _print_sst_info(opt &out,
 	};
 
 	out << std::left
-	    << std::setw(16) << f.name
-	    << " " << std::setw(24) << std::right << f.column
-	    << " " << std::setw(3) << std::right << f.version
-	    << " " << std::setw(5) << std::left << f.level
-	    << " " << std::setw(9) << std::right << f.entries
-	    << " " << std::setw(12) << std::right << f.size
-	    << " " << std::setw(9) << std::right << f.num_reads
-	    << " " << std::setw(10) << std::right << std::boolalpha << f.compacting
-	    << " " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
-	    << " " << std::setw(12) << std::right << min_key << " -> " << std::setw(12) << std::left << max_key
+	    << std::setw(14) << f.name
+	    << "  " << std::setw(3) << std::right << f.version
+	    << "  " << std::setw(26) << std::right << pretty(iec(f.size))
+	    << "  " << std::setw(9) << std::right << f.entries
+	    << "  " << std::setw(9) << std::right << f.num_reads
+	    << "  " << std::setw(10) << std::right << std::boolalpha << f.compacting
+	    << "  " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
+	    << "  " << std::setw(12) << std::right << min_key << " -> " << std::setw(12) << std::left << max_key
+	    << "  " << std::setw(5) << std::right << f.level
+	    << "  " << std::setw(24) << std::left << f.column
 	    << std::endl;
 }
 
