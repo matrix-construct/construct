@@ -1472,6 +1472,72 @@ const
 // room::members
 //
 
+size_t
+ircd::m::room::members::count()
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	return state.count("m.room.member");
+}
+
+size_t
+ircd::m::room::members::count(const string_view &membership)
+const
+{
+	// Allow empty membership string to count all memberships
+	if(!membership)
+		return count();
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(!room.event_id && membership == "join")
+	{
+		size_t ret{0};
+		const room::origins origins{room};
+		origins._for_each_([&ret](const string_view &)
+		{
+			++ret;
+			return true;
+		});
+
+		return ret;
+	}
+
+	// The list of event fields to fetch for the closure
+	static const event::keys keys
+	{
+		event::keys::include
+		{
+			"event_id",    // Added for any upstack usage (but may be unnecessary).
+			"membership",  // Required for membership test.
+			"content",     // Required because synapse events randomly have no event.membership
+		}
+	};
+
+	const m::event::fetch::opts fopts
+	{
+		keys, room.fopts? room.fopts->gopts : db::gopts{}
+	};
+
+	const room::state state
+	{
+		room, &fopts
+	};
+
+	size_t ret{0};
+	state.for_each("m.room.member", event::closure{[&ret, &membership]
+	(const m::event &event)
+	{
+		ret += m::membership(event) == membership;
+	}});
+
+	return ret;
+}
+
 void
 ircd::m::room::members::for_each(const closure &closure)
 const
@@ -1494,14 +1560,14 @@ const
 }
 
 bool
-ircd::m::room::members::test(const event::closure_bool &closure)
+ircd::m::room::members::for_each(const event::closure_bool &closure)
 const
 {
 	const room::state state{room};
-	return !state.for_each("m.room.member", event::closure_bool{[&closure]
+	return state.for_each("m.room.member", event::closure_bool{[&closure]
 	(const m::event &event)
 	{
-		return !closure(event);
+		return closure(event);
 	}});
 }
 
@@ -1557,7 +1623,7 @@ const
 		room.fopts = theirs;
 	}};
 
-	return !test(membership, event::closure_bool{[&closure]
+	return for_each(membership, event::closure_bool{[&closure]
 	(const event &event)
 	{
 		const user::id &user_id
@@ -1565,7 +1631,7 @@ const
 			at<"state_key"_>(event)
 		};
 
-		return !closure(user_id);
+		return closure(user_id);
 	}});
 }
 
@@ -1574,28 +1640,28 @@ ircd::m::room::members::for_each(const string_view &membership,
                                  const event::closure &closure)
 const
 {
-	test(membership, [&closure]
-	(const event &event)
+	for_each(membership, event::closure_bool{[&closure]
+	(const m::event &event)
 	{
 		closure(event);
 		return false;
-	});
+	}});
 }
 
 bool
-ircd::m::room::members::test(const string_view &membership,
-                             const event::closure_bool &closure)
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const event::closure_bool &closure)
 const
 {
 	if(empty(membership))
-		return test(closure);
+		return for_each(closure);
 
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(!room.event_id && membership == "join")
 	{
 		const room::origins origins{room};
-		return origins._test_([&closure, this]
+		return origins._for_each_([&closure, this]
 		(const string_view &key)
 		{
 			const string_view &member
@@ -1603,7 +1669,7 @@ const
 				std::get<1>(dbs::room_joined_key(key))
 			};
 
-			bool ret{false};
+			bool ret{true};
 			room.get(std::nothrow, "m.room.member", member, event::closure{[&closure, &ret]
 			(const event &event)
 			{
@@ -1614,81 +1680,15 @@ const
 		});
 	}
 
-	return test(event::closure_bool{[&membership, &closure]
+	return for_each(event::closure_bool{[&membership, &closure]
 	(const event &event)
 	{
 		if(m::membership(event) == membership)
-			if(closure(event))
-				return true;
+			if(!closure(event))
+				return false;
 
-		return false;
+		return true;
 	}});
-}
-
-size_t
-ircd::m::room::members::count(const string_view &membership)
-const
-{
-	// Allow empty membership string to count all memberships
-	if(!membership)
-		return count();
-
-	// joined members optimization. Only possible when seeking
-	// membership="join" on the present state of the room.
-	if(!room.event_id && membership == "join")
-	{
-		size_t ret{0};
-		const room::origins origins{room};
-		origins._test_([&ret](const string_view &)
-		{
-			++ret;
-			return false;
-		});
-
-		return ret;
-	}
-
-	// The list of event fields to fetch for the closure
-	static const event::keys keys
-	{
-		event::keys::include
-		{
-			"event_id",    // Added for any upstack usage (but may be unnecessary).
-			"membership",  // Required for membership test.
-			"content",     // Required because synapse events randomly have no event.membership
-		}
-	};
-
-	const m::event::fetch::opts fopts
-	{
-		keys, room.fopts? room.fopts->gopts : db::gopts{}
-	};
-
-	const room::state state
-	{
-		room, &fopts
-	};
-
-	size_t ret{0};
-	state.for_each("m.room.member", event::closure{[&ret, &membership]
-	(const m::event &event)
-	{
-		ret += m::membership(event) == membership;
-	}});
-
-	return ret;
-}
-
-size_t
-ircd::m::room::members::count()
-const
-{
-	const room::state state
-	{
-		room
-	};
-
-	return state.count("m.room.member");
 }
 
 //
@@ -1748,19 +1748,19 @@ bool
 ircd::m::room::origins::only(const string_view &origin)
 const
 {
-	bool ret{false};
-	test([&ret, &origin]
-	(const string_view &origin_)
+	ushort ret{2};
+	for_each(closure_bool{[&ret, &origin]
+	(const string_view &origin_) -> bool
 	{
 		if(origin == origin_)
-			ret = true;
-		else if(ret)
-			ret = false;
+			ret = 1;
+		else
+			ret = 0;
 
 		return ret;
-	});
+	}});
 
-	return ret;
+	return ret == 1;
 }
 
 bool
@@ -1803,30 +1803,21 @@ void
 ircd::m::room::origins::for_each(const closure &view)
 const
 {
-	test([&view](const string_view &origin)
+	for_each(closure_bool{[&view]
+	(const string_view &origin)
 	{
 		view(origin);
-		return false;
-	});
+		return true;
+	}});
 }
 
 bool
 ircd::m::room::origins::for_each(const closure_bool &view)
 const
 {
-	return !test([&view](const string_view &origin)
-	{
-		return !view(origin);
-	});
-}
-
-bool
-ircd::m::room::origins::test(const closure_bool &view)
-const
-{
 	string_view last;
 	char lastbuf[256];
-	return _test_([&last, &lastbuf, &view]
+	return _for_each_([&last, &lastbuf, &view]
 	(const string_view &key)
 	{
 		const string_view &origin
@@ -1835,18 +1826,18 @@ const
 		};
 
 		if(origin == last)
-			return false;
-
-		if(view(origin))
 			return true;
 
+		if(!view(origin))
+			return false;
+
 		last = { lastbuf, copy(lastbuf, origin) };
-		return false;
+		return true;
 	});
 }
 
 bool
-ircd::m::room::origins::_test_(const closure_bool &view)
+ircd::m::room::origins::_for_each_(const closure_bool &view)
 const
 {
 	db::index &index
@@ -1866,11 +1857,11 @@ const
 			lstrip(it->first, "\0"_sv)
 		};
 
-		if(view(key))
-			return true;
+		if(!view(key))
+			return false;
 	}
 
-	return false;
+	return true;
 }
 
 //

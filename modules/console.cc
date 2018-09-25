@@ -5424,10 +5424,9 @@ console_cmd__room__origins(opt &out, const string_view &line)
 		room
 	};
 
-	origins.test([&out](const string_view &origin)
+	origins.for_each([&out](const string_view &origin)
 	{
 		out << origin << std::endl;
-		return false;
 	});
 
 	return true;

@@ -316,18 +316,17 @@ struct ircd::m::room::members
 
 	m::room room;
 
-	size_t count() const;
-	size_t count(const string_view &membership) const;
-
-	bool test(const string_view &membership, const event::closure_bool &view) const;
-	bool test(const event::closure_bool &view) const;
-
+	bool for_each(const string_view &membership, const event::closure_bool &) const;
 	void for_each(const string_view &membership, const event::closure &) const;
 	bool for_each(const string_view &membership, const closure_bool &) const;
 	void for_each(const string_view &membership, const closure &) const;
+	bool for_each(const event::closure_bool &) const;
 	void for_each(const event::closure &) const;
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
+
+	size_t count(const string_view &membership) const;
+	size_t count() const;
 
 	members(const m::room &room)
 	:room{room}
@@ -348,8 +347,7 @@ struct ircd::m::room::origins
 
 	m::room room;
 
-	bool _test_(const closure_bool &view) const;
-	bool test(const closure_bool &view) const;
+	bool _for_each_(const closure_bool &view) const;
 	bool for_each(const closure_bool &view) const;
 	void for_each(const closure &view) const;
 	bool has(const string_view &origin) const;

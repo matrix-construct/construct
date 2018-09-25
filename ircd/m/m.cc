@@ -2175,7 +2175,7 @@ const
 	(const m::room &room, const string_view &membership)
 	{
 		const m::room::origins origins{room};
-		return !origins.test([&closure, &seen]
+		return origins.for_each(origins::closure_bool{[&closure, &seen]
 		(const string_view &origin)
 		{
 			const auto it
@@ -2184,11 +2184,11 @@ const
 			};
 
 			if(it != end(seen) && *it == origin)
-				return false;
+				return true;
 
 			seen.emplace_hint(it, std::string{origin});
-			return !closure(origin);
-		});
+			return closure(origin);
+		}});
 	}});
 }
 
@@ -2273,7 +2273,7 @@ const
 	(const m::room &room, const string_view &)
 	{
 		const m::room::members members{room};
-		return !members.test(membership, [&seen, &closure]
+		return members.for_each(membership, event::closure_bool{[&seen, &closure]
 		(const m::event &event)
 		{
 			const auto &other
@@ -2287,11 +2287,11 @@ const
 			};
 
 			if(it != end(seen) && *it == other)
-				return false;
+				return true;
 
 			seen.emplace_hint(it, std::string{other});
-			return !closure(m::user{other});
-		});
+			return closure(m::user{other});
+		}});
 	}});
 }
 
