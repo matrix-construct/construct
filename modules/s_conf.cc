@@ -203,9 +203,10 @@ init_conf_items_hook
 	}
 };
 
-static void
+static m::event::id::buf
 create_conf_item(const string_view &key,
                  const conf::item<> &item)
+try
 {
 	thread_local char vbuf[4_KiB];
 	const string_view &val
@@ -213,10 +214,18 @@ create_conf_item(const string_view &key,
 		item.get(vbuf)
 	};
 
-	send(conf_room, m::me.user_id, "ircd.conf.item", key,
+	return set_conf_item(m::me.user_id, key, val);
+}
+catch(const std::exception &e)
+{
+	if(item_error_log) log::error
 	{
-		{ "value", val }
-	});
+		"Failed to create conf item '%s' :%s",
+		key,
+		e.what()
+	};
+
+	return {};
 }
 
 static void
