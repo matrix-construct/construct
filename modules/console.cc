@@ -1491,9 +1491,9 @@ try
 		    << std::setw(16) << "ROW"
 		    << std::right
 		    << " "
-		    << std::setw(9) << "CACHED"
+		    << std::setw(28) << "CACHED"
 		    << " "
-		    << std::setw(9) << "CAPACITY"
+		    << std::setw(28) << "CAPACITY"
 		    << " "
 		    << std::setw(6) << "PCT"
 		    << " "
@@ -1503,9 +1503,9 @@ try
 		    << std::setw(16) << "*"
 		    << std::right
 		    << " "
-		    << std::setw(9) << usage
+		    << std::setw(28) << std::right << pretty(iec(usage))
 		    << " "
-		    << std::setw(9) << capacity
+		    << std::setw(28) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
@@ -1527,9 +1527,9 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(10) << "CACHED"
+	    << std::setw(28) << "CACHED"
 	    << " "
-	    << std::setw(10) << "CAPACITY"
+	    << std::setw(28) << "CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << " "
@@ -1540,9 +1540,9 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(10) << "CACHED"
+	    << std::setw(28) << "CACHED"
 	    << " "
-	    << std::setw(10) << "CAPACITY"
+	    << std::setw(28) << "CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << std::endl;
@@ -1563,9 +1563,9 @@ try
 		    << " "
 		    << std::setw(9) << stats.inserts
 		    << " "
-		    << std::setw(10) << usage
+		    << std::setw(28) << std::right << pretty(iec(usage))
 		    << " "
-		    << std::setw(10) << capacity
+		    << std::setw(28) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << '%'
@@ -1577,9 +1577,9 @@ try
 		    << " "
 		    << std::setw(9) << stats_comp.inserts
 		    << " "
-		    << std::setw(10) << usage_comp
+		    << std::setw(28) << std::right << pretty(iec(usage_comp))
 		    << " "
-		    << std::setw(10) << capacity_comp
+		    << std::setw(28) << std::right << pretty(iec(capacity_comp))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
 		    << '%'
@@ -2467,23 +2467,23 @@ try
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "size "
-	    << " " << bytes(database)
+	    << " " << pretty(iec(bytes(database)))
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "row cache size "
-	    << " " << db::usage(cache(database))
+	    << " " << pretty(iec(db::usage(cache(database))))
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "live data size "
-	    << " " << db::property(database, "rocksdb.estimate-live-data-size")
+	    << " " << pretty(iec(db::property(database, "rocksdb.estimate-live-data-size")))
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "all tables size "
-	    << " " << db::property(database, "rocksdb.size-all-mem-tables")
+	    << " " << pretty(iec(db::property(database, "rocksdb.size-all-mem-tables")))
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "active table size "
-	    << " " << db::property(database, "rocksdb.cur-size-active-mem-table")
+	    << " " << pretty(iec(db::property(database, "rocksdb.cur-size-active-mem-table")))
 	    << std::endl;
 
 	out << std::left << std::setw(28) << std::setfill('_') << "active table entries "
