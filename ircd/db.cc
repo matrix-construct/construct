@@ -51,15 +51,13 @@
 #include <ircd/db/database/env/file_lock.h>
 #include <ircd/db/database/env/state.h>
 
-#define IRCD_DB_PORT
+// Internal utility interface for this definition file.
+#include "db.h"
 
 // RocksDB port linktime-overriding interfaces (experimental).
 #ifdef IRCD_DB_PORT
 #include <ircd/db/database/env/port.h>
 #endif
-
-// Internal utility interface for this definition file.
-#include "db.h"
 
 //
 // Misc / General linkages

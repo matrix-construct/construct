@@ -30,6 +30,12 @@
 ///
 //#define RB_DEBUG_DB_PORT
 
+/// Defined to enable our rocksdb::port implementation which connects to our
+/// ircd::ctx threading implementation. This is experimental. Note: at this
+/// time this MUST be enabled or rocksdb's will be using posix threading and
+/// that will not work with our env.
+#define IRCD_DB_PORT
+
 namespace ircd::db
 {
 	struct throw_on_error;
