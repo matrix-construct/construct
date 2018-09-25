@@ -1430,6 +1430,10 @@ ircd::db::database::column::column(database *const &d,
 			&this->prefix, [](const rocksdb::SliceTransform *) {}
 		};
 
+	// Set the insert hint prefix extractor
+	if(this->options.prefix_extractor)
+		this->options.memtable_insert_with_hint_prefix_extractor = this->options.prefix_extractor;
+
 	// Set the compaction filter
 	this->options.compaction_filter = &this->cfilter;
 
