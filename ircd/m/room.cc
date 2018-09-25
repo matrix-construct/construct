@@ -1162,6 +1162,9 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure_bool &closure)
 const
 {
+	if(!type)
+		return for_each(closure);
+
 	if(!present())
 		return !m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
@@ -1201,6 +1204,9 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::closure_idx_bool &closure)
 const
 {
+	if(!type)
+		return for_each(closure);
+
 	if(!present())
 		return !m::state::test(root_id, type, [&closure]
 		(const json::array &key, const string_view &event_id)
