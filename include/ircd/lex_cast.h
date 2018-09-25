@@ -37,8 +37,14 @@ namespace ircd
 	string_view u2a(const mutable_buffer &out, const const_buffer &in);
 	std::string u2a(const const_buffer &in);
 
-	string_view pretty_iec(const mutable_buffer &out, const uint64_t &value);
-	std::string pretty_iec(const uint64_t &value);
+	// Human readable space suite
+	using human_readable_size = std::tuple<uint64_t, long double, const string_view &>;
+	human_readable_size iec(const uint64_t &value);
+	human_readable_size si(const uint64_t &value);
+	string_view pretty(const mutable_buffer &out, const human_readable_size &);
+	std::string pretty(const human_readable_size &);
+	string_view pretty_only(const mutable_buffer &out, const human_readable_size &);
+	std::string pretty_only(const human_readable_size &);
 }
 
 namespace ircd

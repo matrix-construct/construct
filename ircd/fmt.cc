@@ -809,6 +809,11 @@ const
 				{
 					return _precision_;
 				}
+
+				static bool trailing_zeros(const long double &)
+				{
+					return _precision_ > 0;
+				}
 			};
 
 			karma::rule<char *, long double()> rule

@@ -22,41 +22,110 @@
 // misc util
 //
 
+//
+// Human readable unit suite
+//
+
 std::string
-ircd::pretty_iec(const uint64_t &value)
+ircd::pretty_only(const human_readable_size &value)
 {
 	return util::string(32, [&value]
 	(const mutable_buffer &out)
 	{
-		return pretty_iec(out, value);
+		return pretty_only(out, value);
 	});
 }
 
 ircd::string_view
-ircd::pretty_iec(const mutable_buffer &out,
-                 const uint64_t &value)
+ircd::pretty_only(const mutable_buffer &out,
+                  const human_readable_size &value)
 try
 {
-	auto pos(0);
-	long double v(value);
-	for(; v > 1024.0; v /= 1024.0, ++pos);
-	static const std::array<string_view, 7>  unit
-	{
-		"B", " KiB", "MiB", "GiB", "TiB", "PiB", "EiB"
-	};
-
 	return fmt::sprintf
 	{
-		out, "%.2lf %s", v, unit.at(pos)
+		out, "%.2lf %s",
+		std::get<long double>(value),
+		std::get<const string_view &>(value)
 	};
 }
 catch(const std::out_of_range &e)
 {
 	return fmt::sprintf
 	{
-		out, "%lu B", value
+		out, "%lu B",
+		std::get<uint64_t>(value)
 	};
 }
+
+std::string
+ircd::pretty(const human_readable_size &value)
+{
+	return util::string(64, [&value]
+	(const mutable_buffer &out)
+	{
+		return pretty(out, value);
+	});
+}
+
+ircd::string_view
+ircd::pretty(const mutable_buffer &out,
+             const human_readable_size &value)
+try
+{
+	return fmt::sprintf
+	{
+		out, "%.2lf %s (%lu)",
+		std::get<long double>(value),
+		std::get<const string_view &>(value),
+		std::get<uint64_t>(value)
+	};
+}
+catch(const std::out_of_range &e)
+{
+	return fmt::sprintf
+	{
+		out, "%lu B",
+		std::get<uint64_t>(value)
+	};
+}
+
+ircd::human_readable_size
+ircd::iec(const uint64_t &value)
+{
+	static const std::array<string_view, 7> unit
+	{
+		"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"
+	};
+
+	auto pos(0);
+	long double v(value);
+	for(; v > 1024.0; v /= 1024.0, ++pos);
+	return
+	{
+		value, v, unit.at(pos)
+	};
+}
+
+ircd::human_readable_size
+ircd::si(const uint64_t &value)
+{
+	static const std::array<string_view, 7> unit
+	{
+		"B", "KB", "MB", "GB", "TB", "PB", "EB"
+	};
+
+	auto pos(0);
+	long double v(value);
+	for(; v > 1000.0; v /= 1000.0, ++pos);
+	return
+	{
+		value, v, unit.at(pos)
+	};
+}
+
+//
+// binary <-> hex suite
+//
 
 std::string
 ircd::u2a(const const_buffer &in)
