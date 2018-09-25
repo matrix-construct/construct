@@ -743,13 +743,23 @@ console_cmd__conf__get(opt &out, const string_view &line)
 bool
 console_cmd__conf__rehash(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"force"
+	}};
+
 	using prototype = void (const bool &);
 	static mods::import<prototype> rehash_conf
 	{
 		"s_conf", "rehash_conf"
 	};
 
-	rehash_conf(false);
+	const bool force
+	{
+		param["force"] == "force"
+	};
+
+	rehash_conf(force);
 	out << "Saved runtime conf items"
 	    << " from the current state into !conf:" << my_host()
 	    << std::endl;
