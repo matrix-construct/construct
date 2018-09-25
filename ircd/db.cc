@@ -549,7 +549,7 @@ ircd::db::prop_int
 ircd::db::property(const database &cd,
                    const string_view &name)
 {
-	uint64_t ret;
+	uint64_t ret(0);
 	database &d(const_cast<database &>(cd));
 	const ctx::uninterruptible::nothrow ui;
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
@@ -7457,7 +7457,7 @@ ircd::db::prop_int
 ircd::db::property(const column &column,
                    const string_view &name)
 {
-	uint64_t ret;
+	uint64_t ret(0);
 	database::column &c(const_cast<db::column &>(column));
 	database &d(const_cast<db::column &>(column));
 	if(!d.d->GetIntProperty(c, slice(name), &ret))
