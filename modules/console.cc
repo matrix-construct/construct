@@ -5493,14 +5493,19 @@ console_cmd__room__state(opt &out, const string_view &line)
 		m::room_id(token(line, ' ', 0))
 	};
 
-	const auto &event_id
+	const auto &event_id_or_type
 	{
 		token(line, ' ', 1, {})
 	};
 
+	const auto is_event_id
+	{
+		m::has_sigil(event_id_or_type) && valid(m::id::EVENT, event_id_or_type)
+	};
+
 	const m::room room
 	{
-		room_id, event_id
+		room_id, is_event_id? event_id_or_type : string_view{}
 	};
 
 	const m::room::state state
@@ -5508,7 +5513,12 @@ console_cmd__room__state(opt &out, const string_view &line)
 		room
 	};
 
-	state.for_each([&out](const m::event &event)
+	const string_view &type
+	{
+		!is_event_id? event_id_or_type : string_view{}
+	};
+
+	state.for_each(type, [&out](const m::event &event)
 	{
 		out << pretty_oneline(event) << std::endl;
 	});
