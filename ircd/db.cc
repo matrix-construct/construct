@@ -8227,6 +8227,106 @@ template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, c
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// comparator.h
+//
+
+//
+// linkage placements for integer comparators so they all have the same addr
+//
+
+ircd::db::cmp_int64_t::cmp_int64_t()
+{
+}
+
+ircd::db::cmp_int64_t::~cmp_int64_t()
+noexcept
+{
+}
+
+ircd::db::cmp_uint64_t::cmp_uint64_t()
+{
+}
+
+ircd::db::cmp_uint64_t::~cmp_uint64_t()
+noexcept
+{
+}
+
+ircd::db::reverse_cmp_int64_t::reverse_cmp_int64_t()
+{
+}
+
+ircd::db::reverse_cmp_int64_t::~reverse_cmp_int64_t()
+noexcept
+{
+}
+
+ircd::db::reverse_cmp_uint64_t::reverse_cmp_uint64_t()
+{
+}
+
+ircd::db::reverse_cmp_uint64_t::~reverse_cmp_uint64_t()
+noexcept
+{
+}
+
+//
+// cmp_string_view
+//
+
+ircd::db::cmp_string_view::cmp_string_view()
+:db::comparator{"string_view", &less, &equal}
+{
+}
+
+bool
+ircd::db::cmp_string_view::less(const string_view &a,
+                                const string_view &b)
+{
+	return a < b;
+}
+
+bool
+ircd::db::cmp_string_view::equal(const string_view &a,
+                                 const string_view &b)
+{
+	return a == b;
+}
+
+//
+// reverse_cmp_string_view
+//
+
+ircd::db::reverse_cmp_string_view::reverse_cmp_string_view()
+:db::comparator{"reverse_string_view", &less, &equal}
+{
+}
+
+bool
+ircd::db::reverse_cmp_string_view::less(const string_view &a,
+                                        const string_view &b)
+{
+	/// RocksDB sez things will not work correctly unless a shorter string
+	/// result returns less than a longer string even if one intends some
+	/// reverse ordering
+	if(a.size() < b.size())
+		return true;
+
+	/// Furthermore, b.size() < a.size() returning false from this function
+	/// appears to not be correct. The reversal also has to also come in
+	/// the form of a bytewise forward iteration.
+	return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
+}
+
+bool
+ircd::db::reverse_cmp_string_view::equal(const string_view &a,
+                                         const string_view &b)
+{
+	return a == b;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // merge.h
 //
 

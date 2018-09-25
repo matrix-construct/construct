@@ -40,46 +40,19 @@ struct ircd::db::comparator
 struct ircd::db::cmp_string_view
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b)
-	{
-		return a < b;
-	}
+	static bool less(const string_view &a, const string_view &b);
+	static bool equal(const string_view &a, const string_view &b);
 
-	static bool equal(const string_view &a, const string_view &b)
-	{
-		return a == b;
-	}
-
-	cmp_string_view()
-	:db::comparator{"string_view", &less, &equal}
-	{}
+	cmp_string_view();
 };
 
 struct ircd::db::reverse_cmp_string_view
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b)
-	{
-		/// RocksDB sez things will not work correctly unless a shorter string
-		/// result returns less than a longer string even if one intends some
-		/// reverse ordering
-		if(a.size() < b.size())
-			return true;
+	static bool less(const string_view &a, const string_view &b);
+	static bool equal(const string_view &a, const string_view &b);
 
-		/// Furthermore, b.size() < a.size() returning false from this function
-		/// appears to not be correct. The reversal also has to also come in
-		/// the form of a bytewise forward iteration.
-		return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
-	}
-
-	static bool equal(const string_view &a, const string_view &b)
-	{
-		return a == b;
-	}
-
-	reverse_cmp_string_view()
-	:db::comparator{"reverse_string_view", &less, &equal}
-	{}
+	reverse_cmp_string_view();
 };
 
 template<class T>
@@ -126,23 +99,27 @@ struct ircd::db::reverse_cmp_integer
 struct ircd::db::cmp_int64_t
 :cmp_integer<int64_t>
 {
-	using cmp_integer<int64_t>::cmp_integer;
+	cmp_int64_t();
+	~cmp_int64_t() noexcept;
 };
 
 struct ircd::db::reverse_cmp_int64_t
 :reverse_cmp_integer<int64_t>
 {
-	using reverse_cmp_integer<int64_t>::reverse_cmp_integer;
+	reverse_cmp_int64_t();
+	~reverse_cmp_int64_t() noexcept;
 };
 
 struct ircd::db::cmp_uint64_t
 :cmp_integer<uint64_t>
 {
-	using cmp_integer<uint64_t>::cmp_integer;
+	cmp_uint64_t();
+	~cmp_uint64_t() noexcept;
 };
 
 struct ircd::db::reverse_cmp_uint64_t
 :reverse_cmp_integer<uint64_t>
 {
-	using reverse_cmp_integer<uint64_t>::reverse_cmp_integer;
+	reverse_cmp_uint64_t();
+	~reverse_cmp_uint64_t() noexcept;
 };
