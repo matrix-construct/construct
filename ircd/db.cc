@@ -1490,15 +1490,15 @@ ircd::db::database::column::column(database *const &d,
 	//this->options.compression = rocksdb::kNoCompression;
 
 	//TODO: descriptor / conf
-	//this->options.num_levels = 8;
+	this->options.num_levels = 7;
 	//this->options.level0_file_num_compaction_trigger = 1;
-	//this->options.target_file_size_base = 128_MiB;
+	this->options.target_file_size_base = 32_MiB;
 	//this->options.max_bytes_for_level_base = 192_MiB;
-	//this->options.target_file_size_multiplier = 2;        // size at level
+	this->options.target_file_size_multiplier = 2;        // size at level
 	//this->options.max_bytes_for_level_multiplier = 3;        // size at level
 	//this->options.write_buffer_size = 2_MiB;
 	//this->options.disable_auto_compactions = true;
-	this->options.level_compaction_dynamic_level_bytes = true;
+	//this->options.level_compaction_dynamic_level_bytes = true;
 
 	log::debug
 	{
