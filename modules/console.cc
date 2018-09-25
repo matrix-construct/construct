@@ -2448,67 +2448,75 @@ try
 		"dbname"
 	}};
 
-	auto &database
+	auto &d
 	{
 		db::database::get(param.at(0))
 	};
 
-	out << std::left << std::setw(28) << std::setfill('_') << "UUID "
-	    << " " << uuid(database)
-	    << std::endl;
+	const auto closeout{[&out, &d]
+	(const string_view &name, const auto &closure)
+	{
+		out << std::left << std::setw(40) << std::setfill('_') << name << " ";
+		closure();
+		out << std::endl;
+	}};
 
-	out << std::left << std::setw(28) << std::setfill('_') << "errors "
-	    << " " << db::property(database, "rocksdb.background-errors")
-	    << std::endl;
+	const auto property{[&out, &d, &closeout]
+	(const string_view &prop)
+	{
+		const auto name(lstrip(prop, "rocksdb."));
+		closeout(name, [&out, &d, &prop]
+		{
+		    out << db::property(d, prop);
+		});
+	}};
 
-	out << std::left << std::setw(28) << std::setfill('_') << "columns "
-	    << " " << database.columns.size()
-	    << std::endl;
+	const auto sizeprop{[&out, &d, &closeout]
+	(const string_view &prop)
+	{
+		const auto name(lstrip(prop, "rocksdb."));
+		closeout(name, [&out, &d, &prop]
+		{
+		    out << pretty(iec(db::property(d, prop)));
+		});
+	}};
 
-	out << std::left << std::setw(28) << std::setfill('_') << "files "
-	    << " " << file_count(database)
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "sequence "
-	    << " " << sequence(database)
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "keys "
-	    << " " << db::property(database, "rocksdb.estimate-num-keys")
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "size "
-	    << " " << pretty(iec(bytes(database)))
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "row cache size "
-	    << " " << pretty(iec(db::usage(cache(database))))
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "live data size "
-	    << " " << pretty(iec(db::property(database, "rocksdb.estimate-live-data-size")))
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "all tables size "
-	    << " " << pretty(iec(db::property(database, "rocksdb.size-all-mem-tables")))
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "active table size "
-	    << " " << pretty(iec(db::property(database, "rocksdb.cur-size-active-mem-table")))
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "active table entries "
-	    << " " << db::property(database, "rocksdb.num-entries-active-mem-table")
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "active table deletes "
-	    << " " << db::property(database, "rocksdb.num-deletes-active-mem-table")
-	    << std::endl;
-
-	out << std::left << std::setw(28) << std::setfill('_') << "lsm sequence "
-	    << " " << db::property(database, "rocksdb.current-super-version-number")
-	    << std::endl;
-
+	closeout("UUID", [&] { out << uuid(d); });
+	closeout("SIZE", [&] { out << pretty(iec(bytes(d))); });
+	closeout("SEQUENCE", [&] { out << sequence(d); });
+	closeout("COLUMNS", [&] { out << d.columns.size(); });
+	closeout("FILES", [&] { out << file_count(d); });
+	sizeprop("rocksdb.live-sst-files-size");
+	sizeprop("rocksdb.total-sst-files-size");
+	sizeprop("rocksdb.estimate-live-data-size");
+	sizeprop("rocksdb.size-all-mem-tables");
+	sizeprop("rocksdb.cur-size-all-mem-tables");
+	sizeprop("rocksdb.cur-size-active-mem-table");
+	sizeprop("rocksdb.estimate-table-readers-mem");
+	sizeprop("rocksdb.block-cache-capacity");
+	sizeprop("rocksdb.block-cache-usage");
+	sizeprop("rocksdb.block-cache-pinned-usage");
+	closeout("row cache size", [&] { out << pretty(iec(db::usage(cache(d)))); });
+	property("rocksdb.estimate-num-keys");
+	property("rocksdb.num-entries-active-mem-table");
+	property("rocksdb.num-entries-imm-mem-tables");
+	property("rocksdb.num-deletes-active-mem-table");
+	property("rocksdb.num-deletes-imm-mem-tables");
+	property("rocksdb.num-immutable-mem-table");
+	property("rocksdb.num-snapshots");
+	property("rocksdb.oldest-snapshot-time");
+	property("rocksdb.min-log-number-to-keep");
+	property("rocksdb.num-live-versions");
+	property("rocksdb.current-super-version-number");
+	property("rocksdb.base-level");
+	property("rocksdb.mem-table-flush-pending");
+	property("rocksdb.compaction-pending");
+	sizeprop("rocksdb.estimate-pending-compaction-bytes");
+	property("rocksdb.is-file-deletions-enabled");
+	property("rocksdb.num-running-compactions");
+	property("rocksdb.num-running-flushes");
+	property("rocksdb.actual-delayed-write-rate");
+	property("rocksdb.is-write-stopped");
 	return true;
 }
 catch(const std::out_of_range &e)
