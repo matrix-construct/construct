@@ -1510,10 +1510,10 @@ ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 		my_room
 	};
 
-	state.test("ircd.room", room::state::keys_bool{[&closure]
+	state.for_each("ircd.room", room::state::keys_bool{[&closure]
 	(const string_view &key)
 	{
-		return !closure(key);
+		return closure(key);
 	}});
 }
 
@@ -2104,7 +2104,7 @@ const
 		user_room, &fopts
 	};
 
-	return !state.test("ircd.member", [&membership, &closure]
+	return state.for_each("ircd.member", event::closure_bool{[&membership, &closure]
 	(const m::event &event)
 	{
 		const string_view &membership_
@@ -2113,15 +2113,15 @@ const
 		};
 
 		if(membership && membership_ != membership)
-			return false;
+			return true;
 
 		const m::room::id &room_id
 		{
 			at<"state_key"_>(event)
 		};
 
-		return !closure(room_id, membership);
-	});
+		return closure(room_id, membership);
+	}});
 }
 
 //

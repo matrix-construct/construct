@@ -56,7 +56,7 @@ post__search(client &client,
 
 	bool limited{true};
 	std::vector<json::value> results;
-	users.test("ircd.user", query, [&results, &limit, &limited]
+	users.for_each("ircd.user", query, [&results, &limit, &limited]
 	(const m::event &event)
 	{
 		results.emplace_back(json::members
@@ -65,7 +65,7 @@ post__search(client &client,
 		});
 
 		limited = results.size() >= limit;
-		return limited; // return true to break
+		return !limited; // returns true to continue
 	});
 
 	return resource::response

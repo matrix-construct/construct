@@ -6795,13 +6795,9 @@ console_cmd__node__keys(opt &out, const string_view &line)
 		param.at(1, size_t(1))
 	};
 
-	const m::node::room node_room
-	{
-		node
-	};
-
+	const m::node::room node_room{node};
 	const m::room::state state{node_room};
-	state.for_each("ircd.key", [&out, &limit]
+	state.for_each("ircd.key", m::event::closure_bool{[&out, &limit]
 	(const m::event &event)
 	{
 		const m::keys keys
@@ -6811,7 +6807,7 @@ console_cmd__node__keys(opt &out, const string_view &line)
 
 		out << keys << std::endl;
 		return --limit;
-	});
+	}});
 
 	return true;
 }

@@ -114,7 +114,7 @@ post__publicrooms(client &client,
 	{
 		json::stack::member chunk_m{top, "chunk"};
 		json::stack::array chunk{chunk_m};
-		publix.test("ircd.room", since, [&](const m::event &event)
+		publix.for_each("ircd.room", since, [&](const m::event &event)
 		{
 			const m::room::id room_id{at<"state_key"_>(event)};
 			const m::room::state state{room_id};
@@ -221,7 +221,7 @@ post__publicrooms(client &client,
 			});
 
 			next_batch_buf = room_id;
-			return count >= limit;
+			return count < limit;
 		});
 	}
 
