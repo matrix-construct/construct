@@ -1533,13 +1533,13 @@ try
 		    << std::setw(16) << "ROW"
 		    << std::right
 		    << " "
-		    << std::setw(22) << "LOCKED"
-		    << " "
 		    << std::setw(26) << "CACHED"
 		    << " "
 		    << std::setw(26) << "CAPACITY"
 		    << " "
-		    << std::setw(6) << "PCT"
+		    << std::setw(7) << "PCT"
+		    << " "
+		    << std::setw(20) << "LOCKED"
 		    << " "
 		    << std::endl;
 
@@ -1547,14 +1547,15 @@ try
 		    << std::setw(16) << "*"
 		    << std::right
 		    << " "
-		    << std::setw(22) << std::right << pretty(iec(pinned))
-		    << " "
 		    << std::setw(26) << std::right << pretty(iec(usage))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
+		    << " "
+		    << std::setw(20) << std::right << pretty(iec(pinned))
+		    << " "
 		    << std::endl
 		    << std::endl;
 
@@ -1573,13 +1574,13 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(22) << "LOCKED"
-	    << " "
 	    << std::setw(26) << "CACHED"
 	    << " "
 	    << std::setw(26) << "CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
+	    << " "
+	    << std::setw(20) << "LOCKED"
 	    << " "
 	    << "|"
 	    << std::setw(9) << "HITS"
@@ -1588,13 +1589,14 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(22) << "COMPRESSED LOCKED"
-	    << " "
 	    << std::setw(26) << "COMPRESSED CACHED"
 	    << " "
 	    << std::setw(26) << "COMPRESSED CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
+	    << " "
+	    << std::setw(20) << "COMPRESSED LOCKED"
+	    << " "
 	    << std::endl;
 
 	const auto output{[&out]
@@ -1615,14 +1617,14 @@ try
 		    << " "
 		    << std::setw(9) << stats.inserts
 		    << " "
-		    << std::setw(22) << std::right << pretty(iec(pinned))
-		    << " "
 		    << std::setw(26) << std::right << pretty(iec(usage))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << '%'
+		    << " "
+		    << std::setw(20) << std::right << pretty(iec(pinned))
 		    << " "
 		    << "|"
 		    << std::setw(9) << stats_comp.hits
@@ -1631,14 +1633,15 @@ try
 		    << " "
 		    << std::setw(9) << stats_comp.inserts
 		    << " "
-		    << std::setw(22) << std::right << pretty(iec(pinned_comp))
-		    << " "
 		    << std::setw(26) << std::right << pretty(iec(usage_comp))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(capacity_comp))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
 		    << '%'
+		    << " "
+		    << std::setw(20) << std::right << pretty(iec(pinned_comp))
+		    << " "
 		    << std::endl;
 	}};
 
