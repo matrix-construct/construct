@@ -394,19 +394,30 @@ ircd::m::self::init::init(const string_view &origin)
 // m/feds.h
 //
 
+//
+// state
+//
+
+ircd::m::feds::state::state(const m::room::id &room_id,
+                            const m::event::id &event_id,
+                            const closure &view)
+:state
+{
+	//TODO: conf
+	room_id, event_id, seconds(20), view
+}
+{
+}
+
 ircd::m::feds::state::state(const m::room::id &room_id,
                             const m::event::id &event_id,
                             const milliseconds &to,
                             const closure &view)
 {
-	using closure_prototype = bool (const string_view &,
-	                                std::exception_ptr,
-	                                const json::object &);
-
 	using prototype = void (const m::room::id &,
 	                        const m::event::id &,
 	                        const milliseconds &,
-	                        const std::function<closure_prototype> &);
+	                        const closure &);
 
 	static mods::import<prototype> feds__state
 	{
