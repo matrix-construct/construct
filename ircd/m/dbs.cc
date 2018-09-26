@@ -743,7 +743,7 @@ ircd::m::dbs::desc::events__room_head__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events._room_head.cache.size" },
-		{ "default",  long(16_MiB)                              },
+		{ "default",  long(8_MiB)                               },
 	}, []
 	{
 		const size_t &value{events__room_head__cache__size};
@@ -867,7 +867,7 @@ ircd::m::dbs::desc::events__room_events__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events._room_events.cache.size" },
-		{ "default",  long(16_MiB)                                },
+		{ "default",  long(32_MiB)                                },
 	}, []
 	{
 		const size_t &value{events__room_events__cache__size};
@@ -1596,7 +1596,7 @@ ircd::m::dbs::desc::events__type__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.type.cache.size"  },
-		{ "default",  long(16_MiB)                         },
+		{ "default",  long(32_MiB)                         },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "type"_>()));
@@ -1685,7 +1685,7 @@ ircd::m::dbs::desc::events__content__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.content.cache.size"  },
-		{ "default",  long(32_MiB)                            },
+		{ "default",  long(48_MiB)                            },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "content"_>()));
@@ -1857,7 +1857,7 @@ ircd::m::dbs::desc::events__room_id__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.room_id.cache.size"  },
-		{ "default",  long(16_MiB)                            },
+		{ "default",  long(32_MiB)                            },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "room_id"_>()));
@@ -1945,7 +1945,7 @@ ircd::m::dbs::desc::events__sender__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.sender.cache.size"  },
-		{ "default",  long(16_MiB)                           },
+		{ "default",  long(32_MiB)                           },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "sender"_>()));
@@ -2033,7 +2033,7 @@ ircd::m::dbs::desc::events__state_key__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.state_key.cache.size"  },
-		{ "default",  long(16_MiB)                              },
+		{ "default",  long(32_MiB)                              },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "state_key"_>()));
@@ -2626,7 +2626,7 @@ ircd::m::dbs::desc::events__membership__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events.membership.cache.size"  },
-		{ "default",  long(16_MiB)                               },
+		{ "default",  long(8_MiB)                                },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "membership"_>()));
