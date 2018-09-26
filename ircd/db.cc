@@ -7128,48 +7128,6 @@ ircd::db::write(const row::delta *const &begin,
 
 size_t
 ircd::db::seek(row &r,
-               const pos &p)
-{
-	// This frame can't be interrupted because it may have requests
-	// pending in the request pool which must synchronize back here.
-	const ctx::uninterruptible ui;
-
-	#ifdef RB_DEBUG_DB_SEEK
-	const ircd::timer timer;
-	#endif
-
-	size_t ret{0};
-	ctx::latch latch{r.size()};
-	for(auto &cell : r) request([&latch, &ret, &cell, &p]
-	{
-		ret += bool(seek(cell, p));
-		latch.count_down();
-	});
-
-	latch.wait();
-
-	#ifdef RB_DEBUG_DB_SEEK
-	const column &c(r[0]);
-	const database &d(c);
-	log::debug
-	{
-		log, "'%s' %lu:%lu '%s' row SEEK POS %zu of %zu in %ld$us",
-		name(d),
-		sequence(d),
-		sequence(r[0]),
-		name(c),
-		ret,
-		r.size(),
-		timer.at<microseconds>().count()
-	};
-	#endif
-
-	assert(ret <= r.size());
-	return ret;
-}
-
-size_t
-ircd::db::seek(row &r,
                const string_view &key)
 {
 	// This frame can't be interrupted because it may have requests

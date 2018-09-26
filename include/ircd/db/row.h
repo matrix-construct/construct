@@ -59,7 +59,6 @@ struct ircd::db::row
 	    const vector_view<cell> &buf = {},
 	    gopts opts = {});
 
-	friend size_t seek(row &, const pos &);
 	friend size_t seek(row &, const string_view &);
 };
 
