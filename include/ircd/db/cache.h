@@ -39,6 +39,10 @@ namespace ircd::db
 	size_t usage(const rocksdb::Cache &);
 	size_t usage(const rocksdb::Cache *const &);
 
+	// Get pinned usage
+	size_t pinned(const rocksdb::Cache &);
+	size_t pinned(const rocksdb::Cache *const &);
+
 	// Test if key exists
 	bool exists(const rocksdb::Cache &, const string_view &key);
 	bool exists(const rocksdb::Cache *const &, const string_view &key);
