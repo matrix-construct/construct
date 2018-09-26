@@ -2257,9 +2257,14 @@ bool
 console_cmd__db__txns(opt &out, const string_view &line)
 try
 {
+	const params param{line, " ",
+	{
+		"dbname", "seqnum", "limit"
+	}};
+
 	const auto dbname
 	{
-		token(line, ' ', 0)
+		param.at("dbname")
 	};
 
 	if(dbname != "events")
@@ -2268,39 +2273,56 @@ try
 			"Sorry, this command is specific to the events db for now."
 		};
 
-	const auto seqnum
-	{
-		lex_cast<uint64_t>(token(line, ' ', 1, "0"))
-	};
-
-	auto limit
-	{
-		lex_cast<size_t>(token(line, ' ', 2, "32"))
-	};
-
 	auto &database
 	{
 		db::database::get(dbname)
 	};
 
-	for_each(database, seqnum, db::seq_closure_bool{[&out, &limit]
-	(db::txn &txn, const uint64_t &seqnum) -> bool
+	const auto cur_seq
+	{
+		db::sequence(database)
+	};
+
+	const auto seqnum
+	{
+		param.at<int64_t>("seqnum", cur_seq)
+	};
+
+	const auto limit
+	{
+		param.at<int64_t>("limit", 32L)
+	};
+
+	// note that we decrement the sequence number here optimistically
+	// based on the number of possible entries in a txn. There are likely
+	// fewer entries in a txn thus we will be missing the latest txns or
+	// outputting more txns than the limit. We choose the latter here.
+	const auto start
+	{
+		std::max(seqnum - limit * ssize_t(database.columns.size()), 0L)
+	};
+
+	for_each(database, start, db::seq_closure_bool{[&out, &seqnum]
+	(db::txn &txn, const int64_t &_seqnum) -> bool
 	{
 		m::event::id::buf event_id;
 		txn.get(db::op::SET, "event_id", [&event_id]
 		(const db::delta &delta)
 		{
-			event_id = std::get<delta.KEY>(delta);
+			event_id = m::event::id
+			{
+				std::get<delta.VAL>(delta)
+			};
 		});
 
-		if(event_id)
+		if(!event_id)
 			return true;
 
-		out << std::setw(12) << std::right << seqnum << " : "
+		out << std::setw(12) << std::right << _seqnum << " : "
 		    << string_view{event_id}
 		    << std::endl;
 
-		return --limit;
+		return _seqnum <= seqnum;
 	}});
 
 	return true;
