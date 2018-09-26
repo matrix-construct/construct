@@ -1522,6 +1522,7 @@ try
 	if(!colname)
 	{
 		const auto usage(db::usage(cache(database)));
+		const auto pinned(db::pinned(cache(database)));
 		const auto capacity(db::capacity(cache(database)));
 		const auto usage_pct
 		{
@@ -1532,9 +1533,11 @@ try
 		    << std::setw(16) << "ROW"
 		    << std::right
 		    << " "
-		    << std::setw(28) << "CACHED"
+		    << std::setw(22) << "LOCKED"
 		    << " "
-		    << std::setw(28) << "CAPACITY"
+		    << std::setw(26) << "CACHED"
+		    << " "
+		    << std::setw(26) << "CAPACITY"
 		    << " "
 		    << std::setw(6) << "PCT"
 		    << " "
@@ -1544,9 +1547,11 @@ try
 		    << std::setw(16) << "*"
 		    << std::right
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(usage))
+		    << std::setw(22) << std::right << pretty(iec(pinned))
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(capacity))
+		    << std::setw(26) << std::right << pretty(iec(usage))
+		    << " "
+		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
@@ -1568,9 +1573,11 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(28) << "CACHED"
+	    << std::setw(22) << "LOCKED"
 	    << " "
-	    << std::setw(28) << "CAPACITY"
+	    << std::setw(26) << "CACHED"
+	    << " "
+	    << std::setw(26) << "CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << " "
@@ -1581,17 +1588,21 @@ try
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
-	    << std::setw(28) << "COMPRESSED CACHED"
+	    << std::setw(22) << "COMPRESSED LOCKED"
 	    << " "
-	    << std::setw(28) << "COMPRESSED CAPACITY"
+	    << std::setw(26) << "COMPRESSED CACHED"
+	    << " "
+	    << std::setw(26) << "COMPRESSED CAPACITY"
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << std::endl;
 
 	const auto output{[&out]
 	(const string_view &column_name,
+	 const size_t &pinned,
 	 const size_t &usage, const size_t &capacity,
-	 const size_t usage_comp, const size_t &capacity_comp,
+	 const size_t &pinned_comp,
+	 const size_t &usage_comp, const size_t &capacity_comp,
 	 const double &usage_pct, const double &usage_comp_pct,
 	 const db::cache_stats &stats, const db::cache_stats &stats_comp)
 	{
@@ -1604,9 +1615,11 @@ try
 		    << " "
 		    << std::setw(9) << stats.inserts
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(usage))
+		    << std::setw(22) << std::right << pretty(iec(pinned))
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(capacity))
+		    << std::setw(26) << std::right << pretty(iec(usage))
+		    << " "
+		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << '%'
@@ -1618,9 +1631,11 @@ try
 		    << " "
 		    << std::setw(9) << stats_comp.inserts
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(usage_comp))
+		    << std::setw(22) << std::right << pretty(iec(pinned_comp))
 		    << " "
-		    << std::setw(28) << std::right << pretty(iec(capacity_comp))
+		    << std::setw(26) << std::right << pretty(iec(usage_comp))
+		    << " "
+		    << std::setw(26) << std::right << pretty(iec(capacity_comp))
 		    << " "
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
 		    << '%'
@@ -1636,6 +1651,7 @@ try
 		};
 
 		const auto usage(db::usage(cache(column)));
+		const auto pinned(db::pinned(cache(column)));
 		const auto capacity(db::capacity(cache(column)));
 		const auto usage_pct
 		{
@@ -1643,6 +1659,7 @@ try
 		};
 
 		const auto usage_comp(db::usage(cache_compressed(column)));
+		const auto pinned_comp(db::pinned(cache_compressed(column)));
 		const auto capacity_comp(db::capacity(cache_compressed(column)));
 		const auto usage_comp_pct
 		{
@@ -1651,21 +1668,23 @@ try
 
 		const auto stats(db::stats(cache(column)));
 		const auto stats_comp(db::stats(cache_compressed(column)));
-		output(colname, usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
+		output(colname, pinned, usage, capacity, pinned_comp, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
 	}};
 
 	// Querying the totals for all caches for all columns in a loop
 	if(colname == "*")
 	{
-		size_t usage(0), usage_comp(0);
+		size_t pinned(0), usage(0), pinned_comp(0), usage_comp(0);
 		size_t capacity(0), capacity_comp(0);
 		db::cache_stats stats, stats_comp;
 		for(const auto &column : database.columns)
 		{
 			const db::column c(*column);
 			usage += db::usage(cache(c));
+			pinned += db::pinned(cache(c));
 			capacity += db::capacity(cache(c));
 			usage_comp += db::usage(cache_compressed(c));
+			pinned_comp += db::pinned(cache_compressed(c));
 			capacity_comp += db::capacity(cache_compressed(c));
 
 			const auto _stats(db::stats(cache(c)));
@@ -1689,7 +1708,7 @@ try
 			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
 		};
 
-		output("*", usage, capacity, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
+		output("*", pinned, usage, capacity, pinned_comp, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
 		return true;
 	}
 
