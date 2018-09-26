@@ -55,8 +55,8 @@ struct ircd::db::txn
 	bool has(const op &, const string_view &col) const;
 	bool has(const op &) const;
 
-	size_t bytes() const;
-	size_t size() const;
+	size_t bytes() const;   // size of data in txn.
+	size_t size() const;    // count of updates in txn.
 
 	// commit
 	void operator()(database &, const sopts & = {});
