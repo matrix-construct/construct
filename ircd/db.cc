@@ -1884,6 +1884,20 @@ ircd::db::histogram_max
 // database::stats (db/database/stats.h) internal
 //
 
+ircd::db::database::stats::stats(database *const &d)
+:d{d}
+{
+}
+
+rocksdb::Status
+ircd::db::database::stats::Reset()
+noexcept
+{
+	ticker.fill(0);
+	histogram.fill({0.0});
+	return rocksdb::Status::OK();
+}
+
 uint64_t
 ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
 noexcept

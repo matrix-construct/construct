@@ -21,7 +21,7 @@ struct ircd::db::database::stats final
 {
 	database *d;
 	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
-	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
+	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram {{0.0}};
 
 	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;
 	void recordTick(const uint32_t tickerType, const uint64_t count) noexcept override;
@@ -30,8 +30,7 @@ struct ircd::db::database::stats final
 	void measureTime(const uint32_t histogramType, const uint64_t time) noexcept override;
 	bool HistEnabledForType(const uint32_t type) const noexcept override;
 	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
+	rocksdb::Status Reset() noexcept override;
 
-	stats(database *const &d)
-	:d{d}
-	{}
+	stats(database *const &d);
 };
