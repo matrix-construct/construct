@@ -2232,7 +2232,7 @@ ircd::db::database::cache::DEFAULT_STRICT
 decltype(ircd::db::database::cache::DEFAULT_HI_PRIO)
 ircd::db::database::cache::DEFAULT_HI_PRIO
 {
-	0.0
+	0.04
 };
 
 //
