@@ -2364,10 +2364,29 @@ try
 		for_each(txn, [&out, &seqnum]
 		(const db::delta &delta)
 		{
+			const string_view &dkey
+			{
+				std::get<delta.KEY>(delta)
+			};
+
+			// !!! Assumption based on the events database schema. If the
+			// key is 8 bytes we assume it's an event::idx in binary. No
+			// other columns have 8 byte keys; instead they have plaintext
+			// event_id amalgams with some binary characters which are simply
+			// not displayed by the ostream. We could have a switch here to
+			// use m::dbs's key parsers based on the column name but that is
+			// not done here yet.
+			const string_view &key
+			{
+				dkey.size() == 8?
+					lex_cast(uint64_t(byte_view<uint64_t>(dkey))):
+					dkey
+			};
+
 			out << std::setw(12)  << std::right  << seqnum << " : "
 			    << std::setw(8)   << std::left   << reflect(std::get<delta.OP>(delta)) << " "
 			    << std::setw(18)  << std::right  << std::get<delta.COL>(delta) << " "
-			    << std::get<delta.KEY>(delta)
+			    << key
 			    << std::endl;
 		});
 	}});
