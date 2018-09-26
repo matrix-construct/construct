@@ -448,7 +448,7 @@ ircd::handle_ec(client &client,
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	if(unlikely(runlevel != runlevel::RUN))
+	if(unlikely(runlevel != runlevel::RUN && ec == success))
 	{
 		log::dwarning
 		{
