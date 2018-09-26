@@ -14,9 +14,12 @@
 namespace ircd::db
 {
 	// Histogram (per database)
+	struct histogram;
 	extern const uint32_t histogram_max;
 	string_view histogram_id(const uint32_t &id);
 	uint32_t histogram_id(const string_view &key);
+	const struct histogram &histogram(const database &, const uint32_t &id);
+	const struct histogram &histogram(const database &, const string_view &key);
 
 	// Ticker (per database)
 	extern const uint32_t ticker_max;
@@ -35,3 +38,17 @@ namespace ircd::db
 	const rocksdb::IOStatsContext &iostats_current();
 	std::string string(const rocksdb::IOStatsContext &, const bool &all = false);
 }
+
+/// Copy of rocksdb::HistogramData because it is not included here.
+struct ircd::db::histogram
+{
+	double median {0};
+	double pct95 {0};
+	double pct99 {0};
+	double avg {0};
+	double stddev {0};
+	double max {0};
+
+	uint64_t hits {0};
+	uint64_t time {0};
+};

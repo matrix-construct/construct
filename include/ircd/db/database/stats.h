@@ -21,7 +21,7 @@ struct ircd::db::database::stats final
 {
 	database *d;
 	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
-	std::array<rocksdb::HistogramData, rocksdb::HISTOGRAM_ENUM_MAX> histogram {{0.0}};
+	std::array<struct db::histogram, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
 
 	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;
 	void recordTick(const uint32_t tickerType, const uint64_t count) noexcept override;

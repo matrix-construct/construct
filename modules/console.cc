@@ -1319,7 +1319,38 @@ try
 			continue;
 
 		out << std::left << std::setw(48) << std::setfill('_') << name
-		    << "  " << val
+		    << " " << val
+		    << std::endl;
+	}
+
+	for(uint32_t i(0); i < db::histogram_max; ++i)
+	{
+		const string_view &name
+		{
+			db::histogram_id(i)
+		};
+
+		if(!name)
+			continue;
+
+		const auto &val
+		{
+			db::histogram(database, i)
+		};
+
+		if(!(val.max > 0.0) && ticker != "-a")
+			continue;
+
+		out << std::left << std::setw(48) << std::setfill('_') << name
+		    << std::setfill(' ') << std::right
+		    << " " << std::setw(9) << val.hits << " hit "
+		    << " " << std::setw(13) << val.time << " tot "
+		    << " " << std::setw(12) << uint64_t(val.max) << " max "
+		    << " " << std::setw(10) << uint64_t(val.median) << " med "
+		    << " " << std::setw(9) << uint64_t(val.avg) << " avg "
+		    << " " << std::setw(10) << val.stddev << " dev "
+		    << " " << std::setw(10) << val.pct95 << " p95 "
+		    << " " << std::setw(10) << val.pct99 << " p99 "
 		    << std::endl;
 	}
 

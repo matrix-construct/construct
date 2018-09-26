@@ -459,20 +459,6 @@ ircd::db::setopt(database &d,
 	};
 }
 
-uint64_t
-ircd::db::ticker(const database &d,
-                 const string_view &key)
-{
-	return ticker(d, ticker_id(key));
-}
-
-uint64_t
-ircd::db::ticker(const database &d,
-                 const uint32_t &id)
-{
-	return d.stats->getTickerCount(id);
-}
-
 size_t
 ircd::db::bytes(const database &d)
 {
@@ -1821,6 +1807,24 @@ ircd::db::perf_level()
 	return rocksdb::GetPerfLevel();
 }
 
+//
+// ticker
+//
+
+uint64_t
+ircd::db::ticker(const database &d,
+                 const string_view &key)
+{
+	return ticker(d, ticker_id(key));
+}
+
+uint64_t
+ircd::db::ticker(const database &d,
+                 const uint32_t &id)
+{
+	return d.stats->getTickerCount(id);
+}
+
 uint32_t
 ircd::db::ticker_id(const string_view &key)
 {
@@ -1849,6 +1853,24 @@ ircd::db::ticker_max
 {
 	rocksdb::TICKER_ENUM_MAX
 };
+
+//
+// histogram
+//
+
+const struct ircd::db::histogram &
+ircd::db::histogram(const database &d,
+                    const string_view &key)
+{
+	return histogram(d, histogram_id(key));
+}
+
+const struct ircd::db::histogram &
+ircd::db::histogram(const database &d,
+                    const uint32_t &id)
+{
+	return d.stats->histogram.at(id);
+}
 
 uint32_t
 ircd::db::histogram_id(const string_view &key)
@@ -1919,6 +1941,13 @@ ircd::db::database::stats::measureTime(const uint32_t type,
                                        const uint64_t time)
 noexcept
 {
+	auto &data(histogram.at(type));
+
+	data.time += time;
+	data.hits++;
+
+	data.max = std::max(data.max, double(time));
+	data.avg = data.time / static_cast<long double>(data.hits);
 }
 
 void
@@ -1927,12 +1956,17 @@ ircd::db::database::stats::histogramData(const uint32_t type,
 const noexcept
 {
 	assert(data);
+	const auto &h
+	{
+		histogram.at(type)
+	};
 
-	const auto &median(data->median);
-	const auto &percentile95(data->percentile95);
-	const auto &percentile88(data->percentile99);
-	const auto &average(data->average);
-	const auto &standard_deviation(data->standard_deviation);
+	data->median = h.median;
+	data->percentile95 = h.pct95;
+	data->percentile99 = h.pct99;
+	data->average = h.avg;
+	data->standard_deviation = h.stddev;
+	data->max = h.max;
 }
 
 void
