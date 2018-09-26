@@ -2219,9 +2219,9 @@ noexcept
 
 decltype(ircd::db::database::cache::DEFAULT_SHARD_BITS)
 ircd::db::database::cache::DEFAULT_SHARD_BITS
-{
-	-1
-};
+(
+	std::min(std::log2(size_t(db::request_pool_size)), 8.0)
+);
 
 decltype(ircd::db::database::cache::DEFAULT_STRICT)
 ircd::db::database::cache::DEFAULT_STRICT
