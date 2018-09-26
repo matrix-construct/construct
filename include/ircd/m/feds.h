@@ -13,6 +13,7 @@
 
 namespace ircd::m::feds
 {
+	struct head;
 	struct state;
 }
 
@@ -22,4 +23,13 @@ struct ircd::m::feds::state
 
 	state(const m::room::id &, const m::event::id &, const milliseconds &, const closure &);
 	state(const m::room::id &, const m::event::id &, const closure &);
+};
+
+struct ircd::m::feds::head
+{
+	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
+
+	head(const m::room::id &, const m::user::id &, const milliseconds &, const closure &);
+	head(const m::room::id &, const m::user::id &, const closure &);
+	head(const m::room::id &, const closure &);
 };

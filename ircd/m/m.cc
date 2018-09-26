@@ -416,6 +416,48 @@ ircd::m::feds::state::state(const m::room::id &room_id,
 	feds__state(room_id, event_id, to, view);
 }
 
+//
+// head
+//
+
+ircd::m::feds::head::head(const m::room::id &room_id,
+                          const closure &view)
+:head
+{
+	room_id, m::me.user_id, view
+}
+{
+}
+
+ircd::m::feds::head::head(const m::room::id &room_id,
+                          const m::user::id &user_id,
+                          const closure &view)
+:head
+{
+	//TODO: conf
+	room_id, user_id, seconds(20), view
+}
+{
+}
+
+ircd::m::feds::head::head(const m::room::id &room_id,
+                          const m::user::id &user_id,
+                          const milliseconds &to,
+                          const closure &view)
+{
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        const milliseconds &,
+	                        const closure &);
+
+	static mods::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
+	};
+
+	feds__head(room_id, user_id, to, view);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/vm.h

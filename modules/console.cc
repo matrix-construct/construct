@@ -7020,21 +7020,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 		param.at(1, m::me.user_id)
 	};
 
-	using closure_prototype = bool (const string_view &,
-	                                std::exception_ptr,
-	                                const json::object &);
-
-	using prototype = void (const m::room::id &,
-	                        const m::user::id &,
-	                        const milliseconds &,
-	                        const std::function<closure_prototype> &);
-
-	static mods::import<prototype> feds__head
-	{
-		"federation_federation", "feds__head"
-	};
-
-	feds__head(room_id, user_id, out.timeout, [&out]
+	m::feds::head(room_id, user_id, out.timeout, [&out]
 	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
 	{
 		if(eptr)
