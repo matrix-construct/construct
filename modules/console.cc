@@ -590,8 +590,8 @@ console_cmd__mem(opt &out, const string_view &line)
 	out << "IRCd thread allocations:" << std::endl
 	    << "alloc count:  " << this_thread.alloc_count << std::endl
 	    << "freed count:  " << this_thread.free_count << std::endl
-	    << "alloc bytes:  " << this_thread.alloc_bytes << std::endl
-	    << "freed bytes:  " << this_thread.free_bytes << std::endl
+	    << "alloc bytes:  " << pretty(iec(this_thread.alloc_bytes)) << std::endl
+	    << "freed bytes:  " << pretty(iec(this_thread.free_bytes)) << std::endl
 	    << std::endl;
 
 	thread_local char buf[1024];
