@@ -10,11 +10,6 @@
 
 #include <ircd/asio.h>
 
-namespace ircd
-{
-	ctx::dock dock;
-}
-
 //
 // client::settings conf::item's
 //
@@ -91,6 +86,11 @@ ircd::client::default_conf
 //
 // linkages
 //
+
+/// A general semaphore for the client system; used for coarse operations
+/// like waiting for all clients to disconnect / system shutdown et al.
+decltype(ircd::client::dock)
+ircd::client::dock;
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring
 /// a stack from this pool. The request handling and response logic can then be written
