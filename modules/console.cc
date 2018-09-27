@@ -602,6 +602,31 @@ console_cmd__mem(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__mem__trim(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"pad"
+	}};
+
+	const size_t &pad
+	{
+		param.at<size_t>("pad", 0UL)
+	};
+
+	const auto ret
+	{
+		ircd::allocator::trim(pad)
+	};
+
+	out << "malloc trim "
+	    << (ret? "was able to release some memory." : "did not release any memory.")
+	    << std::endl;
+
+	return true;
+}
+
 //
 // env
 //
