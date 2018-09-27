@@ -1519,6 +1519,29 @@ try
 		db::database::get(dbname)
 	};
 
+	struct stats
+	{
+		size_t usage;
+		size_t pinned;
+		size_t capacity;
+		size_t hits;
+		size_t misses;
+		size_t inserts;
+		size_t inserts_bytes;
+
+		stats &operator+=(const stats &b)
+		{
+			usage += b.usage;
+			pinned += b.pinned;
+			capacity += b.capacity;
+			hits += b.hits;
+			misses += b.misses;
+			inserts += b.inserts;
+			inserts_bytes += b.inserts_bytes;
+			return *this;
+		}
+	};
+
 	if(!colname)
 	{
 		const auto usage(db::usage(cache(database)));
@@ -1529,15 +1552,28 @@ try
 			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
 		};
 
+		const auto hits(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.hit")));
+		const auto misses(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.miss")));
+		const auto inserts(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.add")));
+		const auto inserts_bytes(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.data.bytes.insert")));
+
 		out << std::left
 		    << std::setw(16) << "ROW"
 		    << std::right
+		    << " "
+		    << std::setw(7) << "PCT"
+		    << " "
+		    << std::setw(9) << "HITS"
+		    << " "
+		    << std::setw(9) << "MISSES"
+		    << " "
+		    << std::setw(9) << "INSERT"
 		    << " "
 		    << std::setw(26) << "CACHED"
 		    << " "
 		    << std::setw(26) << "CAPACITY"
 		    << " "
-		    << std::setw(7) << "PCT"
+		    << std::setw(26) << "INSERT TOTAL"
 		    << " "
 		    << std::setw(20) << "LOCKED"
 		    << " "
@@ -1547,12 +1583,20 @@ try
 		    << std::setw(16) << "*"
 		    << std::right
 		    << " "
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << "%"
+		    << " "
+		    << std::setw(9) << hits
+		    << " "
+		    << std::setw(9) << misses
+		    << " "
+		    << std::setw(9) << inserts
+		    << " "
 		    << std::setw(26) << std::right << pretty(iec(usage))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
-		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
-		    << "%"
+		    << std::setw(26) << std::right << pretty(iec(inserts_bytes))
 		    << " "
 		    << std::setw(20) << std::right << pretty(iec(pinned))
 		    << " "
@@ -1568,24 +1612,28 @@ try
 	    << std::setw(16) << "COLUMN"
 	    << std::right
 	    << " "
+	    << std::setw(7) << "PCT"
+	    << " "
 	    << std::setw(9) << "HITS"
 	    << " "
 	    << std::setw(9) << "MISSES"
 	    << " "
-	    << std::setw(9) << "INSERTS"
+	    << std::setw(9) << "INSERT"
 	    << " "
 	    << std::setw(26) << "CACHED"
 	    << " "
 	    << std::setw(26) << "CAPACITY"
 	    << " "
-	    << std::setw(7) << "PCT"
+	    << std::setw(26) << "INSERT TOTAL"
 	    << " "
 	    << std::setw(20) << "LOCKED"
 	    << " "
+	    << std::endl;
+
+		//TODO: compressed cache reenable
+		/*
 	    << "|"
 	    << std::setw(9) << "HITS"
-	    << " "
-	    << std::setw(9) << "MISSES"
 	    << " "
 	    << std::setw(9) << "INSERTS"
 	    << " "
@@ -1595,136 +1643,123 @@ try
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << " "
-	    << std::setw(20) << "COMPRESSED LOCKED"
-	    << " "
 	    << std::endl;
+		*/
 
 	const auto output{[&out]
-	(const string_view &column_name,
-	 const size_t &pinned,
-	 const size_t &usage, const size_t &capacity,
-	 const size_t &pinned_comp,
-	 const size_t &usage_comp, const size_t &capacity_comp,
-	 const double &usage_pct, const double &usage_comp_pct,
-	 const db::cache_stats &stats, const db::cache_stats &stats_comp)
+	(const string_view &column_name, const stats &s, const stats &comp)
 	{
+		const auto pct
+		{
+			s.capacity > 0.0? (double(s.usage) / double(s.capacity)) : 0.0L
+		};
+
+		const auto pct_comp
+		{
+			comp.capacity > 0.0? (double(comp.usage) / double(comp.capacity)) : 0.0L
+		};
+
 		out << std::setw(16) << std::left << column_name
 		    << std::right
 		    << " "
-		    << std::setw(9) << stats.hits
-		    << " "
-		    << std::setw(9) << stats.misses
-		    << " "
-		    << std::setw(9) << stats.inserts
-		    << " "
-		    << std::setw(26) << std::right << pretty(iec(usage))
-		    << " "
-		    << std::setw(26) << std::right << pretty(iec(capacity))
-		    << " "
-		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (pct * 100)
 		    << '%'
 		    << " "
-		    << std::setw(20) << std::right << pretty(iec(pinned))
+		    << std::setw(9) << s.hits
 		    << " "
-		    << "|"
-		    << std::setw(9) << stats_comp.hits
+		    << std::setw(9) << s.misses
 		    << " "
-		    << std::setw(9) << stats_comp.misses
+		    << std::setw(9) << s.inserts
 		    << " "
-		    << std::setw(9) << stats_comp.inserts
+		    << std::setw(26) << std::right << pretty(iec(s.usage))
 		    << " "
-		    << std::setw(26) << std::right << pretty(iec(usage_comp))
+		    << std::setw(26) << std::right << pretty(iec(s.capacity))
 		    << " "
-		    << std::setw(26) << std::right << pretty(iec(capacity_comp))
+		    << std::setw(26) << pretty(iec(s.inserts_bytes))
 		    << " "
-		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_comp_pct * 100)
+		    << std::setw(20) << std::right << pretty(iec(s.pinned))
+		    << " ";
+
+		//TODO: compressed cache reenable
+		if(1)
+		{
+			out << std::endl;
+			return;
+		}
+
+		out << "|"
+		    << std::setw(9) << comp.hits
+		    << " "
+		    << std::setw(9) << comp.inserts
+		    << " "
+		    << std::setw(26) << std::right << pretty(iec(comp.usage))
+		    << " "
+		    << std::setw(26) << std::right << pretty(iec(comp.capacity))
+		    << " "
+		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (pct_comp * 100)
 		    << '%'
-		    << " "
-		    << std::setw(20) << std::right << pretty(iec(pinned_comp))
 		    << " "
 		    << std::endl;
 	}};
 
-	const auto query{[&output, &database]
-	(const string_view &colname)
+	const auto query{[&database]
+	(const string_view &colname, const auto &output)
 	{
 		const db::column column
 		{
 			database, colname
 		};
 
-		const auto usage(db::usage(cache(column)));
-		const auto pinned(db::pinned(cache(column)));
-		const auto capacity(db::capacity(cache(column)));
-		const auto usage_pct
+		const stats s
 		{
-			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
+			db::usage(cache(column)),
+			db::pinned(cache(column)),
+			db::capacity(cache(column)),
+			db::ticker(cache(column), db::ticker_id("rocksdb.block.cache.hit")),
+			db::ticker(cache(column), db::ticker_id("rocksdb.block.cache.miss")),
+			db::ticker(cache(column), db::ticker_id("rocksdb.block.cache.add")),
+			db::ticker(cache(column), db::ticker_id("rocksdb.block.cache.data.bytes.insert")),
 		};
 
-		const auto usage_comp(db::usage(cache_compressed(column)));
-		const auto pinned_comp(db::pinned(cache_compressed(column)));
-		const auto capacity_comp(db::capacity(cache_compressed(column)));
-		const auto usage_comp_pct
+		const stats comp
 		{
-			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
+			db::usage(cache_compressed(column)),
+			0,
+			db::capacity(cache_compressed(column)),
+			db::ticker(cache_compressed(column), db::ticker_id("rocksdb.block.cache.hit")),
+			0,
+			db::ticker(cache_compressed(column), db::ticker_id("rocksdb.block.cache.add")),
+			0
 		};
 
-		const auto stats(db::stats(cache(column)));
-		const auto stats_comp(db::stats(cache_compressed(column)));
-		output(colname, pinned, usage, capacity, pinned_comp, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
+		output(colname, s, comp);
 	}};
 
 	// Querying the totals for all caches for all columns in a loop
 	if(colname == "*")
 	{
-		size_t pinned(0), usage(0), pinned_comp(0), usage_comp(0);
-		size_t capacity(0), capacity_comp(0);
-		db::cache_stats stats, stats_comp;
-		for(const auto &column : database.columns)
-		{
-			const db::column c(*column);
-			usage += db::usage(cache(c));
-			pinned += db::pinned(cache(c));
-			capacity += db::capacity(cache(c));
-			usage_comp += db::usage(cache_compressed(c));
-			pinned_comp += db::pinned(cache_compressed(c));
-			capacity_comp += db::capacity(cache_compressed(c));
+		stats s_total{0}, comp_total{0};
+		for(const auto &column : database.column_names)
+			query(column, [&](const auto &column, const auto &s, const auto &comp)
+			{
+				s_total += s;
+				comp_total += comp;
+			});
 
-			const auto _stats(db::stats(cache(c)));
-			stats.inserts += _stats.inserts;
-			stats.misses += _stats.misses;
-			stats.hits += _stats.hits;
-
-			const auto _stats_comp(db::stats(cache_compressed(c)));
-			stats_comp.inserts += _stats_comp.inserts;
-			stats_comp.misses += _stats_comp.misses;
-			stats_comp.hits += _stats_comp.hits;
-		}
-
-		const auto usage_pct
-		{
-			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
-		};
-
-		const auto usage_comp_pct
-		{
-			capacity_comp > 0.0? (double(usage_comp) / double(capacity_comp)) : 0.0L
-		};
-
-		output("*", pinned, usage, capacity, pinned_comp, usage_comp, capacity_comp, usage_pct, usage_comp_pct, stats, stats_comp);
+		output("*", s_total, comp_total);
 		return true;
 	}
 
 	// Query the cache for a single column
 	if(colname != "**")
 	{
-		query(colname);
+		query(colname, output);
 		return true;
 	}
 
 	// Querying the cache for all columns in a loop
 	for(const auto &column_name : database.column_names)
-		query(column_name);
+		query(column_name, output);
 
 	return true;
 }
