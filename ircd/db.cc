@@ -1906,8 +1906,17 @@ ircd::db::histogram_max
 // database::stats (db/database/stats.h) internal
 //
 
+//
+// stats::stats
+//
+
 ircd::db::database::stats::stats(database *const &d)
 :d{d}
+{
+}
+
+ircd::db::database::stats::~stats()
+noexcept
 {
 }
 
@@ -1990,6 +1999,95 @@ ircd::db::database::stats::getTickerCount(const uint32_t type)
 const noexcept
 {
 	return ticker.at(type);
+}
+
+//
+// database::stats::passthru
+//
+
+ircd::db::database::stats::passthru::passthru(rocksdb::Statistics *const &a,
+                                              rocksdb::Statistics *const &b)
+:pass
+{
+	{ a, b }
+}
+{
+}
+
+ircd::db::database::stats::passthru::~passthru()
+noexcept
+{
+}
+
+[[noreturn]]
+rocksdb::Status
+ircd::db::database::stats::passthru::Reset()
+noexcept
+{
+	throw assertive {"Unavailable for passthru"};
+}
+
+void
+ircd::db::database::stats::passthru::recordTick(const uint32_t tickerType,
+                                                const uint64_t count)
+noexcept
+{
+	for(auto *const &pass : this->pass)
+		pass->recordTick(tickerType, count);
+}
+
+void
+ircd::db::database::stats::passthru::measureTime(const uint32_t histogramType,
+                                                 const uint64_t time)
+noexcept
+{
+	for(auto *const &pass : this->pass)
+		pass->measureTime(histogramType, time);
+}
+
+bool
+ircd::db::database::stats::passthru::HistEnabledForType(const uint32_t type)
+const noexcept
+{
+	return std::all_of(begin(pass), end(pass), [&type]
+	(const auto *const &pass)
+	{
+		return pass->HistEnabledForType(type);
+	});
+}
+
+[[noreturn]]
+uint64_t
+ircd::db::database::stats::passthru::getTickerCount(const uint32_t tickerType)
+const noexcept
+{
+	throw assertive {"Unavailable for passthru"};
+}
+
+[[noreturn]]
+void
+ircd::db::database::stats::passthru::setTickerCount(const uint32_t tickerType,
+                                                    const uint64_t count)
+noexcept
+{
+	throw assertive {"Unavailable for passthru"};
+}
+
+[[noreturn]]
+void
+ircd::db::database::stats::passthru::histogramData(const uint32_t type,
+                                                   rocksdb::HistogramData *const data)
+const noexcept
+{
+	throw assertive {"Unavailable for passthru"};
+}
+
+[[noreturn]]
+uint64_t
+ircd::db::database::stats::passthru::getAndResetTickerCount(const uint32_t tickerType)
+noexcept
+{
+	throw assertive {"Unavailable for passthru"};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2246,13 +2344,15 @@ ircd::db::database::cache::cache(database *const &d,
 {
 	rocksdb::NewLRUCache
 	(
-		std::max(initial_capacity, ssize_t(0)),
-		DEFAULT_SHARD_BITS,
-		DEFAULT_STRICT,
-		DEFAULT_HI_PRIO
+		std::max(initial_capacity, ssize_t(0))
+		,DEFAULT_SHARD_BITS
+		,DEFAULT_STRICT
+		,DEFAULT_HI_PRIO
 	)
 }
+,stats{d}
 {
+	assert(bool(c));
 }
 
 ircd::db::database::cache::~cache()
@@ -2283,7 +2383,9 @@ noexcept
 		c->Insert(key, value, charge, del, handle, priority)
 	};
 
-	stats.inserts += ret.ok();
+	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD, ret.ok());
+	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD_FAILURES, !ret.ok());
+	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_DATA_BYTES_INSERT, ret.ok()? charge : 0UL);
 	return ret;
 }
 
@@ -2293,13 +2395,30 @@ ircd::db::database::cache::Lookup(const Slice &key,
 noexcept
 {
 	assert(bool(c));
-	auto *const &ret
+
+	database::stats::passthru passthru
 	{
-		c->Lookup(key, statistics)
+		&this->stats, statistics
 	};
 
-	stats.hits += bool(ret);
-	stats.misses += !bool(ret);
+	rocksdb::Statistics *const s
+	{
+		statistics?
+			dynamic_cast<rocksdb::Statistics *>(&passthru):
+			dynamic_cast<rocksdb::Statistics *>(&this->stats)
+	};
+
+	auto *const &ret
+	{
+		c->Lookup(key, s)
+	};
+
+	// Rocksdb's LRUCache stats are broke. The statistics ptr is null and
+	// passing it to Lookup() does nothing internally. We have to do this
+	// here ourselves :/
+
+	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_HIT, bool(ret));
+	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_MISS, !bool(ret));
 	return ret;
 }
 
@@ -8885,21 +9004,23 @@ ircd::db::capacity(const rocksdb::Cache &cache)
 	return cache.GetCapacity();
 }
 
-ircd::db::cache_stats
-ircd::db::stats(const rocksdb::Cache *const &cache)
+uint64_t
+ircd::db::ticker(const rocksdb::Cache *const &cache,
+                 const uint32_t &ticker_id)
 {
-	return cache? stats(*cache) : cache_stats{};
+	return cache? ticker(*cache, ticker_id) : 0UL;
 }
 
-const ircd::db::cache_stats &
-ircd::db::stats(const rocksdb::Cache &cache)
+const uint64_t &
+ircd::db::ticker(const rocksdb::Cache &cache,
+                 const uint32_t &ticker_id)
 {
-	const auto &dc
+	const auto &c
 	{
 		dynamic_cast<const database::cache &>(cache)
 	};
 
-	return dc.stats;
+	return c.stats.ticker.at(ticker_id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

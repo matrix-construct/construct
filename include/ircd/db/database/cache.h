@@ -34,8 +34,8 @@ final
 	static const bool DEFAULT_STRICT;
 
 	database *d;
-	cache_stats stats;
 	std::shared_ptr<rocksdb::Cache> c;
+	struct database::stats stats;
 
 	const char *Name() const noexcept override;
 	Status Insert(const Slice &key, void *value, size_t charge, deleter, Handle **, Priority) noexcept override;

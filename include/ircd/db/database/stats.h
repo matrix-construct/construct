@@ -15,11 +15,13 @@
 // RocksDB symbols which we cannot forward declare. It is used internally
 // and does not need to be included by general users of IRCd.
 
-struct ircd::db::database::stats final
-:std::enable_shared_from_this<struct ircd::db::database::stats>
-,rocksdb::Statistics
+struct ircd::db::database::stats
+final
+:rocksdb::Statistics
 {
-	database *d;
+	struct passthru;
+
+	database *d {nullptr};
 	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
 	std::array<struct db::histogram, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
 
@@ -32,5 +34,25 @@ struct ircd::db::database::stats final
 	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
 	rocksdb::Status Reset() noexcept override;
 
-	stats(database *const &d);
+	stats(database *const &d = nullptr);
+	~stats() noexcept;
+};
+
+struct ircd::db::database::stats::passthru
+final
+:rocksdb::Statistics
+{
+	std::array<rocksdb::Statistics *, 2> pass {{nullptr}};
+
+	void recordTick(const uint32_t tickerType, const uint64_t count) noexcept override;
+	void measureTime(const uint32_t histogramType, const uint64_t time) noexcept override;
+	bool HistEnabledForType(const uint32_t type) const noexcept override;
+	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;
+	void setTickerCount(const uint32_t tickerType, const uint64_t count) noexcept override;
+	void histogramData(const uint32_t type, rocksdb::HistogramData *) const noexcept override;
+	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
+	rocksdb::Status Reset() noexcept override;
+
+	passthru(rocksdb::Statistics *const &a, rocksdb::Statistics *const &b);
+	~passthru() noexcept;
 };
