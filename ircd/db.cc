@@ -7269,6 +7269,8 @@ ircd::db::seek(row &r,
 	for(auto &cell : r)
 	{
 		db::column &column(cell);
+		//TODO: should check a bloom filter on the cache for this branch
+		//TODO: because right now double-querying the cache is gross.
 		if(!exists(cache(column), key))
 			request([&closure, &cell]
 			{
