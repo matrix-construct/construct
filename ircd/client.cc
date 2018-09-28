@@ -452,10 +452,8 @@ ircd::handle_ec(client &client,
 	{
 		log::dwarning
 		{
-			"socket(%p) local[%s] remote[%s] refusing client request in runlevel %s",
-			client.sock.get(),
-			string(local(client)),
-			string(remote(client)),
+			"%s refusing client request in runlevel %s",
+			client.loghead(),
 			reflect(runlevel)
 		};
 
@@ -491,10 +489,8 @@ try
 {
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] end of file",
-		client.sock.get(),
-		string(local(client)),
-		string(remote(client))
+		"%s end of file",
+		client.loghead()
 	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
@@ -504,8 +500,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"socket(%p) EOF: %s",
-		client.sock.get(),
+		"%s end of file :%s",
+		client.loghead(),
 		e.what()
 	};
 
@@ -521,10 +517,8 @@ try
 {
 	log::dwarning
 	{
-		"socket(%p) local[%s] remote[%s] short_read",
-		client.sock.get(),
-		string(local(client)),
-		string(remote(client))
+		"%s short_read",
+		client.loghead()
 	};
 
 	client.close(net::dc::RST, net::close_ignore);
@@ -534,8 +528,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"socket(%p) short_read: %s",
-		client.sock.get(),
+		"%s short_read :%s",
+		client.loghead(),
 		e.what()
 	};
 
@@ -553,10 +547,8 @@ try
 	assert(bool(client.sock));
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] disconnecting after inactivity timeout",
-		client.sock.get(),
-		string(local(client)),
-		string(remote(client))
+		"%s disconnecting after inactivity timeout",
+		client.loghead()
 	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
@@ -566,8 +558,8 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"socket(%p) timeout: %s",
-		client.sock.get(),
+		"%s timeout :%s",
+		client.loghead(),
 		e.what()
 	};
 
@@ -580,13 +572,12 @@ bool
 ircd::handle_ec_default(client &client,
                         const error_code &ec)
 {
+	thread_local char buf[256];
 	log::dwarning
 	{
-		"socket(%p) local[%s] remote[%s] %s",
-		client.sock.get(),
-		string(local(client)),
-		string(remote(client)),
-		string(ec)
+		"%s :%s",
+		client.loghead(),
+		string(buf, ec)
 	};
 
 	client.close(net::dc::RST, net::close_ignore);
@@ -687,11 +678,9 @@ catch(const boost::system::system_error &e)
 
 	log::derror
 	{
-		"socket(%p) local[%s] remote[%s] error during request: %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
-		string(e.code())
+		"%s error during request :%s",
+		loghead(),
+		e.code().message()
 	};
 
 	const error_code &ec{e.code()};
@@ -742,8 +731,8 @@ catch(const boost::system::system_error &e)
 
 	log::error
 	{
-		"socket(%p) (unexpected) %s: (%d) %s",
-		sock.get(),
+		"%s (unexpected) %s: (%d) %s",
+		loghead(),
 		ec.category().name(),
 		value,
 		ec.message()
@@ -756,10 +745,8 @@ catch(const ctx::interrupted &e)
 {
 	log::warning
 	{
-		"socket(%p) local[%s] remote[%s] Request interrupted: %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s Request interrupted :%s",
+		loghead(),
 		e.what()
 	};
 
@@ -770,10 +757,8 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"socket(%p) local[%s] remote[%s] %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s :%s",
+		loghead(),
 		e.what()
 	};
 
@@ -821,10 +806,8 @@ try
 
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] HTTP %s `%s' content-length:%zu have:%zu",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s HTTP %s `%s' content-length:%zu have:%zu",
+		loghead(),
 		head.method,
 		head.path,
 		head.content_length,
@@ -864,10 +847,8 @@ catch(const std::exception &e)
 
 	log::error
 	{
-		"socket(%p) local[%s] remote[%s] HTTP 500 Internal Error: %s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s HTTP 500 Internal Error: %s",
+		loghead(),
 		e.what()
 	};
 
@@ -904,10 +885,8 @@ catch(const http::error &e)
 
 	log::derror
 	{
-		"socket(%p) local[%s] remote[%s] HTTP %u %s `%s' :%s",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s HTTP %u %s `%s' :%s",
+		loghead(),
 		uint(e.code),
 		http::status(e.code),
 		head.uri,
@@ -953,10 +932,8 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 
 	log::debug
 	{
-		"socket(%p) local[%s] remote[%s] discarding %zu unconsumed of %zu bytes content...",
-		sock.get(),
-		string(local(*this)),
-		string(remote(*this)),
+		"%s discarding %zu unconsumed of %zu bytes content...",
+		loghead(),
 		unconsumed,
 		head.content_length
 	};
@@ -968,10 +945,9 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 ircd::ctx::future<void>
 ircd::client::close(const net::close_opts &opts)
 {
-	if(likely(sock) && !sock->fini)
-		return net::close(*sock, opts);
-	else
-		return ctx::future<void>::already;
+	return likely(sock) && !sock->fini?
+		net::close(*sock, opts):
+		ctx::future<void>::already;
 }
 
 void
@@ -991,7 +967,32 @@ size_t
 ircd::client::write_all(const const_buffer &buf)
 {
 	if(unlikely(!sock))
-		throw error{"No socket to client."};
+		throw error
+		{
+			"No socket to client."
+		};
 
 	return net::write_all(*sock, buf);
+}
+
+/// Returns a string_view to a static (tls) buffer containing common
+/// information used to prefix log calls for this client: i.e id, remote
+/// address, etc. This is meant to be used as the first argument to all log
+/// calls apropos this client and should not be held over a context switch
+/// as there is only one static buffer.
+ircd::string_view
+ircd::client::loghead()
+const
+{
+	thread_local char buf[512];
+	thread_local char rembuf[128];
+	thread_local char locbuf[128];
+	return fmt::sprintf
+	{
+		buf, "client[%lu] local[%s] remote[%s] socket(%p)",
+		id,
+		string(locbuf, local(*this)),
+		string(rembuf, remote(*this)),
+		sock.get()
+	};
 }

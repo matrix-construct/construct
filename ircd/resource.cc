@@ -381,10 +381,8 @@ ircd::resource::operator()(client &client,
 
 			log::derror
 			{
-				"socket(%p) local[%s] remote[%s] Timed out in %s `%s'",
-				client.sock.get(),
-				string(local(client)),
-				string(remote(client)),
+				"%s Timed out in %s `%s'",
+				client.loghead(),
 				head.method,
 				head.path
 			};
@@ -1053,10 +1051,8 @@ ircd::resource::response::response(client &client,
 	log::logf
 	{
 		log::general, facility,
-		"socket(%p) local[%s] remote[%s] HTTP %d %s in %ld$us; %s %s content",
-		client.sock.get(),
-		string(local(client)),
-		string(remote(client)),
+		"%s HTTP %d %s in %ld$us; %s %s content",
+		client.loghead(),
 		uint(code),
 		http::status(code),
 		request_time,

@@ -55,6 +55,7 @@ struct ircd::client
 	size_t content_consumed {0};
 	resource::request request;
 
+	string_view loghead() const;
 	size_t write_all(const const_buffer &);
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
