@@ -32,6 +32,19 @@ string(const T &s)
 	return ss.str();
 }
 
+/// Alternative to ircd::string() using a provided buffer for the
+/// std::stringstream to avoid allocating one.
+template<class T>
+auto
+string(const mutable_buffer &buf,
+       const T &s)
+{
+	std::stringstream ss;
+	pubsetbuf(ss, buf);
+	ss << s;
+	return ss.str();
+}
+
 inline auto
 string(const char *const &buf,
        const size_t &size)
