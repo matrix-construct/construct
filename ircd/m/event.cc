@@ -1412,12 +1412,20 @@ ircd::m::index(const event &event,
 ircd::m::event::idx
 ircd::m::index(const event::id &event_id)
 {
-	if(!index(event_id, std::nothrow))
+	const auto ret
+	{
+		index(event_id, std::nothrow)
+	};
+
+	if(!ret)
 		throw m::NOT_FOUND
 		{
 			"no index found for %s",
 			string_view{event_id}
+
 		};
+
+	return ret;
 }
 
 ircd::m::event::idx
