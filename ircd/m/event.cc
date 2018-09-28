@@ -100,7 +100,7 @@ std::ostream &
 ircd::m::pretty(std::ostream &s,
                 const event::prev &prev)
 {
-	using prototype = void (std::ostream &, const event &);
+	using prototype = void (std::ostream &, const event::prev &);
 	static mods::import<prototype> pretty
 	{
 		"m_event", "pretty__prev"
