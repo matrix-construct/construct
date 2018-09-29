@@ -79,26 +79,7 @@ ircd::net::ipport::ipport()
 	std::get<PORT>(*this) = 0;
 	std::get<TYPE>(*this) = 0;
 	auto &ip(std::get<IP>(*this));
-	std::fill(begin(ip), end(ip), 0x0);
-}
-
-inline
-ircd::net::ipport::ipport(const uint32_t &ip,
-                          const uint16_t &p)
-{
-	std::get<TYPE>(*this) = false;
-	host6(*this) = 0;
-	host4(*this) = ip;
-	port(*this) = p;
-}
-
-inline
-ircd::net::ipport::ipport(const uint128_t &ip,
-                          const uint16_t &p)
-{
-	std::get<TYPE>(*this) = true;
-	host6(*this) = ip;
-	port(*this) = p;
+	ip.fill(0);
 }
 
 inline ircd::net::ipport::operator

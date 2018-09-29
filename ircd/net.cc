@@ -3996,7 +3996,7 @@ ircd::net::make_endpoint(const ipport &ipport)
 }
 
 //
-// ipport
+// ipport::ipport
 //
 
 ircd::net::ipport::ipport(const string_view &ip,
@@ -4047,6 +4047,23 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 		std::reverse(std::get<IP>(*this).begin(), std::get<IP>(*this).end());
 	}
 	else host4(*this) = address.to_v4().to_ulong();
+}
+
+ircd::net::ipport::ipport(const uint32_t &ip,
+                          const uint16_t &p)
+{
+	std::get<TYPE>(*this) = false;
+	host6(*this) = 0;
+	host4(*this) = ip;
+	port(*this) = p;
+}
+
+ircd::net::ipport::ipport(const uint128_t &ip,
+                          const uint16_t &p)
+{
+	std::get<TYPE>(*this) = true;
+	host6(*this) = ip;
+	port(*this) = p;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
