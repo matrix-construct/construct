@@ -58,6 +58,10 @@ struct ircd::net::ipport
 {
 	enum { IP, PORT, TYPE };
 
+	struct cmp;
+	struct cmp_ip;
+	struct cmp_port;
+
 	explicit operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
@@ -71,6 +75,22 @@ struct ircd::net::ipport
 	ipport();
 
 	friend std::ostream &operator<<(std::ostream &, const ipport &);
+};
+
+struct ircd::net::ipport::cmp_port
+{
+	bool operator()(const ipport &a, const ipport &b) const;
+};
+
+struct ircd::net::ipport::cmp_ip
+{
+	bool operator()(const ipport &a, const ipport &b) const;
+};
+
+struct ircd::net::ipport::cmp
+:std::less<ipport>
+{
+	using std::less<ipport>::less;
 };
 
 inline

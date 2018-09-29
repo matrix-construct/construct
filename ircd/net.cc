@@ -3995,6 +3995,27 @@ ircd::net::make_endpoint(const ipport &ipport)
 	};
 }
 
+bool
+ircd::net::ipport::cmp_ip::operator()(const ipport &a, const ipport &b)
+const
+{
+	if(is_v4(a) && is_v6(b))
+		return true;
+
+	if(is_v6(a) && is_v4(b))
+		return false;
+
+	assert((is_v4(a) && is_v4(b)) || (is_v6(a) && is_v6(b)));
+	return std::get<a.IP>(a) < std::get<b.IP>(b);
+}
+
+bool
+ircd::net::ipport::cmp_port::operator()(const ipport &a, const ipport &b)
+const
+{
+	return std::get<a.PORT>(a) < std::get<b.PORT>(b);
+}
+
 //
 // ipport::ipport
 //
