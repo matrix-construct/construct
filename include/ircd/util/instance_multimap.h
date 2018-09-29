@@ -13,15 +13,16 @@
 
 namespace ircd::util
 {
-	template<class K, class T> struct instance_multimap;
+	template<class K, class T, class C = std::less<K>> struct instance_multimap;
 }
 
 /// See instance_list for purpose and overview.
 template<class K,
-         class T>
+         class T,
+         class C>
 struct ircd::util::instance_multimap
 {
-	static std::multimap<K, T *> map;
+	static std::multimap<K, T *, C> map;
 
   protected:
 	typename decltype(map)::iterator it;
@@ -36,8 +37,9 @@ struct ircd::util::instance_multimap
 };
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T>::instance_multimap(K&& key)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C>::instance_multimap(K&& key)
 :it
 {
 	map.emplace(std::forward<K>(key), static_cast<T *>(this))
@@ -45,9 +47,10 @@ ircd::util::instance_multimap<K, T>::instance_multimap(K&& key)
 {}
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T>::instance_multimap(const typename decltype(map)::const_iterator &hint,
-                                                       K&& key)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C>::instance_multimap(const typename decltype(map)::const_iterator &hint,
+                                                          K&& key)
 :it
 {
 	map.emplace_hint(hint, std::forward<K>(key), static_cast<T *>(this))
@@ -55,8 +58,9 @@ ircd::util::instance_multimap<K, T>::instance_multimap(const typename decltype(m
 {}
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T>::instance_multimap(instance_multimap &&other)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C>::instance_multimap(instance_multimap &&other)
 noexcept
 :it
 {
@@ -71,8 +75,9 @@ noexcept
 }
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T>::instance_multimap(const instance_multimap &other)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C>::instance_multimap(const instance_multimap &other)
 :it
 {
 	other.it != end(map)?
@@ -82,9 +87,10 @@ ircd::util::instance_multimap<K, T>::instance_multimap(const instance_multimap &
 {}
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T> &
-ircd::util::instance_multimap<K, T>::operator=(instance_multimap &&other)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C> &
+ircd::util::instance_multimap<K, T, C>::operator=(instance_multimap &&other)
 noexcept
 {
 	this->~instance_multimap();
@@ -97,9 +103,10 @@ noexcept
 }
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T> &
-ircd::util::instance_multimap<K, T>::operator=(const instance_multimap &other)
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C> &
+ircd::util::instance_multimap<K, T, C>::operator=(const instance_multimap &other)
 {
 	this->~instance_multimap();
 	it = other.it != end(map)?
@@ -110,8 +117,9 @@ ircd::util::instance_multimap<K, T>::operator=(const instance_multimap &other)
 }
 
 template<class K,
-         class T>
-ircd::util::instance_multimap<K, T>::~instance_multimap()
+         class T,
+         class C>
+ircd::util::instance_multimap<K, T, C>::~instance_multimap()
 noexcept
 {
 	if(it != end(map))
