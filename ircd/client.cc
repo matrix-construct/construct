@@ -107,8 +107,8 @@ ircd::client::ctr
 
 // Linkage for the container of all active clients for iteration purposes.
 template<>
-decltype(ircd::util::instance_multimap<ircd::net::ipport, ircd::client>::map)
-ircd::util::instance_multimap<ircd::net::ipport, ircd::client>::map
+decltype(ircd::util::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::map)
+ircd::util::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::map
 {};
 
 //
@@ -252,9 +252,8 @@ ircd::client::create(const std::shared_ptr<socket> &sock)
 }
 
 size_t
-ircd::client::count(net::ipport remote)
+ircd::client::count(const net::ipport &remote)
 {
-	std::get<remote.PORT>(remote) = 0;
 	return client::map.count(remote);
 }
 
@@ -289,22 +288,16 @@ ircd::read(client &client,
 	return base;
 }
 
-ircd::ipport
+const ircd::ipport &
 ircd::local(const client &client)
 {
-	if(!client.sock)
-		return {};
-
-	return net::local_ipport(*client.sock);
+	return client.local;
 }
 
-ircd::ipport
+const ircd::ipport &
 ircd::remote(const client &client)
 {
-	if(!client.sock)
-		return {};
-
-	return net::remote_ipport(*client.sock);
+	return client.it->first;
 }
 
 //
@@ -594,7 +587,7 @@ ircd::client::client(std::shared_ptr<socket> sock)
 {
 	assert(bool(sock));
 	const auto &ep(sock->remote());
-	return { ep.address(), 0 };
+	return { ep.address(), ep.port() };
 }()}
 ,head_buffer
 {
@@ -603,6 +596,10 @@ ircd::client::client(std::shared_ptr<socket> sock)
 ,sock
 {
 	std::move(sock)
+}
+,local
+{
+	net::local_ipport(*this->sock)
 }
 {
 	assert(size(head_buffer) >= 8_KiB);
@@ -991,8 +988,8 @@ const
 	{
 		buf, "client[%lu] local[%s] remote[%s] socket(%p)",
 		id,
-		string(locbuf, local(*this)),
-		string(rembuf, remote(*this)),
+		string(locbuf, ircd::local(*this)),
+		string(rembuf, ircd::remote(*this)),
 		sock.get()
 	};
 }

@@ -23,7 +23,7 @@ namespace ircd
 /// Remote party connecting to our daemon to make requests.
 struct ircd::client
 :std::enable_shared_from_this<client>
-,ircd::instance_multimap<net::ipport, client>
+,ircd::instance_multimap<net::ipport, client, net::ipport::cmp_ip>
 {
 	struct init;
 	struct conf;
@@ -37,7 +37,7 @@ struct ircd::client
 	static uint64_t ctr;              // monotonic
 
 	static void create(const std::shared_ptr<socket> &);
-	static size_t count(net::ipport remote);
+	static size_t count(const net::ipport &remote); // cmp is by IP only, not port
 	static void terminate_all();
 	static void interrupt_all();
 	static void close_all();
@@ -48,6 +48,7 @@ struct ircd::client
 	unique_buffer<mutable_buffer> head_buffer;
 	unique_buffer<mutable_buffer> content_buffer;
 	std::shared_ptr<socket> sock;
+	net::ipport local;
 	uint64_t id {++ctr};
 	ctx::ctx *reqctx {nullptr};
 	ircd::timer timer;
@@ -73,8 +74,8 @@ struct ircd::client
 	client &operator=(const client &) = delete;
 	~client() noexcept;
 
-	friend ipport remote(const client &);
-	friend ipport local(const client &);
+	friend const ipport &remote(const client &);
+	friend const ipport &local(const client &);
 };
 
 /// Confs can be attached to individual clients to change their behavior
