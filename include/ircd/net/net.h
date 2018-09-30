@@ -49,6 +49,7 @@ namespace ircd::net
 
 namespace ircd::net
 {
+	const uint64_t &id(const socket &);
 	bool opened(const socket &) noexcept;
 	size_t readable(const socket &);
 	size_t available(const socket &) noexcept;

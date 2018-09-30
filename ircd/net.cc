@@ -185,6 +185,12 @@ catch(...)
 	return false;
 }
 
+const uint64_t &
+ircd::net::id(const socket &socket)
+{
+	return socket.id;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/write.h
@@ -1850,7 +1856,6 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 	*ios
 }
 {
-	++count;
 	++instances;
 }
 

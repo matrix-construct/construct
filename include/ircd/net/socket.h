@@ -46,6 +46,7 @@ struct ircd::net::socket
 	static uint64_t count;                       // monotonic
 	static uint64_t instances;                   // current socket count
 
+	uint64_t id {++count};
 	ip::tcp::socket sd;
 	asio::ssl::stream<ip::tcp::socket &> ssl;
 	stat in, out;
