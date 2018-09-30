@@ -427,11 +427,6 @@ catch(const std::exception &e)
 	};
 }
 
-/// This error handling switch is one of two places client errors
-/// are handled. This handles the errors when the client is in async
-/// mode rather than during a request. This executes on the main/callback
-/// stack, not in any ircd::ctx, and must be asynchronous.
-///
 bool
 ircd::handle_ec(client &client,
                 const error_code &ec)
@@ -566,7 +561,7 @@ ircd::handle_ec_default(client &client,
                         const error_code &ec)
 {
 	thread_local char buf[256];
-	log::dwarning
+	log::derror
 	{
 		"%s :%s",
 		client.loghead(),
@@ -668,75 +663,8 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
-	using boost::asio::error::get_ssl_category;
-	using boost::asio::error::get_misc_category;
-
-	log::derror
-	{
-		"%s error during request :%s",
-		loghead(),
-		e.code().message()
-	};
-
 	const error_code &ec{e.code()};
-	const int &value{ec.value()};
-	if(ec.category() == system_category()) switch(value)
-	{
-		case success:
-			assert(0);
-			return true;
-
-		case broken_pipe:
-		case connection_reset:
-		case not_connected:
-			close(net::dc::RST, net::close_ignore);
-			return false;
-
-		case operation_canceled:
-		case timed_out:
-			return false;
-
-		case bad_file_descriptor:
-			return false;
-
-		default:
-			break;
-	}
-	else if(ec.category() == get_ssl_category()) switch(uint8_t(value))
-	{
-		case SSL_R_SHORT_READ:
-			close(net::dc::RST, net::close_ignore);
-			return false;
-
-		case SSL_R_PROTOCOL_IS_SHUTDOWN:
-			close(net::dc::RST, net::close_ignore);
-			return false;
-
-		default:
-			break;
-	}
-	else if(ec.category() == get_misc_category()) switch(value)
-	{
-		case boost::asio::error::eof:
-			return false;
-
-		default:
-			break;
-	}
-
-	log::error
-	{
-		"%s (unexpected) %s: (%d) %s",
-		loghead(),
-		ec.category().name(),
-		value,
-		ec.message()
-	};
-
-	close(net::dc::RST, net::close_ignore);
-	return false;
+	return handle_ec(*this, ec);
 }
 catch(const ctx::interrupted &e)
 {
