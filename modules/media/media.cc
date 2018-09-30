@@ -19,6 +19,11 @@ IRCD_MODULE
 		static const std::string dbopts;
 		media = std::make_shared<database>("media", dbopts, media_description);
 		blocks = db::column{*media, "blocks"};
+
+		// The conf setter callbacks must be manually executed after
+		// the database was just loaded to set the cache size.
+		conf::reset("ircd.media.blocks.cache.size");
+		conf::reset("ircd.media.blocks.cache_comp.size");
 	},
 	[] // fini
 	{
@@ -95,12 +100,6 @@ media_description
 	media_blocks_descriptor,
 };
 
-decltype(media)
-media;
-
-decltype(blocks)
-blocks;
-
 decltype(media_blocks_cache_size)
 media_blocks_cache_size
 {
@@ -132,6 +131,12 @@ media_blocks_cache_comp_size
 		db::capacity(db::cache_compressed(blocks), value);
 	}
 };
+
+decltype(media)
+media;
+
+decltype(blocks)
+blocks;
 
 std::set<m::room::id>
 downloading;

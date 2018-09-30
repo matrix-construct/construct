@@ -52,7 +52,6 @@ on_run()
 	const unwind uw{[] { item_error_log = true; }};
 	item_error_log = false;
 	rehash_conf(false);
-	reload_conf();
 }
 
 /// Waits for the daemon to transition to the RUN state so we can gather all
@@ -129,13 +128,13 @@ noexcept try
 		unquote(content.at("value"))
 	};
 
+	if(runlevel == runlevel::START && !conf::exists(key))
+		return;
+
 	log::debug
 	{
 		"Updating conf [%s] => %s", key, value
 	};
-
-	if(runlevel == runlevel::START && !conf::exists(key))
-		return;
 
 	ircd::conf::set(key, value);
 }
