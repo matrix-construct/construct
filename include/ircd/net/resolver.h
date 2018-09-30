@@ -23,6 +23,7 @@ struct ircd::net::dns::resolver
 	using header = rfc1035::header;
 
 	static constexpr const size_t &MAX_COUNT{64};
+	static conf::item<std::string> servers;
 	static conf::item<milliseconds> timeout;
 	static conf::item<milliseconds> send_rate;
 	static conf::item<size_t> send_burst;
@@ -30,16 +31,17 @@ struct ircd::net::dns::resolver
 
 	std::vector<ip::udp::endpoint> server;       // The list of active servers
 	size_t server_next{0};                       // Round-robin state to hit servers
-	void init_servers();
-
 	ctx::dock dock;
 	std::map<uint16_t, tag> tags;                // The active requests
 	steady_point send_last;                      // Time of last send
 	std::deque<uint16_t> sendq;                  // Queue of frames for rate-limiting
-
 	ip::udp::socket ns;                          // A pollable activity object
 	ip::udp::endpoint reply_from;                // Remote addr of recv
 	unique_buffer<mutable_buffer> reply;         // Buffer for recv
+
+	void add_server(const ipport &);
+	void set_servers(const string_view &list);
+	void set_servers();
 
 	bool handle_error(const error_code &ec) const;
 	bool handle_error(const header &, const rfc1035::question &, tag &);

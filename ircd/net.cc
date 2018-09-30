@@ -3371,6 +3371,19 @@ ircd::net::dns::cache::get(const hostport &hp,
 // net/resolver.h
 //
 
+decltype(ircd::net::dns::resolver::servers)
+ircd::net::dns::resolver::servers
+{
+	{
+		{ "name",     "ircd.net.dns.resolver.servers"                    },
+		{ "default",   "4.2.2.1;4.2.2.2;4.2.2.3;4.2.2.4;4.2.2.5;4.2.2.6" },
+	}, []
+	{
+		if(ircd::net::dns::resolver)
+			ircd::net::dns::resolver->set_servers();
+	}
+};
+
 decltype(ircd::net::dns::resolver::timeout)
 ircd::net::dns::resolver::timeout
 {
@@ -3416,8 +3429,8 @@ ircd::net::dns::resolver::resolver()
 {
 	ns.open(ip::udp::v4());
 	ns.non_blocking(true);
+	set_servers();
 	set_handle();
-	init_servers();
 }
 
 ircd::net::dns::resolver::~resolver()
@@ -3987,29 +4000,46 @@ const
 	}
 }
 
-//TODO: x-platform
 void
-ircd::net::dns::resolver::init_servers()
+ircd::net::dns::resolver::set_servers()
 {
-	const auto resolve_conf
-	{
-		fs::read("/etc/resolv.conf")
-	};
+	const std::string &list(resolver::servers);
+	set_servers(list);
+}
 
-	tokens(resolve_conf, '\n', [this](const auto &line)
+void
+ircd::net::dns::resolver::set_servers(const string_view &list)
+{
+	server.clear();
+	server_next = 0;
+	tokens(list, ';', [this]
+	(const hostport &hp)
 	{
-		const auto kv(split(line, ' '));
-		if(kv.first == "nameserver")
+		const auto &port
 		{
-			const ipport server{kv.second, 53};
-			this->server.emplace_back(make_endpoint_udp(server));
-			log::debug
-			{
-				log, "Found nameserver %s from resolv.conf",
-				string(server)
-			};
-		}
+			net::port(hp) != canon_port? net::port(hp) : uint16_t(53)
+		};
+
+		const ipport ipp
+		{
+			host(hp), port
+		};
+
+		add_server(ipp);
 	});
+}
+
+void
+ircd::net::dns::resolver::add_server(const ipport &ipp)
+{
+	server.emplace_back(make_endpoint_udp(ipp));
+
+	log::debug
+	{
+		log, "Adding [%s] as DNS server #%zu",
+		string(ipp),
+		server.size()
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
