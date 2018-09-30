@@ -1027,11 +1027,16 @@ const
 // net/acceptor.h
 //
 
+namespace ircd::net
+{
+	thread_local char logheadbuf[512];
+}
+
 //
 // listener::acceptor
 //
 
-ircd::log::log
+decltype(ircd::net::listener::acceptor::log)
 ircd::net::listener::acceptor::log
 {
 	"listener"
@@ -1047,7 +1052,8 @@ ircd::net::listener::acceptor::timeout
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
 {
-	s << "'" << a.name << "' @ [" << string(a.ep.address()) << "]:" << a.ep.port();
+	thread_local char addrbuf[128];
+	s << "'" << a.name << "' @ [" << string(addrbuf, a.ep.address()) << "]:" << a.ep.port();
 	return s;
 }
 
@@ -1112,27 +1118,27 @@ try
 
 	log::debug
 	{
-		log, "%s configured listener SSL", string(*this)
+		log, "%s configured listener SSL", string(logheadbuf, *this)
 	};
 
 	a.open(ep.protocol());
 	a.set_option(reuse_address);
 	log::debug
 	{
-		log, "%s opened listener socket", string(*this)
+		log, "%s opened listener socket", string(logheadbuf, *this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", string(*this)
+		log, "%s bound listener socket", string(logheadbuf, *this)
 	};
 
 	a.listen(backlog);
 	log::debug
 	{
 		log, "%s listening (backlog: %lu, max connections: %zu)",
-		string(*this),
+		string(logheadbuf, *this),
 		backlog,
 		max_connections
 	};
@@ -1204,7 +1210,7 @@ try
 	log::debug
 	{
 		log, "%s: socket(%p) is the next socket to accept",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get()
 	};
 */
@@ -1216,7 +1222,7 @@ catch(const std::exception &e)
 {
 	throw assertive
 	{
-		"%s: %s", string(*this), e.what()
+		"%s: %s", string(logheadbuf, *this), e.what()
 	};
 }
 
@@ -1246,7 +1252,7 @@ noexcept try
 	log::debug
 	{
 		log, "%s: socket(%p) accepted(%zu) %s %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		accepting,
 		string(remote_ipport(*sock)),
@@ -1286,7 +1292,7 @@ catch(const ctx::interrupted &e)
 	log::debug
 	{
 		log, "%s: acceptor interrupted socket(%p) %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		string(ec)
 	};
@@ -1298,7 +1304,7 @@ catch(const boost::system::system_error &e)
 	log::derror
 	{
 		log, "%s: socket(%p) in accept(): %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		string(e)
 	};
@@ -1308,7 +1314,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s: socket(%p) in accept(): %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		e.what()
 	};
@@ -1383,7 +1389,7 @@ catch(const ctx::interrupted &e)
 	log::debug
 	{
 		log, "%s: SSL handshake interrupted socket(%p) %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		string(ec)
 	};
@@ -1395,7 +1401,7 @@ catch(const boost::system::system_error &e)
 	log::derror
 	{
 		log, "%s: socket(%p) in handshake(): %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		string(e)
 	};
@@ -1405,7 +1411,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s: socket(%p) in handshake(): %s",
-		string(*this),
+		string(logheadbuf, *this),
 		sock.get(),
 		e.what()
 	};
@@ -1449,7 +1455,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 {
 	log::debug
 	{
-		log, "%s preparing listener socket configuration...", string(*this)
+		log, "%s preparing listener socket configuration...", string(logheadbuf, *this)
 	};
 
 	ssl.set_options
@@ -1471,7 +1477,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::notice
 		{
 			log, "%s asking for password with purpose '%s' (size: %zu)",
-			string(*this),
+			string(logheadbuf, *this),
 			purpose,
 			size
 		};
@@ -1492,7 +1498,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate chain file @ `%s' not found",
-				string(*this),
+				string(logheadbuf, *this),
 				filename
 			};
 
@@ -1500,7 +1506,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using certificate chain file '%s'",
-			string(*this),
+			string(logheadbuf, *this),
 			filename
 		};
 	}
@@ -1516,7 +1522,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate pem file @ `%s' not found",
-				string(*this),
+				string(logheadbuf, *this),
 				filename
 			};
 
@@ -1524,7 +1530,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using certificate file '%s'",
-			string(*this),
+			string(logheadbuf, *this),
 			filename
 		};
 	}
@@ -1540,7 +1546,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL private key file @ `%s' not found",
-				string(*this),
+				string(logheadbuf, *this),
 				filename
 			};
 
@@ -1548,7 +1554,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using private key file '%s'",
-			string(*this),
+			string(logheadbuf, *this),
 			filename
 		};
 	}
@@ -1564,7 +1570,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL tmp dh file @ `%s' not found",
-				string(*this),
+				string(logheadbuf, *this),
 				filename
 			};
 
@@ -1572,7 +1578,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using tmp dh file '%s'",
-			string(*this),
+			string(logheadbuf, *this),
 			filename
 		};
 	}
@@ -1587,7 +1593,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using DH params supplied in options (%zu bytes)",
-			string(*this),
+			string(logheadbuf, *this),
 			size(buf)
 		};
 	}
@@ -1602,7 +1608,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using pre-supplied rfc3526 DH parameters.",
-			string(*this)
+			string(logheadbuf, *this)
 		};
 	}
 }
@@ -1652,13 +1658,13 @@ try
 	a.set_option(reuse_address);
 	log::debug
 	{
-		log, "%s opened listener socket", string(*this)
+		log, "%s opened listener socket", string(logheadbuf, *this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", string(*this)
+		log, "%s bound listener socket", string(logheadbuf, *this)
 	};
 }
 catch(const boost::system::system_error &e)
