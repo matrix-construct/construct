@@ -22,8 +22,10 @@ ircd::net::wait_close_sockets()
 {
 	while(socket::instances)
 		if(!dock.wait_for(seconds(2)))
-			log.warning("Waiting for %zu sockets to destruct",
-			            socket::instances);
+			log::warning
+			{
+				log, "Waiting for %zu sockets to destruct", socket::instances
+			};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1108,23 +1110,32 @@ try
 
 	configure(opts);
 
-	log.debug("%s configured listener SSL",
-	          string(*this));
+	log::debug
+	{
+		log, "%s configured listener SSL", string(*this)
+	};
 
 	a.open(ep.protocol());
 	a.set_option(reuse_address);
-	log.debug("%s opened listener socket",
-	          string(*this));
+	log::debug
+	{
+		log, "%s opened listener socket", string(*this)
+	};
 
 	a.bind(ep);
-	log.debug("%s bound listener socket",
-	          string(*this));
+	log::debug
+	{
+		log, "%s bound listener socket", string(*this)
+	};
 
 	a.listen(backlog);
-	log.debug("%s listening (backlog: %lu, max connections: %zu)",
-	          string(*this),
-	          backlog,
-	          max_connections);
+	log::debug
+	{
+		log, "%s listening (backlog: %lu, max connections: %zu)",
+		string(*this),
+		backlog,
+		max_connections
+	};
 }
 catch(const boost::system::system_error &e)
 {
@@ -1190,9 +1201,12 @@ try
 {
 	auto sock(std::make_shared<ircd::socket>(ssl));
 /*
-	log.debug("%s: socket(%p) is the next socket to accept",
-	          string(*this),
-	          sock.get());
+	log::debug
+	{
+		log, "%s: socket(%p) is the next socket to accept",
+		string(*this),
+		sock.get()
+	};
 */
 	++accepting;
 	ip::tcp::socket &sd(*sock);
@@ -1433,8 +1447,10 @@ ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
 void
 ircd::net::listener::acceptor::configure(const json::object &opts)
 {
-	log.debug("%s preparing listener socket configuration...",
-	          string(*this));
+	log::debug
+	{
+		log, "%s preparing listener socket configuration...", string(*this)
+	};
 
 	ssl.set_options
 	(
@@ -1452,12 +1468,16 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	ssl.set_password_callback([this]
 	(const auto &size, const auto &purpose)
 	{
-		log.debug("%s asking for password with purpose '%s' (size: %zu)",
-		          string(*this),
-		          purpose,
-		          size);
+		log::notice
+		{
+			log, "%s asking for password with purpose '%s' (size: %zu)",
+			string(*this),
+			purpose,
+			size
+		};
 
 		//XXX: TODO
+		assert(0);
 		return "foobar";
 	});
 
@@ -1477,9 +1497,12 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			};
 
 		ssl.use_certificate_chain_file(filename);
-		log.info("%s using certificate chain file '%s'",
-		         string(*this),
-		         filename);
+		log::info
+		{
+			log, "%s using certificate chain file '%s'",
+			string(*this),
+			filename
+		};
 	}
 
 	if(opts.has("certificate_pem_path"))
@@ -1498,9 +1521,12 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
-		log.info("%s using certificate file '%s'",
-		         string(*this),
-		         filename);
+		log::info
+		{
+			log, "%s using certificate file '%s'",
+			string(*this),
+			filename
+		};
 	}
 
 	if(opts.has("private_key_pem_path"))
@@ -1519,9 +1545,12 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			};
 
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
-		log.info("%s using private key file '%s'",
-		         string(*this),
-		         filename);
+		log::info
+		{
+			log, "%s using private key file '%s'",
+			string(*this),
+			filename
+		};
 	}
 
 	if(opts.has("tmp_dh_path") && !empty(unquote(opts.at("tmp_dh_path"))))
@@ -1540,9 +1569,12 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			};
 
 		ssl.use_tmp_dh_file(filename);
-		log.info("%s using tmp dh file '%s'",
-		         string(*this),
-		         filename);
+		log::info
+		{
+			log, "%s using tmp dh file '%s'",
+			string(*this),
+			filename
+		};
 	}
 	else if(opts.has("tmp_dh"))
 	{
@@ -1803,9 +1835,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.error("socket(%p) scope_timeout::cancel: %s",
-	          (const void *)s,
-	          e.what());
+	log::error
+	{
+		log, "socket(%p) scope_timeout::cancel: %s",
+		(const void *)s,
+		e.what()
+	};
 
 	return false;
 }
@@ -1879,7 +1914,13 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) close: %s", this, e.what());
+	log::critical
+	{
+		log, "socket(%p) close: %s",
+		this,
+		e.what()
+	};
+
 	return;
 }
 
@@ -1888,10 +1929,13 @@ ircd::net::socket::connect(const endpoint &ep,
                            const open_opts &opts,
                            eptr_handler callback)
 {
-	log.debug("socket(%p) attempting connect remote[%s] to:%ld$ms",
-	          this,
-	          string(ep),
-	          opts.connect_timeout.count());
+	log::debug
+	{
+		log, "socket(%p) attempting connect remote[%s] to:%ld$ms",
+		this,
+		string(ep),
+		opts.connect_timeout.count()
+	};
 
 	auto connect_handler
 	{
@@ -1906,12 +1950,15 @@ void
 ircd::net::socket::handshake(const open_opts &opts,
                              eptr_handler callback)
 {
-	log.debug("socket(%p) local[%s] remote[%s] handshaking for '%s' to:%ld$ms",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          common_name(opts),
-	          opts.handshake_timeout.count());
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] handshaking for '%s' to:%ld$ms",
+		this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		common_name(opts),
+		opts.handshake_timeout.count()
+	};
 
 	auto handshake_handler
 	{
@@ -2204,23 +2251,29 @@ noexcept try
 	if(type == ready::READ && !ec && bytes == 0)
 		ec = { asio::error::eof, asio::error::get_misc_category() };
 
-	log.debug("socket(%p) local[%s] remote[%s] ready %s %s avail:%zu:%zu:%d",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          reflect(type),
-	          string(ec),
-	          type == ready::READ? bytes : 0UL,
-	          type == ready::READ? available(*this) : 0UL,
-	          SSL_pending(ssl.native_handle()));
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] ready %s %s avail:%zu:%zu:%d",
+		this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		reflect(type),
+		string(ec),
+		type == ready::READ? bytes : 0UL,
+		type == ready::READ? available(*this) : 0UL,
+		SSL_pending(ssl.native_handle())
+	};
 
 	call_user(callback, ec);
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p) handle: %s",
-	          this,
-	          e.what());
+	log::error
+	{
+		log, "socket(%p) handle: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, e.code());
@@ -2230,17 +2283,23 @@ catch(const std::bad_weak_ptr &e)
 	// This handler may still be registered with asio after the socket destructs, so
 	// the weak_ptr will indicate that fact. However, this is never intended and is
 	// a debug assertion which should be corrected.
-	log.warning("socket(%p) belated callback to handler... (%s)",
-	            this,
-	            e.what());
+	log::warning
+	{
+		log, "socket(%p) belated callback to handler... (%s)",
+		this,
+		e.what()
+	};
 
 	assert(0);
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) handle: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) handle: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, ec);
@@ -2309,9 +2368,12 @@ catch(const boost::system::system_error &e)
 
 		default:
 			assert(0);
-			log.critical("socket(%p) handle timeout: %s",
-			             (const void *)this,
-			             string(e));
+			log::critical
+			{
+				log, "socket(%p) handle timeout: %s",
+				(const void *)this,
+				string(e)
+			};
 			break;
 	}
 
@@ -2320,9 +2382,12 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) handle timeout: %s",
-	             (const void *)this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) handle timeout: %s",
+		(const void *)this,
+		e.what()
+	};
 
 	assert(0);
 	if(callback)
@@ -2340,11 +2405,14 @@ noexcept try
 	using boost::system::system_category;
 
 	const life_guard<socket> s{wp};
-	log.debug("socket(%p) local[%s] remote[%s] connect %s",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          string(ec));
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] connect %s",
+		this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		string(ec)
+	};
 
 	// The timer was set by socket::connect() and may need to be canceled.
 	if(!timedout && ec != operation_canceled && !fini)
@@ -2373,26 +2441,35 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p) after connect: %s",
-	          this,
-	          e.what());
+	log::error
+	{
+		log, "socket(%p) after connect: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
 {
-	log.warning("socket(%p) belated callback to handle_connect... (%s)",
-	            this,
-	            e.what());
+	log::warning
+	{
+		log, "socket(%p) belated callback to handle_connect... (%s)",
+		this,
+		e.what()
+	};
 
 	assert(0);
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) handle_connect: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) handle_connect: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, ec);
@@ -2414,11 +2491,14 @@ noexcept try
 	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
-	log.debug("socket(%p) local[%s] remote[%s] disconnect %s",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          string(ec));
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] disconnect %s",
+		this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		string(ec)
+	};
 
 	// This ignores EOF and turns it into a success to alleviate user concern.
 	if(ec.category() == asio::error::get_misc_category())
@@ -2430,18 +2510,24 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p) disconnect: %s",
-	          this,
-	          e.what());
+	log::error
+	{
+		log, "socket(%p) disconnect: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, e.code());
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) disconnect: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) disconnect: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, ec);
@@ -2464,11 +2550,14 @@ noexcept try
 	if(timedout && ec == operation_canceled && ec.category() == system_category())
 		ec = { timed_out, system_category() };
 
-	log.debug("socket(%p) local[%s] remote[%s] handshake %s",
-	          this,
-	          string(local_ipport(*this)),
-	          string(remote_ipport(*this)),
-	          string(ec));
+	log::debug
+	{
+		log, "socket(%p) local[%s] remote[%s] handshake %s",
+		this,
+		string(local_ipport(*this)),
+		string(remote_ipport(*this)),
+		string(ec)
+	};
 
 	// This is the end of the asynchronous call chain; the user is called
 	// back with or without error here.
@@ -2476,26 +2565,35 @@ noexcept try
 }
 catch(const boost::system::system_error &e)
 {
-	log.error("socket(%p) after handshake: %s",
-	          this,
-	          e.what());
+	log::error
+	{
+		log, "socket(%p) after handshake: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
 {
-	log.warning("socket(%p) belated callback to handle_handshake... (%s)",
-	            this,
-	            e.what());
+	log::warning
+	{
+		log, "socket(%p) belated callback to handle_handshake... (%s)",
+		this,
+		e.what()
+	};
 
 	assert(0);
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) handle_handshake: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) handle_handshake: %s",
+		this,
+		e.what()
+	};
 
 	assert(0);
 	call_user(callback, ec);
@@ -2541,10 +2639,13 @@ noexcept try
 	{
 		thread_local char buf[4_KiB];
 		const critical_assertion ca;
-		log.warning("verify[%s]: %s :%s",
-		            common_name(opts),
-		            openssl::get_error_string(stctx),
-		            openssl::print_subject(buf, cert));
+		log::warning
+		{
+			log, "verify[%s]: %s :%s",
+			common_name(opts),
+			openssl::get_error_string(stctx),
+			openssl::print_subject(buf, cert)
+		};
 	}
 
 	const auto err
@@ -2621,21 +2722,32 @@ noexcept try
 	{
 		thread_local char buf[4_KiB];
 		const critical_assertion ca;
-		log.debug("verify[%s]: %s",
-		          common_name(opts),
-		          openssl::print_subject(buf, cert));
+		log::debug
+		{
+			log, "verify[%s]: %s",
+			common_name(opts),
+			openssl::print_subject(buf, cert)
+		};
 	}
 
 	return true;
 }
 catch(const inauthentic &e)
 {
-	log.error("Certificate rejected: %s", e.what());
+	log::error
+	{
+		log, "Certificate rejected: %s", e.what()
+	};
+
 	return false;
 }
 catch(const std::exception &e)
 {
-	log.critical("Certificate error: %s", e.what());
+	log::critical
+	{
+		log, "Certificate error: %s", e.what()
+	};
+
 	return false;
 }
 
@@ -2648,9 +2760,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) async handler: unhandled exception: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) async handler: unhandled exception: %s",
+		this,
+		e.what()
+	};
 
 	close(*this, dc::RST, close_ignore);
 }
@@ -2668,9 +2783,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log.critical("socket(%p) async handler: unhandled exception: %s",
-	             this,
-	             e.what());
+	log::critical
+	{
+		log, "socket(%p) async handler: unhandled exception: %s",
+		this,
+		e.what()
+	};
 }
 
 ircd::milliseconds
@@ -3662,7 +3780,11 @@ try
 }
 catch(const std::exception &e)
 {
-	log.error("%s", e.what());
+	log::error
+	{
+		log, "%s", e.what()
+	};
+
 	return;
 }
 
@@ -3787,9 +3909,12 @@ catch(const std::exception &e)
 	// There's no need to flash red to the log for NXDOMAIN which is
 	// common in this system when probing SRV.
 	if(unlikely(header.rcode != 3))
-		log.error("resolver tag:%u: %s",
-		          tag.id,
-		          e.what());
+		log::error
+		{
+			log, "resolver tag:%u: %s",
+			tag.id,
+			e.what()
+		};
 
 	if(tag.cb)
 	{
@@ -3872,8 +3997,11 @@ ircd::net::dns::resolver::init_servers()
 		{
 			const ipport server{kv.second, 53};
 			this->server.emplace_back(make_endpoint_udp(server));
-			log.debug("Found nameserver %s from resolv.conf",
-			          string(server));
+			log::debug
+			{
+				log, "Found nameserver %s from resolv.conf",
+				string(server)
+			};
 		}
 	});
 }
