@@ -549,3 +549,16 @@ ircd::rfc1035::qtype
 	{ "DOA",         259 },    // Digital Object Architecture	[draft-durand-doa-over-dns]
 	{ "TA",          32768 },  // DNSSEC Trust Authorities [Sam_Weiler][http://cameo.library.cmu.edu/]
 };
+
+decltype(ircd::rfc1035::rqtype)
+ircd::rfc1035::rqtype{[]
+{
+	std::map<uint16_t, string_view> ret;
+	std::transform(begin(qtype), end(qtype), std::inserter(ret, ret.end()), []
+	(const auto &pair) -> std::pair<uint16_t, string_view>
+	{
+		return { pair.second, pair.first };
+	});
+
+	return ret;
+}()};

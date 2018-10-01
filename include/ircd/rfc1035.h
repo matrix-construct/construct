@@ -24,6 +24,7 @@ namespace ircd::rfc1035
 	enum class op :uint8_t;
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
+	extern const std::map<uint16_t, string_view> rqtype;
 
 	const_buffer make_name(const mutable_buffer &out, const string_view &fqdn);
 	size_t parse_name(const mutable_buffer &out, const const_buffer &in);
