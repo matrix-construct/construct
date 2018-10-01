@@ -8,21 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#pragma once
-#define HAVE_IRCD_NET_RESOLVER_H
-
-// This file is not included with the IRCd standard include stack because
-// it requires symbols we can't forward declare without boost headers. It
-// is part of the <ircd/asio.h> stack which can be included in your
-// definition file if you need low level access to this resolver API.
-
-/// Internal resolver service
 struct ircd::net::dns::resolver
 {
 	struct tag;
 	using header = rfc1035::header;
 
-	static constexpr const size_t &MAX_COUNT{64};
 	static conf::item<std::string> servers;
 	static conf::item<milliseconds> timeout;
 	static conf::item<milliseconds> send_rate;

@@ -39,7 +39,6 @@ namespace ircd::net
 
 #include <ircd/net/socket.h>
 #include <ircd/net/acceptor.h>
-#include <ircd/net/resolver.h>
 
 namespace ircd
 {

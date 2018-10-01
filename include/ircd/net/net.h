@@ -71,8 +71,6 @@ namespace ircd
 
 struct ircd::net::init
 {
-	std::unique_ptr<struct dns::resolver> resolver;
-
 	init();
 	~init() noexcept;
 };

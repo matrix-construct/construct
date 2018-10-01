@@ -28,12 +28,11 @@ namespace ircd::net
 struct ircd::net::dns
 {
 	struct opts;
-	struct resolver;
 	struct cache;
+	struct resolver;
 
-	struct cache static cache;
-	struct resolver static *resolver;
 	struct opts static const opts_default;
+	struct cache static cache;
 
 	using callback = std::function<void (std::exception_ptr, const hostport &, const vector_view<const rfc1035::record *> &)>;
 	using callback_A_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::A &)>;
