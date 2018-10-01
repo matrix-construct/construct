@@ -21,17 +21,18 @@ template<class it>
 struct ircd::m::id::input
 :qi::grammar<it, unused_type>
 {
+	using id = m::id;
 	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	// Sigils
-	const rule<m::id::sigil> event_id_sigil      { lit(char(m::id::EVENT))           ,"event_id sigil" };
-	const rule<m::id::sigil> user_id_sigil       { lit(char(m::id::USER))             ,"user_id sigil" };
-	const rule<m::id::sigil> room_id_sigil       { lit(char(m::id::ROOM))             ,"room_id sigil" };
-	const rule<m::id::sigil> room_alias_sigil    { lit(char(m::id::ROOM_ALIAS))    ,"room_alias sigil" };
-	const rule<m::id::sigil> group_id_sigil      { lit(char(m::id::GROUP))           ,"group_id sigil" };
-	const rule<m::id::sigil> node_sigil          { lit(char(m::id::NODE))                ,"node sigil" };
-	const rule<m::id::sigil> device_sigil        { lit(char(m::id::DEVICE))            ,"device sigil" };
-	const rule<m::id::sigil> sigil
+	const rule<id::sigil> event_id_sigil         { lit(char(id::EVENT))          ,"event_id sigil" };
+	const rule<id::sigil> user_id_sigil          { lit(char(id::USER))            ,"user_id sigil" };
+	const rule<id::sigil> room_id_sigil          { lit(char(id::ROOM))            ,"room_id sigil" };
+	const rule<id::sigil> room_alias_sigil       { lit(char(id::ROOM_ALIAS))   ,"room_alias sigil" };
+	const rule<id::sigil> group_id_sigil         { lit(char(id::GROUP))          ,"group_id sigil" };
+	const rule<id::sigil> node_sigil             { lit(char(id::NODE))               ,"node sigil" };
+	const rule<id::sigil> device_sigil           { lit(char(id::DEVICE))           ,"device sigil" };
+	const rule<id::sigil> sigil
 	{
 		event_id_sigil    |
 		user_id_sigil     |
@@ -360,58 +361,80 @@ struct ircd::m::id::printer
 {
 	template<class generator,
 	         class attribute>
-	bool operator()(char *&out, char *const &stop, generator&& g, attribute&& a) const
-	{
-		const auto throws{[&out, &stop]
-		{
-			throw INVALID_MXID
-			{
-				"Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
-				demangle<decltype(a)>(),
-				demangle<decltype(g)>(),
-				size_t(stop - out)
-			};
-		}};
-
-		const auto gg
-		{
-			maxwidth(size_t(stop - out))[std::forward<generator>(g)] | eps[throws]
-		};
-
-		return karma::generate(out, gg, std::forward<attribute>(a));
-	}
+	bool operator()(char *&out, char *const &stop, generator&&, attribute&&) const;
 
 	template<class generator>
-	bool operator()(char *&out, char *const &stop, generator&& g) const
-	{
-		const auto throws{[&out, &stop]
-		{
-			throw INVALID_MXID
-			{
-				"Failed to print generator '%s' (%zd bytes in buffer)",
-				demangle<decltype(g)>(),
-				size_t(stop - out)
-			};
-		}};
-
-		const auto gg
-		{
-			maxwidth(size_t(stop - out))[std::forward<generator>(g)] | eps[throws]
-		};
-
-		return karma::generate(out, gg);
-	}
+	bool operator()(char *&out, char *const &stop, generator&&) const;
 
 	template<class... args>
-	bool operator()(mutable_buffer &out, args&&... a) const
-	{
-		return operator()(buffer::begin(out), buffer::end(out), std::forward<args>(a)...);
-	}
+	bool operator()(mutable_buffer &out, args&&... a) const;
 }
 const ircd::m::id::printer;
 
+template<class gen,
+         class attr>
+bool
+ircd::m::id::printer::operator()(char *&out,
+                                 char *const &stop,
+                                 gen&& g,
+                                 attr&& a)
+const
+{
+	const auto throws{[&out, &stop]
+	{
+		throw INVALID_MXID
+		{
+			"Failed to print attribute '%s' generator '%s' (%zd bytes in buffer)",
+			demangle<decltype(a)>(),
+			demangle<decltype(g)>(),
+			size_t(stop - out)
+		};
+	}};
+
+	const auto gg
+	{
+		maxwidth(size_t(stop - out))[std::forward<decltype(g)>(g)] | eps[throws]
+	};
+
+	return karma::generate(out, gg, std::forward<decltype(a)>(a));
+}
+
+template<class gen>
+bool
+ircd::m::id::printer::operator()(char *&out,
+                                 char *const &stop,
+                                 gen&& g)
+const
+{
+	const auto throws{[&out, &stop]
+	{
+		throw INVALID_MXID
+		{
+			"Failed to print generator '%s' (%zd bytes in buffer)",
+			demangle<decltype(g)>(),
+			size_t(stop - out)
+		};
+	}};
+
+	const auto gg
+	{
+		maxwidth(size_t(stop - out))[std::forward<decltype(g)>(g)] | eps[throws]
+	};
+
+	return karma::generate(out, gg);
+}
+
+template<class... args>
+bool
+ircd::m::id::printer::operator()(mutable_buffer &out,
+                                 args&&... a)
+const
+{
+	return operator()(buffer::begin(out), buffer::end(out), std::forward<args>(a)...);
+}
+
 //
-// id
+// id::id
 //
 
 ircd::m::id::id(const string_view &id)

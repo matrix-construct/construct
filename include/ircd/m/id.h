@@ -111,7 +111,12 @@ struct ircd::m::id::user
 :ircd::m::id
 {
 	using buf = m::id::buf<user>;
-	template<class... args> user(args&&... a) :m::id{USER, std::forward<args>(a)...} {}
+
+	template<class... args>
+	user(args&&... a)
+	:m::id{USER, std::forward<args>(a)...}
+	{}
+
 	user() = default;
 };
 
@@ -128,11 +133,15 @@ struct ircd::m::id::user
 struct ircd::m::id::event
 :ircd::m::id
 {
+	using buf = m::id::buf<event>;
 	using closure = std::function<void (const id::event &)>;
 	using closure_bool = std::function<bool (const id::event &)>;
 
-	using buf = m::id::buf<event>;
-	template<class... args> event(args&&... a) :m::id{EVENT, std::forward<args>(a)...} {}
+	template<class... args>
+	event(args&&... a)
+	:m::id{EVENT, std::forward<args>(a)...}
+	{}
+
 	event() = default;
 };
 
@@ -149,11 +158,15 @@ struct ircd::m::id::event
 struct ircd::m::id::room
 :ircd::m::id
 {
+	using buf = m::id::buf<room>;
 	using closure = std::function<void (const id::room &)>;
 	using closure_bool = std::function<bool (const id::room &)>;
 
-	using buf = m::id::buf<room>;
-	template<class... args> room(args&&... a) :m::id{ROOM, std::forward<args>(a)...} {}
+	template<class... args>
+	room(args&&... a)
+	:m::id{ROOM, std::forward<args>(a)...}
+	{}
+
 	room() = default;
 };
 
@@ -168,7 +181,12 @@ struct ircd::m::id::room_alias
 :ircd::m::id
 {
 	using buf = m::id::buf<room_alias>;
-	template<class... args> room_alias(args&&... a) :m::id{ROOM_ALIAS, std::forward<args>(a)...} {}
+
+	template<class... args>
+	room_alias(args&&... a)
+	:m::id{ROOM_ALIAS, std::forward<args>(a)...}
+	{}
+
 	room_alias() = default;
 };
 
@@ -178,7 +196,12 @@ struct ircd::m::id::group
 :ircd::m::id
 {
 	using buf = m::id::buf<group>;
-	template<class... args> group(args&&... a) :m::id{GROUP, std::forward<args>(a)...} {}
+
+	template<class... args>
+	group(args&&... a)
+	:m::id{GROUP, std::forward<args>(a)...}
+	{}
+
 	group() = default;
 };
 
@@ -188,7 +211,12 @@ struct ircd::m::id::node
 :ircd::m::id
 {
 	using buf = m::id::buf<node>;
-	template<class... args> node(args&&... a) :m::id{NODE, std::forward<args>(a)...} {}
+
+	template<class... args>
+	node(args&&... a)
+	:m::id{NODE, std::forward<args>(a)...}
+	{}
+
 	node() = default;
 };
 
@@ -198,7 +226,12 @@ struct ircd::m::id::device
 :ircd::m::id
 {
 	using buf = m::id::buf<device>;
-	template<class... args> device(args&&... a) :m::id{DEVICE, std::forward<args>(a)...} {}
+
+	template<class... args>
+	device(args&&... a)
+	:m::id{DEVICE, std::forward<args>(a)...}
+	{}
+
 	device() = default;
 };
 
