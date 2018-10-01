@@ -11,55 +11,41 @@
 #pragma once
 #define HAVE_IRCD_NET_DNS_H
 
-namespace ircd::net
-{
-	struct dns extern dns;
-}
-
 /// DNS resolution suite.
-///
-/// This is a singleton class; public usage is to make calls on the singleton
-/// object like `ircd::net::dns()` etc.
 ///
 /// Note that in returned rfc1035::records that TTL values are modified from their
 /// original value to an absolute epoch time in seconds which we use for caching.
 /// This modification only occurs if the dns query allows result caching (default).
 ///
-struct ircd::net::dns
+namespace ircd::net::dns
 {
-	struct opts;
-	struct cache;
-	struct resolver;
+	struct opts extern const opts_default;
 
-	struct opts static const opts_default;
-	struct cache static cache;
+	// Maximum number of records we present in result vector to any closure
+	constexpr const size_t MAX_COUNT {64};
 
 	using callback = std::function<void (std::exception_ptr, const hostport &, const vector_view<const rfc1035::record *> &)>;
 	using callback_A_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::A &)>;
 	using callback_SRV_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::SRV &)>;
 	using callback_ipport_one = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
 
-	// Maximum number of records we present in result vector to any closure
-	static constexpr const size_t &MAX_COUNT {64};
-
-	// (internal) generate strings for rfc1035 questions or dns::cache keys.
-	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
-	static string_view unmake_SRV_key(const string_view &);
-
-  public:
-	// Cache warming
-	static const callback_A_one prefetch_A;
-	static const callback_SRV_one prefetch_SRV;
-	static const callback_ipport_one prefetch_ipport;
+	// Cache warming drop-in callbacks.
+	extern const callback_A_one prefetch_A;
+	extern const callback_SRV_one prefetch_SRV;
+	extern const callback_ipport_one prefetch_ipport;
 
 	// Callback-based interface
-	void operator()(const hostport &, const opts &, callback);
-	void operator()(const hostport &, const opts &, callback_A_one);
-	void operator()(const hostport &, const opts &, callback_SRV_one);
-	void operator()(const hostport &, const opts &, callback_ipport_one);
+	void resolve(const hostport &, const opts &, callback);
+	void resolve(const hostport &, const opts &, callback_A_one);
+	void resolve(const hostport &, const opts &, callback_SRV_one);
+	void resolve(const hostport &, const opts &, callback_ipport_one);
 
 	// Callback-based interface (default options)
-	template<class Callback> void operator()(const hostport &, Callback&&);
+	template<class Callback> void resolve(const hostport &, Callback&&);
+
+	// (internal) generate strings for rfc1035 questions or dns::cache keys.
+	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
+	string_view unmake_SRV_key(const string_view &);
 };
 
 /// DNS resolution options
@@ -99,12 +85,12 @@ struct ircd::net::dns::opts
 };
 
 /// (internal) DNS cache
-struct ircd::net::dns::cache
+namespace ircd::net::dns::cache
 {
 	using closure = std::function<bool (const string_view &, const rfc1035::record &)>;
 
-	static conf::item<seconds> min_ttl;
-	static conf::item<seconds> clear_nxdomain;
+	extern conf::item<seconds> min_ttl;
+	extern conf::item<seconds> clear_nxdomain;
 
 	bool for_each(const uint16_t &type, const closure &);
 	bool for_each(const string_view &type, const closure &);
@@ -117,8 +103,8 @@ struct ircd::net::dns::cache
 
 template<class Callback>
 void
-ircd::net::dns::operator()(const hostport &hostport,
-                           Callback&& callback)
+ircd::net::dns::resolve(const hostport &hostport,
+                        Callback&& callback)
 {
-	operator()(hostport, opts_default, std::forward<Callback>(callback));
+	resolve(hostport, opts_default, std::forward<Callback>(callback));
 }

@@ -925,7 +925,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 	};
 
 	op_resolve = true;
-	net::dns(hostport, std::move(handler));
+	net::dns::resolve(hostport, std::move(handler));
 }
 
 void

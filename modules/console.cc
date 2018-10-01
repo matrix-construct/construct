@@ -3088,7 +3088,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 	bool done{false};
 	net::ipport ipport;
 	std::exception_ptr eptr;
-	net::dns(hostport, [&done, &dock, &eptr, &ipport]
+	net::dns::resolve(hostport, [&done, &dock, &eptr, &ipport]
 	(std::exception_ptr eptr_, const net::hostport &, const net::ipport &ipport_)
 	{
 		eptr = std::move(eptr_);
@@ -3117,7 +3117,7 @@ console_cmd__host(opt &out, const string_view &line)
 bool
 console_cmd__net__host__cache__A(opt &out, const string_view &line)
 {
-	net::dns::cache.for_each("A", [&]
+	net::dns::cache::for_each("A", [&]
 	(const auto &host, const auto &r)
 	{
 		const auto &record
@@ -3142,7 +3142,7 @@ bool
 console_cmd__net__host__cache__A__count(opt &out, const string_view &line)
 {
 	size_t count[2] {0};
-	net::dns::cache.for_each("A", [&]
+	net::dns::cache::for_each("A", [&]
 	(const auto &host, const auto &r)
 	{
 		const auto &record
@@ -3185,7 +3185,7 @@ console_cmd__net__host__cache__A__clear(opt &out, const string_view &line)
 bool
 console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 {
-	net::dns::cache.for_each("SRV", [&]
+	net::dns::cache::for_each("SRV", [&]
 	(const auto &key, const auto &r)
 	{
 		const auto &record
@@ -3214,7 +3214,7 @@ bool
 console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
 {
 	size_t count[2] {0};
-	net::dns::cache.for_each("SRV", [&]
+	net::dns::cache::for_each("SRV", [&]
 	(const auto &host, const auto &r)
 	{
 		const auto &record
@@ -3289,7 +3289,7 @@ console_cmd__net__host__prefetch(opt &out, const string_view &line)
 	size_t count{0};
 	origins.for_each([&count](const string_view &origin)
 	{
-		net::dns(origin, net::dns::prefetch_ipport);
+		net::dns::resolve(origin, net::dns::prefetch_ipport);
 		++count;
 	});
 

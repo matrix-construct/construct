@@ -634,7 +634,7 @@ ircd::net::open(socket &socket,
 	}};
 
 	if(!opts.ipport)
-		dns(opts.hostport, std::move(connector));
+		dns::resolve(opts.hostport, std::move(connector));
 	else
 		connector({}, opts.hostport, opts.ipport);
 }
@@ -2878,20 +2878,9 @@ const
 // net/dns.h
 //
 
-/// Singleton instance of the public interface ircd::net::resolve
-decltype(ircd::net::dns)
-ircd::net::dns
-{};
-
-/// Singleton instance of the DNS cache
-decltype(ircd::net::dns::cache)
-ircd::net::dns::cache
-{};
-
 /// Linkage for default opts
 decltype(ircd::net::dns::opts_default)
-ircd::net::dns::opts_default
-{};
+ircd::net::dns::opts_default;
 
 decltype(ircd::net::dns::prefetch_ipport)
 ircd::net::dns::prefetch_ipport{[]
@@ -2918,9 +2907,9 @@ ircd::net::dns::prefetch_A{[]
 /// an automatic chain of queries such as SRV and A/AAAA based on the input and
 /// intermediate results.
 void
-ircd::net::dns::operator()(const hostport &hp,
-                           const opts &opts,
-                           callback_ipport_one callback)
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts,
+                        callback_ipport_one callback)
 {
 	//TODO: ip6
 	auto calluser{[callback(std::move(callback))]
@@ -2944,7 +2933,7 @@ ircd::net::dns::operator()(const hostport &hp,
 	}};
 
 	if(!hp.service)
-		return operator()(hp, opts, [calluser(std::move(calluser))]
+		return resolve(hp, opts, [calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
 			calluser(std::move(eptr), hp, record.ip4);
@@ -2952,7 +2941,7 @@ ircd::net::dns::operator()(const hostport &hp,
 
 	auto srv_opts{opts};
 	srv_opts.nxdomain_exceptions = false;
-	operator()(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
+	resolve(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
 	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
 	mutable
 	{
@@ -2969,7 +2958,7 @@ ircd::net::dns::operator()(const hostport &hp,
 		opts.srv = {};
 		opts.proto = {};
 
-		net::dns(hp, opts, [calluser(std::move(calluser))]
+		net::dns::resolve(hp, opts, [calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
 			calluser(std::move(eptr), hp, record.ip4);
@@ -2980,11 +2969,11 @@ ircd::net::dns::operator()(const hostport &hp,
 /// Convenience callback with a single SRV record which was selected from
 /// the vector with stochastic respect for weighting and priority.
 void
-ircd::net::dns::operator()(const hostport &hp,
-                           const opts &opts,
-                           callback_SRV_one callback)
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts,
+                        callback_SRV_one callback)
 {
-	operator()(hp, opts, [callback(std::move(callback))]
+	resolve(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
 		static const rfc1035::record::SRV empty;
@@ -3010,11 +2999,11 @@ ircd::net::dns::operator()(const hostport &hp,
 /// Convenience callback with a single A record which was selected from
 /// the vector randomly.
 void
-ircd::net::dns::operator()(const hostport &hp,
-                           const opts &opts,
-                           callback_A_one callback)
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts,
+                        callback_A_one callback)
 {
-	operator()(hp, opts, [callback(std::move(callback))]
+	resolve(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
 	{
 		static const rfc1035::record::A empty;
@@ -3039,23 +3028,23 @@ ircd::net::dns::operator()(const hostport &hp,
 
 /// Fundamental callback with a vector of abstract resource records.
 void
-ircd::net::dns::operator()(const hostport &hp,
-                           const opts &op,
-                           callback cb)
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &op,
+                        callback cb)
 try
 {
 	using prototype = void (const hostport &, const opts &, callback &&);
 
-	static mods::import<prototype> resolve
+	static mods::import<prototype> _resolve_
 	{
-		"s_resolver", "resolve"
+		"s_resolver", "_resolve_"
 	};
 
 	if(op.cache_check)
-		if(cache.get(hp, op, cb))
+		if(cache::get(hp, op, cb))
 			return;
 
-	resolve(hp, op, std::move(cb));
+	_resolve_(hp, op, std::move(cb));
 }
 catch(const mods::unavailable &e)
 {

@@ -324,7 +324,7 @@ try
 		return;
 
 	// Make a query through SRV and A records.
-	net::dns(origin, net::dns::prefetch_ipport);
+	net::dns::resolve(origin, net::dns::prefetch_ipport);
 }
 catch(const std::exception &e)
 {

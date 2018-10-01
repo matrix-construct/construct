@@ -11,33 +11,35 @@
 #include <ircd/asio.h>
 #include "s_resolver.h"
 
-std::unique_ptr<ircd::net::dns::resolver>
-resolver_instance;
-
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Server Domain Name Resolver", []
 	{
-		resolver_instance = std::make_unique<ircd::net::dns::resolver>();
+		assert(!ircd::net::dns::resolver);
+		ircd::net::dns::resolver = new typename ircd::net::dns::resolver{};
 	}, []
 	{
-		resolver_instance.reset(nullptr);
+		delete ircd::net::dns::resolver;
+		ircd::net::dns::resolver = nullptr;
 	}
 };
 
+decltype(ircd::net::dns::resolver)
+ircd::net::dns::resolver;
+
 extern "C" void
-resolve(const ircd::net::hostport &hp,
-        const ircd::net::dns::opts &opts,
-        ircd::net::dns::callback &&callback)
+ircd::net::dns::_resolve_(const hostport &hp,
+                          const opts &opts,
+                          callback &&callback)
 {
-	if(unlikely(!resolver_instance))
+	if(unlikely(!resolver))
 		throw ircd::mods::unavailable
 		{
 			"Resolver module loaded but the service is unavailable."
 		};
 
-	(*resolver_instance)(hp, opts, std::move(callback));
+	(*resolver)(hp, opts, std::move(callback));
 }
 
 //
@@ -52,8 +54,8 @@ ircd::net::dns::resolver::servers
 		{ "default",   "4.2.2.1;4.2.2.2;4.2.2.3;4.2.2.4;4.2.2.5;4.2.2.6" },
 	}, []
 	{
-		if(bool(resolver_instance))
-			resolver_instance->set_servers();
+		if(bool(ircd::net::dns::resolver))
+			ircd::net::dns::resolver->set_servers();
 	}
 };
 
@@ -530,7 +532,7 @@ try
 		const auto &now{ircd::time()};
 		for(size_t i(0); i < header.ancount; ++i)
 		{
-			const uint &min_ttl(seconds(cache.min_ttl).count());
+			const uint &min_ttl(seconds(cache::min_ttl).count());
 			an[i].ttl = now + std::max(an[i].ttl, min_ttl);
 		}
 	}
@@ -558,7 +560,7 @@ try
 				continue;
 			}
 
-			record[i] = cache.put(qd.at(0), an[i]);
+			record[i] = cache::put(qd.at(0), an[i]);
 			continue;
 		}
 
@@ -578,7 +580,7 @@ try
 				continue;
 			}
 
-			record[i] = cache.put(qd.at(0), an[i]);
+			record[i] = cache::put(qd.at(0), an[i]);
 			continue;
 		}
 
@@ -592,7 +594,7 @@ try
 
 	// Cache no answers here.
 	if(!header.ancount && tag.opts.cache_result)
-		cache.put_error(qd.at(0), header.rcode);
+		cache::put_error(qd.at(0), header.rcode);
 
 	if(tag.cb)
 	{
@@ -636,7 +638,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 
 			const auto *record
 			{
-				cache.put_error(question, header.rcode)
+				cache::put_error(question, header.rcode)
 			};
 
 			// When the user doesn't want an eptr for nxdomain we just make
