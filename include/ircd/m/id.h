@@ -92,8 +92,8 @@ enum ircd::m::id::sigil
 	ROOM        = '!',     ///< Room ID (4.2.2)
 	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
 	GROUP       = '+',     ///< Group ID (experimental)
-	NODE        = ':',     ///< Node ID (experimental)
 	DEVICE      = '%',     ///< Device ID (experimental)
+	NODE        = ':',     ///< Node ID (experimental)
 };
 
 /// (Appendix 4.2.1) User Identifiers
@@ -205,21 +205,6 @@ struct ircd::m::id::group
 	group() = default;
 };
 
-/// Node ID (EXPERIMENTAL)
-///
-struct ircd::m::id::node
-:ircd::m::id
-{
-	using buf = m::id::buf<node>;
-
-	template<class... args>
-	node(args&&... a)
-	:m::id{NODE, std::forward<args>(a)...}
-	{}
-
-	node() = default;
-};
-
 /// Device ID (EXPERIMENTAL)
 ///
 struct ircd::m::id::device
@@ -233,6 +218,30 @@ struct ircd::m::id::device
 	{}
 
 	device() = default;
+};
+
+/// Node ID (EXPERIMENTAL)
+///
+struct ircd::m::id::node
+:ircd::m::id
+{
+	using buf = m::id::buf<node>;
+
+	IRCD_OVERLOAD(domain)
+	node(const mutable_buffer &mb, domain_t, const string_view &domain_, const string_view &origin_)
+	:m::id{NODE, mb, domain_, origin_}
+	{}
+
+	IRCD_OVERLOAD(origin)
+	node(const mutable_buffer &mb, origin_t, const string_view &origin_)
+	:m::id{NODE, mb, string_view{}, origin_}
+	{}
+
+	node(const string_view &id)
+	:m::id{NODE, id}
+	{}
+
+	node() = default;
 };
 
 // Utilities

@@ -330,7 +330,7 @@ ircd::m::my_room
 ircd::m::node::id::buf
 ircd_node_id
 {
-	"", "localhost" // replaced after conf init
+	ircd::m::node::id::origin, "localhost" // replaced after conf init
 };
 
 ircd::m::node
@@ -370,7 +370,7 @@ ircd::m::self::init::init(const string_view &origin)
 	ircd_room_id = {"ircd", origin};
 	m::my_room = {ircd_room_id};
 
-	ircd_node_id = {"", origin};
+	ircd_node_id = {node::id::origin, origin};
 	m::my_node = {ircd_node_id};
 
 	users_room_id = {"users", origin};

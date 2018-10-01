@@ -89,7 +89,7 @@ struct node
 	void push(std::shared_ptr<unit>);
 
 	node(const string_view &origin)
-	:id{"", origin}
+	:id{m::node::id::origin, origin}
 	,room{id}
 	{}
 };

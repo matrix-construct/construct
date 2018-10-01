@@ -181,7 +181,7 @@ const
 
 	const m::node::id::buf node_id
 	{
-		"", unquote(at<"origin"_>(*this))
+		m::node::id::origin, unquote(at<"origin"_>(*this))
 	};
 
 	const m::node node

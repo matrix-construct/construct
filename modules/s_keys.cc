@@ -597,7 +597,7 @@ cache_set(const json::object &keys)
 
 	const m::node::id::buf node_id
 	{
-		"", server_name
+		m::node::id::origin, server_name
 	};
 
 	const m::node::room node_room
@@ -634,7 +634,7 @@ cache_get(const string_view &server_name,
 {
 	const m::node::id::buf node_id
 	{
-		"", server_name
+		m::node::id::origin, server_name
 	};
 
 	const m::node::room node_room

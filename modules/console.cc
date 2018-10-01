@@ -6948,9 +6948,14 @@ console_cmd__node__keys(opt &out, const string_view &line)
 		"node_id", "[limit]"
 	}};
 
+	const m::node::id::buf node_id
+	{
+		m::node::id::origin, param.at(0)
+	};
+
 	const m::node &node
 	{
-		param.at(0)
+		node_id
 	};
 
 	auto limit
@@ -6983,9 +6988,14 @@ console_cmd__node__key(opt &out, const string_view &line)
 		"node_id", "key_id"
 	}};
 
+	const m::node::id::buf node_id
+	{
+		m::node::id::origin, param.at(0)
+	};
+
 	const m::node &node
 	{
-		param.at(0)
+		node_id
 	};
 
 	const auto &key_id

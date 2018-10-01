@@ -267,7 +267,7 @@ try
 			"The X-Matrix Authorization is invalid."
 		};
 
-	request.node_id = {"", x_matrix.origin};
+	request.node_id = {m::node::id::origin, x_matrix.origin};
 	request.origin = x_matrix.origin;
 
 	// If we have an error cached from previously not being able to

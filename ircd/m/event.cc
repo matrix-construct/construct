@@ -735,7 +735,7 @@ try
 {
 	const m::node::id::buf node_id
 	{
-		"", origin
+		m::node::id::origin, origin
 	};
 
 	const m::node node
