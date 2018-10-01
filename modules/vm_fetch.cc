@@ -130,77 +130,9 @@ m::vm::fetch::enter(const event &event,
 // API interface
 //
 
-json::object
-m::vm::fetch::acquire(const m::room::id &room_id,
-                      const m::event::id &event_id,
-                      const mutable_buffer &buf)
-{
-	auto &request
-	{
-		_fetch(room_id, event_id)
-	};
-
-	request.dock.wait([&request]
-	{
-		return request.finished;
-	});
-
-	const unwind _remove_{[&event_id]
-	{
-		remove(event_id);
-	}};
-
-	if(request.eptr)
-		std::rethrow_exception(request.eptr);
-
-	const json::object &event
-	{
-		request
-	};
-
-	return json::object
-	{
-		data(buf), copy(buf, event)
-	};
-}
-
-bool
-m::vm::fetch::prefetch(const m::room::id &room_id,
-                       const m::event::id &event_id)
-{
-	_fetch(room_id, event_id);
-	return true;
-}
-
-bool
-ircd::m::vm::fetch::remove(const m::event::id &event_id)
-{
-	const auto it
-	{
-		fetching.find(event_id)
-	};
-
-	if(it == end(fetching))
-		return false;
-
-	const request &r{*it};
-	if(!r.dock.empty())
-		return false;
-
-	for(auto it(begin(fetched)); it != end(fetched); ++it)
-		if(*it == &r)
-		{
-			fetched.erase(it);
-			break;
-		}
-
-	fetching.erase(it);
-	return true;
-}
-
 m::vm::fetch::request &
-m::vm::fetch::_fetch(const m::room::id &room_id,
-                     const m::event::id &event_id)
+m::vm::fetch::fetch(const m::room::id &room_id,
+                    const m::event::id &event_id)
 {
 	auto it
 	{
@@ -231,9 +163,6 @@ m::vm::fetch::dock;
 
 decltype(m::vm::fetch::fetching)
 m::vm::fetch::fetching;
-
-decltype(m::vm::fetch::fetched)
-m::vm::fetch::fetched;
 
 /// The fetch context is an internal worker which drives the fetch process
 /// and then indicates completion to anybody waiting on a fetch. This involves
@@ -381,6 +310,10 @@ ircd::m::vm::fetch::request::select_random_origin()
 	const auto proffer{[this]
 	(const string_view &origin)
 	{
+		// Don't want to request from myself.
+		if(my_host(origin))
+			return false;
+
 		// Don't want to use a peer we already tried and failed with.
 		if(attempted.count(origin))
 			return false;
@@ -456,7 +389,6 @@ void
 ircd::m::vm::fetch::request::finish()
 {
 	finished = ircd::time();
-	fetched.emplace_back(this);
 	dock.notify_all();
 }
 

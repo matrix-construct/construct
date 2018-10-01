@@ -4574,41 +4574,21 @@ console_cmd__event__fetch(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
-	const unique_buffer<mutable_buffer> buf
+	const net::hostport hostport
 	{
-		64_KiB
+		room_id.host()
 	};
 
 	using prototype = json::object (const m::room::id &,
 	                                const m::event::id &,
-	                                const mutable_buffer &);
+	                                const net::hostport &);
 
 	static mods::import<prototype> acquire
 	{
-		"vm_fetch", "acquire"
+		"vm_fetch", "state_fetch"
 	};
 
-	const m::event event
-	{
-		acquire(room_id, event_id, buf)
-	};
-
-	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
-	vmopts.prev_check_exists = false;
-	vmopts.head_must_exist = false;
-	vmopts.history = false;
-	vmopts.notify = false;
-	vmopts.verify = false;
-	m::vm::eval eval
-	{
-		vmopts
-	};
-
-	eval(event);
-
-	out << event << std::endl;
+	acquire(room_id, event_id, hostport);
 	return true;
 }
 

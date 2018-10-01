@@ -10,7 +10,6 @@
 
 namespace ircd::m::vm
 {
-
 	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
 	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
 	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event

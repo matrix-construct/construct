@@ -26,7 +26,6 @@ namespace ircd::m::vm::fetch
 
 	extern ctx::dock dock;
 	extern std::set<request, request> fetching;
-	extern std::deque<request *> fetched;
 	extern hookfn<eval &> hook;
 	extern ctx::context context;
 
@@ -35,13 +34,8 @@ namespace ircd::m::vm::fetch
 	static bool handle();
 	static void worker();
 
-	// interface stack
-	static request &_fetch(const m::room::id &, const m::event::id &);
-	static bool remove(const m::event::id &);
-	extern "C" bool prefetch(const m::room::id &, const m::event::id &);
-	extern "C" json::object acquire(const m::room::id &, const m::event::id &, const mutable_buffer &);
+	static request &fetch(const m::room::id &, const m::event::id &);
 
-	// phase stack
 	static void enter(const event &, vm::eval &);
 }
 
